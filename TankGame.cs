@@ -33,12 +33,12 @@ namespace WiiPlayTanksRemake
             IsMouseVisible = true;
             Instance = this;
             Window.Title = "Wii Play Tanks Remake";
+            Window.AllowUserResizing = true;
         }
 
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
-
 
             base.Initialize();
         }

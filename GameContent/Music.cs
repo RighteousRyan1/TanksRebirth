@@ -22,37 +22,22 @@ namespace WiiPlayTanksRemake.GameContent
     {
         public static List<Music> AllMusic { get; } = new();
 
-        public static int CurrentMusicTrack
-        {
-            get; private set;
-        }
+        public static int CurrentMusicTrack { get; private set; }
 
         public int id;
         public float volume;
 
-        public MusicState State
-        {
-            get; private set;
-        }
+        public MusicState State { get; private set; }
 
         public float maxVolume;
 
-        public string Name
-        {
-            get; set;
-        }
+        public string Name { get; set; }
 
-        public DynamicSoundEffectInstance DynamicSoundInstance
-        {
-            get; private set;
-        }
+        public DynamicSoundEffectInstance DynamicSoundInstance { get; private set; }
 
         private string path;
 
-        private VorbisReader Reader
-        {
-            get; set;
-        }
+        private VorbisReader Reader { get; set; }
 
         private Music(string name, string musicPath, float maxVolume) {
             path = musicPath;

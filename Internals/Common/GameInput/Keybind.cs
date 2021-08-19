@@ -14,17 +14,11 @@ namespace WiiPlayTanksRemake.Internals.Common.GameInput
             AllKeybinds.Add(this);
         }
 
-        public bool JustReassigned
-        {
-            get; private set;
-        }
+        public bool JustReassigned { get; private set; }
 
         public bool JustPressed => Input.KeyJustPressed(AssignedKey) && _bindingWait <= 0;
         public bool IsPressed => Input.CurrentKeySnapshot.IsKeyDown(AssignedKey) && _bindingWait <= 0;
-        public bool IsReassignPending
-        {
-            get; private set;
-        }
+        public bool IsReassignPending { get; private set; }
 
         public Keys AssignedKey { get; internal set; } = Keys.None;
         public string Name { get; set; } = "Not Named";

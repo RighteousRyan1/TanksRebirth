@@ -38,7 +38,7 @@ namespace WiiPlayTanksRemake.Internals
         }
 
         public void Write(object write, LogType writeType) {
-            string str = $"[{assembly.GetName().Name}] [{writeType}]: {write}";
+            string str = $"[{DateTime.Now}] [{assembly.GetName().Name}] [{writeType}]: {write}";
             sWriter.WriteLine(str);
             Debug.WriteLine(str);
             sWriter.Flush();

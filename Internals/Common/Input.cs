@@ -6,31 +6,17 @@ namespace WiiPlayTanksRemake.Internals.Common
 {
     public static class Input
     {
-        public static KeyboardState CurrentKeySnapshot
-        {
-            get; internal set;
-        }
-        public static KeyboardState OldKeySnapshot
-        {
-            get; internal set;
-        }
-        public static MouseState CurrentMouseSnapshot
-        {
-            get; internal set;
-        }
-        public static MouseState OldMouseSnapshot
-        {
-            get; internal set;
-        }
+        public static KeyboardState CurrentKeySnapshot { get; internal set; }
 
-        public static GamePadState CurrentGamePadSnapshot
-        {
-            get; internal set;
-        }
-        public static GamePadState OldGamePadSnapshot
-        {
-            get; internal set;
-        }
+        public static KeyboardState OldKeySnapshot { get; internal set; }
+
+        public static MouseState CurrentMouseSnapshot { get; internal set; }
+
+        public static MouseState OldMouseSnapshot { get; internal set; }
+
+        public static GamePadState CurrentGamePadSnapshot { get; internal set; }
+
+        public static GamePadState OldGamePadSnapshot { get; internal set; }
 
         public static void HandleInput(PlayerIndex pIndex = PlayerIndex.One) {
             CurrentKeySnapshot = Keyboard.GetState();

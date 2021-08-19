@@ -5,6 +5,7 @@ namespace WiiPlayTanksRemake.Internals.UI
     public class UIParent
     {
         public static List<UIParent> TotalParents { get; private set; } = new();
+
         public List<UIElement> Elements { get; private set; } = new();
 
         public bool Visible { get; set; } = true;

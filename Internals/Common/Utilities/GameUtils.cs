@@ -117,6 +117,7 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
         }
         public static Point ToPoint(this Vector2 vector2) => new((int)vector2.X, (int)vector2.Y);
         public static bool WindowActive => TankGame.Instance.IsActive;
+
         private static List<int> chosenTs = new();
         public static T PickRandom<T>(T[] input) {
             int rand = new Random().Next(0, input.Length);

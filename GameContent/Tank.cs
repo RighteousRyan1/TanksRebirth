@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
+using WiiPlayTanksRemake.Enums;
 
 namespace WiiPlayTanksRemake.GameContent
 {
@@ -18,6 +19,8 @@ namespace WiiPlayTanksRemake.GameContent
         public int maxLayableMines;
 
         public bool IsAI { get; }
+
+        public TankType TankType;
 
         public Tank(Vector3 beginPos)
         {
