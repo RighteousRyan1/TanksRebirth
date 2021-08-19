@@ -39,11 +39,18 @@ namespace WiiPlayTanksRemake
         {
             // TODO: Add your initialization logic here
 
+
             base.Initialize();
+        }
+
+        protected override void OnExiting(object sender, EventArgs args)
+        {
+            GameContent.WiiPlayTanksRemake.BaseLogger.Dispose();
         }
 
         protected override void LoadContent()
         {
+            Fonts.Font = Content.Load<SpriteFont>("Go");
             spriteBatch = new SpriteBatch(GraphicsDevice);
             Models.TankModelEnemy = Content.Load<Model>("tnk_tank_e");
             Models.TankModelPlayer = Content.Load<Model>("tnk_tank_p");
@@ -54,7 +61,6 @@ namespace WiiPlayTanksRemake
         {
             Input.HandleInput();
             TextInput.TrackInputKeys();
-
 
             GameContent.WiiPlayTanksRemake.Update();
 

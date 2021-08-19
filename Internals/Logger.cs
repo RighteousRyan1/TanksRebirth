@@ -8,6 +8,7 @@ namespace WiiPlayTanksRemake.Internals
     public sealed class Logger : IDisposable
     {
         private readonly string writeTo;
+
         public string Name
         {
             get;
@@ -29,17 +30,18 @@ namespace WiiPlayTanksRemake.Internals
         public Logger(string writeFile, string name) {
             assembly = Assembly.GetExecutingAssembly();
             Name = name;
-            writeTo = writeFile;
 
-            string withName = Path.Combine(writeFile, $"{name}.log");
+            writeTo = Path.Combine(writeFile, $"{name}.log");
 
-            fStream = new(withName, FileMode.OpenOrCreate);
+            fStream = new(writeTo, FileMode.OpenOrCreate);
             sWriter = new(fStream);
         }
+
         public void Write(object write, LogType writeType) {
             string str = $"[{assembly.GetName().Name}] [{writeType}]: {write}";
             sWriter.WriteLine(str);
             Debug.WriteLine(str);
+            sWriter.Flush();
         }
 
         public void Dispose() {

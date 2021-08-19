@@ -29,7 +29,7 @@ namespace WiiPlayTanksRemake.GameContent
         {
             //instead of updating & drawing mines and bullets
             //in WiiPlayTanksRemake.Update()/Draw(), we could
-            //do it here instead. there shouldn't be any
+            //do it here/Draw() instead. there shouldn't be any
             //difference other than the readability as the
             //call positions should be the same
         }
