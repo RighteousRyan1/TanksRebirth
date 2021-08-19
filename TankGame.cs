@@ -10,10 +10,13 @@ namespace WiiPlayTanksRemake
         public GraphicsDeviceManager graphics;
         public static SpriteBatch SpriteBatch;
 
+        public static Model TankModelEnemy { get; private set; }
+        public static Model TankModelPlayer { get; private set; }
+
         public TankGame()
         {
             graphics = new GraphicsDeviceManager(this);
-            Content.RootDirectory = "Content";
+            Content.RootDirectory = "Content/Assets";
             IsMouseVisible = true;
         }
 
@@ -27,7 +30,8 @@ namespace WiiPlayTanksRemake
         protected override void LoadContent()
         {
             SpriteBatch = new SpriteBatch(GraphicsDevice);
-
+            TankModelEnemy = Content.Load<Model>("tnk_tank_e");
+            TankModelPlayer = Content.Load<Model>("tnk_tank_p");
             // TODO: use this.Content to load your game content here
         }
 
@@ -41,6 +45,7 @@ namespace WiiPlayTanksRemake
         {
             GraphicsDevice.Clear(Color.Orange);
 
+            // TankModelEnemy.draw
             // TODO: Add your drawing code here
 
             base.Draw(gameTime);
