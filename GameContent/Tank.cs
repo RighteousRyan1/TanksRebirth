@@ -2,34 +2,46 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
+using WiiPlayTanksRemake.Enums;
 
 namespace WiiPlayTanksRemake.GameContent
 {
     public class Tank
     {
-        private static readonly List<Tank> totalTanks = new();
+        public static List<Tank> AllTanks { get; } = new();
+
         public Vector3 position;
         public float speed;
         public float bulletShootSpeed;
-        public Mine[] minesLaid;
         public float barrelRotation;
         public int maxLayableMines;
 
-        public bool IsAi { get; }
+        public bool IsAI { get; }
 
-        public Tank(Vector3 beginPos)
+        public TankType TankType;
+
+        public Tank(Vector3 beginPos, bool ai = false)
         {
             position = beginPos;
-            totalTanks.Add(this);
+            IsAI = ai;
+            AllTanks.Add(this);
         }
 
-        public static void UpdateAllTanks()
+        internal void Update()
         {
 
         }
-        public static void DrawAllTankModels()
-        {
 
+        internal void Draw()
+        {
+            if (IsAI)
+            {
+                
+            }
+            else
+            {
+                TankGame.Models.TankModelPlayer.Draw(new Matrix(), new Matrix(), new Matrix());
+            }
         }
     }
 }
