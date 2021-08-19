@@ -6,6 +6,7 @@
         Player,
         Brown,
         Grey,
+        Gray = 3,
         Teal,
         Yellow,
         Red,

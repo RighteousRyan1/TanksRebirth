@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using WiiPlayTanksRemake.Internals.Common;
+using WiiPlayTanksRemake.GameContent;
 
 namespace WiiPlayTanksRemake
 {
@@ -15,6 +16,8 @@ namespace WiiPlayTanksRemake
 
         public GraphicsDeviceManager graphics;
 
+        public Tank tank;
+
         public struct Fonts
         {
             public static SpriteFont Font;
@@ -24,6 +27,12 @@ namespace WiiPlayTanksRemake
         {
             public static Model TankModelEnemy;
             public static Model TankModelPlayer;
+        }
+
+        public struct UITextures
+        {
+            public static Texture2D UIPanelBackground;
+            public static Texture2D UIPanelBackgroundCorner;
         }
 
         public TankGame() : base()
@@ -54,6 +63,12 @@ namespace WiiPlayTanksRemake
             spriteBatch = new SpriteBatch(GraphicsDevice);
             Models.TankModelEnemy = Content.Load<Model>("tnk_tank_e");
             Models.TankModelPlayer = Content.Load<Model>("tnk_tank_p");
+            UITextures.UIPanelBackground = Content.Load<Texture2D>("UIPanelBackground");
+            UITextures.UIPanelBackgroundCorner = Content.Load<Texture2D>("UIPanelBackgroundCorner");
+            GameContent.WiiPlayTanksRemake.par = new();
+            GameContent.WiiPlayTanksRemake.panel = new Internals.Common.GameUI.UITextButton("Hello", Fonts.Font, Color.White, Color.Blue);
+            GameContent.WiiPlayTanksRemake.panel.InteractionBox = new(100, 100, 200, 200);
+            GameContent.WiiPlayTanksRemake.par.AppendElement(GameContent.WiiPlayTanksRemake.panel);
             // TODO: use this.Content to load your game content here
         }
 

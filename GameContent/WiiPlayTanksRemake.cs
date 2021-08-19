@@ -18,6 +18,10 @@ namespace WiiPlayTanksRemake.GameContent
 
         private static UIElement lastElementClicked;
 
+        public static UIParent par;
+
+        public static UITextButton panel;
+
         internal static void Update()
         {
             if (TextInput.pressDelay > 0) {
@@ -26,13 +30,11 @@ namespace WiiPlayTanksRemake.GameContent
             foreach (var music in Music.AllMusic)
                 music?.Update();
             foreach (var tank in Tank.AllTanks)
-            {
                 tank?.Update();
-                foreach (Mine mine in tank.minesLaid)
-                    mine?.Update();
-                foreach (Bullet bullet in tank.bulletsFired)
-                    bullet?.Update();
-            }
+            foreach (var mine in Mine.AllMines)
+                mine?.Update();
+            foreach (var bullet in Bullet.AllBullets)
+                bullet?.Update();
             if (TankGame.Instance.IsActive)
             {
                 if (Input.MouseLeft && GameUtils.MouseOnScreenProtected)
@@ -45,13 +47,11 @@ namespace WiiPlayTanksRemake.GameContent
         internal static void Draw()
         {
             foreach (var tank in Tank.AllTanks)
-            {
                 tank?.Draw();
-                foreach (Mine mine in tank.minesLaid)
-                    mine?.Draw();
-                foreach (Bullet bullet in tank.bulletsFired)
-                    bullet?.Draw();
-            }
+            foreach (var mine in Mine.AllMines)
+                mine?.Draw();
+            foreach (var bullet in Bullet.AllBullets)
+                bullet?.Draw();
             foreach (var parent in UIParent.TotalParents)
                 parent?.DrawElements();
             if (TankGame.Instance.IsActive) {
