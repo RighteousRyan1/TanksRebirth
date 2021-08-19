@@ -7,29 +7,43 @@ namespace WiiPlayTanksRemake.GameContent
 {
     public class Tank
     {
-        private static readonly List<Tank> totalTanks = new();
+        public static List<Tank> AllTanks { get; } = new();
+
         public Vector3 position;
         public float speed;
         public float bulletShootSpeed;
         public Mine[] minesLaid;
+        public Bullet[] bulletsFired;
         public float barrelRotation;
         public int maxLayableMines;
 
-        public bool IsAi { get; }
+        public bool IsAI { get; }
 
         public Tank(Vector3 beginPos)
         {
             position = beginPos;
-            totalTanks.Add(this);
+            AllTanks.Add(this);
         }
 
-        public static void UpdateAllTanks()
+        internal void Update()
         {
-
+            //instead of updating & drawing mines and bullets
+            //in WiiPlayTanksRemake.Update()/Draw(), we could
+            //do it here instead. there shouldn't be any
+            //difference other than the readability as the
+            //call positions should be the same
         }
-        public static void DrawAllTankModels()
-        {
 
+        internal void Draw()
+        {
+            if (IsAI)
+            {
+                TankGame.Models.TankModelEnemy.Draw(new Matrix(), new Matrix(), new Matrix());
+            }
+            else
+            {
+                TankGame.Models.TankModelPlayer.Draw(new Matrix(), new Matrix(), new Matrix());
+            }
         }
     }
 }

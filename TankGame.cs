@@ -1,23 +1,38 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using System.Reflection;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using System;
+using WiiPlayTanksRemake.Internals.Common;
 
 namespace WiiPlayTanksRemake
 {
     public class TankGame : Game
     {
+        public static TankGame Instance { get; private set; }
+        public static string ExePath => Assembly.GetExecutingAssembly().Location.Replace(@$"\{nameof(GameContent.WiiPlayTanksRemake)}.dll", string.Empty);
+        public static SpriteBatch spriteBatch;
+
         public GraphicsDeviceManager graphics;
-        public static SpriteBatch SpriteBatch;
 
-        public static Model TankModelEnemy { get; private set; }
-        public static Model TankModelPlayer { get; private set; }
+        public struct Fonts
+        {
+            public static SpriteFont Font;
+        }
 
-        public TankGame()
+        public struct Models
+        {
+            public static Model TankModelEnemy;
+            public static Model TankModelPlayer;
+        }
+
+        public TankGame() : base()
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content/Assets";
             IsMouseVisible = true;
+            Instance = this;
+            Window.Title = "Wii Play Tanks Remake";
         }
 
         protected override void Initialize()
@@ -29,26 +44,34 @@ namespace WiiPlayTanksRemake
 
         protected override void LoadContent()
         {
-            SpriteBatch = new SpriteBatch(GraphicsDevice);
-            TankModelEnemy = Content.Load<Model>("tnk_tank_e");
-            TankModelPlayer = Content.Load<Model>("tnk_tank_p");
+            spriteBatch = new SpriteBatch(GraphicsDevice);
+            Models.TankModelEnemy = Content.Load<Model>("tnk_tank_e");
+            Models.TankModelPlayer = Content.Load<Model>("tnk_tank_p");
             // TODO: use this.Content to load your game content here
         }
 
         protected override void Update(GameTime gameTime)
         {
+            Input.HandleInput();
+            TextInput.TrackInputKeys();
+
+
+            GameContent.WiiPlayTanksRemake.Update();
 
             base.Update(gameTime);
         }
 
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.Orange);
+            GraphicsDevice.Clear(Color.Black);
+            spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied);
+            GameContent.WiiPlayTanksRemake.Draw();
 
             // TankModelEnemy.draw
             // TODO: Add your drawing code here
 
             base.Draw(gameTime);
+            spriteBatch.End();
         }
     }
     public static class Program

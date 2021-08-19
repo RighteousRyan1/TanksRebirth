@@ -8,6 +8,16 @@ namespace WiiPlayTanksRemake.GameContent
     {
         public Vector3 position;
         public int detonationTimer;
-        public float size;
+        public float explosionRadius;
+
+        internal void Update()
+        {
+            
+        }
+
+        internal void Draw()
+        {
+        
+        }
     }
 }
