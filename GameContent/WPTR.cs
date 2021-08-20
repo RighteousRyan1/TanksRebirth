@@ -31,6 +31,9 @@ namespace WiiPlayTanksRemake.GameContent
 
         internal static void Update()
         {
+            foreach (var bind in Keybind.AllKeybinds)
+                bind?.Update();
+
             foreach (var music in Music.AllMusic)
                 music?.Update();
 
@@ -91,8 +94,8 @@ namespace WiiPlayTanksRemake.GameContent
         private static void InitIngameMenu()
         {
             UIParents.PauseMenuParent = new();
-            UIElements.PauseReturnButton = new("Return", TankGame.Fonts.Default, Color.Gray, Color.White);
-            UIElements.PauseReturnButton.InteractionBoxRelative = new OuRectangle(0.5f, 0.5f, 0.5f, 0.5f);
+            UIElements.PauseReturnButton = new("Return", TankGame.Fonts.Default, Color.Gray, Color.White, 1.5f);
+            UIElements.PauseReturnButton.InteractionBoxRelative = new OuRectangle(0.35f, 0.25f, 0.3f, 0.1f);
             UIParents.PauseMenuParent.AppendElement(UIElements.PauseReturnButton);
         }
 

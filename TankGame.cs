@@ -72,9 +72,6 @@ namespace WiiPlayTanksRemake
         {
             Input.HandleInput();
 
-            foreach (var bind in Keybind.AllKeybinds)
-                bind?.Update();
-
             WPTR.Update();
 
             base.Update(gameTime);
