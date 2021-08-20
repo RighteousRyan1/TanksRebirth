@@ -41,7 +41,7 @@ namespace WiiPlayTanksRemake.GameContent
         {
             panel.Text = TextInput.InputtedText;
             foreach (var tank in Tank.AllTanks)
-                tank?.Draw();
+                tank?.DrawBody();
 
             foreach (var mine in Mine.AllMines)
                 mine?.Draw();
@@ -92,6 +92,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         public static void Initialize()
         {
+            new Tank(new(100, 100));
             InitIngameMenu();
             MusicContent.LoadMusic();
             MusicContent.green1.Play();

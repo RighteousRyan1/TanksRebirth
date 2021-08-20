@@ -4,6 +4,9 @@ using System;
 using System.Collections.Generic;
 using WiiPlayTanksRemake.Enums;
 using System.Linq;
+using WiiPlayTanksRemake.Internals.Common.GameInput;
+using Microsoft.Xna.Framework.Input;
+using WiiPlayTanksRemake.Internals.Common.Utilities;
 
 namespace WiiPlayTanksRemake.GameContent
 {
@@ -12,16 +15,19 @@ namespace WiiPlayTanksRemake.GameContent
         public static List<Tank> AllTanks { get; } = new();
 
         public Vector2 position;
+        public Vector2 approachVelocity;
+        public Vector2 velocity;
         public float speed;
         public float bulletShootSpeed;
         public float barrelRotation; // do remember this is in radians
+        public float tankRotation;
         public int maxLayableMines;
 
         public bool IsAI { get; }
 
         public TankTier tier;
 
-        public int Tier => (int)tier;
+        public int TierHierarchy => (int)tier;
 
         public Action<Tank> behavior;
 
@@ -34,43 +40,114 @@ namespace WiiPlayTanksRemake.GameContent
                 if (tank.tier > highest)
                     highest = tank.tier;
             }
-            // var x = AllTanks.OrderBy(t => t.tier)[AllTanks.OrderBy(t => t.tier).Length - 1];
             return highest;
         }
 
-        public Tank(Vector2 beginPos, TankTier tier, bool ai = false)
+        private Texture2D _texture;
+
+        public Keybind cUp = new("Up", Keys.W);
+        public Keybind cDown = new("Down", Keys.S);
+        public Keybind cLeft = new("Left", Keys.A);
+        public Keybind cRight = new("Right", Keys.D);
+
+        public Tank(Vector2 beginPos, bool ai = false, TankTier tier = TankTier.None)
         {
             position = beginPos;
             IsAI = ai;
             this.tier = tier;
+            _texture = TankGame.Instance.Content.Load<Texture2D>(ai ? "Assets/textures/e_template" : "Assets/textures/p_blue");
             AllTanks.Add(this);
         }
 
         internal void Update()
         {
+            position += velocity;
+            GetAIBehavior();
             if (IsAI)
             {
                 behavior?.Invoke(this);
             }
             else
             {
-                if (behavior != null)
-                    throw new Exception($"Player tanks cannot have ai behavior!");
-
-
+                UpdatePlayerMovement();
             }
         }
 
-        internal void Draw()
+        public void UpdatePlayerMovement()
         {
-            if (IsAI)
+            velocity += approachVelocity / 10;
+            if (cDown.IsPressed)
             {
-                
+                approachVelocity.Y += 20f;
             }
-            else
+            if (cUp.IsPressed)
             {
+                approachVelocity.Y -= 20f;
+            }
+            if (cLeft.IsPressed)
+            {
+                approachVelocity.X -= 20f;
+            }
+            if (cRight.IsPressed)
+            {
+                approachVelocity.X += 20f;
+            }
+            barrelRotation = GameUtils.DirectionOf(GameUtils.MousePosition, position).ToRotation();
+            approachVelocity = Vector2.Zero;
+        }
 
+        public void GetAIBehavior()
+        {
+            if (tier == TankTier.Ash)
+            {
+                behavior = (tank) => {
+                    if (TryGetBulletNear(tank, 50f, out var bullet))
+                    {
+                        tank.velocity = tank.position - bullet.position;
+                    }
+                };
             }
         }
+
+        internal void DrawBody()
+        {
+            GameUtils.DrawStringAtMouse(this);
+            TankGame.spriteBatch.Draw(_texture, position, new(0, 0, 32, 32), Color.White, tankRotation, _texture.Size() / 2, 1f, SpriteEffects.None, 0f);
+            DrawBarrel();
+        }
+        private void DrawBarrel()
+        {
+            TankGame.spriteBatch.Draw(_texture, position, new(31, 0, 12, 3), Color.White, barrelRotation, _texture.Size() / 2, 1f, SpriteEffects.None, 0f);
+        }
+
+        public static bool TryGetBulletNear(Tank tank, float distance, out Bullet bullet)
+        {
+            foreach (var blet in Bullet.AllBullets)
+            {
+                if (Vector2.Distance(tank.position, blet.position) < distance)
+                {
+                    bullet = blet;
+                    return true;
+                }
+            }
+            bullet = null;
+            return false;
+        }
+        public static bool TryGetMineNear(Tank tank, float distance, out Mine mine)
+        {
+            foreach (var mne in Mine.AllMines)
+            {
+                if (Vector2.Distance(tank.position, mne.position) < distance)
+                {
+                    mine = mne;
+                    return true;
+                }
+            }
+            mine = null;
+            return false;
+        }
+
+        public override string ToString()
+            => $"tier: {tier} | velocity/achievable: {velocity}/{approachVelocity}";
     }
 }

@@ -9,7 +9,7 @@ using WiiPlayTanksRemake.Internals.Common.Utilities;
 using WiiPlayTanksRemake.GameContent;
 using WiiPlayTanksRemake.Internals;
 using WiiPlayTanksRemake.Internals.UI;
-global using static 
+using WiiPlayTanksRemake.Internals.Common.GameInput;
 
 namespace WiiPlayTanksRemake
 {
@@ -69,6 +69,9 @@ namespace WiiPlayTanksRemake
         protected override void Update(GameTime gameTime)
         {
             Input.HandleInput();
+
+            foreach (var bind in Keybind.AllKeybinds)
+                bind?.Update();
 
             WPTR.Update();
 
