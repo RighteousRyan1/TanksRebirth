@@ -49,10 +49,12 @@ namespace WiiPlayTanksRemake.Internals.UI
 
         public virtual void MouseOver() {
             OnMouseOver?.Invoke(this);
+            MouseHovering = true;
         }
 
         public virtual void MouseLeave() {
             OnMouseLeave?.Invoke(this);
+            MouseHovering = false;
         }
     }
 }

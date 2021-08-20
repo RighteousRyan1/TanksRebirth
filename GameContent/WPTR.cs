@@ -22,7 +22,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         private static UIParent parent;
 
-        public static UITextButton panel;
+        public static UIImageButton panel;
 
         internal static void Update()
         {
@@ -41,7 +41,6 @@ namespace WiiPlayTanksRemake.GameContent
 
         internal static void Draw()
         {
-            panel.Text = TextInput.InputtedText;
             foreach (var tank in Tank.AllTanks)
                 tank?.Draw();
 
@@ -87,7 +86,7 @@ namespace WiiPlayTanksRemake.GameContent
         private static void InitIngameMenu()
         {
             parent = new();
-            panel = new("Resume", TankGame.Fonts.Font, Color.White, Color.Blue);
+            panel = new(TankGame.UITextures.test, 1f);
             panel.InteractionBox = new(100, 100, 200, 200);
             parent.AppendElement(panel);
         }

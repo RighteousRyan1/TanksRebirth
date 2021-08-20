@@ -4,7 +4,7 @@ using WiiPlayTanksRemake.Internals.UI;
 
 namespace WiiPlayTanksRemake.Internals.Common.GameUI
 {
-    class UIImage : UIElement
+    public class UIImage : UIElement
     {
         public Texture2D Texture { get; set; }
 
