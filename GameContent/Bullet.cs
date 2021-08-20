@@ -10,6 +10,8 @@ namespace WiiPlayTanksRemake.GameContent
         public Vector3 velocity;
         public int ricochets;
 
+        public bool Flaming { get; set; }
+
         internal void Update()
         {
             position += velocity;
@@ -17,11 +19,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         internal void Draw()
         {
-            if (velocity.Length() > 20)
-            {
-                //draw as flaming bullet. optionally we could have
-                //a property defining whether or not it draws as a flaming bullet
-            }
+            
         }
     }
 }

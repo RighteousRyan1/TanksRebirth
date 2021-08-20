@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Reflection;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using WiiPlayTanksRemake.Internals.Common;
+using WiiPlayTanksRemake.Internals.Common.Utilities;
 using WiiPlayTanksRemake.GameContent;
 
 namespace WiiPlayTanksRemake
@@ -17,6 +19,8 @@ namespace WiiPlayTanksRemake
         public GraphicsDeviceManager graphics;
 
         public Tank tank;
+
+        public static DynamicSoundEffectInstance DynamicSoundEffectTest;
 
         public struct Fonts
         {
@@ -65,17 +69,16 @@ namespace WiiPlayTanksRemake
             Models.TankModelPlayer = Content.Load<Model>("tnk_tank_p");
             UITextures.UIPanelBackground = Content.Load<Texture2D>("UIPanelBackground");
             UITextures.UIPanelBackgroundCorner = Content.Load<Texture2D>("UIPanelBackgroundCorner");
-            GameContent.WiiPlayTanksRemake.par = new();
-            GameContent.WiiPlayTanksRemake.panel = new Internals.Common.GameUI.UITextButton("Hello", Fonts.Font, Color.White, Color.Blue);
-            GameContent.WiiPlayTanksRemake.panel.InteractionBox = new(100, 100, 200, 200);
-            GameContent.WiiPlayTanksRemake.par.AppendElement(GameContent.WiiPlayTanksRemake.panel);
+            GameContent.WiiPlayTanksRemake.par = new Internals.UI.UIParent();
+            GameContent.WiiPlayTanksRemake.text = new Internals.Common.GameUI.UIText("Test", Fonts.Font, Color.White);
+            GameContent.WiiPlayTanksRemake.text.InteractionBox = new Rectangle(100, 100, 100, 100);
+            GameContent.WiiPlayTanksRemake.par.AppendElement(GameContent.WiiPlayTanksRemake.text);
             // TODO: use this.Content to load your game content here
         }
 
         protected override void Update(GameTime gameTime)
         {
             Input.HandleInput();
-            TextInput.TrackInputKeys();
 
             GameContent.WiiPlayTanksRemake.Update();
 

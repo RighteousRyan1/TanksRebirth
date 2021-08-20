@@ -122,13 +122,15 @@ namespace WiiPlayTanksRemake.GameContent
 
         private void GetBuffer(bool reset = false) {
             const int bufferSize = 4096;
-            float[] buffer = new float[bufferSize];
+            byte[] buffer = new byte[bufferSize];
+            float[] otherBuff = new float[bufferSize];
 
-            int samples = Reader.ReadSamples(buffer, 0, buffer.Length);
-            Reader.ReadSamples(buffer, samples, buffer.Length - samples);
+            int samples = Reader.ReadSamples(otherBuff, 0, buffer.Length);
+            Reader.ReadSamples(otherBuff, samples, buffer.Length - samples);
 
-            //DynamicSoundInstance.SubmitFloatBufferEXT(buffer);
+            DynamicSoundInstance.SubmitBuffer(buffer);
         }
+
         public event EventHandler OnBegin;
         public event EventHandler OnStop;
     }
