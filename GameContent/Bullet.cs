@@ -9,6 +9,9 @@ namespace WiiPlayTanksRemake.GameContent
         public Vector3 position;
         public Vector3 velocity;
         public int ricochets;
+        public Tank owner;
+
+        private Matrix viewMatrix;
 
         public bool Flaming { get; set; }
 

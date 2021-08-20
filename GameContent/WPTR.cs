@@ -7,24 +7,27 @@ using WiiPlayTanksRemake.Internals.Common.GameUI;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System.Linq;
-using Microsoft.Xna.Framework.Graphics;
+using WiiPlayTanksRemake.Enums;
 
 namespace WiiPlayTanksRemake.GameContent
 {
-    class WiiPlayTanksRemake
+    public class WPTR
     {
         public static Keybind PlaceMine = new("Place Mine", Keys.Space);
 
-        public static Logger BaseLogger { get; } = new($"{TankGame.ExePath}", "client_logger");
+        // public static Logger BaseLogger { get; } = new($"{TankGame.ExePath}", "client_logger");
 
         private static UIElement lastElementClicked;
 
-        public static UIParent par;
+        private static UIParent parent;
 
-        public static UIText text;
+        public static UITextButton panel;
 
         internal static void Update()
         {
+            if (TextInput.pressDelay > 0) {
+                TextInput.pressDelay--;
+            }
             foreach (var music in Music.AllMusic)
                 music?.Update();
 
@@ -93,6 +96,19 @@ namespace WiiPlayTanksRemake.GameContent
                     lastElementClicked = null;
                 }
             }
+        }
+        private static void InitIngameMenu()
+        {
+            parent = new();
+            panel = new("Resume", TankGame.Fonts.Font, Color.White, Color.Blue);
+            panel.InteractionBox = new(100, 100, 200, 200);
+            parent.AppendElement(panel);
+        }
+
+        public static void Initialize()
+        {
+            InitIngameMenu();
+            MusicContent.LoadMusic();
         }
     }
 }

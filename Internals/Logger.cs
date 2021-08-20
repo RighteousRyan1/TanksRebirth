@@ -37,8 +37,8 @@ namespace WiiPlayTanksRemake.Internals
             sWriter = new(fStream);
         }
 
-        public void Write(object write, LogType writeType) {
-            string str = $"[{DateTime.Now}] [{assembly.GetName().Name}] [{writeType}]: {write}";
+        public void Write(object contents, LogType writeType) {
+            string str = $"[{DateTime.Now}] [{assembly.GetName().Name}] [{writeType}]: {contents}";
             sWriter.WriteLine(str);
             Debug.WriteLine(str);
             sWriter.Flush();

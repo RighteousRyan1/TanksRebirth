@@ -1,12 +1,11 @@
 ﻿namespace WiiPlayTanksRemake.Enums
 {
-    public enum TankType : byte
+    public enum TankTier : byte
     {
         None,
         Player,
         Brown,
-        Grey,
-        Gray = 3,
+        Ash,
         Teal,
         Yellow,
         Red,

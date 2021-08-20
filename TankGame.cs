@@ -7,18 +7,24 @@ using Microsoft.Xna.Framework.Input;
 using WiiPlayTanksRemake.Internals.Common;
 using WiiPlayTanksRemake.Internals.Common.Utilities;
 using WiiPlayTanksRemake.GameContent;
+using WiiPlayTanksRemake.Internals;
 
 namespace WiiPlayTanksRemake
 {
     public class TankGame : Game
     {
         public static TankGame Instance { get; private set; }
-        public static string ExePath => Assembly.GetExecutingAssembly().Location.Replace(@$"\{nameof(GameContent.WiiPlayTanksRemake)}.dll", string.Empty);
+        public static string ExePath => Assembly.GetExecutingAssembly().Location.Replace(@$"\{nameof(GameContent.WPTR)}.dll", string.Empty);
         public static SpriteBatch spriteBatch;
 
-        public GraphicsDeviceManager graphics;
+        public readonly GraphicsDeviceManager graphics;
 
-        public Tank tank;
+        public static NameWithID[] menuModes =
+        {
+            new("MainMenu", 0),
+            new("IngameMenu", 1),
+            new("LevelEditorMenu", 2),
+        };
 
         public static DynamicSoundEffectInstance DynamicSoundEffectTest;
 
@@ -42,7 +48,7 @@ namespace WiiPlayTanksRemake
         public TankGame() : base()
         {
             graphics = new GraphicsDeviceManager(this);
-            Content.RootDirectory = "Content/Assets";
+            Content.RootDirectory = "Content";
             IsMouseVisible = true;
             Instance = this;
             Window.Title = "Wii Play Tanks Remake";
@@ -52,27 +58,23 @@ namespace WiiPlayTanksRemake
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
-
             base.Initialize();
         }
 
         protected override void OnExiting(object sender, EventArgs args)
         {
-            GameContent.WiiPlayTanksRemake.BaseLogger.Dispose();
+            // WPTR.BaseLogger.Dispose();
         }
 
         protected override void LoadContent()
         {
-            Fonts.Font = Content.Load<SpriteFont>("Go");
+            Fonts.Font = Content.Load<SpriteFont>("Assets/DefaultFont");
             spriteBatch = new SpriteBatch(GraphicsDevice);
-            Models.TankModelEnemy = Content.Load<Model>("tnk_tank_e");
-            Models.TankModelPlayer = Content.Load<Model>("tnk_tank_p");
-            UITextures.UIPanelBackground = Content.Load<Texture2D>("UIPanelBackground");
-            UITextures.UIPanelBackgroundCorner = Content.Load<Texture2D>("UIPanelBackgroundCorner");
-            GameContent.WiiPlayTanksRemake.par = new Internals.UI.UIParent();
-            GameContent.WiiPlayTanksRemake.text = new Internals.Common.GameUI.UIText("Test", Fonts.Font, Color.White);
-            GameContent.WiiPlayTanksRemake.text.InteractionBox = new Rectangle(100, 100, 100, 100);
-            GameContent.WiiPlayTanksRemake.par.AppendElement(GameContent.WiiPlayTanksRemake.text);
+            Models.TankModelEnemy = Content.Load<Model>("Assets/tnk_tank_e");
+            Models.TankModelPlayer = Content.Load<Model>("Assets/tnk_tank_p");
+            UITextures.UIPanelBackground = Content.Load<Texture2D>("Assets/UIPanelBackground");
+            UITextures.UIPanelBackgroundCorner = Content.Load<Texture2D>("Assets/UIPanelBackgroundCorner");
+            GameContent.WPTR.Initialize();
             // TODO: use this.Content to load your game content here
         }
 
@@ -80,7 +82,7 @@ namespace WiiPlayTanksRemake
         {
             Input.HandleInput();
 
-            GameContent.WiiPlayTanksRemake.Update();
+            GameContent.WPTR.Update();
 
             base.Update(gameTime);
         }
@@ -89,7 +91,7 @@ namespace WiiPlayTanksRemake
         {
             GraphicsDevice.Clear(Color.Black);
             spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied);
-            GameContent.WiiPlayTanksRemake.Draw();
+            GameContent.WPTR.Draw();
 
             // TankModelEnemy.draw
             // TODO: Add your drawing code here

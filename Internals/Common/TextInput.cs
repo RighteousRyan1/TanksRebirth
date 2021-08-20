@@ -7,8 +7,7 @@ namespace WiiPlayTanksRemake.Internals.Common
 {
     public class TextInput
     {
-        private TextInput() {
-        }
+        private TextInput() { }
 
         public static bool trackingInput;
 
