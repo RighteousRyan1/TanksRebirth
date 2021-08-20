@@ -8,6 +8,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System.Linq;
 using WiiPlayTanksRemake.Enums;
+using System.Diagnostics;
 
 namespace WiiPlayTanksRemake.GameContent
 {
@@ -36,17 +37,6 @@ namespace WiiPlayTanksRemake.GameContent
 
             foreach (var bullet in Bullet.AllBullets)
                 bullet?.Update();
-
-            if (TankGame.Instance.IsActive)
-            {
-                if (Input.MouseLeft && GameUtils.MouseOnScreenProtected)
-                {
-                    //shoot
-                }
-                if (!TextInput.trackingInput) {
-                    TextInput.BeginInput();
-                }
-            }
         }
 
         internal static void Draw()

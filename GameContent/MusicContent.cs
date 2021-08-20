@@ -43,17 +43,8 @@ namespace WiiPlayTanksRemake.GameContent
 
         public static void LoadMusic()
         {
-            foreach (var banger in songs) {
-                
-            }
-            /*foreach (var banger in songs)
-            {
-                banger = Content
-            }*/
             green1 = Music.CreateMusicTrack("Green1", "Assets/music/green1", 1f);
-            /*green1.Play();
-
-            WiiPlayTanksRemake.BaseLogger.Write(green1, Internals.Logger.LogType.Debug);*/
+            green1.Play();
         }
     }
 }
