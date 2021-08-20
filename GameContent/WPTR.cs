@@ -25,9 +25,6 @@ namespace WiiPlayTanksRemake.GameContent
 
         internal static void Update()
         {
-            if (TextInput.pressDelay > 0) {
-                TextInput.pressDelay--;
-            }
             foreach (var music in Music.AllMusic)
                 music?.Update();
 
@@ -54,7 +51,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         internal static void Draw()
         {
-            text.Text = TextInput.InputtedText;
+            panel.Text = TextInput.InputtedText;
             foreach (var tank in Tank.AllTanks)
                 tank?.Draw();
 
