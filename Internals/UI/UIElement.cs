@@ -36,16 +36,16 @@ namespace WiiPlayTanksRemake.Internals.UI
 
         public virtual void Draw() {
             if (InteractionBoxRelative.X != default) {
-                InteractionBox.X = GameUtils.WindowTopLeft.X + (GameUtils.WindowWidth * InteractionBoxRelative.X);
+                InteractionBox.X += GameUtils.WindowTopLeft.X + (GameUtils.WindowWidth * InteractionBoxRelative.X);
             }
             if (InteractionBoxRelative.Y != default) {
-                InteractionBox.Y = GameUtils.WindowTopLeft.Y + (GameUtils.WindowHeight * InteractionBoxRelative.Y);
+                InteractionBox.Y += GameUtils.WindowTopLeft.Y + (GameUtils.WindowHeight * InteractionBoxRelative.Y);
             }
             if (InteractionBoxRelative.Width != default) {
-                InteractionBox.Width = GameUtils.WindowWidth * InteractionBoxRelative.Width;
+                InteractionBox.Width += GameUtils.WindowWidth * InteractionBoxRelative.Width;
             }
             if (InteractionBoxRelative.Height != default) {
-                InteractionBox.Height = GameUtils.WindowHeight * InteractionBoxRelative.Height;
+                InteractionBox.Height += GameUtils.WindowHeight * InteractionBoxRelative.Height;
             }
         }
 
