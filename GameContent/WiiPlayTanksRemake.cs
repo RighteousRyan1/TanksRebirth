@@ -18,9 +18,9 @@ namespace WiiPlayTanksRemake.GameContent
 
         private static UIElement lastElementClicked;
 
-        public static UIParent par;
+        private static UIParent parent;
 
-        public static UITextButton panel;
+        private static UITextButton panel;
 
         internal static void Update()
         {
@@ -83,6 +83,17 @@ namespace WiiPlayTanksRemake.GameContent
                     lastElementClicked = null;
                 }
             }
+        }
+        private static void DrawIngameMenu()
+        {
+            parent = new();
+            panel = new("Resume", TankGame.Fonts.Font, Color.White, Color.Blue);
+            panel.InteractionBox = new(100, 100, 200, 200);
+            parent.AppendElement(panel);
+        }
+        public static void Initialize()
+        {
+            MusicContent.LoadMusic();
         }
     }
 }

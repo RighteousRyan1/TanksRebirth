@@ -13,12 +13,18 @@ namespace WiiPlayTanksRemake.GameContent
         public Vector3 position;
         public float speed;
         public float bulletShootSpeed;
-        public float barrelRotation;
+        public float barrelRotation; // do remember this is in radians
         public int maxLayableMines;
+
+        private Matrix viewMatrix;
 
         public bool IsAI { get; }
 
-        public TankType TankType;
+        public TankType type;
+
+        public int Tier => (int)type;
+
+        public Action<Tank> behavior;
 
         public Tank(Vector3 beginPos, bool ai = false)
         {
@@ -29,7 +35,9 @@ namespace WiiPlayTanksRemake.GameContent
 
         internal void Update()
         {
-
+            if (!IsAI)
+                if (behavior != null)
+                    throw new Exception($"Player tanks cannot have ai behavior!");
         }
 
         internal void Draw()
@@ -40,7 +48,7 @@ namespace WiiPlayTanksRemake.GameContent
             }
             else
             {
-                TankGame.Models.TankModelPlayer.Draw(new Matrix(), new Matrix(), new Matrix());
+
             }
         }
     }
