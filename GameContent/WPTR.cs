@@ -99,12 +99,7 @@ namespace WiiPlayTanksRemake.GameContent
             parent = new();
             panel = new("Resume", TankGame.Fonts.Font, Color.White, Color.Blue);
             panel.InteractionBox = new(100, 100, 200, 200);
-            panel.OnMouseClick += Panel_OnMouseClick;
             parent.AppendElement(panel);
-        }
-
-        private static void Panel_OnMouseClick(UIElement affectedElement) {
-            BaseLogger.Write("Test", Logger.LogType.Debug);
         }
 
         public static void Initialize()
