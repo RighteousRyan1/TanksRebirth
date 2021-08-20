@@ -48,9 +48,17 @@ namespace WiiPlayTanksRemake.GameContent
 
         internal void Update()
         {
-            if (!IsAI)
+            if (IsAI)
+            {
+                behavior?.Invoke(this);
+            }
+            else
+            {
                 if (behavior != null)
                     throw new Exception($"Player tanks cannot have ai behavior!");
+
+
+            }
         }
 
         internal void Draw()

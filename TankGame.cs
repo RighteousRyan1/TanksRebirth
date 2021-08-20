@@ -9,6 +9,7 @@ using WiiPlayTanksRemake.Internals.Common.Utilities;
 using WiiPlayTanksRemake.GameContent;
 using WiiPlayTanksRemake.Internals;
 using WiiPlayTanksRemake.Internals.UI;
+global using static 
 
 namespace WiiPlayTanksRemake
 {
@@ -33,7 +34,7 @@ namespace WiiPlayTanksRemake
 
         public TankGame() : base()
         {
-            graphics = new GraphicsDeviceManager(this);
+            graphics = new(this);
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
             Instance = this;
@@ -44,6 +45,9 @@ namespace WiiPlayTanksRemake
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
+            graphics.PreferredBackBufferWidth = 1000;
+            graphics.PreferredBackBufferHeight = 800;
+            graphics.ApplyChanges();
             base.Initialize();
         }
 
