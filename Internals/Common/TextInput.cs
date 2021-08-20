@@ -32,7 +32,7 @@ namespace WiiPlayTanksRemake.Internals.Common
             }
 
             if (isBack && InputtedText.Length > 0) {
-                InputtedText.Remove(InputtedText.Length - 1);
+                InputtedText = InputtedText.Remove(InputtedText.Length - 1);
             }
 
             if (e.Key != Keys.None && !isSpace && !isBack) {
