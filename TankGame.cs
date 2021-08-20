@@ -9,7 +9,6 @@ using WiiPlayTanksRemake.Internals.Common.Utilities;
 using WiiPlayTanksRemake.GameContent;
 using WiiPlayTanksRemake.Internals;
 using WiiPlayTanksRemake.Internals.UI;
-global using static 
 
 namespace WiiPlayTanksRemake
 {
@@ -103,6 +102,7 @@ namespace WiiPlayTanksRemake
     public enum MenuModes : byte
     {
         MainMenu,
+        PauseMenu,
         IngameMenu,
         LevelEditorMenu
     }

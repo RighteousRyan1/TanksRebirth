@@ -18,9 +18,16 @@ namespace WiiPlayTanksRemake.GameContent
 
         private static UIElement lastElementClicked;
 
-        private static UIParent parent;
+        private struct UIParents
+        {
+            public static UIParent PauseMenuParent;
+        }
 
-        public static UIImageButton panel;
+        private struct UIElements
+        {
+            public static UITextButton PauseReturnButton;
+            public static UITextButton PauseExitButton;
+        }
 
         internal static void Update()
         {
@@ -54,11 +61,11 @@ namespace WiiPlayTanksRemake.GameContent
             if (TankGame.Instance.IsActive) {
                 foreach (var parent in UIParent.TotalParents.ToList()) {
                     foreach (var element in parent.Elements) {
-                        if (!element.MouseHovering && element.InteractionBox.Contains(GameUtils.MousePosition)) {
+                        if (!element.MouseHovering && element.InteractionBox.ToRectangle().Contains(GameUtils.MousePosition)) {
                             element?.MouseOver();
                             element.MouseHovering = true;
                         }
-                        else if (element.MouseHovering && !element.InteractionBox.Contains(GameUtils.MousePosition)) {
+                        else if (element.MouseHovering && !element.InteractionBox.ToRectangle().Contains(GameUtils.MousePosition)) {
                             element?.MouseLeave();
                             element.MouseHovering = false;
                         }
@@ -83,10 +90,10 @@ namespace WiiPlayTanksRemake.GameContent
         }
         private static void InitIngameMenu()
         {
-            parent = new();
-            panel = new(TankGame.UITextures.test, 1f);
-            panel.InteractionBox = new(100, 100, 200, 200);
-            parent.AppendElement(panel);
+            UIParents.PauseMenuParent = new();
+            UIElements.PauseReturnButton = new("Return", TankGame.Fonts.Default, Color.Gray, Color.White);
+            UIElements.PauseReturnButton.InteractionBoxRelative = new OuRectangle(0.5f, 0.5f, 0.5f, 0.5f);
+            UIParents.PauseMenuParent.AppendElement(UIElements.PauseReturnButton);
         }
 
         public static void Initialize()

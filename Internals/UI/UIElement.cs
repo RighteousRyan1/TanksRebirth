@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using System.Collections.Generic;
+using WiiPlayTanksRemake.Internals.Common.Utilities;
 
 namespace WiiPlayTanksRemake.Internals.UI
 {
@@ -11,7 +12,9 @@ namespace WiiPlayTanksRemake.Internals.UI
 
         public UIParent Parent { get; set; }
 
-        public Rectangle InteractionBox;
+        public OuRectangle InteractionBox;
+
+        public OuRectangle InteractionBoxRelative;
 
         public bool MouseHovering;
 
@@ -32,7 +35,18 @@ namespace WiiPlayTanksRemake.Internals.UI
         }
 
         public virtual void Draw() {
-
+            if (InteractionBoxRelative.X != default) {
+                InteractionBox.X = GameUtils.WindowTopLeft.X + (GameUtils.WindowWidth * InteractionBoxRelative.X);
+            }
+            if (InteractionBoxRelative.Y != default) {
+                InteractionBox.Y = GameUtils.WindowTopLeft.Y + (GameUtils.WindowHeight * InteractionBoxRelative.Y);
+            }
+            if (InteractionBoxRelative.Width != default) {
+                InteractionBox.Width = GameUtils.WindowWidth * InteractionBoxRelative.Width;
+            }
+            if (InteractionBoxRelative.Height != default) {
+                InteractionBox.Height = GameUtils.WindowHeight * InteractionBoxRelative.Height;
+            }
         }
 
         public virtual void MouseClick() {

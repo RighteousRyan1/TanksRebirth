@@ -24,6 +24,8 @@ namespace WiiPlayTanksRemake.Internals.Common.GameUI
 
         public override void Draw()
         {
+            base.Draw();
+
             TankGame.spriteBatch.DrawString(Font, Text, InteractionBox.Location.ToVector2(), Color, Rotation, Vector2.Zero, Scale, SpriteEffects.None, 0f);
         }
     }
