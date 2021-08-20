@@ -7,8 +7,6 @@ using WiiPlayTanksRemake.Internals.Common.GameUI;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System.Linq;
-using WiiPlayTanksRemake.Enums;
-using System.Diagnostics;
 
 namespace WiiPlayTanksRemake.GameContent
 {
@@ -87,7 +85,7 @@ namespace WiiPlayTanksRemake.GameContent
         private static void InitIngameMenu()
         {
             parent = new();
-            panel = new("Resume", TankGame.Fonts.Font, Color.White, Color.Blue);
+            panel = new("Resume", TankGame.Fonts.Default, Color.White, Color.Blue);
             panel.InteractionBox = new(100, 100, 200, 200);
             parent.AppendElement(panel);
         }
