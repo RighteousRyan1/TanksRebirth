@@ -84,7 +84,7 @@ namespace WiiPlayTanksRemake.GameContent
                 }
             }
         }
-        private static void DrawIngameMenu()
+        private static void InitIngameMenu()
         {
             parent = new();
             panel = new("Resume", TankGame.Fonts.Font, Color.White, Color.Blue);
@@ -93,6 +93,7 @@ namespace WiiPlayTanksRemake.GameContent
         }
         public static void Initialize()
         {
+            InitIngameMenu();
             MusicContent.LoadMusic();
         }
     }

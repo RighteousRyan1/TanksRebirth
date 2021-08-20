@@ -54,7 +54,6 @@ namespace WiiPlayTanksRemake
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
-            GameContent.WiiPlayTanksRemake.Initialize();
             base.Initialize();
         }
 
@@ -71,6 +70,7 @@ namespace WiiPlayTanksRemake
             Models.TankModelPlayer = Content.Load<Model>("Assets/tnk_tank_p");
             UITextures.UIPanelBackground = Content.Load<Texture2D>("Assets/UIPanelBackground");
             UITextures.UIPanelBackgroundCorner = Content.Load<Texture2D>("Assets/UIPanelBackgroundCorner");
+            GameContent.WiiPlayTanksRemake.Initialize();
             // TODO: use this.Content to load your game content here
         }
 
