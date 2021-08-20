@@ -12,7 +12,7 @@ namespace WiiPlayTanksRemake
     public class TankGame : Game
     {
         public static TankGame Instance { get; private set; }
-        public static string ExePath => Assembly.GetExecutingAssembly().Location.Replace(@$"\{nameof(GameContent.WiiPlayTanksRemake)}.dll", string.Empty);
+        public static string ExePath => Assembly.GetExecutingAssembly().Location.Replace(@$"\{nameof(GameContent.WPTR)}.dll", string.Empty);
         public static SpriteBatch spriteBatch;
 
         public readonly GraphicsDeviceManager graphics;
@@ -59,7 +59,7 @@ namespace WiiPlayTanksRemake
 
         protected override void OnExiting(object sender, EventArgs args)
         {
-            GameContent.WiiPlayTanksRemake.BaseLogger.Dispose();
+            GameContent.WPTR.BaseLogger.Dispose();
         }
 
         protected override void LoadContent()
@@ -70,7 +70,7 @@ namespace WiiPlayTanksRemake
             Models.TankModelPlayer = Content.Load<Model>("Assets/tnk_tank_p");
             UITextures.UIPanelBackground = Content.Load<Texture2D>("Assets/UIPanelBackground");
             UITextures.UIPanelBackgroundCorner = Content.Load<Texture2D>("Assets/UIPanelBackgroundCorner");
-            GameContent.WiiPlayTanksRemake.Initialize();
+            GameContent.WPTR.Initialize();
             // TODO: use this.Content to load your game content here
         }
 
@@ -79,7 +79,7 @@ namespace WiiPlayTanksRemake
             Input.HandleInput();
             TextInput.TrackInputKeys();
 
-            GameContent.WiiPlayTanksRemake.Update();
+            GameContent.WPTR.Update();
 
             base.Update(gameTime);
         }
@@ -88,7 +88,7 @@ namespace WiiPlayTanksRemake
         {
             GraphicsDevice.Clear(Color.Black);
             spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied);
-            GameContent.WiiPlayTanksRemake.Draw();
+            GameContent.WPTR.Draw();
 
             // TankModelEnemy.draw
             // TODO: Add your drawing code here

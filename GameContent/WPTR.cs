@@ -10,7 +10,7 @@ using System.Linq;
 
 namespace WiiPlayTanksRemake.GameContent
 {
-    class WiiPlayTanksRemake
+    public class WPTR
     {
         public static Keybind PlaceMine = new("Place Mine", Keys.Space);
 
