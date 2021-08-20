@@ -59,7 +59,7 @@ namespace WiiPlayTanksRemake
 
         protected override void OnExiting(object sender, EventArgs args)
         {
-            GameContent.WPTR.BaseLogger.Dispose();
+            // WPTR.BaseLogger.Dispose();
         }
 
         protected override void LoadContent()

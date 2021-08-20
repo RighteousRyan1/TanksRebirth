@@ -7,6 +7,7 @@ using WiiPlayTanksRemake.Internals.Common.GameUI;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System.Linq;
+using WiiPlayTanksRemake.Enums;
 
 namespace WiiPlayTanksRemake.GameContent
 {
@@ -14,7 +15,7 @@ namespace WiiPlayTanksRemake.GameContent
     {
         public static Keybind PlaceMine = new("Place Mine", Keys.Space);
 
-        public static Logger BaseLogger { get; } = new($"{TankGame.ExePath}", "client_logger");
+        // public static Logger BaseLogger { get; } = new($"{TankGame.ExePath}", "client_logger");
 
         private static UIElement lastElementClicked;
 
@@ -24,6 +25,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         internal static void Update()
         {
+            System.Diagnostics.Debug.WriteLine(Tank.GetHighestTierActive());
             if (TextInput.pressDelay > 0) {
                 TextInput.pressDelay--;
             }
@@ -91,6 +93,7 @@ namespace WiiPlayTanksRemake.GameContent
             panel.InteractionBox = new(100, 100, 200, 200);
             parent.AppendElement(panel);
         }
+
         public static void Initialize()
         {
             InitIngameMenu();

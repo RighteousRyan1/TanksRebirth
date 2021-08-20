@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using WiiPlayTanksRemake.Enums;
+using System.Linq;
 
 namespace WiiPlayTanksRemake.GameContent
 {
@@ -20,16 +21,30 @@ namespace WiiPlayTanksRemake.GameContent
 
         public bool IsAI { get; }
 
-        public TankType type;
+        public TankTier tier;
 
-        public int Tier => (int)type;
+        public int Tier => (int)tier;
 
         public Action<Tank> behavior;
 
-        public Tank(Vector3 beginPos, bool ai = false)
+        public static TankTier GetHighestTierActive()
+        {
+            TankTier highest = TankTier.None;
+
+            foreach (Tank tank in AllTanks)
+            {
+                if (tank.tier > highest)
+                    highest = tank.tier;
+            }
+            // var x = AllTanks.OrderBy(t => t.tier)[AllTanks.OrderBy(t => t.tier).Length - 1];
+            return highest;
+        }
+
+        public Tank(Vector3 beginPos, TankTier tier, bool ai = false)
         {
             position = beginPos;
             IsAI = ai;
+            this.tier = tier;
             AllTanks.Add(this);
         }
 

@@ -1,6 +1,6 @@
 ﻿namespace WiiPlayTanksRemake.Enums
 {
-    public enum TankType : byte
+    public enum TankTier : byte
     {
         None,
         Player,
