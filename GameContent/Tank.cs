@@ -11,13 +11,11 @@ namespace WiiPlayTanksRemake.GameContent
     {
         public static List<Tank> AllTanks { get; } = new();
 
-        public Vector3 position;
+        public Vector2 position;
         public float speed;
         public float bulletShootSpeed;
         public float barrelRotation; // do remember this is in radians
         public int maxLayableMines;
-
-        private Matrix viewMatrix;
 
         public bool IsAI { get; }
 
@@ -40,7 +38,7 @@ namespace WiiPlayTanksRemake.GameContent
             return highest;
         }
 
-        public Tank(Vector3 beginPos, TankTier tier, bool ai = false)
+        public Tank(Vector2 beginPos, TankTier tier, bool ai = false)
         {
             position = beginPos;
             IsAI = ai;

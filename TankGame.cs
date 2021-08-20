@@ -82,7 +82,7 @@ namespace WiiPlayTanksRemake
         {
             Input.HandleInput();
 
-            GameContent.WPTR.Update();
+            WPTR.Update();
 
             base.Update(gameTime);
         }
@@ -91,7 +91,7 @@ namespace WiiPlayTanksRemake
         {
             GraphicsDevice.Clear(Color.Black);
             spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied);
-            GameContent.WPTR.Draw();
+            WPTR.Draw();
 
             // TankModelEnemy.draw
             // TODO: Add your drawing code here

@@ -30,7 +30,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         public string Name { get; set; }
 
-        private  SoundEffect _sound;
+        private SoundEffect _sound;
         public SoundEffectInstance Instance { get; private set; }
 
         private Music(string name, string musicPath, float maxVolume) {
@@ -39,11 +39,11 @@ namespace WiiPlayTanksRemake.GameContent
             Instance = _sound.CreateInstance();
             Instance.IsLooped = true;
             this.maxVolume = maxVolume;
+            AllMusic.Add(this);
         }
 
-        public static Music CreateMusicTrack(string name, string musicPath, float maxVolume) {
-            return new(name, musicPath, maxVolume);
-        }
+        public static Music CreateMusicTrack(string name, string musicPath, float maxVolume)
+            => new(name, musicPath, maxVolume);
 
         public void Play() {
             Instance?.Play();
@@ -62,9 +62,9 @@ namespace WiiPlayTanksRemake.GameContent
         }
 
         internal void Update() {
-                Instance.Volume = volume;
-                if (volume > maxVolume)
-                    volume = maxVolume;
+            Instance.Volume = volume;
+            if (volume > maxVolume)
+                volume = maxVolume;
 
             if (!TankGame.Instance.IsActive) {
                 if (!Instance.IsPaused()) {
@@ -81,8 +81,6 @@ namespace WiiPlayTanksRemake.GameContent
         public event EventHandler OnStop;
 
         public override string ToString()
-        {
-            return $"name: {Name} | state: {State} | volume/max: {volume}/{maxVolume}";
-        }
+            => $"name: {Name} | state: {State} | volume/max: {volume}/{maxVolume}";
     }
 }

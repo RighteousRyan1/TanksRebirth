@@ -140,7 +140,7 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
             chosenTs.Clear();
             return values;
         }
-        //public static void DrawStringAtMouse(object text) => TankGame.spriteBatch.DrawString(TankGame.Fonts.Komika, text.ToString(), MousePosition + new Vector2(25), Color.White, 0f, Vector2.Zero, 0.25f, default, 0f);
+        public static void DrawStringAtMouse(object text) => TankGame.spriteBatch.DrawString(TankGame.Fonts.Font, text.ToString(), MousePosition + new Vector2(25), Color.White, 0f, Vector2.Zero, 1f, default, 0f);
         public static bool IsPlaying(this SoundEffectInstance instance) => instance.State == SoundState.Playing;
         public static bool IsPaused(this SoundEffectInstance instance) => instance.State == SoundState.Paused;
         public static bool IsStopped(this SoundEffectInstance instance) => instance.State == SoundState.Stopped;
