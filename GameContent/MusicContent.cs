@@ -45,8 +45,6 @@ namespace WiiPlayTanksRemake.GameContent
         {
             green1 = Music.CreateMusicTrack("Green1", "Assets/music/green1", 1f);
             green1.Play();
-
-            // WiiPlayTanksRemake.BaseLogger.Write(green1, Internals.Logger.LogType.Debug);
         }
     }
 }

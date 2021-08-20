@@ -16,7 +16,7 @@ namespace WiiPlayTanksRemake.GameContent
     {
         public static Keybind PlaceMine = new("Place Mine", Keys.Space);
 
-        // public static Logger BaseLogger { get; } = new($"{TankGame.ExePath}", "client_logger");
+        public static Logger BaseLogger { get; } = new($"{TankGame.ExePath}", "client_logger");
 
         private static UIElement lastElementClicked;
 
@@ -96,6 +96,7 @@ namespace WiiPlayTanksRemake.GameContent
         {
             InitIngameMenu();
             MusicContent.LoadMusic();
+            MusicContent.green1.Play();
         }
     }
 }
