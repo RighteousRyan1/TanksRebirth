@@ -43,6 +43,9 @@ namespace WiiPlayTanksRemake.GameContent
 
         public static void LoadMusic()
         {
+            foreach (var banger in songs) {
+                
+            }
             /*foreach (var banger in songs)
             {
                 banger = Content

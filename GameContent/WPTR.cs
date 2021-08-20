@@ -15,7 +15,7 @@ namespace WiiPlayTanksRemake.GameContent
     {
         public static Keybind PlaceMine = new("Place Mine", Keys.Space);
 
-        // public static Logger BaseLogger { get; } = new($"{TankGame.ExePath}", "client_logger");
+        public static Logger BaseLogger { get; } = new($"{TankGame.ExePath}", "client_logger");
 
         private static UIElement lastElementClicked;
 
@@ -99,13 +99,19 @@ namespace WiiPlayTanksRemake.GameContent
             parent = new();
             panel = new("Resume", TankGame.Fonts.Font, Color.White, Color.Blue);
             panel.InteractionBox = new(100, 100, 200, 200);
+            panel.OnMouseClick += Panel_OnMouseClick;
             parent.AppendElement(panel);
+        }
+
+        private static void Panel_OnMouseClick(UIElement affectedElement) {
+            BaseLogger.Write("Test", Logger.LogType.Debug);
         }
 
         public static void Initialize()
         {
             InitIngameMenu();
             MusicContent.LoadMusic();
+            MusicContent.green1.Play();
         }
     }
 }

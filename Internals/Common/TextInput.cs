@@ -22,22 +22,22 @@ namespace WiiPlayTanksRemake.Internals.Common
         private static void Window_TextInput(object sender, TextInputEventArgs e) {
             bool isBack = e.Key == Keys.Back;
             bool isSpace = e.Key == Keys.Space;
-            bool ignoreable = e.Key == Keys.Enter || (int)e.Key >= 91;
+            bool ignoreable = e.Key == Keys.Enter;
 
             if (ignoreable)
                 return;
 
             if (isSpace) {
                 InputtedText += " ";
+                return;
             }
 
             if (isBack && InputtedText.Length > 0) {
                 InputtedText = InputtedText.Remove(InputtedText.Length - 1);
+                return;
             }
 
-            if (e.Key != Keys.None && !isSpace && !isBack) {
-                InputtedText += e.Key.ParseKey();
-            }
+            InputtedText += e.Character;
         }
 
         // stops tracking keys

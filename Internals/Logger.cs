@@ -34,10 +34,12 @@ namespace WiiPlayTanksRemake.Internals
             writeTo = Path.Combine(writeFile, $"{name}.log");
 
             fStream = new(writeTo, FileMode.OpenOrCreate);
+            fStream.SetLength(0);
             sWriter = new(fStream);
         }
 
         public void Write(object contents, LogType writeType) {
+            fStream.Position = fStream.Length;
             string str = $"[{DateTime.Now}] [{assembly.GetName().Name}] [{writeType}]: {contents}";
             sWriter.WriteLine(str);
             Debug.WriteLine(str);
