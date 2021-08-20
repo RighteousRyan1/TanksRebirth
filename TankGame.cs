@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Reflection;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using WiiPlayTanksRemake.Internals.Common;
+using WiiPlayTanksRemake.Internals.Common.Utilities;
 using WiiPlayTanksRemake.GameContent;
 using WiiPlayTanksRemake.Internals;
 
@@ -23,6 +25,8 @@ namespace WiiPlayTanksRemake
             new("IngameMenu", 1),
             new("LevelEditorMenu", 2),
         };
+
+        public static DynamicSoundEffectInstance DynamicSoundEffectTest;
 
         public struct Fonts
         {
@@ -77,7 +81,6 @@ namespace WiiPlayTanksRemake
         protected override void Update(GameTime gameTime)
         {
             Input.HandleInput();
-            TextInput.TrackInputKeys();
 
             GameContent.WPTR.Update();
 

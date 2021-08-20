@@ -10,51 +10,41 @@ namespace WiiPlayTanksRemake.Internals.Common
         private TextInput() { }
 
         public static bool trackingInput;
-        private static Keys _lastInputKey = Keys.None;
-        private static int _timeBeforeRepitition;
-
-        public static int pressDelay = 0;
 
         public static string InputtedText { get; private set; } = string.Empty;
 
         // starts the tracking of keys, only when input is not already being tracked
         public static void BeginInput() {
             trackingInput = true;
-            pressDelay = 20;
+            TankGame.Instance.Window.TextInput += Window_TextInput;
+        }
+
+        private static void Window_TextInput(object sender, TextInputEventArgs e) {
+            bool isBack = e.Key == Keys.Back;
+            bool isSpace = e.Key == Keys.Space;
+            bool ignoreable = e.Key == Keys.Enter || (int)e.Key >= 91;
+
+            if (ignoreable)
+                return;
+
+            if (isSpace) {
+                InputtedText += " ";
+            }
+
+            if (isBack && InputtedText.Length > 0) {
+                InputtedText = InputtedText.Remove(InputtedText.Length - 1);
+            }
+
+            if (e.Key != Keys.None && !isSpace && !isBack) {
+                InputtedText += e.Key.ParseKey();
+            }
         }
 
         // stops tracking keys
         public static void EndInput() {
             trackingInput = false;
             InputtedText = string.Empty;
-        }
-
-        public static void TrackInputKeys() {
-            if (trackingInput) {
-                bool isBack = Input.FirstPressedKey == Keys.Back;
-                bool isSpace = Input.FirstPressedKey == Keys.Space;
-                bool ignoreable = Input.FirstPressedKey == Keys.Enter || (int)Input.FirstPressedKey >= 91;
-
-                if (ignoreable)
-                    return;
-
-                if (isSpace) {
-                    InputtedText += " ";
-                    _lastInputKey = Keys.Space;
-                }
-
-                if (isBack && InputtedText.Length > 0) {
-                    InputtedText.Remove(InputtedText.Length - 1);
-                }
-
-                if ((Input.FirstPressedKey != _lastInputKey || _timeBeforeRepitition <= 0) && Input.FirstPressedKey != Keys.None && !isSpace && !isBack) {
-                    InputtedText += Input.FirstPressedKey.ParseKey();
-                    _lastInputKey = Input.FirstPressedKey;
-                    _timeBeforeRepitition = 10;
-                }
-            }
-            if (_timeBeforeRepitition > 0)
-                _timeBeforeRepitition--;
+            TankGame.Instance.Window.TextInput -= Window_TextInput;
         }
     }
 }

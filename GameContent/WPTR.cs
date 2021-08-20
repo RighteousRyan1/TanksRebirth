@@ -21,41 +21,49 @@ namespace WiiPlayTanksRemake.GameContent
 
         private static UIParent parent;
 
-        private static UITextButton panel;
+        public static UITextButton panel;
 
         internal static void Update()
         {
-            System.Diagnostics.Debug.WriteLine(Tank.GetHighestTierActive());
-            if (TextInput.pressDelay > 0) {
-                TextInput.pressDelay--;
-            }
             foreach (var music in Music.AllMusic)
                 music?.Update();
+
             foreach (var tank in Tank.AllTanks)
                 tank?.Update();
+
             foreach (var mine in Mine.AllMines)
                 mine?.Update();
+
             foreach (var bullet in Bullet.AllBullets)
                 bullet?.Update();
+
             if (TankGame.Instance.IsActive)
             {
                 if (Input.MouseLeft && GameUtils.MouseOnScreenProtected)
                 {
                     //shoot
                 }
+                if (!TextInput.trackingInput) {
+                    TextInput.BeginInput();
+                }
             }
         }
 
         internal static void Draw()
         {
+            panel.Text = TextInput.InputtedText;
             foreach (var tank in Tank.AllTanks)
                 tank?.Draw();
+
             foreach (var mine in Mine.AllMines)
                 mine?.Draw();
+
             foreach (var bullet in Bullet.AllBullets)
                 bullet?.Draw();
+
             foreach (var parent in UIParent.TotalParents)
                 parent?.DrawElements();
+
             if (TankGame.Instance.IsActive) {
                 foreach (var parent in UIParent.TotalParents.ToList()) {
                     foreach (var element in parent.Elements) {
