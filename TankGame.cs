@@ -9,6 +9,7 @@ using WiiPlayTanksRemake.Internals.Common.Utilities;
 using WiiPlayTanksRemake.GameContent;
 using WiiPlayTanksRemake.Internals;
 using WiiPlayTanksRemake.Internals.UI;
+global using static 
 
 namespace WiiPlayTanksRemake
 {
@@ -20,17 +21,9 @@ namespace WiiPlayTanksRemake
 
         public readonly GraphicsDeviceManager graphics;
 
-        public static DynamicSoundEffectInstance DynamicSoundEffectTest;
-
         public struct Fonts
         {
-            public static SpriteFont Font;
-        }
-
-        public struct Models
-        {
-            public static Model TankModelEnemy;
-            public static Model TankModelPlayer;
+            public static SpriteFont Default;
         }
 
         public struct UITextures
@@ -42,7 +35,7 @@ namespace WiiPlayTanksRemake
 
         public TankGame() : base()
         {
-            graphics = new GraphicsDeviceManager(this);
+            graphics = new(this);
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
             Instance = this;
@@ -53,6 +46,9 @@ namespace WiiPlayTanksRemake
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
+            graphics.PreferredBackBufferWidth = 1000;
+            graphics.PreferredBackBufferHeight = 800;
+            graphics.ApplyChanges();
             base.Initialize();
         }
 
@@ -63,10 +59,8 @@ namespace WiiPlayTanksRemake
 
         protected override void LoadContent()
         {
-            Fonts.Font = Content.Load<SpriteFont>("Assets/DefaultFont");
+            Fonts.Default = Content.Load<SpriteFont>("Assets/DefaultFont");
             spriteBatch = new SpriteBatch(GraphicsDevice);
-            Models.TankModelEnemy = Content.Load<Model>("Assets/tnk_tank_e");
-            Models.TankModelPlayer = Content.Load<Model>("Assets/tnk_tank_p");
             UITextures.UIPanelBackground = Content.Load<Texture2D>("Assets/UIPanelBackground");
             UITextures.UIPanelBackgroundCorner = Content.Load<Texture2D>("Assets/UIPanelBackgroundCorner");
             UITextures.test = Content.Load<Texture2D>("Assets/thing");

@@ -7,8 +7,6 @@ using WiiPlayTanksRemake.Internals.Common.GameUI;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System.Linq;
-using WiiPlayTanksRemake.Enums;
-using System.Diagnostics;
 
 namespace WiiPlayTanksRemake.GameContent
 {
