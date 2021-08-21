@@ -25,7 +25,7 @@ namespace WiiPlayTanksRemake.Internals.UI
 
         internal void DrawElements() {
             if (Visible) {
-                foreach (var elem in UIElement.AllUIElements)
+                foreach (var elem in Elements)
                     elem.Draw();
             }
         }

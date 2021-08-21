@@ -18,17 +18,6 @@ namespace WiiPlayTanksRemake.GameContent
 
         private static UIElement lastElementClicked;
 
-        private struct UIParents
-        {
-            public static UIParent PauseMenuParent;
-        }
-
-        private struct UIElements
-        {
-            public static UITextButton PauseReturnButton;
-            public static UITextButton PauseExitButton;
-        }
-
         internal static void Update()
         {
             foreach (var bind in Keybind.AllKeybinds)
@@ -93,10 +82,12 @@ namespace WiiPlayTanksRemake.GameContent
         }
         private static void InitIngameMenu()
         {
-            UIParents.PauseMenuParent = new();
-            UIElements.PauseReturnButton = new("Return", TankGame.Fonts.Default, Color.Gray, Color.White, 1.5f);
-            UIElements.PauseReturnButton.InteractionBoxRelative = new OuRectangle(0.35f, 0.25f, 0.3f, 0.1f);
-            UIParents.PauseMenuParent.AppendElement(UIElements.PauseReturnButton);
+            UI.PauseMenu.MenuParent = new();
+            UI.PauseMenu.UIElements.PauseButtonReturn = new("Return", TankGame.Fonts.Default, Color.Gray, Color.White, 1.5f)
+            {
+                InteractionBoxRelative = new OuRectangle(0.35f, 0.25f, 0.3f, 0.1f)
+            };
+            UI.PauseMenu.MenuParent.AppendElement(UI.PauseMenu.UIElements.PauseButtonReturn);
         }
 
         public static void Initialize()
