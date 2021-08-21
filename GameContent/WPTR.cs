@@ -80,20 +80,11 @@ namespace WiiPlayTanksRemake.GameContent
                 }
             }
         }
-        private static void InitIngameMenu()
-        {
-            UI.PauseMenu.MenuParent = new();
-            UI.PauseMenu.UIElements.PauseButtonReturn = new("Return", TankGame.Fonts.Default, Color.Gray, Color.White, 1.5f)
-            {
-                InteractionBoxRelative = new OuRectangle(0.35f, 0.25f, 0.3f, 0.1f)
-            };
-            UI.PauseMenu.MenuParent.AppendElement(UI.PauseMenu.UIElements.PauseButtonReturn);
-        }
 
         public static void Initialize()
         {
             new Tank(new(100, 100));
-            InitIngameMenu();
+            UI.PauseMenu.Initialize();
             MusicContent.LoadMusic();
             MusicContent.green1.Play();
         }

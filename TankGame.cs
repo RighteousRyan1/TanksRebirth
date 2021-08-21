@@ -30,7 +30,6 @@ namespace WiiPlayTanksRemake
         {
             public static Texture2D UIPanelBackground;
             public static Texture2D UIPanelBackgroundCorner;
-            public static Texture2D test;
         }
 
         public TankGame() : base()
@@ -63,7 +62,6 @@ namespace WiiPlayTanksRemake
             spriteBatch = new SpriteBatch(GraphicsDevice);
             UITextures.UIPanelBackground = Content.Load<Texture2D>("Assets/UIPanelBackground");
             UITextures.UIPanelBackgroundCorner = Content.Load<Texture2D>("Assets/UIPanelBackgroundCorner");
-            UITextures.test = Content.Load<Texture2D>("Assets/thing");
             WPTR.Initialize();
             // TODO: use this.Content to load your game content here
         }
