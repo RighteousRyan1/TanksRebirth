@@ -18,12 +18,11 @@ namespace WiiPlayTanksRemake.GameContent
 
         private static UIElement lastElementClicked;
 
-        private static UIParent parent;
-
-        public static UITextButton panel;
-
         internal static void Update()
         {
+            foreach (var bind in Keybind.AllKeybinds)
+                bind?.Update();
+
             foreach (var music in Music.AllMusic)
                 music?.Update();
 
@@ -39,7 +38,6 @@ namespace WiiPlayTanksRemake.GameContent
 
         internal static void Draw()
         {
-            panel.Text = TextInput.InputtedText;
             foreach (var tank in Tank.AllTanks)
                 tank?.DrawBody();
 
@@ -55,11 +53,11 @@ namespace WiiPlayTanksRemake.GameContent
             if (TankGame.Instance.IsActive) {
                 foreach (var parent in UIParent.TotalParents.ToList()) {
                     foreach (var element in parent.Elements) {
-                        if (!element.MouseHovering && element.InteractionBox.Contains(GameUtils.MousePosition)) {
+                        if (!element.MouseHovering && element.InteractionBox.ToRectangle().Contains(GameUtils.MousePosition)) {
                             element?.MouseOver();
                             element.MouseHovering = true;
                         }
-                        else if (element.MouseHovering && !element.InteractionBox.Contains(GameUtils.MousePosition)) {
+                        else if (element.MouseHovering && !element.InteractionBox.ToRectangle().Contains(GameUtils.MousePosition)) {
                             element?.MouseLeave();
                             element.MouseHovering = false;
                         }
@@ -82,18 +80,11 @@ namespace WiiPlayTanksRemake.GameContent
                 }
             }
         }
-        private static void InitIngameMenu()
-        {
-            parent = new();
-            panel = new("Resume", TankGame.Fonts.Default, Color.White, Color.Blue);
-            panel.InteractionBox = new(100, 100, 200, 200);
-            parent.AppendElement(panel);
-        }
 
         public static void Initialize()
         {
             new Tank(new(100, 100));
-            InitIngameMenu();
+            UI.PauseMenu.Initialize();
             MusicContent.LoadMusic();
             MusicContent.green1.Play();
         }

@@ -56,6 +56,22 @@ namespace WiiPlayTanksRemake.GameContent
             IsAI = ai;
             this.tier = tier;
             _texture = TankGame.Instance.Content.Load<Texture2D>(ai ? "Assets/textures/e_template" : "Assets/textures/p_blue");
+            cUp.KeybindPressAction = (cUp) =>
+            {
+                approachVelocity.Y -= 20f;
+            };
+            cDown.KeybindPressAction = (cDown) =>
+            {
+                approachVelocity.Y += 20f;
+            };
+            cLeft.KeybindPressAction = (cLeft) =>
+            {
+                approachVelocity.X -= 20f;
+            };
+            cRight.KeybindPressAction = (cRight) =>
+            {
+                approachVelocity.X += 20f;
+            };
             AllTanks.Add(this);
         }
 
@@ -76,22 +92,6 @@ namespace WiiPlayTanksRemake.GameContent
         public void UpdatePlayerMovement()
         {
             velocity += approachVelocity / 10;
-            if (cDown.IsPressed)
-            {
-                approachVelocity.Y += 20f;
-            }
-            if (cUp.IsPressed)
-            {
-                approachVelocity.Y -= 20f;
-            }
-            if (cLeft.IsPressed)
-            {
-                approachVelocity.X -= 20f;
-            }
-            if (cRight.IsPressed)
-            {
-                approachVelocity.X += 20f;
-            }
             barrelRotation = GameUtils.DirectionOf(GameUtils.MousePosition, position).ToRotation();
             approachVelocity = Vector2.Zero;
         }
