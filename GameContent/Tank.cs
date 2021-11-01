@@ -16,21 +16,27 @@ namespace WiiPlayTanksRemake.GameContent
     {
         public static List<Tank> AllTanks { get; } = new();
 
-        public Vector3 position;
-        public Vector3 approachVelocity;
-        public Vector3 velocity;
+        public bool IsAI { get; }
+        public bool playerControl_isBindPressed;
+
         public float speed = 1f;
         public float bulletShootSpeed;
         public float barrelRotation; // do remember this is in radians
         public float tankRotation;
-
         public float tankTreadPitch;
         public float shootPitch;
+        public float scale;
+
+        private long _treadSoundTimer = 5;
+
+        public int maxLayableMines;
+        public int TierHierarchy => (int)tier;
+
+        public Vector3 position;
+        public Vector3 approachVelocity;
+        public Vector3 velocity;
 
         public Vector2 tankRotationPredicted; // the number of radians which should be rotated to before the tank starts moving
-
-        public float scale;
-        public int maxLayableMines;
 
         public Matrix World;
         public Matrix View;
@@ -40,21 +46,18 @@ namespace WiiPlayTanksRemake.GameContent
 
         public Model TankModel { get; }
 
-        public bool IsAI { get; }
-
         public TankTier tier;
         public PlayerType PlayerType { get; }
-
         public BulletType BulletType { get; } = BulletType.Regular;
 
         private Texture2D _tankColorMesh;
-        private long _treadSoundTimer = 5;
-
-        public int TierHierarchy => (int)tier;
 
         public Action<Tank> behavior;
 
-        public bool playerControl_isBindPressed;
+        public Keybind controlUp = new("Up", Keys.W);
+        public Keybind controlDown = new("Down", Keys.S);
+        public Keybind controlLeft = new("Left", Keys.A);
+        public Keybind controlRight = new("Right", Keys.D);
 
         public static TankTier GetHighestTierActive()
         {
@@ -67,11 +70,6 @@ namespace WiiPlayTanksRemake.GameContent
             }
             return highest;
         }
-
-        public Keybind cUp = new("Up", Keys.W);
-        public Keybind cDown = new("Down", Keys.S);
-        public Keybind cLeft = new("Left", Keys.A);
-        public Keybind cRight = new("Right", Keys.D);
 
         public Tank(Vector3 beginPos, bool ai = false, TankTier tier = TankTier.None, PlayerType playerType = PlayerType.IsNotPlayer)
         {
@@ -101,28 +99,28 @@ namespace WiiPlayTanksRemake.GameContent
 
             if (!ai)
             {
-                cUp.KeybindPressAction = (cUp) =>
+                controlUp.KeybindPressAction = (cUp) =>
                 {
                     playerControl_isBindPressed = true;
                     tankRotationPredicted.Y += 5f;
                     velocity.Y += speed * 5f;
                     // approachVelocity.Y -= 20f;
                 };
-                cDown.KeybindPressAction = (cDown) =>
+                controlDown.KeybindPressAction = (cDown) =>
                 {
                     playerControl_isBindPressed = true;
                     tankRotationPredicted.Y -= 5f;
                     velocity.Y -= speed * 5f;
                     //approachVelocity.Y += 20f;
                 };
-                cLeft.KeybindPressAction = (cLeft) =>
+                controlLeft.KeybindPressAction = (cLeft) =>
                 {
                     playerControl_isBindPressed = true;
                     tankRotationPredicted.X -= 5f;
                     velocity.X -= speed * 5f;
                     //approachVelocity.X -= 20f;
                 };
-                cRight.KeybindPressAction = (cRight) =>
+                controlRight.KeybindPressAction = (cRight) =>
                 {
                     playerControl_isBindPressed = true;
                     tankRotationPredicted.X += 5f;
@@ -190,21 +188,27 @@ namespace WiiPlayTanksRemake.GameContent
             // approachVelocity = Vector3.Zero;
         }
 
+
+        /// <summary>
+        /// Finish bullet implementation!
+        /// </summary>
+        /// <param name="velocity"></param>
+        /// <param name="bulletSpeed"></param>
         public void Shoot(Vector2 velocity, float bulletSpeed)
         {
             SoundEffect shootSound;
-            switch (BulletType)
+
+            shootSound = BulletType switch
             {
-                case BulletType.Regular:
-                    shootSound = Resources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_1");
-                    break;
-                case BulletType.Rocket:
-                    shootSound = Resources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_1");
-                    break;
-                case BulletType.RicochetRocket:
-                    shootSound = Resources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_1");
-                    break;
-            }
+                BulletType.Rocket => Resources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_1"),
+                BulletType.RicochetRocket => Resources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_1"),
+                _ => Resources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_1")
+            };
+
+            var sfx = shootSound.CreateInstance();
+
+            sfx.Play();
+
         }
 
         public void GetAIBehavior()

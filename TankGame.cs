@@ -10,6 +10,8 @@ using WiiPlayTanksRemake.GameContent;
 using WiiPlayTanksRemake.Internals;
 using WiiPlayTanksRemake.Internals.UI;
 using WiiPlayTanksRemake.Internals.Common.GameInput;
+using WiiPlayTanksRemake.Internals.Core.Interfaces;
+using System.Collections.Generic;
 
 namespace WiiPlayTanksRemake
 {
@@ -29,6 +31,8 @@ namespace WiiPlayTanksRemake
         public static SpriteBatch spriteBatch;
 
         public readonly GraphicsDeviceManager graphics;
+
+        private static List<IGameSystem> systems = new();
 
         public struct Fonts
         {
@@ -55,6 +59,7 @@ namespace WiiPlayTanksRemake
 
         protected override void Initialize()
         {
+            systems = ReflectionUtils.GetInheritedTypesOf<IGameSystem>();
             // TODO: Add your initialization logic here
             graphics.PreferredBackBufferWidth = 1920;
             graphics.PreferredBackBufferHeight = 1080;
@@ -91,6 +96,7 @@ namespace WiiPlayTanksRemake
         }
         protected override void Update(GameTime gameTime)
         {
+            UpdateGameSystems();
             //GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(GameUtils.MousePosition.X / GameUtils.WindowWidth * 5);
             Window.IsBorderless = WPTR.WindowBorderless;
 
@@ -101,6 +107,12 @@ namespace WiiPlayTanksRemake
             WPTR.Update();
 
             base.Update(gameTime);
+        }
+
+        private static void UpdateGameSystems()
+        {
+            foreach (var type in systems)
+                type?.Update();
         }
 
         public static Matrix GameView;
