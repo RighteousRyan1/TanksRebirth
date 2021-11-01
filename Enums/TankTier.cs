@@ -30,4 +30,12 @@
         Rocket,
         RicochetRocket
     }
+
+    public enum MenuMode : byte
+    {
+        MainMenu,
+        PauseMenu,
+        IngameMenu,
+        LevelEditorMenu
+    }
 }

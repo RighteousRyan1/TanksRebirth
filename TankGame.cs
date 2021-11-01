@@ -22,10 +22,13 @@ namespace WiiPlayTanksRemake
 
     public class TankGame : Game
     {
-        public static GameTime GameUpdateTime { get; private set; }
+        public static uint GameUpdateTime { get; private set; }
 
         public static Model TankModel_Player;
         public static Model TankModel_Enemy;
+
+        public static Model CubeModel;
+
         public static TankGame Instance { get; private set; }
         public static string ExePath => Assembly.GetExecutingAssembly().Location.Replace(@$"\WiiPlayTanksRemake.dll", string.Empty);
         public static SpriteBatch spriteBatch;
@@ -64,6 +67,11 @@ namespace WiiPlayTanksRemake
             graphics.PreferredBackBufferWidth = 1920;
             graphics.PreferredBackBufferHeight = 1080;
 
+            GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(0.75f);
+            GameProjection = Matrix.CreateOrthographic(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, -500f, 5000f);
+
+            //GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up);
+            //GameProjection = Matrix.CreateOrthographicOffCenter(0, GameUtils.WindowWidth, GameUtils.WindowHeight, 0, -5000, 5000);//Matrix.CreateOrthographicOffCenter(0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, 0, -1, 5000);
 
             graphics.ApplyChanges();
             base.Initialize();
@@ -76,6 +84,8 @@ namespace WiiPlayTanksRemake
 
         protected override void LoadContent()
         {
+            CubeModel = Content.Load<Model>("Assets/cube");
+
             TankModel_Enemy = Content.Load<Model>("Assets/tank_enemy_noshadow");
 
             TankModel_Player = Content.Load<Model>("Assets/tank_player_noshadow");
@@ -84,12 +94,6 @@ namespace WiiPlayTanksRemake
             spriteBatch = new SpriteBatch(GraphicsDevice);
             UITextures.UIPanelBackground = Content.Load<Texture2D>("Assets/UIPanelBackground");
             UITextures.UIPanelBackgroundCorner = Content.Load<Texture2D>("Assets/UIPanelBackgroundCorner");
-
-            GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(0.75f);
-            GameProjection = Matrix.CreateOrthographic(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, -500f, 5000f);
-
-            // GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up);
-            //GameProjection = Matrix.CreateOrthographicOffCenter(0, GameUtils.WindowWidth, GameUtils.WindowHeight, 0, -5000, 5000);//Matrix.CreateOrthographicOffCenter(0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, 0, -1, 5000);
 
             WPTR.Initialize();
             // TODO: use this.Content to load your game content here
@@ -100,7 +104,7 @@ namespace WiiPlayTanksRemake
             //GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(GameUtils.MousePosition.X / GameUtils.WindowWidth * 5);
             Window.IsBorderless = WPTR.WindowBorderless;
 
-            GameUpdateTime = gameTime;
+            GameUpdateTime++;
 
             Input.HandleInput();
 
@@ -122,7 +126,8 @@ namespace WiiPlayTanksRemake
         {
             spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied);
 
-
+            var info = $"MouseX/WindowWidth {GameUtils.MousePosition.X / GameUtils.WindowWidth}" +
+                $"\nHighestTier: {Tank.GetHighestTierActive()}";
 
             spriteBatch.End();
             GraphicsDevice.Clear(Color.Black);
@@ -131,15 +136,50 @@ namespace WiiPlayTanksRemake
 
             spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied);
 
-            spriteBatch.DrawString(Fonts.Default, $"MouseX/WindowWidth {GameUtils.MousePosition.X / GameUtils.WindowWidth}", new(GameUtils.WindowWidth / 2, 10), Color.White);
+            spriteBatch.DrawString(Fonts.Default, info, new(10, GameUtils.WindowHeight / 2), Color.White);
 
             // TankModelEnemy.draw
 
-            base.Draw(gameTime);
-
             graphics.GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
-            foreach (ModelMesh mesh in TankModel_Player.Meshes)
+            var tList = Tank.AllTanks;
+
+            tList.Sort(new Comparison<Tank>(
+                (tank1, tank2) => 
+                tank2.position.Z.CompareTo(tank1.position.Z)));
+
+            int i = 0;
+            foreach (var tank in tList)
+            {
+                spriteBatch.DrawString(Fonts.Default, tank.tier.ToString(), new(10, GameUtils.WindowHeight / 4 + (i * 20)), Color.White);
+                i++;
+                foreach (var mesh in tank.TankModel.Meshes)
+                {
+                    foreach (IEffectMatrices effect in mesh.Effects)
+                    {
+                        effect.View = tank.View;
+                        effect.World = tank.World;
+                        effect.Projection = tank.Projection;
+
+                        if (tank._tankColorMesh != null)
+                        {
+                            var fx = effect as BasicEffect;
+
+                            fx.LightingEnabled = true;
+                            fx.PreferPerPixelLighting = true;
+                            fx.EnableDefaultLighting();
+
+                            fx.TextureEnabled = true;
+
+                            fx.Texture = tank._tankColorMesh;
+                        }
+                    }
+
+                    mesh.Draw();
+                }
+            }
+
+            /*foreach (ModelMesh mesh in TankModel_Player.Meshes)
             {
                 foreach (BasicEffect effect in mesh.Effects)
                 {
@@ -156,11 +196,13 @@ namespace WiiPlayTanksRemake
                     effect.PreferPerPixelLighting = true;
                     effect.EnableDefaultLighting();
                 }
-            }
+            }*/
 
             WPTR.Draw();
 
             spriteBatch.End();
+
+            base.Draw(gameTime);
         }
     }
     public static class Program
@@ -171,13 +213,5 @@ namespace WiiPlayTanksRemake
             using var game = new TankGame();
             game.Run();
         }
-    }
-
-    public enum MenuModes : byte
-    {
-        MainMenu,
-        PauseMenu,
-        IngameMenu,
-        LevelEditorMenu
     }
 }

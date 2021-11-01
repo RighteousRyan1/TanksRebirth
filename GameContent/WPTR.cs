@@ -10,11 +10,14 @@ using System.Linq;
 using WiiPlayTanksRemake.Enums;
 using System;
 using Microsoft.Xna.Framework.Audio;
+using WiiPlayTanksRemake.GameContent.Systems;
 
 namespace WiiPlayTanksRemake.GameContent
 {
     public class WPTR
     {
+        public static float FloatForTesting;
+
         public static Keybind PlaceMine = new("Place Mine", Keys.Space);
 
         public static Logger BaseLogger { get; } = new($"{TankGame.ExePath}", "client_logger");
@@ -23,8 +26,12 @@ namespace WiiPlayTanksRemake.GameContent
 
         public static bool WindowBorderless { get; set; }
 
+        public static TankMusicSystem tankMusicHandler;
+
         internal static void Update()
         {
+            tankMusicHandler.Update();
+
             foreach (var bind in Keybind.AllKeybinds)
                 bind?.Update();
 
@@ -40,21 +47,32 @@ namespace WiiPlayTanksRemake.GameContent
             foreach (var bullet in Bullet.AllBullets)
                 bullet?.Update();
 
+            FloatForTesting = MathHelper.Clamp(FloatForTesting, -1, 1);
+
             if (Input.MouseLeft)
             {
-                if (TankGame.GameUpdateTime.TotalGameTime.Ticks % 5 == 0)
+                if (TankGame.GameUpdateTime % 5 == 0)
                 {
                     var treadPlace = Resources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_tread_place_{new Random().Next(1, 5)}");
                     var treadPlaceSfx = treadPlace.CreateInstance();
                     treadPlaceSfx.Play();
                     treadPlaceSfx.Volume = 0.2f;
-                    treadPlaceSfx.Pitch = -0.2f;
+                    treadPlaceSfx.Pitch = FloatForTesting;
                 }
             }
 
             if (Input.AreKeysJustPressed(Keys.LeftShift, Keys.Enter))
             {
                 WindowBorderless = !WindowBorderless;
+            }
+
+            if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Left))
+            {
+                FloatForTesting -= 0.01f;
+            }
+            if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Right))
+            {
+                FloatForTesting += 0.01f;
             }
         }
 
@@ -71,6 +89,18 @@ namespace WiiPlayTanksRemake.GameContent
 
             foreach (var parent in UIParent.TotalParents)
                 parent?.DrawElements();
+
+            foreach (var cube in Cube.cubes)
+                cube?.Draw();
+
+            TankGame.spriteBatch.DrawString(TankGame.Fonts.Default, $"TestFloat: {FloatForTesting}" +
+                $"\nHighestTier: {Tank.GetHighestTierActive()}" +
+                $"\n", new(10, GameUtils.WindowHeight / 3), Color.White);
+
+            for (int i = 0; i < Enum.GetNames<TankTier>().Length; i++)
+            {
+                TankGame.spriteBatch.DrawString(TankGame.Fonts.Default, $"{Enum.GetNames<TankTier>()[i]}: {Tank.GetTankCountOfType((TankTier)i)}", new(10, GameUtils.WindowHeight * 0.6f + (i * 20)), Color.White);
+            }
 
             if (TankGame.Instance.IsActive) {
                 foreach (var parent in UIParent.TotalParents.ToList()) {
@@ -106,24 +136,25 @@ namespace WiiPlayTanksRemake.GameContent
        
         public static void Initialize()
         {
+            tankMusicHandler = new();
             new Tank(new Vector3(0, 0, 0), playerType: PlayerType.Blue)
             {
-                scale = 2
+                scale = 1
             };
 
-            /*new Tank(new Vector3(100, 100, 0), true, TankTier.Bubblegum)
+            new Tank(new Vector3(new Random().Next(-200, 201), new Random().Next(-200, 201), 0), true, TankTier.Brown)
             {
-                scale = 5
+                scale = 1
+            };
+            new Tank(new Vector3(new Random().Next(-200, 201), new Random().Next(-200, 201), 0), true, TankTier.Ash)
+            {
+                scale = 1
             };
 
-            new Tank(new Vector3(-300, 300, 0), true, TankTier.Marble)
-            {
-                scale = 5,
-                tankTreadPitch = -0.25f
-            };*/
+            new Cube(new Vector3(100, 100, 0));
 
             // UI.PauseMenu.Initialize();
-            MusicContent.LoadMusic();
+            tankMusicHandler.LoadMusic();
             //MusicContent.green1.Play();
         }
     }

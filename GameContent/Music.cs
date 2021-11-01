@@ -46,7 +46,7 @@ namespace WiiPlayTanksRemake.GameContent
             => new(name, musicPath, maxVolume);
 
         public void Play() {
-            Instance.Volume = maxVolume;
+            Instance.Volume = volume;
             Instance?.Play();
             OnBegin?.Invoke(this, new());
         }

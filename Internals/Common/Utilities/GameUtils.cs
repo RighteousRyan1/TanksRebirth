@@ -258,5 +258,31 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
             }
             return MathHelper.WrapAngle(angle);
         }
+
+        public static T Clamp<T>(T value, T min, T max) where T : IComparable<T>
+        {
+            if (value.CompareTo(max) > 0)
+            {
+                return max;
+            }
+            if (value.CompareTo(min) < 0)
+            {
+                return min;
+            }
+            return value;
+        }
+
+        public static T Clamp<T>(ref T value, T min, T max) where T : IComparable<T>
+        {
+            if (value.CompareTo(max) > 0)
+            {
+                return max;
+            }
+            if (value.CompareTo(min) < 0)
+            {
+                return min;
+            }
+            return value;
+        }
     }
 }

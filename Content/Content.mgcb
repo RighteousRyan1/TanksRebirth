@@ -39,11 +39,149 @@
 /processorParam:TextureFormat=Compressed
 /build:Assets/DefaultFont.spritefont
 
+#begin Assets/music/ash1.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/ash1.ogg
+
+#begin Assets/music/ash2.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/ash2.ogg
+
+#begin Assets/music/black.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/black.ogg
+
+#begin Assets/music/bronze.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/bronze.ogg
+
+#begin Assets/music/brown.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/brown.ogg
+
 #begin Assets/music/green1.ogg
 /importer:OggImporter
-/processor:SongProcessor
+/processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Assets/music/green1.ogg
+
+#begin Assets/music/green2.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/green2.ogg
+
+#begin Assets/music/green3.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/green3.ogg
+
+#begin Assets/music/green4.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/green4.ogg
+
+#begin Assets/music/marine1.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/marine1.ogg
+
+#begin Assets/music/marine2.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/marine2.ogg
+
+#begin Assets/music/pink1.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/pink1.ogg
+
+#begin Assets/music/pink2.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/pink2.ogg
+
+#begin Assets/music/pink3.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/pink3.ogg
+
+#begin Assets/music/purple1.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/purple1.ogg
+
+#begin Assets/music/purple2.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/purple2.ogg
+
+#begin Assets/music/purple3.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/purple3.ogg
+
+#begin Assets/music/silver1.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/silver1.ogg
+
+#begin Assets/music/white1.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/white1.ogg
+
+#begin Assets/music/white2.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/white2.ogg
+
+#begin Assets/music/white3.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/white3.ogg
+
+#begin Assets/music/yellow1.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/yellow1.ogg
+
+#begin Assets/music/yellow2.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/yellow2.ogg
+
+#begin Assets/music/yellow3.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/yellow3.ogg
 
 #begin Assets/sounds/bullet_ricochet.wav
 /importer:WavImporter
@@ -444,6 +582,18 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Assets/textures/tnk_tank_env.png
+
+#begin Assets/textures/wood_default.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Assets/textures/wood_default.png
 
 #begin Assets/UIPanelBackground.png
 /importer:TextureImporter
