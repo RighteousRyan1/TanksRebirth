@@ -40,7 +40,7 @@
 /build:Assets/DefaultFont.spritefont
 
 #begin Assets/music/green1.ogg
-/importer:WavImporter
+/importer:OggImporter
 /processor:SongProcessor
 /processorParam:Quality=Best
 /build:Assets/music/green1.ogg

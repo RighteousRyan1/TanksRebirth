@@ -24,6 +24,9 @@ namespace WiiPlayTanksRemake.GameContent
         public float barrelRotation; // do remember this is in radians
         public float tankRotation;
 
+        public float tankTreadPitch;
+        public float shootPitch;
+
         public Vector2 tankRotationPredicted; // the number of radians which should be rotated to before the tank starts moving
 
         public float scale;
@@ -33,14 +36,18 @@ namespace WiiPlayTanksRemake.GameContent
         public Matrix View;
         public Matrix Projection;
 
+        public BoundingBox CollisionBox;
+
         public Model TankModel { get; }
 
         public bool IsAI { get; }
 
         public TankTier tier;
+        public PlayerType PlayerType { get; }
+
+        public BulletType BulletType { get; } = BulletType.Regular;
 
         private Texture2D _tankColorMesh;
-
         private long _treadSoundTimer = 5;
 
         public int TierHierarchy => (int)tier;
@@ -68,6 +75,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         public Tank(Vector3 beginPos, bool ai = false, TankTier tier = TankTier.None, PlayerType playerType = PlayerType.IsNotPlayer)
         {
+            PlayerType = playerType;
             IsAI = ai;
             position = beginPos;
             this.tier = tier;
@@ -77,6 +85,8 @@ namespace WiiPlayTanksRemake.GameContent
 
             if (!ai && tier != TankTier.None)
                 throw new Exception("A player cannot have a tank tier.");
+
+            CollisionBox = new(new Vector3(100, 100, 0), new Vector3(200, 200, 0));
 
             if (ai)
             {
@@ -94,29 +104,29 @@ namespace WiiPlayTanksRemake.GameContent
                 cUp.KeybindPressAction = (cUp) =>
                 {
                     playerControl_isBindPressed = true;
-                    tankRotationPredicted.Y += 1f;
-                    velocity.Y += 5f * speed;
+                    tankRotationPredicted.Y += 5f;
+                    velocity.Y += speed * 5f;
                     // approachVelocity.Y -= 20f;
                 };
                 cDown.KeybindPressAction = (cDown) =>
                 {
                     playerControl_isBindPressed = true;
-                    tankRotationPredicted.Y -= 1f;
-                    velocity.Y -= 5f * speed;
+                    tankRotationPredicted.Y -= 5f;
+                    velocity.Y -= speed * 5f;
                     //approachVelocity.Y += 20f;
                 };
                 cLeft.KeybindPressAction = (cLeft) =>
                 {
                     playerControl_isBindPressed = true;
-                    tankRotationPredicted.X -= 1f;
-                    velocity.X -= 5f * speed;
+                    tankRotationPredicted.X -= 5f;
+                    velocity.X -= speed * 5f;
                     //approachVelocity.X -= 20f;
                 };
                 cRight.KeybindPressAction = (cRight) =>
                 {
                     playerControl_isBindPressed = true;
-                    tankRotationPredicted.X += 1f;
-                    velocity.X += 5f * speed;
+                    tankRotationPredicted.X += 5f;
+                    velocity.X += speed * 5f;
                     //approachVelocity.X += 20f;
                 };
             }
@@ -124,13 +134,10 @@ namespace WiiPlayTanksRemake.GameContent
             AllTanks.Add(this);
         }
 
-        // readonly float yaw = -1.7f;//-1.7145833f; // sideways
-        readonly float pitch = 0f;
-        readonly float roll = 0;//-0.8f;
-
         internal void Update()
         {
-            tankRotation = velocity.ToRotation(); //tankRotationPredicted.ToRotation();
+            tankRotation = velocity.ToRotation();
+            // tankRotation = MathHelper.SmoothStep(velocity.ToRotation(), tankRotationPredicted.ToRotation(), 100f);
             Projection = TankGame.GameProjection;
             View = TankGame.GameView;
 
@@ -139,17 +146,15 @@ namespace WiiPlayTanksRemake.GameContent
 
             // roll = GameUtils.MousePosition.X / (GameUtils.WindowHeight / 2);
 
-            World = Matrix.CreateScale(2 * scale) 
-                * Matrix.CreateFromYawPitchRoll(tankRotation + MathHelper.PiOver2, pitch, roll)
+            World = Matrix.CreateScale(scale) 
+                * Matrix.CreateFromYawPitchRoll(tankRotation + MathHelper.PiOver2, 0, 0)
                 // * Matrix.CreateRotationX(0.6208f)
-                + Matrix.CreateTranslation(position.X, position.Y, position.Z);
+                * Matrix.CreateTranslation(position.X, position.Y, position.Z);
 
-            if (tankRotation.InDistanceOf(tankRotationPredicted.ToRotation(), 0.5f))
+            // if ((tankRotation + MathHelper.PiOver2).IsInRangeOf(tankRotationPredicted.ToRotation(), 1.5f))
             {
                 position += velocity;
             }
-
-            position += velocity;
             if (IsAI)
             {
                 GetAIBehavior();
@@ -159,9 +164,13 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 UpdatePlayerMovement();
             }
-
             velocity *= 0.8f;
             playerControl_isBindPressed = false;
+        }
+
+        public void Destroy()
+        {
+
         }
 
         public void UpdatePlayerMovement()
@@ -178,16 +187,40 @@ namespace WiiPlayTanksRemake.GameContent
             }
             //velocity += approachVelocity / 10;
             // barrelRotation = GameUtils.DirectionOf(GameUtils.MousePosition.ToVector3(), position).ToRotation();
-           // approachVelocity = Vector3.Zero;
+            // approachVelocity = Vector3.Zero;
         }
 
         public void Shoot(Vector2 velocity, float bulletSpeed)
         {
-
+            SoundEffect shootSound;
+            switch (BulletType)
+            {
+                case BulletType.Regular:
+                    shootSound = Resources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_1");
+                    break;
+                case BulletType.Rocket:
+                    shootSound = Resources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_1");
+                    break;
+                case BulletType.RicochetRocket:
+                    shootSound = Resources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_1");
+                    break;
+            }
         }
 
         public void GetAIBehavior()
         {
+            if (velocity != Vector3.Zero && IsAI)
+            {
+                if (TankGame.GameUpdateTime.TotalGameTime.Ticks % _treadSoundTimer == 0)
+                {
+                    var treadPlace = Resources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_tread_place_{new Random().Next(1, 5)}");
+                    var treadPlaceSfx = treadPlace.CreateInstance();
+                    treadPlaceSfx.Play();
+                    treadPlaceSfx.Volume = 0.2f;
+                    treadPlaceSfx.Pitch = tankTreadPitch;
+                }
+            }
+
             if (tier == TankTier.Ash)
             {
                 behavior = (tank) => {
@@ -201,7 +234,12 @@ namespace WiiPlayTanksRemake.GameContent
 
         internal void DrawBody()
         {
-            // TankGame.spriteBatch.DrawString(TankGame.Fonts.Default, $"yaw: {tankRotation + MathHelper.PiOver2}\npitch: {pitch}\nroll: {roll}", new(10, 10), Color.White);
+            var display = $"rotationX: {tankRotation + MathHelper.PiOver2}" +
+                $"\nvelPredicted: {tankRotationPredicted.ToRotation()}" +
+                $"\nvel: {velocity}";
+
+
+            TankGame.spriteBatch.DrawString(TankGame.Fonts.Default, display, position.Flatten(), Color.White);
 
             // TankModel.Meshes[0].ParentBone.Transform = Matrix.CreateTranslation(new(5, 5, 0));
 

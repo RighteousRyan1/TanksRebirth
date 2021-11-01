@@ -226,7 +226,7 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
         }
         public static Vector2 Flatten(this Vector3 vector) => new Vector2(vector.X, vector.Y);
 
-        public static bool InDistanceOf(this float value, float midpoint, float distance)
+        public static bool IsInRangeOf(this float value, float midpoint, float distance)
         {
             return
                 value > midpoint - distance

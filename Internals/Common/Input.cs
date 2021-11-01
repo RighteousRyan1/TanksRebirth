@@ -36,7 +36,7 @@ namespace WiiPlayTanksRemake.Internals.Common
         {
             var justPressed = AreKeysPressed(keys);
 
-            return justPressed;
+            return justPressed && keys.All(key => OldKeySnapshot.IsKeyUp(key));
         }
         public static bool MouseLeft => CurrentMouseSnapshot.LeftButton == ButtonState.Pressed;
         public static bool MouseMiddle => CurrentMouseSnapshot.MiddleButton == ButtonState.Pressed;

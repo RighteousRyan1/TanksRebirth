@@ -8,6 +8,8 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System.Linq;
 using WiiPlayTanksRemake.Enums;
+using System;
+using Microsoft.Xna.Framework.Audio;
 
 namespace WiiPlayTanksRemake.GameContent
 {
@@ -18,6 +20,8 @@ namespace WiiPlayTanksRemake.GameContent
         public static Logger BaseLogger { get; } = new($"{TankGame.ExePath}", "client_logger");
 
         private static UIElement lastElementClicked;
+
+        public static bool WindowBorderless { get; set; }
 
         internal static void Update()
         {
@@ -35,6 +39,23 @@ namespace WiiPlayTanksRemake.GameContent
 
             foreach (var bullet in Bullet.AllBullets)
                 bullet?.Update();
+
+            if (Input.MouseLeft)
+            {
+                if (TankGame.GameUpdateTime.TotalGameTime.Ticks % 5 == 0)
+                {
+                    var treadPlace = Resources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_tread_place_{new Random().Next(1, 5)}");
+                    var treadPlaceSfx = treadPlace.CreateInstance();
+                    treadPlaceSfx.Play();
+                    treadPlaceSfx.Volume = 0.2f;
+                    treadPlaceSfx.Pitch = -0.2f;
+                }
+            }
+
+            if (Input.AreKeysJustPressed(Keys.LeftShift, Keys.Enter))
+            {
+                WindowBorderless = !WindowBorderless;
+            }
         }
 
         internal static void Draw()
@@ -85,20 +106,21 @@ namespace WiiPlayTanksRemake.GameContent
        
         public static void Initialize()
         {
-            new Tank(new Vector3(500, 500, 0), playerType: PlayerType.Blue)
+            new Tank(new Vector3(0, 0, 0), playerType: PlayerType.Blue)
+            {
+                scale = 2
+            };
+
+            /*new Tank(new Vector3(100, 100, 0), true, TankTier.Bubblegum)
             {
                 scale = 5
             };
 
-            new Tank(new Vector3(100, 100, 0), true, TankTier.Bubblegum)
+            new Tank(new Vector3(-300, 300, 0), true, TankTier.Marble)
             {
-                scale = 5
-            };
-
-            new Tank(new Vector3(1200, 500, 0), true, TankTier.Marble)
-            {
-                scale = 5
-            };
+                scale = 5,
+                tankTreadPitch = -0.25f
+            };*/
 
             // UI.PauseMenu.Initialize();
             MusicContent.LoadMusic();

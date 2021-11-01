@@ -23,4 +23,11 @@
         Blue,
         Red
     }
+
+    public enum BulletType : byte
+    {
+        Regular,
+        Rocket,
+        RicochetRocket
+    }
 }
