@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
+using System.Linq;
 using WiiPlayTanksRemake.Internals.Common.Utilities;
 
 namespace WiiPlayTanksRemake.Internals.Common
@@ -26,6 +27,16 @@ namespace WiiPlayTanksRemake.Internals.Common
         public static bool KeyJustPressed(Keys key) {
             bool pressed = CurrentKeySnapshot.IsKeyDown(key) && OldKeySnapshot.IsKeyUp(key);
             return pressed;
+        }
+        public static bool AreKeysPressed(params Keys[] keys)
+        {
+            return keys.All(key => CurrentKeySnapshot.IsKeyDown(key));
+        }
+        public static bool AreKeysJustPressed(params Keys[] keys)
+        {
+            var justPressed = AreKeysPressed(keys);
+
+            return justPressed;
         }
         public static bool MouseLeft => CurrentMouseSnapshot.LeftButton == ButtonState.Pressed;
         public static bool MouseMiddle => CurrentMouseSnapshot.MiddleButton == ButtonState.Pressed;

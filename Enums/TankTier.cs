@@ -6,12 +6,21 @@
         Player,
         Brown,
         Ash,
-        Teal,
+        Marine,
         Yellow,
-        Red,
+        Bubblegum,
+        Pink,
         Green,
         Purple,
         White,
-        Black
+        Black,
+        Marble
+    }
+
+    public enum PlayerType : byte
+    {
+        IsNotPlayer,
+        Blue,
+        Red
     }
 }

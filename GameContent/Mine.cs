@@ -7,7 +7,7 @@ namespace WiiPlayTanksRemake.GameContent
     public sealed class Mine
     {
         public static List<Mine> AllMines { get; } = new();
-        public Vector2 position;
+        public Vector3 position;
         public int detonationTimer;
         public float explosionRadius;
         public Tank owner;

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PipelineBuildEvent xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <SourceFile>C:/Users/Dylannnnnnn/Desktop/Tanks/textures/enemy/tank_brown.png</SourceFile>
+  <SourceTime>2020-10-31T12:51:21.4669621-05:00</SourceTime>
+  <DestFile>C:/Users/Dylannnnnnn/Desktop/WiiPlayTanksRemake/Content/bin/DesktopGL/../../Tanks/textures/enemy/tank_brown_0.xnb</DestFile>
+  <DestTime>2021-10-31T18:19:42.285773-05:00</DestTime>
+  <Importer>TextureImporter</Importer>
+  <ImporterTime>2021-03-01T07:53:26-06:00</ImporterTime>
+  <Processor>TextureProcessor</Processor>
+  <ProcessorTime>2021-03-01T07:53:26-06:00</ProcessorTime>
+  <Parameters>
+    <Key>ColorKeyColor</Key>
+    <Value>0,0,0,0</Value>
+  </Parameters>
+  <Parameters>
+    <Key>ColorKeyEnabled</Key>
+    <Value>True</Value>
+  </Parameters>
+  <Parameters>
+    <Key>GenerateMipmaps</Key>
+    <Value>True</Value>
+  </Parameters>
+  <Parameters>
+    <Key>PremultiplyAlpha</Key>
+    <Value>True</Value>
+  </Parameters>
+  <Parameters>
+    <Key>ResizeToPowerOfTwo</Key>
+    <Value>False</Value>
+  </Parameters>
+  <Parameters>
+    <Key>TextureFormat</Key>
+    <Value>Compressed</Value>
+  </Parameters>
+  <Dependencies />
+  <BuildAsset />
+  <BuildOutput />
+</PipelineBuildEvent>

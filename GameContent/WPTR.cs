@@ -7,6 +7,7 @@ using WiiPlayTanksRemake.Internals.Common.GameUI;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System.Linq;
+using WiiPlayTanksRemake.Enums;
 
 namespace WiiPlayTanksRemake.GameContent
 {
@@ -81,12 +82,27 @@ namespace WiiPlayTanksRemake.GameContent
             }
         }
 
+       
         public static void Initialize()
         {
-            new Tank(new(100, 100));
-            UI.PauseMenu.Initialize();
+            new Tank(new Vector3(500, 500, 0), playerType: PlayerType.Blue)
+            {
+                scale = 5
+            };
+
+            new Tank(new Vector3(100, 100, 0), true, TankTier.Bubblegum)
+            {
+                scale = 5
+            };
+
+            new Tank(new Vector3(1200, 500, 0), true, TankTier.Marble)
+            {
+                scale = 5
+            };
+
+            // UI.PauseMenu.Initialize();
             MusicContent.LoadMusic();
-            MusicContent.green1.Play();
+            //MusicContent.green1.Play();
         }
     }
 }

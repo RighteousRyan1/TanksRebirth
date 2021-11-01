@@ -6,8 +6,8 @@ namespace WiiPlayTanksRemake.GameContent
     public class Bullet
     {
         public static List<Bullet> AllBullets { get; } = new();
-        public Vector2 position;
-        public Vector2 velocity;
+        public Vector3 position;
+        public Vector3 velocity;
         public int ricochets;
         public Tank owner;
 

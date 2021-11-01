@@ -43,7 +43,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         public static void LoadMusic()
         {
-            green1 = Music.CreateMusicTrack("Green1", "Assets/music/green1", 1f);
+            // green1 = Music.CreateMusicTrack("Green1", "Assets/music/green1", 1f);
             // green1.Play();
         }
     }
