@@ -19,8 +19,6 @@ namespace WiiPlayTanksRemake.GameContent
     {
         public static float FloatForTesting;
 
-        public static Keybind PlaceMine = new("Place Mine", Keys.Space);
-
         public static Logger BaseLogger { get; } = new($"{TankGame.ExePath}", "client_logger");
 
         private static UIElement lastElementClicked;
@@ -154,11 +152,14 @@ namespace WiiPlayTanksRemake.GameContent
                 scale = 1
             };
 
-            new Tank(new Vector3(new Random().Next(-200, 201), new Random().Next(-200, 201), 0), true, TankTier.Black)
+            for (int i = 0; i < 30; i++)
             {
-                scale = 1,
-                tankRotation = (float)new Random().NextDouble() * new Random().Next(1, 10)
-            };
+                var enemy = new Tank(new Vector3(new Random().Next(-200, 201), new Random().Next(-200, 201), 0), true, (TankTier)new Random().Next(1, 10))
+                {
+                    scale = 1,
+                    tankRotation = (float)new Random().NextDouble() * new Random().Next(1, 10)
+                };
+            }
 
             new Cube(new Vector3(100, 100, 0));
 

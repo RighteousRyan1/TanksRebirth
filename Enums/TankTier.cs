@@ -3,18 +3,17 @@
     public enum TankTier : byte
     {
         None,
-        Player,
         Brown,
         Ash,
         Marine,
         Yellow,
-        Bubblegum,
+        //Bubblegum,
         Pink,
         Green,
         Purple,
         White,
         Black,
-        Marble
+        //Marble
     }
 
     public enum PlayerType : byte

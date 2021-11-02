@@ -41,9 +41,6 @@ namespace WiiPlayTanksRemake.GameContent.Systems
 
             totalSpike = brownSpike + ashSpike + marineSpike + pinkSpike + greenSpike + purpleSpike + whiteSpike + blackSpike;
 
-            foreach (var song in songs.Where(sng => sng is not null))
-                song.volume = 0f;
-
             if (TierHighest == TankTier.Brown)
                 brown.volume = 0.5f;
 
@@ -54,6 +51,29 @@ namespace WiiPlayTanksRemake.GameContent.Systems
                 else
                     ash1.volume = 0.5f;
             }*/
+
+            brown.volume = 0;
+            ash1.volume = 0;
+            ash2.volume = 0;
+            marine1.volume = 0;
+            marine2.volume = 0;
+            yellow1.volume = 0;
+            yellow2.volume = 0;
+            yellow3.volume = 0;
+            pink1.volume = 0;
+            pink2.volume = 0;
+            pink3.volume = 0;
+            green1.volume = 0;
+            green2.volume = 0;
+            green3.volume = 0;
+            green4.volume = 0;
+            purple1.volume = 0;
+            purple2.volume = 0;
+            purple3.volume = 0;
+            white1.volume = 0;
+            white2.volume = 0;
+            white3.volume = 0;
+            black.volume = 0;
 
             if (TierHighest == TankTier.Brown)
                 brown.volume = 0.5f;
@@ -107,6 +127,8 @@ namespace WiiPlayTanksRemake.GameContent.Systems
 
             if (TierHighest == TankTier.Black)
                 black.volume = 0.5f;
+
+            // we call this hardcode hell in the west
         }
 
         public static Music brown;
@@ -147,7 +169,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems
 
         public void LoadMusic()
         {
-            brown = Music.CreateMusicTrack("BrownTankSong", "Assets/music/brown", 0.5f);
+            brown = Music.CreateMusicTrack("BrownTank", "Assets/music/brown", 0.5f);
 
             ash1 = Music.CreateMusicTrack("AshTank1", "Assets/music/ash1", 0.5f);
             ash2 = Music.CreateMusicTrack("AshTank2", "Assets/music/ash2", 0.5f);

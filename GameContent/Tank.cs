@@ -9,6 +9,7 @@ using Microsoft.Xna.Framework.Input;
 using WiiPlayTanksRemake.Internals.Common.Utilities;
 using WiiPlayTanksRemake.Internals;
 using Microsoft.Xna.Framework.Audio;
+using WiiPlayTanksRemake.Internals.Common;
 
 namespace WiiPlayTanksRemake.GameContent
 {
@@ -49,16 +50,18 @@ namespace WiiPlayTanksRemake.GameContent
 
         public TankTier tier;
         public PlayerType PlayerType { get; }
-        public BulletType BulletType { get; } = BulletType.Regular;
+        public BulletType BulletType { get; private set; } = BulletType.Regular;
 
         internal Texture2D _tankColorMesh;
 
         public Action<Tank> behavior;
 
-        public Keybind controlUp = new("Up", Keys.W);
-        public Keybind controlDown = new("Down", Keys.S);
-        public Keybind controlLeft = new("Left", Keys.A);
-        public Keybind controlRight = new("Right", Keys.D);
+        public static Keybind controlUp = new("Up", Keys.W);
+        public static Keybind controlDown = new("Down", Keys.S);
+        public static Keybind controlLeft = new("Left", Keys.A);
+        public static Keybind controlRight = new("Right", Keys.D);
+        public static Keybind PlaceMine = new("Place Mine", Keys.Space);
+        // public static Keybind FireBullet = new("Fire Bullet", Keys.Space);
 
         public static TankTier GetHighestTierActive()
         {
@@ -75,7 +78,7 @@ namespace WiiPlayTanksRemake.GameContent
         public static int GetTankCountOfType(TankTier tier) 
             => AllTanks.Count(tnk => tnk.tier == tier && tnk.IsAI && !tnk.dead);
 
-        public Tank(Vector3 beginPos, bool ai = false, TankTier tier = TankTier.None, PlayerType playerType = PlayerType.IsNotPlayer)
+        public Tank(Vector3 beginPos, bool ai = false, TankTier tier = TankTier.None, PlayerType playerType = PlayerType.IsNotPlayer, bool setTankDefaults = true)
         {
             PlayerType = playerType;
             IsAI = ai;
@@ -134,14 +137,46 @@ namespace WiiPlayTanksRemake.GameContent
                     //approachVelocity.X += 20f;
                 };
             }
+
+            void setDefaults()
+            {
+                if (tier == TankTier.Green)
+                {
+                    BulletType = BulletType.RicochetRocket;
+                }
+                if (tier == TankTier.Black)
+                {
+                    tankTreadPitch = -0.26f;
+                    BulletType = BulletType.Rocket;
+                }
+                if (tier == TankTier.Purple)
+                {
+                    tankTreadPitch = -0.2f;
+                }
+                if (tier == TankTier.Ash)
+                {
+                    tankTreadPitch = 0.125f;
+                }
+                if (tier == TankTier.Marine)
+                {
+                    tankTreadPitch = 0.075f;
+                    BulletType = BulletType.Rocket;
+                }
+            }
+            if (setTankDefaults)
+                setDefaults();
             
             AllTanks.Add(this);
         }
 
         internal void Update()
         {
+
             if (velocity != Vector3.Zero)
-                tankRotation = velocity.ToRotation();
+            {
+                GameUtils.RoughStep(ref tankRotation, tankRotationPredicted.ToRotation(), 0.5f);
+                // make the stop not go wack
+            }
             // tankRotation = MathHelper.SmoothStep(velocity.ToRotation(), tankRotationPredicted.ToRotation(), 100f);
             Projection = TankGame.GameProjection;
             View = TankGame.GameView;
@@ -167,6 +202,10 @@ namespace WiiPlayTanksRemake.GameContent
             }
             else
             {
+                if (Input.CanDetectClick())
+                {
+                    Shoot(barrelRotation, bulletShootSpeed);
+                }
                 UpdatePlayerMovement();
             }
             velocity *= 0.8f;
@@ -183,7 +222,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             if (IsAI)
             {
-
+                // TODO: play fanfare thingy i think
             }
         }
 
@@ -210,26 +249,26 @@ namespace WiiPlayTanksRemake.GameContent
         /// </summary>
         /// <param name="velocity"></param>
         /// <param name="bulletSpeed"></param>
-        public void Shoot(Vector2 velocity, float bulletSpeed)
+        public void Shoot(float radians, float bulletSpeed)
         {
             SoundEffect shootSound;
 
             shootSound = BulletType switch
             {
-                BulletType.Rocket => Resources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_1"),
-                BulletType.RicochetRocket => Resources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_1"),
+                BulletType.Rocket => Resources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_rocket"),
+                BulletType.RicochetRocket => Resources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_ricochet"),
                 _ => Resources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_1")
             };
 
             var sfx = shootSound.CreateInstance();
 
+            sfx.Volume = 0.3f;
             sfx.Play();
-
         }
 
         public void GetAIBehavior()
         {
-            if (velocity != Vector3.Zero && IsAI)
+            if (velocity != Vector3.Zero)
             {
                 if (TankGame.GameUpdateTime % _treadSoundTimer == 0)
                 {
@@ -253,11 +292,19 @@ namespace WiiPlayTanksRemake.GameContent
 
             behavior = (tank) =>
             {
-                var tank_tryget = AllTanks.FirstOrDefault(tnk => !tnk.IsAI && Vector3.Distance(tnk.position, tank.position) < 300f);
-
-                if (AllTanks.IndexOf(tank_tryget) > -1)
+                if (!tank.dead)
                 {
-                    tank.tankRotation = (tank_tryget.position - tank.position).ToRotation();
+                    var tank_tryget = AllTanks.FirstOrDefault(tnk => !tnk.IsAI && Vector3.Distance(tnk.position, tank.position) < 300f);
+
+                    if (AllTanks.IndexOf(tank_tryget) > -1)
+                    {
+                        tank.tankRotation = (tank_tryget.position - tank.position).ToRotation();
+                    }
+
+                    var randSeed1 = new Random().Next(0, 1500 / tank.TierHierarchy);
+
+                    if (randSeed1 == 0)
+                        tank.Shoot(tank.barrelRotation, bulletShootSpeed);
                 }
             };
         }
@@ -287,7 +334,10 @@ namespace WiiPlayTanksRemake.GameContent
 
             mesh.Draw();*/
 
-            /*foreach (var mesh in TankModel.Meshes)
+            if (dead)
+                return;
+
+            foreach (var mesh in TankModel.Meshes)
             {
                 foreach (IEffectMatrices effect in mesh.Effects)
                 {
@@ -306,7 +356,7 @@ namespace WiiPlayTanksRemake.GameContent
                 }
 
                 mesh.Draw();
-            }*/
+            }
         }
 
         public static bool TryGetBulletNear(Tank tank, float distance, out Bullet bullet)

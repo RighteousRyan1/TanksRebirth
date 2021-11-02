@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 
 namespace WiiPlayTanksRemake.GameContent
@@ -10,6 +11,12 @@ namespace WiiPlayTanksRemake.GameContent
         public Vector3 velocity;
         public int ricochets;
         public Tank owner;
+
+        public Matrix View;
+        public Matrix Projection;
+        public Matrix World;
+
+        public Model BulletModel;
 
         public bool Flaming { get; set; }
 

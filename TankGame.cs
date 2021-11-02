@@ -20,6 +20,9 @@ namespace WiiPlayTanksRemake
     // TODO: Use orthographic off-center for projections
     // TODO: Make model drawing priority work
     // TODO: Implement block once all of above things are done
+    // TODO: TOMORROW - make barrels move by either coed or making it a separate bone/model.
+    // TODO: AI in the middle to far future
+    // TODO: to some finishingf touches to TankMusicSystem
 
     public class TankGame : Game
     {
@@ -71,6 +74,8 @@ namespace WiiPlayTanksRemake
             GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(0.75f);
             GameProjection = Matrix.CreateOrthographic(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, -500f, 5000f);
 
+            //GameProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45), GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000f);
+
             //GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up);
             //GameProjection = Matrix.CreateOrthographicOffCenter(0, GameUtils.WindowWidth, GameUtils.WindowHeight, 0, -5000, 5000);//Matrix.CreateOrthographicOffCenter(0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, 0, -1, 5000);
 
@@ -112,6 +117,14 @@ namespace WiiPlayTanksRemake
 
             WPTR.Update();
 
+            if (Input.KeyJustPressed(Keys.K))
+            {
+                Tank.AllTanks.First(tank => !tank.dead && tank.tier == Tank.GetHighestTierActive()).Destroy();
+            }
+
+            Input.OldKeySnapshot = Input.CurrentKeySnapshot;
+            Input.OldMouseSnapshot = Input.CurrentMouseSnapshot;
+
             base.Update(gameTime);
         }
 
@@ -138,13 +151,13 @@ namespace WiiPlayTanksRemake
 
             spriteBatch.DrawString(Fonts.Default, info, new(10, GameUtils.WindowHeight / 2), Color.White);
 
-            spriteBatch.DrawString(Fonts.Default, $"CurSong: {Music.AllMusic.First(music => music.volume == 0.5f).Name}", new(10, GameUtils.WindowHeight - 100), Color.White);
+            spriteBatch.DrawString(Fonts.Default, $"CurSong: {(Music.AllMusic.FirstOrDefault(music => music.volume == 0.5f) != null ? Music.AllMusic.FirstOrDefault(music => music.volume == 0.5f).Name : "N/A")}", new(10, GameUtils.WindowHeight - 100), Color.White);
 
             graphics.GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
             var tList = Tank.AllTanks;
 
-            tList.Sort(new Comparison<Tank>(
+            /*tList.Sort(new Comparison<Tank>(
                 (tank1, tank2) => 
                 tank2.position.Z.CompareTo(tank1.position.Z)));
 
@@ -177,9 +190,9 @@ namespace WiiPlayTanksRemake
 
                     mesh.Draw();
                 }
-            }
+            }*/
 
-            /*foreach (ModelMesh mesh in TankModel_Player.Meshes)
+            foreach (ModelMesh mesh in TankModel_Player.Meshes)
             {
                 foreach (BasicEffect effect in mesh.Effects)
                 {
@@ -196,7 +209,7 @@ namespace WiiPlayTanksRemake
                     effect.PreferPerPixelLighting = true;
                     effect.EnableDefaultLighting();
                 }
-            }*/
+            }
 
             WPTR.Draw();
 

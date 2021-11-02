@@ -85,6 +85,7 @@ namespace WiiPlayTanksRemake.Internals.Common.GameInput
         }
 
         internal void Update() {
+
             if (_bindingWait > 0)
                 _bindingWait--;
 
@@ -96,7 +97,7 @@ namespace WiiPlayTanksRemake.Internals.Common.GameInput
 
             JustReassigned = false;
 
-            if (JustPressed)
+            if (IsPressed)
                 KeybindPressAction?.Invoke(this);
         }
 
