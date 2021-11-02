@@ -174,7 +174,8 @@ namespace WiiPlayTanksRemake.GameContent
 
             if (velocity != Vector3.Zero)
             {
-                GameUtils.RoughStep(ref tankRotation, tankRotationPredicted.ToRotation(), 0.5f);
+                //GameUtils.RoughStep(ref tankRotation, tankRotationPredicted.ToRotation(), 0.5f);
+                tankRotation = velocity.ToRotation();
                 // make the stop not go wack
             }
             // tankRotation = MathHelper.SmoothStep(velocity.ToRotation(), tankRotationPredicted.ToRotation(), 100f);
