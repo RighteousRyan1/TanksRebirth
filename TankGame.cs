@@ -12,6 +12,7 @@ using WiiPlayTanksRemake.Internals.UI;
 using WiiPlayTanksRemake.Internals.Common.GameInput;
 using WiiPlayTanksRemake.Internals.Core.Interfaces;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace WiiPlayTanksRemake
 {
@@ -100,13 +101,14 @@ namespace WiiPlayTanksRemake
         }
         protected override void Update(GameTime gameTime)
         {
-            UpdateGameSystems();
             //GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(GameUtils.MousePosition.X / GameUtils.WindowWidth * 5);
             Window.IsBorderless = WPTR.WindowBorderless;
 
             GameUpdateTime++;
 
             Input.HandleInput();
+
+            UpdateGameSystems();
 
             WPTR.Update();
 
@@ -132,13 +134,11 @@ namespace WiiPlayTanksRemake
             spriteBatch.End();
             GraphicsDevice.Clear(Color.Black);
 
-            //CubeModel.Draw(View, World, Projection);
-
             spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied);
 
             spriteBatch.DrawString(Fonts.Default, info, new(10, GameUtils.WindowHeight / 2), Color.White);
 
-            // TankModelEnemy.draw
+            spriteBatch.DrawString(Fonts.Default, $"CurSong: {Music.AllMusic.First(music => music.volume == 0.5f).Name}", new(10, GameUtils.WindowHeight - 100), Color.White);
 
             graphics.GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
@@ -151,7 +151,7 @@ namespace WiiPlayTanksRemake
             int i = 0;
             foreach (var tank in tList)
             {
-                spriteBatch.DrawString(Fonts.Default, tank.tier.ToString(), new(10, GameUtils.WindowHeight / 4 + (i * 20)), Color.White);
+                spriteBatch.DrawString(Fonts.Default, tank.tier.ToString(), new(10, 10 + (i * 20)), Color.White);
                 i++;
                 foreach (var mesh in tank.TankModel.Meshes)
                 {

@@ -107,7 +107,7 @@ namespace WiiPlayTanksRemake.GameContent
                 {
                     playerControl_isBindPressed = true;
                     tankRotationPredicted.Y += 5f;
-                    velocity.Y += speed;
+                    velocity.Y += speed / 3;
                     //velocity.Y += speed * 5f;
                     // approachVelocity.Y -= 20f;
                 };
@@ -115,7 +115,7 @@ namespace WiiPlayTanksRemake.GameContent
                 {
                     playerControl_isBindPressed = true;
                     tankRotationPredicted.Y -= 5f;
-                    velocity.Y -= speed;
+                    velocity.Y -= speed / 3;
                     //velocity.Y -= speed * 5f;
                     //approachVelocity.Y += 20f;
                 };
@@ -123,14 +123,14 @@ namespace WiiPlayTanksRemake.GameContent
                 {
                     playerControl_isBindPressed = true;
                     tankRotationPredicted.X -= 5f;
-                    velocity.X -= speed;
+                    velocity.X -= speed / 3;
                     //approachVelocity.X -= 20f;
                 };
                 controlRight.KeybindPressAction = (cRight) =>
                 {
                     playerControl_isBindPressed = true;
                     tankRotationPredicted.X += 5f;
-                    velocity.X += speed;
+                    velocity.X += speed / 3;
                     //approachVelocity.X += 20f;
                 };
             }
@@ -140,7 +140,8 @@ namespace WiiPlayTanksRemake.GameContent
 
         internal void Update()
         {
-            tankRotation = velocity.ToRotation();
+            if (velocity != Vector3.Zero)
+                tankRotation = velocity.ToRotation();
             // tankRotation = MathHelper.SmoothStep(velocity.ToRotation(), tankRotationPredicted.ToRotation(), 100f);
             Projection = TankGame.GameProjection;
             View = TankGame.GameView;
@@ -240,15 +241,25 @@ namespace WiiPlayTanksRemake.GameContent
                 }
             }
 
-            if (tier == TankTier.Ash)
+            /*if (tier == TankTier.Ash)
             {
                 behavior = (tank) => {
                     if (TryGetBulletNear(tank, 50f, out var bullet))
                     {
-                        tank.velocity = tank.position - bullet.position;
+                        tank.velocity = tank.position.DirectionOf(bullet.position, true); //tank.position - bullet.position;
                     }
                 };
-            }
+            }*/
+
+            behavior = (tank) =>
+            {
+                var tank_tryget = AllTanks.FirstOrDefault(tnk => !tnk.IsAI && Vector3.Distance(tnk.position, tank.position) < 300f);
+
+                if (AllTanks.IndexOf(tank_tryget) > -1)
+                {
+                    tank.tankRotation = (tank_tryget.position - tank.position).ToRotation();
+                }
+            };
         }
 
         internal void DrawBody()
@@ -258,7 +269,7 @@ namespace WiiPlayTanksRemake.GameContent
                 $"\nvel: {velocity}";
 
 
-            TankGame.spriteBatch.DrawString(TankGame.Fonts.Default, display, position.Flatten(), Color.White);
+            // TankGame.spriteBatch.DrawString(TankGame.Fonts.Default, display, position.Flatten(), Color.White);
 
             // TankModel.Meshes[0].ParentBone.Transform = Matrix.CreateTranslation(new(5, 5, 0));
 

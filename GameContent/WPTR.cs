@@ -11,6 +11,7 @@ using WiiPlayTanksRemake.Enums;
 using System;
 using Microsoft.Xna.Framework.Audio;
 using WiiPlayTanksRemake.GameContent.Systems;
+using System.Collections.Generic;
 
 namespace WiiPlayTanksRemake.GameContent
 {
@@ -27,6 +28,13 @@ namespace WiiPlayTanksRemake.GameContent
         public static bool WindowBorderless { get; set; }
 
         public static TankMusicSystem tankMusicHandler;
+
+        public delegate void MissionStartEvent(List<Tank> tanks);
+
+        /// <summary>
+        /// Fired when a mission is started.
+        /// </summary>
+        public static MissionStartEvent OnMissionStart;
 
         internal static void Update()
         {
@@ -46,6 +54,9 @@ namespace WiiPlayTanksRemake.GameContent
 
             foreach (var bullet in Bullet.AllBullets)
                 bullet?.Update();
+
+            foreach (var cube in Cube.cubes)
+                cube?.Update();
 
             FloatForTesting = MathHelper.Clamp(FloatForTesting, -1, 1);
 
@@ -81,6 +92,9 @@ namespace WiiPlayTanksRemake.GameContent
             foreach (var tank in Tank.AllTanks)
                 tank?.DrawBody();
 
+            foreach (var cube in Cube.cubes)
+                cube?.Draw();
+
             foreach (var mine in Mine.AllMines)
                 mine?.Draw();
 
@@ -90,9 +104,6 @@ namespace WiiPlayTanksRemake.GameContent
             foreach (var parent in UIParent.TotalParents)
                 parent?.DrawElements();
 
-            foreach (var cube in Cube.cubes)
-                cube?.Draw();
-
             TankGame.spriteBatch.DrawString(TankGame.Fonts.Default, $"TestFloat: {FloatForTesting}" +
                 $"\nHighestTier: {Tank.GetHighestTierActive()}" +
                 $"\n", new(10, GameUtils.WindowHeight / 3), Color.White);
@@ -101,6 +112,8 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 TankGame.spriteBatch.DrawString(TankGame.Fonts.Default, $"{Enum.GetNames<TankTier>()[i]}: {Tank.GetTankCountOfType((TankTier)i)}", new(10, GameUtils.WindowHeight * 0.6f + (i * 20)), Color.White);
             }
+
+            TankGame.spriteBatch.DrawString(TankGame.Fonts.Default, $"TankWeight: {tankMusicHandler.totalSpike}", new(10, GameUtils.WindowHeight - 20), Color.White);
 
             if (TankGame.Instance.IsActive) {
                 foreach (var parent in UIParent.TotalParents.ToList()) {
@@ -132,23 +145,19 @@ namespace WiiPlayTanksRemake.GameContent
                 }
             }
         }
-
-       
         public static void Initialize()
         {
+            OnMissionStart = new((list) => list = Tank.AllTanks);
             tankMusicHandler = new();
             new Tank(new Vector3(0, 0, 0), playerType: PlayerType.Blue)
             {
                 scale = 1
             };
 
-            new Tank(new Vector3(new Random().Next(-200, 201), new Random().Next(-200, 201), 0), true, TankTier.Brown)
+            new Tank(new Vector3(new Random().Next(-200, 201), new Random().Next(-200, 201), 0), true, TankTier.Black)
             {
-                scale = 1
-            };
-            new Tank(new Vector3(new Random().Next(-200, 201), new Random().Next(-200, 201), 0), true, TankTier.Ash)
-            {
-                scale = 1
+                scale = 1,
+                tankRotation = (float)new Random().NextDouble() * new Random().Next(1, 10)
             };
 
             new Cube(new Vector3(100, 100, 0));
