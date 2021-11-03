@@ -10,7 +10,7 @@ namespace WiiPlayTanksRemake.GameContent
         public Vector3 position;
         public Vector3 velocity;
         public int ricochets;
-        public Tank owner;
+        public PlayerTank owner;
 
         public Matrix View;
         public Matrix Projection;

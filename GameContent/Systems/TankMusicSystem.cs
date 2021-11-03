@@ -12,7 +12,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems
 {
     public sealed class TankMusicSystem : IGameSystem
     {
-        public TankTier TierHighest => Tank.GetHighestTierActive();
+        public TankTier TierHighest => AITank.GetHighestTierActive();
 
         public float totalSpike;
 
@@ -78,51 +78,51 @@ namespace WiiPlayTanksRemake.GameContent.Systems
             if (TierHighest == TankTier.Brown)
                 brown.volume = 0.5f;
 
-            if (TierHighest == TankTier.Ash && Tank.GetTankCountOfType(TankTier.Ash) == 1)
+            if (TierHighest == TankTier.Ash && AITank.GetTankCountOfType(TankTier.Ash) == 1)
                 ash1.volume = 0.5f;
-            else if (TierHighest == TankTier.Ash && (Tank.GetTankCountOfType(TankTier.Ash) >= 2)) //|| Tank.GetTankCountOfType(TankTier.Brown) >= 2))
+            else if (TierHighest == TankTier.Ash && (AITank.GetTankCountOfType(TankTier.Ash) >= 2)) //|| Tank.GetTankCountOfType(TankTier.Brown) >= 2))
                 ash2.volume = 0.5f;
 
-            if (TierHighest == TankTier.Marine && Tank.GetTankCountOfType(TankTier.Marine) == 1)
+            if (TierHighest == TankTier.Marine && AITank.GetTankCountOfType(TankTier.Marine) == 1)
                 marine1.volume = 0.5f;
-            else if (TierHighest == TankTier.Marine && (Tank.GetTankCountOfType(TankTier.Marine) >= 2)) //|| Tank.GetTankCountOfType(TankTier.Brown | TankTier.Ash) >= 2))
+            else if (TierHighest == TankTier.Marine && (AITank.GetTankCountOfType(TankTier.Marine) >= 2)) //|| Tank.GetTankCountOfType(TankTier.Brown | TankTier.Ash) >= 2))
                 marine2.volume = 0.5f;
 
-            if (TierHighest == TankTier.Yellow && Tank.GetTankCountOfType(TankTier.Yellow) == 1) //&& Tank.GetTankCountOfType(TankTier.Marine) == 0)
+            if (TierHighest == TankTier.Yellow && AITank.GetTankCountOfType(TankTier.Yellow) == 1) //&& Tank.GetTankCountOfType(TankTier.Marine) == 0)
                 yellow1.volume = 0.5f;
-            else if (TierHighest == TankTier.Yellow && (Tank.GetTankCountOfType(TankTier.Yellow) == 2)) //|| Tank.GetTankCountOfType(TankTier.Marine) == 1))
+            else if (TierHighest == TankTier.Yellow && (AITank.GetTankCountOfType(TankTier.Yellow) == 2)) //|| Tank.GetTankCountOfType(TankTier.Marine) == 1))
                 yellow2.volume = 0.5f;
-            else if (TierHighest == TankTier.Yellow && (Tank.GetTankCountOfType(TankTier.Yellow) >= 3)) //|| Tank.GetTankCountOfType(TankTier.Marine) >= 3))
+            else if (TierHighest == TankTier.Yellow && (AITank.GetTankCountOfType(TankTier.Yellow) >= 3)) //|| Tank.GetTankCountOfType(TankTier.Marine) >= 3))
                 yellow3.volume = 0.5f;
 
-            if (TierHighest == TankTier.Pink && Tank.GetTankCountOfType(TankTier.Pink) == 1) //&& Tank.GetTankCountOfType(TankTier.Marine | TankTier.Yellow) == 0)
+            if (TierHighest == TankTier.Pink && AITank.GetTankCountOfType(TankTier.Pink) == 1) //&& Tank.GetTankCountOfType(TankTier.Marine | TankTier.Yellow) == 0)
                 pink1.volume = 0.5f;
-            else if (TierHighest == TankTier.Pink && (Tank.GetTankCountOfType(TankTier.Pink) == 2)) //|| Tank.GetTankCountOfType(TankTier.Marine | TankTier.Yellow) == 1))
+            else if (TierHighest == TankTier.Pink && (AITank.GetTankCountOfType(TankTier.Pink) == 2)) //|| Tank.GetTankCountOfType(TankTier.Marine | TankTier.Yellow) == 1))
                 pink2.volume = 0.5f;
-            else if (TierHighest == TankTier.Pink && (Tank.GetTankCountOfType(TankTier.Pink) >= 3)) //|| Tank.GetTankCountOfType(TankTier.Marine | TankTier.Yellow) >= 2))
+            else if (TierHighest == TankTier.Pink && (AITank.GetTankCountOfType(TankTier.Pink) >= 3)) //|| Tank.GetTankCountOfType(TankTier.Marine | TankTier.Yellow) >= 2))
                 pink3.volume = 0.5f;
 
-            if (TierHighest == TankTier.Green && Tank.GetTankCountOfType(TankTier.Green) == 1) //&& Tank.GetTankCountOfType(TankTier.Yellow | TankTier.Pink) == 0)
+            if (TierHighest == TankTier.Green && AITank.GetTankCountOfType(TankTier.Green) == 1) //&& Tank.GetTankCountOfType(TankTier.Yellow | TankTier.Pink) == 0)
                 green1.volume = 0.5f;
-            else if (TierHighest == TankTier.Green && (Tank.GetTankCountOfType(TankTier.Green) == 2)) //|| Tank.GetTankCountOfType(TankTier.Yellow | TankTier.Pink) == 1))
+            else if (TierHighest == TankTier.Green && (AITank.GetTankCountOfType(TankTier.Green) == 2)) //|| Tank.GetTankCountOfType(TankTier.Yellow | TankTier.Pink) == 1))
                 green2.volume = 0.5f;
-            else if (TierHighest == TankTier.Green && (Tank.GetTankCountOfType(TankTier.Green) == 3)) //|| Tank.GetTankCountOfType(TankTier.Yellow | TankTier.Pink) == 3))
+            else if (TierHighest == TankTier.Green && (AITank.GetTankCountOfType(TankTier.Green) == 3)) //|| Tank.GetTankCountOfType(TankTier.Yellow | TankTier.Pink) == 3))
                 green3.volume = 0.5f;
-            else if (TierHighest == TankTier.Green && (Tank.GetTankCountOfType(TankTier.Green) >= 4)) //|| Tank.GetTankCountOfType(TankTier.Yellow | TankTier.Pink) >= 4))
+            else if (TierHighest == TankTier.Green && (AITank.GetTankCountOfType(TankTier.Green) >= 4)) //|| Tank.GetTankCountOfType(TankTier.Yellow | TankTier.Pink) >= 4))
                 green4.volume = 0.5f;
 
-            if (TierHighest == TankTier.Purple && Tank.GetTankCountOfType(TankTier.Purple) == 1) //&& Tank.GetTankCountOfType(TankTier.Pink | TankTier.Green) == 0)
+            if (TierHighest == TankTier.Purple && AITank.GetTankCountOfType(TankTier.Purple) == 1) //&& Tank.GetTankCountOfType(TankTier.Pink | TankTier.Green) == 0)
                 purple1.volume = 0.5f;
-            else if (TierHighest == TankTier.Purple && (Tank.GetTankCountOfType(TankTier.Purple) == 2)) //|| Tank.GetTankCountOfType(TankTier.Pink | TankTier.Green) == 1))
+            else if (TierHighest == TankTier.Purple && (AITank.GetTankCountOfType(TankTier.Purple) == 2)) //|| Tank.GetTankCountOfType(TankTier.Pink | TankTier.Green) == 1))
                 purple2.volume = 0.5f;
-            else if (TierHighest == TankTier.Purple && (Tank.GetTankCountOfType(TankTier.Purple) >= 3)) //|| Tank.GetTankCountOfType(TankTier.Pink | TankTier.Green) >= 2))
+            else if (TierHighest == TankTier.Purple && (AITank.GetTankCountOfType(TankTier.Purple) >= 3)) //|| Tank.GetTankCountOfType(TankTier.Pink | TankTier.Green) >= 2))
                 purple3.volume = 0.5f;
 
-            if (TierHighest == TankTier.White && Tank.GetTankCountOfType(TankTier.White) == 1) //&& Tank.GetTankCountOfType(TankTier.Green | TankTier.Purple) == 0)
+            if (TierHighest == TankTier.White && AITank.GetTankCountOfType(TankTier.White) == 1) //&& Tank.GetTankCountOfType(TankTier.Green | TankTier.Purple) == 0)
                 white1.volume = 0.5f;
-            else if (TierHighest == TankTier.White && (Tank.GetTankCountOfType(TankTier.White) == 2)) //|| Tank.GetTankCountOfType(TankTier.Green | TankTier.Purple) == 1))
+            else if (TierHighest == TankTier.White && (AITank.GetTankCountOfType(TankTier.White) == 2)) //|| Tank.GetTankCountOfType(TankTier.Green | TankTier.Purple) == 1))
                 white2.volume = 0.5f;
-            else if (TierHighest == TankTier.White && (Tank.GetTankCountOfType(TankTier.White) >= 3)) //|| Tank.GetTankCountOfType(TankTier.Green | TankTier.Purple) >= 2))
+            else if (TierHighest == TankTier.White && (AITank.GetTankCountOfType(TankTier.White) >= 3)) //|| Tank.GetTankCountOfType(TankTier.Green | TankTier.Purple) >= 2))
                 white3.volume = 0.5f;
 
             if (TierHighest == TankTier.Black)

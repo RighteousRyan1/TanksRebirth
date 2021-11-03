@@ -47,7 +47,8 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
         }
         public static float ToRotation(this Vector3 vector)
         {
-            return (float)Math.Atan2(vector.Y, vector.X);
+            // not working (man)
+            return (float)Math.Atan2(vector.Z, vector.X);
         }
         public static Vector2 RotatedByRadians(this Vector2 spinPoint, double radians, Vector2 center = default)
         {
@@ -224,7 +225,9 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
             int frameCount = textureHeight / frames;
             return new int[frameCount];
         }
-        public static Vector2 Flatten(this Vector3 vector) => new Vector2(vector.X, vector.Y);
+        public static Vector2 Flatten(this Vector3 vector) => new(vector.X, vector.Y);
+
+        public static Vector2 FlattenZ(this Vector3 vector) => new(vector.X, vector.Z);
 
         public static bool IsInRangeOf(this float value, float midpoint, float distance)
         {
@@ -306,6 +309,17 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
             }
 
             return value;
+        }
+    }
+
+    public static class CollectionUtils
+    {
+        public static ICollection<T> Combine<T>(this ICollection<T> collection1, ICollection<T> mergeTo)
+        {
+            foreach (var item in collection1)
+                mergeTo.Add(item);
+
+            return mergeTo;
         }
     }
 }

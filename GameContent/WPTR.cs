@@ -12,11 +12,16 @@ using System;
 using Microsoft.Xna.Framework.Audio;
 using WiiPlayTanksRemake.GameContent.Systems;
 using System.Collections.Generic;
+using WiiPlayTanksRemake.Internals.Core.Interfaces;
 
 namespace WiiPlayTanksRemake.GameContent
 {
     public class WPTR
     {
+        public static List<AITank> AllAITanks { get; } = new();
+
+        public static List<PlayerTank> AllPlayerTanks { get; } = new();
+
         public static float FloatForTesting;
 
         public static Logger BaseLogger { get; } = new($"{TankGame.ExePath}", "client_logger");
@@ -27,7 +32,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         public static TankMusicSystem tankMusicHandler;
 
-        public delegate void MissionStartEvent(List<Tank> tanks);
+        public delegate void MissionStartEvent(List<PlayerTank> players, List<AITank> aiTanks);
 
         /// <summary>
         /// Fired when a mission is started.
@@ -41,11 +46,10 @@ namespace WiiPlayTanksRemake.GameContent
             foreach (var bind in Keybind.AllKeybinds)
                 bind?.Update();
 
-            foreach (var music in Music.AllMusic)
-                music?.Update();
-
-            foreach (var tank in Tank.AllTanks)
-                tank?.Update();
+            foreach (var tank in AllPlayerTanks)
+                tank.Update();
+            foreach (var tank in AllAITanks)
+                tank.Update();
 
             foreach (var mine in Mine.AllMines)
                 mine?.Update();
@@ -70,7 +74,7 @@ namespace WiiPlayTanksRemake.GameContent
                 }
             }
 
-            if (Input.AreKeysJustPressed(Keys.LeftShift, Keys.Enter))
+            if (Input.AreKeysJustPressed(Keys.RightAlt, Keys.Enter))
             {
                 WindowBorderless = !WindowBorderless;
             }
@@ -87,8 +91,10 @@ namespace WiiPlayTanksRemake.GameContent
 
         internal static void Draw()
         {
-            foreach (var tank in Tank.AllTanks)
-                tank?.DrawBody();
+            foreach (var tank in AllPlayerTanks)
+               tank.DrawBody();
+            foreach (var tank in AllAITanks)
+                tank.DrawBody();
 
             foreach (var cube in Cube.cubes)
                 cube?.Draw();
@@ -103,12 +109,12 @@ namespace WiiPlayTanksRemake.GameContent
                 parent?.DrawElements();
 
             TankGame.spriteBatch.DrawString(TankGame.Fonts.Default, $"TestFloat: {FloatForTesting}" +
-                $"\nHighestTier: {Tank.GetHighestTierActive()}" +
+                $"\nHighestTier: {AITank.GetHighestTierActive()}" +
                 $"\n", new(10, GameUtils.WindowHeight / 3), Color.White);
 
             for (int i = 0; i < Enum.GetNames<TankTier>().Length; i++)
             {
-                TankGame.spriteBatch.DrawString(TankGame.Fonts.Default, $"{Enum.GetNames<TankTier>()[i]}: {Tank.GetTankCountOfType((TankTier)i)}", new(10, GameUtils.WindowHeight * 0.6f + (i * 20)), Color.White);
+                TankGame.spriteBatch.DrawString(TankGame.Fonts.Default, $"{Enum.GetNames<TankTier>()[i]}: {AITank.GetTankCountOfType((TankTier)i)}", new(10, GameUtils.WindowHeight * 0.6f + (i * 20)), Color.White);
             }
 
             TankGame.spriteBatch.DrawString(TankGame.Fonts.Default, $"TankWeight: {tankMusicHandler.totalSpike}", new(10, GameUtils.WindowHeight - 20), Color.White);
@@ -145,19 +151,17 @@ namespace WiiPlayTanksRemake.GameContent
         }
         public static void Initialize()
         {
-            OnMissionStart = new((list) => list = Tank.AllTanks);
+            //             OnMissionStart.Invoke(AllPlayerTanks, AllAITanks);
             tankMusicHandler = new();
-            new Tank(new Vector3(0, 0, 0), playerType: PlayerType.Blue)
+            new PlayerTank(new Vector3(0, 0, 0), playerType: PlayerType.Red)
             {
-                scale = 1
             };
 
-            for (int i = 0; i < 30; i++)
+            for (int i = 0; i < 4; i++)
             {
-                var enemy = new Tank(new Vector3(new Random().Next(-200, 201), new Random().Next(-200, 201), 0), true, (TankTier)new Random().Next(1, 10))
+                var enemy = new AITank(new Vector3(new Random().Next(-200, 201), new Random().Next(-200, 201), 0), (TankTier)new Random().Next(1, 10))
                 {
-                    scale = 1,
-                    tankRotation = (float)new Random().NextDouble() * new Random().Next(1, 10)
+                    TankRotation = (float)new Random().NextDouble() * new Random().Next(1, 10)
                 };
             }
 

@@ -10,7 +10,7 @@ namespace WiiPlayTanksRemake.GameContent
         public Vector3 position;
         public int detonationTimer;
         public float explosionRadius;
-        public Tank owner;
+        public PlayerTank owner;
 
         internal void Update()
         {
