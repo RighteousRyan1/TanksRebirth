@@ -16,13 +16,12 @@ using System.Linq;
 
 namespace WiiPlayTanksRemake
 {
-
-    // TODO: Use orthographic off-center for projections
-    // TODO: Make model drawing priority work
     // TODO: Implement block once all of above things are done
-    // TODO: TOMORROW - make barrels move by either coed or making it a separate bone/model.
     // TODO: AI in the middle to far future
-    // TODO: to some finishingf touches to TankMusicSystem
+    // TODO: to some finishing touches to TankMusicSystem
+
+    // TODO: working aim for tanks
+    // MAJOR TODO: make tanks stop sharing the same goddamn spot, cuno maybe you can try it
 
     public class TankGame : Game
     {
@@ -72,18 +71,20 @@ namespace WiiPlayTanksRemake
             graphics.PreferredBackBufferHeight = 1080;
 
             GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(0.75f);
-            GameProjection = Matrix.CreateOrthographic(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, -500f, 5000f);
-
-            testMatrix = Matrix.Identity;
+            GameProjection = Matrix.CreateOrthographic(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, -2000f, 5000f);
 
             //GameProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45), GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000f);
 
             //GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up);
+            // GameProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver2, GraphicsDevice.Viewport.AspectRatio, 1, 5000);
             //GameProjection = Matrix.CreateOrthographicOffCenter(0, GameUtils.WindowWidth, GameUtils.WindowHeight, 0, -5000, 5000);//Matrix.CreateOrthographicOffCenter(0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, 0, -1, 5000);
 
             graphics.ApplyChanges();
+
             base.Initialize();
         }
+
+        public static Vector3 mouse3d;
 
         protected override void OnExiting(object sender, EventArgs args)
         {
@@ -92,24 +93,59 @@ namespace WiiPlayTanksRemake
 
         protected override void LoadContent()
         {
-            CubeModel = Content.Load<Model>("Assets/cube");
+            CubeModel = GameResources.GetGameResource<Model>("Assets/cube");
 
-            TankModel_Enemy = Content.Load<Model>("Assets/tank_enemy");
+            TankModel_Enemy = GameResources.GetGameResource<Model>("Assets/tank_e_fix");
 
-            TankModel_Player = Content.Load<Model>("Assets/tank_player");
+            TankModel_Player = GameResources.GetGameResource<Model>("Assets/tank_p_fix");
 
-            Fonts.Default = Content.Load<SpriteFont>("Assets/DefaultFont");
+            Fonts.Default = GameResources.GetGameResource<SpriteFont>("Assets/DefaultFont");
             spriteBatch = new SpriteBatch(GraphicsDevice);
-            UITextures.UIPanelBackground = Content.Load<Texture2D>("Assets/UIPanelBackground");
-            UITextures.UIPanelBackgroundCorner = Content.Load<Texture2D>("Assets/UIPanelBackgroundCorner");
+            UITextures.UIPanelBackground = GameResources.GetGameResource<Texture2D>("Assets/UIPanelBackground");
+            UITextures.UIPanelBackgroundCorner = GameResources.GetGameResource<Texture2D>("Assets/UIPanelBackgroundCorner");
 
-            floorTexture = Resources.GetGameResource<Texture2D>("Assets/textures/ingame/ground");
             graphics.SynchronizeWithVerticalRetrace = true;
             WPTR.Initialize();
+
+            foreach (ModelMesh mesh in TankModel_Player.Meshes)
+            {
+                foreach (BasicEffect effect in mesh.Effects)
+                {
+                    effect.LightingEnabled = true;
+                    effect.PreferPerPixelLighting = true;
+                    effect.EnableDefaultLighting();
+                }
+            }
+            foreach (ModelMesh mesh in TankModel_Enemy.Meshes)
+            {
+                foreach (BasicEffect effect in mesh.Effects)
+                {
+                    effect.LightingEnabled = true;
+                    effect.PreferPerPixelLighting = true;
+                    effect.EnableDefaultLighting();
+                }
+            }
             // TODO: use this.Content to load your game content here
         }
+
+        Vector2 rotVec;
+
         protected override void Update(GameTime gameTime)
         {
+            if (Input.MouseLeft)
+            {
+                rotVec += GameUtils.GetMouseVelocity(GameUtils.WindowCenter) / 500;
+            }
+
+            var transform = Vector4.Transform(GameUtils.MousePosition, Matrix.Invert(GameView * GameProjection));
+
+            mouse3d = new(transform.X, transform.Y, transform.Z);
+
+            System.Diagnostics.Debug.WriteLine(GameUtils.GetMouseVelocity(GameUtils.WindowCenter));
+
+            GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(0.75f + rotVec.Y) * Matrix.CreateRotationY(rotVec.X);
+            // GameProjection = Matrix.CreateOrthographic(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, -2000f, 5000f);
+
             FixedUpdate(gameTime);
         }
 
@@ -121,9 +157,6 @@ namespace WiiPlayTanksRemake
 
         public static Matrix GameView;
         public static Matrix GameProjection;
-
-        public static Matrix testMatrix;
-        public static Texture2D floorTexture;
 
         public void FixedUpdate(GameTime gameTime)
         {
@@ -158,17 +191,6 @@ namespace WiiPlayTanksRemake
             foreach (var music in Music.AllMusic)
                 music?.Update();
         }
-
-        private void DrawFloor()
-        {
-            spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, transformMatrix: testMatrix);
-
-            // spriteBatch.DrawString(Fonts.Default, "ur So Sussy", new Vector2(10, GameUtils.WindowHeight / 2), Color.White);
-            spriteBatch.Draw(floorTexture, new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height), null, Color.White, 0f, Vector2.Zero, default, default);
-
-            spriteBatch.End();
-        }
-
         protected override void Draw(GameTime gameTime)
         {
             var info = $"MouseX/WindowWidth {GameUtils.MousePosition.X / GameUtils.WindowWidth}" +
@@ -176,70 +198,17 @@ namespace WiiPlayTanksRemake
             GraphicsDevice.Clear(Color.Black);
             // draw stuff past
 
-            DrawFloor();
-
             spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied);
 
+            spriteBatch.DrawString(Fonts.Default, $"{WPTR.myTank.position.FlattenZ().ToNormalisedCoordinates()} : {GameUtils.MousePosition.ToNormalisedCoordinates()}", new(10, GameUtils.WindowHeight * 0.4f), Color.White);
+
             spriteBatch.DrawString(Fonts.Default, info, new(10, GameUtils.WindowHeight / 2), Color.White);
+
+            spriteBatch.DrawString(Fonts.Default, info, new(10, GameUtils.WindowHeight * 0.2f), Color.White);
+
             spriteBatch.DrawString(Fonts.Default, $"CurSong: {(Music.AllMusic.FirstOrDefault(music => music.volume == 0.5f) != null ? Music.AllMusic.FirstOrDefault(music => music.volume == 0.5f).Name : "N/A")}", new(10, GameUtils.WindowHeight - 100), Color.White);
 
             graphics.GraphicsDevice.DepthStencilState = DepthStencilState.Default;
-
-            // var tList = PlayerTank.AllTanks;
-
-            /*tList.Sort(new Comparison<Tank>(
-                (tank1, tank2) => 
-                tank2.position.Z.CompareTo(tank1.position.Z)));
-
-            int i = 0;
-            foreach (var tank in tList)
-            {
-                spriteBatch.DrawString(Fonts.Default, tank.tier.ToString(), new(10, 10 + (i * 20)), Color.White);
-                i++;
-                foreach (var mesh in tank.TankModel.Meshes)
-                {
-                    foreach (IEffectMatrices effect in mesh.Effects)
-                    {
-                        effect.View = tank.View;
-                        effect.World = tank.World;
-                        effect.Projection = tank.Projection;
-
-                        if (tank._tankColorMesh != null)
-                        {
-                            var fx = effect as BasicEffect;
-
-                            fx.LightingEnabled = true;
-                            fx.PreferPerPixelLighting = true;
-                            fx.EnableDefaultLighting();
-
-                            fx.TextureEnabled = true;
-
-                            fx.Texture = tank._tankColorMesh;
-                        }
-                    }
-
-                    mesh.Draw();
-                }
-            }*/
-
-            foreach (ModelMesh mesh in TankModel_Player.Meshes)
-            {
-                foreach (BasicEffect effect in mesh.Effects)
-                {
-                    effect.LightingEnabled = true;
-                    effect.PreferPerPixelLighting = true;
-                    effect.EnableDefaultLighting();
-                }
-            }
-            foreach (ModelMesh mesh in TankModel_Enemy.Meshes)
-            {
-                foreach (BasicEffect effect in mesh.Effects)
-                {
-                    effect.LightingEnabled = true;
-                    effect.PreferPerPixelLighting = true;
-                    effect.EnableDefaultLighting();
-                }
-            }
 
             WPTR.Draw();
 

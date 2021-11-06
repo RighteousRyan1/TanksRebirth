@@ -32,9 +32,9 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
                 _ => other - vec,
             };
         }
-        public static Vector2 GetMouseVelocity()
+        public static Vector2 GetMouseVelocity(Vector2 fromOffset = default)
         {
-            var pos = MousePosition;
+            var pos = MousePosition + fromOffset;
             var diff = pos - _oldMousePos;
             _oldMousePos = pos;
 
@@ -219,11 +219,9 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
             return InverseLerp(begin, end, value, clamped) * 2 - 1;
         }
 
-        public static int[] GetFrames(int frames, int textureHeight)
+        public static Vector2 ToNormalisedCoordinates(this Vector2 input)
         {
-            // this displays frame num, not actual
-            int frameCount = textureHeight / frames;
-            return new int[frameCount];
+            return new Vector2(input.X / WindowWidth - 0.5f, input.Y / WindowHeight - 0.5f) * 2;
         }
         public static Vector2 Flatten(this Vector3 vector) => new(vector.X, vector.Y);
 

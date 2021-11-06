@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PipelineBuildEvent xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<PipelineBuildEvent xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <SourceFile>C:/Users/Dylannnnnnn/Desktop/Tanks/textures/tank_shadow.png</SourceFile>
   <SourceTime>2020-10-31T12:51:21.6232226-05:00</SourceTime>
   <DestFile>C:/Users/Dylannnnnnn/Desktop/WiiPlayTanksRemake/Content/bin/DesktopGL/../../Tanks/textures/tank_shadow_0.xnb</DestFile>
-  <DestTime>2021-10-31T18:19:42.2997761-05:00</DestTime>
+  <DestTime>2021-11-03T21:06:40.2688447-05:00</DestTime>
   <Importer>TextureImporter</Importer>
-  <ImporterTime>2021-03-01T07:53:26-06:00</ImporterTime>
+  <ImporterTime>2020-08-10T16:17:54-05:00</ImporterTime>
   <Processor>TextureProcessor</Processor>
-  <ProcessorTime>2021-03-01T07:53:26-06:00</ProcessorTime>
+  <ProcessorTime>2020-08-10T16:17:54-05:00</ProcessorTime>
   <Parameters>
     <Key>ColorKeyColor</Key>
     <Value>0,0,0,0</Value>

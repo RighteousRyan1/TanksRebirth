@@ -5,7 +5,7 @@ using System.IO;
 
 namespace WiiPlayTanksRemake.Internals
 {
-	public static class Resources
+	public static class GameResources
 	{
 		private static Dictionary<string, object> ResourceCache { get; set; } = new();
 

@@ -18,7 +18,6 @@
 
     public enum PlayerType : byte
     {
-        IsNotPlayer,
         Blue,
         Red
     }

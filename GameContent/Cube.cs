@@ -20,7 +20,7 @@ namespace WiiPlayTanksRemake.GameContent
         public Cube(Vector3 position)
         {
             model = TankGame.CubeModel;
-            meshTexture = Resources.GetGameResource<Texture2D>("Assets/textures/wood_default");
+            meshTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/wood_default");
             this.position = position;
             cubes.Add(this);
         }

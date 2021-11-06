@@ -62,11 +62,11 @@ namespace WiiPlayTanksRemake.GameContent
 
             FloatForTesting = MathHelper.Clamp(FloatForTesting, -1, 1);
 
-            if (Input.MouseLeft)
+            if (Input.MouseRight)
             {
                 if (TankGame.GameUpdateTime % 5 == 0)
                 {
-                    var treadPlace = Resources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_tread_place_{new Random().Next(1, 5)}");
+                    var treadPlace = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_tread_place_{new Random().Next(1, 5)}");
                     var treadPlaceSfx = treadPlace.CreateInstance();
                     treadPlaceSfx.Play();
                     treadPlaceSfx.Volume = 0.2f;
@@ -91,6 +91,8 @@ namespace WiiPlayTanksRemake.GameContent
 
         internal static void Draw()
         {
+            MapRenderer.DrawWorldModels();
+
             foreach (var tank in AllPlayerTanks)
                tank.DrawBody();
             foreach (var tank in AllAITanks)
@@ -111,6 +113,12 @@ namespace WiiPlayTanksRemake.GameContent
             TankGame.spriteBatch.DrawString(TankGame.Fonts.Default, $"TestFloat: {FloatForTesting}" +
                 $"\nHighestTier: {AITank.GetHighestTierActive()}" +
                 $"\n", new(10, GameUtils.WindowHeight / 3), Color.White);
+            var details = $"myTank: {myTank}" +
+                $"\nmyTank_input: {PlayerTank.controlLeft}";
+
+            TankGame.spriteBatch.DrawString(TankGame.Fonts.Default, details, new(10, GameUtils.WindowHeight * 0.8f), Color.White);
+
+            // TankGame.spriteBatch.DrawString(TankGame.Fonts.Default, details, new Vector2(GameUtils.WindowWidth - 10, 10), Color.White, 0f, new Vector2(TankGame.Fonts.Default.MeasureString(details).X, TankGame.Fonts.Default.MeasureString(details).Y / 2), 0f, default, 0f);
 
             for (int i = 0; i < Enum.GetNames<TankTier>().Length; i++)
             {
@@ -149,23 +157,24 @@ namespace WiiPlayTanksRemake.GameContent
                 }
             }
         }
+        public static PlayerTank myTank;
         public static void Initialize()
         {
-            //             OnMissionStart.Invoke(AllPlayerTanks, AllAITanks);
-            tankMusicHandler = new();
-            new PlayerTank(new Vector3(0, 0, 0), playerType: PlayerType.Red)
-            {
-            };
+            MapRenderer.InitializeRenderers();
 
-            for (int i = 0; i < 4; i++)
+            // OnMissionStart.Invoke(AllPlayerTanks, AllAITanks);
+            tankMusicHandler = new();
+            myTank = new PlayerTank(new Vector3(0, 0, 0), playerType: PlayerType.Blue);
+
+            new Cube(new Vector3(100, 100, 0));
+
+            for (int i = 0; i < 6; i++)
             {
-                var enemy = new AITank(new Vector3(new Random().Next(-200, 201), new Random().Next(-200, 201), 0), (TankTier)new Random().Next(1, 10))
+                new AITank(new Vector3(new Random().Next(-200, 201), 0, new Random().Next(-500, 201)), (TankTier)new Random().Next(1, 10))
                 {
                     TankRotation = (float)new Random().NextDouble() * new Random().Next(1, 10)
                 };
             }
-
-            new Cube(new Vector3(100, 100, 0));
 
             // UI.PauseMenu.Initialize();
             tankMusicHandler.LoadMusic();
