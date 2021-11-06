@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PipelineBuildEvent xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-  <SourceFile>C:/Users/Dylannnnnnn/Desktop/Tanks/textures/enemy/tank_brown.png</SourceFile>
-  <SourceTime>2020-10-31T12:51:21.4669621-05:00</SourceTime>
-  <DestFile>C:/Users/Dylannnnnnn/Desktop/WiiPlayTanksRemake/Content/bin/DesktopGL/../../Tanks/textures/enemy/tank_brown_0.xnb</DestFile>
-  <DestTime>2021-11-06T13:44:37.8223984-05:00</DestTime>
+  <SourceFile>C:/Users/Dylannnnnnn/Desktop/Tanks/gamesource/New Folder/G3D/tnk_field_4_3.brres/floor_face.png</SourceFile>
+  <SourceTime>2021-11-06T00:15:20.7364837-05:00</SourceTime>
+  <DestFile>C:/Users/Dylannnnnnn/Desktop/WiiPlayTanksRemake/Content/bin/DesktopGL/../../Tanks/gamesource/New Folder/G3D/tnk_field_4_3.brres/floor_face_0.xnb</DestFile>
+  <DestTime>2021-11-06T13:44:24.2421421-05:00</DestTime>
   <Importer>TextureImporter</Importer>
   <ImporterTime>2020-08-10T16:17:54-05:00</ImporterTime>
   <Processor>TextureProcessor</Processor>

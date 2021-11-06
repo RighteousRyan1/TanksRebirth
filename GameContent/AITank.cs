@@ -31,9 +31,9 @@ namespace WiiPlayTanksRemake.GameContent
 
         internal Texture2D _tankColorTexture;
 
-        public Action behavior;
-
         private static Texture2D _shadowTexture;
+
+        public Action behavior;
 
         #region ModelBone & ModelMesh
         public Matrix[] boneTransforms;
@@ -154,8 +154,6 @@ namespace WiiPlayTanksRemake.GameContent
                 World = Matrix.CreateFromYawPitchRoll(TankRotation + MathHelper.PiOver2, 0, 0)
                     * Matrix.CreateTranslation(position.X, position.Y, position.Z);
 
-                Model.Root.Transform = World;
-
                 // if ((tankRotation + MathHelper.PiOver2).IsInRangeOf(tankRotationPredicted.ToRotation(), 1.5f))
                 position += velocity;
 
@@ -266,6 +264,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         private void RenderModel()
         {
+            Model.Root.Transform = World;
             CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(BarrelRotation);
 
             Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
@@ -274,7 +273,7 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 foreach (BasicEffect effect in mesh.Effects)
                 {
-                    effect.World = boneTransforms[mesh.ParentBone.Index];
+                    effect.World = boneTransforms[mesh.ParentBone.Index]; // IT"S THIS FUCKING LINE
                     effect.View = View;
                     effect.Projection = Projection;
 
@@ -283,6 +282,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                     effect.EnableDefaultLighting();
                 }
+
                 mesh.Draw();
             }
         }
@@ -296,8 +296,6 @@ namespace WiiPlayTanksRemake.GameContent
 
         public override string ToString()
             => $"tier: {tier} | velocity/achievable: {velocity}/{approachVelocity}";
-
-
 
         public static bool TryGetBulletNear(PlayerTank tank, float distance, out Bullet bullet)
         {

@@ -110,12 +110,14 @@ namespace WiiPlayTanksRemake.GameContent
                 World = Matrix.CreateFromYawPitchRoll(TankRotation, 0, 0)
                     * Matrix.CreateTranslation(position.X, position.Y, position.Z);
 
-                Model.Root.Transform = World;
-
                 // if ((tankRotation + MathHelper.PiOver2).IsInRangeOf(tankRotationPredicted.ToRotation(), 1.5f))
                 position += velocity;
 
-                BarrelRotation = (position.FlattenZ().ToNormalisedCoordinates() - GameUtils.MousePosition.ToNormalisedCoordinates()).ToRotation();
+                var normal = position.FlattenZ() - GameUtils.MousePosition;
+
+                normal.Normalize();
+
+                BarrelRotation = normal.RotatedByRadians(MathHelper.Pi).ToRotation(); //(position.FlattenZ().ToNormalisedCoordinates() - GameUtils.MousePosition.ToNormalisedCoordinates()).ToRotation();
 
                 // System.Diagnostics.Debug.WriteLine($"FlattenZ.Position: {position.FlattenZ()}");
 
@@ -203,6 +205,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         private void RenderModel()
         {
+            Model.Root.Transform = World;
             CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(BarrelRotation); // a
 
             Model.CopyAbsoluteBoneTransformsTo(boneTransforms); // a
