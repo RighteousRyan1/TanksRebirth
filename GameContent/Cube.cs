@@ -20,7 +20,7 @@ namespace WiiPlayTanksRemake.GameContent
         public Cube(Vector3 position)
         {
             model = TankGame.CubeModel;
-            meshTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/wood_default");
+            meshTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/ingame/block.1");
             this.position = position;
             cubes.Add(this);
         }
@@ -39,8 +39,6 @@ namespace WiiPlayTanksRemake.GameContent
 
                     var fx = effect as BasicEffect;
 
-                    fx.LightingEnabled = true;
-                    fx.PreferPerPixelLighting = true;
                     fx.EnableDefaultLighting();
 
                     fx.TextureEnabled = true;
@@ -53,7 +51,7 @@ namespace WiiPlayTanksRemake.GameContent
         }
         public void Update()
         {
-            World = Matrix.CreateTranslation(position.X, position.Y, position.Z) * Matrix.CreateScale(500f);
+            World = Matrix.CreateTranslation(position.X, position.Y, position.Z) * Matrix.CreateScale(1500f);
         }
     }
 }

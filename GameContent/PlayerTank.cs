@@ -20,8 +20,6 @@ namespace WiiPlayTanksRemake.GameContent
 
         private long _treadSoundTimer = 5;
 
-        public Vector2 tankRotationPredicted; // the number of radians which should be rotated to before the tank starts moving
-
         public BoundingBox CollisionBox;
 
         public PlayerType PlayerType { get; }
@@ -61,31 +59,27 @@ namespace WiiPlayTanksRemake.GameContent
             controlUp.KeybindPressAction = (cUp) =>
             {
                 playerControl_isBindPressed = true;
-                tankRotationPredicted.Y += 5f;
-                velocity.Z -= Speed / 3;
+                velocity.Z -= MaxSpeed / 3;
                 //velocity.Y += Speed / 3;
                 // approachVelocity.Y -= 20f;
             };
             controlDown.KeybindPressAction = (cDown) =>
             {
                 playerControl_isBindPressed = true;
-                tankRotationPredicted.Y -= 5f;
-                velocity.Z += Speed / 3;
+                velocity.Z += MaxSpeed / 3;
                 //velocity.Y -= Speed / 3;
                 //approachVelocity.Y += 20f;
             };
             controlLeft.KeybindPressAction = (cLeft) =>
             {
                 playerControl_isBindPressed = true;
-                tankRotationPredicted.X -= 5f;
-                velocity.X -= Speed / 3;
+                velocity.X -= MaxSpeed / 3;
                 //approachVelocity.X -= 20f;
             };
             controlRight.KeybindPressAction = (cRight) =>
             {
                 playerControl_isBindPressed = true;
-                tankRotationPredicted.X += 5f;
-                velocity.X += Speed / 3;
+                velocity.X += MaxSpeed / 3;
                 //approachVelocity.X += 20f;
             };
 
@@ -113,11 +107,11 @@ namespace WiiPlayTanksRemake.GameContent
                 // if ((tankRotation + MathHelper.PiOver2).IsInRangeOf(tankRotationPredicted.ToRotation(), 1.5f))
                 position += velocity;
 
-                var normal = position.FlattenZ() - GameUtils.MousePosition;
+                var normal = position - TankGame.mouse3d;
 
                 normal.Normalize();
 
-                BarrelRotation = normal.RotatedByRadians(MathHelper.Pi).ToRotation(); //(position.FlattenZ().ToNormalisedCoordinates() - GameUtils.MousePosition.ToNormalisedCoordinates()).ToRotation();
+                BarrelRotation = normal.ToRotation(); //(position.FlattenZ().ToNormalisedCoordinates() - GameUtils.MousePosition.ToNormalisedCoordinates()).ToRotation();
 
                 // System.Diagnostics.Debug.WriteLine($"FlattenZ.Position: {position.FlattenZ()}");
 
@@ -135,7 +129,7 @@ namespace WiiPlayTanksRemake.GameContent
             }
             else
             {
-                
+                CollisionBox = new();
             }
         }
 
@@ -217,8 +211,13 @@ namespace WiiPlayTanksRemake.GameContent
                     effect.World = boneTransforms[mesh.ParentBone.Index];
                     effect.View = View;
                     effect.Projection = Projection;
+                    effect.TextureEnabled = true;
+
                     if (mesh.Name != "polygon0.001")
                         effect.Texture = _tankColorTexture;
+
+                    else
+                        effect.Texture = _shadowTexture;
 
                     effect.EnableDefaultLighting();
                 }
@@ -228,9 +227,9 @@ namespace WiiPlayTanksRemake.GameContent
 
         internal void DrawBody()
         {
-            var display = $"rotationX: {TankRotation + MathHelper.PiOver2}" +
+            /*var display = $"rotationX: {TankRotation + MathHelper.PiOver2}" +
                 $"\nvelPredicted: {tankRotationPredicted.ToRotation()}" +
-                $"\nvel: {velocity}";
+                $"\nvel: {velocity}";*/
 
             if (Dead)
                 return;

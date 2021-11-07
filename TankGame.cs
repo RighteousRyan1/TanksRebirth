@@ -93,7 +93,7 @@ namespace WiiPlayTanksRemake
 
         protected override void LoadContent()
         {
-            CubeModel = GameResources.GetGameResource<Model>("Assets/cube");
+            CubeModel = GameResources.GetGameResource<Model>("Assets/cube_stack");
 
             TankModel_Enemy = GameResources.GetGameResource<Model>("Assets/tank_e_fix");
 
@@ -129,12 +129,17 @@ namespace WiiPlayTanksRemake
         }
 
         Vector2 rotVec;
+        float zoom = 1f;
 
         protected override void Update(GameTime gameTime)
         {
-            if (Input.MouseLeft)
+            if (Input.MouseLeft && !Input.MouseRight)
             {
                 rotVec += GameUtils.GetMouseVelocity(GameUtils.WindowCenter) / 500;
+            }
+            else if (Input.MouseLeft && Input.MouseRight)
+            {
+                zoom += GameUtils.GetMouseVelocity(GameUtils.WindowCenter).Y / 1500;
             }
 
             var transform = Vector4.Transform(GameUtils.MousePosition, Matrix.Invert(GameView * GameProjection));
@@ -144,7 +149,7 @@ namespace WiiPlayTanksRemake
             System.Diagnostics.Debug.WriteLine(GameUtils.GetMouseVelocity(GameUtils.WindowCenter));
 
             GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(0.75f + rotVec.Y) * Matrix.CreateRotationY(rotVec.X);
-            // GameProjection = Matrix.CreateOrthographic(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, -2000f, 5000f);
+            // GameProjection = Matrix.CreateOrthographic(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, -2000f, 5000f) * Matrix.CreateScale(zoom);
 
             FixedUpdate(gameTime);
         }
@@ -200,13 +205,13 @@ namespace WiiPlayTanksRemake
 
             spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied);
 
-            spriteBatch.DrawString(Fonts.Default, $"{WPTR.myTank.position.FlattenZ().ToNormalisedCoordinates()} : {GameUtils.MousePosition.ToNormalisedCoordinates()}", new(10, GameUtils.WindowHeight * 0.4f), Color.White);
+            DebugUtils.DrawDebugString(spriteBatch, $"{WPTR.myTank.position.FlattenZ().ToNormalisedCoordinates()} : {GameUtils.MousePosition.ToNormalisedCoordinates()}", new(10, GameUtils.WindowHeight * 0.4f));
 
-            spriteBatch.DrawString(Fonts.Default, info, new(10, GameUtils.WindowHeight / 2), Color.White);
+            DebugUtils.DrawDebugString(spriteBatch, info, new(10, GameUtils.WindowHeight / 2));
 
-            spriteBatch.DrawString(Fonts.Default, info, new(10, GameUtils.WindowHeight * 0.2f), Color.White);
+            DebugUtils.DrawDebugString(spriteBatch, info, new(10, GameUtils.WindowHeight * 0.2f));
 
-            spriteBatch.DrawString(Fonts.Default, $"CurSong: {(Music.AllMusic.FirstOrDefault(music => music.volume == 0.5f) != null ? Music.AllMusic.FirstOrDefault(music => music.volume == 0.5f).Name : "N/A")}", new(10, GameUtils.WindowHeight - 100), Color.White);
+            DebugUtils.DrawDebugString(spriteBatch, $"CurSong: {(Music.AllMusic.FirstOrDefault(music => music.volume == 0.5f) != null ? Music.AllMusic.FirstOrDefault(music => music.volume == 0.5f).Name : "N/A")}", new(10, GameUtils.WindowHeight - 100));
 
             graphics.GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 

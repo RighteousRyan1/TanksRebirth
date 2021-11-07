@@ -110,22 +110,27 @@ namespace WiiPlayTanksRemake.GameContent
             foreach (var parent in UIParent.TotalParents)
                 parent?.DrawElements();
 
-            TankGame.spriteBatch.DrawString(TankGame.Fonts.Default, $"TestFloat: {FloatForTesting}" +
+            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"TestFloat: {FloatForTesting}" +
                 $"\nHighestTier: {AITank.GetHighestTierActive()}" +
-                $"\n", new(10, GameUtils.WindowHeight / 3), Color.White);
+                $"\n", new(10, GameUtils.WindowHeight / 3));
             var details = $"myTank: {myTank}" +
                 $"\nmyTank_input: {PlayerTank.controlLeft}";
 
-            TankGame.spriteBatch.DrawString(TankGame.Fonts.Default, details, new(10, GameUtils.WindowHeight * 0.8f), Color.White);
+            // TankGame.spriteBatch.DrawString(TankGame.Fonts.Default, details, new(10, GameUtils.WindowHeight * 0.8f), Color.White);
+            DebugUtils.DrawDebugString(TankGame.spriteBatch, details, new(10, GameUtils.WindowHeight * 0.8f));
 
             // TankGame.spriteBatch.DrawString(TankGame.Fonts.Default, details, new Vector2(GameUtils.WindowWidth - 10, 10), Color.White, 0f, new Vector2(TankGame.Fonts.Default.MeasureString(details).X, TankGame.Fonts.Default.MeasureString(details).Y / 2), 0f, default, 0f);
+            /*for (int k = 0; k < MapRenderer.BoundsRenderer.MeshNames.Length; k++)
+                DebugUtils.DrawDebugString(TankGame.spriteBatch, MapRenderer.BoundsRenderer.MeshNames[k], new(1200, 10 + (k * 11)), 0.75f);*/
 
             for (int i = 0; i < Enum.GetNames<TankTier>().Length; i++)
             {
-                TankGame.spriteBatch.DrawString(TankGame.Fonts.Default, $"{Enum.GetNames<TankTier>()[i]}: {AITank.GetTankCountOfType((TankTier)i)}", new(10, GameUtils.WindowHeight * 0.6f + (i * 20)), Color.White);
+
+                DebugUtils.DrawDebugString(TankGame.spriteBatch, $"{Enum.GetNames<TankTier>()[i]}: {AITank.GetTankCountOfType((TankTier)i)}", new(10, GameUtils.WindowHeight * 0.6f + (i * 20)));
+                //TankGame.spriteBatch.DrawString(TankGame.Fonts.Default, $"{Enum.GetNames<TankTier>()[i]}: {AITank.GetTankCountOfType((TankTier)i)}", new(10, GameUtils.WindowHeight * 0.6f + (i * 20)), Color.White);
             }
 
-            TankGame.spriteBatch.DrawString(TankGame.Fonts.Default, $"TankWeight: {tankMusicHandler.totalSpike}", new(10, GameUtils.WindowHeight - 20), Color.White);
+            // TankGame.spriteBatch.DrawString(TankGame.Fonts.Default, $"TankWeight: {tankMusicHandler.totalSpike}", new(10, GameUtils.WindowHeight - 20), Color.White);
 
             if (TankGame.Instance.IsActive) {
                 foreach (var parent in UIParent.TotalParents.ToList()) {
@@ -160,13 +165,14 @@ namespace WiiPlayTanksRemake.GameContent
         public static PlayerTank myTank;
         public static void Initialize()
         {
+            DebugUtils.DebuggingEnabled = true;
             MapRenderer.InitializeRenderers();
 
             // OnMissionStart.Invoke(AllPlayerTanks, AllAITanks);
             tankMusicHandler = new();
             myTank = new PlayerTank(new Vector3(0, 0, 0), playerType: PlayerType.Blue);
 
-            new Cube(new Vector3(100, 100, 0));
+            new Cube(new Vector3(100, 500, 100));
 
             for (int i = 0; i < 6; i++)
             {

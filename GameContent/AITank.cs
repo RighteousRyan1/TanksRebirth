@@ -11,29 +11,28 @@ using WiiPlayTanksRemake.Internals;
 using Microsoft.Xna.Framework.Audio;
 using WiiPlayTanksRemake.Internals.Common;
 using WiiPlayTanksRemake.Internals.Core.Interfaces;
+using WiiPlayTanksRemake.GameContent.GameMechanics;
 
 namespace WiiPlayTanksRemake.GameContent
 {
     public class AITank : Tank
     {
-        public bool Invisible { get; private set; }
         public bool Stationary { get; private set; }
 
         private long _treadSoundTimer = 5;
         public int TierHierarchy => (int)tier;
-        public int UpdateTicks; // every X ticks, update
 
-        public Vector2 tankRotationPredicted; // the number of radians which should be rotated to before the tank starts moving
+        public AiBehavior[] Behaviors { get; private set; } = new AiBehavior[10]; // each of these should keep track of an action the tank performs
+
+        public int AiUpdateCount; // every X ticks, update
 
         public BoundingBox CollisionBox;
 
         public TankTier tier;
 
-        internal Texture2D _tankColorTexture;
+        private Texture2D _tankColorTexture, _shadowTexture;
 
-        private static Texture2D _shadowTexture;
-
-        public Action behavior;
+        public Action enactBehavior;
 
         #region ModelBone & ModelMesh
         public Matrix[] boneTransforms;
@@ -56,7 +55,6 @@ namespace WiiPlayTanksRemake.GameContent
         public static int GetTankCountOfType(TankTier tier)
             => WPTR.AllAITanks.Count(tnk => tnk.tier == tier);
 
-
         public AITank(Vector3 beginPos, TankTier tier = TankTier.None, bool setTankDefaults = true)
         {
             position = beginPos;
@@ -77,7 +75,7 @@ namespace WiiPlayTanksRemake.GameContent
                 {
                     BulletType = BulletType.RicochetRocket;
                     Stationary = true;
-                    Speed = 0;
+                    MaxSpeed = 0;
                 }
                 if (tier == TankTier.Pink)
                 {
@@ -85,40 +83,40 @@ namespace WiiPlayTanksRemake.GameContent
                 }
                 if (tier == TankTier.White)
                 {
-                    Speed = 1.1f;
+                    MaxSpeed = 1.1f;
                     Invisible = true;
                 }
                 if (tier == TankTier.Brown)
                 {
                     Stationary = true;
-                    Speed = 0;
+                    MaxSpeed = 0;
                 }
                 if (tier == TankTier.Black)
                 {
                     TreadPitch = -0.26f;
                     BulletType = BulletType.Rocket;
-                    Speed = 5f;
+                    MaxSpeed = 5f;
                 }
                 if (tier == TankTier.Yellow)
                 {
                     TreadPitch = 0.08f;
-                    Speed = 2.2f;
+                    MaxSpeed = 2.2f;
                 }
                 if (tier == TankTier.Purple)
                 {
                     TreadPitch = -0.2f;
-                    Speed = 2.5f;
+                    MaxSpeed = 2.5f;
                 }
                 if (tier == TankTier.Ash)
                 {
                     TreadPitch = 0.125f;
-                    Speed = 0.8f;
+                    MaxSpeed = 0.8f;
                 }
                 if (tier == TankTier.Marine)
                 {
                     TreadPitch = 0.11f;
                     BulletType = BulletType.Rocket;
-                    Speed = 0.6f;
+                    MaxSpeed = 0.6f;
                 }
             }
             if (setTankDefaults)
@@ -163,6 +161,10 @@ namespace WiiPlayTanksRemake.GameContent
 
                 oldPosition = position;
                 velocity *= 0.8f;
+            }
+            else
+            {
+                CollisionBox = new();
             }
         }
 
@@ -213,7 +215,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         public void GetAIBehavior()
         {
-            behavior?.Invoke();
+            enactBehavior?.Invoke();
             if (velocity != Vector3.Zero)
             {
                 if (TankGame.GameUpdateTime % _treadSoundTimer == 0)
@@ -236,7 +238,7 @@ namespace WiiPlayTanksRemake.GameContent
                 };
             }*/
 
-            behavior = () =>
+            enactBehavior = () =>
             {
                 if (!Dead)
                 {
@@ -277,8 +279,13 @@ namespace WiiPlayTanksRemake.GameContent
                     effect.View = View;
                     effect.Projection = Projection;
 
+                    effect.TextureEnabled = true;
+
                     if (mesh.Name != "polygon1")
                         effect.Texture = _tankColorTexture;
+
+                    else
+                        effect.Texture = _shadowTexture;
 
                     effect.EnableDefaultLighting();
                 }
@@ -295,7 +302,7 @@ namespace WiiPlayTanksRemake.GameContent
         }
 
         public override string ToString()
-            => $"tier: {tier} | velocity/achievable: {velocity}/{approachVelocity}";
+            => $"tier: {tier} | vel: {velocity} | pos: {position}";
 
         public static bool TryGetBulletNear(PlayerTank tank, float distance, out Bullet bullet)
         {

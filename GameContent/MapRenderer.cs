@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System.Linq;
 using WiiPlayTanksRemake.Internals;
 
 namespace WiiPlayTanksRemake.GameContent
@@ -51,21 +52,35 @@ namespace WiiPlayTanksRemake.GameContent
 
         public class BoundsRenderer
         {
+            public static string[] MeshNames = new string[0];
+
             public static Model BoundaryModel;
 
             public static void LoadBounds()
             {
                 BoundaryModel = GameResources.GetGameResource<Model>("Assets/outerbounds");
 
+                var list = MeshNames.ToList();
+
                 foreach (var mesh in BoundaryModel.Meshes)
                 {
+                    list.Add(mesh.Name);
+
                     foreach (BasicEffect effect in mesh.Effects)
                     {
                         effect.LightingEnabled = true;
                         effect.PreferPerPixelLighting = true;
                         effect.EnableDefaultLighting();
+
+                        effect.TextureEnabled = true;
                     }
+
+                    SetBlockTexture(mesh, "polygon54", BoundaryTextureContext.block_shadow_b);
+                    SetBlockTexture(mesh, "polygon68", BoundaryTextureContext.block_shadow_d);
+                    SetBlockTexture(mesh, "polygon8", BoundaryTextureContext.block_other_a);
                 }
+
+                MeshNames = list.ToArray();
             }
 
             public static void RenderBounds()
@@ -81,6 +96,34 @@ namespace WiiPlayTanksRemake.GameContent
 
                     mesh.Draw();
                 }
+            }
+
+            /// <summary>
+            /// Sets a block texture in the boundary model to 
+            /// </summary>
+            /// <param name="mesh"></param>
+            /// <param name="meshNameMatch"></param>
+            /// <param name="textureContext"></param>
+            private static void SetBlockTexture(ModelMesh mesh, string meshNameMatch, BoundaryTextureContext context)
+            {
+                foreach (BasicEffect effect in mesh.Effects)
+                {
+                    if (mesh.Name == meshNameMatch)
+                    {
+                        effect.Texture = GameResources.GetGameResource<Texture2D>($"Assets/textures/ingame/{context}");
+                    }
+                }
+            }
+
+            private enum BoundaryTextureContext
+            {
+                block_other_a,
+                block_other_b,
+                block_other_c,
+                block_other_b_test,
+                ground,
+                block_shadow_b,
+                block_shadow_d
             }
         }
 
@@ -104,6 +147,6 @@ namespace WiiPlayTanksRemake.GameContent
 
     public static class CollisionMapViewer
     {
-
+        // make a 2d collision map :smil:
     }
 }
