@@ -8,28 +8,30 @@ namespace WiiPlayTanksRemake.Internals.Common.GameUI
     {
         public Color BackgroundColor;
 
-        private void DrawPanel(Texture2D texture, Color color) {
-            SpriteBatch spriteBatch = TankGame.spriteBatch;
-            Rectangle otherInteraction = InteractionBox.ToRectangle();
-            Point other = new(otherInteraction.X + otherInteraction.Width - 12, otherInteraction.Y + otherInteraction.Height - 12);
-            int width = other.X - otherInteraction.X - 12;
-            int height = other.Y - otherInteraction.Y - 12;
-            spriteBatch.Draw(texture, new Rectangle(otherInteraction.X, otherInteraction.Y, 12, 12), new Rectangle(0, 0, 12, 12), color);
-            spriteBatch.Draw(texture, new Rectangle(other.X, otherInteraction.Y, 12, 12), new Rectangle(16, 0, 12, 12), color);
-            spriteBatch.Draw(texture, new Rectangle(otherInteraction.X, other.Y, 12, 12), new Rectangle(0, 12 + 4, 12, 12), color);
-            spriteBatch.Draw(texture, new Rectangle(other.X, other.Y, 12, 12), new Rectangle(12 + 4, 12 + 4, 12, 12), color);
-            spriteBatch.Draw(texture, new Rectangle(otherInteraction.X + 12, otherInteraction.Y, width, 12), new Rectangle(12, 0, 4, 12), color);
-            spriteBatch.Draw(texture, new Rectangle(otherInteraction.X + 12, other.Y, width, 12), new Rectangle(12, 12 + 4, 4, 12), color);
-            spriteBatch.Draw(texture, new Rectangle(otherInteraction.X, otherInteraction.Y + 12, 12, height), new Rectangle(0, 12, 12, 4), color);
-            spriteBatch.Draw(texture, new Rectangle(other.X, otherInteraction.Y + 12, 12, height), new Rectangle(12 + 4, 12, 12, 4), color);
-            spriteBatch.Draw(texture, new Rectangle(otherInteraction.X + 12, otherInteraction.Y + 12, width, height), new Rectangle(12, 12, 4, 4), color);
-        }
+        public override void DrawSelf(SpriteBatch spriteBatch) {
+            base.DrawSelf(spriteBatch);
 
-        public override void Draw() {
-            base.Draw();
+            Texture2D texture = TankGame.UITextures.UIPanelBackground;
 
-            DrawPanel(TankGame.UITextures.UIPanelBackground, BackgroundColor);
-            DrawPanel(TankGame.UITextures.UIPanelBackgroundCorner, BackgroundColor);
+            int border = 12;
+
+            int middleX = Hitbox.X + border;
+            int rightX = Hitbox.Right - border;
+
+            int middleY = Hitbox.Y + border;
+            int bottomY = Hitbox.Bottom - border;
+
+            spriteBatch.Draw(texture, new Rectangle(Hitbox.X, Hitbox.Y, border, border), new Rectangle(0, 0, border, border), BackgroundColor);
+            spriteBatch.Draw(texture, new Rectangle(middleX, Hitbox.Y, Hitbox.Width - border * 2, border), new Rectangle(border, 0, texture.Width - border * 2, border), BackgroundColor);
+            spriteBatch.Draw(texture, new Rectangle(rightX, Hitbox.Y, border, border), new Rectangle(texture.Width - border, 0, border, border), BackgroundColor);
+
+            spriteBatch.Draw(texture, new Rectangle(Hitbox.X, middleY, border, Hitbox.Height - border * 2), new Rectangle(0, border, border, texture.Height - border * 2), BackgroundColor);
+            spriteBatch.Draw(texture, new Rectangle(middleX, middleY, Hitbox.Width - border * 2, Hitbox.Height - border * 2), new Rectangle(border, border, texture.Width - border * 2, texture.Height - border * 2), BackgroundColor);
+            spriteBatch.Draw(texture, new Rectangle(rightX, middleY, border, Hitbox.Height - border * 2), new Rectangle(texture.Width - border, border, border, texture.Height - border * 2), BackgroundColor);
+
+            spriteBatch.Draw(texture, new Rectangle(Hitbox.X, bottomY, border, border), new Rectangle(0, texture.Height - border, border, border), BackgroundColor);
+            spriteBatch.Draw(texture, new Rectangle(middleX, bottomY, Hitbox.Width - border * 2, border), new Rectangle(border, texture.Height - border, texture.Width - border * 2, border), BackgroundColor);
+            spriteBatch.Draw(texture, new Rectangle(rightX, bottomY, border, border), new Rectangle(texture.Width - border, texture.Height - border, border, border), BackgroundColor);
         }
     }
 }

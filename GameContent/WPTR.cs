@@ -13,6 +13,7 @@ using Microsoft.Xna.Framework.Audio;
 using WiiPlayTanksRemake.GameContent.Systems;
 using System.Collections.Generic;
 using WiiPlayTanksRemake.Internals.Core.Interfaces;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace WiiPlayTanksRemake.GameContent
 {
@@ -107,8 +108,13 @@ namespace WiiPlayTanksRemake.GameContent
             foreach (var bullet in Bullet.AllBullets)
                 bullet?.Draw();
 
-            foreach (var parent in UIParent.TotalParents)
-                parent?.DrawElements();
+            foreach (var element in UIElement.AllUIElements) {
+                TankGame.spriteBatch.End();
+                TankGame.spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, transformMatrix: Matrix.CreateScale(Internals.Core.ResolutionHandler.GraphicsDeviceManager.GraphicsDevice.Viewport.AspectRatio));
+                element?.Draw(TankGame.spriteBatch);
+                TankGame.spriteBatch.End();
+                TankGame.spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied);
+            }
 
             DebugUtils.DrawDebugString(TankGame.spriteBatch, $"TestFloat: {FloatForTesting}" +
                 $"\nHighestTier: {AITank.GetHighestTierActive()}" +
@@ -133,28 +139,28 @@ namespace WiiPlayTanksRemake.GameContent
             // TankGame.spriteBatch.DrawString(TankGame.Fonts.Default, $"TankWeight: {tankMusicHandler.totalSpike}", new(10, GameUtils.WindowHeight - 20), Color.White);
 
             if (TankGame.Instance.IsActive) {
-                foreach (var parent in UIParent.TotalParents.ToList()) {
-                    foreach (var element in parent.Elements) {
-                        if (!element.MouseHovering && element.InteractionBox.ToRectangle().Contains(GameUtils.MousePosition)) {
-                            element?.MouseOver();
-                            element.MouseHovering = true;
-                        }
-                        else if (element.MouseHovering && !element.InteractionBox.ToRectangle().Contains(GameUtils.MousePosition)) {
-                            element?.MouseLeave();
-                            element.MouseHovering = false;
-                        }
-                        if (Input.MouseLeft && GameUtils.MouseOnScreenProtected && element != lastElementClicked) {
-                            element?.MouseClick();
-                            lastElementClicked = element;
-                        }
-                        if (Input.MouseRight && GameUtils.MouseOnScreenProtected && element != lastElementClicked) {
-                            element?.MouseRightClick();
-                            lastElementClicked = element;
-                        }
-                        if (Input.MouseMiddle && GameUtils.MouseOnScreenProtected && element != lastElementClicked) {
-                            element?.MouseMiddleClick();
-                            lastElementClicked = element;
-                        }
+                foreach (var element in UIElement.AllUIElements.ToList()) {
+                    DebugUtils.DrawDebugString(TankGame.spriteBatch, element.Hitbox, new(200, 200));
+                    DebugUtils.DrawDebugString(TankGame.spriteBatch, GameUtils.MousePosition, new(200, 250));
+                    if (!element.MouseHovering && element.Hitbox.Contains(GameUtils.MousePosition)) {
+                        element?.MouseOver();
+                        element.MouseHovering = true;
+                    }
+                    else if (element.MouseHovering && !element.Hitbox.Contains(GameUtils.MousePosition)) {
+                        element?.MouseLeave();
+                        element.MouseHovering = false;
+                    }
+                    if (Input.MouseLeft && GameUtils.MouseOnScreenProtected && element != lastElementClicked) {
+                        element?.MouseClick();
+                        lastElementClicked = element;
+                    }
+                    if (Input.MouseRight && GameUtils.MouseOnScreenProtected && element != lastElementClicked) {
+                        element?.MouseRightClick();
+                        lastElementClicked = element;
+                    }
+                    if (Input.MouseMiddle && GameUtils.MouseOnScreenProtected && element != lastElementClicked) {
+                        element?.MouseMiddleClick();
+                        lastElementClicked = element;
                     }
                 }
                 if (!Input.MouseLeft && !Input.MouseRight && !Input.MouseMiddle) {
@@ -182,7 +188,7 @@ namespace WiiPlayTanksRemake.GameContent
                 };
             }
 
-            // UI.PauseMenu.Initialize();
+            UI.IngameUI.Initialize();
             tankMusicHandler.LoadMusic();
             //MusicContent.green1.Play();
         }
