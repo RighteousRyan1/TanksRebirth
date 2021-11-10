@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
-using WiiPlayTanksRemake.Internals.Common.Utilities;
+using WiiPlayTanksRemake.Internals.Core;
 
 namespace WiiPlayTanksRemake.Internals.UI
 {
@@ -8,15 +9,29 @@ namespace WiiPlayTanksRemake.Internals.UI
     {
         public delegate void MouseEvent(UIElement affectedElement);
 
+        private Vector2 InternalPosition;
+
+        private Vector2 InternalSize;
+
         public static List<UIElement> AllUIElements { get; internal set; } = new();
 
-        public UIParent Parent { get; set; }
+        public UIElement Parent { get; private set; }
 
-        public OuRectangle InteractionBox;
+        protected IList<UIElement> Children { get; set; } = new List<UIElement>();
 
-        public OuRectangle InteractionBoxRelative;
+        public Rectangle Hitbox => new Rectangle((int)Position.X, (int)Position.Y, (int)Size.X, (int)Size.Y);
+
+        public Vector2 Position { get; private set; }
+
+        public Vector2 Size { get; private set; }
+
+        public Vector2 ScaleOrigin = new Vector2(0.5f);
+
+        public bool Visible = true;
 
         public bool MouseHovering;
+
+        public bool Initialized;
 
         public float Rotation { get; set; } = 0;
 
@@ -34,19 +49,61 @@ namespace WiiPlayTanksRemake.Internals.UI
             AllUIElements.Add(this);
         }
 
-        public virtual void Draw() {
-            if (InteractionBoxRelative.X != default) {
-                InteractionBox.X = GameUtils.WindowTopLeft.X + (GameUtils.WindowWidth * InteractionBoxRelative.X);
+        public void SetDimensions(int x, int y, int width, int height) {
+            InternalPosition = new Vector2(x, y);
+            InternalSize = new Vector2(width, height);
+            Recalculate();
+        }
+
+        public void Recalculate() {
+            Position = InternalPosition;
+            Size = InternalSize;
+        }
+
+        public virtual void Draw(SpriteBatch spriteBatch) {
+            if (!Visible)
+                return;
+
+            DrawSelf(spriteBatch);
+            DrawChildren(spriteBatch);
+        }
+
+        public void Initialize() {
+            if (Initialized)
+                return;
+
+            OnInitialize();
+            Initialized = true;
+        }
+
+        public virtual void OnInitialize() {
+            foreach (UIElement child in Children) {
+                child.Initialize();
             }
-            if (InteractionBoxRelative.Y != default) {
-                InteractionBox.Y = GameUtils.WindowTopLeft.Y + (GameUtils.WindowHeight * InteractionBoxRelative.Y);
+        }
+
+        public virtual void DrawSelf(SpriteBatch spriteBatch) { }
+
+        public virtual void DrawChildren(SpriteBatch spriteBatch) {
+            foreach (UIElement child in Children) {
+                child.Draw(spriteBatch);
             }
-            if (InteractionBoxRelative.Width != default) {
-                InteractionBox.Width = GameUtils.WindowWidth * InteractionBoxRelative.Width;
-            }
-            if (InteractionBoxRelative.Height != default) {
-                InteractionBox.Height = GameUtils.WindowHeight * InteractionBoxRelative.Height;
-            }
+        }
+
+        public virtual void Append(UIElement element) {
+            element.Remove();
+            element.Parent = this;
+            Children.Add(element);
+        }
+
+        public virtual void Remove() {
+            Parent?.Children.Remove(this);
+            Parent = null;
+        }
+
+        public virtual void Remove(UIElement child) {
+            Children.Remove(child);
+            child.Parent = null;
         }
 
         public virtual void MouseClick() {

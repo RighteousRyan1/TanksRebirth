@@ -48,12 +48,12 @@ namespace WiiPlayTanksRemake
         public struct UITextures
         {
             public static Texture2D UIPanelBackground;
-            public static Texture2D UIPanelBackgroundCorner;
         }
 
         public TankGame() : base()
         {
             graphics = new(this);
+            Internals.Core.ResolutionHandler.Initialize(graphics);
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
             Instance = this;
@@ -102,7 +102,6 @@ namespace WiiPlayTanksRemake
             Fonts.Default = GameResources.GetGameResource<SpriteFont>("Assets/DefaultFont");
             spriteBatch = new SpriteBatch(GraphicsDevice);
             UITextures.UIPanelBackground = GameResources.GetGameResource<Texture2D>("Assets/UIPanelBackground");
-            UITextures.UIPanelBackgroundCorner = GameResources.GetGameResource<Texture2D>("Assets/UIPanelBackgroundCorner");
 
             graphics.SynchronizeWithVerticalRetrace = true;
             WPTR.Initialize();

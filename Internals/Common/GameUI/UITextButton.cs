@@ -36,9 +36,10 @@ namespace WiiPlayTanksRemake.Internals.Common.GameUI
             Scale = scale;
         }
 
-        public override void Draw() {
-            base.Draw();
-            TankGame.spriteBatch.DrawString(Font, Text, InteractionBox.Center - (Font.MeasureString(Text) / 2f), TextColor, Rotation, Vector2.Zero, Scale, SpriteEffects.None, 0f);
+        public override void DrawSelf(SpriteBatch spriteBatch) {
+            base.DrawSelf(spriteBatch);
+
+            spriteBatch.DrawString(Font, Text, Hitbox.Center.ToVector2(), TextColor, Rotation, Font.MeasureString(Text) / 2, Scale, SpriteEffects.None, 0f);
         }
 
         public override void MouseOver() {
