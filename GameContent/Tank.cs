@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using WiiPlayTanksRemake.Enums;
+using WiiPlayTanksRemake.Internals.Common.Utilities;
 using WiiPlayTanksRemake.Internals.Core.Interfaces;
 
 namespace WiiPlayTanksRemake.GameContent
@@ -20,7 +21,7 @@ namespace WiiPlayTanksRemake.GameContent
         /// <summary>Whether or not the tank should become invisible at mission start.</summary>
         public bool Invisible { get; set; }
         /// <summary>How fast the tank should accelerate towards it's <see cref="MaxSpeed"/>.</summary>
-        public float Acceleration { get; set; } = 1f;
+        public float Acceleration { get; set; } = 0.3f;
         /// <summary>The maximum speed this tank can achieve.</summary>
         public float MaxSpeed { get; set; } = 1f;
         /// <summary>How fast the bullets this <see cref="Tank"/> shoot are.</summary>
@@ -38,6 +39,9 @@ namespace WiiPlayTanksRemake.GameContent
         /// <summary>The maximum amount of mines this <see cref="Tank"/> can place.</summary>
         public int MineLimit { get; set; }
 
+        public Vector2 Position2D => position.FlattenZ();
+        public Vector2 Velocity2D => velocity.FlattenZ();
+
         public Vector3 position, oldPosition, velocity;
 
         public int shootStun, mineLayStun, maxBullets, ricochetCount; // ticks!
@@ -45,6 +49,9 @@ namespace WiiPlayTanksRemake.GameContent
 
         public float maxTurnUntilPivot; // radians!!!!
         public float pivotSpeed = 1f; // radians per tick!!!
+
+        public string GetGeneralStats()
+            => $"Pos2D: {Position2D} | Vel: {Velocity2D} | Dead: {Dead}";
     }
 
     public class TankFootprint
@@ -58,9 +65,12 @@ namespace WiiPlayTanksRemake.GameContent
 
         private static int total_treads_placed;
 
-        public void Render()
+        public TankFootprint()
         {
             total_treads_placed++;
+        }
+        public void Render()
+        {
         }
     }
 }

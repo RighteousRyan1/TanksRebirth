@@ -70,7 +70,7 @@ namespace WiiPlayTanksRemake
             graphics.PreferredBackBufferWidth = 1920;
             graphics.PreferredBackBufferHeight = 1080;
 
-            GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(0.75f);
+            GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(0.75f) * Matrix.CreateTranslation(0f, 0f, 1000f);
             GameProjection = Matrix.CreateOrthographic(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, -2000f, 5000f);
 
             //GameProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45), GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000f);
@@ -128,17 +128,12 @@ namespace WiiPlayTanksRemake
         }
 
         Vector2 rotVec;
-        float zoom = 1f;
 
         protected override void Update(GameTime gameTime)
         {
             if (Input.MouseLeft && !Input.MouseRight)
             {
                 rotVec += GameUtils.GetMouseVelocity(GameUtils.WindowCenter) / 500;
-            }
-            else if (Input.MouseLeft && Input.MouseRight)
-            {
-                zoom += GameUtils.GetMouseVelocity(GameUtils.WindowCenter).Y / 1500;
             }
 
             var transform = Vector4.Transform(GameUtils.MousePosition, Matrix.Invert(GameView * GameProjection));
@@ -197,14 +192,13 @@ namespace WiiPlayTanksRemake
         }
         protected override void Draw(GameTime gameTime)
         {
-            var info = $"MouseX/WindowWidth {GameUtils.MousePosition.X / GameUtils.WindowWidth}" +
-                $"\nHighestTier: {AITank.GetHighestTierActive()}";
+            var info = $"HighestTier: {AITank.GetHighestTierActive()}";
             GraphicsDevice.Clear(Color.Black);
             // draw stuff past
 
             spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied);
 
-            DebugUtils.DrawDebugString(spriteBatch, $"{WPTR.myTank.position.FlattenZ().ToNormalisedCoordinates()} : {GameUtils.MousePosition.ToNormalisedCoordinates()}", new(10, GameUtils.WindowHeight * 0.4f));
+            DebugUtils.DrawDebugString(spriteBatch, $"{WPTR.myTank.GetGeneralStats()} : {GameUtils.MousePosition.ToNormalisedCoordinates()}", new(10, GameUtils.WindowHeight * 0.4f));
 
             DebugUtils.DrawDebugString(spriteBatch, info, new(10, GameUtils.WindowHeight / 2));
 

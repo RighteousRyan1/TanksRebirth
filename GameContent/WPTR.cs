@@ -119,24 +119,11 @@ namespace WiiPlayTanksRemake.GameContent
             DebugUtils.DrawDebugString(TankGame.spriteBatch, $"TestFloat: {FloatForTesting}" +
                 $"\nHighestTier: {AITank.GetHighestTierActive()}" +
                 $"\n", new(10, GameUtils.WindowHeight / 3));
-            var details = $"myTank: {myTank}" +
-                $"\nmyTank_input: {PlayerTank.controlLeft}";
-
-            // TankGame.spriteBatch.DrawString(TankGame.Fonts.Default, details, new(10, GameUtils.WindowHeight * 0.8f), Color.White);
-            DebugUtils.DrawDebugString(TankGame.spriteBatch, details, new(10, GameUtils.WindowHeight * 0.8f));
-
-            // TankGame.spriteBatch.DrawString(TankGame.Fonts.Default, details, new Vector2(GameUtils.WindowWidth - 10, 10), Color.White, 0f, new Vector2(TankGame.Fonts.Default.MeasureString(details).X, TankGame.Fonts.Default.MeasureString(details).Y / 2), 0f, default, 0f);
-            /*for (int k = 0; k < MapRenderer.BoundsRenderer.MeshNames.Length; k++)
-                DebugUtils.DrawDebugString(TankGame.spriteBatch, MapRenderer.BoundsRenderer.MeshNames[k], new(1200, 10 + (k * 11)), 0.75f);*/
 
             for (int i = 0; i < Enum.GetNames<TankTier>().Length; i++)
             {
-
                 DebugUtils.DrawDebugString(TankGame.spriteBatch, $"{Enum.GetNames<TankTier>()[i]}: {AITank.GetTankCountOfType((TankTier)i)}", new(10, GameUtils.WindowHeight * 0.6f + (i * 20)));
-                //TankGame.spriteBatch.DrawString(TankGame.Fonts.Default, $"{Enum.GetNames<TankTier>()[i]}: {AITank.GetTankCountOfType((TankTier)i)}", new(10, GameUtils.WindowHeight * 0.6f + (i * 20)), Color.White);
             }
-
-            // TankGame.spriteBatch.DrawString(TankGame.Fonts.Default, $"TankWeight: {tankMusicHandler.totalSpike}", new(10, GameUtils.WindowHeight - 20), Color.White);
 
             if (TankGame.Instance.IsActive) {
                 foreach (var element in UIElement.AllUIElements.ToList()) {
@@ -182,7 +169,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             for (int i = 0; i < 6; i++)
             {
-                new AITank(new Vector3(new Random().Next(-200, 201), 0, new Random().Next(-500, 201)), (TankTier)new Random().Next(1, 10))
+                new AITank(new Vector3(new Random().Next(-200, 201), 0, new Random().Next(-500, 600)), (TankTier)new Random().Next(1, 10))
                 {
                     TankRotation = (float)new Random().NextDouble() * new Random().Next(1, 10)
                 };

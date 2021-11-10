@@ -59,27 +59,27 @@ namespace WiiPlayTanksRemake.GameContent
             controlUp.KeybindPressAction = (cUp) =>
             {
                 playerControl_isBindPressed = true;
-                velocity.Z -= MaxSpeed / 3;
+                velocity.Z -= Acceleration;
                 //velocity.Y += Speed / 3;
                 // approachVelocity.Y -= 20f;
             };
             controlDown.KeybindPressAction = (cDown) =>
             {
                 playerControl_isBindPressed = true;
-                velocity.Z += MaxSpeed / 3;
+                velocity.Z += Acceleration;
                 //velocity.Y -= Speed / 3;
                 //approachVelocity.Y += 20f;
             };
             controlLeft.KeybindPressAction = (cLeft) =>
             {
                 playerControl_isBindPressed = true;
-                velocity.X -= MaxSpeed / 3;
+                velocity.X -= Acceleration;
                 //approachVelocity.X -= 20f;
             };
             controlRight.KeybindPressAction = (cRight) =>
             {
                 playerControl_isBindPressed = true;
-                velocity.X += MaxSpeed / 3;
+                velocity.X += Acceleration;
                 //approachVelocity.X += 20f;
             };
 
@@ -92,10 +92,11 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 position.X = MathHelper.Clamp(position.X, -268, 268);
                 position.Z = MathHelper.Clamp(position.Z, -155, 400);
+
                 if (velocity != Vector3.Zero)
                 {
                     //GameUtils.RoughStep(ref tankRotation, tankRotationPredicted.ToRotation(), 0.5f);
-                    TankRotation = velocity.FlattenZ().ToRotation();
+                    TankRotation = Velocity2D.ToRotation();
                     // make the stop not go wack
                 }
                 Projection = TankGame.GameProjection;
@@ -103,24 +104,19 @@ namespace WiiPlayTanksRemake.GameContent
 
                 World = Matrix.CreateFromYawPitchRoll(TankRotation, 0, 0)
                     * Matrix.CreateTranslation(position.X, position.Y, position.Z);
-
                 // if ((tankRotation + MathHelper.PiOver2).IsInRangeOf(tankRotationPredicted.ToRotation(), 1.5f))
+                if (Input.CurrentGamePadSnapshot.IsConnected)
+                    ControlHandle_ConsoleController();
                 position += velocity;
 
-                var normal = position - TankGame.mouse3d;
+                var normal = Position2D - GameUtils.MousePosition;
 
-                normal.Normalize();
-
-                BarrelRotation = normal.ToRotation(); //(position.FlattenZ().ToNormalisedCoordinates() - GameUtils.MousePosition.ToNormalisedCoordinates()).ToRotation();
-
-                // System.Diagnostics.Debug.WriteLine($"FlattenZ.Position: {position.FlattenZ()}");
+                BarrelRotation = normal.ToRotation();
 
                 if (Input.CanDetectClick())
-                {
                     Shoot(BarrelRotation, BulletShootSpeed);
-                }
+
                 UpdatePlayerMovement();
-                velocity *= 0.8f;
                 UpdateCollision();
 
                 playerControl_isBindPressed = false;
@@ -131,6 +127,21 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 CollisionBox = new();
             }
+        }
+
+        /// <summary>
+        /// Controller support soon i hope
+        /// </summary>
+        private void ControlHandle_ConsoleController()
+        {
+            var leftStick = Input.CurrentGamePadSnapshot.ThumbSticks.Left;
+
+            velocity.X += leftStick.X;
+            velocity.Z -= leftStick.Y;
+        }
+
+        private void ControlHandle_Keybinding()
+        {
         }
 
         private void UpdateCollision()
@@ -159,7 +170,21 @@ namespace WiiPlayTanksRemake.GameContent
 
         public void UpdatePlayerMovement()
         {
-            if (velocity != Vector3.Zero && playerControl_isBindPressed)
+            if (!controlDown.IsPressed && !controlUp.IsPressed)
+                velocity.Z = 0;
+            if (!controlLeft.IsPressed && !controlRight.IsPressed)
+                velocity.X = 0;
+
+            if (velocity.X > MaxSpeed)
+                velocity.X = MaxSpeed;
+            if (velocity.X < -MaxSpeed)
+                velocity.X = -MaxSpeed;
+            if (velocity.Z > MaxSpeed)
+                velocity.Z = MaxSpeed;
+            if (velocity.Z < -MaxSpeed)
+                velocity.Z = -MaxSpeed;
+
+            if (Velocity2D.Length() > 0 && playerControl_isBindPressed)
             {
                 if (TankGame.GameUpdateTime % _treadSoundTimer == 0)
                 {
@@ -219,6 +244,7 @@ namespace WiiPlayTanksRemake.GameContent
                     else
                         effect.Texture = _shadowTexture;
 
+                    //effect.DirectionalLight0.Direction = new(0, 1, 0);
                     effect.EnableDefaultLighting();
                 }
                 mesh.Draw();

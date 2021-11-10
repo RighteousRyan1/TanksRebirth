@@ -11,6 +11,12 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
     {
         private static Vector2 _oldMousePos;
 
+        public static Vector3 Expand_Z(this Vector2 vector)
+            => new(vector.X, 0, vector.Y);
+
+        public static Vector3 Expand(this Vector2 vector)
+            => new(vector, 0);
+
         /// <summary>
         /// <paramref name="from"/> means it gets the direction vector from <paramref name="vec"/>, otherwise to <paramref name="other"/>.
         /// </summary>
@@ -60,8 +66,7 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
             result.Y += newPoint.X * sinRotation + newPoint.Y * cosRotation;
             return result;
         }
-        public static Vector3 ToVector3(this Vector2 twoD) => new(twoD.X, twoD.Y, 0f);
-        public static Vector2 DistanceFrom(this Vector2 start, Vector2 target) => target - start;
+        public static Vector2 DistanceVectorTo(this Vector2 start, Vector2 target) => target - start;
         public static Vector2 MousePosition => new(Input.CurrentMouseSnapshot.X, Input.CurrentMouseSnapshot.Y);
         public static Vector2 MousePosition_ToBlockCoordinates => MousePosition / 16;
         public static Vector2 ToBlockCoordinates(this Vector2 vector) => vector / 16;
@@ -226,6 +231,7 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
         public static Vector2 Flatten(this Vector3 vector) => new(vector.X, vector.Y);
 
         public static Vector2 FlattenZ(this Vector3 vector) => new(vector.X, vector.Z);
+        public static Vector2 FlattenZ_InvertZ(this Vector3 vector) => new(vector.X, -vector.Z);
 
         public static bool IsInRangeOf(this float value, float midpoint, float distance)
         {

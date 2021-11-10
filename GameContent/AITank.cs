@@ -246,16 +246,15 @@ namespace WiiPlayTanksRemake.GameContent
 
                     if (WPTR.AllPlayerTanks.IndexOf(tank_tryget) > -1)
                     {
+                        // if (TankGame.GameUpdateTime % 10 == 0)
+                            BarrelRotation = Position2D.DirectionOf(tank_tryget.Position2D).ToRotation();
+
+                        var randSeed1 = new Random().Next(0, 1500 / TierHierarchy);
+
+                        if (randSeed1 == 0)
+                            Shoot(BarrelRotation, BulletShootSpeed);
                         if (!Stationary)
                         {
-
-                            if (TankGame.GameUpdateTime % 10 == 0)
-                                BarrelRotation = tank_tryget.position.ToRotation();
-
-                            var randSeed1 = new Random().Next(0, 1500 / TierHierarchy);
-
-                            if (randSeed1 == 0)
-                                Shoot(BarrelRotation, BulletShootSpeed);
 
                             // velocity += position.DirectionOf(target) / 500 * Speed;
                         }
