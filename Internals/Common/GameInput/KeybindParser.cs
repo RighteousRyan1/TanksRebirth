@@ -39,7 +39,9 @@ namespace WiiPlayTanksRemake.Internals.Common.GameInput
                     return num.ToString();
                 }
             }
-            switch (key) {
+
+            switch (key)
+            {
                 case OemPlus:
                     return "+";
                 case OemMinus:
@@ -64,8 +66,9 @@ namespace WiiPlayTanksRemake.Internals.Common.GameInput
                     return @"\";
                 case OemTilde:
                     return "`";
+                default:
+                    return key.ToString();
             }
-            return key.ToString();
         }
     }
 }

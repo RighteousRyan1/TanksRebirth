@@ -19,11 +19,11 @@ namespace WiiPlayTanksRemake.Internals.UI
 
         protected IList<UIElement> Children { get; set; } = new List<UIElement>();
 
-        public Rectangle Hitbox => new Rectangle((int)Position.X, (int)Position.Y, (int)Size.X, (int)Size.Y);
+        public Rectangle Hitbox => new((int)Position.X, (int)Position.Y, (int)Size.X, (int)Size.Y);
 
-        public Vector2 Position { get; private set; }
+        public Vector2 Position { get; set; }
 
-        public Vector2 Size { get; private set; }
+        public Vector2 Size { get; set; }
 
         public Vector2 ScaleOrigin = new Vector2(0.5f);
 
@@ -49,7 +49,7 @@ namespace WiiPlayTanksRemake.Internals.UI
             AllUIElements.Add(this);
         }
 
-        public void SetDimensions(int x, int y, int width, int height) {
+        public void SetDimensions(float x, float y, float width, float height) {
             InternalPosition = new Vector2(x, y);
             InternalSize = new Vector2(width, height);
             Recalculate();

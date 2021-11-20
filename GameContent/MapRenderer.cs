@@ -145,8 +145,13 @@ namespace WiiPlayTanksRemake.GameContent
         }
     }
 
-    public static class CollisionMapViewer
+    public static class CollisionMap
     {
         // make a 2d collision map :smil:
+
+        public static Vector2 renderPosition;
+
+        public static Vector2[] trackedTankPositions;
+        public static Vector2[] trackedCubePositions;
     }
 }

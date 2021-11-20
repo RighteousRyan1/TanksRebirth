@@ -60,7 +60,7 @@ namespace WiiPlayTanksRemake
             Window.Title = "Wii Play Tanks Remake";
             Window.AllowUserResizing = true;
 
-            Window.IsBorderless = true;
+            // Window.IsBorderless = true;
         }
 
         protected override void Initialize()
@@ -136,9 +136,9 @@ namespace WiiPlayTanksRemake
                 rotVec += GameUtils.GetMouseVelocity(GameUtils.WindowCenter) / 500;
             }
 
-            var transform = Vector4.Transform(GameUtils.MousePosition, Matrix.Invert(GameView * GameProjection));
+            var transform = Vector3.Transform(new(GameUtils.MousePosition, 0), Matrix.Invert(GameView * GameProjection));
 
-            mouse3d = new(transform.X, transform.Y, transform.Z);
+            mouse3d = transform;
 
             System.Diagnostics.Debug.WriteLine(GameUtils.GetMouseVelocity(GameUtils.WindowCenter));
 
@@ -192,13 +192,14 @@ namespace WiiPlayTanksRemake
         }
         protected override void Draw(GameTime gameTime)
         {
-            var info = $"HighestTier: {AITank.GetHighestTierActive()}";
+            var info = $"HighestTier: {AITank.GetHighestTierActive()}\nMouse3D: {mouse3d}";
             GraphicsDevice.Clear(Color.Black);
             // draw stuff past
 
             spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied);
 
-            DebugUtils.DrawDebugString(spriteBatch, $"{WPTR.myTank.GetGeneralStats()} : {GameUtils.MousePosition.ToNormalisedCoordinates()}", new(10, GameUtils.WindowHeight * 0.4f));
+            DebugUtils.DrawDebugString(spriteBatch, $"{WPTR.myTank.GetGeneralStats()} : {GameUtils.MousePosition.ToNormalisedCoordinates()}", new(10, GameUtils.WindowHeight * 0.15f));
+            DebugUtils.DrawDebugString(spriteBatch, $"{GameUtils.MousePosition}", new(10, GameUtils.WindowHeight * 0.4f));
 
             DebugUtils.DrawDebugString(spriteBatch, info, new(10, GameUtils.WindowHeight / 2));
 

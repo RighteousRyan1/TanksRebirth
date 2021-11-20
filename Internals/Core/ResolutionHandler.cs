@@ -6,17 +6,14 @@ namespace WiiPlayTanksRemake.Internals.Core
 	{
 		public static int DesignedX = 1920;
 
-		public static int DesignedY = 1020;
+		public static int DesignedY = 1080;
 
 		internal static void Initialize(GraphicsDeviceManager graphicsDeviceManager) {
 			GraphicsDeviceManager = graphicsDeviceManager;
 			UpdateResolution(false, DesignedX, DesignedY);
 		}
 
-		public static GraphicsDeviceManager GraphicsDeviceManager
-		{
-			get; private set;
-		}
+		public static GraphicsDeviceManager GraphicsDeviceManager{ get; private set; }
 
 		public static bool FullScreened;
 
@@ -24,7 +21,7 @@ namespace WiiPlayTanksRemake.Internals.Core
 
 		public static int ScreenHeight;
 
-		public static Vector2 ResolutionRatio => new Vector2((float)ScreenWidth / DesignedX, (float)ScreenHeight / DesignedY);
+		public static Vector2 ResolutionRatio => new((float)ScreenWidth / DesignedX, (float)ScreenHeight / DesignedY);
 
 		public static void UpdateResolution(bool fullScreened, int screenWidth, int screenHeight) {
 			FullScreened = fullScreened;

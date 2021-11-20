@@ -14,6 +14,7 @@ using WiiPlayTanksRemake.GameContent.Systems;
 using System.Collections.Generic;
 using WiiPlayTanksRemake.Internals.Core.Interfaces;
 using Microsoft.Xna.Framework.Graphics;
+using WiiPlayTanksRemake.Internals.Core;
 
 namespace WiiPlayTanksRemake.GameContent
 {
@@ -39,6 +40,8 @@ namespace WiiPlayTanksRemake.GameContent
         /// Fired when a mission is started.
         /// </summary>
         public static MissionStartEvent OnMissionStart;
+
+        public static Matrix UIMatrix => Matrix.CreateOrthographicOffCenter(0, TankGame.Instance.GraphicsDevice.Viewport.Width, TankGame.Instance.GraphicsDevice.Viewport.Height, 0, -1, 1);
 
         internal static void Update()
         {
@@ -89,7 +92,6 @@ namespace WiiPlayTanksRemake.GameContent
                 FloatForTesting += 0.01f;
             }
         }
-
         internal static void Draw()
         {
             MapRenderer.DrawWorldModels();
@@ -108,12 +110,13 @@ namespace WiiPlayTanksRemake.GameContent
             foreach (var bullet in Bullet.AllBullets)
                 bullet?.Draw();
 
+            // TODO: Fix translation
+            // TODO: Scaling with screen size.
+
             foreach (var element in UIElement.AllUIElements) {
-                TankGame.spriteBatch.End();
-                TankGame.spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, transformMatrix: Matrix.CreateScale(Internals.Core.ResolutionHandler.GraphicsDeviceManager.GraphicsDevice.Viewport.AspectRatio));
+                element.Position = Vector2.Transform(element.Position, UIMatrix * Matrix.CreateTranslation(element.Position.X, element.Position.Y, 0));
+
                 element?.Draw(TankGame.spriteBatch);
-                TankGame.spriteBatch.End();
-                TankGame.spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied);
             }
 
             DebugUtils.DrawDebugString(TankGame.spriteBatch, $"TestFloat: {FloatForTesting}" +
@@ -155,6 +158,7 @@ namespace WiiPlayTanksRemake.GameContent
                 }
             }
         }
+
         public static PlayerTank myTank;
         public static void Initialize()
         {
@@ -164,8 +168,6 @@ namespace WiiPlayTanksRemake.GameContent
             // OnMissionStart.Invoke(AllPlayerTanks, AllAITanks);
             tankMusicHandler = new();
             myTank = new PlayerTank(new Vector3(0, 0, 0), playerType: PlayerType.Blue);
-
-            new Cube(new Vector3(100, 500, 100));
 
             for (int i = 0; i < 6; i++)
             {

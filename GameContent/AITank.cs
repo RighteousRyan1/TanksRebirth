@@ -150,7 +150,7 @@ namespace WiiPlayTanksRemake.GameContent
                 View = TankGame.GameView;
 
                 World = Matrix.CreateFromYawPitchRoll(TankRotation + MathHelper.PiOver2, 0, 0)
-                    * Matrix.CreateTranslation(position.X, position.Y, position.Z);
+                    * Matrix.CreateTranslation(position);
 
                 // if ((tankRotation + MathHelper.PiOver2).IsInRangeOf(tankRotationPredicted.ToRotation(), 1.5f))
                 position += velocity;

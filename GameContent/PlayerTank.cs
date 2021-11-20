@@ -56,7 +56,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             position = beginPos;
 
-            controlUp.KeybindPressAction = (cUp) =>
+            /*controlUp.KeybindPressAction = (cUp) =>
             {
                 playerControl_isBindPressed = true;
                 velocity.Z -= Acceleration;
@@ -81,11 +81,11 @@ namespace WiiPlayTanksRemake.GameContent
                 playerControl_isBindPressed = true;
                 velocity.X += Acceleration;
                 //approachVelocity.X += 20f;
-            };
+            };*/
 
             WPTR.AllPlayerTanks.Add(this);
         }
-
+        Vector2 p;
         internal void Update()
         {
             if (!Dead)
@@ -105,11 +105,14 @@ namespace WiiPlayTanksRemake.GameContent
                 World = Matrix.CreateFromYawPitchRoll(TankRotation, 0, 0)
                     * Matrix.CreateTranslation(position.X, position.Y, position.Z);
                 // if ((tankRotation + MathHelper.PiOver2).IsInRangeOf(tankRotationPredicted.ToRotation(), 1.5f))
+
+                ControlHandle_Keybinding();
                 if (Input.CurrentGamePadSnapshot.IsConnected)
                     ControlHandle_ConsoleController();
                 position += velocity;
 
-                var normal = Position2D - GameUtils.MousePosition;
+                var normal = (Position2D - GameUtils.MousePosition) * -1;
+                p = normal;
 
                 BarrelRotation = normal.ToRotation();
 
@@ -142,6 +145,26 @@ namespace WiiPlayTanksRemake.GameContent
 
         private void ControlHandle_Keybinding()
         {
+            if (controlDown.IsPressed)
+            {
+                playerControl_isBindPressed = true;
+                velocity.Z += Acceleration;
+            }
+            if (controlUp.IsPressed)
+            {
+                playerControl_isBindPressed = true;
+                velocity.Z -= Acceleration;
+            }
+            if (controlLeft.IsPressed)
+            {
+                playerControl_isBindPressed = true;
+                velocity.X -= Acceleration;
+            }
+            if (controlRight.IsPressed)
+            {
+                playerControl_isBindPressed = true;
+                velocity.X += Acceleration;
+            }
         }
 
         private void UpdateCollision()
@@ -253,10 +276,6 @@ namespace WiiPlayTanksRemake.GameContent
 
         internal void DrawBody()
         {
-            /*var display = $"rotationX: {TankRotation + MathHelper.PiOver2}" +
-                $"\nvelPredicted: {tankRotationPredicted.ToRotation()}" +
-                $"\nvel: {velocity}";*/
-
             if (Dead)
                 return;
 
