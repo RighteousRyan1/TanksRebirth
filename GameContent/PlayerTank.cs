@@ -85,7 +85,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             WPTR.AllPlayerTanks.Add(this);
         }
-        Vector2 p;
+
         internal void Update()
         {
             if (!Dead)
@@ -112,7 +112,6 @@ namespace WiiPlayTanksRemake.GameContent
                 position += velocity;
 
                 var normal = (Position2D - GameUtils.MousePosition) * -1;
-                p = normal;
 
                 BarrelRotation = normal.ToRotation();
 
