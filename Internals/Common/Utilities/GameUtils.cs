@@ -11,6 +11,18 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
     {
         private static Vector2 _oldMousePos;
 
+        public static float NextFloat(this Random random, float min, float max)
+        {
+            float val = (float)(random.NextDouble() * (max - min) + min);
+            return val;
+        }
+
+        public static void GetYawPitchTo(Vector3 d, out float yaw, out float pitch)
+        {
+            yaw = MathF.Atan2(d.X, d.Z);
+            pitch = MathF.Asin(-d.Y);
+        }
+
         public static Vector3 Expand_Z(this Vector2 vector)
             => new(vector.X, 0, vector.Y);
 
@@ -49,12 +61,12 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
         public static float GetRotationVectorOf(Vector2 initial, Vector2 target) => (target - initial).ToRotation();
         public static float ToRotation(this Vector2 vector)
         {
-            return (float)Math.Atan2(vector.Y, vector.X);
+            return MathF.Atan2(vector.Y, vector.X);
         }
         public static float ToRotation(this Vector3 vector)
         {
             // not working (man)
-            return (float)Math.Atan2(vector.Z, vector.X);
+            return MathF.Atan2(vector.Z, vector.X);
         }
         public static Vector2 RotatedByRadians(this Vector2 spinPoint, double radians, Vector2 center = default)
         {
@@ -314,6 +326,29 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
 
             return value;
         }
+        public static float RoughStep(float value, float goal, float step)
+        {
+            if (value < goal)
+            {
+                value += step;
+
+                if (value > goal)
+                {
+                    return goal;
+                }
+            }
+            else if (value > goal)
+            {
+                value -= step;
+
+                if (value < goal)
+                {
+                    return goal;
+                }
+            }
+
+            return value;
+        }
     }
 
     public static class CollectionUtils
@@ -325,5 +360,57 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
 
             return mergeTo;
         }
+    }
+
+    public static class GeometryUtils
+    {
+        public static Vector3[] Raytrace(Vector3 start, Vector3 end, int iterations)
+        {
+            var pointList = new List<Vector3>();
+
+            var diffVector = start.DirectionOf(end);
+
+            for (int i = 0; i < iterations; i++)
+            {
+                pointList.Add(diffVector / i);
+                //pointList.Add((start + end) / i);
+            }
+
+            return pointList.ToArray();
+        }
+    }
+    public sealed class SoundPlayer
+    {
+        public static float MasterVolume = 1f;
+        public static float MusicVolume = 0.75f;
+        public static float SoundVolume = 1f;
+        public static float AmbientVolume = 1f;
+        public static SoundEffectInstance PlaySoundInstance(SoundEffect fromSound, SoundContext context, float volume = 1f)
+        {
+            switch (context)
+            {
+                case SoundContext.Music:
+                    volume *= MusicVolume * MasterVolume;
+                    break;
+                case SoundContext.Sound:
+                    volume *= SoundVolume * MasterVolume;
+                    break;
+                case SoundContext.Ambient:
+                    volume *= AmbientVolume * MasterVolume;
+                    break;
+            }
+            var sfx = fromSound.CreateInstance();
+            sfx.Volume = volume;
+            sfx?.Play();
+
+            return sfx;
+        }
+    }
+
+    public enum SoundContext : byte
+    {
+        Music,
+        Sound,
+        Ambient
     }
 }

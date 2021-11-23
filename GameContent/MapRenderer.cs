@@ -78,6 +78,7 @@ namespace WiiPlayTanksRemake.GameContent
                     SetBlockTexture(mesh, "polygon54", BoundaryTextureContext.block_shadow_b);
                     SetBlockTexture(mesh, "polygon68", BoundaryTextureContext.block_shadow_d);
                     SetBlockTexture(mesh, "polygon8", BoundaryTextureContext.block_other_a);
+                    // SetBlockTexture(mesh, "polygon83", BoundaryTextureContext.ground);
                 }
 
                 MeshNames = list.ToArray();

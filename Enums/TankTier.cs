@@ -22,7 +22,7 @@
         Red
     }
 
-    public enum BulletType : byte
+    public enum ShellTier : byte
     {
         Regular,
         Rocket,

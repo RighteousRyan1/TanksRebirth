@@ -19,8 +19,9 @@ namespace WiiPlayTanksRemake.GameContent
         public bool playerControl_isBindPressed;
 
         private long _treadSoundTimer = 5;
-
-        public BoundingBox CollisionBox;
+        public int curShootStun;
+        public int curShootCooldown;
+        private int curMineCooldown;
 
         public PlayerType PlayerType { get; }
 
@@ -40,9 +41,9 @@ namespace WiiPlayTanksRemake.GameContent
         public ModelMesh CannonMesh;
         #endregion
 
+        public static Vector2 tnkpositionrelative;
         public PlayerTank(Vector3 beginPos, PlayerType playerType)
         {
-
             Model = TankGame.TankModel_Player;
             _tankColorTexture = GameResources.GetGameResource<Texture2D>($"Assets/textures/player/tank_{playerType.ToString().ToLower()}");
 
@@ -56,67 +57,66 @@ namespace WiiPlayTanksRemake.GameContent
 
             position = beginPos;
 
-            /*controlUp.KeybindPressAction = (cUp) =>
-            {
-                playerControl_isBindPressed = true;
-                velocity.Z -= Acceleration;
-                //velocity.Y += Speed / 3;
-                // approachVelocity.Y -= 20f;
-            };
-            controlDown.KeybindPressAction = (cDown) =>
-            {
-                playerControl_isBindPressed = true;
-                velocity.Z += Acceleration;
-                //velocity.Y -= Speed / 3;
-                //approachVelocity.Y += 20f;
-            };
-            controlLeft.KeybindPressAction = (cLeft) =>
-            {
-                playerControl_isBindPressed = true;
-                velocity.X -= Acceleration;
-                //approachVelocity.X -= 20f;
-            };
-            controlRight.KeybindPressAction = (cRight) =>
-            {
-                playerControl_isBindPressed = true;
-                velocity.X += Acceleration;
-                //approachVelocity.X += 20f;
-            };*/
+            ShellCooldown = 5;
+            ShootStun = 10;
+            ShellShootSpeed = 3f;
+            MaxSpeed = 1.8f;
+            RicochetCount = 1;
+            ShellLimit = 5;
+
 
             WPTR.AllPlayerTanks.Add(this);
         }
 
         internal void Update()
         {
+            // pi/2 = up
+            // 0 = down
+            // pi/4 = right
+            // 3/4pi = left
+            if (curShootStun > 0)
+                curShootStun--;
+            if (curShootCooldown > 0)
+                curShootCooldown--;
+            if (curMineCooldown > 0)
+                curMineCooldown--;
             if (!Dead)
             {
+                if (curShootStun > 0 || curMineCooldown > 0)
+                    velocity = Vector3.Zero;
+
                 position.X = MathHelper.Clamp(position.X, -268, 268);
                 position.Z = MathHelper.Clamp(position.Z, -155, 400);
 
                 if (velocity != Vector3.Zero)
                 {
                     //GameUtils.RoughStep(ref tankRotation, tankRotationPredicted.ToRotation(), 0.5f);
-                    TankRotation = Velocity2D.ToRotation();
-                    // make the stop not go wack
+                    TankRotation = Velocity2D.ToRotation() - MathHelper.PiOver2;
                 }
                 Projection = TankGame.GameProjection;
                 View = TankGame.GameView;
 
-                World = Matrix.CreateFromYawPitchRoll(TankRotation, 0, 0)
-                    * Matrix.CreateTranslation(position.X, position.Y, position.Z);
+                World = Matrix.CreateFromYawPitchRoll(-TankRotation, 0, 0)
+                    * Matrix.CreateTranslation(position);
+
+                tnkpositionrelative = Vector2.Transform(Position2D, World);
+
                 // if ((tankRotation + MathHelper.PiOver2).IsInRangeOf(tankRotationPredicted.ToRotation(), 1.5f))
 
-                ControlHandle_Keybinding();
-                if (Input.CurrentGamePadSnapshot.IsConnected)
-                    ControlHandle_ConsoleController();
-                position += velocity;
+                if (curShootStun <= 0)
+                {
+                    ControlHandle_Keybinding();
+                    if (Input.CurrentGamePadSnapshot.IsConnected)
+                        ControlHandle_ConsoleController();
+                }
+                position += velocity * 0.55f;
 
-                var normal = (Position2D - GameUtils.MousePosition) * -1;
+                var normal = ((Position2D + GameUtils.WindowCenter) - (GameUtils.MousePosition));
 
-                BarrelRotation = normal.ToRotation();
+                TurretRotation = -normal.ToRotation() - MathHelper.PiOver2;
 
                 if (Input.CanDetectClick())
-                    Shoot(BarrelRotation, BulletShootSpeed);
+                    Shoot();
 
                 UpdatePlayerMovement();
                 UpdateCollision();
@@ -174,12 +174,38 @@ namespace WiiPlayTanksRemake.GameContent
                 position = oldPosition;
                 //System.Diagnostics.Debug.WriteLine(new Random().Next(0, 100).ToString());
             }
-            if (WPTR.AllPlayerTanks.Any(tnk => tnk.CollisionBox.Intersects(CollisionBox)))
+            if (WPTR.AllPlayerTanks.Any(tnk => tnk.CollisionBox.Intersects(CollisionBox) && tnk != this))
             {
+                position = oldPosition;
             }
+
+            /*foreach (var cube in Cube.cubes.Where(c => Vector3.Distance(c.position, position) < 100))
+            {
+                var dir = cube.GetCollisionDirection(Position2D);
+
+                switch (dir)
+                {
+                    case Cube.CubeCollisionDirection.Up:
+                        if (velocity.Z > 0)
+                            velocity.Z = 0;
+                        break;
+                    case Cube.CubeCollisionDirection.Down:
+                        if (velocity.Z < 0)
+                            velocity.Z = 0;
+                        break;
+                    case Cube.CubeCollisionDirection.Left:
+                        if (velocity.X > 0)
+                            velocity.X = 0;
+                        break;
+                    case Cube.CubeCollisionDirection.Right:
+                        if (velocity.X < 0)
+                            velocity.X = 0;
+                        break;
+                }
+            }*/
         }
 
-        public void Destroy()
+        public override void Destroy()
         {
             Dead = true;
             var killSound = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_destroy");
@@ -211,9 +237,9 @@ namespace WiiPlayTanksRemake.GameContent
                 if (TankGame.GameUpdateTime % _treadSoundTimer == 0)
                 {
                     var treadPlace = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_tread_place_{new Random().Next(1, 5)}");
-                    var treadPlaceSfx = treadPlace.CreateInstance();
-                    treadPlaceSfx.Play();
-                    treadPlaceSfx.Volume = 0.2f;
+                    var sfx = SoundPlayer.PlaySoundInstance(treadPlace, SoundContext.Sound, 0.2f);
+
+                    sfx.Pitch = TreadPitch;
                 }
             }
             //velocity += approachVelocity / 10;
@@ -227,27 +253,47 @@ namespace WiiPlayTanksRemake.GameContent
         /// </summary>
         /// <param name="velocity"></param>
         /// <param name="bulletSpeed"></param>
-        public void Shoot(float radians, float bulletSpeed)
+        public override void Shoot()
         {
+            if (curShootCooldown > 0 || OwnedBulletCount >= ShellLimit)
+                return;
+
             SoundEffect shootSound;
 
-            shootSound = BulletType switch
+            shootSound = ShellType switch
             {
-                BulletType.Rocket => GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_rocket"),
-                BulletType.RicochetRocket => GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_ricochet"),
-                _ => GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_1")
+                ShellTier.Rocket => GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_rocket"),
+                ShellTier.RicochetRocket => GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_ricochet_rocket"),
+                ShellTier.Regular => GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_1"),
+                _ => throw new NotImplementedException()
             };
 
-            var sfx = shootSound.CreateInstance();
+            var sfx = SoundPlayer.PlaySoundInstance(shootSound, SoundContext.Sound, 0.3f);
 
-            sfx.Volume = 0.3f;
-            sfx.Play();
+            sfx.Pitch = ShootPitch;
+
+            var bullet = new Shell(position, Vector3.Zero);
+            var new2d = Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi);
+
+            var newPos = Position2D + new Vector2(0, 20).RotatedByRadians(-TurretRotation);
+
+            bullet.position = new Vector3(newPos.X, 11, newPos.Y);
+
+            bullet.velocity = new Vector3(new2d.X, 0, -new2d.Y) * ShellShootSpeed;
+
+            bullet.owner = this;
+            bullet.ricochets = RicochetCount;
+
+            OwnedBulletCount++;
+
+            curShootStun = ShootStun;
+            curShootCooldown = ShellCooldown;
         }
 
         private void RenderModel()
         {
+            CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation);
             Model.Root.Transform = World;
-            CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(BarrelRotation); // a
 
             Model.CopyAbsoluteBoneTransformsTo(boneTransforms); // a
 
@@ -266,7 +312,6 @@ namespace WiiPlayTanksRemake.GameContent
                     else
                         effect.Texture = _shadowTexture;
 
-                    //effect.DirectionalLight0.Direction = new(0, 1, 0);
                     effect.EnableDefaultLighting();
                 }
                 mesh.Draw();
@@ -282,6 +327,6 @@ namespace WiiPlayTanksRemake.GameContent
         }
 
         public override string ToString()
-            => $"pos: {position} | vel: {velocity} | dead: {Dead}";
+            => $"pos: {position} | vel: {velocity} | dead: {Dead} | rotation: {TankRotation} | OwnedBullets: {OwnedBulletCount}";
     }
 }

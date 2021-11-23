@@ -60,6 +60,8 @@ namespace WiiPlayTanksRemake
             Window.Title = "Wii Play Tanks Remake";
             Window.AllowUserResizing = true;
 
+            graphics.SynchronizeWithVerticalRetrace = true;
+
             // Window.IsBorderless = true;
         }
 
@@ -131,7 +133,7 @@ namespace WiiPlayTanksRemake
 
         protected override void Update(GameTime gameTime)
         {
-            if (Input.MouseLeft && !Input.MouseRight)
+            if (Input.MouseRight)
             {
                 rotVec += GameUtils.GetMouseVelocity(GameUtils.WindowCenter) / 500;
             }
@@ -192,7 +194,7 @@ namespace WiiPlayTanksRemake
         }
         protected override void Draw(GameTime gameTime)
         {
-            var info = $"HighestTier: {AITank.GetHighestTierActive()}\nMouse3D: {mouse3d}";
+            var info = $"HighestTier: {AITank.GetHighestTierActive()}\nmyTank:{WPTR.myTank}";
             GraphicsDevice.Clear(Color.Black);
             // draw stuff past
 

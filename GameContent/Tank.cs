@@ -25,9 +25,9 @@ namespace WiiPlayTanksRemake.GameContent
         /// <summary>The maximum speed this tank can achieve.</summary>
         public float MaxSpeed { get; set; } = 1f;
         /// <summary>How fast the bullets this <see cref="Tank"/> shoot are.</summary>
-        public float BulletShootSpeed { get; set; } = 1f;
+        public float ShellShootSpeed { get; set; } = 1f;
         /// <summary>The rotation of this <see cref="Tank"/>'s barrel. Generally should not be modified in a player context.</summary>
-        public float BarrelRotation { get; set; }
+        public float TurretRotation { get; set; }
         /// <summary>The rotation of this <see cref="Tank"/>.</summary>
         public float TankRotation { get; set; }
         /// <summary>The pitch of the footprint placement sounds.</summary>
@@ -35,23 +35,41 @@ namespace WiiPlayTanksRemake.GameContent
         /// <summary>The pitch of the shoot sound.</summary>
         public float ShootPitch { get; set; }
         /// <summary>The type of bullet this <see cref="Tank"/> shoots.</summary>
-        public BulletType BulletType { get; set; } = BulletType.Regular;
+        public ShellTier ShellType { get; set; } = ShellTier.Regular;
         /// <summary>The maximum amount of mines this <see cref="Tank"/> can place.</summary>
         public int MineLimit { get; set; }
+        /// <summary>The hitbox of this <see cref="Tank"/>.</summary>
+        public BoundingBox CollisionBox { get; set; }
+        /// <summary>How long this <see cref="Tank"/> will be immobile upon firing a bullet.</summary>
+        public int ShootStun { get; set; }
+        /// <summary>How long this <see cref="Tank"/> will be immobile upon laying a mine.</summary>
+        public int MineStun { get; set; }
+        /// <summary>How long this <see cref="Tank"/> has to wait until it can fire another bullet..</summary>
+        public int ShellCooldown { get; set; }
+        public int MineCooldown { get; set; }
+        public int RicochetCount { get; set; }
+        public int ShellLimit { get; set; }
+        public float TurningSpeed { get; set; } = 1f;
+        public float MaximalTurn { get; set; }
 
+        public int OwnedBulletCount { get; set; }
         public Vector2 Position2D => position.FlattenZ();
         public Vector2 Velocity2D => velocity.FlattenZ();
 
         public Vector3 position, oldPosition, velocity;
 
-        public int shootStun, mineLayStun, maxBullets, ricochetCount; // ticks!
-
-
-        public float maxTurnUntilPivot; // radians!!!!
-        public float pivotSpeed = 1f; // radians per tick!!!
-
         public string GetGeneralStats()
             => $"Pos2D: {Position2D} | Vel: {Velocity2D} | Dead: {Dead}";
+
+        public virtual void Destroy()
+        {
+
+        }
+
+        public virtual void Shoot()
+        {
+
+        }
     }
 
     public class TankFootprint

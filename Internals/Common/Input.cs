@@ -60,6 +60,60 @@ namespace WiiPlayTanksRemake.Internals.Common
                 return Keys.None;
             }
         }
+        public static Buttons[] GetPressedButtons(GamePadButtons buttons, bool excludeSystemButtons = false)
+        {
+            Buttons[] pressedButtons = new Buttons[10];
+            if (buttons.A == ButtonState.Pressed)
+            {
+                pressedButtons.Append(Buttons.A);
+            }
+            if (buttons.B == ButtonState.Pressed)
+            {
+                pressedButtons.Append(Buttons.B);
+            }
+            if (buttons.Back == ButtonState.Pressed)
+            {
+                pressedButtons.Append(Buttons.Back);
+            }
+            if (buttons.BigButton == ButtonState.Pressed && !excludeSystemButtons)
+            {
+                pressedButtons.Append(Buttons.BigButton);
+            }
+            if (buttons.LeftShoulder == ButtonState.Pressed)
+            {
+                pressedButtons.Append(Buttons.LeftShoulder);
+            }
+            if (buttons.LeftStick == ButtonState.Pressed)
+            {
+                pressedButtons.Append(Buttons.LeftStick);
+            }
+            if (buttons.RightShoulder == ButtonState.Pressed)
+            {
+                pressedButtons.Append(Buttons.RightShoulder);
+            }
+            if (buttons.RightStick == ButtonState.Pressed)
+            {
+                pressedButtons.Append(Buttons.RightStick);
+            }
+            if (buttons.Start == ButtonState.Pressed && !excludeSystemButtons)
+            {
+                pressedButtons.Append(Buttons.Start);
+            }
+            if (buttons.X == ButtonState.Pressed)
+            {
+                pressedButtons.Append(Buttons.X);
+            }
+            if (buttons.Y == ButtonState.Pressed)
+            {
+                pressedButtons.Append(Buttons.Y);
+            }
+            return pressedButtons;
+        }
+        public static bool ButtonJustPressed(Buttons button)
+        {
+            bool pressed = CurrentGamePadSnapshot.IsButtonDown(button) && OldGamePadSnapshot.IsButtonUp(button);
+            return pressed;
+        }
         public static int DeltaScrollWheel => CurrentMouseSnapshot.ScrollWheelValue / 120;
     }
 }

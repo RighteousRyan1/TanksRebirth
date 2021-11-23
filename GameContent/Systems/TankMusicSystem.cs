@@ -25,8 +25,6 @@ namespace WiiPlayTanksRemake.GameContent.Systems
         public float whiteSpike;
         public float blackSpike;
 
-        public static float musicVolume = 0;
-
         public void Update()
         {
             /*brownSpike += 0.5f * Tank.GetTankCountOfType(TankTier.Brown);
@@ -53,6 +51,8 @@ namespace WiiPlayTanksRemake.GameContent.Systems
                 else
                     ash1.volume = 0.5f;
             }*/
+
+            var musicVolume = SoundPlayer.MusicVolume;
 
             brown.volume = 0;
             ash1.volume = 0;
@@ -82,7 +82,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems
 
             if (TierHighest == TankTier.Ash && AITank.GetTankCountOfType(TankTier.Ash) == 1)
                 ash1.volume = 0.5f * musicVolume;
-            else if (TierHighest == TankTier.Ash && (AITank.GetTankCountOfType(TankTier.Ash) >= 2)) //|| Tank.GetTankCountOfType(TankTier.Brown) >= 2))
+            else if (TierHighest == TankTier.Ash && (AITank.GetTankCountOfType(TankTier.Ash) >= 3)) //|| Tank.GetTankCountOfType(TankTier.Brown) >= 2))
                 ash2.volume = 0.5f * musicVolume;
 
             if (TierHighest == TankTier.Marine && AITank.GetTankCountOfType(TankTier.Marine) == 1)

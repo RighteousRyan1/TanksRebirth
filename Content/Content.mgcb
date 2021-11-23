@@ -77,6 +77,42 @@
 /processorParam:TextureFormat=Compressed
 /build:Assets/DefaultFont.spritefont
 
+#begin Assets/fanfares/endmusic_resultdeath.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/fanfares/endmusic_resultdeath.wav
+
+#begin Assets/fanfares/mission_complete.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/fanfares/mission_complete.wav
+
+#begin Assets/fanfares/mission_complete_M100.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/fanfares/mission_complete_M100.wav
+
+#begin Assets/fanfares/mission_complete_M20.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/fanfares/mission_complete_M20.wav
+
+#begin Assets/fanfares/mission_snare.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/fanfares/mission_snare.wav
+
+#begin Assets/fanfares/tank_player_death.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/fanfares/tank_player_death.wav
+
 #begin Assets/floor.fbx
 /importer:FbxImporter
 /processor:ModelProcessor
@@ -278,41 +314,17 @@
 /processorParam:TextureFormat=Compressed
 /build:Assets/outerbounds.fbx
 
+#begin Assets/sounds/bullet_destroy.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/sounds/bullet_destroy.wav
+
 #begin Assets/sounds/bullet_ricochet.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Assets/sounds/bullet_ricochet.wav
-
-#begin Assets/sounds/bullet_ricochet_travel.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Assets/sounds/bullet_ricochet_travel.wav
-
-#begin Assets/sounds/fanfare_1.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Assets/sounds/fanfare_1.wav
-
-#begin Assets/sounds/fanfare_2.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Assets/sounds/fanfare_2.wav
-
-#begin Assets/sounds/fanfare_3.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Assets/sounds/fanfare_3.wav
-
-#begin Assets/sounds/fanfare_4.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Assets/sounds/fanfare_4.wav
 
 #begin Assets/sounds/game_over_whistle.wav
 /importer:WavImporter
@@ -332,17 +344,29 @@
 /processorParam:Quality=Best
 /build:Assets/sounds/mine_place.wav
 
+#begin Assets/sounds/mission_ready.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/sounds/mission_ready.wav
+
+#begin Assets/sounds/mission_starting.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/sounds/mission_starting.wav
+
+#begin Assets/sounds/tank_enemy_destroy.ogg
+/importer:OggImporter
+/processor:SongProcessor
+/processorParam:Quality=Best
+/build:Assets/sounds/tank_enemy_destroy.ogg
+
 #begin Assets/sounds/tnk_destroy.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Assets/sounds/tnk_destroy.wav
-
-#begin Assets/sounds/tnk_destroy_player.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Assets/sounds/tnk_destroy_player.wav
 
 #begin Assets/sounds/tnk_invisible.wav
 /importer:WavImporter
@@ -356,11 +380,17 @@
 /processorParam:Quality=Best
 /build:Assets/sounds/tnk_shoot_regular_1.wav
 
-#begin Assets/sounds/tnk_shoot_ricochet.wav
+#begin Assets/sounds/tnk_shoot_regular_2.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
-/build:Assets/sounds/tnk_shoot_ricochet.wav
+/build:Assets/sounds/tnk_shoot_regular_2.wav
+
+#begin Assets/sounds/tnk_shoot_ricochet_rocket.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/sounds/tnk_shoot_ricochet_rocket.wav
 
 #begin Assets/sounds/tnk_shoot_rocket.wav
 /importer:WavImporter
@@ -447,6 +477,18 @@
 /processorParam:SwapWindingOrder=False
 /processorParam:TextureFormat=Compressed
 /build:Assets/tank_p_fix.fbx
+
+#begin Assets/textures/bullet/bullet.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Assets/textures/bullet/bullet.png
 
 #begin Assets/textures/enemy/tank_ash.png
 /importer:TextureImporter
@@ -784,18 +826,6 @@
 /processorParam:TextureFormat=Color
 /build:Assets/textures/ingame/ground.png
 
-#begin Assets/textures/ingame/ground.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Assets/textures/ingame/ground.png
-
 #begin Assets/textures/ingame/tnk_tank_env.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -807,6 +837,42 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Assets/textures/ingame/tnk_tank_env.png
+
+#begin Assets/textures/mine/mine_env.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Assets/textures/mine/mine_env.png
+
+#begin Assets/textures/mine/mine_shadow.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Assets/textures/mine/mine_shadow.png
+
+#begin Assets/textures/mine/tank_env.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Assets/textures/mine/tank_env.png
 
 #begin Assets/textures/player/tank_blue.png
 /importer:TextureImporter

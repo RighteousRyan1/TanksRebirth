@@ -12,9 +12,16 @@ namespace WiiPlayTanksRemake.GameContent.GameMechanics
 
         public long totalUpdateCount;
 
-        public bool IsBehaviorRemainderOf(long remainder)
+        public bool IsBehaviourModuloOf(long remainder)
         {
             return totalUpdateCount % remainder == 0;
+        }
+    }
+    public static class AiBehaviorExtensions
+    {
+        public static AiBehavior FromName(this AiBehavior[] arr, string name)
+        {
+            return arr.First(behavior => behavior.Label == name);
         }
     }
 }

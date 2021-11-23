@@ -24,6 +24,8 @@ namespace WiiPlayTanksRemake.GameContent
 
         public static List<PlayerTank> AllPlayerTanks { get; } = new();
 
+        public static List<Tank> AllTanks { get; } = new();
+
         public static float FloatForTesting;
 
         public static Logger BaseLogger { get; } = new($"{TankGame.ExePath}", "client_logger");
@@ -58,7 +60,7 @@ namespace WiiPlayTanksRemake.GameContent
             foreach (var mine in Mine.AllMines)
                 mine?.Update();
 
-            foreach (var bullet in Bullet.AllBullets)
+            foreach (var bullet in Shell.AllShells)
                 bullet?.Update();
 
             foreach (var cube in Cube.cubes)
@@ -66,7 +68,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             FloatForTesting = MathHelper.Clamp(FloatForTesting, -1, 1);
 
-            if (Input.MouseRight)
+            /*if (Input.MouseRight)
             {
                 if (TankGame.GameUpdateTime % 5 == 0)
                 {
@@ -76,7 +78,10 @@ namespace WiiPlayTanksRemake.GameContent
                     treadPlaceSfx.Volume = 0.2f;
                     treadPlaceSfx.Pitch = FloatForTesting;
                 }
-            }
+            }*/
+
+            if (Input.KeyJustPressed(Keys.Insert))
+                DebugUtils.DebuggingEnabled = !DebugUtils.DebuggingEnabled;
 
             if (Input.AreKeysJustPressed(Keys.RightAlt, Keys.Enter))
             {
@@ -107,8 +112,8 @@ namespace WiiPlayTanksRemake.GameContent
             foreach (var mine in Mine.AllMines)
                 mine?.Draw();
 
-            foreach (var bullet in Bullet.AllBullets)
-                bullet?.Draw();
+            foreach (var bullet in Shell.AllShells)
+                bullet?.Render();
 
             // TODO: Fix translation
             // TODO: Scaling with screen size.
@@ -158,24 +163,39 @@ namespace WiiPlayTanksRemake.GameContent
                 }
             }
         }
-
         public static PlayerTank myTank;
         public static void Initialize()
         {
+            foreach (var aitank in AllAITanks)
+                AllTanks.Add(aitank);
+            foreach (var playertank in AllPlayerTanks)
+                AllTanks.Add(playertank);
+
             DebugUtils.DebuggingEnabled = true;
             MapRenderer.InitializeRenderers();
 
+            new Cube(Vector3.Zero);
+
             // OnMissionStart.Invoke(AllPlayerTanks, AllAITanks);
             tankMusicHandler = new();
-            myTank = new PlayerTank(new Vector3(0, 0, 0), playerType: PlayerType.Blue);
+            myTank = new PlayerTank(new Vector3(new Random().Next(-200, 201), 0, new Random().Next(-500, 600)), playerType: PlayerType.Blue);
 
-            for (int i = 0; i < 6; i++)
+            //for (int i = 0; i < 6; i++)
+            //{
+                //new AITank(new Vector3(new Random().Next(-200, 201), 0, new Random().Next(-500, 600)), /*(TankTier)new Random().Next(1, 10)*/ TankTier.Marine)
+                //{
+                 //   TankRotation = (float)new Random().NextDouble() * new Random().Next(1, 10)
+                //};
+            //}
+            new AITank(new Vector3(new Random().Next(-200, 201), 0, new Random().Next(-500, 600)), TankTier.Marine)
             {
-                new AITank(new Vector3(new Random().Next(-200, 201), 0, new Random().Next(-500, 600)), (TankTier)new Random().Next(1, 10))
-                {
-                    TankRotation = (float)new Random().NextDouble() * new Random().Next(1, 10)
-                };
-            }
+                TankRotation = (float)new Random().NextDouble() * new Random().Next(1, 10)
+            };
+            new AITank(new Vector3(new Random().Next(-200, 201), 0, new Random().Next(-500, 600)), TankTier.Yellow)
+            {
+                TankRotation = (float)new Random().NextDouble() * new Random().Next(1, 10),
+                TurretRotation = (float)new Random().NextDouble() * new Random().Next(1, 10)
+            };
 
             UI.IngameUI.Initialize();
             tankMusicHandler.LoadMusic();
