@@ -128,7 +128,10 @@ namespace WiiPlayTanksRemake.GameContent
             }
         }
 
-
+        public const int TANKS_MIN_X = -268;
+        public const int TANKS_MAX_X = 268;
+        public const int TANKS_MIN_Y = -155;
+        public const int TANKS_MAX_Y = 400;
         public static void InitializeRenderers()
         {
             FloorRenderer.LoadFloor();

@@ -11,7 +11,8 @@ namespace WiiPlayTanksRemake.GameContent
 {
     public class Shell
     {
-        public static Shell[] AllShells { get; } = new Shell[500];
+        private static int maxShells = 500;
+        public static Shell[] AllShells { get; } = new Shell[maxShells];
 
         public Tank owner;
 
@@ -58,6 +59,8 @@ namespace WiiPlayTanksRemake.GameContent
 
         internal void Update()
         {
+            if (!WPTR.InMission)
+                return;
             rotation = Velocity2D.ToRotation() - MathHelper.PiOver2;
             position += velocity;
             World = Matrix.CreateFromYawPitchRoll(-rotation, 0, 0)
@@ -109,16 +112,26 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 if (tank.CollisionBox.Intersects(hurtbox))
                 {
-                    tank.Destroy();
-                    Destroy();
+                    if (tank.Team == owner.Team)
+                        Destroy();
+                    else
+                    {
+                        Destroy();
+                        tank.Destroy();
+                    }
                 }
             }
             foreach (var tank in WPTR.AllPlayerTanks)
             {
                 if (tank.CollisionBox.Intersects(hurtbox))
                 {
-                    tank.Destroy();
-                    Destroy();
+                    if (tank.Team == owner.Team)
+                        Destroy();
+                    else
+                    {
+                        Destroy();
+                        tank.Destroy();
+                    }
                 }
             }
 

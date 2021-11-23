@@ -62,6 +62,8 @@ namespace WiiPlayTanksRemake
 
             graphics.SynchronizeWithVerticalRetrace = true;
 
+            IsMouseVisible = false;
+
             // Window.IsBorderless = true;
         }
 

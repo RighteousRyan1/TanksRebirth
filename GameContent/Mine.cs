@@ -1,16 +1,46 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace WiiPlayTanksRemake.GameContent
 {
     public sealed class Mine
     {
-        public static List<Mine> AllMines { get; } = new();
+        private static int maxMines = 200;
+        public static Mine[] AllMines { get; } = new Mine[maxMines];
+
+        public Tank owner;
+
         public Vector3 position;
-        public int detonationTimer;
-        public float explosionRadius;
-        public PlayerTank owner;
+
+        public Matrix View;
+        public Matrix Projection;
+        public Matrix World;
+
+        public Model Model;
+
+        public static Texture2D _mineTexture;
+
+        private int worldId;
+
+        public Mine()
+        {
+
+
+            int index = Array.IndexOf(AllMines, AllMines.First(bullet => bullet is null));
+
+            worldId = index;
+
+            AllMines[index] = this;
+        }
+
+        public void Detonate()
+        {
+
+            AllMines[worldId] = null;
+        }
 
         internal void Update()
         {

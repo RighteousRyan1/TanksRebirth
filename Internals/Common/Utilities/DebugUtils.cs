@@ -6,9 +6,10 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
     public static class DebugUtils
     {
         public static bool DebuggingEnabled { get; set; }
-        public static void DrawDebugString(SpriteBatch sb, object info, Vector2 position, float scaleOverride = 1f, bool beginSb = false)
+        public static int DebugLevel { get; set; }
+        public static void DrawDebugString(SpriteBatch sb, object info, Vector2 position, int level = 0, float scaleOverride = 1f, bool beginSb = false)
         {
-            if (!DebuggingEnabled)
+            if (!DebuggingEnabled || DebugLevel != level)
                 return;
 
             if (beginSb)

@@ -41,7 +41,6 @@ namespace WiiPlayTanksRemake.GameContent
         public ModelMesh CannonMesh;
         #endregion
 
-        public static Vector2 tnkpositionrelative;
         public PlayerTank(Vector3 beginPos, PlayerType playerType)
         {
             Model = TankGame.TankModel_Player;
@@ -58,14 +57,21 @@ namespace WiiPlayTanksRemake.GameContent
             position = beginPos;
 
             ShellCooldown = 5;
-            ShootStun = 10;
-            ShellShootSpeed = 3f;
+            ShootStun = 5;
+            ShellSpeed = 3f;
             MaxSpeed = 1.8f;
             RicochetCount = 1;
             ShellLimit = 5;
+            MineLimit = 2;
+            MineStun = 1;
+            Invisible = false;
+            Acceleration = 0.3f;
+            TurningSpeed = 0.08f;
 
+            Team = Team.Red;
 
             WPTR.AllPlayerTanks.Add(this);
+            WPTR.AllTanks.Add(this);
         }
 
         internal void Update()
@@ -82,12 +88,8 @@ namespace WiiPlayTanksRemake.GameContent
                 curMineCooldown--;
             if (!Dead)
             {
-                if (curShootStun > 0 || curMineCooldown > 0)
-                    velocity = Vector3.Zero;
-
-                position.X = MathHelper.Clamp(position.X, -268, 268);
-                position.Z = MathHelper.Clamp(position.Z, -155, 400);
-
+                position.X = MathHelper.Clamp(position.X, MapRenderer.TANKS_MIN_X, MapRenderer.TANKS_MAX_X);
+                position.Z = MathHelper.Clamp(position.Z, MapRenderer.TANKS_MIN_Y, MapRenderer.TANKS_MAX_Y);
                 if (velocity != Vector3.Zero)
                 {
                     //GameUtils.RoughStep(ref tankRotation, tankRotationPredicted.ToRotation(), 0.5f);
@@ -98,28 +100,38 @@ namespace WiiPlayTanksRemake.GameContent
 
                 World = Matrix.CreateFromYawPitchRoll(-TankRotation, 0, 0)
                     * Matrix.CreateTranslation(position);
-
-                tnkpositionrelative = Vector2.Transform(Position2D, World);
-
-                // if ((tankRotation + MathHelper.PiOver2).IsInRangeOf(tankRotationPredicted.ToRotation(), 1.5f))
-
-                if (curShootStun <= 0)
+                if (WPTR.InMission)
                 {
-                    ControlHandle_Keybinding();
-                    if (Input.CurrentGamePadSnapshot.IsConnected)
-                        ControlHandle_ConsoleController();
+                    if (curShootStun > 0 || curMineCooldown > 0)
+                        velocity = Vector3.Zero;
+
+                    // if ((tankRotation + MathHelper.PiOver2).IsInRangeOf(tankRotationPredicted.ToRotation(), 1.5f))
+
+                    if (curShootStun <= 0)
+                    {
+                        ControlHandle_Keybinding();
+                        if (Input.CurrentGamePadSnapshot.IsConnected)
+                            ControlHandle_ConsoleController();
+                    }
+                    position += velocity * 0.55f;
                 }
-                position += velocity * 0.55f;
+                else
+                    velocity = Vector3.Zero;
 
-                var normal = ((Position2D + GameUtils.WindowCenter) - (GameUtils.MousePosition));
+                //var normal = ((Position2D + GameUtils.WindowCenter) - (GameUtils.MousePosition));
 
-                TurretRotation = -normal.ToRotation() - MathHelper.PiOver2;
+                var tankscreen = TankGame.Instance.GraphicsDevice.Viewport.Unproject(position, Projection, View, World);
 
-                if (Input.CanDetectClick())
-                    Shoot();
+                TurretRotation = (new Vector2(tankscreen.X, tankscreen.Y) - GameUtils.MousePosition).ToRotation(); //-normal.ToRotation() - MathHelper.PiOver2;
 
-                UpdatePlayerMovement();
-                UpdateCollision();
+                if (WPTR.InMission)
+                {
+                    if (Input.CanDetectClick())
+                        Shoot();
+
+                    UpdatePlayerMovement();
+                    UpdateCollision();
+                }
 
                 playerControl_isBindPressed = false;
 
@@ -208,16 +220,22 @@ namespace WiiPlayTanksRemake.GameContent
         public override void Destroy()
         {
             Dead = true;
-            var killSound = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_destroy");
-            var killSfx = killSound.CreateInstance();
-            killSfx.Play();
-            killSfx.Volume = 0.2f;
+            var killSound1 = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_destroy");
+            var killSound2 = GameResources.GetGameResource<SoundEffect>($"Assets/fanfares/tank_player_death");
+            SoundPlayer.PlaySoundInstance(killSound1, SoundContext.Sound, 0.2f);
+            SoundPlayer.PlaySoundInstance(killSound2, SoundContext.Sound, 0.2f);
 
+            var dmark = new TankDeathMark(PlayerType == PlayerType.Blue ? TankDeathMark.CheckColor.Blue : TankDeathMark.CheckColor.Red)
+            {
+                location = position + new Vector3(0, 0.1f, 0)
+            };
             // TODO: play player tank death sound
         }
 
         public void UpdatePlayerMovement()
         {
+            if (!WPTR.InMission)
+                return;
             if (!controlDown.IsPressed && !controlUp.IsPressed)
                 velocity.Z = 0;
             if (!controlLeft.IsPressed && !controlRight.IsPressed)
@@ -238,13 +256,22 @@ namespace WiiPlayTanksRemake.GameContent
                 {
                     var treadPlace = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_tread_place_{new Random().Next(1, 5)}");
                     var sfx = SoundPlayer.PlaySoundInstance(treadPlace, SoundContext.Sound, 0.2f);
-
+                    LayFootprint();
                     sfx.Pitch = TreadPitch;
                 }
             }
             //velocity += approachVelocity / 10;
             // barrelRotation = GameUtils.DirectionOf(GameUtils.MousePosition.ToVector3(), position).ToRotation();
             // approachVelocity = Vector3.Zero;
+        }
+
+        public override void LayFootprint()
+        {
+            var fp = new TankFootprint()
+            {
+                location = position + new Vector3(0, 0.1f, 0),
+                rotation = -TankRotation
+            };
         }
 
 
@@ -255,6 +282,8 @@ namespace WiiPlayTanksRemake.GameContent
         /// <param name="bulletSpeed"></param>
         public override void Shoot()
         {
+            if (!WPTR.InMission)
+                return;
             if (curShootCooldown > 0 || OwnedBulletCount >= ShellLimit)
                 return;
 
@@ -279,7 +308,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             bullet.position = new Vector3(newPos.X, 11, newPos.Y);
 
-            bullet.velocity = new Vector3(new2d.X, 0, -new2d.Y) * ShellShootSpeed;
+            bullet.velocity = new Vector3(new2d.X, 0, -new2d.Y) * ShellSpeed;
 
             bullet.owner = this;
             bullet.ricochets = RicochetCount;

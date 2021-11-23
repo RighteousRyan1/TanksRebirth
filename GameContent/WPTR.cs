@@ -15,6 +15,7 @@ using System.Collections.Generic;
 using WiiPlayTanksRemake.Internals.Core.Interfaces;
 using Microsoft.Xna.Framework.Graphics;
 using WiiPlayTanksRemake.Internals.Core;
+using WiiPlayTanksRemake.GameContent.UI;
 
 namespace WiiPlayTanksRemake.GameContent
 {
@@ -36,18 +37,14 @@ namespace WiiPlayTanksRemake.GameContent
 
         public static TankMusicSystem tankMusicHandler;
 
-        public delegate void MissionStartEvent(List<PlayerTank> players, List<AITank> aiTanks);
-
-        /// <summary>
-        /// Fired when a mission is started.
-        /// </summary>
-        public static MissionStartEvent OnMissionStart;
+        public static bool InMission { get; set; } = false;
 
         public static Matrix UIMatrix => Matrix.CreateOrthographicOffCenter(0, TankGame.Instance.GraphicsDevice.Viewport.Width, TankGame.Instance.GraphicsDevice.Viewport.Height, 0, -1, 1);
 
         internal static void Update()
         {
-            tankMusicHandler.Update();
+            if (InMission)
+                tankMusicHandler.Update();
 
             foreach (var bind in Keybind.AllKeybinds)
                 bind?.Update();
@@ -96,6 +93,25 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 FloatForTesting += 0.01f;
             }
+
+            if (Input.KeyJustPressed(Keys.Up))
+                DebugUtils.DebugLevel++;
+            if (Input.KeyJustPressed(Keys.Down))
+                DebugUtils.DebugLevel--;
+
+            if (timeUntilTankFunction > 0)
+                timeUntilTankFunction--;
+            else
+            {
+                if (!InMission)
+                {
+                    tankMusicHandler.LoadMusic();
+                    InMission = true;
+                }
+            }
+
+            if (Input.KeyJustPressed(Keys.PageUp))
+                SpawnTankPlethorae();
         }
         internal static void Draw()
         {
@@ -115,6 +131,12 @@ namespace WiiPlayTanksRemake.GameContent
             foreach (var bullet in Shell.AllShells)
                 bullet?.Render();
 
+            foreach (var mark in TankDeathMark.deathMarks.Where(mk => mk is not null))
+                mark?.Render();
+
+            foreach (var print in TankFootprint.footprints.Where(prnt => prnt is not null))
+                print?.Render();
+
             // TODO: Fix translation
             // TODO: Scaling with screen size.
 
@@ -127,6 +149,12 @@ namespace WiiPlayTanksRemake.GameContent
             DebugUtils.DrawDebugString(TankGame.spriteBatch, $"TestFloat: {FloatForTesting}" +
                 $"\nHighestTier: {AITank.GetHighestTierActive()}" +
                 $"\n", new(10, GameUtils.WindowHeight / 3));
+
+            for (int i = 0; i < AllAITanks.Count; i++)
+            {
+                var t = AllAITanks[i];
+                DebugUtils.DrawDebugString(TankGame.spriteBatch, $"{t}", new(10, 15 * i), 1);
+            }
 
             for (int i = 0; i < Enum.GetNames<TankTier>().Length; i++)
             {
@@ -162,44 +190,83 @@ namespace WiiPlayTanksRemake.GameContent
                     lastElementClicked = null;
                 }
             }
+
+            MouseRenderer.DrawMouse();
         }
         public static PlayerTank myTank;
+
         public static void Initialize()
         {
-            foreach (var aitank in AllAITanks)
-                AllTanks.Add(aitank);
-            foreach (var playertank in AllPlayerTanks)
-                AllTanks.Add(playertank);
+            BeginIntroSequence();
 
             DebugUtils.DebuggingEnabled = true;
             MapRenderer.InitializeRenderers();
 
             new Cube(Vector3.Zero);
 
-            // OnMissionStart.Invoke(AllPlayerTanks, AllAITanks);
             tankMusicHandler = new();
             myTank = new PlayerTank(new Vector3(new Random().Next(-200, 201), 0, new Random().Next(-500, 600)), playerType: PlayerType.Blue);
+            myTank.Team = Team.Green;
 
-            //for (int i = 0; i < 6; i++)
-            //{
-                //new AITank(new Vector3(new Random().Next(-200, 201), 0, new Random().Next(-500, 600)), /*(TankTier)new Random().Next(1, 10)*/ TankTier.Marine)
-                //{
-                 //   TankRotation = (float)new Random().NextDouble() * new Random().Next(1, 10)
-                //};
-            //}
-            new AITank(new Vector3(new Random().Next(-200, 201), 0, new Random().Next(-500, 600)), TankTier.Marine)
-            {
-                TankRotation = (float)new Random().NextDouble() * new Random().Next(1, 10)
-            };
-            new AITank(new Vector3(new Random().Next(-200, 201), 0, new Random().Next(-500, 600)), TankTier.Yellow)
-            {
-                TankRotation = (float)new Random().NextDouble() * new Random().Next(1, 10),
-                TurretRotation = (float)new Random().NextDouble() * new Random().Next(1, 10)
-            };
+            //SpawnTankPlethorae();
+            SpawnTank(TankTier.Black, Team.Red);
+            SpawnTank(TankTier.Black, Team.Blue);
 
-            UI.IngameUI.Initialize();
-            tankMusicHandler.LoadMusic();
-            //MusicContent.green1.Play();
+            IngameUI.Initialize();
+        }
+
+        internal static int timeUntilTankFunction;
+
+        public static void BeginIntroSequence()
+        {
+            timeUntilTankFunction = 180;
+            var tune = GameResources.GetGameResource<SoundEffect>("Assets/fanfares/mission_snare");
+
+            SoundPlayer.PlaySoundInstance(tune, SoundContext.Music, 1f);
+        }
+        public static AITank SpawnTank(TankTier tier, Team team)
+        {
+            var rot = GeometryUtils.GetPiRandom();
+            return new AITank(new Vector3(new Random().Next(-200, 201), 0, new Random().Next(-500, 600)), tier)
+            {
+                TankRotation = rot,
+                TurretRotation = rot,
+                Team = team
+            };
+        }
+        public static void SpawnTankPlethorae()
+        {
+            for (int i = 0; i < 5; i++)
+            {
+                var rot = GeometryUtils.GetPiRandom();
+                var t = new AITank(new Vector3(new Random().Next(-200, 201), 0, new Random().Next(-500, 600)), AITank.PICK_ANY_THAT_ARE_IMPLEMENTED())
+                {
+                    TankRotation = rot,
+                    TurretRotation = rot
+                };
+            }
+        }
+    }
+
+    public class MouseRenderer
+    {
+        public static Texture2D MouseTexture { get; private set; }
+
+        public static void DrawMouse()
+        {
+            MouseTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/cursor_1");
+
+            var mousePos = GameUtils.MousePosition;
+
+            for (int i = 0; i < 4; i++)
+            {
+                TankGame.spriteBatch.Draw(MouseTexture, mousePos, null, Color.Blue, MathHelper.PiOver2 * i, MouseTexture.Size(), 1f, default, default);
+            }
+
+            /*
+             * if pixel sampled at (x, y) is rgb(1, 1, 1) -- ignore
+             * else, apply shader
+             */
         }
     }
 }

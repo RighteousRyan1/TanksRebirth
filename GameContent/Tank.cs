@@ -1,6 +1,8 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 using WiiPlayTanksRemake.Enums;
+using WiiPlayTanksRemake.Internals;
 using WiiPlayTanksRemake.Internals.Common.Utilities;
 using WiiPlayTanksRemake.Internals.Core.Interfaces;
 
@@ -25,7 +27,7 @@ namespace WiiPlayTanksRemake.GameContent
         /// <summary>The maximum speed this tank can achieve.</summary>
         public float MaxSpeed { get; set; } = 1f;
         /// <summary>How fast the bullets this <see cref="Tank"/> shoot are.</summary>
-        public float ShellShootSpeed { get; set; } = 1f;
+        public float ShellSpeed { get; set; } = 1f;
         /// <summary>The rotation of this <see cref="Tank"/>'s barrel. Generally should not be modified in a player context.</summary>
         public float TurretRotation { get; set; }
         /// <summary>The rotation of this <see cref="Tank"/>.</summary>
@@ -52,6 +54,8 @@ namespace WiiPlayTanksRemake.GameContent
         public float TurningSpeed { get; set; } = 1f;
         public float MaximalTurn { get; set; }
 
+        public Team Team { get; set; }
+
         public int OwnedBulletCount { get; set; }
         public Vector2 Position2D => position.FlattenZ();
         public Vector2 Velocity2D => velocity.FlattenZ();
@@ -64,6 +68,10 @@ namespace WiiPlayTanksRemake.GameContent
         public virtual void Destroy()
         {
 
+        }
+
+        public virtual void LayFootprint()
+        {
         }
 
         public virtual void Shoot()
@@ -81,14 +89,124 @@ namespace WiiPlayTanksRemake.GameContent
         public Vector3 location;
         public float rotation;
 
+        public Matrix World;
+        public Matrix View;
+        public Matrix Projection;
+
+        public Model Model;
+
+        public Texture2D texture;
+
         private static int total_treads_placed;
 
         public TankFootprint()
         {
+            if (total_treads_placed + 1 > MAX_FOOTPRINTS)
+                return;
+            total_treads_placed++;
+
+            Model = GameResources.GetGameResource<Model>("Assets/footprint"); // use this :smiley:
+
+            texture = GameResources.GetGameResource<Texture2D>($"Assets/textures/tank_footprint");
+
+            footprints[total_treads_placed] = this;
             total_treads_placed++;
         }
         public void Render()
         {
+            World = Matrix.CreateScale(0.5f, 1f, 0.1f) * Matrix.CreateRotationY(rotation) * Matrix.CreateTranslation(location);
+            View = TankGame.GameView;
+            Projection = TankGame.GameProjection;
+
+            foreach (ModelMesh mesh in Model.Meshes)
+            {
+                foreach (BasicEffect effect in mesh.Effects)
+                {
+                    effect.World = World;
+                    effect.View = View;
+                    effect.Projection = Projection;
+                    effect.TextureEnabled = true;
+
+                    effect.Texture = texture;
+
+                    effect.EnableDefaultLighting();
+                }
+                mesh.Draw();
+            }
         }
+    }
+
+    public class TankDeathMark
+    {
+        public const int MAX_DEATH_MARKS = 1000;
+
+        public static TankDeathMark[] deathMarks = new TankDeathMark[MAX_DEATH_MARKS];
+
+        public Vector3 location;
+        public float rotation;
+
+        private static int total_death_marks;
+
+        public Matrix World;
+        public Matrix View;
+        public Matrix Projection;
+
+        public Model Model;
+
+        public Texture2D texture;
+
+        public enum CheckColor
+        {
+            Blue,
+            Red,
+            White
+        }
+
+        public TankDeathMark(CheckColor color)
+        {
+            if (total_death_marks + 1 > MAX_DEATH_MARKS)
+                return;
+            total_death_marks++;
+
+            Model = GameResources.GetGameResource<Model>("Assets/check");
+
+            texture = GameResources.GetGameResource<Texture2D>($"Assets/textures/check/check_{color.ToString().ToLower()}");
+
+            deathMarks[total_death_marks] = this;
+        }
+        public void Render()
+        {
+            World = Matrix.CreateTranslation(location);
+            View = TankGame.GameView;
+            Projection = TankGame.GameProjection;
+
+            foreach (ModelMesh mesh in Model.Meshes)
+            {
+                foreach (BasicEffect effect in mesh.Effects)
+                {
+                    effect.World = World;
+                    effect.View = View;
+                    effect.Projection = Projection;
+                    effect.TextureEnabled = true;
+
+                    effect.Texture = texture;
+
+                    effect.EnableDefaultLighting();
+                }
+                mesh.Draw();
+            }
+        }
+    }
+
+    public enum Team
+    {
+        Red    = 1, 
+        Blue   = 2,
+        Green  = 3,
+        Yellow = 4,
+        Purple = 5,
+        Orange = 6,
+        Cyan   = 7,
+
     }
 }
