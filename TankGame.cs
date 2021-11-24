@@ -224,6 +224,7 @@ namespace WiiPlayTanksRemake
 
                 Input.OldKeySnapshot = Input.CurrentKeySnapshot;
                 Input.OldMouseSnapshot = Input.CurrentMouseSnapshot;
+                Input.OldGamePadSnapshot = Input.CurrentGamePadSnapshot;
 
                 base.Update(gameTime);
             }

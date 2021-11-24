@@ -21,6 +21,8 @@ namespace WiiPlayTanksRemake.GameContent.UI
             MissionInfoBar.SetDimensions(650, 1000, 500, 50);
             ResumeButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Resume", Color.Gray));
             ResumeButton.SetDimensions(700, 200, 500, 150);
+
+            ResumeButton.Visible = false;
         }
 
         private static void QuickButton(UIImage imageButton, SpriteBatch spriteBatch, string text, Color color, bool onLeft = false)

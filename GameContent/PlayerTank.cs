@@ -35,7 +35,7 @@ namespace WiiPlayTanksRemake.GameContent
         public static Keybind controlLeft = new("Left", Keys.A);
         public static Keybind controlRight = new("Right", Keys.D);
         public static Keybind PlaceMine = new("Place Mine", Keys.Space);
-        // public static Keybind FireBullet = new("Fire Bullet", Keys.Space);
+        public static GamepadBind FireBullet = new("Fire Bullet", Buttons.RightTrigger);
 
         #region ModelBone & ModelMesh
         public Matrix[] boneTransforms;
@@ -173,12 +173,41 @@ namespace WiiPlayTanksRemake.GameContent
         private void ControlHandle_ConsoleController()
         {
             var leftStick = Input.CurrentGamePadSnapshot.ThumbSticks.Left;
+            var rightStick = Input.CurrentGamePadSnapshot.ThumbSticks.Right;
+            var dPad = Input.CurrentGamePadSnapshot.DPad;
 
             velocity.X += leftStick.X;
             velocity.Z -= leftStick.Y;
-
-            if (leftStick != Vector2.Zero) {
+            if (dPad.Down == ButtonState.Pressed)
+            {
                 playerControl_isBindPressed = true;
+                velocity.Z += Acceleration;
+            }
+            if (dPad.Up == ButtonState.Pressed)
+            {
+                playerControl_isBindPressed = true;
+                velocity.Z -= Acceleration;
+            }
+            if (dPad.Left == ButtonState.Pressed)
+            {
+                playerControl_isBindPressed = true;
+                velocity.X -= Acceleration;
+            }
+            if (dPad.Right == ButtonState.Pressed)
+            {
+                playerControl_isBindPressed = true;
+                velocity.X += Acceleration;
+            }
+            Mouse.SetPosition((int)(Input.CurrentMouseSnapshot.X + rightStick.X * TankGame.Instance.Settings.ControllerSensitivity), (int)(Input.CurrentMouseSnapshot.Y - rightStick.Y * TankGame.Instance.Settings.ControllerSensitivity));
+
+            if (leftStick != Vector2.Zero)
+            {
+                playerControl_isBindPressed = true;
+            }
+
+            if (FireBullet.JustPressed)
+            {
+                Shoot();
             }
         }
 
@@ -269,6 +298,7 @@ namespace WiiPlayTanksRemake.GameContent
         {
             if (curMineCooldown > 0 || OwnedMineCount >= MineLimit)
                 return;
+            curMineCooldown = MineCooldown;
             var sound = GameResources.GetGameResource<SoundEffect>("Assets/sounds/mine_place");
             SoundPlayer.PlaySoundInstance(sound, SoundContext.Sound, 0.5f);
             OwnedMineCount++;

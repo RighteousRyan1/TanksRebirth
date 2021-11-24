@@ -10,7 +10,7 @@ namespace WiiPlayTanksRemake.Internals.Common.GameInput
 
         public GamepadBind(string name, Buttons defaultKey = 0) {
             Name = name;
-            AssignedKey = defaultKey;
+            AssignedButton = defaultKey;
             AllGamepadBinds.Add(this);
         }
 
@@ -19,14 +19,14 @@ namespace WiiPlayTanksRemake.Internals.Common.GameInput
             get; private set;
         }
 
-        public bool JustPressed => !Input.OldGamePadSnapshot.IsButtonDown(AssignedKey) && Input.CurrentGamePadSnapshot.IsButtonDown(AssignedKey) && _bindingWait <= 0;
-        public bool IsPressed => Input.CurrentGamePadSnapshot.IsButtonDown(AssignedKey) && _bindingWait <= 0;
+        public bool JustPressed => Input.ButtonJustPressed(AssignedButton) && _bindingWait <= 0;
+        public bool IsPressed => Input.CurrentGamePadSnapshot.IsButtonDown(AssignedButton) && _bindingWait <= 0;
         public bool IsReassignPending
         {
             get; private set;
         }
 
-        public Buttons AssignedKey { get; internal set; } = 0;
+        public Buttons AssignedButton { get; internal set; } = 0;
         public string Name { get; set; } = "Not Named";
 
         /// <summary>
@@ -54,7 +54,7 @@ namespace WiiPlayTanksRemake.Internals.Common.GameInput
                 return false;
             }
             if (!IsReassignPending && !isOtherBindAssigning()) {
-                Console.WriteLine($"Reassigning '{Name}'... (Current: {AssignedKey})\nPress {AssignedKey} to stop binding, press Escape to unbind.");
+                Console.WriteLine($"Reassigning '{Name}'... (Current: {AssignedButton})\nPress {AssignedButton} to stop binding, press Escape to unbind.");
                 IsReassignPending = true;
             }
             else
@@ -66,19 +66,19 @@ namespace WiiPlayTanksRemake.Internals.Common.GameInput
             if (_bindingWait <= 0) {
                 if (Input.CurrentKeySnapshot.GetPressedKeys().Length > 0) {
                     var firstButton = Input.GetPressedButtons(Input.CurrentGamePadSnapshot.Buttons)[0];
-                    if (Input.ButtonJustPressed(firstButton) && firstButton == AssignedKey) {
+                    if (Input.ButtonJustPressed(firstButton) && firstButton == AssignedButton) {
                         Console.WriteLine($"Stopped the assigning of '{Name}'");
                         IsReassignPending = false;
                         return false;
                     }
                     if (Input.ButtonJustPressed(firstButton) && firstButton == Buttons.Back) {
                         Console.WriteLine($"Unassigned '{Name}'");
-                        AssignedKey = 0;
+                        AssignedButton = 0;
                         IsReassignPending = false;
                         return false;
                     }
-                    Console.WriteLine($"Keybind of name '{Name}' key assigned from {AssignedKey} to '{firstButton}'");
-                    AssignedKey = firstButton;
+                    Console.WriteLine($"Keybind of name '{Name}' key assigned from {AssignedButton} to '{firstButton}'");
+                    AssignedButton = firstButton;
 
                     _rebindAlertTime = 45;
                     IsReassignPending = false;
@@ -108,7 +108,7 @@ namespace WiiPlayTanksRemake.Internals.Common.GameInput
         }
 
         public override string ToString() {
-            return Name + " = {" + $"Button: {AssignedKey} | Pressed: {IsPressed} | ReassignPending: {IsReassignPending} " + "}";
+            return Name + " = {" + $"Button: {AssignedButton} | Pressed: {IsPressed} | ReassignPending: {IsReassignPending} " + "}";
         }
     }
 } 

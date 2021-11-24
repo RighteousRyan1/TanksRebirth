@@ -57,10 +57,13 @@ namespace WiiPlayTanksRemake.GameContent
 
         public float inaccuracy;
 
-        public float mineChance;
-
         public float projectileWarinessRadius;
         public float mineWarinessRadius;
+
+        public float minePlacementChance; // 0.0f to 1.0f
+
+        public int moveFromMineTime;
+        public int timeSinceLastMinePlaced = 999999;
 
         #endregion
 
@@ -221,9 +224,11 @@ namespace WiiPlayTanksRemake.GameContent
                         TreadPitch = 0.085f;
                         MaxSpeed = 1.8f;
 
-                        MineCooldown = 6;
+                        MineCooldown = 600;
                         MineLimit = 4;
                         MineStun = 1;
+                        minePlacementChance = 0.3f;
+                        moveFromMineTime = 60;
                         break;
 
                     case TankTier.Pink:
@@ -301,9 +306,11 @@ namespace WiiPlayTanksRemake.GameContent
                         treadSoundTimer = 6;
                         treadPlaceTimer = 2;
 
-                        MineCooldown = 6;
+                        MineCooldown = 1000;
                         MineLimit = 2;
                         MineStun = 1;
+                        moveFromMineTime = 40;
+                        minePlacementChance = 0.1f;
 
                         Invisible = true;
                         break;
@@ -335,9 +342,11 @@ namespace WiiPlayTanksRemake.GameContent
                         treadSoundTimer = 4;
                         treadPlaceTimer = 4;
 
-                        MineCooldown = 6;
+                        MineCooldown = 850;
                         MineLimit = 2;
                         MineStun = 1;
+                        moveFromMineTime = 40;
+                        minePlacementChance = 0.2f;
                         break;
                 }
                 Team = Team.Blue;
@@ -439,9 +448,12 @@ namespace WiiPlayTanksRemake.GameContent
         {
             if (curMineCooldown > 0 || OwnedMineCount >= MineLimit)
                 return;
+
+            curMineCooldown = MineCooldown;
             var sound = GameResources.GetGameResource<SoundEffect>("Assets/sounds/mine_place");
             SoundPlayer.PlaySoundInstance(sound, SoundContext.Sound, 0.5f);
             OwnedMineCount++;
+            timeSinceLastMinePlaced = 0;
             var mine = new Mine(this, position, 600);
         }
 
@@ -514,8 +526,12 @@ namespace WiiPlayTanksRemake.GameContent
         }
 
         public string uhoh;
+
+        private float randomMovementAngle;
         public void GetAIBehavior()
         {
+            timeSinceLastMinePlaced++;
+
             CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation);
 
             Model.Root.Transform = World;
@@ -545,7 +561,7 @@ namespace WiiPlayTanksRemake.GameContent
             enactBehavior = () =>
             {
 
-                // TODO: MAJOR -  Work on meandering ai and avoidance ai.
+                // TODO: MAJOR - Work on meandering ai and avoidance ai.
                 if (!Dead)
                 {
                     var enemy = WPTR.AllTanks.FirstOrDefault(tnk => tnk is not null && !tnk.Dead && tnk.Team != Team);
@@ -596,6 +612,33 @@ namespace WiiPlayTanksRemake.GameContent
 
                                 velocity *= MaxSpeed;
                             }
+                        }
+                        if (MineLimit > 0)
+                        {
+                            if (Behaviors[4].IsBehaviourModuloOf(60))
+                            {
+                                if (new Random().NextFloat(0, 1) <= minePlacementChance)
+                                {
+                                    randomMovementAngle = new Random().NextFloat(-meanderAngle / 10, meanderAngle / 10);
+                                    LayMine();
+                                }
+                            }
+                        }
+
+                        if (timeSinceLastMinePlaced < moveFromMineTime)
+                        {
+                            TankRotation = randomMovementAngle;
+
+                            var dir = Position2D.RotatedByRadians(TankRotation);
+
+                            velocity.X = dir.X;
+                            velocity.Z = dir.Y;
+
+                            velocity.Normalize();
+
+                            velocity *= MaxSpeed;
+
+                            return;
                         }
                         if (!TryGetBulletNear(projectileWarinessRadius, out var sh))
                         {

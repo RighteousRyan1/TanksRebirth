@@ -141,9 +141,22 @@ namespace WiiPlayTanksRemake.GameContent
             }
         }
 
-        private class Explosion
+        private class MineExplosion
         {
             // model, blah blah blah
+
+            public Vector3 position;
+
+            public Matrix View;
+            public Matrix Projection;
+            public Matrix World;
+
+            public Model Model;
+
+            public MineExplosion()
+            {
+
+            }
         }
     }
 }
