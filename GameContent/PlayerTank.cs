@@ -118,11 +118,11 @@ namespace WiiPlayTanksRemake.GameContent
                 else
                     velocity = Vector3.Zero;
 
-                //var normal = ((Position2D + GameUtils.WindowCenter) - (GameUtils.MousePosition));
+                var normal = Position2D + GameUtils.WindowCenter - GameUtils.MousePosition;
 
-                var tankscreen = TankGame.Instance.GraphicsDevice.Viewport.Unproject(position, Projection, View, World);
+                //var tankscreen = TankGame.Instance.GraphicsDevice.Viewport.Unproject(position, Projection, View, World);
 
-                TurretRotation = (new Vector2(tankscreen.X, tankscreen.Y) - GameUtils.MousePosition).ToRotation(); //-normal.ToRotation() - MathHelper.PiOver2;
+                TurretRotation = /*(new Vector2(tankscreen.X, tankscreen.Y) - GameUtils.MousePosition).ToRotation(); */ -normal.ToRotation() - MathHelper.PiOver2;
 
                 if (WPTR.InMission)
                 {
@@ -144,7 +144,7 @@ namespace WiiPlayTanksRemake.GameContent
         }
 
         /// <summary>
-        /// Controller support soon i hope
+        /// Controller support soon i hope (this is not working)
         /// </summary>
         private void ControlHandle_ConsoleController()
         {

@@ -191,13 +191,15 @@ namespace WiiPlayTanksRemake.GameContent
                 }
             }
 
+            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"{Input.CurrentGamePadSnapshot.ThumbSticks.Left.X}\n{Input.CurrentGamePadSnapshot.ThumbSticks.Left.Y}", new Vector2(10, 10), 2);
+
             MouseRenderer.DrawMouse();
         }
         public static PlayerTank myTank;
 
         public static void Initialize()
         {
-            BeginIntroSequence();
+            GameShaders.Initialize();
 
             DebugUtils.DebuggingEnabled = true;
             MapRenderer.InitializeRenderers();
@@ -213,8 +215,10 @@ namespace WiiPlayTanksRemake.GameContent
             SpawnTank(TankTier.Black, Team.Blue);
 
             IngameUI.Initialize();
-
+          
             tankMusicHandler.LoadMusic();
+          
+            BeginIntroSequence();
         }
 
         internal static int timeUntilTankFunction;
@@ -269,6 +273,19 @@ namespace WiiPlayTanksRemake.GameContent
              * if pixel sampled at (x, y) is rgb(1, 1, 1) -- ignore
              * else, apply shader
              */
+        }
+    }
+    public class GameShaders
+    {
+        public static Effect MouseShader { get; set; }
+
+        public static void Initialize()
+        {
+            MouseShader = GameResources.GetGameResource<Effect>("Assets/Shaders/MouseShader");
+        }
+
+        public void UpdateShader()
+        {
         }
     }
 }
