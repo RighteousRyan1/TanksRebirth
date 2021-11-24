@@ -141,7 +141,7 @@ namespace WiiPlayTanksRemake.GameContent
             // TODO: Scaling with screen size.
 
             foreach (var element in UIElement.AllUIElements) {
-                element.Position = Vector2.Transform(element.Position, UIMatrix * Matrix.CreateTranslation(element.Position.X, element.Position.Y, 0));
+                //element.Position = Vector2.Transform(element.Position, UIMatrix * Matrix.CreateTranslation(element.Position.X, element.Position.Y, 0));
 
                 element?.Draw(TankGame.spriteBatch);
             }

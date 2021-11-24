@@ -152,6 +152,10 @@ namespace WiiPlayTanksRemake.GameContent
 
             velocity.X += leftStick.X;
             velocity.Z -= leftStick.Y;
+
+            if (leftStick != Vector2.Zero) {
+                playerControl_isBindPressed = true;
+            }
         }
 
         private void ControlHandle_Keybinding()
@@ -234,11 +238,12 @@ namespace WiiPlayTanksRemake.GameContent
 
         public void UpdatePlayerMovement()
         {
+            var leftStick = Input.CurrentGamePadSnapshot.ThumbSticks.Left;
             if (!WPTR.InMission)
                 return;
-            if (!controlDown.IsPressed && !controlUp.IsPressed)
+            if (!controlDown.IsPressed && !controlUp.IsPressed && leftStick.Y == 0)
                 velocity.Z = 0;
-            if (!controlLeft.IsPressed && !controlRight.IsPressed)
+            if (!controlLeft.IsPressed && !controlRight.IsPressed && leftStick.X == 0)
                 velocity.X = 0;
 
             if (velocity.X > MaxSpeed)
