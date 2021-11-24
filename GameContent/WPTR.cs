@@ -105,8 +105,8 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 if (!InMission)
                 {
-                    tankMusicHandler.LoadMusic();
                     InMission = true;
+                    tankMusicHandler.PlayMusic();
                 }
             }
 
@@ -215,7 +215,9 @@ namespace WiiPlayTanksRemake.GameContent
             SpawnTank(TankTier.Black, Team.Blue);
 
             IngameUI.Initialize();
-
+          
+            tankMusicHandler.LoadMusic();
+          
             BeginIntroSequence();
         }
 

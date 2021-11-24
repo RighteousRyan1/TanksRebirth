@@ -201,7 +201,10 @@ namespace WiiPlayTanksRemake.GameContent.Systems
             white3 = Music.CreateMusicTrack("WhiteTank3", "Assets/music/white3", 0.5f);
 
             black = Music.CreateMusicTrack("BlackTank", "Assets/music/black", 0.5f);
+        }
 
+        public void PlayMusic()
+        {
             brown.Play();
             ash1.Play();
             ash2.Play();
