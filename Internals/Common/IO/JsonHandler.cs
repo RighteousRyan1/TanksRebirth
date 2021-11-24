@@ -38,7 +38,8 @@ namespace WiiPlayTanksRemake.Internals.Common.IO
             get; private set;
         }
 
-        public JsonHandler(object type, string path) {
+        public JsonHandler(object type, string path)
+        {
             Object = type;
             JsonPath = path;
             JsonInfo = new(path);
@@ -46,7 +47,8 @@ namespace WiiPlayTanksRemake.Internals.Common.IO
             JsonDir = JsonPath.Remove(JsonPath.Length - JsonInfo.Name.Length);
         }
 
-        public JsonHandler(string path, params object[] types) {
+        public JsonHandler(string path, params object[] types)
+        {
             Object = types;
             JsonPath = path;
             JsonInfo = new(path);
@@ -54,22 +56,26 @@ namespace WiiPlayTanksRemake.Internals.Common.IO
             JsonDir = JsonPath.Remove(JsonPath.Length - JsonInfo.Name.Length);
         }
 
-        public string Serialize(JsonSerializerOptions options, bool writeToFile = false) {
+        public string Serialize(JsonSerializerOptions options, bool writeToFile = false)
+        {
             var serialized = JsonSerializer.Serialize(Object, options);
-            if (writeToFile) {
+            if (writeToFile)
+            {
                 Directory.CreateDirectory(JsonDir);
                 File.WriteAllText(JsonPath, serialized);
             }
             return serialized;
         }
 
-        public T DeserializeAndSet<T>() {
+        public T DeserializeAndSet<T>()
+        {
             var asDeserialized = JsonSerializer.Deserialize<T>(File.ReadAllText(JsonPath));
             Object = asDeserialized;
             return asDeserialized;
         }
 
-        public string ReadDeserialized<T>() {
+        public string ReadDeserialized<T>()
+        {
             using StreamReader reader = File.OpenText(JsonPath);
 
             var deserialized = JsonSerializer.Deserialize<T>(File.ReadAllText(JsonPath));
@@ -77,7 +83,8 @@ namespace WiiPlayTanksRemake.Internals.Common.IO
             var def = "";
             var i = 0;
             def += "\nDeserialized: {\n";
-            foreach (var fld in Object.GetType().GetProperties()) {
+            foreach (var fld in Object.GetType().GetProperties())
+            {
                 if (i < Object.GetType().GetProperties().Length - 1)
                     def += $"  \"{fld.Name}\": {fld.GetValue(Object)},\n";
                 else

@@ -42,7 +42,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         public static bool WindowBorderless { get; set; }
 
-        public static bool InMission { get; set; }
+        public static bool InMission { get; set; } = false;
 
         public static Matrix UIMatrix => Matrix.CreateOrthographicOffCenter(0, TankGame.Instance.GraphicsDevice.Viewport.Width, TankGame.Instance.GraphicsDevice.Viewport.Height, 0, -1, 1);
 
@@ -109,8 +109,7 @@ namespace WiiPlayTanksRemake.GameContent
                 if (!InMission)
                 {
                     InMission = true;
-                    OnMissionStart = new(StartMission);
-                    OnMissionStart.Invoke();
+                    OnMissionStart?.Invoke();
                     TankMusicSystem.PlayMusic();
                 }
             }
@@ -220,7 +219,7 @@ namespace WiiPlayTanksRemake.GameContent
             SpawnTankPlethorae();
 
             IngameUI.Initialize();
-          
+
             TankMusicSystem.LoadMusic();
           
             BeginIntroSequence();

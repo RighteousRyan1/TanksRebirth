@@ -422,8 +422,6 @@ namespace WiiPlayTanksRemake.GameContent
             }
         }
 
-
-
         private void UpdateCollision()
         {
             CollisionBox = new(position - new Vector3(7, 10, 7), position + new Vector3(10, 10, 10));
@@ -435,6 +433,16 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 position = oldPosition;
             }
+        }
+
+        public override void LayMine()
+        {
+            if (curMineCooldown > 0 || OwnedMineCount >= MineLimit)
+                return;
+            var sound = GameResources.GetGameResource<SoundEffect>("Assets/sounds/mine_place");
+            SoundPlayer.PlaySoundInstance(sound, SoundContext.Sound, 0.5f);
+            OwnedMineCount++;
+            var mine = new Mine(this, position, 600);
         }
 
         public override void Destroy()
@@ -564,8 +572,22 @@ namespace WiiPlayTanksRemake.GameContent
                         {
                             if (TryGetBulletNear(projectileWarinessRadius, out var shell))
                             {
-                                System.Diagnostics.Debug.WriteLine("Bullet neear!!!!");
                                 var dir = new Vector2(0, -5).RotatedByRadians(shell.Position2D.DirectionOf(Position2D).ToRotation());
+
+                                velocity.X = dir.X;
+                                velocity.Z = dir.Y;
+
+                                velocity.Normalize();
+
+                                velocity *= MaxSpeed;
+                            }
+                        }
+                        if (Behaviors[5].IsBehaviourModuloOf(5))
+                        {
+                            uhoh = "Mine!";
+                            if (TryGetMineNear(mineWarinessRadius, out var mine))
+                            {
+                                var dir = new Vector2(0, -5).RotatedByRadians(mine.Position2D.DirectionOf(Position2D).ToRotation());
 
                                 velocity.X = dir.X;
                                 velocity.Z = dir.Y;
@@ -780,7 +802,7 @@ namespace WiiPlayTanksRemake.GameContent
         public bool TryGetMineNear(float distance, out Mine mine)
         {
             mine = null;
-            foreach (var yours in Mine.AllMines)
+            foreach (var yours in Mine.AllMines.Where(mine => mine is not null))
             {
                 if (Vector3.Distance(position, yours.position) < distance)
                 {

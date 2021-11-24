@@ -12,7 +12,8 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
         public static UIImageButton ResumeButton;
 
-        internal static void Initialize() {
+        internal static void Initialize()
+        {
             SpriteFont font = TankGame.Fonts.Default;
             Vector2 drawOrigin = font.MeasureString("Mission 1        x4") / 2f;
             MissionInfoBar = new((uiPanel, spriteBatch) => spriteBatch.DrawString(font, "Mission 1        x4", uiPanel.Hitbox.Center.ToVector2(), Color.White, 0, drawOrigin, 1.5f, SpriteEffects.None, 1f));
@@ -22,7 +23,8 @@ namespace WiiPlayTanksRemake.GameContent.UI
             ResumeButton.SetDimensions(700, 200, 500, 150);
         }
 
-        private static void QuickButton(UIImage imageButton, SpriteBatch spriteBatch, string text, Color color, bool onLeft = false) {
+        private static void QuickButton(UIImage imageButton, SpriteBatch spriteBatch, string text, Color color, bool onLeft = false)
+        {
             Texture2D texture = TankGame.UITextures.UIPanelBackground;
 
             int border = 12;

@@ -29,7 +29,6 @@ namespace WiiPlayTanksRemake.GameContent.Systems
         {
             /*brownSpike += 0.5f * Tank.GetTankCountOfType(TankTier.Brown);
             ashSpike += 1f * Tank.GetTankCountOfType(TankTier.Ash);
-
             brownSpike = GameUtils.Clamp(brownSpike, 0f, 1f);
             ashSpike = GameUtils.Clamp(ashSpike, 0f, 2f);
             marineSpike = GameUtils.Clamp(marineSpike, 0f, 4f);
@@ -38,12 +37,9 @@ namespace WiiPlayTanksRemake.GameContent.Systems
             purpleSpike = GameUtils.Clamp(purpleSpike, 0f, 24f);
             whiteSpike = GameUtils.Clamp(whiteSpike, 0f, 30f);
             blackSpike = GameUtils.Clamp(blackSpike, 0f, 50f);
-
             totalSpike = brownSpike + ashSpike + marineSpike + pinkSpike + greenSpike + purpleSpike + whiteSpike + blackSpike;
-
             if (TierHighest == TankTier.Brown)
                 brown.volume = 0.5f;
-
             else if (TierHighest == TankTier.Ash)
             {
                 if (totalSpike > 2f)

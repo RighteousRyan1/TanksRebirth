@@ -401,18 +401,14 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
         {
             var seed = new Random().Next(0, 4);
 
-            switch (seed)
-            {
-                case 0:
-                    return 0f;
-                case 1:
-                    return MathHelper.PiOver2;
-                case 2:
-                    return MathHelper.Pi;
-                case 3:
-                    return MathHelper.Pi + MathHelper.PiOver2;
-            }
-            return 0f;
+            return seed switch 
+            { 
+                0 => 0,
+                1 => MathHelper.PiOver2,
+                2 => MathHelper.Pi,
+                3 => MathHelper.Pi + MathHelper.PiOver2,
+                _ => 0
+            };
         }
     }
     public sealed class SoundPlayer

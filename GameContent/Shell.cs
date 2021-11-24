@@ -146,10 +146,13 @@ namespace WiiPlayTanksRemake.GameContent
             }
         }
 
-        public void Destroy()
+        public void Destroy(bool playSound = true)
         {
-            var sfx = SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/bullet_destroy"), SoundContext.Sound, 0.5f);
-            sfx.Pitch = -0.2f;
+            if (playSound)
+            {
+                var sfx = SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/bullet_destroy"), SoundContext.Sound, 0.5f);
+                sfx.Pitch = -0.2f;
+            }
             owner.OwnedBulletCount--;
             AllShells[worldId] = null;
         }

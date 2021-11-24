@@ -58,6 +58,7 @@ namespace WiiPlayTanksRemake.GameContent
         public Team Team { get; set; }
 
         public int OwnedBulletCount { get; set; }
+        public int OwnedMineCount { get; set; }
         public Vector2 Position2D => position.FlattenZ();
         public Vector2 Velocity2D => velocity.FlattenZ();
 
@@ -66,19 +67,13 @@ namespace WiiPlayTanksRemake.GameContent
         public string GetGeneralStats()
             => $"Pos2D: {Position2D} | Vel: {Velocity2D} | Dead: {Dead}";
 
-        public virtual void Destroy()
-        {
+        public virtual void Destroy() { }
 
-        }
+        public virtual void LayFootprint() { }
 
-        public virtual void LayFootprint()
-        {
-        }
+        public virtual void Shoot() { }
 
-        public virtual void Shoot()
-        {
-
-        }
+        public virtual void LayMine() { }
     }
 
     public class TankFootprint
