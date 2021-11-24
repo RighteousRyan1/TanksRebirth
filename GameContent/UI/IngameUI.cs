@@ -10,17 +10,22 @@ namespace WiiPlayTanksRemake.GameContent.UI
     {
         public struct UIElements
         {
-            public static UITextButton BottomTabber;
+            public static UIPanel BottomTabber;
         }
 
         internal static void Initialize() {
-            UIElements.BottomTabber = new("Return", TankGame.Fonts.Default, Color.Black, Color.CornflowerBlue, 1.5f);
-            UIElements.BottomTabber.SetDimensions(GameUtils.WindowWidth / 2, GameUtils.WindowHeight * 0.7f, 250, 30);
+            SpriteFont font = TankGame.Fonts.Default;
+            Vector2 drawOrigin = font.MeasureString("Mission 1        x4") / 2f;
+            UIElements.BottomTabber = new((uiPanel, spriteBatch) => spriteBatch.DrawString(font, "Mission 1        x4", uiPanel.Hitbox.Center.ToVector2(), Color.White, 0, drawOrigin, 1.5f, SpriteEffects.None, 1f));
+            UIElements.BottomTabber.BackgroundColor = Color.Red;
+            UIElements.BottomTabber.SetDimensions(650, 1000, 500, 50);
         }
 
-        private static void QuickButton(UIImageButton imageButton, SpriteBatch spriteBatch, string text, bool onLeft = false) {
+        private static void QuickButton(UIImage imageButton, SpriteBatch spriteBatch, string text, bool onLeft = false) {
             SpriteFont font = TankGame.Fonts.Default;
             spriteBatch.Draw(TankGame.MagicPixel, imageButton.Hitbox, Color.DarkGray * 0.75f);
+            Vector2 drawOrigin = font.MeasureString(text) / 2f;
+            spriteBatch.DrawString(font, text, imageButton.Hitbox.Center.ToVector2(), Color.White, 0, drawOrigin, 1f, SpriteEffects.None, 1f);
         }
     }
 }

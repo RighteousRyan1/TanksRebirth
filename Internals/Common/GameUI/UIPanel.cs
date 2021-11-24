@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using WiiPlayTanksRemake.Internals.UI;
 
@@ -6,7 +7,13 @@ namespace WiiPlayTanksRemake.Internals.Common.GameUI
 {
     public class UIPanel : UIElement
     {
-        public Color BackgroundColor;
+        public Color BackgroundColor = Color.White;
+
+        public Action<UIPanel, SpriteBatch> UniqueDraw;
+
+        public UIPanel(Action<UIPanel, SpriteBatch> uniqueDraw = null) {
+            UniqueDraw = uniqueDraw;
+        }
 
         public override void DrawSelf(SpriteBatch spriteBatch) {
             base.DrawSelf(spriteBatch);
@@ -32,6 +39,8 @@ namespace WiiPlayTanksRemake.Internals.Common.GameUI
             spriteBatch.Draw(texture, new Rectangle(Hitbox.X, bottomY, border, border), new Rectangle(0, texture.Height - border, border, border), BackgroundColor);
             spriteBatch.Draw(texture, new Rectangle(middleX, bottomY, Hitbox.Width - border * 2, border), new Rectangle(border, texture.Height - border, texture.Width - border * 2, border), BackgroundColor);
             spriteBatch.Draw(texture, new Rectangle(rightX, bottomY, border, border), new Rectangle(texture.Width - border, texture.Height - border, border, border), BackgroundColor);
+
+            UniqueDraw?.Invoke(this, spriteBatch);
         }
     }
 }
