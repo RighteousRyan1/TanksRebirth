@@ -15,7 +15,7 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
             if (beginSb)
                 sb.Begin();
 
-            sb.DrawString(TankGame.Fonts.Default, info.ToString(), position, Color.White, 0f, default, scaleOverride, default, default); 
+            sb.DrawString(TankGame.Fonts.Default, info.ToString(), position, Color.White, 0f, default, scaleOverride * 0.6f, default, default); 
 
             if (beginSb)
                 sb.End();
