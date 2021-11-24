@@ -1,8 +1,10 @@
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using WiiPlayTanksRemake.Internals;
 
 namespace WiiPlayTanksRemake.GameContent
 {
@@ -27,8 +29,6 @@ namespace WiiPlayTanksRemake.GameContent
 
         public Mine()
         {
-
-
             int index = Array.IndexOf(AllMines, AllMines.First(bullet => bullet is null));
 
             worldId = index;
@@ -38,7 +38,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         public void Detonate()
         {
-
+            var destroysound = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_destroy");
             AllMines[worldId] = null;
         }
 

@@ -252,7 +252,7 @@ namespace WiiPlayTanksRemake.GameContent
                         TurningSpeed = 0.06f;
                         MaximalTurn = MathHelper.PiOver4;
 
-                        ShootStun = 20;
+                        ShootStun = 5;
                         ShellCooldown = 90;
                         ShellLimit = 3;
                         ShellSpeed = 6f;

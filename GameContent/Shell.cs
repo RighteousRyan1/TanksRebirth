@@ -112,7 +112,7 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 if (tank.CollisionBox.Intersects(hurtbox))
                 {
-                    if (tank.Team == owner.Team)
+                    if (tank.Team == owner.Team && tank != owner)
                         Destroy();
                     else
                     {
@@ -125,7 +125,7 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 if (tank.CollisionBox.Intersects(hurtbox))
                 {
-                    if (tank.Team == owner.Team)
+                    if (tank.Team == owner.Team && tank != owner)
                         Destroy();
                     else
                     {

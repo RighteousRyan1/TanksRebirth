@@ -24,6 +24,8 @@ namespace WiiPlayTanksRemake.GameContent
         public bool Invisible { get; set; }
         /// <summary>How fast the tank should accelerate towards it's <see cref="MaxSpeed"/>.</summary>
         public float Acceleration { get; set; } = 0.3f;
+        /// <summary>The current speed of this tank.</summary>
+        public float Speed { get; set; } = 1f;
         /// <summary>The maximum speed this tank can achieve.</summary>
         public float MaxSpeed { get; set; } = 1f;
         /// <summary>How fast the bullets this <see cref="Tank"/> shoot are.</summary>
