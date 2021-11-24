@@ -10,22 +10,22 @@ using System.IO;
 
 namespace WiiPlayTanksRemake.GameContent.Systems
 {
-    public sealed class TankMusicSystem : IGameSystem
+    public static class TankMusicSystem
     {
-        public TankTier TierHighest => AITank.GetHighestTierActive();
+        public static TankTier TierHighest => AITank.GetHighestTierActive();
 
-        public float totalSpike;
+        public static float totalSpike;
 
-        public float brownSpike;
-        public float ashSpike;
-        public float marineSpike;
-        public float pinkSpike;
-        public float greenSpike;
-        public float purpleSpike;
-        public float whiteSpike;
-        public float blackSpike;
+        public static float brownSpike;
+        public static float ashSpike;
+        public static float marineSpike;
+        public static float pinkSpike;
+        public static float greenSpike;
+        public static float purpleSpike;
+        public static float whiteSpike;
+        public static float blackSpike;
 
-        public void Update()
+        public static void Update()
         {
             /*brownSpike += 0.5f * Tank.GetTankCountOfType(TankTier.Brown);
             ashSpike += 1f * Tank.GetTankCountOfType(TankTier.Ash);
@@ -169,7 +169,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems
             black
         };
 
-        public void LoadMusic()
+        public static void LoadMusic()
         {
             brown = Music.CreateMusicTrack("BrownTank", "Assets/music/brown", 0.5f);
 
@@ -203,7 +203,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems
             black = Music.CreateMusicTrack("BlackTank", "Assets/music/black", 0.5f);
         }
 
-        public void PlayMusic()
+        public static void PlayMusic()
         {
             brown.Play();
             ash1.Play();

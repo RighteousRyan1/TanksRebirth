@@ -101,9 +101,12 @@ namespace WiiPlayTanksRemake
             graphics.PreferredBackBufferHeight = 1080;
 
             if (!File.Exists(SaveDirectory + Path.DirectorySeparatorChar + "settings.json")) {
-                Settings = new();
-                Settings.EffectsVolume = 100;
-                Settings.MusicVolume = 100;
+                Settings = new()
+                {
+                    ControllerSensitivity = 10,
+                    EffectsVolume = 100,
+                    MusicVolume = 100
+                };
                 SettingsHandler = new(Settings, SaveDirectory + Path.DirectorySeparatorChar + "settings.json");
                 System.Text.Json.JsonSerializerOptions opts = new();
                 opts.WriteIndented = true;
