@@ -21,6 +21,7 @@ namespace WiiPlayTanksRemake.GameContent
         public int ricochets;
         public float rotation;
 
+        public Vector2 Position2D => position.FlattenZ();
         public Vector2 Velocity2D => velocity.FlattenZ();
 
         public Matrix View;
@@ -108,7 +109,7 @@ namespace WiiPlayTanksRemake.GameContent
             /*foreach (var tank in WPTR.AllTanks)
                 if (tank.CollisionBox.Intersects(hurtbox))
                     tank.Destroy();*/
-            foreach (var tank in WPTR.AllAITanks)
+            foreach (var tank in WPTR.AllAITanks.Where(tnk => tnk is not null))
             {
                 if (tank.CollisionBox.Intersects(hurtbox))
                 {
@@ -121,7 +122,7 @@ namespace WiiPlayTanksRemake.GameContent
                     }
                 }
             }
-            foreach (var tank in WPTR.AllPlayerTanks)
+            foreach (var tank in WPTR.AllPlayerTanks.Where(tnk => tnk is not null))
             {
                 if (tank.CollisionBox.Intersects(hurtbox))
                 {

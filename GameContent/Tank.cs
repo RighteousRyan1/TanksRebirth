@@ -55,7 +55,6 @@ namespace WiiPlayTanksRemake.GameContent
         public int ShellLimit { get; set; }
         public float TurningSpeed { get; set; } = 1f;
         public float MaximalTurn { get; set; }
-
         public Team Team { get; set; }
 
         public int OwnedBulletCount { get; set; }

@@ -369,19 +369,17 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
         {
             var viewport = TankGame.Instance.GraphicsDevice.Viewport;
 
-            // var expanded = new Vector4(position, 1);
-
-            // var worldviewprojection = projection * view * world;
-
-            // var result = Vector4.Transform(expanded, worldviewprojection);
-
             var proj = viewport.Project(position, projection, view, world);
 
             return new(proj.X, proj.Y);
+        }
+        public static Vector3 ConvertScreenToWorld(Vector3 position, Matrix world, Matrix view, Matrix projection)
+        {
+            var viewport = TankGame.Instance.GraphicsDevice.Viewport;
 
-            /*float screenx = viewport.X + viewport.Width * (result.X + 1f) * 0.5f;
-            float screeny = viewport.Y + viewport.Height * (1.0f - result.Y) * 0.5f;
-            return new Vector2(screenx, screeny);*/
+            var proj = viewport.Unproject(position, projection, view, world);
+
+            return proj;
         }
 
         public static Vector3[] Raytrace(Vector3 start, Vector3 end, int iterations)

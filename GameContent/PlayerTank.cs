@@ -23,6 +23,8 @@ namespace WiiPlayTanksRemake.GameContent
         public int curShootCooldown;
         private int curMineCooldown;
 
+        public int PlayerId { get; }
+        public int WorldId { get; }
         public PlayerType PlayerType { get; }
 
         internal Texture2D _tankColorTexture;
@@ -70,8 +72,20 @@ namespace WiiPlayTanksRemake.GameContent
 
             Team = Team.Red;
 
-            WPTR.AllPlayerTanks.Add(this);
-            WPTR.AllTanks.Add(this);
+            int index = Array.IndexOf(WPTR.AllAITanks, WPTR.AllAITanks.First(tank => tank is null));
+
+            PlayerId = index;
+
+            WPTR.AllPlayerTanks[index] = this;
+
+            int index2 = Array.IndexOf(WPTR.AllTanks, WPTR.AllTanks.First(tank => tank is null));
+
+            WorldId = index2;
+
+            WPTR.AllTanks[index2] = this;
+
+            //WPTR.AllPlayerTanks.Add(this);
+            //WPTR.AllTanks.Add(this);
         }
 
         internal void Update()
@@ -118,11 +132,21 @@ namespace WiiPlayTanksRemake.GameContent
                 else
                     velocity = Vector3.Zero;
 
-                var normal = Position2D + GameUtils.WindowCenter - GameUtils.MousePosition;
+                Plane gamePlane = new(Vector3.UnitY, 0);
 
-                //var tankscreen = TankGame.Instance.GraphicsDevice.Viewport.Unproject(position, Projection, View, World);
+                var nearPlaneMouse = GeometryUtils.ConvertScreenToWorld(new Vector3(GameUtils.MousePosition, 0), Matrix.Identity, TankGame.GameView, TankGame.GameProjection);
+                var farPlaneMouse = GeometryUtils.ConvertScreenToWorld(new Vector3(GameUtils.MousePosition, 1), Matrix.Identity, TankGame.GameView, TankGame.GameProjection);
 
-                TurretRotation = /*(new Vector2(tankscreen.X, tankscreen.Y) - GameUtils.MousePosition).ToRotation(); */ -normal.ToRotation() - MathHelper.PiOver2;
+                var mouseRay = new Ray(nearPlaneMouse, Vector3.Normalize(farPlaneMouse - nearPlaneMouse));
+
+                float? distance = mouseRay.Intersects(gamePlane);
+
+                if (distance.HasValue)
+                {
+                    Vector3 mouseWorldPos = mouseRay.Position + mouseRay.Direction * distance.Value;
+
+                    TurretRotation = (-(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position2D).ToRotation()) + MathHelper.PiOver2;
+                }
 
                 if (WPTR.InMission)
                 {
@@ -185,12 +209,12 @@ namespace WiiPlayTanksRemake.GameContent
         private void UpdateCollision()
         {
             CollisionBox = new(position - new Vector3(12, 10, 12), position + new Vector3(12, 10, 12));
-            if (WPTR.AllAITanks.Any(tnk => tnk.CollisionBox.Intersects(CollisionBox)))
+            if (WPTR.AllAITanks.Any(tnk => tnk is not null && tnk.CollisionBox.Intersects(CollisionBox)))
             {
                 position = oldPosition;
                 //System.Diagnostics.Debug.WriteLine(new Random().Next(0, 100).ToString());
             }
-            if (WPTR.AllPlayerTanks.Any(tnk => tnk.CollisionBox.Intersects(CollisionBox) && tnk != this))
+            if (WPTR.AllPlayerTanks.Any(tnk => tnk is not null && tnk.CollisionBox.Intersects(CollisionBox) && tnk != this))
             {
                 position = oldPosition;
             }
@@ -233,6 +257,9 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 location = position + new Vector3(0, 0.1f, 0)
             };
+
+            WPTR.AllPlayerTanks[PlayerId] = null;
+            WPTR.AllTanks[WorldId] = null;
             // TODO: play player tank death sound
         }
 
@@ -356,6 +383,8 @@ namespace WiiPlayTanksRemake.GameContent
         {
             if (Dead)
                 return;
+
+            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"{Team}", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection), 1);
 
             RenderModel();
         }

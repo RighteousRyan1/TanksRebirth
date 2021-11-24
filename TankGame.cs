@@ -28,6 +28,7 @@ namespace WiiPlayTanksRemake
 
     public class TankGame : Game
     {
+        public static GameTime LastGameTime { get; private set; }
         public static uint GameUpdateTime { get; private set; }
 
         public static Model TankModel_Player;
@@ -62,6 +63,9 @@ namespace WiiPlayTanksRemake
             }
         }
 
+        public static Matrix GameView;
+        public static Matrix GameProjection;
+
         public struct Fonts
         {
             public static SpriteFont Default;
@@ -86,7 +90,7 @@ namespace WiiPlayTanksRemake
 
             IsMouseVisible = false;
 
-            // Window.IsBorderless = true;
+            Window.IsBorderless = true;
         }
 
         protected override void Initialize()
@@ -125,8 +129,6 @@ namespace WiiPlayTanksRemake
 
             base.Initialize();
         }
-
-        public static Vector3 mouse3d;
 
         protected override void OnExiting(object sender, EventArgs args)
         {
@@ -174,19 +176,15 @@ namespace WiiPlayTanksRemake
 
         protected override void Update(GameTime gameTime)
         {
+            LastGameTime = gameTime;
             if (Input.MouseRight)
             {
                 rotVec += GameUtils.GetMouseVelocity(GameUtils.WindowCenter) / 500;
             }
 
-            var transform = Vector3.Transform(new(GameUtils.MousePosition, 0), Matrix.Invert(GameView * GameProjection));
-
-            mouse3d = transform;
-
             System.Diagnostics.Debug.WriteLine(GameUtils.GetMouseVelocity(GameUtils.WindowCenter));
 
             GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(0.75f + rotVec.Y) * Matrix.CreateRotationY(rotVec.X);
-            // GameProjection = Matrix.CreateOrthographic(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, -2000f, 5000f) * Matrix.CreateScale(zoom);
 
             FixedUpdate(gameTime);
         }
@@ -196,9 +194,6 @@ namespace WiiPlayTanksRemake
             foreach (var type in systems)
                 type?.Update();
         }
-
-        public static Matrix GameView;
-        public static Matrix GameProjection;
 
         public void FixedUpdate(GameTime gameTime)
         {
@@ -218,7 +213,10 @@ namespace WiiPlayTanksRemake
 
                 if (Input.KeyJustPressed(Keys.K))
                 {
-                    WPTR.AllAITanks.FirstOrDefault(tank => !tank.Dead && tank.tier == AITank.GetHighestTierActive()).Destroy();
+                    var tnk = WPTR.AllAITanks.FirstOrDefault(tank => tank is not null && !tank.Dead && tank.tier == AITank.GetHighestTierActive());
+
+                    if (Array.IndexOf(WPTR.AllAITanks, tnk) > -1)
+                        tnk?.Destroy();
                 }
 
                 Input.OldKeySnapshot = Input.CurrentKeySnapshot;
@@ -226,31 +224,16 @@ namespace WiiPlayTanksRemake
 
                 base.Update(gameTime);
             }
-            //testMatrix =
-             //Matrix.CreateFromYawPitchRoll(0, 0, GameUtils.MousePosition.X / GameUtils.WindowWidth)
-             //Matrix.CreateTranslation(GameUtils.MousePosition.X, 0, 0);
-            // if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Up))
             foreach (var music in Music.AllMusic)
                 music?.Update();
         }
         protected override void Draw(GameTime gameTime)
         {
-            var info = $"HighestTier: {AITank.GetHighestTierActive()}\nmyTank:{WPTR.myTank}";
             GraphicsDevice.Clear(Color.Black);
-            // draw stuff past
 
             spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied);
 
-            DebugUtils.DrawDebugString(spriteBatch, $"{WPTR.myTank.GetGeneralStats()} : {GameUtils.MousePosition.ToNormalisedCoordinates()}", new(10, GameUtils.WindowHeight * 0.15f));
-            DebugUtils.DrawDebugString(spriteBatch, $"{GameUtils.MousePosition}", new(10, GameUtils.WindowHeight * 0.4f));
-
-            DebugUtils.DrawDebugString(spriteBatch, info, new(10, GameUtils.WindowHeight / 2));
-
-            DebugUtils.DrawDebugString(spriteBatch, info, new(10, GameUtils.WindowHeight * 0.2f));
-
-            DebugUtils.DrawDebugString(spriteBatch, Settings.MusicVolume, new Vector2(10, GameUtils.WindowHeight / 2), 1);
-
-            DebugUtils.DrawDebugString(spriteBatch, $"CurSong: {(Music.AllMusic.FirstOrDefault(music => music.volume == 0.5f) != null ? Music.AllMusic.FirstOrDefault(music => music.volume == 0.5f).Name : "N/A")}", new(10, GameUtils.WindowHeight - 100));
+            spriteBatch.DrawString(Fonts.Default, "Debug Level: " + DebugUtils.CurDebugLabel, new Vector2(10), Color.White, 0f, default, 0.6f, default, default);
 
             graphics.GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
@@ -259,6 +242,10 @@ namespace WiiPlayTanksRemake
             spriteBatch.End();
 
             base.Draw(gameTime);
+
+            spriteBatch.Begin(blendState: BlendState.NonPremultiplied, effect: GameShaders.MouseShader);
+            MouseRenderer.DrawMouse();
+            spriteBatch.End();
         }
     }
     public static class Program
