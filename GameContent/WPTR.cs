@@ -48,6 +48,12 @@ namespace WiiPlayTanksRemake.GameContent
 
         public static Matrix UIMatrix => Matrix.CreateOrthographicOffCenter(0, TankGame.Instance.GraphicsDevice.Viewport.Width, TankGame.Instance.GraphicsDevice.Viewport.Height, 0, -1, 1);
 
+        public delegate void MissionStartEvent();
+
+        public static event MissionStartEvent OnMissionStart;
+
+        public static void StartMission() { }
+
         internal static void Update()
         {
             if (InMission)
@@ -75,18 +81,6 @@ namespace WiiPlayTanksRemake.GameContent
             GameShaders.UpdateShaders();
 
             FloatForTesting = MathHelper.Clamp(FloatForTesting, -1, 1);
-
-            /*if (Input.MouseRight)
-            {
-                if (TankGame.GameUpdateTime % 5 == 0)
-                {
-                    var treadPlace = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_tread_place_{new Random().Next(1, 5)}");
-                    var treadPlaceSfx = treadPlace.CreateInstance();
-                    treadPlaceSfx.Play();
-                    treadPlaceSfx.Volume = 0.2f;
-                    treadPlaceSfx.Pitch = FloatForTesting;
-                }
-            }*/
 
             if (Input.KeyJustPressed(Keys.Insert))
                 DebugUtils.DebuggingEnabled = !DebugUtils.DebuggingEnabled;
@@ -117,14 +111,18 @@ namespace WiiPlayTanksRemake.GameContent
                 if (!InMission)
                 {
                     InMission = true;
+                    OnMissionStart = new(StartMission);
+                    OnMissionStart.Invoke();
                     tankMusicHandler.PlayMusic();
                 }
             }
 
             if (Input.KeyJustPressed(Keys.PageUp))
-                SpawnTank(TankTier.Black, Team.Red);
+                SpawnTankPlethorae();
             if (Input.KeyJustPressed(Keys.PageDown))
                 SpawnMe();
+            if (Input.KeyJustPressed(Keys.End))
+                SpawnTank(TankTier.Black, Team.Red);
         }
         internal static void Draw()
         {

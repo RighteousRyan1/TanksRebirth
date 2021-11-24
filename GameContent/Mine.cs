@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using WiiPlayTanksRemake.Internals;
+using WiiPlayTanksRemake.Internals.Common.Utilities;
 
 namespace WiiPlayTanksRemake.GameContent
 {
@@ -27,8 +28,12 @@ namespace WiiPlayTanksRemake.GameContent
 
         private int worldId;
 
-        public Mine()
+        public Mine(Vector3 pos)
         {
+            position = pos;
+
+            // _mineTexture
+
             int index = Array.IndexOf(AllMines, AllMines.First(bullet => bullet is null));
 
             worldId = index;
@@ -39,17 +44,38 @@ namespace WiiPlayTanksRemake.GameContent
         public void Detonate()
         {
             var destroysound = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_destroy");
+
+            SoundPlayer.PlaySoundInstance(destroysound, SoundContext.Sound, 0.4f);
+
             AllMines[worldId] = null;
         }
 
         internal void Update()
         {
-            
+            World = Matrix.CreateTranslation(position);
+            View = TankGame.GameView;
+            Projection = TankGame.GameProjection;
+
+
         }
 
         internal void Draw()
         {
-        
+            foreach (ModelMesh mesh in Model.Meshes)
+            {
+                foreach (BasicEffect effect in mesh.Effects)
+                {
+                    effect.World = World;
+                    effect.View = View;
+                    effect.Projection = Projection;
+                    effect.TextureEnabled = true;
+
+                    effect.Texture = _mineTexture;
+
+                    effect.EnableDefaultLighting();
+                }
+                mesh.Draw();
+            }
         }
     }
 }

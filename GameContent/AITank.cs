@@ -19,7 +19,8 @@ namespace WiiPlayTanksRemake.GameContent
     {
         public bool Stationary { get; private set; }
 
-        private long treadSoundTimer = 5;
+        private int treadPlaceTimer = 5;
+        private int treadSoundTimer = 5;
         private int curShootStun;
         private int curShootCooldown;
         private int curMineCooldown;
@@ -176,6 +177,9 @@ namespace WiiPlayTanksRemake.GameContent
                         turretRotationSpeed = 0.1f;
                         inaccuracy = 0.08f;
 
+                        projectileWarinessRadius = 80;
+                        mineWarinessRadius = 0;
+
                         TurningSpeed = 0.2f;
                         MaximalTurn = MathHelper.TwoPi;
 
@@ -201,6 +205,9 @@ namespace WiiPlayTanksRemake.GameContent
                         turretRotationSpeed = 0.02f;
                         inaccuracy = 0.5f;
 
+                        projectileWarinessRadius = 40;
+                        mineWarinessRadius = 160;
+
                         TurningSpeed = 0.08f;
                         MaximalTurn = 2f;
 
@@ -220,7 +227,34 @@ namespace WiiPlayTanksRemake.GameContent
                         break;
 
                     case TankTier.Pink:
+                        meanderAngle = 0.3f;
+                        meanderFrequency = 15;
+                        turretMeanderFrequency = 40;
+                        turretRotationSpeed = 0.03f;
+                        inaccuracy = 0.2f;
+
+                        projectileWarinessRadius = 40;
+                        mineWarinessRadius = 160;
+
+                        TurningSpeed = 0.08f;
+                        MaximalTurn = MathHelper.TwoPi;
+
+                        ShootStun = 5;
+                        ShellCooldown = 30;
+                        ShellLimit = 5;
+                        ShellSpeed = 3f;
+                        ShellType = ShellTier.Regular;
+                        RicochetCount = 1;
+
                         TreadPitch = 0.1f;
+                        MaxSpeed = 1.2f;
+
+                        treadSoundTimer = 6;
+                        treadPlaceTimer = 6;
+
+                        MineCooldown = 0;
+                        MineLimit = 0;
+                        MineStun = 0;
                         break;
 
                     case TankTier.Green:
@@ -241,7 +275,36 @@ namespace WiiPlayTanksRemake.GameContent
                         break;
 
                     case TankTier.White:
-                        MaxSpeed = 1.1f;
+                        meanderAngle = 0.9f;
+                        meanderFrequency = 60;
+                        turretMeanderFrequency = 20;
+                        turretRotationSpeed = 0.03f;
+                        inaccuracy = 0.2f;
+
+                        projectileWarinessRadius = 40;
+                        mineWarinessRadius = 160;
+
+                        TurningSpeed = 0.08f;
+                        MaximalTurn = MathHelper.PiOver4;
+
+                        ShootStun = 5;
+                        ShellCooldown = 30;
+                        ShellLimit = 5;
+                        ShellSpeed = 3f;
+                        ShellType = ShellTier.Regular;
+                        RicochetCount = 1;
+
+                        TreadPitch = -0.18f;
+                        MaxSpeed = 1.2f;
+                        Acceleration = 0.3f;
+
+                        treadSoundTimer = 6;
+                        treadPlaceTimer = 2;
+
+                        MineCooldown = 6;
+                        MineLimit = 2;
+                        MineStun = 1;
+
                         Invisible = true;
                         break;
 
@@ -270,6 +333,7 @@ namespace WiiPlayTanksRemake.GameContent
                         Acceleration = 0.3f;
 
                         treadSoundTimer = 4;
+                        treadPlaceTimer = 4;
 
                         MineCooldown = 6;
                         MineLimit = 2;
@@ -281,13 +345,6 @@ namespace WiiPlayTanksRemake.GameContent
             if (setTankDefaults)
                 setDefaults();
 
-            if (Invisible)
-            {
-                var invis = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_invisible");
-                var invisSfx = invis.CreateInstance();
-                invisSfx.Play();
-                invisSfx.Volume = 0.4f;
-            }
             GetAIBehavior();
 
             int index = Array.IndexOf(WPTR.AllAITanks, WPTR.AllAITanks.First(tank => tank is null));
@@ -302,8 +359,19 @@ namespace WiiPlayTanksRemake.GameContent
 
             WPTR.AllTanks[index2] = this;
 
+            WPTR.OnMissionStart += OnMissionStart;
+
             //WPTR.AllAITanks.Add(this);
             //WPTR.AllTanks.Add(this);
+        }
+
+        private void OnMissionStart()
+        {
+            if (Invisible)
+            {
+                var invis = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_invisible");
+                SoundPlayer.PlaySoundInstance(invis, SoundContext.Sound, 0.3f);
+            }
         }
 
         internal void Update()
@@ -354,6 +422,8 @@ namespace WiiPlayTanksRemake.GameContent
             }
         }
 
+
+
         private void UpdateCollision()
         {
             CollisionBox = new(position - new Vector3(7, 10, 7), position + new Vector3(10, 10, 10));
@@ -385,11 +455,7 @@ namespace WiiPlayTanksRemake.GameContent
             WPTR.AllTanks[WorldId] = null;
             // TODO: play fanfare thingy i think
         }
-        /// <summary>
-        /// Finish bullet implementation!
-        /// </summary>
-        /// <param name="velocity"></param>
-        /// <param name="bulletSpeed"></param>
+
         public override void Shoot()
         {
             if (!WPTR.InMission)
@@ -457,9 +523,11 @@ namespace WiiPlayTanksRemake.GameContent
                 {
                     var treadPlace = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_tread_place_{new Random().Next(1, 5)}");
                     var sfx = SoundPlayer.PlaySoundInstance(treadPlace, SoundContext.Sound, 0.05f);
-                    LayFootprint();
-                    // sfx.Volume = 0.05f;
                     sfx.Pitch = TreadPitch;
+                }
+                if (TankGame.GameUpdateTime % treadPlaceTimer == 0)
+                {
+                    LayFootprint();
                 }
             }
 
@@ -497,7 +565,7 @@ namespace WiiPlayTanksRemake.GameContent
                             if (TryGetBulletNear(projectileWarinessRadius, out var shell))
                             {
                                 System.Diagnostics.Debug.WriteLine("Bullet neear!!!!");
-                                var dir = Position2D.RotatedByRadians(shell.Position2D.DirectionOf(Position2D).ToRotation());
+                                var dir = new Vector2(0, -5).RotatedByRadians(shell.Position2D.DirectionOf(Position2D).ToRotation());
 
                                 velocity.X = dir.X;
                                 velocity.Z = dir.Y;
@@ -559,9 +627,6 @@ namespace WiiPlayTanksRemake.GameContent
                         {
                             if (curShootCooldown == 0)
                             {
-                                //var randSeed1 = new Random().Next(0, 500);
-
-                                //if (randSeed1 == 0)
                                 Shoot();
                             }
                         }
@@ -691,6 +756,8 @@ namespace WiiPlayTanksRemake.GameContent
 
             DebugUtils.DrawDebugString(TankGame.spriteBatch, info, GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection), 1, centerIt: true);
 
+            if (Invisible && WPTR.InMission)
+                return;
             RenderModel();
         }
 
@@ -726,7 +793,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         public static TankTier PICK_ANY_THAT_ARE_IMPLEMENTED()
         {
-            TankTier[] workingTiers = { TankTier.Brown, TankTier.Marine, TankTier.Yellow, TankTier.Black };
+            TankTier[] workingTiers = { TankTier.Brown, TankTier.Marine, TankTier.Yellow, TankTier.Black, TankTier.White, TankTier.Pink };
 
             return workingTiers[new Random().Next(0, workingTiers.Length)];
         }
