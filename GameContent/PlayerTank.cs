@@ -35,6 +35,7 @@ namespace WiiPlayTanksRemake.GameContent
         public static Keybind controlLeft = new("Left", Keys.A);
         public static Keybind controlRight = new("Right", Keys.D);
         public static Keybind PlaceMine = new("Place Mine", Keys.Space);
+        public static GamepadBind FireBullet = new("Fire Bullet", Buttons.A);
         // public static Keybind FireBullet = new("Fire Bullet", Keys.Space);
 
         #region ModelBone & ModelMesh
@@ -173,9 +174,28 @@ namespace WiiPlayTanksRemake.GameContent
         private void ControlHandle_ConsoleController()
         {
             var leftStick = Input.CurrentGamePadSnapshot.ThumbSticks.Left;
+            var rightStick = Input.CurrentGamePadSnapshot.ThumbSticks.Right;
+            var dPad = Input.CurrentGamePadSnapshot.DPad;
 
             velocity.X += leftStick.X;
             velocity.Z -= leftStick.Y;
+            if (dPad.Down == ButtonState.Pressed) {
+                playerControl_isBindPressed = true;
+                velocity.Z += Acceleration;
+            }
+            if (dPad.Up == ButtonState.Pressed) {
+                playerControl_isBindPressed = true;
+                velocity.Z -= Acceleration;
+            }
+            if (dPad.Left == ButtonState.Pressed) {
+                playerControl_isBindPressed = true;
+                velocity.X -= Acceleration;
+            }
+            if (dPad.Right == ButtonState.Pressed) {
+                playerControl_isBindPressed = true;
+                velocity.X += Acceleration;
+            }
+            Mouse.SetPosition((int)(Input.CurrentMouseSnapshot.X + rightStick.X * TankGame.Instance.Settings.ControllerSensitivity), (int)(Input.CurrentMouseSnapshot.Y - rightStick.Y * TankGame.Instance.Settings.ControllerSensitivity));
 
             if (leftStick != Vector2.Zero) {
                 playerControl_isBindPressed = true;
@@ -203,6 +223,9 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 playerControl_isBindPressed = true;
                 velocity.X += Acceleration;
+            }
+            if (FireBullet.IsPressed) {
+                Shoot();
             }
         }
 
@@ -266,11 +289,12 @@ namespace WiiPlayTanksRemake.GameContent
         public void UpdatePlayerMovement()
         {
             var leftStick = Input.CurrentGamePadSnapshot.ThumbSticks.Left;
+            var dPad = Input.CurrentGamePadSnapshot.DPad;
             if (!WPTR.InMission)
                 return;
-            if (!controlDown.IsPressed && !controlUp.IsPressed && leftStick.Y == 0)
+            if (!controlDown.IsPressed && !controlUp.IsPressed && leftStick.Y == 0 && dPad.Up == ButtonState.Released && dPad.Down == ButtonState.Released)
                 velocity.Z = 0;
-            if (!controlLeft.IsPressed && !controlRight.IsPressed && leftStick.X == 0)
+            if (!controlLeft.IsPressed && !controlRight.IsPressed && leftStick.X == 0 && dPad.Left == ButtonState.Released && dPad.Right == ButtonState.Released)
                 velocity.X = 0;
 
             if (velocity.X > MaxSpeed)

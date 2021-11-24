@@ -42,9 +42,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         public static bool WindowBorderless { get; set; }
 
-        public static TankMusicSystem tankMusicHandler;
-
-        public static bool InMission { get; set; } = false;
+        public static bool InMission { get; set; }
 
         public static Matrix UIMatrix => Matrix.CreateOrthographicOffCenter(0, TankGame.Instance.GraphicsDevice.Viewport.Width, TankGame.Instance.GraphicsDevice.Viewport.Height, 0, -1, 1);
 
@@ -57,7 +55,7 @@ namespace WiiPlayTanksRemake.GameContent
         internal static void Update()
         {
             if (InMission)
-                tankMusicHandler.Update();
+                TankMusicSystem.Update();
 
             foreach (var bind in Keybind.AllKeybinds)
                 bind?.Update();
@@ -113,7 +111,7 @@ namespace WiiPlayTanksRemake.GameContent
                     InMission = true;
                     OnMissionStart = new(StartMission);
                     OnMissionStart.Invoke();
-                    tankMusicHandler.PlayMusic();
+                    TankMusicSystem.PlayMusic();
                 }
             }
 
@@ -218,14 +216,12 @@ namespace WiiPlayTanksRemake.GameContent
 
             new Cube(Vector3.Zero);
 
-            tankMusicHandler = new();
-
             SpawnMe();
             SpawnTankPlethorae();
 
             IngameUI.Initialize();
           
-            tankMusicHandler.LoadMusic();
+            TankMusicSystem.LoadMusic();
           
             BeginIntroSequence();
         }

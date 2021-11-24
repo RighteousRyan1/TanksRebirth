@@ -13,6 +13,8 @@ namespace WiiPlayTanksRemake.Internals.Common.IO
         public int MusicVolume { get; set; } = 0;
 
         public int EffectsVolume { get; set; } = 0;
+
+        public int ControllerSensitivity { get; set; } = 10;
     }
 
     public class JsonHandler
