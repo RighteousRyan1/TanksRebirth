@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.Text;
 using System.Reflection;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
@@ -13,6 +15,7 @@ using WiiPlayTanksRemake.Internals.Common.GameInput;
 using WiiPlayTanksRemake.Internals.Core.Interfaces;
 using System.Collections.Generic;
 using System.Linq;
+using WiiPlayTanksRemake.Internals.Common.IO;
 
 namespace WiiPlayTanksRemake
 {
@@ -39,6 +42,25 @@ namespace WiiPlayTanksRemake
         public readonly GraphicsDeviceManager graphics;
 
         private static List<IGameSystem> systems = new();
+
+        public SettingsData Settings;
+
+        public JsonHandler SettingsHandler;
+
+        public static Texture2D MagicPixel;
+
+        public string SaveDirectory
+        {
+            get
+            {
+                StringBuilder stringBuilder = new(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
+                stringBuilder.Append(Path.DirectorySeparatorChar);
+                stringBuilder.Append("My Games");
+                stringBuilder.Append(Path.DirectorySeparatorChar);
+                stringBuilder.Append("WiiPlayTanksRemake");
+                return stringBuilder.ToString();
+            }
+        }
 
         public struct Fonts
         {
@@ -74,6 +96,22 @@ namespace WiiPlayTanksRemake
             graphics.PreferredBackBufferWidth = 1920;
             graphics.PreferredBackBufferHeight = 1080;
 
+            if (!File.Exists(SaveDirectory + Path.DirectorySeparatorChar + "settings.json")) {
+                Settings = new();
+                Settings.EffectsVolume = 100;
+                Settings.MusicVolume = 100;
+                SettingsHandler = new(Settings, SaveDirectory + Path.DirectorySeparatorChar + "settings.json");
+                System.Text.Json.JsonSerializerOptions opts = new();
+                opts.WriteIndented = true;
+                SettingsHandler.Serialize(opts, true);
+            }
+            else {
+                SettingsHandler = new(Settings, SaveDirectory + Path.DirectorySeparatorChar + "settings.json");
+                Settings = SettingsHandler.DeserializeAndSet<SettingsData>();
+            }
+            SoundPlayer.MusicVolume = Settings.MusicVolume / 100;
+            SoundPlayer.SoundVolume = Settings.EffectsVolume / 100;
+
             GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(0.75f) * Matrix.CreateTranslation(0f, 0f, 1000f);
             GameProjection = Matrix.CreateOrthographic(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, -2000f, 5000f);
 
@@ -106,6 +144,7 @@ namespace WiiPlayTanksRemake
             Fonts.Default = GameResources.GetGameResource<SpriteFont>("Assets/DefaultFont");
             spriteBatch = new SpriteBatch(GraphicsDevice);
             UITextures.UIPanelBackground = GameResources.GetGameResource<Texture2D>("Assets/UIPanelBackground");
+            MagicPixel = GameResources.GetGameResource<Texture2D>("Assets/MagicPixel");
 
             graphics.SynchronizeWithVerticalRetrace = true;
             WPTR.Initialize();
@@ -208,6 +247,8 @@ namespace WiiPlayTanksRemake
             DebugUtils.DrawDebugString(spriteBatch, info, new(10, GameUtils.WindowHeight / 2));
 
             DebugUtils.DrawDebugString(spriteBatch, info, new(10, GameUtils.WindowHeight * 0.2f));
+
+            DebugUtils.DrawDebugString(spriteBatch, Settings.MusicVolume, new Vector2(10, GameUtils.WindowHeight / 2), 1);
 
             DebugUtils.DrawDebugString(spriteBatch, $"CurSong: {(Music.AllMusic.FirstOrDefault(music => music.volume == 0.5f) != null ? Music.AllMusic.FirstOrDefault(music => music.volume == 0.5f).Name : "N/A")}", new(10, GameUtils.WindowHeight - 100));
 

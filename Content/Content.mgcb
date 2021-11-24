@@ -157,6 +157,18 @@
 /processorParam:TextureFormat=Compressed
 /build:Assets/footprint.fbx
 
+#begin Assets/MagicPixel.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Assets/MagicPixel.png
+
 #begin Assets/mine.fbx
 /importer:FbxImporter
 /processor:ModelProcessor
@@ -338,12 +350,6 @@
 /processorParam:SwapWindingOrder=False
 /processorParam:TextureFormat=Compressed
 /build:Assets/outerbounds.fbx
-
-#begin Assets/Shaders/MouseShader.fx
-/importer:EffectImporter
-/processor:EffectProcessor
-/processorParam:DebugMode=Auto
-/build:Assets/Shaders/MouseShader.fx
 
 #begin Assets/Shaders/MouseShader.fx
 /importer:EffectImporter
