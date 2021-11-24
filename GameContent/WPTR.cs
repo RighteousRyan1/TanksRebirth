@@ -119,7 +119,9 @@ namespace WiiPlayTanksRemake.GameContent
             if (Input.KeyJustPressed(Keys.PageDown))
                 SpawnMe();
             if (Input.KeyJustPressed(Keys.End))
-                SpawnTank(TankTier.Black, Team.Red);
+                SpawnTank(TankTier.Black, Team.Red, Vector3.Zero);
+            if (Input.KeyJustPressed(Keys.Delete))
+                SpawnTank(TankTier.Marine, Team.Red, new Vector3(50, 0, 50));
         }
         internal static void Draw()
         {
@@ -240,10 +242,10 @@ namespace WiiPlayTanksRemake.GameContent
 
             SoundPlayer.PlaySoundInstance(tune, SoundContext.Music, 1f);
         }
-        public static AITank SpawnTank(TankTier tier, Team team)
+        public static AITank SpawnTank(TankTier tier, Team team, Vector3 posOverride = default)
         {
             var rot = GeometryUtils.GetPiRandom();
-            return new AITank(new Vector3(new Random().Next(-200, 201), 0, new Random().Next(-500, 600)), tier)
+            return new AITank(posOverride == default ? new Vector3(new Random().Next(-200, 201), 0, new Random().Next(-500, 600)) : posOverride, tier)
             {
                 TankRotation = rot,
                 TurretRotation = rot,

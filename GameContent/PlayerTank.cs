@@ -27,6 +27,8 @@ namespace WiiPlayTanksRemake.GameContent
         public int WorldId { get; }
         public PlayerType PlayerType { get; }
 
+        public Vector2 unprojectedPosition;
+
         internal Texture2D _tankColorTexture;
         private static Texture2D _shadowTexture;
 
@@ -94,6 +96,7 @@ namespace WiiPlayTanksRemake.GameContent
             // 0 = down
             // pi/4 = right
             // 3/4pi = left
+
             if (curShootStun > 0)
                 curShootStun--;
             if (curShootCooldown > 0)
@@ -114,6 +117,9 @@ namespace WiiPlayTanksRemake.GameContent
 
                 World = Matrix.CreateFromYawPitchRoll(-TankRotation, 0, 0)
                     * Matrix.CreateTranslation(position);
+
+                unprojectedPosition = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection);
+
                 if (WPTR.InMission)
                 {
                     if (curShootStun > 0 || curMineCooldown > 0)
@@ -123,7 +129,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                     if (curShootStun <= 0)
                     {
-                        ControlHandle_Keybinding();
+                         ControlHandle_Keybinding();
                         if (Input.CurrentGamePadSnapshot.IsConnected)
                             ControlHandle_ConsoleController();
                     }
@@ -157,6 +163,8 @@ namespace WiiPlayTanksRemake.GameContent
                     UpdateCollision();
                 }
 
+                Speed = Acceleration;
+
                 playerControl_isBindPressed = false;
 
                 oldPosition = position;
@@ -176,8 +184,16 @@ namespace WiiPlayTanksRemake.GameContent
             var rightStick = Input.CurrentGamePadSnapshot.ThumbSticks.Right;
             var dPad = Input.CurrentGamePadSnapshot.DPad;
 
-            velocity.X += leftStick.X;
-            velocity.Z -= leftStick.Y;
+            var accelReal = Acceleration * leftStick.Length() * MaxSpeed * 4;
+
+            if (leftStick.Length() > 0)
+            {
+                playerControl_isBindPressed = true;
+
+                velocity.X = leftStick.X * accelReal;
+                velocity.Z = -leftStick.Y * accelReal;
+            }
+
             if (dPad.Down == ButtonState.Pressed)
             {
                 playerControl_isBindPressed = true;
@@ -198,11 +214,11 @@ namespace WiiPlayTanksRemake.GameContent
                 playerControl_isBindPressed = true;
                 velocity.X += Acceleration;
             }
-            Mouse.SetPosition((int)(Input.CurrentMouseSnapshot.X + rightStick.X * TankGame.Instance.Settings.ControllerSensitivity), (int)(Input.CurrentMouseSnapshot.Y - rightStick.Y * TankGame.Instance.Settings.ControllerSensitivity));
 
-            if (leftStick != Vector2.Zero)
+            if (rightStick.Length() > 0)
             {
-                playerControl_isBindPressed = true;
+                Mouse.SetPosition((int)(unprojectedPosition.X + rightStick.X * 250), (int)(unprojectedPosition.Y - rightStick.Y * 250));
+                //Mouse.SetPosition((int)(Input.CurrentMouseSnapshot.X + rightStick.X * TankGame.Instance.Settings.ControllerSensitivity), (int)(Input.CurrentMouseSnapshot.Y - rightStick.Y * TankGame.Instance.Settings.ControllerSensitivity));
             }
 
             if (FireBullet.JustPressed)

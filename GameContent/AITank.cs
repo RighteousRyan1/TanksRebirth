@@ -178,9 +178,9 @@ namespace WiiPlayTanksRemake.GameContent
                         meanderFrequency = 15;
                         turretMeanderFrequency = 10;
                         turretRotationSpeed = 0.1f;
-                        inaccuracy = 0.08f;
+                        inaccuracy = 0.04f;
 
-                        projectileWarinessRadius = 80;
+                        projectileWarinessRadius = 120;
                         mineWarinessRadius = 0;
 
                         TurningSpeed = 0.2f;
@@ -376,7 +376,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         private void OnMissionStart()
         {
-            if (Invisible)
+            if (Invisible && !Dead)
             {
                 var invis = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_invisible");
                 SoundPlayer.PlaySoundInstance(invis, SoundContext.Sound, 0.3f);
@@ -560,7 +560,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             enactBehavior = () =>
             {
-
+                // TODO: Work on why mines cause the tanks to freeze
                 // TODO: MAJOR - Work on meandering ai and avoidance ai.
                 if (!Dead)
                 {
@@ -588,10 +588,10 @@ namespace WiiPlayTanksRemake.GameContent
                         {
                             if (TryGetBulletNear(projectileWarinessRadius, out var shell))
                             {
-                                var dir = new Vector2(0, -5).RotatedByRadians(shell.Position2D.DirectionOf(Position2D).ToRotation());
+                                var dir = new Vector2(0, 5).RotatedByRadians(shell.Position2D.DirectionOf(Position2D).ToRotation());
 
                                 velocity.X = dir.X;
-                                velocity.Z = dir.Y;
+                                velocity.Z = -dir.Y;
 
                                 velocity.Normalize();
 
@@ -619,13 +619,15 @@ namespace WiiPlayTanksRemake.GameContent
                             {
                                 if (new Random().NextFloat(0, 1) <= minePlacementChance)
                                 {
-                                    randomMovementAngle = new Random().NextFloat(-meanderAngle / 10, meanderAngle / 10);
+                                    randomMovementAngle = new Random().NextFloat(-meanderAngle, meanderAngle);
                                     LayMine();
                                 }
                             }
                         }
 
-                        if (timeSinceLastMinePlaced < moveFromMineTime)
+                        bool movingFromMine = timeSinceLastMinePlaced < moveFromMineTime;
+
+                        if (movingFromMine)
                         {
                             TankRotation = randomMovementAngle;
 
@@ -637,46 +639,48 @@ namespace WiiPlayTanksRemake.GameContent
                             velocity.Normalize();
 
                             velocity *= MaxSpeed;
-
-                            return;
                         }
-                        if (!TryGetBulletNear(projectileWarinessRadius, out var sh))
+
+                        if (!movingFromMine)
                         {
-                            uhoh = "Wegud";
-                            if (Behaviors[0].IsBehaviourModuloOf(meanderFrequency / 2))
+                            if (!TryGetBulletNear(projectileWarinessRadius, out var sh))
                             {
-                                var meanderRandom = new Random().NextFloat(-meanderAngle / 10, meanderAngle / 10);
+                                uhoh = "Wegud";
+                                if (Behaviors[0].IsBehaviourModuloOf(meanderFrequency / 2))
+                                {
+                                    var meanderRandom = new Random().NextFloat(-meanderAngle / 10, meanderAngle / 10);
 
-                                TankRotation = meanderRandom;
+                                    TankRotation = meanderRandom;
 
-                                var dir = Position2D.RotatedByRadians(TankRotation);
+                                    var dir = Position2D.RotatedByRadians(TankRotation);
 
-                                velocity.X = dir.X;
-                                velocity.Z = dir.Y;
+                                    velocity.X = dir.X;
+                                    velocity.Z = dir.Y;
 
-                                velocity.Normalize();
+                                    velocity.Normalize();
 
-                                velocity *= MaxSpeed;
+                                    velocity *= MaxSpeed;
+                                }
+                                if (Behaviors[0].IsBehaviourModuloOf(meanderFrequency))
+                                {
+                                    var meanderRandom = new Random().NextFloat(-meanderAngle, meanderAngle);
+
+                                    TankRotation = meanderRandom;
+
+                                    var dir = Position2D.RotatedByRadians(TankRotation);
+
+                                    velocity.X = dir.X;
+                                    velocity.Z = dir.Y;
+
+                                    velocity.Normalize();
+
+                                    velocity *= MaxSpeed;
+                                }
                             }
-                            if (Behaviors[0].IsBehaviourModuloOf(meanderFrequency))
+                            else
                             {
-                                var meanderRandom = new Random().NextFloat(-meanderAngle, meanderAngle);
-
-                                TankRotation = meanderRandom;
-
-                                var dir = Position2D.RotatedByRadians(TankRotation);
-
-                                velocity.X = dir.X;
-                                velocity.Z = dir.Y;
-
-                                velocity.Normalize();
-
-                                velocity *= MaxSpeed;
+                                uhoh = "Uh Oh";
                             }
-                        }
-                        else
-                        {
-                            uhoh = "Uh Oh";
                         }
                     }
                     TurretRotation = GameUtils.RoughStep(TurretRotation, targetTurretRotation, turretRotationSpeed);
@@ -817,7 +821,7 @@ namespace WiiPlayTanksRemake.GameContent
             if (Dead)
                 return;
 
-            var info = $"{Team}:{uhoh}";
+            var info = $"{Team}:{uhoh}\n{timeSinceLastMinePlaced}/{moveFromMineTime} - rand: {randomMovementAngle}";
 
             DebugUtils.DrawDebugString(TankGame.spriteBatch, info, GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection), 1, centerIt: true);
 
