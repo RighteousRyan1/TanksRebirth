@@ -430,8 +430,6 @@ namespace WiiPlayTanksRemake.GameContent
 
                     else
                         effect.Texture = _shadowTexture;
-
-                    effect.EnableDefaultLighting();
                 }
                 mesh.Draw();
             }

@@ -365,6 +365,47 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
     public static class GeometryUtils
     {
         // sigh no work
+
+        /// <summary>
+        /// Create a ray on a 2D plane either covering the X and Y axes of a plane or the X and Z axes of a plane.
+        /// </summary>
+        /// <param name="origin">The origin of this <see cref="Ray"/>.</param>
+        /// <param name="destination">The place that will be the termination of this <see cref="Ray"/>.</param>
+        /// <param name="zAxis">Whether or not this <see cref="Ray"/> will go along the Y or Z axis from the X axis.</param>
+        /// <returns></returns>
+        public static Ray CreateRayFrom2D(Vector2 origin, Vector2 destination, bool zAxis = true)
+        {
+            Ray ray;
+
+            if (zAxis)
+                ray = new Ray(new Vector3(origin.X, 0, origin.Y), new Vector3(destination.X, 0, destination.Y));
+            else
+                ray = new Ray(new Vector3(origin.X, origin.Y, 0), new Vector3(destination.X, destination.Y, 0));
+
+            return ray;
+        }
+
+        public static Ray Reflect(ref Ray ray, float distanceAlongRay)
+        {
+            var distPos = ray.Position * Vector3.Normalize(ray.Direction) * distanceAlongRay;
+
+            var reflected = Vector3.Reflect(ray.Direction, distPos);
+
+            return new(distPos, reflected);
+        }
+
+        public static Ray Flatten(this Ray ray, bool zAxis = true)
+        {
+            Ray usedRay;
+
+            if (zAxis)
+                usedRay = new Ray(new Vector3(ray.Position.X, 0, ray.Position.Y), new Vector3(ray.Direction.X, 0, ray.Direction.Y));
+            else
+                usedRay = new Ray(new Vector3(ray.Position.X, ray.Position.Y, 0), new Vector3(ray.Direction.X, ray.Direction.Y, 0));
+
+            return usedRay;
+        }
+
         public static Vector2 ConvertWorldToScreen(Vector3 position, Matrix world, Matrix view, Matrix projection)
         {
             var viewport = TankGame.Instance.GraphicsDevice.Viewport;
@@ -382,6 +423,9 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
             return proj;
         }
 
+        /// <summary>
+        /// Do i even need this?
+        /// </summary>
         public static Vector3[] Raytrace(Vector3 start, Vector3 end, int iterations)
         {
             var pointList = new List<Vector3>();

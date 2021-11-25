@@ -119,7 +119,7 @@ namespace WiiPlayTanksRemake.GameContent
             if (Input.KeyJustPressed(Keys.PageDown))
                 SpawnMe();
             if (Input.KeyJustPressed(Keys.End))
-                SpawnTank(TankTier.Black, Team.Red, Vector3.Zero);
+                SpawnTank(TankTier.Black, Team.Blue, Vector3.Zero);
             if (Input.KeyJustPressed(Keys.Delete))
                 SpawnTank(TankTier.Marine, Team.Red, new Vector3(50, 0, 50));
         }
@@ -263,7 +263,9 @@ namespace WiiPlayTanksRemake.GameContent
                     TurretRotation = rot
                 };
 
-                t.Team = (Team)new Random().Next(1, Enum.GetNames<Team>().Length);
+                t.Team = Team.Orange;
+
+                // t.Team = (Team)new Random().Next(1, Enum.GetNames<Team>().Length);
             }
         }
     }

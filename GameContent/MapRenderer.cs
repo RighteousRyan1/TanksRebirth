@@ -52,7 +52,9 @@ namespace WiiPlayTanksRemake.GameContent
 
         public class BoundsRenderer
         {
-            public static string[] MeshNames = new string[0];
+            private static BoundingBox[] enclosingBoxes = new BoundingBox[4];
+
+            public static BoundingBox BoundaryBox;
 
             public static Model BoundaryModel;
 
@@ -60,12 +62,8 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 BoundaryModel = GameResources.GetGameResource<Model>("Assets/outerbounds");
 
-                var list = MeshNames.ToList();
-
                 foreach (var mesh in BoundaryModel.Meshes)
                 {
-                    list.Add(mesh.Name);
-
                     foreach (BasicEffect effect in mesh.Effects)
                     {
                         effect.LightingEnabled = true;
@@ -81,7 +79,21 @@ namespace WiiPlayTanksRemake.GameContent
                     // SetBlockTexture(mesh, "polygon83", BoundaryTextureContext.ground);
                 }
 
-                MeshNames = list.ToArray();
+                /*
+                 * 0 -> right
+                 * 1 -> left
+                 * 2 -> top
+                 * 3 -> bottom
+                 */
+
+                enclosingBoxes[0] = new(new Vector3(MAX_X, 0, MIN_Y - 20), new Vector3(MAX_X + 20, 0, MAX_Y + 20));
+                enclosingBoxes[1] = new(new Vector3(MIN_X, 0, MIN_Y - 20), new Vector3(MIN_X - 20, 0, MAX_Y + 20));
+                enclosingBoxes[2] = new(new Vector3(MIN_X - 20, 0, MIN_Y - 20), new Vector3(MAX_X + 20, 0, MIN_Y));
+                enclosingBoxes[3] = new(new Vector3(MIN_X - 20, 0, MAX_Y + 20), new Vector3(MAX_X + 20, 0, MAX_Y));
+
+                var merged1 = BoundingBox.CreateMerged(enclosingBoxes[0], enclosingBoxes[1]);
+                var merged2 = BoundingBox.CreateMerged(merged1, enclosingBoxes[2]);
+                BoundaryBox = BoundingBox.CreateMerged(merged2, enclosingBoxes[3]);
             }
 
             public static void RenderBounds()
@@ -132,6 +144,11 @@ namespace WiiPlayTanksRemake.GameContent
         public const int TANKS_MAX_X = 268;
         public const int TANKS_MIN_Y = -155;
         public const int TANKS_MAX_Y = 400;
+
+        public const int MIN_X = -278;
+        public const int MAX_X = 278;
+        public const int MIN_Y = -165;
+        public const int MAX_Y = 410;
         public static void InitializeRenderers()
         {
             FloorRenderer.LoadFloor();
