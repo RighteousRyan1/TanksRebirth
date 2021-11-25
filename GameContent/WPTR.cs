@@ -62,6 +62,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             foreach (var tank in AllPlayerTanks)
                 tank?.Update();
+
             foreach (var tank in AllAITanks)
                 tank?.Update();
 
@@ -129,6 +130,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             foreach (var tank in AllPlayerTanks)
                 tank?.DrawBody();
+
             foreach (var tank in AllAITanks)
                 tank?.DrawBody();
 
@@ -185,15 +187,15 @@ namespace WiiPlayTanksRemake.GameContent
                         element?.MouseLeave();
                         element.MouseHovering = false;
                     }
-                    if (Input.MouseLeft && GameUtils.MouseOnScreenProtected && element != lastElementClicked) {
+                    if (Input.MouseLeft && GameUtils.MouseOnScreenProtected && element != lastElementClicked && element.Hitbox.Contains(GameUtils.MousePosition)) {
                         element?.MouseClick();
                         lastElementClicked = element;
                     }
-                    if (Input.MouseRight && GameUtils.MouseOnScreenProtected && element != lastElementClicked) {
+                    if (Input.MouseRight && GameUtils.MouseOnScreenProtected && element != lastElementClicked && element.Hitbox.Contains(GameUtils.MousePosition)) {
                         element?.MouseRightClick();
                         lastElementClicked = element;
                     }
-                    if (Input.MouseMiddle && GameUtils.MouseOnScreenProtected && element != lastElementClicked) {
+                    if (Input.MouseMiddle && GameUtils.MouseOnScreenProtected && element != lastElementClicked && element.Hitbox.Contains(GameUtils.MousePosition)) {
                         element?.MouseMiddleClick();
                         lastElementClicked = element;
                     }
