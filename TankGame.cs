@@ -103,7 +103,6 @@ namespace WiiPlayTanksRemake
             if (!File.Exists(SaveDirectory + Path.DirectorySeparatorChar + "settings.json")) {
                 Settings = new()
                 {
-                    ControllerSensitivity = 10,
                     EffectsVolume = 100,
                     MusicVolume = 100
                 };

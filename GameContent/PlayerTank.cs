@@ -368,8 +368,6 @@ namespace WiiPlayTanksRemake.GameContent
         /// <summary>
         /// Finish bullet implementation!
         /// </summary>
-        /// <param name="velocity"></param>
-        /// <param name="bulletSpeed"></param>
         public override void Shoot()
         {
             if (!WPTR.InMission)
