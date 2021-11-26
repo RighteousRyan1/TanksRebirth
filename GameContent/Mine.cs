@@ -42,6 +42,8 @@ namespace WiiPlayTanksRemake.GameContent
 
         public float explosionRadius;
 
+        public bool Detonated { get; set; }
+
         public Mine(Tank owner, Vector3 pos, int detonateTime, float radius = 80f)
         {
             this.owner = owner;
@@ -68,6 +70,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         public void Detonate()
         {
+            Detonated = true;
             var destroysound = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_destroy");
 
             SoundPlayer.PlaySoundInstance(destroysound, SoundContext.Sound, 0.4f);
@@ -81,7 +84,19 @@ namespace WiiPlayTanksRemake.GameContent
                 tank.Destroy();
             }
 
-            owner.OwnedMineCount--;
+            foreach (var mine in AllMines.Where(mine => mine is not null && Vector3.Distance(mine.position, position) < explosionRadius && !mine.Detonated))
+            {
+                mine.Detonate();
+            }
+
+            var expl = new MineExplosion(position, explosionRadius * 0.101f, 0.5f);
+
+            expl.expanseRate = 2f;
+            expl.tickAtMax = 15;
+            expl.shrinkRate = 0.5f;
+
+            if (owner != null)
+                owner.OwnedMineCount--;
 
             AllMines[worldId] = null;
         }
@@ -114,6 +129,8 @@ namespace WiiPlayTanksRemake.GameContent
 
         internal void Draw()
         {
+            foreach (var expl in MineExplosion.explosions.Where(expl => expl is not null))
+                expl.Render();
             foreach (ModelMesh mesh in Model.Meshes)
             {
                 foreach (BasicEffect effect in mesh.Effects)
@@ -140,22 +157,103 @@ namespace WiiPlayTanksRemake.GameContent
                 mesh.Draw();
             }
         }
+    }
+    public class MineExplosion
+    {
+        // model, blah blah blah
 
-        private class MineExplosion
+        public const int MINE_EXPLOSIONS_MAX = 100;
+
+        public static MineExplosion[] explosions = new MineExplosion[MINE_EXPLOSIONS_MAX];
+
+        public Vector3 position;
+
+        public Matrix View;
+        public Matrix Projection;
+        public Matrix World;
+
+        public Model Model;
+
+        public static Texture2D mask;
+
+        public float scale;
+
+        public readonly float maxScale;
+
+        public float expanseRate = 1f;
+        public float shrinkRate = 1f;
+
+        public int tickAtMax = 40;
+
+        private bool hitMaxAlready;
+
+        private int id;
+
+        public float rotation;
+
+        public float rotationSpeed;
+
+        public MineExplosion(Vector3 pos, float scaleMax, float rotationSpeed = 1f)
         {
-            // model, blah blah blah
+            this.rotationSpeed = rotationSpeed;
+            position = pos;
+            maxScale = scaleMax;
+            mask = GameResources.GetGameResource<Texture2D>("Assets/textures/mine/explosion_mask");
 
-            public Vector3 position;
+            Model = GameResources.GetGameResource<Model>("Assets/mineexplosion");
 
-            public Matrix View;
-            public Matrix Projection;
-            public Matrix World;
+            int index = Array.IndexOf(explosions, explosions.First(t => t is null));
 
-            public Model Model;
+            id = index;
 
-            public MineExplosion()
+            explosions[index] = this;
+        }
+
+        public void Update()
+        {
+            if (!hitMaxAlready)
             {
+                if (scale < maxScale)
+                    scale += expanseRate;
 
+                if (scale > maxScale)
+                    scale = maxScale;
+
+                if (scale >= maxScale)
+                    hitMaxAlready = true;
+            }
+            else if (tickAtMax <= 0) 
+                scale -= shrinkRate;
+
+            if (hitMaxAlready)
+                tickAtMax--;
+
+            if (scale <= 0)
+                explosions[id] = null;
+
+            rotation += rotationSpeed;
+
+            World = Matrix.CreateScale(scale) * Matrix.CreateRotationY(rotation) * Matrix.CreateTranslation(position);
+            View = TankGame.GameView;
+            Projection = TankGame.GameProjection;
+        }
+
+        public void Render()
+        {
+            foreach (ModelMesh mesh in Model.Meshes)
+            {
+                foreach (BasicEffect effect in mesh.Effects)
+                {
+                    effect.World = World;
+                    effect.View = View;
+                    effect.Projection = Projection;
+                    effect.TextureEnabled = true;
+
+                    effect.Texture = mask;
+
+                    effect.EnableDefaultLighting();
+                }
+                mesh.Draw();
             }
         }
     }

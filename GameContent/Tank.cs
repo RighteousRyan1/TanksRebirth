@@ -74,6 +74,10 @@ namespace WiiPlayTanksRemake.GameContent
         public virtual void Shoot() { }
 
         public virtual void LayMine() { }
+
+        // everything under this comment is added outside of the faithful remake. homing shells, etc
+
+        public Shell.HomingProperties ShellHoming = new();
     }
 
     public class TankFootprint

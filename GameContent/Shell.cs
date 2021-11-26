@@ -11,6 +11,13 @@ namespace WiiPlayTanksRemake.GameContent
 {
     public class Shell
     {
+        public struct HomingProperties {
+            public float power;
+            public float radius;
+            public float speed;
+        }
+
+
         private static int maxShells = 500;
         public static Shell[] AllShells { get; } = new Shell[maxShells];
 
@@ -20,6 +27,8 @@ namespace WiiPlayTanksRemake.GameContent
         public Vector3 velocity;
         public int ricochets;
         public float rotation;
+
+        public HomingProperties homingProperties = default;
 
         public Vector2 Position2D => position.FlattenZ();
         public Vector2 Velocity2D => velocity.FlattenZ();
@@ -38,7 +47,9 @@ namespace WiiPlayTanksRemake.GameContent
 
         private int worldId;
 
-        public Shell(Vector3 position, Vector3 velocity, int ricochets = 0)
+        public int lifeTime;
+
+        public Shell(Vector3 position, Vector3 velocity, int ricochets = 0, HomingProperties homing = default)
         {
             this.ricochets = ricochets;
             this.position = position;
@@ -48,6 +59,7 @@ namespace WiiPlayTanksRemake.GameContent
             World = Matrix.CreateTranslation(position);
             _shellTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/bullet");
 
+            homingProperties = homing;
 
             this.velocity = velocity;
 
@@ -72,17 +84,33 @@ namespace WiiPlayTanksRemake.GameContent
             hurtbox.Max = position + new Vector3(3, 5, 3);
             hurtbox.Min = position - new Vector3(3, 5, 3);
 
-            if (position.X < -274 || position.X > 274)
+            if (position.X < MapRenderer.MIN_X || position.X > MapRenderer.MAX_X)
                 if (ricochets > 0)
                     Ricochet(true);
                 else
                     Destroy();
-            if (position.Z < -160 || position.Z > 405)
+            if (position.Z < MapRenderer.MIN_Y || position.Z > MapRenderer.MAX_Y)
                 if (ricochets > 0)
                     Ricochet(false);
                 else
                     Destroy();
+            lifeTime++;
 
+            if (lifeTime > 30)
+            {
+                foreach (var target in WPTR.AllTanks.Where(tank => tank is not null && tank.Team != owner.Team && Vector3.Distance(position, tank.position) <= homingProperties.radius))
+                {
+                    float dist = Vector3.Distance(position, target.position);
+
+                    velocity.X += (target.position.X - position.X) * homingProperties.power / dist;
+                    velocity.Z += (target.position.Z - position.Z) * homingProperties.power / dist;
+
+                    Vector3 trueSpeed = Vector3.Normalize(velocity) * homingProperties.speed;
+
+
+                    velocity = trueSpeed;
+                }
+            }
             KillCollidingTanks();
         }
 
@@ -153,7 +181,8 @@ namespace WiiPlayTanksRemake.GameContent
                 var sfx = SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/bullet_destroy"), SoundContext.Sound, 0.5f);
                 sfx.Pitch = -0.2f;
             }
-            owner.OwnedBulletCount--;
+            if (owner != null)
+                owner.OwnedBulletCount--;
             AllShells[worldId] = null;
         }
 

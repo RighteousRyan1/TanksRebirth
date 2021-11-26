@@ -24,7 +24,7 @@ namespace WiiPlayTanksRemake.GameContent
         private int curShootStun;
         private int curShootCooldown;
         private int curMineCooldown;
-
+        private int curMineStun;
         public int TierHierarchy => (int)tier;
 
         public AiBehavior[] Behaviors { get; private set; } = new AiBehavior[10]; // each of these should keep track of an action the tank performs
@@ -232,9 +232,9 @@ namespace WiiPlayTanksRemake.GameContent
 
                         MineCooldown = 600;
                         MineLimit = 4;
-                        MineStun = 1;
+                        MineStun = 5;
                         minePlacementChance = 0.3f;
-                        moveFromMineTime = 60;
+                        moveFromMineTime = 120;
                         break;
 
                     case TankTier.Pink:
@@ -314,7 +314,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                         MineCooldown = 1000;
                         MineLimit = 2;
-                        MineStun = 1;
+                        MineStun = 8;
                         moveFromMineTime = 40;
                         minePlacementChance = 0.1f;
 
@@ -329,7 +329,7 @@ namespace WiiPlayTanksRemake.GameContent
                         inaccuracy = 0.12f;
 
                         projectileWarinessRadius = 100;
-                        mineWarinessRadius = 0;
+                        mineWarinessRadius = 60;
 
                         TurningSpeed = 0.06f;
                         MaximalTurn = MathHelper.PiOver4;
@@ -350,9 +350,13 @@ namespace WiiPlayTanksRemake.GameContent
 
                         MineCooldown = 850;
                         MineLimit = 2;
-                        MineStun = 1;
-                        moveFromMineTime = 40;
+                        MineStun = 10;
+                        moveFromMineTime = 100;
                         minePlacementChance = 0.2f;
+
+                        // ShellHoming.power = 1f;
+                        // ShellHoming.radius = 300f;
+                        // ShellHoming.speed = ShellSpeed;
                         break;
                 }
                 Team = Team.Blue;
@@ -395,6 +399,8 @@ namespace WiiPlayTanksRemake.GameContent
                 curShootStun--;
             if (curShootCooldown > 0)
                 curShootCooldown--;
+            if (curMineStun > 0)
+                curMineStun--;
             if (curMineCooldown > 0)
                 curMineCooldown--;
             if (!Dead)
@@ -402,7 +408,7 @@ namespace WiiPlayTanksRemake.GameContent
                 position.X = MathHelper.Clamp(position.X, MapRenderer.TANKS_MIN_X, MapRenderer.TANKS_MAX_X);
                 position.Z = MathHelper.Clamp(position.Z, MapRenderer.TANKS_MIN_Y, MapRenderer.TANKS_MAX_Y);
 
-                if (curShootStun > 0 || curMineCooldown > 0)
+                if (curShootStun > 0 || curMineStun > 0)
                     velocity = Vector3.Zero;
 
                 /*if (!targetTankRotation.IsInRangeOf(TankRotation, maxTurnUntilPivot))
@@ -456,6 +462,7 @@ namespace WiiPlayTanksRemake.GameContent
                 return;
 
             curMineCooldown = MineCooldown;
+            curMineStun = MineStun;
             var sound = GameResources.GetGameResource<SoundEffect>("Assets/sounds/mine_place");
             SoundPlayer.PlaySoundInstance(sound, SoundContext.Sound, 0.5f);
             OwnedMineCount++;
@@ -504,7 +511,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             sfx.Pitch = ShootPitch;
 
-            var bullet = new Shell(position, Vector3.Zero);
+            var bullet = new Shell(position, Vector3.Zero, homing: ShellHoming);
             var new2d = Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.PiOver2);
 
             var newPos = Position2D + new Vector2(0, 20).RotatedByRadians(-TurretRotation - MathHelper.PiOver2);
@@ -531,7 +538,7 @@ namespace WiiPlayTanksRemake.GameContent
             };
         }
 
-        public string uhoh;
+        private Vector3 targetPosition;
 
         public void GetAIBehavior()
         {
@@ -578,10 +585,6 @@ namespace WiiPlayTanksRemake.GameContent
                 {
                     var enemy = WPTR.AllTanks.FirstOrDefault(tnk => tnk is not null && !tnk.Dead && tnk.Team != Team);
 
-                    var turRotationReal = Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.PiOver2);
-
-                    tankTurretRay = GeometryUtils.CreateRayFrom2D(turRotationReal, enemy.Position2D);
-
                     // MoveTo(targetPosition);
 
                     /*foreach (var tank in WPTR.AllTanks.Where(tnk => tnk is not null && !tnk.Dead))
@@ -610,17 +613,17 @@ namespace WiiPlayTanksRemake.GameContent
                             {
                                 var dir = new Vector2(0, 5).RotatedByRadians(shell.Position2D.DirectionOf(Position2D, true).ToRotation());
 
-                                MoveTo(dir.Expand_Z());
-                                /*velocity.X = dir.X;
+                                // MoveTo(dir.Expand_Z());
+                                velocity.X = dir.X;
                                 velocity.Z = -dir.Y;
 
                                 velocity.Normalize();
 
-                                velocity *= MaxSpeed;*/
+                                velocity *= MaxSpeed;
                             }
                         }
 
-                        /*if (MineLimit > 0)
+                        if (MineLimit > 0)
                         {
                             if (Behaviors[4].IsBehaviourModuloOf(60))
                             {
@@ -630,36 +633,35 @@ namespace WiiPlayTanksRemake.GameContent
                                     LayMine();
                                 }
                             }
-                        }*/
+                        }
 
                         bool movingFromMine = timeSinceLastMinePlaced < moveFromMineTime;
 
                         if (movingFromMine)
                         {
-                            // MoveTo(targetPosition);
+                            MoveTo(targetPosition);
                         }
 
-                        // if (!movingFromMine)
+                        if (!movingFromMine)
                         {
                             if (Behaviors[5].IsBehaviourModuloOf(5))
                             {
-                                uhoh = "Mine!";
                                 if (isMineNear)
                                 {
                                     var dir = new Vector2(0, -5).RotatedByRadians(mine.Position2D.DirectionOf(Position2D).ToRotation());
 
-                                    MoveTo(dir.Expand_Z());
-                                    /*velocity.X = dir.X;
+                                    // MoveTo(dir.Expand_Z());
+
+                                    velocity.X = dir.X;
                                     velocity.Z = dir.Y;
 
                                     velocity.Normalize();
 
-                                    velocity *= MaxSpeed;*/
+                                    velocity *= MaxSpeed;
                                 }
                             }
                             if (!TryGetBulletNear(projectileWarinessRadius, out var sh))
                             {
-                                uhoh = "Wegud";
                                 if (Behaviors[0].IsBehaviourModuloOf(meanderFrequency / 2))
                                 {
                                     var meanderRandom = new Random().NextFloat(-meanderAngle / 10, meanderAngle / 10);
@@ -668,14 +670,14 @@ namespace WiiPlayTanksRemake.GameContent
 
                                     var dir = Position2D.RotatedByRadians(TankRotation);
 
-                                    MoveTo(dir.Expand_Z());
+                                    // MoveTo(dir.Expand_Z());
 
-                                    /*velocity.X = dir.X;
+                                    velocity.X = dir.X;
                                     velocity.Z = dir.Y;
 
                                     velocity.Normalize();
 
-                                    velocity *= MaxSpeed;*/
+                                    velocity *= MaxSpeed;
                                 }
                                 if (Behaviors[0].IsBehaviourModuloOf(meanderFrequency))
                                 {
@@ -685,19 +687,15 @@ namespace WiiPlayTanksRemake.GameContent
 
                                     var dir = Position2D.RotatedByRadians(TankRotation);
 
-                                    MoveTo(dir.Expand_Z());
+                                    // MoveTo(dir.Expand_Z());
 
-                                    /*velocity.X = dir.X;
+                                    velocity.X = dir.X;
                                     velocity.Z = dir.Y;
 
                                     velocity.Normalize();
 
-                                    velocity *= MaxSpeed;*/
+                                    velocity *= MaxSpeed;
                                 }
-                            }
-                            else
-                            {
-                                uhoh = "Uh Oh";
                             }
                         }
                     }
@@ -705,6 +703,9 @@ namespace WiiPlayTanksRemake.GameContent
                     TurretRotation = GameUtils.RoughStep(TurretRotation, targetTurretRotation, turretRotationSpeed);
                     if (Array.IndexOf(WPTR.AllTanks, enemy) > -1 && enemy is not null)
                     {
+                        var turRotationReal = Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.PiOver2);
+
+                        tankTurretRay = GeometryUtils.CreateRayFrom2D(turRotationReal, enemy.Position2D);
                         if (Behaviors[1].IsBehaviourModuloOf(turretMeanderFrequency))
                         {
                             var dirVec = Position2D - enemy.Position2D;
@@ -837,8 +838,9 @@ namespace WiiPlayTanksRemake.GameContent
         {
             if (Dead)
                 return;
-
-            var info = $"{Team}:{uhoh}\n{timeSinceLastMinePlaced}/{moveFromMineTime} | {timeSinceLastMinePlaced < moveFromMineTime}";
+            bool isBulletNear = TryGetBulletNear(projectileWarinessRadius, out var shell);
+            bool isMineNear = TryGetMineNear(mineWarinessRadius, out var mine);
+            var info = $"{Team}\nBullet: {isBulletNear} | Mine: {isMineNear}";
 
             DebugUtils.DrawDebugString(TankGame.spriteBatch, info, GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection), 1, centerIt: true);
 

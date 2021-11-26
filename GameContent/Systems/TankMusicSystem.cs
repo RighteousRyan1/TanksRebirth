@@ -167,6 +167,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems
 
         public static void LoadMusic()
         {
+
             brown = Music.CreateMusicTrack("BrownTank", "Assets/music/brown", 0.5f);
 
             ash1 = Music.CreateMusicTrack("AshTank1", "Assets/music/ash1", 0.5f);
@@ -201,35 +202,34 @@ namespace WiiPlayTanksRemake.GameContent.Systems
 
         public static void PlayMusic()
         {
-            brown.Play();
-            ash1.Play();
-            ash2.Play();
+            songs = new Music[]
+            {
+                brown,
+                ash1, ash2,
+                marine1, marine2,
+                pink1, pink2, pink3,
+                yellow1, yellow2, yellow3,
+                purple1, purple2, purple3,
+                green1, green2, green3, green4,
+                white1, white2, white3,
+                black
+            };
 
-            marine1.Play();
-            marine2.Play();
+            foreach (var song in songs)
+                song.Play();
+        }
 
-            yellow1.Play();
-            yellow2.Play();
-            yellow3.Play();
+        public static void PauseAll()
+        {
+            foreach (var song in songs)
+                if (!song.Track.IsPaused())
+                    song.Pause();
+        }
 
-            pink1.Play();
-            pink2.Play();
-            pink3.Play();
-
-            green1.Play();
-            green2.Play();
-            green3.Play();
-            green4.Play();
-
-            purple1.Play();
-            purple2.Play();
-            purple3.Play();
-
-            white1.Play();
-            white2.Play();
-            white3.Play();
-
-            black.Play();
+        public static void ResumeAll()
+        {
+            foreach (var song in songs)
+                song.Play();
         }
     }
 }

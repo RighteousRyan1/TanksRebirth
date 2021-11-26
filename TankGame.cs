@@ -176,6 +176,8 @@ namespace WiiPlayTanksRemake
 
         Vector2 rotVec;
 
+        float zoom = 1f;
+
         protected override void Update(GameTime gameTime)
         {
             LastGameTime = gameTime;
@@ -184,9 +186,14 @@ namespace WiiPlayTanksRemake
                 rotVec += GameUtils.GetMouseVelocity(GameUtils.WindowCenter) / 500;
             }
 
+            if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Up))
+                zoom += 0.01f;
+            if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Down))
+                zoom -= 0.01f;
+
             System.Diagnostics.Debug.WriteLine(GameUtils.GetMouseVelocity(GameUtils.WindowCenter));
 
-            GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(0.75f + rotVec.Y) * Matrix.CreateRotationY(rotVec.X);
+            GameView = Matrix.CreateScale(zoom) * Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(0.75f + rotVec.Y) * Matrix.CreateRotationY(rotVec.X);
 
             FixedUpdate(gameTime);
         }

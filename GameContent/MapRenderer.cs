@@ -17,7 +17,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             public static void LoadFloor()
             {
-                FloorModelBase = GameResources.GetGameResource<Model>("Assets/floor");
+                FloorModelBase = GameResources.GetGameResource<Model>("Assets/floor_big");
 
                 foreach (var mesh in FloorModelBase.Meshes)
                 {
@@ -60,7 +60,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             public static void LoadBounds()
             {
-                BoundaryModel = GameResources.GetGameResource<Model>("Assets/outerbounds");
+                BoundaryModel = GameResources.GetGameResource<Model>("Assets/outerbounds_big");
 
                 foreach (var mesh in BoundaryModel.Meshes)
                 {
@@ -73,9 +73,18 @@ namespace WiiPlayTanksRemake.GameContent
                         effect.TextureEnabled = true;
                     }
 
-                    SetBlockTexture(mesh, "polygon54", BoundaryTextureContext.block_shadow_b);
-                    SetBlockTexture(mesh, "polygon68", BoundaryTextureContext.block_shadow_d);
-                    SetBlockTexture(mesh, "polygon8", BoundaryTextureContext.block_other_a);
+                    SetBlockTexture(mesh, "polygon33", BoundaryTextureContext.block_other_a);
+                    SetBlockTexture(mesh, "polygon7", BoundaryTextureContext.block_shadow_b);
+                    SetBlockTexture(mesh, "polygon20", BoundaryTextureContext.block_shadow_d);
+                    SetBlockTexture(mesh, "polygon21", BoundaryTextureContext.block_shadow_b);
+
+                    //SetBlockTexture(mesh, "polygon54", BoundaryTextureContext.block_shadow_b);
+                    //SetBlockTexture(mesh, "polygon68", BoundaryTextureContext.block_shadow_d);
+
+                    //SetBlockTexture(mesh, "polygon54", BoundaryTextureContext.block_shadow_b);
+                    //SetBlockTexture(mesh, "polygon68", BoundaryTextureContext.block_shadow_d);
+                    //SetBlockTexture(mesh, "polygon8", BoundaryTextureContext.block_other_a);
+
                     // SetBlockTexture(mesh, "polygon83", BoundaryTextureContext.ground);
                 }
 
@@ -140,15 +149,40 @@ namespace WiiPlayTanksRemake.GameContent
             }
         }
 
-        public const int TANKS_MIN_X = -268;
-        public const int TANKS_MAX_X = 268;
-        public const int TANKS_MIN_Y = -155;
-        public const int TANKS_MAX_Y = 400;
+        /*public const float TANKS_MIN_X = -268;
+        public const float TANKS_MAX_X = 268;
+        public const float TANKS_MIN_Y = -155;
+        public const float TANKS_MAX_Y = 400;
 
-        public const int MIN_X = -278;
-        public const int MAX_X = 278;
-        public const int MIN_Y = -165;
-        public const int MAX_Y = 410;
+        public const float MIN_X = -278;
+        public const float MAX_X = 278;
+        public const float MIN_Y = -165;
+        public const float MAX_Y = 410;
+
+        public const float CUBE_MIN_X = MIN_X + Cube.FULLBLOCK_SIZE / 2;
+        public const float CUBE_MAX_X = MAX_X - Cube.FULLBLOCK_SIZE / 2;
+        public const float CUBE_MIN_Y = MIN_Y + Cube.FULLBLOCK_SIZE / 2;
+        public const float CUBE_MAX_Y = MAX_Y - Cube.FULLBLOCK_SIZE / 2;*/
+
+        public const float TANKS_MIN_X = -313.2546f;
+        public const float TANKS_MAX_X = 313.2546f;
+        public const float TANKS_MIN_Y = -111.45461f;
+        public const float TANKS_MAX_Y = 372.32504f;
+
+        public const float MIN_X = -324;
+        public const float MAX_X = 324;
+        public const float MIN_Y = -117;
+        public const float MAX_Y = 377;
+
+        public const float CUBE_MIN_X = MIN_X + Cube.FULLBLOCK_SIZE / 2 - 4f;
+        public const float CUBE_MAX_X = MAX_X - Cube.FULLBLOCK_SIZE / 2 + 2f;
+        public const float CUBE_MIN_Y = MIN_Y + Cube.FULLBLOCK_SIZE / 2 - 8f;
+        public const float CUBE_MAX_Y = MAX_Y - Cube.FULLBLOCK_SIZE / 2 + 8f;
+
+        public static Vector3 TopLeft => new(CUBE_MIN_X, 0, CUBE_MAX_Y);
+        public static Vector3 TopRight => new(CUBE_MAX_X, 0, CUBE_MAX_Y);
+        public static Vector3 BottomLeft => new(CUBE_MIN_X, 0, CUBE_MIN_Y);
+        public static Vector3 BottomRight => new(CUBE_MAX_X, 0, CUBE_MIN_Y);
         public static void InitializeRenderers()
         {
             FloorRenderer.LoadFloor();
@@ -159,7 +193,7 @@ namespace WiiPlayTanksRemake.GameContent
         {
             viewMatrix = TankGame.GameView;
             projectionMatrix = TankGame.GameProjection;
-            worldMatrix = Matrix.CreateTranslation(0, 0, 130); //* Matrix.CreateRotationX(Internals.Common.Utilities.GameUtils.MousePosition.X / 500);
+            worldMatrix = Matrix.CreateScale(0.855f) * Matrix.CreateTranslation(0, 0, 130);
 
             FloorRenderer.RenderFloor();
             BoundsRenderer.RenderBounds();

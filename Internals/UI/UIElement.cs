@@ -107,25 +107,34 @@ namespace WiiPlayTanksRemake.Internals.UI
         }
 
         public virtual void MouseClick() {
-            OnMouseClick?.Invoke(this);
+            if (Visible)
+                OnMouseClick?.Invoke(this);
         }
 
         public virtual void MouseRightClick() {
-            OnMouseRightClick?.Invoke(this);
+            if (Visible)
+                OnMouseRightClick?.Invoke(this);
         }
 
         public virtual void MouseMiddleClick() {
-            OnMouseMiddleClick?.Invoke(this);
+            if (Visible)
+                OnMouseMiddleClick?.Invoke(this);
         }
 
         public virtual void MouseOver() {
-            OnMouseOver?.Invoke(this);
-            MouseHovering = true;
+            if (Visible)
+            {
+                OnMouseOver?.Invoke(this);
+                MouseHovering = true;
+            }
         }
 
         public virtual void MouseLeave() {
-            OnMouseLeave?.Invoke(this);
-            MouseHovering = false;
+            if (Visible)
+            {
+                OnMouseLeave?.Invoke(this);
+                MouseHovering = false;
+            }
         }
     }
 }

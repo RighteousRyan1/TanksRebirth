@@ -5,6 +5,7 @@ using WiiPlayTanksRemake.Internals.Common.GameInput;
 using WiiPlayTanksRemake.Internals.Core;
 using WiiPlayTanksRemake.Internals.Common.GameUI;
 using WiiPlayTanksRemake.Internals.Common.Utilities;
+using WiiPlayTanksRemake.GameContent.Systems;
 
 namespace WiiPlayTanksRemake.GameContent.UI
 {
@@ -20,6 +21,8 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
         public static UIImageButton QuitButton;
 
+        public static bool Paused { get; set; }
+
         internal static void Initialize()
         {
             SpriteFont font = TankGame.Fonts.Default;
@@ -34,12 +37,20 @@ namespace WiiPlayTanksRemake.GameContent.UI
             RestartButton.SetDimensions(700, 450, 500, 150);
             QuitButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Quit", Color.WhiteSmoke));
             QuitButton.SetDimensions(700, 700, 500, 150);
-        }
+            QuitButton.OnMouseClick += QuitButton_OnMouseClick;
 
-        private static void ResumeButton_OnMouseClick(Internals.UI.UIElement affectedElement) {
             ResumeButton.Visible = false;
             RestartButton.Visible = false;
             QuitButton.Visible = false;
+        }
+
+        private static void QuitButton_OnMouseClick(Internals.UI.UIElement affectedElement)
+        {
+            TankGame.Instance.Exit();
+        }
+
+        private static void ResumeButton_OnMouseClick(Internals.UI.UIElement affectedElement) {
+            Paused = false;
         }
 
         private static void QuickButton(UIImage imageButton, SpriteBatch spriteBatch, string text, Color color, bool onLeft = false)
@@ -79,10 +90,16 @@ namespace WiiPlayTanksRemake.GameContent.UI
             MissionInfoBar.UniqueDraw =
                 (uiPanel, spriteBatch) => spriteBatch.DrawString(TankGame.Fonts.Default, text, uiPanel.Hitbox.Center.ToVector2(), Color.White, 0, drawOrigin, 1.5f, SpriteEffects.None, 1f);
             if (Pause.JustPressed) {
-                ResumeButton.Visible = true;
-                RestartButton.Visible = true;
-                QuitButton.Visible = true;
+                if (Paused)
+                    TankMusicSystem.ResumeAll();
+                else
+                    TankMusicSystem.PauseAll();
+                Paused = !Paused;
             }
+
+            ResumeButton.Visible = Paused;
+            RestartButton.Visible = Paused;
+            QuitButton.Visible = Paused;
         }
     }
 }

@@ -18,10 +18,12 @@ namespace WiiPlayTanksRemake.GameContent
     {
         public bool playerControl_isBindPressed;
 
-        private long _treadSoundTimer = 5;
+        private int _treadPlaceTimer = 5;
+        private int _treadSoundTimer = 5;
         public int curShootStun;
         public int curShootCooldown;
         private int curMineCooldown;
+        private int curMineStun;
 
         public int PlayerId { get; }
         public int WorldId { get; }
@@ -63,14 +65,19 @@ namespace WiiPlayTanksRemake.GameContent
             ShellCooldown = 5;
             ShootStun = 5;
             ShellSpeed = 3f;
-            MaxSpeed = 1.8f;
+            MaxSpeed = 1.8f; //1.8f;
             RicochetCount = 1;
             ShellLimit = 5;
             MineLimit = 2;
-            MineStun = 1;
+            MineStun = 8;
             Invisible = false;
             Acceleration = 0.3f;
             TurningSpeed = 0.08f;
+
+            if (MaxSpeed > 5f)
+                _treadPlaceTimer = 1;
+            else
+                _treadPlaceTimer = 5; ///= (int)(MaxSpeed * 2);
 
             Team = Team.Red;
 
@@ -101,6 +108,8 @@ namespace WiiPlayTanksRemake.GameContent
                 curShootStun--;
             if (curShootCooldown > 0)
                 curShootCooldown--;
+            if (curMineStun > 0)
+                curMineStun--;
             if (curMineCooldown > 0)
                 curMineCooldown--;
             if (!Dead)
@@ -122,17 +131,15 @@ namespace WiiPlayTanksRemake.GameContent
 
                 if (WPTR.InMission)
                 {
-                    if (curShootStun > 0 || curMineCooldown > 0)
-                        velocity = Vector3.Zero;
-
-                    // if ((tankRotation + MathHelper.PiOver2).IsInRangeOf(tankRotationPredicted.ToRotation(), 1.5f))
-
-                    if (curShootStun <= 0)
+                    if (curShootStun <= 0 && curMineStun <= 0)
                     {
-                         ControlHandle_Keybinding();
+                        ControlHandle_Keybinding();
                         if (Input.CurrentGamePadSnapshot.IsConnected)
                             ControlHandle_ConsoleController();
                     }
+                    else
+                        velocity = Vector3.Zero;
+
                     position += velocity * 0.55f;
                 }
                 else
@@ -314,6 +321,8 @@ namespace WiiPlayTanksRemake.GameContent
         {
             if (curMineCooldown > 0 || OwnedMineCount >= MineLimit)
                 return;
+            // fix stun
+            curMineStun = MineStun;
             curMineCooldown = MineCooldown;
             var sound = GameResources.GetGameResource<SoundEffect>("Assets/sounds/mine_place");
             SoundPlayer.PlaySoundInstance(sound, SoundContext.Sound, 0.5f);
@@ -342,11 +351,13 @@ namespace WiiPlayTanksRemake.GameContent
 
             if (Velocity2D.Length() > 0 && playerControl_isBindPressed)
             {
+
+                if (TankGame.GameUpdateTime % _treadPlaceTimer == 0)
+                    LayFootprint();
                 if (TankGame.GameUpdateTime % _treadSoundTimer == 0)
                 {
                     var treadPlace = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_tread_place_{new Random().Next(1, 5)}");
                     var sfx = SoundPlayer.PlaySoundInstance(treadPlace, SoundContext.Sound, 0.2f);
-                    LayFootprint();
                     sfx.Pitch = TreadPitch;
                 }
             }
@@ -389,7 +400,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             sfx.Pitch = ShootPitch;
 
-            var bullet = new Shell(position, Vector3.Zero);
+            var bullet = new Shell(position, Vector3.Zero, homing: ShellHoming);
             var new2d = Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi);
 
             var newPos = Position2D + new Vector2(0, 20).RotatedByRadians(-TurretRotation);
@@ -438,7 +449,9 @@ namespace WiiPlayTanksRemake.GameContent
             if (Dead)
                 return;
 
-            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"{Team}", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection), 1);
+            var info = $"{Team} : {position}";
+
+            DebugUtils.DrawDebugString(TankGame.spriteBatch, info, GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection), 1, centerIt: true);
 
             RenderModel();
         }

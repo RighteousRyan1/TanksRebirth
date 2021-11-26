@@ -75,6 +75,9 @@ namespace WiiPlayTanksRemake.GameContent
             foreach (var cube in Cube.cubes)
                 cube?.Update();
 
+            foreach (var expl in MineExplosion.explosions.Where(expl => expl is not null))
+                expl.Update();
+
             IngameUI.UpdateButtons();
 
             GameShaders.UpdateShaders();
@@ -98,9 +101,9 @@ namespace WiiPlayTanksRemake.GameContent
                 FloatForTesting += 0.01f;
             }
 
-            if (Input.KeyJustPressed(Keys.Up))
+            if (Input.KeyJustPressed(Keys.NumPad4))
                 DebugUtils.DebugLevel++;
-            if (Input.KeyJustPressed(Keys.Down))
+            if (Input.KeyJustPressed(Keys.NumPad6))
                 DebugUtils.DebugLevel--;
 
             if (timeUntilTankFunction > 0)
@@ -148,6 +151,9 @@ namespace WiiPlayTanksRemake.GameContent
 
             foreach (var print in TankFootprint.footprints.Where(prnt => prnt is not null))
                 print?.Render();
+
+            foreach (var expl in MineExplosion.explosions.Where(expl => expl is not null))
+                expl.Render();
 
             // TODO: Fix translation
             // TODO: Scaling with screen size.
@@ -217,7 +223,17 @@ namespace WiiPlayTanksRemake.GameContent
             DebugUtils.DebuggingEnabled = true;
             MapRenderer.InitializeRenderers();
 
-            new Cube(Vector3.Zero);
+            List<CubeMapPosition> positionsUsed = new();
+            // 26 max x
+            // 20 max y
+            for (int i = 0; i < 20; i++)
+            {
+                var pos = new CubeMapPosition(new Random().Next(0, 27), new Random().Next(0, 21));
+
+                positionsUsed.Add(pos);
+
+                new Cube(pos, (Cube.BlockType)new Random().Next(1, 3), 2);
+            }
 
             SpawnMe();
             SpawnTankPlethorae();
@@ -247,7 +263,7 @@ namespace WiiPlayTanksRemake.GameContent
         public static AITank SpawnTank(TankTier tier, Team team, Vector3 posOverride = default)
         {
             var rot = GeometryUtils.GetPiRandom();
-            return new AITank(posOverride == default ? new Vector3(new Random().Next(-200, 201), 0, new Random().Next(-500, 600)) : posOverride, tier)
+            return new AITank(posOverride == default ? new Vector3(new Random().Next(-150, 150), 0, new Random().Next(-300, 100)) : posOverride, tier)
             {
                 TankRotation = rot,
                 TurretRotation = rot,

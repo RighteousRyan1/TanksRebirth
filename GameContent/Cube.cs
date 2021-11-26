@@ -10,9 +10,18 @@ namespace WiiPlayTanksRemake.GameContent
 {
     public class Cube : IGameSystem
     {
+        public enum BlockType
+        {
+            Wood = 1,
+            Cork = 2,
+            Hole = 3
+        }
+
+        public BlockType Type { get; set; }
+
         internal static List<Cube> cubes = new();
 
-        public Vector3 position;
+        public CubeMapPosition position;
 
         public Model model;
 
@@ -22,28 +31,47 @@ namespace WiiPlayTanksRemake.GameContent
 
         public BoundingBox collider;
 
+        public Texture2D meshTexture;
+
         public int height;
 
-        public Cube(Vector3 position)
+        public const int MAX_CUBE_HEIGHT = 5;
+
+        public const float FULLBLOCK_SIZE = 25.2f;
+        public const float SLAB_SIZE = 12.6f;
+
+        // 36, 18 respectively for normal size
+
+        public const float FULL_SIZE = 100.8f;
+
+        // 141 for normal
+
+        public Cube(CubeMapPosition position, BlockType type, int height)
         {
+            this.height = MathHelper.Clamp(height, 0, 5); // if 0, it will be a hole.
+
             model = TankGame.CubeModel;
-            meshTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/ingame/block.1");
+
+            meshTexture = type switch
+            {
+                BlockType.Wood => GameResources.GetGameResource<Texture2D>("Assets/textures/ingame/block.1"),
+                BlockType.Cork => GameResources.GetGameResource<Texture2D>("Assets/textures/ingame/block.2"),
+                _ => GameResources.GetGameResource<Texture2D>("Assets/textures/ingame/block_harf.2")
+            };
+
+            Type = type;
+
             this.position = position;
-            World = Matrix.CreateTranslation(position);
-            Projection = TankGame.GameProjection;
-            View = TankGame.GameView;
 
             collider = new BoundingBox(position - new Vector3(3, 40, 3), position + new Vector3(3, 40, 3));
             cubes.Add(this);
         }
 
-        public Texture2D meshTexture;
-
         public void Draw()
         {
             foreach (var mesh in model.Meshes)
             {
-                foreach (IEffectMatrices effect in mesh.Effects)
+                foreach (BasicEffect effect in mesh.Effects)
                 {
                     effect.View = TankGame.GameView;
                     effect.World = World;
@@ -63,7 +91,29 @@ namespace WiiPlayTanksRemake.GameContent
         }
         public void Update()
         {
-            World = Matrix.CreateTranslation(position);
+            Vector3 offset = new();
+
+            switch (height)
+            {
+                case 0:
+                    offset = new(0, FULL_SIZE, 0);
+                    // this thing is a hole, therefore you're mom; work on later
+                    break;
+                case 1:
+                    offset = new(0, FULL_SIZE - FULLBLOCK_SIZE, 0);
+                    break;
+                case 2:
+                    offset = new(0, FULL_SIZE - (FULLBLOCK_SIZE + SLAB_SIZE), 0);
+                    break;
+                case 3:
+                    offset = new(0, FULL_SIZE - (FULLBLOCK_SIZE * 2 + SLAB_SIZE), 0);
+                    break;
+                case 4:
+                    offset = new(0, FULL_SIZE - (FULLBLOCK_SIZE * 2 + SLAB_SIZE * 2), 0);
+                    break;
+            }
+
+            World = Matrix.CreateScale(0.72f) * Matrix.CreateTranslation(position - offset);
             Projection = TankGame.GameProjection;
             View = TankGame.GameView;
         }
@@ -102,6 +152,43 @@ namespace WiiPlayTanksRemake.GameContent
             Down,
             Left,
             Right
+        }
+    }
+
+    public struct CubeMapPosition
+    {
+        public static implicit operator Vector2(CubeMapPosition position) => Convert(position);
+        public static implicit operator Vector3(CubeMapPosition position) => Convert3D(position);
+
+        public int X;
+        public int Y;
+
+        public CubeMapPosition(int x, int y)
+        {
+            X = x;
+            Y = y;
+        }
+
+        public static Vector2 Convert(CubeMapPosition pos)
+        {
+            // (0, 0) == (MIN_X, MIN_Y)
+
+            var orig = new Vector2(MapRenderer.CUBE_MIN_X, MapRenderer.CUBE_MIN_Y);
+
+            var real = new Vector2(orig.X + (pos.X * Cube.FULLBLOCK_SIZE), orig.Y + (pos.Y * Cube.FULLBLOCK_SIZE) - 110);
+
+            return real;
+        }
+
+        public static Vector3 Convert3D(CubeMapPosition pos)
+        {
+            // (0, 0) == (MIN_X, MIN_Y)
+
+            var orig = new Vector3(MapRenderer.CUBE_MIN_X, 0, MapRenderer.CUBE_MIN_Y);
+
+            var real = new Vector3(orig.X + (pos.X * Cube.FULLBLOCK_SIZE), 0,  orig.Y + (pos.Y * Cube.FULLBLOCK_SIZE) - 110);
+
+            return real;
         }
     }
 }

@@ -31,13 +31,13 @@ namespace WiiPlayTanksRemake.GameContent
         public string Name { get; set; }
 
         private SoundEffect _sound;
-        public SoundEffectInstance Instance { get; private set; }
+        public SoundEffectInstance Track { get; private set; }
 
         private Music(string name, string musicPath, float maxVolume) {
             Name = name;
             _sound = TankGame.Instance.Content.Load<SoundEffect>(musicPath);
-            Instance = _sound.CreateInstance();
-            Instance.IsLooped = true;
+            Track = _sound.CreateInstance();
+            Track.IsLooped = true;
             this.maxVolume = maxVolume;
             AllMusic.Add(this);
         }
@@ -46,35 +46,35 @@ namespace WiiPlayTanksRemake.GameContent
             => new(name, musicPath, maxVolume);
 
         public void Play() {
-            Instance.Volume = volume;
-            Instance?.Play();
+            Track.Volume = volume;
+            Track?.Play();
             OnBegin?.Invoke(this, new());
         }
 
         public void Pause() {
             State = MusicState.Paused;
-            Instance?.Pause();
+            Track?.Pause();
         }
 
         public void Stop() {
-            Instance.Volume = 0f;
-            Instance?.Stop();
+            Track.Volume = 0f;
+            Track?.Stop();
             OnStop?.Invoke(this, new());
         }
 
         internal void Update() {
-            Instance.Volume = volume;
+            Track.Volume = volume;
             if (volume > maxVolume)
                 volume = maxVolume;
 
             if (!TankGame.Instance.IsActive) {
-                if (!Instance.IsPaused()) {
-                    Instance?.Pause();
+                if (!Track.IsPaused()) {
+                    Track?.Pause();
                 }
             }
             else {
-                if (Instance.IsPaused()) {
-                    Instance?.Resume();
+                if (Track.IsPaused()) {
+                    Track?.Resume();
                 }
             }
         }
