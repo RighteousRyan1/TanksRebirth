@@ -88,22 +88,16 @@ namespace WiiPlayTanksRemake.GameContent
                 DebugUtils.DebuggingEnabled = !DebugUtils.DebuggingEnabled;
 
             if (Input.AreKeysJustPressed(Keys.RightAlt, Keys.Enter))
-            {
                 WindowBorderless = !WindowBorderless;
-            }
 
             if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Left))
-            {
                 FloatForTesting -= 0.01f;
-            }
             if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Right))
-            {
                 FloatForTesting += 0.01f;
-            }
 
-            if (Input.KeyJustPressed(Keys.NumPad4))
+            if (Input.KeyJustPressed(Keys.Add))
                 DebugUtils.DebugLevel++;
-            if (Input.KeyJustPressed(Keys.NumPad6))
+            if (Input.KeyJustPressed(Keys.Subtract))
                 DebugUtils.DebugLevel--;
 
             if (timeUntilTankFunction > 0)
@@ -122,11 +116,27 @@ namespace WiiPlayTanksRemake.GameContent
                 SpawnTankPlethorae();
             if (Input.KeyJustPressed(Keys.PageDown))
                 SpawnMe();
-            if (Input.KeyJustPressed(Keys.End))
-                SpawnTank(TankTier.Black, Team.Blue, Vector3.Zero);
-            if (Input.KeyJustPressed(Keys.Delete))
-                SpawnTank(TankTier.Marine, Team.Red, new Vector3(50, 0, 50));
+
+            if (Input.KeyJustPressed(Keys.NumPad7))
+                tankToSpawnType--;
+            if (Input.KeyJustPressed(Keys.NumPad9))
+                tankToSpawnType++;
+
+            if (Input.KeyJustPressed(Keys.NumPad1))
+                tankToSpawnTeam--;
+            if (Input.KeyJustPressed(Keys.NumPad3))
+                tankToSpawnTeam++;
+
+            if (Input.KeyJustPressed(Keys.Home))
+            {
+                SpawnTankAtMouse((TankTier)tankToSpawnType, (Team)tankToSpawnTeam);
+                // new Cube(CubeMapPosition.ConvertFromVector3(GameUtils.GetWorldPosition(GameUtils.MousePosition)), Cube.BlockType.Wood, 3);
+            }
         }
+
+        public static int tankToSpawnType;
+        public static int tankToSpawnTeam;
+
         internal static void Draw()
         {
             MapRenderer.DrawWorldModels();
@@ -163,10 +173,16 @@ namespace WiiPlayTanksRemake.GameContent
 
                 element?.Draw(TankGame.spriteBatch);
             }
+            tankToSpawnType = MathHelper.Clamp(tankToSpawnType, 1, Enum.GetValues<TankTier>().Length - 1);
+            tankToSpawnTeam = MathHelper.Clamp(tankToSpawnTeam, 0, Enum.GetValues<Team>().Length - 1);
+            DebugUtils.DrawDebugString(TankGame.spriteBatch, "Spawn Tank With Info:", GameUtils.WindowTop + new Vector2(0, 8), 1, centerIt: true);
+            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"Tier: {Enum.GetNames<TankTier>()[tankToSpawnType]}", GameUtils.WindowTop + new Vector2(0, 24), 1, centerIt: true);
+            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"Team: {Enum.GetNames<Team>()[tankToSpawnTeam]}", GameUtils.WindowTop + new Vector2(0, 40), 1, centerIt: true);
 
             DebugUtils.DrawDebugString(TankGame.spriteBatch, $"TestFloat: {FloatForTesting}" +
                 $"\nHighestTier: {AITank.GetHighestTierActive()}" +
                 $"\n", new(10, GameUtils.WindowHeight * 0.1f));
+
             DebugUtils.DrawDebugString(TankGame.spriteBatch, $"HighestTier: {AITank.GetHighestTierActive()}", new(10, GameUtils.WindowHeight / 2));
             DebugUtils.DrawDebugString(TankGame.spriteBatch, $"CurSong: {(Music.AllMusic.FirstOrDefault(music => music.volume == 0.5f) != null ? Music.AllMusic.FirstOrDefault(music => music.volume == 0.5f).Name : "N/A")}", new(10, GameUtils.WindowHeight - 100));
 
@@ -175,6 +191,8 @@ namespace WiiPlayTanksRemake.GameContent
                 var t = AllAITanks[i];
                 DebugUtils.DrawDebugString(TankGame.spriteBatch, $"{t}", new(10, 15 * i), 1);
             }*/
+
+            ChatSystem.DrawMessages();
 
             for (int i = 0; i < Enum.GetNames<TankTier>().Length; i++)
             {
@@ -223,14 +241,21 @@ namespace WiiPlayTanksRemake.GameContent
             DebugUtils.DebuggingEnabled = true;
             MapRenderer.InitializeRenderers();
 
-            List<CubeMapPosition> positionsUsed = new();
             // 26 max x
             // 20 max y
+
+            var dirX = 0;
+            var dirY = 0;
+
             for (int i = 0; i < 20; i++)
             {
-                var pos = new CubeMapPosition(new Random().Next(0, 27), new Random().Next(0, 21));
+                dirX += new Random().Next(0, 2) == 0 ? 1 : -1;
+                dirY += new Random().Next(0, 2) == 0 ? 1 : -1;
 
-                positionsUsed.Add(pos);
+                dirX = MathHelper.Clamp(dirX, 0, CubeMapPosition.MAP_WIDTH);
+                dirY = MathHelper.Clamp(dirY, 0, CubeMapPosition.MAP_HEIGHT);
+
+                var pos = new CubeMapPosition(dirX, dirY);
 
                 new Cube(pos, (Cube.BlockType)new Random().Next(1, 3), 2);
             }
@@ -247,7 +272,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         public static void SpawnMe()
         {
-            myTank = new PlayerTank(new Vector3(new Random().Next(-200, 201), 0, new Random().Next(-500, 600)), playerType: PlayerType.Blue);
+            myTank = new PlayerTank(new CubeMapPosition(new Random().Next(0, 27), new Random().Next(0, 21)), playerType: PlayerType.Blue);
             myTank.Team = Team.Red;
         }
 
@@ -260,10 +285,27 @@ namespace WiiPlayTanksRemake.GameContent
 
             SoundPlayer.PlaySoundInstance(tune, SoundContext.Music, 1f);
         }
-        public static AITank SpawnTank(TankTier tier, Team team, Vector3 posOverride = default)
+        public static AITank SpawnTank(TankTier tier, Team team)
         {
             var rot = GeometryUtils.GetPiRandom();
-            return new AITank(posOverride == default ? new Vector3(new Random().Next(-150, 150), 0, new Random().Next(-300, 100)) : posOverride, tier)
+
+            var random = new CubeMapPosition(new Random().Next(0, 27), new Random().Next(0, 20));
+
+            return new AITank(new CubeMapPosition(new Random().Next(0, 27), new Random().Next(0, 20)), tier)
+            {
+                TankRotation = rot,
+                TurretRotation = rot,
+                Team = team
+            };
+        }
+        public static AITank SpawnTankAtMouse(TankTier tier, Team team)
+        {
+            var rot = GeometryUtils.GetPiRandom();
+
+            var pos = GameUtils.GetWorldPosition(GameUtils.MousePosition);
+
+
+            return new AITank(pos, tier)
             {
                 TankRotation = rot,
                 TurretRotation = rot,
@@ -274,8 +316,9 @@ namespace WiiPlayTanksRemake.GameContent
         {
             for (int i = 0; i < 5; i++)
             {
+                var random = new CubeMapPosition(new Random().Next(0, 27), new Random().Next(0, 20));
                 var rot = GeometryUtils.GetPiRandom();
-                var t = new AITank(new Vector3(new Random().Next(-200, 201), 0, new Random().Next(-500, 600)), AITank.PICK_ANY_THAT_ARE_IMPLEMENTED())
+                var t = new AITank(random, AITank.PICK_ANY_THAT_ARE_IMPLEMENTED())
                 {
                     TankRotation = rot,
                     TurretRotation = rot

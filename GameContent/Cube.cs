@@ -1,6 +1,9 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using WiiPlayTanksRemake;
 using WiiPlayTanksRemake.Internals;
 using WiiPlayTanksRemake.Internals.Common.Utilities;
@@ -19,7 +22,9 @@ namespace WiiPlayTanksRemake.GameContent
 
         public BlockType Type { get; set; }
 
-        internal static List<Cube> cubes = new();
+        // internal static Cube[] cubes = new Cube[CubeMapPosition.MAP_WIDTH * CubeMapPosition.MAP_HEIGHT];
+
+        public static Cube[,] cubes = new Cube[CubeMapPosition.MAP_WIDTH + 1, CubeMapPosition.MAP_HEIGHT + 1];
 
         public CubeMapPosition position;
 
@@ -48,23 +53,41 @@ namespace WiiPlayTanksRemake.GameContent
 
         public Cube(CubeMapPosition position, BlockType type, int height)
         {
-            this.height = MathHelper.Clamp(height, 0, 5); // if 0, it will be a hole.
-
-            model = TankGame.CubeModel;
-
             meshTexture = type switch
             {
                 BlockType.Wood => GameResources.GetGameResource<Texture2D>("Assets/textures/ingame/block.1"),
                 BlockType.Cork => GameResources.GetGameResource<Texture2D>("Assets/textures/ingame/block.2"),
-                _ => GameResources.GetGameResource<Texture2D>("Assets/textures/ingame/block_harf.2")
+                BlockType.Hole => GameResources.GetGameResource<Texture2D>("Assets/textures/ingame/block_harf.2"),
+                _ => null
             };
+
+            this.height = MathHelper.Clamp(height, 0, 5); // if 0, it will be a hole.
+
+            model = TankGame.CubeModel;
+
 
             Type = type;
 
             this.position = position;
 
             collider = new BoundingBox(position - new Vector3(3, 40, 3), position + new Vector3(3, 40, 3));
-            cubes.Add(this);
+
+            /*int index = Array.IndexOf(cubes, cubes.First(tank => tank is null));
+
+            worldId = index;
+
+            cubes[index] = this;*/
+
+            cubes[position.X, position.Y] = this;
+
+            // cubes.Add(this);
+        }
+
+        public void Destroy()
+        {
+            // blah blah particle chunk thingy
+
+            cubes[position.X, position.Y] = null;
         }
 
         public void Draw()
@@ -76,14 +99,20 @@ namespace WiiPlayTanksRemake.GameContent
                     effect.View = TankGame.GameView;
                     effect.World = World;
                     effect.Projection = TankGame.GameProjection;
+                    effect.EnableDefaultLighting();
 
-                    var fx = effect as BasicEffect;
+                    effect.TextureEnabled = true;
+                    effect.Texture = meshTexture;
 
-                    fx.EnableDefaultLighting();
 
-                    fx.TextureEnabled = true;
+                    effect.DirectionalLight0.Enabled = true;
+                    effect.DirectionalLight1.Enabled = true;
+                    effect.DirectionalLight2.Enabled = false;
 
-                    fx.Texture = meshTexture;
+                    effect.DirectionalLight0.Direction = new Vector3(0, -0.6f, -0.6f);
+                    effect.DirectionalLight1.Direction = new Vector3(0, -0.6f, 0.6f);
+
+                    effect.SpecularColor = new Vector3(0, 0, 0);
                 }
 
                 mesh.Draw();
@@ -117,6 +146,8 @@ namespace WiiPlayTanksRemake.GameContent
             Projection = TankGame.GameProjection;
             View = TankGame.GameView;
         }
+
+
         // going up is negative
         public CubeCollisionDirection GetCollisionDirection(Vector2 collidingPosition)
         {
@@ -157,7 +188,11 @@ namespace WiiPlayTanksRemake.GameContent
 
     public struct CubeMapPosition
     {
-        public static implicit operator Vector2(CubeMapPosition position) => Convert(position);
+        public const int MAP_WIDTH = 26;
+        public const int MAP_HEIGHT = 20;
+
+        public static implicit operator CubeMapPosition(Vector3 position) => ConvertFromVector3(position);
+        public static implicit operator Vector2(CubeMapPosition position) => Convert2D(position);
         public static implicit operator Vector3(CubeMapPosition position) => Convert3D(position);
 
         public int X;
@@ -168,8 +203,13 @@ namespace WiiPlayTanksRemake.GameContent
             X = x;
             Y = y;
         }
+        public CubeMapPosition(int xy)
+        {
+            X = xy;
+            Y = xy;
+        }
 
-        public static Vector2 Convert(CubeMapPosition pos)
+        public static Vector2 Convert2D(CubeMapPosition pos)
         {
             // (0, 0) == (MIN_X, MIN_Y)
 
@@ -189,6 +229,23 @@ namespace WiiPlayTanksRemake.GameContent
             var real = new Vector3(orig.X + (pos.X * Cube.FULLBLOCK_SIZE), 0,  orig.Y + (pos.Y * Cube.FULLBLOCK_SIZE) - 110);
 
             return real;
+        }
+
+        /// <summary>
+        /// Literally doesn't work in the slightest. Do NOT USE
+        /// </summary>
+        /// <param name="position"></param>
+        /// <returns></returns>
+        public static CubeMapPosition ConvertFromVector3(Vector3 position)
+        {
+            // var orig = new Vector3(MapRenderer.CUBE_MIN_X + (position.X % Cube.FULLBLOCK_SIZE), 0, MapRenderer.CUBE_MIN_Y + (position.Z % Cube.FULLBLOCK_SIZE));
+
+            //var orig = new Vector3(MapRenderer.CUBE_MIN_X, 0, MapRenderer.CUBE_MIN_Y);
+
+            //var real = new CubeMapPosition((int)(orig.X + (position.X / Cube.FULLBLOCK_SIZE)), (int)(orig.Y + (position.Z / Cube.FULLBLOCK_SIZE)) - 110);
+
+            return new(); // new((int)((position.X + (MapRenderer.MIN_X + MapRenderer.MAX_X / 2)) % Cube.FULLBLOCK_SIZE), (int)((position.Y + (MapRenderer.MIN_Y + MapRenderer.MAX_Y / 2)) % Cube.FULLBLOCK_SIZE));
+
         }
     }
 }

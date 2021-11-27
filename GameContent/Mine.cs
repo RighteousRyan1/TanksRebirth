@@ -37,10 +37,13 @@ namespace WiiPlayTanksRemake.GameContent
         public BoundingBox hitbox;
 
         public int detonationTime;
+        public int detonationTimeMax;
 
         public bool tickRed;
 
         public float explosionRadius;
+
+        public bool tankCameTooClose;
 
         public bool Detonated { get; set; }
 
@@ -52,6 +55,7 @@ namespace WiiPlayTanksRemake.GameContent
             Model = GameResources.GetGameResource<Model>("Assets/mine");
 
             detonationTime = detonateTime;
+            detonationTimeMax = detonateTime;
 
             position = pos;
 
@@ -113,7 +117,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             if (detonationTime < 120)
             {
-                if (detonationTime % 10 == 0)
+                if (detonationTime % 2 == 0)
                     tickRed = !tickRed;
             }
 
@@ -124,6 +128,15 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 shell.Destroy();
                 Detonate();
+            }
+
+            if (detonationTime > 40 && !tankCameTooClose && detonationTime < detonationTimeMax / 2)
+            {
+                foreach (var tank in WPTR.AllTanks.Where(tank => tank is not null && Vector3.Distance(tank.position, position) < explosionRadius))
+                {
+                    tankCameTooClose = true;
+                    detonationTime = 40;
+                }
             }
         }
 
@@ -142,10 +155,20 @@ namespace WiiPlayTanksRemake.GameContent
 
                     if (mesh == MineMesh)
                     {
-                        effect.EmissiveColor = new(1, 1, 0);
-                        effect.DiffuseColor = new(1, 1, 0);
-                        effect.SpecularColor = new(1, 1, 0);
-                        effect.FogColor = new(1, 1, 0);
+                        if (!tickRed)
+                        {
+                            effect.EmissiveColor = new(1, 1, 0);
+                            effect.DiffuseColor = new(1, 1, 0);
+                            effect.SpecularColor = new(1, 1, 0);
+                            effect.FogColor = new(1, 1, 0);
+                        }
+                        else
+                        {
+                            effect.EmissiveColor = new(1, 0, 0);
+                            effect.DiffuseColor = new(1, 0, 0);
+                            effect.SpecularColor = new(1, 0, 0);
+                            effect.FogColor = new(1, 0, 0);
+                        }
 
                         effect.Texture = _mineTexture;
                     }
@@ -252,6 +275,11 @@ namespace WiiPlayTanksRemake.GameContent
                     effect.Texture = mask;
 
                     effect.EnableDefaultLighting();
+
+                    if (tickAtMax <= 0)
+                        effect.Alpha -= 0.05f;
+                    else
+                        effect.Alpha = 1f;
                 }
                 mesh.Draw();
             }

@@ -80,13 +80,8 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
         }
         public static Vector2 DistanceVectorTo(this Vector2 start, Vector2 target) => target - start;
         public static Vector2 MousePosition => new(Input.CurrentMouseSnapshot.X, Input.CurrentMouseSnapshot.Y);
-        public static Vector2 MousePosition_ToBlockCoordinates => MousePosition / 16;
-        public static Vector2 ToBlockCoordinates(this Vector2 vector) => vector / 16;
-        public static Vector2 ToWorldCoordinates(this Vector2 vector) => vector * 16;
         public static int MouseX => (int)MousePosition.X;
         public static int MouseY => (int)MousePosition.Y;
-        public static int MouseX_TBC => (int)MousePosition.X / 16;
-        public static int MouseY_TBC => (int)MousePosition.Y / 16;
         public static int WindowWidth => TankGame.Instance.Window.ClientBounds.Width;
         public static int WindowHeight => TankGame.Instance.Window.ClientBounds.Height;
         public static Vector2 WindowBounds => new(WindowWidth, WindowHeight);
@@ -157,7 +152,6 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
         public static Point ToPoint(this Vector2 vector2) => new((int)vector2.X, (int)vector2.Y);
         public static bool WindowActive => TankGame.Instance.IsActive;
 
-        private static List<int> chosenTs = new();
         public static T PickRandom<T>(T[] input)
         {
             int rand = new Random().Next(0, input.Length);
@@ -167,6 +161,7 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
         public static List<T> PickRandom<T>(T[] input, int amount)
         {
             List<T> values = new();
+            List<int> chosenTs = new();
             for (int i = 0; i < amount; i++)
             {
             ReRoll:
@@ -235,7 +230,6 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
         {
             return InverseLerp(begin, end, value, clamped) * 2 - 1;
         }
-
         public static Vector2 ToNormalisedCoordinates(this Vector2 input)
         {
             return new Vector2(input.X / WindowWidth - 0.5f, input.Y / WindowHeight - 0.5f) * 2;
@@ -349,6 +343,49 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
 
             return value;
         }
+
+        public static void SetDefaultGameLighting(this BasicEffect effect)
+        {
+            effect.LightingEnabled = true;
+            effect.PreferPerPixelLighting = true;
+            effect.EnableDefaultLighting();
+
+            effect.DirectionalLight0.Enabled = true;
+            effect.DirectionalLight1.Enabled = false;
+            effect.DirectionalLight2.Enabled = false;
+
+            effect.DirectionalLight0.Direction = new Vector3(0, -1, -1);
+        }
+        public static void SetDefaultGameLighting_IngameEntities(this BasicEffect effect)
+        {
+            effect.LightingEnabled = true;
+            effect.PreferPerPixelLighting = true;
+            effect.EnableDefaultLighting();
+
+            effect.DirectionalLight0.Enabled = true;
+            effect.DirectionalLight1.Enabled = true;
+            effect.DirectionalLight2.Enabled = false;
+
+            effect.DirectionalLight0.Direction = Vector3.Down;
+            effect.DirectionalLight1.Direction = new Vector3(0, -1, 1);
+        }
+
+        public static Vector3 GetWorldPosition(Vector2 screenCoords)
+        {
+            Plane gamePlane = new(Vector3.UnitY, 0);
+
+            var nearPlane = GeometryUtils.ConvertScreenToWorld(new Vector3(screenCoords, 0), Matrix.Identity, TankGame.GameView, TankGame.GameProjection);
+            var farPlane = GeometryUtils.ConvertScreenToWorld(new Vector3(screenCoords, 1), Matrix.Identity, TankGame.GameView, TankGame.GameProjection);
+
+            var mouseRay = new Ray(nearPlane, Vector3.Normalize(farPlane - nearPlane));
+
+            float? distance = mouseRay.Intersects(gamePlane);
+
+            if (!distance.HasValue)
+                return new();
+
+            return mouseRay.Position + mouseRay.Direction * distance.Value;
+        }
     }
 
     public static class CollectionUtils
@@ -372,7 +409,7 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
         /// <param name="origin">The origin of this <see cref="Ray"/>.</param>
         /// <param name="destination">The place that will be the termination of this <see cref="Ray"/>.</param>
         /// <param name="zAxis">Whether or not this <see cref="Ray"/> will go along the Y or Z axis from the X axis.</param>
-        /// <returns></returns>
+        /// <returns>The ray created.</returns>
         public static Ray CreateRayFrom2D(Vector2 origin, Vector2 destination, bool zAxis = true)
         {
             Ray ray;
@@ -384,10 +421,31 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
 
             return ray;
         }
-
-        public static Ray Reflect(ref Ray ray, float distanceAlongRay)
+        /// <summary>
+        /// Create a ray on a 2D plane either covering the X and Y axes of a plane or the X and Z axes of a plane. This creates on the 3D plane with a 3D vector and moves along a 2D axis.
+        /// </summary>
+        /// <param name="origin">The origin of this <see cref="Ray"/>.</param>
+        /// <param name="destination">The place that will be the termination of this <see cref="Ray"/>.</param>
+        /// <param name="zAxis">Whether or not this <see cref="Ray"/> will go along the Y or Z axis from the X axis.</param>
+        /// <returns>The ray created.</returns>
+        public static Ray CreateRayFrom2D(Vector3 origin, Vector2 destination, bool zAxis = true)
         {
-            var distPos = ray.Position * Vector3.Normalize(ray.Direction) * distanceAlongRay;
+            Ray ray;
+
+            if (zAxis)
+                ray = new Ray(origin, new Vector3(destination.X, 0, destination.Y));
+            else
+                ray = new Ray(origin, new Vector3(destination.X, destination.Y, 0));
+
+            return ray;
+        }
+
+        public static Ray Reflect(Ray ray, float? distanceAlongRay)
+        {
+            if (!distanceAlongRay.HasValue)
+                throw new NullReferenceException("The distance along the ray was null.");
+
+            var distPos = ray.Position * Vector3.Normalize(ray.Direction) * distanceAlongRay.Value;
 
             var reflected = Vector3.Reflect(ray.Direction, distPos);
 

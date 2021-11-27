@@ -76,7 +76,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems
             if (TierHighest == TankTier.Brown)
                 brown.volume = 0.5f * musicVolume;
 
-            if (TierHighest == TankTier.Ash && AITank.GetTankCountOfType(TankTier.Ash) == 1)
+            if (TierHighest == TankTier.Ash && AITank.GetTankCountOfType(TankTier.Ash) < 3)
                 ash1.volume = 0.5f * musicVolume;
             else if (TierHighest == TankTier.Ash && (AITank.GetTankCountOfType(TankTier.Ash) >= 3)) //|| Tank.GetTankCountOfType(TankTier.Brown) >= 2))
                 ash2.volume = 0.5f * musicVolume;

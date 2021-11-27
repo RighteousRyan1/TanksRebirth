@@ -160,6 +160,22 @@ namespace WiiPlayTanksRemake
                     effect.LightingEnabled = true;
                     effect.PreferPerPixelLighting = true;
                     effect.EnableDefaultLighting();
+
+                    effect.DirectionalLight0.Enabled = true;
+                    effect.DirectionalLight1.Enabled = false;
+                    effect.DirectionalLight2.Enabled = false;
+
+                    if (mesh.Name == "polygon0.001")
+                        effect.DirectionalLight0.Enabled = false;
+                    else
+                    {
+                        effect.DirectionalLight1.Enabled = true;
+                        //effect.DirectionalLight0.Direction = Vector3.Down;
+                        effect.DirectionalLight0.Direction = new Vector3(0, -0.6f, -0.6f);
+                        effect.DirectionalLight1.Direction = new Vector3(0, -0.6f, 0.6f);
+                        // effect.DirectionalLight0.Direction = new(0, -1, -1);
+                    }
+                    effect.SpecularColor = new Vector3(0, 0, 0);
                 }
             }
             foreach (ModelMesh mesh in TankModel_Enemy.Meshes)
@@ -169,6 +185,22 @@ namespace WiiPlayTanksRemake
                     effect.LightingEnabled = true;
                     effect.PreferPerPixelLighting = true;
                     effect.EnableDefaultLighting();
+
+                    effect.DirectionalLight0.Enabled = true;
+                    effect.DirectionalLight1.Enabled = false;
+                    effect.DirectionalLight2.Enabled = false;
+
+                    if (mesh.Name == "polygon1")
+                        effect.DirectionalLight0.Enabled = false;
+                    else
+                    {
+                        effect.DirectionalLight1.Enabled = true;
+                        //effect.DirectionalLight0.Direction = Vector3.Down;
+                        effect.DirectionalLight0.Direction = new Vector3(0, -0.6f, -0.6f);
+                        effect.DirectionalLight1.Direction = new Vector3(0, -0.6f, 0.6f);
+                        // effect.DirectionalLight0.Direction = new(0, -1, -1);
+                    }
+                    effect.SpecularColor = new Vector3(0, 0, 0);
                 }
             }
             // TODO: use this.Content to load your game content here

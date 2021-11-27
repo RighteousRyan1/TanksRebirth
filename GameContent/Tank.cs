@@ -130,6 +130,15 @@ namespace WiiPlayTanksRemake.GameContent
                     effect.Texture = texture;
 
                     effect.EnableDefaultLighting();
+
+                    effect.DirectionalLight0.Enabled = true;
+                    effect.DirectionalLight1.Enabled = true;
+                    effect.DirectionalLight2.Enabled = false;
+
+                    effect.DirectionalLight0.Direction = new Vector3(0, -0.6f, -0.6f);
+                    effect.DirectionalLight1.Direction = new Vector3(0, -0.6f, 0.6f);
+
+                    effect.SpecularColor = new Vector3(0, 0, 0);
                 }
                 mesh.Draw();
             }
@@ -200,13 +209,13 @@ namespace WiiPlayTanksRemake.GameContent
 
     public enum Team
     {
-        Red    = 1, 
-        Blue   = 2,
-        Green  = 3,
-        Yellow = 4,
-        Purple = 5,
-        Orange = 6,
-        Cyan   = 7,
-
+        Red     = 0, 
+        Blue    = 1,
+        Green   = 2,
+        Yellow  = 3,
+        Purple  = 4,
+        Orange  = 5,
+        Cyan    = 6,
+        Magenta = 7
     }
 }

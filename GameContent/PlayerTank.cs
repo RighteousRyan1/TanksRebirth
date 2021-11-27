@@ -145,21 +145,9 @@ namespace WiiPlayTanksRemake.GameContent
                 else
                     velocity = Vector3.Zero;
 
-                Plane gamePlane = new(Vector3.UnitY, 0);
+                Vector3 mouseWorldPos = GameUtils.GetWorldPosition(GameUtils.MousePosition);
 
-                var nearPlaneMouse = GeometryUtils.ConvertScreenToWorld(new Vector3(GameUtils.MousePosition, 0), Matrix.Identity, TankGame.GameView, TankGame.GameProjection);
-                var farPlaneMouse = GeometryUtils.ConvertScreenToWorld(new Vector3(GameUtils.MousePosition, 1), Matrix.Identity, TankGame.GameView, TankGame.GameProjection);
-
-                var mouseRay = new Ray(nearPlaneMouse, Vector3.Normalize(farPlaneMouse - nearPlaneMouse));
-
-                float? distance = mouseRay.Intersects(gamePlane);
-
-                if (distance.HasValue)
-                {
-                    Vector3 mouseWorldPos = mouseRay.Position + mouseRay.Direction * distance.Value;
-
-                    TurretRotation = (-(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position2D).ToRotation()) + MathHelper.PiOver2;
-                }
+                TurretRotation = (-(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position2D).ToRotation()) + MathHelper.PiOver2;
 
                 if (WPTR.InMission)
                 {
@@ -262,7 +250,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         private void UpdateCollision()
         {
-            CollisionBox = new(position - new Vector3(12, 10, 12), position + new Vector3(12, 10, 12));
+            CollisionBox = new(position - new Vector3(12, 15, 12), position + new Vector3(12, 15, 12));
             if (WPTR.AllAITanks.Any(tnk => tnk is not null && tnk.CollisionBox.Intersects(CollisionBox)))
             {
                 position = oldPosition;
@@ -386,17 +374,15 @@ namespace WiiPlayTanksRemake.GameContent
             if (curShootCooldown > 0 || OwnedBulletCount >= ShellLimit)
                 return;
 
-            SoundEffect shootSound;
+            SoundEffectInstance sfx;
 
-            shootSound = ShellType switch
+            sfx = ShellType switch
             {
-                ShellTier.Rocket => GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_rocket"),
-                ShellTier.RicochetRocket => GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_ricochet_rocket"),
-                ShellTier.Regular => GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_1"),
+                ShellTier.Regular => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_1"), SoundContext.Sound, 0.3f),
+                ShellTier.Rocket => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_rocket"), SoundContext.Sound, 0.3f),
+                ShellTier.RicochetRocket => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_ricochet_rocket"), SoundContext.Sound, 0.3f),
                 _ => throw new NotImplementedException()
             };
-
-            var sfx = SoundPlayer.PlaySoundInstance(shootSound, SoundContext.Sound, 0.3f);
 
             sfx.Pitch = ShootPitch;
 
@@ -449,7 +435,7 @@ namespace WiiPlayTanksRemake.GameContent
             if (Dead)
                 return;
 
-            var info = $"{Team} : {position}";
+            var info = $"{Team}";
 
             DebugUtils.DrawDebugString(TankGame.spriteBatch, info, GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection), 1, centerIt: true);
 

@@ -5,7 +5,16 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
 {
     public static class DebugUtils
     {
-        public static string CurDebugLabel => DebuggingNames[DebugLevel] ?? "Unknown";
+        public static string CurDebugLabel
+        {
+            get
+            {
+                if (DebugLevel < 0 || DebugLevel >= DebuggingNames.Length)
+                    return "Unknown";
+                else
+                    return DebuggingNames[DebugLevel];
+            }
+        }
         public static bool DebuggingEnabled { get; set; }
         public static int DebugLevel { get; set; }
 

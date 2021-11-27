@@ -30,6 +30,12 @@ namespace WiiPlayTanksRemake.GameContent
                         effect.LightingEnabled = true;
                         effect.PreferPerPixelLighting = true;
                         effect.EnableDefaultLighting();
+
+                        effect.DirectionalLight0.Enabled = true;
+                        effect.DirectionalLight1.Enabled = false;
+                        effect.DirectionalLight2.Enabled = false;
+
+                        effect.DirectionalLight0.Direction = Vector3.Down;
                     }
                 }
             }
@@ -71,6 +77,15 @@ namespace WiiPlayTanksRemake.GameContent
                         effect.EnableDefaultLighting();
 
                         effect.TextureEnabled = true;
+
+                        effect.DirectionalLight0.Enabled = true;
+                        effect.DirectionalLight1.Enabled = true;
+                        effect.DirectionalLight2.Enabled = false;
+
+                        effect.DirectionalLight0.Direction = new Vector3(0, -0.7f, -0.7f);
+                        effect.DirectionalLight1.Direction = new Vector3(0, -0.7f, 0.7f);
+
+                        effect.SpecularColor = new Vector3(0, 0, 0);
                     }
 
                     SetBlockTexture(mesh, "polygon33", BoundaryTextureContext.block_other_a);
