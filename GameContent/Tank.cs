@@ -62,7 +62,7 @@ namespace WiiPlayTanksRemake.GameContent
         public Vector2 Position2D => position.FlattenZ();
         public Vector2 Velocity2D => velocity.FlattenZ();
 
-        public Vector3 position, oldPosition, velocity;
+        public Vector3 position, velocity;
 
         public string GetGeneralStats()
             => $"Pos2D: {Position2D} | Vel: {Velocity2D} | Dead: {Dead}";
@@ -78,6 +78,8 @@ namespace WiiPlayTanksRemake.GameContent
         // everything under this comment is added outside of the faithful remake. homing shells, etc
 
         public Shell.HomingProperties ShellHoming = new();
+
+        public Tank Old;
     }
 
     public class TankFootprint

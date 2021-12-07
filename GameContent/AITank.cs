@@ -479,51 +479,49 @@ namespace WiiPlayTanksRemake.GameContent
                 curMineStun--;
             if (curMineCooldown > 0)
                 curMineCooldown--;
-            if (!Dead)
+
+            position.X = MathHelper.Clamp(position.X, MapRenderer.TANKS_MIN_X, MapRenderer.TANKS_MAX_X);
+            position.Z = MathHelper.Clamp(position.Z, MapRenderer.TANKS_MIN_Y, MapRenderer.TANKS_MAX_Y);
+
+            if (curShootStun > 0 || curMineStun > 0)
+                velocity = Vector3.Zero;
+
+            if (velocity != Vector3.Zero)
             {
-                position.X = MathHelper.Clamp(position.X, MapRenderer.TANKS_MIN_X, MapRenderer.TANKS_MAX_X);
-                position.Z = MathHelper.Clamp(position.Z, MapRenderer.TANKS_MIN_Y, MapRenderer.TANKS_MAX_Y);
-
-                if (curShootStun > 0 || curMineStun > 0)
-                    velocity = Vector3.Zero;
-
-                if (velocity != Vector3.Zero)
-                {
-                    if (TankRotation - targetTankRotation <= MaximalTurn)
-                        TankRotation = Velocity2D.ToRotation();
-                }
-
-                Projection = TankGame.GameProjection;
-                View = TankGame.GameView;
-
-                World = Matrix.CreateFromYawPitchRoll(-TankRotation + MathHelper.PiOver2, 0, 0)
-                    * Matrix.CreateTranslation(position);
-
-                position += velocity * 0.55f;
-
-                GetAIBehavior();
-
-                UpdateCollision();
-
-                oldPosition = position;
-
+                if (TankRotation - targetTankRotation <= MaximalTurn)
+                    TankRotation = Velocity2D.ToRotation();
             }
-            else
-            {
-                CollisionBox = new();
-            }
+
+            Projection = TankGame.GameProjection;
+            View = TankGame.GameView;
+
+            World = Matrix.CreateFromYawPitchRoll(-TankRotation + MathHelper.PiOver2, 0, 0)
+                * Matrix.CreateTranslation(position);
+
+            position += velocity * 0.55f;
+
+            GetAIBehavior();
+
+            UpdateCollision();
+
+            Old = this;
+
+
+            // TODO: fix old state nutsack
         }
 
         private void UpdateCollision()
         {
             CollisionBox = new(position - new Vector3(7, 15, 7), position + new Vector3(10, 15, 10));
+            if (Old is null)
+                return;
             if (WPTR.AllAITanks.Any(tnk => tnk is not null && tnk.CollisionBox.Intersects(CollisionBox) && tnk != this))
             {
-                position = oldPosition;
+                position = Old.position;
             }
             if (WPTR.AllPlayerTanks.Any(tnk => tnk is not null && tnk.CollisionBox.Intersects(CollisionBox)))
             {
-                position = oldPosition;
+                position = Old.position;
             }
         }
 
@@ -697,17 +695,17 @@ namespace WiiPlayTanksRemake.GameContent
 
                         if (!movingFromMine && !movingFromOtherMine)
                         {
-                            if (Behaviors[2].IsBehaviourModuloOf(4))
+                            /*if (Behaviors[2].IsBehaviourModuloOf(4))
                             {
 
-                                /*if (tier == TankTier.Marine || tier == TankTier.Black)
+                                if (tier == TankTier.Marine || tier == TankTier.Black)
                                 {
                                     var meanderRand = new Random().NextFloat(-meanderAngle, meanderAngle);
                                     TankRotation = meanderRand;
 
                                     AccountForWalls(50, meanderAngle * 10, ref meanderRand, out var isNearWall);
-                                }*/
-                            }
+                                }
+                            }*/
 
                             if (Behaviors[6].IsBehaviourModuloOf(5))
                             {
@@ -719,7 +717,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                                     // MoveTo(dir.Expand_Z());
                                     velocity.X = dir.X;
-                                    velocity.Z = -dir.Y;
+                                    velocity.Z = dir.Y;
 
                                     velocity.Normalize();
 
@@ -745,7 +743,7 @@ namespace WiiPlayTanksRemake.GameContent
                             MoveTo(targetPosition);
                         }
 
-                        if (!movingFromMine)
+                        // if (!movingFromMine)
                         {
                             if (Behaviors[5].IsBehaviourModuloOf(5))
                             {

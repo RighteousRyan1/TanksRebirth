@@ -112,62 +112,55 @@ namespace WiiPlayTanksRemake.GameContent
                 curMineStun--;
             if (curMineCooldown > 0)
                 curMineCooldown--;
-            if (!Dead)
+            position.X = MathHelper.Clamp(position.X, MapRenderer.TANKS_MIN_X, MapRenderer.TANKS_MAX_X);
+            position.Z = MathHelper.Clamp(position.Z, MapRenderer.TANKS_MIN_Y, MapRenderer.TANKS_MAX_Y);
+            if (velocity != Vector3.Zero)
             {
-                position.X = MathHelper.Clamp(position.X, MapRenderer.TANKS_MIN_X, MapRenderer.TANKS_MAX_X);
-                position.Z = MathHelper.Clamp(position.Z, MapRenderer.TANKS_MIN_Y, MapRenderer.TANKS_MAX_Y);
-                if (velocity != Vector3.Zero)
+                //GameUtils.RoughStep(ref tankRotation, tankRotationPredicted.ToRotation(), 0.5f);
+                TankRotation = Velocity2D.ToRotation() - MathHelper.PiOver2;
+            }
+            Projection = TankGame.GameProjection;
+            View = TankGame.GameView;
+
+            World = Matrix.CreateFromYawPitchRoll(-TankRotation, 0, 0)
+                * Matrix.CreateTranslation(position);
+
+            unprojectedPosition = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection);
+
+            if (WPTR.InMission)
+            {
+                if (curShootStun <= 0 && curMineStun <= 0)
                 {
-                    //GameUtils.RoughStep(ref tankRotation, tankRotationPredicted.ToRotation(), 0.5f);
-                    TankRotation = Velocity2D.ToRotation() - MathHelper.PiOver2;
-                }
-                Projection = TankGame.GameProjection;
-                View = TankGame.GameView;
-
-                World = Matrix.CreateFromYawPitchRoll(-TankRotation, 0, 0)
-                    * Matrix.CreateTranslation(position);
-
-                unprojectedPosition = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection);
-
-                if (WPTR.InMission)
-                {
-                    if (curShootStun <= 0 && curMineStun <= 0)
-                    {
-                        ControlHandle_Keybinding();
-                        if (Input.CurrentGamePadSnapshot.IsConnected)
-                            ControlHandle_ConsoleController();
-                    }
-                    else
-                        velocity = Vector3.Zero;
-
-                    position += velocity * 0.55f;
+                    ControlHandle_Keybinding();
+                    if (Input.CurrentGamePadSnapshot.IsConnected)
+                        ControlHandle_ConsoleController();
                 }
                 else
                     velocity = Vector3.Zero;
 
-                Vector3 mouseWorldPos = GameUtils.GetWorldPosition(GameUtils.MousePosition);
-
-                TurretRotation = (-(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position2D).ToRotation()) + MathHelper.PiOver2;
-
-                if (WPTR.InMission)
-                {
-                    if (Input.CanDetectClick())
-                        Shoot();
-
-                    UpdatePlayerMovement();
-                    UpdateCollision();
-                }
-
-                Speed = Acceleration;
-
-                playerControl_isBindPressed = false;
-
-                oldPosition = position;
+                position += velocity * 0.55f;
             }
             else
+                velocity = Vector3.Zero;
+
+            Vector3 mouseWorldPos = GameUtils.GetWorldPosition(GameUtils.MousePosition);
+
+            TurretRotation = (-(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position2D).ToRotation()) + MathHelper.PiOver2;
+
+            if (WPTR.InMission)
             {
-                CollisionBox = new();
+                if (Input.CanDetectClick())
+                    Shoot();
+
+                UpdatePlayerMovement();
+                UpdateCollision();
             }
+
+            Speed = Acceleration;
+
+            playerControl_isBindPressed = false;
+
+            Old = this;
         }
 
         /// <summary>
@@ -251,14 +244,16 @@ namespace WiiPlayTanksRemake.GameContent
         private void UpdateCollision()
         {
             CollisionBox = new(position - new Vector3(12, 15, 12), position + new Vector3(12, 15, 12));
+            if (Old is null)
+                return;
             if (WPTR.AllAITanks.Any(tnk => tnk is not null && tnk.CollisionBox.Intersects(CollisionBox)))
             {
-                position = oldPosition;
+                position = Old.position;
                 //System.Diagnostics.Debug.WriteLine(new Random().Next(0, 100).ToString());
             }
             if (WPTR.AllPlayerTanks.Any(tnk => tnk is not null && tnk.CollisionBox.Intersects(CollisionBox) && tnk != this))
             {
-                position = oldPosition;
+                position = Old.position;
             }
 
             /*foreach (var cube in Cube.cubes.Where(c => Vector3.Distance(c.position, position) < 100))
