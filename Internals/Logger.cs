@@ -38,12 +38,15 @@ namespace WiiPlayTanksRemake.Internals
             sWriter = new(fStream);
         }
 
-        public void Write(object contents, LogType writeType) {
+        public void Write(object contents, LogType writeType, bool throwException = false) {
             fStream.Position = fStream.Length;
             string str = $"[{DateTime.Now}] [{assembly.GetName().Name}] [{writeType}]: {contents}";
             sWriter.WriteLine(str);
             Debug.WriteLine(str);
             sWriter.Flush();
+
+            if (throwException)
+                throw new Exception(contents.ToString());
         }
 
         public void Dispose() {

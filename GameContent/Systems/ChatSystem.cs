@@ -13,15 +13,19 @@ namespace WiiPlayTanksRemake.GameContent.Systems
 {
     public static class ChatSystem
     {
+        public const int CHAT_MESSAGE_CACHE_CAPACITY = 10000;
         public static List<ChatMessage> ChatMessages { get; } = new();
+
+        public static List<ChatMessage> MessageCache { get; } = new(CHAT_MESSAGE_CACHE_CAPACITY);
 
         public static ChatMessageCorner Corner { get; set; } = ChatMessageCorner.TopLeft;
 
-        public static ChatMessage Send(object text, Color color)
+        public static ChatMessage SendMessage(object text, Color color)
         {
             var msg = new ChatMessage(text.ToString(), color);
 
             ChatMessages.Add(msg);
+            MessageCache.Add(msg);
 
             return msg;
         }
@@ -32,11 +36,9 @@ namespace WiiPlayTanksRemake.GameContent.Systems
             var offset = 0f;
             for (int i = 0; i < ChatMessages.Count; i++)
             {
-                var msg = ChatMessages[i];
-
                 var drawOrigin = new Vector2();
 
-                var measure = ChatMessage.Font.MeasureString(msg.Content);
+                var measure = ChatMessage.Font.MeasureString(ChatMessages[i].Content);
 
                 var sb = TankGame.spriteBatch;
 
@@ -68,12 +70,15 @@ namespace WiiPlayTanksRemake.GameContent.Systems
                         break;
                 }
 
+                sb.DrawString(ChatMessage.Font, ChatMessages[i].Content, basePosition + new Vector2(0, i * offset), ChatMessages[i].Color, 0f, drawOrigin, 0.8f, default, default);
+
                 ChatMessages[i].lifeTime--;
+
+                if (i > 5)
+                    ChatMessages[i].lifeTime = 0;
 
                 if (ChatMessages[i].lifeTime <= 0)
                     ChatMessages.RemoveAt(i);
-
-                sb.DrawString(ChatMessage.Font, msg.Content, basePosition + new Vector2(0, i * offset), msg.Color, 0f, drawOrigin, 0.8f, default, default);
             }
         }
     }

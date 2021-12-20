@@ -21,8 +21,9 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
         private static readonly string[] DebuggingNames =
         {
             "General",
-            "TankTeams",
-            "UIElements"
+            "TankStats",
+            "UIElements",
+            "TankRaymarches"
         };
         public static void DrawDebugString(SpriteBatch sb, object info, Vector2 position, int level = 0, float scaleOverride = 1f, bool centerIt = false, bool beginSb = false)
         {

@@ -21,8 +21,10 @@ namespace WiiPlayTanksRemake.GameContent
 {
     public class WPTR
     {
+        public static int timeUntilTankFunction;
+
         public const int MAX_AI_TANKS = 1000;
-        public const int MAX_PLAYERS = 8;
+        public const int MAX_PLAYERS = 100;
 
         // public static List<AITank> AllAITanks { get; } = new();
         public static AITank[] AllAITanks { get; } = new AITank[MAX_AI_TANKS];
@@ -34,9 +36,9 @@ namespace WiiPlayTanksRemake.GameContent
 
         public static Tank[] AllTanks { get; } = new Tank[MAX_PLAYERS + MAX_AI_TANKS];
 
-        public static float FloatForTesting;
+        public static Campaign VanillaCampaign { get; private set; } = new();
 
-        public static Logger BaseLogger { get; } = new($"{TankGame.ExePath}", "client_logger");
+        public static Logger ClientLog { get; } = new($"{TankGame.ExePath}", "client");
 
         private static UIElement lastElementClicked;
 
@@ -49,8 +51,6 @@ namespace WiiPlayTanksRemake.GameContent
         public delegate void MissionStartEvent();
 
         public static event MissionStartEvent OnMissionStart;
-
-        public static void StartMission() { }
 
         internal static void Update()
         {
@@ -75,25 +75,18 @@ namespace WiiPlayTanksRemake.GameContent
             foreach (var cube in Cube.cubes)
                 cube?.Update();
 
-            foreach (var expl in MineExplosion.explosions.Where(expl => expl is not null))
-                expl.Update();
+            foreach (var expl in MineExplosion.explosions)
+                expl?.Update();
 
             IngameUI.UpdateButtons();
 
             GameShaders.UpdateShaders();
-
-            FloatForTesting = MathHelper.Clamp(FloatForTesting, -1, 1);
 
             if (Input.KeyJustPressed(Keys.Insert))
                 DebugUtils.DebuggingEnabled = !DebugUtils.DebuggingEnabled;
 
             if (Input.AreKeysJustPressed(Keys.RightAlt, Keys.Enter))
                 WindowBorderless = !WindowBorderless;
-
-            if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Left))
-                FloatForTesting -= 0.01f;
-            if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Right))
-                FloatForTesting += 0.01f;
 
             if (Input.KeyJustPressed(Keys.Add))
                 DebugUtils.DebugLevel++;
@@ -132,12 +125,21 @@ namespace WiiPlayTanksRemake.GameContent
                 SpawnTankAtMouse((TankTier)tankToSpawnType, (Team)tankToSpawnTeam);
                 // new Cube(CubeMapPosition.ConvertFromVector3(GameUtils.GetWorldPosition(GameUtils.MousePosition)), Cube.BlockType.Wood, 3);
             }
+
+            if (Input.KeyJustPressed(Keys.OemSemicolon))
+            {
+                var m = new Mine(null, GameUtils.GetWorldPosition(GameUtils.MousePosition), 400);
+            }
+            if (Input.KeyJustPressed(Keys.OemQuotes))
+            {
+                var m = new Shell(GameUtils.GetWorldPosition(GameUtils.MousePosition) + new Vector3(0, 11, 0), default, 0);
+            }
         }
 
         public static int tankToSpawnType;
         public static int tankToSpawnTeam;
 
-        internal static void Draw()
+        internal static void DoRender()
         {
             MapRenderer.DrawWorldModels();
 
@@ -156,15 +158,13 @@ namespace WiiPlayTanksRemake.GameContent
             foreach (var bullet in Shell.AllShells)
                 bullet?.Render();
 
-            foreach (var mark in TankDeathMark.deathMarks.Where(mk => mk is not null))
+            foreach (var mark in TankDeathMark.deathMarks)
                 mark?.Render();
-
-            foreach (var print in TankFootprint.footprints.Where(prnt => prnt is not null))
+            foreach (var print in TankFootprint.footprints)
                 print?.Render();
 
-            foreach (var expl in MineExplosion.explosions.Where(expl => expl is not null))
-                expl.Render();
-
+            foreach (var expl in MineExplosion.explosions)
+                expl?.Render();
             // TODO: Fix translation
             // TODO: Scaling with screen size.
 
@@ -175,29 +175,26 @@ namespace WiiPlayTanksRemake.GameContent
             }
             tankToSpawnType = MathHelper.Clamp(tankToSpawnType, 1, Enum.GetValues<TankTier>().Length - 1);
             tankToSpawnTeam = MathHelper.Clamp(tankToSpawnTeam, 0, Enum.GetValues<Team>().Length - 1);
+
+            #region TankInfo
             DebugUtils.DrawDebugString(TankGame.spriteBatch, "Spawn Tank With Info:", GameUtils.WindowTop + new Vector2(0, 8), 1, centerIt: true);
             DebugUtils.DrawDebugString(TankGame.spriteBatch, $"Tier: {Enum.GetNames<TankTier>()[tankToSpawnType]}", GameUtils.WindowTop + new Vector2(0, 24), 1, centerIt: true);
             DebugUtils.DrawDebugString(TankGame.spriteBatch, $"Team: {Enum.GetNames<Team>()[tankToSpawnTeam]}", GameUtils.WindowTop + new Vector2(0, 40), 1, centerIt: true);
 
-            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"TestFloat: {FloatForTesting}" +
-                $"\nHighestTier: {AITank.GetHighestTierActive()}" +
-                $"\n", new(10, GameUtils.WindowHeight * 0.1f));
-
-            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"HighestTier: {AITank.GetHighestTierActive()}", new(10, GameUtils.WindowHeight / 2));
-            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"CurSong: {(Music.AllMusic.FirstOrDefault(music => music.volume == 0.5f) != null ? Music.AllMusic.FirstOrDefault(music => music.volume == 0.5f).Name : "N/A")}", new(10, GameUtils.WindowHeight - 100));
-
-            /*for (int i = 0; i < AllAITanks.Length; i++)
-            {
-                var t = AllAITanks[i];
-                DebugUtils.DrawDebugString(TankGame.spriteBatch, $"{t}", new(10, 15 * i), 1);
-            }*/
-
-            ChatSystem.DrawMessages();
-
+            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"HighestTier: {AITank.GetHighestTierActive()}", new(10, GameUtils.WindowHeight * 0.26f), 1);
+            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"CurSong: {(Music.AllMusic.FirstOrDefault(music => music.volume == 0.5f) != null ? Music.AllMusic.FirstOrDefault(music => music.volume == 0.5f).Name : "N/A")}", new(10, GameUtils.WindowHeight - 100), 1);
             for (int i = 0; i < Enum.GetNames<TankTier>().Length; i++)
             {
-                DebugUtils.DrawDebugString(TankGame.spriteBatch, $"{Enum.GetNames<TankTier>()[i]}: {AITank.GetTankCountOfType((TankTier)i)}", new(10, GameUtils.WindowHeight * 0.6f + (i * 20)));
+                DebugUtils.DrawDebugString(TankGame.spriteBatch, $"{Enum.GetNames<TankTier>()[i]}: {AITank.GetTankCountOfType((TankTier)i)}", new(10, GameUtils.WindowHeight * 0.3f + (i * 20)), 1);
             }
+            #endregion
+
+            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"Logic Time: {TankGame.LogicTime}" +
+                $"\nLogic FPS: {TankGame.LogicFPS}" +
+                $"\n\nRender Time: {TankGame.RenderTime}" +
+                $"\nRender FPS: {TankGame.RenderFPS}", new(10, 500));
+
+            ChatSystem.DrawMessages();
 
             if (TankGame.Instance.IsActive) {
                 foreach (var element in UIElement.AllUIElements.ToList()) {
@@ -228,40 +225,87 @@ namespace WiiPlayTanksRemake.GameContent
                     lastElementClicked = null;
                 }
             }
-
-            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"{Input.CurrentGamePadSnapshot.ThumbSticks.Left.X}\n{Input.CurrentGamePadSnapshot.ThumbSticks.Left.Y}", new Vector2(10, 10), 2);
         }
 
         public static PlayerTank myTank;
 
+        public static Mission ExampleMission1 = new(
+                new Tank[]
+                {
+                    new AITank(TankTier.White) { Team = Team.Red },
+                    new AITank(TankTier.Amethyst) { Team = Team.Blue },
+                    new AITank(TankTier.Gold) { Team = Team.Green },
+                    new AITank(TankTier.Amethyst) { Team = Team.Yellow }
+                },
+                new Vector3[]
+                {
+                    new CubeMapPosition(4, 4),
+                    new CubeMapPosition(CubeMapPosition.MAP_WIDTH - 4, 4),
+                    new CubeMapPosition(CubeMapPosition.MAP_WIDTH - 4, CubeMapPosition.MAP_HEIGHT - 4),
+                    new CubeMapPosition(4, CubeMapPosition.MAP_HEIGHT - 4)
+                },
+                new float[]
+                {
+                    GeometryUtils.GetQuarterRotation(1),
+                    GeometryUtils.GetQuarterRotation(0),
+                    GeometryUtils.GetQuarterRotation(3),
+                    GeometryUtils.GetQuarterRotation(2)
+                },
+                new Cube[]
+                {
+                    new(Cube.BlockType.Wood, 7),
+                    new(Cube.BlockType.Wood, 7),
+                    new(Cube.BlockType.Wood, 5),
+                    new(Cube.BlockType.Wood, 5),
+                    new(Cube.BlockType.Wood, 3),
+                    new(Cube.BlockType.Wood, 3),
+                    new(Cube.BlockType.Wood, 2),
+                    new(Cube.BlockType.Wood, 1),
+                    new(Cube.BlockType.Wood, 1),
+
+                    new(Cube.BlockType.Wood, 1),
+                    new(Cube.BlockType.Wood, 1),
+                    new(Cube.BlockType.Wood, 1),
+
+                    new(Cube.BlockType.Wood, 1),
+                    new(Cube.BlockType.Wood, 1),
+                    new(Cube.BlockType.Wood, 1),
+                    new(Cube.BlockType.Wood, 1)
+                },
+                new CubeMapPosition[]
+                {
+                    new(0, 10),
+                    new(1, 10),
+                    new(2, 10),
+                    new(3, 10),
+                    new(4, 10),
+                    new(5, 10),
+                    new(6, 10),
+                    new(7, 10),
+                    new(8, 10),
+                    new(9, 10),
+
+                    new(9, 11),
+                    new(9, 12),
+                    new(9, 13),
+
+                    new(9, 19),
+                    new(9, 18),
+                    new(9, 17),
+                    new(9, 16)
+                });
+        // fix shitty mission init
+
         public static void Initialize()
         {
+            // 26 x 18
+            InitDebugUi();
             GameShaders.Initialize();
 
             DebugUtils.DebuggingEnabled = true;
             MapRenderer.InitializeRenderers();
 
-            // 26 max x
-            // 20 max y
-
-            var dirX = 0;
-            var dirY = 0;
-
-            for (int i = 0; i < 20; i++)
-            {
-                dirX += new Random().Next(0, 2) == 0 ? 1 : -1;
-                dirY += new Random().Next(0, 2) == 0 ? 1 : -1;
-
-                dirX = MathHelper.Clamp(dirX, 0, CubeMapPosition.MAP_WIDTH);
-                dirY = MathHelper.Clamp(dirY, 0, CubeMapPosition.MAP_HEIGHT);
-
-                var pos = new CubeMapPosition(dirX, dirY);
-
-                new Cube(pos, (Cube.BlockType)new Random().Next(1, 3), 2);
-            }
-
-            SpawnMe();
-            SpawnTankPlethorae();
+            VanillaCampaign.LoadMission(ExampleMission1);
 
             IngameUI.Initialize();
 
@@ -270,13 +314,15 @@ namespace WiiPlayTanksRemake.GameContent
             BeginIntroSequence();
         }
 
-        public static void SpawnMe()
+        public static PlayerTank SpawnMe()
         {
-            myTank = new PlayerTank(new CubeMapPosition(new Random().Next(0, 27), new Random().Next(0, 21)), playerType: PlayerType.Blue);
-            myTank.Team = Team.Red;
+            myTank = new PlayerTank(PlayerType.Blue)
+            {
+                Team = Team.Red,
+                position = new CubeMapPosition(new Random().Next(0, 27), new Random().Next(0, 21))
+            };
+            return myTank;
         }
-
-        internal static int timeUntilTankFunction;
 
         public static void BeginIntroSequence()
         {
@@ -284,6 +330,56 @@ namespace WiiPlayTanksRemake.GameContent
             var tune = GameResources.GetGameResource<SoundEffect>("Assets/fanfares/mission_snare");
 
             SoundPlayer.PlaySoundInstance(tune, SoundContext.Music, 1f);
+
+            VanillaCampaign.SetupLoadedMission();
+
+            foreach (var tank in AllTanks.Where(tnk => tnk is not null))
+                tank.velocity = Vector3.Zero;
+
+            foreach (var song in TankMusicSystem.songs)
+                song?.Stop();
+
+            for (int i = 0; i < Mine.AllMines.Length; i++)
+                Mine.AllMines[i] = null;
+
+            for (int i = 0; i < Shell.AllShells.Length; i++)
+                Shell.AllShells[i] = null;
+
+            InMission = false;
+
+            int minx = (int)MapRenderer.MIN_X - 12;
+            int miny = (int)MapRenderer.MIN_Y - 12;
+
+            int maxx = (int)MapRenderer.MAX_X + 12;
+            int maxy = (int)MapRenderer.MAX_Y + 12;
+
+            for (int i = minx; i < maxx; i++)
+            {
+                if (i % 10 == 0)
+                {
+                    var s = new Shell(new(i, 11, miny), default);
+                    s.INTERNAL_ignoreCollisions = true;
+                    s.INTERNAL_doRender = false;
+
+                    var p = new Shell(new(i, 11, maxy), default);
+                    p.INTERNAL_ignoreCollisions = true;
+                    p.INTERNAL_doRender = false;
+                }
+            }
+            for (int j = miny; j < maxy; j++)
+            {
+                if (j % 10 == 0)
+                {
+                    var s = new Shell(new(minx, 11, j), default);
+                    s.INTERNAL_ignoreCollisions = true;
+                    s.INTERNAL_doRender = false;
+
+                    var p = new Shell(new(maxx, 11, j), default);
+                    p.INTERNAL_ignoreCollisions = true;
+                    p.INTERNAL_doRender = false;
+                }
+            }
+            // for ai tanks avoiding walls lol
         }
         public static AITank SpawnTank(TankTier tier, Team team)
         {
@@ -291,11 +387,12 @@ namespace WiiPlayTanksRemake.GameContent
 
             var random = new CubeMapPosition(new Random().Next(0, 27), new Random().Next(0, 20));
 
-            return new AITank(new CubeMapPosition(new Random().Next(0, 27), new Random().Next(0, 20)), tier)
+            return new AITank(tier)
             {
                 TankRotation = rot,
                 TurretRotation = rot,
-                Team = team
+                Team = team,
+                position = new CubeMapPosition(new Random().Next(0, 27), new Random().Next(0, 20))
             };
         }
         public static AITank SpawnTankAtMouse(TankTier tier, Team team)
@@ -305,11 +402,12 @@ namespace WiiPlayTanksRemake.GameContent
             var pos = GameUtils.GetWorldPosition(GameUtils.MousePosition);
 
 
-            return new AITank(pos, tier)
+            return new AITank(tier)
             {
                 TankRotation = rot,
                 TurretRotation = rot,
-                Team = team
+                Team = team,
+                position = pos
             };
         }
         public static void SpawnTankPlethorae()
@@ -318,16 +416,85 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 var random = new CubeMapPosition(new Random().Next(0, 27), new Random().Next(0, 20));
                 var rot = GeometryUtils.GetPiRandom();
-                var t = new AITank(random, AITank.PICK_ANY_THAT_ARE_IMPLEMENTED())
+                var t = new AITank(AITank.PICK_ANY_THAT_ARE_IMPLEMENTED())
                 {
                     TankRotation = rot,
-                    TurretRotation = rot
+                    TurretRotation = rot,
+                    position = random
                 };
 
-                t.Team = Team.Orange;
+                t.Team = (Team)new Random().Next(0, Enum.GetValues<Team>().Length);
 
                 // t.Team = (Team)new Random().Next(1, Enum.GetNames<Team>().Length);
             }
+        }
+
+        public static UIImageButton ClearTracks;
+        public static UIImageButton ClearChecks;
+
+        public static UIImageButton SetupMissionAgain;
+
+        public static void InitDebugUi()
+        {
+            ClearTracks = new(null, 1f, (uiPanel, spriteBatch) => IngameUI.QuickButton(uiPanel, TankGame.spriteBatch, "Clear Tracks", Color.LightBlue, 0.5f));
+            ClearTracks.SetDimensions(250, 25, 100, 50);
+
+            ClearTracks.OnMouseClick += ClearTankTracks;
+
+            ClearChecks = new(null, 1f, (uiPanel, spriteBatch) => IngameUI.QuickButton(uiPanel, TankGame.spriteBatch, "Clear Checks", Color.LightBlue, 0.5f));
+            ClearChecks.SetDimensions(250, 95, 100, 50);
+
+            ClearChecks.OnMouseClick += ClearTankDeathmarks;
+
+            SetupMissionAgain = new(null, 1f, (uiPanel, spriteBatch) => IngameUI.QuickButton(uiPanel, TankGame.spriteBatch, "Restart\n Mission", Color.LightBlue, 0.5f));
+            SetupMissionAgain.SetDimensions(250, 165, 100, 50);
+
+            SetupMissionAgain.OnMouseClick += RestartMission;
+        }
+
+        private static void RestartMission(UIElement affectedElement)
+        {
+            VanillaCampaign.LoadMission(new Mission(
+                new Tank[]
+                {
+                    new AITank(TankTier.Sapphire) { Team = Team.Red },
+                    new AITank(TankTier.Amethyst) { Team = Team.Blue },
+                    new AITank(TankTier.Sapphire) { Team = Team.Green },
+                    new AITank(TankTier.Amethyst) { Team = Team.Yellow }
+                },
+                new Vector3[]
+                {
+                    new CubeMapPosition(4, 4),
+                    new CubeMapPosition(CubeMapPosition.MAP_WIDTH - 4, 4),
+                    new CubeMapPosition(CubeMapPosition.MAP_WIDTH - 4, CubeMapPosition.MAP_HEIGHT - 4),
+                    new CubeMapPosition(4, CubeMapPosition.MAP_HEIGHT - 4)
+                },
+                new float[]
+                {
+                    GeometryUtils.GetQuarterRotation(1),
+                    GeometryUtils.GetQuarterRotation(0),
+                    GeometryUtils.GetQuarterRotation(3),
+                    GeometryUtils.GetQuarterRotation(2)
+                },
+                new Cube[]
+                {
+                },
+                new CubeMapPosition[]
+                {
+                }));
+            BeginIntroSequence();
+        }
+
+        private static void ClearTankDeathmarks(UIElement affectedElement)
+        {
+            for (int i = 0; i < TankDeathMark.deathMarks.Length; i++)
+                TankDeathMark.deathMarks[i] = null;
+        }
+
+        private static void ClearTankTracks(UIElement affectedElement)
+        {
+            for (int i = 0; i < TankFootprint.footprints.Length; i++)
+                TankFootprint.footprints[i] = null;
         }
     }
 

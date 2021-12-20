@@ -26,8 +26,8 @@ namespace WiiPlayTanksRemake.GameContent.UI
         internal static void Initialize()
         {
             SpriteFont font = TankGame.Fonts.Default;
-            Vector2 drawOrigin = font.MeasureString("Mission 1        x4") / 2f;
-            MissionInfoBar = new((uiPanel, spriteBatch) => spriteBatch.DrawString(font, "Mission 1        x4", uiPanel.Hitbox.Center.ToVector2(), Color.White, 0, drawOrigin, 1.5f, SpriteEffects.None, 1f));
+            Vector2 drawOrigin = font.MeasureString("Mission 1") / 2f;
+            MissionInfoBar = new((uiPanel, spriteBatch) => spriteBatch.DrawString(font, "Mission 1", uiPanel.Hitbox.Center.ToVector2(), Color.White, 0, drawOrigin, 1.5f, SpriteEffects.None, 1f));
             MissionInfoBar.BackgroundColor = Color.Red;
             MissionInfoBar.SetDimensions(650, 1000, 500, 50);
             ResumeButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Resume", Color.WhiteSmoke));
@@ -53,7 +53,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             Paused = false;
         }
 
-        private static void QuickButton(UIImage imageButton, SpriteBatch spriteBatch, string text, Color color, bool onLeft = false)
+        public static void QuickButton(UIImage imageButton, SpriteBatch spriteBatch, string text, Color color, float scale = 1f, bool onLeft = false)
         {
             Texture2D texture = TankGame.UITextures.UIPanelBackground;
 
@@ -80,7 +80,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             spriteBatch.Draw(texture, new Rectangle(rightX, bottomY, border, border), new Rectangle(texture.Width - border, texture.Height - border, border, border), imageButton.MouseHovering ? Color.CornflowerBlue : color);
             SpriteFont font = TankGame.Fonts.Default;
             Vector2 drawOrigin = font.MeasureString(text) / 2f;
-            spriteBatch.DrawString(font, text, imageButton.Hitbox.Center.ToVector2(), Color.Black, 0, drawOrigin, 1f, SpriteEffects.None, 1f);
+            spriteBatch.DrawString(font, text, imageButton.Hitbox.Center.ToVector2(), Color.Black, 0, drawOrigin, scale, SpriteEffects.None, 1f);
         }
 
         public static void UpdateButtons()

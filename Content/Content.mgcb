@@ -238,6 +238,24 @@
 /processorParam:TextureFormat=Compressed
 /build:Assets/mineexplosion.fbx
 
+#begin Assets/music/amethyst1.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/amethyst1.ogg
+
+#begin Assets/music/amethyst2.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/amethyst2.ogg
+
+#begin Assets/music/amethyst3.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/amethyst3.ogg
+
 #begin Assets/music/ash1.ogg
 /importer:OggImporter
 /processor:SoundEffectProcessor
@@ -267,6 +285,66 @@
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Assets/music/brown.ogg
+
+#begin Assets/music/citrine1.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/citrine1.ogg
+
+#begin Assets/music/citrine2.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/citrine2.ogg
+
+#begin Assets/music/citrine3.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/citrine3.ogg
+
+#begin Assets/music/emerald1.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/emerald1.ogg
+
+#begin Assets/music/emerald2.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/emerald2.ogg
+
+#begin Assets/music/emerald3.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/emerald3.ogg
+
+#begin Assets/music/emerald4.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/emerald4.ogg
+
+#begin Assets/music/gold1.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/gold1.ogg
+
+#begin Assets/music/gold2.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/gold2.ogg
+
+#begin Assets/music/gold3.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/gold3.ogg
 
 #begin Assets/music/green1.ogg
 /importer:OggImporter
@@ -304,6 +382,12 @@
 /processorParam:Quality=Best
 /build:Assets/music/marine2.ogg
 
+#begin Assets/music/obsidian.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/obsidian.ogg
+
 #begin Assets/music/pink1.ogg
 /importer:OggImporter
 /processor:SoundEffectProcessor
@@ -340,11 +424,47 @@
 /processorParam:Quality=Best
 /build:Assets/music/purple3.ogg
 
+#begin Assets/music/ruby1.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/ruby1.ogg
+
+#begin Assets/music/ruby2.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/ruby2.ogg
+
+#begin Assets/music/ruby3.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/ruby3.ogg
+
+#begin Assets/music/sapphire1.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/sapphire1.ogg
+
+#begin Assets/music/sapphire2.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/sapphire2.ogg
+
 #begin Assets/music/silver1.ogg
 /importer:OggImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Assets/music/silver1.ogg
+
+#begin Assets/music/silver2.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/silver2.ogg
 
 #begin Assets/music/white1.ogg
 /importer:OggImporter
@@ -812,7 +932,7 @@
 /processorParam:TextureFormat=Color
 /build:Assets/textures/enemy/master/tank_gold.png
 
-#begin Assets/textures/enemy/master/tank_obs.png
+#begin Assets/textures/enemy/master/tank_obsidian.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -822,7 +942,7 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Assets/textures/enemy/master/tank_obs.png
+/build:Assets/textures/enemy/master/tank_obsidian.png
 
 #begin Assets/textures/enemy/master/tank_ruby.png
 /importer:TextureImporter
@@ -1388,6 +1508,18 @@
 /processorParam:TextureFormat=Color
 /build:Assets/textures/tank_footprint.png
 
+#begin Assets/textures/tank_footprint_alt.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Assets/textures/tank_footprint_alt.png
+
 #begin Assets/textures/tank_shadow.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -1483,6 +1615,18 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Assets/textures/ui/tank2d.png
+
+#begin Assets/textures/WhitePixel.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Assets/textures/WhitePixel.png
 
 #begin Assets/textures/wood_default.png
 /importer:TextureImporter

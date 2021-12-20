@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using WiiPlayTanksRemake.GameContent.GameMechanics;
 using WiiPlayTanksRemake.Internals;
 using WiiPlayTanksRemake.Internals.Common.Utilities;
 
@@ -15,10 +16,11 @@ namespace WiiPlayTanksRemake.GameContent
             public float power;
             public float radius;
             public float speed;
+            public int cooldown;
         }
 
 
-        private static int maxShells = 500;
+        private static int maxShells = 1500;
         public static Shell[] AllShells { get; } = new Shell[maxShells];
 
         public Tank owner;
@@ -41,6 +43,8 @@ namespace WiiPlayTanksRemake.GameContent
 
         public BoundingBox hurtbox = new();
 
+        public Rectangle hurtbox2d;
+
         public bool Flaming { get; set; }
 
         public static Texture2D _shellTexture;
@@ -48,6 +52,10 @@ namespace WiiPlayTanksRemake.GameContent
         private int worldId;
 
         public int lifeTime;
+
+        internal bool INTERNAL_ignoreCollisions;
+
+        internal bool INTERNAL_doRender = true;
 
         public Shell(Vector3 position, Vector3 velocity, int ricochets = 0, HomingProperties homing = default)
         {
@@ -72,8 +80,6 @@ namespace WiiPlayTanksRemake.GameContent
 
         internal void Update()
         {
-            if (!WPTR.InMission)
-                return;
             rotation = Velocity2D.ToRotation() - MathHelper.PiOver2;
             position += velocity;
             World = Matrix.CreateFromYawPitchRoll(-rotation, 0, 0)
@@ -84,34 +90,91 @@ namespace WiiPlayTanksRemake.GameContent
             hurtbox.Max = position + new Vector3(3, 5, 3);
             hurtbox.Min = position - new Vector3(3, 5, 3);
 
-            if (position.X < MapRenderer.MIN_X || position.X > MapRenderer.MAX_X)
-                if (ricochets > 0)
-                    Ricochet(true);
-                else
-                    Destroy();
-            if (position.Z < MapRenderer.MIN_Y || position.Z > MapRenderer.MAX_Y)
-                if (ricochets > 0)
-                    Ricochet(false);
-                else
-                    Destroy();
+            hurtbox2d = new((int)(position.X - 3), (int)(position.Z + 3), 6, 6);
+
+            if (!WPTR.InMission)
+                return;
+
+            if (!INTERNAL_ignoreCollisions)
+            {
+                if (position.X < MapRenderer.MIN_X || position.X > MapRenderer.MAX_X)
+                    if (ricochets > 0)
+                        Ricochet(true);
+                    else
+                        Destroy();
+                if (position.Z < MapRenderer.MIN_Y || position.Z > MapRenderer.MAX_Y)
+                    if (ricochets > 0)
+                        Ricochet(false);
+                    else
+                        Destroy();
+
+                var dummyVel = Velocity2D;
+
+                var coldir = Collision.CollisionDirection.None;
+
+                foreach (var c in Cube.cubes.Where(c => c is not null))
+                {
+                    Collision.HandleCollisionSimple(hurtbox2d, c.collider2d, ref dummyVel, ref position, out var dir);
+
+                    //velocity.X = dummyVel.X;
+                    //velocity.Z = dummyVel.Y;
+
+                    coldir = dir;
+                }
+                switch (coldir)
+                {
+                    case Collision.CollisionDirection.Up:
+                        if (ricochets > 0)
+                            Ricochet(false);
+                        else
+                            Destroy();
+                        break;
+                    case Collision.CollisionDirection.Down:
+                        if (ricochets > 0)
+                            Ricochet(false);
+                        else
+                            Destroy();
+                        break;
+                    case Collision.CollisionDirection.Left:
+                        if (ricochets > 0)
+                            Ricochet(true);
+                        else
+                            Destroy();
+                        break;
+                    case Collision.CollisionDirection.Right:
+                        if (ricochets > 0)
+                            Ricochet(true);
+                        else
+                            Destroy();
+                        break;
+                }
+                // this is hacky as fuck fix tomorrow
+
+                if (coldir != Collision.CollisionDirection.None)
+                    WPTR.ClientLog.Write(coldir, Logger.LogType.Debug);
+            }
             lifeTime++;
 
-            if (lifeTime > 30)
+            if (lifeTime > homingProperties.cooldown)
             {
-                foreach (var target in WPTR.AllTanks.Where(tank => tank is not null && tank.Team != owner.Team && Vector3.Distance(position, tank.position) <= homingProperties.radius))
+                if (owner != null)
                 {
-                    float dist = Vector3.Distance(position, target.position);
+                    foreach (var target in WPTR.AllTanks.Where(tank => tank is not null && tank.Team != owner.Team && Vector3.Distance(position, tank.position) <= homingProperties.radius))
+                    {
+                        float dist = Vector3.Distance(position, target.position);
 
-                    velocity.X += (target.position.X - position.X) * homingProperties.power / dist;
-                    velocity.Z += (target.position.Z - position.Z) * homingProperties.power / dist;
+                        velocity.X += (target.position.X - position.X) * homingProperties.power / dist;
+                        velocity.Z += (target.position.Z - position.Z) * homingProperties.power / dist;
 
-                    Vector3 trueSpeed = Vector3.Normalize(velocity) * homingProperties.speed;
+                        Vector3 trueSpeed = Vector3.Normalize(velocity) * homingProperties.speed;
 
 
-                    velocity = trueSpeed;
+                        velocity = trueSpeed;
+                    }
                 }
             }
-            KillCollidingTanks();
+            if (!INTERNAL_ignoreCollisions)
+                CheckCollisions();
         }
 
         /// <summary>
@@ -132,17 +195,22 @@ namespace WiiPlayTanksRemake.GameContent
             ricochets--;
         }
 
-        public void KillCollidingTanks()
+        public void CheckCollisions()
         {
-            /*foreach (var tank in WPTR.AllTanks)
-                if (tank.CollisionBox.Intersects(hurtbox))
-                    tank.Destroy();*/
             foreach (var tank in WPTR.AllAITanks.Where(tnk => tnk is not null))
             {
                 if (tank.CollisionBox.Intersects(hurtbox))
                 {
-                    if (tank.Team == owner.Team && tank != owner)
-                        Destroy();
+                    if (owner != null)
+                    {
+                        if (tank.Team == owner.Team && tank != owner)
+                            Destroy();
+                        else
+                        {
+                            Destroy();
+                            tank.Destroy();
+                        }
+                    }
                     else
                     {
                         Destroy();
@@ -176,33 +244,39 @@ namespace WiiPlayTanksRemake.GameContent
 
         public void Destroy(bool playSound = true)
         {
-            if (playSound)
+            if (!INTERNAL_ignoreCollisions)
             {
-                var sfx = SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/bullet_destroy"), SoundContext.Sound, 0.5f);
-                sfx.Pitch = -0.2f;
+                if (playSound)
+                {
+                    var sfx = SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/bullet_destroy"), SoundContext.Sound, 0.5f);
+                    sfx.Pitch = -0.2f;
+                }
+                if (owner != null)
+                    owner.OwnedBulletCount--;
+                AllShells[worldId] = null;
             }
-            if (owner != null)
-                owner.OwnedBulletCount--;
-            AllShells[worldId] = null;
         }
 
 
         internal void Render()
         {
-            foreach (ModelMesh mesh in Model.Meshes)
+            if (INTERNAL_doRender)
             {
-                foreach (BasicEffect effect in mesh.Effects)
+                foreach (ModelMesh mesh in Model.Meshes)
                 {
-                    effect.World = World;
-                    effect.View = View;
-                    effect.Projection = Projection;
-                    effect.TextureEnabled = true;
+                    foreach (BasicEffect effect in mesh.Effects)
+                    {
+                        effect.World = World;
+                        effect.View = View;
+                        effect.Projection = Projection;
+                        effect.TextureEnabled = true;
 
-                    effect.Texture = _shellTexture;
+                        effect.Texture = _shellTexture;
 
-                    effect.EnableDefaultLighting();
+                        effect.EnableDefaultLighting();
+                    }
+                    mesh.Draw();
                 }
-                mesh.Draw();
             }
         }
     }

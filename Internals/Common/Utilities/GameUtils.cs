@@ -242,8 +242,8 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
         public static bool IsInRangeOf(this float value, float midpoint, float distance)
         {
             return
-                value > midpoint - distance
-                && value < midpoint + distance;
+                value > midpoint - distance / 2
+                && value < midpoint + distance / 2;
         }
         // val: 5
         // mdpt: 15
@@ -344,6 +344,26 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
             return value;
         }
 
+        public static float RoughStep_Pi(float radians, float goal, float step)
+        {
+            if (radians >= MathHelper.Pi && goal <= MathHelper.TwoPi)
+            {
+                radians += step;
+
+                if (radians > goal)
+                    radians = goal;
+            }
+            if (radians < MathHelper.Pi && goal >= 0)
+            {
+                radians -= step;
+
+                if (radians < goal)
+                    radians = goal;
+            }
+
+            return radians;
+        }
+
         public static void SetDefaultGameLighting(this BasicEffect effect)
         {
             effect.LightingEnabled = true;
@@ -410,14 +430,14 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
         /// <param name="destination">The place that will be the termination of this <see cref="Ray"/>.</param>
         /// <param name="zAxis">Whether or not this <see cref="Ray"/> will go along the Y or Z axis from the X axis.</param>
         /// <returns>The ray created.</returns>
-        public static Ray CreateRayFrom2D(Vector2 origin, Vector2 destination, bool zAxis = true)
+        public static Ray CreateRayFrom2D(Vector2 origin, Vector2 destination, float excludedAxisOffset = 0f, bool zAxis = true)
         {
             Ray ray;
 
             if (zAxis)
-                ray = new Ray(new Vector3(origin.X, 0, origin.Y), new Vector3(destination.X, 0, destination.Y));
+                ray = new Ray(new Vector3(origin.X, excludedAxisOffset, origin.Y), new Vector3(destination.X, 0, destination.Y));
             else
-                ray = new Ray(new Vector3(origin.X, origin.Y, 0), new Vector3(destination.X, destination.Y, 0));
+                ray = new Ray(new Vector3(origin.X, origin.Y, excludedAxisOffset), new Vector3(destination.X, destination.Y, 0));
 
             return ray;
         }
@@ -428,14 +448,14 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
         /// <param name="destination">The place that will be the termination of this <see cref="Ray"/>.</param>
         /// <param name="zAxis">Whether or not this <see cref="Ray"/> will go along the Y or Z axis from the X axis.</param>
         /// <returns>The ray created.</returns>
-        public static Ray CreateRayFrom2D(Vector3 origin, Vector2 destination, bool zAxis = true)
+        public static Ray CreateRayFrom2D(Vector3 origin, Vector2 destination, float excludedAxisOffset = 0f, bool zAxis = true)
         {
             Ray ray;
 
             if (zAxis)
-                ray = new Ray(origin, new Vector3(destination.X, 0, destination.Y));
+                ray = new Ray(origin + new Vector3(0, excludedAxisOffset, 0), new Vector3(destination.X, 0, destination.Y));
             else
-                ray = new Ray(origin, new Vector3(destination.X, destination.Y, 0));
+                ray = new Ray(origin + new Vector3(0, 0, excludedAxisOffset), new Vector3(destination.X, destination.Y, 0));
 
             return ray;
         }
@@ -451,6 +471,15 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
 
             return new(distPos, reflected);
         }
+
+        /*public static Ray Reflect(Ray ray, Vector3 normal, float distance)
+        {
+            var distPos = ray.Position * Vector3.Normalize(ray.Direction) * distance;
+
+            var reflected = Vector3.Reflect(ray.Direction, normal);
+
+            return new(distPos, reflected);
+        }*/
 
         public static Ray Flatten(this Ray ray, bool zAxis = true)
         {
@@ -481,24 +510,6 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
             return proj;
         }
 
-        /// <summary>
-        /// Do i even need this?
-        /// </summary>
-        public static Vector3[] Raytrace(Vector3 start, Vector3 end, int iterations)
-        {
-            var pointList = new List<Vector3>();
-
-            var diffVector = start.DirectionOf(end);
-
-            for (int i = 0; i < iterations; i++)
-            {
-                pointList.Add(diffVector / i);
-                //pointList.Add((start + end) / i);
-            }
-
-            return pointList.ToArray();
-        }
-
         public static float GetPiRandom()
         {
             var seed = new Random().Next(0, 4);
@@ -512,11 +523,16 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
                 _ => 0
             };
         }
+
+        public static float GetQuarterRotation(sbyte rot)
+        {
+            return MathHelper.PiOver2 * rot;
+        }
     }
-    public sealed class SoundPlayer
+    public static class SoundPlayer
     {
         public static float MasterVolume = 1f;
-        public static float MusicVolume = 0.75f;
+        public static float MusicVolume = 1f;
         public static float SoundVolume = 1f;
         public static float AmbientVolume = 1f;
         public static SoundEffectInstance PlaySoundInstance(SoundEffect fromSound, SoundContext context, float volume = 1f)
@@ -539,8 +555,35 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
 
             return sfx;
         }
-    }
+        public static SoundEffectInstance PlaySoundInstance(SoundEffect fromSound, SoundContext context, Vector3 position, Matrix world, float volume = 1f)
+        {
+            switch (context)
+            {
+                case SoundContext.Music:
+                    volume *= MusicVolume * MasterVolume;
+                    break;
+                case SoundContext.Sound:
+                    volume *= SoundVolume * MasterVolume;
+                    break;
+                case SoundContext.Ambient:
+                    volume *= AmbientVolume * MasterVolume;
+                    break;
+            }
 
+            var pos2d = GeometryUtils.ConvertWorldToScreen(position, world, TankGame.GameView, TankGame.GameProjection);
+
+            var lerp = GameUtils.ModifiedInverseLerp(-(GameUtils.WindowWidth / 2), GameUtils.WindowWidth + GameUtils.WindowWidth / 2, pos2d.X, true);
+
+            var sfx = fromSound.CreateInstance();
+            sfx.Volume = volume;
+
+            // System.Diagnostics.Debug.WriteLine(sfx.Pan);
+            sfx?.Play();
+            sfx.Pan = lerp;
+
+            return sfx;
+        }
+    }
     public enum SoundContext : byte
     {
         Music,

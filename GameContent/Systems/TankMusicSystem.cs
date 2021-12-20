@@ -50,28 +50,9 @@ namespace WiiPlayTanksRemake.GameContent.Systems
 
             var musicVolume = SoundPlayer.MusicVolume;
 
-            brown.volume = 0;
-            ash1.volume = 0;
-            ash2.volume = 0;
-            marine1.volume = 0;
-            marine2.volume = 0;
-            yellow1.volume = 0;
-            yellow2.volume = 0;
-            yellow3.volume = 0;
-            pink1.volume = 0;
-            pink2.volume = 0;
-            pink3.volume = 0;
-            green1.volume = 0;
-            green2.volume = 0;
-            green3.volume = 0;
-            green4.volume = 0;
-            purple1.volume = 0;
-            purple2.volume = 0;
-            purple3.volume = 0;
-            white1.volume = 0;
-            white2.volume = 0;
-            white3.volume = 0;
-            black.volume = 0;
+            foreach (var song in songs.Where(sng => sng is not null))
+                song.volume = 0f;
+
 
             if (TierHighest == TankTier.Brown)
                 brown.volume = 0.5f * musicVolume;
@@ -126,9 +107,68 @@ namespace WiiPlayTanksRemake.GameContent.Systems
             if (TierHighest == TankTier.Black)
                 black.volume = 0.5f * musicVolume;
 
+
+            // vanilla above, master below
+
+
+
+            if (TierHighest == TankTier.Bronze)
+                bronze.volume = 0.5f * musicVolume;
+
+            if (TierHighest == TankTier.Silver && AITank.GetTankCountOfType(TankTier.Silver) < 3)
+                silver1.volume = 0.5f * musicVolume;
+            else if (TierHighest == TankTier.Silver && (AITank.GetTankCountOfType(TankTier.Silver) >= 3)) //|| Tank.GetTankCountOfType(TankTier.Brown) >= 2))
+                silver2.volume = 0.5f * musicVolume;
+
+            if (TierHighest == TankTier.Sapphire && AITank.GetTankCountOfType(TankTier.Sapphire) == 1)
+                sapphire1.volume = 0.5f * musicVolume;
+            else if (TierHighest == TankTier.Sapphire && (AITank.GetTankCountOfType(TankTier.Sapphire) >= 2)) //|| Tank.GetTankCountOfType(TankTier.Brown | TankTier.Ash) >= 2))
+                sapphire2.volume = 0.5f * musicVolume;
+
+            if (TierHighest == TankTier.Citrine && AITank.GetTankCountOfType(TankTier.Citrine) == 1) //&& Tank.GetTankCountOfType(TankTier.Marine) == 0)
+                citrine1.volume = 0.5f * musicVolume;
+            else if (TierHighest == TankTier.Citrine && (AITank.GetTankCountOfType(TankTier.Citrine) == 2)) //|| Tank.GetTankCountOfType(TankTier.Marine) == 1))
+                citrine2.volume = 0.5f * musicVolume;
+            else if (TierHighest == TankTier.Citrine && (AITank.GetTankCountOfType(TankTier.Citrine) >= 3)) //|| Tank.GetTankCountOfType(TankTier.Marine) >= 3))
+                citrine3.volume = 0.5f * musicVolume;
+
+            if (TierHighest == TankTier.Ruby && AITank.GetTankCountOfType(TankTier.Ruby) == 1) //&& Tank.GetTankCountOfType(TankTier.Marine | TankTier.Yellow) == 0)
+                ruby1.volume = 0.5f * musicVolume;
+            else if (TierHighest == TankTier.Ruby && (AITank.GetTankCountOfType(TankTier.Ruby) == 2)) //|| Tank.GetTankCountOfType(TankTier.Marine | TankTier.Yellow) == 1))
+                ruby2.volume = 0.5f * musicVolume;
+            else if (TierHighest == TankTier.Ruby && (AITank.GetTankCountOfType(TankTier.Ruby) >= 3)) //|| Tank.GetTankCountOfType(TankTier.Marine | TankTier.Yellow) >= 2))
+                ruby3.volume = 0.5f * musicVolume;
+
+            if (TierHighest == TankTier.Emerald && AITank.GetTankCountOfType(TankTier.Emerald) == 1) //&& Tank.GetTankCountOfType(TankTier.Yellow | TankTier.Pink) == 0)
+                emerald1.volume = 0.5f * musicVolume;
+            else if (TierHighest == TankTier.Emerald && (AITank.GetTankCountOfType(TankTier.Emerald) == 2)) //|| Tank.GetTankCountOfType(TankTier.Yellow | TankTier.Pink) == 1))
+                emerald2.volume = 0.5f * musicVolume;
+            else if (TierHighest == TankTier.Emerald && (AITank.GetTankCountOfType(TankTier.Emerald) == 3)) //|| Tank.GetTankCountOfType(TankTier.Yellow | TankTier.Pink) == 3))
+                emerald3.volume = 0.5f * musicVolume;
+            else if (TierHighest == TankTier.Emerald && (AITank.GetTankCountOfType(TankTier.Emerald) >= 4)) //|| Tank.GetTankCountOfType(TankTier.Yellow | TankTier.Pink) >= 4))
+                emerald4.volume = 0.5f * musicVolume;
+
+            if (TierHighest == TankTier.Amethyst && AITank.GetTankCountOfType(TankTier.Amethyst) == 1) //&& Tank.GetTankCountOfType(TankTier.Pink | TankTier.Green) == 0)
+                amethyst1.volume = 0.5f * musicVolume;
+            else if (TierHighest == TankTier.Amethyst && (AITank.GetTankCountOfType(TankTier.Amethyst) == 2)) //|| Tank.GetTankCountOfType(TankTier.Pink | TankTier.Green) == 1))
+                amethyst2.volume = 0.5f * musicVolume;
+            else if (TierHighest == TankTier.Amethyst && (AITank.GetTankCountOfType(TankTier.Amethyst) >= 3)) //|| Tank.GetTankCountOfType(TankTier.Pink | TankTier.Green) >= 2))
+                amethyst3.volume = 0.5f * musicVolume;
+
+            if (TierHighest == TankTier.Gold && AITank.GetTankCountOfType(TankTier.Gold) == 1) //&& Tank.GetTankCountOfType(TankTier.Green | TankTier.Purple) == 0)
+                gold1.volume = 0.5f * musicVolume;
+            else if (TierHighest == TankTier.Gold && (AITank.GetTankCountOfType(TankTier.Gold) == 2)) //|| Tank.GetTankCountOfType(TankTier.Green | TankTier.Purple) == 1))
+                gold2.volume = 0.5f * musicVolume;
+            else if (TierHighest == TankTier.Gold && (AITank.GetTankCountOfType(TankTier.Gold) >= 3)) //|| Tank.GetTankCountOfType(TankTier.Green | TankTier.Purple) >= 2))
+                gold3.volume = 0.5f * musicVolume;
+
+            if (TierHighest == TankTier.Obsidian)
+                obsidian.volume = 0.5f * musicVolume;
+
             // we call this hardcode hell in the west
         }
 
+        #region Songs
         public static Music brown;
         public static Music ash1;
         public static Music ash2;
@@ -152,22 +192,34 @@ namespace WiiPlayTanksRemake.GameContent.Systems
         public static Music white3;
         public static Music black;
 
-        public static Music[] songs =
-        {
-            brown,
-            ash1, ash2,
-            marine1, marine2,
-            pink1, pink2, pink3,
-            yellow1, yellow2, yellow3,
-            purple1, purple2, purple3,
-            green1, green2, green3, green4,
-            white1, white2, white3,
-            black
-        };
+        public static Music bronze;
+        public static Music silver1;
+        public static Music silver2;
+        public static Music sapphire1;
+        public static Music sapphire2;
+        public static Music ruby1;
+        public static Music ruby2;
+        public static Music ruby3;
+        public static Music citrine1;
+        public static Music citrine2;
+        public static Music citrine3;
+        public static Music amethyst1;
+        public static Music amethyst2;
+        public static Music amethyst3;
+        public static Music emerald1;
+        public static Music emerald2;
+        public static Music emerald3;
+        public static Music emerald4;
+        public static Music gold1;
+        public static Music gold2;
+        public static Music gold3;
+        public static Music obsidian;
+        #endregion
+
+        public static Music[] songs;
 
         public static void LoadMusic()
         {
-
             brown = Music.CreateMusicTrack("BrownTank", "Assets/music/brown", 0.5f);
 
             ash1 = Music.CreateMusicTrack("AshTank1", "Assets/music/ash1", 0.5f);
@@ -198,6 +250,63 @@ namespace WiiPlayTanksRemake.GameContent.Systems
             white3 = Music.CreateMusicTrack("WhiteTank3", "Assets/music/white3", 0.5f);
 
             black = Music.CreateMusicTrack("BlackTank", "Assets/music/black", 0.5f);
+
+
+
+
+            bronze = Music.CreateMusicTrack("BronzeTank", "Assets/music/bronze", 0.5f);
+
+            silver1 = Music.CreateMusicTrack("SilverTank1", "Assets/music/silver1", 0.5f);
+            silver2 = Music.CreateMusicTrack("SilverTank2", "Assets/music/silver2", 0.5f);
+
+            sapphire1 = Music.CreateMusicTrack("SapphireTank1", "Assets/music/sapphire1", 0.5f);
+            sapphire2 = Music.CreateMusicTrack("SapphireTank2", "Assets/music/sapphire2", 0.5f);
+
+            ruby1 = Music.CreateMusicTrack("RubyTank1", "Assets/music/ruby1", 0.5f);
+            ruby2 = Music.CreateMusicTrack("RubyTank2", "Assets/music/ruby2", 0.5f); 
+            ruby3 = Music.CreateMusicTrack("RubyTank3", "Assets/music/ruby3", 0.5f);
+
+            citrine1 = Music.CreateMusicTrack("CitrineTank1", "Assets/music/citrine1", 0.5f);
+            citrine2 = Music.CreateMusicTrack("CitrineTank2", "Assets/music/citrine2", 0.5f);
+            citrine3 = Music.CreateMusicTrack("CitrineTank3", "Assets/music/citrine3", 0.5f);
+
+            amethyst1 = Music.CreateMusicTrack("AmethystTank1", "Assets/music/amethyst1", 0.5f);
+            amethyst2 = Music.CreateMusicTrack("AmethystTank2", "Assets/music/amethyst2", 0.5f);
+            amethyst3 = Music.CreateMusicTrack("AmethystTank3", "Assets/music/amethyst3", 0.5f);
+
+            emerald1 = Music.CreateMusicTrack("EmeraldTank1", "Assets/music/emerald1", 0.5f);
+            emerald2 = Music.CreateMusicTrack("EmeraldTank2", "Assets/music/emerald2", 0.5f);
+            emerald3 = Music.CreateMusicTrack("EmeraldTank3", "Assets/music/emerald3", 0.5f);
+            emerald4 = Music.CreateMusicTrack("EmeraldTank4", "Assets/music/emerald4", 0.5f);
+
+            gold1 = Music.CreateMusicTrack("GoldTank1", "Assets/music/gold1", 0.5f);
+            gold2 = Music.CreateMusicTrack("GoldTank2", "Assets/music/gold2", 0.5f);
+            gold3 = Music.CreateMusicTrack("GoldTank3", "Assets/music/gold3", 0.5f);
+
+            obsidian = Music.CreateMusicTrack("ObsidianTank", "Assets/music/obsidian", 0.5f);
+
+            songs = new Music[]
+{
+                brown,
+                ash1, ash2,
+                marine1, marine2,
+                pink1, pink2, pink3,
+                yellow1, yellow2, yellow3,
+                purple1, purple2, purple3,
+                green1, green2, green3, green4,
+                white1, white2, white3,
+                black,
+
+                bronze,
+                silver1, silver2,
+                sapphire1, sapphire2,
+                ruby1, ruby2, ruby3,
+                citrine1, citrine2, citrine3,
+                amethyst1, amethyst2, amethyst3,
+                emerald1, emerald2, emerald3, emerald4,
+                gold1, gold2, gold3,
+                obsidian
+};
         }
 
         public static void PlayMusic()
@@ -212,24 +321,34 @@ namespace WiiPlayTanksRemake.GameContent.Systems
                 purple1, purple2, purple3,
                 green1, green2, green3, green4,
                 white1, white2, white3,
-                black
+                black,
+
+                bronze,
+                silver1, silver2,
+                sapphire1, sapphire2,
+                ruby1, ruby2, ruby3,
+                citrine1, citrine2, citrine3,
+                amethyst1, amethyst2, amethyst3,
+                emerald1, emerald2, emerald3, emerald4,
+                gold1, gold2, gold3,
+                obsidian
             };
 
             foreach (var song in songs)
-                song.Play();
+                song?.Play();
         }
 
         public static void PauseAll()
         {
             foreach (var song in songs)
                 if (!song.Track.IsPaused())
-                    song.Pause();
+                    song?.Pause();
         }
 
         public static void ResumeAll()
         {
             foreach (var song in songs)
-                song.Play();
+                song?.Play();
         }
     }
 }

@@ -16,6 +16,7 @@ using WiiPlayTanksRemake.Internals.Core.Interfaces;
 using System.Collections.Generic;
 using System.Linq;
 using WiiPlayTanksRemake.Internals.Common.IO;
+using System.Diagnostics;
 
 namespace WiiPlayTanksRemake
 {
@@ -23,11 +24,51 @@ namespace WiiPlayTanksRemake
     // TODO: AI in the middle to far future
     // TODO: to some finishing touches to TankMusicSystem
 
-    // TODO: working aim for tanks
-    // MAJOR TODO: make tanks stop sharing the same goddamn spot, cuno maybe you can try it
+    public class SettingsData
+    {
+        public float MusicVolume { get; set; } = 0;
+        public float EffectsVolume { get; set; } = 0;
+    }
 
     public class TankGame : Game
     {
+
+        public static class MemoryParser
+        {
+            public static ulong FromBits(long bytes)
+            {
+                return (ulong)bytes * 8;
+            }
+            public static long FromKilobytes(long bytes)
+            {
+                return bytes / 1000;
+            }
+            public static long FromMegabytes(long bytes)
+            {
+                return bytes / 1000 / 1000;
+            }
+            public static long FromGigabytes(long bytes)
+            {
+                return bytes / 1000 / 1000 / 1000;
+            }
+            public static long FromTerabytes(long bytes)
+            {
+                return bytes / 1000 / 1000 / 1000 / 1000;
+            }
+        }
+
+
+        private static Stopwatch RenderStopwatch { get; } = new();
+        private static Stopwatch UpdateStopwatch { get; } = new();
+
+        public static TimeSpan RenderTime { get; private set; }
+        public static TimeSpan LogicTime { get; private set; }
+
+        public static double LogicFPS { get; private set; }
+        public static double RenderFPS { get; private set; }
+
+        public static long TotalMemoryUsed => GC.GetTotalMemory(true);
+
         public static GameTime LastGameTime { get; private set; }
         public static uint GameUpdateTime { get; private set; }
 
@@ -50,18 +91,7 @@ namespace WiiPlayTanksRemake
 
         public static Texture2D MagicPixel;
 
-        public string SaveDirectory
-        {
-            get
-            {
-                StringBuilder stringBuilder = new(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
-                stringBuilder.Append(Path.DirectorySeparatorChar);
-                stringBuilder.Append("My Games");
-                stringBuilder.Append(Path.DirectorySeparatorChar);
-                stringBuilder.Append("WiiPlayTanksRemake");
-                return stringBuilder.ToString();
-            }
-        }
+        public static readonly string SaveDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "My Games", "WiiPlayTanksRemake");
 
         public static Matrix GameView;
         public static Matrix GameProjection;
@@ -91,6 +121,23 @@ namespace WiiPlayTanksRemake
             IsMouseVisible = false;
 
             Window.IsBorderless = true;
+
+            // var firstTexture = GetFirstAvailable(ToTexArray(GraphicsDevice.Textures));
+        }
+
+        public int GetFirstAvailable<T>(ICollection<T> collection)
+        {
+            var index = collection.FirstOrDefault(elem => elem is null);
+
+            if (Array.IndexOf(collection.ToArray(), index) <= -1)
+                return -1;
+
+            return Array.IndexOf(collection.ToArray(), index);
+        }
+
+        public static ICollection<Texture2D> ToTexArray(TextureCollection collection)
+        {
+            return typeof(TextureCollection).GetField("_textures").GetValue(collection) as Texture2D[];
         }
 
         protected override void Initialize()
@@ -134,11 +181,13 @@ namespace WiiPlayTanksRemake
 
         protected override void OnExiting(object sender, EventArgs args)
         {
-            WPTR.BaseLogger.Dispose();
+            WPTR.ClientLog.Dispose();
         }
 
         protected override void LoadContent()
         {
+            var s = Stopwatch.StartNew();
+
             CubeModel = GameResources.GetGameResource<Model>("Assets/cube_stack");
 
             TankModel_Enemy = GameResources.GetGameResource<Model>("Assets/tank_e_fix");
@@ -203,7 +252,13 @@ namespace WiiPlayTanksRemake
                     effect.SpecularColor = new Vector3(0, 0, 0);
                 }
             }
-            // TODO: use this.Content to load your game content here
+
+
+            var time = s.Elapsed;
+
+            s.Stop();
+
+            WPTR.ClientLog.Write($"Content loaded in {time}.", Logger.LogType.Debug);
         }
 
         Vector2 rotVec;
@@ -212,22 +267,30 @@ namespace WiiPlayTanksRemake
 
         protected override void Update(GameTime gameTime)
         {
+            UpdateStopwatch.Start();
+
             LastGameTime = gameTime;
             if (Input.MouseRight)
-            {
                 rotVec += GameUtils.GetMouseVelocity(GameUtils.WindowCenter) / 500;
-            }
 
             if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Up))
                 zoom += 0.01f;
             if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Down))
                 zoom -= 0.01f;
 
-            System.Diagnostics.Debug.WriteLine(GameUtils.GetMouseVelocity(GameUtils.WindowCenter));
+            GameUtils.GetMouseVelocity(GameUtils.WindowCenter);
+
+            // why do i need to call this????
 
             GameView = Matrix.CreateScale(zoom) * Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(0.75f + rotVec.Y) * Matrix.CreateRotationY(rotVec.X);
 
             FixedUpdate(gameTime);
+
+            LogicTime = UpdateStopwatch.Elapsed;
+
+            UpdateStopwatch.Stop();
+
+            LogicFPS = Math.Round(1 / gameTime.ElapsedGameTime.TotalSeconds, 4);
         }
 
         private static void UpdateGameSystems()
@@ -271,15 +334,17 @@ namespace WiiPlayTanksRemake
         }
         protected override void Draw(GameTime gameTime)
         {
+            RenderStopwatch.Start();
+
             GraphicsDevice.Clear(Color.Black);
 
             spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied);
 
             spriteBatch.DrawString(Fonts.Default, "Debug Level: " + DebugUtils.CurDebugLabel, new Vector2(10), Color.White, 0f, default, 0.6f, default, default);
-
+            DebugUtils.DrawDebugString(spriteBatch, "Memory Used: " + MemoryParser.FromMegabytes(TotalMemoryUsed) + " MB", new(8, GameUtils.WindowHeight * 0.18f));
             graphics.GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
-            WPTR.Draw();
+            WPTR.DoRender();
 
             spriteBatch.End();
 
@@ -288,6 +353,12 @@ namespace WiiPlayTanksRemake
             spriteBatch.Begin(blendState: BlendState.NonPremultiplied, effect: GameShaders.MouseShader);
             MouseRenderer.DrawMouse();
             spriteBatch.End();
+
+            RenderTime = RenderStopwatch.Elapsed;
+
+            RenderStopwatch.Stop();
+
+            RenderFPS = Math.Round(1 / gameTime.ElapsedGameTime.TotalSeconds, 4);
         }
     }
     public static class Program

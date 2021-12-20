@@ -8,12 +8,6 @@ using System.Threading.Tasks;
 
 namespace WiiPlayTanksRemake.Internals.Common.IO
 {
-    public class SettingsData
-    {
-        public int MusicVolume { get; set; } = 0;
-
-        public int EffectsVolume { get; set; } = 0;
-    }
 
     public class JsonHandler
     {

@@ -22,11 +22,11 @@ namespace WiiPlayTanksRemake.GameContent
 
         public BlockType Type { get; set; }
 
-        // internal static Cube[] cubes = new Cube[CubeMapPosition.MAP_WIDTH * CubeMapPosition.MAP_HEIGHT];
+        public static Cube[] cubes = new Cube[CubeMapPosition.MAP_WIDTH * CubeMapPosition.MAP_HEIGHT];
 
-        public static Cube[,] cubes = new Cube[CubeMapPosition.MAP_WIDTH + 1, CubeMapPosition.MAP_HEIGHT + 1];
+        // public static Cube[,] cubes = new Cube[CubeMapPosition.MAP_WIDTH + 1, CubeMapPosition.MAP_HEIGHT + 1];
 
-        public CubeMapPosition position;
+        public Vector3 position;
 
         public Model model;
 
@@ -35,6 +35,8 @@ namespace WiiPlayTanksRemake.GameContent
         public Matrix Projection;
 
         public BoundingBox collider;
+
+        public Rectangle collider2d;
 
         public Texture2D meshTexture;
 
@@ -51,7 +53,9 @@ namespace WiiPlayTanksRemake.GameContent
 
         // 141 for normal
 
-        public Cube(CubeMapPosition position, BlockType type, int height)
+        public int worldId;
+
+        public Cube(BlockType type, int height)
         {
             meshTexture = type switch
             {
@@ -65,20 +69,20 @@ namespace WiiPlayTanksRemake.GameContent
 
             model = TankGame.CubeModel;
 
-
             Type = type;
 
-            this.position = position;
+            collider = new BoundingBox(position - new Vector3(FULLBLOCK_SIZE / 2, FULL_SIZE, FULLBLOCK_SIZE / 2), position + new Vector3(FULLBLOCK_SIZE / 2, FULL_SIZE, FULLBLOCK_SIZE / 2));
 
-            collider = new BoundingBox(position - new Vector3(3, 40, 3), position + new Vector3(3, 40, 3));
+           //  collider2d = new((int)(positio))
+           // TODO: Finish collisions
 
-            /*int index = Array.IndexOf(cubes, cubes.First(tank => tank is null));
+            int index = Array.IndexOf(cubes, cubes.First(tank => tank is null));
 
             worldId = index;
 
-            cubes[index] = this;*/
+            cubes[index] = this;
 
-            cubes[position.X, position.Y] = this;
+            // cubes[position.X, position.Y] = this;
 
             // cubes.Add(this);
         }
@@ -87,7 +91,9 @@ namespace WiiPlayTanksRemake.GameContent
         {
             // blah blah particle chunk thingy
 
-            cubes[position.X, position.Y] = null;
+            cubes[worldId] = null;
+
+            // cubes[position.X, position.Y] = null;
         }
 
         public void Draw()
@@ -117,9 +123,12 @@ namespace WiiPlayTanksRemake.GameContent
 
                 mesh.Draw();
             }
+            TankGame.spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), collider2d, Color.White * 0.75f);
         }
         public void Update()
         {
+            collider2d = new((int)(position.X - FULLBLOCK_SIZE / 2), (int)(position.Z - FULLBLOCK_SIZE / 2), (int)FULLBLOCK_SIZE, (int)FULLBLOCK_SIZE);
+            collider = new BoundingBox(position - new Vector3(FULLBLOCK_SIZE / 2, FULL_SIZE, FULLBLOCK_SIZE / 2), position + new Vector3(FULLBLOCK_SIZE / 2, FULL_SIZE, FULLBLOCK_SIZE / 2));
             Vector3 offset = new();
 
             switch (height)

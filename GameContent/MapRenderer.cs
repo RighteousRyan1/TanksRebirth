@@ -15,11 +15,33 @@ namespace WiiPlayTanksRemake.GameContent
         {
             public static Model FloorModelBase;
 
+            public static Model FloorModelBase2;
+
             public static void LoadFloor()
             {
                 FloorModelBase = GameResources.GetGameResource<Model>("Assets/floor_big");
+                FloorModelBase2 = GameResources.GetGameResource<Model>("Assets/floor_big");
 
                 foreach (var mesh in FloorModelBase.Meshes)
+                {
+                    foreach (BasicEffect effect in mesh.Effects)
+                    {
+                        effect.TextureEnabled = true;
+
+                        effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/ingame/ground");
+
+                        effect.LightingEnabled = true;
+                        effect.PreferPerPixelLighting = true;
+                        effect.EnableDefaultLighting();
+
+                        effect.DirectionalLight0.Enabled = true;
+                        effect.DirectionalLight1.Enabled = false;
+                        effect.DirectionalLight2.Enabled = false;
+
+                        effect.DirectionalLight0.Direction = Vector3.Down;
+                    }
+                }
+                foreach (var mesh in FloorModelBase2.Meshes)
                 {
                     foreach (BasicEffect effect in mesh.Effects)
                     {
@@ -49,6 +71,17 @@ namespace WiiPlayTanksRemake.GameContent
                         matrices.View = viewMatrix;
                         matrices.Projection = projectionMatrix;
                         matrices.World = worldMatrix;
+                    }
+
+                    mesh.Draw();
+                }
+                foreach (var mesh in FloorModelBase2.Meshes)
+                {
+                    foreach (IEffectMatrices matrices in mesh.Effects)
+                    {
+                        matrices.View = viewMatrix;
+                        matrices.Projection = projectionMatrix;
+                        matrices.World = worldMatrix * Matrix.CreateScale(2) * Matrix.CreateTranslation(0, -0.5f, 0);
                     }
 
                     mesh.Draw();
@@ -88,10 +121,10 @@ namespace WiiPlayTanksRemake.GameContent
                         effect.SpecularColor = new Vector3(0, 0, 0);
                     }
 
-                    SetBlockTexture(mesh, "polygon33", BoundaryTextureContext.block_other_a);
+                    SetBlockTexture(mesh, "polygon33", BoundaryTextureContext.block_other_c);
                     SetBlockTexture(mesh, "polygon7", BoundaryTextureContext.block_shadow_b);
-                    SetBlockTexture(mesh, "polygon20", BoundaryTextureContext.block_shadow_d);
-                    SetBlockTexture(mesh, "polygon21", BoundaryTextureContext.block_shadow_b);
+                    //SetBlockTexture(mesh, "polygon20", BoundaryTextureContext.block_shadow_d);
+                    //SetBlockTexture(mesh, "polygon21", BoundaryTextureContext.block_shadow_b);
 
                     //SetBlockTexture(mesh, "polygon54", BoundaryTextureContext.block_shadow_b);
                     //SetBlockTexture(mesh, "polygon68", BoundaryTextureContext.block_shadow_d);

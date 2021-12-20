@@ -10,6 +10,10 @@ namespace WiiPlayTanksRemake.GameContent
 {
     public abstract class Tank
     {
+
+        public const int TNK_WIDTH = 25;
+        public const int TNK_HEIGHT = 25;
+
         /// <summary>This <see cref="Tank"/>'s model.</summary>
         public Model Model { get; set; }
         /// <summary>This <see cref="Tank"/>'s world position. Used to change the actual location of the model relative to the <see cref="View"/> and <see cref="Projection"/>.</summary>
@@ -24,6 +28,8 @@ namespace WiiPlayTanksRemake.GameContent
         public bool Invisible { get; set; }
         /// <summary>How fast the tank should accelerate towards it's <see cref="MaxSpeed"/>.</summary>
         public float Acceleration { get; set; } = 0.3f;
+        /// <summary>How fast the tank should decelerate when not moving.</summary>
+        public float Deceleration { get; set; } = 0.6f;
         /// <summary>The current speed of this tank.</summary>
         public float Speed { get; set; } = 1f;
         /// <summary>The maximum speed this tank can achieve.</summary>
@@ -56,20 +62,24 @@ namespace WiiPlayTanksRemake.GameContent
         public float TurningSpeed { get; set; } = 1f;
         public float MaximalTurn { get; set; }
         public Team Team { get; set; }
-
         public int OwnedBulletCount { get; set; }
         public int OwnedMineCount { get; set; }
+
+        public bool IsTurning { get; set; }
+
         public Vector2 Position2D => position.FlattenZ();
         public Vector2 Velocity2D => velocity.FlattenZ();
 
         public Vector3 position, velocity;
+
+        public Rectangle CollisionBox2D => new((int)(Position2D.X - TNK_WIDTH / 2), (int)(Position2D.Y - TNK_WIDTH / 2), TNK_WIDTH, TNK_HEIGHT);
 
         public string GetGeneralStats()
             => $"Pos2D: {Position2D} | Vel: {Velocity2D} | Dead: {Dead}";
 
         public virtual void Destroy() { }
 
-        public virtual void LayFootprint() { }
+        public virtual void LayFootprint(bool alt) { }
 
         public virtual void Shoot() { }
 
@@ -78,8 +88,6 @@ namespace WiiPlayTanksRemake.GameContent
         // everything under this comment is added outside of the faithful remake. homing shells, etc
 
         public Shell.HomingProperties ShellHoming = new();
-
-        public Tank Old;
     }
 
     public class TankFootprint
@@ -99,24 +107,29 @@ namespace WiiPlayTanksRemake.GameContent
 
         public Texture2D texture;
 
-        private static int total_treads_placed;
+        internal static int total_treads_placed;
 
-        public TankFootprint()
+        private bool alternate;
+
+        public TankFootprint(bool alt = false)
         {
             if (total_treads_placed + 1 > MAX_FOOTPRINTS)
                 return;
+            alternate = alt;
             total_treads_placed++;
 
             Model = GameResources.GetGameResource<Model>("Assets/footprint"); // use this :smiley:
 
-            texture = GameResources.GetGameResource<Texture2D>($"Assets/textures/tank_footprint");
+            texture = GameResources.GetGameResource<Texture2D>(alt ? $"Assets/textures/tank_footprint_alt" : $"Assets/textures/tank_footprint");
 
             footprints[total_treads_placed] = this;
             total_treads_placed++;
         }
         public void Render()
         {
-            World = Matrix.CreateScale(0.5f, 1f, 0.1f) * Matrix.CreateRotationY(rotation) * Matrix.CreateTranslation(location);
+            Matrix scale = alternate ? Matrix.CreateScale(0.5f, 1f, 0.35f) : Matrix.CreateScale(0.5f, 1f, 0.075f);
+
+            World = scale * Matrix.CreateRotationY(rotation) * Matrix.CreateTranslation(location);
             View = TankGame.GameView;
             Projection = TankGame.GameProjection;
 
@@ -187,7 +200,7 @@ namespace WiiPlayTanksRemake.GameContent
         }
         public void Render()
         {
-            World = Matrix.CreateTranslation(location);
+            World = Matrix.CreateScale(0.9f) * Matrix.CreateTranslation(location);
             View = TankGame.GameView;
             Projection = TankGame.GameProjection;
 
