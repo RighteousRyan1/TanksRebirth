@@ -42,7 +42,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         public int height;
 
-        public const int MAX_CUBE_HEIGHT = 5;
+        public const int MAX_CUBE_HEIGHT = 7;
 
         public const float FULLBLOCK_SIZE = 25.2f;
         public const float SLAB_SIZE = 12.6f;
@@ -65,16 +65,15 @@ namespace WiiPlayTanksRemake.GameContent
                 _ => null
             };
 
-            this.height = MathHelper.Clamp(height, 0, 5); // if 0, it will be a hole.
+            this.height = MathHelper.Clamp(height, 0, 7); // if 0, it will be a hole.
 
             model = TankGame.CubeModel;
 
             Type = type;
 
-            collider = new BoundingBox(position - new Vector3(FULLBLOCK_SIZE / 2, FULL_SIZE, FULLBLOCK_SIZE / 2), position + new Vector3(FULLBLOCK_SIZE / 2, FULL_SIZE, FULLBLOCK_SIZE / 2));
+            position = new(-1000, 0, 0);
 
-           //  collider2d = new((int)(positio))
-           // TODO: Finish collisions
+            // TODO: Finish collisions
 
             int index = Array.IndexOf(cubes, cubes.First(tank => tank is null));
 

@@ -532,7 +532,7 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
     public static class SoundPlayer
     {
         public static float MasterVolume = 1f;
-        public static float MusicVolume = 1f;
+        public static float MusicVolume = 0.5f;
         public static float SoundVolume = 1f;
         public static float AmbientVolume = 1f;
         public static SoundEffectInstance PlaySoundInstance(SoundEffect fromSound, SoundContext context, float volume = 1f)

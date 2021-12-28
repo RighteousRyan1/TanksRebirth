@@ -45,7 +45,7 @@ namespace WiiPlayTanksRemake.GameContent
         /// <summary>The pitch of the shoot sound.</summary>
         public float ShootPitch { get; set; }
         /// <summary>The type of bullet this <see cref="Tank"/> shoots.</summary>
-        public ShellTier ShellType { get; set; } = ShellTier.Regular;
+        public ShellTier ShellType { get; set; } = ShellTier.Standard;
         /// <summary>The maximum amount of mines this <see cref="Tank"/> can place.</summary>
         public int MineLimit { get; set; }
         /// <summary>The hitbox of this <see cref="Tank"/>.</summary>
@@ -115,6 +115,7 @@ namespace WiiPlayTanksRemake.GameContent
         {
             if (total_treads_placed + 1 > MAX_FOOTPRINTS)
                 return;
+
             alternate = alt;
             total_treads_placed++;
 
@@ -123,10 +124,12 @@ namespace WiiPlayTanksRemake.GameContent
             texture = GameResources.GetGameResource<Texture2D>(alt ? $"Assets/textures/tank_footprint_alt" : $"Assets/textures/tank_footprint");
 
             footprints[total_treads_placed] = this;
+
             total_treads_placed++;
         }
         public void Render()
         {
+
             Matrix scale = alternate ? Matrix.CreateScale(0.5f, 1f, 0.35f) : Matrix.CreateScale(0.5f, 1f, 0.075f);
 
             World = scale * Matrix.CreateRotationY(rotation) * Matrix.CreateTranslation(location);
@@ -140,6 +143,7 @@ namespace WiiPlayTanksRemake.GameContent
                     effect.World = World;
                     effect.View = View;
                     effect.Projection = Projection;
+
                     effect.TextureEnabled = true;
 
                     effect.Texture = texture;
@@ -169,7 +173,7 @@ namespace WiiPlayTanksRemake.GameContent
         public Vector3 location;
         public float rotation;
 
-        private static int total_death_marks;
+        internal static int total_death_marks;
 
         public Matrix World;
         public Matrix View;
@@ -211,6 +215,7 @@ namespace WiiPlayTanksRemake.GameContent
                     effect.World = World;
                     effect.View = View;
                     effect.Projection = Projection;
+
                     effect.TextureEnabled = true;
 
                     effect.Texture = texture;

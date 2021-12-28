@@ -91,6 +91,8 @@ namespace WiiPlayTanksRemake.GameContent
 
             Team = Team.Red;
 
+            Dead = true;
+
             int index = Array.IndexOf(WPTR.AllAITanks, WPTR.AllAITanks.First(tank => tank is null));
 
             PlayerId = index;
@@ -113,6 +115,9 @@ namespace WiiPlayTanksRemake.GameContent
             // 0 = down
             // pi/4 = right
             // 3/4pi = left
+
+            if (Dead)
+                return;
 
             if (curShootStun > 0)
                 curShootStun--;
@@ -150,6 +155,8 @@ namespace WiiPlayTanksRemake.GameContent
             else
                 velocity = Vector3.Zero;
 
+            UpdateCollision();
+
             Vector3 mouseWorldPos = GameUtils.GetWorldPosition(GameUtils.MousePosition);
 
             TurretRotation = (-(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position2D).ToRotation()) + MathHelper.PiOver2;
@@ -165,8 +172,6 @@ namespace WiiPlayTanksRemake.GameContent
             Speed = Acceleration;
 
             playerControl_isBindPressed = false;
-
-            UpdateCollision();
 
             oldPosition = position;
         }
@@ -306,15 +311,6 @@ namespace WiiPlayTanksRemake.GameContent
         private void UpdateCollision()
         {
             CollisionBox = new(position - new Vector3(12, 15, 12), position + new Vector3(12, 15, 12));
-            /*if (WPTR.AllAITanks.Any(tnk => tnk is not null && tnk.CollisionBox.Intersects(CollisionBox)))
-            {
-                position = Old.position;
-                //System.Diagnostics.Debug.WriteLine(new Random().Next(0, 100).ToString());
-            }
-            if (WPTR.AllPlayerTanks.Any(tnk => tnk is not null && tnk.CollisionBox.Intersects(CollisionBox) && tnk != this))
-            {
-                position = Old.position;
-            }*/
 
             var dummyVel = Velocity2D;
 
@@ -390,9 +386,6 @@ namespace WiiPlayTanksRemake.GameContent
                     sfx.Pitch = TreadPitch;
                 }
             }
-            //velocity += approachVelocity / 10;
-            // barrelRotation = GameUtils.DirectionOf(GameUtils.MousePosition.ToVector3(), position).ToRotation();
-            // approachVelocity = Vector3.Zero;
         }
 
         public override void LayFootprint(bool alt)
@@ -419,7 +412,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             sfx = ShellType switch
             {
-                ShellTier.Regular => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_1"), SoundContext.Sound, 0.3f),
+                ShellTier.Standard => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_1"), SoundContext.Sound, 0.3f),
                 ShellTier.Rocket => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_rocket"), SoundContext.Sound, 0.3f),
                 ShellTier.RicochetRocket => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_ricochet_rocket"), SoundContext.Sound, 0.3f),
                 _ => throw new NotImplementedException()

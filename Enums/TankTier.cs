@@ -46,7 +46,7 @@
 
     public enum ShellTier : byte
     {
-        Regular,
+        Standard,
         Rocket,
         RicochetRocket
     }

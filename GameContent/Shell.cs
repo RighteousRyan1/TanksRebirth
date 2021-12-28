@@ -90,7 +90,7 @@ namespace WiiPlayTanksRemake.GameContent
             hurtbox.Max = position + new Vector3(3, 5, 3);
             hurtbox.Min = position - new Vector3(3, 5, 3);
 
-            hurtbox2d = new((int)(position.X - 3), (int)(position.Z + 3), 6, 6);
+            hurtbox2d = new((int)(position.X - 3), (int)(position.Z - 3), 6, 6);
 
             if (!WPTR.InMission)
                 return;
@@ -112,9 +112,9 @@ namespace WiiPlayTanksRemake.GameContent
 
                 var coldir = Collision.CollisionDirection.None;
 
-                foreach (var c in Cube.cubes.Where(c => c is not null))
+                //foreach (var c in Cube.cubes.Where(c => c is not null))
                 {
-                    Collision.HandleCollisionSimple(hurtbox2d, c.collider2d, ref dummyVel, ref position, out var dir);
+                    Collision.HandleCollisionSimple_ForBlocks(hurtbox2d, ref dummyVel, ref position, out var dir, false);
 
                     //velocity.X = dummyVel.X;
                     //velocity.Z = dummyVel.Y;

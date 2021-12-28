@@ -14,39 +14,29 @@ namespace WiiPlayTanksRemake.GameContent.Systems
     {
         public static TankTier TierHighest => AITank.GetHighestTierActive();
 
-        public static float totalSpike;
-
-        public static float brownSpike;
-        public static float ashSpike;
-        public static float marineSpike;
-        public static float pinkSpike;
-        public static float greenSpike;
-        public static float purpleSpike;
-        public static float whiteSpike;
-        public static float blackSpike;
-
         public static void Update()
         {
-            /*brownSpike += 0.5f * Tank.GetTankCountOfType(TankTier.Brown);
-            ashSpike += 1f * Tank.GetTankCountOfType(TankTier.Ash);
-            brownSpike = GameUtils.Clamp(brownSpike, 0f, 1f);
-            ashSpike = GameUtils.Clamp(ashSpike, 0f, 2f);
-            marineSpike = GameUtils.Clamp(marineSpike, 0f, 4f);
-            pinkSpike = GameUtils.Clamp(pinkSpike, 0f, 8f);
-            greenSpike = GameUtils.Clamp(greenSpike, 0f, 16f);
-            purpleSpike = GameUtils.Clamp(purpleSpike, 0f, 24f);
-            whiteSpike = GameUtils.Clamp(whiteSpike, 0f, 30f);
-            blackSpike = GameUtils.Clamp(blackSpike, 0f, 50f);
-            totalSpike = brownSpike + ashSpike + marineSpike + pinkSpike + greenSpike + purpleSpike + whiteSpike + blackSpike;
-            if (TierHighest == TankTier.Brown)
-                brown.volume = 0.5f;
-            else if (TierHighest == TankTier.Ash)
+            /*
+             * brown = 1 per
+             * ash = 2 per
+             * marine = 3 per
+             * yellow = 4 per
+             * pink = 5 per
+             * purple = 6 per
+             * green = 7 per
+             * white = 8 per
+             * black = 9 per
+             * 
+             * the same pattern should apply to master tanks
+             * 
+             */
+            var maxSpike = AITank.GetHighestTierActive() switch
             {
-                if (totalSpike > 2f)
-                    ash2.volume = 0.5f;
-                else
-                    ash1.volume = 0.5f;
-            }*/
+                TankTier.Brown => 1f,
+                TankTier.Ash => 5f,
+                TankTier.Marine => 10f,
+                _ => 1f
+            };
 
             var musicVolume = SoundPlayer.MusicVolume;
 

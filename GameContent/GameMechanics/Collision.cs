@@ -73,108 +73,157 @@ namespace WiiPlayTanksRemake.GameContent.GameMechanics
         }
 
 
-        public static void HandleCollisionSimple(Rectangle movingBox, Rectangle collidingBox, ref Vector2 velocity, ref Vector3 position)
+        public static void HandleCollisionSimple(Rectangle movingBox, Rectangle collidingBox, ref Vector2 velocity, ref Vector3 position, bool setpos = true)
         {
-            var offset = Vector2.Zero;
+            var offset = velocity;
 
-            for (int i = 0; i < 1; i++)
+            CollisionInfo collisionInfo = new();
+
+            collisionInfo.tValue = 1f;
+            if (IsColliding(movingBox, collidingBox, velocity, out var info))
             {
-                CollisionInfo collisionInfo = new();
+                if (info.tValue < collisionInfo.tValue)
+                    collisionInfo = info;
+            }
 
-                collisionInfo.tValue = 1f;
-                foreach (var block in Cube.cubes)
-                {
-                    if (block != null)
-                    {
-                        if (IsColliding(movingBox, block.collider2d, velocity, out var info))
-                        {
-                            if (info.tValue < collisionInfo.tValue)
-                                collisionInfo = info;
-                        }
-                    }
-                }
+            var pos = position.FlattenZ();
 
-                var pos = position.FlattenZ();
+            pos += offset * collisionInfo.tValue;
 
-                pos += offset * collisionInfo.tValue;
+            if (collisionInfo.tValue < 1)
+            {
+                pos -= Vector2.Dot(velocity, collisionInfo.normal) * collisionInfo.normal;
+                offset -= Vector2.Dot(offset, collisionInfo.normal) * collisionInfo.normal;
+                offset *= 1f - collisionInfo.tValue;
+            }
+            else
+                return;
 
-                if (collisionInfo.tValue < 1)
-                {
-                    pos -= Vector2.Dot(velocity, collisionInfo.normal) * collisionInfo.normal;
-                    offset -= Vector2.Dot(offset, collisionInfo.normal) * collisionInfo.normal;
-                    offset *= 1f - collisionInfo.tValue;
-                }
-                else
-                    break;
-
-
+            if (setpos)
+            {
                 position.X = pos.X;
                 position.Z = pos.Y;
             }
         }
-        public static void HandleCollisionSimple(Rectangle movingBox, Rectangle collidingBox, ref Vector2 velocity, ref Vector3 position, out CollisionDirection direction)
+        public static void HandleCollisionSimple(Rectangle movingBox, Rectangle collidingBox, ref Vector2 velocity, ref Vector3 position, out CollisionDirection direction, bool setpos = true)
         {
             direction = CollisionDirection.None;
-            var offset = Vector2.Zero;
+            var offset = velocity;
 
-            for (int i = 0; i < 1; i++)
+            CollisionInfo collisionInfo = new();
+
+            collisionInfo.tValue = 1f;
+            if (IsColliding(movingBox, collidingBox, velocity, out var info))
             {
-                CollisionInfo collisionInfo = new();
+                if (info.tValue < collisionInfo.tValue)
+                    collisionInfo = info;
+            }
 
-                collisionInfo.tValue = 1f;
-                foreach (var block in Cube.cubes)
-                {
-                    if (block != null)
-                    {
-                        if (IsColliding(movingBox, block.collider2d, velocity, out var info))
-                        {
-                            if (info.tValue < collisionInfo.tValue)
-                                collisionInfo = info;
-                        }
-                    }
-                }
+            var pos = position.FlattenZ();
 
-                var pos = position.FlattenZ();
+            pos += offset * collisionInfo.tValue;
 
-                pos += offset * collisionInfo.tValue;
+            if (collisionInfo.tValue < 1)
+            {
+                pos -= Vector2.Dot(velocity, collisionInfo.normal) * collisionInfo.normal;
+                offset -= Vector2.Dot(offset, collisionInfo.normal) * collisionInfo.normal;
+                offset *= 1f - collisionInfo.tValue;
+            }
+            else
+                return;
 
-                if (collisionInfo.tValue < 1)
-                {
-                    pos -= Vector2.Dot(velocity, collisionInfo.normal) * collisionInfo.normal;
-                    offset -= Vector2.Dot(offset, collisionInfo.normal) * collisionInfo.normal;
-                    offset *= 1f - collisionInfo.tValue;
-                }
-                else
-                    break;
-
-
+            if (setpos)
+            {
                 position.X = pos.X;
                 position.Z = pos.Y;
+            }
 
-                if (collisionInfo.normal.Y > 0)
+            if (collisionInfo.normal.Y > 0)
+            {
+                // ceil
+
+                direction = CollisionDirection.Up;
+            }
+            if (velocity.Y == 0f)
+            {
+                // floor
+
+                direction = CollisionDirection.Down;
+            }
+            if (collisionInfo.normal.X > 0)
+            {
+                // wall left
+
+                direction = CollisionDirection.Left;
+            }
+            if (collisionInfo.normal.X < 0)
+            {
+                // wall right
+
+                direction = CollisionDirection.Right;
+            }
+        }
+
+        public static void HandleCollisionSimple_ForBlocks(Rectangle movingBox, ref Vector2 velocity, ref Vector3 position, out CollisionDirection direction, bool setpos = true)
+        {
+            direction = CollisionDirection.None;
+            var offset = velocity;
+
+            CollisionInfo collisionInfo = new();
+
+            collisionInfo.tValue = 1f;
+
+            foreach (var b in Cube.cubes.Where(c => c is not null))
+            {
+                if (IsColliding(movingBox, b.collider2d, velocity, out var info))
                 {
-                    // ceil
-
-                    direction = CollisionDirection.Up;
+                    if (info.tValue < collisionInfo.tValue)
+                        collisionInfo = info;
                 }
-                if (velocity.Y == 0f)
-                {
-                    // floor
+            }
 
-                    direction = CollisionDirection.Down;
-                }
-                if (collisionInfo.normal.X > 0)
-                {
-                    // wall left
+            var pos = position.FlattenZ();
 
-                    direction = CollisionDirection.Left;
-                }
-                if (collisionInfo.normal.X < 0)
-                {
-                    // wall right
+            pos += offset * collisionInfo.tValue;
 
-                    direction = CollisionDirection.Right;
-                }
+            if (collisionInfo.tValue < 1)
+            {
+                pos -= Vector2.Dot(velocity, collisionInfo.normal) * collisionInfo.normal;
+                offset -= Vector2.Dot(offset, collisionInfo.normal) * collisionInfo.normal;
+                offset *= 1f - collisionInfo.tValue;
+            }
+            else
+                return;
+
+            if (setpos)
+            {
+                position.X = pos.X;
+                position.Z = pos.Y;
+            }
+
+            if (collisionInfo.normal.Y > 0)
+            {
+                // ceil
+
+                direction = CollisionDirection.Up;
+            }
+            if (velocity.Y == 0f)
+            {
+                // floor
+
+                direction = CollisionDirection.Down;
+            }
+            if (collisionInfo.normal.X > 0)
+            {
+                // wall left
+
+                direction = CollisionDirection.Left;
+            }
+            if (collisionInfo.normal.X < 0)
+            {
+                // wall right
+
+                direction = CollisionDirection.Right;
             }
         }
 

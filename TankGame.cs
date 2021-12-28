@@ -29,7 +29,71 @@ namespace WiiPlayTanksRemake
         public float MusicVolume { get; set; } = 0;
         public float EffectsVolume { get; set; } = 0;
     }
+    public class Camera
+    {
+        private Matrix _viewMatrix;
+        private Matrix _projectionMatrix;
 
+        private Vector3 _position;
+
+        private bool IsOmnicient { get; set; }
+
+        public float _fov = MathHelper.ToRadians(90);
+
+        public static GraphicsDevice GraphicsDevice { get; set; }
+
+        public Camera() 
+        {
+            if (GraphicsDevice is null)
+                throw new Exception("Please assign a proper graphics device for the camera to use.");
+
+            _viewMatrix = Matrix.CreatePerspectiveFieldOfView(_fov, GraphicsDevice.Viewport.AspectRatio, 1f, 3000f);
+            _projectionMatrix = Matrix.CreateOrthographic(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, -2000f, 5000f);
+        }
+
+        public Matrix GetView() => _viewMatrix;
+        public Matrix GetProjection() => _projectionMatrix;
+
+        public Camera SetToYawPitchRoll(float yaw, float pitch, float roll)
+        {
+            _viewMatrix *= Matrix.CreateFromYawPitchRoll(yaw, pitch, roll);
+            return this;
+        }
+
+        public Camera SetOmni(bool omni)
+        {
+            IsOmnicient = omni;
+
+            return this;
+        }
+
+        public Vector3 GetPosition() => _position;
+
+        public Camera SetPosition(Vector3 pos)
+        {
+            _position = pos;
+            return this;
+        }
+
+        public Camera SetFov(float fov)
+        {
+            _fov = fov;
+            _viewMatrix = Matrix.CreatePerspectiveFieldOfView(fov, GraphicsDevice.Viewport.AspectRatio, 0.01f, 3000f);
+            return this;
+        }
+
+        public Camera Crunch()
+        {
+
+            return this;
+        }
+
+        public Camera Stretch()
+        {
+
+            return this;
+        }
+    }
     public class TankGame : Game
     {
 
@@ -57,6 +121,7 @@ namespace WiiPlayTanksRemake
             }
         }
 
+        public Camera GameCamera;
 
         private static Stopwatch RenderStopwatch { get; } = new();
         private static Stopwatch UpdateStopwatch { get; } = new();
@@ -74,7 +139,6 @@ namespace WiiPlayTanksRemake
 
         public static Model TankModel_Player;
         public static Model TankModel_Enemy;
-
         public static Model CubeModel;
 
         public static TankGame Instance { get; private set; }
@@ -89,7 +153,7 @@ namespace WiiPlayTanksRemake
 
         public JsonHandler SettingsHandler;
 
-        public static Texture2D MagicPixel;
+        public static Texture2D WhitePixel;
 
         public static readonly string SaveDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "My Games", "WiiPlayTanksRemake");
 
@@ -142,6 +206,21 @@ namespace WiiPlayTanksRemake
 
         protected override void Initialize()
         {
+            Camera.GraphicsDevice = GraphicsDevice;
+
+            GameCamera = new Camera();
+
+            GameCamera.SetToYawPitchRoll(0.75f, 0, 0);
+
+            GameCamera.SetFov(2f);
+
+            GameCamera.SetPosition(GameCamera.GetPosition() + new Vector3(0, 100, 0));
+
+            //GameView = GameCamera.GetView();
+            //GameProjection = GameCamera.GetProjection();
+
+            // i hate myself impostor syndrom
+
             systems = ReflectionUtils.GetInheritedTypesOf<IGameSystem>();
             // TODO: Add your initialization logic here
             graphics.PreferredBackBufferWidth = 1920;
@@ -162,17 +241,12 @@ namespace WiiPlayTanksRemake
                 SettingsHandler = new(Settings, SaveDirectory + Path.DirectorySeparatorChar + "settings.json");
                 Settings = SettingsHandler.DeserializeAndSet<SettingsData>();
             }
+
             SoundPlayer.MusicVolume = Settings.MusicVolume / 100;
             SoundPlayer.SoundVolume = Settings.EffectsVolume / 100;
 
             GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(0.75f) * Matrix.CreateTranslation(0f, 0f, 1000f);
             GameProjection = Matrix.CreateOrthographic(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, -2000f, 5000f);
-
-            //GameProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45), GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000f);
-
-            //GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up);
-            // GameProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver2, GraphicsDevice.Viewport.AspectRatio, 1, 5000);
-            //GameProjection = Matrix.CreateOrthographicOffCenter(0, GameUtils.WindowWidth, GameUtils.WindowHeight, 0, -5000, 5000);//Matrix.CreateOrthographicOffCenter(0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, 0, -1, 5000);
 
             graphics.ApplyChanges();
 
@@ -197,7 +271,7 @@ namespace WiiPlayTanksRemake
             Fonts.Default = GameResources.GetGameResource<SpriteFont>("Assets/DefaultFont");
             spriteBatch = new SpriteBatch(GraphicsDevice);
             UITextures.UIPanelBackground = GameResources.GetGameResource<Texture2D>("Assets/UIPanelBackground");
-            MagicPixel = GameResources.GetGameResource<Texture2D>("Assets/MagicPixel");
+            WhitePixel = GameResources.GetGameResource<Texture2D>("Assets/MagicPixel");
 
             graphics.SynchronizeWithVerticalRetrace = true;
             WPTR.Initialize();
@@ -283,7 +357,7 @@ namespace WiiPlayTanksRemake
             // why do i need to call this????
 
             GameView = Matrix.CreateScale(zoom) * Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(0.75f + rotVec.Y) * Matrix.CreateRotationY(rotVec.X);
-
+            
             FixedUpdate(gameTime);
 
             LogicTime = UpdateStopwatch.Elapsed;

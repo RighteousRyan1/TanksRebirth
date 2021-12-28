@@ -123,17 +123,6 @@ namespace WiiPlayTanksRemake.GameContent
 
                     SetBlockTexture(mesh, "polygon33", BoundaryTextureContext.block_other_c);
                     SetBlockTexture(mesh, "polygon7", BoundaryTextureContext.block_shadow_b);
-                    //SetBlockTexture(mesh, "polygon20", BoundaryTextureContext.block_shadow_d);
-                    //SetBlockTexture(mesh, "polygon21", BoundaryTextureContext.block_shadow_b);
-
-                    //SetBlockTexture(mesh, "polygon54", BoundaryTextureContext.block_shadow_b);
-                    //SetBlockTexture(mesh, "polygon68", BoundaryTextureContext.block_shadow_d);
-
-                    //SetBlockTexture(mesh, "polygon54", BoundaryTextureContext.block_shadow_b);
-                    //SetBlockTexture(mesh, "polygon68", BoundaryTextureContext.block_shadow_d);
-                    //SetBlockTexture(mesh, "polygon8", BoundaryTextureContext.block_other_a);
-
-                    // SetBlockTexture(mesh, "polygon83", BoundaryTextureContext.ground);
                 }
 
                 /*
@@ -196,21 +185,6 @@ namespace WiiPlayTanksRemake.GameContent
                 block_shadow_d
             }
         }
-
-        /*public const float TANKS_MIN_X = -268;
-        public const float TANKS_MAX_X = 268;
-        public const float TANKS_MIN_Y = -155;
-        public const float TANKS_MAX_Y = 400;
-
-        public const float MIN_X = -278;
-        public const float MAX_X = 278;
-        public const float MIN_Y = -165;
-        public const float MAX_Y = 410;
-
-        public const float CUBE_MIN_X = MIN_X + Cube.FULLBLOCK_SIZE / 2;
-        public const float CUBE_MAX_X = MAX_X - Cube.FULLBLOCK_SIZE / 2;
-        public const float CUBE_MIN_Y = MIN_Y + Cube.FULLBLOCK_SIZE / 2;
-        public const float CUBE_MAX_Y = MAX_Y - Cube.FULLBLOCK_SIZE / 2;*/
 
         public const float TANKS_MIN_X = -313.2546f;
         public const float TANKS_MAX_X = 313.2546f;

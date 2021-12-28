@@ -11,7 +11,7 @@ namespace WiiPlayTanksRemake.GameContent
 {
     public sealed class Mine
     {
-        private static int maxMines = 200;
+        private static int maxMines = 500;
         public static Mine[] AllMines { get; } = new Mine[maxMines];
 
         public Tank owner;
@@ -185,7 +185,7 @@ namespace WiiPlayTanksRemake.GameContent
     {
         // model, blah blah blah
 
-        public const int MINE_EXPLOSIONS_MAX = 100;
+        public const int MINE_EXPLOSIONS_MAX = 500;
 
         public static MineExplosion[] explosions = new MineExplosion[MINE_EXPLOSIONS_MAX];
 

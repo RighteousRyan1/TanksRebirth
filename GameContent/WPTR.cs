@@ -21,19 +21,29 @@ namespace WiiPlayTanksRemake.GameContent
 {
     public class WPTR
     {
+
+        /*public struct FirstPersonInfo {
+            public Tank Host { get; set; }
+
+            public float watchDistance;
+
+            public Attaching CameraAttach { get; set; }
+
+            public float FOV { get; set; }
+
+            public enum Attaching
+            {
+                Soft,
+                Hard
+            }
+        }*/
+
         public static int timeUntilTankFunction;
 
         public const int MAX_AI_TANKS = 1000;
         public const int MAX_PLAYERS = 100;
-
-        // public static List<AITank> AllAITanks { get; } = new();
         public static AITank[] AllAITanks { get; } = new AITank[MAX_AI_TANKS];
-
-        // public static List<PlayerTank> AllPlayerTanks { get; } = new();
         public static PlayerTank[] AllPlayerTanks { get; } = new PlayerTank[MAX_PLAYERS];
-
-        // public static List<Tank> AllTanks { get; } = new();
-
         public static Tank[] AllTanks { get; } = new Tank[MAX_PLAYERS + MAX_AI_TANKS];
 
         public static Campaign VanillaCampaign { get; private set; } = new();
@@ -43,7 +53,6 @@ namespace WiiPlayTanksRemake.GameContent
         private static UIElement lastElementClicked;
 
         public static bool WindowBorderless { get; set; }
-
         public static bool InMission { get; set; } = false;
 
         public static Matrix UIMatrix => Matrix.CreateOrthographicOffCenter(0, TankGame.Instance.GraphicsDevice.Viewport.Width, TankGame.Instance.GraphicsDevice.Viewport.Height, 0, -1, 1);
@@ -133,6 +142,13 @@ namespace WiiPlayTanksRemake.GameContent
             if (Input.KeyJustPressed(Keys.OemQuotes))
             {
                 var m = new Shell(GameUtils.GetWorldPosition(GameUtils.MousePosition) + new Vector3(0, 11, 0), default, 0);
+            }
+            if (Input.KeyJustPressed(Keys.L))
+            {
+                var c = new Cube(Cube.BlockType.Wood, 1)
+                {
+                    position = GameUtils.GetWorldPosition(GameUtils.MousePosition)
+                };
             }
         }
 
@@ -253,52 +269,74 @@ namespace WiiPlayTanksRemake.GameContent
                 },
                 new Cube[]
                 {
-                    new(Cube.BlockType.Wood, 7),
-                    new(Cube.BlockType.Wood, 7),
-                    new(Cube.BlockType.Wood, 5),
-                    new(Cube.BlockType.Wood, 5),
-                    new(Cube.BlockType.Wood, 3),
-                    new(Cube.BlockType.Wood, 3),
+                    /*new(Cube.BlockType.Wood, 1),
+                    new(Cube.BlockType.Wood, 1),
+                    new(Cube.BlockType.Wood, 1),
+                    new(Cube.BlockType.Wood, 1),
+                    new(Cube.BlockType.Wood, 1),
+                    new(Cube.BlockType.Wood, 1),
                     new(Cube.BlockType.Wood, 2),
                     new(Cube.BlockType.Wood, 1),
                     new(Cube.BlockType.Wood, 1),
-
                     new(Cube.BlockType.Wood, 1),
                     new(Cube.BlockType.Wood, 1),
                     new(Cube.BlockType.Wood, 1),
-
                     new(Cube.BlockType.Wood, 1),
                     new(Cube.BlockType.Wood, 1),
                     new(Cube.BlockType.Wood, 1),
-                    new(Cube.BlockType.Wood, 1)
+                    new(Cube.BlockType.Wood, 1),
+                    new(Cube.BlockType.Wood, 1),
+                    new(Cube.BlockType.Wood, 1),
+                    new(Cube.BlockType.Wood, 1),
+                    new(Cube.BlockType.Wood, 1),
+                    new(Cube.BlockType.Wood, 1),
+                    new(Cube.BlockType.Wood, 1),
+                    new(Cube.BlockType.Wood, 1),
+                    new(Cube.BlockType.Wood, 1),
+                    new(Cube.BlockType.Wood, 1),
+                    new(Cube.BlockType.Wood, 1),
+                    new(Cube.BlockType.Wood, 1),
+                    new(Cube.BlockType.Wood, 1),*/
                 },
                 new CubeMapPosition[]
                 {
-                    new(0, 10),
-                    new(1, 10),
-                    new(2, 10),
-                    new(3, 10),
-                    new(4, 10),
-                    new(5, 10),
-                    new(6, 10),
-                    new(7, 10),
-                    new(8, 10),
-                    new(9, 10),
+                    /*new(4, 9),
+                    new(5, 9),
+                    new(6, 9),
+                    new(7, 9),
+                    new(8, 9),
+                    new(9, 9),
+                    new(10, 9),
+                    new(11, 9),
+                    new(12, 9),
+                    new(13, 9),
+                    new(14, 9),
+                    new(15, 9),
+                    new(16, 9),
+                    new(17, 9),
+                    new(18, 9),
+                    new(19, 9),
+                    new(20, 9),
+                    new(21, 9),
+                    new(22, 9),
 
-                    new(9, 11),
-                    new(9, 12),
-                    new(9, 13),
+                    new(13, 8),
+                    new(13, 7),
+                    new(13, 6),
+                    new(13, 5),
 
-                    new(9, 19),
-                    new(9, 18),
-                    new(9, 17),
-                    new(9, 16)
+                    new(13, 10),
+                    new(13, 11),
+                    new(13, 12),
+                    new(13, 13),
+                    new(13, 14),*/
                 });
-        // fix shitty mission init
+        // fix shitty mission init (innit?)
 
         public static void Initialize()
         {
-            // 26 x 18
+            // TankGame.Instance.IsFixedTimeStep = false;
+            // 26 x 18 (technically 27 x 19)
             InitDebugUi();
             GameShaders.Initialize();
 
@@ -319,7 +357,8 @@ namespace WiiPlayTanksRemake.GameContent
             myTank = new PlayerTank(PlayerType.Blue)
             {
                 Team = Team.Red,
-                position = new CubeMapPosition(new Random().Next(0, 27), new Random().Next(0, 21))
+                position = new CubeMapPosition(new Random().Next(0, 27), new Random().Next(0, 21)),
+                Dead = false
             };
             return myTank;
         }
@@ -392,7 +431,8 @@ namespace WiiPlayTanksRemake.GameContent
                 TankRotation = rot,
                 TurretRotation = rot,
                 Team = team,
-                position = new CubeMapPosition(new Random().Next(0, 27), new Random().Next(0, 20))
+                position = new CubeMapPosition(new Random().Next(0, 27), new Random().Next(0, 20)),
+                Dead = false
             };
         }
         public static AITank SpawnTankAtMouse(TankTier tier, Team team)
@@ -407,7 +447,8 @@ namespace WiiPlayTanksRemake.GameContent
                 TankRotation = rot,
                 TurretRotation = rot,
                 Team = team,
-                position = pos
+                position = pos,
+                Dead = false
             };
         }
         public static void SpawnTankPlethorae()
@@ -420,7 +461,8 @@ namespace WiiPlayTanksRemake.GameContent
                 {
                     TankRotation = rot,
                     TurretRotation = rot,
-                    position = random
+                    position = random,
+                    Dead = false
                 };
 
                 t.Team = (Team)new Random().Next(0, Enum.GetValues<Team>().Length);
@@ -489,12 +531,16 @@ namespace WiiPlayTanksRemake.GameContent
         {
             for (int i = 0; i < TankDeathMark.deathMarks.Length; i++)
                 TankDeathMark.deathMarks[i] = null;
+
+            TankDeathMark.total_death_marks = 0;
         }
 
         private static void ClearTankTracks(UIElement affectedElement)
         {
             for (int i = 0; i < TankFootprint.footprints.Length; i++)
                 TankFootprint.footprints[i] = null;
+
+            TankFootprint.total_treads_placed = 0;
         }
     }
 
