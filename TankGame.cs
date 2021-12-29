@@ -221,7 +221,7 @@ namespace WiiPlayTanksRemake
 
             // i hate myself impostor syndrom
 
-            systems = ReflectionUtils.GetInheritedTypesOf<IGameSystem>();
+            systems = ReflectionUtils.GetInheritedTypesOf<IGameSystem>(Assembly.GetExecutingAssembly());
             // TODO: Add your initialization logic here
             graphics.PreferredBackBufferWidth = 1920;
             graphics.PreferredBackBufferHeight = 1080;

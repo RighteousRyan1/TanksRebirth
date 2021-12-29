@@ -22,7 +22,9 @@ namespace WiiPlayTanksRemake.GameContent
         public Matrix View { get; set; }
         /// <summary>The projection from the screen to the <see cref="Model"/>.</summary>
         public Matrix Projection { get; set; }
-        /// <summary>Whether the tank has been destroyed or not.</summary>
+        /// <summary>Whether or not the tank has artillery-like function during gameplay.</summary>
+        public bool Stationary { get; set; }
+        /// <summary>Whether or not the tank has been destroyed or not.</summary>
         public bool Dead { get; set; }
         /// <summary>Whether or not the tank should become invisible at mission start.</summary>
         public bool Invisible { get; set; }
@@ -229,13 +231,14 @@ namespace WiiPlayTanksRemake.GameContent
 
     public enum Team
     {
-        Red     = 0, 
-        Blue    = 1,
-        Green   = 2,
-        Yellow  = 3,
-        Purple  = 4,
-        Orange  = 5,
-        Cyan    = 6,
-        Magenta = 7
+        NoTeam,
+        Red     = 1, 
+        Blue    = 2,
+        Green   = 3,
+        Yellow  = 4,
+        Purple  = 5,
+        Orange  = 6,
+        Cyan    = 7,
+        Magenta = 8
     }
 }
