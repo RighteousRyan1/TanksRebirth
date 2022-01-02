@@ -359,11 +359,15 @@ namespace WiiPlayTanksRemake.GameContent
 
         private static PowerupTemplate speed = new(1000, 50f, (tnk) => { tnk.MaxSpeed *= 2; });
         private static PowerupTemplate invis = new(1000, 50f, (tnk) => { tnk.Invisible = true; });
+        private static PowerupTemplate bigturn = new(1000, 50f, (tnk) => { tnk.MaximalTurn = 6.28f; tnk.TurningSpeed = 100f; });
+        private static PowerupTemplate homer = new(1000, 50f, (tnk) => { tnk.ShellHoming.radius = 150f; tnk.ShellHoming.speed = tnk.ShellSpeed; tnk.ShellHoming.power = 1f; });
 
         public static void Initialize()
         {
             new Powerup(speed).Spawn(default);
             new Powerup(invis).Spawn(new(0, 0, 300));
+            new Powerup(bigturn).Spawn(new(0, 0, -150));
+            new Powerup(homer).Spawn(new(-100, 0, 150));
             // TankGame.Instance.IsFixedTimeStep = false;
             // 26 x 18 (technically 27 x 19)
             InitDebugUi();
@@ -378,7 +382,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             LoadTnkScene();
 
-            Lighting.Dawn.Apply(false);
+            Lighting.Midnight.Apply(false);
 
             /*for (int i = 0; i < 3; i++)
                 SpawnTankInCrate(TankTier.Black, Team.Red, true);

@@ -1,9 +1,11 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using WiiPlayTanksRemake.Internals;
 using WiiPlayTanksRemake.Internals.Common.Utilities;
 
 namespace WiiPlayTanksRemake.GameContent
@@ -67,8 +69,8 @@ namespace WiiPlayTanksRemake.GameContent
         {
             if (HasOwner)
             {
-                AffectedTank.ApplyDefaults();
-                PowerupEffects?.Invoke(AffectedTank);
+               //  AffectedTank.ApplyDefaults();
+                // PowerupEffects?.Invoke(AffectedTank);
                 duration--;
                 if (duration <= 0)
                 {
@@ -92,6 +94,8 @@ namespace WiiPlayTanksRemake.GameContent
                 var pos = GeometryUtils.ConvertWorldToScreen(default, Matrix.CreateTranslation(position), TankGame.GameView, TankGame.GameProjection);
 
                 DebugUtils.DrawDebugString(TankGame.spriteBatch, this, pos, 3, centerIt: true);
+
+                TankGame.spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), GeometryUtils.CreateRectangleFromCenter((int)pos.X, (int)pos.Y, 25, 25), Color.White * 0.9f);
             }
             else
             {
@@ -105,9 +109,17 @@ namespace WiiPlayTanksRemake.GameContent
         {
             AffectedTank = recipient;
             InWorld = false;
+
+            PowerupEffects?.Invoke(AffectedTank);
         }
 
-        public override string ToString() => $"duration: {duration} | HasOwner: {HasOwner}" + (HasOwner ? $" | OwnerTier: {(AffectedTank as AITank).tier}" : "");
+        public override string ToString()
+        {
+            if (AffectedTank is PlayerTank)
+                return $"duration: {duration} | HasOwner: {HasOwner}" + (HasOwner ? $" | OwnerTier: {(AffectedTank as PlayerTank).PlayerType}" : "");
+            else
+                return $"duration: {duration} | HasOwner: {HasOwner}" + (HasOwner ? $" | OwnerTier: {(AffectedTank as AITank).tier}" : "");
+        }
     }
 
     public class PowerupTemplate

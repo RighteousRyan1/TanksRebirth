@@ -205,7 +205,7 @@ namespace WiiPlayTanksRemake.GameContent
                 {
                     if (owner != null)
                     {
-                        if (tank.Team == owner.Team && tank != owner)
+                        if (tank.Team == owner.Team && tank != owner && tank.Team != Team.NoTeam)
                             Destroy();
                         else
                         {

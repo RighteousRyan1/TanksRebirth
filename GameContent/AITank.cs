@@ -244,6 +244,7 @@ namespace WiiPlayTanksRemake.GameContent
                     RicochetCount = 1;
 
                     Invisible = false;
+                    ShellHoming = new();
 
                     TreadPitch = 0;
                     MaxSpeed = 0f;
@@ -279,6 +280,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                     Invisible = false;
                     Stationary = false;
+                    ShellHoming = new();
 
                     TreadPitch = 0.085f;
                     MaxSpeed = 1.2f;
@@ -311,6 +313,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                     Invisible = false;
                     Stationary = false;
+                    ShellHoming = new();
 
                     TreadPitch = 0.085f;
                     MaxSpeed = 1f;
@@ -346,6 +349,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                     Invisible = false;
                     Stationary = false;
+                    ShellHoming = new();
 
                     TreadPitch = 0.085f;
                     MaxSpeed = 1.8f;
@@ -383,6 +387,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                     Invisible = false;
                     Stationary = false;
+                    ShellHoming = new();
 
                     TreadPitch = 0.1f;
                     MaxSpeed = 1.2f;
@@ -413,6 +418,7 @@ namespace WiiPlayTanksRemake.GameContent
                     RicochetCount = 2;
 
                     Invisible = false;
+                    ShellHoming = new();
 
                     TreadPitch = 0;
                     MaxSpeed = 0f;
@@ -446,6 +452,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                     Invisible = false;
                     Stationary = false;
+                    ShellHoming = new();
 
                     TreadPitch = -0.2f;
                     MaxSpeed = 1.8f;
@@ -484,6 +491,7 @@ namespace WiiPlayTanksRemake.GameContent
                     RicochetCount = 1;
 
                     Stationary = false;
+                    ShellHoming = new();
 
                     TreadPitch = -0.18f;
                     MaxSpeed = 1.2f;
@@ -525,6 +533,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                     Invisible = false;
                     Stationary = false;
+                    ShellHoming = new();
 
                     TreadPitch = -0.26f;
                     MaxSpeed = 2.4f;
@@ -559,6 +568,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                     Invisible = false;
                     Stationary = true;
+                    ShellHoming = new();
 
                     AiParams.moveFromMineTime = 100;
                     AiParams.minePlacementChance = 0.05f;
@@ -586,6 +596,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                     Invisible = false;
                     Stationary = false;
+                    ShellHoming = new();
 
                     TreadPitch = 0.2f;
                     MaxSpeed = 1.6f;
@@ -625,6 +636,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                     Invisible = false;
                     Stationary = false;
+                    ShellHoming = new();
 
                     TreadPitch = 0.08f;
                     MaxSpeed = 1.4f;
@@ -664,6 +676,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                     Invisible = false;
                     Stationary = false;
+                    ShellHoming = new();
 
                     TreadPitch = 0.08f;
                     MaxSpeed = 1.2f;
@@ -703,6 +716,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                     Invisible = false;
                     Stationary = false;
+                    ShellHoming = new();
 
                     TreadPitch = -0.08f;
                     MaxSpeed = 3.2f;
@@ -744,6 +758,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                     Invisible = false;
                     Stationary = false;
+                    ShellHoming = new();
 
                     TreadPitch = -0.2f;
                     MaxSpeed = 2f;
@@ -773,6 +788,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                     Stationary = true;
                     Invisible = true;
+                    ShellHoming = new();
                     break;
 
                 case TankTier.Gold:
@@ -799,6 +815,7 @@ namespace WiiPlayTanksRemake.GameContent
                     RicochetCount = 1;
 
                     Stationary = false;
+                    ShellHoming = new();
 
                     TreadPitch = -0.1f;
                     MaxSpeed = 0.9f;
@@ -841,6 +858,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                     Invisible = false;
                     Stationary = false;
+                    ShellHoming = new();
 
                     TreadPitch = -0.26f;
                     MaxSpeed = 3f;
@@ -882,6 +900,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                     Invisible = false;
                     Stationary = false;
+                    ShellHoming = new();
 
                     TreadPitch = 0.07f;
                     MaxSpeed = 0.9f;
@@ -897,6 +916,7 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.inaccuracy = 0.01f;
 
                     Invisible = false;
+                    ShellHoming = new();
 
                     ShellCooldown = 40;
                     ShellLimit = 6;
@@ -934,6 +954,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                     Stationary = false;
                     Invisible = false;
+                    ShellHoming = new();
 
                     treadSoundTimer = 4;
                     _treadPlaceTimer = 4;
@@ -1126,7 +1147,7 @@ namespace WiiPlayTanksRemake.GameContent
             }
             enactBehavior = () =>
             {
-                var enemy = WPTR.AllTanks.FirstOrDefault(tnk => tnk is not null && !tnk.Dead && tnk.Team != Team && tnk != this);
+                var enemy = WPTR.AllTanks.FirstOrDefault(tnk => tnk is not null && !tnk.Dead && (tnk.Team != Team || tnk.Team == Team.NoTeam) && tnk != this);
 
                 if (doAim)
                 {

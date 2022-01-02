@@ -113,6 +113,8 @@ namespace WiiPlayTanksRemake.GameContent
             Acceleration = 0.3f;
             TurningSpeed = 0.1f;
             MaximalTurn = 0.8f;
+
+            ShellHoming = new();
         }
 
         internal void Update()
@@ -239,26 +241,6 @@ namespace WiiPlayTanksRemake.GameContent
         {
             if (PlaceMine.JustPressed)
                 LayMine();
-            /*if (controlDown.IsPressed)
-            {
-                playerControl_isBindPressed = true;
-                velocity.Z += Acceleration;
-            }
-            if (controlUp.IsPressed)
-            {
-                playerControl_isBindPressed = true;
-                velocity.Z -= Acceleration;
-            }
-            if (controlLeft.IsPressed)
-            {
-                playerControl_isBindPressed = true;
-                velocity.X -= Acceleration;
-            }
-            if (controlRight.IsPressed)
-            {
-                playerControl_isBindPressed = true;
-                velocity.X += Acceleration;
-            }*/
 
             IsTurning = false;
             bool rotationMet = false;
@@ -492,6 +474,9 @@ namespace WiiPlayTanksRemake.GameContent
 
             for (int i = 0; i < info.Length; i++)
                 DebugUtils.DrawDebugString(TankGame.spriteBatch, info[i], GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, (info.Length * 20) + (i * 20)), 1, centerIt: true);
+
+            if (Invisible && WPTR.InMission)
+                return;
 
             RenderModel();
         }
