@@ -361,6 +361,8 @@ namespace WiiPlayTanksRemake
 
             Input.HandleInput();
 
+            IngameUI.UpdateButtons();
+
             if (IsActive && !IngameUI.Paused)
             {
                 //GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(GameUtils.MousePosition.X / GameUtils.WindowWidth * 5);
