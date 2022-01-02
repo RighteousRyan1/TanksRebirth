@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using WiiPlayTanksRemake.Internals;
 
 namespace WiiPlayTanksRemake.GameContent.Systems
 {
@@ -35,7 +36,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems
         {
             if (CachedMissions[++CurrentMissionId].Tanks is null || ++CurrentMissionId >= 100)
             {
-                WPTR.ClientLog.Write($"CachedMissions[{++CurrentMissionId}] is not existent.", Internals.Logger.LogType.Warn);
+                WPTR.ClientLog.Write($"CachedMissions[{++CurrentMissionId}] is not existent.", LogType.Warn);
                 return;
             }
 
@@ -44,6 +45,12 @@ namespace WiiPlayTanksRemake.GameContent.Systems
 
         public void SetupLoadedMission()
         {
+            if (CurrentMission.Tanks is null && CurrentMission.Cubes is null)
+            {
+                WPTR.ClientLog.Write("No mission loaded. Mission setup canceled.", LogType.Error);
+                return;
+            }
+
             for (int a = 0; a < WPTR.AllTanks.Length; a++)
                 WPTR.AllTanks[a] = null;
 
@@ -58,7 +65,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems
 
                 WPTR.AllTanks[i] = tnk;
 
-                WPTR.ClientLog.Write($"loaded: {(tnk as AITank).tier}", Internals.Logger.LogType.Debug);
+                WPTR.ClientLog.Write($"loaded: {(tnk as AITank).tier}", LogType.Debug);
             }
 
             if (CurrentMission.Cubes.Length > 0)
@@ -103,16 +110,16 @@ namespace WiiPlayTanksRemake.GameContent.Systems
                 cRed++;
 
             if (cBlue > 1 || cRed > 1)
-                WPTR.ClientLog.Write("Only one color allowed per-player.", Internals.Logger.LogType.Error, true);
+                WPTR.ClientLog.Write("Only one color allowed per-player.", LogType.Error, true);
 
             if (cBlue + cRed > 2)
-                WPTR.ClientLog.Write("As of now, only 2 local players are supported.", Internals.Logger.LogType.Error, true);
+                WPTR.ClientLog.Write("As of now, only 2 local players are supported.", LogType.Error, true);
 
             if (obstacles.Length > 0 && cubePositions.Length == 0)
-                WPTR.ClientLog.Write("Obstacles are present but not assigned positions.", Internals.Logger.LogType.Error, true);
+                WPTR.ClientLog.Write("Obstacles are present but not assigned positions.", LogType.Error, true);
 
             if (tanks.Length > 0 && spawnPositions.Length == 0)
-                WPTR.ClientLog.Write("Tanks are present but not assigned positions.", Internals.Logger.LogType.Error, true);
+                WPTR.ClientLog.Write("Tanks are present but not assigned positions.", LogType.Error, true);
 
             Tanks = tanks;
             SpawnPositions = spawnPositions;

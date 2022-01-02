@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace WiiPlayTanksRemake.Internals.Common.Utilities
 {
@@ -157,6 +158,12 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
             int rand = new Random().Next(0, input.Length);
 
             return input[rand];
+        }
+        public static TEnum PickRandom<TEnum>() where TEnum : struct, Enum
+        {
+            int rand = new Random().Next(0, Enum.GetNames<TEnum>().Length);
+
+            return (TEnum)(object)rand;
         }
         public static List<T> PickRandom<T>(T[] input, int amount)
         {
@@ -364,32 +371,6 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
             return radians;
         }
 
-        public static void SetDefaultGameLighting(this BasicEffect effect)
-        {
-            effect.LightingEnabled = true;
-            effect.PreferPerPixelLighting = true;
-            effect.EnableDefaultLighting();
-
-            effect.DirectionalLight0.Enabled = true;
-            effect.DirectionalLight1.Enabled = false;
-            effect.DirectionalLight2.Enabled = false;
-
-            effect.DirectionalLight0.Direction = new Vector3(0, -1, -1);
-        }
-        public static void SetDefaultGameLighting_IngameEntities(this BasicEffect effect)
-        {
-            effect.LightingEnabled = true;
-            effect.PreferPerPixelLighting = true;
-            effect.EnableDefaultLighting();
-
-            effect.DirectionalLight0.Enabled = true;
-            effect.DirectionalLight1.Enabled = true;
-            effect.DirectionalLight2.Enabled = false;
-
-            effect.DirectionalLight0.Direction = Vector3.Down;
-            effect.DirectionalLight1.Direction = new Vector3(0, -1, 1);
-        }
-
         public static Vector3 GetWorldPosition(Vector2 screenCoords)
         {
             Plane gamePlane = new(Vector3.UnitY, 0);
@@ -406,188 +387,7 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
 
             return mouseRay.Position + mouseRay.Direction * distance.Value;
         }
-    }
 
-    public static class CollectionUtils
-    {
-        public static ICollection<T> Combine<T>(this ICollection<T> collection1, ICollection<T> mergeTo)
-        {
-            foreach (var item in collection1)
-                mergeTo.Add(item);
-
-            return mergeTo;
-        }
-    }
-
-    public static class GeometryUtils
-    {
-        // sigh no work
-
-        /// <summary>
-        /// Create a ray on a 2D plane either covering the X and Y axes of a plane or the X and Z axes of a plane.
-        /// </summary>
-        /// <param name="origin">The origin of this <see cref="Ray"/>.</param>
-        /// <param name="destination">The place that will be the termination of this <see cref="Ray"/>.</param>
-        /// <param name="zAxis">Whether or not this <see cref="Ray"/> will go along the Y or Z axis from the X axis.</param>
-        /// <returns>The ray created.</returns>
-        public static Ray CreateRayFrom2D(Vector2 origin, Vector2 destination, float excludedAxisOffset = 0f, bool zAxis = true)
-        {
-            Ray ray;
-
-            if (zAxis)
-                ray = new Ray(new Vector3(origin.X, excludedAxisOffset, origin.Y), new Vector3(destination.X, 0, destination.Y));
-            else
-                ray = new Ray(new Vector3(origin.X, origin.Y, excludedAxisOffset), new Vector3(destination.X, destination.Y, 0));
-
-            return ray;
-        }
-        /// <summary>
-        /// Create a ray on a 2D plane either covering the X and Y axes of a plane or the X and Z axes of a plane. This creates on the 3D plane with a 3D vector and moves along a 2D axis.
-        /// </summary>
-        /// <param name="origin">The origin of this <see cref="Ray"/>.</param>
-        /// <param name="destination">The place that will be the termination of this <see cref="Ray"/>.</param>
-        /// <param name="zAxis">Whether or not this <see cref="Ray"/> will go along the Y or Z axis from the X axis.</param>
-        /// <returns>The ray created.</returns>
-        public static Ray CreateRayFrom2D(Vector3 origin, Vector2 destination, float excludedAxisOffset = 0f, bool zAxis = true)
-        {
-            Ray ray;
-
-            if (zAxis)
-                ray = new Ray(origin + new Vector3(0, excludedAxisOffset, 0), new Vector3(destination.X, 0, destination.Y));
-            else
-                ray = new Ray(origin + new Vector3(0, 0, excludedAxisOffset), new Vector3(destination.X, destination.Y, 0));
-
-            return ray;
-        }
-
-        public static Ray Reflect(Ray ray, float? distanceAlongRay)
-        {
-            if (!distanceAlongRay.HasValue)
-                throw new NullReferenceException("The distance along the ray was null.");
-
-            var distPos = ray.Position * Vector3.Normalize(ray.Direction) * distanceAlongRay.Value;
-
-            var reflected = Vector3.Reflect(ray.Direction, distPos);
-
-            return new(distPos, reflected);
-        }
-
-        /*public static Ray Reflect(Ray ray, Vector3 normal, float distance)
-        {
-            var distPos = ray.Position * Vector3.Normalize(ray.Direction) * distance;
-
-            var reflected = Vector3.Reflect(ray.Direction, normal);
-
-            return new(distPos, reflected);
-        }*/
-
-        public static Ray Flatten(this Ray ray, bool zAxis = true)
-        {
-            Ray usedRay;
-
-            if (zAxis)
-                usedRay = new Ray(new Vector3(ray.Position.X, 0, ray.Position.Y), new Vector3(ray.Direction.X, 0, ray.Direction.Y));
-            else
-                usedRay = new Ray(new Vector3(ray.Position.X, ray.Position.Y, 0), new Vector3(ray.Direction.X, ray.Direction.Y, 0));
-
-            return usedRay;
-        }
-
-        public static Vector2 ConvertWorldToScreen(Vector3 position, Matrix world, Matrix view, Matrix projection)
-        {
-            var viewport = TankGame.Instance.GraphicsDevice.Viewport;
-
-            var proj = viewport.Project(position, projection, view, world);
-
-            return new(proj.X, proj.Y);
-        }
-        public static Vector3 ConvertScreenToWorld(Vector3 position, Matrix world, Matrix view, Matrix projection)
-        {
-            var viewport = TankGame.Instance.GraphicsDevice.Viewport;
-
-            var proj = viewport.Unproject(position, projection, view, world);
-
-            return proj;
-        }
-
-        public static float GetPiRandom()
-        {
-            var seed = new Random().Next(0, 4);
-
-            return seed switch 
-            { 
-                0 => 0,
-                1 => MathHelper.PiOver2,
-                2 => MathHelper.Pi,
-                3 => MathHelper.Pi + MathHelper.PiOver2,
-                _ => 0
-            };
-        }
-
-        public static float GetQuarterRotation(sbyte rot)
-        {
-            return MathHelper.PiOver2 * rot;
-        }
-    }
-    public static class SoundPlayer
-    {
-        public static float MasterVolume = 1f;
-        public static float MusicVolume = 0.5f;
-        public static float SoundVolume = 1f;
-        public static float AmbientVolume = 1f;
-        public static SoundEffectInstance PlaySoundInstance(SoundEffect fromSound, SoundContext context, float volume = 1f)
-        {
-            switch (context)
-            {
-                case SoundContext.Music:
-                    volume *= MusicVolume * MasterVolume;
-                    break;
-                case SoundContext.Sound:
-                    volume *= SoundVolume * MasterVolume;
-                    break;
-                case SoundContext.Ambient:
-                    volume *= AmbientVolume * MasterVolume;
-                    break;
-            }
-            var sfx = fromSound.CreateInstance();
-            sfx.Volume = volume;
-            sfx?.Play();
-
-            return sfx;
-        }
-        public static SoundEffectInstance PlaySoundInstance(SoundEffect fromSound, SoundContext context, Vector3 position, Matrix world, float volume = 1f)
-        {
-            switch (context)
-            {
-                case SoundContext.Music:
-                    volume *= MusicVolume * MasterVolume;
-                    break;
-                case SoundContext.Sound:
-                    volume *= SoundVolume * MasterVolume;
-                    break;
-                case SoundContext.Ambient:
-                    volume *= AmbientVolume * MasterVolume;
-                    break;
-            }
-
-            var pos2d = GeometryUtils.ConvertWorldToScreen(position, world, TankGame.GameView, TankGame.GameProjection);
-
-            var lerp = GameUtils.ModifiedInverseLerp(-(GameUtils.WindowWidth / 2), GameUtils.WindowWidth + GameUtils.WindowWidth / 2, pos2d.X, true);
-
-            var sfx = fromSound.CreateInstance();
-            sfx.Volume = volume;
-
-            // System.Diagnostics.Debug.WriteLine(sfx.Pan);
-            sfx?.Play();
-            sfx.Pan = lerp;
-
-            return sfx;
-        }
-    }
-    public enum SoundContext : byte
-    {
-        Music,
-        Sound,
-        Ambient
+        public static Color ToColor(this Vector3 vec) => new((int)Math.Round(vec.X * 255), (int)Math.Round(vec.Y * 255), (int)Math.Round(vec.Z * 255));
     }
 }

@@ -4,7 +4,9 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using WiiPlayTanksRemake.Graphics;
 using WiiPlayTanksRemake.Internals;
+using WiiPlayTanksRemake.Internals.Common.Framework.Audio;
 using WiiPlayTanksRemake.Internals.Common.Utilities;
 
 namespace WiiPlayTanksRemake.GameContent
@@ -85,7 +87,8 @@ namespace WiiPlayTanksRemake.GameContent
             }
             foreach (var tank in WPTR.AllTanks.Where(tank => tank is not null && Vector3.Distance(tank.position, position) < explosionRadius))
             {
-                tank.Destroy();
+                if (!tank.Dead)
+                    tank.Destroy();
             }
 
             foreach (var mine in AllMines.Where(mine => mine is not null && Vector3.Distance(mine.position, position) < explosionRadius && !mine.Detonated))
@@ -151,6 +154,9 @@ namespace WiiPlayTanksRemake.GameContent
                     effect.World = World;
                     effect.View = View;
                     effect.Projection = Projection;
+
+                    effect.SetDefaultGameLighting_IngameEntities();
+
                     effect.TextureEnabled = true;
 
                     if (mesh == MineMesh)
@@ -158,14 +164,12 @@ namespace WiiPlayTanksRemake.GameContent
                         if (!tickRed)
                         {
                             effect.EmissiveColor = new(1, 1, 0);
-                            effect.DiffuseColor = new(1, 1, 0);
                             effect.SpecularColor = new(1, 1, 0);
                             effect.FogColor = new(1, 1, 0);
                         }
                         else
                         {
                             effect.EmissiveColor = new(1, 0, 0);
-                            effect.DiffuseColor = new(1, 0, 0);
                             effect.SpecularColor = new(1, 0, 0);
                             effect.FogColor = new(1, 0, 0);
                         }
@@ -174,8 +178,6 @@ namespace WiiPlayTanksRemake.GameContent
                     }
                     else
                         effect.Texture = _envTexture;
-
-                    effect.EnableDefaultLighting();
                 }
                 mesh.Draw();
             }
@@ -274,7 +276,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                     effect.Texture = mask;
 
-                    effect.EnableDefaultLighting();
+                    effect.SetDefaultGameLighting_IngameEntities();
 
                     if (tickAtMax <= 0)
                         effect.Alpha -= 0.05f;

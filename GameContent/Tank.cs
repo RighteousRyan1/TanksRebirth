@@ -5,6 +5,7 @@ using WiiPlayTanksRemake.Enums;
 using WiiPlayTanksRemake.Internals;
 using WiiPlayTanksRemake.Internals.Common.Utilities;
 using WiiPlayTanksRemake.Internals.Core.Interfaces;
+using WiiPlayTanksRemake.Graphics;
 
 namespace WiiPlayTanksRemake.GameContent
 {
@@ -73,6 +74,8 @@ namespace WiiPlayTanksRemake.GameContent
         public Vector2 Velocity2D => velocity.FlattenZ();
 
         public Vector3 position, velocity;
+
+        public virtual void ApplyDefaults() { }
 
         public Rectangle CollisionBox2D => new((int)(Position2D.X - TNK_WIDTH / 2), (int)(Position2D.Y - TNK_WIDTH / 2), TNK_WIDTH, TNK_HEIGHT);
 
@@ -150,16 +153,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                     effect.Texture = texture;
 
-                    effect.EnableDefaultLighting();
-
-                    effect.DirectionalLight0.Enabled = true;
-                    effect.DirectionalLight1.Enabled = true;
-                    effect.DirectionalLight2.Enabled = false;
-
-                    effect.DirectionalLight0.Direction = new Vector3(0, -0.6f, -0.6f);
-                    effect.DirectionalLight1.Direction = new Vector3(0, -0.6f, 0.6f);
-
-                    effect.SpecularColor = new Vector3(0, 0, 0);
+                    effect.SetDefaultGameLighting_IngameEntities();
                 }
                 mesh.Draw();
             }
@@ -222,7 +216,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                     effect.Texture = texture;
 
-                    effect.EnableDefaultLighting();
+                    effect.SetDefaultGameLighting_IngameEntities();
                 }
                 mesh.Draw();
             }

@@ -11,6 +11,8 @@ namespace WiiPlayTanksRemake.GameContent.UI
 {
     public static class IngameUI
     {
+        public static bool InOptions { get; set; }
+
         public static Keybind Pause = new("Up", Keys.Escape);
 
         public static UIPanel MissionInfoBar;
@@ -21,7 +23,15 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
         public static UIImageButton QuitButton;
 
+        public static UIImageButton OptionsButton;
+
         public static bool Paused { get; set; }
+
+        public const int SETTINGS_BUTTONS_CT = 10;
+
+        public static UIImageButton[] SettingsButtons = new UIImageButton[SETTINGS_BUTTONS_CT];
+
+        // TODO: make rect scissor work -> get powerups to be pickupable
 
         internal static void Initialize()
         {
@@ -30,18 +40,33 @@ namespace WiiPlayTanksRemake.GameContent.UI
             MissionInfoBar = new((uiPanel, spriteBatch) => spriteBatch.DrawString(font, "Mission 1", uiPanel.Hitbox.Center.ToVector2(), Color.White, 0, drawOrigin, 1.5f, SpriteEffects.None, 1f));
             MissionInfoBar.BackgroundColor = Color.Red;
             MissionInfoBar.SetDimensions(650, 1000, 500, 50);
+
+            
+
             ResumeButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Resume", Color.WhiteSmoke));
-            ResumeButton.SetDimensions(700, 200, 500, 150);
+            ResumeButton.SetDimensions(700, 100, 500, 150);
             ResumeButton.OnMouseClick += ResumeButton_OnMouseClick;
+
             RestartButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Start Over", Color.WhiteSmoke));
-            RestartButton.SetDimensions(700, 450, 500, 150);
+            RestartButton.SetDimensions(700, 350, 500, 150);
+
+            OptionsButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Options", Color.WhiteSmoke));
+            OptionsButton.SetDimensions(700, 600, 500, 150);
+            OptionsButton.OnMouseClick += OptionsButton_OnMouseClick;
+
             QuitButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Quit", Color.WhiteSmoke));
-            QuitButton.SetDimensions(700, 700, 500, 150);
+            QuitButton.SetDimensions(700, 850, 500, 150);
             QuitButton.OnMouseClick += QuitButton_OnMouseClick;
 
             ResumeButton.Visible = false;
             RestartButton.Visible = false;
             QuitButton.Visible = false;
+            OptionsButton.Visible = false;
+        }
+
+        private static void OptionsButton_OnMouseClick(Internals.UI.UIElement affectedElement)
+        {
+            InOptions = true;
         }
 
         private static void QuitButton_OnMouseClick(Internals.UI.UIElement affectedElement)
@@ -97,9 +122,50 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 Paused = !Paused;
             }
 
+            if (InOptions)
+            {
+
+            }
+
             ResumeButton.Visible = Paused;
             RestartButton.Visible = Paused;
             QuitButton.Visible = Paused;
+            OptionsButton.Visible = Paused;
+        }
+
+        public class Options
+        {
+            public SettingsButton<float> MasterVolButton;
+        }
+
+        public class SettingsButton<TSource>
+        {
+            public UIImageButton button;
+
+            public string name;
+
+            private static int num_sets_btns;
+
+            public SettingsButton(bool setDefaultDimensions = true)
+            {
+                if (setDefaultDimensions)
+                    SetDefDims();
+                num_sets_btns++;
+            }
+
+            public void ApplyChanges(ref TSource value)
+            {
+
+            }
+
+            public void SetDefDims()
+            {
+                button = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, name, Color.WhiteSmoke));
+                button.SetDimensions(new Rectangle(100, 100 * num_sets_btns, GameUtils.WindowWidth - 200, 50));
+
+                button.HasScissor = true;
+                button.Scissor = GeometryUtils.CreateRectangleFromCenter(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2, GameUtils.WindowWidth / 4, (int)(GameUtils.WindowHeight * 0.4f));
+            }
         }
     }
 }

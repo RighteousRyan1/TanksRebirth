@@ -5,7 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using WiiPlayTanksRemake.GameContent.GameMechanics;
+using WiiPlayTanksRemake.Graphics;
 using WiiPlayTanksRemake.Internals;
+using WiiPlayTanksRemake.Internals.Common.Framework.Audio;
 using WiiPlayTanksRemake.Internals.Common.Utilities;
 
 namespace WiiPlayTanksRemake.GameContent
@@ -151,7 +153,7 @@ namespace WiiPlayTanksRemake.GameContent
                 // this is hacky as fuck fix tomorrow
 
                 if (coldir != Collision.CollisionDirection.None)
-                    WPTR.ClientLog.Write(coldir, Logger.LogType.Debug);
+                    WPTR.ClientLog.Write(coldir, LogType.Debug);
             }
             lifeTime++;
 
@@ -273,7 +275,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                         effect.Texture = _shellTexture;
 
-                        effect.EnableDefaultLighting();
+                        effect.SetDefaultGameLighting_IngameEntities();
                     }
                     mesh.Draw();
                 }

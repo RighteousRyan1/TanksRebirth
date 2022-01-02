@@ -5,6 +5,13 @@ using System;
 
 namespace WiiPlayTanksRemake.Internals
 {
+    public enum LogType
+    {
+        Info,
+        Warn,
+        Error,
+        Debug
+    }
     public sealed class Logger : IDisposable
     {
         private readonly string writeTo;
@@ -18,14 +25,6 @@ namespace WiiPlayTanksRemake.Internals
 
         private static FileStream fStream;
         private static StreamWriter sWriter;
-
-        public enum LogType
-        {
-            Info,
-            Warn,
-            Error,
-            Debug
-        }
 
         public Logger(string writeFile, string name) {
             assembly = Assembly.GetExecutingAssembly();

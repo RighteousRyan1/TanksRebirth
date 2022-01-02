@@ -12,6 +12,7 @@ using Microsoft.Xna.Framework.Audio;
 using WiiPlayTanksRemake.Internals.Common;
 using WiiPlayTanksRemake.Internals.Core.Interfaces;
 using WiiPlayTanksRemake.GameContent.GameMechanics;
+using WiiPlayTanksRemake.Internals.Common.Framework.Audio;
 
 namespace WiiPlayTanksRemake.GameContent
 {
@@ -63,26 +64,15 @@ namespace WiiPlayTanksRemake.GameContent
 
             PlayerType = playerType;
 
-            ShellCooldown = 5;
-            ShootStun = 5;
-            ShellSpeed = 3f;
-            MaxSpeed = 1.8f; //1.8f;
-            RicochetCount = 1;
-            ShellLimit = 5;
-            MineLimit = 2;
-            MineStun = 8;
-            Invisible = false;
-            Acceleration = 0.3f;
-            TurningSpeed = 0.1f;
-            MaximalTurn = 0.8f;
+            ApplyDefaults();
 
             if (playerType == PlayerType.Red)
                 ShootPitch = 0.1f;
 
-            ShellHoming.cooldown = 30;
-            ShellHoming.power = 1f;
-            ShellHoming.radius = 200f;
-            ShellHoming.speed = 3f;
+            //ShellHoming.cooldown = 30;
+            //ShellHoming.power = 1f;
+            //ShellHoming.radius = 200f;
+            //ShellHoming.speed = 3f;
 
             if (MaxSpeed > 5f)
                 _treadPlaceTimer = 1;
@@ -107,6 +97,22 @@ namespace WiiPlayTanksRemake.GameContent
 
             //WPTR.AllPlayerTanks.Add(this);
             //WPTR.AllTanks.Add(this);
+        }
+
+        public override void ApplyDefaults()
+        {
+            ShellCooldown = 5;
+            ShootStun = 5;
+            ShellSpeed = 3f;
+            MaxSpeed = 1.8f;
+            RicochetCount = 1;
+            ShellLimit = 5;
+            MineLimit = 2;
+            MineStun = 8;
+            Invisible = false;
+            Acceleration = 0.3f;
+            TurningSpeed = 0.1f;
+            MaximalTurn = 0.8f;
         }
 
         internal void Update()
@@ -267,6 +273,10 @@ namespace WiiPlayTanksRemake.GameContent
                 rotationMet = true;
             else
             {
+                if (TankGame.GameUpdateTime % _treadPlaceTimer * 3 == 0)
+                {
+                    LayFootprint(false);
+                }
                 velocity = Vector3.Zero;
                 IsTurning = true;
             }

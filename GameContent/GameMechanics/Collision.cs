@@ -75,7 +75,7 @@ namespace WiiPlayTanksRemake.GameContent.GameMechanics
 
         public static void HandleCollisionSimple(Rectangle movingBox, Rectangle collidingBox, ref Vector2 velocity, ref Vector3 position, bool setpos = true)
         {
-            var offset = velocity;
+            var offset = Vector2.Zero;
 
             CollisionInfo collisionInfo = new();
 

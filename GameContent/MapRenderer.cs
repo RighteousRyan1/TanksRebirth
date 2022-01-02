@@ -1,64 +1,57 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 using System.Linq;
+using WiiPlayTanksRemake.Graphics;
 using WiiPlayTanksRemake.Internals;
+using WiiPlayTanksRemake.Internals.Common.Utilities;
 
 namespace WiiPlayTanksRemake.GameContent
 {
+    public enum MapTheme
+    {
+        Default,
+        Forest
+    }
     public static class MapRenderer
     {
         public static Matrix viewMatrix;
         public static Matrix projectionMatrix;
         public static Matrix worldMatrix;
 
-        public class FloorRenderer
+        public static MapTheme Theme { get; set; } = MapTheme.Forest;
+
+        public static class FloorRenderer
         {
             public static Model FloorModelBase;
 
             public static Model FloorModelBase2;
 
+            public static float scale = 1f;
+
+            private static string floorDir;
+
             public static void LoadFloor()
             {
-                FloorModelBase = GameResources.GetGameResource<Model>("Assets/floor_big");
-                FloorModelBase2 = GameResources.GetGameResource<Model>("Assets/floor_big");
 
-                foreach (var mesh in FloorModelBase.Meshes)
+                switch (Theme)
                 {
-                    foreach (BasicEffect effect in mesh.Effects)
-                    {
-                        effect.TextureEnabled = true;
+                    case MapTheme.Default:
+                        Lighting.ColorBrightness = 1f;
+                        floorDir = "Assets/textures/ingame/ground";
 
-                        effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/ingame/ground");
+                        FloorModelBase = GameResources.GetGameResource<Model>("Assets/floor_big");
+                        FloorModelBase2 = GameResources.GetGameResource<Model>("Assets/floor_big");
+                        break;
 
-                        effect.LightingEnabled = true;
-                        effect.PreferPerPixelLighting = true;
-                        effect.EnableDefaultLighting();
+                    case MapTheme.Forest:
+                        scale = 1.5f;
 
-                        effect.DirectionalLight0.Enabled = true;
-                        effect.DirectionalLight1.Enabled = false;
-                        effect.DirectionalLight2.Enabled = false;
+                        floorDir = "Assets/forest/grassfloor";
 
-                        effect.DirectionalLight0.Direction = Vector3.Down;
-                    }
-                }
-                foreach (var mesh in FloorModelBase2.Meshes)
-                {
-                    foreach (BasicEffect effect in mesh.Effects)
-                    {
-                        effect.TextureEnabled = true;
+                        FloorModelBase = GameResources.GetGameResource<Model>("Assets/floor_big");
 
-                        effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/ingame/ground");
-
-                        effect.LightingEnabled = true;
-                        effect.PreferPerPixelLighting = true;
-                        effect.EnableDefaultLighting();
-
-                        effect.DirectionalLight0.Enabled = true;
-                        effect.DirectionalLight1.Enabled = false;
-                        effect.DirectionalLight2.Enabled = false;
-
-                        effect.DirectionalLight0.Direction = Vector3.Down;
-                    }
+                        break;
                 }
             }
 
@@ -66,30 +59,58 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 foreach (var mesh in FloorModelBase.Meshes)
                 {
-                    foreach (IEffectMatrices matrices in mesh.Effects)
+                    foreach (BasicEffect effect in mesh.Effects)
                     {
-                        matrices.View = viewMatrix;
-                        matrices.Projection = projectionMatrix;
-                        matrices.World = worldMatrix;
+                        effect.View = viewMatrix;
+                        effect.Projection = projectionMatrix;
+                        effect.World = worldMatrix * Matrix.CreateScale(scale);
+
+                        effect.SetDefaultGameLighting();
+
+                        effect.DirectionalLight0.Enabled = true;
+                        effect.DirectionalLight1.Enabled = false;
+                        effect.DirectionalLight2.Enabled = false;
+
+                        effect.DirectionalLight0.Direction = Vector3.Down;
+
+                        effect.TextureEnabled = true;
+
+                        effect.Texture = GameResources.GetGameResource<Texture2D>(floorDir);
                     }
 
                     mesh.Draw();
                 }
-                foreach (var mesh in FloorModelBase2.Meshes)
-                {
-                    foreach (IEffectMatrices matrices in mesh.Effects)
-                    {
-                        matrices.View = viewMatrix;
-                        matrices.Projection = projectionMatrix;
-                        matrices.World = worldMatrix * Matrix.CreateScale(2) * Matrix.CreateTranslation(0, -0.5f, 0);
-                    }
 
-                    mesh.Draw();
+                if (FloorModelBase2 is not null)
+                {
+                    foreach (var mesh in FloorModelBase2.Meshes)
+                    {
+                        foreach (BasicEffect effect in mesh.Effects)
+                        {
+                            effect.View = viewMatrix;
+                            effect.Projection = projectionMatrix;
+                            effect.World = worldMatrix * Matrix.CreateScale(2) * Matrix.CreateTranslation(0, -0.5f, 0);
+
+                            effect.SetDefaultGameLighting();
+
+                            effect.DirectionalLight0.Enabled = true;
+                            effect.DirectionalLight1.Enabled = false;
+                            effect.DirectionalLight2.Enabled = false;
+
+                            effect.DirectionalLight0.Direction = Vector3.Down;
+
+                            effect.TextureEnabled = true;
+
+                            effect.Texture = GameResources.GetGameResource<Texture2D>(floorDir);
+                        }
+
+                        mesh.Draw();
+                    }
                 }
             }
         }
 
-        public class BoundsRenderer
+        public static class BoundsRenderer
         {
             private static BoundingBox[] enclosingBoxes = new BoundingBox[4];
 
@@ -97,32 +118,95 @@ namespace WiiPlayTanksRemake.GameContent
 
             public static Model BoundaryModel;
 
+            public static Vector3[] treePositions = new Vector3[]
+            {
+                new() { X = 390f, Y = 0f, Z = 200f },
+                new() { X = -360f, Y = 0f, Z = 350f },
+                new() { X = -372f, Y = 0f, Z = 150f },
+                new() { X = 372f, Y = 0f, Z = -100f },
+                new() { X = -20f, Y = 0f, Z = -210f },
+                new() { X = 50f, Y = 0f, Z = 500f },
+
+                new() { X = -325f, Y = 0f, Z = -180f },
+            };
+            public static Vector3[] stumpPositions = new Vector3[]
+            {
+                new() { X = 35f, Y = 0f, Z = -185f }
+            };
+
+            // position, inverted
+            public static Vector3[] logPilePositions = new Vector3[]
+            {
+                new() { X = -260f, Y = 0f, Z = -135f },
+                new() { X = -120f, Y = 0f, Z = -135f },
+                new() { X = 0f, Y = 0f, Z = -135f },
+                new() { X = 120f, Y = 0f, Z = -135f },
+                new() { X = 240f, Y = 0f, Z = -135f },
+
+                new() { X = 338f, Y = 0f, Z = -90f },
+                new() { X = 338f, Y = 0f, Z = 30f },
+                new() { X = 338f, Y = 0f, Z = 150f },
+                new() { X = 338f, Y = 0f, Z = 270f },
+                new() { X = 338f, Y = 0f, Z = 390f },
+
+                new() { X = -260f, Y = 0f, Z = 400f },
+                new() { X = -120f, Y = 0f, Z = 400f },
+                new() { X = 0f, Y = 0f, Z = 400f },
+                new() { X = 120f, Y = 0f, Z = 400f },
+                new() { X = 240f, Y = 0f, Z = 400f },
+
+                new() { X = -338f, Y = 0f, Z = -90f },
+                new() { X = -338f, Y = 0f, Z = 30f },
+                new() { X = -338f, Y = 0f, Z = 150f },
+                new() { X = -338f, Y = 0f, Z = 270f },
+                new() { X = -338f, Y = 0f, Z = 390f },
+            };
+
+            public static bool[] logPileInverted = new bool[]
+            {
+                false, true, false, true, false,
+
+                false, true, false, true, false,
+
+                false, true, false, true, false,
+
+                false, true, false, true, false
+            };
+
+            public static float[] logPileOrientations = new float[]
+            {
+                0, 0, 0, 0, 0,
+
+                MathHelper.PiOver2, MathHelper.PiOver2, MathHelper.PiOver2, MathHelper.PiOver2, MathHelper.PiOver2,
+
+                MathHelper.Pi, MathHelper.Pi, MathHelper.Pi, MathHelper.Pi, MathHelper.Pi,
+
+                MathHelper.PiOver2, MathHelper.PiOver2, MathHelper.PiOver2, MathHelper.PiOver2, MathHelper.PiOver2
+            };
+
+            public static Model TreeModel;
+            public static Model TreeStumpModel;
+            public static Model LogPileModel;
+
             public static void LoadBounds()
             {
-                BoundaryModel = GameResources.GetGameResource<Model>("Assets/outerbounds_big");
-
-                foreach (var mesh in BoundaryModel.Meshes)
+                switch (Theme)
                 {
-                    foreach (BasicEffect effect in mesh.Effects)
-                    {
-                        effect.LightingEnabled = true;
-                        effect.PreferPerPixelLighting = true;
-                        effect.EnableDefaultLighting();
+                    case MapTheme.Default:
+                        BoundaryModel = GameResources.GetGameResource<Model>("Assets/outerbounds_big");
 
-                        effect.TextureEnabled = true;
+                        foreach (var mesh in BoundaryModel.Meshes)
+                        {
+                            SetBlockTexture(mesh, "polygon33", BoundaryTextureContext.block_other_c);
+                            SetBlockTexture(mesh, "polygon7", BoundaryTextureContext.block_shadow_b);
+                        }
+                        break;
+                    case MapTheme.Forest:
+                        TreeModel = GameResources.GetGameResource<Model>("Assets/forest/tree");
+                        TreeStumpModel = GameResources.GetGameResource<Model>("Assets/forest/tree_stump");
+                        LogPileModel = GameResources.GetGameResource<Model>("Assets/forest/logpile");
 
-                        effect.DirectionalLight0.Enabled = true;
-                        effect.DirectionalLight1.Enabled = true;
-                        effect.DirectionalLight2.Enabled = false;
-
-                        effect.DirectionalLight0.Direction = new Vector3(0, -0.7f, -0.7f);
-                        effect.DirectionalLight1.Direction = new Vector3(0, -0.7f, 0.7f);
-
-                        effect.SpecularColor = new Vector3(0, 0, 0);
-                    }
-
-                    SetBlockTexture(mesh, "polygon33", BoundaryTextureContext.block_other_c);
-                    SetBlockTexture(mesh, "polygon7", BoundaryTextureContext.block_shadow_b);
+                        break;
                 }
 
                 /*
@@ -144,16 +228,96 @@ namespace WiiPlayTanksRemake.GameContent
 
             public static void RenderBounds()
             {
-                foreach (var mesh in BoundaryModel.Meshes)
+                switch (Theme)
                 {
-                    foreach (IEffectMatrices matrices in mesh.Effects)
-                    {
-                        matrices.View = viewMatrix;
-                        matrices.Projection = projectionMatrix;
-                        matrices.World = worldMatrix;
-                    }
+                    case MapTheme.Default:
+                        foreach (var mesh in BoundaryModel.Meshes)
+                        {
+                            foreach (BasicEffect effect in mesh.Effects)
+                            {
+                                effect.View = viewMatrix;
+                                effect.Projection = projectionMatrix;
+                                effect.World = worldMatrix;
 
-                    mesh.Draw();
+                                effect.SetDefaultGameLighting();
+                            }
+
+                            mesh.Draw();
+                        }
+                        break;
+                    case MapTheme.Forest:
+                        for (int i = 0; i < treePositions.Length; i++)
+                        {
+                            var position = treePositions[i];
+
+                            foreach (var mesh in TreeModel.Meshes)
+                            {
+                                foreach (BasicEffect effect in mesh.Effects)
+                                {
+                                    effect.View = viewMatrix;
+                                    effect.Projection = projectionMatrix;
+                                    effect.World = Matrix.CreateRotationX(-MathHelper.PiOver2) * Matrix.CreateRotationY(MathHelper.Pi) * Matrix.CreateTranslation(position);
+
+                                    effect.TextureEnabled = true;
+
+                                   if (mesh.Name == "Log")
+                                       effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/forest/tree_log_tex");
+                                   else
+                                       effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/forest/grassfloor");
+
+                                    effect.SetDefaultGameLighting();
+                                }
+
+                                mesh.Draw();
+                            }
+                        }
+                        for (int i = 0; i < stumpPositions.Length; i++)
+                        {
+                            var position = stumpPositions[i];
+
+                            foreach (var mesh in TreeStumpModel.Meshes)
+                            {
+                                foreach (BasicEffect effect in mesh.Effects)
+                                {
+                                    effect.View = viewMatrix;
+                                    effect.Projection = projectionMatrix;
+                                    effect.World = Matrix.CreateScale(10) * Matrix.CreateRotationX(-MathHelper.PiOver2) * Matrix.CreateRotationY(MathHelper.Pi) * Matrix.CreateTranslation(position + new Vector3(0, 10, 0));
+
+                                    effect.TextureEnabled = true;
+
+                                    effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/forest/tree_log_tex");
+
+                                    effect.SetDefaultGameLighting();
+                                }
+
+                                mesh.Draw();
+                            }
+                        }
+                        for (int i = 0; i < logPilePositions.Length; i++)
+                        {
+                            var position = logPilePositions[i];
+
+                            var invert = logPileInverted[i];
+
+                            foreach (var mesh in LogPileModel.Meshes)
+                            {
+                                foreach (BasicEffect effect in mesh.Effects)
+                                {
+                                    effect.View = viewMatrix;
+                                    effect.Projection = projectionMatrix;
+                                    effect.World = Matrix.CreateScale(50, 20, 50) * Matrix.CreateRotationX(-MathHelper.PiOver2) * Matrix.CreateFromYawPitchRoll((invert ? MathHelper.Pi : 0) + logPileOrientations[i], 0, 0) * Matrix.CreateTranslation(position);
+
+                                    effect.TextureEnabled = true;
+
+                                    effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/forest/tree_log_tex");
+
+                                    effect.SetDefaultGameLighting();
+                                }
+
+                                mesh.Draw();
+                            }
+                        }
+                        break;
                 }
             }
 

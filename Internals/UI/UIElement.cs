@@ -7,6 +7,9 @@ namespace WiiPlayTanksRemake.Internals.UI
 {
     public abstract class UIElement
     {
+        public bool HasScissor { get; set; }
+        public Rectangle Scissor = new(-int.MaxValue, -int.MaxValue, 0, 0);
+
         public delegate void MouseEvent(UIElement affectedElement);
 
         private Vector2 InternalPosition;
@@ -54,6 +57,12 @@ namespace WiiPlayTanksRemake.Internals.UI
             InternalSize = new Vector2(width, height);
             Recalculate();
         }
+        public void SetDimensions(Rectangle rect)
+        {
+            InternalPosition = new Vector2(rect.X, rect.Y);
+            InternalSize = new Vector2(rect.Width, rect.Height);
+            Recalculate();
+        }
 
         public void Recalculate() {
             Position = InternalPosition;
@@ -63,9 +72,30 @@ namespace WiiPlayTanksRemake.Internals.UI
         public virtual void Draw(SpriteBatch spriteBatch) {
             if (!Visible)
                 return;
+            if (!HasScissor)
+            {
+                DrawSelf(spriteBatch);
+                DrawChildren(spriteBatch);
+            }
+            else
+            {
+                var rastState = new RasterizerState
+                {
+                    ScissorTestEnable = true
+                };
 
-            DrawSelf(spriteBatch);
-            DrawChildren(spriteBatch);
+                TankGame.Instance.GraphicsDevice.RasterizerState = rastState;
+
+                TankGame.Instance.GraphicsDevice.ScissorRectangle = Scissor;
+
+                spriteBatch.Begin(rasterizerState: rastState);
+
+                DrawSelf(spriteBatch);
+                DrawChildren(spriteBatch);
+
+                spriteBatch.End();
+                // draw with schissor
+            }
         }
 
         public void Initialize() {

@@ -7,12 +7,17 @@ using WiiPlayTanksRemake.Enums;
 using Microsoft.Xna.Framework;
 using WiiPlayTanksRemake.Internals.Common.Utilities;
 using System.IO;
+using WiiPlayTanksRemake.Internals.Common.Framework.Audio;
 
 namespace WiiPlayTanksRemake.GameContent.Systems
 {
     public static class TankMusicSystem
     {
         public static TankTier TierHighest => AITank.GetHighestTierActive();
+
+        // TODO: ambience n stuff - remove music in forests
+
+        public static Music forestAmbience;
 
         public static void Update()
         {
@@ -38,7 +43,15 @@ namespace WiiPlayTanksRemake.GameContent.Systems
                 _ => 1f
             };
 
-            var musicVolume = SoundPlayer.MusicVolume;
+
+
+            if (MapRenderer.Theme == MapTheme.Forest)
+            {
+                forestAmbience.volume = GameConfig.AmbientVolume;
+                return;
+            }
+
+            var musicVolume = GameConfig.MusicVolume;
 
             foreach (var song in songs.Where(sng => sng is not null))
                 song.volume = 0f;
@@ -210,6 +223,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems
 
         public static void LoadMusic()
         {
+            #region Load
             brown = Music.CreateMusicTrack("BrownTank", "Assets/music/brown", 0.5f);
 
             ash1 = Music.CreateMusicTrack("AshTank1", "Assets/music/ash1", 0.5f);
@@ -275,8 +289,10 @@ namespace WiiPlayTanksRemake.GameContent.Systems
 
             obsidian = Music.CreateMusicTrack("ObsidianTank", "Assets/music/obsidian", 0.5f);
 
+            #endregion
+
             songs = new Music[]
-{
+            {
                 brown,
                 ash1, ash2,
                 marine1, marine2,
@@ -296,7 +312,12 @@ namespace WiiPlayTanksRemake.GameContent.Systems
                 emerald1, emerald2, emerald3, emerald4,
                 gold1, gold2, gold3,
                 obsidian
-};
+            };
+        }
+
+        public static void LoadAmbienceTracks()
+        {
+            forestAmbience = Music.CreateMusicTrack("Forest Ambient", "Assets/sounds/ambient/forestnight", 1f);
         }
 
         public static void PlayMusic()
@@ -324,12 +345,17 @@ namespace WiiPlayTanksRemake.GameContent.Systems
                 obsidian
             };
 
+
             foreach (var song in songs)
                 song?.Play();
+
+            if (MapRenderer.Theme == MapTheme.Forest)
+                forestAmbience?.Play();
         }
 
         public static void PauseAll()
         {
+            forestAmbience?.Pause();
             foreach (var song in songs)
                 if (!song.Track.IsPaused())
                     song?.Pause();
@@ -337,6 +363,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems
 
         public static void ResumeAll()
         {
+            forestAmbience?.Play();
             foreach (var song in songs)
                 song?.Play();
         }

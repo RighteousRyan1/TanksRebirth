@@ -17,6 +17,9 @@ using System.Collections.Generic;
 using System.Linq;
 using WiiPlayTanksRemake.Internals.Common.IO;
 using System.Diagnostics;
+using WiiPlayTanksRemake.GameContent.UI;
+using WiiPlayTanksRemake.Internals.Common.Framework.Audio;
+using WiiPlayTanksRemake.Graphics;
 
 namespace WiiPlayTanksRemake
 {
@@ -24,10 +27,12 @@ namespace WiiPlayTanksRemake
     // TODO: AI in the middle to far future
     // TODO: to some finishing touches to TankMusicSystem
 
-    public class SettingsData
+    public class GameConfig
     {
-        public float MusicVolume { get; set; } = 0;
-        public float EffectsVolume { get; set; } = 0;
+        public static float MasterVolume { get; set; } = 1f;
+        public static float MusicVolume { get; set; } = 0.5f;
+        public static float SoundVolume { get; set; } = 1f;
+        public static float AmbientVolume { get; set; } = 1f;
     }
     public class Camera
     {
@@ -75,10 +80,10 @@ namespace WiiPlayTanksRemake
             return this;
         }
 
-        public Camera SetFov(float fov)
+        public Camera SetFov(float degrees)
         {
-            _fov = fov;
-            _viewMatrix = Matrix.CreatePerspectiveFieldOfView(fov, GraphicsDevice.Viewport.AspectRatio, 0.01f, 3000f);
+            _fov = MathHelper.ToRadians(degrees);
+            _viewMatrix = Matrix.CreatePerspectiveFieldOfView(_fov, GraphicsDevice.Viewport.AspectRatio, 0.01f, 3000f);
             return this;
         }
 
@@ -149,7 +154,7 @@ namespace WiiPlayTanksRemake
 
         private static List<IGameSystem> systems = new();
 
-        public SettingsData Settings;
+        public GameConfig Settings;
 
         public JsonHandler SettingsHandler;
 
@@ -204,6 +209,19 @@ namespace WiiPlayTanksRemake
             return typeof(TextureCollection).GetField("_textures").GetValue(collection) as Texture2D[];
         }
 
+        public void LoadGraphicsSettings()
+        {
+            var rast = new RasterizerState();
+
+            // rast.ScissorTestEnable = true;
+
+            rast.MultiSampleAntiAlias = true;
+
+            rast.DepthClipEnable = false;
+
+            GraphicsDevice.RasterizerState = rast;
+            // GraphicsDevice.ScissorRectangle = new(10, 10, 300, 300);
+        }
         protected override void Initialize()
         {
             Camera.GraphicsDevice = GraphicsDevice;
@@ -212,9 +230,11 @@ namespace WiiPlayTanksRemake
 
             GameCamera.SetToYawPitchRoll(0.75f, 0, 0);
 
-            GameCamera.SetFov(2f);
+            GameCamera.SetFov(90);
 
             GameCamera.SetPosition(GameCamera.GetPosition() + new Vector3(0, 100, 0));
+
+            LoadGraphicsSettings();
 
             //GameView = GameCamera.GetView();
             //GameProjection = GameCamera.GetProjection();
@@ -227,11 +247,7 @@ namespace WiiPlayTanksRemake
             graphics.PreferredBackBufferHeight = 1080;
 
             if (!File.Exists(SaveDirectory + Path.DirectorySeparatorChar + "settings.json")) {
-                Settings = new()
-                {
-                    EffectsVolume = 100,
-                    MusicVolume = 100
-                };
+                Settings = new();
                 SettingsHandler = new(Settings, SaveDirectory + Path.DirectorySeparatorChar + "settings.json");
                 System.Text.Json.JsonSerializerOptions opts = new();
                 opts.WriteIndented = true;
@@ -239,11 +255,8 @@ namespace WiiPlayTanksRemake
             }
             else {
                 SettingsHandler = new(Settings, SaveDirectory + Path.DirectorySeparatorChar + "settings.json");
-                Settings = SettingsHandler.DeserializeAndSet<SettingsData>();
+                Settings = SettingsHandler.DeserializeAndSet<GameConfig>();
             }
-
-            SoundPlayer.MusicVolume = Settings.MusicVolume / 100;
-            SoundPlayer.SoundVolume = Settings.EffectsVolume / 100;
 
             GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(0.75f) * Matrix.CreateTranslation(0f, 0f, 1000f);
             GameProjection = Matrix.CreateOrthographic(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, -2000f, 5000f);
@@ -280,50 +293,14 @@ namespace WiiPlayTanksRemake
             {
                 foreach (BasicEffect effect in mesh.Effects)
                 {
-                    effect.LightingEnabled = true;
-                    effect.PreferPerPixelLighting = true;
-                    effect.EnableDefaultLighting();
-
-                    effect.DirectionalLight0.Enabled = true;
-                    effect.DirectionalLight1.Enabled = false;
-                    effect.DirectionalLight2.Enabled = false;
-
-                    if (mesh.Name == "polygon0.001")
-                        effect.DirectionalLight0.Enabled = false;
-                    else
-                    {
-                        effect.DirectionalLight1.Enabled = true;
-                        //effect.DirectionalLight0.Direction = Vector3.Down;
-                        effect.DirectionalLight0.Direction = new Vector3(0, -0.6f, -0.6f);
-                        effect.DirectionalLight1.Direction = new Vector3(0, -0.6f, 0.6f);
-                        // effect.DirectionalLight0.Direction = new(0, -1, -1);
-                    }
-                    effect.SpecularColor = new Vector3(0, 0, 0);
+                    effect.SetDefaultGameLighting_IngameEntities();
                 }
             }
             foreach (ModelMesh mesh in TankModel_Enemy.Meshes)
             {
                 foreach (BasicEffect effect in mesh.Effects)
                 {
-                    effect.LightingEnabled = true;
-                    effect.PreferPerPixelLighting = true;
-                    effect.EnableDefaultLighting();
-
-                    effect.DirectionalLight0.Enabled = true;
-                    effect.DirectionalLight1.Enabled = false;
-                    effect.DirectionalLight2.Enabled = false;
-
-                    if (mesh.Name == "polygon1")
-                        effect.DirectionalLight0.Enabled = false;
-                    else
-                    {
-                        effect.DirectionalLight1.Enabled = true;
-                        //effect.DirectionalLight0.Direction = Vector3.Down;
-                        effect.DirectionalLight0.Direction = new Vector3(0, -0.6f, -0.6f);
-                        effect.DirectionalLight1.Direction = new Vector3(0, -0.6f, 0.6f);
-                        // effect.DirectionalLight0.Direction = new(0, -1, -1);
-                    }
-                    effect.SpecularColor = new Vector3(0, 0, 0);
+                    effect.SetDefaultGameLighting_IngameEntities();
                 }
             }
 
@@ -332,7 +309,7 @@ namespace WiiPlayTanksRemake
 
             s.Stop();
 
-            WPTR.ClientLog.Write($"Content loaded in {time}.", Logger.LogType.Debug);
+            WPTR.ClientLog.Write($"Content loaded in {time}.", LogType.Debug);
         }
 
         Vector2 rotVec;
@@ -364,7 +341,7 @@ namespace WiiPlayTanksRemake
 
             UpdateStopwatch.Stop();
 
-            LogicFPS = Math.Round(1 / gameTime.ElapsedGameTime.TotalSeconds, 4);
+            LogicFPS = Math.Round(1f / gameTime.ElapsedGameTime.TotalSeconds, 4);
         }
 
         private static void UpdateGameSystems()
@@ -376,14 +353,17 @@ namespace WiiPlayTanksRemake
         public void FixedUpdate(GameTime gameTime)
         {
             // ... still working this one out.
-            if (IsActive)
+            Window.IsBorderless = WPTR.WindowBorderless;
+
+            GameUpdateTime++;
+
+            GameShaders.UpdateShaders();
+
+            Input.HandleInput();
+
+            if (IsActive && !IngameUI.Paused)
             {
                 //GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(GameUtils.MousePosition.X / GameUtils.WindowWidth * 5);
-                Window.IsBorderless = WPTR.WindowBorderless;
-
-                GameUpdateTime++;
-
-                Input.HandleInput();
 
                 UpdateGameSystems();
 
@@ -396,18 +376,16 @@ namespace WiiPlayTanksRemake
                     if (Array.IndexOf(WPTR.AllAITanks, tnk) > -1)
                         tnk?.Destroy();
                 }
-
-                Input.OldKeySnapshot = Input.CurrentKeySnapshot;
-                Input.OldMouseSnapshot = Input.CurrentMouseSnapshot;
-                Input.OldGamePadSnapshot = Input.CurrentGamePadSnapshot;
-
-                base.Update(gameTime);
             }
+            Input.OldKeySnapshot = Input.CurrentKeySnapshot;
+            Input.OldMouseSnapshot = Input.CurrentMouseSnapshot;
+            Input.OldGamePadSnapshot = Input.CurrentGamePadSnapshot;
             foreach (var music in Music.AllMusic)
                 music?.Update();
         }
         protected override void Draw(GameTime gameTime)
         {
+
             RenderStopwatch.Start();
 
             GraphicsDevice.Clear(Color.Black);
@@ -415,7 +393,7 @@ namespace WiiPlayTanksRemake
             spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied);
 
             spriteBatch.DrawString(Fonts.Default, "Debug Level: " + DebugUtils.CurDebugLabel, new Vector2(10), Color.White, 0f, default, 0.6f, default, default);
-            DebugUtils.DrawDebugString(spriteBatch, "Memory Used: " + MemoryParser.FromMegabytes(TotalMemoryUsed) + " MB", new(8, GameUtils.WindowHeight * 0.18f));
+            DebugUtils.DrawDebugString(spriteBatch, $"Memory Used: {MemoryParser.FromMegabytes(TotalMemoryUsed)} MB", new(8, GameUtils.WindowHeight * 0.18f));
             graphics.GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
             WPTR.DoRender();
@@ -432,7 +410,7 @@ namespace WiiPlayTanksRemake
 
             RenderStopwatch.Stop();
 
-            RenderFPS = Math.Round(1 / gameTime.ElapsedGameTime.TotalSeconds, 4);
+            RenderFPS = Math.Round(1f / gameTime.ElapsedGameTime.TotalSeconds, 4);
         }
     }
     public static class Program

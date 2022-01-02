@@ -16,6 +16,8 @@ using WiiPlayTanksRemake.Internals.Core.Interfaces;
 using Microsoft.Xna.Framework.Graphics;
 using WiiPlayTanksRemake.Internals.Core;
 using WiiPlayTanksRemake.GameContent.UI;
+using WiiPlayTanksRemake.Graphics;
+using WiiPlayTanksRemake.Internals.Common.Framework.Audio;
 
 namespace WiiPlayTanksRemake.GameContent
 {
@@ -87,9 +89,13 @@ namespace WiiPlayTanksRemake.GameContent
             foreach (var expl in MineExplosion.explosions)
                 expl?.Update();
 
-            IngameUI.UpdateButtons();
+            foreach (var crate in CrateDrop.crates)
+                crate?.Update();
 
-            GameShaders.UpdateShaders();
+            foreach (var pu in Powerup.activePowerups)
+                pu?.Update();
+
+            IngameUI.UpdateButtons();
 
             if (Input.KeyJustPressed(Keys.Insert))
                 DebugUtils.DebuggingEnabled = !DebugUtils.DebuggingEnabled;
@@ -150,6 +156,11 @@ namespace WiiPlayTanksRemake.GameContent
                     position = GameUtils.GetWorldPosition(GameUtils.MousePosition)
                 };
             }
+            if (Input.KeyJustPressed(Keys.End))
+            {
+                SpawnCrateAtMouse();
+            }
+
         }
 
         public static int tankToSpawnType;
@@ -181,13 +192,26 @@ namespace WiiPlayTanksRemake.GameContent
 
             foreach (var expl in MineExplosion.explosions)
                 expl?.Render();
+
+            foreach (var crate in CrateDrop.crates)
+                crate?.Render();
+
+            foreach (var pu in Powerup.activePowerups)
+                pu?.Render();
+
             // TODO: Fix translation
             // TODO: Scaling with screen size.
 
             foreach (var element in UIElement.AllUIElements) {
                 //element.Position = Vector2.Transform(element.Position, UIMatrix * Matrix.CreateTranslation(element.Position.X, element.Position.Y, 0));
 
+                if (element.HasScissor)
+                    TankGame.spriteBatch.End();
+
                 element?.Draw(TankGame.spriteBatch);
+
+                if (element.HasScissor)
+                    TankGame.spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied);
             }
             tankToSpawnType = MathHelper.Clamp(tankToSpawnType, 1, Enum.GetValues<TankTier>().Length - 1);
             tankToSpawnTeam = MathHelper.Clamp(tankToSpawnTeam, 0, Enum.GetValues<Team>().Length - 1);
@@ -213,9 +237,9 @@ namespace WiiPlayTanksRemake.GameContent
             ChatSystem.DrawMessages();
 
             if (TankGame.Instance.IsActive) {
-                foreach (var element in UIElement.AllUIElements.ToList()) {
-                    DebugUtils.DrawDebugString(TankGame.spriteBatch, element.Hitbox, new(200, 200), 2);
-                    DebugUtils.DrawDebugString(TankGame.spriteBatch, GameUtils.MousePosition, new(200, 250), 2);
+                foreach (var element in UIElement.AllUIElements) {
+                    //DebugUtils.DrawDebugString(TankGame.spriteBatch, element.Hitbox, new(200, 200), 2);
+                    //DebugUtils.DrawDebugString(TankGame.spriteBatch, GameUtils.MousePosition, new(200, 250), 2);
                     if (!element.MouseHovering && element.Hitbox.Contains(GameUtils.MousePosition)) {
                         element?.MouseOver();
                         element.MouseHovering = true;
@@ -333,8 +357,13 @@ namespace WiiPlayTanksRemake.GameContent
                 });
         // fix shitty mission init (innit?)
 
+        private static PowerupTemplate speed = new(1000, 50f, (tnk) => { tnk.MaxSpeed *= 2; });
+        private static PowerupTemplate invis = new(1000, 50f, (tnk) => { tnk.Invisible = true; });
+
         public static void Initialize()
         {
+            new Powerup(speed).Spawn(default);
+            new Powerup(invis).Spawn(new(0, 0, 300));
             // TankGame.Instance.IsFixedTimeStep = false;
             // 26 x 18 (technically 27 x 19)
             InitDebugUi();
@@ -347,9 +376,25 @@ namespace WiiPlayTanksRemake.GameContent
 
             IngameUI.Initialize();
 
-            TankMusicSystem.LoadMusic();
-          
+            LoadTnkScene();
+
+            Lighting.Dawn.Apply(false);
+
+            /*for (int i = 0; i < 3; i++)
+                SpawnTankInCrate(TankTier.Black, Team.Red, true);
+
+            for (int i = 0; i < 2; i++)
+                SpawnTankInCrate(TankTier.Obsidian, Team.Blue, true);*/
+
+
             BeginIntroSequence();
+        }
+
+        public static void LoadTnkScene()
+        {
+            TankMusicSystem.LoadMusic();
+
+            TankMusicSystem.LoadAmbienceTracks();
         }
 
         public static PlayerTank SpawnMe()
@@ -363,6 +408,25 @@ namespace WiiPlayTanksRemake.GameContent
             return myTank;
         }
 
+        public static void SpawnTankInCrate(TankTier tierOverride = default, Team teamOverride = default, bool createEvenDrop = false)
+        {
+            var random = new CubeMapPosition(new Random().Next(0, 26), new Random().Next(0, 20));
+
+            var drop = CrateDrop.SpawnCrate(new(CubeMapPosition.Convert3D(random).X, 500 + (createEvenDrop ? 0 : new Random().Next(-300, 301)), CubeMapPosition.Convert3D(random).Z), 2f);
+            drop.scale = 1.25f;
+            drop.TankToSpawn = new AITank(tierOverride == default ? AITank.PICK_ANY_THAT_ARE_IMPLEMENTED() : tierOverride);
+            drop.TankToSpawn.Team = teamOverride == default ? GameUtils.PickRandom<Team>() : teamOverride; 
+        }
+
+        public static void SpawnCrateAtMouse()
+        {
+            var pos = GameUtils.GetWorldPosition(GameUtils.MousePosition);
+
+            var drop = CrateDrop.SpawnCrate(new(pos.X, 500, pos.Z), 2f);
+            drop.scale = 1.25f;
+            drop.TankToSpawn = new AITank(AITank.PICK_ANY_THAT_ARE_IMPLEMENTED());
+            drop.TankToSpawn.Team = GameUtils.PickRandom<Team>();
+        }
         public static void BeginIntroSequence()
         {
             timeUntilTankFunction = 180;
@@ -445,7 +509,8 @@ namespace WiiPlayTanksRemake.GameContent
             return new AITank(tier)
             {
                 TankRotation = rot,
-                TurretRotation = rot,
+                targetTankRotation = rot - MathHelper.Pi,
+                TurretRotation = rot - MathHelper.TwoPi,
                 Team = team,
                 position = pos,
                 Dead = false

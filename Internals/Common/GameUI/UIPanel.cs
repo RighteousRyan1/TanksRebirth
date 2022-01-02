@@ -19,7 +19,6 @@ namespace WiiPlayTanksRemake.Internals.Common.GameUI
             base.DrawSelf(spriteBatch);
 
             Texture2D texture = TankGame.UITextures.UIPanelBackground;
-
             int border = 12;
 
             int middleX = Hitbox.X + border;

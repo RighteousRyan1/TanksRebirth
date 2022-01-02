@@ -10,7 +10,7 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
             get
             {
                 if (DebugLevel < 0 || DebugLevel >= DebuggingNames.Length)
-                    return "Unknown";
+                    return $"Unknown - {DebugLevel}";
                 else
                     return DebuggingNames[DebugLevel];
             }
@@ -23,7 +23,7 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
             "General",
             "TankStats",
             "UIElements",
-            "TankRaymarches"
+            "Powerups"
         };
         public static void DrawDebugString(SpriteBatch sb, object info, Vector2 position, int level = 0, float scaleOverride = 1f, bool centerIt = false, bool beginSb = false)
         {
