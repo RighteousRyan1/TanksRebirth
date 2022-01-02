@@ -33,6 +33,15 @@ namespace WiiPlayTanksRemake
         public static float MusicVolume { get; set; } = 0.5f;
         public static float SoundVolume { get; set; } = 1f;
         public static float AmbientVolume { get; set; } = 1f;
+
+        #region Graphics Settings
+        public static int TankFootprintLimit { get; set; }
+        public static int PerPixelLighting { get; set; }
+        public static bool Vsync { get; set; }
+        public static bool BorderlessWindow { get; set; } = true;
+
+        #endregion
+
     }
     public class Camera
     {
@@ -178,49 +187,19 @@ namespace WiiPlayTanksRemake
         public TankGame() : base()
         {
             graphics = new(this);
+
             Internals.Core.ResolutionHandler.Initialize(graphics);
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
             Instance = this;
-            Window.Title = "Wii Play Tanks Remake";
+            Window.Title = "Tanks! Remake";
             Window.AllowUserResizing = true;
 
             graphics.SynchronizeWithVerticalRetrace = true;
 
             IsMouseVisible = false;
 
-            Window.IsBorderless = true;
-
-            // var firstTexture = GetFirstAvailable(ToTexArray(GraphicsDevice.Textures));
-        }
-
-        public int GetFirstAvailable<T>(ICollection<T> collection)
-        {
-            var index = collection.FirstOrDefault(elem => elem is null);
-
-            if (Array.IndexOf(collection.ToArray(), index) <= -1)
-                return -1;
-
-            return Array.IndexOf(collection.ToArray(), index);
-        }
-
-        public static ICollection<Texture2D> ToTexArray(TextureCollection collection)
-        {
-            return typeof(TextureCollection).GetField("_textures").GetValue(collection) as Texture2D[];
-        }
-
-        public void LoadGraphicsSettings()
-        {
-            var rast = new RasterizerState();
-
-            // rast.ScissorTestEnable = true;
-
-            rast.MultiSampleAntiAlias = true;
-
-            rast.DepthClipEnable = false;
-
-            GraphicsDevice.RasterizerState = rast;
-            // GraphicsDevice.ScissorRectangle = new(10, 10, 300, 300);
+            Window.IsBorderless = GameConfig.BorderlessWindow;
         }
         protected override void Initialize()
         {
@@ -234,15 +213,13 @@ namespace WiiPlayTanksRemake
 
             GameCamera.SetPosition(GameCamera.GetPosition() + new Vector3(0, 100, 0));
 
-            LoadGraphicsSettings();
-
             //GameView = GameCamera.GetView();
             //GameProjection = GameCamera.GetProjection();
 
             // i hate myself impostor syndrom
 
             systems = ReflectionUtils.GetInheritedTypesOf<IGameSystem>(Assembly.GetExecutingAssembly());
-            // TODO: Add your initialization logic here
+
             graphics.PreferredBackBufferWidth = 1920;
             graphics.PreferredBackBufferHeight = 1080;
 
@@ -277,9 +254,9 @@ namespace WiiPlayTanksRemake
 
             CubeModel = GameResources.GetGameResource<Model>("Assets/cube_stack");
 
-            TankModel_Enemy = GameResources.GetGameResource<Model>("Assets/tank_e_fix");
+            TankModel_Enemy = GameResources.GetGameResource<Model>("Assets/tank_e");
 
-            TankModel_Player = GameResources.GetGameResource<Model>("Assets/tank_p_fix");
+            TankModel_Player = GameResources.GetGameResource<Model>("Assets/tank_p");
 
             Fonts.Default = GameResources.GetGameResource<SpriteFont>("Assets/DefaultFont");
             spriteBatch = new SpriteBatch(GraphicsDevice);
@@ -352,9 +329,6 @@ namespace WiiPlayTanksRemake
 
         public void FixedUpdate(GameTime gameTime)
         {
-            // ... still working this one out.
-            Window.IsBorderless = WPTR.WindowBorderless;
-
             GameUpdateTime++;
 
             GameShaders.UpdateShaders();
@@ -371,12 +345,23 @@ namespace WiiPlayTanksRemake
 
                 WPTR.Update();
 
-                if (Input.KeyJustPressed(Keys.K))
-                {
-                    var tnk = WPTR.AllAITanks.FirstOrDefault(tank => tank is not null && !tank.Dead && tank.tier == AITank.GetHighestTierActive());
 
-                    if (Array.IndexOf(WPTR.AllAITanks, tnk) > -1)
-                        tnk?.Destroy();
+                foreach (var tnk in WPTR.AllTanks.Where(tnk => tnk is not null && !tnk.Dead))
+                {
+                    if (GameUtils.GetMouseToWorldRay().Intersects(tnk.CollisionBox).HasValue)
+                    {
+                        if (Input.KeyJustPressed(Keys.K))
+                        {
+                            // var tnk = WPTR.AllAITanks.FirstOrDefault(tank => tank is not null && !tank.Dead && tank.tier == AITank.GetHighestTierActive());
+
+                            if (Array.IndexOf(WPTR.AllAITanks, tnk) > -1)
+                                tnk?.Destroy();
+                        }
+
+                        tnk.IsHoveredByMouse = true;
+                    }
+                    else
+                        tnk.IsHoveredByMouse = false;
                 }
             }
             Input.OldKeySnapshot = Input.CurrentKeySnapshot;

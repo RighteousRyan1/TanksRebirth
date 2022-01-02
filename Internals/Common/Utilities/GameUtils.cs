@@ -388,6 +388,16 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
             return mouseRay.Position + mouseRay.Direction * distance.Value;
         }
 
+        public static Ray GetMouseToWorldRay()
+        {
+            Plane gamePlane = new(Vector3.UnitY, 0);
+
+            var nearPlane = GeometryUtils.ConvertScreenToWorld(new Vector3(MousePosition, 0), Matrix.Identity, TankGame.GameView, TankGame.GameProjection);
+            var farPlane = GeometryUtils.ConvertScreenToWorld(new Vector3(MousePosition, 1), Matrix.Identity, TankGame.GameView, TankGame.GameProjection);
+
+            return new Ray(nearPlane, Vector3.Normalize(farPlane - nearPlane));
+        }
+
         public static Color ToColor(this Vector3 vec) => new((int)Math.Round(vec.X * 255), (int)Math.Round(vec.Y * 255), (int)Math.Round(vec.Z * 255));
     }
 }

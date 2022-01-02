@@ -68,7 +68,11 @@ namespace WiiPlayTanksRemake.GameContent
         public int OwnedBulletCount { get; set; }
         public int OwnedMineCount { get; set; }
 
+        public bool CanLayTread { get; set; } = true;
+
         public bool IsTurning { get; set; }
+
+        public bool IsHoveredByMouse { get; set; }
 
         public Vector2 Position2D => position.FlattenZ();
         public Vector2 Velocity2D => velocity.FlattenZ();

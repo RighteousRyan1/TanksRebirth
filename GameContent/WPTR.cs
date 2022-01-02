@@ -54,7 +54,6 @@ namespace WiiPlayTanksRemake.GameContent
 
         private static UIElement lastElementClicked;
 
-        public static bool WindowBorderless { get; set; }
         public static bool InMission { get; set; } = false;
 
         public static Matrix UIMatrix => Matrix.CreateOrthographicOffCenter(0, TankGame.Instance.GraphicsDevice.Viewport.Width, TankGame.Instance.GraphicsDevice.Viewport.Height, 0, -1, 1);
@@ -97,9 +96,6 @@ namespace WiiPlayTanksRemake.GameContent
 
             if (Input.KeyJustPressed(Keys.Insert))
                 DebugUtils.DebuggingEnabled = !DebugUtils.DebuggingEnabled;
-
-            if (Input.AreKeysJustPressed(Keys.RightAlt, Keys.Enter))
-                WindowBorderless = !WindowBorderless;
 
             if (Input.KeyJustPressed(Keys.Add))
                 DebugUtils.DebugLevel++;
@@ -380,7 +376,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             LoadTnkScene();
 
-            Lighting.Midnight.Apply(false);
+            // Lighting.Midnight.Apply(false);
 
             /*for (int i = 0; i < 3; i++)
                 SpawnTankInCrate(TankTier.Black, Team.Red, true);
@@ -403,7 +399,7 @@ namespace WiiPlayTanksRemake.GameContent
         {
             myTank = new PlayerTank(PlayerType.Blue)
             {
-                Team = Team.Red,
+                Team = Team.NoTeam,
                 position = new CubeMapPosition(new Random().Next(0, 27), new Random().Next(0, 21)),
                 Dead = false
             };
@@ -427,7 +423,7 @@ namespace WiiPlayTanksRemake.GameContent
             var drop = CrateDrop.SpawnCrate(new(pos.X, 500, pos.Z), 2f);
             drop.scale = 1.25f;
             drop.TankToSpawn = new AITank(AITank.PICK_ANY_THAT_ARE_IMPLEMENTED());
-            drop.TankToSpawn.Team = GameUtils.PickRandom<Team>();
+            drop.TankToSpawn.Team = Team.NoTeam;
         }
         public static void BeginIntroSequence()
         {

@@ -19,7 +19,6 @@ namespace WiiPlayTanksRemake.GameContent
 {
     public class AITank : Tank
     {
-        private int _treadPlaceTimer = 5;
         private int treadSoundTimer = 5;
         private int curShootStun;
         private int curShootCooldown;
@@ -143,7 +142,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             // _tankColorTexture = GameResources.GetGameResource<Texture2D>($"Assets/textures/enemy/fanmade/tank_animegirl");
 
-            CannonMesh = Model.Meshes["polygon0.001"];
+            CannonMesh = Model.Meshes["Cannon"];
 
             boneTransforms = new Matrix[Model.Bones.Count];
 
@@ -194,7 +193,7 @@ namespace WiiPlayTanksRemake.GameContent
                 _tankColorTexture = GameResources.GetGameResource<Texture2D>($"Assets/textures/enemy/master/tank_{tier.ToString().ToLower()}");
             else
                 _tankColorTexture = GameResources.GetGameResource<Texture2D>($"Assets/textures/enemy/fate/tank_{tier.ToString().ToLower()}");
-            CannonMesh = Model.Meshes["polygon0.001"];
+            CannonMesh = Model.Meshes["Cannon"];
 
             boneTransforms = new Matrix[Model.Bones.Count];
 
@@ -318,8 +317,6 @@ namespace WiiPlayTanksRemake.GameContent
                     TreadPitch = 0.085f;
                     MaxSpeed = 1f;
 
-                    _treadPlaceTimer = 8;
-
                     MineCooldown = 0;
                     MineLimit = 0;
                     MineStun = 0;
@@ -358,7 +355,7 @@ namespace WiiPlayTanksRemake.GameContent
                     MineLimit = 4;
                     MineStun = 5;
 
-                    treadSoundTimer = 3;
+                    treadSoundTimer = 4;
 
                     AiParams.minePlacementChance = 0.3f;
                     AiParams.moveFromMineTime = 120;
@@ -393,7 +390,6 @@ namespace WiiPlayTanksRemake.GameContent
                     MaxSpeed = 1.2f;
 
                     treadSoundTimer = 6;
-                    _treadPlaceTimer = 6;
 
                     MineCooldown = 0;
                     MineLimit = 0;
@@ -459,7 +455,6 @@ namespace WiiPlayTanksRemake.GameContent
                     Acceleration = 0.3f;
 
                     treadSoundTimer = 4;
-                    _treadPlaceTimer = 4;
 
                     MineCooldown = 700;
                     MineLimit = 2;
@@ -498,7 +493,6 @@ namespace WiiPlayTanksRemake.GameContent
                     Acceleration = 0.3f;
 
                     treadSoundTimer = 6;
-                    _treadPlaceTimer = 15;
 
                     MineCooldown = 1000;
                     MineLimit = 2;
@@ -540,7 +534,6 @@ namespace WiiPlayTanksRemake.GameContent
                     Acceleration = 0.3f;
 
                     treadSoundTimer = 4;
-                    _treadPlaceTimer = 4;
 
                     MineCooldown = 850;
                     MineLimit = 2;
@@ -604,7 +597,6 @@ namespace WiiPlayTanksRemake.GameContent
                     Deceleration = 0.6f;
 
                     treadSoundTimer = 4;
-                    _treadPlaceTimer = 4;
 
                     MineCooldown = 60 * 20;
                     MineLimit = 1;
@@ -644,7 +636,6 @@ namespace WiiPlayTanksRemake.GameContent
                     Deceleration = 0.6f;
 
                     treadSoundTimer = 4;
-                    _treadPlaceTimer = 5;
 
                     MineCooldown = 1000;
                     MineLimit = 1;
@@ -684,7 +675,6 @@ namespace WiiPlayTanksRemake.GameContent
                     Deceleration = 0.6f;
 
                     treadSoundTimer = 4;
-                    _treadPlaceTimer = 5;
 
                     MineCooldown = 0;
                     MineLimit = 0;
@@ -724,7 +714,6 @@ namespace WiiPlayTanksRemake.GameContent
                     Deceleration = 0.4f;
 
                     treadSoundTimer = 4;
-                    _treadPlaceTimer = 4; // 4
 
                     MineCooldown = 360;
                     MineLimit = 4;
@@ -766,7 +755,6 @@ namespace WiiPlayTanksRemake.GameContent
                     Deceleration = 0.9f;
 
                     treadSoundTimer = 4;
-                    _treadPlaceTimer = 4;
 
                     MineCooldown = 360;
                     MineLimit = 3;
@@ -804,6 +792,8 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.projectileWarinessRadius = 80;
                     AiParams.mineWarinessRadius = 120;
 
+                    CanLayTread = false;
+
                     TurningSpeed = 0.06f;
                     MaximalTurn = 1.4f;
 
@@ -823,7 +813,6 @@ namespace WiiPlayTanksRemake.GameContent
                     Deceleration = 0.5f;
 
                     treadSoundTimer = 5;
-                    _treadPlaceTimer = int.MaxValue;
 
                     MineCooldown = 700;
                     MineLimit = 2;
@@ -866,7 +855,6 @@ namespace WiiPlayTanksRemake.GameContent
                     Deceleration = 0.8f;
 
                     treadSoundTimer = 4;
-                    _treadPlaceTimer = 4;
 
                     MineCooldown = 850;
                     MineLimit = 2;
@@ -908,7 +896,6 @@ namespace WiiPlayTanksRemake.GameContent
                     Deceleration = 0.4f;
 
                     treadSoundTimer = 4;
-                    _treadPlaceTimer = 6;
                     break;
                 case TankTier.Gamma:
                     AiParams.turretMeanderFrequency = 20;
@@ -957,7 +944,6 @@ namespace WiiPlayTanksRemake.GameContent
                     ShellHoming = new();
 
                     treadSoundTimer = 4;
-                    _treadPlaceTimer = 4;
 
                     MineCooldown = 850;
                     MineLimit = 2;
@@ -1101,6 +1087,8 @@ namespace WiiPlayTanksRemake.GameContent
 
         public override void LayFootprint(bool alt)
         {
+            if (!CanLayTread)
+                return;
             new TankFootprint(alt)
             {
                 location = position + new Vector3(0, 0.1f, 0),
@@ -1116,6 +1104,8 @@ namespace WiiPlayTanksRemake.GameContent
         
         public bool isCubeInWay;
 
+
+        private float treadPlaceTimer;
         public void DoAi(bool doMoveTowards = true, bool doMovements = true, bool doAim = true)
         {
             AiParams.timeSinceLastMinePlaced++;
@@ -1132,6 +1122,7 @@ namespace WiiPlayTanksRemake.GameContent
             foreach (var behavior in Behaviors)
                 behavior.totalUpdateCount++;
 
+            treadPlaceTimer += MaxSpeed / (tier == TankTier.White ? 10 : 5);
             if (velocity != Vector3.Zero && !Stationary)
             {
                 if (TankGame.GameUpdateTime % treadSoundTimer == 0)
@@ -1140,8 +1131,10 @@ namespace WiiPlayTanksRemake.GameContent
                     var sfx = SoundPlayer.PlaySoundInstance(treadPlace, SoundContext.Sound, 0.05f);
                     sfx.Pitch = TreadPitch;
                 }
-                if (TankGame.GameUpdateTime % _treadPlaceTimer == 0)
+
+                if (treadPlaceTimer > MaxSpeed)
                 {
+                    treadPlaceTimer = 0;
                     LayFootprint(tier == TankTier.White ? true : false);
                 }
             }
@@ -1366,8 +1359,9 @@ namespace WiiPlayTanksRemake.GameContent
                     }
                     else
                     {
-                        if (TankGame.GameUpdateTime % _treadPlaceTimer * 3 == 0)
+                        if (treadPlaceTimer > MaxSpeed)
                         {
+                            treadPlaceTimer = 0;
                             LayFootprint(tier == TankTier.White ? true : false);
                         }
                         IsTurning = true;
@@ -1395,11 +1389,34 @@ namespace WiiPlayTanksRemake.GameContent
 
                     effect.TextureEnabled = true;
 
-                    if (mesh.Name != "polygon1")
+                    if (mesh.Name != "Shadow")
+                    {
+                        if (IsHoveredByMouse)
+                            effect.EmissiveColor = Color.White.ToVector3();
+                        else
+                            effect.EmissiveColor = Color.Black.ToVector3();
                         effect.Texture = _tankColorTexture;
+                        /*var ex = new Color[1024];
+
+                        Array.Fill(ex, new Color(new Random().Next(0, 256), new Random().Next(0, 256), new Random().Next(0, 256)));
+
+                        effect.Texture.SetData(0, new Rectangle(0, 8, 32, 15), ex, 0, 480);*/
+
+                        var ex = new Color[1024];
+
+                        Array.Fill(ex, Team != Team.NoTeam ? (Color)typeof(Color).GetProperty(Team.ToString(), System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public).GetValue(null) : default);
+
+                        if (Team != Team.NoTeam)
+                        {
+                            effect.Texture.SetData(0, new Rectangle(0, 0, 32, 9), ex, 0, 288);
+                            effect.Texture.SetData(0, new Rectangle(0, 23, 32, 9), ex, 0, 288);
+                        }
+                    }
 
                     else
+                    {
                         effect.Texture = _shadowTexture;
+                    }
                 }
 
                 mesh.Draw();

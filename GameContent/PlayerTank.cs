@@ -20,7 +20,6 @@ namespace WiiPlayTanksRemake.GameContent
     {
         public bool playerControl_isBindPressed;
 
-        private int _treadPlaceTimer = 5;
         private int _treadSoundTimer = 5;
         public int curShootStun;
         public int curShootCooldown;
@@ -56,7 +55,7 @@ namespace WiiPlayTanksRemake.GameContent
             Model = TankGame.TankModel_Player;
             _tankColorTexture = GameResources.GetGameResource<Texture2D>($"Assets/textures/player/tank_{playerType.ToString().ToLower()}");
 
-            CannonMesh = Model.Meshes["polygon1.001"];
+            CannonMesh = Model.Meshes["Cannon"];
 
             boneTransforms = new Matrix[Model.Bones.Count];
 
@@ -73,11 +72,6 @@ namespace WiiPlayTanksRemake.GameContent
             //ShellHoming.power = 1f;
             //ShellHoming.radius = 200f;
             //ShellHoming.speed = 3f;
-
-            if (MaxSpeed > 5f)
-                _treadPlaceTimer = 1;
-            else
-                _treadPlaceTimer = 5; ///= (int)(MaxSpeed * 2);
 
             Team = Team.Red;
 
@@ -147,6 +141,11 @@ namespace WiiPlayTanksRemake.GameContent
 
             World = Matrix.CreateFromYawPitchRoll(-TankRotation, 0, 0)
                 * Matrix.CreateTranslation(position);
+
+            Vector3 mouseWorldPos = GameUtils.GetWorldPosition(GameUtils.MousePosition);
+
+            TurretRotation = (-(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position2D).ToRotation()) + MathHelper.PiOver2;
+
             if (WPTR.InMission)
             {
                 if (curShootStun <= 0 && curMineStun <= 0)
@@ -164,10 +163,6 @@ namespace WiiPlayTanksRemake.GameContent
                 velocity = Vector3.Zero;
 
             UpdateCollision();
-
-            Vector3 mouseWorldPos = GameUtils.GetWorldPosition(GameUtils.MousePosition);
-
-            TurretRotation = (-(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position2D).ToRotation()) + MathHelper.PiOver2;
 
             if (WPTR.InMission)
             {
@@ -236,7 +231,7 @@ namespace WiiPlayTanksRemake.GameContent
                 Shoot();
             }
         }
-
+        private float treadPlaceTimer;
         private void ControlHandle_Keybinding()
         {
             if (PlaceMine.JustPressed)
@@ -251,12 +246,16 @@ namespace WiiPlayTanksRemake.GameContent
 
             TankRotation = GameUtils.RoughStep(TankRotation, targetTnkRotation, TurningSpeed);
 
+            treadPlaceTimer += MaxSpeed / 5;
+
             if (TankRotation > targetTnkRotation - MaximalTurn && TankRotation < targetTnkRotation + MaximalTurn)
                 rotationMet = true;
             else
             {
-                if (TankGame.GameUpdateTime % _treadPlaceTimer * 3 == 0)
+
+                if (treadPlaceTimer > MaxSpeed)
                 {
+                    treadPlaceTimer = 0;
                     LayFootprint(false);
                 }
                 velocity = Vector3.Zero;
@@ -367,8 +366,9 @@ namespace WiiPlayTanksRemake.GameContent
 
             if (Velocity2D.Length() > 0 && playerControl_isBindPressed)
             {
-                if (TankGame.GameUpdateTime % _treadPlaceTimer == 0)
+                if (treadPlaceTimer > MaxSpeed)
                 {
+                    treadPlaceTimer = 0;
                     LayFootprint(false);
                 }
                 if (TankGame.GameUpdateTime % _treadSoundTimer == 0)
@@ -382,6 +382,8 @@ namespace WiiPlayTanksRemake.GameContent
 
         public override void LayFootprint(bool alt)
         {
+            if (!CanLayTread)
+                return;
             var fp = new TankFootprint(alt)
             {
                 location = position + new Vector3(0, 0.1f, 0),
@@ -446,8 +448,20 @@ namespace WiiPlayTanksRemake.GameContent
                     effect.Projection = Projection;
                     effect.TextureEnabled = true;
 
-                    if (mesh.Name != "polygon0.001")
+                    if (mesh.Name != "Shadow")
+                    {
                         effect.Texture = _tankColorTexture;
+
+                        /*var ex = new Color[1024];
+
+                        Array.Fill(ex, Team != Team.NoTeam ? (Color)typeof(Color).GetProperty(Team.ToString(), System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public).GetValue(null) : default);
+
+                        if (Team != Team.NoTeam)
+                        {
+                            effect.Texture.SetData(0, new Rectangle(0, 0, 32, 9), ex, 0, 288);
+                            effect.Texture.SetData(0, new Rectangle(0, 23, 32, 9), ex, 0, 288);
+                        }*/
+                    }
 
                     else
                         effect.Texture = _shadowTexture;

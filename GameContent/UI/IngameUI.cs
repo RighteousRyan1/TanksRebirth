@@ -25,8 +25,6 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
         public static UIImageButton OptionsButton;
 
-        internal static UISlider Test;
-
         public static bool Paused { get; set; } = false;
 
         public const int SETTINGS_BUTTONS_CT = 10;
@@ -57,13 +55,6 @@ namespace WiiPlayTanksRemake.GameContent.UI
             QuitButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Quit", Color.WhiteSmoke));
             QuitButton.SetDimensions(700, 850, 500, 150);
             QuitButton.OnMouseClick += QuitButton_OnMouseClick;
-
-            Test = new();
-            Test.SetDimensions(100, 100, 100, 50);
-            Test.Initialize();
-            Test.BarColor = Color.DeepSkyBlue;
-            Test.BarWidth = 15;
-            Test.Value = 2;
 
             ResumeButton.Visible = false;
             RestartButton.Visible = false;

@@ -121,8 +121,6 @@ namespace WiiPlayTanksRemake.GameContent.GameMechanics
 
             var pos = position.FlattenZ();
 
-            pos += offset * collisionInfo.tValue;
-
             if (collisionInfo.tValue < 1)
             {
                 pos -= Vector2.Dot(velocity, collisionInfo.normal) * collisionInfo.normal;
@@ -131,6 +129,8 @@ namespace WiiPlayTanksRemake.GameContent.GameMechanics
             }
             else
                 return;
+
+            pos += offset * collisionInfo.tValue;
 
             if (setpos)
             {
@@ -144,7 +144,7 @@ namespace WiiPlayTanksRemake.GameContent.GameMechanics
 
                 direction = CollisionDirection.Up;
             }
-            if (velocity.Y == 0f)
+            if (collisionInfo.normal.Y < 0)
             {
                 // floor
 
@@ -207,7 +207,7 @@ namespace WiiPlayTanksRemake.GameContent.GameMechanics
 
                 direction = CollisionDirection.Up;
             }
-            if (velocity.Y == 0f)
+            if (collisionInfo.normal.Y < 0)
             {
                 // floor
 
