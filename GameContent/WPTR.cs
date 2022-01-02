@@ -95,8 +95,6 @@ namespace WiiPlayTanksRemake.GameContent
             foreach (var pu in Powerup.activePowerups)
                 pu?.Update();
 
-            IngameUI.UpdateButtons();
-
             if (Input.KeyJustPressed(Keys.Insert))
                 DebugUtils.DebuggingEnabled = !DebugUtils.DebuggingEnabled;
 
