@@ -199,7 +199,7 @@ namespace WiiPlayTanksRemake
 
             IsMouseVisible = false;
 
-            Window.IsBorderless = GameConfig.BorderlessWindow;
+            Window.IsBorderless = true;
         }
         protected override void Initialize()
         {
@@ -236,6 +236,7 @@ namespace WiiPlayTanksRemake
                 SettingsHandler = new(Settings, SaveDirectory + Path.DirectorySeparatorChar + "settings.json");
                 Settings = SettingsHandler.DeserializeAndSet<GameConfig>();
             }
+            Window.IsBorderless = Settings.BorderlessWindow;
 
             GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(0.75f) * Matrix.CreateTranslation(0f, 0f, 1000f);
             GameProjection = Matrix.CreateOrthographic(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, -2000f, 5000f);
