@@ -25,6 +25,12 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
         public static UIImageButton OptionsButton;
 
+        public static UIImageButton BackButton;
+
+        internal static UISlider MusicVolume;
+
+        internal static UISlider AmbientVolume;
+
         public static bool Paused { get; set; } = false;
 
         public const int SETTINGS_BUTTONS_CT = 10;
@@ -56,15 +62,49 @@ namespace WiiPlayTanksRemake.GameContent.UI
             QuitButton.SetDimensions(700, 850, 500, 150);
             QuitButton.OnMouseClick += QuitButton_OnMouseClick;
 
+            MusicVolume = new();
+            MusicVolume.SetDimensions(700, 100, 500, 150);
+            MusicVolume.Initialize();
+            MusicVolume.Value = TankGame.Instance.Settings.MusicVolume;
+            MusicVolume.SliderColor = Color.WhiteSmoke;
+
+            AmbientVolume = new();
+            AmbientVolume.SetDimensions(700, 600, 500, 150);
+            AmbientVolume.Initialize();
+            AmbientVolume.Value = TankGame.Instance.Settings.AmbientVolume;
+            AmbientVolume.SliderColor = Color.WhiteSmoke;
+
+            BackButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Back", Color.WhiteSmoke));
+            BackButton.SetDimensions(700, 850, 500, 150);
+            BackButton.OnMouseClick += BackButton_OnMouseClick;
+
             ResumeButton.Visible = false;
             RestartButton.Visible = false;
             QuitButton.Visible = false;
             OptionsButton.Visible = false;
+            MusicVolume.Visible = false;
+            AmbientVolume.Visible = false;
+            BackButton.Visible = false;
+        }
+
+        private static void BackButton_OnMouseClick(Internals.UI.UIElement affectedElement)
+        {
+            InOptions = false;
+            MusicVolume.Visible = false;
+            AmbientVolume.Visible = false;
+            BackButton.Visible = false;
         }
 
         private static void OptionsButton_OnMouseClick(Internals.UI.UIElement affectedElement)
         {
             InOptions = true;
+            ResumeButton.Visible = false;
+            RestartButton.Visible = false;
+            QuitButton.Visible = false;
+            OptionsButton.Visible = false;
+            MusicVolume.Visible = true;
+            AmbientVolume.Visible = true;
+            BackButton.Visible = true;
         }
 
         private static void QuitButton_OnMouseClick(Internals.UI.UIElement affectedElement)
@@ -113,6 +153,14 @@ namespace WiiPlayTanksRemake.GameContent.UI
             MissionInfoBar.UniqueDraw =
                 (uiPanel, spriteBatch) => spriteBatch.DrawString(TankGame.Fonts.Default, text, uiPanel.Hitbox.Center.ToVector2(), Color.White, 0, drawOrigin, 1.5f, SpriteEffects.None, 1f);
             if (Pause.JustPressed) {
+                if (InOptions)
+                {
+                    InOptions = false;
+                    MusicVolume.Visible = false;
+                    AmbientVolume.Visible = false;
+                    BackButton.Visible = false;
+                    return;
+                }
                 if (Paused)
                     TankMusicSystem.ResumeAll();
                 else
@@ -120,15 +168,17 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 Paused = !Paused;
             }
 
-            if (InOptions)
+            if (!InOptions)
             {
-
+                ResumeButton.Visible = Paused;
+                RestartButton.Visible = Paused;
+                QuitButton.Visible = Paused;
+                OptionsButton.Visible = Paused;
             }
 
-            ResumeButton.Visible = Paused;
-            RestartButton.Visible = Paused;
-            QuitButton.Visible = Paused;
-            OptionsButton.Visible = Paused;
+            TankGame.Instance.Settings.MusicVolume = MusicVolume.Value;
+            TankGame.Instance.Settings.AmbientVolume = AmbientVolume.Value;
+            TankMusicSystem.UpdateVolume();
         }
 
         public class Options

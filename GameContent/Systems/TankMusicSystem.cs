@@ -47,11 +47,11 @@ namespace WiiPlayTanksRemake.GameContent.Systems
 
             if (MapRenderer.Theme == MapTheme.Forest)
             {
-                forestAmbience.volume = GameConfig.AmbientVolume;
+                forestAmbience.volume = TankGame.Instance.Settings.AmbientVolume;
                 return;
             }
 
-            var musicVolume = GameConfig.MusicVolume;
+            var musicVolume = TankGame.Instance.Settings.MusicVolume;
 
             foreach (var song in songs.Where(sng => sng is not null))
                 song.volume = 0f;
@@ -366,6 +366,18 @@ namespace WiiPlayTanksRemake.GameContent.Systems
             forestAmbience?.Play();
             foreach (var song in songs)
                 song?.Play();
+        }
+
+        public static void UpdateVolume()
+        {
+            foreach (var song in songs)
+            {
+                if (song.volume > 0)
+                {
+                    song.volume = 0.5f * TankGame.Instance.Settings.MusicVolume;
+                    forestAmbience.volume = TankGame.Instance.Settings.AmbientVolume;
+                }
+            }
         }
     }
 }
