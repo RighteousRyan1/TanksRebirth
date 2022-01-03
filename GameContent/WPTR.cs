@@ -52,8 +52,6 @@ namespace WiiPlayTanksRemake.GameContent
 
         public static Logger ClientLog { get; } = new($"{TankGame.ExePath}", "client");
 
-        private static UIElement lastElementClicked;
-
         public static bool InMission { get; set; } = false;
 
         public static Matrix UIMatrix => Matrix.CreateOrthographicOffCenter(0, TankGame.Instance.GraphicsDevice.Viewport.Width, TankGame.Instance.GraphicsDevice.Viewport.Height, 0, -1, 1);
@@ -159,6 +157,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         public static int tankToSpawnType;
         public static int tankToSpawnTeam;
+        private static int _delay;
 
         internal static void DoRender()
         {
@@ -242,21 +241,15 @@ namespace WiiPlayTanksRemake.GameContent
                         element?.MouseLeave();
                         element.MouseHovering = false;
                     }
-                    if (Input.MouseLeft && GameUtils.MouseOnScreenProtected && element != lastElementClicked && element.Hitbox.Contains(GameUtils.MousePosition)) {
+                    if (Input.MouseLeft && (!Input.OldMouseLeft || element.GetType() == typeof(UIImage)) && GameUtils.MouseOnScreenProtected && element.Hitbox.Contains(GameUtils.MousePosition)) {
                         element?.MouseClick();
-                        lastElementClicked = element;
                     }
-                    if (Input.MouseRight && GameUtils.MouseOnScreenProtected && element != lastElementClicked && element.Hitbox.Contains(GameUtils.MousePosition)) {
+                    if (Input.MouseRight && !Input.OldMouseRight && GameUtils.MouseOnScreenProtected && element.Hitbox.Contains(GameUtils.MousePosition)) {
                         element?.MouseRightClick();
-                        lastElementClicked = element;
                     }
-                    if (Input.MouseMiddle && GameUtils.MouseOnScreenProtected && element != lastElementClicked && element.Hitbox.Contains(GameUtils.MousePosition)) {
+                    if (Input.MouseMiddle && !Input.OldMouseMiddle && GameUtils.MouseOnScreenProtected && element.Hitbox.Contains(GameUtils.MousePosition)) {
                         element?.MouseMiddleClick();
-                        lastElementClicked = element;
                     }
-                }
-                if (!Input.MouseLeft && !Input.MouseRight && !Input.MouseMiddle) {
-                    lastElementClicked = null;
                 }
             }
         }
