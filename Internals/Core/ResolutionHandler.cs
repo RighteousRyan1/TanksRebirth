@@ -13,7 +13,7 @@ namespace WiiPlayTanksRemake.Internals.Core
 			UpdateResolution(false, DesignedX, DesignedY);
 		}
 
-		public static GraphicsDeviceManager GraphicsDeviceManager{ get; private set; }
+		public static GraphicsDeviceManager GraphicsDeviceManager { get; private set; }
 
 		public static bool FullScreened;
 
