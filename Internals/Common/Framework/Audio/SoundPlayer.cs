@@ -6,10 +6,10 @@ namespace WiiPlayTanksRemake.Internals.Common.Framework.Audio
 {
     public static class SoundPlayer
     {
-        private static float MasterVolume => TankGame.Instance.Settings.MasterVolume;
-        private static float MusicVolume => TankGame.Instance.Settings.MusicVolume;
-        private static float SoundVolume => TankGame.Instance.Settings.SoundVolume;
-        private static float AmbientVolume => TankGame.Instance.Settings.AmbientVolume;
+        private static float MasterVolume => TankGame.Settings.MasterVolume;
+        private static float MusicVolume => TankGame.Settings.MusicVolume;
+        private static float SoundVolume => TankGame.Settings.SoundVolume;
+        private static float AmbientVolume => TankGame.Settings.AmbientVolume;
         public static SoundEffectInstance PlaySoundInstance(SoundEffect fromSound, SoundContext context, float volume = 1f)
         {
             switch (context)

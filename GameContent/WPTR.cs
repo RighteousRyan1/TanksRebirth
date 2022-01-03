@@ -343,10 +343,10 @@ namespace WiiPlayTanksRemake.GameContent
                 });
         // fix shitty mission init (innit?)
 
-        private static PowerupTemplate speed = new(1000, 50f, (tnk) => { tnk.MaxSpeed *= 2; });
-        private static PowerupTemplate invis = new(1000, 50f, (tnk) => { tnk.Invisible = true; });
-        private static PowerupTemplate bigturn = new(1000, 50f, (tnk) => { tnk.MaximalTurn = 6.28f; tnk.TurningSpeed = 100f; });
-        private static PowerupTemplate homer = new(1000, 50f, (tnk) => { tnk.ShellHoming.radius = 150f; tnk.ShellHoming.speed = tnk.ShellSpeed; tnk.ShellHoming.power = 1f; });
+        private static readonly PowerupTemplate speed = new(1000, 50f, (tnk) => { tnk.MaxSpeed *= 2; });
+        private static readonly PowerupTemplate invis = new(1000, 50f, (tnk) => { tnk.Invisible = true; });
+        private static readonly PowerupTemplate bigturn = new(1000, 50f, (tnk) => { tnk.MaximalTurn = 6.28f; tnk.TurningSpeed = 100f; });
+        private static readonly PowerupTemplate homer = new(1000, 50f, (tnk) => { tnk.ShellHoming.radius = 150f; tnk.ShellHoming.speed = tnk.ShellSpeed; tnk.ShellHoming.power = 1f; });
 
         public static void Initialize()
         {
@@ -404,8 +404,10 @@ namespace WiiPlayTanksRemake.GameContent
 
             var drop = CrateDrop.SpawnCrate(new(CubeMapPosition.Convert3D(random).X, 500 + (createEvenDrop ? 0 : new Random().Next(-300, 301)), CubeMapPosition.Convert3D(random).Z), 2f);
             drop.scale = 1.25f;
-            drop.TankToSpawn = new AITank(tierOverride == default ? AITank.PICK_ANY_THAT_ARE_IMPLEMENTED() : tierOverride);
-            drop.TankToSpawn.Team = teamOverride == default ? GameUtils.PickRandom<Team>() : teamOverride; 
+            drop.TankToSpawn = new AITank(tierOverride == default ? AITank.PICK_ANY_THAT_ARE_IMPLEMENTED() : tierOverride)
+            {
+                Team = teamOverride == default ? GameUtils.PickRandom<Team>() : teamOverride
+            };
         }
 
         public static void SpawnCrateAtMouse()
@@ -414,8 +416,10 @@ namespace WiiPlayTanksRemake.GameContent
 
             var drop = CrateDrop.SpawnCrate(new(pos.X, 200, pos.Z), 2f);
             drop.scale = 1.25f;
-            drop.TankToSpawn = new AITank(AITank.PICK_ANY_THAT_ARE_IMPLEMENTED());
-            drop.TankToSpawn.Team = Team.NoTeam;
+            drop.TankToSpawn = new AITank(AITank.PICK_ANY_THAT_ARE_IMPLEMENTED())
+            {
+                Team = Team.NoTeam
+            };
         }
         public static void BeginIntroSequence()
         {
@@ -450,26 +454,34 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 if (i % 10 == 0)
                 {
-                    var s = new Shell(new(i, 11, miny), default);
-                    s.INTERNAL_ignoreCollisions = true;
-                    s.INTERNAL_doRender = false;
+                    var s = new Shell(new(i, 11, miny), default)
+                    {
+                        INTERNAL_ignoreCollisions = true,
+                        INTERNAL_doRender = false
+                    };
 
-                    var p = new Shell(new(i, 11, maxy), default);
-                    p.INTERNAL_ignoreCollisions = true;
-                    p.INTERNAL_doRender = false;
+                    var p = new Shell(new(i, 11, maxy), default)
+                    {
+                        INTERNAL_ignoreCollisions = true,
+                        INTERNAL_doRender = false
+                    };
                 }
             }
             for (int j = miny; j < maxy; j++)
             {
                 if (j % 10 == 0)
                 {
-                    var s = new Shell(new(minx, 11, j), default);
-                    s.INTERNAL_ignoreCollisions = true;
-                    s.INTERNAL_doRender = false;
+                    var s = new Shell(new(minx, 11, j), default)
+                    {
+                        INTERNAL_ignoreCollisions = true,
+                        INTERNAL_doRender = false
+                    };
 
-                    var p = new Shell(new(maxx, 11, j), default);
-                    p.INTERNAL_ignoreCollisions = true;
-                    p.INTERNAL_doRender = false;
+                    var p = new Shell(new(maxx, 11, j), default)
+                    {
+                        INTERNAL_ignoreCollisions = true,
+                        INTERNAL_doRender = false
+                    };
                 }
             }
             // for ai tanks avoiding walls lol
@@ -477,8 +489,6 @@ namespace WiiPlayTanksRemake.GameContent
         public static AITank SpawnTank(TankTier tier, Team team)
         {
             var rot = GeometryUtils.GetPiRandom();
-
-            var random = new CubeMapPosition(new Random().Next(0, 27), new Random().Next(0, 20));
 
             return new AITank(tier)
             {

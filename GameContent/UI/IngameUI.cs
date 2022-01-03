@@ -65,13 +65,13 @@ namespace WiiPlayTanksRemake.GameContent.UI
             MusicVolume = new();
             MusicVolume.SetDimensions(700, 100, 500, 150);
             MusicVolume.Initialize();
-            MusicVolume.Value = TankGame.Instance.Settings.MusicVolume;
+            MusicVolume.Value = TankGame.Settings.MusicVolume;
             MusicVolume.SliderColor = Color.WhiteSmoke;
 
             AmbientVolume = new();
             AmbientVolume.SetDimensions(700, 600, 500, 150);
             AmbientVolume.Initialize();
-            AmbientVolume.Value = TankGame.Instance.Settings.AmbientVolume;
+            AmbientVolume.Value = TankGame.Settings.AmbientVolume;
             AmbientVolume.SliderColor = Color.WhiteSmoke;
 
             BackButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Back", Color.WhiteSmoke));
@@ -176,8 +176,8 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 OptionsButton.Visible = Paused;
             }
 
-            TankGame.Instance.Settings.MusicVolume = MusicVolume.Value;
-            TankGame.Instance.Settings.AmbientVolume = AmbientVolume.Value;
+            TankGame.Settings.MusicVolume = MusicVolume.Value;
+            TankGame.Settings.AmbientVolume = AmbientVolume.Value;
             TankMusicSystem.UpdateVolume();
         }
 

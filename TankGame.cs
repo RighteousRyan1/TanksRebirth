@@ -35,9 +35,9 @@ namespace WiiPlayTanksRemake
         public float AmbientVolume { get; set; } = 1f;
 
         #region Graphics Settings
-        public int TankFootprintLimit { get; set; }
-        public int PerPixelLighting { get; set; }
-        public bool Vsync { get; set; }
+        public int TankFootprintLimit { get; set; } = 100000;
+        public bool PerPixelLighting { get; set; } = true;
+        public bool Vsync { get; set; } = true;
         public bool BorderlessWindow { get; set; } = true;
 
         #endregion
@@ -163,7 +163,7 @@ namespace WiiPlayTanksRemake
 
         private static List<IGameSystem> systems = new();
 
-        public GameConfig Settings;
+        public static GameConfig Settings;
 
         public JsonHandler SettingsHandler;
 
@@ -195,11 +195,7 @@ namespace WiiPlayTanksRemake
             Window.Title = "Tanks! Remake";
             Window.AllowUserResizing = true;
 
-            graphics.SynchronizeWithVerticalRetrace = true;
-
             IsMouseVisible = false;
-
-            Window.IsBorderless = true;
         }
         protected override void Initialize()
         {
@@ -236,7 +232,14 @@ namespace WiiPlayTanksRemake
                 SettingsHandler = new(Settings, SaveDirectory + Path.DirectorySeparatorChar + "settings.json");
                 Settings = SettingsHandler.DeserializeAndSet<GameConfig>();
             }
+
+            #region Config Initialization
+
+            graphics.SynchronizeWithVerticalRetrace = Settings.Vsync;
             Window.IsBorderless = Settings.BorderlessWindow;
+            Lighting.PerPixelLighting = Settings.PerPixelLighting;
+
+            #endregion
 
             GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(0.75f) * Matrix.CreateTranslation(0f, 0f, 1000f);
             GameProjection = Matrix.CreateOrthographic(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, -2000f, 5000f);

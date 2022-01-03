@@ -6,6 +6,7 @@ using WiiPlayTanksRemake.Internals;
 using WiiPlayTanksRemake.Internals.Common.Utilities;
 using WiiPlayTanksRemake.Internals.Core.Interfaces;
 using WiiPlayTanksRemake.Graphics;
+using System.Linq;
 
 namespace WiiPlayTanksRemake.GameContent
 {
@@ -103,7 +104,7 @@ namespace WiiPlayTanksRemake.GameContent
     {
         public const int MAX_FOOTPRINTS = 100000;
 
-        public static TankFootprint[] footprints = new TankFootprint[MAX_FOOTPRINTS];
+        public static TankFootprint[] footprints = new TankFootprint[TankGame.Settings.TankFootprintLimit];
 
         public Vector3 location;
         public float rotation;
@@ -118,12 +119,14 @@ namespace WiiPlayTanksRemake.GameContent
 
         internal static int total_treads_placed;
 
-        private bool alternate;
+        private readonly bool alternate;
+
+        public long lifeTime;
 
         public TankFootprint(bool alt = false)
         {
             if (total_treads_placed + 1 > MAX_FOOTPRINTS)
-                return;
+                footprints[Array.IndexOf(footprints, footprints.Max())] = null; // i think?
 
             alternate = alt;
             total_treads_placed++;
@@ -138,7 +141,7 @@ namespace WiiPlayTanksRemake.GameContent
         }
         public void Render()
         {
-
+            lifeTime++;
             Matrix scale = alternate ? Matrix.CreateScale(0.5f, 1f, 0.35f) : Matrix.CreateScale(0.5f, 1f, 0.075f);
 
             World = scale * Matrix.CreateRotationY(rotation) * Matrix.CreateTranslation(location);

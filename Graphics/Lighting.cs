@@ -49,6 +49,8 @@ namespace WiiPlayTanksRemake.Graphics
 
         public static float LightPower = 0f;
 
+        public static bool PerPixelLighting { get; set; }
+
         public static bool IsNight { get; set; }
 
         public static DayState Dawn => new(0.5f, new Color(0, 25, 0)) { isNight = true, sunPower = 0.6f };
@@ -63,7 +65,7 @@ namespace WiiPlayTanksRemake.Graphics
         public static void SetDefaultGameLighting(this BasicEffect effect)
         {
             effect.LightingEnabled = true;
-            effect.PreferPerPixelLighting = true;
+            effect.PreferPerPixelLighting = PerPixelLighting;
             effect.EnableDefaultLighting();
 
             effect.TextureEnabled = true;
@@ -85,7 +87,7 @@ namespace WiiPlayTanksRemake.Graphics
         public static void SetDefaultGameLighting_IngameEntities(this BasicEffect effect)
         {
             effect.LightingEnabled = true;
-            effect.PreferPerPixelLighting = true;
+            effect.PreferPerPixelLighting = PerPixelLighting;
             effect.EnableDefaultLighting();
 
             effect.DirectionalLight0.Enabled = true;
