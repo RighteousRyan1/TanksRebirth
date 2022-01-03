@@ -1401,13 +1401,12 @@ namespace WiiPlayTanksRemake.GameContent
                         Array.Fill(ex, new Color(new Random().Next(0, 256), new Random().Next(0, 256), new Random().Next(0, 256)));
 
                         effect.Texture.SetData(0, new Rectangle(0, 8, 32, 15), ex, 0, 480);*/
-
-                        var ex = new Color[1024];
-
-                        Array.Fill(ex, Team != Team.NoTeam ? (Color)typeof(Color).GetProperty(Team.ToString(), System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public).GetValue(null) : default);
-
                         if (Team != Team.NoTeam)
                         {
+                            var ex = new Color[1024];
+
+                            Array.Fill(ex, (Color)typeof(Color).GetProperty(Team.ToString(), System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public).GetValue(null));
+
                             effect.Texture.SetData(0, new Rectangle(0, 0, 32, 9), ex, 0, 288);
                             effect.Texture.SetData(0, new Rectangle(0, 23, 32, 9), ex, 0, 288);
                         }

@@ -266,10 +266,10 @@ namespace WiiPlayTanksRemake.GameContent
         public static Mission ExampleMission1 = new(
                 new Tank[]
                 {
-                    new AITank(TankTier.White) { Team = Team.Red },
-                    new AITank(TankTier.Amethyst) { Team = Team.Blue },
-                    new AITank(TankTier.Gold) { Team = Team.Green },
-                    new AITank(TankTier.Amethyst) { Team = Team.Yellow }
+                    new AITank(TankTier.Ash) { Team = Team.Red },
+                    new AITank(TankTier.Marine) { Team = Team.Blue },
+                    new AITank(TankTier.Pink) { Team = Team.Green },
+                    new AITank(TankTier.Yellow) { Team = Team.Yellow }
                 },
                 new Vector3[]
                 {
@@ -420,7 +420,7 @@ namespace WiiPlayTanksRemake.GameContent
         {
             var pos = GameUtils.GetWorldPosition(GameUtils.MousePosition);
 
-            var drop = CrateDrop.SpawnCrate(new(pos.X, 500, pos.Z), 2f);
+            var drop = CrateDrop.SpawnCrate(new(pos.X, 200, pos.Z), 2f);
             drop.scale = 1.25f;
             drop.TankToSpawn = new AITank(AITank.PICK_ANY_THAT_ARE_IMPLEMENTED());
             drop.TankToSpawn.Team = Team.NoTeam;
