@@ -376,7 +376,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems
             {
                 if (song.volume > 0)
                 {
-                    song.volume = 0.5f * TankGame.Instance.Settings.MusicVolume;
+                    song.volume = TankGame.Instance.Settings.MusicVolume;
                     if (MapRenderer.Theme == MapTheme.Forest)
                         forestAmbience.volume = TankGame.Instance.Settings.AmbientVolume;
                     else
