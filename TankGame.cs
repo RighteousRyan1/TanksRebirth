@@ -35,10 +35,10 @@ namespace WiiPlayTanksRemake
         public float AmbientVolume { get; set; } = 1f;
 
         #region Graphics Settings
-        public static int TankFootprintLimit { get; set; }
-        public static int PerPixelLighting { get; set; }
-        public static bool Vsync { get; set; }
-        public static bool BorderlessWindow { get; set; } = true;
+        public int TankFootprintLimit { get; set; }
+        public int PerPixelLighting { get; set; }
+        public bool Vsync { get; set; }
+        public bool BorderlessWindow { get; set; } = true;
 
         #endregion
     }

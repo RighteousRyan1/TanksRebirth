@@ -157,7 +157,6 @@ namespace WiiPlayTanksRemake.GameContent
 
         public static int tankToSpawnType;
         public static int tankToSpawnTeam;
-        private static int _delay;
 
         internal static void DoRender()
         {
