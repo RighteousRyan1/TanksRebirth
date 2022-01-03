@@ -1,6 +1,6 @@
 ﻿using System;
 using System.IO;
-using System.Text;
+using System.Text.Json;
 using System.Reflection;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
@@ -29,20 +29,20 @@ namespace WiiPlayTanksRemake
 
     public class GameConfig
     {
-        public static float MasterVolume { get; set; } = 1f;
-        public static float MusicVolume { get; set; } = 0.5f;
-        public static float SoundVolume { get; set; } = 1f;
-        public static float AmbientVolume { get; set; } = 1f;
+        public float MasterVolume { get; set; } = 1f;
+        public float MusicVolume { get; set; } = 0.5f;
+        public float SoundVolume { get; set; } = 1f;
+        public float AmbientVolume { get; set; } = 1f;
 
         #region Graphics Settings
-        public static int TankFootprintLimit { get; set; }
-        public static int PerPixelLighting { get; set; }
-        public static bool Vsync { get; set; }
-        public static bool BorderlessWindow { get; set; } = true;
+        public int TankFootprintLimit { get; set; }
+        public int PerPixelLighting { get; set; }
+        public bool Vsync { get; set; }
+        public bool BorderlessWindow { get; set; } = true;
 
         #endregion
-
     }
+
     public class Camera
     {
         private Matrix _viewMatrix;
@@ -199,7 +199,7 @@ namespace WiiPlayTanksRemake
 
             IsMouseVisible = false;
 
-            Window.IsBorderless = GameConfig.BorderlessWindow;
+            Window.IsBorderless = true;
         }
         protected override void Initialize()
         {
@@ -226,14 +226,17 @@ namespace WiiPlayTanksRemake
             if (!File.Exists(SaveDirectory + Path.DirectorySeparatorChar + "settings.json")) {
                 Settings = new();
                 SettingsHandler = new(Settings, SaveDirectory + Path.DirectorySeparatorChar + "settings.json");
-                System.Text.Json.JsonSerializerOptions opts = new();
-                opts.WriteIndented = true;
+                JsonSerializerOptions opts = new()
+                {
+                    WriteIndented = true
+                };
                 SettingsHandler.Serialize(opts, true);
             }
             else {
                 SettingsHandler = new(Settings, SaveDirectory + Path.DirectorySeparatorChar + "settings.json");
                 Settings = SettingsHandler.DeserializeAndSet<GameConfig>();
             }
+            Window.IsBorderless = Settings.BorderlessWindow;
 
             GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(0.75f) * Matrix.CreateTranslation(0f, 0f, 1000f);
             GameProjection = Matrix.CreateOrthographic(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, -2000f, 5000f);
@@ -246,6 +249,12 @@ namespace WiiPlayTanksRemake
         protected override void OnExiting(object sender, EventArgs args)
         {
             WPTR.ClientLog.Dispose();
+            SettingsHandler = new(Settings, SaveDirectory + Path.DirectorySeparatorChar + "settings.json");
+            JsonSerializerOptions opts = new()
+            {
+                WriteIndented = true
+            };
+            SettingsHandler.Serialize(opts, true);
         }
 
         protected override void LoadContent()
@@ -364,9 +373,6 @@ namespace WiiPlayTanksRemake
                         tnk.IsHoveredByMouse = false;
                 }
             }
-            Input.OldKeySnapshot = Input.CurrentKeySnapshot;
-            Input.OldMouseSnapshot = Input.CurrentMouseSnapshot;
-            Input.OldGamePadSnapshot = Input.CurrentGamePadSnapshot;
             foreach (var music in Music.AllMusic)
                 music?.Update();
         }

@@ -20,6 +20,9 @@ namespace WiiPlayTanksRemake.Internals.Common
         public static GamePadState OldGamePadSnapshot { get; internal set; }
 
         public static void HandleInput(PlayerIndex pIndex = PlayerIndex.One) {
+            OldKeySnapshot = CurrentKeySnapshot;
+            OldMouseSnapshot = CurrentMouseSnapshot;
+            OldGamePadSnapshot = CurrentGamePadSnapshot;
             CurrentKeySnapshot = Keyboard.GetState();
             CurrentMouseSnapshot = Mouse.GetState();
             CurrentGamePadSnapshot = GamePad.GetState(pIndex);
@@ -41,6 +44,9 @@ namespace WiiPlayTanksRemake.Internals.Common
         public static bool MouseLeft => CurrentMouseSnapshot.LeftButton == ButtonState.Pressed;
         public static bool MouseMiddle => CurrentMouseSnapshot.MiddleButton == ButtonState.Pressed;
         public static bool MouseRight => CurrentMouseSnapshot.RightButton == ButtonState.Pressed;
+        public static bool OldMouseLeft => OldMouseSnapshot.LeftButton == ButtonState.Pressed;
+        public static bool OldMouseMiddle => OldMouseSnapshot.MiddleButton == ButtonState.Pressed;
+        public static bool OldMouseRight => OldMouseSnapshot.RightButton == ButtonState.Pressed;
         public static bool CanDetectClick(bool rightClick = false) {
             bool clicked = !rightClick ? (CurrentMouseSnapshot.LeftButton == ButtonState.Pressed && OldMouseSnapshot.LeftButton == ButtonState.Released)
                 : (CurrentMouseSnapshot.RightButton == ButtonState.Pressed && OldMouseSnapshot.RightButton == ButtonState.Released);
