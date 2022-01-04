@@ -1240,7 +1240,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                     //isCubeInWay = rays.Any(r => IsCubeInRayPath(r, AiParams.cubeWarinessDistance));
 
-                    if (isCubeInWay && Behaviors[2].IsBehaviourModuloOf(30))
+                    if (isCubeInWay /*&& Behaviors[2].IsBehaviourModuloOf(30)*/)
                     {
                         /*Ray goodDir = new();
 
@@ -1260,7 +1260,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                         // targetTankRotation = goodRot;
 
-                        var turnInvar = MathHelper.PiOver2;
+                        var turnInvar = 0.15f;// MathHelper.PiOver2;
 
                         if (velocity.X > 0 && velocity.Z > 0) // yes
                         {

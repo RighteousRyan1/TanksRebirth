@@ -40,6 +40,8 @@ namespace WiiPlayTanksRemake
         public bool Vsync { get; set; } = true;
         public bool BorderlessWindow { get; set; } = true;
 
+        public bool MSAA; // not property for a reason for now
+
         #endregion
     }
 
@@ -381,10 +383,9 @@ namespace WiiPlayTanksRemake
         }
         protected override void Draw(GameTime gameTime)
         {
-
             RenderStopwatch.Start();
 
-            GraphicsDevice.Clear(Color.Black);
+            GraphicsDevice.Clear(Color.SkyBlue);
 
             spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied);
 
