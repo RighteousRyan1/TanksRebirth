@@ -112,7 +112,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         public static class BoundsRenderer
         {
-            private static BoundingBox[] enclosingBoxes = new BoundingBox[4];
+            internal static BoundingBox[] enclosingBoxes = new BoundingBox[4];
 
             public static BoundingBox BoundaryBox;
 

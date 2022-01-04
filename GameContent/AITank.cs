@@ -74,6 +74,8 @@ namespace WiiPlayTanksRemake.GameContent
             public int missDistance;
 
             public float shootChance = 1f;
+
+            public float cubeWarinessDistance = 60f;
         }
 
         public Params AiParams { get; } = new();
@@ -970,6 +972,8 @@ namespace WiiPlayTanksRemake.GameContent
             if (Dead)
                 return;
 
+            UpdateCollision();
+
             if (curShootStun > 0)
                 curShootStun--;
             if (curShootCooldown > 0)
@@ -992,8 +996,6 @@ namespace WiiPlayTanksRemake.GameContent
                 * Matrix.CreateTranslation(position);
 
             position += velocity * 0.55f;
-
-            UpdateCollision();
 
             DoAi();
 
@@ -1103,6 +1105,7 @@ namespace WiiPlayTanksRemake.GameContent
         public Ray tankPathRay;
         
         public bool isCubeInWay;
+        private bool wasCubeInWay;
 
 
         private float treadPlaceTimer;
@@ -1122,7 +1125,8 @@ namespace WiiPlayTanksRemake.GameContent
             foreach (var behavior in Behaviors)
                 behavior.totalUpdateCount++;
 
-            treadPlaceTimer += MaxSpeed / (tier == TankTier.White ? 10 : 5);
+            // treadPlaceTimer += MaxSpeed / (tier == TankTier.White ? 10 : 5);
+            treadPlaceTimer += MaxSpeed - (MaxSpeed * (tier == TankTier.White ? 0.92f : 0.85f));
             if (velocity != Vector3.Zero && !Stationary)
             {
                 if (TankGame.GameUpdateTime % treadSoundTimer == 0)
@@ -1181,7 +1185,7 @@ namespace WiiPlayTanksRemake.GameContent
                         }
                         for (int i = 0; i < RicochetCount; i++)
                         {
-                            if (tankTurretRay.Intersects(MapRenderer.BoundsRenderer.BoundaryBox).HasValue)
+                            if (MapRenderer.BoundsRenderer.enclosingBoxes.Any(c => tankTurretRay.Intersects(c).HasValue))
                             {
                                 // normal is up usually
                                 var r = GeometryUtils.Reflect(tankTurretRay, tankTurretRay.Intersects(MapRenderer.BoundsRenderer.BoundaryBox).Value);
@@ -1218,32 +1222,106 @@ namespace WiiPlayTanksRemake.GameContent
                     bool movingFromMine = AiParams.timeSinceLastMinePlaced < AiParams.moveFromMineTime;
                     bool movingFromOtherMine = AiParams.timeSinceLastMineFound < AiParams.moveFromMineTime / 2;
 
+                    #region CubeNav
+
+                    var rays = new List<Ray>();
+
+                    /*for (int i = 0; i < 1; i++)
+                    {
+                        var tnkRay = GeometryUtils.CreateRayFrom2D(Position2D, Vector2.UnitY.RotatedByRadians(TankRotation + MathHelper.ToRadians(i)));
+                        var tnkRay2 = GeometryUtils.CreateRayFrom2D(Position2D, Vector2.UnitY.RotatedByRadians(TankRotation - MathHelper.ToRadians(i)));
+
+                        rays.Add(tnkRay);
+                        rays.Add(tnkRay2);
+                    }*/
+
+                    var tnkRayBase = GeometryUtils.CreateRayFrom2D(Position2D, Vector2.UnitY.RotatedByRadians(TankRotation));
+                    isCubeInWay = IsCubeInRayPath(tnkRayBase, AiParams.cubeWarinessDistance);
+
+                    //isCubeInWay = rays.Any(r => IsCubeInRayPath(r, AiParams.cubeWarinessDistance));
+
+                    if (isCubeInWay && Behaviors[2].IsBehaviourModuloOf(30))
+                    {
+                        /*Ray goodDir = new();
+
+                        float goodRot = 0f;
+
+                        for (int i = 0; i < 4; i++)
+                        {
+                            var tnkRay = GeometryUtils.CreateRayFrom2D(Position2D, Vector2.UnitY.RotatedByRadians(TankRotation + MathHelper.PiOver2 * i));
+
+                            if (!IsCubeInRayPath(tnkRay, AiParams.cubeWarinessDistance))
+                            {
+                                goodDir = tnkRay;
+                                goodRot = (MathHelper.PiOver2 * i) - MathHelper.PiOver2;
+                                break;
+                            }
+                        }*/
+
+                        // targetTankRotation = goodRot;
+
+                        var turnInvar = MathHelper.PiOver2;
+
+                        if (velocity.X > 0 && velocity.Z > 0) // yes
+                        {
+                            // down right
+
+                            targetTankRotation += turnInvar;//0.1f;
+                        }
+                        else if (velocity.X >= 0 && velocity.Z <= 0) // yes
+                        {
+                            // up right
+
+                            targetTankRotation += turnInvar;
+                        }
+                        else if (velocity.X <= 0 && velocity.Z >= 0) // yes
+                        {
+                            // down left
+
+                            targetTankRotation -= turnInvar;
+                        }
+                        else if (velocity.X < 0 && velocity.Z < 0) // yes
+                        {
+                            // up left
+
+                            targetTankRotation -= turnInvar;
+                        }
+                    }
+
+                    wasCubeInWay = isCubeInWay;
+
+                    // adjust angles
+
+                    #endregion
+
                     #region GeneralMovement
                     if (!isMineNear && !isBulletNear && !movingFromMine && !movingFromOtherMine && !IsTurning)
                     {
-                        if (Behaviors[0].IsBehaviourModuloOf(AiParams.meanderFrequency))
+                        if (!isCubeInWay)
                         {
-                            var meanderRandom = new Random().NextFloat(-AiParams.meanderAngle / 2, AiParams.meanderAngle / 2);
+                            if (Behaviors[0].IsBehaviourModuloOf(AiParams.meanderFrequency))
+                            {
+                                var meanderRandom = new Random().NextFloat(-AiParams.meanderAngle / 2, AiParams.meanderAngle / 2);
 
-                            targetTankRotation += meanderRandom;
+                                targetTankRotation += meanderRandom;
 
-                            /*if (targetTankRotation > MathHelper.TwoPi)
-                                targetTankRotation = targetTankRotation - MathHelper.TwoPi;
-                            else if (targetTankRotation < 0)
-                                targetTankRotation = MathHelper.TwoPi + targetTankRotation;*/
-                        }
+                                /*if (targetTankRotation > MathHelper.TwoPi)
+                                    targetTankRotation = targetTankRotation - MathHelper.TwoPi;
+                                else if (targetTankRotation < 0)
+                                    targetTankRotation = MathHelper.TwoPi + targetTankRotation;*/
+                            }
 
+                            if (Behaviors[0].IsBehaviourModuloOf(AiParams.bigMeanderFrequency))
+                            {
+                                var meanderRandom = new Random().NextFloat(-MathHelper.PiOver2, MathHelper.PiOver2);
 
-                        if (Behaviors[0].IsBehaviourModuloOf(AiParams.bigMeanderFrequency))
-                        {
-                            var meanderRandom = new Random().NextFloat(-MathHelper.PiOver2, MathHelper.PiOver2);
+                                targetTankRotation += meanderRandom;
 
-                            targetTankRotation += meanderRandom;
-
-                            /*if (targetTankRotation > MathHelper.TwoPi)
-                                targetTankRotation = targetTankRotation - MathHelper.TwoPi;
-                            else if (targetTankRotation < 0)
-                                targetTankRotation = MathHelper.TwoPi + targetTankRotation;*/
+                                /*if (targetTankRotation > MathHelper.TwoPi)
+                                    targetTankRotation = targetTankRotation - MathHelper.TwoPi;
+                                else if (targetTankRotation < 0)
+                                    targetTankRotation = MathHelper.TwoPi + targetTankRotation;*/
+                            }
                         }
                     }
                     #endregion
@@ -1300,41 +1378,6 @@ namespace WiiPlayTanksRemake.GameContent
                             }
                         }
                     }
-                    #endregion
-
-                    #region CubeNav
-
-                    var tnkRay = GeometryUtils.CreateRayFrom2D(Position2D, Vector2.UnitY.RotatedByRadians(TankRotation));
-
-                    isCubeInWay = IsCubeInRayPath(tnkRay, 50f); // maxDist should be an AiParam
-
-                    if (velocity.X > 0 && velocity.Z > 0)
-                    {
-                        // up right
-
-
-                    }
-                    if (velocity.X > 0 && velocity.Z < 0)
-                    {
-                        // down right
-
-
-                    }
-                    if (velocity.X < 0 && velocity.Z > 0)
-                    {
-                        // up left
-
-
-                    }
-                    if (velocity.X < 0 && velocity.Z < 0)
-                    {
-                        // down left
-
-
-                    }
-                   
-                    // adjust angles
-
                     #endregion
 
                 }
@@ -1429,6 +1472,7 @@ namespace WiiPlayTanksRemake.GameContent
             var info = new string[]
             {
                 $"Team: {Team}",
+                $"Vel: {velocity}   ",
                 $"ViewsTarget: {AiParams.seesTarget}",
                 $"Actual / Target: {TankRotation} / {dummyValue}",
                 $"Mine: {mineFound} | Bullet: {bulletFound}",
@@ -1495,7 +1539,8 @@ namespace WiiPlayTanksRemake.GameContent
 
         public static bool IsCubeInRayPath(Ray navigator, float maxDist)
         {
-            return Cube.cubes.Any(c => c is not null && navigator.Intersects(c.collider) is not null && navigator.Intersects(c.collider).Value <= maxDist);
+            return Cube.cubes.Any(c => c is not null && navigator.Intersects(c.collider) is not null && navigator.Intersects(c.collider).Value <= maxDist) 
+                || (MapRenderer.BoundsRenderer.enclosingBoxes.Any(c => navigator.Intersects(c).HasValue && navigator.Intersects(c).Value <= maxDist));
         }
 
         public static TankTier PICK_ANY_THAT_ARE_IMPLEMENTED()
