@@ -19,7 +19,7 @@ namespace WiiPlayTanksRemake.GameContent
         public static Matrix projectionMatrix;
         public static Matrix worldMatrix;
 
-        public static MapTheme Theme { get; set; } = MapTheme.Default;
+        public static MapTheme Theme { get; set; } = MapTheme.Forest;
 
         public static class FloorRenderer
         {

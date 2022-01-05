@@ -20,6 +20,7 @@ using System.Diagnostics;
 using WiiPlayTanksRemake.GameContent.UI;
 using WiiPlayTanksRemake.Internals.Common.Framework.Audio;
 using WiiPlayTanksRemake.Graphics;
+using System.Management;
 
 namespace WiiPlayTanksRemake
 {
@@ -111,7 +112,30 @@ namespace WiiPlayTanksRemake
     }
     public class TankGame : Game
     {
+        private static string GetGPU()
+        {
+            if (!System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+                return "Unavailable: Only supported on Windows";
+            using var searcher = new ManagementObjectSearcher("select * from Win32_VideoController");
 
+            foreach (ManagementObject obj in searcher.Get())
+            {
+                return $"{obj["Name"]} - {obj["DriverVersion"]}";
+            }
+            return "Data not retrieved.";
+        }
+        public static string GetHardware(string hwclass, string syntax)
+        {
+            if (!System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+                return "Unavailable: Only supported on Windows";
+            using var searcher = new ManagementObjectSearcher($"SELECT * FROM {hwclass}");
+
+            foreach (var obj in searcher.Get())
+            {
+                return $"{obj[syntax]}";
+            }
+            return "Data not retrieved.";
+        }
         public static class MemoryParser
         {
             public static ulong FromBits(long bytes)
@@ -137,6 +161,11 @@ namespace WiiPlayTanksRemake
         }
 
         public Camera GameCamera;
+
+        public static string SysGPU = $"GPU: {GetGPU()}";
+        public static string SysCPU = $"CPU: {GetHardware("Win32_Processor", "Name")}";
+        public static string SysKeybd = $"Keyboard: {GetHardware("Win32_Keyboard", "Name")}";
+        public static string SysMouse = $"Mouse: {GetHardware("Win32_PointingDevice", "Name")}";
 
         private static Stopwatch RenderStopwatch { get; } = new();
         private static Stopwatch UpdateStopwatch { get; } = new();
@@ -197,6 +226,8 @@ namespace WiiPlayTanksRemake
             Window.AllowUserResizing = true;
 
             IsMouseVisible = false;
+
+            graphics.IsFullScreen = false;
         }
         protected override void Initialize()
         {
@@ -234,13 +265,13 @@ namespace WiiPlayTanksRemake
                 Settings = SettingsHandler.DeserializeAndSet<GameConfig>();
             }
 
-            #region Config Initialization
+#region Config Initialization
 
             graphics.SynchronizeWithVerticalRetrace = Settings.Vsync;
             Window.IsBorderless = Settings.BorderlessWindow;
             Lighting.PerPixelLighting = Settings.PerPixelLighting;
 
-            #endregion
+#endregion
 
             GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(0.75f) * Matrix.CreateTranslation(0f, 0f, 1000f);
             GameProjection = Matrix.CreateOrthographic(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, -2000f, 5000f);
@@ -331,7 +362,7 @@ namespace WiiPlayTanksRemake
 
             UpdateStopwatch.Stop();
 
-            LogicFPS = Math.Round(1f / gameTime.ElapsedGameTime.TotalSeconds, 4);
+            LogicFPS = Math.Round(1f / gameTime.ElapsedGameTime.TotalSeconds, 2);
         }
 
         private static void UpdateGameSystems()
@@ -390,6 +421,12 @@ namespace WiiPlayTanksRemake
 
             spriteBatch.DrawString(Fonts.Default, "Debug Level: " + DebugUtils.CurDebugLabel, new Vector2(10), Color.White, 0f, default, 0.6f, default, default);
             DebugUtils.DrawDebugString(spriteBatch, $"Memory Used: {MemoryParser.FromMegabytes(TotalMemoryUsed)} MB", new(8, GameUtils.WindowHeight * 0.18f));
+            DebugUtils.DrawDebugString(spriteBatch, $"{SysGPU}" +
+                $"\n{SysCPU}" +
+                $"\n{SysKeybd}" +
+                $"\n{SysMouse}", 
+                new(8, GameUtils.WindowHeight * 0.2f));
+
             graphics.GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
             WPTR.DoRender();
@@ -406,7 +443,7 @@ namespace WiiPlayTanksRemake
 
             RenderStopwatch.Stop();
 
-            RenderFPS = Math.Round(1f / gameTime.ElapsedGameTime.TotalSeconds, 4);
+            RenderFPS = Math.Round(1f / gameTime.ElapsedGameTime.TotalSeconds, 2);
         }
     }
     public static class Program

@@ -112,18 +112,12 @@ namespace WiiPlayTanksRemake.GameContent
 
                 var dummyVel = Velocity2D;
 
-                var coldir = Collision.CollisionDirection.None;
+                Collision.HandleCollisionSimple_ForBlocks(hurtbox2d, ref dummyVel, ref position, out var dir, false);
 
-                //foreach (var c in Cube.cubes.Where(c => c is not null))
-                {
-                    Collision.HandleCollisionSimple_ForBlocks(hurtbox2d, ref dummyVel, ref position, out var dir, false);
+                if (lifeTime <= 5 && Cube.cubes.Any(cu => cu is not null && cu.collider.Intersects(hurtbox)))
+                    Destroy();
 
-                    //velocity.X = dummyVel.X;
-                    //velocity.Z = dummyVel.Y;
-
-                    coldir = dir;
-                }
-                switch (coldir)
+                switch (dir)
                 {
                     case Collision.CollisionDirection.Up:
                         if (ricochets > 0)
@@ -150,10 +144,6 @@ namespace WiiPlayTanksRemake.GameContent
                             Destroy();
                         break;
                 }
-                // this is hacky as fuck fix tomorrow
-
-                if (coldir != Collision.CollisionDirection.None)
-                    WPTR.ClientLog.Write(coldir, LogType.Debug);
             }
             lifeTime++;
 

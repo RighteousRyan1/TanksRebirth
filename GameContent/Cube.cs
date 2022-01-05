@@ -122,7 +122,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                 mesh.Draw();
             }
-            TankGame.spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), collider2d, Color.White * 0.75f);
+            // TankGame.spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), collider2d, Color.White * 0.75f);
         }
         public void Update()
         {
