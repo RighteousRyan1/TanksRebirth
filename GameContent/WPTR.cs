@@ -421,6 +421,7 @@ namespace WiiPlayTanksRemake.GameContent
                 Team = Team.NoTeam
             };
         }
+
         public static void BeginIntroSequence()
         {
             timeUntilTankFunction = 180;

@@ -6,6 +6,7 @@ using WiiPlayTanksRemake.Internals.Core;
 using WiiPlayTanksRemake.Internals.Common.GameUI;
 using WiiPlayTanksRemake.Internals.Common.Utilities;
 using WiiPlayTanksRemake.GameContent.Systems;
+using WiiPlayTanksRemake.Internals.Common;
 
 namespace WiiPlayTanksRemake.GameContent.UI
 {
@@ -37,6 +38,8 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
         public static UIImageButton[] SettingsButtons = new UIImageButton[SETTINGS_BUTTONS_CT];
 
+        private static int _delay;
+
         // TODO: make rect scissor work -> get powerups to be pickupable
 
         internal static void Initialize()
@@ -66,12 +69,14 @@ namespace WiiPlayTanksRemake.GameContent.UI
             MusicVolume.SetDimensions(700, 100, 500, 150);
             MusicVolume.Initialize();
             MusicVolume.Value = TankGame.Settings.MusicVolume;
+            MusicVolume.BarWidth = 15;
             MusicVolume.SliderColor = Color.WhiteSmoke;
 
             AmbientVolume = new();
             AmbientVolume.SetDimensions(700, 600, 500, 150);
             AmbientVolume.Initialize();
             AmbientVolume.Value = TankGame.Settings.AmbientVolume;
+            AmbientVolume.BarWidth = 15;
             AmbientVolume.SliderColor = Color.WhiteSmoke;
 
             BackButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Back", Color.WhiteSmoke));
@@ -97,6 +102,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
         private static void OptionsButton_OnMouseClick(Internals.UI.UIElement affectedElement)
         {
+            _delay = 1;
             InOptions = true;
             ResumeButton.Visible = false;
             RestartButton.Visible = false;
@@ -104,6 +110,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             OptionsButton.Visible = false;
             MusicVolume.Visible = true;
             AmbientVolume.Visible = true;
+            AmbientVolume.IgnoreMouseInteractions = true;
             BackButton.Visible = true;
         }
 
@@ -176,9 +183,16 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 OptionsButton.Visible = Paused;
             }
 
-            TankGame.Settings.MusicVolume = MusicVolume.Value;
+            if (MusicVolume.Value != 0f)
+                TankGame.Settings.MusicVolume = MusicVolume.Value;
+
             TankGame.Settings.AmbientVolume = AmbientVolume.Value;
             TankMusicSystem.UpdateVolume();
+
+            if (_delay > 0 && !Input.MouseLeft)
+                _delay--;
+            if (_delay <= 0)
+                AmbientVolume.IgnoreMouseInteractions = false;
         }
 
         public class Options
