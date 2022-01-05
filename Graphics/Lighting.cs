@@ -50,7 +50,7 @@ namespace WiiPlayTanksRemake.Graphics
         public static float LightPower = 0f;
 
         public static bool PerPixelLighting { get; set; }
-
+        
         public static bool IsNight { get; set; }
 
         public static DayState Dawn => new(0.5f, new Color(0, 25, 0)) { isNight = true, sunPower = 0.6f };

@@ -963,7 +963,7 @@ namespace WiiPlayTanksRemake.GameContent
             if (Invisible && !Dead)
             {
                 var invis = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_invisible");
-                SoundPlayer.PlaySoundInstance(invis, SoundContext.Sound, 0.3f);
+                SoundPlayer.PlaySoundInstance(invis, SoundContext.Effect, 0.3f);
             }
         }
 
@@ -1024,7 +1024,7 @@ namespace WiiPlayTanksRemake.GameContent
             curMineCooldown = MineCooldown;
             curMineStun = MineStun;
             var sound = GameResources.GetGameResource<SoundEffect>("Assets/sounds/mine_place");
-            SoundPlayer.PlaySoundInstance(sound, SoundContext.Sound, 0.5f);
+            SoundPlayer.PlaySoundInstance(sound, SoundContext.Effect, 0.5f);
             OwnedMineCount++;
             AiParams.timeSinceLastMinePlaced = 0;
 
@@ -1037,8 +1037,8 @@ namespace WiiPlayTanksRemake.GameContent
             var killSound1 = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_destroy");
             var killSound2 = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_destroy_enemy");
 
-            SoundPlayer.PlaySoundInstance(killSound1, SoundContext.Sound, 0.2f);
-            SoundPlayer.PlaySoundInstance(killSound2, SoundContext.Sound, 0.3f);
+            SoundPlayer.PlaySoundInstance(killSound1, SoundContext.Effect, 0.2f);
+            SoundPlayer.PlaySoundInstance(killSound2, SoundContext.Effect, 0.3f);
 
             new TankDeathMark(TankDeathMark.CheckColor.White)
             {
@@ -1062,9 +1062,9 @@ namespace WiiPlayTanksRemake.GameContent
 
             sfx = ShellType switch
             {
-                ShellTier.Standard => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_2"), SoundContext.Sound, 0.3f),
-                ShellTier.Rocket => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_rocket"), SoundContext.Sound, 0.3f),
-                ShellTier.RicochetRocket => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_ricochet_rocket"), SoundContext.Sound, 0.3f),
+                ShellTier.Standard => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_2"), SoundContext.Effect, 0.3f),
+                ShellTier.Rocket => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_rocket"), SoundContext.Effect, 0.3f),
+                ShellTier.RicochetRocket => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_ricochet_rocket"), SoundContext.Effect, 0.3f),
                 _ => throw new NotImplementedException()
             };
             sfx.Pitch = ShootPitch;
@@ -1132,7 +1132,7 @@ namespace WiiPlayTanksRemake.GameContent
                 if (TankGame.GameUpdateTime % treadSoundTimer == 0)
                 {
                     var treadPlace = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_tread_place_{new Random().Next(1, 5)}");
-                    var sfx = SoundPlayer.PlaySoundInstance(treadPlace, SoundContext.Sound, 0.05f);
+                    var sfx = SoundPlayer.PlaySoundInstance(treadPlace, SoundContext.Effect, 0.05f);
                     sfx.Pitch = TreadPitch;
                 }
 

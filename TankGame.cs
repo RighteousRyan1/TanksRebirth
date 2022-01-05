@@ -29,9 +29,8 @@ namespace WiiPlayTanksRemake
 
     public class GameConfig
     {
-        public float MasterVolume { get; set; } = 1f;
         public float MusicVolume { get; set; } = 0.5f;
-        public float SoundVolume { get; set; } = 1f;
+        public float EffectsVolume { get; set; } = 1f;
         public float AmbientVolume { get; set; } = 1f;
 
         #region Graphics Settings

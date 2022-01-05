@@ -192,7 +192,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             var sound = GameResources.GetGameResource<SoundEffect>("Assets/sounds/bullet_ricochet");
 
-            SoundPlayer.PlaySoundInstance(sound, SoundContext.Sound, 0.5f);
+            SoundPlayer.PlaySoundInstance(sound, SoundContext.Effect, 0.5f);
 
             ricochets--;
         }
@@ -250,7 +250,7 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 if (playSound)
                 {
-                    var sfx = SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/bullet_destroy"), SoundContext.Sound, 0.5f);
+                    var sfx = SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/bullet_destroy"), SoundContext.Effect, 0.5f);
                     sfx.Pitch = -0.2f;
                 }
                 if (owner != null)

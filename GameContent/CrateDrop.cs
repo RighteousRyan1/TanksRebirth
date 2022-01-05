@@ -58,7 +58,7 @@ namespace WiiPlayTanksRemake.GameContent
         {
             var spawnSfx = GameResources.GetGameResource<SoundEffect>("Assets/sounds/crate/CrateSpawn");
 
-            SoundPlayer.PlaySoundInstance(spawnSfx, SoundContext.Sound, 0.2f);
+            SoundPlayer.PlaySoundInstance(spawnSfx, SoundContext.Effect, 0.2f);
 
             return new()
             {
@@ -129,7 +129,7 @@ namespace WiiPlayTanksRemake.GameContent
                     {
                         var spawnSfx = GameResources.GetGameResource<SoundEffect>("Assets/sounds/crate/CrateImpact");
 
-                        SoundPlayer.PlaySoundInstance(spawnSfx, SoundContext.Sound, 0.2f);
+                        SoundPlayer.PlaySoundInstance(spawnSfx, SoundContext.Effect, 0.2f);
 
                         velocity.Y = -velocity.Y * 0.5f;
 

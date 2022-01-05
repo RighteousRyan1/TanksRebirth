@@ -79,7 +79,7 @@ namespace WiiPlayTanksRemake.GameContent
             Detonated = true;
             var destroysound = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_destroy");
 
-            SoundPlayer.PlaySoundInstance(destroysound, SoundContext.Sound, 0.4f);
+            SoundPlayer.PlaySoundInstance(destroysound, SoundContext.Effect, 0.4f);
             
             foreach (var shell in Shell.AllShells.Where(shell => shell is not null && Vector3.Distance(shell.position, position) < explosionRadius))
             {

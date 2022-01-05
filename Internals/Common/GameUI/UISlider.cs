@@ -9,7 +9,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace WiiPlayTanksRemake.Internals.Common.GameUI
 {
-    internal class UISlider : UIElement
+    public class UISlider : UIElement
     {
 		public float Value
 		{
@@ -23,18 +23,14 @@ namespace WiiPlayTanksRemake.Internals.Common.GameUI
 
 		public Color SliderColor = Color.LightBlue;
 
-		public bool IgnoreMouseInteractions;
-
 		private float InternalValue;
 
 		public override void OnInitialize()
 		{
 			UIImage interactable = new(GameResources.GetGameResource<Texture2D>("Assets/MagicPixel"), 1f, (image, spriteBatch) => spriteBatch.Draw(image.Texture, image.Hitbox, Color.Transparent));
 			interactable.SetDimensions((int)Position.X + 2, (int)Position.Y + 2, (int)Size.X - 4, (int)Size.Y - 4);
-			interactable.OnMouseClick += (element) =>
+			interactable.OnLeftDown += (element) =>
 			{
-				if (!element.Parent.Visible || !element.Visible || IgnoreMouseInteractions)
-					return;
 				int mouseXRelative = (int)Math.Round(Utilities.GameUtils.MouseX - element.Position.X);
 				InternalValue = MathHelper.Clamp(mouseXRelative / element.Size.X, 0, 1);
 			};
