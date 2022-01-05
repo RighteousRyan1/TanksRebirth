@@ -194,7 +194,7 @@ namespace WiiPlayTanksRemake.GameContent
             // TODO: Fix translation
             // TODO: Scaling with screen size.
 
-            foreach (var element in UIElement.AllUIElements) {
+            foreach (var element in UIElement.AllUIElements.ToList()) {
                 //element.Position = Vector2.Transform(element.Position, UIMatrix * Matrix.CreateTranslation(element.Position.X, element.Position.Y, 0));
 
                 if (element.HasScissor)
@@ -228,29 +228,46 @@ namespace WiiPlayTanksRemake.GameContent
 
             ChatSystem.DrawMessages();
 
-            if (TankGame.Instance.IsActive) {
-                foreach (var element in UIElement.AllUIElements) {
-                    //DebugUtils.DrawDebugString(TankGame.spriteBatch, element.Hitbox, new(200, 200), 2);
-                    //DebugUtils.DrawDebugString(TankGame.spriteBatch, GameUtils.MousePosition, new(200, 250), 2);
-                    if (!element.MouseHovering && element.Hitbox.Contains(GameUtils.MousePosition)) {
-                        element?.MouseOver();
-                        element.MouseHovering = true;
-                    }
-                    else if (element.MouseHovering && !element.Hitbox.Contains(GameUtils.MousePosition)) {
-                        element?.MouseLeave();
-                        element.MouseHovering = false;
-                    }
-                    if (Input.MouseLeft && (!Input.OldMouseLeft || element.GetType() == typeof(UIImage)) && GameUtils.MouseOnScreenProtected && element.Hitbox.Contains(GameUtils.MousePosition)) {
-                        element?.MouseClick();
-                    }
-                    if (Input.MouseRight && !Input.OldMouseRight && GameUtils.MouseOnScreenProtected && element.Hitbox.Contains(GameUtils.MousePosition)) {
-                        element?.MouseRightClick();
-                    }
-                    if (Input.MouseMiddle && !Input.OldMouseMiddle && GameUtils.MouseOnScreenProtected && element.Hitbox.Contains(GameUtils.MousePosition)) {
-                        element?.MouseMiddleClick();
-                    }
+            UIElement focusedElement = GetElementAt(GameUtils.MousePosition);
+
+            if (focusedElement != null)
+            {
+                focusedElement.LeftClick();
+                focusedElement.LeftDown();
+                focusedElement.LeftUp();
+
+                focusedElement.RightClick();
+                focusedElement.RightDown();
+                focusedElement.RightUp();
+
+                focusedElement.MiddleClick();
+                focusedElement.MiddleDown();
+                focusedElement.MiddleUp();
+
+                focusedElement.MouseOver();
+            }
+
+            foreach (UIElement element in UIElement.AllUIElements)
+            {
+                element.MouseOut();
+            }
+        }
+
+        public static UIElement GetElementAt(Vector2 position, bool getHighest = false)
+        {
+            UIElement focusedElement = null;
+
+            for (int iterator = UIElement.AllUIElements.Count - 1; iterator >= 0; iterator--)
+            {
+                UIElement currentElement = UIElement.AllUIElements[iterator];
+                if (!currentElement.IgnoreMouseInteractions && currentElement.Visible && currentElement.Hitbox.Contains(position))
+                {
+                    focusedElement = currentElement;
+                    break;
                 }
             }
+
+            return getHighest ? focusedElement : focusedElement?.GetElementAt(position);
         }
 
         public static PlayerTank myTank;
@@ -421,6 +438,7 @@ namespace WiiPlayTanksRemake.GameContent
                 Team = Team.NoTeam
             };
         }
+
         public static void BeginIntroSequence()
         {
             timeUntilTankFunction = 180;
@@ -546,17 +564,17 @@ namespace WiiPlayTanksRemake.GameContent
             ClearTracks = new(null, 1f, (uiPanel, spriteBatch) => IngameUI.QuickButton(uiPanel, TankGame.spriteBatch, "Clear Tracks", Color.LightBlue, 0.5f));
             ClearTracks.SetDimensions(250, 25, 100, 50);
 
-            ClearTracks.OnMouseClick += ClearTankTracks;
+            ClearTracks.OnLeftClick += ClearTankTracks;
 
             ClearChecks = new(null, 1f, (uiPanel, spriteBatch) => IngameUI.QuickButton(uiPanel, TankGame.spriteBatch, "Clear Checks", Color.LightBlue, 0.5f));
             ClearChecks.SetDimensions(250, 95, 100, 50);
 
-            ClearChecks.OnMouseClick += ClearTankDeathmarks;
+            ClearChecks.OnLeftClick += ClearTankDeathmarks;
 
             SetupMissionAgain = new(null, 1f, (uiPanel, spriteBatch) => IngameUI.QuickButton(uiPanel, TankGame.spriteBatch, "Restart\n Mission", Color.LightBlue, 0.5f));
             SetupMissionAgain.SetDimensions(250, 165, 100, 50);
 
-            SetupMissionAgain.OnMouseClick += RestartMission;
+            SetupMissionAgain.OnLeftClick += RestartMission;
         }
 
         private static void RestartMission(UIElement affectedElement)

@@ -6,22 +6,21 @@ namespace WiiPlayTanksRemake.Internals.Common.Framework.Audio
 {
     public static class SoundPlayer
     {
-        private static float MasterVolume => TankGame.Settings.MasterVolume;
         private static float MusicVolume => TankGame.Settings.MusicVolume;
-        private static float SoundVolume => TankGame.Settings.SoundVolume;
+        private static float EffectsVolume => TankGame.Settings.EffectsVolume;
         private static float AmbientVolume => TankGame.Settings.AmbientVolume;
         public static SoundEffectInstance PlaySoundInstance(SoundEffect fromSound, SoundContext context, float volume = 1f)
         {
             switch (context)
             {
                 case SoundContext.Music:
-                    volume *= MusicVolume * MasterVolume;
+                    volume *= MusicVolume;
                     break;
-                case SoundContext.Sound:
-                    volume *= SoundVolume * MasterVolume;
+                case SoundContext.Effect:
+                    volume *= EffectsVolume;
                     break;
                 case SoundContext.Ambient:
-                    volume *= AmbientVolume * MasterVolume;
+                    volume *= AmbientVolume;
                     break;
             }
             var sfx = fromSound.CreateInstance();
@@ -35,13 +34,13 @@ namespace WiiPlayTanksRemake.Internals.Common.Framework.Audio
             switch (context)
             {
                 case SoundContext.Music:
-                    volume *= MusicVolume * MasterVolume;
+                    volume *= MusicVolume;
                     break;
-                case SoundContext.Sound:
-                    volume *= SoundVolume * MasterVolume;
+                case SoundContext.Effect:
+                    volume *= EffectsVolume;
                     break;
                 case SoundContext.Ambient:
-                    volume *= AmbientVolume * MasterVolume;
+                    volume *= AmbientVolume;
                     break;
             }
 
@@ -62,7 +61,7 @@ namespace WiiPlayTanksRemake.Internals.Common.Framework.Audio
     public enum SoundContext : byte
     {
         Music,
-        Sound,
+        Effect,
         Ambient
     }
 }
