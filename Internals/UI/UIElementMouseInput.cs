@@ -10,13 +10,19 @@ namespace WiiPlayTanksRemake.Internals.UI
 {
     public abstract partial class UIElement
     {
+		/// <summary>
+		/// Gets a <see cref="UIElement"/> at the specified position.
+		/// </summary>
+		/// <param name="position">The position to get the <see cref="UIElement"/> at.</param>
+		/// <param name="getHighest">Whether or not to get the highest <see cref="UIElement"/> as opposed to the lowest.</param>
+		/// <returns>The <see cref="UIElement"/> at the specified position, if one exists; otherwise, returns <see langword="null"/>.</returns>
 		public static UIElement GetElementAt(Vector2 position, bool getHighest = false)
 		{
 			UIElement focusedElement = null;
 
-			for (int iterator = UIElement.AllUIElements.Count - 1; iterator >= 0; iterator--)
+			for (int iterator = AllUIElements.Count - 1; iterator >= 0; iterator--)
 			{
-				UIElement currentElement = UIElement.AllUIElements[iterator];
+				UIElement currentElement = AllUIElements[iterator];
 				if (!currentElement.IgnoreMouseInteractions && currentElement.Visible && currentElement.Hitbox.Contains(position))
 				{
 					focusedElement = currentElement;
@@ -26,6 +32,7 @@ namespace WiiPlayTanksRemake.Internals.UI
 
 			return getHighest ? focusedElement : focusedElement?.GetElementAt(position);
 		}
+
 		protected bool CanRegisterInput(Func<bool> uniqueInput)
 		{
 			if (!TankGame.Instance.IsActive)

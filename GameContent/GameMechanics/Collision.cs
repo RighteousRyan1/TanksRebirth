@@ -20,17 +20,17 @@ namespace WiiPlayTanksRemake.GameContent.GameMechanics
             info = new();
             float horizontalT;
             if (offset.X > 0)
-                horizontalT = (float)(collidingBox.Left - movingBox.Right) / (float)(offset.X);
+                horizontalT = (collidingBox.Left - movingBox.Right) / offset.X;
             else if (offset.X < 0)
-                horizontalT = (float)(collidingBox.Right - movingBox.Left) / (float)(offset.X);
+                horizontalT = (collidingBox.Right - movingBox.Left) / offset.X;
             else
                 horizontalT = -1.0f;
 
             float verticalT;
             if (offset.Y > 0)
-                verticalT = (float)(collidingBox.Top - movingBox.Bottom) / (float)(offset.Y);
+                verticalT = (collidingBox.Top - movingBox.Bottom) / offset.Y;
             else if (offset.Y < 0)
-                verticalT = (float)(collidingBox.Bottom - movingBox.Top) / (float)(offset.Y);
+                verticalT = (collidingBox.Bottom - movingBox.Top) / offset.Y;
             else
                 verticalT = -1.0f;
 

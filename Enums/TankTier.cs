@@ -1,6 +1,6 @@
 ﻿namespace WiiPlayTanksRemake.Enums
 {
-    /// <summary>Serves the purpose of parsing tiers <= 27 into strings.</summary>
+    /// <summary>Serves the purpose of parsing tiers into strings. Note that only tiers less than 27 will be parsed.</summary>
     public enum TankTier : byte
     {
         None,

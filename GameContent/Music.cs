@@ -42,20 +42,36 @@ namespace WiiPlayTanksRemake.GameContent
             AllMusic.Add(this);
         }
 
+        /// <summary>
+        /// Creates a <see cref="Music"/>.
+        /// </summary>
+        /// <param name="name">The name of this <see cref="Music"/>.</param>
+        /// <param name="musicPath">The path to the audio file for this <see cref="Music"/>.</param>
+        /// <param name="maxVolume">The maximum volume allowed for this <see cref="Music"/>.</param>
+        /// <returns></returns>
         public static Music CreateMusicTrack(string name, string musicPath, float maxVolume)
             => new(name, musicPath, maxVolume);
 
+        /// <summary>
+        /// Plays the <see cref="Track"/>.
+        /// </summary>
         public void Play() {
             Track.Volume = volume;
             Track?.Play();
             OnBegin?.Invoke(this, new());
         }
 
+        /// <summary>
+        /// Pauses the <see cref="Track"/>.
+        /// </summary>
         public void Pause() {
             State = MusicState.Paused;
             Track?.Pause();
         }
 
+        /// <summary>
+        /// Stops the <see cref="Track"/>.
+        /// </summary>
         public void Stop() {
             Track.Volume = 0f;
             Track?.Stop();

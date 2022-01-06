@@ -131,6 +131,7 @@ namespace WiiPlayTanksRemake
             }
             return "Data not retrieved.";
         }
+
         public static string GetHardware(string hwclass, string syntax)
         {
             if (!System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
@@ -143,6 +144,7 @@ namespace WiiPlayTanksRemake
             }
             return "Data not retrieved.";
         }
+
         public static class MemoryParser
         {
             public static ulong FromBits(long bytes)
@@ -236,6 +238,7 @@ namespace WiiPlayTanksRemake
 
             graphics.IsFullScreen = false;
         }
+
         protected override void Initialize()
         {
             Camera.GraphicsDevice = GraphicsDevice;
@@ -276,7 +279,6 @@ namespace WiiPlayTanksRemake
 
             graphics.SynchronizeWithVerticalRetrace = Settings.Vsync;
             Window.IsBorderless = Settings.BorderlessWindow;
-            Lighting.PerPixelLighting = Settings.PerPixelLighting;
 
 #endregion
 
@@ -418,6 +420,7 @@ namespace WiiPlayTanksRemake
             foreach (var music in Music.AllMusic)
                 music?.Update();
         }
+
         protected override void Draw(GameTime gameTime)
         {
             RenderStopwatch.Start();
@@ -453,6 +456,7 @@ namespace WiiPlayTanksRemake
             RenderFPS = Math.Round(1f / gameTime.ElapsedGameTime.TotalSeconds, 2);
         }
     }
+
     public static class Program
     {
         [STAThread]

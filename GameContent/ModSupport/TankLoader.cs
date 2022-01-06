@@ -17,6 +17,7 @@ using System.Reflection;
 
 namespace WiiPlayTanksRemake.GameContent.ModSupport
 {
+    /// <summary>Represents a system in which to load <see cref="ModTank"/>s.</summary>
     public static class TankLoader
     {
         public static int TankCount { get; set; }

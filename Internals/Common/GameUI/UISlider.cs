@@ -11,21 +11,25 @@ namespace WiiPlayTanksRemake.Internals.Common.GameUI
 {
     public class UISlider : UIElement
     {
+		/// <summary>The value of the <see cref="UISlider"/>. Will only ever range from 0 to 1.</summary>
 		public float Value
 		{
 			get => InternalValue; 
 			set => InternalValue = MathHelper.Clamp(value, 0f, 1f);
 		}
 
+		/// <summary>The width of the <see cref="UISlider"/>'s bar.</summary>
 		public int BarWidth = 5;
 
+		/// <summary>The color of the <see cref="UISlider"/>'s bar.</summary>
 		public Color BarColor = Color.Black;
 
+		/// <summary>The color of the <see cref="UISlider"/>.</summary>
 		public Color SliderColor = Color.LightBlue;
 
-		public Action<UIElement> BarOverAction;
+		internal Action<UIElement> BarOverAction;
 
-		public Action<UIElement> BarOutAction;
+		internal Action<UIElement> BarOutAction;
 
 		private float InternalValue;
 

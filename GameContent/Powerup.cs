@@ -14,23 +14,27 @@ namespace WiiPlayTanksRemake.GameContent
     {
         public const int MAX_POWERUPS = 50;
         public static Powerup[] activePowerups = new Powerup[MAX_POWERUPS];
-        /// <summary>If this powerup is affecting a <see cref="Tank"/>, that <see cref="Tank"/> is this.</summary>
+
+        /// <summary>The <see cref="Tank"/> this <see cref="Powerup"/> is currently affecting, if any.</summary>
         public Tank AffectedTank { get; private set; }
+
         /// <summary>Whether or not this <see cref="Powerup"/> is affecting a <see cref="Tank"/>.</summary>
         public bool HasOwner => AffectedTank is not null;
-        /// <summary>What this <see cref="Powerup"/> does to the <see cref="Tank"/> it affects.</summary>
+
+        /// <summary>The effect of this <see cref="Powerup"/> on a <see cref="Tank"/>.</summary>
         public Action<Tank> PowerupEffects { get; }
+
         /// <summary>The duration of this <see cref="Powerup"/> on a <see cref="Tank"/></summary>
         public int duration;
 
         public Vector3 position;
 
-        /// <summary>The maximum distance from which a <see cref="Tank"/> can pick up this powerup.</summary>
+        /// <summary>The maximum distance from which a <see cref="Tank"/> can pick up this <see cref="Powerup"/>.</summary>
         public float pickupRadius;
 
         public int id;
 
-        /// <summary>Whether or not this powerup has been already picked up or not</summary>
+        /// <summary>Whether or not this <see cref="Powerup"/> has been already picked up.</summary>
         public bool InWorld { get; private set; }
 
         public Powerup(int duration, float pickupRadius, Action<Tank> effects)
@@ -60,7 +64,7 @@ namespace WiiPlayTanksRemake.GameContent
             activePowerups[index] = this;
         }
 
-        /// <summary>Spawn this powerup in the world.</summary>
+        /// <summary>Spawns this <see cref="Powerup"/> in the world.</summary>
         public void Spawn(Vector3 position)
         {
             InWorld = true;
@@ -126,7 +130,7 @@ namespace WiiPlayTanksRemake.GameContent
                 return $"duration: {duration} | HasOwner: {HasOwner}" + (HasOwner ? $" | OwnerTier: {(AffectedTank as AITank).tier}" : "");
         }
     }
-    /// <summary>A template for creating powerups. The fields in this class are identical to the ones in <see cref="Powerup"/>.</summary>
+    /// <summary>A template for creating a <see cref="Powerup"/>. The fields in this class are identical to the ones in <see cref="Powerup"/>.</summary>
     public struct PowerupTemplate
     {
         public float pickupRadius;

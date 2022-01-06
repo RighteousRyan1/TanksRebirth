@@ -42,6 +42,7 @@ namespace WiiPlayTanksRemake.GameContent
         public int detonationTimeMax;
 
         public bool tickRed;
+
         /// <summary>The radius of this <see cref="Mine"/>'s explosion.</summary>
         public float explosionRadius;
 
@@ -50,6 +51,13 @@ namespace WiiPlayTanksRemake.GameContent
         /// <summary>Whether or not this <see cref="Mine"/> has detonated.</summary>
         public bool Detonated { get; set; }
 
+        /// <summary>
+        /// Creates a new <see cref="Mine"/>.
+        /// </summary>
+        /// <param name="owner">The <see cref="Tank"/> which owns this <see cref="Mine"/>.</param>
+        /// <param name="pos">The position of this <see cref="Mine"/> in the game world.</param>
+        /// <param name="detonateTime">The time it takes for this <see cref="Mine"/> to detonate.</param>
+        /// <param name="radius">The radius of this <see cref="Mine"/>'s explosion.</param>
         public Mine(Tank owner, Vector3 pos, int detonateTime, float radius = 80f)
         {
             this.owner = owner;
@@ -75,7 +83,7 @@ namespace WiiPlayTanksRemake.GameContent
             AllMines[index] = this;
         }
 
-        /// <summary>Detonate this <see cref="Mine"/>.</summary>
+        /// <summary>Detonates this <see cref="Mine"/>.</summary>
         public void Detonate()
         {
             Detonated = true;
