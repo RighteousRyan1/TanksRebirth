@@ -8,6 +8,7 @@ using WiiPlayTanksRemake.Internals.Common.Utilities;
 using WiiPlayTanksRemake.GameContent.Systems;
 using WiiPlayTanksRemake.Internals.Common;
 using WiiPlayTanksRemake.Graphics;
+using System;
 
 namespace WiiPlayTanksRemake.GameContent.UI
 {
@@ -57,6 +58,8 @@ namespace WiiPlayTanksRemake.GameContent.UI
         public static UIImageButton BorderlessWindowButton;
 
         public static UIImage BorderlessWindowToggle;
+
+        public static UIImage Tooltip;
 
         public static bool Paused { get; set; } = false;
 
@@ -136,6 +139,19 @@ namespace WiiPlayTanksRemake.GameContent.UI
             };
             PerPixelLightingButton.SetDimensions(700, 100, 500, 150);
             PerPixelLightingButton.OnLeftClick += PerPixelLightingButton_OnMouseClick;
+            PerPixelLightingButton.OnMouseOver += (element) =>
+            {
+                Tooltip.Remove();
+                Tooltip = new(null, 1, (uiImage, spriteBatch) => QuickIndicator(uiImage, spriteBatch, Color.White, "Whether or not to draw lighting\non each individual pixel"))
+                {
+                    IgnoreMouseInteractions = true
+                };
+                Tooltip.SetDimensions(GameUtils.MouseX, GameUtils.MouseY, 475, 100);
+            };
+            PerPixelLightingButton.OnMouseOut += (element) =>
+            {
+                Tooltip.Visible = false;
+            };
 
             VsyncToggle = new(null, 1, (uiImage, spriteBatch) => QuickIndicator(uiImage, spriteBatch, TankGame.Settings.Vsync ? Color.Green : Color.Red))
             {
@@ -149,6 +165,19 @@ namespace WiiPlayTanksRemake.GameContent.UI
             };
             VsyncButton.SetDimensions(700, 350, 500, 150);
             VsyncButton.OnLeftClick += VsyncButton_OnMouseClick;
+            VsyncButton.OnMouseOver += (element) =>
+            {
+                Tooltip.Remove();
+                Tooltip = new(null, 1, (uiImage, spriteBatch) => QuickIndicator(uiImage, spriteBatch, Color.White, "Whether or not to enable\nvertical synchronization"))
+                {
+                    IgnoreMouseInteractions = true
+                };
+                Tooltip.SetDimensions(GameUtils.MouseX, GameUtils.MouseY, 400, 100);
+            };
+            VsyncButton.OnMouseOut += (element) =>
+            {
+                Tooltip.Visible = false;
+            };
 
             BorderlessWindowToggle = new(null, 1, (uiImage, spriteBatch) => QuickIndicator(uiImage, spriteBatch, TankGame.Settings.BorderlessWindow ? Color.Green : Color.Red))
             {
@@ -162,12 +191,38 @@ namespace WiiPlayTanksRemake.GameContent.UI
             };
             BorderlessWindowButton.SetDimensions(700, 600, 500, 150);
             BorderlessWindowButton.OnLeftClick += BorderlessWindowButton_OnMouseClick;
+            BorderlessWindowButton.OnMouseOver += (element) =>
+            {
+                Tooltip.Remove();
+                Tooltip = new(null, 1, (uiImage, spriteBatch) => QuickIndicator(uiImage, spriteBatch, Color.White, "Whether or not to run the\ngame window borderless"))
+                {
+                    IgnoreMouseInteractions = true
+                };
+                Tooltip.SetDimensions(GameUtils.MouseX, GameUtils.MouseY, 400, 100);
+            };
+            BorderlessWindowButton.OnMouseOut += (element) =>
+            {
+                Tooltip.Visible = false;
+            };
 
             MusicVolume = new()
             {
                 Visible = false
             };
             MusicVolume.SetDimensions(700, 100, 500, 150);
+            MusicVolume.BarOverAction = (element) =>
+            {
+                Tooltip.Remove();
+                Tooltip = new(null, 1, (uiImage, spriteBatch) => QuickIndicator(uiImage, spriteBatch, Color.White, $"Value: {Math.Round(TankGame.Settings.MusicVolume * 100, 1)}%"))
+                {
+                    IgnoreMouseInteractions = true
+                };
+                Tooltip.SetDimensions(GameUtils.MouseX, GameUtils.MouseY, 185, 75);
+            };
+            MusicVolume.OnMouseOut += (element) =>
+            {
+                Tooltip.Visible = false;
+            };
             MusicVolume.Initialize();
             MusicVolume.Value = TankGame.Settings.MusicVolume;
             MusicVolume.BarWidth = 15;
@@ -178,6 +233,19 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 Visible = false
             };
             EffectsVolume.SetDimensions(700, 350, 500, 150);
+            EffectsVolume.BarOverAction = (element) =>
+            {
+                Tooltip.Remove();
+                Tooltip = new(null, 1, (uiImage, spriteBatch) => QuickIndicator(uiImage, spriteBatch, Color.White, $"Value: {Math.Round(TankGame.Settings.EffectsVolume * 100, 1)}%"))
+                {
+                    IgnoreMouseInteractions = true
+                };
+                Tooltip.SetDimensions(GameUtils.MouseX, GameUtils.MouseY, 185, 75);
+            };
+            EffectsVolume.OnMouseOut += (element) =>
+            {
+                Tooltip.Visible = false;
+            };
             EffectsVolume.Initialize();
             EffectsVolume.Value = TankGame.Settings.EffectsVolume;
             EffectsVolume.BarWidth = 15;
@@ -188,6 +256,19 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 Visible = false
             };
             AmbientVolume.SetDimensions(700, 600, 500, 150);
+            AmbientVolume.BarOverAction = (element) =>
+            {
+                Tooltip.Remove();
+                Tooltip = new(null, 1, (uiImage, spriteBatch) => QuickIndicator(uiImage, spriteBatch, Color.White, $"Value: {Math.Round(TankGame.Settings.AmbientVolume * 100, 1)}%"))
+                {
+                    IgnoreMouseInteractions = true
+                };
+                Tooltip.SetDimensions(GameUtils.MouseX, GameUtils.MouseY, 185, 75);
+            };
+            AmbientVolume.OnMouseOut += (element) =>
+            {
+                Tooltip.Visible = false;
+            };
             AmbientVolume.Initialize();
             AmbientVolume.Value = TankGame.Settings.AmbientVolume;
             AmbientVolume.BarWidth = 15;
@@ -213,6 +294,13 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 Visible = false
             };
             AmbientText.SetDimensions(950, 675, 500, 150);
+
+            Tooltip = new(null, 1, (uiImage, spriteBatch) => QuickIndicator(uiImage, spriteBatch, Color.White, "ODST"))
+            {
+                Visible = false,
+                IgnoreMouseInteractions = true
+            };
+            Tooltip.SetDimensions(0, 0, 475, 100);
         }
 
         private static void BorderlessWindowButton_OnMouseClick(Internals.UI.UIElement affectedElement)
@@ -228,6 +316,19 @@ namespace WiiPlayTanksRemake.GameContent.UI
             BorderlessWindowButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Borderless Window", Color.WhiteSmoke));
             BorderlessWindowButton.SetDimensions(700, 600, 500, 150);
             BorderlessWindowButton.OnLeftClick += BorderlessWindowButton_OnMouseClick;
+            BorderlessWindowButton.OnMouseOver += (element) =>
+            {
+                Tooltip.Remove();
+                Tooltip = new(null, 1, (uiImage, spriteBatch) => QuickIndicator(uiImage, spriteBatch, Color.White, "Whether or not to run the\ngame window borderless"))
+                {
+                    IgnoreMouseInteractions = true
+                };
+                Tooltip.SetDimensions(GameUtils.MouseX, GameUtils.MouseY, 400, 100);
+            };
+            BorderlessWindowButton.OnMouseOut += (element) =>
+            {
+                Tooltip.Visible = false;
+            };
         }
 
         private static void VsyncButton_OnMouseClick(Internals.UI.UIElement affectedElement)
@@ -241,6 +342,19 @@ namespace WiiPlayTanksRemake.GameContent.UI
             VsyncButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "VSync", Color.WhiteSmoke));
             VsyncButton.SetDimensions(700, 350, 500, 150);
             VsyncButton.OnLeftClick += VsyncButton_OnMouseClick;
+            VsyncButton.OnMouseOver += (element) =>
+            {
+                Tooltip.Remove();
+                Tooltip = new(null, 1, (uiImage, spriteBatch) => QuickIndicator(uiImage, spriteBatch, Color.White, "Whether or not to enable\nvertical synchronization"))
+                {
+                    IgnoreMouseInteractions = true
+                };
+                Tooltip.SetDimensions(GameUtils.MouseX, GameUtils.MouseY, 400, 100);
+            };
+            VsyncButton.OnMouseOut += (element) =>
+            {
+                Tooltip.Visible = false;
+            };
         }
 
         private static void PerPixelLightingButton_OnMouseClick(Internals.UI.UIElement affectedElement)
@@ -253,6 +367,19 @@ namespace WiiPlayTanksRemake.GameContent.UI
             PerPixelLightingButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Per-Pixel Lighting", Color.WhiteSmoke));
             PerPixelLightingButton.SetDimensions(700, 100, 500, 150);
             PerPixelLightingButton.OnLeftClick += PerPixelLightingButton_OnMouseClick;
+            PerPixelLightingButton.OnMouseOver += (element) =>
+            {
+                Tooltip.Remove();
+                Tooltip = new(null, 1, (uiImage, spriteBatch) => QuickIndicator(uiImage, spriteBatch, Color.White, "Whether or not to draw lighting\non each individual pixel"))
+                {
+                    IgnoreMouseInteractions = true
+                };
+                Tooltip.SetDimensions(GameUtils.MouseX, GameUtils.MouseY, 475, 100);
+            };
+            PerPixelLightingButton.OnMouseOut += (element) =>
+            {
+                Tooltip.Visible = false;
+            };
         }
 
         private static void GraphicsButton_OnMouseClick(Internals.UI.UIElement affectedElement)
@@ -374,7 +501,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             spriteBatch.DrawString(font, text, onLeft ? new Vector2(imageButton.Hitbox.Center.X - 50, imageButton.Hitbox.Center.Y) : imageButton.Hitbox.Center.ToVector2(), Color.Black, 0, drawOrigin, scale, SpriteEffects.None, 1f);
         }
 
-        public static void QuickIndicator(UIImage image, SpriteBatch spriteBatch, Color color)
+        public static void QuickIndicator(UIImage image, SpriteBatch spriteBatch, Color color, string text = null)
         {
             Texture2D texture = TankGame.UITextures.UIPanelBackground;
 
@@ -399,6 +526,12 @@ namespace WiiPlayTanksRemake.GameContent.UI
             spriteBatch.Draw(texture, new Rectangle(Hitbox.X, bottomY, border, border), new Rectangle(0, texture.Height - border, border, border),  color);
             spriteBatch.Draw(texture, new Rectangle(middleX, bottomY, Hitbox.Width - border * 2, border), new Rectangle(border, texture.Height - border, texture.Width - border * 2, border), color);
             spriteBatch.Draw(texture, new Rectangle(rightX, bottomY, border, border), new Rectangle(texture.Width - border, texture.Height - border, border, border), color);
+            if (text != null)
+            {
+                SpriteFont font = TankGame.Fonts.Default;
+                Vector2 drawOrigin = font.MeasureString(text) / 2f;
+                spriteBatch.DrawString(font, text, image.Hitbox.Center.ToVector2(), Color.Black, 0, drawOrigin, 1, SpriteEffects.None, 1f);
+            }
         }
 
         public static void UpdateButtons()
@@ -456,6 +589,11 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 else
                     TankMusicSystem.PauseAll();
                 Paused = !Paused;
+            }
+
+            if (WPTR.GetElementAt(GameUtils.MousePosition) == null)
+            {
+                Tooltip.Visible = false;
             }
 
             if (!InOptions)
