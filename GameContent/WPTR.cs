@@ -249,7 +249,8 @@ namespace WiiPlayTanksRemake.GameContent
 
             foreach (UIElement element in UIElement.AllUIElements)
             {
-                element.MouseOut();
+                if (element.MouseHovering)
+                    element.MouseOut();
             }
         }
 

@@ -23,6 +23,10 @@ namespace WiiPlayTanksRemake.Internals.Common.GameUI
 
 		public Color SliderColor = Color.LightBlue;
 
+		public Action<UIElement> BarOverAction;
+
+		public Action<UIElement> BarOutAction;
+
 		private float InternalValue;
 
 		public override void OnInitialize()
@@ -34,6 +38,14 @@ namespace WiiPlayTanksRemake.Internals.Common.GameUI
 				int mouseXRelative = (int)Math.Round(Utilities.GameUtils.MouseX - element.Position.X);
 				InternalValue = MathHelper.Clamp(mouseXRelative / element.Size.X, 0, 1);
 			};
+			if (BarOverAction != null)
+            {
+				interactable.OnMouseOver += BarOverAction;
+            }
+			if (BarOutAction != null)
+			{
+				interactable.OnMouseOut += BarOutAction;
+			}
 			Append(interactable);
 		}
 
