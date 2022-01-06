@@ -22,21 +22,24 @@ namespace WiiPlayTanksRemake.GameContent
 
         public float gravity;
 
+        /// <summary>How much this <see cref="CrateDrop"/> accelerates while falling in the air.</summary>
         public float dropSpeedAccel = 0.05f;
 
+        /// <summary>The scale of this <see cref="CrateDrop"/>.</summary>
         public float scale = 1f;
 
         public Model Model;
 
         public Matrix[] faceWorlds = new Matrix[6];
-
+        /// <summary>If this is true, an animation sequence plays.</summary>
         public bool IsOpening { get; private set; }
 
         public int id;
 
+        /// <summary>What <see cref="Tank"/> to spawn on opening, if any.</summary>
         public Tank TankToSpawn;
 
-
+        /// <summary>How fast this <see cref="CrateDrop"/> shrinks when it starts to open.</summary>
         public float fadeScale = 0.05f;
 
         private int _bounceCount;
@@ -112,7 +115,6 @@ namespace WiiPlayTanksRemake.GameContent
                 }
             }
         }
-
         public void Update()
         {
             if (!IsOpening)
@@ -153,6 +155,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         }
 
+        /// <summary>Open this <see cref="CrateDrop"/>.</summary>
         public void Open()
         {
             IsOpening = true;

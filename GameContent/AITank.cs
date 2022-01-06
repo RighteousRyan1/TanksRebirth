@@ -44,41 +44,54 @@ namespace WiiPlayTanksRemake.GameContent
 
         public record Params
         {
+            /// <summary>The max angle of which this tank will "meander," or change its movement direction.</summary>
             public float meanderAngle;
+            /// <summary>How often this tank will take a large turn.</summary>
             public int bigMeanderFrequency;
+            /// <summary>How often this tank will take a turn at <see cref="meanderAngle"/> radians.</summary>
             public int meanderFrequency;
-            public float redirectAngle;
-            public float redirectDistance;
-            public float mustPivotAngle;
+
+            /// <summary>Not implemented (yet). Determines how much this tank will move un attempt to get closer to its target.</summary>
             public float pursuitLevel;
+            /// <summary>Not implemented (yet). Determines how often this tank will try to move towards its target.</summary>
             public int pursuitFrequency;
 
-            public float turretMeanderAngle;
+            /// <summary>How often this tank will move its turret in the target's direction. It will be inaccurate at the measure of <see cref="inaccuracy"/>.</summary>
             public int turretMeanderFrequency;
+            /// <summary>How fast this tank's turret rotates towards its target.</summary>
             public float turretSpeed;
-
+            /// <summary>The target rotation for this tank's turret. <see cref="Tank.TurretRotation"/> will move towards this value at a rate of <see cref="turretSpeed"/>.</summary>
             public float targetTurretRotation;
-
+            /// <summary>How inaccurate (in radians) this tank is trying to aim at its target.</summary>
             public float inaccuracy;
 
+            /// <summary>The distance of which this tank is wary of projectiles and tries to move away from them.</summary>
             public float projectileWarinessRadius;
+            /// <summary>The distance of which this tank is wary of mines and tries to move away from them.</summary>
             public float mineWarinessRadius;
 
+            /// <summary>On a given tick, it has this chance out of 1 to lay a mine. <para>Do note that this value must be greater than 0 and less than or equal to 1.</para></summary>
             public float minePlacementChance; // 0.0f to 1.0f
 
+            /// <summary>How long (in ticks) this tank moves away from a mine that it places.</summary>
             public int moveFromMineTime;
-            public int timeSinceLastMinePlaced = 999999;
-            public int timeSinceLastMineFound = 999999;
+            internal int timeSinceLastMinePlaced = 999999;
+            internal int timeSinceLastMineFound = 999999;
 
+            /// <summary>Whether or not this tank sees its target. Generally should not be set, but the tank will shoot if able when this is true.</summary>
             public bool seesTarget;
+            /// <summary>How many extra rays are cast in 2 different directions. If any of these indirect rays hits a target, this tank fires.</summary>
             public int missDistance;
 
+            /// <summary>How often this tank shoots when given the opportunity. 0 to 1 values only. Defaults to 1.</summary>
             public float shootChance = 1f;
 
+            /// <summary>How far ahead of this tank (in the direction the tank is going) that it is aware of obstacles and navigates around them.</summary>
             public float cubeWarinessDistance = 60f;
+            /// <summary>How often this tank reads the obstacles around it and navigates around them</summary>
             public int cubeReadTime = 30;
         }
-
+        /// <summary>The AI parameter collection of this AI Tank.</summary>
         public Params AiParams { get; } = new();
 
         public float targetTankRotation;
@@ -1056,7 +1069,7 @@ namespace WiiPlayTanksRemake.GameContent
             if (!WPTR.InMission)
                 return;
 
-            if (curShootCooldown > 0 || OwnedBulletCount >= ShellLimit)
+            if (curShootCooldown > 0 || OwnedShellCount >= ShellLimit)
                 return;
 
             SoundEffectInstance sfx;
@@ -1082,7 +1095,7 @@ namespace WiiPlayTanksRemake.GameContent
             bullet.owner = this;
             bullet.ricochets = RicochetCount;
 
-            OwnedBulletCount++;
+            OwnedShellCount++;
 
             curShootStun = ShootStun;
             curShootCooldown = ShellCooldown;

@@ -11,6 +11,7 @@ using WiiPlayTanksRemake.Internals.Core.Interfaces;
 
 namespace WiiPlayTanksRemake.GameContent
 {
+    /// <summary>A class that is used for obstacles for Tanks.</summary>
     public class Cube : IGameSystem
     {
         public enum BlockType

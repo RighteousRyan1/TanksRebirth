@@ -20,6 +20,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems
 
         public static ChatMessageCorner Corner { get; set; } = ChatMessageCorner.TopLeft;
 
+        /// <summary>Send a message to the chat.</summary>
         public static ChatMessage SendMessage(object text, Color color)
         {
             var msg = new ChatMessage(text.ToString(), color);

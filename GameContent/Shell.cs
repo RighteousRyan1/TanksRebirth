@@ -14,6 +14,7 @@ namespace WiiPlayTanksRemake.GameContent
 {
     public class Shell
     {
+        /// <summary>A structure that allows you to give a <see cref="Shell"/> homing properties.</summary>
         public struct HomingProperties {
             public float power;
             public float radius;
@@ -21,17 +22,20 @@ namespace WiiPlayTanksRemake.GameContent
             public int cooldown;
         }
 
-
+        /// <summary>The maximum shells allowed at any given time.</summary>
         private static int maxShells = 1500;
         public static Shell[] AllShells { get; } = new Shell[maxShells];
 
+        /// <summary>The tank who shot this <see cref="Shell"/>.</summary>
         public Tank owner;
 
         public Vector3 position;
         public Vector3 velocity;
+        /// <summary>How many times this <see cref="Shell"/> can hit walls.</summary>
         public int ricochets;
         public float rotation;
 
+        /// <summary>The homing properties of this shell.</summary>
         public HomingProperties homingProperties = default;
 
         public Vector2 Position2D => position.FlattenZ();
@@ -43,16 +47,18 @@ namespace WiiPlayTanksRemake.GameContent
 
         public Model Model;
 
+        /// <summary>The <see cref="BoundingBox"/> of this <see cref="Shell"/> determining the size of it's hurtbox/hitbox.</summary>
         public BoundingBox hurtbox = new();
-
+        /// <summary>The hurtbox on the 2D backing map for the game.</summary>
         public Rectangle hurtbox2d;
-
+        /// <summary>Whether or not this shell should emit flames from behind it.</summary>
         public bool Flaming { get; set; }
 
         public static Texture2D _shellTexture;
 
         private int worldId;
 
+        /// <summary>How long this shell has existed in the world.</summary>
         public int lifeTime;
 
         internal bool INTERNAL_ignoreCollisions;
@@ -115,7 +121,7 @@ namespace WiiPlayTanksRemake.GameContent
                 Collision.HandleCollisionSimple_ForBlocks(hurtbox2d, ref dummyVel, ref position, out var dir, false);
 
                 if (lifeTime <= 5 && Cube.cubes.Any(cu => cu is not null && cu.collider.Intersects(hurtbox)))
-                    Destroy();
+                    Destroy(false);
 
                 switch (dir)
                 {
@@ -170,7 +176,7 @@ namespace WiiPlayTanksRemake.GameContent
         }
 
         /// <summary>
-        /// Ricochets this bullet. if <paramref name="horizontal"/>, it will ricochet off of a horizontal axis.
+        /// Ricochets this <see cref="Shell"/>. If <paramref name="horizontal"/> is true, it will ricochet off of a horizontal axis.
         /// </summary>
         /// <param name="horizontal">Is this ricochet horizontal?</param>
         public void Ricochet(bool horizontal)
@@ -234,6 +240,10 @@ namespace WiiPlayTanksRemake.GameContent
             }
         }
 
+        /// <summary>
+        /// Destroys this <see cref="Shell"/>.
+        /// </summary>
+        /// <param name="playSound">Whether or not to play the sound of the bullet being destroyed</param>
         public void Destroy(bool playSound = true)
         {
             if (!INTERNAL_ignoreCollisions)
@@ -244,7 +254,7 @@ namespace WiiPlayTanksRemake.GameContent
                     sfx.Pitch = -0.2f;
                 }
                 if (owner != null)
-                    owner.OwnedBulletCount--;
+                    owner.OwnedShellCount--;
                 AllShells[worldId] = null;
             }
         }

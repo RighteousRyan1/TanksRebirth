@@ -42,11 +42,12 @@ namespace WiiPlayTanksRemake.GameContent
         public int detonationTimeMax;
 
         public bool tickRed;
-
+        /// <summary>The radius of this <see cref="Mine"/>'s explosion.</summary>
         public float explosionRadius;
 
         public bool tankCameTooClose;
 
+        /// <summary>Whether or not this <see cref="Mine"/> has detonated.</summary>
         public bool Detonated { get; set; }
 
         public Mine(Tank owner, Vector3 pos, int detonateTime, float radius = 80f)
@@ -74,6 +75,7 @@ namespace WiiPlayTanksRemake.GameContent
             AllMines[index] = this;
         }
 
+        /// <summary>Detonate this <see cref="Mine"/>.</summary>
         public void Detonate()
         {
             Detonated = true;
@@ -183,7 +185,7 @@ namespace WiiPlayTanksRemake.GameContent
             }
         }
     }
-    public class MineExplosion
+    internal class MineExplosion
     {
         // model, blah blah blah
 

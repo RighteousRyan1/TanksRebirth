@@ -60,43 +60,53 @@ namespace WiiPlayTanksRemake.GameContent
         public int MineStun { get; set; }
         /// <summary>How long this <see cref="Tank"/> has to wait until it can fire another bullet..</summary>
         public int ShellCooldown { get; set; }
+        /// <summary>How long until this <see cref="Tank"/> can lay another mine</summary>
         public int MineCooldown { get; set; }
+        /// <summary>How many times the <see cref="Shell"/> this <see cref="Tank"/> shoots ricochets.</summary>
         public int RicochetCount { get; set; }
+        /// <summary>The amount of <see cref="Shell"/>s this <see cref="Tank"/> can own on-scren at any given time.</summary>
         public int ShellLimit { get; set; }
+        /// <summary>How fast this <see cref="Tank"/> turns.</summary>
         public float TurningSpeed { get; set; } = 1f;
+        /// <summary>The maximum angle this <see cref="Tank"/> can turn (in radians) before it has to start pivoting.</summary>
         public float MaximalTurn { get; set; }
+        /// <summary>The <see cref="GameContent.Team"/> this <see cref="Tank"/> is on.</summary>
         public Team Team { get; set; }
-        public int OwnedBulletCount { get; set; }
-        public int OwnedMineCount { get; set; }
-
+        /// <summary>How many <see cref="Shell"/>s this <see cref="Tank"/> owns.</summary>
+        public int OwnedShellCount { get; internal set; }
+        /// <summary>How many <see cref="Mine"/>s this <see cref="Tank"/> owns.</summary>
+        public int OwnedMineCount { get; internal set; }
+        /// <summary>Whether or not this <see cref="Tank"/> can lay a <see cref="TankFootprint"/>.</summary>
         public bool CanLayTread { get; set; } = true;
-
-        public bool IsTurning { get; set; }
-
-        public bool IsHoveredByMouse { get; set; }
+        /// <summary>Whether or not this <see cref="Tank"/> is currently turning.</summary>
+        public bool IsTurning { get; internal set; }
+        /// <summary>Whether or not this <see cref="Tank"/> is being hovered by the pointer.</summary>
+        public bool IsHoveredByMouse { get; internal set; }
 
         public Vector2 Position2D => position.FlattenZ();
         public Vector2 Velocity2D => velocity.FlattenZ();
 
         public Vector3 position, velocity;
-
+        /// <summary>Apply all the default parameters for this <see cref="Tank"/>.</summary>
         public virtual void ApplyDefaults() { }
 
         public Rectangle CollisionBox2D => new((int)(Position2D.X - TNK_WIDTH / 2), (int)(Position2D.Y - TNK_WIDTH / 2), TNK_WIDTH, TNK_HEIGHT);
 
         public string GetGeneralStats()
             => $"Pos2D: {Position2D} | Vel: {Velocity2D} | Dead: {Dead}";
-
+        /// <summary>Destroy this <see cref="Tank"/>.</summary>
         public virtual void Destroy() { }
-
+        /// <summary>Lay a <see cref="TankFootprint"/> under this <see cref="Tank"/>.</summary>
         public virtual void LayFootprint(bool alt) { }
-
+        /// <summary>Shoot a <see cref="Shell"/> from this <see cref="Tank"/>.</summary>
         public virtual void Shoot() { }
-
+        /// <summary>Make this <see cref="Tank"/> lay a <see cref="Mine"/>.</summary>
         public virtual void LayMine() { }
 
         // everything under this comment is added outside of the faithful remake. homing shells, etc
 
+
+        /// <summary>The <see cref="Shell.HomingProperties"/>of the bullets this <see cref="Tank"/> shoots.</summary>
         public Shell.HomingProperties ShellHoming = new();
     }
 

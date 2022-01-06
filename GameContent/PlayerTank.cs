@@ -399,7 +399,7 @@ namespace WiiPlayTanksRemake.GameContent
         {
             if (!WPTR.InMission)
                 return;
-            if (curShootCooldown > 0 || OwnedBulletCount >= ShellLimit)
+            if (curShootCooldown > 0 || OwnedShellCount >= ShellLimit)
                 return;
 
             SoundEffectInstance sfx;
@@ -426,7 +426,7 @@ namespace WiiPlayTanksRemake.GameContent
             bullet.owner = this;
             bullet.ricochets = RicochetCount;
 
-            OwnedBulletCount++;
+            OwnedShellCount++;
 
             curShootStun = ShootStun;
             curShootCooldown = ShellCooldown;
@@ -496,6 +496,6 @@ namespace WiiPlayTanksRemake.GameContent
         }
 
         public override string ToString()
-            => $"pos: {position} | vel: {velocity} | dead: {Dead} | rotation: {TankRotation} | OwnedBullets: {OwnedBulletCount}";
+            => $"pos: {position} | vel: {velocity} | dead: {Dead} | rotation: {TankRotation} | OwnedBullets: {OwnedShellCount}";
     }
 }
