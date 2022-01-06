@@ -40,7 +40,14 @@ namespace WiiPlayTanksRemake
         public bool Vsync { get; set; } = true;
         public bool BorderlessWindow { get; set; } = true;
 
-        public bool MSAA; // not property for a reason for now
+        public bool MSAA { get; set; } = false;
+
+        #endregion
+
+        #region Extra Settings
+
+        /// <summary>Used to be casted to a MapTheme to change the... map's theme.</summary>
+        public static int GameTheme { get; set; } = (int)MapTheme.Default;
 
         #endregion
     }
