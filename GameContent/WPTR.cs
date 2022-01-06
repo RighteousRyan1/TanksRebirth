@@ -228,7 +228,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             ChatSystem.DrawMessages();
 
-            UIElement focusedElement = GetElementAt(GameUtils.MousePosition);
+            UIElement focusedElement = UIElement.GetElementAt(GameUtils.MousePosition);
 
             if (focusedElement != null)
             {
@@ -254,32 +254,15 @@ namespace WiiPlayTanksRemake.GameContent
             }
         }
 
-        public static UIElement GetElementAt(Vector2 position, bool getHighest = false)
-        {
-            UIElement focusedElement = null;
-
-            for (int iterator = UIElement.AllUIElements.Count - 1; iterator >= 0; iterator--)
-            {
-                UIElement currentElement = UIElement.AllUIElements[iterator];
-                if (!currentElement.IgnoreMouseInteractions && currentElement.Visible && currentElement.Hitbox.Contains(position))
-                {
-                    focusedElement = currentElement;
-                    break;
-                }
-            }
-
-            return getHighest ? focusedElement : focusedElement?.GetElementAt(position);
-        }
-
         public static PlayerTank myTank;
 
         public static Mission ExampleMission1 = new(
                 new Tank[]
                 {
-                    new AITank(TankTier.Ash) { Team = Team.Red },
-                    new AITank(TankTier.Marine) { Team = Team.Blue },
-                    new AITank(TankTier.Pink) { Team = Team.Green },
-                    new AITank(TankTier.Yellow) { Team = Team.Yellow }
+                    new AITank(TankTier.Ash) { Team = Team.NoTeam },
+                    new AITank(TankTier.Marine) { Team = Team.NoTeam },
+                    new AITank(TankTier.Pink) { Team = Team.NoTeam },
+                    new AITank(TankTier.Yellow) { Team = Team.NoTeam }
                 },
                 new Vector3[]
                 {
@@ -469,7 +452,7 @@ namespace WiiPlayTanksRemake.GameContent
             int maxx = (int)MapRenderer.MAX_X + 12;
             int maxy = (int)MapRenderer.MAX_Y + 12;
 
-            /*for (int i = minx; i < maxx; i++)
+            for (int i = minx; i < maxx; i++)
             {
                 if (i % 10 == 0)
                 {
@@ -502,7 +485,7 @@ namespace WiiPlayTanksRemake.GameContent
                         INTERNAL_doRender = false
                     };
                 }
-            }*/
+            }
             // for ai tanks avoiding walls lol
         }
         public static AITank SpawnTank(TankTier tier, Team team)

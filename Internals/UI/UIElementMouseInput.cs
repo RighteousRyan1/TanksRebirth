@@ -10,6 +10,22 @@ namespace WiiPlayTanksRemake.Internals.UI
 {
     public abstract partial class UIElement
     {
+		public static UIElement GetElementAt(Vector2 position, bool getHighest = false)
+		{
+			UIElement focusedElement = null;
+
+			for (int iterator = UIElement.AllUIElements.Count - 1; iterator >= 0; iterator--)
+			{
+				UIElement currentElement = UIElement.AllUIElements[iterator];
+				if (!currentElement.IgnoreMouseInteractions && currentElement.Visible && currentElement.Hitbox.Contains(position))
+				{
+					focusedElement = currentElement;
+					break;
+				}
+			}
+
+			return getHighest ? focusedElement : focusedElement?.GetElementAt(position);
+		}
 		protected bool CanRegisterInput(Func<bool> uniqueInput)
 		{
 			if (!TankGame.Instance.IsActive)

@@ -9,6 +9,7 @@ using WiiPlayTanksRemake.GameContent.Systems;
 using WiiPlayTanksRemake.Internals.Common;
 using WiiPlayTanksRemake.Graphics;
 using System;
+using WiiPlayTanksRemake.Internals.UI;
 
 namespace WiiPlayTanksRemake.GameContent.UI
 {
@@ -593,7 +594,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 Paused = !Paused;
             }
 
-            if (WPTR.GetElementAt(GameUtils.MousePosition) == null)
+            if (UIElement.GetElementAt(GameUtils.MousePosition) == null)
             {
                 Tooltip.Visible = false;
             }

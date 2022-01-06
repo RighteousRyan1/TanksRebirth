@@ -76,6 +76,7 @@ namespace WiiPlayTanksRemake.GameContent
             public float shootChance = 1f;
 
             public float cubeWarinessDistance = 60f;
+            public int cubeReadTime = 30;
         }
 
         public Params AiParams { get; } = new();
@@ -1185,7 +1186,7 @@ namespace WiiPlayTanksRemake.GameContent
                         }
                         for (int i = 0; i < RicochetCount; i++)
                         {
-                            if (MapRenderer.BoundsRenderer.enclosingBoxes.Any(c => tankTurretRay.Intersects(c).HasValue))
+                            if (MapRenderer.BoundsRenderer.enclosingBoxes.Any(c => tankTurretRay.Intersects(c).HasValue) || Cube.cubes.Any(x => x is not null && tankTurretRay.Intersects(x.collider).HasValue))
                             {
                                 // normal is up usually
                                 var r = GeometryUtils.Reflect(tankTurretRay, tankTurretRay.Intersects(MapRenderer.BoundsRenderer.BoundaryBox).Value);
@@ -1198,6 +1199,32 @@ namespace WiiPlayTanksRemake.GameContent
 
                         // check if friendly intersected is LESS than enemy intersected, if true then prevent fire
 
+                        /*float? cubeInter = 0f;
+                        float? tnkInter = 0f;
+
+                        if (tankTurretRay.Intersects(enemy.CollisionBox).HasValue)
+                            tnkInter = tankTurretRay.Intersects(enemy.CollisionBox);
+                        foreach (var cube in Cube.cubes.Where(c => c is not null))
+                        {
+                            if (tankTurretRay.Intersects(cube.collider).HasValue)
+                            {
+                                cubeInter = tankTurretRay.Intersects(cube.collider);
+                            }
+                        }
+
+                        WPTR.ClientLog.Write($"tnk: {tier} | c: {cubeInter} | t: {tnkInter}", LogType.Debug);
+
+                        if (cubeInter is not null && tnkInter is not null)
+                        {
+                            if (cubeInter < tnkInter)
+                            {
+                                AiParams.seesTarget = false;
+                            }
+                            else
+                                AiParams.seesTarget = true;
+                        }
+                        if (tnkInter is null)
+                            AiParams.seesTarget = false;*/
                         AiParams.seesTarget = rays.Any(r => r.Intersects(enemy.CollisionBox).HasValue);
 
                         if (AiParams.seesTarget)
@@ -1240,27 +1267,25 @@ namespace WiiPlayTanksRemake.GameContent
 
                     //isCubeInWay = rays.Any(r => IsCubeInRayPath(r, AiParams.cubeWarinessDistance));
 
-                    if (isCubeInWay /*&& Behaviors[2].IsBehaviourModuloOf(30)*/)
+                    if (isCubeInWay && Behaviors[2].IsBehaviourModuloOf(AiParams.cubeReadTime))
                     {
-                        /*Ray goodDir = new();
-
-                        float goodRot = 0f;
+                        /*float goodRot = 0f;
 
                         for (int i = 0; i < 4; i++)
                         {
-                            var tnkRay = GeometryUtils.CreateRayFrom2D(Position2D, Vector2.UnitY.RotatedByRadians(TankRotation + MathHelper.PiOver2 * i));
+                            var tnkRay = GeometryUtils.CreateRayFrom2D(position, Vector2.UnitY.RotatedByRadians(targetTankRotation + MathHelper.PiOver2 * i));
 
+                            // i dont get why this makes tanks go only up into cubes
                             if (!IsCubeInRayPath(tnkRay, AiParams.cubeWarinessDistance))
                             {
-                                goodDir = tnkRay;
-                                goodRot = (MathHelper.PiOver2 * i) - MathHelper.PiOver2;
+                                goodRot = MathHelper.PiOver2 * i;
                                 break;
                             }
-                        }*/
+                        }
+                        WPTR.ClientLog.Write(goodRot, LogType.Debug);
+                        targetTankRotation = goodRot;*/
 
-                        // targetTankRotation = goodRot;
-
-                        var turnInvar = 0.15f;// MathHelper.PiOver2;
+                        /*var turnInvar = 0.15f;// MathHelper.PiOver2;
 
                         if (velocity.X > 0 && velocity.Z > 0) // yes
                         {
@@ -1285,7 +1310,7 @@ namespace WiiPlayTanksRemake.GameContent
                             // up left
 
                             targetTankRotation -= turnInvar;
-                        }
+                        }*/
                     }
 
                     wasCubeInWay = isCubeInWay;
@@ -1297,7 +1322,7 @@ namespace WiiPlayTanksRemake.GameContent
                     #region GeneralMovement
                     if (!isMineNear && !isBulletNear && !movingFromMine && !movingFromOtherMine && !IsTurning)
                     {
-                        if (!isCubeInWay)
+                        // if (!isCubeInWay)
                         {
                             if (Behaviors[0].IsBehaviourModuloOf(AiParams.meanderFrequency))
                             {
