@@ -73,6 +73,8 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
         internal static void Initialize()
         {
+            var ttColor = Color.LightGray;
+
             SpriteFont font = TankGame.Fonts.Default;
             Vector2 drawOrigin = font.MeasureString("Mission 1") / 2f;
             MissionInfoBar = new((uiPanel, spriteBatch) => spriteBatch.DrawString(font, "Mission 1", uiPanel.Hitbox.Center.ToVector2(), Color.White, 0, drawOrigin, 1.5f, SpriteEffects.None, 1f));
@@ -88,7 +90,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
             RestartButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Start Over", Color.WhiteSmoke))
             {
-                Visible = false
+                Visible = false,
             };
             RestartButton.SetDimensions(700, 350, 500, 150);
 
@@ -142,7 +144,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             PerPixelLightingButton.OnMouseOver += (element) =>
             {
                 Tooltip.Remove();
-                Tooltip = new(null, 1, (uiImage, spriteBatch) => QuickIndicator(uiImage, spriteBatch, Color.White, "Whether or not to draw lighting\non each individual pixel"))
+                Tooltip = new(null, 1, (uiImage, spriteBatch) => QuickIndicator(uiImage, spriteBatch, ttColor, "Whether or not to draw lighting\non each individual pixel"))
                 {
                     IgnoreMouseInteractions = true
                 };
@@ -168,7 +170,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             VsyncButton.OnMouseOver += (element) =>
             {
                 Tooltip.Remove();
-                Tooltip = new(null, 1, (uiImage, spriteBatch) => QuickIndicator(uiImage, spriteBatch, Color.White, "Whether or not to enable\nvertical synchronization"))
+                Tooltip = new(null, 1, (uiImage, spriteBatch) => QuickIndicator(uiImage, spriteBatch, ttColor, "Whether or not to enable\nvertical synchronization"))
                 {
                     IgnoreMouseInteractions = true
                 };
@@ -194,7 +196,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             BorderlessWindowButton.OnMouseOver += (element) =>
             {
                 Tooltip.Remove();
-                Tooltip = new(null, 1, (uiImage, spriteBatch) => QuickIndicator(uiImage, spriteBatch, Color.White, "Whether or not to run the\ngame window borderless"))
+                Tooltip = new(null, 1, (uiImage, spriteBatch) => QuickIndicator(uiImage, spriteBatch, ttColor, "Whether or not to run the\ngame window borderless"))
                 {
                     IgnoreMouseInteractions = true
                 };
@@ -213,7 +215,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             MusicVolume.BarOverAction = (element) =>
             {
                 Tooltip.Remove();
-                Tooltip = new(null, 1, (uiImage, spriteBatch) => QuickIndicator(uiImage, spriteBatch, Color.White, $"Value: {Math.Round(TankGame.Settings.MusicVolume * 100, 1)}%"))
+                Tooltip = new(null, 1, (uiImage, spriteBatch) => QuickIndicator(uiImage, spriteBatch, ttColor, $"{Math.Round(TankGame.Settings.MusicVolume * 100, 1)}%"))
                 {
                     IgnoreMouseInteractions = true
                 };
@@ -236,7 +238,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             EffectsVolume.BarOverAction = (element) =>
             {
                 Tooltip.Remove();
-                Tooltip = new(null, 1, (uiImage, spriteBatch) => QuickIndicator(uiImage, spriteBatch, Color.White, $"Value: {Math.Round(TankGame.Settings.EffectsVolume * 100, 1)}%"))
+                Tooltip = new(null, 1, (uiImage, spriteBatch) => QuickIndicator(uiImage, spriteBatch, ttColor, $"{Math.Round(TankGame.Settings.EffectsVolume * 100, 1)}%"))
                 {
                     IgnoreMouseInteractions = true
                 };
@@ -259,7 +261,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             AmbientVolume.BarOverAction = (element) =>
             {
                 Tooltip.Remove();
-                Tooltip = new(null, 1, (uiImage, spriteBatch) => QuickIndicator(uiImage, spriteBatch, Color.White, $"Value: {Math.Round(TankGame.Settings.AmbientVolume * 100, 1)}%"))
+                Tooltip = new(null, 1, (uiImage, spriteBatch) => QuickIndicator(uiImage, spriteBatch, ttColor, $"{Math.Round(TankGame.Settings.AmbientVolume * 100, 1)}%"))
                 {
                     IgnoreMouseInteractions = true
                 };
@@ -295,7 +297,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             };
             AmbientText.SetDimensions(950, 675, 500, 150);
 
-            Tooltip = new(null, 1, (uiImage, spriteBatch) => QuickIndicator(uiImage, spriteBatch, Color.White, "ODST"))
+            Tooltip = new(null, 1, (uiImage, spriteBatch) => QuickIndicator(uiImage, spriteBatch, ttColor, "ODST"))
             {
                 Visible = false,
                 IgnoreMouseInteractions = true
