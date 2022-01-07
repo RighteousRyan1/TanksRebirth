@@ -31,7 +31,8 @@ namespace WiiPlayTanksRemake.GameContent
         public Model Model;
 
         public Matrix[] faceWorlds = new Matrix[6];
-        /// <summary>If this is true, an animation sequence plays.</summary>
+
+        /// <summary>Whether or not an animation sequence plays when the <see cref="CrateDrop"/> lands.</summary>
         public bool IsOpening { get; private set; }
 
         public int id;
@@ -57,6 +58,12 @@ namespace WiiPlayTanksRemake.GameContent
             crates[index] = this;
         }
 
+        /// <summary>
+        /// Spawns a new <see cref="CrateDrop"/>.
+        /// </summary>
+        /// <param name="pos">The position to spawn the <see cref="CrateDrop"/> in the game world.</param>
+        /// <param name="gravity">The gravity which affects the <see cref="CrateDrop"/> while it falls.</param>
+        /// <returns>The <see cref="CrateDrop"/> spawned.</returns>
         public static CrateDrop SpawnCrate(Vector3 pos, float gravity)
         {
             var spawnSfx = GameResources.GetGameResource<SoundEffect>("Assets/sounds/crate/CrateSpawn");

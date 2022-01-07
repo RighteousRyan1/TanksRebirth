@@ -12,7 +12,7 @@ namespace WiiPlayTanksRemake.Internals.Common.Framework
         public float radius;
         public Vector2 Center { get; set; }
 
-        /// <summary>Returns whether or not this <see cref="Circle"/> intersects with <paramref name="other"/>.</summary>
+        /// <summary>Whether or not this <see cref="Circle"/> intersects with <paramref name="other"/>.</summary>
         public bool Intersects(Circle other)
             => Vector2.Distance(Center, other.Center) < radius;
 

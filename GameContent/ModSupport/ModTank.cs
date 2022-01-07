@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace WiiPlayTanksRemake.GameContent.ModSupport
 {
+    /// <summary>Represents a modded <see cref="GameContent.Tank"/>.</summary>
     public class ModTank
     {
         public virtual string TierName => string.Empty;

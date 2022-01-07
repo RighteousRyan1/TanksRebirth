@@ -20,7 +20,12 @@ namespace WiiPlayTanksRemake.GameContent.Systems
 
         public static ChatMessageCorner Corner { get; set; } = ChatMessageCorner.TopLeft;
 
-        /// <summary>Send a message to the chat.</summary>
+        /// <summary>
+        /// Sends a new <see cref="ChatMessage"/> to the chat.
+        /// </summary>
+        /// <param name="text">The content of the <see cref="ChatMessage"/>.</param>
+        /// <param name="color">The color in which to render the content of the <see cref="ChatMessage"/>.</param>
+        /// <returns>The <see cref="ChatMessage"/> sent to the chat.</returns>
         public static ChatMessage SendMessage(object text, Color color)
         {
             var msg = new ChatMessage(text.ToString(), color);
@@ -83,14 +88,27 @@ namespace WiiPlayTanksRemake.GameContent.Systems
             }
         }
     }
+
+    /// <summary>Represents a system used to store messages and their contents in use with the <see cref="ChatSystem"/>.</summary>
     public class ChatMessage
     {
+        /// <summary>The content of this <see cref="ChatMessage"/>.</summary>
         public string Content { get; }
+
+        /// <summary>The color of the content of this <see cref="ChatMessage"/>.</summary>
         public Color Color { get; set; }
+
+        /// <summary>The <see cref="SpriteFont"/> in which to use to render the content of this <see cref="ChatMessage"/>.</summary>
         public static SpriteFont Font => TankGame.Fonts.Default;
 
+        /// <summary>The duration this <see cref="ChatMessage"/> will persist for.</summary>
         public int lifeTime = 150;
 
+        /// <summary>
+        /// Creates a new <see cref="ChatMessage"/>.
+        /// </summary>
+        /// <param name="content">The content of the <see cref="ChatMessage"/>.</param>
+        /// <param name="color">The color in which to render the content of the <see cref="ChatMessage"/>.</param>
         public ChatMessage(string content, Color color)
         {
             Content = content;

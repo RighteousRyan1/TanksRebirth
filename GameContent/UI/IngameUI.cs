@@ -362,7 +362,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
         private static void PerPixelLightingButton_OnMouseClick(Internals.UI.UIElement affectedElement)
         {
-            Lighting.PerPixelLighting = TankGame.Settings.PerPixelLighting = !TankGame.Settings.PerPixelLighting;
+            TankGame.Settings.PerPixelLighting = !TankGame.Settings.PerPixelLighting;
             PerPixelLightingToggle.Remove();
             PerPixelLightingToggle = new(null, 1, (uiImage, spriteBatch) => QuickIndicator(uiImage, spriteBatch, TankGame.Settings.PerPixelLighting ? Color.Green : Color.Red));
             PerPixelLightingToggle.SetDimensions(695, 95, 510, 160);

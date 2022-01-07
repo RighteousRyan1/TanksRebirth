@@ -130,7 +130,11 @@ namespace WiiPlayTanksRemake.GameContent
         public static int GetTankCountOfType(TankTier tier)
             => WPTR.AllAITanks.Count(tnk => tnk is not null && tnk.tier == tier && !tnk.Dead);
 
-        /// <summary>The vanilla game constructor for AI Tanks.</summary>
+        /// <summary>
+        /// Creates a new <see cref="AITank"/>.
+        /// </summary>
+        /// <param name="tier">The tier of this <see cref="AITank"/>.</param>
+        /// <param name="setTankDefaults">Whether or not to give this <see cref="AITank"/> the default values.</param>
         public AITank(TankTier tier, bool setTankDefaults = true)
         {
             treadSoundTimer += new Random().Next(-1, 2);
@@ -184,7 +188,12 @@ namespace WiiPlayTanksRemake.GameContent
 
             WPTR.OnMissionStart += OnMissionStart;
         }
-        /// <summary>The modded constructor for AI Tanks.</summary>
+
+        /// <summary>
+        /// Creates a new <see cref="AITank"/>.
+        /// </summary>
+        /// <param name="tier">The modded tier of this <see cref="AITank"/>.</param>
+        /// <param name="setTankDefaults">Whether or not to give this <see cref="AITank"/> the default values.</param>
         public AITank(int modTier, bool setTankDefaults = true)
         {
             treadSoundTimer += new Random().Next(-1, 2);
@@ -236,6 +245,9 @@ namespace WiiPlayTanksRemake.GameContent
             WPTR.OnMissionStart += OnMissionStart;
         }
 
+        /// <summary>
+        /// Applies this <see cref="AITank"/>'s defaults.
+        /// </summary>
         public override void ApplyDefaults()
         {
             switch (tier)
@@ -1030,6 +1042,9 @@ namespace WiiPlayTanksRemake.GameContent
             }
         }
 
+        /// <summary>
+        /// Causes this <see cref="AITank"/> to lay a <see cref="Mine"/> at its current position.
+        /// </summary>
         public override void LayMine()
         {
             if (curMineCooldown > 0 || OwnedMineCount >= MineLimit)
@@ -1045,6 +1060,9 @@ namespace WiiPlayTanksRemake.GameContent
             var mine = new Mine(this, position, 600);
         }
 
+        /// <summary>
+        /// Destroys this <see cref="AITank"/>.
+        /// </summary>
         public override void Destroy()
         {
             Dead = true;
@@ -1064,6 +1082,9 @@ namespace WiiPlayTanksRemake.GameContent
             // TODO: play fanfare thingy i think
         }
 
+        /// <summary>
+        /// Causes this <see cref="AITank"/> to fire a <see cref="Shell"/>.
+        /// </summary>
         public override void Shoot()
         {
             if (!WPTR.InMission)
@@ -1123,6 +1144,7 @@ namespace WiiPlayTanksRemake.GameContent
 
 
         private float treadPlaceTimer;
+
         public void DoAi(bool doMoveTowards = true, bool doMovements = true, bool doAim = true)
         {
             AiParams.timeSinceLastMinePlaced++;

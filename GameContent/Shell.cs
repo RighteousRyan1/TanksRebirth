@@ -26,7 +26,7 @@ namespace WiiPlayTanksRemake.GameContent
         private static int maxShells = 1500;
         public static Shell[] AllShells { get; } = new Shell[maxShells];
 
-        /// <summary>The tank who shot this <see cref="Shell"/>.</summary>
+        /// <summary>The <see cref="Tank"/> which shot this <see cref="Shell"/>.</summary>
         public Tank owner;
 
         public Vector3 position;
@@ -35,7 +35,7 @@ namespace WiiPlayTanksRemake.GameContent
         public int ricochets;
         public float rotation;
 
-        /// <summary>The homing properties of this shell.</summary>
+        /// <summary>The homing properties of this <see cref="Shell"/>.</summary>
         public HomingProperties homingProperties = default;
 
         public Vector2 Position2D => position.FlattenZ();
@@ -47,7 +47,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         public Model Model;
 
-        /// <summary>The <see cref="BoundingBox"/> of this <see cref="Shell"/> determining the size of it's hurtbox/hitbox.</summary>
+        /// <summary>The <see cref="BoundingBox"/> of this <see cref="Shell"/> determining the size of its hurtbox/hitbox.</summary>
         public BoundingBox hurtbox = new();
         /// <summary>The hurtbox on the 2D backing map for the game.</summary>
         public Rectangle hurtbox2d;
@@ -65,6 +65,13 @@ namespace WiiPlayTanksRemake.GameContent
 
         internal bool INTERNAL_doRender = true;
 
+        /// <summary>
+        /// Creates a new <see cref="Shell"/>.
+        /// </summary>
+        /// <param name="position">The position of the created <see cref="Shell"/>.</param>
+        /// <param name="velocity">The velocity of the created <see cref="Shell"/>.</param>
+        /// <param name="ricochets">How many times the newly created <see cref="Shell"/> can ricochet.</param>
+        /// <param name="homing">Whether or not the newly created <see cref="Shell"/> homes in on enemies.</param>
         public Shell(Vector3 position, Vector3 velocity, int ricochets = 0, HomingProperties homing = default)
         {
             this.ricochets = ricochets;
@@ -176,9 +183,9 @@ namespace WiiPlayTanksRemake.GameContent
         }
 
         /// <summary>
-        /// Ricochets this <see cref="Shell"/>. If <paramref name="horizontal"/> is true, it will ricochet off of a horizontal axis.
+        /// Ricochets this <see cref="Shell"/>.
         /// </summary>
-        /// <param name="horizontal">Is this ricochet horizontal?</param>
+        /// <param name="horizontal">Whether or not the ricochet is done off of a horizontal axis.</param>
         public void Ricochet(bool horizontal)
         {
             if (horizontal)
@@ -243,7 +250,7 @@ namespace WiiPlayTanksRemake.GameContent
         /// <summary>
         /// Destroys this <see cref="Shell"/>.
         /// </summary>
-        /// <param name="playSound">Whether or not to play the sound of the bullet being destroyed</param>
+        /// <param name="playSound">Whether or not to play the bullet destruction sound.</param>
         public void Destroy(bool playSound = true)
         {
             if (!INTERNAL_ignoreCollisions)
@@ -258,7 +265,6 @@ namespace WiiPlayTanksRemake.GameContent
                 AllShells[worldId] = null;
             }
         }
-
 
         internal void Render()
         {

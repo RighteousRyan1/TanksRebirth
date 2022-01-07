@@ -8,7 +8,7 @@ using WiiPlayTanksRemake.Internals;
 
 namespace WiiPlayTanksRemake.GameContent.Systems
 {
-    /// <summary>A campaign for players to play on with AI tanks, or even player tanks if supported.</summary>
+    /// <summary>A campaign for players to play on with <see cref="AITank"/>s, or even <see cref="PlayerTank"/>s if supported.</summary>
     public class Campaign
     {
         public Mission[] CachedMissions { get; set; } = new Mission[100];
@@ -21,7 +21,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems
         public void LoadMission(int id)
             => CurrentMission = CachedMissions[id];
 
-        /// <summary>Load an array of <see cref="Mission"/>s into the cache.</summary>
+        /// <summary>Loads an array of <see cref="Mission"/>s into the cache.</summary>
         public void LoadMissionsToCache(params Mission[] missions)
         {
             var list = CachedMissions.ToList();
@@ -30,7 +30,8 @@ namespace WiiPlayTanksRemake.GameContent.Systems
 
             CachedMissions = list.ToArray();
         }
-        /// <summary>Load the next mission in the <see cref="Campaign"/>.</summary>
+
+        /// <summary>Loads the next mission in the <see cref="Campaign"/>.</summary>
         public void LoadNextMission()
         {
             if (CachedMissions[++CurrentMissionId].Tanks is null || ++CurrentMissionId >= 100)
@@ -41,7 +42,8 @@ namespace WiiPlayTanksRemake.GameContent.Systems
 
             CurrentMission = CachedMissions[++CurrentMissionId];
         }
-        /// <summary>Setup the <see cref="Mission"/> that is loaded.</summary>
+
+        /// <summary>Sets up the <see cref="Mission"/> that is loaded.</summary>
         public void SetupLoadedMission()
         {
             if (CurrentMission.Tanks is null && CurrentMission.Cubes is null)
@@ -89,14 +91,16 @@ namespace WiiPlayTanksRemake.GameContent.Systems
 
     public struct Mission
     {
-        /// <summary>The tanks that will be spawned.</summary>
+        /// <summary>The <see cref="Tank"/>s that will be spawned.</summary>
         public Tank[] Tanks { get; }
 
-        /// <summary>The position of the spawned tanks.</summary>
+        /// <summary>The position of the spawned <see cref="Tank"/>s.</summary>
         public Vector3[] SpawnPositions { get; }
-        /// <summary>The rotation of the spawned tanks.</summary>
+
+        /// <summary>The rotation of the spawned <see cref="Tank"/>s.</summary>
         public float[] SpawnOrientations { get; }
-        /// <summary>The obstacles in the mission.</summary>
+
+        /// <summary>The obstacles in the <see cref="Mission"/>.</summary>
         public Cube[] Cubes { get; }
 
         public CubeMapPosition[] CubePositions { get; }

@@ -7,6 +7,7 @@ using WiiPlayTanksRemake.Internals.Common.Utilities;
 
 namespace WiiPlayTanksRemake.Graphics
 {
+    /// <summary>Represents a system in which to render lighting for the world.</summary>
     public static class Lighting
     {
         /// <summary>A custom time of day for the lighting and brightness.</summary>
@@ -59,6 +60,7 @@ namespace WiiPlayTanksRemake.Graphics
         public static DayState Midnight => new(0.15f, new Color(0, 0, 0)) { isNight = true, sunPower = 0.5f };
 
         public static Color DefaultLightingColor => new Vector3(0.05333332f, 0.09882354f, 0.1819608f).ToColor();
+
         public static void SetDefaultGameLighting(this BasicEffect effect)
         {
             effect.LightingEnabled = true;
@@ -81,6 +83,7 @@ namespace WiiPlayTanksRemake.Graphics
 
             effect.DiffuseColor = new(ColorBrightness);
         }
+
         public static void SetDefaultGameLighting_IngameEntities(this BasicEffect effect)
         {
             effect.LightingEnabled = true;

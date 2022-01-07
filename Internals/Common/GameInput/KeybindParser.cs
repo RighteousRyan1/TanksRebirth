@@ -33,6 +33,7 @@ namespace WiiPlayTanksRemake.Internals.Common.GameInput
             }
             return false;
         }
+
         public static string ParseKey(this Keys key) {
             foreach (var num in nums) {
                 if (key.ToString() == $"D{num}") {

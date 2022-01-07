@@ -30,7 +30,7 @@ namespace WiiPlayTanksRemake.GameContent
         public bool Dead { get; set; }
         /// <summary>Whether or not the tank should become invisible at mission start.</summary>
         public bool Invisible { get; set; }
-        /// <summary>How fast the tank should accelerate towards it's <see cref="MaxSpeed"/>.</summary>
+        /// <summary>How fast the tank should accelerate towards its <see cref="MaxSpeed"/>.</summary>
         public float Acceleration { get; set; } = 0.3f;
         /// <summary>How fast the tank should decelerate when not moving.</summary>
         public float Deceleration { get; set; } = 0.6f;
