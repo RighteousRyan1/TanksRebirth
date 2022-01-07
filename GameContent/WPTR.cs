@@ -280,7 +280,7 @@ namespace WiiPlayTanksRemake.GameContent
                 },
                 new Cube[]
                 {
-                    new(Cube.BlockType.Wood, 1),
+                    /*new(Cube.BlockType.Wood, 1),
                     new(Cube.BlockType.Wood, 1),
                     new(Cube.BlockType.Wood, 1),
                     new(Cube.BlockType.Wood, 1),
@@ -307,11 +307,11 @@ namespace WiiPlayTanksRemake.GameContent
                     new(Cube.BlockType.Wood, 1),
                     new(Cube.BlockType.Wood, 1),
                     new(Cube.BlockType.Wood, 1),
-                    new(Cube.BlockType.Wood, 1),
+                    new(Cube.BlockType.Wood, 1),*/
                 },
                 new CubeMapPosition[]
                 {
-                    new(4, 9),
+                    /*new(4, 9),
                     new(5, 9),
                     new(6, 9),
                     new(7, 9),
@@ -340,7 +340,7 @@ namespace WiiPlayTanksRemake.GameContent
                     new(13, 11),
                     new(13, 12),
                     new(13, 13),
-                    new(13, 14),
+                    new(13, 14),*/
                 });
         // fix shitty mission init (innit?)
 
