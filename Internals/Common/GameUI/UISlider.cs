@@ -27,29 +27,18 @@ namespace WiiPlayTanksRemake.Internals.Common.GameUI
 		/// <summary>The color of the <see cref="UISlider"/>.</summary>
 		public Color SliderColor = Color.LightBlue;
 
-		internal Action<UIElement> BarOverAction;
-
-		internal Action<UIElement> BarOutAction;
-
 		private float InternalValue;
 
 		public override void OnInitialize()
 		{
 			UIImage interactable = new(GameResources.GetGameResource<Texture2D>("Assets/MagicPixel"), 1f, (image, spriteBatch) => spriteBatch.Draw(image.Texture, image.Hitbox, Color.Transparent));
+			interactable.Tooltip = Tooltip;
 			interactable.SetDimensions((int)Position.X + 2, (int)Position.Y + 2, (int)Size.X - 4, (int)Size.Y - 4);
 			interactable.OnLeftDown += (element) =>
 			{
 				int mouseXRelative = (int)Math.Round(Utilities.GameUtils.MouseX - element.Position.X);
 				InternalValue = MathHelper.Clamp(mouseXRelative / element.Size.X, 0, 1);
 			};
-			if (BarOverAction != null)
-            {
-				interactable.OnMouseOver += BarOverAction;
-            }
-			if (BarOutAction != null)
-			{
-				interactable.OnMouseOut += BarOutAction;
-			}
 			Append(interactable);
 		}
 

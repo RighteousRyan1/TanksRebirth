@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using WiiPlayTanksRemake.Internals.Common.Utilities;
 using WiiPlayTanksRemake.Internals.UI;
 
 namespace WiiPlayTanksRemake.Internals.Common.GameUI
