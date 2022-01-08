@@ -148,13 +148,13 @@ namespace WiiPlayTanksRemake.GameContent.UI
             };
             VsyncToggle.SetDimensions(695, 345, 510, 160);
 
-            VsyncButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "VSync", Color.WhiteSmoke))
+            VsyncButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Vertical Sync", Color.WhiteSmoke))
             {
                 Visible = false
             };
             VsyncButton.SetDimensions(700, 350, 500, 150);
             VsyncButton.OnLeftClick += VsyncButton_OnMouseClick;
-            VsyncButton.Tooltip = "Whether or not to enable\nvertical synchronization";
+            VsyncButton.Tooltip = "Whether or not to render a 1 full\nframe cycle per second";
 
             BorderlessWindowToggle = new(null, 1, (uiImage, spriteBatch) => QuickIndicator(uiImage, spriteBatch, TankGame.Settings.BorderlessWindow ? Color.Green : Color.Red))
             {

@@ -225,6 +225,7 @@ namespace WiiPlayTanksRemake
 
         public TankGame() : base()
         {
+            IsFixedTimeStep = false;
             graphics = new(this);
 
             Internals.Core.ResolutionHandler.Initialize(graphics);
@@ -371,7 +372,7 @@ namespace WiiPlayTanksRemake
 
             UpdateStopwatch.Stop();
 
-            LogicFPS = Math.Round(1f / gameTime.ElapsedGameTime.TotalSeconds, 2);
+            LogicFPS = Math.Round(1f / gameTime.ElapsedGameTime.TotalSeconds);
         }
 
         private static void UpdateGameSystems()
@@ -434,7 +435,7 @@ namespace WiiPlayTanksRemake
             DebugUtils.DrawDebugString(spriteBatch, $"{SysGPU}" +
                 $"\n{SysCPU}" +
                 $"\n{SysKeybd}" +
-                $"\n{SysMouse}", 
+                $"\n{SysMouse}",
                 new(8, GameUtils.WindowHeight * 0.2f));
 
             graphics.GraphicsDevice.DepthStencilState = DepthStencilState.Default;
@@ -452,7 +453,7 @@ namespace WiiPlayTanksRemake
             RenderTime = RenderStopwatch.Elapsed;
 
             RenderStopwatch.Stop();
-            RenderFPS = Math.Round(1f / gameTime.ElapsedGameTime.TotalSeconds, 2);
+            RenderFPS = Math.Round(1f / gameTime.ElapsedGameTime.TotalSeconds);
         }
     }
 
