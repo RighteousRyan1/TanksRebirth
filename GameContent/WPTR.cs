@@ -153,6 +153,9 @@ namespace WiiPlayTanksRemake.GameContent
                 SpawnCrateAtMouse();
             }
 
+            if (Input.KeyJustPressed(Keys.I))
+                new Powerup(powerups[mode]) { position = GameUtils.GetWorldPosition(GameUtils.MousePosition) };
+
         }
 
         public static int tankToSpawnType;
@@ -280,7 +283,7 @@ namespace WiiPlayTanksRemake.GameContent
                 },
                 new Cube[]
                 {
-                    new(Cube.BlockType.Wood, 1),
+                    /*new(Cube.BlockType.Wood, 1),
                     new(Cube.BlockType.Wood, 1),
                     new(Cube.BlockType.Wood, 1),
                     new(Cube.BlockType.Wood, 1),
@@ -307,11 +310,11 @@ namespace WiiPlayTanksRemake.GameContent
                     new(Cube.BlockType.Wood, 1),
                     new(Cube.BlockType.Wood, 1),
                     new(Cube.BlockType.Wood, 1),
-                    new(Cube.BlockType.Wood, 1),
+                    new(Cube.BlockType.Wood, 1),*/
                 },
                 new CubeMapPosition[]
                 {
-                    new(4, 9),
+                    /*new(4, 9),
                     new(5, 9),
                     new(6, 9),
                     new(7, 9),
@@ -340,21 +343,21 @@ namespace WiiPlayTanksRemake.GameContent
                     new(13, 11),
                     new(13, 12),
                     new(13, 13),
-                    new(13, 14),
+                    new(13, 14),*/
                 });
         // fix shitty mission init (innit?)
 
-        private static readonly PowerupTemplate speed = new(1000, 50f, (tnk) => { tnk.MaxSpeed *= 2; });
-        private static readonly PowerupTemplate invis = new(1000, 50f, (tnk) => { tnk.Invisible = true; });
-        private static readonly PowerupTemplate bigturn = new(1000, 50f, (tnk) => { tnk.MaximalTurn = 6.28f; tnk.TurningSpeed = 100f; });
-        private static readonly PowerupTemplate homer = new(1000, 50f, (tnk) => { tnk.ShellHoming.radius = 150f; tnk.ShellHoming.speed = tnk.ShellSpeed; tnk.ShellHoming.power = 1f; });
+        private static readonly PowerupTemplate[] powerups = 
+        {
+             new(1000, 50f, (tnk) => { tnk.MaxSpeed *= 2; }) { Name = "Speed" },
+             new(1000, 50f, (tnk) => { tnk.Invisible = true; }) { Name = "Invis" },
+             new(1000, 50f, (tnk) => { tnk.MaximalTurn = 6.28f; tnk.TurningSpeed = 100f; }) { Name = "BigTurn" },
+             new(1000, 50f, (tnk) => { tnk.ShellHoming.radius = 150f; tnk.ShellHoming.speed = tnk.ShellSpeed; tnk.ShellHoming.power = 1f; }) { Name = "Homing" },
+             new(1000, 50f, (tnk) => { tnk.Stationary = true; }) { Name = "Stationary" }
+        };
 
         public static void Initialize()
         {
-            new Powerup(speed).Spawn(default);
-            new Powerup(invis).Spawn(new(0, 0, 300));
-            new Powerup(bigturn).Spawn(new(0, 0, -150));
-            new Powerup(homer).Spawn(new(-100, 0, 150));
             // TankGame.Instance.IsFixedTimeStep = false;
             // 26 x 18 (technically 27 x 19)
             InitDebugUi();
@@ -543,22 +546,55 @@ namespace WiiPlayTanksRemake.GameContent
 
         public static UIImageButton SetupMissionAgain;
 
+        public static UIImageButton MovePURight;
+        public static UIImageButton MovePULeft;
+
+        public static UIImage Display;
+
+        private static int mode;
+
         public static void InitDebugUi()
         {
-            ClearTracks = new(null, 1f, (uiPanel, spriteBatch) => IngameUI.QuickButton(uiPanel, TankGame.spriteBatch, "Clear Tracks", Color.LightBlue, 0.5f));
+            ClearTracks = new(null, 1f, (uiPanel, spriteBatch) => IngameUI.QuickButton(uiPanel, spriteBatch, "Clear Tracks", Color.LightBlue, 0.5f));
             ClearTracks.SetDimensions(250, 25, 100, 50);
 
             ClearTracks.OnLeftClick += ClearTankTracks;
 
-            ClearChecks = new(null, 1f, (uiPanel, spriteBatch) => IngameUI.QuickButton(uiPanel, TankGame.spriteBatch, "Clear Checks", Color.LightBlue, 0.5f));
+            ClearChecks = new(null, 1f, (uiPanel, spriteBatch) => IngameUI.QuickButton(uiPanel, spriteBatch, "Clear Checks", Color.LightBlue, 0.5f));
             ClearChecks.SetDimensions(250, 95, 100, 50);
 
             ClearChecks.OnLeftClick += ClearTankDeathmarks;
 
-            SetupMissionAgain = new(null, 1f, (uiPanel, spriteBatch) => IngameUI.QuickButton(uiPanel, TankGame.spriteBatch, "Restart\n Mission", Color.LightBlue, 0.5f));
+            SetupMissionAgain = new(null, 1f, (uiPanel, spriteBatch) => IngameUI.QuickButton(uiPanel, spriteBatch, "Restart\n Mission", Color.LightBlue, 0.5f));
             SetupMissionAgain.SetDimensions(250, 165, 100, 50);
 
             SetupMissionAgain.OnLeftClick += RestartMission;
+
+            MovePULeft = new(null, 1f, (uiPanel, spriteBatch) => IngameUI.QuickButton(uiPanel, spriteBatch, "<", Color.LightBlue, 0.5f));
+            MovePULeft.SetDimensions(GameUtils.WindowWidth / 2 - 100, 25, 50, 50);
+
+            MovePURight = new(null, 1f, (uiPanel, spriteBatch) => IngameUI.QuickButton(uiPanel, spriteBatch, ">", Color.LightBlue, 0.5f));
+            MovePURight.SetDimensions(GameUtils.WindowWidth / 2 + 100, 25, 50, 50);
+
+            Display = new(null, 1f, (uiPanel, spriteBatch) => IngameUI.QuickButton(uiPanel, spriteBatch, powerups[mode].Name, Color.LightBlue, 0.5f));
+            Display.SetDimensions(GameUtils.WindowWidth / 2 - 35, 25, 125, 50);
+
+            MovePULeft.OnLeftClick += MovePULeft_OnLeftClick;
+            MovePURight.OnLeftClick += MovePURight_OnLeftClick;
+        }
+
+        private static void MovePURight_OnLeftClick(UIElement obj)
+        {
+            if (mode < powerups.Length - 1)
+                mode++;
+            Display.UniqueDraw = (uiPanel, spriteBatch) => IngameUI.QuickButton(uiPanel, spriteBatch, powerups[mode].Name, Color.LightBlue, 0.5f);
+        }
+
+        private static void MovePULeft_OnLeftClick(UIElement obj)
+        {
+            if (mode > 0)
+                mode--;
+            Display.UniqueDraw = (uiPanel, spriteBatch) => IngameUI.QuickButton(uiPanel, spriteBatch, powerups[mode].Name, Color.LightBlue, 0.5f);
         }
 
         private static void RestartMission(UIElement affectedElement)

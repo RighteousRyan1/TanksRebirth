@@ -34,6 +34,9 @@ namespace WiiPlayTanksRemake.GameContent
 
         public int id;
 
+        /// <summary>The name of this <see cref="Powerup"/>.</summary>
+        public string Name { get; set; }
+
         /// <summary>Whether or not this <see cref="Powerup"/> has been already picked up.</summary>
         public bool InWorld { get; private set; }
 
@@ -96,7 +99,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         public void Render()
         {
-            if (InWorld)
+            if (!HasOwner)
             {
                 var pos = GeometryUtils.ConvertWorldToScreen(default, Matrix.CreateTranslation(position), TankGame.GameView, TankGame.GameProjection);
 
@@ -136,10 +139,13 @@ namespace WiiPlayTanksRemake.GameContent
         public float pickupRadius;
         public int duration;
 
+        public string Name { get; set; }
+
         public Action<Tank> PowerupEffects { get; }
 
         public PowerupTemplate(int duration, float pickupRadius, Action<Tank> fx)
         {
+            Name = string.Empty;
             PowerupEffects = fx;
 
             this.pickupRadius = pickupRadius;

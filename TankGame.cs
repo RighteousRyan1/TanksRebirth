@@ -452,18 +452,26 @@ namespace WiiPlayTanksRemake
             RenderTime = RenderStopwatch.Elapsed;
 
             RenderStopwatch.Stop();
-
             RenderFPS = Math.Round(1f / gameTime.ElapsedGameTime.TotalSeconds, 2);
         }
     }
 
-    public static class Program
+    public static class GameLauncher
     {
-        [STAThread]
-        static void Main()
+        public static bool AutoLaunch = true;
+
+        public static bool IsRunning { get; private set; }
+        public static void LaunchGame()
         {
             using var game = new TankGame();
             game.Run();
+            IsRunning = true;
+        }
+        [STAThread]
+        static void Main()
+        {
+            if (AutoLaunch)
+                LaunchGame();
         }
     }
 }
