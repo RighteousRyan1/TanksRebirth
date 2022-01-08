@@ -1,6 +1,10 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using WiiPlayTanksRemake.Internals.Common.GameUI;
+using WiiPlayTanksRemake.Internals.Common.Utilities;
 using WiiPlayTanksRemake.Internals.Core;
 
 namespace WiiPlayTanksRemake.Internals.UI
@@ -16,6 +20,8 @@ namespace WiiPlayTanksRemake.Internals.UI
         private Vector2 InternalPosition;
 
         private Vector2 InternalSize;
+
+        internal string Tooltip;
 
         /// <summary>A list of all <see cref="UIElement"/>s.</summary>
         public static List<UIElement> AllUIElements { get; internal set; } = new();
@@ -91,7 +97,7 @@ namespace WiiPlayTanksRemake.Internals.UI
         }
 
         /// <summary>
-        /// Draws the <see cref="UIElement"/> and associated content
+        /// Draws the <see cref="UIElement"/> and associated content.
         /// </summary>
         /// <param name="spriteBatch">The <see cref="SpriteBatch"/> being used to draw this <see cref="UIElement"/> with.</param>
         public virtual void Draw(SpriteBatch spriteBatch)
@@ -103,6 +109,10 @@ namespace WiiPlayTanksRemake.Internals.UI
             {
                 DrawSelf(spriteBatch);
                 DrawChildren(spriteBatch);
+                if (Tooltip is not null && Hitbox.Contains(GameUtils.MousePosition))
+                {
+                    QuickIndicator(spriteBatch, Color.White);
+                }
             }
             else
             {
@@ -166,6 +176,18 @@ namespace WiiPlayTanksRemake.Internals.UI
         }
 
         /// <summary>
+        /// Safely retrieves the first found child of this <see cref="UIElement"/> based on a predicate.
+        /// </summary>
+        /// <param name="predicate">The method used to find the child of this <see cref="UIElement"/>.</param>
+        /// <param name="child">The child of the <see cref="UIElement"/>, if found.</param>
+        /// <returns><see langword="true"/> if a child was found; otherwise, returns <see langword="false"/>.</returns>
+        public virtual bool GetChildSafely(Func<UIElement, bool> predicate, out UIElement child)
+        {
+            child = Children.FirstOrDefault(predicate);
+            return child != null;
+        }
+
+        /// <summary>
         /// Adds a child to this <see cref="UIElement"/>.
         /// </summary>
         /// <param name="element">The <see cref="UIElement"/> to add as a child.</param>
@@ -202,29 +224,59 @@ namespace WiiPlayTanksRemake.Internals.UI
         /// <param name="position">The position to get the <see cref="UIElement"/> at.</param>
         /// <returns>The <see cref="UIElement"/> at the specified position, if one exists; otherwise, returns <see langword="null"/>.</returns>
         public virtual UIElement GetElementAt(Vector2 position)
-		{
-			UIElement focusedElement = null;
-			for (int iterator = Children.Count - 1; iterator >= 0; iterator--)
-			{
-				UIElement currentElement = Children[iterator];
-				if (!currentElement.IgnoreMouseInteractions && currentElement.Visible && currentElement.Hitbox.Contains(position))
-				{
-					focusedElement = currentElement;
-					break;
-				}
-			}
+        {
+            UIElement focusedElement = null;
+            for (int iterator = Children.Count - 1; iterator >= 0; iterator--)
+            {
+                UIElement currentElement = Children[iterator];
+                if (!currentElement.IgnoreMouseInteractions && currentElement.Visible && currentElement.Hitbox.Contains(position))
+                {
+                    focusedElement = currentElement;
+                    break;
+                }
+            }
 
-			if (focusedElement != null)
-			{
-				return focusedElement.GetElementAt(position);
-			}
+            if (focusedElement != null)
+            {
+                return focusedElement.GetElementAt(position);
+            }
 
-			if (IgnoreMouseInteractions)
-			{
-				return null;
-			}
+            if (IgnoreMouseInteractions)
+            {
+                return null;
+            }
 
-			return Hitbox.Contains(position) ? this : null;
-		}
+            return Hitbox.Contains(position) ? this : null;
+        }
+
+        internal void QuickIndicator(SpriteBatch spriteBatch, Color color)
+        {
+            SpriteFont font = TankGame.Fonts.Default;
+            Vector2 scaleFont = font.MeasureString(Tooltip);
+            Rectangle Hitbox = new Rectangle(GameUtils.MouseX + 5, GameUtils.MouseY + 5, (int)scaleFont.X + 30, (int)scaleFont.Y + 30);
+            Texture2D texture = TankGame.UITextures.UIPanelBackground;
+
+            int border = 12;
+
+            int middleX = Hitbox.X + border;
+            int rightX = Hitbox.Right - border;
+
+            int middleY = Hitbox.Y + border;
+            int bottomY = Hitbox.Bottom - border;
+
+            spriteBatch.Draw(texture, new Rectangle(Hitbox.X, Hitbox.Y, border, border), new Rectangle(0, 0, border, border), color);
+            spriteBatch.Draw(texture, new Rectangle(middleX, Hitbox.Y, Hitbox.Width - border * 2, border), new Rectangle(border, 0, texture.Width - border * 2, border), color);
+            spriteBatch.Draw(texture, new Rectangle(rightX, Hitbox.Y, border, border), new Rectangle(texture.Width - border, 0, border, border), color);
+
+            spriteBatch.Draw(texture, new Rectangle(Hitbox.X, middleY, border, Hitbox.Height - border * 2), new Rectangle(0, border, border, texture.Height - border * 2), color);
+            spriteBatch.Draw(texture, new Rectangle(middleX, middleY, Hitbox.Width - border * 2, Hitbox.Height - border * 2), new Rectangle(border, border, texture.Width - border * 2, texture.Height - border * 2), color);
+            spriteBatch.Draw(texture, new Rectangle(rightX, middleY, border, Hitbox.Height - border * 2), new Rectangle(texture.Width - border, border, border, texture.Height - border * 2), color);
+
+            spriteBatch.Draw(texture, new Rectangle(Hitbox.X, bottomY, border, border), new Rectangle(0, texture.Height - border, border, border), color);
+            spriteBatch.Draw(texture, new Rectangle(middleX, bottomY, Hitbox.Width - border * 2, border), new Rectangle(border, texture.Height - border, texture.Width - border * 2, border), color);
+            spriteBatch.Draw(texture, new Rectangle(rightX, bottomY, border, border), new Rectangle(texture.Width - border, texture.Height - border, border, border), color);
+
+            spriteBatch.DrawString(font, Tooltip, Hitbox.Center.ToVector2(), Color.Black, 0, scaleFont / 2, 1, SpriteEffects.None, 1f);
+        }
     }
 }
