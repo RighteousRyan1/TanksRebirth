@@ -764,7 +764,7 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.mineWarinessRadius = 140;
 
                     TurningSpeed = 0.1f;
-                    MaximalTurn = MathHelper.Pi;
+                    MaximalTurn = MathHelper.PiOver2 + 0.5f;
 
                     ShootStun = 5;
                     ShellCooldown = 25;
@@ -1302,25 +1302,12 @@ namespace WiiPlayTanksRemake.GameContent
 
                     //isCubeInWay = rays.Any(r => IsCubeInRayPath(r, AiParams.cubeWarinessDistance));
 
-                    if (isCubeInWay && Behaviors[2].IsBehaviourModuloOf(AiParams.cubeReadTime))
+                    if (isCubeInWay /*&& Behaviors[2].IsBehaviourModuloOf(AiParams.cubeReadTime)*/)
                     {
-                        /*float goodRot = 0f;
+                        // TODO: -dir.ToRotation() - Pi/2 | might be more consistent?
+                        // maybe also try affecting meander angle with a variable + meanderAngle
 
-                        for (int i = 0; i < 4; i++)
-                        {
-                            var tnkRay = GeometryUtils.CreateRayFrom2D(position, Vector2.UnitY.RotatedByRadians(targetTankRotation + MathHelper.PiOver2 * i));
-
-                            // i dont get why this makes tanks go only up into cubes
-                            if (!IsCubeInRayPath(tnkRay, AiParams.cubeWarinessDistance))
-                            {
-                                goodRot = MathHelper.PiOver2 * i;
-                                break;
-                            }
-                        }
-                        WPTR.ClientLog.Write(goodRot, LogType.Debug);
-                        targetTankRotation = goodRot;*/
-
-                        /*var turnInvar = 0.15f;// MathHelper.PiOver2;
+                        var turnInvar = 0.15f;
 
                         if (velocity.X > 0 && velocity.Z > 0) // yes
                         {
@@ -1332,7 +1319,7 @@ namespace WiiPlayTanksRemake.GameContent
                         {
                             // up right
 
-                            targetTankRotation += turnInvar;
+                            targetTankRotation -= turnInvar;
                         }
                         else if (velocity.X <= 0 && velocity.Z >= 0) // yes
                         {
@@ -1344,8 +1331,8 @@ namespace WiiPlayTanksRemake.GameContent
                         {
                             // up left
 
-                            targetTankRotation -= turnInvar;
-                        }*/
+                            targetTankRotation += turnInvar;
+                        }
                     }
 
                     wasCubeInWay = isCubeInWay;
@@ -1365,10 +1352,12 @@ namespace WiiPlayTanksRemake.GameContent
 
                                 targetTankRotation += meanderRandom;
 
-                                /*if (targetTankRotation > MathHelper.TwoPi)
-                                    targetTankRotation = targetTankRotation - MathHelper.TwoPi;
-                                else if (targetTankRotation < 0)
-                                    targetTankRotation = MathHelper.TwoPi + targetTankRotation;*/
+                                /*if (TankRotation - targetTankRotation > MathHelper.Pi)
+                                    targetTankRotation += MathHelper.TwoPi;
+                                else if (targetTankRotation - TankRotation > MathHelper.Pi)
+                                    TankRotation += MathHelper.TwoPi;*/
+
+                                // TankRotation = MathHelper.Lerp(TankRotation, targetTankRotation, 4.3f / 60f);
                             }
 
                             if (Behaviors[0].IsBehaviourModuloOf(AiParams.bigMeanderFrequency))
@@ -1498,7 +1487,10 @@ namespace WiiPlayTanksRemake.GameContent
                             effect.EmissiveColor = Color.White.ToVector3();
                         else
                             effect.EmissiveColor = Color.Black.ToVector3();
-                        effect.Texture = _tankColorTexture;
+
+                        var tex = _tankColorTexture;
+
+                        effect.Texture = tex;
                         /*var ex = new Color[1024];
 
                         Array.Fill(ex, new Color(new Random().Next(0, 256), new Random().Next(0, 256), new Random().Next(0, 256)));
@@ -1510,8 +1502,10 @@ namespace WiiPlayTanksRemake.GameContent
 
                             Array.Fill(ex, (Color)typeof(Color).GetProperty(Team.ToString(), System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public).GetValue(null));
 
-                            effect.Texture.SetData(0, new Rectangle(0, 0, 32, 9), ex, 0, 288);
-                            effect.Texture.SetData(0, new Rectangle(0, 23, 32, 9), ex, 0, 288);
+                            tex.SetData(0, new Rectangle(0, 0, 32, 9), ex, 0, 288);
+                            tex.SetData(0, new Rectangle(0, 23, 32, 9), ex, 0, 288);
+
+
                         }
                     }
 

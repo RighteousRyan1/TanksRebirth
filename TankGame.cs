@@ -225,7 +225,7 @@ namespace WiiPlayTanksRemake
 
         public TankGame() : base()
         {
-            IsFixedTimeStep = false;
+            // IsFixedTimeStep = false;
             graphics = new(this);
 
             Internals.Core.ResolutionHandler.Initialize(graphics);
@@ -347,6 +347,8 @@ namespace WiiPlayTanksRemake
 
         float zoom = 1f;
 
+        Vector2 off;
+
         protected override void Update(GameTime gameTime)
         {
             UpdateStopwatch.Start();
@@ -360,11 +362,16 @@ namespace WiiPlayTanksRemake
             if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Down))
                 zoom -= 0.01f;
 
+            if (Input.MouseMiddle)
+            {
+                off += GameUtils.GetMouseVelocity(GameUtils.WindowCenter);
+            }
+
             GameUtils.GetMouseVelocity(GameUtils.WindowCenter);
 
             // why do i need to call this????
 
-            GameView = Matrix.CreateScale(zoom) * Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(0.75f + rotVec.Y) * Matrix.CreateRotationY(rotVec.X);
+            GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateTranslation(off.X, -off.Y, 0) * Matrix.CreateRotationX(0.75f + rotVec.Y) * Matrix.CreateRotationY(rotVec.X) * Matrix.CreateScale(zoom);
             
             FixedUpdate(gameTime);
 
@@ -447,7 +454,9 @@ namespace WiiPlayTanksRemake
             base.Draw(gameTime);
 
             spriteBatch.Begin(blendState: BlendState.NonPremultiplied, effect: GameShaders.MouseShader);
+
             MouseRenderer.DrawMouse();
+
             spriteBatch.End();
 
             RenderTime = RenderStopwatch.Elapsed;

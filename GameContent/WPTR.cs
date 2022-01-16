@@ -283,13 +283,6 @@ namespace WiiPlayTanksRemake.GameContent
                 },
                 new Cube[]
                 {
-                    /*new(Cube.BlockType.Wood, 1),
-                    new(Cube.BlockType.Wood, 1),
-                    new(Cube.BlockType.Wood, 1),
-                    new(Cube.BlockType.Wood, 1),
-                    new(Cube.BlockType.Wood, 1),
-                    new(Cube.BlockType.Wood, 1),
-                    new(Cube.BlockType.Wood, 2),
                     new(Cube.BlockType.Wood, 1),
                     new(Cube.BlockType.Wood, 1),
                     new(Cube.BlockType.Wood, 1),
@@ -299,6 +292,7 @@ namespace WiiPlayTanksRemake.GameContent
                     new(Cube.BlockType.Wood, 1),
                     new(Cube.BlockType.Wood, 1),
                     new(Cube.BlockType.Wood, 1),
+
                     new(Cube.BlockType.Wood, 1),
                     new(Cube.BlockType.Wood, 1),
                     new(Cube.BlockType.Wood, 1),
@@ -308,42 +302,35 @@ namespace WiiPlayTanksRemake.GameContent
                     new(Cube.BlockType.Wood, 1),
                     new(Cube.BlockType.Wood, 1),
                     new(Cube.BlockType.Wood, 1),
+
+                                        new(Cube.BlockType.Wood, 1),
                     new(Cube.BlockType.Wood, 1),
-                    new(Cube.BlockType.Wood, 1),
-                    new(Cube.BlockType.Wood, 1),*/
                 },
                 new CubeMapPosition[]
                 {
-                    /*new(4, 9),
-                    new(5, 9),
-                    new(6, 9),
+                    new(7, 0),
+                    new(7, 1),
+                    new(7, 2),
+                    new(7, 3),
+                    new(7, 4),
+                    new(7, 5),
+                    new(7, 6),
+                    new(7, 7),
+                    new(7, 8),
                     new(7, 9),
-                    new(8, 9),
-                    new(9, 9),
-                    new(10, 9),
+
+                    new(11, 0),
+                    new(11, 1),
+                    new(11, 2),
+                    new(11, 3),
+                    new(11, 4),
+                    new(11, 5),
+                    new(11, 6),
+                    new(11, 7),
+                    new(11, 8),
                     new(11, 9),
-                    new(12, 9),
-                    new(13, 9),
-                    new(14, 9),
-                    new(15, 9),
-                    new(16, 9),
-                    new(17, 9),
-                    new(18, 9),
-                    new(19, 9),
-                    new(20, 9),
-                    new(21, 9),
-                    new(22, 9),
-
-                    new(13, 8),
-                    new(13, 7),
-                    new(13, 6),
-                    new(13, 5),
-
-                    new(13, 10),
-                    new(13, 11),
-                    new(13, 12),
-                    new(13, 13),
-                    new(13, 14),*/
+                    new(11, 8),
+                    new(11, 9),
                 });
         // fix shitty mission init (innit?)
 
