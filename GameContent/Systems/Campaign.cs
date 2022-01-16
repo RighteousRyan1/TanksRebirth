@@ -63,7 +63,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems
                 tnk.TankRotation = CurrentMission.SpawnOrientations[i];
                 if (tnk is AITank ai)
                     ai.targetTankRotation = CurrentMission.SpawnOrientations[i] + MathHelper.Pi;
-                tnk.TurretRotation = CurrentMission.SpawnOrientations[i] - MathHelper.TwoPi;
+                tnk.TurretRotation = CurrentMission.SpawnOrientations[i];
                 tnk.Dead = false;
 
                 WPTR.AllTanks[i] = tnk;

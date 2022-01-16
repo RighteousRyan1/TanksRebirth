@@ -105,6 +105,9 @@ namespace WiiPlayTanksRemake.GameContent
 
         // everything under this comment is added outside of the faithful remake. homing shells, etc
 
+        /// <summary>Whether or not this <see cref="Tank"/> has a turret to fire shells with.</summary>
+
+        public bool HasTurret { get; set; } = true;
 
         /// <summary>The <see cref="Shell.HomingProperties"/>of the bullets this <see cref="Tank"/> shoots.</summary>
         public Shell.HomingProperties ShellHoming = new();

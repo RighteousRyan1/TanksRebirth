@@ -230,7 +230,6 @@ namespace WiiPlayTanksRemake
 
             Internals.Core.ResolutionHandler.Initialize(graphics);
             Content.RootDirectory = "Content";
-            IsMouseVisible = true;
             Instance = this;
             Window.Title = "Tanks! Remake";
             Window.AllowUserResizing = true;
@@ -371,7 +370,7 @@ namespace WiiPlayTanksRemake
 
             // why do i need to call this????
 
-            GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateTranslation(off.X, -off.Y, 0) * Matrix.CreateRotationX(0.75f + rotVec.Y) * Matrix.CreateRotationY(rotVec.X) * Matrix.CreateScale(zoom);
+            GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateTranslation(off.X, -off.Y, 0) * Matrix.CreateRotationX(0.75f + rotVec.Y) * Matrix.CreateRotationY(rotVec.X) * Matrix.CreateScale(zoom + 0.05f);
             
             FixedUpdate(gameTime);
 

@@ -1088,7 +1088,7 @@ namespace WiiPlayTanksRemake.GameContent
         /// </summary>
         public override void Shoot()
         {
-            if (!WPTR.InMission)
+            if (!WPTR.InMission || !HasTurret)
                 return;
 
             if (curShootCooldown > 0 || OwnedShellCount >= ShellLimit)
@@ -1185,6 +1185,12 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 var enemy = WPTR.AllTanks.FirstOrDefault(tnk => tnk is not null && !tnk.Dead && (tnk.Team != Team || tnk.Team == Team.NoTeam) && tnk != this);
 
+                foreach (var tank in WPTR.AllTanks.Where(tnk => tnk is not null && !tnk.Dead && (tnk.Team != Team || tnk.Team == Team.NoTeam) && tnk != this))
+                {
+                    if (Vector3.Distance(tank.position, position) < Vector3.Distance(enemy.position, position))
+                        enemy = tank;
+                }
+
                 #region TurretHandle
 
                 AiParams.targetTurretRotation %= MathHelper.TwoPi;
@@ -1218,7 +1224,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                         tankTurretRay = GeometryUtils.CreateRayFrom2D(Position2D, turRotationReal, 0f);
 
-                        List<Ray> rays = new();
+                        /*List<Ray> rays = new();
 
                         rays.Add(tankTurretRay);
 
@@ -1239,7 +1245,7 @@ namespace WiiPlayTanksRemake.GameContent
                             }
                         }
 
-                        raysMarched = rays;
+                        raysMarched = rays;*/
 
                         // check if friendly intersected is LESS than enemy intersected, if true then prevent fire
 
@@ -1259,7 +1265,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                         // WPTR.ClientLog.Write($"tnk: {tier} | c: {cubeInter} | t: {tnkInter}", LogType.Debug);
 
-                        if (cubeInter > tnkInter || (cubeInter == 0 && tnkInter > 0))
+                        if ((cubeInter > tnkInter && tnkInter > 0) || (cubeInter == 0 && tnkInter > 0))
                             AiParams.seesTarget = true;
                         else if (cubeInter < tnkInter || tnkInter == 0)
                             AiParams.seesTarget = false;
@@ -1285,7 +1291,7 @@ namespace WiiPlayTanksRemake.GameContent
                     if (Stationary)
                         return;
 
-                    bool isBulletNear = bulletFound = TryGetBulletNear(AiParams.projectileWarinessRadius, out var shell);
+                    bool isBulletNear = bulletFound = TryGetShellNear(AiParams.projectileWarinessRadius, out var shell);
                     bool isMineNear = mineFound = TryGetMineNear(AiParams.mineWarinessRadius, out var mine);
 
                     bool movingFromMine = AiParams.timeSinceLastMinePlaced < AiParams.moveFromMineTime;
@@ -1314,7 +1320,7 @@ namespace WiiPlayTanksRemake.GameContent
                         // TODO: -dir.ToRotation() - Pi/2 | might be more consistent?
                         // maybe also try affecting meander angle with a variable + meanderAngle
 
-                        var turnInvar = 0.15f;
+                        var turnInvar = 0.25f; // 0.15
 
                         if (velocity.X > 0 && velocity.Z > 0) // yes
                         {
@@ -1443,22 +1449,6 @@ namespace WiiPlayTanksRemake.GameContent
 
                 if (doMoveTowards)
                 {
-
-                    /*targetTankRotation %= MathHelper.TwoPi;
-
-                    TankRotation %= MathHelper.TwoPi;
-
-                    var dif = targetTankRotation - TankRotation;
-
-                    if (dif > MathHelper.Pi)
-                    {
-                        targetTankRotation -= MathHelper.TwoPi;
-                    }
-                    else if (dif < -MathHelper.Pi)
-                    {
-                        targetTankRotation += MathHelper.TwoPi;
-                    }*/
-
                     if (TankRotation > targ - MaximalTurn && TankRotation < targ + MaximalTurn)
                     {
                         // TankRotation = targ;
@@ -1501,6 +1491,10 @@ namespace WiiPlayTanksRemake.GameContent
                     effect.Projection = Projection;
 
                     effect.TextureEnabled = true;
+
+                    if (!HasTurret)
+                        if (mesh.Name == "Cannon")
+                            return;
 
                     if (mesh.Name != "Shadow")
                     {
@@ -1575,9 +1569,23 @@ namespace WiiPlayTanksRemake.GameContent
         public override string ToString()
             => $"tier: {tier} | mFreq: {AiParams.meanderFrequency}";
 
-        public bool TryGetBulletNear(float distance, out Shell bullet)
+        public bool TryGetShellNear(float distance, out Shell shell)
         {
-            bullet = null;
+            /*shell = null;
+
+            if (Shell.AllShells.Length > 0)
+            {
+                shell = Shell.AllShells.First();
+                foreach (var shel in Shell.AllShells.Where(shel => shel is not null))
+                {
+                    if (Vector3.Distance(position, shel.position) < Vector3.Distance(position, shell.position))
+                    {
+                        shell = shel;
+                        return true;
+                    }
+                }
+            }*/
+            shell = null;
 
             Shell bulletCompare = null;
 
@@ -1586,11 +1594,11 @@ namespace WiiPlayTanksRemake.GameContent
                 if (Vector3.Distance(position, blet.position) < distance)
                 {
                     if (bulletCompare == null)
-                        bullet = blet;
+                        shell = blet;
                     else
                     {
                         if (Vector3.Distance(position, blet.position).CompareTo(Vector3.Distance(position, bulletCompare.position)) < 0)
-                            bullet = bulletCompare;
+                            shell = bulletCompare;
                     }
                     // bullet = blet;
                     return true;

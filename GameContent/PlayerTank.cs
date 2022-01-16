@@ -246,13 +246,11 @@ namespace WiiPlayTanksRemake.GameContent
 
             TankRotation = GameUtils.RoughStep(TankRotation, targetTnkRotation, TurningSpeed);
 
-            treadPlaceTimer += MaxSpeed / 5;
-
             if (TankRotation > targetTnkRotation - MaximalTurn && TankRotation < targetTnkRotation + MaximalTurn)
                 rotationMet = true;
             else
             {
-
+                // treadPlaceTimer += MaxSpeed / 5;
                 if (treadPlaceTimer > MaxSpeed)
                 {
                     treadPlaceTimer = 0;
@@ -366,6 +364,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             if (Velocity2D.Length() > 0 && playerControl_isBindPressed)
             {
+                treadPlaceTimer += MaxSpeed / 5;
                 if (treadPlaceTimer > MaxSpeed)
                 {
                     treadPlaceTimer = 0;
@@ -397,7 +396,7 @@ namespace WiiPlayTanksRemake.GameContent
         /// </summary>
         public override void Shoot()
         {
-            if (!WPTR.InMission)
+            if (!WPTR.InMission || !HasTurret)
                 return;
             if (curShootCooldown > 0 || OwnedShellCount >= ShellLimit)
                 return;
@@ -447,6 +446,10 @@ namespace WiiPlayTanksRemake.GameContent
                     effect.View = View;
                     effect.Projection = Projection;
                     effect.TextureEnabled = true;
+
+                    if (!HasTurret)
+                        if (mesh.Name == "Cannon")
+                            return;
 
                     if (mesh.Name != "Shadow")
                     {
