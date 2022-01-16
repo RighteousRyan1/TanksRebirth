@@ -12,7 +12,7 @@ namespace WiiPlayTanksRemake.GameContent.GameMechanics
 
         public long totalUpdateCount;
 
-        public bool IsBehaviourModuloOf(long remainder)
+        public bool IsModOf(long remainder)
         {
             return totalUpdateCount % remainder == 0;
         }

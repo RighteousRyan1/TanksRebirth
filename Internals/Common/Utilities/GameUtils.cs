@@ -264,8 +264,8 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
             float angle;
             if (targetAngle < curAngle)
             {
-                float num = targetAngle + (float)Math.PI * 2f;
-                angle = ((num - curAngle > curAngle - targetAngle) ? MathHelper.Lerp(curAngle, targetAngle, amount) : MathHelper.Lerp(curAngle, num, amount));
+                float num = targetAngle + MathHelper.TwoPi;
+                angle = (num - curAngle > curAngle - targetAngle) ? MathHelper.Lerp(curAngle, targetAngle, amount) : MathHelper.Lerp(curAngle, num, amount);
             }
             else
             {
@@ -274,9 +274,29 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
                     return curAngle;
                 }
                 float num = targetAngle - (float)Math.PI * 2f;
-                angle = ((targetAngle - curAngle > curAngle - num) ? MathHelper.Lerp(curAngle, num, amount) : MathHelper.Lerp(curAngle, targetAngle, amount));
+                angle = (targetAngle - curAngle > curAngle - num) ? MathHelper.Lerp(curAngle, num, amount) : MathHelper.Lerp(curAngle, targetAngle, amount);
             }
             return MathHelper.WrapAngle(angle);
+        }
+
+        public static float AngleLerp_Test(this float curAngle, float targetAngle, float amount)
+        {
+            float angle = 0f;
+            if (targetAngle < curAngle)
+            {
+                float num = targetAngle + MathHelper.TwoPi;
+                angle += (num - curAngle > curAngle - targetAngle) ? targetAngle : num;
+            }
+            else
+            {
+                if (!(targetAngle > curAngle))
+                {
+                    return curAngle;
+                }
+                float num = targetAngle - MathHelper.TwoPi;
+                angle = (targetAngle - curAngle > curAngle - num) ? num : targetAngle;
+            }
+            return angle;
         }
 
         public static T Clamp<T>(T value, T min, T max) where T : IComparable<T>

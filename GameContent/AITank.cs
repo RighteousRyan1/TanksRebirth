@@ -985,7 +985,8 @@ namespace WiiPlayTanksRemake.GameContent
         }
         private void OnMissionStart()
         {
-            targetTankRotation = TankRotation;
+            AiParams.targetTurretRotation -= MathHelper.TwoPi;
+            targetTankRotation -= MathHelper.TwoPi;
             if (Invisible && !Dead)
             {
                 var invis = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_invisible");
@@ -1023,7 +1024,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             position += velocity * 0.55f;
 
-            DoAi();
+            DoAi(true, true, true);
 
             oldPosition = position;
         }
@@ -1140,12 +1141,14 @@ namespace WiiPlayTanksRemake.GameContent
         public Ray tankPathRay;
         
         public bool isCubeInWay;
-        private bool wasCubeInWay;
 
 
         private float treadPlaceTimer;
 
-        public void DoAi(bool doMoveTowards = true, bool doMovements = true, bool doAim = true)
+        private float t1;
+        private float c1;
+
+        public void DoAi(bool doMoveTowards = true, bool doMovements = true, bool doFire = true)
         {
             AiParams.timeSinceLastMinePlaced++;
 
@@ -1182,28 +1185,34 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 var enemy = WPTR.AllTanks.FirstOrDefault(tnk => tnk is not null && !tnk.Dead && (tnk.Team != Team || tnk.Team == Team.NoTeam) && tnk != this);
 
-                if (doAim)
+                #region TurretHandle
+
+                AiParams.targetTurretRotation %= MathHelper.TwoPi;
+
+                TurretRotation %= MathHelper.TwoPi;
+
+                var diff = AiParams.targetTurretRotation - TurretRotation;
+
+                if (diff > MathHelper.Pi)
                 {
-                    #region TurretHandle
-                    TurretRotation = GameUtils.RoughStep(TurretRotation, AiParams.targetTurretRotation, AiParams.turretSpeed);
-                    if (Array.IndexOf(WPTR.AllTanks, enemy) > -1 && enemy is not null)
+                    AiParams.targetTurretRotation -= MathHelper.TwoPi;
+                }
+                else if (diff < -MathHelper.Pi)
+                {
+                    AiParams.targetTurretRotation += MathHelper.TwoPi;
+                }
+                TurretRotation = GameUtils.RoughStep(TurretRotation, AiParams.targetTurretRotation, AiParams.turretSpeed);
+                // TurretRotation += GameUtils.AngleLerp(TurretRotation, AiParams.targetTurretRotation, AiParams.turretSpeed);
+                if (Array.IndexOf(WPTR.AllTanks, enemy) > -1 && enemy is not null)
+                {
+                    if (Behaviors[1].IsModOf(AiParams.turretMeanderFrequency))
                     {
-                        if (Behaviors[1].IsBehaviourModuloOf(AiParams.turretMeanderFrequency))
-                        {
-                            var dirVec = Position2D - enemy.Position2D;
-                            AiParams.targetTurretRotation = -dirVec.ToRotation() - MathHelper.PiOver2 + new Random().NextFloat(-AiParams.inaccuracy, AiParams.inaccuracy);
+                        var dirVec = Position2D - enemy.Position2D;
+                        AiParams.targetTurretRotation = -dirVec.ToRotation() - MathHelper.PiOver2 + new Random().NextFloat(-AiParams.inaccuracy, AiParams.inaccuracy);
+                    }
 
-                            //const float ThreeFourthsPi = MathHelper.Pi + MathHelper.PiOver2;
-
-                            /*if (targetTurretRotation - last_spot_angle > ThreeFourthsPi || last_spot_angle - targetTurretRotation < MathHelper.PiOver2)
-                            {
-                                // target is at pi/2 and last angle is at pi/4
-
-                                TurretRotation = targetTurretRotation;
-                            }*/
-
-                            // last_spot_angle = targetTurretRotation;
-                        }
+                    if (doFire)
+                    {
 
                         var turRotationReal = Vector2.UnitY.RotatedByRadians(-TurretRotation);
 
@@ -1225,7 +1234,7 @@ namespace WiiPlayTanksRemake.GameContent
                             {
                                 // normal is up usually
                                 var r = GeometryUtils.Reflect(tankTurretRay, tankTurretRay.Intersects(MapRenderer.BoundsRenderer.BoundaryBox).Value);
-                                tankTurretRay = r;
+                                // tankTurretRay = r;
                                 rays.Add(tankTurretRay);
                             }
                         }
@@ -1234,33 +1243,31 @@ namespace WiiPlayTanksRemake.GameContent
 
                         // check if friendly intersected is LESS than enemy intersected, if true then prevent fire
 
-                        /*float? cubeInter = 0f;
-                        float? tnkInter = 0f;
+                        float cubeInter = 0f;
+                        float tnkInter = 0f;
 
                         if (tankTurretRay.Intersects(enemy.CollisionBox).HasValue)
-                            tnkInter = tankTurretRay.Intersects(enemy.CollisionBox);
+                            tnkInter = tankTurretRay.Intersects(enemy.CollisionBox).Value;
                         foreach (var cube in Cube.cubes.Where(c => c is not null))
                         {
                             if (tankTurretRay.Intersects(cube.collider).HasValue)
                             {
-                                cubeInter = tankTurretRay.Intersects(cube.collider);
+                                cubeInter = tankTurretRay.Intersects(cube.collider).Value;
+                                // break;
                             }
                         }
 
-                        WPTR.ClientLog.Write($"tnk: {tier} | c: {cubeInter} | t: {tnkInter}", LogType.Debug);
+                        // WPTR.ClientLog.Write($"tnk: {tier} | c: {cubeInter} | t: {tnkInter}", LogType.Debug);
 
-                        if (cubeInter is not null && tnkInter is not null)
-                        {
-                            if (cubeInter < tnkInter)
-                            {
-                                AiParams.seesTarget = false;
-                            }
-                            else
-                                AiParams.seesTarget = true;
-                        }
-                        if (tnkInter is null)
-                            AiParams.seesTarget = false;*/
-                        AiParams.seesTarget = rays.Any(r => r.Intersects(enemy.CollisionBox).HasValue);
+                        if (cubeInter > tnkInter || (cubeInter == 0 && tnkInter > 0))
+                            AiParams.seesTarget = true;
+                        else if (cubeInter < tnkInter || tnkInter == 0)
+                            AiParams.seesTarget = false;
+
+                        c1 = cubeInter;
+                        t1 = tnkInter;
+
+                        //AiParams.seesTarget = rays.Any(r => r.Intersects(enemy.CollisionBox).HasValue);
 
                         if (AiParams.seesTarget)
                         {
@@ -1268,7 +1275,7 @@ namespace WiiPlayTanksRemake.GameContent
                             {
                                 Shoot();
                             }
-                        }   
+                        }
                     }
                     #endregion
                 }
@@ -1335,8 +1342,6 @@ namespace WiiPlayTanksRemake.GameContent
                         }
                     }
 
-                    wasCubeInWay = isCubeInWay;
-
                     // adjust angles
 
                     #endregion
@@ -1346,7 +1351,7 @@ namespace WiiPlayTanksRemake.GameContent
                     {
                         // if (!isCubeInWay)
                         {
-                            if (Behaviors[0].IsBehaviourModuloOf(AiParams.meanderFrequency))
+                            if (Behaviors[0].IsModOf(AiParams.meanderFrequency))
                             {
                                 var meanderRandom = new Random().NextFloat(-AiParams.meanderAngle / 2, AiParams.meanderAngle / 2);
 
@@ -1360,7 +1365,7 @@ namespace WiiPlayTanksRemake.GameContent
                                 // TankRotation = MathHelper.Lerp(TankRotation, targetTankRotation, 4.3f / 60f);
                             }
 
-                            if (Behaviors[0].IsBehaviourModuloOf(AiParams.bigMeanderFrequency))
+                            if (Behaviors[0].IsModOf(AiParams.bigMeanderFrequency))
                             {
                                 var meanderRandom = new Random().NextFloat(-MathHelper.PiOver2, MathHelper.PiOver2);
 
@@ -1377,11 +1382,10 @@ namespace WiiPlayTanksRemake.GameContent
 
                     #region ShellAvoidance
 
-                    if (Behaviors[6].IsBehaviourModuloOf(5))
+                    if (Behaviors[6].IsModOf(5))
                     {
                         if (isBulletNear)
                         {
-
                             if (shell.owner == this)
                             {
                                 if (shell.lifeTime > 30)
@@ -1405,7 +1409,7 @@ namespace WiiPlayTanksRemake.GameContent
                     #region MineHandle / MineAvoidance
                     if (MineLimit > 0)
                     {
-                        if (Behaviors[4].IsBehaviourModuloOf(60))
+                        if (Behaviors[4].IsModOf(60))
                         {
                             if (new Random().NextFloat(0, 1) <= AiParams.minePlacementChance)
                             {
@@ -1414,7 +1418,7 @@ namespace WiiPlayTanksRemake.GameContent
                             }
                         }
 
-                        if (Behaviors[5].IsBehaviourModuloOf(10))
+                        if (Behaviors[5].IsModOf(10))
                         {
                             if (isMineNear)
                             {
@@ -1439,6 +1443,22 @@ namespace WiiPlayTanksRemake.GameContent
 
                 if (doMoveTowards)
                 {
+
+                    /*targetTankRotation %= MathHelper.TwoPi;
+
+                    TankRotation %= MathHelper.TwoPi;
+
+                    var dif = targetTankRotation - TankRotation;
+
+                    if (dif > MathHelper.Pi)
+                    {
+                        targetTankRotation -= MathHelper.TwoPi;
+                    }
+                    else if (dif < -MathHelper.Pi)
+                    {
+                        targetTankRotation += MathHelper.TwoPi;
+                    }*/
+
                     if (TankRotation > targ - MaximalTurn && TankRotation < targ + MaximalTurn)
                     {
                         // TankRotation = targ;
@@ -1475,6 +1495,7 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 foreach (BasicEffect effect in mesh.Effects)
                 {
+                    // mesh.ParentBone.Index
                     effect.World = boneTransforms[mesh.ParentBone.Index];
                     effect.View = View;
                     effect.Projection = Projection;
@@ -1525,11 +1546,11 @@ namespace WiiPlayTanksRemake.GameContent
 
             var info = new string[]
             {
+                $"iTnk: {t1}",
+                $"iCube: {c1}",
                 $"Team: {Team}",
-                $"Vel: {velocity}   ",
-                $"ViewsTarget: {AiParams.seesTarget}",
                 $"Actual / Target: {TankRotation} / {dummyValue}",
-                $"Mine: {mineFound} | Bullet: {bulletFound}",
+                $"TurActual / TurTarget / TurDiff: {TurretRotation} / {AiParams.targetTurretRotation} / {AiParams.targetTurretRotation - TurretRotation}",
                 $"IsCubeInWay: {isCubeInWay}"
             };
 
