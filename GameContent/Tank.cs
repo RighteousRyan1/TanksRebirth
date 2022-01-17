@@ -133,7 +133,7 @@ namespace WiiPlayTanksRemake.GameContent
         internal static int total_treads_placed;
 
         private readonly bool alternate;
-
+        
         public long lifeTime;
 
         public TankFootprint(bool alt = false)

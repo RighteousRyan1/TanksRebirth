@@ -12,6 +12,12 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
     {
         private static Vector2 _oldMousePos;
 
+        public static void SetIf<T>(ref T value, T valSet, bool condition)
+            => value = condition ? valSet : value;
+
+        public static T SetIf<T>(T value, T valSet, bool condition)
+            => value = condition ? valSet : value;
+
         public static float NextFloat(this Random random, float min, float max)
         {
             float val = (float)(random.NextDouble() * (max - min) + min);

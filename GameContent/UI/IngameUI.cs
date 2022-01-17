@@ -485,11 +485,20 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 OptionsButton.Visible = Paused;
             }
 
-            if (MusicVolume.Value != 0f)
-                TankGame.Settings.MusicVolume = MusicVolume.Value;
+            TankGame.Settings.MusicVolume = MusicVolume.Value;
 
             TankGame.Settings.EffectsVolume = EffectsVolume.Value;
             TankGame.Settings.AmbientVolume = AmbientVolume.Value;
+
+            if (MusicVolume.Value <= 0.01f)
+                MusicVolume.Value = 0f;
+
+            if (EffectsVolume.Value <= 0.01f)
+                EffectsVolume.Value = 0f;
+
+            if (AmbientVolume.Value <= 0.01f)
+                AmbientVolume.Value = 0f;
+
             TankMusicSystem.UpdateVolume();
 
             if (_delay > 0 && !Input.MouseLeft)
