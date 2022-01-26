@@ -18,6 +18,25 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
         public static bool DebuggingEnabled { get; set; }
         public static int DebugLevel { get; set; }
 
+        /// <summary>
+        /// Remove non-valid font characters from the given text to be safe-to-draw
+        /// </summary>
+        /// <param name="font">Font to check valid characters</param>
+        /// <param name="text">Text to valid</param>
+        /// <returns>Safe-to-draw text</returns>
+        public static string GetSafeFontText(SpriteFont font, string text)
+		{
+            string safeText = "";
+
+            foreach (char letter in text)
+                if (letter == '\n' || letter == '\r' || font.Characters.Contains(letter))
+                    safeText += letter;
+                else
+                    safeText += "?";
+
+            return safeText;
+		}
+
         private static readonly string[] DebuggingNames =
         {
             "General",
@@ -33,7 +52,8 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
             if (beginSb)
                 sb.Begin();
 
-            sb.DrawString(TankGame.Fonts.Default, info.ToString(), position, Color.White, 0f, centerIt ? TankGame.Fonts.Default.MeasureString(info.ToString()) / 2 : default, scaleOverride * 0.6f, default, default); 
+            string text = GetSafeFontText(TankGame.Fonts.Default, info.ToString());
+            sb.DrawString(TankGame.Fonts.Default, text, position, Color.White, 0f, centerIt ? TankGame.Fonts.Default.MeasureString( text ) / 2 : default, scaleOverride * 0.6f, default, default); 
 
             if (beginSb)
                 sb.End();
