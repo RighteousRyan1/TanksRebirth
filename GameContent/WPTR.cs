@@ -361,6 +361,14 @@ namespace WiiPlayTanksRemake.GameContent
 
             // Lighting.Midnight.Apply(false);
 
+            var brighter = new Lighting.DayState()
+            {
+                color = Color.White,
+                brightness = 0.5f
+            };
+
+            brighter.Apply(false);
+
             /*for (int i = 0; i < 3; i++)
                 SpawnTankInCrate(TankTier.Black, Team.Red, true);
 

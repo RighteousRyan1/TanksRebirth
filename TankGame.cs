@@ -370,7 +370,12 @@ namespace WiiPlayTanksRemake
 
             // why do i need to call this????
 
-            GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateTranslation(off.X, -off.Y, 0) * Matrix.CreateRotationX(0.75f + rotVec.Y) * Matrix.CreateRotationY(rotVec.X) * Matrix.CreateScale(zoom + 0.05f);
+            IsFixedTimeStep = true;
+
+            if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Tab))
+                IsFixedTimeStep = false;
+
+            GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateTranslation(off.X, -off.Y, 0) * Matrix.CreateScale(zoom + 0.05f) * Matrix.CreateRotationX(0.75f + rotVec.Y) * Matrix.CreateRotationY(rotVec.X);
             
             FixedUpdate(gameTime);
 

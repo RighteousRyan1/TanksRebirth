@@ -139,7 +139,7 @@ namespace WiiPlayTanksRemake.GameContent
         public TankFootprint(bool alt = false)
         {
             if (total_treads_placed + 1 > MAX_FOOTPRINTS)
-                footprints[Array.IndexOf(footprints, footprints.Max())] = null; // i think?
+                footprints[Array.IndexOf(footprints, footprints.Min(x => x.lifeTime > 0))] = null; // i think?
 
             alternate = alt;
             total_treads_placed++;
