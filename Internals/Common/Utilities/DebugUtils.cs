@@ -33,8 +33,7 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
             if (beginSb)
                 sb.Begin();
 
-            SpriteFontUtils.GetSafeText(TankGame.Fonts.Default, info.ToString(), out string text);
-            sb.DrawString(TankGame.Fonts.Default, text, position, Color.White, 0f, centerIt ? TankGame.Fonts.Default.MeasureString(text) / 2 : default, scaleOverride * 0.6f, default, default); 
+            sb.DrawString(TankGame.Fonts.Default, info.ToString(), position, Color.White, 0f, centerIt ? TankGame.Fonts.Default.MeasureString(info.ToString()) / 2 : default, scaleOverride * 0.6f, default, default); 
 
             if (beginSb)
                 sb.End();
