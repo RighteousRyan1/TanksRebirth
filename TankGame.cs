@@ -175,6 +175,7 @@ namespace WiiPlayTanksRemake
         public static string SysCPU = $"CPU: {GetHardware("Win32_Processor", "Name")}";
         public static string SysKeybd = $"Keyboard: {GetHardware("Win32_Keyboard", "Name")}";
         public static string SysMouse = $"Mouse: {GetHardware("Win32_PointingDevice", "Name")}";
+        public static string SysText;
 
         private static Stopwatch RenderStopwatch { get; } = new();
         private static Stopwatch UpdateStopwatch { get; } = new();
@@ -312,6 +313,8 @@ namespace WiiPlayTanksRemake
             TankModel_Player = GameResources.GetGameResource<Model>("Assets/tank_p");
 
             Fonts.Default = GameResources.GetGameResource<SpriteFont>("Assets/DefaultFont");
+            SpriteFontUtils.GetSafeText(Fonts.Default, $"{SysGPU}\n{SysCPU}\n{SysKeybd}\n{SysMouse}", out SysText);
+            
             spriteBatch = new SpriteBatch(GraphicsDevice);
             UITextures.UIPanelBackground = GameResources.GetGameResource<Texture2D>("Assets/UIPanelBackground");
             WhitePixel = GameResources.GetGameResource<Texture2D>("Assets/MagicPixel");
@@ -438,11 +441,7 @@ namespace WiiPlayTanksRemake
 
             spriteBatch.DrawString(Fonts.Default, "Debug Level: " + DebugUtils.CurDebugLabel, new Vector2(10), Color.White, 0f, default, 0.6f, default, default);
             DebugUtils.DrawDebugString(spriteBatch, $"Memory Used: {MemoryParser.FromMegabytes(TotalMemoryUsed)} MB", new(8, GameUtils.WindowHeight * 0.18f));
-            DebugUtils.DrawDebugString(spriteBatch, $"{SysGPU}" +
-                $"\n{SysCPU}" +
-                $"\n{SysKeybd}" +
-                $"\n{SysMouse}",
-                new(8, GameUtils.WindowHeight * 0.2f));
+            DebugUtils.DrawDebugString(spriteBatch, SysText, new(8, GameUtils.WindowHeight * 0.2f));
 
             graphics.GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
