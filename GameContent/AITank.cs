@@ -573,10 +573,6 @@ namespace WiiPlayTanksRemake.GameContent
 
                     AiParams.moveFromMineTime = 100;
                     AiParams.minePlacementChance = 0.05f;
-
-                    // ShellHoming.power = 1f;
-                    // ShellHoming.radius = 300f;
-                    // ShellHoming.speed = ShellSpeed;
                     break;
                 #endregion
                 #region MasterMod

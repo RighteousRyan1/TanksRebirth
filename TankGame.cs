@@ -242,6 +242,8 @@ namespace WiiPlayTanksRemake
 
         protected override void Initialize()
         {
+            DiscordRichPresence.Load();
+
             Camera.GraphicsDevice = GraphicsDevice;
 
             GameCamera = new Camera();
@@ -300,6 +302,8 @@ namespace WiiPlayTanksRemake
                 WriteIndented = true
             };
             SettingsHandler.Serialize(opts, true);
+
+            DiscordRichPresence.Terminate();
         }
 
         protected override void LoadContent()
@@ -354,6 +358,8 @@ namespace WiiPlayTanksRemake
         protected override void Update(GameTime gameTime)
         {
             UpdateStopwatch.Start();
+
+            DiscordRichPresence.Update();
 
             LastGameTime = gameTime;
             if (Input.MouseRight)

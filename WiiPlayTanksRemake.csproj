@@ -27,11 +27,15 @@
   <ItemGroup>
     <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.0.1641" />
     <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.0.1641" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="System.Management" Version="6.0.0" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="BulletSharp">
       <HintPath>deps\BulletSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="DiscordRPC">
+      <HintPath>deps\DiscordRPC.dll</HintPath>
     </Reference>
     <Reference Include="MeltySynth">
       <HintPath>deps\MeltySynth.dll</HintPath>
