@@ -45,15 +45,21 @@ namespace WiiPlayTanksRemake
             rpcClient?.SetPresence(_rpc);
             rpcClient.Initialize();
         }
+
         public static void Update()
         {
             if (!rpcClient.IsDisposed)
             {
-                string getGoodGrammar(string word)
+                static string getGoodGrammar(string word)
                 {
                     if (word.StartsWith('a') || word.StartsWith('e') || word.StartsWith('i') || word.StartsWith('o') || word.StartsWith('u'))
+                    {
                         return "an";
-                    else return "a";
+                    }
+                    else
+                    {
+                        return "a";
+                    }
                 }
 
                 var curTank = GameContent.AITank.GetHighestTierActive();
@@ -65,10 +71,12 @@ namespace WiiPlayTanksRemake
                 rpcClient?.SetPresence(_rpc);
             }
         }
+
         public static void SetDetails(string details)
         {
             _rpc.Details = details;
         }
+
         public static void SetLargeAsset(string key, string details = null)
         {
             _rpc.Assets.LargeImageKey = key;
@@ -76,6 +84,7 @@ namespace WiiPlayTanksRemake
             if (details is not null)
                 _rpc.Assets.LargeImageText = details;
         }
+
         public static void SetSmallAsset(string key, string details = null)
         {
             _rpc.Assets.SmallImageKey = key;
@@ -83,16 +92,19 @@ namespace WiiPlayTanksRemake
             if (details is not null)
                 _rpc.Assets.SmallImageText = details;
         }
+
         public static void SetParty(Party party, int size = -1)
         {
             _rpc.Party = party;
             if (size > -1)
                 _rpc.Party.Size = size;
         }
+
         public static void SetState(string state)
         {
             _rpc.State = state;
         }
+
         /// <summary>Stop handling Discord's Rich Presence feature. Disposes of the client and updates the endtime.</summary>
         public static void Terminate()
         {

@@ -13,6 +13,7 @@ using WiiPlayTanksRemake.Internals.Common;
 using WiiPlayTanksRemake.Internals.Core.Interfaces;
 using WiiPlayTanksRemake.GameContent.GameMechanics;
 using WiiPlayTanksRemake.Internals.Common.Framework.Audio;
+using WiiPlayTanksRemake.Internals.Common.Framework.Input;
 
 namespace WiiPlayTanksRemake.GameContent
 {
@@ -39,7 +40,7 @@ namespace WiiPlayTanksRemake.GameContent
         public static Keybind controlDown = new("Down", Keys.S);
         public static Keybind controlLeft = new("Left", Keys.A);
         public static Keybind controlRight = new("Right", Keys.D);
-        public static Keybind PlaceMine = new("Place Mine", Keys.Space);
+        public static Keybind controlMine = new("Place Mine", Keys.Space);
         public static GamepadBind FireBullet = new("Fire Bullet", Buttons.RightTrigger);
 
         public Vector3 oldPosition;
@@ -234,7 +235,7 @@ namespace WiiPlayTanksRemake.GameContent
         private float treadPlaceTimer;
         private void ControlHandle_Keybinding()
         {
-            if (PlaceMine.JustPressed)
+            if (controlMine.JustPressed)
                 LayMine();
 
             IsTurning = false;
