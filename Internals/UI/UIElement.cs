@@ -165,7 +165,7 @@ namespace WiiPlayTanksRemake.Internals.UI
         public virtual void DrawSelf(SpriteBatch spriteBatch) { }
 
         /// <summary>
-        /// Draw the <see cref="UIElement"/>'s children.
+        /// Draws the <see cref="UIElement"/>'s children.
         /// </summary>
         /// <param name="spriteBatch">The <see cref="SpriteBatch"/> being used to draw this <see cref="UIElement"/>'s children with.</param>
         public virtual void DrawChildren(SpriteBatch spriteBatch)

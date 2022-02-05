@@ -5,7 +5,7 @@ using System.Linq;
 using System.Collections.Generic;
 using static Microsoft.Xna.Framework.Input.Keys;
 
-namespace WiiPlayTanksRemake.Internals.Common.GameInput
+namespace WiiPlayTanksRemake.Internals.Common.Framework.Input
 {
     public static class KeybindParser
     {

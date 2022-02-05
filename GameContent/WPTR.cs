@@ -18,6 +18,7 @@ using WiiPlayTanksRemake.Internals.Core;
 using WiiPlayTanksRemake.GameContent.UI;
 using WiiPlayTanksRemake.Graphics;
 using WiiPlayTanksRemake.Internals.Common.Framework.Audio;
+using WiiPlayTanksRemake.Internals.Common.Framework.Input;
 
 namespace WiiPlayTanksRemake.GameContent
 {
@@ -64,9 +65,6 @@ namespace WiiPlayTanksRemake.GameContent
         {
             if (InMission)
                 TankMusicSystem.Update();
-
-            foreach (var bind in Keybind.AllKeybinds)
-                bind?.Update();
 
             foreach (var tank in AllPlayerTanks)
                 tank?.Update();

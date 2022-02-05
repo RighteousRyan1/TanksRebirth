@@ -10,6 +10,7 @@ using WiiPlayTanksRemake.Internals.Common;
 using WiiPlayTanksRemake.Graphics;
 using System;
 using WiiPlayTanksRemake.Internals.UI;
+using WiiPlayTanksRemake.Internals.Common.Framework.Input;
 
 namespace WiiPlayTanksRemake.GameContent.UI
 {
@@ -32,6 +33,8 @@ namespace WiiPlayTanksRemake.GameContent.UI
         public static UIImageButton VolumeButton;
 
         public static UIImageButton GraphicsButton;
+
+        public static UIImageButton ControlsButton;
 
         public static UIImageButton BackButton;
 
@@ -59,6 +62,22 @@ namespace WiiPlayTanksRemake.GameContent.UI
         public static UIImageButton BorderlessWindowButton;
 
         public static UIImage BorderlessWindowToggle;
+
+
+
+        public static UIImageButton UpKeybindButton;
+
+        public static UIImageButton LeftKeybindButton;
+
+        public static UIImageButton RightKeybindButton;
+
+        public static UIImageButton DownKeybindButton;
+
+        public static UIImageButton MineKeybindButton;
+
+        public static UIDropdown test;
+        public static UIImageButton dropperTest;
+        public static UIImageButton dropperTest2;
 
         public static bool Paused { get; set; } = false;
 
@@ -113,6 +132,13 @@ namespace WiiPlayTanksRemake.GameContent.UI
             };
             GraphicsButton.SetDimensions(700, 350, 500, 150);
             GraphicsButton.OnLeftClick += GraphicsButton_OnMouseClick;
+
+            ControlsButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Controls", Color.WhiteSmoke))
+            {
+                Visible = false
+            };
+            ControlsButton.SetDimensions(700, 600, 500, 150);
+            ControlsButton.OnLeftClick += ControlsButton_OnLeftClick;
 
             QuitButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Quit", Color.WhiteSmoke))
             {
@@ -223,6 +249,159 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 Visible = false
             };
             AmbientText.SetDimensions(950, 675, 500, 150);
+
+            UpKeybindButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Up: " + PlayerTank.controlUp.AssignedKey.ParseKey(), Color.WhiteSmoke))
+            {
+                Visible = false
+            };
+            UpKeybindButton.SetDimensions(550, 200, 300, 150);
+            UpKeybindButton.OnLeftClick += UpKeybindButton_OnLeftClick;
+
+            LeftKeybindButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Left: " + PlayerTank.controlLeft.AssignedKey.ParseKey(), Color.WhiteSmoke))
+            {
+                Visible = false
+            };
+            LeftKeybindButton.SetDimensions(1050, 200, 300, 150);
+            LeftKeybindButton.OnLeftClick += LeftKeybindButton_OnLeftClick;
+
+            RightKeybindButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Right: " + PlayerTank.controlRight.AssignedKey.ParseKey(), Color.WhiteSmoke))
+            {
+                Visible = false
+            };
+            RightKeybindButton.SetDimensions(550, 400, 300, 150);
+            RightKeybindButton.OnLeftClick += RightKeybindButton_OnLeftClick;
+
+            DownKeybindButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Down: " + PlayerTank.controlDown.AssignedKey.ParseKey(), Color.WhiteSmoke))
+            {
+                Visible = false
+            };
+            DownKeybindButton.SetDimensions(1050, 400, 300, 150);
+            DownKeybindButton.OnLeftClick += DownKeybindButton_OnLeftClick;
+
+            MineKeybindButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Mine: " + PlayerTank.controlMine.AssignedKey.ParseKey(), Color.WhiteSmoke))
+            {
+                Visible = false
+            };
+            MineKeybindButton.SetDimensions(800, 600, 300, 150);
+            MineKeybindButton.OnLeftClick += MineKeybindButton_OnLeftClick;
+
+            test = new("Hi", TankGame.Fonts.Default, Color.AliceBlue);
+            test.SetDimensions(800, 500, 200, 100);
+
+            dropperTest = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "test", Color.WhiteSmoke));
+            test.Append(dropperTest);
+            test.Initialize();
+
+            dropperTest2 = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "test2", Color.WhiteSmoke));
+            test.Append(dropperTest2);
+            test.Initialize();
+        }
+
+        private static void MineKeybindButton_OnLeftClick(UIElement obj)
+        {
+            MineKeybindButton.Remove();
+            MineKeybindButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Press a key", Color.WhiteSmoke));
+            MineKeybindButton.SetDimensions(800, 600, 300, 150);
+            PlayerTank.controlMine.OnKeyReassigned += PlaceMine_OnKeyReassigned;
+            PlayerTank.controlMine.PendKeyReassign = true;
+        }
+
+        private static void PlaceMine_OnKeyReassigned(Keys key)
+        {
+            MineKeybindButton.Remove();
+            MineKeybindButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Mine: " + key.ParseKey(), Color.WhiteSmoke));
+            MineKeybindButton.SetDimensions(800, 600, 300, 150);
+            TankGame.Settings.MineKeybind = key;
+            MineKeybindButton.OnLeftClick += MineKeybindButton_OnLeftClick;
+            PlayerTank.controlMine.OnKeyReassigned -= PlaceMine_OnKeyReassigned;
+        }
+
+        private static void DownKeybindButton_OnLeftClick(UIElement obj)
+        {
+            DownKeybindButton.Remove();
+            DownKeybindButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Press a key", Color.WhiteSmoke));
+            DownKeybindButton.SetDimensions(1050, 400, 300, 150);
+            PlayerTank.controlDown.OnKeyReassigned += ControlDown_OnKeyReassigned;
+            PlayerTank.controlDown.PendKeyReassign = true;
+        }
+
+        private static void ControlDown_OnKeyReassigned(Keys key)
+        {
+            DownKeybindButton.Remove();
+            DownKeybindButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Down: " + key.ParseKey(), Color.WhiteSmoke));
+            DownKeybindButton.SetDimensions(1050, 400, 300, 150);
+            TankGame.Settings.DownKeybind = key;
+            DownKeybindButton.OnLeftClick += DownKeybindButton_OnLeftClick;
+            PlayerTank.controlRight.OnKeyReassigned -= ControlDown_OnKeyReassigned;
+        }
+
+        private static void RightKeybindButton_OnLeftClick(UIElement obj)
+        {
+            RightKeybindButton.Remove();
+            RightKeybindButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Press a key", Color.WhiteSmoke));
+            RightKeybindButton.SetDimensions(550, 400, 300, 150);
+            PlayerTank.controlRight.OnKeyReassigned += ControlRight_OnKeyReassigned;
+            PlayerTank.controlRight.PendKeyReassign = true;
+        }
+
+        private static void ControlRight_OnKeyReassigned(Keys key)
+        {
+            RightKeybindButton.Remove();
+            RightKeybindButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Right: " + key.ParseKey(), Color.WhiteSmoke));
+            RightKeybindButton.SetDimensions(550, 400, 300, 150);
+            TankGame.Settings.RightKeybind = key;
+            RightKeybindButton.OnLeftClick += RightKeybindButton_OnLeftClick;
+            PlayerTank.controlRight.OnKeyReassigned -= ControlRight_OnKeyReassigned;
+        }
+
+        private static void LeftKeybindButton_OnLeftClick(UIElement obj)
+        {
+            LeftKeybindButton.Remove();
+            LeftKeybindButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Press a key", Color.WhiteSmoke));
+            LeftKeybindButton.SetDimensions(1050, 200, 300, 150);
+            PlayerTank.controlLeft.OnKeyReassigned += ControlLeft_OnKeyReassigned;
+            PlayerTank.controlLeft.PendKeyReassign = true;
+        }
+
+        private static void ControlLeft_OnKeyReassigned(Keys key)
+        {
+            LeftKeybindButton.Remove();
+            LeftKeybindButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Left: " + key.ParseKey(), Color.WhiteSmoke));
+            LeftKeybindButton.SetDimensions(1050, 200, 300, 150);
+            TankGame.Settings.LeftKeybind = key;
+            LeftKeybindButton.OnLeftClick += LeftKeybindButton_OnLeftClick;
+            PlayerTank.controlLeft.OnKeyReassigned -= ControlLeft_OnKeyReassigned;
+        }
+
+        private static void UpKeybindButton_OnLeftClick(UIElement obj)
+        {
+            UpKeybindButton.Remove();
+            UpKeybindButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Press a key", Color.WhiteSmoke));
+            UpKeybindButton.SetDimensions(550, 200, 300, 150);
+            PlayerTank.controlUp.OnKeyReassigned += ControlUp_OnKeyReassigned;
+            PlayerTank.controlUp.PendKeyReassign = true;
+        }
+
+        private static void ControlUp_OnKeyReassigned(Keys key)
+        {
+            UpKeybindButton.Remove();
+            UpKeybindButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Up: " + key.ParseKey(), Color.WhiteSmoke));
+            UpKeybindButton.SetDimensions(550, 200, 300, 150);
+            TankGame.Settings.UpKeybind = key;
+            UpKeybindButton.OnLeftClick += UpKeybindButton_OnLeftClick;
+            PlayerTank.controlUp.OnKeyReassigned -= ControlUp_OnKeyReassigned;
+        }
+
+        private static void ControlsButton_OnLeftClick(UIElement obj)
+        {
+            VolumeButton.Visible = false;
+            GraphicsButton.Visible = false;
+            ControlsButton.Visible = false;
+            UpKeybindButton.Visible = true;
+            LeftKeybindButton.Visible = true;
+            RightKeybindButton.Visible = true;
+            DownKeybindButton.Visible = true;
+            MineKeybindButton.Visible = true;
         }
 
         private static void BorderlessWindowButton_OnMouseClick(UIElement affectedElement)
@@ -274,6 +453,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             VsyncButton.IgnoreMouseInteractions = true;
             VolumeButton.Visible = false;
             GraphicsButton.Visible = false;
+            ControlsButton.Visible = false;
             PerPixelLightingButton.Visible = true;
             VsyncButton.Visible = true;
             BorderlessWindowButton.Visible = true;
@@ -288,6 +468,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             MusicVolume.IgnoreMouseInteractions = true;
             VolumeButton.Visible = false;
             GraphicsButton.Visible = false;
+            ControlsButton.Visible = false;
             AmbientVolume.Visible = true;
             EffectsVolume.Visible = true;
             MusicVolume.Visible = true;
@@ -308,6 +489,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 AmbientText.Visible = false;
                 VolumeButton.Visible = true;
                 GraphicsButton.Visible = true;
+                ControlsButton.Visible = true;
             }
             else if (PerPixelLightingButton.Visible)
             {
@@ -319,6 +501,18 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 BorderlessWindowToggle.Visible = false;
                 VolumeButton.Visible = true;
                 GraphicsButton.Visible = true;
+                ControlsButton.Visible = true;
+            }
+            else if (UpKeybindButton.Visible)
+            {
+                UpKeybindButton.Visible = false;
+                LeftKeybindButton.Visible = false;
+                RightKeybindButton.Visible = false;
+                DownKeybindButton.Visible = false;
+                MineKeybindButton.Visible = false;
+                VolumeButton.Visible = true;
+                GraphicsButton.Visible = true;
+                ControlsButton.Visible = true;
             }
             else
             {
@@ -332,6 +526,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 BackButton.Visible = false;
                 VolumeButton.Visible = false;
                 GraphicsButton.Visible = false;
+                ControlsButton.Visible = false;
             }
         }
 
@@ -345,6 +540,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             OptionsButton.Visible = false;
             VolumeButton.Visible = true;
             GraphicsButton.Visible = true;
+            ControlsButton.Visible = true;
             BackButton.Visible = true;
         }
 
@@ -429,45 +625,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             if (Pause.JustPressed) {
                 if (InOptions)
                 {
-                    if (AmbientVolume.Visible)
-                    {
-                        MusicVolume.Visible = false;
-                        EffectsVolume.Visible = false;
-                        AmbientVolume.Visible = false;
-                        MusicText.Visible = false;
-                        EffectsText.Visible = false;
-                        AmbientText.Visible = false;
-                        VolumeButton.Visible = true;
-                        GraphicsButton.Visible = true;
-                    }
-                    else if (PerPixelLightingButton.Visible)
-                    {
-                        PerPixelLightingButton.Visible = false;
-                        PerPixelLightingToggle.Visible = false;
-                        VsyncButton.Visible = false;
-                        VsyncToggle.Visible = false;
-                        BorderlessWindowButton.Visible = false;
-                        BorderlessWindowToggle.Visible = false;
-                        VolumeButton.Visible = true;
-                        GraphicsButton.Visible = true;
-                    }
-                    else
-                    {
-                        InOptions = false;
-                        ResumeButton.Visible = true;
-                        RestartButton.Visible = true;
-                        QuitButton.Visible = true;
-                        OptionsButton.Visible = true;
-                        MusicVolume.Visible = false;
-                        EffectsVolume.Visible = false;
-                        AmbientVolume.Visible = false;
-                        MusicText.Visible = false;
-                        EffectsText.Visible = false;
-                        AmbientText.Visible = false;
-                        BackButton.Visible = false;
-                        VolumeButton.Visible = false;
-                        GraphicsButton.Visible = false;
-                    }
+                    BackButton_OnMouseClick(null);
                     return;
                 }
                 if (Paused)

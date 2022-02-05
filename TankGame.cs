@@ -21,6 +21,7 @@ using WiiPlayTanksRemake.GameContent.UI;
 using WiiPlayTanksRemake.Internals.Common.Framework.Audio;
 using WiiPlayTanksRemake.Graphics;
 using System.Management;
+using WiiPlayTanksRemake.Internals.Common.Framework.Input;
 
 namespace WiiPlayTanksRemake
 {
@@ -41,6 +42,20 @@ namespace WiiPlayTanksRemake
         public bool BorderlessWindow { get; set; } = true;
 
         public bool MSAA { get; set; } = false;
+
+        #endregion
+
+        #region Controls Settings
+
+        public Keys UpKeybind { get; set; } = Keys.W;
+
+        public Keys LeftKeybind { get; set; } = Keys.A;
+
+        public Keys RightKeybind { get; set; } = Keys.D;
+
+        public Keys DownKeybind { get; set; } = Keys.S;
+
+        public Keys MineKeybind { get; set; } = Keys.Space;
 
         #endregion
 
@@ -282,6 +297,11 @@ namespace WiiPlayTanksRemake
 
             graphics.SynchronizeWithVerticalRetrace = Settings.Vsync;
             Window.IsBorderless = Settings.BorderlessWindow;
+            PlayerTank.controlUp.AssignedKey = Settings.UpKeybind;
+            PlayerTank.controlDown.AssignedKey = Settings.DownKeybind;
+            PlayerTank.controlLeft.AssignedKey = Settings.LeftKeybind;
+            PlayerTank.controlRight.AssignedKey = Settings.RightKeybind;
+            PlayerTank.controlMine.AssignedKey = Settings.MineKeybind;
 
 #endregion
 
@@ -438,6 +458,10 @@ namespace WiiPlayTanksRemake
                         tnk.IsHoveredByMouse = false;
                 }
             }
+
+            foreach (var bind in Keybind.AllKeybinds)
+                bind?.Update();
+
             foreach (var music in Music.AllMusic)
                 music?.Update();
         }
