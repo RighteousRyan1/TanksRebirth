@@ -1454,7 +1454,9 @@ namespace WiiPlayTanksRemake.GameContent
 
                     #region ShellAvoidance
 
-                    if (Behaviors[6].IsModOf(5) && !isMineNear)
+                    var indif = 1;
+
+                    if (Behaviors[6].IsModOf(indif) && !isMineNear)
                     {
                         if (isBulletNear)
                         {
@@ -1566,6 +1568,7 @@ namespace WiiPlayTanksRemake.GameContent
             };
             enactBehavior?.Invoke();
         }
+
         float dummyValue;
         public List<Ray> raysMarched = new();
         private void RenderModel()

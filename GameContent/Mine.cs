@@ -101,10 +101,10 @@ namespace WiiPlayTanksRemake.GameContent
                     tank.Destroy();
             }
 
-            foreach (var mine in AllMines.Where(mine => mine is not null && Vector3.Distance(mine.position, position) < explosionRadius && !mine.Detonated))
-            {
-                mine.Detonate();
-            }
+            //foreach (var mine in AllMines.Where(mine => mine is not null && Vector3.Distance(mine.position, position) < explosionRadius && !mine.Detonated))
+            //{
+                //mine.Detonate();
+            //}
 
             var expl = new MineExplosion(position, explosionRadius * 0.101f, 0.5f);
 
@@ -259,6 +259,11 @@ namespace WiiPlayTanksRemake.GameContent
             }
             else if (tickAtMax <= 0) 
                 scale -= shrinkRate;
+
+            foreach (var mine in Mine.AllMines.Where(m => m is not null && Vector3.Distance(m.position, position) <= scale * 9))
+            {
+                mine.Detonate();
+            }
 
             if (hitMaxAlready)
                 tickAtMax--;

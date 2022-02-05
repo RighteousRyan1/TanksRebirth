@@ -8,6 +8,7 @@ using Microsoft.Xna.Framework;
 using WiiPlayTanksRemake.Internals.Common.Utilities;
 using System.IO;
 using WiiPlayTanksRemake.Internals.Common.Framework.Audio;
+using MeltySynth;
 
 namespace WiiPlayTanksRemake.GameContent.Systems
 {
@@ -223,6 +224,9 @@ namespace WiiPlayTanksRemake.GameContent.Systems
 
         public static Music[] songs;
 
+        public static MidiPlayer MusicMidi;
+        public static MidiFile MusicSoundFont;
+
         public static void LoadMusic()
         {
             #region Load
@@ -293,6 +297,28 @@ namespace WiiPlayTanksRemake.GameContent.Systems
 
             #endregion
 
+            /*var settings = new SynthesizerSettings(40000)
+            {
+                EnableReverbAndChorus = false,
+            };
+
+            var synthesizer = new Synthesizer(@"C:\Users\ryanr\Desktop\Git Repositories\WiiPlayTanksRemake\Content\Assets\music\Wii_tanks_bgm.sf2", settings);
+
+            MusicSoundFont = new MidiFile(@"C:\Users\ryanr\Desktop\Git Repositories\WiiPlayTanksRemake\Content\Assets\music\Wii_tanks_bgm.mid", 900);
+            var seq = new MidiFileSequencer(synthesizer);
+
+            var left = new float[3 * settings.SampleRate];
+            var right = new float[3 * settings.SampleRate];
+
+            synthesizer.Render(left, right);
+
+            // seq.Play(midi, true);*/
+
+            // hardcoded btw
+            MusicMidi = new MidiPlayer(@"C:\Users\ryanr\Desktop\Git Repositories\WiiPlayTanksRemake\Content\Assets\music\Wii_tanks_bgm.sf2", new(44100) { EnableReverbAndChorus = false });
+            MusicSoundFont = new MidiFile(@"C:\Users\ryanr\Desktop\Git Repositories\WiiPlayTanksRemake\Content\Assets\music\Wii_tanks_bgm_mm.mid", 3200);
+
+
             songs = new Music[]
             {
                 brown,
@@ -346,6 +372,9 @@ namespace WiiPlayTanksRemake.GameContent.Systems
                 gold1, gold2, gold3,
                 obsidian
             };
+
+            //if (MusicMidi.State == Microsoft.Xna.Framework.Audio.SoundState.Stopped)
+                //MusicMidi.Play(MusicSoundFont, true);
 
 
             foreach (var song in songs)

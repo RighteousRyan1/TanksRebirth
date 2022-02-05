@@ -390,7 +390,7 @@ namespace WiiPlayTanksRemake.GameContent
         {
             myTank = new PlayerTank(PlayerType.Blue)
             {
-                Team = Team.NoTeam,
+                Team = Team.Red,
                 position = new CubeMapPosition(new Random().Next(0, 27), new Random().Next(0, 21)),
                 Dead = false
             };
