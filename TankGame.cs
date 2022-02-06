@@ -22,116 +22,14 @@ using WiiPlayTanksRemake.Internals.Common.Framework.Audio;
 using WiiPlayTanksRemake.Graphics;
 using System.Management;
 using WiiPlayTanksRemake.Internals.Common.Framework.Input;
+using WiiPlayTanksRemake.Internals.Core;
 
 namespace WiiPlayTanksRemake
 {
     // TODO: Implement block once all of above things are done
     // TODO: AI in the middle to far future
-    // TODO: to some finishing touches to TankMusicSystem
+    // TODO: add some finishing touches to TankMusicSystem
 
-    public class GameConfig
-    {
-        public float MusicVolume { get; set; } = 0.5f;
-        public float EffectsVolume { get; set; } = 1f;
-        public float AmbientVolume { get; set; } = 1f;
-
-        #region Graphics Settings
-        public int TankFootprintLimit { get; set; } = 100000;
-        public bool PerPixelLighting { get; set; } = true;
-        public bool Vsync { get; set; } = true;
-        public bool BorderlessWindow { get; set; } = true;
-
-        public bool MSAA { get; set; } = false;
-
-        #endregion
-
-        #region Controls Settings
-
-        public Keys UpKeybind { get; set; } = Keys.W;
-
-        public Keys LeftKeybind { get; set; } = Keys.A;
-
-        public Keys RightKeybind { get; set; } = Keys.D;
-
-        public Keys DownKeybind { get; set; } = Keys.S;
-
-        public Keys MineKeybind { get; set; } = Keys.Space;
-
-        #endregion
-
-        #region Extra Settings
-
-        /// <summary>Used to be casted to a MapTheme to change the... map's theme.</summary>
-        public static int GameTheme { get; set; } = (int)MapTheme.Default;
-
-        #endregion
-    }
-
-    public class Camera
-    {
-        private Matrix _viewMatrix;
-        private Matrix _projectionMatrix;
-
-        private Vector3 _position;
-
-        private bool IsOmnicient { get; set; }
-
-        public float _fov = MathHelper.ToRadians(90);
-
-        public static GraphicsDevice GraphicsDevice { get; set; }
-
-        public Camera() 
-        {
-            if (GraphicsDevice is null)
-                throw new Exception("Please assign a proper graphics device for the camera to use.");
-
-            _viewMatrix = Matrix.CreatePerspectiveFieldOfView(_fov, GraphicsDevice.Viewport.AspectRatio, 1f, 3000f);
-            _projectionMatrix = Matrix.CreateOrthographic(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, -2000f, 5000f);
-        }
-
-        public Matrix GetView() => _viewMatrix;
-        public Matrix GetProjection() => _projectionMatrix;
-
-        public Camera SetToYawPitchRoll(float yaw, float pitch, float roll)
-        {
-            _viewMatrix *= Matrix.CreateFromYawPitchRoll(yaw, pitch, roll);
-            return this;
-        }
-
-        public Camera SetOmni(bool omni)
-        {
-            IsOmnicient = omni;
-
-            return this;
-        }
-
-        public Vector3 GetPosition() => _position;
-
-        public Camera SetPosition(Vector3 pos)
-        {
-            _position = pos;
-            return this;
-        }
-
-        public Camera SetFov(float degrees)
-        {
-            _fov = MathHelper.ToRadians(degrees);
-            _viewMatrix = Matrix.CreatePerspectiveFieldOfView(_fov, GraphicsDevice.Viewport.AspectRatio, 0.01f, 3000f);
-            return this;
-        }
-
-        public Camera Crunch()
-        {
-
-            return this;
-        }
-
-        public Camera Stretch()
-        {
-
-            return this;
-        }
-    }
     public class TankGame : Game
     {
         private static string GetGPU()
@@ -244,7 +142,6 @@ namespace WiiPlayTanksRemake
             // IsFixedTimeStep = false;
             graphics = new(this);
 
-            Internals.Core.ResolutionHandler.Initialize(graphics);
             Content.RootDirectory = "Content";
             Instance = this;
             Window.Title = "Tanks! Remake";
@@ -259,25 +156,12 @@ namespace WiiPlayTanksRemake
         {
             DiscordRichPresence.Load();
 
-            Camera.GraphicsDevice = GraphicsDevice;
-
-            GameCamera = new Camera();
-
-            GameCamera.SetToYawPitchRoll(0.75f, 0, 0);
-
-            GameCamera.SetFov(90);
-
-            GameCamera.SetPosition(GameCamera.GetPosition() + new Vector3(0, 100, 0));
-
             //GameView = GameCamera.GetView();
             //GameProjection = GameCamera.GetProjection();
 
             // i hate myself impostor syndrom
 
             systems = ReflectionUtils.GetInheritedTypesOf<IGameSystem>(Assembly.GetExecutingAssembly());
-
-            graphics.PreferredBackBufferWidth = 1920;
-            graphics.PreferredBackBufferHeight = 1080;
 
             if (!File.Exists(SaveDirectory + Path.DirectorySeparatorChar + "settings.json")) {
                 Settings = new();
@@ -292,8 +176,7 @@ namespace WiiPlayTanksRemake
                 SettingsHandler = new(Settings, SaveDirectory + Path.DirectorySeparatorChar + "settings.json");
                 Settings = SettingsHandler.DeserializeAndSet<GameConfig>();
             }
-
-#region Config Initialization
+            #region Config Initialization
 
             graphics.SynchronizeWithVerticalRetrace = Settings.Vsync;
             Window.IsBorderless = Settings.BorderlessWindow;
@@ -303,19 +186,36 @@ namespace WiiPlayTanksRemake
             PlayerTank.controlRight.AssignedKey = Settings.RightKeybind;
             PlayerTank.controlMine.AssignedKey = Settings.MineKeybind;
 
-#endregion
+            graphics.PreferredBackBufferWidth = Settings.ResWidth;
+            graphics.PreferredBackBufferHeight = Settings.ResHeight;
+
+            #endregion
+
+            ResolutionHandler.Initialize(graphics);
+
+            Camera.GraphicsDevice = GraphicsDevice;
+
+            GameCamera = new Camera();
+
+            GameCamera.SetToYawPitchRoll(0.75f, 0, 0);
+
+            GameCamera.SetFov(90);
+
+            GameCamera.SetPosition(GameCamera.GetPosition() + new Vector3(0, 100, 0));
 
             GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(0.75f) * Matrix.CreateTranslation(0f, 0f, 1000f);
             GameProjection = Matrix.CreateOrthographic(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, -2000f, 5000f);
 
             graphics.ApplyChanges();
-
             base.Initialize();
         }
 
+        public static void Quit()
+            => Instance.Exit();
+
         protected override void OnExiting(object sender, EventArgs args)
         {
-            WPTR.ClientLog.Dispose();
+            GameHandler.ClientLog.Dispose();
             SettingsHandler = new(Settings, SaveDirectory + Path.DirectorySeparatorChar + "settings.json");
             JsonSerializerOptions opts = new()
             {
@@ -343,8 +243,7 @@ namespace WiiPlayTanksRemake
             UITextures.UIPanelBackground = GameResources.GetGameResource<Texture2D>("Assets/UIPanelBackground");
             WhitePixel = GameResources.GetGameResource<Texture2D>("Assets/MagicPixel");
 
-            graphics.SynchronizeWithVerticalRetrace = true;
-            WPTR.Initialize();
+            GameHandler.Initialize();
 
             foreach (ModelMesh mesh in TankModel_Player.Meshes)
             {
@@ -366,7 +265,7 @@ namespace WiiPlayTanksRemake
 
             s.Stop();
 
-            WPTR.ClientLog.Write($"Content loaded in {time}.", LogType.Debug);
+            GameHandler.ClientLog.Write($"Content loaded in {time}.", LogType.Debug);
         }
 
         Vector2 rotVec;
@@ -382,29 +281,33 @@ namespace WiiPlayTanksRemake
             DiscordRichPresence.Update();
 
             LastGameTime = gameTime;
-            if (Input.MouseRight)
-                rotVec += GameUtils.GetMouseVelocity(GameUtils.WindowCenter) / 500;
 
-            if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Up))
-                zoom += 0.01f;
-            if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Down))
-                zoom -= 0.01f;
-
-            if (Input.MouseMiddle)
+            if (!IngameUI.Paused)
             {
-                off += GameUtils.GetMouseVelocity(GameUtils.WindowCenter);
+                if (Input.MouseRight)
+                    rotVec += GameUtils.GetMouseVelocity(GameUtils.WindowCenter) / 500;
+
+                if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Up))
+                    zoom += 0.01f;
+                if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Down))
+                    zoom -= 0.01f;
+
+                if (Input.MouseMiddle)
+                {
+                    off += GameUtils.GetMouseVelocity(GameUtils.WindowCenter);
+                }
+
+                GameUtils.GetMouseVelocity(GameUtils.WindowCenter);
+
+                // why do i need to call this????
+
+                IsFixedTimeStep = true;
+
+                if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Tab))
+                    IsFixedTimeStep = false;
+
+                GameView = Matrix.CreateScale(zoom) * Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(0.75f + rotVec.Y) * Matrix.CreateRotationY(rotVec.X) * Matrix.CreateTranslation(off.X, -off.Y, 0);
             }
-
-            GameUtils.GetMouseVelocity(GameUtils.WindowCenter);
-
-            // why do i need to call this????
-
-            IsFixedTimeStep = true;
-
-            if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Tab))
-                IsFixedTimeStep = false;
-
-            GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(0.75f + rotVec.Y) * Matrix.CreateRotationY(rotVec.X) * Matrix.CreateTranslation(off.X, -off.Y, 0);
             
             FixedUpdate(gameTime);
 
@@ -437,10 +340,10 @@ namespace WiiPlayTanksRemake
 
                 UpdateGameSystems();
 
-                WPTR.Update();
+                GameHandler.Update();
 
 
-                foreach (var tnk in WPTR.AllTanks.Where(tnk => tnk is not null && !tnk.Dead))
+                foreach (var tnk in GameHandler.AllTanks.Where(tnk => tnk is not null && !tnk.Dead))
                 {
                     if (GameUtils.GetMouseToWorldRay().Intersects(tnk.CollisionBox).HasValue)
                     {
@@ -448,7 +351,7 @@ namespace WiiPlayTanksRemake
                         {
                             // var tnk = WPTR.AllAITanks.FirstOrDefault(tank => tank is not null && !tank.Dead && tank.tier == AITank.GetHighestTierActive());
 
-                            if (Array.IndexOf(WPTR.AllAITanks, tnk) > -1)
+                            if (Array.IndexOf(GameHandler.AllAITanks, tnk) > -1)
                                 tnk?.Destroy();
                         }
 
@@ -480,7 +383,7 @@ namespace WiiPlayTanksRemake
 
             graphics.GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
-            WPTR.DoRender();
+            GameHandler.DoRender();
 
             spriteBatch.End();
 
@@ -496,25 +399,6 @@ namespace WiiPlayTanksRemake
 
             RenderStopwatch.Stop();
             RenderFPS = Math.Round(1f / gameTime.ElapsedGameTime.TotalSeconds);
-        }
-    }
-
-    public static class GameLauncher
-    {
-        public static bool AutoLaunch = true;
-
-        public static bool IsRunning { get; private set; }
-        public static void LaunchGame()
-        {
-            using var game = new TankGame();
-            game.Run();
-            IsRunning = true;
-        }
-        [STAThread]
-        static void Main()
-        {
-            if (AutoLaunch)
-                LaunchGame();
         }
     }
 }

@@ -11,6 +11,8 @@ using WiiPlayTanksRemake.Graphics;
 using System;
 using WiiPlayTanksRemake.Internals.UI;
 using WiiPlayTanksRemake.Internals.Common.Framework.Input;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace WiiPlayTanksRemake.GameContent.UI
 {
@@ -64,6 +66,8 @@ namespace WiiPlayTanksRemake.GameContent.UI
         public static UIImage BorderlessWindowToggle;
 
 
+        public static UIImageButton ResolutionButton;
+
 
         public static UIImageButton UpKeybindButton;
 
@@ -75,22 +79,25 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
         public static UIImageButton MineKeybindButton;
 
-        public static UIDropdown test;
-        public static UIImageButton dropperTest;
-        public static UIImageButton dropperTest2;
+        public static UIElement[] menuElements;
+        public static UIElement[] graphicsElements;
+
+        // public static UIDropdown test;
+        // public static UIImageButton dropperTest;
+        // public static UIImageButton dropperTest2;
 
         public static bool Paused { get; set; } = false;
 
-        public const int SETTINGS_BUTTONS_CT = 10;
-
-        public static UIImageButton[] SettingsButtons = new UIImageButton[SETTINGS_BUTTONS_CT];
-
         private static int _delay;
+
+        private static float _gpuSettingsOffset = 0f;
 
         // TODO: make rect scissor work -> get powerups to be pickupable
 
         internal static void Initialize()
         {
+            #region oh god please help me
+
             var ttColor = Color.LightGray;
 
             SpriteFont font = TankGame.Fonts.Default;
@@ -146,13 +153,6 @@ namespace WiiPlayTanksRemake.GameContent.UI
             };
             QuitButton.SetDimensions(700, 850, 500, 150);
             QuitButton.OnLeftClick += QuitButton_OnMouseClick;
-
-            BackButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Back", Color.WhiteSmoke))
-            {
-                Visible = false
-            };
-            BackButton.SetDimensions(700, 850, 500, 150);
-            BackButton.OnLeftClick += BackButton_OnMouseClick;
 
             PerPixelLightingToggle = new(null, 1, (uiImage, spriteBatch) => QuickIndicator(uiImage, spriteBatch, TankGame.Settings.PerPixelLighting ? Color.Green : Color.Red))
             {
@@ -285,17 +285,75 @@ namespace WiiPlayTanksRemake.GameContent.UI
             MineKeybindButton.SetDimensions(800, 600, 300, 150);
             MineKeybindButton.OnLeftClick += MineKeybindButton_OnLeftClick;
 
-            test = new("Hi", TankGame.Fonts.Default, Color.AliceBlue);
-            test.SetDimensions(800, 500, 200, 100);
+            #endregion
 
-            dropperTest = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "test", Color.WhiteSmoke));
-            test.Append(dropperTest);
-            test.Initialize();
+            ResolutionButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, $"Resolution: {curPair.Key}x{curPair.Value}", Color.WhiteSmoke))
+            {
+                Visible = false
+            };
+            ResolutionButton.SetDimensions(700, 850, 500, 150);
+            ResolutionButton.OnLeftClick += ResolutionButton_OnLeftClick;
+            ResolutionButton.OnRightClick += ResolutionButton_OnRightClick;
 
-            dropperTest2 = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "test2", Color.WhiteSmoke));
-            test.Append(dropperTest2);
-            test.Initialize();
+            BackButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Back", Color.WhiteSmoke))
+            {
+                Visible = false
+            };
+            BackButton.SetDimensions(700, 850, 500, 150);
+            BackButton.OnLeftClick += BackButton_OnMouseClick;
+
+            //test = new("Hi", TankGame.Fonts.Default, Color.AliceBlue);
+            //test.SetDimensions(800, 500, 200, 100);
+
+            //dropperTest = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "test", Color.WhiteSmoke));
+            //test.Append(dropperTest);
+            //test.Initialize();
+
+            //dropperTest2 = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "test2", Color.WhiteSmoke));
+            //test.Append(dropperTest2);
+            //test.Initialize();
+
+            PostInitialize();
         }
+
+        private static void PostInitialize()
+        {
+            menuElements = new UIElement[]
+            {
+                ResumeButton,
+                RestartButton,
+                QuitButton,
+                OptionsButton,
+                VolumeButton,
+                GraphicsButton,
+                ControlsButton,
+                BackButton,
+                VsyncButton,
+                PerPixelLightingButton,
+                BorderlessWindowButton,
+                ResolutionButton,
+                MusicVolume,
+                EffectsVolume,
+                AmbientVolume
+            };
+            graphicsElements = new UIElement[]
+            {
+                VsyncButton,
+                VsyncToggle,
+                PerPixelLightingButton,
+                PerPixelLightingToggle,
+                BorderlessWindowButton,
+                BorderlessWindowToggle,
+                ResolutionButton
+            };
+            foreach (var button in graphicsElements)
+            {
+                button.HasScissor = true;
+                button.Scissor = new(0, (int)(GameUtils.WindowHeight * 0.05f), GameUtils.WindowWidth, (int)(GameUtils.WindowHeight * 0.7f));
+            }
+        }
+
+        #region Clicks
 
         private static void MineKeybindButton_OnLeftClick(UIElement obj)
         {
@@ -460,6 +518,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             PerPixelLightingToggle.Visible = true;
             VsyncToggle.Visible = true;
             BorderlessWindowToggle.Visible = true;
+            ResolutionButton.Visible = true;
         }
 
         private static void VolumeButton_OnMouseClick(UIElement affectedElement)
@@ -502,6 +561,15 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 VolumeButton.Visible = true;
                 GraphicsButton.Visible = true;
                 ControlsButton.Visible = true;
+                ResolutionButton.Visible = false;
+
+                TankGame.Settings.ResWidth = curPair.Key;
+                TankGame.Settings.ResHeight = curPair.Value;
+
+                TankGame.Instance.graphics.PreferredBackBufferWidth = TankGame.Settings.ResWidth;
+                TankGame.Instance.graphics.PreferredBackBufferHeight = TankGame.Settings.ResHeight;
+
+                TankGame.Instance.graphics.ApplyChanges();
             }
             else if (UpKeybindButton.Visible)
             {
@@ -545,13 +613,71 @@ namespace WiiPlayTanksRemake.GameContent.UI
         }
 
         private static void QuitButton_OnMouseClick(UIElement affectedElement)
-        {
-            TankGame.Instance.Exit();
-        }
+            => TankGame.Quit();
 
         private static void ResumeButton_OnMouseClick(UIElement affectedElement) {
             Paused = false;
         }
+
+        private static void ResolutionButton_OnLeftClick(UIElement obj)
+        {
+            var tryFind = commonResolutions.FirstOrDefault(x => x.Key == curPair.Key);
+
+            if (Array.IndexOf(commonResolutions, tryFind) > -1)
+            {
+                _idxPair = Array.IndexOf(commonResolutions, tryFind);
+            }
+
+            _idxPair++;
+
+            if (_idxPair >= commonResolutions.Length)
+                _idxPair = 0;
+
+            curPair = commonResolutions[_idxPair];
+
+            var pos = ResolutionButton.Position;
+
+            //ResolutionButton.Remove();
+            ResolutionButton.UniqueDraw = (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, $"Resolution: {curPair.Key}x{curPair.Value}", Color.WhiteSmoke);
+        }
+
+        private static void ResolutionButton_OnRightClick(UIElement obj)
+        {
+            var tryFind = commonResolutions.FirstOrDefault(x => x.Key == curPair.Key);
+
+            if (Array.IndexOf(commonResolutions, tryFind) > -1)
+            {
+                _idxPair = Array.IndexOf(commonResolutions, tryFind);
+            }
+
+            _idxPair--;
+
+            if (_idxPair < 0)
+                _idxPair = commonResolutions.Length - 1;
+
+            curPair = commonResolutions[_idxPair];
+
+            var pos = ResolutionButton.Position;
+
+            //ResolutionButton.Remove();
+            ResolutionButton.UniqueDraw = (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, $"Resolution: {curPair.Key}x{curPair.Value}", Color.WhiteSmoke);
+        }
+
+        private static int _idxPair = 0;
+        private static KeyValuePair<int, int> curPair = new(TankGame.Settings.ResWidth, TankGame.Settings.ResHeight);
+
+        private static KeyValuePair<int, int>[] commonResolutions = new KeyValuePair<int, int>[]
+        {
+            new(640, 480),
+            new(1280, 720),
+            new(1920, 1080),
+            new(2560, 1440),
+            new(2048, 1080),
+            new(3840, 2160),
+            new(7680, 4320)
+        };
+
+        #endregion
 
         public static void QuickButton(UIImage imageButton, SpriteBatch spriteBatch, string text, Color color, float scale = 1f, bool onLeft = false)
         {
@@ -616,8 +742,17 @@ namespace WiiPlayTanksRemake.GameContent.UI
             }
         }
 
+        private static int _newScroll;
+        private static int _oldScroll;
+
         public static void UpdateButtons()
         {
+            _newScroll = Input.CurrentMouseSnapshot.ScrollWheelValue;
+
+            if (_newScroll != _oldScroll)
+                foreach (var b in graphicsElements)
+                    b.Position = new(b.Position.X, b.Position.Y + (_newScroll - _oldScroll));
+
             var text = $"Mission 1        x{AITank.CountAll()}";
             Vector2 drawOrigin = TankGame.Fonts.Default.MeasureString(text) / 2f;
             MissionInfoBar.UniqueDraw =
@@ -669,41 +804,10 @@ namespace WiiPlayTanksRemake.GameContent.UI
             MusicVolume.Tooltip = $"{Math.Round(TankGame.Settings.MusicVolume * 100, 1)}%";
             EffectsVolume.Tooltip = $"{Math.Round(TankGame.Settings.EffectsVolume * 100, 1)}%";
             AmbientVolume.Tooltip = $"{Math.Round(TankGame.Settings.AmbientVolume * 100, 1)}%";
-        }
 
-        public class Options
-        {
-            public SettingsButton<float> MasterVolButton;
-        }
+            _oldScroll = _newScroll;
 
-        public class SettingsButton<TSource>
-        {
-            public UIImageButton button;
 
-            public string name;
-
-            private static int num_sets_btns;
-
-            public SettingsButton(bool setDefaultDimensions = true)
-            {
-                if (setDefaultDimensions)
-                    SetDefDims();
-                num_sets_btns++;
-            }
-
-            public void ApplyChanges(ref TSource value)
-            {
-
-            }
-
-            public void SetDefDims()
-            {
-                button = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, name, Color.WhiteSmoke));
-                button.SetDimensions(new Rectangle(100, 100 * num_sets_btns, GameUtils.WindowWidth - 200, 50));
-
-                button.HasScissor = true;
-                button.Scissor = GeometryUtils.CreateRectangleFromCenter(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2, GameUtils.WindowWidth / 4, (int)(GameUtils.WindowHeight * 0.4f));
-            }
         }
     }
 }

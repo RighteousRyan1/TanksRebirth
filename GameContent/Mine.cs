@@ -95,7 +95,7 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 shell.Destroy();
             }
-            foreach (var tank in WPTR.AllTanks.Where(tank => tank is not null && Vector3.Distance(tank.position, position) < explosionRadius))
+            foreach (var tank in GameHandler.AllTanks.Where(tank => tank is not null && Vector3.Distance(tank.position, position) < explosionRadius))
             {
                 if (!tank.Dead)
                     tank.Destroy();
@@ -145,7 +145,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             if (detonationTime > 40 && !tankCameTooClose && detonationTime < detonationTimeMax / 2)
             {
-                foreach (var tank in WPTR.AllTanks.Where(tank => tank is not null && Vector3.Distance(tank.position, position) < explosionRadius))
+                foreach (var tank in GameHandler.AllTanks.Where(tank => tank is not null && Vector3.Distance(tank.position, position) < explosionRadius))
                 {
                     tankCameTooClose = true;
                     detonationTime = 40;

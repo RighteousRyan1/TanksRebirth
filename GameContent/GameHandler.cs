@@ -22,24 +22,8 @@ using WiiPlayTanksRemake.Internals.Common.Framework.Input;
 
 namespace WiiPlayTanksRemake.GameContent
 {
-    public class WPTR
+    public class GameHandler
     {
-
-        /*public struct FirstPersonInfo {
-            public Tank Host { get; set; }
-
-            public float watchDistance;
-
-            public Attaching CameraAttach { get; set; }
-
-            public float FOV { get; set; }
-
-            public enum Attaching
-            {
-                Soft,
-                Hard
-            }
-        }*/
 
         public static int timeUntilTankFunction;
 

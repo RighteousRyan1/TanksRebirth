@@ -120,7 +120,7 @@ namespace WiiPlayTanksRemake.GameContent
         {
             var highest = TankTier.None;
 
-            foreach (var tank in WPTR.AllAITanks.Where(tnk => tnk is not null && !tnk.Dead))
+            foreach (var tank in GameHandler.AllAITanks.Where(tnk => tnk is not null && !tnk.Dead))
             {
                 if (tank.tier > highest)
                     highest = tank.tier;
@@ -129,10 +129,10 @@ namespace WiiPlayTanksRemake.GameContent
         }
 
         public static int CountAll()
-            => WPTR.AllAITanks.Count(tnk => tnk is not null && !tnk.Dead);
+            => GameHandler.AllAITanks.Count(tnk => tnk is not null && !tnk.Dead);
 
         public static int GetTankCountOfType(TankTier tier)
-            => WPTR.AllAITanks.Count(tnk => tnk is not null && tnk.tier == tier && !tnk.Dead);
+            => GameHandler.AllAITanks.Count(tnk => tnk is not null && tnk.tier == tier && !tnk.Dead);
 
         /// <summary>
         /// Creates a new <see cref="AITank"/>.
@@ -178,19 +178,19 @@ namespace WiiPlayTanksRemake.GameContent
 
             Team = Team.Blue;
 
-            int index = Array.IndexOf(WPTR.AllAITanks, WPTR.AllAITanks.First(tank => tank is null));
+            int index = Array.IndexOf(GameHandler.AllAITanks, GameHandler.AllAITanks.First(tank => tank is null));
 
             AITankId = index;
 
-            WPTR.AllAITanks[index] = this;
+            GameHandler.AllAITanks[index] = this;
 
-            int index2 = Array.IndexOf(WPTR.AllTanks, WPTR.AllTanks.First(tank => tank is null));
+            int index2 = Array.IndexOf(GameHandler.AllTanks, GameHandler.AllTanks.First(tank => tank is null));
 
             WorldId = index2;
 
-            WPTR.AllTanks[index2] = this;
+            GameHandler.AllTanks[index2] = this;
 
-            WPTR.OnMissionStart += OnMissionStart;
+            GameHandler.OnMissionStart += OnMissionStart;
         }
 
         /// <summary>
@@ -234,19 +234,19 @@ namespace WiiPlayTanksRemake.GameContent
 
             Team = Team.Blue;
 
-            int index = Array.IndexOf(WPTR.AllAITanks, WPTR.AllAITanks.First(tank => tank is null));
+            int index = Array.IndexOf(GameHandler.AllAITanks, GameHandler.AllAITanks.First(tank => tank is null));
 
             AITankId = index;
 
-            WPTR.AllAITanks[index] = this;
+            GameHandler.AllAITanks[index] = this;
 
-            int index2 = Array.IndexOf(WPTR.AllTanks, WPTR.AllTanks.First(tank => tank is null));
+            int index2 = Array.IndexOf(GameHandler.AllTanks, GameHandler.AllTanks.First(tank => tank is null));
 
             WorldId = index2;
 
-            WPTR.AllTanks[index2] = this;
+            GameHandler.AllTanks[index2] = this;
 
-            WPTR.OnMissionStart += OnMissionStart;
+            GameHandler.OnMissionStart += OnMissionStart;
         }
 
         /// <summary>
@@ -1142,8 +1142,8 @@ namespace WiiPlayTanksRemake.GameContent
                 location = position + new Vector3(0, 0.1f, 0)
             };
 
-            WPTR.AllAITanks[AITankId] = null;
-            WPTR.AllTanks[WorldId] = null;
+            GameHandler.AllAITanks[AITankId] = null;
+            GameHandler.AllTanks[WorldId] = null;
             // TODO: play fanfare thingy i think
         }
 
@@ -1152,7 +1152,7 @@ namespace WiiPlayTanksRemake.GameContent
         /// </summary>
         public override void Shoot()
         {
-            if (!WPTR.InMission || !HasTurret)
+            if (!GameHandler.InMission || !HasTurret)
                 return;
 
             if (curShootCooldown > 0 || OwnedShellCount >= ShellLimit)
@@ -1222,7 +1222,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
 
-            if (!WPTR.InMission)
+            if (!GameHandler.InMission)
                 return;
 
             foreach (var behavior in Behaviors)
@@ -1247,9 +1247,9 @@ namespace WiiPlayTanksRemake.GameContent
             }
             enactBehavior = () =>
             {
-                var enemy = WPTR.AllTanks.FirstOrDefault(tnk => tnk is not null && !tnk.Dead && (tnk.Team != Team || tnk.Team == Team.NoTeam) && tnk != this);
+                var enemy = GameHandler.AllTanks.FirstOrDefault(tnk => tnk is not null && !tnk.Dead && (tnk.Team != Team || tnk.Team == Team.NoTeam) && tnk != this);
 
-                foreach (var tank in WPTR.AllTanks.Where(tnk => tnk is not null && !tnk.Dead && (tnk.Team != Team || tnk.Team == Team.NoTeam) && tnk != this))
+                foreach (var tank in GameHandler.AllTanks.Where(tnk => tnk is not null && !tnk.Dead && (tnk.Team != Team || tnk.Team == Team.NoTeam) && tnk != this))
                 {
                     if (Vector3.Distance(tank.position, position) < Vector3.Distance(enemy.position, position))
                         enemy = tank;
@@ -1269,7 +1269,7 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.targetTurretRotation += MathHelper.TwoPi;
                 TurretRotation = GameUtils.RoughStep(TurretRotation, AiParams.targetTurretRotation, AiParams.turretSpeed);
                 // TurretRotation += GameUtils.AngleLerp(TurretRotation, AiParams.targetTurretRotation, AiParams.turretSpeed);
-                if (Array.IndexOf(WPTR.AllTanks, enemy) > -1 && enemy is not null)
+                if (Array.IndexOf(GameHandler.AllTanks, enemy) > -1 && enemy is not null)
                 {
                     if (Behaviors[1].IsModOf(AiParams.turretMeanderFrequency))
                     {
@@ -1515,7 +1515,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                 if (tier == TankTier.Creeper)
                 {
-                    if (Array.IndexOf(WPTR.AllTanks, enemy) > -1 && enemy is not null)
+                    if (Array.IndexOf(GameHandler.AllTanks, enemy) > -1 && enemy is not null)
                     {
                         float explosionDist = 90f;
                         if (Vector3.Distance(enemy.position, position) < explosionDist)
@@ -1524,7 +1524,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                             new MineExplosion(position, 10f, 0.2f);
 
-                            foreach (var tank in WPTR.AllTanks.Where(tnk => tnk is not null && Vector3.Distance(tnk.position, position) < explosionDist))
+                            foreach (var tank in GameHandler.AllTanks.Where(tnk => tnk is not null && Vector3.Distance(tnk.position, position) < explosionDist))
                                 tank.Destroy();
                         }
                     }
@@ -1653,7 +1653,7 @@ namespace WiiPlayTanksRemake.GameContent
                 DebugUtils.DrawDebugString(TankGame.spriteBatch, "1", GeometryUtils.ConvertWorldToScreen(ray.Position + ray.Direction * 30, World, View, Projection), 1, centerIt: true);
             }*/
 
-            if (Invisible && WPTR.InMission)
+            if (Invisible && GameHandler.InMission)
                 return;
 
             RenderModel();

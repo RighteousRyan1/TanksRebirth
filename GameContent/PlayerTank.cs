@@ -78,17 +78,17 @@ namespace WiiPlayTanksRemake.GameContent
 
             Dead = true;
 
-            int index = Array.IndexOf(WPTR.AllAITanks, WPTR.AllAITanks.First(tank => tank is null));
+            int index = Array.IndexOf(GameHandler.AllAITanks, GameHandler.AllAITanks.First(tank => tank is null));
 
             PlayerId = index;
 
-            WPTR.AllPlayerTanks[index] = this;
+            GameHandler.AllPlayerTanks[index] = this;
 
-            int index2 = Array.IndexOf(WPTR.AllTanks, WPTR.AllTanks.First(tank => tank is null));
+            int index2 = Array.IndexOf(GameHandler.AllTanks, GameHandler.AllTanks.First(tank => tank is null));
 
             WorldId = index2;
 
-            WPTR.AllTanks[index2] = this;
+            GameHandler.AllTanks[index2] = this;
 
             //WPTR.AllPlayerTanks.Add(this);
             //WPTR.AllTanks.Add(this);
@@ -147,7 +147,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             TurretRotation = (-(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position2D).ToRotation()) + MathHelper.PiOver2;
 
-            if (WPTR.InMission)
+            if (GameHandler.InMission)
             {
                 if (curShootStun <= 0 && curMineStun <= 0)
                 {
@@ -165,7 +165,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             UpdateCollision();
 
-            if (WPTR.InMission)
+            if (GameHandler.InMission)
             {
                 if (Input.CanDetectClick())
                     Shoot();
@@ -326,8 +326,8 @@ namespace WiiPlayTanksRemake.GameContent
                 location = position + new Vector3(0, 0.1f, 0)
             };
 
-            WPTR.AllPlayerTanks[PlayerId] = null;
-            WPTR.AllTanks[WorldId] = null;
+            GameHandler.AllPlayerTanks[PlayerId] = null;
+            GameHandler.AllTanks[WorldId] = null;
             // TODO: play player tank death sound
         }
 
@@ -347,7 +347,7 @@ namespace WiiPlayTanksRemake.GameContent
         public void UpdatePlayerMovement()
         {
             var leftStick = Input.CurrentGamePadSnapshot.ThumbSticks.Left;
-            if (!WPTR.InMission)
+            if (!GameHandler.InMission)
                 return;
             if (!controlDown.IsPressed && !controlUp.IsPressed && leftStick.Y == 0)
                 velocity.Z = 0;
@@ -397,7 +397,7 @@ namespace WiiPlayTanksRemake.GameContent
         /// </summary>
         public override void Shoot()
         {
-            if (!WPTR.InMission || !HasTurret)
+            if (!GameHandler.InMission || !HasTurret)
                 return;
             if (curShootCooldown > 0 || OwnedShellCount >= ShellLimit)
                 return;
@@ -493,7 +493,7 @@ namespace WiiPlayTanksRemake.GameContent
             for (int i = 0; i < info.Length; i++)
                 DebugUtils.DrawDebugString(TankGame.spriteBatch, info[i], GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, (info.Length * 20) + (i * 20)), 1, centerIt: true);
 
-            if (Invisible && WPTR.InMission)
+            if (Invisible && GameHandler.InMission)
                 return;
 
             RenderModel();

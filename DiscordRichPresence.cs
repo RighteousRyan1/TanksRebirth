@@ -9,50 +9,50 @@ namespace WiiPlayTanksRemake
 {
     internal static class DiscordRichPresence
     {
-        private static RichPresence _rpc;
+        private static RichPresence _rp;
 
-        private static DiscordRpcClient rpcClient;
+        private static DiscordRpcClient _client;
 
-        private static Button rp_Button_Git;
-        private static Button rp_Button_Disc;
+        private static Button _rpButtonGit;
+        private static Button _rpButtonDiscord;
 
         public static void Load()
         {
-            rpcClient = new DiscordRpcClient("937910981844168744");
+            _client = new DiscordRpcClient("937910981844168744");
 
-            rp_Button_Git = new Button
+            _rpButtonGit = new Button
             {
                 Label = "GitHub",
                 Url = "https://github.com/RighteousRyan1/WiiPlayTanksRemake"
             };
-            rp_Button_Disc = new Button
+            _rpButtonDiscord = new Button
             {
                 Label = "Discord",
                 Url = "https://discord.gg/KhfzvbrrKx"
             };
 
-            _rpc = new RichPresence
+            _rp = new RichPresence
             {
-                Buttons = new Button[] { rp_Button_Git, rp_Button_Disc } 
+                Buttons = new Button[] { _rpButtonGit, _rpButtonDiscord } 
             };
 
-            _rpc.Assets = new();
+            _rp.Assets = new();
 
-            _rpc.Timestamps = new Timestamps()
+            _rp.Timestamps = new Timestamps()
             {
                 Start = DateTime.UtcNow,
             };
-            rpcClient?.SetPresence(_rpc);
-            rpcClient.Initialize();
+            _client?.SetPresence(_rp);
+            _client.Initialize();
         }
 
         public static void Update()
         {
-            if (!rpcClient.IsDisposed)
+            if (!_client.IsDisposed)
             {
-                static string getGoodGrammar(string word)
+                static string getArticle(string word)
                 {
-                    if (word.StartsWith('a') || word.StartsWith('e') || word.StartsWith('i') || word.StartsWith('o') || word.StartsWith('u'))
+                    if (word.ToLower().StartsWith('a') || word.ToLower().StartsWith('e') || word.ToLower().StartsWith('i') || word.ToLower().StartsWith('o') || word.ToLower().StartsWith('u'))
                     {
                         return "an";
                     }
@@ -65,51 +65,51 @@ namespace WiiPlayTanksRemake
                 var curTank = GameContent.AITank.GetHighestTierActive();
 
                 SetLargeAsset("tank_ash_large");
-                SetSmallAsset($"tank_{curTank.ToString().ToLower()}", $"Currently fighting {getGoodGrammar(curTank.ToString())} {GameContent.AITank.GetHighestTierActive()} Tank");
+                SetSmallAsset($"tank_{curTank.ToString().ToLower()}", $"Currently fighting {getArticle(curTank.ToString())} {curTank} Tank");
                 SetDetails($"Fighting a grand total of {GameContent.AITank.CountAll()} tanks!");
                 
-                rpcClient?.SetPresence(_rpc);
+                _client?.SetPresence(_rp);
             }
         }
 
         public static void SetDetails(string details)
         {
-            _rpc.Details = details;
+            _rp.Details = details;
         }
 
         public static void SetLargeAsset(string key, string details = null)
         {
-            _rpc.Assets.LargeImageKey = key;
+            _rp.Assets.LargeImageKey = key;
 
             if (details is not null)
-                _rpc.Assets.LargeImageText = details;
+                _rp.Assets.LargeImageText = details;
         }
 
         public static void SetSmallAsset(string key, string details = null)
         {
-            _rpc.Assets.SmallImageKey = key;
+            _rp.Assets.SmallImageKey = key;
 
             if (details is not null)
-                _rpc.Assets.SmallImageText = details;
+                _rp.Assets.SmallImageText = details;
         }
 
         public static void SetParty(Party party, int size = -1)
         {
-            _rpc.Party = party;
+            _rp.Party = party;
             if (size > -1)
-                _rpc.Party.Size = size;
+                _rp.Party.Size = size;
         }
 
         public static void SetState(string state)
         {
-            _rpc.State = state;
+            _rp.State = state;
         }
 
         /// <summary>Stop handling Discord's Rich Presence feature. Disposes of the client and updates the endtime.</summary>
         public static void Terminate()
         {
-            rpcClient?.UpdateEndTime(DateTime.UtcNow);
-            rpcClient?.Dispose();
+            _client?.UpdateEndTime(DateTime.UtcNow);
+            _client?.Dispose();
         }
     }
 }

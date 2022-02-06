@@ -25,7 +25,7 @@ namespace WiiPlayTanksRemake.Internals.Common.Framework.Audio
             if (settings is not null)
             {
                 settings.SampleRate = sampleRate;
-                synthesizer = new Synthesizer(soundFontPath, sampleRate);
+                synthesizer = new Synthesizer(soundFontPath, settings);
             }
             else
                 synthesizer = new Synthesizer(soundFontPath, settings);

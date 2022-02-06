@@ -107,7 +107,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             hurtbox2d = new((int)(position.X - 3), (int)(position.Z - 3), 6, 6);
 
-            if (!WPTR.InMission)
+            if (!GameHandler.InMission)
                 return;
 
             if (!INTERNAL_ignoreCollisions)
@@ -164,7 +164,7 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 if (owner != null)
                 {
-                    foreach (var target in WPTR.AllTanks.Where(tank => tank is not null && tank.Team != owner.Team && Vector3.Distance(position, tank.position) <= homingProperties.radius))
+                    foreach (var target in GameHandler.AllTanks.Where(tank => tank is not null && tank.Team != owner.Team && Vector3.Distance(position, tank.position) <= homingProperties.radius))
                     {
                         float dist = Vector3.Distance(position, target.position);
 
@@ -202,7 +202,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         public void CheckCollisions()
         {
-            foreach (var tank in WPTR.AllAITanks.Where(tnk => tnk is not null))
+            foreach (var tank in GameHandler.AllAITanks.Where(tnk => tnk is not null))
             {
                 if (tank.CollisionBox.Intersects(hurtbox))
                 {
@@ -223,7 +223,7 @@ namespace WiiPlayTanksRemake.GameContent
                     }
                 }
             }
-            foreach (var tank in WPTR.AllPlayerTanks.Where(tnk => tnk is not null))
+            foreach (var tank in GameHandler.AllPlayerTanks.Where(tnk => tnk is not null))
             {
                 if (tank.CollisionBox.Intersects(hurtbox))
                 {
