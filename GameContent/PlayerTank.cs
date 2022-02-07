@@ -130,8 +130,7 @@ namespace WiiPlayTanksRemake.GameContent
                 curMineStun--;
             if (curMineCooldown > 0)
                 curMineCooldown--;
-            position.X = MathHelper.Clamp(position.X, MapRenderer.TANKS_MIN_X, MapRenderer.TANKS_MAX_X);
-            position.Z = MathHelper.Clamp(position.Z, MapRenderer.TANKS_MIN_Y, MapRenderer.TANKS_MAX_Y);
+
             if (velocity != Vector3.Zero)
             {
                 //GameUtils.RoughStep(ref tankRotation, tankRotationPredicted.ToRotation(), 0.5f);
@@ -176,6 +175,9 @@ namespace WiiPlayTanksRemake.GameContent
             Speed = Acceleration;
 
             playerControl_isBindPressed = false;
+
+            position.X = MathHelper.Clamp(position.X, MapRenderer.TANKS_MIN_X, MapRenderer.TANKS_MAX_X);
+            position.Z = MathHelper.Clamp(position.Z, MapRenderer.TANKS_MIN_Y, MapRenderer.TANKS_MAX_Y);
 
             oldPosition = position;
         }
