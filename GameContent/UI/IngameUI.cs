@@ -736,8 +736,16 @@ namespace WiiPlayTanksRemake.GameContent.UI
             _newScroll = Input.CurrentMouseSnapshot.ScrollWheelValue;
 
             if (_newScroll != _oldScroll)
+            {
+                //if (_gpuSettingsOffset < 0)
+                    //_gpuSettingsOffset = 0;
+                //if (_gpuSettingsOffset < -240)
+                    //_gpuSettingsOffset = -240;
+                _gpuSettingsOffset = _newScroll - _oldScroll;
                 foreach (var b in graphicsElements)
-                    b.Position = new(b.Position.X, b.Position.Y + (_newScroll - _oldScroll));
+                    b.Position = new(b.Position.X, b.Position.Y + _gpuSettingsOffset);
+                // ChatSystem.SendMessage(_gpuSettingsOffset, Color.White, "<Debug>");
+            }
 
             var text = $"Mission 1        x{AITank.CountAll()}";
             Vector2 drawOrigin = TankGame.Fonts.Default.MeasureString(text) / 2f;

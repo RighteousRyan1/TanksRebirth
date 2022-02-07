@@ -26,9 +26,13 @@ namespace WiiPlayTanksRemake.GameContent.Systems
         /// <param name="text">The content of the <see cref="ChatMessage"/>.</param>
         /// <param name="color">The color in which to render the content of the <see cref="ChatMessage"/>.</param>
         /// <returns>The <see cref="ChatMessage"/> sent to the chat.</returns>
-        public static ChatMessage SendMessage(object text, Color color)
+        public static ChatMessage SendMessage(object text, Color color, object sender = null)
         {
-            var msg = new ChatMessage(text.ToString(), color);
+            ChatMessage msg;
+            if (sender is not null)
+                msg = new ChatMessage($"{sender}: {text}", color);
+            else
+                msg = new ChatMessage($"{text}", color);
 
             ChatMessages.Add(msg);
             MessageCache.Add(msg);
