@@ -109,6 +109,7 @@ namespace WiiPlayTanksRemake.Internals.UI
             {
                 DrawSelf(spriteBatch);
                 DrawChildren(spriteBatch);
+
                 if (Tooltip is not null && Hitbox.Contains(GameUtils.MousePosition))
                 {
                     QuickIndicator(spriteBatch, Color.White);
@@ -129,6 +130,11 @@ namespace WiiPlayTanksRemake.Internals.UI
 
                 DrawSelf(spriteBatch);
                 DrawChildren(spriteBatch);
+
+                if (Tooltip is not null && Hitbox.Contains(GameUtils.MousePosition))
+                {
+                    QuickIndicator(spriteBatch, Color.White);
+                }
 
                 spriteBatch.End();
                 // draw with schissor

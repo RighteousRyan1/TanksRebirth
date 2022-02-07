@@ -294,6 +294,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             ResolutionButton.SetDimensions(700, 850, 500, 150);
             ResolutionButton.OnLeftClick += ResolutionButton_OnLeftClick;
             ResolutionButton.OnRightClick += ResolutionButton_OnRightClick;
+            ResolutionButton.Tooltip = $"Changes the resolution of the game";
 
             BackButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Back", Color.WhiteSmoke))
             {
@@ -301,17 +302,6 @@ namespace WiiPlayTanksRemake.GameContent.UI
             };
             BackButton.SetDimensions(700, 850, 500, 150);
             BackButton.OnLeftClick += BackButton_OnMouseClick;
-
-            //test = new("Hi", TankGame.Fonts.Default, Color.AliceBlue);
-            //test.SetDimensions(800, 500, 200, 100);
-
-            //dropperTest = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "test", Color.WhiteSmoke));
-            //test.Append(dropperTest);
-            //test.Initialize();
-
-            //dropperTest2 = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "test2", Color.WhiteSmoke));
-            //test.Append(dropperTest2);
-            //test.Initialize();
 
             PostInitialize();
         }
@@ -464,44 +454,37 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
         private static void BorderlessWindowButton_OnMouseClick(UIElement affectedElement)
         {
-            TankGame.Instance.graphics.PreferredBackBufferWidth = 1920;
-            TankGame.Instance.graphics.PreferredBackBufferHeight = 1080;
+            if (TankGame.Settings.BorderlessWindow)
+                TankGame.Instance.graphics.PreferredBackBufferHeight -= 50;
+            else
+                TankGame.Instance.graphics.PreferredBackBufferHeight += 50;
             TankGame.Instance.Window.IsBorderless = TankGame.Settings.BorderlessWindow = !TankGame.Settings.BorderlessWindow;
             TankGame.Instance.graphics.ApplyChanges();
-            BorderlessWindowToggle.Remove();
-            BorderlessWindowToggle = new(null, 1, (uiImage, spriteBatch) => QuickIndicator(uiImage, spriteBatch, TankGame.Settings.BorderlessWindow ? Color.Green : Color.Red));
-            BorderlessWindowToggle.SetDimensions(695, 595, 510, 160);
-            BorderlessWindowButton.Remove();
-            BorderlessWindowButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Borderless Window", Color.WhiteSmoke));
-            BorderlessWindowButton.SetDimensions(700, 600, 500, 150);
-            BorderlessWindowButton.OnLeftClick += BorderlessWindowButton_OnMouseClick;
-            BorderlessWindowButton.Tooltip = "Whether or not to run the\ngame window borderless";
+
+            BorderlessWindowToggle.UniqueDraw = (uiImage, spriteBatch) => QuickIndicator(uiImage, spriteBatch, TankGame.Settings.BorderlessWindow ? Color.Green : Color.Red);
+
+            BorderlessWindowButton.UniqueDraw = (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Borderless Window", Color.WhiteSmoke);
         }
 
         private static void VsyncButton_OnMouseClick(UIElement affectedElement)
         {
             TankGame.Instance.graphics.SynchronizeWithVerticalRetrace = TankGame.Settings.Vsync = !TankGame.Settings.Vsync;
             TankGame.Instance.graphics.ApplyChanges();
-            VsyncToggle.Remove();
-            VsyncToggle = new(null, 1, (uiImage, spriteBatch) => QuickIndicator(uiImage, spriteBatch, TankGame.Settings.Vsync ? Color.Green : Color.Red));
-            VsyncToggle.SetDimensions(695, 345, 510, 160);
-            VsyncButton.Remove();
-            VsyncButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "VSync", Color.WhiteSmoke));
-            VsyncButton.SetDimensions(700, 350, 500, 150);
-            VsyncButton.OnLeftClick += VsyncButton_OnMouseClick;
-            VsyncButton.Tooltip = "Whether or not to enable\nvertical synchronization";
+
+            VsyncToggle.UniqueDraw = (uiImage, spriteBatch) => QuickIndicator(uiImage, spriteBatch, TankGame.Settings.Vsync ? Color.Green : Color.Red);
+            VsyncButton.UniqueDraw = (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "VSync", Color.WhiteSmoke);
         }
 
         private static void PerPixelLightingButton_OnMouseClick(UIElement affectedElement)
         {
             TankGame.Settings.PerPixelLighting = !TankGame.Settings.PerPixelLighting;
-            PerPixelLightingToggle.Remove();
-            PerPixelLightingToggle = new(null, 1, (uiImage, spriteBatch) => QuickIndicator(uiImage, spriteBatch, TankGame.Settings.PerPixelLighting ? Color.Green : Color.Red));
-            PerPixelLightingToggle.SetDimensions(695, 95, 510, 160);
-            PerPixelLightingButton.Remove();
-            PerPixelLightingButton = new(null, 1f, (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Per-Pixel Lighting", Color.WhiteSmoke));
-            PerPixelLightingButton.SetDimensions(700, 100, 500, 150);
-            PerPixelLightingButton.OnLeftClick += PerPixelLightingButton_OnMouseClick;
+            //PerPixelLightingToggle.Remove();
+            PerPixelLightingToggle.UniqueDraw = (uiImageButton, spriteBatch) => QuickIndicator(uiImageButton, spriteBatch, TankGame.Settings.PerPixelLighting ? Color.Green : Color.Red);
+            //PerPixelLightingToggle.SetDimensions(695, 95, 510, 160);
+            //PerPixelLightingButton.Remove();
+            PerPixelLightingButton.UniqueDraw = (uiImageButton, spriteBatch) => QuickButton(uiImageButton, spriteBatch, "Per-Pixel Lighting", Color.WhiteSmoke);
+            //PerPixelLightingButton.SetDimensions(700, 100, 500, 150);
+            //PerPixelLightingButton.OnLeftClick += PerPixelLightingButton_OnMouseClick;
             PerPixelLightingButton.Tooltip = "Whether or not to draw lighting\non each individual pixel";
         }
 
@@ -570,6 +553,9 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 TankGame.Instance.graphics.PreferredBackBufferHeight = TankGame.Settings.ResHeight;
 
                 TankGame.Instance.graphics.ApplyChanges();
+
+                // FIXME: acts weird
+                // TankGame.Instance.CalculateProjection();
             }
             else if (UpKeybindButton.Visible)
             {

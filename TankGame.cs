@@ -204,10 +204,15 @@ namespace WiiPlayTanksRemake
             GameCamera.SetPosition(GameCamera.GetPosition() + new Vector3(0, 100, 0));
 
             GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(0.75f) * Matrix.CreateTranslation(0f, 0f, 1000f);
-            GameProjection = Matrix.CreateOrthographic(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, -2000f, 5000f);
+            CalculateProjection();
 
             graphics.ApplyChanges();
             base.Initialize();
+        }
+
+        public void CalculateProjection()
+        {
+            GameProjection = Matrix.CreateOrthographic(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, -2000f, 5000f);
         }
 
         public static void Quit()
