@@ -20,13 +20,28 @@ namespace WiiPlayTanksRemake.Internals.UI
 		{
 			UIElement focusedElement = null;
 
-			for (int iterator = AllUIElements.Count - 1; iterator >= 0; iterator--)
-			{
-				UIElement currentElement = AllUIElements[iterator];
-				if (!currentElement.IgnoreMouseInteractions && currentElement.Visible && currentElement.Hitbox.Contains(position))
+			if (!getHighest)
+            {
+				for (int iterator = AllUIElements.Count - 1; iterator >= 0; iterator--)
 				{
-					focusedElement = currentElement;
-					break;
+					UIElement currentElement = AllUIElements[iterator];
+					if (!currentElement.IgnoreMouseInteractions && currentElement.Visible && currentElement.Hitbox.Contains(position))
+					{
+						focusedElement = currentElement;
+						break;
+					}
+				}
+			}
+			else
+            {
+				for (int iterator = 0; iterator < AllUIElements.Count - 1; iterator++)
+				{
+					UIElement currentElement = AllUIElements[iterator];
+					if (!currentElement.IgnoreMouseInteractions && currentElement.Visible && currentElement.Hitbox.Contains(position))
+					{
+						focusedElement = currentElement;
+						break;
+					}
 				}
 			}
 
@@ -54,7 +69,7 @@ namespace WiiPlayTanksRemake.Internals.UI
 			return false;
 		}
 
-		public event Action<UIElement> OnLeftClick;
+		public Action<UIElement> OnLeftClick;
 
 		public virtual void LeftClick()
 		{
@@ -64,7 +79,7 @@ namespace WiiPlayTanksRemake.Internals.UI
 			}
 		}
 
-		public event Action<UIElement> OnLeftDown;
+		public Action<UIElement> OnLeftDown;
 
 		public virtual void LeftDown()
 		{
@@ -74,7 +89,7 @@ namespace WiiPlayTanksRemake.Internals.UI
 			}
 		}
 
-		public event Action<UIElement> OnLeftUp;
+		public Action<UIElement> OnLeftUp;
 
 		public virtual void LeftUp()
 		{
@@ -86,7 +101,7 @@ namespace WiiPlayTanksRemake.Internals.UI
 
 		//---------------------------------------------------------
 
-		public event Action<UIElement> OnRightClick;
+		public Action<UIElement> OnRightClick;
 
 		public virtual void RightClick()
 		{
@@ -96,7 +111,7 @@ namespace WiiPlayTanksRemake.Internals.UI
 			}
 		}
 
-		public event Action<UIElement> OnRightDown;
+		public Action<UIElement> OnRightDown;
 
 		public virtual void RightDown()
 		{
@@ -106,7 +121,7 @@ namespace WiiPlayTanksRemake.Internals.UI
 			}
 		}
 
-		public event Action<UIElement> OnRightUp;
+		public Action<UIElement> OnRightUp;
 
 		public virtual void RightUp()
 		{
@@ -118,7 +133,7 @@ namespace WiiPlayTanksRemake.Internals.UI
 
 		//--------------------------------------------------------
 
-		public event Action<UIElement> OnMiddleClick;
+		public Action<UIElement> OnMiddleClick;
 
 		public virtual void MiddleClick()
 		{
@@ -128,7 +143,7 @@ namespace WiiPlayTanksRemake.Internals.UI
 			}
 		}
 
-		public event Action<UIElement> OnMiddleDown;
+		public Action<UIElement> OnMiddleDown;
 
 		public virtual void MiddleDown()
 		{
@@ -138,7 +153,7 @@ namespace WiiPlayTanksRemake.Internals.UI
 			}
 		}
 
-		public event Action<UIElement> OnMiddleUp;
+		public Action<UIElement> OnMiddleUp;
 
 		public virtual void MiddleUp()
 		{
@@ -150,7 +165,7 @@ namespace WiiPlayTanksRemake.Internals.UI
 
 		//--------------------------------------------------------
 
-		public event Action<UIElement> OnMouseOver;
+		public Action<UIElement> OnMouseOver;
 
 		public virtual void MouseOver()
 		{
@@ -169,7 +184,7 @@ namespace WiiPlayTanksRemake.Internals.UI
 			}
 		}
 
-		public event Action<UIElement> OnMouseOut;
+		public Action<UIElement> OnMouseOut;
 
 		public virtual void MouseOut()
 		{

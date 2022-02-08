@@ -213,7 +213,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             ChatSystem.DrawMessages();
 
-            UIElement focusedElement = UIElement.GetElementAt(GameUtils.MousePosition);
+            UIElement focusedElement = UIElement.GetElementAt(GameUtils.MousePosition, true);
 
             if (focusedElement != null)
             {
@@ -518,42 +518,42 @@ namespace WiiPlayTanksRemake.GameContent
             }
         }
 
-        public static UIImageButton ClearTracks;
-        public static UIImageButton ClearChecks;
+        public static UITextButton ClearTracks;
+        public static UITextButton ClearChecks;
 
-        public static UIImageButton SetupMissionAgain;
+        public static UITextButton SetupMissionAgain;
 
-        public static UIImageButton MovePURight;
-        public static UIImageButton MovePULeft;
+        public static UITextButton MovePURight;
+        public static UITextButton MovePULeft;
 
-        public static UIImage Display;
+        public static UITextButton Display;
 
         private static int mode;
 
         public static void InitDebugUi()
         {
-            ClearTracks = new(null, 1f, (uiPanel, spriteBatch) => IngameUI.QuickButton(uiPanel, spriteBatch, "Clear Tracks", Color.LightBlue, 0.5f));
+            ClearTracks = new("Clear Tracks", TankGame.Fonts.Default, Color.LightBlue, 0.5f);
             ClearTracks.SetDimensions(250, 25, 100, 50);
 
             ClearTracks.OnLeftClick += ClearTankTracks;
 
-            ClearChecks = new(null, 1f, (uiPanel, spriteBatch) => IngameUI.QuickButton(uiPanel, spriteBatch, "Clear Checks", Color.LightBlue, 0.5f));
+            ClearChecks = new("Clear Checks", TankGame.Fonts.Default, Color.LightBlue, 0.5f);
             ClearChecks.SetDimensions(250, 95, 100, 50);
 
             ClearChecks.OnLeftClick += ClearTankDeathmarks;
 
-            SetupMissionAgain = new(null, 1f, (uiPanel, spriteBatch) => IngameUI.QuickButton(uiPanel, spriteBatch, "Restart\n Mission", Color.LightBlue, 0.5f));
+            SetupMissionAgain = new("Restart\nMission", TankGame.Fonts.Default, Color.LightBlue, 0.5f);
             SetupMissionAgain.SetDimensions(250, 165, 100, 50);
 
             SetupMissionAgain.OnLeftClick += RestartMission;
 
-            MovePULeft = new(null, 1f, (uiPanel, spriteBatch) => IngameUI.QuickButton(uiPanel, spriteBatch, "<", Color.LightBlue, 0.5f));
+            MovePULeft = new("<", TankGame.Fonts.Default, Color.LightBlue, 0.5f);
             MovePULeft.SetDimensions(GameUtils.WindowWidth / 2 - 100, 25, 50, 50);
 
-            MovePURight = new(null, 1f, (uiPanel, spriteBatch) => IngameUI.QuickButton(uiPanel, spriteBatch, ">", Color.LightBlue, 0.5f));
+            MovePURight = new(">", TankGame.Fonts.Default, Color.LightBlue, 0.5f);
             MovePURight.SetDimensions(GameUtils.WindowWidth / 2 + 100, 25, 50, 50);
 
-            Display = new(null, 1f, (uiPanel, spriteBatch) => IngameUI.QuickButton(uiPanel, spriteBatch, powerups[mode].Name, Color.LightBlue, 0.5f));
+            Display = new(powerups[mode].Name, TankGame.Fonts.Default, Color.LightBlue, 0.5f);
             Display.SetDimensions(GameUtils.WindowWidth / 2 - 35, 25, 125, 50);
 
             MovePULeft.OnLeftClick += MovePULeft_OnLeftClick;
@@ -564,14 +564,14 @@ namespace WiiPlayTanksRemake.GameContent
         {
             if (mode < powerups.Length - 1)
                 mode++;
-            Display.UniqueDraw = (uiPanel, spriteBatch) => IngameUI.QuickButton(uiPanel, spriteBatch, powerups[mode].Name, Color.LightBlue, 0.5f);
+            Display.Text = powerups[mode].Name;
         }
 
         private static void MovePULeft_OnLeftClick(UIElement obj)
         {
             if (mode > 0)
                 mode--;
-            Display.UniqueDraw = (uiPanel, spriteBatch) => IngameUI.QuickButton(uiPanel, spriteBatch, powerups[mode].Name, Color.LightBlue, 0.5f);
+            Display.Text = powerups[mode].Name;
         }
 
         private static void RestartMission(UIElement affectedElement)

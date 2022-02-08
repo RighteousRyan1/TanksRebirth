@@ -107,6 +107,7 @@ namespace WiiPlayTanksRemake
         public static Model TankModel_Player;
         public static Model TankModel_Enemy;
         public static Model CubeModel;
+        public static Texture2D MagicPixel;
 
         public static TankGame Instance { get; private set; }
         public static string ExePath => Assembly.GetExecutingAssembly().Location.Replace(@$"\WiiPlayTanksRemake.dll", string.Empty);
@@ -119,8 +120,6 @@ namespace WiiPlayTanksRemake
         public static GameConfig Settings;
 
         public JsonHandler SettingsHandler;
-
-        public static Texture2D WhitePixel;
 
         public static readonly string SaveDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "My Games", "WiiPlayTanksRemake");
 
@@ -241,12 +240,13 @@ namespace WiiPlayTanksRemake
 
             TankModel_Player = GameResources.GetGameResource<Model>("Assets/tank_p");
 
+            MagicPixel = GameResources.GetGameResource<Texture2D>("Assets/MagicPixel");
+
             Fonts.Default = GameResources.GetGameResource<SpriteFont>("Assets/DefaultFont");
             SpriteFontUtils.GetSafeText(Fonts.Default, $"{SysGPU}\n{SysCPU}\n{SysKeybd}\n{SysMouse}", out SysText);
             
             spriteBatch = new SpriteBatch(GraphicsDevice);
             UITextures.UIPanelBackground = GameResources.GetGameResource<Texture2D>("Assets/UIPanelBackground");
-            WhitePixel = GameResources.GetGameResource<Texture2D>("Assets/MagicPixel");
 
             GameHandler.Initialize();
 

@@ -31,7 +31,7 @@ namespace WiiPlayTanksRemake.Internals.Common.GameUI
 
 		public override void OnInitialize()
 		{
-			UIImage interactable = new(GameResources.GetGameResource<Texture2D>("Assets/MagicPixel"), 1f, (image, spriteBatch) => spriteBatch.Draw(image.Texture, image.Hitbox, Color.Transparent));
+			UIImage interactable = new(TankGame.MagicPixel, 1f, (image, spriteBatch) => spriteBatch.Draw(image.Texture, image.Hitbox, Color.Transparent));
 			interactable.Tooltip = Tooltip;
 			interactable.SetDimensions((int)Position.X + 2, (int)Position.Y + 2, (int)Size.X - 4, (int)Size.Y - 4);
 			interactable.OnLeftDown += (element) =>
@@ -44,12 +44,12 @@ namespace WiiPlayTanksRemake.Internals.Common.GameUI
 
 		public override void DrawSelf(SpriteBatch spriteBatch)
 		{
-			spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/MagicPixel"), Hitbox, SliderColor);
+			spriteBatch.Draw(TankGame.MagicPixel, Hitbox, SliderColor);
 		}
 
 		public override void DrawChildren(SpriteBatch spriteBatch)
 		{
-			spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/MagicPixel"), new Rectangle((int)Position.X + (int)(InternalValue * Size.X) - (InternalValue > 0.5 ? BarWidth / 2 : 0), (int)Position.Y - 2, BarWidth, (int)Size.Y + 4), BarColor);
+			spriteBatch.Draw(TankGame.MagicPixel, new Rectangle((int)Position.X + (int)(InternalValue * Size.X) - (InternalValue > 0.5 ? BarWidth / 2 : 0), (int)Position.Y - 2, BarWidth, (int)Size.Y + 4), BarColor);
 		}
 	}
 }

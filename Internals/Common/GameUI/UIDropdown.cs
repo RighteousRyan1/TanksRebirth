@@ -38,8 +38,8 @@ namespace WiiPlayTanksRemake.Internals.Common.GameUI
 
             if (Dropped)
             {
-                spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/MagicPixel"), wrapper, new Rectangle(0, 0, border, border), Color);
-                spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/MagicPixel"), scroll, new Rectangle(0, 0, border, border), Color.Gray);
+                spriteBatch.Draw(TankGame.MagicPixel, wrapper, new Rectangle(0, 0, border, border), Color);
+                spriteBatch.Draw(TankGame.MagicPixel, scroll, new Rectangle(0, 0, border, border), Color.Gray);
             }
 
             int middleX = Hitbox.X + border;
