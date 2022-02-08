@@ -16,9 +16,9 @@ namespace WiiPlayTanksRemake.Internals.UI
 		/// <param name="position">The position to get the <see cref="UIElement"/> at.</param>
 		/// <param name="getHighest">Whether or not to get the highest <see cref="UIElement"/> as opposed to the lowest.</param>
 		/// <returns>The <see cref="UIElement"/> at the specified position, if one exists; otherwise, returns <see langword="null"/>.</returns>
-		public static UIElement GetElementAt(Vector2 position, bool getHighest = false)
+		public static List<UIElement> GetElementAt(Vector2 position, bool getHighest = false)
 		{
-			UIElement focusedElement = null;
+			List<UIElement> focusedElements = new List<UIElement>();
 
 			if (!getHighest)
             {
@@ -27,8 +27,9 @@ namespace WiiPlayTanksRemake.Internals.UI
 					UIElement currentElement = AllUIElements[iterator];
 					if (!currentElement.IgnoreMouseInteractions && currentElement.Visible && currentElement.Hitbox.Contains(position))
 					{
-						focusedElement = currentElement;
-						break;
+						focusedElements.Add(currentElement);
+						if (!currentElement.FallThroughInputs)
+							break;
 					}
 				}
 			}
@@ -39,13 +40,25 @@ namespace WiiPlayTanksRemake.Internals.UI
 					UIElement currentElement = AllUIElements[iterator];
 					if (!currentElement.IgnoreMouseInteractions && currentElement.Visible && currentElement.Hitbox.Contains(position))
 					{
-						focusedElement = currentElement;
-						break;
+						focusedElements.Add(currentElement);
+						if (iterator + 1 <= AllUIElements.Count)
+                        {
+							if (currentElement.FallThroughInputs)
+                            {
+								focusedElements.Add(AllUIElements[iterator + 1]);
+                            }
+							else
+                            {
+								break;
+                            }
+                        }
+						//if (!currentElement.FallThroughInputs)
+							//break;
 					}
 				}
 			}
 
-			return getHighest ? focusedElement : focusedElement?.GetElementAt(position);
+			return focusedElements;
 		}
 
 		protected bool CanRegisterInput(Func<bool> uniqueInput)
@@ -61,7 +74,8 @@ namespace WiiPlayTanksRemake.Internals.UI
 				{
 					if (Hitbox.Contains(GameUtils.MousePosition))
 					{
-						return true;
+						if ((HasScissor && Scissor.Contains(GameUtils.MousePosition)) || !HasScissor)
+							return true;
 					}
 				}
 			}
@@ -178,8 +192,11 @@ namespace WiiPlayTanksRemake.Internals.UI
 			{
 				if (Hitbox.Contains(GameUtils.MousePosition))
 				{
-					OnMouseOver?.Invoke(this);
-					MouseHovering = true;
+					if ((HasScissor && Scissor.Contains(GameUtils.MousePosition)) || !HasScissor)
+                    {
+						OnMouseOver?.Invoke(this);
+						MouseHovering = true;
+					}
 				}
 			}
 		}

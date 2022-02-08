@@ -26,7 +26,8 @@ namespace WiiPlayTanksRemake.GameContent.UI
             //Music
             MusicVolume = new()
             {
-                Visible = false
+                Visible = false,
+                FallThroughInputs = true
             };
             MusicVolume.SetDimensions(700, 100, 500, 150);
             MusicVolume.Tooltip = $"{Math.Round(TankGame.Settings.MusicVolume * 100, 1)}%";
@@ -38,7 +39,8 @@ namespace WiiPlayTanksRemake.GameContent.UI
             MusicText = new("Music Volume", TankGame.Fonts.Default, Color.Black)
             {
                 IgnoreMouseInteractions = true,
-                Visible = false
+                Visible = false,
+                FallThroughInputs = true
             };
             MusicText.SetDimensions(950, 175, 500, 150);
 

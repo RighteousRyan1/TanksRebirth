@@ -107,6 +107,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             {
                 VolumeUI.BatchVisible = true;
                 VolumeUI.ShowAll();
+                VolumeUI.MusicVolume.IgnoreMouseInteractions = true;
                 _delay = 1;
                 VolumeButton.Visible = false;
                 GraphicsButton.Visible = false;
@@ -122,6 +123,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             {
                 GraphicsUI.BatchVisible = true;
                 GraphicsUI.ShowAll();
+                GraphicsUI.VsyncButton.IgnoreMouseInteractions = true;
                 _delay = 1;
                 VolumeButton.Visible = false;
                 GraphicsButton.Visible = false;
@@ -259,7 +261,10 @@ namespace WiiPlayTanksRemake.GameContent.UI
                     //_gpuSettingsOffset = -240;
                 _gpuSettingsOffset = _newScroll - _oldScroll;
                 foreach (var b in graphicsElements)
+                {
                     b.Position = new(b.Position.X, b.Position.Y + _gpuSettingsOffset);
+                    b.MouseHovering = false;
+                }
                 // ChatSystem.SendMessage(_gpuSettingsOffset, Color.White, "<Debug>");
             }
 

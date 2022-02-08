@@ -83,7 +83,9 @@ namespace WiiPlayTanksRemake.GameContent
                 DebugUtils.DebugLevel--;
 
             if (timeUntilTankFunction > 0)
+            {
                 timeUntilTankFunction--;
+            }
             else
             {
                 if (!InMission)
@@ -164,6 +166,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             foreach (var mark in TankDeathMark.deathMarks)
                 mark?.Render();
+
             foreach (var print in TankFootprint.footprints)
                 print?.Render();
 
@@ -213,23 +216,26 @@ namespace WiiPlayTanksRemake.GameContent
 
             ChatSystem.DrawMessages();
 
-            UIElement focusedElement = UIElement.GetElementAt(GameUtils.MousePosition, true);
+            List<UIElement> focusedElements = UIElement.GetElementAt(GameUtils.MousePosition, true);
 
-            if (focusedElement != null)
+            foreach (UIElement el in focusedElements)
             {
-                focusedElement.LeftClick();
-                focusedElement.LeftDown();
-                focusedElement.LeftUp();
+                if (el != null)
+                {
+                    el.LeftClick();
+                    el.LeftDown();
+                    el.LeftUp();
 
-                focusedElement.RightClick();
-                focusedElement.RightDown();
-                focusedElement.RightUp();
+                    el.RightClick();
+                    el.RightDown();
+                    el.RightUp();
 
-                focusedElement.MiddleClick();
-                focusedElement.MiddleDown();
-                focusedElement.MiddleUp();
+                    el.MiddleClick();
+                    el.MiddleDown();
+                    el.MiddleUp();
 
-                focusedElement.MouseOver();
+                    el.MouseOver();
+                }
             }
 
             foreach (UIElement element in UIElement.AllUIElements)

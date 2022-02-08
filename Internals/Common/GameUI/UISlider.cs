@@ -33,11 +33,12 @@ namespace WiiPlayTanksRemake.Internals.Common.GameUI
 		{
 			UIImage interactable = new(TankGame.MagicPixel, 1f, (image, spriteBatch) => spriteBatch.Draw(image.Texture, image.Hitbox, Color.Transparent));
 			interactable.Tooltip = Tooltip;
+			interactable.FallThroughInputs = true;
 			interactable.SetDimensions((int)Position.X + 2, (int)Position.Y + 2, (int)Size.X - 4, (int)Size.Y - 4);
-			interactable.OnLeftDown += (element) =>
+			interactable.OnLeftDown = (uiElement) =>
 			{
-				int mouseXRelative = (int)Math.Round(Utilities.GameUtils.MouseX - element.Position.X);
-				InternalValue = MathHelper.Clamp(mouseXRelative / element.Size.X, 0, 1);
+				int mouseXRelative = (int)Math.Round(Utilities.GameUtils.MouseX - uiElement.Position.X);
+				InternalValue = MathHelper.Clamp(mouseXRelative / uiElement.Size.X, 0, 1);
 			};
 			Append(interactable);
 		}

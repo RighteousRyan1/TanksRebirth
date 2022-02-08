@@ -55,6 +55,9 @@ namespace WiiPlayTanksRemake.Internals.UI
         /// <summary>Whether or not to handle mouse interactions for this <see cref="UIElement"/>.</summary>
         public bool IgnoreMouseInteractions;
 
+        /// <summary>Whether or not to have the <see cref="UIElement"/> under this one fire mouse input events.</summary>
+        public bool FallThroughInputs;
+
         /// <summary>The rotation of this <see cref="UIElement"/>.</summary>
         public float Rotation { get; set; } = 0;
 
