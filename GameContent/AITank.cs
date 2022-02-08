@@ -1074,9 +1074,6 @@ namespace WiiPlayTanksRemake.GameContent
             if (curMineCooldown > 0)
                 curMineCooldown--;
 
-            position.X = MathHelper.Clamp(position.X, MapRenderer.TANKS_MIN_X, MapRenderer.TANKS_MAX_X);
-            position.Z = MathHelper.Clamp(position.Z, MapRenderer.TANKS_MIN_Y, MapRenderer.TANKS_MAX_Y);
-
             if (curShootStun > 0 || curMineStun > 0 || Stationary)
                 velocity = Vector3.Zero;
 
@@ -1089,6 +1086,9 @@ namespace WiiPlayTanksRemake.GameContent
             position += velocity * 0.55f;
 
             DoAi();
+
+            position.X = MathHelper.Clamp(position.X, MapRenderer.TANKS_MIN_X, MapRenderer.TANKS_MAX_X);
+            position.Z = MathHelper.Clamp(position.Z, MapRenderer.TANKS_MIN_Y, MapRenderer.TANKS_MAX_Y);
 
             oldPosition = position;
         }
