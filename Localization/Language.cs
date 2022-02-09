@@ -5,27 +5,28 @@ using WiiPlayTanksRemake.Internals.Common.IO;
 namespace WiiPlayTanksRemake.Localization
 {
     // TODO: once cuno pr merged, change text values appropriately
-    public struct Language
+    /// <summary>Localization to load a <see cref="Language"/> from a .json entry. Defaults to English if no <see cref="LangCode"/> is loaded.</summary>
+    public class Language
     {
-        public string Resume;
-        public string StartOver;
-        public string Options;
-        public string Quit;
+        public string Resume = "Resume";
+        public string StartOver = "Start Over";
+        public string Options = "Options";
+        public string Quit = "Quit";
 
-        public string Volume;
-        public string Graphics;
-        public string Controls;
+        public string Volume = "Volume";
+        public string Graphics = "Graphics";
+        public string Controls = "Controls";
 
-        public string MusicVolume;
-        public string EffectsVolume;
-        public string AmbientVolume;
+        public string MusicVolume = "Music Volume";
+        public string EffectsVolume = "Effects Volume";
+        public string AmbientVolume = "Ambient Volume";
 
-        public string PerPxLight;
-        public string VSync;
-        public string BorderlessWindow;
-        public string Resolution;
+        public string PerPxLight = "Per-Pixel Lighting";
+        public string VSync = "Vertical Sync";
+        public string BorderlessWindow = "Borderless Window";
+        public string Resolution = "Resolution";
 
-        public string Back;
+        public string Back = "Back";
         public void LoadLang(LangCode profile)
         {
             // for example, it would be sane to have en_US or es_SP or jp_JA
