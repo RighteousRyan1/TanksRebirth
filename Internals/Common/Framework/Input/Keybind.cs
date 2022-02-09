@@ -22,9 +22,7 @@ namespace WiiPlayTanksRemake.Internals.Common.Framework.Input
         public bool IsPressed => Common.Input.CurrentKeySnapshot.IsKeyDown(AssignedKey) && !PendKeyReassign;
         public bool PendKeyReassign { get; set; } = false;
 
-        public delegate void KeyReassigned(Keys key);
-
-        public event KeyReassigned OnKeyReassigned;
+        public Action<Keys> OnKeyReassigned;
 
         public bool onalssign;
 

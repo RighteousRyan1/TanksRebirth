@@ -107,6 +107,7 @@ namespace WiiPlayTanksRemake
         public static Model TankModel_Player;
         public static Model TankModel_Enemy;
         public static Model CubeModel;
+        public static Texture2D MagicPixel;
 
         public static TankGame Instance { get; private set; }
         public static string ExePath => Assembly.GetExecutingAssembly().Location.Replace(@$"\WiiPlayTanksRemake.dll", string.Empty);
@@ -119,8 +120,6 @@ namespace WiiPlayTanksRemake
         public static GameConfig Settings;
 
         public JsonHandler SettingsHandler;
-
-        public static Texture2D WhitePixel;
 
         public static readonly string SaveDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "My Games", "WiiPlayTanksRemake");
 
@@ -195,10 +194,10 @@ namespace WiiPlayTanksRemake
 
             Camera.GraphicsDevice = GraphicsDevice;
 
-            //GameCamera = new Camera()
-                //.SetToYawPitchRoll(0.75f, 0, 0)
-                //.SetFov(90)
-                //.SetPosition(GameCamera.GetPosition() + new Vector3(0, 100, 0));
+            GameCamera = new Camera()
+                .SetToYawPitchRoll(0.75f, 0, 0)
+                .SetFov(90)
+                .SetPosition(GameCamera.GetPosition() + new Vector3(0, 100, 0));
 
             GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(0.75f) * Matrix.CreateTranslation(0f, 0f, 1000f);
             CalculateProjection();
@@ -238,12 +237,13 @@ namespace WiiPlayTanksRemake
 
             TankModel_Player = GameResources.GetGameResource<Model>("Assets/tank_p");
 
+            MagicPixel = GameResources.GetGameResource<Texture2D>("Assets/MagicPixel");
+
             Fonts.Default = GameResources.GetGameResource<SpriteFont>("Assets/DefaultFont");
             SpriteFontUtils.GetSafeText(Fonts.Default, $"{SysGPU}\n{SysCPU}\n{SysKeybd}\n{SysMouse}", out SysText);
             
             spriteBatch = new SpriteBatch(GraphicsDevice);
             UITextures.UIPanelBackground = GameResources.GetGameResource<Texture2D>("Assets/UIPanelBackground");
-            WhitePixel = GameResources.GetGameResource<Texture2D>("Assets/MagicPixel");
 
             GameHandler.Initialize();
 
@@ -382,6 +382,16 @@ namespace WiiPlayTanksRemake
             spriteBatch.DrawString(Fonts.Default, "Debug Level: " + DebugUtils.CurDebugLabel, new Vector2(10), Color.White, 0f, default, 0.6f, default, default);
             DebugUtils.DrawDebugString(spriteBatch, $"Memory Used: {MemoryParser.FromMegabytes(TotalMemoryUsed)} MB", new(8, GameUtils.WindowHeight * 0.18f));
             DebugUtils.DrawDebugString(spriteBatch, SysText, new(8, GameUtils.WindowHeight * 0.2f));
+            float thing = GameUtils.WindowHeight * 0.25f;
+            List<UIElement> focusedElements = UIElement.GetElementAt(GameUtils.MousePosition, true);
+            foreach (UIElement focusedElement in focusedElements)
+            {
+                if (focusedElement != null)
+                {
+                    DebugUtils.DrawDebugString(spriteBatch, focusedElement.GetType(), new Vector2(400, thing));
+                    thing += 40;
+                }
+            }
 
             graphics.GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 

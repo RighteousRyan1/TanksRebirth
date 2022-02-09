@@ -16,21 +16,49 @@ namespace WiiPlayTanksRemake.Internals.UI
 		/// <param name="position">The position to get the <see cref="UIElement"/> at.</param>
 		/// <param name="getHighest">Whether or not to get the highest <see cref="UIElement"/> as opposed to the lowest.</param>
 		/// <returns>The <see cref="UIElement"/> at the specified position, if one exists; otherwise, returns <see langword="null"/>.</returns>
-		public static UIElement GetElementAt(Vector2 position, bool getHighest = false)
+		public static List<UIElement> GetElementAt(Vector2 position, bool getHighest = false)
 		{
-			UIElement focusedElement = null;
+			List<UIElement> focusedElements = new List<UIElement>();
 
-			for (int iterator = AllUIElements.Count - 1; iterator >= 0; iterator--)
-			{
-				UIElement currentElement = AllUIElements[iterator];
-				if (!currentElement.IgnoreMouseInteractions && currentElement.Visible && currentElement.Hitbox.Contains(position))
+			if (!getHighest)
+            {
+				for (int iterator = AllUIElements.Count - 1; iterator >= 0; iterator--)
 				{
-					focusedElement = currentElement;
-					break;
+					UIElement currentElement = AllUIElements[iterator];
+					if (!currentElement.IgnoreMouseInteractions && currentElement.Visible && currentElement.Hitbox.Contains(position))
+					{
+						focusedElements.Add(currentElement);
+						if (!currentElement.FallThroughInputs)
+							break;
+					}
+				}
+			}
+			else
+            {
+				for (int iterator = 0; iterator < AllUIElements.Count - 1; iterator++)
+				{
+					UIElement currentElement = AllUIElements[iterator];
+					if (!currentElement.IgnoreMouseInteractions && currentElement.Visible && currentElement.Hitbox.Contains(position))
+					{
+						focusedElements.Add(currentElement);
+						if (iterator + 1 <= AllUIElements.Count)
+                        {
+							if (currentElement.FallThroughInputs)
+                            {
+								focusedElements.Add(AllUIElements[iterator + 1]);
+                            }
+							else
+                            {
+								break;
+                            }
+                        }
+						//if (!currentElement.FallThroughInputs)
+							//break;
+					}
 				}
 			}
 
-			return getHighest ? focusedElement : focusedElement?.GetElementAt(position);
+			return focusedElements;
 		}
 
 		protected bool CanRegisterInput(Func<bool> uniqueInput)
@@ -46,7 +74,8 @@ namespace WiiPlayTanksRemake.Internals.UI
 				{
 					if (Hitbox.Contains(GameUtils.MousePosition))
 					{
-						return true;
+						if ((HasScissor && Scissor.Contains(GameUtils.MousePosition)) || !HasScissor)
+							return true;
 					}
 				}
 			}
@@ -54,7 +83,7 @@ namespace WiiPlayTanksRemake.Internals.UI
 			return false;
 		}
 
-		public event Action<UIElement> OnLeftClick;
+		public Action<UIElement> OnLeftClick;
 
 		public virtual void LeftClick()
 		{
@@ -64,7 +93,7 @@ namespace WiiPlayTanksRemake.Internals.UI
 			}
 		}
 
-		public event Action<UIElement> OnLeftDown;
+		public Action<UIElement> OnLeftDown;
 
 		public virtual void LeftDown()
 		{
@@ -74,7 +103,7 @@ namespace WiiPlayTanksRemake.Internals.UI
 			}
 		}
 
-		public event Action<UIElement> OnLeftUp;
+		public Action<UIElement> OnLeftUp;
 
 		public virtual void LeftUp()
 		{
@@ -86,7 +115,7 @@ namespace WiiPlayTanksRemake.Internals.UI
 
 		//---------------------------------------------------------
 
-		public event Action<UIElement> OnRightClick;
+		public Action<UIElement> OnRightClick;
 
 		public virtual void RightClick()
 		{
@@ -96,7 +125,7 @@ namespace WiiPlayTanksRemake.Internals.UI
 			}
 		}
 
-		public event Action<UIElement> OnRightDown;
+		public Action<UIElement> OnRightDown;
 
 		public virtual void RightDown()
 		{
@@ -106,7 +135,7 @@ namespace WiiPlayTanksRemake.Internals.UI
 			}
 		}
 
-		public event Action<UIElement> OnRightUp;
+		public Action<UIElement> OnRightUp;
 
 		public virtual void RightUp()
 		{
@@ -118,7 +147,7 @@ namespace WiiPlayTanksRemake.Internals.UI
 
 		//--------------------------------------------------------
 
-		public event Action<UIElement> OnMiddleClick;
+		public Action<UIElement> OnMiddleClick;
 
 		public virtual void MiddleClick()
 		{
@@ -128,7 +157,7 @@ namespace WiiPlayTanksRemake.Internals.UI
 			}
 		}
 
-		public event Action<UIElement> OnMiddleDown;
+		public Action<UIElement> OnMiddleDown;
 
 		public virtual void MiddleDown()
 		{
@@ -138,7 +167,7 @@ namespace WiiPlayTanksRemake.Internals.UI
 			}
 		}
 
-		public event Action<UIElement> OnMiddleUp;
+		public Action<UIElement> OnMiddleUp;
 
 		public virtual void MiddleUp()
 		{
@@ -150,7 +179,7 @@ namespace WiiPlayTanksRemake.Internals.UI
 
 		//--------------------------------------------------------
 
-		public event Action<UIElement> OnMouseOver;
+		public Action<UIElement> OnMouseOver;
 
 		public virtual void MouseOver()
 		{
@@ -163,13 +192,16 @@ namespace WiiPlayTanksRemake.Internals.UI
 			{
 				if (Hitbox.Contains(GameUtils.MousePosition))
 				{
-					OnMouseOver?.Invoke(this);
-					MouseHovering = true;
+					if ((HasScissor && Scissor.Contains(GameUtils.MousePosition)) || !HasScissor)
+                    {
+						OnMouseOver?.Invoke(this);
+						MouseHovering = true;
+					}
 				}
 			}
 		}
 
-		public event Action<UIElement> OnMouseOut;
+		public Action<UIElement> OnMouseOut;
 
 		public virtual void MouseOut()
 		{
