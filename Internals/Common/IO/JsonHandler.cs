@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace WiiPlayTanksRemake.Internals.Common.IO
 {
 
-    public class JsonHandler
+    public struct JsonHandler
     {
         public string JsonPath
         {
