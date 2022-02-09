@@ -17,5 +17,7 @@ namespace WiiPlayTanksRemake.Localization
         public static LangCode German = new("de", "DE");
         public static LangCode Russian = new("ru", "RU");
         public static LangCode BrazillianPortuguese = new("pt", "BR");
+        public static LangCode Chinese = new("zh", "CN");
+        public static LangCode Polish = new("pl", "PL");
     }
 }
