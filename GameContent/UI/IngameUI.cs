@@ -66,20 +66,20 @@ namespace WiiPlayTanksRemake.GameContent.UI
             MissionInfoBar.BackgroundColor = Color.Red;
             MissionInfoBar.SetDimensions(650, 1000, 500, 50);
 
-            ResumeButton = new("Resume", font, Color.WhiteSmoke)
+            ResumeButton = new(TankGame.GameLanguage.Resume, font, Color.WhiteSmoke)
             {
                 Visible = false
             };
             ResumeButton.SetDimensions(700, 100, 500, 150);
             ResumeButton.OnLeftClick = (uiElement) => Paused = false;
 
-            RestartButton = new("Start Over", font, Color.WhiteSmoke)
+            RestartButton = new(TankGame.GameLanguage.StartOver, font, Color.WhiteSmoke)
             {
                 Visible = false,
             };
             RestartButton.SetDimensions(700, 350, 500, 150);
 
-            OptionsButton = new("Options", font, Color.WhiteSmoke)
+            OptionsButton = new(TankGame.GameLanguage.Options, font, Color.WhiteSmoke)
             {
                 Visible = false
             };
@@ -98,7 +98,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 BackButton.Visible = true;
             };
 
-            VolumeButton = new("Volume", font, Color.WhiteSmoke)
+            VolumeButton = new(TankGame.GameLanguage.Volume, font, Color.WhiteSmoke)
             {
                 Visible = false
             };
@@ -114,7 +114,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 ControlsButton.Visible = false;
             };
 
-            GraphicsButton = new("Graphics", font, Color.WhiteSmoke)
+            GraphicsButton = new(TankGame.GameLanguage.Graphics, font, Color.WhiteSmoke)
             {
                 Visible = false
             };
@@ -130,7 +130,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 ControlsButton.Visible = false;
             };
 
-            ControlsButton = new("Controls", font, Color.WhiteSmoke)
+            ControlsButton = new(TankGame.GameLanguage.Controls, font, Color.WhiteSmoke)
             {
                 Visible = false
             };
@@ -144,14 +144,14 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 ControlsButton.Visible = false;
             };
 
-            QuitButton = new("Quit", font, Color.WhiteSmoke)
+            QuitButton = new(TankGame.GameLanguage.Quit, font, Color.WhiteSmoke)
             {
                 Visible = false
             };
             QuitButton.SetDimensions(700, 850, 500, 150);
             QuitButton.OnLeftClick = (ui) => TankGame.Quit();
 
-            BackButton = new("Back", font, Color.WhiteSmoke)
+            BackButton = new(TankGame.GameLanguage.Back, font, Color.WhiteSmoke)
             {
                 Visible = false
             };

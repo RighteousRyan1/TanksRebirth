@@ -35,7 +35,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         public static Campaign VanillaCampaign { get; private set; } = new();
 
-        public static Logger ClientLog { get; } = new($"{TankGame.ExePath}", "client");
+        public static Logger ClientLog { get; } = new($"{TankGame.SaveDirectory}", "client");
 
         public static bool InMission { get; set; } = false;
 

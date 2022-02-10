@@ -23,6 +23,7 @@ using WiiPlayTanksRemake.Graphics;
 using System.Management;
 using WiiPlayTanksRemake.Internals.Common.Framework.Input;
 using WiiPlayTanksRemake.Internals.Core;
+using WiiPlayTanksRemake.Localization;
 
 namespace WiiPlayTanksRemake
 {
@@ -57,6 +58,8 @@ namespace WiiPlayTanksRemake
             }
             return "Data not retrieved.";
         }
+
+        public static Language GameLanguage = new();
 
         public static class MemoryParser
         {
@@ -194,15 +197,20 @@ namespace WiiPlayTanksRemake
 
             Camera.GraphicsDevice = GraphicsDevice;
 
-            GameCamera = new Camera()
-                .SetToYawPitchRoll(0.75f, 0, 0)
-                .SetFov(90)
-                .SetPosition(GameCamera.GetPosition() + new Vector3(0, 100, 0));
+            GameCamera = new Camera();
+            GameCamera.SetToYawPitchRoll(0.75f, 0, 0);
+            GameCamera.SetFov(90);
+            GameCamera.SetPosition(GameCamera.GetPosition() + new Vector3(0, 100, 0));
 
             GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(0.75f) * Matrix.CreateTranslation(0f, 0f, 1000f);
             CalculateProjection();
 
             graphics.ApplyChanges();
+
+            // TODO: make this load current language
+
+            Language.LoadLang(ref GameLanguage, LangCode.Spanish);
+
             base.Initialize();
         }
 
@@ -382,16 +390,7 @@ namespace WiiPlayTanksRemake
             spriteBatch.DrawString(Fonts.Default, "Debug Level: " + DebugUtils.CurDebugLabel, new Vector2(10), Color.White, 0f, default, 0.6f, default, default);
             DebugUtils.DrawDebugString(spriteBatch, $"Memory Used: {MemoryParser.FromMegabytes(TotalMemoryUsed)} MB", new(8, GameUtils.WindowHeight * 0.18f));
             DebugUtils.DrawDebugString(spriteBatch, SysText, new(8, GameUtils.WindowHeight * 0.2f));
-            float thing = GameUtils.WindowHeight * 0.25f;
-            List<UIElement> focusedElements = UIElement.GetElementAt(GameUtils.MousePosition, true);
-            foreach (UIElement focusedElement in focusedElements)
-            {
-                if (focusedElement != null)
-                {
-                    DebugUtils.DrawDebugString(spriteBatch, focusedElement.GetType(), new Vector2(400, thing));
-                    thing += 40;
-                }
-            }
+            DebugUtils.DrawDebugString(spriteBatch, $"{GameLanguage.Resume}", new(8, GameUtils.WindowHeight * 0.4f));
 
             graphics.GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 

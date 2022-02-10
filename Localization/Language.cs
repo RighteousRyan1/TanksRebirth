@@ -27,12 +27,17 @@ namespace WiiPlayTanksRemake.Localization
         public string Resolution = "Resolution";
 
         public string Back = "Back";
-        public void LoadLang(LangCode profile)
+
+        public static void LoadLang(ref Language lang, LangCode profile)
         {
             // for example, it would be sane to have en_US or es_SP or jp_JA
-            JsonHandler handler = new(this, Path.Combine(TankGame.SaveDirectory, $"{profile.Language}_{profile.Country}"));
+            JsonHandler handler = new(lang, Path.Combine(TankGame.SaveDirectory, $"{profile.Language}_{profile.Country}.json"));
 
-            handler.DeserializeAndSet<Language>();
+            lang = handler.DeserializeAndSet<Language>();
+
+            // TODO: fix
+
+            // GameContent.GameHandler.ClientLog.Write($"{handler.DeserializeAndSet<Language>().Volume}", Internals.LogType.Debug);
         }
     }
 }

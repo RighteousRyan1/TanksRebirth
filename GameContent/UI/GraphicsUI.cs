@@ -56,7 +56,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             };
             PerPixelLightingToggle.SetDimensions(695, 95, 510, 160);
 
-            PerPixelLightingButton = new("Per-Pixel Lighting", TankGame.Fonts.Default, Color.WhiteSmoke)
+            PerPixelLightingButton = new(TankGame.GameLanguage.PerPxLight, TankGame.Fonts.Default, Color.WhiteSmoke)
             {
                 Visible = false,
                 Tooltip = "Whether or not to draw lighting\non each individual pixel"
@@ -76,7 +76,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             };
             VsyncToggle.SetDimensions(695, 345, 510, 160);
 
-            VsyncButton = new("Vertical Sync", TankGame.Fonts.Default, Color.WhiteSmoke)
+            VsyncButton = new(TankGame.GameLanguage.VSync, TankGame.Fonts.Default, Color.WhiteSmoke)
             {
                 Visible = false
             };
@@ -96,7 +96,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             };
             BorderlessWindowToggle.SetDimensions(695, 595, 510, 160);
 
-            BorderlessWindowButton = new("Borderless Window", TankGame.Fonts.Default, Color.WhiteSmoke)
+            BorderlessWindowButton = new(TankGame.GameLanguage.BorderlessWindow, TankGame.Fonts.Default, Color.WhiteSmoke)
             {
                 Visible = false
             };
@@ -117,7 +117,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             };
 
             //Resolution
-            ResolutionButton = new($"Resolution: {curPair.Key}x{curPair.Value}", TankGame.Fonts.Default, Color.WhiteSmoke)
+            ResolutionButton = new($"{TankGame.GameLanguage.Resolution}: {curPair.Key}x{curPair.Value}", TankGame.Fonts.Default, Color.WhiteSmoke)
             {
                 Visible = false
             };
@@ -139,7 +139,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
                 curPair = commonResolutions[_idxPair];
 
-                ResolutionButton.Text = $"Resolution: {curPair.Key}x{curPair.Value}";
+                ResolutionButton.Text = $"{TankGame.GameLanguage.Resolution}: {curPair.Key}x{curPair.Value}";
             };
             ResolutionButton.OnRightClick = (uiElement) =>
             {
@@ -157,7 +157,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
                 curPair = commonResolutions[_idxPair];
 
-                ResolutionButton.Text = $"Resolution: {curPair.Key}x{curPair.Value}";
+                ResolutionButton.Text = $"{TankGame.GameLanguage.Resolution}: {curPair.Key}x{curPair.Value}";
             };
         }
 
