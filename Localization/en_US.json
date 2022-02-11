@@ -13,7 +13,7 @@
   "PerPxLight": "Per-Pixel Lighting",
   "PerPxLightDesc": "Whether or not to draw lighting on each individual pixel",
   "VSync": "Vertical Sync",
-  "VSyncDesc": "Whether or not to render one full frame cycle per second",
+  "VSyncDesc": "Whether or not to synchronize the game's framerate with the monitor's refresh rate",
   "BorderlessWindow": "Borderless Window",
   "BorderlessWindowDesc": "Whether or not to run the game window borderless",
   "Resolution": "Resolution",
