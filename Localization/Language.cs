@@ -39,14 +39,27 @@ namespace WiiPlayTanksRemake.Localization
         public static void LoadLang(ref Language lang, LangCode code)
         {
             // for example, it would be sane to have en_US or es_SP or jp_JA
-            var path = Path.Combine(Path.Combine("Localization", $"{code}.json"));
-            JsonHandler handler = new(lang, path);
+            try
+            {
+                var path = Path.Combine(Path.Combine("Localization", $"{code}.json"));
+                JsonHandler handler = new(lang, path);
 
-            var newLang = handler.DeserializeAndSet<Language>();
+                var newLang = handler.DeserializeAndSet<Language>();
 
-            lang = newLang;
+                lang = newLang;
 
-            GameContent.GameHandler.ClientLog.Write($"Loading language '{code}'... [ " + path + " ]", Internals.LogType.Debug);
+                GameContent.GameHandler.ClientLog.Write($"Loading language '{code}'... [ " + path + " ]", Internals.LogType.Debug);
+            }
+            catch
+            {
+                GameContent.GameHandler.ClientLog.Write($"Loading language '{code}'... Could not find localization file! Using default language 'en_US' instead.", Internals.LogType.Debug);
+                var path = Path.Combine(Path.Combine("Localization", $"en_US.json"));
+                JsonHandler handler = new(lang, path);
+                var newLang = handler.DeserializeAndSet<Language>();
+
+                lang = newLang;
+                return;
+            }
         }
     }
 }
