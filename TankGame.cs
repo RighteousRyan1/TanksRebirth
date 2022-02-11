@@ -289,46 +289,53 @@ namespace WiiPlayTanksRemake
 
         protected override void Update(GameTime gameTime)
         {
-            UpdateStopwatch.Start();
-
-            DiscordRichPresence.Update();
-
-            LastGameTime = gameTime;
-
-            if (!IngameUI.Paused)
+            try
             {
-                if (Input.MouseRight)
-                    rotVec += GameUtils.GetMouseVelocity(GameUtils.WindowCenter) / 500;
+                UpdateStopwatch.Start();
 
-                if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Up))
-                    zoom += 0.01f;
-                if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Down))
-                    zoom -= 0.01f;
+                DiscordRichPresence.Update();
 
-                if (Input.MouseMiddle)
+                LastGameTime = gameTime;
+
+                if (!IngameUI.Paused)
                 {
-                    off += GameUtils.GetMouseVelocity(GameUtils.WindowCenter);
+                    if (Input.MouseRight)
+                        rotVec += GameUtils.GetMouseVelocity(GameUtils.WindowCenter) / 500;
+
+                    if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Up))
+                        zoom += 0.01f;
+                    if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Down))
+                        zoom -= 0.01f;
+
+                    if (Input.MouseMiddle)
+                    {
+                        off += GameUtils.GetMouseVelocity(GameUtils.WindowCenter);
+                    }
+
+                    GameUtils.GetMouseVelocity(GameUtils.WindowCenter);
+
+                    // why do i need to call this????
+
+                    IsFixedTimeStep = true;
+
+                    if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Tab))
+                        IsFixedTimeStep = false;
+
+                    GameView = Matrix.CreateScale(zoom) * Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(0.75f + rotVec.Y) * Matrix.CreateRotationY(rotVec.X) * Matrix.CreateTranslation(off.X, -off.Y, 0);
                 }
 
-                GameUtils.GetMouseVelocity(GameUtils.WindowCenter);
+                FixedUpdate(gameTime);
 
-                // why do i need to call this????
+                LogicTime = UpdateStopwatch.Elapsed;
 
-                IsFixedTimeStep = true;
+                UpdateStopwatch.Stop();
 
-                if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Tab))
-                    IsFixedTimeStep = false;
-
-                GameView = Matrix.CreateScale(zoom) * Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(0.75f + rotVec.Y) * Matrix.CreateRotationY(rotVec.X) * Matrix.CreateTranslation(off.X, -off.Y, 0);
+                LogicFPS = Math.Round(1f / gameTime.ElapsedGameTime.TotalSeconds);
             }
-            
-            FixedUpdate(gameTime);
-
-            LogicTime = UpdateStopwatch.Elapsed;
-
-            UpdateStopwatch.Stop();
-
-            LogicFPS = Math.Round(1f / gameTime.ElapsedGameTime.TotalSeconds);
+            catch (Exception e)
+            {
+                GameHandler.ClientLog.Write($"{e.Message}\nError:{e.StackTrace}", LogType.Error);
+            }
         }
 
         private static void UpdateGameSystems()
