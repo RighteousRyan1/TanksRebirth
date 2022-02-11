@@ -40,7 +40,12 @@ namespace WiiPlayTanksRemake.GameContent.UI
         public static UITextButton ControlsButton;
 
         public static UITextButton BackButton;
-        
+
+        public static UIDropdown testdropdwn;
+
+        public static UITextButton testbuttondrop1;
+        public static UITextButton testbuttondrop2;
+        public static UITextButton testbuttondrop3;
 
         public static UIElement[] menuElements;
         public static UIElement[] graphicsElements;
@@ -66,6 +71,21 @@ namespace WiiPlayTanksRemake.GameContent.UI
             MissionInfoBar = new((uiPanel, spriteBatch) => spriteBatch.DrawString(font, "Mission 1", uiPanel.Hitbox.Center.ToVector2(), Color.White, new Vector2(1.5f), 0f, drawOrigin));
             MissionInfoBar.BackgroundColor = Color.Red;
             MissionInfoBar.SetDimensions(650, 1000, 500, 50);
+
+            testdropdwn = new("Languages", font, Color.SlateGray);
+            testdropdwn.SetDimensions(500, 500, 250, 100);
+
+            testbuttondrop1 = new("Hi", font, Color.WhiteSmoke);
+            testbuttondrop2 = new("Lang2", font, Color.WhiteSmoke);
+            testbuttondrop3 = new("Lang3", font, Color.WhiteSmoke);
+            testbuttondrop1.SetDimensions(0, 0, 1, 1);
+            testbuttondrop2.SetDimensions(0, 0, 1, 1);
+            testbuttondrop3.SetDimensions(0, 0, 1, 1);
+            testdropdwn.Append(testbuttondrop1);
+            testdropdwn.Append(testbuttondrop2);
+            testdropdwn.Append(testbuttondrop3);
+            testdropdwn.WrapperColor = Color.Red;
+            testdropdwn.Initialize();
 
             ResumeButton = new(TankGame.GameLanguage.Resume, font, Color.WhiteSmoke)
             {
@@ -195,7 +215,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 GraphicsUI.BorderlessWindowToggle,
                 GraphicsUI.ResolutionButton
             };
-            foreach (var button in graphicsElements)
+            foreach (UIElement button in graphicsElements)
             {
                 button.HasScissor = true;
                 button.Scissor = new(0, (int)(GameUtils.WindowHeight * 0.05f), GameUtils.WindowWidth, (int)(GameUtils.WindowHeight * 0.7f));
