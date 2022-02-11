@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+﻿using FontStashSharp;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,7 +16,7 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
         /// <param name="font">Font to check valid characters</param>
         /// <param name="text">Text to valid</param>
         /// <param name="validText">Variable to output the valid text</param>
-        public static void GetSafeText(this SpriteFont font, string text, out string validText)
+        /*public static void GetSafeText(this SpriteFontBase font, string text, out string validText)
         {
             validText = "";
 
@@ -30,6 +31,6 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
                     validText += "?";
                 }
             }
-        }
+        }*/
     }
 }

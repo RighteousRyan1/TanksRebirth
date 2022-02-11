@@ -36,7 +36,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             MusicVolume.BarWidth = 15;
             MusicVolume.SliderColor = Color.WhiteSmoke;
 
-            MusicText = new(TankGame.GameLanguage.MusicVolume, TankGame.Fonts.Default, Color.Black)
+            MusicText = new(TankGame.GameLanguage.MusicVolume, TankGame.TextFont, Color.Black)
             {
                 IgnoreMouseInteractions = true,
                 Visible = false,
@@ -56,7 +56,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             EffectsVolume.BarWidth = 15;
             EffectsVolume.SliderColor = Color.WhiteSmoke;
 
-            EffectsText = new(TankGame.GameLanguage.EffectsVolume, TankGame.Fonts.Default, Color.Black)
+            EffectsText = new(TankGame.GameLanguage.EffectsVolume, TankGame.TextFont, Color.Black)
             {
                 IgnoreMouseInteractions = true,
                 Visible = false
@@ -75,7 +75,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             AmbientVolume.BarWidth = 15;
             AmbientVolume.SliderColor = Color.WhiteSmoke;
 
-            AmbientText = new(TankGame.GameLanguage.AmbientVolume, TankGame.Fonts.Default, Color.Black)
+            AmbientText = new(TankGame.GameLanguage.AmbientVolume, TankGame.TextFont, Color.Black)
             {
                 IgnoreMouseInteractions = true,
                 Visible = false

@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using FontStashSharp;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using WiiPlayTanksRemake.Internals.UI;
 
@@ -32,7 +33,7 @@ namespace WiiPlayTanksRemake.Internals.Common.GameUI
         {
             base.DrawSelf(spriteBatch);
 
-            Texture2D texture = TankGame.UITextures.UIPanelBackground;
+            Texture2D texture = UIPanelBackground;
 
             int border = 12;
 
@@ -59,9 +60,9 @@ namespace WiiPlayTanksRemake.Internals.Common.GameUI
             spriteBatch.Draw(texture, new Rectangle(Hitbox.X, bottomY, border, border), new Rectangle(0, texture.Height - border, border, border), MouseHovering ? Color.CornflowerBlue : Color);
             spriteBatch.Draw(texture, new Rectangle(middleX, bottomY, Hitbox.Width - border * 2, border), new Rectangle(border, texture.Height - border, texture.Width - border * 2, border), MouseHovering ? Color.CornflowerBlue : Color);
             spriteBatch.Draw(texture, new Rectangle(rightX, bottomY, border, border), new Rectangle(texture.Width - border, texture.Height - border, border, border), MouseHovering ? Color.CornflowerBlue : Color);
-            SpriteFont font = TankGame.Fonts.Default;
+            SpriteFontBase font = TankGame.TextFont;
             Vector2 drawOrigin = font.MeasureString(Text) / 2f;
-            spriteBatch.DrawString(font, Text, Hitbox.Center.ToVector2(), Color.Black, 0, drawOrigin, Scale, SpriteEffects.None, 1f);
+            spriteBatch.DrawString(font, Text, Hitbox.Center.ToVector2(), Color.Black, new Vector2(Scale), 0, drawOrigin);
         }
 
         public override void OnInitialize()

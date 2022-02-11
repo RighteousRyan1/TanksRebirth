@@ -89,13 +89,6 @@
 /processorParam:TextureFormat=Compressed
 /build:Assets/cube_stack.fbx
 
-#begin Assets/DefaultFont.spritefont
-/importer:FontDescriptionImporter
-/processor:FontDescriptionProcessor
-/processorParam:PremultiplyAlpha=True
-/processorParam:TextureFormat=Compressed
-/build:Assets/DefaultFont.spritefont
-
 #begin Assets/fanfares/endresults.ogg
 /importer:OggImporter
 /processor:SoundEffectProcessor

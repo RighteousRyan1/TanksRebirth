@@ -1376,7 +1376,7 @@ namespace WiiPlayTanksRemake.GameContent
                         rays.Add(tnkRay2);
                     }*/
 
-                    var tnkRayBase = GeometryUtils.CreateRayFrom2D(Position2D, Vector2.UnitY.RotatedByRadians(TankRotation));
+                    var tnkRayBase = GeometryUtils.CreateRayFrom2D(Position2D, Vector2.UnitY.RotatedByRadians(targetTankRotation + MathHelper.Pi));
                     isCubeInWay = IsCubeInRayPath(tnkRayBase, AiParams.cubeWarinessDistance);
 
                     //isCubeInWay = rays.Any(r => IsCubeInRayPath(r, AiParams.cubeWarinessDistance));

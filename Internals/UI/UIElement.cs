@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using FontStashSharp;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
@@ -11,6 +12,7 @@ namespace WiiPlayTanksRemake.Internals.UI
 {
     public abstract partial class UIElement
     {
+        public static Texture2D UIPanelBackground;
         public bool HasScissor { get; set; }
 
         public Rectangle Scissor = new(-int.MaxValue, -int.MaxValue, 0, 0);
@@ -260,10 +262,10 @@ namespace WiiPlayTanksRemake.Internals.UI
 
         internal void QuickIndicator(SpriteBatch spriteBatch, Color color)
         {
-            SpriteFont font = TankGame.Fonts.Default;
+            SpriteFontBase font = TankGame.TextFont;
             Vector2 scaleFont = font.MeasureString(Tooltip);
-            Rectangle Hitbox = new Rectangle(GameUtils.MouseX + 5, GameUtils.MouseY + 5, (int)scaleFont.X + 30, (int)scaleFont.Y + 30);
-            Texture2D texture = TankGame.UITextures.UIPanelBackground;
+            Rectangle Hitbox = new(GameUtils.MouseX + 5, GameUtils.MouseY + 5, (int)scaleFont.X + 30, (int)scaleFont.Y + 30);
+            Texture2D texture = UIPanelBackground;
 
             int border = 12;
 
@@ -285,7 +287,7 @@ namespace WiiPlayTanksRemake.Internals.UI
             spriteBatch.Draw(texture, new Rectangle(middleX, bottomY, Hitbox.Width - border * 2, border), new Rectangle(border, texture.Height - border, texture.Width - border * 2, border), color);
             spriteBatch.Draw(texture, new Rectangle(rightX, bottomY, border, border), new Rectangle(texture.Width - border, texture.Height - border, border, border), color);
 
-            spriteBatch.DrawString(font, Tooltip, Hitbox.Center.ToVector2(), Color.Black, 0, scaleFont / 2, 1, SpriteEffects.None, 1f);
+            spriteBatch.DrawString(font, Tooltip, Hitbox.Center.ToVector2(), Color.Black, new Vector2(1f), 0f, scaleFont / 2, 1);
         }
     }
 }

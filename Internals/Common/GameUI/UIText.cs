@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using FontStashSharp;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using WiiPlayTanksRemake.Internals.UI;
 
@@ -8,13 +9,13 @@ namespace WiiPlayTanksRemake.Internals.Common.GameUI
     {
         public string Text { get; set; }
 
-        public SpriteFont Font { get; set; }
+        public SpriteFontBase Font { get; set; }
 
         public float Scale { get; set; }
 
         public Color Color { get; set; }
 
-        public UIText(string text, SpriteFont font, Color color, float scale = 1f)
+        public UIText(string text, SpriteFontBase font, Color color, float scale = 1f)
         {
             Text = text;
             Font = font;
@@ -26,7 +27,7 @@ namespace WiiPlayTanksRemake.Internals.Common.GameUI
         {
             base.DrawSelf(spriteBatch);
 
-            spriteBatch.DrawString(Font, Text, Position, Color, Rotation, Font.MeasureString(Text) / 2, Scale, SpriteEffects.None, 0f);
+            spriteBatch.DrawString(Font, Text, Position, Color, new Vector2(Scale), Rotation, Font.MeasureString(Text) / 2);
         }
     }
 }

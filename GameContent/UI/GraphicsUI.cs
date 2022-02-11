@@ -56,13 +56,12 @@ namespace WiiPlayTanksRemake.GameContent.UI
             };
             PerPixelLightingToggle.SetDimensions(695, 95, 510, 160);
 
-            PerPixelLightingButton = new(TankGame.GameLanguage.PerPxLight, TankGame.Fonts.Default, Color.WhiteSmoke)
+            PerPixelLightingButton = new(TankGame.GameLanguage.PerPxLight, TankGame.TextFont, Color.WhiteSmoke)
             {
                 Visible = false,
-                Tooltip = "Whether or not to draw lighting\non each individual pixel"
+                Tooltip = TankGame.GameLanguage.PerPxLightDesc
             };
             PerPixelLightingButton.SetDimensions(700, 100, 500, 150);
-            PerPixelLightingButton.Tooltip = "Whether or not to draw lighting\non each individual pixel";
             PerPixelLightingButton.OnLeftClick = (uiElement) =>
             {
                 TankGame.Settings.PerPixelLighting = !TankGame.Settings.PerPixelLighting;
@@ -76,12 +75,12 @@ namespace WiiPlayTanksRemake.GameContent.UI
             };
             VsyncToggle.SetDimensions(695, 345, 510, 160);
 
-            VsyncButton = new(TankGame.GameLanguage.VSync, TankGame.Fonts.Default, Color.WhiteSmoke)
+            VsyncButton = new(TankGame.GameLanguage.VSync, TankGame.TextFont, Color.WhiteSmoke)
             {
-                Visible = false
+                Visible = false,
+                Tooltip = TankGame.GameLanguage.VSyncDesc
             };
             VsyncButton.SetDimensions(700, 350, 500, 150);
-            VsyncButton.Tooltip = "Whether or not to render a 1 full\nframe cycle per second";
             VsyncButton.OnLeftClick = (uiElement) =>
             {
                 TankGame.Instance.graphics.SynchronizeWithVerticalRetrace = TankGame.Settings.Vsync = !TankGame.Settings.Vsync;
@@ -96,12 +95,12 @@ namespace WiiPlayTanksRemake.GameContent.UI
             };
             BorderlessWindowToggle.SetDimensions(695, 595, 510, 160);
 
-            BorderlessWindowButton = new(TankGame.GameLanguage.BorderlessWindow, TankGame.Fonts.Default, Color.WhiteSmoke)
+            BorderlessWindowButton = new(TankGame.GameLanguage.BorderlessWindow, TankGame.TextFont, Color.WhiteSmoke)
             {
-                Visible = false
+                Visible = false,
+                Tooltip = TankGame.GameLanguage.BorderlessWindowDesc
             };
             BorderlessWindowButton.SetDimensions(700, 600, 500, 150);
-            BorderlessWindowButton.Tooltip = "Whether or not to run the\ngame window borderless";
             BorderlessWindowButton.OnLeftClick = (uiElement) =>
             {
                 if (TankGame.Settings.BorderlessWindow)
@@ -117,12 +116,12 @@ namespace WiiPlayTanksRemake.GameContent.UI
             };
 
             //Resolution
-            ResolutionButton = new($"{TankGame.GameLanguage.Resolution}: {curPair.Key}x{curPair.Value}", TankGame.Fonts.Default, Color.WhiteSmoke)
+            ResolutionButton = new($"{TankGame.GameLanguage.Resolution}: {curPair.Key}x{curPair.Value}", TankGame.TextFont, Color.WhiteSmoke)
             {
-                Visible = false
+                Visible = false,
+                Tooltip = TankGame.GameLanguage.ResolutionDesc
             };
             ResolutionButton.SetDimensions(700, 850, 500, 150);
-            ResolutionButton.Tooltip = "Changes the resolution of the game";
             ResolutionButton.OnLeftClick = (uiElement) =>
             {
                 var tryFind = commonResolutions.FirstOrDefault(x => x.Key == curPair.Key);

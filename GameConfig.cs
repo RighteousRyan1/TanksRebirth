@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework.Input;
 using WiiPlayTanksRemake.GameContent;
+using WiiPlayTanksRemake.Localization;
 
 namespace WiiPlayTanksRemake
 {
@@ -47,6 +48,12 @@ namespace WiiPlayTanksRemake
 
         /// <summary>Used to be casted to a MapTheme to change the... map's theme.</summary>
         public static MapTheme GameTheme { get; set; } = MapTheme.Default;
+
+        #endregion
+
+        #region Language
+
+        public LangCode Language { get; set; } = LangCode.English;
 
         #endregion
     }

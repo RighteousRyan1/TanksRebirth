@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using FontStashSharp;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using WiiPlayTanksRemake.Internals.Common.Utilities;
@@ -10,7 +11,7 @@ namespace WiiPlayTanksRemake.Internals.Common.GameUI
     {
         public string Text { get; set; }
 
-        public SpriteFont Font { get; set; }
+        public SpriteFontBase Font { get; set; }
 
         public Color Color { get; set; }
 
@@ -18,7 +19,7 @@ namespace WiiPlayTanksRemake.Internals.Common.GameUI
 
         public float TextScale { get; set; }
 
-        public UITextButton(string text, SpriteFont font, Color color, float textScale = 1) : base(null, 1, null)
+        public UITextButton(string text, SpriteFontBase font, Color color, float textScale = 1) : base(null, 1, null)
         {
             Text = text;
             Font = font;
@@ -28,7 +29,7 @@ namespace WiiPlayTanksRemake.Internals.Common.GameUI
 
         public override void DrawSelf(SpriteBatch spriteBatch)
         {
-            Texture2D texture = TankGame.UITextures.UIPanelBackground;
+            Texture2D texture = UIPanelBackground;
 
             int border = 12;
 
@@ -49,9 +50,9 @@ namespace WiiPlayTanksRemake.Internals.Common.GameUI
             spriteBatch.Draw(texture, new Rectangle(Hitbox.X, bottomY, border, border), new Rectangle(0, texture.Height - border, border, border), MouseHovering ? HoverColor : Color);
             spriteBatch.Draw(texture, new Rectangle(middleX, bottomY, Hitbox.Width - border * 2, border), new Rectangle(border, texture.Height - border, texture.Width - border * 2, border), MouseHovering ? HoverColor : Color);
             spriteBatch.Draw(texture, new Rectangle(rightX, bottomY, border, border), new Rectangle(texture.Width - border, texture.Height - border, border, border), MouseHovering ? HoverColor : Color);
-            SpriteFont font = TankGame.Fonts.Default;
+            SpriteFontBase font = TankGame.TextFont;
             Vector2 drawOrigin = font.MeasureString(Text) / 2f;
-            spriteBatch.DrawString(font, Text, Hitbox.Center.ToVector2(), Color.Black, 0, drawOrigin, TextScale, SpriteEffects.None, 1f);
+            spriteBatch.DrawString(font, Text, Hitbox.Center.ToVector2(), Color.Black, new Vector2(TextScale), 0, drawOrigin);
         }
     }
 }

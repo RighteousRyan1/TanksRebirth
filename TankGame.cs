@@ -24,6 +24,8 @@ using System.Management;
 using WiiPlayTanksRemake.Internals.Common.Framework.Input;
 using WiiPlayTanksRemake.Internals.Core;
 using WiiPlayTanksRemake.Localization;
+using FontStashSharp.SharpFont;
+using FontStashSharp;
 
 namespace WiiPlayTanksRemake
 {
@@ -129,19 +131,12 @@ namespace WiiPlayTanksRemake
         public static Matrix GameView;
         public static Matrix GameProjection;
 
-        public struct Fonts
-        {
-            public static SpriteFont Default;
-        }
+        private FontSystem _fontSystem;
 
-        public struct UITextures
-        {
-            public static Texture2D UIPanelBackground;
-        }
+        public static SpriteFontBase TextFont;
 
         public TankGame() : base()
         {
-            // IsFixedTimeStep = false;
             graphics = new(this);
 
             Content.RootDirectory = "Content";
@@ -152,6 +147,8 @@ namespace WiiPlayTanksRemake
             IsMouseVisible = false;
 
             graphics.IsFullScreen = false;
+
+            _fontSystem = new();
         }
 
         protected override void Initialize()
@@ -165,34 +162,6 @@ namespace WiiPlayTanksRemake
 
             systems = ReflectionUtils.GetInheritedTypesOf<IGameSystem>(Assembly.GetExecutingAssembly());
 
-            if (!File.Exists(SaveDirectory + Path.DirectorySeparatorChar + "settings.json")) {
-                Settings = new();
-                SettingsHandler = new(Settings, SaveDirectory + Path.DirectorySeparatorChar + "settings.json");
-                JsonSerializerOptions opts = new()
-                {
-                    WriteIndented = true
-                };
-                SettingsHandler.Serialize(opts, true);
-            }
-            else {
-                SettingsHandler = new(Settings, SaveDirectory + Path.DirectorySeparatorChar + "settings.json");
-                Settings = SettingsHandler.DeserializeAndSet<GameConfig>();
-            }
-            #region Config Initialization
-
-            graphics.SynchronizeWithVerticalRetrace = Settings.Vsync;
-            Window.IsBorderless = Settings.BorderlessWindow;
-            PlayerTank.controlUp.AssignedKey = Settings.UpKeybind;
-            PlayerTank.controlDown.AssignedKey = Settings.DownKeybind;
-            PlayerTank.controlLeft.AssignedKey = Settings.LeftKeybind;
-            PlayerTank.controlRight.AssignedKey = Settings.RightKeybind;
-            PlayerTank.controlMine.AssignedKey = Settings.MineKeybind;
-
-            graphics.PreferredBackBufferWidth = Settings.ResWidth;
-            graphics.PreferredBackBufferHeight = Settings.ResHeight;
-
-            #endregion
-
             ResolutionHandler.Initialize(graphics);
 
             Camera.GraphicsDevice = GraphicsDevice;
@@ -202,14 +171,14 @@ namespace WiiPlayTanksRemake
             GameCamera.SetFov(90);
             GameCamera.SetPosition(GameCamera.GetPosition() + new Vector3(0, 100, 0));
 
+            spriteBatch = new(GraphicsDevice);
+
             GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(0.75f) * Matrix.CreateTranslation(0f, 0f, 1000f);
             CalculateProjection();
 
             graphics.ApplyChanges();
 
             // TODO: make this load current language
-
-            Language.LoadLang(ref GameLanguage, LangCode.Spanish);
 
             base.Initialize();
         }
@@ -225,7 +194,7 @@ namespace WiiPlayTanksRemake
         protected override void OnExiting(object sender, EventArgs args)
         {
             GameHandler.ClientLog.Dispose();
-            SettingsHandler = new(Settings, SaveDirectory + Path.DirectorySeparatorChar + "settings.json");
+            SettingsHandler = new(Settings, Path.Combine(SaveDirectory, "settings.json"));
             JsonSerializerOptions opts = new()
             {
                 WriteIndented = true
@@ -247,11 +216,46 @@ namespace WiiPlayTanksRemake
 
             MagicPixel = GameResources.GetGameResource<Texture2D>("Assets/MagicPixel");
 
-            Fonts.Default = GameResources.GetGameResource<SpriteFont>("Assets/DefaultFont");
-            SpriteFontUtils.GetSafeText(Fonts.Default, $"{SysGPU}\n{SysCPU}\n{SysKeybd}\n{SysMouse}", out SysText);
-            
-            spriteBatch = new SpriteBatch(GraphicsDevice);
-            UITextures.UIPanelBackground = GameResources.GetGameResource<Texture2D>("Assets/UIPanelBackground");
+            _fontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/en_US.ttf"));
+            _fontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/ja_JP.ttf"));
+            _fontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/es_ES.ttf"));
+            _fontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/ru_RU.ttf"));
+
+            TextFont = _fontSystem.GetFont(30);
+
+            if (!File.Exists(Path.Combine(SaveDirectory, "settings.json")))
+            {
+                Settings = new();
+                SettingsHandler = new(Settings, Path.Combine(SaveDirectory, "settings.json"));
+                JsonSerializerOptions opts = new()
+                {
+                    WriteIndented = true
+                };
+                SettingsHandler.Serialize(opts, true);
+            }
+            else
+            {
+                SettingsHandler = new(Settings, Path.Combine(SaveDirectory, "settings.json"));
+                Settings = SettingsHandler.DeserializeAndSet<GameConfig>();
+            }
+            #region Config Initialization
+
+            graphics.SynchronizeWithVerticalRetrace = Settings.Vsync;
+            Window.IsBorderless = Settings.BorderlessWindow;
+            PlayerTank.controlUp.AssignedKey = Settings.UpKeybind;
+            PlayerTank.controlDown.AssignedKey = Settings.DownKeybind;
+            PlayerTank.controlLeft.AssignedKey = Settings.LeftKeybind;
+            PlayerTank.controlRight.AssignedKey = Settings.RightKeybind;
+            PlayerTank.controlMine.AssignedKey = Settings.MineKeybind;
+
+            graphics.PreferredBackBufferWidth = Settings.ResWidth;
+            graphics.PreferredBackBufferHeight = Settings.ResHeight;
+
+            Language.LoadLang(ref GameLanguage, Settings.Language);
+
+            #endregion
+
+            UIElement.UIPanelBackground = GameResources.GetGameResource<Texture2D>("Assets/UIPanelBackground");
 
             GameHandler.Initialize();
 
@@ -269,7 +273,6 @@ namespace WiiPlayTanksRemake
                     effect.SetDefaultGameLighting_IngameEntities();
                 }
             }
-
 
             var time = s.Elapsed;
 
@@ -387,10 +390,9 @@ namespace WiiPlayTanksRemake
 
             spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied);
 
-            spriteBatch.DrawString(Fonts.Default, "Debug Level: " + DebugUtils.CurDebugLabel, new Vector2(10), Color.White, 0f, default, 0.6f, default, default);
+            spriteBatch.DrawString(TextFont, "Debug Level: " + DebugUtils.CurDebugLabel, new Vector2(10), Color.White, new Vector2(0.6f));
             DebugUtils.DrawDebugString(spriteBatch, $"Memory Used: {MemoryParser.FromMegabytes(TotalMemoryUsed)} MB", new(8, GameUtils.WindowHeight * 0.18f));
-            DebugUtils.DrawDebugString(spriteBatch, SysText, new(8, GameUtils.WindowHeight * 0.2f));
-            DebugUtils.DrawDebugString(spriteBatch, $"{GameLanguage.Resume}", new(8, GameUtils.WindowHeight * 0.4f));
+            DebugUtils.DrawDebugString(spriteBatch, $"{SysGPU}\n{SysCPU}", new(8, GameUtils.WindowHeight * 0.2f));
 
             graphics.GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 

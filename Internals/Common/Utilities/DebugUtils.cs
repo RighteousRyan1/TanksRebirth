@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using FontStashSharp;
 
 namespace WiiPlayTanksRemake.Internals.Common.Utilities
 {
@@ -33,7 +34,7 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
             if (beginSb)
                 sb.Begin();
 
-            sb.DrawString(TankGame.Fonts.Default, info.ToString(), position, Color.White, 0f, centerIt ? TankGame.Fonts.Default.MeasureString(info.ToString()) / 2 : default, scaleOverride * 0.6f, default, default); 
+            sb.DrawString(TankGame.TextFont, info.ToString(), position, Color.White, new Vector2(scaleOverride * 0.6f), 0f, centerIt ? TankGame.TextFont.MeasureString(info.ToString()) / 2 : default); 
 
             if (beginSb)
                 sb.End();

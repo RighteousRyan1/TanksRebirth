@@ -538,28 +538,28 @@ namespace WiiPlayTanksRemake.GameContent
 
         public static void InitDebugUi()
         {
-            ClearTracks = new("Clear Tracks", TankGame.Fonts.Default, Color.LightBlue, 0.5f);
+            ClearTracks = new("Clear Tracks", TankGame.TextFont, Color.LightBlue, 0.5f);
             ClearTracks.SetDimensions(250, 25, 100, 50);
 
             ClearTracks.OnLeftClick += ClearTankTracks;
 
-            ClearChecks = new("Clear Checks", TankGame.Fonts.Default, Color.LightBlue, 0.5f);
+            ClearChecks = new("Clear Checks", TankGame.TextFont, Color.LightBlue, 0.5f);
             ClearChecks.SetDimensions(250, 95, 100, 50);
 
             ClearChecks.OnLeftClick += ClearTankDeathmarks;
 
-            SetupMissionAgain = new("Restart\nMission", TankGame.Fonts.Default, Color.LightBlue, 0.5f);
+            SetupMissionAgain = new("Restart\nMission", TankGame.TextFont, Color.LightBlue, 0.5f);
             SetupMissionAgain.SetDimensions(250, 165, 100, 50);
 
             SetupMissionAgain.OnLeftClick += RestartMission;
 
-            MovePULeft = new("<", TankGame.Fonts.Default, Color.LightBlue, 0.5f);
+            MovePULeft = new("<", TankGame.TextFont, Color.LightBlue, 0.5f);
             MovePULeft.SetDimensions(GameUtils.WindowWidth / 2 - 100, 25, 50, 50);
 
-            MovePURight = new(">", TankGame.Fonts.Default, Color.LightBlue, 0.5f);
+            MovePURight = new(">", TankGame.TextFont, Color.LightBlue, 0.5f);
             MovePURight.SetDimensions(GameUtils.WindowWidth / 2 + 100, 25, 50, 50);
 
-            Display = new(powerups[mode].Name, TankGame.Fonts.Default, Color.LightBlue, 0.5f);
+            Display = new(powerups[mode].Name, TankGame.TextFont, Color.LightBlue, 0.5f);
             Display.SetDimensions(GameUtils.WindowWidth / 2 - 35, 25, 125, 50);
 
             MovePULeft.OnLeftClick += MovePULeft_OnLeftClick;

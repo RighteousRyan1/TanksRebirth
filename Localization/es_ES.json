@@ -1,0 +1,23 @@
+{
+  "Mission": "Misión",
+  "Resume": "Reanudar",
+  "StartOver": "Reiniciar",
+  "Options": "Opciones",
+  "Quit": "Salir",
+  "Volume": "Volumen",
+  "Graphics": "Gráficos",
+  "Controls": "Controles",
+  "MusicVolume": "Volumen de la Música",
+  "EffectsVolume": "Volumen de efectos",
+  "AmbientVolume": "Volumen Ambiente",
+  "PerPxLight": "Iluminación por Píxel",
+  "PerPxLightDesc": "Si se dibuja la iluminación en cada píxel individualmente",
+  "VSync": "Sincronización vertical",
+  "VSyncDesc": "Si se renderiza un ciclo de fotograma completo por segundo",
+  "BorderlessWindow": "Ventana sin bordes",
+  "BorderlessWindowDesc": "Si se ejecuta el juego con la ventana sin bordes",
+  "Resolution": "Resolución",
+  "ResolutionDesc": "Cambia la resolución del juego",
+  "PressAKey": "Presione una tecla",
+  "Back": "Atrás"
+}

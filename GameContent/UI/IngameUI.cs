@@ -13,6 +13,7 @@ using WiiPlayTanksRemake.Internals.UI;
 using WiiPlayTanksRemake.Internals.Common.Framework.Input;
 using System.Collections.Generic;
 using System.Linq;
+using FontStashSharp;
 
 namespace WiiPlayTanksRemake.GameContent.UI
 {
@@ -60,9 +61,9 @@ namespace WiiPlayTanksRemake.GameContent.UI
         {
             var ttColor = Color.LightGray;
 
-            SpriteFont font = TankGame.Fonts.Default;
+            SpriteFontBase font = TankGame.TextFont;
             Vector2 drawOrigin = font.MeasureString("Mission 1") / 2f;
-            MissionInfoBar = new((uiPanel, spriteBatch) => spriteBatch.DrawString(font, "Mission 1", uiPanel.Hitbox.Center.ToVector2(), Color.White, 0, drawOrigin, 1.5f, SpriteEffects.None, 1f));
+            MissionInfoBar = new((uiPanel, spriteBatch) => spriteBatch.DrawString(font, "Mission 1", uiPanel.Hitbox.Center.ToVector2(), Color.White, new Vector2(1.5f), 0f, drawOrigin));
             MissionInfoBar.BackgroundColor = Color.Red;
             MissionInfoBar.SetDimensions(650, 1000, 500, 50);
 
@@ -267,11 +268,10 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 }
                 // ChatSystem.SendMessage(_gpuSettingsOffset, Color.White, "<Debug>");
             }
-
-            var text = $"Mission 1        x{AITank.CountAll()}";
-            Vector2 drawOrigin = TankGame.Fonts.Default.MeasureString(text) / 2f;
+            var text = $"{TankGame.GameLanguage.Mission} 1        x{AITank.CountAll()}";
+            Vector2 drawOrigin = TankGame.TextFont.MeasureString(text) / 2f;
             MissionInfoBar.UniqueDraw =
-                (uiPanel, spriteBatch) => spriteBatch.DrawString(TankGame.Fonts.Default, text, uiPanel.Hitbox.Center.ToVector2(), Color.White, 0, drawOrigin, 1.5f, SpriteEffects.None, 1f);
+                (uiPanel, spriteBatch) => spriteBatch.DrawString(TankGame.TextFont, text, uiPanel.Hitbox.Center.ToVector2(), Color.White, new Vector2(1.5f), 0, drawOrigin);
             if (Pause.JustPressed) {
                 if (InOptions)
                 {

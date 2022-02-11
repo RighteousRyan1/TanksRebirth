@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using FontStashSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
@@ -80,7 +81,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems
                         break;
                 }
 
-                sb.DrawString(ChatMessage.Font, ChatMessages[i].Content, basePosition + new Vector2(0, i * offset), ChatMessages[i].Color, 0f, drawOrigin, 0.8f, default, default);
+                sb.DrawString(ChatMessage.Font, ChatMessages[i].Content, basePosition + new Vector2(0, i * offset), ChatMessages[i].Color, new Vector2(0.8f), 0f, drawOrigin);
 
                 ChatMessages[i].lifeTime--;
 
@@ -103,7 +104,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems
         public Color Color { get; set; }
 
         /// <summary>The <see cref="SpriteFont"/> in which to use to render the content of this <see cref="ChatMessage"/>.</summary>
-        public static SpriteFont Font => TankGame.Fonts.Default;
+        public static SpriteFontBase Font => TankGame.TextFont;
 
         /// <summary>The duration this <see cref="ChatMessage"/> will persist for.</summary>
         public int lifeTime = 150;

@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using FontStashSharp;
 
 namespace WiiPlayTanksRemake.Internals.Common.Utilities
 {
@@ -191,7 +192,7 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
             chosenTs.Clear();
             return values;
         }
-        public static void DrawStringAtMouse(object text) => TankGame.spriteBatch.DrawString(TankGame.Fonts.Default, text.ToString(), MousePosition + new Vector2(25), Color.White, 0f, Vector2.Zero, 1f, default, 0f);
+        public static void DrawStringAtMouse(object text) => TankGame.spriteBatch.DrawString(TankGame.TextFont, text.ToString(), MousePosition + new Vector2(25), Color.White, new Vector2(1f), 0f, Vector2.Zero);
         public static bool IsPlaying(this SoundEffectInstance instance) => instance.State == SoundState.Playing;
         public static bool IsPaused(this SoundEffectInstance instance) => instance.State == SoundState.Paused;
         public static bool IsStopped(this SoundEffectInstance instance) => instance.State == SoundState.Stopped;

@@ -21,14 +21,15 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
         public static void Initialize()
         {
-            UpKeybindButton = new("Up: " + PlayerTank.controlUp.AssignedKey.ParseKey(), TankGame.Fonts.Default, Color.WhiteSmoke)
+            var pressKey = TankGame.GameLanguage.PressAKey;
+            UpKeybindButton = new("Up: " + PlayerTank.controlUp.AssignedKey.ParseKey(), TankGame.TextFont, Color.WhiteSmoke)
             {
                 Visible = false
             };
             UpKeybindButton.SetDimensions(550, 200, 300, 150);
             UpKeybindButton.OnLeftClick = (uiElement) =>
             {
-                UpKeybindButton.Text = "Press a key";
+                UpKeybindButton.Text = pressKey;
                 PlayerTank.controlUp.OnKeyReassigned = (key) =>
                 {
                     UpKeybindButton.Text = "Up: " + key.ParseKey();
@@ -38,14 +39,14 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 PlayerTank.controlUp.PendKeyReassign = true;
             };
 
-            LeftKeybindButton = new("Left: " + PlayerTank.controlLeft.AssignedKey.ParseKey(), TankGame.Fonts.Default, Color.WhiteSmoke)
+            LeftKeybindButton = new("Left: " + PlayerTank.controlLeft.AssignedKey.ParseKey(), TankGame.TextFont, Color.WhiteSmoke)
             {
                 Visible = false
             };
             LeftKeybindButton.SetDimensions(1050, 200, 300, 150);
             LeftKeybindButton.OnLeftClick = (uiElement) =>
             {
-                LeftKeybindButton.Text = "Press a key";
+                LeftKeybindButton.Text = pressKey;
                 PlayerTank.controlLeft.OnKeyReassigned = (key) =>
                 {
                     LeftKeybindButton.Text = "Left: " + key.ParseKey();
@@ -55,14 +56,14 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 PlayerTank.controlLeft.PendKeyReassign = true;
             };
 
-            RightKeybindButton = new("Right: " + PlayerTank.controlRight.AssignedKey.ParseKey(), TankGame.Fonts.Default, Color.WhiteSmoke)
+            RightKeybindButton = new("Right: " + PlayerTank.controlRight.AssignedKey.ParseKey(), TankGame.TextFont, Color.WhiteSmoke)
             {
                 Visible = false
             };
             RightKeybindButton.SetDimensions(550, 400, 300, 150);
             RightKeybindButton.OnLeftClick = (uiElement) =>
             {
-                RightKeybindButton.Text = "Press a key";
+                RightKeybindButton.Text = pressKey;
                 PlayerTank.controlRight.OnKeyReassigned = (key) =>
                 {
                     RightKeybindButton.Text = "Right: " + key.ParseKey();
@@ -72,14 +73,14 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 PlayerTank.controlRight.PendKeyReassign = true;
             };
 
-            DownKeybindButton = new("Down: " + PlayerTank.controlDown.AssignedKey.ParseKey(), TankGame.Fonts.Default, Color.WhiteSmoke)
+            DownKeybindButton = new("Down: " + PlayerTank.controlDown.AssignedKey.ParseKey(), TankGame.TextFont, Color.WhiteSmoke)
             {
                 Visible = false
             };
             DownKeybindButton.SetDimensions(1050, 400, 300, 150);
             DownKeybindButton.OnLeftClick = (uiElement) =>
             {
-                DownKeybindButton.Text = "Press a key";
+                DownKeybindButton.Text = pressKey;
                 PlayerTank.controlDown.OnKeyReassigned = (key) =>
                 {
                     DownKeybindButton.Text = "Down: " + key.ParseKey();
@@ -89,14 +90,14 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 PlayerTank.controlDown.PendKeyReassign = true;
             };
 
-            MineKeybindButton = new("Mine: " + PlayerTank.controlMine.AssignedKey.ParseKey(), TankGame.Fonts.Default, Color.WhiteSmoke)
+            MineKeybindButton = new("Mine: " + PlayerTank.controlMine.AssignedKey.ParseKey(), TankGame.TextFont, Color.WhiteSmoke)
             {
                 Visible = false
             };
             MineKeybindButton.SetDimensions(800, 600, 300, 150);
             MineKeybindButton.OnLeftClick = (uiElement) =>
             {
-                MineKeybindButton.Text = "Press a key";
+                MineKeybindButton.Text = pressKey;
                 PlayerTank.controlMine.OnKeyReassigned = (key) =>
                 {
                     MineKeybindButton.Text = "Mine: " + key.ParseKey();
