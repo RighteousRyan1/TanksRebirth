@@ -80,6 +80,9 @@
     <None Update="Localization\ja_JP.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Localization\pl_PL.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Localization\ru_RU.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

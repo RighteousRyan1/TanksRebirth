@@ -1,0 +1,23 @@
+{
+  "Mission": "Misja",
+  "Resume": "Wznów",
+  "StartOver": "Zacznij od nowa", // or just "Od nowa" if needed shorter
+  "Options": "Opcje",
+  "Quit": "Wyjdź",
+  "Volume": "Głośność",
+  "Graphics": "Grafika",
+  "Controls": "Sterowanie",
+  "MusicVolume": "Głośność muzyki",
+  "EffectsVolume": "Głośność efektów",
+  "AmbientVolume": "Głośność otoczenia",
+  "PerPxLight": "Oświetlenie per piksel",
+  "PerPxLightDesc": "Czy renderować oświetlenie na każdym pikselu z osobna",
+  "VSync": "Synchronizacja pionowa",
+  "VSyncDesc": "Czy renderować dokładnie 1 pełny cykl klatek na sekundę",
+  "BorderlessWindow": "Okno bez ramki",
+  "BorderlessWindowDesc": "Czy gra powinna używać okna bez ramki",
+  "Resolution": "Rozdzielczość",
+  "ResolutionDesc": "Zmienia rozdzielczość gry",
+  "PressAKey": "Wciśnij dowolny klawisz", // "Wciśnij dowolny przycisk" if gamepad works too
+  "Back": "Wróć"
+}
