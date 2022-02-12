@@ -63,6 +63,10 @@ namespace WiiPlayTanksRemake.Internals.UI
         /// <summary>The rotation of this <see cref="UIElement"/>.</summary>
         public float Rotation { get; set; } = 0;
 
+
+        /// <summary>Whether or not the <see cref="UIElement"/> should draw its children before itself.</summary>
+        public bool ReverseDrawOrder { get; set; }
+
         internal UIElement() {
             AllUIElements.Add(this);
         }
@@ -112,8 +116,16 @@ namespace WiiPlayTanksRemake.Internals.UI
 
             if (!HasScissor)
             {
-                DrawSelf(spriteBatch);
-                DrawChildren(spriteBatch);
+                if (!ReverseDrawOrder)
+                {
+                    DrawSelf(spriteBatch);
+                    DrawChildren(spriteBatch);
+                }
+                else
+                {
+                    DrawChildren(spriteBatch);
+                    DrawSelf(spriteBatch);
+                }
 
                 if (Tooltip is not null && Hitbox.Contains(GameUtils.MousePosition))
                 {
@@ -133,8 +145,16 @@ namespace WiiPlayTanksRemake.Internals.UI
 
                 spriteBatch.Begin(rasterizerState: rastState);
 
-                DrawSelf(spriteBatch);
-                DrawChildren(spriteBatch);
+                if (!ReverseDrawOrder)
+                {
+                    DrawSelf(spriteBatch);
+                    DrawChildren(spriteBatch);
+                }
+                else
+                {
+                    DrawChildren(spriteBatch);
+                    DrawSelf(spriteBatch);
+                }
 
                 if (Tooltip is not null && Hitbox.Contains(GameUtils.MousePosition))
                 {
@@ -182,7 +202,13 @@ namespace WiiPlayTanksRemake.Internals.UI
         public virtual void DrawChildren(SpriteBatch spriteBatch)
         {
             foreach (UIElement child in Children) {
-                child.Draw(spriteBatch);
+                if (child.HasScissor)
+                    spriteBatch.End();
+
+                child?.Draw(spriteBatch);
+
+                if (child.HasScissor)
+                    spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied);
             }
         }
 

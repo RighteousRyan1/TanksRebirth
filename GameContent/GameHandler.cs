@@ -184,6 +184,8 @@ namespace WiiPlayTanksRemake.GameContent
 
             foreach (var element in UIElement.AllUIElements.ToList()) {
                 //element.Position = Vector2.Transform(element.Position, UIMatrix * Matrix.CreateTranslation(element.Position.X, element.Position.Y, 0));
+                if (element.Parent != null)
+                    continue;
 
                 if (element.HasScissor)
                     TankGame.spriteBatch.End();
@@ -236,6 +238,32 @@ namespace WiiPlayTanksRemake.GameContent
 
                     el.MouseOver();
                 }
+            }
+
+            List<UIElement> trySlider = UIElement.GetElementAt(GameUtils.MousePosition);
+
+            if (trySlider.Count > 0)
+            {
+                if (trySlider[0] != null)
+                {
+                    UIElement elementWeWant = trySlider[0].GetElementAt(GameUtils.MousePosition);
+                    if (elementWeWant.GetType() != typeof(UIImage))
+                        return;
+
+                    elementWeWant.LeftClick();
+                    elementWeWant.LeftDown();
+                    elementWeWant.LeftUp();
+
+                    elementWeWant.RightClick();
+                    elementWeWant.RightDown();
+                    elementWeWant.RightUp();
+
+                    elementWeWant.MiddleClick();
+                    elementWeWant.MiddleDown();
+                    elementWeWant.MiddleUp();
+
+                    elementWeWant.MouseOver();
+                } 
             }
 
             foreach (UIElement element in UIElement.AllUIElements)

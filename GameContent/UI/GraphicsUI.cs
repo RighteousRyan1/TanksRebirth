@@ -49,7 +49,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             }
 
             //Per-Pixel Lighting
-            PerPixelLightingToggle = new(null, 1, (uiImage, spriteBatch) => DrawIndic(spriteBatch, uiImage.Hitbox, TankGame.Settings.Vsync))
+            PerPixelLightingToggle = new(null, 1, (uiImage, spriteBatch) => DrawIndic(spriteBatch, uiImage.Hitbox, TankGame.Settings.PerPixelLighting))
             {
                 Visible = false,
                 IgnoreMouseInteractions = true
@@ -88,7 +88,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             };
 
             //Borderless Window
-            BorderlessWindowToggle = new(null, 1, (uiImage, spriteBatch) => DrawIndic(spriteBatch, uiImage.Hitbox, TankGame.Settings.Vsync))
+            BorderlessWindowToggle = new(null, 1, (uiImage, spriteBatch) => DrawIndic(spriteBatch, uiImage.Hitbox, TankGame.Settings.BorderlessWindow))
             {
                 Visible = false,
                 IgnoreMouseInteractions = true
