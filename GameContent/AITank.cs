@@ -46,8 +46,6 @@ namespace WiiPlayTanksRemake.GameContent
         {
             /// <summary>The max angle of which this tank will "meander," or change its movement direction.</summary>
             public float meanderAngle;
-            /// <summary>How often this tank will take a large turn.</summary>
-            public int bigMeanderFrequency;
             /// <summary>How often this tank will take a turn at <see cref="meanderAngle"/> radians.</summary>
             public int meanderFrequency;
 
@@ -289,7 +287,6 @@ namespace WiiPlayTanksRemake.GameContent
                     break;
 
                 case TankTier.Ash:
-                    AiParams.bigMeanderFrequency = 120;
                     AiParams.meanderAngle = 1.8f;
                     AiParams.meanderFrequency = 40;
                     AiParams.turretMeanderFrequency = 40;
@@ -322,7 +319,6 @@ namespace WiiPlayTanksRemake.GameContent
                     break;
 
                 case TankTier.Marine:
-                    AiParams.bigMeanderFrequency = 90;
                     AiParams.meanderAngle = 0.4f;
                     AiParams.meanderFrequency = 15;
                     AiParams.turretMeanderFrequency = 10;
@@ -356,7 +352,6 @@ namespace WiiPlayTanksRemake.GameContent
                     break;
 
                 case TankTier.Yellow:
-                    AiParams.bigMeanderFrequency = 150;
                     AiParams.meanderAngle = MathHelper.Pi;
                     AiParams.meanderFrequency = 30;
                     AiParams.turretMeanderFrequency = 20;
@@ -394,7 +389,6 @@ namespace WiiPlayTanksRemake.GameContent
                     break;
 
                 case TankTier.Pink:
-                    AiParams.bigMeanderFrequency = 100;
                     AiParams.meanderAngle = 0.3f;
                     AiParams.meanderFrequency = 15;
                     AiParams.turretMeanderFrequency = 40;
@@ -457,7 +451,6 @@ namespace WiiPlayTanksRemake.GameContent
                     break;
 
                 case TankTier.Purple:
-                    AiParams.bigMeanderFrequency = 90;
                     AiParams.meanderAngle = 1f;
                     AiParams.meanderFrequency = 20;
                     AiParams.turretMeanderFrequency = 25;
@@ -497,7 +490,6 @@ namespace WiiPlayTanksRemake.GameContent
                     break;
 
                 case TankTier.White:
-                    AiParams.bigMeanderFrequency = 120;
                     AiParams.meanderAngle = 0.9f;
                     AiParams.meanderFrequency = 60;
                     AiParams.turretMeanderFrequency = 20;
@@ -537,7 +529,6 @@ namespace WiiPlayTanksRemake.GameContent
                     break;
 
                 case TankTier.Black:
-                    AiParams.bigMeanderFrequency = 80;
                     AiParams.meanderAngle = MathHelper.Pi;
                     AiParams.meanderFrequency = 45;
                     AiParams.turretMeanderFrequency = 20;
@@ -595,7 +586,6 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.minePlacementChance = 0.05f;
                     break;
                 case TankTier.Silver:
-                    AiParams.bigMeanderFrequency = 60;
                     AiParams.meanderAngle = 0.5f;
                     AiParams.meanderFrequency = 10;
                     AiParams.turretMeanderFrequency = 60;
@@ -634,7 +624,6 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.minePlacementChance = 0.05f;
                     break;
                 case TankTier.Sapphire:
-                    AiParams.bigMeanderFrequency = 120;
                     AiParams.meanderAngle = 0.25f;
                     AiParams.meanderFrequency = 15;
                     AiParams.turretMeanderFrequency = 20;
@@ -673,7 +662,6 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.minePlacementChance = 0.05f;
                     break;
                 case TankTier.Ruby:
-                    AiParams.bigMeanderFrequency = 120;
                     AiParams.meanderAngle = 0.35f;
                     AiParams.meanderFrequency = 10;
                     AiParams.turretMeanderFrequency = 20;
@@ -712,7 +700,6 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.minePlacementChance = 0;
                     break;
                 case TankTier.Citrine:
-                    AiParams.bigMeanderFrequency = 90;
                     AiParams.meanderAngle = 0.7f;
                     AiParams.meanderFrequency = 30;
                     AiParams.turretMeanderFrequency = 20;
@@ -753,7 +740,6 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.shootChance = 0.95f;
                     break;
                 case TankTier.Amethyst:
-                    AiParams.bigMeanderFrequency = 40;
                     AiParams.meanderAngle = 0.3f;
                     AiParams.meanderFrequency = 4;
                     AiParams.turretMeanderFrequency = 15;
@@ -808,7 +794,6 @@ namespace WiiPlayTanksRemake.GameContent
                     break;
 
                 case TankTier.Gold:
-                    AiParams.bigMeanderFrequency = 80;
                     AiParams.meanderAngle = 1.8f;
                     AiParams.meanderFrequency = 20;
                     AiParams.turretMeanderFrequency = 20;
@@ -853,7 +838,6 @@ namespace WiiPlayTanksRemake.GameContent
                     break;
 
                 case TankTier.Obsidian:
-                    AiParams.bigMeanderFrequency = 80;
                     AiParams.meanderAngle = 1.2f;
                     AiParams.meanderFrequency = 20;
                     AiParams.turretMeanderFrequency = 20;
@@ -894,7 +878,6 @@ namespace WiiPlayTanksRemake.GameContent
                 #endregion
                 #region AdvancedMod
                 case TankTier.Granite:
-                    AiParams.bigMeanderFrequency = 100;
                     AiParams.meanderAngle = 0.8f;
                     AiParams.meanderFrequency = 10;
                     AiParams.turretMeanderFrequency = 20;
@@ -926,7 +909,6 @@ namespace WiiPlayTanksRemake.GameContent
                     treadSoundTimer = 4;
                     break;
                 case TankTier.Water:
-                    AiParams.bigMeanderFrequency = 100;
                     AiParams.meanderAngle = 0.25f;
                     AiParams.meanderFrequency = 15;
                     AiParams.turretMeanderFrequency = 10;
@@ -958,7 +940,6 @@ namespace WiiPlayTanksRemake.GameContent
                     treadSoundTimer = 4;
                     break;
                 case TankTier.Creeper:
-                    AiParams.bigMeanderFrequency = 100;
                     AiParams.meanderAngle = 0.2f;
                     AiParams.meanderFrequency = 25;
                     AiParams.turretMeanderFrequency = 40;
@@ -1006,7 +987,6 @@ namespace WiiPlayTanksRemake.GameContent
                     Stationary = true;
                     break;
                 case TankTier.Marble:
-                    AiParams.bigMeanderFrequency = 100;
                     AiParams.meanderAngle = MathHelper.PiOver2;
                     AiParams.meanderFrequency = 10;
                     AiParams.turretMeanderFrequency = 20;
@@ -1435,18 +1415,6 @@ namespace WiiPlayTanksRemake.GameContent
                                     TankRotation += MathHelper.TwoPi;*/
 
                                 // TankRotation = MathHelper.Lerp(TankRotation, targetTankRotation, 4.3f / 60f);
-                            }
-
-                            if (Behaviors[0].IsModOf(AiParams.bigMeanderFrequency))
-                            {
-                                var meanderRandom = new Random().NextFloat(-MathHelper.PiOver2, MathHelper.PiOver2);
-
-                                targetTankRotation += meanderRandom;
-
-                                /*if (targetTankRotation > MathHelper.TwoPi)
-                                    targetTankRotation = targetTankRotation - MathHelper.TwoPi;
-                                else if (targetTankRotation < 0)
-                                    targetTankRotation = MathHelper.TwoPi + targetTankRotation;*/
                             }
                         }
                     }

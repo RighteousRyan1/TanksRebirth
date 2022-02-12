@@ -41,18 +41,14 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
         public static UITextButton BackButton;
 
-        public static UIDropdown testdropdwn;
+        // public static UIDropdown testdropdwn;
 
-        public static UITextButton testbuttondrop1;
-        public static UITextButton testbuttondrop2;
-        public static UITextButton testbuttondrop3;
+        //public static UITextButton testbuttondrop1;
+        //public static UITextButton testbuttondrop2;
+        //public static UITextButton testbuttondrop3;
 
         public static UIElement[] menuElements;
         public static UIElement[] graphicsElements;
-
-        // public static UIDropdown test;
-        // public static UIImageButton dropperTest;
-        // public static UIImageButton dropperTest2;
 
         public static bool Paused { get; set; } = false;
 
@@ -72,7 +68,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             MissionInfoBar.BackgroundColor = Color.Red;
             MissionInfoBar.SetDimensions(650, 1000, 500, 50);
 
-            testdropdwn = new("Languages", font, Color.SlateGray);
+            /*testdropdwn = new("Languages", font, Color.SlateGray);
             testdropdwn.SetDimensions(500, 500, 250, 100);
 
             testbuttondrop1 = new("Hi", font, Color.WhiteSmoke);
@@ -85,7 +81,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             testdropdwn.Append(testbuttondrop2);
             testdropdwn.Append(testbuttondrop3);
             testdropdwn.WrapperColor = Color.Red;
-            testdropdwn.Initialize();
+            testdropdwn.Initialize();*/
 
             ResumeButton = new(TankGame.GameLanguage.Resume, font, Color.WhiteSmoke)
             {
