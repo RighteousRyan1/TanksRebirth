@@ -1,6 +1,7 @@
 ﻿using FontStashSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using WiiPlayTanksRemake.Internals.Common.Utilities;
 using WiiPlayTanksRemake.Internals.UI;
 
 namespace WiiPlayTanksRemake.Internals.Common.GameUI
@@ -9,11 +10,15 @@ namespace WiiPlayTanksRemake.Internals.Common.GameUI
     {
         public string Text { get; set; }
 
-        public SpriteFont Font { get; set; }
+        public SpriteFontBase Font { get; set; }
 
         public float Scale { get; set; }
 
         public Color Color { get; set; }
+
+        public Color WrapperColor { get; set; }
+
+        public Color ScrollBarColor { get; set; }
 
         public bool Dropped { get; set; } = false;
 
@@ -21,27 +26,88 @@ namespace WiiPlayTanksRemake.Internals.Common.GameUI
 
         private Rectangle scroll;
 
-        public UIDropdown(string text, SpriteFont font, Color color, float scale = 1f)
+        private static int _newScroll;
+        private static int _oldScroll;
+        private static float _gpuSettingsOffset = 0f;
+        private static float _push = 0f;
+
+        public UIDropdown(string text, SpriteFontBase font, Color color, float scale = 1f)
         {
             Text = text;
             Font = font;
             Color = color;
             Scale = scale;
+            WrapperColor = Color.Gray;
+            ScrollBarColor = Color.White;
         }
 
         public override void DrawSelf(SpriteBatch spriteBatch)
         {
             base.DrawSelf(spriteBatch);
 
-            Texture2D texture = UIPanelBackground;
+            _newScroll = Input.CurrentMouseSnapshot.ScrollWheelValue;
+            if (_newScroll != _oldScroll && wrapper.Contains(GameUtils.MousePosition) && Dropped)
+            {
+                _gpuSettingsOffset = _newScroll - _oldScroll;
+                _push += _gpuSettingsOffset;
+                foreach (UIElement element in Children)
+                {
+                    element.Position = new(element.Position.X, element.Position.Y + _gpuSettingsOffset);
+                    element.MouseHovering = false;
+                }
+                scroll = new(scroll.X, (int)(scroll.Y - _gpuSettingsOffset / Children.Count), scroll.Width, scroll.Height);
+            }
 
-            int border = 12;
+            const int border = 12;
 
             if (Dropped)
             {
-                spriteBatch.Draw(TankGame.MagicPixel, wrapper, new Rectangle(0, 0, border, border), Color);
-                spriteBatch.Draw(TankGame.MagicPixel, scroll, new Rectangle(0, 0, border, border), Color.Gray);
+                spriteBatch.Draw(TankGame.MagicPixel, wrapper, new Rectangle(0, 0, border, border), WrapperColor);
+                spriteBatch.Draw(TankGame.MagicPixel, scroll, new Rectangle(0, 0, border, border), ScrollBarColor);
             }
+
+            _oldScroll = _newScroll;
+        }
+
+        public override void OnInitialize()
+        {
+            wrapper = new Rectangle(Hitbox.X, Hitbox.Y, Hitbox.Width + 10, Hitbox.Height + 200);
+            scroll = new Rectangle(Hitbox.X + Hitbox.Width, Hitbox.Y, 10, 40);
+            foreach (UIElement child in Children)
+            {
+                child.Visible = Dropped;
+                child.HasScissor = true;
+                child.Scissor = wrapper;
+            }
+            HasScissor = true;
+            Scissor = wrapper;
+            OnLeftClick = (uiElement) =>
+            {
+                Dropped = !Dropped;
+                foreach (UIElement child in Children)
+                {
+                    child.Visible = Dropped;
+                }
+            };
+            base.OnInitialize();
+        }
+
+        public override void DrawChildren(SpriteBatch spriteBatch)
+        {
+            if (Dropped)
+            {
+                int shift = 0;
+                foreach (UIElement child in Children)
+                {
+                    shift++;
+                    child.SetDimensions(Position.X, Position.Y + (_push / Children.Count) + (shift * Hitbox.Height), Hitbox.Width, Hitbox.Height);
+                }
+                base.DrawChildren(spriteBatch);
+            }
+
+            Texture2D texture = UIPanelBackground;
+
+            const int border = 12;
 
             int middleX = Hitbox.X + border;
             int rightX = Hitbox.Right - border;
@@ -63,41 +129,7 @@ namespace WiiPlayTanksRemake.Internals.Common.GameUI
             SpriteFontBase font = TankGame.TextFont;
             Vector2 drawOrigin = font.MeasureString(Text) / 2f;
             spriteBatch.DrawString(font, Text, Hitbox.Center.ToVector2(), Color.Black, new Vector2(Scale), 0, drawOrigin);
-        }
 
-        public override void OnInitialize()
-        {
-            wrapper = new Rectangle(Hitbox.X, Hitbox.Y, Hitbox.Width + 10, Hitbox.Height + 200);
-            scroll = new Rectangle(Hitbox.X + Hitbox.Width, Hitbox.Y, 10, 40);
-            foreach (UIImageButton child in Children)
-            {
-                child.Visible = Dropped;
-                child.Scissor = wrapper;
-            }
-            OnLeftClick += UIDropdown_OnLeftClick;
-        }
-
-        private void UIDropdown_OnLeftClick(UIElement obj)
-        {
-            Dropped = !Dropped;
-            foreach (UIImageButton child in Children)
-            {
-                child.Visible = Dropped;
-            }
-        }
-
-        public override void DrawChildren(SpriteBatch spriteBatch)
-        {
-            if (!Dropped)
-                return;
-
-            int shift = 0;
-            foreach (UIImageButton child in Children)
-            {
-                shift++;
-                child.SetDimensions(Position.X, Position.Y + (shift * (Hitbox.Height)), Hitbox.Width, Hitbox.Height);
-            }
-            base.DrawChildren(spriteBatch);
         }
     }
 }

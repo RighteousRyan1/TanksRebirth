@@ -26,6 +26,7 @@ using WiiPlayTanksRemake.Internals.Core;
 using WiiPlayTanksRemake.Localization;
 using FontStashSharp.SharpFont;
 using FontStashSharp;
+using WiiPlayTanksRemake.Internals.Common.GameUI;
 
 namespace WiiPlayTanksRemake
 {
