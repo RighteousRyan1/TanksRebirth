@@ -164,17 +164,20 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 if (owner != null)
                 {
-                    foreach (var target in GameHandler.AllTanks.Where(tank => tank is not null && tank.Team != owner.Team && Vector3.Distance(position, tank.position) <= homingProperties.radius))
+                    foreach (var target in GameHandler.AllTanks)
                     {
-                        float dist = Vector3.Distance(position, target.position);
+                        if (target is not null && target.Team != owner.Team && Vector3.Distance(position, target.position) <= homingProperties.radius)
+                        {
+                            float dist = Vector3.Distance(position, target.position);
 
-                        velocity.X += (target.position.X - position.X) * homingProperties.power / dist;
-                        velocity.Z += (target.position.Z - position.Z) * homingProperties.power / dist;
+                            velocity.X += (target.position.X - position.X) * homingProperties.power / dist;
+                            velocity.Z += (target.position.Z - position.Z) * homingProperties.power / dist;
 
-                        Vector3 trueSpeed = Vector3.Normalize(velocity) * homingProperties.speed;
+                            Vector3 trueSpeed = Vector3.Normalize(velocity) * homingProperties.speed;
 
 
-                        velocity = trueSpeed;
+                            velocity = trueSpeed;
+                        }
                     }
                 }
             }
@@ -202,13 +205,37 @@ namespace WiiPlayTanksRemake.GameContent
 
         public void CheckCollisions()
         {
-            foreach (var tank in GameHandler.AllAITanks.Where(tnk => tnk is not null))
+            foreach (var tank in GameHandler.AllAITanks)
             {
-                if (tank.CollisionBox.Intersects(hurtbox))
+                if (tank is not null)
                 {
-                    if (owner != null)
+                    if (tank.CollisionBox.Intersects(hurtbox))
                     {
-                        if (tank.Team == owner.Team && tank != owner && tank.Team != Team.NoTeam)
+                        if (owner != null)
+                        {
+                            if (tank.Team == owner.Team && tank != owner && tank.Team != Team.NoTeam)
+                                Destroy();
+                            else
+                            {
+                                Destroy();
+                                tank.Destroy();
+                            }
+                        }
+                        else
+                        {
+                            Destroy();
+                            tank.Destroy();
+                        }
+                    }
+                }
+            }
+            foreach (var tank in GameHandler.AllPlayerTanks)
+            {
+                if (tank is not null)
+                {
+                    if (tank.CollisionBox.Intersects(hurtbox))
+                    {
+                        if (tank.Team == owner.Team && tank != owner)
                             Destroy();
                         else
                         {
@@ -216,33 +243,18 @@ namespace WiiPlayTanksRemake.GameContent
                             tank.Destroy();
                         }
                     }
-                    else
-                    {
-                        Destroy();
-                        tank.Destroy();
-                    }
-                }
-            }
-            foreach (var tank in GameHandler.AllPlayerTanks.Where(tnk => tnk is not null))
-            {
-                if (tank.CollisionBox.Intersects(hurtbox))
-                {
-                    if (tank.Team == owner.Team && tank != owner)
-                        Destroy();
-                    else
-                    {
-                        Destroy();
-                        tank.Destroy();
-                    }
                 }
             }
 
-            foreach (var bullet in AllShells.Where(b => b is not null && b != this))
+            foreach (var bullet in AllShells)
             {
-                if (bullet.hurtbox.Intersects(hurtbox))
+                if (bullet is not null && bullet != this)
                 {
-                    bullet.Destroy();
-                    Destroy();
+                    if (bullet.hurtbox.Intersects(hurtbox))
+                    {
+                        bullet.Destroy();
+                        Destroy();
+                    }
                 }
             }
         }

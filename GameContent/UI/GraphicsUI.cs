@@ -26,9 +26,9 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
         private static int _idxPair;
 
-        private static KeyValuePair<int, int> curPair = new(TankGame.Settings.ResWidth, TankGame.Settings.ResHeight);
+        public static KeyValuePair<int, int> CurrentRes = new(TankGame.Settings.ResWidth, TankGame.Settings.ResHeight);
 
-        private static KeyValuePair<int, int>[] commonResolutions = new KeyValuePair<int, int>[]
+        private static KeyValuePair<int, int>[] CommonResolutions = new KeyValuePair<int, int>[]
         {
             new(640, 480),
             new(1280, 720),
@@ -116,7 +116,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             };
 
             //Resolution
-            ResolutionButton = new($"{TankGame.GameLanguage.Resolution}: {curPair.Key}x{curPair.Value}", TankGame.TextFont, Color.WhiteSmoke)
+            ResolutionButton = new($"{TankGame.GameLanguage.Resolution}: {CurrentRes.Key}x{CurrentRes.Value}", TankGame.TextFont, Color.WhiteSmoke)
             {
                 Visible = false,
                 Tooltip = TankGame.GameLanguage.ResolutionDesc
@@ -124,39 +124,39 @@ namespace WiiPlayTanksRemake.GameContent.UI
             ResolutionButton.SetDimensions(700, 850, 500, 150);
             ResolutionButton.OnLeftClick = (uiElement) =>
             {
-                var tryFind = commonResolutions.FirstOrDefault(x => x.Key == curPair.Key);
+                var tryFind = CommonResolutions.FirstOrDefault(x => x.Key == CurrentRes.Key);
 
-                if (Array.IndexOf(commonResolutions, tryFind) > -1)
+                if (Array.IndexOf(CommonResolutions, tryFind) > -1)
                 {
-                    _idxPair = Array.IndexOf(commonResolutions, tryFind);
+                    _idxPair = Array.IndexOf(CommonResolutions, tryFind);
                 }
 
                 _idxPair++;
 
-                if (_idxPair >= commonResolutions.Length)
+                if (_idxPair >= CommonResolutions.Length)
                     _idxPair = 0;
 
-                curPair = commonResolutions[_idxPair];
+                CurrentRes = CommonResolutions[_idxPair];
 
-                ResolutionButton.Text = $"{TankGame.GameLanguage.Resolution}: {curPair.Key}x{curPair.Value}";
+                ResolutionButton.Text = $"{TankGame.GameLanguage.Resolution}: {CurrentRes.Key}x{CurrentRes.Value}";
             };
             ResolutionButton.OnRightClick = (uiElement) =>
             {
-                var tryFind = commonResolutions.FirstOrDefault(x => x.Key == curPair.Key);
+                var tryFind = CommonResolutions.FirstOrDefault(x => x.Key == CurrentRes.Key);
 
-                if (Array.IndexOf(commonResolutions, tryFind) > -1)
+                if (Array.IndexOf(CommonResolutions, tryFind) > -1)
                 {
-                    _idxPair = Array.IndexOf(commonResolutions, tryFind);
+                    _idxPair = Array.IndexOf(CommonResolutions, tryFind);
                 }
 
                 _idxPair--;
 
                 if (_idxPair < 0)
-                    _idxPair = commonResolutions.Length - 1;
+                    _idxPair = CommonResolutions.Length - 1;
 
-                curPair = commonResolutions[_idxPair];
+                CurrentRes = CommonResolutions[_idxPair];
 
-                ResolutionButton.Text = $"{TankGame.GameLanguage.Resolution}: {curPair.Key}x{curPair.Value}";
+                ResolutionButton.Text = $"{TankGame.GameLanguage.Resolution}: {CurrentRes.Key}x{CurrentRes.Value}";
             };
         }
 

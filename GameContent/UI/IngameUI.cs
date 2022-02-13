@@ -236,10 +236,14 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 GraphicsButton.Visible = true;
                 ControlsButton.Visible = true;
 
-                //TankGame.Instance.graphics.PreferredBackBufferWidth = TankGame.Settings.ResWidth;
-                //TankGame.Instance.graphics.PreferredBackBufferHeight = TankGame.Settings.ResHeight;
+                TankGame.Settings.ResWidth = GraphicsUI.CurrentRes.Key;
+                TankGame.Settings.ResHeight = GraphicsUI.CurrentRes.Value;
 
-                //TankGame.Instance.graphics.ApplyChanges();
+
+                TankGame.Instance.graphics.PreferredBackBufferWidth = TankGame.Settings.ResWidth;
+                TankGame.Instance.graphics.PreferredBackBufferHeight = TankGame.Settings.ResHeight;
+
+                TankGame.Instance.graphics.ApplyChanges();
 
                 // FIXME: acts weird
                 // TankGame.Instance.CalculateProjection();

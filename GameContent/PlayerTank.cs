@@ -306,12 +306,15 @@ namespace WiiPlayTanksRemake.GameContent
 
             var dummyVel = Velocity2D;
 
-            foreach (var c in Cube.cubes.Where(c => c is not null))
+            foreach (var c in Cube.cubes)
             {
-                Collision.HandleCollisionSimple(CollisionBox2D, c.collider2d, ref dummyVel, ref position);
+                if (c is not null)
+                {
+                    Collision.HandleCollisionSimple(CollisionBox2D, c.collider2d, ref dummyVel, ref position);
 
-                velocity.X = dummyVel.X;
-                velocity.Z = dummyVel.Y;
+                    velocity.X = dummyVel.X;
+                    velocity.Z = dummyVel.Y;
+                }
             }
         }
 

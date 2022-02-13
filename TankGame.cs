@@ -364,22 +364,25 @@ namespace WiiPlayTanksRemake
                 GameHandler.Update();
 
 
-                foreach (var tnk in GameHandler.AllTanks.Where(tnk => tnk is not null && !tnk.Dead))
+                foreach (var tnk in GameHandler.AllTanks)
                 {
-                    if (GameUtils.GetMouseToWorldRay().Intersects(tnk.CollisionBox).HasValue)
+                    if (tnk is not null && !tnk.Dead)
                     {
-                        if (Input.KeyJustPressed(Keys.K))
+                        if (GameUtils.GetMouseToWorldRay().Intersects(tnk.CollisionBox).HasValue)
                         {
-                            // var tnk = WPTR.AllAITanks.FirstOrDefault(tank => tank is not null && !tank.Dead && tank.tier == AITank.GetHighestTierActive());
+                            if (Input.KeyJustPressed(Keys.K))
+                            {
+                                // var tnk = WPTR.AllAITanks.FirstOrDefault(tank => tank is not null && !tank.Dead && tank.tier == AITank.GetHighestTierActive());
 
-                            if (Array.IndexOf(GameHandler.AllAITanks, tnk) > -1)
-                                tnk?.Destroy();
+                                if (Array.IndexOf(GameHandler.AllAITanks, tnk) > -1)
+                                    tnk?.Destroy();
+                            }
+
+                            tnk.IsHoveredByMouse = true;
                         }
-
-                        tnk.IsHoveredByMouse = true;
+                        else
+                            tnk.IsHoveredByMouse = false;
                     }
-                    else
-                        tnk.IsHoveredByMouse = false;
                 }
             }
 

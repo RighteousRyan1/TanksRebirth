@@ -51,6 +51,8 @@ namespace WiiPlayTanksRemake.GameContent
         /// <summary>Whether or not this <see cref="Mine"/> has detonated.</summary>
         public bool Detonated { get; set; }
 
+        public int mineReactTime = 60;
+
         /// <summary>
         /// Creates a new <see cref="Mine"/>.
         /// </summary>
@@ -91,20 +93,17 @@ namespace WiiPlayTanksRemake.GameContent
 
             SoundPlayer.PlaySoundInstance(destroysound, SoundContext.Effect, 0.4f);
             
-            foreach (var shell in Shell.AllShells.Where(shell => shell is not null && Vector3.Distance(shell.position, position) < explosionRadius))
+            foreach (var shell in Shell.AllShells)
             {
-                shell.Destroy();
+                if (shell is not null && Vector3.Distance(shell.position, position) < explosionRadius)
+                    shell.Destroy();
             }
-            foreach (var tank in GameHandler.AllTanks.Where(tank => tank is not null && Vector3.Distance(tank.position, position) < explosionRadius))
+            foreach (var tank in GameHandler.AllTanks)
             {
-                if (!tank.Dead)
-                    tank.Destroy();
+                if (tank is not null && Vector3.Distance(tank.position, position) < explosionRadius)
+                    if (!tank.Dead)
+                        tank.Destroy();
             }
-
-            //foreach (var mine in AllMines.Where(mine => mine is not null && Vector3.Distance(mine.position, position) < explosionRadius && !mine.Detonated))
-            //{
-                //mine.Detonate();
-            //}
 
             var expl = new MineExplosion(position, explosionRadius * 0.101f, 0.5f);
 
@@ -137,26 +136,30 @@ namespace WiiPlayTanksRemake.GameContent
             if (detonationTime <= 0)
                 Detonate();
 
-            foreach (var shell in Shell.AllShells.Where(shell => shell is not null && shell.hurtbox.Intersects(hitbox)))
+            foreach (var shell in Shell.AllShells)
             {
-                shell.Destroy();
-                Detonate();
+                if (shell is not null && shell.hurtbox.Intersects(hitbox))
+                {
+                    shell.Destroy();
+                    Detonate();
+                }
             }
 
-            if (detonationTime > 40 && !tankCameTooClose && detonationTime < detonationTimeMax / 2)
+            if (detonationTime > mineReactTime && !tankCameTooClose && detonationTime < detonationTimeMax / 2)
             {
-                foreach (var tank in GameHandler.AllTanks.Where(tank => tank is not null && Vector3.Distance(tank.position, position) < explosionRadius))
+                foreach (var tank in GameHandler.AllTanks)
                 {
-                    tankCameTooClose = true;
-                    detonationTime = 40;
+                    if (tank is not null && Vector3.Distance(tank.position, position) < explosionRadius)
+                    {
+                        tankCameTooClose = true;
+                        detonationTime = mineReactTime;
+                    }
                 }
             }
         }
 
         internal void Draw()
         {
-            foreach (var expl in MineExplosion.explosions.Where(expl => expl is not null))
-                expl.Render();
             foreach (ModelMesh mesh in Model.Meshes)
             {
                 foreach (BasicEffect effect in mesh.Effects)
@@ -260,9 +263,10 @@ namespace WiiPlayTanksRemake.GameContent
             else if (tickAtMax <= 0) 
                 scale -= shrinkRate;
 
-            foreach (var mine in Mine.AllMines.Where(m => m is not null && Vector3.Distance(m.position, position) <= scale * 9))
+            foreach (var mine in Mine.AllMines)
             {
-                mine.Detonate();
+                if (mine is not null && Vector3.Distance(mine.position, position) <= scale * 9)
+                    mine.Detonate();
             }
 
             if (hitMaxAlready)

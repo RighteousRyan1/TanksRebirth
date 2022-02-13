@@ -118,10 +118,11 @@ namespace WiiPlayTanksRemake.GameContent
         {
             var highest = TankTier.None;
 
-            foreach (var tank in GameHandler.AllAITanks.Where(tnk => tnk is not null && !tnk.Dead))
+            foreach (var tank in GameHandler.AllAITanks)
             {
-                if (tank.tier > highest)
-                    highest = tank.tier;
+                if (tank is not null && !tank.Dead)
+                    if (tank.tier > highest)
+                        highest = tank.tier;
             }
             return highest;
         }
@@ -1078,12 +1079,15 @@ namespace WiiPlayTanksRemake.GameContent
             CollisionBox = new(position - new Vector3(7, 15, 7), position + new Vector3(10, 15, 10));
 
             var dummyVel = Velocity2D;
-            foreach (var c in Cube.cubes.Where(c => c is not null))
+            foreach (var c in Cube.cubes)
             {
-                Collision.HandleCollisionSimple(CollisionBox2D, c.collider2d, ref dummyVel, ref position);
+                if (c is not null)
+                {
+                    Collision.HandleCollisionSimple(CollisionBox2D, c.collider2d, ref dummyVel, ref position);
 
-                velocity.X = dummyVel.X;
-                velocity.Z = dummyVel.Y;
+                    velocity.X = dummyVel.X;
+                    velocity.Z = dummyVel.Y;
+                }
             }
         }
 
@@ -1229,10 +1233,11 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 var enemy = GameHandler.AllTanks.FirstOrDefault(tnk => tnk is not null && !tnk.Dead && (tnk.Team != Team || tnk.Team == Team.NoTeam) && tnk != this);
 
-                foreach (var tank in GameHandler.AllTanks.Where(tnk => tnk is not null && !tnk.Dead && (tnk.Team != Team || tnk.Team == Team.NoTeam) && tnk != this))
+                foreach (var tank in GameHandler.AllTanks)
                 {
-                    if (Vector3.Distance(tank.position, position) < Vector3.Distance(enemy.position, position))
-                        enemy = tank;
+                    if (tank is not null && !tank.Dead && (tank.Team != Team || tank.Team == Team.NoTeam) && tank != this)
+                        if (Vector3.Distance(tank.position, position) < Vector3.Distance(enemy.position, position))
+                            enemy = tank;
                 }
 
                 #region TurretHandle
@@ -1298,13 +1303,16 @@ namespace WiiPlayTanksRemake.GameContent
 
                         List<float> inters = new();
 
-                        foreach (var cube in Cube.cubes.Where(c => c is not null))
+                        foreach (var cube in Cube.cubes)
                         {
-                            if (tankTurretRay.Intersects(cube.collider).HasValue)
+                            if (cube is not null)
                             {
-                                inters.Add(tankTurretRay.Intersects(cube.collider).Value);
-                                cubeInter = tankTurretRay.Intersects(cube.collider).Value;
-                                // break;
+                                if (tankTurretRay.Intersects(cube.collider).HasValue)
+                                {
+                                    inters.Add(tankTurretRay.Intersects(cube.collider).Value);
+                                    cubeInter = tankTurretRay.Intersects(cube.collider).Value;
+                                    // break;
+                                }
                             }
                         }
 
@@ -1492,8 +1500,9 @@ namespace WiiPlayTanksRemake.GameContent
 
                             new MineExplosion(position, 10f, 0.2f);
 
-                            foreach (var tank in GameHandler.AllTanks.Where(tnk => tnk is not null && Vector3.Distance(tnk.position, position) < explosionDist))
-                                tank.Destroy();
+                            foreach (var tnk in GameHandler.AllTanks)
+                                if (tnk is not null && Vector3.Distance(tnk.position, position) < explosionDist)
+                                    tnk.Destroy();
                         }
                     }
                 }
@@ -1621,8 +1630,8 @@ namespace WiiPlayTanksRemake.GameContent
                 DebugUtils.DrawDebugString(TankGame.spriteBatch, "1", GeometryUtils.ConvertWorldToScreen(ray.Position + ray.Direction * 30, World, View, Projection), 1, centerIt: true);
             }*/
 
-            if (Invisible && GameHandler.InMission)
-                return;
+            //if (Invisible && GameHandler.InMission)
+                //return;
 
             RenderModel();
         }
@@ -1632,37 +1641,26 @@ namespace WiiPlayTanksRemake.GameContent
 
         public bool TryGetShellNear(float distance, out Shell shell)
         {
-            /*shell = null;
-
-            if (Shell.AllShells.Length > 0)
-            {
-                shell = Shell.AllShells.First();
-                foreach (var shel in Shell.AllShells.Where(shel => shel is not null))
-                {
-                    if (Vector3.Distance(position, shel.position) < Vector3.Distance(position, shell.position))
-                    {
-                        shell = shel;
-                        return true;
-                    }
-                }
-            }*/
             shell = null;
 
             Shell bulletCompare = null;
 
-            foreach (var blet in Shell.AllShells.Where(shel => shel is not null))
+            foreach (var blet in Shell.AllShells)
             {
-                if (Vector3.Distance(position, blet.position) < distance)
+                if (shell is not null)
                 {
-                    if (bulletCompare == null)
-                        shell = blet;
-                    else
+                    if (Vector3.Distance(position, blet.position) < distance)
                     {
-                        if (Vector3.Distance(position, blet.position).CompareTo(Vector3.Distance(position, bulletCompare.position)) < 0)
-                            shell = bulletCompare;
+                        if (bulletCompare == null)
+                            shell = blet;
+                        else
+                        {
+                            if (Vector3.Distance(position, blet.position).CompareTo(Vector3.Distance(position, bulletCompare.position)) < 0)
+                                shell = bulletCompare;
+                        }
+                        // bullet = blet;
+                        return true;
                     }
-                    // bullet = blet;
-                    return true;
                 }
             }
             return false;
@@ -1670,12 +1668,15 @@ namespace WiiPlayTanksRemake.GameContent
         public bool TryGetMineNear(float distance, out Mine mine)
         {
             mine = null;
-            foreach (var yours in Mine.AllMines.Where(mine => mine is not null))
+            foreach (var yours in Mine.AllMines)
             {
-                if (Vector3.Distance(position, yours.position) < distance)
+                if (mine is not null)
                 {
-                    mine = yours;
-                    return true;
+                    if (Vector3.Distance(position, yours.position) < distance)
+                    {
+                        mine = yours;
+                        return true;
+                    }
                 }
             }
             return false;

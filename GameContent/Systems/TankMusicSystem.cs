@@ -56,8 +56,9 @@ namespace WiiPlayTanksRemake.GameContent.Systems
 
             var musicVolume = TankGame.Settings.MusicVolume;
 
-            foreach (var song in songs.Where(sng => sng is not null))
-                song.volume = 0f;
+            foreach (var song in songs)
+                if (song is not null)
+                    song.volume = 0f;
 
 
             if (TierHighest == TankTier.Brown)

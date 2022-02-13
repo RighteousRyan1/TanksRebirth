@@ -12,7 +12,7 @@ namespace WiiPlayTanksRemake.Localization
 
         public static LangCode English = new("en", "US"); // done
         public static LangCode Spanish = new("es", "ES"); // done
-        public static LangCode French    = new("fr", "FR");
+        public static LangCode French = new("fr", "FR");
         public static LangCode Japanese = new("ja", "JP"); // done
         public static LangCode German = new("de", "DE");
         public static LangCode Russian = new("ru", "RU"); // done

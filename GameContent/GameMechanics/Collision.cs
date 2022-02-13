@@ -173,12 +173,15 @@ namespace WiiPlayTanksRemake.GameContent.GameMechanics
 
             collisionInfo.tValue = 1f;
 
-            foreach (var b in Cube.cubes.Where(c => c is not null))
+            foreach (var cube in Cube.cubes)
             {
-                if (IsColliding(movingBox, b.collider2d, velocity, out var info))
+                if (cube is not null)
                 {
-                    if (info.tValue < collisionInfo.tValue)
-                        collisionInfo = info;
+                    if (IsColliding(movingBox, cube.collider2d, velocity, out var info))
+                    {
+                        if (info.tValue < collisionInfo.tValue)
+                            collisionInfo = info;
+                    }
                 }
             }
 

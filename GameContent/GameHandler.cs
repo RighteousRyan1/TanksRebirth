@@ -446,8 +446,9 @@ namespace WiiPlayTanksRemake.GameContent
 
             VanillaCampaign.SetupLoadedMission();
 
-            foreach (var tank in AllTanks.Where(tnk => tnk is not null))
-                tank.velocity = Vector3.Zero;
+            foreach (var tank in AllTanks)
+                if (tank is not null)
+                    tank.velocity = Vector3.Zero;
 
             foreach (var song in TankMusicSystem.songs)
                 song?.Stop();
@@ -483,7 +484,7 @@ namespace WiiPlayTanksRemake.GameContent
                     };
                 }
             }
-            for (int j = miny; j < maxy; j++)
+            /*for (int j = miny; j < maxy; j++)
             {
                 if (j % 10 == 0)
                 {
@@ -499,7 +500,7 @@ namespace WiiPlayTanksRemake.GameContent
                         INTERNAL_doRender = false
                     };
                 }
-            }
+            }*/
             // for ai tanks avoiding walls lol
         }
         public static AITank SpawnTank(TankTier tier, Team team)
