@@ -1647,7 +1647,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             foreach (var blet in Shell.AllShells)
             {
-                if (shell is not null)
+                if (blet is not null)
                 {
                     if (Vector3.Distance(position, blet.position) < distance)
                     {
@@ -1670,7 +1670,7 @@ namespace WiiPlayTanksRemake.GameContent
             mine = null;
             foreach (var yours in Mine.AllMines)
             {
-                if (mine is not null)
+                if (yours is not null)
                 {
                     if (Vector3.Distance(position, yours.position) < distance)
                     {

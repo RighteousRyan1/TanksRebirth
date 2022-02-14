@@ -113,15 +113,9 @@ namespace WiiPlayTanksRemake.GameContent
             if (!INTERNAL_ignoreCollisions)
             {
                 if (position.X < MapRenderer.MIN_X || position.X > MapRenderer.MAX_X)
-                    if (ricochets > 0)
-                        Ricochet(true);
-                    else
-                        Destroy();
+                    Ricochet(true);
                 if (position.Z < MapRenderer.MIN_Y || position.Z > MapRenderer.MAX_Y)
-                    if (ricochets > 0)
-                        Ricochet(false);
-                    else
-                        Destroy();
+                    Ricochet(false);
 
                 var dummyVel = Velocity2D;
 
@@ -133,28 +127,16 @@ namespace WiiPlayTanksRemake.GameContent
                 switch (dir)
                 {
                     case Collision.CollisionDirection.Up:
-                        if (ricochets > 0)
-                            Ricochet(false);
-                        else
-                            Destroy();
+                        Ricochet(false);
                         break;
                     case Collision.CollisionDirection.Down:
-                        if (ricochets > 0)
-                            Ricochet(false);
-                        else
-                            Destroy();
+                        Ricochet(false);
                         break;
                     case Collision.CollisionDirection.Left:
-                        if (ricochets > 0)
-                            Ricochet(true);
-                        else
-                            Destroy();
+                        Ricochet(true);
                         break;
                     case Collision.CollisionDirection.Right:
-                        if (ricochets > 0)
-                            Ricochet(true);
-                        else
-                            Destroy();
+                        Ricochet(true);
                         break;
                 }
             }
@@ -191,6 +173,12 @@ namespace WiiPlayTanksRemake.GameContent
         /// <param name="horizontal">Whether or not the ricochet is done off of a horizontal axis.</param>
         public void Ricochet(bool horizontal)
         {
+            if (ricochets <= 0)
+            {
+                Destroy();
+                return;
+            }
+
             if (horizontal)
                 velocity.X = -velocity.X;
             else 

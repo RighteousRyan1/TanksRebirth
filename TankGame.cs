@@ -165,16 +165,10 @@ namespace WiiPlayTanksRemake
 
             ResolutionHandler.Initialize(graphics);
 
-            Camera.GraphicsDevice = GraphicsDevice;
-
-            GameCamera = new Camera();
-            GameCamera.SetToYawPitchRoll(0.75f, 0, 0);
-            GameCamera.SetFov(90);
-            GameCamera.SetPosition(GameCamera.GetPosition() + new Vector3(0, 100, 0));
+            GameCamera = new Camera(GraphicsDevice);
 
             spriteBatch = new(GraphicsDevice);
 
-            GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(0.75f) * Matrix.CreateTranslation(0f, 0f, 1000f);
             CalculateProjection();
 
             graphics.ApplyChanges();
@@ -284,9 +278,11 @@ namespace WiiPlayTanksRemake
 
         Vector2 rotVec;
 
-        float zoom = 1f;
+        float zoom = 2.4f;
 
         Vector2 off;
+
+        bool fps;
 
         protected override void Update(GameTime gameTime)
         {
@@ -307,6 +303,8 @@ namespace WiiPlayTanksRemake
                         zoom += 0.01f;
                     if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Down))
                         zoom -= 0.01f;
+                    if (Input.KeyJustPressed(Keys.Q))
+                        fps = !fps;
 
                     if (Input.MouseMiddle)
                     {
@@ -317,12 +315,42 @@ namespace WiiPlayTanksRemake
 
                     // why do i need to call this????
 
-                    IsFixedTimeStep = true;
 
-                    if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Tab))
-                        IsFixedTimeStep = false;
+                    IsFixedTimeStep = !Input.CurrentKeySnapshot.IsKeyDown(Keys.Tab);
 
-                    GameView = Matrix.CreateScale(zoom) * Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(0.75f + rotVec.Y) * Matrix.CreateRotationY(rotVec.X) * Matrix.CreateTranslation(off.X, -off.Y, 0);
+                    if (!fps)
+                    {
+                        GameView = Matrix.CreateScale(zoom) * Matrix.CreateLookAt(new(0f, 0, 250f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(0.75f + rotVec.Y) * Matrix.CreateRotationY(rotVec.X) * Matrix.CreateTranslation(off.X, -off.Y, 0);
+                        CalculateProjection();
+                    }
+                    else
+                    {
+                        Vector3 pos = Vector3.Zero;
+                        var x = GameHandler.AllAITanks.FirstOrDefault(x => x is not null && !x.Dead);
+
+                        if (x is not null && Array.IndexOf(GameHandler.AllAITanks, x) > -1)
+                        {
+                            pos = x.position;
+
+                            // var mepos = GameHandler.myTank.position;
+
+
+                            GameView = Matrix.CreateLookAt(pos,
+                                pos + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-x.TurretRotation).Expand_Z()
+                                , Vector3.Up) * Matrix.CreateTranslation(0, -20, -40);
+
+                            GameProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000);
+                        }
+
+                        // TODO: fix game camera
+
+                        //GameCamera.SetFov(90);
+                        //GameCamera.SetPosition(GameHandler.myTank.position + new Vector3(0, 0, 300));
+                        //GameCamera.SetLookAt(pos);
+                    }
+
+                    //GameView = GameCamera.GetView();
+                    //GameProjection = GameCamera.GetProjection();
                 }
 
                 FixedUpdate(gameTime);
@@ -357,8 +385,6 @@ namespace WiiPlayTanksRemake
 
             if (IsActive && !IngameUI.Paused)
             {
-                //GameView = Matrix.CreateLookAt(new(0f, 0f, 120f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(GameUtils.MousePosition.X / GameUtils.WindowWidth * 5);
-
                 UpdateGameSystems();
 
                 GameHandler.Update();
@@ -397,11 +423,12 @@ namespace WiiPlayTanksRemake
         {
             RenderStopwatch.Start();
 
-            GraphicsDevice.Clear(Color.SkyBlue);
+            GraphicsDevice.Clear(Color.Transparent);
 
             spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied);
 
-            spriteBatch.DrawString(TextFont, "Debug Level: " + DebugUtils.CurDebugLabel, new Vector2(10), Color.White, new Vector2(0.6f));
+            if (DebugUtils.DebuggingEnabled)
+                spriteBatch.DrawString(TextFont, "Debug Level: " + DebugUtils.CurDebugLabel, new Vector2(10), Color.White, new Vector2(0.6f));
             DebugUtils.DrawDebugString(spriteBatch, $"Memory Used: {MemoryParser.FromMegabytes(TotalMemoryUsed)} MB", new(8, GameUtils.WindowHeight * 0.18f));
             DebugUtils.DrawDebugString(spriteBatch, $"{SysGPU}\n{SysCPU}", new(8, GameUtils.WindowHeight * 0.2f));
 

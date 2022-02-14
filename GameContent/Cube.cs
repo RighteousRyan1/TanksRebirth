@@ -96,7 +96,7 @@ namespace WiiPlayTanksRemake.GameContent
             // cubes[position.X, position.Y] = null;
         }
 
-        public void Draw()
+        public void Render()
         {
             foreach (var mesh in model.Meshes)
             {

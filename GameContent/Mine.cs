@@ -158,7 +158,7 @@ namespace WiiPlayTanksRemake.GameContent
             }
         }
 
-        internal void Draw()
+        internal void Render()
         {
             foreach (ModelMesh mesh in Model.Meshes)
             {

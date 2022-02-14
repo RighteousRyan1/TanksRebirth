@@ -62,9 +62,6 @@ namespace WiiPlayTanksRemake.GameContent
             foreach (var bullet in Shell.AllShells)
                 bullet?.Update();
 
-            foreach (var cube in Cube.cubes)
-                cube?.Update();
-
             foreach (var expl in MineExplosion.explosions)
                 expl?.Update();
 
@@ -72,7 +69,11 @@ namespace WiiPlayTanksRemake.GameContent
                 crate?.Update();
 
             foreach (var pu in Powerup.activePowerups)
-                pu?.Update();
+                pu?.Update(); 
+
+            foreach (var cube in Cube.cubes)
+                cube?.Update();
+
 
             if (Input.KeyJustPressed(Keys.Insert))
                 DebugUtils.DebuggingEnabled = !DebugUtils.DebuggingEnabled;
@@ -149,17 +150,17 @@ namespace WiiPlayTanksRemake.GameContent
         {
             MapRenderer.DrawWorldModels();
 
+            foreach (var cube in Cube.cubes)
+                cube?.Render();
+
             foreach (var tank in AllPlayerTanks)
                 tank?.DrawBody();
 
             foreach (var tank in AllAITanks)
                 tank?.DrawBody();
 
-            foreach (var cube in Cube.cubes)
-                cube?.Draw();
-
             foreach (var mine in Mine.AllMines)
-                mine?.Draw();
+                mine?.Render();
 
             foreach (var bullet in Shell.AllShells)
                 bullet?.Render();
@@ -271,6 +272,15 @@ namespace WiiPlayTanksRemake.GameContent
                 if (element.MouseHovering)
                     element.MouseOut();
             }
+
+            ClearTracks.Visible = DebugUtils.DebuggingEnabled;
+            ClearChecks.Visible = DebugUtils.DebuggingEnabled;
+            SetupMissionAgain.Visible = DebugUtils.DebuggingEnabled;
+            MovePULeft.Visible = DebugUtils.DebuggingEnabled;
+            MovePURight.Visible = DebugUtils.DebuggingEnabled;
+            Display.Visible = DebugUtils.DebuggingEnabled;
+
+            IngameUI.MissionInfoBar.Visible = DebugUtils.DebuggingEnabled;
         }
 
         public static PlayerTank myTank;
@@ -292,7 +302,7 @@ namespace WiiPlayTanksRemake.GameContent
                 },
                 new float[]
                 {
-                    GeometryUtils.GetQuarterRotation(1),
+                    2f,//GeometryUtils.GetQuarterRotation(1),
                     GeometryUtils.GetQuarterRotation(0),
                     GeometryUtils.GetQuarterRotation(3),
                     GeometryUtils.GetQuarterRotation(2)
@@ -544,10 +554,9 @@ namespace WiiPlayTanksRemake.GameContent
                     TankRotation = rot,
                     TurretRotation = rot,
                     position = random,
-                    Dead = false
+                    Dead = false,
+                    Team = Team.NoTeam
                 };
-
-                t.Team = (Team)new Random().Next(0, Enum.GetValues<Team>().Length);
 
                 // t.Team = (Team)new Random().Next(1, Enum.GetNames<Team>().Length);
             }
@@ -667,11 +676,9 @@ namespace WiiPlayTanksRemake.GameContent
         {
             MouseTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/cursor_1");
 
-            var mousePos = GameUtils.MousePosition;
-
             for (int i = 0; i < 4; i++)
             {
-                TankGame.spriteBatch.Draw(MouseTexture, mousePos, null, Color.White, MathHelper.PiOver2 * i, MouseTexture.Size(), 1f, default, default);
+                TankGame.spriteBatch.Draw(MouseTexture, GameUtils.MousePosition, null, Color.White, MathHelper.PiOver2 * i, MouseTexture.Size(), 1f, default, default);
             }
         }
     }

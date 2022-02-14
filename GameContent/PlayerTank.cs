@@ -142,7 +142,7 @@ namespace WiiPlayTanksRemake.GameContent
             World = Matrix.CreateFromYawPitchRoll(-TankRotation, 0, 0)
                 * Matrix.CreateTranslation(position);
 
-            Vector3 mouseWorldPos = GameUtils.GetWorldPosition(GameUtils.MousePosition);
+            Vector3 mouseWorldPos = GameUtils.GetWorldPosition(GameUtils.MousePosition, -11f);
 
             TurretRotation = (-(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position2D).ToRotation()) + MathHelper.PiOver2;
 
@@ -162,8 +162,6 @@ namespace WiiPlayTanksRemake.GameContent
             else
                 velocity = Vector3.Zero;
 
-            UpdateCollision();
-
             if (GameHandler.InMission)
             {
                 if (Input.CanDetectClick())
@@ -179,6 +177,8 @@ namespace WiiPlayTanksRemake.GameContent
             position.X = MathHelper.Clamp(position.X, MapRenderer.TANKS_MIN_X, MapRenderer.TANKS_MAX_X);
             position.Z = MathHelper.Clamp(position.Z, MapRenderer.TANKS_MIN_Y, MapRenderer.TANKS_MAX_Y);
 
+            UpdateCollision();
+                
             oldPosition = position;
         }
 
@@ -490,7 +490,8 @@ namespace WiiPlayTanksRemake.GameContent
                 $"Preturbed: {preterbedVelocity}",
                 $"Actual / Target: {TankRotation} / {preterbedVelocity.FlattenZ().ToRotation()}",
                 $"AnyCubeTouch: {Cube.cubes.Any(c => c is not null && c.collider.Intersects(CollisionBox))}",
-                $"AnyCubeTouch2D: {Cube.cubes.Any(c => c is not null && c.collider2d.Intersects(CollisionBox2D))}"
+                $"AnyCubeTouch2D: {Cube.cubes.Any(c => c is not null && c.collider2d.Intersects(CollisionBox2D))}",
+                $"OwnedShellCount: {OwnedShellCount}"
             };
 
             TankGame.spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), CollisionBox2D, Color.White * 0.75f);

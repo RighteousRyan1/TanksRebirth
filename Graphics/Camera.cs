@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using WiiPlayTanksRemake.GameContent;
+using WiiPlayTanksRemake.Internals.Common.Utilities;
 
 namespace WiiPlayTanksRemake.Graphics
 {
@@ -12,20 +13,22 @@ namespace WiiPlayTanksRemake.Graphics
         private Matrix _projectionMatrix;
 
         private Vector3 _position;
+        private Vector3 _lookAt;
+        private Vector3 _upVector = Vector3.Up;
 
-        private bool IsOmnicient { get; set; }
+        private float _rotation;
 
-        public float _fov = MathHelper.ToRadians(90);
+        private bool IsOrthographic { get; set; }
+
+        public float FieldOfView { get; private set; } = MathHelper.ToRadians(90);
 
         public static GraphicsDevice GraphicsDevice { get; set; }
 
-        public Camera()
+        public Camera(GraphicsDevice device)
         {
+            GraphicsDevice = device;
             if (GraphicsDevice is null)
                 throw new Exception("Please assign a proper graphics device for the camera to use.");
-
-            _viewMatrix = Matrix.CreatePerspectiveFieldOfView(_fov, GraphicsDevice.Viewport.AspectRatio, 1f, 3000f);
-            _projectionMatrix = Matrix.CreateOrthographic(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, -2000f, 5000f);
         }
 
         public Matrix GetView() => _viewMatrix;
@@ -33,13 +36,14 @@ namespace WiiPlayTanksRemake.Graphics
 
         public Camera SetToYawPitchRoll(float yaw, float pitch, float roll)
         {
+            Recalculate();
             _viewMatrix *= Matrix.CreateFromYawPitchRoll(yaw, pitch, roll);
             return this;
         }
 
         public Camera SetOmni(bool omni)
         {
-            IsOmnicient = omni;
+            IsOrthographic = omni;
 
             return this;
         }
@@ -49,13 +53,20 @@ namespace WiiPlayTanksRemake.Graphics
         public Camera SetPosition(Vector3 pos)
         {
             _position = pos;
+            Recalculate();
+            return this;
+        }
+        public Camera SetLookAt(Vector3 pos)
+        {
+            _lookAt = pos;
+            Recalculate();
             return this;
         }
 
         public Camera SetFov(float degrees)
         {
-            _fov = MathHelper.ToRadians(degrees);
-            _viewMatrix = Matrix.CreatePerspectiveFieldOfView(_fov, GraphicsDevice.Viewport.AspectRatio, 0.01f, 3000f);
+            FieldOfView = MathHelper.ToRadians(degrees);
+            Recalculate();
             return this;
         }
 
@@ -69,6 +80,12 @@ namespace WiiPlayTanksRemake.Graphics
         {
 
             return this;
+        }
+
+        private void Recalculate()
+        {
+            _viewMatrix = Matrix.CreateLookAt(_position, _lookAt, _upVector);
+            _projectionMatrix = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(FieldOfView), GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000f);
         }
     }
 }

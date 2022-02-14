@@ -398,9 +398,9 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
             return radians;
         }
 
-        public static Vector3 GetWorldPosition(Vector2 screenCoords)
+        public static Vector3 GetWorldPosition(Vector2 screenCoords, float offset = 0f)
         {
-            Plane gamePlane = new(Vector3.UnitY, 0);
+            Plane gamePlane = new(Vector3.UnitY, offset);
 
             var nearPlane = GeometryUtils.ConvertScreenToWorld(new Vector3(screenCoords, 0), Matrix.Identity, TankGame.GameView, TankGame.GameProjection);
             var farPlane = GeometryUtils.ConvertScreenToWorld(new Vector3(screenCoords, 1), Matrix.Identity, TankGame.GameView, TankGame.GameProjection);

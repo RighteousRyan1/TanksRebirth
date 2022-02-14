@@ -63,12 +63,12 @@ namespace WiiPlayTanksRemake.GameContent.Systems
                 tnk.TankRotation = CurrentMission.SpawnOrientations[i];
                 if (tnk is AITank ai)
                     ai.targetTankRotation = CurrentMission.SpawnOrientations[i] + MathHelper.Pi;
-                tnk.TurretRotation = CurrentMission.SpawnOrientations[i];
+                tnk.TurretRotation = -CurrentMission.SpawnOrientations[i];
                 tnk.Dead = false;
 
                 GameHandler.AllTanks[i] = tnk;
 
-                GameHandler.ClientLog.Write($"loaded: {(tnk as AITank).tier}", LogType.Debug);
+                // GameHandler.ClientLog.Write($"loaded: {(tnk as AITank).tier}", LogType.Debug);
             }
 
             if (CurrentMission.Cubes.Length > 0)
@@ -86,11 +86,13 @@ namespace WiiPlayTanksRemake.GameContent.Systems
                     Cube.cubes[b] = cube;
                 }
             }
+            GameHandler.ClientLog.Write($"Loaded mission '{CurrentMission.Name}' with {CurrentMission.Tanks.Length} tanks and {CurrentMission.Cubes.Length} obstacles.", LogType.Info);
         }
     }
 
     public struct Mission
     {
+        public string Name { get; set; }
         /// <summary>The <see cref="Tank"/>s that will be spawned.</summary>
         public Tank[] Tanks { get; }
 
@@ -107,6 +109,8 @@ namespace WiiPlayTanksRemake.GameContent.Systems
 
         public Mission(Tank[] tanks, Vector3[] spawnPositions, float[] spawnOrientations, Cube[] obstacles, CubeMapPosition[] cubePositions)
         {
+            Name = "N/A";
+
             sbyte cBlue = 0;
             sbyte cRed = 0;
 
@@ -135,5 +139,4 @@ namespace WiiPlayTanksRemake.GameContent.Systems
             CubePositions = cubePositions;
         }
     }
-
 }
