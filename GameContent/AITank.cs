@@ -1515,6 +1515,16 @@ namespace WiiPlayTanksRemake.GameContent
 
                 IsTurning = false;
 
+                /*targetTankRotation %= MathHelper.TwoPi;
+                TankRotation %= MathHelper.TwoPi;
+
+                var diff2 = targetTankRotation - TankRotation;
+
+                if (diff2 > MathHelper.Pi)
+                    targetTankRotation -= MathHelper.TwoPi;
+                else if (diff2 < -MathHelper.Pi)
+                    targetTankRotation += MathHelper.TwoPi;*/
+
                 if (doMoveTowards)
                 {
                     if (TankRotation > targ - MaximalTurn && TankRotation < targ + MaximalTurn)
@@ -1630,8 +1640,8 @@ namespace WiiPlayTanksRemake.GameContent
                 DebugUtils.DrawDebugString(TankGame.spriteBatch, "1", GeometryUtils.ConvertWorldToScreen(ray.Position + ray.Direction * 30, World, View, Projection), 1, centerIt: true);
             }*/
 
-            //if (Invisible && GameHandler.InMission)
-                //return;
+            if (Invisible && GameHandler.InMission)
+                return;
 
             RenderModel();
         }
