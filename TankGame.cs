@@ -217,8 +217,6 @@ namespace WiiPlayTanksRemake
 
         protected override void Initialize()
         {
-            InitPhys();
-            
             DiscordRichPresence.Load();
 
             systems = ReflectionUtils.GetInheritedTypesOf<IGameSystem>(Assembly.GetExecutingAssembly());
@@ -263,7 +261,7 @@ namespace WiiPlayTanksRemake
         {
             var s = Stopwatch.StartNew();
 
-            CubeModel = GameResources.GetGameResource<Model>("Assets/cube_stack");
+            CubeModel = GameResources.GetGameResource<Model>("Assets/toy/cube_stack");
 
             TankModel_Enemy = GameResources.GetGameResource<Model>("Assets/tank_e");
 

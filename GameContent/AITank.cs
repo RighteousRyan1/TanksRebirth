@@ -742,7 +742,7 @@ namespace WiiPlayTanksRemake.GameContent
                     break;
                 case TankTier.Amethyst:
                     AiParams.meanderAngle = 0.3f;
-                    AiParams.meanderFrequency = 4;
+                    AiParams.meanderFrequency = 5;
                     AiParams.turretMeanderFrequency = 15;
                     AiParams.turretSpeed = 0.05f;
                     AiParams.inaccuracy = 0.3f;

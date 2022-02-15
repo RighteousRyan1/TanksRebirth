@@ -11,8 +11,12 @@ namespace WiiPlayTanksRemake.GameContent
     public enum MapTheme
     {
         Default,
-        Forest
+        Forest,
+        MasterMod,
+        MarbleMod
     }
+
+    // TODO: Chairs and Co (models)
     public static class MapRenderer
     {
         public static Matrix viewMatrix;
@@ -193,7 +197,7 @@ namespace WiiPlayTanksRemake.GameContent
                 switch (Theme)
                 {
                     case MapTheme.Default:
-                        BoundaryModel = GameResources.GetGameResource<Model>("Assets/outerbounds_big");
+                        BoundaryModel = GameResources.GetGameResource<Model>("Assets/toy/outerbounds_big");
 
                         foreach (var mesh in BoundaryModel.Meshes)
                         {
