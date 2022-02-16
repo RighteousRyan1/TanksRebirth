@@ -14,6 +14,7 @@ using WiiPlayTanksRemake.Internals.Core.Interfaces;
 using WiiPlayTanksRemake.GameContent.GameMechanics;
 using WiiPlayTanksRemake.GameContent.Systems;
 using WiiPlayTanksRemake.Internals.Common.Framework.Audio;
+using WiiPlayTanksRemake.Graphics;
 
 namespace WiiPlayTanksRemake.GameContent
 {
@@ -154,7 +155,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             Dead = true;
 
-            Model = TankGame.TankModel_Enemy;
+            Model = GameResources.GetRawGameAsset<Model>("Assets/tank_e"); //TankGame.TankModel_Enemy;
 
             if ((int)tier <= (int)TankTier.Black)
                 _tankColorTexture = GameResources.GetGameResource<Texture2D>($"Assets/textures/enemy/tank_{tier.ToString().ToLower()}");
@@ -1078,12 +1079,24 @@ namespace WiiPlayTanksRemake.GameContent
         {
             CollisionBox = new(position - new Vector3(7, 15, 7), position + new Vector3(10, 15, 10));
 
-            var dummyVel = Velocity2D;
             foreach (var c in Cube.cubes)
             {
                 if (c is not null)
                 {
+                    var dummyVel = Velocity2D;
                     Collision.HandleCollisionSimple(CollisionBox2D, c.collider2d, ref dummyVel, ref position);
+
+                    velocity.X = dummyVel.X;
+                    velocity.Z = dummyVel.Y;
+                }
+            }
+
+            foreach (var tank in GameHandler.AllTanks)
+            {
+                if (tank is not null)
+                {
+                    var dummyVel = Velocity2D;
+                    Collision.HandleCollisionSimple(CollisionBox2D, tank.CollisionBox2D, ref dummyVel, ref position);
 
                     velocity.X = dummyVel.X;
                     velocity.Z = dummyVel.Y;
@@ -1616,6 +1629,8 @@ namespace WiiPlayTanksRemake.GameContent
                         effect.Alpha = 0.5f;
                         effect.Texture = _shadowTexture;
                     }
+
+                    effect.SetDefaultGameLighting_IngameEntities();
                 }
 
                 mesh.Draw();

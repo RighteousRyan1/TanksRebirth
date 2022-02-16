@@ -78,7 +78,7 @@ namespace WiiPlayTanksRemake.GameContent
             _mineTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/mine/mine_env");
             _envTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/mine/mine_shadow");
 
-            int index = Array.IndexOf(AllMines, AllMines.First(bullet => bullet is null));
+            int index = Array.IndexOf(AllMines, AllMines.First(mine => mine is null));
 
             worldId = index;
 

@@ -28,6 +28,7 @@ using FontStashSharp.SharpFont;
 using FontStashSharp;
 using WiiPlayTanksRemake.Internals.Common.GameUI;
 using BulletSharp;
+using WiiPlayTanksRemake.Internals.Common.Framework.Graphics;
 
 namespace WiiPlayTanksRemake
 {
@@ -313,7 +314,7 @@ namespace WiiPlayTanksRemake
 
             GameHandler.Initialize();
 
-            foreach (ModelMesh mesh in TankModel_Player.Meshes)
+            /*foreach (ModelMesh mesh in TankModel_Player.Meshes)
             {
                 foreach (BasicEffect effect in mesh.Effects)
                 {
@@ -326,7 +327,9 @@ namespace WiiPlayTanksRemake
                 {
                     effect.SetDefaultGameLighting_IngameEntities();
                 }
-            }
+            }*/
+
+            InitGraphics();
 
             var time = s.Elapsed;
 
@@ -347,6 +350,11 @@ namespace WiiPlayTanksRemake
         {
             try
             {
+                //if (GameHandler.AllAITanks.Count(x => x is not null) >= 2)
+                //{
+                    //Debug.Write(ReferenceEquals(GameHandler.AllAITanks[0].Model.Meshes[0].Effects, GameHandler.AllAITanks[1].Model.Meshes[0].Effects));
+                //}
+
                 UpdateStopwatch.Start();
 
                 DiscordRichPresence.Update();
@@ -478,6 +486,11 @@ namespace WiiPlayTanksRemake
                 music?.Update();
         }
 
+
+        static Triangle2D testTriangle;
+
+        static Quad yeah;
+
         protected override void Draw(GameTime gameTime)
         {
             RenderStopwatch.Start();
@@ -491,9 +504,9 @@ namespace WiiPlayTanksRemake
             DebugUtils.DrawDebugString(spriteBatch, $"Memory Used: {MemoryParser.FromMegabytes(TotalMemoryUsed)} MB", new(8, GameUtils.WindowHeight * 0.18f));
             DebugUtils.DrawDebugString(spriteBatch, $"{SysGPU}\n{SysCPU}", new(8, GameUtils.WindowHeight * 0.2f));
 
-            graphics.GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+            graphics.GraphicsDevice.DepthStencilState = new DepthStencilState() { DepthBufferEnable = true };
 
-            GameHandler.DoRender();
+            GameHandler.RenderAll();
 
             spriteBatch.End();
 
@@ -505,10 +518,20 @@ namespace WiiPlayTanksRemake
 
             spriteBatch.End();
 
+            foreach (var triangle in Triangle2D.triangles)
+                triangle.DrawImmediate();
+            foreach (var qu in Quad.quads)
+                qu.Render();
+
             RenderTime = RenderStopwatch.Elapsed;
 
             RenderStopwatch.Stop();
             RenderFPS = Math.Round(1f / gameTime.ElapsedGameTime.TotalSeconds);
+        }
+
+        public static void InitGraphics()
+        {
+            testTriangle = new Triangle2D(new(10, 100), new(100, 100), new(50, 150), Color.White);
         }
     }
 }

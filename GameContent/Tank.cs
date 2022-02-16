@@ -90,7 +90,7 @@ namespace WiiPlayTanksRemake.GameContent
         /// <summary>Apply all the default parameters for this <see cref="Tank"/>.</summary>
         public virtual void ApplyDefaults() { }
 
-        public Rectangle CollisionBox2D => new((int)(Position2D.X - TNK_WIDTH / 2), (int)(Position2D.Y - TNK_WIDTH / 2), TNK_WIDTH, TNK_HEIGHT);
+        public Rectangle CollisionBox2D => new((int)(Position2D.X - TNK_WIDTH / 2 + 3), (int)(Position2D.Y - TNK_WIDTH / 2 + 3), TNK_WIDTH - 3, TNK_HEIGHT - 3);
 
         public string GetGeneralStats()
             => $"Pos2D: {Position2D} | Vel: {Velocity2D} | Dead: {Dead}";

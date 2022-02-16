@@ -16,7 +16,7 @@ namespace WiiPlayTanksRemake.Internals.UI
 		/// <param name="position">The position to get the <see cref="UIElement"/> at.</param>
 		/// <param name="getHighest">Whether or not to get the highest <see cref="UIElement"/> as opposed to the lowest.</param>
 		/// <returns>The <see cref="UIElement"/> at the specified position, if one exists; otherwise, returns <see langword="null"/>.</returns>
-		public static List<UIElement> GetElementAt(Vector2 position, bool getHighest = false)
+		public static List<UIElement> GetElementsAt(Vector2 position, bool getHighest = false)
 		{
 			List<UIElement> focusedElements = new List<UIElement>();
 

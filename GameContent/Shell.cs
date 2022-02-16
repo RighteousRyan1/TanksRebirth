@@ -86,7 +86,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             this.velocity = velocity;
 
-            int index = Array.IndexOf(AllShells, AllShells.First(bullet => bullet is null));
+            int index = Array.IndexOf(AllShells, AllShells.First(shell => shell is null));
 
             worldId = index;
 
@@ -165,6 +165,23 @@ namespace WiiPlayTanksRemake.GameContent
             }
             if (!INTERNAL_ignoreCollisions)
                 CheckCollisions();
+
+            if (lifeTime % 15 == 0 && !INTERNAL_ignoreCollisions)
+            {
+                var p = ParticleSystem.MakeParticle(position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smoke"));
+                p.FaceTowardsMe = false;
+                p.Scale = 50f;
+
+                p.UniqueBehavior = (p) =>
+                {
+                    if (p.Opacity <= 0)
+                        p.Destroy();
+
+                    if (p.Opacity > 0)  
+                        p.Opacity -= 0.01f;
+                    p.position.Y += 0.1f;
+                };
+            }
         }
 
         /// <summary>
@@ -258,7 +275,7 @@ namespace WiiPlayTanksRemake.GameContent
                 if (playSound)
                 {
                     var sfx = SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/bullet_destroy"), SoundContext.Effect, 0.5f);
-                    sfx.Pitch = -0.2f;
+                    sfx.Pitch = new Random().NextFloat(-0.1f, 0.1f);
                 }
                 if (owner != null)
                     owner.OwnedShellCount--;

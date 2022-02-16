@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 
 namespace WiiPlayTanksRemake.Internals
 {
@@ -29,5 +30,23 @@ namespace WiiPlayTanksRemake.Internals
         {
 			return GetResource<T>(TankGame.Instance.Content, name);
         }
+
+		public static T GetRawAsset<T>(this ContentManager manager, string assetName) where T : class
+        {
+			var t = typeof(ContentManager).GetMethod("ReadAsset", BindingFlags.Instance | BindingFlags.NonPublic);
+
+			var generic = t.MakeGenericMethod(typeof(T)).Invoke(manager, new object[] { assetName, null} ) as T;
+
+			return generic;
+        }
+
+		public static T GetRawGameAsset<T>(string assetName) where T : class
+		{
+			var t = typeof(ContentManager).GetMethod("ReadAsset", BindingFlags.Instance | BindingFlags.NonPublic);
+
+			var generic = t.MakeGenericMethod(typeof(T)).Invoke(TankGame.Instance.Content, new object[] { assetName, null }) as T;
+
+			return generic;
+		}
 	}
 }

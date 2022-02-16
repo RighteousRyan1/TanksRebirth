@@ -74,6 +74,8 @@ namespace WiiPlayTanksRemake.GameContent
             foreach (var cube in Cube.cubes)
                 cube?.Update();
 
+            ParticleSystem.UpdateParticles();
+
 
             if (Input.KeyJustPressed(Keys.Insert))
                 DebugUtils.DebuggingEnabled = !DebugUtils.DebuggingEnabled;
@@ -142,7 +144,7 @@ namespace WiiPlayTanksRemake.GameContent
         public static int tankToSpawnType;
         public static int tankToSpawnTeam;
 
-        internal static void DoRender()
+        internal static void RenderAll()
         {
             MapRenderer.RenderWorldModels();
 
@@ -175,6 +177,8 @@ namespace WiiPlayTanksRemake.GameContent
 
             foreach (var powerup in Powerup.activePowerups)
                 powerup?.Render();
+
+            ParticleSystem.RenderParticles();
 
             // TODO: Fix translation
             // TODO: Scaling with screen size.
@@ -216,7 +220,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             ChatSystem.DrawMessages();
 
-            List<UIElement> focusedElements = UIElement.GetElementAt(GameUtils.MousePosition, true);
+            var focusedElements = UIElement.GetElementsAt(GameUtils.MousePosition, true);
 
             foreach (UIElement el in focusedElements)
             {
@@ -238,7 +242,7 @@ namespace WiiPlayTanksRemake.GameContent
                 }
             }
 
-            List<UIElement> trySlider = UIElement.GetElementAt(GameUtils.MousePosition);
+            var trySlider = UIElement.GetElementsAt(GameUtils.MousePosition);
 
             if (trySlider.Count > 0)
             {

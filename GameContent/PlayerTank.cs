@@ -122,6 +122,8 @@ namespace WiiPlayTanksRemake.GameContent
             if (Dead)
                 return;
 
+            UpdateCollision();
+
             if (curShootStun > 0)
                 curShootStun--;
             if (curShootCooldown > 0)
@@ -176,8 +178,6 @@ namespace WiiPlayTanksRemake.GameContent
 
             position.X = MathHelper.Clamp(position.X, MapRenderer.TANKS_MIN_X, MapRenderer.TANKS_MAX_X);
             position.Z = MathHelper.Clamp(position.Z, MapRenderer.TANKS_MIN_Y, MapRenderer.TANKS_MAX_Y);
-
-            UpdateCollision();
                 
             oldPosition = position;
         }
@@ -304,13 +304,25 @@ namespace WiiPlayTanksRemake.GameContent
         {
             CollisionBox = new(position - new Vector3(12, 15, 12), position + new Vector3(12, 15, 12));
 
-            var dummyVel = Velocity2D;
-
             foreach (var c in Cube.cubes)
             {
                 if (c is not null)
                 {
+                    var dummyVel = Velocity2D;
                     Collision.HandleCollisionSimple(CollisionBox2D, c.collider2d, ref dummyVel, ref position);
+
+                    velocity.X = dummyVel.X;
+                    velocity.Z = dummyVel.Y;
+                }
+            }
+
+
+            foreach (var tank in GameHandler.AllTanks)
+            {
+                if (tank is not null)
+                {
+                    var dummyVel = Velocity2D;
+                    Collision.HandleCollisionSimple(CollisionBox2D, tank.CollisionBox2D, ref dummyVel, ref position);
 
                     velocity.X = dummyVel.X;
                     velocity.Z = dummyVel.Y;

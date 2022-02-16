@@ -26,7 +26,7 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
             "UIElements",
             "Powerups"
         };
-        public static void DrawDebugString(SpriteBatch sb, object info, Vector2 position, int level = 0, float scaleOverride = 1f, bool centerIt = false, bool beginSb = false)
+        public static void DrawDebugString(SpriteBatch sb, object info, Vector2 position, int level = 0, float scaleOverride = 1f, bool centerIt = false, Color colorOverride = default, bool beginSb = false)
         {
             if (!DebuggingEnabled || DebugLevel != level)
                 return;
@@ -34,7 +34,7 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
             if (beginSb)
                 sb.Begin();
 
-            sb.DrawString(TankGame.TextFont, info.ToString(), position, Color.White, new Vector2(scaleOverride * 0.6f), 0f, centerIt ? TankGame.TextFont.MeasureString(info.ToString()) / 2 : default); 
+            sb.DrawString(TankGame.TextFont, info.ToString(), position, colorOverride == default ? Color.White : colorOverride,  new Vector2(scaleOverride * 0.6f), 0f, centerIt ? TankGame.TextFont.MeasureString(info.ToString()) / 2 : default); 
 
             if (beginSb)
                 sb.End();
