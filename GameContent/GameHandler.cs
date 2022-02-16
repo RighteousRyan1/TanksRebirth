@@ -554,7 +554,7 @@ namespace WiiPlayTanksRemake.GameContent
             return new AITank(tier)
             {
                 TankRotation = rot,
-                targetTankRotation = rot - MathHelper.Pi,
+                targetTankRotation = rot + MathHelper.Pi,
                 TurretRotation = rot - MathHelper.TwoPi,
                 Team = team,
                 position = pos,
