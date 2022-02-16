@@ -288,10 +288,10 @@ namespace WiiPlayTanksRemake.GameContent
         public static Mission ExampleMission1 = new(
                 new Tank[]
                 {
-                    new AITank(TankTier.Ash) { Team = Team.NoTeam },
-                    new AITank(TankTier.Marine) { Team = Team.NoTeam },
-                    new AITank(TankTier.Pink) { Team = Team.NoTeam },
-                    new AITank(TankTier.Yellow) { Team = Team.NoTeam }
+                    //new AITank(TankTier.Ash) { Team = Team.NoTeam },
+                    //new AITank(TankTier.Marine) { Team = Team.NoTeam },
+                    //new AITank(TankTier.Pink) { Team = Team.NoTeam },
+                    //new AITank(TankTier.Yellow) { Team = Team.NoTeam }
                 },
                 new Vector3[]
                 {
@@ -623,10 +623,10 @@ namespace WiiPlayTanksRemake.GameContent
             VanillaCampaign.LoadMission(new Mission(
                 new Tank[]
                 {
-                    new AITank(TankTier.Sapphire) { Team = Team.Red },
-                    new AITank(TankTier.Amethyst) { Team = Team.Blue },
-                    new AITank(TankTier.Sapphire) { Team = Team.Green },
-                    new AITank(TankTier.Amethyst) { Team = Team.Yellow }
+                    //new AITank(TankTier.Sapphire) { Team = Team.Red },
+                   // new AITank(TankTier.Amethyst) { Team = Team.Blue },
+                   // new AITank(TankTier.Sapphire) { Team = Team.Green },
+                   // new AITank(TankTier.Amethyst) { Team = Team.Yellow }
                 },
                 new Vector3[]
                 {

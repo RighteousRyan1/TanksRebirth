@@ -1310,17 +1310,25 @@ namespace WiiPlayTanksRemake.GameContent
                                 if (tankTurretRay.Intersects(cube.collider).HasValue)
                                 {
                                     inters.Add(tankTurretRay.Intersects(cube.collider).Value);
-                                    cubeInter = tankTurretRay.Intersects(cube.collider).Value;
-                                    // break;
                                 }
                             }
                         }
 
-                        // WPTR.ClientLog.Write($"tnk: {tier} | c: {cubeInter} | t: {tnkInter}", LogType.Debug);
+                        inters.Sort();
+
+                        string s = $"{tier}:";
+                        for (int i = 0; i < inters.Count; i++)
+                        {
+                            s += " " + inters[i].ToString();
+                        }
+                        GameHandler.ClientLog.Write(s, LogType.Debug);
+
+                        if (inters.Count > 0)
+                            cubeInter = inters[0];
 
                         if ((cubeInter > tnkInter && tnkInter > 0) || (cubeInter == 0 && tnkInter > 0))
                             AiParams.seesTarget = true;
-                        else if ((cubeInter < tnkInter || tnkInter == 0))
+                        else if (cubeInter < tnkInter || tnkInter == 0)
                             AiParams.seesTarget = false;
 
                         c1 = cubeInter;
