@@ -379,7 +379,7 @@ namespace WiiPlayTanksRemake.GameContent
             BoundsRenderer.LoadBounds();
         }
 
-        public static void DrawWorldModels()
+        public static void RenderWorldModels()
         {
             viewMatrix = TankGame.GameView;
             projectionMatrix = TankGame.GameProjection;

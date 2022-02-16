@@ -112,43 +112,39 @@ namespace WiiPlayTanksRemake.GameContent
             if (Input.KeyJustPressed(Keys.NumPad3))
                 tankToSpawnTeam++;
 
+            if (Input.KeyJustPressed(Keys.OemPeriod))
+                cbStack++;
+            if (Input.KeyJustPressed(Keys.OemComma))
+                cbStack--;
+
             if (Input.KeyJustPressed(Keys.Home))
-            {
                 SpawnTankAtMouse((TankTier)tankToSpawnType, (Team)tankToSpawnTeam);
-                // new Cube(CubeMapPosition.ConvertFromVector3(GameUtils.GetWorldPosition(GameUtils.MousePosition)), Cube.BlockType.Wood, 3);
-            }
 
             if (Input.KeyJustPressed(Keys.OemSemicolon))
-            {
-                var m = new Mine(null, GameUtils.GetWorldPosition(GameUtils.MousePosition), 400);
-            }
+                new Mine(null, GameUtils.GetWorldPosition(GameUtils.MousePosition), 400);
             if (Input.KeyJustPressed(Keys.OemQuotes))
-            {
-                var m = new Shell(GameUtils.GetWorldPosition(GameUtils.MousePosition) + new Vector3(0, 11, 0), default, 0);
-            }
+                new Shell(GameUtils.GetWorldPosition(GameUtils.MousePosition) + new Vector3(0, 11, 0), default, 0);
             if (Input.KeyJustPressed(Keys.L))
-            {
-                var c = new Cube(Cube.BlockType.Wood, 1)
+                new Cube(Cube.BlockType.Wood, cbStack)
                 {
                     position = GameUtils.GetWorldPosition(GameUtils.MousePosition)
                 };
-            }
             if (Input.KeyJustPressed(Keys.End))
-            {
                 SpawnCrateAtMouse();
-            }
 
             if (Input.KeyJustPressed(Keys.I))
                 new Powerup(powerups[mode]) { position = GameUtils.GetWorldPosition(GameUtils.MousePosition) };
 
+            cbStack = MathHelper.Clamp(cbStack, 1, 5);
         }
 
+        public static int cbStack = 1;
         public static int tankToSpawnType;
         public static int tankToSpawnTeam;
 
         internal static void DoRender()
         {
-            MapRenderer.DrawWorldModels();
+            MapRenderer.RenderWorldModels();
 
             foreach (var cube in Cube.cubes)
                 cube?.Render();
@@ -177,8 +173,8 @@ namespace WiiPlayTanksRemake.GameContent
             foreach (var crate in CrateDrop.crates)
                 crate?.Render();
 
-            foreach (var pu in Powerup.activePowerups)
-                pu?.Render();
+            foreach (var powerup in Powerup.activePowerups)
+                powerup?.Render();
 
             // TODO: Fix translation
             // TODO: Scaling with screen size.
@@ -203,6 +199,7 @@ namespace WiiPlayTanksRemake.GameContent
             DebugUtils.DrawDebugString(TankGame.spriteBatch, "Spawn Tank With Info:", GameUtils.WindowTop + new Vector2(0, 8), 1, centerIt: true);
             DebugUtils.DrawDebugString(TankGame.spriteBatch, $"Tier: {Enum.GetNames<TankTier>()[tankToSpawnType]}", GameUtils.WindowTop + new Vector2(0, 24), 1, centerIt: true);
             DebugUtils.DrawDebugString(TankGame.spriteBatch, $"Team: {Enum.GetNames<Team>()[tankToSpawnTeam]}", GameUtils.WindowTop + new Vector2(0, 40), 1, centerIt: true);
+            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"CubeStack: {cbStack}", GameUtils.WindowBottom - new Vector2(0, 20), 1, centerIt: true);
 
             DebugUtils.DrawDebugString(TankGame.spriteBatch, $"HighestTier: {AITank.GetHighestTierActive()}", new(10, GameUtils.WindowHeight * 0.26f), 1);
             DebugUtils.DrawDebugString(TankGame.spriteBatch, $"CurSong: {(Music.AllMusic.FirstOrDefault(music => music.volume == 0.5f) != null ? Music.AllMusic.FirstOrDefault(music => music.volume == 0.5f).Name : "N/A")}", new(10, GameUtils.WindowHeight - 100), 1);
@@ -329,8 +326,18 @@ namespace WiiPlayTanksRemake.GameContent
                     new(Cube.BlockType.Wood, 1),
                     new(Cube.BlockType.Wood, 1),
 
-                                        new(Cube.BlockType.Wood, 1),
-                    new(Cube.BlockType.Wood, 1),
+                    new(Cube.BlockType.Wood, 5),
+                    new(Cube.BlockType.Wood, 5),
+                    new(Cube.BlockType.Wood, 5),
+                    new(Cube.BlockType.Wood, 5),
+                    new(Cube.BlockType.Wood, 5),
+                    new(Cube.BlockType.Wood, 5),
+                    new(Cube.BlockType.Wood, 5),
+                    new(Cube.BlockType.Wood, 5),
+
+                                        new(Cube.BlockType.Wood, 5),
+                    new(Cube.BlockType.Wood, 5),
+                    new(Cube.BlockType.Wood, 5),
                 },
                 new CubeMapPosition[]
                 {
@@ -357,6 +364,17 @@ namespace WiiPlayTanksRemake.GameContent
                     new(11, 9),
                     new(11, 8),
                     new(11, 9),
+
+                    new(20, 6),
+                    new(20, 7),
+                    new(20, 8),
+                    new(20, 9),
+                    new(20, 10),
+                    new(20, 11),
+                    new(20, 12),
+                    new(20, 13),
+                    new(20, 14),
+                    new(20, 15),
                 });
         // fix shitty mission init (innit?)
 

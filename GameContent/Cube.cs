@@ -128,7 +128,7 @@ namespace WiiPlayTanksRemake.GameContent
         public void Update()
         {
             collider2d = new((int)(position.X - FULLBLOCK_SIZE / 2), (int)(position.Z - FULLBLOCK_SIZE / 2), (int)FULLBLOCK_SIZE, (int)FULLBLOCK_SIZE);
-            collider = new BoundingBox(position - new Vector3(FULLBLOCK_SIZE / 2, FULL_SIZE, FULLBLOCK_SIZE / 2), position + new Vector3(FULLBLOCK_SIZE / 2, FULL_SIZE, FULLBLOCK_SIZE / 2));
+            collider = new BoundingBox(position - new Vector3(FULLBLOCK_SIZE / 2 + 4, FULL_SIZE, FULLBLOCK_SIZE / 2 + 4), position + new Vector3(FULLBLOCK_SIZE / 2 + 4, FULL_SIZE, FULLBLOCK_SIZE / 2 + 4));
             Vector3 offset = new();
 
             switch (height)

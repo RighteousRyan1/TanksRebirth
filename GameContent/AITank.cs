@@ -663,7 +663,7 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.minePlacementChance = 0.05f;
                     break;
                 case TankTier.Ruby:
-                    AiParams.meanderAngle = 0.35f;
+                    AiParams.meanderAngle = 0.5f;
                     AiParams.meanderFrequency = 10;
                     AiParams.turretMeanderFrequency = 20;
                     AiParams.turretSpeed = 0.025f;
@@ -1316,12 +1316,12 @@ namespace WiiPlayTanksRemake.GameContent
 
                         inters.Sort();
 
-                        string s = $"{tier}:";
+                        /*string s = $"{tier}:";
                         for (int i = 0; i < inters.Count; i++)
                         {
                             s += " " + inters[i].ToString();
                         }
-                        GameHandler.ClientLog.Write(s, LogType.Debug);
+                        GameHandler.ClientLog.Write(s, LogType.Debug);*/
 
                         if (inters.Count > 0)
                             cubeInter = inters[0];
