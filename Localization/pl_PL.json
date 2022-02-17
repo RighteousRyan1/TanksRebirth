@@ -1,7 +1,7 @@
 {
   "Mission": "Misja",
   "Resume": "Wznów",
-  "StartOver": "Zacznij od nowa", // or just "Od nowa" if needed shorter
+  "StartOver": "Zacznij od nowa",
   "Options": "Opcje",
   "Quit": "Wyjdź",
   "Volume": "Głośność",
@@ -18,6 +18,6 @@
   "BorderlessWindowDesc": "Czy gra powinna używać okna bez ramki",
   "Resolution": "Rozdzielczość",
   "ResolutionDesc": "Zmienia rozdzielczość gry",
-  "PressAKey": "Wciśnij dowolny klawisz", // "Wciśnij dowolny przycisk" if gamepad works too
+  "PressAKey": "Wciśnij dowolny klawisz",
   "Back": "Wróć"
 }
