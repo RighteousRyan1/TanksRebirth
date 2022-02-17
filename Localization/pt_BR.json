@@ -11,7 +11,7 @@
   "EffectsVolume": "Volume de Efeitos Sonoros",
   "AmbientVolume": "Volume Ambiente",
   "PerPxLight": "Iluminação por pixel",
-  "PerPxLightDesc": "Se deve desenhar a iluminação em cada pixel individual ou não ",
+  "PerPxLightDesc": "Se deve desenhar a iluminação em cada pixel individual ou não",
   "VSync": "Sincronização vertical",
   "VSyncDesc": "Se deve renderizar um ciclo de frame completo por segundo ou não",
   "BorderlessWindow": "Janela sem bordas",
