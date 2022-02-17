@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using WiiPlayTanksRemake.GameContent;
 
 namespace WiiPlayTanksRemake
 {
@@ -63,11 +62,11 @@ namespace WiiPlayTanksRemake
                     }
                 }
 
-                var curTank = AITank.GetHighestTierActive();
+                var curTank = GameContent.AITank.GetHighestTierActive();
 
                 SetLargeAsset("tank_ash_large");
                 SetSmallAsset($"tank_{curTank.ToString().ToLower()}", $"Currently fighting {getArticle(curTank.ToString())} {curTank} Tank");
-                SetDetails($"Fighting {AITank.CountAll()} tank(s) on '{GameHandler.CurrentMission.Name}'");
+                SetDetails($"Fighting a grand total of {GameContent.AITank.CountAll()} tanks!");
                 
                 _client?.SetPresence(_rp);
             }

@@ -166,15 +166,11 @@ namespace WiiPlayTanksRemake.GameContent
             if (!INTERNAL_ignoreCollisions)
                 CheckCollisions();
 
-            int nummy = (int)Math.Round(30 / velocity.Length()) != 0 ? (int)Math.Round(30 / velocity.Length()) : 5;
-
-            var y = position.Y;
-
-            if (lifeTime % nummy == 0 && !INTERNAL_ignoreCollisions)
+            if (lifeTime % 15 == 0 && !INTERNAL_ignoreCollisions)
             {
-                var p = ParticleSystem.MakeParticle(position/*(position.FlattenZ() - new Vector2(0, 15).RotatedByRadians(-rotation - MathHelper.PiOver2)).Expand_Z() + new Vector3(0, y, 0)*/, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
+                var p = ParticleSystem.MakeParticle(position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smoke"));
                 p.FaceTowardsMe = false;
-                p.Scale = 0.45f;
+                p.Scale = 50f;
 
                 p.UniqueBehavior = (p) =>
                 {

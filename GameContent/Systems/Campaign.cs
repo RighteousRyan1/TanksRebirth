@@ -46,7 +46,6 @@ namespace WiiPlayTanksRemake.GameContent.Systems
         /// <summary>Sets up the <see cref="Mission"/> that is loaded.</summary>
         public void SetupLoadedMission()
         {
-            GameHandler.CurrentMission = CurrentMission;
             if (CurrentMission.Tanks is null && CurrentMission.Cubes is null)
             {
                 GameHandler.ClientLog.Write("No mission loaded. Mission setup canceled.", LogType.Error);

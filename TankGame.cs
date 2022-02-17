@@ -504,7 +504,7 @@ namespace WiiPlayTanksRemake
             DebugUtils.DrawDebugString(spriteBatch, $"Memory Used: {MemoryParser.FromMegabytes(TotalMemoryUsed)} MB", new(8, GameUtils.WindowHeight * 0.18f));
             DebugUtils.DrawDebugString(spriteBatch, $"{SysGPU}\n{SysCPU}", new(8, GameUtils.WindowHeight * 0.2f));
 
-            graphics.GraphicsDevice.DepthStencilState = new DepthStencilState() { /*DepthBufferEnable = true, StencilEnable = true*/ };
+            graphics.GraphicsDevice.DepthStencilState = new DepthStencilState() { DepthBufferEnable = true };
 
             GameHandler.RenderAll();
 

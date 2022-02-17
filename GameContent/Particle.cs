@@ -49,8 +49,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         internal void Render()
         {
-            TankGame.spriteBatch.Draw(Texture, GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(position), TankGame.GameView, TankGame.GameProjection), null, Color.White * Opacity, 0f, Texture.Size() / 2, Scale, default, 0);
-            // TankGame.spriteBatch.Draw(TankGame.spriteBatch, "0", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(position), TankGame.GameView, TankGame.GameProjection), colorOverride: Color.White * Opacity, centerIt: true);
+            DebugUtils.DrawDebugString(TankGame.spriteBatch, "0", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(position), TankGame.GameView, TankGame.GameProjection), colorOverride: Color.White * Opacity, centerIt: true);
             foreach (var mesh in _model.Meshes)
             {
                 foreach (BasicEffect effect in mesh.Effects)
