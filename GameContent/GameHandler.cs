@@ -24,6 +24,11 @@ namespace WiiPlayTanksRemake.GameContent
 {
     public class GameHandler
     {
+        public static Mission CurrentMission;
+
+
+
+
 
         public static int timeUntilTankFunction;
 
@@ -379,7 +384,8 @@ namespace WiiPlayTanksRemake.GameContent
                     new(20, 13),
                     new(20, 14),
                     new(20, 15),
-                });
+                })
+        { Name = "Debug Mission" };
         // fix shitty mission init (innit?)
 
         private static readonly PowerupTemplate[] powerups = 
@@ -558,8 +564,8 @@ namespace WiiPlayTanksRemake.GameContent
             return new AITank(tier)
             {
                 TankRotation = rot,
-                targetTankRotation = rot + MathHelper.Pi,
-                TurretRotation = rot - MathHelper.TwoPi,
+                targetTankRotation = rot - MathHelper.Pi,
+                TurretRotation = rot,
                 Team = team,
                 position = pos,
                 Dead = false
