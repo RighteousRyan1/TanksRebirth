@@ -1370,7 +1370,7 @@ namespace WiiPlayTanksRemake.GameContent
         public bool isCubeInWay;
 
 
-        private float treadPlaceTimer;
+        private int treadPlaceTimer;
 
         private float t1;
         private float c1;
@@ -1392,7 +1392,9 @@ namespace WiiPlayTanksRemake.GameContent
                 behavior.totalUpdateCount++;
 
             // treadPlaceTimer += MaxSpeed / (tier == TankTier.White ? 10 : 5);
-            treadPlaceTimer += MaxSpeed - (MaxSpeed * (tier == TankTier.White ? 0.92f : 0.85f));
+            //treadPlaceTimer += MaxSpeed - (MaxSpeed * (tier == TankTier.White ? 0.92f : 0.85f));
+
+            treadPlaceTimer = (int)Math.Round(14 / velocity.Length()) != 0 ? (int)Math.Round(14 / velocity.Length()) : 1;
 
             if (velocity != Vector3.Zero && !Stationary)
             {
@@ -1403,7 +1405,7 @@ namespace WiiPlayTanksRemake.GameContent
                     sfx.Pitch = TreadPitch;
                 }
 
-                if (treadPlaceTimer > MaxSpeed)
+                if (TankGame.GameUpdateTime % treadPlaceTimer == 0)
                 {
                     treadPlaceTimer = 0;
                     LayFootprint(tier == TankTier.White ? true : false);
@@ -1465,7 +1467,7 @@ namespace WiiPlayTanksRemake.GameContent
                             {
                                 // normal is up usually
                                 var r = GeometryUtils.Reflect(tankTurretRay, tankTurretRay.Intersects(MapRenderer.BoundsRenderer.BoundaryBox).Value);
-                                // tankTurretRay = r;
+                                //tankTurretRay = r;
                                 // rays.Add(tankTurretRay);
                                 rays.Add(r);
                             }

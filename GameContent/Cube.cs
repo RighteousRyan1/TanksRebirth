@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using WiiPlayTanksRemake;
+using WiiPlayTanksRemake.Graphics;
 using WiiPlayTanksRemake.Internals;
 using WiiPlayTanksRemake.Internals.Common.Utilities;
 using WiiPlayTanksRemake.Internals.Core.Interfaces;
@@ -110,15 +111,18 @@ namespace WiiPlayTanksRemake.GameContent
                     effect.TextureEnabled = true;
                     effect.Texture = meshTexture;
 
+                    effect.SetDefaultGameLighting_IngameEntities();
 
-                    effect.DirectionalLight0.Enabled = true;
+                    effect.DirectionalLight0.Direction *= 0.1f;
+
+                    /*effect.DirectionalLight0.Enabled = true;
                     effect.DirectionalLight1.Enabled = true;
                     effect.DirectionalLight2.Enabled = false;
 
                     effect.DirectionalLight0.Direction = new Vector3(0, -0.6f, -0.6f);
                     effect.DirectionalLight1.Direction = new Vector3(0, -0.6f, 0.6f);
 
-                    effect.SpecularColor = new Vector3(0, 0, 0);
+                    effect.SpecularColor = new Vector3(0, 0, 0);*/
                 }
 
                 mesh.Draw();

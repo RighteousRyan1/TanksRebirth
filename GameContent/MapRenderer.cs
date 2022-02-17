@@ -199,11 +199,8 @@ namespace WiiPlayTanksRemake.GameContent
                     case MapTheme.Default:
                         BoundaryModel = GameResources.GetGameResource<Model>("Assets/toy/outerbounds_big");
 
-                        foreach (var mesh in BoundaryModel.Meshes)
-                        {
-                            SetBlockTexture(mesh, "polygon33", BoundaryTextureContext.block_other_c);
-                            SetBlockTexture(mesh, "polygon7", BoundaryTextureContext.block_shadow_b);
-                        }
+                            SetBlockTexture(BoundaryModel.Meshes["polygon33"], BoundaryTextureContext.block_other_c);
+                            SetBlockTexture(BoundaryModel.Meshes["polygon7"], BoundaryTextureContext.block_shadow_b);
                         break;
                     case MapTheme.Forest:
                         TreeModel = GameResources.GetGameResource<Model>("Assets/forest/tree");
@@ -331,14 +328,11 @@ namespace WiiPlayTanksRemake.GameContent
             /// <param name="mesh"></param>
             /// <param name="meshNameMatch"></param>
             /// <param name="textureContext"></param>
-            private static void SetBlockTexture(ModelMesh mesh, string meshNameMatch, BoundaryTextureContext context)
+            private static void SetBlockTexture(ModelMesh mesh, BoundaryTextureContext context)
             {
                 foreach (BasicEffect effect in mesh.Effects)
                 {
-                    if (mesh.Name == meshNameMatch)
-                    {
-                        effect.Texture = GameResources.GetGameResource<Texture2D>($"Assets/textures/ingame/{context}");
-                    }
+                    effect.Texture = GameResources.GetGameResource<Texture2D>($"Assets/textures/ingame/{context}");
                 }
             }
 

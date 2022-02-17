@@ -412,10 +412,11 @@ namespace WiiPlayTanksRemake.GameContent
             var brighter = new Lighting.DayState()
             {
                 color = Color.White,
-                brightness = 0.5f
+                brightness = 0.55f
             };
 
             brighter.Apply(false);
+            //brighter.Apply(false);
 
             /*for (int i = 0; i < 3; i++)
                 SpawnTankInCrate(TankTier.Black, Team.Red, true);
@@ -554,16 +555,16 @@ namespace WiiPlayTanksRemake.GameContent
 
             var pos = GameUtils.GetWorldPosition(GameUtils.MousePosition);
 
-
-            return new AITank(tier)
+            var x = new AITank(tier)
             {
                 TankRotation = rot,
-                targetTankRotation = rot + MathHelper.Pi,
-                TurretRotation = rot - MathHelper.TwoPi,
+                targetTankRotation = rot - MathHelper.Pi,
+                TurretRotation = rot + MathHelper.Pi,
                 Team = team,
                 position = pos,
-                Dead = false
+                Dead = false,
             };
+            return x;
         }
         public static void SpawnTankPlethorae()
         {

@@ -14,6 +14,7 @@ using WiiPlayTanksRemake.Internals.Core.Interfaces;
 using WiiPlayTanksRemake.GameContent.GameMechanics;
 using WiiPlayTanksRemake.Internals.Common.Framework.Audio;
 using WiiPlayTanksRemake.Internals.Common.Framework.Input;
+using WiiPlayTanksRemake.Graphics;
 
 namespace WiiPlayTanksRemake.GameContent
 {
@@ -486,6 +487,8 @@ namespace WiiPlayTanksRemake.GameContent
 
                     else
                         effect.Texture = _shadowTexture;
+
+                    effect.SetDefaultGameLighting_IngameEntities();
                 }
                 mesh.Draw();
             }
