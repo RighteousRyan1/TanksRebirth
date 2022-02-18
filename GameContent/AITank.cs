@@ -1244,6 +1244,17 @@ namespace WiiPlayTanksRemake.GameContent
         private void UpdateCollision()
         {
             CollisionBox = new(position - new Vector3(7, 15, 7), position + new Vector3(10, 15, 10));
+            foreach (var tank in GameHandler.AllTanks)
+            {
+                if (tank is not null)
+                {
+                    var dummyVel = Velocity2D;
+                    Collision.HandleCollisionSimple(CollisionBox2D, tank.CollisionBox2D, ref dummyVel, ref position);
+
+                    velocity.X = dummyVel.X;
+                    velocity.Z = dummyVel.Y;
+                }
+            }
 
             foreach (var c in Cube.cubes)
             {
@@ -1251,18 +1262,6 @@ namespace WiiPlayTanksRemake.GameContent
                 {
                     var dummyVel = Velocity2D;
                     Collision.HandleCollisionSimple(CollisionBox2D, c.collider2d, ref dummyVel, ref position);
-
-                    velocity.X = dummyVel.X;
-                    velocity.Z = dummyVel.Y;
-                }
-            }
-
-            foreach (var tank in GameHandler.AllTanks)
-            {
-                if (tank is not null)
-                {
-                    var dummyVel = Velocity2D;
-                    Collision.HandleCollisionSimple(CollisionBox2D, tank.CollisionBox2D, ref dummyVel, ref position);
 
                     velocity.X = dummyVel.X;
                     velocity.Z = dummyVel.Y;

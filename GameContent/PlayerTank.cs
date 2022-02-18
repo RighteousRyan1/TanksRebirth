@@ -246,6 +246,8 @@ namespace WiiPlayTanksRemake.GameContent
 
             var norm = Vector3.Normalize(preterbedVelocity);
 
+            treadPlaceTimer = (int)Math.Round(14 / velocity.Length()) != 0 ? (int)Math.Round(14 / velocity.Length()) : 1;
+
             var targetTnkRotation = norm.FlattenZ().ToRotation() - MathHelper.PiOver2;
 
             TankRotation = GameUtils.RoughStep(TankRotation, targetTnkRotation, TurningSpeed);
@@ -255,11 +257,8 @@ namespace WiiPlayTanksRemake.GameContent
             else
             {
                 // treadPlaceTimer += MaxSpeed / 5;
-                if (treadPlaceTimer > MaxSpeed)
-                {
-                    treadPlaceTimer = 0;
+                if (TankGame.GameUpdateTime % treadPlaceTimer == 0)
                     LayFootprint(false);
-                }
                 velocity = Vector3.Zero;
                 IsTurning = true;
             }
@@ -305,25 +304,24 @@ namespace WiiPlayTanksRemake.GameContent
         {
             CollisionBox = new(position - new Vector3(12, 15, 12), position + new Vector3(12, 15, 12));
 
-            foreach (var c in Cube.cubes)
-            {
-                if (c is not null)
-                {
-                    var dummyVel = Velocity2D;
-                    Collision.HandleCollisionSimple(CollisionBox2D, c.collider2d, ref dummyVel, ref position);
-
-                    velocity.X = dummyVel.X;
-                    velocity.Z = dummyVel.Y;
-                }
-            }
-
-
             foreach (var tank in GameHandler.AllTanks)
             {
                 if (tank is not null)
                 {
                     var dummyVel = Velocity2D;
                     Collision.HandleCollisionSimple(CollisionBox2D, tank.CollisionBox2D, ref dummyVel, ref position);
+
+                    velocity.X = dummyVel.X;
+                    velocity.Z = dummyVel.Y;
+                }
+            }
+
+            foreach (var c in Cube.cubes)
+            {
+                if (c is not null)
+                {
+                    var dummyVel = Velocity2D;
+                    Collision.HandleCollisionSimple(CollisionBox2D, c.collider2d, ref dummyVel, ref position);
 
                     velocity.X = dummyVel.X;
                     velocity.Z = dummyVel.Y;
@@ -383,10 +381,9 @@ namespace WiiPlayTanksRemake.GameContent
 
             if (Velocity2D.Length() > 0 && playerControl_isBindPressed)
             {
-                treadPlaceTimer += MaxSpeed / 5;
-                if (treadPlaceTimer > MaxSpeed)
+                treadPlaceTimer = (int)Math.Round(14 / velocity.Length()) != 0 ? (int)Math.Round(14 / velocity.Length()) : 1;
+                if (TankGame.GameUpdateTime % treadPlaceTimer == 0  )
                 {
-                    treadPlaceTimer = 0;
                     LayFootprint(false);
                 }
                 if (TankGame.GameUpdateTime % _treadSoundTimer == 0)
