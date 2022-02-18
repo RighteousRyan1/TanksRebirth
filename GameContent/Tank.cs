@@ -112,7 +112,7 @@ namespace WiiPlayTanksRemake.GameContent
         /// <summary>The <see cref="Shell.HomingProperties"/>of the bullets this <see cref="Tank"/> shoots.</summary>
         public Shell.HomingProperties ShellHoming = new();
 
-        public int timeSinceLastAction;
+        public int timeSinceLastAction = 15000;
     }
 
     public class TankFootprint

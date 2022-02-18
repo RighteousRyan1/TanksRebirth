@@ -382,13 +382,12 @@ namespace WiiPlayTanksRemake.GameContent
                 });
         // fix shitty mission init (innit?)
 
-        private static readonly PowerupTemplate[] powerups = 
+        private static readonly PowerupTemplate[] powerups =
         {
-             new(1000, 50f, (tnk) => { tnk.MaxSpeed *= 2; }) { Name = "Speed" },
-             new(1000, 50f, (tnk) => { tnk.Invisible = true; }) { Name = "Invis" },
-             new(1000, 50f, (tnk) => { tnk.MaximalTurn = 6.28f; tnk.TurningSpeed = 100f; }) { Name = "BigTurn" },
-             new(1000, 50f, (tnk) => { tnk.ShellHoming.radius = 150f; tnk.ShellHoming.speed = tnk.ShellSpeed; tnk.ShellHoming.power = 1f; }) { Name = "Homing" },
-             new(1000, 50f, (tnk) => { tnk.Stationary = true; }) { Name = "Stationary" }
+             new(1000, 50f, (tnk) => { tnk.MaxSpeed *= 2; }, (tnk) => { tnk.MaxSpeed /= 2; }) { Name = "Speed" },
+             new(1000, 50f, (tnk) => { tnk.Invisible = !tnk.Invisible; }, (tnk) => tnk.Invisible = !tnk.Invisible) { Name = "InvisSwap" },
+             new(1000, 50f, (tnk) => { tnk.ShellHoming.radius = 150f; tnk.ShellHoming.speed = tnk.ShellSpeed; tnk.ShellHoming.power = 1f; }, (tnk) => tnk.ShellHoming = new()) { Name = "Homing" },
+             new(1000, 50f, (tnk) => { if (tnk.MaxSpeed > 0) tnk.Stationary = true; }, (tnk) => { if (tnk.MaxSpeed > 0) tnk.Stationary = !tnk.Stationary; }) { Name = "Stationary" }
         };
 
         public static void Initialize()

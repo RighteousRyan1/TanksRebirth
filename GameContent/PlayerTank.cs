@@ -153,9 +153,14 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 if (curShootStun <= 0 && curMineStun <= 0)
                 {
-                    ControlHandle_Keybinding();
-                    if (Input.CurrentGamePadSnapshot.IsConnected)
-                        ControlHandle_ConsoleController();
+                    if (!Stationary)
+                    {
+                        ControlHandle_Keybinding();
+                        if (Input.CurrentGamePadSnapshot.IsConnected)
+                            ControlHandle_ConsoleController();
+                    }
+                    else
+                        velocity = Vector3.Zero;
                 }
                 else
                     velocity = Vector3.Zero;
@@ -170,7 +175,8 @@ namespace WiiPlayTanksRemake.GameContent
                 if (Input.CanDetectClick())
                     Shoot();
 
-                UpdatePlayerMovement();
+                if (!Stationary)
+                    UpdatePlayerMovement();
             }
 
             timeSinceLastAction++;

@@ -24,6 +24,12 @@ namespace WiiPlayTanksRemake.GameContent
         /// <summary>The effect of this <see cref="Powerup"/> on a <see cref="Tank"/>.</summary>
         public Action<Tank> PowerupEffects { get; }
 
+        /// <summary>The place to reset the effects of this <see cref="Powerup"/> on the <see cref="Tank"/> it was applied to.
+        /// <para></para>
+        /// It can also be used to do some cool ending effects on a powerup.
+        /// </summary>
+        public Action<Tank> PowerupReset { get; }
+
         /// <summary>The duration of this <see cref="Powerup"/> on a <see cref="Tank"/></summary>
         public int duration;
 
@@ -40,12 +46,13 @@ namespace WiiPlayTanksRemake.GameContent
         /// <summary>Whether or not this <see cref="Powerup"/> has been already picked up.</summary>
         public bool InWorld { get; private set; }
 
-        public Powerup(int duration, float pickupRadius, Action<Tank> effects)
+        public Powerup(int duration, float pickupRadius, Action<Tank> effects, Action<Tank> end)
         {
             this.pickupRadius = pickupRadius;
             this.duration = duration;
 
             PowerupEffects = effects;
+            PowerupReset = end;
 
             int index = Array.IndexOf(activePowerups, activePowerups.First(tank => tank is null));
 
@@ -59,6 +66,7 @@ namespace WiiPlayTanksRemake.GameContent
             pickupRadius = template.pickupRadius;
             duration = template.duration;
             PowerupEffects = template.PowerupEffects;
+            PowerupReset = template.PowerupReset;
 
             int index = Array.IndexOf(activePowerups, activePowerups.First(tank => tank is null));
 
@@ -84,7 +92,7 @@ namespace WiiPlayTanksRemake.GameContent
                 duration--;
                 if (duration <= 0)
                 {
-                    AffectedTank.ApplyDefaults();
+                    PowerupReset?.Invoke(AffectedTank);
                     activePowerups[id] = null;
                 }
             }
@@ -143,10 +151,13 @@ namespace WiiPlayTanksRemake.GameContent
 
         public Action<Tank> PowerupEffects { get; }
 
-        public PowerupTemplate(int duration, float pickupRadius, Action<Tank> fx)
+        public Action<Tank> PowerupReset { get; }
+
+        public PowerupTemplate(int duration, float pickupRadius, Action<Tank> fx, Action<Tank> end)
         {
             Name = string.Empty;
             PowerupEffects = fx;
+            PowerupReset = end;
 
             this.pickupRadius = pickupRadius;
             this.duration = duration;
