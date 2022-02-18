@@ -173,6 +173,8 @@ namespace WiiPlayTanksRemake.GameContent
                 UpdatePlayerMovement();
             }
 
+            timeSinceLastAction++;
+
             Speed = Acceleration;
 
             playerControl_isBindPressed = false;
@@ -357,6 +359,7 @@ namespace WiiPlayTanksRemake.GameContent
             var sound = GameResources.GetGameResource<SoundEffect>("Assets/sounds/mine_place");
             SoundPlayer.PlaySoundInstance(sound, SoundContext.Effect, 0.5f);
             OwnedMineCount++;
+            timeSinceLastAction = 0;
             var mine = new Mine(this, position, 600);
         }
 
@@ -442,6 +445,8 @@ namespace WiiPlayTanksRemake.GameContent
             bullet.ricochets = RicochetCount;
 
             OwnedShellCount++;
+
+            timeSinceLastAction = 0;
 
             curShootStun = ShootStun;
             curShootCooldown = ShellCooldown;

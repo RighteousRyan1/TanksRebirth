@@ -97,6 +97,8 @@ namespace WiiPlayTanksRemake.GameContent
         /// <summary>The AI parameter collection of this AI Tank.</summary>
         public Params AiParams { get; } = new();
 
+        public Vector3 aimTarget;
+
         public float targetTankRotation;
 
         #endregion
@@ -1235,6 +1237,8 @@ namespace WiiPlayTanksRemake.GameContent
 
             DoAi();
 
+            timeSinceLastAction++;
+
             position.X = MathHelper.Clamp(position.X, MapRenderer.TANKS_MIN_X, MapRenderer.TANKS_MAX_X);
             position.Z = MathHelper.Clamp(position.Z, MapRenderer.TANKS_MIN_Y, MapRenderer.TANKS_MAX_Y);
 
@@ -1283,6 +1287,8 @@ namespace WiiPlayTanksRemake.GameContent
             SoundPlayer.PlaySoundInstance(sound, SoundContext.Effect, 0.5f);
             OwnedMineCount++;
             AiParams.timeSinceLastMinePlaced = 0;
+
+            timeSinceLastAction = 0;
 
             var mine = new Mine(this, position, 600);
         }
@@ -1345,6 +1351,8 @@ namespace WiiPlayTanksRemake.GameContent
 
             OwnedShellCount++;
 
+            timeSinceLastAction = 0;
+
             curShootStun = ShootStun;
             curShootCooldown = ShellCooldown;
         }
@@ -1373,6 +1381,8 @@ namespace WiiPlayTanksRemake.GameContent
 
         private float t1;
         private float c1;
+
+        public bool isEnemySpotted;
 
         public void DoAi(bool doMoveTowards = true, bool doMovements = true, bool doFire = true)
         {
@@ -1418,7 +1428,8 @@ namespace WiiPlayTanksRemake.GameContent
                 {
                     if (tank is not null && !tank.Dead && (tank.Team != Team || tank.Team == Team.NoTeam) && tank != this)
                         if (Vector3.Distance(tank.position, position) < Vector3.Distance(enemy.position, position))
-                            enemy = tank;
+                            if ((tank.Invisible && tank.timeSinceLastAction < 60) || !tank.Invisible)
+                                enemy = tank;
                 }
 
                 #region TurretHandle
@@ -1439,7 +1450,20 @@ namespace WiiPlayTanksRemake.GameContent
                 {
                     if (Behaviors[1].IsModOf(AiParams.turretMeanderFrequency))
                     {
-                        var dirVec = Position2D - enemy.Position2D;
+                        isEnemySpotted = false;
+                        if (enemy.Invisible && enemy.timeSinceLastAction < 60)
+                        {
+                            aimTarget = enemy.Position2D.Expand_Z();
+                            isEnemySpotted = true;
+                        }
+
+                        if (!enemy.Invisible)
+                        {
+                            aimTarget = enemy.Position2D.Expand_Z();
+                            isEnemySpotted = true;
+                        }
+
+                        var dirVec = Position2D - aimTarget.FlattenZ();  // enemy.Position2D;
                         AiParams.targetTurretRotation = -dirVec.ToRotation() - MathHelper.PiOver2 + new Random().NextFloat(-AiParams.inaccuracy, AiParams.inaccuracy);
                     }
 
@@ -1510,6 +1534,9 @@ namespace WiiPlayTanksRemake.GameContent
                         if ((cubeInter > tnkInter && tnkInter > 0) || (cubeInter == 0 && tnkInter > 0))
                             AiParams.seesTarget = true;
                         else if (cubeInter < tnkInter || tnkInter == 0)
+                            AiParams.seesTarget = false;
+
+                        if (!isEnemySpotted)
                             AiParams.seesTarget = false;
 
                         c1 = cubeInter;
