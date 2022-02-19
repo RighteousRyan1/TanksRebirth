@@ -91,8 +91,8 @@ namespace WiiPlayTanksRemake.GameContent
             public float cubeWarinessDistance = 60f;
             /// <summary>How often this tank reads the obstacles around it and navigates around them.</summary>
             public int cubeReadTime = 30;
-            /// <summary>How far this tank must be from a teammate before it can lay a mine.</summary>
-            public float teammateTankWariness = 100f;
+            /// <summary>How far this tank must be from a teammate before it can lay a mine or fire a bullet.</summary>
+            public float teammateTankWariness = 50f;
         }
         /// <summary>The AI parameter collection of this AI Tank.</summary>
         public Params AiParams { get; } = new();
@@ -1400,9 +1400,6 @@ namespace WiiPlayTanksRemake.GameContent
             foreach (var behavior in Behaviors)
                 behavior.totalUpdateCount++;
 
-            // treadPlaceTimer += MaxSpeed / (tier == TankTier.White ? 10 : 5);
-            //treadPlaceTimer += MaxSpeed - (MaxSpeed * (tier == TankTier.White ? 0.92f : 0.85f));
-
             treadPlaceTimer = (int)Math.Round(14 / velocity.Length()) != 0 ? (int)Math.Round(14 / velocity.Length()) : 1;
 
             if (velocity != Vector3.Zero && !Stationary)
@@ -1431,6 +1428,12 @@ namespace WiiPlayTanksRemake.GameContent
                             if ((tank.Invisible && tank.timeSinceLastAction < 60) || !tank.Invisible)
                                 enemy = tank;
                 }
+
+                var tanksNearMe = new List<Tank>();
+
+                foreach (var tank in GameHandler.AllTanks)
+                    if (tank != this && tank is not null && !tank.Dead && Vector3.Distance(tank.position, position) <= AiParams.teammateTankWariness)
+                        tanksNearMe.Add(tank);
 
                 #region TurretHandle
 
@@ -1506,7 +1509,8 @@ namespace WiiPlayTanksRemake.GameContent
                         if (tankTurretRay.Intersects(enemy.CollisionBox).HasValue)
                             tnkInter = tankTurretRay.Intersects(enemy.CollisionBox).Value;
 
-                        List<float> inters = new();
+                        List<float> intersCube = new();
+                        List<(Tank, float)> intersTnk = new(); // store the tank and it's dist from raycast
 
                         foreach (var cube in Cube.cubes)
                         {
@@ -1514,12 +1518,23 @@ namespace WiiPlayTanksRemake.GameContent
                             {
                                 if (tankTurretRay.Intersects(cube.collider).HasValue)
                                 {
-                                    inters.Add(tankTurretRay.Intersects(cube.collider).Value);
+                                    intersCube.Add(tankTurretRay.Intersects(cube.collider).Value);
                                 }
                             }
                         }
+                        /*foreach (var tank in GameHandler.AllTanks)
+                        {
+                            if (tank is not null)
+                            {
+                                if (tankTurretRay.Intersects(tank.CollisionBox).HasValue)
+                                {
+                                    intersTnk.Add((tank, tankTurretRay.Intersects(tank.CollisionBox).Value));
+                                }
+                            }
+                        }*/
 
-                        inters.Sort();
+                        // intersTnk.Sort();
+                        intersCube.Sort();
 
                         /*string s = $"{tier}:";
                         for (int i = 0; i < inters.Count; i++)
@@ -1528,15 +1543,21 @@ namespace WiiPlayTanksRemake.GameContent
                         }
                         GameHandler.ClientLog.Write(s, LogType.Debug);*/
 
-                        if (inters.Count > 0)
-                            cubeInter = inters[0];
+                        bool preventFireBecauseTeammateIsInWay = false;
+
+                        if (intersCube.Count > 0)
+                            cubeInter = intersCube[0];
+                        if (intersTnk.Count > 0)
+                        {
+                            //tnkInter = tankTurretRay.Intersects(intersTnk[0].Item1.CollisionBox).Value;
+
+                            // if (intersTnk[0].Item1.Team == Team)
+                                // preventFireBecauseTeammateIsInWay = true;
+                        }
 
                         if ((cubeInter > tnkInter && tnkInter > 0) || (cubeInter == 0 && tnkInter > 0))
                             AiParams.seesTarget = true;
                         else if (cubeInter < tnkInter || tnkInter == 0)
-                            AiParams.seesTarget = false;
-
-                        if (!isEnemySpotted)
                             AiParams.seesTarget = false;
 
                         c1 = cubeInter;
@@ -1544,7 +1565,9 @@ namespace WiiPlayTanksRemake.GameContent
 
                         // AiParams.seesTarget = rays.Any(r => r.Intersects(enemy.CollisionBox).HasValue);
 
-                        if (AiParams.seesTarget)
+                        bool checkNoTeam = Team == Team.NoTeam ? true : !tanksNearMe.Any(x => x.Team == Team);
+
+                        if (AiParams.seesTarget && checkNoTeam && isEnemySpotted && !preventFireBecauseTeammateIsInWay)
                         {
                             if (curShootCooldown <= 0)
                             {
@@ -1677,7 +1700,7 @@ namespace WiiPlayTanksRemake.GameContent
                     {
                         if (Behaviors[4].IsModOf(60))
                         {
-                            // if (!WPTR.AllTanks.Any(tnk => tnk is not null && tnk.Team == Team && Vector3.Distance(tnk.position, position) < AiParams.teammateTankWariness))
+                            if (!tanksNearMe.Any(x => x.Team == Team))
                             {
                                 if (new Random().NextFloat(0, 1) <= AiParams.minePlacementChance)
                                 {
