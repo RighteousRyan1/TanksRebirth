@@ -1437,7 +1437,6 @@ namespace WiiPlayTanksRemake.GameContent
 
                     if (TankGame.GameUpdateTime % treadPlaceTimer == 0)
                     {
-                        treadPlaceTimer = 0;
                         LayFootprint(tier == TankTier.White ? true : false);
                     }
                 }
@@ -1802,9 +1801,9 @@ namespace WiiPlayTanksRemake.GameContent
                         }
                         else
                         {
-                            if (treadPlaceTimer > MaxSpeed)
+                            treadPlaceTimer = (int)Math.Round(14 / TurningSpeed) != 0 ? (int)Math.Round(14 / TurningSpeed) : 1;
+                            if (TankGame.GameUpdateTime % treadPlaceTimer == 0)
                             {
-                                treadPlaceTimer = 0;
                                 LayFootprint(tier == TankTier.White ? true : false);
                             }
                             IsTurning = true;
