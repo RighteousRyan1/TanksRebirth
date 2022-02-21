@@ -1367,8 +1367,6 @@ namespace WiiPlayTanksRemake.GameContent
 
             p.Scale = 0.5f;
 
-            p.position.X -= 13.35f * p.Scale;
-
             p.UniqueBehavior = (part) =>
             {
                 part.color = Color.Orange;

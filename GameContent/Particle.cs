@@ -16,7 +16,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         public Vector3 position;
 
-        public Color color;
+        public Color color = Color.White;
 
         public Quaternion rotation;
         public float rotation2d;
