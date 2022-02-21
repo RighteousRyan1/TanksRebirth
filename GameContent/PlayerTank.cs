@@ -421,6 +421,49 @@ namespace WiiPlayTanksRemake.GameContent
             };
         }
 
+        private void DrawShootPath()
+        {
+            const int MAX_PATH_UNITS = 150;
+
+            var whitePixel = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
+            var pathPos = Position2D + new Vector2(0, 20).RotatedByRadians(-TurretRotation);
+            var pathDir = Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi);
+            pathDir.Y *= -1;
+            pathDir *= ShellSpeed;
+
+
+            for (int i = 0; i < MAX_PATH_UNITS; i++)
+            {
+                var dummyPos = Vector3.Zero;
+
+                if (pathPos.X < MapRenderer.MIN_X || pathPos.X > MapRenderer.MAX_X)
+                    pathDir.X *= -1;
+                if (pathPos.Y < MapRenderer.MIN_Y || pathPos.Y > MapRenderer.MAX_Y)
+                    pathDir.Y *= -1;
+
+                var pathHitbox = new Rectangle((int)pathPos.X - 3, (int)pathPos.Y - 3, 6, 6);
+
+                // Why is velocity passed by reference here lol
+                Collision.HandleCollisionSimple_ForBlocks(pathHitbox, ref pathDir, ref dummyPos, out var dir, false);
+
+                switch (dir)
+                {
+                    case Collision.CollisionDirection.Up:
+                    case Collision.CollisionDirection.Down:
+                        pathDir.Y *= -1;
+                        break;
+                    case Collision.CollisionDirection.Left:
+                    case Collision.CollisionDirection.Right:
+                        pathDir.X *= -1;
+                        break;
+                }
+
+                pathPos += pathDir;
+                
+                var pathPosScreen = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(pathPos.X, 11, pathPos.Y), TankGame.GameView, TankGame.GameProjection);
+                TankGame.spriteBatch.Draw(whitePixel, pathPosScreen, null, Color.White, 0, whitePixel.Size() / 2, 2 + (float)Math.Sin(i * Math.PI / 5 - TankGame.GameUpdateTime * 0.3f), default, default);
+            }
+        }
 
         /// <summary>
         /// Finish bullet implementation!
@@ -512,6 +555,8 @@ namespace WiiPlayTanksRemake.GameContent
         {
             if (Dead)
                 return;
+
+            DrawShootPath();
 
             var info = new string[]
             {
