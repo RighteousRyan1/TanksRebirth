@@ -1408,6 +1408,72 @@ namespace WiiPlayTanksRemake.GameContent
 
         public bool isEnemySpotted;
 
+        private bool IsEnemyInAimedPath(Tank enemy = null, bool draw = false)
+        {
+            const int MAX_PATH_UNITS = 30;
+            const int PATH_UNIT_LENGTH = 20;
+
+            var whitePixel = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
+            var pathPos = Position2D + new Vector2(0, 20).RotatedByRadians(-TurretRotation);
+            var pathDir = Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi);
+            pathDir.Y *= -1;
+            pathDir *= PATH_UNIT_LENGTH;
+            int pathRicochetCount = 0;
+
+            for (int i = 0; i < MAX_PATH_UNITS; i++)
+            {
+                var dummyPos = Vector3.Zero;
+
+                if (pathPos.X < MapRenderer.MIN_X || pathPos.X > MapRenderer.MAX_X)
+                {
+                    pathDir.X *= -1;
+                    pathRicochetCount++;
+                }
+                if (pathPos.Y < MapRenderer.MIN_Y || pathPos.Y > MapRenderer.MAX_Y)
+                {
+                    pathDir.Y *= -1;
+                    pathRicochetCount++;
+                }
+
+                var pathHitbox = new Rectangle((int)pathPos.X - 3, (int)pathPos.Y - 3, 6, 6);
+
+                // Why is velocity passed by reference here lol
+                Collision.HandleCollisionSimple_ForBlocks(pathHitbox, ref pathDir, ref dummyPos, out var dir, false);
+
+                switch (dir)
+                {
+                    case Collision.CollisionDirection.Up:
+                    case Collision.CollisionDirection.Down:
+                        pathDir.Y *= -1;
+                        pathRicochetCount++;
+                        break;
+                    case Collision.CollisionDirection.Left:
+                    case Collision.CollisionDirection.Right:
+                        pathDir.X *= -1;
+                        pathRicochetCount++;
+                        break;
+                }
+
+                if (pathRicochetCount > RicochetCount)
+                    return false;
+
+                pathPos += pathDir;
+
+
+                if (draw)
+                {
+                    var pathPosScreen = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(pathPos.X, 11, pathPos.Y), TankGame.GameView, TankGame.GameProjection);
+                    TankGame.spriteBatch.Draw(whitePixel, pathPosScreen, null, Color.White, 0, whitePixel.Size() / 2, 2 + (float)Math.Sin(i * Math.PI / 5 - TankGame.GameUpdateTime * 0.3f), default, default);
+                }
+
+                if (enemy == null)
+                    continue;
+                if (enemy.CollisionBox2D.Intersects(pathHitbox))
+                    return true;
+            }
+            return false;
+        }
+        
         public void DoAi(bool doMoveTowards = true, bool doMovements = true, bool doFire = true)
         {
             AiParams.timeSinceLastMinePlaced++;
@@ -1578,7 +1644,7 @@ namespace WiiPlayTanksRemake.GameContent
                                 // preventFireBecauseTeammateIsInWay = true;
                             }
 
-                            if ((cubeInter > tnkInter && tnkInter > 0) || (cubeInter == 0 && tnkInter > 0))
+                            if (IsEnemyInAimedPath(enemy))
                                 AiParams.seesTarget = true;
                             else if (cubeInter < tnkInter || tnkInter == 0)
                                 AiParams.seesTarget = false;
@@ -1882,6 +1948,8 @@ namespace WiiPlayTanksRemake.GameContent
         {
             if (Dead)
                 return;
+
+            IsEnemyInAimedPath(default, true);
 
             var info = new string[]
             {
