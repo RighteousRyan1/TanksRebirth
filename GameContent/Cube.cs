@@ -66,7 +66,6 @@ namespace WiiPlayTanksRemake.GameContent
                 BlockType.Hole => GameResources.GetGameResource<Texture2D>("Assets/textures/ingame/block_harf.2"),
                 _ => null
             };
-
             this.height = MathHelper.Clamp(height, 0, 7); // if 0, it will be a hole.
 
             model = TankGame.CubeModel;

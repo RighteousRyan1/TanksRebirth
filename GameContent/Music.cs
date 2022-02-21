@@ -16,7 +16,7 @@ namespace WiiPlayTanksRemake.GameContent
         Stopped
     }
     /// <summary>
-    /// Be sure to use the 
+    /// A class that allows simple usage of a music track. Recommended usage is an <c>.ogg</c> format.
     /// </summary>
     public class Music
     {

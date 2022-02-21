@@ -14,10 +14,13 @@ using WiiPlayTanksRemake.Internals.Common.Framework.Input;
 using System.Collections.Generic;
 using System.Linq;
 using FontStashSharp;
+using WiiPlayTanksRemake.Internals.Common.Framework.Audio;
+using WiiPlayTanksRemake.Internals;
+using Microsoft.Xna.Framework.Audio;
 
 namespace WiiPlayTanksRemake.GameContent.UI
 {
-    public static class IngameUI
+    public static class GameUI
     {
         public static bool InOptions { get; set; }
 
@@ -61,63 +64,55 @@ namespace WiiPlayTanksRemake.GameContent.UI
         internal static void Initialize()
         {
             var ttColor = Color.LightGray;
-
             SpriteFontBase font = TankGame.TextFont;
+
             Vector2 drawOrigin = font.MeasureString("Mission 1") / 2f;
             MissionInfoBar = new((uiPanel, spriteBatch) => spriteBatch.DrawString(font, "Mission 1", uiPanel.Hitbox.Center.ToVector2(), Color.White, new Vector2(1.5f), 0f, drawOrigin));
             MissionInfoBar.BackgroundColor = Color.Red;
             MissionInfoBar.SetDimensions(650, 1000, 500, 50);
 
-            /*testdropdwn = new("Languages", font, Color.SlateGray);
-            testdropdwn.SetDimensions(500, 500, 250, 100);
-
-            testbuttondrop1 = new("Hi", font, Color.WhiteSmoke);
-            testbuttondrop2 = new("Lang2", font, Color.WhiteSmoke);
-            testbuttondrop3 = new("Lang3", font, Color.WhiteSmoke);
-            testbuttondrop1.SetDimensions(0, 0, 1, 1);
-            testbuttondrop2.SetDimensions(0, 0, 1, 1);
-            testbuttondrop3.SetDimensions(0, 0, 1, 1);
-            testdropdwn.Append(testbuttondrop1);
-            testdropdwn.Append(testbuttondrop2);
-            testdropdwn.Append(testbuttondrop3);
-            testdropdwn.WrapperColor = Color.Red;
-            testdropdwn.Initialize();*/
-
             ResumeButton = new(TankGame.GameLanguage.Resume, font, Color.WhiteSmoke)
             {
-                Visible = false
+                IsVisible = false
             };
             ResumeButton.SetDimensions(700, 100, 500, 150);
             ResumeButton.OnLeftClick = (uiElement) => Paused = false;
 
             RestartButton = new(TankGame.GameLanguage.StartOver, font, Color.WhiteSmoke)
             {
-                Visible = false,
+                IsVisible = false,
             };
             RestartButton.SetDimensions(700, 350, 500, 150);
 
             OptionsButton = new(TankGame.GameLanguage.Options, font, Color.WhiteSmoke)
             {
-                Visible = false
+                IsVisible = false
             };
             OptionsButton.SetDimensions(700, 600, 500, 150);
             OptionsButton.OnLeftClick = (uiElement) =>
             {
                 _delay = 1;
                 InOptions = true;
-                ResumeButton.Visible = false;
-                RestartButton.Visible = false;
-                QuitButton.Visible = false;
-                OptionsButton.Visible = false;
-                VolumeButton.Visible = true;
-                GraphicsButton.Visible = true;
-                ControlsButton.Visible = true;
-                BackButton.Visible = true;
+                ResumeButton.IsVisible = false;
+                RestartButton.IsVisible = false;
+                QuitButton.IsVisible = false;
+                OptionsButton.IsVisible = false;
+                VolumeButton.IsVisible = true;
+                GraphicsButton.IsVisible = true;
+                ControlsButton.IsVisible = true;
+                BackButton.IsVisible = true;
+
+                BackButton.Size.Y = 150;
+
+                if (MainMenu.Active)
+                {
+                    MainMenu.PlayButton.IsVisible = false;
+                }
             };
 
             VolumeButton = new(TankGame.GameLanguage.Volume, font, Color.WhiteSmoke)
             {
-                Visible = false
+                IsVisible = false
             };
             VolumeButton.SetDimensions(700, 100, 500, 150);
             VolumeButton.OnLeftClick = (uiElement) =>
@@ -126,14 +121,14 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 VolumeUI.ShowAll();
                 VolumeUI.MusicVolume.IgnoreMouseInteractions = true;
                 _delay = 1;
-                VolumeButton.Visible = false;
-                GraphicsButton.Visible = false;
-                ControlsButton.Visible = false;
+                VolumeButton.IsVisible = false;
+                GraphicsButton.IsVisible = false;
+                ControlsButton.IsVisible = false;
             };
 
             GraphicsButton = new(TankGame.GameLanguage.Graphics, font, Color.WhiteSmoke)
             {
-                Visible = false
+                IsVisible = false
             };
             GraphicsButton.SetDimensions(700, 350, 500, 150);
             GraphicsButton.OnLeftClick = (uiElement) =>
@@ -142,38 +137,40 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 GraphicsUI.ShowAll();
                 GraphicsUI.VsyncButton.IgnoreMouseInteractions = true;
                 _delay = 1;
-                VolumeButton.Visible = false;
-                GraphicsButton.Visible = false;
-                ControlsButton.Visible = false;
+                VolumeButton.IsVisible = false;
+                GraphicsButton.IsVisible = false;
+                ControlsButton.IsVisible = false;
             };
 
             ControlsButton = new(TankGame.GameLanguage.Controls, font, Color.WhiteSmoke)
             {
-                Visible = false
+                IsVisible = false
             };
             ControlsButton.SetDimensions(700, 600, 500, 150);
             ControlsButton.OnLeftClick = (uiElement) =>
             {
                 ControlsUI.BatchVisible = true;
                 ControlsUI.ShowAll();
-                VolumeButton.Visible = false;
-                GraphicsButton.Visible = false;
-                ControlsButton.Visible = false;
+                VolumeButton.IsVisible = false;
+                GraphicsButton.IsVisible = false;
+                ControlsButton.IsVisible = false;
             };
 
             QuitButton = new(TankGame.GameLanguage.Quit, font, Color.WhiteSmoke)
             {
-                Visible = false
+                IsVisible = false
             };
             QuitButton.SetDimensions(700, 850, 500, 150);
             QuitButton.OnLeftClick = (ui) => TankGame.Quit();
 
             BackButton = new(TankGame.GameLanguage.Back, font, Color.WhiteSmoke)
             {
-                Visible = false
+                IsVisible = false
             };
             BackButton.SetDimensions(700, 850, 500, 150);
             BackButton.OnLeftClick = (uiElement) => HandleBackButton();
+
+            // MainMenu.Initialize();
 
             GraphicsUI.Initialize();
             ControlsUI.Initialize();
@@ -215,26 +212,30 @@ namespace WiiPlayTanksRemake.GameContent.UI
             {
                 button.HasScissor = true;
                 button.Scissor = new(0, (int)(GameUtils.WindowHeight * 0.05f), GameUtils.WindowWidth, (int)(GameUtils.WindowHeight * 0.7f));
+                button.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/menu_tick"), SoundContext.Effect); };
             }
+            foreach (var e in menuElements)
+                e.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/menu_tick"), SoundContext.Effect); };
         }
 
         private static void HandleBackButton()
         {
+
             if (VolumeUI.BatchVisible)
             {
                 VolumeUI.BatchVisible = false;
                 VolumeUI.HideAll();
-                VolumeButton.Visible = true;
-                GraphicsButton.Visible = true;
-                ControlsButton.Visible = true;
+                VolumeButton.IsVisible = true;
+                GraphicsButton.IsVisible = true;
+                ControlsButton.IsVisible = true;
             }
             else if (GraphicsUI.BatchVisible)
             {
                 GraphicsUI.BatchVisible = false;
                 GraphicsUI.HideAll();
-                VolumeButton.Visible = true;
-                GraphicsButton.Visible = true;
-                ControlsButton.Visible = true;
+                VolumeButton.IsVisible = true;
+                GraphicsButton.IsVisible = true;
+                ControlsButton.IsVisible = true;
 
                 TankGame.Settings.ResWidth = GraphicsUI.CurrentRes.Key;
                 TankGame.Settings.ResHeight = GraphicsUI.CurrentRes.Value;
@@ -252,18 +253,48 @@ namespace WiiPlayTanksRemake.GameContent.UI
             {
                 ControlsUI.BatchVisible = false;
                 ControlsUI.HideAll();
-                VolumeButton.Visible = true;
-                GraphicsButton.Visible = true;
-                ControlsButton.Visible = true;
+                VolumeButton.IsVisible = true;
+                GraphicsButton.IsVisible = true;
+                ControlsButton.IsVisible = true;
             }
             else
             {
-                InOptions = false;
-                VolumeUI.HideAll();
-                BackButton.Visible = false;
-                VolumeButton.Visible = false;
-                GraphicsButton.Visible = false;
-                ControlsButton.Visible = false;
+                if (MainMenu.Active)
+                {
+                    if (MainMenu.PlayButton_Multiplayer.IsVisible)
+                    {
+                        MainMenu.PlayButton_Multiplayer.IsVisible = false;
+                        MainMenu.PlayButton_SinglePlayer.IsVisible = false;
+                        MainMenu.PlayButton_LevelEditor.IsVisible = false;
+
+                        MainMenu.PlayButton.IsVisible = true;
+
+                        OptionsButton.IsVisible = true;
+                        QuitButton.IsVisible = true;
+
+                        BackButton.IsVisible = false;
+                    }
+
+                    if (GraphicsButton.IsVisible)
+                    {
+                        BackButton.IsVisible = false;
+                        VolumeButton.IsVisible = false;
+                        GraphicsButton.IsVisible = false;
+                        ControlsButton.IsVisible = false;
+                        OptionsButton.IsVisible = true;
+                        QuitButton.IsVisible = true;
+                        MainMenu.PlayButton.IsVisible = true;
+                    }
+                }
+                else
+                {
+                    InOptions = false;
+                    VolumeUI.HideAll();
+                    BackButton.IsVisible = false;
+                    VolumeButton.IsVisible = false;
+                    GraphicsButton.IsVisible = false;
+                    ControlsButton.IsVisible = false;
+                }
             }
         }
 
@@ -276,10 +307,6 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
             if (_newScroll != _oldScroll)
             {
-                //if (_gpuSettingsOffset < 0)
-                    //_gpuSettingsOffset = 0;
-                //if (_gpuSettingsOffset < -240)
-                    //_gpuSettingsOffset = -240;
                 _gpuSettingsOffset = _newScroll - _oldScroll;
                 foreach (var b in graphicsElements)
                 {
@@ -292,25 +319,29 @@ namespace WiiPlayTanksRemake.GameContent.UI
             Vector2 drawOrigin = TankGame.TextFont.MeasureString(text) / 2f;
             MissionInfoBar.UniqueDraw =
                 (uiPanel, spriteBatch) => spriteBatch.DrawString(TankGame.TextFont, text, uiPanel.Hitbox.Center.ToVector2(), Color.White, new Vector2(1.5f), 0, drawOrigin);
-            if (Pause.JustPressed) {
+            if (Pause.JustPressed)
+            {
                 if (InOptions)
                 {
                     HandleBackButton();
                     return;
                 }
-                if (Paused)
-                    TankMusicSystem.ResumeAll();
-                else
-                    TankMusicSystem.PauseAll();
+                if (!MainMenu.Active)
+                {
+                    if (Paused)
+                        TankMusicSystem.ResumeAll();
+                    else
+                        TankMusicSystem.PauseAll();
+                }
                 Paused = !Paused;
             }
 
-            if (!InOptions)
+            if (!MainMenu.Active)
             {
-                ResumeButton.Visible = Paused;
-                RestartButton.Visible = Paused;
-                QuitButton.Visible = Paused;
-                OptionsButton.Visible = Paused;
+                ResumeButton.IsVisible = Paused;
+                RestartButton.IsVisible = Paused;
+                QuitButton.IsVisible = Paused;
+                OptionsButton.IsVisible = Paused;
             }
 
             TankGame.Settings.MusicVolume = VolumeUI.MusicVolume.Value;
@@ -326,7 +357,8 @@ namespace WiiPlayTanksRemake.GameContent.UI
             if (VolumeUI.AmbientVolume.Value <= 0.01f)
                 VolumeUI.AmbientVolume.Value = 0f;
 
-            TankMusicSystem.UpdateVolume();
+            if (!MainMenu.Active)
+                TankMusicSystem.UpdateVolume();
 
             if (_delay > 0 && !Input.MouseLeft)
                 _delay--;

@@ -81,7 +81,6 @@ namespace WiiPlayTanksRemake.GameContent
             View = TankGame.GameView;
             World = Matrix.CreateTranslation(position);
             _shellTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/bullet");
-
             homingProperties = homing;
 
             this.velocity = velocity;

@@ -19,5 +19,9 @@
   "Resolution": "Resolution",
   "ResolutionDesc": "Changes the resolution of the game",
   "PressAKey": "Press a key",
-  "Back": "Back"
+  "Back": "Back",
+  "Play": "Play",
+  "SinglePlayer": "Single Player",
+  "LevelEditor": "Level Editor",
+  "Multiplayer": "Multiplayer"
 }

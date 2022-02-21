@@ -232,8 +232,6 @@ namespace WiiPlayTanksRemake
 
             graphics.ApplyChanges();
 
-            // TODO: make this load current language
-
             base.Initialize();
         }
 
@@ -310,32 +308,13 @@ namespace WiiPlayTanksRemake
 
             #endregion
 
+            GameHandler.SetupGraphics();
+
             UIElement.UIPanelBackground = GameResources.GetGameResource<Texture2D>("Assets/UIPanelBackground");
 
-            GameHandler.Initialize();
-
-            /*foreach (ModelMesh mesh in TankModel_Player.Meshes)
-            {
-                foreach (BasicEffect effect in mesh.Effects)
-                {
-                    effect.SetDefaultGameLighting_IngameEntities();
-                }
-            }
-            foreach (ModelMesh mesh in TankModel_Enemy.Meshes)
-            {
-                foreach (BasicEffect effect in mesh.Effects)
-                {
-                    effect.SetDefaultGameLighting_IngameEntities();
-                }
-            }*/
-
-            InitGraphics();
-
-            var time = s.Elapsed;
+            GameHandler.ClientLog.Write($"Content loaded in {s.Elapsed}.", LogType.Debug);
 
             s.Stop();
-
-            GameHandler.ClientLog.Write($"Content loaded in {time}.", LogType.Debug);
         }
 
         Vector2 rotVec;
@@ -361,7 +340,7 @@ namespace WiiPlayTanksRemake
 
                 LastGameTime = gameTime;
 
-                if (!IngameUI.Paused)
+                if (!GameUI.Paused && !MainMenu.Active)
                 {
                     if (Input.MouseRight)
                         rotVec += GameUtils.GetMouseVelocity(GameUtils.WindowCenter) / 500;
@@ -398,9 +377,6 @@ namespace WiiPlayTanksRemake
                         if (x is not null && Array.IndexOf(GameHandler.AllAITanks, x) > -1)
                         {
                             pos = x.position;
-
-                            // var mepos = GameHandler.myTank.position;
-
 
                             GameView = Matrix.CreateLookAt(pos,
                                 pos + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-x.TurretRotation).Expand_Z()
@@ -448,33 +424,33 @@ namespace WiiPlayTanksRemake
 
             Input.HandleInput();
 
-            IngameUI.UpdateButtons();
-
-            if (IsActive && !IngameUI.Paused)
+            if (IsActive && !GameUI.Paused)
             {
                 UpdateGameSystems();
 
                 GameHandler.Update();
 
-
-                foreach (var tnk in GameHandler.AllTanks)
+                if (!MainMenu.Active)
                 {
-                    if (tnk is not null && !tnk.Dead)
+                    foreach (var tnk in GameHandler.AllTanks)
                     {
-                        if (GameUtils.GetMouseToWorldRay().Intersects(tnk.CollisionBox).HasValue)
+                        if (tnk is not null && !tnk.Dead)
                         {
-                            if (Input.KeyJustPressed(Keys.K))
+                            if (GameUtils.GetMouseToWorldRay().Intersects(tnk.CollisionBox).HasValue)
                             {
-                                // var tnk = WPTR.AllAITanks.FirstOrDefault(tank => tank is not null && !tank.Dead && tank.tier == AITank.GetHighestTierActive());
+                                if (Input.KeyJustPressed(Keys.K))
+                                {
+                                    // var tnk = WPTR.AllAITanks.FirstOrDefault(tank => tank is not null && !tank.Dead && tank.tier == AITank.GetHighestTierActive());
 
-                                if (Array.IndexOf(GameHandler.AllAITanks, tnk) > -1)
-                                    tnk?.Destroy();
+                                    if (Array.IndexOf(GameHandler.AllAITanks, tnk) > -1)
+                                        tnk?.Destroy();
+                                }
+
+                                tnk.IsHoveredByMouse = true;
                             }
-
-                            tnk.IsHoveredByMouse = true;
+                            else
+                                tnk.IsHoveredByMouse = false;
                         }
-                        else
-                            tnk.IsHoveredByMouse = false;
                     }
                 }
             }
@@ -484,12 +460,9 @@ namespace WiiPlayTanksRemake
 
             foreach (var music in Music.AllMusic)
                 music?.Update();
+
+            GameUI.UpdateButtons();
         }
-
-
-        static Triangle2D testTriangle;
-
-        static Quad yeah;
 
         protected override void Draw(GameTime gameTime)
         {
@@ -527,11 +500,6 @@ namespace WiiPlayTanksRemake
 
             RenderStopwatch.Stop();
             RenderFPS = Math.Round(1f / gameTime.ElapsedGameTime.TotalSeconds);
-        }
-
-        public static void InitGraphics()
-        {
-            testTriangle = new Triangle2D(new(10, 100), new(100, 100), new(50, 150), Color.White);
         }
     }
 }

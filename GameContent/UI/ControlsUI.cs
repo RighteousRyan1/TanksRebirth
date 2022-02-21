@@ -24,7 +24,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             var pressKey = TankGame.GameLanguage.PressAKey;
             UpKeybindButton = new("Up: " + PlayerTank.controlUp.AssignedKey.ParseKey(), TankGame.TextFont, Color.WhiteSmoke)
             {
-                Visible = false
+                IsVisible = false
             };
             UpKeybindButton.SetDimensions(550, 200, 300, 150);
             UpKeybindButton.OnLeftClick = (uiElement) =>
@@ -41,7 +41,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
             LeftKeybindButton = new("Left: " + PlayerTank.controlLeft.AssignedKey.ParseKey(), TankGame.TextFont, Color.WhiteSmoke)
             {
-                Visible = false
+                IsVisible = false
             };
             LeftKeybindButton.SetDimensions(1050, 200, 300, 150);
             LeftKeybindButton.OnLeftClick = (uiElement) =>
@@ -58,7 +58,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
             RightKeybindButton = new("Right: " + PlayerTank.controlRight.AssignedKey.ParseKey(), TankGame.TextFont, Color.WhiteSmoke)
             {
-                Visible = false
+                IsVisible = false
             };
             RightKeybindButton.SetDimensions(550, 400, 300, 150);
             RightKeybindButton.OnLeftClick = (uiElement) =>
@@ -75,7 +75,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
             DownKeybindButton = new("Down: " + PlayerTank.controlDown.AssignedKey.ParseKey(), TankGame.TextFont, Color.WhiteSmoke)
             {
-                Visible = false
+                IsVisible = false
             };
             DownKeybindButton.SetDimensions(1050, 400, 300, 150);
             DownKeybindButton.OnLeftClick = (uiElement) =>
@@ -92,7 +92,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
             MineKeybindButton = new("Mine: " + PlayerTank.controlMine.AssignedKey.ParseKey(), TankGame.TextFont, Color.WhiteSmoke)
             {
-                Visible = false
+                IsVisible = false
             };
             MineKeybindButton.SetDimensions(800, 600, 300, 150);
             MineKeybindButton.OnLeftClick = (uiElement) =>
@@ -110,20 +110,20 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
         public static void HideAll()
         {
-            UpKeybindButton.Visible = false;
-            LeftKeybindButton.Visible = false;
-            RightKeybindButton.Visible = false;
-            DownKeybindButton.Visible = false;
-            MineKeybindButton.Visible = false;
+            UpKeybindButton.IsVisible = false;
+            LeftKeybindButton.IsVisible = false;
+            RightKeybindButton.IsVisible = false;
+            DownKeybindButton.IsVisible = false;
+            MineKeybindButton.IsVisible = false;
         }
 
         public static void ShowAll()
         {
-            UpKeybindButton.Visible = true;
-            LeftKeybindButton.Visible = true;
-            RightKeybindButton.Visible = true;
-            DownKeybindButton.Visible = true;
-            MineKeybindButton.Visible = true;
+            UpKeybindButton.IsVisible = true;
+            LeftKeybindButton.IsVisible = true;
+            RightKeybindButton.IsVisible = true;
+            DownKeybindButton.IsVisible = true;
+            MineKeybindButton.IsVisible = true;
         }
     }
 }

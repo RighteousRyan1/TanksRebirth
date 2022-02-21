@@ -26,7 +26,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             //Music
             MusicVolume = new()
             {
-                Visible = false,
+                IsVisible = false,
                 FallThroughInputs = true
             };
             MusicVolume.SetDimensions(700, 100, 500, 150);
@@ -39,7 +39,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             MusicText = new(TankGame.GameLanguage.MusicVolume, TankGame.TextFont, Color.Black)
             {
                 IgnoreMouseInteractions = true,
-                Visible = false,
+                IsVisible = false,
                 FallThroughInputs = true
             };
             MusicText.SetDimensions(950, 175, 500, 150);
@@ -47,7 +47,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             //Effects
             EffectsVolume = new()
             {
-                Visible = false
+                IsVisible = false
             };
             EffectsVolume.SetDimensions(700, 350, 500, 150);
             EffectsVolume.Tooltip = $"{Math.Round(TankGame.Settings.EffectsVolume * 100, 1)}%";
@@ -59,14 +59,14 @@ namespace WiiPlayTanksRemake.GameContent.UI
             EffectsText = new(TankGame.GameLanguage.EffectsVolume, TankGame.TextFont, Color.Black)
             {
                 IgnoreMouseInteractions = true,
-                Visible = false
+                IsVisible = false
             };
             EffectsText.SetDimensions(950, 425, 500, 150);
 
             //Ambient
             AmbientVolume = new()
             {
-                Visible = false
+                IsVisible = false
             };
             AmbientVolume.SetDimensions(700, 600, 500, 150);
             AmbientVolume.Tooltip = $"{Math.Round(TankGame.Settings.AmbientVolume * 100, 1)}%";
@@ -78,29 +78,29 @@ namespace WiiPlayTanksRemake.GameContent.UI
             AmbientText = new(TankGame.GameLanguage.AmbientVolume, TankGame.TextFont, Color.Black)
             {
                 IgnoreMouseInteractions = true,
-                Visible = false
+                IsVisible = false
             };
             AmbientText.SetDimensions(950, 675, 500, 150);
         }
 
         public static void HideAll()
         {
-            MusicVolume.Visible = false;
-            EffectsVolume.Visible = false;
-            AmbientVolume.Visible = false;
-            MusicText.Visible = false;
-            EffectsText.Visible = false;
-            AmbientText.Visible = false;
+            MusicVolume.IsVisible = false;
+            EffectsVolume.IsVisible = false;
+            AmbientVolume.IsVisible = false;
+            MusicText.IsVisible = false;
+            EffectsText.IsVisible = false;
+            AmbientText.IsVisible = false;
         }
 
         public static void ShowAll()
         {
-            MusicVolume.Visible = true;
-            EffectsVolume.Visible = true;
-            AmbientVolume.Visible = true;
-            MusicText.Visible = true;
-            EffectsText.Visible = true;
-            AmbientText.Visible = true;
+            MusicVolume.IsVisible = true;
+            EffectsVolume.IsVisible = true;
+            AmbientVolume.IsVisible = true;
+            MusicText.IsVisible = true;
+            EffectsText.IsVisible = true;
+            AmbientText.IsVisible = true;
         }
     }
 }

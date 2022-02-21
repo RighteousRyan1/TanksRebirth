@@ -25,6 +25,7 @@ namespace WiiPlayTanksRemake.GameContent
     public class GameHandler
     {
 
+
         public static int timeUntilTankFunction;
 
         public const int MAX_AI_TANKS = 1000;
@@ -76,6 +77,10 @@ namespace WiiPlayTanksRemake.GameContent
 
             ParticleSystem.UpdateParticles();
 
+            if (MainMenu.Active)
+                MainMenu.Update();
+
+            UIElement.UpdateElements();
 
             if (Input.KeyJustPressed(Keys.Insert))
                 DebugUtils.DebuggingEnabled = !DebugUtils.DebuggingEnabled;
@@ -84,6 +89,9 @@ namespace WiiPlayTanksRemake.GameContent
                 DebugUtils.DebugLevel++;
             if (Input.KeyJustPressed(Keys.Subtract))
                 DebugUtils.DebugLevel--;
+
+            if (MainMenu.Active)
+                timeUntilTankFunction = 180;
 
             if (timeUntilTankFunction > 0)
             {
@@ -146,7 +154,8 @@ namespace WiiPlayTanksRemake.GameContent
 
         internal static void RenderAll()
         {
-            MapRenderer.RenderWorldModels();
+            if (!MainMenu.Active)
+                MapRenderer.RenderWorldModels();
 
             foreach (var cube in Cube.cubes)
                 cube?.Render();
@@ -220,68 +229,16 @@ namespace WiiPlayTanksRemake.GameContent
 
             ChatSystem.DrawMessages();
 
-            var focusedElements = UIElement.GetElementsAt(GameUtils.MousePosition, true);
-
-            foreach (UIElement el in focusedElements)
+            if (!MainMenu.Active)
             {
-                if (el != null)
-                {
-                    el.LeftClick();
-                    el.LeftDown();
-                    el.LeftUp();
-
-                    el.RightClick();
-                    el.RightDown();
-                    el.RightUp();
-
-                    el.MiddleClick();
-                    el.MiddleDown();
-                    el.MiddleUp();
-
-                    el.MouseOver();
-                }
+                ClearTracks.IsVisible = DebugUtils.DebuggingEnabled;
+                ClearChecks.IsVisible = DebugUtils.DebuggingEnabled;
+                SetupMissionAgain.IsVisible = DebugUtils.DebuggingEnabled;
+                MovePULeft.IsVisible = DebugUtils.DebuggingEnabled;
+                MovePURight.IsVisible = DebugUtils.DebuggingEnabled;
+                Display.IsVisible = DebugUtils.DebuggingEnabled;
             }
-
-            var trySlider = UIElement.GetElementsAt(GameUtils.MousePosition);
-
-            if (trySlider.Count > 0)
-            {
-                if (trySlider[0] != null)
-                {
-                    UIElement elementWeWant = trySlider[0].GetElementAt(GameUtils.MousePosition);
-                    if (elementWeWant.GetType() != typeof(UIImage))
-                        return;
-
-                    elementWeWant.LeftClick();
-                    elementWeWant.LeftDown();
-                    elementWeWant.LeftUp();
-
-                    elementWeWant.RightClick();
-                    elementWeWant.RightDown();
-                    elementWeWant.RightUp();
-
-                    elementWeWant.MiddleClick();
-                    elementWeWant.MiddleDown();
-                    elementWeWant.MiddleUp();
-
-                    elementWeWant.MouseOver();
-                } 
-            }
-
-            foreach (UIElement element in UIElement.AllUIElements)
-            {
-                if (element.MouseHovering)
-                    element.MouseOut();
-            }
-
-            ClearTracks.Visible = DebugUtils.DebuggingEnabled;
-            ClearChecks.Visible = DebugUtils.DebuggingEnabled;
-            SetupMissionAgain.Visible = DebugUtils.DebuggingEnabled;
-            MovePULeft.Visible = DebugUtils.DebuggingEnabled;
-            MovePURight.Visible = DebugUtils.DebuggingEnabled;
-            Display.Visible = DebugUtils.DebuggingEnabled;
-
-            IngameUI.MissionInfoBar.Visible = DebugUtils.DebuggingEnabled;
+            GameUI.MissionInfoBar.IsVisible = DebugUtils.DebuggingEnabled;
         }
 
         public static PlayerTank myTank;
@@ -390,23 +347,16 @@ namespace WiiPlayTanksRemake.GameContent
              new(1000, 50f, (tnk) => { if (tnk.MaxSpeed > 0) tnk.Stationary = true; }, (tnk) => { if (tnk.MaxSpeed > 0) tnk.Stationary = !tnk.Stationary; }) { Name = "Stationary" }
         };
 
-        public static void Initialize()
+        public static void StartTnkScene()
         {
-            // TankGame.Instance.IsFixedTimeStep = false;
             // 26 x 18 (technically 27 x 19)
-            InitDebugUi();
-            GameShaders.Initialize();
 
-            DebugUtils.DebuggingEnabled = true;
+            DebugUtils.DebuggingEnabled = false;
             MapRenderer.InitializeRenderers();
 
             VanillaCampaign.LoadMission(ExampleMission1);
 
-            IngameUI.Initialize();
-
             LoadTnkScene();
-
-            // Lighting.Midnight.Apply(false);
 
             var brighter = new Lighting.DayState()
             {
@@ -415,16 +365,18 @@ namespace WiiPlayTanksRemake.GameContent
             };
 
             brighter.Apply(false);
-            //brighter.Apply(false);
-
-            /*for (int i = 0; i < 3; i++)
-                SpawnTankInCrate(TankTier.Black, Team.Red, true);
-
-            for (int i = 0; i < 2; i++)
-                SpawnTankInCrate(TankTier.Obsidian, Team.Blue, true);*/
 
 
             BeginIntroSequence();
+        }
+
+        public static void SetupGraphics()
+        {
+            GameUI.Initialize();
+            MainMenu.Initialize();
+            GameShaders.Initialize();
+
+            InitDebugUi();
         }
 
         public static void LoadTnkScene()

@@ -43,7 +43,6 @@ namespace WiiPlayTanksRemake.GameContent
                     case MapTheme.Default:
                         Lighting.ColorBrightness = 1f;
                         floorDir = "Assets/textures/ingame/ground";
-
                         FloorModelBase = GameResources.GetGameResource<Model>("Assets/floor_big");
                         FloorModelBase2 = GameResources.GetGameResource<Model>("Assets/floor_big");
                         break;

@@ -75,7 +75,7 @@ namespace WiiPlayTanksRemake.Internals.Common.GameUI
             scroll = new Rectangle(Hitbox.X + Hitbox.Width, Hitbox.Y, 10, 40);
             foreach (UIElement child in Children)
             {
-                child.Visible = Dropped;
+                child.IsVisible = Dropped;
                 child.HasScissor = true;
                 child.Scissor = wrapper;
             }
@@ -86,7 +86,7 @@ namespace WiiPlayTanksRemake.Internals.Common.GameUI
                 Dropped = !Dropped;
                 foreach (UIElement child in Children)
                 {
-                    child.Visible = Dropped;
+                    child.IsVisible = Dropped;
                 }
             };
             base.OnInitialize();

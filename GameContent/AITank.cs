@@ -136,16 +136,20 @@ namespace WiiPlayTanksRemake.GameContent
         public static int GetTankCountOfType(TankTier tier)
             => GameHandler.AllAITanks.Count(tnk => tnk is not null && tnk.tier == tier && !tnk.Dead);
 
+        private bool isIngame;
+
         /// <summary>
         /// Creates a new <see cref="AITank"/>.
         /// </summary>
         /// <param name="tier">The tier of this <see cref="AITank"/>.</param>
         /// <param name="setTankDefaults">Whether or not to give this <see cref="AITank"/> the default values.</param>
-        public AITank(TankTier tier, bool setTankDefaults = true)
+        public AITank(TankTier tier, bool setTankDefaults = true, bool isIngame = true)
         {
             treadSoundTimer += new Random().Next(-1, 2);
             for (int i = 0; i < Behaviors.Length; i++)
                 Behaviors[i] = new();
+
+            this.isIngame = isIngame;
 
             Behaviors[0].Label = "TankBaseMovement";
             Behaviors[1].Label = "TankBarrelMovement";
@@ -166,7 +170,7 @@ namespace WiiPlayTanksRemake.GameContent
             else
                 _tankColorTexture = GameResources.GetGameResource<Texture2D>($"Assets/textures/enemy/fate/tank_{tier.ToString().ToLower()}");
 
-            // _tankColorTexture = GameResources.GetGameResource<Texture2D>($"Assets/textures/enemy/fanmade/tank_animegirl");
+            // _tankColorTexture = GameResources.GetGameResource<Texture2D>($"Assets/textures/sussy");
 
             CannonMesh = Model.Meshes["Cannon"];
 
@@ -1213,8 +1217,6 @@ namespace WiiPlayTanksRemake.GameContent
             if (Dead)
                 return;
 
-            UpdateCollision();
-
             if (curShootStun > 0)
                 curShootStun--;
             if (curShootCooldown > 0)
@@ -1227,8 +1229,11 @@ namespace WiiPlayTanksRemake.GameContent
             if (curShootStun > 0 || curMineStun > 0 || Stationary)
                 velocity = Vector3.Zero;
 
-            Projection = TankGame.GameProjection;
-            View = TankGame.GameView;
+            if (isIngame)
+            {
+                Projection = TankGame.GameProjection;
+                View = TankGame.GameView;
+            }
 
             World = Matrix.CreateFromYawPitchRoll(-TankRotation, 0, 0)
                 * Matrix.CreateTranslation(position);
@@ -1239,10 +1244,17 @@ namespace WiiPlayTanksRemake.GameContent
 
             timeSinceLastAction++;
 
-            position.X = MathHelper.Clamp(position.X, MapRenderer.TANKS_MIN_X, MapRenderer.TANKS_MAX_X);
-            position.Z = MathHelper.Clamp(position.Z, MapRenderer.TANKS_MIN_Y, MapRenderer.TANKS_MAX_Y);
+            if (isIngame)
+                UpdateCollision();
 
             oldPosition = position;
+        }
+
+        public void RemoveSilently()
+        {
+            Dead = true;
+            GameHandler.AllAITanks[AITankId] = null;
+            GameHandler.AllTanks[WorldId] = null;
         }
 
         private void UpdateCollision()
@@ -1271,6 +1283,8 @@ namespace WiiPlayTanksRemake.GameContent
                     velocity.Z = dummyVel.Y;
                 }
             }
+            position.X = MathHelper.Clamp(position.X, MapRenderer.TANKS_MIN_X, MapRenderer.TANKS_MAX_X);
+            position.Z = MathHelper.Clamp(position.Z, MapRenderer.TANKS_MIN_Y, MapRenderer.TANKS_MAX_Y);
         }
 
         /// <summary>

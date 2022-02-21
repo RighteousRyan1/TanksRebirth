@@ -9,32 +9,45 @@ namespace WiiPlayTanksRemake.Localization
     /// <summary>Localization to load a <see cref="Language"/> from a .json entry. Defaults to English if no <see cref="LangCode"/> is loaded.</summary>
     public class Language
     {
-        public string Mission { get; set; } = "Mission";
-        public string Resume { get; set; } = "Resume";
-        public string StartOver { get; set; } = "Start Over";
-        public string Options { get; set; } = "Options";
-        public string Quit { get; set; } = "Quit";
+        public string Mission { get; set; }
+        public string Resume { get; set; }
+        public string StartOver { get; set; }
+        public string Options { get; set; }
+        public string Quit { get; set; }
 
-        public string Volume { get; set; } = "Volume";
-        public string Graphics { get; set; } = "Graphics";
-        public string Controls { get; set; } = "Controls";
+        public string Volume { get; set; }
+        public string Graphics { get; set; }
+        public string Controls { get; set; }
 
-        public string MusicVolume { get; set; } = "Music Volume";
-        public string EffectsVolume { get; set; } = "Effects Volume";
-        public string AmbientVolume { get; set; } = "Ambient Volume";
+        public string MusicVolume { get; set; }
+        public string EffectsVolume { get; set; }
+        public string AmbientVolume { get; set; }
 
-        public string PerPxLight { get; set; } = "Per-Pixel Lighting";
-        public string PerPxLightDesc { get; set; } = "Whether or not to draw lighting on each individual pixel";
-        public string VSync { get; set; } = "Vertical Sync";
-        public string VSyncDesc { get; set; } = "Whether or not to render one full frame cycle per second";
-        public string BorderlessWindow { get; set; } = "Borderless Window";
-        public string BorderlessWindowDesc { get; set; } = "Whether or not to run the game window borderless";
-        public string Resolution { get; set; } = "Resolution";
-        public string ResolutionDesc { get; set; } = "Changes the resolution of the game";
+        public string PerPxLight { get; set; }
+        public string PerPxLightDesc { get; set; }
+        public string VSync { get; set; }
+        public string VSyncDesc { get; set; }
+        public string BorderlessWindow { get; set; }
+        public string BorderlessWindowDesc { get; set; }
+        public string Resolution { get; set; }
+        public string ResolutionDesc { get; set; }
 
-        public string PressAKey { get; set; } = "Press a key";
+        public string PressAKey { get; set; }
 
-        public string Back { get; set; } = "Back";
+        public string Back { get; set; }
+
+
+        #region Main Menu
+
+        public string Play { get; set; }
+
+        public string SinglePlayer { get; set; }
+
+        public string LevelEditor { get; set; }
+
+        public string Multiplayer { get; set; }
+
+        #endregion
 
         public static void LoadLang(ref Language lang, LangCode code)
         {

@@ -51,14 +51,14 @@ namespace WiiPlayTanksRemake.GameContent.UI
             //Per-Pixel Lighting
             PerPixelLightingToggle = new(null, 1, (uiImage, spriteBatch) => DrawIndic(spriteBatch, uiImage.Hitbox, TankGame.Settings.PerPixelLighting))
             {
-                Visible = false,
+                IsVisible = false,
                 IgnoreMouseInteractions = true
             };
             PerPixelLightingToggle.SetDimensions(695, 95, 510, 160);
 
             PerPixelLightingButton = new(TankGame.GameLanguage.PerPxLight, TankGame.TextFont, Color.WhiteSmoke)
             {
-                Visible = false,
+                IsVisible = false,
                 Tooltip = TankGame.GameLanguage.PerPxLightDesc
             };
             PerPixelLightingButton.SetDimensions(700, 100, 500, 150);
@@ -70,14 +70,14 @@ namespace WiiPlayTanksRemake.GameContent.UI
             //Vsync
             VsyncToggle = new(null, 1, (uiImage, spriteBatch) => DrawIndic(spriteBatch, uiImage.Hitbox, TankGame.Settings.Vsync))
             {
-                Visible = false,
+                IsVisible = false,
                 IgnoreMouseInteractions = true
             };
             VsyncToggle.SetDimensions(695, 345, 510, 160);
 
             VsyncButton = new(TankGame.GameLanguage.VSync, TankGame.TextFont, Color.WhiteSmoke)
             {
-                Visible = false,
+                IsVisible = false,
                 Tooltip = TankGame.GameLanguage.VSyncDesc
             };
             VsyncButton.SetDimensions(700, 350, 500, 150);
@@ -90,14 +90,14 @@ namespace WiiPlayTanksRemake.GameContent.UI
             //Borderless Window
             BorderlessWindowToggle = new(null, 1, (uiImage, spriteBatch) => DrawIndic(spriteBatch, uiImage.Hitbox, TankGame.Settings.BorderlessWindow))
             {
-                Visible = false,
+                IsVisible = false,
                 IgnoreMouseInteractions = true
             };
             BorderlessWindowToggle.SetDimensions(695, 595, 510, 160);
 
             BorderlessWindowButton = new(TankGame.GameLanguage.BorderlessWindow, TankGame.TextFont, Color.WhiteSmoke)
             {
-                Visible = false,
+                IsVisible = false,
                 Tooltip = TankGame.GameLanguage.BorderlessWindowDesc
             };
             BorderlessWindowButton.SetDimensions(700, 600, 500, 150);
@@ -118,7 +118,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             //Resolution
             ResolutionButton = new($"{TankGame.GameLanguage.Resolution}: {CurrentRes.Key}x{CurrentRes.Value}", TankGame.TextFont, Color.WhiteSmoke)
             {
-                Visible = false,
+                IsVisible = false,
                 Tooltip = TankGame.GameLanguage.ResolutionDesc
             };
             ResolutionButton.SetDimensions(700, 850, 500, 150);
@@ -162,13 +162,13 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
         public static void HideAll()
         {
-            PerPixelLightingButton.Visible = false;
-            VsyncButton.Visible = false;
-            BorderlessWindowButton.Visible = false;
-            ResolutionButton.Visible = false;
-            PerPixelLightingToggle.Visible = false;
-            VsyncToggle.Visible = false;
-            BorderlessWindowButton.Visible = false;
+            PerPixelLightingButton.IsVisible = false;
+            VsyncButton.IsVisible = false;
+            BorderlessWindowButton.IsVisible = false;
+            ResolutionButton.IsVisible = false;
+            PerPixelLightingToggle.IsVisible = false;
+            VsyncToggle.IsVisible = false;
+            BorderlessWindowButton.IsVisible = false;
 
             //little extra
             //TankGame.Settings.ResWidth = curPair.Key;
@@ -177,13 +177,13 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
         public static void ShowAll()
         {
-            PerPixelLightingButton.Visible = true;
-            VsyncButton.Visible = true;
-            BorderlessWindowButton.Visible = true;
-            ResolutionButton.Visible = true;
-            PerPixelLightingToggle.Visible = true;
-            VsyncToggle.Visible = true;
-            BorderlessWindowButton.Visible = true;
+            PerPixelLightingButton.IsVisible = true;
+            VsyncButton.IsVisible = true;
+            BorderlessWindowButton.IsVisible = true;
+            ResolutionButton.IsVisible = true;
+            PerPixelLightingToggle.IsVisible = true;
+            VsyncToggle.IsVisible = true;
+            BorderlessWindowButton.IsVisible = true;
         }
     }
 }

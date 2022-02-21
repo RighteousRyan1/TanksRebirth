@@ -10,6 +10,8 @@ namespace WiiPlayTanksRemake.Internals.UI
 {
     public abstract partial class UIElement
     {
+		private bool _wasHovered;
+
 		/// <summary>
 		/// Gets a <see cref="UIElement"/> at the specified position.
 		/// </summary>
@@ -25,7 +27,7 @@ namespace WiiPlayTanksRemake.Internals.UI
 				for (int iterator = AllUIElements.Count - 1; iterator >= 0; iterator--)
 				{
 					UIElement currentElement = AllUIElements[iterator];
-					if (!currentElement.IgnoreMouseInteractions && currentElement.Visible && currentElement.Hitbox.Contains(position))
+					if (!currentElement.IgnoreMouseInteractions && currentElement.IsVisible && currentElement.Hitbox.Contains(position))
 					{
 						focusedElements.Add(currentElement);
 						if (!currentElement.FallThroughInputs)
@@ -38,7 +40,7 @@ namespace WiiPlayTanksRemake.Internals.UI
 				for (int iterator = 0; iterator < AllUIElements.Count - 1; iterator++)
 				{
 					UIElement currentElement = AllUIElements[iterator];
-					if (!currentElement.IgnoreMouseInteractions && currentElement.Visible && currentElement.Hitbox.Contains(position))
+					if (!currentElement.IgnoreMouseInteractions && currentElement.IsVisible && currentElement.Hitbox.Contains(position))
 					{
 						focusedElements.Add(currentElement);
 						if (iterator + 1 <= AllUIElements.Count)
@@ -190,7 +192,7 @@ namespace WiiPlayTanksRemake.Internals.UI
 
 			if (Parent is null || Parent.Hitbox.Contains(GameUtils.MousePosition))
 			{
-				if (Hitbox.Contains(GameUtils.MousePosition))
+				if (Hitbox.Contains(GameUtils.MousePosition) && !_wasHovered)
 				{
 					if ((HasScissor && Scissor.Contains(GameUtils.MousePosition)) || !HasScissor)
                     {
@@ -199,6 +201,8 @@ namespace WiiPlayTanksRemake.Internals.UI
 					}
 				}
 			}
+
+			_wasHovered = MouseHovering;
 		}
 
 		public Action<UIElement> OnMouseOut;

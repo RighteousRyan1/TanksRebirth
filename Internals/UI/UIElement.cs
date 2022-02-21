@@ -38,15 +38,15 @@ namespace WiiPlayTanksRemake.Internals.UI
         public Rectangle Hitbox => new((int)Position.X, (int)Position.Y, (int)Size.X, (int)Size.Y);
 
         /// <summary>The position of this <see cref="UIElement"/>.</summary>
-        public Vector2 Position { get; set; }
+        public Vector2 Position;
 
         /// <summary>The size of this <see cref="UIElement"/>.</summary>
-        public Vector2 Size { get; set; }
+        public Vector2 Size;
 
         public Vector2 ScaleOrigin = new Vector2(0.5f);
 
         /// <summary>Whether or not this <see cref="UIElement"/> is visible. If set to <see langword="false"/>, the <see cref="UIElement"/> will not accept mouse input.</summary>
-        public bool Visible = true;
+        public bool IsVisible = true;
 
         /// <summary>Whether or not the mouse is currently hovering over this <see cref="UIElement"/>.</summary>
         public bool MouseHovering;
@@ -111,7 +111,7 @@ namespace WiiPlayTanksRemake.Internals.UI
         /// <param name="spriteBatch">The <see cref="SpriteBatch"/> being used to draw this <see cref="UIElement"/> with.</param>
         public virtual void Draw(SpriteBatch spriteBatch)
         {
-            if (!Visible)
+            if (!IsVisible)
                 return;
 
             if (!HasScissor)
@@ -266,7 +266,7 @@ namespace WiiPlayTanksRemake.Internals.UI
             for (int iterator = Children.Count - 1; iterator >= 0; iterator--)
             {
                 UIElement currentElement = Children[iterator];
-                if (!currentElement.IgnoreMouseInteractions && currentElement.Visible && currentElement.Hitbox.Contains(position))
+                if (!currentElement.IgnoreMouseInteractions && currentElement.IsVisible && currentElement.Hitbox.Contains(position))
                 {
                     focusedElement = currentElement;
                     break;
@@ -314,6 +314,63 @@ namespace WiiPlayTanksRemake.Internals.UI
             spriteBatch.Draw(texture, new Rectangle(rightX, bottomY, border, border), new Rectangle(texture.Width - border, texture.Height - border, border, border), color);
 
             spriteBatch.DrawString(font, Tooltip, Hitbox.Center.ToVector2(), Color.Black, new Vector2(1f), 0f, scaleFont / 2, 1);
+        }
+
+        public static void UpdateElements()
+        {
+            var focusedElements = GetElementsAt(GameUtils.MousePosition, true);
+
+            foreach (UIElement el in focusedElements)
+            {
+                if (el != null)
+                {
+                    el.LeftClick();
+                    el.LeftDown();
+                    el.LeftUp();
+
+                    el.RightClick();
+                    el.RightDown();
+                    el.RightUp();
+
+                    el.MiddleClick();
+                    el.MiddleDown();
+                    el.MiddleUp();
+
+                    el.MouseOver();
+                }
+            }
+
+            var trySlider = GetElementsAt(GameUtils.MousePosition);
+
+            if (trySlider.Count > 0)
+            {
+                if (trySlider[0] != null)
+                {
+                    UIElement elementWeWant = trySlider[0].GetElementAt(GameUtils.MousePosition);
+                    if (elementWeWant.GetType() != typeof(UIImage))
+                        return;
+
+                    elementWeWant.LeftClick();
+                    elementWeWant.LeftDown();
+                    elementWeWant.LeftUp();
+
+                    elementWeWant.RightClick();
+                    elementWeWant.RightDown();
+                    elementWeWant.RightUp();
+
+                    elementWeWant.MiddleClick();
+                    elementWeWant.MiddleDown();
+                    elementWeWant.MiddleUp();
+
+                    elementWeWant.MouseOver();
+                }
+            }
+
+            foreach (UIElement element in AllUIElements)
+            {
+                if (element.MouseHovering)
+                    element.MouseOut();
+            }
         }
     }
 }

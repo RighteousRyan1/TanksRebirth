@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using WiiPlayTanksRemake.GameContent.UI;
 
 namespace WiiPlayTanksRemake
 {
@@ -62,11 +63,18 @@ namespace WiiPlayTanksRemake
                     }
                 }
 
-                var curTank = GameContent.AITank.GetHighestTierActive();
-
                 SetLargeAsset("tank_ash_large");
-                SetSmallAsset($"tank_{curTank.ToString().ToLower()}", $"Currently fighting {getArticle(curTank.ToString())} {curTank} Tank");
-                SetDetails($"Fighting a grand total of {GameContent.AITank.CountAll()} tanks!");
+
+                if (MainMenu.Active)
+                {
+                    SetDetails($"Browsing the main menu");
+                }
+                else
+                {
+                    var curTank = GameContent.AITank.GetHighestTierActive();
+                    SetSmallAsset($"tank_{curTank.ToString().ToLower()}", $"Currently fighting {getArticle(curTank.ToString())} {curTank} Tank");
+                    SetDetails($"Fighting a grand total of {GameContent.AITank.CountAll()} tanks!");
+                }
                 
                 _client?.SetPresence(_rp);
             }
@@ -77,17 +85,19 @@ namespace WiiPlayTanksRemake
             _rp.Details = details;
         }
 
-        public static void SetLargeAsset(string key, string details = null)
+        public static void SetLargeAsset(string key = null, string details = null)
         {
-            _rp.Assets.LargeImageKey = key;
+            if (key is not null)
+                _rp.Assets.LargeImageKey = key;
 
             if (details is not null)
                 _rp.Assets.LargeImageText = details;
         }
 
-        public static void SetSmallAsset(string key, string details = null)
+        public static void SetSmallAsset(string key = null, string details = null)
         {
-            _rp.Assets.SmallImageKey = key;
+            if (key is not null)
+                _rp.Assets.SmallImageKey = key;
 
             if (details is not null)
                 _rp.Assets.SmallImageText = details;
