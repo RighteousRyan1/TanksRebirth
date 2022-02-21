@@ -485,7 +485,7 @@ namespace WiiPlayTanksRemake
 
             base.Draw(gameTime);
 
-            spriteBatch.Begin(blendState: BlendState.NonPremultiplied, effect: GameShaders.MouseShader);
+            spriteBatch.Begin(blendState: BlendState.AlphaBlend, effect: GameShaders.MouseShader);
 
             MouseRenderer.DrawMouse();
 

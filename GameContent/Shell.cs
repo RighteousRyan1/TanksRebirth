@@ -165,7 +165,7 @@ namespace WiiPlayTanksRemake.GameContent
             if (!INTERNAL_ignoreCollisions)
                 CheckCollisions();
 
-            int nummy = (int)Math.Round(30 / velocity.Length()) != 0 ? (int)Math.Round(30 / velocity.Length()) : 5;
+            int nummy = (int)Math.Round(20 / velocity.Length()) != 0 ? (int)Math.Round(20 / velocity.Length()) : 5;
 
             if (lifeTime % nummy == 0 && !INTERNAL_ignoreCollisions)
             {

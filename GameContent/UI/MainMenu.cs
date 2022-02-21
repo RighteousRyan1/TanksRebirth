@@ -42,6 +42,8 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
         private static UIElement[] _menuElements;
 
+        private static float _tnkSpeed = 2.4f;
+
         // TODO: ingame ui doesn't work, but main menu ui does (wack)
         // TODO: get menu visuals working
 
@@ -120,7 +122,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 if (tnk.position.X > 500)
                     tnk.position.X = -500;
 
-                tnk.velocity.X = tnk.MaxSpeed;
+                tnk.velocity.X = _tnkSpeed;
             }
         }
 
@@ -147,7 +149,21 @@ namespace WiiPlayTanksRemake.GameContent.UI
             {
                 for (int j = 0; j < 10; j++)
                 {
-                    AddTravelingTank(TankTier.Black, 1000 + (-i * 100), j * 55);
+                    var t = AddTravelingTank(AITank.PICK_ANY_THAT_ARE_IMPLEMENTED(), 1000 + (-i * 100), j * 55);
+
+                    if (i % 2 == 0)
+                        t.velocity.Z = 1f;
+                    else
+                        t.velocity.Z = -1f;
+
+                    t.enactBehavior = () =>
+                    {
+                        if (t.position.Z > 530)
+                            t.position.Z = -30;
+
+                        if (t.position.Z < -30)
+                            t.position.Z = 530;
+                    };
                 }
             }
 
@@ -167,7 +183,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             GameUI.BackButton.IsVisible = false;
         }
 
-        public static void AddTravelingTank(TankTier tier, float xOffset, float zOffset)
+        public static AITank AddTravelingTank(TankTier tier, float xOffset, float zOffset)
         {
             var extank = new AITank(tier, true, false);
             extank.Team = Team.NoTeam;
@@ -182,6 +198,8 @@ namespace WiiPlayTanksRemake.GameContent.UI
             extank.Projection = Projection;
 
             tanks.Add(extank);
+
+            return extank;
         }
 
         public static void RemoveAllMenuTanks()

@@ -187,7 +187,11 @@ namespace WiiPlayTanksRemake.GameContent
             foreach (var powerup in Powerup.activePowerups)
                 powerup?.Render();
 
+            TankGame.spriteBatch.End();
+            TankGame.spriteBatch.Begin(blendState: BlendState.Additive);
             ParticleSystem.RenderParticles();
+            TankGame.spriteBatch.End();
+            TankGame.spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied);
 
             // TODO: Fix translation
             // TODO: Scaling with screen size.

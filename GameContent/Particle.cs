@@ -16,7 +16,10 @@ namespace WiiPlayTanksRemake.GameContent
 
         public Vector3 position;
 
+        public Color color;
+
         public Quaternion rotation;
+        public float rotation2d;
 
         public float Scale = 1f;
 
@@ -49,7 +52,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         internal void Render()
         {
-            TankGame.spriteBatch.Draw(Texture, GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(position), TankGame.GameView, TankGame.GameProjection), null, Color.White * Opacity, 0f, Texture.Size() / 2, Scale, default, default);
+            TankGame.spriteBatch.Draw(Texture, GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(position), TankGame.GameView, TankGame.GameProjection), null, color * Opacity, rotation2d, Texture.Size() / 2, Scale, default, default);
             //DebugUtils.DrawDebugString(TankGame.spriteBatch, "0", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(position), TankGame.GameView, TankGame.GameProjection), colorOverride: Color.White * Opacity, centerIt: true);
             foreach (var mesh in _model.Meshes)
             {

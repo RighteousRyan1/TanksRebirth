@@ -191,6 +191,12 @@ namespace WiiPlayTanksRemake.GameContent
             oldPosition = position;
         }
 
+        public override void RemoveSilently()
+        {
+            GameHandler.AllPlayerTanks[PlayerId] = null;
+            GameHandler.AllTanks[WorldId] = null;
+        }
+
         /// <summary>
         /// Controller support soon i hope (this is not working)
         /// </summary>

@@ -53,7 +53,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems
             }
 
             for (int a = 0; a < GameHandler.AllTanks.Length; a++)
-                GameHandler.AllTanks[a] = null;
+                GameHandler.AllTanks[a]?.RemoveSilently();
 
             for (int i = 0; i < CurrentMission.Tanks.Length; i++)
             {

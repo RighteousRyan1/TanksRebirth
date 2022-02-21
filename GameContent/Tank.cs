@@ -113,6 +113,8 @@ namespace WiiPlayTanksRemake.GameContent
         public Shell.HomingProperties ShellHoming = new();
 
         public int timeSinceLastAction = 15000;
+
+        public virtual void RemoveSilently() { }
     }
 
     public class TankFootprint
