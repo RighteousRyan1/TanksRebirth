@@ -1910,15 +1910,16 @@ namespace WiiPlayTanksRemake.GameContent
                 if (AiParams.advancedRicochetCalculations)
                     IsTankInPath(Vector2.UnitY.RotatedByRadians(seekRotation), default, true);
                 IsTankInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), default, true);
+
+                if (!Stationary)
+                {
+                    IsObstacleInWay(AiParams.cubeWarinessDistance, Vector2.UnitY.RotatedByRadians(-targetTankRotation), out var travelPath, true);
+                    DebugUtils.DrawDebugString(TankGame.spriteBatch, "D", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(travelPath.X, 11, travelPath.Y), View, Projection), 1, centerIt: true);
+                }
             }
 
-            //if (!Stationary)
-                IsObstacleInWay(AiParams.cubeWarinessDistance, Vector2.UnitY.RotatedByRadians(-targetTankRotation), out var travelPath, true);
-
-            DebugUtils.DrawDebugString(TankGame.spriteBatch, "B", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(travelPath.X, 11, travelPath.Y), View, Projection), 1, centerIt: true);
             var info = new string[]
             {
-                $"{travelPath.ToRotation() / 5} : {-targetTankRotation}",
                 $"Team: {Team}",
                 $"Actual / Target: {TankRotation} / {dummyValue}",
                 $"TurActual / TurTarget / TurDiff: {TurretRotation} / {AiParams.targetTurretRotation} / {AiParams.targetTurretRotation - TurretRotation}",
