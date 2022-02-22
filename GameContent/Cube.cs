@@ -76,7 +76,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             // TODO: Finish collisions
 
-            int index = Array.IndexOf(cubes, cubes.First(tank => tank is null));
+            int index = Array.IndexOf(cubes, cubes.First(cube => cube is null));
 
             worldId = index;
 
@@ -98,6 +98,12 @@ namespace WiiPlayTanksRemake.GameContent
 
         public void Render()
         {
+            var whitePixel = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
+
+            //var deconstruct = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection);
+            //var rect = new Rectangle((int)deconstruct.X - collider2d.Width / 2, (int)deconstruct.Y - collider2d.Height / 2, collider2d.Width, collider2d.Height);
+            //TankGame.spriteBatch.Draw(whitePixel, rect, null, Color.White, 0f, /*rect.Size.ToVector2() / 2*/ Vector2.Zero, default, 1f);
+
             foreach (var mesh in model.Meshes)
             {
                 foreach (BasicEffect effect in mesh.Effects)
@@ -200,8 +206,8 @@ namespace WiiPlayTanksRemake.GameContent
 
     public struct CubeMapPosition
     {
-        public const int MAP_WIDTH = 26;
-        public const int MAP_HEIGHT = 20;
+        public const int MAP_WIDTH = 27;
+        public const int MAP_HEIGHT = 19;
 
         public static implicit operator CubeMapPosition(Vector3 position) => ConvertFromVector3(position);
         public static implicit operator Vector2(CubeMapPosition position) => Convert2D(position);

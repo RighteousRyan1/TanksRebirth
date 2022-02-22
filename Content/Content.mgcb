@@ -420,6 +420,12 @@
 /processorParam:Quality=Best
 /build:Assets/music/citrine3.ogg
 
+#begin Assets/music/commando.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/music/commando.ogg
+
 #begin Assets/music/emerald1.ogg
 /importer:OggImporter
 /processor:SoundEffectProcessor
@@ -539,6 +545,11 @@
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Assets/music/purple3.ogg
+
+#begin Assets/music/rocket_defender.ogg
+/importer:H264Importer
+/processor:VideoProcessor
+/build:Assets/music/rocket_defender.ogg
 
 #begin Assets/music/ruby1.ogg
 /importer:OggImporter
@@ -785,6 +796,25 @@
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Assets/sounds/unknown_3.wav
+
+#begin Assets/specialtanks/tank_commando.fbx
+/importer:FbxImporter
+/processor:ModelProcessor
+/processorParam:ColorKeyColor=0,0,0,0
+/processorParam:ColorKeyEnabled=True
+/processorParam:DefaultEffect=BasicEffect
+/processorParam:GenerateMipmaps=True
+/processorParam:GenerateTangentFrames=False
+/processorParam:PremultiplyTextureAlpha=True
+/processorParam:PremultiplyVertexColors=True
+/processorParam:ResizeTexturesToPowerOfTwo=False
+/processorParam:RotationX=0
+/processorParam:RotationY=0
+/processorParam:RotationZ=0
+/processorParam:Scale=1
+/processorParam:SwapWindingOrder=False
+/processorParam:TextureFormat=Compressed
+/build:Assets/specialtanks/tank_commando.fbx
 
 #begin Assets/tank_e.fbx
 /importer:FbxImporter
@@ -1256,6 +1286,18 @@
 /processorParam:TextureFormat=Color
 /build:Assets/textures/enemy/tank_yellow.png
 
+#begin Assets/textures/enemy/wee/tank_commando.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Assets/textures/enemy/wee/tank_commando.png
+
 #begin Assets/textures/ingame/block.1.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -1508,6 +1550,18 @@
 /processorParam:TextureFormat=Color
 /build:Assets/textures/mine/tank_env.png
 
+#begin Assets/textures/misc/armor.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Assets/textures/misc/armor.png
+
 #begin Assets/textures/misc/bot_hit.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -1555,6 +1609,18 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Assets/textures/misc/cursor_trail.png
+
+#begin Assets/textures/misc/laser.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Assets/textures/misc/laser.png
 
 #begin Assets/textures/misc/light_particle.png
 /importer:TextureImporter

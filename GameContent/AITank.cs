@@ -88,11 +88,13 @@ namespace WiiPlayTanksRemake.GameContent
             public float shootChance = 1f;
 
             /// <summary>How far ahead of this tank (in the direction the tank is going) that it is aware of obstacles and navigates around them.</summary>
-            public float cubeWarinessDistance = 60f;
+            public int cubeWarinessDistance = 60;
             /// <summary>How often this tank reads the obstacles around it and navigates around them.</summary>
             public int cubeReadTime = 30;
             /// <summary>How far this tank must be from a teammate before it can lay a mine or fire a bullet.</summary>
             public float teammateTankWariness = 50f;
+            /// <summary>Whether or not this tank tries to find calculations all around it. This is not recommended for mobile tanks.</summary>
+            public bool advancedRicochetCalculations;
         }
         /// <summary>The AI parameter collection of this AI Tank.</summary>
         public Params AiParams { get; } = new();
@@ -163,12 +165,39 @@ namespace WiiPlayTanksRemake.GameContent
 
             Model = GameResources.GetRawGameAsset<Model>("Assets/tank_e"); //TankGame.TankModel_Enemy;
 
+            #region Non-Special
             if ((int)tier <= (int)TankTier.Black)
                 _tankColorTexture = GameResources.GetGameResource<Texture2D>($"Assets/textures/enemy/tank_{tier.ToString().ToLower()}");
             else if ((int)tier > (int)TankTier.Black && (int)tier <= (int)TankTier.Obsidian)
                 _tankColorTexture = GameResources.GetGameResource<Texture2D>($"Assets/textures/enemy/master/tank_{tier.ToString().ToLower()}");
-            else
+            else if ((int)tier > (int)TankTier.Obsidian && (int)tier <= (int)TankTier.Marble)
                 _tankColorTexture = GameResources.GetGameResource<Texture2D>($"Assets/textures/enemy/fate/tank_{tier.ToString().ToLower()}");
+            #endregion
+
+            #region Special
+
+            if (tier == TankTier.Commando)
+            {
+                Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_commando");
+
+                _tankColorTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/enemy/wee/tank_commando");
+
+                foreach (var mesh in Model.Meshes)
+                {
+                    foreach (var effect in mesh.Effects)
+                    {
+                        if (mesh.Name == "Laser_Beam")
+                            GameResources.GetGameResource<Texture2D>("Assets/textures/misc/laser");
+                        if (mesh.Name == "Barrel_Laser")
+                            GameResources.GetGameResource<Texture2D>("Assets/textures/misc/armor");
+                        if (mesh.Name == "Dish")
+                            GameResources.GetGameResource<Texture2D>("Assets/textures/enemy/wee/tank_commando");
+                    }
+                }
+                // fix?
+            }
+
+            #endregion
 
             // _tankColorTexture = GameResources.GetGameResource<Texture2D>($"Assets/textures/sussy");
 
@@ -178,62 +207,6 @@ namespace WiiPlayTanksRemake.GameContent
 
             _shadowTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank_shadow");
              this.tier = tier;
-
-            if (setTankDefaults)
-                ApplyDefaults();
-
-            Team = Team.Blue;
-
-            int index = Array.IndexOf(GameHandler.AllAITanks, GameHandler.AllAITanks.First(tank => tank is null));
-
-            AITankId = index;
-
-            GameHandler.AllAITanks[index] = this;
-
-            int index2 = Array.IndexOf(GameHandler.AllTanks, GameHandler.AllTanks.First(tank => tank is null));
-
-            WorldId = index2;
-
-            GameHandler.AllTanks[index2] = this;
-
-            GameHandler.OnMissionStart += OnMissionStart;
-        }
-
-        /// <summary>
-        /// Creates a new <see cref="AITank"/>.
-        /// </summary>
-        /// <param name="tier">The modded tier of this <see cref="AITank"/>.</param>
-        /// <param name="setTankDefaults">Whether or not to give this <see cref="AITank"/> the default values.</param>
-        public AITank(int modTier, bool setTankDefaults = true)
-        {
-            treadSoundTimer += new Random().Next(-1, 2);
-            for (int i = 0; i < Behaviors.Length; i++)
-                Behaviors[i] = new();
-
-            Behaviors[0].Label = "TankBaseMovement";
-            Behaviors[1].Label = "TankBarrelMovement";
-            Behaviors[2].Label = "TankEnvReader";
-            Behaviors[3].Label = "TankBulletFire";
-            Behaviors[4].Label = "TankMinePlacement";
-            Behaviors[5].Label = "TankMineAvoidance";
-            Behaviors[6].Label = "TankBulletAvoidance";
-
-            Dead = true;
-
-            Model = TankGame.TankModel_Enemy;
-
-            if ((int)tier <= (int)TankTier.Black)
-                _tankColorTexture = GameResources.GetGameResource<Texture2D>($"Assets/textures/enemy/tank_{tier.ToString().ToLower()}");
-            else if ((int)tier > (int)TankTier.Black && (int)tier <= (int)TankTier.Obsidian)
-                _tankColorTexture = GameResources.GetGameResource<Texture2D>($"Assets/textures/enemy/master/tank_{tier.ToString().ToLower()}");
-            else
-                _tankColorTexture = GameResources.GetGameResource<Texture2D>($"Assets/textures/enemy/fate/tank_{tier.ToString().ToLower()}");
-            CannonMesh = Model.Meshes["Cannon"];
-
-            boneTransforms = new Matrix[Model.Bones.Count];
-
-            _shadowTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank_shadow");
-            this.modTier = modTier;
 
             if (setTankDefaults)
                 ApplyDefaults();
@@ -268,7 +241,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                     AiParams.turretMeanderFrequency = 30;
                     AiParams.turretSpeed = 0.01f;
-                    AiParams.inaccuracy = 1.2f;
+                    AiParams.inaccuracy = MathHelper.ToRadians(170);
 
                     TurningSpeed = 0f;
                     MaximalTurn = 0;
@@ -456,6 +429,8 @@ namespace WiiPlayTanksRemake.GameContent
                     MineCooldown = 0;
                     MineLimit = 0;
                     MineStun = 0;
+
+                    AiParams.advancedRicochetCalculations = true;
                     break;
 
                 case TankTier.Purple:
@@ -799,6 +774,8 @@ namespace WiiPlayTanksRemake.GameContent
                     Stationary = true;
                     Invisible = true;
                     ShellHoming = new();
+
+                    AiParams.advancedRicochetCalculations = true;
                     break;
 
                 case TankTier.Gold:
@@ -1178,7 +1155,45 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.moveFromMineTime = 100;
                     AiParams.minePlacementChance = 0.05f;
                     break;
-                    #endregion
+                #endregion
+
+                case TankTier.Commando:
+                    AiParams.meanderAngle = MathHelper.ToRadians(30);
+                    AiParams.meanderFrequency = 10;
+                    AiParams.turretMeanderFrequency = 60;
+                    AiParams.turretSpeed = 0.045f;
+                    AiParams.inaccuracy = 0.04f;
+
+                    AiParams.projectileWarinessRadius = 140;
+                    AiParams.mineWarinessRadius = 140;
+
+                    TurningSpeed = 0.1f;
+                    MaximalTurn = 0.5f;
+
+                    ShootStun = 0;
+                    ShellCooldown = 15;
+                    ShellLimit = 8;
+                    ShellSpeed = 4f;
+                    ShellType = ShellTier.Standard;
+                    RicochetCount = 1;
+
+                    Invisible = false;
+                    Stationary = false;
+                    ShellHoming = new();
+
+                    TreadPitch = 0.08f;
+                    MaxSpeed = 1.3f;
+                    Acceleration = 0.3f;
+                    Deceleration = 0.6f;
+
+                    MineCooldown = 940;
+                    MineLimit = 1;
+                    MineStun = 5;
+
+                    AiParams.moveFromMineTime = 100;
+                    AiParams.minePlacementChance = 0.02f;
+                    AiParams.shootChance = 0.2f;
+                    break;
             }
         }
         private void OnMissionStart()
@@ -1400,22 +1415,23 @@ namespace WiiPlayTanksRemake.GameContent
         
         public bool isCubeInWay;
 
-
         private int treadPlaceTimer;
-
-        private float t1;
-        private float c1;
-
         public bool isEnemySpotted;
 
-        private bool IsEnemyInAimedPath(Tank enemy = null, bool draw = false)
+        private bool seeks;
+        private float seekRotation = 0;
+
+        // make a new method for just any rectangle
+        private bool IsTankInPath(Vector2 pathDir, Tank enemy = null, bool draw = false, Vector2 offset = default)
         {
-            const int MAX_PATH_UNITS = 30;
-            const int PATH_UNIT_LENGTH = 20;
+            const int MAX_PATH_UNITS = 250;
+            const int PATH_UNIT_LENGTH = 10;
+
+            // 20, 30
 
             var whitePixel = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
-            var pathPos = Position2D + new Vector2(0, 20).RotatedByRadians(-TurretRotation);
-            var pathDir = Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi);
+            var pathPos = Position2D + offset.RotatedByRadians(-TurretRotation);
+
             pathDir.Y *= -1;
             pathDir *= PATH_UNIT_LENGTH;
             int pathRicochetCount = 0;
@@ -1454,11 +1470,13 @@ namespace WiiPlayTanksRemake.GameContent
                         break;
                 }
 
+                if (i < 3 && Cube.cubes.Any(x => x is not null && pathHitbox.Intersects(x.collider2d)))
+                    return false;
+
                 if (pathRicochetCount > RicochetCount)
                     return false;
 
                 pathPos += pathDir;
-
 
                 if (draw)
                 {
@@ -1473,7 +1491,68 @@ namespace WiiPlayTanksRemake.GameContent
             }
             return false;
         }
-        
+
+        private bool IsObstacleInWay(int checkDist, Vector2 pathDir, out Vector2 reflectDir, bool draw = false)
+        {
+            const int PATH_UNIT_LENGTH = 1;
+
+            bool hasCollided = false;
+
+            // 20, 30
+
+            var whitePixel = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
+            var pathPos = Position2D + Vector2.Zero.RotatedByRadians(-TurretRotation);
+
+            pathDir.Y *= -1;
+            pathDir *= PATH_UNIT_LENGTH;
+
+            for (int i = 0; i < checkDist; i++)
+            {
+                var dummyPos = Vector3.Zero;
+
+                if (pathPos.X < MapRenderer.MIN_X || pathPos.X > MapRenderer.MAX_X)
+                {
+                    pathDir.X *= -1;
+                    hasCollided = true;
+                }
+                if (pathPos.Y < MapRenderer.MIN_Y || pathPos.Y > MapRenderer.MAX_Y)
+                {
+                    pathDir.Y *= -1;
+                    hasCollided = true;
+                }
+
+                var pathHitbox = new Rectangle((int)pathPos.X, (int)pathPos.Y, 1, 1);
+
+                // Why is velocity passed by reference here lol
+                Collision.HandleCollisionSimple_ForBlocks(pathHitbox, ref pathDir, ref dummyPos, out var dir, false);
+
+                switch (dir)
+                {
+                    case Collision.CollisionDirection.Up:
+                    case Collision.CollisionDirection.Down:
+                        hasCollided = true;
+                        pathDir.Y *= -1;
+                        break;
+                    case Collision.CollisionDirection.Left:
+                    case Collision.CollisionDirection.Right:
+                        pathDir.X *= -1;
+                        hasCollided = true;
+                        break;
+                }
+
+                pathPos += pathDir;
+
+                if (draw)
+                {
+                    var pathPosScreen = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(pathPos.X, 11, pathPos.Y), TankGame.GameView, TankGame.GameProjection);
+                    TankGame.spriteBatch.Draw(whitePixel, pathPosScreen, null, Color.White, 0, whitePixel.Size() / 2, 2 + (float)Math.Sin(i * Math.PI / 5 - TankGame.GameUpdateTime * 0.3f), default, default);
+                }
+            }
+
+            reflectDir = pathDir;
+            return hasCollided;
+        }
+
         public void DoAi(bool doMoveTowards = true, bool doMovements = true, bool doFire = true)
         {
             AiParams.timeSinceLastMinePlaced++;
@@ -1486,7 +1565,6 @@ namespace WiiPlayTanksRemake.GameContent
 
             if (GameHandler.InMission)
             {
-
                 foreach (var behavior in Behaviors)
                     behavior.totalUpdateCount++;
 
@@ -1536,133 +1614,62 @@ namespace WiiPlayTanksRemake.GameContent
                         AiParams.targetTurretRotation -= MathHelper.TwoPi;
                     else if (diff < -MathHelper.Pi)
                         AiParams.targetTurretRotation += MathHelper.TwoPi;
-                    TurretRotation = GameUtils.RoughStep(TurretRotation, AiParams.targetTurretRotation, AiParams.turretSpeed);
-                    // TurretRotation += GameUtils.AngleLerp(TurretRotation, AiParams.targetTurretRotation, AiParams.turretSpeed);
+
+                    TurretRotation = GameUtils.RoughStep(TurretRotation, AiParams.targetTurretRotation, seeks ? AiParams.turretSpeed * 3 : AiParams.turretSpeed);
+
                     if (Array.IndexOf(GameHandler.AllTanks, enemy) > -1 && enemy is not null)
                     {
-                        if (Behaviors[1].IsModOf(AiParams.turretMeanderFrequency))
+                        if (!seeks)
                         {
-                            isEnemySpotted = false;
-                            if (enemy.Invisible && enemy.timeSinceLastAction < 60)
+                            if (Behaviors[1].IsModOf(AiParams.turretMeanderFrequency))
                             {
-                                aimTarget = enemy.Position2D.Expand_Z();
-                                isEnemySpotted = true;
-                            }
+                                isEnemySpotted = false;
+                                if (enemy.Invisible && enemy.timeSinceLastAction < 60)
+                                {
+                                    aimTarget = enemy.Position2D.Expand_Z();
+                                    isEnemySpotted = true;
+                                }
 
-                            if (!enemy.Invisible)
-                            {
-                                aimTarget = enemy.Position2D.Expand_Z();
-                                isEnemySpotted = true;
-                            }
+                                if (!enemy.Invisible)
+                                {
+                                    aimTarget = enemy.Position2D.Expand_Z();
+                                    isEnemySpotted = true;
+                                }
 
-                            var dirVec = Position2D - aimTarget.FlattenZ();  // enemy.Position2D;
-                            AiParams.targetTurretRotation = -dirVec.ToRotation() - MathHelper.PiOver2 + new Random().NextFloat(-AiParams.inaccuracy, AiParams.inaccuracy);
+                                var dirVec = Position2D - aimTarget.FlattenZ();  // enemy.Position2D;
+                                AiParams.targetTurretRotation = -dirVec.ToRotation() - MathHelper.PiOver2 + new Random().NextFloat(-AiParams.inaccuracy, AiParams.inaccuracy);
+                            }
                         }
 
                         if (doFire)
                         {
+                            bool seesSelf = false;
 
-                            var turRotationReal = Vector2.UnitY.RotatedByRadians(-TurretRotation);
+                            seekRotation += AiParams.turretSpeed;
 
-                            tankTurretRay = GeometryUtils.CreateRayFrom2D(Position2D, turRotationReal, 0f);
-
-                            List<Ray> rays = new();
-
-                            rays.Add(tankTurretRay);
-
-                            // Create a few rays here to simulate "shot is close to target" effect
-                            for (int k = 0; k < AiParams.missDistance; k++)
-                            {
-                                rays.Add(GeometryUtils.CreateRayFrom2D(Position2D, turRotationReal.RotatedByRadians(AiParams.missDistance * k)));
-                                rays.Add(GeometryUtils.CreateRayFrom2D(Position2D, turRotationReal.RotatedByRadians(-AiParams.missDistance * k)));
-                            }
-                            for (int i = 0; i < RicochetCount; i++)
-                            {
-                                if (MapRenderer.BoundsRenderer.enclosingBoxes.Any(c => tankTurretRay.Intersects(c).HasValue) || Cube.cubes.Any(x => x is not null && tankTurretRay.Intersects(x.collider).HasValue))
-                                {
-                                    // normal is up usually
-                                    var r = GeometryUtils.Reflect(tankTurretRay, tankTurretRay.Intersects(MapRenderer.BoundsRenderer.BoundaryBox).Value);
-                                    //tankTurretRay = r;
-                                    // rays.Add(tankTurretRay);
-                                    rays.Add(r);
-                                }
-                            }
-
-                            raysMarched = rays;
-
-                            // check if friendly intersected is LESS than enemy intersected, if true then prevent fire
-
-                            float cubeInter = 0f;
-                            float tnkInter = 0f;
-
-                            if (tankTurretRay.Intersects(enemy.CollisionBox).HasValue)
-                                tnkInter = tankTurretRay.Intersects(enemy.CollisionBox).Value;
-
-                            List<float> intersCube = new();
-                            List<(Tank, float)> intersTnk = new(); // store the tank and it's dist from raycast
-
-                            foreach (var cube in Cube.cubes)
-                            {
-                                if (cube is not null)
-                                {
-                                    if (tankTurretRay.Intersects(cube.collider).HasValue)
-                                    {
-                                        intersCube.Add(tankTurretRay.Intersects(cube.collider).Value);
-                                    }
-                                }
-                            }
-                            /*foreach (var tank in GameHandler.AllTanks)
-                            {
-                                if (tank is not null)
-                                {
-                                    if (tankTurretRay.Intersects(tank.CollisionBox).HasValue)
-                                    {
-                                        intersTnk.Add((tank, tankTurretRay.Intersects(tank.CollisionBox).Value));
-                                    }
-                                }
-                            }*/
-
-                            // intersTnk.Sort();
-                            intersCube.Sort();
-
-                            /*string s = $"{tier}:";
-                            for (int i = 0; i < inters.Count; i++)
-                            {
-                                s += " " + inters[i].ToString();
-                            }
-                            GameHandler.ClientLog.Write(s, LogType.Debug);*/
-
-                            bool preventFireBecauseTeammateIsInWay = false;
-
-                            if (intersCube.Count > 0)
-                                cubeInter = intersCube[0];
-                            if (intersTnk.Count > 0)
-                            {
-                                //tnkInter = tankTurretRay.Intersects(intersTnk[0].Item1.CollisionBox).Value;
-
-                                // if (intersTnk[0].Item1.Team == Team)
-                                // preventFireBecauseTeammateIsInWay = true;
-                            }
-
-                            if (IsEnemyInAimedPath(enemy))
+                            AiParams.seesTarget = false;
+                            if (IsTankInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), enemy, offset: Vector2.UnitY * 20))
                                 AiParams.seesTarget = true;
-                            else if (cubeInter < tnkInter || tnkInter == 0)
-                                AiParams.seesTarget = false;
 
-                            c1 = cubeInter;
-                            t1 = tnkInter;
+                            if (IsTankInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), this, offset: Vector2.UnitY * 20))
+                                seesSelf = true;
+                            if (AiParams.advancedRicochetCalculations)
+                            {
+                                if (IsTankInPath(Vector2.UnitY.RotatedByRadians(seekRotation), enemy))
+                                {
+                                    seeks = true;
+                                    AiParams.targetTurretRotation = seekRotation - MathHelper.Pi;
+                                }
 
-                            // AiParams.seesTarget = rays.Any(r => r.Intersects(enemy.CollisionBox).HasValue);
+                                if (TurretRotation == AiParams.targetTurretRotation)
+                                    seeks = false;
+                            }
 
                             bool checkNoTeam = Team == Team.NoTeam ? true : !tanksNearMe.Any(x => x.Team == Team);
 
-                            if (AiParams.seesTarget && checkNoTeam && isEnemySpotted && !preventFireBecauseTeammateIsInWay)
-                            {
+                            if (AiParams.seesTarget && checkNoTeam && !seesSelf)
                                 if (curShootCooldown <= 0)
-                                {
                                     Shoot();
-                                }
-                            }
                         }
                     }
 
@@ -1681,76 +1688,25 @@ namespace WiiPlayTanksRemake.GameContent
 
                         #region CubeNav
 
-                        var rays = new List<Ray>();
+                        isCubeInWay = IsObstacleInWay(AiParams.cubeWarinessDistance, Vector2.UnitY.RotatedByRadians(-targetTankRotation), out var travelPath);
 
-                        /*for (int i = 0; i < 1; i++)
+                        if (isCubeInWay && Behaviors[2].IsModOf(AiParams.meanderFrequency / 3))
                         {
-                            var tnkRay = GeometryUtils.CreateRayFrom2D(Position2D, Vector2.UnitY.RotatedByRadians(TankRotation + MathHelper.ToRadians(i)));
-                            var tnkRay2 = GeometryUtils.CreateRayFrom2D(Position2D, Vector2.UnitY.RotatedByRadians(TankRotation - MathHelper.ToRadians(i)));
-
-                            rays.Add(tnkRay);
-                            rays.Add(tnkRay2);
-                        }*/
-
-                        var tnkRayBase = GeometryUtils.CreateRayFrom2D(Position2D, Vector2.UnitY.RotatedByRadians(targetTankRotation + MathHelper.Pi));
-                        isCubeInWay = IsCubeInRayPath(tnkRayBase, AiParams.cubeWarinessDistance);
-
-                        //isCubeInWay = rays.Any(r => IsCubeInRayPath(r, AiParams.cubeWarinessDistance));
-
-                        if (isCubeInWay && Behaviors[2].IsModOf(AiParams.meanderFrequency / 2)) // temporary?
-                        {
-                            // TODO: -dir.ToRotation() - Pi/2 | might be more consistent?
-                            // maybe also try affecting meander angle with a variable + meanderAngle
-
-                            var turnInvar = 0.25f; // 0.15
-
-                            if (velocity.X > 0 && velocity.Z > 0) // yes
-                            {
-                                // down right
-
-                                targetTankRotation += turnInvar;//0.1f;
-                            }
-                            else if (velocity.X >= 0 && velocity.Z <= 0) // yes
-                            {
-                                // up right
-
-                                targetTankRotation -= turnInvar;
-                            }
-                            else if (velocity.X <= 0 && velocity.Z >= 0) // yes
-                            {
-                                // down left
-
-                                targetTankRotation -= turnInvar;
-                            }
-                            else if (velocity.X < 0 && velocity.Z < 0) // yes
-                            {
-                                // up left
-
-                                targetTankRotation += turnInvar;
-                            }
+                            targetTankRotation += GameUtils.DirectionOf(Position2D, travelPath).ToRotation() / 4; // needs fixing i think
                         }
-
-                        // adjust angles
 
                         #endregion
 
                         #region GeneralMovement
                         if (!isMineNear && !isBulletNear && !movingFromMine && !movingFromOtherMine && !IsTurning)
                         {
-                            // if (!isCubeInWay)
+                            if (!isCubeInWay)
                             {
                                 if (Behaviors[0].IsModOf(AiParams.meanderFrequency))
                                 {
                                     var meanderRandom = new Random().NextFloat(-AiParams.meanderAngle / 2, AiParams.meanderAngle / 2);
 
                                     targetTankRotation += meanderRandom;
-
-                                    /*if (TankRotation - targetTankRotation > MathHelper.Pi)
-                                        targetTankRotation += MathHelper.TwoPi;
-                                    else if (targetTankRotation - TankRotation > MathHelper.Pi)
-                                        TankRotation += MathHelper.TwoPi;*/
-
-                                    // TankRotation = MathHelper.Lerp(TankRotation, targetTankRotation, 4.3f / 60f);
                                 }
                             }
                         }
@@ -1949,12 +1905,20 @@ namespace WiiPlayTanksRemake.GameContent
             if (Dead)
                 return;
 
-            IsEnemyInAimedPath(default, true);
+            if (DebugUtils.DebugLevel == 1)
+            {
+                if (AiParams.advancedRicochetCalculations)
+                    IsTankInPath(Vector2.UnitY.RotatedByRadians(seekRotation), default, true);
+                IsTankInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), default, true);
+            }
 
+            //if (!Stationary)
+                IsObstacleInWay(AiParams.cubeWarinessDistance, Vector2.UnitY.RotatedByRadians(-targetTankRotation), out var travelPath, true);
+
+            DebugUtils.DrawDebugString(TankGame.spriteBatch, "B", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(travelPath.X, 11, travelPath.Y), View, Projection), 1, centerIt: true);
             var info = new string[]
             {
-                $"iTnk: {t1}",
-                $"iCube: {c1}",
+                $"{travelPath.ToRotation() / 5} : {-targetTankRotation}",
                 $"Team: {Team}",
                 $"Actual / Target: {TankRotation} / {dummyValue}",
                 $"TurActual / TurTarget / TurDiff: {TurretRotation} / {AiParams.targetTurretRotation} / {AiParams.targetTurretRotation - TurretRotation}",
@@ -1964,17 +1928,8 @@ namespace WiiPlayTanksRemake.GameContent
             for (int i = 0; i < info.Length; i++)
                 DebugUtils.DrawDebugString(TankGame.spriteBatch, info[i], GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, (info.Length * 20) + (i * 20)), 1, centerIt: true);
 
-            DebugUtils.DrawDebugString(TankGame.spriteBatch, "0", GeometryUtils.ConvertWorldToScreen(tankTurretRay.Position, World, View, Projection), 3, centerIt: true);
-            DebugUtils.DrawDebugString(TankGame.spriteBatch, "1", GeometryUtils.ConvertWorldToScreen((tankTurretRay.Position + tankTurretRay.Direction) * 30, World, View, Projection), 3, centerIt: true);
-
-            /*foreach (var ray in raysMarched)
-            {
-                DebugUtils.DrawDebugString(TankGame.spriteBatch, "0", GeometryUtils.ConvertWorldToScreen(ray.Position, World, View, Projection), 1, centerIt: true);
-                DebugUtils.DrawDebugString(TankGame.spriteBatch, "1", GeometryUtils.ConvertWorldToScreen(ray.Position + ray.Direction * 30, World, View, Projection), 1, centerIt: true);
-            }*/
-
-            if (Invisible && GameHandler.InMission)
-                return;
+            //if (Invisible && GameHandler.InMission)
+                //return;
 
             RenderModel();
         }

@@ -101,7 +101,7 @@ namespace WiiPlayTanksRemake.GameContent
             ShootStun = 5;
             ShellSpeed = 3f;
             MaxSpeed = 1.8f;
-            RicochetCount = 1;
+            RicochetCount = 2;
             ShellLimit = 5;
             MineLimit = 2;
             MineStun = 8;
@@ -423,13 +423,15 @@ namespace WiiPlayTanksRemake.GameContent
 
         private void DrawShootPath()
         {
-            const int MAX_PATH_UNITS = 150;
+            const int MAX_PATH_UNITS = 500;
 
             var whitePixel = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
-            var pathPos = Position2D + new Vector2(0, 20).RotatedByRadians(-TurretRotation);
+            var pathPos = Position2D + new Vector2(0, 0).RotatedByRadians(-TurretRotation);
             var pathDir = Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi);
             pathDir.Y *= -1;
             pathDir *= ShellSpeed;
+
+            var bounces = 0;
 
 
             for (int i = 0; i < MAX_PATH_UNITS; i++)
@@ -437,26 +439,38 @@ namespace WiiPlayTanksRemake.GameContent
                 var dummyPos = Vector3.Zero;
 
                 if (pathPos.X < MapRenderer.MIN_X || pathPos.X > MapRenderer.MAX_X)
+                {
+                    bounces++;
                     pathDir.X *= -1;
+                }
                 if (pathPos.Y < MapRenderer.MIN_Y || pathPos.Y > MapRenderer.MAX_Y)
+                {
+                    bounces++;
                     pathDir.Y *= -1;
+                }
 
                 var pathHitbox = new Rectangle((int)pathPos.X - 3, (int)pathPos.Y - 3, 6, 6);
 
                 // Why is velocity passed by reference here lol
                 Collision.HandleCollisionSimple_ForBlocks(pathHitbox, ref pathDir, ref dummyPos, out var dir, false);
 
+
                 switch (dir)
                 {
                     case Collision.CollisionDirection.Up:
                     case Collision.CollisionDirection.Down:
                         pathDir.Y *= -1;
+                        bounces++;
                         break;
                     case Collision.CollisionDirection.Left:
                     case Collision.CollisionDirection.Right:
                         pathDir.X *= -1;
+                        bounces++;
                         break;
                 }
+
+                if (bounces > RicochetCount)
+                    return;
 
                 pathPos += pathDir;
                 
@@ -498,6 +512,16 @@ namespace WiiPlayTanksRemake.GameContent
 
             bullet.owner = this;
             bullet.ricochets = RicochetCount;
+
+            var p = ParticleSystem.MakeParticle(bullet.position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
+
+            p.Scale = 0.5f;
+
+            p.UniqueBehavior = (part) =>
+            {
+                part.color = Color.Orange;
+                part.Opacity -= 0.02f;
+            };
 
             OwnedShellCount++;
 

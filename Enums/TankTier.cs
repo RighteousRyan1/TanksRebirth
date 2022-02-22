@@ -36,7 +36,9 @@
         Creeper,
         Fade,
         Gamma,
-        Marble
+        Marble,
+
+        Commando
     }
 
     public enum PlayerType : byte

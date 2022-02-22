@@ -19,6 +19,7 @@ using WiiPlayTanksRemake.GameContent.UI;
 using WiiPlayTanksRemake.Graphics;
 using WiiPlayTanksRemake.Internals.Common.Framework.Audio;
 using WiiPlayTanksRemake.Internals.Common.Framework.Input;
+using System.IO;
 
 namespace WiiPlayTanksRemake.GameContent
 {
@@ -291,45 +292,24 @@ namespace WiiPlayTanksRemake.GameContent
                     new(Cube.BlockType.Wood, 1),
                     new(Cube.BlockType.Wood, 1),
 
-                    new(Cube.BlockType.Wood, 5),
-                    new(Cube.BlockType.Wood, 5),
-                    new(Cube.BlockType.Wood, 5),
-                    new(Cube.BlockType.Wood, 5),
-                    new(Cube.BlockType.Wood, 5),
-                    new(Cube.BlockType.Wood, 5),
-                    new(Cube.BlockType.Wood, 5),
-                    new(Cube.BlockType.Wood, 5),
-
-                                        new(Cube.BlockType.Wood, 5),
-                    new(Cube.BlockType.Wood, 5),
-                    new(Cube.BlockType.Wood, 5),
+                    new(Cube.BlockType.Wood, 1),
+                    new(Cube.BlockType.Wood, 1),
                 },
                 new CubeMapPosition[]
                 {
-                    new(7, 0),
-                    new(7, 1),
-                    new(7, 2),
-                    new(7, 3),
-                    new(7, 4),
-                    new(7, 5),
-                    new(7, 6),
-                    new(7, 7),
-                    new(7, 8),
-                    new(7, 9),
+                    new(5, 4),
+                    new(5, 5),
+                    new(5, 6),
+                    new(5, 7),
+                    new(5, 8),
+                    new(5, 9),
+                    new(5, 10),
+                    new(5, 11),
+                    new(5, 12),
+                    new(5, 13),
 
-                    new(11, 0),
-                    new(11, 1),
-                    new(11, 2),
-                    new(11, 3),
-                    new(11, 4),
-                    new(11, 5),
-                    new(11, 6),
-                    new(11, 7),
-                    new(11, 8),
-                    new(11, 9),
-                    new(11, 8),
-                    new(11, 9),
-
+                    new(20, 4),
+                    new(20, 5),
                     new(20, 6),
                     new(20, 7),
                     new(20, 8),
@@ -338,8 +318,9 @@ namespace WiiPlayTanksRemake.GameContent
                     new(20, 11),
                     new(20, 12),
                     new(20, 13),
-                    new(20, 14),
-                    new(20, 15),
+
+                    new(20, 6),
+                    new(20, 7),
                 });
         // fix shitty mission init (innit?)
 
@@ -353,7 +334,20 @@ namespace WiiPlayTanksRemake.GameContent
 
         public static void StartTnkScene()
         {
+
+            /*var bytes = File.ReadAllBytes("TnkGameParam.bin");
+
+            var str = "";
+
+            foreach (var item in bytes)
+                str += item;
+            ClientLog.Write(str, LogType.Debug);
+
+            ClientLog.Write($"Offset at 0xA4: {bytes[0xA4]}", LogType.Error);*/
+
             // 26 x 18 (technically 27 x 19)
+
+            // 22 x 17 is vanilla (bruh wtf)
 
             DebugUtils.DebuggingEnabled = false;
             MapRenderer.InitializeRenderers();
@@ -362,10 +356,22 @@ namespace WiiPlayTanksRemake.GameContent
 
             LoadTnkScene();
 
+            /*for (int i = 0; i < 26; i++)
+            {
+                for (int j = 0; j < 20; j++)
+                {
+                    if (new Random().NextFloat(0, 1) < 0.1)
+                        new Cube(Cube.BlockType.Wood, new Random().Next(1, 6))
+                        {
+                            position = new CubeMapPosition(i, j)
+                        };
+                }
+            }*/
+
             var brighter = new Lighting.DayState()
             {
                 color = Color.White,
-                brightness = 0.55f
+                brightness = 0.55f,
             };
 
             brighter.Apply(false);
@@ -392,10 +398,11 @@ namespace WiiPlayTanksRemake.GameContent
 
         public static PlayerTank SpawnMe()
         {
+            var pos = GameUtils.GetWorldPosition(GameUtils.MousePosition);
             myTank = new PlayerTank(PlayerType.Blue)
             {
                 Team = Team.Red,
-                position = new CubeMapPosition(new Random().Next(0, 27), new Random().Next(0, 21)),
+                position = pos,
                 Dead = false
             };
             return myTank;
@@ -455,7 +462,7 @@ namespace WiiPlayTanksRemake.GameContent
             int maxx = (int)MapRenderer.MAX_X + 12;
             int maxy = (int)MapRenderer.MAX_Y + 12;
 
-            for (int i = minx; i < maxx; i++)
+            /*for (int i = minx; i < maxx; i++)
             {
                 if (i % 10 == 0)
                 {
@@ -471,7 +478,7 @@ namespace WiiPlayTanksRemake.GameContent
                         INTERNAL_doRender = false
                     };
                 }
-            }
+            }*/
             /*for (int j = miny; j < maxy; j++)
             {
                 if (j % 10 == 0)
@@ -598,34 +605,6 @@ namespace WiiPlayTanksRemake.GameContent
 
         private static void RestartMission(UIElement affectedElement)
         {
-            VanillaCampaign.LoadMission(new Mission(
-                new Tank[]
-                {
-                    //new AITank(TankTier.Sapphire) { Team = Team.Red },
-                   // new AITank(TankTier.Amethyst) { Team = Team.Blue },
-                   // new AITank(TankTier.Sapphire) { Team = Team.Green },
-                   // new AITank(TankTier.Amethyst) { Team = Team.Yellow }
-                },
-                new Vector3[]
-                {
-                    new CubeMapPosition(4, 4),
-                    new CubeMapPosition(CubeMapPosition.MAP_WIDTH - 4, 4),
-                    new CubeMapPosition(CubeMapPosition.MAP_WIDTH - 4, CubeMapPosition.MAP_HEIGHT - 4),
-                    new CubeMapPosition(4, CubeMapPosition.MAP_HEIGHT - 4)
-                },
-                new float[]
-                {
-                    GeometryUtils.GetQuarterRotation(1),
-                    GeometryUtils.GetQuarterRotation(0),
-                    GeometryUtils.GetQuarterRotation(3),
-                    GeometryUtils.GetQuarterRotation(2)
-                },
-                new Cube[]
-                {
-                },
-                new CubeMapPosition[]
-                {
-                }));
             BeginIntroSequence();
         }
 

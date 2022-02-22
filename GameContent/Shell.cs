@@ -165,13 +165,14 @@ namespace WiiPlayTanksRemake.GameContent
             if (!INTERNAL_ignoreCollisions)
                 CheckCollisions();
 
-            int nummy = (int)Math.Round(20 / velocity.Length()) != 0 ? (int)Math.Round(20 / velocity.Length()) : 5;
+            /*int nummy = (int)Math.Round(20 / velocity.Length()) != 0 ? (int)Math.Round(20 / velocity.Length()) : 5;
 
             if (lifeTime % nummy == 0 && !INTERNAL_ignoreCollisions)
             {
                 var p = ParticleSystem.MakeParticle(position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
                 p.FaceTowardsMe = false;
                 p.Scale = 0.45f;
+                p.color = new Color(100, 100, 100, 255);
 
                 p.UniqueBehavior = (p) =>
                 {
@@ -182,7 +183,8 @@ namespace WiiPlayTanksRemake.GameContent
                         p.Opacity -= 0.01f;
                     p.position.Y += 0.1f;
                 };
-            }
+            }*/
+            // re-enable later when 3d works
         }
 
         /// <summary>
@@ -211,37 +213,13 @@ namespace WiiPlayTanksRemake.GameContent
 
         public void CheckCollisions()
         {
-            foreach (var tank in GameHandler.AllAITanks)
+            foreach (var tank in GameHandler.AllTanks)
             {
                 if (tank is not null)
                 {
                     if (tank.CollisionBox.Intersects(hurtbox))
                     {
-                        if (owner != null)
-                        {
-                            if (tank.Team == owner.Team && tank != owner && tank.Team != Team.NoTeam)
-                                Destroy();
-                            else
-                            {
-                                Destroy();
-                                tank.Destroy();
-                            }
-                        }
-                        else
-                        {
-                            Destroy();
-                            tank.Destroy();
-                        }
-                    }
-                }
-            }
-            foreach (var tank in GameHandler.AllPlayerTanks)
-            {
-                if (tank is not null)
-                {
-                    if (tank.CollisionBox.Intersects(hurtbox))
-                    {
-                        if (tank.Team == owner.Team && tank != owner)
+                        if (tank.Team == owner.Team && tank != owner && tank.Team != Team.NoTeam)
                             Destroy();
                         else
                         {
@@ -256,10 +234,13 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 if (bullet is not null && bullet != this)
                 {
-                    if (bullet.hurtbox.Intersects(hurtbox))
+                    if (!bullet.INTERNAL_ignoreCollisions)
                     {
-                        bullet.Destroy();
-                        Destroy();
+                        if (bullet.hurtbox.Intersects(hurtbox))
+                        {
+                            bullet.Destroy();
+                            Destroy();
+                        }
                     }
                 }
             }

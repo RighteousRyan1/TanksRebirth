@@ -5,7 +5,7 @@ namespace WiiPlayTanksRemake.GameContent
 {
     public class ParticleSystem
     {
-        public static int MAX_PARTICLES = 300;
+        public static int MAX_PARTICLES = 2500;
         public static Particle[] CurrentParticles = new Particle[MAX_PARTICLES];
 
         public static void RenderParticles()

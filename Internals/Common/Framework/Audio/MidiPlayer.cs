@@ -68,6 +68,21 @@ namespace WiiPlayTanksRemake.Internals.Common.Framework.Audio
             }
         }
 
+        public void NoteOn(int channel, int key, int velocity)
+        {
+            synthesizer.NoteOn(channel, key, velocity);
+        }
+
+        public void NoteOff(int channel, int key)
+        {
+            synthesizer.NoteOff(channel, key);
+        }
+
+        public void NoteOffAll()
+        {
+            synthesizer.NoteOffAll(true);
+        }
+
         public SoundState State => dynamicSound.State;
     }
 }

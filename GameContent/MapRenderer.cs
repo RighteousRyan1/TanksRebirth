@@ -347,8 +347,8 @@ namespace WiiPlayTanksRemake.GameContent
             }
         }
 
-        public const float TANKS_MIN_X = -313.2546f;
-        public const float TANKS_MAX_X = 313.2546f;
+        public const float TANKS_MIN_X = -317.2546f;
+        public const float TANKS_MAX_X = 317.2546f;
         public const float TANKS_MIN_Y = -111.45461f;
         public const float TANKS_MAX_Y = 372.32504f;
 

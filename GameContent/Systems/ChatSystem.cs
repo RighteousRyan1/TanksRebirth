@@ -12,7 +12,7 @@ using WiiPlayTanksRemake.Internals.Common.Utilities;
 
 namespace WiiPlayTanksRemake.GameContent.Systems
 {
-    public static class ChatSystem
+    public record ChatSystem
     {
         public const int CHAT_MESSAGE_CACHE_CAPACITY = 10000;
         public static List<ChatMessage> ChatMessages { get; } = new();

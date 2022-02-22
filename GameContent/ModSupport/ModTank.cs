@@ -19,10 +19,6 @@ namespace WiiPlayTanksRemake.GameContent.ModSupport
 
         public void Spawn(CubeMapPosition position)
         {
-            var t = new AITank(Tank.modTier, false)
-            {
-                position = position,
-            };
         }
 
         public virtual bool BulletFound() => true;

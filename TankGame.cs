@@ -366,6 +366,7 @@ namespace WiiPlayTanksRemake
 
                     if (!fps)
                     {
+                        //GameView = Matrix.CreateScale(1f) * Matrix.CreateLookAt(new(0f, 0, 250f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(MathHelper.PiOver2 /* 0.75f */ + rotVec.Y) * Matrix.CreateRotationY(rotVec.X) * Matrix.CreateTranslation(off.X, -off.Y, 0);
                         GameView = Matrix.CreateScale(zoom) * Matrix.CreateLookAt(new(0f, 0, 250f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(0.75f + rotVec.Y) * Matrix.CreateRotationY(rotVec.X) * Matrix.CreateTranslation(off.X, -off.Y, 0);
                         CalculateProjection();
                     }
