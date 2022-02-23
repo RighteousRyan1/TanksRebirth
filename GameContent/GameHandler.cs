@@ -356,7 +356,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             LoadTnkScene();
 
-            /*for (int i = 0; i < 26; i++)
+            for (int i = 0; i < 26; i++)
             {
                 for (int j = 0; j < 20; j++)
                 {
@@ -366,7 +366,7 @@ namespace WiiPlayTanksRemake.GameContent
                             position = new CubeMapPosition(i, j)
                         };
                 }
-            }*/
+            }
 
             var brighter = new Lighting.DayState()
             {
@@ -439,7 +439,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             SoundPlayer.PlaySoundInstance(tune, SoundContext.Music, 1f);
 
-            VanillaCampaign.SetupLoadedMission();
+            // VanillaCampaign.SetupLoadedMission();
 
             foreach (var tank in AllTanks)
                 if (tank is not null)

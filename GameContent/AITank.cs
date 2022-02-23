@@ -567,6 +567,8 @@ namespace WiiPlayTanksRemake.GameContent
 
                     AiParams.moveFromMineTime = 100;
                     AiParams.minePlacementChance = 0.05f;
+
+                    AiParams.advancedRicochetCalculations = true;
                     break;
                 case TankTier.Silver:
                     AiParams.meanderAngle = 0.5f;
@@ -1692,7 +1694,8 @@ namespace WiiPlayTanksRemake.GameContent
 
                         if (isCubeInWay && Behaviors[2].IsModOf(AiParams.meanderFrequency / 3))
                         {
-                            targetTankRotation += GameUtils.DirectionOf(Position2D, travelPath).ToRotation() / 4; // needs fixing i think
+                            GameUtils.RoughStep(ref targetTankRotation, GameUtils.DirectionOf(Position2D, travelPath).ToRotation(), GameUtils.DirectionOf(Position2D, travelPath).ToRotation() / 4);
+                            //targetTankRotation += GameUtils.DirectionOf(Position2D, travelPath).ToRotation() / 4; // needs fixing i think
                         }
 
                         #endregion
