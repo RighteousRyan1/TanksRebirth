@@ -148,6 +148,9 @@ namespace WiiPlayTanksRemake.GameContent.Systems
             if (TierHighest == TankTier.Obsidian)
                 obsidian.volume = musicVolume;
 
+            if (TierHighest == TankTier.Assassin)
+                assassin.volume = musicVolume;
+
             // we call this hardcode hell in the west
         }
 
@@ -197,6 +200,8 @@ namespace WiiPlayTanksRemake.GameContent.Systems
         public static Music gold2;
         public static Music gold3;
         public static Music obsidian;
+
+        public static Music assassin;
         #endregion
 
         public static Music[] songs;
@@ -272,6 +277,8 @@ namespace WiiPlayTanksRemake.GameContent.Systems
 
             obsidian = Music.CreateMusicTrack("ObsidianTank", "Assets/music/obsidian", 0.5f);
 
+            assassin = Music.CreateMusicTrack("AssassinTank", "Assets/music/assassin", 0.5f);
+
             #endregion
 
             //MusicMidi = new MidiPlayer(@"C:\Users\ryanr\Desktop\Git Repositories\WiiPlayTanksRemake\Content\Assets\music\Wii_tanks_bgm.sf2", new(44100) { EnableReverbAndChorus = false });
@@ -297,7 +304,9 @@ namespace WiiPlayTanksRemake.GameContent.Systems
                 amethyst1, amethyst2, amethyst3,
                 emerald1, emerald2, emerald3, emerald4,
                 gold1, gold2, gold3,
-                obsidian
+                obsidian,
+
+                assassin
             };
         }
 
@@ -308,29 +317,6 @@ namespace WiiPlayTanksRemake.GameContent.Systems
 
         public static void PlayMusic()
         {
-            songs = new Music[]
-            {
-                brown,
-                ash1, ash2,
-                marine1, marine2,
-                pink1, pink2, pink3,
-                yellow1, yellow2, yellow3,
-                purple1, purple2, purple3,
-                green1, green2, green3, green4,
-                white1, white2, white3,
-                black,
-
-                bronze,
-                silver1, silver2,
-                sapphire1, sapphire2,
-                ruby1, ruby2, ruby3,
-                citrine1, citrine2, citrine3,
-                amethyst1, amethyst2, amethyst3,
-                emerald1, emerald2, emerald3, emerald4,
-                gold1, gold2, gold3,
-                obsidian
-            };
-
             //if (MusicMidi.State == Microsoft.Xna.Framework.Audio.SoundState.Stopped)
                 //MusicMidi.Play(MusicSoundFont, true);
 

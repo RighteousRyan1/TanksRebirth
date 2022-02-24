@@ -101,7 +101,7 @@ namespace WiiPlayTanksRemake.GameContent
             ShootStun = 5;
             ShellSpeed = 3f;
             MaxSpeed = 1.8f;
-            RicochetCount = 2;
+            RicochetCount = 1;
             ShellLimit = 5;
             MineLimit = 2;
             MineStun = 8;
@@ -123,8 +123,6 @@ namespace WiiPlayTanksRemake.GameContent
             if (Dead)
                 return;
 
-            UpdateCollision();
-
             if (curShootStun > 0)
                 curShootStun--;
             if (curShootCooldown > 0)
@@ -134,11 +132,6 @@ namespace WiiPlayTanksRemake.GameContent
             if (curMineCooldown > 0)
                 curMineCooldown--;
 
-            if (velocity != Vector3.Zero)
-            {
-                //GameUtils.RoughStep(ref tankRotation, tankRotationPredicted.ToRotation(), 0.5f);
-                //  TankRotation = Velocity2D.ToRotation() - MathHelper.PiOver2;
-            }
             Projection = TankGame.GameProjection;
             View = TankGame.GameView;
 
@@ -178,6 +171,8 @@ namespace WiiPlayTanksRemake.GameContent
                 if (!Stationary)
                     UpdatePlayerMovement();
             }
+
+            UpdateCollision();
 
             timeSinceLastAction++;
 
@@ -496,12 +491,13 @@ namespace WiiPlayTanksRemake.GameContent
                 ShellTier.Standard => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_1"), SoundContext.Effect, 0.3f),
                 ShellTier.Rocket => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_rocket"), SoundContext.Effect, 0.3f),
                 ShellTier.RicochetRocket => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_ricochet_rocket"), SoundContext.Effect, 0.3f),
+                ShellTier.Supressed => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_silencer"), SoundContext.Effect, 0.3f),
+                ShellTier.Explosive => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_1"), SoundContext.Effect, 0.3f),
                 _ => throw new NotImplementedException()
             };
 
             sfx.Pitch = ShootPitch;
-
-            var bullet = new Shell(position, Vector3.Zero, homing: ShellHoming);
+            var bullet = new Shell(position, Vector3.Zero, RicochetCount, homing: ShellHoming);
             var new2d = Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi);
 
             var newPos = Position2D + new Vector2(0, 20).RotatedByRadians(-TurretRotation);
@@ -511,7 +507,6 @@ namespace WiiPlayTanksRemake.GameContent
             bullet.velocity = new Vector3(new2d.X, 0, -new2d.Y) * ShellSpeed;
 
             bullet.owner = this;
-            bullet.ricochets = RicochetCount;
 
             var p = ParticleSystem.MakeParticle(bullet.position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
 
@@ -580,7 +575,8 @@ namespace WiiPlayTanksRemake.GameContent
             if (Dead)
                 return;
 
-            DrawShootPath();
+            if (DebugUtils.DebugLevel == 1)
+                DrawShootPath();
 
             var info = new string[]
             {

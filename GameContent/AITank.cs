@@ -163,8 +163,6 @@ namespace WiiPlayTanksRemake.GameContent
 
             Dead = true;
 
-            Model = GameResources.GetRawGameAsset<Model>("Assets/tank_e"); //TankGame.TankModel_Enemy;
-
             #region Non-Special
             if ((int)tier <= (int)TankTier.Black)
                 _tankColorTexture = GameResources.GetGameResource<Texture2D>($"Assets/textures/enemy/tank_{tier.ToString().ToLower()}");
@@ -184,22 +182,48 @@ namespace WiiPlayTanksRemake.GameContent
 
                 foreach (var mesh in Model.Meshes)
                 {
-                    foreach (var effect in mesh.Effects)
+                    foreach (BasicEffect effect in mesh.Effects)
                     {
                         if (mesh.Name == "Laser_Beam")
-                            GameResources.GetGameResource<Texture2D>("Assets/textures/misc/laser");
+                            effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/laser");
                         if (mesh.Name == "Barrel_Laser")
-                            GameResources.GetGameResource<Texture2D>("Assets/textures/misc/armor");
+                            effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/armor");
                         if (mesh.Name == "Dish")
-                            GameResources.GetGameResource<Texture2D>("Assets/textures/enemy/wee/tank_commando");
+                            effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/enemy/wee/tank_commando");
                     }
                 }
                 // fix?
             }
+            else if (tier == TankTier.Assassin)
+            {
+                Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_assassin");
+
+                _tankColorTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/enemy/wee/tank_assassin");
+            }
+            else if (tier == TankTier.RocketDefender)
+            {
+                Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_rocket");
+
+                _tankColorTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/enemy/wee/tank_rocket");
+            }
+            else if (tier == TankTier.Electro)
+            {
+                Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_electro");
+
+                _tankColorTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/enemy/wee/tank_electro");
+            }
+            else if (tier == TankTier.Explosive)
+            {
+                Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_explosive");
+
+                _tankColorTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/enemy/wee/tank_explosive");
+            }
+            else
+            {
+                Model = GameResources.GetRawGameAsset<Model>("Assets/tank_e");
+            }
 
             #endregion
-
-            // _tankColorTexture = GameResources.GetGameResource<Texture2D>($"Assets/textures/sussy");
 
             CannonMesh = Model.Meshes["Cannon"];
 
@@ -894,6 +918,8 @@ namespace WiiPlayTanksRemake.GameContent
                     Deceleration = 0.4f;
 
                     treadSoundTimer = 4;
+
+                    AiParams.advancedRicochetCalculations = true;
                     break;
                 case TankTier.Bubblegum:
                     AiParams.meanderAngle = MathHelper.ToRadians(30);
@@ -1159,6 +1185,165 @@ namespace WiiPlayTanksRemake.GameContent
                     break;
                 #endregion
 
+                #region Special
+                case TankTier.Explosive:
+                    AiParams.meanderAngle = MathHelper.ToRadians(30);
+                    AiParams.meanderFrequency = 10;
+                    AiParams.turretMeanderFrequency = 60;
+                    AiParams.turretSpeed = 0.045f;
+                    AiParams.inaccuracy = 0.04f;
+
+                    AiParams.projectileWarinessRadius = 140;
+                    AiParams.mineWarinessRadius = 140;
+
+                    TurningSpeed = 0.1f;
+                    MaximalTurn = 0.4f;
+
+                    ShootStun = 0;
+                    ShellCooldown = 90;
+                    ShellLimit = 2;
+                    ShellSpeed = 2f;
+                    ShellType = ShellTier.Explosive;
+                    RicochetCount = 0;
+
+                    ShootPitch = -0.1f;
+
+                    Invisible = false;
+                    Stationary = false;
+                    ShellHoming = new();
+
+                    TreadPitch = -0.8f;
+                    MaxSpeed = 0.8f;
+                    Acceleration = 0.3f;
+                    Deceleration = 0.6f;
+
+                    MineCooldown = 940;
+                    MineLimit = 1;
+                    MineStun = 5;
+
+                    treadSoundTimer = 9;
+
+                    AiParams.moveFromMineTime = 100;
+                    AiParams.minePlacementChance = 0.02f;
+                    AiParams.shootChance = 0.2f;
+                    break;
+
+                case TankTier.Electro:
+                    AiParams.meanderAngle = MathHelper.ToRadians(30);
+                    AiParams.meanderFrequency = 10;
+                    AiParams.turretMeanderFrequency = 60;
+                    AiParams.turretSpeed = 0.045f;
+                    AiParams.inaccuracy = 0.04f;
+
+                    AiParams.projectileWarinessRadius = 140;
+                    AiParams.mineWarinessRadius = 140;
+
+                    TurningSpeed = 0.1f;
+                    MaximalTurn = 0.5f;
+
+                    ShootStun = 0;
+                    ShellCooldown = 15;
+                    ShellLimit = 8;
+                    ShellSpeed = 4f;
+                    ShellType = ShellTier.Standard;
+                    RicochetCount = 1;
+
+                    Invisible = false;
+                    Stationary = false;
+                    ShellHoming = new();
+
+                    TreadPitch = 0.08f;
+                    MaxSpeed = 1.3f;
+                    Acceleration = 0.3f;
+                    Deceleration = 0.6f;
+
+                    MineCooldown = 940;
+                    MineLimit = 1;
+                    MineStun = 5;
+
+                    AiParams.moveFromMineTime = 100;
+                    AiParams.minePlacementChance = 0.02f;
+                    AiParams.shootChance = 0.2f;
+                    break;
+
+                case TankTier.RocketDefender:
+                    AiParams.meanderAngle = MathHelper.ToRadians(30);
+                    AiParams.meanderFrequency = 10;
+                    AiParams.turretMeanderFrequency = 60;
+                    AiParams.turretSpeed = 0.045f;
+                    AiParams.inaccuracy = 0.04f;
+
+                    AiParams.projectileWarinessRadius = 140;
+                    AiParams.mineWarinessRadius = 140;
+
+                    TurningSpeed = 0.1f;
+                    MaximalTurn = 0.5f;
+
+                    ShootStun = 0;
+                    ShellCooldown = 15;
+                    ShellLimit = 8;
+                    ShellSpeed = 4f;
+                    ShellType = ShellTier.Standard;
+                    RicochetCount = 1;
+
+                    Invisible = false;
+                    Stationary = false;
+                    ShellHoming = new();
+
+                    TreadPitch = 0.08f;
+                    MaxSpeed = 1.3f;
+                    Acceleration = 0.3f;
+                    Deceleration = 0.6f;
+
+                    MineCooldown = 940;
+                    MineLimit = 1;
+                    MineStun = 5;
+
+                    AiParams.moveFromMineTime = 100;
+                    AiParams.minePlacementChance = 0.02f;
+                    AiParams.shootChance = 0.2f;
+                    break;
+
+                case TankTier.Assassin:
+                    AiParams.meanderAngle = MathHelper.ToRadians(40);
+                    AiParams.meanderFrequency = 15;
+                    AiParams.turretMeanderFrequency = 1;
+                    AiParams.turretSpeed = 0.1f;
+                    AiParams.inaccuracy = 0f;
+
+                    AiParams.projectileWarinessRadius = 140;
+                    AiParams.mineWarinessRadius = 140;
+
+                    TurningSpeed = 0.1f;
+                    MaximalTurn = 0.2f;
+
+                    ShootStun = 25;
+                    ShellCooldown = 100;
+                    ShellLimit = 1;
+                    ShellSpeed = 9.5f;
+                    ShellType = ShellTier.Supressed;
+                    RicochetCount = 1;
+
+                    Invisible = false;
+                    Stationary = false;
+                    ShellHoming = new();
+
+                    TreadPitch = -0.4f;
+                    MaxSpeed = 1.2f;
+                    Acceleration = 0.3f;
+                    Deceleration = 0.6f;
+
+                    MineCooldown = 0;
+                    MineLimit = 0;
+                    MineStun = 0;
+
+                    AiParams.moveFromMineTime = 100;
+                    AiParams.minePlacementChance = 0.02f;
+                    AiParams.shootChance = 0.2f;
+
+                    AiParams.advancedRicochetCalculations = true;
+                    break;
+
                 case TankTier.Commando:
                     AiParams.meanderAngle = MathHelper.ToRadians(30);
                     AiParams.meanderFrequency = 10;
@@ -1196,6 +1381,7 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.minePlacementChance = 0.02f;
                     AiParams.shootChance = 0.2f;
                     break;
+                    #endregion
             }
         }
         private void OnMissionStart()
@@ -1364,6 +1550,8 @@ namespace WiiPlayTanksRemake.GameContent
                 ShellTier.Standard => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_2"), SoundContext.Effect, 0.3f),
                 ShellTier.Rocket => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_rocket"), SoundContext.Effect, 0.3f),
                 ShellTier.RicochetRocket => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_ricochet_rocket"), SoundContext.Effect, 0.3f),
+                ShellTier.Supressed => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_silencer"), SoundContext.Effect, 0.3f),
+                ShellTier.Explosive => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_2"), SoundContext.Effect, 0.3f),
                 _ => throw new NotImplementedException()
             };
             sfx.Pitch = ShootPitch;
@@ -1408,10 +1596,6 @@ namespace WiiPlayTanksRemake.GameContent
                 rotation = -TankRotation
             };
         }
-
-        private bool mineFound;
-
-        private bool bulletFound;
 
         public Ray tankPathRay;
         
@@ -1561,6 +1745,13 @@ namespace WiiPlayTanksRemake.GameContent
 
             CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation);
 
+            if (tier == TankTier.Commando)
+            {
+                Model.Meshes["Laser_Beam"].ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation);
+                Model.Meshes["Barrel_Laser"].ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation);
+                Model.Meshes["Dish"].ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation);
+            }
+
             Model.Root.Transform = World;
 
             Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
@@ -1582,9 +1773,7 @@ namespace WiiPlayTanksRemake.GameContent
                     }
 
                     if (TankGame.GameUpdateTime % treadPlaceTimer == 0)
-                    {
                         LayFootprint(tier == TankTier.White ? true : false);
-                    }
                 }
                 enactBehavior = () =>
                 {
@@ -1650,20 +1839,24 @@ namespace WiiPlayTanksRemake.GameContent
                             seekRotation += AiParams.turretSpeed;
 
                             AiParams.seesTarget = false;
-                            if (IsTankInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), enemy, offset: Vector2.UnitY * 20))
+                            if (IsTankInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), enemy, offset: Vector2.UnitY * 20) && isEnemySpotted)
                                 AiParams.seesTarget = true;
 
-                            if (IsTankInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), this, offset: Vector2.UnitY * 20))
+                            if (IsTankInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), this, offset: Vector2.UnitY * 20) && isEnemySpotted)
                                 seesSelf = true;
                             if (AiParams.advancedRicochetCalculations)
                             {
-                                if (IsTankInPath(Vector2.UnitY.RotatedByRadians(seekRotation), enemy))
+                                var canShoot = !(curShootCooldown > 0 || OwnedShellCount >= ShellLimit);
+                                if (canShoot)
                                 {
-                                    seeks = true;
-                                    AiParams.targetTurretRotation = seekRotation - MathHelper.Pi;
+                                    if (IsTankInPath(Vector2.UnitY.RotatedByRadians(seekRotation), enemy))
+                                    {
+                                        seeks = true;
+                                        AiParams.targetTurretRotation = seekRotation - MathHelper.Pi;
+                                    }
                                 }
 
-                                if (TurretRotation == AiParams.targetTurretRotation)
+                                if (TurretRotation == AiParams.targetTurretRotation || !canShoot)
                                     seeks = false;
                             }
 
@@ -1682,8 +1875,8 @@ namespace WiiPlayTanksRemake.GameContent
                         if (Stationary)
                             return;
 
-                        bool isBulletNear = bulletFound = TryGetShellNear(AiParams.projectileWarinessRadius, out var shell);
-                        bool isMineNear = mineFound = TryGetMineNear(AiParams.mineWarinessRadius, out var mine);
+                        bool isBulletNear = TryGetShellNear(AiParams.projectileWarinessRadius, out var shell);
+                        bool isMineNear = TryGetMineNear(AiParams.mineWarinessRadius, out var mine);
 
                         bool movingFromMine = AiParams.timeSinceLastMinePlaced < AiParams.moveFromMineTime;
                         bool movingFromOtherMine = AiParams.timeSinceLastMineFound < AiParams.moveFromMineTime / 2;
@@ -1852,7 +2045,6 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 foreach (BasicEffect effect in mesh.Effects)
                 {
-                    // mesh.ParentBone.Index
                     effect.World = boneTransforms[mesh.ParentBone.Index];
                     effect.View = View;
                     effect.Projection = Projection;
@@ -1863,8 +2055,14 @@ namespace WiiPlayTanksRemake.GameContent
                         if (mesh.Name == "Cannon")
                             return;
 
-                    if (mesh.Name != "Shadow")
+                    if (mesh.Name == "Shadow")
                     {
+                        effect.Alpha = 0.5f;
+                        effect.Texture = _shadowTexture;
+                    }
+                    else
+                    {
+                        effect.Alpha = 1;
                         if (IsHoveredByMouse)
                             effect.EmissiveColor = Color.White.ToVector3();
                         else
@@ -1878,6 +2076,7 @@ namespace WiiPlayTanksRemake.GameContent
                         Array.Fill(ex, new Color(new Random().Next(0, 256), new Random().Next(0, 256), new Random().Next(0, 256)));
 
                         effect.Texture.SetData(0, new Rectangle(0, 8, 32, 15), ex, 0, 480);*/
+
                         if (Team != Team.NoTeam)
                         {
                             var ex = new Color[1024];
@@ -1886,25 +2085,17 @@ namespace WiiPlayTanksRemake.GameContent
 
                             tex.SetData(0, new Rectangle(0, 0, 32, 9), ex, 0, 288);
                             tex.SetData(0, new Rectangle(0, 23, 32, 9), ex, 0, 288);
-
-
                         }
-                    }
-
-                    else
-                    {
-                        effect.Alpha = 0.5f;
-                        effect.Texture = _shadowTexture;
                     }
 
                     effect.SetDefaultGameLighting_IngameEntities();
                 }
-
                 mesh.Draw();
             }
         }
         internal void DrawBody()
         {
+
             if (Dead)
                 return;
 
@@ -1932,8 +2123,8 @@ namespace WiiPlayTanksRemake.GameContent
             for (int i = 0; i < info.Length; i++)
                 DebugUtils.DrawDebugString(TankGame.spriteBatch, info[i], GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, (info.Length * 20) + (i * 20)), 1, centerIt: true);
 
-            //if (Invisible && GameHandler.InMission)
-                //return;
+            if (Invisible && GameHandler.InMission)
+                return;
 
             RenderModel();
         }
@@ -1995,7 +2186,9 @@ namespace WiiPlayTanksRemake.GameContent
             TankTier[] workingTiers = 
             { 
                 TankTier.Brown, TankTier.Marine, TankTier.Yellow, TankTier.Black, TankTier.White, TankTier.Pink, TankTier.Purple, TankTier.Green, TankTier.Ash, 
-                TankTier.Bronze, TankTier.Silver, TankTier.Sapphire, TankTier.Ruby, TankTier.Citrine, TankTier.Amethyst, TankTier.Emerald, TankTier.Gold, TankTier.Obsidian 
+                TankTier.Bronze, TankTier.Silver, TankTier.Sapphire, TankTier.Ruby, TankTier.Citrine, TankTier.Amethyst, TankTier.Emerald, TankTier.Gold, TankTier.Obsidian,
+                TankTier.Granite, TankTier.Bubblegum, TankTier.Water, TankTier.Crimson, /*TankTier.Tiger,*/ TankTier.Creeper, TankTier.Gamma, TankTier.Marble,
+                TankTier.Assassin
             };
 
             return workingTiers[new Random().Next(0, workingTiers.Length)];

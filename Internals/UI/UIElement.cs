@@ -322,7 +322,7 @@ namespace WiiPlayTanksRemake.Internals.UI
 
             foreach (UIElement el in focusedElements)
             {
-                if (el != null)
+                if (el is not null)
                 {
                     el.LeftClick();
                     el.LeftDown();

@@ -72,7 +72,7 @@ namespace WiiPlayTanksRemake.GameContent
         /// <param name="velocity">The velocity of the created <see cref="Shell"/>.</param>
         /// <param name="ricochets">How many times the newly created <see cref="Shell"/> can ricochet.</param>
         /// <param name="homing">Whether or not the newly created <see cref="Shell"/> homes in on enemies.</param>
-        public Shell(Vector3 position, Vector3 velocity, int ricochets = 0, HomingProperties homing = default)
+        public Shell(Vector3 position, Vector3 velocity, int ricochets = 0, Color color = default, HomingProperties homing = default)
         {
             this.ricochets = ricochets;
             this.position = position;
@@ -82,6 +82,8 @@ namespace WiiPlayTanksRemake.GameContent
             World = Matrix.CreateTranslation(position);
             _shellTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/bullet");
             homingProperties = homing;
+
+            // if explosive, black
 
             this.velocity = velocity;
 
@@ -217,7 +219,7 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 if (tank is not null)
                 {
-                    if (tank.CollisionBox.Intersects(hurtbox))
+                    if (tank.CollisionBox2D.Intersects(hurtbox2d))
                     {
                         if (tank.Team == owner.Team && tank != owner && tank.Team != Team.NoTeam)
                             Destroy();

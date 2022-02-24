@@ -38,6 +38,14 @@
         Gamma,
         Marble,
 
+        Explosive,
+
+        Electro,
+
+        RocketDefender,
+
+        Assassin,
+
         Commando
     }
 
@@ -51,7 +59,9 @@
     {
         Standard,
         Rocket,
-        RicochetRocket
+        RicochetRocket,
+        Supressed,
+        Explosive
     }
 
     public enum MenuMode : byte

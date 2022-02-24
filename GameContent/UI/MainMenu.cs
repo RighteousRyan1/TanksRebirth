@@ -44,6 +44,10 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
         private static float _tnkSpeed = 2.4f;
 
+        private static float _defaultLoadTime = 90;
+
+        internal static bool isLoadingScene;
+
         // TODO: ingame ui doesn't work, but main menu ui does (wack)
         // TODO: get menu visuals working
 
@@ -55,7 +59,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
             Projection = Matrix.CreateOrthographic(TankGame.Instance.GraphicsDevice.Viewport.Width, TankGame.Instance.GraphicsDevice.Viewport.Height, -2000f, 5000f);
             //Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), TankGame.Instance.GraphicsDevice.Viewport.AspectRatio, 0.01f, 1000f);
-            View = Matrix.CreateScale(2) * Matrix.CreateLookAt(/*new(0f, 0, 50f)*/ new(0, 0, 500), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(MathHelper.PiOver2);
+            View = Matrix.CreateScale(2) * Matrix.CreateLookAt(new(0, 0, 500), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(MathHelper.PiOver2);
 
             Open();
 
@@ -96,6 +100,8 @@ namespace WiiPlayTanksRemake.GameContent.UI
             {
                 GameHandler.StartTnkScene();
                 Leave();
+
+                isLoadingScene = true;
 
                 RemoveAllMenuTanks();
             };

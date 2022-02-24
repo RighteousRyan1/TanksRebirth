@@ -329,11 +329,6 @@ namespace WiiPlayTanksRemake
         {
             try
             {
-                //if (GameHandler.AllAITanks.Count(x => x is not null) >= 2)
-                //{
-                    //Debug.Write(ReferenceEquals(GameHandler.AllAITanks[0].Model.Meshes[0].Effects, GameHandler.AllAITanks[1].Model.Meshes[0].Effects));
-                //}
-
                 UpdateStopwatch.Start();
 
                 DiscordRichPresence.Update();
@@ -381,7 +376,7 @@ namespace WiiPlayTanksRemake
 
                             GameView = Matrix.CreateLookAt(pos,
                                 pos + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-x.TurretRotation).Expand_Z()
-                                , Vector3.Up) * Matrix.CreateTranslation(0, -20, -40);
+                                , Vector3.Up) * Matrix.CreateRotationX(rotVec.Y) * Matrix.CreateRotationY(rotVec.X) * Matrix.CreateTranslation(0, -20, -40);
 
                             GameProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000);
                         }
@@ -407,7 +402,8 @@ namespace WiiPlayTanksRemake
             }
             catch (Exception e)
             {
-                GameHandler.ClientLog.Write($"{e.Message}\nError:{e.StackTrace}", LogType.Error);
+                GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
+                throw;
             }
         }
 
