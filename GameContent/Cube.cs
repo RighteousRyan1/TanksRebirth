@@ -119,15 +119,6 @@ namespace WiiPlayTanksRemake.GameContent
                     effect.SetDefaultGameLighting_IngameEntities();
 
                     effect.DirectionalLight0.Direction *= 0.1f;
-
-                    /*effect.DirectionalLight0.Enabled = true;
-                    effect.DirectionalLight1.Enabled = true;
-                    effect.DirectionalLight2.Enabled = false;
-
-                    effect.DirectionalLight0.Direction = new Vector3(0, -0.6f, -0.6f);
-                    effect.DirectionalLight1.Direction = new Vector3(0, -0.6f, 0.6f);
-
-                    effect.SpecularColor = new Vector3(0, 0, 0);*/
                 }
 
                 mesh.Draw();
@@ -163,36 +154,6 @@ namespace WiiPlayTanksRemake.GameContent
             World = Matrix.CreateScale(0.72f) * Matrix.CreateTranslation(position - offset);
             Projection = TankGame.GameProjection;
             View = TankGame.GameView;
-        }
-
-
-        // going up is negative
-        public CubeCollisionDirection GetCollisionDirection(Vector2 collidingPosition)
-        {
-            var min = collider.Min.FlattenZ();
-            var max = collider.Max.FlattenZ();
-
-            if (collidingPosition.X < min.X && collidingPosition.X < max.X
-                && collidingPosition.Y < max.Y && collidingPosition.Y > min.Y)
-            {
-                return CubeCollisionDirection.Left;
-            }
-            if (collidingPosition.X > min.X && collidingPosition.X > max.X
-                && collidingPosition.Y < max.Y && collidingPosition.Y > min.Y)
-            {
-                return CubeCollisionDirection.Right;
-            }
-            if (collidingPosition.X > min.X && collidingPosition.X < max.X
-                && collidingPosition.Y > max.Y && collidingPosition.Y > min.Y)
-            {
-                return CubeCollisionDirection.Down;
-            }
-            if (collidingPosition.X > min.X && collidingPosition.X < max.X
-                && collidingPosition.Y < max.Y && collidingPosition.Y < min.Y)
-            {
-                return CubeCollisionDirection.Up;
-            }
-            return CubeCollisionDirection.Right;
         }
 
         public enum CubeCollisionDirection
@@ -256,14 +217,26 @@ namespace WiiPlayTanksRemake.GameContent
         /// <returns></returns>
         public static CubeMapPosition ConvertFromVector3(Vector3 position)
         {
-            // var orig = new Vector3(MapRenderer.CUBE_MIN_X + (position.X % Cube.FULLBLOCK_SIZE), 0, MapRenderer.CUBE_MIN_Y + (position.Z % Cube.FULLBLOCK_SIZE));
+            var origPos = new Vector3(MapRenderer.CUBE_MIN_X % Cube.FULLBLOCK_SIZE, 0, MapRenderer.CUBE_MIN_Y % Cube.FULLBLOCK_SIZE);
 
-            //var orig = new Vector3(MapRenderer.CUBE_MIN_X, 0, MapRenderer.CUBE_MIN_Y);
+            var invarX = (int)MathF.Round(origPos.X + GameUtils.GetWorldPosition(GameUtils.MousePosition).X % Cube.FULLBLOCK_SIZE, 1);
+            var invarY = (int)MathF.Round(origPos.Z + GameUtils.GetWorldPosition(GameUtils.MousePosition).Z % Cube.FULLBLOCK_SIZE, 1);
+            var invar = new CubeMapPosition(invarX, invarY);
 
-            //var real = new CubeMapPosition((int)(orig.X + (position.X / Cube.FULLBLOCK_SIZE)), (int)(orig.Y + (position.Z / Cube.FULLBLOCK_SIZE)) - 110);
+            Systems.ChatSystem.SendMessage(invar, Color.White);
 
-            return new(); // new((int)((position.X + (MapRenderer.MIN_X + MapRenderer.MAX_X / 2)) % Cube.FULLBLOCK_SIZE), (int)((position.Y + (MapRenderer.MIN_Y + MapRenderer.MAX_Y / 2)) % Cube.FULLBLOCK_SIZE));
+            return invar;
 
+        }
+
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder()
+                .Append("{ ")
+                .Append($"X: {X} | Y: {Y}")
+                .Append(" }");
+
+            return sb.ToString();
         }
     }
 }

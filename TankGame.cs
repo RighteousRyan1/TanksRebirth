@@ -340,9 +340,9 @@ namespace WiiPlayTanksRemake
                     if (Input.MouseRight)
                         rotVec += GameUtils.GetMouseVelocity(GameUtils.WindowCenter) / 500;
 
-                    if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Up))
+                    if (Input.CurrentKeySnapshot.IsKeyDown(Keys.NumPad8))
                         zoom += 0.01f;
-                    if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Down))
+                    if (Input.CurrentKeySnapshot.IsKeyDown(Keys.NumPad2))
                         zoom -= 0.01f;
                     if (Input.KeyJustPressed(Keys.Q))
                         fps = !fps;

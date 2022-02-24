@@ -24,9 +24,9 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
             "General",
             "TankStats",
             "UIElements",
-            "Powerups"
+            "Powerups / Level Edit Debug"
         };
-        public static void DrawDebugString(SpriteBatch sb, object info, Vector2 position, int level = 0, float scaleOverride = 1f, bool centerIt = false, Color colorOverride = default, bool beginSb = false)
+        public static void DrawDebugString(SpriteBatch sb, object info, Vector2 position, int level = 0, float scale = 1f, bool centered = false, Color color = default, bool beginSb = false)
         {
             if (!DebuggingEnabled || DebugLevel != level)
                 return;
@@ -34,7 +34,21 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
             if (beginSb)
                 sb.Begin();
 
-            sb.DrawString(TankGame.TextFont, info.ToString(), position, colorOverride == default ? Color.White : colorOverride,  new Vector2(scaleOverride * 0.6f), 0f, centerIt ? TankGame.TextFont.MeasureString(info.ToString()) / 2 : default); 
+            sb.DrawString(TankGame.TextFont, info.ToString(), position, color == default ? Color.White : color,  new Vector2(scale * 0.6f), 0f, centered ? TankGame.TextFont.MeasureString(info.ToString()) / 2 : default); 
+
+            if (beginSb)
+                sb.End();
+        }
+
+        public static void DrawDebugTexture(SpriteBatch sb, Texture2D texture, Vector2 position, int level = 0, float scale = 1f, Color color = default, bool centered = false, bool beginSb = false)
+        {
+            if (!DebuggingEnabled || DebugLevel != level)
+                return;
+
+            if (beginSb)
+                sb.Begin();
+
+            sb.Draw(texture, position, null, color == default ? Color.White : color, 0f, centered ? texture.Size() / 2 : default, scale, default, 0f);
 
             if (beginSb)
                 sb.End();

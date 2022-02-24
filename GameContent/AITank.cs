@@ -1735,7 +1735,7 @@ namespace WiiPlayTanksRemake.GameContent
                 }
             }
 
-            reflectDir = pathDir;
+            reflectDir = pathDir; // pos?
             return hasCollided;
         }
 
@@ -2077,7 +2077,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                         effect.Texture.SetData(0, new Rectangle(0, 8, 32, 15), ex, 0, 480);*/
 
-                        if (Team != Team.NoTeam)
+                        /*if (Team != Team.NoTeam)
                         {
                             var ex = new Color[1024];
 
@@ -2085,7 +2085,8 @@ namespace WiiPlayTanksRemake.GameContent
 
                             tex.SetData(0, new Rectangle(0, 0, 32, 9), ex, 0, 288);
                             tex.SetData(0, new Rectangle(0, 23, 32, 9), ex, 0, 288);
-                        }
+                        }*/
+                        // removed temporarily
                     }
 
                     effect.SetDefaultGameLighting_IngameEntities();
@@ -2108,7 +2109,7 @@ namespace WiiPlayTanksRemake.GameContent
                 if (!Stationary)
                 {
                     IsObstacleInWay(AiParams.cubeWarinessDistance, Vector2.UnitY.RotatedByRadians(-targetTankRotation), out var travelPath, true);
-                    DebugUtils.DrawDebugString(TankGame.spriteBatch, "D", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(travelPath.X, 11, travelPath.Y), View, Projection), 1, centerIt: true);
+                    DebugUtils.DrawDebugString(TankGame.spriteBatch, "D", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(travelPath.X, 11, travelPath.Y), View, Projection), 1, centered: true);
                 }
             }
 
@@ -2121,7 +2122,7 @@ namespace WiiPlayTanksRemake.GameContent
             };
 
             for (int i = 0; i < info.Length; i++)
-                DebugUtils.DrawDebugString(TankGame.spriteBatch, info[i], GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, (info.Length * 20) + (i * 20)), 1, centerIt: true);
+                DebugUtils.DrawDebugString(TankGame.spriteBatch, info[i], GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, (info.Length * 20) + (i * 20)), 1, centered: true);
 
             if (Invisible && GameHandler.InMission)
                 return;
