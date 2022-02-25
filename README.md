@@ -9,9 +9,9 @@ If you wish to keep up with development in real time, consider joining this serv
 
 ## Code Contributors
 
-Cuno (on GitHub) for a primative UI implementation.
-Guthen (on GitHub) for fixing irresolvable font characters.
-4mbr0s3-2 (on GitHub) for ricochet calculations.
+- Cuno (on GitHub) for a primative UI implementation.
+- Guthen (on GitHub) for fixing irresolvable font characters.
+- 4mbr0s3-2 (on GitHub) for ricochet calculations.
 
 ## Localization Contributors
 
