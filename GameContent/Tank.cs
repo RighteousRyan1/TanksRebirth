@@ -90,7 +90,7 @@ namespace WiiPlayTanksRemake.GameContent
         /// <summary>Apply all the default parameters for this <see cref="Tank"/>.</summary>
         public virtual void ApplyDefaults() { }
 
-        public Rectangle CollisionBox2D => new((int)(Position2D.X - TNK_WIDTH / 2 + 2), (int)(Position2D.Y - TNK_WIDTH / 2 + 3), TNK_WIDTH - 3, TNK_HEIGHT - 3);
+        public Rectangle CollisionBox2D => new((int)(Position2D.X - TNK_WIDTH / 2 + 3), (int)(Position2D.Y - TNK_WIDTH / 2 + 2), TNK_WIDTH - 8, TNK_HEIGHT - 4);
 
         public string GetGeneralStats()
             => $"Pos2D: {Position2D} | Vel: {Velocity2D} | Dead: {Dead}";
@@ -237,6 +237,8 @@ namespace WiiPlayTanksRemake.GameContent
                     effect.Projection = Projection;
 
                     effect.TextureEnabled = true;
+
+                    effect.Alpha = 1f;
 
                     effect.Texture = texture;
 

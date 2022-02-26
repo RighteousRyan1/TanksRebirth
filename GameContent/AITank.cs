@@ -46,55 +46,55 @@ namespace WiiPlayTanksRemake.GameContent
         public record Params
         {
             /// <summary>The max angle of which this tank will "meander," or change its movement direction.</summary>
-            public float meanderAngle;
-            /// <summary>How often this tank will take a turn at <see cref="meanderAngle"/> radians.</summary>
-            public int meanderFrequency;
+            public float MeanderAngle { get; set; }
+            /// <summary>How often this tank will take a turn at <see cref="MeanderAngle"/> radians.</summary>
+            public int MeanderFrequency { get; set; }
 
             /// <summary>Not implemented (yet). Determines how much this tank will move un attempt to get closer to its target.</summary>
-            public float pursuitLevel;
+            public float PursuitLevel { get; set; }
             /// <summary>Not implemented (yet). Determines how often this tank will try to move towards its target.</summary>
-            public int pursuitFrequency;
+            public int PursuitFrequency { get; set; }
 
-            /// <summary>How often this tank will move its turret in the target's direction. It will be inaccurate at the measure of <see cref="inaccuracy"/>.</summary>
-            public int turretMeanderFrequency;
+            /// <summary>How often this tank will move its turret in the target's direction. It will be inaccurate at the measure of <see cref="Inaccuracy"/>.</summary>
+            public int TurretMeanderFrequency { get; set; }
             /// <summary>How fast this tank's turret rotates towards its target.</summary>
-            public float turretSpeed;
-            /// <summary>The target rotation for this tank's turret. <see cref="Tank.TurretRotation"/> will move towards this value at a rate of <see cref="turretSpeed"/>.</summary>
-            public float targetTurretRotation;
+            public float TurretSpeed { get; set; }
             /// <summary>How inaccurate (in radians) this tank is trying to aim at its target.</summary>
-            public float inaccuracy;
+            public float Inaccuracy { get; set; }
 
             /// <summary>The distance of which this tank is wary of projectiles and tries to move away from them.</summary>
-            public float projectileWarinessRadius;
+            public float ProjectileWarinessRadius { get; set; }
             /// <summary>The distance of which this tank is wary of mines and tries to move away from them.</summary>
-            public float mineWarinessRadius;
+            public float MineWarinessRadius { get; set; }
 
             /// <summary>On a given tick, it has this chance out of 1 to lay a mine. <para>Do note that this value must be greater than 0 and less than or equal to 1.</para></summary>
-            public float minePlacementChance; // 0.0f to 1.0f
+            public float MinePlacementChance { get; set; } // 0.0f to 1.0f
 
             /// <summary>How long (in ticks) this tank moves away from a mine that it places.</summary>
-            public int moveFromMineTime;
+            public int MoveFromMineTime { get; set; }
 
-            internal int timeSinceLastMinePlaced = 999999;
-            internal int timeSinceLastMineFound = 999999;
+            internal int TimeSinceLastMinePlaced { get; set; } = 999999;
+            internal int TimeSinceLastMineFound { get; set; } = 999999;
 
             /// <summary>Whether or not this tank sees its target. Generally should not be set, but the tank will shoot if able when this is true.</summary>
-            public bool seesTarget;
+            public bool SeesTarget { get; set; }
 
-            /// <summary>How many extra rays are cast in 2 different directions. If any of these indirect rays hits a target, this tank fires.</summary>
-            public int missDistance;
+            /// <summary>The distance from the main shot calculation ray an enemy must be before this tank is allowed to fire.</summary>
+            public int MissDistance { get; set; }
 
             /// <summary>How often this tank shoots when given the opportunity. 0 to 1 values only. Defaults to 1.</summary>
-            public float shootChance = 1f;
+            public float ShootChance { get; set; } = 1f;
 
             /// <summary>How far ahead of this tank (in the direction the tank is going) that it is aware of obstacles and navigates around them.</summary>
-            public int cubeWarinessDistance = 60;
+            public int CubeWarinessDistance { get; set; } = 60;
             /// <summary>How often this tank reads the obstacles around it and navigates around them.</summary>
-            public int cubeReadTime = 30;
+            public int CubeReadTime { get; set; } = 30;
             /// <summary>How far this tank must be from a teammate before it can lay a mine or fire a bullet.</summary>
-            public float teammateTankWariness = 50f;
+            public float TeammateTankWariness { get; set; } = 50f;
             /// <summary>Whether or not this tank tries to find calculations all around it. This is not recommended for mobile tanks.</summary>
-            public bool advancedRicochetCalculations;
+            public bool SmartRicochets { get; set; }
+            /// <summary>Whether or not this tank attempts to lay mines near destructible obstacles. Useless for stationary tanks.</summary>
+            public bool SmartMineLaying { get; set; }
         }
         /// <summary>The AI parameter collection of this AI Tank.</summary>
         public Params AiParams { get; } = new();
@@ -102,6 +102,9 @@ namespace WiiPlayTanksRemake.GameContent
         public Vector3 aimTarget;
 
         public float targetTankRotation;
+
+        /// <summary>The target rotation for this tank's turret. <see cref="Tank.TurretRotation"/> will move towards this value at a rate of <see cref="TurretSpeed"/>.</summary>
+        public float targetTurretRotation;
 
         #endregion
 
@@ -263,9 +266,9 @@ namespace WiiPlayTanksRemake.GameContent
                 case TankTier.Brown:
                     Stationary = true;
 
-                    AiParams.turretMeanderFrequency = 30;
-                    AiParams.turretSpeed = 0.01f;
-                    AiParams.inaccuracy = MathHelper.ToRadians(170);
+                    AiParams.TurretMeanderFrequency = 30;
+                    AiParams.TurretSpeed = 0.01f;
+                    AiParams.Inaccuracy = MathHelper.ToRadians(170);
 
                     TurningSpeed = 0f;
                     MaximalTurn = 0;
@@ -287,19 +290,19 @@ namespace WiiPlayTanksRemake.GameContent
                     MineLimit = 0;
                     MineStun = 0;
 
-                    AiParams.missDistance = 0;
+                    AiParams.MissDistance = 0;
 
                     break;
 
                 case TankTier.Ash:
-                    AiParams.meanderAngle = 1.8f;
-                    AiParams.meanderFrequency = 40;
-                    AiParams.turretMeanderFrequency = 40;
-                    AiParams.turretSpeed = 0.01f;
-                    AiParams.inaccuracy = 0.24f;
+                    AiParams.MeanderAngle = 1.8f;
+                    AiParams.MeanderFrequency = 40;
+                    AiParams.TurretMeanderFrequency = 40;
+                    AiParams.TurretSpeed = 0.01f;
+                    AiParams.Inaccuracy = 0.24f;
 
-                    AiParams.projectileWarinessRadius = 40;
-                    AiParams.mineWarinessRadius = 40;
+                    AiParams.ProjectileWarinessRadius = 40;
+                    AiParams.MineWarinessRadius = 40;
 
                     TurningSpeed = 0.08f;
                     MaximalTurn = 0.7f;
@@ -324,14 +327,14 @@ namespace WiiPlayTanksRemake.GameContent
                     break;
 
                 case TankTier.Marine:
-                    AiParams.meanderAngle = 0.4f;
-                    AiParams.meanderFrequency = 15;
-                    AiParams.turretMeanderFrequency = 10;
-                    AiParams.turretSpeed = 0.1f;
-                    AiParams.inaccuracy = 0.005f;
+                    AiParams.MeanderAngle = 0.4f;
+                    AiParams.MeanderFrequency = 15;
+                    AiParams.TurretMeanderFrequency = 10;
+                    AiParams.TurretSpeed = 0.1f;
+                    AiParams.Inaccuracy = 0.005f;
 
-                    AiParams.projectileWarinessRadius = 40;
-                    AiParams.mineWarinessRadius = 80;
+                    AiParams.ProjectileWarinessRadius = 40;
+                    AiParams.MineWarinessRadius = 80;
 
                     TurningSpeed = 0.2f;
                     MaximalTurn = MathHelper.PiOver2;
@@ -357,14 +360,14 @@ namespace WiiPlayTanksRemake.GameContent
                     break;
 
                 case TankTier.Yellow:
-                    AiParams.meanderAngle = MathHelper.Pi;
-                    AiParams.meanderFrequency = 30;
-                    AiParams.turretMeanderFrequency = 20;
-                    AiParams.turretSpeed = 0.02f;
-                    AiParams.inaccuracy = 0.5f;
+                    AiParams.MeanderAngle = MathHelper.Pi;
+                    AiParams.MeanderFrequency = 30;
+                    AiParams.TurretMeanderFrequency = 20;
+                    AiParams.TurretSpeed = 0.02f;
+                    AiParams.Inaccuracy = 0.5f;
 
-                    AiParams.projectileWarinessRadius = 40;
-                    AiParams.mineWarinessRadius = 160;
+                    AiParams.ProjectileWarinessRadius = 40;
+                    AiParams.MineWarinessRadius = 160;
 
                     TurningSpeed = 0.08f;
                     MaximalTurn = MathHelper.PiOver2;
@@ -389,19 +392,19 @@ namespace WiiPlayTanksRemake.GameContent
 
                     treadSoundTimer = 4;
 
-                    AiParams.minePlacementChance = 0.3f;
-                    AiParams.moveFromMineTime = 120;
+                    AiParams.MinePlacementChance = 0.3f;
+                    AiParams.MoveFromMineTime = 120;
                     break;
 
                 case TankTier.Pink:
-                    AiParams.meanderAngle = 0.3f;
-                    AiParams.meanderFrequency = 15;
-                    AiParams.turretMeanderFrequency = 40;
-                    AiParams.turretSpeed = 0.03f;
-                    AiParams.inaccuracy = 0.2f;
+                    AiParams.MeanderAngle = 0.3f;
+                    AiParams.MeanderFrequency = 15;
+                    AiParams.TurretMeanderFrequency = 40;
+                    AiParams.TurretSpeed = 0.03f;
+                    AiParams.Inaccuracy = 0.2f;
 
-                    AiParams.projectileWarinessRadius = 40;
-                    AiParams.mineWarinessRadius = 160;
+                    AiParams.ProjectileWarinessRadius = 40;
+                    AiParams.MineWarinessRadius = 160;
 
                     TurningSpeed = 0.08f;
                     MaximalTurn = MathHelper.PiOver4;
@@ -430,9 +433,9 @@ namespace WiiPlayTanksRemake.GameContent
                 case TankTier.Green:
                     Stationary = true;
 
-                    AiParams.turretMeanderFrequency = 30;
-                    AiParams.turretSpeed = 0.02f;
-                    AiParams.inaccuracy = 0.4f;
+                    AiParams.TurretMeanderFrequency = 30;
+                    AiParams.TurretSpeed = 0.02f;
+                    AiParams.Inaccuracy = 0.4f;
 
                     TurningSpeed = 0f;
                     MaximalTurn = 0;
@@ -454,19 +457,19 @@ namespace WiiPlayTanksRemake.GameContent
                     MineLimit = 0;
                     MineStun = 0;
 
-                    AiParams.advancedRicochetCalculations = true;
+                    AiParams.SmartRicochets = true;
                     break;
 
                 case TankTier.Purple:
-                    AiParams.meanderAngle = 1f;
-                    AiParams.meanderFrequency = 20;
-                    AiParams.turretMeanderFrequency = 25;
+                    AiParams.MeanderAngle = 1f;
+                    AiParams.MeanderFrequency = 20;
+                    AiParams.TurretMeanderFrequency = 25;
 
-                    AiParams.turretSpeed = 0.03f;
-                    AiParams.inaccuracy = 0.18f;
+                    AiParams.TurretSpeed = 0.03f;
+                    AiParams.Inaccuracy = 0.18f;
 
-                    AiParams.projectileWarinessRadius = 60;
-                    AiParams.mineWarinessRadius = 160;
+                    AiParams.ProjectileWarinessRadius = 60;
+                    AiParams.MineWarinessRadius = 160;
 
                     TurningSpeed = 0.06f;
                     MaximalTurn = MathHelper.PiOver2;
@@ -492,19 +495,19 @@ namespace WiiPlayTanksRemake.GameContent
                     MineLimit = 2;
                     MineStun = 10;
 
-                    AiParams.moveFromMineTime = 60;
-                    AiParams.minePlacementChance = 0.05f;
+                    AiParams.MoveFromMineTime = 60;
+                    AiParams.MinePlacementChance = 0.05f;
                     break;
 
                 case TankTier.White:
-                    AiParams.meanderAngle = 0.9f;
-                    AiParams.meanderFrequency = 60;
-                    AiParams.turretMeanderFrequency = 20;
-                    AiParams.turretSpeed = 0.03f;
-                    AiParams.inaccuracy = 0.2f;
+                    AiParams.MeanderAngle = 0.9f;
+                    AiParams.MeanderFrequency = 60;
+                    AiParams.TurretMeanderFrequency = 20;
+                    AiParams.TurretSpeed = 0.03f;
+                    AiParams.Inaccuracy = 0.2f;
 
-                    AiParams.projectileWarinessRadius = 40;
-                    AiParams.mineWarinessRadius = 160;
+                    AiParams.ProjectileWarinessRadius = 40;
+                    AiParams.MineWarinessRadius = 160;
 
                     TurningSpeed = 0.08f;
                     MaximalTurn = MathHelper.PiOver4;
@@ -529,21 +532,21 @@ namespace WiiPlayTanksRemake.GameContent
                     MineLimit = 2;
                     MineStun = 8;
 
-                    AiParams.moveFromMineTime = 40;
-                    AiParams.minePlacementChance = 0.08f;
+                    AiParams.MoveFromMineTime = 40;
+                    AiParams.MinePlacementChance = 0.08f;
 
                     Invisible = true;
                     break;
 
                 case TankTier.Black:
-                    AiParams.meanderAngle = MathHelper.Pi;
-                    AiParams.meanderFrequency = 45;
-                    AiParams.turretMeanderFrequency = 20;
-                    AiParams.turretSpeed = 0.03f;
-                    AiParams.inaccuracy = 0.12f;
+                    AiParams.MeanderAngle = MathHelper.Pi;
+                    AiParams.MeanderFrequency = 45;
+                    AiParams.TurretMeanderFrequency = 20;
+                    AiParams.TurretSpeed = 0.03f;
+                    AiParams.Inaccuracy = 0.12f;
 
-                    AiParams.projectileWarinessRadius = 100;
-                    AiParams.mineWarinessRadius = 60;
+                    AiParams.ProjectileWarinessRadius = 100;
+                    AiParams.MineWarinessRadius = 60;
 
                     TurningSpeed = 0.06f;
                     MaximalTurn = MathHelper.PiOver4;
@@ -569,15 +572,15 @@ namespace WiiPlayTanksRemake.GameContent
                     MineLimit = 2;
                     MineStun = 10;
 
-                    AiParams.moveFromMineTime = 100;
-                    AiParams.minePlacementChance = 0.05f;
+                    AiParams.MoveFromMineTime = 100;
+                    AiParams.MinePlacementChance = 0.05f;
                     break;
                 #endregion
                 #region MasterMod
                 case TankTier.Bronze:
-                    AiParams.turretMeanderFrequency = 15;
-                    AiParams.turretSpeed = 0.05f;
-                    AiParams.inaccuracy = 0.005f;
+                    AiParams.TurretMeanderFrequency = 15;
+                    AiParams.TurretSpeed = 0.05f;
+                    AiParams.Inaccuracy = 0.005f;
 
                     ShellCooldown = 50;
                     ShellLimit = 2;
@@ -589,20 +592,20 @@ namespace WiiPlayTanksRemake.GameContent
                     Stationary = true;
                     ShellHoming = new();
 
-                    AiParams.moveFromMineTime = 100;
-                    AiParams.minePlacementChance = 0.05f;
+                    AiParams.MoveFromMineTime = 100;
+                    AiParams.MinePlacementChance = 0.05f;
 
-                    AiParams.advancedRicochetCalculations = true;
+                    AiParams.SmartRicochets = true;
                     break;
                 case TankTier.Silver:
-                    AiParams.meanderAngle = 0.5f;
-                    AiParams.meanderFrequency = 10;
-                    AiParams.turretMeanderFrequency = 60;
-                    AiParams.turretSpeed = 0.045f;
-                    AiParams.inaccuracy = 0.9f;
+                    AiParams.MeanderAngle = 0.5f;
+                    AiParams.MeanderFrequency = 10;
+                    AiParams.TurretMeanderFrequency = 60;
+                    AiParams.TurretSpeed = 0.045f;
+                    AiParams.Inaccuracy = 0.9f;
 
-                    AiParams.projectileWarinessRadius = 70;
-                    AiParams.mineWarinessRadius = 140;
+                    AiParams.ProjectileWarinessRadius = 70;
+                    AiParams.MineWarinessRadius = 140;
 
                     TurningSpeed = 0.13f;
                     MaximalTurn = MathHelper.PiOver2;
@@ -629,18 +632,18 @@ namespace WiiPlayTanksRemake.GameContent
                     MineLimit = 1;
                     MineStun = 10;
 
-                    AiParams.moveFromMineTime = 100;
-                    AiParams.minePlacementChance = 0.05f;
+                    AiParams.MoveFromMineTime = 100;
+                    AiParams.MinePlacementChance = 0.05f;
                     break;
                 case TankTier.Sapphire:
-                    AiParams.meanderAngle = 0.25f;
-                    AiParams.meanderFrequency = 15;
-                    AiParams.turretMeanderFrequency = 20;
-                    AiParams.turretSpeed = 0.025f;
-                    AiParams.inaccuracy = 0.01f;
+                    AiParams.MeanderAngle = 0.25f;
+                    AiParams.MeanderFrequency = 15;
+                    AiParams.TurretMeanderFrequency = 20;
+                    AiParams.TurretSpeed = 0.025f;
+                    AiParams.Inaccuracy = 0.01f;
 
-                    AiParams.projectileWarinessRadius = 40;
-                    AiParams.mineWarinessRadius = 70;
+                    AiParams.ProjectileWarinessRadius = 40;
+                    AiParams.MineWarinessRadius = 70;
 
                     TurningSpeed = 0.15f;
                     MaximalTurn = MathHelper.PiOver2;
@@ -667,18 +670,18 @@ namespace WiiPlayTanksRemake.GameContent
                     MineLimit = 1;
                     MineStun = 0;
 
-                    AiParams.moveFromMineTime = 90;
-                    AiParams.minePlacementChance = 0.05f;
+                    AiParams.MoveFromMineTime = 90;
+                    AiParams.MinePlacementChance = 0.05f;
                     break;
                 case TankTier.Ruby:
-                    AiParams.meanderAngle = 0.5f;
-                    AiParams.meanderFrequency = 10;
-                    AiParams.turretMeanderFrequency = 20;
-                    AiParams.turretSpeed = 0.025f;
-                    AiParams.inaccuracy = 0.05f;
+                    AiParams.MeanderAngle = 0.5f;
+                    AiParams.MeanderFrequency = 10;
+                    AiParams.TurretMeanderFrequency = 20;
+                    AiParams.TurretSpeed = 0.025f;
+                    AiParams.Inaccuracy = 0.05f;
 
-                    AiParams.projectileWarinessRadius = 50;
-                    AiParams.mineWarinessRadius = 0;
+                    AiParams.ProjectileWarinessRadius = 50;
+                    AiParams.MineWarinessRadius = 0;
 
                     TurningSpeed = 0.5f;
                     MaximalTurn = MathHelper.PiOver2;
@@ -705,18 +708,18 @@ namespace WiiPlayTanksRemake.GameContent
                     MineLimit = 0;
                     MineStun = 0;
 
-                    AiParams.moveFromMineTime = 0;
-                    AiParams.minePlacementChance = 0;
+                    AiParams.MoveFromMineTime = 0;
+                    AiParams.MinePlacementChance = 0;
                     break;
                 case TankTier.Citrine:
-                    AiParams.meanderAngle = 0.7f;
-                    AiParams.meanderFrequency = 30;
-                    AiParams.turretMeanderFrequency = 20;
-                    AiParams.turretSpeed = 0.035f;
-                    AiParams.inaccuracy = 0.3f;
+                    AiParams.MeanderAngle = 0.7f;
+                    AiParams.MeanderFrequency = 30;
+                    AiParams.TurretMeanderFrequency = 20;
+                    AiParams.TurretSpeed = 0.035f;
+                    AiParams.Inaccuracy = 0.3f;
 
-                    AiParams.projectileWarinessRadius = 80;
-                    AiParams.mineWarinessRadius = 140;
+                    AiParams.ProjectileWarinessRadius = 80;
+                    AiParams.MineWarinessRadius = 140;
 
                     TurningSpeed = 0.08f;
                     MaximalTurn = 1.4f;
@@ -743,20 +746,20 @@ namespace WiiPlayTanksRemake.GameContent
                     MineLimit = 4;
                     MineStun = 5;
 
-                    AiParams.moveFromMineTime = 40;
-                    AiParams.minePlacementChance = 0.15f;
+                    AiParams.MoveFromMineTime = 40;
+                    AiParams.MinePlacementChance = 0.15f;
 
-                    AiParams.shootChance = 0.95f;
+                    AiParams.ShootChance = 0.95f;
                     break;
                 case TankTier.Amethyst:
-                    AiParams.meanderAngle = 0.3f;
-                    AiParams.meanderFrequency = 5;
-                    AiParams.turretMeanderFrequency = 15;
-                    AiParams.turretSpeed = 0.05f;
-                    AiParams.inaccuracy = 0.3f;
+                    AiParams.MeanderAngle = 0.3f;
+                    AiParams.MeanderFrequency = 5;
+                    AiParams.TurretMeanderFrequency = 15;
+                    AiParams.TurretSpeed = 0.05f;
+                    AiParams.Inaccuracy = 0.3f;
 
-                    AiParams.projectileWarinessRadius = 70;
-                    AiParams.mineWarinessRadius = 140;
+                    AiParams.ProjectileWarinessRadius = 70;
+                    AiParams.MineWarinessRadius = 140;
 
                     TurningSpeed = 0.1f;
                     MaximalTurn = MathHelper.PiOver2 + 0.5f;
@@ -783,13 +786,13 @@ namespace WiiPlayTanksRemake.GameContent
                     MineLimit = 3;
                     MineStun = 10;
 
-                    AiParams.moveFromMineTime = 100;
-                    AiParams.minePlacementChance = 0.05f;
+                    AiParams.MoveFromMineTime = 100;
+                    AiParams.MinePlacementChance = 0.05f;
                     break;
                 case TankTier.Emerald:
-                    AiParams.turretMeanderFrequency = 20;
-                    AiParams.turretSpeed = 0.04f;
-                    AiParams.inaccuracy = 1f;
+                    AiParams.TurretMeanderFrequency = 20;
+                    AiParams.TurretSpeed = 0.04f;
+                    AiParams.Inaccuracy = 1f;
 
                     ShellCooldown = 60;
                     ShellLimit = 3;
@@ -801,20 +804,20 @@ namespace WiiPlayTanksRemake.GameContent
                     Invisible = true;
                     ShellHoming = new();
 
-                    AiParams.advancedRicochetCalculations = true;
+                    AiParams.SmartRicochets = true;
                     break;
 
                 case TankTier.Gold:
-                    AiParams.meanderAngle = 1.8f;
-                    AiParams.meanderFrequency = 20;
-                    AiParams.turretMeanderFrequency = 20;
-                    AiParams.turretSpeed = 0.02f;
-                    AiParams.inaccuracy = 0.14f;
+                    AiParams.MeanderAngle = 1.8f;
+                    AiParams.MeanderFrequency = 20;
+                    AiParams.TurretMeanderFrequency = 20;
+                    AiParams.TurretSpeed = 0.02f;
+                    AiParams.Inaccuracy = 0.14f;
 
-                    AiParams.shootChance = 0.7f;
+                    AiParams.ShootChance = 0.7f;
 
-                    AiParams.projectileWarinessRadius = 80;
-                    AiParams.mineWarinessRadius = 120;
+                    AiParams.ProjectileWarinessRadius = 80;
+                    AiParams.MineWarinessRadius = 120;
 
                     CanLayTread = false;
 
@@ -842,21 +845,21 @@ namespace WiiPlayTanksRemake.GameContent
                     MineLimit = 2;
                     MineStun = 10;
 
-                    AiParams.moveFromMineTime = 100;
-                    AiParams.minePlacementChance = 0.01f;
+                    AiParams.MoveFromMineTime = 100;
+                    AiParams.MinePlacementChance = 0.01f;
 
                     Invisible = true;
                     break;
 
                 case TankTier.Obsidian:
-                    AiParams.meanderAngle = 1.2f;
-                    AiParams.meanderFrequency = 20;
-                    AiParams.turretMeanderFrequency = 20;
-                    AiParams.turretSpeed = 0.05f;
-                    AiParams.inaccuracy = 0.18f;
+                    AiParams.MeanderAngle = 1.2f;
+                    AiParams.MeanderFrequency = 20;
+                    AiParams.TurretMeanderFrequency = 20;
+                    AiParams.TurretSpeed = 0.05f;
+                    AiParams.Inaccuracy = 0.18f;
 
-                    AiParams.projectileWarinessRadius = 70;
-                    AiParams.mineWarinessRadius = 140;
+                    AiParams.ProjectileWarinessRadius = 70;
+                    AiParams.MineWarinessRadius = 140;
 
                     TurningSpeed = 0.1f;
                     MaximalTurn = MathHelper.PiOver4;
@@ -883,20 +886,20 @@ namespace WiiPlayTanksRemake.GameContent
                     MineLimit = 2;
                     MineStun = 10;
 
-                    AiParams.moveFromMineTime = 100;
-                    AiParams.minePlacementChance = 0.1f;
+                    AiParams.MoveFromMineTime = 100;
+                    AiParams.MinePlacementChance = 0.1f;
                     break;
                 #endregion
                 #region AdvancedMod
                 case TankTier.Granite:
-                    AiParams.meanderAngle = 0.8f;
-                    AiParams.meanderFrequency = 10;
-                    AiParams.turretMeanderFrequency = 20;
-                    AiParams.turretSpeed = 0.09f;
-                    AiParams.inaccuracy = 0f;
+                    AiParams.MeanderAngle = 0.8f;
+                    AiParams.MeanderFrequency = 10;
+                    AiParams.TurretMeanderFrequency = 20;
+                    AiParams.TurretSpeed = 0.09f;
+                    AiParams.Inaccuracy = 0f;
 
-                    AiParams.projectileWarinessRadius = 150;
-                    AiParams.mineWarinessRadius = 90;
+                    AiParams.ProjectileWarinessRadius = 150;
+                    AiParams.MineWarinessRadius = 90;
 
                     TurningSpeed = 0.3f;
                     MaximalTurn = MathHelper.PiOver4;
@@ -919,17 +922,17 @@ namespace WiiPlayTanksRemake.GameContent
 
                     treadSoundTimer = 4;
 
-                    AiParams.advancedRicochetCalculations = true;
+                    AiParams.SmartRicochets = true;
                     break;
                 case TankTier.Bubblegum:
-                    AiParams.meanderAngle = MathHelper.ToRadians(30);
-                    AiParams.meanderFrequency = 10;
-                    AiParams.turretMeanderFrequency = 60;
-                    AiParams.turretSpeed = 0.045f;
-                    AiParams.inaccuracy = 0.04f;
+                    AiParams.MeanderAngle = MathHelper.ToRadians(30);
+                    AiParams.MeanderFrequency = 10;
+                    AiParams.TurretMeanderFrequency = 60;
+                    AiParams.TurretSpeed = 0.045f;
+                    AiParams.Inaccuracy = 0.04f;
 
-                    AiParams.projectileWarinessRadius = 140;
-                    AiParams.mineWarinessRadius = 140;
+                    AiParams.ProjectileWarinessRadius = 140;
+                    AiParams.MineWarinessRadius = 140;
 
                     TurningSpeed = 0.1f;
                     MaximalTurn = 0.5f;
@@ -954,19 +957,19 @@ namespace WiiPlayTanksRemake.GameContent
                     MineLimit = 1;
                     MineStun = 5;
 
-                    AiParams.moveFromMineTime = 100;
-                    AiParams.minePlacementChance = 0.02f;
-                    AiParams.shootChance = 0.2f;
+                    AiParams.MoveFromMineTime = 100;
+                    AiParams.MinePlacementChance = 0.02f;
+                    AiParams.ShootChance = 0.2f;
                     break;
                 case TankTier.Water:
-                    AiParams.meanderAngle = 0.25f;
-                    AiParams.meanderFrequency = 15;
-                    AiParams.turretMeanderFrequency = 10;
-                    AiParams.turretSpeed = 0.03f;
-                    AiParams.inaccuracy = 0.08f;
+                    AiParams.MeanderAngle = 0.25f;
+                    AiParams.MeanderFrequency = 15;
+                    AiParams.TurretMeanderFrequency = 10;
+                    AiParams.TurretSpeed = 0.03f;
+                    AiParams.Inaccuracy = 0.08f;
 
-                    AiParams.projectileWarinessRadius = 90;
-                    AiParams.mineWarinessRadius = 150;
+                    AiParams.ProjectileWarinessRadius = 90;
+                    AiParams.MineWarinessRadius = 150;
 
                     TurningSpeed = 0.2f;
                     MaximalTurn = MathHelper.PiOver4;
@@ -990,14 +993,14 @@ namespace WiiPlayTanksRemake.GameContent
                     treadSoundTimer = 4;
                     break;
                 case TankTier.Crimson:
-                    AiParams.meanderAngle = 0.12f;
-                    AiParams.meanderFrequency = 8;
-                    AiParams.turretMeanderFrequency = 60;
-                    AiParams.turretSpeed = 0.07f;
-                    AiParams.inaccuracy = 0.04f;
+                    AiParams.MeanderAngle = 0.12f;
+                    AiParams.MeanderFrequency = 8;
+                    AiParams.TurretMeanderFrequency = 60;
+                    AiParams.TurretSpeed = 0.07f;
+                    AiParams.Inaccuracy = 0.04f;
 
-                    AiParams.projectileWarinessRadius = 50;
-                    AiParams.mineWarinessRadius = 50;
+                    AiParams.ProjectileWarinessRadius = 50;
+                    AiParams.MineWarinessRadius = 50;
 
                     TurningSpeed = 0.1f;
                     MaximalTurn = 0.5f;
@@ -1022,19 +1025,19 @@ namespace WiiPlayTanksRemake.GameContent
                     MineLimit = 6;
                     MineStun = 3;
 
-                    AiParams.moveFromMineTime = 100;
-                    AiParams.minePlacementChance = 0.02f;
-                    AiParams.shootChance = 0.2f;
+                    AiParams.MoveFromMineTime = 100;
+                    AiParams.MinePlacementChance = 0.02f;
+                    AiParams.ShootChance = 0.2f;
                     break;
                 case TankTier.Tiger:
-                    AiParams.meanderAngle = 0.30f;
-                    AiParams.meanderFrequency = 2;
-                    AiParams.turretMeanderFrequency = 40;
-                    AiParams.turretSpeed = 0.1f;
-                    AiParams.inaccuracy = 0.12f;
+                    AiParams.MeanderAngle = 0.30f;
+                    AiParams.MeanderFrequency = 2;
+                    AiParams.TurretMeanderFrequency = 40;
+                    AiParams.TurretSpeed = 0.1f;
+                    AiParams.Inaccuracy = 0.12f;
 
-                    AiParams.projectileWarinessRadius = 90;
-                    AiParams.mineWarinessRadius = 120;
+                    AiParams.ProjectileWarinessRadius = 90;
+                    AiParams.MineWarinessRadius = 120;
 
                     TurningSpeed = 0.1f;
                     MaximalTurn = MathHelper.PiOver2;
@@ -1059,18 +1062,18 @@ namespace WiiPlayTanksRemake.GameContent
                     MineLimit = 10;
                     MineStun = 0;
 
-                    AiParams.moveFromMineTime = 100;
-                    AiParams.minePlacementChance = 0.05f;
+                    AiParams.MoveFromMineTime = 100;
+                    AiParams.MinePlacementChance = 0.05f;
                     break;
                 case TankTier.Fade:
-                    AiParams.meanderAngle = MathHelper.ToRadians(30);
-                    AiParams.meanderFrequency = 8;
-                    AiParams.turretMeanderFrequency = 40;
-                    AiParams.turretSpeed = 0.05f;
-                    AiParams.inaccuracy = 0.22f;
+                    AiParams.MeanderAngle = MathHelper.ToRadians(30);
+                    AiParams.MeanderFrequency = 8;
+                    AiParams.TurretMeanderFrequency = 40;
+                    AiParams.TurretSpeed = 0.05f;
+                    AiParams.Inaccuracy = 0.22f;
 
-                    AiParams.projectileWarinessRadius = 100;
-                    AiParams.mineWarinessRadius = 100;
+                    AiParams.ProjectileWarinessRadius = 100;
+                    AiParams.MineWarinessRadius = 100;
 
                     TurningSpeed = 0.12f;
                     MaximalTurn = MathHelper.ToRadians(30);
@@ -1095,18 +1098,18 @@ namespace WiiPlayTanksRemake.GameContent
                     MineLimit = 3;
                     MineStun = 10;
 
-                    AiParams.moveFromMineTime = 100;
-                    AiParams.minePlacementChance = 0.05f;
+                    AiParams.MoveFromMineTime = 100;
+                    AiParams.MinePlacementChance = 0.05f;
                     break;
                 case TankTier.Creeper:
-                    AiParams.meanderAngle = 0.2f;
-                    AiParams.meanderFrequency = 25;
-                    AiParams.turretMeanderFrequency = 40;
-                    AiParams.turretSpeed = 0.085f;
-                    AiParams.inaccuracy = 1f;
+                    AiParams.MeanderAngle = 0.2f;
+                    AiParams.MeanderFrequency = 25;
+                    AiParams.TurretMeanderFrequency = 40;
+                    AiParams.TurretSpeed = 0.085f;
+                    AiParams.Inaccuracy = 1f;
 
-                    AiParams.projectileWarinessRadius = 150;
-                    AiParams.mineWarinessRadius = 110;
+                    AiParams.ProjectileWarinessRadius = 150;
+                    AiParams.MineWarinessRadius = 110;
 
                     TurningSpeed = 0.3f;
                     MaximalTurn = MathHelper.PiOver4;
@@ -1130,9 +1133,9 @@ namespace WiiPlayTanksRemake.GameContent
                     treadSoundTimer = 4;
                     break;
                 case TankTier.Gamma:
-                    AiParams.turretMeanderFrequency = 20;
-                    AiParams.turretSpeed = 0.08f;
-                    AiParams.inaccuracy = 0.01f;
+                    AiParams.TurretMeanderFrequency = 20;
+                    AiParams.TurretSpeed = 0.08f;
+                    AiParams.Inaccuracy = 0.01f;
 
                     Invisible = false;
                     ShellHoming = new();
@@ -1146,14 +1149,14 @@ namespace WiiPlayTanksRemake.GameContent
                     Stationary = true;
                     break;
                 case TankTier.Marble:
-                    AiParams.meanderAngle = MathHelper.PiOver2;
-                    AiParams.meanderFrequency = 10;
-                    AiParams.turretMeanderFrequency = 20;
-                    AiParams.turretSpeed = 0.08f;
-                    AiParams.inaccuracy = 0.11f;
+                    AiParams.MeanderAngle = MathHelper.PiOver2;
+                    AiParams.MeanderFrequency = 10;
+                    AiParams.TurretMeanderFrequency = 20;
+                    AiParams.TurretSpeed = 0.08f;
+                    AiParams.Inaccuracy = 0.11f;
 
-                    AiParams.projectileWarinessRadius = 70;
-                    AiParams.mineWarinessRadius = 140;
+                    AiParams.ProjectileWarinessRadius = 70;
+                    AiParams.MineWarinessRadius = 140;
 
                     TurningSpeed = 0.1f;
                     MaximalTurn = MathHelper.PiOver4;
@@ -1180,21 +1183,21 @@ namespace WiiPlayTanksRemake.GameContent
                     MineLimit = 2;
                     MineStun = 10;
 
-                    AiParams.moveFromMineTime = 100;
-                    AiParams.minePlacementChance = 0.05f;
+                    AiParams.MoveFromMineTime = 100;
+                    AiParams.MinePlacementChance = 0.05f;
                     break;
                 #endregion
 
                 #region Special
                 case TankTier.Explosive:
-                    AiParams.meanderAngle = MathHelper.ToRadians(30);
-                    AiParams.meanderFrequency = 10;
-                    AiParams.turretMeanderFrequency = 60;
-                    AiParams.turretSpeed = 0.045f;
-                    AiParams.inaccuracy = 0.04f;
+                    AiParams.MeanderAngle = MathHelper.ToRadians(30);
+                    AiParams.MeanderFrequency = 10;
+                    AiParams.TurretMeanderFrequency = 60;
+                    AiParams.TurretSpeed = 0.045f;
+                    AiParams.Inaccuracy = 0.04f;
 
-                    AiParams.projectileWarinessRadius = 140;
-                    AiParams.mineWarinessRadius = 140;
+                    AiParams.ProjectileWarinessRadius = 140;
+                    AiParams.MineWarinessRadius = 140;
 
                     TurningSpeed = 0.1f;
                     MaximalTurn = 0.4f;
@@ -1223,20 +1226,20 @@ namespace WiiPlayTanksRemake.GameContent
 
                     treadSoundTimer = 9;
 
-                    AiParams.moveFromMineTime = 100;
-                    AiParams.minePlacementChance = 0.02f;
-                    AiParams.shootChance = 0.2f;
+                    AiParams.MoveFromMineTime = 100;
+                    AiParams.MinePlacementChance = 0.02f;
+                    AiParams.ShootChance = 0.2f;
                     break;
 
                 case TankTier.Electro:
-                    AiParams.meanderAngle = MathHelper.ToRadians(30);
-                    AiParams.meanderFrequency = 10;
-                    AiParams.turretMeanderFrequency = 60;
-                    AiParams.turretSpeed = 0.045f;
-                    AiParams.inaccuracy = 0.04f;
+                    AiParams.MeanderAngle = MathHelper.ToRadians(30);
+                    AiParams.MeanderFrequency = 10;
+                    AiParams.TurretMeanderFrequency = 60;
+                    AiParams.TurretSpeed = 0.045f;
+                    AiParams.Inaccuracy = 0.04f;
 
-                    AiParams.projectileWarinessRadius = 140;
-                    AiParams.mineWarinessRadius = 140;
+                    AiParams.ProjectileWarinessRadius = 140;
+                    AiParams.MineWarinessRadius = 140;
 
                     TurningSpeed = 0.1f;
                     MaximalTurn = 0.5f;
@@ -1261,20 +1264,20 @@ namespace WiiPlayTanksRemake.GameContent
                     MineLimit = 1;
                     MineStun = 5;
 
-                    AiParams.moveFromMineTime = 100;
-                    AiParams.minePlacementChance = 0.02f;
-                    AiParams.shootChance = 0.2f;
+                    AiParams.MoveFromMineTime = 100;
+                    AiParams.MinePlacementChance = 0.02f;
+                    AiParams.ShootChance = 0.2f;
                     break;
 
                 case TankTier.RocketDefender:
-                    AiParams.meanderAngle = MathHelper.ToRadians(30);
-                    AiParams.meanderFrequency = 10;
-                    AiParams.turretMeanderFrequency = 60;
-                    AiParams.turretSpeed = 0.045f;
-                    AiParams.inaccuracy = 0.04f;
+                    AiParams.MeanderAngle = MathHelper.ToRadians(30);
+                    AiParams.MeanderFrequency = 10;
+                    AiParams.TurretMeanderFrequency = 60;
+                    AiParams.TurretSpeed = 0.045f;
+                    AiParams.Inaccuracy = 0.04f;
 
-                    AiParams.projectileWarinessRadius = 140;
-                    AiParams.mineWarinessRadius = 140;
+                    AiParams.ProjectileWarinessRadius = 140;
+                    AiParams.MineWarinessRadius = 140;
 
                     TurningSpeed = 0.1f;
                     MaximalTurn = 0.5f;
@@ -1299,20 +1302,20 @@ namespace WiiPlayTanksRemake.GameContent
                     MineLimit = 1;
                     MineStun = 5;
 
-                    AiParams.moveFromMineTime = 100;
-                    AiParams.minePlacementChance = 0.02f;
-                    AiParams.shootChance = 0.2f;
+                    AiParams.MoveFromMineTime = 100;
+                    AiParams.MinePlacementChance = 0.02f;
+                    AiParams.ShootChance = 0.2f;
                     break;
 
                 case TankTier.Assassin:
-                    AiParams.meanderAngle = MathHelper.ToRadians(40);
-                    AiParams.meanderFrequency = 15;
-                    AiParams.turretMeanderFrequency = 1;
-                    AiParams.turretSpeed = 0.1f;
-                    AiParams.inaccuracy = 0f;
+                    AiParams.MeanderAngle = MathHelper.ToRadians(40);
+                    AiParams.MeanderFrequency = 15;
+                    AiParams.TurretMeanderFrequency = 1;
+                    AiParams.TurretSpeed = 0.1f;
+                    AiParams.Inaccuracy = 0f;
 
-                    AiParams.projectileWarinessRadius = 140;
-                    AiParams.mineWarinessRadius = 140;
+                    AiParams.ProjectileWarinessRadius = 140;
+                    AiParams.MineWarinessRadius = 140;
 
                     TurningSpeed = 0.1f;
                     MaximalTurn = 0.2f;
@@ -1337,22 +1340,22 @@ namespace WiiPlayTanksRemake.GameContent
                     MineLimit = 0;
                     MineStun = 0;
 
-                    AiParams.moveFromMineTime = 100;
-                    AiParams.minePlacementChance = 0.02f;
-                    AiParams.shootChance = 0.2f;
+                    AiParams.MoveFromMineTime = 100;
+                    AiParams.MinePlacementChance = 0.02f;
+                    AiParams.ShootChance = 0.2f;
 
-                    AiParams.advancedRicochetCalculations = true;
+                    AiParams.SmartRicochets = true;
                     break;
 
                 case TankTier.Commando:
-                    AiParams.meanderAngle = MathHelper.ToRadians(30);
-                    AiParams.meanderFrequency = 10;
-                    AiParams.turretMeanderFrequency = 60;
-                    AiParams.turretSpeed = 0.045f;
-                    AiParams.inaccuracy = 0.04f;
+                    AiParams.MeanderAngle = MathHelper.ToRadians(30);
+                    AiParams.MeanderFrequency = 10;
+                    AiParams.TurretMeanderFrequency = 60;
+                    AiParams.TurretSpeed = 0.045f;
+                    AiParams.Inaccuracy = 0.04f;
 
-                    AiParams.projectileWarinessRadius = 140;
-                    AiParams.mineWarinessRadius = 140;
+                    AiParams.ProjectileWarinessRadius = 140;
+                    AiParams.MineWarinessRadius = 140;
 
                     TurningSpeed = 0.1f;
                     MaximalTurn = 0.5f;
@@ -1377,9 +1380,9 @@ namespace WiiPlayTanksRemake.GameContent
                     MineLimit = 1;
                     MineStun = 5;
 
-                    AiParams.moveFromMineTime = 100;
-                    AiParams.minePlacementChance = 0.02f;
-                    AiParams.shootChance = 0.2f;
+                    AiParams.MoveFromMineTime = 100;
+                    AiParams.MinePlacementChance = 0.02f;
+                    AiParams.ShootChance = 0.2f;
                     break;
                     #endregion
             }
@@ -1475,7 +1478,7 @@ namespace WiiPlayTanksRemake.GameContent
                 }
             }
 
-            foreach (var c in Cube.cubes)
+            foreach (var c in Block.blocks)
             {
                 if (c is not null)
                 {
@@ -1503,7 +1506,7 @@ namespace WiiPlayTanksRemake.GameContent
             var sound = GameResources.GetGameResource<SoundEffect>("Assets/sounds/mine_place");
             SoundPlayer.PlaySoundInstance(sound, SoundContext.Effect, 0.5f);
             OwnedMineCount++;
-            AiParams.timeSinceLastMinePlaced = 0;
+            AiParams.TimeSinceLastMinePlaced = 0;
 
             timeSinceLastAction = 0;
 
@@ -1607,6 +1610,8 @@ namespace WiiPlayTanksRemake.GameContent
         private bool seeks;
         private float seekRotation = 0;
 
+        public bool nearDestructibleObstacle;
+
         // make a new method for just any rectangle
         private bool IsTankInPath(Vector2 pathDir, Tank enemy = null, bool draw = false, Vector2 offset = default)
         {
@@ -1640,7 +1645,7 @@ namespace WiiPlayTanksRemake.GameContent
                 var pathHitbox = new Rectangle((int)pathPos.X - 3, (int)pathPos.Y - 3, 6, 6);
 
                 // Why is velocity passed by reference here lol
-                Collision.HandleCollisionSimple_ForBlocks(pathHitbox, ref pathDir, ref dummyPos, out var dir, false);
+                Collision.HandleCollisionSimple_ForBlocks(pathHitbox, ref pathDir, ref dummyPos, out var dir, false, (c) => c.IsSolid);
 
                 switch (dir)
                 {
@@ -1656,7 +1661,7 @@ namespace WiiPlayTanksRemake.GameContent
                         break;
                 }
 
-                if (i < 3 && Cube.cubes.Any(x => x is not null && pathHitbox.Intersects(x.collider2d)))
+                if (i < 3 && Block.blocks.Any(x => x is not null && pathHitbox.Intersects(x.collider2d)))
                     return false;
 
                 if (pathRicochetCount > RicochetCount)
@@ -1741,7 +1746,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         public void DoAi(bool doMoveTowards = true, bool doMovements = true, bool doFire = true)
         {
-            AiParams.timeSinceLastMinePlaced++;
+            AiParams.TimeSinceLastMinePlaced++;
 
             CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation);
 
@@ -1788,31 +1793,36 @@ namespace WiiPlayTanksRemake.GameContent
                     }
 
                     var tanksNearMe = new List<Tank>();
+                    var cubesNearMe = new List<Block>();
 
                     foreach (var tank in GameHandler.AllTanks)
-                        if (tank != this && tank is not null && !tank.Dead && Vector3.Distance(tank.position, position) <= AiParams.teammateTankWariness)
+                        if (tank != this && tank is not null && !tank.Dead && Vector3.Distance(tank.position, position) <= AiParams.TeammateTankWariness)
                             tanksNearMe.Add(tank);
+
+                    foreach (var cube in Block.blocks)
+                        if (cube is not null && Vector3.Distance(position, cube.position) < AiParams.CubeWarinessDistance)
+                            cubesNearMe.Add(cube);
 
                     #region TurretHandle
 
-                    AiParams.targetTurretRotation %= MathHelper.TwoPi;
+                    targetTurretRotation %= MathHelper.TwoPi;
 
                     TurretRotation %= MathHelper.TwoPi;
 
-                    var diff = AiParams.targetTurretRotation - TurretRotation;
+                    var diff = targetTurretRotation - TurretRotation;
 
                     if (diff > MathHelper.Pi)
-                        AiParams.targetTurretRotation -= MathHelper.TwoPi;
+                        targetTurretRotation -= MathHelper.TwoPi;
                     else if (diff < -MathHelper.Pi)
-                        AiParams.targetTurretRotation += MathHelper.TwoPi;
+                        targetTurretRotation += MathHelper.TwoPi;
 
-                    TurretRotation = GameUtils.RoughStep(TurretRotation, AiParams.targetTurretRotation, seeks ? AiParams.turretSpeed * 3 : AiParams.turretSpeed);
+                    TurretRotation = GameUtils.RoughStep(TurretRotation, targetTurretRotation, seeks ? AiParams.TurretSpeed * 3 : AiParams.TurretSpeed);
 
                     if (Array.IndexOf(GameHandler.AllTanks, enemy) > -1 && enemy is not null)
                     {
                         if (!seeks)
                         {
-                            if (Behaviors[1].IsModOf(AiParams.turretMeanderFrequency))
+                            if (Behaviors[1].IsModOf(AiParams.TurretMeanderFrequency))
                             {
                                 isEnemySpotted = false;
                                 if (enemy.Invisible && enemy.timeSinceLastAction < 60)
@@ -1827,8 +1837,8 @@ namespace WiiPlayTanksRemake.GameContent
                                     isEnemySpotted = true;
                                 }
 
-                                var dirVec = Position2D - aimTarget.FlattenZ();  // enemy.Position2D;
-                                AiParams.targetTurretRotation = -dirVec.ToRotation() - MathHelper.PiOver2 + new Random().NextFloat(-AiParams.inaccuracy, AiParams.inaccuracy);
+                                var dirVec = Position2D - aimTarget.FlattenZ();
+                                targetTurretRotation = -dirVec.ToRotation() - MathHelper.PiOver2 + new Random().NextFloat(-AiParams.Inaccuracy, AiParams.Inaccuracy);
                             }
                         }
 
@@ -1836,15 +1846,15 @@ namespace WiiPlayTanksRemake.GameContent
                         {
                             bool seesSelf = false;
 
-                            seekRotation += AiParams.turretSpeed;
+                            seekRotation += AiParams.TurretSpeed;
 
-                            AiParams.seesTarget = false;
+                            AiParams.SeesTarget = false;
                             if (IsTankInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), enemy, offset: Vector2.UnitY * 20) && isEnemySpotted)
-                                AiParams.seesTarget = true;
+                                AiParams.SeesTarget = true;
 
                             if (IsTankInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), this, offset: Vector2.UnitY * 20) && isEnemySpotted)
                                 seesSelf = true;
-                            if (AiParams.advancedRicochetCalculations)
+                            if (AiParams.SmartRicochets)
                             {
                                 var canShoot = !(curShootCooldown > 0 || OwnedShellCount >= ShellLimit);
                                 if (canShoot)
@@ -1852,17 +1862,17 @@ namespace WiiPlayTanksRemake.GameContent
                                     if (IsTankInPath(Vector2.UnitY.RotatedByRadians(seekRotation), enemy))
                                     {
                                         seeks = true;
-                                        AiParams.targetTurretRotation = seekRotation - MathHelper.Pi;
+                                        targetTurretRotation = seekRotation - MathHelper.Pi;
                                     }
                                 }
 
-                                if (TurretRotation == AiParams.targetTurretRotation || !canShoot)
+                                if (TurretRotation == targetTurretRotation || !canShoot)
                                     seeks = false;
                             }
 
                             bool checkNoTeam = Team == Team.NoTeam ? true : !tanksNearMe.Any(x => x.Team == Team);
 
-                            if (AiParams.seesTarget && checkNoTeam && !seesSelf)
+                            if (AiParams.SeesTarget && checkNoTeam && !seesSelf)
                                 if (curShootCooldown <= 0)
                                     Shoot();
                         }
@@ -1875,17 +1885,24 @@ namespace WiiPlayTanksRemake.GameContent
                         if (Stationary)
                             return;
 
-                        bool isBulletNear = TryGetShellNear(AiParams.projectileWarinessRadius, out var shell);
-                        bool isMineNear = TryGetMineNear(AiParams.mineWarinessRadius, out var mine);
+                        /*TankRotation %= MathHelper.Pi;
+                        targetTankRotation %= MathHelper.Tau;
+                        if (targetTankRotation - TankRotation >= MathHelper.PiOver2)
+                            TankRotation += MathHelper.Pi;
+                        else if (targetTankRotation - TankRotation <= -MathHelper.PiOver2)
+                            TankRotation -= MathHelper.Pi;*/
 
-                        bool movingFromMine = AiParams.timeSinceLastMinePlaced < AiParams.moveFromMineTime;
-                        bool movingFromOtherMine = AiParams.timeSinceLastMineFound < AiParams.moveFromMineTime / 2;
+                        bool isBulletNear = TryGetShellNear(AiParams.ProjectileWarinessRadius, out var shell);
+                        bool isMineNear = TryGetMineNear(AiParams.MineWarinessRadius, out var mine);
+
+                        bool movingFromMine = AiParams.TimeSinceLastMinePlaced < AiParams.MoveFromMineTime;
+                        bool movingFromOtherMine = AiParams.TimeSinceLastMineFound < AiParams.MoveFromMineTime / 2;
 
                         #region CubeNav
 
-                        isCubeInWay = IsObstacleInWay(AiParams.cubeWarinessDistance, Vector2.UnitY.RotatedByRadians(-targetTankRotation), out var travelPath);
+                        isCubeInWay = IsObstacleInWay(AiParams.CubeWarinessDistance, Vector2.UnitY.RotatedByRadians(-targetTankRotation), out var travelPath);
 
-                        if (isCubeInWay && Behaviors[2].IsModOf(AiParams.meanderFrequency / 3))
+                        if (isCubeInWay && Behaviors[2].IsModOf(AiParams.MeanderFrequency / 3))
                         {
                             GameUtils.RoughStep(ref targetTankRotation, GameUtils.DirectionOf(Position2D, travelPath).ToRotation(), GameUtils.DirectionOf(Position2D, travelPath).ToRotation() / 4);
                             //targetTankRotation += GameUtils.DirectionOf(Position2D, travelPath).ToRotation() / 4; // needs fixing i think
@@ -1898,9 +1915,9 @@ namespace WiiPlayTanksRemake.GameContent
                         {
                             if (!isCubeInWay)
                             {
-                                if (Behaviors[0].IsModOf(AiParams.meanderFrequency))
+                                if (Behaviors[0].IsModOf(AiParams.MeanderFrequency))
                                 {
-                                    var meanderRandom = new Random().NextFloat(-AiParams.meanderAngle / 2, AiParams.meanderAngle / 2);
+                                    var meanderRandom = new Random().NextFloat(-AiParams.MeanderAngle / 2, AiParams.MeanderAngle / 2);
 
                                     targetTankRotation += meanderRandom;
                                 }
@@ -1943,7 +1960,8 @@ namespace WiiPlayTanksRemake.GameContent
                             {
                                 if (!tanksNearMe.Any(x => x.Team == Team))
                                 {
-                                    if (new Random().NextFloat(0, 1) <= AiParams.minePlacementChance)
+                                    nearDestructibleObstacle = cubesNearMe.Any(c => c.IsDestructible);
+                                    if ((new Random().NextFloat(0, 1) <= AiParams.MinePlacementChance) || (AiParams.SmartMineLaying ? nearDestructibleObstacle : false))
                                     {
                                         targetTankRotation = new Vector2(100, 100).RotatedByRadians(new Random().NextFloat(0, MathHelper.TwoPi)).Expand_Z().ToRotation();
                                         LayMine();
@@ -1955,7 +1973,7 @@ namespace WiiPlayTanksRemake.GameContent
                         {
                             if (Behaviors[5].IsModOf(10))
                             {
-                                if (AiParams.timeSinceLastMinePlaced > AiParams.moveFromMineTime)
+                                if (AiParams.TimeSinceLastMinePlaced > AiParams.MoveFromMineTime)
                                 {
                                     var direction = Vector2.UnitY.RotatedByRadians(mine.Position2D.DirectionOf(Position2D, false).ToRotation());
 
@@ -1991,7 +2009,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                     #region TankRotation
 
-                    var targ = dummyValue = targetTankRotation + MathHelper.Pi;
+                    var targ = targetTankRotation + MathHelper.Pi;
 
                     IsTurning = false;
 
@@ -2036,9 +2054,6 @@ namespace WiiPlayTanksRemake.GameContent
             }
             enactBehavior?.Invoke();
         }
-
-        float dummyValue;
-        public List<Ray> raysMarched = new();
         private void RenderModel()
         {
             foreach (ModelMesh mesh in Model.Meshes)
@@ -2102,13 +2117,13 @@ namespace WiiPlayTanksRemake.GameContent
 
             if (DebugUtils.DebugLevel == 1)
             {
-                if (AiParams.advancedRicochetCalculations)
+                if (AiParams.SmartRicochets)
                     IsTankInPath(Vector2.UnitY.RotatedByRadians(seekRotation), default, true);
                 IsTankInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), default, true);
 
                 if (!Stationary)
                 {
-                    IsObstacleInWay(AiParams.cubeWarinessDistance, Vector2.UnitY.RotatedByRadians(-targetTankRotation), out var travelPath, true);
+                    IsObstacleInWay(AiParams.CubeWarinessDistance, Vector2.UnitY.RotatedByRadians(-targetTankRotation), out var travelPath, true);
                     DebugUtils.DrawDebugString(TankGame.spriteBatch, "D", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(travelPath.X, 11, travelPath.Y), View, Projection), 1, centered: true);
                 }
             }
@@ -2116,9 +2131,7 @@ namespace WiiPlayTanksRemake.GameContent
             var info = new string[]
             {
                 $"Team: {Team}",
-                $"Actual / Target: {TankRotation} / {dummyValue}",
-                $"TurActual / TurTarget / TurDiff: {TurretRotation} / {AiParams.targetTurretRotation} / {AiParams.targetTurretRotation - TurretRotation}",
-                $"IsCubeInWay: {isCubeInWay}"
+                $"OwnedShellCount: {OwnedShellCount}"
             };
 
             for (int i = 0; i < info.Length; i++)
@@ -2129,9 +2142,6 @@ namespace WiiPlayTanksRemake.GameContent
 
             RenderModel();
         }
-
-        public override string ToString()
-            => $"tier: {tier} | mFreq: {AiParams.meanderFrequency}";
 
         public bool TryGetShellNear(float distance, out Shell shell)
         {
@@ -2174,12 +2184,6 @@ namespace WiiPlayTanksRemake.GameContent
                 }
             }
             return false;
-        }
-
-        public static bool IsCubeInRayPath(Ray navigator, float maxDist)
-        {
-            return Cube.cubes.Any(c => c is not null && navigator.Intersects(c.collider) is not null && navigator.Intersects(c.collider).Value <= maxDist) 
-                || (MapRenderer.BoundsRenderer.enclosingBoxes.Any(c => navigator.Intersects(c).HasValue && navigator.Intersects(c).Value <= maxDist));
         }
 
         public static TankTier PICK_ANY_THAT_ARE_IMPLEMENTED()

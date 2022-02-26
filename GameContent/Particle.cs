@@ -31,6 +31,12 @@ namespace WiiPlayTanksRemake.GameContent
 
         public Action<Particle> UniqueBehavior;
 
+        /* TODO:
+         * Model alpha must be set!
+         * 
+         * billboard from 'position' to the camera.
+         */
+
         internal Particle(Model modelOverride = null)
         {
             int index = Array.IndexOf(ParticleSystem.CurrentParticles, ParticleSystem.CurrentParticles.First(particle => particle == null));

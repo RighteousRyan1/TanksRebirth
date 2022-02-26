@@ -19,9 +19,13 @@ namespace WiiPlayTanksRemake.GameContent
     // TODO: Chairs and Co (models)
     public static class MapRenderer
     {
+        public static bool ShouldRender = true;
+
         public static Matrix viewMatrix;
         public static Matrix projectionMatrix;
         public static Matrix worldMatrix;
+
+        internal static string assetsRoot;
 
         public static MapTheme Theme { get; set; } = MapTheme.Default;
 
@@ -29,30 +33,34 @@ namespace WiiPlayTanksRemake.GameContent
         {
             public static Model FloorModelBase;
 
-            public static Model FloorModelBase2;
-
             public static float scale = 1f;
-
-            private static string floorDir;
 
             public static void LoadFloor()
             {
-
+                FloorModelBase = GameResources.GetGameResource<Model>("Assets/floor_big");
                 switch (Theme)
                 {
                     case MapTheme.Default:
-                        Lighting.ColorBrightness = 1f;
-                        floorDir = "Assets/textures/ingame/ground";
-                        FloorModelBase = GameResources.GetGameResource<Model>("Assets/floor_big");
-                        FloorModelBase2 = GameResources.GetGameResource<Model>("Assets/floor_big");
+
+                        assetsRoot = "Assets/textures/ingame/";
+
                         break;
 
                     case MapTheme.Forest:
-                        scale = 1.5f;
 
-                        floorDir = "Assets/forest/grassfloor";
+                        assetsRoot = "Assets/forest/";
 
-                        FloorModelBase = GameResources.GetGameResource<Model>("Assets/floor_big");
+                        break;
+
+                    case MapTheme.MasterMod:
+
+                        assetsRoot = "Assets/textures/ingame/mastermod/";
+
+                        break;
+
+                    case MapTheme.MarbleMod:
+
+                        assetsRoot = "Assets/textures/ingame/marblemod/";
 
                         break;
                 }
@@ -78,37 +86,10 @@ namespace WiiPlayTanksRemake.GameContent
 
                         effect.TextureEnabled = true;
 
-                        effect.Texture = GameResources.GetGameResource<Texture2D>(floorDir);
+                        effect.Texture = GameResources.GetGameResource<Texture2D>(assetsRoot + "floor_face");
                     }
 
                     mesh.Draw();
-                }
-
-                if (FloorModelBase2 is not null)
-                {
-                    foreach (var mesh in FloorModelBase2.Meshes)
-                    {
-                        foreach (BasicEffect effect in mesh.Effects)
-                        {
-                            effect.View = viewMatrix;
-                            effect.Projection = projectionMatrix;
-                            effect.World = worldMatrix * Matrix.CreateScale(2) * Matrix.CreateTranslation(0, -0.5f, 0);
-
-                            effect.SetDefaultGameLighting();
-
-                            effect.DirectionalLight0.Enabled = true;
-                            effect.DirectionalLight1.Enabled = false;
-                            effect.DirectionalLight2.Enabled = false;
-
-                            effect.DirectionalLight0.Direction = Vector3.Down;
-
-                            effect.TextureEnabled = true;
-
-                            effect.Texture = GameResources.GetGameResource<Texture2D>(floorDir);
-                        }
-
-                        mesh.Draw();
-                    }
                 }
             }
         }
@@ -196,10 +177,26 @@ namespace WiiPlayTanksRemake.GameContent
                 switch (Theme)
                 {
                     case MapTheme.Default:
-                        BoundaryModel = GameResources.GetGameResource<Model>("Assets/toy/outerbounds_big");
+                    case MapTheme.MasterMod:
+                    case MapTheme.MarbleMod:
+                        BoundaryModel = GameResources.GetGameResource<Model>("Assets/toy/outerbounds");
 
-                            SetBlockTexture(BoundaryModel.Meshes["polygon33"], BoundaryTextureContext.block_other_c);
-                            SetBlockTexture(BoundaryModel.Meshes["polygon7"], BoundaryTextureContext.block_shadow_b);
+                        SetBlockTexture(BoundaryModel.Meshes["polygon48"], BoundaryTextureContext.block_other_c);
+                        SetBlockTexture(BoundaryModel.Meshes["polygon40"], BoundaryTextureContext.block_other_a);
+                        SetBlockTexture(BoundaryModel.Meshes["polygon33"], BoundaryTextureContext.block_other_b_test);
+                        SetBlockTexture(BoundaryModel.Meshes["polygon7"], BoundaryTextureContext.block_shadow_b);
+                        SetBlockTexture(BoundaryModel.Meshes["polygon15"], BoundaryTextureContext.block_shadow_b);
+
+                        SetBlockTexture(BoundaryModel.Meshes["polygon5"], BoundaryTextureContext.block_shadow_h);
+
+                        SetBlockTexture(BoundaryModel.Meshes["polygon20"], BoundaryTextureContext.block_shadow_d);
+
+                        // SetBlockTexture(BoundaryModel.Meshes["polygon9"], BoundaryTextureContext.block_shadow_d);
+
+                        SetBlockTexture(BoundaryModel.Meshes["polygon21"], BoundaryTextureContext.block_shadow_b);
+
+                        SetBlockTexture(BoundaryModel.Meshes["polygon32"], BoundaryTextureContext.floor_lower);
+
                         break;
                     case MapTheme.Forest:
                         TreeModel = GameResources.GetGameResource<Model>("Assets/forest/tree");
@@ -231,6 +228,8 @@ namespace WiiPlayTanksRemake.GameContent
                 switch (Theme)
                 {
                     case MapTheme.Default:
+                    case MapTheme.MasterMod:
+                    case MapTheme.MarbleMod:
                         foreach (var mesh in BoundaryModel.Meshes)
                         {
                             foreach (BasicEffect effect in mesh.Effects)
@@ -238,6 +237,11 @@ namespace WiiPlayTanksRemake.GameContent
                                 effect.View = viewMatrix;
                                 effect.Projection = projectionMatrix;
                                 effect.World = worldMatrix;
+
+                                if (mesh.Name == "polygon2")
+                                    effect.Alpha = 0.1f;
+                                else
+                                    effect.Alpha = 1f;
 
                                 effect.SetDefaultGameLighting();
                             }
@@ -318,6 +322,7 @@ namespace WiiPlayTanksRemake.GameContent
                             }
                         }
                         break;
+                        break;
                 }
             }
 
@@ -331,7 +336,7 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 foreach (BasicEffect effect in mesh.Effects)
                 {
-                    effect.Texture = GameResources.GetGameResource<Texture2D>($"Assets/textures/ingame/{context}");
+                    effect.Texture = GameResources.GetGameResource<Texture2D>($"{assetsRoot}{context}");
                 }
             }
 
@@ -341,26 +346,27 @@ namespace WiiPlayTanksRemake.GameContent
                 block_other_b,
                 block_other_c,
                 block_other_b_test,
-                ground,
+                floor_lower,
                 block_shadow_b,
-                block_shadow_d
+                block_shadow_d,
+                block_shadow_h
             }
         }
 
-        public const float TANKS_MIN_X = -317.2546f;
-        public const float TANKS_MAX_X = 317.2546f;
-        public const float TANKS_MIN_Y = -111.45461f;
-        public const float TANKS_MAX_Y = 372.32504f;
+        public const float TANKS_MIN_X = MIN_X + 6;
+        public const float TANKS_MAX_X = MAX_X - 6;
+        public const float TANKS_MIN_Y = MIN_Y + 5;
+        public const float TANKS_MAX_Y = MAX_Y - 6;
 
-        public const float MIN_X = -324;
-        public const float MAX_X = 324;
-        public const float MIN_Y = -117;
-        public const float MAX_Y = 377;
+        public const float MIN_X = -264;
+        public const float MAX_X = 264;
+        public const float MIN_Y = -72;
+        public const float MAX_Y = 334;
 
-        public const float CUBE_MIN_X = MIN_X + Cube.FULLBLOCK_SIZE / 2 - 4f;
-        public const float CUBE_MAX_X = MAX_X - Cube.FULLBLOCK_SIZE / 2 + 2f;
-        public const float CUBE_MIN_Y = MIN_Y + Cube.FULLBLOCK_SIZE / 2 - 8f;
-        public const float CUBE_MAX_Y = MAX_Y - Cube.FULLBLOCK_SIZE / 2 + 8f;
+        public const float CUBE_MIN_X = MIN_X + Block.FULL_BLOCK_SIZE / 2 - 6f;
+        public const float CUBE_MAX_X = MAX_X - Block.FULL_BLOCK_SIZE / 2;
+        public const float CUBE_MIN_Y = MIN_Y + Block.FULL_BLOCK_SIZE / 2 - 6f;
+        public const float CUBE_MAX_Y = MAX_Y - Block.FULL_BLOCK_SIZE / 2;
 
         public static Vector3 TopLeft => new(CUBE_MIN_X, 0, CUBE_MAX_Y);
         public static Vector3 TopRight => new(CUBE_MAX_X, 0, CUBE_MAX_Y);
@@ -376,20 +382,13 @@ namespace WiiPlayTanksRemake.GameContent
         {
             viewMatrix = TankGame.GameView;
             projectionMatrix = TankGame.GameProjection;
-            worldMatrix = Matrix.CreateScale(0.855f) * Matrix.CreateTranslation(0, 0, 130);
+            worldMatrix = Matrix.CreateScale(0.7f) * Matrix.CreateTranslation(0, 0, 130);
 
-            FloorRenderer.RenderFloor();
-            BoundsRenderer.RenderBounds();
+            if (ShouldRender)
+            {
+                FloorRenderer.RenderFloor();
+                BoundsRenderer.RenderBounds();
+            }
         }
-    }
-
-    public static class CollisionMap
-    {
-        // make a 2d collision map :smil:
-
-        public static Vector2 renderPosition;
-
-        public static Vector2[] trackedTankPositions;
-        public static Vector2[] trackedCubePositions;
     }
 }

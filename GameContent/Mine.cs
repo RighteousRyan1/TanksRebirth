@@ -168,8 +168,6 @@ namespace WiiPlayTanksRemake.GameContent
                     effect.View = View;
                     effect.Projection = Projection;
 
-                    effect.SetDefaultGameLighting_IngameEntities();
-
                     effect.TextureEnabled = true;
 
                     if (mesh == MineMesh)
@@ -177,20 +175,21 @@ namespace WiiPlayTanksRemake.GameContent
                         if (!tickRed)
                         {
                             effect.EmissiveColor = new(1, 1, 0);
-                            effect.SpecularColor = new(1, 1, 0);
-                            effect.FogColor = new(1, 1, 0);
+                            //effect.SpecularColor = new(1, 1, 0);
+                            //effect.FogColor = new(1, 1, 0);
                         }
                         else
                         {
                             effect.EmissiveColor = new(1, 0, 0);
-                            effect.SpecularColor = new(1, 0, 0);
-                            effect.FogColor = new(1, 0, 0);
+                            //effect.SpecularColor = new(1, 0, 0);
+                            //effect.FogColor = new(1, 0, 0);
                         }
 
                         effect.Texture = _mineTexture;
                     }
                     else
                         effect.Texture = _envTexture;
+                    effect.SetDefaultGameLighting_IngameEntities();
                 }
                 mesh.Draw();
             }
@@ -265,8 +264,13 @@ namespace WiiPlayTanksRemake.GameContent
 
             foreach (var mine in Mine.AllMines)
             {
-                if (mine is not null && Vector3.Distance(mine.position, position) <= scale * 9)
+                if (mine is not null && Vector3.Distance(mine.position, position) <= scale * 9) // magick
                     mine.Detonate();
+            }
+            foreach (var cube in Block.blocks)
+            {
+                if (cube is not null && Vector3.Distance(cube.position, position) <= scale * 9 && cube.IsDestructible)
+                    cube.Destroy();
             }
 
             if (hitMaxAlready)

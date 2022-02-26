@@ -164,7 +164,7 @@ namespace WiiPlayTanksRemake.GameContent.GameMechanics
             }
         }
 
-        public static void HandleCollisionSimple_ForBlocks(Rectangle movingBox, ref Vector2 velocity, ref Vector3 position, out CollisionDirection direction, bool setpos = true)
+        public static void HandleCollisionSimple_ForBlocks(Rectangle movingBox, ref Vector2 velocity, ref Vector3 position, out CollisionDirection direction, bool setpos = true, Func<Block, bool> exclude = null)
         {
             direction = CollisionDirection.None;
             var offset = velocity;
@@ -173,14 +173,28 @@ namespace WiiPlayTanksRemake.GameContent.GameMechanics
 
             collisionInfo.tValue = 1f;
 
-            foreach (var cube in Cube.cubes)
+            foreach (var cube in Block.blocks)
             {
                 if (cube is not null)
                 {
-                    if (IsColliding(movingBox, cube.collider2d, velocity, out var info))
+                    if (exclude is null)
                     {
-                        if (info.tValue < collisionInfo.tValue)
-                            collisionInfo = info;
+                        if (IsColliding(movingBox, cube.collider2d, velocity, out var info))
+                        {
+                            if (info.tValue < collisionInfo.tValue)
+                                collisionInfo = info;
+                        }
+                    }
+                    else
+                    {
+                        if (exclude.Invoke(cube))
+                        {
+                            if (IsColliding(movingBox, cube.collider2d, velocity, out var info))
+                            {
+                                if (info.tValue < collisionInfo.tValue)
+                                    collisionInfo = info;
+                            }
+                        }
                     }
                 }
             }

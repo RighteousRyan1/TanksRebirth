@@ -73,9 +73,10 @@ namespace WiiPlayTanksRemake.Graphics
             effect.DirectionalLight1.Enabled = true;
             effect.DirectionalLight2.Enabled = false;
 
-            effect.DirectionalLight0.Direction = new Vector3(0, -0.7f, -0.7f);
-            effect.DirectionalLight1.Direction = new Vector3(0, -0.7f, 0.7f);
-
+            //effect.DirectionalLight0.Direction = new Vector3(0, -0.7f, -0.7f);
+            //effect.DirectionalLight1.Direction = new Vector3(0, -0.7f, 0.7f);
+            effect.DirectionalLight0.Direction = Vector3.Down * 0.5f;
+            effect.DirectionalLight1.Direction = new Vector3(0, -1, -1) * 0.5f;
 
             effect.SpecularColor = new Vector3(LightPower) * (IsNight ? new Vector3(1) : LightColor.ToVector3());
 
@@ -94,10 +95,12 @@ namespace WiiPlayTanksRemake.Graphics
             effect.DirectionalLight1.Enabled = true;
             effect.DirectionalLight2.Enabled = false;
 
-            //effect.DirectionalLight0.Direction = Vector3.Down;
-            effect.DirectionalLight0.Direction = new Vector3(0, -0.6f, -0.6f);
-            effect.DirectionalLight1.Direction = new Vector3(0, -0.6f, 0.6f);
-            // effect.DirectionalLight0.Direction = new(0, -1, -1);
+            var lightingConstant = 1.5f;
+
+            effect.DirectionalLight0.Direction = new Vector3(0, -0.6f, -0.6f) * lightingConstant;
+            effect.DirectionalLight1.Direction = new Vector3(0, -0.6f, 0.6f) * lightingConstant;
+            // effect.DirectionalLight2.Direction = new Vector3(0, 0.6f, -0.6f);
+
             effect.SpecularColor = new Vector3(LightPower) * (IsNight ? new Vector3(1) : LightColor.ToVector3());
 
             effect.AmbientLightColor = LightColor.ToVector3();

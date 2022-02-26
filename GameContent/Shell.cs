@@ -120,9 +120,9 @@ namespace WiiPlayTanksRemake.GameContent
 
                 var dummyVel = Velocity2D;
 
-                Collision.HandleCollisionSimple_ForBlocks(hurtbox2d, ref dummyVel, ref position, out var dir, false);
+                Collision.HandleCollisionSimple_ForBlocks(hurtbox2d, ref dummyVel, ref position, out var dir, false, (c) => c.IsSolid);
 
-                if (lifeTime <= 5 && Cube.cubes.Any(cu => cu is not null && cu.collider.Intersects(hurtbox)))
+                if (lifeTime <= 5 && Block.blocks.Any(cu => cu is not null && cu.collider.Intersects(hurtbox) && cu.IsSolid))
                     Destroy(false);
 
                 switch (dir)

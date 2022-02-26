@@ -144,11 +144,14 @@ namespace WiiPlayTanksRemake.GameContent.UI
             GameUI.OptionsButton.Size.Y = 150;
             GameUI.QuitButton.Size.Y = 150;
 
+            Theme.volume = 0;
+
             HideAll();
         }
 
         public static void Open()
         {
+            Theme.volume = 0.5f;
             Theme.Play();
 
             for (int i = 0; i < 10; i++)

@@ -377,6 +377,52 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
 
             return value;
         }
+        public static float SoftStep(float value, float goal, float step)
+        {
+            if (value < goal)
+            {
+                value += step * (value / goal);
+
+                if (value > goal)
+                {
+                    return goal;
+                }
+            }
+            else if (value > goal)
+            {
+                value -= step * (value - goal);
+
+                if (value < goal)
+                {
+                    return goal;
+                }
+            }
+
+            return value;
+        }
+        public static float SoftStep(ref float value, float goal, float step)
+        {
+            if (value < goal)
+            {
+                value += step * (value * goal);
+
+                if (value > goal)
+                {
+                    return goal;
+                }
+            }
+            else if (value > goal)
+            {
+                value -= step * (value - goal);
+
+                if (value < goal)
+                {
+                    return goal;
+                }
+            }
+
+            return value;
+        }
 
         public static float RoughStep_Pi(float radians, float goal, float step)
         {

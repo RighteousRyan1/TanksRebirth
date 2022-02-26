@@ -21,6 +21,7 @@ using WiiPlayTanksRemake.Internals.Common.Framework.Audio;
 using WiiPlayTanksRemake.Internals.Common.Framework.Input;
 using System.IO;
 using System.Threading.Tasks;
+using WiiPlayTanksRemake.GameContent.Systems.Coordinates;
 
 namespace WiiPlayTanksRemake.GameContent
 {
@@ -76,8 +77,12 @@ namespace WiiPlayTanksRemake.GameContent
             foreach (var pu in Powerup.activePowerups)
                 pu?.Update(); 
 
-            foreach (var cube in Cube.cubes)
+            foreach (var cube in Block.blocks)
                 cube?.Update();
+
+            if (TankGame.OverheadView)
+                foreach (var sq in PlacementSquare.Placements)
+                    sq?.Update();
 
             ParticleSystem.UpdateParticles();
 
@@ -87,9 +92,9 @@ namespace WiiPlayTanksRemake.GameContent
             if (Input.KeyJustPressed(Keys.Insert))
                 DebugUtils.DebuggingEnabled = !DebugUtils.DebuggingEnabled;
 
-            if (Input.KeyJustPressed(Keys.Add))
+            if (Input.KeyJustPressed(Keys.Multiply))
                 DebugUtils.DebugLevel++;
-            if (Input.KeyJustPressed(Keys.Subtract))
+            if (Input.KeyJustPressed(Keys.Divide))
                 DebugUtils.DebugLevel--;
 
             if (MainMenu.Active)
@@ -110,7 +115,7 @@ namespace WiiPlayTanksRemake.GameContent
             }
 
             if (Input.KeyJustPressed(Keys.PageUp))
-                SpawnTankPlethorae();
+                SpawnTankPlethorae(true);
             if (Input.KeyJustPressed(Keys.PageDown))
                 SpawnMe();
 
@@ -125,45 +130,34 @@ namespace WiiPlayTanksRemake.GameContent
                 tankToSpawnTeam++;
 
             if (Input.KeyJustPressed(Keys.OemPeriod))
-                cbStack++;
+                CubeHeight++;
             if (Input.KeyJustPressed(Keys.OemComma))
-                cbStack--;
+                CubeHeight--;
+
+            if (Input.KeyJustPressed(Keys.Z))
+                BlockType--;
+            if (Input.KeyJustPressed(Keys.X))
+                BlockType++;
 
             if (Input.KeyJustPressed(Keys.Home))
-                SpawnTankAtMouse((TankTier)tankToSpawnType, (Team)tankToSpawnTeam);
-
-            if (Input.KeyJustPressed(Keys.Up))
-                placeAt.Y -= 1;
-            if (Input.KeyJustPressed(Keys.Down))
-                placeAt.Y += 1;
-            if (Input.KeyJustPressed(Keys.Left))
-                placeAt.X -= 1;
-            if (Input.KeyJustPressed(Keys.Right))
-                placeAt.X += 1;
+                SpawnTankAt(GameUtils.GetWorldPosition(GameUtils.MousePosition), (TankTier)tankToSpawnType, (Team)tankToSpawnTeam);
 
             if (Input.KeyJustPressed(Keys.OemSemicolon))
                 new Mine(null, GameUtils.GetWorldPosition(GameUtils.MousePosition), 400);
             if (Input.KeyJustPressed(Keys.OemQuotes))
                 new Shell(GameUtils.GetWorldPosition(GameUtils.MousePosition) + new Vector3(0, 11, 0), default, 0);
-            if (Input.KeyJustPressed(Keys.L))
-            {
-                new Cube(Cube.BlockType.Wood, cbStack)
-                {
-                    position = placeAt//CubeMapPosition.ConvertFromVector3(GameUtils.GetWorldPosition(GameUtils.MousePosition))//GameUtils.GetWorldPosition(GameUtils.MousePosition)
-                };
-            }
             if (Input.KeyJustPressed(Keys.End))
                 SpawnCrateAtMouse();
 
             if (Input.KeyJustPressed(Keys.I))
                 new Powerup(powerups[mode]) { position = GameUtils.GetWorldPosition(GameUtils.MousePosition) };
 
-            cbStack = MathHelper.Clamp(cbStack, 1, 5);
+            CubeHeight = MathHelper.Clamp(CubeHeight, 1, 5);
+            BlockType = MathHelper.Clamp(BlockType, 1, 3);
         }
 
-        public static CubeMapPosition placeAt;
-
-        public static int cbStack = 1;
+        public static int BlockType = 1;
+        public static int CubeHeight = 1;
         public static int tankToSpawnType;
         public static int tankToSpawnTeam;
 
@@ -172,7 +166,7 @@ namespace WiiPlayTanksRemake.GameContent
             if (!MainMenu.Active)
                 MapRenderer.RenderWorldModels();
 
-            foreach (var cube in Cube.cubes)
+            foreach (var cube in Block.blocks)
                 cube?.Render();
 
             foreach (var tank in AllPlayerTanks)
@@ -202,6 +196,10 @@ namespace WiiPlayTanksRemake.GameContent
             foreach (var powerup in Powerup.activePowerups)
                 powerup?.Render();
 
+            if (TankGame.OverheadView)
+                foreach (var sq in PlacementSquare.Placements)
+                sq?.Render();
+
             TankGame.spriteBatch.End();
             TankGame.spriteBatch.Begin(blendState: BlendState.Additive);
             ParticleSystem.RenderParticles();
@@ -227,13 +225,11 @@ namespace WiiPlayTanksRemake.GameContent
             tankToSpawnType = MathHelper.Clamp(tankToSpawnType, 1, Enum.GetValues<TankTier>().Length - 1);
             tankToSpawnTeam = MathHelper.Clamp(tankToSpawnTeam, 0, Enum.GetValues<Team>().Length - 1);
 
-            DebugUtils.DrawDebugTexture(TankGame.spriteBatch, GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), GeometryUtils.ConvertWorldToScreen(CubeMapPosition.Convert3D(placeAt), Matrix.Identity, TankGame.GameView, TankGame.GameProjection), 4, 20f, centered: true);
-
             #region TankInfo
             DebugUtils.DrawDebugString(TankGame.spriteBatch, "Spawn Tank With Info:", GameUtils.WindowTop + new Vector2(0, 8), 1, centered: true);
             DebugUtils.DrawDebugString(TankGame.spriteBatch, $"Tier: {Enum.GetNames<TankTier>()[tankToSpawnType]}", GameUtils.WindowTop + new Vector2(0, 24), 1, centered: true);
             DebugUtils.DrawDebugString(TankGame.spriteBatch, $"Team: {Enum.GetNames<Team>()[tankToSpawnTeam]}", GameUtils.WindowTop + new Vector2(0, 40), 1, centered: true);
-            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"CubeStack: {cbStack}", GameUtils.WindowBottom - new Vector2(0, 20), 1, centered: true);
+            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"CubeStack: {CubeHeight} | CubeType: {Enum.GetNames<Block.BlockType>()[BlockType - 1]}", GameUtils.WindowBottom - new Vector2(0, 20), 3, centered: true);
 
             DebugUtils.DrawDebugString(TankGame.spriteBatch, $"HighestTier: {AITank.GetHighestTierActive()}", new(10, GameUtils.WindowHeight * 0.26f), 1);
             DebugUtils.DrawDebugString(TankGame.spriteBatch, $"CurSong: {(Music.AllMusic.FirstOrDefault(music => music.volume == 0.5f) != null ? Music.AllMusic.FirstOrDefault(music => music.volume == 0.5f).Name : "N/A")}", new(10, GameUtils.WindowHeight - 100), 1);
@@ -264,80 +260,6 @@ namespace WiiPlayTanksRemake.GameContent
 
         public static PlayerTank myTank;
 
-        public static Mission ExampleMission1 = new(
-                new Tank[]
-                {
-                    //new AITank(TankTier.Ash) { Team = Team.NoTeam },
-                    //new AITank(TankTier.Marine) { Team = Team.NoTeam },
-                    //new AITank(TankTier.Pink) { Team = Team.NoTeam },
-                    //new AITank(TankTier.Yellow) { Team = Team.NoTeam }
-                },
-                new Vector3[]
-                {
-                    new CubeMapPosition(4, 4),
-                    new CubeMapPosition(CubeMapPosition.MAP_WIDTH - 4, 4),
-                    new CubeMapPosition(CubeMapPosition.MAP_WIDTH - 4, CubeMapPosition.MAP_HEIGHT - 4),
-                    new CubeMapPosition(4, CubeMapPosition.MAP_HEIGHT - 4)
-                },
-                new float[]
-                {
-                    2f,//GeometryUtils.GetQuarterRotation(1),
-                    GeometryUtils.GetQuarterRotation(0),
-                    GeometryUtils.GetQuarterRotation(3),
-                    GeometryUtils.GetQuarterRotation(2)
-                },
-                new Cube[]
-                {
-                    new(Cube.BlockType.Wood, 1),
-                    new(Cube.BlockType.Wood, 1),
-                    new(Cube.BlockType.Wood, 1),
-                    new(Cube.BlockType.Wood, 1),
-                    new(Cube.BlockType.Wood, 1),
-                    new(Cube.BlockType.Wood, 1),
-                    new(Cube.BlockType.Wood, 1),
-                    new(Cube.BlockType.Wood, 1),
-                    new(Cube.BlockType.Wood, 1),
-
-                    new(Cube.BlockType.Wood, 1),
-                    new(Cube.BlockType.Wood, 1),
-                    new(Cube.BlockType.Wood, 1),
-                    new(Cube.BlockType.Wood, 1),
-                    new(Cube.BlockType.Wood, 1),
-                    new(Cube.BlockType.Wood, 1),
-                    new(Cube.BlockType.Wood, 1),
-                    new(Cube.BlockType.Wood, 1),
-                    new(Cube.BlockType.Wood, 1),
-
-                    new(Cube.BlockType.Wood, 1),
-                    new(Cube.BlockType.Wood, 1),
-                },
-                new CubeMapPosition[]
-                {
-                    new(5, 4),
-                    new(5, 5),
-                    new(5, 6),
-                    new(5, 7),
-                    new(5, 8),
-                    new(5, 9),
-                    new(5, 10),
-                    new(5, 11),
-                    new(5, 12),
-                    new(5, 13),
-
-                    new(20, 4),
-                    new(20, 5),
-                    new(20, 6),
-                    new(20, 7),
-                    new(20, 8),
-                    new(20, 9),
-                    new(20, 10),
-                    new(20, 11),
-                    new(20, 12),
-                    new(20, 13),
-
-                    new(20, 6),
-                    new(20, 7),
-                });
         // fix shitty mission init (innit?)
 
         private static readonly PowerupTemplate[] powerups =
@@ -368,9 +290,9 @@ namespace WiiPlayTanksRemake.GameContent
             DebugUtils.DebuggingEnabled = false;
             MapRenderer.InitializeRenderers();
 
-            VanillaCampaign.LoadMission(ExampleMission1);
-
             LoadTnkScene();
+
+            // load mission?
 
             var brighter = new Lighting.DayState()
             {
@@ -383,6 +305,8 @@ namespace WiiPlayTanksRemake.GameContent
             MainMenu.isLoadingScene = false;
 
             BeginIntroSequence();
+
+            PlacementSquare.InitializeLevelEditorSquares();
         }
 
         public static void SetupGraphics()
@@ -486,11 +410,9 @@ namespace WiiPlayTanksRemake.GameContent
                 Dead = false
             };
         }
-        public static AITank SpawnTankAtMouse(TankTier tier, Team team)
+        public static AITank SpawnTankAt(Vector3 position, TankTier tier, Team team)
         {
             var rot = GeometryUtils.GetPiRandom();
-
-            var pos = GameUtils.GetWorldPosition(GameUtils.MousePosition);
 
             var x = new AITank(tier)
             {
@@ -498,27 +420,25 @@ namespace WiiPlayTanksRemake.GameContent
                 targetTankRotation = rot - MathHelper.Pi,
                 TurretRotation = rot + MathHelper.Pi,
                 Team = team,
-                position = pos,
+                position = position,
                 Dead = false,
             };
             return x;
         }
-        public static void SpawnTankPlethorae()
+        public static void SpawnTankPlethorae(bool useCurTank = false)
         {
             for (int i = 0; i < 5; i++)
             {
-                var random = new CubeMapPosition(new Random().Next(0, 27), new Random().Next(0, 20));
+                var random = new CubeMapPosition(new Random().Next(0, 23), new Random().Next(0, 18));
                 var rot = GeometryUtils.GetPiRandom();
-                var t = new AITank(AITank.PICK_ANY_THAT_ARE_IMPLEMENTED())
+                var t = new AITank(useCurTank ? (TankTier)tankToSpawnType : AITank.PICK_ANY_THAT_ARE_IMPLEMENTED())
                 {
                     TankRotation = rot,
                     TurretRotation = rot,
                     position = random,
                     Dead = false,
-                    Team = Team.NoTeam
+                    Team = useCurTank ? (Team)tankToSpawnTeam : Team.NoTeam
                 };
-
-                // t.Team = (Team)new Random().Next(1, Enum.GetNames<Team>().Length);
             }
         }
 

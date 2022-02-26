@@ -182,7 +182,12 @@ namespace WiiPlayTanksRemake.GameContent
 
             position.X = MathHelper.Clamp(position.X, MapRenderer.TANKS_MIN_X, MapRenderer.TANKS_MAX_X);
             position.Z = MathHelper.Clamp(position.Z, MapRenderer.TANKS_MIN_Y, MapRenderer.TANKS_MAX_Y);
-                
+
+            CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation);
+            Model.Root.Transform = World;
+
+            Model.CopyAbsoluteBoneTransformsTo(boneTransforms); // a
+
             oldPosition = position;
         }
 
@@ -307,6 +312,16 @@ namespace WiiPlayTanksRemake.GameContent
                 if (rotationMet)
                     velocity.X += Acceleration;
             }
+
+            TankRotation %= MathHelper.Tau;
+
+            if (targetTnkRotation - TankRotation >= MathHelper.PiOver2)
+                TankRotation += MathHelper.Pi;
+            else if (targetTnkRotation - TankRotation <= -MathHelper.PiOver2)
+                TankRotation -= MathHelper.Pi;
+
+            if (playerControl_isBindPressed)
+                GameHandler.ClientLog.Write(targetTnkRotation - TankRotation, LogType.Info);
         }
 
         private void UpdateCollision()
@@ -325,7 +340,7 @@ namespace WiiPlayTanksRemake.GameContent
                 }
             }
 
-            foreach (var c in Cube.cubes)
+            foreach (var c in Block.blocks)
             {
                 if (c is not null)
                 {
@@ -447,7 +462,7 @@ namespace WiiPlayTanksRemake.GameContent
                 var pathHitbox = new Rectangle((int)pathPos.X - 3, (int)pathPos.Y - 3, 6, 6);
 
                 // Why is velocity passed by reference here lol
-                Collision.HandleCollisionSimple_ForBlocks(pathHitbox, ref pathDir, ref dummyPos, out var dir, false);
+                Collision.HandleCollisionSimple_ForBlocks(pathHitbox, ref pathDir, ref dummyPos, out var dir, false, (c) => c.IsSolid);
 
 
                 switch (dir)
@@ -528,10 +543,6 @@ namespace WiiPlayTanksRemake.GameContent
 
         private void RenderModel()
         {
-            CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation);
-            Model.Root.Transform = World;
-
-            Model.CopyAbsoluteBoneTransformsTo(boneTransforms); // a
 
             foreach (ModelMesh mesh in Model.Meshes)
             {
@@ -581,10 +592,6 @@ namespace WiiPlayTanksRemake.GameContent
             var info = new string[]
             {
                 $"Team: {Team}",
-                $"Preturbed: {preterbedVelocity}",
-                $"Actual / Target: {TankRotation} / {preterbedVelocity.FlattenZ().ToRotation()}",
-                $"AnyCubeTouch: {Cube.cubes.Any(c => c is not null && c.collider.Intersects(CollisionBox))}",
-                $"AnyCubeTouch2D: {Cube.cubes.Any(c => c is not null && c.collider2d.Intersects(CollisionBox2D))}",
                 $"OwnedShellCount: {OwnedShellCount}"
             };
 

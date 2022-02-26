@@ -29,6 +29,7 @@ using FontStashSharp;
 using WiiPlayTanksRemake.Internals.Common.GameUI;
 using BulletSharp;
 using WiiPlayTanksRemake.Internals.Common.Framework.Graphics;
+using System.Threading;
 
 namespace WiiPlayTanksRemake
 {
@@ -317,14 +318,18 @@ namespace WiiPlayTanksRemake
             s.Stop();
         }
 
-        Vector2 rotVec;
+        Vector2 rotVec = new(0, MathHelper.PiOver4);
 
-        float zoom = 2.4f;
+        const float DEFAULT_ZOOM = 2.925f;
+        float zoom = 1f;
 
         Vector2 off;
 
         bool fps;
 
+        public static bool OverheadView = false;
+
+        int transitionTimer;
         protected override void Update(GameTime gameTime)
         {
             try
@@ -340,29 +345,59 @@ namespace WiiPlayTanksRemake
                     if (Input.MouseRight)
                         rotVec += GameUtils.GetMouseVelocity(GameUtils.WindowCenter) / 500;
 
-                    if (Input.CurrentKeySnapshot.IsKeyDown(Keys.NumPad8))
+                    if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Add))
                         zoom += 0.01f;
-                    if (Input.CurrentKeySnapshot.IsKeyDown(Keys.NumPad2))
+                    if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Subtract))
                         zoom -= 0.01f;
                     if (Input.KeyJustPressed(Keys.Q))
                         fps = !fps;
+
+                    if (Input.KeyJustPressed(Keys.J))
+                    {
+                        transitionTimer = 100;
+                        OverheadView = !OverheadView;
+                    }
 
                     if (Input.MouseMiddle)
                     {
                         off += GameUtils.GetMouseVelocity(GameUtils.WindowCenter);
                     }
 
-                    GameUtils.GetMouseVelocity(GameUtils.WindowCenter);
-
-                    // why do i need to call this????
-
 
                     IsFixedTimeStep = !Input.CurrentKeySnapshot.IsKeyDown(Keys.Tab);
 
                     if (!fps)
                     {
-                        //GameView = Matrix.CreateScale(1f) * Matrix.CreateLookAt(new(0f, 0, 250f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(MathHelper.PiOver2 /* 0.75f */ + rotVec.Y) * Matrix.CreateRotationY(rotVec.X) * Matrix.CreateTranslation(off.X, -off.Y, 0);
-                        GameView = Matrix.CreateScale(zoom) * Matrix.CreateLookAt(new(0f, 0, 250f), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(0.75f + rotVec.Y) * Matrix.CreateRotationY(rotVec.X) * Matrix.CreateTranslation(off.X, -off.Y, 0);
+
+                        if (transitionTimer > 0)
+                        {
+                            transitionTimer--;
+                            if (OverheadView)
+                            {
+                                GameUtils.SoftStep(ref rotVec.Y, MathHelper.PiOver2, 0.08f);
+                                GameUtils.SoftStep(ref zoom, 0.7f, 0.08f);
+                                GameUtils.RoughStep(ref off.Y, 82f, 2f);
+                            }
+                            else
+                            {
+                                GameUtils.SoftStep(ref rotVec.Y, MathHelper.PiOver4, 0.08f);
+                                GameUtils.SoftStep(ref zoom, 1f, 0.08f);
+                                GameUtils.RoughStep(ref off.Y, 0f, 2f);
+                            }
+                        }
+                        else
+                        {
+                            GameUtils.GetMouseVelocity(GameUtils.WindowCenter);
+
+                            // why do i need to call this????
+                        }
+                        GameView =
+                            Matrix.CreateScale(DEFAULT_ZOOM * zoom) *
+                            Matrix.CreateLookAt(new(0f, 0, 350f), Vector3.Zero, Vector3.Up) *
+                            Matrix.CreateRotationX(rotVec.Y) *
+                            Matrix.CreateRotationY(rotVec.X) *
+                            Matrix.CreateTranslation(off.X, -off.Y, 0);
+
                         CalculateProjection();
                     }
                     else
@@ -376,7 +411,7 @@ namespace WiiPlayTanksRemake
 
                             GameView = Matrix.CreateLookAt(pos,
                                 pos + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-x.TurretRotation).Expand_Z()
-                                , Vector3.Up) * Matrix.CreateRotationX(rotVec.Y) * Matrix.CreateRotationY(rotVec.X) * Matrix.CreateTranslation(0, -20, -40);
+                                , Vector3.Up) * Matrix.CreateRotationX(rotVec.Y - MathHelper.PiOver4) * Matrix.CreateRotationY(rotVec.X) * Matrix.CreateTranslation(0, -20, -40);
 
                             GameProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000);
                         }
@@ -398,6 +433,7 @@ namespace WiiPlayTanksRemake
 
                 UpdateStopwatch.Stop();
 
+
                 LogicFPS = Math.Round(1f / gameTime.ElapsedGameTime.TotalSeconds);
             }
             catch (Exception e)
@@ -405,12 +441,6 @@ namespace WiiPlayTanksRemake
                 GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
                 throw;
             }
-        }
-
-        private static void UpdateGameSystems()
-        {
-            foreach (var type in systems)
-                type?.Update();
         }
 
         public void FixedUpdate(GameTime gameTime)
@@ -423,7 +453,8 @@ namespace WiiPlayTanksRemake
 
             if (IsActive && !GameUI.Paused)
             {
-                UpdateGameSystems();
+                foreach (var type in systems)
+                    type?.Update();
 
                 GameHandler.Update();
 

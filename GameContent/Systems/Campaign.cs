@@ -1,9 +1,12 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using WiiPlayTanksRemake.Enums;
+using WiiPlayTanksRemake.GameContent.Systems.Coordinates;
 using WiiPlayTanksRemake.Internals;
 
 namespace WiiPlayTanksRemake.GameContent.Systems
@@ -11,6 +14,34 @@ namespace WiiPlayTanksRemake.GameContent.Systems
     /// <summary>A campaign for players to play on with <see cref="AITank"/>s, or even <see cref="PlayerTank"/>s if supported.</summary>
     public class Campaign
     {
+        public static void LoadFromFolder(string campaignName)
+        {
+            var root = Path.Combine(TankGame.SaveDirectory, "Campaigns");
+            var path = Path.Combine(root, campaignName);
+            Directory.CreateDirectory(root);
+            if (!Directory.Exists(path))
+            {
+                GameHandler.ClientLog.Write($"Could not find a campaign folder with name {campaignName}. Aborting folder load...", LogType.Warn);
+                return;
+            }
+        }
+        public static void SaveMission(string campaignName)
+        {
+            var root = Path.Combine(TankGame.SaveDirectory, "Campaigns");
+            var path = Path.Combine(root, campaignName);
+            Directory.CreateDirectory(root);
+            if (!Directory.Exists(path))
+            {
+                GameHandler.ClientLog.Write($"Could not find a campaign folder with name {campaignName}. Aborting folder load...", LogType.Warn);
+                return;
+            }
+        }
+        // TODO: for cuno since he likes I/O. (maybe ref https://github.com/RighteousRyan1/BaselessJumping/blob/master/GameContent/Stage.cs#L34 if you want)
+
+        public static void LoadMissionFromFile(string missionName)
+        {
+
+        }
         public Mission[] CachedMissions { get; set; } = new Mission[100];
         public Mission CurrentMission { get; private set; }
 
@@ -57,24 +88,27 @@ namespace WiiPlayTanksRemake.GameContent.Systems
 
             for (int i = 0; i < CurrentMission.Tanks.Length; i++)
             {
-                var tnk = CurrentMission.Tanks[i];
+                var tier = CurrentMission.Tanks[i];
 
-                tnk.position = CurrentMission.SpawnPositions[i];
-                tnk.TankRotation = CurrentMission.SpawnOrientations[i];
-                if (tnk is AITank ai)
-                    ai.targetTankRotation = CurrentMission.SpawnOrientations[i] + MathHelper.Pi;
-                tnk.TurretRotation = -CurrentMission.SpawnOrientations[i];
-                tnk.Dead = false;
+                var tank = new AITank(tier);
 
-                GameHandler.AllTanks[i] = tnk;
+                tank.position = CurrentMission.SpawnPositions[i];
+                tank.TankRotation = CurrentMission.SpawnOrientations[i];
+                //if (tier is AITank ai) // redundant for now.
+                    //ai.targetTankRotation = CurrentMission.SpawnOrientations[i] + MathHelper.Pi;
+                tank.targetTankRotation = CurrentMission.SpawnOrientations[i] + MathHelper.Pi;
+                tank.TurretRotation = -CurrentMission.SpawnOrientations[i];
+                tank.Dead = false;
+
+                GameHandler.AllTanks[i] = tank;
 
                 // GameHandler.ClientLog.Write($"loaded: {(tnk as AITank).tier}", LogType.Debug);
             }
 
             if (CurrentMission.Cubes.Length > 0)
             {
-                for (int a = 0; a < Cube.cubes.Length; a++)
-                    Cube.cubes[a] = null;
+                for (int a = 0; a < Block.blocks.Length; a++)
+                    Block.blocks[a] = null;
 
                 for (int b = 0; b < CurrentMission.Cubes.Length; b++)
                 {
@@ -83,7 +117,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems
                     cube.position = CurrentMission.CubePositions[b];
 
 
-                    Cube.cubes[b] = cube;
+                    Block.blocks[b] = cube;
                 }
             }
             GameHandler.ClientLog.Write($"Loaded mission '{CurrentMission.Name}' with {CurrentMission.Tanks.Length} tanks and {CurrentMission.Cubes.Length} obstacles.", LogType.Info);
@@ -92,9 +126,14 @@ namespace WiiPlayTanksRemake.GameContent.Systems
 
     public struct Mission
     {
+        /* properties to add:
+         * tank teams
+         * player tank array
+         */
+
         public string Name { get; set; }
         /// <summary>The <see cref="Tank"/>s that will be spawned.</summary>
-        public Tank[] Tanks { get; }
+        public TankTier[] Tanks { get; }
 
         /// <summary>The position of the spawned <see cref="Tank"/>s.</summary>
         public Vector3[] SpawnPositions { get; }
@@ -103,22 +142,22 @@ namespace WiiPlayTanksRemake.GameContent.Systems
         public float[] SpawnOrientations { get; }
 
         /// <summary>The obstacles in the <see cref="Mission"/>.</summary>
-        public Cube[] Cubes { get; }
+        public Block[] Cubes { get; }
 
         public CubeMapPosition[] CubePositions { get; }
 
-        public Mission(Tank[] tanks, Vector3[] spawnPositions, float[] spawnOrientations, Cube[] obstacles, CubeMapPosition[] cubePositions)
+        public Mission(TankTier[] tanks, Vector3[] spawnPositions, float[] spawnOrientations, Block[] obstacles, CubeMapPosition[] cubePositions)
         {
             Name = "N/A";
 
             sbyte cBlue = 0;
             sbyte cRed = 0;
 
-            if (tanks.Any(tnk => tnk is PlayerTank && (tnk as PlayerTank).PlayerType == Enums.PlayerType.Blue))
+            /*if (tanks.Any(tnk => tnk is PlayerTank && (tnk as PlayerTank).PlayerType == Enums.PlayerType.Blue))
                 cBlue++;
 
             if (tanks.Any(tnk => tnk is PlayerTank && (tnk as PlayerTank).PlayerType == Enums.PlayerType.Red))
-                cRed++;
+                cRed++;*/
 
             if (cBlue > 1 || cRed > 1)
                 GameHandler.ClientLog.Write("Only one color allowed per-player.", LogType.Error, true);
