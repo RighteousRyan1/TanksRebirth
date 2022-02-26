@@ -321,7 +321,8 @@ namespace WiiPlayTanksRemake
             s.Stop();
         }
 
-        Vector2 rotVec = new(0, MathHelper.PiOver4);
+        const float DEFAULT_ORTHOGRAPHIC_ANGLE = 0.75f;
+        Vector2 rotVec = new(0, DEFAULT_ORTHOGRAPHIC_ANGLE);
 
         const float DEFAULT_ZOOM = 2.925f;
         float zoom = 1f;
@@ -383,7 +384,7 @@ namespace WiiPlayTanksRemake
                             }
                             else
                             {
-                                GameUtils.SoftStep(ref rotVec.Y, MathHelper.PiOver4, 0.08f);
+                                GameUtils.SoftStep(ref rotVec.Y, DEFAULT_ORTHOGRAPHIC_ANGLE, 0.08f);
                                 GameUtils.SoftStep(ref zoom, 1f, 0.08f);
                                 GameUtils.RoughStep(ref off.Y, 0f, 2f);
                             }

@@ -224,7 +224,7 @@ namespace WiiPlayTanksRemake.GameContent
         }
         public void Render()
         {
-            World = Matrix.CreateScale(0.9f) * Matrix.CreateTranslation(location);
+            World = Matrix.CreateScale(0.7f) * Matrix.CreateTranslation(location);
             View = TankGame.GameView;
             Projection = TankGame.GameProjection;
 

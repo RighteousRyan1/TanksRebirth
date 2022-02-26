@@ -76,6 +76,8 @@ namespace WiiPlayTanksRemake.GameContent
                 _ => null
             };
 
+            this.height = MathHelper.Clamp(height, 0, 7); // if 0, it will be a hole.
+
             switch (type)
             {
                 case BlockType.Wood:
@@ -96,8 +98,6 @@ namespace WiiPlayTanksRemake.GameContent
                     AffectedByOffset = false;
                     break;
             }
-
-            this.height = MathHelper.Clamp(height, 0, 7); // if 0, it will be a hole.
 
             Type = type;
 
