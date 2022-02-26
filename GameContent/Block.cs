@@ -190,7 +190,7 @@ namespace WiiPlayTanksRemake.GameContent
                         offset = new(0, newFullSize - (FULL_BLOCK_SIZE + SLAB_SIZE), 0);
                         break;
                     case 3:
-                        offset = new(0, newFullSize - (FULL_BLOCK_SIZE + SLAB_SIZE * 2), 0);
+                        offset = new(0, newFullSize - (FULL_BLOCK_SIZE + SLAB_SIZE * 3), 0);
                         break;
                     case 4:
                         offset = new(0, newFullSize - (FULL_BLOCK_SIZE * 2 + SLAB_SIZE), 0);
@@ -199,7 +199,7 @@ namespace WiiPlayTanksRemake.GameContent
                         offset = new(0, newFullSize - (FULL_BLOCK_SIZE * 2 + SLAB_SIZE * 2), 0);
                         break;
                     case 6:
-                        offset = new(0, newFullSize - (FULL_BLOCK_SIZE * 2 + SLAB_SIZE * 3), 0);
+                        offset = new(0, newFullSize - (FULL_BLOCK_SIZE * 2 + SLAB_SIZE * 4), 0);
                         break;
                     case 7:
                         offset = new(0, newFullSize - (FULL_BLOCK_SIZE * 3 + SLAB_SIZE * 2), 0);
