@@ -103,7 +103,7 @@ namespace WiiPlayTanksRemake.GameContent
             if (!TankGame.OverheadView && _wasOverhead)
                 RestartMission(null);
 
-            if (TankGame.OverheadView)
+            if (TankGame.OverheadView || MainMenu.Active)
             {
                 InMission = false;
                 timeUntilTankFunction = 180;
