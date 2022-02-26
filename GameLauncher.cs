@@ -1,8 +1,6 @@
 using Microsoft.Xna.Framework;
 using System;
 using WiiPlayTanksRemake;
-using LiteNetLib;
-using LiteNetLib.Utils;
 
 namespace WiiPlayTanksRemake
 {
@@ -21,11 +19,6 @@ namespace WiiPlayTanksRemake
         {
             if (AutoLaunch)
                 LaunchGame();
-        }
-
-        static void tst()
-        {
-
         }
     }
 }
