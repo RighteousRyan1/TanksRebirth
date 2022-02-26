@@ -410,7 +410,7 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 TankRotation = rot,
                 targetTankRotation = rot - MathHelper.Pi,
-                TurretRotation = rot + MathHelper.Pi,
+                TurretRotation = -rot,
                 Team = team,
                 position = position,
                 Dead = false,
