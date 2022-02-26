@@ -147,7 +147,7 @@ namespace WiiPlayTanksRemake.GameContent
                 BlockType++;
 
             if (Input.KeyJustPressed(Keys.Home))
-                SpawnTankAt(/*GameUtils.GetWorldPosition(GameUtils.MousePosition)*/PlacementSquare.CurrentlyHovered.Position, (TankTier)tankToSpawnType, (Team)tankToSpawnTeam);
+                SpawnTankAt(!TankGame.OverheadView ? GameUtils.GetWorldPosition(GameUtils.MousePosition) : PlacementSquare.CurrentlyHovered.Position, (TankTier)tankToSpawnType, (Team)tankToSpawnTeam);
 
             if (Input.KeyJustPressed(Keys.OemSemicolon))
                 new Mine(null, GameUtils.GetWorldPosition(GameUtils.MousePosition), 400);
