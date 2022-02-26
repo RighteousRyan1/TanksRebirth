@@ -86,9 +86,9 @@ namespace WiiPlayTanksRemake.GameContent
             public float ShootChance { get; set; } = 1f;
 
             /// <summary>How far ahead of this tank (in the direction the tank is going) that it is aware of obstacles and navigates around them.</summary>
-            public int CubeWarinessDistance { get; set; } = 60;
+            public int BlockWarinessDistance { get; set; } = 60;
             /// <summary>How often this tank reads the obstacles around it and navigates around them.</summary>
-            public int CubeReadTime { get; set; } = 30;
+            public int BlockReadTime { get; set; } = 30;
             /// <summary>How far this tank must be from a teammate before it can lay a mine or fire a bullet.</summary>
             public float TeammateTankWariness { get; set; } = 50f;
             /// <summary>Whether or not this tank tries to find calculations all around it. This is not recommended for mobile tanks.</summary>
@@ -710,6 +710,8 @@ namespace WiiPlayTanksRemake.GameContent
 
                     AiParams.MoveFromMineTime = 0;
                     AiParams.MinePlacementChance = 0;
+
+                    AiParams.BlockWarinessDistance = 30;
                     break;
                 case TankTier.Citrine:
                     AiParams.MeanderAngle = 0.7f;
@@ -1800,7 +1802,7 @@ namespace WiiPlayTanksRemake.GameContent
                             tanksNearMe.Add(tank);
 
                     foreach (var cube in Block.blocks)
-                        if (cube is not null && Vector3.Distance(position, cube.position) < AiParams.CubeWarinessDistance)
+                        if (cube is not null && Vector3.Distance(position, cube.position) < AiParams.BlockWarinessDistance)
                             cubesNearMe.Add(cube);
 
                     #region TurretHandle
@@ -1900,7 +1902,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                         #region CubeNav
 
-                        isCubeInWay = IsObstacleInWay(AiParams.CubeWarinessDistance, Vector2.UnitY.RotatedByRadians(-targetTankRotation), out var travelPath);
+                        isCubeInWay = IsObstacleInWay(AiParams.BlockWarinessDistance, Vector2.UnitY.RotatedByRadians(-targetTankRotation), out var travelPath);
 
                         if (isCubeInWay && Behaviors[2].IsModOf(AiParams.MeanderFrequency / 3))
                         {
@@ -2123,7 +2125,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                 if (!Stationary)
                 {
-                    IsObstacleInWay(AiParams.CubeWarinessDistance, Vector2.UnitY.RotatedByRadians(-targetTankRotation), out var travelPath, true);
+                    IsObstacleInWay(AiParams.BlockWarinessDistance, Vector2.UnitY.RotatedByRadians(-targetTankRotation), out var travelPath, true);
                     DebugUtils.DrawDebugString(TankGame.spriteBatch, "D", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(travelPath.X, 11, travelPath.Y), View, Projection), 1, centered: true);
                 }
             }

@@ -32,6 +32,7 @@ namespace WiiPlayTanksRemake.GameContent
         public Vector3 position;
 
         public Model model;
+        public Model shadowModel;
 
         public Matrix World;
         public Matrix View;
@@ -63,6 +64,8 @@ namespace WiiPlayTanksRemake.GameContent
 
         public bool AffectedByOffset { get; set; } = true;
 
+        private bool IsAlternateModel => height == 3 || height == 6;
+
         public Block(BlockType type, int height)
         {
             meshTexture = type switch
@@ -77,12 +80,14 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 case BlockType.Wood:
                     meshTexture = GameResources.GetGameResource<Texture2D>($"{MapRenderer.assetsRoot}block.1");
-                    model = TankGame.CubeModel;
+                    model = IsAlternateModel ? TankGame.CubeModelAlt : TankGame.CubeModel;
+                    shadowModel = GameResources.GetGameResource<Model>($"Assets/toy/cube_shadow");
                     break;
                 case BlockType.Cork:
                     IsDestructible = true;
                     meshTexture = GameResources.GetGameResource<Texture2D>($"{MapRenderer.assetsRoot}block.2");
-                    model = TankGame.CubeModel;
+                    model = IsAlternateModel ? TankGame.CubeModelAlt : TankGame.CubeModel;
+                    shadowModel = GameResources.GetGameResource<Model>($"Assets/toy/cube_shadow");
                     break;
                 case BlockType.Hole:
                     model = GameResources.GetGameResource<Model>("Assets/check");
@@ -135,7 +140,6 @@ namespace WiiPlayTanksRemake.GameContent
                     effect.View = TankGame.GameView;
                     effect.World = World;
                     effect.Projection = TankGame.GameProjection;
-                    effect.EnableDefaultLighting();
 
                     effect.TextureEnabled = true;
                     effect.Texture = meshTexture;
@@ -149,6 +153,23 @@ namespace WiiPlayTanksRemake.GameContent
 
                 mesh.Draw();
             }
+
+            if (shadowModel != null)
+            {
+                foreach (BasicEffect effect in shadowModel.Meshes[0].Effects)
+                {
+                    effect.TextureEnabled = true;
+                    effect.Texture = GameResources.GetGameResource<Texture2D>($"Assets/toy/cube_shadow_tex");
+
+                    effect.View = TankGame.GameView;
+                    effect.World = Matrix.CreateScale(0.65f) * Matrix.CreateTranslation(position);
+                    effect.Projection = TankGame.GameProjection;
+                    effect.SetDefaultGameLighting_IngameEntities();
+
+                    effect.Alpha = 0.4f;
+                }
+                shadowModel.Meshes[0].Draw();
+            }
             // TankGame.spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), collider2d, Color.White * 0.75f);
         }
         public void Update()
@@ -159,23 +180,29 @@ namespace WiiPlayTanksRemake.GameContent
 
             if (AffectedByOffset)
             {
+                var newFullSize = FULL_SIZE;
                 switch (height)
                 {
-                    case 0:
-                        offset = new(0, FULL_SIZE, 0);
-                        // this thing is a hole, therefore you're mom; work on later
-                        break;
                     case 1:
-                        offset = new(0, FULL_SIZE - FULL_BLOCK_SIZE, 0);
+                        offset = new(0, newFullSize - FULL_BLOCK_SIZE, 0);
                         break;
                     case 2:
-                        offset = new(0, FULL_SIZE - (FULL_BLOCK_SIZE + SLAB_SIZE), 0);
+                        offset = new(0, newFullSize - (FULL_BLOCK_SIZE + SLAB_SIZE), 0);
                         break;
                     case 3:
-                        offset = new(0, FULL_SIZE - (FULL_BLOCK_SIZE * 2 + SLAB_SIZE), 0);
+                        offset = new(0, newFullSize - (FULL_BLOCK_SIZE + SLAB_SIZE * 2), 0);
                         break;
                     case 4:
-                        offset = new(0, FULL_SIZE - (FULL_BLOCK_SIZE * 2 + SLAB_SIZE * 2), 0);
+                        offset = new(0, newFullSize - (FULL_BLOCK_SIZE * 2 + SLAB_SIZE), 0);
+                        break;
+                    case 5:
+                        offset = new(0, newFullSize - (FULL_BLOCK_SIZE * 2 + SLAB_SIZE * 2), 0);
+                        break;
+                    case 6:
+                        offset = new(0, newFullSize - (FULL_BLOCK_SIZE * 2 + SLAB_SIZE * 3), 0);
+                        break;
+                    case 7:
+                        offset = new(0, newFullSize - (FULL_BLOCK_SIZE * 3 + SLAB_SIZE * 2), 0);
                         break;
                 }
             }

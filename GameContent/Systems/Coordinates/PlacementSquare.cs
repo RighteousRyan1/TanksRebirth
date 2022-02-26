@@ -15,11 +15,13 @@ namespace WiiPlayTanksRemake.GameContent.Systems.Coordinates
 {
     public class PlacementSquare
     {
+        public static PlacementSquare CurrentlyHovered;
+
         public static bool displayHeights = true;
 
         internal static List<PlacementSquare> Placements = new();
 
-        private Vector3 _position;
+        public Vector3 Position { get; private set; }
 
         private BoundingBox _box;
 
@@ -33,7 +35,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems.Coordinates
 
         public PlacementSquare(Vector3 position, float dimensions)
         {
-            _position = position;
+            Position = position;
             _box = new(position - new Vector3(dimensions / 2, 0, dimensions / 2), position + new Vector3(dimensions / 2, 0, dimensions / 2));
 
             _model = GameResources.GetGameResource<Model>("Assets/check");
@@ -56,7 +58,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems.Coordinates
                                 ChatSystem.SendMessage("Added!", Color.Red);
                                 var cube = new Block((Block.BlockType)GameHandler.BlockType, GameHandler.CubeHeight)
                                 {
-                                    position = place._position
+                                    position = place.Position
                                 };
                                 place._cubeId = cube.worldId;
                             }
@@ -74,8 +76,12 @@ namespace WiiPlayTanksRemake.GameContent.Systems.Coordinates
         // TODO: need a sound for placement
         public void Update()
         {
-            if (IsHovered && Input.CanDetectClick())
-                _onClick?.Invoke(this);
+            if (IsHovered)
+            {
+                CurrentlyHovered = this;
+                if (Input.CanDetectClick())
+                    _onClick?.Invoke(this);
+            }
         }
 
         public void Render()
@@ -84,7 +90,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems.Coordinates
             {
                 foreach (BasicEffect effect in mesh.Effects)
                 {
-                    effect.World = Matrix.CreateScale(0.768f) * Matrix.CreateTranslation(_position +  new Vector3(0, 0.1f, 0));
+                    effect.World = Matrix.CreateScale(0.768f) * Matrix.CreateTranslation(Position +  new Vector3(0, 0.1f, 0));
                     effect.View = TankGame.GameView;
                     effect.Projection = TankGame.GameProjection;
 

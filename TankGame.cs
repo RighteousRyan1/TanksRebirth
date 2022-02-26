@@ -116,6 +116,8 @@ namespace WiiPlayTanksRemake
         public static Model TankModel_Player;
         public static Model TankModel_Enemy;
         public static Model CubeModel;
+        public static Model CubeModelAlt;
+
         public static Texture2D MagicPixel;
 
         public static TankGame Instance { get; private set; }
@@ -262,6 +264,7 @@ namespace WiiPlayTanksRemake
             var s = Stopwatch.StartNew();
 
             CubeModel = GameResources.GetGameResource<Model>("Assets/toy/cube_stack");
+            CubeModelAlt = GameResources.GetGameResource<Model>("Assets/toy/cube_stack_alt");
 
             TankModel_Enemy = GameResources.GetGameResource<Model>("Assets/tank_e");
 

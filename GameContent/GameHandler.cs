@@ -29,7 +29,7 @@ namespace WiiPlayTanksRemake.GameContent
     {
 
 
-        public static int timeUntilTankFunction;
+        public static int timeUntilTankFunction = 180;
 
         public const int MAX_AI_TANKS = 1000;
         public const int MAX_PLAYERS = 100;
@@ -48,6 +48,9 @@ namespace WiiPlayTanksRemake.GameContent
         public delegate void MissionStartEvent();
 
         public static event MissionStartEvent OnMissionStart;
+
+
+        private static bool _wasOverhead;
 
         internal static void Update()
         {
@@ -97,13 +100,17 @@ namespace WiiPlayTanksRemake.GameContent
             if (Input.KeyJustPressed(Keys.Divide))
                 DebugUtils.DebugLevel--;
 
-            if (MainMenu.Active)
+            if (!TankGame.OverheadView && _wasOverhead)
+                RestartMission(null);
+
+            if (TankGame.OverheadView)
+            {
+                InMission = false;
                 timeUntilTankFunction = 180;
+            }
 
             if (timeUntilTankFunction > 0)
-            {
                 timeUntilTankFunction--;
-            }
             else
             {
                 if (!InMission)
@@ -140,7 +147,7 @@ namespace WiiPlayTanksRemake.GameContent
                 BlockType++;
 
             if (Input.KeyJustPressed(Keys.Home))
-                SpawnTankAt(GameUtils.GetWorldPosition(GameUtils.MousePosition), (TankTier)tankToSpawnType, (Team)tankToSpawnTeam);
+                SpawnTankAt(/*GameUtils.GetWorldPosition(GameUtils.MousePosition)*/PlacementSquare.CurrentlyHovered.Position, (TankTier)tankToSpawnType, (Team)tankToSpawnTeam);
 
             if (Input.KeyJustPressed(Keys.OemSemicolon))
                 new Mine(null, GameUtils.GetWorldPosition(GameUtils.MousePosition), 400);
@@ -152,8 +159,10 @@ namespace WiiPlayTanksRemake.GameContent
             if (Input.KeyJustPressed(Keys.I))
                 new Powerup(powerups[mode]) { position = GameUtils.GetWorldPosition(GameUtils.MousePosition) };
 
-            CubeHeight = MathHelper.Clamp(CubeHeight, 1, 5);
+            CubeHeight = MathHelper.Clamp(CubeHeight, 1, 7);
             BlockType = MathHelper.Clamp(BlockType, 1, 3);
+
+            _wasOverhead = TankGame.OverheadView;
         }
 
         public static int BlockType = 1;
@@ -272,27 +281,10 @@ namespace WiiPlayTanksRemake.GameContent
 
         public static void StartTnkScene()
         {
-
-            /*var bytes = File.ReadAllBytes("TnkGameParam.bin");
-
-            var str = "";
-
-            foreach (var item in bytes)
-                str += item;
-            ClientLog.Write(str, LogType.Debug);
-
-            ClientLog.Write($"Offset at 0xA4: {bytes[0xA4]}", LogType.Error);*/
-
-            // 26 x 18 (technically 27 x 19)
-
-            // 22 x 17 is vanilla (bruh wtf)
-
             DebugUtils.DebuggingEnabled = false;
             MapRenderer.InitializeRenderers();
 
             LoadTnkScene();
-
-            // load mission?
 
             var brighter = new Lighting.DayState()
             {
