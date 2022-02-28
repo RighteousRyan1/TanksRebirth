@@ -5,11 +5,12 @@ namespace WiiPlayTanksRemake.GameContent
 {
     public class ParticleSystem
     {
-        public static int MAX_PARTICLES = 2500;
+        public static int MAX_PARTICLES = 15000;
         public static Particle[] CurrentParticles = new Particle[MAX_PARTICLES];
 
         public static void RenderParticles()
         {
+
             foreach (var particle in CurrentParticles)
             {
                 if (particle != null)
@@ -29,11 +30,10 @@ namespace WiiPlayTanksRemake.GameContent
         /// <param name="texture">The texture applied to the model.</param>
         /// <param name="modelOverride">Overrides the model used. If not set, will use a flat model for 2D particles in a 3D space</param>
         /// <returns>The particle created.</returns>
-        public static Particle MakeParticle(Vector3 position, Texture2D texture, Model modelOverride = null)
+        public static Particle MakeParticle(Vector3 position, Texture2D texture)
         {
-            return new(modelOverride)
+            return new(position)
             {
-                position = position,
                 Texture = texture,
             };
         }

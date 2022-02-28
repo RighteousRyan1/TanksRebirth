@@ -183,7 +183,64 @@ namespace WiiPlayTanksRemake.GameContent
             }
         }
     }
+    // maybe some other time
+    /*public class TankFootprint
+    {
+        public const int MAX_FOOTPRINTS = 100000;
 
+        public static TankFootprint[] footprints = new TankFootprint[TankGame.Settings.TankFootprintLimit];
+
+        public Vector3 location;
+        public float rotation;
+
+        public Texture2D texture;
+
+        internal static int total_treads_placed;
+
+        private readonly bool alternate;
+
+        public long lifeTime;
+
+        public readonly Particle track;
+
+        public TankFootprint(bool alt = false)
+        {
+            if (total_treads_placed + 1 > MAX_FOOTPRINTS)
+                footprints[Array.IndexOf(footprints, footprints.Min(x => x.lifeTime > 0))] = null; // i think?
+
+            alternate = alt;
+            total_treads_placed++;
+
+            texture = GameResources.GetGameResource<Texture2D>(alt ? $"Assets/textures/tank_footprint_alt" : $"Assets/textures/tank_footprint");
+
+            footprints[total_treads_placed] = this;
+
+            track = ParticleSystem.MakeParticle(location, texture);
+
+            track.isAddative = false;
+            track.rotationX = -MathHelper.PiOver2;
+            track.Scale = 0.5f;
+
+            total_treads_placed++;
+        }
+
+        private BasicEffect effect = new(TankGame.Instance.GraphicsDevice);
+
+        public void Render()
+        {
+            lifeTime++;
+            Vector3 scale = alternate ? new(0.5f, 1f, 0.35f) : new(0.5f, 1f, 0.075f);
+
+            track.position = location;
+            track.rotationY = rotation;
+            track.color = Color.White;
+            // [0.0, 1.1, 1.5, 0.5]
+            // [0.0, 0.1, 0.8, 0.0]
+            // [0.0, 0.5, 1.2, 1.0]
+            // [0.0, 2.0, 0.6, 0.2]
+        }
+    }
+    */
     public class TankDeathMark
     {
         public const int MAX_DEATH_MARKS = 1000;

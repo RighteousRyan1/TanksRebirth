@@ -322,7 +322,6 @@ namespace WiiPlayTanksRemake.GameContent
                             }
                         }
                         break;
-                        break;
                 }
             }
 

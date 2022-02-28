@@ -99,9 +99,9 @@ namespace WiiPlayTanksRemake.GameContent
         {
             ShellCooldown = 5;
             ShootStun = 5;
-            ShellSpeed = 3f;
+            ShellSpeed = 6f; // 3f
             MaxSpeed = 1.8f;
-            RicochetCount = 1;
+            RicochetCount = 2; // 1
             ShellLimit = 5;
             MineLimit = 2;
             MineStun = 8;
@@ -527,10 +527,15 @@ namespace WiiPlayTanksRemake.GameContent
 
             p.Scale = 0.5f;
 
+            p.rotationX = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
+
             p.UniqueBehavior = (part) =>
             {
                 part.color = Color.Orange;
                 part.Opacity -= 0.02f;
+
+                if (part.Opacity < 0)
+                    part.Destroy();
             };
 
             OwnedShellCount++;

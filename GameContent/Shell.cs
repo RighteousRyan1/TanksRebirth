@@ -61,9 +61,7 @@ namespace WiiPlayTanksRemake.GameContent
         /// <summary>How long this shell has existed in the world.</summary>
         public int lifeTime;
 
-        internal bool INTERNAL_ignoreCollisions;
-
-        internal bool INTERNAL_doRender = true;
+        public bool canFriendlyFire = true;
 
         /// <summary>
         /// Creates a new <see cref="Shell"/>.
@@ -111,35 +109,32 @@ namespace WiiPlayTanksRemake.GameContent
             if (!GameHandler.InMission)
                 return;
 
-            if (!INTERNAL_ignoreCollisions)
+            if (position.X < MapRenderer.MIN_X || position.X > MapRenderer.MAX_X)
+                Ricochet(true);
+            if (position.Z < MapRenderer.MIN_Y || position.Z > MapRenderer.MAX_Y)
+                Ricochet(false);
+
+            var dummyVel = Velocity2D;
+
+            Collision.HandleCollisionSimple_ForBlocks(hurtbox2d, ref dummyVel, ref position, out var dir, false, (c) => c.IsSolid);
+
+            if (lifeTime <= 5 && Block.blocks.Any(cu => cu is not null && cu.collider2d.Intersects(hurtbox2d) && cu.IsSolid))
+                Destroy(false);
+
+            switch (dir)
             {
-                if (position.X < MapRenderer.MIN_X || position.X > MapRenderer.MAX_X)
-                    Ricochet(true);
-                if (position.Z < MapRenderer.MIN_Y || position.Z > MapRenderer.MAX_Y)
+                case Collision.CollisionDirection.Up:
                     Ricochet(false);
-
-                var dummyVel = Velocity2D;
-
-                Collision.HandleCollisionSimple_ForBlocks(hurtbox2d, ref dummyVel, ref position, out var dir, false, (c) => c.IsSolid);
-
-                if (lifeTime <= 5 && Block.blocks.Any(cu => cu is not null && cu.collider.Intersects(hurtbox) && cu.IsSolid))
-                    Destroy(false);
-
-                switch (dir)
-                {
-                    case Collision.CollisionDirection.Up:
-                        Ricochet(false);
-                        break;
-                    case Collision.CollisionDirection.Down:
-                        Ricochet(false);
-                        break;
-                    case Collision.CollisionDirection.Left:
-                        Ricochet(true);
-                        break;
-                    case Collision.CollisionDirection.Right:
-                        Ricochet(true);
-                        break;
-                }
+                    break;
+                case Collision.CollisionDirection.Down:
+                    Ricochet(false);
+                    break;
+                case Collision.CollisionDirection.Left:
+                    Ricochet(true);
+                    break;
+                case Collision.CollisionDirection.Right:
+                    Ricochet(true);
+                    break;
             }
             lifeTime++;
 
@@ -164,29 +159,33 @@ namespace WiiPlayTanksRemake.GameContent
                     }
                 }
             }
-            if (!INTERNAL_ignoreCollisions)
-                CheckCollisions();
+            CheckCollisions();
 
-            /*int nummy = (int)Math.Round(20 / velocity.Length()) != 0 ? (int)Math.Round(20 / velocity.Length()) : 5;
+            int bruh = (int)Math.Round(10 / velocity.Length());
+            int nummy = bruh != 0 ? bruh : 5;
 
-            if (lifeTime % nummy == 0 && !INTERNAL_ignoreCollisions)
+            if (lifeTime % nummy == 0)
             {
-                var p = ParticleSystem.MakeParticle(position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
+                var p = ParticleSystem.MakeParticle(position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(rotation + MathHelper.Pi).Expand_Z(), GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
                 p.FaceTowardsMe = false;
-                p.Scale = 0.45f;
+                p.Scale = 0.4f;
                 p.color = new Color(100, 100, 100, 255);
+
+                p.rotationX = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
                 p.UniqueBehavior = (p) =>
                 {
                     if (p.Opacity <= 0)
                         p.Destroy();
 
-                    if (p.Opacity > 0)  
-                        p.Opacity -= 0.01f;
+                    if (p.Opacity > 0)
+                        p.Opacity -= 0.02f;
+
+                    p.Scale += 0.005f;
+
                     p.position.Y += 0.1f;
                 };
-            }*/
-            // re-enable later when 3d works
+            }
         }
 
         /// <summary>
@@ -203,7 +202,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             if (horizontal)
                 velocity.X = -velocity.X;
-            else 
+            else
                 velocity.Z = -velocity.Z;
 
             var sound = GameResources.GetGameResource<SoundEffect>("Assets/sounds/bullet_ricochet");
@@ -221,8 +220,11 @@ namespace WiiPlayTanksRemake.GameContent
                 {
                     if (tank.CollisionBox2D.Intersects(hurtbox2d))
                     {
-                        if (tank.Team == owner.Team && tank != owner && tank.Team != Team.NoTeam)
-                            Destroy();
+                        if (!canFriendlyFire)
+                        {
+                            if (tank.Team == owner.Team && tank != owner && tank.Team != Team.NoTeam)
+                                Destroy();
+                        }
                         else
                         {
                             Destroy();
@@ -236,13 +238,10 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 if (bullet is not null && bullet != this)
                 {
-                    if (!bullet.INTERNAL_ignoreCollisions)
+                    if (bullet.hurtbox.Intersects(hurtbox))
                     {
-                        if (bullet.hurtbox.Intersects(hurtbox))
-                        {
-                            bullet.Destroy();
-                            Destroy();
-                        }
+                        bullet.Destroy();
+                        Destroy();
                     }
                 }
             }
@@ -254,38 +253,32 @@ namespace WiiPlayTanksRemake.GameContent
         /// <param name="playSound">Whether or not to play the bullet destruction sound.</param>
         public void Destroy(bool playSound = true)
         {
-            if (!INTERNAL_ignoreCollisions)
+            if (playSound)
             {
-                if (playSound)
-                {
-                    var sfx = SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/bullet_destroy"), SoundContext.Effect, 0.5f);
-                    sfx.Pitch = new Random().NextFloat(-0.1f, 0.1f);
-                }
-                if (owner != null)
-                    owner.OwnedShellCount--;
-                AllShells[worldId] = null;
+                var sfx = SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/bullet_destroy"), SoundContext.Effect, 0.5f);
+                sfx.Pitch = new Random().NextFloat(-0.1f, 0.1f);
             }
+            if (owner != null)
+                owner.OwnedShellCount--;
+            AllShells[worldId] = null;
         }
 
         internal void Render()
         {
-            if (INTERNAL_doRender)
+            foreach (ModelMesh mesh in Model.Meshes)
             {
-                foreach (ModelMesh mesh in Model.Meshes)
+                foreach (BasicEffect effect in mesh.Effects)
                 {
-                    foreach (BasicEffect effect in mesh.Effects)
-                    {
-                        effect.World = World;
-                        effect.View = View;
-                        effect.Projection = Projection;
-                        effect.TextureEnabled = true;
+                    effect.World = World;
+                    effect.View = View;
+                    effect.Projection = Projection;
+                    effect.TextureEnabled = true;
 
-                        effect.Texture = _shellTexture;
+                    effect.Texture = _shellTexture;
 
-                        effect.SetDefaultGameLighting_IngameEntities();
-                    }
-                    mesh.Draw();
+                    effect.SetDefaultGameLighting_IngameEntities();
                 }
+                mesh.Draw();
             }
         }
     }

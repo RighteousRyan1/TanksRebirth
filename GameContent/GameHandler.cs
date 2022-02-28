@@ -152,7 +152,7 @@ namespace WiiPlayTanksRemake.GameContent
             if (Input.KeyJustPressed(Keys.OemSemicolon))
                 new Mine(null, GameUtils.GetWorldPosition(GameUtils.MousePosition), 400);
             if (Input.KeyJustPressed(Keys.OemQuotes))
-                new Shell(GameUtils.GetWorldPosition(GameUtils.MousePosition) + new Vector3(0, 11, 0), default, 0);
+                new Shell(GameUtils.GetWorldPosition(GameUtils.MousePosition) + new Vector3(0, 11, 0), default, 0) { owner = default };
             if (Input.KeyJustPressed(Keys.End))
                 SpawnCrateAtMouse();
 
@@ -172,6 +172,8 @@ namespace WiiPlayTanksRemake.GameContent
 
         internal static void RenderAll()
         {
+            TankGame.Instance.GraphicsDevice.BlendState = BlendState.AlphaBlend;
+
             if (!MainMenu.Active)
                 MapRenderer.RenderWorldModels();
 
@@ -190,14 +192,14 @@ namespace WiiPlayTanksRemake.GameContent
             foreach (var bullet in Shell.AllShells)
                 bullet?.Render();
 
+            foreach (var expl in MineExplosion.explosions)
+                expl?.Render();
+
             foreach (var mark in TankDeathMark.deathMarks)
                 mark?.Render();
 
             foreach (var print in TankFootprint.footprints)
                 print?.Render();
-
-            foreach (var expl in MineExplosion.explosions)
-                expl?.Render();
 
             foreach (var crate in CrateDrop.crates)
                 crate?.Render();
@@ -207,13 +209,9 @@ namespace WiiPlayTanksRemake.GameContent
 
             if (TankGame.OverheadView)
                 foreach (var sq in PlacementSquare.Placements)
-                sq?.Render();
+                    sq?.Render();
 
-            TankGame.spriteBatch.End();
-            TankGame.spriteBatch.Begin(blendState: BlendState.Additive);
             ParticleSystem.RenderParticles();
-            TankGame.spriteBatch.End();
-            TankGame.spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied);
 
             // TODO: Fix translation
             // TODO: Scaling with screen size.
@@ -506,18 +504,45 @@ namespace WiiPlayTanksRemake.GameContent
         private static void ClearTankTracks(UIElement affectedElement)
         {
             for (int i = 0; i < TankFootprint.footprints.Length; i++)
+            {
+                // TankFootprint.footprints[i].track?.Destroy();
                 TankFootprint.footprints[i] = null;
+            }
 
             TankFootprint.total_treads_placed = 0;
         }
     }
 
-    public class MouseRenderer
+    public static class MouseRenderer
     {
         public static Texture2D MouseTexture { get; private set; }
 
+        public static int numDots = 10;
+
         public static void DrawMouse()
         {
+            if (GameHandler.myTank is not null)
+            {
+                var tankPos = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, GameHandler.myTank.World, TankGame.GameView, TankGame.GameProjection);
+
+                var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes");
+
+                // GameHandler.ClientLog.Write("One Loop:", LogType.Info);
+
+                /*for (int i = 0; i < numDots; i++)
+                {
+                    var ii = 1f / i;
+
+                    var pos = (GameUtils.MousePosition - tankPos) * (ii * i) + tankPos;
+
+                    GameHandler.ClientLog.Write(pos, LogType.Info);
+
+                    TankGame.spriteBatch.Draw(tex, pos, null, Color.White, 0f, tex.Size() / 2, 1f, default, default);
+                }*/
+
+                // lata
+            }
+
             MouseTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/cursor_1");
 
             for (int i = 0; i < 4; i++)
