@@ -1576,7 +1576,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             var p = ParticleSystem.MakeParticle(bullet.position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
 
-            p.rotationX = TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
+            p.rotationX = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
             p.Scale = 0.5f;
 
