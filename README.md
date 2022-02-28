@@ -20,3 +20,4 @@ If you wish to keep up with development in real time, consider joining this serv
 - Mirsario (on GitHub) for ru_RU translations.
 - TheStachelfisch (on GitHub) for de_DE translations.
 - SnowManPimp (on Discord) for fr_FR translations.
+- vnaka (on GitHub) for pt_BR translations.
