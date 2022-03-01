@@ -523,9 +523,9 @@ namespace WiiPlayTanksRemake.GameContent
         {
             if (GameHandler.myTank is not null)
             {
-                var tankPos = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, GameHandler.myTank.World, TankGame.GameView, TankGame.GameProjection);
+                // mwvar tankPos = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, GameHandler.myTank.World, TankGame.GameView, TankGame.GameProjection);
 
-                var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes");
+                // var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes");
 
                 // GameHandler.ClientLog.Write("One Loop:", LogType.Info);
 

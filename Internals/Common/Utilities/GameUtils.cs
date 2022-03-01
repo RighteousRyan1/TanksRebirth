@@ -331,6 +331,7 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
             }
             return value;
         }
+
         public static float RoughStep(ref float value, float goal, float step)
         {
             if (value < goal)
@@ -354,6 +355,7 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
 
             return value;
         }
+
         public static float RoughStep(float value, float goal, float step)
         {
             if (value < goal)
@@ -377,6 +379,31 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
 
             return value;
         }
+
+        public static int RoughStep(int value, int goal, int step)
+        {
+            if (value < goal)
+            {
+                value += step;
+
+                if (value > goal)
+                {
+                    return goal;
+                }
+            }
+            else if (value > goal)
+            {
+                value -= step;
+
+                if (value < goal)
+                {
+                    return goal;
+                }
+            }
+
+            return value;
+        }
+
         public static float SoftStep(float value, float goal, float step)
         {
             if (value < goal)

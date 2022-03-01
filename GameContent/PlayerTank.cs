@@ -523,20 +523,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             bullet.owner = this;
 
-            var p = ParticleSystem.MakeParticle(bullet.position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
-
-            p.Scale = 0.5f;
-
-            p.rotationX = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
-
-            p.UniqueBehavior = (part) =>
-            {
-                part.color = Color.Orange;
-                part.Opacity -= 0.02f;
-
-                if (part.Opacity < 0)
-                    part.Destroy();
-            };
+            
 
             OwnedShellCount++;
 

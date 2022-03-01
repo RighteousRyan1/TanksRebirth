@@ -34,6 +34,8 @@ namespace WiiPlayTanksRemake.GameContent
 
         public bool isAddative = true;
 
+        public int lifeTime;
+
         /* TODO:
          * Model alpha must be set!
          * 
@@ -53,6 +55,7 @@ namespace WiiPlayTanksRemake.GameContent
         public void Update()
         {
             UniqueBehavior?.Invoke(this);
+            lifeTime++;
         }
 
         public BasicEffect effect = new(TankGame.Instance.GraphicsDevice);
@@ -74,13 +77,13 @@ namespace WiiPlayTanksRemake.GameContent
                 effect.Alpha = Opacity;
 
                 TankGame.spriteBatch.End();
-                TankGame.spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.Additive, SamplerState.PointWrap, DepthStencilState.DepthRead, RasterizerState.CullNone, effect);
+                TankGame.spriteBatch.Begin(SpriteSortMode.Deferred, isAddative ? BlendState.Additive : BlendState.NonPremultiplied, SamplerState.PointWrap, DepthStencilState.DepthRead, RasterizerState.CullNone, effect);
                 TankGame.spriteBatch.Draw(Texture, Vector2.Zero, null, color * Opacity, 0f, Texture.Size() / 2, Scale, default, default);
             }
             else
             {
                 TankGame.spriteBatch.End();
-                TankGame.spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.Additive);
+                TankGame.spriteBatch.Begin(SpriteSortMode.Deferred, isAddative ? BlendState.Additive : BlendState.NonPremultiplied);
                 TankGame.spriteBatch.Draw(Texture, GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(position), TankGame.GameView, TankGame.GameProjection), null, color * Opacity, 0f, Texture.Size() / 2, Scale, default, default);
             }
             TankGame.spriteBatch.End();

@@ -73,9 +73,6 @@ namespace WiiPlayTanksRemake.GameContent
             /// <summary>How long (in ticks) this tank moves away from a mine that it places.</summary>
             public int MoveFromMineTime { get; set; }
 
-            internal int TimeSinceLastMinePlaced { get; set; } = 999999;
-            internal int TimeSinceLastMineFound { get; set; } = 999999;
-
             /// <summary>The distance from the main shot calculation ray an enemy must be before this tank is allowed to fire.</summary>
             public int MissDistance { get; set; }
 
@@ -90,11 +87,14 @@ namespace WiiPlayTanksRemake.GameContent
             public float TeammateTankWariness { get; set; } = 50f;
             /// <summary>Whether or not this tank tries to find calculations all around it. This is not recommended for mobile tanks.</summary>
             public bool SmartRicochets { get; set; }
-            /// <summary>Whether or not this tank attempts to lay mines near destructible obstacles. Useless for stationary tanks.</summary>
+            /// <summary>Whether or not this tank attempts to lay mines near destructible obstacles rather than randomly. Useless for stationary tanks.</summary>
             public bool SmartMineLaying { get; set; }
         }
         /// <summary>The AI parameter collection of this AI Tank.</summary>
         public Params AiParams { get; } = new();
+
+        internal int TimeSinceLastMinePlaced { get; set; } = 999999;
+        internal int TimeSinceLastMineFound { get; set; } = 999999;
 
         public Vector3 aimTarget;
 
@@ -291,6 +291,8 @@ namespace WiiPlayTanksRemake.GameContent
                     MineStun = 0;
 
                     AiParams.MissDistance = 0;
+
+                    TankDestructionColor = Color.Brown;
 
                     break;
 
@@ -574,6 +576,8 @@ namespace WiiPlayTanksRemake.GameContent
 
                     AiParams.MoveFromMineTime = 100;
                     AiParams.MinePlacementChance = 0.05f;
+
+                    AiParams.SmartMineLaying = true;
                     break;
                 #endregion
                 #region MasterMod
@@ -1407,17 +1411,43 @@ namespace WiiPlayTanksRemake.GameContent
                 lightParticle.UniqueBehavior = (lp) =>
                 {
                     lp.position = position;
-                    if (lp.Scale < 6.5f)
-                        lp.Scale += 0.08f;
-                    if (lp.Opacity < 1f && lp.Scale < 6.5f)
+                    if (lp.Scale < 5f)
+                        lp.Scale += 0.12f;
+                    if (lp.Opacity < 1f && lp.Scale < 5f)
                         lp.Opacity += 0.02f;
-                    else
-                    {
-                        lp.Opacity -= 0.01f;
-                    }
+
+                    if (lp.lifeTime > 90)
+                        lp.Opacity -= 0.005f;
+
                     if (lp.Scale < 0f)
                         lp.Destroy();
                 };
+
+                const int NUM_LOCATIONS = 8;
+
+                for (int i = 0; i < NUM_LOCATIONS; i++)
+                {
+                    var lp = ParticleSystem.MakeParticle(position + new Vector3(0, 5, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
+
+                    var velocity = Vector2.UnitY.RotatedByRadians(MathHelper.ToRadians(360f / NUM_LOCATIONS * i));
+
+                    lp.Scale = 1f;
+
+                    lp.UniqueBehavior = (elp) =>
+                    {
+                        elp.position.X += velocity.X;
+                        elp.position.Z += velocity.Y;
+
+                        if (elp.lifeTime > 15)
+                        {
+                            elp.Scale -= 0.03f;
+                            elp.Opacity -= 0.03f;
+                        }
+
+                        if (elp.Scale <= 0f || elp.Opacity <= 0f)
+                            elp.Destroy();
+                    };
+                }
             }
         }
 
@@ -1509,7 +1539,7 @@ namespace WiiPlayTanksRemake.GameContent
             var sound = GameResources.GetGameResource<SoundEffect>("Assets/sounds/mine_place");
             SoundPlayer.PlaySoundInstance(sound, SoundContext.Effect, 0.5f);
             OwnedMineCount++;
-            AiParams.TimeSinceLastMinePlaced = 0;
+            TimeSinceLastMinePlaced = 0;
 
             timeSinceLastAction = 0;
 
@@ -1574,19 +1604,47 @@ namespace WiiPlayTanksRemake.GameContent
             bullet.owner = this;
             bullet.ricochets = RicochetCount;
 
-            var p = ParticleSystem.MakeParticle(bullet.position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
+            var hit = ParticleSystem.MakeParticle(bullet.position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
+            var smoke = ParticleSystem.MakeParticle(bullet.position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
 
-            p.rotationX = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
+            hit.rotationX = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
+            smoke.rotationX = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
-            p.Scale = 0.5f;
+            smoke.Scale = 0.35f;
+            hit.Scale = 0.5f;
 
-            p.UniqueBehavior = (part) =>
+            smoke.color = new(84, 22, 0, 255);
+
+            smoke.isAddative = false;
+
+            int achieveable = 80;
+            int step = 1;
+
+            hit.UniqueBehavior = (part) =>
             {
                 part.color = Color.Orange;
-                part.Opacity -= 0.02f;
 
-                if (part.Opacity < 0)
+                if (part.lifeTime > 1)
+                    part.Opacity -= 0.1f;
+                if (part.Opacity <= 0)
                     part.Destroy();
+            };
+            smoke.UniqueBehavior = (part) =>
+            {
+                part.color.R = (byte)GameUtils.RoughStep(part.color.R, achieveable, step);
+                part.color.G = (byte)GameUtils.RoughStep(part.color.G, achieveable, step);
+                part.color.B = (byte)GameUtils.RoughStep(part.color.B, achieveable, step);
+
+                part.Scale += 0.004f;
+
+                if (part.color.G == achieveable)
+                {
+                    part.color.B = (byte)achieveable;
+                    part.Opacity -= 0.04f;
+
+                    if (part.Opacity <= 0)
+                        part.Destroy();
+                }
             };
 
             OwnedShellCount++;
@@ -1671,6 +1729,9 @@ namespace WiiPlayTanksRemake.GameContent
                         pathRicochetCount++;
                         break;
                 }
+
+                if (i == 0 && Block.blocks.Any(x => x is not null && x.collider2d.Intersects(pathHitbox)))
+                    return false;
 
                 if (i < (int)ShellSpeed && pathRicochetCount > 0)
                     return false;
@@ -1757,7 +1818,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         public void DoAi(bool doMoveTowards = true, bool doMovements = true, bool doFire = true)
         {
-            AiParams.TimeSinceLastMinePlaced++;
+            TimeSinceLastMinePlaced++;
 
             CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation);
 
@@ -1906,8 +1967,8 @@ namespace WiiPlayTanksRemake.GameContent
                         bool isBulletNear = TryGetShellNear(AiParams.ProjectileWarinessRadius, out var shell);
                         bool isMineNear = TryGetMineNear(AiParams.MineWarinessRadius, out var mine);
 
-                        bool movingFromMine = AiParams.TimeSinceLastMinePlaced < AiParams.MoveFromMineTime;
-                        bool movingFromOtherMine = AiParams.TimeSinceLastMineFound < AiParams.MoveFromMineTime / 2;
+                        bool movingFromMine = TimeSinceLastMinePlaced < AiParams.MoveFromMineTime;
+                        bool movingFromOtherMine = TimeSinceLastMineFound < AiParams.MoveFromMineTime / 2;
 
                         #region CubeNav
 
@@ -1972,10 +2033,21 @@ namespace WiiPlayTanksRemake.GameContent
                                 if (!tanksNearMe.Any(x => x.Team == Team))
                                 {
                                     nearDestructibleObstacle = cubesNearMe.Any(c => c.IsDestructible);
-                                    if ((new Random().NextFloat(0, 1) <= AiParams.MinePlacementChance) || (AiParams.SmartMineLaying ? nearDestructibleObstacle : false))
+                                    if (AiParams.SmartMineLaying)
                                     {
-                                        targetTankRotation = new Vector2(100, 100).RotatedByRadians(new Random().NextFloat(0, MathHelper.TwoPi)).Expand_Z().ToRotation();
-                                        LayMine();
+                                        if (nearDestructibleObstacle)
+                                        {
+                                            targetTankRotation = new Vector2(100, 100).RotatedByRadians(new Random().NextFloat(0, MathHelper.TwoPi)).Expand_Z().ToRotation();
+                                            LayMine();
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (new Random().NextFloat(0, 1) <= AiParams.MinePlacementChance)
+                                        {
+                                            targetTankRotation = new Vector2(100, 100).RotatedByRadians(new Random().NextFloat(0, MathHelper.TwoPi)).Expand_Z().ToRotation();
+                                            LayMine();
+                                        }
                                     }
                                 }
                             }
@@ -1984,7 +2056,7 @@ namespace WiiPlayTanksRemake.GameContent
                         {
                             if (Behaviors[5].IsModOf(10))
                             {
-                                if (AiParams.TimeSinceLastMinePlaced > AiParams.MoveFromMineTime)
+                                if (TimeSinceLastMinePlaced > AiParams.MoveFromMineTime)
                                 {
                                     var direction = Vector2.UnitY.RotatedByRadians(mine.Position2D.DirectionOf(Position2D, false).ToRotation());
 

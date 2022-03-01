@@ -103,6 +103,8 @@ namespace WiiPlayTanksRemake.GameContent
         /// <summary>Make this <see cref="Tank"/> lay a <see cref="Mine"/>.</summary>
         public virtual void LayMine() { }
 
+        public Color TankDestructionColor { get; set; }
+
         // everything under this comment is added outside of the faithful remake. homing shells, etc
 
         /// <summary>Whether or not this <see cref="Tank"/> has a turret to fire shells with.</summary>

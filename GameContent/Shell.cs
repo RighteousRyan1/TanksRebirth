@@ -169,7 +169,7 @@ namespace WiiPlayTanksRemake.GameContent
                 var p = ParticleSystem.MakeParticle(position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(rotation + MathHelper.Pi).Expand_Z(), GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
                 p.FaceTowardsMe = false;
                 p.Scale = 0.4f;
-                p.color = new Color(100, 100, 100, 255);
+                p.color = new Color(50, 50, 50, 150);
 
                 p.rotationX = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
@@ -208,6 +208,18 @@ namespace WiiPlayTanksRemake.GameContent
             var sound = GameResources.GetGameResource<SoundEffect>("Assets/sounds/bullet_ricochet");
 
             SoundPlayer.PlaySoundInstance(sound, SoundContext.Effect, 0.5f);
+
+            var p = ParticleSystem.MakeParticle(position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_star"));
+            p.Scale = 0.8f;
+            p.color = Color.Orange;
+            p.UniqueBehavior = (part) => {
+                p.Scale -= 0.0175f;
+
+                p.Opacity -= 0.025f;
+
+                if (p.Opacity <= 0f || p.Scale <= 0f)
+                    p.Destroy();
+            };
 
             ricochets--;
         }
