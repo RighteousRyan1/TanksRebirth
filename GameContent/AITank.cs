@@ -297,8 +297,8 @@ namespace WiiPlayTanksRemake.GameContent
                     break;
 
                 case TankTier.Ash:
-                    AiParams.MeanderAngle = 1.8f;
-                    AiParams.MeanderFrequency = 40;
+                    AiParams.MeanderAngle = MathHelper.ToRadians(30);
+                    AiParams.MeanderFrequency = 15;
                     AiParams.TurretMeanderFrequency = 40;
                     AiParams.TurretSpeed = 0.01f;
                     AiParams.Inaccuracy = 0.24f;
@@ -329,8 +329,8 @@ namespace WiiPlayTanksRemake.GameContent
                     break;
 
                 case TankTier.Marine:
-                    AiParams.MeanderAngle = 0.4f;
-                    AiParams.MeanderFrequency = 15;
+                    AiParams.MeanderAngle = MathHelper.ToRadians(30);
+                    AiParams.MeanderFrequency = 5;
                     AiParams.TurretMeanderFrequency = 10;
                     AiParams.TurretSpeed = 0.1f;
                     AiParams.Inaccuracy = 0.005f;
@@ -358,6 +358,8 @@ namespace WiiPlayTanksRemake.GameContent
                     MineCooldown = 0;
                     MineLimit = 0;
                     MineStun = 0;
+
+                    AiParams.BlockWarinessDistance = 40;
 
                     break;
 
@@ -1685,7 +1687,7 @@ namespace WiiPlayTanksRemake.GameContent
                 pattern = (c) => c.IsSolid;
 
             const int MAX_PATH_UNITS = 250;
-            const int PATH_UNIT_LENGTH = 10;
+            const int PATH_UNIT_LENGTH = 8;
 
             // 20, 30
 
@@ -1974,7 +1976,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                         isCubeInWay = IsObstacleInWay(AiParams.BlockWarinessDistance, Vector2.UnitY.RotatedByRadians(-targetTankRotation), out var travelPath);
 
-                        if (isCubeInWay && Behaviors[2].IsModOf(AiParams.MeanderFrequency / 3) && !isMineNear && !isBulletNear && !movingFromMine && !movingFromOtherMine)
+                        if (isCubeInWay && Behaviors[2].IsModOf(AiParams.MeanderFrequency / 3 > 0 ? AiParams.MeanderFrequency / 3 : 1) && !isMineNear && !isBulletNear && !movingFromMine && !movingFromOtherMine)
                         {
                             GameUtils.RoughStep(ref targetTankRotation, GameUtils.DirectionOf(Position2D, travelPath).ToRotation(), GameUtils.DirectionOf(Position2D, travelPath).ToRotation() / 4);
                             //targetTankRotation += GameUtils.DirectionOf(Position2D, travelPath).ToRotation() / 4; // needs fixing i think
@@ -2133,7 +2135,7 @@ namespace WiiPlayTanksRemake.GameContent
                         }
                         else
                         {
-                            if (TankRotation == targ)
+                            if (TankRotation >= targ - 0.05f || TankRotation <= targ + 0.05f)
                                 IsTurning = false;
                         }
 

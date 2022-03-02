@@ -76,6 +76,8 @@ namespace WiiPlayTanksRemake.GameContent
                 effect.SpecularColor = color.ToVector3();
                 effect.Alpha = Opacity;
 
+                effect.SetDefaultGameLighting_IngameEntities();
+
                 TankGame.spriteBatch.End();
                 TankGame.spriteBatch.Begin(SpriteSortMode.Deferred, isAddative ? BlendState.Additive : BlendState.NonPremultiplied, SamplerState.PointWrap, DepthStencilState.DepthRead, RasterizerState.CullNone, effect);
                 TankGame.spriteBatch.Draw(Texture, Vector2.Zero, null, color * Opacity, 0f, Texture.Size() / 2, Scale, default, default);

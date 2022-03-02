@@ -320,8 +320,8 @@ namespace WiiPlayTanksRemake.GameContent
             else if (targetTnkRotation - TankRotation <= -MathHelper.PiOver2)
                 TankRotation -= MathHelper.Pi;
 
-            if (playerControl_isBindPressed)
-                GameHandler.ClientLog.Write(targetTnkRotation - TankRotation, LogType.Info);
+            //if (playerControl_isBindPressed)
+                // GameHandler.ClientLog.Write(targetTnkRotation - TankRotation, LogType.Info);
         }
 
         private void UpdateCollision()

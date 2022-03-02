@@ -286,8 +286,8 @@ namespace WiiPlayTanksRemake.GameContent
 
             var brighter = new Lighting.DayState()
             {
-                color = Color.White,
-                brightness = 0.55f,
+                color = Color.DarkGray,
+                brightness = 0.71f,
             };
 
             brighter.Apply(false);
