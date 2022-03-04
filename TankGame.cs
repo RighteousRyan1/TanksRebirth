@@ -92,6 +92,9 @@ namespace WiiPlayTanksRemake
             }
         }
 
+        internal static float GetInterpolatedFloat(float value)
+            => value * (float)LastGameTime.ElapsedGameTime.TotalSeconds;
+
         public static Camera GameCamera;
 
         public static string SysGPU = $"GPU: {GetGPU()}";
@@ -337,6 +340,7 @@ namespace WiiPlayTanksRemake
         public static bool OverheadView = false;
 
         int transitionTimer;
+
         protected override void Update(GameTime gameTime)
         {
             try

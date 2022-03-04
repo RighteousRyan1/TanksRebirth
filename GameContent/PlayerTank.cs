@@ -99,9 +99,9 @@ namespace WiiPlayTanksRemake.GameContent
         {
             ShellCooldown = 5;
             ShootStun = 5;
-            ShellSpeed = 6f; // 3f
+            ShellSpeed = 3f; // 3f
             MaxSpeed = 1.8f;
-            RicochetCount = 2; // 1
+            RicochetCount = 1; // 1
             ShellLimit = 5;
             MineLimit = 2;
             MineStun = 8;

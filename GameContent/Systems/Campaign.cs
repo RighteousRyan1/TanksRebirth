@@ -75,7 +75,8 @@ namespace WiiPlayTanksRemake.GameContent.Systems
         }
 
         /// <summary>Sets up the <see cref="Mission"/> that is loaded.</summary>
-        public void SetupLoadedMission()
+        /// <param name="spawnNewSet">If true, will spawn all tanks as if it's the first time the player(s) has/have entered this mission.</param>
+        public void SetupLoadedMission(bool spawnNewSet) // parameter unimplemented currently.
         {
             if (CurrentMission.Tanks is null && CurrentMission.Cubes is null)
             {
