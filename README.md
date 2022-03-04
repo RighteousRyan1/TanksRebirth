@@ -15,7 +15,7 @@ If you wish to keep up with development in real time, consider joining this serv
 
 ## Localization Contributors
 
-- RighteousRyan (me) for en_US translations.
+- RighteousRyan (me) for en_US translations and jp_JA translations.
 - LoLXD8783 (on GitHub) for es_ES translations.
 - Mirsario (on GitHub) for ru_RU translations.
 - TheStachelfisch (on GitHub) for de_DE translations.
