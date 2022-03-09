@@ -144,7 +144,7 @@ namespace WiiPlayTanksRemake.GameContent
                     effect.TextureEnabled = true;
                     effect.Texture = meshTexture;
 
-                    effect.SetDefaultGameLighting_IngameEntities();
+                    effect.SetDefaultGameLighting_IngameEntities_TwoDirections();
 
                     effect.DirectionalLight0.Direction *= 0.1f;
 

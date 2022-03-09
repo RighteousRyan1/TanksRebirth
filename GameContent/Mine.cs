@@ -189,7 +189,7 @@ namespace WiiPlayTanksRemake.GameContent
                     }
                     else
                         effect.Texture = _envTexture;
-                    effect.SetDefaultGameLighting_IngameEntities();
+                    effect.SetDefaultGameLighting();
                 }
                 mesh.Draw();
             }

@@ -334,9 +334,6 @@ namespace WiiPlayTanksRemake.GameContent
                 {
                     var dummyVel = Velocity2D;
                     Collision.HandleCollisionSimple(CollisionBox2D, tank.CollisionBox2D, ref dummyVel, ref position);
-
-                    velocity.X = dummyVel.X;
-                    velocity.Z = dummyVel.Y;
                 }
             }
 
@@ -346,9 +343,6 @@ namespace WiiPlayTanksRemake.GameContent
                 {
                     var dummyVel = Velocity2D;
                     Collision.HandleCollisionSimple(CollisionBox2D, c.collider2d, ref dummyVel, ref position);
-
-                    velocity.X = dummyVel.X;
-                    velocity.Z = dummyVel.Y;
                 }
             }
         }

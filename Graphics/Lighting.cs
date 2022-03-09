@@ -92,6 +92,28 @@ namespace WiiPlayTanksRemake.Graphics
             effect.EnableDefaultLighting();
 
             effect.DirectionalLight0.Enabled = true;
+            effect.DirectionalLight1.Enabled = false;
+            effect.DirectionalLight2.Enabled = false;
+
+            var lightingConstant = 1.5f;
+
+            effect.DirectionalLight0.Direction = new Vector3(0, -1f, 0) * lightingConstant;
+            // effect.DirectionalLight1.Direction = new Vector3(0, -0.6f, 0.6f) * lightingConstant;
+            // effect.DirectionalLight2.Direction = new Vector3(0, 0.6f, -0.6f);
+
+            effect.SpecularColor = new Vector3(LightPower) * (IsNight ? new Vector3(1) : LightColor.ToVector3());
+
+            effect.AmbientLightColor = LightColor.ToVector3();
+
+            effect.DiffuseColor = new(ColorBrightness);
+        }
+        public static void SetDefaultGameLighting_IngameEntities_TwoDirections(this BasicEffect effect)
+        {
+            effect.LightingEnabled = true;
+            effect.PreferPerPixelLighting = TankGame.Settings.PerPixelLighting;
+            effect.EnableDefaultLighting();
+
+            effect.DirectionalLight0.Enabled = true;
             effect.DirectionalLight1.Enabled = true;
             effect.DirectionalLight2.Enabled = false;
 

@@ -74,9 +74,12 @@ namespace WiiPlayTanksRemake.GameContent
                 effect.FogColor = color.ToVector3();
                 effect.EmissiveColor = color.ToVector3();
                 effect.SpecularColor = color.ToVector3();
+
                 effect.Alpha = Opacity;
 
                 effect.SetDefaultGameLighting_IngameEntities();
+
+                effect.FogEnabled = false;
 
                 TankGame.spriteBatch.End();
                 TankGame.spriteBatch.Begin(SpriteSortMode.Deferred, isAddative ? BlendState.Additive : BlendState.NonPremultiplied, SamplerState.PointWrap, DepthStencilState.DepthRead, RasterizerState.CullNone, effect);
