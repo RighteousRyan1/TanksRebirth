@@ -1,11 +1,20 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
+using System;
+using System.IO;
 using WiiPlayTanksRemake.Internals.Common.Utilities;
 
 namespace WiiPlayTanksRemake.Internals.Common.Framework.Audio
 {
     public static class SoundPlayer
     {
+        // public static SoundEffectInstance[] PlayingSounds = new SoundEffectInstance[256];
+        public static TimeSpan GetLengthOfSound(string filePath)
+        {
+            byte[] bytes = File.ReadAllBytes(filePath);
+
+            return SoundEffect.GetSampleDuration(bytes.Length, sizeof(byte) * bytes.Length, AudioChannels.Stereo);
+        }
         private static float MusicVolume => TankGame.Settings.MusicVolume;
         private static float EffectsVolume => TankGame.Settings.EffectsVolume;
         private static float AmbientVolume => TankGame.Settings.AmbientVolume;

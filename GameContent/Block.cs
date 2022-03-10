@@ -162,7 +162,7 @@ namespace WiiPlayTanksRemake.GameContent
                     effect.Texture = GameResources.GetGameResource<Texture2D>($"Assets/toy/cube_shadow_tex");
 
                     effect.View = TankGame.GameView;
-                    effect.World = Matrix.CreateScale(0.65f) * Matrix.CreateTranslation(position - new Vector3(0, 0.1f, 0));
+                    effect.World = Matrix.CreateScale(0.65f) * Matrix.CreateTranslation(position + new Vector3(0, -0.11f, 0));
                     effect.Projection = TankGame.GameProjection;
                     effect.SetDefaultGameLighting_IngameEntities();
 

@@ -69,6 +69,8 @@ namespace WiiPlayTanksRemake.GameContent
 
         public readonly ShellTier Tier;
 
+        private SoundEffectInstance _loopingSound;
+
         /// <summary>
         /// Creates a new <see cref="Shell"/>.
         /// </summary>
@@ -93,8 +95,18 @@ namespace WiiPlayTanksRemake.GameContent
 
             this.velocity = velocity;
 
-            if (Tier == ShellTier.Rocket || Tier == ShellTier.RicochetRocket)
+            if (Tier == ShellTier.Rocket)
+            {
                 Flaming = true;
+                _loopingSound = SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_rocket_loop"), SoundContext.Effect, 0.3f);
+                _loopingSound.IsLooped = true;
+            }
+            if (Tier == ShellTier.RicochetRocket)
+            {
+                Flaming = true;
+                _loopingSound = SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_ricochet_rocket_loop"), SoundContext.Effect, 0.3f);
+                _loopingSound.IsLooped = true;
+            }
 
             SoundEffectInstance sfx = Tier switch
             {
@@ -212,7 +224,7 @@ namespace WiiPlayTanksRemake.GameContent
             }
             CheckCollisions();
 
-            int bruh = (int)Math.Round(10 / velocity.Length());
+            int bruh = (int)Math.Round(12 / velocity.Length());
             int nummy = bruh != 0 ? bruh : 5;
 
             if (lifeTime % nummy == 0)
@@ -237,6 +249,19 @@ namespace WiiPlayTanksRemake.GameContent
                     p.position.Y += 0.1f;
                 };
             }
+
+            TankGame.OnFocusLost += TankGame_OnFocusLost;
+            TankGame.OnFocusRegained += TankGame_OnFocusRegained;
+        }
+
+        private void TankGame_OnFocusRegained(object sender, IntPtr e)
+        {
+            _loopingSound?.Resume();
+        }
+
+        private void TankGame_OnFocusLost(object sender, IntPtr e)
+        {
+            _loopingSound?.Pause();
         }
 
         /// <summary>
@@ -325,6 +350,9 @@ namespace WiiPlayTanksRemake.GameContent
             if (owner != null)
                 owner.OwnedShellCount--;
             _flame?.Destroy();
+            _loopingSound?.Stop();
+            _loopingSound?.Dispose();
+            _loopingSound = null;
             AllShells[worldId] = null;
         }
 

@@ -95,7 +95,7 @@ namespace WiiPlayTanksRemake.Graphics
             effect.DirectionalLight1.Enabled = false;
             effect.DirectionalLight2.Enabled = false;
 
-            var lightingConstant = 1.75f;
+            var lightingConstant = 1.25f;
 
             effect.DirectionalLight0.Direction = new Vector3(0, -1f, 0) * lightingConstant;
             // effect.DirectionalLight1.Direction = new Vector3(0, -0.6f, 0.6f) * lightingConstant;

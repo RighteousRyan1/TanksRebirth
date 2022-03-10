@@ -29,7 +29,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems.Coordinates
 
         public bool IsHovered => GameUtils.GetMouseToWorldRay().Intersects(_box).HasValue;
 
-        private int _cubeId = -1;
+        private int _blockId = -1;
 
         private Action<PlacementSquare> _onClick = null;
 
@@ -53,20 +53,20 @@ namespace WiiPlayTanksRemake.GameContent.Systems.Coordinates
                     {
                         _onClick = (place) =>
                         {
-                            if (place._cubeId <= -1)
+                            if (place._blockId <= -1)
                             {
                                 ChatSystem.SendMessage("Added!", Color.Red);
                                 var cube = new Block((Block.BlockType)GameHandler.BlockType, GameHandler.CubeHeight)
                                 {
                                     position = place.Position
                                 };
-                                place._cubeId = cube.worldId;
+                                place._blockId = cube.worldId;
                             }
                             else
                             {
                                 ChatSystem.SendMessage("Removed!", Color.Red);
-                                Block.blocks[place._cubeId] = null;
-                                place._cubeId = -1;
+                                Block.blocks[place._blockId] = null;
+                                place._blockId = -1;
                             }
                         }
                     };
@@ -82,6 +82,10 @@ namespace WiiPlayTanksRemake.GameContent.Systems.Coordinates
                 if (Input.CanDetectClick())
                     _onClick?.Invoke(this);
             }
+
+            if (_blockId > -1)
+                if (Block.blocks[_blockId] is null)
+                    _blockId = -1;
         }
 
         public void Render()
@@ -94,9 +98,9 @@ namespace WiiPlayTanksRemake.GameContent.Systems.Coordinates
                     effect.View = TankGame.GameView;
                     effect.Projection = TankGame.GameProjection;
 
-                    if (_cubeId > -1)
-                        if (displayHeights && Block.blocks[_cubeId] is not null)
-                            TankGame.spriteBatch.DrawString(TankGame.TextFont, $"{Block.blocks[_cubeId].height}", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection), Color.White, new(1f), 0f, TankGame.TextFont.MeasureString($"{Block.blocks[_cubeId].height}") / 2);
+                    if (_blockId > -1)
+                        if (displayHeights && Block.blocks[_blockId] is not null)
+                            TankGame.spriteBatch.DrawString(TankGame.TextFont, $"{Block.blocks[_blockId].height}", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection), Color.White, new(1f), 0f, TankGame.TextFont.MeasureString($"{Block.blocks[_blockId].height}") / 2);
 
                     effect.TextureEnabled = true;
                     effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");

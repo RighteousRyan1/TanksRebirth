@@ -353,8 +353,8 @@ namespace WiiPlayTanksRemake.GameContent
                     break;
 
                 case TankTier.Yellow:
-                    AiParams.MeanderAngle = MathHelper.Pi;
-                    AiParams.MeanderFrequency = 30;
+                    AiParams.MeanderAngle = MathHelper.ToRadians(30);
+                    AiParams.MeanderFrequency = 15;
                     AiParams.TurretMeanderFrequency = 20;
                     AiParams.TurretSpeed = 0.02f;
                     AiParams.Inaccuracy = 0.5f;
@@ -392,8 +392,8 @@ namespace WiiPlayTanksRemake.GameContent
                     break;
 
                 case TankTier.Pink:
-                    AiParams.MeanderAngle = 0.3f;
-                    AiParams.MeanderFrequency = 15;
+                    AiParams.MeanderAngle = MathHelper.ToRadians(30);
+                    AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 40;
                     AiParams.TurretSpeed = 0.03f;
                     AiParams.Inaccuracy = 0.2f;
@@ -460,8 +460,8 @@ namespace WiiPlayTanksRemake.GameContent
                     break;
 
                 case TankTier.Purple:
-                    AiParams.MeanderAngle = 1f;
-                    AiParams.MeanderFrequency = 20;
+                    AiParams.MeanderAngle = MathHelper.ToRadians(30);
+                    AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 25;
 
                     TankDestructionColor = Color.Purple;
@@ -501,8 +501,8 @@ namespace WiiPlayTanksRemake.GameContent
                     break;
 
                 case TankTier.White:
-                    AiParams.MeanderAngle = 0.9f;
-                    AiParams.MeanderFrequency = 60;
+                    AiParams.MeanderAngle = MathHelper.ToRadians(30);
+                    AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 20;
                     AiParams.TurretSpeed = 0.03f;
                     AiParams.Inaccuracy = 0.2f;
@@ -543,7 +543,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                 case TankTier.Black:
                     AiParams.MeanderAngle = MathHelper.ToRadians(30);
-                    AiParams.MeanderFrequency = 45;
+                    AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 20;
                     AiParams.TurretSpeed = 0.03f;
                     AiParams.Inaccuracy = 0.12f;
@@ -607,7 +607,7 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.SmartRicochets = true;
                     break;
                 case TankTier.Silver:
-                    AiParams.MeanderAngle = 0.5f;
+                    AiParams.MeanderAngle = MathHelper.ToRadians(30);
                     AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 60;
                     AiParams.TurretSpeed = 0.045f;
@@ -647,7 +647,7 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.MinePlacementChance = 0.05f;
                     break;
                 case TankTier.Sapphire:
-                    AiParams.MeanderAngle = 0.25f;
+                    AiParams.MeanderAngle = MathHelper.ToRadians(30);
                     AiParams.MeanderFrequency = 15;
                     AiParams.TurretMeanderFrequency = 20;
                     AiParams.TurretSpeed = 0.025f;
@@ -687,7 +687,7 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.MinePlacementChance = 0.05f;
                     break;
                 case TankTier.Ruby:
-                    AiParams.MeanderAngle = 0.5f;
+                    AiParams.MeanderAngle = MathHelper.ToRadians(30);
                     AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 20;
                     AiParams.TurretSpeed = 0.025f;
@@ -732,7 +732,7 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.BlockWarinessDistance = 30;
                     break;
                 case TankTier.Citrine:
-                    AiParams.MeanderAngle = 0.7f;
+                    AiParams.MeanderAngle = MathHelper.ToRadians(30);
                     AiParams.MeanderFrequency = 30;
                     AiParams.TurretMeanderFrequency = 20;
                     AiParams.TurretSpeed = 0.035f;
@@ -774,7 +774,7 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.ShootChance = 0.95f;
                     break;
                 case TankTier.Amethyst:
-                    AiParams.MeanderAngle = 0.3f;
+                    AiParams.MeanderAngle = MathHelper.ToRadians(30);
                     AiParams.MeanderFrequency = 5;
                     AiParams.TurretMeanderFrequency = 15;
                     AiParams.TurretSpeed = 0.05f;
@@ -834,7 +834,7 @@ namespace WiiPlayTanksRemake.GameContent
                     break;
 
                 case TankTier.Gold:
-                    AiParams.MeanderAngle = 1.8f;
+                    AiParams.MeanderAngle = MathHelper.ToRadians(30);
                     AiParams.MeanderFrequency = 20;
                     AiParams.TurretMeanderFrequency = 20;
                     AiParams.TurretSpeed = 0.02f;
@@ -880,7 +880,7 @@ namespace WiiPlayTanksRemake.GameContent
                     break;
 
                 case TankTier.Obsidian:
-                    AiParams.MeanderAngle = 1.2f;
+                    AiParams.MeanderAngle = MathHelper.ToRadians(30);
                     AiParams.MeanderFrequency = 20;
                     AiParams.TurretMeanderFrequency = 20;
                     AiParams.TurretSpeed = 0.05f;

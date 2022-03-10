@@ -127,7 +127,7 @@ namespace WiiPlayTanksRemake.GameContent
             if (this is AITank)
             {
                 var killSound2 = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_destroy_enemy");
-                SoundPlayer.PlaySoundInstance(killSound2, SoundContext.Effect, 0.5f);
+                SoundPlayer.PlaySoundInstance(killSound2, SoundContext.Effect, 0.3f);
 
                 new TankDeathMark(TankDeathMark.CheckColor.White)
                 {

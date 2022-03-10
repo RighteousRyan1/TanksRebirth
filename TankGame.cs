@@ -145,6 +145,11 @@ namespace WiiPlayTanksRemake
 
         public static SpriteFontBase TextFont;
 
+        public static event EventHandler<IntPtr> OnFocusLost;
+        public static event EventHandler<IntPtr> OnFocusRegained;
+
+        private bool _wasActive;
+
         public TankGame() : base()
         {
             graphics = new(this);
@@ -262,7 +267,7 @@ namespace WiiPlayTanksRemake
 
             DiscordRichPresence.Terminate();
         }
-
+        
         protected override void LoadContent()
         {
             var s = Stopwatch.StartNew();
@@ -350,6 +355,11 @@ namespace WiiPlayTanksRemake
                 DiscordRichPresence.Update();
 
                 LastGameTime = gameTime;
+
+                if (_wasActive && !IsActive)
+                    OnFocusLost?.Invoke(this, Window.Handle);
+                if (!_wasActive && IsActive)
+                    OnFocusRegained?.Invoke(this, Window.Handle);
 
                 if (!GameUI.Paused && !MainMenu.Active)
                 {
@@ -470,8 +480,9 @@ namespace WiiPlayTanksRemake
 
                 UpdateStopwatch.Stop();
 
-
                 LogicFPS = Math.Round(1f / gameTime.ElapsedGameTime.TotalSeconds);
+
+                _wasActive = IsActive;
             }
             catch (Exception e)
             {
