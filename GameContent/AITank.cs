@@ -21,10 +21,6 @@ namespace WiiPlayTanksRemake.GameContent
     public class AITank : Tank
     {
         private int treadSoundTimer = 5;
-        private int curShootStun;
-        private int curShootCooldown;
-        private int curMineCooldown;
-        private int curMineStun;
         public int TierHierarchy => (int)tier;
 
         public AiBehavior[] Behaviors { get; private set; } = new AiBehavior[10]; // each of these should keep track of an action the tank performs
@@ -93,9 +89,6 @@ namespace WiiPlayTanksRemake.GameContent
         /// <summary>The AI parameter collection of this AI Tank.</summary>
         public Params AiParams { get; } = new();
 
-        internal int TimeSinceLastMinePlaced { get; set; } = 999999;
-        internal int TimeSinceLastMineFound { get; set; } = 999999;
-
         public Vector3 aimTarget;
 
         /// <summary>Whether or not this tank sees its target. Generally should not be set, but the tank will shoot if able when this is true.</summary>
@@ -105,12 +98,6 @@ namespace WiiPlayTanksRemake.GameContent
 
         /// <summary>The target rotation for this tank's turret. <see cref="Tank.TurretRotation"/> will move towards this value at a rate of <see cref="TurretSpeed"/>.</summary>
         public float targetTurretRotation;
-
-        #endregion
-
-        #region TankWatchingParams
-
-        public Ray tankTurretRay;
 
         #endregion
 
@@ -141,8 +128,6 @@ namespace WiiPlayTanksRemake.GameContent
         public static int GetTankCountOfType(TankTier tier)
             => GameHandler.AllAITanks.Count(tnk => tnk is not null && tnk.tier == tier && !tnk.Dead);
 
-        private bool isIngame;
-
         /// <summary>
         /// Creates a new <see cref="AITank"/>.
         /// </summary>
@@ -150,11 +135,11 @@ namespace WiiPlayTanksRemake.GameContent
         /// <param name="setTankDefaults">Whether or not to give this <see cref="AITank"/> the default values.</param>
         public AITank(TankTier tier, bool setTankDefaults = true, bool isIngame = true)
         {
-            treadSoundTimer += new Random().Next(-1, 2);
+            treadSoundTimer += GameHandler.GameRand.Next(-1, 2);
             for (int i = 0; i < Behaviors.Length; i++)
                 Behaviors[i] = new();
 
-            this.isIngame = isIngame;
+            IsIngame = isIngame;
 
             Behaviors[0].Label = "TankBaseMovement";
             Behaviors[1].Label = "TankBarrelMovement";
@@ -1443,22 +1428,22 @@ namespace WiiPlayTanksRemake.GameContent
 
                 var lightParticle = ParticleSystem.MakeParticle(position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_particle"));
 
-                lightParticle.Scale = 0.25f;
+                lightParticle.Scale = new(0.25f);
                 lightParticle.Opacity = 0f;
                 lightParticle.is2d = true;
 
                 lightParticle.UniqueBehavior = (lp) =>
                 {
                     lp.position = position;
-                    if (lp.Scale < 5f)
-                        lp.Scale += 0.12f;
-                    if (lp.Opacity < 1f && lp.Scale < 5f)
+                    if (lp.Scale.X < 5f)
+                        GeometryUtils.Add(ref lp.Scale, 0.12f);
+                    if (lp.Opacity < 1f && lp.Scale.X < 5f)
                         lp.Opacity += 0.02f;
 
                     if (lp.lifeTime > 90)
                         lp.Opacity -= 0.005f;
 
-                    if (lp.Scale < 0f)
+                    if (lp.Scale.X < 0f)
                         lp.Destroy();
                 };
 
@@ -1470,7 +1455,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                     var velocity = Vector2.UnitY.RotatedByRadians(MathHelper.ToRadians(360f / NUM_LOCATIONS * i));
 
-                    lp.Scale = 1f;
+                    lp.Scale = new(1f);
 
                     lp.UniqueBehavior = (elp) =>
                     {
@@ -1479,53 +1464,35 @@ namespace WiiPlayTanksRemake.GameContent
 
                         if (elp.lifeTime > 15)
                         {
-                            elp.Scale -= 0.03f;
+                            GeometryUtils.Add(ref elp.Scale, -0.03f);
                             elp.Opacity -= 0.03f;
                         }
 
-                        if (elp.Scale <= 0f || elp.Opacity <= 0f)
+                        if (elp.Scale.X <= 0f || elp.Opacity <= 0f)
                             elp.Destroy();
                     };
                 }
             }
         }
 
-        internal void Update()
+        public override void Update()
         {
             if (Dead)
                 return;
 
-            if (curShootStun > 0)
-                curShootStun--;
-            if (curShootCooldown > 0)
-                curShootCooldown--;
-            if (curMineStun > 0)
-                curMineStun--;
-            if (curMineCooldown > 0)
-                curMineCooldown--;
+            base.Update();
 
-            if (curShootStun > 0 || curMineStun > 0 || Stationary && isIngame)
-                velocity = Vector3.Zero;
-
-            if (isIngame)
+            if (IsIngame)
             {
                 Projection = TankGame.GameProjection;
                 View = TankGame.GameView;
             }
-
-            World = Matrix.CreateFromYawPitchRoll(-TankRotation, 0, 0)
-                * Matrix.CreateTranslation(position);
-
-            position += velocity * 0.55f; //* 60 * (float)TankGame.LastGameTime.ElapsedGameTime.TotalSeconds;
 
             DoAi(true, true, true);
 
             // targetTankRotation = (GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - GameUtils.MousePosition).ToRotation() - MathHelper.PiOver2;
 
             timeSinceLastAction++;
-
-            if (isIngame)
-                UpdateCollision();
 
             oldPosition = position;
         }
@@ -1537,34 +1504,10 @@ namespace WiiPlayTanksRemake.GameContent
             GameHandler.AllTanks[WorldId] = null;
         }
 
-        private void UpdateCollision()
+        public override void UpdateCollision()
         {
-            CollisionBox = new(position - new Vector3(7, 15, 7), position + new Vector3(10, 15, 10));
-            foreach (var tank in GameHandler.AllTanks)
-            {
-                if (tank is not null)
-                {
-                    var dummyVel = Velocity2D;
-                    Collision.HandleCollisionSimple(CollisionBox2D, tank.CollisionBox2D, ref dummyVel, ref position);
-
-                    velocity.X = dummyVel.X;
-                    velocity.Z = dummyVel.Y;
-                }
-            }
-
-            foreach (var c in Block.blocks)
-            {
-                if (c is not null)
-                {
-                    var dummyVel = Velocity2D;
-                    Collision.HandleCollisionSimple(CollisionBox2D, c.collider2d, ref dummyVel, ref position);
-
-                    velocity.X = dummyVel.X;
-                    velocity.Z = dummyVel.Y;
-                }
-            }
-            position.X = MathHelper.Clamp(position.X, MapRenderer.TANKS_MIN_X, MapRenderer.TANKS_MAX_X);
-            position.Z = MathHelper.Clamp(position.Z, MapRenderer.TANKS_MIN_Y, MapRenderer.TANKS_MAX_Y);
+            if (IsIngame)
+                base.UpdateCollision();
         }
 
         /// <summary>
@@ -1572,121 +1515,14 @@ namespace WiiPlayTanksRemake.GameContent
         /// </summary>
         public override void LayMine()
         {
-            if (curMineCooldown > 0 || OwnedMineCount >= MineLimit)
-                return;
-
-            curMineCooldown = MineCooldown;
-            curMineStun = MineStun;
-            var sound = GameResources.GetGameResource<SoundEffect>("Assets/sounds/mine_place");
-            SoundPlayer.PlaySoundInstance(sound, SoundContext.Effect, 0.5f);
-            OwnedMineCount++;
-            TimeSinceLastMinePlaced = 0;
-
-            timeSinceLastAction = 0;
-
-            var mine = new Mine(this, position, 600);
+            base.LayMine();
         }
         /// <summary>
         /// Destroys this <see cref="AITank"/>.
         /// </summary>
         public override void Destroy()
         {
-            Dead = true;
-            var killSound1 = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_destroy");
-            var killSound2 = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_destroy_enemy");
-
-            SoundPlayer.PlaySoundInstance(killSound1, SoundContext.Effect, 0.2f);
-            SoundPlayer.PlaySoundInstance(killSound2, SoundContext.Effect, 0.3f);
-
-            new TankDeathMark(TankDeathMark.CheckColor.White)
-            {
-                location = position + new Vector3(0, 0.1f, 0)
-            };
-
-            for (int i = 0; i < 12; i++)
-            {
-                var tex = GameResources.GetGameResource<Texture2D>(new Random().Next(0, 2) == 0 ? "Assets/textures/misc/tank_rock" : "Assets/textures/misc/tank_rock_2");
-
-                var part = ParticleSystem.MakeParticle(position, tex);
-
-                var rand = new Random();
-
-                part.isAddative = false;
-
-                var vel = new Vector3(rand.NextFloat(-3, 3), rand.NextFloat(3, 6), rand.NextFloat(-3, 3));
-
-                part.rotationX = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
-
-                part.Scale = 0.55f;
-
-                part.color = TankDestructionColor;
-
-                part.UniqueBehavior = (p) =>
-                {
-                    part.rotationY += MathF.Sin(part.position.Length() / 10);
-                    vel.Y -= 0.2f;
-                    part.position += vel;
-                    part.Opacity -= 0.025f;
-
-                    if (part.Opacity <= 0f)
-                        part.Destroy();
-                };
-            }
-
-            var partExpl = ParticleSystem.MakeParticle(position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
-
-            partExpl.color = Color.Yellow * 0.75f;
-
-            partExpl.Scale = 5f;
-
-            partExpl.is2d = true;
-
-            partExpl.UniqueBehavior = (p) =>
-            {
-                p.Scale -= 0.3f;
-                p.Opacity -= 0.06f;
-                if (p.Scale <= 0f)
-                    p.Destroy();
-            };
-
-            const int NUM_LOCATIONS = 8;
-
-            for (int i = 0; i < NUM_LOCATIONS; i++)
-            {
-                var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes");
-
-                var part = ParticleSystem.MakeParticle(position, tex);
-
-                var rand = new Random();
-
-                part.isAddative = false;
-
-                part.rotationX = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
-
-                part.Scale = 0.8f;
-
-                var velocity = Vector2.UnitY.RotatedByRadians(MathHelper.ToRadians(360f / NUM_LOCATIONS * i)).Expand_Z() / 2;
-
-                part.position.Y += 5f;
-
-                part.color = Color.DarkOrange;//new(152, 96, 26);
-
-                part.UniqueBehavior = (p) =>
-                {
-                    part.position += velocity;
-                    part.Scale -= 0.01f;
-
-                    if (part.Scale <= 0f)
-                        part.Destroy();
-
-                    if (part.lifeTime > 40)
-                    {
-                        part.Opacity -= 0.02f;
-                        part.position.Y += 0.25f;
-                    }
-                };
-            }
-
+            base.Destroy();
             GameHandler.AllAITanks[AITankId] = null;
             GameHandler.AllTanks[WorldId] = null;
             // TODO: play fanfare thingy i think
@@ -1697,97 +1533,12 @@ namespace WiiPlayTanksRemake.GameContent
         /// </summary>
         public override void Shoot()
         {
-            if (!GameHandler.InMission || !HasTurret)
-                return;
-
-            if (curShootCooldown > 0 || OwnedShellCount >= ShellLimit)
-                return;
-
-            SoundEffectInstance sfx;
-
-            sfx = ShellType switch
-            {
-                ShellTier.Standard => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_2"), SoundContext.Effect, 0.3f),
-                ShellTier.Rocket => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_rocket"), SoundContext.Effect, 0.3f),
-                ShellTier.RicochetRocket => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_ricochet_rocket"), SoundContext.Effect, 0.3f),
-                ShellTier.Supressed => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_silencer"), SoundContext.Effect, 0.3f),
-                ShellTier.Explosive => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_2"), SoundContext.Effect, 0.3f),
-                _ => throw new NotImplementedException()
-            };
-            sfx.Pitch = ShootPitch;
-
-            var bullet = new Shell(position, Vector3.Zero, homing: ShellHoming);
-            var new2d = Vector2.UnitY.RotatedByRadians(TurretRotation);
-
-            var newPos = Position2D + new Vector2(0, 20).RotatedByRadians(-TurretRotation);
-
-            bullet.position = new Vector3(newPos.X, 11, newPos.Y);
-
-            bullet.velocity = new Vector3(-new2d.X, 0, new2d.Y) * ShellSpeed;
-
-            bullet.owner = this;
-            bullet.ricochets = RicochetCount;
-
-            var hit = ParticleSystem.MakeParticle(bullet.position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
-            var smoke = ParticleSystem.MakeParticle(bullet.position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
-
-            hit.rotationX = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
-            smoke.rotationX = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
-
-            smoke.Scale = 0.35f;
-            hit.Scale = 0.5f;
-
-            smoke.color = new(84, 22, 0, 255);
-
-            smoke.isAddative = false;
-
-            int achieveable = 80;
-            int step = 1;
-
-            hit.UniqueBehavior = (part) =>
-            {
-                part.color = Color.Orange;
-
-                if (part.lifeTime > 1)
-                    part.Opacity -= 0.1f;
-                if (part.Opacity <= 0)
-                    part.Destroy();
-            };
-            smoke.UniqueBehavior = (part) =>
-            {
-                part.color.R = (byte)GameUtils.RoughStep(part.color.R, achieveable, step);
-                part.color.G = (byte)GameUtils.RoughStep(part.color.G, achieveable, step);
-                part.color.B = (byte)GameUtils.RoughStep(part.color.B, achieveable, step);
-
-                part.Scale += 0.004f;
-
-                if (part.color.G == achieveable)
-                {
-                    part.color.B = (byte)achieveable;
-                    part.Opacity -= 0.04f;
-
-                    if (part.Opacity <= 0)
-                        part.Destroy();
-                }
-            };
-
-            OwnedShellCount++;
-
-            timeSinceLastAction = 0;
-
-            curShootStun = ShootStun;
-            curShootCooldown = ShellCooldown;
+            base.Shoot();
         }
 
         public override void LayFootprint(bool alt)
         {
-            if (!CanLayTread)
-                return;
-            new TankFootprint(alt)
-            {
-                location = position + new Vector3(0, 0.1f, 0),
-                rotation = -TankRotation
-            };
+            base.LayFootprint(alt);
         }
 
         public Ray tankPathRay;
@@ -1945,8 +1696,6 @@ namespace WiiPlayTanksRemake.GameContent
 
         public void DoAi(bool doMoveTowards = true, bool doMovements = true, bool doFire = true)
         {
-            TimeSinceLastMinePlaced++;
-
             CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation);
 
             if (tier == TankTier.Commando)
@@ -1971,7 +1720,7 @@ namespace WiiPlayTanksRemake.GameContent
                 {
                     if (TankGame.GameUpdateTime % treadSoundTimer == 0)
                     {
-                        var treadPlace = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_tread_place_{new Random().Next(1, 5)}");
+                        var treadPlace = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_tread_place_{GameHandler.GameRand.Next(1, 5)}");
                         var sfx = SoundPlayer.PlaySoundInstance(treadPlace, SoundContext.Effect, 0.05f);
                         sfx.Pitch = TreadPitch;
                     }
@@ -2037,7 +1786,7 @@ namespace WiiPlayTanksRemake.GameContent
                                 }
 
                                 var dirVec = Position2D - aimTarget.FlattenZ();
-                                targetTurretRotation = -dirVec.ToRotation() - MathHelper.PiOver2 + new Random().NextFloat(-AiParams.Inaccuracy, AiParams.Inaccuracy);
+                                targetTurretRotation = -dirVec.ToRotation() - MathHelper.PiOver2 + GameHandler.GameRand.NextFloat(-AiParams.Inaccuracy, AiParams.Inaccuracy);
                             }
                         }
 
@@ -2066,7 +1815,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                             if (AiParams.SmartRicochets)
                             {
-                                var canShoot = !(curShootCooldown > 0 || OwnedShellCount >= ShellLimit);
+                                var canShoot = !(CurShootCooldown > 0 || OwnedShellCount >= ShellLimit);
                                 if (canShoot)
                                 {
                                     var tanks = GetTanksInPath(Vector2.UnitY.RotatedByRadians(seekRotation));
@@ -2089,7 +1838,7 @@ namespace WiiPlayTanksRemake.GameContent
                             bool checkNoTeam = Team == Team.NoTeam ? true : !tanksNearMe.Any(x => x.Team == Team);
 
                             if (SeesTarget && checkNoTeam && !findsSelf && !findsFriendly)
-                                if (curShootCooldown <= 0)
+                                if (CurShootCooldown <= 0)
                                     Shoot();
                         }
                     }
@@ -2111,14 +1860,11 @@ namespace WiiPlayTanksRemake.GameContent
                         bool isBulletNear = TryGetShellNear(AiParams.ProjectileWarinessRadius, out var shell);
                         bool isMineNear = TryGetMineNear(AiParams.MineWarinessRadius, out var mine);
 
-                        bool movingFromMine = TimeSinceLastMinePlaced < AiParams.MoveFromMineTime;
-                        bool movingFromOtherMine = TimeSinceLastMineFound < AiParams.MoveFromMineTime / 2;
-
                         #region CubeNav
 
                         pathBlocked = IsObstacleInWay(AiParams.BlockWarinessDistance, Vector2.UnitY.RotatedByRadians(-targetTankRotation), out var travelPath);
 
-                        if (pathBlocked && Behaviors[2].IsModOf(3) && !isMineNear && !isBulletNear && !movingFromMine && !movingFromOtherMine)
+                        if (pathBlocked && Behaviors[2].IsModOf(3) && !isMineNear && !isBulletNear)
                         {
                             var targe = GameUtils.DirectionOf(Position2D, travelPath).ToRotation();
                             GameUtils.RoughStep(ref targetTankRotation, targe, targe / 4);
@@ -2129,7 +1875,7 @@ namespace WiiPlayTanksRemake.GameContent
                         #endregion
 
                         #region GeneralMovement
-                        if (!isMineNear && !isBulletNear && !movingFromMine && !movingFromOtherMine && !IsTurning && curMineStun == 0 && curShootStun == 0)
+                        if (!isMineNear && !isBulletNear && !IsTurning && CurMineStun == 0 && CurShootStun == 0)
                         {
                             if (!pathBlocked)
                             {
@@ -2140,7 +1886,7 @@ namespace WiiPlayTanksRemake.GameContent
                                     if (targetExists)
                                         dir = GameUtils.DirectionOf(Position2D, enemy.Position2D).ToRotation();
 
-                                    var random = new Random().NextFloat(-AiParams.MeanderAngle / 2, AiParams.MeanderAngle / 2);
+                                    var random = GameHandler.GameRand.NextFloat(-AiParams.MeanderAngle / 2, AiParams.MeanderAngle / 2);
 
                                     targetTankRotation += random;
                                 }
@@ -2155,7 +1901,7 @@ namespace WiiPlayTanksRemake.GameContent
                                             if (targetExists)
                                                 dir = GameUtils.DirectionOf(Position2D, enemy.Position2D).ToRotation();
 
-                                            var random = new Random().NextFloat(-AiParams.MeanderAngle / 2, AiParams.MeanderAngle / 2);
+                                            var random = GameHandler.GameRand.NextFloat(-AiParams.MeanderAngle / 2, AiParams.MeanderAngle / 2);
 
                                             var meanderRandom = dir != -100 ? random + (dir + MathHelper.PiOver2) + (0.2f * AiParams.PursuitLevel) : random;
 
@@ -2207,15 +1953,15 @@ namespace WiiPlayTanksRemake.GameContent
                                     {
                                         if (nearDestructibleObstacle)
                                         {
-                                            targetTankRotation = new Vector2(100, 100).RotatedByRadians(new Random().NextFloat(0, MathHelper.TwoPi)).Expand_Z().ToRotation();
+                                            targetTankRotation = new Vector2(100, 100).RotatedByRadians(GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi)).Expand_Z().ToRotation();
                                             LayMine();
                                         }
                                     }
                                     else
                                     {
-                                        if (new Random().NextFloat(0, 1) <= AiParams.MinePlacementChance)
+                                        if (GameHandler.GameRand.NextFloat(0, 1) <= AiParams.MinePlacementChance)
                                         {
-                                            targetTankRotation = new Vector2(100, 100).RotatedByRadians(new Random().NextFloat(0, MathHelper.TwoPi)).Expand_Z().ToRotation();
+                                            targetTankRotation = new Vector2(100, 100).RotatedByRadians(GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi)).Expand_Z().ToRotation();
                                             LayMine();
                                         }
                                     }
@@ -2226,12 +1972,9 @@ namespace WiiPlayTanksRemake.GameContent
                         {
                             if (Behaviors[5].IsModOf(10))
                             {
-                                if (TimeSinceLastMinePlaced > AiParams.MoveFromMineTime)
-                                {
-                                    var direction = Vector2.UnitY.RotatedByRadians(mine.Position2D.DirectionOf(Position2D, false).ToRotation());
+                                var direction = Vector2.UnitY.RotatedByRadians(mine.Position2D.DirectionOf(Position2D, false).ToRotation());
 
-                                    targetTankRotation = direction.ToRotation();
-                                }
+                                targetTankRotation = direction.ToRotation();
                             }
                         }
                         #endregion
@@ -2350,7 +2093,7 @@ namespace WiiPlayTanksRemake.GameContent
                         effect.Texture = tex;
                         /*var ex = new Color[1024];
 
-                        Array.Fill(ex, new Color(new Random().Next(0, 256), new Random().Next(0, 256), new Random().Next(0, 256)));
+                        Array.Fill(ex, new Color(GameHandler.GameRand.Next(0, 256), GameHandler.GameRand.Next(0, 256), GameHandler.GameRand.Next(0, 256)));
 
                         effect.Texture.SetData(0, new Rectangle(0, 8, 32, 15), ex, 0, 480);*/
 
@@ -2458,7 +2201,7 @@ namespace WiiPlayTanksRemake.GameContent
                 TankTier.Assassin
             };
 
-            return workingTiers[new Random().Next(0, workingTiers.Length)];
+            return workingTiers[GameHandler.GameRand.Next(0, workingTiers.Length)];
         }
     }
 }

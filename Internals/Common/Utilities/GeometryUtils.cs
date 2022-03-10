@@ -113,5 +113,18 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
         {
             return MathHelper.PiOver2 * rot;
         }
+
+        public static void Add(ref Vector3 v, float scale)
+        {
+            v.X += scale;
+            v.Y += scale;
+            v.Z += scale;
+        }
+        public static void Multiply(ref Vector3 v, float scale)
+        {
+            v.X *= scale;
+            v.Y *= scale;
+            v.Z *= scale;
+        }
     }
 }

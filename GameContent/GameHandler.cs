@@ -27,7 +27,7 @@ namespace WiiPlayTanksRemake.GameContent
 {
     public class GameHandler
     {
-
+        public static Random GameRand = new();
 
         public static int timeUntilTankFunction = 180;
 
@@ -152,7 +152,7 @@ namespace WiiPlayTanksRemake.GameContent
             if (Input.KeyJustPressed(Keys.OemSemicolon))
                 new Mine(null, GameUtils.GetWorldPosition(GameUtils.MousePosition), 400);
             if (Input.KeyJustPressed(Keys.OemQuotes))
-                new Shell(GameUtils.GetWorldPosition(GameUtils.MousePosition) + new Vector3(0, 11, 0), default, 0) { owner = default };
+                new Shell(GameUtils.GetWorldPosition(GameUtils.MousePosition) + new Vector3(0, 11, 0), Vector3.Zero, ShellTier.Standard, default, 0, playSpawnSound: false);
             if (Input.KeyJustPressed(Keys.End))
                 SpawnCrateAtMouse();
 
@@ -329,9 +329,9 @@ namespace WiiPlayTanksRemake.GameContent
 
         public static void SpawnTankInCrate(TankTier tierOverride = default, Team teamOverride = default, bool createEvenDrop = false)
         {
-            var random = new CubeMapPosition(new Random().Next(0, 26), new Random().Next(0, 20));
+            var random = new CubeMapPosition(GameRand.Next(0, 26), GameRand.Next(0, 20));
 
-            var drop = CrateDrop.SpawnCrate(new(CubeMapPosition.Convert3D(random).X, 500 + (createEvenDrop ? 0 : new Random().Next(-300, 301)), CubeMapPosition.Convert3D(random).Z), 2f);
+            var drop = CrateDrop.SpawnCrate(new(CubeMapPosition.Convert3D(random).X, 500 + (createEvenDrop ? 0 : GameRand.Next(-300, 301)), CubeMapPosition.Convert3D(random).Z), 2f);
             drop.scale = 1.25f;
             drop.TankToSpawn = new AITank(tierOverride == default ? AITank.PICK_ANY_THAT_ARE_IMPLEMENTED() : tierOverride)
             {
@@ -362,8 +362,8 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 for (int j = 0; j < 20; j++)
                 {
-                    if (new Random().NextFloat(0, 1) < 0.1)
-                        new Cube(Cube.BlockType.Wood, new Random().Next(1, 6))
+                    if (GameRand.NextFloat(0, 1) < 0.1)
+                        new Cube(Cube.BlockType.Wood, GameRand.Next(1, 6))
                         {
                             position = new CubeMapPosition(i, j)
                         };
@@ -383,7 +383,7 @@ namespace WiiPlayTanksRemake.GameContent
                 Mine.AllMines[i] = null;
 
             for (int i = 0; i < Shell.AllShells.Length; i++)
-                Shell.AllShells[i] = null;
+                Shell.AllShells[i]?.Destroy(false);
 
             InMission = false;
         }
@@ -396,7 +396,7 @@ namespace WiiPlayTanksRemake.GameContent
                 TankRotation = rot,
                 TurretRotation = rot,
                 Team = team,
-                position = new CubeMapPosition(new Random().Next(0, 27), new Random().Next(0, 20)),
+                position = new CubeMapPosition(GameRand.Next(0, 27), GameRand.Next(0, 20)),
                 Dead = false
             };
         }
@@ -419,7 +419,7 @@ namespace WiiPlayTanksRemake.GameContent
         {
             for (int i = 0; i < 5; i++)
             {
-                var random = new CubeMapPosition(new Random().Next(0, 23), new Random().Next(0, 18));
+                var random = new CubeMapPosition(GameRand.Next(0, 23),GameRand.Next(0, 18));
                 var rot = GeometryUtils.GetPiRandom();
                 var t = new AITank(useCurTank ? (TankTier)tankToSpawnType : AITank.PICK_ANY_THAT_ARE_IMPLEMENTED())
                 {

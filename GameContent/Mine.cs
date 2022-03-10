@@ -184,11 +184,12 @@ namespace WiiPlayTanksRemake.GameContent
                             //effect.SpecularColor = new(1, 0, 0);
                             //effect.FogColor = new(1, 0, 0);
                         }
-
                         effect.Texture = _mineTexture;
                     }
                     else
+                    {
                         effect.Texture = _envTexture;
+                    }
                     effect.SetDefaultGameLighting_IngameEntities();
                 }
                 mesh.Draw();

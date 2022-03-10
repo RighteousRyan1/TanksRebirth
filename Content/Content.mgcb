@@ -781,11 +781,23 @@
 /processorParam:Quality=Best
 /build:Assets/sounds/tnk_shoot_ricochet_rocket.wav
 
+#begin Assets/sounds/tnk_shoot_ricochet_rocket_loop.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/sounds/tnk_shoot_ricochet_rocket_loop.wav
+
 #begin Assets/sounds/tnk_shoot_rocket.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Assets/sounds/tnk_shoot_rocket.wav
+
+#begin Assets/sounds/tnk_shoot_rocket_loop.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/sounds/tnk_shoot_rocket_loop.wav
 
 #begin Assets/sounds/tnk_shoot_silencer.ogg
 /importer:OggImporter
@@ -2091,18 +2103,6 @@
 /processorParam:TextureFormat=Color
 /build:Assets/textures/misc/armor.png
 
-#begin Assets/textures/misc/armor.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Assets/textures/misc/armor.png
-
 #begin Assets/textures/misc/bot_hit.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -2114,30 +2114,6 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Assets/textures/misc/bot_hit.png
-
-#begin Assets/textures/misc/bot_hit.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Assets/textures/misc/bot_hit.png
-
-#begin Assets/textures/misc/bot_hit_half.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Assets/textures/misc/bot_hit_half.png
 
 #begin Assets/textures/misc/bot_hit_half.png
 /importer:TextureImporter
@@ -2163,30 +2139,6 @@
 /processorParam:TextureFormat=Color
 /build:Assets/textures/misc/cursor_1.png
 
-#begin Assets/textures/misc/cursor_1.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Assets/textures/misc/cursor_1.png
-
-#begin Assets/textures/misc/cursor_2.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Assets/textures/misc/cursor_2.png
-
 #begin Assets/textures/misc/cursor_2.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -2211,18 +2163,6 @@
 /processorParam:TextureFormat=Color
 /build:Assets/textures/misc/cursor_trail.png
 
-#begin Assets/textures/misc/cursor_trail.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Assets/textures/misc/cursor_trail.png
-
 #begin Assets/textures/misc/light_particle.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -2234,30 +2174,6 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Assets/textures/misc/light_particle.png
-
-#begin Assets/textures/misc/light_particle.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Assets/textures/misc/light_particle.png
-
-#begin Assets/textures/misc/light_star.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Assets/textures/misc/light_star.png
 
 #begin Assets/textures/misc/light_star.png
 /importer:TextureImporter
@@ -2319,18 +2235,6 @@
 /processorParam:TextureFormat=Color
 /build:Assets/textures/misc/tank_rock.png
 
-#begin Assets/textures/misc/tank_rock.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Assets/textures/misc/tank_rock.png
-
 #begin Assets/textures/misc/tank_rock_2.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -2355,18 +2259,6 @@
 /processorParam:TextureFormat=Color
 /build:Assets/textures/misc/tank_smoke.png
 
-#begin Assets/textures/misc/tank_smoke.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Assets/textures/misc/tank_smoke.png
-
 #begin Assets/textures/misc/tank_smoke_ami.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -2378,30 +2270,6 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Assets/textures/misc/tank_smoke_ami.png
-
-#begin Assets/textures/misc/tank_smoke_ami.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Assets/textures/misc/tank_smoke_ami.png
-
-#begin Assets/textures/misc/tank_smokes.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Assets/textures/misc/tank_smokes.png
 
 #begin Assets/textures/misc/tank_smokes.png
 /importer:TextureImporter

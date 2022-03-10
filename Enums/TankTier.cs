@@ -57,6 +57,7 @@
 
     public enum ShellTier : byte
     {
+        Player,
         Standard,
         Rocket,
         RicochetRocket,

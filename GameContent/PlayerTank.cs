@@ -23,10 +23,6 @@ namespace WiiPlayTanksRemake.GameContent
         public bool playerControl_isBindPressed;
 
         private int _treadSoundTimer = 5;
-        public int curShootStun;
-        public int curShootCooldown;
-        private int curMineCooldown;
-        private int curMineStun;
 
         public int PlayerId { get; }
         public int WorldId { get; }
@@ -110,10 +106,19 @@ namespace WiiPlayTanksRemake.GameContent
             TurningSpeed = 0.1f;
             MaximalTurn = 0.8f;
 
+            ShellType = ShellTier.Player;
+
             ShellHoming = new();
+
+            TankDestructionColor = PlayerType switch
+            {
+                PlayerType.Blue => Color.Blue,
+                PlayerType.Red => Color.Red,
+                _ => throw new Exception("What")
+            };
         }
 
-        internal void Update()
+        public override void Update()
         {
             // pi/2 = up
             // 0 = down
@@ -122,15 +127,6 @@ namespace WiiPlayTanksRemake.GameContent
 
             if (Dead)
                 return;
-
-            if (curShootStun > 0)
-                curShootStun--;
-            if (curShootCooldown > 0)
-                curShootCooldown--;
-            if (curMineStun > 0)
-                curMineStun--;
-            if (curMineCooldown > 0)
-                curMineCooldown--;
 
             Projection = TankGame.GameProjection;
             View = TankGame.GameView;
@@ -144,7 +140,8 @@ namespace WiiPlayTanksRemake.GameContent
 
             if (GameHandler.InMission)
             {
-                if (curShootStun <= 0 && curMineStun <= 0)
+                base.Update();
+                if (CurShootStun <= 0 && CurMineStun <= 0)
                 {
                     if (!Stationary)
                     {
@@ -157,8 +154,6 @@ namespace WiiPlayTanksRemake.GameContent
                 }
                 else
                     velocity = Vector3.Zero;
-
-                position += velocity * 0.55f;
             }
             else
                 velocity = Vector3.Zero;
@@ -172,16 +167,11 @@ namespace WiiPlayTanksRemake.GameContent
                     UpdatePlayerMovement();
             }
 
-            UpdateCollision();
-
             timeSinceLastAction++;
 
             Speed = Acceleration;
 
             playerControl_isBindPressed = false;
-
-            position.X = MathHelper.Clamp(position.X, MapRenderer.TANKS_MIN_X, MapRenderer.TANKS_MAX_X);
-            position.Z = MathHelper.Clamp(position.Z, MapRenderer.TANKS_MIN_Y, MapRenderer.TANKS_MAX_Y);
 
             CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation);
             Model.Root.Transform = World;
@@ -324,42 +314,15 @@ namespace WiiPlayTanksRemake.GameContent
                 // GameHandler.ClientLog.Write(targetTnkRotation - TankRotation, LogType.Info);
         }
 
-        private void UpdateCollision()
+        public override void UpdateCollision()
         {
-            CollisionBox = new(position - new Vector3(12, 15, 12), position + new Vector3(12, 15, 12));
-
-            foreach (var tank in GameHandler.AllTanks)
-            {
-                if (tank is not null)
-                {
-                    var dummyVel = Velocity2D;
-                    Collision.HandleCollisionSimple(CollisionBox2D, tank.CollisionBox2D, ref dummyVel, ref position);
-                }
-            }
-
-            foreach (var c in Block.blocks)
-            {
-                if (c is not null)
-                {
-                    var dummyVel = Velocity2D;
-                    Collision.HandleCollisionSimple(CollisionBox2D, c.collider2d, ref dummyVel, ref position);
-                }
-            }
+            if (IsIngame)
+                base.UpdateCollision();
         }
 
         public override void Destroy()
         {
-            Dead = true;
-            var killSound1 = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_destroy");
-            var killSound2 = GameResources.GetGameResource<SoundEffect>($"Assets/fanfares/tank_player_death");
-            SoundPlayer.PlaySoundInstance(killSound1, SoundContext.Effect, 0.2f);
-            SoundPlayer.PlaySoundInstance(killSound2, SoundContext.Effect, 0.2f);
-
-            var dmark = new TankDeathMark(PlayerType == PlayerType.Blue ? TankDeathMark.CheckColor.Blue : TankDeathMark.CheckColor.Red)
-            {
-                location = position + new Vector3(0, 0.1f, 0)
-            };
-
+            base.Destroy();
             GameHandler.AllPlayerTanks[PlayerId] = null;
             GameHandler.AllTanks[WorldId] = null;
             // TODO: play player tank death sound
@@ -367,16 +330,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         public override void LayMine()
         {
-            if (curMineCooldown > 0 || OwnedMineCount >= MineLimit)
-                return;
-            // fix stun
-            curMineStun = MineStun;
-            curMineCooldown = MineCooldown;
-            var sound = GameResources.GetGameResource<SoundEffect>("Assets/sounds/mine_place");
-            SoundPlayer.PlaySoundInstance(sound, SoundContext.Effect, 0.5f);
-            OwnedMineCount++;
-            timeSinceLastAction = 0;
-            var mine = new Mine(this, position, 600);
+            base.LayMine();
         }
 
         public void UpdatePlayerMovement()
@@ -407,7 +361,7 @@ namespace WiiPlayTanksRemake.GameContent
                 }
                 if (TankGame.GameUpdateTime % _treadSoundTimer == 0)
                 {
-                    var treadPlace = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_tread_place_{new Random().Next(1, 5)}");
+                    var treadPlace = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_tread_place_{GameHandler.GameRand.Next(1, 5)}");
                     var sfx = SoundPlayer.PlaySoundInstance(treadPlace, SoundContext.Effect, 0.2f);
                     sfx.Pitch = TreadPitch;
                 }
@@ -416,13 +370,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         public override void LayFootprint(bool alt)
         {
-            if (!CanLayTread)
-                return;
-            var fp = new TankFootprint(alt)
-            {
-                location = position + new Vector3(0, 0.1f, 0),
-                rotation = -TankRotation
-            };
+            base.LayFootprint(alt);
         }
 
         private void DrawShootPath()
@@ -488,43 +436,7 @@ namespace WiiPlayTanksRemake.GameContent
         /// </summary>
         public override void Shoot()
         {
-            if (!GameHandler.InMission || !HasTurret)
-                return;
-            if (curShootCooldown > 0 || OwnedShellCount >= ShellLimit)
-                return;
-
-            SoundEffectInstance sfx;
-
-            sfx = ShellType switch
-            {
-                ShellTier.Standard => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_1"), SoundContext.Effect, 0.3f),
-                ShellTier.Rocket => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_rocket"), SoundContext.Effect, 0.3f),
-                ShellTier.RicochetRocket => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_ricochet_rocket"), SoundContext.Effect, 0.3f),
-                ShellTier.Supressed => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_silencer"), SoundContext.Effect, 0.3f),
-                ShellTier.Explosive => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_1"), SoundContext.Effect, 0.3f),
-                _ => throw new NotImplementedException()
-            };
-
-            sfx.Pitch = ShootPitch;
-            var bullet = new Shell(position, Vector3.Zero, RicochetCount, homing: ShellHoming);
-            var new2d = Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi);
-
-            var newPos = Position2D + new Vector2(0, 20).RotatedByRadians(-TurretRotation);
-
-            bullet.position = new Vector3(newPos.X, 11, newPos.Y);
-
-            bullet.velocity = new Vector3(new2d.X, 0, -new2d.Y) * ShellSpeed;
-
-            bullet.owner = this;
-
-            
-
-            OwnedShellCount++;
-
-            timeSinceLastAction = 0;
-
-            curShootStun = ShootStun;
-            curShootCooldown = ShellCooldown;
+            base.Shoot();
         }
 
         private void RenderModel()

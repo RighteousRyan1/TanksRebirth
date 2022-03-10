@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using WiiPlayTanksRemake.Enums;
 using WiiPlayTanksRemake.GameContent.GameMechanics;
 using WiiPlayTanksRemake.Graphics;
 using WiiPlayTanksRemake.Internals;
@@ -15,7 +16,8 @@ namespace WiiPlayTanksRemake.GameContent
     public class Shell
     {
         /// <summary>A structure that allows you to give a <see cref="Shell"/> homing properties.</summary>
-        public struct HomingProperties {
+        public struct HomingProperties
+        {
             public float power;
             public float radius;
             public float speed;
@@ -63,6 +65,10 @@ namespace WiiPlayTanksRemake.GameContent
 
         public bool canFriendlyFire = true;
 
+        private Particle _flame;
+
+        public readonly ShellTier Tier;
+
         /// <summary>
         /// Creates a new <see cref="Shell"/>.
         /// </summary>
@@ -70,8 +76,9 @@ namespace WiiPlayTanksRemake.GameContent
         /// <param name="velocity">The velocity of the created <see cref="Shell"/>.</param>
         /// <param name="ricochets">How many times the newly created <see cref="Shell"/> can ricochet.</param>
         /// <param name="homing">Whether or not the newly created <see cref="Shell"/> homes in on enemies.</param>
-        public Shell(Vector3 position, Vector3 velocity, int ricochets = 0, Color color = default, HomingProperties homing = default)
+        public Shell(Vector3 position, Vector3 velocity, ShellTier tier, Tank owner, int ricochets = 0, HomingProperties homing = default, bool playSpawnSound = true)
         {
+            Tier = tier;
             this.ricochets = ricochets;
             this.position = position;
             Model = GameResources.GetGameResource<Model>("Assets/bullet");
@@ -80,10 +87,36 @@ namespace WiiPlayTanksRemake.GameContent
             World = Matrix.CreateTranslation(position);
             _shellTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/bullet");
             homingProperties = homing;
+            this.owner = owner;
 
             // if explosive, black
 
             this.velocity = velocity;
+
+            if (Tier == ShellTier.Rocket || Tier == ShellTier.RicochetRocket)
+                Flaming = true;
+
+            SoundEffectInstance sfx = Tier switch
+            {
+                ShellTier.Player => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_1"), SoundContext.Effect, 0.3f),
+                ShellTier.Standard => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_2"), SoundContext.Effect, 0.3f),
+                ShellTier.Rocket => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_rocket"), SoundContext.Effect, 0.3f),
+                ShellTier.RicochetRocket => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_ricochet_rocket"), SoundContext.Effect, 0.3f),
+                ShellTier.Supressed => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_silencer"), SoundContext.Effect, 0.3f),
+                ShellTier.Explosive => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_2"), SoundContext.Effect, 0.3f),
+                _ => throw new NotImplementedException()
+            };
+            sfx.Pitch = owner.ShootPitch;
+
+            if (Flaming)
+            {
+                _flame = ParticleSystem.MakeParticle(position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit_half"));
+
+                _flame.rotationX = -MathHelper.PiOver2;
+                _flame.Scale = new(0.5f, 0.125f, 0.4f);
+                _flame.color = Color.Orange;
+                _flame.isAddative = false;
+            }
 
             int index = Array.IndexOf(AllShells, AllShells.First(shell => shell is null));
 
@@ -100,6 +133,24 @@ namespace WiiPlayTanksRemake.GameContent
                 * Matrix.CreateTranslation(position);
             Projection = TankGame.GameProjection;
             View = TankGame.GameView;
+
+            if (_flame is not null)
+            {
+                _flame.UniqueBehavior = (p) =>
+                {
+                    var flat = position.FlattenZ();
+
+                    var off = flat + new Vector2(0, -12).RotatedByRadians(rotation);
+
+                    p.position = off.Expand_Z() + new Vector3(0, 11, 0);
+
+                    p.rotationY = -rotation - MathHelper.PiOver2;
+
+                    if (TankGame.GameUpdateTime % 2 == 0)
+                        p.rotationX = GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi);
+                };
+            }
+
 
             hurtbox.Max = position + new Vector3(3, 5, 3);
             hurtbox.Min = position - new Vector3(3, 5, 3);
@@ -168,7 +219,7 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 var p = ParticleSystem.MakeParticle(position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(rotation + MathHelper.Pi).Expand_Z(), GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
                 p.FaceTowardsMe = false;
-                p.Scale = 0.4f;
+                p.Scale = new(0.4f);
                 p.color = new Color(50, 50, 50, 150);
 
                 p.rotationX = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
@@ -181,7 +232,7 @@ namespace WiiPlayTanksRemake.GameContent
                     if (p.Opacity > 0)
                         p.Opacity -= 0.02f;
 
-                    p.Scale += 0.005f;
+                    GeometryUtils.Add(ref p.Scale, 0.005f);
 
                     p.position.Y += 0.1f;
                 };
@@ -210,14 +261,15 @@ namespace WiiPlayTanksRemake.GameContent
             SoundPlayer.PlaySoundInstance(sound, SoundContext.Effect, 0.5f);
 
             var p = ParticleSystem.MakeParticle(position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_star"));
-            p.Scale = 0.8f;
+            p.Scale = new(0.8f);
             p.color = Color.Orange;
-            p.UniqueBehavior = (part) => {
-                p.Scale -= 0.0175f;
+            p.UniqueBehavior = (part) =>
+            {
+                GeometryUtils.Add(ref p.Scale, -0.0175f);
 
                 p.Opacity -= 0.025f;
 
-                if (p.Opacity <= 0f || p.Scale <= 0f)
+                if (p.Opacity <= 0f || p.Scale.X <= 0f)
                     p.Destroy();
             };
 
@@ -268,10 +320,11 @@ namespace WiiPlayTanksRemake.GameContent
             if (playSound)
             {
                 var sfx = SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/bullet_destroy"), SoundContext.Effect, 0.5f);
-                sfx.Pitch = new Random().NextFloat(-0.1f, 0.1f);
+                sfx.Pitch = GameHandler.GameRand.NextFloat(-0.1f, 0.1f);
             }
             if (owner != null)
                 owner.OwnedShellCount--;
+            _flame?.Destroy();
             AllShells[worldId] = null;
         }
 

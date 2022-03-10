@@ -20,8 +20,6 @@ namespace WiiPlayTanksRemake.GameContent
         public float rotationY;
         public float rotationZ;
 
-        public float Scale = 1f;
-
         public float Opacity = 1f;
 
         public readonly int id;
@@ -35,6 +33,9 @@ namespace WiiPlayTanksRemake.GameContent
         public bool isAddative = true;
 
         public int lifeTime;
+
+        // NOTE: scale.X is used for 2d scaling.
+        public Vector3 Scale;
 
         /* TODO:
          * Model alpha must be set!
@@ -83,13 +84,13 @@ namespace WiiPlayTanksRemake.GameContent
 
                 TankGame.spriteBatch.End();
                 TankGame.spriteBatch.Begin(SpriteSortMode.Deferred, isAddative ? BlendState.Additive : BlendState.NonPremultiplied, SamplerState.PointWrap, DepthStencilState.DepthRead, RasterizerState.CullNone, effect);
-                TankGame.spriteBatch.Draw(Texture, Vector2.Zero, null, color * Opacity, 0f, Texture.Size() / 2, Scale, default, default);
+                TankGame.spriteBatch.Draw(Texture, Vector2.Zero, null, color * Opacity, 0f, Texture.Size() / 2, Scale.X, default, default);
             }
             else
             {
                 TankGame.spriteBatch.End();
                 TankGame.spriteBatch.Begin(SpriteSortMode.Deferred, isAddative ? BlendState.Additive : BlendState.NonPremultiplied);
-                TankGame.spriteBatch.Draw(Texture, GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(position), TankGame.GameView, TankGame.GameProjection), null, color * Opacity, 0f, Texture.Size() / 2, Scale, default, default);
+                TankGame.spriteBatch.Draw(Texture, GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(position), TankGame.GameView, TankGame.GameProjection), null, color * Opacity, 0f, Texture.Size() / 2, Scale.X, default, default);
             }
             TankGame.spriteBatch.End();
             TankGame.spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
