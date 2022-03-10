@@ -519,6 +519,8 @@ namespace WiiPlayTanksRemake.GameContent
 
         public static int numDots = 10;
 
+        private static float _sinScale;
+
         public static void DrawMouse()
         {
             if (GameHandler.myTank is not null)
@@ -543,11 +545,13 @@ namespace WiiPlayTanksRemake.GameContent
                 // lata
             }
 
+            _sinScale = MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalSeconds) / 8;
+
             MouseTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/cursor_1");
 
             for (int i = 0; i < 4; i++)
             {
-                TankGame.spriteBatch.Draw(MouseTexture, GameUtils.MousePosition, null, Color.White, MathHelper.PiOver2 * i, MouseTexture.Size(), 1f, default, default);
+                TankGame.spriteBatch.Draw(MouseTexture, GameUtils.MousePosition, null, Color.White, MathHelper.PiOver2 * i, MouseTexture.Size(), 1f + _sinScale, default, default);
             }
         }
     }
@@ -563,7 +567,9 @@ namespace WiiPlayTanksRemake.GameContent
         public static void UpdateShaders()
         {
             MouseShader.Parameters["oGlobalTime"].SetValue((float)TankGame.LastGameTime.TotalGameTime.TotalSeconds);
-            // MouseShader.Parameters["oColor"].SetValue(new Vector4(0, 0, 1, 1));
+            MouseShader.Parameters["oColor"].SetValue(new Vector3(0f, 0f, 1f));
+            MouseShader.Parameters["oSpeed"].SetValue(-20f);
+            MouseShader.Parameters["oSpacing"].SetValue(10f);
         }
     }
 }
