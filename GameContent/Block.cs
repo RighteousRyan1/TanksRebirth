@@ -29,7 +29,8 @@ namespace WiiPlayTanksRemake.GameContent
 
         // public static Cube[,] cubes = new Cube[CubeMapPosition.MAP_WIDTH + 1, CubeMapPosition.MAP_HEIGHT + 1];
 
-        public Vector3 position;
+        public Vector2 Position;
+        public Vector3 Position3D => Position.ExpandZ();
 
         public Model model;
         public Model shadowModel;
@@ -101,7 +102,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             Type = type;
 
-            position = new(-1000, 0, 0);
+            Position = new(-1000, 0);
 
             // TODO: Finish collisions
 
@@ -162,7 +163,7 @@ namespace WiiPlayTanksRemake.GameContent
                     effect.Texture = GameResources.GetGameResource<Texture2D>($"Assets/toy/cube_shadow_tex");
 
                     effect.View = TankGame.GameView;
-                    effect.World = Matrix.CreateScale(0.65f) * Matrix.CreateTranslation(position + new Vector3(0, -0.11f, 0));
+                    effect.World = Matrix.CreateScale(0.65f) * Matrix.CreateTranslation(Position3D + new Vector3(0, -0.11f, 0));
                     effect.Projection = TankGame.GameProjection;
                     effect.SetDefaultGameLighting_IngameEntities();
 
@@ -174,8 +175,8 @@ namespace WiiPlayTanksRemake.GameContent
         }
         public void Update()
         {
-            collider2d = new((int)(position.X - FULL_BLOCK_SIZE / 2), (int)(position.Z - FULL_BLOCK_SIZE / 2), (int)FULL_BLOCK_SIZE, (int)FULL_BLOCK_SIZE);
-            collider = new BoundingBox(position - new Vector3(FULL_BLOCK_SIZE / 2 + 4, FULL_SIZE, FULL_BLOCK_SIZE / 2 + 4), position + new Vector3(FULL_BLOCK_SIZE / 2 + 4, FULL_SIZE, FULL_BLOCK_SIZE / 2 + 4));
+            collider2d = new((int)(Position.X - FULL_BLOCK_SIZE / 2), (int)(Position.Y - FULL_BLOCK_SIZE / 2), (int)FULL_BLOCK_SIZE, (int)FULL_BLOCK_SIZE);
+            collider = new BoundingBox(Position3D - new Vector3(FULL_BLOCK_SIZE / 2 + 4, FULL_SIZE, FULL_BLOCK_SIZE / 2 + 4), Position3D + new Vector3(FULL_BLOCK_SIZE / 2 + 4, FULL_SIZE, FULL_BLOCK_SIZE / 2 + 4));
             Vector3 offset = new();
 
             if (AffectedByOffset)
@@ -209,7 +210,7 @@ namespace WiiPlayTanksRemake.GameContent
             else
                 offset.Y -= 0.05f;
 
-            World = Matrix.CreateScale(0.7f) * Matrix.CreateTranslation(position - offset);
+            World = Matrix.CreateScale(0.7f) * Matrix.CreateTranslation(Position3D - offset);
             Projection = TankGame.GameProjection;
             View = TankGame.GameView;
         }

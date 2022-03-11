@@ -70,13 +70,16 @@ namespace WiiPlayTanksRemake.Graphics
             effect.TextureEnabled = true;
 
             effect.DirectionalLight0.Enabled = true;
-            effect.DirectionalLight1.Enabled = true;
+            effect.DirectionalLight1.Enabled = false;
             effect.DirectionalLight2.Enabled = false;
+
+            var ting = GameUtils.MousePosition.X / GameUtils.WindowWidth;
+
+            var lightingConstant = 1f;
 
             //effect.DirectionalLight0.Direction = new Vector3(0, -0.7f, -0.7f);
             //effect.DirectionalLight1.Direction = new Vector3(0, -0.7f, 0.7f);
-            effect.DirectionalLight0.Direction = Vector3.Down * 0.5f;
-            effect.DirectionalLight1.Direction = new Vector3(0, -1, -1) * 0.5f;
+            effect.DirectionalLight0.Direction = Vector3.Down * lightingConstant;
 
             effect.SpecularColor = new Vector3(LightPower) * (IsNight ? new Vector3(1) : LightColor.ToVector3());
 

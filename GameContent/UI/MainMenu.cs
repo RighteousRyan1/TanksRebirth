@@ -125,10 +125,10 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
             foreach (var tnk in tanks)
             {
-                if (tnk.position3d.X > 500)
-                    tnk.position3d.X = -500;
+                if (tnk.Position.X > 500)
+                    tnk.Position.X = -500;
 
-                tnk.velocity.X = _tnkSpeed;
+                tnk.Velocity.X = _tnkSpeed;
             }
         }
 
@@ -161,17 +161,17 @@ namespace WiiPlayTanksRemake.GameContent.UI
                     var t = AddTravelingTank(AITank.PICK_ANY_THAT_ARE_IMPLEMENTED(), 1000 + (-i * 100), j * 55);
 
                     if (i % 2 == 0)
-                        t.velocity.Z = 1f;
+                        t.Velocity.Y = 1f;
                     else
-                        t.velocity.Z = -1f;
+                        t.Velocity.Y = -1f;
 
                     t.enactBehavior = () =>
                     {
-                        if (t.position3d.Z > 530)
-                            t.position3d.Z = -30;
+                        if (t.Position.Y > 530)
+                            t.Position.Y = -30;
 
-                        if (t.position3d.Z < -30)
-                            t.position3d.Z = 530;
+                        if (t.Position.Y < -30)
+                            t.Position.Y = 530;
                     };
                 }
             }
@@ -192,11 +192,11 @@ namespace WiiPlayTanksRemake.GameContent.UI
             GameUI.BackButton.IsVisible = false;
         }
 
-        public static AITank AddTravelingTank(TankTier tier, float xOffset, float zOffset)
+        public static AITank AddTravelingTank(TankTier tier, float xOffset, float yOffset)
         {
             var extank = new AITank(tier, true, false);
             extank.Team = Team.NoTeam;
-            extank.position3d = new Vector3(-500 + xOffset, 0, zOffset);
+            extank.Position = new Vector2(-500 + xOffset, yOffset);
             extank.Dead = false;
 
             extank.TankRotation = MathHelper.PiOver2;

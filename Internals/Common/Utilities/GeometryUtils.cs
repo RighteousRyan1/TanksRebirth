@@ -126,5 +126,10 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
             v.Y *= scale;
             v.Z *= scale;
         }
+
+        public static float Average(ref Vector3 v)
+        {
+            return (v.X + v.Y + v.Z) / 3;
+        }
     }
 }

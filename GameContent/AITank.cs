@@ -51,12 +51,12 @@ namespace WiiPlayTanksRemake.GameContent
             /// <summary>Not implemented (yet). Determines how often this tank will try to move towards its target.</summary>
             public int PursuitFrequency { get; set; }
 
-            /// <summary>How often this tank will move its turret in the target's direction. It will be inaccurate at the measure of <see cref="Inaccuracy"/>.</summary>
+            /// <summary>How often this tank will move its turret in the target's direction. It will be inaccurate at the measure of <see cref="AimOffset"/>.</summary>
             public int TurretMeanderFrequency { get; set; }
             /// <summary>How fast this tank's turret rotates towards its target.</summary>
             public float TurretSpeed { get; set; }
             /// <summary>How inaccurate (in radians) this tank is trying to aim at its target.</summary>
-            public float Inaccuracy { get; set; }
+            public float AimOffset { get; set; }
 
             /// <summary>The distance of which this tank is wary of projectiles and tries to move away from them.</summary>
             public float ProjectileWarinessRadius { get; set; }
@@ -70,7 +70,7 @@ namespace WiiPlayTanksRemake.GameContent
             public int MoveFromMineTime { get; set; }
 
             /// <summary>The distance from the main shot calculation ray an enemy must be before this tank is allowed to fire.</summary>
-            public float MissDistance { get; set; }
+            public float Inaccuracy { get; set; }
 
             /// <summary>How often this tank shoots when given the opportunity. 0 to 1 values only. Defaults to 1.</summary>
             public float ShootChance { get; set; } = 1f;
@@ -103,7 +103,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         #endregion
 
-        public Vector3 oldPosition;
+        public Vector2 oldPosition;
 
         #region ModelBone & ModelMesh
         public Matrix[] boneTransforms;
@@ -242,7 +242,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             GameHandler.OnMissionStart += OnMissionStart;
 
-            Initialize();
+            base.Initialize();
         }
 
         public override void ApplyDefaults()
@@ -257,8 +257,8 @@ namespace WiiPlayTanksRemake.GameContent
 
                     AiParams.TurretMeanderFrequency = 30;
                     AiParams.TurretSpeed = 0.01f;
-                    AiParams.Inaccuracy = MathHelper.ToRadians(170);
-                    AiParams.MissDistance = 1.6f;
+                    AiParams.AimOffset = MathHelper.ToRadians(170);
+                    AiParams.Inaccuracy = 1.6f;
 
                     TurningSpeed = 0f;
                     MaximalTurn = 0;
@@ -287,9 +287,9 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.MeanderFrequency = 15;
                     AiParams.TurretMeanderFrequency = 40;
                     AiParams.TurretSpeed = 0.01f;
-                    AiParams.Inaccuracy = 0.24f;
+                    AiParams.AimOffset = 0.24f;
 
-                    AiParams.MissDistance = 0.3f;
+                    AiParams.Inaccuracy = 0.3f;
 
                     TankDestructionColor = Color.Gray;
 
@@ -323,11 +323,11 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 10;
                     AiParams.TurretSpeed = 0.1f;
-                    AiParams.Inaccuracy = 0.005f;
+                    AiParams.AimOffset = 0.005f;
 
                     TankDestructionColor = Color.Teal;
 
-                    AiParams.MissDistance = 0.15f;
+                    AiParams.Inaccuracy = 0.15f;
 
                     AiParams.ProjectileWarinessRadius = 40;
                     AiParams.MineWarinessRadius = 80;
@@ -362,9 +362,9 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.MeanderFrequency = 15;
                     AiParams.TurretMeanderFrequency = 20;
                     AiParams.TurretSpeed = 0.02f;
-                    AiParams.Inaccuracy = 0.5f;
+                    AiParams.AimOffset = 0.5f;
 
-                    AiParams.MissDistance = 1.5f;
+                    AiParams.Inaccuracy = 1.5f;
 
                     TankDestructionColor = Color.Yellow;
 
@@ -403,9 +403,9 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 40;
                     AiParams.TurretSpeed = 0.03f;
-                    AiParams.Inaccuracy = 0.2f;
+                    AiParams.AimOffset = 0.2f;
 
-                    AiParams.MissDistance = 0.7f;
+                    AiParams.Inaccuracy = 0.7f;
 
                     TankDestructionColor = Color.Pink;
 
@@ -441,9 +441,9 @@ namespace WiiPlayTanksRemake.GameContent
 
                     AiParams.TurretMeanderFrequency = 30;
                     AiParams.TurretSpeed = 0.02f;
-                    AiParams.Inaccuracy = 0.4f;
+                    AiParams.AimOffset = MathHelper.ToRadians(80);
 
-                    AiParams.MissDistance = 0.3f;
+                    AiParams.Inaccuracy = MathHelper.ToRadians(20);
 
                     TankDestructionColor = Color.LimeGreen;
 
@@ -455,7 +455,7 @@ namespace WiiPlayTanksRemake.GameContent
                     ShellLimit = 2;
                     ShellSpeed = 6f;
                     ShellType = ShellTier.RicochetRocket;
-                    RicochetCount = 2; //2;
+                    RicochetCount = 2;
 
                     Invisible = false;
                     ShellHoming = new();
@@ -467,7 +467,6 @@ namespace WiiPlayTanksRemake.GameContent
                     MineLimit = 0;
                     MineStun = 0;
 
-                    // AiParams.SmartRicochets = true;
                     break;
 
                 case TankTier.Purple:
@@ -475,12 +474,12 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 25;
 
-                    AiParams.MissDistance = 0.8f;
+                    AiParams.Inaccuracy = 0.8f;
 
                     TankDestructionColor = Color.Purple;
 
                     AiParams.TurretSpeed = 0.03f;
-                    AiParams.Inaccuracy = 0.18f;
+                    AiParams.AimOffset = 0.18f;
 
                     AiParams.ProjectileWarinessRadius = 60;
                     AiParams.MineWarinessRadius = 160;
@@ -518,9 +517,9 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 20;
                     AiParams.TurretSpeed = 0.03f;
-                    AiParams.Inaccuracy = 0.2f;
+                    AiParams.AimOffset = 0.2f;
 
-                    AiParams.MissDistance = 0.8f;
+                    AiParams.Inaccuracy = 0.8f;
 
                     TankDestructionColor = Color.White;
 
@@ -561,9 +560,9 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 20;
                     AiParams.TurretSpeed = 0.03f;
-                    AiParams.Inaccuracy = 0.12f;
+                    AiParams.AimOffset = 0.12f;
 
-                    AiParams.MissDistance = 0.15f;
+                    AiParams.Inaccuracy = 0.15f;
 
                     TankDestructionColor = Color.Black;
 
@@ -604,9 +603,9 @@ namespace WiiPlayTanksRemake.GameContent
                 case TankTier.Bronze:
                     AiParams.TurretMeanderFrequency = 15;
                     AiParams.TurretSpeed = 0.05f;
-                    AiParams.Inaccuracy = 0.005f;
+                    AiParams.AimOffset = 0.005f;
 
-                    AiParams.MissDistance = 0.2f;
+                    AiParams.Inaccuracy = 0.2f;
 
                     TankDestructionColor = new(152, 96, 26);
 
@@ -630,9 +629,9 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 60;
                     AiParams.TurretSpeed = 0.045f;
-                    AiParams.Inaccuracy = 0.9f;
+                    AiParams.AimOffset = 0.9f;
 
-                    AiParams.MissDistance = 0.4f;
+                    AiParams.Inaccuracy = 0.4f;
 
                     TankDestructionColor = Color.Silver;
 
@@ -672,9 +671,9 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.MeanderFrequency = 15;
                     AiParams.TurretMeanderFrequency = 20;
                     AiParams.TurretSpeed = 0.025f;
-                    AiParams.Inaccuracy = 0.01f;
+                    AiParams.AimOffset = 0.01f;
 
-                    AiParams.MissDistance = 0.2f;
+                    AiParams.Inaccuracy = 0.2f;
 
                     TankDestructionColor = Color.DeepSkyBlue;
 
@@ -714,9 +713,9 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 20;
                     AiParams.TurretSpeed = 0.025f;
-                    AiParams.Inaccuracy = 0.05f;
+                    AiParams.AimOffset = 0.05f;
 
-                    AiParams.MissDistance = 0.1f;
+                    AiParams.Inaccuracy = 0.1f;
 
                     TankDestructionColor = Color.IndianRed;
 
@@ -761,9 +760,9 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.MeanderFrequency = 30;
                     AiParams.TurretMeanderFrequency = 20;
                     AiParams.TurretSpeed = 0.035f;
-                    AiParams.Inaccuracy = 0.3f;
+                    AiParams.AimOffset = 0.3f;
 
-                    AiParams.MissDistance = 0.25f;
+                    AiParams.Inaccuracy = 0.25f;
 
                     TankDestructionColor = Color.Yellow;
 
@@ -805,9 +804,9 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.MeanderFrequency = 5;
                     AiParams.TurretMeanderFrequency = 15;
                     AiParams.TurretSpeed = 0.05f;
-                    AiParams.Inaccuracy = 0.3f;
+                    AiParams.AimOffset = 0.3f;
 
-                    AiParams.MissDistance = 0.65f;
+                    AiParams.Inaccuracy = 0.65f;
 
                     TankDestructionColor = Color.Purple;
 
@@ -845,9 +844,9 @@ namespace WiiPlayTanksRemake.GameContent
                 case TankTier.Emerald:
                     AiParams.TurretMeanderFrequency = 20;
                     AiParams.TurretSpeed = 0.04f;
-                    AiParams.Inaccuracy = 1f;
+                    AiParams.AimOffset = 1f;
 
-                    AiParams.MissDistance = 0.35f;
+                    AiParams.Inaccuracy = 0.35f;
 
                     TankDestructionColor = Color.Green;
 
@@ -869,9 +868,9 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.MeanderFrequency = 20;
                     AiParams.TurretMeanderFrequency = 20;
                     AiParams.TurretSpeed = 0.02f;
-                    AiParams.Inaccuracy = 0.14f;
+                    AiParams.AimOffset = 0.14f;
 
-                    AiParams.MissDistance = 0.4f;
+                    AiParams.Inaccuracy = 0.4f;
 
                     TankDestructionColor = Color.Gold;
 
@@ -917,9 +916,9 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.MeanderFrequency = 20;
                     AiParams.TurretMeanderFrequency = 20;
                     AiParams.TurretSpeed = 0.05f;
-                    AiParams.Inaccuracy = 0.18f;
+                    AiParams.AimOffset = 0.18f;
 
-                    AiParams.MissDistance = 0.9f;
+                    AiParams.Inaccuracy = 0.9f;
 
                     TankDestructionColor = Color.Black;
 
@@ -961,7 +960,7 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 20;
                     AiParams.TurretSpeed = 0.09f;
-                    AiParams.Inaccuracy = 0f;
+                    AiParams.AimOffset = 0f;
 
                     AiParams.ProjectileWarinessRadius = 150;
                     AiParams.MineWarinessRadius = 90;
@@ -994,7 +993,7 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 60;
                     AiParams.TurretSpeed = 0.045f;
-                    AiParams.Inaccuracy = 0.04f;
+                    AiParams.AimOffset = 0.04f;
 
                     AiParams.ProjectileWarinessRadius = 140;
                     AiParams.MineWarinessRadius = 140;
@@ -1031,7 +1030,7 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.MeanderFrequency = 15;
                     AiParams.TurretMeanderFrequency = 10;
                     AiParams.TurretSpeed = 0.03f;
-                    AiParams.Inaccuracy = 0.08f;
+                    AiParams.AimOffset = 0.08f;
 
                     AiParams.ProjectileWarinessRadius = 90;
                     AiParams.MineWarinessRadius = 150;
@@ -1062,7 +1061,7 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.MeanderFrequency = 8;
                     AiParams.TurretMeanderFrequency = 60;
                     AiParams.TurretSpeed = 0.07f;
-                    AiParams.Inaccuracy = 0.04f;
+                    AiParams.AimOffset = 0.04f;
 
                     AiParams.ProjectileWarinessRadius = 50;
                     AiParams.MineWarinessRadius = 50;
@@ -1099,7 +1098,7 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.MeanderFrequency = 2;
                     AiParams.TurretMeanderFrequency = 40;
                     AiParams.TurretSpeed = 0.1f;
-                    AiParams.Inaccuracy = 0.12f;
+                    AiParams.AimOffset = 0.12f;
 
                     AiParams.ProjectileWarinessRadius = 90;
                     AiParams.MineWarinessRadius = 120;
@@ -1135,7 +1134,7 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.MeanderFrequency = 8;
                     AiParams.TurretMeanderFrequency = 40;
                     AiParams.TurretSpeed = 0.05f;
-                    AiParams.Inaccuracy = 0.22f;
+                    AiParams.AimOffset = 0.22f;
 
                     AiParams.ProjectileWarinessRadius = 100;
                     AiParams.MineWarinessRadius = 100;
@@ -1171,7 +1170,7 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.MeanderFrequency = 25;
                     AiParams.TurretMeanderFrequency = 40;
                     AiParams.TurretSpeed = 0.085f;
-                    AiParams.Inaccuracy = 1f;
+                    AiParams.AimOffset = 1f;
 
                     AiParams.ProjectileWarinessRadius = 150;
                     AiParams.MineWarinessRadius = 110;
@@ -1200,7 +1199,7 @@ namespace WiiPlayTanksRemake.GameContent
                 case TankTier.Gamma:
                     AiParams.TurretMeanderFrequency = 20;
                     AiParams.TurretSpeed = 0.08f;
-                    AiParams.Inaccuracy = 0.01f;
+                    AiParams.AimOffset = 0.01f;
 
                     Invisible = false;
                     ShellHoming = new();
@@ -1218,7 +1217,7 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 20;
                     AiParams.TurretSpeed = 0.08f;
-                    AiParams.Inaccuracy = 0.11f;
+                    AiParams.AimOffset = 0.11f;
 
                     AiParams.ProjectileWarinessRadius = 70;
                     AiParams.MineWarinessRadius = 140;
@@ -1259,7 +1258,7 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 60;
                     AiParams.TurretSpeed = 0.045f;
-                    AiParams.Inaccuracy = 0.04f;
+                    AiParams.AimOffset = 0.04f;
 
                     AiParams.ProjectileWarinessRadius = 140;
                     AiParams.MineWarinessRadius = 140;
@@ -1301,7 +1300,7 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 60;
                     AiParams.TurretSpeed = 0.045f;
-                    AiParams.Inaccuracy = 0.04f;
+                    AiParams.AimOffset = 0.04f;
 
                     AiParams.ProjectileWarinessRadius = 140;
                     AiParams.MineWarinessRadius = 140;
@@ -1339,7 +1338,7 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 60;
                     AiParams.TurretSpeed = 0.045f;
-                    AiParams.Inaccuracy = 0.04f;
+                    AiParams.AimOffset = 0.04f;
 
                     AiParams.ProjectileWarinessRadius = 140;
                     AiParams.MineWarinessRadius = 140;
@@ -1377,9 +1376,9 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.MeanderFrequency = 15;
                     AiParams.TurretMeanderFrequency = 1;
                     AiParams.TurretSpeed = 0.1f;
-                    AiParams.Inaccuracy = 0f;
+                    AiParams.AimOffset = 0f;
 
-                    AiParams.MissDistance = 0.25f;
+                    AiParams.Inaccuracy = 0.25f;
                     AiParams.BounceReset = false;
 
                     AiParams.ProjectileWarinessRadius = 140;
@@ -1420,7 +1419,7 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 60;
                     AiParams.TurretSpeed = 0.045f;
-                    AiParams.Inaccuracy = 0.04f;
+                    AiParams.AimOffset = 0.04f;
 
                     AiParams.ProjectileWarinessRadius = 140;
                     AiParams.MineWarinessRadius = 140;
@@ -1464,7 +1463,7 @@ namespace WiiPlayTanksRemake.GameContent
                 var invis = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_invisible");
                 SoundPlayer.PlaySoundInstance(invis, SoundContext.Effect, 0.3f);
 
-                var lightParticle = ParticleSystem.MakeParticle(position3d, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_particle"));
+                var lightParticle = ParticleSystem.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_particle"));
 
                 lightParticle.Scale = new(0.25f);
                 lightParticle.Opacity = 0f;
@@ -1472,7 +1471,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                 lightParticle.UniqueBehavior = (lp) =>
                 {
-                    lp.position = position3d;
+                    lp.position = Position3D;
                     if (lp.Scale.X < 5f)
                         GeometryUtils.Add(ref lp.Scale, 0.12f);
                     if (lp.Opacity < 1f && lp.Scale.X < 5f)
@@ -1489,7 +1488,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                 for (int i = 0; i < NUM_LOCATIONS; i++)
                 {
-                    var lp = ParticleSystem.MakeParticle(position3d + new Vector3(0, 5, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
+                    var lp = ParticleSystem.MakeParticle(Position3D + new Vector3(0, 5, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
 
                     var velocity = Vector2.UnitY.RotatedByRadians(MathHelper.ToRadians(360f / NUM_LOCATIONS * i));
 
@@ -1523,7 +1522,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             timeSinceLastAction++;
 
-            oldPosition = position3d;
+            oldPosition = Position;
         }
 
         public override void RemoveSilently()
@@ -1584,7 +1583,7 @@ namespace WiiPlayTanksRemake.GameContent
             // 20, 30
 
             var whitePixel = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
-            var pathPos = Position2D + offset.RotatedByRadians(-TurretRotation);
+            var pathPos = Position + offset.RotatedByRadians(-TurretRotation);
 
             pathDir.Y *= -1;
             pathDir *= PATH_UNIT_LENGTH;
@@ -1594,7 +1593,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             for (int i = 0; i < MAX_PATH_UNITS; i++)
             {
-                var dummyPos = Vector3.Zero;
+                var dummyPos = Vector2.Zero;
 
                 uninterruptedIterations++;
 
@@ -1614,7 +1613,7 @@ namespace WiiPlayTanksRemake.GameContent
                 var pathHitbox = new Rectangle((int)pathPos.X - 3, (int)pathPos.Y - 3, 6, 6);
 
                 // Why is velocity passed by reference here lol
-                Collision.HandleCollisionSimple_ForBlocks(pathHitbox, ref pathDir, ref dummyPos, out var dir, false, pattern);
+                Collision.HandleCollisionSimple_ForBlocks(pathHitbox, pathDir, ref dummyPos, out var dir, false, pattern);
 
                 switch (dir)
                 {
@@ -1658,7 +1657,7 @@ namespace WiiPlayTanksRemake.GameContent
                         {
                             if (i > 15)
                             {
-                                if (Vector2.Distance(enemy.Position2D, pathPos) <= realMiss)
+                                if (Vector2.Distance(enemy.Position, pathPos) <= realMiss)
                                     tanks.Add(enemy);
                             }
                             else if (enemy.CollisionBox2D.Intersects(pathHitbox))
@@ -1681,14 +1680,14 @@ namespace WiiPlayTanksRemake.GameContent
             // 20, 30
 
             var whitePixel = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
-            var pathPos = Position2D + Vector2.Zero.RotatedByRadians(-TurretRotation);
+            var pathPos = Position + Vector2.Zero.RotatedByRadians(-TurretRotation);
 
             pathDir.Y *= -1;
             pathDir *= PATH_UNIT_LENGTH;
 
             for (int i = 0; i < checkDist; i++)
             {
-                var dummyPos = Vector3.Zero;
+                var dummyPos = Vector2.Zero;
 
                 if (pathPos.X < MapRenderer.MIN_X || pathPos.X > MapRenderer.MAX_X)
                 {
@@ -1704,7 +1703,7 @@ namespace WiiPlayTanksRemake.GameContent
                 var pathHitbox = new Rectangle((int)pathPos.X, (int)pathPos.Y, 1, 1);
 
                 // Why is velocity passed by reference here lol
-                Collision.HandleCollisionSimple_ForBlocks(pathHitbox, ref pathDir, ref dummyPos, out var dir, false);
+                Collision.HandleCollisionSimple_ForBlocks(pathHitbox, pathDir, ref dummyPos, out var dir, false);
 
                 switch (dir)
                 {
@@ -1753,9 +1752,9 @@ namespace WiiPlayTanksRemake.GameContent
                 foreach (var behavior in Behaviors)
                     behavior.totalUpdateCount++;
 
-                treadPlaceTimer = (int)Math.Round(14 / velocity.Length()) != 0 ? (int)Math.Round(14 / velocity.Length()) : 1;
+                treadPlaceTimer = (int)Math.Round(14 / Velocity.Length()) != 0 ? (int)Math.Round(14 / Velocity.Length()) : 1;
 
-                if (velocity != Vector3.Zero && !Stationary)
+                if (Velocity != Vector2.Zero && !Stationary)
                 {
                     if (TankGame.GameUpdateTime % treadSoundTimer == 0)
                     {
@@ -1774,7 +1773,7 @@ namespace WiiPlayTanksRemake.GameContent
                     foreach (var tank in GameHandler.AllTanks)
                     {
                         if (tank is not null && !tank.Dead && (tank.Team != Team || tank.Team == Team.NoTeam) && tank != this)
-                            if (Vector3.Distance(tank.position3d, position3d) < Vector3.Distance(enemy.position3d, position3d))
+                            if (Vector2.Distance(tank.Position, Position) < Vector2.Distance(enemy.Position, Position))
                                 if ((tank.Invisible && tank.timeSinceLastAction < 60) || !tank.Invisible)
                                     enemy = tank;
                     }
@@ -1783,12 +1782,12 @@ namespace WiiPlayTanksRemake.GameContent
                     var cubesNearMe = new List<Block>();
 
                     foreach (var tank in GameHandler.AllTanks)
-                        if (tank != this && tank is not null && !tank.Dead && Vector3.Distance(tank.position3d, position3d) <= AiParams.TeammateTankWariness)
+                        if (tank != this && tank is not null && !tank.Dead && Vector2.Distance(tank.Position, Position) <= AiParams.TeammateTankWariness)
                             tanksNearMe.Add(tank);
 
-                    foreach (var cube in Block.blocks)
-                        if (cube is not null && Vector3.Distance(position3d, cube.position) < AiParams.BlockWarinessDistance)
-                            cubesNearMe.Add(cube);
+                    foreach (var block in Block.blocks)
+                        if (block is not null && Vector2.Distance(Position, block.Position) < AiParams.BlockWarinessDistance)
+                            cubesNearMe.Add(block);
 
                     #region TurretHandle
 
@@ -1814,18 +1813,18 @@ namespace WiiPlayTanksRemake.GameContent
                                 isEnemySpotted = false;
                                 if (enemy.Invisible && enemy.timeSinceLastAction < 60)
                                 {
-                                    aimTarget = enemy.Position2D.Expand_Z();
+                                    aimTarget = enemy.Position.ExpandZ();
                                     isEnemySpotted = true;
                                 }
 
                                 if (!enemy.Invisible)
                                 {
-                                    aimTarget = enemy.Position2D.Expand_Z();
+                                    aimTarget = enemy.Position.ExpandZ();
                                     isEnemySpotted = true;
                                 }
 
-                                var dirVec = Position2D - aimTarget.FlattenZ();
-                                targetTurretRotation = -dirVec.ToRotation() - MathHelper.PiOver2 + GameHandler.GameRand.NextFloat(-AiParams.Inaccuracy, AiParams.Inaccuracy);
+                                var dirVec = Position - aimTarget.FlattenZ();
+                                targetTurretRotation = -dirVec.ToRotation() - MathHelper.PiOver2 + GameHandler.GameRand.NextFloat(-AiParams.AimOffset, AiParams.AimOffset);
                             }
                         }
 
@@ -1835,7 +1834,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                             seekRotation += AiParams.TurretSpeed;
 
-                            var tanksDef = GetTanksInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), offset: Vector2.UnitY * 20, missDist: AiParams.MissDistance, doBounceReset: AiParams.BounceReset); // change?
+                            var tanksDef = GetTanksInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), offset: Vector2.UnitY * 20, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset); // change?
 
                             var findsEnemy = tanksDef.Any(tnk => tnk is not null && (tnk.Team != Team || tnk.Team == Team.NoTeam));
                             var findsSelf = tanksDef.Any(tnk => tnk is not null && tnk == this);
@@ -1851,7 +1850,7 @@ namespace WiiPlayTanksRemake.GameContent
                                 var canShoot = !(CurShootCooldown > 0 || OwnedShellCount >= ShellLimit);
                                 if (canShoot)
                                 {
-                                    var tanks = GetTanksInPath(Vector2.UnitY.RotatedByRadians(seekRotation), false, default, AiParams.MissDistance, doBounceReset: false);
+                                    var tanks = GetTanksInPath(Vector2.UnitY.RotatedByRadians(seekRotation), false, default, AiParams.Inaccuracy, doBounceReset: false);
 
                                     var findsEnemy2 = tanks.Any(tnk => tnk is not null && (tnk.Team != Team || tnk.Team == Team.NoTeam) && tnk != this);
                                     // var findsSelf2 = tanks.Any(tnk => tnk is not null && tnk == this);
@@ -1899,7 +1898,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                         if (pathBlocked && Behaviors[2].IsModOf(3) && !isMineNear && !isBulletNear)
                         {
-                            var targe = GameUtils.DirectionOf(Position2D, travelPath).ToRotation();
+                            var targe = GameUtils.DirectionOf(Position, travelPath).ToRotation();
                             GameUtils.RoughStep(ref targetTankRotation, targe, targe / 4);
 
                             // TODO: i literally do not understand this
@@ -1917,7 +1916,7 @@ namespace WiiPlayTanksRemake.GameContent
                                     float dir = -100;
 
                                     if (targetExists)
-                                        dir = GameUtils.DirectionOf(Position2D, enemy.Position2D).ToRotation();
+                                        dir = GameUtils.DirectionOf(Position, enemy.Position).ToRotation();
 
                                     var random = GameHandler.GameRand.NextFloat(-AiParams.MeanderAngle / 2, AiParams.MeanderAngle / 2);
 
@@ -1932,7 +1931,7 @@ namespace WiiPlayTanksRemake.GameContent
                                             float dir = -100;
 
                                             if (targetExists)
-                                                dir = GameUtils.DirectionOf(Position2D, enemy.Position2D).ToRotation();
+                                                dir = GameUtils.DirectionOf(Position, enemy.Position).ToRotation();
 
                                             var random = GameHandler.GameRand.NextFloat(-AiParams.MeanderAngle / 2, AiParams.MeanderAngle / 2);
 
@@ -1958,14 +1957,14 @@ namespace WiiPlayTanksRemake.GameContent
                                 {
                                     if (shell.lifeTime > 30)
                                     {
-                                        var dire = Vector2.UnitY.RotatedByRadians(shell.Position2D.DirectionOf(Position2D, false).ToRotation());
+                                        var dire = Vector2.UnitY.RotatedByRadians(shell.Position2D.DirectionOf(Position, false).ToRotation());
 
                                         targetTankRotation = dire.ToRotation();
                                     }
                                 }
                                 else
                                 {
-                                    var direction = Vector2.UnitY.RotatedByRadians(shell.Position2D.DirectionOf(Position2D, false).ToRotation());
+                                    var direction = Vector2.UnitY.RotatedByRadians(shell.Position2D.DirectionOf(Position, false).ToRotation());
 
                                     targetTankRotation = direction.ToRotation();
                                 }
@@ -1986,7 +1985,7 @@ namespace WiiPlayTanksRemake.GameContent
                                     {
                                         if (nearDestructibleObstacle)
                                         {
-                                            targetTankRotation = new Vector2(100, 100).RotatedByRadians(GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi)).Expand_Z().ToRotation();
+                                            targetTankRotation = new Vector2(100, 100).RotatedByRadians(GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi)).ExpandZ().ToRotation();
                                             LayMine();
                                         }
                                     }
@@ -1994,7 +1993,7 @@ namespace WiiPlayTanksRemake.GameContent
                                     {
                                         if (GameHandler.GameRand.NextFloat(0, 1) <= AiParams.MinePlacementChance)
                                         {
-                                            targetTankRotation = new Vector2(100, 100).RotatedByRadians(GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi)).Expand_Z().ToRotation();
+                                            targetTankRotation = new Vector2(100, 100).RotatedByRadians(GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi)).ExpandZ().ToRotation();
                                             LayMine();
                                         }
                                     }
@@ -2005,7 +2004,7 @@ namespace WiiPlayTanksRemake.GameContent
                         {
                             if (Behaviors[5].IsModOf(10))
                             {
-                                var direction = Vector2.UnitY.RotatedByRadians(mine.Position2D.DirectionOf(Position2D, false).ToRotation());
+                                var direction = Vector2.UnitY.RotatedByRadians(mine.Position.DirectionOf(Position, false).ToRotation());
 
                                 targetTankRotation = direction.ToRotation();
                             }
@@ -2021,14 +2020,14 @@ namespace WiiPlayTanksRemake.GameContent
                         if (Array.IndexOf(GameHandler.AllTanks, enemy) > -1 && enemy is not null)
                         {
                             float explosionDist = 90f;
-                            if (Vector3.Distance(enemy.position3d, position3d) < explosionDist)
+                            if (Vector2.Distance(enemy.Position, Position) < explosionDist)
                             {
                                 Destroy();
 
-                                new MineExplosion(position3d, 10f, 0.2f);
+                                new MineExplosion(Position, 10f, 0.2f);
 
                                 foreach (var tnk in GameHandler.AllTanks)
-                                    if (tnk is not null && Vector3.Distance(tnk.position3d, position3d) < explosionDist)
+                                    if (tnk is not null && Vector2.Distance(tnk.Position, Position) < explosionDist)
                                         tnk.Destroy();
                             }
                         }
@@ -2060,12 +2059,12 @@ namespace WiiPlayTanksRemake.GameContent
                             {
                                 // TankRotation = targ;
                                 var dir = Vector2.UnitY.RotatedByRadians(TankRotation);
-                                velocity.X = dir.X;
-                                velocity.Z = dir.Y;
+                                Velocity.X = dir.X;
+                                Velocity.Y = dir.Y;
 
-                                velocity.Normalize();
+                                Velocity.Normalize();
                                 // velocity *= MaxSpeed;
-                                velocity *= MaxSpeed;
+                                Velocity *= MaxSpeed;
                             }
                             else
                             {
@@ -2075,7 +2074,7 @@ namespace WiiPlayTanksRemake.GameContent
                                     LayFootprint(tier == TankTier.White);
                                 }
                                 IsTurning = true;
-                                velocity = Vector3.Zero;
+                                Velocity = Vector2.Zero;
                             }
                         }
                         else
@@ -2156,8 +2155,8 @@ namespace WiiPlayTanksRemake.GameContent
             if (DebugUtils.DebugLevel == 1)
             {
                 if (AiParams.SmartRicochets)
-                    GetTanksInPath(Vector2.UnitY.RotatedByRadians(seekRotation), true, missDist: AiParams.MissDistance, doBounceReset: false);
-                var poo = GetTanksInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), true, offset: Vector2.UnitY * 20, missDist: AiParams.MissDistance, doBounceReset: AiParams.BounceReset);
+                    GetTanksInPath(Vector2.UnitY.RotatedByRadians(seekRotation), true, missDist: AiParams.Inaccuracy, doBounceReset: false);
+                var poo = GetTanksInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), true, offset: Vector2.UnitY * 20, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
                 DebugUtils.DrawDebugString(TankGame.spriteBatch, $"{tier}: {poo.Count}", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection), 1, centered: true);
                 if (!Stationary)
                 {
@@ -2191,13 +2190,13 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 if (blet is not null)
                 {
-                    if (Vector3.Distance(position3d, blet.position) < distance)
+                    if (Vector2.Distance(Position, blet.Position2D) < distance)
                     {
                         if (bulletCompare == null)
                             shell = blet;
                         else
                         {
-                            if (Vector3.Distance(position3d, blet.position).CompareTo(Vector3.Distance(position3d, bulletCompare.position)) < 0)
+                            if (Vector2.Distance(Position, blet.Position2D).CompareTo(Vector2.Distance(Position, bulletCompare.Position2D)) < 0)
                                 shell = bulletCompare;
                         }
                         // bullet = blet;
@@ -2214,7 +2213,7 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 if (yours is not null)
                 {
-                    if (Vector3.Distance(position3d, yours.position) < distance)
+                    if (Vector2.Distance(Position, yours.Position) < distance)
                     {
                         mine = yours;
                         return true;

@@ -127,7 +127,7 @@ namespace WiiPlayTanksRemake.Graphics
 
         private void Recalculate()
         {
-            _viewMatrix = Matrix.CreateScale(_zoom) * Matrix.CreateLookAt(_position, _lookAt, _upVector) * Matrix.CreateTranslation(_translation) * Matrix.CreateRotationX(_rotation.X) * Matrix.CreateRotationY(_rotation.Y) * Matrix.CreateRotationZ(_rotation.Z);
+            _viewMatrix = Matrix.CreateScale(_zoom) * Matrix.CreateLookAt(_position, _lookAt, _upVector) * Matrix.CreateRotationX(_rotation.X) * Matrix.CreateRotationY(_rotation.Y) * Matrix.CreateRotationZ(_rotation.Z) * Matrix.CreateTranslation(_translation);
             switch (CameraType)
             {
                 case CameraType.Orthographic:

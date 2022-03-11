@@ -170,7 +170,7 @@ namespace WiiPlayTanksRemake.GameContent
             if (TankToSpawn is not null)
             {
                 TankToSpawn.Dead = false;
-                TankToSpawn.position3d = new(position.X, 0, position.Z);
+                TankToSpawn.Position = new(position.X, position.Z);
             }
         }
     }

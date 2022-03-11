@@ -31,8 +31,8 @@ namespace WiiPlayTanksRemake.GameContent
         /// <summary>The <see cref="Tank"/> which shot this <see cref="Shell"/>.</summary>
         public Tank owner;
 
-        public Vector3 position;
-        public Vector3 velocity;
+        public Vector2 Position2D => Position.FlattenZ();
+        public Vector2 Velocity2D => Velocity.FlattenZ();
         /// <summary>How many times this <see cref="Shell"/> can hit walls.</summary>
         public int ricochets;
         public float rotation;
@@ -40,8 +40,8 @@ namespace WiiPlayTanksRemake.GameContent
         /// <summary>The homing properties of this <see cref="Shell"/>.</summary>
         public HomingProperties homingProperties = default;
 
-        public Vector2 Position2D => position.FlattenZ();
-        public Vector2 Velocity2D => velocity.FlattenZ();
+        public Vector3 Position;
+        public Vector3 Velocity;
 
         public Matrix View;
         public Matrix Projection;
@@ -82,18 +82,16 @@ namespace WiiPlayTanksRemake.GameContent
         {
             Tier = tier;
             this.ricochets = ricochets;
-            this.position = position;
+            Position = position;
             Model = GameResources.GetGameResource<Model>("Assets/bullet");
-            Projection = TankGame.GameProjection;
-            View = TankGame.GameView;
-            World = Matrix.CreateTranslation(position);
+
             _shellTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/bullet");
             homingProperties = homing;
             this.owner = owner;
 
             // if explosive, black
 
-            this.velocity = velocity;
+            Velocity = velocity;
 
             if (Tier == ShellTier.Rocket)
             {
@@ -125,7 +123,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             if (Flaming)
             {
-                _flame = ParticleSystem.MakeParticle(position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit_half"));
+                _flame = ParticleSystem.MakeParticle(Position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit_half"));
 
                 _flame.rotationX = -MathHelper.PiOver2;
                 _flame.Scale = new(0.5f, 0.125f, 0.4f);
@@ -142,10 +140,10 @@ namespace WiiPlayTanksRemake.GameContent
 
         internal void Update()
         {
-            rotation = Velocity2D.ToRotation() - MathHelper.PiOver2;
-            position += velocity;
+            rotation = Velocity.ToRotation() - MathHelper.PiOver2;
+            Position += Velocity;
             World = Matrix.CreateFromYawPitchRoll(-rotation, 0, 0)
-                * Matrix.CreateTranslation(position);
+                * Matrix.CreateTranslation(Position);
             Projection = TankGame.GameProjection;
             View = TankGame.GameView;
 
@@ -153,11 +151,11 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 _flame.UniqueBehavior = (p) =>
                 {
-                    var flat = position.FlattenZ();
+                    var flat = Position.FlattenZ();
 
                     var off = flat + new Vector2(0, -12).RotatedByRadians(rotation);
 
-                    p.position = off.Expand_Z() + new Vector3(0, 11, 0);
+                    p.position = off.ExpandZ() + new Vector3(0, 11, 0);
 
                     p.rotationY = -rotation - MathHelper.PiOver2;
 
@@ -167,22 +165,22 @@ namespace WiiPlayTanksRemake.GameContent
             }
 
 
-            hurtbox.Max = position + new Vector3(3, 5, 3);
-            hurtbox.Min = position - new Vector3(3, 5, 3);
+            hurtbox.Max = Position + new Vector3(3, 5, 3);
+            hurtbox.Min = Position - new Vector3(3, 5, 3);
 
-            hurtbox2d = new((int)(position.X - 3), (int)(position.Z - 3), 6, 6);
+            hurtbox2d = new((int)(Position2D.X - 3), (int)(Position2D.Y - 3), 6, 6);
 
             if (!GameHandler.InMission)
                 return;
 
-            if (position.X < MapRenderer.MIN_X || position.X > MapRenderer.MAX_X)
+            if (Position2D.X < MapRenderer.MIN_X || Position2D.X > MapRenderer.MAX_X)
                 Ricochet(true);
-            if (position.Z < MapRenderer.MIN_Y || position.Z > MapRenderer.MAX_Y)
+            if (Position2D.Y < MapRenderer.MIN_Y || Position2D.Y > MapRenderer.MAX_Y)
                 Ricochet(false);
 
-            var dummyVel = Velocity2D;
+            var dummy = Vector2.Zero;
 
-            Collision.HandleCollisionSimple_ForBlocks(hurtbox2d, ref dummyVel, ref position, out var dir, false, (c) => c.IsSolid);
+            Collision.HandleCollisionSimple_ForBlocks(hurtbox2d, Velocity2D, ref dummy, out var dir, false, (c) => c.IsSolid);
 
             if (lifeTime <= 5 && Block.blocks.Any(cu => cu is not null && cu.collider2d.Intersects(hurtbox2d) && cu.IsSolid))
                 Destroy(false);
@@ -210,29 +208,29 @@ namespace WiiPlayTanksRemake.GameContent
                 {
                     foreach (var target in GameHandler.AllTanks)
                     {
-                        if (target is not null && target.Team != owner.Team && Vector3.Distance(position, target.position3d) <= homingProperties.radius)
+                        if (target is not null && target.Team != owner.Team && Vector2.Distance(Position2D, target.Position) <= homingProperties.radius)
                         {
-                            float dist = Vector3.Distance(position, target.position3d);
+                            float dist = Vector2.Distance(Position2D, target.Position);
 
-                            velocity.X += (target.position3d.X - position.X) * homingProperties.power / dist;
-                            velocity.Z += (target.position3d.Z - position.Z) * homingProperties.power / dist;
+                            Velocity.X += (target.Position.X - Position2D.X) * homingProperties.power / dist;
+                            Velocity.Y += (target.Position.Y - Position2D.Y) * homingProperties.power / dist;
 
-                            Vector3 trueSpeed = Vector3.Normalize(velocity) * homingProperties.speed;
+                            Vector2 trueSpeed = Vector2.Normalize(Velocity2D) * homingProperties.speed;
 
 
-                            velocity = trueSpeed;
+                            Velocity = trueSpeed.ExpandZ();
                         }
                     }
                 }
             }
             CheckCollisions();
 
-            int bruh = (int)Math.Round(12 / velocity.Length());
+            int bruh = (int)Math.Round(12 / Velocity2D.Length());
             int nummy = bruh != 0 ? bruh : 5;
 
             if (lifeTime % nummy == 0)
             {
-                var p = ParticleSystem.MakeParticle(position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(rotation + MathHelper.Pi).Expand_Z(), GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
+                var p = ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(rotation + MathHelper.Pi).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
                 p.FaceTowardsMe = false;
                 p.Scale = new(0.4f);
                 p.color = new Color(50, 50, 50, 150);
@@ -280,15 +278,18 @@ namespace WiiPlayTanksRemake.GameContent
             }
 
             if (horizontal)
-                velocity.X = -velocity.X;
+                Velocity.X = -Velocity.X;
             else
-                velocity.Z = -velocity.Z;
+                Velocity.Z = -Velocity.Z;
 
             var sound = GameResources.GetGameResource<SoundEffect>("Assets/sounds/bullet_ricochet");
 
-            SoundPlayer.PlaySoundInstance(sound, SoundContext.Effect, 0.5f);
+            var s = SoundPlayer.PlaySoundInstance(sound, SoundContext.Effect, 0.5f);
+            //s.Pitch = GameUtils.MousePosition.X / GameUtils.WindowWidth;
+            //s.Pitch = MathHelper.Clamp(s.Pitch, -1f, 1f);
+            //Systems.ChatSystem.SendMessage(s.Pitch, Color.Green);
 
-            var p = ParticleSystem.MakeParticle(position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_star"));
+            var p = ParticleSystem.MakeParticle(Position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_star"));
             p.Scale = new(0.8f);
             p.color = Color.Orange;
             p.UniqueBehavior = (part) =>

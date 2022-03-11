@@ -150,14 +150,14 @@ namespace WiiPlayTanksRemake.GameContent
                 SpawnTankAt(!TankGame.OverheadView ? GameUtils.GetWorldPosition(GameUtils.MousePosition) : PlacementSquare.CurrentlyHovered.Position, (TankTier)tankToSpawnType, (Team)tankToSpawnTeam);
 
             if (Input.KeyJustPressed(Keys.OemSemicolon))
-                new Mine(null, GameUtils.GetWorldPosition(GameUtils.MousePosition), 400);
+                new Mine(null, GameUtils.GetWorldPosition(GameUtils.MousePosition).FlattenZ(), 400);
             if (Input.KeyJustPressed(Keys.OemQuotes))
                 new Shell(GameUtils.GetWorldPosition(GameUtils.MousePosition) + new Vector3(0, 11, 0), Vector3.Zero, ShellTier.Standard, null, 0, playSpawnSound: false);
             if (Input.KeyJustPressed(Keys.End))
                 SpawnCrateAtMouse();
 
             if (Input.KeyJustPressed(Keys.I))
-                new Powerup(powerups[mode]) { position = GameUtils.GetWorldPosition(GameUtils.MousePosition) };
+                new Powerup(powerups[mode]) { Position = GameUtils.GetWorldPosition(GameUtils.MousePosition).FlattenZ() };
 
             CubeHeight = MathHelper.Clamp(CubeHeight, 1, 7);
             BlockType = MathHelper.Clamp(BlockType, 1, 3);
@@ -321,7 +321,7 @@ namespace WiiPlayTanksRemake.GameContent
             myTank = new PlayerTank(PlayerType.Blue)
             {
                 Team = Team.Red,
-                position3d = pos,
+                Position = pos.FlattenZ(),
                 Dead = false
             };
             return myTank;
@@ -374,7 +374,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             foreach (var tank in AllTanks)
                 if (tank is not null)
-                    tank.velocity = Vector3.Zero;
+                    tank.Velocity = Vector2.Zero;
 
             foreach (var song in TankMusicSystem.songs)
                 song?.Stop();
@@ -396,7 +396,7 @@ namespace WiiPlayTanksRemake.GameContent
                 TankRotation = rot,
                 TurretRotation = rot,
                 Team = team,
-                position3d = new CubeMapPosition(GameRand.Next(0, 27), GameRand.Next(0, 20)),
+                Position = new CubeMapPosition(GameRand.Next(0, 27), GameRand.Next(0, 20)),
                 Dead = false
             };
         }
@@ -410,7 +410,7 @@ namespace WiiPlayTanksRemake.GameContent
                 targetTankRotation = rot - MathHelper.Pi,
                 TurretRotation = -rot,
                 Team = team,
-                position3d = position,
+                Position = position.FlattenZ(),
                 Dead = false,
             };
             return x;
@@ -425,7 +425,7 @@ namespace WiiPlayTanksRemake.GameContent
                 {
                     TankRotation = rot,
                     TurretRotation = rot,
-                    position3d = random,
+                    Position = random,
                     Dead = false,
                     Team = useCurTank ? (Team)tankToSpawnTeam : Team.NoTeam
                 };

@@ -33,7 +33,7 @@ namespace WiiPlayTanksRemake.GameContent
         /// <summary>The duration of this <see cref="Powerup"/> on a <see cref="Tank"/></summary>
         public int duration;
 
-        public Vector3 position;
+        public Vector2 Position;
 
         /// <summary>The maximum distance from which a <see cref="Tank"/> can pick up this <see cref="Powerup"/>.</summary>
         public float pickupRadius;
@@ -76,11 +76,11 @@ namespace WiiPlayTanksRemake.GameContent
         }
 
         /// <summary>Spawns this <see cref="Powerup"/> in the world.</summary>
-        public void Spawn(Vector3 position)
+        public void Spawn(Vector2 position)
         {
             InWorld = true;
 
-            this.position = position;
+            Position = position;
         }
 
         public void Update()
@@ -98,7 +98,7 @@ namespace WiiPlayTanksRemake.GameContent
             }
             else
             {
-                if (GameHandler.AllTanks.TryGetFirst(tnk => tnk is not null && Vector3.Distance(position, tnk.position3d) <= pickupRadius, out Tank tank))
+                if (GameHandler.AllTanks.TryGetFirst(tnk => tnk is not null && Vector2.Distance(Position, tnk.Position) <= pickupRadius, out Tank tank))
                 {
                     Pickup(tank);
                 }
@@ -109,7 +109,7 @@ namespace WiiPlayTanksRemake.GameContent
         {
             if (!HasOwner)
             {
-                var pos = GeometryUtils.ConvertWorldToScreen(default, Matrix.CreateTranslation(position), TankGame.GameView, TankGame.GameProjection);
+                var pos = GeometryUtils.ConvertWorldToScreen(default, Matrix.CreateTranslation(Position.ExpandZ()), TankGame.GameView, TankGame.GameProjection);
 
                 DebugUtils.DrawDebugString(TankGame.spriteBatch, this, pos, 3, centered: true);
 

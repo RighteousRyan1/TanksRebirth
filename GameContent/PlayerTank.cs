@@ -40,7 +40,7 @@ namespace WiiPlayTanksRemake.GameContent
         public static Keybind controlMine = new("Place Mine", Keys.Space);
         public static GamepadBind FireBullet = new("Fire Bullet", Buttons.RightTrigger);
 
-        public Vector3 oldPosition;
+        public Vector2 oldPosition;
 
         #region ModelBone & ModelMesh
         public Matrix[] boneTransforms;
@@ -90,7 +90,7 @@ namespace WiiPlayTanksRemake.GameContent
             //WPTR.AllPlayerTanks.Add(this);
             //WPTR.AllTanks.Add(this);
 
-            Initialize();
+            base.Initialize();
         }
 
         public override void ApplyDefaults()
@@ -131,7 +131,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             Vector3 mouseWorldPos = GameUtils.GetWorldPosition(GameUtils.MousePosition, -11f);
 
-            TurretRotation = (-(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position2D).ToRotation()) + MathHelper.PiOver2;
+            TurretRotation = (-(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position).ToRotation()) + MathHelper.PiOver2;
 
             if (GameHandler.InMission)
             {
@@ -144,13 +144,13 @@ namespace WiiPlayTanksRemake.GameContent
                             ControlHandle_ConsoleController();
                     }
                     else
-                        velocity = Vector3.Zero;
+                        Velocity = Vector2.Zero;
                 }
                 else
-                    velocity = Vector3.Zero;
+                    Velocity = Vector2.Zero;
             }
             else
-                velocity = Vector3.Zero;
+                Velocity = Vector2.Zero;
 
             if (GameHandler.InMission)
             {
@@ -172,7 +172,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             Model.CopyAbsoluteBoneTransformsTo(boneTransforms); // a
 
-            oldPosition = position3d;
+            oldPosition = Position;
         }
 
         public override void RemoveSilently()
@@ -196,29 +196,29 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 playerControl_isBindPressed = true;
 
-                velocity.X = leftStick.X * accelReal;
-                velocity.Z = -leftStick.Y * accelReal;
+                Velocity.X = leftStick.X * accelReal;
+                Velocity.Y = -leftStick.Y * accelReal;
             }
 
             if (dPad.Down == ButtonState.Pressed)
             {
                 playerControl_isBindPressed = true;
-                velocity.Z += Acceleration;
+                Velocity.Y += Acceleration;
             }
             if (dPad.Up == ButtonState.Pressed)
             {
                 playerControl_isBindPressed = true;
-                velocity.Z -= Acceleration;
+                Velocity.Y -= Acceleration;
             }
             if (dPad.Left == ButtonState.Pressed)
             {
                 playerControl_isBindPressed = true;
-                velocity.X -= Acceleration;
+                Velocity.X -= Acceleration;
             }
             if (dPad.Right == ButtonState.Pressed)
             {
                 playerControl_isBindPressed = true;
-                velocity.X += Acceleration;
+                Velocity.X += Acceleration;
             }
 
             if (rightStick.Length() > 0)
@@ -244,7 +244,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             var norm = Vector3.Normalize(preterbedVelocity);
 
-            treadPlaceTimer = (int)Math.Round(14 / velocity.Length()) != 0 ? (int)Math.Round(14 / velocity.Length()) : 1;
+            treadPlaceTimer = (int)Math.Round(14 / Velocity.Length()) != 0 ? (int)Math.Round(14 / Velocity.Length()) : 1;
 
             var targetTnkRotation = norm.FlattenZ().ToRotation() - MathHelper.PiOver2;
 
@@ -257,7 +257,7 @@ namespace WiiPlayTanksRemake.GameContent
                 // treadPlaceTimer += MaxSpeed / 5;
                 if (TankGame.GameUpdateTime % treadPlaceTimer == 0)
                     LayFootprint(false);
-                velocity = Vector3.Zero;
+                Velocity = Vector2.Zero;
                 IsTurning = true;
             }
 
@@ -269,7 +269,7 @@ namespace WiiPlayTanksRemake.GameContent
                 preterbedVelocity.Z += 1;
 
                 if (rotationMet)
-                    velocity.Z += Acceleration;
+                    Velocity.Y += Acceleration;
             }
             if (controlUp.IsPressed)
             {
@@ -278,7 +278,7 @@ namespace WiiPlayTanksRemake.GameContent
 
 
                 if (rotationMet)
-                    velocity.Z -= Acceleration;
+                    Velocity.Y -= Acceleration;
             }
             if (controlLeft.IsPressed)
             {
@@ -286,7 +286,7 @@ namespace WiiPlayTanksRemake.GameContent
                 preterbedVelocity.X -= 1;
 
                 if (rotationMet)
-                    velocity.X -= Acceleration;
+                    Velocity.X -= Acceleration;
             }
             if (controlRight.IsPressed)
             {
@@ -294,7 +294,7 @@ namespace WiiPlayTanksRemake.GameContent
                 preterbedVelocity.X += 1;
 
                 if (rotationMet)
-                    velocity.X += Acceleration;
+                    Velocity.X += Acceleration;
             }
 
             TankRotation %= MathHelper.Tau;
@@ -333,22 +333,22 @@ namespace WiiPlayTanksRemake.GameContent
             if (!GameHandler.InMission)
                 return;
             if (!controlDown.IsPressed && !controlUp.IsPressed && leftStick.Y == 0)
-                velocity.Z = 0;
+                Velocity.Y = 0;
             if (!controlLeft.IsPressed && !controlRight.IsPressed && leftStick.X == 0)
-                velocity.X = 0;
+                Velocity.X = 0;
 
-            if (velocity.X > MaxSpeed)
-                velocity.X = MaxSpeed;
-            if (velocity.X < -MaxSpeed)
-                velocity.X = -MaxSpeed;
-            if (velocity.Z > MaxSpeed)
-                velocity.Z = MaxSpeed;
-            if (velocity.Z < -MaxSpeed)
-                velocity.Z = -MaxSpeed;
+            if (Velocity.X > MaxSpeed)
+                Velocity.X = MaxSpeed;
+            if (Velocity.X < -MaxSpeed)
+                Velocity.X = -MaxSpeed;
+            if (Velocity.Y > MaxSpeed)
+                Velocity.Y = MaxSpeed;
+            if (Velocity.Y < -MaxSpeed)
+                Velocity.Y = -MaxSpeed;
 
-            if (Velocity2D.Length() > 0 && playerControl_isBindPressed)
+            if (Velocity.Length() > 0 && playerControl_isBindPressed)
             {
-                treadPlaceTimer = (int)Math.Round(14 / velocity.Length()) != 0 ? (int)Math.Round(14 / velocity.Length()) : 1;
+                treadPlaceTimer = (int)Math.Round(14 / Velocity.Length()) != 0 ? (int)Math.Round(14 / Velocity.Length()) : 1;
                 if (TankGame.GameUpdateTime % treadPlaceTimer == 0  )
                 {
                     LayFootprint(false);
@@ -372,7 +372,7 @@ namespace WiiPlayTanksRemake.GameContent
             const int MAX_PATH_UNITS = 500;
 
             var whitePixel = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
-            var pathPos = Position2D + new Vector2(0, 0).RotatedByRadians(-TurretRotation);
+            var pathPos = Position + new Vector2(0, 0).RotatedByRadians(-TurretRotation);
             var pathDir = Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi);
             pathDir.Y *= -1;
             pathDir *= ShellSpeed;
@@ -382,7 +382,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             for (int i = 0; i < MAX_PATH_UNITS; i++)
             {
-                var dummyPos = Vector3.Zero;
+                var dummyPos = Vector2.Zero;
 
                 if (pathPos.X < MapRenderer.MIN_X || pathPos.X > MapRenderer.MAX_X)
                 {
@@ -398,7 +398,7 @@ namespace WiiPlayTanksRemake.GameContent
                 var pathHitbox = new Rectangle((int)pathPos.X - 3, (int)pathPos.Y - 3, 6, 6);
 
                 // Why is velocity passed by reference here lol
-                Collision.HandleCollisionSimple_ForBlocks(pathHitbox, ref pathDir, ref dummyPos, out var dir, false, (c) => c.IsSolid);
+                Collision.HandleCollisionSimple_ForBlocks(pathHitbox, pathDir, ref dummyPos, out var dir, false, (c) => c.IsSolid);
 
 
                 switch (dir)
@@ -499,6 +499,6 @@ namespace WiiPlayTanksRemake.GameContent
         }
 
         public override string ToString()
-            => $"pos: {position3d} | vel: {velocity} | dead: {Dead} | rotation: {TankRotation} | OwnedBullets: {OwnedShellCount}";
+            => $"pos: {Position} | vel: {Velocity} | dead: {Dead} | rotation: {TankRotation} | OwnedBullets: {OwnedShellCount}";
     }
 }

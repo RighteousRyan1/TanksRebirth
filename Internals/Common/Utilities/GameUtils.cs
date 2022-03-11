@@ -31,7 +31,7 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
             pitch = MathF.Asin(-d.Y);
         }
 
-        public static Vector3 Expand_Z(this Vector2 vector)
+        public static Vector3 ExpandZ(this Vector2 vector)
             => new(vector.X, 0, vector.Y);
 
         public static Vector3 Expand(this Vector2 vector)

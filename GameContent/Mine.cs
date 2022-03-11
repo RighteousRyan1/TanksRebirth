@@ -18,13 +18,13 @@ namespace WiiPlayTanksRemake.GameContent
 
         public Tank owner;
 
-        public Vector3 position;
+        public Vector2 Position;
 
         public Matrix View;
         public Matrix Projection;
         public Matrix World;
 
-        public Vector2 Position2D => position.FlattenZ();
+        public Vector3 Position3D => Position.ExpandZ();
 
         public Model Model;
 
@@ -60,7 +60,7 @@ namespace WiiPlayTanksRemake.GameContent
         /// <param name="pos">The position of this <see cref="Mine"/> in the game world.</param>
         /// <param name="detonateTime">The time it takes for this <see cref="Mine"/> to detonate.</param>
         /// <param name="radius">The radius of this <see cref="Mine"/>'s explosion.</param>
-        public Mine(Tank owner, Vector3 pos, int detonateTime, float radius = 80f)
+        public Mine(Tank owner, Vector2 pos, int detonateTime, float radius = 80f)
         {
             this.owner = owner;
             explosionRadius = radius;
@@ -70,7 +70,7 @@ namespace WiiPlayTanksRemake.GameContent
             detonationTime = detonateTime;
             detonationTimeMax = detonateTime;
 
-            position = pos;
+            Position = pos;
 
             MineMesh = Model.Meshes["polygon1"];
             EnvMesh = Model.Meshes["polygon0"];
@@ -95,17 +95,17 @@ namespace WiiPlayTanksRemake.GameContent
             
             foreach (var shell in Shell.AllShells)
             {
-                if (shell is not null && Vector3.Distance(shell.position, position) < explosionRadius)
+                if (shell is not null && Vector2.Distance(shell.Position2D, Position) < explosionRadius)
                     shell.Destroy();
             }
             foreach (var tank in GameHandler.AllTanks)
             {
-                if (tank is not null && Vector3.Distance(tank.position3d, position) < explosionRadius)
+                if (tank is not null && Vector2.Distance(tank.Position, Position) < explosionRadius)
                     if (!tank.Dead)
                         tank.Destroy();
             }
 
-            var expl = new MineExplosion(position, explosionRadius * 0.101f, 0.5f);
+            var expl = new MineExplosion(Position, explosionRadius * 0.101f, 0.5f);
 
             expl.expanseRate = 2f;
             expl.tickAtMax = 15;
@@ -119,11 +119,11 @@ namespace WiiPlayTanksRemake.GameContent
 
         internal void Update()
         {
-            World = Matrix.CreateScale(0.7f) * Matrix.CreateTranslation(position);
+            World = Matrix.CreateScale(0.7f) * Matrix.CreateTranslation(Position3D);
             View = TankGame.GameView;
             Projection = TankGame.GameProjection;
 
-            hitbox = new(position - new Vector3(10, 0, 10), position + new Vector3(10, 50, 10)); 
+            hitbox = new(Position3D - new Vector3(10, 0, 10), Position3D + new Vector3(10, 50, 10)); 
 
             detonationTime--;
 
@@ -149,7 +149,7 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 foreach (var tank in GameHandler.AllTanks)
                 {
-                    if (tank is not null && Vector3.Distance(tank.position3d, position) < explosionRadius)
+                    if (tank is not null && Vector2.Distance(tank.Position, Position) < explosionRadius)
                     {
                         tankCameTooClose = true;
                         detonationTime = mineReactTime;
@@ -204,7 +204,9 @@ namespace WiiPlayTanksRemake.GameContent
 
         public static MineExplosion[] explosions = new MineExplosion[MINE_EXPLOSIONS_MAX];
 
-        public Vector3 position;
+        public Vector2 Position;
+
+        public Vector3 Position3D => Position.ExpandZ();
 
         public Matrix View;
         public Matrix Projection;
@@ -231,10 +233,10 @@ namespace WiiPlayTanksRemake.GameContent
 
         public float rotationSpeed;
 
-        public MineExplosion(Vector3 pos, float scaleMax, float rotationSpeed = 1f)
+        public MineExplosion(Vector2 pos, float scaleMax, float rotationSpeed = 1f)
         {
             this.rotationSpeed = rotationSpeed;
-            position = pos;
+            Position = pos;
             maxScale = scaleMax;
             mask = GameResources.GetGameResource<Texture2D>("Assets/textures/mine/explosion_mask"/*"Assets/textures/misc/tank_smoke_ami"*/);
 
@@ -265,12 +267,12 @@ namespace WiiPlayTanksRemake.GameContent
 
             foreach (var mine in Mine.AllMines)
             {
-                if (mine is not null && Vector3.Distance(mine.position, position) <= scale * 9) // magick
+                if (mine is not null && Vector2.Distance(mine.Position, Position) <= scale * 9) // magick
                     mine.Detonate();
             }
             foreach (var cube in Block.blocks)
             {
-                if (cube is not null && Vector3.Distance(cube.position, position) <= scale * 9 && cube.IsDestructible)
+                if (cube is not null && Vector2.Distance(cube.Position, Position) <= scale * 9 && cube.IsDestructible)
                     cube.Destroy();
             }
 
@@ -282,7 +284,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             rotation += rotationSpeed;
 
-            World = Matrix.CreateScale(scale) * Matrix.CreateRotationY(rotation) * Matrix.CreateTranslation(position);
+            World = Matrix.CreateScale(scale) * Matrix.CreateRotationY(rotation) * Matrix.CreateTranslation(Position3D);
             View = TankGame.GameView;
             Projection = TankGame.GameProjection;
         }

@@ -78,12 +78,6 @@ namespace WiiPlayTanksRemake.GameContent
 
                         effect.SetDefaultGameLighting();
 
-                        effect.DirectionalLight0.Enabled = true;
-                        effect.DirectionalLight1.Enabled = false;
-                        effect.DirectionalLight2.Enabled = false;
-
-                        effect.DirectionalLight0.Direction = Vector3.Down;
-
                         effect.TextureEnabled = true;
 
                         effect.Texture = GameResources.GetGameResource<Texture2D>(assetsRoot + "floor_face");

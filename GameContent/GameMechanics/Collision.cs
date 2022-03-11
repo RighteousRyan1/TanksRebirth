@@ -73,7 +73,7 @@ namespace WiiPlayTanksRemake.GameContent.GameMechanics
         }
 
 
-        public static void HandleCollisionSimple(Rectangle movingBox, Rectangle collidingBox, ref Vector2 velocity, ref Vector3 position, bool setpos = true)
+        public static void HandleCollisionSimple(Rectangle movingBox, Rectangle collidingBox, Vector2 velocity, ref Vector2 position, bool setpos = true)
         {
             var offset = Vector2.Zero;
 
@@ -86,7 +86,7 @@ namespace WiiPlayTanksRemake.GameContent.GameMechanics
                     collisionInfo = info;
             }
 
-            var pos = position.FlattenZ();
+            var pos = position;
 
             pos += offset * collisionInfo.tValue;
 
@@ -102,10 +102,10 @@ namespace WiiPlayTanksRemake.GameContent.GameMechanics
             if (setpos)
             {
                 position.X = pos.X;
-                position.Z = pos.Y;
+                position.Y = pos.Y;
             }
         }
-        public static void HandleCollisionSimple(Rectangle movingBox, Rectangle collidingBox, ref Vector2 velocity, ref Vector3 position, out CollisionDirection direction, bool setpos = true)
+        public static void HandleCollisionSimple(Rectangle movingBox, Rectangle collidingBox, ref Vector2 velocity, ref Vector2 position, out CollisionDirection direction, bool setpos = true)
         {
             direction = CollisionDirection.None;
             var offset = velocity;
@@ -119,7 +119,7 @@ namespace WiiPlayTanksRemake.GameContent.GameMechanics
                     collisionInfo = info;
             }
 
-            var pos = position.FlattenZ();
+            var pos = position;
 
             if (collisionInfo.tValue < 1)
             {
@@ -135,7 +135,7 @@ namespace WiiPlayTanksRemake.GameContent.GameMechanics
             if (setpos)
             {
                 position.X = pos.X;
-                position.Z = pos.Y;
+                position.Y = pos.Y;
             }
 
             if (collisionInfo.normal.Y > 0)
@@ -164,7 +164,7 @@ namespace WiiPlayTanksRemake.GameContent.GameMechanics
             }
         }
 
-        public static void HandleCollisionSimple_ForBlocks(Rectangle movingBox, ref Vector2 velocity, ref Vector3 position, out CollisionDirection direction, bool setpos = true, Func<Block, bool> exclude = null)
+        public static void HandleCollisionSimple_ForBlocks(Rectangle movingBox, Vector2 velocity, ref Vector2 position, out CollisionDirection direction, bool setpos = true, Func<Block, bool> exclude = null)
         {
             direction = CollisionDirection.None;
             var offset = velocity;
@@ -199,7 +199,7 @@ namespace WiiPlayTanksRemake.GameContent.GameMechanics
                 }
             }
 
-            var pos = position.FlattenZ();
+            var pos = position;
 
             pos += offset * collisionInfo.tValue;
 
@@ -215,7 +215,7 @@ namespace WiiPlayTanksRemake.GameContent.GameMechanics
             if (setpos)
             {
                 position.X = pos.X;
-                position.Z = pos.Y;
+                position.Y = pos.Y;
             }
 
             if (collisionInfo.normal.Y > 0)

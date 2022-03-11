@@ -93,7 +93,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems
 
                 var tank = new AITank(tier);
 
-                tank.position3d = CurrentMission.SpawnPositions[i];
+                tank.Position = CurrentMission.SpawnPositions[i];
                 tank.TankRotation = CurrentMission.SpawnOrientations[i];
                 //if (tier is AITank ai) // redundant for now.
                     //ai.targetTankRotation = CurrentMission.SpawnOrientations[i] + MathHelper.Pi;
@@ -115,7 +115,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems
                 {
                     var cube = CurrentMission.Cubes[b];
 
-                    cube.position = CurrentMission.CubePositions[b];
+                    cube.Position = CurrentMission.CubePositions[b];
 
 
                     Block.blocks[b] = cube;
@@ -137,7 +137,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems
         public TankTier[] Tanks { get; }
 
         /// <summary>The position of the spawned <see cref="Tank"/>s.</summary>
-        public Vector3[] SpawnPositions { get; }
+        public Vector2[] SpawnPositions { get; }
 
         /// <summary>The rotation of the spawned <see cref="Tank"/>s.</summary>
         public float[] SpawnOrientations { get; }
@@ -147,7 +147,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems
 
         public CubeMapPosition[] CubePositions { get; }
 
-        public Mission(TankTier[] tanks, Vector3[] spawnPositions, float[] spawnOrientations, Block[] obstacles, CubeMapPosition[] cubePositions)
+        public Mission(TankTier[] tanks, Vector2[] spawnPositions, float[] spawnOrientations, Block[] obstacles, CubeMapPosition[] cubePositions)
         {
             Name = "N/A";
 

@@ -27,7 +27,6 @@ using WiiPlayTanksRemake.Localization;
 using FontStashSharp.SharpFont;
 using FontStashSharp;
 using WiiPlayTanksRemake.Internals.Common.GameUI;
-using BulletSharp;
 using WiiPlayTanksRemake.Internals.Common.Framework.Graphics;
 using System.Threading;
 using WiiPlayTanksRemake.GameContent.Systems;
@@ -166,68 +165,6 @@ namespace WiiPlayTanksRemake
             _fontSystem = new();
         }
 
-        public static void InitPhys()
-        {
-            /*var bfase = new DbvtBroadphase();
-
-            var collConfig = new DefaultCollisionConfiguration();
-            var dispatcher = new CollisionDispatcher(collConfig);
-
-            var solver = new SequentialImpulseConstraintSolver();
-
-            var world = new DiscreteDynamicsWorld(dispatcher, bfase, solver, collConfig);
-
-            var shape = new SphereShape(10f);
-
-            var ctorInfo = new RigidBodyConstructionInfo(5f, new DefaultMotionState(Matrix.CreateTranslation(0f, 10f, 0f)), shape);
-
-            var ball = new RigidBody(ctorInfo);
-
-            world.AddCollisionObject(ball);
-
-            world.Gravity = new(0, -9.8f, 0);*/
-
-            using var colConfiguration = new DefaultCollisionConfiguration();
-
-            using var colDispatcher = new CollisionDispatcher(colConfiguration);
-            //Pick broadphase algorithm
-            using var broadphase = new DbvtBroadphase();
-            //Create a collision world of your choice, for now pass null as the constraint solver
-            using var colWorld = new DiscreteDynamicsWorld(colDispatcher, broadphase, null, colConfiguration);
-            //Create the object shape - A 10x1x10 box in this case
-            using var groundShape = new BoxShape(5f, 0.5f, 5f);
-            //Use that shape to prepare object construction information
-            //Initial position can be supplied into Motion state's constructor
-            using var groundBodyConstructionInfo =
-                new RigidBodyConstructionInfo(0f, new DefaultMotionState(), groundShape);
-            //Create rigidbody(a physics object that can be added to the world and will collide with other objects)
-            using var ground = new RigidBody(groundBodyConstructionInfo);
-            //Register the object in the world for it to interact with other objects
-            colWorld.AddCollisionObject(ground);
-
-            //Create a shape for our ball - a sphere with radius of 2
-            using var ballShape = new SphereShape(2f);
-
-            //Ball creation info - an object with a mass of 5 and placed 10 units up on Y axis
-            using var ballConstructionInfo = new RigidBodyConstructionInfo(5f,
-                new DefaultMotionState(Matrix.CreateTranslation(0f, 10f, 0f)), ballShape);
-            //Create the ball object with supplied parameters
-            using var ball = new RigidBody(ballConstructionInfo);
-
-            //Add ball to the world
-            colWorld.AddCollisionObject(ball);
-
-            //Prepare simulation parameters, try 25 steps to see the ball mid air
-            var simulationIterations = 125;
-            var simulationTimestep = 1f / 60f;
-
-            //Step through the desired amount of simulation ticks
-            for (var i = 0; i < simulationIterations; i++)
-            {
-                colWorld.StepSimulation(simulationTimestep);
-            }
-        }
-
         protected override void Initialize()
         {
             DiscordRichPresence.Load();
@@ -240,16 +177,9 @@ namespace WiiPlayTanksRemake
 
             spriteBatch = new(GraphicsDevice);
 
-            CalculateProjection();
-
             graphics.ApplyChanges();
 
             base.Initialize();
-        }
-
-        public void CalculateProjection()
-        {
-            GameProjection = Matrix.CreateOrthographic(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, -2000f, 5000f);
         }
 
         public static void Quit()
@@ -350,6 +280,9 @@ namespace WiiPlayTanksRemake
         {
             try
             {
+                Tank.CollisionsWorld.ShiftOrigin(Vector2.Zero);
+                Tank.CollisionsWorld.Step((float)gameTime.ElapsedGameTime.TotalSeconds);
+
                 UpdateStopwatch.Start();
 
                 DiscordRichPresence.Update();
@@ -408,15 +341,7 @@ namespace WiiPlayTanksRemake
                         else
                         {
                             GameUtils.GetMouseVelocity(GameUtils.WindowCenter);
-
-                            // why do i need to call this????
                         }
-                        /*GameView =
-                            Matrix.CreateScale(DEFAULT_ZOOM * zoom) *
-                            Matrix.CreateLookAt(new(0f, 0, 350f), Vector3.Zero, Vector3.Up) *
-                            Matrix.CreateRotationX(rotVec.Y) *
-                            Matrix.CreateRotationY(rotVec.X) *
-                            Matrix.CreateTranslation(off.X, -off.Y, 0);*/
 
                         GameCamera.SetPosition(new Vector3(0, 0, 350));
                         GameCamera.SetLookAt(new Vector3(0, 0, 0));
@@ -438,29 +363,19 @@ namespace WiiPlayTanksRemake
 
                         if (x is not null && Array.IndexOf(GameHandler.AllAITanks, x) > -1)
                         {
-                            pos = x.position3d;
-
-                            /*GameView = Matrix.CreateLookAt(pos,
-                            pos + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-x.TurretRotation).Expand_Z()
-                            , Vector3.Up) 
-                                * Matrix.CreateRotationX(rotVec.Y - MathHelper.PiOver4) 
-                                * Matrix.CreateRotationY(rotVec.X) 
-                                * Matrix.CreateTranslation(0, -20, -40);*/
-
-                            // GameProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000);
+                            pos = x.Position3D;
                             var t = GameUtils.MousePosition.X / GameUtils.WindowWidth;
-                            GameCamera.Zoom(1f);
+                            GameCamera.Zoom(DEFAULT_ZOOM * zoom);
                             GameCamera.SetFov(90);
                             GameCamera.SetPosition(pos);
 
-                            if (GameHandler.AllTanks.Count(x => x is not null) > 1)
-                                GameCamera.SetLookAt(GameHandler.AllTanks[1].position3d);
-                            else
-                                GameCamera.SetLookAt(pos + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-x.TurretRotation).Expand_Z());
-
-                            GameCamera.RotateY(GameUtils.MousePosition.X / 400);
+                            GameCamera.SetLookAt(pos + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-x.TurretRotation).ExpandZ());
+                            //GameCamera.RotateY(GameUtils.MousePosition.X / 400);
                             //GameCamera.RotateY(DEFAULT_ORTHOGRAPHIC_ANGLE);
-                            // GameCamera.RotateX(GameUtils.MousePosition.X / 400);
+                            //GameCamera.RotateX(GameUtils.MousePosition.X / 400);
+
+                            GameCamera.RotateX(rotVec.Y - MathHelper.PiOver4);
+                            GameCamera.RotateY(rotVec.X);
 
                             GameCamera.Translate(new Vector3(0, -20, -40));
 
@@ -514,7 +429,7 @@ namespace WiiPlayTanksRemake
                     {
                         if (tnk is not null && !tnk.Dead)
                         {
-                            if (GameUtils.GetMouseToWorldRay().Intersects(tnk.CollisionBox).HasValue)
+                            if (GameUtils.GetMouseToWorldRay().Intersects(tnk.Worldbox).HasValue)
                             {
                                 if (Input.KeyJustPressed(Keys.K))
                                 {

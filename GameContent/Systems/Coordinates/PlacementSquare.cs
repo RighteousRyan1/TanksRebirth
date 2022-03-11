@@ -58,7 +58,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems.Coordinates
                                 ChatSystem.SendMessage("Added!", Color.Red);
                                 var cube = new Block((Block.BlockType)GameHandler.BlockType, GameHandler.CubeHeight)
                                 {
-                                    position = place.Position
+                                    Position = place.Position.FlattenZ()
                                 };
                                 place._blockId = cube.worldId;
                             }
