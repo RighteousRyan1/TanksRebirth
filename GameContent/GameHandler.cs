@@ -152,7 +152,7 @@ namespace WiiPlayTanksRemake.GameContent
             if (Input.KeyJustPressed(Keys.OemSemicolon))
                 new Mine(null, GameUtils.GetWorldPosition(GameUtils.MousePosition), 400);
             if (Input.KeyJustPressed(Keys.OemQuotes))
-                new Shell(GameUtils.GetWorldPosition(GameUtils.MousePosition) + new Vector3(0, 11, 0), Vector3.Zero, ShellTier.Standard, default, 0, playSpawnSound: false);
+                new Shell(GameUtils.GetWorldPosition(GameUtils.MousePosition) + new Vector3(0, 11, 0), Vector3.Zero, ShellTier.Standard, null, 0, playSpawnSound: false);
             if (Input.KeyJustPressed(Keys.End))
                 SpawnCrateAtMouse();
 
@@ -321,7 +321,7 @@ namespace WiiPlayTanksRemake.GameContent
             myTank = new PlayerTank(PlayerType.Blue)
             {
                 Team = Team.Red,
-                position = pos,
+                position3d = pos,
                 Dead = false
             };
             return myTank;
@@ -396,7 +396,7 @@ namespace WiiPlayTanksRemake.GameContent
                 TankRotation = rot,
                 TurretRotation = rot,
                 Team = team,
-                position = new CubeMapPosition(GameRand.Next(0, 27), GameRand.Next(0, 20)),
+                position3d = new CubeMapPosition(GameRand.Next(0, 27), GameRand.Next(0, 20)),
                 Dead = false
             };
         }
@@ -410,7 +410,7 @@ namespace WiiPlayTanksRemake.GameContent
                 targetTankRotation = rot - MathHelper.Pi,
                 TurretRotation = -rot,
                 Team = team,
-                position = position,
+                position3d = position,
                 Dead = false,
             };
             return x;
@@ -425,7 +425,7 @@ namespace WiiPlayTanksRemake.GameContent
                 {
                     TankRotation = rot,
                     TurretRotation = rot,
-                    position = random,
+                    position3d = random,
                     Dead = false,
                     Team = useCurTank ? (Team)tankToSpawnTeam : Team.NoTeam
                 };

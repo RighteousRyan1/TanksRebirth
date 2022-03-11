@@ -98,7 +98,7 @@ namespace WiiPlayTanksRemake.GameContent
             }
             else
             {
-                if (GameHandler.AllTanks.TryGetFirst(tnk => tnk is not null && Vector3.Distance(position, tnk.position) <= pickupRadius, out Tank tank))
+                if (GameHandler.AllTanks.TryGetFirst(tnk => tnk is not null && Vector3.Distance(position, tnk.position3d) <= pickupRadius, out Tank tank))
                 {
                     Pickup(tank);
                 }

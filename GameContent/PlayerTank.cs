@@ -89,6 +89,8 @@ namespace WiiPlayTanksRemake.GameContent
 
             //WPTR.AllPlayerTanks.Add(this);
             //WPTR.AllTanks.Add(this);
+
+            Initialize();
         }
 
         public override void ApplyDefaults()
@@ -125,14 +127,7 @@ namespace WiiPlayTanksRemake.GameContent
             // pi/4 = right
             // 3/4pi = left
 
-            if (Dead)
-                return;
-
-            Projection = TankGame.GameProjection;
-            View = TankGame.GameView;
-
-            World = Matrix.CreateFromYawPitchRoll(-TankRotation, 0, 0)
-                * Matrix.CreateTranslation(position);
+            base.Update();
 
             Vector3 mouseWorldPos = GameUtils.GetWorldPosition(GameUtils.MousePosition, -11f);
 
@@ -140,7 +135,6 @@ namespace WiiPlayTanksRemake.GameContent
 
             if (GameHandler.InMission)
             {
-                base.Update();
                 if (CurShootStun <= 0 && CurMineStun <= 0)
                 {
                     if (!Stationary)
@@ -178,7 +172,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             Model.CopyAbsoluteBoneTransformsTo(boneTransforms); // a
 
-            oldPosition = position;
+            oldPosition = position3d;
         }
 
         public override void RemoveSilently()
@@ -425,7 +419,7 @@ namespace WiiPlayTanksRemake.GameContent
                     return;
 
                 pathPos += pathDir;
-                
+                // tainicom.Aether.Physics2D.Collision.
                 var pathPosScreen = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(pathPos.X, 11, pathPos.Y), TankGame.GameView, TankGame.GameProjection);
                 TankGame.spriteBatch.Draw(whitePixel, pathPosScreen, null, Color.White, 0, whitePixel.Size() / 2, 2 + (float)Math.Sin(i * Math.PI / 5 - TankGame.GameUpdateTime * 0.3f), default, default);
             }
@@ -505,6 +499,6 @@ namespace WiiPlayTanksRemake.GameContent
         }
 
         public override string ToString()
-            => $"pos: {position} | vel: {velocity} | dead: {Dead} | rotation: {TankRotation} | OwnedBullets: {OwnedShellCount}";
+            => $"pos: {position3d} | vel: {velocity} | dead: {Dead} | rotation: {TankRotation} | OwnedBullets: {OwnedShellCount}";
     }
 }

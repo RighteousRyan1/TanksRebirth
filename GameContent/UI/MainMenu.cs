@@ -125,8 +125,8 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
             foreach (var tnk in tanks)
             {
-                if (tnk.position.X > 500)
-                    tnk.position.X = -500;
+                if (tnk.position3d.X > 500)
+                    tnk.position3d.X = -500;
 
                 tnk.velocity.X = _tnkSpeed;
             }
@@ -167,11 +167,11 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
                     t.enactBehavior = () =>
                     {
-                        if (t.position.Z > 530)
-                            t.position.Z = -30;
+                        if (t.position3d.Z > 530)
+                            t.position3d.Z = -30;
 
-                        if (t.position.Z < -30)
-                            t.position.Z = 530;
+                        if (t.position3d.Z < -30)
+                            t.position3d.Z = 530;
                     };
                 }
             }
@@ -196,7 +196,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
         {
             var extank = new AITank(tier, true, false);
             extank.Team = Team.NoTeam;
-            extank.position = new Vector3(-500 + xOffset, 0, zOffset);
+            extank.position3d = new Vector3(-500 + xOffset, 0, zOffset);
             extank.Dead = false;
 
             extank.TankRotation = MathHelper.PiOver2;

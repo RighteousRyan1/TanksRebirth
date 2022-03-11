@@ -108,17 +108,20 @@ namespace WiiPlayTanksRemake.GameContent
                 _loopingSound.IsLooped = true;
             }
 
-            SoundEffectInstance sfx = Tier switch
+            if (owner is not null)
             {
-                ShellTier.Player => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_1"), SoundContext.Effect, 0.3f),
-                ShellTier.Standard => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_2"), SoundContext.Effect, 0.3f),
-                ShellTier.Rocket => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_rocket"), SoundContext.Effect, 0.3f),
-                ShellTier.RicochetRocket => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_ricochet_rocket"), SoundContext.Effect, 0.3f),
-                ShellTier.Supressed => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_silencer"), SoundContext.Effect, 0.3f),
-                ShellTier.Explosive => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_2"), SoundContext.Effect, 0.3f),
-                _ => throw new NotImplementedException()
-            };
-            sfx.Pitch = owner.ShootPitch;
+                SoundEffectInstance sfx = Tier switch
+                {
+                    ShellTier.Player => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_1"), SoundContext.Effect, 0.3f),
+                    ShellTier.Standard => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_2"), SoundContext.Effect, 0.3f),
+                    ShellTier.Rocket => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_rocket"), SoundContext.Effect, 0.3f),
+                    ShellTier.RicochetRocket => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_ricochet_rocket"), SoundContext.Effect, 0.3f),
+                    ShellTier.Supressed => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_silencer"), SoundContext.Effect, 0.3f),
+                    ShellTier.Explosive => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_2"), SoundContext.Effect, 0.3f),
+                    _ => throw new NotImplementedException()
+                };
+                sfx.Pitch = owner.ShootPitch;
+            }
 
             if (Flaming)
             {
@@ -207,12 +210,12 @@ namespace WiiPlayTanksRemake.GameContent
                 {
                     foreach (var target in GameHandler.AllTanks)
                     {
-                        if (target is not null && target.Team != owner.Team && Vector3.Distance(position, target.position) <= homingProperties.radius)
+                        if (target is not null && target.Team != owner.Team && Vector3.Distance(position, target.position3d) <= homingProperties.radius)
                         {
-                            float dist = Vector3.Distance(position, target.position);
+                            float dist = Vector3.Distance(position, target.position3d);
 
-                            velocity.X += (target.position.X - position.X) * homingProperties.power / dist;
-                            velocity.Z += (target.position.Z - position.Z) * homingProperties.power / dist;
+                            velocity.X += (target.position3d.X - position.X) * homingProperties.power / dist;
+                            velocity.Z += (target.position3d.Z - position.Z) * homingProperties.power / dist;
 
                             Vector3 trueSpeed = Vector3.Normalize(velocity) * homingProperties.speed;
 

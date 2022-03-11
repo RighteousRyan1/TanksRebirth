@@ -10,6 +10,9 @@ using System.Linq;
 using WiiPlayTanksRemake.Internals.Common.Framework.Audio;
 using Microsoft.Xna.Framework.Audio;
 using WiiPlayTanksRemake.GameContent.GameMechanics;
+using tainicom.Aether.Physics2D;
+using Phys = tainicom.Aether.Physics2D.Collision;
+using tainicom.Aether.Physics2D.Dynamics;
 
 namespace WiiPlayTanksRemake.GameContent
 {
@@ -18,6 +21,8 @@ namespace WiiPlayTanksRemake.GameContent
 
         public const int TNK_WIDTH = 25;
         public const int TNK_HEIGHT = 25;
+
+        public Body Body { get; set; } = new();
 
         /// <summary>This <see cref="Tank"/>'s model.</summary>
         public Model Model { get; set; }
@@ -86,17 +91,33 @@ namespace WiiPlayTanksRemake.GameContent
         /// <summary>Whether or not this <see cref="Tank"/> is being hovered by the pointer.</summary>
         public bool IsHoveredByMouse { get; internal set; }
 
-        public Vector2 Position2D => position.FlattenZ();
+        public Vector2 Position2D => position3d.FlattenZ();
         public Vector2 Velocity2D => velocity.FlattenZ();
 
-        public Vector3 position, velocity;
+        public Vector3 position3d, velocity;
         /// <summary>Apply all the default parameters for this <see cref="Tank"/>.</summary>
         public virtual void ApplyDefaults() { }
 
+        public virtual void Initialize() 
+        { 
+            Body = new();
+            Body.LinearDamping = Deceleration;
+        }
+
         public Rectangle CollisionBox2D => new((int)(Position2D.X - TNK_WIDTH / 2 + 3), (int)(Position2D.Y - TNK_WIDTH / 2 + 2), TNK_WIDTH - 8, TNK_HEIGHT - 4);
 
+        /// <summary>Update this <see cref="Tank"/>.</summary>
         public virtual void Update()
         {
+            if (Dead)
+                return;
+
+            if (IsIngame)
+            {
+                Projection = TankGame.GameProjection;
+                View = TankGame.GameView;
+            }
+
             if (CurShootStun > 0)
                 CurShootStun--;
             if (CurShootCooldown > 0)
@@ -110,13 +131,16 @@ namespace WiiPlayTanksRemake.GameContent
                 velocity = Vector3.Zero;
 
             World = Matrix.CreateFromYawPitchRoll(-TankRotation, 0, 0)
-                * Matrix.CreateTranslation(position);
+                * Matrix.CreateTranslation(position3d);
 
-            position += velocity * 0.55f; //* 60 * (float)TankGame.LastGameTime.ElapsedGameTime.TotalSeconds;
+
+            position3d += velocity * 0.55f; //* 60 * (float)TankGame.LastGameTime.ElapsedGameTime.TotalSeconds;
+
+            // position3d = Body.Position;
 
             UpdateCollision();
         }
-
+        /// <summary>Get this <see cref="Tank"/>'s general stats.</summary>
         public string GetGeneralStats()
             => $"Pos2D: {Position2D} | Vel: {Velocity2D} | Dead: {Dead}";
         /// <summary>Destroy this <see cref="Tank"/>.</summary>
@@ -131,7 +155,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                 new TankDeathMark(TankDeathMark.CheckColor.White)
                 {
-                    location = position + new Vector3(0, 0.1f, 0)
+                    location = position3d + new Vector3(0, 0.1f, 0)
                 };
             }
             else if (this is PlayerTank p)
@@ -147,7 +171,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                 new TankDeathMark(c)
                 {
-                    location = position + new Vector3(0, 0.1f, 0)
+                    location = position3d + new Vector3(0, 0.1f, 0)
                 };
             }
 
@@ -158,7 +182,7 @@ namespace WiiPlayTanksRemake.GameContent
                 {
                     var tex = GameResources.GetGameResource<Texture2D>(GameHandler.GameRand.Next(0, 2) == 0 ? "Assets/textures/misc/tank_rock" : "Assets/textures/misc/tank_rock_2");
 
-                    var part = ParticleSystem.MakeParticle(position, tex);
+                    var part = ParticleSystem.MakeParticle(position3d, tex);
 
                     part.isAddative = false;
 
@@ -182,7 +206,7 @@ namespace WiiPlayTanksRemake.GameContent
                     };
                 }
 
-                var partExpl = ParticleSystem.MakeParticle(position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
+                var partExpl = ParticleSystem.MakeParticle(position3d, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
 
                 partExpl.color = Color.Yellow * 0.75f;
 
@@ -204,7 +228,7 @@ namespace WiiPlayTanksRemake.GameContent
                 {
                     var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes");
 
-                    var part = ParticleSystem.MakeParticle(position, tex);
+                    var part = ParticleSystem.MakeParticle(position3d, tex);
 
                     part.isAddative = false;
 
@@ -242,7 +266,7 @@ namespace WiiPlayTanksRemake.GameContent
                 return;
             var fp = new TankFootprint(alt)
             {
-                location = position + new Vector3(0, 0.1f, 0),
+                location = position3d + new Vector3(0, 0.1f, 0),
                 rotation = -TankRotation
             };
         }
@@ -254,7 +278,7 @@ namespace WiiPlayTanksRemake.GameContent
             if (CurShootCooldown > 0 || OwnedShellCount >= ShellLimit)
                 return;
 
-            var bullet = new Shell(position, Vector3.Zero, ShellType, this, homing: ShellHoming);
+            var bullet = new Shell(position3d, Vector3.Zero, ShellType, this, homing: ShellHoming);
             var new2d = Vector2.UnitY.RotatedByRadians(TurretRotation);
 
             var newPos = Position2D + new Vector2(0, 20).RotatedByRadians(-TurretRotation);
@@ -329,37 +353,40 @@ namespace WiiPlayTanksRemake.GameContent
 
             timeSinceLastAction = 0;
 
-            var mine = new Mine(this, position, 600);
+            var mine = new Mine(this, position3d, 600);
         }
         /// <summary>Update this <see cref="Tank"/>'s collision.</summary>
         public virtual void UpdateCollision()
         {
-            CollisionBox = new(position - new Vector3(7, 15, 7), position + new Vector3(10, 15, 10));
-            foreach (var tank in GameHandler.AllTanks)
+            if (IsIngame)
             {
-                if (tank is not null && tank != this)
+                CollisionBox = new(position3d - new Vector3(7, 15, 7), position3d + new Vector3(10, 15, 10));
+                foreach (var tank in GameHandler.AllTanks)
                 {
-                    var dummyVel = Velocity2D;
-                    Collision.HandleCollisionSimple(CollisionBox2D, tank.CollisionBox2D, ref dummyVel, ref position);
+                    if (tank is not null && tank != this)
+                    {
+                        var dummyVel = Velocity2D;
+                        Collision.HandleCollisionSimple(CollisionBox2D, tank.CollisionBox2D, ref dummyVel, ref position3d);
 
-                    velocity.X = dummyVel.X;
-                    velocity.Z = dummyVel.Y;
+                        velocity.X = dummyVel.X;
+                        velocity.Z = dummyVel.Y;
+                    }
                 }
-            }
 
-            foreach (var c in Block.blocks)
-            {
-                if (c is not null)
+                foreach (var c in Block.blocks)
                 {
-                    var dummyVel = Velocity2D;
-                    Collision.HandleCollisionSimple(CollisionBox2D, c.collider2d, ref dummyVel, ref position);
+                    if (c is not null)
+                    {
+                        var dummyVel = Velocity2D;
+                        Collision.HandleCollisionSimple(CollisionBox2D, c.collider2d, ref dummyVel, ref position3d);
 
-                    velocity.X = dummyVel.X;
-                    velocity.Z = dummyVel.Y;
+                        velocity.X = dummyVel.X;
+                        velocity.Z = dummyVel.Y;
+                    }
                 }
+                position3d.X = MathHelper.Clamp(position3d.X, MapRenderer.TANKS_MIN_X, MapRenderer.TANKS_MAX_X);
+                position3d.Z = MathHelper.Clamp(position3d.Z, MapRenderer.TANKS_MIN_Y, MapRenderer.TANKS_MAX_Y);
             }
-            position.X = MathHelper.Clamp(position.X, MapRenderer.TANKS_MIN_X, MapRenderer.TANKS_MAX_X);
-            position.Z = MathHelper.Clamp(position.Z, MapRenderer.TANKS_MIN_Y, MapRenderer.TANKS_MAX_Y);
         }
 
         public Color TankDestructionColor { get; set; }

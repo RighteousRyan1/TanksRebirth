@@ -438,7 +438,7 @@ namespace WiiPlayTanksRemake
 
                         if (x is not null && Array.IndexOf(GameHandler.AllAITanks, x) > -1)
                         {
-                            pos = x.position;
+                            pos = x.position3d;
 
                             /*GameView = Matrix.CreateLookAt(pos,
                             pos + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-x.TurretRotation).Expand_Z()
@@ -454,7 +454,7 @@ namespace WiiPlayTanksRemake
                             GameCamera.SetPosition(pos);
 
                             if (GameHandler.AllTanks.Count(x => x is not null) > 1)
-                                GameCamera.SetLookAt(GameHandler.AllTanks[1].position);
+                                GameCamera.SetLookAt(GameHandler.AllTanks[1].position3d);
                             else
                                 GameCamera.SetLookAt(pos + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-x.TurretRotation).Expand_Z());
 

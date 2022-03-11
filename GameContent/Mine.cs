@@ -100,7 +100,7 @@ namespace WiiPlayTanksRemake.GameContent
             }
             foreach (var tank in GameHandler.AllTanks)
             {
-                if (tank is not null && Vector3.Distance(tank.position, position) < explosionRadius)
+                if (tank is not null && Vector3.Distance(tank.position3d, position) < explosionRadius)
                     if (!tank.Dead)
                         tank.Destroy();
             }
@@ -149,7 +149,7 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 foreach (var tank in GameHandler.AllTanks)
                 {
-                    if (tank is not null && Vector3.Distance(tank.position, position) < explosionRadius)
+                    if (tank is not null && Vector3.Distance(tank.position3d, position) < explosionRadius)
                     {
                         tankCameTooClose = true;
                         detonationTime = mineReactTime;
@@ -236,7 +236,7 @@ namespace WiiPlayTanksRemake.GameContent
             this.rotationSpeed = rotationSpeed;
             position = pos;
             maxScale = scaleMax;
-            mask = GameResources.GetGameResource<Texture2D>("Assets/textures/mine/explosion_mask");
+            mask = GameResources.GetGameResource<Texture2D>("Assets/textures/mine/explosion_mask"/*"Assets/textures/misc/tank_smoke_ami"*/);
 
             Model = GameResources.GetGameResource<Model>("Assets/mineexplosion");
 
