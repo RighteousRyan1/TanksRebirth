@@ -44,7 +44,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
         private static float _tnkSpeed = 2.4f;
 
-        private static float _defaultLoadTime = 90;
+        // private static float _defaultLoadTime = 90;
 
         internal static bool isLoadingScene;
 
@@ -125,10 +125,13 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
             foreach (var tnk in tanks)
             {
-                if (tnk.Position.X > 500)
-                    tnk.Position.X = -500;
+                var pee = tnk.Body.Position;
+                if (pee.X > 500)
+                    pee.X = -500;
 
                 tnk.Velocity.X = _tnkSpeed;
+
+                tnk.Body.Position = pee;
             }
         }
 
@@ -196,7 +199,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
         {
             var extank = new AITank(tier, true, false);
             extank.Team = Team.NoTeam;
-            extank.Position = new Vector2(-500 + xOffset, yOffset);
+            extank.Body.Position = new Vector2(-500 + xOffset, yOffset);
             extank.Dead = false;
 
             extank.TankRotation = MathHelper.PiOver2;

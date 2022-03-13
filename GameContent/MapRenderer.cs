@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Linq;
+using tainicom.Aether.Physics2D.Dynamics;
 using WiiPlayTanksRemake.Graphics;
 using WiiPlayTanksRemake.Internals;
 using WiiPlayTanksRemake.Internals.Common.Utilities;
@@ -90,10 +91,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         public static class BoundsRenderer
         {
-            internal static BoundingBox[] enclosingBoxes = new BoundingBox[4];
-
-            public static BoundingBox BoundaryBox;
-
+            public static Body[] Boundaries = new Body[4];
             public static Model BoundaryModel;
 
             public static Vector3[] treePositions = new Vector3[]
@@ -168,6 +166,15 @@ namespace WiiPlayTanksRemake.GameContent
 
             public static void LoadBounds()
             {
+                // 0 -> top, 1 -> right, 2 -> bottom, 3 -> left
+                Boundaries[0] = Tank.CollisionsWorld.CreateRectangle(1500, 5, 1f, new(MIN_X, MIN_Y - 7), 0f, BodyType.Static);
+
+                Boundaries[1] = Tank.CollisionsWorld.CreateRectangle(5, 1500, 1f, new(MAX_X + 7, MAX_Y), 0f, BodyType.Static);
+
+                Boundaries[2] = Tank.CollisionsWorld.CreateRectangle(1500, 5, 1f, new(MIN_X, MAX_Y + 7), 0f, BodyType.Static);
+
+                Boundaries[3] = Tank.CollisionsWorld.CreateRectangle(5, 1500, 1f, new(MIN_X - 7, MAX_Y), 0f, BodyType.Static);
+
                 switch (Theme)
                 {
                     case MapTheme.Default:
@@ -185,8 +192,6 @@ namespace WiiPlayTanksRemake.GameContent
 
                         SetBlockTexture(BoundaryModel.Meshes["polygon20"], BoundaryTextureContext.block_shadow_d);
 
-                        // SetBlockTexture(BoundaryModel.Meshes["polygon9"], BoundaryTextureContext.block_shadow_d);
-
                         SetBlockTexture(BoundaryModel.Meshes["polygon21"], BoundaryTextureContext.block_shadow_b);
 
                         SetBlockTexture(BoundaryModel.Meshes["polygon32"], BoundaryTextureContext.floor_lower);
@@ -196,25 +201,8 @@ namespace WiiPlayTanksRemake.GameContent
                         TreeModel = GameResources.GetGameResource<Model>("Assets/forest/tree");
                         TreeStumpModel = GameResources.GetGameResource<Model>("Assets/forest/tree_stump");
                         LogPileModel = GameResources.GetGameResource<Model>("Assets/forest/logpile");
-
                         break;
                 }
-
-                /*
-                 * 0 -> right
-                 * 1 -> left
-                 * 2 -> top
-                 * 3 -> bottom
-                 */
-
-                enclosingBoxes[0] = new(new Vector3(MAX_X, 0, MIN_Y - 20), new Vector3(MAX_X + 20, 0, MAX_Y + 20));
-                enclosingBoxes[1] = new(new Vector3(MIN_X, 0, MIN_Y - 20), new Vector3(MIN_X - 20, 0, MAX_Y + 20));
-                enclosingBoxes[2] = new(new Vector3(MIN_X - 20, 0, MIN_Y - 20), new Vector3(MAX_X + 20, 0, MIN_Y));
-                enclosingBoxes[3] = new(new Vector3(MIN_X - 20, 0, MAX_Y + 20), new Vector3(MAX_X + 20, 0, MAX_Y));
-
-                var merged1 = BoundingBox.CreateMerged(enclosingBoxes[0], enclosingBoxes[1]);
-                var merged2 = BoundingBox.CreateMerged(merged1, enclosingBoxes[2]);
-                BoundaryBox = BoundingBox.CreateMerged(merged2, enclosingBoxes[3]);
             }
 
             public static void RenderBounds()
@@ -320,7 +308,7 @@ namespace WiiPlayTanksRemake.GameContent
             }
 
             /// <summary>
-            /// Sets a block texture in the boundary model to 
+            /// Sets a block texture in the boundary model to the context.
             /// </summary>
             /// <param name="mesh"></param>
             /// <param name="meshNameMatch"></param>

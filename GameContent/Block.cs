@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using tainicom.Aether.Physics2D.Dynamics;
 using WiiPlayTanksRemake;
 using WiiPlayTanksRemake.GameContent.Systems.Coordinates;
 using WiiPlayTanksRemake.Graphics;
@@ -27,8 +28,6 @@ namespace WiiPlayTanksRemake.GameContent
 
         public static Block[] blocks = new Block[CubeMapPosition.MAP_WIDTH * CubeMapPosition.MAP_HEIGHT];
 
-        // public static Cube[,] cubes = new Cube[CubeMapPosition.MAP_WIDTH + 1, CubeMapPosition.MAP_HEIGHT + 1];
-
         public Vector2 Position;
         public Vector3 Position3D => Position.ExpandZ();
 
@@ -38,6 +37,8 @@ namespace WiiPlayTanksRemake.GameContent
         public Matrix World;
         public Matrix View;
         public Matrix Projection;
+
+        public Body Body;
 
         public BoundingBox collider;
 
@@ -67,7 +68,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         private bool IsAlternateModel => height == 3 || height == 6;
 
-        public Block(BlockType type, int height)
+        public Block(BlockType type, int height, Vector2 position)
         {
             meshTexture = type switch
             {
@@ -100,9 +101,11 @@ namespace WiiPlayTanksRemake.GameContent
                     break;
             }
 
+            Body = Tank.CollisionsWorld.CreateRectangle(FULL_BLOCK_SIZE, FULL_BLOCK_SIZE, 1f, position, 0f, BodyType.Static);
+
             Type = type;
 
-            Position = new(-1000, 0);
+            Position = Body.Position;
 
             // TODO: Finish collisions
 
@@ -111,19 +114,14 @@ namespace WiiPlayTanksRemake.GameContent
             worldId = index;
 
             blocks[index] = this;
-
-            // cubes[position.X, position.Y] = this;
-
-            // cubes.Add(this);
         }
 
         public void Destroy()
         {
+            Tank.CollisionsWorld.Remove(Body);
             // blah blah particle chunk thingy
 
             blocks[worldId] = null;
-
-            // cubes[position.X, position.Y] = null;
         }
 
         public void Render()

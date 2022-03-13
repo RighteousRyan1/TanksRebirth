@@ -11,7 +11,7 @@ namespace WiiPlayTanksRemake
         public static void LaunchGame()
         {
             using var game = new TankGame();
-                game.Run();
+            game.Run();
             IsRunning = true;
         }
         [STAThread]

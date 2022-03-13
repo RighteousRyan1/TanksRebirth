@@ -280,9 +280,6 @@ namespace WiiPlayTanksRemake
         {
             try
             {
-                Tank.CollisionsWorld.ShiftOrigin(Vector2.Zero);
-                Tank.CollisionsWorld.Step((float)gameTime.ElapsedGameTime.TotalSeconds);
-
                 UpdateStopwatch.Start();
 
                 DiscordRichPresence.Update();
@@ -402,7 +399,7 @@ namespace WiiPlayTanksRemake
             catch (Exception e)
             {
                 GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
-                throw;
+                // throw;
             }
         }
 
@@ -422,6 +419,8 @@ namespace WiiPlayTanksRemake
                     type?.Update();
 
                 GameHandler.Update();
+
+                Tank.CollisionsWorld.Step(/*(float)gameTime.ElapsedGameTime.TotalSeconds*/ 1);
 
                 if (!MainMenu.Active)
                 {

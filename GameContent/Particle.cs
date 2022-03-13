@@ -59,7 +59,7 @@ namespace WiiPlayTanksRemake.GameContent
             lifeTime++;
         }
 
-        public BasicEffect effect = new(TankGame.Instance.GraphicsDevice);
+        public static BasicEffect effect = new(TankGame.Instance.GraphicsDevice);
 
         internal void Render()
         {

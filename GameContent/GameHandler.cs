@@ -321,9 +321,10 @@ namespace WiiPlayTanksRemake.GameContent
             myTank = new PlayerTank(PlayerType.Blue)
             {
                 Team = Team.Red,
-                Position = pos.FlattenZ(),
+                // Position = pos.FlattenZ(),
                 Dead = false
             };
+            myTank.Body.Position = pos.FlattenZ();
             return myTank;
         }
 
@@ -347,6 +348,7 @@ namespace WiiPlayTanksRemake.GameContent
             drop.scale = 1.25f;
             drop.TankToSpawn = new AITank(AITank.PICK_ANY_THAT_ARE_IMPLEMENTED())
             {
+                Dead = true,
                 Team = Team.NoTeam
             };
         }
@@ -390,15 +392,17 @@ namespace WiiPlayTanksRemake.GameContent
         public static AITank SpawnTank(TankTier tier, Team team)
         {
             var rot = GeometryUtils.GetPiRandom();
-
-            return new AITank(tier)
+            
+            var t = new AITank(tier)
             {
                 TankRotation = rot,
                 TurretRotation = rot,
                 Team = team,
-                Position = new CubeMapPosition(GameRand.Next(0, 27), GameRand.Next(0, 20)),
                 Dead = false
             };
+            t.Body.Position = new CubeMapPosition(GameRand.Next(0, 27), GameRand.Next(0, 20));
+
+            return t;
         }
         public static AITank SpawnTankAt(Vector3 position, TankTier tier, Team team)
         {
@@ -410,9 +414,9 @@ namespace WiiPlayTanksRemake.GameContent
                 targetTankRotation = rot - MathHelper.Pi,
                 TurretRotation = -rot,
                 Team = team,
-                Position = position.FlattenZ(),
                 Dead = false,
             };
+            x.Body.Position = position.FlattenZ();
             return x;
         }
         public static void SpawnTankPlethorae(bool useCurTank = false)
@@ -496,7 +500,11 @@ namespace WiiPlayTanksRemake.GameContent
         private static void ClearTankDeathmarks(UIElement affectedElement)
         {
             for (int i = 0; i < TankDeathMark.deathMarks.Length; i++)
+            {
+                if (TankDeathMark.deathMarks[i] != null)
+                    TankDeathMark.deathMarks[i].check?.Destroy();
                 TankDeathMark.deathMarks[i] = null;
+            }
 
             TankDeathMark.total_death_marks = 0;
         }
@@ -505,7 +513,8 @@ namespace WiiPlayTanksRemake.GameContent
         {
             for (int i = 0; i < TankFootprint.footprints.Length; i++)
             {
-                // TankFootprint.footprints[i].track?.Destroy();
+                if (TankFootprint.footprints[i] != null)
+                    TankFootprint.footprints[i].track?.Destroy();
                 TankFootprint.footprints[i] = null;
             }
 

@@ -23,9 +23,9 @@ namespace WiiPlayTanksRemake.GameContent
 {
     public abstract class Tank
     {
-        public static World CollisionsWorld = new(Vector2.Zero);
-        public const int TNK_WIDTH = 25;
-        public const int TNK_HEIGHT = 25;
+        public static World CollisionsWorld = new World(Vector2.Zero);
+        public const float TNK_WIDTH = 25;
+        public const float TNK_HEIGHT = 25;
         #region Fields / Properties
         public Body Body { get; set; } = new();
 
@@ -68,7 +68,7 @@ namespace WiiPlayTanksRemake.GameContent
         /// <summary>The 3D hitbox of this <see cref="Tank"/>.</summary>
         public BoundingBox Worldbox { get; set; }
         /// <summary>The 2D hitbox of this <see cref="Tank"/>.</summary>
-        public Rectangle CollisionBox2D => new((int)(Position.X - TNK_WIDTH / 2 + 3), (int)(Position.Y - TNK_WIDTH / 2 + 2), TNK_WIDTH - 8, TNK_HEIGHT - 4);
+        public Rectangle CollisionBox2D => new((int)(Position.X - TNK_WIDTH / 2 + 3), (int)(Position.Y - TNK_WIDTH / 2 + 2), (int)TNK_WIDTH - 8, (int)TNK_HEIGHT - 4);
         /// <summary>How long this <see cref="Tank"/> will be immobile upon firing a bullet.</summary>
         public int ShootStun { get; set; }
         /// <summary>How long this <see cref="Tank"/> will be immobile upon laying a mine.</summary>
@@ -109,9 +109,11 @@ namespace WiiPlayTanksRemake.GameContent
 
         public virtual void Initialize() 
         {
-            Body = CollisionsWorld.CreateCircle(TNK_WIDTH / 2, 1f, Position, BodyType.Dynamic);
-            Body.LinearDamping = Deceleration;
-            Body.Awake = true;
+            if (IsIngame)
+            {
+                Body = CollisionsWorld.CreateCircle(TNK_WIDTH * 0.4f, 1f, Position, BodyType.Dynamic);
+                // Body.LinearDamping = Deceleration * 10;
+            }
         }
 
         /// <summary>Update this <see cref="Tank"/>.</summary>
@@ -142,22 +144,21 @@ namespace WiiPlayTanksRemake.GameContent
             World = Matrix.CreateFromYawPitchRoll(-TankRotation, 0, 0)
                 * Matrix.CreateTranslation(Position3D);
 
-            Position += Velocity * 0.55f; //* 60 * (float)TankGame.LastGameTime.ElapsedGameTime.TotalSeconds;
-            Body.Position = Position;
+            //Position += Velocity * 0.55f; //* 60 * (float)TankGame.LastGameTime.ElapsedGameTime.TotalSeconds;
+            //Body.Position = Position;
 
-            // Body.Position = Position;
+            Position = Body.Position;
 
-            // position3d = Body.Position;
+            Body.AngularDamping = 100;
 
-            // Systems.ChatSystem.SendMessage($"{Body.World.} | {Body.WorldCenter}", Color.White);
-
-            UpdateCollision();
+            Body.LinearVelocity = Velocity * 0.55f;
         }
         /// <summary>Get this <see cref="Tank"/>'s general stats.</summary>
         public string GetGeneralStats()
             => $"Pos2D: {Position} | Vel: {Velocity} | Dead: {Dead}";
         /// <summary>Destroy this <see cref="Tank"/>.</summary>
         public virtual void Destroy() {
+
             CollisionsWorld.Remove(Body);
             Dead = true;
             var killSound1 = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_destroy");
@@ -279,7 +280,7 @@ namespace WiiPlayTanksRemake.GameContent
         public virtual void LayFootprint(bool alt) {
             if (!CanLayTread)
                 return;
-            var fp = new TankFootprint(alt)
+            var fp = new TankFootprint(this, alt)
             {
                 Position = Position3D + new Vector3(0, 0.1f, 0),
                 rotation = -TankRotation
@@ -371,29 +372,6 @@ namespace WiiPlayTanksRemake.GameContent
             var mine = new Mine(this, Position, 600);
         }
         /// <summary>Update this <see cref="Tank"/>'s collision.</summary>
-        public virtual void UpdateCollision()
-        {
-            if (IsIngame)
-            {
-                foreach (var tank in GameHandler.AllTanks)
-                {
-                    if (tank is not null && tank != this)
-                    {
-                        // Collision.HandleCollisionSimple(CollisionBox2D, tank.CollisionBox2D, Velocity, ref Position);
-                    }
-                }
-
-                foreach (var c in Block.blocks)
-                {
-                    if (c is not null)
-                    {
-                        Collision.HandleCollisionSimple(CollisionBox2D, c.collider2d, Velocity, ref Position);
-                    }
-                }
-                Position.X = MathHelper.Clamp(Position.X, MapRenderer.TANKS_MIN_X, MapRenderer.TANKS_MAX_X);
-                Position.Y = MathHelper.Clamp(Position.Y, MapRenderer.TANKS_MIN_Y, MapRenderer.TANKS_MAX_Y);
-            }
-        }
 
         public Color TankDestructionColor { get; set; }
 
@@ -415,10 +393,15 @@ namespace WiiPlayTanksRemake.GameContent
 
         public bool IsIngame { get; set; } = true;
 
-        public virtual void RemoveSilently() { }
+        public virtual void RemoveSilently() 
+        { 
+            Dead = true;
+            if (IsIngame)
+                CollisionsWorld.Remove(Body); 
+        }
     }
 
-    public class TankFootprint
+    /*public class TankFootprint
     {
         public const int MAX_FOOTPRINTS = 100000;
 
@@ -483,15 +466,14 @@ namespace WiiPlayTanksRemake.GameContent
                 mesh.Draw();
             }
         }
-    }
-    // maybe some other time
-    /*public class TankFootprint
+    }*/
+    public class TankFootprint
     {
         public const int MAX_FOOTPRINTS = 100000;
 
         public static TankFootprint[] footprints = new TankFootprint[TankGame.Settings.TankFootprintLimit];
 
-        public Vector3 location;
+        public Vector3 Position;
         public float rotation;
 
         public Texture2D texture;
@@ -503,8 +485,9 @@ namespace WiiPlayTanksRemake.GameContent
         public long lifeTime;
 
         public readonly Particle track;
+        public readonly Tank owner;
 
-        public TankFootprint(bool alt = false)
+        public TankFootprint(Tank owner, bool alt = false)
         {
             if (total_treads_placed + 1 > MAX_FOOTPRINTS)
                 footprints[Array.IndexOf(footprints, footprints.Min(x => x.lifeTime > 0))] = null; // i think?
@@ -514,25 +497,25 @@ namespace WiiPlayTanksRemake.GameContent
 
             texture = GameResources.GetGameResource<Texture2D>(alt ? $"Assets/textures/tank_footprint_alt" : $"Assets/textures/tank_footprint");
 
-            footprints[total_treads_placed] = this;
-
-            track = ParticleSystem.MakeParticle(location, texture);
+            track = ParticleSystem.MakeParticle(Position, texture);
 
             track.isAddative = false;
+            //if (owner.Team != Team.NoTeam)
+                //track.color = (Color)typeof(Color).GetProperty(owner.Team.ToString(), System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public).GetValue(null);
             track.rotationX = -MathHelper.PiOver2;
-            track.Scale = 0.5f;
+            track.Scale = new(0.5f);
+
+            footprints[total_treads_placed] = this;
 
             total_treads_placed++;
         }
 
-        private BasicEffect effect = new(TankGame.Instance.GraphicsDevice);
-
         public void Render()
         {
             lifeTime++;
-            Vector3 scale = alternate ? new(0.5f, 1f, 0.35f) : new(0.5f, 1f, 0.075f);
+            // Vector3 scale = alternate ? new(0.5f, 1f, 0.35f) : new(0.5f, 1f, 0.075f);
 
-            track.position = location;
+            track.position = Position;
             track.rotationY = rotation;
             track.color = Color.White;
             // [0.0, 1.1, 1.5, 0.5]
@@ -541,8 +524,7 @@ namespace WiiPlayTanksRemake.GameContent
             // [0.0, 2.0, 0.6, 0.2]
         }
     }
-    */
-    public class TankDeathMark
+    /*public class TankDeathMark
     {
         public const int MAX_DEATH_MARKS = 1000;
 
@@ -604,6 +586,52 @@ namespace WiiPlayTanksRemake.GameContent
                 }
                 mesh.Draw();
             }
+        }
+    }*/
+    public class TankDeathMark
+    {
+        public const int MAX_DEATH_MARKS = 1000;
+
+        public static TankDeathMark[] deathMarks = new TankDeathMark[MAX_DEATH_MARKS];
+
+        public Vector3 Position;
+        public float rotation;
+
+        internal static int total_death_marks;
+
+        public Matrix World;
+        public Matrix View;
+        public Matrix Projection;
+
+        public Particle check;
+
+        public Texture2D texture;
+
+        public enum CheckColor
+        {
+            Blue,
+            Red,
+            White
+        }
+
+        public TankDeathMark(CheckColor color)
+        {
+            if (total_death_marks + 1 > MAX_DEATH_MARKS)
+                return;
+            total_death_marks++;
+
+            texture = GameResources.GetGameResource<Texture2D>($"Assets/textures/check/check_{color.ToString().ToLower()}");
+
+            check = ParticleSystem.MakeParticle(Position + new Vector3(0, 0.1f, 0), texture);
+            check.isAddative = false;
+            check.rotationX = -MathHelper.PiOver2;
+
+            deathMarks[total_death_marks] = this;
+        }
+        public void Render()
+        {
+            check.position = Position;
+            check.Scale = new(0.65f);
         }
     }
 

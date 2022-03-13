@@ -105,6 +105,7 @@ namespace WiiPlayTanksRemake.GameContent
             MineStun = 8;
             Invisible = false;
             Acceleration = 0.3f;
+            Deceleration = 0.3f;
             TurningSpeed = 0.1f;
             MaximalTurn = 0.8f;
 
@@ -179,6 +180,7 @@ namespace WiiPlayTanksRemake.GameContent
         {
             GameHandler.AllPlayerTanks[PlayerId] = null;
             GameHandler.AllTanks[WorldId] = null;
+            base.RemoveSilently();
         }
 
         /// <summary>
@@ -306,12 +308,6 @@ namespace WiiPlayTanksRemake.GameContent
 
             //if (playerControl_isBindPressed)
                 // GameHandler.ClientLog.Write(targetTnkRotation - TankRotation, LogType.Info);
-        }
-
-        public override void UpdateCollision()
-        {
-            if (IsIngame)
-                base.UpdateCollision();
         }
 
         public override void Destroy()

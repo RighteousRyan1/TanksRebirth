@@ -396,6 +396,8 @@ namespace WiiPlayTanksRemake.GameContent
 
                     AiParams.MinePlacementChance = 0.3f;
                     AiParams.MoveFromMineTime = 120;
+
+                    AiParams.SmartMineLaying = true;
                     break;
 
                 case TankTier.Pink:
@@ -1516,25 +1518,23 @@ namespace WiiPlayTanksRemake.GameContent
         {
             base.Update();
 
-            DoAi(true, true, true);
+            if (!Dead)
+            {
+                DoAi(true, true, true);
 
-            // targetTankRotation = (GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - GameUtils.MousePosition).ToRotation() - MathHelper.PiOver2;
+                // targetTankRotation = (GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - GameUtils.MousePosition).ToRotation() - MathHelper.PiOver2;
 
-            timeSinceLastAction++;
+                timeSinceLastAction++;
 
-            oldPosition = Position;
+                oldPosition = Position;
+            }
         }
 
         public override void RemoveSilently()
         {
-            Dead = true;
             GameHandler.AllAITanks[AITankId] = null;
             GameHandler.AllTanks[WorldId] = null;
-        }
-
-        public override void UpdateCollision()
-        {
-            base.UpdateCollision();
+            base.RemoveSilently();
         }
 
         public override void LayMine()

@@ -56,16 +56,13 @@ namespace WiiPlayTanksRemake.GameContent.Systems.Coordinates
                             if (place._blockId <= -1)
                             {
                                 ChatSystem.SendMessage("Added!", Color.Red);
-                                var cube = new Block((Block.BlockType)GameHandler.BlockType, GameHandler.CubeHeight)
-                                {
-                                    Position = place.Position.FlattenZ()
-                                };
+                                var cube = new Block((Block.BlockType)GameHandler.BlockType, GameHandler.CubeHeight, place.Position.FlattenZ());
                                 place._blockId = cube.worldId;
                             }
                             else
                             {
                                 ChatSystem.SendMessage("Removed!", Color.Red);
-                                Block.blocks[place._blockId] = null;
+                                Block.blocks[place._blockId].Destroy();
                                 place._blockId = -1;
                             }
                         }
