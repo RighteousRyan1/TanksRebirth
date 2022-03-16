@@ -15,6 +15,7 @@ using WiiPlayTanksRemake.GameContent.GameMechanics;
 using WiiPlayTanksRemake.Internals.Common.Framework.Audio;
 using WiiPlayTanksRemake.Internals.Common.Framework.Input;
 using WiiPlayTanksRemake.Graphics;
+using WiiPlayTanksRemake.Net;
 
 namespace WiiPlayTanksRemake.GameContent
 {
@@ -66,11 +67,6 @@ namespace WiiPlayTanksRemake.GameContent
             if (playerType == PlayerType.Red)
                 ShootPitch = 0.1f;
 
-            //ShellHoming.cooldown = 30;
-            //ShellHoming.power = 1f;
-            //ShellHoming.radius = 200f;
-            //ShellHoming.speed = 3f;
-
             Team = Team.Red;
 
             Dead = true;
@@ -97,9 +93,9 @@ namespace WiiPlayTanksRemake.GameContent
         {
             ShellCooldown = 5;
             ShootStun = 5;
-            ShellSpeed = 6f; // 3f
+            ShellSpeed = 3f; // 3f
             MaxSpeed = 1.8f;
-            RicochetCount = 2; // 1
+            RicochetCount = 1; // 1
             ShellLimit = 5;
             MineLimit = 2;
             MineStun = 8;
@@ -109,7 +105,7 @@ namespace WiiPlayTanksRemake.GameContent
             TurningSpeed = 0.1f;
             MaximalTurn = 0.8f;
 
-            ShellType = ShellTier.RicochetRocket;
+            ShellType = ShellTier.Player;
 
             ShellHoming = new();
 
@@ -130,36 +126,44 @@ namespace WiiPlayTanksRemake.GameContent
 
             base.Update();
 
-            Vector3 mouseWorldPos = GameUtils.GetWorldPosition(GameUtils.MousePosition, -11f);
-
-            TurretRotation = (-(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position).ToRotation()) + MathHelper.PiOver2;
-
-            if (GameHandler.InMission)
+            if (IsIngame)
             {
-                if (CurShootStun <= 0 && CurMineStun <= 0)
+
+                if (NetPlay.IsIdEqualTo(PlayerId))
                 {
-                    if (!Stationary)
+                    Vector3 mouseWorldPos = GameUtils.GetWorldPosition(GameUtils.MousePosition, -11f);
+                    TurretRotation = (-(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position).ToRotation()) + MathHelper.PiOver2;
+                }
+
+                if (GameHandler.InMission)
+                {
+                    if (CurShootStun <= 0 && CurMineStun <= 0)
                     {
-                        ControlHandle_Keybinding();
-                        if (Input.CurrentGamePadSnapshot.IsConnected)
-                            ControlHandle_ConsoleController();
+                        if (!Stationary)
+                        {
+                            if (NetPlay.IsIdEqualTo(PlayerId))
+                            {
+                                ControlHandle_Keybinding();
+                                if (Input.CurrentGamePadSnapshot.IsConnected)
+                                    ControlHandle_ConsoleController();
+                            }
+                        }
                     }
                     else
                         Velocity = Vector2.Zero;
                 }
-                else
-                    Velocity = Vector2.Zero;
-            }
-            else
-                Velocity = Vector2.Zero;
 
-            if (GameHandler.InMission)
-            {
-                if (Input.CanDetectClick())
-                    Shoot();
+                if (GameHandler.InMission)
+                {
+                    if (NetPlay.IsIdEqualTo(PlayerId))
+                    {
+                        if (Input.CanDetectClick())
+                            Shoot();
 
-                if (!Stationary)
-                    UpdatePlayerMovement();
+                        if (!Stationary)
+                            UpdatePlayerMovement();
+                    }
+                }
             }
 
             timeSinceLastAction++;
@@ -171,7 +175,7 @@ namespace WiiPlayTanksRemake.GameContent
             CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation);
             Model.Root.Transform = World;
 
-            Model.CopyAbsoluteBoneTransformsTo(boneTransforms); // a
+            Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
 
             oldPosition = Position;
         }
@@ -447,6 +451,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                     if (mesh.Name != "Shadow")
                     {
+                        effect.Alpha = 1f;
                         effect.Texture = _tankColorTexture;
 
                         /*var ex = new Color[1024];
@@ -458,14 +463,21 @@ namespace WiiPlayTanksRemake.GameContent
                             effect.Texture.SetData(0, new Rectangle(0, 0, 32, 9), ex, 0, 288);
                             effect.Texture.SetData(0, new Rectangle(0, 23, 32, 9), ex, 0, 288);
                         }*/
+                        mesh.Draw();
                     }
 
                     else
-                        effect.Texture = _shadowTexture;
+                    {
+                        if (IsIngame)
+                        {
+                            effect.Alpha = 0.5f;
+                            effect.Texture = _shadowTexture;
+                            mesh.Draw();
+                        }
+                    }
 
                     effect.SetDefaultGameLighting_IngameEntities();
                 }
-                mesh.Draw();
             }
         }
 

@@ -119,9 +119,6 @@ namespace WiiPlayTanksRemake.GameContent
         /// <summary>Update this <see cref="Tank"/>.</summary>
         public virtual void Update()
         {
-            if (Dead)
-                return;
-
             if (IsIngame)
             {
                 Worldbox = new(Position3D - new Vector3(7, 15, 7), Position3D + new Vector3(10, 15, 10));
@@ -144,9 +141,6 @@ namespace WiiPlayTanksRemake.GameContent
             World = Matrix.CreateFromYawPitchRoll(-TankRotation, 0, 0)
                 * Matrix.CreateTranslation(Position3D);
 
-            //Position += Velocity * 0.55f; //* 60 * (float)TankGame.LastGameTime.ElapsedGameTime.TotalSeconds;
-            //Body.Position = Position;
-
             Position = Body.Position;
 
             Body.AngularDamping = 100;
@@ -159,7 +153,8 @@ namespace WiiPlayTanksRemake.GameContent
         /// <summary>Destroy this <see cref="Tank"/>.</summary>
         public virtual void Destroy() {
 
-            CollisionsWorld.Remove(Body);
+            if (CollisionsWorld.BodyList.Contains(Body))
+                CollisionsWorld.Remove(Body);
             Dead = true;
             var killSound1 = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_destroy");
             SoundPlayer.PlaySoundInstance(killSound1, SoundContext.Effect, 0.2f);
@@ -396,7 +391,7 @@ namespace WiiPlayTanksRemake.GameContent
         public virtual void RemoveSilently() 
         { 
             Dead = true;
-            if (IsIngame)
+            if (CollisionsWorld.BodyList.Contains(Body))
                 CollisionsWorld.Remove(Body); 
         }
     }

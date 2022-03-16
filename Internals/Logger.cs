@@ -32,11 +32,27 @@ namespace WiiPlayTanksRemake.Internals
             assembly = Assembly.GetExecutingAssembly();
             Name = name;
 
-            writeTo = Path.Combine(writeFile, $"{name}.log");
+            /*
+            int rev = 0;
+
+            var path = Path.Combine(writeFile, $"{name}_{rev}.log");
+
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+                rev++;
+            }
+
+            path = Path.Combine(writeFile, $"{name}_{rev}.log");
+
+            writeTo = path;
+
+            Debug.WriteLine($"Created '{writeTo}'");
 
             fStream = new(writeTo, FileMode.OpenOrCreate);
             fStream.SetLength(0);
             sWriter = new(fStream);
+            */
         }
 
         /// <summary>
@@ -47,11 +63,11 @@ namespace WiiPlayTanksRemake.Internals
         /// <param name="throwException">Whether or not to throw an exception upon write completion.</param>
         /// <exception cref="Exception">If <paramref name="throwException"/> is set to <see langword="true"/>, this exception will be thrown upon write completion.</exception>
         public void Write(object contents, LogType writeType, bool throwException = false) {
-            fStream.Position = fStream.Length;
+            //fStream.Position = fStream.Length;
             string str = $"[{DateTime.Now}] [{assembly.GetName().Name}] [{writeType}]: {contents}";
-            sWriter.WriteLine(str);
+            //sWriter.WriteLine(str);
             Debug.WriteLine(str);
-            sWriter.Flush();
+            //sWriter.Flush();
 
             if (throwException)
                 throw new Exception(contents.ToString());

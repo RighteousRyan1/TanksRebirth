@@ -23,5 +23,7 @@
   "Play": "Play",
   "SinglePlayer": "Single Player",
   "LevelEditor": "Level Editor",
-  "Multiplayer": "Multiplayer"
+  "Multiplayer": "Multiplayer",
+  "ConnectToServer": "Connect to Server",
+  "CreateServer": "Create Server"
 }

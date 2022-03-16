@@ -32,17 +32,9 @@
     <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.0.1641" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="System.Management" Version="6.0.0" />
+    <PackageReference Include="TextCopy" Version="6.1.0" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="BepuPhysics">
-      <HintPath>deps\BepuPhysics.dll</HintPath>
-    </Reference>
-    <Reference Include="BepuUtilities">
-      <HintPath>deps\BepuUtilities.dll</HintPath>
-    </Reference>
-    <Reference Include="BulletSharp">
-      <HintPath>deps\BulletSharp.dll</HintPath>
-    </Reference>
     <Reference Include="DiscordRPC">
       <HintPath>deps\DiscordRPC.dll</HintPath>
     </Reference>

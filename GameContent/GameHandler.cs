@@ -22,6 +22,7 @@ using WiiPlayTanksRemake.Internals.Common.Framework.Input;
 using System.IO;
 using System.Threading.Tasks;
 using WiiPlayTanksRemake.GameContent.Systems.Coordinates;
+using WiiPlayTanksRemake.Net;
 
 namespace WiiPlayTanksRemake.GameContent
 {
@@ -54,7 +55,6 @@ namespace WiiPlayTanksRemake.GameContent
 
         internal static void Update()
         {
-            UIElement.UpdateElements();
 
             if (InMission)
                 TankMusicSystem.Update();
@@ -117,7 +117,7 @@ namespace WiiPlayTanksRemake.GameContent
                 {
                     InMission = true;
                     OnMissionStart?.Invoke();
-                    TankMusicSystem.PlayMusic();
+                    TankMusicSystem.PlayAll();
                 }
             }
 
@@ -212,6 +212,7 @@ namespace WiiPlayTanksRemake.GameContent
                     sq?.Render();
 
             ParticleSystem.RenderParticles();
+            MainMenu.Render();
 
             // TODO: Fix translation
             // TODO: Scaling with screen size.
@@ -297,6 +298,8 @@ namespace WiiPlayTanksRemake.GameContent
             BeginIntroSequence();
 
             PlacementSquare.InitializeLevelEditorSquares();
+
+            InitDebugUi();
         }
 
         public static void SetupGraphics()
@@ -304,8 +307,6 @@ namespace WiiPlayTanksRemake.GameContent
             GameUI.Initialize();
             MainMenu.Initialize();
             GameShaders.Initialize();
-
-            InitDebugUi();
         }
 
         public static void LoadTnkScene()
@@ -359,20 +360,6 @@ namespace WiiPlayTanksRemake.GameContent
             var tune = GameResources.GetGameResource<SoundEffect>("Assets/fanfares/mission_snare");
 
             SoundPlayer.PlaySoundInstance(tune, SoundContext.Music, 1f);
-
-            /*for (int i = 0; i < 26; i++)
-            {
-                for (int j = 0; j < 20; j++)
-                {
-                    if (GameRand.NextFloat(0, 1) < 0.1)
-                        new Cube(Cube.BlockType.Wood, GameRand.Next(1, 6))
-                        {
-                            position = new CubeMapPosition(i, j)
-                        };
-                }
-            }*/
-
-            // VanillaCampaign.SetupLoadedMission();
 
             foreach (var tank in AllTanks)
                 if (tank is not null)

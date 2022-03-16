@@ -709,23 +709,29 @@
 /processorParam:Quality=Best
 /build:Assets/sounds/game_over_whistle.wav
 
-#begin Assets/sounds/menu_enter_1.wav
+#begin Assets/sounds/menu/menu_enter_1.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
-/build:Assets/sounds/menu_enter_1.wav
+/build:Assets/sounds/menu/menu_enter_1.wav
 
-#begin Assets/sounds/menu_exit.wav
+#begin Assets/sounds/menu/menu_error.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
-/build:Assets/sounds/menu_exit.wav
+/build:Assets/sounds/menu/menu_error.wav
 
-#begin Assets/sounds/menu_tick.wav
+#begin Assets/sounds/menu/menu_exit.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
-/build:Assets/sounds/menu_tick.wav
+/build:Assets/sounds/menu/menu_exit.wav
+
+#begin Assets/sounds/menu/menu_tick.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/sounds/menu/menu_tick.wav
 
 #begin Assets/sounds/mine_place.wav
 /importer:WavImporter

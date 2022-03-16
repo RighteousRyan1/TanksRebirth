@@ -56,5 +56,17 @@ namespace WiiPlayTanksRemake
         public LangCode Language { get; set; } = LangCode.English;
 
         #endregion
+
+        // public MultiplayerInfo MultiplayerInfo { get; set; } = default;
+    }
+    public struct MultiplayerInfo
+    {
+        public string Username { get; set; } = "";
+
+        public string LastUsedIp { get; set; } = "";
+
+        public string LastUsedPassword { get; set; } = "";
+
+        public MultiplayerInfo() { }
     }
 }

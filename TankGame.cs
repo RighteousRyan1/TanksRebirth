@@ -3,7 +3,6 @@ using System.IO;
 using System.Text.Json;
 using System.Reflection;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using WiiPlayTanksRemake.Internals.Common;
@@ -11,26 +10,24 @@ using WiiPlayTanksRemake.Internals.Common.Utilities;
 using WiiPlayTanksRemake.GameContent;
 using WiiPlayTanksRemake.Internals;
 using WiiPlayTanksRemake.Internals.UI;
-using WiiPlayTanksRemake.Internals.Common.GameInput;
 using WiiPlayTanksRemake.Internals.Core.Interfaces;
 using System.Collections.Generic;
 using System.Linq;
 using WiiPlayTanksRemake.Internals.Common.IO;
 using System.Diagnostics;
 using WiiPlayTanksRemake.GameContent.UI;
-using WiiPlayTanksRemake.Internals.Common.Framework.Audio;
 using WiiPlayTanksRemake.Graphics;
 using System.Management;
 using WiiPlayTanksRemake.Internals.Common.Framework.Input;
 using WiiPlayTanksRemake.Internals.Core;
 using WiiPlayTanksRemake.Localization;
-using FontStashSharp.SharpFont;
 using FontStashSharp;
-using WiiPlayTanksRemake.Internals.Common.GameUI;
 using WiiPlayTanksRemake.Internals.Common.Framework.Graphics;
-using System.Threading;
 using WiiPlayTanksRemake.GameContent.Systems;
+using WiiPlayTanksRemake.Net;
 
+[assembly: AssemblyVersion("1.1.0.0")]
+[assembly: AssemblyFileVersion("1.1.0.0")]
 namespace WiiPlayTanksRemake
 {
     // TODO: Implement block once all of above things are done
@@ -149,6 +146,8 @@ namespace WiiPlayTanksRemake
 
         private bool _wasActive;
 
+        public readonly string GameVersion;
+
         public TankGame() : base()
         {
             graphics = new(this);
@@ -163,6 +162,8 @@ namespace WiiPlayTanksRemake
             graphics.IsFullScreen = false;
 
             _fontSystem = new();
+
+            GameVersion = typeof(TankGame).Assembly.GetName().Version.ToString();
         }
 
         protected override void Initialize()
@@ -282,6 +283,13 @@ namespace WiiPlayTanksRemake
             {
                 UpdateStopwatch.Start();
 
+                if (NetPlay.CurrentClient is not null)
+                    Client.clientNetManager.PollEvents();
+                if (NetPlay.CurrentServer is not null)
+                    Server.serverNetManager.PollEvents();
+                UIElement.UpdateElements();
+                GameUI.UpdateButtons();
+
                 DiscordRichPresence.Update();
 
                 LastGameTime = gameTime;
@@ -392,6 +400,7 @@ namespace WiiPlayTanksRemake
 
                 UpdateStopwatch.Stop();
 
+
                 LogicFPS = Math.Round(1f / gameTime.ElapsedGameTime.TotalSeconds);
 
                 _wasActive = IsActive;
@@ -420,7 +429,7 @@ namespace WiiPlayTanksRemake
 
                 GameHandler.Update();
 
-                Tank.CollisionsWorld.Step(/*(float)gameTime.ElapsedGameTime.TotalSeconds*/ 1);
+                Tank.CollisionsWorld.Step(1);
 
                 if (!MainMenu.Active)
                 {
@@ -452,8 +461,6 @@ namespace WiiPlayTanksRemake
 
             foreach (var music in Music.AllMusic)
                 music?.Update();
-
-            GameUI.UpdateButtons();
         }
 
         protected override void Draw(GameTime gameTime)

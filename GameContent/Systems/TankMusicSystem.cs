@@ -315,7 +315,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems
             forestAmbience = Music.CreateMusicTrack("Forest Ambient", "Assets/sounds/ambient/forestnight", 1f);
         }
 
-        public static void PlayMusic()
+        public static void PlayAll()
         {
             //if (MusicMidi.State == Microsoft.Xna.Framework.Audio.SoundState.Stopped)
                 //MusicMidi.Play(MusicSoundFont, true);
@@ -343,6 +343,16 @@ namespace WiiPlayTanksRemake.GameContent.Systems
             forestAmbience?.Play();
             foreach (var song in songs)
                 song?.Play();
+        }
+
+        public static void StopAll()
+        {
+            forestAmbience?.Stop();
+            if (songs is not null)
+            {
+                foreach (var song in songs)
+                    song?.Stop();
+            }
         }
 
         public static void UpdateVolume()

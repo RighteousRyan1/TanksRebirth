@@ -47,6 +47,10 @@ namespace WiiPlayTanksRemake.Localization
 
         public string Multiplayer { get; set; }
 
+        public string ConnectToServer { get; set; }
+
+        public string CreateServer { get; set; }
+
         #endregion
 
         public static void LoadLang(ref Language lang, LangCode code)

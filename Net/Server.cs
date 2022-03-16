@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using LiteNetLib;
 using LiteNetLib.Layers;
 using LiteNetLib.Utils;
+using WiiPlayTanksRemake.GameContent;
 
 namespace WiiPlayTanksRemake.Net
 {
@@ -21,37 +22,47 @@ namespace WiiPlayTanksRemake.Net
 
         public string Name;
 
-        public ushort MaxClients;
+        public static ushort MaxClients;
 
-        public static void CreateServer()
+        public static Client[] ConnectedClients;
+
+        public static int CurrentClientCount;
+
+        public static void CreateServer(ushort maxClients = 8)
         {
+            MaxClients = maxClients;
+
             serverNetListener = new();
             serverNetManager = new(serverNetListener);
 
             Console.ForegroundColor = ConsoleColor.Blue;
 
+            ConnectedClients = new Client[maxClients];
+
+            GameHandler.ClientLog.Write($"Server created.", Internals.LogType.Debug);
+
             NetPlay.MapServerNetworking();
         }
 
-        public static void StartServer(string name, int port, string address, string password, ushort maxClients = 10)
+        public static void StartServer(string name, int port, string address, string password)
         {
-            var server = new Server();
-
-            server.Port = port;
-            server.Address = address;
-            server.Password = password;
-            server.Name = name;
-            server.MaxClients = maxClients;
+            var server = new Server
+            {
+                Port = port,
+                Address = address,
+                Password = password,
+                Name = name
+            };
 
             NetPlay.CurrentServer = server;
 
-
+            GameHandler.ClientLog.Write($"Server started. (Name = \"{name}\" | Port = \"{port}\" | Address = \"{address}\" | Password = \"{password}\")", Internals.LogType.Debug);
 
             serverNetManager.Start(port);
 
             serverNetListener.ConnectionRequestEvent += request =>
             {
-                if (serverNetManager.ConnectedPeersCount < server.MaxClients)
+                if (serverNetManager.ConnectedPeersCount < MaxClients)
                 {
                     request.AcceptIfKey(password);
                 }

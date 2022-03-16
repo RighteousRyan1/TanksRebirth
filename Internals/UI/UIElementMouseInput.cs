@@ -89,7 +89,7 @@ namespace WiiPlayTanksRemake.Internals.UI
 
 		public virtual void LeftClick()
 		{
-			if (CanRegisterInput(() => Input.MouseLeft && !Input.OldMouseLeft))
+			if (Input.MouseLeft && !Input.OldMouseLeft)
 			{
 				OnLeftClick?.Invoke(this);
 			}

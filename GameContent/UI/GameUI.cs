@@ -17,6 +17,7 @@ using FontStashSharp;
 using WiiPlayTanksRemake.Internals.Common.Framework.Audio;
 using WiiPlayTanksRemake.Internals;
 using Microsoft.Xna.Framework.Audio;
+using WiiPlayTanksRemake.Net;
 
 namespace WiiPlayTanksRemake.GameContent.UI
 {
@@ -161,7 +162,20 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 IsVisible = false
             };
             QuitButton.SetDimensions(700, 850, 500, 150);
-            QuitButton.OnLeftClick = (ui) => TankGame.Quit();
+            QuitButton.OnLeftClick = (ui) =>
+            {
+                if (!MainMenu.Active)
+                {
+                    MainMenu.Open();
+                    foreach (var t in GameHandler.AllTanks)
+                        if (t.IsIngame)
+                            t.RemoveSilently();
+                }
+                else
+                {
+                    TankGame.Quit();
+                }
+            };
 
             BackButton = new(TankGame.GameLanguage.Back, font, Color.WhiteSmoke)
             {
@@ -212,10 +226,10 @@ namespace WiiPlayTanksRemake.GameContent.UI
             {
                 button.HasScissor = true;
                 button.Scissor = new(0, (int)(GameUtils.WindowHeight * 0.05f), GameUtils.WindowWidth, (int)(GameUtils.WindowHeight * 0.7f));
-                button.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/menu_tick"), SoundContext.Effect); };
+                button.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/menu/menu_tick"), SoundContext.Effect); };
             }
             foreach (var e in menuElements)
-                e.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/menu_tick"), SoundContext.Effect); };
+                e.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/menu/menu_tick"), SoundContext.Effect); };
         }
 
         private static void HandleBackButton()
@@ -275,7 +289,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
                         BackButton.IsVisible = false;
                     }
 
-                    if (GraphicsButton.IsVisible)
+                    else if (GraphicsButton.IsVisible)
                     {
                         BackButton.IsVisible = false;
                         VolumeButton.IsVisible = false;
@@ -284,6 +298,11 @@ namespace WiiPlayTanksRemake.GameContent.UI
                         OptionsButton.IsVisible = true;
                         QuitButton.IsVisible = true;
                         MainMenu.PlayButton.IsVisible = true;
+                    }
+                    else if (MainMenu.ConnectToServerButton.IsVisible)
+                    {
+                        MainMenu.SetMPButtonsVisibility(false);
+                        MainMenu.SetPlayButtonsVisibility(true);
                     }
                 }
                 else
@@ -319,7 +338,8 @@ namespace WiiPlayTanksRemake.GameContent.UI
             Vector2 drawOrigin = TankGame.TextFont.MeasureString(text) / 2f;
             MissionInfoBar.UniqueDraw =
                 (uiPanel, spriteBatch) => spriteBatch.DrawString(TankGame.TextFont, text, uiPanel.Hitbox.Center.ToVector2(), Color.White, new Vector2(1.5f), 0, drawOrigin);
-            if (Pause.JustPressed)
+            
+            if (Pause.JustPressed && !MainMenu.Active)
             {
                 if (InOptions)
                 {
@@ -334,10 +354,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
                         TankMusicSystem.PauseAll();
                 }
                 Paused = !Paused;
-            }
 
-            if (!MainMenu.Active)
-            {
                 ResumeButton.IsVisible = Paused;
                 RestartButton.IsVisible = Paused;
                 QuitButton.IsVisible = Paused;
