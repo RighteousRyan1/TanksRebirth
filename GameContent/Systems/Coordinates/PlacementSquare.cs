@@ -62,7 +62,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems.Coordinates
                             else
                             {
                                 ChatSystem.SendMessage("Removed!", Color.Red);
-                                Block.blocks[place._blockId].Destroy();
+                                Block.blocks[place._blockId].SilentRemove();
                                 place._blockId = -1;
                             }
                         }

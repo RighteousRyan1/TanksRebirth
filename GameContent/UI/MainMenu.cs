@@ -35,6 +35,8 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
         private static Matrix ForwardView;
 
+        #region Button Fields
+
         public static UITextButton PlayButton;
 
         public static UITextButton PlayButton_SinglePlayer;
@@ -48,15 +50,21 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
         public static UITextButton StartMPGameButton;
 
-        private static UIElement[] _menuElements;
+        public static UITextButton DifficultiesButton;
 
-        private static float _tnkSpeed = 2.4f;
+        private static UIElement[] _menuElements;
 
         public static UITextInput UsernameInput;
         public static UITextInput IPInput;
         public static UITextInput PortInput;
         public static UITextInput PasswordInput;
         public static UITextInput ServerNameInput;
+
+        public static UITextButton MakeTanksWoke; // make them calculate shots abnormally
+
+        #endregion
+
+        private static float _tnkSpeed = 2.4f;
 
         public static Tank MainMenuTank;
 
@@ -100,9 +108,9 @@ namespace WiiPlayTanksRemake.GameContent.UI
             PlayButton_Multiplayer = new(TankGame.GameLanguage.Multiplayer, font, Color.WhiteSmoke)
             {
                 IsVisible = false,
-                Tooltip = "Coming Soon!"
+                Tooltip = "In the works!"
             };
-            PlayButton_Multiplayer.SetDimensions(700, 600, 500, 50);
+            PlayButton_Multiplayer.SetDimensions(700, 750, 500, 50);
 
             PlayButton_Multiplayer.OnLeftClick = (uiElement) =>
             {
@@ -110,12 +118,24 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 SetMPButtonsVisibility(true);
             };
 
+            DifficultiesButton = new(TankGame.GameLanguage.Difficulties, font, Color.WhiteSmoke)
+            {
+                IsVisible = false,
+                Tooltip = "Change the difficulty of the game."
+            };
+            DifficultiesButton.SetDimensions(700, 550, 500, 50);
+            DifficultiesButton.OnLeftClick = (element) =>
+            {
+                SetPlayButtonsVisibility(false);
+                SetDifficultiesButtonsVisibility(true);
+            };
+
 
             PlayButton_SinglePlayer = new(TankGame.GameLanguage.SinglePlayer, font, Color.WhiteSmoke)
             {
                 IsVisible = false,
             };
-            PlayButton_SinglePlayer.SetDimensions(700, 100, 500, 50);
+            PlayButton_SinglePlayer.SetDimensions(700, 450, 500, 50);
             
             PlayButton_SinglePlayer.OnLeftClick = (uiElement) =>
             {
@@ -130,12 +150,14 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 RemoveAllMenuTanks();
             };
 
+            InitializeDifficultyButtons();
+
             PlayButton_LevelEditor = new(TankGame.GameLanguage.LevelEditor, font, Color.WhiteSmoke)
             {
                 IsVisible = false,
                 Tooltip = "Coming Soon!"
             };
-            PlayButton_LevelEditor.SetDimensions(700, 350, 500, 50);
+            PlayButton_LevelEditor.SetDimensions(700, 650, 500, 50);
 
             ConnectToServerButton = new(TankGame.GameLanguage.ConnectToServer, font, Color.WhiteSmoke)
             {
@@ -188,15 +210,18 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 {
                     Server.CreateServer();
                     Server.StartServer(ServerNameInput.Text, port, IPInput.Text, PasswordInput.Text);
+                    NetPlay.ServerName = ServerNameInput.Text;
+
+                    Client.CreateClient(UsernameInput.Text);
+                    Client.AttemptConnectionTo(IPInput.Text, port, PasswordInput.Text);
+
+                    Server.ConnectedClients[0] = NetPlay.CurrentClient;
                 }
                 else
                 {
                     SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/menu/menu_error"), SoundContext.Effect);
                     ChatSystem.SendMessage("That is not a valid port.", Color.Red);
                 }
-
-                //Client.CreateClient("Host");
-                //Client.AttemptConnectionTo("localhost", 7777, "password");
 
             };
             StartMPGameButton = new(TankGame.GameLanguage.Play, font, Color.WhiteSmoke)
@@ -241,6 +266,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 StringToDisplayWhenThereIsNoText = "Server Password (Empty = None)"
             };
             PasswordInput.SetDimensions(100, 700, 500, 50);
+
             ServerNameInput = new(font, Color.WhiteSmoke, 1f, 10)
             {
                 IsVisible = false,
@@ -253,10 +279,25 @@ namespace WiiPlayTanksRemake.GameContent.UI
             Open();
 
             _menuElements = new UIElement[] 
-            { PlayButton, PlayButton_SinglePlayer, PlayButton_LevelEditor, PlayButton_Multiplayer, ConnectToServerButton, CreateServerButton, UsernameInput };
+            { PlayButton, PlayButton_SinglePlayer, PlayButton_LevelEditor, PlayButton_Multiplayer, ConnectToServerButton, 
+                CreateServerButton, UsernameInput, IPInput, PortInput, PasswordInput, ServerNameInput,
+                DifficultiesButton
+            };
 
             foreach (var e in _menuElements)
                 e.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/menu/menu_tick"), SoundContext.Effect); };
+        }
+
+        private static void InitializeDifficultyButtons()
+        {
+            SpriteFontBase font = TankGame.TextFont;
+            MakeTanksWoke = new("Tanks are Calculators", font, Color.White)
+            {
+                IsVisible = false,
+                Tooltip = "ALL tanks will begin to look for angles\non you (and other enemies) outside of their immediate aim\nDo note that this uses significantly more CPU power"
+            };
+            MakeTanksWoke.OnLeftClick += (elem) => DifficultyModes.MakeTanksWoke = !DifficultyModes.MakeTanksWoke;
+            MakeTanksWoke.SetDimensions(100, 300, 300, 50);
         }
 
         internal static void SetPlayButtonsVisibility(bool visible)
@@ -264,6 +305,11 @@ namespace WiiPlayTanksRemake.GameContent.UI
             PlayButton_SinglePlayer.IsVisible = visible;
             PlayButton_LevelEditor.IsVisible = visible;
             PlayButton_Multiplayer.IsVisible = visible;
+            DifficultiesButton.IsVisible = visible;
+        }
+        internal static void SetDifficultiesButtonsVisibility(bool visible)
+        {
+            MakeTanksWoke.IsVisible = visible;
         }
         internal static void SetPrimaryMenuButtonsVisibility(bool visible)
         {
@@ -290,6 +336,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
         public static void Update()
         {
+            MakeTanksWoke.Color = DifficultyModes.MakeTanksWoke ? Color.Green : Color.Red; 
             _tnkRot += 0.01f;
 
             MainMenuTank.TankRotation = _tnkRot;
@@ -336,6 +383,14 @@ namespace WiiPlayTanksRemake.GameContent.UI
             GameUI.Paused = false;
             Theme.volume = 0.5f;
             Theme.Play();
+
+            foreach (var block in Block.blocks)
+                block?.SilentRemove();
+
+            TankGame.OverheadView = false;
+            TankGame.CameraRotationVector.Y = TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
+            TankGame.AddativeZoom = 1f;
+            TankGame.CameraFocusOffset.Y = 0f;
 
             for (int i = 0; i < 10; i++)
             {
@@ -425,9 +480,10 @@ namespace WiiPlayTanksRemake.GameContent.UI
         {
             if (Active)
             {
-                if ((NetPlay.CurrentServer is not null || Client.IsClientConnected()) && Server.ConnectedClients is not null)
+                if ((NetPlay.CurrentServer is not null || Client.IsClientConnected()) && Server.ConnectedClients is not null || NetPlay.ServerName is not null)
                 {
                     Vector2 initialPosition = new(GameUtils.WindowWidth * 0.75f, GameUtils.WindowHeight * 0.25f);
+                    TankGame.spriteBatch.DrawString(TankGame.TextFont, $"\"{NetPlay.ServerName}\"", initialPosition - new Vector2(0, 40), Color.White, 0.6f);
                     TankGame.spriteBatch.DrawString(TankGame.TextFont, $"Connected Players:", initialPosition, Color.White, 0.6f);
                     for (int i = 0; i < Server.ConnectedClients.Count(x => x is not null); i++)
                     {
@@ -440,5 +496,10 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 TankGame.spriteBatch.DrawString(TankGame.TextFont, display, new(8, GameUtils.WindowHeight - 8), Color.White, new(0.6f), 0f, new Vector2(0, TankGame.TextFont.MeasureString(display).Y));
             }
         }
+    }
+
+    public static class DifficultyModes
+    {
+        public static bool MakeTanksWoke { get; set; } = false;
     }
 }

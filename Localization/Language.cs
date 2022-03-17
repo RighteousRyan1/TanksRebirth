@@ -51,6 +51,8 @@ namespace WiiPlayTanksRemake.Localization
 
         public string CreateServer { get; set; }
 
+        public string Difficulties { get; set; }
+
         #endregion
 
         public static void LoadLang(ref Language lang, LangCode code)

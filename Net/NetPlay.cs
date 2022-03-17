@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using WiiPlayTanksRemake.Enums;
 using WiiPlayTanksRemake.GameContent;
 using WiiPlayTanksRemake.GameContent.Systems;
 using WiiPlayTanksRemake.GameContent.UI;
@@ -23,6 +24,8 @@ namespace WiiPlayTanksRemake.Net
 
         public static bool DoPacketLogging = false;
 
+        public static string ServerName;
+
         public static void MapClientNetworking()
         {
             Client.clientNetListener.NetworkReceiveEvent += OnPacketRecieve_Client;
@@ -33,7 +36,6 @@ namespace WiiPlayTanksRemake.Net
         {
             GameHandler.ClientLog.Write($"Connected to remote server.", Internals.LogType.Debug);
             ChatSystem.SendMessage("Connected to server.", Color.Lime);
-            // GameHandler.ClientLog.Write($"Connected to remote server.", Internals.LogType.Debug);
 
             Client.SendClientInfo();
         }
@@ -53,26 +55,54 @@ namespace WiiPlayTanksRemake.Net
                     Client.RequestLobbyInfo();
                     break;
                 case PacketType.LobbyInfo:
-                    int len = reader.GetInt();
-                    Server.ConnectedClients = new Client[len];
-                    for (int i = 0; i < len; i++)
-                    {
-                        int clientId = reader.GetInt();
-                        string clientName = reader.GetString();
+                    int serverMaxClients = reader.GetInt();
 
-                        Server.ConnectedClients[i] = new Client()
-                        {
-                            Id = clientId,
-                            Name = clientName,
-                        };
-                    }
                     string servName = reader.GetString();
+                    ServerName = servName;
+
+                    int curClientCount = reader.GetInt();
+
+                    CurrentClient.Id = curClientCount;
+
+                    Server.ConnectedClients = new Client[serverMaxClients];
+                    for (int i = 0; i < serverMaxClients; i++)
+                    {
+                        bool isClientAvailable = reader.GetBool();
+
+                        if (isClientAvailable)
+                        {
+                            int clientId = reader.GetInt();
+                            string clientName = reader.GetString();
+
+                            Server.ConnectedClients[i] = new Client()
+                            {
+                                Id = clientId,
+                                Name = clientName,
+                            };
+                        }
+                    }
 
                     break;
                 case PacketType.StartGame:
                     MainMenu.PlayButton_SinglePlayer.OnLeftClick?.Invoke(null); // launches the game
 
-                    new PlayerTank(Enums.PlayerType.Blue);
+                    break;
+                case PacketType.PlayerSpawn:
+
+                    PlayerType type = (PlayerType)reader.GetByte();
+                    Team team = (Team)reader.GetByte();
+
+                    float x = reader.GetFloat();
+                    float y = reader.GetFloat();
+                    float tnkRot = reader.GetFloat();
+                    float turRot = reader.GetFloat();
+
+                    var t = new PlayerTank(type);
+                    t.Dead = false;
+                    t.Body.Position = new(x, y);
+                    t.TankRotation = tnkRot;
+                    t.TurretRotation = turRot;
+                    t.Team = team;
 
                     break;
             }
@@ -107,20 +137,29 @@ namespace WiiPlayTanksRemake.Net
                     Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered);
                     break;
                 case PacketType.LobbyInfo:
-                    message.Put(Server.ConnectedClients.Count(x => x is not null));
+                    message.Put(Server.MaxClients);
 
-                    for (int i = 0; i < Server.ConnectedClients.Count(x => x is not null); i++)
-                    {
-                        var client = Server.ConnectedClients[i];
-                        message.Put(client.Id);
-                        message.Put(client.Name);
-                    }
                     message.Put(CurrentServer.Name);
+
+                    message.Put(Server.CurrentClientCount);
+
+                    for (int i = 0; i < Server.MaxClients; i++)
+                    {
+                        message.Put(Server.ConnectedClients[i].Name is not null);
+                        if (Server.ConnectedClients[i].Name is not null)
+                        {
+                            var client = Server.ConnectedClients[i];
+                            message.Put(client.Id);
+                            message.Put(client.Name);
+                            // fix desync of client ids
+                        }
+                    }
 
                     Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered);
 
                     break;
                 case PacketType.StartGame:
+                case PacketType.PlayerSpawn:
                     // We don't need to do anything since it's handled in the Client's method.
                     break;
             }
@@ -173,5 +212,11 @@ namespace WiiPlayTanksRemake.Net
         // Ingame packets: tank mechanics
         MinePlacement,
         BulletFire,
+
+        // Debugging packets:
+
+        PlayerSpawn,
+        AiTankSpawn,
+        CrateSpawn
     }
 }

@@ -287,7 +287,7 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.TurretSpeed = 0.01f;
                     AiParams.AimOffset = 0.24f;
 
-                    AiParams.Inaccuracy = 0.3f;
+                    AiParams.Inaccuracy = 0.9f;
 
                     TankDestructionColor = Color.Gray;
 
@@ -403,7 +403,7 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.TurretSpeed = 0.03f;
                     AiParams.AimOffset = 0.2f;
 
-                    AiParams.Inaccuracy = 0.7f;
+                    AiParams.Inaccuracy = 1.3f;
 
                     TankDestructionColor = Color.Pink;
 
@@ -415,7 +415,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                     ShootStun = 5;
                     ShellCooldown = 30;
-                    ShellLimit = 5;
+                    ShellLimit = 3;
                     ShellSpeed = 3f;
                     ShellType = ShellTier.Standard;
                     RicochetCount = 1;
@@ -440,7 +440,6 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.TurretMeanderFrequency = 30;
                     AiParams.TurretSpeed = 0.02f;
                     AiParams.AimOffset = MathHelper.ToRadians(80);
-
                     AiParams.Inaccuracy = MathHelper.ToRadians(20);
 
                     TankDestructionColor = Color.LimeGreen;
@@ -453,7 +452,7 @@ namespace WiiPlayTanksRemake.GameContent
                     ShellLimit = 2;
                     ShellSpeed = 6f;
                     ShellType = ShellTier.RicochetRocket;
-                    RicochetCount = 2;
+                    RicochetCount = 2; // 2
 
                     Invisible = false;
                     ShellHoming = new();
@@ -611,7 +610,7 @@ namespace WiiPlayTanksRemake.GameContent
                     ShellLimit = 2;
                     ShellSpeed = 3f;
                     ShellType = ShellTier.Standard;
-                    RicochetCount = 1; 
+                    RicochetCount = 1;
 
                     Invisible = false;
                     Stationary = true;
@@ -619,8 +618,6 @@ namespace WiiPlayTanksRemake.GameContent
 
                     AiParams.MoveFromMineTime = 100;
                     AiParams.MinePlacementChance = 0.05f;
-
-                    AiParams.SmartRicochets = true;
                     break;
                 case TankTier.Silver:
                     AiParams.MeanderAngle = MathHelper.ToRadians(30);
@@ -1182,6 +1179,8 @@ namespace WiiPlayTanksRemake.GameContent
                     AiParams.TurretSpeed = 0.085f;
                     AiParams.AimOffset = 1f;
 
+                    AiParams.SmartRicochets = true;
+
                     AiParams.Inaccuracy = 0.6f;
 
                     AiParams.ProjectileWarinessRadius = 150;
@@ -1469,6 +1468,10 @@ namespace WiiPlayTanksRemake.GameContent
                     break;
                     #endregion
             }
+            if (UI.DifficultyModes.MakeTanksWoke)
+                if (RicochetCount >= 1)
+                    if (HasTurret)
+                        AiParams.SmartRicochets = true;
         }
         private void OnMissionStart()
         {
@@ -1672,7 +1675,7 @@ namespace WiiPlayTanksRemake.GameContent
                 if (draw)
                 {
                     var pathPosScreen = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(pathPos.X, 11, pathPos.Y), TankGame.GameView, TankGame.GameProjection);
-                    TankGame.spriteBatch.Draw(whitePixel, pathPosScreen, null, Color.White * 0.3f, 0, whitePixel.Size() / 2, 2 + (float)Math.Sin(i * Math.PI / 5 - TankGame.GameUpdateTime * 0.1f) * realMiss, default, default);
+                    TankGame.spriteBatch.Draw(whitePixel, pathPosScreen, null, Color.White * 0.9f, 0, whitePixel.Size() / 2, /*2 + (float)Math.Sin(i * Math.PI / 5 - TankGame.GameUpdateTime * 0.1f) * */realMiss, default, default);
                 }
 
                 foreach (var enemy in GameHandler.AllTanks)
@@ -1862,7 +1865,7 @@ namespace WiiPlayTanksRemake.GameContent
                                 var canShoot = !(CurShootCooldown > 0 || OwnedShellCount >= ShellLimit);
                                 if (canShoot)
                                 {
-                                    var tanks = GetTanksInPath(Vector2.UnitY.RotatedByRadians(seekRotation), false, default, AiParams.Inaccuracy, doBounceReset: false);
+                                    var tanks = GetTanksInPath(Vector2.UnitY.RotatedByRadians(seekRotation), false, default, AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
 
                                     var findsEnemy2 = tanks.Any(tnk => tnk is not null && (tnk.Team != Team || tnk.Team == Team.NoTeam) && tnk != this);
                                     // var findsSelf2 = tanks.Any(tnk => tnk is not null && tnk == this);
@@ -2176,16 +2179,19 @@ namespace WiiPlayTanksRemake.GameContent
             if (Dead)
                 return;
 
-            if (DebugUtils.DebugLevel == 1)
+            if (IsIngame)
             {
-                if (AiParams.SmartRicochets)
-                    GetTanksInPath(Vector2.UnitY.RotatedByRadians(seekRotation), true, missDist: AiParams.Inaccuracy, doBounceReset: false);
-                var poo = GetTanksInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), true, offset: Vector2.UnitY * 20, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
-                DebugUtils.DrawDebugString(TankGame.spriteBatch, $"{tier}: {poo.Count}", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection), 1, centered: true);
-                if (!Stationary)
+                if (DebugUtils.DebugLevel == 1)
                 {
-                    IsObstacleInWay(AiParams.BlockWarinessDistance, Vector2.UnitY.RotatedByRadians(-targetTankRotation), out var travelPath, true);
-                    DebugUtils.DrawDebugString(TankGame.spriteBatch, travelPath, GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(travelPath.X, 11, travelPath.Y), View, Projection), 1, centered: true);
+                    if (AiParams.SmartRicochets)
+                        GetTanksInPath(Vector2.UnitY.RotatedByRadians(seekRotation), true, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
+                    var poo = GetTanksInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), true, offset: Vector2.UnitY * 20, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
+                    DebugUtils.DrawDebugString(TankGame.spriteBatch, $"{tier}: {poo.Count}", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection), 1, centered: true);
+                    if (!Stationary)
+                    {
+                        IsObstacleInWay(AiParams.BlockWarinessDistance, Vector2.UnitY.RotatedByRadians(-targetTankRotation), out var travelPath, true);
+                        DebugUtils.DrawDebugString(TankGame.spriteBatch, travelPath, GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(travelPath.X, 11, travelPath.Y), View, Projection), 1, centered: true);
+                    }
                 }
             }
 

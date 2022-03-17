@@ -12,6 +12,8 @@ namespace WiiPlayTanksRemake.Internals.UI
 {
     public abstract partial class UIElement
     {
+        public static int delay;
+
         public static Texture2D UIPanelBackground;
         public bool HasScissor { get; set; }
 

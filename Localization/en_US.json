@@ -25,5 +25,6 @@
   "LevelEditor": "Level Editor",
   "Multiplayer": "Multiplayer",
   "ConnectToServer": "Connect to Server",
-  "CreateServer": "Create Server"
+  "CreateServer": "Create Server",
+  "Difficulties": "Difficulties"
 }

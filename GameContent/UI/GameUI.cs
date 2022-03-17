@@ -277,12 +277,8 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 {
                     if (MainMenu.PlayButton_Multiplayer.IsVisible)
                     {
-                        MainMenu.PlayButton_Multiplayer.IsVisible = false;
-                        MainMenu.PlayButton_SinglePlayer.IsVisible = false;
-                        MainMenu.PlayButton_LevelEditor.IsVisible = false;
-
+                        MainMenu.SetPlayButtonsVisibility(false);
                         MainMenu.PlayButton.IsVisible = true;
-
                         OptionsButton.IsVisible = true;
                         QuitButton.IsVisible = true;
 
@@ -302,6 +298,11 @@ namespace WiiPlayTanksRemake.GameContent.UI
                     else if (MainMenu.ConnectToServerButton.IsVisible)
                     {
                         MainMenu.SetMPButtonsVisibility(false);
+                        MainMenu.SetPlayButtonsVisibility(true);
+                    }
+                    else if (MainMenu.MakeTanksWoke.IsVisible)
+                    {
+                        MainMenu.SetDifficultiesButtonsVisibility(false);
                         MainMenu.SetPlayButtonsVisibility(true);
                     }
                 }

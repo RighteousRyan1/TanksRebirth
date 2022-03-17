@@ -70,6 +70,20 @@ namespace WiiPlayTanksRemake.Net
 
             Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered);
         }
+        public static void RequestPlayerTankSpawn(PlayerTank tank)
+        {
+            NetDataWriter message = new();
+            message.Put(PacketType.PlayerSpawn);
+
+            message.Put((byte)tank.PlayerType);
+            message.Put((byte)tank.Team);
+            message.Put(tank.Body.Position.X);
+            message.Put(tank.Body.Position.Y);
+            message.Put(tank.TankRotation);
+            message.Put(tank.TurretRotation);
+
+            Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered);
+        }
 
         public static bool IsClientConnected()
         {

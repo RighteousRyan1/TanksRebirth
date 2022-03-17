@@ -89,9 +89,11 @@ namespace WiiPlayTanksRemake.Internals.UI
 
 		public virtual void LeftClick()
 		{
-			if (Input.MouseLeft && !Input.OldMouseLeft)
+			if (CanRegisterInput(() => Input.MouseLeft && !Input.OldMouseLeft))
 			{
-				OnLeftClick?.Invoke(this);
+				if (delay <= 0)
+					OnLeftClick?.Invoke(this);
+				delay = 2;
 			}
 		}
 
@@ -123,7 +125,9 @@ namespace WiiPlayTanksRemake.Internals.UI
 		{
 			if (CanRegisterInput(() => Input.MouseRight && !Input.OldMouseRight))
 			{
-				OnRightClick?.Invoke(this);
+				if (delay <= 0)
+					OnRightClick?.Invoke(this);
+				delay = 2;
 			}
 		}
 
@@ -155,7 +159,9 @@ namespace WiiPlayTanksRemake.Internals.UI
 		{
 			if (CanRegisterInput(() => Input.MouseMiddle && !Input.OldMouseMiddle))
 			{
-				OnMiddleClick?.Invoke(this);
+				if (delay <= 0)
+					OnMiddleClick?.Invoke(this);
+				delay = 2;
 			}
 		}
 

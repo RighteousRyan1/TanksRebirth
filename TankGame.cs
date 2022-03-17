@@ -148,6 +148,8 @@ namespace WiiPlayTanksRemake
 
         public readonly string GameVersion;
 
+        private static Internals.Common.GameUI.UIPanel dummyPannelBecauseCunosCodeIsUtterShitPleaseDoNotHurtMeForLookingAtThisCode;
+
         public TankGame() : base()
         {
             graphics = new(this);
@@ -260,27 +262,31 @@ namespace WiiPlayTanksRemake
 
             DecalSystem.Initialize(spriteBatch, GraphicsDevice);
 
+            dummyPannelBecauseCunosCodeIsUtterShitPleaseDoNotHurtMeForLookingAtThisCode = new() { IsVisible = false };
+
             s.Stop();
         }
 
         public const float DEFAULT_ORTHOGRAPHIC_ANGLE = 0.75f;
-        Vector2 rotVec = new(0, DEFAULT_ORTHOGRAPHIC_ANGLE);
+        internal static Vector2 CameraRotationVector = new(0, DEFAULT_ORTHOGRAPHIC_ANGLE);
 
-        const float DEFAULT_ZOOM = 2.925f;
-        float zoom = 1f;
+        public const float DEFAULT_ZOOM = 2.925f;
+        internal static float AddativeZoom = 1f;
 
-        Vector2 off;
+        internal static Vector2 CameraFocusOffset;
 
-        bool fps;
+        internal static bool fps;
 
         public static bool OverheadView = false;
 
-        int transitionTimer;
+        private int transitionTimer;
 
         protected override void Update(GameTime gameTime)
         {
             try
             {
+                if (UIElement.delay > 0)
+                    UIElement.delay--;
                 UpdateStopwatch.Start();
 
                 if (NetPlay.CurrentClient is not null)
@@ -302,12 +308,12 @@ namespace WiiPlayTanksRemake
                 if (!GameUI.Paused && !MainMenu.Active)
                 {
                     if (Input.MouseRight)
-                        rotVec += GameUtils.GetMouseVelocity(GameUtils.WindowCenter) / 500;
+                        CameraRotationVector += GameUtils.GetMouseVelocity(GameUtils.WindowCenter) / 500;
 
                     if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Add))
-                        zoom += 0.01f;
+                        AddativeZoom += 0.01f;
                     if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Subtract))
-                        zoom -= 0.01f;
+                        AddativeZoom -= 0.01f;
                     if (Input.KeyJustPressed(Keys.Q))
                         fps = !fps;
 
@@ -319,28 +325,27 @@ namespace WiiPlayTanksRemake
 
                     if (Input.MouseMiddle)
                     {
-                        off += GameUtils.GetMouseVelocity(GameUtils.WindowCenter);
+                        CameraFocusOffset += GameUtils.GetMouseVelocity(GameUtils.WindowCenter);
                     }
 
                     IsFixedTimeStep = !Input.CurrentKeySnapshot.IsKeyDown(Keys.Tab);
 
                     if (!fps)
                     {
-
                         if (transitionTimer > 0)
                         {
                             transitionTimer--;
                             if (OverheadView)
                             {
-                                GameUtils.SoftStep(ref rotVec.Y, MathHelper.PiOver2, 0.08f);
-                                GameUtils.SoftStep(ref zoom, 0.7f, 0.08f);
-                                GameUtils.RoughStep(ref off.Y, 82f, 2f);
+                                GameUtils.SoftStep(ref CameraRotationVector.Y, MathHelper.PiOver2, 0.08f);
+                                GameUtils.SoftStep(ref AddativeZoom, 0.7f, 0.08f);
+                                GameUtils.RoughStep(ref CameraFocusOffset.Y, 82f, 2f);
                             }
                             else
                             {
-                                GameUtils.SoftStep(ref rotVec.Y, DEFAULT_ORTHOGRAPHIC_ANGLE, 0.08f);
-                                GameUtils.SoftStep(ref zoom, 1f, 0.08f);
-                                GameUtils.RoughStep(ref off.Y, 0f, 2f);
+                                GameUtils.SoftStep(ref CameraRotationVector.Y, DEFAULT_ORTHOGRAPHIC_ANGLE, 0.08f);
+                                GameUtils.SoftStep(ref AddativeZoom, 1f, 0.08f);
+                                GameUtils.RoughStep(ref CameraFocusOffset.Y, 0f, 2f);
                             }
                         }
                         else
@@ -350,14 +355,14 @@ namespace WiiPlayTanksRemake
 
                         GameCamera.SetPosition(new Vector3(0, 0, 350));
                         GameCamera.SetLookAt(new Vector3(0, 0, 0));
-                        GameCamera.Zoom(DEFAULT_ZOOM * zoom);
+                        GameCamera.Zoom(DEFAULT_ZOOM * AddativeZoom);
 
-                        GameCamera.RotateX(rotVec.Y);
-                        GameCamera.RotateY(rotVec.X);
+                        GameCamera.RotateX(CameraRotationVector.Y);
+                        GameCamera.RotateY(CameraRotationVector.X);
 
                         GameCamera.SetCameraType(CameraType.Orthographic);
 
-                        GameCamera.Translate(new Vector3(off.X, -off.Y, 0));
+                        GameCamera.Translate(new Vector3(CameraFocusOffset.X, -CameraFocusOffset.Y, 0));
 
                         GameCamera.SetViewingDistances(-2000f, 5000f); 
                     }
@@ -370,7 +375,7 @@ namespace WiiPlayTanksRemake
                         {
                             pos = x.Position3D;
                             var t = GameUtils.MousePosition.X / GameUtils.WindowWidth;
-                            GameCamera.Zoom(DEFAULT_ZOOM * zoom);
+                            GameCamera.Zoom(DEFAULT_ZOOM * AddativeZoom);
                             GameCamera.SetFov(90);
                             GameCamera.SetPosition(pos);
 
@@ -379,8 +384,8 @@ namespace WiiPlayTanksRemake
                             //GameCamera.RotateY(DEFAULT_ORTHOGRAPHIC_ANGLE);
                             //GameCamera.RotateX(GameUtils.MousePosition.X / 400);
 
-                            GameCamera.RotateX(rotVec.Y - MathHelper.PiOver4);
-                            GameCamera.RotateY(rotVec.X);
+                            GameCamera.RotateX(CameraRotationVector.Y - MathHelper.PiOver4);
+                            GameCamera.RotateY(CameraRotationVector.X);
 
                             GameCamera.Translate(new Vector3(0, -20, -40));
 

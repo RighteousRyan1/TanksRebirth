@@ -266,8 +266,6 @@ namespace WiiPlayTanksRemake.GameContent
             GameUI.MissionInfoBar.IsVisible = DebugUtils.DebuggingEnabled;
         }
 
-        public static PlayerTank myTank;
-
         // fix shitty mission init (innit?)
 
         private static readonly PowerupTemplate[] powerups =
@@ -319,13 +317,16 @@ namespace WiiPlayTanksRemake.GameContent
         public static PlayerTank SpawnMe()
         {
             var pos = GameUtils.GetWorldPosition(GameUtils.MousePosition);
-            myTank = new PlayerTank(PlayerType.Blue)
+            var myTank = new PlayerTank(PlayerType.Blue)
             {
                 Team = Team.Red,
                 // Position = pos.FlattenZ(),
                 Dead = false
             };
             myTank.Body.Position = pos.FlattenZ();
+            myTank.Position = pos.FlattenZ();
+
+            Client.RequestPlayerTankSpawn(myTank);
             return myTank;
         }
 
@@ -519,7 +520,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         public static void DrawMouse()
         {
-            if (GameHandler.myTank is not null)
+            if (GameHandler.AllPlayerTanks[0] is not null)
             {
                 // mwvar tankPos = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, GameHandler.myTank.World, TankGame.GameView, TankGame.GameProjection);
 

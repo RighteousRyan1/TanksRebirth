@@ -128,7 +128,8 @@ namespace WiiPlayTanksRemake.GameContent
 
             if (IsIngame)
             {
-
+                if (Client.IsClientConnected())
+                    Systems.ChatSystem.SendMessage($"PlayerId: {PlayerId} | ClientId: {NetPlay.CurrentClient.Id}", Color.White);
                 if (NetPlay.IsIdEqualTo(PlayerId))
                 {
                     Vector3 mouseWorldPos = GameUtils.GetWorldPosition(GameUtils.MousePosition, -11f);
@@ -369,7 +370,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         private void DrawShootPath()
         {
-            const int MAX_PATH_UNITS = 500;
+            const int MAX_PATH_UNITS = 10000;
 
             var whitePixel = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
             var pathPos = Position + new Vector2(0, 0).RotatedByRadians(-TurretRotation);

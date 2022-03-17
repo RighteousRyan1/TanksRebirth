@@ -46,8 +46,6 @@ namespace WiiPlayTanksRemake.GameContent
         /// <summary>The radius of this <see cref="Mine"/>'s explosion.</summary>
         public float explosionRadius;
 
-        public bool tankCameTooClose;
-
         /// <summary>Whether or not this <see cref="Mine"/> has detonated.</summary>
         public bool Detonated { get; set; }
 
@@ -145,13 +143,12 @@ namespace WiiPlayTanksRemake.GameContent
                 }
             }
 
-            if (detonationTime > mineReactTime && !tankCameTooClose && detonationTime < detonationTimeMax / 2)
+            if (detonationTime > mineReactTime && detonationTime < detonationTimeMax / 2)
             {
                 foreach (var tank in GameHandler.AllTanks)
                 {
-                    if (tank is not null && Vector2.Distance(tank.Position, Position) < explosionRadius)
+                    if (tank is not null && Vector2.Distance(tank.Position, Position) < explosionRadius * 9f)
                     {
-                        tankCameTooClose = true;
                         detonationTime = mineReactTime;
                     }
                 }

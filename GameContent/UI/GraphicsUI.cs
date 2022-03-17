@@ -41,15 +41,16 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
         public static bool BatchVisible { get; set; }
 
+        public static void DrawBooleanIndicator(SpriteBatch spriteBatch, Rectangle hitbox, bool active)
+        {
+            spriteBatch.Draw(TankGame.MagicPixel, hitbox, active ? Color.Green : Color.Red);
+        }
+
         public static void Initialize()
         {
-            static void DrawIndic(SpriteBatch spriteBatch, Rectangle hitbox, bool active)
-            {
-                spriteBatch.Draw(TankGame.MagicPixel, hitbox, active ? Color.Green : Color.Red);
-            }
 
             //Per-Pixel Lighting
-            PerPixelLightingToggle = new(null, 1, (uiImage, spriteBatch) => DrawIndic(spriteBatch, uiImage.Hitbox, TankGame.Settings.PerPixelLighting))
+            PerPixelLightingToggle = new(null, 1, (uiImage, spriteBatch) => DrawBooleanIndicator(spriteBatch, uiImage.Hitbox, TankGame.Settings.PerPixelLighting))
             {
                 IsVisible = false,
                 IgnoreMouseInteractions = true
@@ -68,7 +69,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             };
 
             //Vsync
-            VsyncToggle = new(null, 1, (uiImage, spriteBatch) => DrawIndic(spriteBatch, uiImage.Hitbox, TankGame.Settings.Vsync))
+            VsyncToggle = new(null, 1, (uiImage, spriteBatch) => DrawBooleanIndicator(spriteBatch, uiImage.Hitbox, TankGame.Settings.Vsync))
             {
                 IsVisible = false,
                 IgnoreMouseInteractions = true
@@ -88,7 +89,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             };
 
             //Borderless Window
-            BorderlessWindowToggle = new(null, 1, (uiImage, spriteBatch) => DrawIndic(spriteBatch, uiImage.Hitbox, TankGame.Settings.BorderlessWindow))
+            BorderlessWindowToggle = new(null, 1, (uiImage, spriteBatch) => DrawBooleanIndicator(spriteBatch, uiImage.Hitbox, TankGame.Settings.BorderlessWindow))
             {
                 IsVisible = false,
                 IgnoreMouseInteractions = true

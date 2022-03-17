@@ -116,10 +116,47 @@ namespace WiiPlayTanksRemake.GameContent
             blocks[index] = this;
         }
 
+        public void SilentRemove()
+        {
+            Tank.CollisionsWorld.Remove(Body);
+            // blah blah particle chunk thingy
+
+            blocks[worldId] = null;
+        }
+
         public void Destroy()
         {
             Tank.CollisionsWorld.Remove(Body);
             // blah blah particle chunk thingy
+
+            const int PARTICLE_COUNT = 12;
+
+            for (int i = 0; i < PARTICLE_COUNT; i++)
+            {
+                var tex = GameResources.GetGameResource<Texture2D>(GameHandler.GameRand.Next(0, 2) == 0 ? "Assets/textures/misc/tank_rock" : "Assets/textures/misc/tank_rock_2");
+
+                var part = ParticleSystem.MakeParticle(Position3D, tex);
+
+                part.isAddative = false;
+
+                var vel = new Vector3(GameHandler.GameRand.NextFloat(-3, 3), GameHandler.GameRand.NextFloat(4, 6), GameHandler.GameRand.NextFloat(-3, 3));
+
+                part.rotationX = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
+
+                part.Scale = new(0.75f);
+
+                part.color = Color.Coral;
+
+                part.UniqueBehavior = (p) =>
+                {
+                    vel.Y -= 0.2f;
+                    part.position += vel;
+                    part.Opacity -= 0.025f;
+
+                    if (part.Opacity <= 0f)
+                        part.Destroy();
+                };
+            }
 
             blocks[worldId] = null;
         }
