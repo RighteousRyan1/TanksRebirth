@@ -2144,12 +2144,12 @@ namespace WiiPlayTanksRemake.GameContent
 
                     if (mesh.Name == "Shadow")
                     {
+                        effect.Texture = _shadowTexture;
                         if (IsIngame)
                         {
                             effect.Alpha = 0.5f;
                             mesh.Draw();
                         }
-                        effect.Texture = _shadowTexture;
                     }
                     else
                     {
