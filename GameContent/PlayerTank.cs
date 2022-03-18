@@ -32,7 +32,7 @@ namespace WiiPlayTanksRemake.GameContent
         internal Texture2D _tankColorTexture;
         private static Texture2D _shadowTexture;
 
-        public Vector3 preterbedVelocity;
+        public Vector2 preterbedVelocity;
 
         public static Keybind controlUp = new("Up", Keys.W);
         public static Keybind controlDown = new("Down", Keys.S);
@@ -197,35 +197,62 @@ namespace WiiPlayTanksRemake.GameContent
             var rightStick = Input.CurrentGamePadSnapshot.ThumbSticks.Right;
             var dPad = Input.CurrentGamePadSnapshot.DPad;
 
+            var rotationMet = false;
+
+            var treadPlaceTimer = (int)Math.Round(14 / Velocity.Length()) != 0 ? (int)Math.Round(14 / Velocity.Length()) : 1;
+
             var accelReal = Acceleration * leftStick.Length() * MaxSpeed * 4;
 
-            if (leftStick.Length() > 0)
-            {
-                playerControl_isBindPressed = true;
+            preterbedVelocity = Vector2.Zero;
 
-                Velocity.X = leftStick.X * accelReal;
-                Velocity.Y = -leftStick.Y * accelReal;
+            preterbedVelocity = new(leftStick.X, -leftStick.Y);
+
+            var norm = Vector2.Normalize(preterbedVelocity);
+
+            TargetTankRotation = norm.ToRotation() - MathHelper.PiOver2;
+
+            TankRotation = GameUtils.RoughStep(TankRotation, TargetTankRotation, TurningSpeed);
+
+            if (TankRotation > TargetTankRotation - MaximalTurn && TankRotation < TargetTankRotation + MaximalTurn)
+                rotationMet = true;
+            else
+            {
+                if (TankGame.GameUpdateTime % treadPlaceTimer == 0)
+                    LayFootprint(false);
+                Velocity = Vector2.Zero;
+                IsTurning = true;
             }
 
-            if (dPad.Down == ButtonState.Pressed)
+            if (rotationMet)
             {
-                playerControl_isBindPressed = true;
-                Velocity.Y += Acceleration;
-            }
-            if (dPad.Up == ButtonState.Pressed)
-            {
-                playerControl_isBindPressed = true;
-                Velocity.Y -= Acceleration;
-            }
-            if (dPad.Left == ButtonState.Pressed)
-            {
-                playerControl_isBindPressed = true;
-                Velocity.X -= Acceleration;
-            }
-            if (dPad.Right == ButtonState.Pressed)
-            {
-                playerControl_isBindPressed = true;
-                Velocity.X += Acceleration;
+                if (leftStick.Length() > 0)
+                {
+                    playerControl_isBindPressed = true;
+
+                    Velocity.X = leftStick.X * accelReal;
+                    Velocity.Y = -leftStick.Y * accelReal;
+                }
+
+                if (dPad.Down == ButtonState.Pressed)
+                {
+                    playerControl_isBindPressed = true;
+                    Velocity.Y += Acceleration;
+                }
+                if (dPad.Up == ButtonState.Pressed)
+                {
+                    playerControl_isBindPressed = true;
+                    Velocity.Y -= Acceleration;
+                }
+                if (dPad.Left == ButtonState.Pressed)
+                {
+                    playerControl_isBindPressed = true;
+                    Velocity.X -= Acceleration;
+                }
+                if (dPad.Right == ButtonState.Pressed)
+                {
+                    playerControl_isBindPressed = true;
+                    Velocity.X += Acceleration;
+                }
             }
 
             if (rightStick.Length() > 0)
@@ -240,7 +267,6 @@ namespace WiiPlayTanksRemake.GameContent
                 Shoot();
             }
         }
-        private float treadPlaceTimer;
         private void ControlHandle_Keybinding()
         {
             if (controlMine.JustPressed)
@@ -249,15 +275,15 @@ namespace WiiPlayTanksRemake.GameContent
             IsTurning = false;
             bool rotationMet = false;
 
-            var norm = Vector3.Normalize(preterbedVelocity);
+            var norm = Vector2.Normalize(preterbedVelocity);
 
-            treadPlaceTimer = (int)Math.Round(14 / Velocity.Length()) != 0 ? (int)Math.Round(14 / Velocity.Length()) : 1;
+            var treadPlaceTimer = (int)Math.Round(14 / Velocity.Length()) != 0 ? (int)Math.Round(14 / Velocity.Length()) : 1;
 
-            var targetTnkRotation = norm.FlattenZ().ToRotation() - MathHelper.PiOver2;
+            TargetTankRotation = norm.ToRotation() - MathHelper.PiOver2;
 
-            TankRotation = GameUtils.RoughStep(TankRotation, targetTnkRotation, TurningSpeed);
+            TankRotation = GameUtils.RoughStep(TankRotation, TargetTankRotation, TurningSpeed);
 
-            if (TankRotation > targetTnkRotation - MaximalTurn && TankRotation < targetTnkRotation + MaximalTurn)
+            if (TankRotation > TargetTankRotation - MaximalTurn && TankRotation < TargetTankRotation + MaximalTurn)
                 rotationMet = true;
             else
             {
@@ -268,12 +294,12 @@ namespace WiiPlayTanksRemake.GameContent
                 IsTurning = true;
             }
 
-            preterbedVelocity = Vector3.Zero;
+            preterbedVelocity = Vector2.Zero;
 
             if (controlDown.IsPressed)
             {
                 playerControl_isBindPressed = true;
-                preterbedVelocity.Z += 1;
+                preterbedVelocity.Y += 1;
 
                 if (rotationMet)
                     Velocity.Y += Acceleration;
@@ -281,7 +307,7 @@ namespace WiiPlayTanksRemake.GameContent
             if (controlUp.IsPressed)
             {
                 playerControl_isBindPressed = true;
-                preterbedVelocity.Z -= 1;
+                preterbedVelocity.Y -= 1;
 
 
                 if (rotationMet)
@@ -306,9 +332,9 @@ namespace WiiPlayTanksRemake.GameContent
 
             TankRotation %= MathHelper.Tau;
 
-            if (targetTnkRotation - TankRotation >= MathHelper.PiOver2)
+            if (TargetTankRotation - TankRotation >= MathHelper.PiOver2)
                 TankRotation += MathHelper.Pi;
-            else if (targetTnkRotation - TankRotation <= -MathHelper.PiOver2)
+            else if (TargetTankRotation - TankRotation <= -MathHelper.PiOver2)
                 TankRotation -= MathHelper.Pi;
 
             //if (playerControl_isBindPressed)
@@ -349,7 +375,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             if (Velocity.Length() > 0 && playerControl_isBindPressed)
             {
-                treadPlaceTimer = (int)Math.Round(14 / Velocity.Length()) != 0 ? (int)Math.Round(14 / Velocity.Length()) : 1;
+                var treadPlaceTimer = (int)Math.Round(14 / Velocity.Length()) != 0 ? (int)Math.Round(14 / Velocity.Length()) : 1;
                 if (TankGame.GameUpdateTime % treadPlaceTimer == 0  )
                 {
                     LayFootprint(false);

@@ -300,7 +300,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
                         MainMenu.SetMPButtonsVisibility(false);
                         MainMenu.SetPlayButtonsVisibility(true);
                     }
-                    else if (MainMenu.MakeTanksWoke.IsVisible)
+                    else if (MainMenu.TanksAreCalculators.IsVisible)
                     {
                         MainMenu.SetDifficultiesButtonsVisibility(false);
                         MainMenu.SetPlayButtonsVisibility(true);

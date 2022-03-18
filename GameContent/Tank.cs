@@ -101,6 +101,8 @@ namespace WiiPlayTanksRemake.GameContent
         public Vector2 Position;
         public Vector2 Velocity;
 
+        public float TargetTankRotation;
+
         public Vector3 Position3D => Position.ExpandZ();
         public Vector3 Velocity3D => Velocity.ExpandZ();
         #endregion
@@ -113,6 +115,14 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 Body = CollisionsWorld.CreateCircle(TNK_WIDTH * 0.4f, 1f, Position, BodyType.Dynamic);
                 // Body.LinearDamping = Deceleration * 10;
+            }
+
+            if (UI.DifficultyModes.BulletHell)
+                RicochetCount *= 3;
+
+            //if (UI.DifficultyModes.ShellHoming)
+            {
+
             }
         }
 
@@ -366,8 +376,8 @@ namespace WiiPlayTanksRemake.GameContent
 
             var mine = new Mine(this, Position, 600);
         }
-        /// <summary>Update this <see cref="Tank"/>'s collision.</summary>
 
+        /// <summary>The color of particle <see cref="Tank"/> emits upon destruction.</summary>
         public Color TankDestructionColor { get; set; }
 
         public int CurShootStun { get; private set; }
@@ -378,10 +388,15 @@ namespace WiiPlayTanksRemake.GameContent
         // everything under this comment is added outside of the faithful remake. homing shells, etc
 
         /// <summary>Whether or not this <see cref="Tank"/> has a turret to fire shells with.</summary>
-
         public bool HasTurret { get; set; } = true;
 
-        /// <summary>The <see cref="Shell.HomingProperties"/>of the bullets this <see cref="Tank"/> shoots.</summary>
+        public bool VulnerableToMines { get; set; } = true;
+
+        public bool Immortal { get; set; }
+
+        public int Armor { get; set; }
+
+        /// <summary>The homing properties of the shells this <see cref="Tank"/> shoots.</summary>
         public Shell.HomingProperties ShellHoming = new();
 
         public int timeSinceLastAction = 15000;

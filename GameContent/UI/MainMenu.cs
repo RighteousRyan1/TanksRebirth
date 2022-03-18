@@ -60,7 +60,15 @@ namespace WiiPlayTanksRemake.GameContent.UI
         public static UITextInput PasswordInput;
         public static UITextInput ServerNameInput;
 
-        public static UITextButton MakeTanksWoke; // make them calculate shots abnormally
+        #endregion
+
+        #region Diff Buttons
+
+        public static UITextButton TanksAreCalculators; // make them calculate shots abnormally
+        public static UITextButton PieFactory;
+        public static UITextButton UltraMines;
+        public static UITextButton BulletHell;
+        public static UITextButton AllInvisible;
 
         #endregion
 
@@ -291,13 +299,50 @@ namespace WiiPlayTanksRemake.GameContent.UI
         private static void InitializeDifficultyButtons()
         {
             SpriteFontBase font = TankGame.TextFont;
-            MakeTanksWoke = new("Tanks are Calculators", font, Color.White)
+            TanksAreCalculators = new("Tanks are Calculators", font, Color.White)
             {
                 IsVisible = false,
-                Tooltip = "ALL tanks will begin to look for angles\non you (and other enemies) outside of their immediate aim\nDo note that this uses significantly more CPU power"
+                Tooltip = "ALL tanks will begin to look for angles" +
+                "\non you (and other enemies) outside of their immediate aim." +
+                "\nDo note that this uses significantly more CPU power."
             };
-            MakeTanksWoke.OnLeftClick += (elem) => DifficultyModes.MakeTanksWoke = !DifficultyModes.MakeTanksWoke;
-            MakeTanksWoke.SetDimensions(100, 300, 300, 50);
+            TanksAreCalculators.OnLeftClick += (elem) => DifficultyModes.TanksAreCalculators = !DifficultyModes.TanksAreCalculators;
+            TanksAreCalculators.SetDimensions(100, 300, 300, 40);
+
+            PieFactory = new("Lemon Pie Factory", font, Color.White)
+            {
+                IsVisible = false,
+                Tooltip = "Makes yellow tanks absurdly more dangerous by" +
+                "\nturning them into mine-laying machines." +
+                "\nOh, yeah. They're immune to explosions now too."
+            };
+            PieFactory.OnLeftClick += (elem) => DifficultyModes.PieFactory = !DifficultyModes.PieFactory;
+            PieFactory.SetDimensions(100, 350, 300, 40);
+
+            UltraMines = new("Ultra Mines", font, Color.White)
+            {
+                IsVisible = false,
+                Tooltip = "Mines are now 2x as deadly!" +
+                "\nTheir explosion radii are now 2x as big!"
+            };
+            UltraMines.OnLeftClick += (elem) => DifficultyModes.UltraMines = !DifficultyModes.UltraMines;
+            UltraMines.SetDimensions(100, 400, 300, 40);
+
+            BulletHell = new("東方 Mode", font, Color.White)
+            {
+                IsVisible = false,
+                Tooltip = "Ricochet counts are now tripled!"
+            };
+            BulletHell.OnLeftClick += (elem) => DifficultyModes.BulletHell = !DifficultyModes.BulletHell;
+            BulletHell.SetDimensions(100, 450, 300, 40);
+
+            AllInvisible = new("All Invisible", font, Color.White)
+            {
+                IsVisible = false,
+                Tooltip = "Every single non-player tank is now invisible and no longer lay tracks!"
+            };
+            AllInvisible.OnLeftClick += (elem) => DifficultyModes.AllInvisible = !DifficultyModes.AllInvisible;
+            AllInvisible.SetDimensions(100, 500, 300, 40);
         }
 
         internal static void SetPlayButtonsVisibility(bool visible)
@@ -309,7 +354,11 @@ namespace WiiPlayTanksRemake.GameContent.UI
         }
         internal static void SetDifficultiesButtonsVisibility(bool visible)
         {
-            MakeTanksWoke.IsVisible = visible;
+            TanksAreCalculators.IsVisible = visible;
+            PieFactory.IsVisible = visible;
+            UltraMines.IsVisible = visible;
+            BulletHell.IsVisible = visible;
+            AllInvisible.IsVisible = visible;
         }
         internal static void SetPrimaryMenuButtonsVisibility(bool visible)
         {
@@ -336,7 +385,12 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
         public static void Update()
         {
-            MakeTanksWoke.Color = DifficultyModes.MakeTanksWoke ? Color.Green : Color.Red; 
+            TanksAreCalculators.Color = DifficultyModes.TanksAreCalculators ? Color.Green : Color.Red;
+            PieFactory.Color = DifficultyModes.PieFactory ? Color.Green : Color.Red;
+            UltraMines.Color = DifficultyModes.UltraMines ? Color.Green : Color.Red;
+            BulletHell.Color = DifficultyModes.BulletHell ? Color.Green : Color.Red;
+            AllInvisible.Color = DifficultyModes.AllInvisible ? Color.Green : Color.Red;
+
             _tnkRot += 0.01f;
 
             MainMenuTank.TankRotation = _tnkRot;
@@ -500,6 +554,10 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
     public static class DifficultyModes
     {
-        public static bool MakeTanksWoke { get; set; } = false;
+        public static bool TanksAreCalculators { get; set; } = false;
+        public static bool PieFactory { get; set; } = false;
+        public static bool UltraMines { get; set; } = false;
+        public static bool BulletHell { get; set; } = false;
+        public static bool AllInvisible { get; set; } = false;
     }
 }

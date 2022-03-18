@@ -71,7 +71,7 @@ namespace WiiPlayTanksRemake.GameContent
             foreach (var bullet in Shell.AllShells)
                 bullet?.Update();
 
-            foreach (var expl in MineExplosion.explosions)
+            foreach (var expl in Explosion.explosions)
                 expl?.Update();
 
             foreach (var crate in CrateDrop.crates)
@@ -192,7 +192,7 @@ namespace WiiPlayTanksRemake.GameContent
             foreach (var bullet in Shell.AllShells)
                 bullet?.Render();
 
-            foreach (var expl in MineExplosion.explosions)
+            foreach (var expl in Explosion.explosions)
                 expl?.Render();
 
             foreach (var mark in TankDeathMark.deathMarks)
@@ -399,7 +399,7 @@ namespace WiiPlayTanksRemake.GameContent
             var x = new AITank(tier)
             {
                 TankRotation = rot,
-                targetTankRotation = rot - MathHelper.Pi,
+                TargetTankRotation = rot - MathHelper.Pi,
                 TurretRotation = -rot,
                 Team = team,
                 Dead = false,

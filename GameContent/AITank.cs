@@ -96,8 +96,6 @@ namespace WiiPlayTanksRemake.GameContent
         /// <summary>Whether or not this tank sees its target. Generally should not be set, but the tank will shoot if able when this is true.</summary>
         public bool SeesTarget { get; set; }
 
-        public float targetTankRotation;
-
         /// <summary>The target rotation for this tank's turret. <see cref="Tank.TurretRotation"/> will move towards this value at a rate of <see cref="TurretSpeed"/>.</summary>
         public float targetTurretRotation;
 
@@ -394,6 +392,16 @@ namespace WiiPlayTanksRemake.GameContent
 
                     AiParams.MinePlacementChance = 0.3f;
                     AiParams.MoveFromMineTime = 120;
+
+                    if (UI.DifficultyModes.PieFactory)
+                    {
+                        VulnerableToMines = false;
+                        MineCooldown = 10;
+                        MineLimit = 20;
+                        MineStun = 0;
+                        AiParams.MinePlacementChance = 1f;
+                        AiParams.MineWarinessRadius = 20;
+                    }
                     break;
 
                 case TankTier.Pink:
@@ -1468,10 +1476,19 @@ namespace WiiPlayTanksRemake.GameContent
                     break;
                     #endregion
             }
-            if (UI.DifficultyModes.MakeTanksWoke)
+            if (UI.DifficultyModes.TanksAreCalculators)
                 if (RicochetCount >= 1)
                     if (HasTurret)
                         AiParams.SmartRicochets = true;
+
+            if (UI.DifficultyModes.UltraMines)
+                AiParams.MineWarinessRadius *= 3;
+
+            if (UI.DifficultyModes.AllInvisible)
+            {
+                Invisible = true;
+                CanLayTread = false;
+            }
         }
         private void OnMissionStart()
         {
@@ -1585,12 +1602,9 @@ namespace WiiPlayTanksRemake.GameContent
         {
             base.LayFootprint(alt);
         }
-
-        public Ray tankPathRay;
         
         public bool pathBlocked;
 
-        private int treadPlaceTimer;
         public bool isEnemySpotted;
 
         private bool seeks;
@@ -1664,7 +1678,7 @@ namespace WiiPlayTanksRemake.GameContent
                 if (i == 0 && Block.blocks.Any(x => x is not null && x.collider2d.Intersects(pathHitbox)))
                     return tanks;
 
-                if (i < (int)ShellSpeed && pathRicochetCount > 0)
+                if (i < (int)ShellSpeed / 2 && pathRicochetCount > 0)
                     return tanks;
 
                 if (pathRicochetCount > RicochetCount)
@@ -1767,7 +1781,7 @@ namespace WiiPlayTanksRemake.GameContent
                 foreach (var behavior in Behaviors)
                     behavior.totalUpdateCount++;
 
-                treadPlaceTimer = (int)Math.Round(14 / Velocity.Length()) != 0 ? (int)Math.Round(14 / Velocity.Length()) : 1;
+                var treadPlaceTimer = (int)Math.Round(14 / Velocity.Length()) != 0 ? (int)Math.Round(14 / Velocity.Length()) : 1;
 
                 if (Velocity != Vector2.Zero && !Stationary)
                 {
@@ -1908,7 +1922,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                         #region CubeNav
 
-                        pathBlocked = IsObstacleInWay(AiParams.BlockWarinessDistance, Vector2.UnitY.RotatedByRadians(-targetTankRotation), out var travelPath);
+                        pathBlocked = IsObstacleInWay(AiParams.BlockWarinessDistance, Vector2.UnitY.RotatedByRadians(-TargetTankRotation), out var travelPath);
 
                         if (pathBlocked && Behaviors[2].IsModOf(3) && !isMineNear && !isBulletNear)
                         {
@@ -1920,7 +1934,7 @@ namespace WiiPlayTanksRemake.GameContent
                             //targetTankRotation = targe;
 
                             // targetTankRotation
-                            GameUtils.RoughStep(ref targetTankRotation, targe, targe / 4);
+                            GameUtils.RoughStep(ref TargetTankRotation, targe, targe / 4);
 
                             // TODO: i literally do not understand this
                         }
@@ -1941,7 +1955,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                                     var random = GameHandler.GameRand.NextFloat(-AiParams.MeanderAngle / 2, AiParams.MeanderAngle / 2);
 
-                                    targetTankRotation += random;
+                                    TargetTankRotation += random;
                                 }
                                 if (targetExists)
                                 {
@@ -1958,7 +1972,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                                             var meanderRandom = dir != -100 ? random + (dir + MathHelper.PiOver2) + (0.2f * AiParams.PursuitLevel) : random;
 
-                                            targetTankRotation = meanderRandom;
+                                            TargetTankRotation = meanderRandom;
                                         }
                                     }
                                 }
@@ -1980,14 +1994,14 @@ namespace WiiPlayTanksRemake.GameContent
                                     {
                                         var dire = Vector2.UnitY.RotatedByRadians(shell.Position2D.DirectionOf(Position, false).ToRotation());
 
-                                        targetTankRotation = dire.ToRotation();
+                                        TargetTankRotation = dire.ToRotation();
                                     }
                                 }
                                 else
                                 {
                                     var direction = Vector2.UnitY.RotatedByRadians(shell.Position2D.DirectionOf(Position, false).ToRotation());
 
-                                    targetTankRotation = direction.ToRotation();
+                                    TargetTankRotation = direction.ToRotation();
                                 }
                             }
                         }
@@ -2006,7 +2020,7 @@ namespace WiiPlayTanksRemake.GameContent
                                     {
                                         if (nearDestructibleObstacle)
                                         {
-                                            targetTankRotation = new Vector2(100, 100).RotatedByRadians(GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi)).ExpandZ().ToRotation();
+                                            TargetTankRotation = new Vector2(100, 100).RotatedByRadians(GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi)).ExpandZ().ToRotation();
                                             LayMine();
                                         }
                                     }
@@ -2014,7 +2028,7 @@ namespace WiiPlayTanksRemake.GameContent
                                     {
                                         if (GameHandler.GameRand.NextFloat(0, 1) <= AiParams.MinePlacementChance)
                                         {
-                                            targetTankRotation = new Vector2(100, 100).RotatedByRadians(GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi)).ExpandZ().ToRotation();
+                                            TargetTankRotation = new Vector2(100, 100).RotatedByRadians(GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi)).ExpandZ().ToRotation();
                                             LayMine();
                                         }
                                     }
@@ -2027,7 +2041,7 @@ namespace WiiPlayTanksRemake.GameContent
                             {
                                 var direction = Vector2.UnitY.RotatedByRadians(mine.Position.DirectionOf(Position, false).ToRotation());
 
-                                targetTankRotation = direction.ToRotation();
+                                TargetTankRotation = direction.ToRotation();
                             }
                         }
                         #endregion
@@ -2045,7 +2059,7 @@ namespace WiiPlayTanksRemake.GameContent
                             {
                                 Destroy();
 
-                                new MineExplosion(Position, 10f, 0.2f);
+                                new Explosion(Position, 10f, 0.2f);
 
                                 foreach (var tnk in GameHandler.AllTanks)
                                     if (tnk is not null && Vector2.Distance(tnk.Position, Position) < explosionDist)
@@ -2058,7 +2072,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                     #region TankRotation
 
-                    var targ = targetTankRotation + MathHelper.Pi;
+                    var targ = TargetTankRotation + MathHelper.Pi;
 
                     // IsTurning = false;
 
@@ -2135,13 +2149,10 @@ namespace WiiPlayTanksRemake.GameContent
                             effect.Alpha = 0.5f;
                             mesh.Draw();
                         }
-                        else
-                            effect.Alpha = 0f;
                         effect.Texture = _shadowTexture;
                     }
                     else
                     {
-                        effect.Alpha = 1;
                         if (IsHoveredByMouse)
                             effect.EmissiveColor = Color.White.ToVector3();
                         else
@@ -2150,6 +2161,8 @@ namespace WiiPlayTanksRemake.GameContent
                         var tex = _tankColorTexture;
 
                         effect.Texture = tex;
+
+                        effect.Alpha = 1;
                         mesh.Draw();
                         /*var ex = new Color[1024];
 
@@ -2189,7 +2202,7 @@ namespace WiiPlayTanksRemake.GameContent
                     DebugUtils.DrawDebugString(TankGame.spriteBatch, $"{tier}: {poo.Count}", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection), 1, centered: true);
                     if (!Stationary)
                     {
-                        IsObstacleInWay(AiParams.BlockWarinessDistance, Vector2.UnitY.RotatedByRadians(-targetTankRotation), out var travelPath, true);
+                        IsObstacleInWay(AiParams.BlockWarinessDistance, Vector2.UnitY.RotatedByRadians(-TargetTankRotation), out var travelPath, true);
                         DebugUtils.DrawDebugString(TankGame.spriteBatch, travelPath, GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(travelPath.X, 11, travelPath.Y), View, Projection), 1, centered: true);
                     }
                 }

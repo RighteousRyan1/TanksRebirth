@@ -90,20 +90,11 @@ namespace WiiPlayTanksRemake.GameContent
             var destroysound = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_destroy");
 
             SoundPlayer.PlaySoundInstance(destroysound, SoundContext.Effect, 0.4f);
-            
-            foreach (var shell in Shell.AllShells)
-            {
-                if (shell is not null && Vector2.Distance(shell.Position2D, Position) < explosionRadius)
-                    shell.Destroy();
-            }
-            foreach (var tank in GameHandler.AllTanks)
-            {
-                if (tank is not null && Vector2.Distance(tank.Position, Position) < explosionRadius)
-                    if (!tank.Dead)
-                        tank.Destroy();
-            }
 
-            var expl = new MineExplosion(Position, explosionRadius * 0.101f, 0.5f);
+            var expl = new Explosion(Position, explosionRadius * 0.101f, 0.3f);
+
+            if (UI.DifficultyModes.UltraMines)
+                expl.maxScale *= 2f;
 
             expl.expanseRate = 2f;
             expl.tickAtMax = 15;
@@ -193,13 +184,13 @@ namespace WiiPlayTanksRemake.GameContent
             }
         }
     }
-    internal class MineExplosion
+    internal class Explosion
     {
         // model, blah blah blah
 
         public const int MINE_EXPLOSIONS_MAX = 500;
 
-        public static MineExplosion[] explosions = new MineExplosion[MINE_EXPLOSIONS_MAX];
+        public static Explosion[] explosions = new Explosion[MINE_EXPLOSIONS_MAX];
 
         public Vector2 Position;
 
@@ -215,7 +206,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         public float scale;
 
-        public readonly float maxScale;
+        public float maxScale;
 
         public float expanseRate = 1f;
         public float shrinkRate = 1f;
@@ -230,12 +221,12 @@ namespace WiiPlayTanksRemake.GameContent
 
         public float rotationSpeed;
 
-        public MineExplosion(Vector2 pos, float scaleMax, float rotationSpeed = 1f)
+        public Explosion(Vector2 pos, float scaleMax, float rotationSpeed = 1f)
         {
             this.rotationSpeed = rotationSpeed;
             Position = pos;
             maxScale = scaleMax;
-            mask = GameResources.GetGameResource<Texture2D>("Assets/textures/mine/explosion_mask"/*"Assets/textures/misc/tank_smoke_ami"*/);
+            mask = GameResources.GetGameResource<Texture2D>(/*"Assets/textures/mine/explosion_mask"*/"Assets/textures/misc/tank_smoke_ami");
 
             Model = GameResources.GetGameResource<Model>("Assets/mineexplosion");
 
@@ -271,6 +262,18 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 if (cube is not null && Vector2.Distance(cube.Position, Position) <= scale * 9 && cube.IsDestructible)
                     cube.Destroy();
+            }
+            foreach (var shell in Shell.AllShells)
+            {
+                if (shell is not null && Vector2.Distance(shell.Position2D, Position) < scale * 9)
+                    shell.Destroy();
+            }
+            foreach (var tank in GameHandler.AllTanks)
+            {
+                if (tank is not null && Vector2.Distance(tank.Position, Position) < scale * 9)
+                    if (!tank.Dead)
+                        if (tank.VulnerableToMines)
+                            tank.Destroy();
             }
 
             if (hitMaxAlready)
