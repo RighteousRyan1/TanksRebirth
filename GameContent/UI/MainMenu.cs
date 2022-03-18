@@ -69,6 +69,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
         public static UITextButton UltraMines;
         public static UITextButton BulletHell;
         public static UITextButton AllInvisible;
+        public static UITextButton AllStationary;
 
         #endregion
 
@@ -304,9 +305,9 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 IsVisible = false,
                 Tooltip = "ALL tanks will begin to look for angles" +
                 "\non you (and other enemies) outside of their immediate aim." +
-                "\nDo note that this uses significantly more CPU power."
+                "\nDo note that this uses significantly more CPU power.",
+                OnLeftClick = (elem) => DifficultyModes.TanksAreCalculators = !DifficultyModes.TanksAreCalculators
             };
-            TanksAreCalculators.OnLeftClick += (elem) => DifficultyModes.TanksAreCalculators = !DifficultyModes.TanksAreCalculators;
             TanksAreCalculators.SetDimensions(100, 300, 300, 40);
 
             PieFactory = new("Lemon Pie Factory", font, Color.White)
@@ -314,35 +315,44 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 IsVisible = false,
                 Tooltip = "Makes yellow tanks absurdly more dangerous by" +
                 "\nturning them into mine-laying machines." +
-                "\nOh, yeah. They're immune to explosions now too."
+                "\nOh, yeah. They're immune to explosions now too.",
+                OnLeftClick = (elem) => DifficultyModes.PieFactory = !DifficultyModes.PieFactory
             };
-            PieFactory.OnLeftClick += (elem) => DifficultyModes.PieFactory = !DifficultyModes.PieFactory;
             PieFactory.SetDimensions(100, 350, 300, 40);
 
             UltraMines = new("Ultra Mines", font, Color.White)
             {
                 IsVisible = false,
                 Tooltip = "Mines are now 2x as deadly!" +
-                "\nTheir explosion radii are now 2x as big!"
+                "\nTheir explosion radii are now 2x as big!",
+                OnLeftClick = (elem) => DifficultyModes.UltraMines = !DifficultyModes.UltraMines
             };
-            UltraMines.OnLeftClick += (elem) => DifficultyModes.UltraMines = !DifficultyModes.UltraMines;
             UltraMines.SetDimensions(100, 400, 300, 40);
 
             BulletHell = new("東方 Mode", font, Color.White)
             {
                 IsVisible = false,
-                Tooltip = "Ricochet counts are now tripled!"
+                Tooltip = "Ricochet counts are now tripled!",
+                OnLeftClick = (elem) => DifficultyModes.BulletHell = !DifficultyModes.BulletHell
             };
-            BulletHell.OnLeftClick += (elem) => DifficultyModes.BulletHell = !DifficultyModes.BulletHell;
             BulletHell.SetDimensions(100, 450, 300, 40);
 
             AllInvisible = new("All Invisible", font, Color.White)
             {
                 IsVisible = false,
-                Tooltip = "Every single non-player tank is now invisible and no longer lay tracks!"
+                Tooltip = "Every single non-player tank is now invisible and no longer lay tracks!",
+                OnLeftClick = (elem) => DifficultyModes.AllInvisible = !DifficultyModes.AllInvisible
             };
-            AllInvisible.OnLeftClick += (elem) => DifficultyModes.AllInvisible = !DifficultyModes.AllInvisible;
             AllInvisible.SetDimensions(100, 500, 300, 40);
+
+            AllStationary = new("All Stationary", font, Color.White)
+            {
+                IsVisible = false,
+                Tooltip = "Every single non-player tank is now stationary." +
+                "\nThis should REDUCE difficulty.",
+                OnLeftClick = (elem) => DifficultyModes.AllStationary = !DifficultyModes.AllStationary
+            };
+            AllStationary.SetDimensions(100, 550, 300, 40);
         }
 
         internal static void SetPlayButtonsVisibility(bool visible)
@@ -359,6 +369,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             UltraMines.IsVisible = visible;
             BulletHell.IsVisible = visible;
             AllInvisible.IsVisible = visible;
+            AllStationary.IsVisible = visible;
         }
         internal static void SetPrimaryMenuButtonsVisibility(bool visible)
         {
@@ -390,6 +401,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             UltraMines.Color = DifficultyModes.UltraMines ? Color.Green : Color.Red;
             BulletHell.Color = DifficultyModes.BulletHell ? Color.Green : Color.Red;
             AllInvisible.Color = DifficultyModes.AllInvisible ? Color.Green : Color.Red;
+            AllStationary.Color = DifficultyModes.AllStationary ? Color.Green : Color.Red;
 
             _tnkRot += 0.01f;
 
@@ -440,6 +452,11 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
             foreach (var block in Block.blocks)
                 block?.SilentRemove();
+
+            if (GameHandler.ClearTracks is not null)
+                GameHandler.ClearTracks.OnLeftClick?.Invoke(null);
+            if (GameHandler.ClearChecks is not null)
+                GameHandler.ClearChecks.OnLeftClick?.Invoke(null);
 
             TankGame.OverheadView = false;
             TankGame.CameraRotationVector.Y = TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
@@ -559,5 +576,6 @@ namespace WiiPlayTanksRemake.GameContent.UI
         public static bool UltraMines { get; set; } = false;
         public static bool BulletHell { get; set; } = false;
         public static bool AllInvisible { get; set; } = false;
+        public static bool AllStationary { get; set; } = false;
     }
 }

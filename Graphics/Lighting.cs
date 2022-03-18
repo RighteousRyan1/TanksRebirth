@@ -75,7 +75,7 @@ namespace WiiPlayTanksRemake.Graphics
 
             var ting = GameUtils.MousePosition.X / GameUtils.WindowWidth;
 
-            var lightingConstant = 1f;
+            var lightingConstant = 0.9f;
 
             //effect.DirectionalLight0.Direction = new Vector3(0, -0.7f, -0.7f);
             //effect.DirectionalLight1.Direction = new Vector3(0, -0.7f, 0.7f);
@@ -98,7 +98,7 @@ namespace WiiPlayTanksRemake.Graphics
             effect.DirectionalLight1.Enabled = false;
             effect.DirectionalLight2.Enabled = false;
 
-            var lightingConstant = 1.25f;
+            var lightingConstant = 1.1f;
 
             effect.DirectionalLight0.Direction = new Vector3(0, -1f, 0) * lightingConstant;
             // effect.DirectionalLight1.Direction = new Vector3(0, -0.6f, 0.6f) * lightingConstant;

@@ -1489,6 +1489,8 @@ namespace WiiPlayTanksRemake.GameContent
                 Invisible = true;
                 CanLayTread = false;
             }
+            if (UI.DifficultyModes.AllStationary)
+                Stationary = true;
         }
         private void OnMissionStart()
         {
