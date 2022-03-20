@@ -74,7 +74,7 @@ namespace WiiPlayTanksRemake.GameContent
             foreach (var expl in Explosion.explosions)
                 expl?.Update();
 
-            foreach (var crate in CrateDrop.crates)
+            foreach (var crate in Crate.crates)
                 crate?.Update();
 
             foreach (var pu in Powerup.activePowerups)
@@ -201,7 +201,7 @@ namespace WiiPlayTanksRemake.GameContent
             foreach (var print in TankFootprint.footprints)
                 print?.Render();
 
-            foreach (var crate in CrateDrop.crates)
+            foreach (var crate in Crate.crates)
                 crate?.Render();
 
             foreach (var powerup in Powerup.activePowerups)
@@ -316,7 +316,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         public static PlayerTank SpawnMe()
         {
-            var pos = GameUtils.GetWorldPosition(GameUtils.MousePosition);
+            var pos = TankGame.OverheadView ? PlacementSquare.CurrentlyHovered.Position : GameUtils.GetWorldPosition(GameUtils.MousePosition);
             var myTank = new PlayerTank(PlayerType.Blue)
             {
                 Team = Team.Red,
@@ -334,9 +334,9 @@ namespace WiiPlayTanksRemake.GameContent
         {
             var random = new CubeMapPosition(GameRand.Next(0, 26), GameRand.Next(0, 20));
 
-            var drop = CrateDrop.SpawnCrate(new(CubeMapPosition.Convert3D(random).X, 500 + (createEvenDrop ? 0 : GameRand.Next(-300, 301)), CubeMapPosition.Convert3D(random).Z), 2f);
+            var drop = Crate.SpawnCrate(new(CubeMapPosition.Convert3D(random).X, 500 + (createEvenDrop ? 0 : GameRand.Next(-300, 301)), CubeMapPosition.Convert3D(random).Z), 2f);
             drop.scale = 1.25f;
-            drop.TankToSpawn = new AITank(tierOverride == default ? AITank.PICK_ANY_THAT_ARE_IMPLEMENTED() : tierOverride)
+            drop.TankToSpawn = new AITank(tierOverride == default ? AITank.PickRandomTier() : tierOverride)
             {
                 Team = teamOverride == default ? GameUtils.PickRandom<Team>() : teamOverride
             };
@@ -346,9 +346,9 @@ namespace WiiPlayTanksRemake.GameContent
         {
             var pos = GameUtils.GetWorldPosition(GameUtils.MousePosition);
 
-            var drop = CrateDrop.SpawnCrate(new(pos.X, 200, pos.Z), 2f);
+            var drop = Crate.SpawnCrate(new(pos.X, 200, pos.Z), 2f);
             drop.scale = 1.25f;
-            drop.TankToSpawn = new AITank(AITank.PICK_ANY_THAT_ARE_IMPLEMENTED())
+            drop.TankToSpawn = new AITank(AITank.PickRandomTier())
             {
                 Dead = true,
                 Team = Team.NoTeam
@@ -388,7 +388,9 @@ namespace WiiPlayTanksRemake.GameContent
                 Team = team,
                 Dead = false
             };
-            t.Body.Position = new CubeMapPosition(GameRand.Next(0, 27), GameRand.Next(0, 20));
+            var pos = new CubeMapPosition(GameRand.Next(0, 27), GameRand.Next(0, 20));
+            t.Body.Position = pos;
+            t.Position = pos;
 
             return t;
         }
@@ -405,6 +407,7 @@ namespace WiiPlayTanksRemake.GameContent
                 Dead = false,
             };
             x.Body.Position = position.FlattenZ();
+            x.Position = position.FlattenZ();
             return x;
         }
         public static void SpawnTankPlethorae(bool useCurTank = false)
@@ -413,7 +416,7 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 var random = new CubeMapPosition(GameRand.Next(0, 23),GameRand.Next(0, 18));
                 var rot = GeometryUtils.GetPiRandom();
-                var t = new AITank(useCurTank ? (TankTier)tankToSpawnType : AITank.PICK_ANY_THAT_ARE_IMPLEMENTED())
+                var t = new AITank(useCurTank ? (TankTier)tankToSpawnType : AITank.PickRandomTier())
                 {
                     TankRotation = rot,
                     TurretRotation = rot,
@@ -421,6 +424,8 @@ namespace WiiPlayTanksRemake.GameContent
                     Dead = false,
                     Team = useCurTank ? (Team)tankToSpawnTeam : Team.NoTeam
                 };
+                t.Body.Position = random;
+                t.Position = random;
             }
         }
 
@@ -542,22 +547,20 @@ namespace WiiPlayTanksRemake.GameContent
                 // lata
             }
 
-            _sinScale = MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalSeconds) / 8;
+            _sinScale = MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalSeconds);
 
             MouseTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/cursor_1");
-
-            for (int i = 0; i < 4; i++)
-            {
-                TankGame.spriteBatch.Draw(MouseTexture, GameUtils.MousePosition, null, Color.White, MathHelper.PiOver2 * i, MouseTexture.Size(), 1f + _sinScale, default, default);
-            }
+            TankGame.spriteBatch.Draw(MouseTexture, GameUtils.MousePosition, null, Color.White, 0f, MouseTexture.Size() / 2, 1f + _sinScale / 16, default, default);
         }
     }
     public class GameShaders
     {
         public static Effect MouseShader { get; set; }
+        public static Effect GaussianBlurShader { get; set; }
 
         public static void Initialize()
         {
+            GaussianBlurShader = GameResources.GetGameResource<Effect>("Assets/Shaders/GaussianBlur");
             MouseShader = GameResources.GetGameResource<Effect>("Assets/Shaders/MouseShader");
         }
 
@@ -567,6 +570,9 @@ namespace WiiPlayTanksRemake.GameContent
             MouseShader.Parameters["oColor"].SetValue(new Vector3(0f, 0f, 1f));
             MouseShader.Parameters["oSpeed"].SetValue(-20f);
             MouseShader.Parameters["oSpacing"].SetValue(10f);
+
+            GaussianBlurShader.Parameters["oResolution"].SetValue(new Vector2(GameUtils.WindowWidth, GameUtils.WindowHeight));
+            GaussianBlurShader.Parameters["oBlurFactor"].SetValue(6f);
         }
     }
 }

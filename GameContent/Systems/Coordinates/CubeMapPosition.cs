@@ -44,7 +44,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems.Coordinates
 
             var orig = new Vector3(MapRenderer.CUBE_MIN_X, 0, MapRenderer.CUBE_MIN_Y);
 
-            var real = new Vector3(orig.X + (pos.X * Block.FULL_BLOCK_SIZE), 0, orig.Y + (pos.Y * Block.FULL_BLOCK_SIZE) - 66);
+            var real = new Vector3(orig.X + (pos.X * Block.FULL_BLOCK_SIZE), 0, orig.Y + (pos.Y * Block.FULL_BLOCK_SIZE) - 38);
 
             return real;
         }

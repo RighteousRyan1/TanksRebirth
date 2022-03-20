@@ -12,19 +12,19 @@ namespace WiiPlayTanksRemake.GameContent.GameMechanics
     {
         public struct CollisionInfo
         {
-            public float tValue;
-            public Vector2 normal;
+            public float Value;
+            public Vector2 Normal;
         }
         public static bool IsColliding(Rectangle movingBox, Rectangle collidingBox, Vector2 offset, out CollisionInfo info)
         {
             info = new();
-            float horizontalT;
+            float x;
             if (offset.X > 0)
-                horizontalT = (collidingBox.Left - movingBox.Right) / offset.X;
+                x = (collidingBox.Left - movingBox.Right) / offset.X;
             else if (offset.X < 0)
-                horizontalT = (collidingBox.Right - movingBox.Left) / offset.X;
+                x = (collidingBox.Right - movingBox.Left) / offset.X;
             else
-                horizontalT = -1.0f;
+                x = -1.0f;
 
             float verticalT;
             if (offset.Y > 0)
@@ -35,9 +35,9 @@ namespace WiiPlayTanksRemake.GameContent.GameMechanics
                 verticalT = -1.0f;
 
             bool isHorizontal = true;
-            if (horizontalT < 0.0f)
+            if (x < 0.0f)
                 isHorizontal = false;
-            if (horizontalT > 1.0f)
+            if (x > 1.0f)
                 isHorizontal = false;
             if (collidingBox.Top >= movingBox.Bottom || collidingBox.Bottom <= movingBox.Top)
                 isHorizontal = false;
@@ -53,21 +53,21 @@ namespace WiiPlayTanksRemake.GameContent.GameMechanics
             if (!isHorizontal && !isVertical)
                 return false;
 
-            if (!isVertical || (horizontalT < verticalT && isHorizontal))
+            if (!isVertical || (x < verticalT && isHorizontal))
             {
-                info.tValue = horizontalT;
+                info.Value = x;
                 if (offset.X > 0)
-                    info.normal = new(-1.0f, 0.0f);
+                    info.Normal = new(-1.0f, 0.0f);
                 else
-                    info.normal = new(1.0f, 0.0f);
+                    info.Normal = new(1.0f, 0.0f);
             }
             else
             {
-                info.tValue = verticalT;
+                info.Value = verticalT;
                 if (offset.Y > 0)
-                    info.normal = new(0.0f, -1.0f);
+                    info.Normal = new(0.0f, -1.0f);
                 else
-                    info.normal = new(0.0f, 1.0f);
+                    info.Normal = new(0.0f, 1.0f);
             }
             return true;
         }
@@ -79,22 +79,22 @@ namespace WiiPlayTanksRemake.GameContent.GameMechanics
 
             CollisionInfo collisionInfo = new();
 
-            collisionInfo.tValue = 1f;
+            collisionInfo.Value = 1f;
             if (IsColliding(movingBox, collidingBox, velocity, out var info))
             {
-                if (info.tValue < collisionInfo.tValue)
+                if (info.Value < collisionInfo.Value)
                     collisionInfo = info;
             }
 
             var pos = position;
 
-            pos += offset * collisionInfo.tValue;
+            pos += offset * collisionInfo.Value;
 
-            if (collisionInfo.tValue < 1)
+            if (collisionInfo.Value < 1)
             {
-                pos -= Vector2.Dot(velocity, collisionInfo.normal) * collisionInfo.normal;
-                offset -= Vector2.Dot(offset, collisionInfo.normal) * collisionInfo.normal;
-                offset *= 1f - collisionInfo.tValue;
+                pos -= Vector2.Dot(velocity, collisionInfo.Normal) * collisionInfo.Normal;
+                offset -= Vector2.Dot(offset, collisionInfo.Normal) * collisionInfo.Normal;
+                offset *= 1f - collisionInfo.Value;
             }
             else
                 return;
@@ -112,25 +112,25 @@ namespace WiiPlayTanksRemake.GameContent.GameMechanics
 
             CollisionInfo collisionInfo = new();
 
-            collisionInfo.tValue = 1f;
+            collisionInfo.Value = 1f;
             if (IsColliding(movingBox, collidingBox, velocity, out var info))
             {
-                if (info.tValue < collisionInfo.tValue)
+                if (info.Value < collisionInfo.Value)
                     collisionInfo = info;
             }
 
             var pos = position;
 
-            if (collisionInfo.tValue < 1)
+            if (collisionInfo.Value < 1)
             {
-                pos -= Vector2.Dot(velocity, collisionInfo.normal) * collisionInfo.normal;
-                offset -= Vector2.Dot(offset, collisionInfo.normal) * collisionInfo.normal;
-                offset *= 1f - collisionInfo.tValue;
+                pos -= Vector2.Dot(velocity, collisionInfo.Normal) * collisionInfo.Normal;
+                offset -= Vector2.Dot(offset, collisionInfo.Normal) * collisionInfo.Normal;
+                offset *= 1f - collisionInfo.Value;
             }
             else
                 return;
 
-            pos += offset * collisionInfo.tValue;
+            pos += offset * collisionInfo.Value;
 
             if (setpos)
             {
@@ -138,25 +138,25 @@ namespace WiiPlayTanksRemake.GameContent.GameMechanics
                 position.Y = pos.Y;
             }
 
-            if (collisionInfo.normal.Y > 0)
+            if (collisionInfo.Normal.Y > 0)
             {
                 // ceil
 
                 direction = CollisionDirection.Up;
             }
-            if (collisionInfo.normal.Y < 0)
+            if (collisionInfo.Normal.Y < 0)
             {
                 // floor
 
                 direction = CollisionDirection.Down;
             }
-            if (collisionInfo.normal.X > 0)
+            if (collisionInfo.Normal.X > 0)
             {
                 // wall left
 
                 direction = CollisionDirection.Left;
             }
-            if (collisionInfo.normal.X < 0)
+            if (collisionInfo.Normal.X < 0)
             {
                 // wall right
 
@@ -164,14 +164,15 @@ namespace WiiPlayTanksRemake.GameContent.GameMechanics
             }
         }
 
-        public static void HandleCollisionSimple_ForBlocks(Rectangle movingBox, Vector2 velocity, ref Vector2 position, out CollisionDirection direction, bool setpos = true, Func<Block, bool> exclude = null)
+        public static void HandleCollisionSimple_ForBlocks(Rectangle movingBox, Vector2 velocity, ref Vector2 position, out CollisionDirection direction, out Block.BlockType type, bool setpos = true, Func<Block, bool> exclude = null)
         {
+            type = (Block.BlockType)999999;
             direction = CollisionDirection.None;
             var offset = velocity;
 
             CollisionInfo collisionInfo = new();
 
-            collisionInfo.tValue = 1f;
+            collisionInfo.Value = 1f;
 
             foreach (var cube in Block.blocks)
             {
@@ -181,8 +182,9 @@ namespace WiiPlayTanksRemake.GameContent.GameMechanics
                     {
                         if (IsColliding(movingBox, cube.collider2d, velocity, out var info))
                         {
-                            if (info.tValue < collisionInfo.tValue)
+                            if (info.Value < collisionInfo.Value)
                                 collisionInfo = info;
+                            type = cube.Type;
                         }
                     }
                     else
@@ -191,8 +193,9 @@ namespace WiiPlayTanksRemake.GameContent.GameMechanics
                         {
                             if (IsColliding(movingBox, cube.collider2d, velocity, out var info))
                             {
-                                if (info.tValue < collisionInfo.tValue)
+                                if (info.Value < collisionInfo.Value)
                                     collisionInfo = info;
+                                type = cube.Type;
                             }
                         }
                     }
@@ -201,16 +204,14 @@ namespace WiiPlayTanksRemake.GameContent.GameMechanics
 
             var pos = position;
 
-            pos += offset * collisionInfo.tValue;
+            pos += offset * collisionInfo.Value;
 
-            if (collisionInfo.tValue < 1)
+            if (collisionInfo.Value < 1)
             {
-                pos -= Vector2.Dot(velocity, collisionInfo.normal) * collisionInfo.normal;
-                offset -= Vector2.Dot(offset, collisionInfo.normal) * collisionInfo.normal;
-                offset *= 1f - collisionInfo.tValue;
+                pos -= Vector2.Dot(velocity, collisionInfo.Normal) * collisionInfo.Normal;
+                offset -= Vector2.Dot(offset, collisionInfo.Normal) * collisionInfo.Normal;
+                offset *= 1f - collisionInfo.Value;
             }
-            else
-                return;
 
             if (setpos)
             {
@@ -218,38 +219,38 @@ namespace WiiPlayTanksRemake.GameContent.GameMechanics
                 position.Y = pos.Y;
             }
 
-            if (collisionInfo.normal.Y > 0)
+            if (collisionInfo.Normal.Y > 0)
             {
                 // ceil
 
                 direction = CollisionDirection.Up;
             }
-            if (collisionInfo.normal.Y < 0)
+            if (collisionInfo.Normal.Y < 0)
             {
                 // floor
 
                 direction = CollisionDirection.Down;
             }
-            if (collisionInfo.normal.X > 0)
+            if (collisionInfo.Normal.X > 0)
             {
                 // wall left
 
                 direction = CollisionDirection.Left;
             }
-            if (collisionInfo.normal.X < 0)
+            if (collisionInfo.Normal.X < 0)
             {
                 // wall right
 
                 direction = CollisionDirection.Right;
             }
         }
-
-        public enum CollisionDirection {
-            None,
-            Up,
-            Down,
-            Left,
-            Right
-        }
     }
+}
+public enum CollisionDirection
+{
+    None,
+    Up,
+    Down,
+    Left,
+    Right
 }

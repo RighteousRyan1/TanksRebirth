@@ -180,6 +180,8 @@ namespace WiiPlayTanksRemake
 
             spriteBatch = new(GraphicsDevice);
 
+            graphics.PreferMultiSampling = true;
+
             graphics.ApplyChanges();
 
             base.Initialize();
@@ -270,12 +272,12 @@ namespace WiiPlayTanksRemake
         public const float DEFAULT_ORTHOGRAPHIC_ANGLE = 0.75f;
         internal static Vector2 CameraRotationVector = new(0, DEFAULT_ORTHOGRAPHIC_ANGLE);
 
-        public const float DEFAULT_ZOOM = 2.925f;
+        public const float DEFAULT_ZOOM = 3.43f;
         internal static float AddativeZoom = 1f;
 
         internal static Vector2 CameraFocusOffset;
 
-        internal static bool fps;
+        internal static bool FirstPerson;
 
         public static bool OverheadView = false;
 
@@ -315,7 +317,7 @@ namespace WiiPlayTanksRemake
                     if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Subtract))
                         AddativeZoom -= 0.01f;
                     if (Input.KeyJustPressed(Keys.Q))
-                        fps = !fps;
+                        FirstPerson = !FirstPerson;
 
                     if (Input.KeyJustPressed(Keys.J))
                     {
@@ -330,7 +332,7 @@ namespace WiiPlayTanksRemake
 
                     IsFixedTimeStep = !Input.CurrentKeySnapshot.IsKeyDown(Keys.Tab);
 
-                    if (!fps)
+                    if (!FirstPerson)
                     {
                         if (transitionTimer > 0)
                         {
@@ -362,7 +364,7 @@ namespace WiiPlayTanksRemake
 
                         GameCamera.SetCameraType(CameraType.Orthographic);
 
-                        GameCamera.Translate(new Vector3(CameraFocusOffset.X, -CameraFocusOffset.Y, 0));
+                        GameCamera.Translate(new Vector3(CameraFocusOffset.X, -CameraFocusOffset.Y + 40, 0));
 
                         GameCamera.SetViewingDistances(-2000f, 5000f); 
                     }
@@ -416,8 +418,6 @@ namespace WiiPlayTanksRemake
                 // throw;
             }
         }
-
-
 
         public void FixedUpdate(GameTime gameTime)
         {

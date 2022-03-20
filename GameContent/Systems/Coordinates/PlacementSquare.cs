@@ -91,7 +91,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems.Coordinates
             {
                 foreach (BasicEffect effect in mesh.Effects)
                 {
-                    effect.World = Matrix.CreateScale(0.768f) * Matrix.CreateTranslation(Position +  new Vector3(0, 0.1f, 0));
+                    effect.World = Matrix.CreateScale(0.64f) * Matrix.CreateTranslation(Position +  new Vector3(0, 0.1f, 0));
                     effect.View = TankGame.GameView;
                     effect.Projection = TankGame.GameProjection;
 

@@ -10,11 +10,11 @@ namespace WiiPlayTanksRemake.GameContent.GameMechanics
     {
         public string Label { get; set; }
 
-        public long totalUpdateCount;
+        public long Value;
 
         public bool IsModOf(long remainder)
         {
-            return totalUpdateCount % remainder == 0;
+            return Value % remainder == 0;
         }
     }
     public static class AiBehaviorExtensions

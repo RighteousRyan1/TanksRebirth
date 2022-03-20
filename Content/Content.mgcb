@@ -661,6 +661,12 @@
 /processorParam:Quality=Best
 /build:Assets/music/yellow3.ogg
 
+#begin Assets/Shaders/GaussianBlur.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:Assets/Shaders/GaussianBlur.fx
+
 #begin Assets/Shaders/MouseShader.fx
 /importer:EffectImporter
 /processor:EffectProcessor
@@ -1016,6 +1022,18 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Assets/textures/bullet/bullet.png
+
+#begin Assets/textures/bullet/explosive_bullet.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Assets/textures/bullet/explosive_bullet.png
 
 #begin Assets/textures/check/check_blue.png
 /importer:TextureImporter

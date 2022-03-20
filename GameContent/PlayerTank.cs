@@ -257,7 +257,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             if (rightStick.Length() > 0)
             {
-                var unprojectedPosition = GeometryUtils.ConvertWorldToScreen(default, World, View, Projection);
+                var unprojectedPosition = GeometryUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), World, View, Projection);
                 Mouse.SetPosition((int)(unprojectedPosition.X + rightStick.X * 250), (int)(unprojectedPosition.Y - rightStick.Y * 250));
                 //Mouse.SetPosition((int)(Input.CurrentMouseSnapshot.X + rightStick.X * TankGame.Instance.Settings.ControllerSensitivity), (int)(Input.CurrentMouseSnapshot.Y - rightStick.Y * TankGame.Instance.Settings.ControllerSensitivity));
             }
@@ -349,11 +349,6 @@ namespace WiiPlayTanksRemake.GameContent
             // TODO: play player tank death sound
         }
 
-        public override void LayMine()
-        {
-            base.LayMine();
-        }
-
         public void UpdatePlayerMovement()
         {
             var leftStick = Input.CurrentGamePadSnapshot.ThumbSticks.Left;
@@ -425,18 +420,18 @@ namespace WiiPlayTanksRemake.GameContent
                 var pathHitbox = new Rectangle((int)pathPos.X - 3, (int)pathPos.Y - 3, 6, 6);
 
                 // Why is velocity passed by reference here lol
-                Collision.HandleCollisionSimple_ForBlocks(pathHitbox, pathDir, ref dummyPos, out var dir, false, (c) => c.IsSolid);
+                Collision.HandleCollisionSimple_ForBlocks(pathHitbox, pathDir, ref dummyPos, out var dir, out var type, false, (c) => c.IsSolid);
 
 
                 switch (dir)
                 {
-                    case Collision.CollisionDirection.Up:
-                    case Collision.CollisionDirection.Down:
+                    case CollisionDirection.Up:
+                    case CollisionDirection.Down:
                         pathDir.Y *= -1;
                         bounces++;
                         break;
-                    case Collision.CollisionDirection.Left:
-                    case Collision.CollisionDirection.Right:
+                    case CollisionDirection.Left:
+                    case CollisionDirection.Right:
                         pathDir.X *= -1;
                         bounces++;
                         break;
@@ -450,14 +445,6 @@ namespace WiiPlayTanksRemake.GameContent
                 var pathPosScreen = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(pathPos.X, 11, pathPos.Y), TankGame.GameView, TankGame.GameProjection);
                 TankGame.spriteBatch.Draw(whitePixel, pathPosScreen, null, Color.White, 0, whitePixel.Size() / 2, 2 + (float)Math.Sin(i * Math.PI / 5 - TankGame.GameUpdateTime * 0.3f), default, default);
             }
-        }
-
-        /// <summary>
-        /// Finish bullet implementation!
-        /// </summary>
-        public override void Shoot()
-        {
-            base.Shoot();
         }
 
         private void RenderModel()
@@ -503,7 +490,7 @@ namespace WiiPlayTanksRemake.GameContent
                         }
                     }
 
-                    effect.SetDefaultGameLighting_IngameEntities();
+                    effect.SetDefaultGameLighting_IngameEntities(specular: true, ambientMultiplier: 1.5f);
                 }
             }
         }

@@ -32,15 +32,13 @@ namespace WiiPlayTanksRemake.GameContent
         public Vector3 Position3D => Position.ExpandZ();
 
         public Model model;
-        public Model shadowModel;
+        public Particle shadow;
 
         public Matrix World;
         public Matrix View;
         public Matrix Projection;
 
         public Body Body;
-
-        public BoundingBox collider;
 
         public Rectangle collider2d;
 
@@ -50,12 +48,12 @@ namespace WiiPlayTanksRemake.GameContent
 
         public const int MAX_BLOCK_HEIGHT = 7;
 
-        public const float FULL_BLOCK_SIZE = 24.5f;
-        public const float SLAB_SIZE = 13f;
+        public const float FULL_BLOCK_SIZE = 21f; // 24.5
+        public const float SLAB_SIZE = 11.14285714f; // 13
 
         // 36, 18 respectively for normal size
 
-        public const float FULL_SIZE = 100.8f;
+        public const float FULL_SIZE = 86.4f; // 100.8
 
         // 141 for normal
 
@@ -85,13 +83,11 @@ namespace WiiPlayTanksRemake.GameContent
                 case BlockType.Wood:
                     meshTexture = GameResources.GetGameResource<Texture2D>($"{MapRenderer.assetsRoot}block.1");
                     model = IsAlternateModel ? TankGame.CubeModelAlt : TankGame.CubeModel;
-                    shadowModel = GameResources.GetGameResource<Model>($"Assets/toy/cube_shadow");
                     break;
                 case BlockType.Cork:
                     IsDestructible = true;
                     meshTexture = GameResources.GetGameResource<Texture2D>($"{MapRenderer.assetsRoot}block.2");
                     model = IsAlternateModel ? TankGame.CubeModelAlt : TankGame.CubeModel;
-                    shadowModel = GameResources.GetGameResource<Model>($"Assets/toy/cube_shadow");
                     break;
                 case BlockType.Hole:
                     model = GameResources.GetGameResource<Model>("Assets/check");
@@ -106,6 +102,12 @@ namespace WiiPlayTanksRemake.GameContent
             Type = type;
 
             Position = Body.Position;
+
+            // fix this, but dont worry about it for now
+            //shadow = ParticleSystem.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>($"Assets/toy/cube_shadow_tex"));
+            //shadow.roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
+            //shadow.Scale = new(1f);
+            //shadow.isAddative = false;
 
             // TODO: Finish collisions
 
@@ -126,6 +128,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         public void Destroy()
         {
+            shadow?.Destroy();
             Tank.CollisionsWorld.Remove(Body);
             // blah blah particle chunk thingy
 
@@ -141,7 +144,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                 var vel = new Vector3(GameHandler.GameRand.NextFloat(-3, 3), GameHandler.GameRand.NextFloat(4, 6), GameHandler.GameRand.NextFloat(-3, 3));
 
-                part.rotationX = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
+                part.roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
                 part.Scale = new(0.75f);
 
@@ -163,12 +166,6 @@ namespace WiiPlayTanksRemake.GameContent
 
         public void Render()
         {
-            var whitePixel = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
-
-            //var deconstruct = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection);
-            //var rect = new Rectangle((int)deconstruct.X - collider2d.Width / 2, (int)deconstruct.Y - collider2d.Height / 2, collider2d.Width, collider2d.Height);
-            //TankGame.spriteBatch.Draw(whitePixel, rect, null, Color.White, 0f, /*rect.Size.ToVector2() / 2*/ Vector2.Zero, default, 1f);
-
             foreach (var mesh in model.Meshes)
             {
                 foreach (BasicEffect effect in mesh.Effects)
@@ -180,7 +177,7 @@ namespace WiiPlayTanksRemake.GameContent
                     effect.TextureEnabled = true;
                     effect.Texture = meshTexture;
 
-                    effect.SetDefaultGameLighting_IngameEntities_TwoDirections();
+                    effect.SetDefaultGameLighting_IngameEntities(8f);
 
                     effect.DirectionalLight0.Direction *= 0.1f;
 
@@ -189,29 +186,10 @@ namespace WiiPlayTanksRemake.GameContent
 
                 mesh.Draw();
             }
-
-            if (shadowModel != null)
-            {
-                foreach (BasicEffect effect in shadowModel.Meshes[0].Effects)
-                {
-                    effect.TextureEnabled = true;
-                    effect.Texture = GameResources.GetGameResource<Texture2D>($"Assets/toy/cube_shadow_tex");
-
-                    effect.View = TankGame.GameView;
-                    effect.World = Matrix.CreateScale(0.65f) * Matrix.CreateTranslation(Position3D + new Vector3(0, -0.11f, 0));
-                    effect.Projection = TankGame.GameProjection;
-                    effect.SetDefaultGameLighting_IngameEntities();
-
-                    effect.Alpha = 0.4f;
-                }
-                shadowModel.Meshes[0].Draw();
-            }
-            // TankGame.spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), collider2d, Color.White * 0.75f);
         }
         public void Update()
         {
             collider2d = new((int)(Position.X - FULL_BLOCK_SIZE / 2), (int)(Position.Y - FULL_BLOCK_SIZE / 2), (int)FULL_BLOCK_SIZE, (int)FULL_BLOCK_SIZE);
-            collider = new BoundingBox(Position3D - new Vector3(FULL_BLOCK_SIZE / 2 + 4, FULL_SIZE, FULL_BLOCK_SIZE / 2 + 4), Position3D + new Vector3(FULL_BLOCK_SIZE / 2 + 4, FULL_SIZE, FULL_BLOCK_SIZE / 2 + 4));
             Vector3 offset = new();
 
             if (AffectedByOffset)
@@ -245,7 +223,7 @@ namespace WiiPlayTanksRemake.GameContent
             else
                 offset.Y -= 0.05f;
 
-            World = Matrix.CreateScale(0.7f) * Matrix.CreateTranslation(Position3D - offset);
+            World = Matrix.CreateScale(0.6f) * Matrix.CreateTranslation(Position3D - offset);
             Projection = TankGame.GameProjection;
             View = TankGame.GameView;
         }

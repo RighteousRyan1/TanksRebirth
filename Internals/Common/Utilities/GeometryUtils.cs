@@ -109,6 +109,29 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
             };
         }
 
+        public static EulerAngles AsEulerAngles(this Quaternion quaternion)
+        {
+            EulerAngles angles = new();
+
+            // roll (x-axis rotation)
+            float wxyz = 2 * (quaternion.W * quaternion.X + quaternion.Y * quaternion.Z);
+            float xySquared = 1 - 2 * (quaternion.X * quaternion.X + quaternion.Y * quaternion.Y);
+            angles.Roll = MathF.Atan2(wxyz, xySquared);
+            // pitch (y-axis rotation)
+            float sinp = 2 * (quaternion.W * quaternion.Y - quaternion.Z * quaternion.X);
+            if (MathF.Abs(sinp) >= 1)
+                angles.Pitch = MathF.CopySign(MathHelper.PiOver2, sinp); // if sinp > 90 degrees, compress it to 90.
+            else
+                angles.Pitch = MathF.Asin(sinp);
+
+            // yaw (z-axis rotation)
+            float wzxy = 2 * (quaternion.W * quaternion.Z + quaternion.X * quaternion.Y);
+            float yzSquared = 1 - 2 * (quaternion.Y * quaternion.Y + quaternion.Z * quaternion.Z);
+            angles.Yaw = MathF.Atan2(wzxy, yzSquared);
+
+            return angles;
+        }
+
         public static float GetQuarterRotation(sbyte rot)
         {
             return MathHelper.PiOver2 * rot;
@@ -131,5 +154,14 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
         {
             return (v.X + v.Y + v.Z) / 3;
         }
+    }
+    /// <summary>
+    /// Useful for conversion of <see cref="Quaternion"/>s to basic Yaw/Pitch/Roll angles.
+    /// </summary>
+    public struct EulerAngles
+    {
+        public float Yaw;
+        public float Pitch;
+        public float Roll;
     }
 }

@@ -120,9 +120,12 @@ namespace WiiPlayTanksRemake.GameContent
             if (UI.DifficultyModes.BulletHell)
                 RicochetCount *= 3;
 
-            //if (UI.DifficultyModes.ShellHoming)
+            if (UI.DifficultyModes.ShellHoming)
             {
-
+                ShellHoming = new();
+                ShellHoming.radius = 100f;
+                ShellHoming.speed = ShellSpeed;
+                ShellHoming.power = 0.5f;
             }
         }
 
@@ -209,7 +212,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                     var vel = new Vector3(GameHandler.GameRand.NextFloat(-3, 3), GameHandler.GameRand.NextFloat(3, 6), GameHandler.GameRand.NextFloat(-3, 3));
 
-                    part.rotationX = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
+                    part.roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
                     part.Scale = new(0.55f);
 
@@ -217,7 +220,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                     part.UniqueBehavior = (p) =>
                     {
-                        part.rotationY += MathF.Sin(part.position.Length() / 10);
+                        part.pitch += MathF.Sin(part.position.Length() / 10);
                         vel.Y -= 0.2f;
                         part.position += vel;
                         part.Opacity -= 0.025f;
@@ -242,8 +245,8 @@ namespace WiiPlayTanksRemake.GameContent
                     if (p.Scale.X <= 0f)
                         p.Destroy();
                 };
-
-                const int NUM_LOCATIONS = 8;
+                ParticleSystem.MakeSmallExplosion(Position3D, 15, 20, 1.3f, 30);
+                /*const int NUM_LOCATIONS = 8;
 
                 for (int i = 0; i < NUM_LOCATIONS; i++)
                 {
@@ -251,9 +254,9 @@ namespace WiiPlayTanksRemake.GameContent
 
                     var part = ParticleSystem.MakeParticle(Position3D, tex);
 
-                    part.isAddative = false;
+                    part.isAddative = true;
 
-                    part.rotationX = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
+                    part.roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
                     part.Scale = new(0.8f);
 
@@ -277,7 +280,7 @@ namespace WiiPlayTanksRemake.GameContent
                             part.position.Y += 0.25f;
                         }
                     };
-                }
+                }*/
             }
             doDestructionFx();
         }
@@ -314,8 +317,8 @@ namespace WiiPlayTanksRemake.GameContent
             var hit = ParticleSystem.MakeParticle(shell.Position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
             var smoke = ParticleSystem.MakeParticle(shell.Position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
 
-            hit.rotationX = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
-            smoke.rotationX = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
+            hit.roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
+            smoke.roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
             smoke.Scale = new(0.35f);
             hit.Scale = new(0.5f);
@@ -490,7 +493,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         internal static int total_treads_placed;
 
-        private readonly bool alternate;
+        public readonly bool alternate;
 
         public long lifeTime;
 
@@ -499,6 +502,8 @@ namespace WiiPlayTanksRemake.GameContent
 
         public TankFootprint(Tank owner, bool alt = false)
         {
+            alternate = alt;
+            this.owner = owner;
             if (total_treads_placed + 1 > MAX_FOOTPRINTS)
                 footprints[Array.IndexOf(footprints, footprints.Min(x => x.lifeTime > 0))] = null; // i think?
 
@@ -510,10 +515,10 @@ namespace WiiPlayTanksRemake.GameContent
             track = ParticleSystem.MakeParticle(Position, texture);
 
             track.isAddative = false;
-            //if (owner.Team != Team.NoTeam)
-                //track.color = (Color)typeof(Color).GetProperty(owner.Team.ToString(), System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public).GetValue(null);
-            track.rotationX = -MathHelper.PiOver2;
-            track.Scale = new(0.5f);
+
+            track.roll = -MathHelper.PiOver2;
+            track.Scale = new(0.5f, 0.65f, 0.5f);
+            track.Opacity = 0.5f;
 
             footprints[total_treads_placed] = this;
 
@@ -526,7 +531,7 @@ namespace WiiPlayTanksRemake.GameContent
             // Vector3 scale = alternate ? new(0.5f, 1f, 0.35f) : new(0.5f, 1f, 0.075f);
 
             track.position = Position;
-            track.rotationY = rotation;
+            track.pitch = rotation;
             track.color = Color.White;
             // [0.0, 1.1, 1.5, 0.5]
             // [0.0, 0.1, 0.8, 0.0]
@@ -634,7 +639,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             check = ParticleSystem.MakeParticle(Position + new Vector3(0, 0.1f, 0), texture);
             check.isAddative = false;
-            check.rotationX = -MathHelper.PiOver2;
+            check.roll = -MathHelper.PiOver2;
 
             deathMarks[total_death_marks] = this;
         }

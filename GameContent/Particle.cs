@@ -16,9 +16,9 @@ namespace WiiPlayTanksRemake.GameContent
 
         public Color color = Color.White;
 
-        public float rotationX;
-        public float rotationY;
-        public float rotationZ;
+        public float roll;
+        public float pitch;
+        public float yaw;
 
         public float Opacity = 1f;
 
@@ -36,6 +36,8 @@ namespace WiiPlayTanksRemake.GameContent
 
         // NOTE: scale.X is used for 2d scaling.
         public Vector3 Scale;
+
+        public float addativeLightPower;
 
         /* TODO:
          * Model alpha must be set!
@@ -65,7 +67,7 @@ namespace WiiPlayTanksRemake.GameContent
         {
             if (!is2d)
             {
-                effect.World = Matrix.CreateScale(Scale) * Matrix.CreateRotationX(rotationX) * Matrix.CreateRotationY(rotationY) * Matrix.CreateRotationZ(rotationZ) * Matrix.CreateTranslation(position);
+                effect.World = Matrix.CreateScale(Scale) * Matrix.CreateRotationX(roll) * Matrix.CreateRotationY(pitch) * Matrix.CreateRotationZ(yaw) * Matrix.CreateTranslation(position);
                 effect.View = TankGame.GameView;
                 effect.Projection = TankGame.GameProjection;
                 effect.TextureEnabled = true;
@@ -78,7 +80,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                 effect.Alpha = Opacity;
 
-                effect.SetDefaultGameLighting_IngameEntities();
+                effect.SetDefaultGameLighting_IngameEntities(addativeLightPower);
 
                 effect.FogEnabled = false;
 

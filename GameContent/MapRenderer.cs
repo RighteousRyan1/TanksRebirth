@@ -339,10 +339,10 @@ namespace WiiPlayTanksRemake.GameContent
         public const float TANKS_MIN_Y = MIN_Y + 5;
         public const float TANKS_MAX_Y = MAX_Y - 6;
 
-        public const float MIN_X = -264;
-        public const float MAX_X = 264;
-        public const float MIN_Y = -72;
-        public const float MAX_Y = 334;
+        public const float MIN_X = -226;
+        public const float MAX_X = 226;
+        public const float MIN_Y = -42;
+        public const float MAX_Y = 302;
 
         public const float CUBE_MIN_X = MIN_X + Block.FULL_BLOCK_SIZE / 2 - 6f;
         public const float CUBE_MAX_X = MAX_X - Block.FULL_BLOCK_SIZE / 2;
@@ -363,7 +363,7 @@ namespace WiiPlayTanksRemake.GameContent
         {
             viewMatrix = TankGame.GameView;
             projectionMatrix = TankGame.GameProjection;
-            worldMatrix = Matrix.CreateScale(0.7f) * Matrix.CreateTranslation(0, 0, 130);
+            worldMatrix = Matrix.CreateScale(0.6f) * Matrix.CreateTranslation(0, 0, 130);
 
             if (ShouldRender)
             {

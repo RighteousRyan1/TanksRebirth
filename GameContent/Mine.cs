@@ -36,7 +36,7 @@ namespace WiiPlayTanksRemake.GameContent
         public ModelMesh MineMesh;
         public ModelMesh EnvMesh;
 
-        public BoundingBox hitbox;
+        public Rectangle hitbox;
 
         public int detonationTime;
         public int detonationTimeMax;
@@ -87,9 +87,6 @@ namespace WiiPlayTanksRemake.GameContent
         public void Detonate()
         {
             Detonated = true;
-            var destroysound = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_destroy");
-
-            SoundPlayer.PlaySoundInstance(destroysound, SoundContext.Effect, 0.4f);
 
             var expl = new Explosion(Position, explosionRadius * 0.101f, 0.3f);
 
@@ -106,13 +103,15 @@ namespace WiiPlayTanksRemake.GameContent
             AllMines[worldId] = null;
         }
 
+        public void RemoveSilently() => AllMines[worldId] = null;
+
         internal void Update()
         {
             World = Matrix.CreateScale(0.7f) * Matrix.CreateTranslation(Position3D);
             View = TankGame.GameView;
             Projection = TankGame.GameProjection;
 
-            hitbox = new(Position3D - new Vector3(10, 0, 10), Position3D + new Vector3(10, 50, 10)); 
+            hitbox = new((int)Position.X - 10, (int)Position.Y - 10, 20, 20); 
 
             detonationTime--;
 
@@ -127,7 +126,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             foreach (var shell in Shell.AllShells)
             {
-                if (shell is not null && shell.hurtbox.Intersects(hitbox))
+                if (shell is not null && shell.hitbox.Intersects(hitbox))
                 {
                     shell.Destroy();
                     Detonate();
@@ -231,6 +230,10 @@ namespace WiiPlayTanksRemake.GameContent
             Model = GameResources.GetGameResource<Model>("Assets/mineexplosion");
 
             int index = Array.IndexOf(explosions, explosions.First(t => t is null));
+
+            var destroysound = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_destroy");
+
+            SoundPlayer.PlaySoundInstance(destroysound, SoundContext.Effect, 0.4f);
 
             id = index;
 

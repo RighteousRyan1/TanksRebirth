@@ -10,20 +10,6 @@ float lum(float3 color)
 }
 float4 whitePartShader(float4 sampleColor : COLOR0, float2 coords : TEXCOORD0) : COLOR0
 {
-    /*float4 color = tex2D(TexSampler, coords);
-
-    //float offset = cos(coords.y * oSpacing + oGlobalTime * oSpeed) * 0.5 + 0.5;
-    //float3 col = oColor;
-
-    float3 defaultColor = float3(0.0, 0.0, 1.0);
-    float3 colorShift = float3(0.0, 0.79, 0.0);
-
-    float offset = cos(coords.y * oSpacing + oGlobalTime * oSpeed) * 0.5 + 0.5;
-    float3 col = defaultColor + colorShift * offset;
-
-    color.rgb += col;
-    
-    return color;*/
     float4 color = tex2D(TexSampler, coords);
     if (color.a && lum(color.rgb) <= 0.01)
     {

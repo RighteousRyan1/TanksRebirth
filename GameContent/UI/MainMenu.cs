@@ -106,7 +106,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             {
                 IsVisible = true,
             };
-            PlayButton.SetDimensions(700, 450, 500, 50);
+            PlayButton.SetDimensions(700, 550, 500, 50);
             PlayButton.OnLeftClick = (uiElement) =>
             {
                 SetPrimaryMenuButtonsVisibility(false);
@@ -225,6 +225,8 @@ namespace WiiPlayTanksRemake.GameContent.UI
                     Client.AttemptConnectionTo(IPInput.Text, port, PasswordInput.Text);
 
                     Server.ConnectedClients[0] = NetPlay.CurrentClient;
+
+                    StartMPGameButton.IsVisible = true;
                 }
                 else
                 {
@@ -384,7 +386,6 @@ namespace WiiPlayTanksRemake.GameContent.UI
         }
         internal static void SetMPButtonsVisibility(bool visible)
         {
-            StartMPGameButton.IsVisible = visible;
             ConnectToServerButton.IsVisible = visible;
             CreateServerButton.IsVisible = visible;
             UsernameInput.IsVisible = visible;
@@ -392,6 +393,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             PasswordInput.IsVisible = visible;
             PortInput.IsVisible = visible;
             ServerNameInput.IsVisible = visible;
+            StartMPGameButton.IsVisible = visible && Server.serverNetManager is not null;
         }
 
         public static void Update()
@@ -440,6 +442,9 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
             Theme.volume = 0;
 
+            GameUI.QuitButton.Position.Y += 50;
+            GameUI.OptionsButton.Position.Y -= 75;
+
             HideAll();
         }
 
@@ -463,11 +468,19 @@ namespace WiiPlayTanksRemake.GameContent.UI
             TankGame.AddativeZoom = 1f;
             TankGame.CameraFocusOffset.Y = 0f;
 
+            GameUI.QuitButton.Position.Y -= 50;
+            GameUI.OptionsButton.Position.Y += 75;
+
+            foreach (var mine in Mine.AllMines)
+                mine?.RemoveSilently();
+            foreach (var shell in Shell.AllShells)
+                shell?.RemoveSilently();
+
             for (int i = 0; i < 10; i++)
             {
                 for (int j = 0; j < 10; j++)
                 {
-                    var t = AddTravelingTank(AITank.PICK_ANY_THAT_ARE_IMPLEMENTED(), 1000 + (-i * 100), j * 55);
+                    var t = AddTravelingTank(AITank.PickRandomTier(), 1000 + (-i * 100), j * 55);
 
                     if (i % 2 == 0)
                         t.Velocity.Y = 1f;
@@ -577,5 +590,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
         public static bool BulletHell { get; set; } = false;
         public static bool AllInvisible { get; set; } = false;
         public static bool AllStationary { get; set; } = false;
+
+        public static bool ShellHoming { get; set; } = false;
     }
 }

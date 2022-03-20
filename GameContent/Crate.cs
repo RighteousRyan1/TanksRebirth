@@ -10,11 +10,11 @@ using WiiPlayTanksRemake.Graphics;
 
 namespace WiiPlayTanksRemake.GameContent
 {
-    public class CrateDrop
+    public class Crate
     {
         public const int MAX_CRATES = 50;
 
-        public static CrateDrop[] crates = new CrateDrop[MAX_CRATES];
+        public static Crate[] crates = new Crate[MAX_CRATES];
 
         public Vector3 position;
 
@@ -22,17 +22,17 @@ namespace WiiPlayTanksRemake.GameContent
 
         public float gravity;
 
-        /// <summary>How much this <see cref="CrateDrop"/> accelerates while falling in the air.</summary>
+        /// <summary>How much this <see cref="Crate"/> accelerates while falling in the air.</summary>
         public float dropSpeedAccel = 0.05f;
 
-        /// <summary>The scale of this <see cref="CrateDrop"/>.</summary>
+        /// <summary>The scale of this <see cref="Crate"/>.</summary>
         public float scale = 1f;
 
         public Model Model;
 
         public Matrix[] faceWorlds = new Matrix[6];
 
-        /// <summary>Whether or not an animation sequence plays when the <see cref="CrateDrop"/> lands.</summary>
+        /// <summary>Whether or not an animation sequence plays when the <see cref="Crate"/> lands.</summary>
         public bool IsOpening { get; private set; }
 
         public int id;
@@ -40,14 +40,14 @@ namespace WiiPlayTanksRemake.GameContent
         /// <summary>What <see cref="Tank"/> to spawn on opening, if any.</summary>
         public Tank TankToSpawn;
 
-        /// <summary>How fast this <see cref="CrateDrop"/> shrinks when it starts to open.</summary>
+        /// <summary>How fast this <see cref="Crate"/> shrinks when it starts to open.</summary>
         public float fadeScale = 0.05f;
 
         private int _bounceCount;
 
         private int _maxBounces = 2;
 
-        private CrateDrop() 
+        private Crate() 
         {
             Model = GameResources.GetGameResource<Model>("Assets/BoxFace");
 
@@ -59,12 +59,12 @@ namespace WiiPlayTanksRemake.GameContent
         }
 
         /// <summary>
-        /// Spawns a new <see cref="CrateDrop"/>.
+        /// Spawns a new <see cref="Crate"/>.
         /// </summary>
-        /// <param name="pos">The position to spawn the <see cref="CrateDrop"/> in the game world.</param>
-        /// <param name="gravity">The gravity which affects the <see cref="CrateDrop"/> while it falls.</param>
-        /// <returns>The <see cref="CrateDrop"/> spawned.</returns>
-        public static CrateDrop SpawnCrate(Vector3 pos, float gravity)
+        /// <param name="pos">The position to spawn the <see cref="Crate"/> in the game world.</param>
+        /// <param name="gravity">The gravity which affects the <see cref="Crate"/> while it falls.</param>
+        /// <returns>The <see cref="Crate"/> spawned.</returns>
+        public static Crate SpawnCrate(Vector3 pos, float gravity)
         {
             var spawnSfx = GameResources.GetGameResource<SoundEffect>("Assets/sounds/crate/CrateSpawn");
 
@@ -162,7 +162,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         }
 
-        /// <summary>Open this <see cref="CrateDrop"/>.</summary>
+        /// <summary>Open this <see cref="Crate"/>.</summary>
         public void Open()
         {
             IsOpening = true;
@@ -171,6 +171,7 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 TankToSpawn.Dead = false;
                 TankToSpawn.Body.Position = new(position.X, position.Z);
+                TankToSpawn.Position = new(position.X, position.Z);
             }
         }
     }

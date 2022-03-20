@@ -62,6 +62,8 @@ namespace WiiPlayTanksRemake.Internals.Common.Framework.Input
             }
         }
 
+        public void Fire() { KeybindPressAction?.Invoke(this); }
+
         internal void Update()
         {
             if (PendKeyReassign)
@@ -72,7 +74,7 @@ namespace WiiPlayTanksRemake.Internals.Common.Framework.Input
 
             JustReassigned = false;
 
-            if (IsPressed)
+            if (JustPressed)
                 KeybindPressAction?.Invoke(this);
         }
 
