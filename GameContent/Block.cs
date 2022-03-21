@@ -144,7 +144,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                 var vel = new Vector3(GameHandler.GameRand.NextFloat(-3, 3), GameHandler.GameRand.NextFloat(4, 6), GameHandler.GameRand.NextFloat(-3, 3));
 
-                part.roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
+                part.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
                 part.Scale = new(0.75f);
 

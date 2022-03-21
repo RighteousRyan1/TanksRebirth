@@ -2153,6 +2153,9 @@ namespace WiiPlayTanksRemake.GameContent
                     else if (diff2 < -MathHelper.Pi)
                         TargetTankRotation += MathHelper.TwoPi;*/
 
+                    //TargetTankRotation %= MathHelper.Tau;
+                    //TankRotation %= MathHelper.Tau;
+
                     if (doMoveTowards)
                     {
                         if (!IsTurning)

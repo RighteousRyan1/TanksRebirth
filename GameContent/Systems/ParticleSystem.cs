@@ -55,13 +55,13 @@ namespace WiiPlayTanksRemake.GameContent
 
                 var vel = new Vector3(GameHandler.GameRand.NextFloat(-0.25f, 0.25f), GameHandler.GameRand.NextFloat(0, 0.75f), GameHandler.GameRand.NextFloat(-0.25f, 0.25f));
 
-                spark.roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
+                spark.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
-                var angles = GeometryUtils.AsEulerAngles(new Quaternion(new Vector3(spark.roll, spark.pitch, spark.yaw), 0f));
+                var angles = GeometryUtils.AsEulerAngles(new Quaternion(new Vector3(spark.Roll, spark.Pitch, spark.Yaw), 0f));
 
-                spark.roll = angles.Roll;
-                spark.pitch = angles.Pitch;
-                spark.yaw = angles.Yaw;
+                spark.Roll = angles.Roll;
+                spark.Pitch = angles.Pitch;
+                spark.Yaw = angles.Yaw;
                 spark.Opacity = 1f;
                 spark.Scale = new(GameHandler.GameRand.NextFloat(0.4f, 0.6f));
 
@@ -88,7 +88,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                 smoke.isAddative = true;
 
-                smoke.roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
+                smoke.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
                 smoke.Scale = new(0.8f);
 

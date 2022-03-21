@@ -212,7 +212,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                     var vel = new Vector3(GameHandler.GameRand.NextFloat(-3, 3), GameHandler.GameRand.NextFloat(3, 6), GameHandler.GameRand.NextFloat(-3, 3));
 
-                    part.roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
+                    part.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
                     part.Scale = new(0.55f);
 
@@ -220,7 +220,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                     part.UniqueBehavior = (p) =>
                     {
-                        part.pitch += MathF.Sin(part.position.Length() / 10);
+                        part.Pitch += MathF.Sin(part.position.Length() / 10);
                         vel.Y -= 0.2f;
                         part.position += vel;
                         part.Opacity -= 0.025f;
@@ -317,8 +317,8 @@ namespace WiiPlayTanksRemake.GameContent
             var hit = ParticleSystem.MakeParticle(shell.Position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
             var smoke = ParticleSystem.MakeParticle(shell.Position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
 
-            hit.roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
-            smoke.roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
+            hit.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
+            smoke.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
             smoke.Scale = new(0.35f);
             hit.Scale = new(0.5f);
@@ -516,9 +516,9 @@ namespace WiiPlayTanksRemake.GameContent
 
             track.isAddative = false;
 
-            track.roll = -MathHelper.PiOver2;
+            track.Roll = -MathHelper.PiOver2;
             track.Scale = new(0.5f, 0.65f, 0.5f);
-            track.Opacity = 0.5f;
+            track.Opacity = 0.7f;
 
             footprints[total_treads_placed] = this;
 
@@ -528,11 +528,11 @@ namespace WiiPlayTanksRemake.GameContent
         public void Render()
         {
             lifeTime++;
-            // Vector3 scale = alternate ? new(0.5f, 1f, 0.35f) : new(0.5f, 1f, 0.075f);
 
             track.position = Position;
-            track.pitch = rotation;
+            track.Pitch = rotation;
             track.color = Color.White;
+            // Vector3 scale = alternate ? new(0.5f, 1f, 0.35f) : new(0.5f, 1f, 0.075f);
             // [0.0, 1.1, 1.5, 0.5]
             // [0.0, 0.1, 0.8, 0.0]
             // [0.0, 0.5, 1.2, 1.0]
@@ -639,14 +639,15 @@ namespace WiiPlayTanksRemake.GameContent
 
             check = ParticleSystem.MakeParticle(Position + new Vector3(0, 0.1f, 0), texture);
             check.isAddative = false;
-            check.roll = -MathHelper.PiOver2;
+            check.Roll = -MathHelper.PiOver2;
 
             deathMarks[total_death_marks] = this;
         }
+
         public void Render()
         {
             check.position = Position;
-            check.Scale = new(0.65f);
+            check.Scale = new(0.6f);
         }
     }
 

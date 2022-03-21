@@ -16,9 +16,9 @@ namespace WiiPlayTanksRemake.GameContent
 
         public Color color = Color.White;
 
-        public float roll;
-        public float pitch;
-        public float yaw;
+        public float Roll;
+        public float Pitch;
+        public float Yaw;
 
         public float Opacity = 1f;
 
@@ -67,7 +67,7 @@ namespace WiiPlayTanksRemake.GameContent
         {
             if (!is2d)
             {
-                effect.World = Matrix.CreateScale(Scale) * Matrix.CreateRotationX(roll) * Matrix.CreateRotationY(pitch) * Matrix.CreateRotationZ(yaw) * Matrix.CreateTranslation(position);
+                effect.World = Matrix.CreateScale(Scale) * Matrix.CreateRotationX(Roll) * Matrix.CreateRotationY(Pitch) * Matrix.CreateRotationZ(Yaw) * Matrix.CreateTranslation(position);
                 effect.View = TankGame.GameView;
                 effect.Projection = TankGame.GameProjection;
                 effect.TextureEnabled = true;

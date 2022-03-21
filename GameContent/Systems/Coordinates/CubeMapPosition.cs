@@ -62,7 +62,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems.Coordinates
             var invarY = (int)MathF.Round(origPos.Z + GameUtils.GetWorldPosition(GameUtils.MousePosition).Z % Block.FULL_BLOCK_SIZE, 1);
             var invar = new CubeMapPosition(invarX, invarY);
 
-            Systems.ChatSystem.SendMessage(invar, Color.White);
+            ChatSystem.SendMessage(invar, Color.White);
 
             return invar;
 

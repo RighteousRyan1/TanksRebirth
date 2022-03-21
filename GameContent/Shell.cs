@@ -134,7 +134,7 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 _flame = ParticleSystem.MakeParticle(Position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit_half"));
 
-                _flame.roll = -MathHelper.PiOver2;
+                _flame.Roll = -MathHelper.PiOver2;
                 _flame.Scale = new(0.5f, 0.125f, 0.4f);
                 _flame.color = Color.Orange;
                 _flame.isAddative = false;
@@ -166,10 +166,10 @@ namespace WiiPlayTanksRemake.GameContent
 
                     p.position = off.ExpandZ() + new Vector3(0, 11, 0);
 
-                    p.pitch = -rotation - MathHelper.PiOver2;
+                    p.Pitch = -rotation - MathHelper.PiOver2;
 
                     if (TankGame.GameUpdateTime % 2 == 0)
-                        p.roll = GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi);
+                        p.Roll = GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi);
                 };
             }
 
@@ -240,7 +240,7 @@ namespace WiiPlayTanksRemake.GameContent
                 p.Scale = new(0.4f);
                 p.color = new Color(50, 50, 50, 150);
 
-                p.roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
+                p.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
                 p.UniqueBehavior = (p) =>
                 {
@@ -290,7 +290,11 @@ namespace WiiPlayTanksRemake.GameContent
             if (owner is not null)
             {
                 if (owner.ShellType == ShellTier.RicochetRocket)
+                {
                     s.Pitch = GameHandler.GameRand.NextFloat(0.15f, 0.25f);
+                    var s2 = SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/ricochet_zip"), SoundContext.Effect, 0.05f);
+                    s2.Pitch = -0.65f;
+                }
                 else
                 {
                     s.Pitch = GameHandler.GameRand.NextFloat(-0.05f, 0.05f);
