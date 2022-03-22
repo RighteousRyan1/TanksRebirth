@@ -4,6 +4,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <PublishReadyToRun>false</PublishReadyToRun>
     <TieredCompilation>false</TieredCompilation>
+    <AssemblyVersion>1.1.0.0</AssemblyVersion>
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationManifest>app.manifest</ApplicationManifest>

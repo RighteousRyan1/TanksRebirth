@@ -26,8 +26,6 @@ using WiiPlayTanksRemake.Internals.Common.Framework.Graphics;
 using WiiPlayTanksRemake.GameContent.Systems;
 using WiiPlayTanksRemake.Net;
 
-[assembly: AssemblyVersion("1.1.0.0")]
-[assembly: AssemblyFileVersion("1.1.0.0")]
 namespace WiiPlayTanksRemake
 {
     // TODO: Implement block once all of above things are done
