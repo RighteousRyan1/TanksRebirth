@@ -21,9 +21,34 @@ using tainicom.Aether.Physics2D.Controllers;
 
 namespace WiiPlayTanksRemake.GameContent
 {
+    public struct TankTemplate
+    {
+        /// <summary>If false, the template will contain data for an AI tank.</summary>
+        public bool IsPlayer;
+
+        public TankTier AiTier;
+        public PlayerType PlayerType;
+
+        public AITank GetAiTank()
+        {
+            if (IsPlayer)
+                throw new Exception($"{nameof(PlayerType)} was true! This method cannot execute.");
+
+            var ai = new AITank(AiTier, true, true);
+            return ai;
+        }
+        public PlayerTank GetPlayerTank()
+        {
+            if (!IsPlayer)
+                throw new Exception($"{nameof(PlayerType)} was true! This method cannot execute.");
+
+            var player = new PlayerTank(PlayerType);
+            return player;
+        }
+    }
     public abstract class Tank
     {
-        public static World CollisionsWorld = new World(Vector2.Zero);
+        public static World CollisionsWorld = new(Vector2.Zero);
         public const float TNK_WIDTH = 25;
         public const float TNK_HEIGHT = 25;
         #region Fields / Properties

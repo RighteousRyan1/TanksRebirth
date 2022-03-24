@@ -8,12 +8,15 @@ using System.Threading.Tasks;
 using WiiPlayTanksRemake.Enums;
 using WiiPlayTanksRemake.GameContent.Systems.Coordinates;
 using WiiPlayTanksRemake.Internals;
+using WiiPlayTanksRemake.Internals.Common.Utilities;
 
 namespace WiiPlayTanksRemake.GameContent.Systems
 {
     /// <summary>A campaign for players to play on with <see cref="AITank"/>s, or even <see cref="PlayerTank"/>s if supported.</summary>
     public class Campaign
     {
+        public static string[] GetCampaignNames()
+            => IOUtils.GetSubFolders(Path.Combine(TankGame.SaveDirectory, "Campaigns"), true);
         public static void LoadFromFolder(string campaignName)
         {
             var root = Path.Combine(TankGame.SaveDirectory, "Campaigns");
@@ -36,9 +39,9 @@ namespace WiiPlayTanksRemake.GameContent.Systems
                 return;
             }
         }
-        // TODO: for cuno since he likes I/O. (maybe ref https://github.com/RighteousRyan1/BaselessJumping/blob/master/GameContent/Stage.cs#L34 if you want)
+        // TODO: maybe ref https://github.com/RighteousRyan1/BaselessJumping/blob/master/GameContent/Stage.cs#L34 (cuno abandoned the project)
 
-        public static void LoadMissionFromFile(string missionName)
+        public static void LoadMissionFromFile(string campaignName, string missionName)
         {
 
         }
@@ -87,38 +90,48 @@ namespace WiiPlayTanksRemake.GameContent.Systems
             for (int a = 0; a < GameHandler.AllTanks.Length; a++)
                 GameHandler.AllTanks[a]?.RemoveSilently();
 
-            for (int i = 0; i < CurrentMission.Tanks.Length; i++)
+            if (spawnNewSet)
             {
-                var tier = CurrentMission.Tanks[i];
-
-                var tank = new AITank(tier);
-
-                tank.Position = CurrentMission.SpawnPositions[i];
-                tank.TankRotation = CurrentMission.SpawnOrientations[i];
-                //if (tier is AITank ai) // redundant for now.
-                    //ai.targetTankRotation = CurrentMission.SpawnOrientations[i] + MathHelper.Pi;
-                tank.TargetTankRotation = CurrentMission.SpawnOrientations[i] + MathHelper.Pi;
-                tank.TurretRotation = -CurrentMission.SpawnOrientations[i];
-                tank.Dead = false;
-
-                GameHandler.AllTanks[i] = tank;
-
-                // GameHandler.ClientLog.Write($"loaded: {(tnk as AITank).tier}", LogType.Debug);
-            }
-
-            if (CurrentMission.Cubes.Length > 0)
-            {
-                for (int a = 0; a < Block.blocks.Length; a++)
-                    Block.blocks[a] = null;
-
-                for (int b = 0; b < CurrentMission.Cubes.Length; b++)
+                for (int i = 0; i < CurrentMission.Tanks.Length; i++)
                 {
-                    var cube = CurrentMission.Cubes[b];
+                    var template = CurrentMission.Tanks[i];
 
-                    cube.Position = CurrentMission.CubePositions[b];
+                    if (!template.IsPlayer)
+                    {
+                        var tank = template.GetAiTank();
+
+                        tank.Position = CurrentMission.SpawnPositions[i];
+                        tank.TankRotation = CurrentMission.SpawnOrientations[i];
+                        tank.TargetTankRotation = CurrentMission.SpawnOrientations[i] + MathHelper.Pi;
+                        tank.TurretRotation = -CurrentMission.SpawnOrientations[i];
+                        tank.Dead = false;
+                    }
+                    else
+                    {
+                        var tank = template.GetPlayerTank();
+
+                        tank.Position = CurrentMission.SpawnPositions[i];
+                        tank.TankRotation = CurrentMission.SpawnOrientations[i];
+                        tank.Dead = false;
+                    }
+
+                    // GameHandler.ClientLog.Write($"loaded: {(tnk as AITank).tier}", LogType.Debug);
+                }
+
+                if (CurrentMission.Cubes.Length > 0)
+                {
+                    for (int a = 0; a < Block.blocks.Length; a++)
+                        Block.blocks[a] = null;
+
+                    for (int b = 0; b < CurrentMission.Cubes.Length; b++)
+                    {
+                        var cube = CurrentMission.Cubes[b];
+
+                        cube.Position = CurrentMission.CubePositions[b];
 
 
-                    Block.blocks[b] = cube;
+                        Block.blocks[b] = cube;
+                    }
                 }
             }
             GameHandler.ClientLog.Write($"Loaded mission '{CurrentMission.Name}' with {CurrentMission.Tanks.Length} tanks and {CurrentMission.Cubes.Length} obstacles.", LogType.Info);
@@ -134,7 +147,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems
 
         public string Name { get; set; }
         /// <summary>The <see cref="Tank"/>s that will be spawned.</summary>
-        public TankTier[] Tanks { get; }
+        public TankTemplate[] Tanks { get; }
 
         /// <summary>The position of the spawned <see cref="Tank"/>s.</summary>
         public Vector2[] SpawnPositions { get; }
@@ -147,7 +160,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems
 
         public CubeMapPosition[] CubePositions { get; }
 
-        public Mission(TankTier[] tanks, Vector2[] spawnPositions, float[] spawnOrientations, Block[] obstacles, CubeMapPosition[] cubePositions)
+        public Mission(TankTemplate[] tanks, Vector2[] spawnPositions, float[] spawnOrientations, Block[] obstacles, CubeMapPosition[] cubePositions)
         {
             Name = "N/A";
 

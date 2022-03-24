@@ -2,9 +2,6 @@
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using WiiPlayTanksRemake.Graphics;
 using WiiPlayTanksRemake.Internals;
 using WiiPlayTanksRemake.Internals.Common;
@@ -15,6 +12,12 @@ namespace WiiPlayTanksRemake.GameContent.Systems.Coordinates
 {
     public class PlacementSquare
     {
+        // Drag-and-Drop
+        public static bool IsPlacing { get; private set; }
+
+
+        public bool HasBlock => _blockId > -1;
+
         public static PlacementSquare CurrentlyHovered;
 
         public static bool displayHeights = true;
@@ -53,17 +56,15 @@ namespace WiiPlayTanksRemake.GameContent.Systems.Coordinates
                     {
                         _onClick = (place) =>
                         {
-                            if (place._blockId <= -1)
+                            if (!place.HasBlock)
                             {
-                                ChatSystem.SendMessage("Added!", Color.Red);
-                                var cube = new Block((Block.BlockType)GameHandler.BlockType, GameHandler.CubeHeight, place.Position.FlattenZ());
-                                place._blockId = cube.worldId;
+                                ChatSystem.SendMessage("Added!", Color.Lime);
+                                place.DoBlockAction(true);
                             }
                             else
                             {
                                 ChatSystem.SendMessage("Removed!", Color.Red);
-                                Block.blocks[place._blockId].SilentRemove();
-                                place._blockId = -1;
+                                place.DoBlockAction(false);
                             }
                         }
                     };
@@ -71,6 +72,28 @@ namespace WiiPlayTanksRemake.GameContent.Systems.Coordinates
             }
         }
         // TODO: need a sound for placement
+
+        /// <summary>
+        /// Does default block placement/removal.
+        /// </summary>
+        /// <param name="place">Whether or not to place the block or remove the block. If false, the block is removed.</param>
+        public void DoBlockAction(bool place)
+        {
+            if (place)
+            {
+                var cube = new Block((Block.BlockType)GameHandler.BlockType, GameHandler.CubeHeight, Position.FlattenZ());
+                _blockId = cube.worldId;
+
+                IsPlacing = true;
+            }
+            else
+            {
+                Block.blocks[_blockId].SilentRemove();
+                _blockId = -1;
+
+                IsPlacing = false;
+            }
+        }
         public void Update()
         {
             if (IsHovered)
@@ -78,6 +101,27 @@ namespace WiiPlayTanksRemake.GameContent.Systems.Coordinates
                 CurrentlyHovered = this;
                 if (Input.CanDetectClick())
                     _onClick?.Invoke(this);
+
+                if (IsHovered)
+                {
+                    if (Input.MouseLeft)
+                    {
+                        if (IsPlacing)
+                        {
+                            if (!HasBlock)
+                            {
+                                DoBlockAction(true);
+                            }
+                        }
+                        else
+                        {
+                            if (HasBlock)
+                            {
+                                DoBlockAction(false);
+                            }
+                        }
+                    }
+                }
             }
 
             if (_blockId > -1)

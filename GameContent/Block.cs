@@ -26,7 +26,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         public BlockType Type { get; set; }
 
-        public static Block[] blocks = new Block[CubeMapPosition.MAP_WIDTH * CubeMapPosition.MAP_HEIGHT];
+        public static Block[] blocks = new Block[CubeMapPosition.MAP_WIDTH * CubeMapPosition.MAP_HEIGHT * 5];
 
         public Vector2 Position;
         public Vector3 Position3D => Position.ExpandZ();
