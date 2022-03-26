@@ -455,8 +455,8 @@ namespace WiiPlayTanksRemake.GameContent.UI
             Theme.volume = 0.5f;
             Theme.Play();
 
-            foreach (var block in Block.blocks)
-                block?.SilentRemove();
+            foreach (var block in Block.AllBlocks)
+                block?.Remove();
 
             if (GameHandler.ClearTracks is not null)
                 GameHandler.ClearTracks.OnLeftClick?.Invoke(null);
@@ -556,7 +556,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
         {
             for (int i = 0; i < tanks.Count; i++)
             {
-                tanks[i].RemoveSilently();
+                tanks[i].Remove();
             }
         }
 

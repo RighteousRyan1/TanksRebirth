@@ -181,11 +181,11 @@ namespace WiiPlayTanksRemake.GameContent
             oldPosition = Position;
         }
 
-        public override void RemoveSilently()
+        public override void Remove()
         {
             GameHandler.AllPlayerTanks[PlayerId] = null;
             GameHandler.AllTanks[WorldId] = null;
-            base.RemoveSilently();
+            base.Remove();
         }
 
         /// <summary>

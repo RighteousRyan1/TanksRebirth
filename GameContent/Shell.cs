@@ -187,7 +187,7 @@ namespace WiiPlayTanksRemake.GameContent
 
             Collision.HandleCollisionSimple_ForBlocks(hitbox, Velocity2D, ref dummy, out var dir, out var block, false, (c) => c.IsSolid);
 
-            if (lifeTime <= 5 && Block.blocks.Any(cu => cu is not null && cu.collider2d.Intersects(hitbox) && cu.IsSolid))
+            if (lifeTime <= 5 && Block.AllBlocks.Any(cu => cu is not null && cu.collider2d.Intersects(hitbox) && cu.IsSolid))
                 Destroy(false);
 
             switch (dir)

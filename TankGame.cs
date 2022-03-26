@@ -272,7 +272,7 @@ namespace WiiPlayTanksRemake
         public const float DEFAULT_ORTHOGRAPHIC_ANGLE = 0.75f;
         internal static Vector2 CameraRotationVector = new(0, DEFAULT_ORTHOGRAPHIC_ANGLE);
 
-        public const float DEFAULT_ZOOM = 3.43f;
+        public const float DEFAULT_ZOOM = 3.3f;
         internal static float AddativeZoom = 1f;
 
         internal static Vector2 CameraFocusOffset;

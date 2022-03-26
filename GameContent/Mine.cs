@@ -261,7 +261,7 @@ namespace WiiPlayTanksRemake.GameContent
                 if (mine is not null && Vector2.Distance(mine.Position, Position) <= scale * 9) // magick
                     mine.Detonate();
             }
-            foreach (var cube in Block.blocks)
+            foreach (var cube in Block.AllBlocks)
             {
                 if (cube is not null && Vector2.Distance(cube.Position, Position) <= scale * 9 && cube.IsDestructible)
                     cube.Destroy();

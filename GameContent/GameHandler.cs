@@ -80,7 +80,7 @@ namespace WiiPlayTanksRemake.GameContent
             foreach (var pu in Powerup.activePowerups)
                 pu?.Update(); 
 
-            foreach (var cube in Block.blocks)
+            foreach (var cube in Block.AllBlocks)
                 cube?.Update();
 
             if (TankGame.OverheadView)
@@ -101,7 +101,7 @@ namespace WiiPlayTanksRemake.GameContent
                 DebugUtils.DebugLevel--;
 
             if (!TankGame.OverheadView && _wasOverhead)
-                RestartMission(null);
+                BeginIntroSequence();
 
             if (TankGame.OverheadView || MainMenu.Active)
             {
@@ -156,16 +156,16 @@ namespace WiiPlayTanksRemake.GameContent
             if (Input.KeyJustPressed(Keys.End))
                 SpawnCrateAtMouse();
 
-            if (Input.KeyJustPressed(Keys.I))
+            if (Input.KeyJustPressed(Keys.I) && DebugUtils.DebugLevel == 4)
                 new Powerup(powerups[mode]) { Position = GameUtils.GetWorldPosition(GameUtils.MousePosition).FlattenZ() };
 
             CubeHeight = MathHelper.Clamp(CubeHeight, 1, 7);
-            BlockType = MathHelper.Clamp(BlockType, 1, 3);
+            BlockType = MathHelper.Clamp(BlockType, 0, 2);
 
             _wasOverhead = TankGame.OverheadView;
         }
 
-        public static int BlockType = 1;
+        public static int BlockType = 0;
         public static int CubeHeight = 1;
         public static int tankToSpawnType;
         public static int tankToSpawnTeam;
@@ -177,7 +177,7 @@ namespace WiiPlayTanksRemake.GameContent
             if (!MainMenu.Active)
                 MapRenderer.RenderWorldModels();
 
-            foreach (var cube in Block.blocks)
+            foreach (var cube in Block.AllBlocks)
                 cube?.Render();
 
             foreach (var tank in AllPlayerTanks)
@@ -237,7 +237,7 @@ namespace WiiPlayTanksRemake.GameContent
             DebugUtils.DrawDebugString(TankGame.spriteBatch, "Spawn Tank With Info:", GameUtils.WindowTop + new Vector2(0, 8), 1, centered: true);
             DebugUtils.DrawDebugString(TankGame.spriteBatch, $"Tier: {Enum.GetNames<TankTier>()[tankToSpawnType]}", GameUtils.WindowTop + new Vector2(0, 24), 1, centered: true);
             DebugUtils.DrawDebugString(TankGame.spriteBatch, $"Team: {Enum.GetNames<Team>()[tankToSpawnTeam]}", GameUtils.WindowTop + new Vector2(0, 40), 1, centered: true);
-            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"CubeStack: {CubeHeight} | CubeType: {Enum.GetNames<Block.BlockType>()[BlockType - 1]}", GameUtils.WindowBottom - new Vector2(0, 20), 3, centered: true);
+            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"CubeStack: {CubeHeight} | CubeType: {Enum.GetNames<Block.BlockType>()[BlockType]}", GameUtils.WindowBottom - new Vector2(0, 20), 3, centered: true);
 
             DebugUtils.DrawDebugString(TankGame.spriteBatch, $"HighestTier: {AITank.GetHighestTierActive()}", new(10, GameUtils.WindowHeight * 0.26f), 1);
             DebugUtils.DrawDebugString(TankGame.spriteBatch, $"CurSong: {(Music.AllMusic.FirstOrDefault(music => music.volume == 0.5f) != null ? Music.AllMusic.FirstOrDefault(music => music.volume == 0.5f).Name : "N/A")}", new(10, GameUtils.WindowHeight - 100), 1);
@@ -256,12 +256,15 @@ namespace WiiPlayTanksRemake.GameContent
 
             if (!MainMenu.Active)
             {
-                ClearTracks.IsVisible = DebugUtils.DebuggingEnabled;
-                ClearChecks.IsVisible = DebugUtils.DebuggingEnabled;
-                SetupMissionAgain.IsVisible = DebugUtils.DebuggingEnabled;
-                MovePULeft.IsVisible = DebugUtils.DebuggingEnabled;
-                MovePURight.IsVisible = DebugUtils.DebuggingEnabled;
-                Display.IsVisible = DebugUtils.DebuggingEnabled;
+                ClearTracks.IsVisible = DebugUtils.DebuggingEnabled && DebugUtils.DebugLevel == 0;
+                ClearChecks.IsVisible = DebugUtils.DebuggingEnabled && DebugUtils.DebugLevel == 0;
+                SetupMissionAgain.IsVisible = DebugUtils.DebuggingEnabled && DebugUtils.DebugLevel == 0;
+                MovePULeft.IsVisible = DebugUtils.DebuggingEnabled && DebugUtils.DebugLevel == 4;
+                MovePURight.IsVisible = DebugUtils.DebuggingEnabled && DebugUtils.DebugLevel == 4;
+                Display.IsVisible = DebugUtils.DebuggingEnabled && DebugUtils.DebugLevel == 4;
+                MissionName.IsVisible = DebugUtils.DebuggingEnabled && DebugUtils.DebugLevel == 3;
+                LoadMission.IsVisible = DebugUtils.DebuggingEnabled && DebugUtils.DebugLevel == 3;
+                SaveMission.IsVisible = DebugUtils.DebuggingEnabled && DebugUtils.DebugLevel == 3;
             }
             GameUI.MissionInfoBar.IsVisible = DebugUtils.DebuggingEnabled;
         }
@@ -319,7 +322,7 @@ namespace WiiPlayTanksRemake.GameContent
             var pos = TankGame.OverheadView ? PlacementSquare.CurrentlyHovered.Position : GameUtils.GetWorldPosition(GameUtils.MousePosition);
             var myTank = new PlayerTank(PlayerType.Blue)
             {
-                Team = Team.Red,
+                Team = (Team)tankToSpawnTeam,
                 // Position = pos.FlattenZ(),
                 Dead = false
             };
@@ -439,10 +442,40 @@ namespace WiiPlayTanksRemake.GameContent
 
         public static UITextButton Display;
 
+        public static UITextInput MissionName;
+        public static UITextButton LoadMission;
+        public static UITextButton SaveMission;
+
         private static int mode;
 
         public static void InitDebugUi()
         {
+            MissionName = new(TankGame.TextFont, Color.White, 0.75f, 20)
+            {
+                StringToDisplayWhenThereIsNoText = "Mission Name"
+            };
+            MissionName.SetDimensions(20, 60, 230, 50);
+
+            SaveMission = new("Save", TankGame.TextFont, Color.White, 0.5f);
+            SaveMission.OnLeftClick = (l) =>
+            {
+                if (MissionName.IsEmpty())
+                {
+                    ChatSystem.SendMessage("Invalid name for mission.", Color.Red);
+                    return;
+                }
+                Campaign.SaveMissionFile(MissionName.GetRealText(), null);
+            };
+            SaveMission.SetDimensions(20, 120, 105, 50);
+
+            LoadMission = new("Load", TankGame.TextFont, Color.White, 0.5f);
+            LoadMission.OnLeftClick = (l) =>
+            {
+                VanillaCampaign.LoadMission(Campaign.LoadMissionFile(MissionName.GetRealText(), null));
+                VanillaCampaign.SetupLoadedMission(true);
+            };
+            LoadMission.SetDimensions(145, 120, 105, 50);
+
             ClearTracks = new("Clear Tracks", TankGame.TextFont, Color.LightBlue, 0.5f);
             ClearTracks.SetDimensions(250, 25, 100, 50);
 
@@ -456,7 +489,7 @@ namespace WiiPlayTanksRemake.GameContent
             SetupMissionAgain = new("Restart\nMission", TankGame.TextFont, Color.LightBlue, 0.5f);
             SetupMissionAgain.SetDimensions(250, 165, 100, 50);
 
-            SetupMissionAgain.OnLeftClick += RestartMission;
+            SetupMissionAgain.OnLeftClick = (obj) => BeginIntroSequence();
 
             MovePULeft = new("<", TankGame.TextFont, Color.LightBlue, 0.5f);
             MovePULeft.SetDimensions(GameUtils.WindowWidth / 2 - 100, 25, 50, 50);
@@ -467,27 +500,18 @@ namespace WiiPlayTanksRemake.GameContent
             Display = new(powerups[mode].Name, TankGame.TextFont, Color.LightBlue, 0.5f);
             Display.SetDimensions(GameUtils.WindowWidth / 2 - 35, 25, 125, 50);
 
-            MovePULeft.OnLeftClick += MovePULeft_OnLeftClick;
-            MovePURight.OnLeftClick += MovePURight_OnLeftClick;
-        }
-
-        private static void MovePURight_OnLeftClick(UIElement obj)
-        {
-            if (mode < powerups.Length - 1)
-                mode++;
-            Display.Text = powerups[mode].Name;
-        }
-
-        private static void MovePULeft_OnLeftClick(UIElement obj)
-        {
-            if (mode > 0)
-                mode--;
-            Display.Text = powerups[mode].Name;
-        }
-
-        private static void RestartMission(UIElement affectedElement)
-        {
-            BeginIntroSequence();
+            MovePULeft.OnLeftClick = (obj) =>
+            {
+                if (mode < powerups.Length - 1)
+                    mode++;
+                Display.Text = powerups[mode].Name;
+            };
+            MovePURight.OnLeftClick = (obj) =>
+            {
+                if (mode > 0)
+                    mode--;
+                Display.Text = powerups[mode].Name;
+            };
         }
 
         private static void ClearTankDeathmarks(UIElement affectedElement)

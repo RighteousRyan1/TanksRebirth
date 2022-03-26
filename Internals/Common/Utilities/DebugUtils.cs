@@ -24,7 +24,8 @@ namespace WiiPlayTanksRemake.Internals.Common.Utilities
             "General",
             "TankStats",
             "UIElements",
-            "Powerups / Level Edit Debug"
+            "Level Edit Debug",
+            "Powerups"
         };
         public static void DrawDebugString(SpriteBatch sb, object info, Vector2 position, int level = 0, float scale = 1f, bool centered = false, Color color = default, bool beginSb = false)
         {

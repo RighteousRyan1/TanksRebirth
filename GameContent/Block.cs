@@ -14,19 +14,35 @@ using WiiPlayTanksRemake.Internals.Core.Interfaces;
 
 namespace WiiPlayTanksRemake.GameContent
 {
+    public struct BlockTemplate
+    {
+        public sbyte Stack;
+        public Block.BlockType Type;
+        public Vector2 Position;
+
+        public Block GetBlock()
+        {
+            Block c = new(Type, Stack, Position);
+
+            c.Position = Position;
+            c.Body.Position = Position;
+
+            return c;
+        }
+    }
     /// <summary>A class that is used for obstacles for <see cref="Tank"/>s.</summary>
     public class Block : IGameSystem
     {
-        public enum BlockType
+        public enum BlockType : byte
         {
-            Wood = 1,
-            Cork = 2,
-            Hole = 3
+            Wood,
+            Cork,
+            Hole
         }
 
         public BlockType Type { get; set; }
 
-        public static Block[] blocks = new Block[CubeMapPosition.MAP_WIDTH * CubeMapPosition.MAP_HEIGHT * 5];
+        public static Block[] AllBlocks = new Block[CubeMapPosition.MAP_WIDTH * CubeMapPosition.MAP_HEIGHT * 5];
 
         public Vector2 Position;
         public Vector3 Position3D => Position.ExpandZ();
@@ -44,9 +60,9 @@ namespace WiiPlayTanksRemake.GameContent
 
         public Texture2D meshTexture;
 
-        public int height;
+        public sbyte Stack;
 
-        public const int MAX_BLOCK_HEIGHT = 7;
+        public const sbyte MAX_BLOCK_HEIGHT = 7;
 
         public const float FULL_BLOCK_SIZE = 21.7f; // 24.5 = 0.7 | 21 = 0.6
         public const float SLAB_SIZE = 11.5142857114f; // 13 = 0.7 | 11.14285714 = 0.6
@@ -57,14 +73,14 @@ namespace WiiPlayTanksRemake.GameContent
 
         // 141 for normal
 
-        public int worldId;
+        public int Id;
 
         public bool IsDestructible { get; set; }
         public bool IsSolid { get; } = true;
 
         public bool AffectedByOffset { get; set; } = true;
 
-        private bool IsAlternateModel => height == 3 || height == 6;
+        private bool IsAlternateModel => Stack == 3 || Stack == 6;
 
         public Block(BlockType type, int height, Vector2 position)
         {
@@ -76,7 +92,7 @@ namespace WiiPlayTanksRemake.GameContent
                 _ => null
             };
 
-            this.height = MathHelper.Clamp(height, 0, 7); // if 0, it will be a hole.
+            Stack = (sbyte)MathHelper.Clamp(height, 0, 7); // if 0, it will be a hole.
 
             switch (type)
             {
@@ -111,19 +127,19 @@ namespace WiiPlayTanksRemake.GameContent
 
             // TODO: Finish collisions
 
-            int index = Array.IndexOf(blocks, blocks.First(cube => cube is null));
+            int index = Array.IndexOf(AllBlocks, AllBlocks.First(cube => cube is null));
 
-            worldId = index;
+            Id = index;
 
-            blocks[index] = this;
+            AllBlocks[index] = this;
         }
 
-        public void SilentRemove()
+        public void Remove()
         {
             Tank.CollisionsWorld.Remove(Body);
             // blah blah particle chunk thingy
 
-            blocks[worldId] = null;
+            AllBlocks[Id] = null;
         }
 
         public void Destroy()
@@ -161,7 +177,7 @@ namespace WiiPlayTanksRemake.GameContent
                 };
             }
 
-            blocks[worldId] = null;
+            AllBlocks[Id] = null;
         }
 
         public void Render()
@@ -195,7 +211,7 @@ namespace WiiPlayTanksRemake.GameContent
             if (AffectedByOffset)
             {
                 var newFullSize = FULL_SIZE;
-                switch (height)
+                switch (Stack)
                 {
                     case 1:
                         offset = new(0, newFullSize - FULL_BLOCK_SIZE, 0);

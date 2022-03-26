@@ -111,7 +111,7 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 var pos = GeometryUtils.ConvertWorldToScreen(default, Matrix.CreateTranslation(Position.ExpandZ()), TankGame.GameView, TankGame.GameProjection);
 
-                DebugUtils.DrawDebugString(TankGame.spriteBatch, this, pos, 3, centered: true);
+                DebugUtils.DrawDebugString(TankGame.spriteBatch, this, pos, 4, centered: true);
 
                 TankGame.spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), GeometryUtils.CreateRectangleFromCenter((int)pos.X, (int)pos.Y, 25, 25), Color.White * 0.9f);
             }
@@ -119,7 +119,7 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 var pos = GeometryUtils.ConvertWorldToScreen(default, AffectedTank.World, TankGame.GameView, TankGame.GameProjection);
 
-                DebugUtils.DrawDebugString(TankGame.spriteBatch, this, pos, 3, centered: true);
+                DebugUtils.DrawDebugString(TankGame.spriteBatch, this, pos, 4, centered: true);
             }
         }
         /// <summary>

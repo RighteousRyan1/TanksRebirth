@@ -29,12 +29,20 @@ namespace WiiPlayTanksRemake.GameContent
         public TankTier AiTier;
         public PlayerType PlayerType;
 
+        public Vector2 Position;
+
+        public float Rotation;
+
+        public Team Team;
+
         public AITank GetAiTank()
         {
             if (IsPlayer)
                 throw new Exception($"{nameof(PlayerType)} was true! This method cannot execute.");
 
             var ai = new AITank(AiTier, true, true);
+            ai.Body.Position = Position;
+            ai.Position = Position;
             return ai;
         }
         public PlayerTank GetPlayerTank()
@@ -43,6 +51,8 @@ namespace WiiPlayTanksRemake.GameContent
                 throw new Exception($"{nameof(PlayerType)} was true! This method cannot execute.");
 
             var player = new PlayerTank(PlayerType);
+            player.Body.Position = Position;
+            player.Position = Position;
             return player;
         }
     }
@@ -431,7 +441,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         public bool IsIngame { get; set; } = true;
 
-        public virtual void RemoveSilently() 
+        public virtual void Remove() 
         { 
             Dead = true;
             if (CollisionsWorld.BodyList.Contains(Body))

@@ -16,7 +16,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems.Coordinates
         public static bool IsPlacing { get; private set; }
 
 
-        public bool HasBlock => _blockId > -1;
+        public bool HasBlock => CurrentBlockId > -1;
 
         public static PlacementSquare CurrentlyHovered;
 
@@ -24,7 +24,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems.Coordinates
 
         internal static List<PlacementSquare> Placements = new();
 
-        public Vector3 Position { get; private set; }
+        public Vector3 Position { get; set; }
 
         private BoundingBox _box;
 
@@ -32,7 +32,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems.Coordinates
 
         public bool IsHovered => GameUtils.GetMouseToWorldRay().Intersects(_box).HasValue;
 
-        private int _blockId = -1;
+        public int CurrentBlockId = -1;
 
         private Action<PlacementSquare> _onClick = null;
 
@@ -82,14 +82,14 @@ namespace WiiPlayTanksRemake.GameContent.Systems.Coordinates
             if (place)
             {
                 var cube = new Block((Block.BlockType)GameHandler.BlockType, GameHandler.CubeHeight, Position.FlattenZ());
-                _blockId = cube.worldId;
+                CurrentBlockId = cube.Id;
 
                 IsPlacing = true;
             }
             else
             {
-                Block.blocks[_blockId].SilentRemove();
-                _blockId = -1;
+                Block.AllBlocks[CurrentBlockId].Remove();
+                CurrentBlockId = -1;
 
                 IsPlacing = false;
             }
@@ -124,9 +124,9 @@ namespace WiiPlayTanksRemake.GameContent.Systems.Coordinates
                 }
             }
 
-            if (_blockId > -1)
-                if (Block.blocks[_blockId] is null)
-                    _blockId = -1;
+            if (CurrentBlockId > -1)
+                if (Block.AllBlocks[CurrentBlockId] is null)
+                    CurrentBlockId = -1;
         }
 
         public void Render()
@@ -139,19 +139,19 @@ namespace WiiPlayTanksRemake.GameContent.Systems.Coordinates
                     effect.View = TankGame.GameView;
                     effect.Projection = TankGame.GameProjection;
 
-                    if (_blockId > -1)
-                        if (displayHeights && Block.blocks[_blockId] is not null)
+                    if (CurrentBlockId > -1)
+                        if (displayHeights && Block.AllBlocks[CurrentBlockId] is not null)
                         {
                             var pos = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
                             for (int i = 0; i < 4; i++)
-                                TankGame.spriteBatch.DrawString(TankGame.TextFont, $"{Block.blocks[_blockId].height}", pos + new Vector2(0, 2f).RotatedByRadians(MathHelper.PiOver2 * i + MathHelper.PiOver4), 
-                                    Color.Black, new(1f), 0f, TankGame.TextFont.MeasureString($"{Block.blocks[_blockId].height}") / 2);
+                                TankGame.spriteBatch.DrawString(TankGame.TextFont, $"{Block.AllBlocks[CurrentBlockId].Stack}", pos + new Vector2(0, 2f).RotatedByRadians(MathHelper.PiOver2 * i + MathHelper.PiOver4), 
+                                    Color.Black, new(1f), 0f, TankGame.TextFont.MeasureString($"{Block.AllBlocks[CurrentBlockId].Stack}") / 2);
 
 
                             pos = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
 
-                            TankGame.spriteBatch.DrawString(TankGame.TextFont, $"{Block.blocks[_blockId].height}", pos, 
-                                Color.White, new(1f), 0f, TankGame.TextFont.MeasureString($"{Block.blocks[_blockId].height}") / 2);
+                            TankGame.spriteBatch.DrawString(TankGame.TextFont, $"{Block.AllBlocks[CurrentBlockId].Stack}", pos, 
+                                Color.White, new(1f), 0f, TankGame.TextFont.MeasureString($"{Block.AllBlocks[CurrentBlockId].Stack}") / 2);
                         }
 
                     effect.TextureEnabled = true;

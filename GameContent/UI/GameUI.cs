@@ -169,7 +169,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
                     MainMenu.Open();
                     foreach (var t in GameHandler.AllTanks)
                         if (t.IsIngame)
-                            t.RemoveSilently();
+                            t.Remove();
                 }
                 else
                 {

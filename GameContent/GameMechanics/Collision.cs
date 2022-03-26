@@ -166,7 +166,7 @@ namespace WiiPlayTanksRemake.GameContent.GameMechanics
 
         public static void HandleCollisionSimple_ForBlocks(Rectangle movingBox, Vector2 velocity, ref Vector2 position, out CollisionDirection direction, out Block.BlockType type, bool setpos = true, Func<Block, bool> exclude = null)
         {
-            type = (Block.BlockType)999999;
+            type = (Block.BlockType)255;
             direction = CollisionDirection.None;
             var offset = velocity;
 
@@ -174,7 +174,7 @@ namespace WiiPlayTanksRemake.GameContent.GameMechanics
 
             collisionInfo.Value = 1f;
 
-            foreach (var cube in Block.blocks)
+            foreach (var cube in Block.AllBlocks)
             {
                 if (cube is not null)
                 {

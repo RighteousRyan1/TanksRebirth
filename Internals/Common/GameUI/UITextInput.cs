@@ -25,7 +25,7 @@ namespace WiiPlayTanksRemake.Internals.Common.GameUI
             MaxLength = maxLength;
             Id = AllUIElements.IndexOf(AllUIElements.Find(x => x == this));
         }
-
+        public string GetRealText() => IsEmpty() ? "" : Text;
         public override void Draw(SpriteBatch spriteBatch)
         {
             // spriteBatch.DrawString(Font, Text, Position, Color, new Vector2(Scale));

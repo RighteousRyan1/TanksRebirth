@@ -1590,11 +1590,11 @@ namespace WiiPlayTanksRemake.GameContent
             }
         }
 
-        public override void RemoveSilently()
+        public override void Remove()
         {
             GameHandler.AllAITanks[AITankId] = null;
             GameHandler.AllTanks[WorldId] = null;
-            base.RemoveSilently();
+            base.Remove();
         }
 
         public override void LayMine()
@@ -1691,7 +1691,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                 void resetIterations() { if (doBounceReset) uninterruptedIterations = 0; }
 
-                if (i == 0 && Block.blocks.Any(x => x is not null && x.collider2d.Intersects(pathHitbox)))
+                if (i == 0 && Block.AllBlocks.Any(x => x is not null && x.collider2d.Intersects(pathHitbox)))
                 {
                     rayEndpoint = pathPos;
                     return tanks;
@@ -1839,7 +1839,7 @@ namespace WiiPlayTanksRemake.GameContent
                         if (tank != this && tank is not null && !tank.Dead && Vector2.Distance(tank.Position, Position) <= AiParams.TeammateTankWariness)
                             tanksNearMe.Add(tank);
 
-                    foreach (var block in Block.blocks)
+                    foreach (var block in Block.AllBlocks)
                         if (block is not null && Vector2.Distance(Position, block.Position) < AiParams.BlockWarinessDistance)
                             cubesNearMe.Add(block);
 
