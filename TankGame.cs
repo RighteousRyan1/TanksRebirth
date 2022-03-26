@@ -150,7 +150,9 @@ namespace WiiPlayTanksRemake
 
         public TankGame() : base()
         {
-            graphics = new(this);
+            graphics = new(this) { PreferHalfPixelOffset = true };
+            graphics.HardwareModeSwitch = false;
+
 
             Content.RootDirectory = "Content";
             Instance = this;

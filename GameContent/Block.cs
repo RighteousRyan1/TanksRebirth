@@ -48,12 +48,12 @@ namespace WiiPlayTanksRemake.GameContent
 
         public const int MAX_BLOCK_HEIGHT = 7;
 
-        public const float FULL_BLOCK_SIZE = 21f; // 24.5
-        public const float SLAB_SIZE = 11.14285714f; // 13
+        public const float FULL_BLOCK_SIZE = 21.7f; // 24.5 = 0.7 | 21 = 0.6
+        public const float SLAB_SIZE = 11.5142857114f; // 13 = 0.7 | 11.14285714 = 0.6
 
         // 36, 18 respectively for normal size
 
-        public const float FULL_SIZE = 86.4f; // 100.8
+        public const float FULL_SIZE = 89.28f; // 100.8 = 0.7 | 86.4 = 0.6
 
         // 141 for normal
 
@@ -223,7 +223,7 @@ namespace WiiPlayTanksRemake.GameContent
             else
                 offset.Y -= 0.05f;
 
-            World = Matrix.CreateScale(0.6f) * Matrix.CreateTranslation(Position3D - offset);
+            World = Matrix.CreateScale(0.62f) * Matrix.CreateTranslation(Position3D - offset);
             Projection = TankGame.GameProjection;
             View = TankGame.GameView;
         }

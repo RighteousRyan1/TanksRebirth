@@ -141,7 +141,18 @@ namespace WiiPlayTanksRemake.GameContent.Systems.Coordinates
 
                     if (_blockId > -1)
                         if (displayHeights && Block.blocks[_blockId] is not null)
-                            TankGame.spriteBatch.DrawString(TankGame.TextFont, $"{Block.blocks[_blockId].height}", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection), Color.White, new(1f), 0f, TankGame.TextFont.MeasureString($"{Block.blocks[_blockId].height}") / 2);
+                        {
+                            var pos = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
+                            for (int i = 0; i < 4; i++)
+                                TankGame.spriteBatch.DrawString(TankGame.TextFont, $"{Block.blocks[_blockId].height}", pos + new Vector2(0, 2f).RotatedByRadians(MathHelper.PiOver2 * i + MathHelper.PiOver4), 
+                                    Color.Black, new(1f), 0f, TankGame.TextFont.MeasureString($"{Block.blocks[_blockId].height}") / 2);
+
+
+                            pos = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
+
+                            TankGame.spriteBatch.DrawString(TankGame.TextFont, $"{Block.blocks[_blockId].height}", pos, 
+                                Color.White, new(1f), 0f, TankGame.TextFont.MeasureString($"{Block.blocks[_blockId].height}") / 2);
+                        }
 
                     effect.TextureEnabled = true;
                     effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
