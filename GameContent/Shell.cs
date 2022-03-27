@@ -348,7 +348,9 @@ namespace WiiPlayTanksRemake.GameContent
                 }
             }
         }
-        public void RemoveSilently() => AllShells[worldId] = null;
+        public void Remove() {
+            AllShells[worldId] = null;
+        }
         /// <summary>
         /// Destroys this <see cref="Shell"/>.
         /// </summary>
@@ -375,7 +377,7 @@ namespace WiiPlayTanksRemake.GameContent
                 if (owner.ShellType == ShellTier.Explosive)
                     new Explosion(Position2D, 7f, 0.25f);
 
-            AllShells[worldId] = null;
+            Remove();
         }
 
         internal void Render()

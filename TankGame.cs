@@ -89,6 +89,10 @@ namespace WiiPlayTanksRemake
         internal static float GetInterpolatedFloat(float value)
             => value * (float)LastGameTime.ElapsedGameTime.TotalSeconds;
 
+        public const int LevelEditorVersion = 1;
+
+        public static readonly byte[] LevelFileHeader = { 84, 65, 78, 75 };
+
         public static Camera GameCamera;
 
         public static string SysGPU = $"GPU: {GetGPU()}";
@@ -307,7 +311,77 @@ namespace WiiPlayTanksRemake
                 if (!_wasActive && IsActive)
                     OnFocusRegained?.Invoke(this, Window.Handle);
 
-                if (!GameUI.Paused && !MainMenu.Active)
+                if (Input.KeyJustPressed(Keys.J))
+                {
+                    transitionTimer = 100;
+                    OverheadView = !OverheadView;
+                }
+                if (!FirstPerson)
+                {
+                    if (transitionTimer > 0)
+                    {
+                        transitionTimer--;
+                        if (OverheadView)
+                        {
+                            GameUtils.SoftStep(ref CameraRotationVector.Y, MathHelper.PiOver2, 0.08f);
+                            GameUtils.SoftStep(ref AddativeZoom, 0.7f, 0.08f);
+                            GameUtils.RoughStep(ref CameraFocusOffset.Y, 82f, 2f);
+                        }
+                        else
+                        {
+                            GameUtils.SoftStep(ref CameraRotationVector.Y, DEFAULT_ORTHOGRAPHIC_ANGLE, 0.08f);
+                            GameUtils.SoftStep(ref AddativeZoom, 1f, 0.08f);
+                            GameUtils.RoughStep(ref CameraFocusOffset.Y, 0f, 2f);
+                        }
+                    }
+                    else
+                    {
+                        GameUtils.GetMouseVelocity(GameUtils.WindowCenter);
+                    }
+
+                    GameCamera.SetPosition(new Vector3(0, 0, 350));
+                    GameCamera.SetLookAt(new Vector3(0, 0, 0));
+                    GameCamera.Zoom(DEFAULT_ZOOM * AddativeZoom);
+
+                    GameCamera.RotateX(CameraRotationVector.Y);
+                    GameCamera.RotateY(CameraRotationVector.X);
+
+                    GameCamera.SetCameraType(CameraType.Orthographic);
+
+                    GameCamera.Translate(new Vector3(CameraFocusOffset.X, -CameraFocusOffset.Y + 40, 0));
+
+                    GameCamera.SetViewingDistances(-2000f, 5000f);
+                }
+                else
+                {
+                    Vector3 pos = Vector3.Zero;
+                    var x = GameHandler.AllAITanks.FirstOrDefault(x => x is not null && !x.Dead);
+
+                    if (x is not null && Array.IndexOf(GameHandler.AllAITanks, x) > -1)
+                    {
+                        pos = x.Position3D;
+                        var t = GameUtils.MousePosition.X / GameUtils.WindowWidth;
+                        GameCamera.Zoom(DEFAULT_ZOOM * AddativeZoom);
+                        GameCamera.SetFov(90);
+                        GameCamera.SetPosition(pos);
+
+                        GameCamera.SetLookAt(pos + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-x.TurretRotation).ExpandZ());
+                        //GameCamera.RotateY(GameUtils.MousePosition.X / 400);
+                        //GameCamera.RotateY(DEFAULT_ORTHOGRAPHIC_ANGLE);
+                        //GameCamera.RotateX(GameUtils.MousePosition.X / 400);
+
+                        GameCamera.RotateX(CameraRotationVector.Y - MathHelper.PiOver4);
+                        GameCamera.RotateY(CameraRotationVector.X);
+
+                        GameCamera.Translate(new Vector3(0, -20, -40));
+
+                        GameCamera.SetViewingDistances(0.1f, 10000f);
+
+                        GameCamera.SetCameraType(CameraType.FieldOfView);
+                    }
+                }
+
+                if (!GameUI.Paused && !MainMenu.Active && !OverheadView)
                 {
                     if (Input.MouseRight)
                         CameraRotationVector += GameUtils.GetMouseVelocity(GameUtils.WindowCenter) / 500;
@@ -319,87 +393,16 @@ namespace WiiPlayTanksRemake
                     if (Input.KeyJustPressed(Keys.Q))
                         FirstPerson = !FirstPerson;
 
-                    if (Input.KeyJustPressed(Keys.J))
-                    {
-                        transitionTimer = 100;
-                        OverheadView = !OverheadView;
-                    }
-
                     if (Input.MouseMiddle)
                     {
                         CameraFocusOffset += GameUtils.GetMouseVelocity(GameUtils.WindowCenter);
                     }
 
                     IsFixedTimeStep = !Input.CurrentKeySnapshot.IsKeyDown(Keys.Tab);
-
-                    if (!FirstPerson)
-                    {
-                        if (transitionTimer > 0)
-                        {
-                            transitionTimer--;
-                            if (OverheadView)
-                            {
-                                GameUtils.SoftStep(ref CameraRotationVector.Y, MathHelper.PiOver2, 0.08f);
-                                GameUtils.SoftStep(ref AddativeZoom, 0.7f, 0.08f);
-                                GameUtils.RoughStep(ref CameraFocusOffset.Y, 82f, 2f);
-                            }
-                            else
-                            {
-                                GameUtils.SoftStep(ref CameraRotationVector.Y, DEFAULT_ORTHOGRAPHIC_ANGLE, 0.08f);
-                                GameUtils.SoftStep(ref AddativeZoom, 1f, 0.08f);
-                                GameUtils.RoughStep(ref CameraFocusOffset.Y, 0f, 2f);
-                            }
-                        }
-                        else
-                        {
-                            GameUtils.GetMouseVelocity(GameUtils.WindowCenter);
-                        }
-
-                        GameCamera.SetPosition(new Vector3(0, 0, 350));
-                        GameCamera.SetLookAt(new Vector3(0, 0, 0));
-                        GameCamera.Zoom(DEFAULT_ZOOM * AddativeZoom);
-
-                        GameCamera.RotateX(CameraRotationVector.Y);
-                        GameCamera.RotateY(CameraRotationVector.X);
-
-                        GameCamera.SetCameraType(CameraType.Orthographic);
-
-                        GameCamera.Translate(new Vector3(CameraFocusOffset.X, -CameraFocusOffset.Y + 40, 0));
-
-                        GameCamera.SetViewingDistances(-2000f, 5000f); 
-                    }
-                    else
-                    {
-                        Vector3 pos = Vector3.Zero;
-                        var x = GameHandler.AllAITanks.FirstOrDefault(x => x is not null && !x.Dead);
-
-                        if (x is not null && Array.IndexOf(GameHandler.AllAITanks, x) > -1)
-                        {
-                            pos = x.Position3D;
-                            var t = GameUtils.MousePosition.X / GameUtils.WindowWidth;
-                            GameCamera.Zoom(DEFAULT_ZOOM * AddativeZoom);
-                            GameCamera.SetFov(90);
-                            GameCamera.SetPosition(pos);
-
-                            GameCamera.SetLookAt(pos + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-x.TurretRotation).ExpandZ());
-                            //GameCamera.RotateY(GameUtils.MousePosition.X / 400);
-                            //GameCamera.RotateY(DEFAULT_ORTHOGRAPHIC_ANGLE);
-                            //GameCamera.RotateX(GameUtils.MousePosition.X / 400);
-
-                            GameCamera.RotateX(CameraRotationVector.Y - MathHelper.PiOver4);
-                            GameCamera.RotateY(CameraRotationVector.X);
-
-                            GameCamera.Translate(new Vector3(0, -20, -40));
-
-                            GameCamera.SetViewingDistances(0.1f, 10000f);
-
-                            GameCamera.SetCameraType(CameraType.FieldOfView);
-                        }
-                    }
-
-                    GameView = GameCamera.GetView();
-                    GameProjection = GameCamera.GetProjection();
                 }
+
+                GameView = GameCamera.GetView();
+                GameProjection = GameCamera.GetProjection();
 
                 FixedUpdate(gameTime);
 
@@ -432,11 +435,11 @@ namespace WiiPlayTanksRemake
                 foreach (var type in systems)
                     type?.Update();
 
-                GameHandler.Update();
+                GameHandler.UpdateAll();
 
                 Tank.CollisionsWorld.Step(1);
 
-                if (!MainMenu.Active)
+                if (!MainMenu.Active && OverheadView)
                 {
                     foreach (var tnk in GameHandler.AllTanks)
                     {
@@ -448,8 +451,29 @@ namespace WiiPlayTanksRemake
                                 {
                                     // var tnk = WPTR.AllAITanks.FirstOrDefault(tank => tank is not null && !tank.Dead && tank.tier == AITank.GetHighestTierActive());
 
-                                    if (Array.IndexOf(GameHandler.AllAITanks, tnk) > -1)
+                                    if (Array.IndexOf(GameHandler.AllTanks, tnk) > -1)
                                         tnk?.Destroy();
+                                }
+
+                                if (Input.CanDetectClick(rightClick: true))
+                                {
+                                    tnk.TankRotation += MathHelper.PiOver2;
+                                    tnk.TurretRotation += MathHelper.PiOver2;
+                                    if (tnk is AITank ai)
+                                    {
+                                        ai.TargetTurretRotation += MathHelper.PiOver2;
+                                        ai.TargetTankRotation += MathHelper.PiOver2;
+
+                                        if (ai.TargetTurretRotation >= MathHelper.Tau)
+                                            ai.TargetTurretRotation -= MathHelper.Tau;
+                                        if (ai.TargetTankRotation >= MathHelper.Tau)
+                                            ai.TargetTankRotation -= MathHelper.Tau;
+                                    }
+                                    if (tnk.TankRotation >= MathHelper.Tau)
+                                        tnk.TankRotation -= MathHelper.Tau;
+
+                                    if (tnk.TurretRotation >= MathHelper.Tau)
+                                        tnk.TurretRotation -= MathHelper.Tau;
                                 }
 
                                 tnk.IsHoveredByMouse = true;

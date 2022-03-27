@@ -99,7 +99,7 @@ namespace WiiPlayTanksRemake.GameContent
         public bool SeesTarget { get; set; }
 
         /// <summary>The target rotation for this tank's turret. <see cref="Tank.TurretRotation"/> will move towards this value at a rate of <see cref="TurretSpeed"/>.</summary>
-        public float targetTurretRotation;
+        public float TargetTurretRotation;
 
         #endregion
 
@@ -245,7 +245,61 @@ namespace WiiPlayTanksRemake.GameContent
 
             GameHandler.AllTanks[index2] = this;
 
-            GameHandler.OnMissionStart += OnMissionStart;
+            GameHandler.OnMissionStart += () =>
+            {
+                if (Invisible && !Dead)
+                {
+                    var invis = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_invisible");
+                    SoundPlayer.PlaySoundInstance(invis, SoundContext.Effect, 0.3f);
+
+                    var lightParticle = ParticleSystem.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_particle"));
+
+                    lightParticle.Scale = new(0.25f);
+                    lightParticle.Opacity = 0f;
+                    lightParticle.is2d = true;
+
+                    lightParticle.UniqueBehavior = (lp) =>
+                    {
+                        lp.position = Position3D;
+                        if (lp.Scale.X < 5f)
+                            GeometryUtils.Add(ref lp.Scale, 0.12f);
+                        if (lp.Opacity < 1f && lp.Scale.X < 5f)
+                            lp.Opacity += 0.02f;
+
+                        if (lp.lifeTime > 90)
+                            lp.Opacity -= 0.005f;
+
+                        if (lp.Scale.X < 0f)
+                            lp.Destroy();
+                    };
+
+                    const int NUM_LOCATIONS = 8;
+
+                    for (int i = 0; i < NUM_LOCATIONS; i++)
+                    {
+                        var lp = ParticleSystem.MakeParticle(Position3D + new Vector3(0, 5, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
+
+                        var velocity = Vector2.UnitY.RotatedByRadians(MathHelper.ToRadians(360f / NUM_LOCATIONS * i));
+
+                        lp.Scale = new(1f);
+
+                        lp.UniqueBehavior = (elp) =>
+                        {
+                            elp.position.X += velocity.X;
+                            elp.position.Z += velocity.Y;
+
+                            if (elp.lifeTime > 15)
+                            {
+                                GeometryUtils.Add(ref elp.Scale, -0.03f);
+                                elp.Opacity -= 0.03f;
+                            }
+
+                            if (elp.Scale.X <= 0f || elp.Opacity <= 0f)
+                                elp.Destroy();
+                        };
+                    }
+                }
+            };
 
             base.Initialize();
         }
@@ -1505,63 +1559,6 @@ namespace WiiPlayTanksRemake.GameContent
             if (UI.DifficultyModes.AllStationary)
                 Stationary = true;
         }
-        private void OnMissionStart()
-        {
-            //AiParams.targetTurretRotation -= MathHelper.TwoPi;
-            //targetTankRotation -= MathHelper.TwoPi;
-            if (Invisible && !Dead)
-            {
-                var invis = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_invisible");
-                SoundPlayer.PlaySoundInstance(invis, SoundContext.Effect, 0.3f);
-
-                var lightParticle = ParticleSystem.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_particle"));
-
-                lightParticle.Scale = new(0.25f);
-                lightParticle.Opacity = 0f;
-                lightParticle.is2d = true;
-
-                lightParticle.UniqueBehavior = (lp) =>
-                {
-                    lp.position = Position3D;
-                    if (lp.Scale.X < 5f)
-                        GeometryUtils.Add(ref lp.Scale, 0.12f);
-                    if (lp.Opacity < 1f && lp.Scale.X < 5f)
-                        lp.Opacity += 0.02f;
-
-                    if (lp.lifeTime > 90)
-                        lp.Opacity -= 0.005f;
-
-                    if (lp.Scale.X < 0f)
-                        lp.Destroy();
-                };
-
-                const int NUM_LOCATIONS = 8;
-
-                for (int i = 0; i < NUM_LOCATIONS; i++)
-                {
-                    var lp = ParticleSystem.MakeParticle(Position3D + new Vector3(0, 5, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
-
-                    var velocity = Vector2.UnitY.RotatedByRadians(MathHelper.ToRadians(360f / NUM_LOCATIONS * i));
-
-                    lp.Scale = new(1f);
-
-                    lp.UniqueBehavior = (elp) =>
-                    {
-                        elp.position.X += velocity.X;
-                        elp.position.Z += velocity.Y;
-
-                        if (elp.lifeTime > 15)
-                        {
-                            GeometryUtils.Add(ref elp.Scale, -0.03f);
-                            elp.Opacity -= 0.03f;
-                        }
-
-                        if (elp.Scale.X <= 0f || elp.Opacity <= 0f)
-                            elp.Destroy();
-                    };
-                }
-            }
-        }
 
         public override void Update()
         {
@@ -1592,6 +1589,8 @@ namespace WiiPlayTanksRemake.GameContent
 
         public override void Remove()
         {
+
+            Dead = true;
             GameHandler.AllAITanks[AITankId] = null;
             GameHandler.AllTanks[WorldId] = null;
             base.Remove();
@@ -1845,18 +1844,18 @@ namespace WiiPlayTanksRemake.GameContent
 
                     #region TurretHandle
 
-                    targetTurretRotation %= MathHelper.TwoPi;
+                    TargetTurretRotation %= MathHelper.TwoPi;
 
                     TurretRotation %= MathHelper.TwoPi;
 
-                    var diff = targetTurretRotation - TurretRotation;
+                    var diff = TargetTurretRotation - TurretRotation;
 
                     if (diff > MathHelper.Pi)
-                        targetTurretRotation -= MathHelper.TwoPi;
+                        TargetTurretRotation -= MathHelper.TwoPi;
                     else if (diff < -MathHelper.Pi)
-                        targetTurretRotation += MathHelper.TwoPi;
+                        TargetTurretRotation += MathHelper.TwoPi;
 
-                    TurretRotation = GameUtils.RoughStep(TurretRotation, targetTurretRotation, seeks ? AiParams.TurretSpeed * 3 : AiParams.TurretSpeed);
+                    TurretRotation = GameUtils.RoughStep(TurretRotation, TargetTurretRotation, seeks ? AiParams.TurretSpeed * 3 : AiParams.TurretSpeed);
                     bool targetExists = Array.IndexOf(GameHandler.AllTanks, enemy) > -1 && enemy is not null;
                     if (targetExists)
                     {
@@ -1878,7 +1877,7 @@ namespace WiiPlayTanksRemake.GameContent
                                 }
 
                                 var dirVec = Position - aimTarget.FlattenZ();
-                                targetTurretRotation = -dirVec.ToRotation() - MathHelper.PiOver2 + GameHandler.GameRand.NextFloat(-AiParams.AimOffset, AiParams.AimOffset);
+                                TargetTurretRotation = -dirVec.ToRotation() - MathHelper.PiOver2 + GameHandler.GameRand.NextFloat(-AiParams.AimOffset, AiParams.AimOffset);
                             }
                         }
 
@@ -1924,11 +1923,11 @@ namespace WiiPlayTanksRemake.GameContent
                                     if (findsEnemy2/* && !findsFriendly2*/)
                                     {
                                         seeks = true;
-                                        targetTurretRotation = seekRotation - MathHelper.Pi;
+                                        TargetTurretRotation = seekRotation - MathHelper.Pi;
                                     }
                                 }
 
-                                if (TurretRotation == targetTurretRotation || !canShoot)
+                                if (TurretRotation == TargetTurretRotation || !canShoot)
                                     seeks = false;
                             }
 

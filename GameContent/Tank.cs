@@ -203,7 +203,6 @@ namespace WiiPlayTanksRemake.GameContent
 
             if (CollisionsWorld.BodyList.Contains(Body))
                 CollisionsWorld.Remove(Body);
-            Dead = true;
             var killSound1 = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_destroy");
             SoundPlayer.PlaySoundInstance(killSound1, SoundContext.Effect, 0.2f);
             if (this is AITank)
@@ -318,6 +317,7 @@ namespace WiiPlayTanksRemake.GameContent
                 }*/
             }
             doDestructionFx();
+            Remove();
         }
         /// <summary>Lay a <see cref="TankFootprint"/> under this <see cref="Tank"/>.</summary>
         public virtual void LayFootprint(bool alt) {
@@ -443,7 +443,6 @@ namespace WiiPlayTanksRemake.GameContent
 
         public virtual void Remove() 
         { 
-            Dead = true;
             if (CollisionsWorld.BodyList.Contains(Body))
                 CollisionsWorld.Remove(Body); 
         }

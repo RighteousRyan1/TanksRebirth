@@ -53,9 +53,8 @@ namespace WiiPlayTanksRemake.GameContent
 
         private static bool _wasOverhead;
 
-        internal static void Update()
+        internal static void UpdateAll()
         {
-
             if (InMission)
                 TankMusicSystem.Update();
 
@@ -240,7 +239,7 @@ namespace WiiPlayTanksRemake.GameContent
             DebugUtils.DrawDebugString(TankGame.spriteBatch, $"CubeStack: {CubeHeight} | CubeType: {Enum.GetNames<Block.BlockType>()[BlockType]}", GameUtils.WindowBottom - new Vector2(0, 20), 3, centered: true);
 
             DebugUtils.DrawDebugString(TankGame.spriteBatch, $"HighestTier: {AITank.GetHighestTierActive()}", new(10, GameUtils.WindowHeight * 0.26f), 1);
-            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"CurSong: {(Music.AllMusic.FirstOrDefault(music => music.volume == 0.5f) != null ? Music.AllMusic.FirstOrDefault(music => music.volume == 0.5f).Name : "N/A")}", new(10, GameUtils.WindowHeight - 100), 1);
+            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"CurSong: {(Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f) != null ? Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f).Name : "N/A")}", new(10, GameUtils.WindowHeight - 100), 1);
             for (int i = 0; i < Enum.GetNames<TankTier>().Length; i++)
             {
                 DebugUtils.DrawDebugString(TankGame.spriteBatch, $"{Enum.GetNames<TankTier>()[i]}: {AITank.GetTankCountOfType((TankTier)i)}", new(10, GameUtils.WindowHeight * 0.3f + (i * 20)), 1);
@@ -251,6 +250,8 @@ namespace WiiPlayTanksRemake.GameContent
                 $"\nLogic FPS: {TankGame.LogicFPS}" +
                 $"\n\nRender Time: {TankGame.RenderTime}" +
                 $"\nRender FPS: {TankGame.RenderFPS}", new(10, 500));
+
+            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"Current Mission Name: {VanillaCampaign.CurrentMission.Name}", GameUtils.WindowBottomLeft - new Vector2(-4, 20), 3, centered: false);
 
             ChatSystem.DrawMessages();
 
@@ -266,7 +267,7 @@ namespace WiiPlayTanksRemake.GameContent
                 LoadMission.IsVisible = DebugUtils.DebuggingEnabled && DebugUtils.DebugLevel == 3;
                 SaveMission.IsVisible = DebugUtils.DebuggingEnabled && DebugUtils.DebugLevel == 3;
             }
-            GameUI.MissionInfoBar.IsVisible = DebugUtils.DebuggingEnabled;
+            GameUI.MissionInfoBar.IsVisible = !MainMenu.Active;
         }
 
         // fix shitty mission init (innit?)
@@ -282,25 +283,18 @@ namespace WiiPlayTanksRemake.GameContent
         public static void StartTnkScene()
         {
             DebugUtils.DebuggingEnabled = false;
-            MapRenderer.InitializeRenderers();
 
             LoadTnkScene();
 
             var brighter = new Lighting.DayState()
             {
-                color = new(150, 150, 170),// color = Color.DarkGray,
+                color = new(150, 150, 170),
                 brightness = 0.71f,
             };
 
             brighter.Apply(false);
 
-            MainMenu.isLoadingScene = false;
-
             BeginIntroSequence();
-
-            PlacementSquare.InitializeLevelEditorSquares();
-
-            InitDebugUi();
         }
 
         public static void SetupGraphics()
@@ -308,13 +302,31 @@ namespace WiiPlayTanksRemake.GameContent
             GameUI.Initialize();
             MainMenu.Initialize();
             GameShaders.Initialize();
+            MapRenderer.InitializeRenderers();
+
+            InitDebugUi();
+            PlacementSquare.InitializeLevelEditorSquares();
         }
 
+        private static bool _musicLoaded;
         public static void LoadTnkScene()
         {
-            TankMusicSystem.LoadMusic();
-
-            TankMusicSystem.LoadAmbienceTracks();
+            if (!_musicLoaded)
+            {
+                TankMusicSystem.LoadMusic();
+                TankMusicSystem.LoadAmbienceTracks();
+                _musicLoaded = true;
+            }
+            else
+            {
+                foreach (var song in TankMusicSystem.songs)
+                {
+                    song.Stop();
+                    song.Play();
+                }
+                TankMusicSystem.forestAmbience.Stop();
+                TankMusicSystem.forestAmbience.Play();
+            }
         }
 
         public static PlayerTank SpawnMe()
@@ -399,7 +411,7 @@ namespace WiiPlayTanksRemake.GameContent
         }
         public static AITank SpawnTankAt(Vector3 position, TankTier tier, Team team)
         {
-            var rot = GeometryUtils.GetPiRandom();
+            var rot = 0f;//GeometryUtils.GetPiRandom();
 
             var x = new AITank(tier)
             {
@@ -452,7 +464,8 @@ namespace WiiPlayTanksRemake.GameContent
         {
             MissionName = new(TankGame.TextFont, Color.White, 0.75f, 20)
             {
-                StringToDisplayWhenThereIsNoText = "Mission Name"
+                StringToDisplayWhenThereIsNoText = "Mission Name",
+                IsVisible = false
             };
             MissionName.SetDimensions(20, 60, 230, 50);
 
@@ -464,41 +477,49 @@ namespace WiiPlayTanksRemake.GameContent
                     ChatSystem.SendMessage("Invalid name for mission.", Color.Red);
                     return;
                 }
-                Campaign.SaveMissionFile(MissionName.GetRealText(), null);
+                Mission.Save(MissionName.GetRealText(), null);
             };
+            SaveMission.IsVisible = false;
             SaveMission.SetDimensions(20, 120, 105, 50);
 
             LoadMission = new("Load", TankGame.TextFont, Color.White, 0.5f);
             LoadMission.OnLeftClick = (l) =>
             {
-                VanillaCampaign.LoadMission(Campaign.LoadMissionFile(MissionName.GetRealText(), null));
+                VanillaCampaign.LoadMission(Mission.Load(MissionName.GetRealText(), null));
                 VanillaCampaign.SetupLoadedMission(true);
             };
+            LoadMission.IsVisible = false;
             LoadMission.SetDimensions(145, 120, 105, 50);
 
             ClearTracks = new("Clear Tracks", TankGame.TextFont, Color.LightBlue, 0.5f);
             ClearTracks.SetDimensions(250, 25, 100, 50);
+            ClearTracks.IsVisible = false;
 
             ClearTracks.OnLeftClick += ClearTankTracks;
 
             ClearChecks = new("Clear Checks", TankGame.TextFont, Color.LightBlue, 0.5f);
             ClearChecks.SetDimensions(250, 95, 100, 50);
+            ClearChecks.IsVisible = false;
 
             ClearChecks.OnLeftClick += ClearTankDeathmarks;
 
             SetupMissionAgain = new("Restart\nMission", TankGame.TextFont, Color.LightBlue, 0.5f);
             SetupMissionAgain.SetDimensions(250, 165, 100, 50);
+            SetupMissionAgain.IsVisible = false;
 
             SetupMissionAgain.OnLeftClick = (obj) => BeginIntroSequence();
 
             MovePULeft = new("<", TankGame.TextFont, Color.LightBlue, 0.5f);
             MovePULeft.SetDimensions(GameUtils.WindowWidth / 2 - 100, 25, 50, 50);
+            MovePULeft.IsVisible = false;
 
             MovePURight = new(">", TankGame.TextFont, Color.LightBlue, 0.5f);
             MovePURight.SetDimensions(GameUtils.WindowWidth / 2 + 100, 25, 50, 50);
+            MovePURight.IsVisible = false;
 
             Display = new(powerups[mode].Name, TankGame.TextFont, Color.LightBlue, 0.5f);
             Display.SetDimensions(GameUtils.WindowWidth / 2 - 35, 25, 125, 50);
+            Display.IsVisible = false;
 
             MovePULeft.OnLeftClick = (obj) =>
             {

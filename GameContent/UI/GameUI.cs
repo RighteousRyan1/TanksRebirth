@@ -67,8 +67,8 @@ namespace WiiPlayTanksRemake.GameContent.UI
             var ttColor = Color.LightGray;
             SpriteFontBase font = TankGame.TextFont;
 
-            Vector2 drawOrigin = font.MeasureString("Mission 1") / 2f;
-            MissionInfoBar = new((uiPanel, spriteBatch) => spriteBatch.DrawString(font, "Mission 1", uiPanel.Hitbox.Center.ToVector2(), Color.White, new Vector2(1.5f), 0f, drawOrigin));
+            Vector2 drawOrigin = font.MeasureString("Unknown") / 2f;
+            MissionInfoBar = new((uiPanel, spriteBatch) => spriteBatch.DrawString(font, "Unknown", uiPanel.Hitbox.Center.ToVector2(), Color.White, new Vector2(1.5f), 0f, drawOrigin));
             MissionInfoBar.BackgroundColor = Color.Red;
             MissionInfoBar.SetDimensions(650, 1000, 500, 50);
 
@@ -167,9 +167,6 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 if (!MainMenu.Active)
                 {
                     MainMenu.Open();
-                    foreach (var t in GameHandler.AllTanks)
-                        if (t.IsIngame)
-                            t.Remove();
                 }
                 else
                 {
@@ -368,7 +365,8 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 }
                 // ChatSystem.SendMessage(_gpuSettingsOffset, Color.White, "<Debug>");
             }
-            var text = $"{TankGame.GameLanguage.Mission} 1        x{AITank.CountAll()}";
+            var text = /*$"{TankGame.GameLanguage.Mission} 1        x{AITank.CountAll()}";*/
+                $"{GameHandler.VanillaCampaign.CurrentMission.Name ?? $"{TankGame.GameLanguage.Mission}"} x{AITank.CountAll()}";
             Vector2 drawOrigin = TankGame.TextFont.MeasureString(text) / 2f;
             MissionInfoBar.UniqueDraw =
                 (uiPanel, spriteBatch) => spriteBatch.DrawString(TankGame.TextFont, text, uiPanel.Hitbox.Center.ToVector2(), Color.White, new Vector2(1.5f), 0, drawOrigin);

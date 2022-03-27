@@ -77,10 +77,6 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
         public static Tank MainMenuTank;
 
-        // private static float _defaultLoadTime = 90;
-
-        internal static bool isLoadingScene;
-
         // TODO: ingame ui doesn't work, but main menu ui does (wack)
         // TODO: get menu visuals working
 
@@ -90,7 +86,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
         {
             ForwardView = Matrix.CreateScale(10) * Matrix.CreateLookAt(new(0, 0, 500), Vector3.Zero, Vector3.Up)
                 * Matrix.CreateFromYawPitchRoll(1.563f, 0, 0.906f)
-                * Matrix.CreateTranslation(499, 260/*342*/, 150);
+                * Matrix.CreateTranslation(499, 260, 150);
             Projection = Matrix.CreateOrthographic(TankGame.Instance.GraphicsDevice.Viewport.Width, TankGame.Instance.GraphicsDevice.Viewport.Height, -2000f, 5000f);
             //Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), TankGame.Instance.GraphicsDevice.Viewport.AspectRatio, 0.01f, 1000f);
             View = Matrix.CreateScale(2) * Matrix.CreateLookAt(new(0, 0, 500), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(MathHelper.PiOver2);
@@ -148,15 +144,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             
             PlayButton_SinglePlayer.OnLeftClick = (uiElement) =>
             {
-                SetMPButtonsVisibility(false);
-                SetPlayButtonsVisibility(false);
-                SetPrimaryMenuButtonsVisibility(false);
-                GameHandler.StartTnkScene();
                 Leave();
-
-                isLoadingScene = true;
-
-                RemoveAllMenuTanks();
             };
 
             InitializeDifficultyButtons();
@@ -410,7 +398,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             MainMenuTank.TankRotation = _tnkRot;
             MainMenuTank.TurretRotation = -_tnkRot;
 
-            Theme.volume = TankGame.Settings.MusicVolume;
+            Theme.Volume = TankGame.Settings.MusicVolume;
 
             MainMenuTank.View = ForwardView;
 
@@ -430,6 +418,10 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
         public static void Leave()
         {
+            GameHandler.StartTnkScene();
+            SetMPButtonsVisibility(false);
+            SetPlayButtonsVisibility(false);
+            SetPrimaryMenuButtonsVisibility(false);
             GraphicsUI.BatchVisible = false;
             ControlsUI.BatchVisible = false;
             VolumeUI.BatchVisible = false;
@@ -437,10 +429,12 @@ namespace WiiPlayTanksRemake.GameContent.UI
             Active = false;
             Theme.Stop();
 
+            RemoveAllMenuTanks();
+
             GameUI.OptionsButton.Size.Y = 150;
             GameUI.QuitButton.Size.Y = 150;
 
-            Theme.volume = 0;
+            Theme.Volume = 0;
 
             GameUI.QuitButton.Position.Y += 50;
             GameUI.OptionsButton.Position.Y -= 75;
@@ -452,11 +446,17 @@ namespace WiiPlayTanksRemake.GameContent.UI
         {
             Active = true;
             GameUI.Paused = false;
-            Theme.volume = 0.5f;
+            Theme.Volume = 0.5f;
             Theme.Play();
 
             foreach (var block in Block.AllBlocks)
                 block?.Remove();
+            foreach (var mine in Mine.AllMines)
+                mine?.Remove();
+            foreach (var shell in Shell.AllShells)
+                shell?.Remove();
+            foreach (var tank in GameHandler.AllTanks)
+                tank?.Remove();
 
             if (GameHandler.ClearTracks is not null)
                 GameHandler.ClearTracks.OnLeftClick?.Invoke(null);
@@ -470,11 +470,6 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
             GameUI.QuitButton.Position.Y -= 50;
             GameUI.OptionsButton.Position.Y += 75;
-
-            foreach (var mine in Mine.AllMines)
-                mine?.RemoveSilently();
-            foreach (var shell in Shell.AllShells)
-                shell?.RemoveSilently();
 
             for (int i = 0; i < 10; i++)
             {
@@ -558,6 +553,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             {
                 tanks[i].Remove();
             }
+            tanks.Clear();
         }
 
         public static void Render()

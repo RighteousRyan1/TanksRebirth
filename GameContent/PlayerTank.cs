@@ -86,6 +86,62 @@ namespace WiiPlayTanksRemake.GameContent
             //WPTR.AllPlayerTanks.Add(this);
             //WPTR.AllTanks.Add(this);
 
+            GameHandler.OnMissionStart += () =>
+            {
+                if (Invisible && !Dead)
+                {
+                    var invis = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_invisible");
+                    SoundPlayer.PlaySoundInstance(invis, SoundContext.Effect, 0.3f);
+
+                    var lightParticle = ParticleSystem.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_particle"));
+
+                    lightParticle.Scale = new(0.25f);
+                    lightParticle.Opacity = 0f;
+                    lightParticle.is2d = true;
+
+                    lightParticle.UniqueBehavior = (lp) =>
+                    {
+                        lp.position = Position3D;
+                        if (lp.Scale.X < 5f)
+                            GeometryUtils.Add(ref lp.Scale, 0.12f);
+                        if (lp.Opacity < 1f && lp.Scale.X < 5f)
+                            lp.Opacity += 0.02f;
+
+                        if (lp.lifeTime > 90)
+                            lp.Opacity -= 0.005f;
+
+                        if (lp.Scale.X < 0f)
+                            lp.Destroy();
+                    };
+
+                    const int NUM_LOCATIONS = 8;
+
+                    for (int i = 0; i < NUM_LOCATIONS; i++)
+                    {
+                        var lp = ParticleSystem.MakeParticle(Position3D + new Vector3(0, 5, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
+
+                        var velocity = Vector2.UnitY.RotatedByRadians(MathHelper.ToRadians(360f / NUM_LOCATIONS * i));
+
+                        lp.Scale = new(1f);
+
+                        lp.UniqueBehavior = (elp) =>
+                        {
+                            elp.position.X += velocity.X;
+                            elp.position.Z += velocity.Y;
+
+                            if (elp.lifeTime > 15)
+                            {
+                                GeometryUtils.Add(ref elp.Scale, -0.03f);
+                                elp.Opacity -= 0.03f;
+                            }
+
+                            if (elp.Scale.X <= 0f || elp.Opacity <= 0f)
+                                elp.Destroy();
+                        };
+                    }
+                }
+            };
+
             base.Initialize();
         }
 
@@ -183,6 +239,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         public override void Remove()
         {
+            Dead = true;
             GameHandler.AllPlayerTanks[PlayerId] = null;
             GameHandler.AllTanks[WorldId] = null;
             base.Remove();
@@ -467,6 +524,11 @@ namespace WiiPlayTanksRemake.GameContent
                     {
                         effect.Alpha = 1f;
                         effect.Texture = _tankColorTexture;
+
+                        if (IsHoveredByMouse)
+                            effect.EmissiveColor = Color.White.ToVector3();
+                        else
+                            effect.EmissiveColor = Color.Black.ToVector3();
 
                         /*var ex = new Color[1024];
 

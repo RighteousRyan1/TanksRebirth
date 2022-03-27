@@ -22,7 +22,7 @@ namespace WiiPlayTanksRemake.GameContent
     {
         public static List<Music> AllMusic { get; } = new();
 
-        public float volume;
+        public float Volume;
 
         public MusicState State { get; private set; }
 
@@ -56,7 +56,7 @@ namespace WiiPlayTanksRemake.GameContent
         /// Plays the <see cref="Track"/>.
         /// </summary>
         public void Play() {
-            Track.Volume = volume;
+            Track.Volume = Volume;
             Track?.Play();
             OnBegin?.Invoke(this, new());
         }
@@ -79,9 +79,9 @@ namespace WiiPlayTanksRemake.GameContent
         }
 
         internal void Update() {
-            Track.Volume = volume;
-            if (volume > maxVolume)
-                volume = maxVolume;
+            Track.Volume = Volume;
+            if (Volume > maxVolume)
+                Volume = maxVolume;
 
             if (!TankGame.Instance.IsActive) {
                 if (!Track.IsPaused()) {
@@ -98,6 +98,6 @@ namespace WiiPlayTanksRemake.GameContent
         public event EventHandler OnStop;
 
         public override string ToString()
-            => $"name: {Name} | state: {State} | volume/max: {volume}/{maxVolume}";
+            => $"name: {Name} | state: {State} | volume/max: {Volume}/{maxVolume}";
     }
 }
