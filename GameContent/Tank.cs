@@ -273,6 +273,9 @@ namespace WiiPlayTanksRemake.GameContent
                 Destroy();
         }
         public virtual void Destroy() {
+
+            Armor.Remove();
+
             if (CollisionsWorld.BodyList.Contains(Body))
                 CollisionsWorld.Remove(Body);
             var killSound1 = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_destroy");

@@ -25,21 +25,58 @@ namespace WiiPlayTanksRemake.GameContent
 
         public Tank Host;
 
+        private int _hitpointsMax;
         public int HitPoints;
 
         private Texture2D _maskingTexture;
 
         private Model _model;
 
-        public Armor(Tank host, int hitPoints) {
+        public Armor(Tank host, int hitPoints)
+        {
             _model = GameResources.GetGameResource<Model>("Assets/armor");
             Host = host;
-            HitPoints = hitPoints;
+            HitPoints = _hitpointsMax = hitPoints;
             _maskingTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/armor");
+
+            _healthBarTotal = ParticleSystem.MakeParticle(Host.Position3D + new Vector3(0, 20, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"));
+            _healthBarCurrent = ParticleSystem.MakeParticle(Host.Position3D + new Vector3(0, 20, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"));
+
+            _healthBarTotal.isAddative = false;
+            _healthBarCurrent.isAddative = false;
+
+            _healthBarTotal.color = Color.Red;
+            _healthBarCurrent.color = Color.Lime;
+
+            _healthBarCurrent.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
+            _healthBarTotal.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
         }
 
-        public void Render()
+        private Particle _healthBarTotal;
+        private Particle _healthBarCurrent;
+
+        public void Render(bool canRenderHealthBar = true)
         {
+            /*void DrawHealthBar(Vector2 position, float width, float height)
+            {
+                //TankGame.spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), new Rectangle((int)(position.X - _hitpointsMax / 2 * width), (int)position.Y, (int)(HitPoints * width), (int)height), Color.Red);
+                //TankGame.spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), new Rectangle((int)(position.X - _hitpointsMax / 2 * width), (int)position.Y, (int)(HitPoints * width), (int)height), Color.Lime);
+            }*/
+
+            void setHealthBar(float xScl, float yScl, float zScl)
+            {
+                _healthBarTotal.Scale = new(xScl, yScl, zScl);
+                _healthBarCurrent.Scale = new(xScl * (HitPoints + 1) / (_hitpointsMax + 1), yScl, zScl * (HitPoints + 1) / (_hitpointsMax + 1));
+            }
+
+            if (canRenderHealthBar && _hitpointsMax > 3)
+            {
+                setHealthBar(5, 2, 5);
+                _healthBarTotal.position = Host.Position3D + new Vector3(0, 40, 0);
+                _healthBarCurrent.position = Host.Position3D + new Vector3(0, 40, 0);
+            }
+            // DrawHealthBar(GeometryUtils.ConvertWorldToScreen(new Vector3(0, 20, 0f), Host.World, TankGame.GameView, TankGame.GameProjection) - new Vector2(0, 20), 50, 10);
+
             if (HitPoints < 0) // so armor point amount is clamped to be greater than 0 at all times.
                 HitPoints = 0;
 
@@ -96,6 +133,12 @@ namespace WiiPlayTanksRemake.GameContent
                     mesh.Draw();
                 }
             }
+        }
+
+        public void Remove()
+        {
+            _healthBarTotal?.Destroy();
+            _healthBarCurrent?.Destroy();
         }
     }
 }
