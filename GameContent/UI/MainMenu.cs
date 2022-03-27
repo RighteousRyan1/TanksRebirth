@@ -556,6 +556,9 @@ namespace WiiPlayTanksRemake.GameContent.UI
             tanks.Clear();
         }
 
+        private static readonly string tanksMessage = $"Tanks! Remake v{TankGame.Instance.GameVersion}\nThe original game and assets used in this game belongs to Nintendo\nDeveloped by RighteousRyan\nTANKS to all our contributors!";
+        private static Vector2 tanksMessageSize;
+
         public static void Render()
         {
             if (Active)
@@ -569,11 +572,16 @@ namespace WiiPlayTanksRemake.GameContent.UI
                     {
                         var client = Server.ConnectedClients[i];
 
-                        TankGame.spriteBatch.DrawString(TankGame.TextFont, $"{client.Name}" + $" ({client.Id})", initialPosition + new Vector2(0, 20) * (i + 1), Color.White, 0.6f);
+                        Color textCol = Color.White;
+                        if (NetPlay.CurrentClient.Id == i)
+                            textCol = Color.Green;
+
+                        TankGame.spriteBatch.DrawString(TankGame.TextFont, $"{client.Name}" + $" ({client.Id})", initialPosition + new Vector2(0, 20) * (i + 1), textCol, 0.6f);
                     }
                 }
-                var display = $"Tanks! Remake v{TankGame.Instance.GameVersion}\nThe original game and assets used in this game belongs to Nintendo\nDeveloped by RighteousRyan\nTANKS to all our contributors!";
-                TankGame.spriteBatch.DrawString(TankGame.TextFont, display, new(8, GameUtils.WindowHeight - 8), Color.White, new(0.6f), 0f, new Vector2(0, TankGame.TextFont.MeasureString(display).Y));
+                if (tanksMessageSize == Vector2.Zero)
+                    tanksMessageSize = TankGame.TextFont.MeasureString(tanksMessage);
+                TankGame.spriteBatch.DrawString(TankGame.TextFont, tanksMessage, new(8, GameUtils.WindowHeight - 8), Color.White, new(0.6f), 0f, new Vector2(0, tanksMessageSize.Y));
             }
         }
     }
