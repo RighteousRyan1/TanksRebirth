@@ -206,7 +206,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 if (int.TryParse(PortInput.Text, out var port))
                 {
                     Server.CreateServer();
-                    Server.StartServer(ServerNameInput.Text, port, IPInput.Text, PasswordInput.Text);
+                    Server.StartServer(ServerNameInput.GetRealText(), port, IPInput.Text, PasswordInput.Text);
                     NetPlay.ServerName = ServerNameInput.Text;
 
                     Client.CreateClient(UsernameInput.Text);
