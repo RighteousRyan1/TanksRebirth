@@ -386,12 +386,12 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
         public static void Update()
         {
-            TanksAreCalculators.Color = DifficultyModes.TanksAreCalculators ? Color.Green : Color.Red;
-            PieFactory.Color = DifficultyModes.PieFactory ? Color.Green : Color.Red;
-            UltraMines.Color = DifficultyModes.UltraMines ? Color.Green : Color.Red;
-            BulletHell.Color = DifficultyModes.BulletHell ? Color.Green : Color.Red;
-            AllInvisible.Color = DifficultyModes.AllInvisible ? Color.Green : Color.Red;
-            AllStationary.Color = DifficultyModes.AllStationary ? Color.Green : Color.Red;
+            TanksAreCalculators.Color = DifficultyModes.TanksAreCalculators ? Color.Lime : Color.Red;
+            PieFactory.Color = DifficultyModes.PieFactory ? Color.Lime : Color.Red;
+            UltraMines.Color = DifficultyModes.UltraMines ? Color.Lime : Color.Red;
+            BulletHell.Color = DifficultyModes.BulletHell ? Color.Lime : Color.Red;
+            AllInvisible.Color = DifficultyModes.AllInvisible ? Color.Lime : Color.Red;
+            AllStationary.Color = DifficultyModes.AllStationary ? Color.Lime : Color.Red;
 
             _tnkRot += 0.01f;
 

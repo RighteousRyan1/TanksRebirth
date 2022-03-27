@@ -221,7 +221,7 @@ namespace WiiPlayTanksRemake.GameContent
             }
             else
             {
-                Model = GameResources.GetRawGameAsset<Model>("Assets/tank_e");
+                Model = GameResources.GetGameResource<Model>("Assets/tank_e");
             }
 
             #endregion
