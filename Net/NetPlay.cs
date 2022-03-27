@@ -52,6 +52,9 @@ namespace WiiPlayTanksRemake.Net
             switch (packet)
             {
                 case PacketType.ClientInfo:
+                    byte returnedID = reader.GetByte();
+
+                    CurrentClient.Id = returnedID;
                     Client.RequestLobbyInfo();
                     break;
 
@@ -61,10 +64,6 @@ namespace WiiPlayTanksRemake.Net
 
                     string servName = reader.GetString();
                     ServerName = servName;
-
-                    byte curClientCount = reader.GetByte();
-
-                    CurrentClient.Id = curClientCount;
 
                     Server.ConnectedClients = new Client[serverMaxClients];
                     for (int i = 0; i < serverMaxClients; i++)
@@ -137,6 +136,7 @@ namespace WiiPlayTanksRemake.Net
                         Id = Server.CurrentClientCount,
                         Name = name
                     };
+                    message.Put((byte)Server.CurrentClientCount);
                     Server.CurrentClientCount++;
 
                     //Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered);
@@ -148,8 +148,6 @@ namespace WiiPlayTanksRemake.Net
                     message.Put((byte)Server.MaxClients);     //This dang ushort was throwing the entire packet off
 
                     message.Put(CurrentServer.Name);
-
-                    message.Put((byte)Server.CurrentClientCount);
 
                     for (int i = 0; i < Server.MaxClients; i++)
                     {
