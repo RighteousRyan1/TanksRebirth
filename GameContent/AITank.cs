@@ -24,8 +24,8 @@ namespace WiiPlayTanksRemake.GameContent
         private int treadSoundTimer = 5;
         public int TierHierarchy => (int)tier;
 
-        public AiBehavior[] Behaviors { get; private set; } = new AiBehavior[10]; // each of these should keep track of an action the tank performs
-        public AiBehavior[] SpecialBehaviors { get; private set; } = new AiBehavior[3];
+        public AiBehavior[] Behaviors { get; private set; } // each of these should keep track of an action the tank performs
+        public AiBehavior[] SpecialBehaviors { get; private set; }
 
         public TankTier tier;
 
@@ -136,28 +136,33 @@ namespace WiiPlayTanksRemake.GameContent
         /// /// <param name="isIngame">Whether or not this <see cref="AITank"/> is a gameplay tank or a cosmetic tank (i.e: display models on menus, etc).</param>
         public AITank(TankTier tier, bool setTankDefaults = true, bool isIngame = true)
         {
-            treadSoundTimer += GameHandler.GameRand.Next(-1, 2);
-            for (int i = 0; i < Behaviors.Length; i++)
-                Behaviors[i] = new();
-
-            for (int i = 0; i < SpecialBehaviors.Length; i++)
-                SpecialBehaviors[i] = new();
-
             IsIngame = isIngame;
+            if (isIngame)
+            {
+                Behaviors = new AiBehavior[10];
+                SpecialBehaviors = new AiBehavior[3];
 
-            Behaviors[0].Label = "TankBaseMovement";
-            Behaviors[1].Label = "TankBarrelMovement";
-            Behaviors[2].Label = "TankEnvReader";
-            Behaviors[3].Label = "TankBulletFire";
-            Behaviors[4].Label = "TankMinePlacement";
-            Behaviors[5].Label = "TankMineAvoidance";
-            Behaviors[6].Label = "TankBulletAvoidance";
+                treadSoundTimer += GameHandler.GameRand.Next(-1, 2);
+                for (int i = 0; i < Behaviors.Length; i++)
+                    Behaviors[i] = new();
 
-            SpecialBehaviors[0].Label = "SpecialBehavior1"; // for special tanks (such as commando, etc)
-            SpecialBehaviors[1].Label = "SpecialBehavior2";
-            SpecialBehaviors[2].Label = "SpecialBehavior3";
+                for (int i = 0; i < SpecialBehaviors.Length; i++)
+                    SpecialBehaviors[i] = new();
 
-            Dead = true;
+                Behaviors[0].Label = "TankBaseMovement";
+                Behaviors[1].Label = "TankBarrelMovement";
+                Behaviors[2].Label = "TankEnvReader";
+                Behaviors[3].Label = "TankBulletFire";
+                Behaviors[4].Label = "TankMinePlacement";
+                Behaviors[5].Label = "TankMineAvoidance";
+                Behaviors[6].Label = "TankBulletAvoidance";
+
+                SpecialBehaviors[0].Label = "SpecialBehavior1"; // for special tanks (such as commando, etc)
+                SpecialBehaviors[1].Label = "SpecialBehavior2";
+                SpecialBehaviors[2].Label = "SpecialBehavior3";
+
+                Dead = true;
+            }
 
             #region Non-Special
             if ((int)tier <= (int)TankTier.Black)
@@ -226,13 +231,73 @@ namespace WiiPlayTanksRemake.GameContent
             boneTransforms = new Matrix[Model.Bones.Count];
 
             _shadowTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank_shadow");
-             this.tier = tier;
 
-            if (setTankDefaults)
-                ApplyDefaults();
+            this.tier = tier;
+            if (isIngame)
+            {
 
-            Team = Team.Blue;
+                if (setTankDefaults)
+                    ApplyDefaults();
 
+                Team = Team.Blue;
+
+                GameHandler.OnMissionStart += () =>
+                {
+                    if (Invisible && !Dead)
+                    {
+                        var invis = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_invisible");
+                        SoundPlayer.PlaySoundInstance(invis, SoundContext.Effect, 0.3f);
+
+                        var lightParticle = ParticleSystem.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_particle"));
+
+                        lightParticle.Scale = new(0.25f);
+                        lightParticle.Opacity = 0f;
+                        lightParticle.is2d = true;
+
+                        lightParticle.UniqueBehavior = (lp) =>
+                        {
+                            lp.position = Position3D;
+                            if (lp.Scale.X < 5f)
+                                GeometryUtils.Add(ref lp.Scale, 0.12f);
+                            if (lp.Opacity < 1f && lp.Scale.X < 5f)
+                                lp.Opacity += 0.02f;
+
+                            if (lp.lifeTime > 90)
+                                lp.Opacity -= 0.005f;
+
+                            if (lp.Scale.X < 0f)
+                                lp.Destroy();
+                        };
+
+                        const int NUM_LOCATIONS = 8;
+
+                        for (int i = 0; i < NUM_LOCATIONS; i++)
+                        {
+                            var lp = ParticleSystem.MakeParticle(Position3D + new Vector3(0, 5, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
+
+                            var velocity = Vector2.UnitY.RotatedByRadians(MathHelper.ToRadians(360f / NUM_LOCATIONS * i));
+
+                            lp.Scale = new(1f);
+
+                            lp.UniqueBehavior = (elp) =>
+                            {
+                                elp.position.X += velocity.X;
+                                elp.position.Z += velocity.Y;
+
+                                if (elp.lifeTime > 15)
+                                {
+                                    GeometryUtils.Add(ref elp.Scale, -0.03f);
+                                    elp.Opacity -= 0.03f;
+                                }
+
+                                if (elp.Scale.X <= 0f || elp.Opacity <= 0f)
+                                    elp.Destroy();
+                            };
+                        }
+                    }
+                };
+
+            }
             int index = Array.IndexOf(GameHandler.AllAITanks, GameHandler.AllAITanks.First(tank => tank is null));
 
             AITankId = index;
@@ -244,63 +309,6 @@ namespace WiiPlayTanksRemake.GameContent
             WorldId = index2;
 
             GameHandler.AllTanks[index2] = this;
-
-            GameHandler.OnMissionStart += () =>
-            {
-                if (Invisible && !Dead)
-                {
-                    var invis = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_invisible");
-                    SoundPlayer.PlaySoundInstance(invis, SoundContext.Effect, 0.3f);
-
-                    var lightParticle = ParticleSystem.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_particle"));
-
-                    lightParticle.Scale = new(0.25f);
-                    lightParticle.Opacity = 0f;
-                    lightParticle.is2d = true;
-
-                    lightParticle.UniqueBehavior = (lp) =>
-                    {
-                        lp.position = Position3D;
-                        if (lp.Scale.X < 5f)
-                            GeometryUtils.Add(ref lp.Scale, 0.12f);
-                        if (lp.Opacity < 1f && lp.Scale.X < 5f)
-                            lp.Opacity += 0.02f;
-
-                        if (lp.lifeTime > 90)
-                            lp.Opacity -= 0.005f;
-
-                        if (lp.Scale.X < 0f)
-                            lp.Destroy();
-                    };
-
-                    const int NUM_LOCATIONS = 8;
-
-                    for (int i = 0; i < NUM_LOCATIONS; i++)
-                    {
-                        var lp = ParticleSystem.MakeParticle(Position3D + new Vector3(0, 5, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
-
-                        var velocity = Vector2.UnitY.RotatedByRadians(MathHelper.ToRadians(360f / NUM_LOCATIONS * i));
-
-                        lp.Scale = new(1f);
-
-                        lp.UniqueBehavior = (elp) =>
-                        {
-                            elp.position.X += velocity.X;
-                            elp.position.Z += velocity.Y;
-
-                            if (elp.lifeTime > 15)
-                            {
-                                GeometryUtils.Add(ref elp.Scale, -0.03f);
-                                elp.Opacity -= 0.03f;
-                            }
-
-                            if (elp.Scale.X <= 0f || elp.Opacity <= 0f)
-                                elp.Destroy();
-                        };
-                    }
-                }
-            };
-
             base.Initialize();
         }
 
@@ -2335,17 +2343,14 @@ namespace WiiPlayTanksRemake.GameContent
             return false;
         }
 
-        public static TankTier PickRandomTier()
+        private static readonly TankTier[] workingTiers =
         {
-            TankTier[] workingTiers = 
-            { 
-                TankTier.Brown, TankTier.Marine, TankTier.Yellow, TankTier.Black, TankTier.White, TankTier.Pink, TankTier.Purple, TankTier.Green, TankTier.Ash, 
-                TankTier.Bronze, TankTier.Silver, TankTier.Sapphire, TankTier.Ruby, TankTier.Citrine, TankTier.Amethyst, TankTier.Emerald, TankTier.Gold, TankTier.Obsidian,
-                TankTier.Granite, TankTier.Bubblegum, TankTier.Water, TankTier.Crimson, /*TankTier.Tiger,*/ TankTier.Creeper, TankTier.Gamma, TankTier.Marble,
-                TankTier.Assassin
-            };
-
-            return workingTiers[GameHandler.GameRand.Next(0, workingTiers.Length)];
-        }
+            TankTier.Brown, TankTier.Marine, TankTier.Yellow, TankTier.Black, TankTier.White, TankTier.Pink, TankTier.Purple, TankTier.Green, TankTier.Ash,
+            TankTier.Bronze, TankTier.Silver, TankTier.Sapphire, TankTier.Ruby, TankTier.Citrine, TankTier.Amethyst, TankTier.Emerald, TankTier.Gold, TankTier.Obsidian,
+            TankTier.Granite, TankTier.Bubblegum, TankTier.Water, TankTier.Crimson, /*TankTier.Tiger,*/ TankTier.Creeper, TankTier.Gamma, TankTier.Marble,
+            TankTier.Assassin
+        };
+        public static TankTier PickRandomTier()
+            => workingTiers[GameHandler.GameRand.Next(0, workingTiers.Length)];
     }
 }
