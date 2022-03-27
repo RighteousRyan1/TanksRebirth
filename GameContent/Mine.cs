@@ -44,7 +44,7 @@ namespace WiiPlayTanksRemake.GameContent
         public bool tickRed;
 
         /// <summary>The radius of this <see cref="Mine"/>'s explosion.</summary>
-        public float explosionRadius;
+        public float ExplosionRadius;
 
         /// <summary>Whether or not this <see cref="Mine"/> has detonated.</summary>
         public bool Detonated { get; set; }
@@ -58,10 +58,10 @@ namespace WiiPlayTanksRemake.GameContent
         /// <param name="pos">The position of this <see cref="Mine"/> in the game world.</param>
         /// <param name="detonateTime">The time it takes for this <see cref="Mine"/> to detonate.</param>
         /// <param name="radius">The radius of this <see cref="Mine"/>'s explosion.</param>
-        public Mine(Tank owner, Vector2 pos, int detonateTime, float radius = 80f)
+        public Mine(Tank owner, Vector2 pos, int detonateTime, float radius = 65f)
         {
             this.owner = owner;
-            explosionRadius = radius;
+            ExplosionRadius = radius;
 
             Model = GameResources.GetGameResource<Model>("Assets/mine");
 
@@ -88,7 +88,7 @@ namespace WiiPlayTanksRemake.GameContent
         {
             Detonated = true;
 
-            var expl = new Explosion(Position, explosionRadius * 0.101f, 0.3f);
+            var expl = new Explosion(Position, ExplosionRadius * 0.101f, 0.3f);
 
             if (UI.DifficultyModes.UltraMines)
                 expl.maxScale *= 2f;
@@ -139,7 +139,7 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 foreach (var tank in GameHandler.AllTanks)
                 {
-                    if (tank is not null && Vector2.Distance(tank.Position, Position) < explosionRadius * 9f)
+                    if (tank is not null && Vector2.Distance(tank.Position, Position) < ExplosionRadius * 9f)
                     {
                         detonationTime = mineReactTime;
                     }

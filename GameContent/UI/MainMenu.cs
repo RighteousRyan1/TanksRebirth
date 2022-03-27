@@ -533,16 +533,16 @@ namespace WiiPlayTanksRemake.GameContent.UI
         public static void AddMainMenuTank()
         {
 
-            MainMenuTank = new PlayerTank(PlayerType.Blue);
-            MainMenuTank.IsIngame = false;
-            // MainMenuTank.Body.Position = new(100, 100);
-            MainMenuTank.Dead = false;
+            MainMenuTank = new PlayerTank(PlayerType.Blue)
+            {
+                IsIngame = false,
+                Dead = false,
 
-            MainMenuTank.TurretRotation = 0f;
-            MainMenuTank.TurretRotation = 0f;
+                TurretRotation = 0f,
 
-            MainMenuTank.Projection = Projection;
-            MainMenuTank.View = ForwardView;
+                Projection = Projection,
+                View = ForwardView
+            };
 
             tanks.Add(MainMenuTank);
         }
@@ -563,7 +563,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
         {
             if (Active)
             {
-                if ((NetPlay.CurrentServer is not null && (Server.ConnectedClients is not null || NetPlay.ServerName is not null)) || (Client.IsClientConnected() && Client.lobbyDataReceived))
+                if ((NetPlay.CurrentServer is not null && (Server.ConnectedClients is not null || NetPlay.ServerName is not null)) || (Client.IsConnected() && Client.lobbyDataReceived))
                 {
                     Vector2 initialPosition = new(GameUtils.WindowWidth * 0.75f, GameUtils.WindowHeight * 0.25f);
                     TankGame.spriteBatch.DrawString(TankGame.TextFont, $"\"{NetPlay.ServerName}\"", initialPosition - new Vector2(0, 40), Color.White, 0.6f);

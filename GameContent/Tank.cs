@@ -64,6 +64,8 @@ namespace WiiPlayTanksRemake.GameContent
         #region Fields / Properties
         public Body Body { get; set; } = new();
 
+        public int WorldId { get; set; }
+
         /// <summary>This <see cref="Tank"/>'s model.</summary>
         public Model Model { get; set; }
         /// <summary>This <see cref="Tank"/>'s world position. Used to change the actual location of the model relative to the <see cref="View"/> and <see cref="Projection"/>.</summary>
@@ -162,6 +164,62 @@ namespace WiiPlayTanksRemake.GameContent
                 ShellHoming.speed = ShellSpeed;
                 ShellHoming.power = 0.5f;
             }
+
+            GameHandler.OnMissionStart += () =>
+            {
+                if (Invisible && !Dead)
+                {
+                    var invis = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_invisible");
+                    SoundPlayer.PlaySoundInstance(invis, SoundContext.Effect, 0.3f);
+
+                    var lightParticle = ParticleSystem.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_particle"));
+
+                    lightParticle.Scale = new(0.25f);
+                    lightParticle.Opacity = 0f;
+                    lightParticle.is2d = true;
+
+                    lightParticle.UniqueBehavior = (lp) =>
+                    {
+                        lp.position = Position3D;
+                        if (lp.Scale.X < 5f)
+                            GeometryUtils.Add(ref lp.Scale, 0.12f);
+                        if (lp.Opacity < 1f && lp.Scale.X < 5f)
+                            lp.Opacity += 0.02f;
+
+                        if (lp.lifeTime > 90)
+                            lp.Opacity -= 0.005f;
+
+                        if (lp.Scale.X < 0f)
+                            lp.Destroy();
+                    };
+
+                    const int NUM_LOCATIONS = 8;
+
+                    for (int i = 0; i < NUM_LOCATIONS; i++)
+                    {
+                        var lp = ParticleSystem.MakeParticle(Position3D + new Vector3(0, 5, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
+
+                        var velocity = Vector2.UnitY.RotatedByRadians(MathHelper.ToRadians(360f / NUM_LOCATIONS * i));
+
+                        lp.Scale = new(1f);
+
+                        lp.UniqueBehavior = (elp) =>
+                        {
+                            elp.position.X += velocity.X;
+                            elp.position.Z += velocity.Y;
+
+                            if (elp.lifeTime > 15)
+                            {
+                                GeometryUtils.Add(ref elp.Scale, -0.03f);
+                                elp.Opacity -= 0.03f;
+                            }
+
+                            if (elp.Scale.X <= 0f || elp.Opacity <= 0f)
+                                elp.Destroy();
+                        };
+                    }
+                }
+            };
         }
 
         /// <summary>Update this <see cref="Tank"/>.</summary>
@@ -199,8 +257,22 @@ namespace WiiPlayTanksRemake.GameContent
         public string GetGeneralStats()
             => $"Pos2D: {Position} | Vel: {Velocity} | Dead: {Dead}";
         /// <summary>Destroy this <see cref="Tank"/>.</summary>
+        public virtual void Damage() {
+            if (Armor is not null)
+            {
+                if (Armor.HitPoints > 0)
+                {
+                    Armor.HitPoints--;
+                    var ding = SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/armor_ding_{GameHandler.GameRand.Next(1, 3)}"), SoundContext.Effect);
+                    ding.Pitch = GameHandler.GameRand.NextFloat(-0.1f, 0.1f);
+                }
+                else
+                    Destroy();
+            }
+            else
+                Destroy();
+        }
         public virtual void Destroy() {
-
             if (CollisionsWorld.BodyList.Contains(Body))
                 CollisionsWorld.Remove(Body);
             var killSound1 = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_destroy");
@@ -235,7 +307,6 @@ namespace WiiPlayTanksRemake.GameContent
 
             void doDestructionFx()
             {
-
                 for (int i = 0; i < 12; i++)
                 {
                     var tex = GameResources.GetGameResource<Texture2D>(GameHandler.GameRand.Next(0, 2) == 0 ? "Assets/textures/misc/tank_rock" : "Assets/textures/misc/tank_rock_2");
@@ -280,41 +351,6 @@ namespace WiiPlayTanksRemake.GameContent
                         p.Destroy();
                 };
                 ParticleSystem.MakeSmallExplosion(Position3D, 15, 20, 1.3f, 30);
-                /*const int NUM_LOCATIONS = 8;
-
-                for (int i = 0; i < NUM_LOCATIONS; i++)
-                {
-                    var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes");
-
-                    var part = ParticleSystem.MakeParticle(Position3D, tex);
-
-                    part.isAddative = true;
-
-                    part.roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
-
-                    part.Scale = new(0.8f);
-
-                    var velocity = Vector2.UnitY.RotatedByRadians(MathHelper.ToRadians(360f / NUM_LOCATIONS * i)).ExpandZ() / 2;
-
-                    part.position.Y += 5f;
-
-                    part.color = Color.DarkOrange;//new(152, 96, 26);
-
-                    part.UniqueBehavior = (p) =>
-                    {
-                        part.position += velocity;
-                        GeometryUtils.Add(ref part.Scale, -0.01f);
-
-                        if (part.Scale.X <= 0f)
-                            part.Destroy();
-
-                        if (part.lifeTime > 40)
-                        {
-                            part.Opacity -= 0.02f;
-                            part.position.Y += 0.25f;
-                        }
-                    };
-                }*/
             }
             doDestructionFx();
             Remove();
@@ -432,8 +468,6 @@ namespace WiiPlayTanksRemake.GameContent
 
         public bool Immortal { get; set; }
 
-        public int Armor { get; set; }
-
         /// <summary>The homing properties of the shells this <see cref="Tank"/> shoots.</summary>
         public Shell.HomingProperties ShellHoming = new();
 
@@ -441,79 +475,14 @@ namespace WiiPlayTanksRemake.GameContent
 
         public bool IsIngame { get; set; } = true;
 
+        public Armor Armor { get; set; }
+
         public virtual void Remove() 
         { 
             if (CollisionsWorld.BodyList.Contains(Body))
                 CollisionsWorld.Remove(Body); 
         }
     }
-
-    /*public class TankFootprint
-    {
-        public const int MAX_FOOTPRINTS = 100000;
-
-        public static TankFootprint[] footprints = new TankFootprint[TankGame.Settings.TankFootprintLimit];
-
-        public Vector3 Position;
-        public float rotation;
-
-        public Matrix World;
-        public Matrix View;
-        public Matrix Projection;
-
-        public Model Model;
-
-        public Texture2D texture;
-
-        internal static int total_treads_placed;
-
-        private readonly bool alternate;
-        
-        public long lifeTime;
-
-        public TankFootprint(bool alt = false)
-        {
-            if (total_treads_placed + 1 > MAX_FOOTPRINTS)
-                footprints[Array.IndexOf(footprints, footprints.Min(x => x.lifeTime > 0))] = null; // i think?
-
-            alternate = alt;
-            total_treads_placed++;
-
-            Model = GameResources.GetGameResource<Model>("Assets/footprint"); // use this :smiley:
-
-            texture = GameResources.GetGameResource<Texture2D>(alt ? $"Assets/textures/tank_footprint_alt" : $"Assets/textures/tank_footprint");
-
-            footprints[total_treads_placed] = this;
-
-            total_treads_placed++;
-        }
-        public void Render()
-        {
-            lifeTime++;
-            Matrix scale = alternate ? Matrix.CreateScale(0.5f, 1f, 0.35f) : Matrix.CreateScale(0.5f, 1f, 0.075f);
-
-            World = scale * Matrix.CreateRotationY(rotation) * Matrix.CreateTranslation(Position);
-            View = TankGame.GameView;
-            Projection = TankGame.GameProjection;
-
-            foreach (ModelMesh mesh in Model.Meshes)
-            {
-                foreach (BasicEffect effect in mesh.Effects)
-                {
-                    effect.World = World;
-                    effect.View = View;
-                    effect.Projection = Projection;
-
-                    effect.TextureEnabled = true;
-
-                    effect.Texture = texture;
-
-                    effect.SetDefaultGameLighting_IngameEntities();
-                }
-                mesh.Draw();
-            }
-        }
-    }*/
     public class TankFootprint
     {
         public const int MAX_FOOTPRINTS = 100000;
@@ -573,70 +542,6 @@ namespace WiiPlayTanksRemake.GameContent
             // [0.0, 2.0, 0.6, 0.2]
         }
     }
-    /*public class TankDeathMark
-    {
-        public const int MAX_DEATH_MARKS = 1000;
-
-        public static TankDeathMark[] deathMarks = new TankDeathMark[MAX_DEATH_MARKS];
-
-        public Vector3 Position;
-        public float rotation;
-
-        internal static int total_death_marks;
-
-        public Matrix World;
-        public Matrix View;
-        public Matrix Projection;
-
-        public Model Model;
-
-        public Texture2D texture;
-
-        public enum CheckColor
-        {
-            Blue,
-            Red,
-            White
-        }
-
-        public TankDeathMark(CheckColor color)
-        {
-            if (total_death_marks + 1 > MAX_DEATH_MARKS)
-                return;
-            total_death_marks++;
-
-            Model = GameResources.GetGameResource<Model>("Assets/check");
-
-            texture = GameResources.GetGameResource<Texture2D>($"Assets/textures/check/check_{color.ToString().ToLower()}");
-
-            deathMarks[total_death_marks] = this;
-        }
-        public void Render()
-        {
-            World = Matrix.CreateScale(0.7f) * Matrix.CreateTranslation(Position);
-            View = TankGame.GameView;
-            Projection = TankGame.GameProjection;
-
-            foreach (ModelMesh mesh in Model.Meshes)
-            {
-                foreach (BasicEffect effect in mesh.Effects)
-                {
-                    effect.World = World;
-                    effect.View = View;
-                    effect.Projection = Projection;
-
-                    effect.TextureEnabled = true;
-
-                    effect.Alpha = 1f;
-
-                    effect.Texture = texture;
-
-                    effect.SetDefaultGameLighting_IngameEntities();
-                }
-                mesh.Draw();
-            }
-        }
-    }*/
     public class TankDeathMark
     {
         public const int MAX_DEATH_MARKS = 1000;

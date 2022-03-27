@@ -434,6 +434,8 @@ namespace WiiPlayTanksRemake
 
             Input.HandleInput();
 
+            bool shouldUpdate = Client.IsConnected() ? true : IsActive && !GameUI.Paused;
+
             if (IsActive && !GameUI.Paused)
             {
                 foreach (var type in systems)

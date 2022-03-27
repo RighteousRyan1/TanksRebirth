@@ -107,6 +107,28 @@ namespace WiiPlayTanksRemake.Net
                     t.Team = team;
 
                     break;
+                case PacketType.PlayerData:
+
+                    int id = reader.GetInt();
+                    float x2 = reader.GetFloat();
+                    float y2 = reader.GetFloat();
+                    float tankRotation = reader.GetFloat();
+                    float turretRotation = reader.GetFloat();
+                    float vX = reader.GetFloat();
+                    float vY = reader.GetFloat();
+
+                    GameHandler.AllPlayerTanks[id].Body.Position = new(x2, y2);
+                    GameHandler.AllPlayerTanks[id].TankRotation = tankRotation;
+                    GameHandler.AllPlayerTanks[id].TurretRotation = turretRotation;
+                    GameHandler.AllPlayerTanks[id].Velocity = new(vX, vY);
+                    break;
+                case PacketType.ChatMessage:
+                    string msg = reader.GetString();
+                    Color color = reader.GetColor();
+                    string sender = reader.GetString();
+
+                    ChatSystem.SendMessage(msg, color, sender);
+                    break;
             }
 
             //peer.Send(message, DeliveryMethod.ReliableOrdered);
@@ -168,6 +190,9 @@ namespace WiiPlayTanksRemake.Net
                     break;
                 case PacketType.StartGame:
                 case PacketType.PlayerSpawn:
+                    message = new();
+                    message.Put(packet);
+                    Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered, peer);
                     // We don't need to do anything since it's handled in the Client's method.
                     break;
             }
@@ -206,20 +231,18 @@ namespace WiiPlayTanksRemake.Net
         LeaveGame,
 
         // Ingame packets: players
-        PlayerPosition,
-        PlayerTurretAngle,
-        PlayerAngle,
-        PlayerVelocity,
+        PlayerData,
 
         // Ingame packets: ai
-        AiTankPositions,
-        AiTankAngles,
-        AiTankVelocities,
-        AiTankTurretAngles,
+        AiTankData,
 
         // Ingame packets: tank mechanics
         MinePlacement,
         BulletFire,
+
+        // Human communication
+
+        ChatMessage,
 
         // Debugging packets:
 

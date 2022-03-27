@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using LiteNetLib;
 using LiteNetLib.Layers;
 using LiteNetLib.Utils;
+using Microsoft.Xna.Framework;
 using WiiPlayTanksRemake.GameContent;
 
 namespace WiiPlayTanksRemake.Net
@@ -83,10 +84,37 @@ namespace WiiPlayTanksRemake.Net
             message.Put(tank.TankRotation);
             message.Put(tank.TurretRotation);
 
-            Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered);
-        }
+            // Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered);
 
-        public static bool IsClientConnected()
+            client.Send(message, DeliveryMethod.ReliableOrdered);
+        }
+        public static void SyncPlayer(PlayerTank tank)
+        {
+            NetDataWriter message = new();
+            message.Put(PacketType.PlayerData);
+
+            message.Put(tank.PlayerId);
+            message.Put(tank.Body.Position.X);
+            message.Put(tank.Body.Position.Y);
+            message.Put(tank.TankRotation);
+            message.Put(tank.TurretRotation);
+            message.Put(tank.Body.LinearVelocity.X);
+            message.Put(tank.Body.LinearVelocity.Y);
+
+            client.Send(message, DeliveryMethod.ReliableOrdered);
+        }
+        public static void SendMessage(string text, Color color, string sender)
+        {
+            NetDataWriter message = new();
+            message.Put(PacketType.ChatMessage);
+
+            message.Put(text);
+            message.Put(color);
+            message.Put(sender);
+
+            client.Send(message, DeliveryMethod.ReliableOrdered);
+        }
+        public static bool IsConnected()
         {
             if (client is not null)
                 return client.ConnectionState == ConnectionState.Connected;

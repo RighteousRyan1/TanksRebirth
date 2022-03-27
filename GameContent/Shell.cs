@@ -322,7 +322,7 @@ namespace WiiPlayTanksRemake.GameContent
                         else
                         {
                             Destroy();
-                            tank.Destroy();
+                            tank.Damage();
                         }
                     }
                 }

@@ -685,6 +685,18 @@
 /processorParam:Quality=Best
 /build:Assets/sounds/ambient/forestnight.ogg
 
+#begin Assets/sounds/armor_ding_1.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/sounds/armor_ding_1.wav
+
+#begin Assets/sounds/armor_ding_2.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/sounds/armor_ding_2.wav
+
 #begin Assets/sounds/bullet_destroy.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor

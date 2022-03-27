@@ -8,7 +8,9 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using WiiPlayTanksRemake.Internals;
+using WiiPlayTanksRemake.Internals.Common.Framework.Audio;
 using WiiPlayTanksRemake.Internals.Common.Utilities;
+using WiiPlayTanksRemake.Net;
 
 namespace WiiPlayTanksRemake.GameContent.Systems
 {
@@ -37,6 +39,13 @@ namespace WiiPlayTanksRemake.GameContent.Systems
 
             ChatMessages.Add(msg);
             MessageCache.Add(msg);
+
+            if (sender is not null)
+            {
+                SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/menu/menu_tick"), SoundContext.Effect);
+                if (Client.IsConnected())
+                    Client.SendMessage(text.ToString(), color, sender.ToString());
+            }
 
             return msg;
         }

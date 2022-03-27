@@ -1,14 +1,55 @@
 ﻿using MeltySynth;
 using Microsoft.Xna.Framework.Audio;
+using NVorbis;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace WiiPlayTanksRemake.Internals.Common.Framework.Audio
 {
+    public class OggSound : IDisposable
+    {
+        public void Dispose()
+        {
+            GC.SuppressFinalize(this);
+        }
+
+        private static readonly int sampleRate = 44100;
+        private static readonly int bufferLength = sampleRate / 10;
+
+        private DynamicSoundEffectInstance dynamicSound;
+
+        private byte[] byteBuffer;
+        private float[] floatBuffer;
+
+        private VorbisReader reader;
+
+        public OggSound(string path)
+        {
+            dynamicSound = new DynamicSoundEffectInstance(sampleRate, AudioChannels.Stereo);
+            byteBuffer = new byte[4 * bufferLength];
+            floatBuffer = new float[4 * bufferLength];
+
+            reader = new(path + ".ogg");
+
+            int samples = reader.ReadSamples(floatBuffer, 0, bufferLength);
+            reader.ReadSamples(floatBuffer, samples, bufferLength - samples);
+
+            dynamicSound.BufferNeeded += (s, e) => SubmitBuffer();
+        }
+        private void SubmitBuffer()
+        {
+            dynamicSound.SubmitBuffer(byteBuffer, 0, byteBuffer.Length);
+        }
+
+        public void Play()
+            => dynamicSound?.Play();
+        public void Pause()
+            => dynamicSound?.Pause();
+        public void Resume()
+            => dynamicSound?.Resume();
+        public void SetVolume(float volume)
+            => dynamicSound.Volume = volume;
+    }
     public class MidiPlayer : IDisposable
     {
         private static readonly int sampleRate = 44100;

@@ -20,6 +20,8 @@ namespace WiiPlayTanksRemake.GameContent
 
         public Vector2 Position;
 
+        public bool[] HasHit = new bool[GameHandler.AllTanks.Length];
+
         public Vector3 Position3D => Position.ExpandZ();
 
         public Matrix View;
@@ -102,8 +104,12 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 if (tank is not null && Vector2.Distance(tank.Position, Position) < scale * 9)
                     if (!tank.Dead)
-                        if (tank.VulnerableToMines)
-                            tank.Destroy();
+                        if (!HasHit[tank.WorldId])
+                            if (tank.VulnerableToMines)
+                            {
+                                HasHit[tank.WorldId] = true;
+                                tank.Damage();
+                            }
             }
 
             if (hitMaxAlready)
@@ -138,6 +144,11 @@ namespace WiiPlayTanksRemake.GameContent
                     effect.Texture = mask;
 
                     effect.SetDefaultGameLighting_IngameEntities();
+
+                    effect.AmbientLightColor = Color.Orange.ToVector3();
+                    effect.DiffuseColor = Color.Orange.ToVector3();
+                    effect.EmissiveColor = Color.Orange.ToVector3();
+                    effect.FogColor = Color.Orange.ToVector3();
 
                     if (tickAtMax <= 0)
                         effect.Alpha -= 0.05f;
