@@ -100,6 +100,7 @@ namespace WiiPlayTanksRemake.GameContent
             Deceleration = 0.3f;
             TurningSpeed = 0.1f;
             MaximalTurn = 0.8f;
+            // Armor = new(this, 100);
 
             ShellType = ShellTier.Player;
 
@@ -527,6 +528,7 @@ namespace WiiPlayTanksRemake.GameContent
                 return;
 
             RenderModel();
+            Armor?.Render();
         }
 
         public override string ToString()

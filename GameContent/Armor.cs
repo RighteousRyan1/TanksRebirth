@@ -63,15 +63,15 @@ namespace WiiPlayTanksRemake.GameContent
                 //TankGame.spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), new Rectangle((int)(position.X - _hitpointsMax / 2 * width), (int)position.Y, (int)(HitPoints * width), (int)height), Color.Lime);
             }*/
 
-            void setHealthBar(float xScl, float yScl, float zScl)
+            void setHealthBar(float xScl, float yScl)
             {
-                _healthBarTotal.Scale = new(xScl, yScl, zScl);
-                _healthBarCurrent.Scale = new(xScl * (HitPoints + 1) / (_hitpointsMax + 1), yScl, zScl * (HitPoints + 1) / (_hitpointsMax + 1));
+                _healthBarTotal.Scale = new(xScl, yScl, 1f);
+                _healthBarCurrent.Scale = new(xScl * (HitPoints + 1) / (_hitpointsMax + 1), yScl, 1f);
             }
 
             if (canRenderHealthBar && _hitpointsMax > 3)
             {
-                setHealthBar(5, 2, 5);
+                setHealthBar(5, 2);
                 _healthBarTotal.position = Host.Position3D + new Vector3(0, 40, 0);
                 _healthBarCurrent.position = Host.Position3D + new Vector3(0, 40, 0);
             }
@@ -116,10 +116,13 @@ namespace WiiPlayTanksRemake.GameContent
                     {
                         //if (render[i])
                         //{
+                        if (i < 3)
+                        {
                             effect.World = Matrix.CreateRotationX(-MathHelper.PiOver2)
                                  * Matrix.CreateRotationY(-Host.TankRotation)
                                  * Matrix.CreateScale(scale)
                                  * Matrix.CreateTranslation(Host.Position3D + offset[i].RotatedByRadians(Host.TankRotation).ExpandZ());
+                        }
                         //}
                         effect.View = Host.View;
                         effect.Projection = Host.Projection;
