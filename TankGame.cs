@@ -494,17 +494,27 @@ namespace WiiPlayTanksRemake
 
             foreach (var music in Music.AllMusic)
                 music?.Update();
+
+            UiScale = GameUtils.MousePosition.X / GameUtils.WindowWidth * 5;
         }
+
+        public static Matrix Matrix2D;
+
+        public static float UiScale = 1f;
 
         protected override void Draw(GameTime gameTime)
         {
             RenderStopwatch.Start();
 
+            Matrix2D = Matrix.CreateOrthographicOffCenter(0, GameUtils.WindowWidth, GameUtils.WindowHeight, 0, -1, 1)
+                * Matrix.CreateScale(UiScale);
+
             GraphicsDevice.Clear(Color.Transparent);
 
             DecalSystem.UpdateRenderTarget();
 
-            spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied);
+
+            spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied/*, transformMatrix: Matrix2D*/);
 
             if (DebugUtils.DebuggingEnabled)
                 spriteBatch.DrawString(TextFont, "Debug Level: " + DebugUtils.CurDebugLabel, new Vector2(10), Color.White, new Vector2(0.6f));
