@@ -406,13 +406,13 @@ namespace WiiPlayTanksRemake.GameContent.UI
             {
                 if (tnk is not AITank)
                     return;
-                var pee = tnk.Body.Position;
-                if (pee.X > 500)
-                    pee.X = -500;
+                var pos = tnk.Body.Position;
+                if (pos.X > 500)
+                    pos.X = -500;
 
                 tnk.Velocity.Y = _tnkSpeed;
 
-                tnk.Body.Position = pee;
+                tnk.Body.Position = pos;
             }
         }
 

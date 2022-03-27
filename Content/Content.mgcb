@@ -757,12 +757,6 @@
 /processorParam:Quality=Best
 /build:Assets/sounds/tank_1up.wav
 
-#begin Assets/sounds/tank_enemy_destroy.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Assets/sounds/tank_enemy_destroy.wav
-
 #begin Assets/sounds/tnk_destroy.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor

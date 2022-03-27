@@ -242,6 +242,7 @@ namespace WiiPlayTanksRemake
                 SettingsHandler = new(Settings, Path.Combine(SaveDirectory, "settings.json"));
                 Settings = SettingsHandler.DeserializeAndSet<GameConfig>();
             }
+
             #region Config Initialization
 
             graphics.SynchronizeWithVerticalRetrace = Settings.Vsync;
@@ -256,11 +257,16 @@ namespace WiiPlayTanksRemake
             graphics.PreferredBackBufferWidth = Settings.ResWidth;
             graphics.PreferredBackBufferHeight = Settings.ResHeight;
 
+            graphics.ApplyChanges();
+
             Language.LoadLang(ref GameLanguage, Settings.Language);
 
             #endregion
 
             GameHandler.SetupGraphics();
+
+            GameUI.Initialize();
+            MainMenu.Initialize();
 
             UIElement.UIPanelBackground = GameResources.GetGameResource<Texture2D>("Assets/UIPanelBackground");
 
@@ -334,10 +340,6 @@ namespace WiiPlayTanksRemake
                             GameUtils.RoughStep(ref CameraFocusOffset.Y, 0f, 2f);
                         }
                     }
-                    else
-                    {
-                        GameUtils.GetMouseVelocity(GameUtils.WindowCenter);
-                    }
 
                     GameCamera.SetPosition(new Vector3(0, 0, 350));
                     GameCamera.SetLookAt(new Vector3(0, 0, 0));
@@ -384,7 +386,9 @@ namespace WiiPlayTanksRemake
                 if (!GameUI.Paused && !MainMenu.Active && !OverheadView)
                 {
                     if (Input.MouseRight)
+                    {
                         CameraRotationVector += GameUtils.GetMouseVelocity(GameUtils.WindowCenter) / 500;
+                    }
 
                     if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Add))
                         AddativeZoom += 0.01f;
@@ -397,19 +401,19 @@ namespace WiiPlayTanksRemake
                     {
                         CameraFocusOffset += GameUtils.GetMouseVelocity(GameUtils.WindowCenter);
                     }
+                    GameUtils.GetMouseVelocity(GameUtils.WindowCenter);
 
                     IsFixedTimeStep = !Input.CurrentKeySnapshot.IsKeyDown(Keys.Tab);
                 }
 
+                FixedUpdate(gameTime);
+
                 GameView = GameCamera.GetView();
                 GameProjection = GameCamera.GetProjection();
-
-                FixedUpdate(gameTime);
 
                 LogicTime = UpdateStopwatch.Elapsed;
 
                 UpdateStopwatch.Stop();
-
 
                 LogicFPS = Math.Round(1f / gameTime.ElapsedGameTime.TotalSeconds);
 

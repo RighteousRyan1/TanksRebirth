@@ -299,8 +299,6 @@ namespace WiiPlayTanksRemake.GameContent
 
         public static void SetupGraphics()
         {
-            GameUI.Initialize();
-            MainMenu.Initialize();
             GameShaders.Initialize();
             MapRenderer.InitializeRenderers();
 
