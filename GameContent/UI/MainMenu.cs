@@ -560,7 +560,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
         {
             if (Active)
             {
-                if ((NetPlay.CurrentServer is not null || Client.IsClientConnected()) && Server.ConnectedClients is not null || NetPlay.ServerName is not null)
+                if ((NetPlay.CurrentServer is not null && (Server.ConnectedClients is not null || NetPlay.ServerName is not null)) || (Client.IsClientConnected() && Client.lobbyDataReceived))
                 {
                     Vector2 initialPosition = new(GameUtils.WindowWidth * 0.75f, GameUtils.WindowHeight * 0.25f);
                     TankGame.spriteBatch.DrawString(TankGame.TextFont, $"\"{NetPlay.ServerName}\"", initialPosition - new Vector2(0, 40), Color.White, 0.6f);
@@ -569,7 +569,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
                     {
                         var client = Server.ConnectedClients[i];
 
-                        TankGame.spriteBatch.DrawString(TankGame.TextFont, $"{client.Name}", initialPosition + new Vector2(0, 20) * (i + 1), Color.White, 0.6f);
+                        TankGame.spriteBatch.DrawString(TankGame.TextFont, $"{client.Name}" + $" ({client.Id})", initialPosition + new Vector2(0, 20) * (i + 1), Color.White, 0.6f);
                     }
                 }
                 var display = $"Tanks! Remake v{TankGame.Instance.GameVersion}\nThe original game and assets used in this game belongs to Nintendo\nDeveloped by RighteousRyan\nTANKS to all our contributors!";

@@ -54,13 +54,15 @@ namespace WiiPlayTanksRemake.Net
                 case PacketType.ClientInfo:
                     Client.RequestLobbyInfo();
                     break;
+
                 case PacketType.LobbyInfo:
-                    int serverMaxClients = reader.GetInt();
+                    ServerName = "ServerName";
+                    int serverMaxClients = reader.GetByte();
 
                     string servName = reader.GetString();
                     ServerName = servName;
 
-                    int curClientCount = reader.GetInt();
+                    byte curClientCount = reader.GetByte();
 
                     CurrentClient.Id = curClientCount;
 
@@ -71,7 +73,7 @@ namespace WiiPlayTanksRemake.Net
 
                         if (isClientAvailable)
                         {
-                            int clientId = reader.GetInt();
+                            byte clientId = reader.GetByte();
                             string clientName = reader.GetString();
 
                             Server.ConnectedClients[i] = new Client()
@@ -81,6 +83,7 @@ namespace WiiPlayTanksRemake.Net
                             };
                         }
                     }
+                    Client.lobbyDataReceived = true;
 
                     break;
                 case PacketType.StartGame:
@@ -113,17 +116,20 @@ namespace WiiPlayTanksRemake.Net
             //GameHandler.ClientLog.Write(string.Join(",", reader.RawData), Internals.LogType.Debug);
             reader.Recycle();
         }
+
         private static void OnPacketRecieve_Server(NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod)
         {
             var packet = reader.GetPacket();
 
-            NetDataWriter message = new();
+            NetDataWriter message;
 
-            message.Put(packet);
+            //message.Put(packet);
 
             switch (packet)
             {
                 case PacketType.ClientInfo:
+                    message = new();
+                    message.Put(packet);
                     string name = reader.GetString();
 
                     Server.ConnectedClients[Server.CurrentClientCount] = new Client()
@@ -131,31 +137,35 @@ namespace WiiPlayTanksRemake.Net
                         Id = Server.CurrentClientCount,
                         Name = name
                     };
-
                     Server.CurrentClientCount++;
 
-                    Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered);
+                    //Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered);
+                    peer.Send(message, deliveryMethod);
                     break;
                 case PacketType.LobbyInfo:
-                    message.Put(Server.MaxClients);
+                    message = new();        //I have yet to test with this how it previously was.
+                    message.Put(packet);
+                    message.Put((byte)Server.MaxClients);     //This dang ushort was throwing the entire packet off
 
                     message.Put(CurrentServer.Name);
 
-                    message.Put(Server.CurrentClientCount);
+                    message.Put((byte)Server.CurrentClientCount);
 
                     for (int i = 0; i < Server.MaxClients; i++)
                     {
-                        message.Put(Server.ConnectedClients[i].Name is not null);
-                        if (Server.ConnectedClients[i].Name is not null)
+                        bool clientExists = Server.ConnectedClients[i] is not null;
+                        message.Put(clientExists);
+                        if (clientExists)
                         {
-                            var client = Server.ConnectedClients[i];
-                            message.Put(client.Id);
+                            Client client = Server.ConnectedClients[i];
+                            message.Put((byte)client.Id);
                             message.Put(client.Name);
                             // fix desync of client ids
                         }
                     }
 
-                    Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered);
+                    Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered);     //This sends to everyone but the one who sent
+                    peer.Send(message, deliveryMethod);     //This sends it back to the guy who sent
 
                     break;
                 case PacketType.StartGame:
