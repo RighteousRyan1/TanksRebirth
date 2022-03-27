@@ -16,6 +16,7 @@ namespace WiiPlayTanksRemake.Net
         public static EventBasedNetListener clientNetListener;
         public static NetPeer client;
         public static int PingTime = 60;
+        public static bool lobbyDataReceived;
 
         public int Id;
         public string Name;
