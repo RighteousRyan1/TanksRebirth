@@ -1745,11 +1745,13 @@ namespace WiiPlayTanksRemake.GameContent
             return tanks;
         }
 
-        private bool IsObstacleInWay(int checkDist, Vector2 pathDir, out Vector2 reflectDir, bool draw = false)
+        private bool IsObstacleInWay(int checkDist, Vector2 pathDir, out Vector2 endpoint, out Vector2[] reflectPoints, bool draw = false)
         {
             const int PATH_UNIT_LENGTH = 1;
 
             bool hasCollided = false;
+
+            var list = new List<Vector2>();
 
             // 20, 30
 
@@ -1767,11 +1769,13 @@ namespace WiiPlayTanksRemake.GameContent
                 {
                     pathDir.X *= -1;
                     hasCollided = true;
+                    list.Add(pathPos);
                 }
                 if (pathPos.Y < MapRenderer.MIN_Y || pathPos.Y > MapRenderer.MAX_Y)
                 {
                     pathDir.Y *= -1;
                     hasCollided = true;
+                    list.Add(pathPos);
                 }
 
                 var pathHitbox = new Rectangle((int)pathPos.X, (int)pathPos.Y, 1, 1);
@@ -1785,11 +1789,13 @@ namespace WiiPlayTanksRemake.GameContent
                     case CollisionDirection.Down:
                         hasCollided = true;
                         pathDir.Y *= -1;
+                        list.Add(pathPos);
                         break;
                     case CollisionDirection.Left:
                     case CollisionDirection.Right:
                         pathDir.X *= -1;
                         hasCollided = true;
+                        list.Add(pathPos);
                         break;
                 }
 
@@ -1801,8 +1807,9 @@ namespace WiiPlayTanksRemake.GameContent
                     TankGame.spriteBatch.Draw(whitePixel, pathPosScreen, null, Color.White, 0, whitePixel.Size() / 2, 2 + (float)Math.Sin(i * Math.PI / 5 - TankGame.GameUpdateTime * 0.3f), default, default);
                 }
             }
+            reflectPoints = list.ToArray();
             // Body.Position = reflectDir;
-            reflectDir = pathDir;
+            endpoint = pathDir;
             return hasCollided;
         }
 
@@ -1965,19 +1972,22 @@ namespace WiiPlayTanksRemake.GameContent
 
                         #region CubeNav
 
-                        pathBlocked = IsObstacleInWay(AiParams.BlockWarinessDistance, Vector2.UnitY.RotatedByRadians(-TargetTankRotation), out var travelPath);
+                        pathBlocked = IsObstacleInWay(AiParams.BlockWarinessDistance, Vector2.UnitY.RotatedByRadians(-TargetTankRotation), out var travelPath, out var refPoints);
 
                         if (pathBlocked && Behaviors[2].IsModOf(3) && !isMineNear && !isBulletNear)
                         {
-                            var targe = GameUtils.DirectionOf(Position, travelPath).ToRotation();
+                            if (refPoints.Length > 0)
+                            {
+                                var targe = GameUtils.DirectionOf(Position, travelPath - new Vector2(500, 0)).ToRotation();
+                                //var targe = GameUtils.DirectionOf(refPoints[0], travelPath).ToRotation();
 
+                                //var targe = travelPath.ToRotation() + MathHelper.PiOver2    ;
 
-                            //var targe = travelPath.ToRotation() + MathHelper.PiOver2    ;
+                                //targetTankRotation = targe;
 
-                            //targetTankRotation = targe;
-
-                            // targetTankRotation
-                            GameUtils.RoughStep(ref TargetTankRotation, targe, targe / 4);
+                                // targetTankRotation
+                                GameUtils.RoughStep(ref TargetTankRotation, targe, targe / 4);
+                            }
 
                             // TODO: i literally do not understand this
                         }
@@ -2278,7 +2288,7 @@ namespace WiiPlayTanksRemake.GameContent
                     DebugUtils.DrawDebugString(TankGame.spriteBatch, $"{tier}: {poo.Count}", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection), 1, centered: true);
                     if (!Stationary)
                     {
-                        IsObstacleInWay(AiParams.BlockWarinessDistance, Vector2.UnitY.RotatedByRadians(-TargetTankRotation), out var travelPath, true);
+                        IsObstacleInWay(AiParams.BlockWarinessDistance, Vector2.UnitY.RotatedByRadians(-TargetTankRotation), out var travelPath, out var refPoints, true);
                         DebugUtils.DrawDebugString(TankGame.spriteBatch, travelPath, GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(travelPath.X, 11, travelPath.Y), View, Projection), 1, centered: true);
                         DebugUtils.DrawDebugString(TankGame.spriteBatch, "ENDPOINT", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(rayEnd.X, 11, rayEnd.Y), View, Projection), 1, centered: true);
                     }
