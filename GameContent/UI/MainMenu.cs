@@ -70,6 +70,8 @@ namespace WiiPlayTanksRemake.GameContent.UI
         public static UITextButton BulletHell;
         public static UITextButton AllInvisible;
         public static UITextButton AllStationary;
+        public static UITextButton Armored;
+        public static UITextButton AllHoming;
 
         #endregion
 
@@ -343,6 +345,23 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 OnLeftClick = (elem) => DifficultyModes.AllStationary = !DifficultyModes.AllStationary
             };
             AllStationary.SetDimensions(100, 550, 300, 40);
+
+            AllHoming = new("Seekers", font, Color.White)
+            {
+                IsVisible = false,
+                Tooltip = "Every enemy tank now has homing bullets.",
+                OnLeftClick = (elem) => DifficultyModes.AllHoming = !DifficultyModes.AllHoming
+            };
+            AllHoming.SetDimensions(100, 600, 300, 40);
+
+            Armored = new("Armored", font, Color.White)
+            {
+                IsVisible = false,
+                Tooltip = "Every single non-player tank has 3 armor points added to it.",
+                OnLeftClick = (elem) => DifficultyModes.Armored = !DifficultyModes.Armored
+            };
+            Armored.SetDimensions(100, 650, 300, 40);
+
         }
 
         internal static void SetPlayButtonsVisibility(bool visible)
@@ -360,6 +379,8 @@ namespace WiiPlayTanksRemake.GameContent.UI
             BulletHell.IsVisible = visible;
             AllInvisible.IsVisible = visible;
             AllStationary.IsVisible = visible;
+            Armored.IsVisible = visible;
+            AllHoming.IsVisible = visible;
         }
         internal static void SetPrimaryMenuButtonsVisibility(bool visible)
         {
@@ -392,6 +413,8 @@ namespace WiiPlayTanksRemake.GameContent.UI
             BulletHell.Color = DifficultyModes.BulletHell ? Color.Lime : Color.Red;
             AllInvisible.Color = DifficultyModes.AllInvisible ? Color.Lime : Color.Red;
             AllStationary.Color = DifficultyModes.AllStationary ? Color.Lime : Color.Red;
+            AllHoming.Color = DifficultyModes.AllHoming ? Color.Lime : Color.Red;
+            Armored.Color = DifficultyModes.Armored ? Color.Lime : Color.Red;
 
             _tnkRot += 0.01f;
 
@@ -594,7 +617,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
         public static bool BulletHell { get; set; } = false;
         public static bool AllInvisible { get; set; } = false;
         public static bool AllStationary { get; set; } = false;
-
-        public static bool ShellHoming { get; set; } = false;
+        public static bool AllHoming { get; set; } = false;
+        public static bool Armored { get; set; } = false;
     }
 }

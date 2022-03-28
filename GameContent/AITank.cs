@@ -1436,6 +1436,13 @@ namespace WiiPlayTanksRemake.GameContent
                     ShellType = ShellTier.Supressed;
                     RicochetCount = 1;
 
+                    /*ShootStun = 25;
+                    ShellCooldown = 5;
+                    ShellLimit = 50;
+                    ShellSpeed = 9.5f;
+                    ShellType = ShellTier.Supressed;
+                    RicochetCount = 1;*/
+
                     Invisible = false;
                     Stationary = false;
                     ShellHoming = new();
@@ -1511,6 +1518,24 @@ namespace WiiPlayTanksRemake.GameContent
             }
             if (UI.DifficultyModes.AllStationary)
                 Stationary = true;
+
+            if (UI.DifficultyModes.AllHoming)
+            {
+                ShellHoming = new();
+                ShellHoming.radius = 200f;
+                ShellHoming.speed = ShellSpeed;
+                ShellHoming.power = 0.1f * ShellSpeed;
+
+                AiParams.Inaccuracy *= 4;
+            }
+
+            if (UI.DifficultyModes.Armored)
+            {
+                if (Armor is null)
+                    Armor = new(this, 3);
+                else
+                    Armor = new(this, Armor.HitPoints + 3);
+            }
         }
 
         public override void Update()
@@ -1756,7 +1781,6 @@ namespace WiiPlayTanksRemake.GameContent
                 }
             }
             reflectPoints = list.ToArray();
-            // Body.Position = reflectDir;
             endpoint = pathDir;
             return hasCollided;
         }
@@ -2078,8 +2102,10 @@ namespace WiiPlayTanksRemake.GameContent
 
                             var crate = Crate.SpawnCrate(CubeMapPosition.Convert3D(new CubeMapPosition(GameHandler.GameRand.Next(0, CubeMapPosition.MAP_WIDTH),
                                 GameHandler.GameRand.Next(0, CubeMapPosition.MAP_HEIGHT))) + new Vector3(0, 500, 0), 2f);
-                            crate.TankToSpawn = new AITank(PickRandomTier())
+                            crate.TankToSpawn = new TankTemplate()
                             {
+                                AiTier = PickRandomTier(),
+                                IsPlayer = false,
                                 Team = Team
                             };
 

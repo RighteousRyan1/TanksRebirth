@@ -249,7 +249,7 @@ namespace WiiPlayTanksRemake.GameContent
                                    if (mesh.Name == "Log")
                                        effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/forest/tree_log_tex");
                                    else
-                                       effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/forest/grassfloor");
+                                       effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/forest/floor_face");
 
                                     effect.SetDefaultGameLighting();
                                 }

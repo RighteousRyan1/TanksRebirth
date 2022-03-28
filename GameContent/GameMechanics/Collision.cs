@@ -1,9 +1,11 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using WiiPlayTanksRemake.Internals;
 using WiiPlayTanksRemake.Internals.Common.Utilities;
 
 namespace WiiPlayTanksRemake.GameContent.GameMechanics
@@ -243,6 +245,63 @@ namespace WiiPlayTanksRemake.GameContent.GameMechanics
 
                 direction = CollisionDirection.Right;
             }
+        }
+
+        public static bool DoRaycast(Vector2 start, Vector2 destination, float forgiveness, bool draw = false)
+        {
+            const int PATH_UNIT_LENGTH = 4;
+            const int MAX_DIST = 1000;
+
+            // 20, 30
+
+            var pathDir = GameUtils.DirectionOf(start, destination).ToRotation();
+
+            var whitePixel = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
+            var pathPos = start + Vector2.Zero.RotatedByRadians(pathDir);
+
+            pathDir *= PATH_UNIT_LENGTH;
+
+            for (int i = 0; i < MAX_DIST; i++)
+            {
+                var dummyPos = Vector2.Zero;
+
+                if (pathPos.X < MapRenderer.MIN_X || pathPos.X > MapRenderer.MAX_X)
+                {
+                    return false;
+                }
+                if (pathPos.Y < MapRenderer.MIN_Y || pathPos.Y > MapRenderer.MAX_Y)
+                {
+                    return false;
+                }
+
+                var pathHitbox = new Rectangle((int)pathPos.X, (int)pathPos.Y, 1, 1);
+
+                // Why is velocity passed by reference here lol
+                HandleCollisionSimple_ForBlocks(pathHitbox, start, ref dummyPos, out var dir, out var block, false);
+
+                switch (dir)
+                {
+                    case CollisionDirection.Up:
+                    case CollisionDirection.Down:
+                        return false;
+                    case CollisionDirection.Left:
+                    case CollisionDirection.Right:
+                        return false;
+                }
+
+                if (Vector2.Distance(pathPos, destination) < forgiveness)
+                    return true;
+
+                pathPos += Vector2.Normalize(GameUtils.DirectionOf(start, destination));
+
+                if (draw)
+                {
+                    var pathPosScreen = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(pathPos.X, 11, pathPos.Y), TankGame.GameView, TankGame.GameProjection);
+                    TankGame.spriteBatch.Draw(whitePixel, pathPosScreen, null, Color.White, 0, whitePixel.Size() / 2, 2 + (float)Math.Sin(i * Math.PI / 5 - TankGame.GameUpdateTime * 0.3f), default, default);
+                }
+
+            }
+            return true;
         }
     }
 }

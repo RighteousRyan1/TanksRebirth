@@ -22,6 +22,8 @@ namespace WiiPlayTanksRemake.GameContent
             public float radius;
             public float speed;
             public int cooldown;
+
+            public Vector2 target;
         }
 
         /// <summary>The maximum shells allowed at any given time.</summary>
@@ -213,12 +215,24 @@ namespace WiiPlayTanksRemake.GameContent
                 {
                     foreach (var target in GameHandler.AllTanks)
                     {
-                        if (target is not null && target.Team != owner.Team && Vector2.Distance(Position2D, target.Position) <= homingProperties.radius)
+                        if (target is not null && target != owner && Vector2.Distance(Position2D, target.Position) <= homingProperties.radius)
                         {
-                            float dist = Vector2.Distance(Position2D, target.Position);
+                            if (target.Team != owner.Team || target.Team == Team.NoTeam)
+                            {
+                                homingProperties.target = target.Position;
+                            }
+                        }
+                    }
+                    if (homingProperties.target != Vector2.Zero)
+                    {
+                        bool hits = Collision.DoRaycast(Position2D, homingProperties.target, (int)homingProperties.radius * 2);
 
-                            Velocity.X += (target.Position.X - Position2D.X) * homingProperties.power / dist;
-                            Velocity.Y += (target.Position.Y - Position2D.Y) * homingProperties.power / dist;
+                        if (hits)
+                        {
+                            float dist = Vector2.Distance(Position2D, homingProperties.target);
+
+                            Velocity.X += GameUtils.DirectionOf(Position2D, homingProperties.target).X * homingProperties.power / dist;
+                            Velocity.Z += GameUtils.DirectionOf(Position2D, homingProperties.target).Y * homingProperties.power / dist;
 
                             Vector2 trueSpeed = Vector2.Normalize(Velocity2D) * homingProperties.speed;
 
@@ -382,6 +396,8 @@ namespace WiiPlayTanksRemake.GameContent
 
         internal void Render()
         {
+            if (DebugUtils.DebugLevel == 1 && homingProperties.speed > 0)
+                Collision.DoRaycast(Position2D, homingProperties.target, (int)homingProperties.radius, true);
             foreach (ModelMesh mesh in Model.Meshes)
             {
                 foreach (BasicEffect effect in mesh.Effects)

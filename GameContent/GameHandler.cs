@@ -351,8 +351,9 @@ namespace WiiPlayTanksRemake.GameContent
 
             var drop = Crate.SpawnCrate(new(CubeMapPosition.Convert3D(random).X, 500 + (createEvenDrop ? 0 : GameRand.Next(-300, 301)), CubeMapPosition.Convert3D(random).Z), 2f);
             drop.scale = 1.25f;
-            drop.TankToSpawn = new AITank(tierOverride == default ? AITank.PickRandomTier() : tierOverride)
+            drop.TankToSpawn = new TankTemplate()
             {
+                AiTier = tierOverride == default ? AITank.PickRandomTier() : tierOverride,
                 Team = teamOverride == default ? GameUtils.PickRandom<Team>() : teamOverride
             };
         }
@@ -363,9 +364,9 @@ namespace WiiPlayTanksRemake.GameContent
 
             var drop = Crate.SpawnCrate(new(pos.X, 200, pos.Z), 2f);
             drop.scale = 1.25f;
-            drop.TankToSpawn = new AITank(AITank.PickRandomTier())
+            drop.TankToSpawn = new TankTemplate()
             {
-                Dead = true,
+                AiTier = AITank.PickRandomTier(),
                 Team = Team.NoTeam
             };
         }

@@ -38,7 +38,8 @@ namespace WiiPlayTanksRemake.GameContent
         public int id;
 
         /// <summary>What <see cref="Tank"/> to spawn on opening, if any.</summary>
-        public Tank TankToSpawn;
+        public TankTemplate TankToSpawn;
+        public bool ContainsTank = true;
 
         /// <summary>How fast this <see cref="Crate"/> shrinks when it starts to open.</summary>
         public float fadeScale = 0.05f;
@@ -46,6 +47,8 @@ namespace WiiPlayTanksRemake.GameContent
         private int _bounceCount;
 
         private int _maxBounces = 2;
+
+        public event EventHandler OnOpen;
 
         private Crate() 
         {
@@ -167,12 +170,15 @@ namespace WiiPlayTanksRemake.GameContent
         {
             IsOpening = true;
 
-            if (TankToSpawn is not null)
+            if (ContainsTank)
             {
-                TankToSpawn.Dead = false;
-                TankToSpawn.Body.Position = new(position.X, position.Z);
-                TankToSpawn.Position = new(position.X, position.Z);
+                var t = new AITank(TankToSpawn.AiTier);
+                t.Body.Position = position.FlattenZ();
+                t.Position = position.FlattenZ();
+                t.Dead = false;
             }
+
+            OnOpen?.Invoke(this, new());
         }
     }
 }

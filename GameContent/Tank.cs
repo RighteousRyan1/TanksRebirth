@@ -157,14 +157,6 @@ namespace WiiPlayTanksRemake.GameContent
             if (UI.DifficultyModes.BulletHell)
                 RicochetCount *= 3;
 
-            if (UI.DifficultyModes.ShellHoming)
-            {
-                ShellHoming = new();
-                ShellHoming.radius = 100f;
-                ShellHoming.speed = ShellSpeed;
-                ShellHoming.power = 0.5f;
-            }
-
             GameHandler.OnMissionStart += () =>
             {
                 if (Invisible && !Dead)
@@ -227,7 +219,7 @@ namespace WiiPlayTanksRemake.GameContent
         {
             if (IsIngame)
             {
-                Worldbox = new(Position3D - new Vector3(7, 15, 7), Position3D + new Vector3(10, 15, 10));
+                Worldbox = new(Position3D - new Vector3(7, 0, 7), Position3D + new Vector3(10, 15, 10));
                 Projection = TankGame.GameProjection;
                 View = TankGame.GameView;
             }
@@ -258,6 +250,10 @@ namespace WiiPlayTanksRemake.GameContent
             => $"Pos2D: {Position} | Vel: {Velocity} | Dead: {Dead}";
         /// <summary>Destroy this <see cref="Tank"/>.</summary>
         public virtual void Damage() {
+
+            if (Dead || Immortal)
+                return;
+
             if (Armor is not null)
             {
                 if (Armor.HitPoints > 0)
