@@ -147,7 +147,6 @@ namespace WiiPlayTanksRemake.GameContent.Systems
             }
             GameHandler.ClientLog.Write($"Saved stage file \"{name}.mission\" in map save path.", LogType.Info);
         }
-        // TODO: maybe ref https://github.com/RighteousRyan1/BaselessJumping/blob/master/GameContent/Stage.cs#L34 (cuno abandoned the project)
 
         public static Mission Load(string missionName, string campaignName)
         {

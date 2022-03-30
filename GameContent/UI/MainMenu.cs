@@ -243,35 +243,35 @@ namespace WiiPlayTanksRemake.GameContent.UI
             UsernameInput = new(font, Color.WhiteSmoke, 1f, 20)
             {
                 IsVisible = false,
-                StringToDisplayWhenThereIsNoText = "Username"
+                DefaultString = "Username"
             };
             UsernameInput.SetDimensions(100, 400, 500, 50);
 
             IPInput = new(font, Color.WhiteSmoke, 1f, 15)
             {
                 IsVisible = false,
-                StringToDisplayWhenThereIsNoText = "Server IP address"
+                DefaultString = "Server IP address"
             };
             IPInput.SetDimensions(100, 500, 500, 50);
 
             PortInput = new(font, Color.WhiteSmoke, 1f, 5)
             {
                 IsVisible = false,
-                StringToDisplayWhenThereIsNoText = "Server Port"
+                DefaultString = "Server Port"
             };
             PortInput.SetDimensions(100, 600, 500, 50);
 
             PasswordInput = new(font, Color.WhiteSmoke, 1f, 10)
             {
                 IsVisible = false,
-                StringToDisplayWhenThereIsNoText = "Server Password (Empty = None)"
+                DefaultString = "Server Password (Empty = None)"
             };
             PasswordInput.SetDimensions(100, 700, 500, 50);
 
             ServerNameInput = new(font, Color.WhiteSmoke, 1f, 10)
             {
                 IsVisible = false,
-                StringToDisplayWhenThereIsNoText = "Server Name (Server Creation)"
+                DefaultString = "Server Name (Server Creation)"
             };
             ServerNameInput.SetDimensions(100, 800, 500, 50);
             #endregion
@@ -534,7 +534,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
         public static Tank AddTravelingTank(TankTier tier, float xOffset, float yOffset)
         {
-            var extank = new AITank(tier, true, false)
+            var extank = new AITank(tier, default, true, false)
             {
                 Team = Team.NoTeam,
                 Dead = false

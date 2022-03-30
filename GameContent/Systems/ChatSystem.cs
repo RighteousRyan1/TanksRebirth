@@ -14,7 +14,7 @@ using WiiPlayTanksRemake.Net;
 
 namespace WiiPlayTanksRemake.GameContent.Systems
 {
-    public record ChatSystem
+    public sealed record ChatSystem
     {
         public const int CHAT_MESSAGE_CACHE_CAPACITY = 10000;
         public static List<ChatMessage> ChatMessages { get; } = new();
@@ -104,16 +104,16 @@ namespace WiiPlayTanksRemake.GameContent.Systems
     }
 
     /// <summary>Represents a system used to store messages and their contents in use with the <see cref="ChatSystem"/>.</summary>
-    public class ChatMessage
+    public sealed class ChatMessage
     {
         /// <summary>The content of this <see cref="ChatMessage"/>.</summary>
-        public string Content { get; }
+        public string Content;
 
         /// <summary>The color of the content of this <see cref="ChatMessage"/>.</summary>
-        public Color Color { get; set; }
+        public Color Color;
 
         /// <summary>The <see cref="SpriteFont"/> in which to use to render the content of this <see cref="ChatMessage"/>.</summary>
-        public static SpriteFontBase Font => TankGame.TextFont;
+        public static SpriteFontBase Font = TankGame.TextFont;
 
         /// <summary>The duration this <see cref="ChatMessage"/> will persist for.</summary>
         public int lifeTime = 150;

@@ -231,7 +231,7 @@ namespace WiiPlayTanksRemake.GameContent
                 if (element.HasScissor)
                     TankGame.spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied);
             }
-            tankToSpawnType = MathHelper.Clamp(tankToSpawnType, 1, Enum.GetValues<TankTier>().Length - 1);
+            tankToSpawnType = MathHelper.Clamp(tankToSpawnType, 2, Enum.GetValues<TankTier>().Length - 1);
             tankToSpawnTeam = MathHelper.Clamp(tankToSpawnTeam, 0, Enum.GetValues<Team>().Length - 1);
 
             #region TankInfo
@@ -465,7 +465,7 @@ namespace WiiPlayTanksRemake.GameContent
         {
             MissionName = new(TankGame.TextFont, Color.White, 0.75f, 20)
             {
-                StringToDisplayWhenThereIsNoText = "Mission Name",
+                DefaultString = "Mission Name",
                 IsVisible = false
             };
             MissionName.SetDimensions(20, 60, 230, 50);

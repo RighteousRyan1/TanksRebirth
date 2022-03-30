@@ -11,24 +11,12 @@ namespace WiiPlayTanksRemake.Internals.Common.IO
 
     public struct JsonHandler
     {
-        public string JsonPath
-        {
-            get;
-        }
-        public string JsonDir
-        {
-            get;
-        }
+        public readonly string JsonPath;
+        public readonly string JsonDir;
 
-        public FileInfo JsonInfo
-        {
-            get;
-        }
+        public readonly FileInfo JsonInfo;
 
-        public object Object
-        {
-            get; private set;
-        }
+        public object Object;
 
         public JsonHandler(object type, string path)
         {

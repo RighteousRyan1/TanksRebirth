@@ -16,6 +16,7 @@ using WiiPlayTanksRemake.GameContent.Systems;
 using WiiPlayTanksRemake.Internals.Common.Framework.Audio;
 using WiiPlayTanksRemake.Graphics;
 using WiiPlayTanksRemake.GameContent.Systems.Coordinates;
+using WiiPlayTanksRemake.Internals.Common.Framework;
 
 namespace WiiPlayTanksRemake.GameContent
 {
@@ -130,11 +131,13 @@ namespace WiiPlayTanksRemake.GameContent
         /// <summary>
         /// Creates a new <see cref="AITank"/>.
         /// </summary>
-        /// <param name="tier">The tier of this <see cref="AITank"/>.</param>
+        /// <param name="tier">The tier of this <see cref="AITank"/>. If '<see cref="TankTier.Random"/>', it will be randomly chosen.</param>
         /// <param name="setTankDefaults">Whether or not to give this <see cref="AITank"/> the default values.</param>
         /// /// <param name="isIngame">Whether or not this <see cref="AITank"/> is a gameplay tank or a cosmetic tank (i.e: display models on menus, etc).</param>
-        public AITank(TankTier tier, bool setTankDefaults = true, bool isIngame = true)
+        public AITank(TankTier tier, Range<TankTier> tankRange = default, bool setTankDefaults = true, bool isIngame = true)
         {
+            if (tier == TankTier.Random)
+                tier = (TankTier)GameHandler.GameRand.Next((int)tankRange.Min, (int)tankRange.Max);
             IsIngame = isIngame;
             if (isIngame)
             {

@@ -4,6 +4,7 @@
     public enum TankTier : byte
     {
         None,
+        Random,
         Brown,
         Ash,
         Marine,

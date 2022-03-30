@@ -22,9 +22,9 @@ namespace WiiPlayTanksRemake.GameContent
     {
         public static bool ShouldRender = true;
 
-        public static Matrix viewMatrix;
-        public static Matrix projectionMatrix;
-        public static Matrix worldMatrix;
+        public static Matrix View;
+        public static Matrix Projection;
+        public static Matrix World;
 
         internal static string assetsRoot;
 
@@ -73,9 +73,9 @@ namespace WiiPlayTanksRemake.GameContent
                 {
                     foreach (BasicEffect effect in mesh.Effects)
                     {
-                        effect.View = viewMatrix;
-                        effect.Projection = projectionMatrix;
-                        effect.World = worldMatrix * Matrix.CreateScale(scale);
+                        effect.View = View;
+                        effect.Projection = Projection;
+                        effect.World = World * Matrix.CreateScale(scale);
 
                         effect.SetDefaultGameLighting();
 
@@ -216,9 +216,9 @@ namespace WiiPlayTanksRemake.GameContent
                         {
                             foreach (BasicEffect effect in mesh.Effects)
                             {
-                                effect.View = viewMatrix;
-                                effect.Projection = projectionMatrix;
-                                effect.World = worldMatrix;
+                                effect.View = View;
+                                effect.Projection = Projection;
+                                effect.World = World;
 
                                 if (mesh.Name == "polygon2")
                                     effect.Alpha = 0.1f;
@@ -240,8 +240,8 @@ namespace WiiPlayTanksRemake.GameContent
                             {
                                 foreach (BasicEffect effect in mesh.Effects)
                                 {
-                                    effect.View = viewMatrix;
-                                    effect.Projection = projectionMatrix;
+                                    effect.View = View;
+                                    effect.Projection = Projection;
                                     effect.World = Matrix.CreateRotationX(-MathHelper.PiOver2) * Matrix.CreateRotationY(MathHelper.Pi) * Matrix.CreateTranslation(position);
 
                                     effect.TextureEnabled = true;
@@ -265,8 +265,8 @@ namespace WiiPlayTanksRemake.GameContent
                             {
                                 foreach (BasicEffect effect in mesh.Effects)
                                 {
-                                    effect.View = viewMatrix;
-                                    effect.Projection = projectionMatrix;
+                                    effect.View = View;
+                                    effect.Projection = Projection;
                                     effect.World = Matrix.CreateScale(10) * Matrix.CreateRotationX(-MathHelper.PiOver2) * Matrix.CreateRotationY(MathHelper.Pi) * Matrix.CreateTranslation(position + new Vector3(0, 10, 0));
 
                                     effect.TextureEnabled = true;
@@ -289,8 +289,8 @@ namespace WiiPlayTanksRemake.GameContent
                             {
                                 foreach (BasicEffect effect in mesh.Effects)
                                 {
-                                    effect.View = viewMatrix;
-                                    effect.Projection = projectionMatrix;
+                                    effect.View = View;
+                                    effect.Projection = Projection;
                                     effect.World = Matrix.CreateScale(50, 20, 50) * Matrix.CreateRotationX(-MathHelper.PiOver2) * Matrix.CreateFromYawPitchRoll((invert ? MathHelper.Pi : 0) + logPileOrientations[i], 0, 0) * Matrix.CreateTranslation(position);
 
                                     effect.TextureEnabled = true;
@@ -361,9 +361,9 @@ namespace WiiPlayTanksRemake.GameContent
 
         public static void RenderWorldModels()
         {
-            viewMatrix = TankGame.GameView;
-            projectionMatrix = TankGame.GameProjection;
-            worldMatrix = Matrix.CreateScale(0.62f) * Matrix.CreateTranslation(0, 0, 130);
+            View = TankGame.GameView;
+            Projection = TankGame.GameProjection;
+            World = Matrix.CreateScale(0.62f) * Matrix.CreateTranslation(0, 0, 130);
 
             if (ShouldRender)
             {

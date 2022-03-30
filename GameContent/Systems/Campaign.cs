@@ -15,9 +15,11 @@ namespace WiiPlayTanksRemake.GameContent.Systems
     /// <summary>A campaign for players to play on with <see cref="AITank"/>s, or even <see cref="PlayerTank"/>s if supported.</summary>
     public class Campaign
     {
+        /// <summary>The maximum allowed missions in a campaign.</summary>
+        public const int MAX_MISSIONS = 100;
         public static string[] GetCampaignNames()
             => IOUtils.GetSubFolders(Path.Combine(TankGame.SaveDirectory, "Campaigns"), true);
-        public Mission[] CachedMissions { get; set; } = new Mission[100];
+        public Mission[] CachedMissions { get; set; } = new Mission[MAX_MISSIONS];
         public Mission CurrentMission { get; private set; }
 
         public int CurrentMissionId { get; private set; }
@@ -44,20 +46,20 @@ namespace WiiPlayTanksRemake.GameContent.Systems
         /// <summary>Loads the next mission in the <see cref="Campaign"/>.</summary>
         public void LoadNextMission()
         {
-            if (CachedMissions[++CurrentMissionId].Tanks is null || ++CurrentMissionId >= 100)
+            if (CurrentMissionId + 1 >= MAX_MISSIONS)
             {
-                GameHandler.ClientLog.Write($"CachedMissions[{++CurrentMissionId}] is not existent.", LogType.Warn);
+                GameHandler.ClientLog.Write($"CachedMissions[{CurrentMissionId + 1}] is not existent.", LogType.Warn);
                 return;
             }
+            CurrentMissionId++;
 
-            CurrentMission = CachedMissions[++CurrentMissionId];
+            CurrentMission = CachedMissions[CurrentMissionId];
         }
 
         /// <summary>Sets up the <see cref="Mission"/> that is loaded.</summary>
         /// <param name="spawnNewSet">If true, will spawn all tanks as if it's the first time the player(s) has/have entered this mission.</param>
         public void SetupLoadedMission(bool spawnNewSet)
         {
-
             if (spawnNewSet)
             {
                 for (int a = 0; a < GameHandler.AllTanks.Length; a++)
@@ -105,8 +107,11 @@ namespace WiiPlayTanksRemake.GameContent.Systems
 
             GameHandler.ClientLog.Write($"Loaded mission '{CurrentMission.Name}' with {CurrentMission.Tanks.Length} tanks and {CurrentMission.Blocks.Length} obstacles.", LogType.Info);
         }
-
-        public static void LoadFromFolder(string campaignName)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="campaignName"></param>
+        public void LoadFromFolder(string campaignName)
         {
             var root = Path.Combine(TankGame.SaveDirectory, "Campaigns");
             var path = Path.Combine(root, campaignName);
@@ -115,6 +120,18 @@ namespace WiiPlayTanksRemake.GameContent.Systems
             {
                 GameHandler.ClientLog.Write($"Could not find a campaign folder with name {campaignName}. Aborting folder load...", LogType.Warn);
                 return;
+            }
+
+            List<Mission> missions = new();
+
+            var files = Directory.GetFiles(path);
+
+            foreach (var file in files)
+            {
+                missions.Add(Mission.Load(file, null));
+                // campaignName argument is null since we are loading from the campaign folder anyway. 
+
+                CachedMissions = missions.ToArray();
             }
         }
     }

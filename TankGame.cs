@@ -95,11 +95,10 @@ namespace WiiPlayTanksRemake
 
         public static Camera GameCamera;
 
-        public static string SysGPU = $"GPU: {GetGPU()}";
-        public static string SysCPU = $"CPU: {GetHardware("Win32_Processor", "Name")}";
-        public static string SysKeybd = $"Keyboard: {GetHardware("Win32_Keyboard", "Name")}";
-        public static string SysMouse = $"Mouse: {GetHardware("Win32_PointingDevice", "Name")}";
-        public static string SysText;
+        public static readonly string SysGPU = $"GPU: {GetGPU()}";
+        public static readonly string SysCPU = $"CPU: {GetHardware("Win32_Processor", "Name")}";
+        public static readonly string SysKeybd = $"Keyboard: {GetHardware("Win32_Keyboard", "Name")}";
+        public static readonly string SysMouse = $"Mouse: {GetHardware("Win32_PointingDevice", "Name")}";
 
         private static Stopwatch RenderStopwatch { get; } = new();
         private static Stopwatch UpdateStopwatch { get; } = new();
@@ -123,7 +122,7 @@ namespace WiiPlayTanksRemake
         public static Texture2D MagicPixel;
 
         public static TankGame Instance { get; private set; }
-        public static string ExePath => Assembly.GetExecutingAssembly().Location.Replace(@$"\WiiPlayTanksRemake.dll", string.Empty);
+        public static readonly string ExePath = Assembly.GetExecutingAssembly().Location.Replace(@$"\WiiPlayTanksRemake.dll", string.Empty);
         public static SpriteBatch spriteBatch;
 
         public readonly GraphicsDeviceManager graphics;

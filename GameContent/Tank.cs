@@ -40,7 +40,7 @@ namespace WiiPlayTanksRemake.GameContent
             if (IsPlayer)
                 throw new Exception($"{nameof(PlayerType)} was true! This method cannot execute.");
 
-            var ai = new AITank(AiTier, true, true);
+            var ai = new AITank(AiTier, default, true, true);
             ai.Body.Position = Position;
             ai.Position = Position;
             return ai;

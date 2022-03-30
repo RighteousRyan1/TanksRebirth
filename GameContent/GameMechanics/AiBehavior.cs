@@ -8,7 +8,7 @@ namespace WiiPlayTanksRemake.GameContent.GameMechanics
 {
     public class AiBehavior
     {
-        public string Label { get; set; }
+        public string Label;
 
         public long Value;
 

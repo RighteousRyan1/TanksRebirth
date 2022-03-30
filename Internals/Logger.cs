@@ -18,10 +18,7 @@ namespace WiiPlayTanksRemake.Internals
     {
         private readonly string writeTo;
 
-        public string Name
-        {
-            get;
-        }
+        public readonly string Name;
 
         private readonly Assembly assembly;
 

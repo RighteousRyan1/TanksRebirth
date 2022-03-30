@@ -16,7 +16,7 @@ namespace WiiPlayTanksRemake.Internals.Common.GameUI
 
         public int MaxLength;
 
-        public string StringToDisplayWhenThereIsNoText;
+        public string DefaultString;
 
         public bool ActiveHandle;
 
@@ -55,19 +55,19 @@ namespace WiiPlayTanksRemake.Internals.Common.GameUI
                         ActiveHandle = true;
                         TankGame.Instance.Window.TextInput += HandleText;
                     }
-                    if (Text == StringToDisplayWhenThereIsNoText)
+                    if (Text == DefaultString)
                         Text = "";
                     currentActiveBox = Id;
                 }
             }
             if (string.IsNullOrEmpty(Text) && !IsSelected())
-                Text = StringToDisplayWhenThereIsNoText;
+                Text = DefaultString;
 
             base.Draw(spriteBatch);
         }
 
         public bool IsEmpty() 
-            => Text == StringToDisplayWhenThereIsNoText || string.IsNullOrEmpty(Text);
+            => Text == DefaultString || string.IsNullOrEmpty(Text);
         public bool IsSelected()
             => currentActiveBox == Id;
         private void HandleText(object sender, TextInputEventArgs e)
