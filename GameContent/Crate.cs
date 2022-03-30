@@ -176,6 +176,7 @@ namespace WiiPlayTanksRemake.GameContent
                 t.Body.Position = position.FlattenZ();
                 t.Position = position.FlattenZ();
                 t.Dead = false;
+                t.Team = TankToSpawn.Team;
             }
 
             OnOpen?.Invoke(this, new());

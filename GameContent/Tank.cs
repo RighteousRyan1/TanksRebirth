@@ -236,14 +236,14 @@ namespace WiiPlayTanksRemake.GameContent
            if (CurShootStun > 0 || CurMineStun > 0 || Stationary && IsIngame)
                 Velocity = Vector2.Zero;
 
+            Position = Body.Position;
+
+            Body.LinearVelocity = Velocity * 0.55f;
+
             World = Matrix.CreateFromYawPitchRoll(-TankRotation, 0, 0)
                 * Matrix.CreateTranslation(Position3D);
 
-            Position = Body.Position;
-
             Body.AngularDamping = 100;
-
-            Body.LinearVelocity = Velocity * 0.55f;
         }
         /// <summary>Get this <see cref="Tank"/>'s general stats.</summary>
         public string GetGeneralStats()

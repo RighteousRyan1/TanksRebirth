@@ -580,8 +580,28 @@ namespace WiiPlayTanksRemake.GameContent.UI
         }
 
         private static readonly string tanksMessage = $"Tanks! Remake v{TankGame.Instance.GameVersion}\nThe original game and assets used in this game belongs to Nintendo\nDeveloped by RighteousRyan\nTANKS to all our contributors!";
-        private static Vector2 tanksMessageSize;
-
+        private static readonly string keyDisplay = "For anyone needing a list of keys for\ndebugging purposes, here you go:\n" +
+            "i - spawns the powerup listed at the top\n" +
+            "; - spawns a  mine at the mouse\n" +
+            "' - spawns a still bullet at the mouse\n" +
+            "insert - hides all debugging UI\n" +
+            "mouse2 - allows you to change the angle of the camera\n" +
+            "mouse3 - allows the dragging of the camera on an axis\n" +
+            "add and subtract - allow scaling of the game\n" +
+            "q - toggles fps mode (not working ATM)\n" +
+            "num7 and num9 - changes tank to spawn\n" +
+            "num1 and num3 - changes the team of the tank spawned\n" +
+            "k while hovering a tank - kill that tank\n" +
+            "home - spawn a tank\n" +
+            "end - spawn a tank crate\n" +
+            "pgup - spawns a plethora of the tank type you choose and it's respective team\n" +
+            "pgdown - spawns a player\n" +
+            "mult - change debug level by +1\n" +
+            "divide - change debug level by -1\n" +
+            "z and x - change placed block type\n" +
+            "j - overhead level editor view (level editor) (for now)\n" +
+            ", and . - change block heights\n\n" +
+            "Also, ahead of time- sorry if you have a < 66% keyboard!";
         public static void Render()
         {
             if (Active)
@@ -602,9 +622,11 @@ namespace WiiPlayTanksRemake.GameContent.UI
                         TankGame.spriteBatch.DrawString(TankGame.TextFont, $"{client.Name}" + $" ({client.Id})", initialPosition + new Vector2(0, 20) * (i + 1), textCol, 0.6f);
                     }
                 }
-                if (tanksMessageSize == Vector2.Zero)
-                    tanksMessageSize = TankGame.TextFont.MeasureString(tanksMessage);
+                var tanksMessageSize = TankGame.TextFont.MeasureString(tanksMessage);
                 TankGame.spriteBatch.DrawString(TankGame.TextFont, tanksMessage, new(8, GameUtils.WindowHeight - 8), Color.White, new(0.6f), 0f, new Vector2(0, tanksMessageSize.Y));
+
+                TankGame.spriteBatch.DrawString(TankGame.TextFont, tanksMessage, new(8, GameUtils.WindowHeight - 8), Color.White, new(0.6f), 0f, new Vector2(0, tanksMessageSize.Y));
+                TankGame.spriteBatch.DrawString(TankGame.TextFont, keyDisplay, new(12, 12), Color.White, new(0.6f), 0f, Vector2.Zero);
             }
         }
     }

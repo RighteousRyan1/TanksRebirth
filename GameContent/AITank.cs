@@ -1525,6 +1525,7 @@ namespace WiiPlayTanksRemake.GameContent
                 ShellHoming.radius = 200f;
                 ShellHoming.speed = ShellSpeed;
                 ShellHoming.power = 0.1f * ShellSpeed;
+                // ShellHoming.isHeatSeeking = true;
 
                 AiParams.Inaccuracy *= 4;
             }
@@ -1551,10 +1552,6 @@ namespace WiiPlayTanksRemake.GameContent
                 Model.Meshes["Dish"].ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation);
             }
 
-            Model.Root.Transform = World;
-
-            Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
-
             if (!Dead && IsIngame)
             {
                 DoAi(true, true, true);
@@ -1563,6 +1560,10 @@ namespace WiiPlayTanksRemake.GameContent
 
                 timeSinceLastAction++;
             }
+
+            Model.Root.Transform = World;
+
+            Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
         }
 
         public override void Remove()
@@ -2194,7 +2195,6 @@ namespace WiiPlayTanksRemake.GameContent
                 foreach (BasicEffect effect in mesh.Effects)
                 {
                     effect.World = boneTransforms[mesh.ParentBone.Index];
-                    World = boneTransforms[0];
                     effect.View = View;
                     effect.Projection = Projection;
 
@@ -2334,7 +2334,7 @@ namespace WiiPlayTanksRemake.GameContent
         {
             TankTier.Brown, TankTier.Marine, TankTier.Yellow, TankTier.Black, TankTier.White, TankTier.Pink, TankTier.Purple, TankTier.Green, TankTier.Ash,
             TankTier.Bronze, TankTier.Silver, TankTier.Sapphire, TankTier.Ruby, TankTier.Citrine, TankTier.Amethyst, TankTier.Emerald, TankTier.Gold, TankTier.Obsidian,
-            TankTier.Granite, TankTier.Bubblegum, TankTier.Water, TankTier.Crimson, /*TankTier.Tiger,*/ TankTier.Creeper, TankTier.Gamma, TankTier.Marble,
+            TankTier.Granite, TankTier.Bubblegum, TankTier.Water, TankTier.Crimson, TankTier.Tiger, TankTier.Creeper, TankTier.Gamma, TankTier.Marble,
             TankTier.Assassin
         };
         public static TankTier PickRandomTier()

@@ -24,6 +24,8 @@ namespace WiiPlayTanksRemake.GameContent
             public int cooldown;
 
             public Vector2 target;
+
+            public bool isHeatSeeking;
         }
 
         /// <summary>The maximum shells allowed at any given time.</summary>
@@ -219,7 +221,10 @@ namespace WiiPlayTanksRemake.GameContent
                         {
                             if (target.Team != owner.Team || target.Team == Team.NoTeam)
                             {
-                                homingProperties.target = target.Position;
+                                if (homingProperties.isHeatSeeking && target.Velocity != Vector2.Zero)
+                                    homingProperties.target = target.Position;
+                                if (!homingProperties.isHeatSeeking)
+                                    homingProperties.target = target.Position;
                             }
                         }
                     }
