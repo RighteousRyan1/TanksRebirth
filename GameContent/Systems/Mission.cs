@@ -7,13 +7,15 @@ using System.Text;
 using System.Threading.Tasks;
 using WiiPlayTanksRemake.Enums;
 using WiiPlayTanksRemake.Internals;
+using WiiPlayTanksRemake.Internals.Common.Framework;
 
 namespace WiiPlayTanksRemake.GameContent.Systems
 {
     public record struct Mission
     {
+        /// <summary>The name of this <see cref="Mission"/>.</summary>
         public string Name { get; set; }
-        /// <summary>The <see cref="Tank"/>s that will be spawned.</summary>
+        /// <summary>The <see cref="Tank"/>s that will be spawned upon mission load.</summary>
         public TankTemplate[] Tanks { get; }
 
         /// <summary>The obstacles in the <see cref="Mission"/>.</summary>
@@ -47,6 +49,11 @@ namespace WiiPlayTanksRemake.GameContent.Systems
             Blocks = obstacles;
         }
 
+        /// <summary>
+        /// Saves a mission as a <c>.mission</c> file for reading later.
+        /// </summary>
+        /// <param name="name">The name of the mission to save.</param>
+        /// <param name="campaignName">The mission folder to save this to. If the directory does not exist, one will be created.<para></para>If null, saves to the <c>Missions/</c> directory.</param>
         public static void Save(string name, string campaignName)
         {
             string root;
@@ -148,6 +155,13 @@ namespace WiiPlayTanksRemake.GameContent.Systems
             GameHandler.ClientLog.Write($"Saved stage file \"{name}.mission\" in map save path.", LogType.Info);
         }
 
+        /// <summary>
+        /// Loads a mission from a <c>.mission</c> file and returns it for code use.
+        /// </summary>
+        /// <param name="missionName">The name of the mission.</param>
+        /// <param name="campaignName">The campaign to search for the mission in. If null, searches the <c>Missions/</c> directory.</param>
+        /// <returns>The successfully loaded mission.</returns>
+        /// <exception cref="FileLoadException"></exception>
         public static Mission Load(string missionName, string campaignName)
         {
             string root;
@@ -155,7 +169,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems
                 root = Path.Combine(TankGame.SaveDirectory, "Campaigns", campaignName);
             else
                 root = Path.Combine(TankGame.SaveDirectory, "Missions");
-            var path = Path.Combine(root, missionName + ".mission");
+            var path = missionName.EndsWith(".mission") ? Path.Combine(root, missionName) : Path.Combine(root, missionName + ".mission");
 
             Directory.CreateDirectory(root);
 
@@ -185,7 +199,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems
                 var isPlayer = reader.ReadBoolean();
                 var x = reader.ReadSingle();
                 var y = reader.ReadSingle();
-                var rotation = reader.ReadSingle();
+                var rotation = -reader.ReadSingle(); // i genuinely hate having to make this negative :(
                 var tier = reader.ReadByte();
                 var pType = reader.ReadByte();
                 var team = reader.ReadByte();

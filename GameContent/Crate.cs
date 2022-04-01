@@ -79,7 +79,10 @@ namespace WiiPlayTanksRemake.GameContent
                 gravity = gravity,
             };
         }
-
+        public void Remove()
+        {
+            crates[id] = null;
+        }
         public void Render()
         {
             // face order: right, left, front, back, top, bottom

@@ -136,6 +136,8 @@ namespace WiiPlayTanksRemake.GameContent
         /// /// <param name="isIngame">Whether or not this <see cref="AITank"/> is a gameplay tank or a cosmetic tank (i.e: display models on menus, etc).</param>
         public AITank(TankTier tier, Range<TankTier> tankRange = default, bool setTankDefaults = true, bool isIngame = true)
         {
+            if (UI.DifficultyModes.BumpUp)
+                tier += 1;
             if (tier == TankTier.Random)
                 tier = (TankTier)GameHandler.GameRand.Next((int)tankRange.Min, (int)tankRange.Max);
             IsIngame = isIngame;
@@ -1557,11 +1559,17 @@ namespace WiiPlayTanksRemake.GameContent
 
             if (!Dead && IsIngame)
             {
-                DoAi(true, true, true);
 
                 // targetTankRotation = (GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - GameUtils.MousePosition).ToRotation() - MathHelper.PiOver2;
 
                 timeSinceLastAction++;
+
+                if (!GameHandler.InMission || GameHandler.IsAwaitingNewMission)
+                {
+                    Velocity = Vector2.Zero;
+                }
+                else
+                    DoAi(true, true, true);
             }
 
             Model.Root.Transform = World;

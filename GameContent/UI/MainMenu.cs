@@ -52,6 +52,8 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
         public static UITextButton DifficultiesButton;
 
+        public static UITextButton LaunchVanillaCampaign;
+
         private static UIElement[] _menuElements;
 
         public static UITextInput UsernameInput;
@@ -72,6 +74,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
         public static UITextButton AllStationary;
         public static UITextButton Armored;
         public static UITextButton AllHoming;
+        public static UITextButton BumpUp;
 
         #endregion
 
@@ -143,10 +146,21 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 IsVisible = false,
             };
             PlayButton_SinglePlayer.SetDimensions(700, 450, 500, 50);
-            
-            PlayButton_SinglePlayer.OnLeftClick = (uiElement) =>
+
+            PlayButton_SinglePlayer.OnLeftClick = (uiElement) => Leave();
+
+            LaunchVanillaCampaign = new("Vanilla Campaign", font, Color.WhiteSmoke)
             {
-                Leave();
+                IsVisible = false,
+            };
+            LaunchVanillaCampaign.SetDimensions(1250, 450, 500, 50);
+
+            LaunchVanillaCampaign.OnLeftClick = (uiElement) =>
+            {
+                PlayButton_SinglePlayer.OnLeftClick?.Invoke(null);
+
+                GameHandler.VanillaCampaign.LoadFromFolder("Vanilla", true);
+                GameHandler.VanillaCampaign.SetupLoadedMission(true);
             };
 
             InitializeDifficultyButtons();
@@ -282,7 +296,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             _menuElements = new UIElement[] 
             { PlayButton, PlayButton_SinglePlayer, PlayButton_LevelEditor, PlayButton_Multiplayer, ConnectToServerButton, 
                 CreateServerButton, UsernameInput, IPInput, PortInput, PasswordInput, ServerNameInput,
-                DifficultiesButton
+                DifficultiesButton, LaunchVanillaCampaign
             };
 
             foreach (var e in _menuElements)
@@ -362,6 +376,13 @@ namespace WiiPlayTanksRemake.GameContent.UI
             };
             Armored.SetDimensions(100, 650, 300, 40);
 
+            BumpUp = new("Bump Up", font, Color.White)
+            {
+                IsVisible = false,
+                Tooltip = "Makes the game a bit harder by \"Bumping up\" each tank, giving them one extra tier.",
+                OnLeftClick = (elem) => DifficultyModes.BumpUp = !DifficultyModes.BumpUp
+            };
+            BumpUp.SetDimensions(100, 700, 300, 40);
         }
 
         internal static void SetPlayButtonsVisibility(bool visible)
@@ -369,6 +390,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             PlayButton_SinglePlayer.IsVisible = visible;
             PlayButton_LevelEditor.IsVisible = visible;
             PlayButton_Multiplayer.IsVisible = visible;
+            LaunchVanillaCampaign.IsVisible = visible;
             DifficultiesButton.IsVisible = visible;
         }
         internal static void SetDifficultiesButtonsVisibility(bool visible)
@@ -381,6 +403,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             AllStationary.IsVisible = visible;
             Armored.IsVisible = visible;
             AllHoming.IsVisible = visible;
+            BumpUp.IsVisible = visible;
         }
         internal static void SetPrimaryMenuButtonsVisibility(bool visible)
         {
@@ -415,6 +438,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             AllStationary.Color = DifficultyModes.AllStationary ? Color.Lime : Color.Red;
             AllHoming.Color = DifficultyModes.AllHoming ? Color.Lime : Color.Red;
             Armored.Color = DifficultyModes.Armored ? Color.Lime : Color.Red;
+            BumpUp.Color = DifficultyModes.BumpUp ? Color.Lime : Color.Red;
 
             _tnkRot += 0.01f;
 
@@ -633,13 +657,14 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
     public static class DifficultyModes
     {
-        public static bool TanksAreCalculators { get; set; } = false;
-        public static bool PieFactory { get; set; } = false;
-        public static bool UltraMines { get; set; } = false;
-        public static bool BulletHell { get; set; } = false;
-        public static bool AllInvisible { get; set; } = false;
-        public static bool AllStationary { get; set; } = false;
-        public static bool AllHoming { get; set; } = false;
-        public static bool Armored { get; set; } = false;
+        public static bool TanksAreCalculators { get; set; }
+        public static bool PieFactory { get; set; }
+        public static bool UltraMines { get; set; }
+        public static bool BulletHell { get; set; }
+        public static bool AllInvisible { get; set; }
+        public static bool AllStationary { get; set; }
+        public static bool AllHoming { get; set; }
+        public static bool Armored { get; set; }
+        public static bool BumpUp { get; set; }
     }
 }

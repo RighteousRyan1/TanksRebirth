@@ -85,31 +85,34 @@ namespace WiiPlayTanksRemake.GameContent
             else if (tickAtMax <= 0)
                 scale -= shrinkRate;
 
-            foreach (var mine in Mine.AllMines)
+            if (!GameHandler.IsAwaitingNewMission)
             {
-                if (mine is not null && Vector2.Distance(mine.Position, Position) <= scale * 9) // magick
-                    mine.Detonate();
-            }
-            foreach (var cube in Block.AllBlocks)
-            {
-                if (cube is not null && Vector2.Distance(cube.Position, Position) <= scale * 9 && cube.IsDestructible)
-                    cube.Destroy();
-            }
-            foreach (var shell in Shell.AllShells)
-            {
-                if (shell is not null && Vector2.Distance(shell.Position2D, Position) < scale * 9)
-                    shell.Destroy();
-            }
-            foreach (var tank in GameHandler.AllTanks)
-            {
-                if (tank is not null && Vector2.Distance(tank.Position, Position) < scale * 9)
-                    if (!tank.Dead)
-                        if (!HasHit[tank.WorldId])
-                            if (tank.VulnerableToMines)
-                            {
-                                HasHit[tank.WorldId] = true;
-                                tank.Damage();
-                            }
+                foreach (var mine in Mine.AllMines)
+                {
+                    if (mine is not null && Vector2.Distance(mine.Position, Position) <= scale * 9) // magick
+                        mine.Detonate();
+                }
+                foreach (var cube in Block.AllBlocks)
+                {
+                    if (cube is not null && Vector2.Distance(cube.Position, Position) <= scale * 9 && cube.IsDestructible)
+                        cube.Destroy();
+                }
+                foreach (var shell in Shell.AllShells)
+                {
+                    if (shell is not null && Vector2.Distance(shell.Position2D, Position) < scale * 9)
+                        shell.Destroy();
+                }
+                foreach (var tank in GameHandler.AllTanks)
+                {
+                    if (tank is not null && Vector2.Distance(tank.Position, Position) < scale * 9)
+                        if (!tank.Dead)
+                            if (!HasHit[tank.WorldId])
+                                if (tank.VulnerableToMines)
+                                {
+                                    HasHit[tank.WorldId] = true;
+                                    tank.Damage();
+                                }
+                }
             }
 
             if (hitMaxAlready)

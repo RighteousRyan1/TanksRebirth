@@ -202,7 +202,7 @@ namespace WiiPlayTanksRemake.Net
             GameHandler.ClientLog.Write($"Packet Recieved: {packet} from client {peer.Id}. Current clients connected: {Server.CurrentClientCount}", Internals.LogType.Debug);
             reader.Recycle();
         }
-        public static bool IsIdEqualTo(int otherId)
+        public static bool IsClientMatched(int otherId)
         {
             if (CurrentClient is null && CurrentServer is null)
                 return true;

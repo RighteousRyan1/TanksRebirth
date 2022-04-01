@@ -127,7 +127,7 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 if (Client.IsConnected())
                     Systems.ChatSystem.SendMessage($"PlayerId: {PlayerId} | ClientId: {NetPlay.CurrentClient.Id}", Color.White);
-                if (NetPlay.IsIdEqualTo(PlayerId))
+                if (NetPlay.IsClientMatched(PlayerId) && !GameHandler.IsAwaitingNewMission)
                 {
                     Vector3 mouseWorldPos = GameUtils.GetWorldPosition(GameUtils.MousePosition, -11f);
                     TurretRotation = (-(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position).ToRotation()) + MathHelper.PiOver2;
@@ -139,7 +139,7 @@ namespace WiiPlayTanksRemake.GameContent
                     {
                         if (!Stationary)
                         {
-                            if (NetPlay.IsIdEqualTo(PlayerId))
+                            if (NetPlay.IsClientMatched(PlayerId))
                             {
                                 ControlHandle_Keybinding();
                                 if (Input.CurrentGamePadSnapshot.IsConnected)
@@ -153,7 +153,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                 if (GameHandler.InMission)
                 {
-                    if (NetPlay.IsIdEqualTo(PlayerId))
+                    if (NetPlay.IsClientMatched(PlayerId))
                     {
                         if (Input.CanDetectClick())
                             Shoot();

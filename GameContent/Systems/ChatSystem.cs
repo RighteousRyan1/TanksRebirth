@@ -89,9 +89,11 @@ namespace WiiPlayTanksRemake.GameContent.Systems
 
                         break;
                 }
-                    
+
                 if (i > 5)
-                    ChatMessages[i].lifeTime = 0;
+                {
+                    ChatMessages[4].lifeTime = 0;
+                }
 
                 sb.DrawString(ChatMessage.Font, ChatMessages[i].Content, basePosition + new Vector2(0, i * offset), ChatMessages[i].Color, new Vector2(0.8f), 0f, drawOrigin);
 

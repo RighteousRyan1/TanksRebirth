@@ -249,6 +249,13 @@ namespace WiiPlayTanksRemake.GameContent
             }
             CheckCollisions();
 
+            GameHandler.OnMissionEnd += (delay, fatal) =>
+            {
+                _flame?.Destroy();
+                _loopingSound?.Stop();
+                _shootSound?.Stop();
+            };
+
             int bruh = (int)Math.Round(12 / Velocity2D.Length());
             int nummy = bruh != 0 ? bruh : 5;
 
@@ -368,6 +375,9 @@ namespace WiiPlayTanksRemake.GameContent
             }
         }
         public void Remove() {
+            _flame?.Destroy();
+            _loopingSound?.Stop();
+            _shootSound?.Stop();
             AllShells[worldId] = null;
         }
         /// <summary>

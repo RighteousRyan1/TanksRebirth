@@ -13,7 +13,7 @@ namespace WiiPlayTanksRemake.GameContent
     public class Powerup
     {
         public const int MAX_POWERUPS = 50;
-        public static Powerup[] activePowerups = new Powerup[MAX_POWERUPS];
+        public static Powerup[] powerups = new Powerup[MAX_POWERUPS];
 
         /// <summary>The <see cref="Tank"/> this <see cref="Powerup"/> is currently affecting, if any.</summary>
         public Tank AffectedTank { get; private set; }
@@ -54,11 +54,11 @@ namespace WiiPlayTanksRemake.GameContent
             PowerupEffects = effects;
             PowerupReset = end;
 
-            int index = Array.IndexOf(activePowerups, activePowerups.First(tank => tank is null));
+            int index = Array.IndexOf(powerups, powerups.First(tank => tank is null));
 
             id = index;
 
-            activePowerups[index] = this;
+            powerups[index] = this;
         }
 
         public Powerup(PowerupTemplate template)
@@ -68,11 +68,11 @@ namespace WiiPlayTanksRemake.GameContent
             PowerupEffects = template.PowerupEffects;
             PowerupReset = template.PowerupReset;
 
-            int index = Array.IndexOf(activePowerups, activePowerups.First(tank => tank is null));
+            int index = Array.IndexOf(powerups, powerups.First(tank => tank is null));
 
             id = index;
 
-            activePowerups[index] = this;
+            powerups[index] = this;
         }
 
         /// <summary>Spawns this <see cref="Powerup"/> in the world.</summary>
@@ -81,6 +81,11 @@ namespace WiiPlayTanksRemake.GameContent
             InWorld = true;
 
             Position = position;
+        }
+
+        public void Remove()
+        {
+            powerups[id] = null;
         }
 
         public void Update()
@@ -93,7 +98,7 @@ namespace WiiPlayTanksRemake.GameContent
                 if (duration <= 0)
                 {
                     PowerupReset?.Invoke(AffectedTank);
-                    activePowerups[id] = null;
+                    powerups[id] = null;
                 }
             }
             else

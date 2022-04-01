@@ -173,6 +173,8 @@ namespace WiiPlayTanksRemake
 
         protected override void Initialize()
         {
+            GameHandler.MapEvents();
+
             DiscordRichPresence.Load();
 
             systems = ReflectionUtils.GetInheritedTypesOf<IGameSystem>(Assembly.GetExecutingAssembly());
@@ -421,7 +423,7 @@ namespace WiiPlayTanksRemake
             catch (Exception e)
             {
                 GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
-                // throw;
+                throw;
             }
         }
 

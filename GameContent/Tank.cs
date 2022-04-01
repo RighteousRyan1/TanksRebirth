@@ -18,6 +18,7 @@ using tainicom.Aether.Physics2D.Content;
 using tainicom.Aether.Physics2D.Fluids;
 using tainicom.Aether.Physics2D.Common;
 using tainicom.Aether.Physics2D.Controllers;
+using WiiPlayTanksRemake.Internals.Common.Framework;
 
 namespace WiiPlayTanksRemake.GameContent
 {
@@ -34,6 +35,8 @@ namespace WiiPlayTanksRemake.GameContent
         public float Rotation;
 
         public Team Team;
+
+        public Range<TankTier> RandomizeRange;
 
         public AITank GetAiTank()
         {
@@ -217,11 +220,24 @@ namespace WiiPlayTanksRemake.GameContent
         /// <summary>Update this <see cref="Tank"/>.</summary>
         public virtual void Update()
         {
+            Position = Body.Position;
+
+            Body.LinearVelocity = Velocity * 0.55f;
+
+            World = Matrix.CreateFromYawPitchRoll(-TankRotation, 0, 0)
+                * Matrix.CreateTranslation(Position3D);
+
             if (IsIngame)
             {
                 Worldbox = new(Position3D - new Vector3(7, 0, 7), Position3D + new Vector3(10, 15, 10));
                 Projection = TankGame.GameProjection;
                 View = TankGame.GameView;
+
+                if (!GameHandler.InMission || GameHandler.IsAwaitingNewMission)
+                {
+                    Velocity = Vector2.Zero;
+                    return;
+                }
             }
 
             if (CurShootStun > 0)
@@ -235,15 +251,6 @@ namespace WiiPlayTanksRemake.GameContent
 
            if (CurShootStun > 0 || CurMineStun > 0 || Stationary && IsIngame)
                 Velocity = Vector2.Zero;
-
-            Position = Body.Position;
-
-            Body.LinearVelocity = Velocity * 0.55f;
-
-            World = Matrix.CreateFromYawPitchRoll(-TankRotation, 0, 0)
-                * Matrix.CreateTranslation(Position3D);
-
-            Body.AngularDamping = 100;
         }
         /// <summary>Get this <see cref="Tank"/>'s general stats.</summary>
         public string GetGeneralStats()
@@ -286,9 +293,6 @@ namespace WiiPlayTanksRemake.GameContent
             }
             else if (this is PlayerTank p)
             {
-                var killSound2 = GameResources.GetGameResource<SoundEffect>($"Assets/fanfares/tank_player_death");
-                SoundPlayer.PlaySoundInstance(killSound2, SoundContext.Effect, 0.3f);
-
                 var c = p.PlayerType switch
                 {
                     PlayerType.Blue => TankDeathMark.CheckColor.Blue,
