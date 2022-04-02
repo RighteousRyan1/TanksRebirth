@@ -89,6 +89,8 @@ namespace WiiPlayTanksRemake.GameContent
             }
         }
 
+
+        // make proper texturepack loading.
         public static class BoundsRenderer
         {
             public static Body[] Boundaries = new Body[4];

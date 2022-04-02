@@ -6,6 +6,7 @@ using WiiPlayTanksRemake.Internals.Common;
 using NVorbis;
 using System.IO;
 using WiiPlayTanksRemake.Internals.Common.Utilities;
+using WiiPlayTanksRemake.Internals.Common.Framework.Audio;
 
 namespace WiiPlayTanksRemake.GameContent
 {
@@ -15,18 +16,89 @@ namespace WiiPlayTanksRemake.GameContent
         Paused,
         Stopped
     }
-    /// <summary>
-    /// A class that allows simple usage of a music track. Recommended usage is an <c>.ogg</c> format.
-    /// </summary>
-    public class Music
+    public interface IAudio
     {
-        public static List<Music> AllMusic { get; } = new();
+        float Volume { get; set; }
+        float MaxVolume { get; set; }
+        string Name { get; set; }
+        MusicState State { get; set; }
 
-        public float Volume;
+        void Play();
+        void Pause();
+        void Stop();
 
-        public MusicState State { get; private set; }
+        void Update();
+    }
+    public class OggMusic : IAudio
+    {
+        public float Volume { get; set; }
+        public float MaxVolume { get; set; }
+        public MusicState State { get; set; }
+        public string Name { get; set; }
+        /*
+         * 
+            var song = new Internals.Common.Framework.Audio.OggAudio("amethyst1");
+            song.Play();
+            song.SetVolume(0f);*/
+        private OggAudio _music;
+        public OggMusic(string name, string songPath, float maxVolume)
+        {
+            _music = new(songPath);
+            Name = name;
+            MaxVolume = maxVolume;
+        }
+        public void Play()
+            => _music.Play();
+        public void Pause()
+            => _music?.Pause();
+        public void Resume()
+            => _music?.Resume();
+        public void SetVolume(float volume)
+            => _music.SetVolume(volume);
+        public void Stop()
+            => _music?.Stop();
 
-        public float maxVolume;
+        public bool IsPaused()
+            => _music.State == SoundState.Paused;
+        public bool IsStopped()
+            => _music.State == SoundState.Stopped;
+        public bool IsPlaying()
+            => _music.State == SoundState.Playing;
+
+        public void Update()
+        {
+            Volume = Volume;
+            if (Volume > MaxVolume)
+                Volume = MaxVolume;
+
+            if (!TankGame.Instance.IsActive)
+            {
+                if (!_music.IsPaused())
+                {
+                    _music?.Pause();
+                }
+            }
+            else
+            {
+                if (_music.IsPaused())
+                {
+                    _music?.Resume();
+                }
+            }
+        }
+    }
+    /// <summary>
+    /// A class that allows simple usage of a music track.
+    /// </summary>
+    public class Music : IAudio
+    {
+        public static List<IAudio> AllMusic { get; } = new();
+
+        public float Volume { get; set; }
+
+        public MusicState State { get; set; }
+
+        public float MaxVolume { get; set; }
 
         public string Name { get; set; }
 
@@ -38,7 +110,7 @@ namespace WiiPlayTanksRemake.GameContent
             _sound = TankGame.Instance.Content.Load<SoundEffect>(musicPath);
             Track = _sound.CreateInstance();
             Track.IsLooped = true;
-            this.maxVolume = maxVolume;
+            MaxVolume = maxVolume;
             AllMusic.Add(this);
         }
 
@@ -78,10 +150,10 @@ namespace WiiPlayTanksRemake.GameContent
             OnStop?.Invoke(this, new());
         }
 
-        internal void Update() {
+        public void Update() {
             Track.Volume = Volume;
-            if (Volume > maxVolume)
-                Volume = maxVolume;
+            if (Volume > MaxVolume)
+                Volume = MaxVolume;
 
             if (!TankGame.Instance.IsActive) {
                 if (!Track.IsPaused()) {
@@ -98,6 +170,6 @@ namespace WiiPlayTanksRemake.GameContent
         public event EventHandler OnStop;
 
         public override string ToString()
-            => $"name: {Name} | state: {State} | volume/max: {Volume}/{maxVolume}";
+            => $"name: {Name} | state: {State} | volume/max: {Volume}/{MaxVolume}";
     }
 }

@@ -55,7 +55,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
         
         private static UIElement[] _menuElements;
 
-        private static List<UIElement> _campaignNames = new();
+        internal static List<UIElement> campaignNames = new();
 
         public static UITextInput UsernameInput;
         public static UITextInput IPInput;
@@ -379,7 +379,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
         {
             SetPlayButtonsVisibility(false);
             
-            foreach (var elem in _campaignNames)
+            foreach (var elem in campaignNames)
                 elem.Remove();
             // get all the campaign folders from the SaveDirectory + Campaigns
             var campaignFolders = IOUtils.GetSubFolders(Path.Combine(TankGame.SaveDirectory, "Campaigns"), true);
@@ -401,7 +401,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 {
                     GameHandler.LoadedCampaign = Campaign.LoadFromFolder(elem.Text, true);
 
-                    foreach (var elem in _campaignNames)
+                    foreach (var elem in campaignNames)
                         elem.Remove();
 
                     IntermissionsSystem.TimeBlack = 240;
@@ -413,7 +413,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
                     IntermissionsSystem.SetTime(600);
                 };
                 elem.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/menu/menu_tick"), SoundContext.Effect); };
-                _campaignNames.Add(elem);
+                campaignNames.Add(elem);
             }
             var extra = new UITextButton("Freeplay", TankGame.TextFont, Color.White, 0.8f)
             {
@@ -425,7 +425,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             //elem.
             extra.OnLeftClick += (el) =>
             {
-                foreach (var elem in _campaignNames)
+                foreach (var elem in campaignNames)
                     elem.Remove();
 
                 GameHandler.ShouldMissionsProgress = false;
@@ -433,7 +433,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 IntermissionsSystem.TimeBlack = 150;
                 // Leave();
             };
-            _campaignNames.Add(extra);
+            campaignNames.Add(extra);
             
             TankGame.cunoSucksElement.Remove();
             TankGame.cunoSucksElement = new();

@@ -1,54 +1,120 @@
 ﻿using MeltySynth;
 using Microsoft.Xna.Framework.Audio;
-using NVorbis;
+using StbVorbisSharp;
 using System;
+using System.IO;
 using System.Runtime.InteropServices;
 
 namespace WiiPlayTanksRemake.Internals.Common.Framework.Audio
 {
-    public class OggSound : IDisposable
+    public class OggAudio : IDisposable
     {
         public void Dispose()
         {
             GC.SuppressFinalize(this);
         }
 
-        private static readonly int sampleRate = 44100;
-        private static readonly int bufferLength = sampleRate / 10;
-
-        private DynamicSoundEffectInstance dynamicSound;
-
-        private byte[] byteBuffer;
-        private float[] floatBuffer;
-
-        private VorbisReader reader;
-
-        public OggSound(string path)
+        public SoundState State
         {
-            dynamicSound = new DynamicSoundEffectInstance(sampleRate, AudioChannels.Stereo);
-            byteBuffer = new byte[4 * bufferLength];
-            floatBuffer = new float[4 * bufferLength];
+            get
+            {
+                if (_effect != null)
+                    return _effect.State;
+                else
+                    return SoundState.Stopped;
+            }
+        }
 
-            reader = new(path + ".ogg");
+        private Vorbis _vorbis;
+        private DynamicSoundEffectInstance _effect;
+        private bool _startedPlaying;
 
-            int samples = reader.ReadSamples(floatBuffer, 0, bufferLength);
-            reader.ReadSamples(floatBuffer, samples, bufferLength - samples);
+        public string SongPath { get; }
 
-            dynamicSound.BufferNeeded += (s, e) => SubmitBuffer();
+        public OggAudio(string path)
+        {
+            SongPath = path + ".ogg";
         }
         private void SubmitBuffer()
         {
-            dynamicSound.SubmitBuffer(byteBuffer, 0, byteBuffer.Length);
+            _vorbis.SubmitBuffer();
+
+            if (_vorbis.Decoded == 0)
+            {
+                // Restart
+                _vorbis.Restart();
+                _vorbis.SubmitBuffer();
+            }
+
+            var audioShort = _vorbis.SongBuffer;
+            byte[] audioData = new byte[_vorbis.Decoded * _vorbis.Channels * 2];
+            for (var i = 0; i < _vorbis.Decoded * _vorbis.Channels; ++i)
+            {
+                /*if (i * 2 >= audioData.Length)
+                {
+                    break;
+                }
+
+                var b1 = (byte)(audioShort[i] >> 8);
+                var b2 = (byte)(audioShort[i] & 256);
+
+                audioData[i * 2] = b2;
+                audioData[i * 2 + 1] = b1;*/
+
+                short tempShort = audioShort[i];
+
+                audioData[i * 2] = (byte)tempShort;
+                audioData[i * 2 + 1] = (byte)(tempShort >> 8);
+            }
+
+            _effect.SubmitBuffer(audioData);
+        }
+        private void LoadSong()
+        {
+            var buffer = File.ReadAllBytes(SongPath);
+
+            _vorbis = Vorbis.FromMemory(buffer);
+
+            _effect = new DynamicSoundEffectInstance(_vorbis.SampleRate, (AudioChannels)_vorbis.Channels)
+            {
+                Volume = 0.5f
+            };
+
+            _effect.BufferNeeded += (s, a) => SubmitBuffer();
+
+            SubmitBuffer();
         }
 
         public void Play()
-            => dynamicSound?.Play();
+        {
+            if (!_startedPlaying)
+            {
+                LoadSong();
+                _effect.Play();
+                _startedPlaying = true;
+            }
+        }
+        public void Stop()
+        {
+            if (_startedPlaying)
+            {
+                _effect.Stop();
+                _startedPlaying = false;
+            }
+        }
         public void Pause()
-            => dynamicSound?.Pause();
+            => _effect?.Pause();
         public void Resume()
-            => dynamicSound?.Resume();
+            => _effect?.Resume();
         public void SetVolume(float volume)
-            => dynamicSound.Volume = volume;
+            => _effect.Volume = volume;
+
+        public bool IsPaused()
+            => _effect.State == SoundState.Paused;
+        public bool IsStopped()
+            => _effect.State == SoundState.Stopped;
+        public bool IsPlaying()
+            => _effect.State == SoundState.Playing;
     }
     public class MidiPlayer : IDisposable
     {

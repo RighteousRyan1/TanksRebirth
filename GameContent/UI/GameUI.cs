@@ -305,7 +305,13 @@ namespace WiiPlayTanksRemake.GameContent.UI
             {
                 if (MainMenu.Active)
                 {
-                    if (MainMenu.PlayButton_Multiplayer.IsVisible)
+                    if (MainMenu.campaignNames.Count > 0)
+                    {
+                        foreach (var elem in MainMenu.campaignNames)
+                            elem.Remove();
+                        MainMenu.SetPlayButtonsVisibility(true);
+                    }
+                    else if (MainMenu.PlayButton_Multiplayer.IsVisible)
                     {
                         MainMenu.SetPlayButtonsVisibility(false);
                         MainMenu.PlayButton.IsVisible = true;
