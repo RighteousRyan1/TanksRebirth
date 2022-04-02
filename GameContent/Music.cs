@@ -67,7 +67,7 @@ namespace TanksRebirth.GameContent
 
         public void Update()
         {
-            Volume = Volume;
+            _music.SetVolume(Volume);
             if (Volume > MaxVolume)
                 Volume = MaxVolume;
 

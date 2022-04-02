@@ -29,6 +29,8 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
         private DynamicSoundEffectInstance _effect;
         private bool _startedPlaying;
 
+        public float Volume;
+
         public string SongPath { get; }
 
         public OggAudio(string path)
@@ -77,7 +79,7 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
 
             _effect = new DynamicSoundEffectInstance(_vorbis.SampleRate, (AudioChannels)_vorbis.Channels)
             {
-                Volume = 0.5f
+                Volume = Volume
             };
 
             _effect.BufferNeeded += (s, a) => SubmitBuffer();

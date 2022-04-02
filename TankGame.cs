@@ -133,7 +133,7 @@ namespace TanksRebirth
 
         public JsonHandler SettingsHandler;
 
-        public static readonly string SaveDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "My Games", "WiiPlayTanksRemake");
+        public static readonly string SaveDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "My Games", "Tanks Rebirth");
 
         public static Matrix GameView;
         public static Matrix GameProjection;
