@@ -19,6 +19,7 @@ using WiiPlayTanksRemake.Internals;
 using Microsoft.Xna.Framework.Audio;
 using WiiPlayTanksRemake.Enums;
 using WiiPlayTanksRemake.Net;
+using System.IO;
 
 namespace WiiPlayTanksRemake.GameContent.UI
 {
@@ -51,10 +52,10 @@ namespace WiiPlayTanksRemake.GameContent.UI
         public static UITextButton StartMPGameButton;
 
         public static UITextButton DifficultiesButton;
-
-        public static UITextButton LaunchVanillaCampaign;
-
+        
         private static UIElement[] _menuElements;
+
+        private static List<UIElement> _campaignNames = new();
 
         public static UITextInput UsernameInput;
         public static UITextInput IPInput;
@@ -147,20 +148,9 @@ namespace WiiPlayTanksRemake.GameContent.UI
             };
             PlayButton_SinglePlayer.SetDimensions(700, 450, 500, 50);
 
-            PlayButton_SinglePlayer.OnLeftClick = (uiElement) => Leave();
-
-            LaunchVanillaCampaign = new("Vanilla Campaign", font, Color.WhiteSmoke)
+            PlayButton_SinglePlayer.OnLeftClick = (uiElement) =>
             {
-                IsVisible = false,
-            };
-            LaunchVanillaCampaign.SetDimensions(1250, 450, 500, 50);
-
-            LaunchVanillaCampaign.OnLeftClick = (uiElement) =>
-            {
-                PlayButton_SinglePlayer.OnLeftClick?.Invoke(null);
-
-                GameHandler.VanillaCampaign.LoadFromFolder("Vanilla", true);
-                GameHandler.VanillaCampaign.SetupLoadedMission(true);
+                SetCampaignDisplay();
             };
 
             InitializeDifficultyButtons();
@@ -296,7 +286,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
             _menuElements = new UIElement[] 
             { PlayButton, PlayButton_SinglePlayer, PlayButton_LevelEditor, PlayButton_Multiplayer, ConnectToServerButton, 
                 CreateServerButton, UsernameInput, IPInput, PortInput, PasswordInput, ServerNameInput,
-                DifficultiesButton, LaunchVanillaCampaign
+                DifficultiesButton
             };
 
             foreach (var e in _menuElements)
@@ -384,13 +374,77 @@ namespace WiiPlayTanksRemake.GameContent.UI
             };
             BumpUp.SetDimensions(100, 700, 300, 40);
         }
+        
+        private static void SetCampaignDisplay()
+        {
+            SetPlayButtonsVisibility(false);
+            
+            foreach (var elem in _campaignNames)
+                elem.Remove();
+            // get all the campaign folders from the SaveDirectory + Campaigns
+            var campaignFolders = IOUtils.GetSubFolders(Path.Combine(TankGame.SaveDirectory, "Campaigns"), true);
+            // add a new UIElement for each campaign folder
+            int totalOffset = 0;
+            for (int i = 0; i < campaignFolders.Length; i++)
+            {
+                int offset = i * 60;
+                totalOffset += offset;
+                var name = campaignFolders[i];
+                var elem = new UITextButton(name, TankGame.TextFont, Color.White, 0.8f)
+                {
+                    IsVisible = true,
+                };
+                elem.SetDimensions(700, 100 + offset, 300, 40);
+                //elem.HasScissor = true;
+                //elem.
+                elem.OnLeftClick += (el) =>
+                {
+                    GameHandler.LoadedCampaign = Campaign.LoadFromFolder(elem.Text, true);
+
+                    foreach (var elem in _campaignNames)
+                        elem.Remove();
+
+                    IntermissionsSystem.TimeBlack = 240;
+
+                    GameHandler.ShouldMissionsProgress = true;
+
+                    // Leave();
+
+                    IntermissionsSystem.SetTime(600);
+                };
+                elem.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/menu/menu_tick"), SoundContext.Effect); };
+                _campaignNames.Add(elem);
+            }
+            var extra = new UITextButton("Freeplay", TankGame.TextFont, Color.White, 0.8f)
+            {
+                IsVisible = true,
+            };
+            extra.SetDimensions(700, 100 + totalOffset, 300, 40);
+            extra.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/menu/menu_tick"), SoundContext.Effect); };
+            //elem.HasScissor = true;
+            //elem.
+            extra.OnLeftClick += (el) =>
+            {
+                foreach (var elem in _campaignNames)
+                    elem.Remove();
+
+                GameHandler.ShouldMissionsProgress = false;
+
+                IntermissionsSystem.TimeBlack = 150;
+                // Leave();
+            };
+            _campaignNames.Add(extra);
+            
+            TankGame.cunoSucksElement.Remove();
+            TankGame.cunoSucksElement = new();
+            TankGame.cunoSucksElement.SetDimensions(-1000789342, -783218, 0, 0);
+        }
 
         internal static void SetPlayButtonsVisibility(bool visible)
         {
             PlayButton_SinglePlayer.IsVisible = visible;
             PlayButton_LevelEditor.IsVisible = visible;
             PlayButton_Multiplayer.IsVisible = visible;
-            LaunchVanillaCampaign.IsVisible = visible;
             DifficultiesButton.IsVisible = visible;
         }
         internal static void SetDifficultiesButtonsVisibility(bool visible)
@@ -465,6 +519,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
         public static void Leave()
         {
+            PlayerTank.Lives = PlayerTank.MaxLives;
             GameHandler.StartTnkScene();
             SetMPButtonsVisibility(false);
             SetPlayButtonsVisibility(false);

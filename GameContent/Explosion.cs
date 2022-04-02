@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Linq;
+using WiiPlayTanksRemake.GameContent.Systems;
 using WiiPlayTanksRemake.Graphics;
 using WiiPlayTanksRemake.Internals;
 using WiiPlayTanksRemake.Internals.Common.Framework.Audio;
@@ -85,7 +86,7 @@ namespace WiiPlayTanksRemake.GameContent
             else if (tickAtMax <= 0)
                 scale -= shrinkRate;
 
-            if (!GameHandler.IsAwaitingNewMission)
+            if (!IntermissionsSystem.IsAwaitingNewMission)
             {
                 foreach (var mine in Mine.AllMines)
                 {

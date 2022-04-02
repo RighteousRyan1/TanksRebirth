@@ -119,7 +119,7 @@ namespace WiiPlayTanksRemake
         public static Model CubeModel;
         public static Model CubeModelAlt;
 
-        public static Texture2D MagicPixel;
+        public static Texture2D WhitePixel;
 
         public static TankGame Instance { get; private set; }
         public static readonly string ExePath = Assembly.GetExecutingAssembly().Location.Replace(@$"\WiiPlayTanksRemake.dll", string.Empty);
@@ -141,6 +141,7 @@ namespace WiiPlayTanksRemake
         private FontSystem _fontSystem;
 
         public static SpriteFontBase TextFont;
+        public static SpriteFontBase TextFontLarge;
 
         public static event EventHandler<IntPtr> OnFocusLost;
         public static event EventHandler<IntPtr> OnFocusRegained;
@@ -149,7 +150,7 @@ namespace WiiPlayTanksRemake
 
         public readonly string GameVersion;
 
-        private static Internals.Common.GameUI.UIPanel dummyPannelBecauseCunosCodeIsUtterShitPleaseDoNotHurtMeForLookingAtThisCode;
+        internal static Internals.Common.GameUI.UIPanel cunoSucksElement;
 
         public TankGame() : base()
         {
@@ -219,7 +220,7 @@ namespace WiiPlayTanksRemake
 
             TankModel_Player = GameResources.GetGameResource<Model>("Assets/tank_p");
 
-            MagicPixel = GameResources.GetGameResource<Texture2D>("Assets/MagicPixel");
+            WhitePixel = GameResources.GetGameResource<Texture2D>("Assets/MagicPixel");
 
             _fontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/en_US.ttf"));
             _fontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/ja_JP.ttf"));
@@ -227,6 +228,7 @@ namespace WiiPlayTanksRemake
             _fontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/ru_RU.ttf"));
 
             TextFont = _fontSystem.GetFont(30);
+            TextFontLarge = _fontSystem.GetFont(120);
 
             if (!File.Exists(Path.Combine(SaveDirectory, "settings.json")))
             {
@@ -275,7 +277,7 @@ namespace WiiPlayTanksRemake
 
             DecalSystem.Initialize(spriteBatch, GraphicsDevice);
 
-            dummyPannelBecauseCunosCodeIsUtterShitPleaseDoNotHurtMeForLookingAtThisCode = new() { IsVisible = false };
+            cunoSucksElement = new() { IsVisible = false };
 
             s.Stop();
         }

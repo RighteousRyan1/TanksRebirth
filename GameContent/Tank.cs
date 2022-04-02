@@ -19,6 +19,7 @@ using tainicom.Aether.Physics2D.Fluids;
 using tainicom.Aether.Physics2D.Common;
 using tainicom.Aether.Physics2D.Controllers;
 using WiiPlayTanksRemake.Internals.Common.Framework;
+using WiiPlayTanksRemake.GameContent.Systems;
 
 namespace WiiPlayTanksRemake.GameContent
 {
@@ -233,7 +234,7 @@ namespace WiiPlayTanksRemake.GameContent
                 Projection = TankGame.GameProjection;
                 View = TankGame.GameView;
 
-                if (!GameHandler.InMission || GameHandler.IsAwaitingNewMission)
+                if (!GameHandler.InMission || IntermissionsSystem.IsAwaitingNewMission)
                 {
                     Velocity = Vector2.Zero;
                     return;

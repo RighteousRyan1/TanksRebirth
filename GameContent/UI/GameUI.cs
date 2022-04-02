@@ -200,10 +200,10 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 }
                 else if (!MainMenu.Active)
                 {
-                    if (Paused)
+                    /*if (Paused)
                         TankMusicSystem.ResumeAll();
                     else
-                        TankMusicSystem.PauseAll();
+                        TankMusicSystem.PauseAll();*/
                     Paused = !Paused;
                 }
 
@@ -366,7 +366,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
                 // ChatSystem.SendMessage(_gpuSettingsOffset, Color.White, "<Debug>");
             }
             var text = /*$"{TankGame.GameLanguage.Mission} 1        x{AITank.CountAll()}";*/
-                $"{GameHandler.VanillaCampaign.CurrentMission.Name ?? $"{TankGame.GameLanguage.Mission}"} x{AITank.CountAll()}";
+                $"{GameHandler.LoadedCampaign.CurrentMission.Name ?? $"{TankGame.GameLanguage.Mission}"} x{AITank.CountAll()}";
             Vector2 drawOrigin = TankGame.TextFont.MeasureString(text) / 2f;
             MissionInfoBar.UniqueDraw =
                 (uiPanel, spriteBatch) => spriteBatch.DrawString(TankGame.TextFont, text, uiPanel.Hitbox.Center.ToVector2(), Color.White, new Vector2(1.5f), 0, drawOrigin);

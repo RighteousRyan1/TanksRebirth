@@ -16,12 +16,16 @@ using WiiPlayTanksRemake.Internals.Common.Framework.Audio;
 using WiiPlayTanksRemake.Internals.Common.Framework.Input;
 using WiiPlayTanksRemake.Graphics;
 using WiiPlayTanksRemake.Net;
+using WiiPlayTanksRemake.GameContent.Systems;
 
 namespace WiiPlayTanksRemake.GameContent
 {
     public class PlayerTank : Tank
     {
-        public bool playerControl_isBindPressed;
+        public static int MaxLives = 3;
+        public static int Lives;
+        
+        private bool playerControl_isBindPressed;
 
         private int _treadSoundTimer = 5;
 
@@ -127,7 +131,7 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 if (Client.IsConnected())
                     Systems.ChatSystem.SendMessage($"PlayerId: {PlayerId} | ClientId: {NetPlay.CurrentClient.Id}", Color.White);
-                if (NetPlay.IsClientMatched(PlayerId) && !GameHandler.IsAwaitingNewMission)
+                if (NetPlay.IsClientMatched(PlayerId) && !IntermissionsSystem.IsAwaitingNewMission)
                 {
                     Vector3 mouseWorldPos = GameUtils.GetWorldPosition(GameUtils.MousePosition, -11f);
                     TurretRotation = (-(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position).ToRotation()) + MathHelper.PiOver2;

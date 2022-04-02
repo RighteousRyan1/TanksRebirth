@@ -43,7 +43,7 @@ namespace WiiPlayTanksRemake.GameContent.UI
 
         public static void DrawBooleanIndicator(SpriteBatch spriteBatch, Rectangle hitbox, bool active)
         {
-            spriteBatch.Draw(TankGame.MagicPixel, hitbox, active ? Color.Green : Color.Red);
+            spriteBatch.Draw(TankGame.WhitePixel, hitbox, active ? Color.Green : Color.Red);
         }
 
         public static void Initialize()

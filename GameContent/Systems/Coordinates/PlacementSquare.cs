@@ -157,7 +157,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems.Coordinates
                     effect.TextureEnabled = true;
                     effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
                     if (IsHovered)
-                        effect.Alpha = 0.5f;
+                        effect.Alpha = 0.7f;
                     else
                         effect.Alpha = 0f;
 

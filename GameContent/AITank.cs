@@ -1564,7 +1564,7 @@ namespace WiiPlayTanksRemake.GameContent
 
                 timeSinceLastAction++;
 
-                if (!GameHandler.InMission || GameHandler.IsAwaitingNewMission)
+                if (!GameHandler.InMission || IntermissionsSystem.IsAwaitingNewMission)
                 {
                     Velocity = Vector2.Zero;
                 }
@@ -1957,7 +1957,7 @@ namespace WiiPlayTanksRemake.GameContent
                         #region CubeNav
 
                         pathBlocked = IsObstacleInWay(AiParams.BlockWarinessDistance, Vector2.UnitY.RotatedByRadians(-TargetTankRotation), out var travelPath, out var refPoints);
-
+                        
                         if (pathBlocked && Behaviors[2].IsModOf(3) && !isMineNear && !isBulletNear)
                         {
                             if (refPoints.Length > 0)
@@ -2285,7 +2285,8 @@ namespace WiiPlayTanksRemake.GameContent
             {
                 $"Team: {Team}",
                 $"OwnedShellCount: {OwnedShellCount}",
-                $"Armor: {(Armor != null ? Armor.HitPoints : "N/A")}"
+                $"Armor: {(Armor != null ? Armor.HitPoints : "N/A")}",
+                $"Real/Target Rot: {TankRotation}/{TargetTankRotation}",
             };
 
             for (int i = 0; i < info.Length; i++)

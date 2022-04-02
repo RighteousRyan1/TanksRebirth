@@ -33,7 +33,6 @@ namespace WiiPlayTanksRemake.GameContent
         public static Random GameRand = new();
 
         private static int _tankFuncDelay = 180;
-        private static int _missionEndDelay;
 
         public const int MAX_AI_TANKS = 1000;
         public const int MAX_PLAYERS = 100;
@@ -41,13 +40,11 @@ namespace WiiPlayTanksRemake.GameContent
         public static PlayerTank[] AllPlayerTanks { get; } = new PlayerTank[MAX_PLAYERS];
         public static Tank[] AllTanks { get; } = new Tank[MAX_PLAYERS + MAX_AI_TANKS];
 
-        public static Campaign VanillaCampaign { get; private set; } = new();
+        public static Campaign LoadedCampaign { get; set; } = new();
 
         public static Logger ClientLog { get; } = new($"{TankGame.SaveDirectory}", "client");
 
         public static bool InMission { get; set; } = false;
-
-        public static bool IsAwaitingNewMission => _missionEndDelay > 180;
 
         public static Matrix UIMatrix => Matrix.CreateOrthographicOffCenter(0, TankGame.Instance.GraphicsDevice.Viewport.Width, TankGame.Instance.GraphicsDevice.Viewport.Height, 0, -1, 1);
 
@@ -73,23 +70,47 @@ namespace WiiPlayTanksRemake.GameContent
 
         public static void DoEndMissionWorkload(int delay, bool resultDeath) // bool major = (if true, play M100 fanfare, else M20)
         {
-            _missionEndDelay = delay;
+            IntermissionsSystem.SetTime(delay);
 
             TankMusicSystem.StopAll();
 
             if (resultDeath)
             {
-                var deathSound = GameResources.GetGameResource<SoundEffect>($"Assets/fanfares/tank_player_death");
-                SoundPlayer.PlaySoundInstance(deathSound, SoundContext.Effect, 0.3f);
+                PlayerTank.Lives--;
+
+                /*int len = $"{VanillaCampaign.CachedMissions.Count(x => !string.IsNullOrEmpty(x.Name))}".Length;
+                int diff = len - $"{VanillaCampaign.CurrentMissionId}".Length;
+
+                string realName = "";
+
+                for (int i = 0; i < diff; i++)
+                    realName += "0";
+                realName += $"{VanillaCampaign.CurrentMissionId + 1}";
+
+                VanillaCampaign.CachedMissions[VanillaCampaign.CurrentMissionId] = Mission.Load(realName, VanillaCampaign.Name);*/
+                if (PlayerTank.Lives > 0)
+                {
+                    var deathSound = GameResources.GetGameResource<SoundEffect>($"Assets/fanfares/tank_player_death");
+                    SoundPlayer.PlaySoundInstance(deathSound, SoundContext.Effect, 0.3f);
+                }
+                else
+                {
+                    var deathSound = GameResources.GetGameResource<SoundEffect>($"Assets/fanfares/gameover_playerdeath");
+                    SoundPlayer.PlaySoundInstance(deathSound, SoundContext.Effect, 0.3f);
+                }
             }
             else
             {
-                VanillaCampaign.LoadNextMission();
+                LoadedCampaign.LoadNextMission();
                 var victorySound = GameResources.GetGameResource<SoundEffect>($"Assets/fanfares/mission_complete");
                 SoundPlayer.PlaySoundInstance(victorySound, SoundContext.Effect, 0.5f);
             }
         }
-
+        private static void DoEndScene()
+        {
+            MainMenu.Open();
+            // this will be finished later...
+        }
         internal static void UpdateAll()
         {
             foreach (var tank in AllPlayerTanks)
@@ -117,7 +138,7 @@ namespace WiiPlayTanksRemake.GameContent
             foreach (var expl in Explosion.explosions)
                 expl?.Update();
 
-            if (ShouldMissionsProgress)
+            if (ShouldMissionsProgress && !MainMenu.Active)
                 HandleMissionChanging();
 
             foreach (var cube in Block.AllBlocks)
@@ -146,7 +167,7 @@ namespace WiiPlayTanksRemake.GameContent
             if (TankGame.OverheadView || MainMenu.Active)
             {
                 InMission = false;
-                _tankFuncDelay = 180;
+                _tankFuncDelay = 600;
             }
 
             if (_tankFuncDelay > 0)
@@ -208,7 +229,7 @@ namespace WiiPlayTanksRemake.GameContent
 
         private static void HandleMissionChanging()
         {
-            if (VanillaCampaign.CachedMissions[0].Name is null)
+            if (LoadedCampaign.CachedMissions[0].Name is null)
                 return;
 
             if (AllAITanks.Count(tnk => tnk != null && !tnk.Dead) <= 0)
@@ -216,22 +237,37 @@ namespace WiiPlayTanksRemake.GameContent
                 InMission = false;
                 // if a 1-up mission, extend by X amount of time (TBD?)
                 if (!InMission && _wasInMission)
-                    OnMissionEnd?.Invoke(300, false);
+                    OnMissionEnd?.Invoke(600, false);
             }
             else if (AllPlayerTanks.Count(tnk => tnk != null && !tnk.Dead) <= 0)
             {
                 InMission = false;
 
                 if (!InMission && _wasInMission)
-                    OnMissionEnd?.Invoke(300, true);
+                    OnMissionEnd?.Invoke(600, true);
             }
-            if (_missionEndDelay > 0)
-                _missionEndDelay--;
+            if (IntermissionsSystem.CurrentWaitTime > 0)
+                IntermissionsSystem.Tick(1);
 
-            if (_missionEndDelay == 180)
+            if (IntermissionsSystem.CurrentWaitTime == 220)
                 BeginIntroSequence();
-            if (_missionEndDelay == 180)
-                VanillaCampaign.SetupLoadedMission(true);
+            if (IntermissionsSystem.CurrentWaitTime == IntermissionsSystem.WaitTime / 2 && IntermissionsSystem.CurrentWaitTime != 0)
+            {
+                LoadedCampaign.SetupLoadedMission(/*AllPlayerTanks.Count(tnk => tnk != null && !tnk.Dead) > 0*/ true);
+            }
+            if (IntermissionsSystem.CurrentWaitTime > 240 && IntermissionsSystem.CurrentWaitTime < IntermissionsSystem.WaitTime - 150)
+            {
+                if (PlayerTank.Lives <= 0)
+                    DoEndScene();
+                IntermissionsSystem.TickAlpha(1f / 45f);
+            }
+            else
+                IntermissionsSystem.TickAlpha(-1f / 45f);
+            if (IntermissionsSystem.CurrentWaitTime == IntermissionsSystem.WaitTime - 180)
+            {
+                CleanupScene();
+                SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/fanfares/mission_starting"), SoundContext.Effect, 0.8f);
+            }
         }
 
         public static int BlockType = 0;
@@ -248,12 +284,6 @@ namespace WiiPlayTanksRemake.GameContent
 
             foreach (var cube in Block.AllBlocks)
                 cube?.Render();
-
-            foreach (var tank in AllPlayerTanks)
-                tank?.DrawBody();
-
-            foreach (var tank in AllAITanks)
-                tank?.DrawBody();
 
             foreach (var mine in Mine.AllMines)
                 mine?.Render();
@@ -281,6 +311,12 @@ namespace WiiPlayTanksRemake.GameContent
             if (TankGame.OverheadView)
                 foreach (var sq in PlacementSquare.Placements)
                     sq?.Render();
+
+            foreach (var tank in AllPlayerTanks)
+                tank?.DrawBody();
+
+            foreach (var tank in AllAITanks)
+                tank?.DrawBody();
 
             ParticleSystem.RenderParticles();
             MainMenu.Render();
@@ -323,7 +359,9 @@ namespace WiiPlayTanksRemake.GameContent
                 $"\n\nRender Time: {TankGame.RenderTime}" +
                 $"\nRender FPS: {TankGame.RenderFPS}", new(10, 500));
 
-            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"Current Mission Name: {VanillaCampaign.LoadedMission.Name}", GameUtils.WindowBottomLeft - new Vector2(-4, 20), 3, centered: false);
+            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"Current Mission: {LoadedCampaign.CurrentMission.Name}\nCurrent Campaign: {LoadedCampaign.Name}", GameUtils.WindowBottomLeft - new Vector2(-4, 40), 3, centered: false);
+
+            IntermissionsSystem.Draw(TankGame.spriteBatch);
 
             ChatSystem.DrawMessages();
 
@@ -366,8 +404,6 @@ namespace WiiPlayTanksRemake.GameContent
             };
 
             brighter.Apply(false);
-
-            BeginIntroSequence();
         }
 
         public static void SetupGraphics()
@@ -465,6 +501,9 @@ namespace WiiPlayTanksRemake.GameContent
         public static void BeginIntroSequence()
         {
             _tankFuncDelay = 180;
+
+            TankMusicSystem.StopAll();
+
             var tune = GameResources.GetGameResource<SoundEffect>("Assets/fanfares/mission_snare");
 
             SoundPlayer.PlaySoundInstance(tune, SoundContext.Music, 1f);
@@ -572,8 +611,8 @@ namespace WiiPlayTanksRemake.GameContent
             LoadMission = new("Load", TankGame.TextFont, Color.White, 0.5f);
             LoadMission.OnLeftClick = (l) =>
             {
-                VanillaCampaign.LoadMission(Mission.Load(MissionName.GetRealText(), null));
-                VanillaCampaign.SetupLoadedMission(true);
+                LoadedCampaign.LoadMission(Mission.Load(MissionName.GetRealText(), null));
+                LoadedCampaign.SetupLoadedMission(true);
             };
             LoadMission.IsVisible = false;
             LoadMission.SetDimensions(145, 120, 105, 50);
@@ -586,8 +625,8 @@ namespace WiiPlayTanksRemake.GameContent
                     ChatSystem.SendMessage("Invalid name for campaign.", Color.Red);
                     return;
                 }
-                VanillaCampaign.LoadFromFolder(MissionName.GetRealText(), true);
-                VanillaCampaign.SetupLoadedMission(true);
+                LoadedCampaign = Campaign.LoadFromFolder(MissionName.GetRealText(), true);
+                LoadedCampaign.SetupLoadedMission(true);
             };
             LoadCampaign.IsVisible = false;
             LoadCampaign.SetDimensions(20, 180, 230, 50);

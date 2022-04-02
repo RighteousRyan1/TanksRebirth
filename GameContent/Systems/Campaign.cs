@@ -16,6 +16,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems
     /// <summary>A campaign for players to play on with <see cref="AITank"/>s, or even <see cref="PlayerTank"/>s if supported.</summary>
     public class Campaign
     {
+        public string Name { get; set; }
         /// <summary>The maximum allowed missions in a campaign.</summary>
         public const int MAX_MISSIONS = 100;
         /// <summary>Returns the names of campaigns in the user's <c>Campaigns/</c> directory.</summary>
@@ -76,7 +77,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems
 
                         tank.Position = template.Position;
                         tank.TankRotation = template.Rotation;
-                        tank.TargetTankRotation = template.Rotation + MathHelper.Pi;
+                        tank.TargetTankRotation = template.Rotation - MathHelper.Pi;
                         tank.TurretRotation = -template.Rotation;
                         tank.Dead = false;
                     }
@@ -89,22 +90,49 @@ namespace WiiPlayTanksRemake.GameContent.Systems
                         tank.Dead = false;
                     }
                 }
-
-                for (int a = 0; a < Block.AllBlocks.Length; a++)
-                    Block.AllBlocks[a]?.Remove();
-
-                for (int p = 0; p < PlacementSquare.Placements.Count; p++)
-                    PlacementSquare.Placements[p].CurrentBlockId = -1;
-
-                for (int b = 0; b < LoadedMission.Blocks.Length; b++)
+            }
+            else
+            {
+                // if false, don't spawn any new tanks and place the tanks in the same positions as they were before
+                for (int i = 0; i < LoadedMission.Tanks.Length; i++)
                 {
-                    var cube = LoadedMission.Blocks[b];
+                    var template = LoadedMission.Tanks[i];
 
-                    var c = cube.GetBlock();
+                    if (!template.IsPlayer)
+                    {
+                        var tank = template.GetAiTank();
 
-                    var foundPlacement = PlacementSquare.Placements.First(placement => placement.Position == c.Position3D);
-                    foundPlacement.CurrentBlockId = c.Id;
+                        tank.Position = template.Position;
+                        tank.TankRotation = template.Rotation;
+                        tank.TargetTankRotation = template.Rotation - MathHelper.Pi;
+                        tank.TurretRotation = -template.Rotation;
+                        tank.Dead = false;
+                    }
+                    else
+                    {
+                        var tank = template.GetPlayerTank();
+
+                        tank.Position = template.Position;
+                        tank.TankRotation = template.Rotation;
+                        tank.Dead = false;
+                    }
                 }
+            }
+
+            for (int a = 0; a < Block.AllBlocks.Length; a++)
+                Block.AllBlocks[a]?.Remove();
+
+            for (int p = 0; p < PlacementSquare.Placements.Count; p++)
+                PlacementSquare.Placements[p].CurrentBlockId = -1;
+
+            for (int b = 0; b < LoadedMission.Blocks.Length; b++)
+            {
+                var cube = LoadedMission.Blocks[b];
+
+                var c = cube.GetBlock();
+
+                var foundPlacement = PlacementSquare.Placements.First(placement => placement.Position == c.Position3D);
+                foundPlacement.CurrentBlockId = c.Id;
             }
 
             CurrentMission = LoadedMission;
@@ -116,8 +144,10 @@ namespace WiiPlayTanksRemake.GameContent.Systems
         /// <param name="campaignName">The name of the campaign folder to load files from.</param>
         /// <param name="autoSetLoadedMission">Sets the currently loaded mission to the first mission loaded from this folder.</param>
         /// <exception cref="FileLoadException"></exception>
-        public Mission[] LoadFromFolder(string campaignName, bool autoSetLoadedMission)
+        public static Campaign LoadFromFolder(string campaignName, bool autoSetLoadedMission)
         {
+            Campaign campaign = new();
+
             var root = Path.Combine(TankGame.SaveDirectory, "Campaigns");
             var path = Path.Combine(root, campaignName);
             Directory.CreateDirectory(root);
@@ -136,13 +166,17 @@ namespace WiiPlayTanksRemake.GameContent.Systems
                 missions.Add(Mission.Load(file, ""));
                 // campaignName argument is null since we are loading from the campaign folder anyway. 
 
-                CachedMissions = missions.ToArray();
+                campaign.CachedMissions = missions.ToArray();
             }
 
             if (autoSetLoadedMission)
-                LoadedMission = CachedMissions[0];
+            {
+                campaign.LoadedMission = campaign.CachedMissions[0];
+                campaign.Name = new DirectoryInfo(path).Name;
+            }
 
-            return missions.ToArray();
+
+            return campaign;
         }
 
         /*public int LoadRandomizedMission(Range<int> missionRange, TankTier highestTier = TankTier.None, int highestCount = 0)

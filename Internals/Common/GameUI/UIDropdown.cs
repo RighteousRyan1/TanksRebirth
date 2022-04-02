@@ -62,8 +62,8 @@ namespace WiiPlayTanksRemake.Internals.Common.GameUI
 
             if (Dropped)
             {
-                spriteBatch.Draw(TankGame.MagicPixel, wrapper, new Rectangle(0, 0, border, border), WrapperColor);
-                spriteBatch.Draw(TankGame.MagicPixel, scroll, new Rectangle(0, 0, border, border), ScrollBarColor);
+                spriteBatch.Draw(TankGame.WhitePixel, wrapper, new Rectangle(0, 0, border, border), WrapperColor);
+                spriteBatch.Draw(TankGame.WhitePixel, scroll, new Rectangle(0, 0, border, border), ScrollBarColor);
             }
 
             _oldScroll = _newScroll;

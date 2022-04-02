@@ -5,7 +5,6 @@ using WiiPlayTanksRemake.Internals.Common.IO;
 
 namespace WiiPlayTanksRemake.Localization
 {
-    // TODO: once cuno pr merged, change text values appropriately
     /// <summary>Localization to load a <see cref="Language"/> from a .json entry. Defaults to English if no <see cref="LangCode"/> is loaded.</summary>
     public class Language
     {
