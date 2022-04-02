@@ -336,7 +336,7 @@ namespace TanksRebirth.GameContent.UI
                         MainMenu.SetMPButtonsVisibility(false);
                         MainMenu.SetPlayButtonsVisibility(true);
                     }
-                    else if (MainMenu.TanksAreCalculators.IsVisible)
+                    if (MainMenu.TanksAreCalculators.IsVisible)
                     {
                         MainMenu.SetDifficultiesButtonsVisibility(false);
                         MainMenu.SetPlayButtonsVisibility(true);

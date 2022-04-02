@@ -24,7 +24,7 @@ namespace TanksRebirth
             _rpButtonGit = new Button
             {
                 Label = "GitHub",
-                Url = "https://github.com/RighteousRyan1/WiiPlayTanksRemake"
+                Url = "https://github.com/RighteousRyan1/TanksRebirth"
             };
             _rpButtonDiscord = new Button
             {
@@ -46,7 +46,6 @@ namespace TanksRebirth
             _client?.SetPresence(_rp);
             _client.Initialize();
         }
-
         public static void Update()
         {
             if (!_client.IsDisposed)
