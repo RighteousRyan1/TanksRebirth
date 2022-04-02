@@ -1,8 +1,8 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
-using WiiPlayTanksRemake.Internals.Common.Utilities;
+using TanksRebirth.Internals.Common.Utilities;
 
-namespace WiiPlayTanksRemake.GameContent.Systems.Coordinates
+namespace TanksRebirth.GameContent.Systems.Coordinates
 {
     public struct CubeMapPosition
     {

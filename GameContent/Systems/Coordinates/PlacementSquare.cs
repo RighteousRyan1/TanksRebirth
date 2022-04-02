@@ -2,13 +2,13 @@
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
-using WiiPlayTanksRemake.Graphics;
-using WiiPlayTanksRemake.Internals;
-using WiiPlayTanksRemake.Internals.Common;
-using WiiPlayTanksRemake.Internals.Common.Utilities;
+using TanksRebirth.Graphics;
+using TanksRebirth.Internals;
+using TanksRebirth.Internals.Common;
+using TanksRebirth.Internals.Common.Utilities;
 using FontStashSharp;
 
-namespace WiiPlayTanksRemake.GameContent.Systems.Coordinates
+namespace TanksRebirth.GameContent.Systems.Coordinates
 {
     public class PlacementSquare
     {

@@ -2,13 +2,13 @@
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Linq;
-using WiiPlayTanksRemake.Internals.Common.Utilities;
-using WiiPlayTanksRemake.Internals;
+using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Internals;
 using Microsoft.Xna.Framework.Audio;
-using WiiPlayTanksRemake.Internals.Common.Framework.Audio;
-using WiiPlayTanksRemake.Graphics;
+using TanksRebirth.Internals.Common.Framework.Audio;
+using TanksRebirth.Graphics;
 
-namespace WiiPlayTanksRemake.GameContent
+namespace TanksRebirth.GameContent
 {
     public class Crate
     {

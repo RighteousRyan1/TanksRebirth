@@ -1,8 +1,8 @@
 using Microsoft.Xna.Framework.Input;
-using WiiPlayTanksRemake.GameContent;
-using WiiPlayTanksRemake.Localization;
+using TanksRebirth.GameContent;
+using TanksRebirth.Localization;
 
-namespace WiiPlayTanksRemake
+namespace TanksRebirth
 {
     public class GameConfig
     {

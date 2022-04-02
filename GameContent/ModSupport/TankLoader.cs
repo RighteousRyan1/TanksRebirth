@@ -2,20 +2,20 @@
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
-using WiiPlayTanksRemake.Enums;
+using TanksRebirth.Enums;
 using System.Linq;
-using WiiPlayTanksRemake.Internals.Common.GameInput;
+using TanksRebirth.Internals.Common.GameInput;
 using Microsoft.Xna.Framework.Input;
-using WiiPlayTanksRemake.Internals.Common.Utilities;
-using WiiPlayTanksRemake.Internals;
+using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Internals;
 using Microsoft.Xna.Framework.Audio;
-using WiiPlayTanksRemake.Internals.Common;
-using WiiPlayTanksRemake.Internals.Core.Interfaces;
-using WiiPlayTanksRemake.GameContent.GameMechanics;
-using WiiPlayTanksRemake.GameContent.Systems;
+using TanksRebirth.Internals.Common;
+using TanksRebirth.Internals.Core.Interfaces;
+using TanksRebirth.GameContent.GameMechanics;
+using TanksRebirth.GameContent.Systems;
 using System.Reflection;
 
-namespace WiiPlayTanksRemake.GameContent.ModSupport
+namespace TanksRebirth.GameContent.ModSupport
 {
     /// <summary>Represents a system in which to load <see cref="ModTank"/>s.</summary>
     public static class TankLoader

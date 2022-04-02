@@ -1,12 +1,12 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
-using WiiPlayTanksRemake.Internals.Common.Utilities;
-using WiiPlayTanksRemake.Internals;
-using WiiPlayTanksRemake.GameContent.UI;
+using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Internals;
+using TanksRebirth.GameContent.UI;
 using FontStashSharp;
 using System.Linq;
 
-namespace WiiPlayTanksRemake.GameContent.Systems
+namespace TanksRebirth.GameContent.Systems
 {
     public static class IntermissionsSystem
     {

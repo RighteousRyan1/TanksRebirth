@@ -2,23 +2,23 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
-using WiiPlayTanksRemake.Enums;
+using TanksRebirth.Enums;
 using System.Linq;
-using WiiPlayTanksRemake.Internals.Common.GameInput;
+using TanksRebirth.Internals.Common.GameInput;
 using Microsoft.Xna.Framework.Input;
-using WiiPlayTanksRemake.Internals.Common.Utilities;
-using WiiPlayTanksRemake.Internals;
+using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Internals;
 using Microsoft.Xna.Framework.Audio;
-using WiiPlayTanksRemake.Internals.Common;
-using WiiPlayTanksRemake.Internals.Core.Interfaces;
-using WiiPlayTanksRemake.GameContent.GameMechanics;
-using WiiPlayTanksRemake.GameContent.Systems;
-using WiiPlayTanksRemake.Internals.Common.Framework.Audio;
-using WiiPlayTanksRemake.Graphics;
-using WiiPlayTanksRemake.GameContent.Systems.Coordinates;
-using WiiPlayTanksRemake.Internals.Common.Framework;
+using TanksRebirth.Internals.Common;
+using TanksRebirth.Internals.Core.Interfaces;
+using TanksRebirth.GameContent.GameMechanics;
+using TanksRebirth.GameContent.Systems;
+using TanksRebirth.Internals.Common.Framework.Audio;
+using TanksRebirth.Graphics;
+using TanksRebirth.GameContent.Systems.Coordinates;
+using TanksRebirth.Internals.Common.Framework;
 
-namespace WiiPlayTanksRemake.GameContent
+namespace TanksRebirth.GameContent
 {
     public class AITank : Tank
     {

@@ -2,10 +2,10 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
-using WiiPlayTanksRemake.GameContent;
-using WiiPlayTanksRemake.Internals.Common.Utilities;
+using TanksRebirth.GameContent;
+using TanksRebirth.Internals.Common.Utilities;
 
-namespace WiiPlayTanksRemake.Graphics
+namespace TanksRebirth.Graphics
 {
     public enum CameraType
     {

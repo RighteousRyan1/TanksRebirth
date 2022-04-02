@@ -1,15 +1,15 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
-using WiiPlayTanksRemake.Enums;
-using WiiPlayTanksRemake.Internals;
-using WiiPlayTanksRemake.Internals.Common.Utilities;
-using WiiPlayTanksRemake.Internals.Core.Interfaces;
-using WiiPlayTanksRemake.Graphics;
+using TanksRebirth.Enums;
+using TanksRebirth.Internals;
+using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Internals.Core.Interfaces;
+using TanksRebirth.Graphics;
 using System.Linq;
-using WiiPlayTanksRemake.Internals.Common.Framework.Audio;
+using TanksRebirth.Internals.Common.Framework.Audio;
 using Microsoft.Xna.Framework.Audio;
-using WiiPlayTanksRemake.GameContent.GameMechanics;
+using TanksRebirth.GameContent.GameMechanics;
 using tainicom.Aether.Physics2D;
 using Phys = tainicom.Aether.Physics2D.Collision;
 using tainicom.Aether.Physics2D.Dynamics;
@@ -18,10 +18,10 @@ using tainicom.Aether.Physics2D.Content;
 using tainicom.Aether.Physics2D.Fluids;
 using tainicom.Aether.Physics2D.Common;
 using tainicom.Aether.Physics2D.Controllers;
-using WiiPlayTanksRemake.Internals.Common.Framework;
-using WiiPlayTanksRemake.GameContent.Systems;
+using TanksRebirth.Internals.Common.Framework;
+using TanksRebirth.GameContent.Systems;
 
-namespace WiiPlayTanksRemake.GameContent
+namespace TanksRebirth.GameContent
 {
     public struct TankTemplate
     {

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WiiPlayTanksRemake.Internals.Common.Framework.Graphics
+namespace TanksRebirth.Internals.Common.Framework.Graphics
 {
     public class Quadrilateral : IDisposable
     {

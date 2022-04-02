@@ -1,6 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 
-namespace WiiPlayTanksRemake.Internals.Core
+namespace TanksRebirth.Internals.Core
 {
 	public static class ResolutionHandler
 	{

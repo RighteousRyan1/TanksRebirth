@@ -1,4 +1,4 @@
-namespace WiiPlayTanksRemake.Localization
+namespace TanksRebirth.Localization
 {
     public struct LangCode
     {

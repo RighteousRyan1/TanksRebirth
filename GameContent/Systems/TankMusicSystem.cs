@@ -1,16 +1,16 @@
-using WiiPlayTanksRemake;
-using WiiPlayTanksRemake.GameContent;
+using TanksRebirth;
+using TanksRebirth.GameContent;
 using System;
 using System.Linq;
-using WiiPlayTanksRemake.Internals.Core.Interfaces;
-using WiiPlayTanksRemake.Enums;
+using TanksRebirth.Internals.Core.Interfaces;
+using TanksRebirth.Enums;
 using Microsoft.Xna.Framework;
-using WiiPlayTanksRemake.Internals.Common.Utilities;
+using TanksRebirth.Internals.Common.Utilities;
 using System.IO;
-using WiiPlayTanksRemake.Internals.Common.Framework.Audio;
+using TanksRebirth.Internals.Common.Framework.Audio;
 using MeltySynth;
 
-namespace WiiPlayTanksRemake.GameContent.Systems
+namespace TanksRebirth.GameContent.Systems
 {
     /*public static class TankMusicSystem
     {
@@ -390,7 +390,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems
 
             var musicVolume = TankGame.Settings.MusicVolume;
 
-            foreach (var song in songs)
+            foreach (var song in Songs)
                 if (song is not null)
                     song.SetVolume(0f);
 
@@ -562,7 +562,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems
         public static OggMusic assassin;
         #endregion
 
-        public static OggMusic[] songs;
+        public static OggMusic[] Songs;
 
         // public static OggMusic[] songs = new OggMusic[Directory.GetFiles("Content/assets/music").Length];
 
@@ -644,7 +644,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems
             //MusicMidi = new MidiPlayer(@"C:\Users\ryanr\Desktop\Git Repositories\WiiPlayTanksRemake\Content\Assets\music\Wii_tanks_bgm.sf2", new(44100) { EnableReverbAndChorus = false });
             // MusicSoundFont = new MidiFile(@"C:\Users\ryanr\Desktop\Git Repositories\WiiPlayTanksRemake\Content\Assets\music\Wii_tanks_bgm.mid", 3200);
 
-            songs = new OggMusic[]
+            Songs = new OggMusic[]
             {
                 brown,
                 ash1, ash2,
@@ -683,7 +683,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems
             // MusicMidi.NoteOffAll();
 
 
-            foreach (var song in songs)
+            foreach (var song in Songs)
                 song?.Play();
 
             if (MapRenderer.Theme == MapTheme.Forest)
@@ -693,7 +693,7 @@ namespace WiiPlayTanksRemake.GameContent.Systems
         public static void PauseAll()
         {
             forestAmbience?.Pause();
-            foreach (var song in songs)
+            foreach (var song in Songs)
                 if (!song.IsPaused())
                     song?.Pause();
         }
@@ -701,23 +701,23 @@ namespace WiiPlayTanksRemake.GameContent.Systems
         public static void ResumeAll()
         {
             forestAmbience?.Play();
-            foreach (var song in songs)
+            foreach (var song in Songs)
                 song?.Play();
         }
 
         public static void StopAll()
         {
             forestAmbience?.Stop();
-            if (songs is not null)
+            if (Songs is not null)
             {
-                foreach (var song in songs)
+                foreach (var song in Songs)
                     song?.Stop();
             }
         }
 
         public static void UpdateVolume()
         {
-            foreach (var song in songs)
+            foreach (var song in Songs)
             {
                 if (song.Volume > 0)
                 {

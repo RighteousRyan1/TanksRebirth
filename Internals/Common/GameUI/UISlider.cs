@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using WiiPlayTanksRemake.Internals.UI;
+using TanksRebirth.Internals.UI;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace WiiPlayTanksRemake.Internals.Common.GameUI
+namespace TanksRebirth.Internals.Common.GameUI
 {
     public class UISlider : UIElement
     {

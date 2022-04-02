@@ -5,14 +5,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using tainicom.Aether.Physics2D.Dynamics;
-using WiiPlayTanksRemake;
-using WiiPlayTanksRemake.GameContent.Systems.Coordinates;
-using WiiPlayTanksRemake.Graphics;
-using WiiPlayTanksRemake.Internals;
-using WiiPlayTanksRemake.Internals.Common.Utilities;
-using WiiPlayTanksRemake.Internals.Core.Interfaces;
+using TanksRebirth;
+using TanksRebirth.GameContent.Systems.Coordinates;
+using TanksRebirth.Graphics;
+using TanksRebirth.Internals;
+using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Internals.Core.Interfaces;
 
-namespace WiiPlayTanksRemake.GameContent
+namespace TanksRebirth.GameContent
 {
     public struct BlockTemplate
     {

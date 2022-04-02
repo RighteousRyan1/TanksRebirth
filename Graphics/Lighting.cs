@@ -1,11 +1,11 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using WiiPlayTanksRemake.GameContent;
-using WiiPlayTanksRemake.GameContent.Systems;
-using WiiPlayTanksRemake.Internals;
-using WiiPlayTanksRemake.Internals.Common.Utilities;
+using TanksRebirth.GameContent;
+using TanksRebirth.GameContent.Systems;
+using TanksRebirth.Internals;
+using TanksRebirth.Internals.Common.Utilities;
 
-namespace WiiPlayTanksRemake.Graphics
+namespace TanksRebirth.Graphics
 {
     /// <summary>Represents a system in which to render lighting for the world.</summary>
     public static class Lighting

@@ -1,9 +1,9 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System.Linq;
-using WiiPlayTanksRemake.Internals.Common.Utilities;
+using TanksRebirth.Internals.Common.Utilities;
 
-namespace WiiPlayTanksRemake.Internals.Common
+namespace TanksRebirth.Internals.Common
 {
     public static class Input
     {

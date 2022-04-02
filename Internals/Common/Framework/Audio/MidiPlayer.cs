@@ -5,7 +5,7 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 
-namespace WiiPlayTanksRemake.Internals.Common.Framework.Audio
+namespace TanksRebirth.Internals.Common.Framework.Audio
 {
     public class OggAudio : IDisposable
     {
@@ -103,18 +103,32 @@ namespace WiiPlayTanksRemake.Internals.Common.Framework.Audio
             }
         }
         public void Pause()
-            => _effect?.Pause();
+            => _effect?.Pause(); 
         public void Resume()
             => _effect?.Resume();
-        public void SetVolume(float volume)
-            => _effect.Volume = volume;
+        public void SetVolume(float volume) {
+            if (_effect == null)
+                return;
+            _effect.Volume = volume;
+        }
 
-        public bool IsPaused()
-            => _effect.State == SoundState.Paused;
+        public bool IsPaused() {
+            if (_effect == null)
+                return false; 
+            return _effect.State == SoundState.Paused;
+        }
         public bool IsStopped()
-            => _effect.State == SoundState.Stopped;
+        {
+            if (_effect == null)
+                return true;
+            return _effect.State == SoundState.Stopped;
+        }
         public bool IsPlaying()
-            => _effect.State == SoundState.Playing;
+        {
+            if (_effect == null)
+                return false;
+            return _effect.State == SoundState.Playing;
+        }
     }
     public class MidiPlayer : IDisposable
     {

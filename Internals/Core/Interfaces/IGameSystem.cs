@@ -1,4 +1,4 @@
-namespace WiiPlayTanksRemake.Internals.Core.Interfaces
+namespace TanksRebirth.Internals.Core.Interfaces
 {
     public interface IGameSystem
     {

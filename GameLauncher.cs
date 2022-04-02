@@ -1,8 +1,8 @@
 using Microsoft.Xna.Framework;
 using System;
-using WiiPlayTanksRemake;
+using TanksRebirth;
 
-namespace WiiPlayTanksRemake
+namespace TanksRebirth
 {
     public static class GameLauncher
     {

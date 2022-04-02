@@ -2,10 +2,10 @@
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
-using WiiPlayTanksRemake.Internals.Common.Utilities;
+using TanksRebirth.Internals.Common.Utilities;
 using FontStashSharp;
 
-namespace WiiPlayTanksRemake.Internals.Common.Framework.Graphics
+namespace TanksRebirth.Internals.Common.Framework.Graphics
 {
     public class Triangle2D : IDisposable
     {

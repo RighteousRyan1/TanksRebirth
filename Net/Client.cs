@@ -7,9 +7,9 @@ using LiteNetLib;
 using LiteNetLib.Layers;
 using LiteNetLib.Utils;
 using Microsoft.Xna.Framework;
-using WiiPlayTanksRemake.GameContent;
+using TanksRebirth.GameContent;
 
-namespace WiiPlayTanksRemake.Net
+namespace TanksRebirth.Net
 {
     public class Client
     {

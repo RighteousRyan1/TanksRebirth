@@ -4,9 +4,9 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using WiiPlayTanksRemake.GameContent;
+using TanksRebirth.GameContent;
 
-namespace WiiPlayTanksRemake.Internals.Common.Utilities
+namespace TanksRebirth.Internals.Common.Utilities
 {
     public static class IOUtils
     {

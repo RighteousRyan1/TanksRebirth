@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Reflection;
 using System;
 
-namespace WiiPlayTanksRemake.Internals
+namespace TanksRebirth.Internals
 {
     public enum LogType
     {

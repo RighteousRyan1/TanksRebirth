@@ -1,12 +1,12 @@
 ﻿using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using WiiPlayTanksRemake.Internals.UI;
+using TanksRebirth.Internals.UI;
 using FontStashSharp;
 using Microsoft.Xna.Framework.Input;
 using TextCopy;
 
-namespace WiiPlayTanksRemake.Internals.Common.GameUI
+namespace TanksRebirth.Internals.Common.GameUI
 {
     public class UITextInput : UITextButton
     {

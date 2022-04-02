@@ -1,32 +1,32 @@
-﻿using WiiPlayTanksRemake.Internals;
-using WiiPlayTanksRemake.Internals.UI;
-using WiiPlayTanksRemake.Internals.Common;
-using WiiPlayTanksRemake.Internals.Common.Utilities;
-using WiiPlayTanksRemake.Internals.Common.GameInput;
-using WiiPlayTanksRemake.Internals.Common.GameUI;
+﻿using TanksRebirth.Internals;
+using TanksRebirth.Internals.UI;
+using TanksRebirth.Internals.Common;
+using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Internals.Common.GameInput;
+using TanksRebirth.Internals.Common.GameUI;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System.Linq;
-using WiiPlayTanksRemake.Enums;
+using TanksRebirth.Enums;
 using System;
 using Microsoft.Xna.Framework.Audio;
-using WiiPlayTanksRemake.GameContent.Systems;
+using TanksRebirth.GameContent.Systems;
 using System.Collections.Generic;
-using WiiPlayTanksRemake.Internals.Core.Interfaces;
+using TanksRebirth.Internals.Core.Interfaces;
 using Microsoft.Xna.Framework.Graphics;
-using WiiPlayTanksRemake.Internals.Core;
-using WiiPlayTanksRemake.GameContent.UI;
-using WiiPlayTanksRemake.Graphics;
-using WiiPlayTanksRemake.Internals.Common.Framework.Audio;
-using WiiPlayTanksRemake.Internals.Common.Framework.Input;
+using TanksRebirth.Internals.Core;
+using TanksRebirth.GameContent.UI;
+using TanksRebirth.Graphics;
+using TanksRebirth.Internals.Common.Framework.Audio;
+using TanksRebirth.Internals.Common.Framework.Input;
 using System.IO;
 using System.Threading.Tasks;
-using WiiPlayTanksRemake.GameContent.Systems.Coordinates;
-using WiiPlayTanksRemake.Net;
+using TanksRebirth.GameContent.Systems.Coordinates;
+using TanksRebirth.Net;
 using System.Threading;
 using System.Diagnostics;
 
-namespace WiiPlayTanksRemake.GameContent
+namespace TanksRebirth.GameContent
 {
     public class GameHandler
     {
@@ -135,6 +135,11 @@ namespace WiiPlayTanksRemake.GameContent
                 foreach (var pu in Powerup.powerups)
                     pu?.Update();
             }
+            else
+                if (!InMission)
+                    if (TankMusicSystem.Songs is not null)
+                        foreach (var song in TankMusicSystem.Songs)
+                            song?.SetVolume(0f);
             foreach (var expl in Explosion.explosions)
                 expl?.Update();
 
@@ -426,7 +431,7 @@ namespace WiiPlayTanksRemake.GameContent
             }
             else
             {
-                foreach (var song in TankMusicSystem.songs)
+                foreach (var song in TankMusicSystem.Songs)
                 {
                     song.Stop();
                     song.Play();

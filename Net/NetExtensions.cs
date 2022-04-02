@@ -2,7 +2,7 @@
 using LiteNetLib.Utils;
 using Microsoft.Xna.Framework;
 
-namespace WiiPlayTanksRemake.Net
+namespace TanksRebirth.Net
 {
     public static class NetExtensions
     {

@@ -4,14 +4,14 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using WiiPlayTanksRemake.Enums;
-using WiiPlayTanksRemake.GameContent.GameMechanics;
-using WiiPlayTanksRemake.Graphics;
-using WiiPlayTanksRemake.Internals;
-using WiiPlayTanksRemake.Internals.Common.Framework.Audio;
-using WiiPlayTanksRemake.Internals.Common.Utilities;
+using TanksRebirth.Enums;
+using TanksRebirth.GameContent.GameMechanics;
+using TanksRebirth.Graphics;
+using TanksRebirth.Internals;
+using TanksRebirth.Internals.Common.Framework.Audio;
+using TanksRebirth.Internals.Common.Utilities;
 
-namespace WiiPlayTanksRemake.GameContent
+namespace TanksRebirth.GameContent
 {
     public class Shell
     {

@@ -2,9 +2,9 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using System;
 using System.IO;
-using WiiPlayTanksRemake.Internals.Common.Utilities;
+using TanksRebirth.Internals.Common.Utilities;
 
-namespace WiiPlayTanksRemake.Internals.Common.Framework.Audio
+namespace TanksRebirth.Internals.Common.Framework.Audio
 {
     public static class SoundPlayer
     {

@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using FontStashSharp;
 
-namespace WiiPlayTanksRemake.Internals.Common.Utilities
+namespace TanksRebirth.Internals.Common.Utilities
 {
     public static class GameUtils
     {

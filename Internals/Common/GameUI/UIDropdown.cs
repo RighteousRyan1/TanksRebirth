@@ -1,10 +1,10 @@
 ﻿using FontStashSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using WiiPlayTanksRemake.Internals.Common.Utilities;
-using WiiPlayTanksRemake.Internals.UI;
+using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Internals.UI;
 
-namespace WiiPlayTanksRemake.Internals.Common.GameUI
+namespace TanksRebirth.Internals.Common.GameUI
 {
     public class UIDropdown : UIElement
     {

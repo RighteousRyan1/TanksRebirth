@@ -4,12 +4,12 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using WiiPlayTanksRemake.Graphics;
-using WiiPlayTanksRemake.Internals;
-using WiiPlayTanksRemake.Internals.Common.Framework.Audio;
-using WiiPlayTanksRemake.Internals.Common.Utilities;
+using TanksRebirth.Graphics;
+using TanksRebirth.Internals;
+using TanksRebirth.Internals.Common.Framework.Audio;
+using TanksRebirth.Internals.Common.Utilities;
 
-namespace WiiPlayTanksRemake.GameContent
+namespace TanksRebirth.GameContent
 {
     public sealed class Mine
     {

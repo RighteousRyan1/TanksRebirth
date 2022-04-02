@@ -1,6 +1,6 @@
-using WiiPlayTanksRemake.GameContent;
+using TanksRebirth.GameContent;
 
-namespace WiiPlayTanksRemake.Graphics
+namespace TanksRebirth.Graphics
 {
     public struct ThirdPerson
     {

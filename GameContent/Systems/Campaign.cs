@@ -5,13 +5,13 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using WiiPlayTanksRemake.Enums;
-using WiiPlayTanksRemake.GameContent.Systems.Coordinates;
-using WiiPlayTanksRemake.Internals;
-using WiiPlayTanksRemake.Internals.Common.Framework;
-using WiiPlayTanksRemake.Internals.Common.Utilities;
+using TanksRebirth.Enums;
+using TanksRebirth.GameContent.Systems.Coordinates;
+using TanksRebirth.Internals;
+using TanksRebirth.Internals.Common.Framework;
+using TanksRebirth.Internals.Common.Utilities;
 
-namespace WiiPlayTanksRemake.GameContent.Systems
+namespace TanksRebirth.GameContent.Systems
 {
     /// <summary>A campaign for players to play on with <see cref="AITank"/>s, or even <see cref="PlayerTank"/>s if supported.</summary>
     public class Campaign

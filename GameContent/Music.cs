@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using Microsoft.Xna.Framework.Audio;
 using System;
-using WiiPlayTanksRemake.Internals.Common;
+using TanksRebirth.Internals.Common;
 using NVorbis;
 using System.IO;
-using WiiPlayTanksRemake.Internals.Common.Utilities;
-using WiiPlayTanksRemake.Internals.Common.Framework.Audio;
+using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Internals.Common.Framework.Audio;
 
-namespace WiiPlayTanksRemake.GameContent
+namespace TanksRebirth.GameContent
 {
     public enum MusicState
     {

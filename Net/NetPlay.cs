@@ -7,13 +7,13 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
-using WiiPlayTanksRemake.Enums;
-using WiiPlayTanksRemake.GameContent;
-using WiiPlayTanksRemake.GameContent.Systems;
-using WiiPlayTanksRemake.GameContent.UI;
-using WiiPlayTanksRemake.Net;
+using TanksRebirth.Enums;
+using TanksRebirth.GameContent;
+using TanksRebirth.GameContent.Systems;
+using TanksRebirth.GameContent.UI;
+using TanksRebirth.Net;
 
-namespace WiiPlayTanksRemake.Net
+namespace TanksRebirth.Net
 {
     public class NetPlay
     {

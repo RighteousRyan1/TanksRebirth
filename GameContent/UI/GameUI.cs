@@ -1,25 +1,25 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using WiiPlayTanksRemake.Internals.Common.GameInput;
-using WiiPlayTanksRemake.Internals.Core;
-using WiiPlayTanksRemake.Internals.Common.GameUI;
-using WiiPlayTanksRemake.Internals.Common.Utilities;
-using WiiPlayTanksRemake.GameContent.Systems;
-using WiiPlayTanksRemake.Internals.Common;
-using WiiPlayTanksRemake.Graphics;
+using TanksRebirth.Internals.Common.GameInput;
+using TanksRebirth.Internals.Core;
+using TanksRebirth.Internals.Common.GameUI;
+using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.GameContent.Systems;
+using TanksRebirth.Internals.Common;
+using TanksRebirth.Graphics;
 using System;
-using WiiPlayTanksRemake.Internals.UI;
-using WiiPlayTanksRemake.Internals.Common.Framework.Input;
+using TanksRebirth.Internals.UI;
+using TanksRebirth.Internals.Common.Framework.Input;
 using System.Collections.Generic;
 using System.Linq;
 using FontStashSharp;
-using WiiPlayTanksRemake.Internals.Common.Framework.Audio;
-using WiiPlayTanksRemake.Internals;
+using TanksRebirth.Internals.Common.Framework.Audio;
+using TanksRebirth.Internals;
 using Microsoft.Xna.Framework.Audio;
-using WiiPlayTanksRemake.Net;
+using TanksRebirth.Net;
 
-namespace WiiPlayTanksRemake.GameContent.UI
+namespace TanksRebirth.GameContent.UI
 {
     public static class GameUI
     {

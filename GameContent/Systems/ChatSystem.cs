@@ -7,12 +7,12 @@ using FontStashSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
-using WiiPlayTanksRemake.Internals;
-using WiiPlayTanksRemake.Internals.Common.Framework.Audio;
-using WiiPlayTanksRemake.Internals.Common.Utilities;
-using WiiPlayTanksRemake.Net;
+using TanksRebirth.Internals;
+using TanksRebirth.Internals.Common.Framework.Audio;
+using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Net;
 
-namespace WiiPlayTanksRemake.GameContent.Systems
+namespace TanksRebirth.GameContent.Systems
 {
     public sealed record ChatSystem
     {

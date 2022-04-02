@@ -2,7 +2,7 @@ using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
 
-namespace WiiPlayTanksRemake.Internals.Common.GameInput
+namespace TanksRebirth.Internals.Common.GameInput
 {
     public class GamepadBind
     {

@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 
-namespace WiiPlayTanksRemake.Internals.Common.Utilities
+namespace TanksRebirth.Internals.Common.Utilities
 {
     public static class GeometryUtils
     {

@@ -5,11 +5,11 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using WiiPlayTanksRemake.Enums;
-using WiiPlayTanksRemake.Internals;
-using WiiPlayTanksRemake.Internals.Common.Framework;
+using TanksRebirth.Enums;
+using TanksRebirth.Internals;
+using TanksRebirth.Internals.Common.Framework;
 
-namespace WiiPlayTanksRemake.GameContent.Systems
+namespace TanksRebirth.GameContent.Systems
 {
     public record struct Mission
     {

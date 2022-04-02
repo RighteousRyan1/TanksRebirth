@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 using LiteNetLib;
 using LiteNetLib.Layers;
 using LiteNetLib.Utils;
-using WiiPlayTanksRemake.GameContent;
+using TanksRebirth.GameContent;
 
-namespace WiiPlayTanksRemake.Net
+namespace TanksRebirth.Net
 {
     public class Server
     {

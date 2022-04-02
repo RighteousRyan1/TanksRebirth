@@ -1,9 +1,9 @@
 
 using System.IO;
 using System.Text.Json;
-using WiiPlayTanksRemake.Internals.Common.IO;
+using TanksRebirth.Internals.Common.IO;
 
-namespace WiiPlayTanksRemake.Localization
+namespace TanksRebirth.Localization
 {
     /// <summary>Localization to load a <see cref="Language"/> from a .json entry. Defaults to English if no <see cref="LangCode"/> is loaded.</summary>
     public class Language

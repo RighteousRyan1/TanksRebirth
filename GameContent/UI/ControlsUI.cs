@@ -1,9 +1,9 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
-using WiiPlayTanksRemake.Internals.Common.Framework.Input;
-using WiiPlayTanksRemake.Internals.Common.GameUI;
+using TanksRebirth.Internals.Common.Framework.Input;
+using TanksRebirth.Internals.Common.GameUI;
 
-namespace WiiPlayTanksRemake.GameContent.UI
+namespace TanksRebirth.GameContent.UI
 {
     public static class ControlsUI
     {

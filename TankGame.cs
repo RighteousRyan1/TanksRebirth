@@ -5,28 +5,28 @@ using System.Reflection;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using WiiPlayTanksRemake.Internals.Common;
-using WiiPlayTanksRemake.Internals.Common.Utilities;
-using WiiPlayTanksRemake.GameContent;
-using WiiPlayTanksRemake.Internals;
-using WiiPlayTanksRemake.Internals.UI;
-using WiiPlayTanksRemake.Internals.Core.Interfaces;
+using TanksRebirth.Internals.Common;
+using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.GameContent;
+using TanksRebirth.Internals;
+using TanksRebirth.Internals.UI;
+using TanksRebirth.Internals.Core.Interfaces;
 using System.Collections.Generic;
 using System.Linq;
-using WiiPlayTanksRemake.Internals.Common.IO;
+using TanksRebirth.Internals.Common.IO;
 using System.Diagnostics;
-using WiiPlayTanksRemake.GameContent.UI;
-using WiiPlayTanksRemake.Graphics;
+using TanksRebirth.GameContent.UI;
+using TanksRebirth.Graphics;
 using System.Management;
-using WiiPlayTanksRemake.Internals.Common.Framework.Input;
-using WiiPlayTanksRemake.Internals.Core;
-using WiiPlayTanksRemake.Localization;
+using TanksRebirth.Internals.Common.Framework.Input;
+using TanksRebirth.Internals.Core;
+using TanksRebirth.Localization;
 using FontStashSharp;
-using WiiPlayTanksRemake.Internals.Common.Framework.Graphics;
-using WiiPlayTanksRemake.GameContent.Systems;
-using WiiPlayTanksRemake.Net;
+using TanksRebirth.Internals.Common.Framework.Graphics;
+using TanksRebirth.GameContent.Systems;
+using TanksRebirth.Net;
 
-namespace WiiPlayTanksRemake
+namespace TanksRebirth
 {
     // TODO: Implement block once all of above things are done
     // TODO: AI in the middle to far future
@@ -298,7 +298,7 @@ namespace WiiPlayTanksRemake
 
         protected override void Update(GameTime gameTime)
         {
-            try
+            //try
             {
                 if (UIElement.delay > 0)
                     UIElement.delay--;
@@ -422,10 +422,10 @@ namespace WiiPlayTanksRemake
 
                 _wasActive = IsActive;
             }
-            catch (Exception e)
+            //catch (Exception e)
             {
-                GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
-                throw;
+                //GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
+                // throw;
             }
         }
 

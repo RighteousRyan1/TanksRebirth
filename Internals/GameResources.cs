@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 
-namespace WiiPlayTanksRemake.Internals
+namespace TanksRebirth.Internals
 {
 	public static class GameResources
 	{

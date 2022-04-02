@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using WiiPlayTanksRemake.GameContent.Systems.Coordinates;
+using TanksRebirth.GameContent.Systems.Coordinates;
 
-namespace WiiPlayTanksRemake.GameContent.ModSupport
+namespace TanksRebirth.GameContent.ModSupport
 {
     /// <summary>Represents a modded <see cref="GameContent.Tank"/>.</summary>
     public class ModTank

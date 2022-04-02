@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using WiiPlayTanksRemake.GameContent.UI;
+using TanksRebirth.GameContent.UI;
 
-namespace WiiPlayTanksRemake
+namespace TanksRebirth
 {
     internal static class DiscordRichPresence
     {

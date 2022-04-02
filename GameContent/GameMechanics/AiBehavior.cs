@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WiiPlayTanksRemake.GameContent.GameMechanics
+namespace TanksRebirth.GameContent.GameMechanics
 {
     public class AiBehavior
     {

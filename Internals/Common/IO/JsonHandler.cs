@@ -6,7 +6,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace WiiPlayTanksRemake.Internals.Common.IO
+namespace TanksRebirth.Internals.Common.IO
 {
 
     public struct JsonHandler

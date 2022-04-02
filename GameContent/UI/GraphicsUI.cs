@@ -3,10 +3,10 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using WiiPlayTanksRemake.Internals.Common.GameUI;
-using WiiPlayTanksRemake.Internals.UI;
+using TanksRebirth.Internals.Common.GameUI;
+using TanksRebirth.Internals.UI;
 
-namespace WiiPlayTanksRemake.GameContent.UI
+namespace TanksRebirth.GameContent.UI
 {
     public static class GraphicsUI
     {

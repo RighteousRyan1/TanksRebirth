@@ -1,10 +1,10 @@
 ﻿using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
-using WiiPlayTanksRemake.Internals.Common;
-using WiiPlayTanksRemake.Internals.Common.Utilities;
+using TanksRebirth.Internals.Common;
+using TanksRebirth.Internals.Common.Utilities;
 
-namespace WiiPlayTanksRemake.Internals.Common.Framework.Input
+namespace TanksRebirth.Internals.Common.Framework.Input
 {
     public class Keybind
     {

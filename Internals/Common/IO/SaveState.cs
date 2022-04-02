@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WiiPlayTanksRemake.Internals.Common.IO
+namespace TanksRebirth.Internals.Common.IO
 {
     // this is very wip and does not work
     internal class SaveState

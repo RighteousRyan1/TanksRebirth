@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WiiPlayTanksRemake.Internals.Common.Utilities
+namespace TanksRebirth.Internals.Common.Utilities
 {
     public static class CollectionUtils
     {

@@ -2,7 +2,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using FontStashSharp;
 
-namespace WiiPlayTanksRemake.Internals.Common.Utilities
+namespace TanksRebirth.Internals.Common.Utilities
 {
     public static class DebugUtils
     {

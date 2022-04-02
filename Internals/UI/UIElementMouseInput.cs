@@ -2,11 +2,11 @@
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
-using WiiPlayTanksRemake.Internals.Common;
-using WiiPlayTanksRemake.Internals.Common.Utilities;
-using WiiPlayTanksRemake.Internals.Core;
+using TanksRebirth.Internals.Common;
+using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Internals.Core;
 
-namespace WiiPlayTanksRemake.Internals.UI
+namespace TanksRebirth.Internals.UI
 {
     public abstract partial class UIElement
     {

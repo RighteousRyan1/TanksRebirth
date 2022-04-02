@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WiiPlayTanksRemake.Internals.Common.Framework
+namespace TanksRebirth.Internals.Common.Framework
 {
 	/*public class XnbReader : IAssetReader
 	{

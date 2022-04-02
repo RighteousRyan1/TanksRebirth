@@ -5,10 +5,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using WiiPlayTanksRemake.Internals;
-using WiiPlayTanksRemake.Internals.Common.Utilities;
+using TanksRebirth.Internals;
+using TanksRebirth.Internals.Common.Utilities;
 
-namespace WiiPlayTanksRemake.GameContent.GameMechanics
+namespace TanksRebirth.GameContent.GameMechanics
 {
     public static class Collision
     {
