@@ -658,7 +658,7 @@ namespace TanksRebirth.GameContent.UI
             tanks.Clear();
         }
 
-        private static readonly string tanksMessage = $"Tanks! Remake v{TankGame.Instance.GameVersion}\nThe original game and assets used in this game belongs to Nintendo\nDeveloped by RighteousRyan\nTANKS to all our contributors!";
+        private static readonly string tanksMessage = $"Tanks! Rebirth   v{TankGame.Instance.GameVersion}\nThe original game and assets used in this game belongs to Nintendo\nDeveloped by RighteousRyan\nTANKS to all our contributors!";
         private static readonly string keyDisplay = "For anyone needing a list of keys for\ndebugging purposes, here you go:\n" +
             "i - spawns the powerup listed at the top\n" +
             "; - spawns a  mine at the mouse\n" +

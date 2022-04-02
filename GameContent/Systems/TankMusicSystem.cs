@@ -569,8 +569,14 @@ namespace TanksRebirth.GameContent.Systems
         //public static MidiPlayer MusicMidi;
         //public static MidiFile MusicSoundFont;
 
+        private static bool _loaded;
+
         public static void LoadMusic()
         {
+            if (!_loaded)
+                _loaded = true;
+            else
+                return;
             #region Load
             brown = new OggMusic("BrownTank", "Content/Assets/music/brown", 0.5f);
 
