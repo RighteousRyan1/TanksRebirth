@@ -15,6 +15,8 @@ namespace TanksRebirth.GameContent
     {
         // model, blah blah blah
 
+        public Tank source;
+
         public const int MINE_EXPLOSIONS_MAX = 500;
 
         public static Explosion[] explosions = new Explosion[MINE_EXPLOSIONS_MAX];
@@ -50,11 +52,12 @@ namespace TanksRebirth.GameContent
 
         public float rotationSpeed;
 
-        public Explosion(Vector2 pos, float scaleMax, float rotationSpeed = 1f)
+        public Explosion(Vector2 pos, float scaleMax, Tank owner = null, float rotationSpeed = 1f)
         {
             this.rotationSpeed = rotationSpeed;
             Position = pos;
             maxScale = scaleMax;
+            source = owner;
             mask = GameResources.GetGameResource<Texture2D>(/*"Assets/textures/mine/explosion_mask"*/"Assets/textures/misc/tank_smoke_ami");
 
             Model = GameResources.GetGameResource<Model>("Assets/mineexplosion");
@@ -86,7 +89,7 @@ namespace TanksRebirth.GameContent
             else if (tickAtMax <= 0)
                 scale -= shrinkRate;
 
-            if (!IntermissionsSystem.IsAwaitingNewMission)
+            if (!IntermissionSystem.IsAwaitingNewMission)
             {
                 foreach (var mine in Mine.AllMines)
                 {
@@ -111,7 +114,15 @@ namespace TanksRebirth.GameContent
                                 if (tank.VulnerableToMines)
                                 {
                                     HasHit[tank.WorldId] = true;
-                                    tank.Damage();
+                                    if (source is null)
+                                        tank.Damage(TankHurtContext.Other);
+                                    else if (source is not null)
+                                    {
+                                        if (source is AITank)
+                                            tank.Damage(TankHurtContext.ByAiMine);
+                                        else
+                                            tank.Damage(TankHurtContext.ByPlayerMine);
+                                    }
                                 }
                 }
             }

@@ -461,7 +461,7 @@ namespace TanksRebirth
                                     // var tnk = WPTR.AllAITanks.FirstOrDefault(tank => tank is not null && !tank.Dead && tank.tier == AITank.GetHighestTierActive());
 
                                     if (Array.IndexOf(GameHandler.AllTanks, tnk) > -1)
-                                        tnk?.Destroy();
+                                        tnk?.Destroy(TankHurtContext.Other);
                                 }
 
                                 if (Input.CanDetectClick(rightClick: true))

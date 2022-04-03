@@ -1564,7 +1564,7 @@ namespace TanksRebirth.GameContent
 
                 timeSinceLastAction++;
 
-                if (!GameHandler.InMission || IntermissionsSystem.IsAwaitingNewMission)
+                if (!GameHandler.InMission || IntermissionSystem.IsAwaitingNewMission)
                 {
                     Velocity = Vector2.Zero;
                 }
@@ -1590,15 +1590,17 @@ namespace TanksRebirth.GameContent
         {
             base.LayMine();
         }
-        public override void Damage()
+        public override void Damage(TankHurtContext context)
         {
-            base.Damage();
+            base.Damage(context);
         }
-        public override void Destroy()
+        public override void Destroy(TankHurtContext context)
         {
+            if (context == TankHurtContext.ByPlayerBullet || context == TankHurtContext.ByPlayerMine)
+                PlayerTank.TanksKilledThisCampaign++;
             GameHandler.AllAITanks[AITankId] = null;
             GameHandler.AllTanks[WorldId] = null;
-            base.Destroy();
+            base.Destroy(context);
         }
         public override void Shoot()
         {
@@ -2094,13 +2096,9 @@ namespace TanksRebirth.GameContent
                             float explosionDist = 90f;
                             if (Vector2.Distance(enemy.Position, Position) < explosionDist)
                             {
-                                Damage();
+                                Destroy(TankHurtContext.ByExplosion);
 
-                                new Explosion(Position, 10f, 0.2f);
-
-                                foreach (var tnk in GameHandler.AllTanks)
-                                    if (tnk is not null && Vector2.Distance(tnk.Position, Position) < explosionDist)
-                                        tnk.Damage();
+                                new Explosion(Position, 10f, this, 0.2f);
                             }
                         }
                     }

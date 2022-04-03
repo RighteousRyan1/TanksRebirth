@@ -25,6 +25,7 @@ using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.Net;
 using System.Threading;
 using System.Diagnostics;
+using Microsoft.Xna.Framework.Media;
 
 namespace TanksRebirth.GameContent
 {
@@ -70,7 +71,7 @@ namespace TanksRebirth.GameContent
 
         public static void DoEndMissionWorkload(int delay, bool resultDeath) // bool major = (if true, play M100 fanfare, else M20)
         {
-            IntermissionsSystem.SetTime(delay);
+            IntermissionSystem.SetTime(delay);
 
             TankMusicSystem.StopAll();
 
@@ -139,7 +140,7 @@ namespace TanksRebirth.GameContent
                 if (!InMission)
                     if (TankMusicSystem.Songs is not null)
                         foreach (var song in TankMusicSystem.Songs)
-                            song?.SetVolume(0f);
+                            song.Volume = 0;
             foreach (var expl in Explosion.explosions)
                 expl?.Update();
 
@@ -225,6 +226,9 @@ namespace TanksRebirth.GameContent
             if (Input.KeyJustPressed(Keys.I) && DebugUtils.DebugLevel == 4)
                 new Powerup(powerups[mode]) { Position = GameUtils.GetWorldPosition(GameUtils.MousePosition).FlattenZ() };
 
+            if (!MainMenu.Active)
+                PlayerTank.TanksKilledThisCampaign = 0;
+
             CubeHeight = MathHelper.Clamp(CubeHeight, 1, 7);
             BlockType = MathHelper.Clamp(BlockType, 0, 2);
 
@@ -251,24 +255,24 @@ namespace TanksRebirth.GameContent
                 if (!InMission && _wasInMission)
                     OnMissionEnd?.Invoke(600, true);
             }
-            if (IntermissionsSystem.CurrentWaitTime > 0)
-                IntermissionsSystem.Tick(1);
+            if (IntermissionSystem.CurrentWaitTime > 0)
+                IntermissionSystem.Tick(1);
 
-            if (IntermissionsSystem.CurrentWaitTime == 220)
+            if (IntermissionSystem.CurrentWaitTime == 220)
                 BeginIntroSequence();
-            if (IntermissionsSystem.CurrentWaitTime == IntermissionsSystem.WaitTime / 2 && IntermissionsSystem.CurrentWaitTime != 0)
+            if (IntermissionSystem.CurrentWaitTime == IntermissionSystem.WaitTime / 2 && IntermissionSystem.CurrentWaitTime != 0)
             {
                 LoadedCampaign.SetupLoadedMission(/*AllPlayerTanks.Count(tnk => tnk != null && !tnk.Dead) > 0*/ true);
             }
-            if (IntermissionsSystem.CurrentWaitTime > 240 && IntermissionsSystem.CurrentWaitTime < IntermissionsSystem.WaitTime - 150)
+            if (IntermissionSystem.CurrentWaitTime > 240 && IntermissionSystem.CurrentWaitTime < IntermissionSystem.WaitTime - 150)
             {
                 if (PlayerTank.Lives <= 0)
                     DoEndScene();
-                IntermissionsSystem.TickAlpha(1f / 45f);
+                IntermissionSystem.TickAlpha(1f / 45f);
             }
             else
-                IntermissionsSystem.TickAlpha(-1f / 45f);
-            if (IntermissionsSystem.CurrentWaitTime == IntermissionsSystem.WaitTime - 180)
+                IntermissionSystem.TickAlpha(-1f / 45f);
+            if (IntermissionSystem.CurrentWaitTime == IntermissionSystem.WaitTime - 180)
             {
                 CleanupScene();
                 SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/fanfares/mission_starting"), SoundContext.Effect, 0.8f);
@@ -365,8 +369,15 @@ namespace TanksRebirth.GameContent
                 $"\nRender FPS: {TankGame.RenderFPS}", new(10, 500));
 
             DebugUtils.DrawDebugString(TankGame.spriteBatch, $"Current Mission: {LoadedCampaign.CurrentMission.Name}\nCurrent Campaign: {LoadedCampaign.Name}", GameUtils.WindowBottomLeft - new Vector2(-4, 40), 3, centered: false);
-
-            IntermissionsSystem.Draw(TankGame.spriteBatch);
+            if (!MainMenu.Active)
+            {
+                for (int i = -4; i < 10; i++)
+                {
+                    IntermissionSystem.DrawShadowedTexture(GameResources.GetGameResource<Texture2D>("Assets/textures/ui/scoreboard"), new Vector2(i * 14, GameUtils.WindowHeight * 0.9f), Vector2.UnitY, Color.White, new(2f, 2f), 1f, new(0, GameResources.GetGameResource<Texture2D>("Assets/textures/ui/scoreboard").Size().Y / 2), true);
+                }
+                IntermissionSystem.DrawShadowedString(new Vector2(80, GameUtils.WindowHeight * 0.89f), Vector2.One, $"{PlayerTank.TanksKilledThisCampaign}", new(119, 190, 238), new(0.675f), 1f);
+            }
+            IntermissionSystem.Draw(TankGame.spriteBatch);
 
             ChatSystem.DrawMessages();
 
@@ -434,7 +445,6 @@ namespace TanksRebirth.GameContent
                 foreach (var song in TankMusicSystem.Songs)
                 {
                     song.Stop();
-                    song.Play();
                 }
                 TankMusicSystem.forestAmbience.Stop();
                 TankMusicSystem.forestAmbience.Play();

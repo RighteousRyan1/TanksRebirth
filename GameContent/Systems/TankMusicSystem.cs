@@ -12,7 +12,7 @@ using MeltySynth;
 
 namespace TanksRebirth.GameContent.Systems
 {
-    /*public static class TankMusicSystem
+    public static class TankMusicSystem
     {
         public static TankTier TierHighest => AITank.GetHighestTierActive();
 
@@ -32,7 +32,7 @@ namespace TanksRebirth.GameContent.Systems
 
             var musicVolume = TankGame.Settings.MusicVolume;
 
-            foreach (var song in songs)
+            foreach (var song in Songs)
                 if (song is not null)
                     song.Volume = 0f;
 
@@ -151,6 +151,9 @@ namespace TanksRebirth.GameContent.Systems
             if (TierHighest == TankTier.Assassin)
                 assassin.Volume = musicVolume;
 
+            if (TierHighest == TankTier.Commando)
+                commando.Volume = musicVolume;
+
             // we call this hardcode hell in the west
         }
 
@@ -200,11 +203,12 @@ namespace TanksRebirth.GameContent.Systems
         public static Music gold2;
         public static Music gold3;
         public static Music obsidian;
+        public static Music commando;
 
         public static Music assassin;
         #endregion
 
-        public static Music[] songs;
+        public static Music[] Songs;
 
         public static MidiPlayer MusicMidi;
         public static MidiFile MusicSoundFont;
@@ -279,12 +283,14 @@ namespace TanksRebirth.GameContent.Systems
 
             assassin = Music.CreateMusicTrack("AssassinTank", "Assets/music/assassin", 0.5f);
 
+            commando = Music.CreateMusicTrack("CommandoTank", "Assets/music/commando", 0.5f);
+
             #endregion
 
             //MusicMidi = new MidiPlayer(@"C:\Users\ryanr\Desktop\Git Repositories\WiiPlayTanksRemake\Content\Assets\music\Wii_tanks_bgm.sf2", new(44100) { EnableReverbAndChorus = false });
             // MusicSoundFont = new MidiFile(@"C:\Users\ryanr\Desktop\Git Repositories\WiiPlayTanksRemake\Content\Assets\music\Wii_tanks_bgm.mid", 3200);
 
-            songs = new Music[]
+            Songs = new Music[]
             {
                 brown,
                 ash1, ash2,
@@ -306,7 +312,9 @@ namespace TanksRebirth.GameContent.Systems
                 gold1, gold2, gold3,
                 obsidian,
 
-                assassin
+                assassin,
+
+                commando
             };
         }
 
@@ -323,7 +331,7 @@ namespace TanksRebirth.GameContent.Systems
             // MusicMidi.NoteOffAll();
 
 
-            foreach (var song in songs)
+            foreach (var song in Songs)
                 song?.Play();
 
             if (MapRenderer.Theme == MapTheme.Forest)
@@ -333,31 +341,31 @@ namespace TanksRebirth.GameContent.Systems
         public static void PauseAll()
         {
             forestAmbience?.Pause();
-            foreach (var song in songs)
-                if (!song.Track.IsPaused())
+            foreach (var song in Songs)
+                //if (!song.IsPaused())
                     song?.Pause();
         }
 
         public static void ResumeAll()
         {
             forestAmbience?.Play();
-            foreach (var song in songs)
+            foreach (var song in Songs)
                 song?.Play();
         }
 
         public static void StopAll()
         {
             forestAmbience?.Stop();
-            if (songs is not null)
+            if (Songs is not null)
             {
-                foreach (var song in songs)
+                foreach (var song in Songs)
                     song?.Stop();
             }
         }
 
         public static void UpdateVolume()
         {
-            foreach (var song in songs)
+            foreach (var song in Songs)
             {
                 if (song.Volume > 0)
                 {
@@ -369,8 +377,8 @@ namespace TanksRebirth.GameContent.Systems
                 }
             }
         }
-    }*/
-    public static class TankMusicSystem
+    }
+    /*public static class TankMusicSystem
     {
         public static TankTier TierHighest => AITank.GetHighestTierActive();
 
@@ -735,5 +743,5 @@ namespace TanksRebirth.GameContent.Systems
                 }
             }
         }
-    }    
+    }    */
 }

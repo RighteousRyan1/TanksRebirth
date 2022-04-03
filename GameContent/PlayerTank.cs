@@ -23,7 +23,9 @@ namespace TanksRebirth.GameContent
     public class PlayerTank : Tank
     {
         public static int MaxLives = 3;
-        public static int Lives;
+        public static int Lives = 0;
+
+        public static int TanksKilledThisCampaign = 0;
         
         private bool playerControl_isBindPressed;
 
@@ -131,7 +133,7 @@ namespace TanksRebirth.GameContent
             {
                 if (Client.IsConnected())
                     Systems.ChatSystem.SendMessage($"PlayerId: {PlayerId} | ClientId: {NetPlay.CurrentClient.Id}", Color.White);
-                if (NetPlay.IsClientMatched(PlayerId) && !IntermissionsSystem.IsAwaitingNewMission)
+                if (NetPlay.IsClientMatched(PlayerId) && !IntermissionSystem.IsAwaitingNewMission)
                 {
                     Vector3 mouseWorldPos = GameUtils.GetWorldPosition(GameUtils.MousePosition, -11f);
                     TurretRotation = (-(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position).ToRotation()) + MathHelper.PiOver2;
@@ -346,16 +348,16 @@ namespace TanksRebirth.GameContent
                 // GameHandler.ClientLog.Write(targetTnkRotation - TankRotation, LogType.Info);
         }
 
-        public override void Damage()
+        public override void Damage(TankHurtContext context)
         {
-            base.Damage();
+            base.Damage(context);
             // TODO: play player tank death sound
         }
-        public override void Destroy()
+        public override void Destroy(TankHurtContext context)
         {
             GameHandler.AllPlayerTanks[PlayerId] = null;
             GameHandler.AllTanks[WorldId] = null;
-            base.Destroy();
+            base.Destroy(context);
         }
 
         public void UpdatePlayerMovement()

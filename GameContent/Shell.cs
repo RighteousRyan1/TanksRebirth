@@ -348,7 +348,7 @@ namespace TanksRebirth.GameContent
                         else
                         {
                             Destroy();
-                            tank.Damage();
+                            tank.Damage(owner is AITank ? TankHurtContext.ByAiBullet : TankHurtContext.ByPlayerBullet);
                         }
                     }
                 }
@@ -404,7 +404,7 @@ namespace TanksRebirth.GameContent
 
             if (owner is not null)
                 if (owner.ShellType == ShellTier.Explosive)
-                    new Explosion(Position2D, 7f, 0.25f);
+                    new Explosion(Position2D, 7f, owner, 0.25f);
 
             Remove();
         }

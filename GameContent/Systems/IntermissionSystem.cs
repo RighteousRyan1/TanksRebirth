@@ -8,7 +8,7 @@ using System.Linq;
 
 namespace TanksRebirth.GameContent.Systems
 {
-    public static class IntermissionsSystem
+    public static class IntermissionSystem
     {
         public static int TimeBlack; // for black screen when entering this game
         public static float BlackAlpha;
@@ -97,14 +97,14 @@ namespace TanksRebirth.GameContent.Systems
                 DrawStripe(spriteBatch, Color.DarkRed, GameUtils.WindowHeight * (0.2f + off * 8), Alpha);
 
 
-                DrawShadowedString(new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2 - 250), Vector2.One, GameHandler.LoadedCampaign.LoadedMission.Name, SolidBackgroundColor, 1f);
-                DrawShadowedString(new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2 - 50), Vector2.One, $"Enemy tanks: {GameHandler.LoadedCampaign.LoadedMission.Tanks.Count(x => !x.IsPlayer)}", SolidBackgroundColor, 0.8f);
-                DrawShadowedString(new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2 + 350), Vector2.One, $"x   {PlayerTank.Lives}", SolidBackgroundColor, 1f);
+                DrawShadowedString(new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2 - 250), Vector2.One, GameHandler.LoadedCampaign.LoadedMission.Name, SolidBackgroundColor, new(1f), Alpha);
+                DrawShadowedString(new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2 - 50), Vector2.One, $"Enemy tanks: {GameHandler.LoadedCampaign.LoadedMission.Tanks.Count(x => !x.IsPlayer)}", SolidBackgroundColor, new(0.8f), Alpha);
+                DrawShadowedString(new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2 + 350), Vector2.One, $"x   {PlayerTank.Lives}", SolidBackgroundColor, new(1f), Alpha);
 
                 if (GameHandler.LoadedCampaign.CurrentMissionId == 0)
-                    DrawShadowedString(new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2 - 325), Vector2.One, $"Campaign: \"{GameHandler.LoadedCampaign.Name}\"", SolidBackgroundColor, 0.4f);
+                    DrawShadowedString(new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2 - 325), Vector2.One, $"Campaign: \"{GameHandler.LoadedCampaign.Name}\"", SolidBackgroundColor, new(0.4f), Alpha);
 
-                DrawShadowedTexture(GameResources.GetGameResource<Texture2D>("Assets/textures/ui/playertank2d"), new Vector2(GameUtils.WindowWidth / 2 - 200, GameUtils.WindowHeight / 2 + 375), Vector2.One, Color.Blue, 1.25f);
+                DrawShadowedTexture(GameResources.GetGameResource<Texture2D>("Assets/textures/ui/playertank2d"), new Vector2(GameUtils.WindowWidth / 2 - 200, GameUtils.WindowHeight / 2 + 375), Vector2.One, Color.Blue, new(1.25f), Alpha);
                 
                 
             }
@@ -113,17 +113,16 @@ namespace TanksRebirth.GameContent.Systems
             _oldBlack = BlackAlpha;
         }
 
-        private static void DrawShadowedString(Vector2 position, Vector2 shadowDir, string text, Color color, float scale)
+        public static void DrawShadowedString(Vector2 position, Vector2 shadowDir, string text, Color color, Vector2 scale, float alpha, Vector2 origin = default)
         {
-            TankGame.spriteBatch.DrawString(TankGame.TextFontLarge, text, position + (Vector2.Normalize(shadowDir) * 10), Color.Black * Alpha * 0.75f, new Vector2(scale), 0f, TankGame.TextFontLarge.MeasureString(text) / 2, 0f);
+            TankGame.spriteBatch.DrawString(TankGame.TextFontLarge, text, position + (Vector2.Normalize(shadowDir) * 10), Color.Black * alpha * 0.75f, scale, 0f, origin == default ? TankGame.TextFontLarge.MeasureString(text) / 2 : origin, 0f);
 
-            TankGame.spriteBatch.DrawString(TankGame.TextFontLarge, text, position, color * Alpha, new Vector2(scale), 0f, TankGame.TextFontLarge.MeasureString(text) / 2, 0f);
+            TankGame.spriteBatch.DrawString(TankGame.TextFontLarge, text, position, color * alpha, scale, 0f, origin == default ? TankGame.TextFontLarge.MeasureString(text) / 2 : origin, 0f);
         }
-        private static void DrawShadowedTexture(Texture2D texture, Vector2 position, Vector2 shadowDir, Color color, float scale)
+        public static void DrawShadowedTexture(Texture2D texture, Vector2 position, Vector2 shadowDir, Color color, Vector2 scale, float alpha, Vector2 origin = default, bool flip = false)
         {
-            TankGame.spriteBatch.Draw(texture, position + (Vector2.Normalize(shadowDir) * 10), null, Color.Black * Alpha * 0.75f, 0f, texture.Size() / 2, scale, default, default);
-            TankGame.spriteBatch.Draw(texture, position, null, color * Alpha, 0f, texture.Size() / 2, scale, default, default);
-            
+            TankGame.spriteBatch.Draw(texture, position + (Vector2.Normalize(shadowDir) * 10), null, Color.Black * alpha * 0.75f, 0f, origin == default ? texture.Size() / 2 : origin, scale, flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, default);
+            TankGame.spriteBatch.Draw(texture, position, null, color * alpha, 0f, origin == default ? texture.Size() / 2 : origin, scale, flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, default);
         }
 
         private static void DrawStripe(SpriteBatch spriteBatch, Color color, float offsetY, float alpha)

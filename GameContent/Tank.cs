@@ -60,6 +60,16 @@ namespace TanksRebirth.GameContent
             return player;
         }
     }
+
+    public enum TankHurtContext
+    {
+        ByPlayerBullet,
+        ByAiBullet,
+        ByPlayerMine,
+        ByAiMine,
+        ByExplosion,
+        Other
+    }
     public abstract class Tank
     {
         public static World CollisionsWorld = new(Vector2.Zero);
@@ -234,7 +244,7 @@ namespace TanksRebirth.GameContent
                 Projection = TankGame.GameProjection;
                 View = TankGame.GameView;
 
-                if (!GameHandler.InMission || IntermissionsSystem.IsAwaitingNewMission)
+                if (!GameHandler.InMission || IntermissionSystem.IsAwaitingNewMission)
                 {
                     Velocity = Vector2.Zero;
                     return;
@@ -257,7 +267,7 @@ namespace TanksRebirth.GameContent
         public string GetGeneralStats()
             => $"Pos2D: {Position} | Vel: {Velocity} | Dead: {Dead}";
         /// <summary>Destroy this <see cref="Tank"/>.</summary>
-        public virtual void Damage() {
+        public virtual void Damage(TankHurtContext context) {
 
             if (Dead || Immortal)
                 return;
@@ -271,12 +281,12 @@ namespace TanksRebirth.GameContent
                     ding.Pitch = GameHandler.GameRand.NextFloat(-0.1f, 0.1f);
                 }
                 else
-                    Destroy();
+                    Destroy(context);
             }
             else
-                Destroy();
+                Destroy(context);
         }
-        public virtual void Destroy() {
+        public virtual void Destroy(TankHurtContext context) {
 
             if (CollisionsWorld.BodyList.Contains(Body))
                 CollisionsWorld.Remove(Body);

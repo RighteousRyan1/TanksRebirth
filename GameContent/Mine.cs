@@ -88,7 +88,7 @@ namespace TanksRebirth.GameContent
         {
             Detonated = true;
 
-            var expl = new Explosion(Position, ExplosionRadius * 0.101f, 0.3f);
+            var expl = new Explosion(Position, ExplosionRadius * 0.101f, owner, 0.3f);
 
             if (UI.DifficultyModes.UltraMines)
                 expl.maxScale *= 2f;

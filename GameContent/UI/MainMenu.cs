@@ -404,13 +404,13 @@ namespace TanksRebirth.GameContent.UI
                     foreach (var elem in campaignNames)
                         elem.Remove();
 
-                    IntermissionsSystem.TimeBlack = 240;
+                    IntermissionSystem.TimeBlack = 240;
 
                     GameHandler.ShouldMissionsProgress = true;
 
                     // Leave();
 
-                    IntermissionsSystem.SetTime(600);
+                    IntermissionSystem.SetTime(600);
                 };
                 elem.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/menu/menu_tick"), SoundContext.Effect); };
                 campaignNames.Add(elem);
@@ -430,7 +430,7 @@ namespace TanksRebirth.GameContent.UI
 
                 GameHandler.ShouldMissionsProgress = false;
 
-                IntermissionsSystem.TimeBlack = 150;
+                IntermissionSystem.TimeBlack = 150;
                 // Leave();
             };
             campaignNames.Add(extra);

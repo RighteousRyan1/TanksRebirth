@@ -4,6 +4,8 @@ using StbVorbisSharp;
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace TanksRebirth.Internals.Common.Framework.Audio
 {
@@ -39,37 +41,44 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
         }
         private void SubmitBuffer()
         {
-            _vorbis.SubmitBuffer();
-
-            if (_vorbis.Decoded == 0)
+            var thread = new Thread(() =>
             {
-                // Restart
-                _vorbis.Restart();
                 _vorbis.SubmitBuffer();
-            }
 
-            var audioShort = _vorbis.SongBuffer;
-            byte[] audioData = new byte[_vorbis.Decoded * _vorbis.Channels * 2];
-            for (var i = 0; i < _vorbis.Decoded * _vorbis.Channels; ++i)
-            {
-                /*if (i * 2 >= audioData.Length)
+                if (_vorbis.Decoded == 0)
                 {
-                    break;
+                    // Restart
+                    _vorbis.Restart();
+                    _vorbis.SubmitBuffer();
                 }
 
-                var b1 = (byte)(audioShort[i] >> 8);
-                var b2 = (byte)(audioShort[i] & 256);
+                var audioShort = _vorbis.SongBuffer;
+                byte[] audioData = new byte[_vorbis.Decoded * _vorbis.Channels * 2];
 
-                audioData[i * 2] = b2;
-                audioData[i * 2 + 1] = b1;*/
+                // GameContent.Systems.ChatSystem.SendMessage($"Decoded: {_vorbis.Decoded} | audioData: {audioData.Length}", Microsoft.Xna.Framework.Color.White);
 
-                short tempShort = audioShort[i];
+                for (var i = 0; i < _vorbis.Decoded * _vorbis.Channels; ++i)
+                {
+                    /*if (i * 2 >= audioData.Length)
+                    {
+                        break;
+                    }
 
-                audioData[i * 2] = (byte)tempShort;
-                audioData[i * 2 + 1] = (byte)(tempShort >> 8);
-            }
+                    var b1 = (byte)(audioShort[i] >> 8);
+                    var b2 = (byte)(audioShort[i] & 256);
 
-            _effect.SubmitBuffer(audioData);
+                    audioData[i * 2] = b2;
+                    audioData[i * 2 + 1] = b1;*/
+
+                    short tempShort = audioShort[i];
+
+                    audioData[i * 2] = (byte)tempShort;
+                    audioData[i * 2 + 1] = (byte)(tempShort >> 8);
+                }
+
+                _effect.SubmitBuffer(audioData);
+            });
+            thread.Start();
         }
         private void LoadSong()
         {
