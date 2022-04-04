@@ -310,8 +310,10 @@ namespace TanksRebirth.GameContent.UI
                         foreach (var elem in MainMenu.campaignNames)
                             elem.Remove();
                         MainMenu.SetPlayButtonsVisibility(true);
+
+                        MainMenu.campaignNames.Clear();
                     }
-                    else if (MainMenu.PlayButton_Multiplayer.IsVisible)
+                    else if (MainMenu.PlayButton_SinglePlayer.IsVisible)
                     {
                         MainMenu.SetPlayButtonsVisibility(false);
                         MainMenu.PlayButton.IsVisible = true;

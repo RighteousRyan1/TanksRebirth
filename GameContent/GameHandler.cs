@@ -226,7 +226,7 @@ namespace TanksRebirth.GameContent
             if (Input.KeyJustPressed(Keys.I) && DebugUtils.DebugLevel == 4)
                 new Powerup(powerups[mode]) { Position = GameUtils.GetWorldPosition(GameUtils.MousePosition).FlattenZ() };
 
-            if (!MainMenu.Active)
+            if (MainMenu.Active)
                 PlayerTank.TanksKilledThisCampaign = 0;
 
             CubeHeight = MathHelper.Clamp(CubeHeight, 1, 7);
@@ -261,9 +261,7 @@ namespace TanksRebirth.GameContent
             if (IntermissionSystem.CurrentWaitTime == 220)
                 BeginIntroSequence();
             if (IntermissionSystem.CurrentWaitTime == IntermissionSystem.WaitTime / 2 && IntermissionSystem.CurrentWaitTime != 0)
-            {
                 LoadedCampaign.SetupLoadedMission(/*AllPlayerTanks.Count(tnk => tnk != null && !tnk.Dead) > 0*/ true);
-            }
             if (IntermissionSystem.CurrentWaitTime > 240 && IntermissionSystem.CurrentWaitTime < IntermissionSystem.WaitTime - 150)
             {
                 if (PlayerTank.Lives <= 0)
@@ -350,9 +348,9 @@ namespace TanksRebirth.GameContent
             tankToSpawnTeam = MathHelper.Clamp(tankToSpawnTeam, 0, Enum.GetValues<Team>().Length - 1);
 
             #region TankInfo
-            DebugUtils.DrawDebugString(TankGame.spriteBatch, "Spawn Tank With Info:", GameUtils.WindowTop + new Vector2(0, 8), 1, centered: true);
-            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"Tier: {Enum.GetNames<TankTier>()[tankToSpawnType]}", GameUtils.WindowTop + new Vector2(0, 24), 1, centered: true);
-            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"Team: {Enum.GetNames<Team>()[tankToSpawnTeam]}", GameUtils.WindowTop + new Vector2(0, 40), 1, centered: true);
+            DebugUtils.DrawDebugString(TankGame.spriteBatch, "Spawn Tank With Info:", GameUtils.WindowTop + new Vector2(0, 8), 3, centered: true);
+            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"Tier: {Enum.GetNames<TankTier>()[tankToSpawnType]}", GameUtils.WindowTop + new Vector2(0, 24), 3, centered: true);
+            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"Team: {Enum.GetNames<Team>()[tankToSpawnTeam]}", GameUtils.WindowTop + new Vector2(0, 40), 3, centered: true);
             DebugUtils.DrawDebugString(TankGame.spriteBatch, $"CubeStack: {CubeHeight} | CubeType: {Enum.GetNames<Block.BlockType>()[BlockType]}", GameUtils.WindowBottom - new Vector2(0, 20), 3, centered: true);
 
             DebugUtils.DrawDebugString(TankGame.spriteBatch, $"HighestTier: {AITank.GetHighestTierActive()}", new(10, GameUtils.WindowHeight * 0.26f), 1);
@@ -371,6 +369,10 @@ namespace TanksRebirth.GameContent
             DebugUtils.DrawDebugString(TankGame.spriteBatch, $"Current Mission: {LoadedCampaign.CurrentMission.Name}\nCurrent Campaign: {LoadedCampaign.Name}", GameUtils.WindowBottomLeft - new Vector2(-4, 40), 3, centered: false);
             if (!MainMenu.Active)
             {
+                if (IntermissionSystem.IsAwaitingNewMission)
+                {
+                    
+                }
                 for (int i = -4; i < 10; i++)
                 {
                     IntermissionSystem.DrawShadowedTexture(GameResources.GetGameResource<Texture2D>("Assets/textures/ui/scoreboard"), new Vector2(i * 14, GameUtils.WindowHeight * 0.9f), Vector2.UnitY, Color.White, new(2f, 2f), 1f, new(0, GameResources.GetGameResource<Texture2D>("Assets/textures/ui/scoreboard").Size().Y / 2), true);
@@ -393,6 +395,7 @@ namespace TanksRebirth.GameContent
                 LoadMission.IsVisible = DebugUtils.DebuggingEnabled && DebugUtils.DebugLevel == 3;
                 SaveMission.IsVisible = DebugUtils.DebuggingEnabled && DebugUtils.DebugLevel == 3;
                 LoadCampaign.IsVisible = DebugUtils.DebuggingEnabled && DebugUtils.DebugLevel == 3;
+                CampaignName.IsVisible = DebugUtils.DebuggingEnabled && DebugUtils.DebugLevel == 3;
             }
             GameUI.MissionInfoBar.IsVisible = !MainMenu.Active;
         }
@@ -594,6 +597,7 @@ namespace TanksRebirth.GameContent
         public static UITextButton Display;
 
         public static UITextInput MissionName;
+        public static UITextInput CampaignName;
         public static UITextButton LoadMission;
         public static UITextButton SaveMission;
 
@@ -609,6 +613,12 @@ namespace TanksRebirth.GameContent
                 IsVisible = false
             };
             MissionName.SetDimensions(20, 60, 230, 50);
+            CampaignName = new(TankGame.TextFont, Color.White, 0.75f, 20)
+            {
+                DefaultString = "Campaign Name",
+                IsVisible = false
+            };
+            CampaignName.SetDimensions(20, 120, 230, 50);
 
             SaveMission = new("Save", TankGame.TextFont, Color.White, 0.5f);
             SaveMission.OnLeftClick = (l) =>
@@ -618,19 +628,21 @@ namespace TanksRebirth.GameContent
                     ChatSystem.SendMessage("Invalid name for mission.", Color.Red);
                     return;
                 }
-                Mission.Save(MissionName.GetRealText(), null);
+                Mission.Save(MissionName.GetRealText(), CampaignName.IsEmpty() ? null : CampaignName.GetRealText());
+
+                ChatSystem.SendMessage(CampaignName.IsEmpty() ? $"Saved mission '{MissionName.GetRealText()}'." : $"Saved mission '{MissionName.GetRealText()}' to Campaign folder '{CampaignName.GetRealText()}'.", Color.White);
             };
             SaveMission.IsVisible = false;
-            SaveMission.SetDimensions(20, 120, 105, 50);
+            SaveMission.SetDimensions(20, 180, 105, 50);
 
             LoadMission = new("Load", TankGame.TextFont, Color.White, 0.5f);
             LoadMission.OnLeftClick = (l) =>
             {
-                LoadedCampaign.LoadMission(Mission.Load(MissionName.GetRealText(), null));
+                LoadedCampaign.LoadMission(Mission.Load(MissionName.GetRealText(), CampaignName.IsEmpty() ? null : CampaignName.GetRealText()));
                 LoadedCampaign.SetupLoadedMission(true);
             };
             LoadMission.IsVisible = false;
-            LoadMission.SetDimensions(145, 120, 105, 50);
+            LoadMission.SetDimensions(145, 180, 105, 50);
 
             LoadCampaign = new("Load Campaign", TankGame.TextFont, Color.White, 0.75f);
             LoadCampaign.OnLeftClick = (l) =>
@@ -640,11 +652,11 @@ namespace TanksRebirth.GameContent
                     ChatSystem.SendMessage("Invalid name for campaign.", Color.Red);
                     return;
                 }
-                LoadedCampaign = Campaign.LoadFromFolder(MissionName.GetRealText(), true);
+                LoadedCampaign = Campaign.LoadFromFolder(CampaignName.GetRealText(), true);
                 LoadedCampaign.SetupLoadedMission(true);
             };
             LoadCampaign.IsVisible = false;
-            LoadCampaign.SetDimensions(20, 180, 230, 50);
+            LoadCampaign.SetDimensions(20, 240, 230, 50);
 
             ClearTracks = new("Clear Tracks", TankGame.TextFont, Color.LightBlue, 0.5f);
             ClearTracks.SetDimensions(250, 25, 100, 50);

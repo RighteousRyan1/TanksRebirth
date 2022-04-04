@@ -56,13 +56,20 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
         /// <returns></returns>
         public static CubeMapPosition ConvertFromVector3(Vector3 position)
         {
-            var origPos = new Vector3(MapRenderer.CUBE_MIN_X % Block.FULL_BLOCK_SIZE, 0, MapRenderer.CUBE_MIN_Y % Block.FULL_BLOCK_SIZE);
-
-            var invarX = (int)MathF.Round(origPos.X + GameUtils.GetWorldPosition(GameUtils.MousePosition).X % Block.FULL_BLOCK_SIZE, 1);
-            var invarY = (int)MathF.Round(origPos.Z + GameUtils.GetWorldPosition(GameUtils.MousePosition).Z % Block.FULL_BLOCK_SIZE, 1);
+            // convert position into a CubeMapPosition, and grid lock it
+            var invarX = (int)MathF.Round(position.X % Block.FULL_BLOCK_SIZE, 1);
+            var invarY = (int)MathF.Round(position.Z % Block.FULL_BLOCK_SIZE, 1);
             var invar = new CubeMapPosition(invarX, invarY);
 
-            ChatSystem.SendMessage(invar, Color.White);
+            return invar;
+
+        }
+        public static CubeMapPosition ConvertFromVector2(Vector2 position)
+        {
+            // convert position into a CubeMapPosition, and grid lock it
+            var invarX = (int)MathF.Round(position.X % Block.FULL_BLOCK_SIZE, 1);
+            var invarY = (int)MathF.Round(position.Y % Block.FULL_BLOCK_SIZE, 1);
+            var invar = new CubeMapPosition(invarX, invarY);
 
             return invar;
 

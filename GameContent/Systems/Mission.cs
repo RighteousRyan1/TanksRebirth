@@ -190,54 +190,63 @@ namespace TanksRebirth.GameContent.Systems
                 throw new FileLoadException($"The byte header of this file does not match what this game expects! File name = \"{path}\"");
 
             var version = reader.ReadInt32();
-            var name = reader.ReadString();
 
-            var totalTanks = reader.ReadInt32();
+            if (version != TankGame.LevelEditorVersion)
+                ChatSystem.SendMessage($"Warning: This level was saved with a different version of the level editor. It may not work correctly.", Color.Yellow);
 
-            for (int i = 0; i < totalTanks; i++)
+            Mission mission = new();
+
+            if (version == 1)
             {
-                var isPlayer = reader.ReadBoolean();
-                var x = reader.ReadSingle();
-                var y = reader.ReadSingle();
-                var rotation = -reader.ReadSingle(); // i genuinely hate having to make this negative :(
-                var tier = reader.ReadByte();
-                var pType = reader.ReadByte();
-                var team = reader.ReadByte();
+                var name = reader.ReadString();
 
-                tanks.Add(new()
+                var totalTanks = reader.ReadInt32();
+
+                for (int i = 0; i < totalTanks; i++)
                 {
-                    IsPlayer = isPlayer,
-                    Position = new(x, y),
-                    Rotation = rotation,
-                    AiTier = (TankTier)tier,
-                    PlayerType = (PlayerType)pType,
-                    Team = (Team)team
-                });
+                    var isPlayer = reader.ReadBoolean();
+                    var x = reader.ReadSingle();
+                    var y = reader.ReadSingle();
+                    var rotation = -reader.ReadSingle(); // i genuinely hate having to make this negative :(
+                    var tier = reader.ReadByte();
+                    var pType = reader.ReadByte();
+                    var team = reader.ReadByte();
+
+                    tanks.Add(new()
+                    {
+                        IsPlayer = isPlayer,
+                        Position = new(x, y),
+                        Rotation = rotation,
+                        AiTier = (TankTier)tier,
+                        PlayerType = (PlayerType)pType,
+                        Team = (Team)team
+                    });
+                }
+
+                var totalBlocks = reader.ReadInt32();
+
+                for (int i = 0; i < totalBlocks; i++)
+                {
+                    var type = reader.ReadByte();
+                    var stack = reader.ReadSByte();
+                    var x = reader.ReadSingle();
+                    var y = reader.ReadSingle();
+
+                    blocks.Add(new()
+                    {
+                        Type = (Block.BlockType)type,
+                        Stack = stack,
+                        Position = new(x, y),
+                    });
+                }
+
+                mission = new Mission(tanks.ToArray(), blocks.ToArray())
+                {
+                    Name = name
+                };
             }
 
-            var totalBlocks = reader.ReadInt32();
-
-            for (int i = 0; i < totalBlocks; i++)
-            {
-                var type = reader.ReadByte();
-                var stack = reader.ReadSByte();
-                var x = reader.ReadSingle();
-                var y = reader.ReadSingle();
-
-                blocks.Add(new()
-                {
-                    Type = (Block.BlockType)type,
-                    Stack = stack,
-                    Position = new(x, y),
-                });
-            }
-
-            var mission = new Mission(tanks.ToArray(), blocks.ToArray())
-            {
-                Name = name
-            };
-
-            ChatSystem.SendMessage($"Loaded mission with {tanks.Count} tank(s) and {blocks.Count} block(s).", Color.Lime);
+            // ChatSystem.SendMessage($"Loaded mission with {tanks.Count} tank(s) and {blocks.Count} block(s).", Color.Lime);
 
             return mission;
         }

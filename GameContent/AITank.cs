@@ -136,8 +136,13 @@ namespace TanksRebirth.GameContent
         /// /// <param name="isIngame">Whether or not this <see cref="AITank"/> is a gameplay tank or a cosmetic tank (i.e: display models on menus, etc).</param>
         public AITank(TankTier tier, Range<TankTier> tankRange = default, bool setTankDefaults = true, bool isIngame = true)
         {
-            if (UI.DifficultyModes.BumpUp)
-                tier += 1;
+            if (isIngame)
+            {
+                if (UI.DifficultyModes.BumpUp)
+                    tier += 1;
+                if (UI.DifficultyModes.MeanGreens)
+                    tier = TankTier.Green;
+            }
             if (tier == TankTier.Random)
                 tier = (TankTier)GameHandler.GameRand.Next((int)tankRange.Min, (int)tankRange.Max);
             IsIngame = isIngame;
@@ -1886,8 +1891,6 @@ namespace TanksRebirth.GameContent
                         {
                             SeesTarget = false;
 
-                            seekRotation += AiParams.TurretSpeed;
-
                             bool tooCloseToExplosiveShell = false;
 
                             List<Tank> tanksDef;
@@ -1912,6 +1915,8 @@ namespace TanksRebirth.GameContent
 
                             if (AiParams.SmartRicochets)
                             {
+                                if (!seeks)
+                                    seekRotation += AiParams.TurretSpeed;
                                 var canShoot = !(CurShootCooldown > 0 || OwnedShellCount >= ShellLimit);
                                 if (canShoot)
                                 {
@@ -1964,14 +1969,10 @@ namespace TanksRebirth.GameContent
                         {
                             if (refPoints.Length > 0)
                             {
-                                var targe = GameUtils.DirectionOf(Position, travelPath - new Vector2(500, 0)).ToRotation();
-                                //var targe = GameUtils.DirectionOf(refPoints[0], travelPath).ToRotation();
+                                var targe = GameUtils.DirectionOf(Position, travelPath - new Vector2(400, 0)).ToRotation();
+                                
+                                // why does this never work no matter what i do
 
-                                //var targe = travelPath.ToRotation() + MathHelper.PiOver2    ;
-
-                                //targetTankRotation = targe;
-
-                                // targetTankRotation
                                 GameUtils.RoughStep(ref TargetTankRotation, targe, targe / 4);
                             }
 
@@ -2285,6 +2286,7 @@ namespace TanksRebirth.GameContent
                 $"OwnedShellCount: {OwnedShellCount}",
                 $"Armor: {(Armor != null ? Armor.HitPoints : "N/A")}",
                 $"Real/Target Rot: {TankRotation}/{TargetTankRotation}",
+                $"Pos: {Position}"
             };
 
             for (int i = 0; i < info.Length; i++)

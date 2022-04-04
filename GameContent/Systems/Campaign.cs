@@ -34,7 +34,10 @@ namespace TanksRebirth.GameContent.Systems
             LoadedMission = mission;
         }
         public void LoadMission(int id)
-            => LoadedMission = CachedMissions[id];
+        {
+            LoadedMission = CachedMissions[id];
+            CurrentMissionId = id;
+        }
 
         /// <summary>Loads an array of <see cref="Mission"/>s into memory.</summary>
         public void LoadMissionsToCache(params Mission[] missions)

@@ -76,17 +76,13 @@ namespace TanksRebirth.GameContent.UI
         public static UITextButton Armored;
         public static UITextButton AllHoming;
         public static UITextButton BumpUp;
-
+        public static UITextButton MeanGreens;
         #endregion
 
         private static float _tnkSpeed = 2.4f;
 
         public static Tank MainMenuTank;
-
-        // TODO: ingame ui doesn't work, but main menu ui does (wack)
         // TODO: get menu visuals working
-
-        private static float _tnkRot;
 
         public static void Initialize()
         {
@@ -280,7 +276,6 @@ namespace TanksRebirth.GameContent.UI
             ServerNameInput.SetDimensions(100, 800, 500, 50);
             #endregion
 
-            AddMainMenuTank();
             Open();
 
             _menuElements = new UIElement[] 
@@ -373,8 +368,17 @@ namespace TanksRebirth.GameContent.UI
                 OnLeftClick = (elem) => DifficultyModes.BumpUp = !DifficultyModes.BumpUp
             };
             BumpUp.SetDimensions(100, 700, 300, 40);
+
+            MeanGreens = new("Mean Greens", font, Color.White)
+            {
+                IsVisible = false,
+                Tooltip = "Makes every tank a green tank." +
+                "\n\"Bump Up\" effects are nullified.",
+                OnLeftClick = (elem) => DifficultyModes.MeanGreens = !DifficultyModes.MeanGreens
+            };
+            MeanGreens.SetDimensions(100, 750, 300, 40);
         }
-        
+
         private static void SetCampaignDisplay()
         {
             SetPlayButtonsVisibility(false);
@@ -383,16 +387,37 @@ namespace TanksRebirth.GameContent.UI
                 elem.Remove();
             // get all the campaign folders from the SaveDirectory + Campaigns
             var campaignFolders = IOUtils.GetSubFolders(Path.Combine(TankGame.SaveDirectory, "Campaigns"), true);
+            var campaignPaths = IOUtils.GetSubFolders(Path.Combine(TankGame.SaveDirectory, "Campaigns"), false);
+
             // add a new UIElement for each campaign folder
             int totalOffset = 0;
+            
             for (int i = 0; i < campaignFolders.Length; i++)
             {
+
                 int offset = i * 60;
                 totalOffset += offset;
                 var name = campaignFolders[i];
+                var fullPath = campaignPaths[i];
+
+                // get all mission files from the campaign folder
+                var missions = Directory.GetFiles(fullPath).Where(str => str.EndsWith(".mission")).ToArray();
+
+                int numTanks = 0;
+
+                foreach (var path in missions)
+                {
+                    var mission = Path.GetFileName(path);
+                    // load the mission file, then count each tank, then add that to the total
+                    var loaded = Mission.Load(mission, name);
+                    numTanks += loaded.Tanks.Count(x => !x.IsPlayer);
+                }
+
                 var elem = new UITextButton(name, TankGame.TextFont, Color.White, 0.8f)
                 {
                     IsVisible = true,
+                    Tooltip = missions.Length + " missions" +
+                    $"\n{numTanks} tanks total",
                 };
                 elem.SetDimensions(700, 100 + offset, 300, 40);
                 //elem.HasScissor = true;
@@ -408,6 +433,8 @@ namespace TanksRebirth.GameContent.UI
 
                     GameHandler.ShouldMissionsProgress = true;
 
+                    // GameHandler.LoadedCampaign.LoadMission(20);
+
                     // Leave();
 
                     IntermissionSystem.SetTime(600);
@@ -418,6 +445,7 @@ namespace TanksRebirth.GameContent.UI
             var extra = new UITextButton("Freeplay", TankGame.TextFont, Color.White, 0.8f)
             {
                 IsVisible = true,
+                Tooltip = "Play without a campaign!",
             };
             extra.SetDimensions(700, 100 + totalOffset, 300, 40);
             extra.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/menu/menu_tick"), SoundContext.Effect); };
@@ -438,6 +466,8 @@ namespace TanksRebirth.GameContent.UI
             TankGame.cunoSucksElement.Remove();
             TankGame.cunoSucksElement = new();
             TankGame.cunoSucksElement.SetDimensions(-1000789342, -783218, 0, 0);
+
+            GC.Collect();
         }
 
         internal static void SetPlayButtonsVisibility(bool visible)
@@ -458,6 +488,7 @@ namespace TanksRebirth.GameContent.UI
             Armored.IsVisible = visible;
             AllHoming.IsVisible = visible;
             BumpUp.IsVisible = visible;
+            MeanGreens.IsVisible = visible;
         }
         internal static void SetPrimaryMenuButtonsVisibility(bool visible)
         {
@@ -493,15 +524,9 @@ namespace TanksRebirth.GameContent.UI
             AllHoming.Color = DifficultyModes.AllHoming ? Color.Lime : Color.Red;
             Armored.Color = DifficultyModes.Armored ? Color.Lime : Color.Red;
             BumpUp.Color = DifficultyModes.BumpUp ? Color.Lime : Color.Red;
-
-            _tnkRot += 0.01f;
-
-            MainMenuTank.TankRotation = _tnkRot;
-            MainMenuTank.TurretRotation = -_tnkRot;
+            MeanGreens.Color = DifficultyModes.MeanGreens ? Color.Lime : Color.Red;
 
             Theme.Volume = TankGame.Settings.MusicVolume;
-
-            MainMenuTank.View = ForwardView;
 
             foreach (var tnk in tanks)
             {
@@ -721,5 +746,7 @@ namespace TanksRebirth.GameContent.UI
         public static bool AllHoming { get; set; }
         public static bool Armored { get; set; }
         public static bool BumpUp { get; set; }
+
+        public static bool MeanGreens { get; set; }
     }
 }

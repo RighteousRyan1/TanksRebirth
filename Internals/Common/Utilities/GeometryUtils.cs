@@ -10,6 +10,23 @@ namespace TanksRebirth.Internals.Common.Utilities
 {
     public static class GeometryUtils
     {
+
+        public static T[] Shift<T>(ref T[] array, int index, int amount)
+        {
+            // extend the array by amount if we're out of bounds, then shift every element past index by amount
+            if (index + amount > array.Length)
+            {
+                var newArray = new T[index + amount];
+                array.CopyTo(newArray, 0);
+                array = newArray;
+            }
+            for (int i = index; i < array.Length; i++)
+            {
+                if (i >= index)
+                    array[i] = array[i + amount];
+            }
+            return array;
+        }
         // sigh no work
 
         /// <summary>

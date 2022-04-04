@@ -73,13 +73,14 @@ namespace TanksRebirth.Graphics
             effect.DirectionalLight1.Enabled = false;
             effect.DirectionalLight2.Enabled = false;
 
-            var ting = GameUtils.MousePosition.X / GameUtils.WindowWidth;
+            var ting = GameUtils.MousePosition.X / (GameUtils.WindowWidth + GameUtils.WindowWidth / 2);
+            var ting2 = GameUtils.MousePosition.Y / (GameUtils.WindowHeight + GameUtils.WindowHeight / 2);
 
             var lightingConstant = 0.9f;
 
             //effect.DirectionalLight0.Direction = new Vector3(0, -0.7f, -0.7f);
             //effect.DirectionalLight1.Direction = new Vector3(0, -0.7f, 0.7f);
-            effect.DirectionalLight0.Direction = Vector3.Down * lightingConstant;
+            effect.DirectionalLight0.Direction = Vector3.Down * lightingConstant; //+ new Vector3(ting, 0, ting2);
 
             effect.SpecularColor = new Vector3(LightPower) * (IsNight ? new Vector3(1) : LightColor.ToVector3());
 
@@ -98,9 +99,12 @@ namespace TanksRebirth.Graphics
             effect.DirectionalLight1.Enabled = false;
             effect.DirectionalLight2.Enabled = false;
 
+            var ting = GameUtils.MousePosition.X / (GameUtils.WindowWidth + GameUtils.WindowWidth / 2);
+            var ting2 = GameUtils.MousePosition.Y / (GameUtils.WindowHeight + GameUtils.WindowHeight / 2);
+
             var lightingConstant = 1.1f * powerMultiplier;
 
-            effect.DirectionalLight0.Direction = new Vector3(0, -1f, 0) * lightingConstant;
+            effect.DirectionalLight0.Direction = new Vector3(0, -1f, 0) * lightingConstant; //+ new Vector3(ting, 0, ting2);
 
             effect.SpecularColor = specular ? Color.White.ToVector3() : new Vector3(LightPower) * (IsNight ? new Vector3(1) : LightColor.ToVector3());
 
