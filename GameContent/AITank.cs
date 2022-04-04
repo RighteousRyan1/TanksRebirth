@@ -1915,8 +1915,8 @@ namespace TanksRebirth.GameContent
 
                             if (AiParams.SmartRicochets)
                             {
-                                if (!seeks)
-                                    seekRotation += AiParams.TurretSpeed;
+                                //if (!seeks)
+                                seekRotation += AiParams.TurretSpeed;
                                 var canShoot = !(CurShootCooldown > 0 || OwnedShellCount >= ShellLimit);
                                 if (canShoot)
                                 {

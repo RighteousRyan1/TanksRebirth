@@ -77,6 +77,7 @@ namespace TanksRebirth.GameContent.UI
         public static UITextButton AllHoming;
         public static UITextButton BumpUp;
         public static UITextButton MeanGreens;
+        public static UITextButton InfiniteLives;
         #endregion
 
         private static float _tnkSpeed = 2.4f;
@@ -377,6 +378,14 @@ namespace TanksRebirth.GameContent.UI
                 OnLeftClick = (elem) => DifficultyModes.MeanGreens = !DifficultyModes.MeanGreens
             };
             MeanGreens.SetDimensions(100, 750, 300, 40);
+
+            InfiniteLives = new("Infinite Lives", font, Color.White)
+            {
+                IsVisible = false,
+                Tooltip = "You now have infinite lives. Have fun!",
+                OnLeftClick = (elem) => DifficultyModes.InfiniteLives = !DifficultyModes.InfiniteLives
+            };
+            InfiniteLives.SetDimensions(450, 300, 300, 40);
         }
 
         private static void SetCampaignDisplay()
@@ -489,6 +498,7 @@ namespace TanksRebirth.GameContent.UI
             AllHoming.IsVisible = visible;
             BumpUp.IsVisible = visible;
             MeanGreens.IsVisible = visible;
+            InfiniteLives.IsVisible = visible;
         }
         internal static void SetPrimaryMenuButtonsVisibility(bool visible)
         {
@@ -525,6 +535,7 @@ namespace TanksRebirth.GameContent.UI
             Armored.Color = DifficultyModes.Armored ? Color.Lime : Color.Red;
             BumpUp.Color = DifficultyModes.BumpUp ? Color.Lime : Color.Red;
             MeanGreens.Color = DifficultyModes.MeanGreens ? Color.Lime : Color.Red;
+            InfiniteLives.Color = DifficultyModes.InfiniteLives ? Color.Lime : Color.Red;
 
             Theme.Volume = TankGame.Settings.MusicVolume;
 
@@ -746,7 +757,7 @@ namespace TanksRebirth.GameContent.UI
         public static bool AllHoming { get; set; }
         public static bool Armored { get; set; }
         public static bool BumpUp { get; set; }
-
         public static bool MeanGreens { get; set; }
+        public static bool InfiniteLives { get; set; }
     }
 }

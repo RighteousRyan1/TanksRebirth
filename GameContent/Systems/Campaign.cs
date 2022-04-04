@@ -162,7 +162,7 @@ namespace TanksRebirth.GameContent.Systems
 
             List<Mission> missions = new();
 
-            var files = Directory.GetFiles(path);
+            var files = Directory.GetFiles(path).Where(file => file.EndsWith(".mission")).ToArray();
 
             foreach (var file in files)
             {
