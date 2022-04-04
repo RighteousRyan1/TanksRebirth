@@ -154,7 +154,7 @@ namespace TanksRebirth.GameContent
         internal void Update()
         {
             rotation = Velocity.ToRotation() - MathHelper.PiOver2;
-            Position += Velocity;
+            Position += Velocity * 0.62f;
             World = Matrix.CreateFromYawPitchRoll(-rotation, 0, 0)
                 * Matrix.CreateTranslation(Position);
             Projection = TankGame.GameProjection;
@@ -256,17 +256,21 @@ namespace TanksRebirth.GameContent
                 _shootSound?.Stop();
             };
 
-            int bruh = (int)Math.Round(12 / Velocity2D.Length());
+            int bruh = (int)Math.Round(14 / Velocity2D.Length());
             int nummy = bruh != 0 ? bruh : 5;
 
             if (lifeTime % nummy == 0)
             {
                 var p = ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(rotation + MathHelper.Pi).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
                 p.FaceTowardsMe = false;
-                p.Scale = new(0.4f);
-                p.color = new Color(50, 50, 50, 150);
+                p.Scale = new(0.3f);
+                // p.color = new Color(50, 50, 50, 150);
 
                 p.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
+
+                p.isAddative = false;
+                p.color = new Color(150, 150, 150, 50);
+                p.Opacity = 0.5f;
 
                 p.UniqueBehavior = (p) =>
                 {
@@ -275,6 +279,8 @@ namespace TanksRebirth.GameContent
 
                     if (p.Opacity > 0)
                         p.Opacity -= 0.02f;
+
+                    GeometryUtils.Add(ref p.Scale, 0.005f);
 
                     GeometryUtils.Add(ref p.Scale, 0.005f);
 
@@ -287,7 +293,7 @@ namespace TanksRebirth.GameContent
         }
 
         private void TankGame_OnFocusRegained(object sender, IntPtr e) 
-            =>_loopingSound?.Resume();
+            => _loopingSound?.Resume();
 
         private void TankGame_OnFocusLost(object sender, IntPtr e)
             => _loopingSound?.Pause();
@@ -375,9 +381,13 @@ namespace TanksRebirth.GameContent
             }
         }
         public void Remove() {
+            TankGame.OnFocusLost -= TankGame_OnFocusLost;
+            TankGame.OnFocusRegained -= TankGame_OnFocusRegained;
             _flame?.Destroy();
             _loopingSound?.Stop();
             _shootSound?.Stop();
+            _loopingSound = null;
+            _shootSound = null;
             AllShells[worldId] = null;
         }
         /// <summary>

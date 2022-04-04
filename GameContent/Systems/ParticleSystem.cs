@@ -7,7 +7,7 @@ namespace TanksRebirth.GameContent
 {
     public class ParticleSystem
     {
-        public static int MAX_PARTICLES = 15000;
+        public static int MAX_PARTICLES = 150000;
         public static Particle[] CurrentParticles = new Particle[MAX_PARTICLES];
 
         public static void RenderParticles()

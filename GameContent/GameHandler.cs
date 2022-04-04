@@ -36,7 +36,7 @@ namespace TanksRebirth.GameContent
         private static int _tankFuncDelay = 180;
 
         public const int MAX_AI_TANKS = 1000;
-        public const int MAX_PLAYERS = 100;
+        public const int MAX_PLAYERS = 1000;
         public static AITank[] AllAITanks { get; } = new AITank[MAX_AI_TANKS];
         public static PlayerTank[] AllPlayerTanks { get; } = new PlayerTank[MAX_PLAYERS];
         public static Tank[] AllTanks { get; } = new Tank[MAX_PLAYERS + MAX_AI_TANKS];
