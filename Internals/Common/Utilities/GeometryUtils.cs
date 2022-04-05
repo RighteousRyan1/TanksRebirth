@@ -29,6 +29,10 @@ namespace TanksRebirth.Internals.Common.Utilities
         }
         // sigh no work
 
+        public static Vector2 PredictFuturePosition(Vector2 source, Vector2 velocity, float time)
+        {
+            return source + velocity * time;
+        }
         /// <summary>
         /// Create a ray on a 2D plane either covering the X and Y axes of a plane or the X and Z axes of a plane.
         /// </summary>

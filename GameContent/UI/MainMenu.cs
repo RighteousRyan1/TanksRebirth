@@ -456,7 +456,7 @@ namespace TanksRebirth.GameContent.UI
                 IsVisible = true,
                 Tooltip = "Play without a campaign!",
             };
-            extra.SetDimensions(700, 100 + totalOffset, 300, 40);
+            extra.SetDimensions(1150, 100, 300, 40);
             extra.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/menu/menu_tick"), SoundContext.Effect); };
             //elem.HasScissor = true;
             //elem.

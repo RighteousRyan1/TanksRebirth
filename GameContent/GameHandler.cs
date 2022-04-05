@@ -291,6 +291,12 @@ namespace TanksRebirth.GameContent
             if (!MainMenu.Active)
                 MapRenderer.RenderWorldModels();
 
+            foreach (var tank in AllPlayerTanks)
+                tank?.DrawBody();
+
+            foreach (var tank in AllAITanks)
+                tank?.DrawBody();
+
             foreach (var cube in Block.AllBlocks)
                 cube?.Render();
 
@@ -320,12 +326,6 @@ namespace TanksRebirth.GameContent
             if (TankGame.OverheadView)
                 foreach (var sq in PlacementSquare.Placements)
                     sq?.Render();
-
-            foreach (var tank in AllPlayerTanks)
-                tank?.DrawBody();
-
-            foreach (var tank in AllAITanks)
-                tank?.DrawBody();
 
             ParticleSystem.RenderParticles();
             MainMenu.Render();

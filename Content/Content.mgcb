@@ -274,18 +274,6 @@
 /processorParam:TextureFormat=Compressed
 /build:Assets/forest/tree.fbx
 
-#begin Assets/forest/tree_leaves_tex.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Assets/forest/tree_leaves_tex.png
-
 #begin Assets/forest/tree_log_tex.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -316,18 +304,6 @@
 /processorParam:SwapWindingOrder=False
 /processorParam:TextureFormat=Compressed
 /build:Assets/forest/tree_stump.fbx
-
-#begin Assets/forest/tree_stump_map.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Assets/forest/tree_stump_map.png
 
 #begin Assets/MagicPixel.png
 /importer:TextureImporter
@@ -1017,6 +993,18 @@
 /processorParam:TextureFormat=Color
 /build:Assets/textures/bullet/bullet.png
 
+#begin Assets/textures/bullet/bullet.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Assets/textures/bullet/bullet.png
+
 #begin Assets/textures/bullet/explosive_bullet.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -1028,6 +1016,42 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Assets/textures/bullet/explosive_bullet.png
+
+#begin Assets/textures/bullet/explosive_bullet.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Assets/textures/bullet/explosive_bullet.png
+
+#begin Assets/textures/bullet/flame.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Assets/textures/bullet/flame.png
+
+#begin Assets/textures/bullet/smoketrail.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Assets/textures/bullet/smoketrail.png
 
 #begin Assets/textures/check/check_blue.png
 /importer:TextureImporter
@@ -2397,30 +2421,6 @@
 /processorParam:TextureFormat=Color
 /build:Assets/textures/ui/banner.png
 
-#begin Assets/textures/ui/banner.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Assets/textures/ui/banner.png
-
-#begin Assets/textures/ui/bonustankstar.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Assets/textures/ui/bonustankstar.png
-
 #begin Assets/textures/ui/bonustankstar.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -2444,30 +2444,6 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Assets/textures/ui/patterndiamond.png
-
-#begin Assets/textures/ui/patterndiamond.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Assets/textures/ui/patterndiamond.png
-
-#begin Assets/textures/ui/playertank2d.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Assets/textures/ui/playertank2d.png
 
 #begin Assets/textures/ui/playertank2d.png
 /importer:TextureImporter
@@ -2505,18 +2481,6 @@
 /processorParam:TextureFormat=Color
 /build:Assets/textures/ui/tank_background_billboard.png
 
-#begin Assets/textures/ui/tank_background_billboard.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Assets/textures/ui/tank_background_billboard.png
-
 #begin Assets/textures/ui/tank_background_billboard_white.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -2528,18 +2492,6 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Assets/textures/ui/tank_background_billboard_white.png
-
-#begin Assets/textures/ui/tank2d.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Assets/textures/ui/tank2d.png
 
 #begin Assets/textures/ui/tank2d.png
 /importer:TextureImporter

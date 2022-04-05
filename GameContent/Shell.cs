@@ -59,6 +59,7 @@ namespace TanksRebirth.GameContent
         public Rectangle hitbox;
         /// <summary>Whether or not this shell should emit flames from behind it.</summary>
         public bool Flaming { get; set; }
+        public bool LeavesTrail { get; set; }
 
         public Texture2D _shellTexture;
 
@@ -69,7 +70,7 @@ namespace TanksRebirth.GameContent
 
         public bool canFriendlyFire = true;
 
-        private Particle _flame;
+        // private Particle _flame;
 
         public readonly ShellTier Tier;
 
@@ -134,7 +135,7 @@ namespace TanksRebirth.GameContent
                 _shootSound.Pitch = owner.ShootPitch;
             }
 
-            if (Flaming)
+            /*if (Flaming)
             {
                 _flame = ParticleSystem.MakeParticle(Position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit_half"));
 
@@ -142,7 +143,7 @@ namespace TanksRebirth.GameContent
                 _flame.Scale = new(0.5f, 0.125f, 0.4f);
                 _flame.color = Color.Orange;
                 _flame.isAddative = false;
-            }
+            }*/
 
             int index = Array.IndexOf(AllShells, AllShells.First(shell => shell is null));
 
@@ -160,7 +161,7 @@ namespace TanksRebirth.GameContent
             Projection = TankGame.GameProjection;
             View = TankGame.GameView;
 
-            if (_flame is not null)
+            /*if (_flame is not null)
             {
                 _flame.UniqueBehavior = (p) =>
                 {
@@ -175,7 +176,7 @@ namespace TanksRebirth.GameContent
                     if (TankGame.GameUpdateTime % 2 == 0)
                         p.Roll = GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi);
                 };
-            }
+            }*/
 
             hitbox = new((int)(Position2D.X - 3), (int)(Position2D.Y - 3), 6, 6);
 
@@ -251,13 +252,15 @@ namespace TanksRebirth.GameContent
 
             GameHandler.OnMissionEnd += (delay, fatal) =>
             {
-                _flame?.Destroy();
+                // _flame?.Destroy();
                 _loopingSound?.Stop();
                 _shootSound?.Stop();
             };
 
-            int bruh = (int)Math.Round(14 / Velocity2D.Length());
+            int bruh = Flaming ? (int)Math.Round(6 / Velocity2D.Length()) : (int)Math.Round(12 / Velocity2D.Length());
             int nummy = bruh != 0 ? bruh : 5;
+
+            int darkness = Flaming ? 0 : 250;
 
             if (lifeTime % nummy == 0)
             {
@@ -269,8 +272,8 @@ namespace TanksRebirth.GameContent
                 p.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
                 p.isAddative = false;
-                p.color = new Color(150, 150, 150, 50);
-                p.Opacity = 0.5f;
+                p.color = Flaming ? new Color(darkness, darkness, darkness, 255) : new Color(darkness, darkness, darkness, 50);
+                p.Opacity = 0.75f;
 
                 p.UniqueBehavior = (p) =>
                 {
@@ -280,11 +283,47 @@ namespace TanksRebirth.GameContent
                     if (p.Opacity > 0)
                         p.Opacity -= 0.02f;
 
-                    GeometryUtils.Add(ref p.Scale, 0.005f);
+                    GeometryUtils.Add(ref p.Scale, 0.0075f);
+                };
+            }
+            if (Flaming && !LeavesTrail)
+            {
+                // every 5 frames, create a flame particle that is a bit smaller than the shell which expands away from the shell, then after a while, shrinks
 
-                    GeometryUtils.Add(ref p.Scale, 0.005f);
+                var p = ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(rotation + MathHelper.Pi).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/flame"));
 
-                    p.position.Y += 0.1f;
+                p.Roll = -MathHelper.PiOver2;
+                var scaleRand = GameHandler.GameRand.NextFloat(0.5f, 0.75f);
+                p.Scale = new(scaleRand, 0.165f, 0.4f); // x is outward from bullet
+                p.color = Color.Orange;
+                p.isAddative = false;
+                // GameHandler.GameRand.NextFloat(-2f, 2f)
+                p.TextureRotation = -MathHelper.PiOver2;
+
+                var rotoff = GameHandler.GameRand.NextFloat(-0.25f, 0.25f);
+                p.TextureOrigin = new(p.Texture.Size().X / 2, p.Texture.Size().Y);
+
+                var initialScale = p.Scale;
+
+                p.UniqueBehavior = (par) =>
+                {
+                    var flat = Position.FlattenZ();
+
+                    var off = flat + new Vector2(0, 0).RotatedByRadians(rotation);
+
+                    p.position = off.ExpandZ() + new Vector3(0, 11, 0);
+
+                    p.Pitch = -rotation - MathHelper.PiOver2 + rotoff;
+
+                        //if (TankGame.GameUpdateTime % 2 == 0)
+                        //p.Roll = GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi);
+
+                    var scalingConstant = 0.06f;
+
+                    p.Scale.X -= scalingConstant;
+
+                    if (p.Scale.X <= 0)
+                        p.Destroy();
                 };
             }
 
@@ -383,7 +422,7 @@ namespace TanksRebirth.GameContent
         public void Remove() {
             TankGame.OnFocusLost -= TankGame_OnFocusLost;
             TankGame.OnFocusRegained -= TankGame_OnFocusRegained;
-            _flame?.Destroy();
+            //_flame?.Destroy();
             _loopingSound?.Stop();
             _shootSound?.Stop();
             _loopingSound = null;
@@ -407,7 +446,7 @@ namespace TanksRebirth.GameContent
             ParticleSystem.MakeSmallExplosion(Position, 8, 10, 1.25f, 15);
             if (owner != null)
                 owner.OwnedShellCount--;
-            _flame?.Destroy();
+            //_flame?.Destroy();
             _loopingSound?.Stop();
             _loopingSound?.Dispose();
             _loopingSound = null;
