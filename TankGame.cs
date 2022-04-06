@@ -157,7 +157,6 @@ namespace TanksRebirth
             graphics = new(this) { PreferHalfPixelOffset = true };
             graphics.HardwareModeSwitch = false;
 
-
             Content.RootDirectory = "Content";
             Instance = this;
             Window.Title = "Tanks! Remake";

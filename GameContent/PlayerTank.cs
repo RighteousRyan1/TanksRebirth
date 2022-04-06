@@ -29,8 +29,6 @@ namespace TanksRebirth.GameContent
         
         private bool playerControl_isBindPressed;
 
-        private int _treadSoundTimer = 5;
-
         public int PlayerId { get; }
         public PlayerType PlayerType { get; }
 
@@ -103,9 +101,9 @@ namespace TanksRebirth.GameContent
             MineStun = 8;
             Invisible = false;
             Acceleration = 0.3f;
-            Deceleration = 0.3f;
+            Deceleration = 0.6f;
             TurningSpeed = 0.1f;
-            MaximalTurn = 0.8f;
+            MaximalTurn = MathHelper.ToDegrees(15);
             // Armor = new(this, 100);
 
             ShellType = ShellTier.Player;
@@ -386,7 +384,7 @@ namespace TanksRebirth.GameContent
                 {
                     LayFootprint(false);
                 }
-                if (TankGame.GameUpdateTime % _treadSoundTimer == 0)
+                if (TankGame.GameUpdateTime % MathHelper.Clamp(treadPlaceTimer / 2, 4, 6) == 0)
                 {
                     var treadPlace = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_tread_place_{GameHandler.GameRand.Next(1, 5)}");
                     var sfx = SoundPlayer.PlaySoundInstance(treadPlace, SoundContext.Effect, 0.2f);

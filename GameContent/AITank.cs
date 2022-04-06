@@ -22,7 +22,6 @@ namespace TanksRebirth.GameContent
 {
     public class AITank : Tank
     {
-        private int treadSoundTimer = 5;
         public int TierHierarchy => (int)tier;
 
         public AiBehavior[] Behaviors { get; private set; } // each of these should keep track of an action the tank performs
@@ -101,6 +100,8 @@ namespace TanksRebirth.GameContent
         /// <summary>The target rotation for this tank's turret. <see cref="Tank.TurretRotation"/> will move towards this value at a rate of <see cref="TurretSpeed"/>.</summary>
         public float TargetTurretRotation;
 
+        private Vector2 oldPosition;
+
         #endregion
 
         #region ModelBone & ModelMesh
@@ -151,7 +152,6 @@ namespace TanksRebirth.GameContent
                 Behaviors = new AiBehavior[10];
                 SpecialBehaviors = new AiBehavior[3];
 
-                treadSoundTimer += GameHandler.GameRand.Next(-1, 2);
                 for (int i = 0; i < Behaviors.Length; i++)
                     Behaviors[i] = new();
 
@@ -317,7 +317,7 @@ namespace TanksRebirth.GameContent
                     AiParams.MineWarinessRadius = 40;
 
                     TurningSpeed = 0.08f;
-                    MaximalTurn = 0.7f;
+                    MaximalTurn = MathHelper.ToRadians(10);
 
                     ShootStun = 3;
                     ShellCooldown = 180;
@@ -353,7 +353,7 @@ namespace TanksRebirth.GameContent
                     AiParams.MineWarinessRadius = 80;
 
                     TurningSpeed = 0.2f;
-                    MaximalTurn = MathHelper.PiOver2;
+                    MaximalTurn = MathHelper.ToRadians(10);
 
                     ShootStun = 20;
                     ShellCooldown = 180;
@@ -386,13 +386,16 @@ namespace TanksRebirth.GameContent
 
                     AiParams.Inaccuracy = 1.5f;
 
+                    Acceleration = 0.3f;
+                    Deceleration = 0.6f;
+
                     TankDestructionColor = Color.Yellow;
 
                     AiParams.ProjectileWarinessRadius = 40;
                     AiParams.MineWarinessRadius = 160;
 
                     TurningSpeed = 0.08f;
-                    MaximalTurn = MathHelper.PiOver2;
+                    MaximalTurn = MathHelper.ToRadians(10);
 
                     ShootStun = 20;
                     ShellCooldown = 90;
@@ -411,8 +414,6 @@ namespace TanksRebirth.GameContent
                     MineCooldown = 600;
                     MineLimit = 4;
                     MineStun = 5;
-
-                    treadSoundTimer = 4;
 
                     AiParams.MinePlacementChance = 0.3f;
                     AiParams.MoveFromMineTime = 120;
@@ -443,7 +444,7 @@ namespace TanksRebirth.GameContent
                     AiParams.MineWarinessRadius = 160;
 
                     TurningSpeed = 0.08f;
-                    MaximalTurn = MathHelper.PiOver4;
+                    MaximalTurn = MathHelper.ToRadians(10);
 
                     ShootStun = 5;
                     ShellCooldown = 30;
@@ -458,8 +459,6 @@ namespace TanksRebirth.GameContent
 
                     TreadPitch = 0.1f;
                     MaxSpeed = 1.2f;
-
-                    treadSoundTimer = 6;
 
                     MineCooldown = 0;
                     MineLimit = 0;
@@ -482,7 +481,7 @@ namespace TanksRebirth.GameContent
                     AiParams.MineWarinessRadius = 160;
 
                     TurningSpeed = 0.06f;
-                    MaximalTurn = MathHelper.PiOver2;
+                    MaximalTurn = MathHelper.ToRadians(10);
 
                     ShootStun = 5;
                     ShellCooldown = 30;
@@ -498,8 +497,6 @@ namespace TanksRebirth.GameContent
                     TreadPitch = -0.2f;
                     MaxSpeed = 1.8f;
                     Acceleration = 0.3f;
-
-                    treadSoundTimer = 4;
 
                     MineCooldown = 700;
                     MineLimit = 2;
@@ -556,7 +553,7 @@ namespace TanksRebirth.GameContent
                     AiParams.MineWarinessRadius = 160;
 
                     TurningSpeed = 0.08f;
-                    MaximalTurn = MathHelper.PiOver4;
+                    MaximalTurn = MathHelper.ToRadians(10);
 
                     ShootStun = 5;
                     ShellCooldown = 30;
@@ -571,8 +568,6 @@ namespace TanksRebirth.GameContent
                     TreadPitch = -0.35f;
                     MaxSpeed = 1.2f;
                     Acceleration = 0.3f;
-
-                    treadSoundTimer = 6;
 
                     MineCooldown = 1000;
                     MineLimit = 2;
@@ -591,7 +586,7 @@ namespace TanksRebirth.GameContent
                     AiParams.TurretSpeed = 0.03f;
                     AiParams.AimOffset = 0.12f;
 
-                    AiParams.Inaccuracy = 0.15f;
+                    AiParams.Inaccuracy = 0.35f;
 
                     TankDestructionColor = Color.Black;
 
@@ -617,8 +612,6 @@ namespace TanksRebirth.GameContent
                     Acceleration = 0.3f;
 
                     ShootPitch = -0.2f;
-
-                    treadSoundTimer = 4;
 
                     MineCooldown = 850;
                     MineLimit = 2;
@@ -686,8 +679,6 @@ namespace TanksRebirth.GameContent
                     Acceleration = 0.3f;
                     Deceleration = 0.6f;
 
-                    treadSoundTimer = 4;
-
                     MineCooldown = 60 * 20;
                     MineLimit = 1;
                     MineStun = 10;
@@ -702,7 +693,7 @@ namespace TanksRebirth.GameContent
                     AiParams.TurretSpeed = 0.025f;
                     AiParams.AimOffset = 0.01f;
 
-                    AiParams.Inaccuracy = 0.2f;
+                    AiParams.Inaccuracy = 0.4f;
 
                     TankDestructionColor = Color.DeepSkyBlue;
 
@@ -727,8 +718,6 @@ namespace TanksRebirth.GameContent
                     MaxSpeed = 1.4f;
                     Acceleration = 0.3f;
                     Deceleration = 0.6f;
-
-                    treadSoundTimer = 4;
 
                     MineCooldown = 1000;
                     MineLimit = 1;
@@ -773,8 +762,6 @@ namespace TanksRebirth.GameContent
                     Acceleration = 0.4f;
                     Deceleration = 0.6f;
 
-                    treadSoundTimer = 4;
-
                     MineCooldown = 0;
                     MineLimit = 0;
                     MineStun = 0;
@@ -817,8 +804,6 @@ namespace TanksRebirth.GameContent
                     Acceleration = 0.2f;
                     Deceleration = 0.4f;
 
-                    treadSoundTimer = 4;
-
                     MineCooldown = 360;
                     MineLimit = 4;
                     MineStun = 5;
@@ -860,8 +845,6 @@ namespace TanksRebirth.GameContent
                     MaxSpeed = 2f;
                     Acceleration = 0.6f;
                     Deceleration = 0.9f;
-
-                    treadSoundTimer = 4;
 
                     MineCooldown = 360;
                     MineLimit = 3;
@@ -928,8 +911,6 @@ namespace TanksRebirth.GameContent
                     Acceleration = 0.8f;
                     Deceleration = 0.5f;
 
-                    treadSoundTimer = 5;
-
                     MineCooldown = 700;
                     MineLimit = 2;
                     MineStun = 10;
@@ -973,8 +954,6 @@ namespace TanksRebirth.GameContent
                     Acceleration = 0.6f;
                     Deceleration = 0.8f;
 
-                    treadSoundTimer = 4;
-
                     MineCooldown = 850;
                     MineLimit = 2;
                     MineStun = 10;
@@ -1014,8 +993,6 @@ namespace TanksRebirth.GameContent
                     MaxSpeed = 0.9f;
                     Acceleration = 0.3f;
                     Deceleration = 0.4f;
-
-                    treadSoundTimer = 4;
 
                     AiParams.SmartRicochets = true;
                     break;
@@ -1088,8 +1065,6 @@ namespace TanksRebirth.GameContent
                     MaxSpeed = 1.7f;
                     Acceleration = 0.4f;
                     Deceleration = 0.6f;
-
-                    treadSoundTimer = 4;
                     break;
                 case TankTier.Crimson:
                     AiParams.MeanderAngle = 0.12f;
@@ -1238,8 +1213,6 @@ namespace TanksRebirth.GameContent
                     MaxSpeed = 1f;
                     Acceleration = 0.3f;
                     Deceleration = 0.4f;
-
-                    treadSoundTimer = 4;
                     break;
                 case TankTier.Gamma:
                     AiParams.TurretMeanderFrequency = 20;
@@ -1290,8 +1263,6 @@ namespace TanksRebirth.GameContent
                     Invisible = false;
                     ShellHoming = new();
 
-                    treadSoundTimer = 4;
-
                     MineCooldown = 850;
                     MineLimit = 2;
                     MineStun = 10;
@@ -1339,8 +1310,6 @@ namespace TanksRebirth.GameContent
                     MineCooldown = 940;
                     MineLimit = 1;
                     MineStun = 5;
-
-                    treadSoundTimer = 9;
 
                     AiParams.MoveFromMineTime = 100;
                     AiParams.MinePlacementChance = 0.02f;
@@ -1576,6 +1545,8 @@ namespace TanksRebirth.GameContent
                 else
                     DoAi(true, true, true);
             }
+
+            oldPosition = Position;
 
             Model.Root.Transform = World;
 
@@ -1813,9 +1784,9 @@ namespace TanksRebirth.GameContent
 
                 var treadPlaceTimer = (int)Math.Round(14 / Velocity.Length()) != 0 ? (int)Math.Round(14 / Velocity.Length()) : 1;
 
-                if (Velocity != Vector2.Zero && !Stationary)
+                if (Position - oldPosition != Vector2.Zero && !Stationary)
                 {
-                    if (TankGame.GameUpdateTime % treadSoundTimer == 0)
+                    if (TankGame.GameUpdateTime % MathHelper.Clamp(treadPlaceTimer / 2, 4, 6) == 0)
                     {
                         var treadPlace = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_tread_place_{GameHandler.GameRand.Next(1, 5)}");
                         var sfx = SoundPlayer.PlaySoundInstance(treadPlace, SoundContext.Effect, 0.05f);
@@ -1982,7 +1953,7 @@ namespace TanksRebirth.GameContent
                         #endregion
 
                         #region GeneralMovement
-                        if (!isMineNear && !isBulletNear && !IsTurning && CurMineStun == 0 && CurShootStun == 0)
+                        if (!isMineNear && !isBulletNear && !IsTurning && CurMineStun <= 0 && CurShootStun <= 0)
                         {
                             if (!pathBlocked)
                             {
@@ -2160,36 +2131,38 @@ namespace TanksRebirth.GameContent
 
                     if (doMoveTowards)
                     {
-                        if (!IsTurning)
-                        {
-                            if (TankRotation > targ - MaximalTurn && TankRotation < targ + MaximalTurn)
-                            {
-                                // TankRotation = targ;
-                                var dir = Vector2.UnitY.RotatedByRadians(TankRotation);
-                                Velocity.X = dir.X;
-                                Velocity.Y = dir.Y;
 
-                                Velocity.Normalize();
-                                // velocity *= MaxSpeed;
-                                Velocity *= MaxSpeed;
-                            }
-                            else
-                            {
-                                treadPlaceTimer = (int)Math.Round(14 / TurningSpeed) != 0 ? (int)Math.Round(14 / TurningSpeed) : 1;
-                                if (TankGame.GameUpdateTime % treadPlaceTimer == 0)
-                                {
-                                    LayFootprint(tier == TankTier.White);
-                                }
-                                IsTurning = true;
-                                Velocity = Vector2.Zero;
-                            }
+                        if (TankRotation > targ - MaximalTurn && TankRotation < targ + MaximalTurn)
+                        {
+                            IsTurning = false;
+                            Speed += Acceleration;
+                            if (Speed > MaxSpeed)
+                                Speed = MaxSpeed;
+                            // TankRotation = targ;
+
+                            // velocity *= MaxSpeed;
                         }
                         else
                         {
-                            if (TankRotation >= targ - 0.05f || TankRotation <= targ + 0.05f)
-                                IsTurning = false;
+                            Speed -= Deceleration;
+                            if (Speed < 0)
+                                Speed = 0;
+                            treadPlaceTimer = (int)Math.Round(14 / TurningSpeed) != 0 ? (int)Math.Round(14 / TurningSpeed) : 1;
+                            if (TankGame.GameUpdateTime % treadPlaceTimer == 0)
+                            {
+                                LayFootprint(tier == TankTier.White);
+                            }
+                            IsTurning = true;
+                            Velocity = Vector2.Zero;
                         }
 
+                        var dir = Vector2.UnitY.RotatedByRadians(TankRotation);
+                        Velocity.X = dir.X;
+                        Velocity.Y = dir.Y;
+
+                        Velocity.Normalize();
+
+                        Velocity *= Speed;
                         TankRotation = GameUtils.RoughStep(TankRotation, targ, TurningSpeed);
                     }
 
@@ -2285,8 +2258,9 @@ namespace TanksRebirth.GameContent
                 $"Team: {Team}",
                 $"OwnedShellCount: {OwnedShellCount}",
                 $"Armor: {(Armor != null ? Armor.HitPoints : "N/A")}",
-                $"Real/Target Rot: {TankRotation}/{TargetTankRotation}",
-                $"Pos: {Position}"
+                $"Speed/Max: {Speed}/{MaxSpeed}",
+                $"Pos: {Position}",
+                $"Vel: {Body.LinearVelocity}",
             };
 
             for (int i = 0; i < info.Length; i++)

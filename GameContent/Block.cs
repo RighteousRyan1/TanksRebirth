@@ -237,7 +237,7 @@ namespace TanksRebirth.GameContent
                 }
             }
             else
-                offset.Y -= 0.05f;
+                offset.Y -= 0.1f;
 
             World = Matrix.CreateScale(0.62f) * Matrix.CreateTranslation(Position3D - offset);
             Projection = TankGame.GameProjection;

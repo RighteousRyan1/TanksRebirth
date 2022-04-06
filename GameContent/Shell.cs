@@ -178,7 +178,7 @@ namespace TanksRebirth.GameContent
                 };
             }*/
 
-            hitbox = new((int)(Position2D.X - 3), (int)(Position2D.Y - 3), 6, 6);
+            hitbox = new((int)(Position2D.X - 3), (int)(Position2D.Y - 3), 5, 5);
 
             if (!GameHandler.InMission)
                 return;
@@ -260,7 +260,7 @@ namespace TanksRebirth.GameContent
             int bruh = Flaming ? (int)Math.Round(6 / Velocity2D.Length()) : (int)Math.Round(12 / Velocity2D.Length());
             int nummy = bruh != 0 ? bruh : 5;
 
-            int darkness = Flaming ? 0 : 250;
+            int darkness = 255;
 
             if (lifeTime % nummy == 0)
             {
@@ -272,8 +272,8 @@ namespace TanksRebirth.GameContent
                 p.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
                 p.isAddative = false;
-                p.color = Flaming ? new Color(darkness, darkness, darkness, 255) : new Color(darkness, darkness, darkness, 50);
-                p.Opacity = 0.75f;
+                p.color = new Color(darkness, darkness, darkness, darkness);
+                p.Opacity = 0.5f;
 
                 p.UniqueBehavior = (p) =>
                 {
@@ -281,7 +281,7 @@ namespace TanksRebirth.GameContent
                         p.Destroy();
 
                     if (p.Opacity > 0)
-                        p.Opacity -= 0.02f;
+                        p.Opacity -= Flaming ? 0.03f : 0.02f;
 
                     GeometryUtils.Add(ref p.Scale, 0.0075f);
                 };

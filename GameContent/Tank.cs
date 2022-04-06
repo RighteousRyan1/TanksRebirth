@@ -534,7 +534,7 @@ namespace TanksRebirth.GameContent
             track.isAddative = false;
 
             track.Roll = -MathHelper.PiOver2;
-            track.Scale = new(0.5f, 0.65f, 0.5f);
+            track.Scale = new(0.5f, 0.55f, 0.5f);
             track.Opacity = 0.7f;
 
             footprints[total_treads_placed] = this;
