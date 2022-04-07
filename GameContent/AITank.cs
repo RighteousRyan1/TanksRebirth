@@ -1557,6 +1557,8 @@ namespace TanksRebirth.GameContent
         {
 
             Dead = true;
+            Behaviors = null;
+            SpecialBehaviors = null;
             GameHandler.AllAITanks[AITankId] = null;
             GameHandler.AllTanks[WorldId] = null;
             base.Remove();

@@ -289,7 +289,10 @@ namespace TanksRebirth.GameContent
         public virtual void Destroy(TankHurtContext context) {
 
             if (CollisionsWorld.BodyList.Contains(Body))
+            {
                 CollisionsWorld.Remove(Body);
+                Body = null;
+            }
             var killSound1 = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_destroy");
             SoundPlayer.PlaySoundInstance(killSound1, SoundContext.Effect, 0.2f);
             if (this is AITank)
