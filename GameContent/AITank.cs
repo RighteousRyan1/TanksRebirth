@@ -88,6 +88,8 @@ namespace TanksRebirth.GameContent
             public bool SmartMineLaying { get; set; }
             /// <summary>Whether or not this tank's shot raycast resets it's distance check per-bounce.</summary>
             public bool BounceReset { get; set; } = true;
+
+            public float RedirectAngle { get; set; } = MathHelper.ToRadians(5);
         }
         /// <summary>The AI parameter collection of this AI Tank.</summary>
         public Params AiParams { get; } = new();
@@ -1942,11 +1944,15 @@ namespace TanksRebirth.GameContent
                         {
                             if (refPoints.Length > 0)
                             {
-                                var targe = GameUtils.DirectionOf(Position, travelPath - new Vector2(400, 0)).ToRotation();
-                                
+                                var refAngle = GameUtils.DirectionOf(Position, travelPath - new Vector2(400, 0)).ToRotation();
+
                                 // why does this never work no matter what i do
 
-                                GameUtils.RoughStep(ref TargetTankRotation, targe, targe / 4);
+                                // refAngle / 4
+                                //GameUtils.RoughStep(ref TargetTankRotation, refAngle - MathHelper.PiOver2, AiParams.RedirectAngle);
+                                GameUtils.RoughStep(ref TargetTankRotation, refAngle, refAngle / 4);//AiParams.RedirectAngle);
+
+                                // ChatSystem.SendMessage($"{TargetTankRotation} / {refAngle}", Color.White);
                             }
 
                             // TODO: i literally do not understand this
@@ -2116,23 +2122,16 @@ namespace TanksRebirth.GameContent
 
                     var targ = TargetTankRotation + MathHelper.Pi;
 
-                    // IsTurning = false;
-
-                    /*TargetTankRotation %= MathHelper.TwoPi;
-                    TankRotation %= MathHelper.TwoPi;
-
-                    var diff2 = TargetTankRotation - TankRotation;
-
-                    if (diff2 > MathHelper.Pi)
-                        TargetTankRotation -= MathHelper.TwoPi;
-                    else if (diff2 < -MathHelper.Pi)
-                        TargetTankRotation += MathHelper.TwoPi;*/
-
-                    //TargetTankRotation %= MathHelper.Tau;
-                    //TankRotation %= MathHelper.Tau;
-
                     if (doMoveTowards)
                     {
+                        if (IsTurning)
+                        {
+                            var real = TankRotation + MathHelper.PiOver2;
+                            if (targ - TankRotation >= MathHelper.PiOver2)
+                                TankRotation += MathHelper.Pi;
+                            else if (targ - TankRotation <= -MathHelper.PiOver2)
+                                TankRotation -= MathHelper.Pi;
+                        }
 
                         if (TankRotation > targ - MaximalTurn && TankRotation < targ + MaximalTurn)
                         {
@@ -2248,21 +2247,22 @@ namespace TanksRebirth.GameContent
                     DebugUtils.DrawDebugString(TankGame.spriteBatch, $"{tier}: {poo.Count}", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection), 1, centered: true);
                     if (!Stationary)
                     {
-                        IsObstacleInWay(AiParams.BlockWarinessDistance, Vector2.UnitY.RotatedByRadians(-TargetTankRotation), out var travelPath, out var refPoints, true);
-                        DebugUtils.DrawDebugString(TankGame.spriteBatch, travelPath, GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(travelPath.X, 11, travelPath.Y), View, Projection), 1, centered: true);
+                        IsObstacleInWay(AiParams.BlockWarinessDistance, Vector2.UnitY.RotatedByRadians(-TargetTankRotation), out var travelPos, out var refPoints, true);
+                        DebugUtils.DrawDebugString(TankGame.spriteBatch, travelPos, GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(travelPos.X, 11, travelPos.Y), View, Projection), 1, centered: true);
                         DebugUtils.DrawDebugString(TankGame.spriteBatch, "ENDPOINT", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(rayEnd.X, 11, rayEnd.Y), View, Projection), 1, centered: true);
+
+                        //TankGame.spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), new Rectangle((int)travelPos.X - 1, (int)travelPos.Y - 1, 20, 20), Color.White);
                     }
                 }
             }
 
+            //TankGame.spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), new Rectangle((int)Position.X - 1, (int)Position.Y - 1, 20, 20), Color.White);
+
             var info = new string[]
             {
                 $"Team: {Team}",
-                $"OwnedShellCount: {OwnedShellCount}",
                 $"Armor: {(Armor != null ? Armor.HitPoints : "N/A")}",
-                $"Speed/Max: {Speed}/{MaxSpeed}",
-                $"Pos: {Position}",
-                $"Vel: {Body.LinearVelocity}",
+                $"Rotation/Target: {TankRotation}/{TargetTankRotation + MathHelper.Pi}",
             };
 
             for (int i = 0; i < info.Length; i++)

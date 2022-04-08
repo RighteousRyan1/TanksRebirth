@@ -120,6 +120,10 @@ namespace TanksRebirth.GameContent
 
         public override void Update()
         {
+            CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation);
+            Model.Root.Transform = World;
+
+            Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
             // pi/2 = up
             // 0 = down
             // pi/4 = right
@@ -130,7 +134,7 @@ namespace TanksRebirth.GameContent
             if (IsIngame)
             {
                 if (Client.IsConnected())
-                    Systems.ChatSystem.SendMessage($"PlayerId: {PlayerId} | ClientId: {NetPlay.CurrentClient.Id}", Color.White);
+                    ChatSystem.SendMessage($"PlayerId: {PlayerId} | ClientId: {NetPlay.CurrentClient.Id}", Color.White);
                 if (NetPlay.IsClientMatched(PlayerId) && !IntermissionSystem.IsAwaitingNewMission)
                 {
                     Vector3 mouseWorldPos = GameUtils.GetWorldPosition(GameUtils.MousePosition, -11f);
@@ -174,11 +178,6 @@ namespace TanksRebirth.GameContent
 
             playerControl_isBindPressed = false;
 
-            CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation);
-            Model.Root.Transform = World;
-
-            Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
-
             //if (Client.IsConnected() && IsIngame)
                 //Client.SyncPlayer(this);
 
@@ -202,8 +201,6 @@ namespace TanksRebirth.GameContent
             var rightStick = Input.CurrentGamePadSnapshot.ThumbSticks.Right;
             var dPad = Input.CurrentGamePadSnapshot.DPad;
 
-            var rotationMet = false;
-
             var treadPlaceTimer = (int)Math.Round(14 / Velocity.Length()) != 0 ? (int)Math.Round(14 / Velocity.Length()) : 1;
 
             var accelReal = Acceleration * leftStick.Length() * MaxSpeed * 4;
@@ -218,18 +215,23 @@ namespace TanksRebirth.GameContent
 
             TankRotation = GameUtils.RoughStep(TankRotation, TargetTankRotation, TurningSpeed);
 
-            if (TankRotation > TargetTankRotation - MaximalTurn && TankRotation < TargetTankRotation + MaximalTurn)
-                rotationMet = true;
-            else
+            var rotationMet = TankRotation > TargetTankRotation - MaximalTurn && TankRotation < TargetTankRotation + MaximalTurn;
+
+            if (!rotationMet)
             {
                 if (TankGame.GameUpdateTime % treadPlaceTimer == 0)
                     LayFootprint(false);
-                Velocity = Vector2.Zero;
+                Speed -= Deceleration;
+                if (Speed < 0)
+                    Speed = 0;
                 IsTurning = true;
             }
-
-            if (rotationMet)
+            else
             {
+                Speed += Acceleration;
+                if (Speed > MaxSpeed)
+                    Speed = MaxSpeed;
+                
                 if (leftStick.Length() > 0)
                 {
                     playerControl_isBindPressed = true;

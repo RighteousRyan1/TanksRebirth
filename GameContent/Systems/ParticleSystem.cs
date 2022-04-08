@@ -14,18 +14,12 @@ namespace TanksRebirth.GameContent
         {
 
             foreach (var particle in CurrentParticles)
-            {
-                if (particle != null)
-                    particle.Render();
-            }
+                particle?.Render();
         }
         public static void UpdateParticles()
         {
             foreach (var particle in CurrentParticles)
-            {
-                if (particle != null)
-                    particle.Update();
-            }
+                particle?.Update();
         }
         /// <summary>Creates a particle.</summary>
         /// <param name="position">The initial position of this particle.</param>

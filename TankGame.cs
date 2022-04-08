@@ -298,6 +298,7 @@ namespace TanksRebirth
         protected override void Update(GameTime gameTime)
         {
             //try
+            // ChatSystem.SendMessage(ParticleSystem.CurrentParticles.Count(x => x is not null), Color.White);
             {
                 if (UIElement.delay > 0)
                     UIElement.delay--;
