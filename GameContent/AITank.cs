@@ -145,6 +145,10 @@ namespace TanksRebirth.GameContent
                     tier += 1;
                 if (UI.DifficultyModes.MeanGreens)
                     tier = TankTier.Green;
+                if (UI.DifficultyModes.MasterModBuff && !UI.DifficultyModes.MarbleModBuff)
+                    tier += 9;
+                if (UI.DifficultyModes.MarbleModBuff && !UI.DifficultyModes.MasterModBuff)
+                    tier += 18;
             }
             if (tier == TankTier.Random)
                 tier = (TankTier)GameHandler.GameRand.Next((int)tankRange.Min, (int)tankRange.Max);
@@ -249,8 +253,6 @@ namespace TanksRebirth.GameContent
 
                 if (setTankDefaults)
                     ApplyDefaults();
-
-                Team = Team.Blue;
 
             }
             int index = Array.IndexOf(GameHandler.AllAITanks, GameHandler.AllAITanks.First(tank => tank is null));
@@ -1536,7 +1538,7 @@ namespace TanksRebirth.GameContent
             if (!Dead && IsIngame)
             {
 
-                // targetTankRotation = (GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - GameUtils.MousePosition).ToRotation() - MathHelper.PiOver2;
+                // TargetTankRotation = (GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - GameUtils.MousePosition).ToRotation() - MathHelper.PiOver2;
 
                 timeSinceLastAction++;
 
@@ -1557,7 +1559,6 @@ namespace TanksRebirth.GameContent
 
         public override void Remove()
         {
-
             Dead = true;
             Behaviors = null;
             SpecialBehaviors = null;

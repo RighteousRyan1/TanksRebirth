@@ -83,6 +83,7 @@ namespace TanksRebirth.GameContent.Systems
                         tank.TargetTankRotation = template.Rotation - MathHelper.Pi;
                         tank.TurretRotation = -template.Rotation;
                         tank.Dead = false;
+                        tank.Team = template.Team;
                     }
                     else
                     {
@@ -91,6 +92,7 @@ namespace TanksRebirth.GameContent.Systems
                         tank.Position = template.Position;
                         tank.TankRotation = template.Rotation;
                         tank.Dead = false;
+                        tank.Team = template.Team;
                     }
                 }
             }

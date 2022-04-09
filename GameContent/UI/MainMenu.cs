@@ -78,6 +78,9 @@ namespace TanksRebirth.GameContent.UI
         public static UITextButton BumpUp;
         public static UITextButton MeanGreens;
         public static UITextButton InfiniteLives;
+
+        public static UITextButton MasterModBuff;
+        public static UITextButton MarbleModBuff;
         #endregion
 
         private static float _tnkSpeed = 2.4f;
@@ -386,7 +389,26 @@ namespace TanksRebirth.GameContent.UI
                 OnLeftClick = (elem) => DifficultyModes.InfiniteLives = !DifficultyModes.InfiniteLives
             };
             InfiniteLives.SetDimensions(450, 300, 300, 40);
+
+            MasterModBuff = new("Master Mod Buff", font, Color.White)
+            {
+                IsVisible = false,
+                Tooltip = "Vanilla tanks become their master mod counterparts.",
+                OnLeftClick = (elem) => DifficultyModes.MasterModBuff = !DifficultyModes.MasterModBuff
+            };
+            MasterModBuff.SetDimensions(450, 350, 300, 40);
+
+            MarbleModBuff = new("Marble Mod Buff", font, Color.White)
+            {
+                IsVisible = false,
+                Tooltip = "Vanilla tanks become their marble mod counterparts.",
+                OnLeftClick = (elem) => DifficultyModes.MarbleModBuff = !DifficultyModes.MarbleModBuff
+            };
+            MarbleModBuff.SetDimensions(450, 400, 300, 40);
         }
+
+        
+        
 
         private static void SetCampaignDisplay()
         {
@@ -500,6 +522,8 @@ namespace TanksRebirth.GameContent.UI
             BumpUp.IsVisible = visible;
             MeanGreens.IsVisible = visible;
             InfiniteLives.IsVisible = visible;
+            MasterModBuff.IsVisible = visible;
+            MarbleModBuff.IsVisible = visible;
         }
         internal static void SetPrimaryMenuButtonsVisibility(bool visible)
         {
@@ -537,6 +561,8 @@ namespace TanksRebirth.GameContent.UI
             BumpUp.Color = DifficultyModes.BumpUp ? Color.Lime : Color.Red;
             MeanGreens.Color = DifficultyModes.MeanGreens ? Color.Lime : Color.Red;
             InfiniteLives.Color = DifficultyModes.InfiniteLives ? Color.Lime : Color.Red;
+            MasterModBuff.Color = DifficultyModes.MasterModBuff ? Color.Lime : Color.Red;
+            MarbleModBuff.Color = DifficultyModes.MarbleModBuff ? Color.Lime : Color.Red;
 
             Theme.Volume = TankGame.Settings.MusicVolume;
 
@@ -760,5 +786,9 @@ namespace TanksRebirth.GameContent.UI
         public static bool BumpUp { get; set; }
         public static bool MeanGreens { get; set; }
         public static bool InfiniteLives { get; set; }
+
+        public static bool MasterModBuff { get; set; }
+        
+        public static bool MarbleModBuff { get; set; }
     }
 }
