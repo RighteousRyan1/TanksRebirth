@@ -36,7 +36,15 @@ namespace TanksRebirth.GameContent.Systems
         public void LoadMission(int id)
         {
             LoadedMission = CachedMissions[id];
+
             CurrentMissionId = id;
+
+            TrackedSpawnPoints = new (Vector2, bool)[LoadedMission.Tanks.Length];
+            for (int i = 0; i < LoadedMission.Tanks.Length; i++)
+            {
+                TrackedSpawnPoints[i].Item1 = LoadedMission.Tanks[i].Position;
+                TrackedSpawnPoints[i].Item2 = true;
+            }
         }
 
         /// <summary>Loads an array of <see cref="Mission"/>s into memory.</summary>
@@ -60,32 +68,51 @@ namespace TanksRebirth.GameContent.Systems
             CurrentMissionId++;
 
             LoadedMission = CachedMissions[CurrentMissionId];
+
+            TrackedSpawnPoints = new (Vector2, bool)[LoadedMission.Tanks.Length];
+            for (int i = 0; i < LoadedMission.Tanks.Length; i++)
+            {
+                TrackedSpawnPoints[i].Item1 = LoadedMission.Tanks[i].Position;
+                TrackedSpawnPoints[i].Item2 = true;
+            }
+            // run line 120 and 121 in each when i get back
         }
+
+        public (Vector2, bool)[] TrackedSpawnPoints; // position of spawn, alive
 
         /// <summary>Sets up the <see cref="Mission"/> that is loaded.</summary>
         /// <param name="spawnNewSet">If true, will spawn all tanks as if it's the first time the player(s) has/have entered this mission.</param>
         public void SetupLoadedMission(bool spawnNewSet)
         {
-            if (spawnNewSet)
+
+            for (int a = 0; a < GameHandler.AllTanks.Length; a++)
+                GameHandler.AllTanks[a]?.Remove();
+            for (int i = 0; i < LoadedMission.Tanks.Length; i++)
             {
-                for (int a = 0; a < GameHandler.AllTanks.Length; a++)
-                    GameHandler.AllTanks[a]?.Remove();
-                for (int i = 0; i < LoadedMission.Tanks.Length; i++)
+                var template = LoadedMission.Tanks[i];
+
+                if (!spawnNewSet)
                 {
-                    var template = LoadedMission.Tanks[i];
-
-                    if (!template.IsPlayer)
+                    if (TrackedSpawnPoints[i].Item2) // check for alive tank
                     {
-                        var tank = template.GetAiTank();
+                        if (!template.IsPlayer)
+                        {
+                            var tank = template.GetAiTank();
 
-                        tank.Position = template.Position;
-                        tank.TankRotation = template.Rotation;
-                        tank.TargetTankRotation = template.Rotation - MathHelper.Pi;
-                        tank.TurretRotation = -template.Rotation;
-                        tank.Dead = false;
-                        tank.Team = template.Team;
+                            tank.Position = template.Position;
+                            tank.TankRotation = template.Rotation;
+                            tank.TargetTankRotation = template.Rotation - MathHelper.Pi;
+                            tank.TurretRotation = -template.Rotation;
+                            tank.Dead = false;
+                            tank.Team = template.Team;
+
+                            tank.OnDestroy += (sender, e) =>
+                            {
+                                TrackedSpawnPoints[Array.IndexOf(TrackedSpawnPoints, TrackedSpawnPoints.First(pos => pos.Item1 == template.Position))].Item2 = false; // make sure the tank is not spawned again
+                            };
+                        }
                     }
-                    else
+                    if (template.IsPlayer)
                     {
                         var tank = template.GetPlayerTank();
 
@@ -95,14 +122,10 @@ namespace TanksRebirth.GameContent.Systems
                         tank.Team = template.Team;
                     }
                 }
-            }
-            else
-            {
-                // if false, don't spawn any new tanks and place the tanks in the same positions as they were before
-                for (int i = 0; i < LoadedMission.Tanks.Length; i++)
+                else
                 {
-                    var template = LoadedMission.Tanks[i];
-
+                    TrackedSpawnPoints[i].Item1 = LoadedMission.Tanks[i].Position;
+                    TrackedSpawnPoints[i].Item2 = true;
                     if (!template.IsPlayer)
                     {
                         var tank = template.GetAiTank();
@@ -112,6 +135,12 @@ namespace TanksRebirth.GameContent.Systems
                         tank.TargetTankRotation = template.Rotation - MathHelper.Pi;
                         tank.TurretRotation = -template.Rotation;
                         tank.Dead = false;
+                        tank.Team = template.Team;
+
+                        tank.OnDestroy += (sender, e) =>
+                        {
+                            TrackedSpawnPoints[Array.IndexOf(TrackedSpawnPoints, TrackedSpawnPoints.First(pos => pos.Item1 == template.Position))].Item2 = false; // make sure the tank is not spawned again
+                        };
                     }
                     else
                     {
@@ -120,6 +149,7 @@ namespace TanksRebirth.GameContent.Systems
                         tank.Position = template.Position;
                         tank.TankRotation = template.Rotation;
                         tank.Dead = false;
+                        tank.Team = template.Team;
                     }
                 }
             }
@@ -178,6 +208,7 @@ namespace TanksRebirth.GameContent.Systems
             {
                 campaign.LoadedMission = campaign.CachedMissions[0];
                 campaign.Name = new DirectoryInfo(path).Name;
+                campaign.TrackedSpawnPoints = new (Vector2, bool)[campaign.LoadedMission.Tanks.Length];
             }
 
 

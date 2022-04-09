@@ -78,6 +78,8 @@ namespace TanksRebirth.GameContent
         #region Fields / Properties
         public Body Body { get; set; } = new();
 
+        public event EventHandler OnDestroy;
+
         public int WorldId { get; set; }
 
         /// <summary>This <see cref="Tank"/>'s model.</summary>
@@ -287,7 +289,7 @@ namespace TanksRebirth.GameContent
                 Destroy(context);
         }
         public virtual void Destroy(TankHurtContext context) {
-
+            OnDestroy?.Invoke(this, new());
             if (CollisionsWorld.BodyList.Contains(Body))
             {
                 CollisionsWorld.Remove(Body);

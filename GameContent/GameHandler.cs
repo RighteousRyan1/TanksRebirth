@@ -263,7 +263,7 @@ namespace TanksRebirth.GameContent
             if (IntermissionSystem.CurrentWaitTime == 220)
                 BeginIntroSequence();
             if (IntermissionSystem.CurrentWaitTime == IntermissionSystem.WaitTime / 2 && IntermissionSystem.CurrentWaitTime != 0)
-                LoadedCampaign.SetupLoadedMission(/*AllPlayerTanks.Count(tnk => tnk != null && !tnk.Dead) > 0*/ true);
+                LoadedCampaign.SetupLoadedMission(AllPlayerTanks.Count(tnk => tnk != null && !tnk.Dead) > 0);
             if (IntermissionSystem.CurrentWaitTime > 240 && IntermissionSystem.CurrentWaitTime < IntermissionSystem.WaitTime - 150)
             {
                 if (PlayerTank.Lives <= 0)
