@@ -173,61 +173,62 @@ namespace TanksRebirth.GameContent
             if (UI.DifficultyModes.BulletHell)
                 RicochetCount *= 3;
 
-            GameHandler.OnMissionStart += () =>
+            GameHandler.OnMissionStart += OnMissionStart;
+        }
+        void OnMissionStart()
+        {
+            if (Invisible && !Dead)
             {
-                if (Invisible && !Dead)
+                var invis = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_invisible");
+                SoundPlayer.PlaySoundInstance(invis, SoundContext.Effect, 0.3f);
+
+                var lightParticle = ParticleSystem.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_particle"));
+
+                lightParticle.Scale = new(0.25f);
+                lightParticle.Opacity = 0f;
+                lightParticle.is2d = true;
+
+                lightParticle.UniqueBehavior = (lp) =>
                 {
-                    var invis = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_invisible");
-                    SoundPlayer.PlaySoundInstance(invis, SoundContext.Effect, 0.3f);
+                    lp.position = Position3D;
+                    if (lp.Scale.X < 5f)
+                        GeometryUtils.Add(ref lp.Scale, 0.12f);
+                    if (lp.Opacity < 1f && lp.Scale.X < 5f)
+                        lp.Opacity += 0.02f;
 
-                    var lightParticle = ParticleSystem.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_particle"));
+                    if (lp.lifeTime > 90)
+                        lp.Opacity -= 0.005f;
 
-                    lightParticle.Scale = new(0.25f);
-                    lightParticle.Opacity = 0f;
-                    lightParticle.is2d = true;
+                    if (lp.Scale.X < 0f)
+                        lp.Destroy();
+                };
 
-                    lightParticle.UniqueBehavior = (lp) =>
+                const int NUM_LOCATIONS = 8;
+
+                for (int i = 0; i < NUM_LOCATIONS; i++)
+                {
+                    var lp = ParticleSystem.MakeParticle(Position3D + new Vector3(0, 5, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
+
+                    var velocity = Vector2.UnitY.RotatedByRadians(MathHelper.ToRadians(360f / NUM_LOCATIONS * i));
+
+                    lp.Scale = new(1f);
+
+                    lp.UniqueBehavior = (elp) =>
                     {
-                        lp.position = Position3D;
-                        if (lp.Scale.X < 5f)
-                            GeometryUtils.Add(ref lp.Scale, 0.12f);
-                        if (lp.Opacity < 1f && lp.Scale.X < 5f)
-                            lp.Opacity += 0.02f;
+                        elp.position.X += velocity.X;
+                        elp.position.Z += velocity.Y;
 
-                        if (lp.lifeTime > 90)
-                            lp.Opacity -= 0.005f;
-
-                        if (lp.Scale.X < 0f)
-                            lp.Destroy();
-                    };
-
-                    const int NUM_LOCATIONS = 8;
-
-                    for (int i = 0; i < NUM_LOCATIONS; i++)
-                    {
-                        var lp = ParticleSystem.MakeParticle(Position3D + new Vector3(0, 5, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
-
-                        var velocity = Vector2.UnitY.RotatedByRadians(MathHelper.ToRadians(360f / NUM_LOCATIONS * i));
-
-                        lp.Scale = new(1f);
-
-                        lp.UniqueBehavior = (elp) =>
+                        if (elp.lifeTime > 15)
                         {
-                            elp.position.X += velocity.X;
-                            elp.position.Z += velocity.Y;
+                            GeometryUtils.Add(ref elp.Scale, -0.03f);
+                            elp.Opacity -= 0.03f;
+                        }
 
-                            if (elp.lifeTime > 15)
-                            {
-                                GeometryUtils.Add(ref elp.Scale, -0.03f);
-                                elp.Opacity -= 0.03f;
-                            }
-
-                            if (elp.Scale.X <= 0f || elp.Opacity <= 0f)
-                                elp.Destroy();
-                        };
-                    }
+                        if (elp.Scale.X <= 0f || elp.Opacity <= 0f)
+                            elp.Destroy();
+                    };
                 }
-            };
+            }
         }
 
         /// <summary>Update this <see cref="Tank"/>.</summary>
@@ -500,6 +501,7 @@ namespace TanksRebirth.GameContent
         {
             if (CollisionsWorld.BodyList.Contains(Body))
                 CollisionsWorld.Remove(Body);
+            GameHandler.OnMissionStart -= OnMissionStart;
         }
     }
     public class TankFootprint

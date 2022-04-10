@@ -109,7 +109,7 @@ namespace TanksRebirth
         public static double LogicFPS { get; private set; }
         public static double RenderFPS { get; private set; }
 
-        public static long TotalMemoryUsed => GC.GetTotalMemory(true);
+        public static long TotalMemoryUsed => GC.GetTotalMemory(false);
 
         public static GameTime LastGameTime { get; private set; }
         public static uint GameUpdateTime { get; private set; }
