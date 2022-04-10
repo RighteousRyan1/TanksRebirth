@@ -263,8 +263,11 @@ namespace TanksRebirth.GameContent
             if (CurMineCooldown > 0)
                 CurMineCooldown--;
 
-           if (CurShootStun > 0 || CurMineStun > 0 || Stationary && IsIngame)
+            if (CurShootStun > 0 || CurMineStun > 0 || Stationary && IsIngame)
+            {
+                Body.LinearVelocity = Vector2.Zero;
                 Velocity = Vector2.Zero;
+            }
         }
         /// <summary>Get this <see cref="Tank"/>'s general stats.</summary>
         public string GetGeneralStats()
