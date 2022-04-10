@@ -32,21 +32,17 @@
         Granite,
         Bubblegum,
         Water,
-        Crimson,
         Tiger,
+        Crimson,
         Fade,
         Creeper,
         Gamma,
         Marble,
 
         Explosive,
-
         Electro,
-
         RocketDefender,
-
         Assassin,
-
         Commando
     }
 

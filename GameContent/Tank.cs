@@ -497,9 +497,9 @@ namespace TanksRebirth.GameContent
         public Armor Armor { get; set; }
 
         public virtual void Remove() 
-        { 
+        {
             if (CollisionsWorld.BodyList.Contains(Body))
-                CollisionsWorld.Remove(Body); 
+                CollisionsWorld.Remove(Body);
         }
     }
     public class TankFootprint

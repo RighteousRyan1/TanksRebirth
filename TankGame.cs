@@ -311,7 +311,8 @@ namespace TanksRebirth
                 UIElement.UpdateElements();
                 GameUI.UpdateButtons();
 
-                DiscordRichPresence.Update();
+                if (GameUpdateTime % 30 == 0)
+                    DiscordRichPresence.Update();
 
                 LastGameTime = gameTime;
 
@@ -344,7 +345,7 @@ namespace TanksRebirth
                         }
                     }
 
-                    GameCamera.SetPosition(new Vector3(0, 0, 350));
+                    /*GameCamera.SetPosition(new Vector3(0, 0, 350));
                     GameCamera.SetLookAt(new Vector3(0, 0, 0));
                     GameCamera.Zoom(DEFAULT_ZOOM * AddativeZoom);
 
@@ -355,7 +356,17 @@ namespace TanksRebirth
 
                     GameCamera.Translate(new Vector3(CameraFocusOffset.X, -CameraFocusOffset.Y + 40, 0));
 
-                    GameCamera.SetViewingDistances(-2000f, 5000f);
+                    GameCamera.SetViewingDistances(-2000f, 5000f);*/
+
+                    GameView =
+                            Matrix.CreateScale(DEFAULT_ZOOM * AddativeZoom) *
+                            Matrix.CreateLookAt(new(0f, 0, 350f), Vector3.Zero, Vector3.Up) *
+                            Matrix.CreateRotationX(CameraRotationVector.Y) *
+                            Matrix.CreateRotationY(CameraRotationVector.X) *
+                            Matrix.CreateTranslation(CameraFocusOffset.X, -CameraFocusOffset.Y + 40, 0);
+                    //Matrix.CreateTranslation(CameraFocusOffset.X, -CameraFocusOffset.Y, 0);
+
+                    GameProjection = Matrix.CreateOrthographic(GameUtils.WindowWidth, GameUtils.WindowHeight, -2000, 5000);
                 }
                 else
                 {
@@ -364,13 +375,15 @@ namespace TanksRebirth
 
                     if (x is not null && Array.IndexOf(GameHandler.AllAITanks, x) > -1)
                     {
-                        pos = x.Position3D;
+                        /*pos = x.Position3D;
                         var t = GameUtils.MousePosition.X / GameUtils.WindowWidth;
-                        GameCamera.Zoom(DEFAULT_ZOOM * AddativeZoom);
-                        GameCamera.SetFov(90);
-                        GameCamera.SetPosition(pos);
+                        // GameCamera.Zoom(DEFAULT_ZOOM * AddativeZoom);
+                        GameCamera.SetPosition(pos - new Vector3(0, 0, 100).FlattenZ().RotatedByRadians(-x.TurretRotation).ExpandZ());
 
-                        GameCamera.SetLookAt(pos + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-x.TurretRotation).ExpandZ());
+                        GameCamera.SetLookAt(pos + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-x.TurretRotation).ExpandZ());                        
+                        GameCamera.Zoom(GameUtils.MousePosition.X / GameUtils.WindowWidth * 5);
+                        GameCamera.SetFov(90);
+                        //GameCamera.SetPosition(pos);
                         //GameCamera.RotateY(GameUtils.MousePosition.X / 400);
                         //GameCamera.RotateY(DEFAULT_ORTHOGRAPHIC_ANGLE);
                         //GameCamera.RotateX(GameUtils.MousePosition.X / 400);
@@ -382,7 +395,15 @@ namespace TanksRebirth
 
                         GameCamera.SetViewingDistances(0.1f, 10000f);
 
-                        GameCamera.SetCameraType(CameraType.FieldOfView);
+                        GameCamera.SetCameraType(CameraType.FieldOfView);*/
+
+                        pos = x.Position.ExpandZ();
+
+                        GameView = Matrix.CreateLookAt(pos,
+                            pos + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-x.TurretRotation).ExpandZ()
+                            , Vector3.Up) * Matrix.CreateRotationX(CameraRotationVector.Y - MathHelper.PiOver4) * Matrix.CreateRotationY(CameraRotationVector.X) * Matrix.CreateTranslation(0, -20, -40);
+
+                        GameProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000);
                     }
                 }
 
@@ -411,8 +432,8 @@ namespace TanksRebirth
 
                 FixedUpdate(gameTime);
 
-                GameView = GameCamera.GetView();
-                GameProjection = GameCamera.GetProjection();
+                //GameView = GameCamera.GetView();
+                //GameProjection = GameCamera.GetProjection();
 
                 LogicTime = UpdateStopwatch.Elapsed;
 
