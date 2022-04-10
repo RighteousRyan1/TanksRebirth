@@ -277,7 +277,7 @@ namespace TanksRebirth.GameContent
 
             if (Dead || Immortal)
                 return;
-
+            // ChatSystem.SendMessage(context, Color.White, "<Debug>");
             if (Armor is not null)
             {
                 if (Armor.HitPoints > 0)

@@ -103,7 +103,7 @@ namespace TanksRebirth.GameContent
             Acceleration = 0.3f;
             Deceleration = 0.6f;
             TurningSpeed = 0.1f;
-            MaximalTurn = MathHelper.ToDegrees(15);
+            MaximalTurn = MathHelper.ToDegrees(10);
             // Armor = new(this, 100);
 
             ShellType = ShellTier.Player;
@@ -280,7 +280,6 @@ namespace TanksRebirth.GameContent
                 LayMine();
 
             IsTurning = false;
-            bool rotationMet = false;
 
             var norm = Vector2.Normalize(preterbedVelocity);
 
@@ -290,16 +289,23 @@ namespace TanksRebirth.GameContent
 
             TankRotation = GameUtils.RoughStep(TankRotation, TargetTankRotation, TurningSpeed);
 
-            if (TankRotation > TargetTankRotation - MaximalTurn && TankRotation < TargetTankRotation + MaximalTurn)
-                rotationMet = true;
-            else
+            var rotationMet = TankRotation > TargetTankRotation - MaximalTurn && TankRotation < TargetTankRotation + MaximalTurn;
+            if (!rotationMet)
             {
                 // treadPlaceTimer += MaxSpeed / 5;
                 if (TankGame.GameUpdateTime % treadPlaceTimer == 0)
                     LayFootprint(false);
+                Body.LinearVelocity = Vector2.Zero;
                 Velocity = Vector2.Zero;
                 IsTurning = true;
             }
+
+            TankRotation %= MathHelper.Tau;
+
+            if (TargetTankRotation - TankRotation >= MathHelper.PiOver2)
+                TankRotation += MathHelper.Pi;
+            else if (TargetTankRotation - TankRotation <= -MathHelper.PiOver2)
+                TankRotation -= MathHelper.Pi;
 
             preterbedVelocity = Vector2.Zero;
 
@@ -336,16 +342,6 @@ namespace TanksRebirth.GameContent
                 if (rotationMet)
                     Velocity.X += Acceleration;
             }
-
-            TankRotation %= MathHelper.Tau;
-
-            if (TargetTankRotation - TankRotation >= MathHelper.PiOver2)
-                TankRotation += MathHelper.Pi;
-            else if (TargetTankRotation - TankRotation <= -MathHelper.PiOver2)
-                TankRotation -= MathHelper.Pi;
-
-            //if (playerControl_isBindPressed)
-                // GameHandler.ClientLog.Write(targetTnkRotation - TankRotation, LogType.Info);
         }
 
         public override void Damage(TankHurtContext context)
