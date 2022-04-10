@@ -155,8 +155,6 @@ namespace TanksRebirth.GameContent
                             }
                         }
                     }
-                    else
-                        Velocity = Vector2.Zero;
                 }
 
                 if (GameHandler.InMission)
@@ -427,9 +425,10 @@ namespace TanksRebirth.GameContent
                 var pathHitbox = new Rectangle((int)pathPos.X - 3, (int)pathPos.Y - 3, 6, 6);
 
                 // Why is velocity passed by reference here lol
-                Collision.HandleCollisionSimple_ForBlocks(pathHitbox, pathDir, ref dummyPos, out var dir, out var type, false, (c) => c.IsSolid);
+                Collision.HandleCollisionSimple_ForBlocks(pathHitbox, pathDir, ref dummyPos, out var dir, out var type, out bool corner, false, (c) => c.IsSolid);
 
-
+                if (corner)
+                    return;
                 switch (dir)
                 {
                     case CollisionDirection.Up:

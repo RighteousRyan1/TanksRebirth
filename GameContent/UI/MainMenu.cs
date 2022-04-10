@@ -81,6 +81,8 @@ namespace TanksRebirth.GameContent.UI
 
         public static UITextButton MasterModBuff;
         public static UITextButton MarbleModBuff;
+
+        public static UITextButton MachineGuns;
         #endregion
 
         private static float _tnkSpeed = 2.4f;
@@ -301,7 +303,7 @@ namespace TanksRebirth.GameContent.UI
                 Tooltip = "ALL tanks will begin to look for angles" +
                 "\non you (and other enemies) outside of their immediate aim." +
                 "\nDo note that this uses significantly more CPU power.",
-                OnLeftClick = (elem) => DifficultyModes.TanksAreCalculators = !DifficultyModes.TanksAreCalculators
+                OnLeftClick = (elem) => Difficulties.TanksAreCalculators = !Difficulties.TanksAreCalculators
             };
             TanksAreCalculators.SetDimensions(100, 300, 300, 40);
 
@@ -311,7 +313,7 @@ namespace TanksRebirth.GameContent.UI
                 Tooltip = "Makes yellow tanks absurdly more dangerous by" +
                 "\nturning them into mine-laying machines." +
                 "\nOh, yeah. They're immune to explosions now too.",
-                OnLeftClick = (elem) => DifficultyModes.PieFactory = !DifficultyModes.PieFactory
+                OnLeftClick = (elem) => Difficulties.PieFactory = !Difficulties.PieFactory
             };
             PieFactory.SetDimensions(100, 350, 300, 40);
 
@@ -320,7 +322,7 @@ namespace TanksRebirth.GameContent.UI
                 IsVisible = false,
                 Tooltip = "Mines are now 2x as deadly!" +
                 "\nTheir explosion radii are now 2x as big!",
-                OnLeftClick = (elem) => DifficultyModes.UltraMines = !DifficultyModes.UltraMines
+                OnLeftClick = (elem) => Difficulties.UltraMines = !Difficulties.UltraMines
             };
             UltraMines.SetDimensions(100, 400, 300, 40);
 
@@ -328,7 +330,7 @@ namespace TanksRebirth.GameContent.UI
             {
                 IsVisible = false,
                 Tooltip = "Ricochet counts are now tripled!",
-                OnLeftClick = (elem) => DifficultyModes.BulletHell = !DifficultyModes.BulletHell
+                OnLeftClick = (elem) => Difficulties.BulletHell = !Difficulties.BulletHell
             };
             BulletHell.SetDimensions(100, 450, 300, 40);
 
@@ -336,7 +338,7 @@ namespace TanksRebirth.GameContent.UI
             {
                 IsVisible = false,
                 Tooltip = "Every single non-player tank is now invisible and no longer lay tracks!",
-                OnLeftClick = (elem) => DifficultyModes.AllInvisible = !DifficultyModes.AllInvisible
+                OnLeftClick = (elem) => Difficulties.AllInvisible = !Difficulties.AllInvisible
             };
             AllInvisible.SetDimensions(100, 500, 300, 40);
 
@@ -345,7 +347,7 @@ namespace TanksRebirth.GameContent.UI
                 IsVisible = false,
                 Tooltip = "Every single non-player tank is now stationary." +
                 "\nThis should REDUCE difficulty.",
-                OnLeftClick = (elem) => DifficultyModes.AllStationary = !DifficultyModes.AllStationary
+                OnLeftClick = (elem) => Difficulties.AllStationary = !Difficulties.AllStationary
             };
             AllStationary.SetDimensions(100, 550, 300, 40);
 
@@ -353,7 +355,7 @@ namespace TanksRebirth.GameContent.UI
             {
                 IsVisible = false,
                 Tooltip = "Every enemy tank now has homing bullets.",
-                OnLeftClick = (elem) => DifficultyModes.AllHoming = !DifficultyModes.AllHoming
+                OnLeftClick = (elem) => Difficulties.AllHoming = !Difficulties.AllHoming
             };
             AllHoming.SetDimensions(100, 600, 300, 40);
 
@@ -361,7 +363,7 @@ namespace TanksRebirth.GameContent.UI
             {
                 IsVisible = false,
                 Tooltip = "Every single non-player tank has 3 armor points added to it.",
-                OnLeftClick = (elem) => DifficultyModes.Armored = !DifficultyModes.Armored
+                OnLeftClick = (elem) => Difficulties.Armored = !Difficulties.Armored
             };
             Armored.SetDimensions(100, 650, 300, 40);
 
@@ -369,7 +371,7 @@ namespace TanksRebirth.GameContent.UI
             {
                 IsVisible = false,
                 Tooltip = "Makes the game a bit harder by \"Bumping up\" each tank, giving them one extra tier.",
-                OnLeftClick = (elem) => DifficultyModes.BumpUp = !DifficultyModes.BumpUp
+                OnLeftClick = (elem) => Difficulties.BumpUp = !Difficulties.BumpUp
             };
             BumpUp.SetDimensions(100, 700, 300, 40);
 
@@ -378,7 +380,7 @@ namespace TanksRebirth.GameContent.UI
                 IsVisible = false,
                 Tooltip = "Makes every tank a green tank." +
                 "\n\"Bump Up\" effects are nullified.",
-                OnLeftClick = (elem) => DifficultyModes.MeanGreens = !DifficultyModes.MeanGreens
+                OnLeftClick = (elem) => Difficulties.MeanGreens = !Difficulties.MeanGreens
             };
             MeanGreens.SetDimensions(100, 750, 300, 40);
 
@@ -386,25 +388,36 @@ namespace TanksRebirth.GameContent.UI
             {
                 IsVisible = false,
                 Tooltip = "You now have infinite lives. Have fun!",
-                OnLeftClick = (elem) => DifficultyModes.InfiniteLives = !DifficultyModes.InfiniteLives
+                OnLeftClick = (elem) => Difficulties.InfiniteLives = !Difficulties.InfiniteLives
             };
             InfiniteLives.SetDimensions(450, 300, 300, 40);
 
             MasterModBuff = new("Master Mod Buff", font, Color.White)
             {
                 IsVisible = false,
-                Tooltip = "Vanilla tanks become their master mod counterparts.",
-                OnLeftClick = (elem) => DifficultyModes.MasterModBuff = !DifficultyModes.MasterModBuff
+                Tooltip = "Vanilla tanks become their master mod counterparts." +
+                "\nWill not work with \"Marble Mod Buff\" enabled.",
+                OnLeftClick = (elem) => Difficulties.MasterModBuff = !Difficulties.MasterModBuff
             };
             MasterModBuff.SetDimensions(450, 350, 300, 40);
 
             MarbleModBuff = new("Marble Mod Buff", font, Color.White)
             {
                 IsVisible = false,
-                Tooltip = "Vanilla tanks become their marble mod counterparts.",
-                OnLeftClick = (elem) => DifficultyModes.MarbleModBuff = !DifficultyModes.MarbleModBuff
+                Tooltip = "Vanilla tanks become their marble mod counterparts." +
+                "\nWill not work with \"Master Mod Buff\" enabled.",
+                OnLeftClick = (elem) => Difficulties.MarbleModBuff = !Difficulties.MarbleModBuff
             };
             MarbleModBuff.SetDimensions(450, 400, 300, 40);
+
+            // initialize "MachineGuns"
+            MachineGuns = new("Machine Guns", font, Color.White)
+            {
+                IsVisible = false,
+                Tooltip = "Every tank now sprays bullets at you.",
+                OnLeftClick = (elem) => Difficulties.MachineGuns = !Difficulties.MachineGuns
+            };
+            MachineGuns.SetDimensions(450, 450, 300, 40);
         }
 
         
@@ -524,6 +537,7 @@ namespace TanksRebirth.GameContent.UI
             InfiniteLives.IsVisible = visible;
             MasterModBuff.IsVisible = visible;
             MarbleModBuff.IsVisible = visible;
+            MachineGuns.IsVisible = visible;
         }
         internal static void SetPrimaryMenuButtonsVisibility(bool visible)
         {
@@ -550,19 +564,20 @@ namespace TanksRebirth.GameContent.UI
 
         public static void Update()
         {
-            TanksAreCalculators.Color = DifficultyModes.TanksAreCalculators ? Color.Lime : Color.Red;
-            PieFactory.Color = DifficultyModes.PieFactory ? Color.Lime : Color.Red;
-            UltraMines.Color = DifficultyModes.UltraMines ? Color.Lime : Color.Red;
-            BulletHell.Color = DifficultyModes.BulletHell ? Color.Lime : Color.Red;
-            AllInvisible.Color = DifficultyModes.AllInvisible ? Color.Lime : Color.Red;
-            AllStationary.Color = DifficultyModes.AllStationary ? Color.Lime : Color.Red;
-            AllHoming.Color = DifficultyModes.AllHoming ? Color.Lime : Color.Red;
-            Armored.Color = DifficultyModes.Armored ? Color.Lime : Color.Red;
-            BumpUp.Color = DifficultyModes.BumpUp ? Color.Lime : Color.Red;
-            MeanGreens.Color = DifficultyModes.MeanGreens ? Color.Lime : Color.Red;
-            InfiniteLives.Color = DifficultyModes.InfiniteLives ? Color.Lime : Color.Red;
-            MasterModBuff.Color = DifficultyModes.MasterModBuff ? Color.Lime : Color.Red;
-            MarbleModBuff.Color = DifficultyModes.MarbleModBuff ? Color.Lime : Color.Red;
+            TanksAreCalculators.Color = Difficulties.TanksAreCalculators ? Color.Lime : Color.Red;
+            PieFactory.Color = Difficulties.PieFactory ? Color.Lime : Color.Red;
+            UltraMines.Color = Difficulties.UltraMines ? Color.Lime : Color.Red;
+            BulletHell.Color = Difficulties.BulletHell ? Color.Lime : Color.Red;
+            AllInvisible.Color = Difficulties.AllInvisible ? Color.Lime : Color.Red;
+            AllStationary.Color = Difficulties.AllStationary ? Color.Lime : Color.Red;
+            AllHoming.Color = Difficulties.AllHoming ? Color.Lime : Color.Red;
+            Armored.Color = Difficulties.Armored ? Color.Lime : Color.Red;
+            BumpUp.Color = Difficulties.BumpUp ? Color.Lime : Color.Red;
+            MeanGreens.Color = Difficulties.MeanGreens ? Color.Lime : Color.Red;
+            InfiniteLives.Color = Difficulties.InfiniteLives ? Color.Lime : Color.Red;
+            MasterModBuff.Color = Difficulties.MasterModBuff ? Color.Lime : Color.Red;
+            MarbleModBuff.Color = Difficulties.MarbleModBuff ? Color.Lime : Color.Red;
+            MachineGuns.Color = Difficulties.MachineGuns ? Color.Lime : Color.Red;
 
             Theme.Volume = TankGame.Settings.MusicVolume;
 
@@ -771,24 +786,5 @@ namespace TanksRebirth.GameContent.UI
                 TankGame.spriteBatch.DrawString(TankGame.TextFont, keyDisplay, new(12, 12), Color.White, new(0.6f), 0f, Vector2.Zero);
             }
         }
-    }
-
-    public static class DifficultyModes
-    {
-        public static bool TanksAreCalculators { get; set; }
-        public static bool PieFactory { get; set; }
-        public static bool UltraMines { get; set; }
-        public static bool BulletHell { get; set; }
-        public static bool AllInvisible { get; set; }
-        public static bool AllStationary { get; set; }
-        public static bool AllHoming { get; set; }
-        public static bool Armored { get; set; }
-        public static bool BumpUp { get; set; }
-        public static bool MeanGreens { get; set; }
-        public static bool InfiniteLives { get; set; }
-
-        public static bool MasterModBuff { get; set; }
-        
-        public static bool MarbleModBuff { get; set; }
     }
 }

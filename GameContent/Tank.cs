@@ -132,7 +132,7 @@ namespace TanksRebirth.GameContent
         public int MineCooldown { get; set; }
         /// <summary>How many times the <see cref="Shell"/> this <see cref="Tank"/> shoots ricochets.</summary>
         public int RicochetCount { get; set; }
-        /// <summary>The amount of <see cref="Shell"/>s this <see cref="Tank"/> can own on-scren at any given time.</summary>
+        /// <summary>The amount of <see cref="Shell"/>s this <see cref="Tank"/> can own on-screen at any given time.</summary>
         public int ShellLimit { get; set; }
         /// <summary>How fast this <see cref="Tank"/> turns.</summary>
         public float TurningSpeed { get; set; } = 1f;
@@ -162,7 +162,7 @@ namespace TanksRebirth.GameContent
         /// <summary>Apply all the default parameters for this <see cref="Tank"/>.</summary>
         public virtual void ApplyDefaults() { }
 
-        public virtual void Initialize() 
+        public virtual void Initialize()
         {
             if (IsIngame)
             {
@@ -170,8 +170,17 @@ namespace TanksRebirth.GameContent
                 // Body.LinearDamping = Deceleration * 10;
             }
 
-            if (UI.DifficultyModes.BulletHell)
+            if (Difficulties.BulletHell)
                 RicochetCount *= 3;
+            if (Difficulties.MachineGuns)
+            {
+                ShellCooldown = 5;
+                ShellLimit = 50;
+                ShootStun = 0;
+
+                if (this is AITank tank)
+                    tank.AiParams.Inaccuracy *= 2;
+            }
 
             GameHandler.OnMissionStart += OnMissionStart;
         }
@@ -408,6 +417,11 @@ namespace TanksRebirth.GameContent
             shell.owner = this;
             shell.ricochets = RicochetCount;
 
+            /*var force = (Position - newPos) * Recoil;
+            Velocity = force;
+            Body.ApplyForce(force);*/
+
+            #region Particles
             var hit = ParticleSystem.MakeParticle(shell.Position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
             var smoke = ParticleSystem.MakeParticle(shell.Position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
 
@@ -450,6 +464,7 @@ namespace TanksRebirth.GameContent
                         part.Destroy();
                 }
             };
+            #endregion
 
             OwnedShellCount++;
 
@@ -475,12 +490,12 @@ namespace TanksRebirth.GameContent
         }
 
         /// <summary>The color of particle <see cref="Tank"/> emits upon destruction.</summary>
-        public Color TankDestructionColor { get; set; }
+        public Color TankDestructionColor { get; set; } = Color.Black;
 
-        public int CurShootStun { get; private set; }
-        public int CurShootCooldown { get; private set; }
-        public int CurMineCooldown { get; private set; }
-        public int CurMineStun { get; private set; }
+        public int CurShootStun { get; private set; } = 0;
+        public int CurShootCooldown { get; private set; } = 0;
+        public int CurMineCooldown { get; private set; } = 0;
+        public int CurMineStun { get; private set; } = 0;
 
         // everything under this comment is added outside of the faithful remake. homing shells, etc
 
@@ -489,16 +504,20 @@ namespace TanksRebirth.GameContent
 
         public bool VulnerableToMines { get; set; } = true;
 
-        public bool Immortal { get; set; }
+        public bool Immortal { get; set; } = false;
 
         /// <summary>The homing properties of the shells this <see cref="Tank"/> shoots.</summary>
         public Shell.HomingProperties ShellHoming = new();
 
         public int timeSinceLastAction = 15000;
-
+        /// <summary>Whether or not this tank is used for ingame purposes or not.</summary>
         public bool IsIngame { get; set; } = true;
-
-        public Armor Armor { get; set; }
+        /// <summary>The armor properties this <see cref="Tank"/> has.</summary>
+        public Armor Armor { get; set; } = null;
+        
+        // Get it working before using this.
+        /// <summary>How much this <see cref="Tank"/> is launched backward after firing a shell.</summary>
+        public float Recoil { get; set; } = 0f;
 
         public virtual void Remove() 
         {

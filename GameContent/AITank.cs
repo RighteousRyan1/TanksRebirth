@@ -141,13 +141,13 @@ namespace TanksRebirth.GameContent
         {
             if (isIngame)
             {
-                if (UI.DifficultyModes.BumpUp)
+                if (Difficulties.BumpUp)
                     tier += 1;
-                if (UI.DifficultyModes.MeanGreens)
+                if (Difficulties.MeanGreens)
                     tier = TankTier.Green;
-                if (UI.DifficultyModes.MasterModBuff && !UI.DifficultyModes.MarbleModBuff)
+                if (Difficulties.MasterModBuff && !Difficulties.MarbleModBuff)
                     tier += 9;
-                if (UI.DifficultyModes.MarbleModBuff && !UI.DifficultyModes.MasterModBuff)
+                if (Difficulties.MarbleModBuff && !Difficulties.MasterModBuff)
                     tier += 18;
             }
             if (tier == TankTier.Random)
@@ -422,7 +422,7 @@ namespace TanksRebirth.GameContent
                     AiParams.MinePlacementChance = 0.3f;
                     AiParams.MoveFromMineTime = 120;
 
-                    if (UI.DifficultyModes.PieFactory)
+                    if (Difficulties.PieFactory)
                     {
                         VulnerableToMines = false;
                         MineCooldown = 10;
@@ -1486,23 +1486,23 @@ namespace TanksRebirth.GameContent
                     break;
                     #endregion
             }
-            if (UI.DifficultyModes.TanksAreCalculators)
+            if (Difficulties.TanksAreCalculators)
                 if (RicochetCount >= 1)
                     if (HasTurret)
                         AiParams.SmartRicochets = true;
 
-            if (UI.DifficultyModes.UltraMines)
+            if (Difficulties.UltraMines)
                 AiParams.MineWarinessRadius *= 3;
 
-            if (UI.DifficultyModes.AllInvisible)
+            if (Difficulties.AllInvisible)
             {
                 Invisible = true;
                 CanLayTread = false;
             }
-            if (UI.DifficultyModes.AllStationary)
+            if (Difficulties.AllStationary)
                 Stationary = true;
 
-            if (UI.DifficultyModes.AllHoming)
+            if (Difficulties.AllHoming)
             {
                 ShellHoming = new();
                 ShellHoming.radius = 200f;
@@ -1513,7 +1513,7 @@ namespace TanksRebirth.GameContent
                 AiParams.Inaccuracy *= 4;
             }
 
-            if (UI.DifficultyModes.Armored)
+            if (Difficulties.Armored)
             {
                 if (Armor is null)
                     Armor = new(this, 3);
@@ -1646,7 +1646,9 @@ namespace TanksRebirth.GameContent
                 var pathHitbox = new Rectangle((int)pathPos.X - 3, (int)pathPos.Y - 3, 6, 6);
 
                 // Why is velocity passed by reference here lol
-                Collision.HandleCollisionSimple_ForBlocks(pathHitbox, pathDir, ref dummyPos, out var dir, out var block, false, pattern);
+                Collision.HandleCollisionSimple_ForBlocks(pathHitbox, pathDir, ref dummyPos, out var dir, out var block, out bool corner, false, pattern);
+                if (corner)
+                    return tanks;
 
                 switch (dir)
                 {
@@ -1666,7 +1668,7 @@ namespace TanksRebirth.GameContent
 
                 void resetIterations() { if (doBounceReset) uninterruptedIterations = 0; }
 
-                if (i == 0 && Block.AllBlocks.Any(x => x is not null && x.collider2d.Intersects(pathHitbox) && pattern is not null ? pattern.Invoke(x) : false))
+                if (i == 0 && Block.AllBlocks.Any(x => x is not null && x.Hitbox.Intersects(pathHitbox) && pattern is not null ? pattern.Invoke(x) : false))
                 {
                     rayEndpoint = pathPos;
                     return tanks;
@@ -1749,7 +1751,7 @@ namespace TanksRebirth.GameContent
                 var pathHitbox = new Rectangle((int)pathPos.X, (int)pathPos.Y, 1, 1);
 
                 // Why is velocity passed by reference here lol
-                Collision.HandleCollisionSimple_ForBlocks(pathHitbox, pathDir, ref dummyPos, out var dir, out var block, false);
+                Collision.HandleCollisionSimple_ForBlocks(pathHitbox, pathDir, ref dummyPos, out var dir, out var block, out bool corner, false, null);
 
                 switch (dir)
                 {

@@ -56,7 +56,7 @@ namespace TanksRebirth.GameContent
 
         public Body Body;
 
-        public Rectangle collider2d;
+        public Rectangle Hitbox;
 
         public Texture2D meshTexture;
 
@@ -205,7 +205,7 @@ namespace TanksRebirth.GameContent
         }
         public void Update()
         {
-            collider2d = new((int)(Position.X - FULL_BLOCK_SIZE / 2), (int)(Position.Y - FULL_BLOCK_SIZE / 2), (int)FULL_BLOCK_SIZE, (int)FULL_BLOCK_SIZE);
+            Hitbox = new((int)(Position.X - FULL_BLOCK_SIZE / 2), (int)(Position.Y - FULL_BLOCK_SIZE / 2), (int)FULL_BLOCK_SIZE, (int)FULL_BLOCK_SIZE);
             Vector3 offset = new();
 
             if (AffectedByOffset)

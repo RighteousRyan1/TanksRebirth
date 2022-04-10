@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TanksRebirth.GameContent.Systems;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework.Audio;
@@ -90,7 +91,7 @@ namespace TanksRebirth.GameContent
 
             var expl = new Explosion(Position, ExplosionRadius * 0.101f, owner, 0.3f);
 
-            if (UI.DifficultyModes.UltraMines)
+            if (Difficulties.UltraMines)
                 expl.maxScale *= 2f;
 
             expl.expanseRate = 2f;

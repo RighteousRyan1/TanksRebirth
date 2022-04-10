@@ -161,23 +161,6 @@ namespace TanksRebirth.GameContent
             Projection = TankGame.GameProjection;
             View = TankGame.GameView;
 
-            /*if (_flame is not null)
-            {
-                _flame.UniqueBehavior = (p) =>
-                {
-                    var flat = Position.FlattenZ();
-
-                    var off = flat + new Vector2(0, -12).RotatedByRadians(rotation);
-
-                    p.position = off.ExpandZ() + new Vector3(0, 11, 0);
-
-                    p.Pitch = -rotation - MathHelper.PiOver2;
-
-                    if (TankGame.GameUpdateTime % 2 == 0)
-                        p.Roll = GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi);
-                };
-            }*/
-
             hitbox = new((int)(Position2D.X - 3), (int)(Position2D.Y - 3), 5, 5);
 
             if (!GameHandler.InMission)
@@ -190,22 +173,20 @@ namespace TanksRebirth.GameContent
 
             var dummy = Vector2.Zero;
 
-            Collision.HandleCollisionSimple_ForBlocks(hitbox, Velocity2D, ref dummy, out var dir, out var block, false, (c) => c.IsSolid);
+            Collision.HandleCollisionSimple_ForBlocks(hitbox, Velocity2D, ref dummy, out var dir, out var block, out bool corner, false, (c) => c.IsSolid);
 
-            if (lifeTime <= 5 && Block.AllBlocks.Any(cu => cu is not null && cu.collider2d.Intersects(hitbox) && cu.IsSolid))
+            if (lifeTime <= 5 && Block.AllBlocks.Any(cu => cu is not null && cu.Hitbox.Intersects(hitbox) && cu.IsSolid))
                 Destroy(false);
 
+            if (corner)
+                Destroy();
             switch (dir)
             {
                 case CollisionDirection.Up:
-                    Ricochet(false);
-                    break;
                 case CollisionDirection.Down:
                     Ricochet(false);
                     break;
                 case CollisionDirection.Left:
-                    Ricochet(true);
-                    break;
                 case CollisionDirection.Right:
                     Ricochet(true);
                     break;
@@ -371,7 +352,6 @@ namespace TanksRebirth.GameContent
                     s.Pitch = GameHandler.GameRand.NextFloat(-0.05f, 0.05f);
                 }
             }
-
             ParticleSystem.MakeShineSpot(Position, Color.Orange, 0.8f);
 
             ricochets--;
@@ -422,7 +402,6 @@ namespace TanksRebirth.GameContent
         public void Remove() {
             TankGame.OnFocusLost -= TankGame_OnFocusLost;
             TankGame.OnFocusRegained -= TankGame_OnFocusRegained;
-            //_flame?.Destroy();
             _loopingSound?.Stop();
             _shootSound?.Stop();
             _loopingSound = null;

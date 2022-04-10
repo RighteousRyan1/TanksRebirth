@@ -12,8 +12,7 @@ namespace TanksRebirth.GameContent.GameMechanics
 {
     public static class Collision
     {
-        public struct CollisionInfo
-        {
+        public struct CollisionInfo {
             public float Value;
             public Vector2 Normal;
         }
@@ -109,7 +108,7 @@ namespace TanksRebirth.GameContent.GameMechanics
         }
         public static void HandleCollisionSimple(Rectangle movingBox, Rectangle collidingBox, ref Vector2 velocity, ref Vector2 position, out CollisionDirection direction, bool setpos = true)
         {
-            direction = CollisionDirection.None;
+            direction = CollisionDirection.Other;
             var offset = velocity;
 
             CollisionInfo collisionInfo = new();
@@ -146,19 +145,19 @@ namespace TanksRebirth.GameContent.GameMechanics
 
                 direction = CollisionDirection.Up;
             }
-            if (collisionInfo.Normal.Y < 0)
+            else if (collisionInfo.Normal.Y < 0)
             {
                 // floor
 
                 direction = CollisionDirection.Down;
             }
-            if (collisionInfo.Normal.X > 0)
+            else if (collisionInfo.Normal.X > 0)
             {
                 // wall left
 
                 direction = CollisionDirection.Left;
             }
-            if (collisionInfo.Normal.X < 0)
+            else if (collisionInfo.Normal.X < 0)
             {
                 // wall right
 
@@ -166,10 +165,11 @@ namespace TanksRebirth.GameContent.GameMechanics
             }
         }
 
-        public static void HandleCollisionSimple_ForBlocks(Rectangle movingBox, Vector2 velocity, ref Vector2 position, out CollisionDirection direction, out Block.BlockType type, bool setpos = true, Func<Block, bool> exclude = null)
+        public static void HandleCollisionSimple_ForBlocks(Rectangle movingBox, Vector2 velocity, ref Vector2 position, out CollisionDirection direction, out Block.BlockType type, out bool cornerCollision, bool setpos = true, Func<Block, bool> exclude = null)
         {
+            cornerCollision = false;
             type = (Block.BlockType)255;
-            direction = CollisionDirection.None;
+            direction = CollisionDirection.Other;
             var offset = velocity;
 
             CollisionInfo collisionInfo = new();
@@ -180,9 +180,14 @@ namespace TanksRebirth.GameContent.GameMechanics
             {
                 if (cube is not null)
                 {
+                    if (movingBox.Intersects(cube.Hitbox))
+                    {
+                        cornerCollision = true;
+                        break;
+                    }
                     if (exclude is null)
                     {
-                        if (IsColliding(movingBox, cube.collider2d, velocity, out var info))
+                        if (IsColliding(movingBox, cube.Hitbox, velocity, out var info))
                         {
                             if (info.Value < collisionInfo.Value)
                                 collisionInfo = info;
@@ -193,7 +198,7 @@ namespace TanksRebirth.GameContent.GameMechanics
                     {
                         if (exclude.Invoke(cube))
                         {
-                            if (IsColliding(movingBox, cube.collider2d, velocity, out var info))
+                            if (IsColliding(movingBox, cube.Hitbox, velocity, out var info))
                             {
                                 if (info.Value < collisionInfo.Value)
                                     collisionInfo = info;
@@ -227,23 +232,28 @@ namespace TanksRebirth.GameContent.GameMechanics
 
                 direction = CollisionDirection.Up;
             }
-            if (collisionInfo.Normal.Y < 0)
+            else if (collisionInfo.Normal.Y < 0)
             {
                 // floor
 
                 direction = CollisionDirection.Down;
             }
-            if (collisionInfo.Normal.X > 0)
+            else if (collisionInfo.Normal.X > 0)
             {
                 // wall left
 
                 direction = CollisionDirection.Left;
             }
-            if (collisionInfo.Normal.X < 0)
+            else if (collisionInfo.Normal.X < 0)
             {
                 // wall right
 
                 direction = CollisionDirection.Right;
+            }
+            else if (collisionInfo.Normal == Vector2.Zero)
+            {
+                direction = CollisionDirection.Other;
+                
             }
         }
 
@@ -277,7 +287,7 @@ namespace TanksRebirth.GameContent.GameMechanics
                 var pathHitbox = new Rectangle((int)pathPos.X, (int)pathPos.Y, 1, 1);
 
                 // Why is velocity passed by reference here lol
-                HandleCollisionSimple_ForBlocks(pathHitbox, start, ref dummyPos, out var dir, out var block, false);
+                HandleCollisionSimple_ForBlocks(pathHitbox, start, ref dummyPos, out var dir, out var block, out bool corner, false);
 
                 switch (dir)
                 {
@@ -308,6 +318,7 @@ namespace TanksRebirth.GameContent.GameMechanics
 public enum CollisionDirection
 {
     None,
+    Other,
     Up,
     Down,
     Left,

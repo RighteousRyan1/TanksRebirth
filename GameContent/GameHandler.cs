@@ -114,7 +114,7 @@ namespace TanksRebirth.GameContent
         }
         internal static void UpdateAll()
         {
-            if (UI.DifficultyModes.InfiniteLives)
+            if (Difficulties.InfiniteLives)
                 PlayerTank.Lives = PlayerTank.MaxLives;
             foreach (var tank in AllPlayerTanks)
                 tank?.Update();
