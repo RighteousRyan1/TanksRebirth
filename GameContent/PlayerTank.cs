@@ -54,7 +54,7 @@ namespace TanksRebirth.GameContent
 
         public PlayerTank(PlayerType playerType)
         {
-            Model = TankGame.TankModel_Player;
+            Model = GameResources.GetGameResource<Model>("Assets/tank_p");
             _tankColorTexture = GameResources.GetGameResource<Texture2D>($"Assets/textures/player/tank_{playerType.ToString().ToLower()}");
 
             CannonMesh = Model.Meshes["Cannon"];

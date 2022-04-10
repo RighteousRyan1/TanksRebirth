@@ -114,11 +114,6 @@ namespace TanksRebirth
         public static GameTime LastGameTime { get; private set; }
         public static uint GameUpdateTime { get; private set; }
 
-        public static Model TankModel_Player;
-        public static Model TankModel_Enemy;
-        public static Model CubeModel;
-        public static Model CubeModelAlt;
-
         public static Texture2D WhitePixel;
 
         public static TankGame Instance { get; private set; }
@@ -211,13 +206,6 @@ namespace TanksRebirth
         protected override void LoadContent()
         {
             var s = Stopwatch.StartNew();
-
-            CubeModel = GameResources.GetGameResource<Model>("Assets/toy/cube_stack");
-            CubeModelAlt = GameResources.GetGameResource<Model>("Assets/toy/cube_stack_alt");
-
-            TankModel_Enemy = GameResources.GetGameResource<Model>("Assets/tank_e");
-
-            TankModel_Player = GameResources.GetGameResource<Model>("Assets/tank_p");
 
             WhitePixel = GameResources.GetGameResource<Texture2D>("Assets/MagicPixel");
 

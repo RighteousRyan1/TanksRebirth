@@ -93,17 +93,17 @@ namespace TanksRebirth.GameContent
             };
 
             Stack = (sbyte)MathHelper.Clamp(height, 0, 7); // if 0, it will be a hole.
-
+            
             switch (type)
             {
                 case BlockType.Wood:
                     meshTexture = GameResources.GetGameResource<Texture2D>($"{MapRenderer.assetsRoot}block.1");
-                    model = IsAlternateModel ? TankGame.CubeModelAlt : TankGame.CubeModel;
+                    model = IsAlternateModel ? GameResources.GetGameResource<Model>("Assets/toy/cube_stack_alt") : GameResources.GetGameResource<Model>("Assets/toy/cube_stack"); ;
                     break;
                 case BlockType.Cork:
                     IsDestructible = true;
                     meshTexture = GameResources.GetGameResource<Texture2D>($"{MapRenderer.assetsRoot}block.2");
-                    model = IsAlternateModel ? TankGame.CubeModelAlt : TankGame.CubeModel;
+                    model = IsAlternateModel ? GameResources.GetGameResource<Model>("Assets/toy/cube_stack_alt") : GameResources.GetGameResource<Model>("Assets/toy/cube_stack"); ;
                     break;
                 case BlockType.Hole:
                     model = GameResources.GetGameResource<Model>("Assets/check");
