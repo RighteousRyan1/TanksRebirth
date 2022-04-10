@@ -285,8 +285,7 @@ namespace TanksRebirth
 
         protected override void Update(GameTime gameTime)
         {
-            try
-            // ChatSystem.SendMessage(ParticleSystem.CurrentParticles.Count(x => x is not null), Color.White);
+            //try
             {
                 if (UIElement.delay > 0)
                     UIElement.delay--;
@@ -431,10 +430,10 @@ namespace TanksRebirth
 
                 _wasActive = IsActive;
             }
-            catch (Exception e)
+            //catch (Exception e)
             {
-                GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
-                throw;
+                //GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
+                //throw;
             }
         }
 

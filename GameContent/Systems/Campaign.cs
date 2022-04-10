@@ -124,8 +124,11 @@ namespace TanksRebirth.GameContent.Systems
                 }
                 else
                 {
-                    TrackedSpawnPoints[i].Item1 = LoadedMission.Tanks[i].Position;
-                    TrackedSpawnPoints[i].Item2 = true;
+                    if (GameHandler.ShouldMissionsProgress)
+                    {
+                        TrackedSpawnPoints[i].Item1 = LoadedMission.Tanks[i].Position;
+                        TrackedSpawnPoints[i].Item2 = true;
+                    }
                     if (!template.IsPlayer)
                     {
                         var tank = template.GetAiTank();
@@ -136,11 +139,13 @@ namespace TanksRebirth.GameContent.Systems
                         tank.TurretRotation = -template.Rotation;
                         tank.Dead = false;
                         tank.Team = template.Team;
-
-                        tank.OnDestroy += (sender, e) =>
+                        if (GameHandler.ShouldMissionsProgress)
                         {
-                            TrackedSpawnPoints[Array.IndexOf(TrackedSpawnPoints, TrackedSpawnPoints.First(pos => pos.Item1 == template.Position))].Item2 = false; // make sure the tank is not spawned again
-                        };
+                            tank.OnDestroy += (sender, e) =>
+                            {
+                                TrackedSpawnPoints[Array.IndexOf(TrackedSpawnPoints, TrackedSpawnPoints.First(pos => pos.Item1 == template.Position))].Item2 = false; // make sure the tank is not spawned again
+                            };
+                        }
                     }
                     else
                     {
