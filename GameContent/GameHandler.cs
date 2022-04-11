@@ -269,7 +269,7 @@ namespace TanksRebirth.GameContent
                 var rand = new Range<Thunder.ThunderType>(Thunder.ThunderType.Fast, Thunder.ThunderType.Instant2);
                 var type = (Thunder.ThunderType)GameRand.Next((int)rand.Min, (int)rand.Max);
 
-                if (Thunder.Thunders.Count(x => x is not null && x.Type == type) <= 0)
+                if (!Thunder.Thunders.Any(x => x is not null && x.Type == type))
                     new Thunder(type);
             }
 
