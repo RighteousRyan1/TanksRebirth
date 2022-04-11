@@ -808,8 +808,12 @@ namespace TanksRebirth.GameContent
 
         private static float _sinScale;
 
+        public static bool ShouldRender = true;
+
         public static void DrawMouse()
         {
+            if (!ShouldRender)
+                return;
             if (GameHandler.AllPlayerTanks[0] is not null)
             {
                 // mwvar tankPos = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, GameHandler.myTank.World, TankGame.GameView, TankGame.GameProjection);

@@ -144,13 +144,13 @@ namespace TanksRebirth.GameContent
                     }
                     else
                     {
-                        TurretRotation += -TankGame.MouseVelocity.X / 300;
-
-                        if (Input.CurrentMouseSnapshot.X > GameUtils.WindowWidth)
-                            Mouse.SetPosition(GameUtils.WindowWidth, Input.CurrentMouseSnapshot.Y);
-                        if (Input.CurrentMouseSnapshot.Y > GameUtils.WindowHeight)
-                            Mouse.SetPosition(Input.CurrentMouseSnapshot.X, GameUtils.WindowHeight);
-                        // Mouse.SetPosition((int)GameUtils.WindowCenter.X, (int)GameUtils.WindowCenter.Y);
+                        MouseRenderer.ShouldRender = TankGame.FirstPerson;
+                        if (Input.CurrentMouseSnapshot.X >= GameUtils.WindowWidth)
+                            Mouse.SetPosition(1, Input.CurrentMouseSnapshot.Y);
+                        if (Input.CurrentMouseSnapshot.X <= 0)
+                            Mouse.SetPosition(GameUtils.WindowWidth - 1, Input.CurrentMouseSnapshot.Y);
+                        //Mouse.SetPosition((int)GameUtils.WindowCenter.X, (int)GameUtils.WindowCenter.Y);
+                        TurretRotation += -TankGame.MouseVelocity.X / 312;
                     }
                 }
 
