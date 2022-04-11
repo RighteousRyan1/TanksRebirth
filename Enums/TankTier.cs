@@ -1,6 +1,6 @@
 ﻿namespace TanksRebirth.Enums
 {
-    /// <summary>Serves the purpose of parsing tiers into strings. Note that only tiers less than 27 will be parsed.</summary>
+    /// <summary>Serves the purpose of parsing tiers into strings.</summary>
     public enum TankTier : byte
     {
         None,

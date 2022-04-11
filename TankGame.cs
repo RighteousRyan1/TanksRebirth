@@ -25,6 +25,8 @@ using FontStashSharp;
 using TanksRebirth.Internals.Common.Framework.Graphics;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.Net;
+using System.Runtime.InteropServices;
+using Microsoft.Xna.Framework.Audio;
 
 namespace TanksRebirth
 {
@@ -109,7 +111,16 @@ namespace TanksRebirth
         public static double LogicFPS { get; private set; }
         public static double RenderFPS { get; private set; }
 
-        public static long TotalMemoryUsed => GC.GetTotalMemory(false);
+        public static long GCMemory => GC.GetTotalMemory(false);
+        public static long ProcessMemory
+        {
+            get
+            {
+                using Process process = Process.GetCurrentProcess(); 
+                return process.PrivateMemorySize64;
+            }
+            private set { }
+        }
 
         public static GameTime LastGameTime { get; private set; }
         public static uint GameUpdateTime { get; private set; }
@@ -147,8 +158,32 @@ namespace TanksRebirth
 
         internal static Internals.Common.GameUI.UIPanel cunoSucksElement;
 
+        public static OSPlatform OperatingSystem;
+        public static bool IsWin;
+        public static bool IsMac;
+        public static bool IsLinux;
+
         public TankGame() : base()
         {
+            // check if platform is windows, mac, or linux
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                OperatingSystem = OSPlatform.Windows;
+                IsWin = true;
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                OperatingSystem = OSPlatform.OSX;
+                IsMac = true;
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                OperatingSystem = OSPlatform.Linux;
+                IsLinux = true;
+            }
+
+            // IOUtils.SetAssociation(".mission", "MISSION_FILE", "TanksRebirth.exe", "Tanks Rebirth mission file");
+
             graphics = new(this) { PreferHalfPixelOffset = true };
             graphics.HardwareModeSwitch = false;
 
@@ -165,6 +200,8 @@ namespace TanksRebirth
 
             GameVersion = typeof(TankGame).Assembly.GetName().Version.ToString();
         }
+
+        private long _memBytes;
 
         protected override void Initialize()
         {
@@ -206,6 +243,12 @@ namespace TanksRebirth
         protected override void LoadContent()
         {
             var s = Stopwatch.StartNew();
+
+            Thunder.SoftRain = GameResources.GetGameResource<SoundEffect>("Assets/sounds/ambient/soft_rain").CreateInstance();
+            Thunder.SoftRain.IsLooped = true;
+
+            OnFocusLost += TankGame_OnFocusLost;
+            OnFocusRegained += TankGame_OnFocusRegained;
 
             WhitePixel = GameResources.GetGameResource<Texture2D>("Assets/MagicPixel");
 
@@ -265,8 +308,20 @@ namespace TanksRebirth
             DecalSystem.Initialize(spriteBatch, GraphicsDevice);
 
             cunoSucksElement = new() { IsVisible = false };
-
+            
             s.Stop();
+        }
+
+        private void TankGame_OnFocusRegained(object sender, IntPtr e)
+        {
+            if (Thunder.SoftRain.IsPaused())
+                Thunder.SoftRain.Resume();
+        }
+
+        private void TankGame_OnFocusLost(object sender, IntPtr e)
+        {
+            if (Thunder.SoftRain.IsPlaying())
+                Thunder.SoftRain.Pause();
         }
 
         public const float DEFAULT_ORTHOGRAPHIC_ANGLE = 0.75f;
@@ -283,9 +338,11 @@ namespace TanksRebirth
 
         private int transitionTimer;
 
+        public static Vector2 MouseVelocity => GameUtils.GetMouseVelocity(GameUtils.WindowCenter);
+
         protected override void Update(GameTime gameTime)
         {
-            //try
+            try
             {
                 if (UIElement.delay > 0)
                     UIElement.delay--;
@@ -299,7 +356,10 @@ namespace TanksRebirth
                 GameUI.UpdateButtons();
 
                 if (GameUpdateTime % 30 == 0)
+                {
                     DiscordRichPresence.Update();
+                    _memBytes = ProcessMemory;
+                }
 
                 LastGameTime = gameTime;
 
@@ -357,40 +417,65 @@ namespace TanksRebirth
                 }
                 else
                 {
-                    Vector3 pos = Vector3.Zero;
-                    var x = GameHandler.AllAITanks.FirstOrDefault(x => x is not null && !x.Dead);
-
-                    if (x is not null && Array.IndexOf(GameHandler.AllAITanks, x) > -1)
+                    var pos = Vector3.Zero;
+                    if (GameHandler.AllPlayerTanks.Count(x => x is not null && !x.Dead) > 0)
                     {
-                        /*pos = x.Position3D;
-                        var t = GameUtils.MousePosition.X / GameUtils.WindowWidth;
-                        // GameCamera.Zoom(DEFAULT_ZOOM * AddativeZoom);
-                        GameCamera.SetPosition(pos - new Vector3(0, 0, 100).FlattenZ().RotatedByRadians(-x.TurretRotation).ExpandZ());
+                        pos = GameHandler.AllPlayerTanks[0].Position.ExpandZ();
+                        /*GameCamera.SetPosition(GameHandler.AllPlayerTanks[0].Position.ExpandZ());
+                        GameCamera.SetLookAt(GameHandler.AllPlayerTanks[0].Position.ExpandZ());
+                        GameCamera.Zoom(DEFAULT_ZOOM * AddativeZoom);
 
-                        GameCamera.SetLookAt(pos + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-x.TurretRotation).ExpandZ());                        
-                        GameCamera.Zoom(GameUtils.MousePosition.X / GameUtils.WindowWidth * 5);
-                        GameCamera.SetFov(90);
-                        //GameCamera.SetPosition(pos);
-                        //GameCamera.RotateY(GameUtils.MousePosition.X / 400);
-                        //GameCamera.RotateY(DEFAULT_ORTHOGRAPHIC_ANGLE);
-                        //GameCamera.RotateX(GameUtils.MousePosition.X / 400);
-
-                        GameCamera.RotateX(CameraRotationVector.Y - MathHelper.PiOver4);
+                        GameCamera.RotateX(CameraRotationVector.Y);
                         GameCamera.RotateY(CameraRotationVector.X);
 
-                        GameCamera.Translate(new Vector3(0, -20, -40));
+                        GameCamera.SetCameraType(CameraType.Orthographic);
 
-                        GameCamera.SetViewingDistances(0.1f, 10000f);
+                        GameCamera.Translate(new Vector3(CameraFocusOffset.X, -CameraFocusOffset.Y + 40, 0));
 
-                        GameCamera.SetCameraType(CameraType.FieldOfView);*/
-
-                        pos = x.Position.ExpandZ();
+                        GameCamera.SetViewingDistances(-2000f, 5000f);*/
 
                         GameView = Matrix.CreateLookAt(pos,
-                            pos + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-x.TurretRotation).ExpandZ()
-                            , Vector3.Up) * Matrix.CreateRotationX(CameraRotationVector.Y - MathHelper.PiOver4) * Matrix.CreateRotationY(CameraRotationVector.X) * Matrix.CreateTranslation(0, -20, -40);
+                            pos + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-GameHandler.AllPlayerTanks[0].TurretRotation).ExpandZ()
+                            , Vector3.Up) * Matrix.CreateScale(AddativeZoom) * Matrix.CreateRotationX(CameraRotationVector.Y - MathHelper.PiOver4) * Matrix.CreateRotationY(CameraRotationVector.X) * Matrix.CreateTranslation(0, -20, -40);
 
                         GameProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000);
+                    }
+                    else
+                    {
+                        var x = GameHandler.AllAITanks.FirstOrDefault(x => x is not null && !x.Dead);
+
+                        if (x is not null && Array.IndexOf(GameHandler.AllAITanks, x) > -1)
+                        {
+                            /*pos = x.Position3D;
+                            var t = GameUtils.MousePosition.X / GameUtils.WindowWidth;
+                            // GameCamera.Zoom(DEFAULT_ZOOM * AddativeZoom);
+                            GameCamera.SetPosition(pos - new Vector3(0, 0, 100).FlattenZ().RotatedByRadians(-x.TurretRotation).ExpandZ());
+
+                            GameCamera.SetLookAt(pos + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-x.TurretRotation).ExpandZ());                        
+                            GameCamera.Zoom(GameUtils.MousePosition.X / GameUtils.WindowWidth * 5);
+                            GameCamera.SetFov(90);
+                            //GameCamera.SetPosition(pos);
+                            //GameCamera.RotateY(GameUtils.MousePosition.X / 400);
+                            //GameCamera.RotateY(DEFAULT_ORTHOGRAPHIC_ANGLE);
+                            //GameCamera.RotateX(GameUtils.MousePosition.X / 400);
+
+                            GameCamera.RotateX(CameraRotationVector.Y - MathHelper.PiOver4);
+                            GameCamera.RotateY(CameraRotationVector.X);
+
+                            GameCamera.Translate(new Vector3(0, -20, -40));
+
+                            GameCamera.SetViewingDistances(0.1f, 10000f);
+
+                            GameCamera.SetCameraType(CameraType.FieldOfView);*/
+
+                            pos = x.Position.ExpandZ();
+
+                            GameView = Matrix.CreateLookAt(pos,
+                                pos + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-x.TurretRotation).ExpandZ()
+                                , Vector3.Up) * Matrix.CreateScale(AddativeZoom) * Matrix.CreateRotationX(CameraRotationVector.Y - MathHelper.PiOver4) * Matrix.CreateRotationY(CameraRotationVector.X) * Matrix.CreateTranslation(0, -20, -40) * Matrix.CreateScale(AddativeZoom);
+
+                            GameProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000);
+                        }
                     }
                 }
 
@@ -398,7 +483,7 @@ namespace TanksRebirth
                 {
                     if (Input.MouseRight)
                     {
-                        CameraRotationVector += GameUtils.GetMouseVelocity(GameUtils.WindowCenter) / 500;
+                        CameraRotationVector += MouseVelocity / 500;
                     }
 
                     if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Add))
@@ -410,7 +495,7 @@ namespace TanksRebirth
 
                     if (Input.MouseMiddle)
                     {
-                        CameraFocusOffset += GameUtils.GetMouseVelocity(GameUtils.WindowCenter);
+                        CameraFocusOffset += MouseVelocity;
                     }
                     GameUtils.GetMouseVelocity(GameUtils.WindowCenter);
 
@@ -430,9 +515,9 @@ namespace TanksRebirth
 
                 _wasActive = IsActive;
             }
-            //catch (Exception e)
+            catch (Exception e)
             {
-                //GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
+                GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
                 //throw;
             }
         }
@@ -515,6 +600,8 @@ namespace TanksRebirth
 
         public static float UiScale = 1f;
 
+        public static Color ClearColor = Color.Black;
+
         protected override void Draw(GameTime gameTime)
         {
             RenderStopwatch.Start();
@@ -522,16 +609,19 @@ namespace TanksRebirth
             Matrix2D = Matrix.CreateOrthographicOffCenter(0, GameUtils.WindowWidth, GameUtils.WindowHeight, 0, -1, 1)
                 * Matrix.CreateScale(UiScale);
 
-            GraphicsDevice.Clear(Color.Transparent);
+            GraphicsDevice.Clear(ClearColor);
 
             DecalSystem.UpdateRenderTarget();
 
 
             spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied/*, transformMatrix: Matrix2D*/);
 
+            
+
             if (DebugUtils.DebuggingEnabled)
                 spriteBatch.DrawString(TextFont, "Debug Level: " + DebugUtils.CurDebugLabel, new Vector2(10), Color.White, new Vector2(0.6f));
-            DebugUtils.DrawDebugString(spriteBatch, $"Memory Used: {MemoryParser.FromMegabytes(TotalMemoryUsed)} MB", new(8, GameUtils.WindowHeight * 0.18f));
+            DebugUtils.DrawDebugString(spriteBatch, $"Garbage Collection: {MemoryParser.FromMegabytes(GCMemory)} MB" +
+                $"\nProcess Memory: {MemoryParser.FromMegabytes(_memBytes)} MB", new(8, GameUtils.WindowHeight * 0.15f));
             DebugUtils.DrawDebugString(spriteBatch, $"{SysGPU}\n{SysCPU}", new(8, GameUtils.WindowHeight * 0.2f));
 
             GraphicsDevice.DepthStencilState = new DepthStencilState() { };

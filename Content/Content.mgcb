@@ -799,6 +799,12 @@
 /processorParam:Quality=Best
 /build:Assets/sounds/ambient/forestnight.ogg
 
+#begin Assets/sounds/ambient/soft_rain.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/sounds/ambient/soft_rain.wav
+
 #begin Assets/sounds/armor_ding_1.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
@@ -876,6 +882,30 @@
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Assets/sounds/ricochet_zip.wav
+
+#begin Assets/sounds/thunder/fast.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/sounds/thunder/fast.wav
+
+#begin Assets/sounds/thunder/gradual_fast.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/sounds/thunder/gradual_fast.wav
+
+#begin Assets/sounds/thunder/instant.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/sounds/thunder/instant.wav
+
+#begin Assets/sounds/thunder/instant_2.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/sounds/thunder/instant_2.wav
 
 #begin Assets/sounds/tnk_destroy.wav
 /importer:WavImporter

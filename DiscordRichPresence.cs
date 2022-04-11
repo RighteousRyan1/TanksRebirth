@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TanksRebirth.GameContent;
+using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.UI;
 
 namespace TanksRebirth
@@ -34,11 +36,11 @@ namespace TanksRebirth
 
             _rp = new RichPresence
             {
-                Buttons = new Button[] { _rpButtonGit, _rpButtonDiscord } 
+                Buttons = new Button[] { _rpButtonGit, _rpButtonDiscord },
             };
 
             _rp.Assets = new();
-
+            
             _rp.Timestamps = new Timestamps()
             {
                 Start = DateTime.UtcNow,
@@ -46,6 +48,7 @@ namespace TanksRebirth
             _client?.SetPresence(_rp);
             _client.Initialize();
         }
+        private static string tnkCnt;
         public static void Update()
         {
             if (!_client.IsDisposed)
@@ -62,17 +65,29 @@ namespace TanksRebirth
                     }
                 }
 
-                SetLargeAsset("tank_ash_large");
-
                 if (MainMenu.Active)
                 {
                     SetDetails($"Browsing the main menu");
+                    SetLargeAsset("tank_ash_large", $"Gaming on version v{TankGame.Instance.GameVersion}");
                 }
                 else
                 {
-                    var curTank = GameContent.AITank.GetHighestTierActive();
-                    SetSmallAsset($"tank_{curTank.ToString().ToLower()}", $"Currently fighting {getArticle(curTank.ToString())} {curTank} Tank");
-                    SetDetails($"Fighting a grand total of {GameContent.AITank.CountAll()} tanks!");
+                    tnkCnt = $"Fighting {AITank.CountAll()} tank(s)";
+                    // get the names of each difficulty mode active, then join them together
+                    if (GameHandler.ShouldMissionsProgress)
+                    {
+                        SetDetails($"Playing campaign '{GameHandler.LoadedCampaign.Name}' on mission '{GameHandler.LoadedCampaign.CurrentMission.Name}'" +
+                            $"\n{tnkCnt}");
+                    }
+                    else
+                    {
+                        if (TankGame.OverheadView)
+                            SetDetails($"Editing a level");
+                        else
+                            SetDetails($"Playing freeplay | {tnkCnt}");
+                    }
+
+                    SetSmallAsset($"tank_{AITank.GetHighestTierActive().ToString().ToLower()}", $"Currently fighting {getArticle(AITank.GetHighestTierActive().ToString())} {AITank.GetHighestTierActive()} Tank");
                 }
                 
                 _client?.SetPresence(_rp);

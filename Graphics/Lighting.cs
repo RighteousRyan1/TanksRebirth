@@ -11,35 +11,35 @@ namespace TanksRebirth.Graphics
     public static class Lighting
     {
         /// <summary>A custom time of day for the lighting and brightness.</summary>
-        public struct DayState
+        public struct LightProfile
         {
-            public float brightness;
-            public Color color;
+            public float Brightness;
+            public Color Color;
 
-            public bool isNight;
+            public bool IsNight;
 
             public float sunPower;
-            public DayState(float brightness, Color color)
+            public LightProfile(float brightness, Color color)
             {
-                this.brightness = brightness;
-                this.color = color;
+                this.Brightness = brightness;
+                this.Color = color;
 
-                isNight = true;
+                IsNight = true;
 
                 sunPower = 0f;
             }
 
             public void Apply(bool applySunPower)
             {
-                LightColor = color;
-                ColorBrightness = brightness;
+                LightColor = Color;
+                ColorBrightness = Brightness;
 
                 if (applySunPower)
                     LightPower = sunPower;
 
-                IsNight = isNight;
+                Lighting.IsNight = IsNight;
 
-                TankMusicSystem.forestAmbience = Music.CreateMusicTrack("Forest Ambient", isNight ? "Assets/sounds/ambient/forestnight" : "Assets/sounds/ambient/forestday", 1f);
+                TankMusicSystem.forestAmbience = Music.CreateMusicTrack("Forest Ambient", IsNight ? "Assets/sounds/ambient/forestnight" : "Assets/sounds/ambient/forestday", 1f);
             }
 
 
@@ -51,13 +51,13 @@ namespace TanksRebirth.Graphics
         public static float LightPower = 0f;
         public static bool IsNight { get; set; }
 
-        public static DayState Dawn => new(0.5f, new Color(0, 25, 0)) { isNight = true, sunPower = 0.6f };
+        public static LightProfile Dawn => new(0.5f, new Color(0, 25, 0)) { IsNight = true, sunPower = 0.6f };
 
-        public static DayState Noon => new(0.65f, new Color(200, 200, 200)) { isNight = false, sunPower = 1f };
+        public static LightProfile Noon => new(0.65f, new Color(200, 200, 200)) { IsNight = false, sunPower = 1f };
 
-        public static DayState Dusk => new(0.4f, new Color(255, 165, 0)) { isNight = true, sunPower = 0.7f };
+        public static LightProfile Dusk => new(0.4f, new Color(255, 165, 0)) { IsNight = true, sunPower = 0.7f };
 
-        public static DayState Midnight => new(0.15f, new Color(0, 0, 0)) { isNight = true, sunPower = 0.5f };
+        public static LightProfile Midnight => new(0.15f, new Color(0, 0, 0)) { IsNight = true, sunPower = 0.5f };
 
         public static Color DefaultLightingColor => new Vector3(0.05333332f, 0.09882354f, 0.1819608f).ToColor();
 
@@ -106,7 +106,7 @@ namespace TanksRebirth.Graphics
 
             effect.DirectionalLight0.Direction = new Vector3(0, -1f, 0) * lightingConstant; //+ new Vector3(ting, 0, ting2);
 
-            effect.SpecularColor = specular ? Color.White.ToVector3() : new Vector3(LightPower) * (IsNight ? new Vector3(1) : LightColor.ToVector3());
+            effect.SpecularColor = specular ? (Color.White.ToVector3() * LightPower) : new Vector3(LightPower) * (IsNight ? new Vector3(1) : LightColor.ToVector3());
 
             effect.AmbientLightColor = LightColor.ToVector3() * ambientMultiplier;
 

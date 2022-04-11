@@ -137,8 +137,21 @@ namespace TanksRebirth.GameContent
                     ChatSystem.SendMessage($"PlayerId: {PlayerId} | ClientId: {NetPlay.CurrentClient.Id}", Color.White);
                 if (NetPlay.IsClientMatched(PlayerId) && !IntermissionSystem.IsAwaitingNewMission)
                 {
-                    Vector3 mouseWorldPos = GameUtils.GetWorldPosition(GameUtils.MousePosition, -11f);
-                    TurretRotation = (-(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position).ToRotation()) + MathHelper.PiOver2;
+                    if (!TankGame.FirstPerson)
+                    {
+                        Vector3 mouseWorldPos = GameUtils.GetWorldPosition(GameUtils.MousePosition, -11f);
+                        TurretRotation = (-(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position).ToRotation()) + MathHelper.PiOver2;
+                    }
+                    else
+                    {
+                        TurretRotation += -TankGame.MouseVelocity.X / 300;
+
+                        if (Input.CurrentMouseSnapshot.X > GameUtils.WindowWidth)
+                            Mouse.SetPosition(GameUtils.WindowWidth, Input.CurrentMouseSnapshot.Y);
+                        if (Input.CurrentMouseSnapshot.Y > GameUtils.WindowHeight)
+                            Mouse.SetPosition(Input.CurrentMouseSnapshot.X, GameUtils.WindowHeight);
+                        // Mouse.SetPosition((int)GameUtils.WindowCenter.X, (int)GameUtils.WindowCenter.Y);
+                    }
                 }
 
                 if (GameHandler.InMission)
@@ -290,12 +303,21 @@ namespace TanksRebirth.GameContent
             var rotationMet = TankRotation > TargetTankRotation - MaximalTurn && TankRotation < TargetTankRotation + MaximalTurn;
             if (!rotationMet)
             {
+                Speed -= Deceleration;
+                if (Speed < 0)
+                    Speed = 0;
                 // treadPlaceTimer += MaxSpeed / 5;
                 if (TankGame.GameUpdateTime % treadPlaceTimer == 0)
                     LayFootprint(false);
                 Body.LinearVelocity = Vector2.Zero;
                 Velocity = Vector2.Zero;
                 IsTurning = true;
+            }
+            else
+            {
+                Speed += Acceleration;
+                if (Speed > MaxSpeed)
+                    Speed = MaxSpeed;
             }
 
             TankRotation %= MathHelper.Tau;
@@ -307,39 +329,34 @@ namespace TanksRebirth.GameContent
 
             preterbedVelocity = Vector2.Zero;
 
+
             if (controlDown.IsPressed)
             {
                 playerControl_isBindPressed = true;
-                preterbedVelocity.Y += 1;
-
-                if (rotationMet)
-                    Velocity.Y += Acceleration;
+                preterbedVelocity.Y = 1;
             }
             if (controlUp.IsPressed)
             {
                 playerControl_isBindPressed = true;
-                preterbedVelocity.Y -= 1;
-
-
-                if (rotationMet)
-                    Velocity.Y -= Acceleration;
+                preterbedVelocity.Y = -1;
             }
             if (controlLeft.IsPressed)
             {
                 playerControl_isBindPressed = true;
-                preterbedVelocity.X -= 1;
-
-                if (rotationMet)
-                    Velocity.X -= Acceleration;
+                preterbedVelocity.X = -1;
             }
             if (controlRight.IsPressed)
             {
                 playerControl_isBindPressed = true;
-                preterbedVelocity.X += 1;
-
-                if (rotationMet)
-                    Velocity.X += Acceleration;
+                preterbedVelocity.X = 1;
             }
+
+
+            if (TankGame.FirstPerson)
+                preterbedVelocity = preterbedVelocity.RotatedByRadians(-TurretRotation + MathHelper.Pi);
+            
+            Velocity = preterbedVelocity * Speed * 3;
+            //ChatSystem.SendMessage($"{preterbedVelocity} | " + preterbedVelocity.RotatedByRadians(-TurretRotation + MathHelper.Pi), Color.White);
         }
 
         public override void Damage(TankHurtContext context)
@@ -359,19 +376,10 @@ namespace TanksRebirth.GameContent
             var leftStick = Input.CurrentGamePadSnapshot.ThumbSticks.Left;
             if (!GameHandler.InMission)
                 return;
-            if (!controlDown.IsPressed && !controlUp.IsPressed && leftStick.Y == 0)
-                Velocity.Y = 0;
-            if (!controlLeft.IsPressed && !controlRight.IsPressed && leftStick.X == 0)
-                Velocity.X = 0;
-
-            if (Velocity.X > MaxSpeed)
-                Velocity.X = MaxSpeed;
-            if (Velocity.X < -MaxSpeed)
-                Velocity.X = -MaxSpeed;
-            if (Velocity.Y > MaxSpeed)
-                Velocity.Y = MaxSpeed;
-            if (Velocity.Y < -MaxSpeed)
-                Velocity.Y = -MaxSpeed;
+            //if (!controlDown.IsPressed && !controlUp.IsPressed && leftStick.Y == 0)
+                //Velocity.Y = 0;
+            //if (!controlLeft.IsPressed && !controlRight.IsPressed && leftStick.X == 0)
+                //Velocity.X = 0;
 
             if (Velocity.Length() > 0 && playerControl_isBindPressed)
             {

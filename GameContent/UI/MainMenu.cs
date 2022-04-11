@@ -20,6 +20,7 @@ using Microsoft.Xna.Framework.Audio;
 using TanksRebirth.Enums;
 using TanksRebirth.Net;
 using System.IO;
+using System.Diagnostics;
 
 namespace TanksRebirth.GameContent.UI
 {
@@ -83,6 +84,10 @@ namespace TanksRebirth.GameContent.UI
         public static UITextButton MarbleModBuff;
 
         public static UITextButton MachineGuns;
+
+        public static UITextButton RandomizedTanks;
+
+        public static UITextButton ThunderMode;
         #endregion
 
         private static float _tnkSpeed = 2.4f;
@@ -303,7 +308,7 @@ namespace TanksRebirth.GameContent.UI
                 Tooltip = "ALL tanks will begin to look for angles" +
                 "\non you (and other enemies) outside of their immediate aim." +
                 "\nDo note that this uses significantly more CPU power.",
-                OnLeftClick = (elem) => Difficulties.TanksAreCalculators = !Difficulties.TanksAreCalculators
+                OnLeftClick = (elem) => Difficulties.Types["TanksAreCalculators"] = !Difficulties.Types["TanksAreCalculators"]
             };
             TanksAreCalculators.SetDimensions(100, 300, 300, 40);
 
@@ -313,7 +318,7 @@ namespace TanksRebirth.GameContent.UI
                 Tooltip = "Makes yellow tanks absurdly more dangerous by" +
                 "\nturning them into mine-laying machines." +
                 "\nOh, yeah. They're immune to explosions now too.",
-                OnLeftClick = (elem) => Difficulties.PieFactory = !Difficulties.PieFactory
+                OnLeftClick = (elem) => Difficulties.Types["PieFactory"] = !Difficulties.Types["PieFactory"]
             };
             PieFactory.SetDimensions(100, 350, 300, 40);
 
@@ -322,7 +327,7 @@ namespace TanksRebirth.GameContent.UI
                 IsVisible = false,
                 Tooltip = "Mines are now 2x as deadly!" +
                 "\nTheir explosion radii are now 2x as big!",
-                OnLeftClick = (elem) => Difficulties.UltraMines = !Difficulties.UltraMines
+                OnLeftClick = (elem) => Difficulties.Types["UltraMines"] = !Difficulties.Types["UltraMines"]
             };
             UltraMines.SetDimensions(100, 400, 300, 40);
 
@@ -330,7 +335,7 @@ namespace TanksRebirth.GameContent.UI
             {
                 IsVisible = false,
                 Tooltip = "Ricochet counts are now tripled!",
-                OnLeftClick = (elem) => Difficulties.BulletHell = !Difficulties.BulletHell
+                OnLeftClick = (elem) => Difficulties.Types["BulletHell"] = !Difficulties.Types["BulletHell"]
             };
             BulletHell.SetDimensions(100, 450, 300, 40);
 
@@ -338,7 +343,7 @@ namespace TanksRebirth.GameContent.UI
             {
                 IsVisible = false,
                 Tooltip = "Every single non-player tank is now invisible and no longer lay tracks!",
-                OnLeftClick = (elem) => Difficulties.AllInvisible = !Difficulties.AllInvisible
+                OnLeftClick = (elem) => Difficulties.Types["AllInvisible"] = !Difficulties.Types["AllInvisible"]
             };
             AllInvisible.SetDimensions(100, 500, 300, 40);
 
@@ -347,7 +352,7 @@ namespace TanksRebirth.GameContent.UI
                 IsVisible = false,
                 Tooltip = "Every single non-player tank is now stationary." +
                 "\nThis should REDUCE difficulty.",
-                OnLeftClick = (elem) => Difficulties.AllStationary = !Difficulties.AllStationary
+                OnLeftClick = (elem) => Difficulties.Types["AllStationary"] = !Difficulties.Types["AllStationary"]
             };
             AllStationary.SetDimensions(100, 550, 300, 40);
 
@@ -355,7 +360,7 @@ namespace TanksRebirth.GameContent.UI
             {
                 IsVisible = false,
                 Tooltip = "Every enemy tank now has homing bullets.",
-                OnLeftClick = (elem) => Difficulties.AllHoming = !Difficulties.AllHoming
+                OnLeftClick = (elem) => Difficulties.Types["AllHoming"] = !Difficulties.Types["AllHoming"]
             };
             AllHoming.SetDimensions(100, 600, 300, 40);
 
@@ -363,7 +368,7 @@ namespace TanksRebirth.GameContent.UI
             {
                 IsVisible = false,
                 Tooltip = "Every single non-player tank has 3 armor points added to it.",
-                OnLeftClick = (elem) => Difficulties.Armored = !Difficulties.Armored
+                OnLeftClick = (elem) => Difficulties.Types["Armored"] = !Difficulties.Types["Armored"]
             };
             Armored.SetDimensions(100, 650, 300, 40);
 
@@ -371,7 +376,7 @@ namespace TanksRebirth.GameContent.UI
             {
                 IsVisible = false,
                 Tooltip = "Makes the game a bit harder by \"Bumping up\" each tank, giving them one extra tier.",
-                OnLeftClick = (elem) => Difficulties.BumpUp = !Difficulties.BumpUp
+                OnLeftClick = (elem) => Difficulties.Types["BumpUp"] = !Difficulties.Types["BumpUp"]
             };
             BumpUp.SetDimensions(100, 700, 300, 40);
 
@@ -380,7 +385,7 @@ namespace TanksRebirth.GameContent.UI
                 IsVisible = false,
                 Tooltip = "Makes every tank a green tank." +
                 "\n\"Bump Up\" effects are nullified.",
-                OnLeftClick = (elem) => Difficulties.MeanGreens = !Difficulties.MeanGreens
+                OnLeftClick = (elem) => Difficulties.Types["MeanGreens"] = !Difficulties.Types["MeanGreens"]
             };
             MeanGreens.SetDimensions(100, 750, 300, 40);
 
@@ -388,7 +393,7 @@ namespace TanksRebirth.GameContent.UI
             {
                 IsVisible = false,
                 Tooltip = "You now have infinite lives. Have fun!",
-                OnLeftClick = (elem) => Difficulties.InfiniteLives = !Difficulties.InfiniteLives
+                OnLeftClick = (elem) => Difficulties.Types["InfiniteLives"] = !Difficulties.Types["InfiniteLives"]
             };
             InfiniteLives.SetDimensions(450, 300, 300, 40);
 
@@ -397,7 +402,7 @@ namespace TanksRebirth.GameContent.UI
                 IsVisible = false,
                 Tooltip = "Vanilla tanks become their master mod counterparts." +
                 "\nWill not work with \"Marble Mod Buff\" enabled.",
-                OnLeftClick = (elem) => Difficulties.MasterModBuff = !Difficulties.MasterModBuff
+                OnLeftClick = (elem) => Difficulties.Types["MasterModBuff"] = !Difficulties.Types["MasterModBuff"]
             };
             MasterModBuff.SetDimensions(450, 350, 300, 40);
 
@@ -406,23 +411,35 @@ namespace TanksRebirth.GameContent.UI
                 IsVisible = false,
                 Tooltip = "Vanilla tanks become their marble mod counterparts." +
                 "\nWill not work with \"Master Mod Buff\" enabled.",
-                OnLeftClick = (elem) => Difficulties.MarbleModBuff = !Difficulties.MarbleModBuff
+                OnLeftClick = (elem) => Difficulties.Types["MarbleModBuff"] = !Difficulties.Types["MarbleModBuff"]
             };
             MarbleModBuff.SetDimensions(450, 400, 300, 40);
 
-            // initialize "MachineGuns"
             MachineGuns = new("Machine Guns", font, Color.White)
             {
                 IsVisible = false,
                 Tooltip = "Every tank now sprays bullets at you.",
-                OnLeftClick = (elem) => Difficulties.MachineGuns = !Difficulties.MachineGuns
+                OnLeftClick = (elem) => Difficulties.Types["MachineGuns"] = !Difficulties.Types["MachineGuns"]
             };
             MachineGuns.SetDimensions(450, 450, 300, 40);
+            
+            RandomizedTanks = new("Randomized Tanks", font, Color.White)
+            {
+                IsVisible = false,
+                Tooltip = "Every tank is now randomized." +
+                "\nA black tank could appear where a brown tank would be!",
+                OnLeftClick = (elem) => Difficulties.Types["RandomizedTanks"] = !Difficulties.Types["RandomizedTanks"]
+            };
+            RandomizedTanks.SetDimensions(450, 500, 300, 40);
+            
+            ThunderMode = new("Thunder Mode", font, Color.White)
+            {
+                IsVisible = false,
+                Tooltip = "The scene is much darker, and thunder is your only source of decent light.",
+                OnLeftClick = (elem) => Difficulties.Types["ThunderMode"] = !Difficulties.Types["ThunderMode"]
+            };
+            ThunderMode.SetDimensions(450, 550, 300, 40);
         }
-
-        
-        
-
         private static void SetCampaignDisplay()
         {
             SetPlayButtonsVisibility(false);
@@ -538,6 +555,8 @@ namespace TanksRebirth.GameContent.UI
             MasterModBuff.IsVisible = visible;
             MarbleModBuff.IsVisible = visible;
             MachineGuns.IsVisible = visible;
+            RandomizedTanks.IsVisible = visible;
+            ThunderMode.IsVisible = visible;
         }
         internal static void SetPrimaryMenuButtonsVisibility(bool visible)
         {
@@ -564,20 +583,22 @@ namespace TanksRebirth.GameContent.UI
 
         public static void Update()
         {
-            TanksAreCalculators.Color = Difficulties.TanksAreCalculators ? Color.Lime : Color.Red;
-            PieFactory.Color = Difficulties.PieFactory ? Color.Lime : Color.Red;
-            UltraMines.Color = Difficulties.UltraMines ? Color.Lime : Color.Red;
-            BulletHell.Color = Difficulties.BulletHell ? Color.Lime : Color.Red;
-            AllInvisible.Color = Difficulties.AllInvisible ? Color.Lime : Color.Red;
-            AllStationary.Color = Difficulties.AllStationary ? Color.Lime : Color.Red;
-            AllHoming.Color = Difficulties.AllHoming ? Color.Lime : Color.Red;
-            Armored.Color = Difficulties.Armored ? Color.Lime : Color.Red;
-            BumpUp.Color = Difficulties.BumpUp ? Color.Lime : Color.Red;
-            MeanGreens.Color = Difficulties.MeanGreens ? Color.Lime : Color.Red;
-            InfiniteLives.Color = Difficulties.InfiniteLives ? Color.Lime : Color.Red;
-            MasterModBuff.Color = Difficulties.MasterModBuff ? Color.Lime : Color.Red;
-            MarbleModBuff.Color = Difficulties.MarbleModBuff ? Color.Lime : Color.Red;
-            MachineGuns.Color = Difficulties.MachineGuns ? Color.Lime : Color.Red;
+            TanksAreCalculators.Color = Difficulties.Types["TanksAreCalculators"] ? Color.Lime : Color.Red;
+            PieFactory.Color = Difficulties.Types["PieFactory"] ? Color.Lime : Color.Red;
+            UltraMines.Color = Difficulties.Types["UltraMines"] ? Color.Lime : Color.Red;
+            BulletHell.Color = Difficulties.Types["BulletHell"] ? Color.Lime : Color.Red;
+            AllInvisible.Color = Difficulties.Types["AllInvisible"] ? Color.Lime : Color.Red;
+            AllStationary.Color = Difficulties.Types["AllStationary"] ? Color.Lime : Color.Red;
+            AllHoming.Color = Difficulties.Types["AllHoming"] ? Color.Lime : Color.Red;
+            Armored.Color = Difficulties.Types["Armored"] ? Color.Lime : Color.Red;
+            BumpUp.Color = Difficulties.Types["BumpUp"] ? Color.Lime : Color.Red;
+            MeanGreens.Color = Difficulties.Types["MeanGreens"] ? Color.Lime : Color.Red;
+            InfiniteLives.Color = Difficulties.Types["InfiniteLives"] ? Color.Lime : Color.Red;
+            MasterModBuff.Color = Difficulties.Types["MasterModBuff"] ? Color.Lime : Color.Red;
+            MarbleModBuff.Color = Difficulties.Types["MarbleModBuff"] ? Color.Lime : Color.Red;
+            MachineGuns.Color = Difficulties.Types["MachineGuns"] ? Color.Lime : Color.Red;
+            RandomizedTanks.Color = Difficulties.Types["RandomizedTanks"] ? Color.Lime : Color.Red;
+            ThunderMode.Color = Difficulties.Types["ThunderMode"] ? Color.Lime : Color.Red;
 
             Theme.Volume = TankGame.Settings.MusicVolume;
 
@@ -763,6 +784,7 @@ namespace TanksRebirth.GameContent.UI
         {
             if (Active)
             {
+                #region Various things
                 if ((NetPlay.CurrentServer is not null && (Server.ConnectedClients is not null || NetPlay.ServerName is not null)) || (Client.IsConnected() && Client.lobbyDataReceived))
                 {
                     Vector2 initialPosition = new(GameUtils.WindowWidth * 0.75f, GameUtils.WindowHeight * 0.25f);
@@ -783,7 +805,33 @@ namespace TanksRebirth.GameContent.UI
                 TankGame.spriteBatch.DrawString(TankGame.TextFont, tanksMessage, new(8, GameUtils.WindowHeight - 8), Color.White, new(0.6f), 0f, new Vector2(0, tanksMessageSize.Y));
 
                 TankGame.spriteBatch.DrawString(TankGame.TextFont, tanksMessage, new(8, GameUtils.WindowHeight - 8), Color.White, new(0.6f), 0f, new Vector2(0, tanksMessageSize.Y));
-                TankGame.spriteBatch.DrawString(TankGame.TextFont, keyDisplay, new(12, 12), Color.White, new(0.6f), 0f, Vector2.Zero);
+                if (PlayButton.IsVisible)
+                    TankGame.spriteBatch.DrawString(TankGame.TextFont, keyDisplay, new(12, 12), Color.White, new(0.6f), 0f, Vector2.Zero);
+                #endregion
+
+                if (campaignNames.Count == 1)
+                {
+                    TankGame.spriteBatch.DrawString(TankGame.TextFont, $"You have no campaigns!" +
+                        $"\nTry downloading the Vanilla campaign by pressing 'Enter' or making your own." +
+                        $"\nCampaign folders belong in '{Path.Combine(TankGame.SaveDirectory, "Campaigns")}' (press TAB to open on Windows)", new(12, 12), Color.White, new(0.75f), 0f, Vector2.Zero);
+
+                    if (TankGame.IsWin)
+                    {
+                        if (Input.KeyJustPressed(Keys.Tab))
+                        {
+                            if (Directory.Exists(Path.Combine(TankGame.SaveDirectory, "Campaigns")))
+                                Process.Start("explorer.exe", Path.Combine(TankGame.SaveDirectory, "Campaigns"));
+                            // do note that this fails on windows lol
+                        }
+                        if (Input.KeyJustPressed(Keys.Enter))
+                        {
+                            Process.Start(new ProcessStartInfo("https://github.com/RighteousRyan1/TanksRebirth/releases/download/1.3-alpha/VanillaCampaign.rar")
+                            {
+                                UseShellExecute = true,
+                            });
+                        }
+                    }
+                }
             }
         }
     }

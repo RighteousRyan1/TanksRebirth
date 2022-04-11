@@ -30,7 +30,7 @@ namespace TanksRebirth.GameContent.Systems
 
             forestAmbience.Volume = 0;
 
-            var musicVolume = TankGame.Settings.MusicVolume;
+            var musicVolume = Difficulties.Types["ThunderMode"] ? TankGame.Settings.MusicVolume / 4 : TankGame.Settings.MusicVolume;
 
             foreach (var song in Songs)
                 if (song is not null)

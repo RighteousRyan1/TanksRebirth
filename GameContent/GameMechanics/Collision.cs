@@ -182,8 +182,17 @@ namespace TanksRebirth.GameContent.GameMechanics
                 {
                     if (movingBox.Intersects(cube.Hitbox))
                     {
-                        cornerCollision = true;
-                        break;
+                        if (exclude is not null)
+                        {
+                            if (exclude.Invoke(cube))
+                                cornerCollision = true;
+                            break;
+                        }
+                        else
+                        {
+                            cornerCollision = true;
+                            break;
+                        }
                     }
                     if (exclude is null)
                     {

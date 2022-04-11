@@ -169,10 +169,10 @@ namespace TanksRebirth.GameContent
                 Body = CollisionsWorld.CreateCircle(TNK_WIDTH * 0.4f, 1f, Position, BodyType.Dynamic);
                 // Body.LinearDamping = Deceleration * 10;
             }
-
-            if (Difficulties.BulletHell)
+            
+            if (Difficulties.Types["BulletHell"])
                 RicochetCount *= 3;
-            if (Difficulties.MachineGuns)
+            if (Difficulties.Types["MachineGuns"])
             {
                 ShellCooldown = 5;
                 ShellLimit = 50;
@@ -261,6 +261,10 @@ namespace TanksRebirth.GameContent
                     Velocity = Vector2.Zero;
                     return;
                 }
+                if (OwnedShellCount < 0)
+                    OwnedShellCount = 0;
+                if (OwnedMineCount < 0)
+                    OwnedMineCount = 0;
             }
 
             if (CurShootStun > 0)

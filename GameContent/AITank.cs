@@ -141,14 +141,19 @@ namespace TanksRebirth.GameContent
         {
             if (isIngame)
             {
-                if (Difficulties.BumpUp)
+                if (Difficulties.Types["BumpUp"])
                     tier += 1;
-                if (Difficulties.MeanGreens)
+                if (Difficulties.Types["MeanGreens"])
                     tier = TankTier.Green;
-                if (Difficulties.MasterModBuff && !Difficulties.MarbleModBuff)
+                if (Difficulties.Types["MasterModBuff"] && !Difficulties.Types["MarbleModBuff"])
                     tier += 9;
-                if (Difficulties.MarbleModBuff && !Difficulties.MasterModBuff)
+                if (Difficulties.Types["MarbleModBuff"] && !Difficulties.Types["MasterModBuff"])
                     tier += 18;
+                if (Difficulties.Types["RandomizedTanks"])
+                {
+                    tier = TankTier.Random;
+                    tankRange = new Range<TankTier>(TankTier.Brown, TankTier.Marble); // set to commando when the time comes
+                }
             }
             if (tier == TankTier.Random)
                 tier = (TankTier)GameHandler.GameRand.Next((int)tankRange.Min, (int)tankRange.Max);
@@ -422,7 +427,7 @@ namespace TanksRebirth.GameContent
                     AiParams.MinePlacementChance = 0.3f;
                     AiParams.MoveFromMineTime = 120;
 
-                    if (Difficulties.PieFactory)
+                    if (Difficulties.Types["PieFactory"])
                     {
                         VulnerableToMines = false;
                         MineCooldown = 10;
@@ -1486,23 +1491,23 @@ namespace TanksRebirth.GameContent
                     break;
                     #endregion
             }
-            if (Difficulties.TanksAreCalculators)
+            if (Difficulties.Types["TanksAreCalculators"])
                 if (RicochetCount >= 1)
                     if (HasTurret)
                         AiParams.SmartRicochets = true;
 
-            if (Difficulties.UltraMines)
+            if (Difficulties.Types["UltraMines"])
                 AiParams.MineWarinessRadius *= 3;
 
-            if (Difficulties.AllInvisible)
+            if (Difficulties.Types["AllInvisible"])
             {
                 Invisible = true;
                 CanLayTread = false;
             }
-            if (Difficulties.AllStationary)
+            if (Difficulties.Types["AllStationary"])
                 Stationary = true;
 
-            if (Difficulties.AllHoming)
+            if (Difficulties.Types["AllHoming"])
             {
                 ShellHoming = new();
                 ShellHoming.radius = 200f;
@@ -1513,7 +1518,7 @@ namespace TanksRebirth.GameContent
                 AiParams.Inaccuracy *= 4;
             }
 
-            if (Difficulties.Armored)
+            if (Difficulties.Types["Armored"])
             {
                 if (Armor is null)
                     Armor = new(this, 3);

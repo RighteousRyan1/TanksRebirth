@@ -26,6 +26,7 @@ using TanksRebirth.Net;
 using System.Threading;
 using System.Diagnostics;
 using Microsoft.Xna.Framework.Media;
+using TanksRebirth.Internals.Common.Framework;
 
 namespace TanksRebirth.GameContent
 {
@@ -114,7 +115,7 @@ namespace TanksRebirth.GameContent
         }
         internal static void UpdateAll()
         {
-            if (Difficulties.InfiniteLives)
+            if (Difficulties.Types["InfiniteLives"])
                 PlayerTank.Lives = PlayerTank.MaxLives;
             foreach (var tank in AllPlayerTanks)
                 tank?.Update();
@@ -145,6 +146,9 @@ namespace TanksRebirth.GameContent
                             song.Volume = 0;
             foreach (var expl in Explosion.explosions)
                 expl?.Update();
+
+            if (Difficulties.Types["ThunderMode"])
+                DoThunderStuff();
 
             if (ShouldMissionsProgress && !MainMenu.Active)
                 HandleMissionChanging();
@@ -236,6 +240,67 @@ namespace TanksRebirth.GameContent
 
             _wasOverhead = TankGame.OverheadView;
             _wasInMission = InMission;
+        }
+
+        private static void DoThunderStuff()
+        {
+            if (IntermissionSystem.BlackAlpha > 0 || IntermissionSystem.Alpha >= 1f || MainMenu.Active || GameUI.Paused)
+            {
+                if (Thunder.SoftRain.IsPlaying())
+                    Thunder.SoftRain.Stop();
+
+                TankGame.ClearColor = Color.Black;
+
+                GameLight.Color = new(150, 150, 170);
+                GameLight.Brightness = 0.71f;
+                
+                return;
+            }
+            if (!Thunder.SoftRain.IsPlaying())
+            {
+                Thunder.SoftRain.Play();
+            }
+            Thunder.SoftRain.Volume = TankGame.Settings.AmbientVolume;
+            
+            if (GameRand.NextFloat(0, 1f) <= 0.003f)
+            {
+                var rand = new Range<Thunder.ThunderType>(Thunder.ThunderType.Fast, Thunder.ThunderType.Instant2);
+                var type = (Thunder.ThunderType)GameRand.Next((int)rand.Min, (int)rand.Max);
+
+                if (Thunder.Thunders.Count(x => x is not null && x.Type == type) <= 0)
+                    new Thunder(type);
+            }
+
+            Thunder brightest = null;
+
+            float minThresh = 0.005f;
+
+            foreach (var thun in Thunder.Thunders)
+            {
+                if (thun is not null)
+                {
+                    thun.Update();
+
+                    if (brightest is null)
+                        brightest = thun;
+                    else
+                        if (thun.CurBright > brightest.CurBright && thun.CurBright > minThresh)
+                            brightest = thun;
+                }
+            }
+
+            GameLight.Color = Color.Multiply(Color.DeepSkyBlue, 0.5f); // DeepSkyBlue
+
+            
+            if (brightest is not null)
+            {
+                TankGame.ClearColor = Color.DeepSkyBlue * brightest.CurBright;
+                GameLight.Brightness = brightest.CurBright / 6;
+            }
+            else
+                GameLight.Brightness = minThresh;
+
+            GameLight.Apply(false);
         }
 
         private static void HandleMissionChanging()
@@ -412,19 +477,23 @@ namespace TanksRebirth.GameContent
              new(1000, 50f, (tnk) => { if (tnk.MaxSpeed > 0) tnk.Stationary = true; }, (tnk) => { if (tnk.MaxSpeed > 0) tnk.Stationary = !tnk.Stationary; }) { Name = "Stationary" }
         };
 
+        public static Lighting.LightProfile GameLight = new Lighting.LightProfile()
+        {
+            Color = new(150, 150, 170),
+            Brightness = 0.71f,
+
+            //color = new(150, 150, 170),
+            //brightness = 0.1f,
+            //isNight = true
+        };
+
         public static void StartTnkScene()
         {
             DebugUtils.DebuggingEnabled = false;
 
             LoadTnkScene();
 
-            var brighter = new Lighting.DayState()
-            {
-                color = new(150, 150, 170),
-                brightness = 0.71f,
-            };
-
-            brighter.Apply(false);
+            GameLight.Apply(false);
         }
 
         public static void SetupGraphics()

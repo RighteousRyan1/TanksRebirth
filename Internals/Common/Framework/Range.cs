@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TanksRebirth.GameContent;
 
 namespace TanksRebirth.Internals.Common.Framework
 {
@@ -14,5 +15,7 @@ namespace TanksRebirth.Internals.Common.Framework
         public Range(T min, T max) { 
             Min = min; Max = max; 
         }
+
+        // public static implicit operator T(Range<T> range) { return GameHandler.GameRand.Next(range.Min, range.Max); }
     }
 }

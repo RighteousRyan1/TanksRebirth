@@ -91,7 +91,7 @@ namespace TanksRebirth.GameContent
 
             var expl = new Explosion(Position, ExplosionRadius * 0.101f, owner, 0.3f);
 
-            if (Difficulties.UltraMines)
+            if (Difficulties.Types["UltraMines"])
                 expl.maxScale *= 2f;
 
             expl.expanseRate = 2f;
@@ -164,15 +164,11 @@ namespace TanksRebirth.GameContent
                     {
                         if (!tickRed)
                         {
-                            effect.EmissiveColor = new(1, 1, 0);
-                            //effect.SpecularColor = new(1, 1, 0);
-                            //effect.FogColor = new(1, 1, 0);
+                            effect.EmissiveColor = new Vector3(1, 1, 0) * GameHandler.GameLight.Brightness;
                         }
                         else
                         {
-                            effect.EmissiveColor = new(1, 0, 0);
-                            //effect.SpecularColor = new(1, 0, 0);
-                            //effect.FogColor = new(1, 0, 0);
+                            effect.EmissiveColor = new Vector3(1, 0, 0) * GameHandler.GameLight.Brightness;
                         }
                         effect.Texture = _mineTexture;
                     }
