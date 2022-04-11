@@ -253,7 +253,9 @@ namespace TanksRebirth.GameContent
 
                 GameLight.Color = new(150, 150, 170);
                 GameLight.Brightness = 0.71f;
-                
+
+                GameLight.Apply(false);
+
                 return;
             }
             if (!Thunder.SoftRain.IsPlaying())
