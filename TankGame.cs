@@ -344,6 +344,7 @@ namespace TanksRebirth
         {
             try
             {
+                MouseRenderer.ShouldRender = TankGame.FirstPerson ? (GameUI.Paused || MainMenu.Active) : true;
                 if (UIElement.delay > 0)
                     UIElement.delay--;
                 UpdateStopwatch.Start();

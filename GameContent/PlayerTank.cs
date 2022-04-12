@@ -144,7 +144,7 @@ namespace TanksRebirth.GameContent
                     }
                     else
                     {
-                        MouseRenderer.ShouldRender = TankGame.FirstPerson;
+                        //Mouse.SetPosition(Input.CurrentMouseSnapshot.X, GameUtils.WindowHeight / 2);
                         if (Input.CurrentMouseSnapshot.X >= GameUtils.WindowWidth)
                             Mouse.SetPosition(1, Input.CurrentMouseSnapshot.Y);
                         if (Input.CurrentMouseSnapshot.X <= 0)

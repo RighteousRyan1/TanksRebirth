@@ -156,7 +156,7 @@ namespace TanksRebirth.GameContent
                 }
             }
             if (tier == TankTier.Random)
-                tier = (TankTier)GameHandler.GameRand.Next((int)tankRange.Min, (int)tankRange.Max);
+                tier = (TankTier)GameHandler.GameRand.Next((int)tankRange.Min, (int)tankRange.Max + 1);
             IsIngame = isIngame;
             if (isIngame)
             {
@@ -1783,7 +1783,7 @@ namespace TanksRebirth.GameContent
                 }
             }
             reflectPoints = list.ToArray();
-            endpoint = pathDir;
+            endpoint = pathPos;
             return hasCollided;
         }
 
@@ -1934,33 +1934,28 @@ namespace TanksRebirth.GameContent
                         if (Stationary)
                             return;
 
-                        /*TankRotation %= MathHelper.Pi;
-                        targetTankRotation %= MathHelper.Tau;
-                        if (targetTankRotation - TankRotation >= MathHelper.PiOver2)
-                            TankRotation += MathHelper.Pi;
-                        else if (targetTankRotation - TankRotation <= -MathHelper.PiOver2)
-                            TankRotation -= MathHelper.Pi;*/
-
                         bool isBulletNear = TryGetShellNear(AiParams.ProjectileWarinessRadius, out var shell);
                         bool isMineNear = TryGetMineNear(AiParams.MineWarinessRadius, out var mine);
 
                         #region CubeNav
 
-                        pathBlocked = IsObstacleInWay(AiParams.BlockWarinessDistance, Vector2.UnitY.RotatedByRadians(-TargetTankRotation), out var travelPath, out var refPoints);
+                        pathBlocked = IsObstacleInWay(AiParams.BlockWarinessDistance, Vector2.UnitX.RotatedByRadians(-TargetTankRotation + MathHelper.PiOver2), out var travelPath, out var refPoints);
                         
                         if (pathBlocked && Behaviors[2].IsModOf(3) && !isMineNear && !isBulletNear)
                         {
                             if (refPoints.Length > 0)
                             {
-                                var refAngle = GameUtils.DirectionOf(Position, travelPath - new Vector2(400, 0)).ToRotation();
+                                //var refAngle = GameUtils.DirectionOf(Position, travelPath).ToRotation();
 
                                 // why does this never work no matter what i do
 
-                                // refAngle / 4
-                                //GameUtils.RoughStep(ref TargetTankRotation, refAngle - MathHelper.PiOver2, AiParams.RedirectAngle);
-                                GameUtils.RoughStep(ref TargetTankRotation, refAngle, refAngle / 4);//AiParams.RedirectAngle);
+                                /*var pos = GameUtils.DirectionOf(Position, travelPath);
+                                var rot = pos.ToRotation();
+                                var posNew = new Vector2(50, 0).RotatedByRadians(rot);*/
 
-                                // ChatSystem.SendMessage($"{TargetTankRotation} / {refAngle}", Color.White);
+                                var refAngle = GameUtils.DirectionOf(Position, travelPath).ToRotation();
+
+                                GameUtils.RoughStep(ref TargetTankRotation, refAngle, refAngle / 4);//AiParams.RedirectAngle);
                             }
 
                             // TODO: i literally do not understand this
@@ -2255,10 +2250,21 @@ namespace TanksRebirth.GameContent
                     DebugUtils.DrawDebugString(TankGame.spriteBatch, $"{tier}: {poo.Count}", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection), 1, centered: true);
                     if (!Stationary)
                     {
-                        IsObstacleInWay(AiParams.BlockWarinessDistance, Vector2.UnitY.RotatedByRadians(-TargetTankRotation), out var travelPos, out var refPoints, true);
-                        DebugUtils.DrawDebugString(TankGame.spriteBatch, travelPos, GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(travelPos.X, 11, travelPos.Y), View, Projection), 1, centered: true);
+                        IsObstacleInWay(AiParams.BlockWarinessDistance, Vector2.UnitX.RotatedByRadians(-TargetTankRotation + MathHelper.PiOver2), out var travelPos, out var refPoints, true);
+                        DebugUtils.DrawDebugString(TankGame.spriteBatch, "TRAVELENDPOINT", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(travelPos.X, 11, travelPos.Y), View, Projection), 1, centered: true);
                         DebugUtils.DrawDebugString(TankGame.spriteBatch, "ENDPOINT", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(rayEnd.X, 11, rayEnd.Y), View, Projection), 1, centered: true);
 
+                        /*var pos = GameUtils.DirectionOf(Position, travelPos);
+                        var rot = pos.ToRotation();
+                        var posNew = new Vector2(50, 0).RotatedByRadians(rot);
+                        DebugUtils.DrawDebugString(TankGame.spriteBatch, "here?",
+                            GeometryUtils.ConvertWorldToScreen(new(posNew.X, 11, posNew.Y), 
+                            Matrix.CreateTranslation(Position.X, 
+                            0, Position.Y), View, Projection), 
+                            1, centered: true);*/
+
+                        DebugUtils.DrawDebugString(TankGame.spriteBatch, "end", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(GameUtils.DirectionOf(Position, travelPos).X, 0, GameUtils.DirectionOf(Position, travelPos).Y), View, Projection), 1, centered: true);
+                        DebugUtils.DrawDebugString(TankGame.spriteBatch, "me", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.Identity, View, Projection/*Matrix.CreateTranslation(Position.X, 11, Position.Y), View, Projection)*/), 1, centered: true);
                         //TankGame.spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), new Rectangle((int)travelPos.X - 1, (int)travelPos.Y - 1, 20, 20), Color.White);
                     }
                 }
