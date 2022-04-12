@@ -9,7 +9,7 @@ If you wish to keep up with development in real time, consider joining this serv
 
 ## Code Contributors
 
-- Cuno (on GitHub) for a primative UI implementation.
+- Cuno (on GitHub) for a primitive UI implementation.
 - Guthen (on GitHub) for fixing irresolvable font characters.
 - 4mbr0s3-2 (on GitHub) for ricochet calculations.
 
