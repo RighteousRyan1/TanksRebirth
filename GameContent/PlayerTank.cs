@@ -55,7 +55,7 @@ namespace TanksRebirth.GameContent
         public PlayerTank(PlayerType playerType)
         {
             Model = GameResources.GetGameResource<Model>("Assets/tank_p");
-            _tankColorTexture = GameResources.GetGameResource<Texture2D>($"Assets/textures/player/tank_{playerType.ToString().ToLower()}");
+            _tankColorTexture = Assets[$"tank_" + playerType.ToString().ToLower()];
 
             CannonMesh = Model.Meshes["Cannon"];
 
@@ -70,7 +70,7 @@ namespace TanksRebirth.GameContent
             if (playerType == PlayerType.Red)
                 ShootPitch = 0.1f;
 
-            Team = Team.Red;
+            Team = TankTeam.Red;
 
             Dead = true;
 

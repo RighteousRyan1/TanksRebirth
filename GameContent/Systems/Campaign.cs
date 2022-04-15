@@ -218,7 +218,7 @@ namespace TanksRebirth.GameContent.Systems
             {
                 campaign.LoadMission(0);
                 campaign.TrackedSpawnPoints = new (Vector2, bool)[campaign.LoadedMission.Tanks.Length];
-                PlayerTank.MaxLives = campaign.Properties.StartingLives;
+                PlayerTank.MaxLives = properties.StartingLives;
             }
 
             campaign.Properties = properties;

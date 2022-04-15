@@ -92,7 +92,7 @@ namespace TanksRebirth.Net
                 case PacketType.PlayerSpawn:
 
                     PlayerType type = (PlayerType)reader.GetByte();
-                    Team team = (Team)reader.GetByte();
+                    TankTeam team = (TankTeam)reader.GetByte();
 
                     float x = reader.GetFloat();
                     float y = reader.GetFloat();

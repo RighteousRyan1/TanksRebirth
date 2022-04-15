@@ -195,7 +195,7 @@ namespace TanksRebirth.GameContent
                     {
                         if (target is not null && target != owner && Vector2.Distance(Position2D, target.Position) <= homingProperties.radius)
                         {
-                            if (target.Team != owner.Team || target.Team == Team.NoTeam)
+                            if (target.Team != owner.Team || target.Team == TankTeam.NoTeam)
                             {
                                 if (homingProperties.isHeatSeeking && target.Velocity != Vector2.Zero)
                                     homingProperties.target = target.Position;
@@ -499,7 +499,7 @@ namespace TanksRebirth.GameContent
                     {
                         if (!canFriendlyFire)
                         {
-                            if (tank.Team == owner.Team && tank != owner && tank.Team != Team.NoTeam)
+                            if (tank.Team == owner.Team && tank != owner && tank.Team != TankTeam.NoTeam)
                                 Destroy();
                         }
                         else

@@ -38,7 +38,7 @@ namespace TanksRebirth.GameContent.Systems
 
         public static void UpdateRenderTarget()
         {
-            if (_decalsToAdd.Count == 0)
+            if (_decalsToAdd is null || _decalsToAdd.Count == 0)
             {
                 return;
             }

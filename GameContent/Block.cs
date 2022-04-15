@@ -84,31 +84,23 @@ namespace TanksRebirth.GameContent
 
         public Block(BlockType type, int height, Vector2 position)
         {
-            meshTexture = type switch
-            {
-                BlockType.Wood => GameResources.GetGameResource<Texture2D>("Assets/textures/ingame/block.1"),
-                BlockType.Cork => GameResources.GetGameResource<Texture2D>("Assets/textures/ingame/block.2"),
-                BlockType.Hole => GameResources.GetGameResource<Texture2D>("Assets/textures/ingame/block_harf.2"),
-                _ => null
-            };
-
             Stack = (sbyte)MathHelper.Clamp(height, 0, 7); // if 0, it will be a hole.
             
             switch (type)
             {
                 case BlockType.Wood:
-                    meshTexture = GameResources.GetGameResource<Texture2D>($"{MapRenderer.assetsRoot}block.1");
+                    meshTexture = MapRenderer.Assets["block.1"];//GameResources.GetGameResource<Texture2D>($"{MapRenderer.AssetRoot}block.1");
                     model = IsAlternateModel ? GameResources.GetGameResource<Model>("Assets/toy/cube_stack_alt") : GameResources.GetGameResource<Model>("Assets/toy/cube_stack"); ;
                     break;
                 case BlockType.Cork:
                     IsDestructible = true;
-                    meshTexture = GameResources.GetGameResource<Texture2D>($"{MapRenderer.assetsRoot}block.2");
+                    meshTexture = MapRenderer.Assets["block.2"]; //GameResources.GetGameResource<Texture2D>($"{MapRenderer.AssetRoot}block.2");
                     model = IsAlternateModel ? GameResources.GetGameResource<Model>("Assets/toy/cube_stack_alt") : GameResources.GetGameResource<Model>("Assets/toy/cube_stack"); ;
                     break;
                 case BlockType.Hole:
                     model = GameResources.GetGameResource<Model>("Assets/check");
                     IsSolid = false;
-                    meshTexture = GameResources.GetGameResource<Texture2D>($"{MapRenderer.assetsRoot}block_harf.2");
+                    meshTexture = MapRenderer.Assets["block_harf.1"]; //GameResources.GetGameResource<Texture2D>($"{MapRenderer.AssetRoot}block_harf.1");
                     AffectedByOffset = false;
                     break;
             }

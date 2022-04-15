@@ -242,78 +242,92 @@ namespace TanksRebirth
         
         protected override void LoadContent()
         {
-            var s = Stopwatch.StartNew();
-
-            Directory.CreateDirectory(SaveDirectory);
-
-            GameHandler.ClientLog = new($"{SaveDirectory}", "client");
-
-            Thunder.SoftRain = GameResources.GetGameResource<SoundEffect>("Assets/sounds/ambient/soft_rain").CreateInstance();
-            Thunder.SoftRain.IsLooped = true;
-
-            OnFocusLost += TankGame_OnFocusLost;
-            OnFocusRegained += TankGame_OnFocusRegained;
-
-            WhitePixel = GameResources.GetGameResource<Texture2D>("Assets/MagicPixel");
-
-            _fontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/en_US.ttf"));
-            _fontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/ja_JP.ttf"));
-            _fontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/es_ES.ttf"));
-            _fontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/ru_RU.ttf"));
-
-            TextFont = _fontSystem.GetFont(30);
-            TextFontLarge = _fontSystem.GetFont(120);
-
-            if (!File.Exists(Path.Combine(SaveDirectory, "settings.json")))
+            try
             {
-                Settings = new();
-                SettingsHandler = new(Settings, Path.Combine(SaveDirectory, "settings.json"));
-                JsonSerializerOptions opts = new()
+
+                var s = Stopwatch.StartNew();
+
+                UIElement.UIPanelBackground = GameResources.GetGameResource<Texture2D>("Assets/UIPanelBackground");
+
+                Directory.CreateDirectory(SaveDirectory);
+                Directory.CreateDirectory(Path.Combine(SaveDirectory, "Texture Packs", "Scene"));
+                Directory.CreateDirectory(Path.Combine(SaveDirectory, "Texture Packs", "Tank"));
+
+                GameHandler.ClientLog = new($"{SaveDirectory}", "client");
+
+                Thunder.SoftRain = GameResources.GetGameResource<SoundEffect>("Assets/sounds/ambient/soft_rain").CreateInstance();
+                Thunder.SoftRain.IsLooped = true;
+
+                OnFocusLost += TankGame_OnFocusLost;
+                OnFocusRegained += TankGame_OnFocusRegained;
+
+                WhitePixel = GameResources.GetGameResource<Texture2D>("Assets/MagicPixel");
+
+                _fontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/en_US.ttf"));
+                _fontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/ja_JP.ttf"));
+                _fontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/es_ES.ttf"));
+                _fontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/ru_RU.ttf"));
+
+                TextFont = _fontSystem.GetFont(30);
+                TextFontLarge = _fontSystem.GetFont(120);
+
+                if (!File.Exists(Path.Combine(SaveDirectory, "settings.json")))
                 {
-                    WriteIndented = true
-                };
-                SettingsHandler.Serialize(opts, true);
+                    Settings = new();
+                    SettingsHandler = new(Settings, Path.Combine(SaveDirectory, "settings.json"));
+                    JsonSerializerOptions opts = new()
+                    {
+                        WriteIndented = true
+                    };
+                    SettingsHandler.Serialize(opts, true);
+                }
+                else
+                {
+                    SettingsHandler = new(Settings, Path.Combine(SaveDirectory, "settings.json"));
+                    Settings = SettingsHandler.DeserializeAndSet();
+                }
+
+                #region Config Initialization
+
+                graphics.SynchronizeWithVerticalRetrace = Settings.Vsync;
+                Window.IsBorderless = Settings.BorderlessWindow;
+                PlayerTank.controlUp.AssignedKey = Settings.UpKeybind;
+                PlayerTank.controlDown.AssignedKey = Settings.DownKeybind;
+                PlayerTank.controlLeft.AssignedKey = Settings.LeftKeybind;
+                PlayerTank.controlRight.AssignedKey = Settings.RightKeybind;
+                PlayerTank.controlMine.AssignedKey = Settings.MineKeybind;
+                MapRenderer.Theme = Settings.GameTheme;
+
+                graphics.PreferredBackBufferWidth = Settings.ResWidth;
+                graphics.PreferredBackBufferHeight = Settings.ResHeight;
+
+                Tank.SetAssetNames();
+                MapRenderer.LoadTexturePack(Settings.MapPack);
+                Tank.LoadTexturePack(Settings.TankPack);
+                graphics.ApplyChanges();
+
+                Language.LoadLang(ref GameLanguage, Settings.Language);
+
+                #endregion
+
+                GameHandler.SetupGraphics();
+
+                GameUI.Initialize();
+                MainMenu.Initialize();
+
+                GameHandler.ClientLog.Write($"Content loaded in {s.Elapsed}.", LogType.Debug);
+
+                DecalSystem.Initialize(spriteBatch, GraphicsDevice);
+
+                cunoSucksElement = new() { IsVisible = false };
+
+                s.Stop();
             }
-            else
+            catch (Exception e)
             {
-                SettingsHandler = new(Settings, Path.Combine(SaveDirectory, "settings.json"));
-                Settings = SettingsHandler.DeserializeAndSet();
+                GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
+                throw;
             }
-
-            #region Config Initialization
-
-            graphics.SynchronizeWithVerticalRetrace = Settings.Vsync;
-            Window.IsBorderless = Settings.BorderlessWindow;
-            PlayerTank.controlUp.AssignedKey = Settings.UpKeybind;
-            PlayerTank.controlDown.AssignedKey = Settings.DownKeybind;
-            PlayerTank.controlLeft.AssignedKey = Settings.LeftKeybind;
-            PlayerTank.controlRight.AssignedKey = Settings.RightKeybind;
-            PlayerTank.controlMine.AssignedKey = Settings.MineKeybind;
-            MapRenderer.Theme = Settings.GameTheme;
-
-            graphics.PreferredBackBufferWidth = Settings.ResWidth;
-            graphics.PreferredBackBufferHeight = Settings.ResHeight;
-
-            graphics.ApplyChanges();
-
-            Language.LoadLang(ref GameLanguage, Settings.Language);
-
-            #endregion
-
-            GameHandler.SetupGraphics();
-
-            GameUI.Initialize();
-            MainMenu.Initialize();
-
-            UIElement.UIPanelBackground = GameResources.GetGameResource<Texture2D>("Assets/UIPanelBackground");
-
-            GameHandler.ClientLog.Write($"Content loaded in {s.Elapsed}.", LogType.Debug);
-
-            DecalSystem.Initialize(spriteBatch, GraphicsDevice);
-
-            cunoSucksElement = new() { IsVisible = false };
-            
-            s.Stop();
         }
 
         private void TankGame_OnFocusRegained(object sender, IntPtr e)
@@ -523,7 +537,7 @@ namespace TanksRebirth
             catch (Exception e)
             {
                 GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
-                //throw;
+                throw;
             }
         }
 
@@ -609,49 +623,57 @@ namespace TanksRebirth
 
         protected override void Draw(GameTime gameTime)
         {
-            RenderStopwatch.Start();
+            try
+            {
+                RenderStopwatch.Start();
 
-            Matrix2D = Matrix.CreateOrthographicOffCenter(0, GameUtils.WindowWidth, GameUtils.WindowHeight, 0, -1, 1)
-                * Matrix.CreateScale(UiScale);
+                Matrix2D = Matrix.CreateOrthographicOffCenter(0, GameUtils.WindowWidth, GameUtils.WindowHeight, 0, -1, 1)
+                    * Matrix.CreateScale(UiScale);
 
-            GraphicsDevice.Clear(ClearColor);
+                GraphicsDevice.Clear(ClearColor);
 
-            DecalSystem.UpdateRenderTarget();
+                DecalSystem.UpdateRenderTarget();
 
 
-            spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied/*, transformMatrix: Matrix2D*/);
+                spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied/*, transformMatrix: Matrix2D*/);
 
-            
 
-            if (DebugUtils.DebuggingEnabled)
-                spriteBatch.DrawString(TextFont, "Debug Level: " + DebugUtils.CurDebugLabel, new Vector2(10), Color.White, new Vector2(0.6f));
-            DebugUtils.DrawDebugString(spriteBatch, $"Garbage Collection: {MemoryParser.FromMegabytes(GCMemory)} MB" +
-                $"\nProcess Memory: {MemoryParser.FromMegabytes(_memBytes)} MB", new(8, GameUtils.WindowHeight * 0.15f));
-            DebugUtils.DrawDebugString(spriteBatch, $"{SysGPU}\n{SysCPU}", new(8, GameUtils.WindowHeight * 0.2f));
 
-            GraphicsDevice.DepthStencilState = new DepthStencilState() { };
+                if (DebugUtils.DebuggingEnabled)
+                    spriteBatch.DrawString(TextFont, "Debug Level: " + DebugUtils.CurDebugLabel, new Vector2(10), Color.White, new Vector2(0.6f));
+                DebugUtils.DrawDebugString(spriteBatch, $"Garbage Collection: {MemoryParser.FromMegabytes(GCMemory)} MB" +
+                    $"\nProcess Memory: {MemoryParser.FromMegabytes(_memBytes)} MB", new(8, GameUtils.WindowHeight * 0.15f));
+                DebugUtils.DrawDebugString(spriteBatch, $"{SysGPU}\n{SysCPU}", new(8, GameUtils.WindowHeight * 0.2f));
 
-            GameHandler.RenderAll();
+                GraphicsDevice.DepthStencilState = new DepthStencilState() { };
 
-            spriteBatch.End();
+                GameHandler.RenderAll();
 
-            base.Draw(gameTime);
+                spriteBatch.End();
 
-            spriteBatch.Begin(blendState: BlendState.AlphaBlend, effect: GameShaders.MouseShader);
+                base.Draw(gameTime);
 
-            MouseRenderer.DrawMouse();
+                spriteBatch.Begin(blendState: BlendState.AlphaBlend, effect: GameShaders.MouseShader);
 
-            spriteBatch.End();
+                MouseRenderer.DrawMouse();
 
-            foreach (var triangle in Triangle2D.triangles)
-                triangle.DrawImmediate();
-            foreach (var qu in Quad.quads)
-                qu.Render();
+                spriteBatch.End();
 
-            RenderTime = RenderStopwatch.Elapsed;
+                foreach (var triangle in Triangle2D.triangles)
+                    triangle.DrawImmediate();
+                foreach (var qu in Quad.quads)
+                    qu.Render();
 
-            RenderStopwatch.Stop();
-            RenderFPS = Math.Round(1f / gameTime.ElapsedGameTime.TotalSeconds);
+                RenderTime = RenderStopwatch.Elapsed;
+
+                RenderStopwatch.Stop();
+                RenderFPS = Math.Round(1f / gameTime.ElapsedGameTime.TotalSeconds);
+            }
+            catch (Exception e)
+            {
+                GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
+                throw;
+            }
         }
     }
 }

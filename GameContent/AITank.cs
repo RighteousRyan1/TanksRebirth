@@ -184,15 +184,15 @@ namespace TanksRebirth.GameContent
                 Dead = true;
             }
 
-            #region Non-Special
-            if ((int)tier <= (int)TankTier.Black)
-                _tankTexture = GameResources.GetGameResource<Texture2D>($"Assets/textures/enemy/tank_{tier.ToString().ToLower()}");
+            /*if ((int)tier <= (int)TankTier.Black)
+                _tankTexture = GameResources.GetGameResource<Texture2D>($"Assets/textures/tank/tank_{tier.ToString().ToLower()}");
             else if ((int)tier > (int)TankTier.Black && (int)tier <= (int)TankTier.Obsidian)
-                _tankTexture = GameResources.GetGameResource<Texture2D>($"Assets/textures/enemy/master/tank_{tier.ToString().ToLower()}");
+                _tankTexture = GameResources.GetGameResource<Texture2D>($"Assets/textures/tank/master/tank_{tier.ToString().ToLower()}");
             else if ((int)tier > (int)TankTier.Obsidian && (int)tier <= (int)TankTier.Marble)
-                _tankTexture = GameResources.GetGameResource<Texture2D>($"Assets/textures/enemy/fate/tank_{tier.ToString().ToLower()}");
-            #endregion
+                _tankTexture = GameResources.GetGameResource<Texture2D>($"Assets/textures/tank/marble/tank_{tier.ToString().ToLower()}");*/
 
+            if ((int) tier <= (int)TankTier.Marble)
+                _tankTexture = Assets[$"tank_" + tier.ToString().ToLower()];
             #region Special
 
             if (tier == TankTier.Commando)
@@ -219,25 +219,25 @@ namespace TanksRebirth.GameContent
             {
                 Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_assassin");
 
-                _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/enemy/wee/tank_assassin");
+                _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_assassin");
             }
             else if (tier == TankTier.RocketDefender)
             {
                 Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_rocket");
 
-                _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/enemy/wee/tank_rocket");
+                _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_rocket");
             }
             else if (tier == TankTier.Electro)
             {
                 Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_electro");
 
-                _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/enemy/wee/tank_electro");
+                _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_electro");
             }
             else if (tier == TankTier.Explosive)
             {
                 Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_explosive");
 
-                _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/enemy/wee/tank_explosive");
+                _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_explosive");
             }
             else
             {
@@ -1810,11 +1810,11 @@ namespace TanksRebirth.GameContent
                 }
                 enactBehavior = () =>
                 {
-                    var enemy = GameHandler.AllTanks.FirstOrDefault(tnk => tnk is not null && !tnk.Dead && (tnk.Team != Team || tnk.Team == Team.NoTeam) && tnk != this);
+                    var enemy = GameHandler.AllTanks.FirstOrDefault(tnk => tnk is not null && !tnk.Dead && (tnk.Team != Team || tnk.Team == TankTeam.NoTeam) && tnk != this);
 
                     foreach (var tank in GameHandler.AllTanks)
                     {
-                        if (tank is not null && !tank.Dead && (tank.Team != Team || tank.Team == Team.NoTeam) && tank != this)
+                        if (tank is not null && !tank.Dead && (tank.Team != Team || tank.Team == TankTeam.NoTeam) && tank != this)
                             if (Vector2.Distance(tank.Position, Position) < Vector2.Distance(enemy.Position, Position))
                                 if ((tank.Invisible && tank.timeSinceLastAction < 60) || !tank.Invisible)
                                     enemy = tank;
@@ -1887,9 +1887,9 @@ namespace TanksRebirth.GameContent
                             else
                                 tanksDef = GetTanksInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), out var rayEndpoint, offset: Vector2.UnitY * 20, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);// change?
 
-                            var findsEnemy = tanksDef.Any(tnk => tnk is not null && (tnk.Team != Team || tnk.Team == Team.NoTeam));
+                            var findsEnemy = tanksDef.Any(tnk => tnk is not null && (tnk.Team != Team || tnk.Team == TankTeam.NoTeam));
                             var findsSelf = tanksDef.Any(tnk => tnk is not null && tnk == this);
-                            var findsFriendly = tanksDef.Any(tnk => tnk is not null && (tnk.Team == Team && tnk.Team != Team.NoTeam));
+                            var findsFriendly = tanksDef.Any(tnk => tnk is not null && (tnk.Team == Team && tnk.Team != TankTeam.NoTeam));
 
                             if (findsEnemy && isEnemySpotted && !tooCloseToExplosiveShell)
                                 SeesTarget = true;
@@ -1905,9 +1905,9 @@ namespace TanksRebirth.GameContent
                                 {
                                     var tanks = GetTanksInPath(Vector2.UnitY.RotatedByRadians(seekRotation), out var rayEndpoint, false, default, AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
 
-                                    var findsEnemy2 = tanks.Any(tnk => tnk is not null && (tnk.Team != Team || tnk.Team == Team.NoTeam) && tnk != this);
+                                    var findsEnemy2 = tanks.Any(tnk => tnk is not null && (tnk.Team != Team || tnk.Team == TankTeam.NoTeam) && tnk != this);
                                     // var findsSelf2 = tanks.Any(tnk => tnk is not null && tnk == this);
-                                    var findsFriendly2 = tanks.Any(tnk => tnk is not null && (tnk.Team == Team && tnk.Team != Team.NoTeam));
+                                    var findsFriendly2 = tanks.Any(tnk => tnk is not null && (tnk.Team == Team && tnk.Team != TankTeam.NoTeam));
                                     // ChatSystem.SendMessage($"{findsEnemy2} {findsFriendly2} | seek: {seeks}", Color.White);
                                     if (findsEnemy2/* && !findsFriendly2*/)
                                     {
@@ -1920,7 +1920,7 @@ namespace TanksRebirth.GameContent
                                     seeks = false;
                             }
 
-                            bool checkNoTeam = Team == Team.NoTeam ? true : !tanksNearMe.Any(x => x.Team == Team);
+                            bool checkNoTeam = Team == TankTeam.NoTeam ? true : !tanksNearMe.Any(x => x.Team == Team);
 
                             if (SeesTarget && checkNoTeam && !findsSelf && !findsFriendly)
                                 if (CurShootCooldown <= 0)

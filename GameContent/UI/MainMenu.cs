@@ -722,7 +722,7 @@ namespace TanksRebirth.GameContent.UI
         {
             var extank = new AITank(tier, default, true, false)
             {
-                Team = Team.NoTeam,
+                Team = TankTeam.NoTeam,
                 Dead = false
             };
             extank.Body.Position = new Vector2(-500 + xOffset, yOffset);

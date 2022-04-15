@@ -219,7 +219,7 @@ namespace TanksRebirth.GameContent.Systems
                         Rotation = rotation,
                         AiTier = (TankTier)tier,
                         PlayerType = (PlayerType)pType,
-                        Team = (Team)team
+                        Team = (TankTeam)team
                     });
                 }
 

@@ -4,22 +4,14 @@ using System;
 using TanksRebirth.Enums;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Utilities;
-using TanksRebirth.Internals.Core.Interfaces;
-using TanksRebirth.Graphics;
 using System.Linq;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using Microsoft.Xna.Framework.Audio;
-using TanksRebirth.GameContent.GameMechanics;
-using tainicom.Aether.Physics2D;
-using Phys = tainicom.Aether.Physics2D.Collision;
 using tainicom.Aether.Physics2D.Dynamics;
-using tainicom.Aether.Physics2D.Collision.Shapes;
-using tainicom.Aether.Physics2D.Content;
-using tainicom.Aether.Physics2D.Fluids;
-using tainicom.Aether.Physics2D.Common;
-using tainicom.Aether.Physics2D.Controllers;
 using TanksRebirth.Internals.Common.Framework;
 using TanksRebirth.GameContent.Systems;
+using System.Collections.Generic;
+using System.IO;
 
 namespace TanksRebirth.GameContent
 {
@@ -35,7 +27,7 @@ namespace TanksRebirth.GameContent
 
         public float Rotation;
 
-        public Team Team;
+        public TankTeam Team;
 
         public Range<TankTier> RandomizeRange;
 
@@ -72,6 +64,78 @@ namespace TanksRebirth.GameContent
     }
     public abstract class Tank
     {
+        public static Dictionary<string, Texture2D> Assets = new();
+
+        public static string AssetRoot;
+
+        public static void SetAssetNames()
+        {
+            Assets.Clear();
+            foreach (var tier in Enum.GetNames<TankTier>().Where(tier => (int)Enum.Parse<TankTier>(tier) > (int)TankTier.Random && (int)Enum.Parse<TankTier>(tier) < (int)TankTier.Explosive))
+            {
+                Assets.Add($"tank_" + tier.ToLower(), null);
+            }
+            foreach (var type in Enum.GetNames<PlayerType>())
+            {
+                Assets.Add($"tank_" + type.ToLower(), null);
+            }
+        }
+        public static void LoadVanillaTextures()
+        {
+            Assets.Clear();
+
+            foreach (var tier in Enum.GetNames<TankTier>().Where(tier => (int)Enum.Parse<TankTier>(tier) > (int)TankTier.Random && (int)Enum.Parse<TankTier>(tier) < (int)TankTier.Explosive))
+            {
+                if (!Assets.ContainsKey($"tank_" + tier.ToLower()))
+                {
+                    Assets.Add($"tank_" + tier.ToLower(), GameResources.GetGameResource<Texture2D>($"Assets/textures/tank/tank_{tier.ToLower()}"));
+                }
+            }
+            foreach (var type in Enum.GetNames<PlayerType>())
+            {
+                if (!Assets.ContainsKey($"tank_" + type.ToLower()))
+                {
+                    Assets.Add($"tank_" + type.ToLower(), GameResources.GetGameResource<Texture2D>($"Assets/textures/tank/tank_{type.ToLower()}"));
+                }
+            }
+            AssetRoot = "Assets/textures/tank";
+        }
+
+        public static void LoadTexturePack(string folder)
+        {
+            if (folder.ToLower() == "vanilla")
+            {
+                LoadVanillaTextures();
+                GameHandler.ClientLog.Write($"Loaded vanilla textures for Tank.", LogType.Info);
+                return;
+            }
+
+            var baseRoot = Path.Combine(TankGame.SaveDirectory, "Texture Packs");
+            var rootGameScene = Path.Combine(TankGame.SaveDirectory, "Texture Packs", "Tank");
+            var path = Path.Combine(rootGameScene, folder);
+
+            // ensure that these directories exist before dealing with them
+            Directory.CreateDirectory(baseRoot);
+            Directory.CreateDirectory(rootGameScene);
+
+            if (!Directory.Exists(path))
+            {
+                GameHandler.ClientLog.Write($"Error: Directory '{path}' not found when attempting texture pack load.", LogType.Warn);
+                return;
+            }
+
+            AssetRoot = path;
+
+            foreach (var file in Directory.GetFiles(path))
+            {
+                if (Assets.Any(type => type.Key == Path.GetFileNameWithoutExtension(file)))
+                {
+                    Assets[Path.GetFileNameWithoutExtension(file)] = Texture2D.FromFile(TankGame.Instance.GraphicsDevice, Path.Combine(path, Path.GetFileName(file)));
+                    GameHandler.ClientLog.Write($"Texture pack '{folder}' overrided texture '{Path.GetFileNameWithoutExtension(file)}'", LogType.Info);
+                }
+            }
+        }
+
         public static World CollisionsWorld = new(Vector2.Zero);
         public const float TNK_WIDTH = 25;
         public const float TNK_HEIGHT = 25;
@@ -138,8 +202,8 @@ namespace TanksRebirth.GameContent
         public float TurningSpeed { get; set; } = 1f;
         /// <summary>The maximum angle this <see cref="Tank"/> can turn (in radians) before it has to start pivoting.</summary>
         public float MaximalTurn { get; set; }
-        /// <summary>The <see cref="GameContent.Team"/> this <see cref="Tank"/> is on.</summary>
-        public Team Team { get; set; }
+        /// <summary>The <see cref="GameContent.TankTeam"/> this <see cref="Tank"/> is on.</summary>
+        public TankTeam Team { get; set; }
         /// <summary>How many <see cref="Shell"/>s this <see cref="Tank"/> owns.</summary>
         public int OwnedShellCount { get; internal set; }
         /// <summary>How many <see cref="Mine"/>s this <see cref="Tank"/> owns.</summary>
@@ -635,18 +699,5 @@ namespace TanksRebirth.GameContent
             check.position = Position;
             check.Scale = new(0.6f);
         }
-    }
-
-    public enum Team
-    {
-        NoTeam,
-        Red     = 1, 
-        Blue    = 2,
-        Green   = 3,
-        Yellow  = 4,
-        Purple  = 5,
-        Orange  = 6,
-        Cyan    = 7,
-        Magenta = 8
     }
 }

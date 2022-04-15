@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TanksRebirth.Enums;
 using TanksRebirth.GameContent.Systems.Coordinates;
 
 namespace TanksRebirth.GameContent.ModSupport
@@ -11,7 +12,7 @@ namespace TanksRebirth.GameContent.ModSupport
     public class ModTank
     {
         public virtual string TierName => string.Empty;
-        public virtual Team Team => Team.NoTeam;
+        public virtual TankTeam Team => TankTeam.NoTeam;
 
         public AITank Tank { get; }
 

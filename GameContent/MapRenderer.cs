@@ -1,6 +1,8 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using tainicom.Aether.Physics2D.Dynamics;
 using TanksRebirth.Graphics;
@@ -11,10 +13,8 @@ namespace TanksRebirth.GameContent
 {
     public enum MapTheme
     {
-        Default,
+        Vanilla,
         Forest,
-        MasterMod,
-        MarbleMod
     }
 
     // TODO: Chairs and Co (models)
@@ -26,9 +26,84 @@ namespace TanksRebirth.GameContent
         public static Matrix Projection;
         public static Matrix World;
 
-        internal static string assetsRoot;
+        public static string AssetRoot;
 
-        public static MapTheme Theme { get; set; } = MapTheme.Default;
+        public static MapTheme Theme { get; set; } = MapTheme.Vanilla;
+
+        public static Dictionary<string, Texture2D> Assets = new()
+        {
+            ["block.1"] = null,
+            ["block.2"] = null,
+            ["block_harf.1"] = null,
+            ["block_other_a"] = null,
+            ["block_other_b"] = null,
+            ["block_other_b_test"] = null,
+            ["block_other_c"] = null,
+            ["block_shadow_a"] = null,
+            ["block_shadow_b"] = null,
+            ["block_shadow_c"] = null,
+            ["block_shadow_d"] = null,
+            ["block_shadow_h"] = null,
+            ["floor_face"] = null,
+            ["floor_lower"] = null
+        };
+
+        public static void LoadTexturePack(string folder)
+        {
+            if (folder.ToLower() == "vanilla")
+            {
+                LoadVanillaTextures();
+                GameHandler.ClientLog.Write($"Loaded vanilla textures for Scene.", LogType.Info);
+                return;
+            }
+
+            var baseRoot = Path.Combine(TankGame.SaveDirectory, "Texture Packs");
+            var rootGameScene = Path.Combine(TankGame.SaveDirectory, "Texture Packs", "Scene");
+            var path = Path.Combine(rootGameScene, folder);
+
+            // ensure that these directories exist before dealing with them
+            Directory.CreateDirectory(baseRoot);
+            Directory.CreateDirectory(rootGameScene);
+
+            if (!Directory.Exists(path))
+            {
+                GameHandler.ClientLog.Write($"Error: Directory '{path}' not found when attempting texture pack load.", LogType.Warn);
+                return;
+            }
+
+            AssetRoot = path;
+
+            foreach (var file in Directory.GetFiles(path))
+            {
+                if (Assets.Any(type => type.Key == Path.GetFileNameWithoutExtension(file)))
+                {
+                    Assets[Path.GetFileNameWithoutExtension(file)] = Texture2D.FromFile(TankGame.Instance.GraphicsDevice, Path.Combine(path, Path.GetFileName(file)));
+                    GameHandler.ClientLog.Write($"Texture pack '{folder}' overrided texture '{Path.GetFileNameWithoutExtension(file)}'", LogType.Info);
+                }
+            }
+        }
+
+        public static void LoadVanillaTextures()
+        {
+            AssetRoot = "Assets/textures/ingame";
+            static Texture2D get(string s)
+                => GameResources.GetGameResource<Texture2D>(Path.Combine(AssetRoot, s));
+
+            Assets["block.1"] = get("block.1");
+            Assets["block.2"] = get("block.2");
+            Assets["block_harf.1"] = get("block_harf.1");
+            Assets["block_other_a"] = get("block_other_a");
+            Assets["block_other_b"] = get("block_other_b");
+            Assets["block_other_b_test"] = get("block_other_b_test");
+            Assets["block_other_c"] = get("block_other_c");
+            Assets["block_shadow_a"] = get("block_shadow_a");
+            Assets["block_shadow_b"] = get("block_shadow_b");
+            Assets["block_shadow_c"] = get("block_shadow_c");
+            Assets["block_shadow_d"] = get("block_shadow_d");
+            Assets["block_shadow_h"] = get("block_shadow_h");
+            Assets["floor_face"] = get("floor_face");
+            Assets["floor_lower"] = get("floor_lower");
+        }
 
         public static class FloorRenderer
         {
@@ -41,27 +116,15 @@ namespace TanksRebirth.GameContent
                 FloorModelBase = GameResources.GetGameResource<Model>("Assets/floor_big");
                 switch (Theme)
                 {
-                    case MapTheme.Default:
+                    case MapTheme.Vanilla:
 
-                        assetsRoot = "Assets/textures/ingame/";
+                        AssetRoot = "Assets/textures/ingame/";
 
                         break;
 
                     case MapTheme.Forest:
 
-                        assetsRoot = "Assets/forest/";
-
-                        break;
-
-                    case MapTheme.MasterMod:
-
-                        assetsRoot = "Assets/textures/ingame/mastermod/";
-
-                        break;
-
-                    case MapTheme.MarbleMod:
-
-                        assetsRoot = "Assets/textures/ingame/marblemod/";
+                        AssetRoot = "Assets/forest/";
 
                         break;
                 }
@@ -81,7 +144,8 @@ namespace TanksRebirth.GameContent
 
                         effect.TextureEnabled = true;
 
-                        effect.Texture = GameResources.GetGameResource<Texture2D>(assetsRoot + "floor_face");
+                        //effect.Texture = GameResources.GetGameResource<Texture2D>(AssetRoot + "floor_face");
+                        effect.Texture = Assets["floor_face"];
                     }
 
                     mesh.Draw();
@@ -169,19 +233,17 @@ namespace TanksRebirth.GameContent
             public static void LoadBounds()
             {
                 // 0 -> top, 1 -> right, 2 -> bottom, 3 -> left
-                Boundaries[0] = Tank.CollisionsWorld.CreateRectangle(1500, 5, 1f, new(MIN_X, MIN_Y - 7), 0f, BodyType.Static);
+                Boundaries[0] = Tank.CollisionsWorld.CreateRectangle(1000, 5, 1f, new(MIN_X, MIN_Y - 7), 0f, BodyType.Static);
 
-                Boundaries[1] = Tank.CollisionsWorld.CreateRectangle(5, 1500, 1f, new(MAX_X + 7, MAX_Y), 0f, BodyType.Static);
+                Boundaries[1] = Tank.CollisionsWorld.CreateRectangle(5, 1000, 1f, new(MAX_X + 7, MAX_Y), 0f, BodyType.Static);
 
-                Boundaries[2] = Tank.CollisionsWorld.CreateRectangle(1500, 5, 1f, new(MIN_X, MAX_Y + 7), 0f, BodyType.Static);
+                Boundaries[2] = Tank.CollisionsWorld.CreateRectangle(1000, 5, 1f, new(MIN_X, MAX_Y + 7), 0f, BodyType.Static);
 
-                Boundaries[3] = Tank.CollisionsWorld.CreateRectangle(5, 1500, 1f, new(MIN_X - 7, MAX_Y), 0f, BodyType.Static);
-
+                Boundaries[3] = Tank.CollisionsWorld.CreateRectangle(5, 1000, 1f, new(MIN_X - 7, MAX_Y), 0f, BodyType.Static);
+                
                 switch (Theme)
                 {
-                    case MapTheme.Default:
-                    case MapTheme.MasterMod:
-                    case MapTheme.MarbleMod:
+                    case MapTheme.Vanilla:
                         BoundaryModel = GameResources.GetGameResource<Model>("Assets/toy/outerbounds");
 
                         SetBlockTexture(BoundaryModel.Meshes["polygon48"], BoundaryTextureContext.block_other_c);
@@ -211,9 +273,7 @@ namespace TanksRebirth.GameContent
             {
                 switch (Theme)
                 {
-                    case MapTheme.Default:
-                    case MapTheme.MasterMod:
-                    case MapTheme.MarbleMod:
+                    case MapTheme.Vanilla:
                         foreach (var mesh in BoundaryModel.Meshes)
                         {
                             foreach (BasicEffect effect in mesh.Effects)
@@ -319,7 +379,7 @@ namespace TanksRebirth.GameContent
             {
                 foreach (BasicEffect effect in mesh.Effects)
                 {
-                    effect.Texture = GameResources.GetGameResource<Texture2D>($"{assetsRoot}{context}");
+                    effect.Texture = Assets[context.ToString()];//GameResources.GetGameResource<Texture2D>($"{AssetRoot}{context}");
                 }
             }
 

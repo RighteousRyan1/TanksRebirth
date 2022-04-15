@@ -47,7 +47,9 @@ namespace TanksRebirth
         #region Extra Settings
 
         /// <summary>Used to be casted to a MapTheme to change the... map's theme.</summary>
-        public MapTheme GameTheme { get; set; } = MapTheme.Default;
+        public MapTheme GameTheme { get; set; } = MapTheme.Vanilla;
+        public string MapPack { get; set; } = "Vanilla";
+        public string TankPack { get; set; } = "Vanilla";
 
         #endregion
 
