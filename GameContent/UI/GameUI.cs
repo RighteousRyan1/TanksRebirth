@@ -305,6 +305,8 @@ namespace TanksRebirth.GameContent.UI
             {
                 if (MainMenu.Active)
                 {
+                    if (MainMenu.PlayButton.IsVisible)
+                        return;
                     if (MainMenu.campaignNames.Count > 0)
                     {
                         foreach (var elem in MainMenu.campaignNames)
@@ -331,6 +333,9 @@ namespace TanksRebirth.GameContent.UI
                         ControlsButton.IsVisible = false;
                         OptionsButton.IsVisible = true;
                         QuitButton.IsVisible = true;
+                        GraphicsUI.BatchVisible = false;
+                        VolumeUI.BatchVisible = false;
+                        
                         MainMenu.PlayButton.IsVisible = true;
                     }
                     else if (MainMenu.ConnectToServerButton.IsVisible)
