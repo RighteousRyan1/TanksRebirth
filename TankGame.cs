@@ -137,7 +137,7 @@ namespace TanksRebirth
 
         public static GameConfig Settings;
 
-        public JsonHandler SettingsHandler;
+        public JsonHandler<GameConfig> SettingsHandler;
 
         public static readonly string SaveDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "My Games", "Tanks Rebirth");
 
@@ -244,6 +244,10 @@ namespace TanksRebirth
         {
             var s = Stopwatch.StartNew();
 
+            Directory.CreateDirectory(SaveDirectory);
+
+            GameHandler.ClientLog = new($"{SaveDirectory}", "client");
+
             Thunder.SoftRain = GameResources.GetGameResource<SoundEffect>("Assets/sounds/ambient/soft_rain").CreateInstance();
             Thunder.SoftRain.IsLooped = true;
 
@@ -273,7 +277,7 @@ namespace TanksRebirth
             else
             {
                 SettingsHandler = new(Settings, Path.Combine(SaveDirectory, "settings.json"));
-                Settings = SettingsHandler.DeserializeAndSet<GameConfig>();
+                Settings = SettingsHandler.DeserializeAndSet();
             }
 
             #region Config Initialization

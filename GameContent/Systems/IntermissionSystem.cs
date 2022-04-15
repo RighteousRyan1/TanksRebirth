@@ -28,20 +28,27 @@ namespace TanksRebirth.GameContent.Systems
         /// <summary>Renders the intermission.</summary>
         public static void Draw(SpriteBatch spriteBatch)
         {
-            if (TimeBlack > -1)
+            if (TankGame.Instance.IsActive)
             {
-                TimeBlack--;
-                BlackAlpha += 1f / 45f;
+                if (TimeBlack > -1)
+                {
+                    TimeBlack--;
+                    BlackAlpha += 1f / 45f;
+                }
+                else
+                    BlackAlpha -= 1f / 45f;
             }
-            else
-                BlackAlpha -= 1f / 45f;
 
             if (BlackAlpha >= 1 && _oldBlack < 1)
             {
                 MainMenu.Leave();
-                
+
                 if (GameHandler.ShouldMissionsProgress)
+                {
                     GameHandler.LoadedCampaign.SetupLoadedMission(true);
+                    // GameHandler.LoadedCampaign.LoadMission(27);
+                }
+                
             }
 
             BlackAlpha = MathHelper.Clamp(BlackAlpha, 0f, 1f);
@@ -106,7 +113,7 @@ namespace TanksRebirth.GameContent.Systems
                 DrawShadowedString(new Vector2(GameUtils.WindowWidth / 2 - 100, GameUtils.WindowHeight / 2 + 350), Vector2.One, $"x   {PlayerTank.Lives}", SolidBackgroundColor, new(1f), Alpha, new Vector2(0, TankGame.TextFontLarge.MeasureString($"x   {PlayerTank.Lives}").Y / 2));
 
                 if (GameHandler.LoadedCampaign.CurrentMissionId == 0)
-                    DrawShadowedString(new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2 - 325), Vector2.One, $"Campaign: \"{GameHandler.LoadedCampaign.Name}\"", SolidBackgroundColor, new(0.4f), Alpha);
+                    DrawShadowedString(new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2 - 325), Vector2.One, $"Campaign: \"{GameHandler.LoadedCampaign.Properties.Name}\"", SolidBackgroundColor, new(0.4f), Alpha);
 
                 DrawShadowedTexture(GameResources.GetGameResource<Texture2D>("Assets/textures/ui/playertank2d"), new Vector2(GameUtils.WindowWidth / 2 - 200, GameUtils.WindowHeight / 2 + 375), Vector2.One, Color.Blue, new(1.25f), Alpha);
                 

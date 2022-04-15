@@ -39,7 +39,7 @@ namespace TanksRebirth.Internals.Common.IO
         {
             var ss = new SaveState(assembly);
 
-            var hndlr = new JsonHandler(ss, Path.Combine(Environment.SpecialFolder.Desktop.ToString(), "savestate"));
+            var hndlr = new JsonHandler<SaveState>(ss, Path.Combine(Environment.SpecialFolder.Desktop.ToString(), "savestate"));
 
             var opts = new System.Text.Json.JsonSerializerOptions() { WriteIndented = true, IncludeFields = true };
 

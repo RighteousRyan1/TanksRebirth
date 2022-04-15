@@ -69,7 +69,8 @@ namespace TanksRebirth.Internals.UI
         /// <summary>Whether or not the <see cref="UIElement"/> should draw its children before itself.</summary>
         public bool ReverseDrawOrder { get; set; }
 
-        internal UIElement() {
+        internal UIElement()
+        {
             AllUIElements.Add(this);
         }
 
@@ -128,11 +129,6 @@ namespace TanksRebirth.Internals.UI
                     DrawChildren(spriteBatch);
                     DrawSelf(spriteBatch);
                 }
-
-                if (Tooltip is not null && Hitbox.Contains(GameUtils.MousePosition))
-                {
-                    QuickIndicator(spriteBatch, Color.White);
-                }
             }
             else
             {
@@ -158,16 +154,25 @@ namespace TanksRebirth.Internals.UI
                     DrawSelf(spriteBatch);
                 }
 
-                if (Tooltip is not null && Hitbox.Contains(GameUtils.MousePosition))
+                /*if (Tooltip is not null && Hitbox.Contains(GameUtils.MousePosition))
                 {
                     QuickIndicator(spriteBatch, Color.White);
-                }
+                }*/
 
                 spriteBatch.End();
                 // draw with schissor
             }
         }
+        public virtual void DrawTooltips(SpriteBatch spriteBatch)
+        {
+            if (!IsVisible)
+                return;
 
+            if (Tooltip is not null && Hitbox.Contains(GameUtils.MousePosition))
+            {
+                QuickIndicator(spriteBatch, Color.White);
+            }
+        }
         /// <summary>
         /// Initializes this <see cref="UIElement">.
         /// </summary>
@@ -315,7 +320,7 @@ namespace TanksRebirth.Internals.UI
             spriteBatch.Draw(texture, new Rectangle(middleX, bottomY, Hitbox.Width - border * 2, border), new Rectangle(border, texture.Height - border, texture.Width - border * 2, border), color);
             spriteBatch.Draw(texture, new Rectangle(rightX, bottomY, border, border), new Rectangle(texture.Width - border, texture.Height - border, border, border), color);
 
-            spriteBatch.DrawString(font, Tooltip, Hitbox.Center.ToVector2(), Color.Black, new Vector2(1f), 0f, scaleFont / 2, 1);
+            spriteBatch.DrawString(font, Tooltip, Hitbox.Center.ToVector2(), Color.Black, new Vector2(1f), 0f, scaleFont / 2, 0);
         }
 
         public static void UpdateElements()

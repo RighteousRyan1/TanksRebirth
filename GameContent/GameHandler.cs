@@ -44,7 +44,7 @@ namespace TanksRebirth.GameContent
 
         public static Campaign LoadedCampaign { get; set; } = new();
 
-        public static Logger ClientLog { get; } = new($"{TankGame.SaveDirectory}", "client");
+        public static Logger ClientLog { get; set;  }
 
         public static bool InMission { get; set; } = false;
 
@@ -401,7 +401,7 @@ namespace TanksRebirth.GameContent
             // TODO: Scaling with screen size.
 
             foreach (var element in UIElement.AllUIElements.ToList()) {
-                //element.Position = Vector2.Transform(element.Position, UIMatrix * Matrix.CreateTranslation(element.Position.X, element.Position.Y, 0));
+                // element.Position = Vector2.Transform(element.Position, UIMatrix * Matrix.CreateTranslation(element.Position.X, element.Position.Y, 0));
                 if (element.Parent != null)
                     continue;
 
@@ -412,6 +412,10 @@ namespace TanksRebirth.GameContent
 
                 if (element.HasScissor)
                     TankGame.spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied);
+            }
+            foreach (var element in UIElement.AllUIElements.ToList())
+            {
+                element?.DrawTooltips(TankGame.spriteBatch);
             }
             tankToSpawnType = MathHelper.Clamp(tankToSpawnType, 2, Enum.GetValues<TankTier>().Length - 1);
             tankToSpawnTeam = MathHelper.Clamp(tankToSpawnTeam, 0, Enum.GetValues<Team>().Length - 1);
@@ -435,7 +439,7 @@ namespace TanksRebirth.GameContent
                 $"\n\nRender Time: {TankGame.RenderTime}" +
                 $"\nRender FPS: {TankGame.RenderFPS}", new(10, 500));
 
-            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"Current Mission: {LoadedCampaign.CurrentMission.Name}\nCurrent Campaign: {LoadedCampaign.Name}", GameUtils.WindowBottomLeft - new Vector2(-4, 40), 3, centered: false);
+            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"Current Mission: {LoadedCampaign.CurrentMission.Name}\nCurrent Campaign: {LoadedCampaign.Properties.Name}", GameUtils.WindowBottomLeft - new Vector2(-4, 40), 3, centered: false);
             if (!MainMenu.Active)
             {
                 if (IntermissionSystem.IsAwaitingNewMission)

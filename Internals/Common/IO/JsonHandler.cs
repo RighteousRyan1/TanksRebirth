@@ -9,27 +9,18 @@ using System.Threading.Tasks;
 namespace TanksRebirth.Internals.Common.IO
 {
 
-    public struct JsonHandler
+    public struct JsonHandler<T>
     {
         public readonly string JsonPath;
         public readonly string JsonDir;
 
         public readonly FileInfo JsonInfo;
 
-        public object Object;
-
-        public JsonHandler(object type, string path)
+        public T Object;
+        
+        public JsonHandler(T type, string path)
         {
             Object = type;
-            JsonPath = path;
-            JsonInfo = new(path);
-
-            JsonDir = JsonPath.Remove(JsonPath.Length - JsonInfo.Name.Length);
-        }
-
-        public JsonHandler(string path, params object[] types)
-        {
-            Object = types;
             JsonPath = path;
             JsonInfo = new(path);
 
@@ -47,7 +38,7 @@ namespace TanksRebirth.Internals.Common.IO
             return serialized;
         }
 
-        public T DeserializeAndSet<T>()
+        public T DeserializeAndSet()
         {
             var asDeserialized = JsonSerializer.Deserialize<T>(File.ReadAllText(JsonPath));
             Object = asDeserialized;

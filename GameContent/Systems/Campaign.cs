@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -9,6 +10,7 @@ using TanksRebirth.Enums;
 using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework;
+using TanksRebirth.Internals.Common.IO;
 using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.GameContent.Systems
@@ -16,7 +18,6 @@ namespace TanksRebirth.GameContent.Systems
     /// <summary>A campaign for players to play on with <see cref="AITank"/>s, or even <see cref="PlayerTank"/>s if supported.</summary>
     public class Campaign
     {
-        public string Name { get; set; }
         /// <summary>The maximum allowed missions in a campaign.</summary>
         public const int MAX_MISSIONS = 100;
         /// <summary>Returns the names of campaigns in the user's <c>Campaigns/</c> directory.</summary>
@@ -26,6 +27,8 @@ namespace TanksRebirth.GameContent.Systems
         public Mission CurrentMission { get; private set; }
         public Mission LoadedMission { get; private set; }
         public int CurrentMissionId { get; private set; }
+
+        public CampaignProperties Properties { get; private set; }
 
         public void LoadMission(Mission mission)
         {
@@ -197,6 +200,8 @@ namespace TanksRebirth.GameContent.Systems
                 return default;
             }
 
+            CampaignProperties properties = CampaignProperties.Get(path, "_properties.json");
+
             List<Mission> missions = new();
 
             var files = Directory.GetFiles(path).Where(file => file.EndsWith(".mission")).ToArray();
@@ -211,13 +216,54 @@ namespace TanksRebirth.GameContent.Systems
 
             if (autoSetLoadedMission)
             {
-                campaign.LoadedMission = campaign.CachedMissions[0];
-                campaign.Name = new DirectoryInfo(path).Name;
+                campaign.LoadMission(0);
                 campaign.TrackedSpawnPoints = new (Vector2, bool)[campaign.LoadedMission.Tanks.Length];
+                PlayerTank.MaxLives = campaign.Properties.StartingLives;
             }
+
+            campaign.Properties = properties;
 
 
             return campaign;
+        }
+
+        public struct CampaignProperties {
+            public string Name { get; set; }
+            public string Description { get; set; }
+            public string Author { get; set; }
+            public string Version { get; set; }
+            public string[] Tags { get; set; }
+
+            public int[] ExtraLivesMissions { get; set; }
+            public int StartingLives { get; set; }
+
+            public static CampaignProperties Get(string path, string fileName)
+            {
+                CampaignProperties properties = new()
+                {
+                    Name = "Unnamed",
+                    Description = "No description",
+                    Author = "Unknown",
+                    Version = "0.0.0.0",
+                    Tags = new string[] { "N/A" },
+                    ExtraLivesMissions = Array.Empty<int>(),
+                    StartingLives = 3
+                };
+
+                var file = Path.Combine(path, fileName);
+
+                JsonHandler<CampaignProperties> handler = new(properties, file);
+
+                if (!File.Exists(file))
+                {
+                    handler.Serialize(new() { WriteIndented = true }, true);
+                    return properties;
+                }
+
+                properties = handler.DeserializeAndSet();
+
+                return properties;
+            }
         }
 
         /*public int LoadRandomizedMission(Range<int> missionRange, TankTier highestTier = TankTier.None, int highestCount = 0)

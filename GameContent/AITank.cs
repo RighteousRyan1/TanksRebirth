@@ -1783,7 +1783,7 @@ namespace TanksRebirth.GameContent
                 }
             }
             reflectPoints = list.ToArray();
-            endpoint = pathPos;
+            endpoint = pathDir;
             return hasCollided;
         }
 
@@ -1939,21 +1939,15 @@ namespace TanksRebirth.GameContent
 
                         #region CubeNav
 
-                        pathBlocked = IsObstacleInWay(AiParams.BlockWarinessDistance, Vector2.UnitX.RotatedByRadians(-TargetTankRotation + MathHelper.PiOver2), out var travelPath, out var refPoints);
+                        pathBlocked = IsObstacleInWay(AiParams.BlockWarinessDistance, Vector2.UnitY.RotatedByRadians(-TargetTankRotation), out var travelPath, out var refPoints);
                         
                         if (pathBlocked && Behaviors[2].IsModOf(3) && !isMineNear && !isBulletNear)
                         {
                             if (refPoints.Length > 0)
                             {
-                                //var refAngle = GameUtils.DirectionOf(Position, travelPath).ToRotation();
-
                                 // why does this never work no matter what i do
-
-                                /*var pos = GameUtils.DirectionOf(Position, travelPath);
-                                var rot = pos.ToRotation();
-                                var posNew = new Vector2(50, 0).RotatedByRadians(rot);*/
-
-                                var refAngle = GameUtils.DirectionOf(Position, travelPath).ToRotation();
+                                var refAngle = GameUtils.DirectionOf(Position, travelPath - new Vector2(400, 0)).ToRotation();
+                                //var refAngle = GameUtils.DirectionOf(refPoints[0], travelPath).ToRotation();
 
                                 GameUtils.RoughStep(ref TargetTankRotation, refAngle, refAngle / 4);//AiParams.RedirectAngle);
                             }
@@ -2250,7 +2244,7 @@ namespace TanksRebirth.GameContent
                     DebugUtils.DrawDebugString(TankGame.spriteBatch, $"{tier}: {poo.Count}", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection), 1, centered: true);
                     if (!Stationary)
                     {
-                        IsObstacleInWay(AiParams.BlockWarinessDistance, Vector2.UnitX.RotatedByRadians(-TargetTankRotation + MathHelper.PiOver2), out var travelPos, out var refPoints, true);
+                        IsObstacleInWay(AiParams.BlockWarinessDistance, Vector2.UnitY.RotatedByRadians(-TargetTankRotation), out var travelPos, out var refPoints, true);
                         DebugUtils.DrawDebugString(TankGame.spriteBatch, "TRAVELENDPOINT", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(travelPos.X, 11, travelPos.Y), View, Projection), 1, centered: true);
                         DebugUtils.DrawDebugString(TankGame.spriteBatch, "ENDPOINT", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(rayEnd.X, 11, rayEnd.Y), View, Projection), 1, centered: true);
 

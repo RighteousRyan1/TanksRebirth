@@ -467,6 +467,8 @@ namespace TanksRebirth.GameContent.UI
 
                 int numTanks = 0;
 
+                var campaign = Campaign.LoadFromFolder(name, false);
+
                 foreach (var path in missions)
                 {
                     var mission = Path.GetFileName(path);
@@ -479,7 +481,13 @@ namespace TanksRebirth.GameContent.UI
                 {
                     IsVisible = true,
                     Tooltip = missions.Length + " missions" +
-                    $"\n{numTanks} tanks total",
+                    $"\n{numTanks} tanks total" +
+                    $"\n\nName: {campaign.Properties.Name}" +
+                    $"\nDescription: {campaign.Properties.Description}" +
+                    $"\nVersion: {campaign.Properties.Version}" +
+                    $"\nStarting Lives: {campaign.Properties.StartingLives}" +
+                    // display all tags in a string
+                    $"\nTags: {string.Join(", ", campaign.Properties.Tags)}"
                 };
                 elem.SetDimensions(700, 100 + offset, 300, 40);
                 //elem.HasScissor = true;
