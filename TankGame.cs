@@ -205,23 +205,35 @@ namespace TanksRebirth
 
         protected override void Initialize()
         {
-            GameHandler.MapEvents();
+            try
+            {
+                Directory.CreateDirectory(SaveDirectory);
+                Directory.CreateDirectory(Path.Combine(SaveDirectory, "Texture Packs", "Scene"));
+                Directory.CreateDirectory(Path.Combine(SaveDirectory, "Texture Packs", "Tank"));
 
-            DiscordRichPresence.Load();
+                GameHandler.MapEvents();
 
-            systems = ReflectionUtils.GetInheritedTypesOf<IGameSystem>(Assembly.GetExecutingAssembly());
+                DiscordRichPresence.Load();
 
-            ResolutionHandler.Initialize(graphics);
+                systems = ReflectionUtils.GetInheritedTypesOf<IGameSystem>(Assembly.GetExecutingAssembly());
 
-            GameCamera = new Camera(GraphicsDevice);
+                ResolutionHandler.Initialize(graphics);
 
-            spriteBatch = new(GraphicsDevice);
+                GameCamera = new Camera(GraphicsDevice);
 
-            graphics.PreferMultiSampling = true;
+                spriteBatch = new(GraphicsDevice);
 
-            graphics.ApplyChanges();
+                graphics.PreferMultiSampling = true;
 
-            base.Initialize();
+                graphics.ApplyChanges();
+
+                base.Initialize();
+            }
+            catch (Exception e)
+            {
+                GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
+                throw;
+            }
         }
 
         public static void Quit()
@@ -248,10 +260,6 @@ namespace TanksRebirth
                 var s = Stopwatch.StartNew();
 
                 UIElement.UIPanelBackground = GameResources.GetGameResource<Texture2D>("Assets/UIPanelBackground");
-
-                Directory.CreateDirectory(SaveDirectory);
-                Directory.CreateDirectory(Path.Combine(SaveDirectory, "Texture Packs", "Scene"));
-                Directory.CreateDirectory(Path.Combine(SaveDirectory, "Texture Packs", "Tank"));
 
                 GameHandler.ClientLog = new($"{SaveDirectory}", "client");
 
