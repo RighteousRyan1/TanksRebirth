@@ -132,7 +132,7 @@ namespace TanksRebirth.GameContent.Systems
                             tnk.Position = template.Position;
                             tnk.Body.Position = template.Position;
                             tnk.Team = tank.Team;
-                            tnk.TankRotation = template.Rotation;
+                            tnk.TankRotation = -template.Rotation + MathHelper.Pi;
                             tnk.TargetTankRotation = template.Rotation - MathHelper.Pi;
                             tnk.TurretRotation = -template.Rotation;
                             tnk.Dead = false;
@@ -156,7 +156,7 @@ namespace TanksRebirth.GameContent.Systems
                         var tank = template.GetAiTank();
 
                         tank.Position = template.Position;
-                        tank.TankRotation = template.Rotation;
+                        tank.TankRotation = -template.Rotation;
                         tank.TargetTankRotation = template.Rotation - MathHelper.Pi;
                         tank.TurretRotation = -template.Rotation;
                         tank.Dead = false;

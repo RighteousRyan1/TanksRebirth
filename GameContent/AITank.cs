@@ -380,7 +380,7 @@ namespace TanksRebirth.GameContent
                     AiParams.MeanderFrequency = 15;
                     AiParams.TurretMeanderFrequency = 40;
                     AiParams.TurretSpeed = 0.01f;
-                    AiParams.AimOffset = 0.24f;
+                    AiParams.AimOffset = MathHelper.ToRadians(40);
 
                     AiParams.Inaccuracy = 0.9f;
 
@@ -416,7 +416,7 @@ namespace TanksRebirth.GameContent
                     AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 10;
                     AiParams.TurretSpeed = 0.1f;
-                    AiParams.AimOffset = 0.005f;
+                    AiParams.AimOffset = MathHelper.ToRadians(0);
 
                     TankDestructionColor = Color.Teal;
 
@@ -451,7 +451,7 @@ namespace TanksRebirth.GameContent
                     break;
 
                 case TankTier.Yellow:
-                    AiParams.MeanderAngle = MathHelper.ToRadians(30);
+                    AiParams.MeanderAngle = MathHelper.ToRadians(40);
                     AiParams.MeanderFrequency = 15;
                     AiParams.TurretMeanderFrequency = 20;
                     AiParams.TurretSpeed = 0.02f;
@@ -503,7 +503,7 @@ namespace TanksRebirth.GameContent
                     break;
 
                 case TankTier.Pink:
-                    AiParams.MeanderAngle = MathHelper.ToRadians(30);
+                    AiParams.MeanderAngle = MathHelper.ToRadians(40);
                     AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 40;
                     AiParams.TurretSpeed = 0.03f;
@@ -539,7 +539,7 @@ namespace TanksRebirth.GameContent
                     break;
 
                 case TankTier.Purple:
-                    AiParams.MeanderAngle = MathHelper.ToRadians(30);
+                    AiParams.MeanderAngle = MathHelper.ToRadians(40);
                     AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 25;
 
@@ -616,7 +616,7 @@ namespace TanksRebirth.GameContent
                     AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 20;
                     AiParams.TurretSpeed = 0.03f;
-                    AiParams.AimOffset = 0.2f;
+                    AiParams.AimOffset = MathHelper.ToRadians(40);
 
                     AiParams.Inaccuracy = 0.8f;
 
@@ -657,7 +657,7 @@ namespace TanksRebirth.GameContent
                     AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 20;
                     AiParams.TurretSpeed = 0.03f;
-                    AiParams.AimOffset = 0.12f;
+                    AiParams.AimOffset = MathHelper.ToRadians(5);
 
                     AiParams.Inaccuracy = 0.35f;
 
