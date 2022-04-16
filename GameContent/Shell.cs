@@ -29,20 +29,20 @@ namespace TanksRebirth.GameContent
         }
 
         /// <summary>The maximum shells allowed at any given time.</summary>
-        private static int maxShells = 1500;
-        public static Shell[] AllShells { get; } = new Shell[maxShells];
+        private static int MaxShells = 1500;
+        public static Shell[] AllShells { get; } = new Shell[MaxShells];
 
         /// <summary>The <see cref="Tank"/> which shot this <see cref="Shell"/>.</summary>
-        public Tank owner;
+        public Tank Owner;
 
         public Vector2 Position2D => Position.FlattenZ();
         public Vector2 Velocity2D => Velocity.FlattenZ();
         /// <summary>How many times this <see cref="Shell"/> can hit walls.</summary>
         public int ricochets;
-        public float rotation;
+        public float Rotation;
 
         /// <summary>The homing properties of this <see cref="Shell"/>.</summary>
-        public HomingProperties homingProperties = default;
+        public HomingProperties HomeProperties = default;
 
         public Vector3 Position;
         public Vector3 Velocity;
@@ -56,7 +56,7 @@ namespace TanksRebirth.GameContent
         private SoundEffectInstance _shootSound;
 
         /// <summary>The hurtbox on the 2D backing map for the game.</summary>
-        public Rectangle hitbox;
+        public Rectangle Hitbox;
         /// <summary>Whether or not this shell should emit flames from behind it.</summary>
         public bool Flaming { get; set; }
         public bool LeavesTrail { get; set; }
@@ -64,12 +64,12 @@ namespace TanksRebirth.GameContent
 
         public Texture2D _shellTexture;
 
-        private int worldId;
+        private int Id;
 
         /// <summary>How long this shell has existed in the world.</summary>
-        public int lifeTime;
+        public int LifeTime;
 
-        public bool canFriendlyFire = true;
+        public bool CanFriendlyFire = true;
 
         // private Particle _flame;
 
@@ -86,7 +86,7 @@ namespace TanksRebirth.GameContent
         /// <param name="velocity">The velocity of the created <see cref="Shell"/>.</param>
         /// <param name="ricochets">How many times the newly created <see cref="Shell"/> can ricochet.</param>
         /// <param name="homing">Whether or not the newly created <see cref="Shell"/> homes in on enemies.</param>
-        public Shell(Vector3 position, Vector3 velocity, ShellTier tier, Tank owner, int ricochets = 0, HomingProperties homing = default, bool useDarkTexture = false,bool playSpawnSound = true)
+        public Shell(Vector3 position, Vector3 velocity, ShellTier tier, Tank owner, int ricochets = 0, HomingProperties homing = default, bool useDarkTexture = false, bool playSpawnSound = true)
         {
             Tier = tier;
             this.ricochets = ricochets;
@@ -101,8 +101,8 @@ namespace TanksRebirth.GameContent
 
             _shellTexture = useDarkTexture ? GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/explosive_bullet") : GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/bullet");
 
-            homingProperties = homing;
-            this.owner = owner;
+            HomeProperties = homing;
+            this.Owner = owner;
 
             // if explosive, black
 
@@ -141,21 +141,21 @@ namespace TanksRebirth.GameContent
 
             int index = Array.IndexOf(AllShells, AllShells.First(shell => shell is null));
 
-            worldId = index;
+            Id = index;
 
             AllShells[index] = this;
         }
 
         internal void Update()
         {
-            rotation = Velocity.ToRotation() - MathHelper.PiOver2;
+            Rotation = Velocity.ToRotation() - MathHelper.PiOver2;
             Position += Velocity * 0.62f;
-            World = Matrix.CreateFromYawPitchRoll(-rotation, 0, 0)
+            World = Matrix.CreateFromYawPitchRoll(-Rotation, 0, 0)
                 * Matrix.CreateTranslation(Position);
             Projection = TankGame.GameProjection;
             View = TankGame.GameView;
 
-            hitbox = new((int)(Position2D.X - 3), (int)(Position2D.Y - 3), 5, 5);
+            Hitbox = new((int)(Position2D.X - 3), (int)(Position2D.Y - 3), 5, 5);
 
             if (!GameHandler.InMission)
                 return;
@@ -167,9 +167,9 @@ namespace TanksRebirth.GameContent
 
             var dummy = Vector2.Zero;
 
-            Collision.HandleCollisionSimple_ForBlocks(hitbox, Velocity2D, ref dummy, out var dir, out var block, out bool corner, false, (c) => c.IsSolid);
+            Collision.HandleCollisionSimple_ForBlocks(Hitbox, Velocity2D, ref dummy, out var dir, out var block, out bool corner, false, (c) => c.IsSolid);
 
-            if (lifeTime <= 5 && Block.AllBlocks.Any(cu => cu is not null && cu.Hitbox.Intersects(hitbox) && cu.IsSolid))
+            if (LifeTime <= 5 && Block.AllBlocks.Any(cu => cu is not null && cu.Hitbox.Intersects(Hitbox) && cu.IsSolid))
                 Destroy(false);
 
             if (corner)
@@ -185,37 +185,37 @@ namespace TanksRebirth.GameContent
                     Ricochet(true);
                     break;
             }
-            lifeTime++;
+            LifeTime++;
 
-            if (lifeTime > homingProperties.cooldown)
+            if (LifeTime > HomeProperties.cooldown)
             {
-                if (owner != null)
+                if (Owner != null)
                 {
                     foreach (var target in GameHandler.AllTanks)
                     {
-                        if (target is not null && target != owner && Vector2.Distance(Position2D, target.Position) <= homingProperties.radius)
+                        if (target is not null && target != Owner && Vector2.Distance(Position2D, target.Position) <= HomeProperties.radius)
                         {
-                            if (target.Team != owner.Team || target.Team == TankTeam.NoTeam)
+                            if (target.Team != Owner.Team || target.Team == TankTeam.NoTeam)
                             {
-                                if (homingProperties.isHeatSeeking && target.Velocity != Vector2.Zero)
-                                    homingProperties.target = target.Position;
-                                if (!homingProperties.isHeatSeeking)
-                                    homingProperties.target = target.Position;
+                                if (HomeProperties.isHeatSeeking && target.Velocity != Vector2.Zero)
+                                    HomeProperties.target = target.Position;
+                                if (!HomeProperties.isHeatSeeking)
+                                    HomeProperties.target = target.Position;
                             }
                         }
                     }
-                    if (homingProperties.target != Vector2.Zero)
+                    if (HomeProperties.target != Vector2.Zero)
                     {
-                        bool hits = Collision.DoRaycast(Position2D, homingProperties.target, (int)homingProperties.radius * 2);
+                        bool hits = Collision.DoRaycast(Position2D, HomeProperties.target, (int)HomeProperties.radius * 2);
 
                         if (hits)
                         {
-                            float dist = Vector2.Distance(Position2D, homingProperties.target);
+                            float dist = Vector2.Distance(Position2D, HomeProperties.target);
 
-                            Velocity.X += GameUtils.DirectionOf(Position2D, homingProperties.target).X * homingProperties.power / dist;
-                            Velocity.Z += GameUtils.DirectionOf(Position2D, homingProperties.target).Y * homingProperties.power / dist;
+                            Velocity.X += GameUtils.DirectionOf(Position2D, HomeProperties.target).X * HomeProperties.power / dist;
+                            Velocity.Z += GameUtils.DirectionOf(Position2D, HomeProperties.target).Y * HomeProperties.power / dist;
 
-                            Vector2 trueSpeed = Vector2.Normalize(Velocity2D) * homingProperties.speed;
+                            Vector2 trueSpeed = Vector2.Normalize(Velocity2D) * HomeProperties.speed;
 
 
                             Velocity = trueSpeed.ExpandZ();
@@ -239,9 +239,9 @@ namespace TanksRebirth.GameContent
 
             if (EmitsSmoke)
             {
-                if (lifeTime % nummy == 0)
+                if (LifeTime % nummy == 0)
                 {
-                    var p = ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(rotation + MathHelper.Pi).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
+                    var p = ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
                     p.FaceTowardsMe = false;
                     p.Scale = new(0.3f);
                     // p.color = new Color(50, 50, 50, 150);
@@ -292,7 +292,7 @@ namespace TanksRebirth.GameContent
                             p.Destroy();
                     };
                 }*/
-                var p = ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(rotation + MathHelper.Pi).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
+                var p = ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
 
                 p.Roll = -MathHelper.PiOver2;
                 p.Scale = new(/*0.4f*/Velocity.Length() / 10 - 0.2f, 0.25f, 0.4f); // x is outward from bullet
@@ -303,7 +303,7 @@ namespace TanksRebirth.GameContent
                 //p.TextureRotation = -MathHelper.PiOver2;
                 p.TextureOrigin = new(p.Texture.Size().X / 2, 0);
 
-                p.Pitch = -rotation - MathHelper.PiOver2;
+                p.Pitch = -Rotation - MathHelper.PiOver2;
 
                 p.UniqueBehavior = (part) =>
                 {
@@ -313,7 +313,7 @@ namespace TanksRebirth.GameContent
                         p.Destroy();
                 };
 
-                var p2 = ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(rotation + MathHelper.Pi).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
+                var p2 = ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
 
                 p2.Roll = -MathHelper.PiOver2;
                 p2.Scale = new(/*0.4f*/ Velocity.Length() / 10 - 0.2f, 0.25f, 0.4f); // x is outward from bullet
@@ -324,7 +324,7 @@ namespace TanksRebirth.GameContent
                 //p.TextureRotation = -MathHelper.PiOver2;
                 p2.TextureOrigin = new(p.Texture.Size().X / 2, 0);
 
-                p2.Pitch = -rotation + MathHelper.PiOver2;
+                p2.Pitch = -Rotation + MathHelper.PiOver2;
 
                 p2.UniqueBehavior = (part) =>
                 {
@@ -338,7 +338,7 @@ namespace TanksRebirth.GameContent
             {
                 // every 5 frames, create a flame particle that is a bit smaller than the shell which expands away from the shell, then after a while, shrinks
 
-                var p = ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(rotation + MathHelper.Pi).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/flame"));
+                var p = ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/flame"));
 
                 p.Roll = -MathHelper.PiOver2;
                 var scaleRand = GameHandler.GameRand.NextFloat(0.5f, 0.75f);
@@ -357,11 +357,11 @@ namespace TanksRebirth.GameContent
                 {
                     var flat = Position.FlattenZ();
 
-                    var off = flat + new Vector2(0, 0).RotatedByRadians(rotation);
+                    var off = flat + new Vector2(0, 0).RotatedByRadians(Rotation);
 
                     p.position = off.ExpandZ() + new Vector3(0, 11, 0);
 
-                    p.Pitch = -rotation - MathHelper.PiOver2 + rotoff;
+                    p.Pitch = -Rotation - MathHelper.PiOver2 + rotoff;
 
                         //if (TankGame.GameUpdateTime % 2 == 0)
                         //p.Roll = GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi);
@@ -387,7 +387,7 @@ namespace TanksRebirth.GameContent
 
         private void MakeTrail()
         {
-            var p = ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(rotation + MathHelper.Pi).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
+            var p = ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
 
             p.Roll = -MathHelper.PiOver2;
             p.Scale = new(1f, 0.165f, 0.4f); // x is outward from bullet
@@ -400,10 +400,10 @@ namespace TanksRebirth.GameContent
 
             p.UniqueBehavior = (part) =>
             {
-                p.Pitch = -rotation - MathHelper.PiOver2;
+                p.Pitch = -Rotation - MathHelper.PiOver2;
                 var flat = Position.FlattenZ();
 
-                var off = flat + new Vector2(0, 0).RotatedByRadians(rotation);
+                var off = flat + new Vector2(0, 0).RotatedByRadians(Rotation);
                 
                 p.position = off.ExpandZ() + new Vector3(0, 11, 0);
                 
@@ -415,7 +415,7 @@ namespace TanksRebirth.GameContent
                 if (p.Scale.X < 0)
                     p.Destroy();
             };
-            var p2 = ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(rotation + MathHelper.Pi).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
+            var p2 = ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
 
             p2.Roll = -MathHelper.PiOver2;
             p2.Scale = new(1f, 0.165f, 0.4f); // x is outward from bullet
@@ -428,10 +428,10 @@ namespace TanksRebirth.GameContent
 
             p2.UniqueBehavior = (part) =>
             {
-                p2.Pitch = -rotation + MathHelper.PiOver2;
+                p2.Pitch = -Rotation + MathHelper.PiOver2;
                 var flat = Position.FlattenZ();
 
-                var off = flat + new Vector2(0, 0).RotatedByRadians(rotation);
+                var off = flat + new Vector2(0, 0).RotatedByRadians(Rotation);
 
                 p2.position = off.ExpandZ() + new Vector3(0, 11, 0);
 
@@ -471,9 +471,9 @@ namespace TanksRebirth.GameContent
 
             var s = SoundPlayer.PlaySoundInstance(sound, SoundContext.Effect, 0.5f);
 
-            if (owner is not null)
+            if (Owner is not null)
             {
-                if (owner.ShellType == ShellTier.RicochetRocket)
+                if (Owner.ShellType == ShellTier.RicochetRocket)
                 {
                     s.Pitch = GameHandler.GameRand.NextFloat(0.15f, 0.25f);
                     var s2 = SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/ricochet_zip"), SoundContext.Effect, 0.05f);
@@ -495,17 +495,17 @@ namespace TanksRebirth.GameContent
             {
                 if (tank is not null)
                 {
-                    if (tank.CollisionBox2D.Intersects(hitbox))
+                    if (tank.CollisionBox2D.Intersects(Hitbox))
                     {
-                        if (!canFriendlyFire)
+                        if (!CanFriendlyFire)
                         {
-                            if (tank.Team == owner.Team && tank != owner && tank.Team != TankTeam.NoTeam)
+                            if (tank.Team == Owner.Team && tank != Owner && tank.Team != TankTeam.NoTeam)
                                 Destroy();
                         }
                         else
                         {
                             Destroy();
-                            tank.Damage(owner is AITank ? TankHurtContext.ByAiBullet : TankHurtContext.ByPlayerBullet);
+                            tank.Damage(Owner is AITank ? TankHurtContext.ByAiBullet : TankHurtContext.ByPlayerBullet);
                         }
                     }
                 }
@@ -515,7 +515,7 @@ namespace TanksRebirth.GameContent
             {
                 if (bullet is not null && bullet != this)
                 {
-                    if (bullet.hitbox.Intersects(hitbox))
+                    if (bullet.Hitbox.Intersects(Hitbox))
                     {
                         if (bullet.IsDestructible)
                             bullet.Destroy();
@@ -538,7 +538,7 @@ namespace TanksRebirth.GameContent
             _shootSound?.Stop();
             _loopingSound = null;
             _shootSound = null;
-            AllShells[worldId] = null;
+            AllShells[Id] = null;
         }
         /// <summary>
         /// Destroys this <see cref="Shell"/>.
@@ -555,24 +555,24 @@ namespace TanksRebirth.GameContent
             _shootSound?.Stop(true);
             // ParticleSystem.MakeSparkEmission(Position, 10);
             ParticleSystem.MakeSmallExplosion(Position, 8, 10, 1.25f, 15);
-            if (owner != null)
-                owner.OwnedShellCount--;
+            if (Owner != null)
+                Owner.OwnedShellCount--;
             //_flame?.Destroy();
             _loopingSound?.Stop();
             _loopingSound?.Dispose();
             _loopingSound = null;
 
-            if (owner is not null)
-                if (owner.ShellType == ShellTier.Explosive)
-                    new Explosion(Position2D, 7f, owner, 0.25f);
+            if (Owner is not null)
+                if (Owner.ShellType == ShellTier.Explosive)
+                    new Explosion(Position2D, 7f, Owner, 0.25f);
 
             Remove();
         }
 
         internal void Render()
         {
-            if (DebugUtils.DebugLevel == 1 && homingProperties.speed > 0)
-                Collision.DoRaycast(Position2D, homingProperties.target, (int)homingProperties.radius, true);
+            if (DebugUtils.DebugLevel == 1 && HomeProperties.speed > 0)
+                Collision.DoRaycast(Position2D, HomeProperties.target, (int)HomeProperties.radius, true);
             foreach (ModelMesh mesh in Model.Meshes)
             {
                 foreach (BasicEffect effect in mesh.Effects)

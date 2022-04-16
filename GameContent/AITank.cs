@@ -17,6 +17,7 @@ using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Graphics;
 using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.Internals.Common.Framework;
+using TanksRebirth.Internals.Common.IO;
 
 namespace TanksRebirth.GameContent
 {
@@ -131,6 +132,69 @@ namespace TanksRebirth.GameContent
         public static int GetTankCountOfType(TankTier tier)
             => GameHandler.AllAITanks.Count(tnk => tnk is not null && tnk.tier == tier && !tnk.Dead);
 
+        public void Swap(TankTier tier, bool setDefaults = true)
+        {
+            this.tier = tier;
+
+            if ((int)tier <= (int)TankTier.Marble)
+                _tankTexture = Assets[$"tank_" + tier.ToString().ToLower()];
+            #region Special
+
+            if (tier == TankTier.Commando)
+            {
+                Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_commando");
+
+                _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/enemy/wee/tank_commando");
+
+                foreach (var mesh in Model.Meshes)
+                {
+                    foreach (BasicEffect effect in mesh.Effects)
+                    {
+                        if (mesh.Name == "Laser_Beam")
+                            effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/laser");
+                        if (mesh.Name == "Barrel_Laser")
+                            effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/armor");
+                        if (mesh.Name == "Dish")
+                            effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/enemy/wee/tank_commando");
+                    }
+                }
+                // fix?
+            }
+            else if (tier == TankTier.Assassin)
+            {
+                Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_assassin");
+
+                _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_assassin");
+            }
+            else if (tier == TankTier.RocketDefender)
+            {
+                Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_rocket");
+
+                _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_rocket");
+            }
+            else if (tier == TankTier.Electro)
+            {
+                Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_electro");
+
+                _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_electro");
+            }
+            else if (tier == TankTier.Explosive)
+            {
+                Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_explosive");
+
+                _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_explosive");
+            }
+            else
+            {
+                Model = GameResources.GetGameResource<Model>("Assets/tank_e");
+            }
+
+            #endregion
+
+            if (setDefaults)
+                ApplyDefaults();
+        }
+
         /// <summary>
         /// Creates a new <see cref="AITank"/>.
         /// </summary>
@@ -191,8 +255,9 @@ namespace TanksRebirth.GameContent
             else if ((int)tier > (int)TankTier.Obsidian && (int)tier <= (int)TankTier.Marble)
                 _tankTexture = GameResources.GetGameResource<Texture2D>($"Assets/textures/tank/marble/tank_{tier.ToString().ToLower()}");*/
 
-            if ((int) tier <= (int)TankTier.Marble)
+            if ((int)tier <= (int)TankTier.Marble)
                 _tankTexture = Assets[$"tank_" + tier.ToString().ToLower()];
+            
             #region Special
 
             if (tier == TankTier.Commando)
@@ -273,7 +338,6 @@ namespace TanksRebirth.GameContent
             GameHandler.AllTanks[index2] = this;
             base.Initialize();
         }
-
         public override void ApplyDefaults()
         {
             switch (tier)
@@ -1452,7 +1516,7 @@ namespace TanksRebirth.GameContent
                     break;
 
                 case TankTier.Commando:
-                    Armor = new(this, 3);   
+                    Armor = new(this, 3);
                     AiParams.MeanderAngle = MathHelper.ToRadians(30);
                     AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 60;
@@ -1526,7 +1590,6 @@ namespace TanksRebirth.GameContent
                     Armor = new(this, Armor.HitPoints + 3);
             }
         }
-
         public override void Update()
         {
             base.Update();
@@ -1946,10 +2009,11 @@ namespace TanksRebirth.GameContent
                             if (refPoints.Length > 0)
                             {
                                 // why does this never work no matter what i do
-                                var refAngle = GameUtils.DirectionOf(Position, travelPath - new Vector2(400, 0)).ToRotation();
+                                var refAngle = GameUtils.DirectionOf(Position, travelPath  /*new Vector2(400, 0)*/).ToRotation();
                                 //var refAngle = GameUtils.DirectionOf(refPoints[0], travelPath).ToRotation();
 
-                                GameUtils.RoughStep(ref TargetTankRotation, refAngle, refAngle / 4);//AiParams.RedirectAngle);
+                                // GameUtils.RoughStep(ref TargetTankRotation, refAngle, refAngle / 4);//AiParams.RedirectAngle);
+                                GameUtils.RoughStep(ref TargetTankRotation, refAngle, 0.1f);
                             }
 
                             // TODO: i literally do not understand this
@@ -2004,20 +2068,23 @@ namespace TanksRebirth.GameContent
                         {
                             if (isBulletNear)
                             {
-                                if (shell.owner == this)
+                                if (shell is not null)
                                 {
-                                    if (shell.lifeTime > 30)
+                                    if (shell.Owner == this)
                                     {
-                                        var dire = Vector2.UnitY.RotatedByRadians(shell.Position2D.DirectionOf(Position, false).ToRotation());
+                                        if (shell.LifeTime > 30)
+                                        {
+                                            var dire = Vector2.UnitY.RotatedByRadians(shell.Position2D.DirectionOf(Position, false).ToRotation());
 
-                                        TargetTankRotation = dire.ToRotation();
+                                            TargetTankRotation = dire.ToRotation();
+                                        }
                                     }
-                                }
-                                else
-                                {
-                                    var direction = Vector2.UnitY.RotatedByRadians(shell.Position2D.DirectionOf(Position, false).ToRotation());
+                                    else
+                                    {
+                                        var direction = Vector2.UnitY.RotatedByRadians(shell.Position2D.DirectionOf(Position, false).ToRotation());
 
-                                    TargetTankRotation = direction.ToRotation();
+                                        TargetTankRotation = direction.ToRotation();
+                                    }
                                 }
                             }
                         }
@@ -2241,7 +2308,7 @@ namespace TanksRebirth.GameContent
                     if (AiParams.SmartRicochets)
                         GetTanksInPath(Vector2.UnitY.RotatedByRadians(seekRotation), out var rayEndpoint, true, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
                     var poo = GetTanksInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), out var rayEnd, true, offset: Vector2.UnitY * 20, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
-                    DebugUtils.DrawDebugString(TankGame.spriteBatch, $"{tier}: {poo.Count}", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection), 1, centered: true);
+                    DebugUtils.DrawDebugString(TankGame.spriteBatch, $"{tier}: {poo.Count}", GeometryUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), World, View, Projection), 1, centered: true);
                     if (!Stationary)
                     {
                         IsObstacleInWay(AiParams.BlockWarinessDistance, Vector2.UnitY.RotatedByRadians(-TargetTankRotation), out var travelPos, out var refPoints, true);
@@ -2256,6 +2323,11 @@ namespace TanksRebirth.GameContent
                             Matrix.CreateTranslation(Position.X, 
                             0, Position.Y), View, Projection), 
                             1, centered: true);*/
+                        
+                        foreach (var pt in refPoints)
+                        {
+                            DebugUtils.DrawDebugString(TankGame.spriteBatch, "pt", GeometryUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), Matrix.CreateTranslation(pt.X, 0, pt.Y), View, Projection), 1, centered: true);
+                        }
 
                         DebugUtils.DrawDebugString(TankGame.spriteBatch, "end", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(GameUtils.DirectionOf(Position, travelPos).X, 0, GameUtils.DirectionOf(Position, travelPos).Y), View, Projection), 1, centered: true);
                         DebugUtils.DrawDebugString(TankGame.spriteBatch, "me", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.Identity, View, Projection/*Matrix.CreateTranslation(Position.X, 11, Position.Y), View, Projection)*/), 1, centered: true);
@@ -2287,22 +2359,19 @@ namespace TanksRebirth.GameContent
         {
             shell = null;
 
-            Shell bulletCompare = null;
-
-            foreach (var blet in Shell.AllShells)
+            foreach (var bullet in Shell.AllShells)
             {
-                if (blet is not null)
+                if (bullet is not null)
                 {
-                    if (Vector2.Distance(Position, blet.Position2D) < distance)
+                    if (Vector2.Distance(Position, bullet.Position2D) < distance)
                     {
-                        if (bulletCompare == null)
-                            shell = blet;
-                        else
+                        var rotationTo = GameUtils.DirectionOf(Position, bullet.Position2D).ToRotation();
+
+                        if (Math.Abs(rotationTo - TurretRotation) < MathHelper.PiOver2 || Vector2.Distance(Position, bullet.Position2D) < distance / 2)
                         {
-                            if (Vector2.Distance(Position, blet.Position2D).CompareTo(Vector2.Distance(Position, bulletCompare.Position2D)) < 0)
-                                shell = bulletCompare;
+                            shell = bullet;
+                            return true;
                         }
-                        // bullet = blet;
                         return true;
                     }
                 }

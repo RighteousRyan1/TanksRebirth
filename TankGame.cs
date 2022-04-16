@@ -165,40 +165,52 @@ namespace TanksRebirth
 
         public TankGame() : base()
         {
-            // check if platform is windows, mac, or linux
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            Directory.CreateDirectory(SaveDirectory);
+            Directory.CreateDirectory(Path.Combine(SaveDirectory, "Texture Packs", "Scene"));
+            Directory.CreateDirectory(Path.Combine(SaveDirectory, "Texture Packs", "Tank"));
+            GameHandler.ClientLog = new($"{SaveDirectory}", "client");
+            try
             {
-                OperatingSystem = OSPlatform.Windows;
-                IsWin = true;
+                // check if platform is windows, mac, or linux
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    OperatingSystem = OSPlatform.Windows;
+                    IsWin = true;
+                }
+                else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                {
+                    OperatingSystem = OSPlatform.OSX;
+                    IsMac = true;
+                }
+                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                {
+                    OperatingSystem = OSPlatform.Linux;
+                    IsLinux = true;
+                }
+
+                // IOUtils.SetAssociation(".mission", "MISSION_FILE", "TanksRebirth.exe", "Tanks Rebirth mission file");
+
+                graphics = new(this) { PreferHalfPixelOffset = true };
+                graphics.HardwareModeSwitch = false;
+
+                Content.RootDirectory = "Content";
+                Instance = this;
+                Window.Title = "Tanks! Remake";
+                Window.AllowUserResizing = true;
+
+                IsMouseVisible = false;
+
+                graphics.IsFullScreen = false;
+
+                _fontSystem = new();
+
+                GameVersion = typeof(TankGame).Assembly.GetName().Version.ToString();
             }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            catch (Exception e)
             {
-                OperatingSystem = OSPlatform.OSX;
-                IsMac = true;
+                GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
+                throw;
             }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                OperatingSystem = OSPlatform.Linux;
-                IsLinux = true;
-            }
-
-            // IOUtils.SetAssociation(".mission", "MISSION_FILE", "TanksRebirth.exe", "Tanks Rebirth mission file");
-
-            graphics = new(this) { PreferHalfPixelOffset = true };
-            graphics.HardwareModeSwitch = false;
-
-            Content.RootDirectory = "Content";
-            Instance = this;
-            Window.Title = "Tanks! Remake";
-            Window.AllowUserResizing = true;
-
-            IsMouseVisible = false;
-
-            graphics.IsFullScreen = false;
-
-            _fontSystem = new();
-
-            GameVersion = typeof(TankGame).Assembly.GetName().Version.ToString();
         }
 
         private long _memBytes;
@@ -207,9 +219,6 @@ namespace TanksRebirth
         {
             try
             {
-                Directory.CreateDirectory(SaveDirectory);
-                Directory.CreateDirectory(Path.Combine(SaveDirectory, "Texture Packs", "Scene"));
-                Directory.CreateDirectory(Path.Combine(SaveDirectory, "Texture Packs", "Tank"));
 
                 GameHandler.MapEvents();
 
@@ -260,8 +269,6 @@ namespace TanksRebirth
                 var s = Stopwatch.StartNew();
 
                 UIElement.UIPanelBackground = GameResources.GetGameResource<Texture2D>("Assets/UIPanelBackground");
-
-                GameHandler.ClientLog = new($"{SaveDirectory}", "client");
 
                 Thunder.SoftRain = GameResources.GetGameResource<SoundEffect>("Assets/sounds/ambient/soft_rain").CreateInstance();
                 Thunder.SoftRain.IsLooped = true;
@@ -517,8 +524,10 @@ namespace TanksRebirth
                         AddativeZoom += 0.01f;
                     if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Subtract))
                         AddativeZoom -= 0.01f;
-                    if (Input.KeyJustPressed(Keys.Q))
-                        FirstPerson = !FirstPerson;
+                    //if (Input.KeyJustPressed(Keys.Q))
+                    //FirstPerson = !FirstPerson;
+
+                    FirstPerson = Difficulties.Types["ThirdPerson"];
 
                     if (Input.MouseMiddle)
                     {

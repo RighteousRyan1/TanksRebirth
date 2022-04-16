@@ -14,17 +14,14 @@ namespace TanksRebirth.Internals.Common.IO
         public readonly string JsonPath;
         public readonly string JsonDir;
 
-        public readonly FileInfo JsonInfo;
-
         public T Object;
         
         public JsonHandler(T type, string path)
         {
             Object = type;
             JsonPath = path;
-            JsonInfo = new(path);
 
-            JsonDir = JsonPath.Remove(JsonPath.Length - JsonInfo.Name.Length);
+            JsonDir = JsonPath.Remove(JsonPath.Length - new FileInfo(JsonPath).Name.Length);
         }
 
         public string Serialize(JsonSerializerOptions options, bool writeToFile = false)
@@ -40,6 +37,8 @@ namespace TanksRebirth.Internals.Common.IO
 
         public T DeserializeAndSet()
         {
+            if (!File.Exists(JsonPath))
+                File.Create(JsonPath);
             var asDeserialized = JsonSerializer.Deserialize<T>(File.ReadAllText(JsonPath));
             Object = asDeserialized;
             return asDeserialized;

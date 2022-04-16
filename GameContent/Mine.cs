@@ -129,7 +129,7 @@ namespace TanksRebirth.GameContent
 
             foreach (var shell in Shell.AllShells)
             {
-                if (shell is not null && shell.hitbox.Intersects(hitbox))
+                if (shell is not null && shell.Hitbox.Intersects(hitbox))
                 {
                     shell.Destroy();
                     Detonate();

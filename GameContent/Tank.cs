@@ -68,6 +68,20 @@ namespace TanksRebirth.GameContent
 
         public static string AssetRoot;
 
+        public static List<TankTeam> GetActiveTeams()
+        {
+            var teams = new List<TankTeam>();
+            foreach (var tank in GameHandler.AllTanks)
+            {
+                if (tank is not null && !tank.Dead)
+                {
+                    if (!teams.Contains(tank.Team))
+                        teams.Add(tank.Team);
+                }
+            }
+            return teams;
+        }
+
         public static void SetAssetNames()
         {
             Assets.Clear();
@@ -482,7 +496,7 @@ namespace TanksRebirth.GameContent
 
             shell.Velocity = new Vector3(-new2d.X, 0, new2d.Y) * ShellSpeed;
 
-            shell.owner = this;
+            shell.Owner = this;
             shell.ricochets = RicochetCount;
 
             /*var force = (Position - newPos) * Recoil;

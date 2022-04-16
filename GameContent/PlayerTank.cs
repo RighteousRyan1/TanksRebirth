@@ -22,6 +22,8 @@ namespace TanksRebirth.GameContent
 {
     public class PlayerTank : Tank
     {
+        public static TankTeam MyTeam;
+
         public static int MaxLives = 3;
         public static int Lives = 0;
 

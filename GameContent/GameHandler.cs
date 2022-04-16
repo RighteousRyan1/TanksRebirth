@@ -310,19 +310,56 @@ namespace TanksRebirth.GameContent
             if (LoadedCampaign.CachedMissions[0].Name is null)
                 return;
 
-            if (AllAITanks.Count(tnk => tnk != null && !tnk.Dead) <= 0)
+            if (LoadedCampaign.CurrentMission.Tanks.Any(tnk => tnk.IsPlayer))
             {
-                InMission = false;
-                // if a 1-up mission, extend by X amount of time (TBD?)
-                if (!InMission && _wasInMission)
-                    OnMissionEnd?.Invoke(600, false);
-            }
-            else if (AllPlayerTanks.Count(tnk => tnk != null && !tnk.Dead) <= 0)
-            {
-                InMission = false;
+                /*if (AllAITanks.Count(tnk => tnk != null && !tnk.Dead) <= 0)
+                {
+                    InMission = false;
+                    // if a 1-up mission, extend by X amount of time (TBD?)
+                    if (!InMission && _wasInMission)
+                        OnMissionEnd?.Invoke(600, false);
+                }
+                else if (AllPlayerTanks.Count(tnk => tnk != null && !tnk.Dead) <= 0)
+                {
+                    InMission = false;
 
-                if (!InMission && _wasInMission)
-                    OnMissionEnd?.Invoke(600, true);
+                    if (!InMission && _wasInMission)
+                        OnMissionEnd?.Invoke(600, true);
+                }*/
+                var activeTeams = Tank.GetActiveTeams();
+                if (activeTeams.Contains(TankTeam.NoTeam) && AllTanks.Count(tnk => tnk != null && !tnk.Dead) <= 1)
+                {
+                    InMission = false;
+                    // if a 1-up mission, extend by X amount of time (TBD?)
+                    if (!InMission && _wasInMission)
+                        OnMissionEnd?.Invoke(600, AllPlayerTanks.Count(tnk => tnk != null && !tnk.Dead) <= 0);
+                }
+                else if (!activeTeams.Contains(TankTeam.NoTeam) && activeTeams.Count <= 1)
+                {
+                    InMission = false;
+                    // if a 1-up mission, extend by X amount of time (TBD?)
+                    if (!InMission && _wasInMission)
+                        OnMissionEnd?.Invoke(600, !activeTeams.Contains(PlayerTank.MyTeam));
+                }
+            }
+            else
+            {
+                var activeTeams = Tank.GetActiveTeams();
+                // if a player was not initially spawned in the mission, check if a team is still alive and end the mission
+                if (activeTeams.Contains(TankTeam.NoTeam) && AllTanks.Count(tnk => tnk != null && !tnk.Dead) <= 1)
+                {
+                    InMission = false;
+                    // if a 1-up mission, extend by X amount of time (TBD?)
+                    if (!InMission && _wasInMission)
+                        OnMissionEnd?.Invoke(600, false);
+                }
+                else if (!activeTeams.Contains(TankTeam.NoTeam) && activeTeams.Count <= 1)
+                {
+                    InMission = false;
+                    // if a 1-up mission, extend by X amount of time (TBD?)
+                    if (!InMission && _wasInMission)
+                        OnMissionEnd?.Invoke(600, false);
+                }
             }
             if (IntermissionSystem.CurrentWaitTime > 0)
                 IntermissionSystem.Tick(1);

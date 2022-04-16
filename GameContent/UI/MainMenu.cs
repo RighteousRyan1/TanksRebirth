@@ -88,6 +88,10 @@ namespace TanksRebirth.GameContent.UI
         public static UITextButton RandomizedTanks;
 
         public static UITextButton ThunderMode;
+
+        public static UITextButton ThirdPerson;
+
+        public static UITextButton AiCompanion;
         #endregion
 
         private static float _tnkSpeed = 2.4f;
@@ -439,6 +443,25 @@ namespace TanksRebirth.GameContent.UI
                 OnLeftClick = (elem) => Difficulties.Types["ThunderMode"] = !Difficulties.Types["ThunderMode"]
             };
             ThunderMode.SetDimensions(450, 550, 300, 40);
+            
+            ThirdPerson = new("Third Person Mode", font, Color.White)
+            {
+                IsVisible = false,
+                Tooltip = "Make the game a third person shooter!" +
+                "\nYou can move around inter-directionally with WASD, and aim by dragging the mouse.",
+                OnLeftClick = (elem) => Difficulties.Types["ThirdPerson"] = !Difficulties.Types["ThirdPerson"]
+            };
+            ThirdPerson.SetDimensions(450, 600, 300, 40);
+
+            // initialize AiCompanion element
+            AiCompanion = new("AI Companion", font, Color.White)
+            {
+                IsVisible = false,
+                Tooltip = "A random tank will spawn at your location and help you throughout every mission.",
+                OnLeftClick = (elem) => Difficulties.Types["AiCompanion"] = !Difficulties.Types["AiCompanion"]
+            };
+            AiCompanion.SetDimensions(450, 650, 300, 40);
+
         }
         private static void SetCampaignDisplay()
         {
@@ -565,6 +588,8 @@ namespace TanksRebirth.GameContent.UI
             MachineGuns.IsVisible = visible;
             RandomizedTanks.IsVisible = visible;
             ThunderMode.IsVisible = visible;
+            ThirdPerson.IsVisible = visible;
+            AiCompanion.IsVisible = visible;
         }
         internal static void SetPrimaryMenuButtonsVisibility(bool visible)
         {
@@ -607,6 +632,8 @@ namespace TanksRebirth.GameContent.UI
             MachineGuns.Color = Difficulties.Types["MachineGuns"] ? Color.Lime : Color.Red;
             RandomizedTanks.Color = Difficulties.Types["RandomizedTanks"] ? Color.Lime : Color.Red;
             ThunderMode.Color = Difficulties.Types["ThunderMode"] ? Color.Lime : Color.Red;
+            ThirdPerson.Color = Difficulties.Types["ThirdPerson"] ? Color.Lime : Color.Red;
+            AiCompanion.Color = Difficulties.Types["AiCompanion"] ? Color.Lime : Color.Red;
 
             Theme.Volume = TankGame.Settings.MusicVolume;
 
