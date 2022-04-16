@@ -2009,11 +2009,11 @@ namespace TanksRebirth.GameContent
                             if (refPoints.Length > 0)
                             {
                                 // why does this never work no matter what i do
-                                var refAngle = GameUtils.DirectionOf(Position, travelPath  /*new Vector2(400, 0)*/).ToRotation();
+                                var refAngle = GameUtils.DirectionOf(Position, travelPath - new Vector2(400, 0)).ToRotation();
                                 //var refAngle = GameUtils.DirectionOf(refPoints[0], travelPath).ToRotation();
 
                                 // GameUtils.RoughStep(ref TargetTankRotation, refAngle, refAngle / 4);//AiParams.RedirectAngle);
-                                GameUtils.RoughStep(ref TargetTankRotation, refAngle, 0.1f);
+                                GameUtils.RoughStep(ref TargetTankRotation, refAngle, refAngle / 3);
                             }
 
                             // TODO: i literally do not understand this
