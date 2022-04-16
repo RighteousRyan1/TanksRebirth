@@ -264,6 +264,18 @@ namespace TanksRebirth.GameContent.Systems
             return campaign;
         }
 
+        /// <summary>Does not work yet.</summary>
+        public static void SaveToFile()
+        {
+            if (GameHandler.LoadedCampaign == null)
+                return;
+
+            var root = Path.Combine(TankGame.SaveDirectory, "Campaigns");
+            var path = Path.Combine(root, GameHandler.LoadedCampaign.Properties.Name);
+            Directory.CreateDirectory(root);
+            
+        }
+
         public struct CampaignProperties {
             public string Name { get; set; }
             public string Description { get; set; }
