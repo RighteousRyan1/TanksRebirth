@@ -144,7 +144,7 @@ namespace TanksRebirth.GameContent
             {
                 Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_commando");
 
-                _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/enemy/wee/tank_commando");
+                _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_commando");
 
                 foreach (var mesh in Model.Meshes)
                 {
@@ -155,7 +155,7 @@ namespace TanksRebirth.GameContent
                         if (mesh.Name == "Barrel_Laser")
                             effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/armor");
                         if (mesh.Name == "Dish")
-                            effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/enemy/wee/tank_commando");
+                            effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_commando");
                     }
                 }
                 // fix?
@@ -264,20 +264,7 @@ namespace TanksRebirth.GameContent
             {
                 Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_commando");
 
-                _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/enemy/wee/tank_commando");
-
-                foreach (var mesh in Model.Meshes)
-                {
-                    foreach (BasicEffect effect in mesh.Effects)
-                    {
-                        if (mesh.Name == "Laser_Beam")
-                            effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/laser");
-                        if (mesh.Name == "Barrel_Laser")
-                            effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/armor");
-                        if (mesh.Name == "Dish")
-                            effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/enemy/wee/tank_commando");
-                    }
-                }
+                _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_commando");
                 // fix?
             }
             else if (tier == TankTier.Assassin)
