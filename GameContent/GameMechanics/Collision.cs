@@ -169,7 +169,7 @@ namespace TanksRebirth.GameContent.GameMechanics
         {
             cornerCollision = false;
             type = (Block.BlockType)255;
-            direction = CollisionDirection.Other;
+            direction = CollisionDirection.None;
             var offset = velocity;
 
             CollisionInfo collisionInfo = new();
