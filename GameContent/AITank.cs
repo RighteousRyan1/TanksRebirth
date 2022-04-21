@@ -78,9 +78,9 @@ namespace TanksRebirth.GameContent
             public float ShootChance { get; set; } = 1f;
 
             /// <summary>How far ahead of this tank (in the direction the tank is going) that it is aware of obstacles and navigates around them.</summary>
-            public int BlockWarinessDistance { get; set; } = 60;
+            public int BlockWarinessDistance { get; set; } = 50;
             /// <summary>How often this tank reads the obstacles around it and navigates around them.</summary>
-            public int BlockReadTime { get; set; } = 30;
+            public int BlockReadTime { get; set; } = 3;
             /// <summary>How far this tank must be from a teammate before it can lay a mine or fire a bullet.</summary>
             public float TeammateTankWariness { get; set; } = 30f;
             /// <summary>Whether or not this tank tries to find calculations all around it. This is not recommended for mobile tanks.</summary>
@@ -396,6 +396,8 @@ namespace TanksRebirth.GameContent
                     MineCooldown = 0;
                     MineLimit = 0;
                     MineStun = 0;
+
+                    AiParams.BlockWarinessDistance = 25;
                     break;
 
                 case TankTier.Marine:
@@ -523,6 +525,8 @@ namespace TanksRebirth.GameContent
                     MineCooldown = 0;
                     MineLimit = 0;
                     MineStun = 0;
+
+                    AiParams.BlockWarinessDistance = 35;
                     break;
 
                 case TankTier.Purple:
@@ -564,6 +568,8 @@ namespace TanksRebirth.GameContent
 
                     AiParams.MoveFromMineTime = 60;
                     AiParams.MinePlacementChance = 0.05f;
+
+                    AiParams.BlockWarinessDistance = 45;
                     break;
 
                 case TankTier.Green:
@@ -636,6 +642,8 @@ namespace TanksRebirth.GameContent
                     AiParams.MoveFromMineTime = 40;
                     AiParams.MinePlacementChance = 0.08f;
 
+                    AiParams.BlockWarinessDistance = 30;
+
                     Invisible = true;
                     break;
 
@@ -681,6 +689,8 @@ namespace TanksRebirth.GameContent
                     AiParams.MinePlacementChance = 0.05f;
 
                     AiParams.SmartMineLaying = true;
+
+                    AiParams.BlockWarinessDistance = 60;
                     break;
                 #endregion
                 #region MasterMod
@@ -872,6 +882,8 @@ namespace TanksRebirth.GameContent
                     AiParams.MinePlacementChance = 0.15f;
 
                     AiParams.ShootChance = 0.95f;
+
+                    AiParams.BlockWarinessDistance = 60;
                     break;
                 case TankTier.Amethyst:
                     AiParams.MeanderAngle = MathHelper.ToRadians(30);
@@ -1020,6 +1032,9 @@ namespace TanksRebirth.GameContent
 
                     AiParams.MoveFromMineTime = 100;
                     AiParams.MinePlacementChance = 0.1f;
+
+                    AiParams.BlockWarinessDistance = 50;
+                    AiParams.BlockReadTime = 30;
                     break;
                 #endregion
                 #region AdvancedMod
@@ -1988,19 +2003,21 @@ namespace TanksRebirth.GameContent
                         bool isMineNear = TryGetMineNear(AiParams.MineWarinessRadius, out var mine);
 
                         #region CubeNav
-
-                        pathBlocked = IsObstacleInWay(AiParams.BlockWarinessDistance, Vector2.UnitY.RotatedByRadians(-TargetTankRotation), out var travelPath, out var refPoints);
                         
-                        if (pathBlocked && Behaviors[2].IsModOf(3) && !isMineNear && !isBulletNear)
+                        if (Behaviors[2].IsModOf(AiParams.BlockReadTime) && !isMineNear && !isBulletNear)
                         {
-                            if (refPoints.Length > 0)
+                            pathBlocked = IsObstacleInWay(AiParams.BlockWarinessDistance, Vector2.UnitY.RotatedByRadians(-TargetTankRotation), out var travelPath, out var refPoints);
+                            if (pathBlocked)
                             {
-                                // why does this never work no matter what i do
-                                var refAngle = GameUtils.DirectionOf(Position, travelPath - new Vector2(400, 0)).ToRotation();
-                                //var refAngle = GameUtils.DirectionOf(refPoints[0], travelPath).ToRotation();
+                                if (refPoints.Length > 0)
+                                {
+                                    // why does this never work no matter what i do
+                                    var refAngle = GameUtils.DirectionOf(Position, travelPath - new Vector2(400, 0)).ToRotation();
+                                    //var refAngle = GameUtils.DirectionOf(refPoints[0], travelPath).ToRotation();
 
-                                // GameUtils.RoughStep(ref TargetTankRotation, refAngle, refAngle / 4);//AiParams.RedirectAngle);
-                                GameUtils.RoughStep(ref TargetTankRotation, refAngle, refAngle / 3);
+                                    // GameUtils.RoughStep(ref TargetTankRotation, refAngle, refAngle / 4);//AiParams.RedirectAngle);
+                                    GameUtils.RoughStep(ref TargetTankRotation, refAngle, refAngle / 3);
+                                }
                             }
 
                             // TODO: i literally do not understand this
