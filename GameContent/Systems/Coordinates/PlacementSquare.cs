@@ -142,16 +142,29 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
                     if (CurrentBlockId > -1)
                         if (displayHeights && Block.AllBlocks[CurrentBlockId] is not null)
                         {
-                            var pos = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
-                            for (int i = 0; i < 4; i++)
-                                TankGame.spriteBatch.DrawString(TankGame.TextFont, $"{Block.AllBlocks[CurrentBlockId].Stack}", pos + new Vector2(0, 2f).RotatedByRadians(MathHelper.PiOver2 * i + MathHelper.PiOver4), 
-                                    Color.Black, new(1f), 0f, TankGame.TextFont.MeasureString($"{Block.AllBlocks[CurrentBlockId].Stack}") / 2);
+                            if (Block.AllBlocks[CurrentBlockId].CanStack)
+                            {
+                                var pos = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
+                                for (int i = 0; i < 4; i++)
+                                    TankGame.spriteBatch.DrawString(TankGame.TextFont, $"{Block.AllBlocks[CurrentBlockId].Stack}", pos + new Vector2(0, 2f).RotatedByRadians(MathHelper.PiOver2 * i + MathHelper.PiOver4),
+                                        Color.Black, new(1f), 0f, TankGame.TextFont.MeasureString($"{Block.AllBlocks[CurrentBlockId].Stack}") / 2);
 
 
-                            pos = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
+                                pos = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
+                                TankGame.spriteBatch.DrawString(TankGame.TextFont, $"{Block.AllBlocks[CurrentBlockId].Stack}", pos,
+                                    Color.White, new(1f), 0f, TankGame.TextFont.MeasureString($"{Block.AllBlocks[CurrentBlockId].Stack}") / 2);
+                            }
+                            if (Block.AllBlocks[CurrentBlockId].Type == Block.BlockType.Teleporter)
+                            {
+                                var pos = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
+                                for (int i = 0; i < 4; i++)
+                                    TankGame.spriteBatch.DrawString(TankGame.TextFont, $"TP:{Block.AllBlocks[CurrentBlockId].TpLink}", pos + new Vector2(0, 2f).RotatedByRadians(MathHelper.PiOver2 * i + MathHelper.PiOver4),
+                                        Color.Black, new(1f), 0f, TankGame.TextFont.MeasureString($"TP:{Block.AllBlocks[CurrentBlockId].TpLink}") / 2);
 
-                            TankGame.spriteBatch.DrawString(TankGame.TextFont, $"{Block.AllBlocks[CurrentBlockId].Stack}", pos, 
-                                Color.White, new(1f), 0f, TankGame.TextFont.MeasureString($"{Block.AllBlocks[CurrentBlockId].Stack}") / 2);
+                                pos = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
+                                TankGame.spriteBatch.DrawString(TankGame.TextFont, $"TP:{Block.AllBlocks[CurrentBlockId].TpLink}", pos,
+                                    Color.White, new(1f), 0f, TankGame.TextFont.MeasureString($"TP:{Block.AllBlocks[CurrentBlockId].TpLink}") / 2);
+                            }
                         }
 
                     effect.TextureEnabled = true;

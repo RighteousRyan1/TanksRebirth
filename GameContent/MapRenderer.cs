@@ -45,7 +45,8 @@ namespace TanksRebirth.GameContent
             ["block_shadow_d"] = null,
             ["block_shadow_h"] = null,
             ["floor_face"] = null,
-            ["floor_lower"] = null
+            ["floor_lower"] = null,
+            ["teleporter"] = null,
         };
 
         public static void LoadTexturePack(string folder)
@@ -103,6 +104,7 @@ namespace TanksRebirth.GameContent
             Assets["block_shadow_h"] = get("block_shadow_h");
             Assets["floor_face"] = get("floor_face");
             Assets["floor_lower"] = get("floor_lower");
+            Assets["teleporter"] = get("teleporter");
         }
 
         public static class FloorRenderer

@@ -89,6 +89,7 @@ namespace TanksRebirth.GameContent.Systems
              *  - Stack (sbyte)
              *  - X (float)
              *  - Y (float)
+             *  - TpLink (sbyte) (VERSION 2 or GREATER)
              */
 
             writer.Write(TankGame.LevelFileHeader);
@@ -135,12 +136,14 @@ namespace TanksRebirth.GameContent.Systems
                         Type = block.Type,
                         Stack = block.Stack,
                         Position = block.Position,
+                        TpLink = block.TpLink
                     };
 
                     writer.Write((byte)temp.Type);
                     writer.Write(temp.Stack);
                     writer.Write(temp.Position.X);
                     writer.Write(temp.Position.Y);
+                    writer.Write(temp.TpLink);
                 }
             }
 
@@ -237,6 +240,57 @@ namespace TanksRebirth.GameContent.Systems
                         Type = (Block.BlockType)type,
                         Stack = stack,
                         Position = new(x, y),
+                    });
+                }
+
+                mission = new Mission(tanks.ToArray(), blocks.ToArray())
+                {
+                    Name = name
+                };
+            }
+            else if (version == 2)
+            {
+                var name = reader.ReadString();
+
+                var totalTanks = reader.ReadInt32();
+
+                for (int i = 0; i < totalTanks; i++)
+                {
+                    var isPlayer = reader.ReadBoolean();
+                    var x = reader.ReadSingle();
+                    var y = reader.ReadSingle();
+                    var rotation = -reader.ReadSingle(); // i genuinely hate having to make this negative :(
+                    var tier = reader.ReadByte();
+                    var pType = reader.ReadByte();
+                    var team = reader.ReadByte();
+
+                    tanks.Add(new()
+                    {
+                        IsPlayer = isPlayer,
+                        Position = new(x, y),
+                        Rotation = rotation,
+                        AiTier = (TankTier)tier,
+                        PlayerType = (PlayerType)pType,
+                        Team = (TankTeam)team
+                    });
+                }
+
+                var totalBlocks = reader.ReadInt32();
+
+                for (int i = 0; i < totalBlocks; i++)
+                {
+                    var type = reader.ReadByte();
+                    var stack = reader.ReadSByte();
+                    var x = reader.ReadSingle();
+                    var y = reader.ReadSingle();
+                    var link = reader.ReadSByte();
+
+                    blocks.Add(new()
+                    {
+                        Type = (Block.BlockType)type,
+                        Stack = stack,
+                        Position = new(x, y),
+                        TpLink = link
                     });
                 }
 

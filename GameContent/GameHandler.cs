@@ -236,10 +236,13 @@ namespace TanksRebirth.GameContent
                 PlayerTank.TanksKilledThisCampaign = 0;
 
             CubeHeight = MathHelper.Clamp(CubeHeight, 1, 7);
-            BlockType = MathHelper.Clamp(BlockType, 0, 2);
+            BlockType = MathHelper.Clamp(BlockType, 0, 3);
 
             _wasOverhead = TankGame.OverheadView;
             _wasInMission = InMission;
+
+            if (TankGame.OverheadView)
+                HandleLevelEditorModifications();
         }
 
         private static void DoThunderStuff()
@@ -510,6 +513,26 @@ namespace TanksRebirth.GameContent
             GameUI.MissionInfoBar.IsVisible = !MainMenu.Active;
         }
 
+
+        private static int _oldelta;
+        public static void HandleLevelEditorModifications()
+        {
+            var cur = PlacementSquare.CurrentlyHovered;
+
+            if (cur is not null && cur.HasBlock)
+            {
+                if (Block.AllBlocks[cur.CurrentBlockId].Type == Block.BlockType.Teleporter)
+                {
+                    ChatSystem.SendMessage($"{Input.DeltaScrollWheel}", Color.White);
+
+                    if (Input.DeltaScrollWheel != _oldelta)
+                        Block.AllBlocks[cur.CurrentBlockId].TpLink += (sbyte)(Input.DeltaScrollWheel - _oldelta);
+                }
+            }
+
+            _oldelta = Input.DeltaScrollWheel;
+        }
+
         // fix shitty mission init (innit?)
 
         private static readonly PowerupTemplate[] powerups =
@@ -520,7 +543,7 @@ namespace TanksRebirth.GameContent
              new(1000, 50f, (tnk) => { if (tnk.MaxSpeed > 0) tnk.Stationary = true; }, (tnk) => { if (tnk.MaxSpeed > 0) tnk.Stationary = !tnk.Stationary; }) { Name = "Stationary" }
         };
 
-        public static Lighting.LightProfile GameLight = new Lighting.LightProfile()
+        public static Lighting.LightProfile GameLight = new()
         {
             Color = new(150, 150, 170),
             Brightness = 0.71f,

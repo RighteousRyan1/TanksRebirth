@@ -91,7 +91,7 @@ namespace TanksRebirth
         internal static float GetInterpolatedFloat(float value)
             => value * (float)LastGameTime.ElapsedGameTime.TotalSeconds;
 
-        public const int LevelEditorVersion = 1;
+        public const int LevelEditorVersion = 2;
 
         public static readonly byte[] LevelFileHeader = { 84, 65, 78, 75 };
 

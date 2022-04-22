@@ -18,6 +18,7 @@ using TanksRebirth.Graphics;
 using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.Internals.Common.Framework;
 using TanksRebirth.Internals.Common.IO;
+using System.Reflection;
 
 namespace TanksRebirth.GameContent
 {
@@ -1591,6 +1592,26 @@ namespace TanksRebirth.GameContent
                 else
                     Armor = new(this, Armor.HitPoints + 3);
             }
+
+            /*foreach (var aifld in AiParams.GetType().GetProperties())
+                if (aifld.GetValue(AiParams) is int)
+                    aifld.SetValue(AiParams, GameHandler.GameRand.Next(1, 60));
+                else if (aifld.GetValue(AiParams) is float)
+                    aifld.SetValue(AiParams, GameHandler.GameRand.NextFloat(0.01f, 2f));
+                else if (aifld.GetValue(AiParams) is bool)
+                    aifld.SetValue(AiParams, GameHandler.GameRand.Next(0, 2) == 0);
+            foreach (var fld in GetType().GetProperties())
+            {
+                if (fld.SetMethod != null && fld == typeof(Enum) && !fld.Name.ToLower().Contains("behavior") && !fld.Name.Contains("Id"))
+                {
+                    if (fld.GetValue(this) is int)
+                        fld.SetValue(this, GameHandler.GameRand.Next(1, 60));
+                    else if (fld.GetValue(this) is float)
+                        fld.SetValue(this, GameHandler.GameRand.NextFloat(0.01f, 60));
+                    else if (fld.GetValue(this) is bool && fld.Name != "Dead")
+                        fld.SetValue(this, GameHandler.GameRand.Next(0, 2) == 0);
+                }
+            }*/
         }
         public override void Update()
         {
