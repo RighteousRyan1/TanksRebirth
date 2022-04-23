@@ -1699,7 +1699,7 @@ namespace TanksRebirth.GameContent
             rayEndpoint = new(-999999, -999999);
             List<Tank> tanks = new();
             if (pattern is null)
-                pattern = (c) => c.IsSolid;
+                pattern = (c) => c.IsSolid || c.Type == Block.BlockType.Teleporter;
 
             const int MAX_PATH_UNITS = 1000;
             const int PATH_UNIT_LENGTH = 8;
@@ -1714,6 +1714,10 @@ namespace TanksRebirth.GameContent
             int pathRicochetCount = 0;
 
             int uninterruptedIterations = 0;
+
+            bool goneThroughTeleporter = false;
+            int tpidx = -1;
+            Vector2 tpos = Vector2.Zero;
 
             for (int i = 0; i < MAX_PATH_UNITS; i++)
             {
@@ -1741,20 +1745,46 @@ namespace TanksRebirth.GameContent
                 if (corner)
                     return tanks;
 
-                switch (dir)
+                if (block is not null)
                 {
-                    case CollisionDirection.Up:
-                    case CollisionDirection.Down:
-                        pathDir.Y *= -1;
-                        pathRicochetCount++;
-                        resetIterations();
-                        break;
-                    case CollisionDirection.Left:
-                    case CollisionDirection.Right:
-                        pathDir.X *= -1;
-                        pathRicochetCount++;
-                        resetIterations();
-                        break;
+                    if (block.Type == Block.BlockType.Teleporter)
+                    {
+                        if (!goneThroughTeleporter)
+                        {
+                            var otherTp = Block.AllBlocks.FirstOrDefault(bl => bl != null && bl != block && bl.TpLink == block.TpLink);
+
+                            if (Array.IndexOf(Block.AllBlocks, otherTp) > -1)
+                            {
+                                //pathPos = otherTp.Position;
+                                tpos = otherTp.Position;
+                                goneThroughTeleporter = true;
+                                tpidx = i + 1;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        switch (dir)
+                        {
+                            case CollisionDirection.Up:
+                            case CollisionDirection.Down:
+                                pathDir.Y *= -1;
+                                pathRicochetCount++;
+                                resetIterations();
+                                break;
+                            case CollisionDirection.Left:
+                            case CollisionDirection.Right:
+                                pathDir.X *= -1;
+                                pathRicochetCount++;
+                                resetIterations();
+                                break;
+                        }
+                    }
+                }
+
+                if (goneThroughTeleporter && i == tpidx)
+                {
+                    pathPos = tpos;
                 }
 
                 void resetIterations() { if (doBounceReset) uninterruptedIterations = 0; }
@@ -1783,6 +1813,7 @@ namespace TanksRebirth.GameContent
                 {
                     var pathPosScreen = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(pathPos.X, 11, pathPos.Y), TankGame.GameView, TankGame.GameProjection);
                     TankGame.spriteBatch.Draw(whitePixel, pathPosScreen, null, Color.White * 0.9f, 0, whitePixel.Size() / 2, /*2 + (float)Math.Sin(i * Math.PI / 5 - TankGame.GameUpdateTime * 0.1f) * */realMiss, default, default);
+                    DebugUtils.DrawDebugString(TankGame.spriteBatch, $"{goneThroughTeleporter}:{(block is not null ? $"{block.Type}" : "N/A")}", GeometryUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), Matrix.CreateTranslation(pathPos.X, 0, pathPos.Y), View, Projection), 1, centered: true);
                 }
 
                 foreach (var enemy in GameHandler.AllTanks)
@@ -1966,12 +1997,12 @@ namespace TanksRebirth.GameContent
 
                             if (ShellType == ShellTier.Explosive)
                             {
-                                tanksDef = GetTanksInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), out var rayEndpoint, offset: Vector2.UnitY * 20, pattern: x => !x.IsDestructible && x.IsSolid, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
+                                tanksDef = GetTanksInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), out var rayEndpoint, offset: Vector2.UnitY * 20, pattern: x => (!x.IsDestructible && x.IsSolid) || x.Type == Block.BlockType.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
                                 if (Vector2.Distance(rayEndpoint, Position) < 150f) // TODO: change from hardcode to normalcode :YES:
                                     tooCloseToExplosiveShell = true;
                             }
                             else
-                                tanksDef = GetTanksInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), out var rayEndpoint, offset: Vector2.UnitY * 20, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);// change?
+                                tanksDef = GetTanksInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), out var rayEndpoint, offset: Vector2.UnitY * 20, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
 
                             var findsEnemy = tanksDef.Any(tnk => tnk is not null && (tnk.Team != Team || tnk.Team == TankTeam.NoTeam));
                             var findsSelf = tanksDef.Any(tnk => tnk is not null && tnk == this);
@@ -2032,12 +2063,12 @@ namespace TanksRebirth.GameContent
                             {
                                 if (refPoints.Length > 0)
                                 {
+                                    // float AngleSmoothStep(float angle, float target, float amount) => GameUtils.AngleLerp(angle, target, amount * amount * (3f - 2f * amount));
                                     // why does this never work no matter what i do
                                     var refAngle = GameUtils.DirectionOf(Position, travelPath - new Vector2(400, 0)).ToRotation();
-                                    //var refAngle = GameUtils.DirectionOf(refPoints[0], travelPath).ToRotation();
 
-                                    // GameUtils.RoughStep(ref TargetTankRotation, refAngle, refAngle / 4);//AiParams.RedirectAngle);
-                                    GameUtils.RoughStep(ref TargetTankRotation, refAngle, refAngle / 3);
+                                    // AngleSmoothStep(TargetTankRotation, refAngle, refAngle / 3);
+                                    GameUtils.RoughStep(ref TargetTankRotation, refAngle, refAngle / 6);
                                 }
                             }
 
@@ -2332,7 +2363,7 @@ namespace TanksRebirth.GameContent
                 {
                     if (AiParams.SmartRicochets)
                         GetTanksInPath(Vector2.UnitY.RotatedByRadians(seekRotation), out var rayEndpoint, true, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
-                    var poo = GetTanksInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), out var rayEnd, true, offset: Vector2.UnitY * 20, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
+                    var poo = GetTanksInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), out var rayEnd, true, offset: Vector2.UnitY * 20, pattern: x => x.IsSolid | x.Type == Block.BlockType.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
                     DebugUtils.DrawDebugString(TankGame.spriteBatch, $"{tier}: {poo.Count}", GeometryUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), World, View, Projection), 1, centered: true);
                     if (!Stationary)
                     {

@@ -226,6 +226,25 @@ namespace TanksRebirth.GameContent
         public bool CanLayTread { get; set; } = true;
         /// <summary>Whether or not this <see cref="Tank"/> is currently turning.</summary>
         public bool IsTurning { get; internal set; }
+        /// <summary>If <see cref="ShellShootCount"/> is greater than 1, this is how many radians each shot's offset will be when this <see cref="Tank"/> shoots.
+        /// <para></para>
+        /// A common formula to calculate values for when the bullets won't instantly collide is:
+        /// <para></para>
+        /// <c>(ShellShootCount / 12) - 0.05</c>
+        /// <para></para>
+        /// A table:
+        /// <para></para>
+        /// 3 = 0.3
+        /// <para></para>
+        /// 5 = 0.4
+        /// <para></para>
+        /// 7 = 0.65
+        /// <para></para>
+        /// 9 = 0.8
+        /// </summary>
+        public float ShellSpread { get; set; } = 0f;
+        /// <summary>How many <see cref="Shell"/>s this <see cref="Tank"/> fires upon shooting in a spread.</summary>
+        public int ShellShootCount { get; set; } = 1;
         /// <summary>Whether or not this <see cref="Tank"/> is being hovered by the pointer.</summary>
         public bool IsHoveredByMouse { get; internal set; }
 
@@ -255,6 +274,15 @@ namespace TanksRebirth.GameContent
                 ShellCooldown = 5;
                 ShellLimit = 50;
                 ShootStun = 0;
+
+                if (this is AITank tank)
+                    tank.AiParams.Inaccuracy *= 2;
+            }
+            if (Difficulties.Types["Shotguns"])
+            {
+                ShellSpread = 0.3f;
+                ShellShootCount = 3;
+                ShellLimit *= 3;
 
                 if (this is AITank tank)
                     tank.AiParams.Inaccuracy *= 2;
@@ -385,11 +413,6 @@ namespace TanksRebirth.GameContent
         }
         public virtual void Destroy(TankHurtContext context) {
             OnDestroy?.Invoke(this, new());
-            if (CollisionsWorld.BodyList.Contains(Body))
-            {
-                CollisionsWorld.Remove(Body);
-                Body = null;
-            }
             var killSound1 = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_destroy");
             SoundPlayer.PlaySoundInstance(killSound1, SoundContext.Effect, 0.2f);
             if (this is AITank)
@@ -484,71 +507,106 @@ namespace TanksRebirth.GameContent
             if (!GameHandler.InMission || !HasTurret)
                 return;
 
-            if (CurShootCooldown > 0 || OwnedShellCount >= ShellLimit)
+            if (CurShootCooldown > 0 || OwnedShellCount >= ShellLimit / ShellShootCount)
                 return;
 
-            var shell = new Shell(Position3D, Vector3.Zero, ShellType, this, homing: ShellHoming);
-            var new2d = Vector2.UnitY.RotatedByRadians(TurretRotation);
+            bool flip = false;
+            float angle = 0f;
 
-            var newPos = Position + new Vector2(0, 20).RotatedByRadians(-TurretRotation);
+            for (int i = 0; i < ShellShootCount; i++)
+            {
+                int p = 0;
+                if (i == 0)
+                {
+                    var shell = new Shell(Position3D, Vector3.Zero, ShellType, this, homing: ShellHoming);
+                    var new2d = Vector2.UnitY.RotatedByRadians(TurretRotation);
 
-            shell.Position = new Vector3(newPos.X, 11, newPos.Y);
+                    var newPos = Position + new Vector2(0, 20).RotatedByRadians(-TurretRotation);
 
-            shell.Velocity = new Vector3(-new2d.X, 0, new2d.Y) * ShellSpeed;
+                    shell.Position = new Vector3(newPos.X, 11, newPos.Y);
 
-            shell.Owner = this;
-            shell.ricochets = RicochetCount;
+                    shell.Velocity = new Vector3(-new2d.X, 0, new2d.Y) * ShellSpeed;
+
+                    shell.Owner = this;
+                    shell.ricochets = RicochetCount;
+
+                    #region Particles
+                    var hit = ParticleSystem.MakeParticle(shell.Position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
+                    var smoke = ParticleSystem.MakeParticle(shell.Position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
+
+                    hit.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
+                    smoke.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
+
+                    smoke.Scale = new(0.35f);
+                    hit.Scale = new(0.5f);
+
+                    smoke.color = new(84, 22, 0, 255);
+
+                    smoke.isAddative = false;
+
+                    int achieveable = 80;
+                    int step = 1;
+
+                    hit.UniqueBehavior = (part) =>
+                    {
+                        part.color = Color.Orange;
+
+                        if (part.lifeTime > 1)
+                            part.Opacity -= 0.1f;
+                        if (part.Opacity <= 0)
+                            part.Destroy();
+                    };
+                    smoke.UniqueBehavior = (part) =>
+                    {
+                        part.color.R = (byte)GameUtils.RoughStep(part.color.R, achieveable, step);
+                        part.color.G = (byte)GameUtils.RoughStep(part.color.G, achieveable, step);
+                        part.color.B = (byte)GameUtils.RoughStep(part.color.B, achieveable, step);
+
+                        GeometryUtils.Add(ref part.Scale, 0.004f);
+
+                        if (part.color.G == achieveable)
+                        {
+                            part.color.B = (byte)achieveable;
+                            part.Opacity -= 0.04f;
+
+                            if (part.Opacity <= 0)
+                                part.Destroy();
+                        }
+                    };
+                    #endregion
+                }
+                else
+                {
+                    // i == 0 : null, 0 rads
+                    // i == 1 : flipped, -0.15 rads
+                    // i == 2 : !flipped, 0.15 rads
+                    // i == 3 : flipped, -0.30 rads
+                    // i == 4 : !flipped, 0.30 rads
+                    flip = !flip;
+                    if ((i - 1) % 2 == 0)
+                        angle += ShellSpread;
+                    var newAngle = flip ? -angle : angle;
+
+                    var shell = new Shell(Position3D, Vector3.Zero, ShellType, this, homing: ShellHoming);
+                    var new2d = Vector2.UnitY.RotatedByRadians(TurretRotation);
+
+                    var newPos = Position + new Vector2(0, 20).RotatedByRadians(-TurretRotation + newAngle);
+
+                    shell.Position = new Vector3(newPos.X, 11, newPos.Y);
+
+
+                    shell.Velocity = new Vector3(-new2d.X, 0, new2d.Y).FlattenZ().RotatedByRadians(newAngle).ExpandZ() * ShellSpeed;
+
+                    shell.Owner = this;
+                    shell.ricochets = RicochetCount;
+                }
+            }
 
             /*var force = (Position - newPos) * Recoil;
             Velocity = force;
             Body.ApplyForce(force);*/
 
-            #region Particles
-            var hit = ParticleSystem.MakeParticle(shell.Position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
-            var smoke = ParticleSystem.MakeParticle(shell.Position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
-
-            hit.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
-            smoke.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
-
-            smoke.Scale = new(0.35f);
-            hit.Scale = new(0.5f);
-
-            smoke.color = new(84, 22, 0, 255);
-
-            smoke.isAddative = false;
-
-            int achieveable = 80;
-            int step = 1;
-
-            hit.UniqueBehavior = (part) =>
-            {
-                part.color = Color.Orange;
-
-                if (part.lifeTime > 1)
-                    part.Opacity -= 0.1f;
-                if (part.Opacity <= 0)
-                    part.Destroy();
-            };
-            smoke.UniqueBehavior = (part) =>
-            {
-                part.color.R = (byte)GameUtils.RoughStep(part.color.R, achieveable, step);
-                part.color.G = (byte)GameUtils.RoughStep(part.color.G, achieveable, step);
-                part.color.B = (byte)GameUtils.RoughStep(part.color.B, achieveable, step);
-
-                GeometryUtils.Add(ref part.Scale, 0.004f);
-
-                if (part.color.G == achieveable)
-                {
-                    part.color.B = (byte)achieveable;
-                    part.Opacity -= 0.04f;
-
-                    if (part.Opacity <= 0)
-                        part.Destroy();
-                }
-            };
-            #endregion
-
-            OwnedShellCount++;
+            OwnedShellCount += ShellShootCount;
 
             timeSinceLastAction = 0;
 
@@ -602,7 +660,7 @@ namespace TanksRebirth.GameContent
         public float Recoil { get; set; } = 0f;
 
         public virtual void Remove() 
-        {
+        {            
             if (CollisionsWorld.BodyList.Contains(Body))
                 CollisionsWorld.Remove(Body);
             GameHandler.OnMissionStart -= OnMissionStart;

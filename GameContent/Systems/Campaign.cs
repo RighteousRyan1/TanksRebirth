@@ -88,7 +88,8 @@ namespace TanksRebirth.GameContent.Systems
         /// <param name="spawnNewSet">If true, will spawn all tanks as if it's the first time the player(s) has/have entered this mission.</param>
         public void SetupLoadedMission(bool spawnNewSet)
         {
-
+            //foreach (var body in Tank.CollisionsWorld.BodyList)
+                //Tank.CollisionsWorld.Remove(body);
             for (int a = 0; a < GameHandler.AllTanks.Length; a++)
                 GameHandler.AllTanks[a]?.Remove();
             for (int i = 0; i < LoadedMission.Tanks.Length; i++)

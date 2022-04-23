@@ -437,6 +437,11 @@ namespace TanksRebirth.GameContent
             ParticleSystem.RenderParticles();
             MainMenu.Render();
 
+            foreach (var body in Tank.CollisionsWorld.BodyList)
+            {
+                DebugUtils.DrawDebugString(TankGame.spriteBatch, $"BODY", 
+                    GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(body.Position.X, 0, body.Position.Y), TankGame.GameView, TankGame.GameProjection), centered: true);
+            }
             // TODO: Fix translation
             // TODO: Scaling with screen size.
 
@@ -523,7 +528,7 @@ namespace TanksRebirth.GameContent
             {
                 if (Block.AllBlocks[cur.CurrentBlockId].Type == Block.BlockType.Teleporter)
                 {
-                    ChatSystem.SendMessage($"{Input.DeltaScrollWheel}", Color.White);
+                    // ChatSystem.SendMessage($"{Input.DeltaScrollWheel}", Color.White);
 
                     if (Input.DeltaScrollWheel != _oldelta)
                         Block.AllBlocks[cur.CurrentBlockId].TpLink += (sbyte)(Input.DeltaScrollWheel - _oldelta);

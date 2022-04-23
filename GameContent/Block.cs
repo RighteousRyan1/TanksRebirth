@@ -26,7 +26,8 @@ namespace TanksRebirth.GameContent
             Block c = new(Type, Stack, Position);
 
             c.Position = Position;
-            c.Body.Position = Position;
+            if (c.Body != null)
+                c.Body.Position = Position;
             c.TpLink = TpLink;
 
             return c;
@@ -188,7 +189,7 @@ namespace TanksRebirth.GameContent
                 }
             }
 
-            AllBlocks[Id] = null;
+            Remove();
         }
 
         public void Render()

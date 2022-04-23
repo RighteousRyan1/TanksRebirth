@@ -165,10 +165,10 @@ namespace TanksRebirth.GameContent.GameMechanics
             }
         }
 
-        public static void HandleCollisionSimple_ForBlocks(Rectangle movingBox, Vector2 velocity, ref Vector2 position, out CollisionDirection direction, out Block.BlockType type, out bool cornerCollision, bool setpos = true, Func<Block, bool> exclude = null)
+        public static void HandleCollisionSimple_ForBlocks(Rectangle movingBox, Vector2 velocity, ref Vector2 position, out CollisionDirection direction, out Block block, out bool cornerCollision, bool setpos = true, Func<Block, bool> exclude = null)
         {
             cornerCollision = false;
-            type = (Block.BlockType)255;
+            block = null;
             direction = CollisionDirection.None;
             var offset = velocity;
 
@@ -200,7 +200,7 @@ namespace TanksRebirth.GameContent.GameMechanics
                         {
                             if (info.Value < collisionInfo.Value)
                                 collisionInfo = info;
-                            type = cube.Type;
+                            block = cube;
                         }
                     }
                     else
@@ -211,7 +211,7 @@ namespace TanksRebirth.GameContent.GameMechanics
                             {
                                 if (info.Value < collisionInfo.Value)
                                     collisionInfo = info;
-                                type = cube.Type;
+                                block = cube;
                             }
                         }
                     }

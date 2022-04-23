@@ -9,6 +9,7 @@ using TanksRebirth.GameContent.Systems.Coordinates;
 namespace TanksRebirth.GameContent.ModSupport
 {
     /// <summary>Represents a modded <see cref="GameContent.Tank"/>.</summary>
+    // will probably be deleted eventually, since inheritance from AITank can exist.
     public class ModTank
     {
         public virtual string TierName => string.Empty;

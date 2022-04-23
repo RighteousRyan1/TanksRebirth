@@ -92,6 +92,7 @@ namespace TanksRebirth.GameContent.UI
         public static UITextButton ThirdPerson;
 
         public static UITextButton AiCompanion;
+        public static UITextButton Shotguns;
         #endregion
 
         private static float _tnkSpeed = 2.4f;
@@ -453,7 +454,6 @@ namespace TanksRebirth.GameContent.UI
             };
             ThirdPerson.SetDimensions(450, 600, 300, 40);
 
-            // initialize AiCompanion element
             AiCompanion = new("AI Companion", font, Color.White)
             {
                 IsVisible = false,
@@ -462,6 +462,13 @@ namespace TanksRebirth.GameContent.UI
             };
             AiCompanion.SetDimensions(450, 650, 300, 40);
 
+            Shotguns = new("Shotguns", font, Color.White)
+            {
+                IsVisible = false,
+                Tooltip = "Every tank now fires a spread of bullets.",
+                OnLeftClick = (elem) => Difficulties.Types["Shotguns"] = !Difficulties.Types["Shotguns"]
+            };
+            Shotguns.SetDimensions(450, 700, 300, 40);
         }
         private static void SetCampaignDisplay()
         {
@@ -590,6 +597,7 @@ namespace TanksRebirth.GameContent.UI
             ThunderMode.IsVisible = visible;
             ThirdPerson.IsVisible = visible;
             AiCompanion.IsVisible = visible;
+            Shotguns.IsVisible = visible;
         }
         internal static void SetPrimaryMenuButtonsVisibility(bool visible)
         {
@@ -634,6 +642,7 @@ namespace TanksRebirth.GameContent.UI
             ThunderMode.Color = Difficulties.Types["ThunderMode"] ? Color.Lime : Color.Red;
             ThirdPerson.Color = Difficulties.Types["ThirdPerson"] ? Color.Lime : Color.Red;
             AiCompanion.Color = Difficulties.Types["AiCompanion"] ? Color.Lime : Color.Red;
+            Shotguns.Color = Difficulties.Types["Shotguns"] ? Color.Lime : Color.Red;
 
             Theme.Volume = TankGame.Settings.MusicVolume;
 
