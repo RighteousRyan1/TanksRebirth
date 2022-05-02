@@ -24,7 +24,7 @@ namespace TanksRebirth.GameContent
     {
         public static TankTeam MyTeam;
 
-        public static int MaxLives = 3;
+        public static int StartingLives = 3;
         public static int Lives = 0;
 
         public static int TanksKilledThisCampaign = 0;

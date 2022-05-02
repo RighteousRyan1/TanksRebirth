@@ -589,8 +589,8 @@ namespace TanksRebirth.GameContent
                     ShootStun = 5;
                     ShellCooldown = 60;
                     ShellLimit = 2;
-                    ShellSpeed = 6f;
-                    ShellType = ShellTier.RicochetRocket;
+                    ShellSpeed = 6f; // 6f
+                    ShellType = ShellTier.TrailedRocket;
                     RicochetCount = 2; // 2
 
                     Invisible = false;
@@ -906,7 +906,7 @@ namespace TanksRebirth.GameContent
                     ShootStun = 5;
                     ShellCooldown = 25;
                     ShellLimit = 5;
-                    ShellSpeed = 3f; // 3
+                    ShellSpeed = 3.5f; // 3.5
                     ShellType = ShellTier.Standard;
                     RicochetCount = 1; // 1
 
@@ -938,7 +938,7 @@ namespace TanksRebirth.GameContent
                     ShellCooldown = 60;
                     ShellLimit = 3;
                     ShellSpeed = 8f;
-                    ShellType = ShellTier.RicochetRocket;
+                    ShellType = ShellTier.TrailedRocket;
                     RicochetCount = 2;
 
                     Stationary = true;
@@ -1278,7 +1278,7 @@ namespace TanksRebirth.GameContent
                     ShellCooldown = 60;
                     ShellLimit = 2;
                     ShellSpeed = 8f;
-                    ShellType = ShellTier.RicochetRocket;
+                    ShellType = ShellTier.TrailedRocket;
                     RicochetCount = 3;
 
                     Invisible = false;
@@ -1522,35 +1522,36 @@ namespace TanksRebirth.GameContent
                     Armor = new(this, 3);
                     AiParams.MeanderAngle = MathHelper.ToRadians(30);
                     AiParams.MeanderFrequency = 10;
-                    AiParams.TurretMeanderFrequency = 60;
-                    AiParams.TurretSpeed = 0.045f;
-                    AiParams.AimOffset = 0.04f;
+                    AiParams.TurretMeanderFrequency = 15;
+                    AiParams.TurretSpeed = 0.05f;
+                    AiParams.AimOffset = 0.03f;
+                    AiParams.Inaccuracy = MathHelper.ToRadians(10);
 
                     AiParams.ProjectileWarinessRadius = 140;
                     AiParams.MineWarinessRadius = 140;
 
-                    TurningSpeed = 0.1f;
-                    MaximalTurn = 0.5f;
+                    TurningSpeed = 0.05f;
+                    MaximalTurn = MathHelper.ToRadians(20);
 
-                    ShootStun = 0;
-                    ShellCooldown = 15;
-                    ShellLimit = 8;
-                    ShellSpeed = 4f;
-                    ShellType = ShellTier.Standard;
-                    RicochetCount = 1;
+                    ShootStun = 25;
+                    ShellCooldown = 50;
+                    ShellLimit = 1;
+                    ShellSpeed = 6f;
+                    ShellType = ShellTier.TrailedRocket;
+                    RicochetCount = 0;
 
                     Invisible = false;
                     Stationary = false;
                     ShellHoming = new();
 
-                    TreadPitch = 0.08f;
-                    MaxSpeed = 1.3f;
+                    TreadPitch = -0.08f;
+                    MaxSpeed = 1.4f;
                     Acceleration = 0.3f;
                     Deceleration = 0.6f;
 
-                    MineCooldown = 940;
-                    MineLimit = 1;
-                    MineStun = 5;
+                    MineCooldown = 0;
+                    MineLimit = 0;
+                    MineStun = 0;
 
                     AiParams.MoveFromMineTime = 100;
                     AiParams.MinePlacementChance = 0.02f;
@@ -1738,7 +1739,7 @@ namespace TanksRebirth.GameContent
                     resetIterations();
                 }
 
-                var pathHitbox = new Rectangle((int)pathPos.X - 3, (int)pathPos.Y - 3, 6, 6);
+                var pathHitbox = new Rectangle((int)pathPos.X - 2, (int)pathPos.Y - 2, 4, 4);
 
                 // Why is velocity passed by reference here lol
                 Collision.HandleCollisionSimple_ForBlocks(pathHitbox, pathDir, ref dummyPos, out var dir, out var block, out bool corner, false, pattern);
@@ -2078,6 +2079,7 @@ namespace TanksRebirth.GameContent
                         #endregion
 
                         #region GeneralMovement
+
                         if (!isMineNear && !isBulletNear && !IsTurning && CurMineStun <= 0 && CurShootStun <= 0)
                         {
                             if (!pathBlocked)
@@ -2419,16 +2421,19 @@ namespace TanksRebirth.GameContent
             {
                 if (bullet is not null)
                 {
-                    if (Vector2.Distance(Position, bullet.Position2D) < distance)
+                    if (bullet.LifeTime > 30)
                     {
-                        var rotationTo = GameUtils.DirectionOf(Position, bullet.Position2D).ToRotation();
-
-                        if (Math.Abs(rotationTo - TurretRotation) < MathHelper.PiOver2 || Vector2.Distance(Position, bullet.Position2D) < distance / 2)
+                        if (Vector2.Distance(Position, bullet.Position2D) < distance)
                         {
-                            shell = bullet;
+                            var rotationTo = GameUtils.DirectionOf(Position, bullet.Position2D).ToRotation();
+
+                            if (Math.Abs(rotationTo - TurretRotation) < MathHelper.PiOver2 /*|| Vector2.Distance(Position, bullet.Position2D) < distance / 2*/)
+                            {
+                                shell = bullet;
+                                return true;
+                            }
                             return true;
                         }
-                        return true;
                     }
                 }
             }

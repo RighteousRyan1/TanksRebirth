@@ -114,7 +114,7 @@ namespace TanksRebirth.GameContent
                 _loopingSound = SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_rocket_loop"), SoundContext.Effect, 0.3f);
                 _loopingSound.IsLooped = true;
             }
-            if (Tier == ShellTier.RicochetRocket)
+            if (Tier == ShellTier.TrailedRocket)
             {
                 // MakeTrail();
                 EmitsSmoke = false;
@@ -131,7 +131,7 @@ namespace TanksRebirth.GameContent
                     ShellTier.Player => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_1"), SoundContext.Effect, 0.3f),
                     ShellTier.Standard => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_2"), SoundContext.Effect, 0.3f),
                     ShellTier.Rocket => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_rocket"), SoundContext.Effect, 0.3f),
-                    ShellTier.RicochetRocket => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_ricochet_rocket"), SoundContext.Effect, 0.3f),
+                    ShellTier.TrailedRocket => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_ricochet_rocket"), SoundContext.Effect, 0.3f),
                     ShellTier.Supressed => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_silencer"), SoundContext.Effect, 0.3f),
                     ShellTier.Explosive => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_2"), SoundContext.Effect, 0.3f),
                     _ => throw new NotImplementedException()
@@ -155,7 +155,7 @@ namespace TanksRebirth.GameContent
             Projection = TankGame.GameProjection;
             View = TankGame.GameView;
 
-            Hitbox = new((int)(Position2D.X - 3), (int)(Position2D.Y - 3), 5, 5);
+            Hitbox = new((int)(Position2D.X - 2), (int)(Position2D.Y - 2), 4, 4);
 
             if (!GameHandler.InMission)
                 return;
@@ -225,7 +225,7 @@ namespace TanksRebirth.GameContent
             }
             CheckCollisions();
 
-            GameHandler.OnMissionEnd += (delay, fatal) =>
+            GameHandler.OnMissionEnd += (delay, cxt, extralife) =>
             {
                 // _flame?.Destroy();
                 _loopingSound?.Stop();
@@ -295,12 +295,13 @@ namespace TanksRebirth.GameContent
                 var p = ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
 
                 p.Roll = -MathHelper.PiOver2;
-                p.Scale = new(/*0.4f*/Velocity.Length() / 10 - 0.2f, 0.25f, 0.4f); // x is outward from bullet
+                p.Scale = new(0.4f, 0.25f, 0.4f); // x is outward from bullet
                                                    // p.Scale = new(1f, 1f, 1f);
                 p.color = Color.Gray;
                 p.isAddative = false;
                 // GameHandler.GameRand.NextFloat(-2f, 2f)
                 //p.TextureRotation = -MathHelper.PiOver2;
+                p.TextureScale = Velocity.Length() / 10 - 0.2f;
                 p.TextureOrigin = new(p.Texture.Size().X / 2, 0);
 
                 p.Pitch = -Rotation - MathHelper.PiOver2;
@@ -322,6 +323,7 @@ namespace TanksRebirth.GameContent
                 p2.isAddative = false;
                 // GameHandler.GameRand.NextFloat(-2f, 2f)
                 //p.TextureRotation = -MathHelper.PiOver2;
+                p.TextureScale = Velocity.Length() / 10 - 0.2f;
                 p2.TextureOrigin = new(p.Texture.Size().X / 2, 0);
 
                 p2.Pitch = -Rotation + MathHelper.PiOver2;
@@ -473,7 +475,7 @@ namespace TanksRebirth.GameContent
 
             if (Owner is not null)
             {
-                if (Owner.ShellType == ShellTier.RicochetRocket)
+                if (Owner.ShellType == ShellTier.TrailedRocket)
                 {
                     s.Pitch = GameHandler.GameRand.NextFloat(0.15f, 0.25f);
                     var s2 = SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/ricochet_zip"), SoundContext.Effect, 0.05f);
@@ -535,9 +537,9 @@ namespace TanksRebirth.GameContent
             TankGame.OnFocusLost -= TankGame_OnFocusLost;
             TankGame.OnFocusRegained -= TankGame_OnFocusRegained;
             _loopingSound?.Stop();
-            _shootSound?.Stop();
+            // _shootSound?.Stop();
             _loopingSound = null;
-            _shootSound = null;
+            // _shootSound = null;
             AllShells[Id] = null;
         }
         /// <summary>

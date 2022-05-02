@@ -27,6 +27,7 @@ using System.Threading;
 using System.Diagnostics;
 using Microsoft.Xna.Framework.Media;
 using TanksRebirth.Internals.Common.Framework;
+using NativeFileDialogSharp;
 
 namespace TanksRebirth.GameContent
 {
@@ -54,7 +55,7 @@ namespace TanksRebirth.GameContent
 
         public static event MissionStartEvent OnMissionStart;
 
-        public delegate void MissionEndEvent(int delay, bool resultDeath);
+        public delegate void MissionEndEvent(int delay, MissionEndContext context, bool result1up);
 
         public static event MissionEndEvent OnMissionEnd;
 
@@ -70,13 +71,30 @@ namespace TanksRebirth.GameContent
             OnMissionEnd += DoEndMissionWorkload;
         }
 
-        public static void DoEndMissionWorkload(int delay, bool resultDeath) // bool major = (if true, play M100 fanfare, else M20)
+        public static void DoEndMissionWorkload(int delay, MissionEndContext context, bool result1up) // bool major = (if true, play M100 fanfare, else M20)
         {
             IntermissionSystem.SetTime(delay);
-
+            
             TankMusicSystem.StopAll();
 
-            if (resultDeath)
+            if (context == MissionEndContext.CampaignCompleteMajor)
+            {
+                var victory = GameResources.GetGameResource<SoundEffect>($"Assets/fanfares/mission_complete_M100");
+                SoundPlayer.PlaySoundInstance(victory, SoundContext.Effect, 0.5f);
+
+            }
+            else if (context == MissionEndContext.CampaignCompleteMinor)
+            {
+                var victory = GameResources.GetGameResource<SoundEffect>($"Assets/fanfares/mission_complete_M20");
+                SoundPlayer.PlaySoundInstance(victory, SoundContext.Effect, 0.5f);
+            }
+            if (result1up && context == MissionEndContext.Win)
+            {
+                PlayerTank.Lives++;
+                var lifeget = GameResources.GetGameResource<SoundEffect>($"Assets/fanfares/life_get");
+                SoundPlayer.PlaySoundInstance(lifeget, SoundContext.Effect, 0.5f);
+            }
+            if (context == MissionEndContext.Lose)
             {
                 PlayerTank.Lives--;
 
@@ -101,7 +119,7 @@ namespace TanksRebirth.GameContent
                     SoundPlayer.PlaySoundInstance(deathSound, SoundContext.Effect, 0.3f);
                 }
             }
-            else
+            else if (context == MissionEndContext.Win)
             {
                 LoadedCampaign.LoadNextMission();
                 var victorySound = GameResources.GetGameResource<SoundEffect>($"Assets/fanfares/mission_complete");
@@ -116,7 +134,7 @@ namespace TanksRebirth.GameContent
         internal static void UpdateAll()
         {
             if (Difficulties.Types["InfiniteLives"])
-                PlayerTank.Lives = PlayerTank.MaxLives;
+                PlayerTank.Lives = PlayerTank.StartingLives;
             foreach (var tank in AllPlayerTanks)
                 tank?.Update();
 
@@ -330,38 +348,57 @@ namespace TanksRebirth.GameContent
                         OnMissionEnd?.Invoke(600, true);
                 }*/
                 var activeTeams = Tank.GetActiveTeams();
+
+                bool isExtraLifeMission = LoadedCampaign.Properties.ExtraLivesMissions.Contains(LoadedCampaign.CurrentMissionId + 1);
+
+                int restartTime = 600;
+                if (isExtraLifeMission)
+                    restartTime += 200;
+
                 if (activeTeams.Contains(TankTeam.NoTeam) && AllTanks.Count(tnk => tnk != null && !tnk.Dead) <= 1)
                 {
                     InMission = false;
                     // if a 1-up mission, extend by X amount of time (TBD?)
                     if (!InMission && _wasInMission)
-                        OnMissionEnd?.Invoke(600, AllPlayerTanks.Count(tnk => tnk != null && !tnk.Dead) <= 0);
+                    {
+                        MissionEndContext cxt = AllPlayerTanks.Count(tnk => tnk != null && !tnk.Dead) <= 0 ? MissionEndContext.Lose : MissionEndContext.Win;
+                        OnMissionEnd?.Invoke(restartTime, cxt, isExtraLifeMission);
+                    }
                 }
-                else if (!activeTeams.Contains(TankTeam.NoTeam) && activeTeams.Count <= 1)
+                else if (!activeTeams.Contains(TankTeam.NoTeam) && activeTeams.Count <= 1) // check if it's not only FFA, and if teams left doesnt contain ffa.
                 {
                     InMission = false;
                     // if a 1-up mission, extend by X amount of time (TBD?)
                     if (!InMission && _wasInMission)
-                        OnMissionEnd?.Invoke(600, !activeTeams.Contains(PlayerTank.MyTeam));
+                    {
+                        MissionEndContext cxt = !activeTeams.Contains(PlayerTank.MyTeam) ? MissionEndContext.Lose : MissionEndContext.Win;
+                        OnMissionEnd?.Invoke(restartTime, cxt, isExtraLifeMission);
+                    }
                 }
             }
             else
             {
                 var activeTeams = Tank.GetActiveTeams();
+
+                bool isExtraLifeMission = LoadedCampaign.Properties.ExtraLivesMissions.Contains(LoadedCampaign.CurrentMissionId);
+
+                int restartTime = 600;
+                if (isExtraLifeMission)
+                    restartTime += 200;
                 // if a player was not initially spawned in the mission, check if a team is still alive and end the mission
                 if (activeTeams.Contains(TankTeam.NoTeam) && AllTanks.Count(tnk => tnk != null && !tnk.Dead) <= 1)
                 {
                     InMission = false;
                     // if a 1-up mission, extend by X amount of time (TBD?)
                     if (!InMission && _wasInMission)
-                        OnMissionEnd?.Invoke(600, false);
+                        OnMissionEnd?.Invoke(restartTime, MissionEndContext.Win, isExtraLifeMission);
                 }
                 else if (!activeTeams.Contains(TankTeam.NoTeam) && activeTeams.Count <= 1)
                 {
                     InMission = false;
                     // if a 1-up mission, extend by X amount of time (TBD?)
                     if (!InMission && _wasInMission)
-                        OnMissionEnd?.Invoke(600, false);
+                        OnMissionEnd?.Invoke(restartTime, MissionEndContext.Win, isExtraLifeMission);
                 }
             }
             if (IntermissionSystem.CurrentWaitTime > 0)
@@ -780,6 +817,43 @@ namespace TanksRebirth.GameContent
             LoadMission = new("Load", TankGame.TextFont, Color.White, 0.5f);
             LoadMission.OnLeftClick = (l) =>
             {
+                if (TankGame.IsWindows && MissionName.IsEmpty())
+                {
+                    /*using OpenFileDialog fdlg = new();
+                    fdlg.Title = "Load a supported mission file...";
+                    fdlg.InitialDirectory = TankGame.SaveDirectory;
+                    fdlg.Filter = "Tanks Rebirth Levels (*.mission)|*.mission";
+                    fdlg.FilterIndex = 1;
+
+                    if (fdlg.ShowDialog() == true)
+                    {
+                        try {
+                            Mission.Load(fdlg.FileName, null);
+                            ChatSystem.SendMessage($"Loaded mission '{Path.GetFileNameWithoutExtension(fdlg.FileName)}'.", Color.White);
+                        }
+                        catch {
+                            ChatSystem.SendMessage("Failed to load mission.", Color.Red);
+                        }
+                    }*/
+                    
+                    var res = Dialog.FileOpen("mission", TankGame.SaveDirectory);
+                    if (res.Path != null && res.IsOk)
+                    {
+                        try
+                        {
+                            LoadedCampaign.LoadMission(Mission.Load(res.Path, null));
+                            LoadedCampaign.SetupLoadedMission(true);
+                            
+                            ChatSystem.SendMessage($"Loaded mission '{Path.GetFileNameWithoutExtension(res.Path)}'.", Color.White);
+                        }
+                        catch
+                        {
+                            ChatSystem.SendMessage("Failed to load mission.", Color.Red);
+                        }
+                    }
+                    return;
+                }
+
                 LoadedCampaign.LoadMission(Mission.Load(MissionName.GetRealText(), CampaignName.IsEmpty() ? null : CampaignName.GetRealText()));
                 LoadedCampaign.SetupLoadedMission(true);
             };

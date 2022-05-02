@@ -18,7 +18,7 @@ namespace TanksRebirth.Graphics
 
             public bool IsNight;
 
-            public float sunPower;
+            public float SunPower;
             public LightProfile(float brightness, Color color)
             {
                 this.Brightness = brightness;
@@ -26,7 +26,7 @@ namespace TanksRebirth.Graphics
 
                 IsNight = true;
 
-                sunPower = 0f;
+                SunPower = 0f;
             }
 
             public void Apply(bool applySunPower)
@@ -35,7 +35,7 @@ namespace TanksRebirth.Graphics
                 ColorBrightness = Brightness;
 
                 if (applySunPower)
-                    LightPower = sunPower;
+                    LightPower = SunPower;
 
                 Lighting.IsNight = IsNight;
 
@@ -51,13 +51,13 @@ namespace TanksRebirth.Graphics
         public static float LightPower = 0f;
         public static bool IsNight { get; set; }
 
-        public static LightProfile Dawn => new(0.5f, new Color(0, 25, 0)) { IsNight = true, sunPower = 0.6f };
+        public static LightProfile Dawn => new(0.5f, new Color(0, 25, 0)) { IsNight = true, SunPower = 0.6f };
 
-        public static LightProfile Noon => new(0.65f, new Color(200, 200, 200)) { IsNight = false, sunPower = 1f };
+        public static LightProfile Noon => new(0.65f, new Color(200, 200, 200)) { IsNight = false, SunPower = 1f };
 
-        public static LightProfile Dusk => new(0.4f, new Color(255, 165, 0)) { IsNight = true, sunPower = 0.7f };
+        public static LightProfile Dusk => new(0.4f, new Color(255, 165, 0)) { IsNight = true, SunPower = 0.7f };
 
-        public static LightProfile Midnight => new(0.15f, new Color(0, 0, 0)) { IsNight = true, sunPower = 0.5f };
+        public static LightProfile Midnight => new(0.15f, new Color(0, 0, 0)) { IsNight = true, SunPower = 0.5f };
 
         public static Color DefaultLightingColor => new Vector3(0.05333332f, 0.09882354f, 0.1819608f).ToColor();
 

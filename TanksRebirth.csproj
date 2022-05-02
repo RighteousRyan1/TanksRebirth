@@ -9,7 +9,12 @@
   <PropertyGroup>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Icon.ico</ApplicationIcon>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
+  <ItemGroup>
+    <Content Remove="C:\Users\ryanr\.nuget\packages\nativefiledialogsharp\0.5.0\contentFiles\any\netstandard2.0\nfd.dll" />
+    <Content Remove="C:\Users\ryanr\.nuget\packages\nativefiledialogsharp\0.5.0\contentFiles\any\netstandard2.0\nfd_x86.dll" />
+  </ItemGroup>
   <ItemGroup>
     <None Remove="Icon.ico" />
     <None Remove="Icon.bmp" />
@@ -30,6 +35,7 @@
     <PackageReference Include="LiteNetLib" Version="0.9.5.2" />
     <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.0.1641" />
     <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.0.1641" />
+    <PackageReference Include="NativeFileDialogSharp" Version="0.5.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="StbVorbisSharp" Version="1.16.2" />
     <PackageReference Include="System.Management" Version="6.0.0" />

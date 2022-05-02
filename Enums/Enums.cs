@@ -57,7 +57,7 @@
         Player,
         Standard,
         Rocket,
-        RicochetRocket,
+        TrailedRocket,
         Supressed,
         Explosive
     }
@@ -81,5 +81,13 @@
         Orange = 6,
         Cyan = 7,
         Magenta = 8
+    }
+
+    public enum MissionEndContext
+    {
+        Lose,
+        Win,
+        CampaignCompleteMajor,
+        CampaignCompleteMinor
     }
 }

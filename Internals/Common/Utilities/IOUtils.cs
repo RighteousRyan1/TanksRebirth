@@ -75,7 +75,7 @@ namespace TanksRebirth.Internals.Common.Utilities
 
         public static void SetAssociation(string Extension, string KeyName, string OpenWith, string FileDescription)
         {
-            if (!TankGame.IsWin)
+            if (!TankGame.IsWindows)
                 return;
             // The stuff that was above here is basically the same
 

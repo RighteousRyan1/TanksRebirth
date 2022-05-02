@@ -159,7 +159,7 @@ namespace TanksRebirth
         internal static Internals.Common.GameUI.UIPanel cunoSucksElement;
 
         public static OSPlatform OperatingSystem;
-        public static bool IsWin;
+        public static bool IsWindows;
         public static bool IsMac;
         public static bool IsLinux;
 
@@ -175,7 +175,7 @@ namespace TanksRebirth
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
                     OperatingSystem = OSPlatform.Windows;
-                    IsWin = true;
+                    IsWindows = true;
                 }
                 else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                 {
@@ -375,7 +375,7 @@ namespace TanksRebirth
 
         protected override void Update(GameTime gameTime)
         {
-            try
+            //try
             {
                 MouseRenderer.ShouldRender = TankGame.FirstPerson ? (GameUI.Paused || MainMenu.Active) : true;
                 if (UIElement.delay > 0)
@@ -551,10 +551,10 @@ namespace TanksRebirth
 
                 _wasActive = IsActive;
             }
-            catch (Exception e)
+            //catch (Exception e)
             {
-                GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
-                throw;
+                //GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
+                //throw;
             }
         }
 

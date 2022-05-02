@@ -662,7 +662,7 @@ namespace TanksRebirth.GameContent.UI
 
         public static void Leave()
         {
-            PlayerTank.Lives = PlayerTank.MaxLives;
+            PlayerTank.Lives = PlayerTank.StartingLives;
             GameHandler.StartTnkScene();
             SetMPButtonsVisibility(false);
             SetPlayButtonsVisibility(false);
@@ -859,7 +859,7 @@ namespace TanksRebirth.GameContent.UI
                         $"\nTry downloading the Vanilla campaign by pressing 'Enter' or making your own." +
                         $"\nCampaign folders belong in '{Path.Combine(TankGame.SaveDirectory, "Campaigns")}' (press TAB to open on Windows)", new(12, 12), Color.White, new(0.75f), 0f, Vector2.Zero);
 
-                    if (TankGame.IsWin)
+                    if (TankGame.IsWindows)
                     {
                         if (Input.KeyJustPressed(Keys.Tab))
                         {
