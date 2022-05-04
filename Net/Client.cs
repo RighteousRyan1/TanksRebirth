@@ -16,7 +16,7 @@ namespace TanksRebirth.Net
         public static NetManager clientNetManager;
         public static EventBasedNetListener clientNetListener;
         public static NetPeer client;
-        public static int PingTime = 60;
+        public static int PingTime = 69;
         public static bool lobbyDataReceived;
 
         public int Id;
