@@ -14,7 +14,10 @@ namespace TanksRebirth.GameContent.Systems
     public record struct Mission
     {
         /// <summary>The name of this <see cref="Mission"/>.</summary>
-        public string Name { get; set; }
+        public string Name { get; set; } = "No Name";
+
+        /// <summary>The popup text that will display at the beginning of this <see cref="Mission"/>.</summary>
+        public string Note { get; set; } = string.Empty;
         /// <summary>The <see cref="Tank"/>s that will be spawned upon mission load.</summary>
         public TankTemplate[] Tanks { get; }
 
@@ -28,8 +31,6 @@ namespace TanksRebirth.GameContent.Systems
         /// <param name="obstacles"></param>
         public Mission(TankTemplate[] tanks, BlockTemplate[] obstacles)
         {
-            Name = "N/A";
-
             sbyte cBlue = 0;
             sbyte cRed = 0;
 
@@ -90,6 +91,9 @@ namespace TanksRebirth.GameContent.Systems
              *  - X (float)
              *  - Y (float)
              *  - TpLink (sbyte) (VERSION 2 or GREATER)
+             *  
+             *  8) Extras
+             *   - Note (string) (VERSION 3 OR GREATER) (NOT IMPLEMENTED YET)
              */
 
             writer.Write(TankGame.LevelFileHeader);
@@ -194,8 +198,8 @@ namespace TanksRebirth.GameContent.Systems
 
             var version = reader.ReadInt32();
 
-            if (version != TankGame.LevelEditorVersion)
-                ChatSystem.SendMessage($"Warning: This level was saved with a different version of the level editor. It may not work correctly.", Color.Yellow);
+           // if (version != TankGame.LevelEditorVersion)
+                //ChatSystem.SendMessage($"Warning: This level was saved with a different version of the level editor. It may not work correctly.", Color.Yellow);
 
             Mission mission = new();
 

@@ -62,7 +62,7 @@ namespace TanksRebirth.GameContent
         ByExplosion,
         Other
     }
-    public abstract class Tank
+    public abstract class Tank : ITankProperties
     {
         public static Dictionary<string, Texture2D> Assets = new();
 
@@ -528,7 +528,7 @@ namespace TanksRebirth.GameContent
                     shell.Velocity = new Vector3(-new2d.X, 0, new2d.Y) * ShellSpeed;
 
                     shell.Owner = this;
-                    shell.ricochets = RicochetCount;
+                    shell.RicochetsLeft = RicochetCount;
 
                     #region Particles
                     var hit = ParticleSystem.MakeParticle(shell.Position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
@@ -598,7 +598,7 @@ namespace TanksRebirth.GameContent
                     shell.Velocity = new Vector3(-new2d.X, 0, new2d.Y).FlattenZ().RotatedByRadians(newAngle).ExpandZ() * ShellSpeed;
 
                     shell.Owner = this;
-                    shell.ricochets = RicochetCount;
+                    shell.RicochetsLeft = RicochetCount;
                 }
             }
 
@@ -665,6 +665,56 @@ namespace TanksRebirth.GameContent
                 CollisionsWorld.Remove(Body);
             GameHandler.OnMissionStart -= OnMissionStart;
         }
+    }
+
+    public interface ITankProperties
+    {
+        /// <summary>Whether or not the tank has artillery-like function during gameplay.</summary>
+        bool Stationary { get; set; }
+        /// <summary>Whether or not the tank has been destroyed or not.</summary>
+        bool Dead { get; set; }
+        /// <summary>Whether or not the tank should become invisible at mission start.</summary>
+        bool Invisible { get; set; }
+        /// <summary>How fast the tank should accelerate towards its <see cref="MaxSpeed"/>.</summary>
+        float Acceleration { get; set; }
+        /// <summary>How fast the tank should decelerate when not moving.</summary>
+        float Deceleration { get; set; }
+        /// <summary>The current speed of this tank.</summary>
+        float Speed { get; set; }
+        /// <summary>The maximum speed this tank can achieve.</summary>
+        float MaxSpeed { get; set; }
+        /// <summary>How fast the bullets this <see cref="Tank"/> shoot are.</summary>
+        float ShellSpeed { get; set; }
+        /// <summary>The rotation of this <see cref="Tank"/>'s barrel. Generally should not be modified in a player context.</summary>
+        float TurretRotation { get; set; }
+        /// <summary>The rotation of this <see cref="Tank"/>.</summary>
+        float TankRotation { get; set; }
+        /// <summary>The pitch of the footprint placement sounds.</summary>
+        float TreadPitch { get; set; }
+        /// <summary>The pitch of the shoot sound.</summary>
+        float ShootPitch { get; set; }
+        /// <summary>The type of bullet this <see cref="Tank"/> shoots.</summary>
+        ShellTier ShellType { get; set; }
+        /// <summary>The maximum amount of mines this <see cref="Tank"/> can place.</summary>
+        int MineLimit { get; set; }
+        /// <summary>How long this <see cref="Tank"/> will be immobile upon firing a bullet.</summary>
+        int ShootStun { get; set; }
+        /// <summary>How long this <see cref="Tank"/> will be immobile upon laying a mine.</summary>
+        int MineStun { get; set; }
+        /// <summary>How long this <see cref="Tank"/> has to wait until it can fire another bullet..</summary>
+        int ShellCooldown { get; set; }
+        /// <summary>How long until this <see cref="Tank"/> can lay another mine</summary>
+        int MineCooldown { get; set; }
+        /// <summary>How many times the <see cref="Shell"/> this <see cref="Tank"/> shoots ricochets.</summary>
+        int RicochetCount { get; set; }
+        /// <summary>The amount of <see cref="Shell"/>s this <see cref="Tank"/> can own on-screen at any given time.</summary>
+        int ShellLimit { get; set; }
+        /// <summary>How fast this <see cref="Tank"/> turns.</summary>
+        public float TurningSpeed { get; set; }
+        /// <summary>The maximum angle this <see cref="Tank"/> can turn (in radians) before it has to start pivoting.</summary>
+        float MaximalTurn { get; set; }
+        /// <summary>Whether or not this <see cref="Tank"/> can lay a <see cref="TankFootprint"/>.</summary>
+        public bool CanLayTread { get; set; }
     }
     public class TankFootprint
     {

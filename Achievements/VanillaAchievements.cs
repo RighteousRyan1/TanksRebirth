@@ -15,17 +15,17 @@ namespace TanksRebirth.Achievements
             new("There are no equals", "Destroy 100,000 tanks total!"),
 
             new("Child Abuse", "Destroy 100 Brown Tanks."),
-            new("To Ashes", "Destroy 100 Ash tanks."),
+            new("Catch them all", "Destroy 100 Ash tanks."),
             new("Enlisted", "Destroy 100 Marine tanks."),
-            new("Mello...", "Destroy 100 Yellow Tanks."),
+            new("Those weren't submarines...", "Destroy 100 Yellow Tanks."),
             new("Bratatatat", "Destroy 100 Pink Tanks."),
             new("Outsmarting the Calculator", "Destroy 100 Green Tanks."),
             new("Bratatatat 2", "Destroy 100 Purple Tanks."),
             new("Now you see me...", "Destroy 100 White Tanks."),
             new("Conquering the World", "Destroy 100 Black Tanks."),
 
-            new("You're mine", "Kill 50 Tanks with mines."),
-            new("I have a brain", "Destroy 100 tanks with bullets that have ricocheted at least once."),
+            new("Will you be mine?", "Kill 50 Tanks with mines."),
+            new("Simple Geometry", "Destroy 100 tanks with bullets that have ricocheted at least once."),
 
             new("Playing with fire", "Encounter a Marine tank, a tank with fast, flame-trailed bullets."),
             new("Double Whammy", "Encounter a Green tank, a tank that can precisely calculate double bounces."),
@@ -35,7 +35,9 @@ namespace TanksRebirth.Achievements
             new("Doomed to failure", "Destroy yourself with your own mine."),
             new("Just an accident", "Destroy yourself with your own bullet."),
             new("Beyond Saving", "Destroy yourself with your own bullet... 10 times."),
-            new("Soldier in disguise", "Destroy a tank with a bullet that traveled through a teleporter.")
+            new("Soldier in disguise", "Destroy a tank with a bullet that traveled through a teleporter."),
+
+            new("See through the dragon's eyes", "Complete a campaign in third-person mode.")
 
             // get some new ideas later normie
         };
@@ -43,7 +45,7 @@ namespace TanksRebirth.Achievements
         public void InitializeToRepository()
         {
             // If an achievement from _achievemnts already exists in the repository, don't add it again.
-            if (AchievementRepository.GetAchievements().Intersect(_achievements).Count() > 0)
+            if (AchievementRepository.GetAchievements().Intersect(_achievements).Any())
                 return;
             
             foreach (var ach in _achievements)

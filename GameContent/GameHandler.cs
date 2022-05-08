@@ -162,7 +162,7 @@ namespace TanksRebirth.GameContent
                     if (TankMusicSystem.Songs is not null)
                         foreach (var song in TankMusicSystem.Songs)
                             song.Volume = 0;
-            foreach (var expl in Explosion.explosions)
+            foreach (var expl in Explosion.Explosions)
                 expl?.Update();
 
             if (Difficulties.Types["ThunderMode"])
@@ -451,7 +451,7 @@ namespace TanksRebirth.GameContent
                 bullet?.Render();
 
             TankGame.Instance.GraphicsDevice.BlendState = BlendState.Additive;
-            foreach (var expl in Explosion.explosions)
+            foreach (var expl in Explosion.Explosions)
                 expl?.Render();
             TankGame.Instance.GraphicsDevice.BlendState = BlendState.NonPremultiplied;
 
@@ -581,7 +581,7 @@ namespace TanksRebirth.GameContent
         {
              new(1000, 50f, (tnk) => { tnk.MaxSpeed *= 2; }, (tnk) => { tnk.MaxSpeed /= 2; }) { Name = "Speed" },
              new(1000, 50f, (tnk) => { tnk.Invisible = !tnk.Invisible; }, (tnk) => tnk.Invisible = !tnk.Invisible) { Name = "InvisSwap" },
-             new(1000, 50f, (tnk) => { tnk.ShellHoming.radius = 150f; tnk.ShellHoming.speed = tnk.ShellSpeed; tnk.ShellHoming.power = 1f; }, (tnk) => tnk.ShellHoming = new()) { Name = "Homing" },
+             new(1000, 50f, (tnk) => { tnk.ShellHoming.Radius = 150f; tnk.ShellHoming.Speed = tnk.ShellSpeed; tnk.ShellHoming.Power = 1f; }, (tnk) => tnk.ShellHoming = new()) { Name = "Homing" },
              new(1000, 50f, (tnk) => { if (tnk.MaxSpeed > 0) tnk.Stationary = true; }, (tnk) => { if (tnk.MaxSpeed > 0) tnk.Stationary = !tnk.Stationary; }) { Name = "Stationary" }
         };
 
@@ -683,7 +683,7 @@ namespace TanksRebirth.GameContent
             foreach (var bullet in Shell.AllShells)
                 bullet?.Remove();
 
-            foreach (var expl in Explosion.explosions)
+            foreach (var expl in Explosion.Explosions)
                 expl?.Remove();
 
             foreach (var crate in Crate.crates)

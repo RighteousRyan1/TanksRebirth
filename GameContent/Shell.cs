@@ -18,14 +18,14 @@ namespace TanksRebirth.GameContent
         /// <summary>A structure that allows you to give a <see cref="Shell"/> homing properties.</summary>
         public struct HomingProperties
         {
-            public float power;
-            public float radius;
-            public float speed;
-            public int cooldown;
+            public float Power;
+            public float Radius;
+            public float Speed;
+            public int Cooldown;
 
-            public Vector2 target;
+            public Vector2 Target;
 
-            public bool isHeatSeeking;
+            public bool HeatSeeks;
         }
 
         /// <summary>The maximum shells allowed at any given time.</summary>
@@ -38,7 +38,7 @@ namespace TanksRebirth.GameContent
         public Vector2 Position2D => Position.FlattenZ();
         public Vector2 Velocity2D => Velocity.FlattenZ();
         /// <summary>How many times this <see cref="Shell"/> can hit walls.</summary>
-        public int ricochets;
+        public int RicochetsLeft;
         public float Rotation;
 
         /// <summary>The homing properties of this <see cref="Shell"/>.</summary>
@@ -62,9 +62,9 @@ namespace TanksRebirth.GameContent
         public bool LeavesTrail { get; set; }
         public bool EmitsSmoke { get; set; } = true;
 
-        public Texture2D _shellTexture;
+        private Texture2D _shellTexture;
 
-        private int Id;
+        private int _id;
 
         /// <summary>How long this shell has existed in the world.</summary>
         public int LifeTime;
@@ -89,7 +89,7 @@ namespace TanksRebirth.GameContent
         public Shell(Vector3 position, Vector3 velocity, ShellTier tier, Tank owner, int ricochets = 0, HomingProperties homing = default, bool useDarkTexture = false, bool playSpawnSound = true)
         {
             Tier = tier;
-            this.ricochets = ricochets;
+            this.RicochetsLeft = ricochets;
             Position = position;
             Model = GameResources.GetGameResource<Model>("Assets/bullet");
 
@@ -141,7 +141,7 @@ namespace TanksRebirth.GameContent
 
             int index = Array.IndexOf(AllShells, AllShells.First(shell => shell is null));
 
-            Id = index;
+            _id = index;
 
             AllShells[index] = this;
         }
@@ -187,35 +187,35 @@ namespace TanksRebirth.GameContent
             }
             LifeTime++;
 
-            if (LifeTime > HomeProperties.cooldown)
+            if (LifeTime > HomeProperties.Cooldown)
             {
                 if (Owner != null)
                 {
                     foreach (var target in GameHandler.AllTanks)
                     {
-                        if (target is not null && target != Owner && Vector2.Distance(Position2D, target.Position) <= HomeProperties.radius)
+                        if (target is not null && target != Owner && Vector2.Distance(Position2D, target.Position) <= HomeProperties.Radius)
                         {
                             if (target.Team != Owner.Team || target.Team == TankTeam.NoTeam)
                             {
-                                if (HomeProperties.isHeatSeeking && target.Velocity != Vector2.Zero)
-                                    HomeProperties.target = target.Position;
-                                if (!HomeProperties.isHeatSeeking)
-                                    HomeProperties.target = target.Position;
+                                if (HomeProperties.HeatSeeks && target.Velocity != Vector2.Zero)
+                                    HomeProperties.Target = target.Position;
+                                if (!HomeProperties.HeatSeeks)
+                                    HomeProperties.Target = target.Position;
                             }
                         }
                     }
-                    if (HomeProperties.target != Vector2.Zero)
+                    if (HomeProperties.Target != Vector2.Zero)
                     {
-                        bool hits = Collision.DoRaycast(Position2D, HomeProperties.target, (int)HomeProperties.radius * 2);
+                        bool hits = Collision.DoRaycast(Position2D, HomeProperties.Target, (int)HomeProperties.Radius * 2);
 
                         if (hits)
                         {
-                            float dist = Vector2.Distance(Position2D, HomeProperties.target);
+                            float dist = Vector2.Distance(Position2D, HomeProperties.Target);
 
-                            Velocity.X += GameUtils.DirectionOf(Position2D, HomeProperties.target).X * HomeProperties.power / dist;
-                            Velocity.Z += GameUtils.DirectionOf(Position2D, HomeProperties.target).Y * HomeProperties.power / dist;
+                            Velocity.X += GameUtils.DirectionOf(Position2D, HomeProperties.Target).X * HomeProperties.Power / dist;
+                            Velocity.Z += GameUtils.DirectionOf(Position2D, HomeProperties.Target).Y * HomeProperties.Power / dist;
 
-                            Vector2 trueSpeed = Vector2.Normalize(Velocity2D) * HomeProperties.speed;
+                            Vector2 trueSpeed = Vector2.Normalize(Velocity2D) * HomeProperties.Speed;
 
 
                             Velocity = trueSpeed.ExpandZ();
@@ -453,7 +453,7 @@ namespace TanksRebirth.GameContent
         /// <param name="horizontal">Whether or not the ricochet is done off of a horizontal axis.</param>
         public void Ricochet(bool horizontal)
         {
-            if (ricochets <= 0)
+            if (RicochetsLeft <= 0)
             {
                 Destroy();
                 return;
@@ -488,7 +488,7 @@ namespace TanksRebirth.GameContent
             }
             ParticleSystem.MakeShineSpot(Position, Color.Orange, 0.8f);
 
-            ricochets--;
+            RicochetsLeft--;
         }
 
         public void CheckCollisions()
@@ -540,7 +540,7 @@ namespace TanksRebirth.GameContent
             // _shootSound?.Stop();
             _loopingSound = null;
             // _shootSound = null;
-            AllShells[Id] = null;
+            AllShells[_id] = null;
         }
         /// <summary>
         /// Destroys this <see cref="Shell"/>.
@@ -573,8 +573,9 @@ namespace TanksRebirth.GameContent
 
         internal void Render()
         {
-            if (DebugUtils.DebugLevel == 1 && HomeProperties.speed > 0)
-                Collision.DoRaycast(Position2D, HomeProperties.target, (int)HomeProperties.radius, true);
+            if (DebugUtils.DebugLevel == 1 && HomeProperties.Speed > 0)
+                Collision.DoRaycast(Position2D, HomeProperties.Target, (int)HomeProperties.Radius, true);
+            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"RicochetsLeft: {RicochetsLeft}\nTier: {Tier}", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 20), 1, centered: true);
             foreach (ModelMesh mesh in Model.Meshes)
             {
                 foreach (BasicEffect effect in mesh.Effects)

@@ -83,7 +83,7 @@ namespace TanksRebirth.GameContent
             /// <summary>How often this tank reads the obstacles around it and navigates around them.</summary>
             public int BlockReadTime { get; set; } = 3;
             /// <summary>How far this tank must be from a teammate before it can lay a mine or fire a bullet.</summary>
-            public float TeammateTankWariness { get; set; } = 30f;
+            public float TankWarinessRadius { get; set; } = 50f;
             /// <summary>Whether or not this tank tries to find calculations all around it. This is not recommended for mobile tanks.</summary>
             public bool SmartRicochets { get; set; }
             /// <summary>Whether or not this tank attempts to lay mines near destructible obstacles rather than randomly. Useless for stationary tanks.</summary>
@@ -92,6 +92,8 @@ namespace TanksRebirth.GameContent
             public bool BounceReset { get; set; } = true;
 
             public float RedirectAngle { get; set; } = MathHelper.ToRadians(5);
+
+            // TODO: make friendly check distances separate for bullets and mines
         }
         /// <summary>The AI parameter collection of this AI Tank.</summary>
         public Params AiParams { get; } = new();
@@ -689,7 +691,7 @@ namespace TanksRebirth.GameContent
                     AiParams.MoveFromMineTime = 100;
                     AiParams.MinePlacementChance = 0.05f;
 
-                    AiParams.SmartMineLaying = true;
+                    // AiParams.SmartMineLaying = true;
 
                     AiParams.BlockWarinessDistance = 60;
                     break;
@@ -1578,9 +1580,9 @@ namespace TanksRebirth.GameContent
             if (Difficulties.Types["AllHoming"])
             {
                 ShellHoming = new();
-                ShellHoming.radius = 200f;
-                ShellHoming.speed = ShellSpeed;
-                ShellHoming.power = 0.1f * ShellSpeed;
+                ShellHoming.Radius = 200f;
+                ShellHoming.Speed = ShellSpeed;
+                ShellHoming.Power = 0.1f * ShellSpeed;
                 // ShellHoming.isHeatSeeking = true;
 
                 AiParams.Inaccuracy *= 4;
@@ -1739,7 +1741,7 @@ namespace TanksRebirth.GameContent
                     resetIterations();
                 }
 
-                var pathHitbox = new Rectangle((int)pathPos.X - 2, (int)pathPos.Y - 2, 4, 4);
+                var pathHitbox = new Rectangle((int)pathPos.X - 5, (int)pathPos.Y - 5, 8, 8);
 
                 // Why is velocity passed by reference here lol
                 Collision.HandleCollisionSimple_ForBlocks(pathHitbox, pathDir, ref dummyPos, out var dir, out var block, out bool corner, false, pattern);
@@ -1814,7 +1816,7 @@ namespace TanksRebirth.GameContent
                 {
                     var pathPosScreen = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(pathPos.X, 11, pathPos.Y), TankGame.GameView, TankGame.GameProjection);
                     TankGame.spriteBatch.Draw(whitePixel, pathPosScreen, null, Color.White * 0.9f, 0, whitePixel.Size() / 2, /*2 + (float)Math.Sin(i * Math.PI / 5 - TankGame.GameUpdateTime * 0.1f) * */realMiss, default, default);
-                    DebugUtils.DrawDebugString(TankGame.spriteBatch, $"{goneThroughTeleporter}:{(block is not null ? $"{block.Type}" : "N/A")}", GeometryUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), Matrix.CreateTranslation(pathPos.X, 0, pathPos.Y), View, Projection), 1, centered: true);
+                    // DebugUtils.DrawDebugString(TankGame.spriteBatch, $"{goneThroughTeleporter}:{(block is not null ? $"{block.Type}" : "N/A")}", GeometryUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), Matrix.CreateTranslation(pathPos.X, 0, pathPos.Y), View, Projection), 1, centered: true);
                 }
 
                 foreach (var enemy in GameHandler.AllTanks)
@@ -1849,7 +1851,7 @@ namespace TanksRebirth.GameContent
             // 20, 30
 
             var whitePixel = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
-            var pathPos = Position + Vector2.Zero.RotatedByRadians(-TurretRotation);
+            var pathPos = Position;
 
             pathDir.Y *= -1;
             pathDir *= PATH_UNIT_LENGTH;
@@ -1938,11 +1940,14 @@ namespace TanksRebirth.GameContent
                                     enemy = tank;
                     }
 
+                    bool isShellNear = TryGetShellNear(AiParams.ProjectileWarinessRadius, out var shell);
+                    bool isMineNear = TryGetMineNear(AiParams.MineWarinessRadius, out var mine);
+
                     var tanksNearMe = new List<Tank>();
                     var cubesNearMe = new List<Block>();
 
                     foreach (var tank in GameHandler.AllTanks)
-                        if (tank != this && tank is not null && !tank.Dead && Vector2.Distance(tank.Position, Position) <= AiParams.TeammateTankWariness)
+                        if (tank != this && tank is not null && !tank.Dead && Vector2.Distance(tank.Position, Position) <= AiParams.TankWarinessRadius)
                             tanksNearMe.Add(tank);
 
                     foreach (var block in Block.AllBlocks)
@@ -2038,9 +2043,9 @@ namespace TanksRebirth.GameContent
                                     seeks = false;
                             }
 
-                            bool checkNoTeam = Team == TankTeam.NoTeam ? true : !tanksNearMe.Any(x => x.Team == Team);
+                            bool checkNoTeam = Team == TankTeam.NoTeam || !tanksNearMe.Any(x => x.Team == Team);
 
-                            if (SeesTarget && checkNoTeam && !findsSelf && !findsFriendly)
+                            if (SeesTarget && checkNoTeam && !findsSelf && !findsFriendly && !isMineNear)
                                 if (CurShootCooldown <= 0)
                                     Shoot();
                         }
@@ -2052,12 +2057,9 @@ namespace TanksRebirth.GameContent
                         if (Stationary)
                             return;
 
-                        bool isBulletNear = TryGetShellNear(AiParams.ProjectileWarinessRadius, out var shell);
-                        bool isMineNear = TryGetMineNear(AiParams.MineWarinessRadius, out var mine);
-
                         #region CubeNav
                         
-                        if (Behaviors[2].IsModOf(AiParams.BlockReadTime) && !isMineNear && !isBulletNear)
+                        if (Behaviors[2].IsModOf(AiParams.BlockReadTime) && !isMineNear && !isShellNear)
                         {
                             pathBlocked = IsObstacleInWay(AiParams.BlockWarinessDistance, Vector2.UnitY.RotatedByRadians(-TargetTankRotation), out var travelPath, out var refPoints);
                             if (pathBlocked)
@@ -2080,7 +2082,7 @@ namespace TanksRebirth.GameContent
 
                         #region GeneralMovement
 
-                        if (!isMineNear && !isBulletNear && !IsTurning && CurMineStun <= 0 && CurShootStun <= 0)
+                        if (!isMineNear && !isShellNear && !IsTurning && CurMineStun <= 0 && CurShootStun <= 0)
                         {
                             if (!pathBlocked)
                             {
@@ -2120,30 +2122,15 @@ namespace TanksRebirth.GameContent
 
                         #region ShellAvoidance
 
-                        var indif = 1;
+                        var indif = 3;
 
-                        if (Behaviors[6].IsModOf(indif) && !isMineNear)
+                        if (isShellNear && shell is not null)
                         {
-                            if (isBulletNear)
+                            if (Behaviors[6].IsModOf(indif))
                             {
-                                if (shell is not null)
-                                {
-                                    if (shell.Owner == this)
-                                    {
-                                        if (shell.LifeTime > 30)
-                                        {
-                                            var dire = Vector2.UnitY.RotatedByRadians(shell.Position2D.DirectionOf(Position, false).ToRotation());
+                                var direction = Vector2.UnitY.RotatedByRadians(shell.Position2D.DirectionOf(Position, false).ToRotation());
 
-                                            TargetTankRotation = dire.ToRotation();
-                                        }
-                                    }
-                                    else
-                                    {
-                                        var direction = Vector2.UnitY.RotatedByRadians(shell.Position2D.DirectionOf(Position, false).ToRotation());
-
-                                        TargetTankRotation = direction.ToRotation();
-                                    }
-                                }
+                                TargetTankRotation = direction.ToRotation();
                             }
                         }
 
@@ -2176,7 +2163,7 @@ namespace TanksRebirth.GameContent
                                 }
                             }
                         }
-                        if (isMineNear)
+                        if (isMineNear && !isShellNear && shell is null)
                         {
                             if (Behaviors[5].IsModOf(10))
                             {
@@ -2248,14 +2235,14 @@ namespace TanksRebirth.GameContent
                     {
                         if (IsTurning)
                         {
-                            var real = TankRotation + MathHelper.PiOver2;
+                            // var real = TankRotation + MathHelper.PiOver2;
                             if (targ - TankRotation >= MathHelper.PiOver2)
                                 TankRotation += MathHelper.Pi;
                             else if (targ - TankRotation <= -MathHelper.PiOver2)
                                 TankRotation -= MathHelper.Pi;
                         }
 
-                        if (TankRotation > targ - MaximalTurn && TankRotation < targ + MaximalTurn)
+                        if (TankRotation > targ - MaximalTurn - MathHelper.ToRadians(5) && TankRotation < targ + MaximalTurn + MathHelper.ToRadians(5))
                         {
                             IsTurning = false;
                             Speed += Acceleration;

@@ -365,7 +365,7 @@ namespace TanksRebirth
 
         internal static Vector2 CameraFocusOffset;
 
-        internal static bool FirstPerson;
+        internal static bool ThirdPerson;
 
         public static bool OverheadView = false;
 
@@ -377,7 +377,7 @@ namespace TanksRebirth
         {
             //try
             {
-                MouseRenderer.ShouldRender = TankGame.FirstPerson ? (GameUI.Paused || MainMenu.Active) : true;
+                MouseRenderer.ShouldRender = TankGame.ThirdPerson ? (GameUI.Paused || MainMenu.Active) : true;
                 if (UIElement.delay > 0)
                     UIElement.delay--;
                 UpdateStopwatch.Start();
@@ -407,7 +407,7 @@ namespace TanksRebirth
                     transitionTimer = 100;
                     OverheadView = !OverheadView;
                 }
-                if (!FirstPerson)
+                if (!ThirdPerson)
                 {
                     if (transitionTimer > 0)
                     {
@@ -527,7 +527,7 @@ namespace TanksRebirth
                     //if (Input.KeyJustPressed(Keys.Q))
                     //FirstPerson = !FirstPerson;
 
-                    FirstPerson = Difficulties.Types["ThirdPerson"];
+                    ThirdPerson = Difficulties.Types["ThirdPerson"];
 
                     if (Input.MouseMiddle)
                     {

@@ -22,7 +22,7 @@ namespace TanksRebirth.Internals.Common.Utilities
         private static readonly string[] DebuggingNames =
         {
             "General",
-            "TankStats",
+            "Entity Data",
             "UIElements",
             "Level Edit Debug",
             "Powerups"

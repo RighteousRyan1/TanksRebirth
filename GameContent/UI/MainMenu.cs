@@ -475,7 +475,7 @@ namespace TanksRebirth.GameContent.UI
             SetPlayButtonsVisibility(false);
             
             foreach (var elem in campaignNames)
-                elem.Remove();
+                elem?.Remove();
             // get all the campaign folders from the SaveDirectory + Campaigns
             Directory.CreateDirectory(Path.Combine(TankGame.SaveDirectory, "Campaigns"));
             var campaignFolders = IOUtils.GetSubFolders(Path.Combine(TankGame.SaveDirectory, "Campaigns"), true);

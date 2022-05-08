@@ -14,10 +14,10 @@ namespace TanksRebirth.GameContent
 {
     public sealed class Mine
     {
-        private static int maxMines = 500;
-        public static Mine[] AllMines { get; } = new Mine[maxMines];
+        public const int MAX_MINES = 500;
+        public static Mine[] AllMines { get; } = new Mine[MAX_MINES];
 
-        public Tank owner;
+        public Tank Owner;
 
         public Vector2 Position;
 
@@ -29,20 +29,20 @@ namespace TanksRebirth.GameContent
 
         public Model Model;
 
-        public static Texture2D _mineTexture;
-        public static Texture2D _envTexture;
+        private static Texture2D _mineTexture;
+        private static Texture2D _envTexture;
 
-        private int worldId;
+        private int _worldId;
 
         public ModelMesh MineMesh;
         public ModelMesh EnvMesh;
 
-        public Rectangle hitbox;
+        public Rectangle Hitbox;
 
-        public int detonationTime;
-        public int detonationTimeMax;
+        public int DetonateTime;
+        public readonly int DetonateTimeMax;
 
-        public bool tickRed;
+        private bool _tickRed;
 
         /// <summary>The radius of this <see cref="Mine"/>'s explosion.</summary>
         public float ExplosionRadius;
@@ -50,7 +50,7 @@ namespace TanksRebirth.GameContent
         /// <summary>Whether or not this <see cref="Mine"/> has detonated.</summary>
         public bool Detonated { get; set; }
 
-        public int mineReactTime = 60;
+        public int MineReactTime = 30;
 
         /// <summary>
         /// Creates a new <see cref="Mine"/>.
@@ -61,13 +61,13 @@ namespace TanksRebirth.GameContent
         /// <param name="radius">The radius of this <see cref="Mine"/>'s explosion.</param>
         public Mine(Tank owner, Vector2 pos, int detonateTime, float radius = 65f)
         {
-            this.owner = owner;
+            this.Owner = owner;
             ExplosionRadius = radius;
 
             Model = GameResources.GetGameResource<Model>("Assets/mine");
 
-            detonationTime = detonateTime;
-            detonationTimeMax = detonateTime;
+            DetonateTime = detonateTime;
+            DetonateTimeMax = detonateTime;
 
             Position = pos;
 
@@ -79,7 +79,7 @@ namespace TanksRebirth.GameContent
 
             int index = Array.IndexOf(AllMines, AllMines.First(mine => mine is null));
 
-            worldId = index;
+            _worldId = index;
 
             AllMines[index] = this;
         }
@@ -89,23 +89,23 @@ namespace TanksRebirth.GameContent
         {
             Detonated = true;
 
-            var expl = new Explosion(Position, ExplosionRadius * 0.101f, owner, 0.3f);
+            var expl = new Explosion(Position, ExplosionRadius * 0.101f, Owner, 0.3f);
 
             if (Difficulties.Types["UltraMines"])
-                expl.maxScale *= 2f;
+                expl.MaxScale *= 2f;
 
-            expl.expanseRate = 2f;
-            expl.tickAtMax = 15;
-            expl.shrinkRate = 0.5f;
+            expl.ExpanseRate = 2f;
+            expl.ShrinkDelay = 15;
+            expl.ShrinkRate = 0.5f;
 
-            if (owner != null)
-                owner.OwnedMineCount--;
+            if (Owner != null)
+                Owner.OwnedMineCount--;
 
             Remove();
         }
 
         public void Remove() {
-            AllMines[worldId] = null; 
+            AllMines[_worldId] = null; 
         }
 
         internal void Update()
@@ -114,35 +114,35 @@ namespace TanksRebirth.GameContent
             View = TankGame.GameView;
             Projection = TankGame.GameProjection;
 
-            hitbox = new((int)Position.X - 10, (int)Position.Y - 10, 20, 20); 
+            Hitbox = new((int)Position.X - 10, (int)Position.Y - 10, 20, 20); 
 
-            detonationTime--;
+            DetonateTime--;
 
-            if (detonationTime < 120)
+            if (DetonateTime < 120)
             {
-                if (detonationTime % 2 == 0)
-                    tickRed = !tickRed;
+                if (DetonateTime % 2 == 0)
+                    _tickRed = !_tickRed;
             }
 
-            if (detonationTime <= 0)
+            if (DetonateTime <= 0)
                 Detonate();
 
             foreach (var shell in Shell.AllShells)
             {
-                if (shell is not null && shell.Hitbox.Intersects(hitbox))
+                if (shell is not null && shell.Hitbox.Intersects(Hitbox))
                 {
                     shell.Destroy();
                     Detonate();
                 }
             }
 
-            if (detonationTime > mineReactTime && detonationTime < detonationTimeMax / 2)
+            if (DetonateTime > MineReactTime)
             {
                 foreach (var tank in GameHandler.AllTanks)
                 {
-                    if (tank is not null && Vector2.Distance(tank.Position, Position) < ExplosionRadius * 9f)
+                    if (tank is not null && tank != Owner && Vector2.Distance(tank.Position, Position) < ExplosionRadius * 0.8f)
                     {
-                        detonationTime = mineReactTime;
+                        DetonateTime = MineReactTime;
                     }
                 }
             }
@@ -150,6 +150,7 @@ namespace TanksRebirth.GameContent
 
         internal void Render()
         {
+            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"Det: {DetonateTime}/{DetonateTimeMax}", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 20), 1, centered: true);
             foreach (ModelMesh mesh in Model.Meshes)
             {
                 foreach (BasicEffect effect in mesh.Effects)
@@ -162,7 +163,7 @@ namespace TanksRebirth.GameContent
 
                     if (mesh == MineMesh)
                     {
-                        if (!tickRed)
+                        if (!_tickRed)
                         {
                             effect.EmissiveColor = new Vector3(1, 1, 0) * GameHandler.GameLight.Brightness;
                         }

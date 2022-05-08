@@ -45,6 +45,7 @@ namespace TanksRebirth.GameContent
         public static Keybind controlRight = new("Right", Keys.D);
         public static Keybind controlMine = new("Place Mine", Keys.Space);
         public static GamepadBind FireBullet = new("Fire Bullet", Buttons.RightTrigger);
+        public static GamepadBind PlaceMine = new("Place Mine", Buttons.A);
 
         public Vector2 oldPosition;
 
@@ -54,9 +55,9 @@ namespace TanksRebirth.GameContent
         public ModelMesh CannonMesh;
         #endregion
 
-        public PlayerTank(PlayerType playerType)
+        public PlayerTank(PlayerType playerType, bool isPlayerModel = true)
         {
-            Model = GameResources.GetGameResource<Model>("Assets/tank_p");
+            Model = GameResources.GetGameResource<Model>(isPlayerModel ? "Assets/tank_p" : "Assets/tank_e");
             _tankColorTexture = Assets[$"tank_" + playerType.ToString().ToLower()];
 
             CannonMesh = Model.Meshes["Cannon"];
@@ -105,7 +106,7 @@ namespace TanksRebirth.GameContent
             Acceleration = 0.3f;
             Deceleration = 0.6f;
             TurningSpeed = 0.1f;
-            MaximalTurn = MathHelper.ToDegrees(10);
+            MaximalTurn = MathHelper.ToRadians(10); // normally it's 10 degrees, but we want to make it easier for keyboard players.
             // Armor = new(this, 100);
 
             ShellType = ShellTier.Player;
@@ -122,10 +123,6 @@ namespace TanksRebirth.GameContent
 
         public override void Update()
         {
-            CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation);
-            Model.Root.Transform = World;
-
-            Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
             // pi/2 = up
             // 0 = down
             // pi/4 = right
@@ -139,7 +136,7 @@ namespace TanksRebirth.GameContent
                     ChatSystem.SendMessage($"PlayerId: {PlayerId} | ClientId: {NetPlay.CurrentClient.Id}", Color.White);
                 if (NetPlay.IsClientMatched(PlayerId) && !IntermissionSystem.IsAwaitingNewMission)
                 {
-                    if (!TankGame.FirstPerson)
+                    if (!TankGame.ThirdPerson)
                     {
                         Vector3 mouseWorldPos = GameUtils.GetWorldPosition(GameUtils.MousePosition, -11f);
                         TurretRotation = (-(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position).ToRotation()) + MathHelper.PiOver2;
@@ -152,7 +149,7 @@ namespace TanksRebirth.GameContent
                         if (Input.CurrentMouseSnapshot.X <= 0)
                             Mouse.SetPosition(GameUtils.WindowWidth - 1, Input.CurrentMouseSnapshot.Y);
                         //Mouse.SetPosition((int)GameUtils.WindowCenter.X, (int)GameUtils.WindowCenter.Y);
-                        TurretRotation += -TankGame.MouseVelocity.X / 312;
+                        TurretRotation += -TankGame.MouseVelocity.X / 312; // terry evanswood
                     }
                 }
 
@@ -164,9 +161,10 @@ namespace TanksRebirth.GameContent
                         {
                             if (NetPlay.IsClientMatched(PlayerId))
                             {
-                                ControlHandle_Keybinding();
                                 if (Input.CurrentGamePadSnapshot.IsConnected)
                                     ControlHandle_ConsoleController();
+                                else
+                                    ControlHandle_Keybinding();
                             }
                         }
                     }
@@ -192,7 +190,12 @@ namespace TanksRebirth.GameContent
             playerControl_isBindPressed = false;
 
             //if (Client.IsConnected() && IsIngame)
-                //Client.SyncPlayer(this);
+            //Client.SyncPlayer(this);
+
+            CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation);
+            Model.Root.Transform = World;
+
+            Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
 
             oldPosition = Position;
         }
@@ -210,6 +213,13 @@ namespace TanksRebirth.GameContent
         /// </summary>
         private void ControlHandle_ConsoleController()
         {
+            TankRotation %= MathHelper.Tau;
+
+            if (TargetTankRotation - TankRotation >= MathHelper.PiOver2)
+                TankRotation += MathHelper.Pi;
+            else if (TargetTankRotation - TankRotation <= -MathHelper.PiOver2)
+                TankRotation -= MathHelper.Pi;
+
             var leftStick = Input.CurrentGamePadSnapshot.ThumbSticks.Left;
             var rightStick = Input.CurrentGamePadSnapshot.ThumbSticks.Right;
             var dPad = Input.CurrentGamePadSnapshot.DPad;
@@ -237,10 +247,15 @@ namespace TanksRebirth.GameContent
                 Speed -= Deceleration;
                 if (Speed < 0)
                     Speed = 0;
+                Body.LinearVelocity = Vector2.Zero;
+                Velocity = Vector2.Zero;
                 IsTurning = true;
             }
             else
             {
+                if (TankGame.ThirdPerson)
+                    preterbedVelocity = preterbedVelocity.RotatedByRadians(-TurretRotation + MathHelper.Pi);
+
                 Speed += Acceleration;
                 if (Speed > MaxSpeed)
                     Speed = MaxSpeed;
@@ -283,12 +298,17 @@ namespace TanksRebirth.GameContent
             }
 
             if (FireBullet.JustPressed)
-            {
                 Shoot();
-            }
+            if (PlaceMine.JustPressed)
+                LayMine();
         }
         private void ControlHandle_Keybinding()
         {
+            if (TargetTankRotation - TankRotation >= MathHelper.PiOver2)
+                TankRotation += MathHelper.Pi;
+            else if (TargetTankRotation - TankRotation <= -MathHelper.PiOver2)
+                TankRotation -= MathHelper.Pi;
+
             if (controlMine.JustPressed)
                 LayMine();
 
@@ -303,6 +323,11 @@ namespace TanksRebirth.GameContent
             TankRotation = GameUtils.RoughStep(TankRotation, TargetTankRotation, TurningSpeed);
 
             var rotationMet = TankRotation > TargetTankRotation - MaximalTurn && TankRotation < TargetTankRotation + MaximalTurn;
+
+            TankRotation %= MathHelper.Tau;
+
+            preterbedVelocity = Vector2.Zero;
+
             if (!rotationMet)
             {
                 Speed -= Deceleration;
@@ -321,15 +346,6 @@ namespace TanksRebirth.GameContent
                 if (Speed > MaxSpeed)
                     Speed = MaxSpeed;
             }
-
-            TankRotation %= MathHelper.Tau;
-
-            if (TargetTankRotation - TankRotation >= MathHelper.PiOver2)
-                TankRotation += MathHelper.Pi;
-            else if (TargetTankRotation - TankRotation <= -MathHelper.PiOver2)
-                TankRotation -= MathHelper.Pi;
-
-            preterbedVelocity = Vector2.Zero;
 
 
             if (controlDown.IsPressed)
@@ -354,7 +370,7 @@ namespace TanksRebirth.GameContent
             }
 
 
-            if (TankGame.FirstPerson)
+            if (TankGame.ThirdPerson)
                 preterbedVelocity = preterbedVelocity.RotatedByRadians(-TurretRotation + MathHelper.Pi);
             
             Velocity = preterbedVelocity * Speed * 3;
@@ -465,7 +481,6 @@ namespace TanksRebirth.GameContent
 
         private void RenderModel()
         {
-
             foreach (ModelMesh mesh in Model.Meshes)
             {
                 foreach (BasicEffect effect in mesh.Effects)
