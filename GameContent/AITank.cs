@@ -2124,7 +2124,7 @@ namespace TanksRebirth.GameContent
 
                         var indif = 3;
 
-                        if (isShellNear && shell is not null)
+                        if (isShellNear)
                         {
                             if (Behaviors[6].IsModOf(indif))
                             {
@@ -2163,7 +2163,7 @@ namespace TanksRebirth.GameContent
                                 }
                             }
                         }
-                        if (isMineNear && !isShellNear && shell is null)
+                        if (isMineNear && !isShellNear)
                         {
                             if (Behaviors[5].IsModOf(10))
                             {
@@ -2419,7 +2419,6 @@ namespace TanksRebirth.GameContent
                                 shell = bullet;
                                 return true;
                             }
-                            return true;
                         }
                     }
                 }
