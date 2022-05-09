@@ -136,15 +136,19 @@ namespace TanksRebirth.GameContent
                 }
             }
 
+            List<Tank> tanksNear = new();
+
             if (DetonateTime > MineReactTime)
             {
                 foreach (var tank in GameHandler.AllTanks)
                 {
-                    if (tank is not null && tank != Owner && Vector2.Distance(tank.Position, Position) < ExplosionRadius * 0.8f)
+                    if (tank is not null && Vector2.Distance(tank.Position, Position) < ExplosionRadius * 0.8f)
                     {
-                        DetonateTime = MineReactTime;
+                        tanksNear.Add(tank);
                     }
                 }
+                if (!tanksNear.Any(tnk => tnk == Owner) && tanksNear.Count > 0)
+                    DetonateTime = MineReactTime;
             }
         }
 

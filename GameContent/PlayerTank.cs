@@ -27,7 +27,9 @@ namespace TanksRebirth.GameContent
         public static int StartingLives = 3;
         public static int Lives = 0;
 
-        public static int TanksKilledThisCampaign = 0;
+        public static Dictionary<TankTier, int> TanksKillDict = new();
+
+        public static int KillCount = 0;
         
         private bool playerControl_isBindPressed;
 

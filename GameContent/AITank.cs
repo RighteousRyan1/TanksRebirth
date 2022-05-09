@@ -19,17 +19,18 @@ using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.Internals.Common.Framework;
 using TanksRebirth.Internals.Common.IO;
 using System.Reflection;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent
 {
     public class AITank : Tank
     {
-        public int TierHierarchy => (int)tier;
+        public int TierHierarchy => (int)Tier;
 
         public AiBehavior[] Behaviors { get; private set; } // each of these should keep track of an action the tank performs
         public AiBehavior[] SpecialBehaviors { get; private set; }
 
-        public TankTier tier;
+        public TankTier Tier;
 
         /// <summary>Should always be -1 if this tank is not modded content.</summary>
         public int modTier = -1;
@@ -123,8 +124,8 @@ namespace TanksRebirth.GameContent
             foreach (var tank in GameHandler.AllAITanks)
             {
                 if (tank is not null && !tank.Dead)
-                    if (tank.tier > highest)
-                        highest = tank.tier;
+                    if (tank.Tier > highest)
+                        highest = tank.Tier;
             }
             return highest;
         }
@@ -133,11 +134,11 @@ namespace TanksRebirth.GameContent
             => GameHandler.AllAITanks.Count(tnk => tnk is not null && !tnk.Dead);
 
         public static int GetTankCountOfType(TankTier tier)
-            => GameHandler.AllAITanks.Count(tnk => tnk is not null && tnk.tier == tier && !tnk.Dead);
+            => GameHandler.AllAITanks.Count(tnk => tnk is not null && tnk.Tier == tier && !tnk.Dead);
 
         public void Swap(TankTier tier, bool setDefaults = true)
         {
-            this.tier = tier;
+            this.Tier = tier;
 
             if ((int)tier <= (int)TankTier.Marble)
                 _tankTexture = Assets[$"tank_" + tier.ToString().ToLower()];
@@ -307,7 +308,7 @@ namespace TanksRebirth.GameContent
 
             _shadowTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank_shadow");
 
-            this.tier = tier;
+            this.Tier = tier;
             if (isIngame)
             {
 
@@ -330,7 +331,7 @@ namespace TanksRebirth.GameContent
         }
         public override void ApplyDefaults()
         {
-            switch (tier)
+            switch (Tier)
             {
                 #region VanillaTanks
                 case TankTier.Brown:
@@ -1622,7 +1623,7 @@ namespace TanksRebirth.GameContent
 
             CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation);
 
-            if (tier == TankTier.Commando)
+            if (Tier == TankTier.Commando)
             {
                 Model.Meshes["Laser_Beam"].ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation);
                 Model.Meshes["Barrel_Laser"].ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation);
@@ -1671,8 +1672,29 @@ namespace TanksRebirth.GameContent
         }
         public override void Destroy(TankHurtContext context)
         {
-            if (context == TankHurtContext.ByPlayerBullet || context == TankHurtContext.ByPlayerMine)
-                PlayerTank.TanksKilledThisCampaign++;
+            if (!Client.IsConnected())
+            {
+                PlayerTank.KillCount++;
+
+                if (!PlayerTank.TanksKillDict.ContainsKey(Tier))
+                    PlayerTank.TanksKillDict.Add(Tier, 1);
+                else
+                    PlayerTank.TanksKillDict[Tier]++;
+            }
+            else
+            {
+                if (context == TankHurtContext.ByPlayerBullet || context == TankHurtContext.ByPlayerMine)
+                {
+                    // check if player id matches client id, if so, increment that player's kill count, then sync to the server
+                    // TODO: convert TankHurtContext into a struct and use it here
+                    // Will be used to track the reason of death and who caused the death, if any tank owns a shell or mine
+                    //
+                    // if (context.PlayerId == Client.PlayerId)
+                    // {
+                    //    PlayerTank.KillCount++;
+                    //   Client.Send(new TankKillCountUpdateMessage(PlayerTank.KillCount)); // not a bad idea actually
+                }
+            }
             GameHandler.AllAITanks[AITankId] = null;
             GameHandler.AllTanks[WorldId] = null;
             base.Destroy(context);
@@ -1926,7 +1948,7 @@ namespace TanksRebirth.GameContent
                     }
 
                     if (TankGame.GameUpdateTime % treadPlaceTimer == 0)
-                        LayFootprint(tier == TankTier.White ? true : false);
+                        LayFootprint(Tier == TankTier.White ? true : false);
                 }
                 enactBehavior = () =>
                 {
@@ -2178,7 +2200,7 @@ namespace TanksRebirth.GameContent
 
                     #region Special Tank Behavior
 
-                    if (tier == TankTier.Creeper)
+                    if (Tier == TankTier.Creeper)
                     {
                         if (Array.IndexOf(GameHandler.AllTanks, enemy) > -1 && enemy is not null)
                         {
@@ -2192,7 +2214,7 @@ namespace TanksRebirth.GameContent
                         }
                     }
 
-                    if (tier == TankTier.Commando)
+                    if (Tier == TankTier.Commando)
                     {
                         SpecialBehaviors[0].Value++;
                         if (SpecialBehaviors[0].Value > 500)
@@ -2260,7 +2282,7 @@ namespace TanksRebirth.GameContent
                             treadPlaceTimer = (int)Math.Round(14 / TurningSpeed) != 0 ? (int)Math.Round(14 / TurningSpeed) : 1;
                             if (TankGame.GameUpdateTime % treadPlaceTimer == 0)
                             {
-                                LayFootprint(tier == TankTier.White);
+                                LayFootprint(Tier == TankTier.White);
                             }
                             IsTurning = true;
                             Velocity = Vector2.Zero;
@@ -2353,7 +2375,7 @@ namespace TanksRebirth.GameContent
                     if (AiParams.SmartRicochets)
                         GetTanksInPath(Vector2.UnitY.RotatedByRadians(seekRotation), out var rayEndpoint, true, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
                     var poo = GetTanksInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), out var rayEnd, true, offset: Vector2.UnitY * 20, pattern: x => x.IsSolid | x.Type == Block.BlockType.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
-                    DebugUtils.DrawDebugString(TankGame.spriteBatch, $"{tier}: {poo.Count}", GeometryUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), World, View, Projection), 1, centered: true);
+                    DebugUtils.DrawDebugString(TankGame.spriteBatch, $"{Tier}: {poo.Count}", GeometryUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), World, View, Projection), 1, centered: true);
                     if (!Stationary)
                     {
                         IsObstacleInWay(AiParams.BlockWarinessDistance, Vector2.UnitY.RotatedByRadians(-TargetTankRotation), out var travelPos, out var refPoints, true);

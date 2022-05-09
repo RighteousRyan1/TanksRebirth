@@ -662,6 +662,20 @@ namespace TanksRebirth
                     $"\nProcess Memory: {MemoryParser.FromMegabytes(_memBytes)} MB", new(8, GameUtils.WindowHeight * 0.15f));
                 DebugUtils.DrawDebugString(spriteBatch, $"{SysGPU}\n{SysCPU}", new(8, GameUtils.WindowHeight * 0.2f));
 
+                DebugUtils.DrawDebugString(spriteBatch, $"Tank Kill Counts:", new(8, GameUtils.WindowHeight * 0.05f), 2);
+
+                for (int i = 0; i < PlayerTank.TanksKillDict.Count; i++)
+                {
+                    var tier = PlayerTank.TanksKillDict.ElementAt(i).Key;
+                    var count = PlayerTank.TanksKillDict.ElementAt(i).Value;
+
+                    DebugUtils.DrawDebugString(spriteBatch, $"{tier}: {count}", new(8, GameUtils.WindowHeight * 0.05f + (14f*(i + 1))), 2);
+                }
+
+                DebugUtils.DrawDebugString(spriteBatch, $"Lives / StartingLives: {PlayerTank.Lives} / {PlayerTank.StartingLives}" +
+                    $"\nKillCount: {PlayerTank.KillCount}", new(8, GameUtils.WindowHeight * 0.4f), 2);
+
+
                 GraphicsDevice.DepthStencilState = new DepthStencilState() { };
 
                 GameHandler.RenderAll();

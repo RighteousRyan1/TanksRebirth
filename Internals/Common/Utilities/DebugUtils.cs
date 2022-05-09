@@ -23,7 +23,7 @@ namespace TanksRebirth.Internals.Common.Utilities
         {
             "General",
             "Entity Data",
-            "UIElements",
+            "Player Data",
             "Level Edit Debug",
             "Powerups"
         };

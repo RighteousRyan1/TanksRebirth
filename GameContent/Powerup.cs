@@ -143,7 +143,7 @@ namespace TanksRebirth.GameContent
             if (AffectedTank is PlayerTank)
                 return $"duration: {duration} | HasOwner: {HasOwner}" + (HasOwner ? $" | OwnerTier: {(AffectedTank as PlayerTank).PlayerType}" : "");
             else
-                return $"duration: {duration} | HasOwner: {HasOwner}" + (HasOwner ? $" | OwnerTier: {(AffectedTank as AITank).tier}" : "");
+                return $"duration: {duration} | HasOwner: {HasOwner}" + (HasOwner ? $" | OwnerTier: {(AffectedTank as AITank).Tier}" : "");
         }
     }
     /// <summary>A template for creating a <see cref="Powerup"/>. The fields in this class are identical to the ones in <see cref="Powerup"/>.</summary>

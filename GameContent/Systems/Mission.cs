@@ -109,7 +109,7 @@ namespace TanksRebirth.GameContent.Systems
                 {
                     var temp = new TankTemplate();
                     if (tank is AITank ai)
-                        temp.AiTier = ai.tier;
+                        temp.AiTier = ai.Tier;
                     else if (tank is PlayerTank player)
                         temp.PlayerType = player.PlayerType;
 

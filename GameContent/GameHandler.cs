@@ -128,6 +128,7 @@ namespace TanksRebirth.GameContent
         }
         private static void DoEndScene()
         {
+            PlayerTank.TanksKillDict.Clear();
             MainMenu.Open();
             // this will be finished later...
         }
@@ -251,7 +252,7 @@ namespace TanksRebirth.GameContent
                 new Powerup(powerups[mode]) { Position = GameUtils.GetWorldPosition(GameUtils.MousePosition).FlattenZ() };
 
             if (MainMenu.Active)
-                PlayerTank.TanksKilledThisCampaign = 0;
+                PlayerTank.KillCount = 0;
 
             CubeHeight = MathHelper.Clamp(CubeHeight, 1, 7);
             BlockType = MathHelper.Clamp(BlockType, 0, 3);
@@ -516,9 +517,9 @@ namespace TanksRebirth.GameContent
             }
             #endregion
 
-            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"Logic Time: {TankGame.LogicTime}" +
+            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"Logic Time: {TankGame.LogicTime.TotalMilliseconds:0.00}ms" +
                 $"\nLogic FPS: {TankGame.LogicFPS}" +
-                $"\n\nRender Time: {TankGame.RenderTime}" +
+                $"\n\nRender Time: {TankGame.RenderTime.TotalMilliseconds:0.00}ms" +
                 $"\nRender FPS: {TankGame.RenderFPS}", new(10, 500));
 
             DebugUtils.DrawDebugString(TankGame.spriteBatch, $"Current Mission: {LoadedCampaign.CurrentMission.Name}\nCurrent Campaign: {LoadedCampaign.Properties.Name}", GameUtils.WindowBottomLeft - new Vector2(-4, 40), 3, centered: false);
@@ -532,7 +533,7 @@ namespace TanksRebirth.GameContent
                 {
                     IntermissionSystem.DrawShadowedTexture(GameResources.GetGameResource<Texture2D>("Assets/textures/ui/scoreboard"), new Vector2(i * 14, GameUtils.WindowHeight * 0.9f), Vector2.UnitY, Color.White, new(2f, 2f), 1f, new(0, GameResources.GetGameResource<Texture2D>("Assets/textures/ui/scoreboard").Size().Y / 2), true);
                 }
-                IntermissionSystem.DrawShadowedString(new Vector2(80, GameUtils.WindowHeight * 0.89f), Vector2.One, $"{PlayerTank.TanksKilledThisCampaign}", new(119, 190, 238), new(0.675f), 1f);
+                IntermissionSystem.DrawShadowedString(new Vector2(80, GameUtils.WindowHeight * 0.89f), Vector2.One, $"{PlayerTank.KillCount}", new(119, 190, 238), new(0.675f), 1f);
             }
             IntermissionSystem.Draw(TankGame.spriteBatch);
 
