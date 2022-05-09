@@ -249,7 +249,7 @@ namespace TanksRebirth.GameContent
                     p.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
                     p.isAddative = false;
-                    p.color = new Color(darkness, darkness, darkness, darkness);
+                    p.Color = new Color(darkness, darkness, darkness, darkness);
                     p.Opacity = 0.5f;
 
                     p.UniqueBehavior = (p) =>
@@ -297,7 +297,7 @@ namespace TanksRebirth.GameContent
                 p.Roll = -MathHelper.PiOver2;
                 p.Scale = new(0.4f, 0.25f, 0.4f); // x is outward from bullet
                                                    // p.Scale = new(1f, 1f, 1f);
-                p.color = Color.Gray;
+                p.Color = Color.Gray;
                 p.isAddative = false;
                 // GameHandler.GameRand.NextFloat(-2f, 2f)
                 //p.TextureRotation = -MathHelper.PiOver2;
@@ -319,7 +319,7 @@ namespace TanksRebirth.GameContent
                 p2.Roll = -MathHelper.PiOver2;
                 p2.Scale = new(/*0.4f*/ Velocity.Length() / 10 - 0.2f, 0.25f, 0.4f); // x is outward from bullet
                                                    // p.Scale = new(1f, 1f, 1f);
-                p2.color = Color.Gray;
+                p2.Color = Color.Gray;
                 p2.isAddative = false;
                 // GameHandler.GameRand.NextFloat(-2f, 2f)
                 //p.TextureRotation = -MathHelper.PiOver2;
@@ -345,7 +345,7 @@ namespace TanksRebirth.GameContent
                 p.Roll = -MathHelper.PiOver2;
                 var scaleRand = GameHandler.GameRand.NextFloat(0.5f, 0.75f);
                 p.Scale = new(scaleRand, 0.165f, 0.4f); // x is outward from bullet
-                p.color = Color.Orange;
+                p.Color = Color.Orange;
                 p.isAddative = false;
                 // GameHandler.GameRand.NextFloat(-2f, 2f)
                 p.TextureRotation = -MathHelper.PiOver2;
@@ -361,7 +361,7 @@ namespace TanksRebirth.GameContent
 
                     var off = flat + new Vector2(0, 0).RotatedByRadians(Rotation);
 
-                    p.position = off.ExpandZ() + new Vector3(0, 11, 0);
+                    p.Position = off.ExpandZ() + new Vector3(0, 11, 0);
 
                     p.Pitch = -Rotation - MathHelper.PiOver2 + rotoff;
 
@@ -394,7 +394,7 @@ namespace TanksRebirth.GameContent
             p.Roll = -MathHelper.PiOver2;
             p.Scale = new(1f, 0.165f, 0.4f); // x is outward from bullet
                                               // p.Scale = new(1f, 1f, 1f);
-            p.color = Color.Black;
+            p.Color = Color.Black;
             p.isAddative = false;
             // GameHandler.GameRand.NextFloat(-2f, 2f)
             //p.TextureRotation = -MathHelper.PiOver2;
@@ -407,9 +407,9 @@ namespace TanksRebirth.GameContent
 
                 var off = flat + new Vector2(0, 0).RotatedByRadians(Rotation);
                 
-                p.position = off.ExpandZ() + new Vector3(0, 11, 0);
+                p.Position = off.ExpandZ() + new Vector3(0, 11, 0);
                 
-                if (p.lifeTime < 120)
+                if (p.LifeTime < 120)
                     p.Scale.X += 0.01f;
                 else
                     p.Scale.X -= 0.01f;
@@ -422,7 +422,7 @@ namespace TanksRebirth.GameContent
             p2.Roll = -MathHelper.PiOver2;
             p2.Scale = new(1f, 0.165f, 0.4f); // x is outward from bullet
                                              // p.Scale = new(1f, 1f, 1f);
-            p2.color = Color.Black;
+            p2.Color = Color.Black;
             p2.isAddative = false;
             // GameHandler.GameRand.NextFloat(-2f, 2f)
             //p.TextureRotation = -MathHelper.PiOver2;
@@ -435,9 +435,9 @@ namespace TanksRebirth.GameContent
 
                 var off = flat + new Vector2(0, 0).RotatedByRadians(Rotation);
 
-                p2.position = off.ExpandZ() + new Vector3(0, 11, 0);
+                p2.Position = off.ExpandZ() + new Vector3(0, 11, 0);
 
-                if (p2.lifeTime < 120)
+                if (p2.LifeTime < 120)
                     p2.Scale.X += 0.01f;
                 else
                     p2.Scale.X -= 0.01f;

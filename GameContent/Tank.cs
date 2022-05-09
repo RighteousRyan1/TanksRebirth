@@ -301,17 +301,17 @@ namespace TanksRebirth.GameContent
 
                 lightParticle.Scale = new(0.25f);
                 lightParticle.Opacity = 0f;
-                lightParticle.is2d = true;
+                lightParticle.Is2d = true;
 
                 lightParticle.UniqueBehavior = (lp) =>
                 {
-                    lp.position = Position3D;
+                    lp.Position = Position3D;
                     if (lp.Scale.X < 5f)
                         GeometryUtils.Add(ref lp.Scale, 0.12f);
                     if (lp.Opacity < 1f && lp.Scale.X < 5f)
                         lp.Opacity += 0.02f;
 
-                    if (lp.lifeTime > 90)
+                    if (lp.LifeTime > 90)
                         lp.Opacity -= 0.005f;
 
                     if (lp.Scale.X < 0f)
@@ -330,10 +330,10 @@ namespace TanksRebirth.GameContent
 
                     lp.UniqueBehavior = (elp) =>
                     {
-                        elp.position.X += velocity.X;
-                        elp.position.Z += velocity.Y;
+                        elp.Position.X += velocity.X;
+                        elp.Position.Z += velocity.Y;
 
-                        if (elp.lifeTime > 15)
+                        if (elp.LifeTime > 15)
                         {
                             GeometryUtils.Add(ref elp.Scale, -0.03f);
                             elp.Opacity -= 0.03f;
@@ -458,13 +458,13 @@ namespace TanksRebirth.GameContent
 
                     part.Scale = new(0.55f);
 
-                    part.color = TankDestructionColor;
+                    part.Color = TankDestructionColor;
 
                     part.UniqueBehavior = (p) =>
                     {
-                        part.Pitch += MathF.Sin(part.position.Length() / 10);
+                        part.Pitch += MathF.Sin(part.Position.Length() / 10);
                         vel.Y -= 0.2f;
-                        part.position += vel;
+                        part.Position += vel;
                         part.Opacity -= 0.025f;
 
                         if (part.Opacity <= 0f)
@@ -474,11 +474,11 @@ namespace TanksRebirth.GameContent
 
                 var partExpl = ParticleSystem.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
 
-                partExpl.color = Color.Yellow * 0.75f;
+                partExpl.Color = Color.Yellow * 0.75f;
 
                 partExpl.Scale = new(5f);
 
-                partExpl.is2d = true;
+                partExpl.Is2d = true;
 
                 partExpl.UniqueBehavior = (p) =>
                 {
@@ -540,7 +540,7 @@ namespace TanksRebirth.GameContent
                     smoke.Scale = new(0.35f);
                     hit.Scale = new(0.5f);
 
-                    smoke.color = new(84, 22, 0, 255);
+                    smoke.Color = new(84, 22, 0, 255);
 
                     smoke.isAddative = false;
 
@@ -549,24 +549,24 @@ namespace TanksRebirth.GameContent
 
                     hit.UniqueBehavior = (part) =>
                     {
-                        part.color = Color.Orange;
+                        part.Color = Color.Orange;
 
-                        if (part.lifeTime > 1)
+                        if (part.LifeTime > 1)
                             part.Opacity -= 0.1f;
                         if (part.Opacity <= 0)
                             part.Destroy();
                     };
                     smoke.UniqueBehavior = (part) =>
                     {
-                        part.color.R = (byte)GameUtils.RoughStep(part.color.R, achieveable, step);
-                        part.color.G = (byte)GameUtils.RoughStep(part.color.G, achieveable, step);
-                        part.color.B = (byte)GameUtils.RoughStep(part.color.B, achieveable, step);
+                        part.Color.R = (byte)GameUtils.RoughStep(part.Color.R, achieveable, step);
+                        part.Color.G = (byte)GameUtils.RoughStep(part.Color.G, achieveable, step);
+                        part.Color.B = (byte)GameUtils.RoughStep(part.Color.B, achieveable, step);
 
                         GeometryUtils.Add(ref part.Scale, 0.004f);
 
-                        if (part.color.G == achieveable)
+                        if (part.Color.G == achieveable)
                         {
-                            part.color.B = (byte)achieveable;
+                            part.Color.B = (byte)achieveable;
                             part.Opacity -= 0.04f;
 
                             if (part.Opacity <= 0)
@@ -765,9 +765,9 @@ namespace TanksRebirth.GameContent
         {
             lifeTime++;
 
-            track.position = Position;
+            track.Position = Position;
             track.Pitch = rotation;
-            track.color = Color.White;
+            track.Color = Color.White;
             // Vector3 scale = alternate ? new(0.5f, 1f, 0.35f) : new(0.5f, 1f, 0.075f);
             // [0.0, 1.1, 1.5, 0.5]
             // [0.0, 0.1, 0.8, 0.0]
@@ -818,7 +818,7 @@ namespace TanksRebirth.GameContent
 
         public void Render()
         {
-            check.position = Position;
+            check.Position = Position;
             check.Scale = new(0.6f);
         }
     }

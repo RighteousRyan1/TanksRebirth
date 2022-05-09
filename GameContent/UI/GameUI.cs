@@ -381,6 +381,7 @@ namespace TanksRebirth.GameContent.UI
             var text = /*$"{TankGame.GameLanguage.Mission} 1        x{AITank.CountAll()}";*/
                 $"{GameHandler.LoadedCampaign.CurrentMission.Name ?? $"{TankGame.GameLanguage.Mission}"} x{AITank.CountAll()}";
             Vector2 drawOrigin = TankGame.TextFont.MeasureString(text) / 2f;
+            MissionInfoBar.Position = new(GameUtils.WindowWidth * 0.4f, GameUtils.WindowHeight - 75);
             MissionInfoBar.UniqueDraw =
                 (uiPanel, spriteBatch) => spriteBatch.DrawString(TankGame.TextFont, text, uiPanel.Hitbox.Center.ToVector2(), Color.White, new Vector2(1.5f), 0, drawOrigin);
 

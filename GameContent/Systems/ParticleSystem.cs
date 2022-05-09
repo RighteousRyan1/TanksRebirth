@@ -59,13 +59,13 @@ namespace TanksRebirth.GameContent
                 spark.Opacity = 1f;
                 spark.Scale = new(GameHandler.GameRand.NextFloat(0.4f, 0.6f));
 
-                spark.color = Color.Yellow;
+                spark.Color = Color.Yellow;
 
                 spark.UniqueBehavior = (part) =>
                 {
-                    part.position += vel;
+                    part.Position += vel;
                     part.Opacity -= 0.025f;
-                    part.position += vel;
+                    part.Position += vel;
 
                     if (part.Opacity <= 0f)
                         part.Destroy();
@@ -88,22 +88,22 @@ namespace TanksRebirth.GameContent
 
                 var velocity = Vector2.UnitY.RotatedByRadians(MathHelper.ToRadians(360f / numClouds * i)).ExpandZ() / 2;
 
-                smoke.position.Y += 5f + GameHandler.GameRand.NextFloat(0f, 8f);
+                smoke.Position.Y += 5f + GameHandler.GameRand.NextFloat(0f, 8f);
 
-                smoke.color = Color.DarkOrange;
+                smoke.Color = Color.DarkOrange;
 
                 smoke.UniqueBehavior = (p) =>
                 {
-                    smoke.position += velocity;
+                    smoke.Position += velocity;
                     GeometryUtils.Add(ref smoke.Scale, -0.01f);
 
                     if (smoke.Scale.X <= 0f)
                         smoke.Destroy();
 
-                    if (smoke.lifeTime > timeMovingSideways)
+                    if (smoke.LifeTime > timeMovingSideways)
                     {
                         smoke.Opacity -= 0.02f;
-                        smoke.position.Y += GameHandler.GameRand.NextFloat(0.1f, 0.25f);
+                        smoke.Position.Y += GameHandler.GameRand.NextFloat(0.1f, 0.25f);
                         velocity.X *= 0.9f;
                         velocity.Z *= 0.9f;
                     }
@@ -115,7 +115,7 @@ namespace TanksRebirth.GameContent
         {
             var p = MakeParticle(position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_star"));
             p.Scale = new(scale);
-            p.color = color;
+            p.Color = color;
             p.UniqueBehavior = (part) =>
             {
                 GeometryUtils.Add(ref p.Scale, -0.0175f);

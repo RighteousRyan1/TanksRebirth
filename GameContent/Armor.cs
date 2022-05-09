@@ -45,8 +45,8 @@ namespace TanksRebirth.GameContent
             _healthBarTotal.isAddative = false;
             _healthBarCurrent.isAddative = false;
 
-            _healthBarTotal.color = Color.Red;
-            _healthBarCurrent.color = Color.Lime;
+            _healthBarTotal.Color = Color.Red;
+            _healthBarCurrent.Color = Color.Lime;
 
             _healthBarCurrent.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
             _healthBarTotal.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
@@ -72,8 +72,8 @@ namespace TanksRebirth.GameContent
             if (canRenderHealthBar && _hitpointsMax > 3)
             {
                 setHealthBar(5, 2);
-                _healthBarTotal.position = Host.Position3D + new Vector3(0, 40, 0);
-                _healthBarCurrent.position = Host.Position3D + new Vector3(0, 40, 0);
+                _healthBarTotal.Position = Host.Position3D + new Vector3(0, 40, 0);
+                _healthBarCurrent.Position = Host.Position3D + new Vector3(0, 40, 0);
             }
             // DrawHealthBar(GeometryUtils.ConvertWorldToScreen(new Vector3(0, 20, 0f), Host.World, TankGame.GameView, TankGame.GameProjection) - new Vector2(0, 20), 50, 10);
 

@@ -371,6 +371,8 @@ namespace TanksRebirth
 
         private int transitionTimer;
 
+        private bool _justChanged = true;
+
         public static Vector2 MouseVelocity => GameUtils.GetMouseVelocity(GameUtils.WindowCenter);
 
         protected override void Update(GameTime gameTime)
@@ -394,6 +396,9 @@ namespace TanksRebirth
                     DiscordRichPresence.Update();
                     _memBytes = ProcessMemory;
                 }
+
+                if (IntermissionSystem.Alpha >= 1)
+                    _justChanged = true;
 
                 LastGameTime = gameTime;
 
@@ -447,7 +452,12 @@ namespace TanksRebirth
                             Matrix.CreateTranslation(CameraFocusOffset.X, -CameraFocusOffset.Y + 40, 0);
                     //Matrix.CreateTranslation(CameraFocusOffset.X, -CameraFocusOffset.Y, 0);
 
-                    GameProjection = Matrix.CreateOrthographic(GameUtils.WindowWidth, GameUtils.WindowHeight, -2000, 5000);
+                    if (_justChanged)
+                    { 
+                        //if we just changed to third person, we don't want to reset the camera
+                        GameProjection = Matrix.CreateOrthographic(GameUtils.WindowWidth, GameUtils.WindowHeight, -2000, 5000);
+                        _justChanged = false;
+                    }
                 }
                 else
                 {
@@ -471,8 +481,11 @@ namespace TanksRebirth
                         GameView = Matrix.CreateLookAt(pos,
                             pos + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-GameHandler.AllPlayerTanks[0].TurretRotation).ExpandZ()
                             , Vector3.Up) * Matrix.CreateScale(AddativeZoom) * Matrix.CreateRotationX(CameraRotationVector.Y - MathHelper.PiOver4) * Matrix.CreateRotationY(CameraRotationVector.X) * Matrix.CreateTranslation(0, -20, -40);
-
-                        GameProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000);
+                        if (_justChanged)
+                        {
+                            GameProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000);
+                            _justChanged = false;
+                        }
                     }
                     else
                     {
@@ -507,8 +520,11 @@ namespace TanksRebirth
                             GameView = Matrix.CreateLookAt(pos,
                                 pos + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-x.TurretRotation).ExpandZ()
                                 , Vector3.Up) * Matrix.CreateScale(AddativeZoom) * Matrix.CreateRotationX(CameraRotationVector.Y - MathHelper.PiOver4) * Matrix.CreateRotationY(CameraRotationVector.X) * Matrix.CreateTranslation(0, -20, -40) * Matrix.CreateScale(AddativeZoom);
-
-                            GameProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000);
+                            if (_justChanged)
+                            {
+                                GameProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000);
+                                _justChanged = false;
+                            }
                         }
                     }
                 }

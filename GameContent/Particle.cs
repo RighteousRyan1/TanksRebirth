@@ -12,9 +12,9 @@ namespace TanksRebirth.GameContent
     {
         public Texture2D Texture;
 
-        public Vector3 position;
+        public Vector3 Position;
 
-        public Color color = Color.White;
+        public Color Color = Color.White;
 
         public float Roll;
         public float Pitch;
@@ -27,22 +27,22 @@ namespace TanksRebirth.GameContent
 
         public float Opacity = 1f;
 
-        public readonly int id;
+        public readonly int Id;
 
         public bool FaceTowardsMe;
 
-        public bool is2d;
+        public bool Is2d;
 
         public Action<Particle> UniqueBehavior;
 
         public bool isAddative = true;
 
-        public int lifeTime;
+        public int LifeTime;
 
         // NOTE: scale.X is used for 2d scaling.
         public Vector3 Scale;
 
-        public float addativeLightPower;
+        public float LightPower;
 
         /* TODO:
          * Model alpha must be set!
@@ -52,10 +52,10 @@ namespace TanksRebirth.GameContent
 
         internal Particle(Vector3 position)
         {
-            this.position = position;
+            Position = position;
             int index = Array.IndexOf(ParticleSystem.CurrentParticles, ParticleSystem.CurrentParticles.First(particle => particle == null));
 
-            id = index;
+            Id = index;
 
             ParticleSystem.CurrentParticles[index] = this;
         }
@@ -63,41 +63,41 @@ namespace TanksRebirth.GameContent
         public void Update()
         {
             UniqueBehavior?.Invoke(this);
-            lifeTime++;
+            LifeTime++;
         }
 
         public static BasicEffect effect = new(TankGame.Instance.GraphicsDevice);
 
         internal void Render()
         {
-            if (!is2d)
+            if (!Is2d)
             {
-                effect.World = Matrix.CreateScale(Scale) * Matrix.CreateRotationX(Roll) * Matrix.CreateRotationY(Pitch) * Matrix.CreateRotationZ(Yaw) * Matrix.CreateTranslation(position);
+                effect.World = Matrix.CreateScale(Scale) * Matrix.CreateRotationX(Roll) * Matrix.CreateRotationY(Pitch) * Matrix.CreateRotationZ(Yaw) * Matrix.CreateTranslation(Position);
                 effect.View = TankGame.GameView;
                 effect.Projection = TankGame.GameProjection;
                 effect.TextureEnabled = true;
                 effect.Texture = Texture;
-                effect.AmbientLightColor = color.ToVector3() * GameHandler.GameLight.Brightness;
-                effect.DiffuseColor = color.ToVector3() * GameHandler.GameLight.Brightness;
-                effect.FogColor = color.ToVector3() * GameHandler.GameLight.Brightness;
-                effect.EmissiveColor = color.ToVector3() * GameHandler.GameLight.Brightness;
-                effect.SpecularColor = color.ToVector3() * GameHandler.GameLight.Brightness;
+                effect.AmbientLightColor = Color.ToVector3() * GameHandler.GameLight.Brightness;
+                effect.DiffuseColor = Color.ToVector3() * GameHandler.GameLight.Brightness;
+                effect.FogColor = Color.ToVector3() * GameHandler.GameLight.Brightness;
+                effect.EmissiveColor = Color.ToVector3() * GameHandler.GameLight.Brightness;
+                effect.SpecularColor = Color.ToVector3() * GameHandler.GameLight.Brightness;
 
                 effect.Alpha = Opacity;
 
-                effect.SetDefaultGameLighting_IngameEntities(addativeLightPower);
+                effect.SetDefaultGameLighting_IngameEntities(LightPower);
 
                 effect.FogEnabled = false;
 
                 TankGame.spriteBatch.End();
                 TankGame.spriteBatch.Begin(SpriteSortMode.Deferred, isAddative ? BlendState.Additive : BlendState.NonPremultiplied, SamplerState.PointWrap, DepthStencilState.DepthRead, RasterizerState.CullNone, effect);
-                TankGame.spriteBatch.Draw(Texture, Vector2.Zero, null, color * Opacity, TextureRotation, TextureOrigin != default ? TextureOrigin : Texture.Size() / 2, TextureScale == int.MinValue ? Scale.X : TextureScale, default, default);
+                TankGame.spriteBatch.Draw(Texture, Vector2.Zero, null, Color * Opacity, TextureRotation, TextureOrigin != default ? TextureOrigin : Texture.Size() / 2, TextureScale == int.MinValue ? Scale.X : TextureScale, default, default);
             }
             else
             {
                 TankGame.spriteBatch.End();
                 TankGame.spriteBatch.Begin(SpriteSortMode.Deferred, isAddative ? BlendState.Additive : BlendState.NonPremultiplied);
-                TankGame.spriteBatch.Draw(Texture, GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(position), TankGame.GameView, TankGame.GameProjection), null, color * Opacity, TextureRotation, TextureOrigin != default ? TextureOrigin : Texture.Size() / 2, TextureScale == int.MinValue ? Scale.X : TextureScale, default, default);
+                TankGame.spriteBatch.Draw(Texture, GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(Position), TankGame.GameView, TankGame.GameProjection), null, Color * Opacity, TextureRotation, TextureOrigin != default ? TextureOrigin : Texture.Size() / 2, TextureScale == int.MinValue ? Scale.X : TextureScale, default, default);
             }
             TankGame.spriteBatch.End();
             TankGame.spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
@@ -105,7 +105,8 @@ namespace TanksRebirth.GameContent
 
         public void Destroy()
         {
-            ParticleSystem.CurrentParticles[id] = null;
+            UniqueBehavior = null;
+            ParticleSystem.CurrentParticles[Id] = null;
         }
     }
 }

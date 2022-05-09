@@ -175,12 +175,12 @@ namespace TanksRebirth.GameContent
 
                     part.Scale = new(0.7f);
 
-                    part.color = Color.Coral;
+                    part.Color = Color.Coral;
 
                     part.UniqueBehavior = (p) =>
                     {
                         vel.Y -= 0.2f;
-                        part.position += vel;
+                        part.Position += vel;
                         part.Opacity -= 0.025f;
 
                         if (part.Opacity <= 0f)

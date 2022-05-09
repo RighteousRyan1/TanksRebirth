@@ -1078,9 +1078,9 @@ namespace TanksRebirth.GameContent
                 case TankTier.Bubblegum:
                     AiParams.MeanderAngle = MathHelper.ToRadians(30);
                     AiParams.MeanderFrequency = 10;
-                    AiParams.TurretMeanderFrequency = 60;
+                    AiParams.TurretMeanderFrequency = 20;
                     AiParams.TurretSpeed = 0.045f;
-                    AiParams.AimOffset = 0.04f;
+                    AiParams.AimOffset = MathHelper.ToRadians(30);
 
                     AiParams.Inaccuracy = 0.4f;
 
@@ -1119,7 +1119,7 @@ namespace TanksRebirth.GameContent
                     AiParams.MeanderFrequency = 15;
                     AiParams.TurretMeanderFrequency = 10;
                     AiParams.TurretSpeed = 0.03f;
-                    AiParams.AimOffset = 0.08f;
+                    AiParams.AimOffset = MathHelper.ToRadians(10);
 
                     AiParams.Inaccuracy = 0.5f;
 
@@ -2093,7 +2093,7 @@ namespace TanksRebirth.GameContent
                                     var refAngle = GameUtils.DirectionOf(Position, travelPath - new Vector2(400, 0)).ToRotation();
 
                                     // AngleSmoothStep(TargetTankRotation, refAngle, refAngle / 3);
-                                    GameUtils.RoughStep(ref TargetTankRotation, refAngle, refAngle / 6);
+                                    GameUtils.RoughStep(ref TargetTankRotation, TargetTankRotation <= 0 ? -refAngle : refAngle, refAngle / 6);
                                 }
                             }
 

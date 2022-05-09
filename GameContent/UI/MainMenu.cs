@@ -497,50 +497,55 @@ namespace TanksRebirth.GameContent.UI
 
                 int numTanks = 0;
 
-                var campaign = Campaign.LoadFromFolder(name, false);
+                try {
+                    var campaign = Campaign.LoadFromFolder(name, false);
 
-                foreach (var path in missions)
-                {
-                    var mission = Path.GetFileName(path);
-                    // load the mission file, then count each tank, then add that to the total
-                    var loaded = Mission.Load(mission, name);
-                    numTanks += loaded.Tanks.Count(x => !x.IsPlayer);
-                }
+                    foreach (var path in missions)
+                    {
+                        var mission = Path.GetFileName(path);
+                        // load the mission file, then count each tank, then add that to the total
+                        var loaded = Mission.Load(mission, name);
+                        numTanks += loaded.Tanks.Count(x => !x.IsPlayer);
+                    }
 
-                var elem = new UITextButton(name, TankGame.TextFont, Color.White, 0.8f)
-                {
-                    IsVisible = true,
-                    Tooltip = missions.Length + " missions" +
-                    $"\n{numTanks} tanks total" +
-                    $"\n\nName: {campaign.Properties.Name}" +
-                    $"\nDescription: {campaign.Properties.Description}" +
-                    $"\nVersion: {campaign.Properties.Version}" +
-                    $"\nStarting Lives: {campaign.Properties.StartingLives}" +
-                    // display all tags in a string
-                    $"\nTags: {string.Join(", ", campaign.Properties.Tags)}"
-                };
-                elem.SetDimensions(700, 100 + offset, 300, 40);
-                //elem.HasScissor = true;
-                //elem.
-                elem.OnLeftClick += (el) =>
-                {
-                    GameHandler.LoadedCampaign = Campaign.LoadFromFolder(elem.Text, true);
+                    var elem = new UITextButton(name, TankGame.TextFont, Color.White, 0.8f)
+                    {
+                        IsVisible = true,
+                        Tooltip = missions.Length + " missions" +
+                        $"\n{numTanks} tanks total" +
+                        $"\n\nName: {campaign.Properties.Name}" +
+                        $"\nDescription: {campaign.Properties.Description}" +
+                        $"\nVersion: {campaign.Properties.Version}" +
+                        $"\nStarting Lives: {campaign.Properties.StartingLives}" +
+                        // display all tags in a string
+                        $"\nTags: {string.Join(", ", campaign.Properties.Tags)}"
+                    };
+                    elem.SetDimensions(700, 100 + offset, 300, 40);
+                    //elem.HasScissor = true;
+                    //elem.
+                    elem.OnLeftClick += (el) =>
+                    {
+                        GameHandler.LoadedCampaign = Campaign.LoadFromFolder(elem.Text, true);
 
-                    foreach (var elem in campaignNames)
-                        elem.Remove();
+                        foreach (var elem in campaignNames)
+                            elem.Remove();
 
-                    IntermissionSystem.TimeBlack = 240;
+                        IntermissionSystem.TimeBlack = 240;
 
-                    GameHandler.ShouldMissionsProgress = true;
+                        GameHandler.ShouldMissionsProgress = true;
 
                     // GameHandler.LoadedCampaign.LoadMission(20);
 
                     // Leave();
 
                     IntermissionSystem.SetTime(600);
-                };
-                elem.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/menu/menu_tick"), SoundContext.Effect); };
-                campaignNames.Add(elem);
+                    };
+                    elem.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/menu/menu_tick"), SoundContext.Effect); };
+                    campaignNames.Add(elem);
+                }
+                catch (System.Text.Json.JsonException e) {
+                    GameHandler.ClientLog.Write($"Silently Caught Exception: {e.Message}\n{e.StackTrace}", LogType.Error);
+                }
             }
             var extra = new UITextButton("Freeplay", TankGame.TextFont, Color.White, 0.8f)
             {
