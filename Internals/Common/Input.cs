@@ -31,15 +31,16 @@ namespace TanksRebirth.Internals.Common
             bool pressed = CurrentKeySnapshot.IsKeyDown(key) && OldKeySnapshot.IsKeyUp(key);
             return pressed;
         }
-        public static bool AreKeysPressed(params Keys[] keys)
+        public static bool AreKeysDown(params Keys[] keys)
         {
             return keys.All(key => CurrentKeySnapshot.IsKeyDown(key));
         }
         public static bool AreKeysJustPressed(params Keys[] keys)
         {
-            var justPressed = AreKeysPressed(keys);
-
-            return justPressed && keys.All(key => OldKeySnapshot.IsKeyUp(key));
+            bool allAreDown = keys.All(key => CurrentKeySnapshot.IsKeyDown(key));
+            bool notAllUp = keys.Any(key => OldKeySnapshot.IsKeyUp(key));
+            
+            return allAreDown && notAllUp;
         }
         public static bool MouseLeft => CurrentMouseSnapshot.LeftButton == ButtonState.Pressed;
         public static bool MouseMiddle => CurrentMouseSnapshot.MiddleButton == ButtonState.Pressed;

@@ -35,8 +35,6 @@ namespace TanksRebirth.GameContent.UI
         private static Matrix View;
         private static Matrix Projection;
 
-        private static Matrix ForwardView;
-
         #region Button Fields
 
         public static UITextButton PlayButton;
@@ -93,18 +91,17 @@ namespace TanksRebirth.GameContent.UI
 
         public static UITextButton AiCompanion;
         public static UITextButton Shotguns;
+
+        public static UITextButton Predictions;
         #endregion
 
         private static float _tnkSpeed = 2.4f;
 
-        public static Tank MainMenuTank;
+        public static int MissionCheckpoint = 0;
         // TODO: get menu visuals working
 
         public static void Initialize()
         {
-            ForwardView = Matrix.CreateScale(10) * Matrix.CreateLookAt(new(0, 0, 500), Vector3.Zero, Vector3.Up)
-                * Matrix.CreateFromYawPitchRoll(1.563f, 0, 0.906f)
-                * Matrix.CreateTranslation(499, 260, 150);
             Projection = Matrix.CreateOrthographic(TankGame.Instance.GraphicsDevice.Viewport.Width, TankGame.Instance.GraphicsDevice.Viewport.Height, -2000f, 5000f);
             //Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), TankGame.Instance.GraphicsDevice.Viewport.AspectRatio, 0.01f, 1000f);
             View = Matrix.CreateScale(2) * Matrix.CreateLookAt(new(0, 0, 500), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(MathHelper.PiOver2);
@@ -469,6 +466,15 @@ namespace TanksRebirth.GameContent.UI
                 OnLeftClick = (elem) => Difficulties.Types["Shotguns"] = !Difficulties.Types["Shotguns"]
             };
             Shotguns.SetDimensions(450, 700, 300, 40);
+
+            //init predictions
+            Predictions = new("Predictions", font, Color.White)
+            {
+                IsVisible = false,
+                Tooltip = "Every tank predicts your future position.",
+                OnLeftClick = (elem) => Difficulties.Types["Predictions"] = !Difficulties.Types["Predictions"]
+            };
+            Predictions.SetDimensions(450, 750, 300, 40);
         }
         private static void SetCampaignDisplay()
         {
@@ -525,7 +531,26 @@ namespace TanksRebirth.GameContent.UI
                     //elem.
                     elem.OnLeftClick += (el) =>
                     {
-                        GameHandler.LoadedCampaign = Campaign.LoadFromFolder(elem.Text, true);
+                        var camp = Campaign.LoadFromFolder(elem.Text, false);
+
+                        // check if the CampaignCheckpoint number is less than the number of missions in the array
+                        if (MissionCheckpoint >= camp.CachedMissions.Length)
+                        {
+                            // if it is, notify the user that the checkpoint is too high via the chat, and play the error sound
+                            ChatSystem.SendMessage($"{elem.Text} has no mission {MissionCheckpoint + 1}.", Color.Red);
+                            SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/menu/menu_error"), SoundContext.Effect);
+                            return;
+                        }
+                        else if (MissionCheckpoint < 0)
+                        {
+                            ChatSystem.SendMessage($"You scallywag! No campaign has a mission {MissionCheckpoint + 1}!", Color.Red);
+                            SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/menu/menu_error"), SoundContext.Effect);
+                            return;
+                        }
+
+                        // if it is, load the mission
+                        GameHandler.LoadedCampaign = camp;
+                        GameHandler.LoadedCampaign.LoadMission(MissionCheckpoint);
 
                         foreach (var elem in campaignNames)
                             elem.Remove();
@@ -538,7 +563,7 @@ namespace TanksRebirth.GameContent.UI
 
                     // Leave();
 
-                    IntermissionSystem.SetTime(600);
+                        IntermissionSystem.SetTime(600);
                     };
                     elem.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/menu/menu_tick"), SoundContext.Effect); };
                     campaignNames.Add(elem);
@@ -603,6 +628,7 @@ namespace TanksRebirth.GameContent.UI
             ThirdPerson.IsVisible = visible;
             AiCompanion.IsVisible = visible;
             Shotguns.IsVisible = visible;
+            Predictions.IsVisible = visible;
         }
         internal static void SetPrimaryMenuButtonsVisibility(bool visible)
         {
@@ -648,6 +674,7 @@ namespace TanksRebirth.GameContent.UI
             ThirdPerson.Color = Difficulties.Types["ThirdPerson"] ? Color.Lime : Color.Red;
             AiCompanion.Color = Difficulties.Types["AiCompanion"] ? Color.Lime : Color.Red;
             Shotguns.Color = Difficulties.Types["Shotguns"] ? Color.Lime : Color.Red;
+            Predictions.Color = Difficulties.Types["Predictions"] ? Color.Lime : Color.Red;
 
             Theme.Volume = TankGame.Settings.MusicVolume;
 
@@ -780,23 +807,6 @@ namespace TanksRebirth.GameContent.UI
             return extank;
         }
 
-        public static void AddMainMenuTank()
-        {
-
-            MainMenuTank = new PlayerTank(PlayerType.Blue)
-            {
-                IsIngame = false,
-                Dead = false,
-
-                TurretRotation = 0f,
-
-                Projection = Projection,
-                View = ForwardView
-            };
-
-            tanks.Add(MainMenuTank);
-        }
-
         public static void RemoveAllMenuTanks()
         {
             for (int i = 0; i < tanks.Count; i++)
@@ -829,6 +839,8 @@ namespace TanksRebirth.GameContent.UI
             "j - overhead level editor view (level editor) (for now)\n" +
             ", and . - change block heights\n\n" +
             "Also, ahead of time- sorry if you have a < 66% keyboard!";
+
+        private static int _oldwheel;
         public static void Render()
         {
             if (Active)
@@ -881,7 +893,36 @@ namespace TanksRebirth.GameContent.UI
                         }
                     }
                 }
+                if (campaignNames.Count > 0)
+                {
+                    static string getSuffix(int num)
+                    {
+                        var str = num.ToString();
+
+                        if (num < 10 && num > 13)
+                        {
+                            if (str.EndsWith('1'))
+                                return "st";
+                            if (str.EndsWith('2'))
+                                return "nd";
+                            if (str.EndsWith('3'))
+                                return "rd";
+                            else
+                                return "th";
+                        }
+                        else
+                            return "th";
+                    }
+
+                    if (_oldwheel != Input.DeltaScrollWheel)
+                        MissionCheckpoint += Input.DeltaScrollWheel - _oldwheel;
+                    
+                    TankGame.spriteBatch.DrawString(TankGame.TextFont, $"You can scroll with your mouse to skip to a certain mission." +
+                        $"\nCurrently, you will skip to the {MissionCheckpoint + 1}{getSuffix(MissionCheckpoint + 1)} mission in the campaign." +
+                        $"\nYou will be alerted if that mission does not exist.", new(12, 200), Color.White, new(0.75f), 0f, Vector2.Zero);
+                }
             }
+            _oldwheel = Input.DeltaScrollWheel;
         }
     }
 }

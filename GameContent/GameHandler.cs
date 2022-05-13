@@ -35,7 +35,7 @@ namespace TanksRebirth.GameContent
     {
         public static Random GameRand = new();
 
-        private static int _tankFuncDelay = 180;
+        private static int _tankFuncDelay = 190;
 
         public const int MAX_AI_TANKS = 1000;
         public const int MAX_PLAYERS = 1000;
@@ -494,7 +494,7 @@ namespace TanksRebirth.GameContent
                 element?.Draw(TankGame.spriteBatch);
 
                 if (element.HasScissor)
-                    TankGame.spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied);
+                    TankGame.spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: TankGame.DefaultRasterizer);
             }
             foreach (var element in UIElement.AllUIElements.ToList())
             {
@@ -698,7 +698,7 @@ namespace TanksRebirth.GameContent
         }
         public static void BeginIntroSequence()
         {
-            _tankFuncDelay = 180;
+            _tankFuncDelay = 190;
 
             TankMusicSystem.StopAll();
 

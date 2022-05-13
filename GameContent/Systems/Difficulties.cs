@@ -28,7 +28,8 @@ namespace TanksRebirth.GameContent.Systems
             ["ThunderMode"] = false,
             ["ThirdPerson"] = false,
             ["AiCompanion"] = false,
-            ["Shotguns"] = false
+            ["Shotguns"] = false,
+            ["Predictions"] = false,
         };
     }
 }

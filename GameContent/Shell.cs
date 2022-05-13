@@ -241,7 +241,7 @@ namespace TanksRebirth.GameContent
             {
                 if (LifeTime % nummy == 0)
                 {
-                    var p = ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
+                    var p = ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi + GameHandler.GameRand.NextFloat(-0.3f, 0.3f)).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
                     p.FaceTowardsMe = false;
                     p.Scale = new(0.3f);
                     // p.color = new Color(50, 50, 50, 150);

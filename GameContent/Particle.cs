@@ -90,13 +90,13 @@ namespace TanksRebirth.GameContent
                 effect.FogEnabled = false;
 
                 TankGame.spriteBatch.End();
-                TankGame.spriteBatch.Begin(SpriteSortMode.Deferred, isAddative ? BlendState.Additive : BlendState.NonPremultiplied, SamplerState.PointWrap, DepthStencilState.DepthRead, RasterizerState.CullNone, effect);
+                TankGame.spriteBatch.Begin(SpriteSortMode.Deferred, isAddative ? BlendState.Additive : BlendState.NonPremultiplied, SamplerState.PointWrap, DepthStencilState.DepthRead, TankGame.DefaultRasterizer, effect);
                 TankGame.spriteBatch.Draw(Texture, Vector2.Zero, null, Color * Opacity, TextureRotation, TextureOrigin != default ? TextureOrigin : Texture.Size() / 2, TextureScale == int.MinValue ? Scale.X : TextureScale, default, default);
             }
             else
             {
                 TankGame.spriteBatch.End();
-                TankGame.spriteBatch.Begin(SpriteSortMode.Deferred, isAddative ? BlendState.Additive : BlendState.NonPremultiplied);
+                TankGame.spriteBatch.Begin(SpriteSortMode.Deferred, isAddative ? BlendState.Additive : BlendState.NonPremultiplied, rasterizerState: TankGame.DefaultRasterizer);
                 TankGame.spriteBatch.Draw(Texture, GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(Position), TankGame.GameView, TankGame.GameProjection), null, Color * Opacity, TextureRotation, TextureOrigin != default ? TextureOrigin : Texture.Size() / 2, TextureScale == int.MinValue ? Scale.X : TextureScale, default, default);
             }
             TankGame.spriteBatch.End();

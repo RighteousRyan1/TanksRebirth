@@ -166,6 +166,9 @@ namespace TanksRebirth.GameContent.UI
             {
                 if (!MainMenu.Active)
                 {
+                    foreach (var elem in MainMenu.campaignNames)
+                        elem?.Remove();
+                    MainMenu.campaignNames.Clear();
                     MainMenu.Open();
                 }
                 else

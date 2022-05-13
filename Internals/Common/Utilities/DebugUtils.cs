@@ -35,9 +35,9 @@ namespace TanksRebirth.Internals.Common.Utilities
             if (beginSb)
                 sb.Begin();
 
-            var sizeAdjust = new Vector2(scale * 0.15f * (float)(GameUtils.WindowWidth / 1920f), scale * 0.15f * (float)(GameUtils.WindowHeight / 1080f));
+            var sizeAdjust = new Vector2(scale * 0.6f * (float)(GameUtils.WindowWidth / 1920f), scale * 0.6f * (float)(GameUtils.WindowHeight / 1080f));
 
-            sb.DrawString(TankGame.TextFontLarge, info.ToString(), position, color == default ? Color.White : color,  sizeAdjust, 0f, centered ? TankGame.TextFont.MeasureString(info.ToString()) / 2 : default); 
+            sb.DrawString(TankGame.TextFont, info.ToString(), position, color == default ? Color.White : color,  sizeAdjust, 0f, centered ? TankGame.TextFont.MeasureString(info.ToString()) / 2 : default); 
 
             if (beginSb)
                 sb.End();

@@ -38,6 +38,7 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
         public OggAudio(string path)
         {
             SongPath = path + ".ogg";
+            LoadSong();
         }
         private void SubmitBuffer()
         {
@@ -54,6 +55,12 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
 
                 var audioShort = _vorbis.SongBuffer;
                 byte[] audioData = new byte[_vorbis.Decoded * _vorbis.Channels * 2];
+
+                /*var s = new SoundEffect(audioData, _vorbis.SampleRate, AudioChannels.Stereo);
+                var sfx = s.CreateInstance();
+                sfx.Play();
+                sfx.Volume = 1f;*/
+
 
                 // GameContent.Systems.ChatSystem.SendMessage($"Decoded: {_vorbis.Decoded} | audioData: {audioData.Length}", Microsoft.Xna.Framework.Color.White);
 

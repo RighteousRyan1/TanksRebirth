@@ -412,6 +412,9 @@ namespace TanksRebirth.GameContent
                 Destroy(context);
         }
         public virtual void Destroy(TankHurtContext context) {
+            
+            GameHandler.OnMissionStart -= OnMissionStart;
+
             OnDestroy?.Invoke(this, new());
             var killSound1 = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_destroy");
             SoundPlayer.PlaySoundInstance(killSound1, SoundContext.Effect, 0.2f);
@@ -515,7 +518,6 @@ namespace TanksRebirth.GameContent
 
             for (int i = 0; i < ShellShootCount; i++)
             {
-                int p = 0;
                 if (i == 0)
                 {
                     var shell = new Shell(Position3D, Vector3.Zero, ShellType, this, homing: ShellHoming);

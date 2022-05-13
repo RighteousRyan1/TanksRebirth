@@ -38,7 +38,7 @@ namespace TanksRebirth
     {
         private static string GetGPU()
         {
-            if (!System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 return "Unavailable: Only supported on Windows";
             using var searcher = new ManagementObjectSearcher("select * from Win32_VideoController");
 
@@ -51,7 +51,7 @@ namespace TanksRebirth
 
         public static string GetHardware(string hwclass, string syntax)
         {
-            if (!System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 return "Unavailable: Only supported on Windows";
             using var searcher = new ManagementObjectSearcher($"SELECT * FROM {hwclass}");
 
@@ -236,6 +236,8 @@ namespace TanksRebirth
 
                 graphics.ApplyChanges();
 
+                // var s = new Internals.Common.Framework.Audio.OggAudio(@"C:\Users\ryanr\Desktop\TanksRebirth\Content\Assets\music\amethyst1");
+                
                 base.Initialize();
             }
             catch (Exception e)
@@ -267,6 +269,8 @@ namespace TanksRebirth
             {
 
                 var s = Stopwatch.StartNew();
+
+                _cachedState = GraphicsDevice.RasterizerState;
 
                 UIElement.UIPanelBackground = GameResources.GetGameResource<Texture2D>("Assets/UIPanelBackground");
 
@@ -377,9 +381,13 @@ namespace TanksRebirth
 
         protected override void Update(GameTime gameTime)
         {
-            //try
+            try
             {
-                MouseRenderer.ShouldRender = TankGame.ThirdPerson ? (GameUI.Paused || MainMenu.Active) : true;
+
+                if (Input.AreKeysJustPressed(Keys.LeftShift, Keys.RightShift))
+                    RenderWireframe = !RenderWireframe;
+
+                MouseRenderer.ShouldRender = ThirdPerson ? (GameUI.Paused || MainMenu.Active) : true;
                 if (UIElement.delay > 0)
                     UIElement.delay--;
                 UpdateStopwatch.Start();
@@ -388,6 +396,7 @@ namespace TanksRebirth
                     Client.clientNetManager.PollEvents();
                 if (NetPlay.CurrentServer is not null)
                     Server.serverNetManager.PollEvents();
+                
                 UIElement.UpdateElements();
                 GameUI.UpdateButtons();
 
@@ -412,6 +421,7 @@ namespace TanksRebirth
                     transitionTimer = 100;
                     OverheadView = !OverheadView;
                 }
+
                 if (!ThirdPerson)
                 {
                     if (transitionTimer > 0)
@@ -446,19 +456,20 @@ namespace TanksRebirth
 
                     GameView =
                             Matrix.CreateScale(DEFAULT_ZOOM * AddativeZoom) *
-                            Matrix.CreateLookAt(new(0f, 0, 350f), Vector3.Zero, Vector3.Up) *
+                            Matrix.CreateLookAt(new(0f, 0, 350f), Vector3.Zero, Vector3.Up) * // 0, 0, 350
+                            Matrix.CreateTranslation(CameraFocusOffset.X, -CameraFocusOffset.Y + 40, 0) *
                             Matrix.CreateRotationX(CameraRotationVector.Y) *
-                            Matrix.CreateRotationY(CameraRotationVector.X) *
-                            Matrix.CreateTranslation(CameraFocusOffset.X, -CameraFocusOffset.Y + 40, 0);
+                            Matrix.CreateRotationY(CameraRotationVector.X);
                     //Matrix.CreateTranslation(CameraFocusOffset.X, -CameraFocusOffset.Y, 0);
 
                     if (_justChanged)
                     { 
                         //if we just changed to third person, we don't want to reset the camera
                         GameProjection = Matrix.CreateOrthographic(GameUtils.WindowWidth, GameUtils.WindowHeight, -2000, 5000);
+
                         _justChanged = false;
                     }
-                }
+                }                                                                                   
                 else
                 {
                     var pos = Vector3.Zero;
@@ -567,10 +578,10 @@ namespace TanksRebirth
 
                 _wasActive = IsActive;
             }
-            //catch (Exception e)
+            catch (Exception e)
             {
-                //GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
-                //throw;
+                GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
+                throw;
             }
         }
 
@@ -654,10 +665,17 @@ namespace TanksRebirth
 
         public static Color ClearColor = Color.Black;
 
+        public static bool RenderWireframe = false;
+
+        public static RasterizerState _cachedState;
+
+        public static RasterizerState DefaultRasterizer => RenderWireframe ? new() { FillMode = FillMode.WireFrame } : RasterizerState.CullNone;
+
         protected override void Draw(GameTime gameTime)
         {
             try
             {
+                // GraphicsDevice.RasterizerState = Default;
                 RenderStopwatch.Start();
 
                 Matrix2D = Matrix.CreateOrthographicOffCenter(0, GameUtils.WindowWidth, GameUtils.WindowHeight, 0, -1, 1)
@@ -668,7 +686,7 @@ namespace TanksRebirth
                 DecalSystem.UpdateRenderTarget();
 
 
-                spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied/*, transformMatrix: Matrix2D*/);
+                spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied/*, transformMatrix: Matrix2D*/, rasterizerState: DefaultRasterizer);
 
 
 
@@ -700,7 +718,7 @@ namespace TanksRebirth
 
                 base.Draw(gameTime);
 
-                spriteBatch.Begin(blendState: BlendState.AlphaBlend, effect: GameShaders.MouseShader);
+                spriteBatch.Begin(blendState: BlendState.AlphaBlend, effect: GameShaders.MouseShader, rasterizerState: DefaultRasterizer);
 
                 MouseRenderer.DrawMouse();
 
