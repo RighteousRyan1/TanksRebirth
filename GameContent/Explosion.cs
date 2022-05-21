@@ -108,20 +108,20 @@ namespace TanksRebirth.GameContent
                 }
                 foreach (var tank in GameHandler.AllTanks)
                 {
-                    if (tank is not null && Vector2.Distance(tank.Position, Position) < Scale * 9)
-                        if (!tank.Dead)
+                    if (tank is not null && Vector2.Distance(tank.Properties.Position, Position) < Scale * 9)
+                        if (!tank.Properties.Dead)
                             if (!HasHit[tank.WorldId])
-                                if (tank.VulnerableToMines)
+                                if (tank.Properties.VulnerableToMines)
                                 {
                                     HasHit[tank.WorldId] = true;
                                     if (Source is null)
-                                        tank.Damage(TankHurtContext.Other);
+                                        tank.Damage(null);
                                     else if (Source is not null)
                                     {
                                         if (Source is AITank)
-                                            tank.Damage(TankHurtContext.ByAiMine);
+                                            tank.Damage(new TankHurtContext_Mine(false, Source.WorldId));
                                         else
-                                            tank.Damage(TankHurtContext.ByPlayerMine);
+                                            tank.Damage(new TankHurtContext_Mine(true, Source.WorldId));
                                     }
                                 }
                 }

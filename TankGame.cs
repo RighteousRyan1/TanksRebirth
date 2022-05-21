@@ -27,6 +27,7 @@ using TanksRebirth.GameContent.Systems;
 using TanksRebirth.Net;
 using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework.Audio;
+using TanksRebirth.IO;
 
 namespace TanksRebirth
 {
@@ -102,9 +103,6 @@ namespace TanksRebirth
         public static readonly string SysKeybd = $"Keyboard: {GetHardware("Win32_Keyboard", "Name")}";
         public static readonly string SysMouse = $"Mouse: {GetHardware("Win32_PointingDevice", "Name")}";
 
-        private static Stopwatch RenderStopwatch { get; } = new();
-        private static Stopwatch UpdateStopwatch { get; } = new();
-
         public static TimeSpan RenderTime { get; private set; }
         public static TimeSpan LogicTime { get; private set; }
 
@@ -140,6 +138,7 @@ namespace TanksRebirth
         public JsonHandler<GameConfig> SettingsHandler;
 
         public static readonly string SaveDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "My Games", "Tanks Rebirth");
+        public static GameData GameData { get; private set; } = new();
 
         public static Matrix GameView;
         public static Matrix GameProjection;
@@ -267,7 +266,6 @@ namespace TanksRebirth
         {
             try
             {
-
                 var s = Stopwatch.StartNew();
 
                 _cachedState = GraphicsDevice.RasterizerState;
@@ -340,6 +338,8 @@ namespace TanksRebirth
 
                 cunoSucksElement = new() { IsVisible = false };
 
+                GameData.Serialize();
+
                 s.Stop();
             }
             catch (Exception e)
@@ -390,7 +390,6 @@ namespace TanksRebirth
                 MouseRenderer.ShouldRender = ThirdPerson ? (GameUI.Paused || MainMenu.Active) : true;
                 if (UIElement.delay > 0)
                     UIElement.delay--;
-                UpdateStopwatch.Start();
 
                 if (NetPlay.CurrentClient is not null)
                     Client.clientNetManager.PollEvents();
@@ -473,9 +472,9 @@ namespace TanksRebirth
                 else
                 {
                     var pos = Vector3.Zero;
-                    if (GameHandler.AllPlayerTanks.Count(x => x is not null && !x.Dead) > 0)
+                    if (GameHandler.AllPlayerTanks.Count(x => x is not null && !x.Properties.Dead) > 0)
                     {
-                        pos = GameHandler.AllPlayerTanks[0].Position.ExpandZ();
+                        pos = GameHandler.AllPlayerTanks[0].Properties.Position.ExpandZ();
                         /*GameCamera.SetPosition(GameHandler.AllPlayerTanks[0].Position.ExpandZ());
                         GameCamera.SetLookAt(GameHandler.AllPlayerTanks[0].Position.ExpandZ());
                         GameCamera.Zoom(DEFAULT_ZOOM * AddativeZoom);
@@ -490,7 +489,7 @@ namespace TanksRebirth
                         GameCamera.SetViewingDistances(-2000f, 5000f);*/
 
                         GameView = Matrix.CreateLookAt(pos,
-                            pos + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-GameHandler.AllPlayerTanks[0].TurretRotation).ExpandZ()
+                            pos + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-GameHandler.AllPlayerTanks[0].Properties.TurretRotation).ExpandZ()
                             , Vector3.Up) * Matrix.CreateScale(AddativeZoom) * Matrix.CreateRotationX(CameraRotationVector.Y - MathHelper.PiOver4) * Matrix.CreateRotationY(CameraRotationVector.X) * Matrix.CreateTranslation(0, -20, -40);
                         if (_justChanged)
                         {
@@ -500,7 +499,7 @@ namespace TanksRebirth
                     }
                     else
                     {
-                        var x = GameHandler.AllAITanks.FirstOrDefault(x => x is not null && !x.Dead);
+                        var x = GameHandler.AllAITanks.FirstOrDefault(x => x is not null && !x.Properties.Dead);
 
                         if (x is not null && Array.IndexOf(GameHandler.AllAITanks, x) > -1)
                         {
@@ -526,10 +525,10 @@ namespace TanksRebirth
 
                             GameCamera.SetCameraType(CameraType.FieldOfView);*/
 
-                            pos = x.Position.ExpandZ();
+                            pos = x.Properties.Position.ExpandZ();
 
                             GameView = Matrix.CreateLookAt(pos,
-                                pos + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-x.TurretRotation).ExpandZ()
+                                pos + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-x.Properties.TurretRotation).ExpandZ()
                                 , Vector3.Up) * Matrix.CreateScale(AddativeZoom) * Matrix.CreateRotationX(CameraRotationVector.Y - MathHelper.PiOver4) * Matrix.CreateRotationY(CameraRotationVector.X) * Matrix.CreateTranslation(0, -20, -40) * Matrix.CreateScale(AddativeZoom);
                             if (_justChanged)
                             {
@@ -570,9 +569,7 @@ namespace TanksRebirth
                 //GameView = GameCamera.GetView();
                 //GameProjection = GameCamera.GetProjection();
 
-                LogicTime = UpdateStopwatch.Elapsed;
-
-                UpdateStopwatch.Stop();
+                LogicTime = gameTime.ElapsedGameTime;
 
                 LogicFPS = Math.Round(1f / gameTime.ElapsedGameTime.TotalSeconds);
 
@@ -587,6 +584,21 @@ namespace TanksRebirth
 
         public void FixedUpdate(GameTime gameTime)
         {
+            /*
+            if (Input.KeyJustPressed(Keys.Up))
+            {
+                if (GameHandler.LoadedCampaign != null)
+                {
+                    using var writer = new BinaryWriter(File.Open(Path.Combine(SaveDirectory, "debug_campaign.camp"), FileMode.OpenOrCreate));
+
+                    // eventual .campaign format
+                    for (int i = 0; i < GameHandler.LoadedCampaign.CachedMissions.Length; i++)
+                    {
+                        var mission = GameHandler.LoadedCampaign.CachedMissions[i];
+                    }
+                }
+            }*/
+
             GameUpdateTime++;
 
             GameShaders.UpdateShaders();
@@ -608,22 +620,22 @@ namespace TanksRebirth
                 {
                     foreach (var tnk in GameHandler.AllTanks)
                     {
-                        if (tnk is not null && !tnk.Dead)
+                        if (tnk is not null && !tnk.Properties.Dead)
                         {
-                            if (GameUtils.GetMouseToWorldRay().Intersects(tnk.Worldbox).HasValue)
+                            if (GameUtils.GetMouseToWorldRay().Intersects(tnk.Properties.Worldbox).HasValue)
                             {
                                 if (Input.KeyJustPressed(Keys.K))
                                 {
                                     // var tnk = WPTR.AllAITanks.FirstOrDefault(tank => tank is not null && !tank.Dead && tank.tier == AITank.GetHighestTierActive());
 
                                     if (Array.IndexOf(GameHandler.AllTanks, tnk) > -1)
-                                        tnk?.Destroy(TankHurtContext.Other);
+                                        tnk?.Destroy(null); // hmmm
                                 }
 
                                 if (Input.CanDetectClick(rightClick: true))
                                 {
-                                    tnk.TankRotation += MathHelper.PiOver2;
-                                    tnk.TurretRotation += MathHelper.PiOver2;
+                                    tnk.Properties.TankRotation += MathHelper.PiOver2;
+                                    tnk.Properties.TurretRotation += MathHelper.PiOver2;
                                     if (tnk is AITank ai)
                                     {
                                         ai.TargetTurretRotation += MathHelper.PiOver2;
@@ -634,17 +646,17 @@ namespace TanksRebirth
                                         if (ai.TargetTankRotation >= MathHelper.Tau)
                                             ai.TargetTankRotation -= MathHelper.Tau;
                                     }
-                                    if (tnk.TankRotation >= MathHelper.Tau)
-                                        tnk.TankRotation -= MathHelper.Tau;
+                                    if (tnk.Properties.TankRotation >= MathHelper.Tau)
+                                        tnk.Properties.TankRotation -= MathHelper.Tau;
 
-                                    if (tnk.TurretRotation >= MathHelper.Tau)
-                                        tnk.TurretRotation -= MathHelper.Tau;
+                                    if (tnk.Properties.TurretRotation >= MathHelper.Tau)
+                                        tnk.Properties.TurretRotation -= MathHelper.Tau;
                                 }
 
-                                tnk.IsHoveredByMouse = true;
+                                tnk.Properties.IsHoveredByMouse = true;
                             }
                             else
-                                tnk.IsHoveredByMouse = false;
+                                tnk.Properties.IsHoveredByMouse = false;
                         }
                     }
                 }
@@ -676,7 +688,6 @@ namespace TanksRebirth
             try
             {
                 // GraphicsDevice.RasterizerState = Default;
-                RenderStopwatch.Start();
 
                 Matrix2D = Matrix.CreateOrthographicOffCenter(0, GameUtils.WindowWidth, GameUtils.WindowHeight, 0, -1, 1)
                     * Matrix.CreateScale(UiScale);
@@ -729,9 +740,7 @@ namespace TanksRebirth
                 foreach (var qu in Quad.quads)
                     qu.Render();
 
-                RenderTime = RenderStopwatch.Elapsed;
-
-                RenderStopwatch.Stop();
+                RenderTime = gameTime.ElapsedGameTime;
                 RenderFPS = Math.Round(1f / gameTime.ElapsedGameTime.TotalSeconds);
             }
             catch (Exception e)

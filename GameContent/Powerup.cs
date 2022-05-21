@@ -103,7 +103,7 @@ namespace TanksRebirth.GameContent
             }
             else
             {
-                if (GameHandler.AllTanks.TryGetFirst(tnk => tnk is not null && Vector2.Distance(Position, tnk.Position) <= pickupRadius, out Tank tank))
+                if (GameHandler.AllTanks.TryGetFirst(tnk => tnk is not null && Vector2.Distance(Position, tnk.Properties.Position) <= pickupRadius, out Tank tank))
                 {
                     Pickup(tank);
                 }

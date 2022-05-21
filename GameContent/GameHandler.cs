@@ -244,7 +244,7 @@ namespace TanksRebirth.GameContent
             if (Input.KeyJustPressed(Keys.OemSemicolon))
                 new Mine(null, GameUtils.GetWorldPosition(GameUtils.MousePosition).FlattenZ(), 400);
             if (Input.KeyJustPressed(Keys.OemQuotes))
-                new Shell(GameUtils.GetWorldPosition(GameUtils.MousePosition) + new Vector3(0, 11, 0), Vector3.Zero, ShellTier.Standard, null, 0, playSpawnSound: false);
+                new Shell(GameUtils.GetWorldPosition(GameUtils.MousePosition) + new Vector3(0, 11, 0), Vector3.Zero, ShellType.Standard, null, 0, playSpawnSound: false);
             if (Input.KeyJustPressed(Keys.End))
                 SpawnCrateAtMouse();
 
@@ -356,13 +356,13 @@ namespace TanksRebirth.GameContent
                 if (isExtraLifeMission)
                     restartTime += 200;
 
-                if (activeTeams.Contains(TankTeam.NoTeam) && AllTanks.Count(tnk => tnk != null && !tnk.Dead) <= 1)
+                if (activeTeams.Contains(TankTeam.NoTeam) && AllTanks.Count(tnk => tnk != null && !tnk.Properties.Dead) <= 1)
                 {
                     InMission = false;
                     // if a 1-up mission, extend by X amount of time (TBD?)
                     if (!InMission && _wasInMission)
                     {
-                        MissionEndContext cxt = AllPlayerTanks.Count(tnk => tnk != null && !tnk.Dead) <= 0 ? MissionEndContext.Lose : MissionEndContext.Win;
+                        MissionEndContext cxt = AllPlayerTanks.Count(tnk => tnk != null && !tnk.Properties.Dead) <= 0 ? MissionEndContext.Lose : MissionEndContext.Win;
                         OnMissionEnd?.Invoke(restartTime, cxt, isExtraLifeMission);
                     }
                 }
@@ -387,7 +387,7 @@ namespace TanksRebirth.GameContent
                 if (isExtraLifeMission)
                     restartTime += 200;
                 // if a player was not initially spawned in the mission, check if a team is still alive and end the mission
-                if (activeTeams.Contains(TankTeam.NoTeam) && AllTanks.Count(tnk => tnk != null && !tnk.Dead) <= 1)
+                if (activeTeams.Contains(TankTeam.NoTeam) && AllTanks.Count(tnk => tnk != null && !tnk.Properties.Dead) <= 1)
                 {
                     InMission = false;
                     // if a 1-up mission, extend by X amount of time (TBD?)
@@ -408,7 +408,7 @@ namespace TanksRebirth.GameContent
             if (IntermissionSystem.CurrentWaitTime == 220)
                 BeginIntroSequence();
             if (IntermissionSystem.CurrentWaitTime == IntermissionSystem.WaitTime / 2 && IntermissionSystem.CurrentWaitTime != 0)
-                LoadedCampaign.SetupLoadedMission(AllPlayerTanks.Count(tnk => tnk != null && !tnk.Dead) > 0);
+                LoadedCampaign.SetupLoadedMission(AllPlayerTanks.Count(tnk => tnk != null && !tnk.Properties.Dead) > 0);
             if (IntermissionSystem.CurrentWaitTime > 240 && IntermissionSystem.CurrentWaitTime < IntermissionSystem.WaitTime - 150)
             {
                 if (PlayerTank.Lives <= 0)
@@ -580,10 +580,10 @@ namespace TanksRebirth.GameContent
 
         private static readonly PowerupTemplate[] powerups =
         {
-             new(1000, 50f, (tnk) => { tnk.MaxSpeed *= 2; }, (tnk) => { tnk.MaxSpeed /= 2; }) { Name = "Speed" },
-             new(1000, 50f, (tnk) => { tnk.Invisible = !tnk.Invisible; }, (tnk) => tnk.Invisible = !tnk.Invisible) { Name = "InvisSwap" },
-             new(1000, 50f, (tnk) => { tnk.ShellHoming.Radius = 150f; tnk.ShellHoming.Speed = tnk.ShellSpeed; tnk.ShellHoming.Power = 1f; }, (tnk) => tnk.ShellHoming = new()) { Name = "Homing" },
-             new(1000, 50f, (tnk) => { if (tnk.MaxSpeed > 0) tnk.Stationary = true; }, (tnk) => { if (tnk.MaxSpeed > 0) tnk.Stationary = !tnk.Stationary; }) { Name = "Stationary" }
+             new(1000, 50f, (tnk) => { tnk.Properties.MaxSpeed *= 2; }, (tnk) => { tnk.Properties.MaxSpeed /= 2; }) { Name = "Speed" },
+             new(1000, 50f, (tnk) => { tnk.Properties.Invisible = !tnk.Properties.Invisible; }, (tnk) => tnk.Properties.Invisible = !tnk.Properties.Invisible) { Name = "InvisSwap" },
+             new(1000, 50f, (tnk) => { tnk.Properties.ShellHoming.Radius = 150f; tnk.Properties.ShellHoming.Speed = tnk.Properties.ShellSpeed; tnk.Properties.ShellHoming.Power = 1f; }, (tnk) => tnk.Properties.ShellHoming = new()) { Name = "Homing" },
+             new(1000, 50f, (tnk) => { if (tnk.Properties.MaxSpeed > 0) tnk.Properties.Stationary = true; }, (tnk) => { if (tnk.Properties.MaxSpeed > 0) tnk.Properties.Stationary = !tnk.Properties.Stationary; }) { Name = "Stationary" }
         };
 
         public static Lighting.LightProfile GameLight = new()
@@ -637,14 +637,12 @@ namespace TanksRebirth.GameContent
         public static PlayerTank SpawnMe()
         {
             var pos = TankGame.OverheadView ? PlacementSquare.CurrentlyHovered.Position : GameUtils.GetWorldPosition(GameUtils.MousePosition);
-            var myTank = new PlayerTank(PlayerType.Blue)
-            {
-                Team = (TankTeam)tankToSpawnTeam,
-                // Position = pos.FlattenZ(),
-                Dead = false
-            };
+            var myTank = new PlayerTank(PlayerType.Blue);
+
+            myTank.Properties.Team = (TankTeam)tankToSpawnTeam;
+            myTank.Properties.Dead = false;
             myTank.Body.Position = pos.FlattenZ();
-            myTank.Position = pos.FlattenZ();
+            myTank.Properties.Position = pos.FlattenZ();
 
             if (Client.IsConnected())
                 Client.RequestPlayerTankSpawn(myTank);
@@ -708,7 +706,7 @@ namespace TanksRebirth.GameContent
 
             foreach (var tank in AllTanks)
                 if (tank is not null)
-                    tank.Velocity = Vector2.Zero;
+                    tank.Properties.Velocity = Vector2.Zero;
 
             CleanupScene();
 
@@ -717,17 +715,15 @@ namespace TanksRebirth.GameContent
         public static AITank SpawnTank(TankTier tier, TankTeam team)
         {
             var rot = GeometryUtils.GetPiRandom();
-            
-            var t = new AITank(tier)
-            {
-                TankRotation = rot,
-                TurretRotation = rot,
-                Team = team,
-                Dead = false
-            };
+
+            var t = new AITank(tier);
+            t.Properties.TankRotation = rot;
+            t.Properties.TurretRotation = rot;
+            t.Properties.Team = team;
+            t.Properties.Dead = false;
             var pos = new CubeMapPosition(GameRand.Next(0, 27), GameRand.Next(0, 20));
             t.Body.Position = pos;
-            t.Position = pos;
+            t.Properties.Position = pos;
 
             return t;
         }
@@ -737,14 +733,15 @@ namespace TanksRebirth.GameContent
 
             var x = new AITank(tier)
             {
-                TankRotation = rot,
-                TargetTankRotation = rot - MathHelper.Pi,
-                TurretRotation = -rot,
-                Team = team,
-                Dead = false,
+                TargetTankRotation = rot - MathHelper.Pi
             };
+            x.Properties.TankRotation = rot;
+            x.Properties.TurretRotation = -rot;
+
+            x.Properties.Team = team;
+            x.Properties.Dead = false;
             x.Body.Position = position.FlattenZ();
-            x.Position = position.FlattenZ();
+            x.Properties.Position = position.FlattenZ();
             return x;
         }
         public static void SpawnTankPlethorae(bool useCurTank = false)
@@ -753,16 +750,13 @@ namespace TanksRebirth.GameContent
             {
                 var random = new CubeMapPosition(GameRand.Next(0, 23),GameRand.Next(0, 18));
                 var rot = GeometryUtils.GetPiRandom();
-                var t = new AITank(useCurTank ? (TankTier)tankToSpawnType : AITank.PickRandomTier())
-                {
-                    TankRotation = rot,
-                    TurretRotation = rot,
-                    Position = random,
-                    Dead = false,
-                    Team = useCurTank ? (TankTeam)tankToSpawnTeam : TankTeam.NoTeam
-                };
+                var t = new AITank(useCurTank ? (TankTier)tankToSpawnType : AITank.PickRandomTier());
+                t.Properties.TankRotation = rot;
+                t.Properties.TurretRotation = rot;
+                t.Properties.Dead = false;
+                t.Properties.Team = useCurTank ? (TankTeam)tankToSpawnTeam : TankTeam.NoTeam;
                 t.Body.Position = random;
-                t.Position = random;
+                t.Properties.Position = random;
             }
         }
 

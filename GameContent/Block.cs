@@ -275,7 +275,7 @@ namespace TanksRebirth.GameContent
                         _tankCooldowns[tnk.WorldId]--;
                         if (_tankCooldowns[tnk.WorldId] <= 0)
                         {
-                            if (Vector2.Distance(tnk.Position, Position) < FULL_BLOCK_SIZE)
+                            if (Vector2.Distance(tnk.Properties.Position, Position) < FULL_BLOCK_SIZE)
                             {
                                 var otherTp = AllBlocks.FirstOrDefault(bl => bl != null && bl != this && bl.TpLink == TpLink);
 
@@ -283,7 +283,7 @@ namespace TanksRebirth.GameContent
                                 {
                                     otherTp._tankCooldowns[tnk.WorldId] = 120;
 
-                                    tnk.Position = otherTp.Position;
+                                    tnk.Properties.Position = otherTp.Position;
                                     tnk.Body.Position = otherTp.Position;
                                 }
                             }

@@ -12,6 +12,13 @@ namespace TanksRebirth.Internals.Common.Utilities
 {
     public static class IOUtils
     {
+        public static byte[] ToAsciiBytes(string input)
+        {
+            List<byte> vs = new();
+            for (int i = 0; i < input.Length; i++)
+                vs.Add(Convert.ToByte(input[i]));
+            return vs.ToArray();
+        }
         public static string[] GetSubFolders(string root, bool getName = false)
         {
             var rootGotten = Directory.GetDirectories(root);

@@ -119,9 +119,9 @@ namespace TanksRebirth.GameContent
                         if (i < 3)
                         {
                             effect.World = Matrix.CreateRotationX(-MathHelper.PiOver2)
-                                 * Matrix.CreateRotationY(-Host.TankRotation)
+                                 * Matrix.CreateRotationY(-Host.Properties.TankRotation)
                                  * Matrix.CreateScale(scale)
-                                 * Matrix.CreateTranslation(Host.Position3D + offset[i].RotatedByRadians(Host.TankRotation).ExpandZ());
+                                 * Matrix.CreateTranslation(Host.Position3D + offset[i].RotatedByRadians(Host.Properties.TankRotation).ExpandZ());
                         }
                         //}
                         effect.View = Host.View;

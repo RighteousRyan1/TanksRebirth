@@ -100,12 +100,12 @@ namespace TanksRebirth.GameContent.Systems
             writer.Write(TankGame.LevelEditorVersion);
             writer.Write(name);
 
-            int totalTanks = GameHandler.AllTanks.Count(x => x is not null && !x.Dead);
+            int totalTanks = GameHandler.AllTanks.Count(tnk => tnk is not null && !tnk.Properties.Dead);
             writer.Write(totalTanks);
             for (int i = 0; i < GameHandler.AllTanks.Length; i++)
             {
                 var tank = GameHandler.AllTanks[i];
-                if (tank is not null && !tank.Dead)
+                if (tank is not null && !tank.Properties.Dead)
                 {
                     var temp = new TankTemplate();
                     if (tank is AITank ai)
@@ -114,9 +114,9 @@ namespace TanksRebirth.GameContent.Systems
                         temp.PlayerType = player.PlayerType;
 
                     temp.IsPlayer = tank is PlayerTank;
-                    temp.Position = tank.Position;
-                    temp.Rotation = tank.TankRotation;
-                    temp.Team = tank.Team;
+                    temp.Position = tank.Properties.Position;
+                    temp.Rotation = tank.Properties.TankRotation;
+                    temp.Team = tank.Properties.Team;
 
                     writer.Write(temp.IsPlayer);
                     writer.Write(temp.Position.X);

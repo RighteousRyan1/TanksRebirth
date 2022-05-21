@@ -686,7 +686,7 @@ namespace TanksRebirth.GameContent.UI
                 if (pos.X > 500)
                     pos.X = -500;
 
-                tnk.Velocity.Y = _tnkSpeed;
+                tnk.Properties.Velocity.Y = _tnkSpeed;
 
                 tnk.Body.Position = pos;
             }
@@ -755,9 +755,9 @@ namespace TanksRebirth.GameContent.UI
                     var t = AddTravelingTank(AITank.PickRandomTier(), 1000 + (-i * 100), j * 55);
 
                     if (i % 2 == 0)
-                        t.Velocity.Y = 1f;
+                        t.Properties.Velocity.Y = 1f;
                     else
-                        t.Velocity.Y = -1f;
+                        t.Properties.Velocity.Y = -1f;
                 }
             }
 
@@ -788,16 +788,14 @@ namespace TanksRebirth.GameContent.UI
 
         public static Tank AddTravelingTank(TankTier tier, float xOffset, float yOffset)
         {
-            var extank = new AITank(tier, default, true, false)
-            {
-                Team = TankTeam.NoTeam,
-                Dead = false
-            };
+            var extank = new AITank(tier, default, true, false);
+            extank.Properties.Team = TankTeam.NoTeam;
+            extank.Properties.Dead = false;
             extank.Body.Position = new Vector2(-500 + xOffset, yOffset);
 
-            extank.TankRotation = MathHelper.PiOver2;
+            extank.Properties.TankRotation = MathHelper.PiOver2;
 
-            extank.TurretRotation = extank.TankRotation;
+            extank.Properties.TurretRotation = extank.Properties.TankRotation;
 
             extank.View = View;
             extank.Projection = Projection;

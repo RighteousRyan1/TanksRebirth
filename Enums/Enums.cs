@@ -52,7 +52,7 @@
         Red
     }
 
-    public enum ShellTier : byte
+    public enum ShellType : byte
     {
         Player,
         Standard,

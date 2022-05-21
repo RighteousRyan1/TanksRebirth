@@ -99,7 +99,7 @@ namespace TanksRebirth.GameContent
             expl.ShrinkRate = 0.5f;
 
             if (Owner != null)
-                Owner.OwnedMineCount--;
+                Owner.Properties.OwnedMineCount--;
 
             Remove();
         }
@@ -142,7 +142,7 @@ namespace TanksRebirth.GameContent
             {
                 foreach (var tank in GameHandler.AllTanks)
                 {
-                    if (tank is not null && Vector2.Distance(tank.Position, Position) < ExplosionRadius * 0.8f)
+                    if (tank is not null && Vector2.Distance(tank.Properties.Position, Position) < ExplosionRadius * 0.8f)
                     {
                         tanksNear.Add(tank);
                     }
