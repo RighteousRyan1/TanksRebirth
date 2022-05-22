@@ -2354,7 +2354,6 @@ namespace TanksRebirth.GameContent
                                 LayFootprint(Tier == TankTier.White);
                             }
                             Properties.IsTurning = true;
-                            Properties.Velocity = Vector2.Zero;
                         }
 
                         var dir = Vector2.UnitY.RotatedByRadians(Properties.TankRotation);
@@ -2374,61 +2373,68 @@ namespace TanksRebirth.GameContent
         }
         private void RenderModel()
         {
-            foreach (ModelMesh mesh in Model.Meshes)
+            TankGame.Instance.GraphicsDevice.BlendState = BlendState.AlphaBlend;
+            for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++)
             {
-                foreach (BasicEffect effect in mesh.Effects)
+                foreach (ModelMesh mesh in Model.Meshes)
                 {
-                    effect.World = boneTransforms[mesh.ParentBone.Index];
-                    effect.View = View;
-                    effect.Projection = Projection;
-
-                    effect.TextureEnabled = true;
-
-                    if (!Properties.HasTurret)
-                        if (mesh.Name == "Cannon")
-                            return;
-
-                    if (mesh.Name == "Shadow")
+                    foreach (BasicEffect effect in mesh.Effects)
                     {
-                        effect.Texture = _shadowTexture;
-                        if (Properties.IsIngame)
+                        effect.World = i == 0 ? boneTransforms[mesh.ParentBone.Index] : boneTransforms[mesh.ParentBone.Index] * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
+                        effect.View = View;
+                        effect.Projection = Projection;
+
+                        effect.TextureEnabled = true;
+
+                        if (!Properties.HasTurret)
+                            if (mesh.Name == "Cannon")
+                                return;
+
+                        if (mesh.Name == "Shadow")
                         {
-                            effect.Alpha = 0.5f;
-                            mesh.Draw();
+                            if (!Lighting.AccurateShadows)
+                            {
+                                effect.Texture = _shadowTexture;
+                                if (Properties.IsIngame)
+                                {
+                                    effect.Alpha = 0.5f;
+                                    mesh.Draw();
+                                }
+                            }
                         }
-                    }
-                    else
-                    {
-                        if (Properties.IsHoveredByMouse)
-                            effect.EmissiveColor = Color.White.ToVector3();
                         else
-                            effect.EmissiveColor = Color.Black.ToVector3();
-
-                        var tex = _tankTexture;
-
-                        effect.Texture = tex;
-
-                        effect.Alpha = 1;
-                        mesh.Draw();
-                        /*var ex = new Color[1024];
-
-                        Array.Fill(ex, new Color(GameHandler.GameRand.Next(0, 256), GameHandler.GameRand.Next(0, 256), GameHandler.GameRand.Next(0, 256)));
-
-                        effect.Texture.SetData(0, new Rectangle(0, 8, 32, 15), ex, 0, 480);*/
-
-                        /*if (Team != Team.NoTeam)
                         {
-                            var ex = new Color[1024];
+                            if (Properties.IsHoveredByMouse)
+                                effect.EmissiveColor = Color.White.ToVector3();
+                            else
+                                effect.EmissiveColor = Color.Black.ToVector3();
 
-                            Array.Fill(ex, (Color)typeof(Color).GetProperty(Team.ToString(), System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public).GetValue(null));
+                            var tex = _tankTexture;
 
-                            tex.SetData(0, new Rectangle(0, 0, 32, 9), ex, 0, 288);
-                            tex.SetData(0, new Rectangle(0, 23, 32, 9), ex, 0, 288);
-                        }*/
-                        // removed temporarily
+                            effect.Texture = tex;
+
+                            effect.Alpha = 1;
+                            mesh.Draw();
+                            /*var ex = new Color[1024];
+
+                            Array.Fill(ex, new Color(GameHandler.GameRand.Next(0, 256), GameHandler.GameRand.Next(0, 256), GameHandler.GameRand.Next(0, 256)));
+
+                            effect.Texture.SetData(0, new Rectangle(0, 8, 32, 15), ex, 0, 480);*/
+
+                            /*if (Team != Team.NoTeam)
+                            {
+                                var ex = new Color[1024];
+
+                                Array.Fill(ex, (Color)typeof(Color).GetProperty(Team.ToString(), System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public).GetValue(null));
+
+                                tex.SetData(0, new Rectangle(0, 0, 32, 9), ex, 0, 288);
+                                tex.SetData(0, new Rectangle(0, 23, 32, 9), ex, 0, 288);
+                            }*/
+                            // removed temporarily
+                        }
+
+                        effect.SetDefaultGameLighting_IngameEntities();
                     }
-
-                    effect.SetDefaultGameLighting_IngameEntities();
                 }
             }
         }
@@ -2497,6 +2503,7 @@ namespace TanksRebirth.GameContent
                 $"Team: {Properties.Team}",
                 $"Armor: {(Properties.Armor != null ? Properties.Armor.HitPoints : "N/A")}",
                 $"Rotation/Target: {Properties.TankRotation}/{TargetTankRotation + MathHelper.Pi}",
+                $"Speed/Max: {Properties.Speed}/{Properties.MaxSpeed}"
             };
 
             for (int i = 0; i < info.Length; i++)

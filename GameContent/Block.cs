@@ -199,25 +199,29 @@ namespace TanksRebirth.GameContent
                 World = Matrix.CreateScale(0.62f) * Matrix.CreateTranslation(Position3D - _offset);
                 Projection = TankGame.GameProjection;
                 View = TankGame.GameView;
-                foreach (var mesh in model.Meshes)
+
+                for (int i = 0; i < /*(Lighting.AccurateShadows ? 2 : 1)*/ 1; i++) // shadows later if i can fix it
                 {
-                    foreach (BasicEffect effect in mesh.Effects)
+                    foreach (var mesh in model.Meshes)
                     {
-                        effect.View = TankGame.GameView;
-                        effect.World = World;
-                        effect.Projection = TankGame.GameProjection;
+                        foreach (BasicEffect effect in mesh.Effects)
+                        {
+                            effect.View = TankGame.GameView;
+                            effect.World = i == 0 ? World : World * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0) * Matrix.CreateScale(1, 1, (float)Stack / 7f);
+                            effect.Projection = TankGame.GameProjection;
 
-                        effect.TextureEnabled = true;
-                        effect.Texture = meshTexture;
+                            effect.TextureEnabled = true;
+                            effect.Texture = meshTexture;
 
-                        effect.SetDefaultGameLighting_IngameEntities(8f);
+                            effect.SetDefaultGameLighting_IngameEntities(8f);
 
-                        effect.DirectionalLight0.Direction *= 0.1f;
+                            effect.DirectionalLight0.Direction *= 0.1f;
 
-                        effect.Alpha = 1f;
+                            effect.Alpha = 1f;
+                        }
+
+                        mesh.Draw();
                     }
-
-                    mesh.Draw();
                 }
             }
             else

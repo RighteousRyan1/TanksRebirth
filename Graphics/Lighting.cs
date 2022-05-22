@@ -45,6 +45,10 @@ namespace TanksRebirth.Graphics
 
         }
 
+        public static bool AccurateShadows = false;
+
+        public static Vector3 AccurateLightingDirection = new(0, 1, -1);
+
         public static Color LightColor = DefaultLightingColor;
         public static float ColorBrightness = 1f;
 

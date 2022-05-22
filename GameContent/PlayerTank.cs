@@ -132,6 +132,17 @@ namespace TanksRebirth.GameContent
 
             base.Update();
 
+            CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(Properties.TurretRotation + Properties.TankRotation);
+            Model.Root.Transform = World;
+
+            Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
+
+            Properties.TankRotation %= MathHelper.Tau;
+            if (TargetTankRotation - Properties.TankRotation >= MathHelper.PiOver2)
+                Properties.TankRotation += MathHelper.Pi;
+            else if (TargetTankRotation - Properties.TankRotation <= -MathHelper.PiOver2)
+                Properties.TankRotation -= MathHelper.Pi;
+
             if (Properties.IsIngame)
             {
                 if (Client.IsConnected())
@@ -194,11 +205,6 @@ namespace TanksRebirth.GameContent
             //if (Client.IsConnected() && IsIngame)
             //Client.SyncPlayer(this);
 
-            CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(Properties.TurretRotation + Properties.TankRotation);
-            Model.Root.Transform = World;
-
-            Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
-
             oldPosition = Properties.Position;
         }
 
@@ -215,12 +221,6 @@ namespace TanksRebirth.GameContent
         /// </summary>
         private void ControlHandle_ConsoleController()
         {
-            Properties.TankRotation %= MathHelper.Tau;
-
-            if (TargetTankRotation - Properties.TankRotation >= MathHelper.PiOver2)
-                Properties.TankRotation += MathHelper.Pi;
-            else if (TargetTankRotation - Properties.TankRotation <= -MathHelper.PiOver2)
-                Properties.TankRotation -= MathHelper.Pi;
 
             var leftStick = Input.CurrentGamePadSnapshot.ThumbSticks.Left;
             var rightStick = Input.CurrentGamePadSnapshot.ThumbSticks.Right;
@@ -306,10 +306,6 @@ namespace TanksRebirth.GameContent
         }
         private void ControlHandle_Keybinding()
         {
-            if (TargetTankRotation - Properties.TankRotation >= MathHelper.PiOver2)
-                Properties.TankRotation += MathHelper.Pi;
-            else if (TargetTankRotation - Properties.TankRotation <= -MathHelper.PiOver2)
-                Properties.TankRotation -= MathHelper.Pi;
 
             if (controlMine.JustPressed)
                 LayMine();
@@ -508,52 +504,58 @@ namespace TanksRebirth.GameContent
 
         private void RenderModel()
         {
-            foreach (ModelMesh mesh in Model.Meshes)
+            for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++)
             {
-                foreach (BasicEffect effect in mesh.Effects)
+                foreach (ModelMesh mesh in Model.Meshes)
                 {
-                    effect.World = boneTransforms[mesh.ParentBone.Index];
-                    effect.View = View;
-                    effect.Projection = Projection;
-                    effect.TextureEnabled = true;
-
-                    if (!Properties.HasTurret)
-                        if (mesh.Name == "Cannon")
-                            return;
-
-                    if (mesh.Name != "Shadow")
+                    foreach (BasicEffect effect in mesh.Effects)
                     {
-                        effect.Alpha = 1f;
-                        effect.Texture = _tankColorTexture;
+                        effect.World = i == 0 ? boneTransforms[mesh.ParentBone.Index] : boneTransforms[mesh.ParentBone.Index] * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
+                        effect.View = View;
+                        effect.Projection = Projection;
+                        effect.TextureEnabled = true;
 
-                        if (Properties.IsHoveredByMouse)
-                            effect.EmissiveColor = Color.White.ToVector3();
-                        else
-                            effect.EmissiveColor = Color.Black.ToVector3();
+                        if (!Properties.HasTurret)
+                            if (mesh.Name == "Cannon")
+                                return;
 
-                        /*var ex = new Color[1024];
-
-                        Array.Fill(ex, Team != Team.NoTeam ? (Color)typeof(Color).GetProperty(Team.ToString(), System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public).GetValue(null) : default);
-
-                        if (Team != Team.NoTeam)
+                        if (mesh.Name != "Shadow")
                         {
-                            effect.Texture.SetData(0, new Rectangle(0, 0, 32, 9), ex, 0, 288);
-                            effect.Texture.SetData(0, new Rectangle(0, 23, 32, 9), ex, 0, 288);
-                        }*/
-                        mesh.Draw();
-                    }
+                            effect.Alpha = 1f;
+                            effect.Texture = _tankColorTexture;
 
-                    else
-                    {
-                        if (Properties.IsIngame)
-                        {
-                            effect.Alpha = 0.5f;
-                            effect.Texture = _shadowTexture;
+                            if (Properties.IsHoveredByMouse)
+                                effect.EmissiveColor = Color.White.ToVector3();
+                            else
+                                effect.EmissiveColor = Color.Black.ToVector3();
+
+                            /*var ex = new Color[1024];
+
+                            Array.Fill(ex, Team != Team.NoTeam ? (Color)typeof(Color).GetProperty(Team.ToString(), System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public).GetValue(null) : default);
+
+                            if (Team != Team.NoTeam)
+                            {
+                                effect.Texture.SetData(0, new Rectangle(0, 0, 32, 9), ex, 0, 288);
+                                effect.Texture.SetData(0, new Rectangle(0, 23, 32, 9), ex, 0, 288);
+                            }*/
                             mesh.Draw();
                         }
-                    }
 
-                    effect.SetDefaultGameLighting_IngameEntities(specular: true, ambientMultiplier: 1.5f);
+                        else
+                        {
+                            if (!Lighting.AccurateShadows)
+                            {
+                                if (Properties.IsIngame)
+                                {
+                                    effect.Alpha = 0.5f;
+                                    effect.Texture = _shadowTexture;
+                                    mesh.Draw();
+                                }
+                            }
+                        }
+
+                        effect.SetDefaultGameLighting_IngameEntities(specular: true, ambientMultiplier: 1.5f);
+                    }
                 }
             }
         }

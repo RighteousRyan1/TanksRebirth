@@ -155,35 +155,43 @@ namespace TanksRebirth.GameContent
         internal void Render()
         {
             DebugUtils.DrawDebugString(TankGame.spriteBatch, $"Det: {DetonateTime}/{DetonateTimeMax}", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 20), 1, centered: true);
-            foreach (ModelMesh mesh in Model.Meshes)
+            for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++)
             {
-                foreach (BasicEffect effect in mesh.Effects)
+                foreach (ModelMesh mesh in Model.Meshes)
                 {
-                    effect.World = World;
-                    effect.View = View;
-                    effect.Projection = Projection;
-
-                    effect.TextureEnabled = true;
-
-                    if (mesh == MineMesh)
+                    foreach (BasicEffect effect in mesh.Effects)
                     {
-                        if (!_tickRed)
+                        effect.World = i == 0 ? World : World * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
+                        effect.View = View;
+                        effect.Projection = Projection;
+
+                        effect.TextureEnabled = true;
+
+                        if (mesh == MineMesh)
                         {
-                            effect.EmissiveColor = new Vector3(1, 1, 0) * GameHandler.GameLight.Brightness;
+                            if (!_tickRed)
+                            {
+                                effect.EmissiveColor = new Vector3(1, 1, 0) * GameHandler.GameLight.Brightness;
+                            }
+                            else
+                            {
+                                effect.EmissiveColor = new Vector3(1, 0, 0) * GameHandler.GameLight.Brightness;
+                            }
+                            effect.Texture = _mineTexture;
+
+                            mesh.Draw();
                         }
                         else
                         {
-                            effect.EmissiveColor = new Vector3(1, 0, 0) * GameHandler.GameLight.Brightness;
+                            if (!Lighting.AccurateShadows)
+                            {
+                                effect.Texture = _envTexture;
+                                mesh.Draw();
+                            }
                         }
-                        effect.Texture = _mineTexture;
+                        effect.SetDefaultGameLighting_IngameEntities();
                     }
-                    else
-                    {
-                        effect.Texture = _envTexture;
-                    }
-                    effect.SetDefaultGameLighting_IngameEntities();
                 }
-                mesh.Draw();
             }
         }
     }

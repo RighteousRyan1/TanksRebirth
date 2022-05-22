@@ -507,7 +507,7 @@ namespace TanksRebirth.GameContent
                         else
                         {
                             Destroy();
-                            tank.Damage(Owner is AITank ? new TankHurtContext_Bullet(false, RicochetsLeft, Tier, Owner.WorldId) : new TankHurtContext_Bullet(true, RicochetsLeft, Tier, Owner.WorldId));
+                            tank.Damage(Owner is AITank ? new TankHurtContext_Bullet(false, RicochetsLeft, Tier, Owner is not null ? Owner.WorldId : -1) : new TankHurtContext_Bullet(true, RicochetsLeft, Tier, Owner is not null ? Owner.WorldId : -1));
                         }
                     }
                 }
@@ -576,20 +576,24 @@ namespace TanksRebirth.GameContent
             if (DebugUtils.DebugLevel == 1 && HomeProperties.Speed > 0)
                 Collision.DoRaycast(Position2D, HomeProperties.Target, (int)HomeProperties.Radius, true);
             DebugUtils.DrawDebugString(TankGame.spriteBatch, $"RicochetsLeft: {RicochetsLeft}\nTier: {Tier}", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 20), 1, centered: true);
-            foreach (ModelMesh mesh in Model.Meshes)
+
+            for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++)
             {
-                foreach (BasicEffect effect in mesh.Effects)
+                foreach (ModelMesh mesh in Model.Meshes)
                 {
-                    effect.World = World;
-                    effect.View = View;
-                    effect.Projection = Projection;
-                    effect.TextureEnabled = true;
+                    foreach (BasicEffect effect in mesh.Effects)
+                    {
+                        effect.World = i == 0 ? World : World * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
+                        effect.View = View;
+                        effect.Projection = Projection;
+                        effect.TextureEnabled = true;
 
-                    effect.Texture = _shellTexture;
+                        effect.Texture = _shellTexture;
 
-                    effect.SetDefaultGameLighting_IngameEntities();
+                        effect.SetDefaultGameLighting_IngameEntities();
+                    }
+                    mesh.Draw();
                 }
-                mesh.Draw();
             }
         }
     }

@@ -72,7 +72,9 @@ namespace TanksRebirth.GameContent
         {
             if (!Is2d)
             {
-                effect.World = Matrix.CreateScale(Scale) * Matrix.CreateRotationX(Roll) * Matrix.CreateRotationY(Pitch) * Matrix.CreateRotationZ(Yaw) * Matrix.CreateTranslation(Position);
+                var world =
+                    Matrix.CreateScale(Scale) * Matrix.CreateRotationX(Roll) * Matrix.CreateRotationY(Pitch) * Matrix.CreateRotationZ(Yaw) * Matrix.CreateTranslation(Position);
+                effect.World = world;
                 effect.View = TankGame.GameView;
                 effect.Projection = TankGame.GameProjection;
                 effect.TextureEnabled = true;

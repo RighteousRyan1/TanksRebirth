@@ -377,13 +377,16 @@ namespace TanksRebirth
 
         private bool _justChanged = true;
 
+        public static Vector3 ThirdPersonCameraPosition;
+
         public static Vector2 MouseVelocity => GameUtils.GetMouseVelocity(GameUtils.WindowCenter);
 
         protected override void Update(GameTime gameTime)
         {
             try
             {
-
+                if (Input.AreKeysJustPressed(Keys.LeftAlt, Keys.RightAlt))
+                    Lighting.AccurateShadows = !Lighting.AccurateShadows;
                 if (Input.AreKeysJustPressed(Keys.LeftShift, Keys.RightShift))
                     RenderWireframe = !RenderWireframe;
 
@@ -471,10 +474,9 @@ namespace TanksRebirth
                 }                                                                                   
                 else
                 {
-                    var pos = Vector3.Zero;
                     if (GameHandler.AllPlayerTanks.Count(x => x is not null && !x.Properties.Dead) > 0)
                     {
-                        pos = GameHandler.AllPlayerTanks[0].Properties.Position.ExpandZ();
+                        ThirdPersonCameraPosition = GameHandler.AllPlayerTanks[0].Properties.Position.ExpandZ();
                         /*GameCamera.SetPosition(GameHandler.AllPlayerTanks[0].Position.ExpandZ());
                         GameCamera.SetLookAt(GameHandler.AllPlayerTanks[0].Position.ExpandZ());
                         GameCamera.Zoom(DEFAULT_ZOOM * AddativeZoom);
@@ -488,8 +490,8 @@ namespace TanksRebirth
 
                         GameCamera.SetViewingDistances(-2000f, 5000f);*/
 
-                        GameView = Matrix.CreateLookAt(pos,
-                            pos + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-GameHandler.AllPlayerTanks[0].Properties.TurretRotation).ExpandZ()
+                        GameView = Matrix.CreateLookAt(ThirdPersonCameraPosition,
+                            ThirdPersonCameraPosition + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-GameHandler.AllPlayerTanks[0].Properties.TurretRotation).ExpandZ()
                             , Vector3.Up) * Matrix.CreateScale(AddativeZoom) * Matrix.CreateRotationX(CameraRotationVector.Y - MathHelper.PiOver4) * Matrix.CreateRotationY(CameraRotationVector.X) * Matrix.CreateTranslation(0, -20, -40);
                         if (_justChanged)
                         {
@@ -525,10 +527,10 @@ namespace TanksRebirth
 
                             GameCamera.SetCameraType(CameraType.FieldOfView);*/
 
-                            pos = x.Properties.Position.ExpandZ();
+                            ThirdPersonCameraPosition = x.Properties.Position.ExpandZ();
 
-                            GameView = Matrix.CreateLookAt(pos,
-                                pos + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-x.Properties.TurretRotation).ExpandZ()
+                            GameView = Matrix.CreateLookAt(ThirdPersonCameraPosition,
+                                ThirdPersonCameraPosition + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-x.Properties.TurretRotation).ExpandZ()
                                 , Vector3.Up) * Matrix.CreateScale(AddativeZoom) * Matrix.CreateRotationX(CameraRotationVector.Y - MathHelper.PiOver4) * Matrix.CreateRotationY(CameraRotationVector.X) * Matrix.CreateTranslation(0, -20, -40) * Matrix.CreateScale(AddativeZoom);
                             if (_justChanged)
                             {

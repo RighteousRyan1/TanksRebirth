@@ -606,9 +606,9 @@ namespace TanksRebirth.GameContent
         /// <summary>Whether or not the tank should become invisible at mission start.</summary>
         public bool Invisible { get; set; }
         /// <summary>How fast the tank should accelerate towards its <see cref="MaxSpeed"/>.</summary>
-        public float Acceleration { get; set; }
+        public float Acceleration { get; set; } = 0.6f;
         /// <summary>How fast the tank should decelerate when not moving.</summary>
-        public float Deceleration { get; set; }
+        public float Deceleration { get; set; } = 0.3f;
         /// <summary>The current speed of this tank.</summary>
         public float Speed { get; set; }
         /// <summary>The maximum speed this tank can achieve.</summary>
@@ -644,7 +644,7 @@ namespace TanksRebirth.GameContent
         /// <summary>The maximum angle this <see cref="Tank"/> can turn (in radians) before it has to start pivoting.</summary>
         public float MaximalTurn { get; set; }
         /// <summary>Whether or not this <see cref="Tank"/> can lay a <see cref="TankFootprint"/>.</summary>
-        public bool CanLayTread { get; set; }
+        public bool CanLayTread { get; set; } = true;
 
         public TankTeam Team { get; set; }
         /// <summary>The rotation of this <see cref="Tank"/>'s barrel. Generally should not be modified in a player context.</summary>>
