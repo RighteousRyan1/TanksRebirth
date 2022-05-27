@@ -126,14 +126,14 @@ namespace TanksRebirth.GameContent.Systems
 
         public static void DrawShadowedString(Vector2 position, Vector2 shadowDir, string text, Color color, Vector2 scale, float alpha, Vector2 origin = default)
         {
-            TankGame.spriteBatch.DrawString(TankGame.TextFontLarge, text, position + (Vector2.Normalize(shadowDir) * 10), Color.Black * alpha * 0.75f, scale, 0f, origin == default ? TankGame.TextFontLarge.MeasureString(text) / 2 : origin, 0f);
+            TankGame.SpriteRenderer.DrawString(TankGame.TextFontLarge, text, position + (Vector2.Normalize(shadowDir) * 10), Color.Black * alpha * 0.75f, scale, 0f, origin == default ? TankGame.TextFontLarge.MeasureString(text) / 2 : origin, 0f);
 
-            TankGame.spriteBatch.DrawString(TankGame.TextFontLarge, text, position, color * alpha, scale, 0f, origin == default ? TankGame.TextFontLarge.MeasureString(text) / 2 : origin, 0f);
+            TankGame.SpriteRenderer.DrawString(TankGame.TextFontLarge, text, position, color * alpha, scale, 0f, origin == default ? TankGame.TextFontLarge.MeasureString(text) / 2 : origin, 0f);
         }
         public static void DrawShadowedTexture(Texture2D texture, Vector2 position, Vector2 shadowDir, Color color, Vector2 scale, float alpha, Vector2 origin = default, bool flip = false)
         {
-            TankGame.spriteBatch.Draw(texture, position + (Vector2.Normalize(shadowDir) * 10), null, Color.Black * alpha * 0.75f, 0f, origin == default ? texture.Size() / 2 : origin, scale, flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, default);
-            TankGame.spriteBatch.Draw(texture, position, null, color * alpha, 0f, origin == default ? texture.Size() / 2 : origin, scale, flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, default);
+            TankGame.SpriteRenderer.Draw(texture, position + (Vector2.Normalize(shadowDir) * 10), null, Color.Black * alpha * 0.75f, 0f, origin == default ? texture.Size() / 2 : origin, scale, flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, default);
+            TankGame.SpriteRenderer.Draw(texture, position, null, color * alpha, 0f, origin == default ? texture.Size() / 2 : origin, scale, flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, default);
         }
 
         private static void DrawStripe(SpriteBatch spriteBatch, Color color, float offsetY, float alpha)

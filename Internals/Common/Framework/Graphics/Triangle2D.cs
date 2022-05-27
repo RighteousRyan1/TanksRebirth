@@ -76,7 +76,7 @@ namespace TanksRebirth.Internals.Common.Framework.Graphics
                 int j = 0;
                 foreach (var pos in triangle.vertices)
                 {
-                    TankGame.spriteBatch.DrawString(TankGame.TextFont, j.ToString(), pos, Color.White, new Vector2(0.5f), 0f, TankGame.TextFont.MeasureString(j.ToString()) / 2);
+                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, j.ToString(), pos, Color.White, new Vector2(0.5f), 0f, TankGame.TextFont.MeasureString(j.ToString()) / 2);
                     j++;
                 }
             }

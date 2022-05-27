@@ -129,7 +129,7 @@ namespace TanksRebirth
 
         public static TankGame Instance { get; private set; }
         public static readonly string ExePath = Assembly.GetExecutingAssembly().Location.Replace(@$"\WiiPlayTanksRemake.dll", string.Empty);
-        public static SpriteBatch spriteBatch;
+        public static SpriteBatch SpriteRenderer;
 
         public readonly GraphicsDeviceManager graphics;
 
@@ -234,7 +234,7 @@ namespace TanksRebirth
 
                 GameCamera = new Camera(GraphicsDevice);
 
-                spriteBatch = new(GraphicsDevice);
+                SpriteRenderer = new(GraphicsDevice);
 
                 graphics.PreferMultiSampling = true;
 
@@ -344,7 +344,7 @@ namespace TanksRebirth
 
                 GameHandler.ClientLog.Write($"Content loaded in {s.Elapsed}.", LogType.Debug);
 
-                DecalSystem.Initialize(spriteBatch, GraphicsDevice);
+                DecalSystem.Initialize(SpriteRenderer, GraphicsDevice);
 
                 cunoSucksElement = new() { IsVisible = false };
 
@@ -389,6 +389,8 @@ namespace TanksRebirth
 
         public static Vector2 MouseVelocity => GameUtils.GetMouseVelocity(GameUtils.WindowCenter);
 
+        public static bool SecretCosmeticSetting;
+
         protected override void Update(GameTime gameTime)
         {
             try
@@ -397,6 +399,8 @@ namespace TanksRebirth
                     Lighting.AccurateShadows = !Lighting.AccurateShadows;
                 if (Input.AreKeysJustPressed(Keys.LeftShift, Keys.RightShift))
                     RenderWireframe = !RenderWireframe;
+                if (Input.AreKeysJustPressed(Keys.NumPad4, Keys.NumPad6))
+                    SecretCosmeticSetting = !SecretCosmeticSetting;
                 if (Input.AreKeysJustPressed(Keys.LeftAlt | Keys.RightAlt, Keys.Enter))
                 {
                     graphics.IsFullScreen = !graphics.IsFullScreen;
@@ -654,12 +658,12 @@ namespace TanksRebirth
                                     if (tnk is AITank ai)
                                     {
                                         ai.TargetTurretRotation += MathHelper.PiOver2;
-                                        ai.TargetTankRotation += MathHelper.PiOver2;
+                                        ai.Properties.TargetTankRotation += MathHelper.PiOver2;
 
                                         if (ai.TargetTurretRotation >= MathHelper.Tau)
                                             ai.TargetTurretRotation -= MathHelper.Tau;
-                                        if (ai.TargetTankRotation >= MathHelper.Tau)
-                                            ai.TargetTankRotation -= MathHelper.Tau;
+                                        if (ai.Properties.TargetTankRotation >= MathHelper.Tau)
+                                            ai.Properties.TargetTankRotation -= MathHelper.Tau;
                                     }
                                     if (tnk.Properties.TankRotation >= MathHelper.Tau)
                                         tnk.Properties.TankRotation -= MathHelper.Tau;
@@ -712,27 +716,27 @@ namespace TanksRebirth
                 DecalSystem.UpdateRenderTarget();
 
 
-                spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied/*, transformMatrix: Matrix2D*/, rasterizerState: DefaultRasterizer);
+                SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied/*, transformMatrix: Matrix2D*/, rasterizerState: DefaultRasterizer);
 
 
 
                 if (DebugUtils.DebuggingEnabled)
-                    spriteBatch.DrawString(TextFont, "Debug Level: " + DebugUtils.CurDebugLabel, new Vector2(10), Color.White, new Vector2(0.6f));
-                DebugUtils.DrawDebugString(spriteBatch, $"Garbage Collection: {MemoryParser.FromMegabytes(GCMemory)} MB" +
+                    SpriteRenderer.DrawString(TextFont, "Debug Level: " + DebugUtils.CurDebugLabel, new Vector2(10), Color.White, new Vector2(0.6f));
+                DebugUtils.DrawDebugString(SpriteRenderer, $"Garbage Collection: {MemoryParser.FromMegabytes(GCMemory)} MB" +
                     $"\nProcess Memory: {MemoryParser.FromMegabytes(_memBytes)} MB", new(8, GameUtils.WindowHeight * 0.15f));
-                DebugUtils.DrawDebugString(spriteBatch, $"{SysGPU}\n{SysCPU}", new(8, GameUtils.WindowHeight * 0.2f));
+                DebugUtils.DrawDebugString(SpriteRenderer, $"{SysGPU}\n{SysCPU}", new(8, GameUtils.WindowHeight * 0.2f));
 
-                DebugUtils.DrawDebugString(spriteBatch, $"Tank Kill Counts:", new(8, GameUtils.WindowHeight * 0.05f), 2);
+                DebugUtils.DrawDebugString(SpriteRenderer, $"Tank Kill Counts:", new(8, GameUtils.WindowHeight * 0.05f), 2);
 
                 for (int i = 0; i < PlayerTank.TanksKillDict.Count; i++)
                 {
                     var tier = PlayerTank.TanksKillDict.ElementAt(i).Key;
                     var count = PlayerTank.TanksKillDict.ElementAt(i).Value;
 
-                    DebugUtils.DrawDebugString(spriteBatch, $"{tier}: {count}", new(8, GameUtils.WindowHeight * 0.05f + (14f*(i + 1))), 2);
+                    DebugUtils.DrawDebugString(SpriteRenderer, $"{tier}: {count}", new(8, GameUtils.WindowHeight * 0.05f + (14f*(i + 1))), 2);
                 }
 
-                DebugUtils.DrawDebugString(spriteBatch, $"Lives / StartingLives: {PlayerTank.Lives} / {PlayerTank.StartingLives}" +
+                DebugUtils.DrawDebugString(SpriteRenderer, $"Lives / StartingLives: {PlayerTank.Lives} / {PlayerTank.StartingLives}" +
                     $"\nKillCount: {PlayerTank.KillCount}" +
                     $"\n\nSaveable Game Data:" +
                     $"\nTotal / Bullet / Mine / Bounce Kills: {GameData.TotalKills} / {GameData.BulletKills} / {GameData.MineKills} / {GameData.BounceKills}" +
@@ -748,22 +752,22 @@ namespace TanksRebirth
                     var tier = GameData.TankKills.ElementAt(i).Key;
                     var count = GameData.TankKills.ElementAt(i).Value;
 
-                    DebugUtils.DrawDebugString(spriteBatch, $"{tier}: {count}", new(GameUtils.WindowWidth * 0.9f, 8 + (14f * (i + 1))), 2);
+                    DebugUtils.DrawDebugString(SpriteRenderer, $"{tier}: {count}", new(GameUtils.WindowWidth * 0.9f, 8 + (14f * (i + 1))), 2);
                 }
 
                 GraphicsDevice.DepthStencilState = new DepthStencilState() { };
 
                 GameHandler.RenderAll();
 
-                spriteBatch.End();
+                SpriteRenderer.End();
 
                 base.Draw(gameTime);
 
-                spriteBatch.Begin(blendState: BlendState.AlphaBlend, effect: GameShaders.MouseShader, rasterizerState: DefaultRasterizer);
+                SpriteRenderer.Begin(blendState: BlendState.AlphaBlend, effect: GameShaders.MouseShader, rasterizerState: DefaultRasterizer);
 
                 MouseRenderer.DrawMouse();
 
-                spriteBatch.End();
+                SpriteRenderer.End();
 
                 foreach (var triangle in Triangle2D.triangles)
                     triangle.DrawImmediate();

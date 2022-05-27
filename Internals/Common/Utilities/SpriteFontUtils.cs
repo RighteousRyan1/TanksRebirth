@@ -1,36 +1,19 @@
 ﻿using FontStashSharp;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TanksRebirth.Internals.Common.Utilities
 {
 	public static class SpriteFontUtils
 	{
-        /// <summary>
-        /// Remove non-valid font characters from the given text to be safe-to-draw
-        /// </summary>
-        /// <param name="font">Font to check valid characters</param>
-        /// <param name="text">Text to valid</param>
-        /// <param name="validText">Variable to output the valid text</param>
-        /*public static void GetSafeText(this SpriteFontBase font, string text, out string validText)
+		public static void DrawBorderedText(SpriteBatch spriteBatch, SpriteFontBase font, string text, Vector2 position, Color textColor, Color borderColor, Vector2 scale, float rotation, float borderThickness = 1f)
         {
-            validText = "";
+            // pos + new Vector2(0, 2f).RotatedByRadians(MathHelper.PiOver2 * i + MathHelper.PiOver4)
+            for (int i = 0; i < 4; i++)
+                spriteBatch.DrawString(font, text, position + new Vector2(0, 2f * borderThickness).RotatedByRadians(MathHelper.PiOver2 * i + MathHelper.PiOver4), 
+                    borderColor, scale, rotation, font.MeasureString(text) / 2, 0f);
 
-            foreach (char letter in text)
-            {
-                if (letter == '\n' || letter == '\r' || font.Characters.Contains(letter))
-                {
-                    validText += letter;
-                }
-                else
-                {
-                    validText += "?";
-                }
-            }
-        }*/
+            spriteBatch.DrawString(font, text, position, textColor, scale, rotation, font.MeasureString(text) / 2, 0f);
+        }
     }
 }

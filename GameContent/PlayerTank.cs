@@ -16,6 +16,7 @@ using TanksRebirth.Internals.Common.Framework.Input;
 using TanksRebirth.Graphics;
 using TanksRebirth.Net;
 using TanksRebirth.GameContent.Systems;
+using FontStashSharp;
 
 namespace TanksRebirth.GameContent
 {
@@ -135,9 +136,9 @@ namespace TanksRebirth.GameContent
             Model.Root.Transform = World;
 
             Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
-            if (TargetTankRotation - Properties.TankRotation >= MathHelper.PiOver2)
+            if (Properties.TargetTankRotation - Properties.TankRotation >= MathHelper.PiOver2)
                 Properties.TankRotation += MathHelper.Pi;
-            else if (TargetTankRotation - Properties.TankRotation <= -MathHelper.PiOver2)
+            else if (Properties.TargetTankRotation - Properties.TankRotation <= -MathHelper.PiOver2)
                 Properties.TankRotation -= MathHelper.Pi;
 
             if (Properties.IsIngame)
@@ -195,8 +196,6 @@ namespace TanksRebirth.GameContent
 
             timeSinceLastAction++;
 
-            Properties.Speed = Properties.Acceleration;
-
             playerControl_isBindPressed = false;
 
             //if (Client.IsConnected() && IsIngame)
@@ -233,11 +232,11 @@ namespace TanksRebirth.GameContent
 
             var norm = Vector2.Normalize(preterbedVelocity);
 
-            TargetTankRotation = norm.ToRotation() - MathHelper.PiOver2;
+            Properties.TargetTankRotation = norm.ToRotation() - MathHelper.PiOver2;
 
-            Properties.TankRotation = GameUtils.RoughStep(Properties.TankRotation, TargetTankRotation, Properties.TurningSpeed);
+            Properties.TankRotation = GameUtils.RoughStep(Properties.TankRotation, Properties.TargetTankRotation, Properties.TurningSpeed);
 
-            var rotationMet = Properties.TankRotation > TargetTankRotation - Properties.MaximalTurn && Properties.TankRotation < TargetTankRotation + Properties.MaximalTurn;
+            var rotationMet = Properties.TankRotation > Properties.TargetTankRotation - Properties.MaximalTurn && Properties.TankRotation < Properties.TargetTankRotation + Properties.MaximalTurn;
 
             if (!rotationMet)
             {
@@ -313,11 +312,11 @@ namespace TanksRebirth.GameContent
 
             var treadPlaceTimer = (int)Math.Round(14 / Properties.Velocity.Length()) != 0 ? (int)Math.Round(14 / Properties.Velocity.Length()) : 1;
 
-            TargetTankRotation = norm.ToRotation() - MathHelper.PiOver2;
+            Properties.TargetTankRotation = norm.ToRotation() - MathHelper.PiOver2;
 
-            Properties.TankRotation = GameUtils.RoughStep(Properties.TankRotation, TargetTankRotation, Properties.TurningSpeed);
+            Properties.TankRotation = GameUtils.RoughStep(Properties.TankRotation, Properties.TargetTankRotation, Properties.TurningSpeed);
 
-            var rotationMet = Properties.TankRotation > TargetTankRotation - Properties.MaximalTurn && Properties.TankRotation < TargetTankRotation + Properties.MaximalTurn;
+            var rotationMet = Properties.TankRotation > Properties.TargetTankRotation - Properties.MaximalTurn && Properties.TankRotation < Properties.TargetTankRotation + Properties.MaximalTurn;
 
             Properties.TankRotation %= MathHelper.Tau;
 
@@ -331,8 +330,6 @@ namespace TanksRebirth.GameContent
                 // treadPlaceTimer += MaxSpeed / 5;
                 if (TankGame.GameUpdateTime % treadPlaceTimer == 0)
                     LayFootprint(false);
-                Body.LinearVelocity = Vector2.Zero;
-                Properties.Velocity = Vector2.Zero;
                 Properties.IsTurning = true;
             }
             else
@@ -368,15 +365,10 @@ namespace TanksRebirth.GameContent
             if (TankGame.ThirdPerson)
                 preterbedVelocity = preterbedVelocity.RotatedByRadians(-Properties.TurretRotation + MathHelper.Pi);
 
-            Properties.Velocity = preterbedVelocity * Properties.Speed * 3;
+            Properties.Velocity = Vector2.UnitY.RotatedByRadians(Properties.TankRotation) * Properties.Speed;
             //ChatSystem.SendMessage($"{preterbedVelocity} | " + preterbedVelocity.RotatedByRadians(-TurretRotation + MathHelper.Pi), Color.White);
         }
 
-        public override void Damage(ITankHurtContext context)
-        {
-            base.Damage(context);
-            // TODO: play player tank death sound
-        }
         public override void Destroy(ITankHurtContext context)
         {
 
@@ -401,7 +393,6 @@ namespace TanksRebirth.GameContent
 
         public void UpdatePlayerMovement()
         {
-            var leftStick = Input.CurrentGamePadSnapshot.ThumbSticks.Left;
             if (!GameHandler.InMission)
                 return;
             //if (!controlDown.IsPressed && !controlUp.IsPressed && leftStick.Y == 0)
@@ -423,11 +414,6 @@ namespace TanksRebirth.GameContent
                     sfx.Pitch = Properties.TreadPitch;
                 }
             }
-        }
-
-        public override void LayFootprint(bool alt)
-        {
-            base.LayFootprint(alt);
         }
 
         private void DrawShootPath()
@@ -485,12 +471,15 @@ namespace TanksRebirth.GameContent
                 pathPos += pathDir;
                 // tainicom.Aether.Physics2D.Collision.
                 var pathPosScreen = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(pathPos.X, 11, pathPos.Y), TankGame.GameView, TankGame.GameProjection);
-                TankGame.spriteBatch.Draw(whitePixel, pathPosScreen, null, Color.White, 0, whitePixel.Size() / 2, 2 + (float)Math.Sin(i * Math.PI / 5 - TankGame.GameUpdateTime * 0.3f), default, default);
+                TankGame.SpriteRenderer.Draw(whitePixel, pathPosScreen, null, Color.White, 0, whitePixel.Size() / 2, 2 + (float)Math.Sin(i * Math.PI / 5 - TankGame.GameUpdateTime * 0.3f), default, default);
             }
         }
 
         public override void Render()
         {
+            DrawExtras();
+            if (Properties.Invisible && GameHandler.InMission)
+                return;
             for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++)
             {
                 foreach (ModelMesh mesh in Model.Meshes)
@@ -545,7 +534,6 @@ namespace TanksRebirth.GameContent
                     }
                 }
             }
-            DrawExtras();
             base.Render();
         }
 
@@ -554,19 +542,36 @@ namespace TanksRebirth.GameContent
             if (Properties.Dead)
                 return;
 
+            if (GameHandler.ShouldMissionsProgress && !GameHandler.InMission && Properties.IsIngame && !IntermissionSystem.IsAwaitingNewMission)
+            {
+                var tex1 = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/chevron_border");
+                var tex2 = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/chevron_inside");
+
+                var pos = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 125);
+
+                var playerColor = PlayerType == PlayerType.Blue ? Color.DeepSkyBlue : Color.Red;
+
+                string pText = $"P{GameHandler.AllPlayerTanks.Count(x => x is not null && !x.Properties.Dead)}";
+
+                float rotation = 0f;
+
+                bool flip = false;
+
+                if (pos.Y <= 150)
+                {
+                    flip = true;
+                    pos.Y += 225;
+                    rotation = MathHelper.Pi;
+                }
+
+                TankGame.SpriteRenderer.Draw(tex1, pos, null, Color.White, rotation, tex1.Size() / 2, 0.5f, default, default);
+                TankGame.SpriteRenderer.Draw(tex2, pos, null, playerColor, rotation, tex2.Size() / 2, 0.5f, default, default);
+
+                SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFontLarge, pText, new(pos.X, pos.Y + (flip ? 100 : -125)), playerColor, Color.White, new(1f), 0f, 2f);
+            }
+
             if (DebugUtils.DebugLevel == 1)
                 DrawShootPath();
-
-            var info = new string[]
-            {
-                $"Team: {Properties.Team}",
-                $"OwnedShellCount: {Properties.OwnedShellCount}"
-            };
-
-            // TankGame.spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), CollisionBox2D, Color.White * 0.75f);
-
-            for (int i = 0; i < info.Length; i++)
-                DebugUtils.DrawDebugString(TankGame.spriteBatch, info[i], GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, (info.Length * 20) + (i * 20)), 1, centered: true);
 
             if (Properties.Invisible && GameHandler.InMission)
                 return;

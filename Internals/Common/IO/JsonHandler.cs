@@ -44,7 +44,7 @@ namespace TanksRebirth.Internals.Common.IO
             return asDeserialized;
         }
 
-        public string ReadDeserialized<T>()
+        public string ReadDeserialized()
         {
             using StreamReader reader = File.OpenText(JsonPath);
 

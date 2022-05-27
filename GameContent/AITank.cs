@@ -1916,7 +1916,7 @@ namespace TanksRebirth.GameContent
                 if (draw)
                 {
                     var pathPosScreen = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(pathPos.X, 11, pathPos.Y), TankGame.GameView, TankGame.GameProjection);
-                    TankGame.spriteBatch.Draw(whitePixel, pathPosScreen, null, Color.White * 0.9f, 0, whitePixel.Size() / 2, /*2 + (float)Math.Sin(i * Math.PI / 5 - TankGame.GameUpdateTime * 0.1f) * */realMiss, default, default);
+                    TankGame.SpriteRenderer.Draw(whitePixel, pathPosScreen, null, Color.White * 0.9f, 0, whitePixel.Size() / 2, /*2 + (float)Math.Sin(i * Math.PI / 5 - TankGame.GameUpdateTime * 0.1f) * */realMiss, default, default);
                     // DebugUtils.DrawDebugString(TankGame.spriteBatch, $"{goneThroughTeleporter}:{(block is not null ? $"{block.Type}" : "N/A")}", GeometryUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), Matrix.CreateTranslation(pathPos.X, 0, pathPos.Y), View, Projection), 1, centered: true);
                 }
 
@@ -2000,7 +2000,7 @@ namespace TanksRebirth.GameContent
                 if (draw)
                 {
                     var pathPosScreen = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(pathPos.X, 11, pathPos.Y), TankGame.GameView, TankGame.GameProjection);
-                    TankGame.spriteBatch.Draw(whitePixel, pathPosScreen, null, Color.White, 0, whitePixel.Size() / 2, 2 + (float)Math.Sin(i * Math.PI / 5 - TankGame.GameUpdateTime * 0.3f), default, default);
+                    TankGame.SpriteRenderer.Draw(whitePixel, pathPosScreen, null, Color.White, 0, whitePixel.Size() / 2, 2 + (float)Math.Sin(i * Math.PI / 5 - TankGame.GameUpdateTime * 0.3f), default, default);
                 }
             }
             reflectPoints = list.ToArray();
@@ -2051,8 +2051,6 @@ namespace TanksRebirth.GameContent
                     {
                         _predicts = true;
                         TargetTurretRotation = rot + MathHelper.Pi;
-
-
                     }
                 }
             }
@@ -2060,7 +2058,7 @@ namespace TanksRebirth.GameContent
             var findsSelf = tanksDef.Any(tnk => tnk is not null && tnk == this);
             var findsFriendly = tanksDef.Any(tnk => tnk is not null && (tnk.Properties.Team == Properties.Team && tnk.Properties.Team != TankTeam.NoTeam));
 
-            if (findsEnemy && isEnemySpotted && !tooCloseToExplosiveShell)
+            if (findsEnemy && !tooCloseToExplosiveShell)
                 SeesTarget = true;
 
             // ChatSystem.SendMessage($"tier: {tier} | enemy: {findsEnemy} | self: {findsSelf} | friendly: {findsFriendly} | Count: {tanksDef.Count}", Color.White);
@@ -2212,7 +2210,7 @@ namespace TanksRebirth.GameContent
                         #region CubeNav
                         if (Behaviors[2].IsModOf(AiParams.BlockReadTime) && !isMineNear && !isShellNear)
                         {
-                            pathBlocked = IsObstacleInWay(AiParams.BlockWarinessDistance, Vector2.UnitY.RotatedByRadians(-TargetTankRotation), out var travelPath, out var refPoints);
+                            pathBlocked = IsObstacleInWay(AiParams.BlockWarinessDistance, Vector2.UnitY.RotatedByRadians(-Properties.TargetTankRotation), out var travelPath, out var refPoints);
                             if (pathBlocked)
                             {
                                 if (refPoints.Length > 0)
@@ -2222,7 +2220,7 @@ namespace TanksRebirth.GameContent
                                     var refAngle = GameUtils.DirectionOf(Properties.Position, travelPath - new Vector2(400, 0)).ToRotation();
 
                                     // AngleSmoothStep(TargetTankRotation, refAngle, refAngle / 3);
-                                    GameUtils.RoughStep(ref TargetTankRotation, TargetTankRotation <= 0 ? -refAngle     : refAngle, refAngle / 6);
+                                    GameUtils.RoughStep(ref Properties.TargetTankRotation, Properties.TargetTankRotation <= 0 ? -refAngle : refAngle, refAngle / 6);
                                 }
                             }
 
@@ -2246,7 +2244,7 @@ namespace TanksRebirth.GameContent
 
                                     var random = GameHandler.GameRand.NextFloat(-AiParams.MeanderAngle / 2, AiParams.MeanderAngle / 2);
 
-                                    TargetTankRotation += random;
+                                    Properties.TargetTankRotation += random;
                                 }
                                 if (targetExists)
                                 {
@@ -2263,7 +2261,7 @@ namespace TanksRebirth.GameContent
 
                                             var meanderRandom = dir != -100 ? random + (dir + MathHelper.PiOver2) + (0.2f * AiParams.PursuitLevel) : random;
 
-                                            TargetTankRotation = meanderRandom;
+                                            Properties.TargetTankRotation = meanderRandom;
                                         }
                                     }
                                 }
@@ -2281,7 +2279,7 @@ namespace TanksRebirth.GameContent
                             {
                                 var direction = Vector2.UnitY.RotatedByRadians(shell.Position2D.DirectionOf(Properties.Position, false).ToRotation());
 
-                                TargetTankRotation = direction.ToRotation();
+                                Properties.TargetTankRotation = direction.ToRotation();
                             }
                         }
 
@@ -2299,7 +2297,7 @@ namespace TanksRebirth.GameContent
                                     {
                                         if (nearDestructibleObstacle)
                                         {
-                                            TargetTankRotation = new Vector2(100, 100).RotatedByRadians(GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi)).ExpandZ().ToRotation();
+                                            Properties.TargetTankRotation = new Vector2(100, 100).RotatedByRadians(GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi)).ExpandZ().ToRotation();
                                             LayMine();
                                         }
                                     }
@@ -2307,7 +2305,7 @@ namespace TanksRebirth.GameContent
                                     {
                                         if (GameHandler.GameRand.NextFloat(0, 1) <= AiParams.MinePlacementChance)
                                         {
-                                            TargetTankRotation = new Vector2(100, 100).RotatedByRadians(GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi)).ExpandZ().ToRotation();
+                                            Properties.TargetTankRotation = new Vector2(100, 100).RotatedByRadians(GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi)).ExpandZ().ToRotation();
                                             LayMine();
                                         }
                                     }
@@ -2320,7 +2318,7 @@ namespace TanksRebirth.GameContent
                             {
                                 var direction = Vector2.UnitY.RotatedByRadians(mine.Position.DirectionOf(Properties.Position, false).ToRotation());
 
-                                TargetTankRotation = direction.ToRotation();
+                                Properties.TargetTankRotation = direction.ToRotation();
                             }
                         }
                         #endregion
@@ -2380,7 +2378,7 @@ namespace TanksRebirth.GameContent
 
                     #region TankRotation
 
-                    var targ = TargetTankRotation + MathHelper.Pi;
+                    var targ = Properties.TargetTankRotation + MathHelper.Pi;
 
                     if (doMoveTowards)
                     {
@@ -2431,6 +2429,10 @@ namespace TanksRebirth.GameContent
         public override void Render()
         {
             TankGame.Instance.GraphicsDevice.BlendState = BlendState.AlphaBlend;
+            DrawExtras();
+            if (Properties.Invisible && GameHandler.InMission)
+                return;
+
             for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++)
             {
                 foreach (ModelMesh mesh in Model.Meshes)
@@ -2495,7 +2497,6 @@ namespace TanksRebirth.GameContent
                 }
             }
 
-            DrawExtras();
             base.Render();
         }
         private void DrawExtras()
@@ -2524,12 +2525,12 @@ namespace TanksRebirth.GameContent
                             Aimtarget).ToRotation() - MathHelper.PiOver2;
                         GetTanksInPath(Vector2.UnitY.RotatedByRadians(rot), out var rayEnd2, true, Vector2.Zero, pattern: x => x.IsSolid | x.Type == Block.BlockType.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
                     }
-                    DebugUtils.DrawDebugString(TankGame.spriteBatch, $"{Tier}: {poo.Count}", GeometryUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), World, View, Projection), 1, centered: true);
+                    DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"{Tier}: {poo.Count}", GeometryUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), World, View, Projection), 1, centered: true);
                     if (!Properties.Stationary)
                     {
-                        IsObstacleInWay(AiParams.BlockWarinessDistance, Vector2.UnitY.RotatedByRadians(-TargetTankRotation), out var travelPos, out var refPoints, true);
-                        DebugUtils.DrawDebugString(TankGame.spriteBatch, "TRAVELENDPOINT", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(travelPos.X, 11, travelPos.Y), View, Projection), 1, centered: true);
-                        DebugUtils.DrawDebugString(TankGame.spriteBatch, "ENDPOINT", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(rayEnd.X, 11, rayEnd.Y), View, Projection), 1, centered: true);
+                        IsObstacleInWay(AiParams.BlockWarinessDistance, Vector2.UnitY.RotatedByRadians(-Properties.TargetTankRotation), out var travelPos, out var refPoints, true);
+                        DebugUtils.DrawDebugString(TankGame.SpriteRenderer, "TRAVELENDPOINT", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(travelPos.X, 11, travelPos.Y), View, Projection), 1, centered: true);
+                        DebugUtils.DrawDebugString(TankGame.SpriteRenderer, "ENDPOINT", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(rayEnd.X, 11, rayEnd.Y), View, Projection), 1, centered: true);
 
                         /*var pos = GameUtils.DirectionOf(Position, travelPos);
                         var rot = pos.ToRotation();
@@ -2542,11 +2543,11 @@ namespace TanksRebirth.GameContent
                         
                         foreach (var pt in refPoints)
                         {
-                            DebugUtils.DrawDebugString(TankGame.spriteBatch, "pt", GeometryUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), Matrix.CreateTranslation(pt.X, 0, pt.Y), View, Projection), 1, centered: true);
+                            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, "pt", GeometryUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), Matrix.CreateTranslation(pt.X, 0, pt.Y), View, Projection), 1, centered: true);
                         }
 
-                        DebugUtils.DrawDebugString(TankGame.spriteBatch, "end", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(GameUtils.DirectionOf(Properties.Position, travelPos).X, 0, GameUtils.DirectionOf(Properties.Position, travelPos).Y), View, Projection), 1, centered: true);
-                        DebugUtils.DrawDebugString(TankGame.spriteBatch, "me", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.Identity, View, Projection/*Matrix.CreateTranslation(Position.X, 11, Position.Y), View, Projection)*/), 1, centered: true);
+                        DebugUtils.DrawDebugString(TankGame.SpriteRenderer, "end", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(GameUtils.DirectionOf(Properties.Position, travelPos).X, 0, GameUtils.DirectionOf(Properties.Position, travelPos).Y), View, Projection), 1, centered: true);
+                        DebugUtils.DrawDebugString(TankGame.SpriteRenderer, "me", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.Identity, View, Projection/*Matrix.CreateTranslation(Position.X, 11, Position.Y), View, Projection)*/), 1, centered: true);
                         //TankGame.spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), new Rectangle((int)travelPos.X - 1, (int)travelPos.Y - 1, 20, 20), Color.White);
 
                         // draw future
@@ -2555,19 +2556,6 @@ namespace TanksRebirth.GameContent
 
                 }
             }
-
-            //TankGame.spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), new Rectangle((int)Position.X - 1, (int)Position.Y - 1, 20, 20), Color.White);
-
-            var info = new string[]
-            {
-                $"Team: {Properties.Team}",
-                $"Armor: {(Properties.Armor != null ? Properties.Armor.HitPoints : "N/A")}",
-                $"Rotation/Target: {Properties.TankRotation}/{TargetTankRotation + MathHelper.Pi}",
-                $"Speed/Max: {Properties.Speed}/{Properties.MaxSpeed}"
-            };
-
-            for (int i = 0; i < info.Length; i++)
-                DebugUtils.DrawDebugString(TankGame.spriteBatch, info[i], GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, (info.Length * 20) + (i * 20)), 1, centered: true);
 
             if (Properties.Invisible && GameHandler.InMission)
                 return;

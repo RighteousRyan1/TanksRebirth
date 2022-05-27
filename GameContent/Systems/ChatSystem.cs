@@ -60,7 +60,7 @@ namespace TanksRebirth.GameContent.Systems
 
                 var measure = ChatMessage.Font.MeasureString(ChatMessages[i].Content);
 
-                var sb = TankGame.spriteBatch;
+                var sb = TankGame.SpriteRenderer;
 
                 switch (Corner)
                 {

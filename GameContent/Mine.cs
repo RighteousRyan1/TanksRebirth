@@ -154,7 +154,7 @@ namespace TanksRebirth.GameContent
 
         internal void Render()
         {
-            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"Det: {DetonateTime}/{DetonateTimeMax}", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 20), 1, centered: true);
+            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"Det: {DetonateTime}/{DetonateTimeMax}", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 20), 1, centered: true);
             for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++)
             {
                 foreach (ModelMesh mesh in Model.Meshes)

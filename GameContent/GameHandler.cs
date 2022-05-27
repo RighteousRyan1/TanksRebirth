@@ -168,7 +168,7 @@ namespace TanksRebirth.GameContent
                 foreach (var crate in Crate.crates)
                     crate?.Update();
 
-                foreach (var pu in Powerup.powerups)
+                foreach (var pu in Powerup.Powerups)
                     pu?.Update();
             }
             else
@@ -262,7 +262,7 @@ namespace TanksRebirth.GameContent
                 SpawnCrateAtMouse();
 
             if (Input.KeyJustPressed(Keys.I) && DebugUtils.DebugLevel == 4)
-                new Powerup(powerups[mode]) { Position = GameUtils.GetWorldPosition(GameUtils.MousePosition).FlattenZ() };
+                new Powerup(powerups[mode]) { Position = GameUtils.GetWorldPosition(GameUtils.MousePosition) + new Vector3(0, 10, 0) };
 
             if (MainMenu.Active)
                 PlayerTank.KillCount = 0;
@@ -473,7 +473,7 @@ namespace TanksRebirth.GameContent
             foreach (var crate in Crate.crates)
                 crate?.Render();
 
-            foreach (var powerup in Powerup.powerups)
+            foreach (var powerup in Powerup.Powerups)
                 powerup?.Render();
 
             if (TankGame.OverheadView)
@@ -485,14 +485,14 @@ namespace TanksRebirth.GameContent
 
             foreach (var body in Tank.CollisionsWorld.BodyList)
             {
-                DebugUtils.DrawDebugString(TankGame.spriteBatch, $"BODY", 
+                DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"BODY", 
                     GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(body.Position.X, 0, body.Position.Y), TankGame.GameView, TankGame.GameProjection), centered: true);
             }
 
             for (int i = 0; i < VanillaAchievements.Repository.GetAchievements().Count; i++)
             {
                 var achievement = VanillaAchievements.Repository.GetAchievements()[i];
-                DebugUtils.DrawDebugString(TankGame.spriteBatch, $"{achievement.Name}: {(achievement.IsComplete ? "Complete" : "Incomplete")}",
+                DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"{achievement.Name}: {(achievement.IsComplete ? "Complete" : "Incomplete")}",
                     new Vector2(8, 24 + (i * 20)), level: DebugUtils.Id.AchievementData, centered: false);
             }
             // TODO: Fix translation
@@ -504,40 +504,40 @@ namespace TanksRebirth.GameContent
                     continue;
 
                 if (element.HasScissor)
-                    TankGame.spriteBatch.End();
+                    TankGame.SpriteRenderer.End();
 
-                element?.Draw(TankGame.spriteBatch);
+                element?.Draw(TankGame.SpriteRenderer);
 
                 if (element.HasScissor)
-                    TankGame.spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: TankGame.DefaultRasterizer);
+                    TankGame.SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: TankGame.DefaultRasterizer);
             }
             foreach (var element in UIElement.AllUIElements.ToList())
             {
-                element?.DrawTooltips(TankGame.spriteBatch);
+                element?.DrawTooltips(TankGame.SpriteRenderer);
             }
             tankToSpawnType = MathHelper.Clamp(tankToSpawnType, 2, Enum.GetValues<TankTier>().Length - 1);
             tankToSpawnTeam = MathHelper.Clamp(tankToSpawnTeam, 0, Enum.GetValues<TankTeam>().Length - 1);
 
             #region TankInfo
-            DebugUtils.DrawDebugString(TankGame.spriteBatch, "Spawn Tank With Info:", GameUtils.WindowTop + new Vector2(0, 8), 3, centered: true);
-            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"Tier: {Enum.GetNames<TankTier>()[tankToSpawnType]}", GameUtils.WindowTop + new Vector2(0, 24), 3, centered: true);
-            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"Team: {Enum.GetNames<TankTeam>()[tankToSpawnTeam]}", GameUtils.WindowTop + new Vector2(0, 40), 3, centered: true);
-            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"CubeStack: {CubeHeight} | CubeType: {Enum.GetNames<Block.BlockType>()[BlockType]}", GameUtils.WindowBottom - new Vector2(0, 20), 3, centered: true);
+            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, "Spawn Tank With Info:", GameUtils.WindowTop + new Vector2(0, 8), 3, centered: true);
+            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"Tier: {Enum.GetNames<TankTier>()[tankToSpawnType]}", GameUtils.WindowTop + new Vector2(0, 24), 3, centered: true);
+            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"Team: {Enum.GetNames<TankTeam>()[tankToSpawnTeam]}", GameUtils.WindowTop + new Vector2(0, 40), 3, centered: true);
+            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"CubeStack: {CubeHeight} | CubeType: {Enum.GetNames<Block.BlockType>()[BlockType]}", GameUtils.WindowBottom - new Vector2(0, 20), 3, centered: true);
 
-            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"HighestTier: {AITank.GetHighestTierActive()}", new(10, GameUtils.WindowHeight * 0.26f), 1);
-            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"CurSong: {(Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f) != null ? Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f).Name : "N/A")}", new(10, GameUtils.WindowHeight - 100), 1);
+            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"HighestTier: {AITank.GetHighestTierActive()}", new(10, GameUtils.WindowHeight * 0.26f), 1);
+            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"CurSong: {(Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f) != null ? Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f).Name : "N/A")}", new(10, GameUtils.WindowHeight - 100), 1);
             for (int i = 0; i < Enum.GetNames<TankTier>().Length; i++)
             {
-                DebugUtils.DrawDebugString(TankGame.spriteBatch, $"{Enum.GetNames<TankTier>()[i]}: {AITank.GetTankCountOfType((TankTier)i)}", new(10, GameUtils.WindowHeight * 0.3f + (i * 20)), 1);
+                DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"{Enum.GetNames<TankTier>()[i]}: {AITank.GetTankCountOfType((TankTier)i)}", new(10, GameUtils.WindowHeight * 0.3f + (i * 20)), 1);
             }
             #endregion
 
-            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"Logic Time: {TankGame.LogicTime.TotalMilliseconds:0.00}ms" +
+            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"Logic Time: {TankGame.LogicTime.TotalMilliseconds:0.00}ms" +
                 $"\nLogic FPS: {TankGame.LogicFPS}" +
                 $"\n\nRender Time: {TankGame.RenderTime.TotalMilliseconds:0.00}ms" +
                 $"\nRender FPS: {TankGame.RenderFPS}", new(10, 500));
 
-            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"Current Mission: {LoadedCampaign.CurrentMission.Name}\nCurrent Campaign: {LoadedCampaign.Properties.Name}", GameUtils.WindowBottomLeft - new Vector2(-4, 40), 3, centered: false);
+            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"Current Mission: {LoadedCampaign.CurrentMission.Name}\nCurrent Campaign: {LoadedCampaign.Properties.Name}", GameUtils.WindowBottomLeft - new Vector2(-4, 40), 3, centered: false);
             if (!MainMenu.Active)
             {
                 if (IntermissionSystem.IsAwaitingNewMission)
@@ -550,7 +550,7 @@ namespace TanksRebirth.GameContent
                 }
                 IntermissionSystem.DrawShadowedString(new Vector2(80, GameUtils.WindowHeight * 0.89f), Vector2.One, $"{PlayerTank.KillCount}", new(119, 190, 238), new(0.675f), 1f);
             }
-            IntermissionSystem.Draw(TankGame.spriteBatch);
+            IntermissionSystem.Draw(TankGame.SpriteRenderer);
 
             ChatSystem.DrawMessages();
 
@@ -595,10 +595,9 @@ namespace TanksRebirth.GameContent
 
         private static readonly PowerupTemplate[] powerups =
         {
-             new(1000, 50f, (tnk) => { tnk.Properties.MaxSpeed *= 2; }, (tnk) => { tnk.Properties.MaxSpeed /= 2; }) { Name = "Speed" },
-             new(1000, 50f, (tnk) => { tnk.Properties.Invisible = !tnk.Properties.Invisible; }, (tnk) => tnk.Properties.Invisible = !tnk.Properties.Invisible) { Name = "InvisSwap" },
-             new(1000, 50f, (tnk) => { tnk.Properties.ShellHoming.Radius = 150f; tnk.Properties.ShellHoming.Speed = tnk.Properties.ShellSpeed; tnk.Properties.ShellHoming.Power = 1f; }, (tnk) => tnk.Properties.ShellHoming = new()) { Name = "Homing" },
-             new(1000, 50f, (tnk) => { if (tnk.Properties.MaxSpeed > 0) tnk.Properties.Stationary = true; }, (tnk) => { if (tnk.Properties.MaxSpeed > 0) tnk.Properties.Stationary = !tnk.Properties.Stationary; }) { Name = "Stationary" }
+             Powerup.Speed,
+             Powerup.ShellHome,
+             Powerup.Invisibility
         };
 
         public static Lighting.LightProfile GameLight = new()
@@ -703,7 +702,7 @@ namespace TanksRebirth.GameContent
             foreach (var crate in Crate.crates)
                 crate?.Remove();
 
-            foreach (var pu in Powerup.powerups)
+            foreach (var pu in Powerup.Powerups)
                 pu?.Remove();
 
             ClearTankDeathmarks(null);
@@ -746,10 +745,8 @@ namespace TanksRebirth.GameContent
         {
             var rot = 0f;//GeometryUtils.GetPiRandom();
 
-            var x = new AITank(tier)
-            {
-                TargetTankRotation = rot - MathHelper.Pi
-            };
+            var x = new AITank(tier);
+            x.Properties.TargetTankRotation = rot - MathHelper.Pi;
             x.Properties.TankRotation = rot;
             x.Properties.TurretRotation = -rot;
 
@@ -992,7 +989,7 @@ namespace TanksRebirth.GameContent
             _sinScale = MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalSeconds);
 
             MouseTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/cursor_1");
-            TankGame.spriteBatch.Draw(MouseTexture, GameUtils.MousePosition, null, Color.White, 0f, MouseTexture.Size() / 2, 1f + _sinScale / 16, default, default);
+            TankGame.SpriteRenderer.Draw(MouseTexture, GameUtils.MousePosition, null, Color.White, 0f, MouseTexture.Size() / 2, 1f + _sinScale / 16, default, default);
         }
     }
     public class GameShaders

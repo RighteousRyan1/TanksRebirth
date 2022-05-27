@@ -115,7 +115,7 @@ namespace TanksRebirth.GameContent
                                 {
                                     HasHit[tank.WorldId] = true;
                                     if (Source is null)
-                                        tank.Damage(null);
+                                        tank.Damage(new TankHurtContext_Other(TankHurtContext_Other.HurtContext.FromIngame));
                                     else if (Source is not null)
                                     {
                                         if (Source is AITank)

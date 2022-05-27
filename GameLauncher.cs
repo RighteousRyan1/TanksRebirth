@@ -12,7 +12,7 @@ namespace TanksRebirth
         {
             IsRunning = true;
             using var game = new TankGame();
-            game.Run();
+                game.Run();
         }
         [STAThread]
         static void Main()

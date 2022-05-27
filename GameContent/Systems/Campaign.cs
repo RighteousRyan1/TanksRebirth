@@ -106,7 +106,7 @@ namespace TanksRebirth.GameContent.Systems
 
                             tank.Properties.Position = template.Position;
                             tank.Properties.TankRotation = template.Rotation;
-                            tank.TargetTankRotation = template.Rotation - MathHelper.Pi;
+                            tank.Properties.TargetTankRotation = template.Rotation - MathHelper.Pi;
                             tank.Properties.TurretRotation = -template.Rotation;
                             tank.Properties.Dead = false;
                             tank.Properties.Team = template.Team;
@@ -134,7 +134,7 @@ namespace TanksRebirth.GameContent.Systems
                             tnk.Body.Position = template.Position;
                             tnk.Properties.Team = tank.Properties.Team;
                             tnk.Properties.TankRotation = -template.Rotation + MathHelper.Pi;
-                            tnk.TargetTankRotation = template.Rotation - MathHelper.Pi;
+                            tnk.Properties.TargetTankRotation = template.Rotation - MathHelper.Pi;
                             tnk.Properties.TurretRotation = -template.Rotation;
                             tnk.Properties.Dead = false;
 
@@ -158,7 +158,7 @@ namespace TanksRebirth.GameContent.Systems
 
                         tank.Properties.Position = template.Position;
                         tank.Properties.TankRotation = -template.Rotation;
-                        tank.TargetTankRotation = template.Rotation - MathHelper.Pi;
+                        tank.Properties.TargetTankRotation = template.Rotation - MathHelper.Pi;
                         tank.Properties.TurretRotation = -template.Rotation;
                         tank.Properties.Dead = false;
                         tank.Properties.Team = template.Team;
@@ -187,7 +187,7 @@ namespace TanksRebirth.GameContent.Systems
                             tnk.Body.Position = template.Position;
                             tnk.Properties.Team = tank.Properties.Team;
                             tnk.Properties.TankRotation = template.Rotation;
-                            tnk.TargetTankRotation = template.Rotation - MathHelper.Pi;
+                            tnk.Properties.TargetTankRotation = template.Rotation - MathHelper.Pi;
                             tnk.Properties.TurretRotation = -template.Rotation;
                             tnk.Properties.Dead = false;
 

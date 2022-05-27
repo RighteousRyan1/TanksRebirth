@@ -17,14 +17,16 @@ namespace TanksRebirth.GameContent.Cosmetics
         /// <summary>The rotation of this <see cref="Cosmetic2D"/></summary>
         public Vector3 Rotation { get; set; }
         /// <summary>Change the properties of this <see cref="Cosmetic2D"/> every game tick.</summary>
-        public Action<ICosmetic> UniqueBehavior { get; set; } = null;
-
-        public Cosmetic2D(string name, Texture2D texture, Vector3 position, Vector3 rotation, bool snap)
+        public Action<ICosmetic, Tank> UniqueBehavior { get; set; } = null;
+        /// <summary>The rotation of this <see cref="Cosmetic3D"/>.</summary>
+        public Vector3 Scale { get; set; } 
+        public Cosmetic2D(string name, Texture2D texture, Vector3 position, bool snap)
         {
             Name = name;
             Texture = texture;
             RelativePosition = position;
-            Rotation = rotation;
+            Rotation = Vector3.Zero;
+            Scale = Vector3.One;
             SnapToTurretAngle = snap;
         }
     }

@@ -858,8 +858,8 @@ namespace TanksRebirth.GameContent.UI
                 if ((NetPlay.CurrentServer is not null && (Server.ConnectedClients is not null || NetPlay.ServerName is not null)) || (Client.IsConnected() && Client.lobbyDataReceived))
                 {
                     Vector2 initialPosition = new(GameUtils.WindowWidth * 0.75f, GameUtils.WindowHeight * 0.25f);
-                    TankGame.spriteBatch.DrawString(TankGame.TextFont, $"\"{NetPlay.ServerName}\"", initialPosition - new Vector2(0, 40), Color.White, 0.6f);
-                    TankGame.spriteBatch.DrawString(TankGame.TextFont, $"Connected Players:", initialPosition, Color.White, 0.6f);
+                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"\"{NetPlay.ServerName}\"", initialPosition - new Vector2(0, 40), Color.White, 0.6f);
+                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"Connected Players:", initialPosition, Color.White, 0.6f);
                     for (int i = 0; i < Server.ConnectedClients.Count(x => x is not null); i++)
                     {
                         var client = Server.ConnectedClients[i];
@@ -868,23 +868,23 @@ namespace TanksRebirth.GameContent.UI
                         if (NetPlay.CurrentClient.Id == i)
                             textCol = Color.Green;
 
-                        TankGame.spriteBatch.DrawString(TankGame.TextFont, $"{client.Name}" + $" ({client.Id})", initialPosition + new Vector2(0, 20) * (i + 1), textCol, 0.6f);
+                        TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"{client.Name}" + $" ({client.Id})", initialPosition + new Vector2(0, 20) * (i + 1), textCol, 0.6f);
                     }
                 }
                 var size = TankGame.TextFont.MeasureString(TankGame.Instance.MOTD);
-                TankGame.spriteBatch.DrawString(TankGame.TextFont, TankGame.Instance.MOTD, new(GameUtils.WindowWidth - 8, 8), Color.White, new(0.6f), 0f, new Vector2(size.X, 0));
+                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, TankGame.Instance.MOTD, new(GameUtils.WindowWidth - 8, 8), Color.White, new(0.6f), 0f, new Vector2(size.X, 0));
 
                 var tanksMessageSize = TankGame.TextFont.MeasureString(tanksMessage);
-                TankGame.spriteBatch.DrawString(TankGame.TextFont, tanksMessage, new(8, GameUtils.WindowHeight - 8), Color.White, new(0.6f), 0f, new Vector2(0, tanksMessageSize.Y));
+                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, tanksMessage, new(8, GameUtils.WindowHeight - 8), Color.White, new(0.6f), 0f, new Vector2(0, tanksMessageSize.Y));
 
-                TankGame.spriteBatch.DrawString(TankGame.TextFont, tanksMessage, new(8, GameUtils.WindowHeight - 8), Color.White, new(0.6f), 0f, new Vector2(0, tanksMessageSize.Y));
+                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, tanksMessage, new(8, GameUtils.WindowHeight - 8), Color.White, new(0.6f), 0f, new Vector2(0, tanksMessageSize.Y));
                 if (PlayButton.IsVisible)
-                    TankGame.spriteBatch.DrawString(TankGame.TextFont, keyDisplay, new(12, 12), Color.White, new(0.6f), 0f, Vector2.Zero);
+                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, keyDisplay, new(12, 12), Color.White, new(0.6f), 0f, Vector2.Zero);
                 #endregion
 
                 if (campaignNames.Count == 1)
                 {
-                    TankGame.spriteBatch.DrawString(TankGame.TextFont, $"You have no campaigns!" +
+                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"You have no campaigns!" +
                         $"\nTry downloading the Vanilla campaign by pressing 'Enter' or making your own." +
                         $"\nCampaign folders belong in '{Path.Combine(TankGame.SaveDirectory, "Campaigns")}' (press TAB to open on Windows)", new(12, 12), Color.White, new(0.75f), 0f, Vector2.Zero);
 
@@ -946,7 +946,7 @@ namespace TanksRebirth.GameContent.UI
                     if (_oldwheel != Input.DeltaScrollWheel)
                         MissionCheckpoint += Input.DeltaScrollWheel - _oldwheel;
                     
-                    TankGame.spriteBatch.DrawString(TankGame.TextFont, $"You can scroll with your mouse to skip to a certain mission." +
+                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"You can scroll with your mouse to skip to a certain mission." +
                         $"\nCurrently, you will skip to the {MissionCheckpoint + 1}{getSuffix(MissionCheckpoint + 1)} mission in the campaign." +
                         $"\nYou will be alerted if that mission does not exist.", new(12, 200), Color.White, new(0.75f), 0f, Vector2.Zero);
                 }

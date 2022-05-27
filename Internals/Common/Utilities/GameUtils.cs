@@ -122,9 +122,9 @@ namespace TanksRebirth.Internals.Common.Utilities
                     yOffset = borderSize;
 
 
-                TankGame.spriteBatch.DrawString(font, text, pos + new Vector2(xOffset, yOffset), borderColor, rot, origin, scale, default, 0f);
+                TankGame.SpriteRenderer.DrawString(font, text, pos + new Vector2(xOffset, yOffset), borderColor, rot, origin, scale, default, 0f);
             }
-            TankGame.spriteBatch.DrawString(font, text, pos, color, rot, origin, scale, default, 0f);
+            TankGame.SpriteRenderer.DrawString(font, text, pos, color, rot, origin, scale, default, 0f);
         }
         public static void DrawTextureWithBorder(Texture2D texture, Vector2 pos, Color color, Color borderColor, float rot, float scale, int borderSize)
         {
@@ -143,9 +143,9 @@ namespace TanksRebirth.Internals.Common.Utilities
                     yOffset = borderSize;
 
 
-                TankGame.spriteBatch.Draw(texture, pos + new Vector2(xOffset, yOffset), null, borderColor, rot, origin, scale, default, 0f);
+                TankGame.SpriteRenderer.Draw(texture, pos + new Vector2(xOffset, yOffset), null, borderColor, rot, origin, scale, default, 0f);
             }
-            TankGame.spriteBatch.Draw(texture, pos, null, color, rot, origin, scale, default, 0f);
+            TankGame.SpriteRenderer.Draw(texture, pos, null, color, rot, origin, scale, default, 0f);
         }
         public static T[,] Resize2D<T>(T[,] original, int rows, int cols)
         {
@@ -192,7 +192,7 @@ namespace TanksRebirth.Internals.Common.Utilities
             chosenTs.Clear();
             return values;
         }
-        public static void DrawStringAtMouse(object text) => TankGame.spriteBatch.DrawString(TankGame.TextFont, text.ToString(), MousePosition + new Vector2(25), Color.White, new Vector2(1f), 0f, Vector2.Zero);
+        public static void DrawStringAtMouse(object text) => TankGame.SpriteRenderer.DrawString(TankGame.TextFont, text.ToString(), MousePosition + new Vector2(25), Color.White, new Vector2(1f), 0f, Vector2.Zero);
         public static bool IsPlaying(this SoundEffectInstance instance) => instance.State == SoundState.Playing;
         public static bool IsPaused(this SoundEffectInstance instance) => instance.State == SoundState.Paused;
         public static bool IsStopped(this SoundEffectInstance instance) => instance.State == SoundState.Stopped;

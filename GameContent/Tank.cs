@@ -13,6 +13,8 @@ using TanksRebirth.GameContent.Systems;
 using System.Collections.Generic;
 using System.IO;
 using TanksRebirth.GameContent.Cosmetics;
+using TanksRebirth.Graphics;
+using TanksRebirth.GameContent.UI;
 
 namespace TanksRebirth.GameContent
 {
@@ -213,8 +215,6 @@ namespace TanksRebirth.GameContent
 
         public TankProperties Properties { get; set; } = new();
 
-        public float TargetTankRotation;
-
         public Vector3 Position3D => Properties.Position.ExpandZ();
         public Vector3 Velocity3D => Properties.Velocity.ExpandZ();
         #endregion
@@ -225,29 +225,44 @@ namespace TanksRebirth.GameContent
 
         public virtual void Initialize()
         {
+            if (TankGame.SecretCosmeticSetting)
+            {
+                for (int i = 0; i < 1; i++)
+                {
+                    var recieved = CosmeticChest.Basic.Open();
+
+                    if (recieved is ICosmetic cosmetic1)
+                        Cosmetics.Add(cosmetic1);
+                }
+            }
+
             if (Properties.IsIngame)
             {
                 Body = CollisionsWorld.CreateCircle(TNK_WIDTH * 0.4f, 1f, Properties.Position, BodyType.Dynamic);
                 // Body.LinearDamping = Deceleration * 10;
             }
 
-            foreach (var cosmetic in Cosmetics)
+            if (!MainMenu.Active && Properties.IsIngame)
             {
-                if (cosmetic is Cosmetic2D cos2d)
+                foreach (var cosmetic in Cosmetics)
                 {
-                    var particle = ParticleSystem.MakeParticle(Position3D + cos2d.RelativePosition, cos2d.Texture);
-
-                    particle.Scale = new(1);
-                    particle.Tag = $"cosmetic_2d_{GetHashCode()}"; // store the hash code of this tank, so when we destroy the cosmetic's particle, it destroys all belonging to this tank!
-
-                    particle.UniqueBehavior = (z) =>
+                    if (cosmetic is Cosmetic2D cos2d)
                     {
-                        particle.Position = Position3D + cos2d.RelativePosition;
-                        particle.Roll = cosmetic.Rotation.X;
-                        particle.Pitch = cosmetic.Rotation.Y;
-                        particle.Yaw = cosmetic.Rotation.Z;
-                    };
+                        var particle = ParticleSystem.MakeParticle(Position3D + cos2d.RelativePosition, cos2d.Texture);
 
+                        particle.Scale = cosmetic.Scale;
+                        particle.Tag = $"cosmetic_2d_{GetHashCode()}"; // store the hash code of this tank, so when we destroy the cosmetic's particle, it destroys all belonging to this tank!
+                        particle.isAddative = false;
+                        particle.UniqueBehavior = (z) =>
+                        {
+                            particle.Position = Position3D + cos2d.RelativePosition;
+                            particle.Roll = cosmetic.Rotation.X;
+                            particle.Pitch = cosmetic.Rotation.Y;
+                            particle.Yaw = cosmetic.Rotation.Z;
+                            particle.Scale = (Properties.Invisible && GameHandler.InMission) ? Vector3.Zero : cosmetic.Scale;
+                        };
+
+                    }
                 }
             }
             
@@ -372,7 +387,7 @@ namespace TanksRebirth.GameContent
                 Properties.Velocity = Vector2.Zero;
             }
             foreach (var cosmetic in Cosmetics)
-                cosmetic?.UniqueBehavior?.Invoke(cosmetic); 
+                cosmetic?.UniqueBehavior?.Invoke(cosmetic, this); 
         }
         /// <summary>Get this <see cref="Tank"/>'s general stats.</summary>
         public string GetGeneralStats()
@@ -617,20 +632,59 @@ namespace TanksRebirth.GameContent
             var mine = new Mine(this, Properties.Position, 600);
         }
 
-        public virtual void Render() { 
-            foreach (var cosmetic in Cosmetics)
+        public virtual void Render() {
+            if (Properties.IsIngame)
             {
-                if (cosmetic is Cosmetic3D cos3d) {
-                    foreach (ModelMesh mesh in cos3d.Model.Meshes) {
-                        foreach (BasicEffect effect in mesh.Effects) {
-                            effect.World = World * Matrix.CreateTranslation(cos3d.RelativePosition) * Matrix.CreateFromYawPitchRoll(cos3d.Rotation.X, cos3d.Rotation.Y, cos3d.Rotation.Z);
-                            effect.View = View;
-                            effect.Projection = Projection;
+
+                foreach (var cosmetic in Cosmetics)
+                {
+                    if (GameHandler.InMission && Properties.Invisible)
+                        break;
+                    if (cosmetic is Cosmetic3D cos3d)
+                    {
+                        for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++)
+                        {
+                            foreach (ModelMesh mesh in cos3d.Model.Meshes)
+                            {
+                                if (!cos3d.IgnoreMeshesByName.Any(meshname => meshname == mesh.Name))
+                                {
+                                    foreach (BasicEffect effect in mesh.Effects)
+                                    {
+
+                                        effect.World = i == 0 ? Matrix.CreateRotationX(cosmetic.Rotation.X) * Matrix.CreateRotationY(cosmetic.SnapToTurretAngle ? cosmetic.Rotation.Y + Properties.TurretRotation : cosmetic.Rotation.Y) * Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) * Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition)
+                                            : Matrix.CreateRotationX(cosmetic.Rotation.X) * Matrix.CreateRotationY(cosmetic.Rotation.Y) * Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) * Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition) * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
+                                        effect.View = View;
+                                        effect.Projection = Projection;
+
+                                        effect.TextureEnabled = true;
+                                        if (i == 0)
+                                            effect.Texture = cos3d.ModelTexture;
+                                        else
+                                            effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/ingame/block_shadow_h");
+                                    }
+                                    mesh.Draw();
+                                }
+                            }
                         }
-                        mesh.Draw();
                     }
                 }
             }
+            var info = new string[]
+            {
+                $"Team: {Properties.Team}",
+                $"OwnedShellCount: {Properties.OwnedShellCount}",
+                $"OwnedMineCount: {Properties.OwnedMineCount}",
+                $"Speed / MaxSpeed / Velocity: {Properties.Speed} / {Properties.MaxSpeed} / {Properties.Velocity}",
+                $"Invisible: {Properties.Invisible}",
+                $"ShellCooldown: {Properties.ShellCooldown}",
+                $"MineCooldown: {Properties.MineCooldown}"
+            };
+
+            // TankGame.spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), CollisionBox2D, Color.White * 0.75f);
+
+            for (int i = 0; i < info.Length; i++)
+                DebugUtils.DrawDebugString(TankGame.SpriteRenderer, info[i], GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, (info.Length * 20) + (i * 20)), 1, centered: true);
+
         }
 
         public uint CurShootStun { get; private set; } = 0;
@@ -674,6 +728,8 @@ namespace TanksRebirth.GameContent
         public float TurretRotation { get; set; }
         /// <summary>The rotation of this <see cref="Tank"/>.</summary>
         public float TankRotation { get; set; }
+        /// <summary>The rotation this <see cref="Tank"/> will pivot to.</summary>
+        public float TargetTankRotation;
         /// <summary>The pitch of the footprint placement sounds.</summary>
         public float TreadPitch { get; set; }
         /// <summary>The pitch of the shoot sound.</summary>

@@ -19,16 +19,22 @@ namespace TanksRebirth.GameContent.Cosmetics
         /// <summary>The texture applied to the model.</summary>
         public Texture2D ModelTexture { get; set; }
         /// <summary>Change the properties of this <see cref="Cosmetic3D"/> every game tick.</summary>
-        public Action<ICosmetic> UniqueBehavior { get; set; } = null;
+        public Action<ICosmetic, Tank> UniqueBehavior { get; set; } = null;
+        /// <summary>The rotation of this <see cref="Cosmetic3D"/>.</summary>
+        public Vector3 Scale { get; set; }
 
-        public Cosmetic3D(string name, Model model, Texture2D texture, Vector3 position, Vector3 rotation, bool snap)
+        public string[] IgnoreMeshesByName;
+
+        public Cosmetic3D(string name, Model model, Texture2D texture, Vector3 position, bool snap)
         {
             Name = name;
             Model = model;
             ModelTexture = texture;
             RelativePosition = position;
-            Rotation = rotation;
+            Rotation = Vector3.Zero;
+            Scale = Vector3.One;
             SnapToTurretAngle = snap;
+            IgnoreMeshesByName = Array.Empty<string>();
         }
     }
 }

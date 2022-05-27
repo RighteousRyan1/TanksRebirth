@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
@@ -9,6 +10,8 @@ namespace TanksRebirth.Internals
 	public static class GameResources
 	{
 		private static Dictionary<string, object> ResourceCache { get; set; } = new();
+
+		private static Dictionary<string, object> QueuedResources { get; set; } = new();
 
 		public static T GetResource<T>(this ContentManager manager, string name) where T : class
 		{
@@ -28,9 +31,26 @@ namespace TanksRebirth.Internals
 
 		public static T GetGameResource<T>(string name) where T : class
         {
+			if (TankGame.Instance is null)
+				QueueAsset<T>(name);
 			return GetResource<T>(TankGame.Instance.Content, name);
         }
 
+		public static void QueueAsset<T>(string name)
+        {
+			if (!QueuedResources.TryGetValue(name, out var val) || val is not T)
+				QueuedResources[name] = typeof(T);
+        }
+
+		public static void LoadQueuedAssets()
+        {
+			foreach (var resource in QueuedResources)
+            {
+				Type t = resource.Value.GetType(); 
+				// TankGame.Instance.Content.Load
+
+			}
+        }
 		public static T GetRawAsset<T>(this ContentManager manager, string assetName) where T : class
         {
 			var t = typeof(ContentManager).GetMethod("ReadAsset", BindingFlags.Instance | BindingFlags.NonPublic);
