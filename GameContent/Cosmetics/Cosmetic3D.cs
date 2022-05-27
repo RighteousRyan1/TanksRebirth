@@ -13,7 +13,7 @@ namespace TanksRebirth.GameContent.Cosmetics
         /// <summary>The name of this <see cref="Cosmetic3D"/>.</summary>
         public string Name { get; set; }
         /// <summary>Whether or not this <see cref="Cosmetic3D"/> rotates with the tank's turret.</summary>
-        public bool SnapToTurretAngle { get; set; }
+        public CosmeticLockOptions LockOptions { get; set; }
         /// <summary>The rotation of this <see cref="Cosmetic3D"/></summary>
         public Vector3 Rotation { get; set; }
         /// <summary>The texture applied to the model.</summary>
@@ -25,7 +25,7 @@ namespace TanksRebirth.GameContent.Cosmetics
 
         public string[] IgnoreMeshesByName;
 
-        public Cosmetic3D(string name, Model model, Texture2D texture, Vector3 position, bool snap)
+        public Cosmetic3D(string name, Model model, Texture2D texture, Vector3 position, CosmeticLockOptions lockOptions)
         {
             Name = name;
             Model = model;
@@ -33,7 +33,7 @@ namespace TanksRebirth.GameContent.Cosmetics
             RelativePosition = position;
             Rotation = Vector3.Zero;
             Scale = Vector3.One;
-            SnapToTurretAngle = snap;
+            LockOptions = lockOptions;
             IgnoreMeshesByName = Array.Empty<string>();
         }
     }

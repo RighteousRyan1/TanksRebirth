@@ -14,7 +14,7 @@ namespace TanksRebirth.GameContent.Cosmetics
         public static CosmeticChest Basic = new(new()
         {
             {
-                new Cosmetic2D("Anger!", GameResources.GetGameResource<Texture2D>("Assets/cosmetics/anger_symbol"), new(8, 20, 8), false)
+                new Cosmetic2D("Anger!", GameResources.GetGameResource<Texture2D>("Assets/cosmetics/anger_symbol"), new(8, 20, 8), CosmeticLockOptions.None)
                 {
                     UniqueBehavior = (cos, tnk) =>
                     {
@@ -25,7 +25,7 @@ namespace TanksRebirth.GameContent.Cosmetics
                 12.5f
             },
             {
-                new Cosmetic3D("King's Crown", GameResources.GetGameResource<Model>("Assets/cosmetics/crown"), GameResources.GetGameResource<Texture2D>("Assets/cosmetics/crown_tex"), new(0, 21, 0), true)
+                new Cosmetic3D("King's Crown", GameResources.GetGameResource<Model>("Assets/cosmetics/crown"), GameResources.GetGameResource<Texture2D>("Assets/cosmetics/crown_tex"), new(0, 21, 0), CosmeticLockOptions.ToTurret)
                 {
                     Rotation = new(-MathHelper.PiOver2, 0, 0),
                     Scale = new(3.5f)
@@ -33,7 +33,7 @@ namespace TanksRebirth.GameContent.Cosmetics
                 12.5f
             },
             {
-                new Cosmetic3D("Big Ol' Stump", GameResources.GetGameResource<Model>("Assets/forest/tree_stump"), GameResources.GetGameResource<Texture2D>("Assets/forest/tree_log_tex"), new(0, 60, 0), false)
+                new Cosmetic3D("Big Ol' Stump", GameResources.GetGameResource<Model>("Assets/forest/tree_stump"), GameResources.GetGameResource<Texture2D>("Assets/forest/tree_log_tex"), new(0, 60, 0), CosmeticLockOptions.None)
                 {
                     Rotation = new(-MathHelper.PiOver2, 0, 0),
                     UniqueBehavior = (cos, tnk) =>
@@ -45,7 +45,7 @@ namespace TanksRebirth.GameContent.Cosmetics
                 12.5f
             },
             {
-                new Cosmetic3D("A Literal Chair", GameResources.GetGameResource<Model>("Assets/toy/wooden_chair"), GameResources.GetGameResource<Texture2D>("Assets/toy/chair_tex"), new(0, 60, 0), false)
+                new Cosmetic3D("A Literal Chair", GameResources.GetGameResource<Model>("Assets/toy/wooden_chair"), GameResources.GetGameResource<Texture2D>("Assets/toy/chair_tex"), new(0, 60, 0), CosmeticLockOptions.None)
                 {
                     Rotation = new(-MathHelper.PiOver2, 0, -MathHelper.PiOver2),
                     UniqueBehavior = (cos, tnk) =>
@@ -60,7 +60,7 @@ namespace TanksRebirth.GameContent.Cosmetics
                 12.5f
             },
             {
-                new Cosmetic3D("Devil Horns", GameResources.GetGameResource<Model>("Assets/cosmetics/horns"), GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), new(0, 11, 0), true)
+                new Cosmetic3D("Devil Horns", GameResources.GetGameResource<Model>("Assets/cosmetics/horns"), GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), new(0, 11, 0), CosmeticLockOptions.ToTurret)
                 {
                     Rotation = new(MathHelper.Pi, 0, 0),
                     Scale = new(100f)
@@ -68,7 +68,7 @@ namespace TanksRebirth.GameContent.Cosmetics
                 12.5f
             },
             {
-                new Cosmetic3D("Angel Halo", GameResources.GetGameResource<Model>("Assets/cosmetics/halo"), GameResources.GetGameResource<Texture2D>("Assets/cosmetics/halo_tex"), new(0, 20, 0), true)
+                new Cosmetic3D("Angel Halo", GameResources.GetGameResource<Model>("Assets/cosmetics/halo"), GameResources.GetGameResource<Texture2D>("Assets/cosmetics/halo_tex"), new(0, 20, 0), CosmeticLockOptions.ToTurret)
                 {
                     Rotation = new(MathHelper.PiOver2, 0, 0),
                     Scale = new(5f, 2f, 5f),
@@ -92,7 +92,7 @@ namespace TanksRebirth.GameContent.Cosmetics
                 12.5f
             },
             {
-                new Cosmetic3D("Army Hat", GameResources.GetGameResource<Model>("Assets/cosmetics/army_hat"), GameResources.GetGameResource<Texture2D>("Assets/cosmetics/army_hat_tex"), new(0, 13.5f, 0), true)
+                new Cosmetic3D("Army Hat", GameResources.GetGameResource<Model>("Assets/cosmetics/army_hat"), GameResources.GetGameResource<Texture2D>("Assets/cosmetics/army_hat_tex"), new(0, 13.5f, 0), CosmeticLockOptions.ToTurret)
                 {
                     Rotation = new(-MathHelper.PiOver2, 0, 0),
                     Scale = new(10f)
@@ -100,7 +100,7 @@ namespace TanksRebirth.GameContent.Cosmetics
                 12.5f
             },
             {
-                new Cosmetic3D("Santa Hat", GameResources.GetGameResource<Model>("Assets/cosmetics/santa_hat"), GameResources.GetGameResource<Texture2D>("Assets/textures/tank/tank_santa"), new(0, 12.5f, 0), true)
+                new Cosmetic3D("Santa Hat", GameResources.GetGameResource<Model>("Assets/cosmetics/santa_hat"), GameResources.GetGameResource<Texture2D>("Assets/textures/tank/tank_santa"), new(0, 12.5f, 0), CosmeticLockOptions.ToTurret)
                 {
                     Rotation = new(-MathHelper.PiOver2, MathHelper.Pi, 0),
                     Scale = new(100f)
