@@ -28,6 +28,8 @@ using TanksRebirth.Net;
 using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework.Audio;
 using TanksRebirth.IO;
+using TanksRebirth.Enums;
+using TanksRebirth.Achievements;
 
 namespace TanksRebirth
 {
@@ -162,6 +164,8 @@ namespace TanksRebirth
         public static bool IsMac;
         public static bool IsLinux;
 
+        public readonly string MOTD;
+
         public TankGame() : base()
         {
             Directory.CreateDirectory(SaveDirectory);
@@ -170,6 +174,8 @@ namespace TanksRebirth
             GameHandler.ClientLog = new($"{SaveDirectory}", "client");
             try
             {
+                var bytes = WebUtils.DownloadWebFile("https://raw.githubusercontent.com/RighteousRyan1/tanks_rebirth_motds/master/motd.txt", out var name);
+                MOTD = System.Text.Encoding.Default.GetString(bytes);
                 // check if platform is windows, mac, or linux
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
@@ -218,7 +224,6 @@ namespace TanksRebirth
         {
             try
             {
-
                 GameHandler.MapEvents();
 
                 DiscordRichPresence.Load();
@@ -235,8 +240,12 @@ namespace TanksRebirth
 
                 graphics.ApplyChanges();
 
-                // var s = new Internals.Common.Framework.Audio.OggAudio(@"C:\Users\ryanr\Desktop\TanksRebirth\Content\Assets\music\amethyst1");
-                
+                GameData.Setup();
+                if (File.Exists(Path.Combine(GameData.Directory, GameData.Name)))
+                    GameData.Deserialize();
+
+                VanillaAchievements.InitializeToRepository();
+
                 base.Initialize();
             }
             catch (Exception e)
@@ -258,6 +267,7 @@ namespace TanksRebirth
                 WriteIndented = true
             };
             SettingsHandler.Serialize(opts, true);
+            GameData.Serialize();
 
             DiscordRichPresence.Terminate();
         }
@@ -307,7 +317,7 @@ namespace TanksRebirth
                 #region Config Initialization
 
                 graphics.SynchronizeWithVerticalRetrace = Settings.Vsync;
-                Window.IsBorderless = Settings.BorderlessWindow;
+                graphics.IsFullScreen = Settings.FullScreen;
                 PlayerTank.controlUp.AssignedKey = Settings.UpKeybind;
                 PlayerTank.controlDown.AssignedKey = Settings.DownKeybind;
                 PlayerTank.controlLeft.AssignedKey = Settings.LeftKeybind;
@@ -337,8 +347,6 @@ namespace TanksRebirth
                 DecalSystem.Initialize(spriteBatch, GraphicsDevice);
 
                 cunoSucksElement = new() { IsVisible = false };
-
-                GameData.Serialize();
 
                 s.Stop();
             }
@@ -389,6 +397,11 @@ namespace TanksRebirth
                     Lighting.AccurateShadows = !Lighting.AccurateShadows;
                 if (Input.AreKeysJustPressed(Keys.LeftShift, Keys.RightShift))
                     RenderWireframe = !RenderWireframe;
+                if (Input.AreKeysJustPressed(Keys.LeftAlt | Keys.RightAlt, Keys.Enter))
+                {
+                    graphics.IsFullScreen = !graphics.IsFullScreen;
+                    graphics.ApplyChanges();
+                }
 
                 MouseRenderer.ShouldRender = ThirdPerson ? (GameUI.Paused || MainMenu.Active) : true;
                 if (UIElement.delay > 0)
@@ -631,7 +644,7 @@ namespace TanksRebirth
                                     // var tnk = WPTR.AllAITanks.FirstOrDefault(tank => tank is not null && !tank.Dead && tank.tier == AITank.GetHighestTierActive());
 
                                     if (Array.IndexOf(GameHandler.AllTanks, tnk) > -1)
-                                        tnk?.Destroy(null); // hmmm
+                                        tnk?.Destroy(new TankHurtContext_Other()); // hmmm
                                 }
 
                                 if (Input.CanDetectClick(rightClick: true))
@@ -720,8 +733,23 @@ namespace TanksRebirth
                 }
 
                 DebugUtils.DrawDebugString(spriteBatch, $"Lives / StartingLives: {PlayerTank.Lives} / {PlayerTank.StartingLives}" +
-                    $"\nKillCount: {PlayerTank.KillCount}", new(8, GameUtils.WindowHeight * 0.4f), 2);
+                    $"\nKillCount: {PlayerTank.KillCount}" +
+                    $"\n\nSaveable Game Data:" +
+                    $"\nTotal / Bullet / Mine / Bounce Kills: {GameData.TotalKills} / {GameData.BulletKills} / {GameData.MineKills} / {GameData.BounceKills}" +
+                    $"\nTotal Deaths: {GameData.Deaths}" +
+                    $"\nTotal Suicides: {GameData.Suicides}" +
+                    $"\nMissions Completed: {GameData.MissionsCompleted}" +
+                    $"\nExp Level / DecayMultiplier: {GameData.ExpLevel} / {GameData.UniversalExpMultiplier}", new(8, GameUtils.WindowHeight * 0.4f), 2);
 
+                for (int i = 0; i < GameData.TankKills.Count; i++)
+                {
+                    //var tier = GameData.KillCountsTiers[i];
+                    //var count = GameData.KillCountsCount[i];
+                    var tier = GameData.TankKills.ElementAt(i).Key;
+                    var count = GameData.TankKills.ElementAt(i).Value;
+
+                    DebugUtils.DrawDebugString(spriteBatch, $"{tier}: {count}", new(GameUtils.WindowWidth * 0.9f, 8 + (14f * (i + 1))), 2);
+                }
 
                 GraphicsDevice.DepthStencilState = new DepthStencilState() { };
 

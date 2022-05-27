@@ -22,6 +22,9 @@ using TanksRebirth.Net;
 using System.IO;
 using System.Diagnostics;
 
+using Aspose.Zip;
+using Aspose.Zip.Rar;
+
 namespace TanksRebirth.GameContent.UI
 {
     public static class MainMenu
@@ -102,6 +105,8 @@ namespace TanksRebirth.GameContent.UI
 
         public static void Initialize()
         {
+            TankGame.Instance.Window.ClientSizeChanged += UpdateProjection;
+
             Projection = Matrix.CreateOrthographic(TankGame.Instance.GraphicsDevice.Viewport.Width, TankGame.Instance.GraphicsDevice.Viewport.Height, -2000f, 5000f);
             //Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), TankGame.Instance.GraphicsDevice.Viewport.AspectRatio, 0.01f, 1000f);
             View = Matrix.CreateScale(2) * Matrix.CreateLookAt(new(0, 0, 500), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(MathHelper.PiOver2);
@@ -299,6 +304,12 @@ namespace TanksRebirth.GameContent.UI
 
             foreach (var e in _menuElements)
                 e.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/menu/menu_tick"), SoundContext.Effect); };
+        }
+
+        private static void UpdateProjection(object sender, EventArgs e)
+        {
+            Projection = Matrix.CreateOrthographic(TankGame.Instance.GraphicsDevice.Viewport.Width, TankGame.Instance.GraphicsDevice.Viewport.Height, -2000f, 5000f);
+            View = Matrix.CreateScale(2) * Matrix.CreateLookAt(new(0, 0, 500), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(MathHelper.PiOver2);
         }
 
         private static void InitializeDifficultyButtons()
@@ -860,6 +871,9 @@ namespace TanksRebirth.GameContent.UI
                         TankGame.spriteBatch.DrawString(TankGame.TextFont, $"{client.Name}" + $" ({client.Id})", initialPosition + new Vector2(0, 20) * (i + 1), textCol, 0.6f);
                     }
                 }
+                var size = TankGame.TextFont.MeasureString(TankGame.Instance.MOTD);
+                TankGame.spriteBatch.DrawString(TankGame.TextFont, TankGame.Instance.MOTD, new(GameUtils.WindowWidth - 8, 8), Color.White, new(0.6f), 0f, new Vector2(size.X, 0));
+
                 var tanksMessageSize = TankGame.TextFont.MeasureString(tanksMessage);
                 TankGame.spriteBatch.DrawString(TankGame.TextFont, tanksMessage, new(8, GameUtils.WindowHeight - 8), Color.White, new(0.6f), 0f, new Vector2(0, tanksMessageSize.Y));
 
@@ -884,10 +898,27 @@ namespace TanksRebirth.GameContent.UI
                         }
                         if (Input.KeyJustPressed(Keys.Enter))
                         {
-                            Process.Start(new ProcessStartInfo("https://github.com/RighteousRyan1/TanksRebirth/releases/download/1.3-alpha/VanillaCampaign.rar")
-                            {
-                                UseShellExecute = true,
-                            });
+                            try {
+                                var bytes = WebUtils.DownloadWebFile("https://github.com/RighteousRyan1/TanksRebirth/releases/download/1.3.4-alpha/Vanilla.rar", out var filename);
+                                var path = Path.Combine(TankGame.SaveDirectory, "Campaigns", filename);
+                                File.WriteAllBytes(path, bytes);
+
+                                using (var archive = new RarArchive(path))
+                                {
+                                    archive.ExtractToDirectory(Path.Combine(TankGame.SaveDirectory, "Campaigns", ""));
+                                }
+
+                                File.Delete(path);
+
+                                SetCampaignDisplay();
+
+                            } catch(Exception e) {
+                                Process.Start(new ProcessStartInfo("https://github.com/RighteousRyan1/TanksRebirth/releases/download/1.3.4-alpha/Vanilla.rar")
+                                {
+                                    UseShellExecute = true,
+                                });
+                                GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
+                            }
                         }
                     }
                 }

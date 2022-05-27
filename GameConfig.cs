@@ -14,7 +14,7 @@ namespace TanksRebirth
         public int TankFootprintLimit { get; set; } = 100000;
         public bool PerPixelLighting { get; set; } = true;
         public bool Vsync { get; set; } = true;
-        public bool BorderlessWindow { get; set; } = true;
+        public bool FullScreen { get; set; } = false;
 
         public bool MSAA { get; set; } = false;
 

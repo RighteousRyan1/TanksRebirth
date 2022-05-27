@@ -8,11 +8,10 @@ namespace TanksRebirth.Achievements
 {
     public interface IAchievement
     {
-        void Achieve();
+        void Complete();
+
         bool[] Requirements { get; set; }
-
-        bool IsAchieved { get; set; }
-
+        bool IsComplete { get; set; }
         string Name { get; set; }
     }
 }

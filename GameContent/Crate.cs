@@ -7,6 +7,7 @@ using TanksRebirth.Internals;
 using Microsoft.Xna.Framework.Audio;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Graphics;
+using TanksRebirth.GameContent.Systems;
 
 namespace TanksRebirth.GameContent
 {
@@ -175,7 +176,12 @@ namespace TanksRebirth.GameContent
 
             if (ContainsTank)
             {
-                var t = new AITank(TankToSpawn.AiTier);
+                var tier = TankToSpawn.AiTier;
+                if (Difficulties.Types["MarbleModBuff"])
+                    tier -= 18;
+                if (Difficulties.Types["MasterModBuff"])
+                    tier -= 9;
+                var t = new AITank(tier);
                 t.Body.Position = position.FlattenZ();
                 t.Properties.Position = position.FlattenZ();
                 t.Properties.Dead = false;

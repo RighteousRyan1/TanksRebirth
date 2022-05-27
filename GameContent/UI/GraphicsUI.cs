@@ -18,9 +18,9 @@ namespace TanksRebirth.GameContent.UI
 
         public static UIImage VsyncToggle;
 
-        public static UITextButton BorderlessWindowButton;
+        public static UITextButton FullScreenButton;
 
-        public static UIImage BorderlessWindowToggle;
+        public static UIImage FullScreenToggle;
 
         public static UITextButton ResolutionButton;
 
@@ -89,22 +89,22 @@ namespace TanksRebirth.GameContent.UI
             };
 
             //Borderless Window
-            BorderlessWindowToggle = new(null, 1, (uiImage, spriteBatch) => DrawBooleanIndicator(spriteBatch, uiImage.Hitbox, TankGame.Settings.BorderlessWindow))
+            FullScreenToggle = new(null, 1, (uiImage, spriteBatch) => DrawBooleanIndicator(spriteBatch, uiImage.Hitbox, TankGame.Settings.FullScreen))
             {
                 IsVisible = false,
                 IgnoreMouseInteractions = true
             };
-            BorderlessWindowToggle.SetDimensions(695, 595, 510, 160);
+            FullScreenToggle.SetDimensions(695, 595, 510, 160);
 
-            BorderlessWindowButton = new(TankGame.GameLanguage.BorderlessWindow, TankGame.TextFont, Color.WhiteSmoke)
+            FullScreenButton = new(TankGame.GameLanguage.BorderlessWindow, TankGame.TextFont, Color.WhiteSmoke)
             {
                 IsVisible = false,
                 Tooltip = TankGame.GameLanguage.BorderlessWindowDesc
             };
-            BorderlessWindowButton.SetDimensions(700, 600, 500, 150);
-            BorderlessWindowButton.OnLeftClick = (uiElement) =>
+            FullScreenButton.SetDimensions(700, 600, 500, 150);
+            FullScreenButton.OnLeftClick = (uiElement) =>
             {
-                if (TankGame.Settings.BorderlessWindow)
+                if (TankGame.Settings.FullScreen)
                 {
                     TankGame.Instance.graphics.PreferredBackBufferHeight -= 50;
                 }
@@ -112,7 +112,7 @@ namespace TanksRebirth.GameContent.UI
                 {
                     TankGame.Instance.graphics.PreferredBackBufferHeight += 50;
                 }
-                TankGame.Instance.Window.IsBorderless = TankGame.Settings.BorderlessWindow = !TankGame.Settings.BorderlessWindow;
+                TankGame.Instance.graphics.IsFullScreen = TankGame.Settings.FullScreen = !TankGame.Settings.FullScreen;
                 TankGame.Instance.graphics.ApplyChanges();
             };
 
@@ -165,11 +165,11 @@ namespace TanksRebirth.GameContent.UI
         {
             PerPixelLightingButton.IsVisible = false;
             VsyncButton.IsVisible = false;
-            BorderlessWindowButton.IsVisible = false;
+            FullScreenButton.IsVisible = false;
             ResolutionButton.IsVisible = false;
             PerPixelLightingToggle.IsVisible = false;
             VsyncToggle.IsVisible = false;
-            BorderlessWindowButton.IsVisible = false;
+            FullScreenButton.IsVisible = false;
 
             //little extra
             //TankGame.Settings.ResWidth = curPair.Key;
@@ -180,11 +180,11 @@ namespace TanksRebirth.GameContent.UI
         {
             PerPixelLightingButton.IsVisible = true;
             VsyncButton.IsVisible = true;
-            BorderlessWindowButton.IsVisible = true;
+            FullScreenButton.IsVisible = true;
             ResolutionButton.IsVisible = true;
             PerPixelLightingToggle.IsVisible = true;
             VsyncToggle.IsVisible = true;
-            BorderlessWindowButton.IsVisible = true;
+            FullScreenButton.IsVisible = true;
         }
     }
 }

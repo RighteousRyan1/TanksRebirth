@@ -6,6 +6,15 @@ namespace TanksRebirth.Internals.Common.Utilities
 {
     public static class DebugUtils
     {
+        public readonly struct Id
+        {
+            public const int General = 0;
+            public const int EntityData = 1;
+            public const int PlayerData = 2;
+            public const int LevelEditDebug = 3;
+            public const int Powerups = 4;
+            public const int AchievementData = 5;
+        }
         public static string CurDebugLabel
         {
             get
@@ -25,9 +34,10 @@ namespace TanksRebirth.Internals.Common.Utilities
             "Entity Data",
             "Player Data",
             "Level Edit Debug",
-            "Powerups"
+            "Powerups",
+            "Achievement Data"
         };
-        public static void DrawDebugString(SpriteBatch sb, object info, Vector2 position, int level = 0, float scale = 1f, bool centered = false, Color color = default, bool beginSb = false)
+        public static void DrawDebugString(SpriteBatch sb, object info, Vector2 position, int level = Id.General, float scale = 1f, bool centered = false, Color color = default, bool beginSb = false)
         {
             if (!DebuggingEnabled || DebugLevel != level)
                 return;

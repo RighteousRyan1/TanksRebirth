@@ -28,6 +28,8 @@ using System.Diagnostics;
 using Microsoft.Xna.Framework.Media;
 using TanksRebirth.Internals.Common.Framework;
 using NativeFileDialogSharp;
+using TanksRebirth.IO;
+using TanksRebirth.Achievements;
 
 namespace TanksRebirth.GameContent
 {
@@ -77,19 +79,25 @@ namespace TanksRebirth.GameContent
             
             TankMusicSystem.StopAll();
 
+            if (result1up && context != MissionEndContext.Lose)
+                delay += 200;
+
             if (context == MissionEndContext.CampaignCompleteMajor)
             {
+                TankGame.GameData.CampaignsCompleted++;
                 var victory = GameResources.GetGameResource<SoundEffect>($"Assets/fanfares/mission_complete_M100");
                 SoundPlayer.PlaySoundInstance(victory, SoundContext.Effect, 0.5f);
 
             }
             else if (context == MissionEndContext.CampaignCompleteMinor)
             {
+                TankGame.GameData.CampaignsCompleted++;
                 var victory = GameResources.GetGameResource<SoundEffect>($"Assets/fanfares/mission_complete_M20");
                 SoundPlayer.PlaySoundInstance(victory, SoundContext.Effect, 0.5f);
             }
             if (result1up && context == MissionEndContext.Win)
             {
+                TankGame.GameData.MissionsCompleted++;
                 PlayerTank.Lives++;
                 var lifeget = GameResources.GetGameResource<SoundEffect>($"Assets/fanfares/life_get");
                 SoundPlayer.PlaySoundInstance(lifeget, SoundContext.Effect, 0.5f);
@@ -121,6 +129,7 @@ namespace TanksRebirth.GameContent
             }
             else if (context == MissionEndContext.Win)
             {
+                TankGame.GameData.MissionsCompleted++;
                 LoadedCampaign.LoadNextMission();
                 var victorySound = GameResources.GetGameResource<SoundEffect>($"Assets/fanfares/mission_complete");
                 SoundPlayer.PlaySoundInstance(victorySound, SoundContext.Effect, 0.5f);
@@ -134,12 +143,16 @@ namespace TanksRebirth.GameContent
         }
         internal static void UpdateAll()
         {
+            // technically, level 0 in code is level 1, so we want to use that number (1) if the user is level 0.
+
+            VanillaAchievements.Repository.UpdateCompletions();
+            var floor1 = MathF.Floor(TankGame.GameData.ExpLevel + 1f);
+            var floor0 = MathF.Floor(TankGame.GameData.ExpLevel);
+            GameData.UniversalExpMultiplier = floor1 - (GameData.DecayPerLevel * floor0);
+
             if (Difficulties.Types["InfiniteLives"])
                 PlayerTank.Lives = PlayerTank.StartingLives;
-            foreach (var tank in AllPlayerTanks)
-                tank?.Update();
-
-            foreach (var tank in AllAITanks)
+            foreach (var tank in AllTanks)
                 tank?.Update();
 
             if (InMission)
@@ -353,8 +366,6 @@ namespace TanksRebirth.GameContent
                 bool isExtraLifeMission = LoadedCampaign.Properties.ExtraLivesMissions.Contains(LoadedCampaign.CurrentMissionId + 1);
 
                 int restartTime = 600;
-                if (isExtraLifeMission)
-                    restartTime += 200;
 
                 if (activeTeams.Contains(TankTeam.NoTeam) && AllTanks.Count(tnk => tnk != null && !tnk.Properties.Dead) <= 1)
                 {
@@ -436,11 +447,8 @@ namespace TanksRebirth.GameContent
             if (!MainMenu.Active)
                 MapRenderer.RenderWorldModels();
 
-            foreach (var tank in AllPlayerTanks)
-                tank?.DrawBody();
-
-            foreach (var tank in AllAITanks)
-                tank?.DrawBody();
+            foreach (var tank in AllTanks)
+                tank?.Render();
 
             foreach (var cube in Block.AllBlocks)
                 cube?.Render();
@@ -479,6 +487,13 @@ namespace TanksRebirth.GameContent
             {
                 DebugUtils.DrawDebugString(TankGame.spriteBatch, $"BODY", 
                     GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(body.Position.X, 0, body.Position.Y), TankGame.GameView, TankGame.GameProjection), centered: true);
+            }
+
+            for (int i = 0; i < VanillaAchievements.Repository.GetAchievements().Count; i++)
+            {
+                var achievement = VanillaAchievements.Repository.GetAchievements()[i];
+                DebugUtils.DrawDebugString(TankGame.spriteBatch, $"{achievement.Name}: {(achievement.IsComplete ? "Complete" : "Incomplete")}",
+                    new Vector2(8, 24 + (i * 20)), level: DebugUtils.Id.AchievementData, centered: false);
             }
             // TODO: Fix translation
             // TODO: Scaling with screen size.

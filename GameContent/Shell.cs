@@ -29,7 +29,7 @@ namespace TanksRebirth.GameContent
         }
 
         /// <summary>The maximum shells allowed at any given time.</summary>
-        private static int MaxShells = 1500;
+        private const int MaxShells = 1500;
         public static Shell[] AllShells { get; } = new Shell[MaxShells];
 
         /// <summary>The <see cref="Tank"/> which shot this <see cref="Shell"/>.</summary>
@@ -38,7 +38,8 @@ namespace TanksRebirth.GameContent
         public Vector2 Position2D => Position.FlattenZ();
         public Vector2 Velocity2D => Velocity.FlattenZ();
         /// <summary>How many times this <see cref="Shell"/> can hit walls.</summary>
-        public uint RicochetsLeft;
+        public uint RicochetsRemaining;
+        public uint Ricochets;
         public float Rotation;
 
         /// <summary>The homing properties of this <see cref="Shell"/>.</summary>
@@ -89,7 +90,7 @@ namespace TanksRebirth.GameContent
         public Shell(Vector3 position, Vector3 velocity, ShellType tier, Tank owner, uint ricochets = 0, HomingProperties homing = default, bool useDarkTexture = false, bool playSpawnSound = true)
         {
             Tier = tier;
-            RicochetsLeft = ricochets;
+            RicochetsRemaining = ricochets;
             Position = position;
             Model = GameResources.GetGameResource<Model>("Assets/bullet");
 
@@ -102,7 +103,7 @@ namespace TanksRebirth.GameContent
             _shellTexture = useDarkTexture ? GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/explosive_bullet") : GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/bullet");
 
             HomeProperties = homing;
-            this.Owner = owner;
+            Owner = owner;
 
             // if explosive, black
 
@@ -302,7 +303,7 @@ namespace TanksRebirth.GameContent
                 // GameHandler.GameRand.NextFloat(-2f, 2f)
                 //p.TextureRotation = -MathHelper.PiOver2;
                 p.TextureScale = Velocity.Length() / 10 - 0.2f;
-                p.TextureOrigin = new(p.Texture.Size().X / 2, 0);
+                p.Origin2D = new(p.Texture.Size().X / 2, 0);
 
                 p.Pitch = -Rotation - MathHelper.PiOver2;
 
@@ -324,7 +325,7 @@ namespace TanksRebirth.GameContent
                 // GameHandler.GameRand.NextFloat(-2f, 2f)
                 //p.TextureRotation = -MathHelper.PiOver2;
                 p.TextureScale = Velocity.Length() / 10 - 0.2f;
-                p2.TextureOrigin = new(p.Texture.Size().X / 2, 0);
+                p2.Origin2D = new(p.Texture.Size().X / 2, 0);
 
                 p2.Pitch = -Rotation + MathHelper.PiOver2;
 
@@ -338,8 +339,6 @@ namespace TanksRebirth.GameContent
             }
             if (Flaming)
             {
-                // every 5 frames, create a flame particle that is a bit smaller than the shell which expands away from the shell, then after a while, shrinks
-
                 var p = ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/flame"));
 
                 p.Roll = -MathHelper.PiOver2;
@@ -348,10 +347,10 @@ namespace TanksRebirth.GameContent
                 p.Color = Color.Orange;
                 p.isAddative = false;
                 // GameHandler.GameRand.NextFloat(-2f, 2f)
-                p.TextureRotation = -MathHelper.PiOver2;
+                p.Rotation2D = -MathHelper.PiOver2;
 
                 var rotoff = GameHandler.GameRand.NextFloat(-0.25f, 0.25f);
-                p.TextureOrigin = new(p.Texture.Size().X / 2, p.Texture.Size().Y);
+                p.Origin2D = new(p.Texture.Size().X / 2, p.Texture.Size().Y);
 
                 var initialScale = p.Scale;
 
@@ -375,6 +374,42 @@ namespace TanksRebirth.GameContent
                     if (p.Scale.X <= 0)
                         p.Destroy();
                 };
+
+                /*const int PARTICLES_PER_ITERATION = 5;
+                for (int i = 0; i < PARTICLES_PER_ITERATION; i++)
+                {
+                    var p = ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/flame"));
+
+                    p.Roll = -MathHelper.PiOver2;
+                    var scaleRand = GameHandler.GameRand.NextFloat(0.45f, 0.6f);
+                    p.Scale = new(scaleRand, 0.16f, 0.4f); // x is outward from bullet
+                    p.Color = Color.Orange;
+                    p.isAddative = false;
+                    // GameHandler.GameRand.NextFloat(-2f, 2f)
+                    p.Rotation2D = -MathHelper.PiOver2;
+
+                    var rotoff = GameHandler.GameRand.NextFloat(-0.25f, 0.25f);
+                    p.Origin2D = new(p.Texture.Size().X / 2, p.Texture.Size().Y);
+
+                    var initialScale = p.Scale;
+
+                    var rand = GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi);
+                    p.UniqueBehavior = (par) =>
+                    {
+                        var flat = Position.FlattenZ();
+
+                        var off = flat + new Vector2(0, 0).RotatedByRadians(Rotation);
+
+                        p.Position = off.ExpandZ() + new Vector3(0, 11, 0);
+
+                        p.Pitch = -Rotation - MathHelper.PiOver2 + rotoff;
+
+                        p.Roll = rand;
+
+                        if (p.LifeTime > 1)
+                            p.Destroy();
+                    };
+                }*/
             }
 
             TankGame.OnFocusLost += TankGame_OnFocusLost;
@@ -398,7 +433,7 @@ namespace TanksRebirth.GameContent
             p.isAddative = false;
             // GameHandler.GameRand.NextFloat(-2f, 2f)
             //p.TextureRotation = -MathHelper.PiOver2;
-            p.TextureOrigin = new(0, p.Texture.Size().Y / 2);
+            p.Origin2D = new(0, p.Texture.Size().Y / 2);
 
             p.UniqueBehavior = (part) =>
             {
@@ -426,7 +461,7 @@ namespace TanksRebirth.GameContent
             p2.isAddative = false;
             // GameHandler.GameRand.NextFloat(-2f, 2f)
             //p.TextureRotation = -MathHelper.PiOver2;
-            p2.TextureOrigin = new(0, p.Texture.Size().Y / 2);
+            p2.Origin2D = new(0, p.Texture.Size().Y / 2);
 
             p2.UniqueBehavior = (part) =>
             {
@@ -453,15 +488,15 @@ namespace TanksRebirth.GameContent
         /// <param name="horizontal">Whether or not the ricochet is done off of a horizontal axis.</param>
         public void Ricochet(bool horizontal)
         {
-            if (RicochetsLeft <= 0)
+            if (RicochetsRemaining <= 0)
             {
                 Destroy();
                 return;
             }
-            
+
             //if (LeavesTrail)
             //{
-                //MakeTrail();
+            //MakeTrail();
             //}
 
             if (horizontal)
@@ -488,7 +523,8 @@ namespace TanksRebirth.GameContent
             }
             ParticleSystem.MakeShineSpot(Position, Color.Orange, 0.8f);
 
-            RicochetsLeft--;
+            Ricochets++;
+            RicochetsRemaining--;
         }
 
         public void CheckCollisions()
@@ -507,7 +543,7 @@ namespace TanksRebirth.GameContent
                         else
                         {
                             Destroy();
-                            tank.Damage(Owner is AITank ? new TankHurtContext_Bullet(false, RicochetsLeft, Tier, Owner is not null ? Owner.WorldId : -1) : new TankHurtContext_Bullet(true, RicochetsLeft, Tier, Owner is not null ? Owner.WorldId : -1));
+                            tank.Damage(Owner is AITank ? new TankHurtContext_Bullet(false, Ricochets, Tier, Owner is not null ? Owner.WorldId : -1) : new TankHurtContext_Bullet(true, Ricochets, Tier, Owner is not null ? Owner.WorldId : -1));
                         }
                     }
                 }
@@ -575,7 +611,7 @@ namespace TanksRebirth.GameContent
         {
             if (DebugUtils.DebugLevel == 1 && HomeProperties.Speed > 0)
                 Collision.DoRaycast(Position2D, HomeProperties.Target, (int)HomeProperties.Radius, true);
-            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"RicochetsLeft: {RicochetsLeft}\nTier: {Tier}", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 20), 1, centered: true);
+            DebugUtils.DrawDebugString(TankGame.spriteBatch, $"RicochetsLeft: {RicochetsRemaining}\nTier: {Tier}", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 20), 1, centered: true);
 
             for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++)
             {

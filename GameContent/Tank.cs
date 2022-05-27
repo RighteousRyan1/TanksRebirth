@@ -12,6 +12,7 @@ using TanksRebirth.Internals.Common.Framework;
 using TanksRebirth.GameContent.Systems;
 using System.Collections.Generic;
 using System.IO;
+using TanksRebirth.GameContent.Cosmetics;
 
 namespace TanksRebirth.GameContent
 {
@@ -52,20 +53,30 @@ namespace TanksRebirth.GameContent
             return player;
         }
     }
-
     public interface ITankHurtContext
     {
-        /*ByPlayerBullet,
-        ByAiBullet,
-        ByPlayerMine,
-        ByAiMine,
-        ByExplosion,
-        Other*/
-
         bool IsPlayer { get; set; }
         int TankId { get; set; }
     }
+    public struct TankHurtContext_Other : ITankHurtContext
+    {
+        public enum HurtContext
+        {
+            FromIngame,
+            FromOther
+        }
+        public HurtContext Context { get; set; }
+        public bool IsPlayer { get; set; }
+        public int TankId { get; set; }
 
+        public TankHurtContext_Other(HurtContext cxt)
+        {
+            Context = cxt;
+            IsPlayer = false;
+            TankId = -1;
+        }
+
+    }
     public struct TankHurtContext_Bullet : ITankHurtContext
     {
         public bool IsPlayer { get; set; }
@@ -207,6 +218,8 @@ namespace TanksRebirth.GameContent
         public Vector3 Position3D => Properties.Position.ExpandZ();
         public Vector3 Velocity3D => Properties.Velocity.ExpandZ();
         #endregion
+
+        public List<ICosmetic> Cosmetics = new();
         /// <summary>Apply all the default parameters for this <see cref="Tank"/>.</summary>
         public virtual void ApplyDefaults() { }
 
@@ -216,6 +229,26 @@ namespace TanksRebirth.GameContent
             {
                 Body = CollisionsWorld.CreateCircle(TNK_WIDTH * 0.4f, 1f, Properties.Position, BodyType.Dynamic);
                 // Body.LinearDamping = Deceleration * 10;
+            }
+
+            foreach (var cosmetic in Cosmetics)
+            {
+                if (cosmetic is Cosmetic2D cos2d)
+                {
+                    var particle = ParticleSystem.MakeParticle(Position3D + cos2d.RelativePosition, cos2d.Texture);
+
+                    particle.Scale = new(1);
+                    particle.Tag = $"cosmetic_2d_{GetHashCode()}"; // store the hash code of this tank, so when we destroy the cosmetic's particle, it destroys all belonging to this tank!
+
+                    particle.UniqueBehavior = (z) =>
+                    {
+                        particle.Position = Position3D + cos2d.RelativePosition;
+                        particle.Roll = cosmetic.Rotation.X;
+                        particle.Pitch = cosmetic.Rotation.Y;
+                        particle.Yaw = cosmetic.Rotation.Z;
+                    };
+
+                }
             }
             
             if (Difficulties.Types["BulletHell"])
@@ -338,6 +371,8 @@ namespace TanksRebirth.GameContent
                 Body.LinearVelocity = Vector2.Zero;
                 Properties.Velocity = Vector2.Zero;
             }
+            foreach (var cosmetic in Cosmetics)
+                cosmetic?.UniqueBehavior?.Invoke(cosmetic); 
         }
         /// <summary>Get this <see cref="Tank"/>'s general stats.</summary>
         public string GetGeneralStats()
@@ -481,7 +516,7 @@ namespace TanksRebirth.GameContent
                     shell.Velocity = new Vector3(-new2d.X, 0, new2d.Y) * Properties.ShellSpeed;
 
                     shell.Owner = this;
-                    shell.RicochetsLeft = Properties.RicochetCount;
+                    shell.RicochetsRemaining = Properties.RicochetCount;
 
                     #region Particles
                     var hit = ParticleSystem.MakeParticle(shell.Position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
@@ -551,7 +586,7 @@ namespace TanksRebirth.GameContent
                     shell.Velocity = new Vector3(-new2d.X, 0, new2d.Y).FlattenZ().RotatedByRadians(newAngle).ExpandZ() * Properties.ShellSpeed;
 
                     shell.Owner = this;
-                    shell.RicochetsLeft = Properties.RicochetCount;
+                    shell.RicochetsRemaining = Properties.RicochetCount;
                 }
             }
 
@@ -582,6 +617,22 @@ namespace TanksRebirth.GameContent
             var mine = new Mine(this, Properties.Position, 600);
         }
 
+        public virtual void Render() { 
+            foreach (var cosmetic in Cosmetics)
+            {
+                if (cosmetic is Cosmetic3D cos3d) {
+                    foreach (ModelMesh mesh in cos3d.Model.Meshes) {
+                        foreach (BasicEffect effect in mesh.Effects) {
+                            effect.World = World * Matrix.CreateTranslation(cos3d.RelativePosition) * Matrix.CreateFromYawPitchRoll(cos3d.Rotation.X, cos3d.Rotation.Y, cos3d.Rotation.Z);
+                            effect.View = View;
+                            effect.Projection = Projection;
+                        }
+                        mesh.Draw();
+                    }
+                }
+            }
+        }
+
         public uint CurShootStun { get; private set; } = 0;
         public uint CurShootCooldown { get; private set; } = 0;
         public uint CurMineCooldown { get; private set; } = 0;
@@ -593,6 +644,10 @@ namespace TanksRebirth.GameContent
         {            
             if (CollisionsWorld.BodyList.Contains(Body))
                 CollisionsWorld.Remove(Body);
+            foreach (var particle in ParticleSystem.CurrentParticles)
+                if (particle is not null)
+                    if ((string)particle.Tag == $"cosmetic_2d_{GetHashCode()}") // remove all particles related to this tank
+                        particle.Destroy();
             GameHandler.OnMissionStart -= OnMissionStart;
         }
     }

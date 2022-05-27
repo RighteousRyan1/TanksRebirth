@@ -228,7 +228,7 @@ namespace TanksRebirth.GameContent.UI
                 BackButton,
                 GraphicsUI.VsyncButton,
                 GraphicsUI.PerPixelLightingButton,
-                GraphicsUI.BorderlessWindowButton,
+                GraphicsUI.FullScreenButton,
                 GraphicsUI.ResolutionButton,
                 VolumeUI.MusicVolume,
                 VolumeUI.EffectsVolume,
@@ -240,8 +240,8 @@ namespace TanksRebirth.GameContent.UI
                 GraphicsUI.VsyncToggle,
                 GraphicsUI.PerPixelLightingButton,
                 GraphicsUI.PerPixelLightingToggle,
-                GraphicsUI.BorderlessWindowButton,
-                GraphicsUI.BorderlessWindowToggle,
+                GraphicsUI.FullScreenButton,
+                GraphicsUI.FullScreenToggle,
                 GraphicsUI.ResolutionButton
             };
             foreach (UIElement button in graphicsElements)

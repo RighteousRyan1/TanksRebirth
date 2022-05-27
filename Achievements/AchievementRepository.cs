@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,21 +9,41 @@ namespace TanksRebirth.Achievements
 {
     public class AchievementRepository
     {
-        private static List<IAchievement> _achievements { get; set; } = new();
+        private List<IAchievement> _achievements = new();
 
-        public static void AddAchievement(IAchievement achievement)
+        public void AddAchievement(IAchievement achievement)
+            => _achievements.Add(achievement);
+
+        public IList<IAchievement> GetAchievements() 
+            => _achievements;
+
+        // not really sure if these work. I hope they do.
+        public void Save(BinaryWriter writer)
         {
-            _achievements.Add(achievement);
+            for (int i = 0; i < _achievements.Count; i++)
+                writer.Write(_achievements[i].IsComplete);
         }
 
-        public static IEnumerable<IAchievement> GetAchievements()
+        public void Load(BinaryReader reader)
         {
-            return _achievements;
+            for (int i = 0; i < _achievements.Count; i++)
+                if (reader.ReadBoolean())
+                    _achievements[i].Complete();
         }
 
-        public static void Save()
+        public void UpdateCompletions()
         {
-            
+            for (int i = 0; i < _achievements.Count; i++)
+            {
+                var achievement = _achievements[i];
+                if (achievement.Requirements.Length > 0)
+                {
+                    if (_achievements[i].Requirements.All(req => req))
+                    {
+                        _achievements[i].Complete();
+                    }
+                }
+            }
         }
     }
 }

@@ -14,6 +14,8 @@ namespace TanksRebirth.GameContent.GameMechanics
 
         public bool IsModOf(long remainder)
         {
+            if (remainder == 0)
+                return false;
             return Value % remainder == 0;
         }
     }

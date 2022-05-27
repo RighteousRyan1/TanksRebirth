@@ -10,7 +10,6 @@ using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Internals;
 using Microsoft.Xna.Framework.Audio;
 using TanksRebirth.Internals.Common;
-using TanksRebirth.Internals.Core.Interfaces;
 using TanksRebirth.GameContent.GameMechanics;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Framework.Input;
@@ -27,7 +26,7 @@ namespace TanksRebirth.GameContent
         public static int StartingLives = 3;
         public static int Lives = 0;
 
-        public static Dictionary<TankTier, int> TanksKillDict = new();
+        public static Dictionary<TankTier, int> TanksKillDict = new(); // this campaign only!
 
         public static int KillCount = 0;
         
@@ -136,8 +135,6 @@ namespace TanksRebirth.GameContent
             Model.Root.Transform = World;
 
             Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
-
-            Properties.TankRotation %= MathHelper.Tau;
             if (TargetTankRotation - Properties.TankRotation >= MathHelper.PiOver2)
                 Properties.TankRotation += MathHelper.Pi;
             else if (TargetTankRotation - Properties.TankRotation <= -MathHelper.PiOver2)
@@ -385,18 +382,7 @@ namespace TanksRebirth.GameContent
 
             if (context.IsPlayer)
             {
-                if (context is TankHurtContext_Bullet cxt1)
-                {
-                    //if (cxt.Bounces > 0)
-                    TankGame.GameData.BulletKills++;
-                    TankGame.GameData.TotalKills++;
-
-                }
-                if (context is TankHurtContext_Mine cxt2)
-                {
-                    TankGame.GameData.MineKills++;
-                    TankGame.GameData.TotalKills++;
-                }
+                TankGame.GameData.Suicides++;
                 // check if player id matches client id, if so, increment that player's kill count, then sync to the server
                 // TODO: convert TankHurtContext into a struct and use it here
                 // Will be used to track the reason of death and who caused the death, if any tank owns a shell or mine
@@ -406,6 +392,7 @@ namespace TanksRebirth.GameContent
                 //    PlayerTank.KillCount++;
                 //   Client.Send(new TankKillCountUpdateMessage(PlayerTank.KillCount)); // not a bad idea actually
             }
+            TankGame.GameData.Deaths++;
 
             GameHandler.AllPlayerTanks[PlayerId] = null;
             GameHandler.AllTanks[WorldId] = null;
@@ -502,7 +489,7 @@ namespace TanksRebirth.GameContent
             }
         }
 
-        private void RenderModel()
+        public override void Render()
         {
             for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++)
             {
@@ -558,9 +545,11 @@ namespace TanksRebirth.GameContent
                     }
                 }
             }
+            DrawExtras();
+            base.Render();
         }
 
-        internal void DrawBody()
+        private void DrawExtras()
         {
             if (Properties.Dead)
                 return;
@@ -582,7 +571,6 @@ namespace TanksRebirth.GameContent
             if (Properties.Invisible && GameHandler.InMission)
                 return;
 
-            RenderModel();
             Properties.Armor?.Render();
         }
 

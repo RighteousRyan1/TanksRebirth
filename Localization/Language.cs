@@ -26,8 +26,8 @@ namespace TanksRebirth.Localization
         public string PerPxLightDesc { get; set; }
         public string VSync { get; set; }
         public string VSyncDesc { get; set; }
-        public string BorderlessWindow { get; set; }
-        public string BorderlessWindowDesc { get; set; }
+        public string BorderlessWindow { get; set; } // name is remaining the same for legacy purposes, this is actually just the dictation for fullscreen
+        public string BorderlessWindowDesc { get; set; } // same here
         public string Resolution { get; set; }
         public string ResolutionDesc { get; set; }
 

@@ -32,6 +32,14 @@ namespace TanksRebirth.GameContent
                 Texture = texture,
             };
         }
+        public static Particle MakeParticle(Vector3 position, string text)
+        {
+            return new(position)
+            {
+                IsText = true,
+                Text = text
+            };
+        }
 
         public static void MakeSmallExplosion(Vector3 position, int numClouds, int numSparks, float shineScale, int movementFactor)
         {
