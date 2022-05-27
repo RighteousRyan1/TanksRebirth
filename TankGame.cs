@@ -399,8 +399,11 @@ namespace TanksRebirth
                     Lighting.AccurateShadows = !Lighting.AccurateShadows;
                 if (Input.AreKeysJustPressed(Keys.LeftShift, Keys.RightShift))
                     RenderWireframe = !RenderWireframe;
-                if (Input.AreKeysJustPressed(Keys.NumPad4, Keys.NumPad6))
+                if (Input.AreKeysJustPressed(Keys.Left, Keys.Right, Keys.Up, Keys.Down))
+                {
                     SecretCosmeticSetting = !SecretCosmeticSetting;
+                    ChatSystem.SendMessage(SecretCosmeticSetting ? "Activated randomized cosmetics!" : "Deactivated randomized cosmetics!", SecretCosmeticSetting ? Color.Lime : Color.Red);
+                }
                 if (Input.AreKeysJustPressed(Keys.LeftAlt | Keys.RightAlt, Keys.Enter))
                 {
                     graphics.IsFullScreen = !graphics.IsFullScreen;
