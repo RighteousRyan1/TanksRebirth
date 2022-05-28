@@ -5,6 +5,7 @@ using TanksRebirth.Internals;
 using TanksRebirth.GameContent.UI;
 using FontStashSharp;
 using System.Linq;
+using TanksRebirth.GameContent.Properties;
 
 namespace TanksRebirth.GameContent.Systems
 {
@@ -43,9 +44,9 @@ namespace TanksRebirth.GameContent.Systems
             {
                 MainMenu.Leave();
 
-                if (GameHandler.ShouldMissionsProgress)
+                if (GameProperties.ShouldMissionsProgress)
                 {
-                    GameHandler.LoadedCampaign.SetupLoadedMission(true);
+                    GameProperties.LoadedCampaign.SetupLoadedMission(true);
                     // GameHandler.LoadedCampaign.LoadMission(27);
                 }
                 
@@ -103,17 +104,17 @@ namespace TanksRebirth.GameContent.Systems
                 DrawStripe(spriteBatch, Color.DarkRed, GameUtils.WindowHeight * (0.2f + off * 7), Alpha);
                 DrawStripe(spriteBatch, Color.DarkRed, GameUtils.WindowHeight * (0.2f + off * 8), Alpha);
 
-                int mafs1 = GameHandler.LoadedCampaign.TrackedSpawnPoints.Count(p => p.Item2);
-                int mafs2 = GameHandler.LoadedCampaign.LoadedMission.Tanks.Count(x => x.IsPlayer);
+                int mafs1 = GameProperties.LoadedCampaign.TrackedSpawnPoints.Count(p => p.Item2);
+                int mafs2 = GameProperties.LoadedCampaign.LoadedMission.Tanks.Count(x => x.IsPlayer);
                 int mafs = mafs1 - mafs2;
 
 
-                DrawShadowedString(new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2 - 250), Vector2.One, GameHandler.LoadedCampaign.LoadedMission.Name, SolidBackgroundColor, new(1f), Alpha);
+                DrawShadowedString(new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2 - 250), Vector2.One, GameProperties.LoadedCampaign.LoadedMission.Name, SolidBackgroundColor, new(1f), Alpha);
                 DrawShadowedString(new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2 - 50), Vector2.One, $"Enemy tanks: {mafs}", SolidBackgroundColor, new(0.8f), Alpha);
                 DrawShadowedString(new Vector2(GameUtils.WindowWidth / 2 - 100, GameUtils.WindowHeight / 2 + 350), Vector2.One, $"x   {PlayerTank.Lives}", SolidBackgroundColor, new(1f), Alpha, new Vector2(0, TankGame.TextFontLarge.MeasureString($"x   {PlayerTank.Lives}").Y / 2));
 
-                if (GameHandler.LoadedCampaign.CurrentMissionId == 0)
-                    DrawShadowedString(new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2 - 325), Vector2.One, $"Campaign: \"{GameHandler.LoadedCampaign.Properties.Name}\"", SolidBackgroundColor, new(0.4f), Alpha);
+                if (GameProperties.LoadedCampaign.CurrentMissionId == 0)
+                    DrawShadowedString(new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2 - 325), Vector2.One, $"Campaign: \"{GameProperties.LoadedCampaign.Properties.Name}\"", SolidBackgroundColor, new(0.4f), Alpha);
 
                 DrawShadowedTexture(GameResources.GetGameResource<Texture2D>("Assets/textures/ui/playertank2d"), new Vector2(GameUtils.WindowWidth / 2 - 200, GameUtils.WindowHeight / 2 + 375), Vector2.One, Color.Blue, new(1.25f), Alpha);
                 

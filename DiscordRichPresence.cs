@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TanksRebirth.GameContent;
+using TanksRebirth.GameContent.Properties;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.UI;
 
@@ -74,9 +75,9 @@ namespace TanksRebirth
                 {
                     tnkCnt = $"Fighting {AITank.CountAll()} tank(s)";
                     // get the names of each difficulty mode active, then join them together
-                    if (GameHandler.ShouldMissionsProgress)
+                    if (GameProperties.ShouldMissionsProgress)
                     {
-                        SetDetails($"Playing campaign '{GameHandler.LoadedCampaign.Properties.Name}' on mission '{GameHandler.LoadedCampaign.CurrentMission.Name}'" +
+                        SetDetails($"Playing campaign '{GameProperties.LoadedCampaign.Properties.Name}' on mission '{GameProperties.LoadedCampaign.CurrentMission.Name}'" +
                             $"\n{tnkCnt}");
                     }
                     else

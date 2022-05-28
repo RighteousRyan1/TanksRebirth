@@ -31,6 +31,8 @@ namespace TanksRebirth.IO
         public uint Deaths;
         public uint Suicides;
 
+        public TimeSpan TimePlayed;
+
         // Multiplayer wins, etc (for when they are made)
 
         // under is a bunch of encounter booleans
@@ -58,6 +60,8 @@ namespace TanksRebirth.IO
              * 2) Total Tanks Killed Per-type (Dictionary<TankTier, uint>)
              * 3) Missions Completed Total (uint)
              * 
+             * I've given up on this lol.
+             * 
              */
 
             // writer.Write(_message);
@@ -70,14 +74,12 @@ namespace TanksRebirth.IO
             writer.Write(Deaths);
             writer.Write(Suicides);
 
-            for (int i = 0; i < TankKills.Count; i++) {
+            writer.Write(TimePlayed.TotalMilliseconds);
 
-                //writer.Write(KillCountsCount[i]);
-
+            for (int i = 0; i < TankKills.Count; i++)
                 writer.Write(TankKills[(TankTier)i]);
-            }
 
-            VanillaAchievements.Repository.Save(writer);
+            //VanillaAchievements.Repository.Save(writer);
 
             writer.Write(ExpLevel);
 
@@ -96,12 +98,12 @@ namespace TanksRebirth.IO
             Deaths = reader.ReadUInt32();
             Suicides = reader.ReadUInt32();
 
-            for (int i = 0; i < TankKills.Count; i++)
-            {
-                TankKills[(TankTier)i] = reader.ReadUInt32();
-            }
+            TimePlayed = TimeSpan.FromMilliseconds(reader.ReadDouble());
 
-            VanillaAchievements.Repository.Load(reader);
+            for (int i = 0; i < TankKills.Count; i++)
+                TankKills[(TankTier)i] = reader.ReadUInt32();
+
+            //VanillaAchievements.Repository.Load(reader);
 
             ExpLevel = reader.ReadSingle();
         }

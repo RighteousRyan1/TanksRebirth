@@ -21,6 +21,7 @@ using TanksRebirth.Internals.Common.IO;
 using System.Reflection;
 using TanksRebirth.Net;
 using TanksRebirth.IO;
+using TanksRebirth.GameContent.Properties;
 
 namespace TanksRebirth.GameContent
 {
@@ -328,7 +329,7 @@ namespace TanksRebirth.GameContent
 
             GameHandler.AllTanks[index2] = this;
 
-            GameHandler.OnMissionStart += OnMissionStart;
+            GameProperties.OnMissionStart += OnMissionStart;
             
             base.Initialize();
         }
@@ -1693,7 +1694,7 @@ namespace TanksRebirth.GameContent
 
                 timeSinceLastAction++;
 
-                if (!GameHandler.InMission || IntermissionSystem.IsAwaitingNewMission)
+                if (!GameProperties.InMission || IntermissionSystem.IsAwaitingNewMission)
                 {
                     Properties.Velocity = Vector2.Zero;
                 }
@@ -1710,7 +1711,7 @@ namespace TanksRebirth.GameContent
 
         public override void Remove()
         {
-            GameHandler.OnMissionStart -= OnMissionStart;
+            GameProperties.OnMissionStart -= OnMissionStart;
             Properties.Dead = true;
             Behaviors = null;
             SpecialBehaviors = null;
@@ -2111,7 +2112,7 @@ namespace TanksRebirth.GameContent
 
         public void DoAi(bool doMoveTowards = true, bool doMovements = true, bool doFire = true)
         {
-            if (GameHandler.InMission)
+            if (GameProperties.InMission)
             {
                 for (int i = 0; i < Behaviors.Length; i++)
                     Behaviors[i].Value++;
@@ -2120,11 +2121,14 @@ namespace TanksRebirth.GameContent
 
                 if (Properties.Position - _oldPosition != Vector2.Zero && !Properties.Stationary)
                 {
-                    if (TankGame.GameUpdateTime % MathHelper.Clamp(treadPlaceTimer / 2, 4, 6) == 0)
+                    if (!Properties.IsSilent)
                     {
-                        var treadPlace = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_tread_place_{GameHandler.GameRand.Next(1, 5)}");
-                        var sfx = SoundPlayer.PlaySoundInstance(treadPlace, SoundContext.Effect, 0.05f);
-                        sfx.Pitch = Properties.TreadPitch;
+                        if (TankGame.GameUpdateTime % MathHelper.Clamp(treadPlaceTimer / 2, 4, 6) == 0)
+                        {
+                            var treadPlace = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_tread_place_{GameHandler.GameRand.Next(1, 5)}");
+                            var sfx = SoundPlayer.PlaySoundInstance(treadPlace, SoundContext.Effect, 0.05f);
+                            sfx.Pitch = Properties.TreadPitch;
+                        }
                     }
 
                     if (TankGame.GameUpdateTime % treadPlaceTimer == 0)
@@ -2430,7 +2434,7 @@ namespace TanksRebirth.GameContent
         {
             TankGame.Instance.GraphicsDevice.BlendState = BlendState.AlphaBlend;
             DrawExtras();
-            if (Properties.Invisible && GameHandler.InMission)
+            if (Properties.Invisible && GameProperties.InMission)
                 return;
 
             for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++)
@@ -2557,7 +2561,7 @@ namespace TanksRebirth.GameContent
                 }
             }
 
-            if (Properties.Invisible && GameHandler.InMission)
+            if (Properties.Invisible && GameProperties.InMission)
                 return;
 
             Properties.Armor?.Render();

@@ -15,6 +15,7 @@ using System.IO;
 using TanksRebirth.GameContent.Cosmetics;
 using TanksRebirth.Graphics;
 using TanksRebirth.GameContent.UI;
+using TanksRebirth.GameContent.Properties;
 
 namespace TanksRebirth.GameContent
 {
@@ -259,7 +260,7 @@ namespace TanksRebirth.GameContent
                             particle.Roll = cosmetic.Rotation.X;
                             particle.Pitch = cosmetic.Rotation.Y;
                             particle.Yaw = cosmetic.Rotation.Z;
-                            particle.Scale = (Properties.Invisible && GameHandler.InMission) ? Vector3.Zero : cosmetic.Scale;
+                            particle.Scale = (Properties.Invisible && GameProperties.InMission) ? Vector3.Zero : cosmetic.Scale;
                         };
 
                     }
@@ -287,7 +288,7 @@ namespace TanksRebirth.GameContent
                     tank.AiParams.Inaccuracy *= 2;
             }
 
-            GameHandler.OnMissionStart += OnMissionStart;
+            GameProperties.OnMissionStart += OnMissionStart;
         }
         void OnMissionStart()
         {
@@ -361,7 +362,7 @@ namespace TanksRebirth.GameContent
                 Projection = TankGame.GameProjection;
                 View = TankGame.GameView;
 
-                if (!GameHandler.InMission || IntermissionSystem.IsAwaitingNewMission)
+                if (!GameProperties.InMission || IntermissionSystem.IsAwaitingNewMission)
                 {
                     Properties.Velocity = Vector2.Zero;
                     return;
@@ -413,8 +414,8 @@ namespace TanksRebirth.GameContent
                 Destroy(context);
         }
         public virtual void Destroy(ITankHurtContext context) {
-            
-            GameHandler.OnMissionStart -= OnMissionStart;
+
+            GameProperties.OnMissionStart -= OnMissionStart;
 
             OnDestroy?.Invoke(this, new());
             var killSound1 = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_destroy");
@@ -500,7 +501,7 @@ namespace TanksRebirth.GameContent
         public virtual void LayFootprint(bool alt) {
             if (!Properties.CanLayTread)
                 return;
-            var fp = new TankFootprint(this, alt)
+            new TankFootprint(this, alt)
             {
                 Position = Position3D + new Vector3(0, 0.1f, 0),
                 rotation = -Properties.TankRotation
@@ -508,7 +509,7 @@ namespace TanksRebirth.GameContent
         }
         /// <summary>Shoot a <see cref="Shell"/> from this <see cref="Tank"/>.</summary>
         public virtual void Shoot() {
-            if (!GameHandler.InMission || !Properties.HasTurret)
+            if (!GameProperties.InMission || !Properties.HasTurret)
                 return;
 
             if (CurShootCooldown > 0 || Properties.OwnedShellCount >= Properties.ShellLimit / Properties.ShellShootCount)
@@ -635,10 +636,9 @@ namespace TanksRebirth.GameContent
         public virtual void Render() {
             if (Properties.IsIngame)
             {
-
                 foreach (var cosmetic in Cosmetics)
                 {
-                    if (GameHandler.InMission && Properties.Invisible)
+                    if (GameProperties.InMission && Properties.Invisible)
                         break;
                     if (cosmetic is Cosmetic3D cos3d)
                     {
@@ -650,8 +650,14 @@ namespace TanksRebirth.GameContent
                                 {
                                     foreach (BasicEffect effect in mesh.Effects)
                                     {
-
-                                        effect.World = i == 0 ? Matrix.CreateRotationX(cosmetic.Rotation.X) * Matrix.CreateRotationY(cosmetic.LockOptions == CosmeticLockOptions.ToTurret ? cosmetic.Rotation.Y + Properties.TurretRotation : cosmetic.Rotation.Y) * Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) * Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition)
+                                        float rotY;
+                                        if (cosmetic.LockOptions == CosmeticLockOptions.ToTurret)
+                                            rotY = cosmetic.Rotation.Y + Properties.TurretRotation;
+                                        else if (cosmetic.LockOptions == CosmeticLockOptions.ToTank)
+                                            rotY = cosmetic.Rotation.Y + Properties.TankRotation;
+                                        else
+                                            rotY = cosmetic.Rotation.Y;
+                                        effect.World = i == 0 ? Matrix.CreateRotationX(cosmetic.Rotation.X) * Matrix.CreateRotationY(rotY) * Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) * Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition)
                                             : Matrix.CreateRotationX(cosmetic.Rotation.X) * Matrix.CreateRotationY(cosmetic.Rotation.Y) * Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) * Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition) * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
                                         effect.View = View;
                                         effect.Projection = Projection;
@@ -702,7 +708,7 @@ namespace TanksRebirth.GameContent
                 if (particle is not null)
                     if ((string)particle.Tag == $"cosmetic_2d_{GetHashCode()}") // remove all particles related to this tank
                         particle.Destroy();
-            GameHandler.OnMissionStart -= OnMissionStart;
+            GameProperties.OnMissionStart -= OnMissionStart;
         }
     }
 
@@ -770,6 +776,8 @@ namespace TanksRebirth.GameContent
         public bool IsTurning { get; internal set; }
         /// <summary>Whether or not this <see cref="Tank"/> is being hovered by the pointer.</summary>
         public bool IsHoveredByMouse { get; internal set; }
+        /// <summary>Whether or not this <see cref="Tank"/> makes sounds while moving.</summary>
+        public bool IsSilent { get; set; }
 
         public Vector2 Position;
         public Vector2 Velocity;

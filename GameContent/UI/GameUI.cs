@@ -18,6 +18,7 @@ using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals;
 using Microsoft.Xna.Framework.Audio;
 using TanksRebirth.Net;
+using TanksRebirth.GameContent.Properties;
 
 namespace TanksRebirth.GameContent.UI
 {
@@ -382,7 +383,7 @@ namespace TanksRebirth.GameContent.UI
                 // ChatSystem.SendMessage(_gpuSettingsOffset, Color.White, "<Debug>");
             }
             var text = /*$"{TankGame.GameLanguage.Mission} 1        x{AITank.CountAll()}";*/
-                $"{GameHandler.LoadedCampaign.CurrentMission.Name ?? $"{TankGame.GameLanguage.Mission}"} x{AITank.CountAll()}";
+                $"{GameProperties.LoadedCampaign.CurrentMission.Name ?? $"{TankGame.GameLanguage.Mission}"} x{AITank.CountAll()}";
             Vector2 drawOrigin = TankGame.TextFont.MeasureString(text) / 2f;
             MissionInfoBar.Position = new(GameUtils.WindowWidth * 0.4f, GameUtils.WindowHeight - 75);
             MissionInfoBar.UniqueDraw =

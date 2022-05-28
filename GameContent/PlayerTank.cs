@@ -17,6 +17,7 @@ using TanksRebirth.Graphics;
 using TanksRebirth.Net;
 using TanksRebirth.GameContent.Systems;
 using FontStashSharp;
+using TanksRebirth.GameContent.Properties;
 
 namespace TanksRebirth.GameContent
 {
@@ -164,7 +165,7 @@ namespace TanksRebirth.GameContent
                     }
                 }
 
-                if (GameHandler.InMission)
+                if (GameProperties.InMission)
                 {
                     if (CurShootStun <= 0 && CurMineStun <= 0)
                     {
@@ -181,7 +182,7 @@ namespace TanksRebirth.GameContent
                     }
                 }
 
-                if (GameHandler.InMission)
+                if (GameProperties.InMission)
                 {
                     if (NetPlay.IsClientMatched(PlayerId))
                     {
@@ -393,7 +394,7 @@ namespace TanksRebirth.GameContent
 
         public void UpdatePlayerMovement()
         {
-            if (!GameHandler.InMission)
+            if (!GameProperties.InMission)
                 return;
             //if (!controlDown.IsPressed && !controlUp.IsPressed && leftStick.Y == 0)
                 //Velocity.Y = 0;
@@ -404,14 +405,15 @@ namespace TanksRebirth.GameContent
             {
                 var treadPlaceTimer = (int)Math.Round(14 / Properties.Velocity.Length()) != 0 ? (int)Math.Round(14 / Properties.Velocity.Length()) : 1;
                 if (TankGame.GameUpdateTime % treadPlaceTimer == 0  )
-                {
                     LayFootprint(false);
-                }
-                if (TankGame.GameUpdateTime % MathHelper.Clamp(treadPlaceTimer / 2, 4, 6) == 0)
+                if (!Properties.IsSilent)
                 {
-                    var treadPlace = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_tread_place_{GameHandler.GameRand.Next(1, 5)}");
-                    var sfx = SoundPlayer.PlaySoundInstance(treadPlace, SoundContext.Effect, 0.2f);
-                    sfx.Pitch = Properties.TreadPitch;
+                    if (TankGame.GameUpdateTime % MathHelper.Clamp(treadPlaceTimer / 2, 4, 6) == 0)
+                    {
+                        var treadPlace = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_tread_place_{GameHandler.GameRand.Next(1, 5)}");
+                        var sfx = SoundPlayer.PlaySoundInstance(treadPlace, SoundContext.Effect, 0.2f);
+                        sfx.Pitch = Properties.TreadPitch;
+                    }
                 }
             }
         }
@@ -478,7 +480,7 @@ namespace TanksRebirth.GameContent
         public override void Render()
         {
             DrawExtras();
-            if (Properties.Invisible && GameHandler.InMission)
+            if (Properties.Invisible && GameProperties.InMission)
                 return;
             for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++)
             {
@@ -542,7 +544,7 @@ namespace TanksRebirth.GameContent
             if (Properties.Dead)
                 return;
 
-            if (GameHandler.ShouldMissionsProgress && !GameHandler.InMission && Properties.IsIngame && !IntermissionSystem.IsAwaitingNewMission)
+            if (GameProperties.ShouldMissionsProgress && !GameProperties.InMission && Properties.IsIngame && !IntermissionSystem.IsAwaitingNewMission)
             {
                 var tex1 = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/chevron_border");
                 var tex2 = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/chevron_inside");
@@ -573,7 +575,7 @@ namespace TanksRebirth.GameContent
             if (DebugUtils.DebugLevel == 1)
                 DrawShootPath();
 
-            if (Properties.Invisible && GameHandler.InMission)
+            if (Properties.Invisible && GameProperties.InMission)
                 return;
 
             Properties.Armor?.Render();

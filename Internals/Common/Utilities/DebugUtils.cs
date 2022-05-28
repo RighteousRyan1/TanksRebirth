@@ -52,6 +52,21 @@ namespace TanksRebirth.Internals.Common.Utilities
             if (beginSb)
                 sb.End();
         }
+        public static void DrawDebugString(SpriteFontBase font, SpriteBatch sb, object info, Vector2 position, int level = Id.General, float scale = 1f, bool centered = false, Color color = default, bool beginSb = false)
+        {
+            if (!DebuggingEnabled || DebugLevel != level)
+                return;
+
+            if (beginSb)
+                sb.Begin();
+
+            var sizeAdjust = new Vector2(scale * 0.6f * (float)(GameUtils.WindowWidth / 1920f), scale * 0.6f * (float)(GameUtils.WindowHeight / 1080f));
+
+            sb.DrawString(font, info.ToString(), position, color == default ? Color.White : color, sizeAdjust, 0f, centered ? TankGame.TextFont.MeasureString(info.ToString()) / 2 : default);
+
+            if (beginSb)
+                sb.End();
+        }
 
         public static void DrawDebugTexture(SpriteBatch sb, Texture2D texture, Vector2 position, int level = 0, float scale = 1f, Color color = default, bool centered = false, bool beginSb = false)
         {

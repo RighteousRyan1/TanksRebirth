@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TanksRebirth.Enums;
+using TanksRebirth.GameContent.Properties;
 using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework;
@@ -147,7 +148,7 @@ namespace TanksRebirth.GameContent.Systems
                 }
                 else
                 {
-                    if (GameHandler.ShouldMissionsProgress)
+                    if (GameProperties.ShouldMissionsProgress)
                     {
                         TrackedSpawnPoints[i].Item1 = LoadedMission.Tanks[i].Position;
                         TrackedSpawnPoints[i].Item2 = true;
@@ -162,7 +163,7 @@ namespace TanksRebirth.GameContent.Systems
                         tank.Properties.TurretRotation = -template.Rotation;
                         tank.Properties.Dead = false;
                         tank.Properties.Team = template.Team;
-                        if (GameHandler.ShouldMissionsProgress)
+                        if (GameProperties.ShouldMissionsProgress)
                         {
                             tank.OnDestroy += (sender, e) =>
                             {
@@ -268,11 +269,12 @@ namespace TanksRebirth.GameContent.Systems
         /// <summary>Does not work yet.</summary>
         public static void SaveToFile()
         {
-            if (GameHandler.LoadedCampaign == null)
+            // TODO: do this
+            if (GameProperties.LoadedCampaign == null)
                 return;
 
             var root = Path.Combine(TankGame.SaveDirectory, "Campaigns");
-            var path = Path.Combine(root, GameHandler.LoadedCampaign.Properties.Name);
+            var path = Path.Combine(root, GameProperties.LoadedCampaign.Properties.Name);
             Directory.CreateDirectory(root);
             
         }

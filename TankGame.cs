@@ -30,6 +30,8 @@ using Microsoft.Xna.Framework.Audio;
 using TanksRebirth.IO;
 using TanksRebirth.Enums;
 using TanksRebirth.Achievements;
+using TanksRebirth.GameContent.Speedrunning;
+using TanksRebirth.GameContent.Properties;
 
 namespace TanksRebirth
 {
@@ -220,10 +222,14 @@ namespace TanksRebirth
 
         private long _memBytes;
 
+        private static Stopwatch _timePlayed = new();
+
         protected override void Initialize()
         {
             try
             {
+                _timePlayed.Start();
+
                 GameHandler.MapEvents();
 
                 DiscordRichPresence.Load();
@@ -260,12 +266,11 @@ namespace TanksRebirth
 
         protected override void OnExiting(object sender, EventArgs args)
         {
+            GameData.TimePlayed += _timePlayed.Elapsed;
+            _timePlayed.Stop();
             GameHandler.ClientLog.Dispose();
             SettingsHandler = new(Settings, Path.Combine(SaveDirectory, "settings.json"));
-            JsonSerializerOptions opts = new()
-            {
-                WriteIndented = true
-            };
+            JsonSerializerOptions opts = new() { WriteIndented = true };
             SettingsHandler.Serialize(opts, true);
             GameData.Serialize();
 
@@ -386,10 +391,10 @@ namespace TanksRebirth
         private bool _justChanged = true;
 
         public static Vector3 ThirdPersonCameraPosition;
-
         public static Vector2 MouseVelocity => GameUtils.GetMouseVelocity(GameUtils.WindowCenter);
 
         public static bool SecretCosmeticSetting;
+        public static bool SpeedrunMode;
 
         protected override void Update(GameTime gameTime)
         {
@@ -402,7 +407,16 @@ namespace TanksRebirth
                 if (Input.AreKeysJustPressed(Keys.Left, Keys.Right, Keys.Up, Keys.Down))
                 {
                     SecretCosmeticSetting = !SecretCosmeticSetting;
-                    ChatSystem.SendMessage(SecretCosmeticSetting ? "Activated randomized cosmetics!" : "Deactivated randomized cosmetics!", SecretCosmeticSetting ? Color.Lime : Color.Red);
+                    ChatSystem.SendMessage(SecretCosmeticSetting ? "Activated randomized cosmetics!" : "Deactivated randomized cosmetics.", SecretCosmeticSetting ? Color.Lime : Color.Red);
+                }
+                if (Input.KeyJustPressed(Keys.F1))
+                {
+                    SpeedrunMode = !SpeedrunMode;
+                    if (SpeedrunMode)
+                        GameProperties.OnMissionStart += GameHandler.StartSpeedrun;
+                    else
+                        GameProperties.OnMissionStart -= GameHandler.StartSpeedrun;
+                    ChatSystem.SendMessage(SpeedrunMode ? "Speedrun mode on!" : "Speedrun mode off.", SpeedrunMode ? Color.Lime : Color.Red);
                 }
                 if (Input.AreKeysJustPressed(Keys.LeftAlt | Keys.RightAlt, Keys.Enter))
                 {
@@ -561,7 +575,7 @@ namespace TanksRebirth
                     }
                 }
 
-                if (!GameUI.Paused && !MainMenu.Active && !OverheadView)
+                if (!GameUI.Paused && !MainMenu.Active && !OverheadView && DebugUtils.DebuggingEnabled)
                 {
                     if (Input.MouseRight)
                     {
@@ -583,8 +597,13 @@ namespace TanksRebirth
                     }
                     GameUtils.GetMouseVelocity(GameUtils.WindowCenter);
 
-                    IsFixedTimeStep = !Input.CurrentKeySnapshot.IsKeyDown(Keys.Tab);
+                    if (!SpeedrunMode)
+                        IsFixedTimeStep = !Input.CurrentKeySnapshot.IsKeyDown(Keys.Tab);
+                    else
+                        IsFixedTimeStep = true;
                 }
+                else
+                    IsFixedTimeStep = true;
 
                 FixedUpdate(gameTime);
 
@@ -625,7 +644,7 @@ namespace TanksRebirth
 
             GameShaders.UpdateShaders();
 
-            Input.HandleInput();
+            Input.PollEvents();
 
             bool shouldUpdate = Client.IsConnected() ? true : IsActive && !GameUI.Paused;
 
@@ -747,6 +766,27 @@ namespace TanksRebirth
                     $"\nTotal Suicides: {GameData.Suicides}" +
                     $"\nMissions Completed: {GameData.MissionsCompleted}" +
                     $"\nExp Level / DecayMultiplier: {GameData.ExpLevel} / {GameData.UniversalExpMultiplier}", new(8, GameUtils.WindowHeight * 0.4f), 2);
+
+                if (SpeedrunMode)
+                {
+                    if (GameHandler.CurrentSpeedrun is not null)
+                    {
+                        int num = 0;
+
+                        if (GameProperties.LoadedCampaign.CurrentMissionId > 2)
+                            num = GameProperties.LoadedCampaign.CurrentMissionId - 2;
+                        else if (GameProperties.LoadedCampaign.CurrentMissionId == 1)
+                            num = GameProperties.LoadedCampaign.CurrentMissionId - 1;
+
+                        SpriteRenderer.DrawString(TextFontLarge, $"Time: {GameHandler.CurrentSpeedrun.Timer.Elapsed}", new Vector2(10, 5), Color.White, new Vector2(0.15f), 0f, Vector2.Zero);
+                        for (int i = num; i <= GameProperties.LoadedCampaign.CurrentMissionId + 2; i++) // current.times.count originally
+                        {
+                            var time = GameHandler.CurrentSpeedrun.MissionTimes.ElementAt(i);
+                            // display mission name and time taken
+                            SpriteRenderer.DrawString(TextFontLarge, $"{time.Key}: {time.Value.Item2}", new Vector2(10, 20 + ((i - num) * 15)), Color.White, new Vector2(0.15f), 0f, Vector2.Zero);
+                        }
+                    }
+                }
 
                 for (int i = 0; i < GameData.TankKills.Count; i++)
                 {

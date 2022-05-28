@@ -19,7 +19,7 @@ namespace TanksRebirth.Internals.Common
 
         public static GamePadState OldGamePadSnapshot { get; internal set; }
 
-        public static void HandleInput(PlayerIndex pIndex = PlayerIndex.One) {
+        public static void PollEvents(PlayerIndex pIndex = PlayerIndex.One) {
             OldKeySnapshot = CurrentKeySnapshot;
             OldMouseSnapshot = CurrentMouseSnapshot;
             OldGamePadSnapshot = CurrentGamePadSnapshot;
@@ -51,19 +51,19 @@ namespace TanksRebirth.Internals.Common
         public static bool CanDetectClick(bool rightClick = false) {
             bool clicked = !rightClick ? (CurrentMouseSnapshot.LeftButton == ButtonState.Pressed && OldMouseSnapshot.LeftButton == ButtonState.Released)
                 : (CurrentMouseSnapshot.RightButton == ButtonState.Pressed && OldMouseSnapshot.RightButton == ButtonState.Released);
-            return GameUtils.WindowActive ? clicked : false;
+            return GameUtils.WindowActive && clicked;
         }
         public static bool CanDetectClickRelease(bool rightClick = false) {
             bool released = !rightClick ? (CurrentMouseSnapshot.LeftButton != ButtonState.Pressed && OldMouseSnapshot.LeftButton != ButtonState.Released)
                 : (CurrentMouseSnapshot.RightButton != ButtonState.Pressed && OldMouseSnapshot.RightButton != ButtonState.Released);
-            return GameUtils.WindowActive ? released : false;
+            return GameUtils.WindowActive && released;
         }
         public static Keys FirstPressedKey
         {
             get
             {
                 if (CurrentKeySnapshot.GetPressedKeys().Length > 0)
-                    return CurrentKeySnapshot.GetPressedKeys()[CurrentKeySnapshot.GetPressedKeys().Length - 1];
+                    return CurrentKeySnapshot.GetPressedKeys()[^1];
                 return Keys.None;
             }
         }

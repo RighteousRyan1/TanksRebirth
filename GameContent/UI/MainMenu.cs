@@ -24,6 +24,7 @@ using System.Diagnostics;
 
 using Aspose.Zip;
 using Aspose.Zip.Rar;
+using TanksRebirth.GameContent.Properties;
 
 namespace TanksRebirth.GameContent.UI
 {
@@ -560,15 +561,15 @@ namespace TanksRebirth.GameContent.UI
                         }
 
                         // if it is, load the mission
-                        GameHandler.LoadedCampaign = camp;
-                        GameHandler.LoadedCampaign.LoadMission(MissionCheckpoint);
+                        GameProperties.LoadedCampaign = camp;
+                        GameProperties.LoadedCampaign.LoadMission(MissionCheckpoint);
 
                         foreach (var elem in campaignNames)
                             elem.Remove();
 
                         IntermissionSystem.TimeBlack = 240;
 
-                        GameHandler.ShouldMissionsProgress = true;
+                        GameProperties.ShouldMissionsProgress = true;
 
                     // GameHandler.LoadedCampaign.LoadMission(20);
 
@@ -597,7 +598,7 @@ namespace TanksRebirth.GameContent.UI
                 foreach (var elem in campaignNames)
                     elem.Remove();
 
-                GameHandler.ShouldMissionsProgress = false;
+                GameProperties.ShouldMissionsProgress = false;
 
                 IntermissionSystem.TimeBlack = 150;
                 // Leave();

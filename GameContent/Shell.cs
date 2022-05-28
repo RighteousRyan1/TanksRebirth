@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TanksRebirth.Enums;
 using TanksRebirth.GameContent.GameMechanics;
+using TanksRebirth.GameContent.Properties;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework.Audio;
@@ -158,7 +159,7 @@ namespace TanksRebirth.GameContent
 
             Hitbox = new((int)(Position2D.X - 2), (int)(Position2D.Y - 2), 4, 4);
 
-            if (!GameHandler.InMission)
+            if (!GameProperties.InMission)
                 return;
 
             if (Position2D.X < MapRenderer.MIN_X || Position2D.X > MapRenderer.MAX_X)
@@ -226,7 +227,7 @@ namespace TanksRebirth.GameContent
             }
             CheckCollisions();
 
-            GameHandler.OnMissionEnd += (delay, cxt, extralife) =>
+            GameProperties.OnMissionEnd += (delay, cxt, extralife) =>
             {
                 // _flame?.Destroy();
                 _loopingSound?.Stop();
