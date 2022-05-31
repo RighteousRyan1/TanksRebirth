@@ -11,6 +11,7 @@ using TanksRebirth.GameContent.Properties;
 using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework;
+using TanksRebirth.Internals.Common.Framework.Graphics;
 using TanksRebirth.Internals.Common.IO;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
@@ -248,14 +249,14 @@ namespace TanksRebirth.GameContent.Systems
             foreach (var file in files)
             {
                 missions.Add(Mission.Load(file, ""));
-                // campaignName argument is null since we are loading from the campaign folder anyway. 
+                // campaignName argument is empty since we are loading from the campaign folder anyway. 
 
                 campaign.CachedMissions = missions.ToArray();
             }
 
             if (autoSetLoadedMission)
             {
-                campaign.LoadMission(0);
+                campaign.LoadMission(0); // first mission in campaign
                 campaign.TrackedSpawnPoints = new (Vector2, bool)[campaign.LoadedMission.Tanks.Length];
                 PlayerTank.StartingLives = properties.StartingLives;
             }
@@ -289,6 +290,9 @@ namespace TanksRebirth.GameContent.Systems
             public int[] ExtraLivesMissions { get; set; }
             public int StartingLives { get; set; }
 
+            public UnpackedColor BackgroundColor { get; set; }
+            public UnpackedColor MissionStripColor { get; set; }
+
             public static CampaignProperties Get(string path, string fileName)
             {
                 CampaignProperties properties = new()
@@ -299,7 +303,9 @@ namespace TanksRebirth.GameContent.Systems
                     Version = "0.0.0.0",
                     Tags = new string[] { "N/A" },
                     ExtraLivesMissions = Array.Empty<int>(),
-                    StartingLives = 3
+                    StartingLives = 3,
+                    BackgroundColor = IntermissionSystem.DefaultBackgroundColor,
+                    MissionStripColor = IntermissionSystem.DefaultStripColor
                 };
 
                 var file = Path.Combine(path, fileName);
@@ -312,7 +318,7 @@ namespace TanksRebirth.GameContent.Systems
                     return properties;
                 }
 
-                properties = handler.DeserializeAndSet();
+                properties = handler.Deserialize();
 
                 return properties;
             }

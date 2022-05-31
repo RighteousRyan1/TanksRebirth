@@ -293,7 +293,7 @@ namespace TanksRebirth
                 OnFocusLost += TankGame_OnFocusLost;
                 OnFocusRegained += TankGame_OnFocusRegained;
 
-                WhitePixel = GameResources.GetGameResource<Texture2D>("Assets/MagicPixel");
+                WhitePixel = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
 
                 _fontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/en_US.ttf"));
                 _fontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/ja_JP.ttf"));
@@ -316,7 +316,7 @@ namespace TanksRebirth
                 else
                 {
                     SettingsHandler = new(Settings, Path.Combine(SaveDirectory, "settings.json"));
-                    Settings = SettingsHandler.DeserializeAndSet();
+                    Settings = SettingsHandler.Deserialize();
                 }
 
                 #region Config Initialization
@@ -778,8 +778,10 @@ namespace TanksRebirth
                         else if (GameProperties.LoadedCampaign.CurrentMissionId == 1)
                             num = GameProperties.LoadedCampaign.CurrentMissionId - 1;
 
+                        var len = GameProperties.LoadedCampaign.CurrentMissionId + 2 > GameProperties.LoadedCampaign.CachedMissions.Length ? GameProperties.LoadedCampaign.CachedMissions.Length - 1 : GameProperties.LoadedCampaign.CurrentMissionId + 2;
+
                         SpriteRenderer.DrawString(TextFontLarge, $"Time: {GameHandler.CurrentSpeedrun.Timer.Elapsed}", new Vector2(10, 5), Color.White, new Vector2(0.15f), 0f, Vector2.Zero);
-                        for (int i = num; i <= GameProperties.LoadedCampaign.CurrentMissionId + 2; i++) // current.times.count originally
+                        for (int i = num; i <= len; i++) // current.times.count originally
                         {
                             var time = GameHandler.CurrentSpeedrun.MissionTimes.ElementAt(i);
                             // display mission name and time taken

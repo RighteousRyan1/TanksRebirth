@@ -130,7 +130,6 @@ namespace TanksRebirth.GameContent
             // 0 = down
             // pi/4 = right
             // 3/4pi = left
-
             base.Update();
 
             CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(Properties.TurretRotation + Properties.TankRotation);
@@ -227,8 +226,6 @@ namespace TanksRebirth.GameContent
 
             var accelReal = Properties.Acceleration * leftStick.Length() * Properties.MaxSpeed * 4;
 
-            preterbedVelocity = Vector2.Zero;
-
             preterbedVelocity = new(leftStick.X, -leftStick.Y);
 
             var norm = Vector2.Normalize(preterbedVelocity);
@@ -305,7 +302,7 @@ namespace TanksRebirth.GameContent
         {
 
             if (controlMine.JustPressed)
-                LayMine();
+                //LayMine();
 
             Properties.IsTurning = false;
 

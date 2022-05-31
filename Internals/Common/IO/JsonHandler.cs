@@ -35,7 +35,7 @@ namespace TanksRebirth.Internals.Common.IO
             return serialized;
         }
 
-        public T DeserializeAndSet()
+        public T Deserialize()
         {
             if (!File.Exists(JsonPath))
                 File.Create(JsonPath);

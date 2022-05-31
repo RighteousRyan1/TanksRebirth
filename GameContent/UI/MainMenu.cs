@@ -25,6 +25,7 @@ using System.Diagnostics;
 using Aspose.Zip;
 using Aspose.Zip.Rar;
 using TanksRebirth.GameContent.Properties;
+using TanksRebirth.GameContent.Cosmetics;
 
 namespace TanksRebirth.GameContent.UI
 {
@@ -66,6 +67,8 @@ namespace TanksRebirth.GameContent.UI
         public static UITextInput PasswordInput;
         public static UITextInput ServerNameInput;
 
+        public static UITextButton CosmeticsMenuButton;
+
         #endregion
 
         #region Diff Buttons
@@ -102,10 +105,61 @@ namespace TanksRebirth.GameContent.UI
         private static float _tnkSpeed = 2.4f;
 
         public static int MissionCheckpoint = 0;
+
+        public static Texture2D LogoTexture;
+        public static Vector2 LogoPosition;
+        public static float LogoScale = 0.5f;
+        public static float LogoRotation;
+        public static float LogoRotationSpeed = 1f;
+
+        private static float _sclOffset = 0f;
+        private static float _sclApproach = 0.5f;
+        private static float _sclAcc = 0.005f;
+
         // TODO: get menu visuals working
+
+        public static RenderableCrate Crate;
+
+        private static int _spinCd = 30;
+        private static float _spinOffset;
+
+        private static float _spinTarget;
+
+        //private static float _spinMod = 0.001f;
+        //private static float _spinLenience = 1.5f;
+        private static float _spinSpeed = 0.1f;
+
+        // not always properly set, fix later
+        // this code is becoming so shit i want to vomit but i don't know any better
+        public enum State
+        {
+            PrimaryMenu,
+            PlayList,
+            Campaigns,
+            Mulitplayer,
+            CosmeticMenu,
+            Difficulties,
+            Options
+        }
+
+        public static State MenuState;
+
+        #region Chest Stuff
+        private static bool _openingCrate;
+        #endregion
 
         public static void Initialize()
         {
+            MenuState = State.PrimaryMenu;
+            Crate = new(new(0, 0, 0), TankGame.GameView, TankGame.GameProjection);
+            Crate.ChestPosition = new(0, 500, 250);
+            Crate.LidPosition = Crate.ChestPosition; //new(67.5f, 500, 137.5f);
+            Crate.Rotation.Y = MathHelper.Pi + 0.25f;
+            Crate.Rotation.X = -MathHelper.PiOver4;
+            Crate.Rotation.Z = 0f;
+            Crate.LidRotation = Crate.Rotation;
+
+            LogoTexture = GameResources.GetGameResource<Texture2D>("Assets/tanks_rebirth_logo");
             TankGame.Instance.Window.ClientSizeChanged += UpdateProjection;
 
             Projection = Matrix.CreateOrthographic(TankGame.Instance.GraphicsDevice.Viewport.Width, TankGame.Instance.GraphicsDevice.Viewport.Height, -2000f, 5000f);
@@ -126,9 +180,8 @@ namespace TanksRebirth.GameContent.UI
             PlayButton.SetDimensions(700, 550, 500, 50);
             PlayButton.OnLeftClick = (uiElement) =>
             {
-                SetPrimaryMenuButtonsVisibility(false);
-                SetPlayButtonsVisibility(true);
                 GameUI.BackButton.IsVisible = true;
+                MenuState = State.PlayList;
             };
 
             PlayButton_Multiplayer = new(TankGame.GameLanguage.Multiplayer, font, Color.WhiteSmoke)
@@ -142,6 +195,7 @@ namespace TanksRebirth.GameContent.UI
             {
                 SetPlayButtonsVisibility(false);
                 SetMPButtonsVisibility(true);
+                MenuState = State.Mulitplayer;
             };
 
             DifficultiesButton = new(TankGame.GameLanguage.Difficulties, font, Color.WhiteSmoke)
@@ -152,8 +206,7 @@ namespace TanksRebirth.GameContent.UI
             DifficultiesButton.SetDimensions(700, 550, 500, 50);
             DifficultiesButton.OnLeftClick = (element) =>
             {
-                SetPlayButtonsVisibility(false);
-                SetDifficultiesButtonsVisibility(true);
+                MenuState = State.Difficulties;
             };
 
 
@@ -166,6 +219,7 @@ namespace TanksRebirth.GameContent.UI
             PlayButton_SinglePlayer.OnLeftClick = (uiElement) =>
             {
                 SetCampaignDisplay();
+                MenuState = State.Campaigns;
             };
 
             InitializeDifficultyButtons();
@@ -255,8 +309,26 @@ namespace TanksRebirth.GameContent.UI
 
                 Client.RequestStartGame();
                 SetPlayButtonsVisibility(false);
+
+                MenuState = State.Campaigns;
             };
             StartMPGameButton.SetDimensions(700, 600, 500, 50);
+
+            CosmeticsMenuButton = new("Cosmetics Menu", font, Color.WhiteSmoke)
+            {
+                IsVisible = false,
+                Tooltip = "Use some of your currency and luck out\non items for your tank!"
+            };
+            CosmeticsMenuButton.SetDimensions(50, 50, 300, 50);
+            CosmeticsMenuButton.OnLeftClick += (elem) =>
+            {
+                CosmeticsMenuButton.IsVisible = false;
+                SetPlayButtonsVisibility(false);
+                SetMPButtonsVisibility(false);
+                SetPrimaryMenuButtonsVisibility(false);
+
+                MenuState = State.CosmeticMenu;
+            };
             #endregion
             #region Input Boxes
             UsernameInput = new(font, Color.WhiteSmoke, 1f, 20)
@@ -305,6 +377,37 @@ namespace TanksRebirth.GameContent.UI
 
             foreach (var e in _menuElements)
                 e.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/menu/menu_tick"), SoundContext.Effect); };
+        }
+
+        public static void RenderCrate()
+        {
+            Crate.View = View;
+            Crate.Projection = Projection;
+            Crate?.Render();
+            //Crate.Rotation.Y = MathHelper.Pi;
+            //Crate.Rotation.X = MathHelper.PiOver2;
+
+            if (_openingCrate)
+                Crate.LidPosition.Z -= 1f;
+            else
+                Crate.LidPosition = Crate.ChestPosition;
+        }
+
+        private static void UpdateLogo()
+        {
+            LogoPosition = new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 4);
+
+            LogoRotation = MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalMilliseconds / 200) / 300 + _spinOffset;
+            LogoScale = MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalMilliseconds / 250) / 250 + _sclOffset;
+
+            if (_sclOffset < _sclApproach)
+                _sclOffset += _sclAcc;
+            else
+                _sclOffset = _sclApproach;
+
+            //if (_spinOffset <= _spinTarget)
+                //GameUtils.SoftStep(ref _spinOffset, _spinTarget, _spinSpeed
+                // considerations...
         }
 
         private static void UpdateProjection(object sender, EventArgs e)
@@ -535,8 +638,9 @@ namespace TanksRebirth.GameContent.UI
                         $"\nDescription: {campaign.Properties.Description}" +
                         $"\nVersion: {campaign.Properties.Version}" +
                         $"\nStarting Lives: {campaign.Properties.StartingLives}" +
+                        $"\nBonus Life Count: {campaign.Properties.ExtraLivesMissions.Length}" +
                         // display all tags in a string
-                        $"\nTags: {string.Join(", ", campaign.Properties.Tags)}"
+                        $"\nTags: {string.Join(", ", campaign.Properties.Tags)}",
                     };
                     elem.SetDimensions(700, 100 + offset, 300, 40);
                     //elem.HasScissor = true;
@@ -563,6 +667,9 @@ namespace TanksRebirth.GameContent.UI
                         // if it is, load the mission
                         GameProperties.LoadedCampaign = camp;
                         GameProperties.LoadedCampaign.LoadMission(MissionCheckpoint);
+                        PlayerTank.StartingLives = camp.Properties.StartingLives;
+                        IntermissionSystem.StripColor = camp.Properties.MissionStripColor;
+                        IntermissionSystem.BackgroundColor = camp.Properties.BackgroundColor;
 
                         foreach (var elem in campaignNames)
                             elem.Remove();
@@ -618,6 +725,7 @@ namespace TanksRebirth.GameContent.UI
             PlayButton_LevelEditor.IsVisible = visible;
             PlayButton_Multiplayer.IsVisible = visible;
             DifficultiesButton.IsVisible = visible;
+            CosmeticsMenuButton.IsVisible = visible;
         }
         internal static void SetDifficultiesButtonsVisibility(bool visible)
         {
@@ -645,7 +753,6 @@ namespace TanksRebirth.GameContent.UI
         internal static void SetPrimaryMenuButtonsVisibility(bool visible)
         {
             GameUI.OptionsButton.IsVisible = visible;
-            PlayButton_SinglePlayer.IsVisible = visible;
 
             GameUI.QuitButton.IsVisible = visible;
 
@@ -667,6 +774,18 @@ namespace TanksRebirth.GameContent.UI
 
         public static void Update()
         {
+            if (_spinCd > 0)
+                _spinCd--;
+            else
+            {
+                _spinTarget += MathHelper.Tau;
+                _spinCd = 420;
+            }
+            SetPlayButtonsVisibility(MenuState == State.PlayList);
+            SetMPButtonsVisibility(MenuState == State.Mulitplayer);
+            SetPrimaryMenuButtonsVisibility(MenuState == State.PrimaryMenu);
+            SetDifficultiesButtonsVisibility(MenuState == State.Difficulties);
+
             TanksAreCalculators.Color = Difficulties.Types["TanksAreCalculators"] ? Color.Lime : Color.Red;
             PieFactory.Color = Difficulties.Types["PieFactory"] ? Color.Lime : Color.Red;
             UltraMines.Color = Difficulties.Types["UltraMines"] ? Color.Lime : Color.Red;
@@ -702,6 +821,8 @@ namespace TanksRebirth.GameContent.UI
 
                 tnk.Body.Position = pos;
             }
+
+            UpdateLogo();
         }
 
         public static void Leave()
@@ -733,6 +854,8 @@ namespace TanksRebirth.GameContent.UI
 
         public static void Open()
         {
+            _sclOffset = 0;
+            MenuState = State.PrimaryMenu;
             Active = true;
             GameUI.Paused = false;
             Theme.Volume = 0.5f;
@@ -855,6 +978,10 @@ namespace TanksRebirth.GameContent.UI
         {
             if (Active)
             {
+                if (MenuState == State.CosmeticMenu)
+                {
+                    RenderCrate();
+                }
                 #region Various things
                 if ((NetPlay.CurrentServer is not null && (Server.ConnectedClients is not null || NetPlay.ServerName is not null)) || (Client.IsConnected() && Client.lobbyDataReceived))
                 {
@@ -882,6 +1009,12 @@ namespace TanksRebirth.GameContent.UI
                 if (PlayButton.IsVisible)
                     TankGame.SpriteRenderer.DrawString(TankGame.TextFont, keyDisplay, new(12, 12), Color.White, new(0.6f), 0f, Vector2.Zero);
                 #endregion
+
+                if (PlayButton.IsVisible || PlayButton_SinglePlayer.IsVisible)
+                {
+                    // draw the logo at it's position
+                    TankGame.SpriteRenderer.Draw(LogoTexture, LogoPosition, null, Color.White, LogoRotation, LogoTexture.Size() / 2, LogoScale, default, default);
+                }
 
                 if (campaignNames.Count == 1)
                 {
@@ -929,7 +1062,7 @@ namespace TanksRebirth.GameContent.UI
                     {
                         var str = num.ToString();
 
-                        if (num < 10 && num > 13)
+                        //if (num < 10 && num > 13)
                         {
                             if (str.EndsWith('1'))
                                 return "st";
@@ -940,8 +1073,8 @@ namespace TanksRebirth.GameContent.UI
                             else
                                 return "th";
                         }
-                        else
-                            return "th";
+                        //else
+                            //return "th";
                     }
 
                     if (_oldwheel != Input.DeltaScrollWheel)

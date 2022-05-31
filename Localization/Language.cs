@@ -62,7 +62,7 @@ namespace TanksRebirth.Localization
                 var path = Path.Combine(Path.Combine("Localization", $"{code}.json"));
                 JsonHandler<Language> handler = new(lang, path);
 
-                var newLang = handler.DeserializeAndSet();
+                var newLang = handler.Deserialize();
 
                 lang = newLang;
 
@@ -73,7 +73,7 @@ namespace TanksRebirth.Localization
                 GameContent.GameHandler.ClientLog.Write($"Loading language '{code}'... Could not find localization file! Using default language 'en_US' instead.", Internals.LogType.Debug);
                 var path = Path.Combine(Path.Combine("Localization", $"en_US.json"));
                 JsonHandler<Language> handler = new(lang, path);
-                var newLang = handler.DeserializeAndSet();
+                var newLang = handler.Deserialize();
 
                 lang = newLang;
                 return;

@@ -196,10 +196,10 @@ namespace TanksRebirth.Internals.Common.Utilities
         public static bool IsPlaying(this SoundEffectInstance instance) => instance.State == SoundState.Playing;
         public static bool IsPaused(this SoundEffectInstance instance) => instance.State == SoundState.Paused;
         public static bool IsStopped(this SoundEffectInstance instance) => instance.State == SoundState.Stopped;
-        public static float QuickDistance(this Vector2 initial, Vector2 end) => Vector2.Distance(initial, end);
+        public static float Distance(this Vector2 initial, Vector2 other) => Vector2.Distance(initial, other);
         public static float MaxDistanceValue(Vector2 initial, Vector2 end, float maxDist)
         {
-            var init = initial.QuickDistance(end);
+            var init = initial.Distance(end);
 
             float actual = 1f - init / maxDist <= 0 ? 0 : 1f - init / maxDist;
 

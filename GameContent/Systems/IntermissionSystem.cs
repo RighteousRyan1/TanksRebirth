@@ -20,7 +20,11 @@ namespace TanksRebirth.GameContent.Systems
         public static int WaitTime { get; private set; }
         public static int CurrentWaitTime { get; private set; }
 
-        public static Color SolidBackgroundColor = new(228, 231, 173); // color picked lol
+        public static readonly Color DefaultBackgroundColor = new(228, 231, 173); // color picked lol
+        public static readonly Color DefaultStripColor = Color.DarkRed;
+
+        public static Color BackgroundColor = new(228, 231, 173); // color picked lol
+        public static Color StripColor = Color.DarkRed;
 
         private static Vector2 _offset;
 
@@ -78,7 +82,7 @@ namespace TanksRebirth.GameContent.Systems
                 spriteBatch.Draw(
                     TankGame.WhitePixel,
                     new Rectangle(0, 0, GameUtils.WindowWidth, GameUtils.WindowHeight),
-                    SolidBackgroundColor * Alpha);
+                    BackgroundColor * Alpha);
 
                 int padding = 10;
                 int scale = 2;
@@ -90,31 +94,33 @@ namespace TanksRebirth.GameContent.Systems
                 {
                     for (int j = -padding; j < GameUtils.WindowHeight / texWidth + padding; j++)
                     {
-                        spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/ui/tank_background_billboard"), new Vector2(i, j) * texWidth + _offset, null, SolidBackgroundColor * Alpha, 0f, Vector2.Zero, scale, default, default);
+                        spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/ui/tank_background_billboard"), new Vector2(i, j) * texWidth + _offset, null, BackgroundColor * Alpha, 0f, Vector2.Zero, scale, default, default);
                     }
                 }
                 float off = 0.045f;
-                DrawStripe(spriteBatch, Color.DarkRed, GameUtils.WindowHeight * 0.2f, Alpha);
-                DrawStripe(spriteBatch, Color.DarkRed, GameUtils.WindowHeight * (0.2f + off), Alpha);
-                DrawStripe(spriteBatch, Color.DarkRed, GameUtils.WindowHeight * (0.2f + off * 2), Alpha);
-                DrawStripe(spriteBatch, Color.DarkRed, GameUtils.WindowHeight * (0.2f + off * 3), Alpha);
-                DrawStripe(spriteBatch, Color.DarkRed, GameUtils.WindowHeight * (0.2f + off * 4), Alpha);
-                DrawStripe(spriteBatch, Color.DarkRed, GameUtils.WindowHeight * (0.2f + off * 5), Alpha);
-                DrawStripe(spriteBatch, Color.DarkRed, GameUtils.WindowHeight * (0.2f + off * 6), Alpha);
-                DrawStripe(spriteBatch, Color.DarkRed, GameUtils.WindowHeight * (0.2f + off * 7), Alpha);
-                DrawStripe(spriteBatch, Color.DarkRed, GameUtils.WindowHeight * (0.2f + off * 8), Alpha);
-
+                DrawStripe(spriteBatch, StripColor, GameUtils.WindowHeight * 0.2f, Alpha);
+                DrawStripe(spriteBatch, StripColor, GameUtils.WindowHeight * (0.2f + off), Alpha);
+                DrawStripe(spriteBatch, StripColor, GameUtils.WindowHeight * (0.2f + off * 2), Alpha);
+                DrawStripe(spriteBatch, StripColor, GameUtils.WindowHeight * (0.2f + off * 3), Alpha);
+                DrawStripe(spriteBatch, StripColor, GameUtils.WindowHeight * (0.2f + off * 4), Alpha);
+                DrawStripe(spriteBatch, StripColor, GameUtils.WindowHeight * (0.2f + off * 5), Alpha);
+                DrawStripe(spriteBatch, StripColor, GameUtils.WindowHeight * (0.2f + off * 6), Alpha);
+                DrawStripe(spriteBatch, StripColor, GameUtils.WindowHeight * (0.2f + off * 7), Alpha);
+                DrawStripe(spriteBatch, StripColor, GameUtils.WindowHeight * (0.2f + off * 8), Alpha);
+                var wp = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
+                spriteBatch.Draw(wp, new Vector2(0, GameUtils.WindowHeight * 0.2f), null, Color.Yellow * Alpha, 0f, new Vector2(0, wp.Size().Y / 2), new Vector2(GameUtils.WindowWidth, 5), default, default);
+                spriteBatch.Draw(wp, new Vector2(0, GameUtils.WindowHeight * (0.2f + off * 8)), null, Color.Yellow * Alpha, 0f, new Vector2(0, wp.Size().Y / 2), new Vector2(GameUtils.WindowWidth, 5), default, default);
                 int mafs1 = GameProperties.LoadedCampaign.TrackedSpawnPoints.Count(p => p.Item2);
                 int mafs2 = GameProperties.LoadedCampaign.LoadedMission.Tanks.Count(x => x.IsPlayer);
                 int mafs = mafs1 - mafs2;
 
 
-                DrawShadowedString(new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2 - 250), Vector2.One, GameProperties.LoadedCampaign.LoadedMission.Name, SolidBackgroundColor, new(1f), Alpha);
-                DrawShadowedString(new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2 - 50), Vector2.One, $"Enemy tanks: {mafs}", SolidBackgroundColor, new(0.8f), Alpha);
-                DrawShadowedString(new Vector2(GameUtils.WindowWidth / 2 - 100, GameUtils.WindowHeight / 2 + 350), Vector2.One, $"x   {PlayerTank.Lives}", SolidBackgroundColor, new(1f), Alpha, new Vector2(0, TankGame.TextFontLarge.MeasureString($"x   {PlayerTank.Lives}").Y / 2));
+                DrawShadowedString(new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2 - 220), Vector2.One, GameProperties.LoadedCampaign.LoadedMission.Name, BackgroundColor, new(1f), Alpha);
+                DrawShadowedString(new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2 - 50), Vector2.One, $"Enemy tanks: {mafs}", BackgroundColor, new(0.8f), Alpha);
+                DrawShadowedString(new Vector2(GameUtils.WindowWidth / 2 - 100, GameUtils.WindowHeight / 2 + 350), Vector2.One, $"x   {PlayerTank.Lives}", BackgroundColor, new(1f), Alpha, new Vector2(0, TankGame.TextFontLarge.MeasureString($"x   {PlayerTank.Lives}").Y / 2));
 
                 if (GameProperties.LoadedCampaign.CurrentMissionId == 0)
-                    DrawShadowedString(new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2 - 325), Vector2.One, $"Campaign: \"{GameProperties.LoadedCampaign.Properties.Name}\"", SolidBackgroundColor, new(0.4f), Alpha);
+                    DrawShadowedString(new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2 - 295), Vector2.One, $"Campaign: \"{GameProperties.LoadedCampaign.Properties.Name}\"", BackgroundColor, new(0.4f), Alpha);
 
                 DrawShadowedTexture(GameResources.GetGameResource<Texture2D>("Assets/textures/ui/playertank2d"), new Vector2(GameUtils.WindowWidth / 2 - 200, GameUtils.WindowHeight / 2 + 375), Vector2.One, Color.Blue, new(1.25f), Alpha);
                 

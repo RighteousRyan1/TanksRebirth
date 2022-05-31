@@ -104,6 +104,8 @@ namespace TanksRebirth.GameContent.UI
                 ControlsButton.IsVisible = true;
                 BackButton.IsVisible = true;
 
+                MainMenu.MenuState = MainMenu.State.Options;
+
                 BackButton.Size.Y = 150;
 
                 if (MainMenu.Active)
@@ -257,6 +259,8 @@ namespace TanksRebirth.GameContent.UI
 
         private static void HandleBackButton()
         {
+            if (MainMenu.MenuState == MainMenu.State.CosmeticMenu)
+                MainMenu.MenuState = MainMenu.State.PlayList;
             if (VolumeButton.IsVisible && !MainMenu.Active)
             {
                 ResumeButton.IsVisible = true;
@@ -315,18 +319,19 @@ namespace TanksRebirth.GameContent.UI
                     {
                         foreach (var elem in MainMenu.campaignNames)
                             elem.Remove();
-                        MainMenu.SetPlayButtonsVisibility(true);
+                        MainMenu.MenuState = MainMenu.State.PlayList;
 
                         MainMenu.campaignNames.Clear();
                     }
                     else if (MainMenu.PlayButton_SinglePlayer.IsVisible)
                     {
-                        MainMenu.SetPlayButtonsVisibility(false);
                         MainMenu.PlayButton.IsVisible = true;
                         OptionsButton.IsVisible = true;
                         QuitButton.IsVisible = true;
 
                         BackButton.IsVisible = false;
+
+                        MainMenu.MenuState = MainMenu.State.PrimaryMenu;
                     }
 
                     else if (GraphicsButton.IsVisible)
@@ -339,18 +344,16 @@ namespace TanksRebirth.GameContent.UI
                         QuitButton.IsVisible = true;
                         GraphicsUI.BatchVisible = false;
                         VolumeUI.BatchVisible = false;
-                        
-                        MainMenu.PlayButton.IsVisible = true;
+
+                        MainMenu.MenuState = MainMenu.State.PrimaryMenu;    
                     }
                     else if (MainMenu.ConnectToServerButton.IsVisible)
                     {
-                        MainMenu.SetMPButtonsVisibility(false);
-                        MainMenu.SetPlayButtonsVisibility(true);
+                        MainMenu.MenuState = MainMenu.State.PlayList;
                     }
                     if (MainMenu.TanksAreCalculators.IsVisible)
                     {
-                        MainMenu.SetDifficultiesButtonsVisibility(false);
-                        MainMenu.SetPlayButtonsVisibility(true);
+                        MainMenu.MenuState = MainMenu.State.PlayList;
                     }
                 }
                 else

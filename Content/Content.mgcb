@@ -120,18 +120,6 @@
 /processorParam:TextureFormat=Color
 /build:Assets/cosmetics/anger_symbol.png
 
-#begin Assets/cosmetics/anger_symbol.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Assets/cosmetics/anger_symbol.png
-
 #begin Assets/cosmetics/army_hat.fbx
 /importer:FbxImporter
 /processor:ModelProcessor
@@ -478,18 +466,6 @@
 /processorParam:SwapWindingOrder=False
 /processorParam:TextureFormat=Compressed
 /build:Assets/key.fbx
-
-#begin Assets/MagicPixel.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Assets/MagicPixel.png
 
 #begin Assets/mainmenu/theme.ogg
 /importer:OggImporter
@@ -1342,6 +1318,18 @@
 /processorParam:TextureFormat=Compressed
 /build:Assets/tank_p.fbx
 
+#begin Assets/tanks_rebirth_logo.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Assets/tanks_rebirth_logo.png
+
 #begin Assets/teleporter.fbx
 /importer:FbxImporter
 /processor:ModelProcessor
@@ -1444,6 +1432,18 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Assets/textures/check/check_white.png
+
+#begin Assets/textures/chest/chest.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Assets/textures/chest/chest.png
 
 #begin Assets/textures/ingame/block.1.png
 /importer:TextureImporter

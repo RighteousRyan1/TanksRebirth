@@ -1950,8 +1950,6 @@ namespace TanksRebirth.GameContent
 
             var list = new List<Vector2>();
 
-            // 20, 30
-
             var whitePixel = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
             var pathPos = Properties.Position;
 
@@ -2005,7 +2003,7 @@ namespace TanksRebirth.GameContent
                 }
             }
             reflectPoints = list.ToArray();
-            endpoint = pathDir;
+            endpoint = pathPos;
             return hasCollided;
         }
 
@@ -2035,7 +2033,7 @@ namespace TanksRebirth.GameContent
             {
                 if (TargetTank is not null)
                 {
-                    var calculation = Properties.Position.QuickDistance(TargetTank.Properties.Position) / (float)(Properties.ShellSpeed * 1.2f);
+                    var calculation = Properties.Position.Distance(TargetTank.Properties.Position) / (float)(Properties.ShellSpeed * 1.2f);
                     float rot = -GameUtils.DirectionOf(Properties.Position,
                         GeometryUtils.PredictFuturePosition(TargetTank.Properties.Position, TargetTank.Properties.Velocity, calculation))
                         .ToRotation() - MathHelper.PiOver2;
@@ -2221,13 +2219,13 @@ namespace TanksRebirth.GameContent
                                 {
                                     // float AngleSmoothStep(float angle, float target, float amount) => GameUtils.AngleLerp(angle, target, amount * amount * (3f - 2f * amount));
                                     // why does this never work no matter what i do
-                                    var refAngle = GameUtils.DirectionOf(Properties.Position, travelPath - new Vector2(400, 0)).ToRotation();
+                                    var refAngle = GameUtils.DirectionOf(Properties.Position, travelPath - new Vector2(0, 10000)).ToRotation();
 
                                     // AngleSmoothStep(TargetTankRotation, refAngle, refAngle / 3);
-                                    GameUtils.RoughStep(ref Properties.TargetTankRotation, Properties.TargetTankRotation <= 0 ? -refAngle : refAngle, refAngle / 6);
+                                    // Properties.TargetTankRotation = -Properties.TargetTankRotation + MathHelper.PiOver2;
+                                    GameUtils.RoughStep(ref Properties.TargetTankRotation, Properties.TargetTankRotation <= MathHelper.Pi ? -refAngle + MathHelper.PiOver2 : refAngle, refAngle / 6);
                                 }
                             }
-
                             // TODO: i literally do not understand this
                         }
 
@@ -2290,27 +2288,30 @@ namespace TanksRebirth.GameContent
                         #endregion
 
                         #region MineHandle / MineAvoidance
-                        if (Properties.MineLimit > 0)
+                        if (!isMineNear && !isShellNear)
                         {
-                            if (Behaviors[4].IsModOf(60))
+                            if (Properties.MineLimit > 0)
                             {
-                                if (!tanksNearMe.Any(x => x.Properties.Team == Properties.Team))
+                                if (Behaviors[4].IsModOf(60))
                                 {
-                                    nearDestructibleObstacle = cubesNearMe.Any(c => c.IsDestructible);
-                                    if (AiParams.SmartMineLaying)
+                                    if (!tanksNearMe.Any(x => x.Properties.Team == Properties.Team))
                                     {
-                                        if (nearDestructibleObstacle)
+                                        nearDestructibleObstacle = cubesNearMe.Any(c => c.IsDestructible);
+                                        if (AiParams.SmartMineLaying)
                                         {
-                                            Properties.TargetTankRotation = new Vector2(100, 100).RotatedByRadians(GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi)).ExpandZ().ToRotation();
-                                            LayMine();
+                                            if (nearDestructibleObstacle)
+                                            {
+                                                Properties.TargetTankRotation = new Vector2(100, 100).RotatedByRadians(GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi)).ExpandZ().ToRotation();
+                                                LayMine();
+                                            }
                                         }
-                                    }
-                                    else
-                                    {
-                                        if (GameHandler.GameRand.NextFloat(0, 1) <= AiParams.MinePlacementChance)
+                                        else
                                         {
-                                            Properties.TargetTankRotation = new Vector2(100, 100).RotatedByRadians(GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi)).ExpandZ().ToRotation();
-                                            LayMine();
+                                            if (GameHandler.GameRand.NextFloat(0, 1) <= AiParams.MinePlacementChance)
+                                            {
+                                                Properties.TargetTankRotation = new Vector2(100, 100).RotatedByRadians(GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi)).ExpandZ().ToRotation();
+                                                LayMine();
+                                            }
                                         }
                                     }
                                 }
@@ -2516,7 +2517,7 @@ namespace TanksRebirth.GameContent
 
                     if (AiParams.PredictsPositions && TargetTank is not null)
                     {
-                        calculation = Properties.Position.QuickDistance(TargetTank.Properties.Position) / (float)(Properties.ShellSpeed * 1.2f);
+                        calculation = Properties.Position.Distance(TargetTank.Properties.Position) / (float)(Properties.ShellSpeed * 1.2f);
                     }
 
                     if (AiParams.SmartRicochets)
@@ -2571,6 +2572,10 @@ namespace TanksRebirth.GameContent
         {
             shell = null;
 
+            Shell closest = null;
+
+            bool returned = false;
+
             foreach (var bullet in Shell.AllShells)
             {
                 if (bullet is not null)
@@ -2579,22 +2584,27 @@ namespace TanksRebirth.GameContent
                     {
                         if (Vector2.Distance(Properties.Position, bullet.Position2D) < distance)
                         {
-                            var rotationTo = GameUtils.DirectionOf(Properties.Position, bullet.Position2D).ToRotation();
+                            if (closest == null)
+                                closest = bullet;
+                            else if (Vector2.Distance(Properties.Position, bullet.Position2D) < Vector2.Distance(Properties.Position, closest.Position2D))
+                                closest = bullet;
+                            //var rotationTo = GameUtils.DirectionOf(Properties.Position, bullet.Position2D).ToRotation();
 
-                            if (Math.Abs(rotationTo - Properties.TurretRotation) < MathHelper.PiOver2 /*|| Vector2.Distance(Position, bullet.Position2D) < distance / 2*/)
-                            {
-                                shell = bullet;
-                                return true;
-                            }
+                            //if (Math.Abs(rotationTo - Properties.TankRotation + MathHelper.Pi) < MathHelper.PiOver2 /*|| Vector2.Distance(Position, bullet.Position2D) < distance / 2*/)
+                            //
+                            returned = true;
+                            //
                         }
                     }
                 }
             }
-            return false;
+
+            shell = closest;
+            return returned;
         }
         public bool TryGetMineNear(float distance, out Mine mine)
         {
-            mine = null;
+            /*mine = null;
             foreach (var yours in Mine.AllMines)
             {
                 if (yours is not null)
@@ -2605,8 +2615,35 @@ namespace TanksRebirth.GameContent
                         return true;
                     }
                 }
+            }*/
+            mine = null;
+
+            Mine closest = null;
+
+            bool returned = false;
+
+            foreach (var min in Mine.AllMines)
+            {
+                if (min is not null)
+                {
+                    if (Vector2.Distance(Properties.Position, min.Position) < distance)
+                    {
+                        if (closest == null)
+                            closest = min;
+                        else if (Vector2.Distance(Properties.Position, min.Position) < Vector2.Distance(Properties.Position, closest.Position))
+                            closest = min;
+                        //var rotationTo = GameUtils.DirectionOf(Properties.Position, bullet.Position2D).ToRotation();
+
+                        //if (Math.Abs(rotationTo - Properties.TankRotation + MathHelper.Pi) < MathHelper.PiOver2 /*|| Vector2.Distance(Position, bullet.Position2D) < distance / 2*/)
+                        //
+                        returned = true;
+                        //
+                    }
+                }
             }
-            return false;
+
+            mine = closest;
+            return returned;
         }
 
         private static readonly TankTier[] workingTiers =
