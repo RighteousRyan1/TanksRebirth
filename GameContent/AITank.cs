@@ -1782,7 +1782,7 @@ namespace TanksRebirth.GameContent
                     // if (context.PlayerId == Client.PlayerId)
                     // {
                     //    PlayerTank.KillCount++;
-                    //   Client.Send(new TankKillCountUpdateMessage(PlayerTank.KillCount)); // not a bad idea actually
+                    //    Client.Send(new TankKillCountUpdateMessage(PlayerTank.KillCount)); // not a bad idea actually
             }
             GameHandler.AllAITanks[AITankId] = null;
             GameHandler.AllTanks[WorldId] = null;
@@ -2003,7 +2003,7 @@ namespace TanksRebirth.GameContent
                 }
             }
             reflectPoints = list.ToArray();
-            endpoint = pathPos;
+            endpoint = pathDir;
             return hasCollided;
         }
 
