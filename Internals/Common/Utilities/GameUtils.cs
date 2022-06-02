@@ -11,6 +11,11 @@ namespace TanksRebirth.Internals.Common.Utilities
 {
     public static class GameUtils
     {
+
+        public static float Distance_WiiTanksUnits(Vector2 position, Vector2 endPoint)
+        {
+            return Vector2.Distance(position, endPoint) / 0.55f;
+        }
         private static Vector2 _oldMousePos;
 
         public static void SetIf<T>(ref T value, T valSet, bool condition)

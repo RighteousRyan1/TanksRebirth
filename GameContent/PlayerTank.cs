@@ -58,10 +58,13 @@ namespace TanksRebirth.GameContent
         public ModelMesh CannonMesh;
         #endregion
 
-        public PlayerTank(PlayerType playerType, bool isPlayerModel = true)
+        public PlayerTank(PlayerType playerType, bool isPlayerModel = true, TankTier copyTier = TankTier.None)
         {
             Model = GameResources.GetGameResource<Model>(isPlayerModel ? "Assets/tank_p" : "Assets/tank_e");
-            _tankColorTexture = Assets[$"tank_" + playerType.ToString().ToLower()];
+            if (copyTier == TankTier.None)
+                _tankColorTexture = Assets[$"tank_" + playerType.ToString().ToLower()];
+            else
+                _tankColorTexture = Assets[$"tank_" + copyTier.ToString().ToLower()];
 
             CannonMesh = Model.Meshes["Cannon"];
 
@@ -300,9 +303,8 @@ namespace TanksRebirth.GameContent
         }
         private void ControlHandle_Keybinding()
         {
-
             if (controlMine.JustPressed)
-                //LayMine();
+                LayMine();
 
             Properties.IsTurning = false;
 
@@ -494,6 +496,9 @@ namespace TanksRebirth.GameContent
                             if (mesh.Name == "Cannon")
                                 return;
 
+                        effect.SpecularColor = Color.White.ToVector3();
+                        effect.SpecularPower = 10;
+
                         if (mesh.Name != "Shadow")
                         {
                             effect.Alpha = 1f;
@@ -550,7 +555,7 @@ namespace TanksRebirth.GameContent
 
                 var playerColor = PlayerType == PlayerType.Blue ? Color.DeepSkyBlue : Color.Red;
 
-                string pText = $"P{GameHandler.AllPlayerTanks.Count(x => x is not null && !x.Properties.Dead)}";
+                string pText = $"P{PlayerId + 1}";
 
                 float rotation = 0f;
 

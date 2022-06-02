@@ -92,6 +92,8 @@ namespace TanksRebirth.GameContent
             public float RedirectAngle { get; set; } = MathHelper.ToRadians(5);
             /// <summary>Whether or not this tank predics the future position of its target.</summary>
             public bool PredictsPositions { get; set; }
+            /// <summary>Whether or not this <see cref="AITank"/> should deflect incoming bullets to prevent being hit.</summary>
+            public bool DeflectsBullets { get; set; }
 
             // TODO: make friendly check distances separate for bullets and mines
         }
@@ -348,6 +350,8 @@ namespace TanksRebirth.GameContent
                 case TankTier.Brown:
                     Properties.Stationary = true;
 
+                    AiParams.ProjectileWarinessRadius = 60;
+
                     Properties.DestructionColor = new(152, 96, 26);
 
                     AiParams.TurretMeanderFrequency = 30;
@@ -600,6 +604,8 @@ namespace TanksRebirth.GameContent
 
                 case TankTier.Green:
                     Properties.Stationary = true;
+
+                    AiParams.ProjectileWarinessRadius = 70;
 
                     AiParams.TurretMeanderFrequency = 30;
                     AiParams.TurretSpeed = 0.02f;
@@ -1928,7 +1934,7 @@ namespace TanksRebirth.GameContent
                         {
                             if (i > 15)
                             {
-                                if (Vector2.Distance(enemy.Properties.Position, pathPos) <= realMiss)
+                                if (GameUtils.Distance_WiiTanksUnits(enemy.Properties.Position, pathPos) <= realMiss)
                                     tanks.Add(enemy);
                             }
                             else if (enemy.Properties.CollisionBox2D.Intersects(pathHitbox))
@@ -2021,7 +2027,7 @@ namespace TanksRebirth.GameContent
             if (Properties.ShellType == ShellType.Explosive)
             {
                 tanksDef = GetTanksInPath(Vector2.UnitY.RotatedByRadians(Properties.TurretRotation - MathHelper.Pi), out var rayEndpoint, offset: Vector2.UnitY * 20, pattern: x => (!x.IsDestructible && x.IsSolid) || x.Type == Block.BlockType.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
-                if (Vector2.Distance(rayEndpoint, Properties.Position) < 150f) // TODO: change from hardcode to normalcode :YES:
+                if (GameUtils.Distance_WiiTanksUnits(rayEndpoint, Properties.Position) < 150f) // TODO: change from hardcode to normalcode :YES:
                     tooCloseToExplosiveShell = true;
             }
             else
@@ -2078,6 +2084,7 @@ namespace TanksRebirth.GameContent
                     if (findsEnemy2/* && !findsFriendly2*/)
                     {
                         seeks = true;
+                        TurretRotationMultiplier = 3f;
                         TargetTurretRotation = seekRotation - MathHelper.Pi;
                     }
                 }
@@ -2108,8 +2115,12 @@ namespace TanksRebirth.GameContent
 
         public Tank TargetTank;
 
+        public float TurretRotationMultiplier = 1f;
+
         public void DoAi(bool doMoveTowards = true, bool doMovements = true, bool doFire = true)
         {
+            TurretRotationMultiplier = 1f;
+            AiParams.DeflectsBullets = true;
             if (GameProperties.InMission)
             {
                 for (int i = 0; i < Behaviors.Length; i++)
@@ -2139,7 +2150,7 @@ namespace TanksRebirth.GameContent
                     foreach (var tank in GameHandler.AllTanks)
                     {
                         if (tank is not null && !tank.Properties.Dead && (tank.Properties.Team != Properties.Team || tank.Properties.Team == TankTeam.NoTeam) && tank != this)
-                            if (Vector2.Distance(tank.Properties.Position, Properties.Position) < Vector2.Distance(TargetTank.Properties.Position, Properties.Position))
+                            if (GameUtils.Distance_WiiTanksUnits(tank.Properties.Position, Properties.Position) < GameUtils.Distance_WiiTanksUnits(TargetTank.Properties.Position, Properties.Position))
                                 if ((tank.Properties.Invisible && tank.timeSinceLastAction < 60) || !tank.Properties.Invisible)
                                     TargetTank = tank;
                     }
@@ -2151,12 +2162,35 @@ namespace TanksRebirth.GameContent
                     var cubesNearMe = new List<Block>();
 
                     foreach (var tank in GameHandler.AllTanks)
-                        if (tank != this && tank is not null && !tank.Properties.Dead && Vector2.Distance(tank.Properties.Position, Properties.Position) <= AiParams.TankWarinessRadius)
+                        if (tank != this && tank is not null && !tank.Properties.Dead && GameUtils.Distance_WiiTanksUnits(tank.Properties.Position, Properties.Position) <= AiParams.TankWarinessRadius)
                             tanksNearMe.Add(tank);
 
                     foreach (var block in Block.AllBlocks)
-                        if (block is not null && Vector2.Distance(Properties.Position, block.Position) < AiParams.BlockWarinessDistance)
+                        if (block is not null && GameUtils.Distance_WiiTanksUnits(Properties.Position, block.Position) < AiParams.BlockWarinessDistance)
                             cubesNearMe.Add(block);
+
+                    if (AiParams.DeflectsBullets)
+                    {
+                        if (isShellNear)
+                        {
+                            if (shell.Owner != this)
+                            {
+                                var dir = GameUtils.DirectionOf(Properties.Position, shell.Position2D);
+                                var rotation = dir.ToRotation();
+                                var calculation = Properties.Position.Distance(shell.Position2D) / (float)(Properties.ShellSpeed * 1);
+                                float rot = -GameUtils.DirectionOf(Properties.Position,
+                                    GeometryUtils.PredictFuturePosition(shell.Position2D, shell.Velocity2D * 0.65f, calculation))
+                                    .ToRotation() + MathHelper.PiOver2;
+
+                                TargetTurretRotation = rot;
+
+                                TurretRotationMultiplier = 6f;
+
+                                if ((Properties.TurretRotation).IsInRangeOf(rot, 0.05f))
+                                    Shoot();
+                            }
+                        }
+                    }
 
                     #region TurretHandle
 
@@ -2171,7 +2205,7 @@ namespace TanksRebirth.GameContent
                     else if (diff < -MathHelper.Pi)
                         TargetTurretRotation += MathHelper.TwoPi;
 
-                    Properties.TurretRotation = GameUtils.RoughStep(Properties.TurretRotation, TargetTurretRotation, seeks ? AiParams.TurretSpeed * 3 : AiParams.TurretSpeed);
+                    Properties.TurretRotation = GameUtils.RoughStep(Properties.TurretRotation, TargetTurretRotation, AiParams.TurretSpeed * TurretRotationMultiplier);
                     bool targetExists = Array.IndexOf(GameHandler.AllTanks, TargetTank) > -1 && TargetTank is not null;
                     if (targetExists)
                     {
@@ -2337,7 +2371,7 @@ namespace TanksRebirth.GameContent
                         if (Array.IndexOf(GameHandler.AllTanks, TargetTank) > -1 && TargetTank is not null)
                         {
                             float explosionDist = 90f;
-                            if (Vector2.Distance(TargetTank.Properties.Position, Properties.Position) < explosionDist)
+                            if (GameUtils.Distance_WiiTanksUnits(TargetTank.Properties.Position, Properties.Position) < explosionDist)
                             {
                                 Destroy(new TankHurtContext_Mine(false, WorldId));
 
@@ -2582,11 +2616,12 @@ namespace TanksRebirth.GameContent
                 {
                     if (bullet.LifeTime > 30)
                     {
-                        if (Vector2.Distance(Properties.Position, bullet.Position2D) < distance)
+                        var dist = GameUtils.Distance_WiiTanksUnits(Properties.Position, bullet.Position2D);
+                        if (dist < distance)
                         {
                             if (closest == null)
                                 closest = bullet;
-                            else if (Vector2.Distance(Properties.Position, bullet.Position2D) < Vector2.Distance(Properties.Position, closest.Position2D))
+                            else if (GameUtils.Distance_WiiTanksUnits(Properties.Position, bullet.Position2D) < GameUtils.Distance_WiiTanksUnits(Properties.Position, closest.Position2D))
                                 closest = bullet;
                             //var rotationTo = GameUtils.DirectionOf(Properties.Position, bullet.Position2D).ToRotation();
 
@@ -2626,11 +2661,11 @@ namespace TanksRebirth.GameContent
             {
                 if (min is not null)
                 {
-                    if (Vector2.Distance(Properties.Position, min.Position) < distance)
+                    if (GameUtils.Distance_WiiTanksUnits(Properties.Position, min.Position) < distance)
                     {
                         if (closest == null)
                             closest = min;
-                        else if (Vector2.Distance(Properties.Position, min.Position) < Vector2.Distance(Properties.Position, closest.Position))
+                        else if (GameUtils.Distance_WiiTanksUnits(Properties.Position, min.Position) < GameUtils.Distance_WiiTanksUnits(Properties.Position, closest.Position))
                             closest = min;
                         //var rotationTo = GameUtils.DirectionOf(Properties.Position, bullet.Position2D).ToRotation();
 
