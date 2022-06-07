@@ -100,11 +100,11 @@ namespace TanksRebirth.Net
                     float turRot = reader.GetFloat();
 
                     var t = new PlayerTank(type);
-                    t.Properties.Dead = false;
+                    t.Dead = false;
                     t.Body.Position = new(x, y);
-                    t.Properties.TankRotation = tnkRot;
-                    t.Properties.TurretRotation = turRot;
-                    t.Properties.Team = team;
+                    t.TankRotation = tnkRot;
+                    t.TurretRotation = turRot;
+                    t.Team = team;
 
                     break;
                 case PacketType.PlayerData:
@@ -118,9 +118,9 @@ namespace TanksRebirth.Net
                     float vY = reader.GetFloat();
 
                     GameHandler.AllPlayerTanks[id].Body.Position = new(x2, y2);
-                    GameHandler.AllPlayerTanks[id].Properties.TankRotation = tankRotation;
-                    GameHandler.AllPlayerTanks[id].Properties.TurretRotation = turretRotation;
-                    GameHandler.AllPlayerTanks[id].Properties.Velocity = new(vX, vY);
+                    GameHandler.AllPlayerTanks[id].TankRotation = tankRotation;
+                    GameHandler.AllPlayerTanks[id].TurretRotation = turretRotation;
+                    GameHandler.AllPlayerTanks[id].Velocity = new(vX, vY);
                     break;
                 case PacketType.ChatMessage:
                     string msg = reader.GetString();

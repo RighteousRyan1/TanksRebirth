@@ -14,7 +14,7 @@ namespace TanksRebirth.Internals.Common.Utilities
 
         public static float Distance_WiiTanksUnits(Vector2 position, Vector2 endPoint)
         {
-            return Vector2.Distance(position, endPoint) / 0.55f;
+            return Vector2.Distance(position, endPoint) / 0.7f;
         }
         private static Vector2 _oldMousePos;
 

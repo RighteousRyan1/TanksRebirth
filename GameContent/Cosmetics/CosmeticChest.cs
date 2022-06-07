@@ -80,7 +80,7 @@ namespace TanksRebirth.GameContent.Cosmetics
 
                         cos.RelativePosition = new Vector3(sinx, 20 + siny / 5, 0f);
 
-                        if (tnk.Properties.IsIngame)
+                        if (tnk.IsIngame && !tnk.Properties.Invisible)
                         {
                             if (TankGame.GameUpdateTime % 10 == 0)
                             {

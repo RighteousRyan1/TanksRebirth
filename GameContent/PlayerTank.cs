@@ -58,13 +58,27 @@ namespace TanksRebirth.GameContent
         public ModelMesh CannonMesh;
         #endregion
 
+        private bool _isPlayerModel;
+
         public PlayerTank(PlayerType playerType, bool isPlayerModel = true, TankTier copyTier = TankTier.None)
         {
             Model = GameResources.GetGameResource<Model>(isPlayerModel ? "Assets/tank_p" : "Assets/tank_e");
             if (copyTier == TankTier.None)
+            {
                 _tankColorTexture = Assets[$"tank_" + playerType.ToString().ToLower()];
+                ApplyDefaults(ref Properties);
+            }
             else
+            {
                 _tankColorTexture = Assets[$"tank_" + copyTier.ToString().ToLower()];
+                var dummy = new AITank(copyTier, default, true);
+
+                Properties = dummy.Properties;
+
+                dummy.Remove();
+            }
+
+            _isPlayerModel = isPlayerModel;
 
             CannonMesh = Model.Meshes["Cannon"];
 
@@ -74,14 +88,12 @@ namespace TanksRebirth.GameContent
 
             PlayerType = playerType;
 
-            ApplyDefaults();
-
             if (playerType == PlayerType.Red)
                 Properties.ShootPitch = 0.1f;
 
-            Properties.Team = TankTeam.Red;
+            Team = TankTeam.Red;
 
-            Properties.Dead = true;
+            Dead = true;
 
             int index = Array.IndexOf(GameHandler.AllPlayerTanks, GameHandler.AllAITanks.First(tank => tank is null));
 
@@ -98,33 +110,33 @@ namespace TanksRebirth.GameContent
             base.Initialize();
         }
 
-        public override void ApplyDefaults()
+        public override void ApplyDefaults(ref TankProperties properties)
         {
-            Properties.ShellCooldown = 5;
-            Properties.ShootStun = 5;
-            Properties.ShellSpeed = 3f; // 3f
-            Properties.MaxSpeed = 1.8f;
-            Properties.RicochetCount = 1; // 1
-            Properties.ShellLimit = 5;
-            Properties.MineLimit = 2;
-            Properties.MineStun = 8;
-            Properties.Invisible = false;
-            Properties.Acceleration = 0.3f;
-            Properties.Deceleration = 0.6f;
-            Properties.TurningSpeed = 0.1f;
-            Properties.MaximalTurn = MathHelper.ToRadians(10); // normally it's 10 degrees, but we want to make it easier for keyboard players.
-            // Armor = new(this, 100);
+            properties.ShellCooldown = 5;
+            properties.ShootStun = 5;
+            properties.ShellSpeed = 3f; // 3f
+            properties.MaxSpeed = 1.8f;
+            properties.RicochetCount = 1; // 1
+            properties.ShellLimit = 5;
+            properties.MineLimit = 2;
+            properties.MineStun = 8;
+            properties.Invisible = false;
+            properties.Acceleration = 0.3f;
+            properties.Deceleration = 0.6f;
+            properties.TurningSpeed = 0.1f;
+            properties.MaximalTurn = MathHelper.ToRadians(10); // normally it's 10 degrees, but we want to make it easier for keyboard players.
 
-            Properties.ShellType = ShellType.Player;
+            properties.ShellType = ShellType.Player;
 
-            Properties.ShellHoming = new();
+            properties.ShellHoming = new();
 
-            Properties.DestructionColor = PlayerType switch
+            properties.DestructionColor = PlayerType switch
             {
                 PlayerType.Blue => Color.Blue,
                 PlayerType.Red => Color.Red,
-                _ => throw new Exception("What")
+                _ => throw new Exception("What did you do?")
             };
+            base.ApplyDefaults(ref properties);
         }
 
         public override void Update()
@@ -135,16 +147,17 @@ namespace TanksRebirth.GameContent
             // 3/4pi = left
             base.Update();
 
-            CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(Properties.TurretRotation + Properties.TankRotation);
+            CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation);
             Model.Root.Transform = World;
 
             Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
-            if (Properties.TargetTankRotation - Properties.TankRotation >= MathHelper.PiOver2)
-                Properties.TankRotation += MathHelper.Pi;
-            else if (Properties.TargetTankRotation - Properties.TankRotation <= -MathHelper.PiOver2)
-                Properties.TankRotation -= MathHelper.Pi;
 
-            if (Properties.IsIngame)
+            if (TargetTankRotation - TankRotation >= MathHelper.PiOver2)
+                TankRotation += MathHelper.Pi;
+            else if (TargetTankRotation - TankRotation <= -MathHelper.PiOver2)
+                TankRotation -= MathHelper.Pi;
+
+            if (IsIngame)
             {
                 if (Client.IsConnected())
                     ChatSystem.SendMessage($"PlayerId: {PlayerId} | ClientId: {NetPlay.CurrentClient.Id}", Color.White);
@@ -153,7 +166,7 @@ namespace TanksRebirth.GameContent
                     if (!TankGame.ThirdPerson)
                     {
                         Vector3 mouseWorldPos = GameUtils.GetWorldPosition(GameUtils.MousePosition, -11f);
-                        Properties.TurretRotation = (-(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Properties.Position).ToRotation()) + MathHelper.PiOver2;
+                        TurretRotation = (-(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position).ToRotation()) + MathHelper.PiOver2;
                     }
                     else
                     {
@@ -163,7 +176,7 @@ namespace TanksRebirth.GameContent
                         if (Input.CurrentMouseSnapshot.X <= 0)
                             Mouse.SetPosition(GameUtils.WindowWidth - 1, Input.CurrentMouseSnapshot.Y);
                         //Mouse.SetPosition((int)GameUtils.WindowCenter.X, (int)GameUtils.WindowCenter.Y);
-                        Properties.TurretRotation += -TankGame.MouseVelocity.X / 312; // terry evanswood
+                        TurretRotation += -TankGame.MouseVelocity.X / 312; // terry evanswood
                     }
                 }
 
@@ -204,20 +217,17 @@ namespace TanksRebirth.GameContent
             //if (Client.IsConnected() && IsIngame)
             //Client.SyncPlayer(this);
 
-            oldPosition = Properties.Position;
+            oldPosition = Position;
         }
 
         public override void Remove()
         {
-            Properties.Dead = true;
+            Dead = true;
             GameHandler.AllPlayerTanks[PlayerId] = null;
             GameHandler.AllTanks[WorldId] = null;
             base.Remove();
         }
 
-        /// <summary>
-        /// Controller support soon i hope (this is not working)
-        /// </summary>
         private void ControlHandle_ConsoleController()
         {
 
@@ -225,35 +235,31 @@ namespace TanksRebirth.GameContent
             var rightStick = Input.CurrentGamePadSnapshot.ThumbSticks.Right;
             var dPad = Input.CurrentGamePadSnapshot.DPad;
 
-            var treadPlaceTimer = (int)Math.Round(14 / Properties.Velocity.Length()) != 0 ? (int)Math.Round(14 / Properties.Velocity.Length()) : 1;
-
-            var accelReal = Properties.Acceleration * leftStick.Length() * Properties.MaxSpeed * 4;
+            var treadPlaceTimer = (int)Math.Round(14 / Velocity.Length()) != 0 ? (int)Math.Round(14 / Velocity.Length()) : 1;
 
             preterbedVelocity = new(leftStick.X, -leftStick.Y);
 
             var norm = Vector2.Normalize(preterbedVelocity);
 
-            Properties.TargetTankRotation = norm.ToRotation() - MathHelper.PiOver2;
+            TargetTankRotation = norm.ToRotation() - MathHelper.PiOver2;
 
-            Properties.TankRotation = GameUtils.RoughStep(Properties.TankRotation, Properties.TargetTankRotation, Properties.TurningSpeed);
+            TankRotation = GameUtils.RoughStep(TankRotation, TargetTankRotation, Properties.TurningSpeed);
 
-            var rotationMet = Properties.TankRotation > Properties.TargetTankRotation - Properties.MaximalTurn && Properties.TankRotation < Properties.TargetTankRotation + Properties.MaximalTurn;
+            var rotationMet = TankRotation > TargetTankRotation - Properties.MaximalTurn && TankRotation < TargetTankRotation + Properties.MaximalTurn;
 
             if (!rotationMet)
             {
                 if (TankGame.GameUpdateTime % treadPlaceTimer == 0)
-                    LayFootprint(false);
+                    LayFootprint(Properties.Track == TrackType.Thick);
                 Properties.Speed -= Properties.Deceleration;
                 if (Properties.Speed < 0)
                     Properties.Speed = 0;
-                Body.LinearVelocity = Vector2.Zero;
-                Properties.Velocity = Vector2.Zero;
-                Properties.IsTurning = true;
+                IsTurning = true;
             }
             else
             {
                 if (TankGame.ThirdPerson)
-                    preterbedVelocity = preterbedVelocity.RotatedByRadians(-Properties.TurretRotation + MathHelper.Pi);
+                    preterbedVelocity = preterbedVelocity.RotatedByRadians(-TurretRotation + MathHelper.Pi);
 
                 Properties.Speed += Properties.Acceleration;
                 if (Properties.Speed > Properties.MaxSpeed)
@@ -262,30 +268,27 @@ namespace TanksRebirth.GameContent
                 if (leftStick.Length() > 0)
                 {
                     playerControl_isBindPressed = true;
-
-                    Properties.Velocity.X = leftStick.X * accelReal;
-                    Properties.Velocity.Y = -leftStick.Y * accelReal;
                 }
 
                 if (dPad.Down == ButtonState.Pressed)
                 {
                     playerControl_isBindPressed = true;
-                    Properties.Velocity.Y += Properties.Acceleration;
+                    preterbedVelocity.Y = 1;
                 }
                 if (dPad.Up == ButtonState.Pressed)
                 {
                     playerControl_isBindPressed = true;
-                    Properties.Velocity.Y -= Properties.Acceleration;
+                    preterbedVelocity.Y = -1;
                 }
                 if (dPad.Left == ButtonState.Pressed)
                 {
                     playerControl_isBindPressed = true;
-                    Properties.Velocity.X -= Properties.Acceleration;
+                    preterbedVelocity.X = -1;
                 }
                 if (dPad.Right == ButtonState.Pressed)
                 {
                     playerControl_isBindPressed = true;
-                    Properties.Velocity.X += Properties.Acceleration;
+                    preterbedVelocity.X = 1;
                 }
             }
 
@@ -295,6 +298,8 @@ namespace TanksRebirth.GameContent
                 Mouse.SetPosition((int)(unprojectedPosition.X + rightStick.X * 250), (int)(unprojectedPosition.Y - rightStick.Y * 250));
                 //Mouse.SetPosition((int)(Input.CurrentMouseSnapshot.X + rightStick.X * TankGame.Instance.Settings.ControllerSensitivity), (int)(Input.CurrentMouseSnapshot.Y - rightStick.Y * TankGame.Instance.Settings.ControllerSensitivity));
             }
+
+            Velocity = Vector2.UnitY.RotatedByRadians(TankRotation) * Properties.Speed;
 
             if (FireBullet.JustPressed)
                 Shoot();
@@ -306,19 +311,19 @@ namespace TanksRebirth.GameContent
             if (controlMine.JustPressed)
                 LayMine();
 
-            Properties.IsTurning = false;
+            IsTurning = false;
 
             var norm = Vector2.Normalize(preterbedVelocity);
 
-            var treadPlaceTimer = (int)Math.Round(14 / Properties.Velocity.Length()) != 0 ? (int)Math.Round(14 / Properties.Velocity.Length()) : 1;
+            var treadPlaceTimer = (int)Math.Round(14 / Velocity.Length()) != 0 ? (int)Math.Round(14 / Velocity.Length()) : 1;
 
-            Properties.TargetTankRotation = norm.ToRotation() - MathHelper.PiOver2;
+            TargetTankRotation = norm.ToRotation() - MathHelper.PiOver2;
 
-            Properties.TankRotation = GameUtils.RoughStep(Properties.TankRotation, Properties.TargetTankRotation, Properties.TurningSpeed);
+            TankRotation = GameUtils.RoughStep(TankRotation, TargetTankRotation, Properties.TurningSpeed);
 
-            var rotationMet = Properties.TankRotation > Properties.TargetTankRotation - Properties.MaximalTurn && Properties.TankRotation < Properties.TargetTankRotation + Properties.MaximalTurn;
+            var rotationMet = TankRotation > TargetTankRotation - Properties.MaximalTurn && TankRotation < TargetTankRotation + Properties.MaximalTurn;
 
-            Properties.TankRotation %= MathHelper.Tau;
+            TankRotation %= MathHelper.Tau;
 
             preterbedVelocity = Vector2.Zero;
 
@@ -329,8 +334,8 @@ namespace TanksRebirth.GameContent
                     Properties.Speed = 0;
                 // treadPlaceTimer += MaxSpeed / 5;
                 if (TankGame.GameUpdateTime % treadPlaceTimer == 0)
-                    LayFootprint(false);
-                Properties.IsTurning = true;
+                    LayFootprint(Properties.Track == TrackType.Thick);
+                IsTurning = true;
             }
             else
             {
@@ -363,9 +368,9 @@ namespace TanksRebirth.GameContent
 
 
             if (TankGame.ThirdPerson)
-                preterbedVelocity = preterbedVelocity.RotatedByRadians(-Properties.TurretRotation + MathHelper.Pi);
+                preterbedVelocity = preterbedVelocity.RotatedByRadians(-TurretRotation + MathHelper.Pi);
 
-            Properties.Velocity = Vector2.UnitY.RotatedByRadians(Properties.TankRotation) * Properties.Speed;
+            Velocity = Vector2.UnitY.RotatedByRadians(TankRotation) * Properties.Speed;
             //ChatSystem.SendMessage($"{preterbedVelocity} | " + preterbedVelocity.RotatedByRadians(-TurretRotation + MathHelper.Pi), Color.White);
         }
 
@@ -400,11 +405,11 @@ namespace TanksRebirth.GameContent
             //if (!controlLeft.IsPressed && !controlRight.IsPressed && leftStick.X == 0)
                 //Velocity.X = 0;
 
-            if (Properties.Velocity.Length() > 0 && playerControl_isBindPressed)
+            if (Velocity.Length() > 0 && playerControl_isBindPressed)
             {
-                var treadPlaceTimer = (int)Math.Round(14 / Properties.Velocity.Length()) != 0 ? (int)Math.Round(14 / Properties.Velocity.Length()) : 1;
+                var treadPlaceTimer = (int)Math.Round(14 / Velocity.Length()) != 0 ? (int)Math.Round(14 / Velocity.Length()) : 1;
                 if (TankGame.GameUpdateTime % treadPlaceTimer == 0  )
-                    LayFootprint(false);
+                    LayFootprint(Properties.Track == TrackType.Thick);
                 if (!Properties.IsSilent)
                 {
                     if (TankGame.GameUpdateTime % MathHelper.Clamp(treadPlaceTimer / 2, 4, 6) == 0)
@@ -422,8 +427,8 @@ namespace TanksRebirth.GameContent
             const int MAX_PATH_UNITS = 10000;
 
             var whitePixel = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
-            var pathPos = Properties.Position + new Vector2(0, 0).RotatedByRadians(-Properties.TurretRotation);
-            var pathDir = Vector2.UnitY.RotatedByRadians(Properties.TurretRotation - MathHelper.Pi);
+            var pathPos = Position + new Vector2(0, 0).RotatedByRadians(-TurretRotation);
+            var pathDir = Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi);
             pathDir.Y *= -1;
             pathDir *= Properties.ShellSpeed;
 
@@ -496,15 +501,15 @@ namespace TanksRebirth.GameContent
                             if (mesh.Name == "Cannon")
                                 return;
 
-                        effect.SpecularColor = Color.White.ToVector3();
-                        effect.SpecularPower = 10;
+                        //effect.SpecularColor = Color.White.ToVector3();
+                        //effect.SpecularPower = 10;
 
                         if (mesh.Name != "Shadow")
                         {
                             effect.Alpha = 1f;
                             effect.Texture = _tankColorTexture;
 
-                            if (Properties.IsHoveredByMouse)
+                            if (IsHoveredByMouse)
                                 effect.EmissiveColor = Color.White.ToVector3();
                             else
                                 effect.EmissiveColor = Color.Black.ToVector3();
@@ -525,7 +530,7 @@ namespace TanksRebirth.GameContent
                         {
                             if (!Lighting.AccurateShadows)
                             {
-                                if (Properties.IsIngame)
+                                if (IsIngame)
                                 {
                                     effect.Alpha = 0.5f;
                                     effect.Texture = _shadowTexture;
@@ -534,7 +539,7 @@ namespace TanksRebirth.GameContent
                             }
                         }
 
-                        effect.SetDefaultGameLighting_IngameEntities(specular: true, ambientMultiplier: 1.5f);
+                        effect.SetDefaultGameLighting_IngameEntities(specular: _isPlayerModel, ambientMultiplier: _isPlayerModel ? 1.5f : 1f);
                     }
                 }
             }
@@ -543,10 +548,10 @@ namespace TanksRebirth.GameContent
 
         private void DrawExtras()
         {
-            if (Properties.Dead)
+            if (Dead)
                 return;
 
-            if (GameProperties.ShouldMissionsProgress && !GameProperties.InMission && Properties.IsIngame && !IntermissionSystem.IsAwaitingNewMission)
+            if (GameProperties.ShouldMissionsProgress && !GameProperties.InMission && IsIngame && !IntermissionSystem.IsAwaitingNewMission)
             {
                 var tex1 = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/chevron_border");
                 var tex2 = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/chevron_inside");
@@ -584,6 +589,6 @@ namespace TanksRebirth.GameContent
         }
 
         public override string ToString()
-            => $"pos: {Properties.Position} | vel: {Properties.Velocity} | dead: {Properties.Dead} | rotation: {Properties.TankRotation} | OwnedBullets: {Properties.OwnedShellCount}";
+            => $"pos: {Position} | vel: {Velocity} | dead: {Dead} | rotation: {TankRotation} | OwnedBullets: {OwnedShellCount}";
     }
 }

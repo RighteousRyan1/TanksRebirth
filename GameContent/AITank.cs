@@ -59,10 +59,14 @@ namespace TanksRebirth.GameContent
             /// <summary>How inaccurate (in radians) this tank is trying to aim at its target.</summary>
             public float AimOffset { get; set; }
 
-            /// <summary>The distance of which this tank is wary of projectiles and tries to move away from them.</summary>
-            public float ProjectileWarinessRadius { get; set; }
-            /// <summary>The distance of which this tank is wary of mines and tries to move away from them.</summary>
-            public float MineWarinessRadius { get; set; }
+            /// <summary>The distance of which this tank is wary of projectiles shot by <see cref="PlayerTank"/>s and tries to move away from them.</summary>
+            public float ProjectileWarinessRadius_PlayerShot { get; set; }
+            /// <summary>The distance of which this tank is wary of projectiles shot by <see cref="PlayerTank"/>s and tries to move away from them.</summary>
+            public float ProjectileWarinessRadius_AIShot { get; set; }
+            /// <summary>The distance of which this tank is wary of mines laid by <see cref="PlayerTank"/>s and tries to move away from them.</summary>
+            public float MineWarinessRadius_PlayerLaid { get; set; }
+            /// <summary>The distance of which this tank is wary of mines laid by <see cref="AITank"/>s and tries to move away from them.</summary>
+            public float MineWarinessRadius_AILaid { get; set; }
 
             /// <summary>On a given tick, it has this chance out of 1 to lay a mine. <para>Do note that this value must be greater than 0 and less than or equal to 1.</para></summary>
             public float MinePlacementChance { get; set; } // 0.0f to 1.0f
@@ -94,6 +98,8 @@ namespace TanksRebirth.GameContent
             public bool PredictsPositions { get; set; }
             /// <summary>Whether or not this <see cref="AITank"/> should deflect incoming bullets to prevent being hit.</summary>
             public bool DeflectsBullets { get; set; }
+            /// <summary>Whether or not this <see cref="AITank"/> will shoot mines that are near destructible obstacles.</summary>
+            public bool ShootsMinesSmartly { get; set; }
 
             // TODO: make friendly check distances separate for bullets and mines
         }
@@ -126,7 +132,7 @@ namespace TanksRebirth.GameContent
 
             foreach (var tank in GameHandler.AllAITanks)
             {
-                if (tank is not null && !tank.Properties.Dead)
+                if (tank is not null && !tank.Dead)
                     if (tank.Tier > highest)
                         highest = tank.Tier;
             }
@@ -134,14 +140,14 @@ namespace TanksRebirth.GameContent
         }
 
         public static int CountAll()
-            => GameHandler.AllAITanks.Count(tnk => tnk is not null && !tnk.Properties.Dead);
+            => GameHandler.AllAITanks.Count(tnk => tnk is not null && !tnk.Dead);
 
         public static int GetTankCountOfType(TankTier tier)
-            => GameHandler.AllAITanks.Count(tnk => tnk is not null && tnk.Tier == tier && !tnk.Properties.Dead);
+            => GameHandler.AllAITanks.Count(tnk => tnk is not null && tnk.Tier == tier && !tnk.Dead);
 
         public void Swap(TankTier tier, bool setDefaults = true)
         {
-            this.Tier = tier;
+            Tier = tier;
 
             if ((int)tier <= (int)TankTier.Marble)
                 _tankTexture = Assets[$"tank_" + tier.ToString().ToLower()];
@@ -199,7 +205,7 @@ namespace TanksRebirth.GameContent
             #endregion
 
             if (setDefaults)
-                ApplyDefaults();
+                ApplyDefaults(ref Properties);
         }
 
         /// <summary>
@@ -228,7 +234,7 @@ namespace TanksRebirth.GameContent
             }
             if (tier == TankTier.Random)
                 tier = (TankTier)GameHandler.GameRand.Next((int)tankRange.Min, (int)tankRange.Max + 1);
-            Properties.IsIngame = isIngame;
+            IsIngame = isIngame;
             if (isIngame)
             {
                 Behaviors = new AiBehavior[10];
@@ -252,7 +258,7 @@ namespace TanksRebirth.GameContent
                 SpecialBehaviors[1].Label = "SpecialBehavior2";
                 SpecialBehaviors[2].Label = "SpecialBehavior3";
 
-                Properties.Dead = true;
+                Dead = true;
             }
 
             /*if ((int)tier <= (int)TankTier.Black)
@@ -311,12 +317,12 @@ namespace TanksRebirth.GameContent
 
             _shadowTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank_shadow");
 
-            this.Tier = tier;
+            Tier = tier;
             if (isIngame)
             {
 
                 if (setTankDefaults)
-                    ApplyDefaults();
+                    ApplyDefaults(ref Properties);
 
             }
             int index = Array.IndexOf(GameHandler.AllAITanks, GameHandler.AllAITanks.First(tank => tank is null));
@@ -342,42 +348,42 @@ namespace TanksRebirth.GameContent
             //UpdateAim(new List<Tank>(), true);
         }
 
-        public override void ApplyDefaults()
+        public override void ApplyDefaults(ref TankProperties properties)
         {
             switch (Tier)
             {
                 #region VanillaTanks
                 case TankTier.Brown:
-                    Properties.Stationary = true;
+                    properties.Stationary = true;
 
-                    AiParams.ProjectileWarinessRadius = 60;
+                    AiParams.ProjectileWarinessRadius_PlayerShot = 60;
 
-                    Properties.DestructionColor = new(152, 96, 26);
+                    properties.DestructionColor = new(152, 96, 26);
 
                     AiParams.TurretMeanderFrequency = 30;
                     AiParams.TurretSpeed = 0.01f;
                     AiParams.AimOffset = MathHelper.ToRadians(170);
                     AiParams.Inaccuracy = 1.6f;
 
-                    Properties.TurningSpeed = 0f;
-                    Properties.MaximalTurn = 0;
+                    properties.TurningSpeed = 0f;
+                    properties.MaximalTurn = 0;
 
-                    Properties.ShootStun = 20;
-                    Properties.ShellCooldown = 300;
-                    Properties.ShellLimit = 1;
-                    Properties.ShellSpeed = 3f;
-                    Properties.ShellType = ShellType.Standard;
-                    Properties.RicochetCount = 1;
+                    properties.ShootStun = 20;
+                    properties.ShellCooldown = 300;
+                    properties.ShellLimit = 1;
+                    properties.ShellSpeed = 3f;
+                    properties.ShellType = ShellType.Standard;
+                    properties.RicochetCount = 1;
 
-                    Properties.Invisible = false;
-                    Properties.ShellHoming = new();
+                    properties.Invisible = false;
+                    properties.ShellHoming = new();
 
-                    Properties.TreadPitch = 0;
-                    Properties.MaxSpeed = 0f;
+                    properties.TreadPitch = 0;
+                    properties.MaxSpeed = 0f;
 
-                    Properties.MineCooldown = 0;
-                    Properties.MineLimit = 0;
-                    Properties.MineStun = 0;
+                    properties.MineCooldown = 0;
+                    properties.MineLimit = 0;
+                    properties.MineStun = 0;
 
                     BaseExpValue = 0.01f;
 
@@ -392,31 +398,31 @@ namespace TanksRebirth.GameContent
 
                     AiParams.Inaccuracy = 0.9f;
 
-                    Properties.DestructionColor = Color.Gray;
+                    properties.DestructionColor = Color.Gray;
 
-                    AiParams.ProjectileWarinessRadius = 40;
-                    AiParams.MineWarinessRadius = 40;
+                    AiParams.ProjectileWarinessRadius_PlayerShot = 40;
+                    AiParams.MineWarinessRadius_PlayerLaid = 40;
 
-                    Properties.TurningSpeed = 0.08f;
-                    Properties.MaximalTurn = MathHelper.ToRadians(10);
+                    properties.TurningSpeed = 0.08f;
+                    properties.MaximalTurn = MathHelper.ToRadians(10);
 
-                    Properties.ShootStun = 3;
-                    Properties.ShellCooldown = 180;
-                    Properties.ShellLimit = 1;
-                    Properties.ShellSpeed = 3f;
-                    Properties.ShellType = ShellType.Standard;
-                    Properties.RicochetCount = 1;
+                    properties.ShootStun = 3;
+                    properties.ShellCooldown = 180;
+                    properties.ShellLimit = 1;
+                    properties.ShellSpeed = 3f;
+                    properties.ShellType = ShellType.Standard;
+                    properties.RicochetCount = 1;
 
-                    Properties.Invisible = false;
-                    Properties.Stationary = false;
-                    Properties.ShellHoming = new();
+                    properties.Invisible = false;
+                    properties.Stationary = false;
+                    properties.ShellHoming = new();
 
-                    Properties.TreadPitch = 0.085f;
-                    Properties.MaxSpeed = 1.2f;
+                    properties.TreadPitch = 0.085f;
+                    properties.MaxSpeed = 1.2f;
 
-                    Properties.MineCooldown = 0;
-                    Properties.MineLimit = 0;
-                    Properties.MineStun = 0;
+                    properties.MineCooldown = 0;
+                    properties.MineLimit = 0;
+                    properties.MineStun = 0;
 
                     AiParams.BlockWarinessDistance = 25;
 
@@ -430,33 +436,33 @@ namespace TanksRebirth.GameContent
                     AiParams.TurretSpeed = 0.1f;
                     AiParams.AimOffset = MathHelper.ToRadians(0);
 
-                    Properties.DestructionColor = Color.Teal;
+                    properties.DestructionColor = Color.Teal;
 
                     AiParams.Inaccuracy = 0.15f;
 
-                    AiParams.ProjectileWarinessRadius = 40;
-                    AiParams.MineWarinessRadius = 80;
+                    AiParams.ProjectileWarinessRadius_PlayerShot = 40;
+                    AiParams.MineWarinessRadius_PlayerLaid = 80;
 
-                    Properties.TurningSpeed = 0.2f;
-                    Properties.MaximalTurn = MathHelper.ToRadians(10);
+                    properties.TurningSpeed = 0.2f;
+                    properties.MaximalTurn = MathHelper.ToRadians(10);
 
-                    Properties.ShootStun = 20;
-                    Properties.ShellCooldown = 180;
-                    Properties.ShellLimit = 1;
-                    Properties.ShellSpeed = 6f;
-                    Properties.ShellType = ShellType.Rocket;
-                    Properties.RicochetCount = 0;
+                    properties.ShootStun = 20;
+                    properties.ShellCooldown = 180;
+                    properties.ShellLimit = 1;
+                    properties.ShellSpeed = 6f;
+                    properties.ShellType = ShellType.Rocket;
+                    properties.RicochetCount = 0;
 
-                    Properties.Invisible = false;
-                    Properties.Stationary = false;
-                    Properties.ShellHoming = new();
+                    properties.Invisible = false;
+                    properties.Stationary = false;
+                    properties.ShellHoming = new();
 
-                    Properties.TreadPitch = 0.085f;
-                    Properties.MaxSpeed = 1f;
+                    properties.TreadPitch = 0.085f;
+                    properties.MaxSpeed = 1f;
 
-                    Properties.MineCooldown = 0;
-                    Properties.MineLimit = 0;
-                    Properties.MineStun = 0;
+                    properties.MineCooldown = 0;
+                    properties.MineLimit = 0;
+                    properties.MineStun = 0;
 
                     AiParams.BlockWarinessDistance = 40;
 
@@ -472,34 +478,34 @@ namespace TanksRebirth.GameContent
 
                     AiParams.Inaccuracy = 1.5f;
 
-                    Properties.Acceleration = 0.3f;
-                    Properties.Deceleration = 0.6f;
+                    properties.Acceleration = 0.3f;
+                    properties.Deceleration = 0.6f;
 
-                    Properties.DestructionColor = Color.Yellow;
+                    properties.DestructionColor = Color.Yellow;
 
-                    AiParams.ProjectileWarinessRadius = 40;
-                    AiParams.MineWarinessRadius = 160;
+                    AiParams.ProjectileWarinessRadius_PlayerShot = 40;
+                    AiParams.MineWarinessRadius_PlayerLaid = 160;
 
-                    Properties.TurningSpeed = 0.08f;
-                    Properties.MaximalTurn = MathHelper.ToRadians(10);
+                    properties.TurningSpeed = 0.08f;
+                    properties.MaximalTurn = MathHelper.ToRadians(10);
 
-                    Properties.ShootStun = 20;
-                    Properties.ShellCooldown = 90;
-                    Properties.ShellLimit = 1;
-                    Properties.ShellSpeed = 3f;
-                    Properties.ShellType = ShellType.Standard;
-                    Properties.RicochetCount = 1;
+                    properties.ShootStun = 20;
+                    properties.ShellCooldown = 90;
+                    properties.ShellLimit = 1;
+                    properties.ShellSpeed = 3f;
+                    properties.ShellType = ShellType.Standard;
+                    properties.RicochetCount = 1;
 
-                    Properties.Invisible = false;
-                    Properties.Stationary = false;
-                    Properties.ShellHoming = new();
+                    properties.Invisible = false;
+                    properties.Stationary = false;
+                    properties.ShellHoming = new();
 
-                    Properties.TreadPitch = 0.085f;
-                    Properties.MaxSpeed = 1.8f;
+                    properties.TreadPitch = 0.085f;
+                    properties.MaxSpeed = 1.8f;
 
-                    Properties.MineCooldown = 600;
-                    Properties.MineLimit = 4;
-                    Properties.MineStun = 5;
+                    properties.MineCooldown = 600;
+                    properties.MineLimit = 4;
+                    properties.MineStun = 5;
 
                     AiParams.MinePlacementChance = 0.3f;
                     AiParams.MoveFromMineTime = 120;
@@ -508,12 +514,12 @@ namespace TanksRebirth.GameContent
 
                     if (Difficulties.Types["PieFactory"])
                     {
-                        Properties.VulnerableToMines = false;
-                        Properties.MineCooldown = 10;
-                        Properties.MineLimit = 20;
-                        Properties.MineStun = 0;
+                        properties.VulnerableToMines = false;
+                        properties.MineCooldown = 10;
+                        properties.MineLimit = 20;
+                        properties.MineStun = 0;
                         AiParams.MinePlacementChance = 1f;
-                        AiParams.MineWarinessRadius = 0;
+                        AiParams.MineWarinessRadius_PlayerLaid = 0;
                     }
                     break;
 
@@ -526,31 +532,31 @@ namespace TanksRebirth.GameContent
 
                     AiParams.Inaccuracy = 1.3f;
 
-                    Properties.DestructionColor = Color.Pink;
+                    properties.DestructionColor = Color.Pink;
 
-                    AiParams.ProjectileWarinessRadius = 40;
-                    AiParams.MineWarinessRadius = 160;
+                    AiParams.ProjectileWarinessRadius_PlayerShot = 40;
+                    AiParams.MineWarinessRadius_PlayerLaid = 160;
 
-                    Properties.TurningSpeed = 0.08f;
-                    Properties.MaximalTurn = MathHelper.ToRadians(10);
+                    properties.TurningSpeed = 0.08f;
+                    properties.MaximalTurn = MathHelper.ToRadians(10);
 
-                    Properties.ShootStun = 5;
-                    Properties.ShellCooldown = 30;
-                    Properties.ShellLimit = 3;
-                    Properties.ShellSpeed = 3f;
-                    Properties.ShellType = ShellType.Standard;
-                    Properties.RicochetCount = 1;
+                    properties.ShootStun = 5;
+                    properties.ShellCooldown = 30;
+                    properties.ShellLimit = 3;
+                    properties.ShellSpeed = 3f;
+                    properties.ShellType = ShellType.Standard;
+                    properties.RicochetCount = 1;
 
-                    Properties.Invisible = false;
-                    Properties.Stationary = false;
-                    Properties.ShellHoming = new();
+                    properties.Invisible = false;
+                    properties.Stationary = false;
+                    properties.ShellHoming = new();
 
-                    Properties.TreadPitch = 0.1f;
-                    Properties.MaxSpeed = 1.2f;
+                    properties.TreadPitch = 0.1f;
+                    properties.MaxSpeed = 1.2f;
 
-                    Properties.MineCooldown = 0;
-                    Properties.MineLimit = 0;
-                    Properties.MineStun = 0;
+                    properties.MineCooldown = 0;
+                    properties.MineLimit = 0;
+                    properties.MineStun = 0;
 
                     AiParams.BlockWarinessDistance = 35;
 
@@ -564,35 +570,35 @@ namespace TanksRebirth.GameContent
 
                     AiParams.Inaccuracy = 0.8f;
 
-                    Properties.DestructionColor = Color.Purple;
+                    properties.DestructionColor = Color.Purple;
 
                     AiParams.TurretSpeed = 0.03f;
                     AiParams.AimOffset = 0.18f;
 
-                    AiParams.ProjectileWarinessRadius = 60;
-                    AiParams.MineWarinessRadius = 160;
+                    AiParams.ProjectileWarinessRadius_PlayerShot = 60;
+                    AiParams.MineWarinessRadius_PlayerLaid = 160;
 
-                    Properties.TurningSpeed = 0.06f;
-                    Properties.MaximalTurn = MathHelper.ToRadians(10);
+                    properties.TurningSpeed = 0.06f;
+                    properties.MaximalTurn = MathHelper.ToRadians(10);
 
-                    Properties.ShootStun = 5;
-                    Properties.ShellCooldown = 30;
-                    Properties.ShellLimit = 5;
-                    Properties.ShellSpeed = 3f;
-                    Properties.ShellType = ShellType.Standard;
-                    Properties.RicochetCount = 1;
+                    properties.ShootStun = 5;
+                    properties.ShellCooldown = 30;
+                    properties.ShellLimit = 5;
+                    properties.ShellSpeed = 3f;
+                    properties.ShellType = ShellType.Standard;
+                    properties.RicochetCount = 1;
 
-                    Properties.Invisible = false;
-                    Properties.Stationary = false;
-                    Properties.ShellHoming = new();
+                    properties.Invisible = false;
+                    properties.Stationary = false;
+                    properties.ShellHoming = new();
 
-                    Properties.TreadPitch = -0.2f;
-                    Properties.MaxSpeed = 1.8f;
-                    Properties.Acceleration = 0.3f;
+                    properties.TreadPitch = -0.2f;
+                    properties.MaxSpeed = 1.8f;
+                    properties.Acceleration = 0.3f;
 
-                    Properties.MineCooldown = 700;
-                    Properties.MineLimit = 2;
-                    Properties.MineStun = 10;
+                    properties.MineCooldown = 700;
+                    properties.MineLimit = 2;
+                    properties.MineStun = 10;
 
                     AiParams.MoveFromMineTime = 60;
                     AiParams.MinePlacementChance = 0.05f;
@@ -603,36 +609,36 @@ namespace TanksRebirth.GameContent
                     break;
 
                 case TankTier.Green:
-                    Properties.Stationary = true;
+                    properties.Stationary = true;
 
-                    AiParams.ProjectileWarinessRadius = 70;
+                    AiParams.ProjectileWarinessRadius_PlayerShot = 70;
 
                     AiParams.TurretMeanderFrequency = 30;
                     AiParams.TurretSpeed = 0.02f;
                     AiParams.AimOffset = MathHelper.ToRadians(80);
                     AiParams.Inaccuracy = MathHelper.ToRadians(25);
 
-                    Properties.DestructionColor = Color.LimeGreen;
+                    properties.DestructionColor = Color.LimeGreen;
 
-                    Properties.TurningSpeed = 0f;
-                    Properties.MaximalTurn = 0;
+                    properties.TurningSpeed = 0f;
+                    properties.MaximalTurn = 0;
 
-                    Properties.ShootStun = 5;
-                    Properties.ShellCooldown = 60;
-                    Properties.ShellLimit = 2;
-                    Properties.ShellSpeed = 6f; // 6f
-                    Properties.ShellType = ShellType.TrailedRocket;
-                    Properties.RicochetCount = 2; // 2
+                    properties.ShootStun = 5;
+                    properties.ShellCooldown = 60;
+                    properties.ShellLimit = 2;
+                    properties.ShellSpeed = 6f; // 6f
+                    properties.ShellType = ShellType.TrailedRocket;
+                    properties.RicochetCount = 2; // 2
 
-                    Properties.Invisible = false;
-                    Properties.ShellHoming = new();
+                    properties.Invisible = false;
+                    properties.ShellHoming = new();
 
-                    Properties.TreadPitch = 0;
-                    Properties.MaxSpeed = 0f;
+                    properties.TreadPitch = 0;
+                    properties.MaxSpeed = 0f;
 
-                    Properties.MineCooldown = 0;
-                    Properties.MineLimit = 0;
-                    Properties.MineStun = 0;
+                    properties.MineCooldown = 0;
+                    properties.MineLimit = 0;
+                    properties.MineStun = 0;
 
                     BaseExpValue = 0.12f;
                     break;
@@ -644,40 +650,42 @@ namespace TanksRebirth.GameContent
                     AiParams.TurretSpeed = 0.03f;
                     AiParams.AimOffset = MathHelper.ToRadians(40);
 
+                    properties.Track = TrackType.Thick;
+
                     AiParams.Inaccuracy = 0.8f;
 
-                    Properties.DestructionColor = Color.White;
+                    properties.DestructionColor = Color.White;
 
-                    AiParams.ProjectileWarinessRadius = 40;
-                    AiParams.MineWarinessRadius = 160;
+                    AiParams.ProjectileWarinessRadius_PlayerShot = 40;
+                    AiParams.MineWarinessRadius_PlayerLaid = 160;
 
-                    Properties.TurningSpeed = 0.08f;
-                    Properties.MaximalTurn = MathHelper.ToRadians(10);
+                    properties.TurningSpeed = 0.08f;
+                    properties.MaximalTurn = MathHelper.ToRadians(10);
 
-                    Properties.ShootStun = 5;
-                    Properties.ShellCooldown = 30;
-                    Properties.ShellLimit = 5;
-                    Properties.ShellSpeed = 3f;
-                    Properties.ShellType = ShellType.Standard;
-                    Properties.RicochetCount = 1;
+                    properties.ShootStun = 5;
+                    properties.ShellCooldown = 30;
+                    properties.ShellLimit = 5;
+                    properties.ShellSpeed = 3f;
+                    properties.ShellType = ShellType.Standard;
+                    properties.RicochetCount = 1;
 
-                    Properties.Stationary = false;
-                    Properties.ShellHoming = new();
+                    properties.Stationary = false;
+                    properties.ShellHoming = new();
 
-                    Properties.TreadPitch = -0.35f;
-                    Properties.MaxSpeed = 1.2f;
-                    Properties.Acceleration = 0.3f;
+                    properties.TreadPitch = -0.35f;
+                    properties.MaxSpeed = 1.2f;
+                    properties.Acceleration = 0.3f;
 
-                    Properties.MineCooldown = 1000;
-                    Properties.MineLimit = 2;
-                    Properties.MineStun = 8;
+                    properties.MineCooldown = 1000;
+                    properties.MineLimit = 2;
+                    properties.MineStun = 8;
 
                     AiParams.MoveFromMineTime = 40;
                     AiParams.MinePlacementChance = 0.08f;
 
                     AiParams.BlockWarinessDistance = 30;
 
-                    Properties.Invisible = true;
+                    properties.Invisible = true;
 
                     BaseExpValue = 0.125f;
                     break;
@@ -691,34 +699,34 @@ namespace TanksRebirth.GameContent
 
                     AiParams.Inaccuracy = 0.35f;
 
-                    Properties.DestructionColor = Color.Black;
+                    properties.DestructionColor = Color.Black;
 
-                    AiParams.ProjectileWarinessRadius = 100;
-                    AiParams.MineWarinessRadius = 60;
+                    AiParams.ProjectileWarinessRadius_PlayerShot = 100;
+                    AiParams.MineWarinessRadius_PlayerLaid = 60;
 
-                    Properties.TurningSpeed = 0.06f;
-                    Properties.MaximalTurn = MathHelper.ToRadians(5);
+                    properties.TurningSpeed = 0.06f;
+                    properties.MaximalTurn = MathHelper.ToRadians(5);
 
-                    Properties.ShootStun = 5;
-                    Properties.ShellCooldown = 90;
-                    Properties.ShellLimit = 3;
-                    Properties.ShellSpeed = 6f;
-                    Properties.ShellType = ShellType.Rocket;
-                    Properties.RicochetCount = 0;
+                    properties.ShootStun = 5;
+                    properties.ShellCooldown = 90;
+                    properties.ShellLimit = 3;
+                    properties.ShellSpeed = 6f;
+                    properties.ShellType = ShellType.Rocket;
+                    properties.RicochetCount = 0;
 
-                    Properties.Invisible = false;
-                    Properties.Stationary = false;
-                    Properties.ShellHoming = new();
+                    properties.Invisible = false;
+                    properties.Stationary = false;
+                    properties.ShellHoming = new();
 
-                    Properties.TreadPitch = -0.26f;
-                    Properties.MaxSpeed = 2.4f;
-                    Properties.Acceleration = 0.3f;
+                    properties.TreadPitch = -0.26f;
+                    properties.MaxSpeed = 2.4f;
+                    properties.Acceleration = 0.3f;
 
-                    Properties.ShootPitch = -0.2f;
+                    properties.ShootPitch = -0.2f;
 
-                    Properties.MineCooldown = 850;
-                    Properties.MineLimit = 2;
-                    Properties.MineStun = 10;
+                    properties.MineCooldown = 850;
+                    properties.MineLimit = 2;
+                    properties.MineStun = 10;
 
                     AiParams.MoveFromMineTime = 100;
                     AiParams.MinePlacementChance = 0.05f;
@@ -734,19 +742,21 @@ namespace TanksRebirth.GameContent
                     AiParams.TurretSpeed = 0.05f;
                     AiParams.AimOffset = 0.005f;
 
+                    AiParams.ProjectileWarinessRadius_PlayerShot = 140;
+
                     AiParams.Inaccuracy = 0.2f;
 
-                    Properties.DestructionColor = new(152, 96, 26);
+                    properties.DestructionColor = new(152, 96, 26);
 
-                    Properties.ShellCooldown = 50;
-                    Properties.ShellLimit = 2;
-                    Properties.ShellSpeed = 3f;
-                    Properties.ShellType = ShellType.Standard;
-                    Properties.RicochetCount = 1;
+                    properties.ShellCooldown = 50;
+                    properties.ShellLimit = 2;
+                    properties.ShellSpeed = 3f;
+                    properties.ShellType = ShellType.Standard;
+                    properties.RicochetCount = 1;
 
-                    Properties.Invisible = false;
-                    Properties.Stationary = true;
-                    Properties.ShellHoming = new();
+                    properties.Invisible = false;
+                    properties.Stationary = true;
+                    properties.ShellHoming = new();
 
                     AiParams.MoveFromMineTime = 100;
                     AiParams.MinePlacementChance = 0.05f;
@@ -762,33 +772,33 @@ namespace TanksRebirth.GameContent
 
                     AiParams.Inaccuracy = 0.4f;
 
-                    Properties.DestructionColor = Color.Silver;
+                    properties.DestructionColor = Color.Silver;
 
-                    AiParams.ProjectileWarinessRadius = 70;
-                    AiParams.MineWarinessRadius = 140;
+                    AiParams.ProjectileWarinessRadius_PlayerShot = 70;
+                    AiParams.MineWarinessRadius_PlayerLaid = 140;
 
-                    Properties.TurningSpeed = 0.13f;
-                    Properties.MaximalTurn = MathHelper.PiOver2;
+                    properties.TurningSpeed = 0.13f;
+                    properties.MaximalTurn = MathHelper.PiOver2;
 
-                    Properties.ShootStun = 0;
-                    Properties.ShellCooldown = 15;
-                    Properties.ShellLimit = 8;
-                    Properties.ShellSpeed = 4f;
-                    Properties.ShellType = ShellType.Standard;
-                    Properties.RicochetCount = 1;
+                    properties.ShootStun = 0;
+                    properties.ShellCooldown = 15;
+                    properties.ShellLimit = 8;
+                    properties.ShellSpeed = 4f;
+                    properties.ShellType = ShellType.Standard;
+                    properties.RicochetCount = 1;
 
-                    Properties.Invisible = false;
-                    Properties.Stationary = false;
-                    Properties.ShellHoming = new();
+                    properties.Invisible = false;
+                    properties.Stationary = false;
+                    properties.ShellHoming = new();
 
-                    Properties.TreadPitch = 0.2f;
-                    Properties.MaxSpeed = 1.6f;
-                    Properties.Acceleration = 0.3f;
-                    Properties.Deceleration = 0.6f;
+                    properties.TreadPitch = 0.2f;
+                    properties.MaxSpeed = 1.6f;
+                    properties.Acceleration = 0.3f;
+                    properties.Deceleration = 0.6f;
 
-                    Properties.MineCooldown = 60 * 20;
-                    Properties.MineLimit = 1;
-                    Properties.MineStun = 10;
+                    properties.MineCooldown = 60 * 20;
+                    properties.MineLimit = 1;
+                    properties.MineStun = 10;
 
                     AiParams.MoveFromMineTime = 100;
                     AiParams.MinePlacementChance = 0.05f;
@@ -804,33 +814,33 @@ namespace TanksRebirth.GameContent
 
                     AiParams.Inaccuracy = 0.4f;
 
-                    Properties.DestructionColor = Color.DeepSkyBlue;
+                    properties.DestructionColor = Color.DeepSkyBlue;
 
-                    AiParams.ProjectileWarinessRadius = 40;
-                    AiParams.MineWarinessRadius = 70;
+                    AiParams.ProjectileWarinessRadius_PlayerShot = 40;
+                    AiParams.MineWarinessRadius_PlayerLaid = 70;
 
-                    Properties.TurningSpeed = 0.15f;
-                    Properties.MaximalTurn = MathHelper.PiOver2;
+                    properties.TurningSpeed = 0.15f;
+                    properties.MaximalTurn = MathHelper.PiOver2;
 
-                    Properties.ShootStun = 20;
-                    Properties.ShellCooldown = 10;
-                    Properties.ShellLimit = 3;
-                    Properties.ShellSpeed = 5.5f;
-                    Properties.ShellType = ShellType.Rocket;
-                    Properties.RicochetCount = 0;
+                    properties.ShootStun = 20;
+                    properties.ShellCooldown = 10;
+                    properties.ShellLimit = 3;
+                    properties.ShellSpeed = 5.5f;
+                    properties.ShellType = ShellType.Rocket;
+                    properties.RicochetCount = 0;
 
-                    Properties.Invisible = false;
-                    Properties.Stationary = false;
-                    Properties.ShellHoming = new();
+                    properties.Invisible = false;
+                    properties.Stationary = false;
+                    properties.ShellHoming = new();
 
-                    Properties.TreadPitch = 0.08f;
-                    Properties.MaxSpeed = 1.4f;
-                    Properties.Acceleration = 0.3f;
-                    Properties.Deceleration = 0.6f;
+                    properties.TreadPitch = 0.08f;
+                    properties.MaxSpeed = 1.4f;
+                    properties.Acceleration = 0.3f;
+                    properties.Deceleration = 0.6f;
 
-                    Properties.MineCooldown = 1000;
-                    Properties.MineLimit = 1;
-                    Properties.MineStun = 0;
+                    properties.MineCooldown = 1000;
+                    properties.MineLimit = 1;
+                    properties.MineStun = 0;
 
                     AiParams.MoveFromMineTime = 90;
                     AiParams.MinePlacementChance = 0.05f;
@@ -846,36 +856,36 @@ namespace TanksRebirth.GameContent
 
                     AiParams.Inaccuracy = 0.6f;
 
-                    Properties.DestructionColor = Color.IndianRed;
+                    properties.DestructionColor = Color.IndianRed;
 
                     //AiParams.PursuitLevel = 0.1f;
                     //AiParams.PursuitFrequency = 30;
 
-                    AiParams.ProjectileWarinessRadius = 50;
-                    AiParams.MineWarinessRadius = 70;
+                    AiParams.ProjectileWarinessRadius_PlayerShot = 50;
+                    AiParams.MineWarinessRadius_PlayerLaid = 70;
 
-                    Properties.TurningSpeed = 0.5f;
-                    Properties.MaximalTurn = MathHelper.PiOver2;
+                    properties.TurningSpeed = 0.5f;
+                    properties.MaximalTurn = MathHelper.PiOver2;
 
-                    Properties.ShootStun = 0;
-                    Properties.ShellCooldown = 8;
-                    Properties.ShellLimit = 10;
-                    Properties.ShellSpeed = 3f;
-                    Properties.ShellType = ShellType.Standard;
-                    Properties.RicochetCount = 0;
+                    properties.ShootStun = 0;
+                    properties.ShellCooldown = 8;
+                    properties.ShellLimit = 10;
+                    properties.ShellSpeed = 3f;
+                    properties.ShellType = ShellType.Standard;
+                    properties.RicochetCount = 0;
 
-                    Properties.Invisible = false;
-                    Properties.Stationary = false;
-                    Properties.ShellHoming = new();
+                    properties.Invisible = false;
+                    properties.Stationary = false;
+                    properties.ShellHoming = new();
 
-                    Properties.TreadPitch = 0.08f;
-                    Properties.MaxSpeed = 1.2f;
-                    Properties.Acceleration = 0.4f;
-                    Properties.Deceleration = 0.6f;
+                    properties.TreadPitch = 0.08f;
+                    properties.MaxSpeed = 1.2f;
+                    properties.Acceleration = 0.4f;
+                    properties.Deceleration = 0.6f;
 
-                    Properties.MineCooldown = 0;
-                    Properties.MineLimit = 0;
-                    Properties.MineStun = 0;
+                    properties.MineCooldown = 0;
+                    properties.MineLimit = 0;
+                    properties.MineStun = 0;
 
                     AiParams.MoveFromMineTime = 0;
                     AiParams.MinePlacementChance = 0;
@@ -893,33 +903,33 @@ namespace TanksRebirth.GameContent
 
                     AiParams.Inaccuracy = 0.25f;
 
-                    Properties.DestructionColor = Color.Yellow;
+                    properties.DestructionColor = Color.Yellow;
 
-                    AiParams.ProjectileWarinessRadius = 80;
-                    AiParams.MineWarinessRadius = 140;
+                    AiParams.ProjectileWarinessRadius_PlayerShot = 80;
+                    AiParams.MineWarinessRadius_PlayerLaid = 140;
 
-                    Properties.TurningSpeed = 0.08f;
-                    Properties.MaximalTurn = 1.4f;
+                    properties.TurningSpeed = 0.08f;
+                    properties.MaximalTurn = 1.4f;
 
-                    Properties.ShootStun = 10;
-                    Properties.ShellCooldown = 60;
-                    Properties.ShellLimit = 3;
-                    Properties.ShellSpeed = 6f;
-                    Properties.ShellType = ShellType.Standard;
-                    Properties.RicochetCount = 0;
+                    properties.ShootStun = 10;
+                    properties.ShellCooldown = 60;
+                    properties.ShellLimit = 3;
+                    properties.ShellSpeed = 6f;
+                    properties.ShellType = ShellType.Standard;
+                    properties.RicochetCount = 0;
 
-                    Properties.Invisible = false;
-                    Properties.Stationary = false;
-                    Properties.ShellHoming = new();
+                    properties.Invisible = false;
+                    properties.Stationary = false;
+                    properties.ShellHoming = new();
 
-                    Properties.TreadPitch = -0.08f;
-                    Properties.MaxSpeed = 3.2f;
-                    Properties.Acceleration = 0.2f;
-                    Properties.Deceleration = 0.4f;
+                    properties.TreadPitch = -0.08f;
+                    properties.MaxSpeed = 3.2f;
+                    properties.Acceleration = 0.2f;
+                    properties.Deceleration = 0.4f;
 
-                    Properties.MineCooldown = 360;
-                    Properties.MineLimit = 4;
-                    Properties.MineStun = 5;
+                    properties.MineCooldown = 360;
+                    properties.MineLimit = 4;
+                    properties.MineStun = 5;
 
                     AiParams.MoveFromMineTime = 40;
                     AiParams.MinePlacementChance = 0.15f;
@@ -939,33 +949,33 @@ namespace TanksRebirth.GameContent
 
                     AiParams.Inaccuracy = 0.65f;
 
-                    Properties.DestructionColor = Color.Purple;
+                    properties.DestructionColor = Color.Purple;
 
-                    AiParams.ProjectileWarinessRadius = 70;
-                    AiParams.MineWarinessRadius = 140;
+                    AiParams.ProjectileWarinessRadius_PlayerShot = 70;
+                    AiParams.MineWarinessRadius_PlayerLaid = 140;
 
-                    Properties.TurningSpeed = 0.1f;
-                    Properties.MaximalTurn = MathHelper.PiOver2 + 0.5f;
+                    properties.TurningSpeed = 0.1f;
+                    properties.MaximalTurn = MathHelper.PiOver2 + 0.5f;
 
-                    Properties.ShootStun = 5;
-                    Properties.ShellCooldown = 25;
-                    Properties.ShellLimit = 5;
-                    Properties.ShellSpeed = 3.5f; // 3.5
-                    Properties.ShellType = ShellType.Standard;
-                    Properties.RicochetCount = 1; // 1
+                    properties.ShootStun = 5;
+                    properties.ShellCooldown = 25;
+                    properties.ShellLimit = 5;
+                    properties.ShellSpeed = 3.5f; // 3.5
+                    properties.ShellType = ShellType.Standard;
+                    properties.RicochetCount = 1; // 1
 
-                    Properties.Invisible = false;
-                    Properties.Stationary = false;
-                    Properties.ShellHoming = new();
+                    properties.Invisible = false;
+                    properties.Stationary = false;
+                    properties.ShellHoming = new();
 
-                    Properties.TreadPitch = -0.2f;
-                    Properties.MaxSpeed = 2f;
-                    Properties.Acceleration = 0.6f;
-                    Properties.Deceleration = 0.9f;
+                    properties.TreadPitch = -0.2f;
+                    properties.MaxSpeed = 2f;
+                    properties.Acceleration = 0.6f;
+                    properties.Deceleration = 0.9f;
 
-                    Properties.MineCooldown = 360;
-                    Properties.MineLimit = 3;
-                    Properties.MineStun = 10;
+                    properties.MineCooldown = 360;
+                    properties.MineLimit = 3;
+                    properties.MineStun = 10;
 
                     AiParams.MoveFromMineTime = 100;
                     AiParams.MinePlacementChance = 0.05f;
@@ -979,17 +989,17 @@ namespace TanksRebirth.GameContent
 
                     AiParams.Inaccuracy = 0.35f;
 
-                    Properties.DestructionColor = Color.Green;
+                    properties.DestructionColor = Color.Green;
 
-                    Properties.ShellCooldown = 60;
-                    Properties.ShellLimit = 3;
-                    Properties.ShellSpeed = 8f;
-                    Properties.ShellType = ShellType.TrailedRocket;
-                    Properties.RicochetCount = 2;
+                    properties.ShellCooldown = 60;
+                    properties.ShellLimit = 3;
+                    properties.ShellSpeed = 8f;
+                    properties.ShellType = ShellType.TrailedRocket;
+                    properties.RicochetCount = 2;
 
-                    Properties.Stationary = true;
-                    Properties.Invisible = true;
-                    Properties.ShellHoming = new();
+                    properties.Stationary = true;
+                    properties.Invisible = true;
+                    properties.ShellHoming = new();
 
                     AiParams.SmartRicochets = true;
 
@@ -1005,41 +1015,41 @@ namespace TanksRebirth.GameContent
 
                     AiParams.Inaccuracy = 0.4f;
 
-                    Properties.DestructionColor = Color.Gold;
+                    properties.DestructionColor = Color.Gold;
 
                     AiParams.ShootChance = 0.7f;
 
-                    AiParams.ProjectileWarinessRadius = 80;
-                    AiParams.MineWarinessRadius = 120;
+                    AiParams.ProjectileWarinessRadius_PlayerShot = 80;
+                    AiParams.MineWarinessRadius_PlayerLaid = 120;
 
-                    Properties.CanLayTread = false;
+                    properties.CanLayTread = false;
 
-                    Properties.TurningSpeed = 0.06f;
-                    Properties.MaximalTurn = 1.4f;
+                    properties.TurningSpeed = 0.06f;
+                    properties.MaximalTurn = 1.4f;
 
-                    Properties.ShootStun = 5;
-                    Properties.ShellCooldown = 30;
-                    Properties.ShellLimit = 3;
-                    Properties.ShellSpeed = 4f;
-                    Properties.ShellType = ShellType.Standard;
-                    Properties.RicochetCount = 1;
+                    properties.ShootStun = 5;
+                    properties.ShellCooldown = 30;
+                    properties.ShellLimit = 3;
+                    properties.ShellSpeed = 4f;
+                    properties.ShellType = ShellType.Standard;
+                    properties.RicochetCount = 1;
 
-                    Properties.Stationary = false;
-                    Properties.ShellHoming = new();
+                    properties.Stationary = false;
+                    properties.ShellHoming = new();
 
-                    Properties.TreadPitch = -0.1f;
-                    Properties.MaxSpeed = 0.9f;
-                    Properties.Acceleration = 0.8f;
-                    Properties.Deceleration = 0.5f;
+                    properties.TreadPitch = -0.1f;
+                    properties.MaxSpeed = 0.9f;
+                    properties.Acceleration = 0.8f;
+                    properties.Deceleration = 0.5f;
 
-                    Properties.MineCooldown = 700;
-                    Properties.MineLimit = 2;
-                    Properties.MineStun = 10;
+                    properties.MineCooldown = 700;
+                    properties.MineLimit = 2;
+                    properties.MineStun = 10;
 
                     AiParams.MoveFromMineTime = 100;
                     AiParams.MinePlacementChance = 0.01f;
 
-                    Properties.Invisible = true;
+                    properties.Invisible = true;
 
                     BaseExpValue = 0.16f;
                     break;
@@ -1053,33 +1063,33 @@ namespace TanksRebirth.GameContent
 
                     AiParams.Inaccuracy = 0.9f;
 
-                    Properties.DestructionColor = Color.Black;
+                    properties.DestructionColor = Color.Black;
 
-                    AiParams.ProjectileWarinessRadius = 70;
-                    AiParams.MineWarinessRadius = 140;
+                    AiParams.ProjectileWarinessRadius_PlayerShot = 70;
+                    AiParams.MineWarinessRadius_PlayerLaid = 140;
 
-                    Properties.TurningSpeed = 0.1f;
-                    Properties.MaximalTurn = MathHelper.PiOver4;
+                    properties.TurningSpeed = 0.1f;
+                    properties.MaximalTurn = MathHelper.PiOver4;
 
-                    Properties.ShootStun = 5;
-                    Properties.ShellCooldown = 25;
-                    Properties.ShellLimit = 3;
-                    Properties.ShellSpeed = 6f;
-                    Properties.ShellType = ShellType.Rocket;
-                    Properties.RicochetCount = 2;
+                    properties.ShootStun = 5;
+                    properties.ShellCooldown = 25;
+                    properties.ShellLimit = 3;
+                    properties.ShellSpeed = 8.5f;
+                    properties.ShellType = ShellType.Rocket;
+                    properties.RicochetCount = 2;
 
-                    Properties.Invisible = false;
-                    Properties.Stationary = false;
-                    Properties.ShellHoming = new();
+                    properties.Invisible = false;
+                    properties.Stationary = false;
+                    properties.ShellHoming = new();
 
-                    Properties.TreadPitch = -0.26f;
-                    Properties.MaxSpeed = 3f;
-                    Properties.Acceleration = 0.6f;
-                    Properties.Deceleration = 0.8f;
+                    properties.TreadPitch = -0.26f;
+                    properties.MaxSpeed = 3f;
+                    properties.Acceleration = 0.6f;
+                    properties.Deceleration = 0.8f;
 
-                    Properties.MineCooldown = 850;
-                    Properties.MineLimit = 2;
-                    Properties.MineStun = 10;
+                    properties.MineCooldown = 850;
+                    properties.MineLimit = 2;
+                    properties.MineStun = 10;
 
                     AiParams.MoveFromMineTime = 100;
                     AiParams.MinePlacementChance = 0.1f;
@@ -1100,27 +1110,27 @@ namespace TanksRebirth.GameContent
 
                     AiParams.Inaccuracy = 0.5f;
 
-                    AiParams.ProjectileWarinessRadius = 150;
-                    AiParams.MineWarinessRadius = 90;
+                    AiParams.ProjectileWarinessRadius_PlayerShot = 150;
+                    AiParams.MineWarinessRadius_PlayerLaid = 90;
 
-                    Properties.TurningSpeed = 0.3f;
-                    Properties.MaximalTurn = MathHelper.PiOver4;
+                    properties.TurningSpeed = 0.3f;
+                    properties.MaximalTurn = MathHelper.PiOver4;
 
-                    Properties.ShootStun = 60;
-                    Properties.ShellCooldown = 40;
-                    Properties.ShellLimit = 2;
-                    Properties.ShellSpeed = 5f;
-                    Properties.ShellType = ShellType.Standard;
-                    Properties.RicochetCount = 1;
+                    properties.ShootStun = 60;
+                    properties.ShellCooldown = 40;
+                    properties.ShellLimit = 2;
+                    properties.ShellSpeed = 5f;
+                    properties.ShellType = ShellType.Standard;
+                    properties.RicochetCount = 1;
 
-                    Properties.Invisible = false;
-                    Properties.Stationary = false;
-                    Properties.ShellHoming = new();
+                    properties.Invisible = false;
+                    properties.Stationary = false;
+                    properties.ShellHoming = new();
 
-                    Properties.TreadPitch = 0.07f;
-                    Properties.MaxSpeed = 0.9f;
-                    Properties.Acceleration = 0.3f;
-                    Properties.Deceleration = 0.4f;
+                    properties.TreadPitch = 0.07f;
+                    properties.MaxSpeed = 0.9f;
+                    properties.Acceleration = 0.3f;
+                    properties.Deceleration = 0.4f;
 
                     AiParams.SmartRicochets = true;
 
@@ -1135,31 +1145,31 @@ namespace TanksRebirth.GameContent
 
                     AiParams.Inaccuracy = 0.4f;
 
-                    AiParams.ProjectileWarinessRadius = 140;
-                    AiParams.MineWarinessRadius = 140;
+                    AiParams.ProjectileWarinessRadius_PlayerShot = 140;
+                    AiParams.MineWarinessRadius_PlayerLaid = 140;
 
-                    Properties.TurningSpeed = 0.1f;
-                    Properties.MaximalTurn = 0.5f;
+                    properties.TurningSpeed = 0.1f;
+                    properties.MaximalTurn = 0.5f;
 
-                    Properties.ShootStun = 0;
-                    Properties.ShellCooldown = 15;
-                    Properties.ShellLimit = 8;
-                    Properties.ShellSpeed = 4f;
-                    Properties.ShellType = ShellType.Standard;
-                    Properties.RicochetCount = 1;
+                    properties.ShootStun = 0;
+                    properties.ShellCooldown = 15;
+                    properties.ShellLimit = 8;
+                    properties.ShellSpeed = 4f;
+                    properties.ShellType = ShellType.Standard;
+                    properties.RicochetCount = 1;
 
-                    Properties.Invisible = false;
-                    Properties.Stationary = false;
-                    Properties.ShellHoming = new();
+                    properties.Invisible = false;
+                    properties.Stationary = false;
+                    properties.ShellHoming = new();
 
-                    Properties.TreadPitch = 0.08f;
-                    Properties.MaxSpeed = 1.3f;
-                    Properties.Acceleration = 0.3f;
-                    Properties.Deceleration = 0.6f;
+                    properties.TreadPitch = 0.08f;
+                    properties.MaxSpeed = 1.3f;
+                    properties.Acceleration = 0.3f;
+                    properties.Deceleration = 0.6f;
 
-                    Properties.MineCooldown = 940;
-                    Properties.MineLimit = 1;
-                    Properties.MineStun = 5;
+                    properties.MineCooldown = 940;
+                    properties.MineLimit = 1;
+                    properties.MineStun = 5;
 
                     AiParams.MoveFromMineTime = 100;
                     AiParams.MinePlacementChance = 0.02f;
@@ -1176,27 +1186,27 @@ namespace TanksRebirth.GameContent
 
                     AiParams.Inaccuracy = 0.5f;
 
-                    AiParams.ProjectileWarinessRadius = 90;
-                    AiParams.MineWarinessRadius = 150;
+                    AiParams.ProjectileWarinessRadius_PlayerShot = 90;
+                    AiParams.MineWarinessRadius_PlayerLaid = 150;
 
-                    Properties.TurningSpeed = 0.2f;
-                    Properties.MaximalTurn = MathHelper.PiOver4;
+                    properties.TurningSpeed = 0.2f;
+                    properties.MaximalTurn = MathHelper.PiOver4;
 
-                    Properties.ShootStun = 20;
-                    Properties.ShellCooldown = 25;
-                    Properties.ShellLimit = 2;
-                    Properties.ShellSpeed = 5.5f;
-                    Properties.ShellType = ShellType.Rocket;
-                    Properties.RicochetCount = 1;
+                    properties.ShootStun = 20;
+                    properties.ShellCooldown = 25;
+                    properties.ShellLimit = 2;
+                    properties.ShellSpeed = 5.5f;
+                    properties.ShellType = ShellType.Rocket;
+                    properties.RicochetCount = 1;
 
-                    Properties.Invisible = false;
-                    Properties.Stationary = false;
-                    Properties.ShellHoming = new();
+                    properties.Invisible = false;
+                    properties.Stationary = false;
+                    properties.ShellHoming = new();
 
-                    Properties.TreadPitch = 0.14f;
-                    Properties.MaxSpeed = 1.7f;
-                    Properties.Acceleration = 0.4f;
-                    Properties.Deceleration = 0.6f;
+                    properties.TreadPitch = 0.14f;
+                    properties.MaxSpeed = 1.7f;
+                    properties.Acceleration = 0.4f;
+                    properties.Deceleration = 0.6f;
 
                     BaseExpValue = 0.08f;
                     break;
@@ -1209,31 +1219,31 @@ namespace TanksRebirth.GameContent
 
                     AiParams.Inaccuracy = 0.2f;
 
-                    AiParams.ProjectileWarinessRadius = 50;
-                    AiParams.MineWarinessRadius = 50;
+                    AiParams.ProjectileWarinessRadius_PlayerShot = 50;
+                    AiParams.MineWarinessRadius_PlayerLaid = 50;
 
-                    Properties.TurningSpeed = 0.1f;
-                    Properties.MaximalTurn = 0.5f;
+                    properties.TurningSpeed = 0.1f;
+                    properties.MaximalTurn = 0.5f;
 
-                    Properties.ShootStun = 1;
-                    Properties.ShellCooldown = 5;
-                    Properties.ShellLimit = 5;
-                    Properties.ShellSpeed = 3f;
-                    Properties.ShellType = ShellType.Standard;
-                    Properties.RicochetCount = 0;
+                    properties.ShootStun = 1;
+                    properties.ShellCooldown = 5;
+                    properties.ShellLimit = 5;
+                    properties.ShellSpeed = 3f;
+                    properties.ShellType = ShellType.Standard;
+                    properties.RicochetCount = 0;
 
-                    Properties.Invisible = false;
-                    Properties.Stationary = false;
-                    Properties.ShellHoming = new();
+                    properties.Invisible = false;
+                    properties.Stationary = false;
+                    properties.ShellHoming = new();
 
-                    Properties.TreadPitch = 0.08f;
-                    Properties.MaxSpeed = 1.3f;
-                    Properties.Acceleration = 0.6f;
-                    Properties.Deceleration = 0.8f;
+                    properties.TreadPitch = 0.08f;
+                    properties.MaxSpeed = 1.3f;
+                    properties.Acceleration = 0.6f;
+                    properties.Deceleration = 0.8f;
 
-                    Properties.MineCooldown = 340;
-                    Properties.MineLimit = 6;
-                    Properties.MineStun = 3;
+                    properties.MineCooldown = 340;
+                    properties.MineLimit = 6;
+                    properties.MineStun = 3;
 
                     AiParams.MoveFromMineTime = 100;
                     AiParams.MinePlacementChance = 0.02f;
@@ -1250,31 +1260,31 @@ namespace TanksRebirth.GameContent
 
                     AiParams.Inaccuracy = 0.7f;
 
-                    AiParams.ProjectileWarinessRadius = 90;
-                    AiParams.MineWarinessRadius = 120;
+                    AiParams.ProjectileWarinessRadius_PlayerShot = 90;
+                    AiParams.MineWarinessRadius_PlayerLaid = 120;
 
-                    Properties.TurningSpeed = 0.1f;
-                    Properties.MaximalTurn = MathHelper.PiOver2;
+                    properties.TurningSpeed = 0.1f;
+                    properties.MaximalTurn = MathHelper.PiOver2;
 
-                    Properties.ShootStun = 0;
-                    Properties.ShellCooldown = 20;
-                    Properties.ShellLimit = 4;
-                    Properties.ShellSpeed = 4f;
-                    Properties.ShellType = ShellType.Standard;
-                    Properties.RicochetCount = 1;
+                    properties.ShootStun = 0;
+                    properties.ShellCooldown = 20;
+                    properties.ShellLimit = 4;
+                    properties.ShellSpeed = 4f;
+                    properties.ShellType = ShellType.Standard;
+                    properties.RicochetCount = 1;
 
-                    Properties.Invisible = false;
-                    Properties.Stationary = false;
-                    Properties.ShellHoming = new();
+                    properties.Invisible = false;
+                    properties.Stationary = false;
+                    properties.ShellHoming = new();
 
-                    Properties.TreadPitch = 0.14f;
-                    Properties.MaxSpeed = 2f;
-                    Properties.Acceleration = 0.6f;
-                    Properties.Deceleration = 0.8f;
+                    properties.TreadPitch = 0.14f;
+                    properties.MaxSpeed = 2f;
+                    properties.Acceleration = 0.6f;
+                    properties.Deceleration = 0.8f;
 
-                    Properties.MineCooldown = 1;
-                    Properties.MineLimit = 10;
-                    Properties.MineStun = 0;
+                    properties.MineCooldown = 1;
+                    properties.MineLimit = 10;
+                    properties.MineStun = 0;
 
                     AiParams.MoveFromMineTime = 100;
                     AiParams.MinePlacementChance = 0.05f;
@@ -1290,31 +1300,31 @@ namespace TanksRebirth.GameContent
 
                     AiParams.Inaccuracy = 1.1f;
 
-                    AiParams.ProjectileWarinessRadius = 100;
-                    AiParams.MineWarinessRadius = 100;
+                    AiParams.ProjectileWarinessRadius_PlayerShot = 100;
+                    AiParams.MineWarinessRadius_PlayerLaid = 100;
 
-                    Properties.TurningSpeed = 0.12f;
-                    Properties.MaximalTurn = MathHelper.ToRadians(30);
+                    properties.TurningSpeed = 0.12f;
+                    properties.MaximalTurn = MathHelper.ToRadians(30);
 
-                    Properties.ShootStun = 5;
-                    Properties.ShellCooldown = 25;
-                    Properties.ShellLimit = 5;
-                    Properties.ShellSpeed = 3.5f;
-                    Properties.ShellType = ShellType.Standard;
-                    Properties.RicochetCount = 1;
+                    properties.ShootStun = 5;
+                    properties.ShellCooldown = 25;
+                    properties.ShellLimit = 5;
+                    properties.ShellSpeed = 3.5f;
+                    properties.ShellType = ShellType.Standard;
+                    properties.RicochetCount = 1;
 
-                    Properties.Invisible = false;
-                    Properties.Stationary = false;
-                    Properties.ShellHoming = new();
+                    properties.Invisible = false;
+                    properties.Stationary = false;
+                    properties.ShellHoming = new();
 
-                    Properties.TreadPitch = -0.2f;
-                    Properties.MaxSpeed = 1.9f;
-                    Properties.Acceleration = 0.6f;
-                    Properties.Deceleration = 0.9f;
+                    properties.TreadPitch = -0.2f;
+                    properties.MaxSpeed = 1.9f;
+                    properties.Acceleration = 0.6f;
+                    properties.Deceleration = 0.9f;
 
-                    Properties.MineCooldown = 680;
-                    Properties.MineLimit = 3;
-                    Properties.MineStun = 10;
+                    properties.MineCooldown = 680;
+                    properties.MineLimit = 3;
+                    properties.MineStun = 10;
 
                     AiParams.MoveFromMineTime = 100;
                     AiParams.MinePlacementChance = 0.05f;
@@ -1332,27 +1342,27 @@ namespace TanksRebirth.GameContent
 
                     AiParams.Inaccuracy = 0.6f;
 
-                    AiParams.ProjectileWarinessRadius = 150;
-                    AiParams.MineWarinessRadius = 110;
+                    AiParams.ProjectileWarinessRadius_PlayerShot = 150;
+                    AiParams.MineWarinessRadius_PlayerLaid = 110;
 
-                    Properties.TurningSpeed = 0.3f;
-                    Properties.MaximalTurn = MathHelper.PiOver4;
+                    properties.TurningSpeed = 0.3f;
+                    properties.MaximalTurn = MathHelper.PiOver4;
 
-                    Properties.ShootStun = 20;
-                    Properties.ShellCooldown = 60;
-                    Properties.ShellLimit = 2;
-                    Properties.ShellSpeed = 8f;
-                    Properties.ShellType = ShellType.TrailedRocket;
-                    Properties.RicochetCount = 3;
+                    properties.ShootStun = 20;
+                    properties.ShellCooldown = 60;
+                    properties.ShellLimit = 2;
+                    properties.ShellSpeed = 8f;
+                    properties.ShellType = ShellType.TrailedRocket;
+                    properties.RicochetCount = 3;
 
-                    Properties.Invisible = false;
-                    Properties.Stationary = false;
-                    Properties.ShellHoming = new();
+                    properties.Invisible = false;
+                    properties.Stationary = false;
+                    properties.ShellHoming = new();
 
-                    Properties.TreadPitch = -0.07f;
-                    Properties.MaxSpeed = 1f;
-                    Properties.Acceleration = 0.3f;
-                    Properties.Deceleration = 0.4f;
+                    properties.TreadPitch = -0.07f;
+                    properties.MaxSpeed = 1f;
+                    properties.Acceleration = 0.3f;
+                    properties.Deceleration = 0.4f;
 
                     BaseExpValue = 0.17f;
                     break;
@@ -1363,16 +1373,16 @@ namespace TanksRebirth.GameContent
 
                     AiParams.Inaccuracy = 0.15f;
 
-                    Properties.Invisible = false;
-                    Properties.ShellHoming = new();
+                    properties.Invisible = false;
+                    properties.ShellHoming = new();
 
-                    Properties.ShellCooldown = 40;
-                    Properties.ShellLimit = 6;
-                    Properties.ShellSpeed = 12.5f;
-                    Properties.ShellType = ShellType.Standard;
-                    Properties.RicochetCount = 0;
+                    properties.ShellCooldown = 40;
+                    properties.ShellLimit = 6;
+                    properties.ShellSpeed = 12.5f;
+                    properties.ShellType = ShellType.Standard;
+                    properties.RicochetCount = 0;
 
-                    Properties.Stationary = true;
+                    properties.Stationary = true;
 
                     BaseExpValue = 0.13f;
                     break;
@@ -1383,33 +1393,33 @@ namespace TanksRebirth.GameContent
                     AiParams.TurretSpeed = 0.08f;
                     AiParams.AimOffset = 0.11f;
 
-                    AiParams.ProjectileWarinessRadius = 70;
-                    AiParams.MineWarinessRadius = 140;
+                    AiParams.ProjectileWarinessRadius_PlayerShot = 70;
+                    AiParams.MineWarinessRadius_PlayerLaid = 140;
 
-                    Properties.TurningSpeed = 0.1f;
-                    Properties.MaximalTurn = MathHelper.PiOver4;
+                    properties.TurningSpeed = 0.1f;
+                    properties.MaximalTurn = MathHelper.PiOver4;
 
                     AiParams.Inaccuracy = 0.6f;
 
-                    Properties.ShootStun = 5;
-                    Properties.ShellCooldown = 25;
-                    Properties.ShellLimit = 3;
-                    Properties.ShellSpeed = 10f;
-                    Properties.ShellType = ShellType.Rocket;
-                    Properties.RicochetCount = 1;
+                    properties.ShootStun = 5;
+                    properties.ShellCooldown = 25;
+                    properties.ShellLimit = 3;
+                    properties.ShellSpeed = 10f;
+                    properties.ShellType = ShellType.Rocket;
+                    properties.RicochetCount = 1;
 
-                    Properties.TreadPitch = -0.26f;
-                    Properties.MaxSpeed = 2.6f;
-                    Properties.Acceleration = 0.6f;
-                    Properties.Deceleration = 0.8f;
+                    properties.TreadPitch = -0.26f;
+                    properties.MaxSpeed = 2.6f;
+                    properties.Acceleration = 0.6f;
+                    properties.Deceleration = 0.8f;
 
-                    Properties.Stationary = false;
-                    Properties.Invisible = false;
-                    Properties.ShellHoming = new();
+                    properties.Stationary = false;
+                    properties.Invisible = false;
+                    properties.ShellHoming = new();
 
-                    Properties.MineCooldown = 850;
-                    Properties.MineLimit = 2;
-                    Properties.MineStun = 10;
+                    properties.MineCooldown = 850;
+                    properties.MineLimit = 2;
+                    properties.MineStun = 10;
 
                     AiParams.MoveFromMineTime = 100;
                     AiParams.MinePlacementChance = 0.05f;
@@ -1420,7 +1430,7 @@ namespace TanksRebirth.GameContent
                 // unimplemented XP values
                 #region Special
                 case TankTier.Explosive:
-                    Properties.Armor = new(this, 3);
+                    properties.Armor = new(this, 3);
                     AiParams.MeanderAngle = MathHelper.ToRadians(30);
                     AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 60;
@@ -1429,33 +1439,33 @@ namespace TanksRebirth.GameContent
 
                     AiParams.Inaccuracy = 1.2f;
 
-                    AiParams.ProjectileWarinessRadius = 140;
-                    AiParams.MineWarinessRadius = 140;
+                    AiParams.ProjectileWarinessRadius_PlayerShot = 140;
+                    AiParams.MineWarinessRadius_PlayerLaid = 140;
 
-                    Properties.TurningSpeed = 0.1f;
-                    Properties.MaximalTurn = 0.4f;
+                    properties.TurningSpeed = 0.1f;
+                    properties.MaximalTurn = 0.4f;
 
-                    Properties.ShootStun = 0;
-                    Properties.ShellCooldown = 90;
-                    Properties.ShellLimit = 2;
-                    Properties.ShellSpeed = 2f;
-                    Properties.ShellType = ShellType.Explosive;
-                    Properties.RicochetCount = 0;
+                    properties.ShootStun = 0;
+                    properties.ShellCooldown = 90;
+                    properties.ShellLimit = 2;
+                    properties.ShellSpeed = 2f;
+                    properties.ShellType = ShellType.Explosive;
+                    properties.RicochetCount = 0;
 
-                    Properties.ShootPitch = -0.1f;
+                    properties.ShootPitch = -0.1f;
 
-                    Properties.Invisible = false;
-                    Properties.Stationary = false;
-                    Properties.ShellHoming = new();
+                    properties.Invisible = false;
+                    properties.Stationary = false;
+                    properties.ShellHoming = new();
 
-                    Properties.TreadPitch = -0.8f;
-                    Properties.MaxSpeed = 0.8f;
-                    Properties.Acceleration = 0.3f;
-                    Properties.Deceleration = 0.6f;
+                    properties.TreadPitch = -0.8f;
+                    properties.MaxSpeed = 0.8f;
+                    properties.Acceleration = 0.3f;
+                    properties.Deceleration = 0.6f;
 
-                    Properties.MineCooldown = 940;
-                    Properties.MineLimit = 1;
-                    Properties.MineStun = 5;
+                    properties.MineCooldown = 940;
+                    properties.MineLimit = 1;
+                    properties.MineStun = 5;
 
                     AiParams.MoveFromMineTime = 100;
                     AiParams.MinePlacementChance = 0.02f;
@@ -1469,31 +1479,31 @@ namespace TanksRebirth.GameContent
                     AiParams.TurretSpeed = 0.045f;
                     AiParams.AimOffset = 0.04f;
 
-                    AiParams.ProjectileWarinessRadius = 140;
-                    AiParams.MineWarinessRadius = 140;
+                    AiParams.ProjectileWarinessRadius_PlayerShot = 140;
+                    AiParams.MineWarinessRadius_PlayerLaid = 140;
 
-                    Properties.TurningSpeed = 0.1f;
-                    Properties.MaximalTurn = 0.5f;
+                    properties.TurningSpeed = 0.1f;
+                    properties.MaximalTurn = 0.5f;
 
-                    Properties.ShootStun = 0;
-                    Properties.ShellCooldown = 15;
-                    Properties.ShellLimit = 8;
-                    Properties.ShellSpeed = 4f;
-                    Properties.ShellType = ShellType.Standard;
-                    Properties.RicochetCount = 1;
+                    properties.ShootStun = 0;
+                    properties.ShellCooldown = 15;
+                    properties.ShellLimit = 8;
+                    properties.ShellSpeed = 4f;
+                    properties.ShellType = ShellType.Standard;
+                    properties.RicochetCount = 1;
 
-                    Properties.Invisible = false;
-                    Properties.Stationary = false;
-                    Properties.ShellHoming = new();
+                    properties.Invisible = false;
+                    properties.Stationary = false;
+                    properties.ShellHoming = new();
 
-                    Properties.TreadPitch = 0.08f;
-                    Properties.MaxSpeed = 1.3f;
-                    Properties.Acceleration = 0.3f;
-                    Properties.Deceleration = 0.6f;
+                    properties.TreadPitch = 0.08f;
+                    properties.MaxSpeed = 1.3f;
+                    properties.Acceleration = 0.3f;
+                    properties.Deceleration = 0.6f;
 
-                    Properties.MineCooldown = 940;
-                    Properties.MineLimit = 1;
-                    Properties.MineStun = 5;
+                    properties.MineCooldown = 940;
+                    properties.MineLimit = 1;
+                    properties.MineStun = 5;
 
                     AiParams.MoveFromMineTime = 100;
                     AiParams.MinePlacementChance = 0.02f;
@@ -1507,31 +1517,31 @@ namespace TanksRebirth.GameContent
                     AiParams.TurretSpeed = 0.045f;
                     AiParams.AimOffset = 0.04f;
 
-                    AiParams.ProjectileWarinessRadius = 140;
-                    AiParams.MineWarinessRadius = 140;
+                    AiParams.ProjectileWarinessRadius_PlayerShot = 140;
+                    AiParams.MineWarinessRadius_PlayerLaid = 140;
 
-                    Properties.TurningSpeed = 0.1f;
-                    Properties.MaximalTurn = 0.5f;
+                    properties.TurningSpeed = 0.1f;
+                    properties.MaximalTurn = 0.5f;
 
-                    Properties.ShootStun = 0;
-                    Properties.ShellCooldown = 15;
-                    Properties.ShellLimit = 8;
-                    Properties.ShellSpeed = 4f;
-                    Properties.ShellType = ShellType.Standard;
-                    Properties.RicochetCount = 1;
+                    properties.ShootStun = 0;
+                    properties.ShellCooldown = 15;
+                    properties.ShellLimit = 8;
+                    properties.ShellSpeed = 4f;
+                    properties.ShellType = ShellType.Standard;
+                    properties.RicochetCount = 1;
 
-                    Properties.Invisible = false;
-                    Properties.Stationary = false;
-                    Properties.ShellHoming = new();
+                    properties.Invisible = false;
+                    properties.Stationary = false;
+                    properties.ShellHoming = new();
 
-                    Properties.TreadPitch = 0.08f;
-                    Properties.MaxSpeed = 1.3f;
-                    Properties.Acceleration = 0.3f;
-                    Properties.Deceleration = 0.6f;
+                    properties.TreadPitch = 0.08f;
+                    properties.MaxSpeed = 1.3f;
+                    properties.Acceleration = 0.3f;
+                    properties.Deceleration = 0.6f;
 
-                    Properties.MineCooldown = 940;
-                    Properties.MineLimit = 1;
-                    Properties.MineStun = 5;
+                    properties.MineCooldown = 940;
+                    properties.MineLimit = 1;
+                    properties.MineStun = 5;
 
                     AiParams.MoveFromMineTime = 100;
                     AiParams.MinePlacementChance = 0.02f;
@@ -1548,31 +1558,31 @@ namespace TanksRebirth.GameContent
                     AiParams.Inaccuracy = 0.25f;
                     AiParams.BounceReset = false;
 
-                    AiParams.ProjectileWarinessRadius = 140;
-                    AiParams.MineWarinessRadius = 140;
+                    AiParams.ProjectileWarinessRadius_PlayerShot = 140;
+                    AiParams.MineWarinessRadius_PlayerLaid = 140;
 
-                    Properties.TurningSpeed = 0.1f;
-                    Properties.MaximalTurn = 0.2f;
+                    properties.TurningSpeed = 0.1f;
+                    properties.MaximalTurn = 0.2f;
 
-                    Properties.ShootStun = 25;
-                    Properties.ShellCooldown = 100;
-                    Properties.ShellLimit = 1;
-                    Properties.ShellSpeed = 9.5f;
-                    Properties.ShellType = ShellType.Supressed;
-                    Properties.RicochetCount = 1;
+                    properties.ShootStun = 25;
+                    properties.ShellCooldown = 100;
+                    properties.ShellLimit = 1;
+                    properties.ShellSpeed = 9.5f;
+                    properties.ShellType = ShellType.Supressed;
+                    properties.RicochetCount = 1;
 
-                    Properties.Invisible = false;
-                    Properties.Stationary = false;
-                    Properties.ShellHoming = new();
+                    properties.Invisible = false;
+                    properties.Stationary = false;
+                    properties.ShellHoming = new();
 
-                    Properties.TreadPitch = -0.4f;
-                    Properties.MaxSpeed = 1.2f;
-                    Properties.Acceleration = 0.3f;
-                    Properties.Deceleration = 0.6f;
+                    properties.TreadPitch = -0.4f;
+                    properties.MaxSpeed = 1.2f;
+                    properties.Acceleration = 0.3f;
+                    properties.Deceleration = 0.6f;
 
-                    Properties.MineCooldown = 0;
-                    Properties.MineLimit = 0;
-                    Properties.MineStun = 0;
+                    properties.MineCooldown = 0;
+                    properties.MineLimit = 0;
+                    properties.MineStun = 0;
 
                     AiParams.MoveFromMineTime = 100;
                     AiParams.MinePlacementChance = 0.02f;
@@ -1582,7 +1592,7 @@ namespace TanksRebirth.GameContent
                     break;
 
                 case TankTier.Commando:
-                    Properties.Armor = new(this, 3);
+                    properties.Armor = new(this, 3);
                     AiParams.MeanderAngle = MathHelper.ToRadians(30);
                     AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 15;
@@ -1590,31 +1600,31 @@ namespace TanksRebirth.GameContent
                     AiParams.AimOffset = 0.03f;
                     AiParams.Inaccuracy = MathHelper.ToRadians(10);
 
-                    AiParams.ProjectileWarinessRadius = 140;
-                    AiParams.MineWarinessRadius = 140;
+                    AiParams.ProjectileWarinessRadius_PlayerShot = 140;
+                    AiParams.MineWarinessRadius_PlayerLaid = 140;
 
-                    Properties.TurningSpeed = 0.05f;
-                    Properties.MaximalTurn = MathHelper.ToRadians(20);
+                    properties.TurningSpeed = 0.05f;
+                    properties.MaximalTurn = MathHelper.ToRadians(20);
 
-                    Properties.ShootStun = 25;
-                    Properties.ShellCooldown = 50;
-                    Properties.ShellLimit = 1;
-                    Properties.ShellSpeed = 6f;
-                    Properties.ShellType = ShellType.TrailedRocket;
-                    Properties.RicochetCount = 0;
+                    properties.ShootStun = 25;
+                    properties.ShellCooldown = 50;
+                    properties.ShellLimit = 1;
+                    properties.ShellSpeed = 6f;
+                    properties.ShellType = ShellType.TrailedRocket;
+                    properties.RicochetCount = 0;
 
-                    Properties.Invisible = false;
-                    Properties.Stationary = false;
-                    Properties.ShellHoming = new();
+                    properties.Invisible = false;
+                    properties.Stationary = false;
+                    properties.ShellHoming = new();
 
-                    Properties.TreadPitch = -0.08f;
-                    Properties.MaxSpeed = 1.4f;
-                    Properties.Acceleration = 0.3f;
-                    Properties.Deceleration = 0.6f;
+                    properties.TreadPitch = -0.08f;
+                    properties.MaxSpeed = 1.4f;
+                    properties.Acceleration = 0.3f;
+                    properties.Deceleration = 0.6f;
 
-                    Properties.MineCooldown = 0;
-                    Properties.MineLimit = 0;
-                    Properties.MineStun = 0;
+                    properties.MineCooldown = 0;
+                    properties.MineLimit = 0;
+                    properties.MineStun = 0;
 
                     AiParams.MoveFromMineTime = 100;
                     AiParams.MinePlacementChance = 0.02f;
@@ -1623,27 +1633,27 @@ namespace TanksRebirth.GameContent
                     #endregion
             }
             if (Difficulties.Types["TanksAreCalculators"])
-                if (Properties.RicochetCount >= 1)
-                    if (Properties.HasTurret)
+                if (properties.RicochetCount >= 1)
+                    if (properties.HasTurret)
                         AiParams.SmartRicochets = true;
 
             if (Difficulties.Types["UltraMines"])
-                AiParams.MineWarinessRadius *= 3;
+                AiParams.MineWarinessRadius_PlayerLaid *= 3;
 
             if (Difficulties.Types["AllInvisible"])
             {
-                Properties.Invisible = true;
-                Properties.CanLayTread = false;
+                properties.Invisible = true;
+                properties.CanLayTread = false;
             }
             if (Difficulties.Types["AllStationary"])
-                Properties.Stationary = true;
+                properties.Stationary = true;
 
             if (Difficulties.Types["AllHoming"])
             {
-                Properties.ShellHoming = new();
-                Properties.ShellHoming.Radius = 200f;
-                Properties.ShellHoming.Speed = Properties.ShellSpeed;
-                Properties.ShellHoming.Power = 0.1f * Properties.ShellSpeed;
+                properties.ShellHoming = new();
+                properties.ShellHoming.Radius = 200f;
+                properties.ShellHoming.Speed = properties.ShellSpeed;
+                properties.ShellHoming.Power = 0.1f * properties.ShellSpeed;
                 // ShellHoming.isHeatSeeking = true;
 
                 AiParams.Inaccuracy *= 4;
@@ -1651,10 +1661,10 @@ namespace TanksRebirth.GameContent
 
             if (Difficulties.Types["Armored"])
             {
-                if (Properties.Armor is null)
-                    Properties.Armor = new(this, 3);
+                if (properties.Armor is null)
+                    properties.Armor = new(this, 3);
                 else
-                    Properties.Armor = new(this, Properties.Armor.HitPoints + 3);
+                    properties.Armor = new(this, properties.Armor.HitPoints + 3);
             }
 
             if (Difficulties.Types["Predictions"])
@@ -1679,21 +1689,22 @@ namespace TanksRebirth.GameContent
                         fld.SetValue(this, GameHandler.GameRand.Next(0, 2) == 0);
                 }
             }*/
+            base.ApplyDefaults(ref properties);
         }
         public override void Update()
         {
             base.Update();
 
-            CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(Properties.TurretRotation + Properties.TankRotation);
+            CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation);
 
             if (Tier == TankTier.Commando)
             {
-                Model.Meshes["Laser_Beam"].ParentBone.Transform = Matrix.CreateRotationY(Properties.TurretRotation + Properties.TankRotation);
-                Model.Meshes["Barrel_Laser"].ParentBone.Transform = Matrix.CreateRotationY(Properties.TurretRotation + Properties.TankRotation);
-                Model.Meshes["Dish"].ParentBone.Transform = Matrix.CreateRotationY(Properties.TurretRotation + Properties.TankRotation);
+                Model.Meshes["Laser_Beam"].ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation);
+                Model.Meshes["Barrel_Laser"].ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation);
+                Model.Meshes["Dish"].ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation);
             }
 
-            if (!Properties.Dead && Properties.IsIngame)
+            if (!Dead && IsIngame)
             {
 
                 // TargetTankRotation = (GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - GameUtils.MousePosition).ToRotation() - MathHelper.PiOver2;
@@ -1702,13 +1713,13 @@ namespace TanksRebirth.GameContent
 
                 if (!GameProperties.InMission || IntermissionSystem.IsAwaitingNewMission)
                 {
-                    Properties.Velocity = Vector2.Zero;
+                    Velocity = Vector2.Zero;
                 }
                 else
                     DoAi(true, true, true);
             }
 
-            _oldPosition = Properties.Position;
+            _oldPosition = Position;
 
             Model.Root.Transform = World;
 
@@ -1718,7 +1729,7 @@ namespace TanksRebirth.GameContent
         public override void Remove()
         {
             GameProperties.OnMissionStart -= OnMissionStart;
-            Properties.Dead = true;
+            Dead = true;
             Behaviors = null;
             SpecialBehaviors = null;
             GameHandler.AllAITanks[AITankId] = null;
@@ -1818,7 +1829,7 @@ namespace TanksRebirth.GameContent
             // 20, 30
 
             var whitePixel = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
-            var pathPos = Properties.Position + offset.RotatedByRadians(-Properties.TurretRotation);
+            var pathPos = Position + offset.RotatedByRadians(-TurretRotation);
 
             pathDir.Y *= -1;
             pathDir *= PATH_UNIT_LENGTH;
@@ -1934,10 +1945,10 @@ namespace TanksRebirth.GameContent
                         {
                             if (i > 15)
                             {
-                                if (GameUtils.Distance_WiiTanksUnits(enemy.Properties.Position, pathPos) <= realMiss)
+                                if (GameUtils.Distance_WiiTanksUnits(enemy.Position, pathPos) <= realMiss)
                                     tanks.Add(enemy);
                             }
-                            else if (enemy.Properties.CollisionBox2D.Intersects(pathHitbox))
+                            else if (enemy.CollisionBox2D.Intersects(pathHitbox))
                             {
                                 tanks.Add(enemy);
                             }
@@ -1957,7 +1968,7 @@ namespace TanksRebirth.GameContent
             var list = new List<Vector2>();
 
             var whitePixel = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
-            var pathPos = Properties.Position;
+            var pathPos = Position;
 
             pathDir.Y *= -1;
             pathDir *= PATH_UNIT_LENGTH;
@@ -2026,30 +2037,30 @@ namespace TanksRebirth.GameContent
 
             if (Properties.ShellType == ShellType.Explosive)
             {
-                tanksDef = GetTanksInPath(Vector2.UnitY.RotatedByRadians(Properties.TurretRotation - MathHelper.Pi), out var rayEndpoint, offset: Vector2.UnitY * 20, pattern: x => (!x.IsDestructible && x.IsSolid) || x.Type == Block.BlockType.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
-                if (GameUtils.Distance_WiiTanksUnits(rayEndpoint, Properties.Position) < 150f) // TODO: change from hardcode to normalcode :YES:
+                tanksDef = GetTanksInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), out var rayEndpoint, offset: Vector2.UnitY * 20, pattern: x => (!x.IsDestructible && x.IsSolid) || x.Type == Block.BlockType.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
+                if (GameUtils.Distance_WiiTanksUnits(rayEndpoint, Position) < 150f) // TODO: change from hardcode to normalcode :YES:
                     tooCloseToExplosiveShell = true;
             }
             else
                 tanksDef = GetTanksInPath( 
-                    Vector2.UnitY.RotatedByRadians(Properties.TurretRotation - MathHelper.Pi), 
+                    Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), 
                     out var rayEndpoint, offset: Vector2.UnitY * 20,
                     missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
             if (AiParams.PredictsPositions)
             {
                 if (TargetTank is not null)
                 {
-                    var calculation = Properties.Position.Distance(TargetTank.Properties.Position) / (float)(Properties.ShellSpeed * 1.2f);
-                    float rot = -GameUtils.DirectionOf(Properties.Position,
-                        GeometryUtils.PredictFuturePosition(TargetTank.Properties.Position, TargetTank.Properties.Velocity, calculation))
+                    var calculation = Position.Distance(TargetTank.Position) / (float)(Properties.ShellSpeed * 1.2f);
+                    float rot = -GameUtils.DirectionOf(Position,
+                        GeometryUtils.PredictFuturePosition(TargetTank.Position, TargetTank.Velocity, calculation))
                         .ToRotation() - MathHelper.PiOver2;
 
                     tanksDef = GetTanksInPath(
-                    Vector2.UnitY.RotatedByRadians(-GameUtils.DirectionOf(Properties.Position, TargetTank.Properties.Position).ToRotation() - MathHelper.PiOver2),
+                    Vector2.UnitY.RotatedByRadians(-GameUtils.DirectionOf(Position, TargetTank.Position).ToRotation() - MathHelper.PiOver2),
                     out var rayEndpoint, offset: AiParams.PredictsPositions ? Vector2.Zero : Vector2.UnitY * 20,
                     missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
 
-                    var targ = GeometryUtils.PredictFuturePosition(TargetTank.Properties.Position, TargetTank.Properties.Velocity, calculation);
+                    var targ = GeometryUtils.PredictFuturePosition(TargetTank.Position, TargetTank.Velocity, calculation);
                     var posPredict = GetTanksInPath(Vector2.UnitY.RotatedByRadians(rot), out var rayEndpoint2, offset: Vector2.UnitY * 20, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
 
                     if (tanksDef.Contains(TargetTank))
@@ -2059,9 +2070,9 @@ namespace TanksRebirth.GameContent
                     }
                 }
             }
-            var findsEnemy = tanksDef.Any(tnk => tnk is not null && (tnk.Properties.Team != Properties.Team || tnk.Properties.Team == TankTeam.NoTeam) && tnk != this);
+            var findsEnemy = tanksDef.Any(tnk => tnk is not null && (tnk.Team != Team || tnk.Team == TankTeam.NoTeam) && tnk != this);
             var findsSelf = tanksDef.Any(tnk => tnk is not null && tnk == this);
-            var findsFriendly = tanksDef.Any(tnk => tnk is not null && (tnk.Properties.Team == Properties.Team && tnk.Properties.Team != TankTeam.NoTeam));
+            var findsFriendly = tanksDef.Any(tnk => tnk is not null && (tnk.Team == Team && tnk.Team != TankTeam.NoTeam));
 
             if (findsEnemy && !tooCloseToExplosiveShell)
                 SeesTarget = true;
@@ -2072,14 +2083,14 @@ namespace TanksRebirth.GameContent
             {
                 //if (!seeks)
                 seekRotation += AiParams.TurretSpeed;
-                var canShoot = !(CurShootCooldown > 0 || Properties.OwnedShellCount >= Properties.ShellLimit);
+                var canShoot = !(CurShootCooldown > 0 || OwnedShellCount >= Properties.ShellLimit);
                 if (canShoot)
                 {
                     var tanks = GetTanksInPath(Vector2.UnitY.RotatedByRadians(seekRotation), out var rayEndpoint, false, default, AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
 
-                    var findsEnemy2 = tanks.Any(tnk => tnk is not null && (tnk.Properties.Team != Properties.Team || tnk.Properties.Team == TankTeam.NoTeam) && tnk != this);
+                    var findsEnemy2 = tanks.Any(tnk => tnk is not null && (tnk.Team != Team || tnk.Team == TankTeam.NoTeam) && tnk != this);
                     // var findsSelf2 = tanks.Any(tnk => tnk is not null && tnk == this);
-                    var findsFriendly2 = tanks.Any(tnk => tnk is not null && (tnk.Properties.Team == Properties.Team && tnk.Properties.Team != TankTeam.NoTeam));
+                    var findsFriendly2 = tanks.Any(tnk => tnk is not null && (tnk.Team == Team && tnk.Team != TankTeam.NoTeam));
                     // ChatSystem.SendMessage($"{findsEnemy2} {findsFriendly2} | seek: {seeks}", Color.White);
                     if (findsEnemy2/* && !findsFriendly2*/)
                     {
@@ -2089,11 +2100,11 @@ namespace TanksRebirth.GameContent
                     }
                 }
 
-                if (Properties.TurretRotation == TargetTurretRotation || !canShoot)
+                if (TurretRotation == TargetTurretRotation || !canShoot)
                     seeks = false;
             }
 
-            bool checkNoTeam = Properties.Team == TankTeam.NoTeam || !tanksNear.Any(x => x.Properties.Team == Properties.Team);
+            bool checkNoTeam = Team == TankTeam.NoTeam || !tanksNear.Any(x => x.Team == Team);
 
             if (AiParams.PredictsPositions)
             {
@@ -2120,15 +2131,15 @@ namespace TanksRebirth.GameContent
         public void DoAi(bool doMoveTowards = true, bool doMovements = true, bool doFire = true)
         {
             TurretRotationMultiplier = 1f;
-            AiParams.DeflectsBullets = true;
+            // AiParams.DeflectsBullets = true;
             if (GameProperties.InMission)
             {
                 for (int i = 0; i < Behaviors.Length; i++)
                     Behaviors[i].Value++;
 
-                var treadPlaceTimer = (int)Math.Round(14 / Properties.Velocity.Length()) != 0 ? (int)Math.Round(14 / Properties.Velocity.Length()) : 1;
+                var treadPlaceTimer = (int)Math.Round(14 / Velocity.Length()) != 0 ? (int)Math.Round(14 / Velocity.Length()) : 1;
 
-                if (Properties.Position - _oldPosition != Vector2.Zero && !Properties.Stationary)
+                if (Position - _oldPosition != Vector2.Zero && !Properties.Stationary)
                 {
                     if (!Properties.IsSilent)
                     {
@@ -2141,52 +2152,55 @@ namespace TanksRebirth.GameContent
                     }
 
                     if (TankGame.GameUpdateTime % treadPlaceTimer == 0)
-                        LayFootprint(Tier == TankTier.White ? true : false);
+                        LayFootprint(Properties.Track == TrackType.Thick);
                 }
                 enactBehavior = () =>
                 {
-                    TargetTank = GameHandler.AllTanks.FirstOrDefault(tnk => tnk is not null && !tnk.Properties.Dead && (tnk.Properties.Team != Properties.Team || tnk.Properties.Team == TankTeam.NoTeam) && tnk != this);
+                    TargetTank = GameHandler.AllTanks.FirstOrDefault(tnk => tnk is not null && !tnk.Dead && (tnk.Team != Team || tnk.Team == TankTeam.NoTeam) && tnk != this);
 
                     foreach (var tank in GameHandler.AllTanks)
                     {
-                        if (tank is not null && !tank.Properties.Dead && (tank.Properties.Team != Properties.Team || tank.Properties.Team == TankTeam.NoTeam) && tank != this)
-                            if (GameUtils.Distance_WiiTanksUnits(tank.Properties.Position, Properties.Position) < GameUtils.Distance_WiiTanksUnits(TargetTank.Properties.Position, Properties.Position))
+                        if (tank is not null && !tank.Dead && (tank.Team != Team || tank.Team == TankTeam.NoTeam) && tank != this)
+                            if (GameUtils.Distance_WiiTanksUnits(tank.Position, Position) < GameUtils.Distance_WiiTanksUnits(TargetTank.Position, Position))
                                 if ((tank.Properties.Invisible && tank.timeSinceLastAction < 60) || !tank.Properties.Invisible)
                                     TargetTank = tank;
                     }
 
-                    bool isShellNear = TryGetShellNear(AiParams.ProjectileWarinessRadius, out var shell);
-                    bool isMineNear = TryGetMineNear(AiParams.MineWarinessRadius, out var mine);
+                    // ai stuff not implemented for AIShot and AILaid
+                    bool isShellNear = TryGetShellNear(AiParams.ProjectileWarinessRadius_PlayerShot, out var shell);
+                    bool isMineNear = TryGetMineNear(AiParams.MineWarinessRadius_PlayerLaid, out var mine);
 
                     var tanksNearMe = new List<Tank>();
                     var cubesNearMe = new List<Block>();
 
                     foreach (var tank in GameHandler.AllTanks)
-                        if (tank != this && tank is not null && !tank.Properties.Dead && GameUtils.Distance_WiiTanksUnits(tank.Properties.Position, Properties.Position) <= AiParams.TankWarinessRadius)
+                        if (tank != this && tank is not null && !tank.Dead && GameUtils.Distance_WiiTanksUnits(tank.Position, Position) <= AiParams.TankWarinessRadius)
                             tanksNearMe.Add(tank);
 
                     foreach (var block in Block.AllBlocks)
-                        if (block is not null && GameUtils.Distance_WiiTanksUnits(Properties.Position, block.Position) < AiParams.BlockWarinessDistance)
+                        if (block is not null && GameUtils.Distance_WiiTanksUnits(Position, block.Position) < AiParams.BlockWarinessDistance)
                             cubesNearMe.Add(block);
 
                     if (AiParams.DeflectsBullets)
                     {
                         if (isShellNear)
                         {
-                            if (shell.Owner != this)
+                            if (shell.LifeTime > 60)
                             {
-                                var dir = GameUtils.DirectionOf(Properties.Position, shell.Position2D);
+                                var dir = GameUtils.DirectionOf(Position, shell.Position2D);
                                 var rotation = dir.ToRotation();
-                                var calculation = Properties.Position.Distance(shell.Position2D) / (float)(Properties.ShellSpeed * 1);
-                                float rot = -GameUtils.DirectionOf(Properties.Position,
-                                    GeometryUtils.PredictFuturePosition(shell.Position2D, shell.Velocity2D * 0.65f, calculation))
+                                var calculation = (Position.Distance(shell.Position2D) - 20f) / (float)(Properties.ShellSpeed * 1.2f);
+                                float rot = -GameUtils.DirectionOf(Position,
+                                    GeometryUtils.PredictFuturePosition(shell.Position2D, shell.Velocity2D, calculation))
                                     .ToRotation() + MathHelper.PiOver2;
 
                                 TargetTurretRotation = rot;
 
-                                TurretRotationMultiplier = 6f;
+                                TurretRotationMultiplier = 4f;
 
-                                if ((Properties.TurretRotation).IsInRangeOf(rot, 0.05f))
+                                rot %= MathHelper.Tau;
+
+                                //if ((-TurretRotation + MathHelper.PiOver2).IsInRangeOf(TargetTurretRotation, 0.15f))
                                     Shoot();
                             }
                         }
@@ -2196,16 +2210,16 @@ namespace TanksRebirth.GameContent
 
                     TargetTurretRotation %= MathHelper.TwoPi;
 
-                    Properties.TurretRotation %= MathHelper.TwoPi;
+                    TurretRotation %= MathHelper.TwoPi;
 
-                    var diff = TargetTurretRotation - Properties.TurretRotation;
+                    var diff = TargetTurretRotation - TurretRotation;
 
                     if (diff > MathHelper.Pi)
                         TargetTurretRotation -= MathHelper.TwoPi;
                     else if (diff < -MathHelper.Pi)
                         TargetTurretRotation += MathHelper.TwoPi;
 
-                    Properties.TurretRotation = GameUtils.RoughStep(Properties.TurretRotation, TargetTurretRotation, AiParams.TurretSpeed * TurretRotationMultiplier);
+                    TurretRotation = GameUtils.RoughStep(TurretRotation, TargetTurretRotation, AiParams.TurretSpeed * TurretRotationMultiplier);
                     bool targetExists = Array.IndexOf(GameHandler.AllTanks, TargetTank) > -1 && TargetTank is not null;
                     if (targetExists)
                     {
@@ -2216,17 +2230,17 @@ namespace TanksRebirth.GameContent
                                 isEnemySpotted = false;
                                 if (TargetTank.Properties.Invisible && TargetTank.timeSinceLastAction < 60)
                                 {
-                                    Aimtarget = TargetTank.Properties.Position;
+                                    Aimtarget = TargetTank.Position;
                                     isEnemySpotted = true;
                                 }
 
                                 if (!TargetTank.Properties.Invisible)
                                 {
-                                    Aimtarget = TargetTank.Properties.Position;
+                                    Aimtarget = TargetTank.Position;
                                     isEnemySpotted = true;
                                 }
 
-                                var dirVec = Properties.Position - Aimtarget;
+                                var dirVec = Position - Aimtarget;
                                 TargetTurretRotation = -dirVec.ToRotation() - MathHelper.PiOver2 + GameHandler.GameRand.NextFloat(-AiParams.AimOffset, AiParams.AimOffset);
                             }
                         }
@@ -2246,18 +2260,18 @@ namespace TanksRebirth.GameContent
                         #region CubeNav
                         if (Behaviors[2].IsModOf(AiParams.BlockReadTime) && !isMineNear && !isShellNear)
                         {
-                            pathBlocked = IsObstacleInWay(AiParams.BlockWarinessDistance, Vector2.UnitY.RotatedByRadians(-Properties.TargetTankRotation), out var travelPath, out var refPoints);
+                            pathBlocked = IsObstacleInWay(AiParams.BlockWarinessDistance, Vector2.UnitY.RotatedByRadians(-TargetTankRotation), out var travelPath, out var refPoints);
                             if (pathBlocked)
                             {
                                 if (refPoints.Length > 0)
                                 {
                                     // float AngleSmoothStep(float angle, float target, float amount) => GameUtils.AngleLerp(angle, target, amount * amount * (3f - 2f * amount));
                                     // why does this never work no matter what i do
-                                    var refAngle = GameUtils.DirectionOf(Properties.Position, travelPath - new Vector2(0, 10000)).ToRotation();
+                                    var refAngle = GameUtils.DirectionOf(Position, travelPath - new Vector2(0, 10000)).ToRotation();
 
                                     // AngleSmoothStep(TargetTankRotation, refAngle, refAngle / 3);
-                                    // Properties.TargetTankRotation = -Properties.TargetTankRotation + MathHelper.PiOver2;
-                                    GameUtils.RoughStep(ref Properties.TargetTankRotation, Properties.TargetTankRotation <= MathHelper.Pi ? -refAngle + MathHelper.PiOver2 : refAngle, refAngle / 6);
+                                    // TargetTankRotation = -TargetTankRotation + MathHelper.PiOver2;
+                                    GameUtils.RoughStep(ref TargetTankRotation, TargetTankRotation <= MathHelper.Pi ? -refAngle + MathHelper.PiOver2 : refAngle, refAngle / 6);
                                 }
                             }
                             // TODO: i literally do not understand this
@@ -2267,7 +2281,7 @@ namespace TanksRebirth.GameContent
 
                         #region GeneralMovement
 
-                        if (!isMineNear && !isShellNear && !Properties.IsTurning && CurMineStun <= 0 && CurShootStun <= 0)
+                        if (!isMineNear && !isShellNear && !IsTurning && CurMineStun <= 0 && CurShootStun <= 0)
                         {
                             if (!pathBlocked)
                             {
@@ -2276,11 +2290,11 @@ namespace TanksRebirth.GameContent
                                     float dir = -100;
 
                                     if (targetExists)
-                                        dir = GameUtils.DirectionOf(Properties.Position, TargetTank.Properties.Position).ToRotation();
+                                        dir = GameUtils.DirectionOf(Position, TargetTank.Position).ToRotation();
 
                                     var random = GameHandler.GameRand.NextFloat(-AiParams.MeanderAngle / 2, AiParams.MeanderAngle / 2);
 
-                                    Properties.TargetTankRotation += random;
+                                    TargetTankRotation += random;
                                 }
                                 if (targetExists)
                                 {
@@ -2291,13 +2305,13 @@ namespace TanksRebirth.GameContent
                                             float dir = -100;
 
                                             if (targetExists)
-                                                dir = GameUtils.DirectionOf(Properties.Position, TargetTank.Properties.Position).ToRotation();
+                                                dir = GameUtils.DirectionOf(Position, TargetTank.Position).ToRotation();
 
                                             var random = GameHandler.GameRand.NextFloat(-AiParams.MeanderAngle / 2, AiParams.MeanderAngle / 2);
 
                                             var meanderRandom = dir != -100 ? random + (dir + MathHelper.PiOver2) + (0.2f * AiParams.PursuitLevel) : random;
 
-                                            Properties.TargetTankRotation = meanderRandom;
+                                            TargetTankRotation = meanderRandom;
                                         }
                                     }
                                 }
@@ -2313,9 +2327,9 @@ namespace TanksRebirth.GameContent
                         {
                             if (Behaviors[6].IsModOf(indif))
                             {
-                                var direction = Vector2.UnitY.RotatedByRadians(shell.Position2D.DirectionOf(Properties.Position, false).ToRotation());
+                                var direction = Vector2.UnitY.RotatedByRadians(shell.Position2D.DirectionOf(Position, false).ToRotation());
 
-                                Properties.TargetTankRotation = direction.ToRotation();
+                                TargetTankRotation = direction.ToRotation();
                             }
                         }
 
@@ -2328,14 +2342,14 @@ namespace TanksRebirth.GameContent
                             {
                                 if (Behaviors[4].IsModOf(60))
                                 {
-                                    if (!tanksNearMe.Any(x => x.Properties.Team == Properties.Team))
+                                    if (!tanksNearMe.Any(x => x.Team == Team))
                                     {
                                         nearDestructibleObstacle = cubesNearMe.Any(c => c.IsDestructible);
                                         if (AiParams.SmartMineLaying)
                                         {
                                             if (nearDestructibleObstacle)
                                             {
-                                                Properties.TargetTankRotation = new Vector2(100, 100).RotatedByRadians(GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi)).ExpandZ().ToRotation();
+                                                TargetTankRotation = new Vector2(100, 100).RotatedByRadians(GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi)).ExpandZ().ToRotation();
                                                 LayMine();
                                             }
                                         }
@@ -2343,7 +2357,7 @@ namespace TanksRebirth.GameContent
                                         {
                                             if (GameHandler.GameRand.NextFloat(0, 1) <= AiParams.MinePlacementChance)
                                             {
-                                                Properties.TargetTankRotation = new Vector2(100, 100).RotatedByRadians(GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi)).ExpandZ().ToRotation();
+                                                TargetTankRotation = new Vector2(100, 100).RotatedByRadians(GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi)).ExpandZ().ToRotation();
                                                 LayMine();
                                             }
                                         }
@@ -2355,9 +2369,9 @@ namespace TanksRebirth.GameContent
                         {
                             if (Behaviors[5].IsModOf(10))
                             {
-                                var direction = Vector2.UnitY.RotatedByRadians(mine.Position.DirectionOf(Properties.Position, false).ToRotation());
+                                var direction = Vector2.UnitY.RotatedByRadians(mine.Position.DirectionOf(Position, false).ToRotation());
 
-                                Properties.TargetTankRotation = direction.ToRotation();
+                                TargetTankRotation = direction.ToRotation();
                             }
                         }
                         #endregion
@@ -2371,11 +2385,11 @@ namespace TanksRebirth.GameContent
                         if (Array.IndexOf(GameHandler.AllTanks, TargetTank) > -1 && TargetTank is not null)
                         {
                             float explosionDist = 90f;
-                            if (GameUtils.Distance_WiiTanksUnits(TargetTank.Properties.Position, Properties.Position) < explosionDist)
+                            if (GameUtils.Distance_WiiTanksUnits(TargetTank.Position, Position) < explosionDist)
                             {
                                 Destroy(new TankHurtContext_Mine(false, WorldId));
 
-                                new Explosion(Properties.Position, 10f, this, 0.2f);
+                                new Explosion(Position, 10f, this, 0.2f);
                             }
                         }
                     }
@@ -2393,7 +2407,7 @@ namespace TanksRebirth.GameContent
                             {
                                 AiTier = PickRandomTier(),
                                 IsPlayer = false,
-                                Team = Properties.Team
+                                Team = Team
                             };
 
                             /*foreach (var mesh in Model.Meshes)
@@ -2417,22 +2431,22 @@ namespace TanksRebirth.GameContent
 
                     #region TankRotation
 
-                    var targ = Properties.TargetTankRotation + MathHelper.Pi;
+                    var targ = TargetTankRotation + MathHelper.Pi;
 
                     if (doMoveTowards)
                     {
-                        if (Properties.IsTurning)
+                        if (IsTurning)
                         {
                             // var real = TankRotation + MathHelper.PiOver2;
-                            if (targ - Properties.TankRotation >= MathHelper.PiOver2)
-                                Properties.TankRotation += MathHelper.Pi;
-                            else if (targ - Properties.TankRotation <= -MathHelper.PiOver2)
-                                Properties.TankRotation -= MathHelper.Pi;
+                            if (targ - TankRotation >= MathHelper.PiOver2)
+                                TankRotation += MathHelper.Pi;
+                            else if (targ - TankRotation <= -MathHelper.PiOver2)
+                                TankRotation -= MathHelper.Pi;
                         }
 
-                        if (Properties.TankRotation > targ - Properties.MaximalTurn - MathHelper.ToRadians(5) && Properties.TankRotation < targ + Properties.MaximalTurn + MathHelper.ToRadians(5))
+                        if (TankRotation > targ - Properties.MaximalTurn - MathHelper.ToRadians(5) && TankRotation < targ + Properties.MaximalTurn + MathHelper.ToRadians(5))
                         {
-                            Properties.IsTurning = false;
+                            IsTurning = false;
                             Properties.Speed += Properties.Acceleration;
                             if (Properties.Speed > Properties.MaxSpeed)
                                 Properties.Speed = Properties.MaxSpeed;
@@ -2444,20 +2458,18 @@ namespace TanksRebirth.GameContent
                                 Properties.Speed = 0;
                             treadPlaceTimer = (int)Math.Round(14 / Properties.TurningSpeed) != 0 ? (int)Math.Round(14 / Properties.TurningSpeed) : 1;
                             if (TankGame.GameUpdateTime % treadPlaceTimer == 0)
-                            {
-                                LayFootprint(Tier == TankTier.White);
-                            }
-                            Properties.IsTurning = true;
+                                LayFootprint(Properties.Track == TrackType.Thick);
+                            IsTurning = true;
                         }
 
-                        var dir = Vector2.UnitY.RotatedByRadians(Properties.TankRotation);
-                        Properties.Velocity.X = dir.X;
-                        Properties.Velocity.Y = dir.Y;
+                        var dir = Vector2.UnitY.RotatedByRadians(TankRotation);
+                        Velocity.X = dir.X;
+                        Velocity.Y = dir.Y;
 
-                        Properties.Velocity.Normalize();
+                        Velocity.Normalize();
 
-                        Properties.Velocity *= Properties.Speed;
-                        Properties.TankRotation = GameUtils.RoughStep(Properties.TankRotation, targ, Properties.TurningSpeed);
+                        Velocity *= Properties.Speed;
+                        TankRotation = GameUtils.RoughStep(TankRotation, targ, Properties.TurningSpeed);
                     }
 
                     #endregion
@@ -2493,7 +2505,7 @@ namespace TanksRebirth.GameContent
                             if (!Lighting.AccurateShadows)
                             {
                                 effect.Texture = _shadowTexture;
-                                if (Properties.IsIngame)
+                                if (IsIngame)
                                 {
                                     effect.Alpha = 0.5f;
                                     mesh.Draw();
@@ -2502,7 +2514,7 @@ namespace TanksRebirth.GameContent
                         }
                         else
                         {
-                            if (Properties.IsHoveredByMouse)
+                            if (IsHoveredByMouse)
                                 effect.EmissiveColor = Color.White.ToVector3();
                             else
                                 effect.EmissiveColor = Color.Black.ToVector3();
@@ -2540,10 +2552,10 @@ namespace TanksRebirth.GameContent
         }
         private void DrawExtras()
         {
-            if (Properties.Dead)
+            if (Dead)
                 return;
 
-            if (Properties.IsIngame)
+            if (IsIngame)
             {
                 if (DebugUtils.DebugLevel == 1)
                 {
@@ -2551,23 +2563,23 @@ namespace TanksRebirth.GameContent
 
                     if (AiParams.PredictsPositions && TargetTank is not null)
                     {
-                        calculation = Properties.Position.Distance(TargetTank.Properties.Position) / (float)(Properties.ShellSpeed * 1.2f);
+                        calculation = Position.Distance(TargetTank.Position) / (float)(Properties.ShellSpeed * 1.2f);
                     }
 
                     if (AiParams.SmartRicochets)
                         GetTanksInPath(Vector2.UnitY.RotatedByRadians(seekRotation), out var rayEndpoint, true, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
-                    var poo = GetTanksInPath(Vector2.UnitY.RotatedByRadians(Properties.TurretRotation - MathHelper.Pi), out var rayEnd, true, offset: Vector2.UnitY * 20, pattern: x => x.IsSolid | x.Type == Block.BlockType.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
+                    var poo = GetTanksInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), out var rayEnd, true, offset: Vector2.UnitY * 20, pattern: x => x.IsSolid | x.Type == Block.BlockType.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
                     if (AiParams.PredictsPositions)
                     {
-                        float rot = -GameUtils.DirectionOf(Properties.Position, TargetTank is not null ?
-                            GeometryUtils.PredictFuturePosition(TargetTank.Properties.Position, TargetTank.Properties.Velocity, calculation) :
+                        float rot = -GameUtils.DirectionOf(Position, TargetTank is not null ?
+                            GeometryUtils.PredictFuturePosition(TargetTank.Position, TargetTank.Velocity, calculation) :
                             Aimtarget).ToRotation() - MathHelper.PiOver2;
                         GetTanksInPath(Vector2.UnitY.RotatedByRadians(rot), out var rayEnd2, true, Vector2.Zero, pattern: x => x.IsSolid | x.Type == Block.BlockType.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
                     }
                     DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"{Tier}: {poo.Count}", GeometryUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), World, View, Projection), 1, centered: true);
                     if (!Properties.Stationary)
                     {
-                        IsObstacleInWay(AiParams.BlockWarinessDistance, Vector2.UnitY.RotatedByRadians(-Properties.TargetTankRotation), out var travelPos, out var refPoints, true);
+                        IsObstacleInWay(AiParams.BlockWarinessDistance, Vector2.UnitY.RotatedByRadians(-TargetTankRotation), out var travelPos, out var refPoints, true);
                         DebugUtils.DrawDebugString(TankGame.SpriteRenderer, "TRAVELENDPOINT", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(travelPos.X, 11, travelPos.Y), View, Projection), 1, centered: true);
                         DebugUtils.DrawDebugString(TankGame.SpriteRenderer, "ENDPOINT", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(rayEnd.X, 11, rayEnd.Y), View, Projection), 1, centered: true);
 
@@ -2585,7 +2597,7 @@ namespace TanksRebirth.GameContent
                             DebugUtils.DrawDebugString(TankGame.SpriteRenderer, "pt", GeometryUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), Matrix.CreateTranslation(pt.X, 0, pt.Y), View, Projection), 1, centered: true);
                         }
 
-                        DebugUtils.DrawDebugString(TankGame.SpriteRenderer, "end", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(GameUtils.DirectionOf(Properties.Position, travelPos).X, 0, GameUtils.DirectionOf(Properties.Position, travelPos).Y), View, Projection), 1, centered: true);
+                        DebugUtils.DrawDebugString(TankGame.SpriteRenderer, "end", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(GameUtils.DirectionOf(Position, travelPos).X, 0, GameUtils.DirectionOf(Position, travelPos).Y), View, Projection), 1, centered: true);
                         DebugUtils.DrawDebugString(TankGame.SpriteRenderer, "me", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.Identity, View, Projection/*Matrix.CreateTranslation(Position.X, 11, Position.Y), View, Projection)*/), 1, centered: true);
                         //TankGame.spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), new Rectangle((int)travelPos.X - 1, (int)travelPos.Y - 1, 20, 20), Color.White);
 
@@ -2616,16 +2628,16 @@ namespace TanksRebirth.GameContent
                 {
                     if (bullet.LifeTime > 30)
                     {
-                        var dist = GameUtils.Distance_WiiTanksUnits(Properties.Position, bullet.Position2D);
+                        var dist = GameUtils.Distance_WiiTanksUnits(Position, bullet.Position2D);
                         if (dist < distance)
                         {
                             if (closest == null)
                                 closest = bullet;
-                            else if (GameUtils.Distance_WiiTanksUnits(Properties.Position, bullet.Position2D) < GameUtils.Distance_WiiTanksUnits(Properties.Position, closest.Position2D))
+                            else if (GameUtils.Distance_WiiTanksUnits(Position, bullet.Position2D) < GameUtils.Distance_WiiTanksUnits(Position, closest.Position2D))
                                 closest = bullet;
-                            //var rotationTo = GameUtils.DirectionOf(Properties.Position, bullet.Position2D).ToRotation();
+                            //var rotationTo = GameUtils.DirectionOf(Position, bullet.Position2D).ToRotation();
 
-                            //if (Math.Abs(rotationTo - Properties.TankRotation + MathHelper.Pi) < MathHelper.PiOver2 /*|| Vector2.Distance(Position, bullet.Position2D) < distance / 2*/)
+                            //if (Math.Abs(rotationTo - TankRotation + MathHelper.Pi) < MathHelper.PiOver2 /*|| Vector2.Distance(Position, bullet.Position2D) < distance / 2*/)
                             //
                             returned = true;
                             //
@@ -2644,7 +2656,7 @@ namespace TanksRebirth.GameContent
             {
                 if (yours is not null)
                 {
-                    if (Vector2.Distance(Properties.Position, yours.Position) < distance)
+                    if (Vector2.Distance(Position, yours.Position) < distance)
                     {
                         mine = yours;
                         return true;
@@ -2661,15 +2673,15 @@ namespace TanksRebirth.GameContent
             {
                 if (min is not null)
                 {
-                    if (GameUtils.Distance_WiiTanksUnits(Properties.Position, min.Position) < distance)
+                    if (GameUtils.Distance_WiiTanksUnits(Position, min.Position) < distance)
                     {
                         if (closest == null)
                             closest = min;
-                        else if (GameUtils.Distance_WiiTanksUnits(Properties.Position, min.Position) < GameUtils.Distance_WiiTanksUnits(Properties.Position, closest.Position))
+                        else if (GameUtils.Distance_WiiTanksUnits(Position, min.Position) < GameUtils.Distance_WiiTanksUnits(Position, closest.Position))
                             closest = min;
-                        //var rotationTo = GameUtils.DirectionOf(Properties.Position, bullet.Position2D).ToRotation();
+                        //var rotationTo = GameUtils.DirectionOf(Position, bullet.Position2D).ToRotation();
 
-                        //if (Math.Abs(rotationTo - Properties.TankRotation + MathHelper.Pi) < MathHelper.PiOver2 /*|| Vector2.Distance(Position, bullet.Position2D) < distance / 2*/)
+                        //if (Math.Abs(rotationTo - TankRotation + MathHelper.Pi) < MathHelper.PiOver2 /*|| Vector2.Distance(Position, bullet.Position2D) < distance / 2*/)
                         //
                         returned = true;
                         //
@@ -2686,7 +2698,7 @@ namespace TanksRebirth.GameContent
             TankTier.Brown, TankTier.Marine, TankTier.Yellow, TankTier.Black, TankTier.White, TankTier.Pink, TankTier.Purple, TankTier.Green, TankTier.Ash,
             TankTier.Bronze, TankTier.Silver, TankTier.Sapphire, TankTier.Ruby, TankTier.Citrine, TankTier.Amethyst, TankTier.Emerald, TankTier.Gold, TankTier.Obsidian,
             TankTier.Granite, TankTier.Bubblegum, TankTier.Water, TankTier.Crimson, TankTier.Tiger, TankTier.Creeper, TankTier.Gamma, TankTier.Marble,
-            TankTier.Assassin
+            // TankTier.Assassin
         };
         public static TankTier PickRandomTier()
             => workingTiers[GameHandler.GameRand.Next(0, workingTiers.Length)];

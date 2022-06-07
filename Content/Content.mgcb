@@ -1901,6 +1901,54 @@
 /processorParam:TextureFormat=Color
 /build:Assets/textures/misc/unknown_glow.png
 
+#begin Assets/textures/tank/fanmade/tank_animegirl.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Assets/textures/tank/fanmade/tank_animegirl.png
+
+#begin Assets/textures/tank/fanmade/tank_asphalt.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Assets/textures/tank/fanmade/tank_asphalt.png
+
+#begin Assets/textures/tank/fanmade/tank_azure.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Assets/textures/tank/fanmade/tank_azure.png
+
+#begin Assets/textures/tank/fanmade/tank_cherry_armored_fortified.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Assets/textures/tank/fanmade/tank_cherry_armored_fortified.png
+
 #begin Assets/textures/tank/tank_amethyst.png
 /importer:TextureImporter
 /processor:TextureProcessor

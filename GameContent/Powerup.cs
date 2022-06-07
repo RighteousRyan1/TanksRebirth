@@ -60,7 +60,7 @@ namespace TanksRebirth.GameContent
         public static PowerupTemplate Speed { get; } = new("Speed", "Assets/textures/medal/medal_speed", 1000, DEF_PICKUP_RANGE, tnk =>
             tnk.Properties.MaxSpeed *= 1.5f, 
         tnk =>
-            tnk.Properties.MaxSpeed /= 1.5f);
+            tnk.Properties.MaxSpeed /= 1.5f);   
         public static PowerupTemplate Invisibility { get; } = new("Invisibility", "Assets/textures/medal/medal_invis", 1000, DEF_PICKUP_RANGE, tnk => 
             tnk.Properties.Invisible = !tnk.Properties.Invisible, 
         tnk => 
@@ -118,9 +118,7 @@ namespace TanksRebirth.GameContent
             {
                 Rotation.X += 0.05f;
                 if (GameHandler.AllTanks.TryGetFirst(tnk => tnk is not null && Vector3.Distance(Position, tnk.Position3D) <= PickupRadius, out Tank tank))
-                {
                     Pickup(tank);
-                }
             }
         }
 

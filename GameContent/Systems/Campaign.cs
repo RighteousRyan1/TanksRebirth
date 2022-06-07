@@ -106,12 +106,12 @@ namespace TanksRebirth.GameContent.Systems
                         {
                             var tank = template.GetAiTank();
 
-                            tank.Properties.Position = template.Position;
-                            tank.Properties.TankRotation = template.Rotation;
-                            tank.Properties.TargetTankRotation = template.Rotation - MathHelper.Pi;
-                            tank.Properties.TurretRotation = -template.Rotation;
-                            tank.Properties.Dead = false;
-                            tank.Properties.Team = template.Team;
+                            tank.Position = template.Position;
+                            tank.TankRotation = template.Rotation;
+                            tank.TargetTankRotation = template.Rotation - MathHelper.Pi;
+                            tank.TurretRotation = -template.Rotation;
+                            tank.Dead = false;
+                            tank.Team = template.Team;
 
                             tank.OnDestroy += (sender, e) =>
                             {
@@ -123,28 +123,28 @@ namespace TanksRebirth.GameContent.Systems
                     {
                         var tank = template.GetPlayerTank();
 
-                        tank.Properties.Position = template.Position;
-                        tank.Properties.TankRotation = template.Rotation;
-                        tank.Properties.Dead = false;
-                        tank.Properties.Team = template.Team;
+                        tank.Position = template.Position;
+                        tank.TankRotation = template.Rotation;
+                        tank.Dead = false;
+                        tank.Team = template.Team;
 
                         if (Difficulties.Types["AiCompanion"])
                         {
-                            tank.Properties.Team = TankTeam.Magenta;
+                            tank.Team = TankTeam.Magenta;
                             var tnk = new AITank(TankTier.Black);
-                            tnk.Properties.Position = template.Position;
+                            tnk.Position = template.Position;
                             tnk.Body.Position = template.Position;
-                            tnk.Properties.Team = tank.Properties.Team;
-                            tnk.Properties.TankRotation = -template.Rotation + MathHelper.Pi;
-                            tnk.Properties.TargetTankRotation = template.Rotation - MathHelper.Pi;
-                            tnk.Properties.TurretRotation = -template.Rotation;
-                            tnk.Properties.Dead = false;
+                            tnk.Team = tank.Team;
+                            tnk.TankRotation = -template.Rotation + MathHelper.Pi;
+                            tnk.TargetTankRotation = template.Rotation - MathHelper.Pi;
+                            tnk.TurretRotation = -template.Rotation;
+                            tnk.Dead = false;
 
                             tnk.Swap(AITank.PickRandomTier());
                         }
 
                         if (NetPlay.IsClientMatched(tank.PlayerId))
-                            PlayerTank.MyTeam = tank.Properties.Team;
+                            PlayerTank.MyTeam = tank.Team;
                     }
                 }
                 else
@@ -158,12 +158,12 @@ namespace TanksRebirth.GameContent.Systems
                     {
                         var tank = template.GetAiTank();
 
-                        tank.Properties.Position = template.Position;
-                        tank.Properties.TankRotation = -template.Rotation;
-                        tank.Properties.TargetTankRotation = template.Rotation - MathHelper.Pi;
-                        tank.Properties.TurretRotation = -template.Rotation;
-                        tank.Properties.Dead = false;
-                        tank.Properties.Team = template.Team;
+                        tank.Position = template.Position;
+                        tank.TankRotation = -template.Rotation;
+                        tank.TargetTankRotation = template.Rotation - MathHelper.Pi;
+                        tank.TurretRotation = -template.Rotation;
+                        tank.Dead = false;
+                        tank.Team = template.Team;
                         if (GameProperties.ShouldMissionsProgress)
                         {
                             tank.OnDestroy += (sender, e) =>
@@ -176,28 +176,28 @@ namespace TanksRebirth.GameContent.Systems
                     {
                         var tank = template.GetPlayerTank();
 
-                        tank.Properties.Position = template.Position;
-                        tank.Properties.TankRotation = template.Rotation;
-                        tank.Properties.Dead = false;
-                        tank.Properties.Team = template.Team;
+                        tank.Position = template.Position;
+                        tank.TankRotation = template.Rotation;
+                        tank.Dead = false;
+                        tank.Team = template.Team;
 
                         if (Difficulties.Types["AiCompanion"])
                         {
-                            tank.Properties.Team = TankTeam.Magenta;
+                            tank.Team = TankTeam.Magenta;
                             var tnk = new AITank(TankTier.Black);
-                            tnk.Properties.Position = template.Position;
+                            tnk.Position = template.Position;
                             tnk.Body.Position = template.Position;
-                            tnk.Properties.Team = tank.Properties.Team;
-                            tnk.Properties.TankRotation = template.Rotation;
-                            tnk.Properties.TargetTankRotation = template.Rotation - MathHelper.Pi;
-                            tnk.Properties.TurretRotation = -template.Rotation;
-                            tnk.Properties.Dead = false;
+                            tnk.Team = tank.Team;
+                            tnk.TankRotation = template.Rotation;
+                            tnk.TargetTankRotation = template.Rotation - MathHelper.Pi;
+                            tnk.TurretRotation = -template.Rotation;
+                            tnk.Dead = false;
 
                             tnk.Swap(AITank.PickRandomTier());
                         }
                         
                         if (NetPlay.IsClientMatched(tank.PlayerId))
-                            PlayerTank.MyTeam = tank.Properties.Team;
+                            PlayerTank.MyTeam = tank.Team;
                     }
                 }
             }

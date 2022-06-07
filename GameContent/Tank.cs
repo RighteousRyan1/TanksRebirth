@@ -16,6 +16,7 @@ using TanksRebirth.GameContent.Cosmetics;
 using TanksRebirth.Graphics;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.GameContent.Properties;
+using TanksRebirth.Graphics;
 
 namespace TanksRebirth.GameContent
 {
@@ -38,21 +39,21 @@ namespace TanksRebirth.GameContent
         public AITank GetAiTank()
         {
             if (IsPlayer)
-                throw new Exception($"{nameof(PlayerType)} was true! This method cannot execute.");
+                throw new Exception($"{nameof(PlayerType)} was true. This method cannot execute.");
 
             var ai = new AITank(AiTier, default, true, true);
             ai.Body.Position = Position;
-            ai.Properties.Position = Position;
+            ai.Position = Position;
             return ai;
         }
         public PlayerTank GetPlayerTank()
         {
             if (!IsPlayer)
-                throw new Exception($"{nameof(PlayerType)} was true! This method cannot execute.");
+                throw new Exception($"{nameof(PlayerType)} was false. This method cannot execute.");
 
-            var player = new PlayerTank(PlayerType);
+            var player = Difficulties.Types["RandomPlayer"] ? new PlayerTank(PlayerType, false, AITank.PickRandomTier()) : new PlayerTank(PlayerType);
             player.Body.Position = Position;
-            player.Properties.Position = Position;
+            player.Position = Position;
             return player;
         }
     }
@@ -72,13 +73,22 @@ namespace TanksRebirth.GameContent
         public bool IsPlayer { get; set; }
         public int TankId { get; set; }
 
+        public string Reason { get; }
+
         public TankHurtContext_Other(HurtContext cxt)
         {
+            Reason = string.Empty;
             Context = cxt;
             IsPlayer = false;
             TankId = -1;
         }
-
+        public TankHurtContext_Other(string reason)
+        {
+            Reason = reason;
+            Context = HurtContext.FromOther;
+            IsPlayer = false;
+            TankId = -1;
+        }
     }
     public struct TankHurtContext_Bullet : ITankHurtContext
     {
@@ -118,10 +128,10 @@ namespace TanksRebirth.GameContent
             var teams = new List<TankTeam>();
             foreach (var tank in GameHandler.AllTanks)
             {
-                if (tank is not null && !tank.Properties.Dead)
+                if (tank is not null && !tank.Dead)
                 {
-                    if (!teams.Contains(tank.Properties.Team))
-                        teams.Add(tank.Properties.Team);
+                    if (!teams.Contains(tank.Team))
+                        teams.Add(tank.Team);
                 }
             }
             return teams;
@@ -214,15 +224,42 @@ namespace TanksRebirth.GameContent
 
         public int WorldId { get; set; }
 
-        public TankProperties Properties { get; set; } = new();
+        public TankProperties Properties = new();
 
-        public Vector3 Position3D => Properties.Position.ExpandZ();
-        public Vector3 Velocity3D => Properties.Velocity.ExpandZ();
+        public Vector2 Position;
+        public Vector2 Velocity;
+
+        /// <summary>This <see cref="Tank"/>'s <see cref="TankTeam"/>.</summary>
+        public TankTeam Team { get; set; }
+        /// <summary>The rotation of this <see cref="Tank"/>'s barrel. Generally should not be modified in a player context.</summary>>
+        public BoundingBox Worldbox { get; set; }
+        /// <summary>The 2D hitbox of this <see cref="Tank"/>.</summary>
+        public Rectangle CollisionBox2D => new((int)(Position.X - TNK_WIDTH / 2 + 3), (int)(Position.Y - TNK_WIDTH / 2 + 2), (int)TNK_WIDTH - 8, (int)TNK_HEIGHT - 4);
+        /// <summary>How many times the <see cref="Shell"/> this <see cref="Tank"/> shoots can ricochet.</summary>
+        public int OwnedShellCount { get; internal set; }
+        /// <summary>How many <see cref="Mine"/>s this <see cref="Tank"/> owns.</summary>
+        public int OwnedMineCount { get; internal set; }
+        /// <summary>Whether or not this <see cref="Tank"/> is currently turning.</summary>
+        public bool IsTurning { get; internal set; }
+        /// <summary>Whether or not this <see cref="Tank"/> is being hovered by the pointer.</summary>
+        public bool IsHoveredByMouse { get; internal set; }
+        public float TurretRotation { get; set; }
+        /// <summary>The rotation of this <see cref="Tank"/>.</summary>
+        public float TankRotation { get; set; }
+        /// <summary>The rotation this <see cref="Tank"/> will pivot to.</summary>
+        public float TargetTankRotation;
+        /// <summary>Whether or not the tank has been destroyed or not.</summary>
+        public bool Dead { get; set; }
+        /// <summary>Whether or not this tank is used for ingame purposes or not.</summary>
+        public bool IsIngame { get; set; } = true;
+
+        public Vector3 Position3D => Position.ExpandZ();
+        public Vector3 Velocity3D => Velocity.ExpandZ();
         #endregion
 
         public List<ICosmetic> Cosmetics = new();
         /// <summary>Apply all the default parameters for this <see cref="Tank"/>.</summary>
-        public virtual void ApplyDefaults() { }
+        public virtual void ApplyDefaults(ref TankProperties properties) { this.Properties = properties; }
 
         public virtual void Initialize()
         {
@@ -237,13 +274,13 @@ namespace TanksRebirth.GameContent
                 }
             }
 
-            if (Properties.IsIngame)
+            if (IsIngame)
             {
-                Body = CollisionsWorld.CreateCircle(TNK_WIDTH * 0.4f, 1f, Properties.Position, BodyType.Dynamic);
+                Body = CollisionsWorld.CreateCircle(TNK_WIDTH * 0.4f, 1f, Position, BodyType.Dynamic);
                 // Body.LinearDamping = Deceleration * 10;
             }
 
-            if (!MainMenu.Active && Properties.IsIngame)
+            if (!MainMenu.Active && IsIngame)
             {
                 foreach (var cosmetic in Cosmetics)
                 {
@@ -292,7 +329,7 @@ namespace TanksRebirth.GameContent
         }
         void OnMissionStart()
         {
-            if (Properties.Invisible && !Properties.Dead)
+            if (Properties.Invisible && !Dead)
             {
                 var invis = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_invisible");
                 SoundPlayer.PlaySoundInstance(invis, SoundContext.Effect, 0.3f);
@@ -349,28 +386,28 @@ namespace TanksRebirth.GameContent
         /// <summary>Update this <see cref="Tank"/>.</summary>
         public virtual void Update()
         {
-            Properties.Position = Body.Position;
+            Position = Body.Position;
 
-            Body.LinearVelocity = Properties.Velocity * 0.55f;
+            Body.LinearVelocity = Velocity * 0.55f;
 
-            World = Matrix.CreateFromYawPitchRoll(-Properties.TankRotation, 0, 0)
+            World = Matrix.CreateFromYawPitchRoll(-TankRotation, 0, 0)
                 * Matrix.CreateTranslation(Position3D);
 
-            if (Properties.IsIngame)
+            if (IsIngame)
             {
-                Properties.Worldbox = new(Position3D - new Vector3(7, 0, 7), Position3D + new Vector3(10, 15, 10));
+                Worldbox = new(Position3D - new Vector3(7, 0, 7), Position3D + new Vector3(10, 15, 10));
                 Projection = TankGame.GameProjection;
                 View = TankGame.GameView;
 
                 if (!GameProperties.InMission || IntermissionSystem.IsAwaitingNewMission)
                 {
-                    Properties.Velocity = Vector2.Zero;
+                    Velocity = Vector2.Zero;
                     return;
                 }
-                if (Properties.OwnedShellCount < 0)
-                    Properties.OwnedShellCount = 0;
-                if (Properties.OwnedMineCount < 0)
-                    Properties.OwnedMineCount = 0;
+                if (OwnedShellCount < 0)
+                    OwnedShellCount = 0;
+                if (OwnedMineCount < 0)
+                    OwnedMineCount = 0;
             }
 
             if (CurShootStun > 0)
@@ -382,21 +419,21 @@ namespace TanksRebirth.GameContent
             if (CurMineCooldown > 0)
                 CurMineCooldown--;
 
-            if (CurShootStun > 0 || CurMineStun > 0 || Properties.Stationary && Properties.IsIngame)
+            if (CurShootStun > 0 || CurMineStun > 0 || Properties.Stationary && IsIngame)
             {
                 Body.LinearVelocity = Vector2.Zero;
-                Properties.Velocity = Vector2.Zero;
+                Velocity = Vector2.Zero;
             }
             foreach (var cosmetic in Cosmetics)
                 cosmetic?.UniqueBehavior?.Invoke(cosmetic, this); 
         }
         /// <summary>Get this <see cref="Tank"/>'s general stats.</summary>
         public string GetGeneralStats()
-            => $"Pos2D: {Properties.Position} | Vel: {Properties.Velocity} | Dead: {Properties.Dead}";
+            => $"Pos2D: {Position} | Vel: {Velocity} | Dead: {Dead}";
         /// <summary>Destroy this <see cref="Tank"/>.</summary>
         public virtual void Damage(ITankHurtContext context) {
 
-            if (Properties.Dead || Properties.Immortal)
+            if (Dead || Properties.Immortal)
                 return;
             // ChatSystem.SendMessage(context, Color.White, "<Debug>");
             if (Properties.Armor is not null)
@@ -504,7 +541,7 @@ namespace TanksRebirth.GameContent
             new TankFootprint(this, alt)
             {
                 Position = Position3D + new Vector3(0, 0.1f, 0),
-                rotation = -Properties.TankRotation
+                rotation = -TankRotation
             };
         }
         /// <summary>Shoot a <see cref="Shell"/> from this <see cref="Tank"/>.</summary>
@@ -512,7 +549,7 @@ namespace TanksRebirth.GameContent
             if (!GameProperties.InMission || !Properties.HasTurret)
                 return;
 
-            if (CurShootCooldown > 0 || Properties.OwnedShellCount >= Properties.ShellLimit / Properties.ShellShootCount)
+            if (CurShootCooldown > 0 || OwnedShellCount >= Properties.ShellLimit / Properties.ShellShootCount)
                 return;
 
             bool flip = false;
@@ -523,9 +560,9 @@ namespace TanksRebirth.GameContent
                 if (i == 0)
                 {
                     var shell = new Shell(Position3D, Vector3.Zero, Properties.ShellType, this, homing: Properties.ShellHoming);
-                    var new2d = Vector2.UnitY.RotatedByRadians(Properties.TurretRotation);
+                    var new2d = Vector2.UnitY.RotatedByRadians(TurretRotation);
 
-                    var newPos = Properties.Position + new Vector2(0, 20).RotatedByRadians(-Properties.TurretRotation);
+                    var newPos = Position + new Vector2(0, 20).RotatedByRadians(-TurretRotation);
 
                     shell.Position = new Vector3(newPos.X, 11, newPos.Y);
 
@@ -592,9 +629,9 @@ namespace TanksRebirth.GameContent
                     var newAngle = flip ? -angle : angle;
 
                     var shell = new Shell(Position3D, Vector3.Zero, Properties.ShellType, this, homing: Properties.ShellHoming);
-                    var new2d = Vector2.UnitY.RotatedByRadians(Properties.TurretRotation);
+                    var new2d = Vector2.UnitY.RotatedByRadians(TurretRotation);
 
-                    var newPos = Properties.Position + new Vector2(0, 20).RotatedByRadians(-Properties.TurretRotation + newAngle);
+                    var newPos = Position + new Vector2(0, 20).RotatedByRadians(-TurretRotation + newAngle);
 
                     shell.Position = new Vector3(newPos.X, 11, newPos.Y);
 
@@ -610,7 +647,7 @@ namespace TanksRebirth.GameContent
             Velocity = force;
             Body.ApplyForce(force);*/
 
-            Properties.OwnedShellCount += Properties.ShellShootCount;
+            OwnedShellCount += Properties.ShellShootCount;
 
             timeSinceLastAction = 0;
 
@@ -619,22 +656,22 @@ namespace TanksRebirth.GameContent
         }
         /// <summary>Make this <see cref="Tank"/> lay a <see cref="Mine"/>.</summary>
         public virtual void LayMine() {
-            if (CurMineCooldown > 0 || Properties.OwnedMineCount >= Properties.MineLimit)
+            if (CurMineCooldown > 0 || OwnedMineCount >= Properties.MineLimit)
                 return;
 
             CurMineCooldown = Properties.MineCooldown;
             CurMineStun = Properties.MineStun;
             var sound = GameResources.GetGameResource<SoundEffect>("Assets/sounds/mine_place");
             SoundPlayer.PlaySoundInstance(sound, SoundContext.Effect, 0.5f);
-            Properties.OwnedMineCount++;
+            OwnedMineCount++;
 
             timeSinceLastAction = 0;
 
-            var mine = new Mine(this, Properties.Position, 600);
+            var mine = new Mine(this, Position, 600);
         }
 
         public virtual void Render() {
-            if (Properties.IsIngame)
+            if (IsIngame)
             {
                 foreach (var cosmetic in Cosmetics)
                 {
@@ -652,9 +689,9 @@ namespace TanksRebirth.GameContent
                                     {
                                         float rotY;
                                         if (cosmetic.LockOptions == CosmeticLockOptions.ToTurret)
-                                            rotY = cosmetic.Rotation.Y + Properties.TurretRotation;
+                                            rotY = cosmetic.Rotation.Y + TurretRotation;
                                         else if (cosmetic.LockOptions == CosmeticLockOptions.ToTank)
-                                            rotY = cosmetic.Rotation.Y + Properties.TankRotation;
+                                            rotY = cosmetic.Rotation.Y + TankRotation;
                                         else
                                             rotY = cosmetic.Rotation.Y;
                                         effect.World = i == 0 ? Matrix.CreateRotationX(cosmetic.Rotation.X) * Matrix.CreateRotationY(rotY) * Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) * Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition)
@@ -667,6 +704,8 @@ namespace TanksRebirth.GameContent
                                             effect.Texture = cos3d.ModelTexture;
                                         else
                                             effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/ingame/block_shadow_h");
+                                        
+                                        effect.SetDefaultGameLighting_IngameEntities();
                                     }
                                     mesh.Draw();
                                 }
@@ -677,10 +716,10 @@ namespace TanksRebirth.GameContent
             }
             var info = new string[]
             {
-                $"Team: {Properties.Team}",
-                $"OwnedShellCount: {Properties.OwnedShellCount}",
-                $"OwnedMineCount: {Properties.OwnedMineCount}",
-                $"Speed / MaxSpeed / Velocity: {Properties.Speed} / {Properties.MaxSpeed} / {Properties.Velocity}",
+                $"Team: {Team}",
+                $"OwnedShellCount: {OwnedShellCount}",
+                $"OwnedMineCount: {OwnedMineCount}",
+                $"Speed / MaxSpeed / Velocity: {Properties.Speed} / {Properties.MaxSpeed} / {Velocity}",
                 $"Invisible: {Properties.Invisible}",
                 $"ShellCooldown: {Properties.ShellCooldown}",
                 $"MineCooldown: {Properties.MineCooldown}"
@@ -716,8 +755,6 @@ namespace TanksRebirth.GameContent
     {
         /// <summary>Whether or not the tank has artillery-like function during gameplay.</summary>
         public bool Stationary { get; set; }
-        /// <summary>Whether or not the tank has been destroyed or not.</summary>
-        public bool Dead { get; set; }
         /// <summary>Whether or not the tank should become invisible at mission start.</summary>
         public bool Invisible { get; set; }
         /// <summary>How fast the tank should accelerate towards its <see cref="MaxSpeed"/>.</summary>
@@ -731,11 +768,6 @@ namespace TanksRebirth.GameContent
         /// <summary>How fast the bullets this <see cref="Tank"/> shoot are.</summary>
         public float ShellSpeed { get; set; }
         /// <summary>The rotation of this <see cref="Tank"/>'s barrel. Generally should not be modified in a player context.</summary>
-        public float TurretRotation { get; set; }
-        /// <summary>The rotation of this <see cref="Tank"/>.</summary>
-        public float TankRotation { get; set; }
-        /// <summary>The rotation this <see cref="Tank"/> will pivot to.</summary>
-        public float TargetTankRotation;
         /// <summary>The pitch of the footprint placement sounds.</summary>
         public float TreadPitch { get; set; }
         /// <summary>The pitch of the shoot sound.</summary>
@@ -762,26 +794,10 @@ namespace TanksRebirth.GameContent
         public float MaximalTurn { get; set; }
         /// <summary>Whether or not this <see cref="Tank"/> can lay a <see cref="TankFootprint"/>.</summary>
         public bool CanLayTread { get; set; } = true;
-
-        public TankTeam Team { get; set; }
-        /// <summary>The rotation of this <see cref="Tank"/>'s barrel. Generally should not be modified in a player context.</summary>>
-        public BoundingBox Worldbox { get; set; }
-        /// <summary>The 2D hitbox of this <see cref="Tank"/>.</summary>
-        public Rectangle CollisionBox2D => new((int)(Position.X - Tank.TNK_WIDTH / 2 + 3), (int)(Position.Y - Tank.TNK_WIDTH / 2 + 2), (int)Tank.TNK_WIDTH - 8, (int)Tank.TNK_HEIGHT - 4);
-        /// <summary>How many times the <see cref="Shell"/> this <see cref="Tank"/> shoots can ricochet.</summary>
-        public int OwnedShellCount { get; internal set; }
-        /// <summary>How many <see cref="Mine"/>s this <see cref="Tank"/> owns.</summary>
-        public int OwnedMineCount { get; internal set; }
-        /// <summary>Whether or not this <see cref="Tank"/> is currently turning.</summary>
-        public bool IsTurning { get; internal set; }
-        /// <summary>Whether or not this <see cref="Tank"/> is being hovered by the pointer.</summary>
-        public bool IsHoveredByMouse { get; internal set; }
         /// <summary>Whether or not this <see cref="Tank"/> makes sounds while moving.</summary>
         public bool IsSilent { get; set; }
-
-        public Vector2 Position;
-        public Vector2 Velocity;
-
+        /// <summary>The type of track that is laid.</summary>
+        public TrackType Track { get; set; }
         /// <summary>If <see cref="ShellShootCount"/> is greater than 1, this is how many radians each shot's offset will be when this <see cref="Tank"/> shoots.
         /// <para></para>
         /// A common formula to calculate values for when the bullets won't instantly collide is:
@@ -804,8 +820,6 @@ namespace TanksRebirth.GameContent
 
         /// <summary>The color of particle <see cref="Tank"/> emits upon destruction.</summary>
         public Color DestructionColor { get; set; } = Color.Black;
-        /// <summary>Whether or not this tank is used for ingame purposes or not.</summary>
-        public bool IsIngame { get; set; } = true;
         /// <summary>The armor properties this <see cref="Tank"/> has.</summary>
         public Armor Armor { get; set; } = null;
 

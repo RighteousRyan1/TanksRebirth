@@ -100,6 +100,8 @@ namespace TanksRebirth.GameContent.UI
         public static UITextButton Shotguns;
 
         public static UITextButton Predictions;
+
+        public static UITextButton RandomizedPlayer;
         #endregion
 
         private static float _tnkSpeed = 2.4f;
@@ -137,7 +139,7 @@ namespace TanksRebirth.GameContent.UI
             PlayList,
             Campaigns,
             Mulitplayer,
-            CosmeticMenu,
+            Cosmetics,
             Difficulties,
             Options
         }
@@ -327,7 +329,7 @@ namespace TanksRebirth.GameContent.UI
                 SetMPButtonsVisibility(false);
                 SetPrimaryMenuButtonsVisibility(false);
 
-                MenuState = State.CosmeticMenu;
+                MenuState = State.Cosmetics;
             };
             #endregion
             #region Input Boxes
@@ -590,6 +592,14 @@ namespace TanksRebirth.GameContent.UI
                 OnLeftClick = (elem) => Difficulties.Types["Predictions"] = !Difficulties.Types["Predictions"]
             };
             Predictions.SetDimensions(450, 750, 300, 40);
+
+            RandomizedPlayer = new("Randomized Player", font, Color.White)
+            {
+                IsVisible = false,
+                Tooltip = "You become a random enemy tank every life.",
+                OnLeftClick = (elem) => Difficulties.Types["RandomPlayer"] = !Difficulties.Types["RandomPlayer"]
+            };
+            RandomizedPlayer.SetDimensions(800, 300, 300, 40);
         }
         private static void SetCampaignDisplay()
         {
@@ -718,7 +728,6 @@ namespace TanksRebirth.GameContent.UI
 
             GC.Collect();
         }
-
         internal static void SetPlayButtonsVisibility(bool visible)
         {
             PlayButton_SinglePlayer.IsVisible = visible;
@@ -749,6 +758,7 @@ namespace TanksRebirth.GameContent.UI
             AiCompanion.IsVisible = visible;
             Shotguns.IsVisible = visible;
             Predictions.IsVisible = visible;
+            RandomizedPlayer.IsVisible = visible;
         }
         internal static void SetPrimaryMenuButtonsVisibility(bool visible)
         {
@@ -806,6 +816,7 @@ namespace TanksRebirth.GameContent.UI
             AiCompanion.Color = Difficulties.Types["AiCompanion"] ? Color.Lime : Color.Red;
             Shotguns.Color = Difficulties.Types["Shotguns"] ? Color.Lime : Color.Red;
             Predictions.Color = Difficulties.Types["Predictions"] ? Color.Lime : Color.Red;
+            RandomizedPlayer.Color = Difficulties.Types["RandomPlayer"] ? Color.Lime : Color.Red;
 
             Theme.Volume = TankGame.Settings.MusicVolume;
 
@@ -817,7 +828,7 @@ namespace TanksRebirth.GameContent.UI
                 if (pos.X > 500)
                     pos.X = -500;
 
-                tnk.Properties.Velocity.Y = _tnkSpeed;
+                tnk.Velocity.Y = _tnkSpeed;
 
                 tnk.Body.Position = pos;
             }
@@ -890,9 +901,9 @@ namespace TanksRebirth.GameContent.UI
                     var t = AddTravelingTank(AITank.PickRandomTier(), 1000 + (-i * 100), j * 55);
 
                     if (i % 2 == 0)
-                        t.Properties.Velocity.Y = 1f;
+                        t.Velocity.Y = 1f;
                     else
-                        t.Properties.Velocity.Y = -1f;
+                        t.Velocity.Y = -1f;
                 }
             }
 
@@ -924,13 +935,13 @@ namespace TanksRebirth.GameContent.UI
         public static Tank AddTravelingTank(TankTier tier, float xOffset, float yOffset)
         {
             var extank = new AITank(tier, default, true, false);
-            extank.Properties.Team = TankTeam.NoTeam;
-            extank.Properties.Dead = false;
+            extank.Team = TankTeam.NoTeam;
+            extank.Dead = false;
             extank.Body.Position = new Vector2(-500 + xOffset, yOffset);
 
-            extank.Properties.TankRotation = MathHelper.PiOver2;
+            extank.TankRotation = MathHelper.PiOver2;
 
-            extank.Properties.TurretRotation = extank.Properties.TankRotation;
+            extank.TurretRotation = extank.TankRotation;
 
             extank.View = View;
             extank.Projection = Projection;
@@ -978,7 +989,7 @@ namespace TanksRebirth.GameContent.UI
         {
             if (Active)
             {
-                if (MenuState == State.CosmeticMenu)
+                if (MenuState == State.Cosmetics)
                 {
                     RenderCrate();
                 }
@@ -1032,31 +1043,29 @@ namespace TanksRebirth.GameContent.UI
                         }
                         if (Input.KeyJustPressed(Keys.Enter))
                         {
-                            try {
-                                var bytes = WebUtils.DownloadWebFile("https://github.com/RighteousRyan1/TanksRebirth/releases/download/1.3.4-alpha/Vanilla.rar", out var filename);
+                            //try {
+                                var bytes = WebUtils.DownloadWebFile("https://github.com/RighteousRyan1/tanks_rebirth_motds/blob/master/Vanilla.rar?raw=true", out var filename);
                                 var path = Path.Combine(TankGame.SaveDirectory, "Campaigns", filename);
                                 File.WriteAllBytes(path, bytes);
 
                                 using (var archive = new RarArchive(path))
-                                {
                                     archive.ExtractToDirectory(Path.Combine(TankGame.SaveDirectory, "Campaigns", ""));
-                                }
 
                                 File.Delete(path);
 
                                 SetCampaignDisplay();
 
-                            } catch(Exception e) {
+                            /*} catch(Exception e) {
                                 Process.Start(new ProcessStartInfo("https://github.com/RighteousRyan1/TanksRebirth/releases/download/1.3.4-alpha/Vanilla.rar")
                                 {
                                     UseShellExecute = true,
                                 });
                                 GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
-                            }
+                            }*/
                         }
                     }
                 }
-                if (campaignNames.Count > 0)
+                if (MenuState == State.Campaigns)
                 {
                     static string getSuffix(int num)
                     {
@@ -1083,6 +1092,10 @@ namespace TanksRebirth.GameContent.UI
                     TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"You can scroll with your mouse to skip to a certain mission." +
                         $"\nCurrently, you will skip to the {MissionCheckpoint + 1}{getSuffix(MissionCheckpoint + 1)} mission in the campaign." +
                         $"\nYou will be alerted if that mission does not exist.", new(12, 200), Color.White, new(0.75f), 0f, Vector2.Zero);
+                }
+                else if (MenuState == State.Cosmetics)
+                {
+                    TankGame.SpriteRenderer.DrawString(TankGame.TextFontLarge, $"COMING SOON!", new(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 6), Color.White, new Vector2(0.75f) * (1920 / 1080 / TankGame.Instance.GraphicsDevice.Viewport.AspectRatio), 0f, TankGame.TextFontLarge.MeasureString($"COMING SOON!") / 2);
                 }
             }
             _oldwheel = Input.DeltaScrollWheel;

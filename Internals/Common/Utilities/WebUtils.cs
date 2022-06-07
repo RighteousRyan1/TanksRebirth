@@ -25,7 +25,9 @@ namespace TanksRebirth.Internals.Common.Utilities
 
             GameHandler.ClientLog.Write($"WebRequest sent to {client}", LogType.Debug);
 
-            return (file, System.IO.Path.GetFileName(url));
+            var name = System.IO.Path.GetFileName(url).Split('?')[0];
+
+            return (file, name);
         }
     }
 }

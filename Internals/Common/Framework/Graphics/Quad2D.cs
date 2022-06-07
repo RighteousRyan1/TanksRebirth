@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace TanksRebirth.Internals.Common.Framework.Graphics
 {
-    public class Quadrilateral : IDisposable
+    public class Quad2D : IDisposable
     {
-        internal static List<Quadrilateral> quads = new();
+        internal static List<Quad2D> quads = new();
         public void Dispose()
         {
             foreach (var tri in triangles)
@@ -26,7 +26,7 @@ namespace TanksRebirth.Internals.Common.Framework.Graphics
         private Color tColor1;
         private Color tColor2;
 
-        public Quadrilateral(Vector2[] vertices, Color color)
+        public Quad2D(Vector2[] vertices, Color color)
         {
             // First, assign the values to the objects.
             this.color = color;

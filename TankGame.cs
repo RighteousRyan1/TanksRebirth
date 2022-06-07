@@ -508,9 +508,9 @@ namespace TanksRebirth
                 }                                                                                   
                 else
                 {
-                    if (GameHandler.AllPlayerTanks.Count(x => x is not null && !x.Properties.Dead) > 0)
+                    if (GameHandler.AllPlayerTanks.Count(x => x is not null && !x.Dead) > 0)
                     {
-                        ThirdPersonCameraPosition = GameHandler.AllPlayerTanks[0].Properties.Position.ExpandZ();
+                        ThirdPersonCameraPosition = GameHandler.AllPlayerTanks[0].Position.ExpandZ();
                         /*GameCamera.SetPosition(GameHandler.AllPlayerTanks[0].Position.ExpandZ());
                         GameCamera.SetLookAt(GameHandler.AllPlayerTanks[0].Position.ExpandZ());
                         GameCamera.Zoom(DEFAULT_ZOOM * AddativeZoom);
@@ -525,7 +525,7 @@ namespace TanksRebirth
                         GameCamera.SetViewingDistances(-2000f, 5000f);*/
 
                         GameView = Matrix.CreateLookAt(ThirdPersonCameraPosition,
-                            ThirdPersonCameraPosition + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-GameHandler.AllPlayerTanks[0].Properties.TurretRotation).ExpandZ()
+                            ThirdPersonCameraPosition + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-GameHandler.AllPlayerTanks[0].TurretRotation).ExpandZ()
                             , Vector3.Up) * Matrix.CreateScale(AddativeZoom) * Matrix.CreateRotationX(CameraRotationVector.Y - MathHelper.PiOver4) * Matrix.CreateRotationY(CameraRotationVector.X) * Matrix.CreateTranslation(0, -20, -40);
                         if (_justChanged)
                         {
@@ -535,7 +535,7 @@ namespace TanksRebirth
                     }
                     else
                     {
-                        var x = GameHandler.AllAITanks.FirstOrDefault(x => x is not null && !x.Properties.Dead);
+                        var x = GameHandler.AllAITanks.FirstOrDefault(x => x is not null && !x.Dead);
 
                         if (x is not null && Array.IndexOf(GameHandler.AllAITanks, x) > -1)
                         {
@@ -561,10 +561,10 @@ namespace TanksRebirth
 
                             GameCamera.SetCameraType(CameraType.FieldOfView);*/
 
-                            ThirdPersonCameraPosition = x.Properties.Position.ExpandZ();
+                            ThirdPersonCameraPosition = x.Position.ExpandZ();
 
                             GameView = Matrix.CreateLookAt(ThirdPersonCameraPosition,
-                                ThirdPersonCameraPosition + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-x.Properties.TurretRotation).ExpandZ()
+                                ThirdPersonCameraPosition + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-x.TurretRotation).ExpandZ()
                                 , Vector3.Up) * Matrix.CreateScale(AddativeZoom) * Matrix.CreateRotationX(CameraRotationVector.Y - MathHelper.PiOver4) * Matrix.CreateRotationY(CameraRotationVector.X) * Matrix.CreateTranslation(0, -20, -40) * Matrix.CreateScale(AddativeZoom);
                             if (_justChanged)
                             {
@@ -661,9 +661,9 @@ namespace TanksRebirth
                 {
                     foreach (var tnk in GameHandler.AllTanks)
                     {
-                        if (tnk is not null && !tnk.Properties.Dead)
+                        if (tnk is not null && !tnk.Dead)
                         {
-                            if (GameUtils.GetMouseToWorldRay().Intersects(tnk.Properties.Worldbox).HasValue)
+                            if (GameUtils.GetMouseToWorldRay().Intersects(tnk.Worldbox).HasValue)
                             {
                                 if (Input.KeyJustPressed(Keys.K))
                                 {
@@ -675,29 +675,29 @@ namespace TanksRebirth
 
                                 if (Input.CanDetectClick(rightClick: true))
                                 {
-                                    tnk.Properties.TankRotation += MathHelper.PiOver2;
-                                    tnk.Properties.TurretRotation += MathHelper.PiOver2;
+                                    tnk.TankRotation += MathHelper.PiOver2;
+                                    tnk.TurretRotation += MathHelper.PiOver2;
                                     if (tnk is AITank ai)
                                     {
                                         ai.TargetTurretRotation += MathHelper.PiOver2;
-                                        ai.Properties.TargetTankRotation += MathHelper.PiOver2;
+                                        ai.TargetTankRotation += MathHelper.PiOver2;
 
                                         if (ai.TargetTurretRotation >= MathHelper.Tau)
                                             ai.TargetTurretRotation -= MathHelper.Tau;
-                                        if (ai.Properties.TargetTankRotation >= MathHelper.Tau)
-                                            ai.Properties.TargetTankRotation -= MathHelper.Tau;
+                                        if (ai.TargetTankRotation >= MathHelper.Tau)
+                                            ai.TargetTankRotation -= MathHelper.Tau;
                                     }
-                                    if (tnk.Properties.TankRotation >= MathHelper.Tau)
-                                        tnk.Properties.TankRotation -= MathHelper.Tau;
+                                    if (tnk.TankRotation >= MathHelper.Tau)
+                                        tnk.TankRotation -= MathHelper.Tau;
 
-                                    if (tnk.Properties.TurretRotation >= MathHelper.Tau)
-                                        tnk.Properties.TurretRotation -= MathHelper.Tau;
+                                    if (tnk.TurretRotation >= MathHelper.Tau)
+                                        tnk.TurretRotation -= MathHelper.Tau;
                                 }
 
-                                tnk.Properties.IsHoveredByMouse = true;
+                                tnk.IsHoveredByMouse = true;
                             }
                             else
-                                tnk.Properties.IsHoveredByMouse = false;
+                                tnk.IsHoveredByMouse = false;
                         }
                     }
                 }
@@ -816,7 +816,7 @@ namespace TanksRebirth
 
                 foreach (var triangle in Triangle2D.triangles)
                     triangle.DrawImmediate();
-                foreach (var qu in Quad.quads)
+                foreach (var qu in Quad3D.quads)
                     qu.Render();
 
                 RenderTime = gameTime.ElapsedGameTime;

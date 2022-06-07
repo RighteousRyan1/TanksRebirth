@@ -90,4 +90,9 @@
         CampaignCompleteMajor,
         CampaignCompleteMinor
     }
+    public enum TrackType
+    {
+        Standard,
+        Thick
+    }
 }

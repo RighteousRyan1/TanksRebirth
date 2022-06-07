@@ -183,9 +183,9 @@ namespace TanksRebirth.GameContent
                     tier -= 9;
                 var t = new AITank(tier);
                 t.Body.Position = position.FlattenZ();
-                t.Properties.Position = position.FlattenZ();
-                t.Properties.Dead = false;
-                t.Properties.Team = TankToSpawn.Team;
+                t.Position = position.FlattenZ();
+                t.Dead = false;
+                t.Team = TankToSpawn.Team;
             }
 
             OnOpen?.Invoke(this, new());

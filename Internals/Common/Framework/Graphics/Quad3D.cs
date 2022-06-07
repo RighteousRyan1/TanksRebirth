@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 
 namespace TanksRebirth.Internals.Common.Framework.Graphics
 {
-    public class Quad : IDisposable
+    public class Quad3D : IDisposable
     {
-        internal static List<Quad> quads = new();
+        internal static List<Quad3D> quads = new();
 
         public VertexBuffer Buffer { get; private set; }
 
@@ -28,7 +28,7 @@ namespace TanksRebirth.Internals.Common.Framework.Graphics
         public Vector3[] vertices;
 
         public Color color = Color.White;
-        public Quad(Vector3[] vertices, Color color)
+        public Quad3D(Vector3[] vertices, Color color)
         {
             // First, assign the values to the object's.
             this.color = color;

@@ -108,8 +108,8 @@ namespace TanksRebirth.GameContent
                 }
                 foreach (var tank in GameHandler.AllTanks)
                 {
-                    if (tank is not null && Vector2.Distance(tank.Properties.Position, Position) < Scale * 9)
-                        if (!tank.Properties.Dead)
+                    if (tank is not null && Vector2.Distance(tank.Position, Position) < Scale * 9)
+                        if (!tank.Dead)
                             if (!HasHit[tank.WorldId])
                                 if (tank.Properties.VulnerableToMines)
                                 {

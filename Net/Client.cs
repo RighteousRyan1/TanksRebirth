@@ -78,11 +78,11 @@ namespace TanksRebirth.Net
             message.Put(PacketType.PlayerSpawn);
 
             message.Put((byte)tank.PlayerType);
-            message.Put((byte)tank.Properties.Team);
+            message.Put((byte)tank.Team);
             message.Put(tank.Body.Position.X);
             message.Put(tank.Body.Position.Y);
-            message.Put(tank.Properties.TankRotation);
-            message.Put(tank.Properties.TurretRotation);
+            message.Put(tank.TankRotation);
+            message.Put(tank.TurretRotation);
 
             // Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered);
 
@@ -96,8 +96,8 @@ namespace TanksRebirth.Net
             message.Put(tank.PlayerId);
             message.Put(tank.Body.Position.X);
             message.Put(tank.Body.Position.Y);
-            message.Put(tank.Properties.TankRotation);
-            message.Put(tank.Properties.TurretRotation);
+            message.Put(tank.TankRotation);
+            message.Put(tank.TurretRotation);
             message.Put(tank.Body.LinearVelocity.X);
             message.Put(tank.Body.LinearVelocity.Y);
 

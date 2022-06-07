@@ -195,14 +195,14 @@ namespace TanksRebirth.GameContent
                 {
                     foreach (var target in GameHandler.AllTanks)
                     {
-                        if (target is not null && target != Owner && Vector2.Distance(Position2D, target.Properties.Position) <= HomeProperties.Radius)
+                        if (target is not null && target != Owner && Vector2.Distance(Position2D, target.Position) <= HomeProperties.Radius)
                         {
-                            if (target.Properties.Team != Owner.Properties.Team || target.Properties.Team == TankTeam.NoTeam)
+                            if (target.Team != Owner.Team || target.Team == TankTeam.NoTeam)
                             {
-                                if (HomeProperties.HeatSeeks && target.Properties.Velocity != Vector2.Zero)
-                                    HomeProperties.Target = target.Properties.Position;
+                                if (HomeProperties.HeatSeeks && target.Velocity != Vector2.Zero)
+                                    HomeProperties.Target = target.Position;
                                 if (!HomeProperties.HeatSeeks)
-                                    HomeProperties.Target = target.Properties.Position;
+                                    HomeProperties.Target = target.Position;
                             }
                         }
                     }
@@ -534,11 +534,11 @@ namespace TanksRebirth.GameContent
             {
                 if (tank is not null)
                 {
-                    if (tank.Properties.CollisionBox2D.Intersects(Hitbox))
+                    if (tank.CollisionBox2D.Intersects(Hitbox))
                     {
                         if (!CanFriendlyFire)
                         {
-                            if (tank.Properties.Team == Owner.Properties.Team && tank != Owner && tank.Properties.Team != TankTeam.NoTeam)
+                            if (tank.Team == Owner.Team && tank != Owner && tank.Team != TankTeam.NoTeam)
                                 Destroy();
                         }
                         else
@@ -595,7 +595,7 @@ namespace TanksRebirth.GameContent
             // ParticleSystem.MakeSparkEmission(Position, 10);
             ParticleSystem.MakeSmallExplosion(Position, 8, 10, 1.25f, 15);
             if (Owner != null)
-                Owner.Properties.OwnedShellCount--;
+                Owner.OwnedShellCount--;
             //_flame?.Destroy();
             _loopingSound?.Stop();
             _loopingSound?.Dispose();

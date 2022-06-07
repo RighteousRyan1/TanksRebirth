@@ -30,6 +30,7 @@ namespace TanksRebirth.GameContent.Systems
             ["AiCompanion"] = false,
             ["Shotguns"] = false,
             ["Predictions"] = false,
+            ["RandomPlayer"] = false
         };
     }
 }

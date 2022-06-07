@@ -259,7 +259,7 @@ namespace TanksRebirth.GameContent.UI
 
         private static void HandleBackButton()
         {
-            if (MainMenu.MenuState == MainMenu.State.CosmeticMenu)
+            if (MainMenu.MenuState == MainMenu.State.Cosmetics)
                 MainMenu.MenuState = MainMenu.State.PlayList;
             if (VolumeButton.IsVisible && !MainMenu.Active)
             {

@@ -20,6 +20,7 @@ namespace TanksRebirth.GameContent
         public Tank Owner;
 
         public Vector2 Position;
+        private Vector2 _oldPosition;
 
         public Matrix View;
         public Matrix Projection;
@@ -43,6 +44,8 @@ namespace TanksRebirth.GameContent
         public readonly int DetonateTimeMax;
 
         private bool _tickRed;
+
+        public bool IsNearDestructibles { get; private set; }
 
         /// <summary>The radius of this <see cref="Mine"/>'s explosion.</summary>
         public float ExplosionRadius;
@@ -99,7 +102,7 @@ namespace TanksRebirth.GameContent
             expl.ShrinkRate = 0.5f;
 
             if (Owner != null)
-                Owner.Properties.OwnedMineCount--;
+                Owner.OwnedMineCount--;
 
             Remove();
         }
@@ -136,13 +139,15 @@ namespace TanksRebirth.GameContent
                 }
             }
 
+            if (Position != _oldPosition) // magicqe number
+                IsNearDestructibles = Block.AllBlocks.Any(b => b != null && Position.Distance(b.Position) <= ExplosionRadius - 6f && b.IsDestructible);
             List<Tank> tanksNear = new();
 
             if (DetonateTime > MineReactTime)
             {
                 foreach (var tank in GameHandler.AllTanks)
                 {
-                    if (tank is not null && Vector2.Distance(tank.Properties.Position, Position) < ExplosionRadius * 0.8f)
+                    if (tank is not null && Vector2.Distance(tank.Position, Position) < ExplosionRadius * 0.8f)
                     {
                         tanksNear.Add(tank);
                     }
@@ -150,11 +155,13 @@ namespace TanksRebirth.GameContent
                 if (!tanksNear.Any(tnk => tnk == Owner) && tanksNear.Count > 0)
                     DetonateTime = MineReactTime;
             }
+
+            _oldPosition = Position;
         }
 
         internal void Render()
         {
-            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"Det: {DetonateTime}/{DetonateTimeMax}", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 20), 1, centered: true);
+            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"Det: {DetonateTime}/{DetonateTimeMax}\nNearDestructibles: {IsNearDestructibles}", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 20), 1, centered: true);
             for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++)
             {
                 foreach (ModelMesh mesh in Model.Meshes)
