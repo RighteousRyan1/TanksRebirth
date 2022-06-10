@@ -9,9 +9,45 @@ using FontStashSharp;
 
 namespace TanksRebirth.Internals.Common.Utilities
 {
+    public enum Aligning
+    {
+        TopLeft,
+        TopRight,
+        BottomLeft,
+        BottomRight,
+        TopCenter,
+        BottomCenter,
+        Center,
+        LeftCenter,
+        RightCenter,
+    }
     public static class GameUtils
     {
-
+        public static Vector2 GetAligning(this Aligning a, Vector2 vector)
+        {
+            switch (a)
+            {
+                case Aligning.TopLeft:
+                    return Vector2.Zero;
+                case Aligning.TopRight:
+                    return new(vector.X, 0);
+                case Aligning.BottomLeft:
+                    return new(0, vector.Y);
+                case Aligning.BottomRight:
+                    return new(vector.X, vector.Y);
+                case Aligning.LeftCenter:
+                    return new(0, vector.Y / 2);
+                    case Aligning.RightCenter:
+                    return new(vector.X, vector.Y / 2);
+                case Aligning.Center:
+                    return new(vector.X  /2 , vector.Y / 2);
+                case Aligning.TopCenter:
+                    return new(vector.X / 2, 0);
+                case Aligning.BottomCenter:
+                    return new(vector.X / 2, vector.Y);
+            }
+            return default;
+        }
         public static float Distance_WiiTanksUnits(Vector2 position, Vector2 endPoint)
         {
             return Vector2.Distance(position, endPoint) / 0.7f;

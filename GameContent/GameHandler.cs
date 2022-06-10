@@ -49,6 +49,8 @@ namespace TanksRebirth.GameContent
 
         public static Logger ClientLog { get; set;  }
 
+        public static XpBar Xp;
+
         public static Matrix UIMatrix => Matrix.CreateOrthographicOffCenter(0, TankGame.Instance.GraphicsDevice.Viewport.Width, TankGame.Instance.GraphicsDevice.Viewport.Height, 0, -1, 1);
 
         private static bool _wasOverhead;
@@ -142,7 +144,8 @@ namespace TanksRebirth.GameContent
         internal static void UpdateAll()
         {
             // technically, level 0 in code is level 1, so we want to use that number (1) if the user is level 0.
-
+            if (Xp is not null)
+                Xp.Value = TankGame.GameData.ExpLevel - MathF.Floor(TankGame.GameData.ExpLevel);
             VanillaAchievements.Repository.UpdateCompletions();
             var floor1 = MathF.Floor(TankGame.GameData.ExpLevel + 1f);
             var floor0 = MathF.Floor(TankGame.GameData.ExpLevel);
@@ -455,6 +458,8 @@ namespace TanksRebirth.GameContent
         {
             TankGame.Instance.GraphicsDevice.BlendState = BlendState.AlphaBlend;
 
+            Xp?.Render(TankGame.SpriteRenderer, new(GameUtils.WindowWidth / 2, 50), new(100, 20), Aligning.Center, Color.Red, Color.Lime);
+
             if (!MainMenu.Active)
                 MapRenderer.RenderWorldModels();
 
@@ -553,7 +558,7 @@ namespace TanksRebirth.GameContent
             {
                 if (IntermissionSystem.IsAwaitingNewMission)
                 {
-                    
+                    // uhhh... what was i doing here?
                 }
                 for (int i = -4; i < 10; i++)
                 {

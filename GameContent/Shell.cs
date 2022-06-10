@@ -9,6 +9,7 @@ using TanksRebirth.GameContent.GameMechanics;
 using TanksRebirth.GameContent.Properties;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
+using TanksRebirth.Internals.Common.Framework;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Utilities;
 
@@ -58,7 +59,9 @@ namespace TanksRebirth.GameContent
         private SoundEffectInstance _shootSound;
 
         /// <summary>The hurtbox on the 2D backing map for the game.</summary>
-        public Rectangle Hitbox;
+        public Rectangle Hitbox => new((int)(Position2D.X - 2), (int)(Position2D.Y - 2), 4, 4);
+        /// <summary>The hurtcircle on the 2D backing map for the game.</summary>
+        public Circle HitCircle => new() { Center = Position2D, Radius = 4 };
         /// <summary>Whether or not this shell should emit flames from behind it.</summary>
         public bool Flaming { get; set; }
         public bool LeavesTrail { get; set; }
@@ -156,8 +159,6 @@ namespace TanksRebirth.GameContent
                 * Matrix.CreateTranslation(Position);
             Projection = TankGame.GameProjection;
             View = TankGame.GameView;
-
-            Hitbox = new((int)(Position2D.X - 2), (int)(Position2D.Y - 2), 4, 4);
 
             if (!GameProperties.InMission)
                 return;
@@ -534,7 +535,7 @@ namespace TanksRebirth.GameContent
             {
                 if (tank is not null)
                 {
-                    if (tank.CollisionBox2D.Intersects(Hitbox))
+                    if (tank.CollisionCircle.Intersects(HitCircle))
                     {
                         if (!CanFriendlyFire)
                         {

@@ -233,8 +233,10 @@ namespace TanksRebirth.GameContent
         public TankTeam Team { get; set; }
         /// <summary>The rotation of this <see cref="Tank"/>'s barrel. Generally should not be modified in a player context.</summary>>
         public BoundingBox Worldbox { get; set; }
-        /// <summary>The 2D hitbox of this <see cref="Tank"/>.</summary>
-        public Rectangle CollisionBox2D => new((int)(Position.X - TNK_WIDTH / 2 + 3), (int)(Position.Y - TNK_WIDTH / 2 + 2), (int)TNK_WIDTH - 8, (int)TNK_HEIGHT - 4);
+        /// <summary>The 2D circle-represented hitbox of this <see cref="Tank"/>.</summary>
+        public Circle CollisionCircle => new() { Center = Position, Radius = TNK_WIDTH / 2 };
+        /// <summary>The 2D rectangle-represented hitbox of this <see cref="Tank"/>.</summary>
+        public Rectangle CollisionBox => new((int)(Position.X - TNK_WIDTH / 2 + 3), (int)(Position.Y - TNK_WIDTH / 2 + 2), (int)TNK_WIDTH - 8, (int)TNK_HEIGHT - 4);
         /// <summary>How many times the <see cref="Shell"/> this <see cref="Tank"/> shoots can ricochet.</summary>
         public int OwnedShellCount { get; internal set; }
         /// <summary>How many <see cref="Mine"/>s this <see cref="Tank"/> owns.</summary>
@@ -430,7 +432,7 @@ namespace TanksRebirth.GameContent
         /// <summary>Get this <see cref="Tank"/>'s general stats.</summary>
         public string GetGeneralStats()
             => $"Pos2D: {Position} | Vel: {Velocity} | Dead: {Dead}";
-        /// <summary>Destroy this <see cref="Tank"/>.</summary>
+        /// <summary>Damage this <see cref="Tank"/>. If it has no armor, <see cref="Destroy"/> it.</summary>
         public virtual void Damage(ITankHurtContext context) {
 
             if (Dead || Properties.Immortal)
@@ -450,6 +452,7 @@ namespace TanksRebirth.GameContent
             else
                 Destroy(context);
         }
+        /// <summary>Destroy this <see cref="Tank"/>.</summary>
         public virtual void Destroy(ITankHurtContext context) {
 
             GameProperties.OnMissionStart -= OnMissionStart;

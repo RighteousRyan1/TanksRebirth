@@ -261,6 +261,8 @@ namespace TanksRebirth.GameContent.UI
         {
             if (MainMenu.MenuState == MainMenu.State.Cosmetics)
                 MainMenu.MenuState = MainMenu.State.PlayList;
+            if (MainMenu.MenuState == MainMenu.State.StatsMenu)
+                MainMenu.MenuState = MainMenu.State.PrimaryMenu;
             if (VolumeButton.IsVisible && !MainMenu.Active)
             {
                 ResumeButton.IsVisible = true;

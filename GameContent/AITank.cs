@@ -1768,7 +1768,8 @@ namespace TanksRebirth.GameContent
                     TankGame.GameData.TankKills[Tier]++;
                     // TankGame.GameData.KillCountsTiers[(int)Tier] = Tier;
 
-                    var gain = BaseExpValue + GameHandler.GameRand.NextFloat(-(BaseExpValue * 0.2f), BaseExpValue * 0.2f) * GameData.UniversalExpMultiplier;
+                    var rand = GameHandler.GameRand.NextFloat(-(BaseExpValue * 0.25f), BaseExpValue * 0.25f);
+                    var gain = (BaseExpValue + rand) * GameData.UniversalExpMultiplier;
                     TankGame.GameData.ExpLevel += gain;
 
                     var p = ParticleSystem.MakeParticle(Position3D + new Vector3(0, 30, 0), $"+{gain:0.00} XP");
@@ -1948,7 +1949,7 @@ namespace TanksRebirth.GameContent
                                 if (GameUtils.Distance_WiiTanksUnits(enemy.Position, pathPos) <= realMiss)
                                     tanks.Add(enemy);
                             }
-                            else if (enemy.CollisionBox2D.Intersects(pathHitbox))
+                            else if (enemy.CollisionBox.Intersects(pathHitbox))
                             {
                                 tanks.Add(enemy);
                             }

@@ -6,12 +6,18 @@ using System.Text;
 using System.Threading.Tasks;
 using TanksRebirth.Achievements;
 using TanksRebirth.Enums;
+using TanksRebirth.GameContent;
+using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.IO
 {
     public class GameData : IFileSerializable
     {
+        public const byte GameDataVersion = 0;
+
+        public bool ReadOutdatedFile;
+
         public string Directory { get; } = TankGame.SaveDirectory;
         public string Name { get; } = "GameData.dat";
 
@@ -65,8 +71,10 @@ namespace TanksRebirth.IO
              */
 
             // writer.Write(_message);
+            writer.Write(GameDataVersion);
 
             writer.Write(TotalKills);
+            writer.Write(BulletKills);
             writer.Write(BounceKills);
             writer.Write(MineKills);
             writer.Write(MissionsCompleted);
@@ -90,7 +98,17 @@ namespace TanksRebirth.IO
 
             // reader.ReadString();
 
+            var vers = reader.ReadByte();
+
+            if (vers != GameDataVersion)
+            {
+                GameHandler.ClientLog.Write($"Loading an outdated {Name}!", LogType.Warn);
+                ReadOutdatedFile = true;
+            }
+            
+
             TotalKills = reader.ReadUInt32();
+            BulletKills = reader.ReadUInt32();
             BounceKills = reader.ReadUInt32();
             MineKills = reader.ReadUInt32();
             MissionsCompleted = reader.ReadUInt32();
@@ -106,6 +124,8 @@ namespace TanksRebirth.IO
             //VanillaAchievements.Repository.Load(reader);
 
             ExpLevel = reader.ReadSingle();
+
+            GameHandler.Xp = new() { MaxValue = 1f, Value = ExpLevel - MathF.Floor(ExpLevel) };
         }
     }
 }

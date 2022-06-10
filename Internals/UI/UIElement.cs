@@ -10,6 +10,7 @@ using TanksRebirth.Internals.Core;
 
 namespace TanksRebirth.Internals.UI
 {
+    // make position stored as a Func<Vector2> so said position is always set, which will make UI adjustment easier.
     public abstract partial class UIElement
     {
         public static int delay;

@@ -30,6 +30,8 @@ namespace TanksRebirth.GameContent
 
         public static Dictionary<TankTier, int> TanksKillDict = new(); // this campaign only!
 
+        public static bool _drawShotPath;
+
         public static int KillCount = 0;
         
         private bool playerControl_isBindPressed;
@@ -47,6 +49,7 @@ namespace TanksRebirth.GameContent
         public static Keybind controlLeft = new("Left", Keys.A);
         public static Keybind controlRight = new("Right", Keys.D);
         public static Keybind controlMine = new("Place Mine", Keys.Space);
+        public static Keybind controlFirePath = new("Draw Shot Path", Keys.Q);
         public static GamepadBind FireBullet = new("Fire Bullet", Buttons.RightTrigger);
         public static GamepadBind PlaceMine = new("Place Mine", Buttons.A);
 
@@ -308,6 +311,8 @@ namespace TanksRebirth.GameContent
         }
         private void ControlHandle_Keybinding()
         {
+            if (controlFirePath.JustPressed)
+                _drawShotPath = !_drawShotPath;
             if (controlMine.JustPressed)
                 LayMine();
 
@@ -427,7 +432,7 @@ namespace TanksRebirth.GameContent
             const int MAX_PATH_UNITS = 10000;
 
             var whitePixel = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
-            var pathPos = Position + new Vector2(0, 0).RotatedByRadians(-TurretRotation);
+            var pathPos = Position + new Vector2(0, 18).RotatedByRadians(-TurretRotation);
             var pathDir = Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi);
             pathDir.Y *= -1;
             pathDir *= Properties.ShellSpeed;
@@ -474,10 +479,14 @@ namespace TanksRebirth.GameContent
                 if (bounces > Properties.RicochetCount)
                     return;
 
+                if (GameHandler.AllTanks.Any(tnk => tnk is not null && tnk.CollisionCircle.Intersects(new Internals.Common.Framework.Circle() { Center = pathPos, Radius = 4 })))
+                    return;
+
                 pathPos += pathDir;
                 // tainicom.Aether.Physics2D.Collision.
                 var pathPosScreen = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(pathPos.X, 11, pathPos.Y), TankGame.GameView, TankGame.GameProjection);
-                TankGame.SpriteRenderer.Draw(whitePixel, pathPosScreen, null, Color.White, 0, whitePixel.Size() / 2, 2 + (float)Math.Sin(i * Math.PI / 5 - TankGame.GameUpdateTime * 0.3f), default, default);
+                var off = (float)Math.Sin(i * Math.PI / 5 - TankGame.GameUpdateTime * 0.3f);
+                TankGame.SpriteRenderer.Draw(whitePixel, pathPosScreen, null, (Color.White.ToVector3() * off).ToColor(), 0, whitePixel.Size() / 2, 2 + off, default, default);
             }
         }
 
@@ -579,7 +588,7 @@ namespace TanksRebirth.GameContent
                 SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFontLarge, pText, new(pos.X, pos.Y + (flip ? 100 : -125)), playerColor, Color.White, new(1f), 0f, 2f);
             }
 
-            if (DebugUtils.DebugLevel == 1)
+            if (DebugUtils.DebugLevel == 1 || _drawShotPath)
                 DrawShootPath();
 
             if (Properties.Invisible && GameProperties.InMission)

@@ -176,8 +176,16 @@ namespace TanksRebirth
             GameHandler.ClientLog = new($"{SaveDirectory}", "client");
             try
             {
-                var bytes = WebUtils.DownloadWebFile("https://raw.githubusercontent.com/RighteousRyan1/tanks_rebirth_motds/master/motd.txt", out var name);
-                MOTD = System.Text.Encoding.Default.GetString(bytes);
+                try
+                {
+                    var bytes = WebUtils.DownloadWebFile("https://raw.githubusercontent.com/RighteousRyan1/tanks_rebirth_motds/master/motd.txt", out var name);
+                    MOTD = System.Text.Encoding.Default.GetString(bytes);
+                }
+                catch
+                {
+                    // in the case that an HTTPRequestException is thrown (no internet access)
+                    MOTD = LocalizationRandoms.GetRandomMotd();
+                }
                 // check if platform is windows, mac, or linux
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
@@ -222,13 +230,13 @@ namespace TanksRebirth
 
         private long _memBytes;
 
-        private static Stopwatch _timePlayed = new();
+        public static Stopwatch CurrentSessionTimer = new();
 
         protected override void Initialize()
         {
             try
             {
-                _timePlayed.Start();
+                CurrentSessionTimer.Start();
 
                 GameHandler.MapEvents();
 
@@ -266,8 +274,8 @@ namespace TanksRebirth
 
         protected override void OnExiting(object sender, EventArgs args)
         {
-            GameData.TimePlayed += _timePlayed.Elapsed;
-            _timePlayed.Stop();
+            GameData.TimePlayed += CurrentSessionTimer.Elapsed;
+            CurrentSessionTimer.Stop();
             GameHandler.ClientLog.Dispose();
             SettingsHandler = new(Settings, Path.Combine(SaveDirectory, "settings.json"));
             JsonSerializerOptions opts = new() { WriteIndented = true };
