@@ -68,8 +68,43 @@ namespace TanksRebirth
 
                 if (MainMenu.Active)
                 {
-                    SetDetails($"Browsing the main menu");
-                    SetLargeAsset("tank_ash_large", $"Gaming on version v{TankGame.Instance.GameVersion}");
+                    switch (MainMenu.MenuState)
+                    {
+                        case MainMenu.State.PrimaryMenu:
+                        case MainMenu.State.PlayList:
+                            SetDetails("Browsing the main menu");
+                            break;
+                        case MainMenu.State.StatsMenu:
+                            SetDetails("Looking at their all-time stats");
+                            break;
+                        case MainMenu.State.Options:
+                            SetDetails("Making things juuuust right");
+                            break;
+                        case MainMenu.State.Difficulties:
+                            var count = Difficulties.Types.Count(diff => diff.Value);
+
+                            
+                            SetDetails($"Challenging themselves with {count} {(count == 1 ? "difficulty" : "difficulties")}");
+                            break;
+                        case MainMenu.State.Cosmetics:
+                            SetDetails("Testing their luck");
+                            break;
+                        case MainMenu.State.Mulitplayer:
+                            if (Net.Server.serverNetManager is not null)
+                                SetDetails($"In a multiplayer lobby '{Net.NetPlay.CurrentServer.Name}' ({Net.Server.serverNetManager.ConnectedPeersCount}/{Net.Server.MaxClients})");
+                            else
+                                SetDetails("Creating a multiplayer server");
+                            break;
+                        case MainMenu.State.Campaigns:
+                            // subtract one because "Freeplay" counts as a campaign, even though it really isn't
+                            SetDetails($"Choosing one of their {MainMenu.campaignNames.Count - 1} campaigns to play");
+                            break;
+                        default:
+                            SetDetails($"Browsing the main menu");
+                            break;
+                    }
+
+                    SetLargeAsset("tank_ash_large", $"v{TankGame.Instance.GameVersion}");
                 }
                 else
                 {

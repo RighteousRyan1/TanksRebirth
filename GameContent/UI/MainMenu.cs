@@ -34,6 +34,7 @@ namespace TanksRebirth.GameContent.UI
         public static bool Active { get; private set; } = true;
 
         private static Music Theme;
+        private static bool _musicFading;
 
         private static List<Tank> tanks = new();
 
@@ -89,21 +90,17 @@ namespace TanksRebirth.GameContent.UI
 
         public static UITextButton MasterModBuff;
         public static UITextButton MarbleModBuff;
-
         public static UITextButton MachineGuns;
-
         public static UITextButton RandomizedTanks;
-
         public static UITextButton ThunderMode;
-
         public static UITextButton ThirdPerson;
-
         public static UITextButton AiCompanion;
         public static UITextButton Shotguns;
-
         public static UITextButton Predictions;
 
         public static UITextButton RandomizedPlayer;
+        public static UITextButton BulletBlocking;
+
         #endregion
 
         private static float _tnkSpeed = 2.4f;
@@ -125,13 +122,16 @@ namespace TanksRebirth.GameContent.UI
         public static RenderableCrate Crate;
 
         private static int _spinCd = 30;
-        private static float _spinOffset;
+        private static float _spinOffset; // shut up IDE pls CS0649 bs
 
         private static float _spinTarget;
 
         //private static float _spinMod = 0.001f;
         //private static float _spinLenience = 1.5f;
-        private static float _spinSpeed = 0.1f;
+        private static float _bpm = 75;
+        private static float _rotationBpm = 500; // more? (200 default)
+        private static float _sclMax = 50; // 250 default
+        private static float _rotDelta = 5; // 300 usually?
 
         // not always properly set, fix later
         // this code is becoming so shit i want to vomit but i don't know any better
@@ -410,8 +410,12 @@ namespace TanksRebirth.GameContent.UI
         {
             LogoPosition = new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 4);
 
-            LogoRotation = MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalMilliseconds / 200) / 300 + _spinOffset;
-            LogoScale = MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalMilliseconds / 250) / 250 + _sclOffset;
+            //_bpm = GameUtils.MousePosition.Y / GameUtils.WindowHeight * 1000;
+            //_sclMax = GameUtils.MousePosition.X / GameUtils.WindowWidth * 1000;
+            // _rotDelta = GameUtils.MousePosition.Y / GameUtils.WindowHeight * 1000;
+
+            LogoRotation = MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalMilliseconds / _rotationBpm) / _rotDelta + _spinOffset;
+            LogoScale = MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalMilliseconds / _bpm) / _sclMax + _sclOffset;
 
             if (_sclOffset < _sclApproach)
                 _sclOffset += _sclAcc;
@@ -611,6 +615,15 @@ namespace TanksRebirth.GameContent.UI
                 OnLeftClick = (elem) => Difficulties.Types["RandomPlayer"] = !Difficulties.Types["RandomPlayer"]
             };
             RandomizedPlayer.SetDimensions(800, 300, 300, 40);
+
+            BulletBlocking = new("Bullet Blocking", font, Color.White)
+            {
+                IsVisible = false,
+                Tooltip = "Enemies *attempt* to block your bullets." +
+                "\nIt doesn't always work, sometimes even killing teammates.\nHigh fire-rate enemies are mostly affected.",
+                OnLeftClick = (elem) => Difficulties.Types["BulletBlocking"] = !Difficulties.Types["BulletBlocking"]
+            };
+            BulletBlocking.SetDimensions(800, 350, 300, 40);
         }
         private static void SetCampaignDisplay()
         {
@@ -699,9 +712,7 @@ namespace TanksRebirth.GameContent.UI
 
                         GameProperties.ShouldMissionsProgress = true;
 
-                    // GameHandler.LoadedCampaign.LoadMission(20);
-
-                    // Leave();
+                        _musicFading = true;
 
                         IntermissionSystem.SetTime(600);
                     };
@@ -770,6 +781,7 @@ namespace TanksRebirth.GameContent.UI
             Shotguns.IsVisible = visible;
             Predictions.IsVisible = visible;
             RandomizedPlayer.IsVisible = visible;
+            BulletBlocking.IsVisible = visible;
         }
         internal static void SetPrimaryMenuButtonsVisibility(bool visible)
         {
@@ -870,8 +882,15 @@ namespace TanksRebirth.GameContent.UI
             Shotguns.Color = Difficulties.Types["Shotguns"] ? Color.Lime : Color.Red;
             Predictions.Color = Difficulties.Types["Predictions"] ? Color.Lime : Color.Red;
             RandomizedPlayer.Color = Difficulties.Types["RandomPlayer"] ? Color.Lime : Color.Red;
+            BulletBlocking.Color = Difficulties.Types["BulletBlocking"] ? Color.Lime : Color.Red;
 
-            Theme.Volume = TankGame.Settings.MusicVolume;
+            if (_musicFading)
+            {
+                if (Theme.Volume > 0)
+                    Theme.Volume -= 0.0075f;
+            }
+            else
+                Theme.Volume = TankGame.Settings.MusicVolume;
 
             foreach (var tnk in tanks)
             {
@@ -918,11 +937,12 @@ namespace TanksRebirth.GameContent.UI
 
         public static void Open()
         {
+            _musicFading = false;
             _sclOffset = 0;
             MenuState = State.PrimaryMenu;
             Active = true;
             GameUI.Paused = false;
-            Theme.Volume = 0.5f;
+            Theme.Volume = TankGame.Settings.MusicVolume;
             Theme.Play();
 
             foreach (var block in Block.AllBlocks)

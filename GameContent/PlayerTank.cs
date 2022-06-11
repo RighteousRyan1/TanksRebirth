@@ -76,6 +76,12 @@ namespace TanksRebirth.GameContent
                 _tankColorTexture = Assets[$"tank_" + copyTier.ToString().ToLower()];
                 var dummy = new AITank(copyTier, default, true);
 
+                // ugly hardcode fix lol - prevents nantuple instead of triple bounces
+                // TODO: should probably be written better
+
+                if (Difficulties.Types["BulletHell"])
+                    dummy.Properties.RicochetCount /= 3;
+
                 Properties = dummy.Properties;
 
                 dummy.Remove();
@@ -150,15 +156,21 @@ namespace TanksRebirth.GameContent
             // 3/4pi = left
             base.Update();
 
-            CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation);
+            CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
             Model.Root.Transform = World;
 
             Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
 
             if (TargetTankRotation - TankRotation >= MathHelper.PiOver2)
+            {
                 TankRotation += MathHelper.Pi;
+                Flip = !Flip;
+            }
             else if (TargetTankRotation - TankRotation <= -MathHelper.PiOver2)
+            {
                 TankRotation -= MathHelper.Pi;
+                Flip = !Flip;
+            }
 
             if (IsIngame)
             {

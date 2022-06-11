@@ -95,7 +95,12 @@ namespace TanksRebirth.GameContent
     {
         public static List<IAudio> AllMusic { get; } = new();
 
-        public float Volume { get; set; }
+        private float _volume;
+        public float Volume
+        {
+            get => _volume;
+            set => _volume = MathHelper.Clamp(value, 0, 1);
+        }
 
         public MusicState State { get; set; }
 
@@ -129,7 +134,7 @@ namespace TanksRebirth.GameContent
         /// Plays the <see cref="Track"/>.
         /// </summary>
         public void Play() {
-            Track.Volume = Volume;
+            Track.Volume = _volume;
             Track?.Play();
             OnBegin?.Invoke(this, new());
         }
@@ -152,7 +157,7 @@ namespace TanksRebirth.GameContent
         }
 
         public void Update() {
-            Track.Volume = Volume;
+            Track.Volume = _volume;
             if (Volume > MaxVolume)
                 Volume = MaxVolume;
 

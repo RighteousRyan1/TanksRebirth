@@ -1659,6 +1659,9 @@ namespace TanksRebirth.GameContent
                 AiParams.Inaccuracy *= 4;
             }
 
+            if (Difficulties.Types["BulletBlocking"])
+                AiParams.DeflectsBullets = true;
+
             if (Difficulties.Types["Armored"])
             {
                 if (properties.Armor is null)
@@ -1695,7 +1698,7 @@ namespace TanksRebirth.GameContent
         {
             base.Update();
 
-            CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation);
+            CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
 
             if (Tier == TankTier.Commando)
             {
@@ -2440,9 +2443,15 @@ namespace TanksRebirth.GameContent
                         {
                             // var real = TankRotation + MathHelper.PiOver2;
                             if (targ - TankRotation >= MathHelper.PiOver2)
+                            {
                                 TankRotation += MathHelper.Pi;
+                                Flip = !Flip;
+                            }
                             else if (targ - TankRotation <= -MathHelper.PiOver2)
+                            {
                                 TankRotation -= MathHelper.Pi;
+                                Flip = !Flip;
+                            }
                         }
 
                         if (TankRotation > targ - Properties.MaximalTurn - MathHelper.ToRadians(5) && TankRotation < targ + Properties.MaximalTurn + MathHelper.ToRadians(5))

@@ -305,26 +305,29 @@ namespace TanksRebirth.GameContent
                     }
                 }
             }
-            
-            if (Difficulties.Types["BulletHell"])
-                Properties.RicochetCount *= 3;
-            if (Difficulties.Types["MachineGuns"])
-            {
-                Properties.ShellCooldown = 5;
-                Properties.ShellLimit = 50;
-                Properties.ShootStun = 0;
 
-                if (this is AITank tank)
-                    tank.AiParams.Inaccuracy *= 2;
-            }
-            if (Difficulties.Types["Shotguns"])
+            if (IsIngame)
             {
-                Properties.ShellSpread = 0.3f;
-                Properties.ShellShootCount = 3;
-                Properties.ShellLimit *= 3;
+                if (Difficulties.Types["BulletHell"])
+                    Properties.RicochetCount *= 3;
+                if (Difficulties.Types["MachineGuns"])
+                {
+                    Properties.ShellCooldown = 5;
+                    Properties.ShellLimit = 50;
+                    Properties.ShootStun = 0;
 
-                if (this is AITank tank)
-                    tank.AiParams.Inaccuracy *= 2;
+                    if (this is AITank tank)
+                        tank.AiParams.Inaccuracy *= 2;
+                }
+                if (Difficulties.Types["Shotguns"])
+                {
+                    Properties.ShellSpread = 0.3f;
+                    Properties.ShellShootCount = 3;
+                    Properties.ShellLimit *= 3;
+
+                    if (this is AITank tank)
+                        tank.AiParams.Inaccuracy *= 2;
+                }
             }
 
             GameProperties.OnMissionStart += OnMissionStart;
@@ -385,6 +388,7 @@ namespace TanksRebirth.GameContent
             }
         }
 
+        public bool Flip;
         /// <summary>Update this <see cref="Tank"/>.</summary>
         public virtual void Update()
         {
@@ -392,7 +396,7 @@ namespace TanksRebirth.GameContent
 
             Body.LinearVelocity = Velocity * 0.55f;
 
-            World = Matrix.CreateFromYawPitchRoll(-TankRotation, 0, 0)
+            World = Matrix.CreateFromYawPitchRoll(-TankRotation + (Flip ? MathHelper.Pi : 0f), 0, 0)
                 * Matrix.CreateTranslation(Position3D);
 
             if (IsIngame)
