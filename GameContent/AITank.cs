@@ -214,7 +214,7 @@ namespace TanksRebirth.GameContent
         /// <param name="tier">The tier of this <see cref="AITank"/>. If '<see cref="TankTier.Random"/>', it will be randomly chosen.</param>
         /// <param name="setTankDefaults">Whether or not to give this <see cref="AITank"/> the default values.</param>
         /// /// <param name="isIngame">Whether or not this <see cref="AITank"/> is a gameplay tank or a cosmetic tank (i.e: display models on menus, etc).</param>
-        public AITank(TankTier tier, Range<TankTier> tankRange = default, bool setTankDefaults = true, bool isIngame = true)
+        public AITank(TankTier tier, Range<TankTier> tankRange = default, bool setTankDefaults = true, bool isIngame = true, bool isRandomizable = true)
         {
             if (isIngame)
             {
@@ -232,8 +232,9 @@ namespace TanksRebirth.GameContent
                     tankRange = new Range<TankTier>(TankTier.Brown, TankTier.Marble); // set to commando when the time comes
                 }
             }
-            if (tier == TankTier.Random)
-                tier = (TankTier)GameHandler.GameRand.Next((int)tankRange.Min, (int)tankRange.Max + 1);
+            if (isRandomizable)
+                if (tier == TankTier.Random)
+                    tier = (TankTier)GameHandler.GameRand.Next((int)tankRange.Min, (int)tankRange.Max + 1);
             IsIngame = isIngame;
             if (isIngame)
             {
@@ -261,14 +262,7 @@ namespace TanksRebirth.GameContent
                 Dead = true;
             }
 
-            /*if ((int)tier <= (int)TankTier.Black)
-                _tankTexture = GameResources.GetGameResource<Texture2D>($"Assets/textures/tank/tank_{tier.ToString().ToLower()}");
-            else if ((int)tier > (int)TankTier.Black && (int)tier <= (int)TankTier.Obsidian)
-                _tankTexture = GameResources.GetGameResource<Texture2D>($"Assets/textures/tank/master/tank_{tier.ToString().ToLower()}");
-            else if ((int)tier > (int)TankTier.Obsidian && (int)tier <= (int)TankTier.Marble)
-                _tankTexture = GameResources.GetGameResource<Texture2D>($"Assets/textures/tank/marble/tank_{tier.ToString().ToLower()}");*/
-
-            if ((int)tier <= (int)TankTier.Marble)
+            if (tier <= TankTier.Marble)
                 _tankTexture = Assets[$"tank_" + tier.ToString().ToLower()];
             
             #region Special
@@ -318,13 +312,10 @@ namespace TanksRebirth.GameContent
             _shadowTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank_shadow");
 
             Tier = tier;
-            if (isIngame)
-            {
 
-                if (setTankDefaults)
-                    ApplyDefaults(ref Properties);
+            if (setTankDefaults)
+                ApplyDefaults(ref Properties);
 
-            }
             int index = Array.IndexOf(GameHandler.AllAITanks, GameHandler.AllAITanks.First(tank => tank is null));
 
             AITankId = index;
@@ -1769,17 +1760,19 @@ namespace TanksRebirth.GameContent
                     }
 
                     TankGame.GameData.TankKills[Tier]++;
-                    // TankGame.GameData.KillCountsTiers[(int)Tier] = Tier;
 
+                    // add slight variation in XP gain.
                     var rand = GameHandler.GameRand.NextFloat(-(BaseExpValue * 0.25f), BaseExpValue * 0.25f);
-                    var gain = (BaseExpValue + rand) * GameData.UniversalExpMultiplier;
+                    var gain = BaseExpValue + rand;
+                    // i will keep this commented if anything else happens.
+                    //var gain = (BaseExpValue + rand) * GameData.UniversalExpMultiplier;
                     TankGame.GameData.ExpLevel += gain;
 
-                    var p = ParticleSystem.MakeParticle(Position3D + new Vector3(0, 30, 0), $"+{gain:0.00} XP");
+                    var p = ParticleSystem.MakeParticle(Position3D + new Vector3(0, 30, 0), $"+{gain * 100:0.00} XP");
 
                     p.Scale = new(0.5f);
                     p.Roll = MathHelper.Pi;
-                    p.Origin2D = TankGame.TextFont.MeasureString($"+{gain:0.00} XP") / 2;
+                    p.Origin2D = TankGame.TextFont.MeasureString($"+{gain * 100:0.00} XP") / 2;
 
                     p.UniqueBehavior = (p) =>
                     {
@@ -1791,8 +1784,6 @@ namespace TanksRebirth.GameContent
                             p.Destroy();
                     };
                 }
-
-
             }
             else
             {

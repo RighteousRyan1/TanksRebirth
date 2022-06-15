@@ -31,7 +31,8 @@ namespace TanksRebirth.GameContent.Systems
             ["Shotguns"] = false,
             ["Predictions"] = false,
             ["RandomPlayer"] = false,
-            ["BulletBlocking"] = false
+            ["BulletBlocking"] = false,
+            ["FFA"] = false
         };
     }
 }

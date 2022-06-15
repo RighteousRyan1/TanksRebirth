@@ -27,12 +27,22 @@ namespace TanksRebirth.Achievements
             new("Now you see me...", "Destroy 100 White Tanks.", () => TankGame.GameData.TankKills[TankTier.White] >= 100),
             new("Conquering the World", "Destroy 100 Black Tanks.", () => TankGame.GameData.TankKills[TankTier.Black] >= 100),
 
+            new("Lesser Child Abuse", "Destroy 100 Bronze Tanks", () => TankGame.GameData.TankKills[TankTier.Bronze] >= 100),
+            new("It's no Use!", "Destroy 100 Silver Tanks", () => TankGame.GameData.TankKills[TankTier.Silver] >= 100),
+            new("Gemmin' it up", "Destroy 100 Sapphire Tanks", () => TankGame.GameData.TankKills[TankTier.Sapphire] >= 100),
+            new("The Glint in your Eye", "Destroy 100 Ruby Tanks", () => TankGame.GameData.TankKills[TankTier.Ruby] >= 100),
+            new("Fast and Furious", "Destroy 100 Citrine Tanks", () => TankGame.GameData.TankKills[TankTier.Citrine] >= 100),
+            new("Purple Pain", "Destroy 100 Amethyst Tanks", () => TankGame.GameData.TankKills[TankTier.Amethyst] >= 100),
+            new("Perfect for Trading", "Destroy 100 Emerald Tanks", () => TankGame.GameData.TankKills[TankTier.Emerald] >= 100),
+            new("Found You!", "Destroy 100 Gold Tanks", () => TankGame.GameData.TankKills[TankTier.Gold] >= 100),
+            new("Unbreakable Will", "Destroy 100 Obsidian Tanks", () => TankGame.GameData.TankKills[TankTier.Obsidian] >= 100),
+
             new("Will you be mine?", "Kill 100 Tanks with mines.", () => TankGame.GameData.MineKills >= 100),
             new("Simple Geometry", "Destroy 100 tanks with bullets that have ricocheted at least once.", () => TankGame.GameData.BounceKills >= 100),
 
             new("Playing with fire", "Encounter a Marine tank, a tank with fast, flame-trailed bullets."),
             new("Double Whammy", "Encounter a Green tank, a tank that can precisely calculate double bounces."),
-            new("Camoflague", "Encounter a White tank, a tank which can go invisible and sneak up on you."),
+            new("Camouflage", "Encounter a White tank, a tank which can go invisible and sneak up on you."),
             new("Black Attack!", "Encounter a Black tank, a tank which goes fast, shoots fast, and dodges bullets well."),
 
             new("Doomed to failure", "Destroy yourself with your own mine."),
@@ -40,7 +50,9 @@ namespace TanksRebirth.Achievements
             new("Beyond Saving", "Destroy yourself with your own bullet... 10 times."),
             new("Soldier in disguise", "Destroy a tank with a bullet that traveled through a teleporter."),
 
-            new("See through the dragon's eyes", "Complete a campaign in third-person mode.")
+            new("See through the dragon's eyes", "Complete a campaign in third-person mode."),
+
+            new("You found me!", "It's a secret... Shhh...."), // uh, click title logo
 
             // get some new ideas later normie
         };

@@ -39,9 +39,9 @@ namespace TanksRebirth.GameContent
         public AITank GetAiTank()
         {
             if (IsPlayer)
-                throw new Exception($"{nameof(PlayerType)} was true. This method cannot execute.");
+                throw new Exception($"{nameof(IsPlayer)} was true. This method cannot execute.");
 
-            var ai = new AITank(AiTier, default, true, true);
+            var ai = new AITank(AiTier);
             ai.Body.Position = Position;
             ai.Position = Position;
             return ai;
@@ -49,7 +49,7 @@ namespace TanksRebirth.GameContent
         public PlayerTank GetPlayerTank()
         {
             if (!IsPlayer)
-                throw new Exception($"{nameof(PlayerType)} was false. This method cannot execute.");
+                throw new Exception($"{nameof(IsPlayer)} was false. This method cannot execute.");
 
             var player = Difficulties.Types["RandomPlayer"] ? new PlayerTank(PlayerType, false, AITank.PickRandomTier()) : new PlayerTank(PlayerType);
             player.Body.Position = Position;
@@ -261,7 +261,7 @@ namespace TanksRebirth.GameContent
 
         public List<ICosmetic> Cosmetics = new();
         /// <summary>Apply all the default parameters for this <see cref="Tank"/>.</summary>
-        public virtual void ApplyDefaults(ref TankProperties properties) { this.Properties = properties; }
+        public virtual void ApplyDefaults(ref TankProperties properties) { Properties = properties; }
 
         public virtual void Initialize()
         {
@@ -334,6 +334,8 @@ namespace TanksRebirth.GameContent
         }
         void OnMissionStart()
         {
+            if (Difficulties.Types["FFA"])
+                Team = TankTeam.NoTeam;
             if (Properties.Invisible && !Dead)
             {
                 var invis = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_invisible");
@@ -464,14 +466,23 @@ namespace TanksRebirth.GameContent
             OnDestroy?.Invoke(this, new());
             var killSound1 = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_destroy");
             SoundPlayer.PlaySoundInstance(killSound1, SoundContext.Effect, 0.2f);
-            if (this is AITank)
+            if (this is AITank t)
             {
                 var killSound2 = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_destroy_enemy");
                 SoundPlayer.PlaySoundInstance(killSound2, SoundContext.Effect, 0.3f);
 
-                new TankDeathMark(TankDeathMark.CheckColor.White)
+                var dm = new TankDeathMark(TankDeathMark.CheckColor.White)
                 {
-                    Position = Position3D + new Vector3(0, 0.1f, 0)
+                    Position = Position3D + new Vector3(0, 0.1f, 0),
+                };
+
+                dm.StoredTank = new()
+                {
+                    AiTier = t.Tier,
+                    IsPlayer = false,
+                    Position = dm.Position.FlattenZ(),
+                    Rotation = t.TankRotation,
+                    Team = t.Team,
                 };
             }
             else if (this is PlayerTank p)
@@ -483,9 +494,18 @@ namespace TanksRebirth.GameContent
                     _ => throw new Exception()
                 };
 
-                new TankDeathMark(c)
+                var dm = new TankDeathMark(c)
                 {
                     Position = Position3D + new Vector3(0, 0.1f, 0)
+                };
+
+                dm.StoredTank = new()
+                {
+                    IsPlayer = true,
+                    Position = dm.Position.FlattenZ(),
+                    Rotation = p.TankRotation,
+                    Team = p.Team,
+                    PlayerType = p.PlayerType
                 };
             }
 
@@ -922,11 +942,26 @@ namespace TanksRebirth.GameContent
 
         public Texture2D texture;
 
+        public TankTemplate StoredTank;
+
         public enum CheckColor
         {
             Blue,
             Red,
             White
+        }
+        /// <summary>Resurrects <see cref="StoredTank"/>.</summary>
+        public void ResurrectTank()
+        {
+            // FIXME: gonna be real... i have no clue why this makes tank become invincible.
+            if (StoredTank.IsPlayer)
+            {
+                StoredTank.GetPlayerTank();
+            }
+            else
+            {
+                StoredTank.GetAiTank();
+            }
         }
 
         public TankDeathMark(CheckColor color)

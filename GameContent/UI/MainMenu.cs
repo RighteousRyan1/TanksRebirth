@@ -101,6 +101,8 @@ namespace TanksRebirth.GameContent.UI
         public static UITextButton RandomizedPlayer;
         public static UITextButton BulletBlocking;
 
+        public static UITextButton FFA;
+
         #endregion
 
         private static float _tnkSpeed = 2.4f;
@@ -624,6 +626,14 @@ namespace TanksRebirth.GameContent.UI
                 OnLeftClick = (elem) => Difficulties.Types["BulletBlocking"] = !Difficulties.Types["BulletBlocking"]
             };
             BulletBlocking.SetDimensions(800, 350, 300, 40);
+
+            FFA = new("Free-for-all", font, Color.White)
+            {
+                IsVisible = false,
+                Tooltip = "Every tank is on their own!",
+                OnLeftClick = (elem) => Difficulties.Types["FFA"] = !Difficulties.Types["FFA"]
+            };
+            FFA.SetDimensions(800, 400, 300, 40);
         }
         private static void SetCampaignDisplay()
         {
@@ -674,7 +684,8 @@ namespace TanksRebirth.GameContent.UI
                         $"\nStarting Lives: {campaign.Properties.StartingLives}" +
                         $"\nBonus Life Count: {campaign.Properties.ExtraLivesMissions.Length}" +
                         // display all tags in a string
-                        $"\nTags: {string.Join(", ", campaign.Properties.Tags)}",
+                        $"\nTags: {string.Join(", ", campaign.Properties.Tags)}" +
+                        $"\n\nRight click to DELETE ME."
                     };
                     elem.SetDimensions(700, 100 + offset, 300, 40);
                     //elem.HasScissor = true;
@@ -715,6 +726,15 @@ namespace TanksRebirth.GameContent.UI
                         _musicFading = true;
 
                         IntermissionSystem.SetTime(600);
+                    };
+                    elem.OnRightClick += (el) =>
+                    {
+                        var path = Path.Combine(TankGame.SaveDirectory, "Campaigns", elem.Text);
+
+                        foreach (var file in Directory.GetFiles(path))
+                            File.Delete(file);
+                        Directory.Delete(path);
+                        SetCampaignDisplay();
                     };
                     elem.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/menu/menu_tick"), SoundContext.Effect); };
                     campaignNames.Add(elem);
@@ -782,6 +802,7 @@ namespace TanksRebirth.GameContent.UI
             Predictions.IsVisible = visible;
             RandomizedPlayer.IsVisible = visible;
             BulletBlocking.IsVisible = visible;
+            FFA.IsVisible = visible;
         }
         internal static void SetPrimaryMenuButtonsVisibility(bool visible)
         {
@@ -883,6 +904,7 @@ namespace TanksRebirth.GameContent.UI
             Predictions.Color = Difficulties.Types["Predictions"] ? Color.Lime : Color.Red;
             RandomizedPlayer.Color = Difficulties.Types["RandomPlayer"] ? Color.Lime : Color.Red;
             BulletBlocking.Color = Difficulties.Types["BulletBlocking"] ? Color.Lime : Color.Red;
+            FFA.Color = Difficulties.Types["FFA"] ? Color.Lime : Color.Red;
 
             if (_musicFading)
             {
@@ -1007,7 +1029,7 @@ namespace TanksRebirth.GameContent.UI
 
         public static Tank AddTravelingTank(TankTier tier, float xOffset, float yOffset)
         {
-            var extank = new AITank(tier, default, true, false);
+            var extank = new AITank(tier, default, false, false);
             extank.Team = TankTeam.NoTeam;
             extank.Dead = false;
             extank.Body.Position = new Vector2(-500 + xOffset, yOffset);
@@ -1066,6 +1088,8 @@ namespace TanksRebirth.GameContent.UI
                     RenderCrate();
                 else if (MenuState == State.StatsMenu)
                     RenderStats(new Vector2(GameUtils.WindowWidth * 0.3f, 200), new Vector2(GameUtils.WindowWidth * 0.7f, 40), Aligning.TopCenter);
+                else if (MenuState == State.Difficulties)
+                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "Ideas are welcome! Let us know in our DISCORD server!", new(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 6), Color.White, new Vector2(1f), 0f, GameUtils.GetAligning(Aligning.Center, TankGame.TextFont.MeasureString("Ideas are welcome! Let us know in our DISCORD server!")));
                 #region Various things
                 if ((NetPlay.CurrentServer is not null && (Server.ConnectedClients is not null || NetPlay.ServerName is not null)) || (Client.IsConnected() && Client.lobbyDataReceived))
                 {

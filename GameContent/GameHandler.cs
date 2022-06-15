@@ -146,10 +146,13 @@ namespace TanksRebirth.GameContent
             // technically, level 0 in code is level 1, so we want to use that number (1) if the user is level 0.
             if (Xp is not null)
                 Xp.Value = TankGame.GameData.ExpLevel - MathF.Floor(TankGame.GameData.ExpLevel);
+            else
+                Xp = new();
             VanillaAchievements.Repository.UpdateCompletions();
+            /* uh, yeah. this is the decay-per-level calculation. people don't want it!
             var floor1 = MathF.Floor(TankGame.GameData.ExpLevel + 1f);
             var floor0 = MathF.Floor(TankGame.GameData.ExpLevel);
-            GameData.UniversalExpMultiplier = floor1 - (GameData.DecayPerLevel * floor0);
+            GameData.UniversalExpMultiplier = floor1 - (GameData.DecayPerLevel * floor0);*/
 
             if (Difficulties.Types["InfiniteLives"])
                 PlayerTank.Lives = PlayerTank.StartingLives;

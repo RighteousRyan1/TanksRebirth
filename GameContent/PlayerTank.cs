@@ -74,9 +74,10 @@ namespace TanksRebirth.GameContent
             else
             {
                 _tankColorTexture = Assets[$"tank_" + copyTier.ToString().ToLower()];
-                var dummy = new AITank(copyTier, default, true);
+                var dummy = new AITank(copyTier, default, true, false, false);
 
                 // ugly hardcode fix lol - prevents nantuple instead of triple bounces
+                // maybe inefficient on memory
                 // TODO: should probably be written better
 
                 if (Difficulties.Types["BulletHell"])
@@ -150,6 +151,11 @@ namespace TanksRebirth.GameContent
 
         public override void Update()
         {
+            /*if (Input.KeyJustPressed(Keys.P))
+                foreach (var m in TankDeathMark.deathMarks)
+                    m?.ResurrectTank();*/
+            // FIXME: reference?
+
             // pi/2 = up
             // 0 = down
             // pi/4 = right
