@@ -38,7 +38,7 @@ namespace TanksRebirth.Achievements
                 var achievement = _achievements[i];
                 if (achievement.Requirements.Length > 0)
                 {
-                    if (_achievements[i].Requirements.All(req => req))
+                    if (_achievements[i].Requirements.All(req => req.Invoke()))
                     {
                         _achievements[i].Complete();
                     }

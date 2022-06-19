@@ -295,10 +295,10 @@ namespace TanksRebirth.GameContent.UI
                 TankGame.Settings.ResHeight = GraphicsUI.CurrentRes.Value;
 
 
-                TankGame.Instance.graphics.PreferredBackBufferWidth = TankGame.Settings.ResWidth;
-                TankGame.Instance.graphics.PreferredBackBufferHeight = TankGame.Settings.ResHeight;
+                TankGame.Instance.Graphics.PreferredBackBufferWidth = TankGame.Settings.ResWidth;
+                TankGame.Instance.Graphics.PreferredBackBufferHeight = TankGame.Settings.ResHeight;
 
-                TankGame.Instance.graphics.ApplyChanges();
+                TankGame.Instance.Graphics.ApplyChanges();
 
                 // FIXME: acts weird
                 // TankGame.Instance.CalculateProjection();

@@ -81,7 +81,7 @@ namespace TanksRebirth.GameContent
             LifeTime++;
         }
 
-        public static BasicEffect effect = new(TankGame.Instance.GraphicsDevice);
+        public static BasicEffect EffectHandle = new(TankGame.Instance.GraphicsDevice);
 
         internal void Render()
         {
@@ -89,25 +89,25 @@ namespace TanksRebirth.GameContent
             {
                 var world =
                     Matrix.CreateScale(Scale) * Matrix.CreateRotationX(Roll) * Matrix.CreateRotationY(Pitch) * Matrix.CreateRotationZ(Yaw) * Matrix.CreateTranslation(Position);
-                effect.World = world;
-                effect.View = TankGame.GameView;
-                effect.Projection = TankGame.GameProjection;
-                effect.TextureEnabled = true;
-                effect.Texture = Texture;
-                effect.AmbientLightColor = Color.ToVector3() * GameHandler.GameLight.Brightness;
-                effect.DiffuseColor = Color.ToVector3() * GameHandler.GameLight.Brightness;
-                effect.FogColor = Color.ToVector3() * GameHandler.GameLight.Brightness;
-                effect.EmissiveColor = Color.ToVector3() * GameHandler.GameLight.Brightness;
-                effect.SpecularColor = Color.ToVector3() * GameHandler.GameLight.Brightness;
+                EffectHandle.World = world;
+                EffectHandle.View = TankGame.GameView;
+                EffectHandle.Projection = TankGame.GameProjection;
+                EffectHandle.TextureEnabled = true;
+                EffectHandle.Texture = Texture;
+                EffectHandle.AmbientLightColor = Color.ToVector3() * GameHandler.GameLight.Brightness;
+                EffectHandle.DiffuseColor = Color.ToVector3() * GameHandler.GameLight.Brightness;
+                EffectHandle.FogColor = Color.ToVector3() * GameHandler.GameLight.Brightness;
+                EffectHandle.EmissiveColor = Color.ToVector3() * GameHandler.GameLight.Brightness;
+                EffectHandle.SpecularColor = Color.ToVector3() * GameHandler.GameLight.Brightness;
 
-                effect.Alpha = Opacity;
+                EffectHandle.Alpha = Opacity;
 
-                effect.SetDefaultGameLighting_IngameEntities(LightPower);
+                EffectHandle.SetDefaultGameLighting_IngameEntities(LightPower);
 
-                effect.FogEnabled = false;
+                EffectHandle.FogEnabled = false;
 
                 TankGame.SpriteRenderer.End();
-                TankGame.SpriteRenderer.Begin(SpriteSortMode.Deferred, isAddative ? BlendState.Additive : BlendState.NonPremultiplied, SamplerState.PointWrap, DepthStencilState.DepthRead, TankGame.DefaultRasterizer, effect);
+                TankGame.SpriteRenderer.Begin(SpriteSortMode.Deferred, isAddative ? BlendState.Additive : BlendState.NonPremultiplied, SamplerState.PointWrap, DepthStencilState.DepthRead, TankGame.DefaultRasterizer, EffectHandle);
                 if (!IsText)
                     TankGame.SpriteRenderer.Draw(Texture, Vector2.Zero, TextureCrop, Color * Opacity, Rotation2D, Origin2D != default ? Origin2D : Texture.Size() / 2, TextureScale == int.MinValue ? Scale.X : TextureScale, default, default);
                 else

@@ -8,7 +8,7 @@ namespace TanksRebirth.Achievements
 {
     public class Achievement : IAchievement
     {
-        public bool[] Requirements { get; set; }
+        public Func<bool>[] Requirements { get; set; }
 
         public bool IsComplete { get; set; }
 
@@ -28,10 +28,7 @@ namespace TanksRebirth.Achievements
 
             Description = description;
             
-            Requirements = new bool[requirements.Length];
-
-            for (int i = 0; i < requirements.Length; i++)
-                Requirements[i] = requirements[i].Invoke();
+            Requirements = requirements;
         }
     }
 }

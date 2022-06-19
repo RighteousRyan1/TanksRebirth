@@ -713,7 +713,7 @@ namespace TanksRebirth.GameContent
                     properties.MaxSpeed = 2.4f;
                     properties.Acceleration = 0.3f;
 
-                    properties.ShootPitch = -0.2f;
+                    properties.ShootPitch = -0.2f; // 0.2f
 
                     properties.MineCooldown = 850;
                     properties.MineLimit = 2;

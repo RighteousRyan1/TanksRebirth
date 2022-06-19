@@ -9,8 +9,7 @@ namespace TanksRebirth.Achievements
     public interface IAchievement
     {
         void Complete();
-
-        bool[] Requirements { get; set; }
+        Func<bool>[] Requirements { get; set; }
         bool IsComplete { get; set; }
         string Name { get; set; }
     }

@@ -478,11 +478,6 @@ namespace TanksRebirth.GameContent
             foreach (var bullet in Shell.AllShells)
                 bullet?.Render();
 
-            TankGame.Instance.GraphicsDevice.BlendState = BlendState.Additive;
-            foreach (var expl in Explosion.Explosions)
-                expl?.Render();
-            TankGame.Instance.GraphicsDevice.BlendState = BlendState.NonPremultiplied;
-
             foreach (var mark in TankDeathMark.deathMarks)
                 mark?.Render();
 
@@ -498,6 +493,11 @@ namespace TanksRebirth.GameContent
             if (TankGame.OverheadView)
                 foreach (var sq in PlacementSquare.Placements)
                     sq?.Render();
+
+            TankGame.Instance.GraphicsDevice.BlendState = BlendState.Additive;
+            foreach (var expl in Explosion.Explosions)
+                expl?.Render();
+            TankGame.Instance.GraphicsDevice.BlendState = BlendState.NonPremultiplied;
 
             ParticleSystem.RenderParticles();
             MainMenu.Render();

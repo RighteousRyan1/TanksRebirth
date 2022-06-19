@@ -12,6 +12,7 @@ namespace TanksRebirth.Achievements
         public static AchievementRepository Repository { get; } = new();
 
         private static Achievement[] _achievements = {
+            #region Tank Genocide
             new("Simply a start", "Destroy your first 100 tanks.", () => TankGame.GameData.TotalKills >= 100),
             new("A true warrior", "Destroy 1000 tanks.", () => TankGame.GameData.TotalKills >= 1000),
             new("Genocide", "Destroy 10,000 tanks total.", () => TankGame.GameData.TotalKills >= 10000),
@@ -39,21 +40,46 @@ namespace TanksRebirth.Achievements
 
             new("Will you be mine?", "Kill 100 Tanks with mines.", () => TankGame.GameData.MineKills >= 100),
             new("Simple Geometry", "Destroy 100 tanks with bullets that have ricocheted at least once.", () => TankGame.GameData.BounceKills >= 100),
-
+            #endregion
+            #region Meetups
             new("Playing with fire", "Encounter a Marine tank, a tank with fast, flame-trailed bullets."),
             new("Double Whammy", "Encounter a Green tank, a tank that can precisely calculate double bounces."),
             new("Camouflage", "Encounter a White tank, a tank which can go invisible and sneak up on you."),
             new("Black Attack!", "Encounter a Black tank, a tank which goes fast, shoots fast, and dodges bullets well."),
-
+            #endregion
+            #region Self-Deprecation
             new("Doomed to failure", "Destroy yourself with your own mine."),
             new("Just an accident", "Destroy yourself with your own bullet."),
             new("Beyond Saving", "Destroy yourself with your own bullet... 10 times."),
-            new("Soldier in disguise", "Destroy a tank with a bullet that traveled through a teleporter."),
-
+            new("I teleported bullets... For 3 days!", "Destroy a tank with a bullet that traveled through a teleporter."),
+            #endregion
+            #region Misc
             new("See through the dragon's eyes", "Complete a campaign in third-person mode."),
-
+            #endregion
+            #region Secrets
             new("You found me!", "It's a secret... Shhh...."), // uh, click title logo
-
+            #endregion
+            #region Time Played
+            new("A Good Start", "Play for your first 10 minutes.", 
+                () => TankGame.CurrentSessionTimer.Elapsed + TankGame.GameData.TimePlayed >= TimeSpan.FromMinutes(10)),
+            new("Addicted yet?", "Play for an hour of your life.",
+                () => TankGame.CurrentSessionTimer.Elapsed + TankGame.GameData.TimePlayed >= TimeSpan.FromHours(1)),
+            new("Enjoyment Supreme", "Play for 3 hours.",
+                () => TankGame.CurrentSessionTimer.Elapsed + TankGame.GameData.TimePlayed >= TimeSpan.FromHours(3)),
+            new("Entertainment Value", "Play for 5 hours.",
+                () => TankGame.CurrentSessionTimer.Elapsed + TankGame.GameData.TimePlayed >= TimeSpan.FromHours(5)),
+            new("Please go outside", "Play for 10 hours!",
+                () => TankGame.CurrentSessionTimer.Elapsed + TankGame.GameData.TimePlayed >= TimeSpan.FromHours(10)),
+            #endregion
+            #region Creation!
+            new("The Power of Creation", "Create a campaign."),
+            new("What are these?", "Create a mission."),
+            #endregion
+            #region Blood, Sweat, and Tears
+            new("A winner is you", "Complete the Vanilla campaign."),
+            new("Is winning this easy?", "Complete 5 custom-made campaigns."),
+            new("All your base are belong to us", "Complete 10 custom-made campaigns."),
+            #endregion
             // get some new ideas later normie
         };
 
@@ -63,8 +89,8 @@ namespace TanksRebirth.Achievements
             if (Repository.GetAchievements().Intersect(_achievements).Any())
                 return;
             
-            foreach (var ach in _achievements)
-                Repository.AddAchievement(ach);
+            foreach (var achievement in _achievements)
+                Repository.AddAchievement(achievement);
         }
     }
 }

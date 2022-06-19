@@ -84,8 +84,8 @@ namespace TanksRebirth.GameContent.UI
             VsyncButton.SetDimensions(700, 350, 500, 150);
             VsyncButton.OnLeftClick = (uiElement) =>
             {
-                TankGame.Instance.graphics.SynchronizeWithVerticalRetrace = TankGame.Settings.Vsync = !TankGame.Settings.Vsync;
-                TankGame.Instance.graphics.ApplyChanges();
+                TankGame.Instance.Graphics.SynchronizeWithVerticalRetrace = TankGame.Settings.Vsync = !TankGame.Settings.Vsync;
+                TankGame.Instance.Graphics.ApplyChanges();
             };
 
             //Borderless Window
@@ -106,14 +106,14 @@ namespace TanksRebirth.GameContent.UI
             {
                 if (TankGame.Settings.FullScreen)
                 {
-                    TankGame.Instance.graphics.PreferredBackBufferHeight -= 50;
+                    TankGame.Instance.Graphics.PreferredBackBufferHeight -= 50;
                 }
                 else
                 {
-                    TankGame.Instance.graphics.PreferredBackBufferHeight += 50;
+                    TankGame.Instance.Graphics.PreferredBackBufferHeight += 50;
                 }
-                TankGame.Instance.graphics.IsFullScreen = TankGame.Settings.FullScreen = !TankGame.Settings.FullScreen;
-                TankGame.Instance.graphics.ApplyChanges();
+                TankGame.Instance.Graphics.IsFullScreen = TankGame.Settings.FullScreen = !TankGame.Settings.FullScreen;
+                TankGame.Instance.Graphics.ApplyChanges();
             };
 
             //Resolution

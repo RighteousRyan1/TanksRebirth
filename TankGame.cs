@@ -133,9 +133,9 @@ namespace TanksRebirth
         public static readonly string ExePath = Assembly.GetExecutingAssembly().Location.Replace(@$"\WiiPlayTanksRemake.dll", string.Empty);
         public static SpriteBatch SpriteRenderer;
 
-        public readonly GraphicsDeviceManager graphics;
+        public readonly GraphicsDeviceManager Graphics;
 
-        private static List<IGameSystem> systems = new();
+        // private static List<IGameSystem> systems = new();
 
         public static GameConfig Settings;
 
@@ -205,8 +205,8 @@ namespace TanksRebirth
 
                 // IOUtils.SetAssociation(".mission", "MISSION_FILE", "TanksRebirth.exe", "Tanks Rebirth mission file");
 
-                graphics = new(this) { PreferHalfPixelOffset = true };
-                graphics.HardwareModeSwitch = false;
+                Graphics = new(this) { PreferHalfPixelOffset = true };
+                Graphics.HardwareModeSwitch = false;
 
                 Content.RootDirectory = "Content";
                 Instance = this;
@@ -215,7 +215,7 @@ namespace TanksRebirth
 
                 IsMouseVisible = false;
 
-                graphics.IsFullScreen = false;
+                Graphics.IsFullScreen = false;
 
                 _fontSystem = new();
 
@@ -242,17 +242,17 @@ namespace TanksRebirth
 
                 DiscordRichPresence.Load();
 
-                systems = ReflectionUtils.GetInheritedTypesOf<IGameSystem>(Assembly.GetExecutingAssembly());
+                // systems = ReflectionUtils.GetInheritedTypesOf<IGameSystem>(Assembly.GetExecutingAssembly());
 
-                ResolutionHandler.Initialize(graphics);
+                ResolutionHandler.Initialize(Graphics);
 
                 GameCamera = new Camera(GraphicsDevice);
 
                 SpriteRenderer = new(GraphicsDevice);
 
-                graphics.PreferMultiSampling = true;
+                Graphics.PreferMultiSampling = true;
 
-                graphics.ApplyChanges();
+                Graphics.ApplyChanges();
 
                 GameData.Setup();
                 if (File.Exists(Path.Combine(GameData.Directory, GameData.Name)))
@@ -329,8 +329,8 @@ namespace TanksRebirth
 
                 #region Config Initialization
 
-                graphics.SynchronizeWithVerticalRetrace = Settings.Vsync;
-                graphics.IsFullScreen = Settings.FullScreen;
+                Graphics.SynchronizeWithVerticalRetrace = Settings.Vsync;
+                Graphics.IsFullScreen = Settings.FullScreen;
                 PlayerTank.controlUp.AssignedKey = Settings.UpKeybind;
                 PlayerTank.controlDown.AssignedKey = Settings.DownKeybind;
                 PlayerTank.controlLeft.AssignedKey = Settings.LeftKeybind;
@@ -338,13 +338,13 @@ namespace TanksRebirth
                 PlayerTank.controlMine.AssignedKey = Settings.MineKeybind;
                 MapRenderer.Theme = Settings.GameTheme;
 
-                graphics.PreferredBackBufferWidth = Settings.ResWidth;
-                graphics.PreferredBackBufferHeight = Settings.ResHeight;
+                Graphics.PreferredBackBufferWidth = Settings.ResWidth;
+                Graphics.PreferredBackBufferHeight = Settings.ResHeight;
 
                 Tank.SetAssetNames();
                 MapRenderer.LoadTexturePack(Settings.MapPack);
                 Tank.LoadTexturePack(Settings.TankPack);
-                graphics.ApplyChanges();
+                Graphics.ApplyChanges();
 
                 Language.LoadLang(ref GameLanguage, Settings.Language);
 
@@ -404,10 +404,14 @@ namespace TanksRebirth
         public static bool SecretCosmeticSetting;
         public static bool SpeedrunMode;
 
+        public static bool Interp = true;
+        public static float DeltaTime { get; private set; }
+
         protected override void Update(GameTime gameTime)
         {
             try
             {
+                DeltaTime = Interp ? (float)gameTime.ElapsedGameTime.TotalSeconds : 1; // if interpolation of frames is false, set delta time to 1
                 if (Input.AreKeysJustPressed(Keys.LeftAlt, Keys.RightAlt))
                     Lighting.AccurateShadows = !Lighting.AccurateShadows;
                 if (Input.AreKeysJustPressed(Keys.LeftShift, Keys.RightShift))
@@ -428,8 +432,8 @@ namespace TanksRebirth
                 }
                 if (Input.AreKeysJustPressed(Keys.LeftAlt | Keys.RightAlt, Keys.Enter))
                 {
-                    graphics.IsFullScreen = !graphics.IsFullScreen;
-                    graphics.ApplyChanges();
+                    Graphics.IsFullScreen = !Graphics.IsFullScreen;
+                    Graphics.ApplyChanges();
                 }
 
                 MouseRenderer.ShouldRender = ThirdPerson ? (GameUI.Paused || MainMenu.Active) : true;
@@ -633,7 +637,7 @@ namespace TanksRebirth
 
         public void FixedUpdate(GameTime gameTime)
         {
-            /*
+            /* TODO: this
             if (Input.KeyJustPressed(Keys.Up))
             {
                 if (GameHandler.LoadedCampaign != null)
@@ -656,10 +660,10 @@ namespace TanksRebirth
 
             bool shouldUpdate = Client.IsConnected() ? true : IsActive && !GameUI.Paused;
 
-            if (IsActive && !GameUI.Paused)
+            if (shouldUpdate)
             {
-                foreach (var type in systems)
-                    type?.Update();
+                /*foreach (var type in systems)
+                    type?.Update();*/
 
                 GameHandler.UpdateAll();
 
