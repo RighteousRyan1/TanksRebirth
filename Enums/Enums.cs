@@ -39,6 +39,7 @@
         Gamma,
         Marble,
 
+        Cherry,
         Explosive,
         Electro,
         RocketDefender,

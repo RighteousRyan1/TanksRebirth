@@ -229,44 +229,46 @@ namespace TanksRebirth.GameContent
                     TankMusicSystem.PlayAll();
                 }
             }
+            if (!MainMenu.Active)
+            {
+                if (Input.KeyJustPressed(Keys.PageUp))
+                    SpawnTankPlethorae(true);
+                if (Input.KeyJustPressed(Keys.PageDown))
+                    SpawnMe();
 
-            if (Input.KeyJustPressed(Keys.PageUp))
-                SpawnTankPlethorae(true);
-            if (Input.KeyJustPressed(Keys.PageDown))
-                SpawnMe();
+                if (Input.KeyJustPressed(Keys.NumPad7))
+                    tankToSpawnType--;
+                if (Input.KeyJustPressed(Keys.NumPad9))
+                    tankToSpawnType++;
 
-            if (Input.KeyJustPressed(Keys.NumPad7))
-                tankToSpawnType--;
-            if (Input.KeyJustPressed(Keys.NumPad9))
-                tankToSpawnType++;
+                if (Input.KeyJustPressed(Keys.NumPad1))
+                    tankToSpawnTeam--;
+                if (Input.KeyJustPressed(Keys.NumPad3))
+                    tankToSpawnTeam++;
 
-            if (Input.KeyJustPressed(Keys.NumPad1))
-                tankToSpawnTeam--;
-            if (Input.KeyJustPressed(Keys.NumPad3))
-                tankToSpawnTeam++;
+                if (Input.KeyJustPressed(Keys.OemPeriod))
+                    CubeHeight++;
+                if (Input.KeyJustPressed(Keys.OemComma))
+                    CubeHeight--;
 
-            if (Input.KeyJustPressed(Keys.OemPeriod))
-                CubeHeight++;
-            if (Input.KeyJustPressed(Keys.OemComma))
-                CubeHeight--;
+                if (Input.KeyJustPressed(Keys.Z))
+                    BlockType--;
+                if (Input.KeyJustPressed(Keys.X))
+                    BlockType++;
 
-            if (Input.KeyJustPressed(Keys.Z))
-                BlockType--;
-            if (Input.KeyJustPressed(Keys.X))
-                BlockType++;
+                if (Input.KeyJustPressed(Keys.Home))
+                    SpawnTankAt(!TankGame.OverheadView ? GameUtils.GetWorldPosition(GameUtils.MousePosition) : PlacementSquare.CurrentlyHovered.Position, (TankTier)tankToSpawnType, (TankTeam)tankToSpawnTeam);
 
-            if (Input.KeyJustPressed(Keys.Home))
-                SpawnTankAt(!TankGame.OverheadView ? GameUtils.GetWorldPosition(GameUtils.MousePosition) : PlacementSquare.CurrentlyHovered.Position, (TankTier)tankToSpawnType, (TankTeam)tankToSpawnTeam);
+                if (Input.KeyJustPressed(Keys.OemSemicolon))
+                    new Mine(null, GameUtils.GetWorldPosition(GameUtils.MousePosition).FlattenZ(), 400);
+                if (Input.KeyJustPressed(Keys.OemQuotes))
+                    new Shell(GameUtils.GetWorldPosition(GameUtils.MousePosition) + new Vector3(0, 11, 0), Vector3.Zero, ShellType.Standard, null, 0, playSpawnSound: false);
+                if (Input.KeyJustPressed(Keys.End))
+                    SpawnCrateAtMouse();
 
-            if (Input.KeyJustPressed(Keys.OemSemicolon))
-                new Mine(null, GameUtils.GetWorldPosition(GameUtils.MousePosition).FlattenZ(), 400);
-            if (Input.KeyJustPressed(Keys.OemQuotes))
-                new Shell(GameUtils.GetWorldPosition(GameUtils.MousePosition) + new Vector3(0, 11, 0), Vector3.Zero, ShellType.Standard, null, 0, playSpawnSound: false);
-            if (Input.KeyJustPressed(Keys.End))
-                SpawnCrateAtMouse();
-
-            if (Input.KeyJustPressed(Keys.I) && DebugUtils.DebugLevel == 4)
-                new Powerup(powerups[mode]) { Position = GameUtils.GetWorldPosition(GameUtils.MousePosition) + new Vector3(0, 10, 0) };
+                if (Input.KeyJustPressed(Keys.I) && DebugUtils.DebugLevel == 4)
+                    new Powerup(powerups[mode]) { Position = GameUtils.GetWorldPosition(GameUtils.MousePosition) + new Vector3(0, 10, 0) };
+            }
 
             if (MainMenu.Active)
                 PlayerTank.KillCount = 0;
@@ -621,7 +623,7 @@ namespace TanksRebirth.GameContent
 
         public static Lighting.LightProfile GameLight = new()
         {
-            Color = new(150, 150, 170),
+            Color = new(255, 150, 170),
             Brightness = 0.71f,
 
             //color = new(150, 150, 170),

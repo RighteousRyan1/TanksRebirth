@@ -100,8 +100,8 @@ namespace TanksRebirth.Net
                     float turRot = reader.GetFloat();
 
                     var t = new PlayerTank(type);
-                    t.Dead = false;
                     t.Body.Position = new(x, y);
+                    t.Dead = false;
                     t.TankRotation = tnkRot;
                     t.TurretRotation = turRot;
                     t.Team = team;
@@ -248,6 +248,10 @@ namespace TanksRebirth.Net
 
         PlayerSpawn,
         AiTankSpawn,
-        CrateSpawn
+        CrateSpawn,
+
+        // more server syncing
+
+        ServerNameSync
     }
 }

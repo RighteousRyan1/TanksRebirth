@@ -234,7 +234,7 @@ namespace TanksRebirth
 
         protected override void Initialize()
         {
-            try
+            //try
             {
                 CurrentSessionTimer.Start();
 
@@ -262,10 +262,10 @@ namespace TanksRebirth
 
                 base.Initialize();
             }
-            catch (Exception e)
+            //catch (Exception e)
             {
-                GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
-                throw;
+                //GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
+                //throw;
             }
         }
 
@@ -444,7 +444,7 @@ namespace TanksRebirth
                     Client.clientNetManager.PollEvents();
                 if (NetPlay.CurrentServer is not null)
                     Server.serverNetManager.PollEvents();
-                
+
                 UIElement.UpdateElements();
                 GameUI.UpdateButtons();
 
@@ -463,11 +463,13 @@ namespace TanksRebirth
                     OnFocusLost?.Invoke(this, Window.Handle);
                 if (!_wasActive && IsActive)
                     OnFocusRegained?.Invoke(this, Window.Handle);
-
-                if (Input.KeyJustPressed(Keys.J))
+                if (!MainMenu.Active)
                 {
-                    transitionTimer = 100;
-                    OverheadView = !OverheadView;
+                    if (Input.KeyJustPressed(Keys.J))
+                    {
+                        transitionTimer = 100;
+                        OverheadView = !OverheadView;
+                    }
                 }
 
                 if (!ThirdPerson)
@@ -511,13 +513,13 @@ namespace TanksRebirth
                     //Matrix.CreateTranslation(CameraFocusOffset.X, -CameraFocusOffset.Y, 0);
 
                     if (_justChanged)
-                    { 
+                    {
                         //if we just changed to third person, we don't want to reset the camera
                         GameProjection = Matrix.CreateOrthographic(GameUtils.WindowWidth, GameUtils.WindowHeight, -2000, 5000);
 
                         _justChanged = false;
                     }
-                }                                                                                   
+                }
                 else
                 {
                     if (GameHandler.AllPlayerTanks.Count(x => x is not null && !x.Dead) > 0)

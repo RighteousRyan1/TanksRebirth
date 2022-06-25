@@ -151,6 +151,25 @@
 /processorParam:TextureFormat=Color
 /build:Assets/cosmetics/army_hat_tex.png
 
+#begin Assets/cosmetics/blender_default_cube.fbx
+/importer:FbxImporter
+/processor:ModelProcessor
+/processorParam:ColorKeyColor=0,0,0,0
+/processorParam:ColorKeyEnabled=True
+/processorParam:DefaultEffect=BasicEffect
+/processorParam:GenerateMipmaps=True
+/processorParam:GenerateTangentFrames=False
+/processorParam:PremultiplyTextureAlpha=True
+/processorParam:PremultiplyVertexColors=True
+/processorParam:ResizeTexturesToPowerOfTwo=False
+/processorParam:RotationX=0
+/processorParam:RotationY=0
+/processorParam:RotationZ=0
+/processorParam:Scale=1
+/processorParam:SwapWindingOrder=False
+/processorParam:TextureFormat=Compressed
+/build:Assets/cosmetics/blender_default_cube.fbx
+
 #begin Assets/cosmetics/crown.fbx
 /importer:FbxImporter
 /processor:ModelProcessor
@@ -1087,6 +1106,12 @@
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Assets/sounds/tnk_destroy_enemy.wav
+
+#begin Assets/sounds/tnk_event/alert.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Assets/sounds/tnk_event/alert.wav
 
 #begin Assets/sounds/tnk_invisible.wav
 /importer:WavImporter
@@ -2032,6 +2057,18 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Assets/textures/tank/tank_bubblegum.png
+
+#begin Assets/textures/tank/tank_cherry.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Assets/textures/tank/tank_cherry.png
 
 #begin Assets/textures/tank/tank_citrine.png
 /importer:TextureImporter

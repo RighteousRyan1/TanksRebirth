@@ -271,8 +271,10 @@ namespace TanksRebirth.GameContent
                 {
                     var recieved = CosmeticChest.Basic.Open();
 
-                    if (recieved is ICosmetic cosmetic1)
+                    if (recieved is Cosmetic3D cosmetic1)
                         Cosmetics.Add(cosmetic1);
+                    else if (recieved is Cosmetic2D cosmetic2)
+                        Add2DCosmetic(cosmetic2);
                 }
             }
 
@@ -282,29 +284,9 @@ namespace TanksRebirth.GameContent
                 // Body.LinearDamping = Deceleration * 10;
             }
 
-            if (!MainMenu.Active && IsIngame)
-            {
-                foreach (var cosmetic in Cosmetics)
-                {
-                    if (cosmetic is Cosmetic2D cos2d)
-                    {
-                        var particle = ParticleSystem.MakeParticle(Position3D + cos2d.RelativePosition, cos2d.Texture);
-
-                        particle.Scale = cosmetic.Scale;
-                        particle.Tag = $"cosmetic_2d_{GetHashCode()}"; // store the hash code of this tank, so when we destroy the cosmetic's particle, it destroys all belonging to this tank!
-                        particle.isAddative = false;
-                        particle.UniqueBehavior = (z) =>
-                        {
-                            particle.Position = Position3D + cos2d.RelativePosition;
-                            particle.Roll = cosmetic.Rotation.X;
-                            particle.Pitch = cosmetic.Rotation.Y;
-                            particle.Yaw = cosmetic.Rotation.Z;
-                            particle.Scale = (Properties.Invisible && GameProperties.InMission) ? Vector3.Zero : cosmetic.Scale;
-                        };
-
-                    }
-                }
-            }
+            foreach (var cos in Cosmetics)
+                if (cos is Cosmetic2D cos2d)
+                    Add2DCosmetic(cos2d);
 
             if (IsIngame)
             {
@@ -331,6 +313,33 @@ namespace TanksRebirth.GameContent
             }
 
             GameProperties.OnMissionStart += OnMissionStart;
+        }
+
+        public void Add2DCosmetic(Cosmetic2D cos2d, Func<bool> destroyOn = null)
+        {
+            if (!MainMenu.Active && IsIngame)
+            {
+                if (Cosmetics.Contains(cos2d))
+                    return;
+                Cosmetics.Add(cos2d);
+                var particle = ParticleSystem.MakeParticle(Position3D + cos2d.RelativePosition, cos2d.Texture);
+
+                particle.Scale = cos2d.Scale;
+                particle.Tag = $"cosmetic_2d_{GetHashCode()}"; // store the hash code of this tank, so when we destroy the cosmetic's particle, it destroys all belonging to this tank!
+                particle.isAddative = false;
+                particle.UniqueBehavior = (z) =>
+                {
+                    particle.Position = Position3D + cos2d.RelativePosition;
+                    particle.Roll = cos2d.Rotation.X;
+                    particle.Pitch = cos2d.Rotation.Y;
+                    particle.Yaw = cos2d.Rotation.Z;
+                    particle.Scale = (Properties.Invisible && GameProperties.InMission) ? Vector3.Zero : cos2d.Scale;
+
+                    if (destroyOn != null)
+                        if (destroyOn.Invoke())
+                            particle.Destroy();
+                };
+            }
         }
         void OnMissionStart()
         {
@@ -432,6 +441,7 @@ namespace TanksRebirth.GameContent
                 Body.LinearVelocity = Vector2.Zero;
                 Velocity = Vector2.Zero;
             }
+            // fix 2d peeopled
             foreach (var cosmetic in Cosmetics)
                 cosmetic?.UniqueBehavior?.Invoke(cosmetic, this); 
         }

@@ -67,6 +67,7 @@ namespace TanksRebirth.GameContent.UI
         public static UITextInput PortInput;
         public static UITextInput PasswordInput;
         public static UITextInput ServerNameInput;
+        public static UITextButton DisconnectButton;
 
         public static UITextButton CosmeticsMenuButton;
 
@@ -365,6 +366,16 @@ namespace TanksRebirth.GameContent.UI
                 DefaultString = "Server Password (Empty = None)"
             };
             PasswordInput.SetDimensions(100, 700, 500, 50);
+
+            DisconnectButton = new("Disconnect", font, Color.WhiteSmoke, 1f)
+            {
+                IsVisible = false,
+                OnLeftClick = (arg) =>
+                {
+                    Client.client.Disconnect();
+                }
+            };
+            DisconnectButton.SetDimensions(100, 800, 500, 50);
 
             ServerNameInput = new(font, Color.WhiteSmoke, 1f, 10)
             {
@@ -824,7 +835,8 @@ namespace TanksRebirth.GameContent.UI
             IPInput.IsVisible = visible;
             PasswordInput.IsVisible = visible;
             PortInput.IsVisible = visible;
-            ServerNameInput.IsVisible = visible;
+            ServerNameInput.IsVisible = visible && !Client.IsConnected();
+            DisconnectButton.IsVisible = visible && Client.IsConnected();
             StartMPGameButton.IsVisible = visible && Server.serverNetManager is not null;
         }
 
@@ -912,7 +924,7 @@ namespace TanksRebirth.GameContent.UI
                     Theme.Volume -= 0.0075f;
             }
             else
-                Theme.Volume = TankGame.Settings.MusicVolume;
+                Theme.Volume = TankGame.Settings.MusicVolume * 0.1f;
 
             foreach (var tnk in tanks)
             {

@@ -20,6 +20,8 @@ namespace TanksRebirth.Internals.Common.GameUI
 
         public bool ActiveHandle;
 
+        public static event EventHandler OnConfirmContents;
+
         public UITextInput(SpriteFontBase font, Color color, float scale, int maxLength) : base("", font, color, scale)
         {
             MaxLength = maxLength;
@@ -74,6 +76,10 @@ namespace TanksRebirth.Internals.Common.GameUI
         {
             if (!IsSelected())
             {
+                // if another box is clicked, confirm contents
+                if (ActiveHandle)
+                    OnConfirmContents?.Invoke(this, new());
+
                 ActiveHandle = false;
                 TankGame.Instance.Window.TextInput -= HandleText;
                 return;
@@ -91,6 +97,7 @@ namespace TanksRebirth.Internals.Common.GameUI
                     TankGame.Instance.Window.TextInput -= HandleText;
                     ActiveHandle = false;
                     currentActiveBox = -1;
+                    OnConfirmContents?.Invoke(this, new());
                 }
                 else if (e.Key == Keys.Tab)
                     Text += "   ";
@@ -99,6 +106,7 @@ namespace TanksRebirth.Internals.Common.GameUI
                     TankGame.Instance.Window.TextInput -= HandleText;
                     ActiveHandle = false;
                     currentActiveBox = -1;
+                    OnConfirmContents?.Invoke(this, new());
                 }
                 else
                 {

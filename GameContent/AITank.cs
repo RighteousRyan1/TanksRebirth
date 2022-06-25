@@ -22,11 +22,13 @@ using System.Reflection;
 using TanksRebirth.Net;
 using TanksRebirth.IO;
 using TanksRebirth.GameContent.Properties;
+using TanksRebirth.GameContent.Cosmetics;
 
 namespace TanksRebirth.GameContent
 {
     public class AITank : Tank
     {
+        // TODO: Make smoke bombs!
         public AiBehavior[] Behaviors { get; private set; } // each of these should keep track of an action the tank performs
         public AiBehavior[] SpecialBehaviors { get; private set; }
 
@@ -71,8 +73,6 @@ namespace TanksRebirth.GameContent
             /// <summary>On a given tick, it has this chance out of 1 to lay a mine. <para>Do note that this value must be greater than 0 and less than or equal to 1.</para></summary>
             public float MinePlacementChance { get; set; } // 0.0f to 1.0f
 
-            /// <summary>How long (in ticks) this tank moves away from a mine that it places.</summary>
-            public int MoveFromMineTime { get; set; }
 
             /// <summary>The distance from the main shot calculation ray an enemy must be before this tank is allowed to fire.</summary>
             public float Inaccuracy { get; set; }
@@ -262,7 +262,7 @@ namespace TanksRebirth.GameContent
                 Dead = true;
             }
 
-            if (tier <= TankTier.Marble)
+            if (tier <= TankTier.Cherry)
                 _tankTexture = Assets[$"tank_" + tier.ToString().ToLower()];
             
             #region Special
@@ -499,7 +499,6 @@ namespace TanksRebirth.GameContent
                     properties.MineStun = 5;
 
                     AiParams.MinePlacementChance = 0.3f;
-                    AiParams.MoveFromMineTime = 120;
 
                     BaseExpValue = 0.035f;
 
@@ -591,7 +590,6 @@ namespace TanksRebirth.GameContent
                     properties.MineLimit = 2;
                     properties.MineStun = 10;
 
-                    AiParams.MoveFromMineTime = 60;
                     AiParams.MinePlacementChance = 0.05f;
 
                     AiParams.BlockWarinessDistance = 45;
@@ -671,7 +669,6 @@ namespace TanksRebirth.GameContent
                     properties.MineLimit = 2;
                     properties.MineStun = 8;
 
-                    AiParams.MoveFromMineTime = 40;
                     AiParams.MinePlacementChance = 0.08f;
 
                     AiParams.BlockWarinessDistance = 30;
@@ -719,7 +716,6 @@ namespace TanksRebirth.GameContent
                     properties.MineLimit = 2;
                     properties.MineStun = 10;
 
-                    AiParams.MoveFromMineTime = 100;
                     AiParams.MinePlacementChance = 0.05f;
 
                     AiParams.BlockWarinessDistance = 60;
@@ -749,7 +745,6 @@ namespace TanksRebirth.GameContent
                     properties.Stationary = true;
                     properties.ShellHoming = new();
 
-                    AiParams.MoveFromMineTime = 100;
                     AiParams.MinePlacementChance = 0.05f;
 
                     BaseExpValue = 0.025f;
@@ -791,7 +786,6 @@ namespace TanksRebirth.GameContent
                     properties.MineLimit = 1;
                     properties.MineStun = 10;
 
-                    AiParams.MoveFromMineTime = 100;
                     AiParams.MinePlacementChance = 0.05f;
 
                     BaseExpValue = 0.07f;
@@ -833,7 +827,6 @@ namespace TanksRebirth.GameContent
                     properties.MineLimit = 1;
                     properties.MineStun = 0;
 
-                    AiParams.MoveFromMineTime = 90;
                     AiParams.MinePlacementChance = 0.05f;
 
                     BaseExpValue = 0.095f;
@@ -878,7 +871,6 @@ namespace TanksRebirth.GameContent
                     properties.MineLimit = 0;
                     properties.MineStun = 0;
 
-                    AiParams.MoveFromMineTime = 0;
                     AiParams.MinePlacementChance = 0;
 
                     AiParams.BlockWarinessDistance = 30;
@@ -922,7 +914,6 @@ namespace TanksRebirth.GameContent
                     properties.MineLimit = 4;
                     properties.MineStun = 5;
 
-                    AiParams.MoveFromMineTime = 40;
                     AiParams.MinePlacementChance = 0.15f;
 
                     AiParams.ShootChance = 0.95f;
@@ -968,7 +959,6 @@ namespace TanksRebirth.GameContent
                     properties.MineLimit = 3;
                     properties.MineStun = 10;
 
-                    AiParams.MoveFromMineTime = 100;
                     AiParams.MinePlacementChance = 0.05f;
 
                     BaseExpValue = 0.095f;
@@ -1037,7 +1027,6 @@ namespace TanksRebirth.GameContent
                     properties.MineLimit = 2;
                     properties.MineStun = 10;
 
-                    AiParams.MoveFromMineTime = 100;
                     AiParams.MinePlacementChance = 0.01f;
 
                     properties.Invisible = true;
@@ -1082,7 +1071,6 @@ namespace TanksRebirth.GameContent
                     properties.MineLimit = 2;
                     properties.MineStun = 10;
 
-                    AiParams.MoveFromMineTime = 100;
                     AiParams.MinePlacementChance = 0.1f;
 
                     AiParams.BlockWarinessDistance = 50;
@@ -1162,7 +1150,6 @@ namespace TanksRebirth.GameContent
                     properties.MineLimit = 1;
                     properties.MineStun = 5;
 
-                    AiParams.MoveFromMineTime = 100;
                     AiParams.MinePlacementChance = 0.02f;
                     AiParams.ShootChance = 0.2f;
 
@@ -1236,7 +1223,6 @@ namespace TanksRebirth.GameContent
                     properties.MineLimit = 6;
                     properties.MineStun = 3;
 
-                    AiParams.MoveFromMineTime = 100;
                     AiParams.MinePlacementChance = 0.02f;
                     AiParams.ShootChance = 0.2f;
 
@@ -1277,7 +1263,6 @@ namespace TanksRebirth.GameContent
                     properties.MineLimit = 10;
                     properties.MineStun = 0;
 
-                    AiParams.MoveFromMineTime = 100;
                     AiParams.MinePlacementChance = 0.05f;
 
                     BaseExpValue = 0.1f;
@@ -1317,7 +1302,6 @@ namespace TanksRebirth.GameContent
                     properties.MineLimit = 3;
                     properties.MineStun = 10;
 
-                    AiParams.MoveFromMineTime = 100;
                     AiParams.MinePlacementChance = 0.05f;
 
                     BaseExpValue = 0.105f;
@@ -1412,7 +1396,6 @@ namespace TanksRebirth.GameContent
                     properties.MineLimit = 2;
                     properties.MineStun = 10;
 
-                    AiParams.MoveFromMineTime = 100;
                     AiParams.MinePlacementChance = 0.05f;
 
                     BaseExpValue = 0.195f;
@@ -1458,7 +1441,6 @@ namespace TanksRebirth.GameContent
                     properties.MineLimit = 1;
                     properties.MineStun = 5;
 
-                    AiParams.MoveFromMineTime = 100;
                     AiParams.MinePlacementChance = 0.02f;
                     AiParams.ShootChance = 0.2f;
                     break;
@@ -1496,7 +1478,6 @@ namespace TanksRebirth.GameContent
                     properties.MineLimit = 1;
                     properties.MineStun = 5;
 
-                    AiParams.MoveFromMineTime = 100;
                     AiParams.MinePlacementChance = 0.02f;
                     AiParams.ShootChance = 0.2f;
                     break;
@@ -1534,7 +1515,6 @@ namespace TanksRebirth.GameContent
                     properties.MineLimit = 1;
                     properties.MineStun = 5;
 
-                    AiParams.MoveFromMineTime = 100;
                     AiParams.MinePlacementChance = 0.02f;
                     AiParams.ShootChance = 0.2f;
                     break;
@@ -1575,11 +1555,51 @@ namespace TanksRebirth.GameContent
                     properties.MineLimit = 0;
                     properties.MineStun = 0;
 
-                    AiParams.MoveFromMineTime = 100;
                     AiParams.MinePlacementChance = 0.02f;
                     AiParams.ShootChance = 0.2f;
 
                     AiParams.SmartRicochets = true;
+                    break;
+                case TankTier.Cherry:
+                    AiParams.MeanderAngle = MathHelper.ToRadians(20);
+                    AiParams.MeanderFrequency = 15;
+                    AiParams.TurretMeanderFrequency = 10;
+                    AiParams.TurretSpeed = 0.1f;
+                    AiParams.AimOffset = 0.08f;
+
+                    AiParams.Inaccuracy = 0.4f;
+                    AiParams.BounceReset = false;
+
+                    AiParams.ProjectileWarinessRadius_PlayerShot = 140;
+                    AiParams.MineWarinessRadius_PlayerLaid = 140;
+
+                    properties.TurningSpeed = 0.1f;
+                    properties.MaximalTurn = 0.2f;
+
+                    properties.ShootStun = 0;
+                    properties.ShellCooldown = 10;
+                    properties.ShellLimit = 10;
+                    properties.ShellSpeed = 6f;
+                    properties.ShellType = ShellType.Rocket;
+                    properties.RicochetCount = 0;
+
+                    properties.Invisible = false;
+                    properties.Stationary = false;
+                    properties.ShellHoming = new();
+
+                    properties.TreadPitch = -0.1f;
+                    properties.MaxSpeed = 1.35f;
+                    properties.Acceleration = 0.3f;
+                    properties.Deceleration = 0.6f;
+
+                    properties.MineCooldown = 0;
+                    properties.MineLimit = 0;
+                    properties.MineStun = 0;
+
+                    AiParams.MinePlacementChance = 0.02f;
+                    AiParams.ShootChance = 0.2f;
+
+                    AiParams.SmartRicochets = false;
                     break;
 
                 case TankTier.Commando:
@@ -1617,7 +1637,6 @@ namespace TanksRebirth.GameContent
                     properties.MineLimit = 0;
                     properties.MineStun = 0;
 
-                    AiParams.MoveFromMineTime = 100;
                     AiParams.MinePlacementChance = 0.02f;
                     AiParams.ShootChance = 0.2f;
                     break;
@@ -1693,9 +1712,9 @@ namespace TanksRebirth.GameContent
 
             if (Tier == TankTier.Commando)
             {
-                Model.Meshes["Laser_Beam"].ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation);
-                Model.Meshes["Barrel_Laser"].ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation);
-                Model.Meshes["Dish"].ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation);
+                Model.Meshes["Laser_Beam"].ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
+                Model.Meshes["Barrel_Laser"].ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
+                Model.Meshes["Dish"].ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
             }
 
             if (!Dead && IsIngame)
@@ -2388,8 +2407,29 @@ namespace TanksRebirth.GameContent
                             }
                         }
                     }
+                    else if (Tier == TankTier.Cherry)
+                    {
+                        if (SeesTarget)
+                        {
+                            if (SpecialBehaviors[0].Value <= 0)
+                            {
+                                SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/tnk_event/alert"), SoundContext.Effect, 0.6f);
+                                Add2DCosmetic(CosmeticChest.Anger, () => SpecialBehaviors[0].Value <= 0);
+                            }
+                            SpecialBehaviors[0].Value = 300;
+                        }
+                        else
+                            if (SpecialBehaviors[0].Value > 0)
+                            SpecialBehaviors[0].Value--;
+                        if (SpecialBehaviors[0].Value > 0)
+                        {
 
-                    if (Tier == TankTier.Commando)
+                            Properties.MaxSpeed = 2.2f;
+                        }
+                        else
+                            Properties.MaxSpeed = 1.35f;
+                    }
+                    else if (Tier == TankTier.Commando)
                     {
                         SpecialBehaviors[0].Value++;
                         if (SpecialBehaviors[0].Value > 500)

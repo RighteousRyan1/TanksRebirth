@@ -120,5 +120,13 @@ namespace TanksRebirth.Net
                 return client.ConnectionState == ConnectionState.Connected;
             return false;
         }
+
+        public static void SendServerNameChange(string newName)
+        {
+            NetDataWriter message = new();
+            message.Put(PacketType.ServerNameSync);
+
+            Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered);
+        }
     }
 }
