@@ -623,11 +623,8 @@ namespace TanksRebirth.GameContent
 
         public static Lighting.LightProfile GameLight = new()
         {
-            Color = new(255, 150, 170),
-            Brightness = 0.71f,
-
-            //color = new(150, 150, 170),
-            //brightness = 0.1f,
+            Color = new(150, 150, 170),
+            Brightness = 0.7f,
             //isNight = true
         };
 
