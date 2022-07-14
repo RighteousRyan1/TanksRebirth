@@ -56,7 +56,7 @@ namespace TanksRebirth.GameContent
 
         public Model Model;
 
-        private SoundEffectInstance _shootSound;
+        private OggAudio _shootSound;
 
         /// <summary>The hurtbox on the 2D backing map for the game.</summary>
         public Rectangle Hitbox => new((int)(Position2D.X - 2), (int)(Position2D.Y - 2), 4, 4);
@@ -80,7 +80,7 @@ namespace TanksRebirth.GameContent
 
         public readonly ShellType Tier;
 
-        private SoundEffectInstance _loopingSound;
+        private OggAudio _loopingSound;
 
         public bool IsDestructible { get; set; } = true;
 
@@ -116,8 +116,8 @@ namespace TanksRebirth.GameContent
             if (Tier == ShellType.Rocket)
             {
                 Flaming = true;
-                _loopingSound = SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_rocket_loop"), SoundContext.Effect, 0.3f);
-                _loopingSound.IsLooped = true;
+                _loopingSound = SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_rocket_loop", SoundContext.Effect, 0.3f);
+                _loopingSound.Instance.IsLooped = true;
             }
             if (Tier == ShellType.TrailedRocket)
             {
@@ -125,30 +125,40 @@ namespace TanksRebirth.GameContent
                 EmitsSmoke = false;
                 LeavesTrail = true;
                 Flaming = true;
-                _loopingSound = SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_ricochet_rocket_loop"), SoundContext.Effect, 0.3f);
-                _loopingSound.IsLooped = true;
+                _loopingSound = SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_ricochet_rocket_loop", SoundContext.Effect, 0.3f);
+                _loopingSound.Instance.IsLooped = true;
             }
 
             if (owner is not null)
             {
                 _shootSound = Tier switch
                 {
-                    ShellType.Player => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_1"), SoundContext.Effect, 0.3f),
-                    ShellType.Standard => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_2"), SoundContext.Effect, 0.3f),
-                    ShellType.Rocket => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_rocket"), SoundContext.Effect, 0.3f),
-                    ShellType.TrailedRocket => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_ricochet_rocket"), SoundContext.Effect, 0.3f),
-                    ShellType.Supressed => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_silencer"), SoundContext.Effect, 0.3f),
-                    ShellType.Explosive => SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_shoot_regular_2"), SoundContext.Effect, 0.3f),
+                    ShellType.Player => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_regular_1", SoundContext.Effect, 0.3f),
+                    ShellType.Standard => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_regular_2", SoundContext.Effect, 0.3f),
+                    ShellType.Rocket => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_rocket", SoundContext.Effect, 0.3f),
+                    ShellType.TrailedRocket => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_ricochet_rocket", SoundContext.Effect, 0.3f),
+                    ShellType.Supressed => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_silencer", SoundContext.Effect, 0.3f),
+                    ShellType.Explosive => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_regular_2", SoundContext.Effect, 0.3f),
                     _ => throw new NotImplementedException()
                 };
-                _shootSound.Pitch = owner.Properties.ShootPitch;
+                _shootSound.Instance.Pitch = owner.Properties.ShootPitch;
             }
 
-            int index = Array.IndexOf(AllShells, AllShells.First(shell => shell is null));
+            GameProperties.OnMissionEnd += StopSounds;
+            TankGame.OnFocusLost += TankGame_OnFocusLost;
+            TankGame.OnFocusRegained += TankGame_OnFocusRegained;
+
+            int index = Array.IndexOf(AllShells, null);
 
             _id = index;
 
             AllShells[index] = this;
+        }
+
+        private void StopSounds(int delay, MissionEndContext context, bool result1up)
+        {
+            _loopingSound?.Instance?.Stop();
+            _shootSound?.Instance?.Stop();
         }
 
         internal void Update()
@@ -228,13 +238,6 @@ namespace TanksRebirth.GameContent
             }
             CheckCollisions();
 
-            GameProperties.OnMissionEnd += (delay, cxt, extralife) =>
-            {
-                // _flame?.Destroy();
-                _loopingSound?.Stop();
-                _shootSound?.Stop();
-            };
-
             int bruh = Flaming ? (int)Math.Round(6 / Velocity2D.Length()) : (int)Math.Round(12 / Velocity2D.Length());
             int nummy = bruh != 0 ? bruh : 5;
 
@@ -267,7 +270,6 @@ namespace TanksRebirth.GameContent
                     };
                 }
             }
-
             if (LeavesTrail)
             {
                 /*for (int i = 0; i < 4; i++)
@@ -376,54 +378,15 @@ namespace TanksRebirth.GameContent
                     if (p.Scale.X <= 0)
                         p.Destroy();
                 };
-
-                /*const int PARTICLES_PER_ITERATION = 5;
-                for (int i = 0; i < PARTICLES_PER_ITERATION; i++)
-                {
-                    var p = ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/flame"));
-
-                    p.Roll = -MathHelper.PiOver2;
-                    var scaleRand = GameHandler.GameRand.NextFloat(0.45f, 0.6f);
-                    p.Scale = new(scaleRand, 0.16f, 0.4f); // x is outward from bullet
-                    p.Color = Color.Orange;
-                    p.isAddative = false;
-                    // GameHandler.GameRand.NextFloat(-2f, 2f)
-                    p.Rotation2D = -MathHelper.PiOver2;
-
-                    var rotoff = GameHandler.GameRand.NextFloat(-0.25f, 0.25f);
-                    p.Origin2D = new(p.Texture.Size().X / 2, p.Texture.Size().Y);
-
-                    var initialScale = p.Scale;
-
-                    var rand = GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi);
-                    p.UniqueBehavior = (par) =>
-                    {
-                        var flat = Position.FlattenZ();
-
-                        var off = flat + new Vector2(0, 0).RotatedByRadians(Rotation);
-
-                        p.Position = off.ExpandZ() + new Vector3(0, 11, 0);
-
-                        p.Pitch = -Rotation - MathHelper.PiOver2 + rotoff;
-
-                        p.Roll = rand;
-
-                        if (p.LifeTime > 1)
-                            p.Destroy();
-                    };
-                }*/
             }
-
-            TankGame.OnFocusLost += TankGame_OnFocusLost;
-            TankGame.OnFocusRegained += TankGame_OnFocusRegained;
         }
 
         private void TankGame_OnFocusRegained(object sender, IntPtr e) 
-            => _loopingSound?.Resume();
+            => _loopingSound?.Instance?.Resume();
 
         private void TankGame_OnFocusLost(object sender, IntPtr e)
-            => _loopingSound?.Pause();
-
+            => _loopingSound?.Instance?.Pause();
+        // deprecated.
         private void MakeTrail()
         {
             var p = ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
@@ -496,17 +459,12 @@ namespace TanksRebirth.GameContent
                 return;
             }
 
-            //if (LeavesTrail)
-            //{
-            //MakeTrail();
-            //}
-
             if (horizontal)
                 Velocity.X = -Velocity.X;
             else
                 Velocity.Z = -Velocity.Z;
 
-            var sound = GameResources.GetGameResource<SoundEffect>("Assets/sounds/bullet_ricochet");
+            var sound = "Assets/sounds/bullet_ricochet";
 
             var s = SoundPlayer.PlaySoundInstance(sound, SoundContext.Effect, 0.5f);
 
@@ -514,13 +472,13 @@ namespace TanksRebirth.GameContent
             {
                 if (Owner.Properties.ShellType == ShellType.TrailedRocket)
                 {
-                    s.Pitch = GameHandler.GameRand.NextFloat(0.15f, 0.25f);
-                    var s2 = SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/ricochet_zip"), SoundContext.Effect, 0.05f);
-                    s2.Pitch = -0.65f;
+                    s.Instance.Pitch = GameHandler.GameRand.NextFloat(0.15f, 0.25f);
+                    var s2 = SoundPlayer.PlaySoundInstance("Assets/sounds/ricochet_zip", SoundContext.Effect, 0.05f);
+                    s2.Instance.Pitch = -0.65f;
                 }
                 else
                 {
-                    s.Pitch = GameHandler.GameRand.NextFloat(-0.05f, 0.05f);
+                    s.Instance.Pitch = GameHandler.GameRand.NextFloat(-0.05f, 0.05f);
                 }
             }
             ParticleSystem.MakeShineSpot(Position, Color.Orange, 0.8f);
@@ -574,7 +532,8 @@ namespace TanksRebirth.GameContent
         public void Remove() {
             TankGame.OnFocusLost -= TankGame_OnFocusLost;
             TankGame.OnFocusRegained -= TankGame_OnFocusRegained;
-            _loopingSound?.Stop();
+            GameProperties.OnMissionEnd -= StopSounds;
+            _loopingSound?.Instance?.Stop();
             // _shootSound?.Stop();
             _loopingSound = null;
             // _shootSound = null;
@@ -588,17 +547,17 @@ namespace TanksRebirth.GameContent
         {
             if (playSound)
             {
-                var sfx = SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/bullet_destroy"), SoundContext.Effect, 0.5f);
-                sfx.Pitch = GameHandler.GameRand.NextFloat(-0.1f, 0.1f);
+                var sfx = SoundPlayer.PlaySoundInstance("Assets/sounds/bullet_destroy", SoundContext.Effect, 0.5f);
+                sfx.Instance.Pitch = GameHandler.GameRand.NextFloat(-0.1f, 0.1f);
             }
 
-            _shootSound?.Stop(true);
+            _shootSound?.Instance?.Stop(true);
             // ParticleSystem.MakeSparkEmission(Position, 10);
             ParticleSystem.MakeSmallExplosion(Position, 8, 10, 1.25f, 15);
             if (Owner != null)
                 Owner.OwnedShellCount--;
             //_flame?.Destroy();
-            _loopingSound?.Stop();
+            _loopingSound?.Instance?.Stop();
             _loopingSound?.Dispose();
             _loopingSound = null;
 

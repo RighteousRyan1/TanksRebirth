@@ -2159,9 +2159,9 @@ namespace TanksRebirth.GameContent
                     {
                         if (TankGame.GameUpdateTime % MathHelper.Clamp(treadPlaceTimer / 2, 4, 6) == 0)
                         {
-                            var treadPlace = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_tread_place_{GameHandler.GameRand.Next(1, 5)}");
+                            var treadPlace = $"Assets/sounds/tnk_tread_place_{GameHandler.GameRand.Next(1, 5)}";
                             var sfx = SoundPlayer.PlaySoundInstance(treadPlace, SoundContext.Effect, 0.05f);
-                            sfx.Pitch = Properties.TreadPitch;
+                            sfx.Instance.Pitch = Properties.TreadPitch;
                         }
                     }
 
@@ -2413,7 +2413,7 @@ namespace TanksRebirth.GameContent
                         {
                             if (SpecialBehaviors[0].Value <= 0)
                             {
-                                SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/tnk_event/alert"), SoundContext.Effect, 0.6f);
+                                SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_event/alert", SoundContext.Effect, 0.6f);
                                 Add2DCosmetic(CosmeticChest.Anger, () => SpecialBehaviors[0].Value <= 0);
                             }
                             SpecialBehaviors[0].Value = 300;
@@ -2584,7 +2584,7 @@ namespace TanksRebirth.GameContent
                             // removed temporarily
                         }
 
-                        effect.SetDefaultGameLighting_IngameEntities();
+                        effect.SetDefaultGameLighting_IngameEntities(0.9f);
                     }
                 }
             }

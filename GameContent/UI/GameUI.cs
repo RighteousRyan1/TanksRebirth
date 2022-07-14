@@ -210,7 +210,12 @@ namespace TanksRebirth.GameContent.UI
                         TankMusicSystem.ResumeAll();
                     else
                         TankMusicSystem.PauseAll();*/
+
                     Paused = !Paused;
+                    if (Paused)
+                        TankMusicSystem.PauseAll();
+                    else
+                        TankMusicSystem.ResumeAll();
                 }
 
                 ResumeButton.IsVisible = Paused;
@@ -251,10 +256,10 @@ namespace TanksRebirth.GameContent.UI
             {
                 button.HasScissor = true;
                 button.Scissor = new(0, (int)(GameUtils.WindowHeight * 0.05f), GameUtils.WindowWidth, (int)(GameUtils.WindowHeight * 0.7f));
-                button.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/menu/menu_tick"), SoundContext.Effect); };
+                button.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick", SoundContext.Effect); };
             }
             foreach (var e in menuElements)
-                e.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/menu/menu_tick"), SoundContext.Effect); };
+                e.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick", SoundContext.Effect); };
         }
 
         private static void HandleBackButton()

@@ -38,6 +38,9 @@ namespace TanksRebirth.Achievements
             new("Found You!", "Destroy 100 Gold Tanks", () => TankGame.GameData.TankKills[TankTier.Gold] >= 100),
             new("Unbreakable Will", "Destroy 100 Obsidian Tanks", () => TankGame.GameData.TankKills[TankTier.Obsidian] >= 100),
 
+            new("In the eyes of the maker", "Kill a Green Tank with a mine."),
+            new("Close and Personal", "Kill a black tank within 50 units of it."),
+
             new("Will you be mine?", "Kill 100 Tanks with mines.", () => TankGame.GameData.MineKills >= 100),
             new("Simple Geometry", "Destroy 100 tanks with bullets that have ricocheted at least once.", () => TankGame.GameData.BounceKills >= 100),
             #endregion

@@ -12,7 +12,7 @@ using MeltySynth;
 
 namespace TanksRebirth.GameContent.Systems
 {
-    public static class TankMusicSystem
+    /*public static class TankMusicSystem
     {
         public static TankTier TierHighest => AITank.GetHighestTierActive();
 
@@ -497,14 +497,14 @@ namespace TanksRebirth.GameContent.Systems
                 }
             }
         }
-    }
-    /*public static class TankMusicSystem
+    }*/
+    public static class TankMusicSystem
     {
         public static TankTier TierHighest => AITank.GetHighestTierActive();
 
         // TODO: ambience n stuff - remove music in forests
 
-        public static Music forestAmbience;
+        public static OggMusic forestAmbience;
 
         public static void Update()
         {
@@ -697,12 +697,12 @@ namespace TanksRebirth.GameContent.Systems
         //public static MidiPlayer MusicMidi;
         //public static MidiFile MusicSoundFont;
 
-        private static bool _loaded;
+        public static bool IsLoaded;
 
         public static void LoadMusic()
         {
-            if (!_loaded)
-                _loaded = true;
+            if (!IsLoaded)
+                IsLoaded = true;
             else
                 return;
             #region Load
@@ -806,7 +806,7 @@ namespace TanksRebirth.GameContent.Systems
 
         public static void LoadAmbienceTracks()
         {
-            forestAmbience = Music.CreateMusicTrack("Forest Ambient", "Assets/sounds/ambient/forestnight", 1f);
+            forestAmbience = new("Forest Ambient", "Content/Assets/sounds/ambient/forestnight", 1f);
         }
 
         public static void PlayAll()
@@ -836,7 +836,7 @@ namespace TanksRebirth.GameContent.Systems
         {
             forestAmbience?.Play();
             foreach (var song in Songs)
-                song?.Play();
+                song?.Resume();
         }
 
         public static void StopAll()
@@ -863,5 +863,5 @@ namespace TanksRebirth.GameContent.Systems
                 }
             }
         }
-    }    */
+    }    
 }

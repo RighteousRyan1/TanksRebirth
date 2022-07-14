@@ -39,7 +39,7 @@ namespace TanksRebirth.Graphics
 
                 Lighting.IsNight = IsNight;
 
-                TankMusicSystem.forestAmbience = Music.CreateMusicTrack("Forest Ambient", IsNight ? "Assets/sounds/ambient/forestnight" : "Assets/sounds/ambient/forestday", 1f);
+                TankMusicSystem.forestAmbience = new OggMusic("Forest Ambient", IsNight ? "Content/Assets/sounds/ambient/forestnight" : "Content/Assets/sounds/ambient/forestday", 1f);
             }
 
 
@@ -103,10 +103,10 @@ namespace TanksRebirth.Graphics
             effect.DirectionalLight1.Enabled = false;
             effect.DirectionalLight2.Enabled = false;
 
-            var ting = GameUtils.MousePosition.X / (GameUtils.WindowWidth + GameUtils.WindowWidth / 2);
-            var ting2 = GameUtils.MousePosition.Y / (GameUtils.WindowHeight + GameUtils.WindowHeight / 2);
+            var ting = GameUtils.MousePosition.X / (GameUtils.WindowWidth - GameUtils.WindowWidth / 2);
+            var ting2 = GameUtils.MousePosition.Y / (GameUtils.WindowHeight - GameUtils.WindowHeight / 2);
 
-            var lightingConstant = 1.1f * powerMultiplier;
+            var lightingConstant = 1f * powerMultiplier;
 
             effect.DirectionalLight0.Direction = new Vector3(0, -1f, 0) * lightingConstant; //+ new Vector3(ting, 0, ting2);
 

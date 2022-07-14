@@ -80,6 +80,8 @@ namespace TanksRebirth.GameContent
                 // maybe inefficient on memory
                 // TODO: should probably be written better
 
+
+				// TODO: hardcode hell. bad. suck. balls
                 if (Difficulties.Types["BulletHell"])
                     dummy.Properties.RicochetCount /= 3;
 
@@ -437,9 +439,9 @@ namespace TanksRebirth.GameContent
                 {
                     if (TankGame.GameUpdateTime % MathHelper.Clamp(treadPlaceTimer / 2, 4, 6) == 0)
                     {
-                        var treadPlace = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_tread_place_{GameHandler.GameRand.Next(1, 5)}");
+                        var treadPlace = $"Assets/sounds/tnk_tread_place_{GameHandler.GameRand.Next(1, 5)}";
                         var sfx = SoundPlayer.PlaySoundInstance(treadPlace, SoundContext.Effect, 0.2f);
-                        sfx.Pitch = Properties.TreadPitch;
+                        sfx.Instance.Pitch = Properties.TreadPitch;
                     }
                 }
             }
@@ -566,7 +568,7 @@ namespace TanksRebirth.GameContent
                             }
                         }
 
-                        effect.SetDefaultGameLighting_IngameEntities(specular: _isPlayerModel, ambientMultiplier: _isPlayerModel ? 1.5f : 1f);
+                        effect.SetDefaultGameLighting_IngameEntities(specular: _isPlayerModel, ambientMultiplier: _isPlayerModel ? 2f : 0.9f);
                     }
                 }
             }

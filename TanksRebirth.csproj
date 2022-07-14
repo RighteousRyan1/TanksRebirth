@@ -37,7 +37,7 @@
     <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.0.1641" />
     <PackageReference Include="NativeFileDialogSharp" Version="0.5.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="StbVorbisSharp" Version="1.16.2" />
+    <PackageReference Include="StbVorbisSharp" Version="1.22.4" />
     <PackageReference Include="System.Management" Version="6.0.0" />
     <PackageReference Include="TextCopy" Version="6.1.0" />
   </ItemGroup>
@@ -51,52 +51,5 @@
     <Reference Include="MeltySynth">
       <HintPath>deps\MeltySynth.dll</HintPath>
     </Reference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Update="Content\Assets\fonts\DefaultFont_EN.ttf">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Content\Assets\fonts\DefaultFont_ES.ttf">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Content\Assets\fonts\DefaultFont_JP.ttf">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Content\Assets\fonts\en_US.ttf">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Content\Assets\fonts\es_ES.ttf">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Content\Assets\fonts\ja_JP.ttf">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Content\Assets\fonts\ru_RU.ttf">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Localization\de_DE.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Localization\en_US.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Localization\es_ES.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Localization\fr_FR.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Localization\ja_JP.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Localization\pl_PL.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Localization\pt_BR.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Localization\ru_RU.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 </Project>

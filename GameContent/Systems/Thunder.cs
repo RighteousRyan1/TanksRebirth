@@ -12,7 +12,7 @@ namespace TanksRebirth.GameContent.Systems
 {
     public class Thunder
     {
-        public static SoundEffectInstance SoftRain;
+        public static OggAudio SoftRain;
 
         public static Thunder[] Thunders = new Thunder[20];
 
@@ -56,7 +56,7 @@ namespace TanksRebirth.GameContent.Systems
             TickDelay = tickDelay;
             LingerTime = lingerTime;
 
-            SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>(soundPath), SoundContext.Effect, 1f);
+            SoundPlayer.PlaySoundInstance(soundPath, SoundContext.Effect, 1f);
 
             int index = Array.IndexOf(Thunders, Thunders.First(thunder => thunder is null));
 
@@ -81,7 +81,7 @@ namespace TanksRebirth.GameContent.Systems
                     TickDelay = 30;
                     LingerTime = 60;
 
-                    SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/thunder/fast"), SoundContext.Effect, 1f);
+                    SoundPlayer.PlaySoundInstance("Assets/sounds/thunder/fast", SoundContext.Effect, 1f);
                     break;
                 case ThunderType.GradualFast:
                     MaxBright = 0.2f;
@@ -90,7 +90,7 @@ namespace TanksRebirth.GameContent.Systems
                     TickDelay = 40;
                     LingerTime = 0;
 
-                    SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/thunder/gradual_fast"), SoundContext.Effect, 1f);
+                    SoundPlayer.PlaySoundInstance("Assets/sounds/thunder/gradual_fast", SoundContext.Effect, 1f);
                     break;
                 case ThunderType.Instant:
                     MaxBright = 0.6f;
@@ -99,7 +99,7 @@ namespace TanksRebirth.GameContent.Systems
                     TickDelay = 5;
                     LingerTime = 40;
 
-                    SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/thunder/instant"), SoundContext.Effect, 1f);
+                    SoundPlayer.PlaySoundInstance("Assets/sounds/thunder/instant", SoundContext.Effect, 1f);
                     break;
                 case ThunderType.Instant2:
                     MaxBright = 1f;
@@ -108,7 +108,7 @@ namespace TanksRebirth.GameContent.Systems
                     TickDelay = 5;
                     LingerTime = 40;
 
-                    SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/thunder/instant_2"), SoundContext.Effect, 1f);
+                    SoundPlayer.PlaySoundInstance("Assets/sounds/thunder/instant_2", SoundContext.Effect, 1f);
                     break;
             }
 

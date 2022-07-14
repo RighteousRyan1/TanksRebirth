@@ -33,7 +33,7 @@ namespace TanksRebirth.GameContent.UI
     {
         public static bool Active { get; private set; } = true;
 
-        private static Music Theme;
+        private static OggMusic Theme;
         private static bool _musicFading;
 
         private static List<Tank> tanks = new();
@@ -178,7 +178,8 @@ namespace TanksRebirth.GameContent.UI
 
             SpriteFontBase font = TankGame.TextFont;
 
-            Theme = Music.CreateMusicTrack("Main Menu Theme", "Assets/mainmenu/theme", TankGame.Settings.MusicVolume);
+            Theme = new OggMusic("Main Menu Theme", "Content/Assets/mainmenu/theme", TankGame.Settings.MusicVolume);
+            Theme.Volume = TankGame.Settings.MusicVolume * 0.1f;
 
             #region Init Standard Buttons
             PlayButton = new(TankGame.GameLanguage.Play, font, Color.WhiteSmoke)
@@ -249,19 +250,19 @@ namespace TanksRebirth.GameContent.UI
             {
                 if (UsernameInput.IsEmpty())
                 {
-                    SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/menu/menu_error"), SoundContext.Effect);
+                    SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_error", SoundContext.Effect);
                     ChatSystem.SendMessage("Your username is empty!", Color.Red);
                     return;
                 }
                 if (PortInput.IsEmpty())
                 {
-                    SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/menu/menu_error"), SoundContext.Effect);
+                    SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_error", SoundContext.Effect);
                     ChatSystem.SendMessage("The port is empty!", Color.Red);
                     return;
                 }
                 if (IPInput.IsEmpty())
                 {
-                    SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/menu/menu_error"), SoundContext.Effect);
+                    SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_error", SoundContext.Effect);
                     ChatSystem.SendMessage("The IP address is not valid.", Color.Red);
                     return;
                 }
@@ -273,7 +274,7 @@ namespace TanksRebirth.GameContent.UI
                 }
                 else
                 {
-                    SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/menu/menu_error"), SoundContext.Effect);
+                    SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_error", SoundContext.Effect);
                     ChatSystem.SendMessage("That is not a valid port.", Color.Red);
                 }
             };
@@ -301,7 +302,7 @@ namespace TanksRebirth.GameContent.UI
                 }
                 else
                 {
-                    SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/menu/menu_error"), SoundContext.Effect);
+                    SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_error", SoundContext.Effect);
                     ChatSystem.SendMessage("That is not a valid port.", Color.Red);
                 }
 
@@ -402,7 +403,7 @@ namespace TanksRebirth.GameContent.UI
             };
 
             foreach (var e in _menuElements)
-                e.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/menu/menu_tick"), SoundContext.Effect); };
+                e.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick", SoundContext.Effect); };
         }
 
         public static void RenderCrate()
@@ -710,13 +711,13 @@ namespace TanksRebirth.GameContent.UI
                         {
                             // if it is, notify the user that the checkpoint is too high via the chat, and play the error sound
                             ChatSystem.SendMessage($"{elem.Text} has no mission {MissionCheckpoint + 1}.", Color.Red);
-                            SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/menu/menu_error"), SoundContext.Effect);
+                            SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_error", SoundContext.Effect);
                             return;
                         }
                         else if (MissionCheckpoint < 0)
                         {
                             ChatSystem.SendMessage($"You scallywag! No campaign has a mission {MissionCheckpoint + 1}!", Color.Red);
-                            SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/menu/menu_error"), SoundContext.Effect);
+                            SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_error", SoundContext.Effect);
                             return;
                         }
 
@@ -747,7 +748,7 @@ namespace TanksRebirth.GameContent.UI
                         Directory.Delete(path);
                         SetCampaignDisplay();
                     };
-                    elem.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/menu/menu_tick"), SoundContext.Effect); };
+                    elem.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick", SoundContext.Effect); };
                     campaignNames.Add(elem);
                 }
                 catch (System.Text.Json.JsonException e) {
@@ -760,7 +761,7 @@ namespace TanksRebirth.GameContent.UI
                 Tooltip = "Play without a campaign!",
             };
             extra.SetDimensions(1150, 100, 300, 40);
-            extra.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/menu/menu_tick"), SoundContext.Effect); };
+            extra.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick", SoundContext.Effect); };
             //elem.HasScissor = true;
             //elem.
             extra.OnLeftClick += (el) =>
@@ -961,8 +962,6 @@ namespace TanksRebirth.GameContent.UI
             GameUI.OptionsButton.Size.Y = 150;
             GameUI.QuitButton.Size.Y = 150;
 
-            Theme.Volume = 0;
-
             GameUI.QuitButton.Position.Y += 50;
             GameUI.OptionsButton.Position.Y -= 75;
 
@@ -976,7 +975,6 @@ namespace TanksRebirth.GameContent.UI
             MenuState = State.PrimaryMenu;
             Active = true;
             GameUI.Paused = false;
-            Theme.Volume = TankGame.Settings.MusicVolume;
             Theme.Play();
 
             foreach (var block in Block.AllBlocks)

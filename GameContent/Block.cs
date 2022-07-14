@@ -213,7 +213,7 @@ namespace TanksRebirth.GameContent
                             effect.TextureEnabled = true;
                             effect.Texture = meshTexture;
 
-                            effect.SetDefaultGameLighting_IngameEntities(8f);
+                            effect.SetDefaultGameLighting_IngameEntities(10f);
 
                             effect.DirectionalLight0.Direction *= 0.1f;
 

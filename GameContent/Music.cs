@@ -23,16 +23,27 @@ namespace TanksRebirth.GameContent
         float MaxVolume { get; set; }
         string Name { get; set; }
         MusicState State { get; set; }
-
         void Play();
         void Pause();
         void Stop();
-
-        void Update();
     }
     public class OggMusic : IAudio
     {
-        public float Volume { get; set; }
+        private float _vol;
+        public float Volume {
+            get => _vol;
+            set
+            {
+                _vol = value;
+
+                if (value > MaxVolume)
+                    value = MaxVolume;
+                else if (value < 0)
+                    value = 0;
+
+                _music.Instance.Volume = value;
+            }
+        }
         public float MaxVolume { get; set; }
         public MusicState State { get; set; }
         public string Name { get; set; }
@@ -47,46 +58,26 @@ namespace TanksRebirth.GameContent
             _music = new(songPath);
             Name = name;
             MaxVolume = maxVolume;
+            _music.Instance.IsLooped = true;
+            _music.Instance.Volume = 0;
         }
         public void Play()
-            => _music.Play();
+            => _music.Instance.Play();
         public void Pause()
-            => _music?.Pause();
+            => _music?.Instance.Pause();
         public void Resume()
-            => _music?.Resume();
+            => _music?.Instance.Resume();
         public void SetVolume(float volume)
-            => _music.SetVolume(volume);
+            => _music.Instance.Volume = volume;
         public void Stop()
-            => _music?.Stop();
+            => _music?.Instance.Stop();
 
         public bool IsPaused()
-            => _music.State == SoundState.Paused;
+            => _music.Instance.State == SoundState.Paused;
         public bool IsStopped()
-            => _music.State == SoundState.Stopped;
+            => _music.Instance.State == SoundState.Stopped;
         public bool IsPlaying()
-            => _music.State == SoundState.Playing;
-
-        public void Update()
-        {
-            _music.SetVolume(Volume);
-            if (Volume > MaxVolume)
-                Volume = MaxVolume;
-
-            if (!TankGame.Instance.IsActive)
-            {
-                if (!_music.IsPaused())
-                {
-                    _music?.Pause();
-                }
-            }
-            else
-            {
-                if (_music.IsPaused())
-                {
-                    _music?.Resume();
-                }
-            }
-        }
+            => _music.Instance.State == SoundState.Playing;
     }
     /// <summary>
     /// A class that allows simple usage of a music track.

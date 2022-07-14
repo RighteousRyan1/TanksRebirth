@@ -32,6 +32,7 @@ using TanksRebirth.Enums;
 using TanksRebirth.Achievements;
 using TanksRebirth.GameContent.Speedrunning;
 using TanksRebirth.GameContent.Properties;
+using TanksRebirth.Internals.Common.Framework.Audio;
 
 namespace TanksRebirth
 {
@@ -291,12 +292,43 @@ namespace TanksRebirth
             {
                 var s = Stopwatch.StartNew();
 
+                GameResources.CopySrcFolderContents("Content/Assets/fonts");
+                GameResources.CopySrcFolderContents("Content/Assets/music");
+                GameResources.CopySrcFolderContents("Content/Assets/music/marble");
+                GameResources.CopySrcFolderContents("Content/Assets/sounds");
+                GameResources.CopySrcFolderContents("Content/Assets/sounds/ambient");
+                GameResources.CopySrcFolderContents("Content/Assets/sounds/crate");
+                GameResources.CopySrcFolderContents("Content/Assets/sounds/menu");
+                GameResources.CopySrcFolderContents("Content/Assets/sounds/thunder");
+                GameResources.CopySrcFolderContents("Content/Assets/sounds/tnk_event");
+                GameResources.CopySrcFolderContents("Content/Assets/fanfares");
+                GameResources.CopySrcFolderContents("Content/Assets/mainmenu");
+                GameResources.CopySrcFolderContents("Localization");
+
+                GameResources.CopySrcFolderContents("Content/Assets/textures/bullet");
+                GameResources.CopySrcFolderContents("Content/Assets/textures/check");
+                GameResources.CopySrcFolderContents("Content/Assets/textures/chest");
+                GameResources.CopySrcFolderContents("Content/Assets/textures/ingame");
+                GameResources.CopySrcFolderContents("Content/Assets/textures/medal");
+                GameResources.CopySrcFolderContents("Content/Assets/textures/mine");
+                GameResources.CopySrcFolderContents("Content/Assets/textures/misc");
+                GameResources.CopySrcFolderContents("Content/Assets/textures/tank");
+                GameResources.CopySrcFolderContents("Content/Assets/textures/tank/wee");
+                GameResources.CopySrcFolderContents("Content/Assets/textures/ui");
+
+                GameResources.CopySrcFolderContents("Content/Assets/textures", ".png");
+                GameResources.CopySrcFolderContents("Content/Assets", ".png");
+                GameResources.CopySrcFolderContents("Content/Assets/toy", ".png");
+                GameResources.CopySrcFolderContents("Content/Assets/forest", ".png");
+                GameResources.CopySrcFolderContents("Content/Assets/cosmetics", ".png");
+
                 _cachedState = GraphicsDevice.RasterizerState;
 
                 UIElement.UIPanelBackground = GameResources.GetGameResource<Texture2D>("Assets/UIPanelBackground");
 
-                Thunder.SoftRain = GameResources.GetGameResource<SoundEffect>("Assets/sounds/ambient/soft_rain").CreateInstance();
-                Thunder.SoftRain.IsLooped = true;
+                Thunder.SoftRain = new OggAudio("Content/Assets/sounds/ambient/soft_rain");
+                Thunder.SoftRain.Instance.Volume = 0;
+                Thunder.SoftRain.Instance.IsLooped = true;
 
                 OnFocusLost += TankGame_OnFocusLost;
                 OnFocusRegained += TankGame_OnFocusRegained;
@@ -372,14 +404,22 @@ namespace TanksRebirth
 
         private void TankGame_OnFocusRegained(object sender, IntPtr e)
         {
-            if (Thunder.SoftRain.IsPaused())
-                Thunder.SoftRain.Resume();
+            if (TankMusicSystem.IsLoaded)
+            {
+                if (Thunder.SoftRain.IsPaused())
+                    Thunder.SoftRain.Instance.Resume();
+                TankMusicSystem.ResumeAll();
+            }
         }
 
         private void TankGame_OnFocusLost(object sender, IntPtr e)
         {
-            if (Thunder.SoftRain.IsPlaying())
-                Thunder.SoftRain.Pause();
+            if (TankMusicSystem.IsLoaded)
+            {
+                if (Thunder.SoftRain.IsPlaying())
+                    Thunder.SoftRain.Instance.Pause();
+                TankMusicSystem.PauseAll();
+            }
         }
 
         public const float DEFAULT_ORTHOGRAPHIC_ANGLE = 0.75f;
@@ -719,9 +759,6 @@ namespace TanksRebirth
 
             foreach (var bind in Keybind.AllKeybinds)
                 bind?.Update();
-
-            foreach (var music in Music.AllMusic)
-                music?.Update();
 
             UiScale = GameUtils.MousePosition.X / GameUtils.WindowWidth * 5;
         }

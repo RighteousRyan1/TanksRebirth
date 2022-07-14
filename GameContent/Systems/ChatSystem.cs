@@ -42,7 +42,7 @@ namespace TanksRebirth.GameContent.Systems
 
             if (sender is not null)
             {
-                SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>("Assets/sounds/menu/menu_tick"), SoundContext.Effect);
+                SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick", SoundContext.Effect);
                 if (Client.IsConnected())
                     Client.SendMessage(text.ToString(), color, sender.ToString());
             }

@@ -347,7 +347,7 @@ namespace TanksRebirth.GameContent
                 Team = TankTeam.NoTeam;
             if (Properties.Invisible && !Dead)
             {
-                var invis = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_invisible");
+                var invis = "Assets/sounds/tnk_invisible";
                 SoundPlayer.PlaySoundInstance(invis, SoundContext.Effect, 0.3f);
 
                 var lightParticle = ParticleSystem.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_particle"));
@@ -459,8 +459,8 @@ namespace TanksRebirth.GameContent
                 if (Properties.Armor.HitPoints > 0)
                 {
                     Properties.Armor.HitPoints--;
-                    var ding = SoundPlayer.PlaySoundInstance(GameResources.GetGameResource<SoundEffect>($"Assets/sounds/armor_ding_{GameHandler.GameRand.Next(1, 3)}"), SoundContext.Effect);
-                    ding.Pitch = GameHandler.GameRand.NextFloat(-0.1f, 0.1f);
+                    var ding = SoundPlayer.PlaySoundInstance($"Assets/sounds/armor_ding_{GameHandler.GameRand.Next(1, 3)}", SoundContext.Effect);
+                    ding.Instance.Pitch = GameHandler.GameRand.NextFloat(-0.1f, 0.1f);
                 }
                 else
                     Destroy(context);
@@ -474,11 +474,11 @@ namespace TanksRebirth.GameContent
             GameProperties.OnMissionStart -= OnMissionStart;
 
             OnDestroy?.Invoke(this, new());
-            var killSound1 = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_destroy");
+            var killSound1 = "Assets/sounds/tnk_destroy";
             SoundPlayer.PlaySoundInstance(killSound1, SoundContext.Effect, 0.2f);
             if (this is AITank t)
             {
-                var killSound2 = GameResources.GetGameResource<SoundEffect>($"Assets/sounds/tnk_destroy_enemy");
+                var killSound2 = "Assets/sounds/tnk_destroy_enemy";
                 SoundPlayer.PlaySoundInstance(killSound2, SoundContext.Effect, 0.3f);
 
                 var dm = new TankDeathMark(TankDeathMark.CheckColor.White)
@@ -698,7 +698,7 @@ namespace TanksRebirth.GameContent
 
             CurMineCooldown = Properties.MineCooldown;
             CurMineStun = Properties.MineStun;
-            var sound = GameResources.GetGameResource<SoundEffect>("Assets/sounds/mine_place");
+            var sound = "Assets/sounds/mine_place";
             SoundPlayer.PlaySoundInstance(sound, SoundContext.Effect, 0.5f);
             OwnedMineCount++;
 
@@ -706,7 +706,6 @@ namespace TanksRebirth.GameContent
 
             var mine = new Mine(this, Position, 600);
         }
-
         public virtual void Render() {
             if (IsIngame)
             {
