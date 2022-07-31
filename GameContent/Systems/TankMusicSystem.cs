@@ -504,17 +504,17 @@ namespace TanksRebirth.GameContent.Systems
 
         // TODO: ambience n stuff - remove music in forests
 
-        public static OggMusic forestAmbience;
+        public static OggMusic snowLoop;
 
         public static void Update()
         {
-            if (MapRenderer.Theme == MapTheme.Forest)
+            if (MapRenderer.Theme == MapTheme.Christmas)
             {
-                forestAmbience.Volume = TankGame.Settings.AmbientVolume;
+                snowLoop.SetVolume(TankGame.Settings.AmbientVolume);
                 return;
             }
 
-            forestAmbience.Volume = 0;
+            snowLoop.Volume = 0;
 
             var musicVolume = TankGame.Settings.MusicVolume;
 
@@ -528,49 +528,49 @@ namespace TanksRebirth.GameContent.Systems
 
             if (TierHighest == TankTier.Ash && AITank.CountAll() < 3)
                 ash1.SetVolume(musicVolume);
-            else if (TierHighest == TankTier.Ash && AITank.CountAll() >= 3) //|| Tank.GetTankCountOfType(TankTier.Brown) >= 2))
+            else if (TierHighest == TankTier.Ash && AITank.CountAll() >= 3)
                 ash2.SetVolume(musicVolume);
 
             if (TierHighest == TankTier.Marine && AITank.CountAll() == 1)
                 marine1.SetVolume(musicVolume);
-            else if (TierHighest == TankTier.Marine && AITank.CountAll() >= 2) //|| Tank.GetTankCountOfType(TankTier.Brown | TankTier.Ash) >= 2))
+            else if (TierHighest == TankTier.Marine && AITank.CountAll() >= 2) 
                 marine2.SetVolume(musicVolume);
 
-            if (TierHighest == TankTier.Yellow && AITank.CountAll() == 1) //&& Tank.GetTankCountOfType(TankTier.Marine) == 0)
+            if (TierHighest == TankTier.Yellow && AITank.CountAll() == 1) 
                 yellow1.SetVolume(musicVolume);
-            else if (TierHighest == TankTier.Yellow && (AITank.CountAll() == 2)) //|| Tank.GetTankCountOfType(TankTier.Marine) == 1))
+            else if (TierHighest == TankTier.Yellow && (AITank.CountAll() == 2)) 
                 yellow2.SetVolume(musicVolume);
-            else if (TierHighest == TankTier.Yellow && (AITank.CountAll() >= 3)) //|| Tank.GetTankCountOfType(TankTier.Marine) >= 3))
+            else if (TierHighest == TankTier.Yellow && (AITank.CountAll() >= 3)) 
                 yellow3.SetVolume(musicVolume);
 
-            if (TierHighest == TankTier.Pink && AITank.CountAll() == 1) //&& Tank.GetTankCountOfType(TankTier.Marine | TankTier.Yellow) == 0)
+            if (TierHighest == TankTier.Pink && AITank.CountAll() == 1) 
                 pink1.SetVolume(musicVolume);
-            else if (TierHighest == TankTier.Pink && (AITank.CountAll() == 2)) //|| Tank.GetTankCountOfType(TankTier.Marine | TankTier.Yellow) == 1))
+            else if (TierHighest == TankTier.Pink && (AITank.CountAll() == 2)) 
                 pink2.SetVolume(musicVolume);
-            else if (TierHighest == TankTier.Pink && (AITank.CountAll() >= 3)) //|| Tank.GetTankCountOfType(TankTier.Marine | TankTier.Yellow) >= 2))
+            else if (TierHighest == TankTier.Pink && (AITank.CountAll() >= 3)) 
                 pink3.SetVolume(musicVolume);
 
-            if (TierHighest == TankTier.Green && AITank.CountAll() == 1) //&& Tank.GetTankCountOfType(TankTier.Yellow | TankTier.Pink) == 0)
+            if (TierHighest == TankTier.Green && AITank.CountAll() == 1) 
                 green1.SetVolume(musicVolume);
-            else if (TierHighest == TankTier.Green && (AITank.CountAll() == 2)) //|| Tank.GetTankCountOfType(TankTier.Yellow | TankTier.Pink) == 1))
+            else if (TierHighest == TankTier.Green && (AITank.CountAll() == 2)) 
                 green2.SetVolume(musicVolume);
-            else if (TierHighest == TankTier.Green && (AITank.CountAll() == 3)) //|| Tank.GetTankCountOfType(TankTier.Yellow | TankTier.Pink) == 3))
+            else if (TierHighest == TankTier.Green && (AITank.CountAll() == 3)) 
                 green3.SetVolume(musicVolume);
-            else if (TierHighest == TankTier.Green && (AITank.CountAll() >= 4)) //|| Tank.GetTankCountOfType(TankTier.Yellow | TankTier.Pink) >= 4))
+            else if (TierHighest == TankTier.Green && (AITank.CountAll() >= 4)) 
                 green4.SetVolume(musicVolume);
 
-            if (TierHighest == TankTier.Purple && AITank.CountAll() == 1) //&& Tank.GetTankCountOfType(TankTier.Pink | TankTier.Green) == 0)
+            if (TierHighest == TankTier.Purple && AITank.CountAll() == 1)  
                 purple1.SetVolume(musicVolume);
-            else if (TierHighest == TankTier.Purple && (AITank.CountAll() == 2)) //|| Tank.GetTankCountOfType(TankTier.Pink | TankTier.Green) == 1))
+            else if (TierHighest == TankTier.Purple && (AITank.CountAll() == 2)) 
                 purple2.SetVolume(musicVolume);
-            else if (TierHighest == TankTier.Purple && (AITank.CountAll() >= 3)) //|| Tank.GetTankCountOfType(TankTier.Pink | TankTier.Green) >= 2))
+            else if (TierHighest == TankTier.Purple && (AITank.CountAll() >= 3)) 
                 purple3.SetVolume(musicVolume);
 
-            if (TierHighest == TankTier.White && AITank.CountAll() == 1) //&& Tank.GetTankCountOfType(TankTier.Green | TankTier.Purple) == 0)
+            if (TierHighest == TankTier.White && AITank.CountAll() == 1) 
                 white1.SetVolume(musicVolume);
-            else if (TierHighest == TankTier.White && (AITank.CountAll() == 2)) //|| Tank.GetTankCountOfType(TankTier.Green | TankTier.Purple) == 1))
+            else if (TierHighest == TankTier.White && (AITank.CountAll() == 2)) 
                 white2.SetVolume(musicVolume);
-            else if (TierHighest == TankTier.White && (AITank.CountAll() >= 3)) //|| Tank.GetTankCountOfType(TankTier.Green | TankTier.Purple) >= 2))
+            else if (TierHighest == TankTier.White && (AITank.CountAll() >= 3)) 
                 white3.SetVolume(musicVolume);
 
             if (TierHighest == TankTier.Black)
@@ -586,49 +586,49 @@ namespace TanksRebirth.GameContent.Systems
 
             if (TierHighest == TankTier.Silver && AITank.CountAll() < 3)
                 silver1.SetVolume(musicVolume);
-            else if (TierHighest == TankTier.Silver && (AITank.CountAll() >= 3)) //|| Tank.GetTankCountOfType(TankTier.Brown) >= 2))
+            else if (TierHighest == TankTier.Silver && (AITank.CountAll() >= 3))
                 silver2.SetVolume(musicVolume);
 
             if (TierHighest == TankTier.Sapphire && AITank.CountAll() == 1)
                 sapphire1.SetVolume(musicVolume);
-            else if (TierHighest == TankTier.Sapphire && (AITank.CountAll() >= 2)) //|| Tank.GetTankCountOfType(TankTier.Brown | TankTier.Ash) >= 2))
+            else if (TierHighest == TankTier.Sapphire && (AITank.CountAll() >= 2))
                 sapphire2.SetVolume(musicVolume);
 
-            if (TierHighest == TankTier.Citrine && AITank.CountAll() == 1) //&& Tank.GetTankCountOfType(TankTier.Marine) == 0)
+            if (TierHighest == TankTier.Citrine && AITank.CountAll() == 1)
                 citrine1.SetVolume(musicVolume);
-            else if (TierHighest == TankTier.Citrine && (AITank.CountAll() == 2)) //|| Tank.GetTankCountOfType(TankTier.Marine) == 1))
+            else if (TierHighest == TankTier.Citrine && (AITank.CountAll() == 2))
                 citrine2.SetVolume(musicVolume);
-            else if (TierHighest == TankTier.Citrine && (AITank.CountAll() >= 3)) //|| Tank.GetTankCountOfType(TankTier.Marine) >= 3))
+            else if (TierHighest == TankTier.Citrine && (AITank.CountAll() >= 3))
                 citrine3.SetVolume(musicVolume);
 
-            if (TierHighest == TankTier.Ruby && AITank.CountAll() == 1) //&& Tank.GetTankCountOfType(TankTier.Marine | TankTier.Yellow) == 0)
+            if (TierHighest == TankTier.Ruby && AITank.CountAll() == 1)
                 ruby1.SetVolume(musicVolume);
-            else if (TierHighest == TankTier.Ruby && (AITank.CountAll() == 2)) //|| Tank.GetTankCountOfType(TankTier.Marine | TankTier.Yellow) == 1))
+            else if (TierHighest == TankTier.Ruby && (AITank.CountAll() == 2))
                 ruby2.SetVolume(musicVolume);
-            else if (TierHighest == TankTier.Ruby && (AITank.CountAll() >= 3)) //|| Tank.GetTankCountOfType(TankTier.Marine | TankTier.Yellow) >= 2))
+            else if (TierHighest == TankTier.Ruby && (AITank.CountAll() >= 3))
                 ruby3.SetVolume(musicVolume);
 
-            if (TierHighest == TankTier.Emerald && AITank.CountAll() == 1) //&& Tank.GetTankCountOfType(TankTier.Yellow | TankTier.Pink) == 0)
+            if (TierHighest == TankTier.Emerald && AITank.CountAll() == 1)
                 emerald1.SetVolume(musicVolume);
-            else if (TierHighest == TankTier.Emerald && (AITank.CountAll() == 2)) //|| Tank.GetTankCountOfType(TankTier.Yellow | TankTier.Pink) == 1))
+            else if (TierHighest == TankTier.Emerald && (AITank.CountAll() == 2))
                 emerald2.SetVolume(musicVolume);
-            else if (TierHighest == TankTier.Emerald && (AITank.CountAll() == 3)) //|| Tank.GetTankCountOfType(TankTier.Yellow | TankTier.Pink) == 3))
+            else if (TierHighest == TankTier.Emerald && (AITank.CountAll() == 3))
                 emerald3.SetVolume(musicVolume);
-            else if (TierHighest == TankTier.Emerald && (AITank.CountAll() >= 4)) //|| Tank.GetTankCountOfType(TankTier.Yellow | TankTier.Pink) >= 4))
+            else if (TierHighest == TankTier.Emerald && (AITank.CountAll() >= 4))
                 emerald4.SetVolume(musicVolume);
 
-            if (TierHighest == TankTier.Amethyst && AITank.CountAll() == 1) //&& Tank.GetTankCountOfType(TankTier.Pink | TankTier.Green) == 0)
+            if (TierHighest == TankTier.Amethyst && AITank.CountAll() == 1) 
                 amethyst1.SetVolume(musicVolume);
-            else if (TierHighest == TankTier.Amethyst && (AITank.CountAll() == 2)) //|| Tank.GetTankCountOfType(TankTier.Pink | TankTier.Green) == 1))
+            else if (TierHighest == TankTier.Amethyst && (AITank.CountAll() == 2))
                 amethyst2.SetVolume(musicVolume);
-            else if (TierHighest == TankTier.Amethyst && (AITank.CountAll() >= 3)) //|| Tank.GetTankCountOfType(TankTier.Pink | TankTier.Green) >= 2))
+            else if (TierHighest == TankTier.Amethyst && (AITank.CountAll() >= 3)) 
                 amethyst3.SetVolume(musicVolume);
 
-            if (TierHighest == TankTier.Gold && AITank.CountAll() == 1) //&& Tank.GetTankCountOfType(TankTier.Green | TankTier.Purple) == 0)
+            if (TierHighest == TankTier.Gold && AITank.CountAll() == 1) 
                 gold1.SetVolume(musicVolume);
-            else if (TierHighest == TankTier.Gold && (AITank.CountAll() == 2)) //|| Tank.GetTankCountOfType(TankTier.Green | TankTier.Purple) == 1))
+            else if (TierHighest == TankTier.Gold && (AITank.CountAll() == 2)) 
                 gold2.SetVolume(musicVolume);
-            else if (TierHighest == TankTier.Gold && (AITank.CountAll() >= 3)) //|| Tank.GetTankCountOfType(TankTier.Green | TankTier.Purple) >= 2))
+            else if (TierHighest == TankTier.Gold && (AITank.CountAll() >= 3)) 
                 gold3.SetVolume(musicVolume);
 
             if (TierHighest == TankTier.Obsidian)
@@ -636,6 +636,66 @@ namespace TanksRebirth.GameContent.Systems
 
             if (TierHighest == TankTier.Assassin)
                 assassin.SetVolume(musicVolume);
+
+            if (TierHighest == TankTier.Granite)
+                granite.SetVolume(musicVolume);
+
+            if (TierHighest == TankTier.Bubblegum && AITank.CountAll() < 3)
+                bubblegum1.SetVolume(musicVolume);
+            else if (TierHighest == TankTier.Bubblegum && (AITank.CountAll() >= 3))
+                bubblegum2.SetVolume(musicVolume);
+
+            if (TierHighest == TankTier.Water && AITank.CountAll() == 1)
+                water1.SetVolume(musicVolume);
+            else if (TierHighest == TankTier.Water && (AITank.CountAll() >= 2))
+                water2.SetVolume(musicVolume);
+
+            if (TierHighest == TankTier.Tiger && AITank.CountAll() == 1)
+                tiger1.SetVolume(musicVolume);
+            else if (TierHighest == TankTier.Tiger && (AITank.CountAll() == 2))
+                tiger2.SetVolume(musicVolume);
+            else if (TierHighest == TankTier.Tiger && (AITank.CountAll() >= 3))
+                tiger3.SetVolume(musicVolume);
+
+            if (TierHighest == TankTier.Crimson && AITank.CountAll() == 1)
+                crimson1.SetVolume(musicVolume);
+            else if (TierHighest == TankTier.Crimson && (AITank.CountAll() == 2))
+                crimson2.SetVolume(musicVolume);
+            else if (TierHighest == TankTier.Crimson && (AITank.CountAll() >= 3))
+                crimson3.SetVolume(musicVolume);
+
+            if (TierHighest == TankTier.Creeper && AITank.CountAll() == 1)
+                creeper1.SetVolume(musicVolume);
+            else if (TierHighest == TankTier.Creeper && (AITank.CountAll() == 2))
+                creeper2.SetVolume(musicVolume);
+            else if (TierHighest == TankTier.Creeper && (AITank.CountAll() == 3))
+                creeper3.SetVolume(musicVolume);
+            else if (TierHighest == TankTier.Creeper && (AITank.CountAll() >= 4))
+                creeper4.SetVolume(musicVolume);
+
+            if (TierHighest == TankTier.Fade && AITank.CountAll() == 1)
+                fade1.SetVolume(musicVolume);
+            else if (TierHighest == TankTier.Fade && (AITank.CountAll() == 2))
+                fade2.SetVolume(musicVolume);
+            else if (TierHighest == TankTier.Fade && (AITank.CountAll() >= 3))
+                fade3.SetVolume(musicVolume);
+
+            if (TierHighest == TankTier.Gamma && AITank.CountAll() == 1)
+                gamma1.SetVolume(musicVolume);
+            else if (TierHighest == TankTier.Gamma && (AITank.CountAll() == 2))
+                gamma2.SetVolume(musicVolume);
+            else if (TierHighest == TankTier.Gamma && (AITank.CountAll() >= 3))
+                gamma3.SetVolume(musicVolume);
+
+            if (TierHighest == TankTier.Marble)
+                marble.SetVolume(musicVolume);
+
+
+            if (TierHighest == TankTier.Assassin)
+                assassin.SetVolume(musicVolume);
+
+            if (TierHighest == TankTier.Commando)
+                commando.SetVolume(musicVolume);
 
             // we call this hardcode hell in the west
         }
@@ -687,7 +747,31 @@ namespace TanksRebirth.GameContent.Systems
         public static OggMusic gold3;
         public static OggMusic obsidian;
 
+        public static OggMusic granite;
+        public static OggMusic bubblegum1;
+        public static OggMusic bubblegum2;
+        public static OggMusic water1;
+        public static OggMusic water2;
+        public static OggMusic crimson1;
+        public static OggMusic crimson2;
+        public static OggMusic crimson3;
+        public static OggMusic tiger1;
+        public static OggMusic tiger2;
+        public static OggMusic tiger3;
+        public static OggMusic fade1;
+        public static OggMusic fade2;
+        public static OggMusic fade3;
+        public static OggMusic creeper1;
+        public static OggMusic creeper2;
+        public static OggMusic creeper3;
+        public static OggMusic creeper4;
+        public static OggMusic gamma1;
+        public static OggMusic gamma2;
+        public static OggMusic gamma3;
+        public static OggMusic marble;
+
         public static OggMusic assassin;
+        public static OggMusic commando;
         #endregion
 
         public static OggMusic[] Songs;
@@ -769,9 +853,43 @@ namespace TanksRebirth.GameContent.Systems
             gold2 = new OggMusic("GoldTank2", "Content/Assets/music/gold2", 0.5f);
             gold3 = new OggMusic("GoldTank3", "Content/Assets/music/gold3", 0.5f);
 
+            // initialize songs in order, using base path "Assets/music/marble"
+            granite = new OggMusic("GraniteTank", "Content/Assets/music/marble/granite", 0.5f);
+
+            bubblegum1 = new OggMusic("BubblegumTank1", "Content/Assets/music/marble/bubblegum1", 0.5f);
+            bubblegum2 = new OggMusic("BubblegumTank2", "Content/Assets/music/marble/bubblegum2", 0.5f);
+
+            water1 = new OggMusic("WaterTank1", "Content/Assets/music/marble/water1", 0.5f);
+            water2 = new OggMusic("WaterTank2", "Content/Assets/music/marble/water2", 0.5f);
+
+            crimson1 = new OggMusic("CrimsonTank1", "Content/Assets/music/marble/crimson1", 0.5f);
+            crimson2 = new OggMusic("CrimsonTank2", "Content/Assets/music/marble/crimson2", 0.5f);
+            crimson3 = new OggMusic("CrimsonTank3", "Content/Assets/music/marble/crimson3", 0.5f);
+
+            tiger1 = new OggMusic("TigerTank1", "Content/Assets/music/marble/tiger1", 0.5f);
+            tiger2 = new OggMusic("TigerTank2", "Content/Assets/music/marble/tiger2", 0.5f);
+            tiger3 = new OggMusic("TigerTank3", "Content/Assets/music/marble/tiger3", 0.5f);
+
+            fade1 = new OggMusic("FadeTank1", "Content/Assets/music/marble/fade1", 0.5f);
+            fade2 = new OggMusic("FadeTank2", "Content/Assets/music/marble/fade2", 0.5f);
+            fade3 = new OggMusic("FadeTank3", "Content/Assets/music/marble/fade3", 0.5f);
+
+            creeper1 = new OggMusic("CreeperTank1", "Content/Assets/music/marble/creeper1", 0.5f);
+            creeper2 = new OggMusic("CreeperTank2", "Content/Assets/music/marble/creeper2", 0.5f);
+            creeper3 = new OggMusic("CreeperTank3", "Content/Assets/music/marble/creeper3", 0.5f);
+            creeper4 = new OggMusic("CreeperTank4", "Content/Assets/music/marble/creeper4", 0.5f);
+
+            gamma1 = new OggMusic("GammaTank1", "Content/Assets/music/marble/gamma1", 0.5f);
+            gamma2 = new OggMusic("GammaTank2", "Content/Assets/music/marble/gamma2", 0.5f);
+            gamma3 = new OggMusic("GammaTank3", "Content/Assets/music/marble/gamma3", 0.5f);
+
+            marble = new OggMusic("MarbleTank", "Content/Assets/music/marble/marble", 0.5f);
+
             obsidian = new OggMusic("ObsidianTank", "Content/Assets/music/obsidian", 0.5f);
 
             assassin = new OggMusic("AssassinTank", "Content/Assets/music/assassin", 0.5f);
+
+            commando = new OggMusic("CommandoTank", "Content/Assets/music/commando", 0.5f);
 
             #endregion
 
@@ -800,13 +918,25 @@ namespace TanksRebirth.GameContent.Systems
                 gold1, gold2, gold3,
                 obsidian,
 
-                assassin
+                granite,
+                bubblegum1, bubblegum2,
+                water1, water2,
+                crimson1, crimson2, crimson3,
+                tiger1, tiger2, tiger3,
+                fade1, fade2, fade3,
+                creeper1, creeper2, creeper3, creeper4,
+                gamma1, gamma2, gamma3,
+                marble,
+
+                assassin,
+
+                commando
             };
         }
 
         public static void LoadAmbienceTracks()
         {
-            forestAmbience = new("Forest Ambient", "Content/Assets/sounds/ambient/forestnight", 1f);
+            snowLoop = new("Snow Breeze", "Content/Assets/sounds/ambient/snowfall", 1f);
         }
 
         public static void PlayAll()
@@ -820,13 +950,13 @@ namespace TanksRebirth.GameContent.Systems
             foreach (var song in Songs)
                 song?.Play();
 
-            if (MapRenderer.Theme == MapTheme.Forest)
-                forestAmbience?.Play();
+            if (MapRenderer.Theme == MapTheme.Christmas)
+                snowLoop?.Play();
         }
 
         public static void PauseAll()
         {
-            forestAmbience?.Pause();
+            snowLoop?.Pause();
             foreach (var song in Songs)
                 if (!song.IsPaused())
                     song?.Pause();
@@ -834,14 +964,14 @@ namespace TanksRebirth.GameContent.Systems
 
         public static void ResumeAll()
         {
-            forestAmbience?.Play();
+            snowLoop?.Play();
             foreach (var song in Songs)
                 song?.Resume();
         }
 
         public static void StopAll()
         {
-            forestAmbience?.Stop();
+            snowLoop?.Stop();
             if (Songs is not null)
             {
                 foreach (var song in Songs)
@@ -855,11 +985,11 @@ namespace TanksRebirth.GameContent.Systems
             {
                 if (song.Volume > 0)
                 {
-                    song.Volume = TankGame.Settings.MusicVolume;
-                    if (MapRenderer.Theme == MapTheme.Forest)
-                        forestAmbience.Volume = TankGame.Settings.AmbientVolume;
+                    song.SetVolume(TankGame.Settings.MusicVolume);
+                    if (MapRenderer.Theme == MapTheme.Christmas)
+                        snowLoop.SetVolume(TankGame.Settings.AmbientVolume);
                     else
-                        forestAmbience.Volume = 0;
+                        snowLoop.SetVolume(0);
                 }
             }
         }

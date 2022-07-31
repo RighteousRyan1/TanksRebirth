@@ -39,7 +39,7 @@ namespace TanksRebirth.Graphics
 
                 Lighting.IsNight = IsNight;
 
-                TankMusicSystem.forestAmbience = new OggMusic("Forest Ambient", IsNight ? "Content/Assets/sounds/ambient/forestnight" : "Content/Assets/sounds/ambient/forestday", 1f);
+                TankMusicSystem.snowLoop = new OggMusic("Forest Ambient", IsNight ? "Content/Assets/sounds/ambient/forestnight" : "Content/Assets/sounds/ambient/forestday", 1f);
             }
 
 

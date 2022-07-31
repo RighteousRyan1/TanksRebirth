@@ -235,7 +235,7 @@ namespace TanksRebirth
 
         protected override void Initialize()
         {
-            //try
+            try
             {
                 CurrentSessionTimer.Start();
 
@@ -263,10 +263,10 @@ namespace TanksRebirth
 
                 base.Initialize();
             }
-            //catch (Exception e)
+            catch (Exception e)
             {
-                //GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
-                //throw;
+                GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
+                throw;
             }
         }
 

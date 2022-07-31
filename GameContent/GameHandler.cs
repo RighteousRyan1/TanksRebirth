@@ -32,6 +32,7 @@ using TanksRebirth.IO;
 using TanksRebirth.Achievements;
 using TanksRebirth.GameContent.Properties;
 using TanksRebirth.GameContent.Speedrunning;
+using FontStashSharp;
 
 namespace TanksRebirth.GameContent
 {
@@ -456,17 +457,19 @@ namespace TanksRebirth.GameContent
                 SoundPlayer.PlaySoundInstance(missionStarting, SoundContext.Effect, 0.8f);
             }
         }
-
         public static int BlockType = 0;
         public static int CubeHeight = 1;
         public static int tankToSpawnType;
         public static int tankToSpawnTeam;
-
         internal static void RenderAll()
         {
             TankGame.Instance.GraphicsDevice.BlendState = BlendState.AlphaBlend;
 
             Xp?.Render(TankGame.SpriteRenderer, new(GameUtils.WindowWidth / 2, 50), new(100, 20), Aligning.Center, Color.Red, Color.Lime);
+
+            if (_tankFuncDelay > 0 && !MainMenu.Active)
+                // $"{MathF.Round(_tankFuncDelay / 60)}"
+                TankGame.SpriteRenderer.DrawString(TankGame.TextFontLarge, $"{MathF.Round(_tankFuncDelay / 60) + 1}", GameUtils.WindowCenter, Color.White, Vector2.One * 3f, 0f, TankGame.TextFontLarge.MeasureString($"{MathF.Round(_tankFuncDelay / 60) + 1}") / 2, 0f);
 
             if (!MainMenu.Active)
                 MapRenderer.RenderWorldModels();
@@ -592,10 +595,9 @@ namespace TanksRebirth.GameContent
                 LoadCampaign.IsVisible = DebugUtils.DebuggingEnabled && DebugUtils.DebugLevel == 3;
                 CampaignName.IsVisible = DebugUtils.DebuggingEnabled && DebugUtils.DebugLevel == 3;
             }
+
             GameUI.MissionInfoBar.IsVisible = !MainMenu.Active;
         }
-
-
         private static int _oldelta;
         public static void HandleLevelEditorModifications()
         {
@@ -664,8 +666,8 @@ namespace TanksRebirth.GameContent
                 {
                     song.Stop();
                 }
-                TankMusicSystem.forestAmbience.Stop();
-                TankMusicSystem.forestAmbience.Play();
+                TankMusicSystem.snowLoop.Stop();
+                TankMusicSystem.snowLoop.Play();
             }
         }
 

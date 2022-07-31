@@ -14,7 +14,7 @@ namespace TanksRebirth.GameContent
     public enum MapTheme
     {
         Vanilla,
-        Forest,
+        Christmas,
     }
 
     // TODO: Chairs and Co (models)
@@ -124,14 +124,14 @@ namespace TanksRebirth.GameContent
 
                         break;
 
-                    case MapTheme.Forest:
+                    case MapTheme.Christmas:
 
-                        AssetRoot = "Assets/forest/";
+                        AssetRoot = "Assets/christmas/";
 
                         break;
                 }
             }
-
+            // TODO: finish christmas stuff kekw failure
             public static void RenderFloor()
             {
                 foreach (var mesh in FloorModelBase.Meshes)
@@ -161,76 +161,6 @@ namespace TanksRebirth.GameContent
         {
             public static Body[] Boundaries = new Body[4];
             public static Model BoundaryModel;
-
-            public static Vector3[] treePositions = new Vector3[]
-            {
-                new() { X = 390f, Y = 0f, Z = 200f },
-                new() { X = -360f, Y = 0f, Z = 350f },
-                new() { X = -372f, Y = 0f, Z = 150f },
-                new() { X = 372f, Y = 0f, Z = -100f },
-                new() { X = -20f, Y = 0f, Z = -210f },
-                new() { X = 50f, Y = 0f, Z = 500f },
-
-                new() { X = -325f, Y = 0f, Z = -180f },
-            };
-            public static Vector3[] stumpPositions = new Vector3[]
-            {
-                new() { X = 35f, Y = 0f, Z = -185f }
-            };
-
-            // position, inverted
-            public static Vector3[] logPilePositions = new Vector3[]
-            {
-                new() { X = -260f, Y = 0f, Z = -135f },
-                new() { X = -120f, Y = 0f, Z = -135f },
-                new() { X = 0f, Y = 0f, Z = -135f },
-                new() { X = 120f, Y = 0f, Z = -135f },
-                new() { X = 240f, Y = 0f, Z = -135f },
-
-                new() { X = 338f, Y = 0f, Z = -90f },
-                new() { X = 338f, Y = 0f, Z = 30f },
-                new() { X = 338f, Y = 0f, Z = 150f },
-                new() { X = 338f, Y = 0f, Z = 270f },
-                new() { X = 338f, Y = 0f, Z = 390f },
-
-                new() { X = -260f, Y = 0f, Z = 400f },
-                new() { X = -120f, Y = 0f, Z = 400f },
-                new() { X = 0f, Y = 0f, Z = 400f },
-                new() { X = 120f, Y = 0f, Z = 400f },
-                new() { X = 240f, Y = 0f, Z = 400f },
-
-                new() { X = -338f, Y = 0f, Z = -90f },
-                new() { X = -338f, Y = 0f, Z = 30f },
-                new() { X = -338f, Y = 0f, Z = 150f },
-                new() { X = -338f, Y = 0f, Z = 270f },
-                new() { X = -338f, Y = 0f, Z = 390f },
-            };
-
-            public static bool[] logPileInverted = new bool[]
-            {
-                false, true, false, true, false,
-
-                false, true, false, true, false,
-
-                false, true, false, true, false,
-
-                false, true, false, true, false
-            };
-
-            public static float[] logPileOrientations = new float[]
-            {
-                0, 0, 0, 0, 0,
-
-                MathHelper.PiOver2, MathHelper.PiOver2, MathHelper.PiOver2, MathHelper.PiOver2, MathHelper.PiOver2,
-
-                MathHelper.Pi, MathHelper.Pi, MathHelper.Pi, MathHelper.Pi, MathHelper.Pi,
-
-                MathHelper.PiOver2, MathHelper.PiOver2, MathHelper.PiOver2, MathHelper.PiOver2, MathHelper.PiOver2
-            };
-
-            public static Model TreeModel;
-            public static Model TreeStumpModel;
-            public static Model LogPileModel;
 
             public static void LoadBounds()
             {
@@ -263,11 +193,6 @@ namespace TanksRebirth.GameContent
                         SetBlockTexture(BoundaryModel.Meshes["polygon32"], BoundaryTextureContext.floor_lower);
 
                         break;
-                    case MapTheme.Forest:
-                        TreeModel = GameResources.GetGameResource<Model>("Assets/forest/tree");
-                        TreeStumpModel = GameResources.GetGameResource<Model>("Assets/forest/tree_stump");
-                        LogPileModel = GameResources.GetGameResource<Model>("Assets/forest/logpile");
-                        break;
                 }
             }
 
@@ -293,79 +218,6 @@ namespace TanksRebirth.GameContent
                             }
 
                             mesh.Draw();
-                        }
-                        break;
-                    case MapTheme.Forest:
-                        for (int i = 0; i < treePositions.Length; i++)
-                        {
-                            var position = treePositions[i];
-
-                            foreach (var mesh in TreeModel.Meshes)
-                            {
-                                foreach (BasicEffect effect in mesh.Effects)
-                                {
-                                    effect.View = View;
-                                    effect.Projection = Projection;
-                                    effect.World = Matrix.CreateRotationX(-MathHelper.PiOver2) * Matrix.CreateRotationY(MathHelper.Pi) * Matrix.CreateTranslation(position);
-
-                                    effect.TextureEnabled = true;
-
-                                   if (mesh.Name == "Log")
-                                       effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/forest/tree_log_tex");
-                                   else
-                                       effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/forest/floor_face");
-
-                                    effect.SetDefaultGameLighting();
-                                }
-
-                                mesh.Draw();
-                            }
-                        }
-                        for (int i = 0; i < stumpPositions.Length; i++)
-                        {
-                            var position = stumpPositions[i];
-
-                            foreach (var mesh in TreeStumpModel.Meshes)
-                            {
-                                foreach (BasicEffect effect in mesh.Effects)
-                                {
-                                    effect.View = View;
-                                    effect.Projection = Projection;
-                                    effect.World = Matrix.CreateScale(10) * Matrix.CreateRotationX(-MathHelper.PiOver2) * Matrix.CreateRotationY(MathHelper.Pi) * Matrix.CreateTranslation(position + new Vector3(0, 10, 0));
-
-                                    effect.TextureEnabled = true;
-
-                                    effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/forest/tree_log_tex");
-
-                                    effect.SetDefaultGameLighting();
-                                }
-
-                                mesh.Draw();
-                            }
-                        }
-                        for (int i = 0; i < logPilePositions.Length; i++)
-                        {
-                            var position = logPilePositions[i];
-
-                            var invert = logPileInverted[i];
-
-                            foreach (var mesh in LogPileModel.Meshes)
-                            {
-                                foreach (BasicEffect effect in mesh.Effects)
-                                {
-                                    effect.View = View;
-                                    effect.Projection = Projection;
-                                    effect.World = Matrix.CreateScale(50, 20, 50) * Matrix.CreateRotationX(-MathHelper.PiOver2) * Matrix.CreateFromYawPitchRoll((invert ? MathHelper.Pi : 0) + logPileOrientations[i], 0, 0) * Matrix.CreateTranslation(position);
-
-                                    effect.TextureEnabled = true;
-
-                                    effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/forest/tree_log_tex");
-
-                                    effect.SetDefaultGameLighting();
-                                }
-
-                                mesh.Draw();
-                            }
                         }
                         break;
                 }
