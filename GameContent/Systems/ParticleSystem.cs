@@ -64,7 +64,7 @@ namespace TanksRebirth.GameContent
                 spark.Roll = angles.Roll;
                 spark.Pitch = angles.Pitch;
                 spark.Yaw = angles.Yaw;
-                spark.Opacity = 1f;
+                spark.Alpha = 1f;
                 spark.Scale = new(GameHandler.GameRand.NextFloat(0.4f, 0.6f));
 
                 spark.Color = Color.Yellow;
@@ -72,10 +72,10 @@ namespace TanksRebirth.GameContent
                 spark.UniqueBehavior = (part) =>
                 {
                     part.Position += vel;
-                    part.Opacity -= 0.025f;
+                    part.Alpha -= 0.025f;
                     part.Position += vel;
 
-                    if (part.Opacity <= 0f)
+                    if (part.Alpha <= 0f)
                         part.Destroy();
                 };
             }
@@ -110,7 +110,7 @@ namespace TanksRebirth.GameContent
 
                     if (smoke.LifeTime > timeMovingSideways)
                     {
-                        smoke.Opacity -= 0.02f;
+                        smoke.Alpha -= 0.02f;
                         smoke.Position.Y += GameHandler.GameRand.NextFloat(0.1f, 0.25f);
                         velocity.X *= 0.9f;
                         velocity.Z *= 0.9f;
@@ -128,9 +128,9 @@ namespace TanksRebirth.GameContent
             {
                 GeometryUtils.Add(ref p.Scale, -0.0175f);
 
-                p.Opacity -= 0.025f;
+                p.Alpha -= 0.025f;
 
-                if (p.Opacity <= 0f || p.Scale.X <= 0f)
+                if (p.Alpha <= 0f || p.Scale.X <= 0f)
                     p.Destroy();
             };
         }

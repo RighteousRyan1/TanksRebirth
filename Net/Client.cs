@@ -8,6 +8,7 @@ using LiteNetLib.Layers;
 using LiteNetLib.Utils;
 using Microsoft.Xna.Framework;
 using TanksRebirth.GameContent;
+using TanksRebirth.GameContent.Systems;
 
 namespace TanksRebirth.Net
 {
@@ -65,10 +66,11 @@ namespace TanksRebirth.Net
 
             client.Send(message, DeliveryMethod.ReliableOrdered);
         }
-        public static void RequestStartGame()
+        public static void RequestStartGame(bool shouldProgressMissions)
         {
             NetDataWriter message = new();
             message.Put(PacketType.StartGame);
+            message.Put(shouldProgressMissions);
 
             Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered);
         }
@@ -127,6 +129,63 @@ namespace TanksRebirth.Net
             message.Put(PacketType.ServerNameSync);
 
             Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered);
+        }
+        /// <summary>
+        /// Sends a campaign through the connected server.
+        /// 
+        /// <para></para>
+        /// 
+        /// Sends in this order: <para></para>
+        ///     Sends Campaign properties (name, lives, bg color, strip color), Mission Count
+        ///     Then sends each: Block Count, Tank Count, Mission Name, Mission Note <para></para>
+        ///         Then sends each: Mission Block (Position, Type, Stack, TpLink) <para></para>
+        ///             Finally, sends each: Mission TankTemplate (Position, Rotation, IsPlayer, Team)
+        ///             if IsPlayer is true, send PlayerType, otherwise send AiTier
+        /// 
+        /// </summary>
+        /// <param name="campaign">The campaign to send.</param>
+        public static void SendCampaign(Campaign campaign)
+        {
+            NetDataWriter message = new();
+            message.Put(PacketType.SendCampaign);
+
+            message.Put(campaign.Properties.Name);
+            message.Put(campaign.Properties.StartingLives);
+            message.Put(campaign.Properties.BackgroundColor);
+            message.Put(campaign.Properties.MissionStripColor);
+
+            message.Put(campaign.CachedMissions.Length);
+
+            foreach (var mission in campaign.CachedMissions)
+            {
+                message.Put(mission.Blocks.Length);
+                message.Put(mission.Tanks.Length);
+
+                message.Put(mission.Name);
+                message.Put(mission.Note);
+
+                foreach (var block in mission.Blocks)
+                {
+                    message.Put(block.Position);
+                    message.Put((byte)block.Type);
+                    message.Put(block.Stack);
+                    message.Put(block.TpLink);
+                }
+                foreach (var tank in mission.Tanks)
+                {
+                    message.Put(tank.Position);
+                    message.Put(tank.Rotation);
+                    message.Put(tank.IsPlayer);
+                    message.Put((byte)tank.Team);
+
+                    if (tank.IsPlayer)
+                        message.Put((byte)tank.PlayerType);
+                    else
+                        message.Put((byte)tank.AiTier);
+                }
+            }
+
+            Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered, client); // TODO: find a way to make this not send back to the sender. done.
         }
     }
 }

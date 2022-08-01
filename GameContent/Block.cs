@@ -181,9 +181,9 @@ namespace TanksRebirth.GameContent
                     {
                         vel.Y -= 0.2f;
                         part.Position += vel;
-                        part.Opacity -= 0.025f;
+                        part.Alpha -= 0.025f;
 
-                        if (part.Opacity <= 0f)
+                        if (part.Alpha <= 0f)
                             part.Destroy();
                     };
                 }

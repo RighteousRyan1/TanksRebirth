@@ -31,7 +31,7 @@ namespace TanksRebirth.GameContent.Systems
         public Mission LoadedMission { get; private set; }
         public int CurrentMissionId { get; private set; }
 
-        public CampaignProperties Properties { get; private set; }
+        public CampaignProperties Properties;
 
         public void LoadMission(Mission mission)
         {

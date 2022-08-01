@@ -175,6 +175,9 @@ namespace TanksRebirth.GameContent
 
                 foreach (var pu in Powerup.Powerups)
                     pu?.Update();
+
+                foreach (var fp in TankFootprint.footprints)
+                    fp?.Update();
             }
             else
                 if (!GameProperties.InMission)
@@ -467,7 +470,7 @@ namespace TanksRebirth.GameContent
 
             Xp?.Render(TankGame.SpriteRenderer, new(GameUtils.WindowWidth / 2, 50), new(100, 20), Aligning.Center, Color.Red, Color.Lime);
 
-            if (_tankFuncDelay > 0 && !MainMenu.Active)
+            if (_tankFuncDelay > 0 && !MainMenu.Active && !TankGame.OverheadView)
                 // $"{MathF.Round(_tankFuncDelay / 60)}"
                 TankGame.SpriteRenderer.DrawString(TankGame.TextFontLarge, $"{MathF.Round(_tankFuncDelay / 60) + 1}", GameUtils.WindowCenter, Color.White, Vector2.One * 3f, 0f, TankGame.TextFontLarge.MeasureString($"{MathF.Round(_tankFuncDelay / 60) + 1}") / 2, 0f);
 
@@ -964,12 +967,9 @@ namespace TanksRebirth.GameContent
         {
             for (int i = 0; i < TankFootprint.footprints.Length; i++)
             {
-                if (TankFootprint.footprints[i] != null)
-                    TankFootprint.footprints[i].track?.Destroy();
+                TankFootprint.footprints[i]?.Remove();
                 TankFootprint.footprints[i] = null;
             }
-
-            TankFootprint.total_treads_placed = 0;
         }
     }
 

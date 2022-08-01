@@ -316,7 +316,6 @@ namespace TanksRebirth.GameContent.UI
             {
                 PlayButton_SinglePlayer.OnLeftClick?.Invoke(null); // starts the game
 
-                Client.RequestStartGame();
                 SetPlayButtonsVisibility(false);
 
                 MenuState = State.Campaigns;
@@ -723,11 +722,21 @@ namespace TanksRebirth.GameContent.UI
 
                         // if it is, load the mission
                         GameProperties.LoadedCampaign = camp;
-                        GameProperties.LoadedCampaign.LoadMission(MissionCheckpoint);
+
+                        if (Server.serverNetManager is null)
+                            GameProperties.LoadedCampaign.LoadMission(MissionCheckpoint); // loading the mission specified
+                        else
+                        {
+                            Client.SendCampaign(camp);
+                            Client.RequestStartGame(true);
+                        }
+
                         PlayerTank.StartingLives = camp.Properties.StartingLives;
                         IntermissionSystem.StripColor = camp.Properties.MissionStripColor;
                         IntermissionSystem.BackgroundColor = camp.Properties.BackgroundColor;
 
+
+                        
                         foreach (var elem in campaignNames)
                             elem.Remove();
 

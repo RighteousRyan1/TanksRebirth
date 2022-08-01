@@ -353,7 +353,7 @@ namespace TanksRebirth.GameContent
                 var lightParticle = ParticleSystem.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_particle"));
 
                 lightParticle.Scale = new(0.25f);
-                lightParticle.Opacity = 0f;
+                lightParticle.Alpha = 0f;
                 lightParticle.Is2d = true;
 
                 lightParticle.UniqueBehavior = (lp) =>
@@ -361,11 +361,11 @@ namespace TanksRebirth.GameContent
                     lp.Position = Position3D;
                     if (lp.Scale.X < 5f)
                         GeometryUtils.Add(ref lp.Scale, 0.12f);
-                    if (lp.Opacity < 1f && lp.Scale.X < 5f)
-                        lp.Opacity += 0.02f;
+                    if (lp.Alpha < 1f && lp.Scale.X < 5f)
+                        lp.Alpha += 0.02f;
 
                     if (lp.LifeTime > 90)
-                        lp.Opacity -= 0.005f;
+                        lp.Alpha -= 0.005f;
 
                     if (lp.Scale.X < 0f)
                         lp.Destroy();
@@ -389,10 +389,10 @@ namespace TanksRebirth.GameContent
                         if (elp.LifeTime > 15)
                         {
                             GeometryUtils.Add(ref elp.Scale, -0.03f);
-                            elp.Opacity -= 0.03f;
+                            elp.Alpha -= 0.03f;
                         }
 
-                        if (elp.Scale.X <= 0f || elp.Opacity <= 0f)
+                        if (elp.Scale.X <= 0f || elp.Alpha <= 0f)
                             elp.Destroy();
                     };
                 }
@@ -544,9 +544,9 @@ namespace TanksRebirth.GameContent
                         part.Pitch += MathF.Sin(part.Position.Length() / 10);
                         vel.Y -= 0.2f;
                         part.Position += vel;
-                        part.Opacity -= 0.025f;
+                        part.Alpha -= 0.025f;
 
-                        if (part.Opacity <= 0f)
+                        if (part.Alpha <= 0f)
                             part.Destroy();
                     };
                 }
@@ -562,7 +562,7 @@ namespace TanksRebirth.GameContent
                 partExpl.UniqueBehavior = (p) =>
                 {
                     GeometryUtils.Add(ref p.Scale, -0.3f);
-                    p.Opacity -= 0.06f;
+                    p.Alpha -= 0.06f;
                     if (p.Scale.X <= 0f)
                         p.Destroy();
                 };
@@ -630,8 +630,8 @@ namespace TanksRebirth.GameContent
                         part.Color = Color.Orange;
 
                         if (part.LifeTime > 1)
-                            part.Opacity -= 0.1f;
-                        if (part.Opacity <= 0)
+                            part.Alpha -= 0.1f;
+                        if (part.Alpha <= 0)
                             part.Destroy();
                     };
                     smoke.UniqueBehavior = (part) =>
@@ -645,9 +645,9 @@ namespace TanksRebirth.GameContent
                         if (part.Color.G == achieveable)
                         {
                             part.Color.B = (byte)achieveable;
-                            part.Opacity -= 0.04f;
+                            part.Alpha -= 0.04f;
 
-                            if (part.Opacity <= 0)
+                            if (part.Alpha <= 0)
                                 part.Destroy();
                         }
                     };
@@ -875,6 +875,8 @@ namespace TanksRebirth.GameContent
     }
     public class TankFootprint
     {
+        public static bool ShouldTracksFade;
+
         public const int MAX_FOOTPRINTS = 100000;
 
         public static TankFootprint[] footprints = new TankFootprint[TankGame.Settings.TankFootprintLimit];
@@ -890,8 +892,9 @@ namespace TanksRebirth.GameContent
 
         public long lifeTime;
 
-        public readonly Particle track;
         public readonly Tank owner;
+
+        public int id = 0;
 
         public TankFootprint(Tank owner, bool alt = false)
         {
@@ -901,36 +904,55 @@ namespace TanksRebirth.GameContent
                 footprints[Array.IndexOf(footprints, footprints.Min(x => x.lifeTime > 0))] = null; // i think?
 
             alternate = alt;
-            total_treads_placed++;
+            id = total_treads_placed;
 
             texture = GameResources.GetGameResource<Texture2D>(alt ? $"Assets/textures/tank_footprint_alt" : $"Assets/textures/tank_footprint");
 
-            track = ParticleSystem.MakeParticle(Position, texture);
+            var track = ParticleSystem.MakeParticle(Position, texture);
 
             track.isAddative = false;
 
             track.Roll = -MathHelper.PiOver2;
             track.Scale = new(0.5f, 0.55f, 0.5f);
-            track.Opacity = 0.7f;
+            track.Alpha = 0.7f;
+            track.Color = Color.White;
+            track.UniqueBehavior = (a) =>
+            {
+                track.Position = Position;
+                track.Pitch = rotation;
+                if (ShouldTracksFade)
+                    track.Alpha -= 0.001f;
+                if (track.Alpha <= 0 || _destroy)
+                {
+                    track.Destroy();
+                    footprints[id] = null;
+                    total_treads_placed--;
+                }
+
+                track.Position = Position;
+                track.Pitch = rotation;
+            };
 
             footprints[total_treads_placed] = this;
 
             total_treads_placed++;
         }
-
-        public void Render()
+        public void Update()
         {
             lifeTime++;
-
-            track.Position = Position;
-            track.Pitch = rotation;
-            track.Color = Color.White;
+        }
+        public void Render()
+        {
+            // i feel goofy
             // Vector3 scale = alternate ? new(0.5f, 1f, 0.35f) : new(0.5f, 1f, 0.075f);
             // [0.0, 1.1, 1.5, 0.5]
             // [0.0, 0.1, 0.8, 0.0]
             // [0.0, 0.5, 1.2, 1.0]
             // [0.0, 2.0, 0.6, 0.2]
         }
+
+        private bool _destroy;
+        public void Remove() => _destroy = true;
     }
     public class TankDeathMark
     {

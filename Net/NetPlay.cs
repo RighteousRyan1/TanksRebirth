@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TanksRebirth.Enums;
 using TanksRebirth.GameContent;
+using TanksRebirth.GameContent.Properties;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.Net;
@@ -49,6 +50,8 @@ namespace TanksRebirth.Net
         {
             var packet = reader.GetPacket();
 
+            GameHandler.ClientLog.Write($"Packet Recieved: {packet} from server {peer.Id}.", Internals.LogType.Debug);
+
             switch (packet)
             {
                 case PacketType.ClientInfo:
@@ -86,7 +89,9 @@ namespace TanksRebirth.Net
 
                     break;
                 case PacketType.StartGame:
-                    MainMenu.PlayButton_SinglePlayer.OnLeftClick?.Invoke(null); // launches the game
+                    bool shouldProgress = reader.GetBool();
+                    GameProperties.ShouldMissionsProgress = shouldProgress;
+                    MainMenu.FFA.OnLeftClick?.Invoke(null); // launches the game to freeplay, but when recieved, missions should be synced anyway.
 
                     break;
                 case PacketType.PlayerSpawn:
@@ -99,12 +104,12 @@ namespace TanksRebirth.Net
                     float tnkRot = reader.GetFloat();
                     float turRot = reader.GetFloat();
 
-                    var t = new PlayerTank(type);
-                    t.Body.Position = new(x, y);
-                    t.Dead = false;
-                    t.TankRotation = tnkRot;
-                    t.TurretRotation = turRot;
-                    t.Team = team;
+                    var tank = new PlayerTank(type);
+                    tank.Body.Position = new(x, y);
+                    tank.Dead = false;
+                    tank.TankRotation = tnkRot;
+                    tank.TurretRotation = turRot;
+                    tank.Team = team;
 
                     break;
                 case PacketType.PlayerData:
@@ -129,11 +134,66 @@ namespace TanksRebirth.Net
 
                     ChatSystem.SendMessage(msg, color, sender);
                     break;
+                case PacketType.SendCampaign:
+                    var campaign = new Campaign();
+                    campaign.Properties.Name = reader.GetString();
+                    campaign.Properties.StartingLives = reader.GetInt();
+                    campaign.Properties.BackgroundColor = reader.GetColor();
+                    campaign.Properties.MissionStripColor = reader.GetColor();
+
+                    var missionCount = reader.GetInt();
+
+                    campaign.CachedMissions = new Mission[missionCount];
+
+                    for (int i = 0; i < missionCount; i++)
+                    {
+                        var blockLen = reader.GetInt();
+                        var tnkLen = reader.GetInt();
+
+                        var name = reader.GetString();
+                        var note = reader.GetString();
+
+                        List<BlockTemplate> blockTotal = new();
+                        List<TankTemplate> tankTotal = new();
+
+                        for (int m = 0; m < blockLen; m++)
+                        {
+                            blockTotal.Add(new()
+                            {
+                                Position = reader.GetVector2(),
+                                Type = (Block.BlockType)reader.GetByte(),
+                                Stack = reader.GetSByte(),
+                                TpLink = reader.GetSByte(),
+                            });
+                        }
+                        for (var t = 0; t < tnkLen; t++)
+                        {
+                            TankTemplate tmp = new()
+                            {
+                                Position = reader.GetVector2(),
+                                Rotation = reader.GetFloat(),
+                                IsPlayer = reader.GetBool(),
+                                Team = (TankTeam)reader.GetByte()
+                            };
+
+                            if (tmp.IsPlayer)
+                                tmp.PlayerType = (PlayerType)reader.GetByte();
+                            else
+                                tmp.AiTier = (TankTier)reader.GetByte();
+                        }
+
+                        campaign.CachedMissions[i] = new(tankTotal.ToArray(), blockTotal.ToArray())
+                        {
+                            Name = name,
+                            Note = note
+                        };
+                    }
+
+                    break;
             }
 
             //peer.Send(message, DeliveryMethod.ReliableOrdered);
 
-            GameHandler.ClientLog.Write($"Packet Recieved: {packet} from server {peer.Id}.", Internals.LogType.Debug);
             //GameHandler.ClientLog.Write(string.Join(",", reader.RawData), Internals.LogType.Debug);
             reader.Recycle();
         }
@@ -252,6 +312,11 @@ namespace TanksRebirth.Net
 
         // more server syncing
 
-        ServerNameSync
+        ServerNameSync,
+
+        // map sync
+
+        SendCampaign,
+        SendMission
     }
 }

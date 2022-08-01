@@ -256,15 +256,15 @@ namespace TanksRebirth.GameContent
 
                     p.isAddative = false;
                     p.Color = new Color(darkness, darkness, darkness, darkness);
-                    p.Opacity = 0.5f;
+                    p.Alpha = 0.5f;
 
                     p.UniqueBehavior = (p) =>
                     {
-                        if (p.Opacity <= 0)
+                        if (p.Alpha <= 0)
                             p.Destroy();
 
-                        if (p.Opacity > 0)
-                            p.Opacity -= Flaming ? 0.03f : 0.02f;
+                        if (p.Alpha > 0)
+                            p.Alpha -= Flaming ? 0.03f : 0.02f;
 
                         GeometryUtils.Add(ref p.Scale, 0.0075f);
                     };
@@ -313,9 +313,9 @@ namespace TanksRebirth.GameContent
 
                 p.UniqueBehavior = (part) =>
                 {
-                    p.Opacity -= 0.02f;
+                    p.Alpha -= 0.02f;
 
-                    if (p.Opacity <= 0)
+                    if (p.Alpha <= 0)
                         p.Destroy();
                 };
 
@@ -335,9 +335,9 @@ namespace TanksRebirth.GameContent
 
                 p2.UniqueBehavior = (part) =>
                 {
-                    p2.Opacity -= 0.02f;
+                    p2.Alpha -= 0.02f;
 
-                    if (p2.Opacity <= 0)
+                    if (p2.Alpha <= 0)
                         p2.Destroy();
                 };
             }

@@ -937,7 +937,7 @@ namespace TanksRebirth.GameContent
                     AiParams.MineWarinessRadius_PlayerLaid = 140;
 
                     properties.TurningSpeed = 0.1f;
-                    properties.MaximalTurn = MathHelper.PiOver2 + 0.5f;
+                    properties.MaximalTurn = MathHelper.ToRadians(30);
 
                     properties.ShootStun = 5;
                     properties.ShellCooldown = 25;
@@ -1797,9 +1797,9 @@ namespace TanksRebirth.GameContent
                     {
                         p.Position.Y += 0.1f;
 
-                        p.Opacity -= 0.01f;
+                        p.Alpha -= 0.01f;
 
-                        if (p.Opacity <= 0)
+                        if (p.Alpha <= 0)
                             p.Destroy();
                     };
                 }

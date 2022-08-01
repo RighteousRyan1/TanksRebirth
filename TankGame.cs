@@ -174,7 +174,8 @@ namespace TanksRebirth
             Directory.CreateDirectory(SaveDirectory);
             Directory.CreateDirectory(Path.Combine(SaveDirectory, "Texture Packs", "Scene"));
             Directory.CreateDirectory(Path.Combine(SaveDirectory, "Texture Packs", "Tank"));
-            GameHandler.ClientLog = new($"{SaveDirectory}", "client");
+            Directory.CreateDirectory(Path.Combine(SaveDirectory, "Logs"));
+            GameHandler.ClientLog = new(Path.Combine(SaveDirectory, "Logs"), "client");
             try
             {
                 try
@@ -369,6 +370,7 @@ namespace TanksRebirth
                 PlayerTank.controlRight.AssignedKey = Settings.RightKeybind;
                 PlayerTank.controlMine.AssignedKey = Settings.MineKeybind;
                 MapRenderer.Theme = Settings.GameTheme;
+                TankFootprint.ShouldTracksFade = Settings.FadeFootprints;
 
                 Graphics.PreferredBackBufferWidth = Settings.ResWidth;
                 Graphics.PreferredBackBufferHeight = Settings.ResHeight;
@@ -449,7 +451,7 @@ namespace TanksRebirth
 
         protected override void Update(GameTime gameTime)
         {
-            try
+            //try
             {
                 DeltaTime = Interp ? (float)gameTime.ElapsedGameTime.TotalSeconds : 1; // if interpolation of frames is false, set delta time to 1
                 if (Input.AreKeysJustPressed(Keys.LeftAlt, Keys.RightAlt))
@@ -670,10 +672,10 @@ namespace TanksRebirth
 
                 _wasActive = IsActive;
             }
-            catch (Exception e)
+            //catch (Exception e)
             {
-                GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
-                throw;
+                //GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
+                //throw;
             }
         }
 
@@ -700,7 +702,7 @@ namespace TanksRebirth
 
             Input.PollEvents();
 
-            bool shouldUpdate = Client.IsConnected() ? true : IsActive && !GameUI.Paused;
+            bool shouldUpdate = Client.IsConnected() || IsActive && !GameUI.Paused;
 
             if (shouldUpdate)
             {

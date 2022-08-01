@@ -15,9 +15,8 @@ namespace TanksRebirth
         public bool PerPixelLighting { get; set; } = true;
         public bool Vsync { get; set; } = true;
         public bool FullScreen { get; set; } = false;
-
         public bool MSAA { get; set; } = false;
-
+        public bool FadeFootprints { get; set; } = false;
         #endregion
 
         #region Controls Settings

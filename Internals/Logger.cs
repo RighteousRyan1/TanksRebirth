@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Reflection;
 using System;
+using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.Internals
 {
@@ -43,6 +44,9 @@ namespace TanksRebirth.Internals
             path = Path.Combine(writeFile, $"{name}_{rev}.log");
 
             writeTo = path;*/
+
+            name += $"_{DateTime.Now.StringFormatDots()}";
+
             writeTo = Path.Combine(writeFile, $"{name}.log");
 
             Debug.WriteLine($"Created '{writeTo}'");

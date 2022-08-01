@@ -35,7 +35,7 @@ namespace TanksRebirth.GameContent
 
         public Vector2 Origin2D;
 
-        public float Opacity = 1f;
+        public float Alpha = 1f;
 
         public readonly int Id;
 
@@ -100,7 +100,7 @@ namespace TanksRebirth.GameContent
                 EffectHandle.EmissiveColor = Color.ToVector3() * GameHandler.GameLight.Brightness;
                 EffectHandle.SpecularColor = Color.ToVector3() * GameHandler.GameLight.Brightness;
 
-                EffectHandle.Alpha = Opacity;
+                EffectHandle.Alpha = Alpha;
 
                 EffectHandle.SetDefaultGameLighting_IngameEntities(LightPower);
 
@@ -109,18 +109,18 @@ namespace TanksRebirth.GameContent
                 TankGame.SpriteRenderer.End();
                 TankGame.SpriteRenderer.Begin(SpriteSortMode.Deferred, isAddative ? BlendState.Additive : BlendState.NonPremultiplied, SamplerState.PointWrap, DepthStencilState.DepthRead, TankGame.DefaultRasterizer, EffectHandle);
                 if (!IsText)
-                    TankGame.SpriteRenderer.Draw(Texture, Vector2.Zero, TextureCrop, Color * Opacity, Rotation2D, Origin2D != default ? Origin2D : Texture.Size() / 2, TextureScale == int.MinValue ? Scale.X : TextureScale, default, default);
+                    TankGame.SpriteRenderer.Draw(Texture, Vector2.Zero, TextureCrop, Color * Alpha, Rotation2D, Origin2D != default ? Origin2D : Texture.Size() / 2, TextureScale == int.MinValue ? Scale.X : TextureScale, default, default);
                 else
-                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, Text, Vector2.Zero, Color * Opacity, new Vector2(Scale.X, Scale.Y), Rotation2D, Origin2D);
+                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, Text, Vector2.Zero, Color * Alpha, new Vector2(Scale.X, Scale.Y), Rotation2D, Origin2D);
             }
             else
             {
                 TankGame.SpriteRenderer.End();
                 TankGame.SpriteRenderer.Begin(SpriteSortMode.Deferred, isAddative ? BlendState.Additive : BlendState.NonPremultiplied, rasterizerState: TankGame.DefaultRasterizer);
                 if (!IsText)
-                    TankGame.SpriteRenderer.Draw(Texture, GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(Position), TankGame.GameView, TankGame.GameProjection), TextureCrop, Color * Opacity, Rotation2D, Origin2D != default ? Origin2D : Texture.Size() / 2, TextureScale == int.MinValue ? Scale.X : TextureScale, default, default);
+                    TankGame.SpriteRenderer.Draw(Texture, GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(Position), TankGame.GameView, TankGame.GameProjection), TextureCrop, Color * Alpha, Rotation2D, Origin2D != default ? Origin2D : Texture.Size() / 2, TextureScale == int.MinValue ? Scale.X : TextureScale, default, default);
                 else
-                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, Text, GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(Position), TankGame.GameView, TankGame.GameProjection), Color * Opacity, new Vector2(Scale.X, Scale.Y), Rotation2D, Origin2D);
+                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, Text, GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(Position), TankGame.GameView, TankGame.GameProjection), Color * Alpha, new Vector2(Scale.X, Scale.Y), Rotation2D, Origin2D);
             }
             TankGame.SpriteRenderer.End();
             TankGame.SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
