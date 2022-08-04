@@ -146,13 +146,13 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
                             {
                                 var pos = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
 
-                                SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"{Block.AllBlocks[CurrentBlockId].Stack}", pos, Color.White, Color.Black, new(1f), 0f);
+                                SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"{Block.AllBlocks[CurrentBlockId].Stack}", pos, Color.White, Color.Black, new(TankGame.AddativeZoom * 1.5f), 0f);
                             }
                             if (Block.AllBlocks[CurrentBlockId].Type == Block.BlockType.Teleporter)
                             {
                                 var pos = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
 
-                                SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"TP:{Block.AllBlocks[CurrentBlockId].TpLink}", pos, Color.White, Color.Black, new(1f), 0f);
+                                SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"TP:{Block.AllBlocks[CurrentBlockId].TpLink}", pos, Color.White, Color.Black, new(TankGame.AddativeZoom * 1.5f), 0f);
                             }
                         }
 

@@ -3,11 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TanksRebirth.Enums;
 using TanksRebirth.Internals;
-using TanksRebirth.Internals.Common.Framework;
 
 namespace TanksRebirth.GameContent.Systems
 {
@@ -49,7 +46,75 @@ namespace TanksRebirth.GameContent.Systems
             Tanks = tanks;
             Blocks = obstacles;
         }
+        /// <summary>
+        /// Creates a <see cref="Mission"/> instance from the current placement of everything.
+        /// </summary>
+        /// <returns>The mission that is currently active, or created.</returns>
+        public static Mission GetCurrent()
+        {
+            List<TankTemplate> tanks = new();
+            List<BlockTemplate> blocks = new();
 
+            foreach (var tank in GameHandler.AllTanks)
+            {
+                if (tank is not null)
+                {
+                    var tmp = new TankTemplate
+                    {
+                        IsPlayer = tank is PlayerTank,
+                        Position = tank.Position,
+                        Rotation = tank.TankRotation,
+                        Team = tank.Team,
+                    };
+
+                    if (tmp.IsPlayer)
+                        tmp.PlayerType = (tank as PlayerTank).PlayerType;
+                    else
+                        tmp.AiTier = (tank as AITank).Tier;
+
+                    tanks.Add(tmp);
+                }
+            }
+            foreach (var block in Block.AllBlocks)
+            {
+                if (block is not null)
+                {
+                    blocks.Add(new()
+                    {
+                        Position = block.Position,
+                        Stack = block.Stack,
+                        TpLink = block.TpLink,
+                        Type = block.Type,
+                    });
+                }
+            }
+
+            return new(tanks.ToArray(), blocks.ToArray());
+        }
+        /// <summary>
+        /// Loads a <see cref="Mission"/> and instantly applies it to the game field.
+        /// </summary>
+        /// <param name="mission">The mission instance to load.</param>
+        public static void LoadDirectly(Mission mission)
+        {
+            foreach (var block in Block.AllBlocks)
+                block?.Remove();
+            foreach (var mine in Mine.AllMines)
+                mine?.Remove();
+            foreach (var shell in Shell.AllShells)
+                shell?.Remove();
+            foreach (var tank in GameHandler.AllTanks)
+                tank?.Remove();
+            for (int i = 0; i < mission.Tanks.Length; i++) {
+                var tnk = mission.Tanks[i];
+                tnk.GetTank();
+            }
+            for (int i = 0; i < mission.Blocks.Length; i++) {
+                var block = mission.Blocks[i];
+
+                block.GetBlock();
+            }
+        }
         /// <summary>
         /// Saves a mission as a <c>.mission</c> file for reading later.
         /// </summary>

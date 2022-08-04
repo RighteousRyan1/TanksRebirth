@@ -9,7 +9,7 @@ using FontStashSharp;
 
 namespace TanksRebirth.Internals.Common.Utilities
 {
-    public enum Aligning
+    public enum Anchor
     {
         TopLeft,
         TopRight,
@@ -23,27 +23,27 @@ namespace TanksRebirth.Internals.Common.Utilities
     }
     public static class GameUtils
     {
-        public static Vector2 GetAligning(this Aligning a, Vector2 vector)
+        public static Vector2 GetAnchor(this Anchor a, Vector2 vector)
         {
             switch (a)
             {
-                case Aligning.TopLeft:
+                case Anchor.TopLeft:
                     return Vector2.Zero;
-                case Aligning.TopRight:
+                case Anchor.TopRight:
                     return new(vector.X, 0);
-                case Aligning.BottomLeft:
+                case Anchor.BottomLeft:
                     return new(0, vector.Y);
-                case Aligning.BottomRight:
+                case Anchor.BottomRight:
                     return new(vector.X, vector.Y);
-                case Aligning.LeftCenter:
+                case Anchor.LeftCenter:
                     return new(0, vector.Y / 2);
-                    case Aligning.RightCenter:
+                    case Anchor.RightCenter:
                     return new(vector.X, vector.Y / 2);
-                case Aligning.Center:
+                case Anchor.Center:
                     return new(vector.X  /2 , vector.Y / 2);
-                case Aligning.TopCenter:
+                case Anchor.TopCenter:
                     return new(vector.X / 2, 0);
-                case Aligning.BottomCenter:
+                case Anchor.BottomCenter:
                     return new(vector.X / 2, vector.Y);
             }
             return default;

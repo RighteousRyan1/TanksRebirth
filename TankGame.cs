@@ -160,8 +160,6 @@ namespace TanksRebirth
 
         public readonly string GameVersion;
 
-        internal static Internals.Common.GameUI.UIPanel cunoSucksElement;
-
         public static OSPlatform OperatingSystem;
         public static bool IsWindows;
         public static bool IsMac;
@@ -393,11 +391,11 @@ namespace TanksRebirth
 
                 DecalSystem.Initialize(SpriteRenderer, GraphicsDevice);
 
-                cunoSucksElement = new() { IsVisible = false };
+                LevelEditor.Initialize();
 
                 s.Stop();
             }
-            catch (Exception e)
+            catch (Exception e) when (!Debugger.IsAttached)
             {
                 GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
                 throw;
@@ -411,6 +409,10 @@ namespace TanksRebirth
                 if (Thunder.SoftRain.IsPaused())
                     Thunder.SoftRain.Instance.Resume();
                 TankMusicSystem.ResumeAll();
+                if (MainMenu.Active)
+                    MainMenu.Theme.Resume();
+                if (LevelEditor.Active)
+                    LevelEditor.Theme.Resume();
             }
         }
 
@@ -421,6 +423,10 @@ namespace TanksRebirth
                 if (Thunder.SoftRain.IsPlaying())
                     Thunder.SoftRain.Instance.Pause();
                 TankMusicSystem.PauseAll();
+                if (MainMenu.Active)
+                    MainMenu.Theme.Pause();
+                if (LevelEditor.Active)
+                    LevelEditor.Theme.Pause();
             }
         }
 
@@ -434,9 +440,18 @@ namespace TanksRebirth
 
         internal static bool ThirdPerson;
 
-        public static bool OverheadView = false;
+        private static bool _oView;
+        public static bool OverheadView
+        {
+            get => _oView; 
+            set
+            {
+                transitionTimer = 100;
+                _oView = value;
+            }
+        }
 
-        private int transitionTimer;
+        private static int transitionTimer;
 
         private bool _justChanged = true;
 
@@ -451,7 +466,7 @@ namespace TanksRebirth
 
         protected override void Update(GameTime gameTime)
         {
-            //try
+            try
             {
                 DeltaTime = Interp ? (float)gameTime.ElapsedGameTime.TotalSeconds : 1; // if interpolation of frames is false, set delta time to 1
                 if (Input.AreKeysJustPressed(Keys.LeftAlt, Keys.RightAlt))
@@ -490,8 +505,7 @@ namespace TanksRebirth
                 UIElement.UpdateElements();
                 GameUI.UpdateButtons();
 
-                if (GameUpdateTime % 30 == 0)
-                {
+                if (GameUpdateTime % 60 == 0 && DebugUtils.DebuggingEnabled) {
                     DiscordRichPresence.Update();
                     _memBytes = ProcessMemory;
                 }
@@ -505,14 +519,9 @@ namespace TanksRebirth
                     OnFocusLost?.Invoke(this, Window.Handle);
                 if (!_wasActive && IsActive)
                     OnFocusRegained?.Invoke(this, Window.Handle);
-                if (!MainMenu.Active)
-                {
+                if (!MainMenu.Active && DebugUtils.DebuggingEnabled)
                     if (Input.KeyJustPressed(Keys.J))
-                    {
-                        transitionTimer = 100;
                         OverheadView = !OverheadView;
-                    }
-                }
 
                 if (!ThirdPerson)
                 {
@@ -522,7 +531,7 @@ namespace TanksRebirth
                         if (OverheadView)
                         {
                             GameUtils.SoftStep(ref CameraRotationVector.Y, MathHelper.PiOver2, 0.08f);
-                            GameUtils.SoftStep(ref AddativeZoom, 0.7f, 0.08f);
+                            GameUtils.SoftStep(ref AddativeZoom, 0.6f, 0.08f);
                             GameUtils.RoughStep(ref CameraFocusOffset.Y, 82f, 2f);
                         }
                         else
@@ -631,26 +640,20 @@ namespace TanksRebirth
                     }
                 }
 
-                if (!GameUI.Paused && !MainMenu.Active && !OverheadView && DebugUtils.DebuggingEnabled)
+                if (!GameUI.Paused && !MainMenu.Active && DebugUtils.DebuggingEnabled)
                 {
                     if (Input.MouseRight)
-                    {
                         CameraRotationVector += MouseVelocity / 500;
-                    }
 
                     if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Add))
                         AddativeZoom += 0.01f;
                     if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Subtract))
                         AddativeZoom -= 0.01f;
-                    //if (Input.KeyJustPressed(Keys.Q))
-                    //FirstPerson = !FirstPerson;
 
                     ThirdPerson = Difficulties.Types["ThirdPerson"];
 
                     if (Input.MouseMiddle)
-                    {
                         CameraFocusOffset += MouseVelocity;
-                    }
                     GameUtils.GetMouseVelocity(GameUtils.WindowCenter);
 
                     if (!SpeedrunMode)
@@ -672,10 +675,10 @@ namespace TanksRebirth
 
                 _wasActive = IsActive;
             }
-            //catch (Exception e)
+            catch (Exception e) when (!Debugger.IsAttached)
             {
-                //GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
-                //throw;
+                GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
+                throw;
             }
         }
 
@@ -875,7 +878,7 @@ namespace TanksRebirth
                 RenderTime = gameTime.ElapsedGameTime;
                 RenderFPS = Math.Round(1f / gameTime.ElapsedGameTime.TotalSeconds);
             }
-            catch (Exception e)
+            catch (Exception e) when (!Debugger.IsAttached)
             {
                 GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
                 throw;

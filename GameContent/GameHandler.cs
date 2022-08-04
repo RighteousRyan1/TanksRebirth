@@ -184,6 +184,8 @@ namespace TanksRebirth.GameContent
                     if (TankMusicSystem.Songs is not null)
                         foreach (var song in TankMusicSystem.Songs)
                             song.Volume = 0;
+            LevelEditor.Update();
+
             foreach (var expl in Explosion.Explosions)
                 expl?.Update();
 
@@ -365,27 +367,53 @@ namespace TanksRebirth.GameContent
                 }
             }
         }
+
+        /// <summary>
+        /// A method that returns whether or not there was a victory- be it for the enemy or the player.
+        /// </summary>
+        /// <param name="mission">The mission to check.</param>
+        /// <param name="victory">Whether or not it resulted in victory for the player.</param>
+        /// <returns>Whether or not one team or one player dominates the map.</returns>
+        public static bool NothingCanHappenAnymore(Mission mission, out bool victory)
+        {
+            if (mission.Tanks.Any(tnk => tnk.IsPlayer))
+            {
+                var activeTeams = Tank.GetActiveTeams();
+
+                if (activeTeams.Contains(TankTeam.NoTeam) && AllTanks.Count(tnk => tnk != null && !tnk.Dead) <= 1)
+                {
+                    victory = AllPlayerTanks.Any(tnk => tnk != null && !tnk.Dead);
+                    return true;
+                }
+                // check if it's not only FFA, and if teams left doesnt contain ffa. 
+                else if (!activeTeams.Contains(TankTeam.NoTeam) && activeTeams.Count <= 1) {
+                    victory = activeTeams.Contains(PlayerTank.MyTeam);
+                    return true;
+                }
+            }
+            else
+            {
+                var activeTeams = Tank.GetActiveTeams();
+                // if a player was not initially spawned in the mission, check if a team is still alive and end the mission
+                if (activeTeams.Contains(TankTeam.NoTeam) && AllTanks.Count(tnk => tnk != null && !tnk.Dead) <= 1) {
+                    victory = true;
+                    return true;
+                }
+                else if (!activeTeams.Contains(TankTeam.NoTeam) && activeTeams.Count <= 1) {
+                    victory = true;
+                    return true;
+                }
+            }
+            victory = false;
+            return false;
+        }
         private static void HandleMissionChanging()
         {
             if (GameProperties.LoadedCampaign.CachedMissions[0].Name is null)
                 return;
 
-            if (GameProperties.LoadedCampaign.CurrentMission.Tanks.Any(tnk => tnk.IsPlayer))
+            /*if (GameProperties.LoadedCampaign.CurrentMission.Tanks.Any(tnk => tnk.IsPlayer))
             {
-                /*if (AllAITanks.Count(tnk => tnk != null && !tnk.Dead) <= 0)
-                {
-                    InMission = false;
-                    // if a 1-up mission, extend by X amount of time (TBD?)
-                    if (!InMission && _wasInMission)
-                        OnMissionEnd?.Invoke(600, false);
-                }
-                else if (AllPlayerTanks.Count(tnk => tnk != null && !tnk.Dead) <= 0)
-                {
-                    InMission = false;
-
-                    if (!InMission && _wasInMission)
-                        OnMissionEnd?.Invoke(600, true);
-                }*/
                 var activeTeams = Tank.GetActiveTeams();
 
                 bool isExtraLifeMission = GameProperties.LoadedCampaign.Properties.ExtraLivesMissions.Contains(GameProperties.LoadedCampaign.CurrentMissionId + 1);
@@ -437,14 +465,41 @@ namespace TanksRebirth.GameContent
                     if (!GameProperties.InMission && _wasInMission)
                         GameProperties.MissionEndEvent_Invoke(restartTime, MissionEndContext.Win, isExtraLifeMission);
                 }
+            }*/
+            var nothingAnymore = NothingCanHappenAnymore(GameProperties.LoadedCampaign.CurrentMission, out bool victory);
+
+            if (nothingAnymore)
+            {
+                GameProperties.InMission = false;
+                if (!GameProperties.InMission && _wasInMission)
+                {
+                    bool isExtraLifeMission = GameProperties.LoadedCampaign.Properties.ExtraLivesMissions.Contains(GameProperties.LoadedCampaign.CurrentMissionId);
+                    if (victory)
+                    {
+                        int restartTime = 600;
+                        if (isExtraLifeMission)
+                            restartTime += 200;
+
+                        GameProperties.MissionEndEvent_Invoke(restartTime, MissionEndContext.Win, isExtraLifeMission);
+                    }
+                    else
+                    {
+                        int restartTime = 600;
+
+                        // if a 1-up mission, extend by X amount of time (TBD?)
+                        MissionEndContext cxt = !AllPlayerTanks.Any(tnk => tnk != null && !tnk.Dead) ? MissionEndContext.Lose : MissionEndContext.Win;
+                        GameProperties.MissionEndEvent_Invoke(restartTime, cxt, isExtraLifeMission);
+                    }
+                }
             }
+
             if (IntermissionSystem.CurrentWaitTime > 0)
                 IntermissionSystem.Tick(1);
 
             if (IntermissionSystem.CurrentWaitTime == 220)
                 BeginIntroSequence();
             if (IntermissionSystem.CurrentWaitTime == IntermissionSystem.WaitTime / 2 && IntermissionSystem.CurrentWaitTime != 0)
-                GameProperties.LoadedCampaign.SetupLoadedMission(AllPlayerTanks.Count(tnk => tnk != null && !tnk.Dead) > 0);
+                GameProperties.LoadedCampaign.SetupLoadedMission(AllPlayerTanks.Any(tnk => tnk != null && !tnk.Dead));
             if (IntermissionSystem.CurrentWaitTime > 240 && IntermissionSystem.CurrentWaitTime < IntermissionSystem.WaitTime - 150)
             {
                 if (PlayerTank.Lives <= 0)
@@ -468,7 +523,7 @@ namespace TanksRebirth.GameContent
         {
             TankGame.Instance.GraphicsDevice.BlendState = BlendState.AlphaBlend;
 
-            Xp?.Render(TankGame.SpriteRenderer, new(GameUtils.WindowWidth / 2, 50), new(100, 20), Aligning.Center, Color.Red, Color.Lime);
+            Xp?.Render(TankGame.SpriteRenderer, new(GameUtils.WindowWidth / 2, 50), new(100, 20), Anchor.Center, Color.Red, Color.Lime);
 
             if (_tankFuncDelay > 0 && !MainMenu.Active && !TankGame.OverheadView)
                 // $"{MathF.Round(_tankFuncDelay / 60)}"
@@ -511,7 +566,12 @@ namespace TanksRebirth.GameContent
             TankGame.Instance.GraphicsDevice.BlendState = BlendState.NonPremultiplied;
 
             ParticleSystem.RenderParticles();
+
+            if (MainMenu.Active)
             MainMenu.Render();
+
+            if (LevelEditor.Active)
+                LevelEditor.Render();
 
             foreach (var body in Tank.CollisionsWorld.BodyList)
             {
@@ -541,10 +601,10 @@ namespace TanksRebirth.GameContent
                 if (element.HasScissor)
                     TankGame.SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: TankGame.DefaultRasterizer);
             }
-            foreach (var element in UIElement.AllUIElements.ToList())
-            {
+            foreach (var element in UIElement.AllUIElements.ToList()) {
                 element?.DrawTooltips(TankGame.SpriteRenderer);
             }
+
             tankToSpawnType = MathHelper.Clamp(tankToSpawnType, 2, Enum.GetValues<TankTier>().Length - 1);
             tankToSpawnTeam = MathHelper.Clamp(tankToSpawnTeam, 0, Enum.GetValues<TankTeam>().Length - 1);
 
@@ -556,8 +616,7 @@ namespace TanksRebirth.GameContent
 
             DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"HighestTier: {AITank.GetHighestTierActive()}", new(10, GameUtils.WindowHeight * 0.26f), 1);
             DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"CurSong: {(Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f) != null ? Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f).Name : "N/A")}", new(10, GameUtils.WindowHeight - 100), 1);
-            for (int i = 0; i < Enum.GetNames<TankTier>().Length; i++)
-            {
+            for (int i = 0; i < Enum.GetNames<TankTier>().Length; i++) {
                 DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"{Enum.GetNames<TankTier>()[i]}: {AITank.GetTankCountOfType((TankTier)i)}", new(10, GameUtils.WindowHeight * 0.3f + (i * 20)), 1);
             }
             #endregion
@@ -568,7 +627,7 @@ namespace TanksRebirth.GameContent
                 $"\nRender FPS: {TankGame.RenderFPS}", new(10, 500));
 
             DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"Current Mission: {GameProperties.LoadedCampaign.CurrentMission.Name}\nCurrent Campaign: {GameProperties.LoadedCampaign.Properties.Name}", GameUtils.WindowBottomLeft - new Vector2(-4, 40), 3, centered: false);
-            if (!MainMenu.Active)
+            if (!MainMenu.Active && !TankGame.OverheadView)
             {
                 if (IntermissionSystem.IsAwaitingNewMission)
                 {
@@ -599,7 +658,7 @@ namespace TanksRebirth.GameContent
                 CampaignName.IsVisible = DebugUtils.DebuggingEnabled && DebugUtils.DebugLevel == 3;
             }
 
-            GameUI.MissionInfoBar.IsVisible = !MainMenu.Active;
+            GameUI.MissionInfoBar.IsVisible = !MainMenu.Active && !TankGame.OverheadView;
         }
         private static int _oldelta;
         public static void HandleLevelEditorModifications()
@@ -669,8 +728,8 @@ namespace TanksRebirth.GameContent
                 {
                     song.Stop();
                 }
-                TankMusicSystem.snowLoop.Stop();
-                TankMusicSystem.snowLoop.Play();
+                TankMusicSystem.SnowLoop.Stop();
+                TankMusicSystem.SnowLoop.Play();
             }
         }
 
@@ -852,23 +911,6 @@ namespace TanksRebirth.GameContent
             {
                 if (TankGame.IsWindows && MissionName.IsEmpty())
                 {
-                    /*using OpenFileDialog fdlg = new();
-                    fdlg.Title = "Load a supported mission file...";
-                    fdlg.InitialDirectory = TankGame.SaveDirectory;
-                    fdlg.Filter = "Tanks Rebirth Levels (*.mission)|*.mission";
-                    fdlg.FilterIndex = 1;
-
-                    if (fdlg.ShowDialog() == true)
-                    {
-                        try {
-                            Mission.Load(fdlg.FileName, null);
-                            ChatSystem.SendMessage($"Loaded mission '{Path.GetFileNameWithoutExtension(fdlg.FileName)}'.", Color.White);
-                        }
-                        catch {
-                            ChatSystem.SendMessage("Failed to load mission.", Color.Red);
-                        }
-                    }*/
-                    
                     var res = Dialog.FileOpen("mission", TankGame.SaveDirectory);
                     if (res.Path != null && res.IsOk)
                     {

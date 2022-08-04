@@ -553,7 +553,7 @@ namespace TanksRebirth.GameContent
                     BaseExpValue = 0.08f;
                     break;
 
-                case TankTier.Purple:
+                case TankTier.Violet:
                     AiParams.MeanderAngle = MathHelper.ToRadians(40);
                     AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 25;
@@ -2736,7 +2736,7 @@ namespace TanksRebirth.GameContent
 
         private static readonly TankTier[] workingTiers =
         {
-            TankTier.Brown, TankTier.Marine, TankTier.Yellow, TankTier.Black, TankTier.White, TankTier.Pink, TankTier.Purple, TankTier.Green, TankTier.Ash,
+            TankTier.Brown, TankTier.Marine, TankTier.Yellow, TankTier.Black, TankTier.White, TankTier.Pink, TankTier.Violet, TankTier.Green, TankTier.Ash,
             TankTier.Bronze, TankTier.Silver, TankTier.Sapphire, TankTier.Ruby, TankTier.Citrine, TankTier.Amethyst, TankTier.Emerald, TankTier.Gold, TankTier.Obsidian,
             TankTier.Granite, TankTier.Bubblegum, TankTier.Water, TankTier.Crimson, TankTier.Tiger, TankTier.Creeper, TankTier.Gamma, TankTier.Marble,
             // TankTier.Assassin

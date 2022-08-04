@@ -10,7 +10,7 @@
         Marine,
         Yellow,
         Pink,
-        Purple,
+        Violet,
         Green,
         White,
         Black,

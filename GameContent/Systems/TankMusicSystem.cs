@@ -504,17 +504,17 @@ namespace TanksRebirth.GameContent.Systems
 
         // TODO: ambience n stuff - remove music in forests
 
-        public static OggMusic snowLoop;
+        public static OggMusic SnowLoop;
 
         public static void Update()
         {
             if (MapRenderer.Theme == MapTheme.Christmas)
             {
-                snowLoop.SetVolume(TankGame.Settings.AmbientVolume);
+                SnowLoop.SetVolume(TankGame.Settings.AmbientVolume);
                 return;
             }
 
-            snowLoop.Volume = 0;
+            SnowLoop.Volume = 0;
 
             var musicVolume = TankGame.Settings.MusicVolume;
 
@@ -559,11 +559,11 @@ namespace TanksRebirth.GameContent.Systems
             else if (TierHighest == TankTier.Green && (AITank.CountAll() >= 4)) 
                 green4.SetVolume(musicVolume);
 
-            if (TierHighest == TankTier.Purple && AITank.CountAll() == 1)  
+            if (TierHighest == TankTier.Violet && AITank.CountAll() == 1)  
                 purple1.SetVolume(musicVolume);
-            else if (TierHighest == TankTier.Purple && (AITank.CountAll() == 2)) 
+            else if (TierHighest == TankTier.Violet && (AITank.CountAll() == 2)) 
                 purple2.SetVolume(musicVolume);
-            else if (TierHighest == TankTier.Purple && (AITank.CountAll() >= 3)) 
+            else if (TierHighest == TankTier.Violet && (AITank.CountAll() >= 3)) 
                 purple3.SetVolume(musicVolume);
 
             if (TierHighest == TankTier.White && AITank.CountAll() == 1) 
@@ -936,7 +936,7 @@ namespace TanksRebirth.GameContent.Systems
 
         public static void LoadAmbienceTracks()
         {
-            snowLoop = new("Snow Breeze", "Content/Assets/sounds/ambient/snowfall", 1f);
+            SnowLoop = new("Snow Breeze", "Content/Assets/sounds/ambient/snowfall", 1f);
         }
 
         public static void PlayAll()
@@ -951,12 +951,12 @@ namespace TanksRebirth.GameContent.Systems
                 song?.Play();
 
             if (MapRenderer.Theme == MapTheme.Christmas)
-                snowLoop?.Play();
+                SnowLoop?.Play();
         }
 
         public static void PauseAll()
         {
-            snowLoop?.Pause();
+            SnowLoop?.Pause();
             foreach (var song in Songs)
                 if (!song.IsPaused())
                     song?.Pause();
@@ -964,14 +964,14 @@ namespace TanksRebirth.GameContent.Systems
 
         public static void ResumeAll()
         {
-            snowLoop?.Play();
+            SnowLoop?.Play();
             foreach (var song in Songs)
                 song?.Resume();
         }
 
         public static void StopAll()
         {
-            snowLoop?.Stop();
+            SnowLoop?.Stop();
             if (Songs is not null)
             {
                 foreach (var song in Songs)
@@ -987,9 +987,9 @@ namespace TanksRebirth.GameContent.Systems
                 {
                     song.SetVolume(TankGame.Settings.MusicVolume);
                     if (MapRenderer.Theme == MapTheme.Christmas)
-                        snowLoop.SetVolume(TankGame.Settings.AmbientVolume);
+                        SnowLoop.SetVolume(TankGame.Settings.AmbientVolume);
                     else
-                        snowLoop.SetVolume(0);
+                        SnowLoop.SetVolume(0);
                 }
             }
         }

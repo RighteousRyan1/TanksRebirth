@@ -105,6 +105,20 @@ namespace TanksRebirth.Net
 
             client.Send(message, DeliveryMethod.ReliableOrdered);
         }
+        /// <summary>Be sure to sync by accessing the index of the tank from the AllTanks array. (<see cref="GameHandler.AllTanks"/>)
+        /// <para></para>
+        /// <c>AllTanks[tankId].Shoot()</c>
+        /// </summary>
+        /// <param name="tankId">The identified of the <see cref="Tank"/> that fired.</param>
+        public static void SyncTankFire(int tankId)
+        {
+            NetDataWriter message = new();
+            message.Put(PacketType.PlayerData);
+
+            message.Put(tankId);
+
+            client.Send(message, DeliveryMethod.ReliableOrdered);
+        }
         public static void SendMessage(string text, Color color, string sender)
         {
             NetDataWriter message = new();

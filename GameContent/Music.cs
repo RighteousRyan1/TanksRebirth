@@ -9,7 +9,7 @@ using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using Microsoft.Xna.Framework.Media;
 
-namespace TanksRebirth.GameContent
+namespace TanksRebirth.Internals.Common.Framework.Audio
 {
     public enum MusicState
     {

@@ -28,6 +28,9 @@ namespace TanksRebirth.Internals.UI
 
         internal string Tooltip;
 
+        /// <summary>Only use TopLeft, BottomLeft, TopRight, and BottomRight</summary>
+        public Anchor TooltipAnchor;
+
         /// <summary>A list of all <see cref="UIElement"/>s.</summary>
         public static List<UIElement> AllUIElements { get; internal set; } = new();
 
@@ -65,10 +68,15 @@ namespace TanksRebirth.Internals.UI
 
         /// <summary>The rotation of this <see cref="UIElement"/>.</summary>
         public float Rotation { get; set; } = 0;
+        /// <summary>The anchor of this <see cref="UIElement"/>. 
+        /// <para>WARNING: Does not work graphically.</para></summary>
+        public Anchor Anchor { get; set; } = Anchor.TopLeft;
 
 
         /// <summary>Whether or not the <see cref="UIElement"/> should draw its children before itself.</summary>
         public bool ReverseDrawOrder { get; set; }
+
+        internal static UIPanel cunoSucksElement;
 
         internal UIElement()
         {
@@ -86,7 +94,19 @@ namespace TanksRebirth.Internals.UI
         {
             InternalPosition = new Vector2(x, y);
             InternalSize = new Vector2(width, height);
+            _doUpdating = false;
             Recalculate();
+        }
+
+        private Func<Vector2> _updatedPos;
+        private Func<Vector2> _updatedSize;
+        private bool _doUpdating;
+
+        public void SetDimensions(Func<Vector2> position, Func<Vector2> dimensions)
+        {
+            _updatedPos = position;
+            _updatedSize = dimensions;
+            _doUpdating = true;
         }
 
         /// <summary>
@@ -98,6 +118,10 @@ namespace TanksRebirth.Internals.UI
             InternalPosition = new Vector2(rect.X, rect.Y);
             InternalSize = new Vector2(rect.Width, rect.Height);
             Recalculate();
+            cunoSucksElement = new() { IsVisible = false };
+            cunoSucksElement.Remove();
+            cunoSucksElement = new();
+            cunoSucksElement.SetDimensions(-1000789342, -783218, 0, 0);
         }
 
         /// <summary>
@@ -171,7 +195,7 @@ namespace TanksRebirth.Internals.UI
 
             if (Tooltip is not null && Hitbox.Contains(GameUtils.MousePosition))
             {
-                QuickIndicator(spriteBatch, Color.White);
+                DrawTooltipBox(spriteBatch, Color.White);
             }
         }
         /// <summary>
@@ -294,7 +318,8 @@ namespace TanksRebirth.Internals.UI
             return Hitbox.Contains(position) ? this : null;
         }
 
-        internal void QuickIndicator(SpriteBatch spriteBatch, Color color)
+        // TODO: tooltip anchors
+        internal void DrawTooltipBox(SpriteBatch spriteBatch, Color color)
         {
             SpriteFontBase font = TankGame.TextFont;
             Vector2 scaleFont = font.MeasureString(Tooltip);
@@ -345,6 +370,19 @@ namespace TanksRebirth.Internals.UI
                     el.MiddleUp();
 
                     el.MouseOver();
+
+                }
+            }
+
+            foreach (var element in AllUIElements)
+            {
+                if (element != null)
+                {
+                    if (element._doUpdating)
+                    {
+                        element.Position = element._updatedPos.Invoke();
+                        element.Size = element._updatedSize.Invoke();
+                    }
                 }
             }
 

@@ -117,10 +117,12 @@ namespace TanksRebirth
                     }
                     else
                     {
-                        if (TankGame.OverheadView)
+                        if (LevelEditor.Active)
                             SetDetails($"Editing a level");
-                        else
+                        else if (!LevelEditor.Editing)
                             SetDetails($"Playing freeplay | {tnkCnt}");
+                        else if (LevelEditor.Editing)
+                            SetDetails($"Testing a level");
                     }
 
                     SetSmallAsset($"tank_{AITank.GetHighestTierActive().ToString().ToLower()}", $"Currently fighting {getArticle(AITank.GetHighestTierActive().ToString())} {AITank.GetHighestTierActive()} Tank");

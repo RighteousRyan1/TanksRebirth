@@ -36,6 +36,7 @@ namespace TanksRebirth.GameContent
 
         public Range<TankTier> RandomizeRange;
 
+        public Tank GetTank() => IsPlayer ? GetPlayerTank() : GetAiTank();
         public AITank GetAiTank()
         {
             if (IsPlayer)
@@ -44,6 +45,9 @@ namespace TanksRebirth.GameContent
             var ai = new AITank(AiTier);
             ai.Body.Position = Position;
             ai.Position = Position;
+            ai.TankRotation = Rotation;
+            ai.Dead = false;
+            ai.TurretRotation = Rotation;
             return ai;
         }
         public PlayerTank GetPlayerTank()
@@ -54,6 +58,8 @@ namespace TanksRebirth.GameContent
             var player = Difficulties.Types["RandomPlayer"] ? new PlayerTank(PlayerType, false, AITank.PickRandomTier()) : new PlayerTank(PlayerType);
             player.Body.Position = Position;
             player.Position = Position;
+            player.TankRotation = Rotation;
+            player.Dead = false;
             return player;
         }
     }

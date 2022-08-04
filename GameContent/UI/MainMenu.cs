@@ -33,7 +33,7 @@ namespace TanksRebirth.GameContent.UI
     {
         public static bool Active { get; private set; } = true;
 
-        private static OggMusic Theme;
+        public static OggMusic Theme;
         private static bool _musicFading;
 
         private static List<Tank> tanks = new();
@@ -178,7 +178,7 @@ namespace TanksRebirth.GameContent.UI
 
             SpriteFontBase font = TankGame.TextFont;
 
-            Theme = new OggMusic("Main Menu Theme", "Content/Assets/mainmenu/theme", TankGame.Settings.MusicVolume);
+            Theme = new("Main Menu Theme", "Content/Assets/mainmenu/theme", TankGame.Settings.MusicVolume);
             Theme.Volume = TankGame.Settings.MusicVolume * 0.1f;
 
             #region Init Standard Buttons
@@ -222,6 +222,7 @@ namespace TanksRebirth.GameContent.UI
             PlayButton_SinglePlayer = new(TankGame.GameLanguage.SinglePlayer, font, Color.WhiteSmoke)
             {
                 IsVisible = false,
+                Tooltip = "Choose from your downloaded campaigns."
             };
             PlayButton_SinglePlayer.SetDimensions(700, 450, 500, 50);
 
@@ -233,47 +234,42 @@ namespace TanksRebirth.GameContent.UI
 
             InitializeDifficultyButtons();
 
-            PlayButton_LevelEditor = new(TankGame.GameLanguage.LevelEditor, font, Color.WhiteSmoke)
-            {
+            PlayButton_LevelEditor = new(TankGame.GameLanguage.LevelEditor, font, Color.WhiteSmoke) {
                 IsVisible = false,
-                Tooltip = "Coming Soon!"
+                Tooltip = "Create your own levels and campaigns with ease!"
             };
             PlayButton_LevelEditor.SetDimensions(700, 650, 500, 50);
+            PlayButton_LevelEditor.OnLeftClick = (b) => {
+                LevelEditor.Open();
+            };
 
-            ConnectToServerButton = new(TankGame.GameLanguage.ConnectToServer, font, Color.WhiteSmoke)
-            {
+            ConnectToServerButton = new(TankGame.GameLanguage.ConnectToServer, font, Color.WhiteSmoke) {
                 IsVisible = false,
                 Tooltip = "Connect to the written IP and Port in the form of ip:port"
             };
             ConnectToServerButton.SetDimensions(700, 100, 500, 50);
-            ConnectToServerButton.OnLeftClick = (uiButton) =>
-            {
-                if (UsernameInput.IsEmpty())
-                {
+            ConnectToServerButton.OnLeftClick = (uiButton) => {
+                if (UsernameInput.IsEmpty()) {
                     SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_error", SoundContext.Effect);
                     ChatSystem.SendMessage("Your username is empty!", Color.Red);
                     return;
                 }
-                if (PortInput.IsEmpty())
-                {
+                if (PortInput.IsEmpty()) {
                     SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_error", SoundContext.Effect);
                     ChatSystem.SendMessage("The port is empty!", Color.Red);
                     return;
                 }
-                if (IPInput.IsEmpty())
-                {
+                if (IPInput.IsEmpty()) {
                     SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_error", SoundContext.Effect);
                     ChatSystem.SendMessage("The IP address is not valid.", Color.Red);
                     return;
                 }
 
-                if (int.TryParse(PortInput.Text, out var port))
-                {
+                if (int.TryParse(PortInput.Text, out var port)) {
                     Client.CreateClient(UsernameInput.Text);
                     Client.AttemptConnectionTo(IPInput.Text, port, PasswordInput.Text);
                 }
-                else
-                {
+                else {
                     SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_error", SoundContext.Effect);
                     ChatSystem.SendMessage("That is not a valid port.", Color.Red);
                 }
@@ -784,12 +780,11 @@ namespace TanksRebirth.GameContent.UI
                 // Leave();
             };
             campaignNames.Add(extra);
-            
-            TankGame.cunoSucksElement.Remove();
-            TankGame.cunoSucksElement = new();
-            TankGame.cunoSucksElement.SetDimensions(-1000789342, -783218, 0, 0);
 
-            GC.Collect();
+            UIElement.cunoSucksElement = new() { IsVisible = false };
+            UIElement.cunoSucksElement.Remove();
+            UIElement.cunoSucksElement = new();
+            UIElement.cunoSucksElement.SetDimensions(-1000789342, -783218, 0, 0);
         }
         internal static void SetPlayButtonsVisibility(bool visible)
         {
@@ -851,7 +846,7 @@ namespace TanksRebirth.GameContent.UI
         }
 
         // this method is causing considerable amounts of garbage collection!
-        internal static void RenderStats(Vector2 genericStatsPos, Vector2 tankKillsPos, Aligning aligning)
+        internal static void RenderStats(Vector2 genericStatsPos, Vector2 tankKillsPos, Anchor aligning)
         {
             List<string> info = new()
             {
@@ -870,21 +865,21 @@ namespace TanksRebirth.GameContent.UI
             for (int i = 0; i < info.Count; i++)
             {
                 var str = info[i];
-                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, str, genericStatsPos + Vector2.UnitY * (i * 25), Color.White, Vector2.One, 0f, GameUtils.GetAligning(aligning, TankGame.TextFont.MeasureString(str)), 0f);
+                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, str, genericStatsPos + Vector2.UnitY * (i * 25), Color.White, Vector2.One, 0f, GameUtils.GetAnchor(aligning, TankGame.TextFont.MeasureString(str)), 0f);
             }   
-            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "Tanks Killed by Type:", tankKillsPos, Color.White, Vector2.One, 0f, GameUtils.GetAligning(aligning, TankGame.TextFont.MeasureString("Tanks Killed by Type:")), 0f);
+            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "Tanks Killed by Type:", tankKillsPos, Color.White, Vector2.One, 0f, GameUtils.GetAnchor(aligning, TankGame.TextFont.MeasureString("Tanks Killed by Type:")), 0f);
             for (int i = 2; i < TankGame.GameData.TankKills.Count; i++)
             {
                 var elem = TankGame.GameData.TankKills.ElementAt(i);
                 var split = elem.Key.ToString().SplitByCamel();
                 var display = $"{split}: {elem.Value}";
-                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, display, tankKillsPos + Vector2.UnitY * ((i - 1) * 25), Color.White, Vector2.One, 0f, GameUtils.GetAligning(aligning, TankGame.TextFont.MeasureString(display)), 0f);
+                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, display, tankKillsPos + Vector2.UnitY * ((i - 1) * 25), Color.White, Vector2.One, 0f, GameUtils.GetAnchor(aligning, TankGame.TextFont.MeasureString(display)), 0f);
             }
             if (TankGame.GameData.ReadOutdatedFile)
             {
                 TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"Outdated save file ({TankGame.GameData.Name})! Delete the old one!", new Vector2(8, 8), Color.White, Vector2.One, 0f, Vector2.Zero, 0f);
             }
-            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "Press ESC to return", GameUtils.WindowBottom - Vector2.UnitY * 40, Color.White, Vector2.One, 0f, GameUtils.GetAligning(aligning, TankGame.TextFont.MeasureString("Press ESC to leave")), 0f);
+            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "Press ESC to return", GameUtils.WindowBottom - Vector2.UnitY * 40, Color.White, Vector2.One, 0f, GameUtils.GetAnchor(aligning, TankGame.TextFont.MeasureString("Press ESC to leave")), 0f);
         }
 
         public static void Update()
@@ -1106,9 +1101,9 @@ namespace TanksRebirth.GameContent.UI
                 if (MenuState == State.Cosmetics)
                     RenderCrate();
                 else if (MenuState == State.StatsMenu)
-                    RenderStats(new Vector2(GameUtils.WindowWidth * 0.3f, 200), new Vector2(GameUtils.WindowWidth * 0.7f, 40), Aligning.TopCenter);
+                    RenderStats(new Vector2(GameUtils.WindowWidth * 0.3f, 200), new Vector2(GameUtils.WindowWidth * 0.7f, 40), Anchor.TopCenter);
                 else if (MenuState == State.Difficulties)
-                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "Ideas are welcome! Let us know in our DISCORD server!", new(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 6), Color.White, new Vector2(1f), 0f, GameUtils.GetAligning(Aligning.Center, TankGame.TextFont.MeasureString("Ideas are welcome! Let us know in our DISCORD server!")));
+                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "Ideas are welcome! Let us know in our DISCORD server!", new(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 6), Color.White, new Vector2(1f), 0f, GameUtils.GetAnchor(Anchor.Center, TankGame.TextFont.MeasureString("Ideas are welcome! Let us know in our DISCORD server!")));
                 #region Various things
                 if ((NetPlay.CurrentServer is not null && (Server.ConnectedClients is not null || NetPlay.ServerName is not null)) || (Client.IsConnected() && Client.lobbyDataReceived))
                 {
@@ -1140,7 +1135,7 @@ namespace TanksRebirth.GameContent.UI
                     TankGame.SpriteRenderer.Draw(LogoTexture, LogoPosition, null, Color.White, LogoRotation, LogoTexture.Size() / 2, LogoScale, default, default);
 
                     var size = TankGame.TextFont.MeasureString(TankGame.Instance.MOTD);
-                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, TankGame.Instance.MOTD, LogoPosition + LogoTexture.Size() * LogoScale * 0.3f, Color.White, new(LogoScale * 1.5f), LogoRotation - 0.25f, GameUtils.GetAligning(Aligning.TopCenter, size));
+                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, TankGame.Instance.MOTD, LogoPosition + LogoTexture.Size() * LogoScale * 0.3f, Color.White, new(LogoScale * 1.5f), LogoRotation - 0.25f, GameUtils.GetAnchor(Anchor.TopCenter, size));
                 }
 
                 if (campaignNames.Count == 1)

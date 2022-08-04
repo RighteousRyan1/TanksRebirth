@@ -23,7 +23,7 @@ namespace TanksRebirth.Achievements
             new("Enlisted", "Destroy 100 Marine tanks.", () => TankGame.GameData.TankKills[TankTier.Marine] >= 100),
             new("Those weren't submarines...", "Destroy 100 Yellow Tanks.", () => TankGame.GameData.TankKills[TankTier.Yellow] >= 100),
             new("Bratatatat", "Destroy 100 Pink Tanks.", () => TankGame.GameData.TankKills[TankTier.Pink] >= 100),
-            new("Bratatatat 2", "Destroy 100 Purple Tanks.", () => TankGame.GameData.TankKills[TankTier.Purple] >= 100),
+            new("Bratatatat 2", "Destroy 100 Purple Tanks.", () => TankGame.GameData.TankKills[TankTier.Violet] >= 100),
             new("Outsmarting the Calculator", "Destroy 100 Green Tanks.", () => TankGame.GameData.TankKills[TankTier.Green] >= 100),
             new("Now you see me...", "Destroy 100 White Tanks.", () => TankGame.GameData.TankKills[TankTier.White] >= 100),
             new("Conquering the World", "Destroy 100 Black Tanks.", () => TankGame.GameData.TankKills[TankTier.Black] >= 100),
