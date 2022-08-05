@@ -46,6 +46,7 @@ namespace TanksRebirth.GameContent
             ai.Body.Position = Position;
             ai.Position = Position;
             ai.TankRotation = Rotation;
+            ai.TargetTankRotation = Rotation;
             ai.Dead = false;
             ai.TurretRotation = Rotation;
             ai.Team = Team;

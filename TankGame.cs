@@ -465,6 +465,8 @@ namespace TanksRebirth
         public static bool Interp = true;
         public static float DeltaTime { get; private set; }
 
+        public static bool HoveringAnyTank;
+
         protected override void Update(GameTime gameTime)
         {
             try
@@ -717,6 +719,7 @@ namespace TanksRebirth
 
                 Tank.CollisionsWorld.Step(1);
 
+                HoveringAnyTank = false;
                 if (!MainMenu.Active && OverheadView)
                 {
                     foreach (var tnk in GameHandler.AllTanks)
@@ -725,6 +728,7 @@ namespace TanksRebirth
                         {
                             if (GameUtils.GetMouseToWorldRay().Intersects(tnk.Worldbox).HasValue)
                             {
+                                HoveringAnyTank = true;
                                 if (Input.KeyJustPressed(Keys.K))
                                 {
                                     // var tnk = WPTR.AllAITanks.FirstOrDefault(tank => tank is not null && !tank.Dead && tank.tier == AITank.GetHighestTierActive());
@@ -735,8 +739,8 @@ namespace TanksRebirth
 
                                 if (Input.CanDetectClick(rightClick: true))
                                 {
-                                    tnk.TankRotation += MathHelper.PiOver2;
-                                    tnk.TurretRotation += MathHelper.PiOver2;
+                                    tnk.TankRotation -= MathHelper.PiOver2;
+                                    tnk.TurretRotation -= MathHelper.PiOver2;
                                     if (tnk is AITank ai)
                                     {
                                         ai.TargetTurretRotation += MathHelper.PiOver2;

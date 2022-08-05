@@ -86,6 +86,9 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
                 return;
             if (PlacesBlock)
             {
+                if (!HasBlock && HasItem)
+                    return;
+
                 if (place)
                 {
                     var cube = new Block(LevelEditor.Active ? LevelEditor.SelectedBlockType : (Block.BlockType)GameHandler.BlockType, LevelEditor.Active ?  LevelEditor.BlockHeight : GameHandler.CubeHeight, Position.FlattenZ());

@@ -833,7 +833,7 @@ namespace TanksRebirth.GameContent
             var rot = 0f;
 
             var x = new AITank(tier);
-            x.TargetTankRotation = rot - MathHelper.Pi;
+            x.TargetTankRotation = rot + MathHelper.Pi;
             x.TankRotation = rot;
             x.TurretRotation = -rot;
 

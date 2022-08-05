@@ -131,6 +131,8 @@ namespace TanksRebirth.GameContent.UI
             {
                 Open(false);
                 TankGame.OverheadView = true;
+                GameProperties.InMission = false;
+                GameHandler.CleanupScene();
 
                 Mission.LoadDirectly(_cachedMission);
             };
@@ -254,6 +256,7 @@ namespace TanksRebirth.GameContent.UI
 
         public static void Render()
         {
+            #region Main UI
             int xOff = 0;
             _clickRect = new(0, (int)(GameUtils.WindowBottom.Y * 0.8f), GameUtils.WindowWidth, (int)(GameUtils.WindowHeight * 0.2f));
             TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, _clickRect, null, Color.White, 0f, Vector2.Zero, default, 0f);
@@ -307,7 +310,7 @@ namespace TanksRebirth.GameContent.UI
             }
             else if (CurCategory == Category.Blocks)
             {
-                var tex = BlockHeight != 1 ? $"{SelectedBlockType}_{BlockHeight}" : $"{SelectedBlockType}";
+                var tex = SelectedBlockType != Block.BlockType.Hole ? $"{SelectedBlockType}_{BlockHeight}" : $"{SelectedBlockType}";
                 var size = RenderTextures[tex].Size();
                 Vector2 start = new(GameUtils.WindowWidth - 175, 450);
                 TankGame.SpriteRenderer.Draw(RenderTextures[tex], start, null, Color.White, 0f, new(size.X / 2, size.Y), /*new Vector2(1f, (float)GameUtils.WindowHeight / 1080)*/ Vector2.One, default, 0f);
@@ -339,8 +342,26 @@ namespace TanksRebirth.GameContent.UI
                             TankTier.Pink => "A slow, but incredibly persistent and aggressive tank.\nCan fire multiple bullets at once.",
                             TankTier.Green => "A highly-dangerous but stationary tank.\nShoots multiple rockets that can bounce twice.",
                             TankTier.Violet => "A fast-moving, intelligent tank that can spray\nup to 5 bullets at once and can lay mines.",
-                            TankTier.White => "A slow-moving, powerful tank that turns invisible\nat the start of the mission and can fire multiple bullets and lay mines..",
-                            TankTier.Black => "A tank that moves faster than the player, fires rockets often, \nis aggressive, and can dodge well. Can lay mines.",
+                            TankTier.White => "A slow-moving, powerful tank that turns invisible\nat the start of the mission and can fire multiple bullets and lay mines.",
+                            TankTier.Black => "A tank that moves faster than the player, fires rockets often,\nis aggressive, and can dodge well. Can lay mines.",
+                            TankTier.Bronze => "A simple, stationary tank that can fire multiple bullets\nand aims directly at its target.",
+                            TankTier.Silver => "An advanced and difficult mobile tank that can fire up\nto 8 bullets at fast rates and can dodge well. Can lay mines",
+                            TankTier.Sapphire => "A deadly tank that can rapidly fire up to 3 rockets\nin a single volley. Can lay mines.",
+                            TankTier.Ruby => "A slow, but very aggressive tank that constantly fires shells.",
+                            TankTier.Citrine => "An insanely fast tank that shoots very fast shells at its target.\nLays mines frequently.",
+                            TankTier.Amethyst => "A fast, very agile, and dodgy tank that fires a spread\nof shells at its target. Can lay mines.",
+                            TankTier.Emerald => "A stationary tank that turns invisible at the start of the round.\nFires multiple double-bounce rockets at its target.",
+                            TankTier.Gold => "A slow and mobile tank that turns invisible at the start of the round\nand lays no tracks for players to see. Can lay mines.",
+                            TankTier.Obsidian => "A very fast, but very unintelligent tank that fires\nfast rockets frequently with 2 bounces. Can lay mines.",
+                            TankTier.Granite => "A very slow, mobile tank that becomes stunned\n for a while upon firing. Shoots faster-than-normal shells.",
+                            TankTier.Bubblegum => "A medium-speed, fast-firing dodgy tank that can lay mines.",
+                            TankTier.Water => "A medium-speed tank that moves linearly.\nFires rockets that bounce one time, and can also lay mines.",
+                            TankTier.Crimson => "A slow tank that fires in a burst of 5 shells. Can lay mines.",
+                            TankTier.Tiger => "A very wary tank that strafes very often and dodges very often.\nFires shells fast and lays mines often.",
+                            TankTier.Fade => "A tank that is mainly focused on dodging threats.\nFires often and can lay mines.",
+                            TankTier.Creeper => "A highly dangerous tank that fires very fast rockets\n that bounce 3 times. Moves very slowly.",
+                            TankTier.Gamma => "A stationary tank that fires insanely fast bullets at rapid frequency.",
+                            TankTier.Marble => "An apex predator tank that is good at dodging, good at\ncalculating shots, is fast, and fires fast rockets rapidly.",
                             _ => "What?"
                         }); // TODO: localize this. i hate english.
 
@@ -395,6 +416,14 @@ namespace TanksRebirth.GameContent.UI
                     DebugUtils.DrawDebugString(TankGame.SpriteRenderer, text, new Vector2(500, 20 + a), 3);
                     a += 20;
                 }
+            }
+            #endregion
+
+            if (Active && TankGame.HoveringAnyTank)
+            {
+                var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/leveledit/rotate");
+                TankGame.SpriteRenderer.Draw(tex,
+                   GameUtils.MousePosition + new Vector2(20, -20), null, Color.White, 0f, new Vector2(0, tex.Size().Y), 0.2f, default, 0f);
             }
         }
 
