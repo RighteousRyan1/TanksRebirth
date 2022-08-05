@@ -206,7 +206,7 @@ namespace TanksRebirth.GameContent.Systems
                 Block.AllBlocks[a]?.Remove();
 
             for (int p = 0; p < PlacementSquare.Placements.Count; p++)
-                PlacementSquare.Placements[p].CurrentBlockId = -1;
+                PlacementSquare.Placements[p].BlockId = -1;
 
             for (int b = 0; b < LoadedMission.Blocks.Length; b++)
             {
@@ -215,7 +215,7 @@ namespace TanksRebirth.GameContent.Systems
                 var c = cube.GetBlock();
 
                 var foundPlacement = PlacementSquare.Placements.First(placement => placement.Position == c.Position3D);
-                foundPlacement.CurrentBlockId = c.Id;
+                foundPlacement.BlockId = c.Id;
             }
 
             CurrentMission = LoadedMission;

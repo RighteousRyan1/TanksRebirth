@@ -7,6 +7,10 @@ using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.Utilities;
 using FontStashSharp;
+using System.Linq;
+using TanksRebirth.GameContent.UI;
+using TanksRebirth.Enums;
+using TanksRebirth.Internals.UI;
 
 namespace TanksRebirth.GameContent.Systems.Coordinates
 {
@@ -16,7 +20,7 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
         public static bool IsPlacing { get; private set; }
 
 
-        public bool HasBlock => CurrentBlockId > -1;
+        public bool HasItem => BlockId > -1 || TankId > -1;
 
         public static PlacementSquare CurrentlyHovered;
 
@@ -32,9 +36,14 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
 
         public bool IsHovered => GameUtils.GetMouseToWorldRay().Intersects(_box).HasValue;
 
-        public int CurrentBlockId = -1;
+        public static bool PlacesBlock; // if false, tanks will be placed
+
+        public int TankId = -1;
+        public int BlockId = -1;
 
         private Action<PlacementSquare> _onClick = null;
+
+        public bool HasBlock; // if false, a tank exists here
 
         public PlacementSquare(Vector3 position, float dimensions)
         {
@@ -56,16 +65,10 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
                     {
                         _onClick = (place) =>
                         {
-                            if (!place.HasBlock)
-                            {
-                                ChatSystem.SendMessage("Added!", Color.Lime);
-                                place.DoBlockAction(true);
-                            }
+                            if (!place.HasItem)
+                                place.DoPlacementAction(true);
                             else
-                            {
-                                ChatSystem.SendMessage("Removed!", Color.Red);
-                                place.DoBlockAction(false);
-                            }
+                                place.DoPlacementAction(false);
                         }
                     };
                 }
@@ -77,21 +80,53 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
         /// Does default block placement/removal.
         /// </summary>
         /// <param name="place">Whether or not to place the block or remove the block. If false, the block is removed.</param>
-        public void DoBlockAction(bool place)
+        public void DoPlacementAction(bool place)
         {
-            if (place)
+            if (UIElement.GetElementsAt(GameUtils.MousePosition).Count > 0)
+                return;
+            if (PlacesBlock)
             {
-                var cube = new Block((Block.BlockType)GameHandler.BlockType, GameHandler.CubeHeight, Position.FlattenZ());
-                CurrentBlockId = cube.Id;
+                if (place)
+                {
+                    var cube = new Block(LevelEditor.Active ? LevelEditor.SelectedBlockType : (Block.BlockType)GameHandler.BlockType, LevelEditor.Active ?  LevelEditor.BlockHeight : GameHandler.CubeHeight, Position.FlattenZ());
+                    BlockId = cube.Id;
 
-                IsPlacing = true;
+                    HasBlock = true;
+                    IsPlacing = true;
+                }
+                else
+                {
+                    Block.AllBlocks[BlockId].Remove();
+                    BlockId = -1;
+
+                    HasBlock = true;
+                    IsPlacing = false;
+                }
             }
-            else
-            {
-                Block.AllBlocks[CurrentBlockId].Remove();
-                CurrentBlockId = -1;
+            else {
+                // var team = LevelEditor.Active ? LevelEditor.SelectedTankTeam : (TankTeam)GameHandler.tankToSpawnTeam;
 
-                IsPlacing = false;
+                if (!HasBlock && HasItem)
+                {
+                    GameHandler.AllTanks[TankId].Remove();
+                    TankId = -1;
+                    return;
+                }
+
+                var team = LevelEditor.Active ? LevelEditor.SelectedTankTeam : (TankTeam)GameHandler.tankToSpawnTeam;
+                if (LevelEditor.CurCategory == LevelEditor.Category.EnemyTanks)
+                {
+                    if (LevelEditor.Active && LevelEditor.SelectedTankTier < TankTier.Brown)
+                        return;
+                    var tnk = GameHandler.SpawnTankAt(Position, LevelEditor.Active ? LevelEditor.SelectedTankTier : (TankTier)GameHandler.tankToSpawnType, team); // todo: finish
+                    HasBlock = false;
+                    TankId = tnk.WorldId;
+                }
+                else
+                {
+                    var me = GameHandler.SpawnMe(LevelEditor.Active ? LevelEditor.SelectedPlayerType : PlayerType.Blue, team);
+                    TankId = me.WorldId;
+                }
             }
         }
         public void Update()
@@ -102,35 +137,48 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
                 if (Input.CanDetectClick())
                     _onClick?.Invoke(this);
 
-                if (IsHovered)
+                if (PlacesBlock)
                 {
                     if (Input.MouseLeft)
                     {
                         if (IsPlacing)
                         {
-                            if (!HasBlock)
+                            if (!HasItem)
                             {
-                                DoBlockAction(true);
+                                DoPlacementAction(true);
                             }
                         }
                         else
                         {
-                            if (HasBlock)
+                            if (HasItem)
                             {
-                                DoBlockAction(false);
+                                DoPlacementAction(false);
                             }
                         }
                     }
                 }
             }
 
-            if (CurrentBlockId > -1)
-                if (Block.AllBlocks[CurrentBlockId] is null)
-                    CurrentBlockId = -1;
+            if (BlockId > -1)
+            {
+                if (PlacesBlock)
+                {
+                    if (Block.AllBlocks[BlockId] is null)
+                        BlockId = -1;
+                }
+                else
+                {
+                    if (GameHandler.AllTanks[BlockId] is null)
+                        TankId = -1;
+                }
+            }
         }
 
         public void Render()
         {
+            if (UIElement.GetElementsAt(GameUtils.MousePosition).Count > 0)
+                return;
+
             foreach (var mesh in _model.Meshes)
             {
                 foreach (BasicEffect effect in mesh.Effects)
@@ -139,20 +187,20 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
                     effect.View = TankGame.GameView;
                     effect.Projection = TankGame.GameProjection;
 
-                    if (CurrentBlockId > -1)
-                        if (displayHeights && Block.AllBlocks[CurrentBlockId] is not null)
+                    if (BlockId > -1)
+                        if (displayHeights && Block.AllBlocks[BlockId] is not null)
                         {
-                            if (Block.AllBlocks[CurrentBlockId].CanStack)
+                            if (Block.AllBlocks[BlockId].CanStack)
                             {
                                 var pos = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
 
-                                SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"{Block.AllBlocks[CurrentBlockId].Stack}", pos, Color.White, Color.Black, new(TankGame.AddativeZoom * 1.5f), 0f);
+                                SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"{Block.AllBlocks[BlockId].Stack}", pos, Color.White, Color.Black, new(TankGame.AddativeZoom * 1.5f), 0f);
                             }
-                            if (Block.AllBlocks[CurrentBlockId].Type == Block.BlockType.Teleporter)
+                            if (Block.AllBlocks[BlockId].Type == Block.BlockType.Teleporter)
                             {
                                 var pos = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
 
-                                SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"TP:{Block.AllBlocks[CurrentBlockId].TpLink}", pos, Color.White, Color.Black, new(TankGame.AddativeZoom * 1.5f), 0f);
+                                SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"TP:{Block.AllBlocks[BlockId].TpLink}", pos, Color.White, Color.Black, new(TankGame.AddativeZoom * 1.5f), 0f);
                             }
                         }
 

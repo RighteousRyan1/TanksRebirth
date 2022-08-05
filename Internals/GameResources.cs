@@ -31,7 +31,7 @@ namespace TanksRebirth.Internals
 			return loaded;
 		}
 
-		public static T GetGameResource<T>(string name) where T : class
+		public static T GetGameResource<T>(string name, bool addDotPng = true, bool addContentPrefix = true) where T : class
 		{
 			if (TankGame.Instance is null)
 				QueueAsset<T>(name);
@@ -41,8 +41,8 @@ namespace TanksRebirth.Internals
 			else if (typeof(T) == typeof(Texture2D))
 			{
 				// var texture = (Texture2D)Convert.ChangeType(result, typeof(Texture2D));
-				object result = Texture2D.FromFile(TankGame.Instance.GraphicsDevice, Path.Combine(TankGame.Instance.Content.RootDirectory, name + ".png"));
-				ResourceCache[name + ".png"] = result;
+				object result = Texture2D.FromFile(TankGame.Instance.GraphicsDevice, Path.Combine(addContentPrefix ? TankGame.Instance.Content.RootDirectory : string.Empty, name + (addDotPng ? ".png" : string.Empty)));
+				ResourceCache[name + (addDotPng ? ".png" : string.Empty)] = result;
 
 				return (T)result;
 			}

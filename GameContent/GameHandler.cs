@@ -198,7 +198,7 @@ namespace TanksRebirth.GameContent
             foreach (var cube in Block.AllBlocks)
                 cube?.Update();
 
-            if (TankGame.OverheadView)
+            if ((DebugUtils.DebuggingEnabled && DebugUtils.DebugLevel == DebugUtils.Id.LevelEditDebug && TankGame.OverheadView) || LevelEditor.Active)
                 foreach (var sq in PlacementSquare.Placements)
                     sq?.Update();
 
@@ -215,14 +215,16 @@ namespace TanksRebirth.GameContent
             if (Input.KeyJustPressed(Keys.Divide))
                 DebugUtils.DebugLevel--;
 
-            if (!TankGame.OverheadView && _wasOverhead)
+            if (!TankGame.OverheadView && _wasOverhead && !LevelEditor.Active)
                 BeginIntroSequence();
 
-            if (TankGame.OverheadView || MainMenu.Active)
-            {
+            if ((TankGame.OverheadView || MainMenu.Active) && !LevelEditor.Active) {
                 GameProperties.InMission = false;
                 _tankFuncDelay = 600;
             }
+
+            if (LevelEditor.Active)
+                _tankFuncDelay = 190;
 
             if (_tankFuncDelay > 0)
                 _tankFuncDelay--;
@@ -262,7 +264,7 @@ namespace TanksRebirth.GameContent
                     if (Input.KeyJustPressed(Keys.PageUp))
                         SpawnTankPlethorae(true);
                     if (Input.KeyJustPressed(Keys.PageDown))
-                        SpawnMe();
+                        SpawnMe(PlayerType.Blue, (TankTeam)tankToSpawnTeam);
                     if (Input.KeyJustPressed(Keys.Home))
                         SpawnTankAt(!TankGame.OverheadView ? GameUtils.GetWorldPosition(GameUtils.MousePosition) : PlacementSquare.CurrentlyHovered.Position, (TankTier)tankToSpawnType, (TankTeam)tankToSpawnTeam);
 
@@ -525,7 +527,7 @@ namespace TanksRebirth.GameContent
 
             Xp?.Render(TankGame.SpriteRenderer, new(GameUtils.WindowWidth / 2, 50), new(100, 20), Anchor.Center, Color.Red, Color.Lime);
 
-            if (_tankFuncDelay > 0 && !MainMenu.Active && !TankGame.OverheadView)
+            if (_tankFuncDelay > 0 && !MainMenu.Active && !TankGame.OverheadView && !LevelEditor.Active)
                 // $"{MathF.Round(_tankFuncDelay / 60)}"
                 TankGame.SpriteRenderer.DrawString(TankGame.TextFontLarge, $"{MathF.Round(_tankFuncDelay / 60) + 1}", GameUtils.WindowCenter, Color.White, Vector2.One * 3f, 0f, TankGame.TextFontLarge.MeasureString($"{MathF.Round(_tankFuncDelay / 60) + 1}") / 2, 0f);
 
@@ -556,7 +558,7 @@ namespace TanksRebirth.GameContent
             foreach (var powerup in Powerup.Powerups)
                 powerup?.Render();
 
-            if (TankGame.OverheadView)
+            if ((DebugUtils.DebuggingEnabled && DebugUtils.DebugLevel == DebugUtils.Id.LevelEditDebug && TankGame.OverheadView) || LevelEditor.Active)
                 foreach (var sq in PlacementSquare.Placements)
                     sq?.Render();
 
@@ -627,7 +629,7 @@ namespace TanksRebirth.GameContent
                 $"\nRender FPS: {TankGame.RenderFPS}", new(10, 500));
 
             DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"Current Mission: {GameProperties.LoadedCampaign.CurrentMission.Name}\nCurrent Campaign: {GameProperties.LoadedCampaign.Properties.Name}", GameUtils.WindowBottomLeft - new Vector2(-4, 40), 3, centered: false);
-            if (!MainMenu.Active && !TankGame.OverheadView)
+            if (!MainMenu.Active && !LevelEditor.Active)
             {
                 if (IntermissionSystem.IsAwaitingNewMission)
                 {
@@ -658,21 +660,21 @@ namespace TanksRebirth.GameContent
                 CampaignName.IsVisible = DebugUtils.DebuggingEnabled && DebugUtils.DebugLevel == 3;
             }
 
-            GameUI.MissionInfoBar.IsVisible = !MainMenu.Active && !TankGame.OverheadView;
+            GameUI.MissionInfoBar.IsVisible = !MainMenu.Active && !LevelEditor.Active;
         }
         private static int _oldelta;
         public static void HandleLevelEditorModifications()
         {
             var cur = PlacementSquare.CurrentlyHovered;
 
-            if (cur is not null && cur.HasBlock)
+            if (cur is not null && cur.HasItem && cur.HasBlock)
             {
-                if (Block.AllBlocks[cur.CurrentBlockId].Type == Block.BlockType.Teleporter)
+                if (Block.AllBlocks[cur.BlockId].Type == Block.BlockType.Teleporter)
                 {
                     // ChatSystem.SendMessage($"{Input.DeltaScrollWheel}", Color.White);
 
                     if (Input.DeltaScrollWheel != _oldelta)
-                        Block.AllBlocks[cur.CurrentBlockId].TpLink += (sbyte)(Input.DeltaScrollWheel - _oldelta);
+                        Block.AllBlocks[cur.BlockId].TpLink += (sbyte)(Input.DeltaScrollWheel - _oldelta);
                 }
             }
 
@@ -733,12 +735,12 @@ namespace TanksRebirth.GameContent
             }
         }
 
-        public static PlayerTank SpawnMe()
+        public static PlayerTank SpawnMe(PlayerType playerType, TankTeam team)
         {
             var pos = TankGame.OverheadView ? PlacementSquare.CurrentlyHovered.Position : GameUtils.GetWorldPosition(GameUtils.MousePosition);
-            var myTank = new PlayerTank(PlayerType.Blue);
+            var myTank = new PlayerTank(playerType);
 
-            myTank.Team = (TankTeam)tankToSpawnTeam;
+            myTank.Team = team;
             myTank.Dead = false;
             myTank.Body.Position = pos.FlattenZ();
             myTank.Position = pos.FlattenZ();
@@ -828,7 +830,7 @@ namespace TanksRebirth.GameContent
         }
         public static AITank SpawnTankAt(Vector3 position, TankTier tier, TankTeam team)
         {
-            var rot = 0f;//GeometryUtils.GetPiRandom();
+            var rot = 0f;
 
             var x = new AITank(tier);
             x.TargetTankRotation = rot - MathHelper.Pi;

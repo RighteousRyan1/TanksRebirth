@@ -23,6 +23,7 @@ using TanksRebirth.Net;
 using TanksRebirth.IO;
 using TanksRebirth.GameContent.Properties;
 using TanksRebirth.GameContent.Cosmetics;
+using TanksRebirth.GameContent.UI;
 
 namespace TanksRebirth.GameContent
 {
@@ -1724,10 +1725,8 @@ namespace TanksRebirth.GameContent
 
                 timeSinceLastAction++;
 
-                if (!GameProperties.InMission || IntermissionSystem.IsAwaitingNewMission)
-                {
+                if (!GameProperties.InMission || IntermissionSystem.IsAwaitingNewMission || LevelEditor.Active)
                     Velocity = Vector2.Zero;
-                }
                 else
                     DoAi(true, true, true);
             }

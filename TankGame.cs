@@ -262,7 +262,7 @@ namespace TanksRebirth
 
                 base.Initialize();
             }
-            catch (Exception e)
+            catch (Exception e) when (!Debugger.IsAttached)
             {
                 GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
                 throw;
@@ -314,6 +314,7 @@ namespace TanksRebirth
                 GameResources.CopySrcFolderContents("Content/Assets/textures/tank");
                 GameResources.CopySrcFolderContents("Content/Assets/textures/tank/wee");
                 GameResources.CopySrcFolderContents("Content/Assets/textures/ui");
+                GameResources.CopySrcFolderContents("Content/Assets/textures/ui/leveledit");
 
                 GameResources.CopySrcFolderContents("Content/Assets/textures", ".png");
                 GameResources.CopySrcFolderContents("Content/Assets", ".png");

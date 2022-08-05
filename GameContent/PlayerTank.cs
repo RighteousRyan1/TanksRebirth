@@ -18,6 +18,7 @@ using TanksRebirth.Net;
 using TanksRebirth.GameContent.Systems;
 using FontStashSharp;
 using TanksRebirth.GameContent.Properties;
+using TanksRebirth.GameContent.UI;
 
 namespace TanksRebirth.GameContent
 {
@@ -203,7 +204,7 @@ namespace TanksRebirth.GameContent
                     }
                 }
 
-                if (GameProperties.InMission)
+                if (GameProperties.InMission && !LevelEditor.Active)
                 {
                     if (CurShootStun <= 0 && CurMineStun <= 0)
                     {
@@ -220,7 +221,7 @@ namespace TanksRebirth.GameContent
                     }
                 }
 
-                if (GameProperties.InMission)
+                if (GameProperties.InMission && !LevelEditor.Active)
                 {
                     if (NetPlay.IsClientMatched(PlayerId))
                     {

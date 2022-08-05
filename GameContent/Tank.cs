@@ -48,6 +48,7 @@ namespace TanksRebirth.GameContent
             ai.TankRotation = Rotation;
             ai.Dead = false;
             ai.TurretRotation = Rotation;
+            ai.Team = Team;
             return ai;
         }
         public PlayerTank GetPlayerTank()
@@ -60,6 +61,7 @@ namespace TanksRebirth.GameContent
             player.Position = Position;
             player.TankRotation = Rotation;
             player.Dead = false;
+            player.Team = Team;
             return player;
         }
     }
