@@ -21,8 +21,8 @@ namespace TanksRebirth.Graphics
             public float SunPower;
             public LightProfile(float brightness, Color color)
             {
-                this.Brightness = brightness;
-                this.Color = color;
+                Brightness = brightness;
+                Color = color;
 
                 IsNight = true;
 
@@ -37,12 +37,11 @@ namespace TanksRebirth.Graphics
                 if (applySunPower)
                     LightPower = SunPower;
 
+                if (Lighting.IsNight != IsNight)
+                    TankMusicSystem.SnowLoop = new("Snow Loop", IsNight ? "Content/Assets/sounds/ambient/forestnight" : "Content/Assets/sounds/ambient/forestday", 1f);
+
                 Lighting.IsNight = IsNight;
-
-                TankMusicSystem.SnowLoop = new("Forest Ambient", IsNight ? "Content/Assets/sounds/ambient/forestnight" : "Content/Assets/sounds/ambient/forestday", 1f);
             }
-
-
         }
 
         public static bool AccurateShadows = false;

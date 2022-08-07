@@ -291,36 +291,41 @@ namespace TanksRebirth
             {
                 var s = Stopwatch.StartNew();
 
-                GameResources.CopySrcFolderContents("Content/Assets/fonts");
-                GameResources.CopySrcFolderContents("Content/Assets/music");
-                GameResources.CopySrcFolderContents("Content/Assets/music/marble");
-                GameResources.CopySrcFolderContents("Content/Assets/sounds");
-                GameResources.CopySrcFolderContents("Content/Assets/sounds/ambient");
-                GameResources.CopySrcFolderContents("Content/Assets/sounds/crate");
-                GameResources.CopySrcFolderContents("Content/Assets/sounds/menu");
-                GameResources.CopySrcFolderContents("Content/Assets/sounds/thunder");
-                GameResources.CopySrcFolderContents("Content/Assets/sounds/tnk_event");
-                GameResources.CopySrcFolderContents("Content/Assets/fanfares");
-                GameResources.CopySrcFolderContents("Content/Assets/mainmenu");
-                GameResources.CopySrcFolderContents("Localization");
+                if (Debugger.IsAttached)
+                {
+                    GameResources.CopySrcFolderContents("Content/Assets/fonts");
+                    GameResources.CopySrcFolderContents("Content/Assets/music");
+                    GameResources.CopySrcFolderContents("Content/Assets/music/marble");
+                    GameResources.CopySrcFolderContents("Content/Assets/sounds");
+                    GameResources.CopySrcFolderContents("Content/Assets/sounds/ambient");
+                    GameResources.CopySrcFolderContents("Content/Assets/sounds/crate");
+                    GameResources.CopySrcFolderContents("Content/Assets/sounds/menu");
+                    GameResources.CopySrcFolderContents("Content/Assets/sounds/thunder");
+                    GameResources.CopySrcFolderContents("Content/Assets/sounds/tnk_event");
+                    GameResources.CopySrcFolderContents("Content/Assets/fanfares");
+                    GameResources.CopySrcFolderContents("Content/Assets/mainmenu");
+                    GameResources.CopySrcFolderContents("Localization");
 
-                GameResources.CopySrcFolderContents("Content/Assets/textures/bullet");
-                GameResources.CopySrcFolderContents("Content/Assets/textures/check");
-                GameResources.CopySrcFolderContents("Content/Assets/textures/chest");
-                GameResources.CopySrcFolderContents("Content/Assets/textures/ingame");
-                GameResources.CopySrcFolderContents("Content/Assets/textures/medal");
-                GameResources.CopySrcFolderContents("Content/Assets/textures/mine");
-                GameResources.CopySrcFolderContents("Content/Assets/textures/misc");
-                GameResources.CopySrcFolderContents("Content/Assets/textures/tank");
-                GameResources.CopySrcFolderContents("Content/Assets/textures/tank/wee");
-                GameResources.CopySrcFolderContents("Content/Assets/textures/ui");
-                GameResources.CopySrcFolderContents("Content/Assets/textures/ui/leveledit");
+                    GameResources.CopySrcFolderContents("Content/Assets/textures/bullet");
+                    GameResources.CopySrcFolderContents("Content/Assets/textures/check");
+                    GameResources.CopySrcFolderContents("Content/Assets/textures/chest");
+                    GameResources.CopySrcFolderContents("Content/Assets/textures/ingame");
+                    GameResources.CopySrcFolderContents("Content/Assets/textures/medal");
+                    GameResources.CopySrcFolderContents("Content/Assets/textures/mine");
+                    GameResources.CopySrcFolderContents("Content/Assets/textures/misc");
+                    GameResources.CopySrcFolderContents("Content/Assets/textures/tank");
+                    GameResources.CopySrcFolderContents("Content/Assets/textures/tank/wee");
+                    GameResources.CopySrcFolderContents("Content/Assets/textures/ui");
+                    GameResources.CopySrcFolderContents("Content/Assets/textures/ui/leveledit");
 
-                GameResources.CopySrcFolderContents("Content/Assets/textures", ".png");
-                GameResources.CopySrcFolderContents("Content/Assets", ".png");
-                GameResources.CopySrcFolderContents("Content/Assets/toy", ".png");
-                GameResources.CopySrcFolderContents("Content/Assets/forest", ".png");
-                GameResources.CopySrcFolderContents("Content/Assets/cosmetics", ".png");
+                    GameResources.CopySrcFolderContents("Content/Assets/textures", ".png");
+                    GameResources.CopySrcFolderContents("Content/Assets", ".png");
+                    GameResources.CopySrcFolderContents("Content/Assets/toy", ".png");
+                    GameResources.CopySrcFolderContents("Content/Assets/forest", ".png");
+                    GameResources.CopySrcFolderContents("Content/Assets/cosmetics", ".png");
+                }
+
+
 
                 _cachedState = GraphicsDevice.RasterizerState;
 
@@ -388,11 +393,14 @@ namespace TanksRebirth
                 GameUI.Initialize();
                 MainMenu.Initialize();
 
-                GameHandler.ClientLog.Write($"Content loaded in {s.Elapsed}.", LogType.Debug);
-
                 DecalSystem.Initialize(SpriteRenderer, GraphicsDevice);
 
                 LevelEditor.Initialize();
+
+                GameHandler.ClientLog.Write("Running in directory: " + Directory.GetCurrentDirectory(), LogType.Info);
+
+                GameHandler.ClientLog.Write($"Content loaded in {s.Elapsed}.", LogType.Debug);
+                GameHandler.ClientLog.Write($"DebugMode: {Debugger.IsAttached}", LogType.Debug);
 
                 s.Stop();
             }

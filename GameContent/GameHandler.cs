@@ -149,6 +149,7 @@ namespace TanksRebirth.GameContent
                 Xp.Value = TankGame.GameData.ExpLevel - MathF.Floor(TankGame.GameData.ExpLevel);
             else
                 Xp = new();
+
             VanillaAchievements.Repository.UpdateCompletions();
             /* uh, yeah. this is the decay-per-level calculation. people don't want it!
             var floor1 = MathF.Floor(TankGame.GameData.ExpLevel + 1f);
@@ -298,25 +299,22 @@ namespace TanksRebirth.GameContent
             if (IntermissionSystem.BlackAlpha > 0 || IntermissionSystem.Alpha >= 1f || MainMenu.Active || GameUI.Paused)
             {
                 if (Thunder.SoftRain.IsPlaying())
+                {
                     Thunder.SoftRain.Instance.Stop();
+                    TankGame.ClearColor = Color.Black;
 
-                TankGame.ClearColor = Color.Black;
+                    GameLight.Color = new(150, 150, 170);
+                    GameLight.Brightness = 0.71f;
 
-                GameLight.Color = new(150, 150, 170);
-                GameLight.Brightness = 0.71f;
-
-                GameLight.Apply(false);
-
+                    GameLight.Apply(false);
+                }
                 return;
             }
             if (!Thunder.SoftRain.IsPlaying())
-            {
                 Thunder.SoftRain.Instance.Play();
-            }
             Thunder.SoftRain.Instance.Volume = TankGame.Settings.AmbientVolume;
             
-            if (GameRand.NextFloat(0, 1f) <= 0.003f)
-            {
+            if (GameRand.NextFloat(0, 1f) <= 0.003f)  {
                 var rand = new Range<Thunder.ThunderType>(Thunder.ThunderType.Fast, Thunder.ThunderType.Instant2);
                 var type = (Thunder.ThunderType)GameRand.Next((int)rand.Min, (int)rand.Max);
 
@@ -525,7 +523,8 @@ namespace TanksRebirth.GameContent
         {
             TankGame.Instance.GraphicsDevice.BlendState = BlendState.AlphaBlend;
 
-            Xp?.Render(TankGame.SpriteRenderer, new(GameUtils.WindowWidth / 2, 50), new(100, 20), Anchor.Center, Color.Red, Color.Lime);
+            if (!MainMenu.Active && !LevelEditor.Editing)
+                Xp?.Render(TankGame.SpriteRenderer, new(GameUtils.WindowWidth / 2, 50), new(100, 20), Anchor.Center, Color.Red, Color.Lime);
 
             if (_tankFuncDelay > 0 && !MainMenu.Active && !TankGame.OverheadView && !LevelEditor.Active)
                 // $"{MathF.Round(_tankFuncDelay / 60)}"

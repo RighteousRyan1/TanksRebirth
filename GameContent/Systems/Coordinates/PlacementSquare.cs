@@ -109,6 +109,9 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
             else {
                 // var team = LevelEditor.Active ? LevelEditor.SelectedTankTeam : (TankTeam)GameHandler.tankToSpawnTeam;
 
+                if (HasBlock && HasItem)
+                    return;
+
                 if (!HasBlock && HasItem)
                 {
                     GameHandler.AllTanks[TankId].Remove();
@@ -179,14 +182,13 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
 
         public void Render()
         {
-            if (UIElement.GetElementsAt(GameUtils.MousePosition).Count > 0)
-                return;
+            var hoverUi = UIElement.GetElementsAt(GameUtils.MousePosition).Count > 0;
 
             foreach (var mesh in _model.Meshes)
             {
                 foreach (BasicEffect effect in mesh.Effects)
                 {
-                    effect.World = Matrix.CreateScale(0.68f) * Matrix.CreateTranslation(Position +  new Vector3(0, 0.1f, 0));
+                    effect.World = Matrix.CreateScale(0.68f) * Matrix.CreateTranslation(Position + new Vector3(0, 0.1f, 0));
                     effect.View = TankGame.GameView;
                     effect.Projection = TankGame.GameProjection;
 
@@ -209,7 +211,8 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
 
                     effect.TextureEnabled = true;
                     effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
-                    if (IsHovered)
+
+                    if (IsHovered && !hoverUi)
                         effect.Alpha = 0.7f;
                     else
                         effect.Alpha = 0f;

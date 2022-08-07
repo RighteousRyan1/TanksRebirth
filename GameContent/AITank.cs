@@ -1779,28 +1779,32 @@ namespace TanksRebirth.GameContent
 
                     TankGame.GameData.TankKills[Tier]++;
 
-                    // add slight variation in XP gain.
-                    var rand = GameHandler.GameRand.NextFloat(-(BaseExpValue * 0.25f), BaseExpValue * 0.25f);
-                    var gain = BaseExpValue + rand;
-                    // i will keep this commented if anything else happens.
-                    //var gain = (BaseExpValue + rand) * GameData.UniversalExpMultiplier;
-                    TankGame.GameData.ExpLevel += gain;
-
-                    var p = ParticleSystem.MakeParticle(Position3D + new Vector3(0, 30, 0), $"+{gain * 100:0.00} XP");
-
-                    p.Scale = new(0.5f);
-                    p.Roll = MathHelper.Pi;
-                    p.Origin2D = TankGame.TextFont.MeasureString($"+{gain * 100:0.00} XP") / 2;
-
-                    p.UniqueBehavior = (p) =>
+                    // haaaaaaarddddddcode
+                    if (!LevelEditor.Editing)
                     {
-                        p.Position.Y += 0.1f;
+                        var rand = GameHandler.GameRand.NextFloat(-(BaseExpValue * 0.25f), BaseExpValue * 0.25f);
+                        var gain = BaseExpValue + rand;
+                        // i will keep this commented if anything else happens.
+                        //var gain = (BaseExpValue + rand) * GameData.UniversalExpMultiplier;
+                        TankGame.GameData.ExpLevel += gain;
 
-                        p.Alpha -= 0.01f;
 
-                        if (p.Alpha <= 0)
-                            p.Destroy();
-                    };
+                        var p = ParticleSystem.MakeParticle(Position3D + new Vector3(0, 30, 0), $"+{gain * 100:0.00} XP");
+
+                        p.Scale = new(0.5f);
+                        p.Roll = MathHelper.Pi;
+                        p.Origin2D = TankGame.TextFont.MeasureString($"+{gain * 100:0.00} XP") / 2;
+
+                        p.UniqueBehavior = (p) =>
+                        {
+                            p.Position.Y += 0.1f;
+
+                            p.Alpha -= 0.01f;
+
+                            if (p.Alpha <= 0)
+                                p.Destroy();
+                        };
+                    }
                 }
             }
             else
@@ -2259,9 +2263,7 @@ namespace TanksRebirth.GameContent
                         }
 
                         if (doFire)
-                        {
                             UpdateAim(tanksNearMe, !isMineNear);
-                        }
                     }
 
                     #endregion

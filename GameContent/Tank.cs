@@ -16,7 +16,6 @@ using TanksRebirth.GameContent.Cosmetics;
 using TanksRebirth.Graphics;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.GameContent.Properties;
-using TanksRebirth.Graphics;
 
 namespace TanksRebirth.GameContent
 {

@@ -1070,7 +1070,7 @@ namespace TanksRebirth.GameContent.UI
         }
 
         private static readonly string tanksMessage = $"Tanks! Rebirth ALPHA v{TankGame.Instance.GameVersion}\nThe original game and assets used in this game belongs to Nintendo\nDeveloped by RighteousRyan\nTANKS to all our contributors!";
-        private static readonly string keyDisplay = "For anyone needing a list of keys for\ndebugging purposes, here you go:\n" +
+        /*private static readonly string keyDisplay = "For anyone needing a list of keys for\ndebugging purposes, here you go:\n" +
             "i - spawns the powerup listed at the top\n" +
             "; - spawns a  mine at the mouse\n" +
             "' - spawns a still bullet at the mouse\n" +
@@ -1091,7 +1091,7 @@ namespace TanksRebirth.GameContent.UI
             "z and x - change placed block type\n" +
             "j - overhead level editor view (level editor) (for now)\n" +
             ", and . - change block heights\n\n" +
-            "Also, ahead of time- sorry if you have a < 66% keyboard!";
+            "Also, ahead of time- sorry if you have a < 66% keyboard!";*/
 
         private static int _oldwheel;
         public static void Render()
@@ -1125,8 +1125,8 @@ namespace TanksRebirth.GameContent.UI
                 TankGame.SpriteRenderer.DrawString(TankGame.TextFont, tanksMessage, new(8, GameUtils.WindowHeight - 8), Color.White, new(0.6f), 0f, new Vector2(0, tanksMessageSize.Y));
 
                 TankGame.SpriteRenderer.DrawString(TankGame.TextFont, tanksMessage, new(8, GameUtils.WindowHeight - 8), Color.White, new(0.6f), 0f, new Vector2(0, tanksMessageSize.Y));
-                if (PlayButton.IsVisible)
-                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, keyDisplay, new(12, 12), Color.White, new(0.6f), 0f, Vector2.Zero);
+                //if (PlayButton.IsVisible)
+                //TankGame.SpriteRenderer.DrawString(TankGame.TextFont, keyDisplay, new(12, 12), Color.White, new(0.6f), 0f, Vector2.Zero);
                 #endregion
 
                 if (MenuState == State.PrimaryMenu || MenuState == State.PlayList)
@@ -1144,35 +1144,32 @@ namespace TanksRebirth.GameContent.UI
                         $"\nTry downloading the Vanilla campaign by pressing 'Enter' or making your own." +
                         $"\nCampaign folders belong in '{Path.Combine(TankGame.SaveDirectory, "Campaigns")}' (press TAB to open on Windows)", new(12, 12), Color.White, new(0.75f), 0f, Vector2.Zero);
 
-                    if (TankGame.IsWindows)
+                    if (Input.KeyJustPressed(Keys.Tab))
                     {
-                        if (Input.KeyJustPressed(Keys.Tab))
-                        {
-                            if (Directory.Exists(Path.Combine(TankGame.SaveDirectory, "Campaigns")))
-                                Process.Start("explorer.exe", Path.Combine(TankGame.SaveDirectory, "Campaigns"));
-                            // do note that this fails on windows lol
-                        }
-                        if (Input.KeyJustPressed(Keys.Enter))
-                        {
-                            //try {
-                                var bytes = WebUtils.DownloadWebFile("https://github.com/RighteousRyan1/tanks_rebirth_motds/blob/master/Vanilla.rar?raw=true", out var filename);
-                                var path = Path.Combine(TankGame.SaveDirectory, "Campaigns", filename);
-                                File.WriteAllBytes(path, bytes);
+                        if (Directory.Exists(Path.Combine(TankGame.SaveDirectory, "Campaigns")))
+                            Process.Start("explorer.exe", Path.Combine(TankGame.SaveDirectory, "Campaigns"));
+                        // do note that this fails on windows lol
+                    }
+                    if (Input.KeyJustPressed(Keys.Enter))
+                    {
+                        try {
+                            var bytes = WebUtils.DownloadWebFile("https://github.com/RighteousRyan1/tanks_rebirth_motds/blob/master/Vanilla.rar?raw=true", out var filename);
+                            var path = Path.Combine(TankGame.SaveDirectory, "Campaigns", filename);
+                            File.WriteAllBytes(path, bytes);
 
-                                using (var archive = new RarArchive(path))
-                                    archive.ExtractToDirectory(Path.Combine(TankGame.SaveDirectory, "Campaigns", ""));
+                            using (var archive = new RarArchive(path))
+                                archive.ExtractToDirectory(Path.Combine(TankGame.SaveDirectory, "Campaigns", ""));
 
-                                File.Delete(path);
+                            File.Delete(path);
 
-                                SetCampaignDisplay();
+                            SetCampaignDisplay();
 
-                            /*} catch(Exception e) {
-                                Process.Start(new ProcessStartInfo("https://github.com/RighteousRyan1/TanksRebirth/releases/download/1.3.4-alpha/Vanilla.rar")
-                                {
-                                    UseShellExecute = true,
-                                });
-                                GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
-                            }*/
+                        } catch(Exception e) {
+                            Process.Start(new ProcessStartInfo("https://github.com/RighteousRyan1/TanksRebirth/releases/download/1.3.4-alpha/Vanilla.rar")
+                            {
+                                UseShellExecute = true,
+                            });
+                            GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
                         }
                     }
                 }

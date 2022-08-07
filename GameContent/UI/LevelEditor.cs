@@ -28,20 +28,37 @@ namespace TanksRebirth.GameContent.UI
 
         public static UITextButton TestLevel;
         public static UITextButton Perspective;
+
         public static UITextButton BlocksCategory;
         public static UITextButton EnemyTanksCategory;
         public static UITextButton PlayerTanksCategory;
 
+        public static UITextButton SaveLevel;
+
         public static UITextButton ReturnToEditor;
 
+        #region ConfirmLevelContents
+        // finish confirmation stuff later.
+        public static UIPanel LevelContentsPanel;
+        public static UITextInput LevelName;
+        public static UITextInput LevelDescription;
+        public static UITextInput LevelAuthor;
+        public static UITextInput LevelVersion;
+        public static UITextInput LevelTags;
+        public static UITextInput LevelExtraLifeMissions;
+        public static UITextInput LevelLoadingStripColor;
+        public static UITextInput LevelLoadingBGColor;
+        public static UITextButton ExitConfirm;
+        #endregion
+        #region Variables / Properties
         public static Category CurCategory { get; private set; }
-
         public static TankTier SelectedTankTier { get; private set; }
         public static TankTeam SelectedTankTeam { get; private set; }
         public static PlayerType SelectedPlayerType { get; private set; }
         public static Block.BlockType SelectedBlockType { get; private set; }
         public static int BlockHeight { get; private set; }
         public static bool Editing { get; internal set; }
+
         private static Mission _cachedMission;
         public enum Category {
             EnemyTanks,
@@ -57,8 +74,59 @@ namespace TanksRebirth.GameContent.UI
         private static List<string> _renderNamesTanks = new();
         private static List<string> _renderNamesBlocks = new();
         private static List<string> _renderNamesPlayers = new();
+        #endregion
+
+        public static void InitializeSaveMenu()
+        {
+            return;
+            LevelName = new(TankGame.TextFont, Color.White, 1f, 20);
+            LevelName.SetDimensions(() => new(GameUtils.WindowWidth * 0.01f, GameUtils.WindowHeight * 0.725f), () => new(200, 50));
+
+            LevelContentsPanel = new(){
+
+            };
+
+            LevelName.OnLeftClick = (l) => {
+
+            };
+        }
+        private enum UICategory
+        {
+
+        }
+
+        private static Category _category;
+        public static Category GUICategory {
+            get => _category;
+            set {
+
+            }
+        }
+
+        private static bool _saveMenuOpen;
+        private static void SetSaveMenuVisibility(bool visible)
+        {
+            LevelName.IsVisible = visible;
+            LevelAuthor.IsVisible = visible;
+            LevelDescription.IsVisible = visible;
+            LevelTags.IsVisible = visible;
+            LevelVersion.IsVisible = visible;
+            LevelExtraLifeMissions.IsVisible = visible;
+            ExitConfirm.IsVisible = visible;
+            _saveMenuOpen = visible;
+        }
+        private static void SetLevelEditorVisibility(bool visible)
+        {
+            EnemyTanksCategory.IsVisible = visible;
+            BlocksCategory.IsVisible = visible;
+            TestLevel.IsVisible = visible;
+            Perspective.IsVisible = visible;
+            PlayerTanksCategory.IsVisible = visible;
+            SaveLevel.IsVisible = visible;
+        }
         public static void Initialize()
         {
+            #region Enumerable Init
             for (int i = 1; i < Enum.GetNames<TankTeam>().Length; i++)
             {
                 var team = (TankTeam)i;
@@ -96,17 +164,10 @@ namespace TanksRebirth.GameContent.UI
                 if (RenderTextures.ContainsKey(nTL))
                     _renderNamesPlayers.Add(nTL);
             }
+            #endregion
 
             TestLevel = new("Test Level", TankGame.TextFont, Color.White);
-            TestLevel.SetDimensions(() =>
-            {
-                // let's be goofy and set the volume of the track to the music volume.
-
-                return new(GameUtils.WindowWidth * 0.01f, GameUtils.WindowHeight * 0.725f);
-            }, () =>
-            {
-                return new(200, 50);
-            });
+            TestLevel.SetDimensions(() => new(GameUtils.WindowWidth * 0.01f, GameUtils.WindowHeight * 0.725f), () => new(200, 50));
 
             TestLevel.OnLeftClick = (l) =>
             {
@@ -117,80 +178,52 @@ namespace TanksRebirth.GameContent.UI
             };
 
             ReturnToEditor = new("Return to Editor", TankGame.TextFont, Color.White);
-            ReturnToEditor.SetDimensions(() =>
-            {
-                // let's be goofy and set the volume of the track to the music volume.
+            ReturnToEditor.SetDimensions(() =>new(GameUtils.WindowWidth * 0.01f, GameUtils.WindowHeight * 0.02f), () => new(250, 50));
 
-                return new(GameUtils.WindowWidth * 0.01f, GameUtils.WindowHeight * 0.02f);
-            }, () =>
-            {
-                return new(250, 50);
-            });
-
-            ReturnToEditor.OnLeftClick = (l) =>
-            {
+            ReturnToEditor.OnLeftClick = (l) => {
                 Open(false);
                 TankGame.OverheadView = true;
                 GameProperties.InMission = false;
                 GameHandler.CleanupScene();
-
                 Mission.LoadDirectly(_cachedMission);
             };
 
             Perspective = new("Perspective", TankGame.TextFont, Color.White);
-            Perspective.SetDimensions(() =>
-            {
-                return new(GameUtils.WindowWidth * 0.125f, GameUtils.WindowHeight * 0.725f);
-            }, () =>
-            {
-                return new(200, 50);
-            });
-            Perspective.OnLeftClick = (l) =>
-            {
+            Perspective.SetDimensions(() => new(GameUtils.WindowWidth * 0.125f, GameUtils.WindowHeight * 0.725f), () =>new(200, 50));
+
+            Perspective.OnLeftClick = (l) => {
                 TankGame.OverheadView = !TankGame.OverheadView;
             };
 
             BlocksCategory = new("Blocks", TankGame.TextFont, Color.White);
-            BlocksCategory.SetDimensions(() =>
-            {
-                return new(GameUtils.WindowWidth * 0.75f, GameUtils.WindowHeight * 0.725f);
-            }, () =>
-            {
-                return new(200, 50);
-            });
+            BlocksCategory.SetDimensions(() => new(GameUtils.WindowWidth * 0.75f, GameUtils.WindowHeight * 0.725f), () => new(200, 50));
             BlocksCategory.OnLeftClick = (l) => {
                 CurCategory = Category.Blocks;
             };
 
             EnemyTanksCategory = new("Enemies", TankGame.TextFont, Color.White);
-            EnemyTanksCategory.SetDimensions(() =>
-            {
-                return new(GameUtils.WindowWidth * 0.875f, GameUtils.WindowHeight * 0.725f);
-            }, () =>
-            {
-                return new(200, 50);
-            });
+            EnemyTanksCategory.SetDimensions(() => new(GameUtils.WindowWidth * 0.875f, GameUtils.WindowHeight * 0.725f), () => new(200, 50));
             EnemyTanksCategory.OnLeftClick = (l) => {
                 CurCategory = Category.EnemyTanks;
             };
             PlayerTanksCategory = new("Players", TankGame.TextFont, Color.White);
-            PlayerTanksCategory.SetDimensions(() =>
-            {
-                return new(GameUtils.WindowWidth * 0.875f, GameUtils.WindowHeight * 0.65f);
-            }, () =>
-            {
-                return new(200, 50);
-            });
+            PlayerTanksCategory.SetDimensions(() => new(GameUtils.WindowWidth * 0.875f, GameUtils.WindowHeight * 0.65f), () => new(200, 50));
             PlayerTanksCategory.OnLeftClick = (l) => {
                 CurCategory = Category.PlayerTanks;
             };
 
-            EnemyTanksCategory.IsVisible = false;
-            BlocksCategory.IsVisible = false;
-            TestLevel.IsVisible = false;
-            Perspective.IsVisible = false;
-            ReturnToEditor.IsVisible = false;
-            PlayerTanksCategory.IsVisible = false;
+            SaveLevel = new("Save Level", TankGame.TextFont, Color.White);
+
+            float width = 200;
+
+            SaveLevel.SetDimensions(() => new(GameUtils.WindowWidth * 0.5f - width / 2, 10), () => new(width, 50));
+            SaveLevel.OnLeftClick = (a) => {
+                SetSaveMenuVisibility(!_saveMenuOpen);
+            };
+
+            InitializeSaveMenu();
+
+            SetLevelEditorVisibility(false);
 
             UIElement.cunoSucksElement = new() { IsVisible = false };
             UIElement.cunoSucksElement.Remove();
@@ -211,22 +244,14 @@ namespace TanksRebirth.GameContent.UI
                     Active = true;
                     TankGame.OverheadView = true;
                     Theme.Play();
-                    EnemyTanksCategory.IsVisible = true;
-                    BlocksCategory.IsVisible = true;
-                    TestLevel.IsVisible = true;
-                    Perspective.IsVisible = true;
-                    PlayerTanksCategory.IsVisible = true;
+                    SetLevelEditorVisibility(true);
                 });
             }
             else
             {
                 Theme.Play();
                 Active = true;
-                EnemyTanksCategory.IsVisible = true;
-                BlocksCategory.IsVisible = true;
-                TestLevel.IsVisible = true;
-                Perspective.IsVisible = true;
-                PlayerTanksCategory.IsVisible = true;
+                SetLevelEditorVisibility(true);
             }
             Editing = true;
         }
@@ -235,11 +260,7 @@ namespace TanksRebirth.GameContent.UI
             Active = false;
             Theme.SetVolume(0);
             Theme.Stop();
-            EnemyTanksCategory.IsVisible = false;
-            BlocksCategory.IsVisible = false;
-            TestLevel.IsVisible = false;
-            Perspective.IsVisible = false;
-            PlayerTanksCategory.IsVisible = false;
+            SetLevelEditorVisibility(false);
         }
 
         private static Rectangle _clickRect;
