@@ -22,6 +22,9 @@ namespace TanksRebirth.Internals.Common.GameUI
 
         public static event EventHandler OnConfirmContents;
 
+        /// <summary>Disfunctional right now.</summary>
+        public bool UseDefaultStringWithText;
+
         public UITextInput(SpriteFontBase font, Color color, float scale, int maxLength) : base("", font, color, scale)
         {
             MaxLength = maxLength;

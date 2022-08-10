@@ -1702,6 +1702,16 @@ namespace TanksRebirth.GameContent
                     else if (fld.GetValue(this) is bool && fld.Name != "Dead")
                         fld.SetValue(this, GameHandler.GameRand.Next(0, 2) == 0);
                 }
+            }
+
+            foreach (var fld in Properties.GetType().GetProperties())
+            {
+                if (fld.GetValue(Properties) is int)
+                    fld.SetValue(Properties, GameHandler.GameRand.Next(1, 60));
+                else if (fld.GetValue(Properties) is float)
+                    fld.SetValue(Properties, GameHandler.GameRand.NextFloat(0.01f, 60));
+                else if (fld.GetValue(Properties) is bool && fld.Name != "Immortal")
+                    fld.SetValue(Properties, GameHandler.GameRand.Next(0, 2) == 0);
             }*/
             base.ApplyDefaults(ref properties);
         }
@@ -2164,7 +2174,7 @@ namespace TanksRebirth.GameContent
                         {
                             var treadPlace = $"Assets/sounds/tnk_tread_place_{GameHandler.GameRand.Next(1, 5)}";
                             var sfx = SoundPlayer.PlaySoundInstance(treadPlace, SoundContext.Effect, 0.05f);
-                            sfx.Instance.Pitch = Properties.TreadPitch;
+                            sfx.Instance.Pitch = MathHelper.Clamp(Properties.TreadPitch, 0, 1);
                         }
                     }
 

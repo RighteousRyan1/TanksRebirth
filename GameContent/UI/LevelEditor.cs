@@ -18,6 +18,7 @@ using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Internals.UI;
 using FontStashSharp;
 using TanksRebirth.GameContent.Systems.Coordinates;
+using NativeFileDialogSharp;
 
 namespace TanksRebirth.GameContent.UI
 {
@@ -39,8 +40,9 @@ namespace TanksRebirth.GameContent.UI
 
         #region ConfirmLevelContents
         // finish confirmation stuff later.
-        public static UIPanel LevelContentsPanel;
+        public static Rectangle LevelContentsPanel;
         public static UITextInput LevelName;
+        public static UITextInput LevelCampaignName;
         public static UITextInput LevelDescription;
         public static UITextInput LevelAuthor;
         public static UITextInput LevelVersion;
@@ -49,6 +51,7 @@ namespace TanksRebirth.GameContent.UI
         public static UITextInput LevelLoadingStripColor;
         public static UITextInput LevelLoadingBGColor;
         public static UITextButton ExitConfirm;
+        public static UITextButton SaveLevelConfirm;
         #endregion
         #region Variables / Properties
         public static Category CurCategory { get; private set; }
@@ -76,44 +79,132 @@ namespace TanksRebirth.GameContent.UI
         private static List<string> _renderNamesPlayers = new();
         #endregion
 
+        // reduce hardcode -- make a variable that tracks height.
         public static void InitializeSaveMenu()
         {
-            return;
             LevelName = new(TankGame.TextFont, Color.White, 1f, 20);
-            LevelName.SetDimensions(() => new(GameUtils.WindowWidth * 0.01f, GameUtils.WindowHeight * 0.725f), () => new(200, 50));
+            LevelName.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20, LevelContentsPanel.Y + 60), () => new(LevelContentsPanel.Width - 40, 50 / (1080 / GameUtils.WindowHeight)));
+            LevelName.DefaultString = "Name";
 
-            LevelContentsPanel = new(){
+            LevelCampaignName = new(TankGame.TextFont, Color.White, 1f, 20);
+            LevelCampaignName.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20, LevelContentsPanel.Y + 120), () => new(LevelContentsPanel.Width - 40, 50 / (1080 / GameUtils.WindowHeight)));
+            LevelCampaignName.DefaultString = "Campaign Name (Optional)";
+            LevelCampaignName.Tooltip = "The campaign this mission belongs to.";
 
+            LevelDescription = new(TankGame.TextFont, Color.White, 1f, 20);
+            LevelDescription.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20, LevelContentsPanel.Y + 180), () => new(LevelContentsPanel.Width - 40, 50 / (1080 / GameUtils.WindowHeight)));
+            LevelDescription.DefaultString = "Description";
+
+            LevelAuthor = new(TankGame.TextFont, Color.White, 1f, 20);
+            LevelAuthor.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20, LevelContentsPanel.Y + 240), () => new(LevelContentsPanel.Width - 40, 50 / (1080 / GameUtils.WindowHeight)));
+            LevelAuthor.DefaultString = "Author";
+
+            LevelTags = new(TankGame.TextFont, Color.White, 1f, 20);
+            LevelTags.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20, LevelContentsPanel.Y + 300), () => new(LevelContentsPanel.Width - 40, 50 / (1080 / GameUtils.WindowHeight)));
+            LevelTags.DefaultString = "Tags (separate tags with a ',')";
+
+            LevelExtraLifeMissions = new(TankGame.TextFont, Color.White, 1f, 20);
+            LevelExtraLifeMissions.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20, LevelContentsPanel.Y + 360), () => new(LevelContentsPanel.Width - 40, 50 / (1080 / GameUtils.WindowHeight)));
+            LevelExtraLifeMissions.DefaultString = "Extra Life Missions (separate tags with a ',')";
+
+            LevelVersion = new(TankGame.TextFont, Color.White, 1f, 20);
+            LevelVersion.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20, LevelContentsPanel.Y + 420), () => new(LevelContentsPanel.Width - 40, 50 / (1080 / GameUtils.WindowHeight)));
+            LevelVersion.DefaultString = "Level Version";
+
+            LevelLoadingBGColor = new(TankGame.TextFont, Color.White, 1f, 20);
+            LevelLoadingBGColor.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20, LevelContentsPanel.Y + 480), () => new(LevelContentsPanel.Width - 40, 50 / (1080 / GameUtils.WindowHeight)));
+            LevelLoadingBGColor.DefaultString = "Mission Loading: BG Color";
+
+            LevelLoadingStripColor = new(TankGame.TextFont, Color.White, 1f, 20);
+            LevelLoadingStripColor.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20, LevelContentsPanel.Y + 540), () => new(LevelContentsPanel.Width - 40, 50 / (1080 / GameUtils.WindowHeight)));
+            LevelLoadingStripColor.DefaultString = "Mission Loading: Strip Color";
+
+            ExitConfirm = new("Return", TankGame.TextFont, Color.White);
+            ExitConfirm.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20, LevelContentsPanel.Y + LevelContentsPanel.Height - 60), () => new(200, 50 / (1080 / GameUtils.WindowHeight)));
+
+            ExitConfirm.OnLeftClick = (l) => {
+                GUICategory = UICategory.LevelEditor;
             };
 
-            LevelName.OnLeftClick = (l) => {
+            SaveLevelConfirm = new("Save Level", TankGame.TextFont, Color.White);
+            SaveLevelConfirm.SetDimensions(() => new Vector2(LevelContentsPanel.X + 40 + ExitConfirm.Size.X, LevelContentsPanel.Y + LevelContentsPanel.Height - 60), () => new(200, 50 / (1080 / GameUtils.WindowHeight)));
+            SaveLevelConfirm.Tooltip = "Save your mission to a file.\nKeep in mind: you will need to name the missions in numerical order.";
+            SaveLevelConfirm.OnLeftClick = (l) => {
+                // Mission.Save(LevelName.GetRealText(), )
 
+                if (TankGame.IsWindows)
+                {
+                    var res = Dialog.FileSave("mission", TankGame.SaveDirectory);
+                    if (res.Path != null && res.IsOk)
+                    {
+                        try
+                        {
+                            var ingameName = LevelName.Text;
+                            var realName = Path.HasExtension(res.Path) ? Path.GetFileNameWithoutExtension(res.Path) : Path.GetFileName(res.Path);
+                            var path = res.Path.Replace(realName, string.Empty);
+                            Mission.Save(ingameName, path, false, realName);
+                        }
+                        catch
+                        {
+                            // guh
+                        }
+                    }
+                    return;
+                }
+
+                GUICategory = UICategory.LevelEditor;
             };
-        }
-        private enum UICategory
-        {
 
+
+            SetSaveMenuVisibility(false);
+        }
+        public enum UICategory {
+            LevelEditor,
+            SavingThings,
         }
 
-        private static Category _category;
-        public static Category GUICategory {
+        private static UICategory _category;
+        public static UICategory GUICategory {
             get => _category;
             set {
+                _category = value;
 
+                if (_category == UICategory.SavingThings)
+                {
+                    SetSaveMenuVisibility(true);
+                    SetLevelEditorVisibility(false);
+                }
+                else
+                {
+                    SetSaveMenuVisibility(false);
+                    SetLevelEditorVisibility(true);
+                }
             }
         }
 
         private static bool _saveMenuOpen;
         private static void SetSaveMenuVisibility(bool visible)
         {
+            _saveMenuOpen = visible;
             LevelName.IsVisible = visible;
+            LevelCampaignName.IsVisible = visible;
+            SaveLevelConfirm.IsVisible = visible;
+            ExitConfirm.IsVisible = visible;
+            /*LevelDescription.IsVisible = visible;
             LevelAuthor.IsVisible = visible;
-            LevelDescription.IsVisible = visible;
             LevelTags.IsVisible = visible;
             LevelVersion.IsVisible = visible;
             LevelExtraLifeMissions.IsVisible = visible;
             ExitConfirm.IsVisible = visible;
-            _saveMenuOpen = visible;
+            LevelLoadingBGColor.IsVisible = visible;
+            LevelLoadingStripColor.IsVisible = visible;*/
+            LevelDescription.IsVisible = 
+            LevelAuthor.IsVisible = 
+            LevelTags.IsVisible = 
+            LevelVersion.IsVisible = 
+            LevelExtraLifeMissions.IsVisible = 
+            LevelLoadingBGColor.IsVisible = 
+            LevelLoadingStripColor.IsVisible = false;
         }
         private static void SetLevelEditorVisibility(bool visible)
         {
@@ -169,8 +260,7 @@ namespace TanksRebirth.GameContent.UI
             TestLevel = new("Test Level", TankGame.TextFont, Color.White);
             TestLevel.SetDimensions(() => new(GameUtils.WindowWidth * 0.01f, GameUtils.WindowHeight * 0.725f), () => new(200, 50));
 
-            TestLevel.OnLeftClick = (l) =>
-            {
+            TestLevel.OnLeftClick = (l) => {
                 Close();
                 TankGame.OverheadView = false;
 
@@ -218,7 +308,10 @@ namespace TanksRebirth.GameContent.UI
 
             SaveLevel.SetDimensions(() => new(GameUtils.WindowWidth * 0.5f - width / 2, 10), () => new(width, 50));
             SaveLevel.OnLeftClick = (a) => {
-                SetSaveMenuVisibility(!_saveMenuOpen);
+                if (!_saveMenuOpen)
+                    GUICategory = UICategory.SavingThings;
+                else
+                    GUICategory = UICategory.LevelEditor;
             };
 
             InitializeSaveMenu();
@@ -261,6 +354,7 @@ namespace TanksRebirth.GameContent.UI
             Theme.SetVolume(0);
             Theme.Stop();
             SetLevelEditorVisibility(false);
+            SetSaveMenuVisibility(false);
         }
 
         private static Rectangle _clickRect;
@@ -446,10 +540,14 @@ namespace TanksRebirth.GameContent.UI
                 TankGame.SpriteRenderer.Draw(tex,
                    GameUtils.MousePosition + new Vector2(20, -20), null, Color.White, 0f, new Vector2(0, tex.Size().Y), 0.2f, default, 0f);
             }
+            if (Active && GUICategory == UICategory.SavingThings)
+                TankGame.SpriteRenderer.Draw(TankGame.WhitePixel,
+                   LevelContentsPanel, null, Color.Gray, 0f, Vector2.Zero, default, 0f);
         }
 
         public static void Update()
         {
+            LevelContentsPanel = new Rectangle(GameUtils.WindowWidth / 4, (int)(GameUtils.WindowHeight * 0.1f), GameUtils.WindowWidth / 2, (int)(GameUtils.WindowHeight * 0.625f));
             PlacementSquare.PlacesBlock = CurCategory == Category.Blocks;
             switch (CurCategory) {
                 case Category.EnemyTanks:

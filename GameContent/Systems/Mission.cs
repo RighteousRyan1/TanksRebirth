@@ -119,16 +119,25 @@ namespace TanksRebirth.GameContent.Systems
         /// Saves a mission as a <c>.mission</c> file for reading later.
         /// </summary>
         /// <param name="name">The name of the mission to save.</param>
-        /// <param name="campaignName">The mission folder to save this to. If the directory does not exist, one will be created.<para></para>If null, saves to the <c>Missions/</c> directory.</param>
-        public static void Save(string name, string campaignName)
+        /// <param name="campaignName">The mission folder to save this to. If the directory does not exist, one will be created.<para></para>If null, saves to the <c>Missions/</c> directory by default.</param>
+        /// <param name="useDefaultPaths">If true, the path for the location of the mission file will be located in <paramref name="campaignName"/></param>
+        /// <param name="fileName">If not null, will use this instead of <paramref name="name"/> for the file name.</param>
+        public static void Save(string name, string campaignName, bool useDefaultPaths = true, string fileName = null)
         {
             string root;
-            if (campaignName is not null)
-                root = Path.Combine(TankGame.SaveDirectory, "Campaigns", campaignName);
+            if (useDefaultPaths)
+            {
+                if (campaignName is not null)
+                    root = Path.Combine(TankGame.SaveDirectory, "Campaigns", campaignName);
+                else
+                    root = Path.Combine(TankGame.SaveDirectory, "Missions");
+            }
             else
-                root = Path.Combine(TankGame.SaveDirectory, "Missions");
-            var path = Path.Combine(root, name + ".mission");
-            Directory.CreateDirectory(root);
+                root = campaignName;
+
+            var path = Path.Combine(root, (fileName == null ? name : fileName) + ".mission");
+            if (useDefaultPaths)
+                Directory.CreateDirectory(root);
 
             using var writer = new BinaryWriter(File.Open(path, FileMode.OpenOrCreate, FileAccess.ReadWrite));
 

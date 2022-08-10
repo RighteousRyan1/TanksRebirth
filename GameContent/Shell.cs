@@ -141,7 +141,7 @@ namespace TanksRebirth.GameContent
                     ShellType.Explosive => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_regular_2", SoundContext.Effect, 0.3f),
                     _ => throw new NotImplementedException()
                 };
-                _shootSound.Instance.Pitch = owner.Properties.ShootPitch;
+                _shootSound.Instance.Pitch = MathHelper.Clamp(owner.Properties.ShootPitch, -1, 1);
             }
 
             GameProperties.OnMissionEnd += StopSounds;

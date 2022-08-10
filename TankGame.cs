@@ -174,34 +174,29 @@ namespace TanksRebirth
             Directory.CreateDirectory(Path.Combine(SaveDirectory, "Texture Packs", "Tank"));
             Directory.CreateDirectory(Path.Combine(SaveDirectory, "Logs"));
             GameHandler.ClientLog = new(Path.Combine(SaveDirectory, "Logs"), "client");
-            try
-            {
-                try
-                {
+            try {
+                try {
                     var bytes = WebUtils.DownloadWebFile("https://raw.githubusercontent.com/RighteousRyan1/tanks_rebirth_motds/master/motd.txt", out var name);
                     MOTD = System.Text.Encoding.Default.GetString(bytes);
-                }
-                catch
-                {
+                } catch {
                     // in the case that an HTTPRequestException is thrown (no internet access)
                     MOTD = LocalizationRandoms.GetRandomMotd();
                 }
                 // check if platform is windows, mac, or linux
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                {
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
                     OperatingSystem = OSPlatform.Windows;
                     IsWindows = true;
                 }
-                else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-                {
+                else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)){
                     OperatingSystem = OSPlatform.OSX;
                     IsMac = true;
                 }
-                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                {
+                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
                     OperatingSystem = OSPlatform.Linux;
                     IsLinux = true;
                 }
+
+                GameHandler.ClientLog.Write($"Playing on Operating System '{OperatingSystem}'", LogType.Info);
 
                 // IOUtils.SetAssociation(".mission", "MISSION_FILE", "TanksRebirth.exe", "Tanks Rebirth mission file");
 
@@ -210,7 +205,7 @@ namespace TanksRebirth
 
                 Content.RootDirectory = "Content";
                 Instance = this;
-                Window.Title = "Tanks! Remake";
+                Window.Title = "Tanks! Rebirth";
                 Window.AllowUserResizing = true;
 
                 IsMouseVisible = false;
@@ -220,8 +215,10 @@ namespace TanksRebirth
                 _fontSystem = new();
 
                 GameVersion = typeof(TankGame).Assembly.GetName().Version.ToString();
+
+                GameHandler.ClientLog.Write($"Running {typeof(TankGame).Assembly.GetName().Name} on version {GameVersion}'", LogType.Info);
             }
-            catch (Exception e)
+            catch (Exception e) when (!Debugger.IsAttached)
             {
                 GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
                 throw;
@@ -234,13 +231,14 @@ namespace TanksRebirth
 
         protected override void Initialize()
         {
-            try
-            {
+            try {
                 CurrentSessionTimer.Start();
 
                 GameHandler.MapEvents();
+                GameHandler.ClientLog.Write($"Mapped events...", LogType.Info);
 
                 DiscordRichPresence.Load();
+                GameHandler.ClientLog.Write($"Loaded Discord Rich Presence...", LogType.Info);
 
                 // systems = ReflectionUtils.GetInheritedTypesOf<IGameSystem>(Assembly.GetExecutingAssembly());
 
@@ -254,16 +252,19 @@ namespace TanksRebirth
 
                 Graphics.ApplyChanges();
 
+                GameHandler.ClientLog.Write($"Applying changes to graphics device... ({Graphics.PreferredBackBufferWidth}x{Graphics.PreferredBackBufferHeight})", LogType.Info);
+
                 GameData.Setup();
                 if (File.Exists(Path.Combine(GameData.Directory, GameData.Name)))
                     GameData.Deserialize();
+
+                GameHandler.ClientLog.Write($"Loaded save data.", LogType.Info);
 
                 VanillaAchievements.InitializeToRepository();
 
                 base.Initialize();
             }
-            catch (Exception e) when (!Debugger.IsAttached)
-            {
+            catch (Exception e) when (!Debugger.IsAttached) {
                 GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
                 throw;
             }
@@ -274,6 +275,7 @@ namespace TanksRebirth
 
         protected override void OnExiting(object sender, EventArgs args)
         {
+            GameHandler.ClientLog.Write($"Handling termination process...", LogType.Info);
             GameData.TimePlayed += CurrentSessionTimer.Elapsed;
             CurrentSessionTimer.Stop();
             GameHandler.ClientLog.Dispose();
@@ -323,6 +325,8 @@ namespace TanksRebirth
                     GameResources.CopySrcFolderContents("Content/Assets/toy", ".png");
                     GameResources.CopySrcFolderContents("Content/Assets/forest", ".png");
                     GameResources.CopySrcFolderContents("Content/Assets/cosmetics", ".png");
+
+                    GameHandler.ClientLog.Write($"Detected build: Copying source folders to output...", LogType.Info);
                 }
 
 
@@ -345,6 +349,8 @@ namespace TanksRebirth
                 _fontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/es_ES.ttf"));
                 _fontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/ru_RU.ttf"));
 
+                GameHandler.ClientLog.Write($"Loaded fonts.", LogType.Info);
+
                 TextFont = _fontSystem.GetFont(30);
                 TextFontLarge = _fontSystem.GetFont(120);
 
@@ -364,6 +370,8 @@ namespace TanksRebirth
                     Settings = SettingsHandler.Deserialize();
                 }
 
+                GameHandler.ClientLog.Write($"Loaded user settings.", LogType.Info);
+
                 #region Config Initialization
 
                 Graphics.SynchronizeWithVerticalRetrace = Settings.Vsync;
@@ -378,6 +386,8 @@ namespace TanksRebirth
 
                 Graphics.PreferredBackBufferWidth = Settings.ResWidth;
                 Graphics.PreferredBackBufferHeight = Settings.ResHeight;
+
+                GameHandler.ClientLog.Write($"Applied user settings.", LogType.Info);
 
                 Tank.SetAssetNames();
                 MapRenderer.LoadTexturePack(Settings.MapPack);

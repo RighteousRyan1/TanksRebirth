@@ -23,7 +23,7 @@ namespace TanksRebirth.Internals.Common.Utilities
 
             var file = await client.GetByteArrayAsync(url);
 
-            GameHandler.ClientLog.Write($"WebRequest sent to {client}", LogType.Debug);
+            GameHandler.ClientLog.Write($"WebRequest sent to '{url}'", LogType.Debug);
 
             var name = System.IO.Path.GetFileName(url).Split('?')[0];
 

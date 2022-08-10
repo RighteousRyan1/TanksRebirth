@@ -746,6 +746,7 @@ namespace TanksRebirth.GameContent
 
             if (Client.IsConnected())
                 Client.RequestPlayerTankSpawn(myTank);
+
             return myTank;
         }
 

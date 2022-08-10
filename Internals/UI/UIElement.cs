@@ -26,7 +26,7 @@ namespace TanksRebirth.Internals.UI
 
         private Vector2 InternalSize;
 
-        internal string Tooltip;
+        public string Tooltip;
 
         /// <summary>Only use TopLeft, BottomLeft, TopRight, and BottomRight</summary>
         public Anchor TooltipAnchor;
