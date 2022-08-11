@@ -304,6 +304,7 @@ namespace TanksRebirth
                     GameResources.CopySrcFolderContents("Content/Assets/sounds/menu");
                     GameResources.CopySrcFolderContents("Content/Assets/sounds/thunder");
                     GameResources.CopySrcFolderContents("Content/Assets/sounds/tnk_event");
+                    GameResources.CopySrcFolderContents("Content/Assets/sounds/results");
                     GameResources.CopySrcFolderContents("Content/Assets/fanfares");
                     GameResources.CopySrcFolderContents("Content/Assets/mainmenu");
                     GameResources.CopySrcFolderContents("Localization");

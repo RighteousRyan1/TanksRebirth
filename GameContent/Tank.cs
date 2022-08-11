@@ -69,6 +69,8 @@ namespace TanksRebirth.GameContent
     {
         bool IsPlayer { get; set; }
         int TankId { get; set; }
+
+        // PlayerType PlayerType { get; set; } // don't use if IsPlayer is false.
     }
     public struct TankHurtContext_Other : ITankHurtContext
     {

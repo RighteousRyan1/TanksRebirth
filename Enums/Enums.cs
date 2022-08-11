@@ -96,4 +96,28 @@
         Standard,
         Thick
     }
+
+    public enum Grade
+    {
+        //S,
+        APlus,
+        A,
+        AMinus,
+
+        BPlus,
+        B,
+        BMinus,
+
+        CPlus,
+        C,
+        CMinus,
+
+        DPlus,
+        D,
+        DMinus,
+
+        FPlus,
+        F,
+        FMinus
+    }
 }

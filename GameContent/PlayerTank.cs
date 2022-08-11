@@ -29,7 +29,18 @@ namespace TanksRebirth.GameContent
         public static int StartingLives = 3;
         public static int Lives = 0;
 
+        // public static Dictionary<PlayerType, Dictionary<TankTier, int>> TanksKillDict = new(); // this campaign only!
         public static Dictionary<TankTier, int> TanksKillDict = new(); // this campaign only!
+
+        public struct DeterministicPlayerStats {
+            public int ShellsShotThisCampaign;
+            public int ShellHitsThisCampaign;
+            public int MinesLaidThisCampaign;
+            public int MineHitsThisCampaign;
+            public int SuicidesThisCampaign; // self-damage this campaign?
+        }
+
+        public static DeterministicPlayerStats PlayerStatistics;
 
         public static bool _drawShotPath;
 
