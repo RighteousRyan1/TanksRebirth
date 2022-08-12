@@ -17,9 +17,17 @@ namespace TanksRebirth.GameContent
 {
     public class Shell
     {
-        /// <summary>A structure that allows you to give a <see cref="Shell"/> homing properties.</summary>
-        public struct HomingProperties
+        public enum DestructionContext
         {
+            WithObstacle,
+            WithMine,
+            WithFriendlyTank,
+            WithHostileTank,
+            WithShell,
+            WithExplosion
+        }
+        /// <summary>A structure that allows you to give a <see cref="Shell"/> homing properties.</summary>
+        public struct HomingProperties {
             public float Power;
             public float Radius;
             public float Speed;
@@ -183,10 +191,9 @@ namespace TanksRebirth.GameContent
             Collision.HandleCollisionSimple_ForBlocks(Hitbox, Velocity2D, ref dummy, out var dir, out var block, out bool corner, false, (c) => c.IsSolid);
 
             if (LifeTime <= 5 && Block.AllBlocks.Any(cu => cu is not null && cu.Hitbox.Intersects(Hitbox) && cu.IsSolid))
-                Destroy(false);
-
+                Destroy(DestructionContext.WithObstacle);
             if (corner)
-                Destroy();
+                Destroy(DestructionContext.WithObstacle);
             switch (dir)
             {
                 case CollisionDirection.Up:
@@ -453,9 +460,8 @@ namespace TanksRebirth.GameContent
         /// <param name="horizontal">Whether or not the ricochet is done off of a horizontal axis.</param>
         public void Ricochet(bool horizontal)
         {
-            if (RicochetsRemaining <= 0)
-            {
-                Destroy();
+            if (RicochetsRemaining <= 0) {
+                Destroy(DestructionContext.WithObstacle);
                 return;
             }
 
@@ -495,35 +501,35 @@ namespace TanksRebirth.GameContent
                 {
                     if (tank.CollisionCircle.Intersects(HitCircle))
                     {
-                        if (!CanFriendlyFire)
-                        {
+                        if (!CanFriendlyFire) {
                             if (tank.Team == Owner.Team && tank != Owner && tank.Team != TankTeam.NoTeam)
-                                Destroy();
+                                Destroy(DestructionContext.WithFriendlyTank);
                         }
-                        else
-                        {
-                            Destroy();
+                        else {
+                            if (tank == Owner)
+                                Destroy(DestructionContext.WithFriendlyTank);
+                            if (tank.Team == Owner.Team && tank != Owner && tank.Team != TankTeam.NoTeam)
+                                Destroy(DestructionContext.WithFriendlyTank);
+                            else
+                                Destroy(DestructionContext.WithHostileTank);
                             tank.Damage(Owner is AITank ? new TankHurtContext_Bullet(false, Ricochets, Tier, Owner is not null ? Owner.WorldId : -1) : new TankHurtContext_Bullet(true, Ricochets, Tier, Owner is not null ? Owner.WorldId : -1));
                         }
                     }
                 }
             }
 
-            foreach (var bullet in AllShells)
-            {
-                if (bullet is not null && bullet != this)
-                {
-                    if (bullet.Hitbox.Intersects(Hitbox))
-                    {
+            foreach (var bullet in AllShells) {
+                if (bullet is not null && bullet != this) {
+                    if (bullet.Hitbox.Intersects(Hitbox)) {
                         if (bullet.IsDestructible)
-                            bullet.Destroy();
+                            bullet.Destroy(DestructionContext.WithShell);
                         if (IsDestructible)
-                            Destroy();
+                            Destroy(DestructionContext.WithShell);
 
-                        if (!bullet.IsDestructible && !IsDestructible)
-                        {
-                            bullet.Destroy();
-                            Destroy();
+                        // if two indestructible bullets come together, destroy them both. too powerful!
+                        if (!bullet.IsDestructible && !IsDestructible) {
+                            bullet.Destroy(DestructionContext.WithShell);
+                            Destroy(DestructionContext.WithShell);
                         }
                     }
                 }
@@ -543,17 +549,18 @@ namespace TanksRebirth.GameContent
         /// Destroys this <see cref="Shell"/>.
         /// </summary>
         /// <param name="playSound">Whether or not to play the bullet destruction sound.</param>
-        public void Destroy(bool playSound = true)
+        public void Destroy(DestructionContext context, bool playSound = true)
         {
-            if (playSound)
-            {
-                var sfx = SoundPlayer.PlaySoundInstance("Assets/sounds/bullet_destroy", SoundContext.Effect, 0.5f);
-                sfx.Instance.Pitch = GameHandler.GameRand.NextFloat(-0.1f, 0.1f);
-            }
 
             _shootSound?.Instance?.Stop(true);
             // ParticleSystem.MakeSparkEmission(Position, 10);
-            ParticleSystem.MakeSmallExplosion(Position, 8, 10, 1.25f, 15);
+            if (context != DestructionContext.WithHostileTank && context != DestructionContext.WithMine && context != DestructionContext.WithExplosion) {
+                if (playSound) {
+                    var sfx = SoundPlayer.PlaySoundInstance("Assets/sounds/bullet_destroy", SoundContext.Effect, 0.5f);
+                    sfx.Instance.Pitch = GameHandler.GameRand.NextFloat(-0.1f, 0.1f);
+                }
+                ParticleSystem.MakeSmallExplosion(Position, 8, 10, 1.25f, 15);
+            }
             if (Owner != null)
                 Owner.OwnedShellCount--;
             //_flame?.Destroy();
@@ -562,8 +569,14 @@ namespace TanksRebirth.GameContent
             _loopingSound = null;
 
             if (Owner is not null)
+            {
                 if (Owner.Properties.ShellType == ShellType.Explosive)
                     new Explosion(Position2D, 7f, Owner, 0.25f);
+                if (Owner is PlayerTank)
+                    // in case the player wants to destroy a mine that may be impeding progress- we don't want to penalize them.
+                    if (context == DestructionContext.WithHostileTank || context == DestructionContext.WithMine)
+                        PlayerTank.PlayerStatistics.ShellHitsThisCampaign++;
+            }
 
             Remove();
         }

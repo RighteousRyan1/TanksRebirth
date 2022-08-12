@@ -73,10 +73,8 @@ namespace TanksRebirth.GameContent
             Explosions[index] = this;
         }
 
-        public void Update()
-        {
-            if (!_maxAchieved)
-            {
+        public void Update() {
+            if (!_maxAchieved) {
                 if (Scale < MaxScale)
                     Scale += ExpanseRate;
 
@@ -89,35 +87,28 @@ namespace TanksRebirth.GameContent
             else if (ShrinkDelay <= 0)
                 Scale -= ShrinkRate;
 
-            if (!IntermissionSystem.IsAwaitingNewMission)
-            {
-                foreach (var mine in Mine.AllMines)
-                {
+            if (!IntermissionSystem.IsAwaitingNewMission) {
+                foreach (var mine in Mine.AllMines) {
                     if (mine is not null && Vector2.Distance(mine.Position, Position) <= Scale * 9) // magick
                         mine.Detonate();
                 }
-                foreach (var cube in Block.AllBlocks)
-                {
-                    if (cube is not null && Vector2.Distance(cube.Position, Position) <= Scale * 9 && cube.IsDestructible)
-                        cube.Destroy();
+                foreach (var block in Block.AllBlocks) {
+                    if (block is not null && Vector2.Distance(block.Position, Position) <= Scale * 9 && block.IsDestructible)
+                        block.Destroy();
                 }
-                foreach (var shell in Shell.AllShells)
-                {
+                foreach (var shell in Shell.AllShells) {
                     if (shell is not null && Vector2.Distance(shell.Position2D, Position) < Scale * 9)
-                        shell.Destroy();
+                        shell.Destroy(Shell.DestructionContext.WithExplosion);
                 }
-                foreach (var tank in GameHandler.AllTanks)
-                {
+                foreach (var tank in GameHandler.AllTanks) {
                     if (tank is not null && Vector2.Distance(tank.Position, Position) < Scale * 9)
                         if (!tank.Dead)
                             if (!HasHit[tank.WorldId])
-                                if (tank.Properties.VulnerableToMines)
-                                {
+                                if (tank.Properties.VulnerableToMines) {
                                     HasHit[tank.WorldId] = true;
                                     if (Source is null)
                                         tank.Damage(new TankHurtContext_Other(TankHurtContext_Other.HurtContext.FromIngame));
-                                    else if (Source is not null)
-                                    {
+                                    else if (Source is not null) {
                                         if (Source is AITank)
                                             tank.Damage(new TankHurtContext_Mine(false, Source.WorldId));
                                         else
@@ -145,12 +136,9 @@ namespace TanksRebirth.GameContent
             Explosions[_id] = null;
         }
 
-        public void Render()
-        {
-            foreach (ModelMesh mesh in Model.Meshes)
-            {
-                foreach (BasicEffect effect in mesh.Effects)
-                {
+        public void Render() {
+            foreach (ModelMesh mesh in Model.Meshes) {
+                foreach (BasicEffect effect in mesh.Effects) {
                     effect.World = World;
                     effect.View = View;
                     effect.Projection = Projection;

@@ -830,10 +830,10 @@ namespace TanksRebirth
 
                 DebugUtils.DrawDebugString(SpriteRenderer, $"Tank Kill Counts:", new(8, GameUtils.WindowHeight * 0.05f), 2);
 
-                for (int i = 0; i < PlayerTank.TanksKillDict.Count; i++)
+                for (int i = 0; i < PlayerTank.TankKills.Count; i++)
                 {
-                    var tier = PlayerTank.TanksKillDict.ElementAt(i).Key;
-                    var count = PlayerTank.TanksKillDict.ElementAt(i).Value;
+                    var tier = PlayerTank.TankKills.ElementAt(i).Key;
+                    var count = PlayerTank.TankKills.ElementAt(i).Value;
 
                     DebugUtils.DrawDebugString(SpriteRenderer, $"{tier}: {count}", new(8, GameUtils.WindowHeight * 0.05f + (14f*(i + 1))), 2);
                 }

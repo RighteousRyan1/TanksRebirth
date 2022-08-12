@@ -30,7 +30,7 @@ namespace TanksRebirth.GameContent
         public static int Lives = 0;
 
         // public static Dictionary<PlayerType, Dictionary<TankTier, int>> TanksKillDict = new(); // this campaign only!
-        public static Dictionary<TankTier, int> TanksKillDict = new(); // this campaign only!
+        public static Dictionary<TankTier, int> TankKills = new(); // this campaign only!
 
         public struct DeterministicPlayerStats {
             public int ShellsShotThisCampaign;
@@ -263,6 +263,16 @@ namespace TanksRebirth.GameContent
             base.Remove();
         }
 
+        public override void Shoot() {
+            PlayerStatistics.ShellsShotThisCampaign++;
+            base.Shoot();
+        }
+
+        public override void LayMine() {
+            PlayerStatistics.MinesLaidThisCampaign++;
+            base.LayMine();
+        }
+
         private void ControlHandle_ConsoleController()
         {
 
@@ -413,10 +423,10 @@ namespace TanksRebirth.GameContent
 
         public override void Destroy(ITankHurtContext context)
         {
-
-            if (context.IsPlayer)
-            {
+            if (context.IsPlayer) {
+                // this probably makes sense
                 TankGame.GameData.Suicides++;
+                PlayerStatistics.SuicidesThisCampaign++;
                 // check if player id matches client id, if so, increment that player's kill count, then sync to the server
                 // TODO: convert TankHurtContext into a struct and use it here
                 // Will be used to track the reason of death and who caused the death, if any tank owns a shell or mine
@@ -424,7 +434,8 @@ namespace TanksRebirth.GameContent
                 // if (context.PlayerId == Client.PlayerId)
                 // {
                 //    PlayerTank.KillCount++;
-                //   Client.Send(new TankKillCountUpdateMessage(PlayerTank.KillCount)); // not a bad idea actually
+                //    Client.Send(new TankKillCountUpdateMessage(PlayerTank.KillCount)); 
+                //    not a bad idea actually
             }
             TankGame.GameData.Deaths++;
 

@@ -46,13 +46,11 @@
         Assassin,
         Commando
     }
-
     public enum PlayerType : byte
     {
         Blue,
         Red
     }
-
     public enum ShellType : byte
     {
         Player,
@@ -62,7 +60,6 @@
         Supressed,
         Explosive
     }
-
     public enum MenuMode : byte
     {
         MainMenu,
@@ -70,7 +67,6 @@
         IngameMenu,
         LevelEditorMenu
     }
-
     public enum TankTeam
     {
         NoTeam = 0,
@@ -83,7 +79,6 @@
         Cyan = 7,
         Magenta = 8
     }
-
     public enum MissionEndContext
     {
         Lose,
@@ -96,28 +91,27 @@
         Standard,
         Thick
     }
-
     public enum Grade
     {
         //S,
-        APlus,
-        A,
-        AMinus,
+        APlus  = 0,
+        A      = 1,
+        AMinus = 2,
 
-        BPlus,
-        B,
-        BMinus,
+        BPlus  = 3,
+        B      = 4,
+        BMinus = 5,
 
-        CPlus,
-        C,
-        CMinus,
+        CPlus  = 6,
+        C      = 7,
+        CMinus = 8,
 
-        DPlus,
-        D,
-        DMinus,
+        DPlus  = 9,
+        D      = 10,
+        DMinus = 11,
 
-        FPlus,
-        F,
-        FMinus
+        FPlus  = 12,
+        F      = 13,
+        FMinus = 14
     }
 }

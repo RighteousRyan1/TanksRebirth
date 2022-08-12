@@ -64,7 +64,7 @@ namespace TanksRebirth.GameContent
         /// <param name="radius">The radius of this <see cref="Mine"/>'s explosion.</param>
         public Mine(Tank owner, Vector2 pos, int detonateTime, float radius = 65f)
         {
-            this.Owner = owner;
+            Owner = owner;
             ExplosionRadius = radius;
 
             Model = GameResources.GetGameResource<Model>("Assets/mine");
@@ -111,8 +111,7 @@ namespace TanksRebirth.GameContent
             AllMines[_worldId] = null; 
         }
 
-        internal void Update()
-        {
+        internal void Update() {
             World = Matrix.CreateScale(0.7f) * Matrix.CreateTranslation(Position3D);
             View = TankGame.GameView;
             Projection = TankGame.GameProjection;
@@ -121,8 +120,7 @@ namespace TanksRebirth.GameContent
 
             DetonateTime--;
 
-            if (DetonateTime < 120)
-            {
+            if (DetonateTime < 120) {
                 if (DetonateTime % 2 == 0)
                     _tickRed = !_tickRed;
             }
@@ -130,11 +128,9 @@ namespace TanksRebirth.GameContent
             if (DetonateTime <= 0)
                 Detonate();
 
-            foreach (var shell in Shell.AllShells)
-            {
-                if (shell is not null && shell.Hitbox.Intersects(Hitbox))
-                {
-                    shell.Destroy();
+            foreach (var shell in Shell.AllShells) {
+                if (shell is not null && shell.Hitbox.Intersects(Hitbox)) {
+                    shell.Destroy(Shell.DestructionContext.WithMine);
                     Detonate();
                 }
             }
@@ -143,12 +139,9 @@ namespace TanksRebirth.GameContent
                 IsNearDestructibles = Block.AllBlocks.Any(b => b != null && Position.Distance(b.Position) <= ExplosionRadius - 6f && b.IsDestructible);
             List<Tank> tanksNear = new();
 
-            if (DetonateTime > MineReactTime)
-            {
-                foreach (var tank in GameHandler.AllTanks)
-                {
-                    if (tank is not null && Vector2.Distance(tank.Position, Position) < ExplosionRadius * 0.8f)
-                    {
+            if (DetonateTime > MineReactTime) {
+                foreach (var tank in GameHandler.AllTanks) {
+                    if (tank is not null && Vector2.Distance(tank.Position, Position) < ExplosionRadius * 0.8f) {
                         tanksNear.Add(tank);
                     }
                 }
@@ -162,36 +155,28 @@ namespace TanksRebirth.GameContent
         internal void Render()
         {
             DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"Det: {DetonateTime}/{DetonateTimeMax}\nNearDestructibles: {IsNearDestructibles}", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 20), 1, centered: true);
-            for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++)
-            {
-                foreach (ModelMesh mesh in Model.Meshes)
-                {
-                    foreach (BasicEffect effect in mesh.Effects)
-                    {
+            for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
+                foreach (ModelMesh mesh in Model.Meshes) {
+                    foreach (BasicEffect effect in mesh.Effects) {
                         effect.World = i == 0 ? World : World * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
                         effect.View = View;
                         effect.Projection = Projection;
 
                         effect.TextureEnabled = true;
 
-                        if (mesh == MineMesh)
-                        {
-                            if (!_tickRed)
-                            {
+                        if (mesh == MineMesh) {
+                            if (!_tickRed) {
                                 effect.EmissiveColor = new Vector3(1, 1, 0) * GameHandler.GameLight.Brightness;
                             }
-                            else
-                            {
+                            else {
                                 effect.EmissiveColor = new Vector3(1, 0, 0) * GameHandler.GameLight.Brightness;
                             }
                             effect.Texture = _mineTexture;
 
                             mesh.Draw();
                         }
-                        else
-                        {
-                            if (!Lighting.AccurateShadows)
-                            {
+                        else {
+                            if (!Lighting.AccurateShadows) {
                                 effect.Texture = _envTexture;
                                 mesh.Draw();
                             }

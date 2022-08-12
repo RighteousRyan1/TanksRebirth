@@ -931,8 +931,9 @@ namespace TanksRebirth.GameContent.UI
             else
                 Theme.Volume = TankGame.Settings.MusicVolume * 0.1f;
 
-            foreach (var tnk in tanks)
+            for (int i = 0; i < tanks.Count; i++)
             {
+                var tnk = tanks[i];
                 if (tnk is not AITank)
                     return;
                 var pos = tnk.Body.Position;

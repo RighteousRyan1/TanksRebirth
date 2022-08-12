@@ -58,11 +58,9 @@ namespace TanksRebirth.GameContent
 
         private static bool _wasInMission;
 
-        internal static void MapEvents()
-        {
+        internal static void MapEvents() {
             GameProperties.OnMissionEnd += DoEndMissionWorkload;
         }
-
         public static void DoEndMissionWorkload(int delay, MissionEndContext context, bool result1up) // bool major = (if true, play M100 fanfare, else M20)
         {
             IntermissionSystem.SetTime(delay);
@@ -138,8 +136,8 @@ namespace TanksRebirth.GameContent
         }
         private static void DoEndScene()
         {
-            PlayerTank.TanksKillDict.Clear();
-            MainMenu.Open();
+            CampaignCompleteUI.PerformSequence(default); // change context lol.
+            PlayerTank.TankKills.Clear();
             // this will be finished later...
         }
         internal static void UpdateAll()
@@ -282,7 +280,11 @@ namespace TanksRebirth.GameContent
             }
 
             if (MainMenu.Active)
+            {
                 PlayerTank.KillCount = 0;
+                // don't know if this fucks with the stack or not. to be determined.
+                PlayerTank.PlayerStatistics = default;
+            }
 
             CubeHeight = MathHelper.Clamp(CubeHeight, 1, 7);
             BlockType = MathHelper.Clamp(BlockType, 0, 3);
@@ -412,60 +414,6 @@ namespace TanksRebirth.GameContent
             if (GameProperties.LoadedCampaign.CachedMissions[0].Name is null)
                 return;
 
-            /*if (GameProperties.LoadedCampaign.CurrentMission.Tanks.Any(tnk => tnk.IsPlayer))
-            {
-                var activeTeams = Tank.GetActiveTeams();
-
-                bool isExtraLifeMission = GameProperties.LoadedCampaign.Properties.ExtraLivesMissions.Contains(GameProperties.LoadedCampaign.CurrentMissionId + 1);
-
-                int restartTime = 600;
-
-                if (activeTeams.Contains(TankTeam.NoTeam) && AllTanks.Count(tnk => tnk != null && !tnk.Dead) <= 1)
-                {
-                    GameProperties.InMission = false;
-                    // if a 1-up mission, extend by X amount of time (TBD?)
-                    if (!GameProperties.InMission && _wasInMission)
-                    {
-                        MissionEndContext cxt = !AllPlayerTanks.Any(tnk => tnk != null && !tnk.Dead) ? MissionEndContext.Lose : MissionEndContext.Win;
-                        GameProperties.MissionEndEvent_Invoke(restartTime, cxt, isExtraLifeMission);
-                    }
-                }
-                else if (!activeTeams.Contains(TankTeam.NoTeam) && activeTeams.Count <= 1) // check if it's not only FFA, and if teams left doesnt contain ffa.
-                {
-                    GameProperties.InMission = false;
-                    // if a 1-up mission, extend by X amount of time (TBD?)
-                    if (!GameProperties.InMission && _wasInMission)
-                    {
-                        MissionEndContext cxt = !activeTeams.Contains(PlayerTank.MyTeam) ? MissionEndContext.Lose : MissionEndContext.Win;
-                        GameProperties.MissionEndEvent_Invoke(restartTime, cxt, isExtraLifeMission);
-                    }
-                }
-            }
-            else
-            {
-                var activeTeams = Tank.GetActiveTeams();
-
-                bool isExtraLifeMission = GameProperties.LoadedCampaign.Properties.ExtraLivesMissions.Contains(GameProperties.LoadedCampaign.CurrentMissionId);
-
-                int restartTime = 600;
-                if (isExtraLifeMission)
-                    restartTime += 200;
-                // if a player was not initially spawned in the mission, check if a team is still alive and end the mission
-                if (activeTeams.Contains(TankTeam.NoTeam) && AllTanks.Count(tnk => tnk != null && !tnk.Dead) <= 1)
-                {
-                    GameProperties.InMission = false;
-                    // if a 1-up mission, extend by X amount of time (TBD?)
-                    if (!GameProperties.InMission && _wasInMission)
-                        GameProperties.MissionEndEvent_Invoke(restartTime, MissionEndContext.Win, isExtraLifeMission);
-                }
-                else if (!activeTeams.Contains(TankTeam.NoTeam) && activeTeams.Count <= 1)
-                {
-                    GameProperties.InMission = false;
-                    // if a 1-up mission, extend by X amount of time (TBD?)
-                    if (!GameProperties.InMission && _wasInMission)
-                        GameProperties.MissionEndEvent_Invoke(restartTime, MissionEndContext.Win, isExtraLifeMission);
-                }
-            }*/
             var nothingAnymore = NothingCanHappenAnymore(GameProperties.LoadedCampaign.CurrentMission, out bool victory);
 
             if (nothingAnymore)
@@ -492,27 +440,32 @@ namespace TanksRebirth.GameContent
                     }
                 }
             }
-
-            if (IntermissionSystem.CurrentWaitTime > 0)
-                IntermissionSystem.Tick(1);
-
-            if (IntermissionSystem.CurrentWaitTime == 220)
-                BeginIntroSequence();
-            if (IntermissionSystem.CurrentWaitTime == IntermissionSystem.WaitTime / 2 && IntermissionSystem.CurrentWaitTime != 0)
-                GameProperties.LoadedCampaign.SetupLoadedMission(AllPlayerTanks.Any(tnk => tnk != null && !tnk.Dead));
-            if (IntermissionSystem.CurrentWaitTime > 240 && IntermissionSystem.CurrentWaitTime < IntermissionSystem.WaitTime - 150)
+            if (!CampaignCompleteUI.IsViewingResults)
             {
-                if (PlayerTank.Lives <= 0)
-                    DoEndScene();
-                IntermissionSystem.TickAlpha(1f / 45f);
-            }
-            else
-                IntermissionSystem.TickAlpha(-1f / 45f);
-            if (IntermissionSystem.CurrentWaitTime == IntermissionSystem.WaitTime - 180)
-            {
-                CleanupScene();
-                var missionStarting = "Assets/fanfares/mission_starting";
-                SoundPlayer.PlaySoundInstance(missionStarting, SoundContext.Effect, 0.8f);
+                if (IntermissionSystem.CurrentWaitTime > 0)
+                    IntermissionSystem.Tick(1);
+
+                if (IntermissionSystem.CurrentWaitTime == 220)
+                    BeginIntroSequence();
+                if (IntermissionSystem.CurrentWaitTime == IntermissionSystem.WaitTime / 2 && IntermissionSystem.CurrentWaitTime != 0)
+                    GameProperties.LoadedCampaign.SetupLoadedMission(AllPlayerTanks.Any(tnk => tnk != null && !tnk.Dead));
+                if (IntermissionSystem.CurrentWaitTime > 240 && IntermissionSystem.CurrentWaitTime < IntermissionSystem.WaitTime - 150)
+                {
+                    if (PlayerTank.Lives <= 0)
+                        DoEndScene();
+                    // this hardcode makes me want to commit neck rope
+                    // boolean is changed within the scope of the check so we check again. weird.
+                    if (!CampaignCompleteUI.IsViewingResults)
+                        IntermissionSystem.TickAlpha(1f / 45f);
+                }
+                else
+                    IntermissionSystem.TickAlpha(-1f / 45f);
+                if (IntermissionSystem.CurrentWaitTime == IntermissionSystem.WaitTime - 180)
+                {
+                    CleanupScene();
+                    var missionStarting = "Assets/fanfares/mission_starting";
+                    SoundPlayer.PlaySoundInstance(missionStarting, SoundContext.Effect, 0.8f);
+                }
             }
         }
         public static int BlockType = 0;
@@ -573,6 +526,9 @@ namespace TanksRebirth.GameContent
 
             if (LevelEditor.Active)
                 LevelEditor.Render();
+
+            if (CampaignCompleteUI.IsViewingResults)
+                CampaignCompleteUI.Render();
 
             foreach (var body in Tank.CollisionsWorld.BodyList)
             {
@@ -659,7 +615,7 @@ namespace TanksRebirth.GameContent
                 CampaignName.IsVisible = DebugUtils.DebuggingEnabled && DebugUtils.DebugLevel == 3;
             }
 
-            GameUI.MissionInfoBar.IsVisible = !MainMenu.Active && !LevelEditor.Active;
+            GameUI.MissionInfoBar.IsVisible = !MainMenu.Active && !LevelEditor.Active && !CampaignCompleteUI.IsViewingResults;
         }
         private static int _oldelta;
         public static void HandleLevelEditorModifications()

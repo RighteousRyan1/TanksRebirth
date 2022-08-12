@@ -41,6 +41,27 @@ namespace TanksRebirth.GameContent
 
         public int AITankId { get; }
 
+        public static Dictionary<TankTier, Color> TankDestructionColors = new()
+        {
+            [TankTier.Brown] = new(152, 96, 26),
+            [TankTier.Ash] = Color.Gray,
+            [TankTier.Marine] = Color.Teal,
+            [TankTier.Yellow] = Color.Yellow,
+            [TankTier.Pink] = Color.Pink,
+            [TankTier.Green] = Color.LimeGreen,
+            [TankTier.Violet] = Color.Purple,
+            [TankTier.White] = Color.White,
+            [TankTier.Black] = Color.Black,
+            [TankTier.Bronze] = new(152, 96, 26),
+            [TankTier.Silver] = Color.Silver,
+            [TankTier.Sapphire] = Color.DeepSkyBlue,
+            [TankTier.Ruby] = Color.IndianRed,
+            [TankTier.Citrine] = Color.Yellow,
+            [TankTier.Amethyst] = Color.Purple,
+            [TankTier.Emerald] = Color.Green,
+            [TankTier.Gold] = Color.Gold,
+            [TankTier.Obsidian] = Color.Black
+        };
         #region AiTankParams
 
         public record Params
@@ -120,13 +141,11 @@ namespace TanksRebirth.GameContent
         public float BaseExpValue { get; set; }
 
         #endregion
-
         #region ModelBone & ModelMesh
         public Matrix[] boneTransforms;
 
         public ModelMesh CannonMesh;
         #endregion
-
         public static TankTier GetHighestTierActive()
         {
             var highest = TankTier.None;
@@ -139,13 +158,10 @@ namespace TanksRebirth.GameContent
             }
             return highest;
         }
-
         public static int CountAll()
             => GameHandler.AllAITanks.Count(tnk => tnk is not null && !tnk.Dead);
-
         public static int GetTankCountOfType(TankTier tier)
             => GameHandler.AllAITanks.Count(tnk => tnk is not null && tnk.Tier == tier && !tnk.Dead);
-
         public void Swap(TankTier tier, bool setDefaults = true)
         {
             Tier = tier;
@@ -333,15 +349,14 @@ namespace TanksRebirth.GameContent
             
             base.Initialize();
         }
-
         private void OnMissionStart()
         {
             // other things can be done here
             //UpdateAim(new List<Tank>(), true);
         }
-
         public override void ApplyDefaults(ref TankProperties properties)
         {
+            properties.DestructionColor = TankDestructionColors[Tier];
             switch (Tier)
             {
                 #region VanillaTanks
@@ -349,8 +364,6 @@ namespace TanksRebirth.GameContent
                     properties.Stationary = true;
 
                     AiParams.ProjectileWarinessRadius_PlayerShot = 60;
-
-                    properties.DestructionColor = new(152, 96, 26);
 
                     AiParams.TurretMeanderFrequency = 30;
                     AiParams.TurretSpeed = 0.01f;
@@ -390,8 +403,6 @@ namespace TanksRebirth.GameContent
 
                     AiParams.Inaccuracy = 0.9f;
 
-                    properties.DestructionColor = Color.Gray;
-
                     AiParams.ProjectileWarinessRadius_PlayerShot = 40;
                     AiParams.MineWarinessRadius_PlayerLaid = 40;
 
@@ -427,8 +438,6 @@ namespace TanksRebirth.GameContent
                     AiParams.TurretMeanderFrequency = 10;
                     AiParams.TurretSpeed = 0.1f;
                     AiParams.AimOffset = MathHelper.ToRadians(0);
-
-                    properties.DestructionColor = Color.Teal;
 
                     AiParams.Inaccuracy = 0.15f;
 
@@ -473,8 +482,6 @@ namespace TanksRebirth.GameContent
                     properties.Acceleration = 0.3f;
                     properties.Deceleration = 0.6f;
 
-                    properties.DestructionColor = Color.Yellow;
-
                     AiParams.ProjectileWarinessRadius_PlayerShot = 40;
                     AiParams.MineWarinessRadius_PlayerLaid = 160;
 
@@ -503,8 +510,7 @@ namespace TanksRebirth.GameContent
 
                     BaseExpValue = 0.035f;
 
-                    if (Difficulties.Types["PieFactory"])
-                    {
+                    if (Difficulties.Types["PieFactory"]) {
                         properties.VulnerableToMines = false;
                         properties.MineCooldown = 10;
                         properties.MineLimit = 20;
@@ -522,8 +528,6 @@ namespace TanksRebirth.GameContent
                     AiParams.AimOffset = 0.2f;
 
                     AiParams.Inaccuracy = 1.3f;
-
-                    properties.DestructionColor = Color.Pink;
 
                     AiParams.ProjectileWarinessRadius_PlayerShot = 40;
                     AiParams.MineWarinessRadius_PlayerLaid = 160;
@@ -560,8 +564,6 @@ namespace TanksRebirth.GameContent
                     AiParams.TurretMeanderFrequency = 25;
 
                     AiParams.Inaccuracy = 0.8f;
-
-                    properties.DestructionColor = Color.Purple;
 
                     AiParams.TurretSpeed = 0.03f;
                     AiParams.AimOffset = 0.18f;
@@ -608,8 +610,6 @@ namespace TanksRebirth.GameContent
                     AiParams.AimOffset = MathHelper.ToRadians(80);
                     AiParams.Inaccuracy = MathHelper.ToRadians(25);
 
-                    properties.DestructionColor = Color.LimeGreen;
-
                     properties.TurningSpeed = 0f;
                     properties.MaximalTurn = 0;
 
@@ -643,8 +643,6 @@ namespace TanksRebirth.GameContent
                     properties.Track = TrackType.Thick;
 
                     AiParams.Inaccuracy = 0.8f;
-
-                    properties.DestructionColor = Color.White;
 
                     AiParams.ProjectileWarinessRadius_PlayerShot = 40;
                     AiParams.MineWarinessRadius_PlayerLaid = 160;
@@ -687,8 +685,6 @@ namespace TanksRebirth.GameContent
                     AiParams.AimOffset = MathHelper.ToRadians(5);
 
                     AiParams.Inaccuracy = 0.35f;
-
-                    properties.DestructionColor = Color.Black;
 
                     AiParams.ProjectileWarinessRadius_PlayerShot = 100;
                     AiParams.MineWarinessRadius_PlayerLaid = 60;
@@ -759,8 +755,6 @@ namespace TanksRebirth.GameContent
 
                     AiParams.Inaccuracy = 0.4f;
 
-                    properties.DestructionColor = Color.Silver;
-
                     AiParams.ProjectileWarinessRadius_PlayerShot = 70;
                     AiParams.MineWarinessRadius_PlayerLaid = 140;
 
@@ -800,8 +794,6 @@ namespace TanksRebirth.GameContent
 
                     AiParams.Inaccuracy = 0.4f;
 
-                    properties.DestructionColor = Color.DeepSkyBlue;
-
                     AiParams.ProjectileWarinessRadius_PlayerShot = 40;
                     AiParams.MineWarinessRadius_PlayerLaid = 70;
 
@@ -840,8 +832,6 @@ namespace TanksRebirth.GameContent
                     AiParams.AimOffset = 0.05f;
 
                     AiParams.Inaccuracy = 0.6f;
-
-                    properties.DestructionColor = Color.IndianRed;
 
                     //AiParams.PursuitLevel = 0.1f;
                     //AiParams.PursuitFrequency = 30;
@@ -887,8 +877,6 @@ namespace TanksRebirth.GameContent
 
                     AiParams.Inaccuracy = 0.25f;
 
-                    properties.DestructionColor = Color.Yellow;
-
                     AiParams.ProjectileWarinessRadius_PlayerShot = 80;
                     AiParams.MineWarinessRadius_PlayerLaid = 140;
 
@@ -932,8 +920,6 @@ namespace TanksRebirth.GameContent
 
                     AiParams.Inaccuracy = 0.65f;
 
-                    properties.DestructionColor = Color.Purple;
-
                     AiParams.ProjectileWarinessRadius_PlayerShot = 70;
                     AiParams.MineWarinessRadius_PlayerLaid = 140;
 
@@ -971,8 +957,6 @@ namespace TanksRebirth.GameContent
 
                     AiParams.Inaccuracy = 0.35f;
 
-                    properties.DestructionColor = Color.Green;
-
                     properties.ShellCooldown = 60;
                     properties.ShellLimit = 3;
                     properties.ShellSpeed = 8f;
@@ -996,8 +980,6 @@ namespace TanksRebirth.GameContent
                     AiParams.AimOffset = 0.14f;
 
                     AiParams.Inaccuracy = 0.4f;
-
-                    properties.DestructionColor = Color.Gold;
 
                     AiParams.ShootChance = 0.7f;
 
@@ -1043,8 +1025,6 @@ namespace TanksRebirth.GameContent
                     AiParams.AimOffset = 0.18f;
 
                     AiParams.Inaccuracy = 0.9f;
-
-                    properties.DestructionColor = Color.Black;
 
                     AiParams.ProjectileWarinessRadius_PlayerShot = 70;
                     AiParams.MineWarinessRadius_PlayerLaid = 140;
@@ -1764,10 +1744,10 @@ namespace TanksRebirth.GameContent
             {
                 PlayerTank.KillCount++;
 
-                if (!PlayerTank.TanksKillDict.ContainsKey(Tier))
-                    PlayerTank.TanksKillDict.Add(Tier, 1);
+                if (!PlayerTank.TankKills.ContainsKey(Tier))
+                    PlayerTank.TankKills.Add(Tier, 1);
                 else
-                    PlayerTank.TanksKillDict[Tier]++;
+                    PlayerTank.TankKills[Tier]++;
 
                 if (context.IsPlayer)
                 {
