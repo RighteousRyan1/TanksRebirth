@@ -470,7 +470,7 @@ namespace TanksRebirth
 
         public static Vector2 CameraFocusOffset;
 
-        internal static bool ThirdPerson;
+        public static bool ThirdPerson;
 
         private static bool _oView;
         public static bool OverheadView
