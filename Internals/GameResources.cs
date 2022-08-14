@@ -23,9 +23,20 @@ namespace TanksRebirth.Internals
 			}
 			return LoadResource<T>(manager, name);
 		}
-		public static T LoadResource<T>(ContentManager manager, string name) where T : class
+		public static T LoadResource<T>(ContentManager manager, string name, bool addDotPng = true) where T : class
 		{
 			T loaded = manager.Load<T>(name);
+
+			if (ResourceCache.ContainsKey(name + ".png"))
+				return (T)ResourceCache[name + ".png"];
+			else if (typeof(T) == typeof(Texture2D))
+			{
+				// var texture = (Texture2D)Convert.ChangeType(result, typeof(Texture2D));
+				object result = Texture2D.FromFile(TankGame.Instance.GraphicsDevice, Path.Combine(string.Empty, name + (addDotPng ? ".png" : string.Empty)));
+				ResourceCache[name + (addDotPng ? ".png" : string.Empty)] = result;
+
+				return (T)result;
+			}
 
 			ResourceCache[name] = loaded;
 			return loaded;
