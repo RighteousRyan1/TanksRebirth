@@ -83,6 +83,7 @@
     {
         Lose,
         Win,
+        GameOver,
         CampaignCompleteMajor,
         CampaignCompleteMinor
     }

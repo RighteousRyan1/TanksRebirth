@@ -505,15 +505,15 @@ namespace TanksRebirth.GameContent
                             if (tank.Team == Owner.Team && tank != Owner && tank.Team != TankTeam.NoTeam)
                                 Destroy(DestructionContext.WithFriendlyTank);
                         }
-                        else {
+                        else if (Owner != null) {
                             if (tank == Owner)
                                 Destroy(DestructionContext.WithFriendlyTank);
                             if (tank.Team == Owner.Team && tank != Owner && tank.Team != TankTeam.NoTeam)
                                 Destroy(DestructionContext.WithFriendlyTank);
                             else
                                 Destroy(DestructionContext.WithHostileTank);
-                            tank.Damage(Owner is AITank ? new TankHurtContext_Bullet(false, Ricochets, Tier, Owner is not null ? Owner.WorldId : -1) : new TankHurtContext_Bullet(true, Ricochets, Tier, Owner is not null ? Owner.WorldId : -1));
                         }
+                        tank.Damage(Owner is AITank ? new TankHurtContext_Bullet(false, Ricochets, Tier, Owner is not null ? Owner.WorldId : -1) : new TankHurtContext_Bullet(true, Ricochets, Tier, Owner is not null ? Owner.WorldId : -1));
                     }
                 }
             }

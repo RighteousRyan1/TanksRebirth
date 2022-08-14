@@ -870,12 +870,12 @@ namespace TanksRebirth
                     }
                 }
 
-                for (int i = 0; i < GameData.TankKills.Count; i++)
+                for (int i = 0; i < PlayerTank.TankKills.Count; i++)
                 {
                     //var tier = GameData.KillCountsTiers[i];
                     //var count = GameData.KillCountsCount[i];
-                    var tier = GameData.TankKills.ElementAt(i).Key;
-                    var count = GameData.TankKills.ElementAt(i).Value;
+                    var tier = PlayerTank.TankKills.ElementAt(i).Key;
+                    var count = PlayerTank.TankKills.ElementAt(i).Value;
 
                     DebugUtils.DrawDebugString(SpriteRenderer, $"{tier}: {count}", new(GameUtils.WindowWidth * 0.9f, 8 + (14f * (i + 1))), 2);
                 }

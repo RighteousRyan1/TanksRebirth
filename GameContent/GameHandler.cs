@@ -48,7 +48,7 @@ namespace TanksRebirth.GameContent
         public static PlayerTank[] AllPlayerTanks { get; } = new PlayerTank[MAX_PLAYERS];
         public static Tank[] AllTanks { get; } = new Tank[MAX_PLAYERS + MAX_AI_TANKS];
 
-        public static Logger ClientLog { get; set;  }
+        public static Logger ClientLog { get; set; }
 
         public static XpBar Xp;
 
@@ -58,13 +58,12 @@ namespace TanksRebirth.GameContent
 
         private static bool _wasInMission;
 
-        internal static void MapEvents() {
+        internal static void MapEvents()
+        {
             GameProperties.OnMissionEnd += DoEndMissionWorkload;
         }
         public static void DoEndMissionWorkload(int delay, MissionEndContext context, bool result1up) // bool major = (if true, play M100 fanfare, else M20)
         {
-            IntermissionSystem.SetTime(delay);
-            
             TankMusicSystem.StopAll();
 
             if (result1up && context != MissionEndContext.Lose)
@@ -75,7 +74,6 @@ namespace TanksRebirth.GameContent
                 TankGame.GameData.CampaignsCompleted++;
                 string victory = "Assets/fanfares/mission_complete_M100";
                 SoundPlayer.PlaySoundInstance(victory, SoundContext.Effect, 0.5f);
-
             }
             else if (context == MissionEndContext.CampaignCompleteMinor)
             {
@@ -90,10 +88,12 @@ namespace TanksRebirth.GameContent
                 var lifeget = "Assets/fanfares/life_get";
                 SoundPlayer.PlaySoundInstance(lifeget, SoundContext.Effect, 0.5f);
             }
+
             if (context == MissionEndContext.Lose)
             {
                 PlayerTank.Lives--;
 
+                // what is this comment?
                 /*int len = $"{VanillaCampaign.CachedMissions.Count(x => !string.IsNullOrEmpty(x.Name))}".Length;
                 int diff = len - $"{VanillaCampaign.CurrentMissionId}".Length;
 
@@ -104,16 +104,15 @@ namespace TanksRebirth.GameContent
                 realName += $"{VanillaCampaign.CurrentMissionId + 1}";
 
                 VanillaCampaign.CachedMissions[VanillaCampaign.CurrentMissionId] = Mission.Load(realName, VanillaCampaign.Name);*/
-                if (PlayerTank.Lives > 0)
-                {
-                    var deathSound = "Assets/fanfares/tank_player_death";
-                    SoundPlayer.PlaySoundInstance(deathSound, SoundContext.Effect, 0.3f);
-                }
-                else
-                {
-                    var deathSound = "Assets/fanfares/gameover_playerdeath";
-                    SoundPlayer.PlaySoundInstance(deathSound, SoundContext.Effect, 0.3f);
-                }
+                var deathSound = "Assets/fanfares/tank_player_death";
+                SoundPlayer.PlaySoundInstance(deathSound, SoundContext.Effect, 0.3f);
+            }
+            else if (context == MissionEndContext.GameOver)
+            {
+                PlayerTank.Lives--;
+
+                var deathSound = "Assets/fanfares/gameover_playerdeath";
+                SoundPlayer.PlaySoundInstance(deathSound, SoundContext.Effect, 0.3f);
             }
             else if (context == MissionEndContext.Win)
             {
@@ -133,12 +132,28 @@ namespace TanksRebirth.GameContent
                         CurrentSpeedrun.MissionTimes[GameProperties.LoadedCampaign.CurrentMission.Name] = (CurrentSpeedrun.Timer.Elapsed, CurrentSpeedrun.Timer.Elapsed);
                 }
             }
+
+            if (CampaignCompleteUI.FanfaresAndDurations.ContainsKey(context))
+            {
+                CampaignCompleteUI.FanfaresAndDurations[context].Item1.Instance?.Play();
+                DoEndScene(CampaignCompleteUI.FanfaresAndDurations[context].Item2, context);
+            }
+            else
+                IntermissionSystem.SetTime(delay);
         }
-        private static void DoEndScene()
+        /// <summary>
+        /// Uses a multithreaded approach to start the campaign results screen.
+        /// </summary>
+        /// <param name="delay">The delay of time before starting the results screen.</param>
+        /// <param name="context">The context of which the campaign is ending.</param>
+        private static void DoEndScene(TimeSpan delay, MissionEndContext context)
         {
-            CampaignCompleteUI.PerformSequence(default); // change context lol.
-            PlayerTank.TankKills.Clear();
-            // this will be finished later...
+            // i think this works.
+            Task.Run(() =>
+            {
+                Thread.Sleep(delay);
+                CampaignCompleteUI.PerformSequence(context);
+            });
         }
         internal static void UpdateAll()
         {
@@ -180,9 +195,9 @@ namespace TanksRebirth.GameContent
             }
             else
                 if (!GameProperties.InMission)
-                    if (TankMusicSystem.Songs is not null)
-                        foreach (var song in TankMusicSystem.Songs)
-                            song.Volume = 0;
+                if (TankMusicSystem.Songs is not null)
+                    foreach (var song in TankMusicSystem.Songs)
+                        song.Volume = 0;
             LevelEditor.Update();
 
             foreach (var expl in Explosion.Explosions)
@@ -217,7 +232,8 @@ namespace TanksRebirth.GameContent
             if (!TankGame.OverheadView && _wasOverhead && !LevelEditor.Active)
                 BeginIntroSequence();
 
-            if ((TankGame.OverheadView || MainMenu.Active) && !LevelEditor.Active) {
+            if ((TankGame.OverheadView || MainMenu.Active) && !LevelEditor.Active)
+            {
                 GameProperties.InMission = false;
                 _tankFuncDelay = 600;
             }
@@ -229,6 +245,7 @@ namespace TanksRebirth.GameContent
                 _tankFuncDelay--;
             if (_tankFuncDelay == 1)
             {
+                // FIXME: maybe causes issues since the mission is 1 tick from starting?
                 if (!GameProperties.InMission)
                 {
                     GameProperties.InMission = true;
@@ -315,8 +332,9 @@ namespace TanksRebirth.GameContent
             if (!Thunder.SoftRain.IsPlaying())
                 Thunder.SoftRain.Instance.Play();
             Thunder.SoftRain.Instance.Volume = TankGame.Settings.AmbientVolume;
-            
-            if (GameRand.NextFloat(0, 1f) <= 0.003f)  {
+
+            if (GameRand.NextFloat(0, 1f) <= 0.003f)
+            {
                 var rand = new Range<Thunder.ThunderType>(Thunder.ThunderType.Fast, Thunder.ThunderType.Instant2);
                 var type = (Thunder.ThunderType)GameRand.Next((int)rand.Min, (int)rand.Max);
 
@@ -338,13 +356,13 @@ namespace TanksRebirth.GameContent
                         brightest = thun;
                     else
                         if (thun.CurBright > brightest.CurBright && thun.CurBright > minThresh)
-                            brightest = thun;
+                        brightest = thun;
                 }
             }
 
             GameLight.Color = Color.Multiply(Color.DeepSkyBlue, 0.5f); // DeepSkyBlue
 
-            
+
             if (brightest is not null)
             {
                 TankGame.ClearColor = Color.DeepSkyBlue * brightest.CurBright;
@@ -388,7 +406,8 @@ namespace TanksRebirth.GameContent
                     return true;
                 }
                 // check if it's not only FFA, and if teams left doesnt contain ffa. 
-                else if (!activeTeams.Contains(TankTeam.NoTeam) && activeTeams.Count <= 1) {
+                else if (!activeTeams.Contains(TankTeam.NoTeam) && activeTeams.Count <= 1)
+                {
                     victory = activeTeams.Contains(PlayerTank.MyTeam);
                     return true;
                 }
@@ -397,11 +416,13 @@ namespace TanksRebirth.GameContent
             {
                 var activeTeams = Tank.GetActiveTeams();
                 // if a player was not initially spawned in the mission, check if a team is still alive and end the mission
-                if (activeTeams.Contains(TankTeam.NoTeam) && AllTanks.Count(tnk => tnk != null && !tnk.Dead) <= 1) {
+                if (activeTeams.Contains(TankTeam.NoTeam) && AllTanks.Count(tnk => tnk != null && !tnk.Dead) <= 1)
+                {
                     victory = true;
                     return true;
                 }
-                else if (!activeTeams.Contains(TankTeam.NoTeam) && activeTeams.Count <= 1) {
+                else if (!activeTeams.Contains(TankTeam.NoTeam) && activeTeams.Count <= 1)
+                {
                     victory = true;
                     return true;
                 }
@@ -428,44 +449,46 @@ namespace TanksRebirth.GameContent
                         if (isExtraLifeMission)
                             restartTime += 200;
 
-                        GameProperties.MissionEndEvent_Invoke(restartTime, MissionEndContext.Win, isExtraLifeMission);
+                        var cxt = MissionEndContext.Win;
+
+                        if (GameProperties.LoadedCampaign.CurrentMissionId >= GameProperties.LoadedCampaign.CachedMissions.Length - 1)
+                            cxt = GameProperties.LoadedCampaign.Properties.HasMajorVictory ? MissionEndContext.CampaignCompleteMajor : MissionEndContext.CampaignCompleteMinor;
+
+                        GameProperties.MissionEndEvent_Invoke(restartTime, cxt, isExtraLifeMission);
                     }
                     else
                     {
                         int restartTime = 600;
 
                         // if a 1-up mission, extend by X amount of time (TBD?)
-                        MissionEndContext cxt = !AllPlayerTanks.Any(tnk => tnk != null && !tnk.Dead) ? MissionEndContext.Lose : MissionEndContext.Win;
+                        // we check <= 1 since the lives haven't actually been deducted yet.
+                        MissionEndContext cxt = !AllPlayerTanks.Any(tnk => tnk != null && !tnk.Dead) ? (PlayerTank.Lives <= 1 ? MissionEndContext.GameOver : MissionEndContext.Lose) : MissionEndContext.Win;
+
+
                         GameProperties.MissionEndEvent_Invoke(restartTime, cxt, isExtraLifeMission);
                     }
                 }
             }
-            if (!CampaignCompleteUI.IsViewingResults)
-            {
-                if (IntermissionSystem.CurrentWaitTime > 0)
-                    IntermissionSystem.Tick(1);
+            if (IntermissionSystem.CurrentWaitTime > 0)
+                IntermissionSystem.Tick(1);
 
-                if (IntermissionSystem.CurrentWaitTime == 220)
-                    BeginIntroSequence();
-                if (IntermissionSystem.CurrentWaitTime == IntermissionSystem.WaitTime / 2 && IntermissionSystem.CurrentWaitTime != 0)
-                    GameProperties.LoadedCampaign.SetupLoadedMission(AllPlayerTanks.Any(tnk => tnk != null && !tnk.Dead));
-                if (IntermissionSystem.CurrentWaitTime > 240 && IntermissionSystem.CurrentWaitTime < IntermissionSystem.WaitTime - 150)
-                {
-                    if (PlayerTank.Lives <= 0)
-                        DoEndScene();
-                    // this hardcode makes me want to commit neck rope
-                    // boolean is changed within the scope of the check so we check again. weird.
-                    if (!CampaignCompleteUI.IsViewingResults)
-                        IntermissionSystem.TickAlpha(1f / 45f);
-                }
-                else
-                    IntermissionSystem.TickAlpha(-1f / 45f);
-                if (IntermissionSystem.CurrentWaitTime == IntermissionSystem.WaitTime - 180)
-                {
-                    CleanupScene();
-                    var missionStarting = "Assets/fanfares/mission_starting";
-                    SoundPlayer.PlaySoundInstance(missionStarting, SoundContext.Effect, 0.8f);
-                }
+            if (IntermissionSystem.CurrentWaitTime == 220)
+                BeginIntroSequence();
+            if (IntermissionSystem.CurrentWaitTime == IntermissionSystem.WaitTime / 2 && IntermissionSystem.CurrentWaitTime != 0)
+                GameProperties.LoadedCampaign.SetupLoadedMission(AllPlayerTanks.Any(tnk => tnk != null && !tnk.Dead));
+            if (IntermissionSystem.CurrentWaitTime > 240 && IntermissionSystem.CurrentWaitTime < IntermissionSystem.WaitTime - 150)
+            {
+                // this hardcode makes me want to commit neck rope
+                // boolean is changed within the scope of the check so we check again. weird.
+                IntermissionSystem.TickAlpha(1f / 45f);
+            }
+            else
+                IntermissionSystem.TickAlpha(-1f / 45f);
+            if (IntermissionSystem.CurrentWaitTime == IntermissionSystem.WaitTime - 180)
+            {
+                CleanupScene();
+                var missionStarting = "Assets/fanfares/mission_starting";
+                SoundPlayer.PlaySoundInstance(missionStarting, SoundContext.Effect, 0.8f);
             }
         }
         public static int BlockType = 0;
@@ -592,9 +615,9 @@ namespace TanksRebirth.GameContent
                 }
                 for (int i = -4; i < 10; i++)
                 {
-                    IntermissionSystem.DrawShadowedTexture(GameResources.GetGameResource<Texture2D>("Assets/textures/ui/scoreboard"), new Vector2(i * 14, GameUtils.WindowHeight * 0.9f), Vector2.UnitY, Color.White, new(2f, 2f), 1f, new(0, GameResources.GetGameResource<Texture2D>("Assets/textures/ui/scoreboard").Size().Y / 2), true);
+                    IntermissionSystem.DrawShadowedTexture(GameResources.GetGameResource<Texture2D>("Assets/textures/ui/scoreboard"), new Vector2((i * 14).ToResolutionX(), GameUtils.WindowHeight * 0.9f), Vector2.UnitY, Color.White, new Vector2(2f).ToResolution(), 1f, new(0, GameResources.GetGameResource<Texture2D>("Assets/textures/ui/scoreboard").Size().Y / 2), true);
                 }
-                IntermissionSystem.DrawShadowedString(new Vector2(80, GameUtils.WindowHeight * 0.89f), Vector2.One, $"{PlayerTank.KillCount}", new(119, 190, 238), new(0.675f), 1f);
+                IntermissionSystem.DrawShadowedString(TankGame.TextFontLarge, new Vector2(80.ToResolutionX(), GameUtils.WindowHeight * 0.9f - 14f.ToResolutionY()), Vector2.One, $"{PlayerTank.KillCount}", new(119, 190, 238), new Vector2(0.675f).ToResolution(), 1f);
             }
             IntermissionSystem.Draw(TankGame.SpriteRenderer);
 

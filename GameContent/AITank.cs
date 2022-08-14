@@ -60,7 +60,16 @@ namespace TanksRebirth.GameContent
             [TankTier.Amethyst] = Color.Purple,
             [TankTier.Emerald] = Color.Green,
             [TankTier.Gold] = Color.Gold,
-            [TankTier.Obsidian] = Color.Black
+            [TankTier.Obsidian] = Color.Black,
+            [TankTier.Granite] = new(152, 96, 26),
+            [TankTier.Bubblegum] = Color.LightPink,
+            [TankTier.Water] = Color.LightBlue,
+            [TankTier.Crimson] = Color.Crimson,
+            [TankTier.Tiger] = Color.Yellow,
+            [TankTier.Creeper] = Color.Green,
+            [TankTier.Fade] = Color.Beige,
+            [TankTier.Gamma] = Color.DarkGreen,
+            [TankTier.Marble] = Color.Red
         };
         #region AiTankParams
 
@@ -1060,7 +1069,7 @@ namespace TanksRebirth.GameContent
                     BaseExpValue = 0.175f;
                     break;
                 #endregion
-                #region AdvancedMod
+                #region MarbleMod
                 case TankTier.Granite:
                     AiParams.MeanderAngle = 0.8f;
                     AiParams.MeanderFrequency = 10;
@@ -2625,9 +2634,8 @@ namespace TanksRebirth.GameContent
                             1, centered: true);*/
                         
                         foreach (var pt in refPoints)
-                        {
                             DebugUtils.DrawDebugString(TankGame.SpriteRenderer, "pt", GeometryUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), Matrix.CreateTranslation(pt.X, 0, pt.Y), View, Projection), 1, centered: true);
-                        }
+
 
                         DebugUtils.DrawDebugString(TankGame.SpriteRenderer, "end", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(GameUtils.DirectionOf(Position, travelPos).X, 0, GameUtils.DirectionOf(Position, travelPos).Y), View, Projection), 1, centered: true);
                         DebugUtils.DrawDebugString(TankGame.SpriteRenderer, "me", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.Identity, View, Projection/*Matrix.CreateTranslation(Position.X, 11, Position.Y), View, Projection)*/), 1, centered: true);

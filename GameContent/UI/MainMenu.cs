@@ -855,7 +855,7 @@ namespace TanksRebirth.GameContent.UI
                 $"Tank Kills w/Bounced Bullets: {TankGame.GameData.BounceKills}",
                 $"Tank Kills w/Mines: {TankGame.GameData.MineKills}",
                 $"Missions Completed: {TankGame.GameData.MissionsCompleted}",
-                $"Campaigns Completed (not working): {TankGame.GameData.CampaignsCompleted}",
+                $"Campaigns Completed: {TankGame.GameData.CampaignsCompleted}",
                 $"Deaths: {TankGame.GameData.Deaths}",
                 $"Suicides: {TankGame.GameData.Suicides}",
                 $"Time Played Total: {TankGame.GameData.TimePlayed.StringFormat()} ({(TankGame.GameData.TimePlayed.TotalMinutes < 120 ? $"{TankGame.GameData.TimePlayed.TotalMinutes:0.#} minutes" : $"{TankGame.GameData.TimePlayed.TotalHours:#.#} hours")})",
@@ -863,22 +863,16 @@ namespace TanksRebirth.GameContent.UI
             };
 
             for (int i = 0; i < info.Count; i++)
-            {
-                var str = info[i];
-                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, str, genericStatsPos + Vector2.UnitY * (i * 25), Color.White, Vector2.One, 0f, GameUtils.GetAnchor(aligning, TankGame.TextFont.MeasureString(str)), 0f);
-            }   
+                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, info[i], genericStatsPos + Vector2.UnitY * (i * 25), Color.White, Vector2.One, 0f, GameUtils.GetAnchor(aligning, TankGame.TextFont.MeasureString(info[i])), 0f); 
             TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "Tanks Killed by Type:", tankKillsPos, Color.White, Vector2.One, 0f, GameUtils.GetAnchor(aligning, TankGame.TextFont.MeasureString("Tanks Killed by Type:")), 0f);
-            for (int i = 2; i < TankGame.GameData.TankKills.Count; i++)
-            {
+            for (int i = 2; i < TankGame.GameData.TankKills.Count; i++) {
                 var elem = TankGame.GameData.TankKills.ElementAt(i);
                 var split = elem.Key.ToString().SplitByCamel();
                 var display = $"{split}: {elem.Value}";
                 TankGame.SpriteRenderer.DrawString(TankGame.TextFont, display, tankKillsPos + Vector2.UnitY * ((i - 1) * 25), Color.White, Vector2.One, 0f, GameUtils.GetAnchor(aligning, TankGame.TextFont.MeasureString(display)), 0f);
             }
             if (TankGame.GameData.ReadOutdatedFile)
-            {
                 TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"Outdated save file ({TankGame.GameData.Name})! Delete the old one!", new Vector2(8, 8), Color.White, Vector2.One, 0f, Vector2.Zero, 0f);
-            }
             TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "Press ESC to return", GameUtils.WindowBottom - Vector2.UnitY * 40, Color.White, Vector2.One, 0f, GameUtils.GetAnchor(aligning, TankGame.TextFont.MeasureString("Press ESC to leave")), 0f);
         }
 
@@ -990,6 +984,8 @@ namespace TanksRebirth.GameContent.UI
                 shell?.Remove();
             foreach (var tank in GameHandler.AllTanks)
                 tank?.Remove();
+
+            PlayerTank.TankKills.Clear();
 
             if (GameHandler.ClearTracks is not null)
                 GameHandler.ClearTracks.OnLeftClick?.Invoke(null);

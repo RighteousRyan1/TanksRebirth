@@ -286,12 +286,15 @@ namespace TanksRebirth.GameContent.Systems
             public string Author { get; set; }
             public string Version { get; set; }
             public string[] Tags { get; set; }
+            public bool HasMajorVictory { get; set; }
 
             public int[] ExtraLivesMissions { get; set; }
             public int StartingLives { get; set; }
 
             public UnpackedColor BackgroundColor { get; set; }
             public UnpackedColor MissionStripColor { get; set; }
+
+            // TODO: support for custom mission results panel color?
 
             public static CampaignProperties Get(string path, string fileName)
             {
@@ -305,7 +308,8 @@ namespace TanksRebirth.GameContent.Systems
                     ExtraLivesMissions = Array.Empty<int>(),
                     StartingLives = 3,
                     BackgroundColor = IntermissionSystem.DefaultBackgroundColor,
-                    MissionStripColor = IntermissionSystem.DefaultStripColor
+                    MissionStripColor = IntermissionSystem.DefaultStripColor,
+                    HasMajorVictory = false
                 };
 
                 var file = Path.Combine(path, fileName);

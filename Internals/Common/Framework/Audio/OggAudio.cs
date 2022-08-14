@@ -50,8 +50,6 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
 
             _effect = new SoundEffect(audioData, sampleRate, (AudioChannels)channels);
             Instance = _effect.CreateInstance();
-            Instance.Volume = 0.5f;
-            Instance.Play();
         }
 
         public bool IsPaused()

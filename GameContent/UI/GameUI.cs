@@ -203,6 +203,8 @@ namespace TanksRebirth.GameContent.UI
         {
             Pause.KeybindPressAction = (p) =>
             {
+                if (CampaignCompleteUI.IsViewingResults)
+                    return;
                 if (InOptions)
                 {
                     HandleBackButton();
@@ -210,11 +212,6 @@ namespace TanksRebirth.GameContent.UI
                 }
                 else if (!MainMenu.Active)
                 {
-                    /*if (Paused)
-                        TankMusicSystem.ResumeAll();
-                    else
-                        TankMusicSystem.PauseAll();*/
-
                     Paused = !Paused;
                     if (Paused)
                         TankMusicSystem.PauseAll();

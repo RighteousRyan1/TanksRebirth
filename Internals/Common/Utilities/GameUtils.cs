@@ -23,6 +23,13 @@ namespace TanksRebirth.Internals.Common.Utilities
     }
     public static class GameUtils
     {
+        public static Vector2 ToResolution(this Vector2 input) => input * (WindowBounds / new Vector2(1920, 1080));
+        public static Vector2 ToResolution(this float input) => input * (WindowBounds / new Vector2(1920, 1080));
+        public static float ToResolutionX(this float input) => ToResolution(input).X;
+        public static float ToResolutionY(this float input) => ToResolution(input).Y;
+        public static float ToResolutionX(this int input) => ToResolution(input).X;
+        public static float ToResolutionY(this int input) => ToResolution(input).Y;
+
         public static Vector2 GetAnchor(this Anchor a, Vector2 vector)
         {
             switch (a)
