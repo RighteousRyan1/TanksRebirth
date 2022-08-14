@@ -186,9 +186,35 @@ namespace TanksRebirth.GameContent.UI
             _panelAlpha += _panelFadeSpeed;
             if (_panelAlpha > _panelAlphaMax)
                 _panelAlpha = _panelAlphaMax;
-                
+            float width = 350.ToResolutionX();
+            TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Vector2(0, GameUtils.WindowHeight / 3), null, Color.Beige * _panelAlpha, 0f, Vector2.Zero, new Vector2(width, GameUtils.WindowHeight / 2), default, 0f);
+            TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Vector2(0, GameUtils.WindowHeight / 3 + 50.ToResolutionY()), null, Color.Gold * _panelAlpha, 0f, Vector2.Zero, new Vector2(width, 5).ToResolution(), default, 0f);
+            var txt = "Fun Facts";
+            var measure = TankGame.TextFont.MeasureString(txt);
+            IntermissionSystem.DrawShadowedString(TankGame.TextFont, new Vector2(width / 2, GameUtils.WindowHeight / 3 + 5.ToResolutionY()), Vector2.One, 
+                txt, Color.DeepSkyBlue, Vector2.One.ToResolution(), 1f, new Vector2(measure.X / 2, 0), 0.4f);
+
+            string[] funFacts = 
+            {
+                $"Shot/Hit Ratio: {ShotToKillRatio * 100:0}% ({ShellsFired}/{ShellHits})",
+                $"Mine/Hit Ratio: {MineToKillRatio * 100:0}% ({MinesLaid}/{MineHits})",
+                $"Lives/Possible Ratio: {LifeRatio * 100:0}% ({LivesRemaining}/{TotalPossibleLives})"
+            };
+            for (int i = 0; i < funFacts.Length; i++)
+            {
+                var ff = funFacts[i];
+                measure = TankGame.TextFont.MeasureString(ff);
+
+                IntermissionSystem.DrawShadowedString(TankGame.TextFont, new Vector2(8.ToResolutionX(), GameUtils.WindowHeight / 3 + (75 + (i * 25)).ToResolutionY()), Vector2.One,
+                    ff, Color.DeepSkyBlue, new Vector2(0.75f).ToResolution(), 1f, new Vector2(0, measure.Y / 2), 0.4f);
+            }
+
+
+
+
+
             TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Vector2(GameUtils.WindowWidth / 3, 0), null, Color.Beige * _panelAlpha, 0f, Vector2.Zero, new Vector2(GameUtils.WindowWidth / 3, GameUtils.WindowHeight), default, 0f);
-            TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Vector2(GameUtils.WindowWidth / 3, (_tnkDrawYOff - 50f).ToResolutionY()), null, Color.Gold * _panelAlpha, 0f, Vector2.Zero, new Vector2(GameUtils.WindowWidth / 3, 10f.ToResolutionY()), default, 0f);
+            TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Vector2(GameUtils.WindowWidth / 3, (_tnkDrawYOff - 50f).ToResolutionY()), null, Color.Gold * _panelAlpha, 0f, Vector2.Zero, new Vector2(GameUtils.WindowWidth / 3, 10.ToResolutionY()), default, 0f);
 
             if (_shouldShowGrade) {
                 _gradeAlpha += _gradeFadeSpeed / 2;
@@ -267,13 +293,13 @@ namespace TanksRebirth.GameContent.UI
                 }
             }
             #endregion
-            var txt = _skip ? "Press 'Enter' to exit." : "Press 'Enter' to skip.";
-            var measure = TankGame.TextFont.MeasureString(txt);
+            txt = _skip ? "Press 'Enter' to exit." : "Press 'Enter' to skip.";
+            measure = TankGame.TextFont.MeasureString(txt);
             IntermissionSystem.DrawShadowedString(TankGame.TextFont, new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight - 8), Vector2.One, txt, Color.Black, Vector2.One.ToResolution(), 1f, new Vector2(measure.X / 2, measure.Y), 0.4f);
 
-            var txt1 = "Campaign Results";
-            var measure1 = TankGame.TextFontLarge.MeasureString(txt1);
-            IntermissionSystem.DrawShadowedString(TankGame.TextFontLarge, new Vector2(GameUtils.WindowWidth / 2, 8), Vector2.One, txt1, Color.DeepSkyBlue, new Vector2(0.5f).ToResolution(), _panelAlpha, new Vector2(measure1.X / 2, 0));
+            txt = "Campaign Results";
+            measure = TankGame.TextFontLarge.MeasureString(txt);
+            IntermissionSystem.DrawShadowedString(TankGame.TextFontLarge, new Vector2(GameUtils.WindowWidth / 2, 8), Vector2.One, txt, Color.DeepSkyBlue, new Vector2(0.5f).ToResolution(), _panelAlpha, new Vector2(measure.X / 2, 0));
         }
         // TODO: probably support multiple players L + ratio me
         public static void SetStats(Campaign campaign, PlayerTank.DeterministicPlayerStats stats, Dictionary<TankTier, int> killCounts, bool orderByTier = true)
@@ -308,44 +334,44 @@ namespace TanksRebirth.GameContent.UI
         {
             var grade = Grade.APlus;
 
-            float shellRatio = (float)ShellHits / ShellsFired;
-            float mineRatio = (float)MineHits / MinesLaid;
-            float lifeRatio = (float)LivesRemaining / TotalPossibleLives;
+            ShotToKillRatio = (float)ShellHits / ShellsFired;
+            MineToKillRatio = (float)MineHits / MinesLaid;
+            LifeRatio = (float)LivesRemaining / TotalPossibleLives;
 
-            if (float.IsNaN(shellRatio))
-                shellRatio = 0f;
-            if (float.IsNaN(mineRatio))
-                mineRatio = 0f;
+            if (float.IsNaN(ShotToKillRatio))
+                ShotToKillRatio = 1f;
+            if (float.IsNaN(MineToKillRatio))
+                MineToKillRatio = 1f;
 
             // (min, max]
             bool isBetween(float input, float min, float max) => input >= min && input < max;
             // redundant code but whatever i love men
-            if (shellRatio > 0.8f)
+            if (ShotToKillRatio > 0.8f)
                 grade += 0;
-            else if (isBetween(shellRatio, 0.6f, 0.8f))
+            else if (isBetween(ShotToKillRatio, 0.6f, 0.8f))
                 grade += 1;
-            else if (isBetween(shellRatio, 0.4f, 0.6f))
+            else if (isBetween(ShotToKillRatio, 0.4f, 0.6f))
                 grade += 2;
-            else if (isBetween(shellRatio, 0.2f, 0.4f))
+            else if (isBetween(ShotToKillRatio, 0.2f, 0.4f))
                 grade += 3;
-            else if (shellRatio < 0.2f)
+            else if (ShotToKillRatio < 0.2f)
                 grade += 4;
 
-            if (mineRatio >= 0.25f)
+            if (MineToKillRatio >= 0.25f)
                 grade += 0;
-            else if (mineRatio < 0.25f)
+            else if (MineToKillRatio < 0.25f)
                 grade += 1;
 
             // check >= just incase something goofy happens.
-            if (lifeRatio >= 1f)
+            if (LifeRatio >= 1f)
                 grade += 0;
-            else if (isBetween(lifeRatio, 0.75f, 1f))
+            else if (isBetween(LifeRatio, 0.75f, 1f))
                 grade += 1;
-            else if (isBetween(lifeRatio, 0.5f, 0.75f))
+            else if (isBetween(LifeRatio, 0.5f, 0.75f))
                 grade += 2;
-            else if (isBetween(lifeRatio, 0.25f, 0.5f))
+            else if (isBetween(LifeRatio, 0.25f, 0.5f))
                 grade += 3;
-            else if (isBetween(lifeRatio, 0f, 0.25f))
+            else if (isBetween(LifeRatio, 0f, 0.25f))
                 grade += 4;
 
             grade += SuicideCount;
@@ -370,5 +396,9 @@ namespace TanksRebirth.GameContent.UI
         public static int LivesRemaining;
 
         public static int SuicideCount;
+
+        public static float ShotToKillRatio;
+        public static float MineToKillRatio;
+        public static float LifeRatio;
     }
 }

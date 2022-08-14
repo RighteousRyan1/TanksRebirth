@@ -443,7 +443,7 @@ namespace TanksRebirth.GameContent
                 GameProperties.InMission = false;
                 if (!GameProperties.InMission && _wasInMission)
                 {
-                    bool isExtraLifeMission = GameProperties.LoadedCampaign.Properties.ExtraLivesMissions.Contains(GameProperties.LoadedCampaign.CurrentMissionId);
+                    bool isExtraLifeMission = GameProperties.LoadedCampaign.Properties.ExtraLivesMissions.Contains(GameProperties.LoadedCampaign.CurrentMissionId + 1);
                     if (victory)
                     {
                         int restartTime = 600;

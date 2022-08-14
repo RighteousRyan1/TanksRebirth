@@ -574,7 +574,7 @@ namespace TanksRebirth.GameContent
                     new Explosion(Position2D, 7f, Owner, 0.25f);
                 if (Owner is PlayerTank)
                     // in case the player wants to destroy a mine that may be impeding progress- we don't want to penalize them.
-                    if (context == DestructionContext.WithHostileTank || context == DestructionContext.WithMine)
+                    if (context == DestructionContext.WithHostileTank || context == DestructionContext.WithMine || context == DestructionContext.WithShell)
                         PlayerTank.PlayerStatistics.ShellHitsThisCampaign++;
             }
 
