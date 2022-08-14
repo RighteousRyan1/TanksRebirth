@@ -136,6 +136,7 @@ namespace TanksRebirth.GameContent
             if (CampaignCompleteUI.FanfaresAndDurations.ContainsKey(context))
             {
                 CampaignCompleteUI.FanfaresAndDurations[context].Item1.Instance?.Play();
+                CampaignCompleteUI.FanfaresAndDurations[context].Item1.Instance.Volume = TankGame.Settings.MusicVolume;
                 DoEndScene(CampaignCompleteUI.FanfaresAndDurations[context].Item2, context);
             }
             else

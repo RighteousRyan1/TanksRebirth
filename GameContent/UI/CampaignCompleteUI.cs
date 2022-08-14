@@ -120,19 +120,25 @@ namespace TanksRebirth.GameContent.UI
 
                     _tierDisplays[i] = true;
 
+                    //ChatSystem.SendMessage($"{killData.Key}:{killData.Value}", Color.White);
+
                     if (!_skip)
                     {
-                        if ((i % 4) + 1 == 0) // i think this is the value
+                        if (i % 4 == 3) // i think this is the value
                             SoundPlayer.PlaySoundInstance("Assets/sounds/results/whistle_double", SoundContext.Effect, 1f);
                         else
                             SoundPlayer.PlaySoundInstance("Assets/sounds/results/whistle_singular", SoundContext.Effect, 1f);
 
                         Thread.Sleep(_delayPerTank);
+
+                        //ChatSystem.SendMessage("sleep", Color.White);
                     }
                 }
 
+                //ChatSystem.SendMessage("whistle", Color.White);
                 SoundPlayer.PlaySoundInstance("Assets/sounds/results/whistle_full", SoundContext.Effect, 1f);
 
+                _skip = true;
                 _shouldShowGrade = true;
 
                 while (!Input.KeyJustPressed(Keys.Enter)) {
@@ -152,8 +158,9 @@ namespace TanksRebirth.GameContent.UI
         }
 
         private static void ModifyTracks() {
-            if (TankGame.Instance != null)
+            try {
                 ResultsFanfare.SetVolume(TankGame.Instance.IsActive ? TankGame.Settings.MusicVolume : 0f);
+            } catch { }
         }
 
         private static void ResetThings()
