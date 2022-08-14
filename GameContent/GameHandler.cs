@@ -312,6 +312,8 @@ namespace TanksRebirth.GameContent
 
             if (TankGame.OverheadView)
                 HandleLevelEditorModifications();
+
+            OnPostUpdate?.Invoke();
         }
 
         private static void DoThunderStuff()
@@ -492,6 +494,7 @@ namespace TanksRebirth.GameContent
                 SoundPlayer.PlaySoundInstance(missionStarting, SoundContext.Effect, 0.8f);
             }
         }
+
         public static int BlockType = 0;
         public static int CubeHeight = 1;
         public static int tankToSpawnType;
@@ -638,7 +641,6 @@ namespace TanksRebirth.GameContent
                 LoadCampaign.IsVisible = DebugUtils.DebuggingEnabled && DebugUtils.DebugLevel == 3;
                 CampaignName.IsVisible = DebugUtils.DebuggingEnabled && DebugUtils.DebugLevel == 3;
             }
-
             GameUI.MissionInfoBar.IsVisible = !MainMenu.Active && !LevelEditor.Active && !CampaignCompleteUI.IsViewingResults;
         }
         private static int _oldelta;
@@ -695,12 +697,18 @@ namespace TanksRebirth.GameContent
         }
 
         private static bool _musicLoaded;
+
+        public delegate void LoadTankScene();
+        public static event LoadTankScene OnLoadTankScene; 
+        public delegate void PostUpdate();
+        public static event PostUpdate OnPostUpdate;
         public static void LoadTnkScene()
         {
             if (!_musicLoaded)
             {
                 TankMusicSystem.LoadMusic();
                 TankMusicSystem.LoadAmbienceTracks();
+                OnLoadTankScene?.Invoke();
                 _musicLoaded = true;
             }
             else

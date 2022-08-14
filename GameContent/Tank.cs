@@ -215,6 +215,23 @@ namespace TanksRebirth.GameContent
             }
         }
 
+        #region Events
+        public delegate void DamageDelegate(ref Tank victim, bool destroy, ITankHurtContext context);
+        public static event DamageDelegate OnDamage;
+        public delegate void ApplyDefaultsDelegate(ref Tank tank, ref TankProperties properties);
+        public static event ApplyDefaultsDelegate PostApplyDefaults;
+        public delegate void ShootDelegate(ref Tank tank, ref Shell shell);
+        /// <summary>Does not run for spread-fire.</summary>
+        public static event ShootDelegate OnShoot;
+        public delegate void LayMineDelegate(ref Tank tank, ref Mine mine);
+        public static event LayMineDelegate OnLayMine;
+
+        public delegate void PreUpdateDelegate(ref Tank tank);
+        public static event PreUpdateDelegate OnPreUpdate;
+        public delegate void PostUpdateDelegate(ref Tank tank);
+        public static event PostUpdateDelegate OnPostUpdate;
+        #endregion
+
         public static World CollisionsWorld = new(Vector2.Zero);
         public const float TNK_WIDTH = 25;
         public const float TNK_HEIGHT = 25;
@@ -271,7 +288,11 @@ namespace TanksRebirth.GameContent
 
         public List<ICosmetic> Cosmetics = new();
         /// <summary>Apply all the default parameters for this <see cref="Tank"/>.</summary>
-        public virtual void ApplyDefaults(ref TankProperties properties) { Properties = properties; }
+        public virtual void ApplyDefaults(ref TankProperties properties) {
+            var me = this;
+            PostApplyDefaults?.Invoke(ref me, ref properties);
+            Properties = properties; 
+        }
 
         public virtual void Initialize()
         {
@@ -413,6 +434,9 @@ namespace TanksRebirth.GameContent
         /// <summary>Update this <see cref="Tank"/>.</summary>
         public virtual void Update()
         {
+            var me = this;
+            OnPreUpdate?.Invoke(ref me);
+
             Position = Body.Position;
 
             Body.LinearVelocity = Velocity * 0.55f;
@@ -453,30 +477,34 @@ namespace TanksRebirth.GameContent
             }
             // fix 2d peeopled
             foreach (var cosmetic in Cosmetics)
-                cosmetic?.UniqueBehavior?.Invoke(cosmetic, this); 
+                cosmetic?.UniqueBehavior?.Invoke(cosmetic, this);
+            me = this;
+            OnPostUpdate?.Invoke(ref me);
         }
         /// <summary>Get this <see cref="Tank"/>'s general stats.</summary>
         public string GetGeneralStats()
             => $"Pos2D: {Position} | Vel: {Velocity} | Dead: {Dead}";
         /// <summary>Damage this <see cref="Tank"/>. If it has no armor, <see cref="Destroy"/> it.</summary>
         public virtual void Damage(ITankHurtContext context) {
-
             if (Dead || Properties.Immortal)
                 return;
-            // ChatSystem.SendMessage(context, Color.White, "<Debug>");
-            if (Properties.Armor is not null)
-            {
-                if (Properties.Armor.HitPoints > 0)
-                {
+            var me = this;
+            if (Properties.Armor is not null) {
+                OnDamage?.Invoke(ref me, Properties.Armor.HitPoints > 0, context);
+                if (Properties.Armor.HitPoints > 0) {
                     Properties.Armor.HitPoints--;
                     var ding = SoundPlayer.PlaySoundInstance($"Assets/sounds/armor_ding_{GameHandler.GameRand.Next(1, 3)}", SoundContext.Effect);
                     ding.Instance.Pitch = GameHandler.GameRand.NextFloat(-0.1f, 0.1f);
                 }
-                else
+                else {
+                    OnDamage?.Invoke(ref me, true, context);
                     Destroy(context);
+                }
             }
-            else
+            else {
+                OnDamage?.Invoke(ref me, true, context);
                 Destroy(context);
+            }
         }
         /// <summary>Destroy this <see cref="Tank"/>.</summary>
         public virtual void Destroy(ITankHurtContext context) {
@@ -618,6 +646,9 @@ namespace TanksRebirth.GameContent
                     shell.Owner = this;
                     shell.RicochetsRemaining = Properties.RicochetCount;
 
+                    var me = this;
+                    OnShoot?.Invoke(ref me, ref shell);
+
                     #region Particles
                     var hit = ParticleSystem.MakeParticle(shell.Position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
                     var smoke = ParticleSystem.MakeParticle(shell.Position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
@@ -715,6 +746,8 @@ namespace TanksRebirth.GameContent
             timeSinceLastAction = 0;
 
             var mine = new Mine(this, Position, 600);
+            var me = this;
+            OnLayMine?.Invoke(ref me, ref mine);
         }
         public virtual void Render() {
             if (IsIngame)
@@ -777,7 +810,6 @@ namespace TanksRebirth.GameContent
                 DebugUtils.DrawDebugString(TankGame.SpriteRenderer, info[i], GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, (info.Length * 20) + (i * 20)), 1, centered: true);
 
         }
-
         public uint CurShootStun { get; private set; } = 0;
         public uint CurShootCooldown { get; private set; } = 0;
         public uint CurMineCooldown { get; private set; } = 0;

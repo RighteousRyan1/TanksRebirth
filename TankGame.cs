@@ -33,6 +33,8 @@ using TanksRebirth.Achievements;
 using TanksRebirth.GameContent.Speedrunning;
 using TanksRebirth.GameContent.Properties;
 using TanksRebirth.Internals.Common.Framework.Audio;
+using TanksRebirth.GameContent.ModSupport;
+using System.Threading.Tasks;
 
 namespace TanksRebirth
 {
@@ -286,7 +288,6 @@ namespace TanksRebirth
 
             DiscordRichPresence.Terminate();
         }
-        
         protected override void LoadContent()
         {
             try
@@ -329,8 +330,6 @@ namespace TanksRebirth
 
                     GameHandler.ClientLog.Write($"Detected build: Copying source folders to output...", LogType.Info);
                 }
-
-
 
                 _cachedState = GraphicsDevice.RasterizerState;
 
@@ -399,14 +398,27 @@ namespace TanksRebirth
 
                 #endregion
 
-                GameHandler.SetupGraphics();
+                ModLoader.LoadMods();
+
+                MainMenu.InitializeBasics();
 
                 GameUI.Initialize();
-                MainMenu.Initialize();
+                MainMenu.InitializeUIGraphics();
 
                 DecalSystem.Initialize(SpriteRenderer, GraphicsDevice);
 
                 LevelEditor.Initialize();
+
+                if (ModLoader.LoadingMods) {
+                    MainMenu.MenuState = MainMenu.State.LoadingMods;
+                    Task.Run(() => {
+                        while (ModLoader.LoadingMods)
+                            Task.Delay(50);
+                        MainMenu.MenuState = MainMenu.State.PrimaryMenu;
+                    });
+                }
+
+                GameHandler.SetupGraphics();
 
                 GameHandler.ClientLog.Write("Running in directory: " + Directory.GetCurrentDirectory(), LogType.Info);
 
@@ -495,6 +507,10 @@ namespace TanksRebirth
                     Lighting.AccurateShadows = !Lighting.AccurateShadows;
                 if (Input.AreKeysJustPressed(Keys.LeftShift, Keys.RightShift))
                     RenderWireframe = !RenderWireframe;
+
+                if (DebugUtils.DebuggingEnabled && Input.AreKeysJustPressed(Keys.V, Keys.B))
+                    ModLoader.LoadMods();
+
                 if (Input.AreKeysJustPressed(Keys.Left, Keys.Right, Keys.Up, Keys.Down))
                 {
                     SecretCosmeticSetting = !SecretCosmeticSetting;

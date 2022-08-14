@@ -69,7 +69,13 @@ namespace TanksRebirth.GameContent
             [TankTier.Creeper] = Color.Green,
             [TankTier.Fade] = Color.Beige,
             [TankTier.Gamma] = Color.DarkGreen,
-            [TankTier.Marble] = Color.Red
+            [TankTier.Marble] = Color.Red,
+            [TankTier.Cherry] = Color.DarkRed,
+            [TankTier.Assassin] = Color.DarkGray,
+            [TankTier.Commando] = Color.Olive,
+            [TankTier.RocketDefender] = Color.DarkGray,
+            [TankTier.Electro] = Color.Blue,
+            [TankTier.Explosive] = Color.DarkGray,
         };
         #region AiTankParams
 

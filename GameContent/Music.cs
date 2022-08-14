@@ -41,7 +41,7 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
                 else if (value < 0)
                     value = 0;
 
-                _music.Instance.Volume = value;
+                BackingAudio.Instance.Volume = value;
             }
         }
         public float MaxVolume { get; set; }
@@ -52,32 +52,32 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
             var song = new Internals.Common.Framework.Audio.OggAudio("amethyst1");
             song.Play();
             song.SetVolume(0f);*/
-        private OggAudio _music;
+        public OggAudio BackingAudio { get; private set; }
         public OggMusic(string name, string songPath, float maxVolume)
         {
-            _music = new(songPath);
+            BackingAudio = new(songPath);
             Name = name;
             MaxVolume = maxVolume;
-            _music.Instance.IsLooped = true;
-            _music.Instance.Volume = 0;
+            BackingAudio.Instance.IsLooped = true;
+            BackingAudio.Instance.Volume = 0;
         }
         public void Play()
-            => _music.Instance.Play();
+            => BackingAudio.Instance.Play();
         public void Pause()
-            => _music?.Instance.Pause();
+            => BackingAudio?.Instance.Pause();
         public void Resume()
-            => _music?.Instance.Resume();
+            => BackingAudio?.Instance.Resume();
         public void SetVolume(float volume)
-            => _music.Instance.Volume = volume;
+            => BackingAudio.Instance.Volume = volume;
         public void Stop()
-            => _music?.Instance.Stop();
+            => BackingAudio?.Instance.Stop();
 
         public bool IsPaused()
-            => _music.Instance.State == SoundState.Paused;
+            => BackingAudio.Instance.State == SoundState.Paused;
         public bool IsStopped()
-            => _music.Instance.State == SoundState.Stopped;
+            => BackingAudio.Instance.State == SoundState.Stopped;
         public bool IsPlaying()
-            => _music.Instance.State == SoundState.Playing;
+            => BackingAudio.Instance.State == SoundState.Playing;
     }
     /// <summary>
     /// A class that allows simple usage of a music track.
