@@ -451,7 +451,7 @@ namespace TanksRebirth
         }
 
         public const float DEFAULT_ORTHOGRAPHIC_ANGLE = 0.75f;
-        internal static Vector2 CameraRotationVector = new(0, DEFAULT_ORTHOGRAPHIC_ANGLE);
+        public static Vector2 CameraRotationVector = new(0, DEFAULT_ORTHOGRAPHIC_ANGLE);
 
         public const float DEFAULT_ZOOM = 3.3f;
         public static float AddativeZoom = 1f;
