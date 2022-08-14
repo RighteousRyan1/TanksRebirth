@@ -113,7 +113,9 @@ namespace TanksRebirth.GameContent.ModSupport
                                     ModBeingLoaded = modName;
                                     Compile(modName);
                                     Status = LoadStatus.Loading;
-                                    var assembly = Assembly.LoadFile(Path.Combine(folder, "bin", "Release", ModNETVersion, $"{modName}.dll"));
+                                    string filepath = Path.Combine(folder, "bin", "Release", ModNETVersion, $"{modName}.dll");
+                                    string pdb = Path.ChangeExtension(filepath, ".pdb");
+                                    var assembly = Assembly.Load(File.ReadAllBytes(filepath), File.ReadAllBytes(pdb));
                                     _loadedAssemblies.Add(assembly);
 
                                     _sandboxingActions.Add(() =>
