@@ -83,6 +83,8 @@ namespace TanksRebirth.GameContent.ModSupport
             if (!_firstLoad)
                 ChatSystem.SendMessage("Reloading mods...", Color.Red);
 
+            Directory.CreateDirectory(ModsPath);
+
             var folders = Directory.GetDirectories(ModsPath);
 
             if (folders.Length == 0) {

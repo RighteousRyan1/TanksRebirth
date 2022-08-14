@@ -642,6 +642,8 @@ namespace TanksRebirth.GameContent
                 CampaignName.IsVisible = DebugUtils.DebuggingEnabled && DebugUtils.DebugLevel == 3;
             }
             GameUI.MissionInfoBar.IsVisible = !MainMenu.Active && !LevelEditor.Active && !CampaignCompleteUI.IsViewingResults;
+
+            OnPostRender?.Invoke();
         }
         private static int _oldelta;
         public static void HandleLevelEditorModifications()
@@ -702,6 +704,8 @@ namespace TanksRebirth.GameContent
         public static event LoadTankScene OnLoadTankScene; 
         public delegate void PostUpdate();
         public static event PostUpdate OnPostUpdate;
+        public delegate void PostRender();
+        public static event PostRender OnPostRender;
         public static void LoadTnkScene()
         {
             if (!_musicLoaded)
