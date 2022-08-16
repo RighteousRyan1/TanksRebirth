@@ -820,8 +820,20 @@ namespace TanksRebirth
 
         public static RasterizerState DefaultRasterizer => RenderWireframe ? new() { FillMode = FillMode.WireFrame } : RasterizerState.CullNone;
 
+        static RenderTarget2D gameTarget;
+        public static RenderTarget2D GameTarget => gameTarget;
+
+        public static event Action<GameTime> OnPostDraw;
+
         protected override void Draw(GameTime gameTime)
         {
+            if(gameTarget == null || gameTarget.IsDisposed || gameTarget.Size() != GameUtils.WindowBounds)
+            {
+                gameTarget?.Dispose();
+                var presentationParams = GraphicsDevice.PresentationParameters;
+                gameTarget = new RenderTarget2D(GraphicsDevice, presentationParams.BackBufferWidth, presentationParams.BackBufferHeight, false, presentationParams.BackBufferFormat, presentationParams.DepthStencilFormat, presentationParams.MultiSampleCount, RenderTargetUsage.PreserveContents);
+            }
+            GraphicsDevice.SetRenderTarget(gameTarget);
             try
             {
                 // GraphicsDevice.RasterizerState = Default;
@@ -923,6 +935,14 @@ namespace TanksRebirth
                 GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
                 throw;
             }
+
+            GraphicsDevice.SetRenderTarget(null);
+
+            SpriteRenderer.Begin();
+            SpriteRenderer.Draw(gameTarget, Vector2.Zero, Color.White);
+            SpriteRenderer.End();
+
+            OnPostDraw?.Invoke(gameTime);
         }
     }
 }
