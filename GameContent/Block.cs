@@ -36,6 +36,12 @@ namespace TanksRebirth.GameContent
     /// <summary>A class that is used for obstacles for <see cref="Tank"/>s.</summary>
     public class Block : IGameSystem
     {
+
+        public delegate void DestroyDelegate(ref Block block);
+        public event DestroyDelegate OnDestroy;
+
+        public delegate void UpdateDelegate(ref Block block);
+        public event UpdateDelegate OnPostUpdate;
         public enum BlockType : byte
         {
             Wood,
@@ -189,6 +195,8 @@ namespace TanksRebirth.GameContent
                 }
             }
 
+            var me = this;
+            OnDestroy?.Invoke(ref me);
             Remove();
         }
 
@@ -326,6 +334,9 @@ namespace TanksRebirth.GameContent
             }
             else
                 _offset.Y -= 0.1f;
+
+            var me = this;
+            OnPostUpdate?.Invoke(ref me);
         }
 
         public enum CollisionDirection

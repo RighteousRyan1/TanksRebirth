@@ -17,6 +17,15 @@ namespace TanksRebirth.GameContent
 {
     public class Shell
     {
+        public delegate void RicochetDelegate(Shell shell);
+        public static RicochetDelegate OnRicochet;
+        public delegate void PostUpdateDelegate(Shell shell);
+        public static PostUpdateDelegate OnPostUpdate;
+        public delegate void PostRenderDelegate(Shell shell);
+        public static PostRenderDelegate OnPostRender;
+        public delegate void DestroyDelegate(Shell shell);
+        public static DestroyDelegate OnDestroy;
+
         public enum DestructionContext
         {
             WithObstacle,
@@ -386,6 +395,7 @@ namespace TanksRebirth.GameContent
                         p.Destroy();
                 };
             }
+            OnPostUpdate?.Invoke(this);
         }
 
         private void TankGame_OnFocusRegained(object sender, IntPtr e) 
@@ -488,9 +498,9 @@ namespace TanksRebirth.GameContent
                 }
             }
             ParticleSystem.MakeShineSpot(Position, Color.Orange, 0.8f);
-
             Ricochets++;
             RicochetsRemaining--;
+            OnRicochet?.Invoke(this);
         }
 
         public void CheckCollisions()
@@ -577,7 +587,7 @@ namespace TanksRebirth.GameContent
                     if (context == DestructionContext.WithHostileTank || context == DestructionContext.WithMine || context == DestructionContext.WithShell)
                         PlayerTank.PlayerStatistics.ShellHitsThisCampaign++;
             }
-
+            OnDestroy?.Invoke(this);
             Remove();
         }
 
@@ -605,6 +615,7 @@ namespace TanksRebirth.GameContent
                     mesh.Draw();
                 }
             }
+            OnPostRender?.Invoke(this);
         }
     }
 }
