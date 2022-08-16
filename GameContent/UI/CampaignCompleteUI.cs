@@ -103,9 +103,9 @@ namespace TanksRebirth.GameContent.UI
 
             _skip = false;
 
-            Task.Run(() => {
+            Task.Run(async () => {
                 while (_panelAlpha < 1f)
-                    Thread.Sleep(TankGame.LastGameTime.ElapsedGameTime);
+                    await Task.Delay(TankGame.LastGameTime.ElapsedGameTime).ConfigureAwait(false);
                 if (!ResultsFanfare.IsPlaying()) {
                     ResultsFanfare.SetVolume(1f);
                     ResultsFanfare.Play();
@@ -129,7 +129,7 @@ namespace TanksRebirth.GameContent.UI
                         else
                             SoundPlayer.PlaySoundInstance("Assets/sounds/results/whistle_singular", SoundContext.Effect, 1f);
 
-                        Thread.Sleep(_delayPerTank);
+                        await Task.Delay(_delayPerTank).ConfigureAwait(false);
 
                         //ChatSystem.SendMessage("sleep", Color.White);
                     }
@@ -143,7 +143,7 @@ namespace TanksRebirth.GameContent.UI
 
                 while (!Input.KeyJustPressed(Keys.Enter)) {
                     ModifyTracks();
-                    Thread.Sleep(TankGame.LastGameTime.ElapsedGameTime);
+                    await Task.Delay(TankGame.LastGameTime.ElapsedGameTime).ConfigureAwait(false);
                 }
 
                 _panelAlpha = 0f;

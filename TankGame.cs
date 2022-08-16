@@ -411,9 +411,9 @@ namespace TanksRebirth
 
                 if (ModLoader.LoadingMods) {
                     MainMenu.MenuState = MainMenu.State.LoadingMods;
-                    Task.Run(() => {
+                    Task.Run(async () => {
                         while (ModLoader.LoadingMods)
-                            Task.Delay(50);
+                            await Task.Delay(50).ConfigureAwait(false);
                         MainMenu.MenuState = MainMenu.State.PrimaryMenu;
                     });
                 }

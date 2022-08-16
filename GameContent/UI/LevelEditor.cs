@@ -332,10 +332,10 @@ namespace TanksRebirth.GameContent.UI
             {
                 IntermissionSystem.TimeBlack = 180;
                 GameProperties.ShouldMissionsProgress = false;
-                Task.Run(() =>
+                Task.Run(async () =>
                 {
                     while (IntermissionSystem.BlackAlpha > 0.8f || MainMenu.Active)
-                        Thread.Sleep(TankGame.LogicTime);
+                        await Task.Delay(TankGame.LogicTime).ConfigureAwait(false);
 
                     Active = true;
                     TankGame.OverheadView = true;
