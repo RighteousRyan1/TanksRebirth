@@ -60,13 +60,8 @@ namespace TanksRebirth.GameContent.ModSupport
 
             process.StartInfo = startInfo;
             process.Start();
+            process.WaitForExit();
 
-            while (!process.HasExited) {
-                if (TankGame.LastGameTime != null)
-                    Thread.Sleep(TankGame.LastGameTime.ElapsedGameTime);
-                else
-                    Thread.Sleep(TimeSpan.FromMilliseconds(50));
-            }
             // garbage collector hell
             // Thread.Sleep(GameHandler.GameRand.Next(250, 1250));
         }

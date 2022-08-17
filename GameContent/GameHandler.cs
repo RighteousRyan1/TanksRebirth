@@ -150,9 +150,9 @@ namespace TanksRebirth.GameContent
         private static void DoEndScene(TimeSpan delay, MissionEndContext context)
         {
             // i think this works.
-            Task.Run(() =>
+            Task.Run(async () =>
             {
-                Thread.Sleep(delay);
+                await Task.Delay(delay).ConfigureAwait(false);
                 CampaignCompleteUI.PerformSequence(context);
             });
         }
