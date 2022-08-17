@@ -14,11 +14,11 @@ namespace TanksRebirth.GameContent
     public class Powerup
     {
         public delegate void PickupDelegate(ref Tank recipient);
-        public event PickupDelegate OnPickup;
+        public static event PickupDelegate OnPickup;
         public delegate void PostUpdateDelegate(Powerup powerup);
-        public static PostUpdateDelegate OnPostUpdate;
+        public static event PostUpdateDelegate OnPostUpdate;
         public delegate void PostRenderDelegate(Powerup powerup);
-        public static PostRenderDelegate OnPostRender;
+        public static event PostRenderDelegate OnPostRender;
 
         public const int MAX_POWERUPS = 50;
         public static Powerup[] Powerups = new Powerup[MAX_POWERUPS];

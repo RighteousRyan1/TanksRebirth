@@ -16,9 +16,9 @@ namespace TanksRebirth.GameContent
         // model, blah blah blah
 
         public delegate void PostUpdateDelegate(Explosion explosion);
-        public event PostUpdateDelegate OnPostUpdate;
+        public static event PostUpdateDelegate OnPostUpdate;
         public delegate void PostRenderDelegate(Explosion explosion);
-        public event PostRenderDelegate OnPostRender;
+        public static event PostRenderDelegate OnPostRender;
 
         public Tank Source;
 

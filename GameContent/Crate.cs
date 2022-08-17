@@ -14,11 +14,11 @@ namespace TanksRebirth.GameContent
     public class Crate
     {
         public delegate void OpenDelegate(Crate crate);
-        public event OpenDelegate OnOpen;
+        public static event OpenDelegate OnOpen;
         public delegate void PostUpdateDelegate(Crate crate);
-        public event PostUpdateDelegate OnPostUpdate;
+        public static event PostUpdateDelegate OnPostUpdate;
         public delegate void PostRenderDelegate(Crate crate);
-        public event PostRenderDelegate OnPostRender;
+        public static event PostRenderDelegate OnPostRender;
 
         public const int MAX_CRATES = 50;
 

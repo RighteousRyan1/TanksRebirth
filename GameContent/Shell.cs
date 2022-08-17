@@ -18,13 +18,13 @@ namespace TanksRebirth.GameContent
     public class Shell
     {
         public delegate void RicochetDelegate(Shell shell);
-        public static RicochetDelegate OnRicochet;
+        public static event RicochetDelegate OnRicochet;
         public delegate void PostUpdateDelegate(Shell shell);
-        public static PostUpdateDelegate OnPostUpdate;
+        public static event PostUpdateDelegate OnPostUpdate;
         public delegate void PostRenderDelegate(Shell shell);
-        public static PostRenderDelegate OnPostRender;
+        public static event PostRenderDelegate OnPostRender;
         public delegate void DestroyDelegate(Shell shell);
-        public static DestroyDelegate OnDestroy;
+        public static event DestroyDelegate OnDestroy;
 
         public enum DestructionContext
         {
@@ -215,7 +215,7 @@ namespace TanksRebirth.GameContent
                     break;
             }
             LifeTime++;
-
+			// todo: make a check so this doesn't consume cpu power.
             if (LifeTime > HomeProperties.Cooldown)
             {
                 if (Owner != null)

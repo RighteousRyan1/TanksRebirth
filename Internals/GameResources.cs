@@ -17,26 +17,29 @@ namespace TanksRebirth.Internals
 
 		public static T GetResource<T>(this ContentManager manager, string name) where T : class
 		{
-			if (ResourceCache.TryGetValue(Path.Combine(manager.RootDirectory, name), out var val) && val is T content)
-			{
-				return content;
+			if (manager != null) {
+				if (ResourceCache.TryGetValue(Path.Combine(manager.RootDirectory, name), out var val) && val is T content)
+					return content;
 			}
+			else if (ResourceCache.TryGetValue(name, out var val) && val is T content)
+				return content;
+
 			return LoadResource<T>(manager, name);
 		}
-		public static T LoadResource<T>(ContentManager manager, string name, bool addDotPng = true) where T : class
+		public static T LoadResource<T>(ContentManager manager, string name) where T : class
 		{
-			T loaded = manager.Load<T>(name);
-
-			if (ResourceCache.ContainsKey(name + ".png"))
-				return (T)ResourceCache[name + ".png"];
+			if (ResourceCache.ContainsKey(name))
+				return (T)ResourceCache[name];
 			else if (typeof(T) == typeof(Texture2D))
 			{
 				// var texture = (Texture2D)Convert.ChangeType(result, typeof(Texture2D));
-				object result = Texture2D.FromFile(TankGame.Instance.GraphicsDevice, Path.Combine(string.Empty, name + (addDotPng ? ".png" : string.Empty)));
-				ResourceCache[name + (addDotPng ? ".png" : string.Empty)] = result;
+				object result = Texture2D.FromFile(TankGame.Instance.GraphicsDevice, name);
+				ResourceCache[name] = result;
 
 				return (T)result;
 			}
+
+			T loaded = manager.Load<T>(name);
 
 			ResourceCache[name] = loaded;
 			return loaded;

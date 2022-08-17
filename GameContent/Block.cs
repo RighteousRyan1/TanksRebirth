@@ -37,11 +37,14 @@ namespace TanksRebirth.GameContent
     public class Block : IGameSystem
     {
 
-        public delegate void DestroyDelegate(ref Block block);
-        public event DestroyDelegate OnDestroy;
+        public delegate void DestroyDelegate(Block block);
+        public static event DestroyDelegate OnDestroy;
 
-        public delegate void UpdateDelegate(ref Block block);
-        public event UpdateDelegate OnPostUpdate;
+        public delegate void UpdateDelegate(Block block);
+        public static event UpdateDelegate OnPostUpdate;
+
+        public delegate void PostRenderDelegate(Block block);
+        public static event PostRenderDelegate OnPostRender;
         public enum BlockType : byte
         {
             Wood,
@@ -195,8 +198,7 @@ namespace TanksRebirth.GameContent
                 }
             }
 
-            var me = this;
-            OnDestroy?.Invoke(ref me);
+            OnDestroy?.Invoke(this);
             Remove();
         }
 
@@ -272,6 +274,7 @@ namespace TanksRebirth.GameContent
                     mesh.Draw();
                 }
             }
+            OnPostRender?.Invoke(this);
         }
         public void Update()
         {
@@ -335,8 +338,7 @@ namespace TanksRebirth.GameContent
             else
                 _offset.Y -= 0.1f;
 
-            var me = this;
-            OnPostUpdate?.Invoke(ref me);
+            OnPostUpdate?.Invoke(this);
         }
 
         public enum CollisionDirection

@@ -30,6 +30,8 @@ namespace TanksRebirth.GameContent
     public class AITank : Tank
     {
         // TODO: Make smoke bombs!
+        public delegate void PostExecuteAI(AITank tank);
+        public static event PostExecuteAI OnPostUpdateAI;
         public AiBehavior[] Behaviors { get; private set; } // each of these should keep track of an action the tank performs
         public AiBehavior[] SpecialBehaviors { get; private set; }
 
@@ -2523,6 +2525,7 @@ namespace TanksRebirth.GameContent
                 };
             }
             enactBehavior?.Invoke();
+            OnPostUpdateAI?.Invoke(this);
         }
         public override void Render()
         {
@@ -2609,9 +2612,7 @@ namespace TanksRebirth.GameContent
                     float calculation = 0f;
 
                     if (AiParams.PredictsPositions && TargetTank is not null)
-                    {
                         calculation = Position.Distance(TargetTank.Position) / (float)(Properties.ShellSpeed * 1.2f);
-                    }
 
                     if (AiParams.SmartRicochets)
                         GetTanksInPath(Vector2.UnitY.RotatedByRadians(seekRotation), out var rayEndpoint, true, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);

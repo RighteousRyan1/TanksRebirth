@@ -706,6 +706,8 @@ namespace TanksRebirth.GameContent
         public static event PostUpdate OnPostUpdate;
         public delegate void PostRender();
         public static event PostRender OnPostRender;
+        public delegate void MissionCleanupEvent();
+        public static event MissionCleanupEvent OnMissionCleanup;
         public static void LoadTnkScene()
         {
             if (!_musicLoaded)
@@ -786,6 +788,8 @@ namespace TanksRebirth.GameContent
 
             ClearTankDeathmarks(null);
             ClearTankTracks(null);
+
+            OnMissionCleanup?.Invoke();
         }
         public static void BeginIntroSequence()
         {

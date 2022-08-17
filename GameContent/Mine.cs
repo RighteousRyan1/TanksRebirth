@@ -15,11 +15,11 @@ namespace TanksRebirth.GameContent
     public sealed class Mine
     {
         public delegate void ExplodeDelegate(Mine mine);
-        public event ExplodeDelegate OnExplode;
+        public static event ExplodeDelegate OnExplode;
         public delegate void PostUpdateDelegate(Mine mine);
-        public event PostUpdateDelegate OnPostUpdate;
+        public static event PostUpdateDelegate OnPostUpdate;
         public delegate void PostRenderDelegate(Mine mine);
-        public event PostRenderDelegate OnPostRender;
+        public static event PostRenderDelegate OnPostRender;
 
         public const int MAX_MINES = 500;
         public static Mine[] AllMines { get; } = new Mine[MAX_MINES];
