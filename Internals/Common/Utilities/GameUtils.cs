@@ -538,8 +538,6 @@ namespace TanksRebirth.Internals.Common.Utilities
 
         public static Ray GetMouseToWorldRay()
         {
-            Plane gamePlane = new(Vector3.UnitY, 0);
-
             var nearPlane = GeometryUtils.ConvertScreenToWorld(new Vector3(MousePosition, 0), Matrix.Identity, TankGame.GameView, TankGame.GameProjection);
             var farPlane = GeometryUtils.ConvertScreenToWorld(new Vector3(MousePosition, 1), Matrix.Identity, TankGame.GameView, TankGame.GameProjection);
 

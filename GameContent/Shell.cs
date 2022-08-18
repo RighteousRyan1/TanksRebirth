@@ -17,6 +17,15 @@ namespace TanksRebirth.GameContent
 {
     public class Shell
     {
+        public delegate void RicochetDelegate(Shell shell);
+        public static event RicochetDelegate OnRicochet;
+        public delegate void PostUpdateDelegate(Shell shell);
+        public static event PostUpdateDelegate OnPostUpdate;
+        public delegate void PostRenderDelegate(Shell shell);
+        public static event PostRenderDelegate OnPostRender;
+        public delegate void DestroyDelegate(Shell shell);
+        public static event DestroyDelegate OnDestroy;
+
         public enum DestructionContext
         {
             WithObstacle,
@@ -206,7 +215,7 @@ namespace TanksRebirth.GameContent
                     break;
             }
             LifeTime++;
-
+			// todo: make a check so this doesn't consume cpu power.
             if (LifeTime > HomeProperties.Cooldown)
             {
                 if (Owner != null)
@@ -386,6 +395,7 @@ namespace TanksRebirth.GameContent
                         p.Destroy();
                 };
             }
+            OnPostUpdate?.Invoke(this);
         }
 
         private void TankGame_OnFocusRegained(object sender, IntPtr e) 
@@ -488,9 +498,9 @@ namespace TanksRebirth.GameContent
                 }
             }
             ParticleSystem.MakeShineSpot(Position, Color.Orange, 0.8f);
-
             Ricochets++;
             RicochetsRemaining--;
+            OnRicochet?.Invoke(this);
         }
 
         public void CheckCollisions()
@@ -577,7 +587,7 @@ namespace TanksRebirth.GameContent
                     if (context == DestructionContext.WithHostileTank || context == DestructionContext.WithMine || context == DestructionContext.WithShell)
                         PlayerTank.PlayerStatistics.ShellHitsThisCampaign++;
             }
-
+            OnDestroy?.Invoke(this);
             Remove();
         }
 
@@ -605,6 +615,7 @@ namespace TanksRebirth.GameContent
                     mesh.Draw();
                 }
             }
+            OnPostRender?.Invoke(this);
         }
     }
 }

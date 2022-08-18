@@ -14,6 +14,13 @@ namespace TanksRebirth.GameContent
 {
     public sealed class Mine
     {
+        public delegate void ExplodeDelegate(Mine mine);
+        public static event ExplodeDelegate OnExplode;
+        public delegate void PostUpdateDelegate(Mine mine);
+        public static event PostUpdateDelegate OnPostUpdate;
+        public delegate void PostRenderDelegate(Mine mine);
+        public static event PostRenderDelegate OnPostRender;
+
         public const int MAX_MINES = 500;
         public static Mine[] AllMines { get; } = new Mine[MAX_MINES];
 
@@ -104,6 +111,8 @@ namespace TanksRebirth.GameContent
             if (Owner != null)
                 Owner.OwnedMineCount--;
 
+            OnExplode?.Invoke(this);
+
             Remove();
         }
 
@@ -150,6 +159,8 @@ namespace TanksRebirth.GameContent
             }
 
             _oldPosition = Position;
+
+            OnPostUpdate?.Invoke(this);
         }
 
         internal void Render()
@@ -185,6 +196,7 @@ namespace TanksRebirth.GameContent
                     }
                 }
             }
+            OnPostRender?.Invoke(this);
         }
     }
 }

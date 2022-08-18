@@ -44,9 +44,9 @@ namespace TanksRebirth.GameContent
 
         public const int MAX_AI_TANKS = 1000;
         public const int MAX_PLAYERS = 1000;
-        public static AITank[] AllAITanks { get; } = new AITank[MAX_AI_TANKS];
-        public static PlayerTank[] AllPlayerTanks { get; } = new PlayerTank[MAX_PLAYERS];
-        public static Tank[] AllTanks { get; } = new Tank[MAX_PLAYERS + MAX_AI_TANKS];
+        public static AITank[] AllAITanks = new AITank[MAX_AI_TANKS];
+        public static PlayerTank[] AllPlayerTanks = new PlayerTank[MAX_PLAYERS];
+        public static Tank[] AllTanks = new Tank[MAX_PLAYERS + MAX_AI_TANKS];
 
         public static Logger ClientLog { get; set; }
 
@@ -150,9 +150,9 @@ namespace TanksRebirth.GameContent
         private static void DoEndScene(TimeSpan delay, MissionEndContext context)
         {
             // i think this works.
-            Task.Run(() =>
+            Task.Run(async () =>
             {
-                Thread.Sleep(delay);
+                await Task.Delay(delay).ConfigureAwait(false);
                 CampaignCompleteUI.PerformSequence(context);
             });
         }
@@ -312,6 +312,8 @@ namespace TanksRebirth.GameContent
 
             if (TankGame.OverheadView)
                 HandleLevelEditorModifications();
+
+            OnPostUpdate?.Invoke();
         }
 
         private static void DoThunderStuff()
@@ -492,6 +494,7 @@ namespace TanksRebirth.GameContent
                 SoundPlayer.PlaySoundInstance(missionStarting, SoundContext.Effect, 0.8f);
             }
         }
+
         public static int BlockType = 0;
         public static int CubeHeight = 1;
         public static int tankToSpawnType;
@@ -638,8 +641,9 @@ namespace TanksRebirth.GameContent
                 LoadCampaign.IsVisible = DebugUtils.DebuggingEnabled && DebugUtils.DebugLevel == 3;
                 CampaignName.IsVisible = DebugUtils.DebuggingEnabled && DebugUtils.DebugLevel == 3;
             }
-
             GameUI.MissionInfoBar.IsVisible = !MainMenu.Active && !LevelEditor.Active && !CampaignCompleteUI.IsViewingResults;
+
+            OnPostRender?.Invoke();
         }
         private static int _oldelta;
         public static void HandleLevelEditorModifications()
@@ -695,12 +699,22 @@ namespace TanksRebirth.GameContent
         }
 
         private static bool _musicLoaded;
+
+        public delegate void LoadTankScene();
+        public static event LoadTankScene OnLoadTankScene; 
+        public delegate void PostUpdate();
+        public static event PostUpdate OnPostUpdate;
+        public delegate void PostRender();
+        public static event PostRender OnPostRender;
+        public delegate void MissionCleanupEvent();
+        public static event MissionCleanupEvent OnMissionCleanup;
         public static void LoadTnkScene()
         {
             if (!_musicLoaded)
             {
                 TankMusicSystem.LoadMusic();
                 TankMusicSystem.LoadAmbienceTracks();
+                OnLoadTankScene?.Invoke();
                 _musicLoaded = true;
             }
             else
@@ -774,6 +788,8 @@ namespace TanksRebirth.GameContent
 
             ClearTankDeathmarks(null);
             ClearTankTracks(null);
+
+            OnMissionCleanup?.Invoke();
         }
         public static void BeginIntroSequence()
         {

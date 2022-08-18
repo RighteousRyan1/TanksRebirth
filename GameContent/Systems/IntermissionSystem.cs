@@ -50,6 +50,7 @@ namespace TanksRebirth.GameContent.Systems
 
                 if (GameProperties.ShouldMissionsProgress)
                 {
+                    // todo: should this happen?
                     GameProperties.LoadedCampaign.SetupLoadedMission(true);
                     // GameHandler.LoadedCampaign.LoadMission(27);
                 }

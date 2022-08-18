@@ -43,6 +43,7 @@ namespace TanksRebirth.GameContent.Systems
                 return;
             }
 
+            var oldtargets = _device.GetRenderTargets();
             _device.SetRenderTarget(_target);
 
             foreach (var pair in _decalsToAdd)
@@ -60,7 +61,7 @@ namespace TanksRebirth.GameContent.Systems
                 _spriteBatch.End();
             }
 
-            _device.SetRenderTarget(null);
+            _device.SetRenderTargets(oldtargets);
 
             _decalsToAdd.Clear();
         } 

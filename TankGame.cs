@@ -33,6 +33,8 @@ using TanksRebirth.Achievements;
 using TanksRebirth.GameContent.Speedrunning;
 using TanksRebirth.GameContent.Properties;
 using TanksRebirth.Internals.Common.Framework.Audio;
+using TanksRebirth.GameContent.ModSupport;
+using System.Threading.Tasks;
 
 namespace TanksRebirth
 {
@@ -286,7 +288,6 @@ namespace TanksRebirth
 
             DiscordRichPresence.Terminate();
         }
-        
         protected override void LoadContent()
         {
             try
@@ -329,8 +330,6 @@ namespace TanksRebirth
 
                     GameHandler.ClientLog.Write($"Detected build: Copying source folders to output...", LogType.Info);
                 }
-
-
 
                 _cachedState = GraphicsDevice.RasterizerState;
 
@@ -399,14 +398,27 @@ namespace TanksRebirth
 
                 #endregion
 
-                GameHandler.SetupGraphics();
+                ModLoader.LoadMods();
+
+                MainMenu.InitializeBasics();
 
                 GameUI.Initialize();
-                MainMenu.Initialize();
+                MainMenu.InitializeUIGraphics();
 
                 DecalSystem.Initialize(SpriteRenderer, GraphicsDevice);
 
                 LevelEditor.Initialize();
+
+                if (ModLoader.LoadingMods) {
+                    MainMenu.MenuState = MainMenu.State.LoadingMods;
+                    Task.Run(async () => {
+                        while (ModLoader.LoadingMods)
+                            await Task.Delay(50).ConfigureAwait(false);
+                        MainMenu.MenuState = MainMenu.State.PrimaryMenu;
+                    });
+                }
+
+                GameHandler.SetupGraphics();
 
                 GameHandler.ClientLog.Write("Running in directory: " + Directory.GetCurrentDirectory(), LogType.Info);
 
@@ -457,6 +469,7 @@ namespace TanksRebirth
         public static float AddativeZoom = 1f;
 
         public static Vector2 CameraFocusOffset;
+        public static bool ThirdPerson;
 
         public static bool ThirdPerson;
 		
@@ -495,6 +508,10 @@ namespace TanksRebirth
                     Lighting.AccurateShadows = !Lighting.AccurateShadows;
                 if (Input.AreKeysJustPressed(Keys.LeftShift, Keys.RightShift))
                     RenderWireframe = !RenderWireframe;
+
+                if (DebugUtils.DebuggingEnabled && Input.AreKeysJustPressed(Keys.V, Keys.B))
+                    ModLoader.LoadMods();
+
                 if (Input.AreKeysJustPressed(Keys.Left, Keys.Right, Keys.Up, Keys.Down))
                 {
                     SecretCosmeticSetting = !SecretCosmeticSetting;
@@ -804,8 +821,20 @@ namespace TanksRebirth
 
         public static RasterizerState DefaultRasterizer => RenderWireframe ? new() { FillMode = FillMode.WireFrame } : RasterizerState.CullNone;
 
+        static RenderTarget2D gameTarget;
+        public static RenderTarget2D GameTarget => gameTarget;
+
+        public static event Action<GameTime> OnPostDraw;
+
         protected override void Draw(GameTime gameTime)
         {
+            if(gameTarget == null || gameTarget.IsDisposed || gameTarget.Size() != GameUtils.WindowBounds)
+            {
+                gameTarget?.Dispose();
+                var presentationParams = GraphicsDevice.PresentationParameters;
+                gameTarget = new RenderTarget2D(GraphicsDevice, presentationParams.BackBufferWidth, presentationParams.BackBufferHeight, false, presentationParams.BackBufferFormat, presentationParams.DepthStencilFormat, presentationParams.MultiSampleCount, RenderTargetUsage.PreserveContents);
+            }
+            GraphicsDevice.SetRenderTarget(gameTarget);
             try
             {
                 // GraphicsDevice.RasterizerState = Default;
@@ -907,6 +936,14 @@ namespace TanksRebirth
                 GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
                 throw;
             }
+
+            GraphicsDevice.SetRenderTarget(null);
+
+            SpriteRenderer.Begin();
+            SpriteRenderer.Draw(gameTarget, Vector2.Zero, Color.White);
+            SpriteRenderer.End();
+
+            OnPostDraw?.Invoke(gameTime);
         }
     }
 }

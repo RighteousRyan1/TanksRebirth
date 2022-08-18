@@ -62,9 +62,10 @@ namespace TanksRebirth.GameContent.UI
         private static float _gpuSettingsOffset = 0f;
 
         // TODO: make rect scissor work -> get powerups to be pickupable
-
+        private static bool _initialized;
         internal static void Initialize()
         {
+            _initialized = true;
             var ttColor = Color.LightGray;
             SpriteFontBase font = TankGame.TextFont;
 
@@ -265,6 +266,8 @@ namespace TanksRebirth.GameContent.UI
 
         private static void HandleBackButton()
         {
+            if (!_initialized)
+                return;
             if (MainMenu.MenuState == MainMenu.State.Cosmetics)
                 MainMenu.MenuState = MainMenu.State.PlayList;
             if (MainMenu.MenuState == MainMenu.State.StatsMenu)
@@ -381,6 +384,8 @@ namespace TanksRebirth.GameContent.UI
 
         public static void UpdateButtons()
         {
+            if (!_initialized)
+                return;
             _newScroll = Input.CurrentMouseSnapshot.ScrollWheelValue;
 
             if (_newScroll != _oldScroll)

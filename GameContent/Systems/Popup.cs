@@ -49,7 +49,7 @@ namespace TanksRebirth.GameContent.Systems
                 _ => 0f
             };
             // from here we start the popup appearance, then end it later
-            Task.Run(() => {
+            Task.Run(async () => {
                 switch (Anchor)
                 {
                     case PopupAnchor.Top:
@@ -61,7 +61,7 @@ namespace TanksRebirth.GameContent.Systems
                             _curPos.Y -= Easing;
                         break;
                 }
-                Thread.Sleep(Duration);
+                await Task.Delay(Duration).ConfigureAwait(false);
             });
         }
     }

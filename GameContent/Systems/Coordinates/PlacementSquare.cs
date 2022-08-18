@@ -26,7 +26,7 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
 
         public static bool displayHeights = true;
 
-        internal static List<PlacementSquare> Placements = new();
+        public static List<PlacementSquare> Placements = new();
 
         public Vector3 Position { get; set; }
 

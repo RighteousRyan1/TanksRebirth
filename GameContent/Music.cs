@@ -47,11 +47,6 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
         public float MaxVolume { get; set; }
         public MusicState State { get; set; }
         public string Name { get; set; }
-        /*
-         * 
-            var song = new Internals.Common.Framework.Audio.OggAudio("amethyst1");
-            song.Play();
-            song.SetVolume(0f);*/
         public OggAudio BackingAudio { get; private set; }
         public OggMusic(string name, string songPath, float maxVolume)
         {

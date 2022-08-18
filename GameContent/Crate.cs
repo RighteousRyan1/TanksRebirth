@@ -13,6 +13,13 @@ namespace TanksRebirth.GameContent
 {
     public class Crate
     {
+        public delegate void OpenDelegate(Crate crate);
+        public static event OpenDelegate OnOpen;
+        public delegate void PostUpdateDelegate(Crate crate);
+        public static event PostUpdateDelegate OnPostUpdate;
+        public delegate void PostRenderDelegate(Crate crate);
+        public static event PostRenderDelegate OnPostRender;
+
         public const int MAX_CRATES = 50;
 
         public static Crate[] crates = new Crate[MAX_CRATES];
@@ -48,8 +55,6 @@ namespace TanksRebirth.GameContent
         private int _bounceCount;
 
         private int _maxBounces = 2;
-
-        public event EventHandler OnOpen;
 
         private Crate() 
         {
@@ -128,6 +133,7 @@ namespace TanksRebirth.GameContent
                     mesh.Draw();
                 }
             }
+            OnPostRender?.Invoke(this);
         }
         public void Update()
         {
@@ -167,6 +173,7 @@ namespace TanksRebirth.GameContent
             if (position.Y < 0)
                 position.Y = 0;
 
+            OnPostUpdate?.Invoke(this);
         }
 
         /// <summary>Open this <see cref="Crate"/>.</summary>
@@ -187,8 +194,7 @@ namespace TanksRebirth.GameContent
                 t.Dead = false;
                 t.Team = TankToSpawn.Team;
             }
-
-            OnOpen?.Invoke(this, new());
+            OnOpen?.Invoke(this);
         }
     }
 }

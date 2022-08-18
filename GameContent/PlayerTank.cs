@@ -24,6 +24,8 @@ namespace TanksRebirth.GameContent
 {
     public class PlayerTank : Tank
     {
+
+        #region The Rest
         public static TankTeam MyTeam;
 
         public static int StartingLives = 3;
@@ -74,6 +76,8 @@ namespace TanksRebirth.GameContent
         #endregion
 
         private bool _isPlayerModel;
+
+        #endregion
 
         public PlayerTank(PlayerType playerType, bool isPlayerModel = true, TankTier copyTier = TankTier.None)
         {
@@ -174,6 +178,7 @@ namespace TanksRebirth.GameContent
             // 0 = down
             // pi/4 = right
             // 3/4pi = left
+
             base.Update();
 
             CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
@@ -181,30 +186,24 @@ namespace TanksRebirth.GameContent
 
             Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
 
-            if (TargetTankRotation - TankRotation >= MathHelper.PiOver2)
-            {
+            if (TargetTankRotation - TankRotation >= MathHelper.PiOver2) {
                 TankRotation += MathHelper.Pi;
                 Flip = !Flip;
             }
-            else if (TargetTankRotation - TankRotation <= -MathHelper.PiOver2)
-            {
+            else if (TargetTankRotation - TankRotation <= -MathHelper.PiOver2) {
                 TankRotation -= MathHelper.Pi;
                 Flip = !Flip;
             }
 
-            if (IsIngame)
-            {
+            if (IsIngame) {
                 if (Client.IsConnected())
                     ChatSystem.SendMessage($"PlayerId: {PlayerId} | ClientId: {NetPlay.CurrentClient.Id}", Color.White);
-                if (NetPlay.IsClientMatched(PlayerId) && !IntermissionSystem.IsAwaitingNewMission)
-                {
-                    if (!TankGame.ThirdPerson)
-                    {
+                if (NetPlay.IsClientMatched(PlayerId) && !IntermissionSystem.IsAwaitingNewMission) {
+                    if (!TankGame.ThirdPerson) {
                         Vector3 mouseWorldPos = GameUtils.GetWorldPosition(GameUtils.MousePosition, -11f);
                         TurretRotation = (-(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position).ToRotation()) + MathHelper.PiOver2;
                     }
-                    else
-                    {
+                    else {
                         //Mouse.SetPosition(Input.CurrentMouseSnapshot.X, GameUtils.WindowHeight / 2);
                         if (Input.CurrentMouseSnapshot.X >= GameUtils.WindowWidth)
                             Mouse.SetPosition(1, Input.CurrentMouseSnapshot.Y);
@@ -215,14 +214,10 @@ namespace TanksRebirth.GameContent
                     }
                 }
 
-                if (GameProperties.InMission && !LevelEditor.Active)
-                {
-                    if (CurShootStun <= 0 && CurMineStun <= 0)
-                    {
-                        if (!Properties.Stationary)
-                        {
-                            if (NetPlay.IsClientMatched(PlayerId))
-                            {
+                if (GameProperties.InMission && !LevelEditor.Active) {
+                    if (CurShootStun <= 0 && CurMineStun <= 0) {
+                        if (!Properties.Stationary) {
+                            if (NetPlay.IsClientMatched(PlayerId)) {
                                 if (Input.CurrentGamePadSnapshot.IsConnected)
                                     ControlHandle_ConsoleController();
                                 else
@@ -232,10 +227,8 @@ namespace TanksRebirth.GameContent
                     }
                 }
 
-                if (GameProperties.InMission && !LevelEditor.Active)
-                {
-                    if (NetPlay.IsClientMatched(PlayerId))
-                    {
+                if (GameProperties.InMission && !LevelEditor.Active) {
+                    if (NetPlay.IsClientMatched(PlayerId)) {
                         if (Input.CanDetectClick())
                             Shoot();
 
@@ -420,7 +413,6 @@ namespace TanksRebirth.GameContent
             Velocity = Vector2.UnitY.RotatedByRadians(TankRotation) * Properties.Speed;
             //ChatSystem.SendMessage($"{preterbedVelocity} | " + preterbedVelocity.RotatedByRadians(-TurretRotation + MathHelper.Pi), Color.White);
         }
-
         public override void Destroy(ITankHurtContext context)
         {
             if (context.IsPlayer) {

@@ -13,6 +13,13 @@ namespace TanksRebirth.GameContent
 {
     public class Powerup
     {
+        public delegate void PickupDelegate(ref Tank recipient);
+        public static event PickupDelegate OnPickup;
+        public delegate void PostUpdateDelegate(Powerup powerup);
+        public static event PostUpdateDelegate OnPostUpdate;
+        public delegate void PostRenderDelegate(Powerup powerup);
+        public static event PostRenderDelegate OnPostRender;
+
         public const int MAX_POWERUPS = 50;
         public static Powerup[] Powerups = new Powerup[MAX_POWERUPS];
 
@@ -120,6 +127,7 @@ namespace TanksRebirth.GameContent
                 if (GameHandler.AllTanks.TryGetFirst(tnk => tnk is not null && Vector3.Distance(Position, tnk.Position3D) <= PickupRadius, out Tank tank))
                     Pickup(tank);
             }
+            OnPostUpdate?.Invoke(this);
         }
 
         public void Render()
@@ -155,6 +163,7 @@ namespace TanksRebirth.GameContent
 
                 DebugUtils.DrawDebugString(TankGame.SpriteRenderer, this, pos, 4, centered: true);
             }
+            OnPostRender?.Invoke(this);
         }
         /// <summary>
         /// Make a <see cref="Tank"/> pick this <see cref="Powerup"/> up.
@@ -166,6 +175,7 @@ namespace TanksRebirth.GameContent
             InWorld = false;
 
             PowerupEffects?.Invoke(AffectedTank);
+            OnPickup?.Invoke(ref recipient);
         }
         public override string ToString()
         {

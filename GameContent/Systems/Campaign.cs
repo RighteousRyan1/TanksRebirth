@@ -21,6 +21,9 @@ namespace TanksRebirth.GameContent.Systems
     /// <summary>A campaign for players to play on with <see cref="AITank"/>s, or even <see cref="PlayerTank"/>s if supported.</summary>
     public class Campaign
     {
+        public delegate void MissionLoadDelegate(ref Tank[] tanks, ref Block[] blocks);
+        public static event MissionLoadDelegate OnMissionLoad;
+
         /// <summary>The maximum allowed missions in a campaign.</summary>
         public const int MAX_MISSIONS = 100;
         /// <summary>Returns the names of campaigns in the user's <c>Campaigns/</c> directory.</summary>
@@ -220,6 +223,8 @@ namespace TanksRebirth.GameContent.Systems
 
             CurrentMission = LoadedMission;
             GameHandler.ClientLog.Write($"Loaded mission '{LoadedMission.Name}' with {LoadedMission.Tanks.Length} tanks and {LoadedMission.Blocks.Length} obstacles.", LogType.Info);
+
+            OnMissionLoad?.Invoke(ref GameHandler.AllTanks, ref Block.AllBlocks);
         }
         /// <summary>
         /// Loads missions from inside the <paramref name="campaignName"/> folder to memory.

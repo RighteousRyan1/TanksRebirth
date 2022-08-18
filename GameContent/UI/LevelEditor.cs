@@ -79,9 +79,12 @@ namespace TanksRebirth.GameContent.UI
         private static List<string> _renderNamesPlayers = new();
         #endregion
 
+        private static bool _initialized;
+
         // reduce hardcode -- make a variable that tracks height.
         public static void InitializeSaveMenu()
         {
+            _initialized = true;
             LevelName = new(TankGame.TextFont, Color.White, 1f, 20);
             LevelName.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20, LevelContentsPanel.Y + 60), () => new(LevelContentsPanel.Width - 40, 50 / (1080 / GameUtils.WindowHeight)));
             LevelName.DefaultString = "Name";
@@ -329,10 +332,10 @@ namespace TanksRebirth.GameContent.UI
             {
                 IntermissionSystem.TimeBlack = 180;
                 GameProperties.ShouldMissionsProgress = false;
-                Task.Run(() =>
+                Task.Run(async () =>
                 {
                     while (IntermissionSystem.BlackAlpha > 0.8f || MainMenu.Active)
-                        Thread.Sleep(TankGame.LogicTime);
+                        await Task.Delay(TankGame.LogicTime).ConfigureAwait(false);
 
                     Active = true;
                     TankGame.OverheadView = true;
@@ -371,6 +374,8 @@ namespace TanksRebirth.GameContent.UI
 
         public static void Render()
         {
+            if (!_initialized)
+                return;
             #region Main UI
             int xOff = 0;
             _clickRect = new(0, (int)(GameUtils.WindowBottom.Y * 0.8f), GameUtils.WindowWidth, (int)(GameUtils.WindowHeight * 0.2f));
@@ -547,6 +552,8 @@ namespace TanksRebirth.GameContent.UI
 
         public static void Update()
         {
+            if (!_initialized)
+                return;
             LevelContentsPanel = new Rectangle(GameUtils.WindowWidth / 4, (int)(GameUtils.WindowHeight * 0.1f), GameUtils.WindowWidth / 2, (int)(GameUtils.WindowHeight * 0.625f));
             PlacementSquare.PlacesBlock = CurCategory == Category.Blocks;
             switch (CurCategory) {

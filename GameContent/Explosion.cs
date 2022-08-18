@@ -15,6 +15,11 @@ namespace TanksRebirth.GameContent
     {
         // model, blah blah blah
 
+        public delegate void PostUpdateDelegate(Explosion explosion);
+        public static event PostUpdateDelegate OnPostUpdate;
+        public delegate void PostRenderDelegate(Explosion explosion);
+        public static event PostRenderDelegate OnPostRender;
+
         public Tank Source;
 
         public const int MINE_EXPLOSIONS_MAX = 500;
@@ -129,6 +134,8 @@ namespace TanksRebirth.GameContent
             World = Matrix.CreateScale(Scale) * Matrix.CreateRotationY(Rotation) * Matrix.CreateTranslation(Position3D);
             View = TankGame.GameView;
             Projection = TankGame.GameProjection;
+
+            OnPostUpdate?.Invoke(this);
         }
 
         public void Remove()
@@ -160,6 +167,7 @@ namespace TanksRebirth.GameContent
                 }
                 mesh.Draw();
             }
+            OnPostRender?.Invoke(this);
         }
     }
 }

@@ -17,14 +17,28 @@ namespace TanksRebirth.Internals
 
 		public static T GetResource<T>(this ContentManager manager, string name) where T : class
 		{
-			if (ResourceCache.TryGetValue(Path.Combine(manager.RootDirectory, name), out var val) && val is T content)
-			{
-				return content;
+			if (manager != null) {
+				if (ResourceCache.TryGetValue(Path.Combine(manager.RootDirectory, name), out var val) && val is T content)
+					return content;
 			}
+			else if (ResourceCache.TryGetValue(name, out var val) && val is T content)
+				return content;
+
 			return LoadResource<T>(manager, name);
 		}
 		public static T LoadResource<T>(ContentManager manager, string name) where T : class
 		{
+			if (ResourceCache.ContainsKey(name))
+				return (T)ResourceCache[name];
+			else if (typeof(T) == typeof(Texture2D))
+			{
+				// var texture = (Texture2D)Convert.ChangeType(result, typeof(Texture2D));
+				object result = Texture2D.FromFile(TankGame.Instance.GraphicsDevice, name);
+				ResourceCache[name] = result;
+
+				return (T)result;
+			}
+
 			T loaded = manager.Load<T>(name);
 
 			ResourceCache[name] = loaded;

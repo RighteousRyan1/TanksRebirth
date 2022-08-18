@@ -26,6 +26,7 @@ using Aspose.Zip;
 using Aspose.Zip.Rar;
 using TanksRebirth.GameContent.Properties;
 using TanksRebirth.GameContent.Cosmetics;
+using TanksRebirth.GameContent.ModSupport;
 
 namespace TanksRebirth.GameContent.UI
 {
@@ -40,6 +41,11 @@ namespace TanksRebirth.GameContent.UI
 
         private static Matrix View;
         private static Matrix Projection;
+
+        public delegate void MenuOpenDelegate();
+        public delegate void MenuCloseDelegate();
+        public static event MenuOpenDelegate OnMenuOpen;
+        public static event MenuCloseDelegate OnMenuClose;
 
         #region Button Fields
 
@@ -112,7 +118,7 @@ namespace TanksRebirth.GameContent.UI
 
         public static Texture2D LogoTexture;
         public static Vector2 LogoPosition;
-        public static float LogoScale = 0.5f;
+        public static Vector2 LogoScale = new(0.5f);
         public static float LogoRotation;
         public static float LogoRotationSpeed = 1f;
 
@@ -140,6 +146,7 @@ namespace TanksRebirth.GameContent.UI
         // this code is becoming so shit i want to vomit but i don't know any better
         public enum State
         {
+            LoadingMods,
             PrimaryMenu,
             PlayList,
             Campaigns,
@@ -156,7 +163,9 @@ namespace TanksRebirth.GameContent.UI
         private static bool _openingCrate; // we don't use this yet since the stuff isn't exactly implemented.
         #endregion
 
-        public static void Initialize()
+        private static bool _initialized;
+
+        public static void InitializeBasics()
         {
             MenuState = State.PrimaryMenu;
             Crate = new(new(0, 0, 0), TankGame.GameView, TankGame.GameProjection);
@@ -166,9 +175,7 @@ namespace TanksRebirth.GameContent.UI
             Crate.Rotation.X = -MathHelper.PiOver4;
             Crate.Rotation.Z = 0f;
             Crate.LidRotation = Crate.Rotation;
-
             LogoTexture = GameResources.GetGameResource<Texture2D>("Assets/tanks_rebirth_logo");
-            TankGame.Instance.Window.ClientSizeChanged += UpdateProjection;
 
             Projection = Matrix.CreateOrthographic(TankGame.Instance.GraphicsDevice.Viewport.Width, TankGame.Instance.GraphicsDevice.Viewport.Height, -2000f, 5000f);
             //Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), TankGame.Instance.GraphicsDevice.Viewport.AspectRatio, 0.01f, 1000f);
@@ -176,11 +183,15 @@ namespace TanksRebirth.GameContent.UI
 
             // AddTravelingTank(TankTier.Black, 200, 200);
 
-            SpriteFontBase font = TankGame.TextFont;
-
             Theme = new("Main Menu Theme", "Content/Assets/mainmenu/theme", TankGame.Settings.MusicVolume);
             Theme.Volume = TankGame.Settings.MusicVolume * 0.1f;
+        }
+        public static void InitializeUIGraphics()
+        {
+            _initialized = true;
 
+            TankGame.Instance.Window.ClientSizeChanged += UpdateProjection;
+            var font = TankGame.TextFont;
             #region Init Standard Buttons
             PlayButton = new(TankGame.GameLanguage.Play, font, Color.WhiteSmoke)
             {
@@ -424,7 +435,7 @@ namespace TanksRebirth.GameContent.UI
             // _rotDelta = GameUtils.MousePosition.Y / GameUtils.WindowHeight * 1000;
 
             LogoRotation = MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalMilliseconds / _rotationBpm) / _rotDelta + _spinOffset;
-            LogoScale = MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalMilliseconds / _bpm) / _sclMax + _sclOffset;
+            LogoScale = (MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalMilliseconds / _bpm) / _sclMax + _sclOffset).ToResolution();
 
             if (_sclOffset < _sclApproach)
                 _sclOffset += _sclAcc;
@@ -441,9 +452,10 @@ namespace TanksRebirth.GameContent.UI
             Projection = Matrix.CreateOrthographic(TankGame.Instance.GraphicsDevice.Viewport.Width, TankGame.Instance.GraphicsDevice.Viewport.Height, -2000f, 5000f);
             View = Matrix.CreateScale(2) * Matrix.CreateLookAt(new(0, 0, 500), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(MathHelper.PiOver2);
         }
-
+        private static bool _diffButtonsInitialized;
         private static void InitializeDifficultyButtons()
         {
+            _diffButtonsInitialized = true;
             SpriteFontBase font = TankGame.TextFont;
             TanksAreCalculators = new("Tanks are Calculators", font, Color.White)
             {
@@ -878,6 +890,8 @@ namespace TanksRebirth.GameContent.UI
 
         public static void Update()
         {
+            if (!_initialized || !_diffButtonsInitialized)
+                return;
             if (MenuState == State.StatsMenu)
                 if (Input.KeyJustPressed(Keys.Escape))
                     MenuState = State.PrimaryMenu;
@@ -965,6 +979,7 @@ namespace TanksRebirth.GameContent.UI
             GameUI.OptionsButton.Position.Y -= 75;
 
             HideAll();
+            OnMenuClose?.Invoke();
         }
 
         public static void Open()
@@ -1026,6 +1041,8 @@ namespace TanksRebirth.GameContent.UI
             GameUI.QuitButton.IsVisible = true;
             GameUI.OptionsButton.IsVisible = true;
             GameUI.OptionsButton.Size.Y = 50;
+
+            OnMenuOpen?.Invoke();
         }
 
         private static void HideAll()
@@ -1067,32 +1084,12 @@ namespace TanksRebirth.GameContent.UI
         }
 
         private static readonly string tanksMessage = $"Tanks! Rebirth ALPHA v{TankGame.Instance.GameVersion}\nThe original game and assets used in this game belongs to Nintendo\nDeveloped by RighteousRyan\nTANKS to all our contributors!";
-        /*private static readonly string keyDisplay = "For anyone needing a list of keys for\ndebugging purposes, here you go:\n" +
-            "i - spawns the powerup listed at the top\n" +
-            "; - spawns a  mine at the mouse\n" +
-            "' - spawns a still bullet at the mouse\n" +
-            "insert - hides all debugging UI\n" +
-            "mouse2 - allows you to change the angle of the camera\n" +
-            "mouse3 - allows the dragging of the camera on an axis\n" +
-            "add and subtract - allow scaling of the game\n" +
-            "q - toggles fps mode (not working ATM)\n" +
-            "num7 and num9 - changes tank to spawn\n" +
-            "num1 and num3 - changes the team of the tank spawned\n" +
-            "k while hovering a tank - kill that tank\n" +
-            "home - spawn a tank\n" +
-            "end - spawn a tank crate\n" +
-            "pgup - spawns a plethora of the tank type you choose and it's respective team\n" +
-            "pgdown - spawns a player\n" +
-            "mult - change debug level by +1\n" +
-            "divide - change debug level by -1\n" +
-            "z and x - change placed block type\n" +
-            "j - overhead level editor view (level editor) (for now)\n" +
-            ", and . - change block heights\n\n" +
-            "Also, ahead of time- sorry if you have a < 66% keyboard!";*/
 
         private static int _oldwheel;
         public static void Render()
         {
+            if (!_initialized || !_diffButtonsInitialized)
+                return;
             if (Active)
             {
                 if (MenuState == State.Cosmetics)
@@ -1101,6 +1098,28 @@ namespace TanksRebirth.GameContent.UI
                     RenderStats(new Vector2(GameUtils.WindowWidth * 0.3f, 200), new Vector2(GameUtils.WindowWidth * 0.7f, 40), Anchor.TopCenter);
                 else if (MenuState == State.Difficulties)
                     TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "Ideas are welcome! Let us know in our DISCORD server!", new(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 6), Color.White, new Vector2(1f), 0f, GameUtils.GetAnchor(Anchor.Center, TankGame.TextFont.MeasureString("Ideas are welcome! Let us know in our DISCORD server!")));
+                else if (MenuState == State.LoadingMods)
+                {
+                    var alpha = 0.7f;
+                    var width = GameUtils.WindowWidth / 3;
+                    TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2), null, Color.SkyBlue * alpha, 0f, GameUtils.GetAnchor(Anchor.Center, TankGame.WhitePixel.Size()), new Vector2(width, 200.ToResolutionY()), default, 0f);
+
+                    var barDims = new Vector2(width - 120, 20).ToResolution();
+
+                    TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2), null, Color.Goldenrod * alpha, 0f, GameUtils.GetAnchor(Anchor.Center, TankGame.WhitePixel.Size()), 
+                        barDims, default, 0f);
+                    var ratio = (float)ModLoader.ActionsComplete / ModLoader.ActionsNeeded;
+                    if (ModLoader.ActionsNeeded == 0)
+                        ratio = 0;
+                    TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2), null, Color.Yellow * alpha, 0f, GameUtils.GetAnchor(Anchor.Center, TankGame.WhitePixel.Size()), 
+                        barDims * new Vector2(ratio, 1f).ToResolution(), default, 0f);
+
+                    var txt = $"{ModLoader.Status} {ModLoader.ModBeingLoaded}...";
+                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, txt, new(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2 - 75.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(Anchor.Center, TankGame.TextFont.MeasureString(txt)));
+
+                    txt = $"Loading your mods... {ratio * 100:0}% ({ModLoader.ActionsComplete} / {ModLoader.ActionsNeeded})";
+                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, txt, new(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2 - 150.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(Anchor.Center, TankGame.TextFont.MeasureString(txt)));
+                }
                 #region Various things
                 if ((NetPlay.CurrentServer is not null && (Server.ConnectedClients is not null || NetPlay.ServerName is not null)) || (Client.IsConnected() && Client.lobbyDataReceived))
                 {
@@ -1132,7 +1151,7 @@ namespace TanksRebirth.GameContent.UI
                     TankGame.SpriteRenderer.Draw(LogoTexture, LogoPosition, null, Color.White, LogoRotation, LogoTexture.Size() / 2, LogoScale, default, default);
 
                     var size = TankGame.TextFont.MeasureString(TankGame.Instance.MOTD);
-                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, TankGame.Instance.MOTD, LogoPosition + LogoTexture.Size() * LogoScale * 0.3f, Color.White, new(LogoScale * 1.5f), LogoRotation - 0.25f, GameUtils.GetAnchor(Anchor.TopCenter, size));
+                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, TankGame.Instance.MOTD, LogoPosition + LogoTexture.Size() * LogoScale * 0.3f, Color.White, LogoScale * 1.5f, LogoRotation - 0.25f, GameUtils.GetAnchor(Anchor.TopCenter, size));
                 }
 
                 if (campaignNames.Count == 1)
@@ -1198,8 +1217,7 @@ namespace TanksRebirth.GameContent.UI
                         $"\nCurrently, you will skip to the {MissionCheckpoint + 1}{getSuffix(MissionCheckpoint + 1)} mission in the campaign." +
                         $"\nYou will be alerted if that mission does not exist.", new(12, 200), Color.White, new(0.75f), 0f, Vector2.Zero);
                 }
-                else if (MenuState == State.Cosmetics)
-                {
+                else if (MenuState == State.Cosmetics) {
                     TankGame.SpriteRenderer.DrawString(TankGame.TextFontLarge, $"COMING SOON!", new(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 6), Color.White, new Vector2(0.75f) * (1920 / 1080 / TankGame.Instance.GraphicsDevice.Viewport.AspectRatio), 0f, TankGame.TextFontLarge.MeasureString($"COMING SOON!") / 2);
                 }
             }
