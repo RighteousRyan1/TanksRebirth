@@ -42,6 +42,11 @@ namespace TanksRebirth.GameContent.UI
         private static Matrix View;
         private static Matrix Projection;
 
+        public delegate void MenuOpenDelegate();
+        public delegate void MenuCloseDelegate();
+        public static event MenuOpenDelegate OnMenuOpen;
+        public static event MenuCloseDelegate OnMenuClose;
+
         #region Button Fields
 
         public static UITextButton PlayButton;
@@ -974,6 +979,7 @@ namespace TanksRebirth.GameContent.UI
             GameUI.OptionsButton.Position.Y -= 75;
 
             HideAll();
+            OnMenuClose?.Invoke();
         }
 
         public static void Open()
@@ -1035,6 +1041,8 @@ namespace TanksRebirth.GameContent.UI
             GameUI.QuitButton.IsVisible = true;
             GameUI.OptionsButton.IsVisible = true;
             GameUI.OptionsButton.Size.Y = 50;
+
+            OnMenuOpen?.Invoke();
         }
 
         private static void HideAll()

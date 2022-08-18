@@ -99,7 +99,7 @@ namespace TanksRebirth.GameContent.UI
 
             // finish this tomorrow i am very tired murder me.
             SetStats(GameProperties.LoadedCampaign, PlayerTank.PlayerStatistics, PlayerTank.TankKills);
-            Grade = FormulateGradeLevel();
+            Grade = FormulateGradeLevel(true);
 
             _skip = false;
 
@@ -196,9 +196,10 @@ namespace TanksRebirth.GameContent.UI
 
             string[] funFacts = 
             {
-                $"Shot/Hit Ratio: {ShotToKillRatio * 100:0}% ({ShellsFired}/{ShellHits})",
-                $"Mine/Hit Ratio: {MineToKillRatio * 100:0}% ({MinesLaid}/{MineHits})",
-                $"Lives/Possible Ratio: {LifeRatio * 100:0}% ({LivesRemaining}/{TotalPossibleLives})"
+                $"% Shots Hit: {ShotToKillRatio * 100:0}% ({ShellsFired}/{ShellHits})",
+                $"% Mine Effect: {MineToKillRatio * 100:0}% ({MinesLaid}/{MineHits})",
+                $"% Lives Earned: {LifeRatio * 100:0}% ({LivesRemaining}/{TotalPossibleLives})",
+                $"% Missions Complete: {MissionRatio * 100:0}% ({GameProperties.LoadedCampaign.CurrentMissionId + 1}/{GameProperties.LoadedCampaign.CachedMissions.Length})"
             };
             for (int i = 0; i < funFacts.Length; i++)
             {
@@ -208,10 +209,6 @@ namespace TanksRebirth.GameContent.UI
                 IntermissionSystem.DrawShadowedString(TankGame.TextFont, new Vector2(8.ToResolutionX(), GameUtils.WindowHeight / 3 + (75 + (i * 25)).ToResolutionY()), Vector2.One,
                     ff, Color.DeepSkyBlue, new Vector2(0.75f).ToResolution(), 1f, new Vector2(0, measure.Y / 2), 0.4f);
             }
-
-
-
-
 
             TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Vector2(GameUtils.WindowWidth / 3, 0), null, Color.Beige * _panelAlpha, 0f, Vector2.Zero, new Vector2(GameUtils.WindowWidth / 3, GameUtils.WindowHeight), default, 0f);
             TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Vector2(GameUtils.WindowWidth / 3, (_tnkDrawYOff - 50f).ToResolutionY()), null, Color.Gold * _panelAlpha, 0f, Vector2.Zero, new Vector2(GameUtils.WindowWidth / 3, 10.ToResolutionY()), default, 0f);
@@ -330,13 +327,14 @@ namespace TanksRebirth.GameContent.UI
                 KillsPerType = KillsPerType.OrderBy(tier => tier.Key).ToDictionary(x => x.Key, y => y.Value);
         }
 
-        public static Grade FormulateGradeLevel()
+        public static Grade FormulateGradeLevel(bool useMissionCompletionRatio)
         {
             var grade = Grade.APlus;
 
             ShotToKillRatio = (float)ShellHits / ShellsFired;
             MineToKillRatio = (float)MineHits / MinesLaid;
             LifeRatio = (float)LivesRemaining / TotalPossibleLives;
+            MissionRatio = (float)(GameProperties.LoadedCampaign.CurrentMissionId + 1) / GameProperties.LoadedCampaign.CachedMissions.Length;
 
             if (float.IsNaN(ShotToKillRatio))
                 ShotToKillRatio = 1f;
@@ -346,21 +344,20 @@ namespace TanksRebirth.GameContent.UI
             // (min, max]
             bool isBetween(float input, float min, float max) => input >= min && input < max;
             // redundant code but whatever i love men
-            if (ShotToKillRatio > 0.8f)
+            if (ShotToKillRatio > 0.5f)
                 grade += 0;
-            else if (isBetween(ShotToKillRatio, 0.6f, 0.8f))
+            else if (isBetween(ShotToKillRatio, 0.3f, 0.5f))
                 grade += 1;
-            else if (isBetween(ShotToKillRatio, 0.4f, 0.6f))
+            else if (isBetween(ShotToKillRatio, 0.15f, 0.3f))
                 grade += 2;
-            else if (isBetween(ShotToKillRatio, 0.2f, 0.4f))
+            else
                 grade += 3;
-            else if (ShotToKillRatio < 0.2f)
-                grade += 4;
 
-            if (MineToKillRatio >= 0.25f)
+            // too harsh i think.
+            /*if (MineToKillRatio >= 0.25f)
                 grade += 0;
-            else if (MineToKillRatio < 0.25f)
-                grade += 1;
+            else
+                grade += 1;*/
 
             // check >= just incase something goofy happens.
             if (LifeRatio >= 1f)
@@ -373,6 +370,22 @@ namespace TanksRebirth.GameContent.UI
                 grade += 3;
             else if (isBetween(LifeRatio, 0f, 0.25f))
                 grade += 4;
+
+            if (useMissionCompletionRatio)
+            {
+                if (MissionRatio >= 0.75f)
+                    grade += 0;
+                else if (isBetween(LifeRatio, 0.5f, 0.75f))
+                    grade += 1;
+                else if (isBetween(LifeRatio, 0.3f, 0.5f))
+                    grade += 2;
+                else if (isBetween(LifeRatio, 0.2f, 0.3f))
+                    grade += 3;
+                else if (isBetween(LifeRatio, 0.1f, 0.2f))
+                    grade += 4;
+                else
+                    grade += 5;
+            }
 
             grade += SuicideCount;
 
@@ -400,5 +413,6 @@ namespace TanksRebirth.GameContent.UI
         public static float ShotToKillRatio;
         public static float MineToKillRatio;
         public static float LifeRatio;
+        public static float MissionRatio;
     }
 }
