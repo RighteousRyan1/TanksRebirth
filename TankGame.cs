@@ -405,7 +405,7 @@ namespace TanksRebirth
                 GameUI.Initialize();
                 MainMenu.InitializeUIGraphics();
 
-                DecalSystem.Initialize(SpriteRenderer, GraphicsDevice);
+                // DecalSystem.Initialize(SpriteRenderer, GraphicsDevice);
 
                 LevelEditor.Initialize();
 
@@ -830,7 +830,7 @@ namespace TanksRebirth
             {
                 gameTarget?.Dispose();
                 var presentationParams = GraphicsDevice.PresentationParameters;
-                gameTarget = new RenderTarget2D(GraphicsDevice, presentationParams.BackBufferWidth, presentationParams.BackBufferHeight, false, presentationParams.BackBufferFormat, presentationParams.DepthStencilFormat, presentationParams.MultiSampleCount, RenderTargetUsage.PreserveContents);
+                gameTarget = new RenderTarget2D(GraphicsDevice, presentationParams.BackBufferWidth, presentationParams.BackBufferHeight, false, presentationParams.BackBufferFormat, presentationParams.DepthStencilFormat, 0, RenderTargetUsage.PreserveContents);
             }
             GraphicsDevice.SetRenderTarget(gameTarget);
             try

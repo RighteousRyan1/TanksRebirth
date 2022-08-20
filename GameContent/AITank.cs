@@ -2293,7 +2293,7 @@ namespace TanksRebirth.GameContent
 
                                     // AngleSmoothStep(TargetTankRotation, refAngle, refAngle / 3);
                                     // TargetTankRotation = -TargetTankRotation + MathHelper.PiOver2;
-                                    GameUtils.RoughStep(ref TargetTankRotation, TargetTankRotation <= MathHelper.Pi ? -refAngle + MathHelper.PiOver2 : refAngle, refAngle / 6);
+                                    GameUtils.RoughStep(ref TargetTankRotation, /*TargetTankRotation <= MathHelper.Pi ? -refAngle + MathHelper.PiOver2 : */refAngle, refAngle / 6);
                                 }
                             }
                             // TODO: i literally do not understand this
@@ -2645,7 +2645,7 @@ namespace TanksRebirth.GameContent
 
 
                         DebugUtils.DrawDebugString(TankGame.SpriteRenderer, "end", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(GameUtils.DirectionOf(Position, travelPos).X, 0, GameUtils.DirectionOf(Position, travelPos).Y), View, Projection), 1, centered: true);
-                        DebugUtils.DrawDebugString(TankGame.SpriteRenderer, "me", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.Identity, View, Projection/*Matrix.CreateTranslation(Position.X, 11, Position.Y), View, Projection)*/), 1, centered: true);
+                        DebugUtils.DrawDebugString(TankGame.SpriteRenderer, "me", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection/*Matrix.CreateTranslation(Position.X, 11, Position.Y), View, Projection)*/), 1, centered: true);
                         //TankGame.spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), new Rectangle((int)travelPos.X - 1, (int)travelPos.Y - 1, 20, 20), Color.White);
 
                         // draw future
