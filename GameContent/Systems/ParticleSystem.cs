@@ -29,7 +29,10 @@ namespace TanksRebirth.GameContent
         {
             return new(position)
             {
-                Texture = texture,
+                //IsText = true,
+                //Text = "fuck",
+                //Roll = MathHelper.Pi,
+                Texture = texture
             };
         }
         public static Particle MakeParticle(Vector3 position, string text)

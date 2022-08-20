@@ -64,7 +64,6 @@ namespace TanksRebirth.GameContent
         public Vector3 Position3D => Position.ExpandZ();
 
         public Model model;
-        public Particle shadow;
 
         public Matrix World;
         public Matrix View;
@@ -140,32 +139,55 @@ namespace TanksRebirth.GameContent
                 Position = position;
 
             // fix this, but dont worry about it for now
-            //shadow = ParticleSystem.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>($"Assets/toy/cube_shadow_tex"));
-            //shadow.roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
-            //shadow.Scale = new(1f);
-            //shadow.isAddative = false;
+            var p = ParticleSystem.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>($"Assets/toy/cube_shadow_tex"));
 
+            bool moveL = true;
+            bool moveD = true;
+            p.UniqueBehavior = (a) =>
+            {
+                p.Roll = MathHelper.PiOver2;
+                p.Scale = new(1f);
+                p.isAddative = false;
+                p.TextureCrop = new(0, 0, 32, 32);
+                p.Alpha = 1f;
+
+                moveL = p.TextureCrop.Value.X < 32;
+                moveD = p.TextureCrop.Value.Y < 32;
+
+                float coordOff = 16 * p.Scale.X;
+
+                p.Position = new Vector3(Position3D.X + (moveL ? coordOff : -coordOff), 0.15f, Position3D.Z + (moveD ? coordOff : -coordOff));
+            };
             // TODO: Finish collisions
+
+            UpdateOffset();
 
             int index = Array.IndexOf(AllBlocks, AllBlocks.First(cube => cube is null));
 
             Id = index;
 
+            p.Tag = "block_shadow_" + Id;
+
             AllBlocks[index] = this;
         }
-
         public void Remove()
         {
             if (Body != null)
                 Tank.CollisionsWorld.Remove(Body);
+
+            var index = Array.FindIndex(ParticleSystem.CurrentParticles, a => {
+                if (a == null)
+                    return false;
+                return (string)a.Tag == "block_shadow_" + Id;
+                });
+            if (index > -1)
+                ParticleSystem.CurrentParticles[index].Destroy();
 
             AllBlocks[Id] = null;
         }
 
         public void Destroy()
         {
-            shadow?.Destroy();
-
             if (IsDestructible)
             {
                 const int PARTICLE_COUNT = 12;
@@ -175,6 +197,7 @@ namespace TanksRebirth.GameContent
                     var tex = GameResources.GetGameResource<Texture2D>(GameHandler.GameRand.Next(0, 2) == 0 ? "Assets/textures/misc/tank_rock" : "Assets/textures/misc/tank_rock_2");
 
                     var part = ParticleSystem.MakeParticle(Position3D, tex);
+                    // var part = ParticleSystem.MakeParticle(Position3D, "wtf");
 
                     part.isAddative = false;
 
@@ -278,6 +301,7 @@ namespace TanksRebirth.GameContent
         }
         public void Update()
         {
+
             Hitbox = new((int)(Position.X - FULL_BLOCK_SIZE / 2 + 1), (int)(Position.Y - FULL_BLOCK_SIZE / 2), (int)FULL_BLOCK_SIZE - 1, (int)FULL_BLOCK_SIZE);
             _offset = new();
 
@@ -307,6 +331,13 @@ namespace TanksRebirth.GameContent
                 }
             }
 
+            UpdateOffset();
+
+            OnPostUpdate?.Invoke(this);
+        }
+
+        private void UpdateOffset()
+        {
             if (CanStack)
             {
                 var newFullSize = FULL_SIZE;
@@ -337,8 +368,6 @@ namespace TanksRebirth.GameContent
             }
             else
                 _offset.Y -= 0.1f;
-
-            OnPostUpdate?.Invoke(this);
         }
 
         public enum CollisionDirection

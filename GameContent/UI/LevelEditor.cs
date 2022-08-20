@@ -134,7 +134,6 @@ namespace TanksRebirth.GameContent.UI
             SaveLevelConfirm.Tooltip = "Save your mission to a file.\nKeep in mind: you will need to name the missions in numerical order.";
             SaveLevelConfirm.OnLeftClick = (l) => {
                 // Mission.Save(LevelName.GetRealText(), )
-
                 if (TankGame.IsWindows)
                 {
                     var res = Dialog.FileSave("mission", TankGame.SaveDirectory);
@@ -166,6 +165,15 @@ namespace TanksRebirth.GameContent.UI
             SavingThings,
         }
 
+        private static bool _sdbui;
+        public static bool ShouldDrawBarUI {
+            get => _sdbui;
+            set {
+                SetBarUIVisibility(value);
+                _sdbui = value;
+            }
+        }
+
         private static UICategory _category;
         public static UICategory GUICategory {
             get => _category;
@@ -186,6 +194,14 @@ namespace TanksRebirth.GameContent.UI
         }
 
         private static bool _saveMenuOpen;
+        private static void SetBarUIVisibility(bool visible)
+        {
+            PlayerTanksCategory.IsVisible =
+                EnemyTanksCategory.IsVisible =
+                BlocksCategory.IsVisible =
+                Perspective.IsVisible =
+                TestLevel.IsVisible = visible;
+        }
         private static void SetSaveMenuVisibility(bool visible)
         {
             _saveMenuOpen = visible;
@@ -201,12 +217,12 @@ namespace TanksRebirth.GameContent.UI
             ExitConfirm.IsVisible = visible;
             LevelLoadingBGColor.IsVisible = visible;
             LevelLoadingStripColor.IsVisible = visible;*/
-            LevelDescription.IsVisible = 
-            LevelAuthor.IsVisible = 
-            LevelTags.IsVisible = 
-            LevelVersion.IsVisible = 
-            LevelExtraLifeMissions.IsVisible = 
-            LevelLoadingBGColor.IsVisible = 
+            LevelDescription.IsVisible =
+            LevelAuthor.IsVisible =
+            LevelTags.IsVisible =
+            LevelVersion.IsVisible =
+            LevelExtraLifeMissions.IsVisible =
+            LevelLoadingBGColor.IsVisible =
             LevelLoadingStripColor.IsVisible = false;
         }
         private static void SetLevelEditorVisibility(bool visible)
@@ -261,7 +277,7 @@ namespace TanksRebirth.GameContent.UI
             #endregion
 
             TestLevel = new("Test Level", TankGame.TextFont, Color.White);
-            TestLevel.SetDimensions(() => new(GameUtils.WindowWidth * 0.01f, GameUtils.WindowHeight * 0.725f), () => new(200, 50));
+            TestLevel.SetDimensions(() => new(GameUtils.WindowWidth * 0.01f, GameUtils.WindowHeight * 0.725f), () => new Vector2(200, 50).ToResolution());
 
             TestLevel.OnLeftClick = (l) => {
                 Close();
@@ -271,7 +287,7 @@ namespace TanksRebirth.GameContent.UI
             };
 
             ReturnToEditor = new("Return to Editor", TankGame.TextFont, Color.White);
-            ReturnToEditor.SetDimensions(() =>new(GameUtils.WindowWidth * 0.01f, GameUtils.WindowHeight * 0.02f), () => new(250, 50));
+            ReturnToEditor.SetDimensions(() => new(GameUtils.WindowWidth * 0.01f, GameUtils.WindowHeight * 0.02f), () => new Vector2(250, 50).ToResolution());
 
             ReturnToEditor.OnLeftClick = (l) => {
                 Open(false);
@@ -282,25 +298,25 @@ namespace TanksRebirth.GameContent.UI
             };
 
             Perspective = new("Perspective", TankGame.TextFont, Color.White);
-            Perspective.SetDimensions(() => new(GameUtils.WindowWidth * 0.125f, GameUtils.WindowHeight * 0.725f), () =>new(200, 50));
-
+            Perspective.SetDimensions(() => new(GameUtils.WindowWidth * 0.125f, GameUtils.WindowHeight * 0.725f), () => new Vector2(200, 50).ToResolution());
+            Perspective.Tooltip = "View your mission at the perspective of the player.";
             Perspective.OnLeftClick = (l) => {
                 TankGame.OverheadView = !TankGame.OverheadView;
             };
 
             BlocksCategory = new("Blocks", TankGame.TextFont, Color.White);
-            BlocksCategory.SetDimensions(() => new(GameUtils.WindowWidth * 0.75f, GameUtils.WindowHeight * 0.725f), () => new(200, 50));
+            BlocksCategory.SetDimensions(() => new(GameUtils.WindowWidth * 0.75f, GameUtils.WindowHeight * 0.725f), () => new Vector2(200, 50).ToResolution());
             BlocksCategory.OnLeftClick = (l) => {
                 CurCategory = Category.Blocks;
             };
 
             EnemyTanksCategory = new("Enemies", TankGame.TextFont, Color.White);
-            EnemyTanksCategory.SetDimensions(() => new(GameUtils.WindowWidth * 0.875f, GameUtils.WindowHeight * 0.725f), () => new(200, 50));
+            EnemyTanksCategory.SetDimensions(() => new(GameUtils.WindowWidth * 0.875f, GameUtils.WindowHeight * 0.725f), () => new Vector2(200, 50).ToResolution());
             EnemyTanksCategory.OnLeftClick = (l) => {
                 CurCategory = Category.EnemyTanks;
             };
             PlayerTanksCategory = new("Players", TankGame.TextFont, Color.White);
-            PlayerTanksCategory.SetDimensions(() => new(GameUtils.WindowWidth * 0.875f, GameUtils.WindowHeight * 0.65f), () => new(200, 50));
+            PlayerTanksCategory.SetDimensions(() => new(GameUtils.WindowWidth * 0.875f, GameUtils.WindowHeight * 0.65f), () => new Vector2(200, 50).ToResolution());
             PlayerTanksCategory.OnLeftClick = (l) => {
                 CurCategory = Category.PlayerTanks;
             };
@@ -309,7 +325,7 @@ namespace TanksRebirth.GameContent.UI
 
             float width = 200;
 
-            SaveLevel.SetDimensions(() => new(GameUtils.WindowWidth * 0.5f - width / 2, 10), () => new(width, 50));
+            SaveLevel.SetDimensions(() => new(GameUtils.WindowWidth * 0.5f - (width / 2).ToResolutionX(), 10.ToResolutionY()), () => new Vector2(width, 50).ToResolution());
             SaveLevel.OnLeftClick = (a) => {
                 if (!_saveMenuOpen)
                     GUICategory = UICategory.SavingThings;
@@ -376,6 +392,9 @@ namespace TanksRebirth.GameContent.UI
         {
             if (!_initialized)
                 return;
+            ShouldDrawBarUI = !GameUI.Paused;
+            if (!ShouldDrawBarUI)
+                return;
             #region Main UI
             int xOff = 0;
             _clickRect = new(0, (int)(GameUtils.WindowBottom.Y * 0.8f), GameUtils.WindowWidth, (int)(GameUtils.WindowHeight * 0.2f));
@@ -387,72 +406,69 @@ namespace TanksRebirth.GameContent.UI
             {
                 int padding = 20;
                 var orig = new Vector2(0, TankGame.WhitePixel.Size().Y);
-                TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, 
-                    new Rectangle((int)(GameUtils.WindowWidth / 2 - measure.X / 2 - padding), (int)(GameUtils.WindowHeight * 0.8f), (int)(measure.X + padding * 2), (int)(measure.Y + 20)), null, Color.White, 0f, orig, default, 0f);
+                TankGame.SpriteRenderer.Draw(TankGame.WhitePixel,
+                    new Rectangle((int)(GameUtils.WindowWidth / 2 - (measure.X / 2 + padding).ToResolutionX()), (int)(GameUtils.WindowHeight * 0.8f), (int)(measure.X + padding * 2).ToResolutionX(), (int)(measure.Y + 20).ToResolutionY()), null, Color.White, 0f, orig, default, 0f);
             }
 
-            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, _curDescription, new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight * 0.78f), Color.Black, Vector2.One, 0f, new Vector2(measure.X / 2, measure.Y));
+            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, _curDescription, new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight * 0.78f), Color.Black, Vector2.One.ToResolution(), 0f, new Vector2(measure.X / 2, measure.Y));
             // level info
-            TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Rectangle(0, 0, 350, 500), null, Color.Gray, 0f, Vector2.Zero, default, 0f);
-            TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Rectangle(0, 0, 350, 40), null, Color.White, 0f, Vector2.Zero, default, 0f);
+            TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Rectangle(0, 0, 350, 500).ToResolution(), null, Color.Gray, 0f, Vector2.Zero, default, 0f);
+            TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Rectangle(0, 0, 350, 40).ToResolution(), null, Color.White, 0f, Vector2.Zero, default, 0f);
             // render teams
 
             // placement information
-            TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Rectangle(GameUtils.WindowWidth - 350, 0, 350, 500), null, Color.Gray, 0f, Vector2.Zero, default, 0f);
-            TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Rectangle(GameUtils.WindowWidth - 350, 0, 350, 40), null, Color.White, 0f, Vector2.Zero, default, 0f);
-            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "Placement Information", new Vector2(GameUtils.WindowWidth - 325, 3), Color.Black, Vector2.One, 0f, Vector2.Zero);
+            TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Rectangle(GameUtils.WindowWidth - (int)350.ToResolutionX(), 0, (int)350.ToResolutionX(), (int)500.ToResolutionY()), null, Color.Gray, 0f, Vector2.Zero, default, 0f);
+            TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Rectangle(GameUtils.WindowWidth - (int)350.ToResolutionX(), 0, (int)350.ToResolutionX(), (int)40.ToResolutionY()), null, Color.White, 0f, Vector2.Zero, default, 0f);
+            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "Placement Information", new Vector2(GameUtils.WindowWidth - 325.ToResolutionX(), 3.ToResolutionY()), Color.Black, Vector2.One.ToResolution(), 0f, Vector2.Zero);
             if (CurCategory == Category.Blocks)
-            {
-                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"Block Stack: {BlockHeight}", new Vector2(GameUtils.WindowWidth - 335, 40), Color.White, Vector2.One, 0f, Vector2.Zero);
-                // TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"Block Stack: {BlockHeight}", new Vector2(GameUtils.WindowWidth - 335, 40), Color.White, Vector2.One, 0f, Vector2.Zero);
-            }
+                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"Block Stack: {BlockHeight}", new Vector2(GameUtils.WindowWidth - 335.ToResolutionX(), 40.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
 
             if (CurCategory == Category.EnemyTanks || CurCategory == Category.PlayerTanks)
             {
-                Vector2 start = new(GameUtils.WindowWidth - 250, 140);
+                Vector2 start = new(GameUtils.WindowWidth - 250.ToResolutionX(), 140.ToResolutionY());
 
-                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "Tank Teams", new Vector2(start.X + 45, start.Y - 80), Color.White, Vector2.One, 0f, TankGame.TextFont.MeasureString("Tank Teams") / 2);
+                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "Tank Teams", new Vector2(start.X + 45.ToResolutionX(), start.Y - 80.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, TankGame.TextFont.MeasureString("Tank Teams") / 2);
 
-                TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Rectangle((int)start.X, (int)(start.Y - 40), 40, 40), null, Color.Black, 0f, Vector2.Zero, default, 0f);
-                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "No Team", new Vector2(start.X + 45, start.Y - 40), Color.Black, Vector2.One, 0f, Vector2.Zero);
+                TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Rectangle((int)start.X, (int)(start.Y - 40.ToResolutionY()), (int)40.ToResolutionX(), (int)40.ToResolutionY()), null, Color.Black, 0f, Vector2.Zero, default, 0f);
+                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "No Team", new Vector2(start.X + 45.ToResolutionX(), start.Y - 40.ToResolutionY()), Color.Black, Vector2.One.ToResolution(), 0f, Vector2.Zero);
                 for (int i = 0; i < Enum.GetNames<TankTeam>().Length - 1; i++)
                 {
                     var color = TeamColors[i];
-                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, ((TankTeam)i + 1).ToString(), new Vector2(start.X + 45, start.Y + i * 40), color, Vector2.One, 0f, Vector2.Zero); ;
-                    TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Rectangle((int)start.X, (int)(start.Y + i * 40), 40, 40), null, color, 0f, Vector2.Zero, default, 0f);
+                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, ((TankTeam)i + 1).ToString(), new Vector2(start.X + 45.ToResolutionX(), start.Y + (i * 40).ToResolutionY()), color, Vector2.One.ToResolution(), 0f, Vector2.Zero); ;
+                    TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Rectangle((int)start.X, (int)(start.Y + (i * 40).ToResolutionY()), (int)40.ToResolutionX(), (int)40.ToResolutionY()), null, color, 0f, Vector2.Zero, default, 0f);
                 }
-                TankGame.SpriteRenderer.DrawString(TankGame.TextFontLarge, ">", new Vector2(start.X - 25, start.Y + ((int)(SelectedTankTeam - 1) * 40)), Color.White, new(1f), 0f, TankGame.TextFontLarge.MeasureString(">") / 2);
+                TankGame.SpriteRenderer.DrawString(TankGame.TextFontLarge, ">", new Vector2(start.X - 25.ToResolutionX(), start.Y + ((int)(SelectedTankTeam - 1) * 40).ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, TankGame.TextFontLarge.MeasureString(">") / 2);
 
                 if (SelectedTankTeam != TankTeam.Magenta)
-                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "v", new Vector2(start.X - 25, start.Y + ((int)(SelectedTankTeam - 1) * 40 + 50)), Color.White, new(1f), 0f, TankGame.TextFont.MeasureString("v") / 2);
+                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "v", new Vector2(start.X - 25.ToResolutionX(), start.Y + ((int)(SelectedTankTeam - 1) * 40 + 50).ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, TankGame.TextFont.MeasureString("v") / 2);
                 if (SelectedTankTeam != TankTeam.NoTeam)
-                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "v", new Vector2(start.X - 25, start.Y + ((int)(SelectedTankTeam - 1) * 40 - 10)), Color.White, new(1f), MathHelper.Pi, TankGame.TextFont.MeasureString("v") / 2);
+                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "v", new Vector2(start.X - 25.ToResolutionX(), start.Y + ((int)(SelectedTankTeam - 1) * 40 - 10).ToResolutionY()), Color.White, Vector2.One.ToResolution(), MathHelper.Pi, TankGame.TextFont.MeasureString("v") / 2);
             }
             else if (CurCategory == Category.Blocks)
             {
                 var tex = SelectedBlockType != Block.BlockType.Hole ? $"{SelectedBlockType}_{BlockHeight}" : $"{SelectedBlockType}";
                 var size = RenderTextures[tex].Size();
-                Vector2 start = new(GameUtils.WindowWidth - 175, 450);
-                TankGame.SpriteRenderer.Draw(RenderTextures[tex], start, null, Color.White, 0f, new(size.X / 2, size.Y), /*new Vector2(1f, (float)GameUtils.WindowHeight / 1080)*/ Vector2.One, default, 0f);
+                Vector2 start = new(GameUtils.WindowWidth - 175.ToResolutionX(), 450.ToResolutionY());
+                TankGame.SpriteRenderer.Draw(RenderTextures[tex], start, null, Color.White, 0f, new Vector2(size.X / 2, size.Y), Vector2.One.ToResolution(), default, 0f);
                 // TODO: reduce the hardcode for modders, yeah
                 if (SelectedBlockType != Block.BlockType.Teleporter && SelectedBlockType != Block.BlockType.Hole)
                 {
-                    TankGame.SpriteRenderer.DrawString(TankGame.TextFontLarge, "v", new Vector2(start.X + 100, start.Y - 75), Color.White, new(1f), 0f, TankGame.TextFontLarge.MeasureString("v") / 2);
-                    TankGame.SpriteRenderer.DrawString(TankGame.TextFontLarge, "v", new Vector2(start.X - 100, start.Y - 25), Color.White, new(1f), MathHelper.Pi, TankGame.TextFontLarge.MeasureString("v") / 2);
+                    TankGame.SpriteRenderer.DrawString(TankGame.TextFontLarge, "v", new Vector2(start.X + 100.ToResolutionX(), start.Y - 75.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, TankGame.TextFontLarge.MeasureString("v") / 2);
+                    TankGame.SpriteRenderer.DrawString(TankGame.TextFontLarge, "v", new Vector2(start.X - 100.ToResolutionX(), start.Y - 25.ToResolutionY()), Color.White, Vector2.One.ToResolution(), MathHelper.Pi, TankGame.TextFontLarge.MeasureString("v") / 2);
                 }
             }
 
             TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, _curHoverRect, null, HoverBoxColor * 0.5f, 0f, Vector2.Zero, default, 0f);
 
-            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "Level Information", new Vector2(55, 3), Color.Black, Vector2.One, 0f, Vector2.Zero);
-            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"Total Enemy Tanks: {AITank.CountAll()}", new Vector2(10, 40), Color.White, Vector2.One, 0f, Vector2.Zero);
-            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"Difficulty Rating: {DifficultyAlgorithm.GetDifficulty(Mission.GetCurrent()):0.00}", new Vector2(10, 80), Color.White, Vector2.One, 0f, Vector2.Zero);
+            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "Level Information", new Vector2(55, 3).ToResolution(), Color.Black, Vector2.One.ToResolution(), 0f, Vector2.Zero);
+            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"Total Enemy Tanks: {AITank.CountAll()}", new Vector2(10, 40).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
+            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"Difficulty Rating: {DifficultyAlgorithm.GetDifficulty(Mission.GetCurrent()):0.00}", new Vector2(10, 80).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
 
             if (CurCategory == Category.EnemyTanks)
             {
                 for (int i = 0; i < _renderNamesTanks.Count; i++)
                 {
-                    ClickEventsPerItem[new Rectangle((int)(34 + xOff + _barOffset), (int)(GameUtils.WindowBottom.Y * 0.8f), 234, 256)] =
+                    ClickEventsPerItem[new Rectangle((int)(34.ToResolutionX() + xOff + _barOffset), (int)(GameUtils.WindowBottom.Y * 0.8f), (int)234.ToResolutionX(), (int)256.ToResolutionY())] =
                         (i + 2, (TankTier)(i + 2) switch
                         {
                             TankTier.Brown => "An easy to defeat, stationary, slow firing enemy.",
@@ -485,8 +501,8 @@ namespace TanksRebirth.GameContent.UI
                             _ => "What?"
                         }); // TODO: localize this. i hate english.
 
-                    TankGame.SpriteRenderer.Draw(RenderTextures[_renderNamesTanks[i]], new Vector2(24 + xOff + _barOffset, GameUtils.WindowBottom.Y * 0.75f), null, (int)SelectedTankTier - 2 == i ? SelectionColor : Color.White, 0f, Vector2.Zero, new Vector2(1f, (float)GameUtils.WindowHeight / 1080), default, 0f);
-                    xOff += 234;
+                    TankGame.SpriteRenderer.Draw(RenderTextures[_renderNamesTanks[i]], new Vector2(24.ToResolutionX() + xOff + _barOffset, GameUtils.WindowBottom.Y * 0.75f), null, (int)SelectedTankTier - 2 == i ? SelectionColor : Color.White, 0f, Vector2.Zero, Vector2.One.ToResolution(), default, 0f);
+                    xOff += (int)234.ToResolutionX();
                 }
                 _maxScroll = xOff;
             }
@@ -494,7 +510,7 @@ namespace TanksRebirth.GameContent.UI
             {
                 for (int i = 0; i < _renderNamesBlocks.Count; i++)
                 {
-                    ClickEventsPerItem[new Rectangle((int)(34 + xOff + _barOffset), (int)(GameUtils.WindowBottom.Y * 0.8f), 234, 256)] =
+                    ClickEventsPerItem[new Rectangle((int)(34.ToResolutionX() + xOff + _barOffset), (int)(GameUtils.WindowBottom.Y * 0.8f), (int)234.ToResolutionX(), (int)256.ToResolutionY())] =
                         (i, (Block.BlockType)i switch
                         {
                             Block.BlockType.Wood => "An indestructible obstacle.",
@@ -503,8 +519,8 @@ namespace TanksRebirth.GameContent.UI
                             _ => "What?"
                         });
 
-                    TankGame.SpriteRenderer.Draw(RenderTextures[_renderNamesBlocks[i]], new Vector2(24 + xOff + _barOffset, GameUtils.WindowBottom.Y * 0.75f), null, (int)SelectedBlockType == i ? SelectionColor : Color.White, 0f, Vector2.Zero, new Vector2(1f, (float)GameUtils.WindowHeight / 1080), default, 0f);
-                    xOff += 234;
+                    TankGame.SpriteRenderer.Draw(RenderTextures[_renderNamesBlocks[i]], new Vector2(24.ToResolutionX() + xOff + _barOffset, GameUtils.WindowBottom.Y * 0.75f), null, (int)SelectedBlockType == i ? SelectionColor : Color.White, 0f, Vector2.Zero, Vector2.One.ToResolution(), default, 0f);
+                    xOff += (int)234.ToResolutionX();
                 }
                 _maxScroll = xOff;
             }
@@ -520,7 +536,7 @@ namespace TanksRebirth.GameContent.UI
                             _ => "What?"
                         });
 
-                    TankGame.SpriteRenderer.Draw(RenderTextures[_renderNamesPlayers[i]], new Vector2(24 + xOff + _barOffset, GameUtils.WindowBottom.Y * 0.75f), null, (int)SelectedPlayerType == i ? SelectionColor : Color.White, 0f, Vector2.Zero, new Vector2(1f, (float)GameUtils.WindowHeight / 1080), default, 0f);
+                    TankGame.SpriteRenderer.Draw(RenderTextures[_renderNamesPlayers[i]], new Vector2(24.ToResolutionX() + xOff + _barOffset, GameUtils.WindowBottom.Y * 0.75f), null, (int)SelectedPlayerType == i ? SelectionColor : Color.White, 0f, Vector2.Zero, Vector2.One.ToResolution(), default, 0f);
                     xOff += 234;
                 }
                 _maxScroll = xOff;
@@ -543,7 +559,7 @@ namespace TanksRebirth.GameContent.UI
             {
                 var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/leveledit/rotate");
                 TankGame.SpriteRenderer.Draw(tex,
-                   GameUtils.MousePosition + new Vector2(20, -20), null, Color.White, 0f, new Vector2(0, tex.Size().Y), 0.2f, default, 0f);
+                   GameUtils.MousePosition + new Vector2(20, -20).ToResolution(), null, Color.White, 0f, new Vector2(0, tex.Size().Y), 0.2f.ToResolution(), default, 0f);
             }
             if (Active && GUICategory == UICategory.SavingThings)
                 TankGame.SpriteRenderer.Draw(TankGame.WhitePixel,
@@ -554,6 +570,7 @@ namespace TanksRebirth.GameContent.UI
         {
             if (!_initialized)
                 return;
+
             LevelContentsPanel = new Rectangle(GameUtils.WindowWidth / 4, (int)(GameUtils.WindowHeight * 0.1f), GameUtils.WindowWidth / 2, (int)(GameUtils.WindowHeight * 0.625f));
             PlacementSquare.PlacesBlock = CurCategory == Category.Blocks;
             switch (CurCategory) {

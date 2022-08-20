@@ -312,7 +312,9 @@ namespace TanksRebirth.GameContent
 
             if (TankGame.OverheadView)
                 HandleLevelEditorModifications();
-
+            /*GameLight.Brightness = GameUtils.MousePosition.Y / GameUtils.WindowHeight;
+            ChatSystem.SendMessage(GameLight.Brightness, Color.White);
+            GameLight.Apply(false);*/
             OnPostUpdate?.Invoke();
         }
 
@@ -390,7 +392,6 @@ namespace TanksRebirth.GameContent
                 }
             }
         }
-
         /// <summary>
         /// A method that returns whether or not there was a victory- be it for the enemy or the player.
         /// </summary>
@@ -504,11 +505,11 @@ namespace TanksRebirth.GameContent
             TankGame.Instance.GraphicsDevice.BlendState = BlendState.AlphaBlend;
 
             if (!MainMenu.Active && !LevelEditor.Editing)
-                Xp?.Render(TankGame.SpriteRenderer, new(GameUtils.WindowWidth / 2, 50), new(100, 20), Anchor.Center, Color.Red, Color.Lime);
+                Xp?.Render(TankGame.SpriteRenderer, new(GameUtils.WindowWidth / 2, 50.ToResolutionY()), new Vector2(100, 20).ToResolution(), Anchor.Center, Color.Red, Color.Lime);
 
             if (_tankFuncDelay > 0 && !MainMenu.Active && !TankGame.OverheadView && !LevelEditor.Active)
                 // $"{MathF.Round(_tankFuncDelay / 60)}"
-                TankGame.SpriteRenderer.DrawString(TankGame.TextFontLarge, $"{MathF.Round(_tankFuncDelay / 60) + 1}", GameUtils.WindowCenter, Color.White, Vector2.One * 3f, 0f, TankGame.TextFontLarge.MeasureString($"{MathF.Round(_tankFuncDelay / 60) + 1}") / 2, 0f);
+                TankGame.SpriteRenderer.DrawString(TankGame.TextFontLarge, $"{MathF.Round(_tankFuncDelay / 60) + 1}", GameUtils.WindowCenter, Color.White, new Vector2(3).ToResolution(), 0f, TankGame.TextFontLarge.MeasureString($"{MathF.Round(_tankFuncDelay / 60) + 1}") / 2, 0f);
 
             if (!MainMenu.Active)
                 MapRenderer.RenderWorldModels();
@@ -642,7 +643,6 @@ namespace TanksRebirth.GameContent
                 CampaignName.IsVisible = DebugUtils.DebuggingEnabled && DebugUtils.DebugLevel == 3;
             }
             GameUI.MissionInfoBar.IsVisible = !MainMenu.Active && !LevelEditor.Active && !CampaignCompleteUI.IsViewingResults;
-
             OnPostRender?.Invoke();
         }
         private static int _oldelta;
@@ -676,7 +676,7 @@ namespace TanksRebirth.GameContent
         public static Lighting.LightProfile GameLight = new()
         {
             Color = new(150, 150, 170),
-            Brightness = 0.7f,
+            Brightness = 0.75f,
             //isNight = true
         };
 
@@ -1023,36 +1023,40 @@ namespace TanksRebirth.GameContent
 
         public static bool ShouldRender = true;
 
+        public static float DistUntilPathTrace = 1575f;
+
         public static void DrawMouse()
         {
+            numDots = 10;
             if (!ShouldRender)
                 return;
-            if (GameHandler.AllPlayerTanks[0] is not null)
+            if (!MainMenu.Active && !GameUI.Paused)
             {
-                // mwvar tankPos = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, GameHandler.myTank.World, TankGame.GameView, TankGame.GameProjection);
-
-                // var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes");
-
-                // GameHandler.ClientLog.Write("One Loop:", LogType.Info);
-
-                /*for (int i = 0; i < numDots; i++)
+                if (GameHandler.AllPlayerTanks[0] is not null)
                 {
-                    var ii = 1f / i;
+                    var me = GameHandler.AllPlayerTanks[0];
+                    var tankPos = GeometryUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), me.World, TankGame.GameView, TankGame.GameProjection);
 
-                    var pos = (GameUtils.MousePosition - tankPos) * (ii * i) + tankPos;
+                    if (GameUtils.Distance_WiiTanksUnits(tankPos, GameUtils.MousePosition) >= DistUntilPathTrace.ToResolutionX()) // any scale doesnt matter?
+                    {
+                        var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/mouse_dot");
 
-                    GameHandler.ClientLog.Write(pos, LogType.Info);
+                        // GameHandler.ClientLog.Write("One Loop:", LogType.Info);
+                        for (int i = 0; i < numDots; i++)
+                        {
+                            var curDrawPos = Vector2.Lerp(tankPos, GameUtils.MousePosition, (float)i / numDots);// tankPos.DirectionOf(GameUtils.MousePosition) * i;
 
-                    TankGame.spriteBatch.Draw(tex, pos, null, Color.White, 0f, tex.Size() / 2, 1f, default, default);
-                }*/
-
-                // lata
+                            for (int j = 0; j < 4; j++)
+                                TankGame.SpriteRenderer.Draw(tex, curDrawPos, null, Color.White, MathHelper.PiOver2 * j, tex.Size(), new Vector2(0.35f).ToResolution(), default, default);
+                        }
+                    }
+                }
             }
 
             _sinScale = MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalSeconds);
 
             MouseTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/cursor_1");
-            TankGame.SpriteRenderer.Draw(MouseTexture, GameUtils.MousePosition, null, Color.White, 0f, MouseTexture.Size() / 2, 1f + _sinScale / 16, default, default);
+            TankGame.SpriteRenderer.Draw(MouseTexture, GameUtils.MousePosition, null, Color.White, 0f, MouseTexture.Size() / 2, (1f + _sinScale / 16).ToResolution(), default, default);
         }
     }
     public class GameShaders

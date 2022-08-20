@@ -63,6 +63,13 @@ namespace TanksRebirth.GameContent.UI
 
         // TODO: make rect scissor work -> get powerups to be pickupable
         private static bool _initialized;
+
+        internal static Vector2 QuitButtonSize = new Vector2(500, 150);
+        internal static Vector2 OptionsButtonSize = new Vector2(500, 150);
+
+        internal static Vector2 QuitButtonPos = new Vector2(700, 850);
+        internal static Vector2 OptionsButtonPos = new Vector2(700, 600);
+
         internal static void Initialize()
         {
             _initialized = true;
@@ -72,26 +79,26 @@ namespace TanksRebirth.GameContent.UI
             Vector2 drawOrigin = font.MeasureString("Unknown") / 2f;
             MissionInfoBar = new((uiPanel, spriteBatch) => spriteBatch.DrawString(font, "Unknown", uiPanel.Hitbox.Center.ToVector2(), Color.White, new Vector2(1.5f), 0f, drawOrigin));
             MissionInfoBar.BackgroundColor = Color.Red;
-            MissionInfoBar.SetDimensions(650, 1000, 500, 50);
+            MissionInfoBar.SetDimensions(() => new Vector2(GameUtils.WindowWidth / 2 - 250.ToResolutionX(), GameUtils.WindowHeight - 75.ToResolutionY()), () => new Vector2(500, 50).ToResolution());
 
             ResumeButton = new(TankGame.GameLanguage.Resume, font, Color.WhiteSmoke)
             {
                 IsVisible = false
             };
-            ResumeButton.SetDimensions(700, 100, 500, 150);
+            ResumeButton.SetDimensions(() => new Vector2(700, 100).ToResolution(), () => new Vector2(500, 150).ToResolution());
             ResumeButton.OnLeftClick = (uiElement) => Pause.Fire();
 
             RestartButton = new(TankGame.GameLanguage.StartOver, font, Color.WhiteSmoke)
             {
                 IsVisible = false,
             };
-            RestartButton.SetDimensions(700, 350, 500, 150);
+            RestartButton.SetDimensions(() => new Vector2(700, 350).ToResolution(), () => new Vector2(500, 150).ToResolution());
 
             OptionsButton = new(TankGame.GameLanguage.Options, font, Color.WhiteSmoke)
             {
                 IsVisible = false
             };
-            OptionsButton.SetDimensions(700, 600, 500, 150);
+            OptionsButton.SetDimensions(() => OptionsButtonPos.ToResolution(), () => OptionsButtonSize.ToResolution());
             OptionsButton.OnLeftClick = (uiElement) =>
             {
                 _delay = 1;
@@ -119,7 +126,7 @@ namespace TanksRebirth.GameContent.UI
             {
                 IsVisible = false
             };
-            VolumeButton.SetDimensions(700, 100, 500, 150);
+            VolumeButton.SetDimensions(() => new Vector2(700, 100).ToResolution(), () => new Vector2(500, 150).ToResolution());
             VolumeButton.OnLeftClick = (uiElement) =>
             {
                 VolumeUI.BatchVisible = true;
@@ -135,7 +142,7 @@ namespace TanksRebirth.GameContent.UI
             {
                 IsVisible = false
             };
-            GraphicsButton.SetDimensions(700, 350, 500, 150);
+            GraphicsButton.SetDimensions(() => new Vector2(700, 350).ToResolution(), () => new Vector2(500, 150).ToResolution());
             GraphicsButton.OnLeftClick = (uiElement) =>
             {
                 GraphicsUI.BatchVisible = true;
@@ -151,7 +158,7 @@ namespace TanksRebirth.GameContent.UI
             {
                 IsVisible = false
             };
-            ControlsButton.SetDimensions(700, 600, 500, 150);
+            ControlsButton.SetDimensions(() => new Vector2(700, 600).ToResolution(), () => new Vector2(500, 150).ToResolution());
             ControlsButton.OnLeftClick = (uiElement) =>
             {
                 ControlsUI.BatchVisible = true;
@@ -165,7 +172,7 @@ namespace TanksRebirth.GameContent.UI
             {
                 IsVisible = false
             };
-            QuitButton.SetDimensions(700, 850, 500, 150);
+            QuitButton.SetDimensions(() => QuitButtonPos.ToResolution(), () => QuitButtonSize.ToResolution());
             QuitButton.OnLeftClick = (ui) =>
             {
                 if (!MainMenu.Active)
@@ -189,7 +196,7 @@ namespace TanksRebirth.GameContent.UI
             {
                 IsVisible = false
             };
-            BackButton.SetDimensions(700, 850, 500, 150);
+            BackButton.SetDimensions(() => new Vector2(700, 850).ToResolution(), () => new Vector2(500, 150).ToResolution());
             BackButton.OnLeftClick = (uiElement) => HandleBackButton();
 
             // MainMenu.Initialize();
@@ -384,6 +391,10 @@ namespace TanksRebirth.GameContent.UI
 
         public static void UpdateButtons()
         {
+            if (!Paused) {
+                _newScroll = 0;
+                _oldScroll = 0;
+            }    
             if (!_initialized)
                 return;
             _newScroll = Input.CurrentMouseSnapshot.ScrollWheelValue;
@@ -401,9 +412,8 @@ namespace TanksRebirth.GameContent.UI
             var text = /*$"{TankGame.GameLanguage.Mission} 1        x{AITank.CountAll()}";*/
                 $"{GameProperties.LoadedCampaign.CurrentMission.Name ?? $"{TankGame.GameLanguage.Mission}"} x{AITank.CountAll()}";
             Vector2 drawOrigin = TankGame.TextFont.MeasureString(text) / 2f;
-            MissionInfoBar.Position = new(GameUtils.WindowWidth * 0.4f, GameUtils.WindowHeight - 75);
             MissionInfoBar.UniqueDraw =
-                (uiPanel, spriteBatch) => spriteBatch.DrawString(TankGame.TextFont, text, uiPanel.Hitbox.Center.ToVector2(), Color.White, new Vector2(1.5f), 0, drawOrigin);
+                (uiPanel, spriteBatch) => spriteBatch.DrawString(TankGame.TextFont, text, uiPanel.Hitbox.Center.ToVector2(), Color.White, new Vector2(1.5f).ToResolution(), 0, drawOrigin);
 
             TankGame.Settings.MusicVolume = VolumeUI.MusicVolume.Value;
             TankGame.Settings.EffectsVolume = VolumeUI.EffectsVolume.Value;

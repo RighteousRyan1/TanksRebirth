@@ -30,6 +30,8 @@ namespace TanksRebirth.Internals.Common.Utilities
         public static float ToResolutionX(this int input) => ToResolution(input).X;
         public static float ToResolutionY(this int input) => ToResolution(input).Y;
 
+        public static Rectangle ToResolution(this Rectangle input) => new((int)(input.X * (WindowBounds.X / 1920)), (int)(input.Y * WindowBounds.Y / 1080), (int)(input.Width * (WindowBounds.X / 1920)), (int)(input.Height * WindowBounds.Y / 1080));
+
         public static Vector2 GetAnchor(this Anchor a, Vector2 vector)
         {
             switch (a)

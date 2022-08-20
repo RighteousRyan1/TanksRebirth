@@ -2,6 +2,7 @@
 using System;
 using TanksRebirth.Internals.Common.Framework.Input;
 using TanksRebirth.Internals.Common.GameUI;
+using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.GameContent.UI
 {
@@ -26,7 +27,7 @@ namespace TanksRebirth.GameContent.UI
             {
                 IsVisible = false
             };
-            UpKeybindButton.SetDimensions(550, 200, 300, 150);
+            UpKeybindButton.SetDimensions(() => new Vector2(550, 200).ToResolution(), () => new Vector2(300, 150).ToResolution());
             UpKeybindButton.OnLeftClick = (uiElement) =>
             {
                 UpKeybindButton.Text = pressKey;
@@ -43,7 +44,7 @@ namespace TanksRebirth.GameContent.UI
             {
                 IsVisible = false
             };
-            LeftKeybindButton.SetDimensions(1050, 200, 300, 150);
+            LeftKeybindButton.SetDimensions(() => new Vector2(1050, 200).ToResolution(), () => new Vector2(300, 150).ToResolution());
             LeftKeybindButton.OnLeftClick = (uiElement) =>
             {
                 LeftKeybindButton.Text = pressKey;
@@ -60,7 +61,7 @@ namespace TanksRebirth.GameContent.UI
             {
                 IsVisible = false
             };
-            RightKeybindButton.SetDimensions(550, 400, 300, 150);
+            RightKeybindButton.SetDimensions(() => new Vector2(550, 400).ToResolution(), () => new Vector2(300, 150).ToResolution());
             RightKeybindButton.OnLeftClick = (uiElement) =>
             {
                 RightKeybindButton.Text = pressKey;
@@ -77,7 +78,7 @@ namespace TanksRebirth.GameContent.UI
             {
                 IsVisible = false
             };
-            DownKeybindButton.SetDimensions(1050, 400, 300, 150);
+            DownKeybindButton.SetDimensions(() => new Vector2(1050, 400).ToResolution(), () => new Vector2(300, 150).ToResolution());
             DownKeybindButton.OnLeftClick = (uiElement) =>
             {
                 DownKeybindButton.Text = pressKey;
@@ -94,7 +95,7 @@ namespace TanksRebirth.GameContent.UI
             {
                 IsVisible = false
             };
-            MineKeybindButton.SetDimensions(800, 600, 300, 150);
+            MineKeybindButton.SetDimensions(() => new Vector2(800, 600).ToResolution(), () => new Vector2(300, 150).ToResolution());
             MineKeybindButton.OnLeftClick = (uiElement) =>
             {
                 MineKeybindButton.Text = pressKey;

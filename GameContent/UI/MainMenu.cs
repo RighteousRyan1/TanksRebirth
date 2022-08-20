@@ -197,7 +197,7 @@ namespace TanksRebirth.GameContent.UI
             {
                 IsVisible = true,
             };
-            PlayButton.SetDimensions(700, 550, 500, 50);
+            PlayButton.SetDimensions(() => new Vector2(700, 550).ToResolution(), () => new Vector2(500, 50).ToResolution());
             PlayButton.OnLeftClick = (uiElement) =>
             {
                 GameUI.BackButton.IsVisible = true;
@@ -209,7 +209,7 @@ namespace TanksRebirth.GameContent.UI
                 IsVisible = false,
                 Tooltip = "In the works!"
             };
-            PlayButton_Multiplayer.SetDimensions(700, 750, 500, 50);
+            PlayButton_Multiplayer.SetDimensions(() => new Vector2(700, 750).ToResolution(), () => new Vector2(500, 50).ToResolution());
 
             PlayButton_Multiplayer.OnLeftClick = (uiElement) =>
             {
@@ -223,7 +223,7 @@ namespace TanksRebirth.GameContent.UI
                 IsVisible = false,
                 Tooltip = "Change the difficulty of the game."
             };
-            DifficultiesButton.SetDimensions(700, 550, 500, 50);
+            DifficultiesButton.SetDimensions(() => new Vector2(700, 550).ToResolution(), () => new Vector2(500, 50).ToResolution());
             DifficultiesButton.OnLeftClick = (element) =>
             {
                 MenuState = State.Difficulties;
@@ -235,7 +235,7 @@ namespace TanksRebirth.GameContent.UI
                 IsVisible = false,
                 Tooltip = "Choose from your downloaded campaigns."
             };
-            PlayButton_SinglePlayer.SetDimensions(700, 450, 500, 50);
+            PlayButton_SinglePlayer.SetDimensions(() => new Vector2(700, 450).ToResolution(), () => new Vector2(500, 50).ToResolution());
 
             PlayButton_SinglePlayer.OnLeftClick = (uiElement) =>
             {
@@ -249,7 +249,7 @@ namespace TanksRebirth.GameContent.UI
                 IsVisible = false,
                 Tooltip = "Create your own levels and campaigns with ease!"
             };
-            PlayButton_LevelEditor.SetDimensions(700, 650, 500, 50);
+            PlayButton_LevelEditor.SetDimensions(() => new Vector2(700, 650).ToResolution(), () => new Vector2(500, 50).ToResolution());
             PlayButton_LevelEditor.OnLeftClick = (b) => {
                 LevelEditor.Open();
             };
@@ -258,7 +258,7 @@ namespace TanksRebirth.GameContent.UI
                 IsVisible = false,
                 Tooltip = "Connect to the written IP and Port in the form of ip:port"
             };
-            ConnectToServerButton.SetDimensions(700, 100, 500, 50);
+            ConnectToServerButton.SetDimensions(() => new Vector2(700, 100).ToResolution(), () => new Vector2(500, 50).ToResolution());
             ConnectToServerButton.OnLeftClick = (uiButton) => {
                 if (UsernameInput.IsEmpty()) {
                     SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_error", SoundContext.Effect);
@@ -291,7 +291,7 @@ namespace TanksRebirth.GameContent.UI
                 IsVisible = false,
                 Tooltip = "Create a server with the written IP and Port in the form of ip:port"
             };
-            CreateServerButton.SetDimensions(700, 350, 500, 50);
+            CreateServerButton.SetDimensions(() => new Vector2(700, 350).ToResolution(), () => new Vector2(500, 50).ToResolution());
             CreateServerButton.OnLeftClick = (uiButton) =>
             {
                 if (int.TryParse(PortInput.Text, out var port))
@@ -327,14 +327,14 @@ namespace TanksRebirth.GameContent.UI
 
                 MenuState = State.Campaigns;
             };
-            StartMPGameButton.SetDimensions(700, 600, 500, 50);
+            StartMPGameButton.SetDimensions(() => new Vector2(700, 600).ToResolution(), () => new Vector2(500, 50).ToResolution());
 
             CosmeticsMenuButton = new("Cosmetics Menu", font, Color.WhiteSmoke)
             {
                 IsVisible = false,
                 Tooltip = "Use some of your currency and luck out\non items for your tank!"
             };
-            CosmeticsMenuButton.SetDimensions(50, 50, 300, 50);
+            CosmeticsMenuButton.SetDimensions(() => new Vector2(50, 50).ToResolution(), () => new Vector2(300, 50).ToResolution());
             CosmeticsMenuButton.OnLeftClick += (elem) =>
             {
                 CosmeticsMenuButton.IsVisible = false;
@@ -351,28 +351,28 @@ namespace TanksRebirth.GameContent.UI
                 IsVisible = false,
                 DefaultString = "Username"
             };
-            UsernameInput.SetDimensions(100, 400, 500, 50);
+            UsernameInput.SetDimensions(() => new Vector2(100, 400).ToResolution(), () => new Vector2(500, 50).ToResolution());
 
             IPInput = new(font, Color.WhiteSmoke, 1f, 15)
             {
                 IsVisible = false,
                 DefaultString = "Server IP address"
             };
-            IPInput.SetDimensions(100, 500, 500, 50);
+            IPInput.SetDimensions(() => new Vector2(100, 500).ToResolution(), () => new Vector2(500, 50).ToResolution());
 
             PortInput = new(font, Color.WhiteSmoke, 1f, 5)
             {
                 IsVisible = false,
                 DefaultString = "Server Port"
             };
-            PortInput.SetDimensions(100, 600, 500, 50);
+            PortInput.SetDimensions(() => new Vector2(100, 600).ToResolution(), () => new Vector2(500, 50).ToResolution());
 
             PasswordInput = new(font, Color.WhiteSmoke, 1f, 10)
             {
                 IsVisible = false,
                 DefaultString = "Server Password (Empty = None)"
             };
-            PasswordInput.SetDimensions(100, 700, 500, 50);
+            PasswordInput.SetDimensions(() => new Vector2(100, 700).ToResolution(), () => new Vector2(500, 50).ToResolution());
 
             DisconnectButton = new("Disconnect", font, Color.WhiteSmoke, 1f)
             {
@@ -382,14 +382,14 @@ namespace TanksRebirth.GameContent.UI
                     Client.client.Disconnect();
                 }
             };
-            DisconnectButton.SetDimensions(100, 800, 500, 50);
+            DisconnectButton.SetDimensions(() => new Vector2(100, 800).ToResolution(), () => new Vector2(500, 50).ToResolution());
 
             ServerNameInput = new(font, Color.WhiteSmoke, 1f, 10)
             {
                 IsVisible = false,
                 DefaultString = "Server Name (Server Creation)"
             };
-            ServerNameInput.SetDimensions(100, 800, 500, 50);
+            ServerNameInput.SetDimensions(() => new Vector2(100, 800).ToResolution(), () => new Vector2(500, 50).ToResolution());
 
             StatsMenu = new("Game Stats", font, Color.WhiteSmoke)
             { 
@@ -397,7 +397,7 @@ namespace TanksRebirth.GameContent.UI
                 OnLeftClick = (a) => { MenuState = State.StatsMenu; },
                 Tooltip = "View your all-time statistics for this game!"
             };
-            StatsMenu.SetDimensions(GameUtils.WindowWidth / 2 - 90, GameUtils.WindowHeight - 200, 180, 50);
+            StatsMenu.SetDimensions(() => new Vector2(GameUtils.WindowWidth / 2 - 90.ToResolutionX(), GameUtils.WindowHeight - 100.ToResolutionY()), () => new Vector2(180, 50).ToResolution());
             #endregion
 
             Open();
@@ -706,7 +706,7 @@ namespace TanksRebirth.GameContent.UI
                         $"\nTags: {string.Join(", ", campaign.Properties.Tags)}" +
                         $"\n\nRight click to DELETE ME."
                     };
-                    elem.SetDimensions(700, 100 + offset, 300, 40);
+                    elem.SetDimensions(() => new Vector2(700, 100 + offset).ToResolution(), () => new Vector2(300, 40).ToResolution());
                     //elem.HasScissor = true;
                     //elem.
                     elem.OnLeftClick += (el) =>
@@ -777,7 +777,7 @@ namespace TanksRebirth.GameContent.UI
                 IsVisible = true,
                 Tooltip = "Play without a campaign!",
             };
-            extra.SetDimensions(1150, 100, 300, 40);
+            extra.SetDimensions(() => new Vector2(1150, 100).ToResolution(), () => new Vector2(300, 40).ToResolution());
             extra.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick", SoundContext.Effect); };
             //elem.HasScissor = true;
             //elem.
@@ -972,11 +972,11 @@ namespace TanksRebirth.GameContent.UI
 
             RemoveAllMenuTanks();
 
-            GameUI.OptionsButton.Size.Y = 150;
-            GameUI.QuitButton.Size.Y = 150;
+            GameUI.OptionsButtonSize.Y = 150;
+            GameUI.QuitButtonSize.Y = 150;
 
-            GameUI.QuitButton.Position.Y += 50;
-            GameUI.OptionsButton.Position.Y -= 75;
+            GameUI.QuitButtonPos.Y += 50;
+            GameUI.OptionsButtonPos.Y -= 75;
 
             HideAll();
             OnMenuClose?.Invoke();
@@ -1012,8 +1012,8 @@ namespace TanksRebirth.GameContent.UI
             TankGame.AddativeZoom = 1f;
             TankGame.CameraFocusOffset.Y = 0f;
 
-            GameUI.QuitButton.Position.Y -= 50;
-            GameUI.OptionsButton.Position.Y += 75;
+            GameUI.QuitButtonPos.Y -= 50;
+            GameUI.OptionsButtonPos.Y += 75;
 
             for (int i = 0; i < 10; i++)
             {
@@ -1037,10 +1037,10 @@ namespace TanksRebirth.GameContent.UI
             GameUI.ResumeButton.IsVisible = false;
             GameUI.RestartButton.IsVisible = false;
 
-            GameUI.QuitButton.Size.Y = 50;
+            GameUI.QuitButtonSize.Y = 50;
+            GameUI.OptionsButtonSize.Y = 50;
             GameUI.QuitButton.IsVisible = true;
             GameUI.OptionsButton.IsVisible = true;
-            GameUI.OptionsButton.Size.Y = 50;
 
             OnMenuOpen?.Invoke();
         }

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using TanksRebirth.Internals.Common.GameUI;
+using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Internals.UI;
 
 namespace TanksRebirth.GameContent.UI
@@ -55,14 +56,14 @@ namespace TanksRebirth.GameContent.UI
                 IsVisible = false,
                 IgnoreMouseInteractions = true
             };
-            PerPixelLightingToggle.SetDimensions(695, 95, 510, 160);
+            PerPixelLightingToggle.SetDimensions(() => new Vector2(695, 95).ToResolution(), () => new Vector2(510, 160).ToResolution());
 
             PerPixelLightingButton = new(TankGame.GameLanguage.PerPxLight, TankGame.TextFont, Color.WhiteSmoke)
             {
                 IsVisible = false,
                 Tooltip = TankGame.GameLanguage.PerPxLightDesc
             };
-            PerPixelLightingButton.SetDimensions(700, 100, 500, 150);
+            PerPixelLightingButton.SetDimensions(() => new Vector2(700, 100).ToResolution(), () => new Vector2(500, 150).ToResolution());
             PerPixelLightingButton.OnLeftClick = (uiElement) =>
             {
                 TankGame.Settings.PerPixelLighting = !TankGame.Settings.PerPixelLighting;
@@ -74,14 +75,14 @@ namespace TanksRebirth.GameContent.UI
                 IsVisible = false,
                 IgnoreMouseInteractions = true
             };
-            VsyncToggle.SetDimensions(695, 345, 510, 160);
+            VsyncToggle.SetDimensions(() => new Vector2(695, 345).ToResolution(), () => new Vector2(510, 160).ToResolution());
 
             VsyncButton = new(TankGame.GameLanguage.VSync, TankGame.TextFont, Color.WhiteSmoke)
             {
                 IsVisible = false,
                 Tooltip = TankGame.GameLanguage.VSyncDesc
             };
-            VsyncButton.SetDimensions(700, 350, 500, 150);
+            VsyncButton.SetDimensions(() => new Vector2(700, 350).ToResolution(), () => new Vector2(500, 150).ToResolution());
             VsyncButton.OnLeftClick = (uiElement) =>
             {
                 TankGame.Instance.Graphics.SynchronizeWithVerticalRetrace = TankGame.Settings.Vsync = !TankGame.Settings.Vsync;
@@ -94,14 +95,14 @@ namespace TanksRebirth.GameContent.UI
                 IsVisible = false,
                 IgnoreMouseInteractions = true
             };
-            FullScreenToggle.SetDimensions(695, 595, 510, 160);
+            FullScreenToggle.SetDimensions(() => new Vector2(695, 595).ToResolution(), () => new Vector2(510, 160).ToResolution());
 
             FullScreenButton = new(TankGame.GameLanguage.BorderlessWindow, TankGame.TextFont, Color.WhiteSmoke)
             {
                 IsVisible = false,
                 Tooltip = TankGame.GameLanguage.BorderlessWindowDesc
             };
-            FullScreenButton.SetDimensions(700, 600, 500, 150);
+            FullScreenButton.SetDimensions(() => new Vector2(700, 600).ToResolution(), () => new Vector2(500, 150).ToResolution());
             FullScreenButton.OnLeftClick = (uiElement) =>
             {
                 if (TankGame.Settings.FullScreen)
@@ -122,15 +123,13 @@ namespace TanksRebirth.GameContent.UI
                 IsVisible = false,
                 Tooltip = TankGame.GameLanguage.ResolutionDesc
             };
-            ResolutionButton.SetDimensions(700, 850, 500, 150);
+            ResolutionButton.SetDimensions(() => new Vector2(700, 850).ToResolution(), () => new Vector2(500, 150).ToResolution());
             ResolutionButton.OnLeftClick = (uiElement) =>
             {
                 var tryFind = CommonResolutions.FirstOrDefault(x => x.Key == CurrentRes.Key);
 
                 if (Array.IndexOf(CommonResolutions, tryFind) > -1)
-                {
                     _idxPair = Array.IndexOf(CommonResolutions, tryFind);
-                }
 
                 _idxPair++;
 

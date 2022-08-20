@@ -49,7 +49,7 @@ namespace TanksRebirth.Internals.UI
         /// <summary>The size of this <see cref="UIElement"/>.</summary>
         public Vector2 Size;
 
-        public Vector2 ScaleOrigin = new Vector2(0.5f);
+        public Vector2 ScaleOrigin = new(0.5f);
 
         /// <summary>Whether or not this <see cref="UIElement"/> is visible. If set to <see langword="false"/>, the <see cref="UIElement"/> will not accept mouse input.</summary>
         public bool IsVisible = true;
@@ -321,10 +321,10 @@ namespace TanksRebirth.Internals.UI
         // TODO: tooltip anchors
         internal void DrawTooltipBox(SpriteBatch spriteBatch, Color color)
         {
-            SpriteFontBase font = TankGame.TextFont;
-            Vector2 scaleFont = font.MeasureString(Tooltip);
-            Rectangle Hitbox = new(GameUtils.MouseX + 5, GameUtils.MouseY + 5, (int)scaleFont.X + 30, (int)scaleFont.Y + 30);
-            Texture2D texture = UIPanelBackground;
+            var font = TankGame.TextFont;
+            var scaleFont = font.MeasureString(Tooltip);
+            var Hitbox = new Rectangle(GameUtils.MouseX + 5, GameUtils.MouseY + 5, (int)(scaleFont.X + 30).ToResolutionX(), (int)(scaleFont.Y + 30).ToResolutionY());
+            var texture = UIPanelBackground;
 
             int border = 12;
 
@@ -346,7 +346,7 @@ namespace TanksRebirth.Internals.UI
             spriteBatch.Draw(texture, new Rectangle(middleX, bottomY, Hitbox.Width - border * 2, border), new Rectangle(border, texture.Height - border, texture.Width - border * 2, border), color);
             spriteBatch.Draw(texture, new Rectangle(rightX, bottomY, border, border), new Rectangle(texture.Width - border, texture.Height - border, border, border), color);
 
-            spriteBatch.DrawString(font, Tooltip, Hitbox.Center.ToVector2(), Color.Black, new Vector2(1f), 0f, scaleFont / 2, 0);
+            spriteBatch.DrawString(font, Tooltip, Hitbox.Center.ToVector2(), Color.Black, new Vector2(1f).ToResolution(), 0f, scaleFont / 2, 0);
         }
 
         public static void UpdateElements()

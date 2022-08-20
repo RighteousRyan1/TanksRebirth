@@ -65,7 +65,7 @@ namespace TanksRebirth
                         return "a";
                     }
                 }
-
+                SetLargeAsset("tank_ash_large", $"v{TankGame.Instance.GameVersion}");
                 if (MainMenu.Active)
                 {
                     switch (MainMenu.MenuState)
@@ -103,8 +103,6 @@ namespace TanksRebirth
                             SetDetails($"Browsing the main menu");
                             break;
                     }
-
-                    SetLargeAsset("tank_ash_large", $"v{TankGame.Instance.GameVersion}");
                 }
                 else
                 {
@@ -127,7 +125,6 @@ namespace TanksRebirth
 
                     SetSmallAsset($"tank_{AITank.GetHighestTierActive().ToString().ToLower()}", $"Currently fighting {getArticle(AITank.GetHighestTierActive().ToString())} {AITank.GetHighestTierActive()} Tank");
                 }
-                
                 _client?.SetPresence(_rp);
             }
         }

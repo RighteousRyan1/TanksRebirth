@@ -542,8 +542,9 @@ namespace TanksRebirth
                 UIElement.UpdateElements();
                 GameUI.UpdateButtons();
 
+                DiscordRichPresence.Update();
+
                 if (GameUpdateTime % 60 == 0 && DebugUtils.DebuggingEnabled) {
-                    DiscordRichPresence.Update();
                     _memBytes = ProcessMemory;
                 }
 
@@ -603,7 +604,8 @@ namespace TanksRebirth
                     if (_justChanged)
                     {
                         //if we just changed to third person, we don't want to reset the camera
-                        GameProjection = Matrix.CreateOrthographic(GameUtils.WindowWidth, GameUtils.WindowHeight, -2000, 5000);
+                        // use width or height?
+                        GameProjection = Matrix.CreateOrthographic(1920, 1080, -2000, 5000);
 
                         _justChanged = false;
                     }

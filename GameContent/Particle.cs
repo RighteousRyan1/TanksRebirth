@@ -47,7 +47,7 @@ namespace TanksRebirth.GameContent
 
         public bool isAddative = true;
 
-        public Rectangle? TextureCrop; // for framing a particle's texture
+        public Rectangle? TextureCrop = null; // for framing a particle's texture
 
         public int LifeTime;
 

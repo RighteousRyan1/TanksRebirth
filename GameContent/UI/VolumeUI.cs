@@ -2,6 +2,7 @@
 using System;
 using TanksRebirth.Internals.Common.Framework.Input;
 using TanksRebirth.Internals.Common.GameUI;
+using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.GameContent.UI
 {
@@ -29,7 +30,7 @@ namespace TanksRebirth.GameContent.UI
                 IsVisible = false,
                 FallThroughInputs = true
             };
-            MusicVolume.SetDimensions(700, 100, 500, 150);
+            MusicVolume.SetDimensions(() => new Vector2(700, 100).ToResolution(), () => new Vector2(500, 150).ToResolution());
             MusicVolume.Tooltip = $"{Math.Round(TankGame.Settings.MusicVolume * 100, 1)}%";
             MusicVolume.Initialize();
             MusicVolume.Value = TankGame.Settings.MusicVolume;
@@ -42,14 +43,14 @@ namespace TanksRebirth.GameContent.UI
                 IsVisible = false,
                 FallThroughInputs = true
             };
-            MusicText.SetDimensions(950, 175, 500, 150);
+            MusicText.SetDimensions(() => new Vector2(950, 175).ToResolution(), () => new Vector2(500, 150).ToResolution());
 
             //Effects
             EffectsVolume = new()
             {
                 IsVisible = false
             };
-            EffectsVolume.SetDimensions(700, 350, 500, 150);
+            EffectsVolume.SetDimensions(() => new Vector2(700, 350).ToResolution(), () => new Vector2(500, 150).ToResolution());
             EffectsVolume.Tooltip = $"{Math.Round(TankGame.Settings.EffectsVolume * 100, 1)}%";
             EffectsVolume.Initialize();
             EffectsVolume.Value = TankGame.Settings.EffectsVolume;
@@ -61,14 +62,14 @@ namespace TanksRebirth.GameContent.UI
                 IgnoreMouseInteractions = true,
                 IsVisible = false
             };
-            EffectsText.SetDimensions(950, 425, 500, 150);
+            EffectsText.SetDimensions(() => new Vector2(950, 425).ToResolution(), () => new Vector2(500, 150).ToResolution());
 
             //Ambient
             AmbientVolume = new()
             {
                 IsVisible = false
             };
-            AmbientVolume.SetDimensions(700, 600, 500, 150);
+            AmbientVolume.SetDimensions(() => new Vector2(700, 600).ToResolution(), () => new Vector2(500, 150).ToResolution());
             AmbientVolume.Tooltip = $"{Math.Round(TankGame.Settings.AmbientVolume * 100, 1)}%";
             AmbientVolume.Initialize();
             AmbientVolume.Value = TankGame.Settings.AmbientVolume;
@@ -80,7 +81,7 @@ namespace TanksRebirth.GameContent.UI
                 IgnoreMouseInteractions = true,
                 IsVisible = false
             };
-            AmbientText.SetDimensions(950, 675, 500, 150);
+            AmbientText.SetDimensions(() => new Vector2(950, 675).ToResolution(), () => new Vector2(500, 150).ToResolution());
         }
 
         public static void HideAll()

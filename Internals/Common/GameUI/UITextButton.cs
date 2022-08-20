@@ -17,14 +17,23 @@ namespace TanksRebirth.Internals.Common.GameUI
 
         public Color HoverColor { get; set; } = Color.CornflowerBlue;
 
-        public float TextScale { get; set; }
+        public Func<Vector2> TextScale { get; set; }
 
-        public UITextButton(string text, SpriteFontBase font, Color color, float textScale = 1) : base(null, 1, null)
+        public static bool AutoResolutionHandle = true;
+
+        public UITextButton(string text, SpriteFontBase font, Color color, Func<Vector2> textScale) : base(null, 1, null)
         {
             Text = text;
             Font = font;
             Color = color;
             TextScale = textScale;
+        }
+        public UITextButton(string text, SpriteFontBase font, Color color, float textScale = 1f) : base(null, 1, null)
+        {
+            Text = text;
+            Font = font;
+            Color = color;
+            TextScale = () => new(textScale);
         }
 
         public override void DrawSelf(SpriteBatch spriteBatch)
@@ -52,7 +61,8 @@ namespace TanksRebirth.Internals.Common.GameUI
             spriteBatch.Draw(texture, new Rectangle(rightX, bottomY, border, border), new Rectangle(texture.Width - border, texture.Height - border, border, border), MouseHovering ? HoverColor : Color, 0f, GameUtils.GetAnchor(Anchor, texture.Size()), default, 0f);
             SpriteFontBase font = TankGame.TextFont;
             Vector2 drawOrigin = font.MeasureString(Text) / 2f;
-            spriteBatch.DrawString(font, Text, Hitbox.Center.ToVector2(), Color.Black, new Vector2(TextScale), 0, drawOrigin);
+            if (TextScale != null)
+                spriteBatch.DrawString(font, Text, Hitbox.Center.ToVector2(), Color.Black, AutoResolutionHandle ? TextScale.Invoke().ToResolution() : TextScale.Invoke(), 0, drawOrigin);
         }
     }
 }
