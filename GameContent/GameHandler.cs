@@ -1030,7 +1030,7 @@ namespace TanksRebirth.GameContent
             numDots = 10;
             if (!ShouldRender)
                 return;
-            if (!MainMenu.Active && !GameUI.Paused)
+            if (!MainMenu.Active && !GameUI.Paused && !LevelEditor.Active)
             {
                 if (GameHandler.AllPlayerTanks[0] is not null)
                 {

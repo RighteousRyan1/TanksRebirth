@@ -107,7 +107,8 @@ namespace TanksRebirth.GameContent.Systems
                 tank?.Remove();
             for (int i = 0; i < mission.Tanks.Length; i++) {
                 var tnk = mission.Tanks[i];
-                tnk.GetTank();
+                var tank = tnk.GetTank();
+                tank.TargetTankRotation = -tank.TankRotation - MathHelper.Pi;
             }
             for (int i = 0; i < mission.Blocks.Length; i++) {
                 var block = mission.Blocks[i];

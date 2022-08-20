@@ -186,13 +186,18 @@ namespace TanksRebirth.GameContent
 
             Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
 
-            if (TargetTankRotation - TankRotation >= MathHelper.PiOver2) {
-                TankRotation += MathHelper.Pi;
-                Flip = !Flip;
-            }
-            else if (TargetTankRotation - TankRotation <= -MathHelper.PiOver2) {
-                TankRotation -= MathHelper.Pi;
-                Flip = !Flip;
+            if (GameProperties.InMission)
+            {
+                if (TargetTankRotation - TankRotation >= MathHelper.PiOver2)
+                {
+                    TankRotation += MathHelper.Pi;
+                    Flip = !Flip;
+                }
+                else if (TargetTankRotation - TankRotation <= -MathHelper.PiOver2)
+                {
+                    TankRotation -= MathHelper.Pi;
+                    Flip = !Flip;
+                }
             }
 
             if (IsIngame) {
@@ -201,7 +206,10 @@ namespace TanksRebirth.GameContent
                 if (NetPlay.IsClientMatched(PlayerId) && !IntermissionSystem.IsAwaitingNewMission) {
                     if (!TankGame.ThirdPerson) {
                         Vector3 mouseWorldPos = GameUtils.GetWorldPosition(GameUtils.MousePosition, -11f);
-                        TurretRotation = (-(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position).ToRotation()) + MathHelper.PiOver2;
+                        if (!LevelEditor.Active)
+                            TurretRotation = (-(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position).ToRotation()) + MathHelper.PiOver2;
+                        else
+                            TurretRotation = TankRotation;
                     }
                     else {
                         //Mouse.SetPosition(Input.CurrentMouseSnapshot.X, GameUtils.WindowHeight / 2);

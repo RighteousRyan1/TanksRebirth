@@ -174,6 +174,9 @@ namespace TanksRebirth.GameContent.Systems
                                 TrackedSpawnPoints[Array.IndexOf(TrackedSpawnPoints, TrackedSpawnPoints.First(pos => pos.Item1 == template.Position))].Item2 = false; // make sure the tank is not spawned again
                             };
                         }
+                        var placement = PlacementSquare.Placements.First(placement => placement.Position == tank.Position3D);
+                        placement.TankId = tank.WorldId;
+                        placement.HasBlock = false;
                     }
                     else
                     {
@@ -198,7 +201,10 @@ namespace TanksRebirth.GameContent.Systems
 
                             tnk.Swap(AITank.PickRandomTier());
                         }
-                        
+                        var placement = PlacementSquare.Placements.First(placement => placement.Position == tank.Position3D);
+                        placement.TankId = tank.WorldId;
+                        placement.HasBlock = false;
+
                         if (NetPlay.IsClientMatched(tank.PlayerId))
                             PlayerTank.MyTeam = tank.Team;
                     }
@@ -213,12 +219,13 @@ namespace TanksRebirth.GameContent.Systems
 
             for (int b = 0; b < LoadedMission.Blocks.Length; b++)
             {
-                var cube = LoadedMission.Blocks[b];
+                var template = LoadedMission.Blocks[b];
 
-                var c = cube.GetBlock();
+                var block = template.GetBlock();
 
-                var foundPlacement = PlacementSquare.Placements.First(placement => placement.Position == c.Position3D);
-                foundPlacement.BlockId = c.Id;
+                var placement = PlacementSquare.Placements.First(placement => placement.Position == block.Position3D);
+                placement.BlockId = block.Id;
+                placement.HasBlock = true;
             }
 
             CurrentMission = LoadedMission;

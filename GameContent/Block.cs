@@ -138,37 +138,37 @@ namespace TanksRebirth.GameContent
             else
                 Position = position;
 
-            // fix this, but dont worry about it for now
-            var p = ParticleSystem.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>($"Assets/toy/cube_shadow_tex"));
-
-            bool moveL = true;
-            bool moveD = true;
-            p.UniqueBehavior = (a) =>
-            {
-                p.Roll = MathHelper.PiOver2;
-                p.Scale = new(1f);
-                p.isAddative = false;
-                p.TextureCrop = new(0, 0, 32, 32);
-                p.Alpha = 1f;
-
-                moveL = p.TextureCrop.Value.X < 32;
-                moveD = p.TextureCrop.Value.Y < 32;
-
-                float coordOff = 16 * p.Scale.X;
-
-                p.Position = new Vector3(Position3D.X + (moveL ? coordOff : -coordOff), 0.15f, Position3D.Z + (moveD ? coordOff : -coordOff));
-            };
-            // TODO: Finish collisions
-
-            UpdateOffset();
-
             int index = Array.IndexOf(AllBlocks, AllBlocks.First(cube => cube is null));
 
             Id = index;
 
-            p.Tag = "block_shadow_" + Id;
-
             AllBlocks[index] = this;
+
+            if (CanStack)
+            {
+                // fix this, but dont worry about it for now
+                var p = ParticleSystem.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>($"Assets/toy/cube_shadow_tex"));
+                p.Tag = "block_shadow_" + Id;
+                bool moveL = true;
+                bool moveD = true;
+                p.UniqueBehavior = (a) =>
+                {
+                    p.Roll = MathHelper.PiOver2;
+                    p.Scale = new(1f);
+                    p.isAddative = false;
+                    p.TextureCrop = new(0, 0, 32, 32);
+                    p.Alpha = 1f;
+
+                    moveL = p.TextureCrop.Value.X < 32;
+                    moveD = p.TextureCrop.Value.Y < 32;
+
+                    float coordOff = 16 * p.Scale.X;
+
+                    p.Position = new Vector3(Position3D.X + (moveL ? coordOff : -coordOff), 0.15f, Position3D.Z + (moveD ? coordOff : -coordOff));
+                };
+                // TODO: Finish collisions
+            }
+            UpdateOffset();
         }
         public void Remove()
         {

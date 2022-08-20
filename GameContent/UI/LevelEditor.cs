@@ -35,6 +35,7 @@ namespace TanksRebirth.GameContent.UI
         public static UITextButton PlayerTanksCategory;
 
         public static UITextButton SaveLevel;
+        public static UITextButton LoadLevel;
 
         public static UITextButton ReturnToEditor;
 
@@ -157,7 +158,6 @@ namespace TanksRebirth.GameContent.UI
                 GUICategory = UICategory.LevelEditor;
             };
 
-
             SetSaveMenuVisibility(false);
         }
         public enum UICategory {
@@ -200,6 +200,8 @@ namespace TanksRebirth.GameContent.UI
                 EnemyTanksCategory.IsVisible =
                 BlocksCategory.IsVisible =
                 Perspective.IsVisible =
+                SaveLevel.IsVisible = 
+                LoadLevel.IsVisible = 
                 TestLevel.IsVisible = visible;
         }
         private static void SetSaveMenuVisibility(bool visible)
@@ -233,6 +235,7 @@ namespace TanksRebirth.GameContent.UI
             Perspective.IsVisible = visible;
             PlayerTanksCategory.IsVisible = visible;
             SaveLevel.IsVisible = visible;
+            LoadLevel.IsVisible = visible;
         }
         public static void Initialize()
         {
@@ -325,13 +328,22 @@ namespace TanksRebirth.GameContent.UI
 
             float width = 200;
 
-            SaveLevel.SetDimensions(() => new(GameUtils.WindowWidth * 0.5f - (width / 2).ToResolutionX(), 10.ToResolutionY()), () => new Vector2(width, 50).ToResolution());
+            SaveLevel.SetDimensions(() => new(GameUtils.WindowWidth * 0.425f - (width / 2).ToResolutionX(), 10.ToResolutionY()), () => new Vector2(width, 50).ToResolution());
             SaveLevel.OnLeftClick = (a) => {
                 if (!_saveMenuOpen)
                     GUICategory = UICategory.SavingThings;
                 else
                     GUICategory = UICategory.LevelEditor;
             };
+
+            LoadLevel = new("Load Level", TankGame.TextFont, Color.White);
+
+            LoadLevel.SetDimensions(() => new(GameUtils.WindowWidth * 0.575f - (width / 2).ToResolutionX(), 10.ToResolutionY()), () => new Vector2(width, 50).ToResolution());
+            LoadLevel.OnLeftClick = (a) => {
+                GameHandler.LoadMission.OnLeftClick?.Invoke(null);
+            };
+            // TODO: non-windows support. i am lazy. fuck this.
+            LoadLevel.Tooltip = "Will open a file dialog for\nyou to choose what mission to load.";
 
             InitializeSaveMenu();
 
