@@ -251,6 +251,7 @@ namespace TanksRebirth.GameContent.UI
             };
             PlayButton_LevelEditor.SetDimensions(() => new Vector2(700, 650).ToResolution(), () => new Vector2(500, 50).ToResolution());
             PlayButton_LevelEditor.OnLeftClick = (b) => {
+                LevelEditor.Initialize();
                 LevelEditor.Open();
             };
 

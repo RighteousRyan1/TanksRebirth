@@ -650,7 +650,7 @@ namespace TanksRebirth.GameContent
         {
             var cur = PlacementSquare.CurrentlyHovered;
 
-            if (cur is not null && cur.HasItem && cur.HasBlock)
+            if (cur is not null && cur.HasItem && cur.HasBlock && cur.BlockId > -1 && cur.BlockId < Block.AllBlocks.Length)
             {
                 if (Block.AllBlocks[cur.BlockId].Type == Block.BlockType.Teleporter)
                 {

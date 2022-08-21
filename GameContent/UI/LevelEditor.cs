@@ -85,53 +85,39 @@ namespace TanksRebirth.GameContent.UI
         // reduce hardcode -- make a variable that tracks height.
         public static void InitializeSaveMenu()
         {
-            _initialized = true;
+            LevelContentsPanel = new Rectangle(GameUtils.WindowWidth / 4, (int)(GameUtils.WindowHeight * 0.1f), GameUtils.WindowWidth / 2, (int)(GameUtils.WindowHeight * 0.625f));
+
             LevelName = new(TankGame.TextFont, Color.White, 1f, 20);
-            LevelName.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20, LevelContentsPanel.Y + 60), () => new(LevelContentsPanel.Width - 40, 50 / (1080 / GameUtils.WindowHeight)));
+
+            LevelName.SetDimensions(() => new(LevelContentsPanel.X + 20.ToResolutionX(), 
+                LevelContentsPanel.Y + 60.ToResolutionY()), 
+                () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 
+                50.ToResolutionY()));
             LevelName.DefaultString = "Name";
 
             LevelCampaignName = new(TankGame.TextFont, Color.White, 1f, 20);
-            LevelCampaignName.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20, LevelContentsPanel.Y + 120), () => new(LevelContentsPanel.Width - 40, 50 / (1080 / GameUtils.WindowHeight)));
+            LevelCampaignName.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), 
+                LevelContentsPanel.Y + 120.ToResolutionY()), 
+                () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 
+                50.ToResolutionY()));
             LevelCampaignName.DefaultString = "Campaign Name (Optional)";
             LevelCampaignName.Tooltip = "The campaign this mission belongs to.";
 
-            LevelDescription = new(TankGame.TextFont, Color.White, 1f, 20);
-            LevelDescription.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20, LevelContentsPanel.Y + 180), () => new(LevelContentsPanel.Width - 40, 50 / (1080 / GameUtils.WindowHeight)));
-            LevelDescription.DefaultString = "Description";
-
-            LevelAuthor = new(TankGame.TextFont, Color.White, 1f, 20);
-            LevelAuthor.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20, LevelContentsPanel.Y + 240), () => new(LevelContentsPanel.Width - 40, 50 / (1080 / GameUtils.WindowHeight)));
-            LevelAuthor.DefaultString = "Author";
-
-            LevelTags = new(TankGame.TextFont, Color.White, 1f, 20);
-            LevelTags.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20, LevelContentsPanel.Y + 300), () => new(LevelContentsPanel.Width - 40, 50 / (1080 / GameUtils.WindowHeight)));
-            LevelTags.DefaultString = "Tags (separate tags with a ',')";
-
-            LevelExtraLifeMissions = new(TankGame.TextFont, Color.White, 1f, 20);
-            LevelExtraLifeMissions.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20, LevelContentsPanel.Y + 360), () => new(LevelContentsPanel.Width - 40, 50 / (1080 / GameUtils.WindowHeight)));
-            LevelExtraLifeMissions.DefaultString = "Extra Life Missions (separate tags with a ',')";
-
-            LevelVersion = new(TankGame.TextFont, Color.White, 1f, 20);
-            LevelVersion.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20, LevelContentsPanel.Y + 420), () => new(LevelContentsPanel.Width - 40, 50 / (1080 / GameUtils.WindowHeight)));
-            LevelVersion.DefaultString = "Level Version";
-
-            LevelLoadingBGColor = new(TankGame.TextFont, Color.White, 1f, 20);
-            LevelLoadingBGColor.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20, LevelContentsPanel.Y + 480), () => new(LevelContentsPanel.Width - 40, 50 / (1080 / GameUtils.WindowHeight)));
-            LevelLoadingBGColor.DefaultString = "Mission Loading: BG Color";
-
-            LevelLoadingStripColor = new(TankGame.TextFont, Color.White, 1f, 20);
-            LevelLoadingStripColor.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20, LevelContentsPanel.Y + 540), () => new(LevelContentsPanel.Width - 40, 50 / (1080 / GameUtils.WindowHeight)));
-            LevelLoadingStripColor.DefaultString = "Mission Loading: Strip Color";
-
             ExitConfirm = new("Return", TankGame.TextFont, Color.White);
-            ExitConfirm.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20, LevelContentsPanel.Y + LevelContentsPanel.Height - 60), () => new(200, 50 / (1080 / GameUtils.WindowHeight)));
+            ExitConfirm.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), 
+                LevelContentsPanel.Y + LevelContentsPanel.Height - 60.ToResolutionY()), 
+                () => new(200.ToResolutionX(), 
+                50.ToResolutionY()));
 
             ExitConfirm.OnLeftClick = (l) => {
                 GUICategory = UICategory.LevelEditor;
             };
 
             SaveLevelConfirm = new("Save Level", TankGame.TextFont, Color.White);
-            SaveLevelConfirm.SetDimensions(() => new Vector2(LevelContentsPanel.X + 40 + ExitConfirm.Size.X, LevelContentsPanel.Y + LevelContentsPanel.Height - 60), () => new(200, 50 / (1080 / GameUtils.WindowHeight)));
+            SaveLevelConfirm.SetDimensions(() => new Vector2(LevelContentsPanel.X + 40.ToResolutionX() + ExitConfirm.Size.X, 
+                LevelContentsPanel.Y + LevelContentsPanel.Height - 60.ToResolutionY()), 
+                () => new(200.ToResolutionX(), 
+                50.ToResolutionY()));
             SaveLevelConfirm.Tooltip = "Save your mission to a file.\nKeep in mind: you will need to name the missions in numerical order.";
             SaveLevelConfirm.OnLeftClick = (l) => {
                 // Mission.Save(LevelName.GetRealText(), )
@@ -159,6 +145,39 @@ namespace TanksRebirth.GameContent.UI
             };
 
             SetSaveMenuVisibility(false);
+
+            return;
+
+            // heheheha
+            LevelDescription = new(TankGame.TextFont, Color.White, 1f, 20);
+            LevelDescription.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20, LevelContentsPanel.Y + 180), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 50.ToResolutionY()));
+            LevelDescription.DefaultString = "Description";
+
+            LevelAuthor = new(TankGame.TextFont, Color.White, 1f, 20);
+            LevelAuthor.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20, LevelContentsPanel.Y + 240), () => new(LevelContentsPanel.Width - 40, 50 / (1080 / GameUtils.WindowHeight)));
+            LevelAuthor.DefaultString = "Author";
+
+            LevelTags = new(TankGame.TextFont, Color.White, 1f, 20);
+            LevelTags.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20, LevelContentsPanel.Y + 300), () => new(LevelContentsPanel.Width - 40, 50 / (1080 / GameUtils.WindowHeight)));
+            LevelTags.DefaultString = "Tags (separate tags with a ',')";
+
+            LevelExtraLifeMissions = new(TankGame.TextFont, Color.White, 1f, 20);
+            LevelExtraLifeMissions.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20, LevelContentsPanel.Y + 360), () => new(LevelContentsPanel.Width - 40, 50 / (1080 / GameUtils.WindowHeight)));
+            LevelExtraLifeMissions.DefaultString = "Extra Life Missions (separate tags with a ',')";
+
+            LevelVersion = new(TankGame.TextFont, Color.White, 1f, 20);
+            LevelVersion.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20, LevelContentsPanel.Y + 420), () => new(LevelContentsPanel.Width - 40, 50 / (1080 / GameUtils.WindowHeight)));
+            LevelVersion.DefaultString = "Level Version";
+
+            LevelLoadingBGColor = new(TankGame.TextFont, Color.White, 1f, 20);
+            LevelLoadingBGColor.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20, LevelContentsPanel.Y + 480), () => new(LevelContentsPanel.Width - 40, 50 / (1080 / GameUtils.WindowHeight)));
+            LevelLoadingBGColor.DefaultString = "Mission Loading: BG Color";
+
+            LevelLoadingStripColor = new(TankGame.TextFont, Color.White, 1f, 20);
+            LevelLoadingStripColor.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20, LevelContentsPanel.Y + 540), () => new(LevelContentsPanel.Width - 40, 50 / (1080 / GameUtils.WindowHeight)));
+            LevelLoadingStripColor.DefaultString = "Mission Loading: Strip Color";
+
+            // SetSaveMenuVisibility(false);
         }
         public enum UICategory {
             LevelEditor,
@@ -219,13 +238,13 @@ namespace TanksRebirth.GameContent.UI
             ExitConfirm.IsVisible = visible;
             LevelLoadingBGColor.IsVisible = visible;
             LevelLoadingStripColor.IsVisible = visible;*/
-            LevelDescription.IsVisible =
+            /*LevelDescription.IsVisible =
             LevelAuthor.IsVisible =
             LevelTags.IsVisible =
             LevelVersion.IsVisible =
             LevelExtraLifeMissions.IsVisible =
             LevelLoadingBGColor.IsVisible =
-            LevelLoadingStripColor.IsVisible = false;
+            LevelLoadingStripColor.IsVisible = false;*/
         }
         private static void SetLevelEditorVisibility(bool visible)
         {
@@ -239,6 +258,9 @@ namespace TanksRebirth.GameContent.UI
         }
         public static void Initialize()
         {
+            if (_initialized)
+                return;
+            _initialized = true;
             #region Enumerable Init
             for (int i = 1; i < Enum.GetNames<TankTeam>().Length; i++)
             {

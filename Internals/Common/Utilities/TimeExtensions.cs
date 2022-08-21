@@ -27,11 +27,11 @@ namespace TanksRebirth.Internals.Common.Utilities
             return $"{days}{hours}{mins}{secs}";
         }
 
-        public static string StringFormatDots(this DateTime span)
+        public static string StringFormatCustom(this DateTime span, string between)
         {
-            string days = span.Day == 0 ? "" : (span.Day == 1 ? $"{span.Day}." : $"{span.Day}.");
-            string hours = span.Hour == 0 ? "" : (span.Hour == 1 ? $"{span.Hour}." : $"{span.Hour}.");
-            string mins = span.Minute == 0 ? "" : (span.Minute == 1 ? $"{span.Minute}." : $"{span.Minute}.");
+            string days = span.Day == 0 ? "" : (span.Day == 1 ? $"{span.Day}{between}" : $"{span.Day}{between}");
+            string hours = span.Hour == 0 ? "" : (span.Hour == 1 ? $"{span.Hour}{between}" : $"{span.Hour}{between}");
+            string mins = span.Minute == 0 ? "" : (span.Minute == 1 ? $"{span.Minute}{between}" : $"{span.Minute}{between}");
             string secs = span.Second == 0 ? "" : (span.Second == 1 ? $"{span.Second}" : $"{span.Second}");
 
             return $"{days}{hours}{mins}{secs}";

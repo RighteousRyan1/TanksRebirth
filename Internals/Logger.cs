@@ -21,6 +21,8 @@ namespace TanksRebirth.Internals
 
         public readonly string Name;
 
+        public readonly string FileName;
+
         private readonly Assembly assembly;
 
         private static FileStream fStream;
@@ -30,31 +32,15 @@ namespace TanksRebirth.Internals
             assembly = Assembly.GetExecutingAssembly();
             Name = name;
 
-            /*
-            int rev = 0;
+            FileName = $"{name}_{DateTime.Now.StringFormatCustom("_")}.log";
 
-            var path = Path.Combine(writeFile, $"{name}_{rev}.log");
-
-            if (File.Exists(path))
-            {
-                File.Delete(path);
-                rev++;
-            }
-
-            path = Path.Combine(writeFile, $"{name}_{rev}.log");
-
-            writeTo = path;*/
-
-            name += $"_{DateTime.Now.StringFormatDots()}";
-
-            writeTo = Path.Combine(writeFile, $"{name}.log");
+            writeTo = Path.Combine(writeFile, $"{FileName}");
 
             Debug.WriteLine($"Created '{writeTo}'");
 
             fStream = new(writeTo, FileMode.OpenOrCreate);
             fStream.SetLength(0);
             sWriter = new(fStream);
-            
         }
 
         /// <summary>

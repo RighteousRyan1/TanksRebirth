@@ -222,7 +222,7 @@ namespace TanksRebirth
             }
             catch (Exception e) when (!Debugger.IsAttached)
             {
-                GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
+                WriteError(e);
                 throw;
             }
         }
@@ -267,7 +267,7 @@ namespace TanksRebirth
                 base.Initialize();
             }
             catch (Exception e) when (!Debugger.IsAttached) {
-                GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
+                WriteError(e);
                 throw;
             }
         }
@@ -407,8 +407,6 @@ namespace TanksRebirth
 
                 // DecalSystem.Initialize(SpriteRenderer, GraphicsDevice);
 
-                LevelEditor.Initialize();
-
                 if (ModLoader.LoadingMods) {
                     MainMenu.MenuState = MainMenu.State.LoadingMods;
                     Task.Run(async () => {
@@ -429,9 +427,21 @@ namespace TanksRebirth
             }
             catch (Exception e) when (!Debugger.IsAttached)
             {
-                GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
+                WriteError(e);
                 throw;
             }
+        }
+
+        public static void WriteError(Exception e, bool notifyUser = true, bool openFile = true) {
+            GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
+            if (notifyUser)
+                GameHandler.ClientLog.Write($"The error above is important for the developer of this game. If you are able to report it, explain how to reproduce it." +
+                    $"\nThis file was opened for your sake of helping the developer out.", LogType.Info);
+            if (openFile)
+                Process.Start(new ProcessStartInfo(GameHandler.ClientLog.FileName) {
+                    UseShellExecute = true,
+                    WorkingDirectory = Path.Combine(SaveDirectory, "Logs"),
+                });
         }
 
         private void TankGame_OnFocusRegained(object sender, IntPtr e)
@@ -716,7 +726,7 @@ namespace TanksRebirth
             }
             catch (Exception e) when (!Debugger.IsAttached)
             {
-                GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
+                WriteError(e);
                 throw;
             }
         }
@@ -828,8 +838,7 @@ namespace TanksRebirth
 
         protected override void Draw(GameTime gameTime)
         {
-            if(gameTarget == null || gameTarget.IsDisposed || gameTarget.Size() != GameUtils.WindowBounds)
-            {
+            if(gameTarget == null || gameTarget.IsDisposed || gameTarget.Size() != GameUtils.WindowBounds) {
                 gameTarget?.Dispose();
                 var presentationParams = GraphicsDevice.PresentationParameters;
                 gameTarget = new RenderTarget2D(GraphicsDevice, presentationParams.BackBufferWidth, presentationParams.BackBufferHeight, false, presentationParams.BackBufferFormat, presentationParams.DepthStencilFormat, 0, RenderTargetUsage.PreserveContents);
@@ -933,7 +942,7 @@ namespace TanksRebirth
             }
             catch (Exception e) when (!Debugger.IsAttached)
             {
-                GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
+                WriteError(e);
                 throw;
             }
 
