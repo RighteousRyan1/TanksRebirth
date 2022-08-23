@@ -30,6 +30,11 @@ namespace TanksRebirth.GameContent
                 c.Body.Position = Position;
             c.TpLink = TpLink;
 
+            for (int i = 0; i < PlacementSquare.Placements.Count; i++) {
+                if (c.Position3D == PlacementSquare.Placements[i].Position)
+                    PlacementSquare.Placements[i].BlockId = c.Id;
+            }
+
             return c;
         }
     }

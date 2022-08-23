@@ -24,6 +24,7 @@ using TanksRebirth.IO;
 using TanksRebirth.GameContent.Properties;
 using TanksRebirth.GameContent.Cosmetics;
 using TanksRebirth.GameContent.UI;
+using TanksRebirth.GameContent.ID;
 
 namespace TanksRebirth.GameContent
 {
@@ -35,7 +36,7 @@ namespace TanksRebirth.GameContent
         public AiBehavior[] Behaviors { get; private set; } // each of these should keep track of an action the tank performs
         public AiBehavior[] SpecialBehaviors { get; private set; }
 
-        public TankTier Tier;
+        public int Tier;
 
         private Texture2D _tankTexture, _shadowTexture;
 
@@ -43,41 +44,41 @@ namespace TanksRebirth.GameContent
 
         public int AITankId { get; }
 
-        public static Dictionary<TankTier, Color> TankDestructionColors = new()
+        public static Dictionary<int, Color> TankDestructionColors = new()
         {
-            [TankTier.Brown] = new(152, 96, 26),
-            [TankTier.Ash] = Color.Gray,
-            [TankTier.Marine] = Color.Teal,
-            [TankTier.Yellow] = Color.Yellow,
-            [TankTier.Pink] = Color.Pink,
-            [TankTier.Green] = Color.LimeGreen,
-            [TankTier.Violet] = Color.Purple,
-            [TankTier.White] = Color.White,
-            [TankTier.Black] = Color.Black,
-            [TankTier.Bronze] = new(152, 96, 26),
-            [TankTier.Silver] = Color.Silver,
-            [TankTier.Sapphire] = Color.DeepSkyBlue,
-            [TankTier.Ruby] = Color.IndianRed,
-            [TankTier.Citrine] = Color.Yellow,
-            [TankTier.Amethyst] = Color.Purple,
-            [TankTier.Emerald] = Color.Green,
-            [TankTier.Gold] = Color.Gold,
-            [TankTier.Obsidian] = Color.Black,
-            [TankTier.Granite] = new(152, 96, 26),
-            [TankTier.Bubblegum] = Color.LightPink,
-            [TankTier.Water] = Color.LightBlue,
-            [TankTier.Crimson] = Color.Crimson,
-            [TankTier.Tiger] = Color.Yellow,
-            [TankTier.Creeper] = Color.Green,
-            [TankTier.Fade] = Color.Beige,
-            [TankTier.Gamma] = Color.DarkGreen,
-            [TankTier.Marble] = Color.Red,
-            [TankTier.Cherry] = Color.DarkRed,
-            [TankTier.Assassin] = Color.DarkGray,
-            [TankTier.Commando] = Color.Olive,
-            [TankTier.RocketDefender] = Color.DarkGray,
-            [TankTier.Electro] = Color.Blue,
-            [TankTier.Explosive] = Color.DarkGray,
+            [TankID.Brown] = new(152, 96, 26),
+            [TankID.Ash] = Color.Gray,
+            [TankID.Marine] = Color.Teal,
+            [TankID.Yellow] = Color.Yellow,
+            [TankID.Pink] = Color.Pink,
+            [TankID.Green] = Color.LimeGreen,
+            [TankID.Violet] = Color.Purple,
+            [TankID.White] = Color.White,
+            [TankID.Black] = Color.Black,
+            [TankID.Bronze] = new(152, 96, 26),
+            [TankID.Silver] = Color.Silver,
+            [TankID.Sapphire] = Color.DeepSkyBlue,
+            [TankID.Ruby] = Color.IndianRed,
+            [TankID.Citrine] = Color.Yellow,
+            [TankID.Amethyst] = Color.Purple,
+            [TankID.Emerald] = Color.Green,
+            [TankID.Gold] = Color.Gold,
+            [TankID.Obsidian] = Color.Black,
+            [TankID.Granite] = new(152, 96, 26),
+            [TankID.Bubblegum] = Color.LightPink,
+            [TankID.Water] = Color.LightBlue,
+            [TankID.Crimson] = Color.Crimson,
+            [TankID.Tiger] = Color.Yellow,
+            [TankID.Creeper] = Color.Green,
+            [TankID.Fade] = Color.Beige,
+            [TankID.Gamma] = Color.DarkGreen,
+            [TankID.Marble] = Color.Red,
+            [TankID.Cherry] = Color.DarkRed,
+            [TankID.Assassin] = Color.DarkGray,
+            [TankID.Commando] = Color.Olive,
+            [TankID.RocketDefender] = Color.DarkGray,
+            [TankID.Electro] = Color.Blue,
+            [TankID.Explosive] = Color.DarkGray,
         };
         #region AiTankParams
 
@@ -163,9 +164,9 @@ namespace TanksRebirth.GameContent
 
         public ModelMesh CannonMesh;
         #endregion
-        public static TankTier GetHighestTierActive()
+        public static int GetHighestTierActive()
         {
-            var highest = TankTier.None;
+            var highest = TankID.None;
 
             foreach (var tank in GameHandler.AllAITanks)
             {
@@ -177,17 +178,17 @@ namespace TanksRebirth.GameContent
         }
         public static int CountAll()
             => GameHandler.AllAITanks.Count(tnk => tnk is not null && !tnk.Dead);
-        public static int GetTankCountOfType(TankTier tier)
+        public static int GetTankCountOfType(int tier)
             => GameHandler.AllAITanks.Count(tnk => tnk is not null && tnk.Tier == tier && !tnk.Dead);
-        public void Swap(TankTier tier, bool setDefaults = true)
+        public void Swap(int tier, bool setDefaults = true)
         {
             Tier = tier;
 
-            if ((int)tier <= (int)TankTier.Marble)
+            if ((int)tier <= (int)TankID.Marble)
                 _tankTexture = Assets[$"tank_" + tier.ToString().ToLower()];
             #region Special
 
-            if (tier == TankTier.Commando)
+            if (tier == TankID.Commando)
             {
                 Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_commando");
 
@@ -207,25 +208,25 @@ namespace TanksRebirth.GameContent
                 }
                 // fix?
             }
-            else if (tier == TankTier.Assassin)
+            else if (tier == TankID.Assassin)
             {
                 Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_assassin");
 
                 _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_assassin");
             }
-            else if (tier == TankTier.RocketDefender)
+            else if (tier == TankID.RocketDefender)
             {
                 Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_rocket");
 
                 _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_rocket");
             }
-            else if (tier == TankTier.Electro)
+            else if (tier == TankID.Electro)
             {
                 Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_electro");
 
                 _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_electro");
             }
-            else if (tier == TankTier.Explosive)
+            else if (tier == TankID.Explosive)
             {
                 Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_explosive");
 
@@ -245,30 +246,30 @@ namespace TanksRebirth.GameContent
         /// <summary>
         /// Creates a new <see cref="AITank"/>.
         /// </summary>
-        /// <param name="tier">The tier of this <see cref="AITank"/>. If '<see cref="TankTier.Random"/>', it will be randomly chosen.</param>
+        /// <param name="tier">The tier of this <see cref="AITank"/>. If '<see cref="TankID.Random"/>', it will be randomly chosen.</param>
         /// <param name="setTankDefaults">Whether or not to give this <see cref="AITank"/> the default values.</param>
         /// /// <param name="isIngame">Whether or not this <see cref="AITank"/> is a gameplay tank or a cosmetic tank (i.e: display models on menus, etc).</param>
-        public AITank(TankTier tier, Range<TankTier> tankRange = default, bool setTankDefaults = true, bool isIngame = true, bool isRandomizable = true)
+        public AITank(int tier, Range<int> tankRange = default, bool setTankDefaults = true, bool isIngame = true, bool isRandomizable = true)
         {
             if (isIngame)
             {
                 if (Difficulties.Types["BumpUp"])
-                    tier += 1;
+                    tier++;
                 if (Difficulties.Types["MeanGreens"])
-                    tier = TankTier.Green;
+                    tier = TankID.Green;
                 if (Difficulties.Types["MasterModBuff"] && !Difficulties.Types["MarbleModBuff"])
                     tier += 9;
                 if (Difficulties.Types["MarbleModBuff"] && !Difficulties.Types["MasterModBuff"])
                     tier += 18;
                 if (Difficulties.Types["RandomizedTanks"])
                 {
-                    tier = TankTier.Random;
-                    tankRange = new Range<TankTier>(TankTier.Brown, TankTier.Marble); // set to commando when the time comes
+                    tier = TankID.Random;
+                    tankRange = new Range<int>(TankID.Brown, TankID.Marble); // set to commando when the time comes
                 }
             }
             if (isRandomizable)
-                if (tier == TankTier.Random)
-                    tier = (TankTier)GameHandler.GameRand.Next((int)tankRange.Min, (int)tankRange.Max + 1);
+                if (tier == TankID.Random)
+                    tier = (short)GameHandler.GameRand.Next(tankRange.Min, tankRange.Max + 1); // guh?? an overload exists???
             IsIngame = isIngame;
             if (isIngame)
             {
@@ -296,37 +297,37 @@ namespace TanksRebirth.GameContent
                 Dead = true;
             }
 
-            if (tier <= TankTier.Cherry)
-                _tankTexture = Assets[$"tank_" + tier.ToString().ToLower()];
+            if (tier <= TankID.Cherry)
+                _tankTexture = Assets[$"tank_" + TankID.Collection.GetKey(tier).ToLower()];
             
             #region Special
 
-            if (tier == TankTier.Commando)
+            if (tier == TankID.Commando)
             {
                 Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_commando");
 
                 _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_commando");
                 // fix?
             }
-            else if (tier == TankTier.Assassin)
+            else if (tier == TankID.Assassin)
             {
                 Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_assassin");
 
                 _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_assassin");
             }
-            else if (tier == TankTier.RocketDefender)
+            else if (tier == TankID.RocketDefender)
             {
                 Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_rocket");
 
                 _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_rocket");
             }
-            else if (tier == TankTier.Electro)
+            else if (tier == TankID.Electro)
             {
                 Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_electro");
 
                 _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_electro");
             }
-            else if (tier == TankTier.Explosive)
+            else if (tier == TankID.Explosive)
             {
                 Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_explosive");
 
@@ -377,7 +378,7 @@ namespace TanksRebirth.GameContent
             switch (Tier)
             {
                 #region VanillaTanks
-                case TankTier.Brown:
+                case TankID.Brown:
                     properties.Stationary = true;
 
                     AiParams.ProjectileWarinessRadius_PlayerShot = 60;
@@ -394,7 +395,7 @@ namespace TanksRebirth.GameContent
                     properties.ShellCooldown = 300;
                     properties.ShellLimit = 1;
                     properties.ShellSpeed = 3f;
-                    properties.ShellType = ShellType.Standard;
+                    properties.ShellType = ShellID.Standard;
                     properties.RicochetCount = 1;
 
                     properties.Invisible = false;
@@ -411,7 +412,7 @@ namespace TanksRebirth.GameContent
 
                     break;
 
-                case TankTier.Ash:
+                case TankID.Ash:
                     AiParams.MeanderAngle = MathHelper.ToRadians(30);
                     AiParams.MeanderFrequency = 15;
                     AiParams.TurretMeanderFrequency = 40;
@@ -430,7 +431,7 @@ namespace TanksRebirth.GameContent
                     properties.ShellCooldown = 180;
                     properties.ShellLimit = 1;
                     properties.ShellSpeed = 3f;
-                    properties.ShellType = ShellType.Standard;
+                    properties.ShellType = ShellID.Standard;
                     properties.RicochetCount = 1;
 
                     properties.Invisible = false;
@@ -449,7 +450,7 @@ namespace TanksRebirth.GameContent
                     BaseExpValue = 0.015f;
                     break;
 
-                case TankTier.Marine:
+                case TankID.Marine:
                     AiParams.MeanderAngle = MathHelper.ToRadians(30);
                     AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 10;
@@ -468,7 +469,7 @@ namespace TanksRebirth.GameContent
                     properties.ShellCooldown = 180;
                     properties.ShellLimit = 1;
                     properties.ShellSpeed = 6f;
-                    properties.ShellType = ShellType.Rocket;
+                    properties.ShellType = ShellID.Rocket;
                     properties.RicochetCount = 0;
 
                     properties.Invisible = false;
@@ -487,7 +488,7 @@ namespace TanksRebirth.GameContent
                     BaseExpValue = 0.04f;
                     break;
 
-                case TankTier.Yellow:
+                case TankID.Yellow:
                     AiParams.MeanderAngle = MathHelper.ToRadians(40);
                     AiParams.MeanderFrequency = 15;
                     AiParams.TurretMeanderFrequency = 20;
@@ -509,7 +510,7 @@ namespace TanksRebirth.GameContent
                     properties.ShellCooldown = 90;
                     properties.ShellLimit = 1;
                     properties.ShellSpeed = 3f;
-                    properties.ShellType = ShellType.Standard;
+                    properties.ShellType = ShellID.Standard;
                     properties.RicochetCount = 1;
 
                     properties.Invisible = false;
@@ -537,7 +538,7 @@ namespace TanksRebirth.GameContent
                     }
                     break;
 
-                case TankTier.Pink:
+                case TankID.Pink:
                     AiParams.MeanderAngle = MathHelper.ToRadians(40);
                     AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 40;
@@ -556,7 +557,7 @@ namespace TanksRebirth.GameContent
                     properties.ShellCooldown = 30;
                     properties.ShellLimit = 3;
                     properties.ShellSpeed = 3f;
-                    properties.ShellType = ShellType.Standard;
+                    properties.ShellType = ShellID.Standard;
                     properties.RicochetCount = 1;
 
                     properties.Invisible = false;
@@ -575,7 +576,7 @@ namespace TanksRebirth.GameContent
                     BaseExpValue = 0.08f;
                     break;
 
-                case TankTier.Violet:
+                case TankID.Violet:
                     AiParams.MeanderAngle = MathHelper.ToRadians(40);
                     AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 25;
@@ -595,7 +596,7 @@ namespace TanksRebirth.GameContent
                     properties.ShellCooldown = 30;
                     properties.ShellLimit = 5;
                     properties.ShellSpeed = 3f;
-                    properties.ShellType = ShellType.Standard;
+                    properties.ShellType = ShellID.Standard;
                     properties.RicochetCount = 1;
 
                     properties.Invisible = false;
@@ -617,7 +618,7 @@ namespace TanksRebirth.GameContent
                     BaseExpValue = 0.1f;
                     break;
 
-                case TankTier.Green:
+                case TankID.Green:
                     properties.Stationary = true;
 
                     AiParams.ProjectileWarinessRadius_PlayerShot = 70;
@@ -634,7 +635,7 @@ namespace TanksRebirth.GameContent
                     properties.ShellCooldown = 60;
                     properties.ShellLimit = 2;
                     properties.ShellSpeed = 6f; // 6f
-                    properties.ShellType = ShellType.TrailedRocket;
+                    properties.ShellType = ShellID.TrailedRocket;
                     properties.RicochetCount = 2; // 2
 
                     properties.Invisible = false;
@@ -650,14 +651,14 @@ namespace TanksRebirth.GameContent
                     BaseExpValue = 0.12f;
                     break;
 
-                case TankTier.White:
+                case TankID.White:
                     AiParams.MeanderAngle = MathHelper.ToRadians(30);
                     AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 20;
                     AiParams.TurretSpeed = 0.03f;
                     AiParams.AimOffset = MathHelper.ToRadians(40);
 
-                    properties.Track = TrackType.Thick;
+                    properties.TrackType = TrackID.Thick;
 
                     AiParams.Inaccuracy = 0.8f;
 
@@ -671,7 +672,7 @@ namespace TanksRebirth.GameContent
                     properties.ShellCooldown = 30;
                     properties.ShellLimit = 5;
                     properties.ShellSpeed = 3f;
-                    properties.ShellType = ShellType.Standard;
+                    properties.ShellType = ShellID.Standard;
                     properties.RicochetCount = 1;
 
                     properties.Stationary = false;
@@ -694,7 +695,7 @@ namespace TanksRebirth.GameContent
                     BaseExpValue = 0.125f;
                     break;
 
-                case TankTier.Black:
+                case TankID.Black:
                     AiParams.MeanderAngle = MathHelper.ToRadians(30);
                     AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 20;
@@ -713,7 +714,7 @@ namespace TanksRebirth.GameContent
                     properties.ShellCooldown = 90;
                     properties.ShellLimit = 3;
                     properties.ShellSpeed = 6f;
-                    properties.ShellType = ShellType.Rocket;
+                    properties.ShellType = ShellID.Rocket;
                     properties.RicochetCount = 0;
 
                     properties.Invisible = false;
@@ -738,7 +739,7 @@ namespace TanksRebirth.GameContent
                     break;
                 #endregion
                 #region MasterMod
-                case TankTier.Bronze:
+                case TankID.Bronze:
                     AiParams.TurretMeanderFrequency = 15;
                     AiParams.TurretSpeed = 0.05f;
                     AiParams.AimOffset = 0.005f;
@@ -752,7 +753,7 @@ namespace TanksRebirth.GameContent
                     properties.ShellCooldown = 50;
                     properties.ShellLimit = 2;
                     properties.ShellSpeed = 3f;
-                    properties.ShellType = ShellType.Standard;
+                    properties.ShellType = ShellID.Standard;
                     properties.RicochetCount = 1;
 
                     properties.Invisible = false;
@@ -763,7 +764,7 @@ namespace TanksRebirth.GameContent
 
                     BaseExpValue = 0.025f;
                     break;
-                case TankTier.Silver:
+                case TankID.Silver:
                     AiParams.MeanderAngle = MathHelper.ToRadians(30);
                     AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 60;
@@ -782,7 +783,7 @@ namespace TanksRebirth.GameContent
                     properties.ShellCooldown = 15;
                     properties.ShellLimit = 8;
                     properties.ShellSpeed = 4f;
-                    properties.ShellType = ShellType.Standard;
+                    properties.ShellType = ShellID.Standard;
                     properties.RicochetCount = 1;
 
                     properties.Invisible = false;
@@ -802,7 +803,7 @@ namespace TanksRebirth.GameContent
 
                     BaseExpValue = 0.07f;
                     break;
-                case TankTier.Sapphire:
+                case TankID.Sapphire:
                     AiParams.MeanderAngle = MathHelper.ToRadians(30);
                     AiParams.MeanderFrequency = 15;
                     AiParams.TurretMeanderFrequency = 20;
@@ -821,7 +822,7 @@ namespace TanksRebirth.GameContent
                     properties.ShellCooldown = 10;
                     properties.ShellLimit = 3;
                     properties.ShellSpeed = 5.5f;
-                    properties.ShellType = ShellType.Rocket;
+                    properties.ShellType = ShellID.Rocket;
                     properties.RicochetCount = 0;
 
                     properties.Invisible = false;
@@ -841,7 +842,7 @@ namespace TanksRebirth.GameContent
 
                     BaseExpValue = 0.095f;
                     break;
-                case TankTier.Ruby:
+                case TankID.Ruby:
                     AiParams.MeanderAngle = MathHelper.ToRadians(30);
                     AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 20;
@@ -863,7 +864,7 @@ namespace TanksRebirth.GameContent
                     properties.ShellCooldown = 8;
                     properties.ShellLimit = 10;
                     properties.ShellSpeed = 3f;
-                    properties.ShellType = ShellType.Standard;
+                    properties.ShellType = ShellID.Standard;
                     properties.RicochetCount = 0;
 
                     properties.Invisible = false;
@@ -885,7 +886,7 @@ namespace TanksRebirth.GameContent
 
                     BaseExpValue = 0.13f;
                     break;
-                case TankTier.Citrine:
+                case TankID.Citrine:
                     AiParams.MeanderAngle = MathHelper.ToRadians(30);
                     AiParams.MeanderFrequency = 30;
                     AiParams.TurretMeanderFrequency = 20;
@@ -904,7 +905,7 @@ namespace TanksRebirth.GameContent
                     properties.ShellCooldown = 60;
                     properties.ShellLimit = 3;
                     properties.ShellSpeed = 6f;
-                    properties.ShellType = ShellType.Standard;
+                    properties.ShellType = ShellID.Standard;
                     properties.RicochetCount = 0;
 
                     properties.Invisible = false;
@@ -928,7 +929,7 @@ namespace TanksRebirth.GameContent
 
                     BaseExpValue = 0.09f;
                     break;
-                case TankTier.Amethyst:
+                case TankID.Amethyst:
                     AiParams.MeanderAngle = MathHelper.ToRadians(30);
                     AiParams.MeanderFrequency = 5;
                     AiParams.TurretMeanderFrequency = 15;
@@ -947,7 +948,7 @@ namespace TanksRebirth.GameContent
                     properties.ShellCooldown = 25;
                     properties.ShellLimit = 5;
                     properties.ShellSpeed = 3.5f; // 3.5
-                    properties.ShellType = ShellType.Standard;
+                    properties.ShellType = ShellID.Standard;
                     properties.RicochetCount = 1; // 1
 
                     properties.Invisible = false;
@@ -967,7 +968,7 @@ namespace TanksRebirth.GameContent
 
                     BaseExpValue = 0.095f;
                     break;
-                case TankTier.Emerald:
+                case TankID.Emerald:
                     AiParams.TurretMeanderFrequency = 20;
                     AiParams.TurretSpeed = 0.04f;
                     AiParams.AimOffset = 1f;
@@ -977,7 +978,7 @@ namespace TanksRebirth.GameContent
                     properties.ShellCooldown = 60;
                     properties.ShellLimit = 3;
                     properties.ShellSpeed = 8f;
-                    properties.ShellType = ShellType.TrailedRocket;
+                    properties.ShellType = ShellID.TrailedRocket;
                     properties.RicochetCount = 2;
 
                     properties.Stationary = true;
@@ -989,7 +990,7 @@ namespace TanksRebirth.GameContent
                     BaseExpValue = 0.14f;
                     break;
 
-                case TankTier.Gold:
+                case TankID.Gold:
                     AiParams.MeanderAngle = MathHelper.ToRadians(30);
                     AiParams.MeanderFrequency = 20;
                     AiParams.TurretMeanderFrequency = 20;
@@ -1012,7 +1013,7 @@ namespace TanksRebirth.GameContent
                     properties.ShellCooldown = 30;
                     properties.ShellLimit = 3;
                     properties.ShellSpeed = 4f;
-                    properties.ShellType = ShellType.Standard;
+                    properties.ShellType = ShellID.Standard;
                     properties.RicochetCount = 1;
 
                     properties.Stationary = false;
@@ -1034,7 +1035,7 @@ namespace TanksRebirth.GameContent
                     BaseExpValue = 0.16f;
                     break;
 
-                case TankTier.Obsidian:
+                case TankID.Obsidian:
                     AiParams.MeanderAngle = MathHelper.ToRadians(30);
                     AiParams.MeanderFrequency = 20;
                     AiParams.TurretMeanderFrequency = 20;
@@ -1053,7 +1054,7 @@ namespace TanksRebirth.GameContent
                     properties.ShellCooldown = 25;
                     properties.ShellLimit = 3;
                     properties.ShellSpeed = 8.5f;
-                    properties.ShellType = ShellType.Rocket;
+                    properties.ShellType = ShellID.Rocket;
                     properties.RicochetCount = 2;
 
                     properties.Invisible = false;
@@ -1078,7 +1079,7 @@ namespace TanksRebirth.GameContent
                     break;
                 #endregion
                 #region MarbleMod
-                case TankTier.Granite:
+                case TankID.Granite:
                     AiParams.MeanderAngle = 0.8f;
                     AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 20;
@@ -1097,7 +1098,7 @@ namespace TanksRebirth.GameContent
                     properties.ShellCooldown = 40;
                     properties.ShellLimit = 2;
                     properties.ShellSpeed = 5f;
-                    properties.ShellType = ShellType.Standard;
+                    properties.ShellType = ShellID.Standard;
                     properties.RicochetCount = 1;
 
                     properties.Invisible = false;
@@ -1113,7 +1114,7 @@ namespace TanksRebirth.GameContent
 
                     BaseExpValue = 0.02f;
                     break;
-                case TankTier.Bubblegum:
+                case TankID.Bubblegum:
                     AiParams.MeanderAngle = MathHelper.ToRadians(30);
                     AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 20;
@@ -1132,7 +1133,7 @@ namespace TanksRebirth.GameContent
                     properties.ShellCooldown = 15;
                     properties.ShellLimit = 8;
                     properties.ShellSpeed = 4f;
-                    properties.ShellType = ShellType.Standard;
+                    properties.ShellType = ShellID.Standard;
                     properties.RicochetCount = 1;
 
                     properties.Invisible = false;
@@ -1153,7 +1154,7 @@ namespace TanksRebirth.GameContent
 
                     BaseExpValue = 0.035f;
                     break;
-                case TankTier.Water:
+                case TankID.Water:
                     AiParams.MeanderAngle = 0.25f;
                     AiParams.MeanderFrequency = 15;
                     AiParams.TurretMeanderFrequency = 10;
@@ -1172,7 +1173,7 @@ namespace TanksRebirth.GameContent
                     properties.ShellCooldown = 25;
                     properties.ShellLimit = 2;
                     properties.ShellSpeed = 5.5f;
-                    properties.ShellType = ShellType.Rocket;
+                    properties.ShellType = ShellID.Rocket;
                     properties.RicochetCount = 1;
 
                     properties.Invisible = false;
@@ -1186,7 +1187,7 @@ namespace TanksRebirth.GameContent
 
                     BaseExpValue = 0.08f;
                     break;
-                case TankTier.Crimson:
+                case TankID.Crimson:
                     AiParams.MeanderAngle = 0.12f;
                     AiParams.MeanderFrequency = 8;
                     AiParams.TurretMeanderFrequency = 60;
@@ -1205,7 +1206,7 @@ namespace TanksRebirth.GameContent
                     properties.ShellCooldown = 5;
                     properties.ShellLimit = 5;
                     properties.ShellSpeed = 3f;
-                    properties.ShellType = ShellType.Standard;
+                    properties.ShellType = ShellID.Standard;
                     properties.RicochetCount = 0;
 
                     properties.Invisible = false;
@@ -1226,7 +1227,7 @@ namespace TanksRebirth.GameContent
 
                     BaseExpValue = 0.095f;
                     break;
-                case TankTier.Tiger:
+                case TankID.Tiger:
                     AiParams.MeanderAngle = 0.30f;
                     AiParams.MeanderFrequency = 2;
                     AiParams.TurretMeanderFrequency = 40;
@@ -1245,7 +1246,7 @@ namespace TanksRebirth.GameContent
                     properties.ShellCooldown = 20;
                     properties.ShellLimit = 4;
                     properties.ShellSpeed = 4f;
-                    properties.ShellType = ShellType.Standard;
+                    properties.ShellType = ShellID.Standard;
                     properties.RicochetCount = 1;
 
                     properties.Invisible = false;
@@ -1265,7 +1266,7 @@ namespace TanksRebirth.GameContent
 
                     BaseExpValue = 0.1f;
                     break;
-                case TankTier.Fade:
+                case TankID.Fade:
                     AiParams.MeanderAngle = MathHelper.ToRadians(30);
                     AiParams.MeanderFrequency = 8;
                     AiParams.TurretMeanderFrequency = 40;
@@ -1284,7 +1285,7 @@ namespace TanksRebirth.GameContent
                     properties.ShellCooldown = 25;
                     properties.ShellLimit = 5;
                     properties.ShellSpeed = 3.5f;
-                    properties.ShellType = ShellType.Standard;
+                    properties.ShellType = ShellID.Standard;
                     properties.RicochetCount = 1;
 
                     properties.Invisible = false;
@@ -1304,7 +1305,7 @@ namespace TanksRebirth.GameContent
 
                     BaseExpValue = 0.105f;
                     break;
-                case TankTier.Creeper:
+                case TankID.Creeper:
                     AiParams.MeanderAngle = 0.2f;
                     AiParams.MeanderFrequency = 25;
                     AiParams.TurretMeanderFrequency = 40;
@@ -1325,7 +1326,7 @@ namespace TanksRebirth.GameContent
                     properties.ShellCooldown = 60;
                     properties.ShellLimit = 2;
                     properties.ShellSpeed = 8f;
-                    properties.ShellType = ShellType.TrailedRocket;
+                    properties.ShellType = ShellID.TrailedRocket;
                     properties.RicochetCount = 3;
 
                     properties.Invisible = false;
@@ -1339,7 +1340,7 @@ namespace TanksRebirth.GameContent
 
                     BaseExpValue = 0.17f;
                     break;
-                case TankTier.Gamma:
+                case TankID.Gamma:
                     AiParams.TurretMeanderFrequency = 20;
                     AiParams.TurretSpeed = 0.08f;
                     AiParams.AimOffset = 0.01f;
@@ -1352,14 +1353,14 @@ namespace TanksRebirth.GameContent
                     properties.ShellCooldown = 40;
                     properties.ShellLimit = 6;
                     properties.ShellSpeed = 12.5f;
-                    properties.ShellType = ShellType.Standard;
+                    properties.ShellType = ShellID.Standard;
                     properties.RicochetCount = 0;
 
                     properties.Stationary = true;
 
                     BaseExpValue = 0.13f;
                     break;
-                case TankTier.Marble:
+                case TankID.Marble:
                     AiParams.MeanderAngle = MathHelper.PiOver2;
                     AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 20;
@@ -1378,7 +1379,7 @@ namespace TanksRebirth.GameContent
                     properties.ShellCooldown = 25;
                     properties.ShellLimit = 3;
                     properties.ShellSpeed = 10f;
-                    properties.ShellType = ShellType.Rocket;
+                    properties.ShellType = ShellID.Rocket;
                     properties.RicochetCount = 1;
 
                     properties.TreadPitch = -0.26f;
@@ -1401,7 +1402,7 @@ namespace TanksRebirth.GameContent
                 #endregion
                 // unimplemented XP values
                 #region Special
-                case TankTier.Explosive:
+                case TankID.Explosive:
                     properties.Armor = new(this, 3);
                     AiParams.MeanderAngle = MathHelper.ToRadians(30);
                     AiParams.MeanderFrequency = 10;
@@ -1421,7 +1422,7 @@ namespace TanksRebirth.GameContent
                     properties.ShellCooldown = 90;
                     properties.ShellLimit = 2;
                     properties.ShellSpeed = 2f;
-                    properties.ShellType = ShellType.Explosive;
+                    properties.ShellType = ShellID.Explosive;
                     properties.RicochetCount = 0;
 
                     properties.ShootPitch = -0.1f;
@@ -1443,7 +1444,7 @@ namespace TanksRebirth.GameContent
                     AiParams.ShootChance = 0.2f;
                     break;
 
-                case TankTier.Electro:
+                case TankID.Electro:
                     AiParams.MeanderAngle = MathHelper.ToRadians(30);
                     AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 60;
@@ -1460,7 +1461,7 @@ namespace TanksRebirth.GameContent
                     properties.ShellCooldown = 15;
                     properties.ShellLimit = 8;
                     properties.ShellSpeed = 4f;
-                    properties.ShellType = ShellType.Standard;
+                    properties.ShellType = ShellID.Standard;
                     properties.RicochetCount = 1;
 
                     properties.Invisible = false;
@@ -1480,7 +1481,7 @@ namespace TanksRebirth.GameContent
                     AiParams.ShootChance = 0.2f;
                     break;
 
-                case TankTier.RocketDefender:
+                case TankID.RocketDefender:
                     AiParams.MeanderAngle = MathHelper.ToRadians(30);
                     AiParams.MeanderFrequency = 10;
                     AiParams.TurretMeanderFrequency = 60;
@@ -1497,7 +1498,7 @@ namespace TanksRebirth.GameContent
                     properties.ShellCooldown = 15;
                     properties.ShellLimit = 8;
                     properties.ShellSpeed = 4f;
-                    properties.ShellType = ShellType.Standard;
+                    properties.ShellType = ShellID.Standard;
                     properties.RicochetCount = 1;
 
                     properties.Invisible = false;
@@ -1517,7 +1518,7 @@ namespace TanksRebirth.GameContent
                     AiParams.ShootChance = 0.2f;
                     break;
 
-                case TankTier.Assassin:
+                case TankID.Assassin:
                     AiParams.MeanderAngle = MathHelper.ToRadians(40);
                     AiParams.MeanderFrequency = 15;
                     AiParams.TurretMeanderFrequency = 1;
@@ -1537,7 +1538,7 @@ namespace TanksRebirth.GameContent
                     properties.ShellCooldown = 100;
                     properties.ShellLimit = 1;
                     properties.ShellSpeed = 9.5f;
-                    properties.ShellType = ShellType.Supressed;
+                    properties.ShellType = ShellID.Supressed;
                     properties.RicochetCount = 1;
 
                     properties.Invisible = false;
@@ -1558,7 +1559,7 @@ namespace TanksRebirth.GameContent
 
                     AiParams.SmartRicochets = true;
                     break;
-                case TankTier.Cherry:
+                case TankID.Cherry:
                     AiParams.MeanderAngle = MathHelper.ToRadians(20);
                     AiParams.MeanderFrequency = 15;
                     AiParams.TurretMeanderFrequency = 10;
@@ -1578,7 +1579,7 @@ namespace TanksRebirth.GameContent
                     properties.ShellCooldown = 10;
                     properties.ShellLimit = 10;
                     properties.ShellSpeed = 6f;
-                    properties.ShellType = ShellType.Rocket;
+                    properties.ShellType = ShellID.Rocket;
                     properties.RicochetCount = 0;
 
                     properties.Invisible = false;
@@ -1600,7 +1601,7 @@ namespace TanksRebirth.GameContent
                     AiParams.SmartRicochets = false;
                     break;
 
-                case TankTier.Commando:
+                case TankID.Commando:
                     properties.Armor = new(this, 3);
                     AiParams.MeanderAngle = MathHelper.ToRadians(30);
                     AiParams.MeanderFrequency = 10;
@@ -1619,7 +1620,7 @@ namespace TanksRebirth.GameContent
                     properties.ShellCooldown = 50;
                     properties.ShellLimit = 1;
                     properties.ShellSpeed = 6f;
-                    properties.ShellType = ShellType.TrailedRocket;
+                    properties.ShellType = ShellID.TrailedRocket;
                     properties.RicochetCount = 0;
 
                     properties.Invisible = false;
@@ -1718,7 +1719,7 @@ namespace TanksRebirth.GameContent
 
             CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
 
-            if (Tier == TankTier.Commando)
+            if (Tier == TankID.Commando)
             {
                 Model.Meshes["Laser_Beam"].ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
                 Model.Meshes["Barrel_Laser"].ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
@@ -2059,7 +2060,7 @@ namespace TanksRebirth.GameContent
 
             List<Tank> tanksDef;
 
-            if (Properties.ShellType == ShellType.Explosive)
+            if (Properties.ShellType == ShellID.Explosive)
             {
                 tanksDef = GetTanksInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), out var rayEndpoint, offset: Vector2.UnitY * 20, pattern: x => (!x.IsDestructible && x.IsSolid) || x.Type == Block.BlockType.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
                 if (GameUtils.Distance_WiiTanksUnits(rayEndpoint, Position) < 150f) // TODO: change from hardcode to normalcode :YES:
@@ -2094,9 +2095,9 @@ namespace TanksRebirth.GameContent
                     }
                 }
             }
-            var findsEnemy = tanksDef.Any(tnk => tnk is not null && (tnk.Team != Team || tnk.Team == TankTeam.NoTeam) && tnk != this);
+            var findsEnemy = tanksDef.Any(tnk => tnk is not null && (tnk.Team != Team || tnk.Team == TeamID.NoTeam) && tnk != this);
             var findsSelf = tanksDef.Any(tnk => tnk is not null && tnk == this);
-            var findsFriendly = tanksDef.Any(tnk => tnk is not null && (tnk.Team == Team && tnk.Team != TankTeam.NoTeam));
+            var findsFriendly = tanksDef.Any(tnk => tnk is not null && (tnk.Team == Team && tnk.Team != TeamID.NoTeam));
 
             if (findsEnemy && !tooCloseToExplosiveShell)
                 SeesTarget = true;
@@ -2112,9 +2113,9 @@ namespace TanksRebirth.GameContent
                 {
                     var tanks = GetTanksInPath(Vector2.UnitY.RotatedByRadians(seekRotation), out var rayEndpoint, false, default, AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
 
-                    var findsEnemy2 = tanks.Any(tnk => tnk is not null && (tnk.Team != Team || tnk.Team == TankTeam.NoTeam) && tnk != this);
+                    var findsEnemy2 = tanks.Any(tnk => tnk is not null && (tnk.Team != Team || tnk.Team == TeamID.NoTeam) && tnk != this);
                     // var findsSelf2 = tanks.Any(tnk => tnk is not null && tnk == this);
-                    var findsFriendly2 = tanks.Any(tnk => tnk is not null && (tnk.Team == Team && tnk.Team != TankTeam.NoTeam));
+                    var findsFriendly2 = tanks.Any(tnk => tnk is not null && (tnk.Team == Team && tnk.Team != TeamID.NoTeam));
                     // ChatSystem.SendMessage($"{findsEnemy2} {findsFriendly2} | seek: {seeks}", Color.White);
                     if (findsEnemy2/* && !findsFriendly2*/)
                     {
@@ -2128,7 +2129,7 @@ namespace TanksRebirth.GameContent
                     seeks = false;
             }
 
-            bool checkNoTeam = Team == TankTeam.NoTeam || !tanksNear.Any(x => x.Team == Team);
+            bool checkNoTeam = Team == TeamID.NoTeam || !tanksNear.Any(x => x.Team == Team);
 
             if (AiParams.PredictsPositions)
             {
@@ -2176,15 +2177,15 @@ namespace TanksRebirth.GameContent
                     }
 
                     if (TankGame.GameUpdateTime % treadPlaceTimer == 0)
-                        LayFootprint(Properties.Track == TrackType.Thick);
+                        LayFootprint(Properties.TrackType == TrackID.Thick);
                 }
                 enactBehavior = () =>
                 {
-                    TargetTank = GameHandler.AllTanks.FirstOrDefault(tnk => tnk is not null && !tnk.Dead && (tnk.Team != Team || tnk.Team == TankTeam.NoTeam) && tnk != this);
+                    TargetTank = GameHandler.AllTanks.FirstOrDefault(tnk => tnk is not null && !tnk.Dead && (tnk.Team != Team || tnk.Team == TeamID.NoTeam) && tnk != this);
 
                     foreach (var tank in GameHandler.AllTanks)
                     {
-                        if (tank is not null && !tank.Dead && (tank.Team != Team || tank.Team == TankTeam.NoTeam) && tank != this)
+                        if (tank is not null && !tank.Dead && (tank.Team != Team || tank.Team == TeamID.NoTeam) && tank != this)
                             if (GameUtils.Distance_WiiTanksUnits(tank.Position, Position) < GameUtils.Distance_WiiTanksUnits(TargetTank.Position, Position))
                                 if ((tank.Properties.Invisible && tank.timeSinceLastAction < 60) || !tank.Properties.Invisible)
                                     TargetTank = tank;
@@ -2402,7 +2403,7 @@ namespace TanksRebirth.GameContent
 
                     #region Special Tank Behavior
 
-                    if (Tier == TankTier.Creeper)
+                    if (Tier == TankID.Creeper)
                     {
                         if (Array.IndexOf(GameHandler.AllTanks, TargetTank) > -1 && TargetTank is not null)
                         {
@@ -2415,7 +2416,7 @@ namespace TanksRebirth.GameContent
                             }
                         }
                     }
-                    else if (Tier == TankTier.Cherry)
+                    else if (Tier == TankID.Cherry)
                     {
                         if (SeesTarget)
                         {
@@ -2437,7 +2438,7 @@ namespace TanksRebirth.GameContent
                         else
                             Properties.MaxSpeed = 1.35f;
                     }
-                    else if (Tier == TankTier.Commando)
+                    else if (Tier == TankID.Commando)
                     {
                         SpecialBehaviors[0].Value++;
                         if (SpecialBehaviors[0].Value > 500)
@@ -2507,7 +2508,7 @@ namespace TanksRebirth.GameContent
                                 Properties.Speed = 0;
                             treadPlaceTimer = (int)Math.Round(14 / Properties.TurningSpeed) != 0 ? (int)Math.Round(14 / Properties.TurningSpeed) : 1;
                             if (TankGame.GameUpdateTime % treadPlaceTimer == 0)
-                                LayFootprint(Properties.Track == TrackType.Thick);
+                                LayFootprint(Properties.TrackType == TrackID.Thick);
                             IsTurning = true;
                         }
 
@@ -2740,14 +2741,14 @@ namespace TanksRebirth.GameContent
             return returned;
         }
 
-        private static readonly TankTier[] workingTiers =
+        private static readonly int[] workingTiers =
         {
-            TankTier.Brown, TankTier.Marine, TankTier.Yellow, TankTier.Black, TankTier.White, TankTier.Pink, TankTier.Violet, TankTier.Green, TankTier.Ash,
-            TankTier.Bronze, TankTier.Silver, TankTier.Sapphire, TankTier.Ruby, TankTier.Citrine, TankTier.Amethyst, TankTier.Emerald, TankTier.Gold, TankTier.Obsidian,
-            TankTier.Granite, TankTier.Bubblegum, TankTier.Water, TankTier.Crimson, TankTier.Tiger, TankTier.Creeper, TankTier.Gamma, TankTier.Marble,
+            TankID.Brown, TankID.Marine, TankID.Yellow, TankID.Black, TankID.White, TankID.Pink, TankID.Violet, TankID.Green, TankID.Ash,
+            TankID.Bronze, TankID.Silver, TankID.Sapphire, TankID.Ruby, TankID.Citrine, TankID.Amethyst, TankID.Emerald, TankID.Gold, TankID.Obsidian,
+            TankID.Granite, TankID.Bubblegum, TankID.Water, TankID.Crimson, TankID.Tiger, TankID.Creeper, TankID.Gamma, TankID.Marble,
             // TankTier.Assassin
         };
-        public static TankTier PickRandomTier()
+        public static int PickRandomTier()
             => workingTiers[GameHandler.GameRand.Next(0, workingTiers.Length)];
     }
 }

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TanksRebirth.Enums;
 using TanksRebirth.GameContent.GameMechanics;
+using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Properties;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
@@ -95,7 +96,7 @@ namespace TanksRebirth.GameContent
 
         // private Particle _flame;
 
-        public readonly ShellType Tier;
+        public readonly int Tier;
 
         private OggAudio _loopingSound;
 
@@ -108,17 +109,17 @@ namespace TanksRebirth.GameContent
         /// <param name="velocity">The velocity of the created <see cref="Shell"/>.</param>
         /// <param name="ricochets">How many times the newly created <see cref="Shell"/> can ricochet.</param>
         /// <param name="homing">Whether or not the newly created <see cref="Shell"/> homes in on enemies.</param>
-        public Shell(Vector3 position, Vector3 velocity, ShellType tier, Tank owner, uint ricochets = 0, HomingProperties homing = default, bool useDarkTexture = false, bool playSpawnSound = true)
+        public Shell(Vector3 position, Vector3 velocity, int tier, Tank owner, uint ricochets = 0, HomingProperties homing = default, bool useDarkTexture = false, bool playSpawnSound = true)
         {
             Tier = tier;
             RicochetsRemaining = ricochets;
             Position = position;
             Model = GameResources.GetGameResource<Model>("Assets/bullet");
 
-            if (tier == ShellType.Supressed || tier == ShellType.Explosive)
+            if (tier == ShellID.Supressed || tier == ShellID.Explosive)
                 useDarkTexture = true;
 
-            if (tier == ShellType.Explosive)
+            if (tier == ShellID.Explosive)
                 IsDestructible = false;
 
             _shellTexture = useDarkTexture ? GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/explosive_bullet") : GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/bullet");
@@ -130,13 +131,13 @@ namespace TanksRebirth.GameContent
 
             Velocity = velocity;
 
-            if (Tier == ShellType.Rocket)
+            if (Tier == ShellID.Rocket)
             {
                 Flaming = true;
                 _loopingSound = SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_rocket_loop", SoundContext.Effect, 0.3f);
                 _loopingSound.Instance.IsLooped = true;
             }
-            if (Tier == ShellType.TrailedRocket)
+            if (Tier == ShellID.TrailedRocket)
             {
                 // MakeTrail();
                 EmitsSmoke = false;
@@ -150,12 +151,12 @@ namespace TanksRebirth.GameContent
             {
                 _shootSound = Tier switch
                 {
-                    ShellType.Player => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_regular_1", SoundContext.Effect, 0.3f),
-                    ShellType.Standard => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_regular_2", SoundContext.Effect, 0.3f),
-                    ShellType.Rocket => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_rocket", SoundContext.Effect, 0.3f),
-                    ShellType.TrailedRocket => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_ricochet_rocket", SoundContext.Effect, 0.3f),
-                    ShellType.Supressed => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_silencer", SoundContext.Effect, 0.3f),
-                    ShellType.Explosive => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_regular_2", SoundContext.Effect, 0.3f),
+                    ShellID.Player => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_regular_1", SoundContext.Effect, 0.3f),
+                    ShellID.Standard => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_regular_2", SoundContext.Effect, 0.3f),
+                    ShellID.Rocket => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_rocket", SoundContext.Effect, 0.3f),
+                    ShellID.TrailedRocket => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_ricochet_rocket", SoundContext.Effect, 0.3f),
+                    ShellID.Supressed => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_silencer", SoundContext.Effect, 0.3f),
+                    ShellID.Explosive => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_regular_2", SoundContext.Effect, 0.3f),
                     _ => throw new NotImplementedException()
                 };
                 _shootSound.Instance.Pitch = MathHelper.Clamp(owner.Properties.ShootPitch, -1, 1);
@@ -224,7 +225,7 @@ namespace TanksRebirth.GameContent
                     {
                         if (target is not null && target != Owner && Vector2.Distance(Position2D, target.Position) <= HomeProperties.Radius)
                         {
-                            if (target.Team != Owner.Team || target.Team == TankTeam.NoTeam)
+                            if (target.Team != Owner.Team || target.Team == TeamID.NoTeam)
                             {
                                 if (HomeProperties.HeatSeeks && target.Velocity != Vector2.Zero)
                                     HomeProperties.Target = target.Position;
@@ -322,7 +323,7 @@ namespace TanksRebirth.GameContent
                 p.isAddative = false;
                 // GameHandler.GameRand.NextFloat(-2f, 2f)
                 //p.TextureRotation = -MathHelper.PiOver2;
-                p.TextureScale = Velocity.Length() / 10 - 0.2f;
+                p.TextureScale = new(Velocity.Length() / 10 - 0.2f);
                 p.Origin2D = new(p.Texture.Size().X / 2, 0);
 
                 p.Pitch = -Rotation - MathHelper.PiOver2;
@@ -344,7 +345,7 @@ namespace TanksRebirth.GameContent
                 p2.isAddative = false;
                 // GameHandler.GameRand.NextFloat(-2f, 2f)
                 //p.TextureRotation = -MathHelper.PiOver2;
-                p.TextureScale = Velocity.Length() / 10 - 0.2f;
+                p.TextureScale = new(Velocity.Length() / 10 - 0.2f);
                 p2.Origin2D = new(p.Texture.Size().X / 2, 0);
 
                 p2.Pitch = -Rotation + MathHelper.PiOver2;
@@ -486,7 +487,7 @@ namespace TanksRebirth.GameContent
 
             if (Owner is not null)
             {
-                if (Owner.Properties.ShellType == ShellType.TrailedRocket)
+                if (Owner.Properties.ShellType == ShellID.TrailedRocket)
                 {
                     s.Instance.Pitch = GameHandler.GameRand.NextFloat(0.15f, 0.25f);
                     var s2 = SoundPlayer.PlaySoundInstance("Assets/sounds/ricochet_zip", SoundContext.Effect, 0.05f);
@@ -512,18 +513,18 @@ namespace TanksRebirth.GameContent
                     if (tank.CollisionCircle.Intersects(HitCircle))
                     {
                         if (!CanFriendlyFire) {
-                            if (tank.Team == Owner.Team && tank != Owner && tank.Team != TankTeam.NoTeam)
+                            if (tank.Team == Owner.Team && tank != Owner && tank.Team != TeamID.NoTeam)
                                 Destroy(DestructionContext.WithFriendlyTank);
                         }
                         else if (Owner != null) {
                             if (tank == Owner)
                                 Destroy(DestructionContext.WithFriendlyTank);
-                            if (tank.Team == Owner.Team && tank != Owner && tank.Team != TankTeam.NoTeam)
+                            if (tank.Team == Owner.Team && tank != Owner && tank.Team != TeamID.NoTeam)
                                 Destroy(DestructionContext.WithFriendlyTank);
                             else
                                 Destroy(DestructionContext.WithHostileTank);
                         }
-                        tank.Damage(Owner is AITank ? new TankHurtContext_Bullet(false, Ricochets, Tier, Owner is not null ? Owner.WorldId : -1) : new TankHurtContext_Bullet(true, Ricochets, Tier, Owner is not null ? Owner.WorldId : -1));
+                        tank.Damage(new TankHurtContext_Bullet(Owner is PlayerTank, Ricochets, Tier, Owner is not null ? Owner.WorldId : -1));
                     }
                 }
             }
@@ -580,7 +581,7 @@ namespace TanksRebirth.GameContent
 
             if (Owner is not null)
             {
-                if (Owner.Properties.ShellType == ShellType.Explosive)
+                if (Owner.Properties.ShellType == ShellID.Explosive)
                     new Explosion(Position2D, 7f, Owner, 0.25f);
                 if (Owner is PlayerTank)
                     // in case the player wants to destroy a mine that may be impeding progress- we don't want to penalize them.

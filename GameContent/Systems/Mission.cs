@@ -299,9 +299,9 @@ namespace TanksRebirth.GameContent.Systems
                         IsPlayer = isPlayer,
                         Position = new(x, y),
                         Rotation = rotation,
-                        AiTier = (TankTier)tier,
-                        PlayerType = (PlayerType)pType,
-                        Team = (TankTeam)team
+                        AiTier = tier,
+                        PlayerType = pType,
+                        Team = team
                     });
                 }
 
@@ -348,9 +348,9 @@ namespace TanksRebirth.GameContent.Systems
                         IsPlayer = isPlayer,
                         Position = new(x, y),
                         Rotation = rotation,
-                        AiTier = (TankTier)tier,
-                        PlayerType = (PlayerType)pType,
-                        Team = (TankTeam)team
+                        AiTier = tier,
+                        PlayerType = pType,
+                        Team = team
                     });
                 }
 

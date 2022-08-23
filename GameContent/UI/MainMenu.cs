@@ -27,6 +27,7 @@ using Aspose.Zip.Rar;
 using TanksRebirth.GameContent.Properties;
 using TanksRebirth.GameContent.Cosmetics;
 using TanksRebirth.GameContent.ModSupport;
+using TanksRebirth.GameContent.ID;
 
 namespace TanksRebirth.GameContent.UI
 {
@@ -880,7 +881,7 @@ namespace TanksRebirth.GameContent.UI
             TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "Tanks Killed by Type:", tankKillsPos, Color.White, Vector2.One, 0f, GameUtils.GetAnchor(aligning, TankGame.TextFont.MeasureString("Tanks Killed by Type:")), 0f);
             for (int i = 2; i < TankGame.GameData.TankKills.Count; i++) {
                 var elem = TankGame.GameData.TankKills.ElementAt(i);
-                var split = elem.Key.ToString().SplitByCamel();
+                var split = TankID.Collection.GetKey(elem.Key).SplitByCamel();
                 var display = $"{split}: {elem.Value}";
                 TankGame.SpriteRenderer.DrawString(TankGame.TextFont, display, tankKillsPos + Vector2.UnitY * ((i - 1) * 25), Color.White, Vector2.One, 0f, GameUtils.GetAnchor(aligning, TankGame.TextFont.MeasureString(display)), 0f);
             }
@@ -1056,10 +1057,10 @@ namespace TanksRebirth.GameContent.UI
             GameUI.BackButton.IsVisible = false;
         }
 
-        public static Tank AddTravelingTank(TankTier tier, float xOffset, float yOffset)
+        public static Tank AddTravelingTank(int tier, float xOffset, float yOffset)
         {
             var extank = new AITank(tier, default, false, false);
-            extank.Team = TankTeam.NoTeam;
+            extank.Team = TeamID.NoTeam;
             extank.Dead = false;
             extank.Body.Position = new Vector2(-500 + xOffset, yOffset);
 

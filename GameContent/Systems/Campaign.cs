@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TanksRebirth.Enums;
+using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Properties;
 using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.Internals;
@@ -133,8 +134,8 @@ namespace TanksRebirth.GameContent.Systems
 
                         if (Difficulties.Types["AiCompanion"])
                         {
-                            tank.Team = TankTeam.Magenta;
-                            var tnk = new AITank(TankTier.Black);
+                            tank.Team = TeamID.Magenta;
+                            var tnk = new AITank(TankID.Black);
                             tnk.Position = template.Position;
                             tnk.Body.Position = template.Position;
                             tnk.Team = tank.Team;
@@ -174,9 +175,12 @@ namespace TanksRebirth.GameContent.Systems
                                 TrackedSpawnPoints[Array.IndexOf(TrackedSpawnPoints, TrackedSpawnPoints.First(pos => pos.Item1 == template.Position))].Item2 = false; // make sure the tank is not spawned again
                             };
                         }
-                        var placement = PlacementSquare.Placements.First(placement => placement.Position == tank.Position3D);
-                        placement.TankId = tank.WorldId;
-                        placement.HasBlock = false;
+                        var placement = PlacementSquare.Placements.FindIndex(place => place.Position == tank.Position3D);
+
+                        if (placement > -1) {
+                            PlacementSquare.Placements[placement].TankId = tank.WorldId;
+                            PlacementSquare.Placements[placement].HasBlock = false;
+                        }
                     }
                     else
                     {
@@ -189,8 +193,8 @@ namespace TanksRebirth.GameContent.Systems
 
                         if (Difficulties.Types["AiCompanion"])
                         {
-                            tank.Team = TankTeam.Magenta;
-                            var tnk = new AITank(TankTier.Black);
+                            tank.Team = TeamID.Magenta;
+                            var tnk = new AITank(TankID.Black);
                             tnk.Position = template.Position;
                             tnk.Body.Position = template.Position;
                             tnk.Team = tank.Team;
@@ -201,9 +205,12 @@ namespace TanksRebirth.GameContent.Systems
 
                             tnk.Swap(AITank.PickRandomTier());
                         }
-                        var placement = PlacementSquare.Placements.First(placement => placement.Position == tank.Position3D);
-                        placement.TankId = tank.WorldId;
-                        placement.HasBlock = false;
+                        var placement = PlacementSquare.Placements.FindIndex(place => place.Position == tank.Position3D);
+
+                        if (placement > -1) {
+                            PlacementSquare.Placements[placement].TankId = tank.WorldId;
+                            PlacementSquare.Placements[placement].HasBlock = false;
+                        }
 
                         if (NetPlay.IsClientMatched(tank.PlayerId))
                             PlayerTank.MyTeam = tank.Team;
@@ -223,9 +230,12 @@ namespace TanksRebirth.GameContent.Systems
 
                 var block = template.GetBlock();
 
-                var placement = PlacementSquare.Placements.First(placement => placement.Position == block.Position3D);
-                placement.BlockId = block.Id;
-                placement.HasBlock = true;
+                var placement = PlacementSquare.Placements.FindIndex(place => place.Position == block.Position3D);
+                if (placement > -1)
+                {
+                    PlacementSquare.Placements[placement].BlockId = block.Id;
+                    PlacementSquare.Placements[placement].HasBlock = true;
+                }
             }
 
             CurrentMission = LoadedMission;

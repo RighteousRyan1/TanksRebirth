@@ -4,47 +4,48 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TanksRebirth.Enums;
+using TanksRebirth.GameContent.ID;
 
 namespace TanksRebirth.GameContent.Systems
 {
     public static class DifficultyAlgorithm
     {
 
-        private static Dictionary<TankTier, float> _tankDiffs = new()
+        private static Dictionary<int, float> _tankDiffs = new()
         {
-            [TankTier.Brown] = 0.01f,
-            [TankTier.Ash] = 0.025f,
-            [TankTier.Marine] = 0.12f,
-            [TankTier.Yellow] = 0.08f,
-            [TankTier.Pink] = 0.15f,
-            [TankTier.Green] = 0.3f,
-            [TankTier.Violet] = 0.25f,
-            [TankTier.White] = 0.275f,
-            [TankTier.Black] = 0.36f,
-            [TankTier.Bronze] = 0.035f,
-            [TankTier.Silver] = 0.09f,
-            [TankTier.Sapphire] = 0.24f,
-            [TankTier.Ruby] = 0.31f,
-            [TankTier.Citrine] = 0.26f,
-            [TankTier.Amethyst] = 0.35f,
-            [TankTier.Emerald] = 0.42f,
-            [TankTier.Gold] = 0.61f,
-            [TankTier.Obsidian] = 0.69f,
-            [TankTier.Granite] = 0.025f,
-            [TankTier.Bubblegum] = 0.065f,
-            [TankTier.Water] = 0.15f,
-            [TankTier.Crimson] = 0.23f,
-            [TankTier.Tiger] = 0.27f,
-            [TankTier.Fade] = 0.29f,
-            [TankTier.Creeper] = 0.45f,
-            [TankTier.Gamma] = 0.35f,
-            [TankTier.Marble] = 0.85f,
+            [TankID.Brown] = 0.01f,
+            [TankID.Ash] = 0.025f,
+            [TankID.Marine] = 0.12f,
+            [TankID.Yellow] = 0.08f,
+            [TankID.Pink] = 0.15f,
+            [TankID.Green] = 0.3f,
+            [TankID.Violet] = 0.25f,
+            [TankID.White] = 0.275f,
+            [TankID.Black] = 0.36f,
+            [TankID.Bronze] = 0.035f,
+            [TankID.Silver] = 0.09f,
+            [TankID.Sapphire] = 0.24f,
+            [TankID.Ruby] = 0.31f,
+            [TankID.Citrine] = 0.26f,
+            [TankID.Amethyst] = 0.35f,
+            [TankID.Emerald] = 0.42f,
+            [TankID.Gold] = 0.61f,
+            [TankID.Obsidian] = 0.69f,
+            [TankID.Granite] = 0.025f,
+            [TankID.Bubblegum] = 0.065f,
+            [TankID.Water] = 0.15f,
+            [TankID.Crimson] = 0.23f,
+            [TankID.Tiger] = 0.27f,
+            [TankID.Fade] = 0.29f,
+            [TankID.Creeper] = 0.45f,
+            [TankID.Gamma] = 0.35f,
+            [TankID.Marble] = 0.85f,
         };
 
         public static float GetDifficulty(Mission mission)
         {
             float difficulty = 0;
-            Dictionary<TankTier, int> tankCounts = new();
+            Dictionary<int, int> tankCounts = new();
             foreach (var tank in mission.Tanks)
             {
                 if (!tank.IsPlayer)

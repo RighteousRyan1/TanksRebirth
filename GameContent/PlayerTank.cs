@@ -19,6 +19,7 @@ using TanksRebirth.GameContent.Systems;
 using FontStashSharp;
 using TanksRebirth.GameContent.Properties;
 using TanksRebirth.GameContent.UI;
+using TanksRebirth.GameContent.ID;
 
 namespace TanksRebirth.GameContent
 {
@@ -26,13 +27,13 @@ namespace TanksRebirth.GameContent
     {
 
         #region The Rest
-        public static TankTeam MyTeam;
+        public static int MyTeam;
 
         public static int StartingLives = 3;
         public static int Lives = 0;
 
         // public static Dictionary<PlayerType, Dictionary<TankTier, int>> TanksKillDict = new(); // this campaign only!
-        public static Dictionary<TankTier, int> TankKills = new(); // this campaign only!
+        public static Dictionary<int, int> TankKills = new(); // this campaign only!
 
         public struct DeterministicPlayerStats {
             public int ShellsShotThisCampaign;
@@ -51,7 +52,7 @@ namespace TanksRebirth.GameContent
         private bool playerControl_isBindPressed;
 
         public int PlayerId { get; }
-        public PlayerType PlayerType { get; }
+        public int PlayerType { get; }
 
         internal Texture2D _tankColorTexture;
         private static Texture2D _shadowTexture;
@@ -79,17 +80,17 @@ namespace TanksRebirth.GameContent
 
         #endregion
 
-        public PlayerTank(PlayerType playerType, bool isPlayerModel = true, TankTier copyTier = TankTier.None)
+        public PlayerTank(int playerType, bool isPlayerModel = true, int copyTier = TankID.None)
         {
             Model = GameResources.GetGameResource<Model>(isPlayerModel ? "Assets/tank_p" : "Assets/tank_e");
-            if (copyTier == TankTier.None)
+            if (copyTier == TankID.None)
             {
-                _tankColorTexture = Assets[$"tank_" + playerType.ToString().ToLower()];
+                _tankColorTexture = Assets[$"tank_" + PlayerID.Collection.GetKey(playerType).ToLower()];
                 ApplyDefaults(ref Properties);
             }
             else
             {
-                _tankColorTexture = Assets[$"tank_" + copyTier.ToString().ToLower()];
+                _tankColorTexture = Assets[$"tank_" + TankID.Collection.GetKey(copyTier).ToLower()];
                 var dummy = new AITank(copyTier, default, true, false, false);
 
                 // ugly hardcode fix lol - prevents nantuple instead of triple bounces
@@ -116,10 +117,10 @@ namespace TanksRebirth.GameContent
 
             PlayerType = playerType;
 
-            if (playerType == PlayerType.Red)
+            if (playerType == PlayerID.Red)
                 Properties.ShootPitch = 0.1f;
 
-            Team = TankTeam.Red;
+            Team = TeamID.Red;
 
             Dead = true;
 
@@ -154,14 +155,14 @@ namespace TanksRebirth.GameContent
             properties.TurningSpeed = 0.1f;
             properties.MaximalTurn = MathHelper.ToRadians(10); // normally it's 10 degrees, but we want to make it easier for keyboard players.
 
-            properties.ShellType = ShellType.Player;
+            properties.ShellType = ShellID.Player;
 
             properties.ShellHoming = new();
 
             properties.DestructionColor = PlayerType switch
             {
-                PlayerType.Blue => Color.Blue,
-                PlayerType.Red => Color.Red,
+                PlayerID.Blue => Color.Blue,
+                PlayerID.Red => Color.Red,
                 _ => throw new Exception("What did you do?")
             };
             base.ApplyDefaults(ref properties);
@@ -296,7 +297,7 @@ namespace TanksRebirth.GameContent
             if (!rotationMet)
             {
                 if (TankGame.GameUpdateTime % treadPlaceTimer == 0)
-                    LayFootprint(Properties.Track == TrackType.Thick);
+                    LayFootprint(Properties.TrackType == TrackID.Thick);
                 Properties.Speed -= Properties.Deceleration;
                 if (Properties.Speed < 0)
                     Properties.Speed = 0;
@@ -382,7 +383,7 @@ namespace TanksRebirth.GameContent
                     Properties.Speed = 0;
                 // treadPlaceTimer += MaxSpeed / 5;
                 if (TankGame.GameUpdateTime % treadPlaceTimer == 0)
-                    LayFootprint(Properties.Track == TrackType.Thick);
+                    LayFootprint(Properties.TrackType == TrackID.Thick);
                 IsTurning = true;
             }
             else
@@ -457,7 +458,7 @@ namespace TanksRebirth.GameContent
             {
                 var treadPlaceTimer = (int)Math.Round(14 / Velocity.Length()) != 0 ? (int)Math.Round(14 / Velocity.Length()) : 1;
                 if (TankGame.GameUpdateTime % treadPlaceTimer == 0  )
-                    LayFootprint(Properties.Track == TrackType.Thick);
+                    LayFootprint(Properties.TrackType == TrackID.Thick);
                 if (!Properties.IsSilent)
                 {
                     if (TankGame.GameUpdateTime % MathHelper.Clamp(treadPlaceTimer / 2, 4, 6) == 0)
@@ -610,9 +611,9 @@ namespace TanksRebirth.GameContent
 
                 var pos = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 125).ToResolution();
 
-                var playerColor = PlayerType == PlayerType.Blue ? Color.DeepSkyBlue : Color.Red;
+                var playerColor = PlayerType == PlayerID.Blue ? Color.DeepSkyBlue : Color.Red;
 
-                string pText = $"P{PlayerId + 1}";
+                string pText = $"P{PlayerId + 1}"; // heeheeheeha
 
                 float rotation = 0f;
 

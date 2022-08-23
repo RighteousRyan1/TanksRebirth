@@ -11,6 +11,7 @@ using System.Linq;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.Enums;
 using TanksRebirth.Internals.UI;
+using TanksRebirth.GameContent.ID;
 
 namespace TanksRebirth.GameContent.Systems.Coordinates
 {
@@ -114,23 +115,24 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
 
                 if (!HasBlock && HasItem)
                 {
+                    // FIXME: why does this even craaaash?
                     GameHandler.AllTanks[TankId].Remove();
                     TankId = -1;
                     return;
                 }
 
-                var team = LevelEditor.Active ? LevelEditor.SelectedTankTeam : (TankTeam)GameHandler.tankToSpawnTeam;
+                var team = LevelEditor.Active ? LevelEditor.SelectedTankTeam : GameHandler.tankToSpawnTeam;
                 if (LevelEditor.CurCategory == LevelEditor.Category.EnemyTanks)
                 {
-                    if (LevelEditor.Active && LevelEditor.SelectedTankTier < TankTier.Brown)
+                    if (LevelEditor.Active && LevelEditor.SelectedTankTier < TankID.Brown)
                         return;
-                    var tnk = GameHandler.SpawnTankAt(Position, LevelEditor.Active ? LevelEditor.SelectedTankTier : (TankTier)GameHandler.tankToSpawnType, team); // todo: finish
+                    var tnk = GameHandler.SpawnTankAt(Position, LevelEditor.Active ? LevelEditor.SelectedTankTier : GameHandler.tankToSpawnType, team); // todo: finish
                     HasBlock = false;
                     TankId = tnk.WorldId;
                 }
                 else
                 {
-                    var me = GameHandler.SpawnMe(LevelEditor.Active ? LevelEditor.SelectedPlayerType : PlayerType.Blue, team);
+                    var me = GameHandler.SpawnMe(LevelEditor.Active ? LevelEditor.SelectedPlayerType : PlayerID.Blue, team);
                     TankId = me.WorldId;
                 }
             }

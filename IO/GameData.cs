@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using TanksRebirth.Achievements;
 using TanksRebirth.Enums;
 using TanksRebirth.GameContent;
+using TanksRebirth.GameContent.ID;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Utilities;
 
@@ -43,15 +44,15 @@ namespace TanksRebirth.IO
 
         // under is a bunch of encounter booleans
 
-        public Dictionary<TankTier, uint> TankKills = new(Enum.GetValues<TankTier>().Length);
+        public Dictionary<int, uint> TankKills = new(TankID.Collection.Count);
 
         public float ExpLevel; // every whole number is an XP level | 1.000 = XP level 1
 
         public void Setup()
         {
-            for (int i = 0; i < Enum.GetValues<TankTier>().Length; i++)
+            for (int i = 0; i < TankID.Collection.Count; i++)
             {
-                TankKills.Add((TankTier)i, 0);
+                TankKills.Add(i, 0);
             }
         }
         public void Serialize()
@@ -85,7 +86,7 @@ namespace TanksRebirth.IO
             writer.Write(TimePlayed.TotalMilliseconds);
 
             for (int i = 0; i < TankKills.Count; i++)
-                writer.Write(TankKills[(TankTier)i]);
+                writer.Write(TankKills[i]);
 
             //VanillaAchievements.Repository.Save(writer);
 
@@ -105,27 +106,32 @@ namespace TanksRebirth.IO
                 GameHandler.ClientLog.Write($"Loading an outdated {Name}!", LogType.Warn);
                 ReadOutdatedFile = true;
             }
-            
 
-            TotalKills = reader.ReadUInt32();
-            BulletKills = reader.ReadUInt32();
-            BounceKills = reader.ReadUInt32();
-            MineKills = reader.ReadUInt32();
-            MissionsCompleted = reader.ReadUInt32();
-            CampaignsCompleted = reader.ReadUInt32();
-            Deaths = reader.ReadUInt32();
-            Suicides = reader.ReadUInt32();
+            try {
 
-            TimePlayed = TimeSpan.FromMilliseconds(reader.ReadDouble());
+                TotalKills = reader.ReadUInt32();
+                BulletKills = reader.ReadUInt32();
+                BounceKills = reader.ReadUInt32();
+                MineKills = reader.ReadUInt32();
+                MissionsCompleted = reader.ReadUInt32();
+                CampaignsCompleted = reader.ReadUInt32();
+                Deaths = reader.ReadUInt32();
+                Suicides = reader.ReadUInt32();
 
-            for (int i = 0; i < TankKills.Count; i++)
-                TankKills[(TankTier)i] = reader.ReadUInt32();
+                TimePlayed = TimeSpan.FromMilliseconds(reader.ReadDouble());
 
-            //VanillaAchievements.Repository.Load(reader);
+                for (int i = 0; i < TankKills.Count; i++)
+                    TankKills[i] = reader.ReadUInt32();
 
-            ExpLevel = reader.ReadSingle();
+                //VanillaAchievements.Repository.Load(reader);
 
-            GameHandler.Xp = new() { MaxValue = 1f, Value = ExpLevel - MathF.Floor(ExpLevel) };
+                ExpLevel = reader.ReadSingle();
+
+                GameHandler.Xp = new() { MaxValue = 1f, Value = ExpLevel - MathF.Floor(ExpLevel) };
+            } catch(Exception e) {
+                TankGame.WriteError(e);
+                GameHandler.ClientLog.Write($"This error was thrown because your save file was out-of-date. For now, delete it and restart. Sorry!", LogType.Info);
+            }
         }
     }
 }

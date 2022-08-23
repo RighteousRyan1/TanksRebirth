@@ -19,6 +19,7 @@ using TanksRebirth.Internals.UI;
 using FontStashSharp;
 using TanksRebirth.GameContent.Systems.Coordinates;
 using NativeFileDialogSharp;
+using TanksRebirth.GameContent.ID;
 
 namespace TanksRebirth.GameContent.UI
 {
@@ -56,9 +57,9 @@ namespace TanksRebirth.GameContent.UI
         #endregion
         #region Variables / Properties
         public static Category CurCategory { get; private set; }
-        public static TankTier SelectedTankTier { get; private set; }
-        public static TankTeam SelectedTankTeam { get; private set; }
-        public static PlayerType SelectedPlayerType { get; private set; }
+        public static int SelectedTankTier { get; private set; }
+        public static int SelectedTankTeam { get; private set; }
+        public static int SelectedPlayerType { get; private set; }
         public static Block.BlockType SelectedBlockType { get; private set; }
         public static int BlockHeight { get; private set; }
         public static bool Editing { get; internal set; }
@@ -262,11 +263,11 @@ namespace TanksRebirth.GameContent.UI
                 return;
             _initialized = true;
             #region Enumerable Init
-            for (int i = 1; i < Enum.GetNames<TankTeam>().Length; i++)
+            for (int i = 1; i < TeamID.Collection.Count; i++)
             {
-                var team = (TankTeam)i;
+                var team = TeamID.Collection.GetKey(i);
 
-                var colorToAdd = (Color)typeof(Color).GetProperty(team.ToString()).GetValue(null);
+                var colorToAdd = (Color)typeof(Color).GetProperty(team).GetValue(null);
                 TeamColors.Add(colorToAdd);
             }
             foreach (var file in Directory.GetFiles(Path.Combine("Content", "Assets", "textures", "ui", "leveledit")))
@@ -275,26 +276,23 @@ namespace TanksRebirth.GameContent.UI
                 var assetName = file;
                 RenderTextures.Add(fileName, GameResources.GetGameResource<Texture2D>(assetName, false, false));
             }
-            var enumNames = Enum.GetNames<TankTier>();
-            for (int i = 0; i < enumNames.Length; i++)
-            {
-                var nTL = enumNames[i];
+            var names = TankID.Collection.Keys;
+            for (int i = 0; i < names.Length; i++) {
+                var nTL = names[i];
 
                 if (RenderTextures.ContainsKey(nTL))
                     _renderNamesTanks.Add(nTL);
             }
-            enumNames = Enum.GetNames<Block.BlockType>();
-            for (int i = 0; i < enumNames.Length; i++)
-            {
-                var nTL = enumNames[i];
+            names = Enum.GetNames<Block.BlockType>();
+            for (int i = 0; i < names.Length; i++) {
+                var nTL = names[i];
 
                 if (RenderTextures.ContainsKey(nTL))
                     _renderNamesBlocks.Add(nTL);
             }
-            enumNames = Enum.GetNames<PlayerType>();
-            for (int i = 0; i < enumNames.Length; i++)
-            {
-                var nTL = enumNames[i];
+            names = PlayerID.Collection.Keys;
+            for (int i = 0; i < names.Length; i++) {
+                var nTL = names[i];
 
                 if (RenderTextures.ContainsKey(nTL))
                     _renderNamesPlayers.Add(nTL);
@@ -408,6 +406,10 @@ namespace TanksRebirth.GameContent.UI
             Theme.Stop();
             SetLevelEditorVisibility(false);
             SetSaveMenuVisibility(false);
+            for (int i = 0; i < PlacementSquare.Placements.Count; i++) {
+                PlacementSquare.Placements[i].TankId = -1;
+                PlacementSquare.Placements[i].BlockId = -1;
+            }
         }
 
         private static Rectangle _clickRect;
@@ -456,33 +458,36 @@ namespace TanksRebirth.GameContent.UI
             TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "Placement Information", new Vector2(GameUtils.WindowWidth - 325.ToResolutionX(), 3.ToResolutionY()), Color.Black, Vector2.One.ToResolution(), 0f, Vector2.Zero);
             if (CurCategory == Category.Blocks)
                 TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"Block Stack: {BlockHeight}", new Vector2(GameUtils.WindowWidth - 335.ToResolutionX(), 40.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
-
+            var helpText = "";
+            Vector2 start = new();
             if (CurCategory == Category.EnemyTanks || CurCategory == Category.PlayerTanks)
             {
-                Vector2 start = new(GameUtils.WindowWidth - 250.ToResolutionX(), 140.ToResolutionY());
+                helpText = "UP and DOWN to change teams.";
+                start = new(GameUtils.WindowWidth - 250.ToResolutionX(), 140.ToResolutionY());
 
                 TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "Tank Teams", new Vector2(start.X + 45.ToResolutionX(), start.Y - 80.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, TankGame.TextFont.MeasureString("Tank Teams") / 2);
 
                 TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Rectangle((int)start.X, (int)(start.Y - 40.ToResolutionY()), (int)40.ToResolutionX(), (int)40.ToResolutionY()), null, Color.Black, 0f, Vector2.Zero, default, 0f);
                 TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "No Team", new Vector2(start.X + 45.ToResolutionX(), start.Y - 40.ToResolutionY()), Color.Black, Vector2.One.ToResolution(), 0f, Vector2.Zero);
-                for (int i = 0; i < Enum.GetNames<TankTeam>().Length - 1; i++)
+                for (int i = 0; i < TeamID.Collection.Count - 1; i++)
                 {
                     var color = TeamColors[i];
-                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, ((TankTeam)i + 1).ToString(), new Vector2(start.X + 45.ToResolutionX(), start.Y + (i * 40).ToResolutionY()), color, Vector2.One.ToResolution(), 0f, Vector2.Zero); ;
+                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, (i + 1).ToString(), new Vector2(start.X + 45.ToResolutionX(), start.Y + (i * 40).ToResolutionY()), color, Vector2.One.ToResolution(), 0f, Vector2.Zero); ;
                     TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Rectangle((int)start.X, (int)(start.Y + (i * 40).ToResolutionY()), (int)40.ToResolutionX(), (int)40.ToResolutionY()), null, color, 0f, Vector2.Zero, default, 0f);
                 }
                 TankGame.SpriteRenderer.DrawString(TankGame.TextFontLarge, ">", new Vector2(start.X - 25.ToResolutionX(), start.Y + ((int)(SelectedTankTeam - 1) * 40).ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, TankGame.TextFontLarge.MeasureString(">") / 2);
 
-                if (SelectedTankTeam != TankTeam.Magenta)
+                if (SelectedTankTeam != TeamID.Magenta)
                     TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "v", new Vector2(start.X - 25.ToResolutionX(), start.Y + ((int)(SelectedTankTeam - 1) * 40 + 50).ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, TankGame.TextFont.MeasureString("v") / 2);
-                if (SelectedTankTeam != TankTeam.NoTeam)
+                if (SelectedTankTeam != TeamID.NoTeam)
                     TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "v", new Vector2(start.X - 25.ToResolutionX(), start.Y + ((int)(SelectedTankTeam - 1) * 40 - 10).ToResolutionY()), Color.White, Vector2.One.ToResolution(), MathHelper.Pi, TankGame.TextFont.MeasureString("v") / 2);
             }
             else if (CurCategory == Category.Blocks)
             {
+                helpText = "UP and DOWN to change stack.";
                 var tex = SelectedBlockType != Block.BlockType.Hole ? $"{SelectedBlockType}_{BlockHeight}" : $"{SelectedBlockType}";
                 var size = RenderTextures[tex].Size();
-                Vector2 start = new(GameUtils.WindowWidth - 175.ToResolutionX(), 450.ToResolutionY());
+                start = new Vector2(GameUtils.WindowWidth - 175.ToResolutionX(), 450.ToResolutionY());
                 TankGame.SpriteRenderer.Draw(RenderTextures[tex], start, null, Color.White, 0f, new Vector2(size.X / 2, size.Y), Vector2.One.ToResolution(), default, 0f);
                 // TODO: reduce the hardcode for modders, yeah
                 if (SelectedBlockType != Block.BlockType.Teleporter && SelectedBlockType != Block.BlockType.Hole)
@@ -491,7 +496,7 @@ namespace TanksRebirth.GameContent.UI
                     TankGame.SpriteRenderer.DrawString(TankGame.TextFontLarge, "v", new Vector2(start.X - 100.ToResolutionX(), start.Y - 25.ToResolutionY()), Color.White, Vector2.One.ToResolution(), MathHelper.Pi, TankGame.TextFontLarge.MeasureString("v") / 2);
                 }
             }
-
+            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, helpText, new Vector2(GameUtils.WindowWidth - 175.ToResolutionX(), GameUtils.WindowHeight / 2 - 70.ToResolutionY()), Color.White, new Vector2(0.5f).ToResolution(), 0f, TankGame.TextFont.MeasureString(helpText) / 2);
             TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, _curHoverRect, null, HoverBoxColor * 0.5f, 0f, Vector2.Zero, default, 0f);
 
             TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "Level Information", new Vector2(55, 3).ToResolution(), Color.Black, Vector2.One.ToResolution(), 0f, Vector2.Zero);
@@ -502,36 +507,36 @@ namespace TanksRebirth.GameContent.UI
             {
                 for (int i = 0; i < _renderNamesTanks.Count; i++)
                 {
-                    ClickEventsPerItem[new Rectangle((int)(34.ToResolutionX() + xOff + _barOffset), (int)(GameUtils.WindowBottom.Y * 0.8f), (int)234.ToResolutionX(), (int)256.ToResolutionY())] =
-                        (i + 2, (TankTier)(i + 2) switch
+                    ClickEventsPerItem[new Rectangle((int)(34.ToResolutionX() + xOff + _barOffset), (int)(GameUtils.WindowBottom.Y * 0.8f), (int)234.ToResolutionX(), (int)(GameUtils.WindowHeight * 0.2f))] =
+                        (i + 2, (i + 2) switch
                         {
-                            TankTier.Brown => "An easy to defeat, stationary, slow firing enemy.",
-                            TankTier.Ash => "Similar to the Brown tank, but can move slowly and fire more often.",
-                            TankTier.Marine => "A slow-moving, passive and methodical enemy.\nShoots off rockets instead of standard shells.",
-                            TankTier.Yellow => "Not incredibly dangerous. Lays mines often and move fast.",
-                            TankTier.Pink => "A slow, but incredibly persistent and aggressive tank.\nCan fire multiple bullets at once.",
-                            TankTier.Green => "A highly-dangerous but stationary tank.\nShoots multiple rockets that can bounce twice.",
-                            TankTier.Violet => "A fast-moving, intelligent tank that can spray\nup to 5 bullets at once and can lay mines.",
-                            TankTier.White => "A slow-moving, powerful tank that turns invisible\nat the start of the mission and can fire multiple bullets and lay mines.",
-                            TankTier.Black => "A tank that moves faster than the player, fires rockets often,\nis aggressive, and can dodge well. Can lay mines.",
-                            TankTier.Bronze => "A simple, stationary tank that can fire multiple bullets\nand aims directly at its target.",
-                            TankTier.Silver => "An advanced and difficult mobile tank that can fire up\nto 8 bullets at fast rates and can dodge well. Can lay mines",
-                            TankTier.Sapphire => "A deadly tank that can rapidly fire up to 3 rockets\nin a single volley. Can lay mines.",
-                            TankTier.Ruby => "A slow, but very aggressive tank that constantly fires shells.",
-                            TankTier.Citrine => "An insanely fast tank that shoots very fast shells at its target.\nLays mines frequently.",
-                            TankTier.Amethyst => "A fast, very agile, and dodgy tank that fires a spread\nof shells at its target. Can lay mines.",
-                            TankTier.Emerald => "A stationary tank that turns invisible at the start of the round.\nFires multiple double-bounce rockets at its target.",
-                            TankTier.Gold => "A slow and mobile tank that turns invisible at the start of the round\nand lays no tracks for players to see. Can lay mines.",
-                            TankTier.Obsidian => "A very fast, but very unintelligent tank that fires\nfast rockets frequently with 2 bounces. Can lay mines.",
-                            TankTier.Granite => "A very slow, mobile tank that becomes stunned\n for a while upon firing. Shoots faster-than-normal shells.",
-                            TankTier.Bubblegum => "A medium-speed, fast-firing dodgy tank that can lay mines.",
-                            TankTier.Water => "A medium-speed tank that moves linearly.\nFires rockets that bounce one time, and can also lay mines.",
-                            TankTier.Crimson => "A slow tank that fires in a burst of 5 shells. Can lay mines.",
-                            TankTier.Tiger => "A very wary tank that strafes very often and dodges very often.\nFires shells fast and lays mines often.",
-                            TankTier.Fade => "A tank that is mainly focused on dodging threats.\nFires often and can lay mines.",
-                            TankTier.Creeper => "A highly dangerous tank that fires very fast rockets\n that bounce 3 times. Moves very slowly.",
-                            TankTier.Gamma => "A stationary tank that fires insanely fast bullets at rapid frequency.",
-                            TankTier.Marble => "An apex predator tank that is good at dodging, good at\ncalculating shots, is fast, and fires fast rockets rapidly.",
+                            TankID.Brown => "An easy to defeat, stationary, slow firing enemy.",
+                            TankID.Ash => "Similar to the Brown tank, but can move slowly and fire more often.",
+                            TankID.Marine => "A slow-moving, passive and methodical enemy.\nShoots off rockets instead of standard shells.",
+                            TankID.Yellow => "Not incredibly dangerous. Lays mines often and move fast.",
+                            TankID.Pink => "A slow, but incredibly persistent and aggressive tank.\nCan fire multiple bullets at once.",
+                            TankID.Green => "A highly-dangerous but stationary tank.\nShoots multiple rockets that can bounce twice.",
+                            TankID.Violet => "A fast-moving, intelligent tank that can spray\nup to 5 bullets at once and can lay mines.",
+                            TankID.White => "A slow-moving, powerful tank that turns invisible\nat the start of the mission and can fire multiple bullets and lay mines.",
+                            TankID.Black => "A tank that moves faster than the player, fires rockets often,\nis aggressive, and can dodge well. Can lay mines.",
+                            TankID.Bronze => "A simple, stationary tank that can fire multiple bullets\nand aims directly at its target.",
+                            TankID.Silver => "An advanced and difficult mobile tank that can fire up\nto 8 bullets at fast rates and can dodge well. Can lay mines",
+                            TankID.Sapphire => "A deadly tank that can rapidly fire up to 3 rockets\nin a single volley. Can lay mines.",
+                            TankID.Ruby => "A slow, but very aggressive tank that constantly fires shells.",
+                            TankID.Citrine => "An insanely fast tank that shoots very fast shells at its target.\nLays mines frequently.",
+                            TankID.Amethyst => "A fast, very agile, and dodgy tank that fires a spread\nof shells at its target. Can lay mines.",
+                            TankID.Emerald => "A stationary tank that turns invisible at the start of the round.\nFires multiple double-bounce rockets at its target.",
+                            TankID.Gold => "A slow and mobile tank that turns invisible at the start of the round\nand lays no tracks for players to see. Can lay mines.",
+                            TankID.Obsidian => "A very fast, but very unintelligent tank that fires\nfast rockets frequently with 2 bounces. Can lay mines.",
+                            TankID.Granite => "A very slow, mobile tank that becomes stunned\n for a while upon firing. Shoots faster-than-normal shells.",
+                            TankID.Bubblegum => "A medium-speed, fast-firing dodgy tank that can lay mines.",
+                            TankID.Water => "A medium-speed tank that moves linearly.\nFires rockets that bounce one time, and can also lay mines.",
+                            TankID.Crimson => "A slow tank that fires in a burst of 5 shells. Can lay mines.",
+                            TankID.Tiger => "A very wary tank that strafes very often and dodges very often.\nFires shells fast and lays mines often.",
+                            TankID.Fade => "A tank that is mainly focused on dodging threats.\nFires often and can lay mines.",
+                            TankID.Creeper => "A highly dangerous tank that fires very fast rockets\n that bounce 3 times. Moves very slowly.",
+                            TankID.Gamma => "A stationary tank that fires insanely fast bullets at rapid frequency.",
+                            TankID.Marble => "An apex predator tank that is good at dodging, good at\ncalculating shots, is fast, and fires fast rockets rapidly.",
                             _ => "What?"
                         }); // TODO: localize this. i hate english.
 
@@ -544,7 +549,7 @@ namespace TanksRebirth.GameContent.UI
             {
                 for (int i = 0; i < _renderNamesBlocks.Count; i++)
                 {
-                    ClickEventsPerItem[new Rectangle((int)(34.ToResolutionX() + xOff + _barOffset), (int)(GameUtils.WindowBottom.Y * 0.8f), (int)234.ToResolutionX(), (int)256.ToResolutionY())] =
+                    ClickEventsPerItem[new Rectangle((int)(34.ToResolutionX() + xOff + _barOffset), (int)(GameUtils.WindowBottom.Y * 0.8f), (int)234.ToResolutionX(), (int)(GameUtils.WindowHeight * 0.2f))] =
                         (i, (Block.BlockType)i switch
                         {
                             Block.BlockType.Wood => "An indestructible obstacle.",
@@ -562,16 +567,16 @@ namespace TanksRebirth.GameContent.UI
             {
                 for (int i = 0; i < _renderNamesPlayers.Count; i++)
                 {
-                    ClickEventsPerItem[new Rectangle((int)(34 + xOff + _barOffset), (int)(GameUtils.WindowBottom.Y * 0.8f), 234, 256)] =
-                        (i, (PlayerType)i switch
+                    ClickEventsPerItem[new Rectangle((int)(34.ToResolutionX() + xOff + _barOffset), (int)(GameUtils.WindowBottom.Y * 0.8f), (int)234.ToResolutionX(), (int)(GameUtils.WindowHeight * 0.2f))] =
+                        (i, i switch
                         {
-                            PlayerType.Blue => "The blue player tank (P1)",
-                            PlayerType.Red => "The red player tank. (P2)",
+                            PlayerID.Blue => "The blue player tank (P1)",
+                            PlayerID.Red => "The red player tank. (P2)",
                             _ => "What?"
                         });
 
                     TankGame.SpriteRenderer.Draw(RenderTextures[_renderNamesPlayers[i]], new Vector2(24.ToResolutionX() + xOff + _barOffset, GameUtils.WindowBottom.Y * 0.75f), null, (int)SelectedPlayerType == i ? SelectionColor : Color.White, 0f, Vector2.Zero, Vector2.One.ToResolution(), default, 0f);
-                    xOff += 234;
+                    xOff += (int)234.ToResolutionX();
                 }
                 _maxScroll = xOff;
             }
@@ -582,7 +587,7 @@ namespace TanksRebirth.GameContent.UI
                 {
                     if (DebugUtils.DebugLevel == 3)
                         TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, thing.Key, null, Color.Red * 0.5f, 0f, Vector2.Zero, default, 0f);
-                    var text = thing.Key.Contains(GameUtils.MousePosition.ToPoint()) ? $"{thing.Key} ---- {(TankTier)thing.Value.Item1} (HOVERED)" : $"{thing.Key} ---- {(TankTier)thing.Value.Item1}";
+                    var text = thing.Key.Contains(GameUtils.MousePosition.ToPoint()) ? $"{thing.Key} ---- {thing.Value.Item1} (HOVERED)" : $"{thing.Key} ---- {thing.Value.Item1}";
                     DebugUtils.DrawDebugString(TankGame.SpriteRenderer, text, new Vector2(500, 20 + a), 3);
                     a += 20;
                 }
@@ -648,16 +653,14 @@ namespace TanksRebirth.GameContent.UI
                     for (int i = 0; i < ClickEventsPerItem.Count; i++)
                     {
                         var evt = ClickEventsPerItem.ElementAt(i);
-                        if (evt.Key.Contains(GameUtils.MousePosition.ToPoint())) {
-                            if (CurCategory == Category.EnemyTanks) {
-                                SelectedTankTier = (TankTier)evt.Value.Item1;
-                            }
-                            else if (CurCategory == Category.Blocks) {
+                        if (evt.Key.Contains(GameUtils.MousePosition.ToPoint()))
+                        {
+                            if (CurCategory == Category.EnemyTanks)
+                                SelectedTankTier = evt.Value.Item1;
+                            else if (CurCategory == Category.Blocks)
                                 SelectedBlockType = (Block.BlockType)evt.Value.Item1;
-                            }
-                            else if (CurCategory == Category.PlayerTanks) {
-                                SelectedPlayerType = (PlayerType)evt.Value.Item1;
-                            }
+                            else if (CurCategory == Category.PlayerTanks)
+                                SelectedPlayerType = evt.Value.Item1;
                         }
                     }
                 }
@@ -675,18 +678,20 @@ namespace TanksRebirth.GameContent.UI
 
                 BlockHeight = MathHelper.Clamp(BlockHeight, 1, 7);
 
-                if (CurCategory == Category.EnemyTanks || CurCategory == Category.PlayerTanks) {
+                if (CurCategory == Category.EnemyTanks || CurCategory == Category.PlayerTanks)
+                {
                     // tank place handling, etc
                     if (Input.KeyJustPressed(Microsoft.Xna.Framework.Input.Keys.Up))
                         SelectedTankTeam--;
                     if (Input.KeyJustPressed(Microsoft.Xna.Framework.Input.Keys.Down))
                         SelectedTankTeam++;
-                    if (SelectedTankTeam > TankTeam.Magenta)
-                        SelectedTankTeam = TankTeam.Magenta;
-                    if (SelectedTankTeam < TankTeam.NoTeam)
-                        SelectedTankTeam = TankTeam.NoTeam;
+                    if (SelectedTankTeam > TeamID.Magenta)
+                        SelectedTankTeam = TeamID.Magenta;
+                    if (SelectedTankTeam < TeamID.NoTeam)
+                        SelectedTankTeam = TeamID.NoTeam;
                 }
-                else if (CurCategory == Category.Blocks) {
+                else if (CurCategory == Category.Blocks)
+                {
                     if (Input.KeyJustPressed(Microsoft.Xna.Framework.Input.Keys.Up))
                         BlockHeight++;
                     if (Input.KeyJustPressed(Microsoft.Xna.Framework.Input.Keys.Down))
@@ -700,9 +705,20 @@ namespace TanksRebirth.GameContent.UI
             }
             else if (Editing && !Active && _cachedMission != default && GameProperties.InMission)
                 if (GameHandler.NothingCanHappenAnymore(_cachedMission, out bool victory))
-                    ReturnToEditor?.OnLeftClick?.Invoke(null);
+                    QueueEditorReEntry(TimeSpan.FromSeconds(2), true);
             if (ReturnToEditor != null)
                 ReturnToEditor.IsVisible = Editing && !Active && !MainMenu.Active;
+        }
+
+        private static void QueueEditorReEntry(TimeSpan delay, bool instant)
+        {
+            if (instant)
+                ReturnToEditor?.OnLeftClick?.Invoke(null);
+            Task.Run(async () =>
+            {
+                await Task.Delay(delay).ConfigureAwait(false);
+                ReturnToEditor?.OnLeftClick?.Invoke(null);
+            });
         }
     }
 }

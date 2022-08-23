@@ -34,7 +34,7 @@ namespace TanksRebirth.GameContent.UI
             MusicVolume.Tooltip = $"{Math.Round(TankGame.Settings.MusicVolume * 100, 1)}%";
             MusicVolume.Initialize();
             MusicVolume.Value = TankGame.Settings.MusicVolume;
-            MusicVolume.BarWidth = 15;
+            MusicVolume.BarWidth = 10;
             MusicVolume.SliderColor = Color.WhiteSmoke;
 
             MusicText = new(TankGame.GameLanguage.MusicVolume, TankGame.TextFont, Color.Black)
@@ -54,7 +54,7 @@ namespace TanksRebirth.GameContent.UI
             EffectsVolume.Tooltip = $"{Math.Round(TankGame.Settings.EffectsVolume * 100, 1)}%";
             EffectsVolume.Initialize();
             EffectsVolume.Value = TankGame.Settings.EffectsVolume;
-            EffectsVolume.BarWidth = 15;
+            EffectsVolume.BarWidth = 10;
             EffectsVolume.SliderColor = Color.WhiteSmoke;
 
             EffectsText = new(TankGame.GameLanguage.EffectsVolume, TankGame.TextFont, Color.Black)
@@ -73,7 +73,7 @@ namespace TanksRebirth.GameContent.UI
             AmbientVolume.Tooltip = $"{Math.Round(TankGame.Settings.AmbientVolume * 100, 1)}%";
             AmbientVolume.Initialize();
             AmbientVolume.Value = TankGame.Settings.AmbientVolume;
-            AmbientVolume.BarWidth = 15;
+            AmbientVolume.BarWidth = 10;
             AmbientVolume.SliderColor = Color.WhiteSmoke;
 
             AmbientText = new(TankGame.GameLanguage.AmbientVolume, TankGame.TextFont, Color.Black)

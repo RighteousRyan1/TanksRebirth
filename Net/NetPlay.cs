@@ -96,8 +96,8 @@ namespace TanksRebirth.Net
                     break;
                 case PacketType.PlayerSpawn:
 
-                    PlayerType type = (PlayerType)reader.GetByte();
-                    TankTeam team = (TankTeam)reader.GetByte();
+                    var type = reader.GetByte();
+                    var team = reader.GetByte();
 
                     float x = reader.GetFloat();
                     float y = reader.GetFloat();
@@ -173,13 +173,13 @@ namespace TanksRebirth.Net
                                 Position = reader.GetVector2(),
                                 Rotation = reader.GetFloat(),
                                 IsPlayer = reader.GetBool(),
-                                Team = (TankTeam)reader.GetByte()
+                                Team = reader.GetByte()
                             };
 
                             if (tmp.IsPlayer)
-                                tmp.PlayerType = (PlayerType)reader.GetByte();
+                                tmp.PlayerType = reader.GetByte();
                             else
-                                tmp.AiTier = (TankTier)reader.GetByte();
+                                tmp.AiTier = reader.GetByte();
                         }
 
                         campaign.CachedMissions[i] = new(tankTotal.ToArray(), blockTotal.ToArray())

@@ -33,6 +33,7 @@ using TanksRebirth.Achievements;
 using TanksRebirth.GameContent.Properties;
 using TanksRebirth.GameContent.Speedrunning;
 using FontStashSharp;
+using TanksRebirth.GameContent.ID;
 
 namespace TanksRebirth.GameContent
 {
@@ -281,14 +282,14 @@ namespace TanksRebirth.GameContent
                     if (Input.KeyJustPressed(Keys.PageUp))
                         SpawnTankPlethorae(true);
                     if (Input.KeyJustPressed(Keys.PageDown))
-                        SpawnMe(PlayerType.Blue, (TankTeam)tankToSpawnTeam);
+                        SpawnMe(PlayerID.Blue, tankToSpawnTeam);
                     if (Input.KeyJustPressed(Keys.Home))
-                        SpawnTankAt(!TankGame.OverheadView ? GameUtils.GetWorldPosition(GameUtils.MousePosition) : PlacementSquare.CurrentlyHovered.Position, (TankTier)tankToSpawnType, (TankTeam)tankToSpawnTeam);
+                        SpawnTankAt(!TankGame.OverheadView ? GameUtils.GetWorldPosition(GameUtils.MousePosition) : PlacementSquare.CurrentlyHovered.Position, tankToSpawnType, tankToSpawnTeam);
 
                     if (Input.KeyJustPressed(Keys.OemSemicolon))
                         new Mine(null, GameUtils.GetWorldPosition(GameUtils.MousePosition).FlattenZ(), 400);
                     if (Input.KeyJustPressed(Keys.OemQuotes))
-                        new Shell(GameUtils.GetWorldPosition(GameUtils.MousePosition) + new Vector3(0, 11, 0), Vector3.Zero, ShellType.Standard, null, 0, playSpawnSound: false);
+                        new Shell(GameUtils.GetWorldPosition(GameUtils.MousePosition) + new Vector3(0, 11, 0), Vector3.Zero, ShellID.Standard, null, 0, playSpawnSound: false);
                     if (Input.KeyJustPressed(Keys.End))
                         SpawnCrateAtMouse();
 
@@ -404,13 +405,13 @@ namespace TanksRebirth.GameContent
             {
                 var activeTeams = Tank.GetActiveTeams();
 
-                if (activeTeams.Contains(TankTeam.NoTeam) && AllTanks.Count(tnk => tnk != null && !tnk.Dead) <= 1)
+                if (activeTeams.Contains(TeamID.NoTeam) && AllTanks.Count(tnk => tnk != null && !tnk.Dead) <= 1)
                 {
                     victory = AllPlayerTanks.Any(tnk => tnk != null && !tnk.Dead);
                     return true;
                 }
                 // check if it's not only FFA, and if teams left doesnt contain ffa. 
-                else if (!activeTeams.Contains(TankTeam.NoTeam) && activeTeams.Count <= 1)
+                else if (!activeTeams.Contains(TeamID.NoTeam) && activeTeams.Count <= 1)
                 {
                     victory = activeTeams.Contains(PlayerTank.MyTeam);
                     return true;
@@ -420,12 +421,12 @@ namespace TanksRebirth.GameContent
             {
                 var activeTeams = Tank.GetActiveTeams();
                 // if a player was not initially spawned in the mission, check if a team is still alive and end the mission
-                if (activeTeams.Contains(TankTeam.NoTeam) && AllTanks.Count(tnk => tnk != null && !tnk.Dead) <= 1)
+                if (activeTeams.Contains(TeamID.NoTeam) && AllTanks.Count(tnk => tnk != null && !tnk.Dead) <= 1)
                 {
                     victory = true;
                     return true;
                 }
-                else if (!activeTeams.Contains(TankTeam.NoTeam) && activeTeams.Count <= 1)
+                else if (!activeTeams.Contains(TeamID.NoTeam) && activeTeams.Count <= 1)
                 {
                     victory = true;
                     return true;
@@ -590,19 +591,19 @@ namespace TanksRebirth.GameContent
                 element?.DrawTooltips(TankGame.SpriteRenderer);
             }
 
-            tankToSpawnType = MathHelper.Clamp(tankToSpawnType, 2, Enum.GetValues<TankTier>().Length - 1);
-            tankToSpawnTeam = MathHelper.Clamp(tankToSpawnTeam, 0, Enum.GetValues<TankTeam>().Length - 1);
+            tankToSpawnType = MathHelper.Clamp(tankToSpawnType, 2, TankID.Collection.Count - 1);
+            tankToSpawnTeam = MathHelper.Clamp(tankToSpawnTeam, 0, TeamID.Collection.Count - 1);
 
             #region TankInfo
             DebugUtils.DrawDebugString(TankGame.SpriteRenderer, "Spawn Tank With Info:", GameUtils.WindowTop + new Vector2(0, 8), 3, centered: true);
-            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"Tier: {Enum.GetNames<TankTier>()[tankToSpawnType]}", GameUtils.WindowTop + new Vector2(0, 24), 3, centered: true);
-            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"Team: {Enum.GetNames<TankTeam>()[tankToSpawnTeam]}", GameUtils.WindowTop + new Vector2(0, 40), 3, centered: true);
+            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"Tier: {TankID.Collection.GetKey(tankToSpawnType)}", GameUtils.WindowTop + new Vector2(0, 24), 3, centered: true);
+            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"Team: {TeamID.Collection.GetKey(tankToSpawnTeam)}", GameUtils.WindowTop + new Vector2(0, 40), 3, centered: true);
             DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"CubeStack: {CubeHeight} | CubeType: {Enum.GetNames<Block.BlockType>()[BlockType]}", GameUtils.WindowBottom - new Vector2(0, 20), 3, centered: true);
 
             DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"HighestTier: {AITank.GetHighestTierActive()}", new(10, GameUtils.WindowHeight * 0.26f), 1);
             DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"CurSong: {(Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f) != null ? Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f).Name : "N/A")}", new(10, GameUtils.WindowHeight - 100), 1);
-            for (int i = 0; i < Enum.GetNames<TankTier>().Length; i++) {
-                DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"{Enum.GetNames<TankTier>()[i]}: {AITank.GetTankCountOfType((TankTier)i)}", new(10, GameUtils.WindowHeight * 0.3f + (i * 20)), 1);
+            for (int i = 0; i < TankID.Collection.Count; i++) {
+                DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"{TankID.Collection.GetKey(i)}: {AITank.GetTankCountOfType(i)}", new(10, GameUtils.WindowHeight * 0.3f + (i * 20)), 1);
             }
             #endregion
 
@@ -652,12 +653,15 @@ namespace TanksRebirth.GameContent
 
             if (cur is not null && cur.HasItem && cur.HasBlock && cur.BlockId > -1 && cur.BlockId < Block.AllBlocks.Length)
             {
-                if (Block.AllBlocks[cur.BlockId].Type == Block.BlockType.Teleporter)
+                if (Block.AllBlocks[cur.BlockId] != null)
                 {
-                    // ChatSystem.SendMessage($"{Input.DeltaScrollWheel}", Color.White);
+                    if (Block.AllBlocks[cur.BlockId].Type == Block.BlockType.Teleporter)
+                    {
+                        // ChatSystem.SendMessage($"{Input.DeltaScrollWheel}", Color.White);
 
-                    if (Input.DeltaScrollWheel != _oldelta)
-                        Block.AllBlocks[cur.BlockId].TpLink += (sbyte)(Input.DeltaScrollWheel - _oldelta);
+                        if (Input.DeltaScrollWheel != _oldelta)
+                            Block.AllBlocks[cur.BlockId].TpLink += (sbyte)(Input.DeltaScrollWheel - _oldelta);
+                    }
                 }
             }
 
@@ -728,7 +732,7 @@ namespace TanksRebirth.GameContent
             }
         }
 
-        public static PlayerTank SpawnMe(PlayerType playerType, TankTeam team)
+        public static PlayerTank SpawnMe(int playerType, int team)
         {
             var pos = TankGame.OverheadView ? PlacementSquare.CurrentlyHovered.Position : GameUtils.GetWorldPosition(GameUtils.MousePosition);
             var myTank = new PlayerTank(playerType);
@@ -744,7 +748,7 @@ namespace TanksRebirth.GameContent
             return myTank;
         }
 
-        public static void SpawnTankInCrate(TankTier tierOverride = default, TankTeam teamOverride = default, bool createEvenDrop = false)
+        public static void SpawnTankInCrate(int tierOverride = default, int teamOverride = default, bool createEvenDrop = false)
         {
             var random = new CubeMapPosition(GameRand.Next(0, 26), GameRand.Next(0, 20));
 
@@ -753,7 +757,7 @@ namespace TanksRebirth.GameContent
             drop.TankToSpawn = new TankTemplate()
             {
                 AiTier = tierOverride == default ? AITank.PickRandomTier() : tierOverride,
-                Team = teamOverride == default ? GameUtils.PickRandom<TankTeam>() : teamOverride
+                Team = teamOverride == default ? GameRand.Next(TeamID.NoTeam, TeamID.Collection.Count) : teamOverride
             };
         }
 
@@ -766,7 +770,7 @@ namespace TanksRebirth.GameContent
             drop.TankToSpawn = new TankTemplate()
             {
                 AiTier = AITank.PickRandomTier(),
-                Team = TankTeam.NoTeam
+                Team = TeamID.NoTeam
             };
         }
         public static void CleanupScene()
@@ -809,7 +813,7 @@ namespace TanksRebirth.GameContent
 
             GameProperties.InMission = false;
         }
-        public static AITank SpawnTank(TankTier tier, TankTeam team)
+        public static AITank SpawnTank(int tier, int team)
         {
             var rot = GeometryUtils.GetPiRandom();
 
@@ -824,7 +828,7 @@ namespace TanksRebirth.GameContent
 
             return t;
         }
-        public static AITank SpawnTankAt(Vector3 position, TankTier tier, TankTeam team)
+        public static AITank SpawnTankAt(Vector3 position, int tier, int team)
         {
             var rot = 0f;
 
@@ -845,11 +849,11 @@ namespace TanksRebirth.GameContent
             {
                 var random = new CubeMapPosition(GameRand.Next(0, 23),GameRand.Next(0, 18));
                 var rot = GeometryUtils.GetPiRandom();
-                var t = new AITank(useCurTank ? (TankTier)tankToSpawnType : AITank.PickRandomTier());
+                var t = new AITank(useCurTank ? tankToSpawnType : AITank.PickRandomTier());
                 t.TankRotation = rot;
                 t.TurretRotation = rot;
                 t.Dead = false;
-                t.Team = useCurTank ? (TankTeam)tankToSpawnTeam : TankTeam.NoTeam;
+                t.Team = useCurTank ? tankToSpawnTeam : TeamID.NoTeam;
                 t.Body.Position = random;
                 t.Position = random;
             }
@@ -1025,6 +1029,10 @@ namespace TanksRebirth.GameContent
 
         public static float DistUntilPathTrace = 1575f;
 
+        private static Vector2 _oldMouse;
+
+        public static bool DoTrail = false;
+
         public static void DrawMouse()
         {
             numDots = 10;
@@ -1053,10 +1061,32 @@ namespace TanksRebirth.GameContent
                 }
             }
 
+            if (DoTrail)
+            {
+                var p = ParticleSystem.MakeParticle(new Vector3(GameUtils.MousePosition.X, GameUtils.MousePosition.Y, 0), TankGame.WhitePixel);
+                p.Is2d = true;
+                var dir = _oldMouse.DirectionOf(GameUtils.MousePosition).ToResolution();
+                p.Rotation2D = dir.ToRotation();
+                p.TextureScale = new Vector2(dir.Length() * 1.1f, 20.ToResolutionY());
+                p.Origin2D = new(0, TankGame.WhitePixel.Size().Y / 2);
+                p.isAddative = false;
+                p.ToScreenSpace = false;
+                p.UniqueBehavior = (pa) =>
+                {
+                    p.Alpha -= 0.06f;
+                    p.TextureScale -= new Vector2(0.06f);
+
+                    if (p.Alpha <= 0)
+                        p.Destroy();
+
+                    p.Color = Color.SkyBlue;//GameUtils.HsvToRgb(TankGame.GameUpdateTime % 255 / 255f * 360, 1, 1);
+                };
+            }
             _sinScale = MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalSeconds);
 
             MouseTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/cursor_1");
             TankGame.SpriteRenderer.Draw(MouseTexture, GameUtils.MousePosition, null, Color.White, 0f, MouseTexture.Size() / 2, (1f + _sinScale / 16).ToResolution(), default, default);
+            _oldMouse = GameUtils.MousePosition;
         }
     }
     public class GameShaders
@@ -1073,7 +1103,8 @@ namespace TanksRebirth.GameContent
         public static void UpdateShaders()
         {
             MouseShader.Parameters["oGlobalTime"].SetValue((float)TankGame.LastGameTime.TotalGameTime.TotalSeconds);
-            MouseShader.Parameters["oColor"].SetValue(new Vector3(0f, 0f, 1f));
+            MouseShader.Parameters["oColor"].SetValue(new Vector3(0f, 0f, 1f)
+                /*MouseRenderer.HsvToRgb(TankGame.GameUpdateTime % 255 / 255f * 360, 1, 1).ToVector3()*/);
             MouseShader.Parameters["oSpeed"].SetValue(-20f);
             MouseShader.Parameters["oSpacing"].SetValue(10f);
 

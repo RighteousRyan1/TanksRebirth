@@ -37,6 +37,7 @@ namespace TanksRebirth.Internals.Common.GameUI
 			interactable.SetDimensions((int)Position.X + 2, (int)Position.Y + 2, (int)Size.X - 4, (int)Size.Y - 4);
 			interactable.OnLeftDown = (uiElement) =>
 			{
+				// FIXME: huh? this isn't invoked.
 				int mouseXRelative = (int)Math.Round(Utilities.GameUtils.MouseX - uiElement.Position.X);
 				InternalValue = MathHelper.Clamp(mouseXRelative / uiElement.Size.X, 0, 1);
 			};

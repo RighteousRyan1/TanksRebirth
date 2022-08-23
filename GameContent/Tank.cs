@@ -16,6 +16,8 @@ using TanksRebirth.GameContent.Cosmetics;
 using TanksRebirth.Graphics;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.GameContent.Properties;
+using TanksRebirth.GameContent.Systems.Coordinates;
+using TanksRebirth.GameContent.ID;
 
 namespace TanksRebirth.GameContent
 {
@@ -24,16 +26,16 @@ namespace TanksRebirth.GameContent
         /// <summary>If false, the template will contain data for an AI tank.</summary>
         public bool IsPlayer;
 
-        public TankTier AiTier;
-        public PlayerType PlayerType;
+        public int AiTier;
+        public int PlayerType;
 
         public Vector2 Position;
 
         public float Rotation;
 
-        public TankTeam Team;
+        public int Team;
 
-        public Range<TankTier> RandomizeRange;
+        public Range<int> RandomizeRange;
 
         public Tank GetTank() => IsPlayer ? GetPlayerTank() : GetAiTank();
         public AITank GetAiTank()
@@ -49,6 +51,14 @@ namespace TanksRebirth.GameContent
             ai.Dead = false;
             ai.TurretRotation = Rotation;
             ai.Team = Team;
+
+            var placement = PlacementSquare.Placements.FindIndex(place => place.Position == ai.Position3D);
+            if (placement > -1)
+            {
+                PlacementSquare.Placements[placement].TankId = ai.WorldId;
+                PlacementSquare.Placements[placement].HasBlock = false;
+            }
+
             return ai;
         }
         public PlayerTank GetPlayerTank()
@@ -62,6 +72,13 @@ namespace TanksRebirth.GameContent
             player.TankRotation = Rotation;
             player.Dead = false;
             player.Team = Team;
+
+            var placement = PlacementSquare.Placements.FindIndex(place => place.Position == player.Position3D);
+            if (placement > -1)
+            {
+                PlacementSquare.Placements[placement].TankId = player.WorldId;
+                PlacementSquare.Placements[placement].HasBlock = false;
+            }
             return player;
         }
     }
@@ -107,9 +124,9 @@ namespace TanksRebirth.GameContent
 
         public int TankId { get; set; }
 
-        public ShellType ShellType { get; set; }
+        public int ShellType { get; set; }
 
-        public TankHurtContext_Bullet(bool isPlayer, uint bounces, ShellType type, int tankId)
+        public TankHurtContext_Bullet(bool isPlayer, uint bounces, int type, int tankId)
         {
             IsPlayer = isPlayer;
             Bounces = bounces;
@@ -133,9 +150,9 @@ namespace TanksRebirth.GameContent
 
         public static string AssetRoot;
 
-        public static List<TankTeam> GetActiveTeams()
+        public static List<int> GetActiveTeams()
         {
-            var teams = new List<TankTeam>();
+            var teams = new List<int>();
             foreach (var tank in GameHandler.AllTanks)
             {
                 if (tank is not null && !tank.Dead)
@@ -150,33 +167,22 @@ namespace TanksRebirth.GameContent
         public static void SetAssetNames()
         {
             Assets.Clear();
-            foreach (var tier in Enum.GetNames<TankTier>().Where(tier => (int)Enum.Parse<TankTier>(tier) > (int)TankTier.Random && (int)Enum.Parse<TankTier>(tier) < (int)TankTier.Explosive))
-            {
+            // TankTier.Collection.GetKey(tankToSpawnType)
+            foreach (var tier in TankID.Collection.Keys.Where(tier => TankID.Collection.GetValue(tier) > TankID.Random && TankID.Collection.GetValue(tier) < TankID.Explosive))
                 Assets.Add($"tank_" + tier.ToLower(), null);
-            }
-            foreach (var type in Enum.GetNames<PlayerType>())
-            {
+            foreach (var type in PlayerID.Collection.Keys)
                 Assets.Add($"tank_" + type.ToLower(), null);
-            }
         }
         public static void LoadVanillaTextures()
         {
             Assets.Clear();
 
-            foreach (var tier in Enum.GetNames<TankTier>().Where(tier => (int)Enum.Parse<TankTier>(tier) > (int)TankTier.Random && (int)Enum.Parse<TankTier>(tier) < (int)TankTier.Explosive))
-            {
+            foreach (var tier in TankID.Collection.Keys.Where(tier => TankID.Collection.GetValue(tier) > TankID.Random && TankID.Collection.GetValue(tier) < TankID.Explosive))
                 if (!Assets.ContainsKey($"tank_" + tier.ToLower()))
-                {
                     Assets.Add($"tank_" + tier.ToLower(), GameResources.GetGameResource<Texture2D>($"Assets/textures/tank/tank_{tier.ToLower()}"));
-                }
-            }
-            foreach (var type in Enum.GetNames<PlayerType>())
-            {
+            foreach (var type in PlayerID.Collection.Keys)
                 if (!Assets.ContainsKey($"tank_" + type.ToLower()))
-                {
                     Assets.Add($"tank_" + type.ToLower(), GameResources.GetGameResource<Texture2D>($"Assets/textures/tank/tank_{type.ToLower()}"));
-                }
-            }
             AssetRoot = "Assets/textures/tank";
         }
 
@@ -256,8 +262,8 @@ namespace TanksRebirth.GameContent
         public Vector2 Position;
         public Vector2 Velocity;
 
-        /// <summary>This <see cref="Tank"/>'s <see cref="TankTeam"/>.</summary>
-        public TankTeam Team { get; set; }
+        /// <summary>This <see cref="Tank"/>'s <see cref="TeamID"/>.</summary>
+        public int Team { get; set; }
         /// <summary>The rotation of this <see cref="Tank"/>'s barrel. Generally should not be modified in a player context.</summary>>
         public BoundingBox Worldbox { get; set; }
         /// <summary>The 2D circle-represented hitbox of this <see cref="Tank"/>.</summary>
@@ -374,7 +380,7 @@ namespace TanksRebirth.GameContent
         void OnMissionStart()
         {
             if (Difficulties.Types["FFA"])
-                Team = TankTeam.NoTeam;
+                Team = TeamID.NoTeam;
             if (Properties.Invisible && !Dead)
             {
                 var invis = "Assets/sounds/tnk_invisible";
@@ -533,8 +539,8 @@ namespace TanksRebirth.GameContent
             {
                 var c = p.PlayerType switch
                 {
-                    PlayerType.Blue => TankDeathMark.CheckColor.Blue,
-                    PlayerType.Red => TankDeathMark.CheckColor.Red,
+                    PlayerID.Blue => TankDeathMark.CheckColor.Blue,
+                    PlayerID.Red => TankDeathMark.CheckColor.Red,
                     _ => throw new Exception()
                 };
 
@@ -588,6 +594,8 @@ namespace TanksRebirth.GameContent
                 var partExpl = ParticleSystem.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
 
                 partExpl.Color = Color.Yellow * 0.75f;
+
+                partExpl.ToScreenSpace = true;
 
                 partExpl.Scale = new(5f);
 
@@ -845,7 +853,7 @@ namespace TanksRebirth.GameContent
         /// <summary>The pitch of the shoot sound.</summary>
         public float ShootPitch { get; set; }
         /// <summary>The type of bullet this <see cref="Tank"/> shoots.</summary>
-        public ShellType ShellType { get; set; }
+        public int ShellType { get; set; }
         /// <summary>The maximum amount of mines this <see cref="Tank"/> can place.</summary>
         public uint MineLimit { get; set; }
         /// <summary>How long this <see cref="Tank"/> will be immobile upon firing a bullet.</summary>
@@ -869,7 +877,7 @@ namespace TanksRebirth.GameContent
         /// <summary>Whether or not this <see cref="Tank"/> makes sounds while moving.</summary>
         public bool IsSilent { get; set; }
         /// <summary>The type of track that is laid.</summary>
-        public TrackType Track { get; set; }
+        public int TrackType { get; set; }
         /// <summary>If <see cref="ShellShootCount"/> is greater than 1, this is how many radians each shot's offset will be when this <see cref="Tank"/> shoots.
         /// <para></para>
         /// A common formula to calculate values for when the bullets won't instantly collide is:

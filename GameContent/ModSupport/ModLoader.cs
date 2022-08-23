@@ -92,14 +92,14 @@ namespace TanksRebirth.GameContent.ModSupport
                 var files = Directory.GetFiles(folder);
                 foreach (var file1 in files)
                 {
-                    bool isSln = file1.Contains(".sln");
+                    bool isSln = file1.Contains(".csproj");
                     if (isSln)
                     {
                         foreach (var file2 in files)
                         {
                             var fileName = Path.GetFileName(file2);
                             var modName = folder.Split('\\')[^1];
-                            if (fileName == modName + ".sln")
+                            if (fileName == modName + ".csproj")
                             {
                                 ActionsNeeded++;
 

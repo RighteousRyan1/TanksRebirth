@@ -37,7 +37,7 @@ namespace TanksRebirth.GameContent.UI
 
         private static TimeSpan _delayPerTank = TimeSpan.FromMilliseconds(500);
 
-        public static Dictionary<TankTier, int> KillsPerType = new();
+        public static Dictionary<int, int> KillsPerType = new();
 
         public static Grade Grade;
 
@@ -299,7 +299,7 @@ namespace TanksRebirth.GameContent.UI
             IntermissionSystem.DrawShadowedString(TankGame.TextFontLarge, new Vector2(GameUtils.WindowWidth / 2, 8), Vector2.One, txt, Color.DeepSkyBlue, new Vector2(0.5f).ToResolution(), _panelAlpha, new Vector2(measure.X / 2, 0));
         }
         // TODO: probably support multiple players L + ratio me
-        public static void SetStats(Campaign campaign, PlayerTank.DeterministicPlayerStats stats, Dictionary<TankTier, int> killCounts, bool orderByTier = true)
+        public static void SetStats(Campaign campaign, PlayerTank.DeterministicPlayerStats stats, Dictionary<int, int> killCounts, bool orderByTier = true)
         {
             // set everything properly...
             KillsPerType = killCounts;
