@@ -18,8 +18,6 @@ namespace TanksRebirth.Internals.Common.Framework.Collections
     /// <typeparam name="TValue"></typeparam>
     public class ReflectionDictionary<TClass, TValue> where TClass : class, new()
     {
-#pragma warning disable CS8600, CS8602, CS8603, CS8604
-
         public int Count => _dictionary.Count;
         public string[] Keys => _dictionary.Keys.ToArray();
         public TValue[] Values => _dictionary.Values.ToArray();
@@ -71,6 +69,5 @@ namespace TanksRebirth.Internals.Common.Framework.Collections
         public bool ContainsValue(TValue value) => _dictionary.ContainsValue(value);
 
         public Dictionary<string, TValue> GetContents() => _dictionary;
-#pragma warning restore
     }
 }

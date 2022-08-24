@@ -1119,7 +1119,8 @@ namespace TanksRebirth.GameContent.UI
                     var txt = $"{ModLoader.Status} {ModLoader.ModBeingLoaded}...";
                     TankGame.SpriteRenderer.DrawString(TankGame.TextFont, txt, new(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2 - 75.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(Anchor.Center, TankGame.TextFont.MeasureString(txt)));
 
-                    txt = $"Loading your mods... {ratio * 100:0}% ({ModLoader.ActionsComplete} / {ModLoader.ActionsNeeded})";
+                    txt = ModLoader.Error == string.Empty ? $"Loading your mods... {ratio * 100:0}% ({ModLoader.ActionsComplete} / {ModLoader.ActionsNeeded})" :
+                    $"Error Loading '{ModLoader.ModBeingLoaded}'";
                     TankGame.SpriteRenderer.DrawString(TankGame.TextFont, txt, new(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2 - 150.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(Anchor.Center, TankGame.TextFont.MeasureString(txt)));
                 }
                 #region Various things

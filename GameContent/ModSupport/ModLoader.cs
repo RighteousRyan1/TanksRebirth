@@ -40,6 +40,8 @@ namespace TanksRebirth.GameContent.ModSupport
         private volatile static List<Action> _sandboxingActions = new();
 
         private static bool _firstLoad = true;
+
+        public static string Error = string.Empty;
         private static void Compile(string modName)
         {
             if (!TankGame.IsWindows) {
@@ -48,22 +50,25 @@ namespace TanksRebirth.GameContent.ModSupport
             }
             Status = LoadStatus.Compiling;
             Process process = new();
-            ProcessStartInfo startInfo = new() {
-                UseShellExecute = false,
+            try {
+                ProcessStartInfo startInfo = new() {
+                    UseShellExecute = false,
 
-                CreateNoWindow = true,
-                WindowStyle = ProcessWindowStyle.Hidden,
-                FileName = @"C:\Windows\system32\cmd.exe",
-                WorkingDirectory = Path.Combine(ModsPath, modName),
-                Arguments = $"/c dotnet build -c Release"
-            };
+                    CreateNoWindow = true,
+                    WindowStyle = ProcessWindowStyle.Hidden,
+                    FileName = @"C:\Windows\system32\cmd.exe",
+                    WorkingDirectory = Path.Combine(ModsPath, modName),
+                    Arguments = $"/c dotnet build -c Release"
+                };
 
-            process.StartInfo = startInfo;
-            process.Start();
-            process.WaitForExit();
-
-            // garbage collector hell
-            // Thread.Sleep(GameHandler.GameRand.Next(250, 1250));
+                process.StartInfo = startInfo;
+                process.Start();
+                process.WaitForExit();
+            } catch (Exception e) {
+                Error = e.Message;
+                process.Dispose();
+                process.Close();
+            }
         }
         /// <summary>Prepare your garbage collector!</summary>
         internal static void LoadMods()
@@ -139,8 +144,10 @@ namespace TanksRebirth.GameContent.ModSupport
                     }
                 }
             }
-            Task.Run(() => {
+            Task.Run(async () => {
                 _loadingActions.ForEach(x => x.Invoke());
+                while (Error != string.Empty)
+                    await Task.Delay(10).ConfigureAwait(false);
                 _sandboxingActions.ForEach(x => x.Invoke());
                 LoadingMods = false;
                 Status = LoadStatus.Complete;

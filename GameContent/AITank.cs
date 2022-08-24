@@ -38,7 +38,8 @@ namespace TanksRebirth.GameContent
 
         public int Tier;
 
-        private Texture2D _tankTexture, _shadowTexture;
+        private Texture2D _tankTexture;
+        private static Texture2D _shadowTexture;
 
         public Action enactBehavior;
 
@@ -80,6 +81,8 @@ namespace TanksRebirth.GameContent
             [TankID.Electro] = Color.Blue,
             [TankID.Explosive] = Color.DarkGray,
         };
+
+        public void SwapTankTexture(Texture2D texture) => _tankTexture = texture;
         #region AiTankParams
 
         public record Params
@@ -1771,13 +1774,11 @@ namespace TanksRebirth.GameContent
                 {
                     if (context is TankHurtContext_Bullet cxt1)
                     {
-                        //if (cxt.Bounces > 0)
                         TankGame.GameData.BulletKills++;
                         TankGame.GameData.TotalKills++;
 
                         if (cxt1.Bounces > 0)
                             TankGame.GameData.BounceKills++;
-
                     }
                     if (context is TankHurtContext_Mine cxt2)
                     {
@@ -1785,7 +1786,8 @@ namespace TanksRebirth.GameContent
                         TankGame.GameData.TotalKills++;
                     }
 
-                    TankGame.GameData.TankKills[Tier]++;
+                    if (TankGame.GameData.TankKills.ContainsKey(Tier))
+                        TankGame.GameData.TankKills[Tier]++;
 
                     // haaaaaaarddddddcode
                     if (!LevelEditor.Editing)

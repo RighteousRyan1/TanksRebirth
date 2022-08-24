@@ -54,7 +54,7 @@ namespace TanksRebirth.GameContent
         public int PlayerId { get; }
         public int PlayerType { get; }
 
-        internal Texture2D _tankColorTexture;
+        private Texture2D _tankTexture;
         private static Texture2D _shadowTexture;
 
         public Vector2 preterbedVelocity;
@@ -79,18 +79,19 @@ namespace TanksRebirth.GameContent
         private bool _isPlayerModel;
 
         #endregion
+        public void SwapTankTexture(Texture2D texture) => _tankTexture = texture;
 
         public PlayerTank(int playerType, bool isPlayerModel = true, int copyTier = TankID.None)
         {
             Model = GameResources.GetGameResource<Model>(isPlayerModel ? "Assets/tank_p" : "Assets/tank_e");
             if (copyTier == TankID.None)
             {
-                _tankColorTexture = Assets[$"tank_" + PlayerID.Collection.GetKey(playerType).ToLower()];
+                _tankTexture = Assets[$"tank_" + PlayerID.Collection.GetKey(playerType).ToLower()];
                 ApplyDefaults(ref Properties);
             }
             else
             {
-                _tankColorTexture = Assets[$"tank_" + TankID.Collection.GetKey(copyTier).ToLower()];
+                _tankTexture = Assets[$"tank_" + TankID.Collection.GetKey(copyTier).ToLower()];
                 var dummy = new AITank(copyTier, default, true, false, false);
 
                 // ugly hardcode fix lol - prevents nantuple instead of triple bounces
@@ -560,7 +561,7 @@ namespace TanksRebirth.GameContent
                         if (mesh.Name != "Shadow")
                         {
                             effect.Alpha = 1f;
-                            effect.Texture = _tankColorTexture;
+                            effect.Texture = _tankTexture;
 
                             if (IsHoveredByMouse)
                                 effect.EmissiveColor = Color.White.ToVector3();
