@@ -316,7 +316,7 @@ namespace TanksRebirth.GameContent.Systems
 
                     blocks.Add(new()
                     {
-                        Type = (Block.BlockType)type,
+                        Type = type,
                         Stack = stack,
                         Position = new(x, y),
                     });
@@ -366,7 +366,7 @@ namespace TanksRebirth.GameContent.Systems
 
                     blocks.Add(new()
                     {
-                        Type = (Block.BlockType)type,
+                        Type = type,
                         Stack = stack,
                         Position = new(x, y),
                         TpLink = link

@@ -92,7 +92,7 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
 
                 if (place)
                 {
-                    var cube = new Block(LevelEditor.Active ? LevelEditor.SelectedBlockType : (Block.BlockType)GameHandler.BlockType, LevelEditor.Active ?  LevelEditor.BlockHeight : GameHandler.CubeHeight, Position.FlattenZ());
+                    var cube = new Block(LevelEditor.Active ? LevelEditor.SelectedBlockType : GameHandler.blockType, LevelEditor.Active ?  LevelEditor.BlockHeight : GameHandler.blockHeight, Position.FlattenZ());
                     BlockId = cube.Id;
 
                     HasBlock = true;
@@ -203,7 +203,7 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
 
                                 SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"{Block.AllBlocks[BlockId].Stack}", pos, Color.White, Color.Black, new Vector2(TankGame.AddativeZoom * 1.5f).ToResolution(), 0f);
                             }
-                            if (Block.AllBlocks[BlockId].Type == Block.BlockType.Teleporter)
+                            if (Block.AllBlocks[BlockId].Type == BlockID.Teleporter)
                             {
                                 var pos = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
 

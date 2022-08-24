@@ -1848,7 +1848,7 @@ namespace TanksRebirth.GameContent
             rayEndpoint = new(-999999, -999999);
             List<Tank> tanks = new();
             if (pattern is null)
-                pattern = (c) => c.IsSolid || c.Type == Block.BlockType.Teleporter;
+                pattern = (c) => c.IsSolid || c.Type == BlockID.Teleporter;
 
             const int MAX_PATH_UNITS = 1000;
             const int PATH_UNIT_LENGTH = 8;
@@ -1896,7 +1896,7 @@ namespace TanksRebirth.GameContent
 
                 if (block is not null)
                 {
-                    if (block.Type == Block.BlockType.Teleporter)
+                    if (block.Type == BlockID.Teleporter)
                     {
                         if (!goneThroughTeleporter)
                         {
@@ -2064,7 +2064,7 @@ namespace TanksRebirth.GameContent
 
             if (Properties.ShellType == ShellID.Explosive)
             {
-                tanksDef = GetTanksInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), out var rayEndpoint, offset: Vector2.UnitY * 20, pattern: x => (!x.IsDestructible && x.IsSolid) || x.Type == Block.BlockType.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
+                tanksDef = GetTanksInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), out var rayEndpoint, offset: Vector2.UnitY * 20, pattern: x => (!x.IsDestructible && x.IsSolid) || x.Type == BlockID.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
                 if (GameUtils.Distance_WiiTanksUnits(rayEndpoint, Position) < 150f) // TODO: change from hardcode to normalcode :YES:
                     tooCloseToExplosiveShell = true;
             }
@@ -2619,13 +2619,13 @@ namespace TanksRebirth.GameContent
 
                     if (AiParams.SmartRicochets)
                         GetTanksInPath(Vector2.UnitY.RotatedByRadians(seekRotation), out var rayEndpoint, true, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
-                    var poo = GetTanksInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), out var rayEnd, true, offset: Vector2.UnitY * 20, pattern: x => x.IsSolid | x.Type == Block.BlockType.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
+                    var poo = GetTanksInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), out var rayEnd, true, offset: Vector2.UnitY * 20, pattern: x => x.IsSolid | x.Type == BlockID.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
                     if (AiParams.PredictsPositions)
                     {
                         float rot = -GameUtils.DirectionOf(Position, TargetTank is not null ?
                             GeometryUtils.PredictFuturePosition(TargetTank.Position, TargetTank.Velocity, calculation) :
                             Aimtarget).ToRotation() - MathHelper.PiOver2;
-                        GetTanksInPath(Vector2.UnitY.RotatedByRadians(rot), out var rayEnd2, true, Vector2.Zero, pattern: x => x.IsSolid | x.Type == Block.BlockType.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
+                        GetTanksInPath(Vector2.UnitY.RotatedByRadians(rot), out var rayEnd2, true, Vector2.Zero, pattern: x => x.IsSolid | x.Type == BlockID.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
                     }
                     DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"{Tier}: {poo.Count}", GeometryUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), World, View, Projection), 1, centered: true);
                     if (!Properties.Stationary)

@@ -258,9 +258,9 @@ namespace TanksRebirth.GameContent
             if (!MainMenu.Active)
             {
                 if (Input.KeyJustPressed(Keys.Z))
-                    BlockType--;
+                    blockType--;
                 if (Input.KeyJustPressed(Keys.X))
-                    BlockType++;
+                    blockType++;
                 if (DebugUtils.DebuggingEnabled)
                 {
                     if (Input.KeyJustPressed(Keys.NumPad7))
@@ -274,9 +274,9 @@ namespace TanksRebirth.GameContent
                         tankToSpawnTeam++;
 
                     if (Input.KeyJustPressed(Keys.OemPeriod))
-                        CubeHeight++;
+                        blockHeight++;
                     if (Input.KeyJustPressed(Keys.OemComma))
-                        CubeHeight--;
+                        blockHeight--;
 
 
                     if (Input.KeyJustPressed(Keys.PageUp))
@@ -305,8 +305,8 @@ namespace TanksRebirth.GameContent
                 PlayerTank.PlayerStatistics = default;
             }
 
-            CubeHeight = MathHelper.Clamp(CubeHeight, 1, 7);
-            BlockType = MathHelper.Clamp(BlockType, 0, 3);
+            blockHeight = MathHelper.Clamp(blockHeight, 1, 7);
+            blockType = MathHelper.Clamp(blockType, 0, 3);
 
             _wasOverhead = TankGame.OverheadView;
             _wasInMission = GameProperties.InMission;
@@ -497,8 +497,8 @@ namespace TanksRebirth.GameContent
             }
         }
 
-        public static int BlockType = 0;
-        public static int CubeHeight = 1;
+        public static int blockType = 0;
+        public static int blockHeight = 1;
         public static int tankToSpawnType;
         public static int tankToSpawnTeam;
         internal static void RenderAll()
@@ -598,7 +598,7 @@ namespace TanksRebirth.GameContent
             DebugUtils.DrawDebugString(TankGame.SpriteRenderer, "Spawn Tank With Info:", GameUtils.WindowTop + new Vector2(0, 8), 3, centered: true);
             DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"Tier: {TankID.Collection.GetKey(tankToSpawnType)}", GameUtils.WindowTop + new Vector2(0, 24), 3, centered: true);
             DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"Team: {TeamID.Collection.GetKey(tankToSpawnTeam)}", GameUtils.WindowTop + new Vector2(0, 40), 3, centered: true);
-            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"CubeStack: {CubeHeight} | CubeType: {Enum.GetNames<Block.BlockType>()[BlockType]}", GameUtils.WindowBottom - new Vector2(0, 20), 3, centered: true);
+            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"CubeStack: {blockHeight} | CubeType: {BlockID.Collection.GetKey(blockType)}", GameUtils.WindowBottom - new Vector2(0, 20), 3, centered: true);
 
             DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"HighestTier: {AITank.GetHighestTierActive()}", new(10, GameUtils.WindowHeight * 0.26f), 1);
             DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"CurSong: {(Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f) != null ? Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f).Name : "N/A")}", new(10, GameUtils.WindowHeight - 100), 1);
@@ -655,7 +655,7 @@ namespace TanksRebirth.GameContent
             {
                 if (Block.AllBlocks[cur.BlockId] != null)
                 {
-                    if (Block.AllBlocks[cur.BlockId].Type == Block.BlockType.Teleporter)
+                    if (Block.AllBlocks[cur.BlockId].Type == BlockID.Teleporter)
                     {
                         // ChatSystem.SendMessage($"{Input.DeltaScrollWheel}", Color.White);
 

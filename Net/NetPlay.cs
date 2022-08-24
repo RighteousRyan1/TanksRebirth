@@ -161,7 +161,7 @@ namespace TanksRebirth.Net
                             blockTotal.Add(new()
                             {
                                 Position = reader.GetVector2(),
-                                Type = (Block.BlockType)reader.GetByte(),
+                                Type = reader.GetByte(),
                                 Stack = reader.GetSByte(),
                                 TpLink = reader.GetSByte(),
                             });

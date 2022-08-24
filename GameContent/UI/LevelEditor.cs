@@ -60,7 +60,7 @@ namespace TanksRebirth.GameContent.UI
         public static int SelectedTankTier { get; private set; }
         public static int SelectedTankTeam { get; private set; }
         public static int SelectedPlayerType { get; private set; }
-        public static Block.BlockType SelectedBlockType { get; private set; }
+        public static int SelectedBlockType { get; private set; }
         public static int BlockHeight { get; private set; }
         public static bool Editing { get; internal set; }
 
@@ -283,7 +283,7 @@ namespace TanksRebirth.GameContent.UI
                 if (RenderTextures.ContainsKey(nTL))
                     _renderNamesTanks.Add(nTL);
             }
-            names = Enum.GetNames<Block.BlockType>();
+            names = BlockID.Collection.Keys;
             for (int i = 0; i < names.Length; i++) {
                 var nTL = names[i];
 
@@ -485,12 +485,12 @@ namespace TanksRebirth.GameContent.UI
             else if (CurCategory == Category.Blocks)
             {
                 helpText = "UP and DOWN to change stack.";
-                var tex = SelectedBlockType != Block.BlockType.Hole ? $"{SelectedBlockType}_{BlockHeight}" : $"{SelectedBlockType}";
+                var tex = SelectedBlockType != BlockID.Hole ? $"{SelectedBlockType}_{BlockHeight}" : $"{SelectedBlockType}";
                 var size = RenderTextures[tex].Size();
                 start = new Vector2(GameUtils.WindowWidth - 175.ToResolutionX(), 450.ToResolutionY());
                 TankGame.SpriteRenderer.Draw(RenderTextures[tex], start, null, Color.White, 0f, new Vector2(size.X / 2, size.Y), Vector2.One.ToResolution(), default, 0f);
                 // TODO: reduce the hardcode for modders, yeah
-                if (SelectedBlockType != Block.BlockType.Teleporter && SelectedBlockType != Block.BlockType.Hole)
+                if (SelectedBlockType != BlockID.Teleporter && SelectedBlockType != BlockID.Hole)
                 {
                     TankGame.SpriteRenderer.DrawString(TankGame.TextFontLarge, "v", new Vector2(start.X + 100.ToResolutionX(), start.Y - 75.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, TankGame.TextFontLarge.MeasureString("v") / 2);
                     TankGame.SpriteRenderer.DrawString(TankGame.TextFontLarge, "v", new Vector2(start.X - 100.ToResolutionX(), start.Y - 25.ToResolutionY()), Color.White, Vector2.One.ToResolution(), MathHelper.Pi, TankGame.TextFontLarge.MeasureString("v") / 2);
@@ -550,11 +550,11 @@ namespace TanksRebirth.GameContent.UI
                 for (int i = 0; i < _renderNamesBlocks.Count; i++)
                 {
                     ClickEventsPerItem[new Rectangle((int)(34.ToResolutionX() + xOff + _barOffset), (int)(GameUtils.WindowBottom.Y * 0.8f), (int)234.ToResolutionX(), (int)(GameUtils.WindowHeight * 0.2f))] =
-                        (i, (Block.BlockType)i switch
+                        (i, i switch
                         {
-                            Block.BlockType.Wood => "An indestructible obstacle.",
-                            Block.BlockType.Cork => "An obstacle that can be destroyed by mines.",
-                            Block.BlockType.Hole => "An obstacle that tanks cannot travel through, but shells can.",
+                            BlockID.Wood => "An indestructible obstacle.",
+                            BlockID.Cork => "An obstacle that can be destroyed by mines.",
+                            BlockID.Hole => "An obstacle that tanks cannot travel through, but shells can.",
                             _ => "What?"
                         });
 
@@ -658,7 +658,7 @@ namespace TanksRebirth.GameContent.UI
                             if (CurCategory == Category.EnemyTanks)
                                 SelectedTankTier = evt.Value.Item1;
                             else if (CurCategory == Category.Blocks)
-                                SelectedBlockType = (Block.BlockType)evt.Value.Item1;
+                                SelectedBlockType = evt.Value.Item1;
                             else if (CurCategory == Category.PlayerTanks)
                                 SelectedPlayerType = evt.Value.Item1;
                         }
@@ -696,7 +696,7 @@ namespace TanksRebirth.GameContent.UI
                         BlockHeight++;
                     if (Input.KeyJustPressed(Microsoft.Xna.Framework.Input.Keys.Down))
                         BlockHeight--;
-                    if (SelectedBlockType == Block.BlockType.Hole || SelectedBlockType == Block.BlockType.Teleporter)
+                    if (SelectedBlockType == BlockID.Hole || SelectedBlockType == BlockID.Teleporter)
                         BlockHeight = 1;
 
                     BlockHeight = MathHelper.Clamp(BlockHeight, 1, 7);

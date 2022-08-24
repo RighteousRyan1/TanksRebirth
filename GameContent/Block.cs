@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using tainicom.Aether.Physics2D.Dynamics;
 using TanksRebirth;
+using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
@@ -17,7 +18,7 @@ namespace TanksRebirth.GameContent
     public struct BlockTemplate
     {
         public sbyte Stack;
-        public Block.BlockType Type;
+        public int Type;
         public Vector2 Position;
         public sbyte TpLink;
 
@@ -50,18 +51,11 @@ namespace TanksRebirth.GameContent
 
         public delegate void PostRenderDelegate(Block block);
         public static event PostRenderDelegate OnPostRender;
-        public enum BlockType : byte
-        {
-            Wood,
-            Cork,
-            Hole,
-            Teleporter
-        }
 
         public sbyte TpLink = -1;
         public int[] _tankCooldowns = new int[GameHandler.AllTanks.Length];
 
-        public BlockType Type { get; set; }
+        public int Type { get; set; }
 
         public static Block[] AllBlocks = new Block[CubeMapPosition.MAP_WIDTH * CubeMapPosition.MAP_HEIGHT * 5];
 
@@ -104,31 +98,31 @@ namespace TanksRebirth.GameContent
 
         private bool IsAlternateModel => Stack == 3 || Stack == 6;
 
-        public Block(BlockType type, int height, Vector2 position)
+        public Block(int type, int height, Vector2 position)
         {
-            Stack = (sbyte)MathHelper.Clamp(height, 0, 7); // if 0, it will be a hole.
+            Stack = (sbyte)MathHelper.Clamp(height, 0, 7);
             
             switch (type)
             {
-                case BlockType.Wood:
+                case BlockID.Wood:
                     meshTexture = MapRenderer.Assets["block.1"];
                     Body = Tank.CollisionsWorld.CreateRectangle(FULL_BLOCK_SIZE, FULL_BLOCK_SIZE, 1f, position, 0f, BodyType.Static);
                     model = IsAlternateModel ? GameResources.GetGameResource<Model>("Assets/toy/cube_stack_alt") : GameResources.GetGameResource<Model>("Assets/toy/cube_stack"); ;
                     break;
-                case BlockType.Cork:
+                case BlockID.Cork:
                     IsDestructible = true;
                     Body = Tank.CollisionsWorld.CreateRectangle(FULL_BLOCK_SIZE, FULL_BLOCK_SIZE, 1f, position, 0f, BodyType.Static);
                     meshTexture = MapRenderer.Assets["block.2"];
                     model = IsAlternateModel ? GameResources.GetGameResource<Model>("Assets/toy/cube_stack_alt") : GameResources.GetGameResource<Model>("Assets/toy/cube_stack"); ;
                     break;
-                case BlockType.Hole:
+                case BlockID.Hole:
                     model = GameResources.GetGameResource<Model>("Assets/check");
                     IsSolid = false;
                     Body = Tank.CollisionsWorld.CreateRectangle(FULL_BLOCK_SIZE, FULL_BLOCK_SIZE, 1f, position, 0f, BodyType.Static);
                     meshTexture = MapRenderer.Assets["block_harf.1"];
                     CanStack = false;
                     break;
-                case BlockType.Teleporter:
+                case BlockID.Teleporter:
                     model = GameResources.GetGameResource<Model>("Assets/teleporter");
                     IsSolid = false;
                     meshTexture = MapRenderer.Assets["teleporter"];
@@ -190,7 +184,6 @@ namespace TanksRebirth.GameContent
 
             AllBlocks[Id] = null;
         }
-
         public void Destroy()
         {
             if (IsDestructible)
@@ -229,10 +222,9 @@ namespace TanksRebirth.GameContent
             OnDestroy?.Invoke(this);
             Remove();
         }
-
         public void Render()
         {
-            if (Type != BlockType.Teleporter)
+            if (Type != BlockID.Teleporter)
             {
                 World = Matrix.CreateScale(0.62f) * Matrix.CreateTranslation(Position3D - _offset);
                 Projection = TankGame.GameProjection;
@@ -310,7 +302,7 @@ namespace TanksRebirth.GameContent
             Hitbox = new((int)(Position.X - FULL_BLOCK_SIZE / 2 + 1), (int)(Position.Y - FULL_BLOCK_SIZE / 2), (int)FULL_BLOCK_SIZE - 1, (int)FULL_BLOCK_SIZE);
             _offset = new();
 
-            if (Type == BlockType.Teleporter)
+            if (Type == BlockID.Teleporter)
             {
                 foreach (var tnk in GameHandler.AllTanks)
                 {
@@ -340,7 +332,6 @@ namespace TanksRebirth.GameContent
 
             OnPostUpdate?.Invoke(this);
         }
-
         private void UpdateOffset()
         {
             if (CanStack)
@@ -374,7 +365,6 @@ namespace TanksRebirth.GameContent
             else
                 _offset.Y -= 0.1f;
         }
-
         public enum CollisionDirection
         {
             Up,
