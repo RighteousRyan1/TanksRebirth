@@ -239,9 +239,6 @@ namespace TanksRebirth.GameContent
         #endregion
 
         public static World CollisionsWorld = new(Vector2.Zero);
-
-        public const float UnitsToPixels = 100f;
-
         public const float TNK_WIDTH = 25;
         public const float TNK_HEIGHT = 25;
         #region Fields / Properties
