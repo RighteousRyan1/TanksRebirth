@@ -358,7 +358,7 @@ namespace TanksRebirth.GameContent
                 if (Cosmetics.Contains(cos2d))
                     return;
                 Cosmetics.Add(cos2d);
-                var particle = ParticleSystem.MakeParticle(Position3D + cos2d.RelativePosition, cos2d.Texture);
+                var particle = GameHandler.ParticleSystem.MakeParticle(Position3D + cos2d.RelativePosition, cos2d.Texture);
 
                 particle.Scale = cos2d.Scale;
                 particle.Tag = $"cosmetic_2d_{GetHashCode()}"; // store the hash code of this tank, so when we destroy the cosmetic's particle, it destroys all belonging to this tank!
@@ -386,7 +386,7 @@ namespace TanksRebirth.GameContent
                 var invis = "Assets/sounds/tnk_invisible";
                 SoundPlayer.PlaySoundInstance(invis, SoundContext.Effect, 0.3f);
 
-                var lightParticle = ParticleSystem.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_particle"));
+                var lightParticle = GameHandler.ParticleSystem.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_particle"));
 
                 lightParticle.Scale = new(0.25f);
                 lightParticle.Alpha = 0f;
@@ -411,7 +411,7 @@ namespace TanksRebirth.GameContent
 
                 for (int i = 0; i < NUM_LOCATIONS; i++)
                 {
-                    var lp = ParticleSystem.MakeParticle(Position3D + new Vector3(0, 5, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
+                    var lp = GameHandler.ParticleSystem.MakeParticle(Position3D + new Vector3(0, 5, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
 
                     var velocity = Vector2.UnitY.RotatedByRadians(MathHelper.ToRadians(360f / NUM_LOCATIONS * i));
 
@@ -567,7 +567,7 @@ namespace TanksRebirth.GameContent
                 {
                     var tex = GameResources.GetGameResource<Texture2D>(GameHandler.GameRand.Next(0, 2) == 0 ? "Assets/textures/misc/tank_rock" : "Assets/textures/misc/tank_rock_2");
 
-                    var part = ParticleSystem.MakeParticle(Position3D, tex);
+                    var part = GameHandler.ParticleSystem.MakeParticle(Position3D, tex);
 
                     part.isAddative = false;
 
@@ -591,7 +591,7 @@ namespace TanksRebirth.GameContent
                     };
                 }
 
-                var partExpl = ParticleSystem.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
+                var partExpl = GameHandler.ParticleSystem.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
 
                 partExpl.Color = Color.Yellow * 0.75f;
 
@@ -608,7 +608,7 @@ namespace TanksRebirth.GameContent
                     if (p.Scale.X <= 0f)
                         p.Destroy();
                 };
-                ParticleSystem.MakeSmallExplosion(Position3D, 15, 20, 1.3f, 30);
+                GameHandler.ParticleSystem.MakeSmallExplosion(Position3D, 15, 20, 1.3f, 30);
             }
             doDestructionFx();
             Remove();
@@ -617,10 +617,8 @@ namespace TanksRebirth.GameContent
         public virtual void LayFootprint(bool alt) {
             if (!Properties.CanLayTread)
                 return;
-            new TankFootprint(this, alt)
-            {
+            new TankFootprint(this, -TankRotation, alt) {
                 Position = Position3D + new Vector3(0, 0.1f, 0),
-                rotation = -TankRotation
             };
         }
         /// <summary>Shoot a <see cref="Shell"/> from this <see cref="Tank"/>.</summary>
@@ -653,8 +651,8 @@ namespace TanksRebirth.GameContent
                     OnShoot?.Invoke(this, ref shell);
 
                     #region Particles
-                    var hit = ParticleSystem.MakeParticle(shell.Position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
-                    var smoke = ParticleSystem.MakeParticle(shell.Position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
+                    var hit = GameHandler.ParticleSystem.MakeParticle(shell.Position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
+                    var smoke = GameHandler.ParticleSystem.MakeParticle(shell.Position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
 
                     hit.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
                     smoke.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
@@ -823,14 +821,13 @@ namespace TanksRebirth.GameContent
         {            
             if (CollisionsWorld.BodyList.Contains(Body))
                 CollisionsWorld.Remove(Body);
-            foreach (var particle in ParticleSystem.CurrentParticles)
+            foreach (var particle in GameHandler.ParticleSystem.CurrentParticles)
                 if (particle is not null)
                     if ((string)particle.Tag == $"cosmetic_2d_{GetHashCode()}") // remove all particles related to this tank
                         particle.Destroy();
             GameProperties.OnMissionStart -= OnMissionStart;
         }
     }
-
     public class TankProperties
     {
         /// <summary>Whether or not the tank has artillery-like function during gameplay.</summary>
@@ -940,8 +937,11 @@ namespace TanksRebirth.GameContent
 
         public int id = 0;
 
-        public TankFootprint(Tank owner, bool alt = false)
+        public static DecalSystem DecalHandler; // = new(TankGame.SpriteRenderer, TankGame.Instance.GraphicsDevice);
+
+        public TankFootprint(Tank owner, float rotation, bool alt = false)
         {
+            this.rotation = rotation;
             alternate = alt;
             this.owner = owner;
             if (total_treads_placed + 1 > MAX_FOOTPRINTS)
@@ -949,10 +949,11 @@ namespace TanksRebirth.GameContent
 
             alternate = alt;
             id = total_treads_placed;
+            Position = owner.Position3D;
 
             texture = GameResources.GetGameResource<Texture2D>(alt ? $"Assets/textures/tank_footprint_alt" : $"Assets/textures/tank_footprint");
 
-            var track = ParticleSystem.MakeParticle(Position, texture);
+            var track = GameHandler.ParticleSystem.MakeParticle(Position, texture);
 
             track.isAddative = false;
 
@@ -980,20 +981,14 @@ namespace TanksRebirth.GameContent
             footprints[total_treads_placed] = this;
 
             total_treads_placed++;
+
+            /*DecalHandler.AddDecal(texture, GeometryUtils.ConvertWorldToScreen(Vector3.Zero,
+                Matrix.CreateTranslation(Position), TankGame.GameView,
+                TankGame.GameProjection), null, Color.White, rotation, BlendState.Opaque);*/
+
+            // Render();
         }
-        public void Update()
-        {
-            lifeTime++;
-        }
-        public void Render()
-        {
-            // i feel goofy
-            // Vector3 scale = alternate ? new(0.5f, 1f, 0.35f) : new(0.5f, 1f, 0.075f);
-            // [0.0, 1.1, 1.5, 0.5]
-            // [0.0, 0.1, 0.8, 0.0]
-            // [0.0, 0.5, 1.2, 1.0]
-            // [0.0, 2.0, 0.6, 0.2]
-        }
+        public void Update() => lifeTime++;
 
         private bool _destroy;
         public void Remove() => _destroy = true;
@@ -1028,15 +1023,7 @@ namespace TanksRebirth.GameContent
         /// <summary>Resurrects <see cref="StoredTank"/>.</summary>
         public void ResurrectTank()
         {
-            // FIXME: gonna be real... i have no clue why this makes tank become invincible.
-            if (StoredTank.IsPlayer)
-            {
-                StoredTank.GetPlayerTank();
-            }
-            else
-            {
-                StoredTank.GetAiTank();
-            }
+            StoredTank.GetTank();
         }
 
         public TankDeathMark(CheckColor color)
@@ -1047,7 +1034,7 @@ namespace TanksRebirth.GameContent
 
             texture = GameResources.GetGameResource<Texture2D>($"Assets/textures/check/check_{color.ToString().ToLower()}");
 
-            check = ParticleSystem.MakeParticle(Position + new Vector3(0, 0.1f, 0), texture);
+            check = GameHandler.ParticleSystem.MakeParticle(Position + new Vector3(0, 0.1f, 0), texture);
             check.isAddative = false;
             check.Roll = -MathHelper.PiOver2;
 

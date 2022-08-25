@@ -273,7 +273,7 @@ namespace TanksRebirth.GameContent
             {
                 if (LifeTime % nummy == 0)
                 {
-                    var p = ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi + GameHandler.GameRand.NextFloat(-0.3f, 0.3f)).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
+                    var p = GameHandler.ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi + GameHandler.GameRand.NextFloat(-0.3f, 0.3f)).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
                     p.FaceTowardsMe = false;
                     p.Scale = new(0.3f);
                     // p.color = new Color(50, 50, 50, 150);
@@ -323,7 +323,7 @@ namespace TanksRebirth.GameContent
                             p.Destroy();
                     };
                 }*/
-                var p = ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
+                var p = GameHandler.ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
 
                 p.Roll = -MathHelper.PiOver2;
                 p.Scale = new(0.4f, 0.25f, 0.4f); // x is outward from bullet
@@ -345,7 +345,7 @@ namespace TanksRebirth.GameContent
                         p.Destroy();
                 };
 
-                var p2 = ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
+                var p2 = GameHandler.ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
 
                 p2.Roll = -MathHelper.PiOver2;
                 p2.Scale = new(/*0.4f*/ Velocity.Length() / 10 - 0.2f, 0.25f, 0.4f); // x is outward from bullet
@@ -369,7 +369,7 @@ namespace TanksRebirth.GameContent
             }
             if (Flaming)
             {
-                var p = ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/flame"));
+                var p = GameHandler.ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/flame"));
 
                 p.Roll = -MathHelper.PiOver2;
                 var scaleRand = GameHandler.GameRand.NextFloat(0.5f, 0.75f);
@@ -416,7 +416,7 @@ namespace TanksRebirth.GameContent
         // deprecated.
         private void MakeTrail()
         {
-            var p = ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
+            var p = GameHandler.ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
 
             p.Roll = -MathHelper.PiOver2;
             p.Scale = new(1f, 0.165f, 0.4f); // x is outward from bullet
@@ -444,7 +444,7 @@ namespace TanksRebirth.GameContent
                 if (p.Scale.X < 0)
                     p.Destroy();
             };
-            var p2 = ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
+            var p2 = GameHandler.ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
 
             p2.Roll = -MathHelper.PiOver2;
             p2.Scale = new(1f, 0.165f, 0.4f); // x is outward from bullet
@@ -507,7 +507,7 @@ namespace TanksRebirth.GameContent
                     s.Instance.Pitch = GameHandler.GameRand.NextFloat(-0.05f, 0.05f);
                 }
             }
-            ParticleSystem.MakeShineSpot(Position, Color.Orange, 0.8f);
+            GameHandler.ParticleSystem.MakeShineSpot(Position, Color.Orange, 0.8f);
             Ricochets++;
             RicochetsRemaining--;
         }
@@ -576,7 +576,7 @@ namespace TanksRebirth.GameContent
                     var sfx = SoundPlayer.PlaySoundInstance("Assets/sounds/bullet_destroy", SoundContext.Effect, 0.5f);
                     sfx.Instance.Pitch = GameHandler.GameRand.NextFloat(-0.1f, 0.1f);
                 }
-                ParticleSystem.MakeSmallExplosion(Position, 8, 10, 1.25f, 15);
+                GameHandler.ParticleSystem.MakeSmallExplosion(Position, 8, 10, 1.25f, 15);
             }
             if (Owner != null)
                 Owner.OwnedShellCount--;

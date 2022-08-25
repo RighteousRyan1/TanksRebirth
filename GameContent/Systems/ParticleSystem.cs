@@ -7,16 +7,22 @@ namespace TanksRebirth.GameContent
 {
     public class ParticleSystem
     {
-        public static int MAX_PARTICLES = 150000;
-        public static Particle[] CurrentParticles = new Particle[MAX_PARTICLES];
+        public int MaxParticles = 150000;
+        public Particle[] CurrentParticles;
 
-        public static void RenderParticles()
+        public ParticleSystem(int maxParticles)
+        {
+            MaxParticles = maxParticles;
+            CurrentParticles = new Particle[MaxParticles];
+        }
+
+        public void RenderParticles()
         {
 
             foreach (var particle in CurrentParticles)
                 particle?.Render();
         }
-        public static void UpdateParticles()
+        public void UpdateParticles()
         {
             foreach (var particle in CurrentParticles)
                 particle?.Update();
@@ -25,9 +31,9 @@ namespace TanksRebirth.GameContent
         /// <param name="position">The initial position of this particle.</param>
         /// <param name="texture">The texture used for the particle.</param>
         /// <returns>The particle created.</returns>
-        public static Particle MakeParticle(Vector3 position, Texture2D texture)
+        public Particle MakeParticle(Vector3 position, Texture2D texture)
         {
-            return new(position)
+            return new(position, this)
             {
                 //IsText = true,
                 //Text = "fuck",
@@ -35,22 +41,22 @@ namespace TanksRebirth.GameContent
                 Texture = texture
             };
         }
-        public static Particle MakeParticle(Vector3 position, string text)
+        public Particle MakeParticle(Vector3 position, string text)
         {
-            return new(position)
+            return new(position, this)
             {
                 IsText = true,
                 Text = text
             };
         }
 
-        public static void MakeSmallExplosion(Vector3 position, int numClouds, int numSparks, float shineScale, int movementFactor)
+        public void MakeSmallExplosion(Vector3 position, int numClouds, int numSparks, float shineScale, int movementFactor)
         {
             MakeSmokeCloud(position, movementFactor, numClouds);
             MakeSparkEmission(position, numSparks);
             MakeShineSpot(position, Color.Orange, shineScale);
         }
-        public static void MakeSparkEmission(Vector3 position, int numSparks)
+        public void MakeSparkEmission(Vector3 position, int numSparks)
                                                                                                         {
             for (int i = 0; i < numSparks; i++)
             {
@@ -83,7 +89,7 @@ namespace TanksRebirth.GameContent
                 };
             }
         }
-        public static void MakeSmokeCloud(Vector3 position, int timeMovingSideways, int numClouds)
+        public void MakeSmokeCloud(Vector3 position, int timeMovingSideways, int numClouds)
         {
             for (int i = 0; i < numClouds; i++)
             {
@@ -122,7 +128,7 @@ namespace TanksRebirth.GameContent
             }
         }
 
-        public static void MakeShineSpot(Vector3 position, Color color, float scale)
+        public void MakeShineSpot(Vector3 position, Color color, float scale)
         {
             var p = MakeParticle(position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_star"));
             p.Scale = new(scale);

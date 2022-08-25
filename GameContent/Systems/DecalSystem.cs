@@ -4,31 +4,37 @@ using System.Collections.Generic;
 
 namespace TanksRebirth.GameContent.Systems
 {
-    public sealed class DecalSystem
+    public class DecalSystem
     {
         private struct DecalInfo
         {
             public Texture2D texture;
-            public Rectangle destRect;
+            public Vector2 position;
             public Rectangle? srcRect;
             public Color color;
+            public float rotation;
 
-            public DecalInfo(Texture2D texture, Rectangle destRect, Rectangle? srcRect, Color color)
+            public DecalInfo(Texture2D texture, Vector2 position, Rectangle? srcRect, Color color, float rotation)
             {
                 this.texture = texture;
-                this.destRect = destRect;
+                this.position = position;
                 this.srcRect = srcRect;
                 this.color = color;
+                this.rotation = rotation;
             }
         }
 
-        private static Dictionary<BlendState, List<DecalInfo>> _decalsToAdd;
-        private static RenderTarget2D _target;
+        private Dictionary<BlendState, List<DecalInfo>> _decalsToAdd;
+        private RenderTarget2D _target;
 
-        private static SpriteBatch _spriteBatch;
-        private static GraphicsDevice _device;
+        private SpriteBatch _spriteBatch;
+        private GraphicsDevice _device;
 
-        public static void Initialize(SpriteBatch batch, GraphicsDevice device)
+        public BasicEffect Effect;
+
+        public DecalSystem(SpriteBatch batch, GraphicsDevice device) => Initialize(batch, device);
+
+        public void Initialize(SpriteBatch batch, GraphicsDevice device)
         {
             _device = device;
             _spriteBatch = batch;
@@ -36,12 +42,10 @@ namespace TanksRebirth.GameContent.Systems
             _decalsToAdd = new Dictionary<BlendState, List<DecalInfo>>();
         }
 
-        public static void UpdateRenderTarget()
+        public void UpdateRenderTarget()
         {
             if (_decalsToAdd is null || _decalsToAdd.Count == 0)
-            {
                 return;
-            }
 
             var oldtargets = _device.GetRenderTargets();
             _device.SetRenderTarget(_target);
@@ -51,12 +55,10 @@ namespace TanksRebirth.GameContent.Systems
                 var blendState = pair.Key;
                 var drawList = pair.Value;
 
-                _spriteBatch.Begin(SpriteSortMode.Deferred, blendState, SamplerState.LinearClamp, DepthStencilState.None, RasterizerState.CullCounterClockwise);
+                _spriteBatch.Begin(SpriteSortMode.Deferred, blendState, SamplerState.LinearClamp, DepthStencilState.None, RasterizerState.CullCounterClockwise, Effect);
 
                 foreach (var info in drawList)
-                {
-                    _spriteBatch.Draw(info.texture, info.destRect, info.srcRect, info.color);
-                }
+                    _spriteBatch.Draw(info.texture, info.position, info.srcRect, info.color);
 
                 _spriteBatch.End();
             }
@@ -66,7 +68,7 @@ namespace TanksRebirth.GameContent.Systems
             _decalsToAdd.Clear();
         } 
 
-        public static void Dispose()
+        public void Dispose()
         {
             if (_target != null)
             {
@@ -74,14 +76,21 @@ namespace TanksRebirth.GameContent.Systems
             }
         }
 
-        public static void AddDecal(Texture2D texture, Rectangle localDestRect, Rectangle? srcRect, Color color, BlendState blendState)
+        public void AddDecal(Texture2D texture, Vector2 localDestRect, Rectangle? srcRect, Color color, float rotation, BlendState blendState)
         {
             if (!_decalsToAdd.TryGetValue(blendState, out var list))
             {
                 _decalsToAdd[blendState] = list = new List<DecalInfo>();
             }
 
-            list.Add(new DecalInfo(texture, localDestRect, srcRect, color));
+            list.Add(new DecalInfo(texture, localDestRect, srcRect, color, rotation));
+        }
+
+        public void CleanRenderTarget(GraphicsDevice device)
+        {
+            device.SetRenderTarget(_target);
+            device.Clear(Color.Black);
+            device.SetRenderTarget(null);
         }
     }
 }

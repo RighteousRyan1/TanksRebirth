@@ -155,7 +155,7 @@ namespace TanksRebirth.GameContent
             if (CanStack)
             {
                 // fix this, but dont worry about it for now
-                var p = ParticleSystem.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>($"Assets/toy/cube_shadow_tex"));
+                var p = GameHandler.ParticleSystem.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>($"Assets/toy/cube_shadow_tex"));
                 p.Tag = "block_shadow_" + Id;
                 bool moveL = true;
                 bool moveD = true;
@@ -180,13 +180,13 @@ namespace TanksRebirth.GameContent
         }
         public void Remove()
         {
-            var index = Array.FindIndex(ParticleSystem.CurrentParticles, a => {
+            var index = Array.FindIndex(GameHandler.ParticleSystem.CurrentParticles, a => {
                 if (a == null)
                     return false;
                 return (string)a.Tag == "block_shadow_" + Id;
                 });
             if (index > -1)
-                ParticleSystem.CurrentParticles[index].Destroy();
+                GameHandler.ParticleSystem.CurrentParticles[index].Destroy();
 
             if (Body != null && Tank.CollisionsWorld.BodyList.Contains(Body))
                 Tank.CollisionsWorld.Remove(Body);
@@ -202,7 +202,7 @@ namespace TanksRebirth.GameContent
                 {
                     var tex = GameResources.GetGameResource<Texture2D>(GameHandler.GameRand.Next(0, 2) == 0 ? "Assets/textures/misc/tank_rock" : "Assets/textures/misc/tank_rock_2");
 
-                    var part = ParticleSystem.MakeParticle(Position3D, tex);
+                    var part = GameHandler.ParticleSystem.MakeParticle(Position3D, tex);
                     // var part = ParticleSystem.MakeParticle(Position3D, "wtf");
 
                     part.isAddative = false;

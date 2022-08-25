@@ -59,6 +59,8 @@ namespace TanksRebirth.GameContent
 
         private static bool _wasInMission;
 
+        public static ParticleSystem ParticleSystem { get; } = new(15000);
+
         internal static void MapEvents()
         {
             GameProperties.OnMissionEnd += DoEndMissionWorkload;
@@ -530,8 +532,8 @@ namespace TanksRebirth.GameContent
             foreach (var mark in TankDeathMark.deathMarks)
                 mark?.Render();
 
-            foreach (var print in TankFootprint.footprints)
-                print?.Render();
+            //foreach (var print in TankFootprint.footprints)
+                //print?.Render();
 
             foreach (var crate in Crate.crates)
                 crate?.Render();
@@ -1063,7 +1065,7 @@ namespace TanksRebirth.GameContent
 
             if (DoTrail)
             {
-                var p = ParticleSystem.MakeParticle(new Vector3(GameUtils.MousePosition.X, GameUtils.MousePosition.Y, 0), TankGame.WhitePixel);
+                var p = GameHandler.ParticleSystem.MakeParticle(new Vector3(GameUtils.MousePosition.X, GameUtils.MousePosition.Y, 0), TankGame.WhitePixel);
                 p.Is2d = true;
                 var dir = _oldMouse.DirectionOf(GameUtils.MousePosition).ToResolution();
                 p.Rotation2D = dir.ToRotation();

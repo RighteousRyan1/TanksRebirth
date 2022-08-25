@@ -59,6 +59,7 @@ namespace TanksRebirth.GameContent
         public Vector3 Scale;
 
         public float LightPower;
+        public ParticleSystem ParticleSystem { get; }
 
         /* TODO:
          * Model alpha must be set!
@@ -66,14 +67,15 @@ namespace TanksRebirth.GameContent
          * billboard from 'position' to the camera.
          */
 
-        internal Particle(Vector3 position)
+        internal Particle(Vector3 position, ParticleSystem system)
         {
             Position = position;
-            int index = Array.IndexOf(ParticleSystem.CurrentParticles, ParticleSystem.CurrentParticles.First(particle => particle == null));
+            ParticleSystem = system;
+            int index = Array.IndexOf(GameHandler.ParticleSystem.CurrentParticles, GameHandler.ParticleSystem.CurrentParticles.First(particle => particle == null));
 
             Id = index;
 
-            ParticleSystem.CurrentParticles[index] = this;
+            GameHandler.ParticleSystem.CurrentParticles[index] = this;
         }
 
         public void Update()
@@ -130,7 +132,7 @@ namespace TanksRebirth.GameContent
         public void Destroy()
         {
             UniqueBehavior = null;
-            ParticleSystem.CurrentParticles[Id] = null;
+            GameHandler.ParticleSystem.CurrentParticles[Id] = null;
         }
     }
 }

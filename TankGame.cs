@@ -405,7 +405,12 @@ namespace TanksRebirth
                 GameUI.Initialize();
                 MainMenu.InitializeUIGraphics();
 
-                DecalSystem.Initialize(SpriteRenderer, GraphicsDevice);
+                /*TankFootprint.DecalHandler.Effect = new(GraphicsDevice)
+                {
+                    World = Matrix.CreateRotationX(MathHelper.PiOver2) * Matrix.CreateTranslation(0, 0.05f, 0),
+                    View = GameView,
+                    Projection = GameProjection,
+                };*/
 
                 if (ModLoader.LoadingMods) {
                     MainMenu.MenuState = MainMenu.State.LoadingMods;
@@ -733,17 +738,19 @@ namespace TanksRebirth
 
         public void FixedUpdate(GameTime gameTime)
         {
-            /* TODO: this
-            if (Input.KeyJustPressed(Keys.Up))
+            // TODO: this
+            /*if (Input.KeyJustPressed(Keys.Up))
             {
-                if (GameHandler.LoadedCampaign != null)
+                if (GameProperties.LoadedCampaign != null)
                 {
                     using var writer = new BinaryWriter(File.Open(Path.Combine(SaveDirectory, "debug_campaign.camp"), FileMode.OpenOrCreate));
 
                     // eventual .campaign format
-                    for (int i = 0; i < GameHandler.LoadedCampaign.CachedMissions.Length; i++)
+                    for (int i = 0; i < GameProperties.LoadedCampaign.CachedMissions.Length; i++)
                     {
-                        var mission = GameHandler.LoadedCampaign.CachedMissions[i];
+                        var mission = GameProperties.LoadedCampaign.CachedMissions[i];
+
+                        Mission.Save();
                     }
                 }
             }*/
@@ -853,7 +860,7 @@ namespace TanksRebirth
 
                 GraphicsDevice.Clear(ClearColor);
 
-                DecalSystem.UpdateRenderTarget();
+                // TankFootprint.DecalHandler.UpdateRenderTarget();
 
 
                 SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied/*, transformMatrix: Matrix2D*/, rasterizerState: DefaultRasterizer);

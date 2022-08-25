@@ -1799,7 +1799,7 @@ namespace TanksRebirth.GameContent
                         TankGame.GameData.ExpLevel += gain;
 
 
-                        var p = ParticleSystem.MakeParticle(Position3D + new Vector3(0, 30, 0), $"+{gain * 100:0.00} XP");
+                        var p = GameHandler.ParticleSystem.MakeParticle(Position3D + new Vector3(0, 30, 0), $"+{gain * 100:0.00} XP");
 
                         p.Scale = new(0.5f);
                         p.Roll = MathHelper.Pi;
