@@ -52,6 +52,9 @@ namespace TanksRebirth.GameContent
         public delegate void PostRenderDelegate(Block block);
         public static event PostRenderDelegate OnPostRender;
 
+        public delegate void InitializeDelegate(Block block);
+        public static event InitializeDelegate OnInitialize;
+
         public sbyte TpLink = -1;
         public int[] _tankCooldowns = new int[GameHandler.AllTanks.Length];
 
@@ -62,7 +65,7 @@ namespace TanksRebirth.GameContent
         public Vector2 Position;
         public Vector3 Position3D => Position.ExpandZ();
 
-        public Model model;
+        public Model Model;
 
         public Matrix World;
         public Matrix View;
@@ -72,7 +75,7 @@ namespace TanksRebirth.GameContent
 
         public Rectangle Hitbox;
 
-        public Texture2D meshTexture;
+        public Texture2D _texture;
 
         public sbyte Stack;
 
@@ -90,58 +93,64 @@ namespace TanksRebirth.GameContent
         public int Id;
 
         private Vector3 _offset;
-
         public bool IsDestructible { get; set; }
-        public bool IsSolid { get; } = true;
+        public bool IsSolid { get; set; } = true;
+        public bool IsCollidable { get; set; } = true;
+        public bool AllowShotPathBounce { get; set; } = true;
+        /// <summary>Set to negative to increase the amount. Set to 0 to make nothing happen.</summary>
+        public int PathBounceCount { get; set; } = 1;
 
         public bool CanStack { get; set; } = true;
 
-        private bool IsAlternateModel => Stack == 3 || Stack == 6;
+        public bool IsAlternateModel => Stack == 3 || Stack == 6;
+
+        public void SwapTexture(Texture2D texture) => _texture = texture;
 
         public Block(int type, int height, Vector2 position)
         {
             Stack = (sbyte)MathHelper.Clamp(height, 0, 7);
-            
-            switch (type)
-            {
+            Type = type;
+
+            switch (type) {
                 case BlockID.Wood:
-                    meshTexture = MapRenderer.Assets["block.1"];
-                    Body = Tank.CollisionsWorld.CreateRectangle(FULL_BLOCK_SIZE, FULL_BLOCK_SIZE, 1f, position, 0f, BodyType.Static);
-                    model = IsAlternateModel ? GameResources.GetGameResource<Model>("Assets/toy/cube_stack_alt") : GameResources.GetGameResource<Model>("Assets/toy/cube_stack"); ;
+                    _texture = MapRenderer.Assets["block.1"];
+                    IsSolid = true;
+                    Model = IsAlternateModel ? GameResources.GetGameResource<Model>("Assets/toy/cube_stack_alt") : GameResources.GetGameResource<Model>("Assets/toy/cube_stack"); ;
                     break;
                 case BlockID.Cork:
                     IsDestructible = true;
-                    Body = Tank.CollisionsWorld.CreateRectangle(FULL_BLOCK_SIZE, FULL_BLOCK_SIZE, 1f, position, 0f, BodyType.Static);
-                    meshTexture = MapRenderer.Assets["block.2"];
-                    model = IsAlternateModel ? GameResources.GetGameResource<Model>("Assets/toy/cube_stack_alt") : GameResources.GetGameResource<Model>("Assets/toy/cube_stack"); ;
+                    _texture = MapRenderer.Assets["block.2"];
+                    IsSolid = true;
+                    Model = IsAlternateModel ? GameResources.GetGameResource<Model>("Assets/toy/cube_stack_alt") : GameResources.GetGameResource<Model>("Assets/toy/cube_stack"); ;
                     break;
                 case BlockID.Hole:
-                    model = GameResources.GetGameResource<Model>("Assets/check");
+                    Model = GameResources.GetGameResource<Model>("Assets/check");
                     IsSolid = false;
-                    Body = Tank.CollisionsWorld.CreateRectangle(FULL_BLOCK_SIZE, FULL_BLOCK_SIZE, 1f, position, 0f, BodyType.Static);
-                    meshTexture = MapRenderer.Assets["block_harf.1"];
+                    _texture = MapRenderer.Assets["block_harf.1"];
                     CanStack = false;
                     break;
                 case BlockID.Teleporter:
-                    model = GameResources.GetGameResource<Model>("Assets/teleporter");
+                    Model = GameResources.GetGameResource<Model>("Assets/teleporter");
                     IsSolid = false;
-                    meshTexture = MapRenderer.Assets["teleporter"];
+                    IsCollidable = false;
+                    _texture = MapRenderer.Assets["teleporter"];
                     CanStack = false;
                     break;
             }
-
-            Type = type;
 
             if (Body != null)
                 Position = Body.Position;
             else
                 Position = position;
 
-            int index = Array.IndexOf(AllBlocks, AllBlocks.First(cube => cube is null));
+            OnInitialize?.Invoke(this);
 
-            Id = index;
+            if (IsCollidable)
+                Body = Tank.CollisionsWorld.CreateRectangle(FULL_BLOCK_SIZE, FULL_BLOCK_SIZE, 1f, Position, 0f, BodyType.Static);
 
-            AllBlocks[index] = this;
+            Id = Array.FindIndex(AllBlocks, block => block is null);
+
+            AllBlocks[Id] = this;
 
             if (CanStack)
             {
@@ -171,9 +180,6 @@ namespace TanksRebirth.GameContent
         }
         public void Remove()
         {
-            if (Body != null)
-                Tank.CollisionsWorld.Remove(Body);
-
             var index = Array.FindIndex(ParticleSystem.CurrentParticles, a => {
                 if (a == null)
                     return false;
@@ -182,6 +188,8 @@ namespace TanksRebirth.GameContent
             if (index > -1)
                 ParticleSystem.CurrentParticles[index].Destroy();
 
+            if (Body != null && Tank.CollisionsWorld.BodyList.Contains(Body))
+                Tank.CollisionsWorld.Remove(Body);
             AllBlocks[Id] = null;
         }
         public void Destroy()
@@ -232,7 +240,7 @@ namespace TanksRebirth.GameContent
 
                 for (int i = 0; i < /*(Lighting.AccurateShadows ? 2 : 1)*/ 1; i++) // shadows later if i can fix it
                 {
-                    foreach (var mesh in model.Meshes)
+                    foreach (var mesh in Model.Meshes)
                     {
                         foreach (BasicEffect effect in mesh.Effects)
                         {
@@ -241,7 +249,7 @@ namespace TanksRebirth.GameContent
                             effect.Projection = TankGame.GameProjection;
 
                             effect.TextureEnabled = true;
-                            effect.Texture = meshTexture;
+                            effect.Texture = _texture;
 
                             effect.SetDefaultGameLighting_IngameEntities(10f);
 
@@ -256,7 +264,7 @@ namespace TanksRebirth.GameContent
             }
             else
             {
-                foreach (var mesh in model.Meshes)
+                foreach (var mesh in Model.Meshes)
                 {
                     foreach (BasicEffect effect in mesh.Effects)
                     {
@@ -271,7 +279,7 @@ namespace TanksRebirth.GameContent
                         if (mesh.Name == "Teleporter_Button")
                         {
                             World = Matrix.CreateRotationX(-MathHelper.PiOver2) * Matrix.CreateScale(10f) * Matrix.CreateTranslation(Position3D);
-                            effect.Texture = meshTexture;
+                            effect.Texture = _texture;
                         }
                         else if (mesh.Name == "Teleporter_Shadow")
                         {
@@ -364,13 +372,6 @@ namespace TanksRebirth.GameContent
             }
             else
                 _offset.Y -= 0.1f;
-        }
-        public enum CollisionDirection
-        {
-            Up,
-            Down,
-            Left,
-            Right
         }
     }
 }

@@ -38,4 +38,11 @@
         F      = 13,
         FMinus = 14
     }
+    public enum CollisionDirection
+    {
+        Up,
+        Down,
+        Left,
+        Right
+    }
 }

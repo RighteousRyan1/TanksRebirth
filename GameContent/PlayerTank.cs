@@ -482,7 +482,7 @@ namespace TanksRebirth.GameContent
             pathDir.Y *= -1;
             pathDir *= Properties.ShellSpeed;
 
-            var bounces = 0;
+            var pathRicochetCount = 0;
 
 
             for (int i = 0; i < MAX_PATH_UNITS; i++)
@@ -491,37 +491,43 @@ namespace TanksRebirth.GameContent
 
                 if (pathPos.X < MapRenderer.MIN_X || pathPos.X > MapRenderer.MAX_X)
                 {
-                    bounces++;
+                    pathRicochetCount++;
                     pathDir.X *= -1;
                 }
                 if (pathPos.Y < MapRenderer.MIN_Y || pathPos.Y > MapRenderer.MAX_Y)
                 {
-                    bounces++;
+                    pathRicochetCount++;
                     pathDir.Y *= -1;
                 }
 
                 var pathHitbox = new Rectangle((int)pathPos.X - 3, (int)pathPos.Y - 3, 6, 6);
 
                 // Why is velocity passed by reference here lol
-                Collision.HandleCollisionSimple_ForBlocks(pathHitbox, pathDir, ref dummyPos, out var dir, out var type, out bool corner, false, (c) => c.IsSolid);
+                Collision.HandleCollisionSimple_ForBlocks(pathHitbox, pathDir, ref dummyPos, out var dir, out var block, out bool corner, false, (c) => c.IsSolid);
 
                 if (corner)
                     return;
-                switch (dir)
+                if (block != null)
                 {
-                    case CollisionDirection.Up:
-                    case CollisionDirection.Down:
-                        pathDir.Y *= -1;
-                        bounces++;
-                        break;
-                    case CollisionDirection.Left:
-                    case CollisionDirection.Right:
-                        pathDir.X *= -1;
-                        bounces++;
-                        break;
+                    if (block.AllowShotPathBounce)
+                    {
+                        switch (dir)
+                        {
+                            case CollisionDirection.Up:
+                            case CollisionDirection.Down:
+                                pathDir.Y *= -1;
+                                pathRicochetCount += block.PathBounceCount;
+                                break;
+                            case CollisionDirection.Left:
+                            case CollisionDirection.Right:
+                                pathDir.X *= -1;
+                                pathRicochetCount += block.PathBounceCount;
+                                break;
+                        }
+                    }
                 }
 
-                if (bounces > Properties.RicochetCount)
+                if (pathRicochetCount > Properties.RicochetCount)
                     return;
 
                 if (GameHandler.AllTanks.Any(tnk => tnk is not null && tnk.CollisionCircle.Intersects(new Internals.Common.Framework.Circle() { Center = pathPos, Radius = 4 })))

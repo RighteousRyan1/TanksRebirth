@@ -18,13 +18,17 @@ namespace TanksRebirth.GameContent
 {
     public class Shell
     {
+        public delegate void BlockRicochetDelegate(ref Block block, Shell shell);
+        /// <summary>Only called when it bounces from wall-bounce code.</summary>
+        public static event BlockRicochetDelegate OnRicochetWithBlock;
         public delegate void RicochetDelegate(Shell shell);
+        /// <summary>Only called when it bounces from wall-bounce code.</summary>
         public static event RicochetDelegate OnRicochet;
         public delegate void PostUpdateDelegate(Shell shell);
         public static event PostUpdateDelegate OnPostUpdate;
         public delegate void PostRenderDelegate(Shell shell);
         public static event PostRenderDelegate OnPostRender;
-        public delegate void DestroyDelegate(Shell shell);
+        public delegate void DestroyDelegate(Shell shell, DestructionContext context);
         public static event DestroyDelegate OnDestroy;
 
         public enum DestructionContext
@@ -191,16 +195,19 @@ namespace TanksRebirth.GameContent
             if (!GameProperties.InMission)
                 return;
 
-            if (Position2D.X < MapRenderer.MIN_X || Position2D.X > MapRenderer.MAX_X)
+            if (Position2D.X < MapRenderer.MIN_X || Position2D.X > MapRenderer.MAX_X) {
+                OnRicochet?.Invoke(this);
                 Ricochet(true);
-            if (Position2D.Y < MapRenderer.MIN_Y || Position2D.Y > MapRenderer.MAX_Y)
+            } if (Position2D.Y < MapRenderer.MIN_Y || Position2D.Y > MapRenderer.MAX_Y) {
+                OnRicochet?.Invoke(this);
                 Ricochet(false);
+            }
 
             var dummy = Vector2.Zero;
 
             Collision.HandleCollisionSimple_ForBlocks(Hitbox, Velocity2D, ref dummy, out var dir, out var block, out bool corner, false, (c) => c.IsSolid);
 
-            if (LifeTime <= 5 && Block.AllBlocks.Any(cu => cu is not null && cu.Hitbox.Intersects(Hitbox) && cu.IsSolid))
+            if (LifeTime <= 5 && (dir != CollisionDirection.None || corner))
                 Destroy(DestructionContext.WithObstacle);
             if (corner)
                 Destroy(DestructionContext.WithObstacle);
@@ -208,10 +215,12 @@ namespace TanksRebirth.GameContent
             {
                 case CollisionDirection.Up:
                 case CollisionDirection.Down:
+                    OnRicochetWithBlock?.Invoke(ref block, this);
                     Ricochet(false);
                     break;
                 case CollisionDirection.Left:
                 case CollisionDirection.Right:
+                    OnRicochetWithBlock?.Invoke(ref block, this);
                     Ricochet(true);
                     break;
             }
@@ -501,9 +510,7 @@ namespace TanksRebirth.GameContent
             ParticleSystem.MakeShineSpot(Position, Color.Orange, 0.8f);
             Ricochets++;
             RicochetsRemaining--;
-            OnRicochet?.Invoke(this);
         }
-
         public void CheckCollisions()
         {
             foreach (var tank in GameHandler.AllTanks)
@@ -562,7 +569,6 @@ namespace TanksRebirth.GameContent
         /// <param name="playSound">Whether or not to play the bullet destruction sound.</param>
         public void Destroy(DestructionContext context, bool playSound = true)
         {
-
             _shootSound?.Instance?.Stop(true);
             // ParticleSystem.MakeSparkEmission(Position, 10);
             if (context != DestructionContext.WithHostileTank && context != DestructionContext.WithMine && context != DestructionContext.WithExplosion) {
@@ -588,7 +594,7 @@ namespace TanksRebirth.GameContent
                     if (context == DestructionContext.WithHostileTank || context == DestructionContext.WithMine || context == DestructionContext.WithShell)
                         PlayerTank.PlayerStatistics.ShellHitsThisCampaign++;
             }
-            OnDestroy?.Invoke(this);
+            OnDestroy?.Invoke(this, context);
             Remove();
         }
 

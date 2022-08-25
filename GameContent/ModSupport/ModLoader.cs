@@ -120,18 +120,24 @@ namespace TanksRebirth.GameContent.ModSupport
 
                                     _sandboxingActions.Add(() =>
                                     {
-                                        Status = LoadStatus.Sandboxing;
-                                        var types = assembly.GetTypes();
-                                        foreach (var type in types)
-                                        {
-                                            if (type.Name == "MainRun")
+                                        try {
+                                            Status = LoadStatus.Sandboxing;
+                                            var types = assembly.GetTypes();
+                                            foreach (var type in types)
                                             {
-                                                var methods = type.GetMethods(BindingFlags.Static | BindingFlags.Public);
-                                                foreach (var method in methods)
-                                                    if (method.Name != "Main")
-                                                        method.Invoke(null, null);
+                                                if (type.Name == "MainRun")
+                                                {
+                                                    var methods = type.GetMethods(BindingFlags.Static | BindingFlags.Public);
+                                                    foreach (var method in methods)
+                                                        if (method.Name != "Main")
+                                                            method.Invoke(null, null);
+                                                }
+                                                //Thread.Sleep(250);
                                             }
-                                            //Thread.Sleep(250);
+                                        } catch (Exception e)
+                                        {
+                                            Error = e.Message;
+                                            return;
                                         }
                                         // ActionsComplete++;
                                     });
@@ -149,6 +155,8 @@ namespace TanksRebirth.GameContent.ModSupport
                 while (Error != string.Empty)
                     await Task.Delay(10).ConfigureAwait(false);
                 _sandboxingActions.ForEach(x => x.Invoke());
+                while (Error != string.Empty)
+                    await Task.Delay(10).ConfigureAwait(false);
                 LoadingMods = false;
                 Status = LoadStatus.Complete;
                 ChatSystem.SendMessage(_firstLoad ? $"Loaded {_loadedAssemblies.Count} mod(s)." : $"Reloaded {_loadedAssemblies.Count} mod(s).", Color.Lime);

@@ -1868,20 +1868,17 @@ namespace TanksRebirth.GameContent
             int tpidx = -1;
             Vector2 tpos = Vector2.Zero;
 
-            for (int i = 0; i < MAX_PATH_UNITS; i++)
-            {
+            for (int i = 0; i < MAX_PATH_UNITS; i++) {
                 var dummyPos = Vector2.Zero;
 
                 uninterruptedIterations++;
 
-                if (pathPos.X < MapRenderer.MIN_X || pathPos.X > MapRenderer.MAX_X)
-                {
+                if (pathPos.X < MapRenderer.MIN_X || pathPos.X > MapRenderer.MAX_X) {
                     pathDir.X *= -1;
                     pathRicochetCount++;
                     resetIterations();
                 }
-                if (pathPos.Y < MapRenderer.MIN_Y || pathPos.Y > MapRenderer.MAX_Y)
-                {
+                else if (pathPos.Y < MapRenderer.MIN_Y || pathPos.Y > MapRenderer.MAX_Y) {
                     pathDir.Y *= -1;
                     pathRicochetCount++;
                     resetIterations();
@@ -1894,16 +1891,12 @@ namespace TanksRebirth.GameContent
                 if (corner)
                     return tanks;
 
-                if (block is not null)
-                {
-                    if (block.Type == BlockID.Teleporter)
-                    {
-                        if (!goneThroughTeleporter)
-                        {
+                if (block is not null) {
+                    if (block.Type == BlockID.Teleporter) {
+                        if (!goneThroughTeleporter) {
                             var otherTp = Block.AllBlocks.FirstOrDefault(bl => bl != null && bl != block && bl.TpLink == block.TpLink);
 
-                            if (Array.IndexOf(Block.AllBlocks, otherTp) > -1)
-                            {
+                            if (Array.IndexOf(Block.AllBlocks, otherTp) > -1) {
                                 //pathPos = otherTp.Position;
                                 tpos = otherTp.Position;
                                 goneThroughTeleporter = true;
@@ -1911,30 +1904,28 @@ namespace TanksRebirth.GameContent
                             }
                         }
                     }
-                    else
-                    {
-                        switch (dir)
-                        {
-                            case CollisionDirection.Up:
-                            case CollisionDirection.Down:
-                                pathDir.Y *= -1;
-                                pathRicochetCount++;
-                                resetIterations();
-                                break;
-                            case CollisionDirection.Left:
-                            case CollisionDirection.Right:
-                                pathDir.X *= -1;
-                                pathRicochetCount++;
-                                resetIterations();
-                                break;
+                    else {
+                        if (block.AllowShotPathBounce) {
+                            switch (dir) {
+                                case CollisionDirection.Up:
+                                case CollisionDirection.Down:
+                                    pathDir.Y *= -1;
+                                    pathRicochetCount += block.PathBounceCount;
+                                    resetIterations();
+                                    break;
+                                case CollisionDirection.Left:
+                                case CollisionDirection.Right:
+                                    pathDir.X *= -1;
+                                    pathRicochetCount += block.PathBounceCount;
+                                    resetIterations();
+                                    break;
+                            }
                         }
                     }
                 }
 
                 if (goneThroughTeleporter && i == tpidx)
-                {
                     pathPos = tpos;
-                }
 
                 void resetIterations() { if (doBounceReset) uninterruptedIterations = 0; }
 

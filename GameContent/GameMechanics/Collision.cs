@@ -259,11 +259,11 @@ namespace TanksRebirth.GameContent.GameMechanics
 
                 direction = CollisionDirection.Right;
             }
-            else if (collisionInfo.Normal == Vector2.Zero)
+            /*else if (collisionInfo.Normal == Vector2.Zero)
             {
                 direction = CollisionDirection.Other;
-                
-            }
+               
+            }*/ // huh?
         }
 
         public static bool DoRaycast(Vector2 start, Vector2 destination, float forgiveness, bool draw = false)
