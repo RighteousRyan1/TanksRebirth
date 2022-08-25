@@ -405,7 +405,7 @@ namespace TanksRebirth
                 GameUI.Initialize();
                 MainMenu.InitializeUIGraphics();
 
-                // DecalSystem.Initialize(SpriteRenderer, GraphicsDevice);
+                DecalSystem.Initialize(SpriteRenderer, GraphicsDevice);
 
                 if (ModLoader.LoadingMods) {
                     MainMenu.MenuState = MainMenu.State.LoadingMods;
