@@ -663,38 +663,33 @@ namespace TanksRebirth.GameContent.UI
             foreach (var elem in campaignNames)
                 elem?.Remove();
             // get all the campaign folders from the SaveDirectory + Campaigns
-            Directory.CreateDirectory(Path.Combine(TankGame.SaveDirectory, "Campaigns"));
-            var campaignFolders = IOUtils.GetSubFolders(Path.Combine(TankGame.SaveDirectory, "Campaigns"), true);
-            var campaignPaths = IOUtils.GetSubFolders(Path.Combine(TankGame.SaveDirectory, "Campaigns"), false);
-
+            var path = Path.Combine(TankGame.SaveDirectory, "Campaigns");
+            Directory.CreateDirectory(path);
             // add a new UIElement for each campaign folder
             int totalOffset = 0;
-            
-            for (int i = 0; i < campaignFolders.Length; i++)
-            {
 
+            var campaignFiles = Directory.GetFiles(path).Where(file => file.EndsWith(".campaign")).ToArray()    ;
+            
+            for (int i = 0; i < campaignFiles.Length; i++)
+            {
                 int offset = i * 60;
                 totalOffset += offset;
-                var name = campaignFolders[i];
-                var fullPath = campaignPaths[i];
-
-                // get all mission files from the campaign folder
-                var missions = Directory.GetFiles(fullPath).Where(str => str.EndsWith(".mission")).ToArray();
+                var name = campaignFiles[i];
 
                 int numTanks = 0;
 
                 try {
-                    var campaign = Campaign.LoadFromFolder(name, false);
+                    var campaign = Campaign.Load(name);
 
-                    foreach (var path in missions)
+                    var missions = campaign.CachedMissions;
+
+                    foreach (var mission in missions)
                     {
-                        var mission = Path.GetFileName(path);
                         // load the mission file, then count each tank, then add that to the total
-                        var loaded = Mission.Load(mission, name);
-                        numTanks += loaded.Tanks.Count(x => !x.IsPlayer);
+                        numTanks += mission.Tanks.Count(x => !x.IsPlayer);
                     }
 
-                    var elem = new UITextButton(name, TankGame.TextFont, Color.White, 0.8f)
+                    var elem = new UITextButton(campaign.MetaData.Name, TankGame.TextFont, Color.White, 0.8f)
                     {
                         IsVisible = true,
                         Tooltip = missions.Length + " missions" +
@@ -713,7 +708,7 @@ namespace TanksRebirth.GameContent.UI
                     //elem.
                     elem.OnLeftClick += (el) =>
                     {
-                        var camp = Campaign.LoadFromFolder(elem.Text, false);
+                        var camp = Campaign.Load(Path.Combine(TankGame.SaveDirectory, "Campaigns", elem.Text + ".campaign"));
 
                         // check if the CampaignCheckpoint number is less than the number of missions in the array
                         if (MissionCheckpoint >= camp.CachedMissions.Length)

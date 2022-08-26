@@ -503,7 +503,7 @@ namespace TanksRebirth.GameContent.Systems
                     var isPlayer = reader.ReadBoolean();
                     var x = reader.ReadSingle();
                     var y = reader.ReadSingle();
-                    var rotation = -reader.ReadSingle(); // i genuinely hate having to make this negative :(
+                    var rotation = reader.ReadSingle(); // i genuinely hate having to make this negative :(
                     var tier = reader.ReadByte();
                     var pType = reader.ReadByte();
                     var team = reader.ReadByte();

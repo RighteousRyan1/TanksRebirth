@@ -322,7 +322,7 @@ namespace TanksRebirth.GameContent.Systems
         {
             Campaign campaign = new();
 
-            using var reader = new BinaryReader(File.Open(Path.Combine(TankGame.SaveDirectory, fileName) + ".campaign", FileMode.Open, FileAccess.Read));
+            using var reader = new BinaryReader(File.Open(Path.Combine(TankGame.SaveDirectory, fileName), FileMode.Open, FileAccess.Read));
 
             var header = reader.ReadBytes(4);
             if (!header.SequenceEqual(TankGame.LevelFileHeader))
