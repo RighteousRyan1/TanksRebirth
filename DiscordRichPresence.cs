@@ -110,7 +110,7 @@ namespace TanksRebirth
                     // get the names of each difficulty mode active, then join them together
                     if (GameProperties.ShouldMissionsProgress)
                     {
-                        SetDetails($"Playing campaign '{GameProperties.LoadedCampaign.Properties.Name}' on mission '{GameProperties.LoadedCampaign.CurrentMission.Name}'" +
+                        SetDetails($"Playing campaign '{GameProperties.LoadedCampaign.MetaData.Name}' on mission '{GameProperties.LoadedCampaign.CurrentMission.Name}'" +
                             $"\n{tnkCnt}");
                     }
                     else

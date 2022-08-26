@@ -163,10 +163,10 @@ namespace TanksRebirth.Net
             NetDataWriter message = new();
             message.Put(PacketType.SendCampaign);
 
-            message.Put(campaign.Properties.Name);
-            message.Put(campaign.Properties.StartingLives);
-            message.Put(campaign.Properties.BackgroundColor);
-            message.Put(campaign.Properties.MissionStripColor);
+            message.Put(campaign.MetaData.Name);
+            message.Put(campaign.MetaData.StartingLives);
+            message.Put(campaign.MetaData.BackgroundColor);
+            message.Put(campaign.MetaData.MissionStripColor);
 
             message.Put(campaign.CachedMissions.Length);
 

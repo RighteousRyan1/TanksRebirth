@@ -699,13 +699,13 @@ namespace TanksRebirth.GameContent.UI
                         IsVisible = true,
                         Tooltip = missions.Length + " missions" +
                         $"\n{numTanks} tanks total" +
-                        $"\n\nName: {campaign.Properties.Name}" +
-                        $"\nDescription: {campaign.Properties.Description}" +
-                        $"\nVersion: {campaign.Properties.Version}" +
-                        $"\nStarting Lives: {campaign.Properties.StartingLives}" +
-                        $"\nBonus Life Count: {campaign.Properties.ExtraLivesMissions.Length}" +
+                        $"\n\nName: {campaign.MetaData.Name}" +
+                        $"\nDescription: {campaign.MetaData.Description}" +
+                        $"\nVersion: {campaign.MetaData.Version}" +
+                        $"\nStarting Lives: {campaign.MetaData.StartingLives}" +
+                        $"\nBonus Life Count: {campaign.MetaData.ExtraLivesMissions.Length}" +
                         // display all tags in a string
-                        $"\nTags: {string.Join(", ", campaign.Properties.Tags)}" +
+                        $"\nTags: {string.Join(", ", campaign.MetaData.Tags)}" +
                         $"\n\nRight click to DELETE ME."
                     };
                     elem.SetDimensions(() => new Vector2(700, 100 + offset).ToResolution(), () => new Vector2(300, 40).ToResolution());
@@ -741,9 +741,9 @@ namespace TanksRebirth.GameContent.UI
                             Client.RequestStartGame(true);
                         }
 
-                        PlayerTank.StartingLives = camp.Properties.StartingLives;
-                        IntermissionSystem.StripColor = camp.Properties.MissionStripColor;
-                        IntermissionSystem.BackgroundColor = camp.Properties.BackgroundColor;
+                        PlayerTank.StartingLives = camp.MetaData.StartingLives;
+                        IntermissionSystem.StripColor = camp.MetaData.MissionStripColor;
+                        IntermissionSystem.BackgroundColor = camp.MetaData.BackgroundColor;
 
 
                         

@@ -388,7 +388,7 @@ namespace TanksRebirth.GameContent
             {
                 if (GameProperties.LoadedCampaign.CurrentMissionId <= 0)
                 {
-                    CurrentSpeedrun = new(GameProperties.LoadedCampaign.Properties.Name);
+                    CurrentSpeedrun = new(GameProperties.LoadedCampaign.MetaData.Name);
                     foreach (var mission in GameProperties.LoadedCampaign.CachedMissions)
                         CurrentSpeedrun.MissionTimes.Add(mission.Name, (TimeSpan.Zero, TimeSpan.Zero));
                     CurrentSpeedrun.Timer.Start();
@@ -449,7 +449,7 @@ namespace TanksRebirth.GameContent
                 GameProperties.InMission = false;
                 if (!GameProperties.InMission && _wasInMission)
                 {
-                    bool isExtraLifeMission = GameProperties.LoadedCampaign.Properties.ExtraLivesMissions.Contains(GameProperties.LoadedCampaign.CurrentMissionId + 1);
+                    bool isExtraLifeMission = GameProperties.LoadedCampaign.MetaData.ExtraLivesMissions.Contains(GameProperties.LoadedCampaign.CurrentMissionId + 1);
                     if (victory)
                     {
                         int restartTime = 600;
@@ -459,7 +459,7 @@ namespace TanksRebirth.GameContent
                         var cxt = MissionEndContext.Win;
 
                         if (GameProperties.LoadedCampaign.CurrentMissionId >= GameProperties.LoadedCampaign.CachedMissions.Length - 1)
-                            cxt = GameProperties.LoadedCampaign.Properties.HasMajorVictory ? MissionEndContext.CampaignCompleteMajor : MissionEndContext.CampaignCompleteMinor;
+                            cxt = GameProperties.LoadedCampaign.MetaData.HasMajorVictory ? MissionEndContext.CampaignCompleteMajor : MissionEndContext.CampaignCompleteMinor;
 
                         GameProperties.MissionEndEvent_Invoke(restartTime, cxt, isExtraLifeMission);
                     }
@@ -614,7 +614,7 @@ namespace TanksRebirth.GameContent
                 $"\n\nRender Time: {TankGame.RenderTime.TotalMilliseconds:0.00}ms" +
                 $"\nRender FPS: {TankGame.RenderFPS}", new(10, 500));
 
-            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"Current Mission: {GameProperties.LoadedCampaign.CurrentMission.Name}\nCurrent Campaign: {GameProperties.LoadedCampaign.Properties.Name}", GameUtils.WindowBottomLeft - new Vector2(-4, 40), 3, centered: false);
+            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"Current Mission: {GameProperties.LoadedCampaign.CurrentMission.Name}\nCurrent Campaign: {GameProperties.LoadedCampaign.MetaData.Name}", GameUtils.WindowBottomLeft - new Vector2(-4, 40), 3, centered: false);
             if (!MainMenu.Active && !LevelEditor.Active)
             {
                 if (IntermissionSystem.IsAwaitingNewMission)

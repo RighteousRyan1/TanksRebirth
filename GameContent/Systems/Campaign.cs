@@ -35,7 +35,7 @@ namespace TanksRebirth.GameContent.Systems
         public Mission LoadedMission { get; private set; }
         public int CurrentMissionId { get; private set; }
 
-        public CampaignProperties Properties;
+        public CampaignMetaData MetaData;
 
         public void LoadMission(Mission mission)
         {
@@ -262,7 +262,7 @@ namespace TanksRebirth.GameContent.Systems
                 return default;
             }
 
-            CampaignProperties properties = CampaignProperties.Get(path, "_properties.json");
+            CampaignMetaData properties = CampaignMetaData.Get(path, "_properties.json");
 
             List<Mission> missions = new();
 
@@ -283,26 +283,86 @@ namespace TanksRebirth.GameContent.Systems
                 PlayerTank.StartingLives = properties.StartingLives;
             }
 
-            campaign.Properties = properties;
+            campaign.MetaData = properties;
 
 
             return campaign;
         }
 
         /// <summary>Does not work yet.</summary>
-        public static void SaveToFile()
+        public static void Save(string fileName, Campaign campaign)
         {
-            // TODO: do this
-            if (GameProperties.LoadedCampaign == null)
-                return;
+            using var writer = new BinaryWriter(File.Open(Path.Combine(TankGame.SaveDirectory, fileName) + ".campaign", FileMode.OpenOrCreate));
 
-            var root = Path.Combine(TankGame.SaveDirectory, "Campaigns");
-            var path = Path.Combine(root, GameProperties.LoadedCampaign.Properties.Name);
-            Directory.CreateDirectory(root);
-            
+            writer.Write(TankGame.LevelFileHeader);
+            writer.Write(TankGame.LevelEditorVersion);
+
+            int totalMissions = campaign.CachedMissions.Length;
+            writer.Write(totalMissions);
+
+            writer.Write(campaign.MetaData.Name);
+            writer.Write(campaign.MetaData.Description);
+            writer.Write(campaign.MetaData.Author);
+            writer.Write(campaign.MetaData.Tags.Length);
+            Array.ForEach(campaign.MetaData.Tags, tag => writer.Write(tag));
+            writer.Write(campaign.MetaData.StartingLives);
+            writer.Write(campaign.MetaData.ExtraLivesMissions.Length);
+            Array.ForEach(campaign.MetaData.ExtraLivesMissions, id => writer.Write(id));
+            writer.Write(campaign.MetaData.Version);
+            writer.Write(campaign.MetaData.HasMajorVictory);
+            writer.Write(campaign.MetaData.MissionStripColor);
+            writer.Write(campaign.MetaData.BackgroundColor);
+
+            for (int i = 0; i < totalMissions; i++)
+                Mission.WriteContentsOf(writer, campaign.CachedMissions[i]);
+            ChatSystem.SendMessage($"Saved campaign with {totalMissions} missions.", Color.Lime);
         }
 
-        public struct CampaignProperties {
+        public static Campaign Load(string fileName)
+        {
+            Campaign campaign = new();
+
+            using var reader = new BinaryReader(File.Open(Path.Combine(TankGame.SaveDirectory, fileName) + ".campaign", FileMode.Open, FileAccess.Read));
+
+            var header = reader.ReadBytes(4);
+            if (!header.SequenceEqual(TankGame.LevelFileHeader))
+                throw new FileLoadException($"The byte header of this file does not match what this game expects! File name = \"{fileName}\"");
+            var editorVersion = reader.ReadInt32();
+            if (editorVersion < 2)
+                throw new FileLoadException($"Cannot load a campaign at this level editor version! File name = \"{fileName}\"");
+            else {
+                // first available version.
+                if (editorVersion == 2) {
+                    var totalMissions = reader.ReadInt32();
+
+                    campaign.CachedMissions = new Mission[totalMissions];
+
+                    campaign.MetaData.Name = reader.ReadString();
+                    campaign.MetaData.Description = reader.ReadString();
+                    campaign.MetaData.Author = reader.ReadString();
+                    campaign.MetaData.Tags = new string[reader.ReadInt32()];
+                    for (int j = 0; j < campaign.MetaData.Tags.Length; j++)
+                        campaign.MetaData.Tags[j] = reader.ReadString();
+                    campaign.MetaData.StartingLives = reader.ReadInt32();
+                    campaign.MetaData.ExtraLivesMissions = new int[reader.ReadInt32()];
+                    for (int j = 0; j < campaign.MetaData.ExtraLivesMissions.Length; j++)
+                        campaign.MetaData.ExtraLivesMissions[j] = reader.ReadInt32();
+                    campaign.MetaData.Version = reader.ReadString();
+                    campaign.MetaData.HasMajorVictory = reader.ReadBoolean();
+                    campaign.MetaData.MissionStripColor = reader.ReadColor();
+                    campaign.MetaData.BackgroundColor = reader.ReadColor();
+
+                    for (int i = 0; i < totalMissions; i++)
+                    {
+                        // TODO: do for loop, load each.
+
+                        campaign.CachedMissions[i] = Mission.Read(reader);
+                    }
+                }
+            }
+            return campaign;
+        }
+        public struct CampaignMetaData {
             public string Name { get; set; }
             public string Description { get; set; }
             public string Author { get; set; }
@@ -318,9 +378,9 @@ namespace TanksRebirth.GameContent.Systems
 
             // TODO: support for custom mission results panel color?
 
-            public static CampaignProperties Get(string path, string fileName)
+            public static CampaignMetaData Get(string path, string fileName)
             {
-                CampaignProperties properties = new()
+                CampaignMetaData properties = new()
                 {
                     Name = "Unnamed",
                     Description = "No description",
@@ -336,7 +396,7 @@ namespace TanksRebirth.GameContent.Systems
 
                 var file = Path.Combine(path, fileName);
 
-                JsonHandler<CampaignProperties> handler = new(properties, file);
+                JsonHandler<CampaignMetaData> handler = new(properties, file);
 
                 if (!File.Exists(file))
                 {

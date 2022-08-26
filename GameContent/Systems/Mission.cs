@@ -142,34 +142,46 @@ namespace TanksRebirth.GameContent.Systems
 
             using var writer = new BinaryWriter(File.Open(path, FileMode.OpenOrCreate, FileAccess.ReadWrite));
 
+            WriteCurrent(writer, name);
+
+            if (File.Exists(path))
+            {
+                GameHandler.ClientLog.Write($"Overwrote \"{name}.mission\" in map save path.", LogType.Info);
+                return;
+            }
+            GameHandler.ClientLog.Write($"Saved stage file \"{name}.mission\" in map save path.", LogType.Info);
+        }
+
+        public static void WriteCurrent(BinaryWriter writer, string name)
+        {
             /* File Order / Format
-             * 1) File Header (TANK in ASCII) (byte[])
-             * 2) Level Editor version (to check if older levels might cause anomalies!)
-             * 3) Name (string)
-             * 
-             * 4) Total Tanks Used (int)
-             * 
-             * 5) Storing of Tanks (their respective templates)
-             *  - IsPlayer (bool)
-             *  - X (float)
-             *  - Y (float)
-             *  - Rotation (float)
-             *  - AiType (byte) - should be as default if it's a player.
-             *  - PlayerType (byte) - should be as default if it's an AI.
-             *  - Team (byte)
-             *  
-             * 6) Total Blocks Used (int)
-             *  
-             * 7) Storing of Blocks (their respective templates)
-             *  - Type (byte)
-             *  - Stack (sbyte)
-             *  - X (float)
-             *  - Y (float)
-             *  - TpLink (sbyte) (VERSION 2 or GREATER)
-             *  
-             *  8) Extras
-             *   - Note (string) (VERSION 3 OR GREATER) (NOT IMPLEMENTED YET)
-             */
+                * 1) File Header (TANK in ASCII) (byte[])
+                * 2) Level Editor version (to check if older levels might cause anomalies!)
+                * 3) Name (string)
+                * 
+                * 4) Total Tanks Used (int)
+                 * 
+                * 5) Storing of Tanks (their respective templates)
+                 *  - IsPlayer (bool)
+                *  - X (float)
+                *  - Y (float)
+                *  - Rotation (float)
+                *  - AiType (byte) - should be as default if it's a player.
+                *  - PlayerType (byte) - should be as default if it's an AI.
+                *  - Team (byte)
+                *  
+                * 6) Total Blocks Used (int)
+                *  
+                * 7) Storing of Blocks (their respective templates)
+                *  - Type (byte)
+                *  - Stack (sbyte)
+                *  - X (float)
+                *  - Y (float)
+                *  - TpLink (sbyte) (VERSION 2 or GREATER)
+                *  
+                *  8) Extras
+                *   - Note (string) (VERSION 3 OR GREATER) (NOT IMPLEMENTED YET)
+                */
 
             writer.Write(TankGame.LevelFileHeader);
             writer.Write(TankGame.LevelEditorVersion);
@@ -225,16 +237,41 @@ namespace TanksRebirth.GameContent.Systems
                     writer.Write(temp.TpLink);
                 }
             }
-
-
             ChatSystem.SendMessage($"Saved mission with {totalTanks} tank(s) and {totalBlocks} block(s).", Color.Lime);
+        }
+        public static void WriteContentsOf(BinaryWriter writer, Mission mission)
+        {
+            writer.Write(TankGame.LevelFileHeader);
+            writer.Write(TankGame.LevelEditorVersion);
+            writer.Write(mission.Name);
 
-            if (File.Exists(path))
+            var tanks = mission.Tanks;
+            writer.Write(tanks.Length);
+            for (int i = 0; i < tanks.Length; i++)
             {
-                GameHandler.ClientLog.Write($"Overwrote \"{name}.mission\" in map save path.", LogType.Info);
-                return;
+                var tank = tanks[i];
+                writer.Write(tank.IsPlayer);
+                writer.Write(tank.Position.X);
+                writer.Write(tank.Position.Y);
+                writer.Write(tank.Rotation);
+                writer.Write((byte)tank.AiTier);
+                writer.Write((byte)tank.PlayerType);
+                writer.Write((byte)tank.Team);
             }
-            GameHandler.ClientLog.Write($"Saved stage file \"{name}.mission\" in map save path.", LogType.Info);
+
+            var blocks = mission.Blocks;
+            writer.Write(blocks.Length);
+            for (int i = 0; i < blocks.Length; i++)
+            {
+                var block = blocks[i];
+
+                writer.Write((byte)block.Type);
+                writer.Write(block.Stack);
+                writer.Write(block.Position.X);
+                writer.Write(block.Position.Y);
+                writer.Write(block.TpLink);
+            }
+            ChatSystem.SendMessage($"Saved mission '{mission.Name}' with {tanks.Length} tank(s) and {blocks.Length} block(s).", Color.Lime);
         }
 
         /// <summary>
@@ -275,6 +312,134 @@ namespace TanksRebirth.GameContent.Systems
 
            // if (version != TankGame.LevelEditorVersion)
                 //ChatSystem.SendMessage($"Warning: This level was saved with a different version of the level editor. It may not work correctly.", Color.Yellow);
+
+            Mission mission = new();
+
+            if (version == 1)
+            {
+                var name = reader.ReadString();
+
+                var totalTanks = reader.ReadInt32();
+
+                for (int i = 0; i < totalTanks; i++)
+                {
+                    var isPlayer = reader.ReadBoolean();
+                    var x = reader.ReadSingle();
+                    var y = reader.ReadSingle();
+                    var rotation = -reader.ReadSingle(); // i genuinely hate having to make this negative :(
+                    var tier = reader.ReadByte();
+                    var pType = reader.ReadByte();
+                    var team = reader.ReadByte();
+
+                    tanks.Add(new()
+                    {
+                        IsPlayer = isPlayer,
+                        Position = new(x, y),
+                        Rotation = rotation,
+                        AiTier = tier,
+                        PlayerType = pType,
+                        Team = team
+                    });
+                }
+
+                var totalBlocks = reader.ReadInt32();
+
+                for (int i = 0; i < totalBlocks; i++)
+                {
+                    var type = reader.ReadByte();
+                    var stack = reader.ReadSByte();
+                    var x = reader.ReadSingle();
+                    var y = reader.ReadSingle();
+
+                    blocks.Add(new()
+                    {
+                        Type = type,
+                        Stack = stack,
+                        Position = new(x, y),
+                    });
+                }
+
+                mission = new Mission(tanks.ToArray(), blocks.ToArray())
+                {
+                    Name = name
+                };
+            }
+            else if (version == 2)
+            {
+                var name = reader.ReadString();
+
+                var totalTanks = reader.ReadInt32();
+
+                for (int i = 0; i < totalTanks; i++)
+                {
+                    var isPlayer = reader.ReadBoolean();
+                    var x = reader.ReadSingle();
+                    var y = reader.ReadSingle();
+                    var rotation = -reader.ReadSingle(); // i genuinely hate having to make this negative :(
+                    var tier = reader.ReadByte();
+                    var pType = reader.ReadByte();
+                    var team = reader.ReadByte();
+
+                    tanks.Add(new()
+                    {
+                        IsPlayer = isPlayer,
+                        Position = new(x, y),
+                        Rotation = rotation,
+                        AiTier = tier,
+                        PlayerType = pType,
+                        Team = team
+                    });
+                }
+
+                var totalBlocks = reader.ReadInt32();
+
+                for (int i = 0; i < totalBlocks; i++)
+                {
+                    var type = reader.ReadByte();
+                    var stack = reader.ReadSByte();
+                    var x = reader.ReadSingle();
+                    var y = reader.ReadSingle();
+                    var link = reader.ReadSByte();
+
+                    blocks.Add(new()
+                    {
+                        Type = type,
+                        Stack = stack,
+                        Position = new(x, y),
+                        TpLink = link
+                    });
+                }
+
+                mission = new Mission(tanks.ToArray(), blocks.ToArray())
+                {
+                    Name = name
+                };
+            }
+
+            // ChatSystem.SendMessage($"Loaded mission with {tanks.Count} tank(s) and {blocks.Count} block(s).", Color.Lime);
+
+            return mission;
+        }
+        /// <summary>
+        /// Reads from the current position in the <paramref name="reader"/>'s stream and returns the mission.
+        /// </summary>
+        /// <param name="reader">The <see cref="BinaryReader"/> that is accessed.</param>
+        /// <returns>The read mission data.</returns>
+        /// <exception cref="FileLoadException"></exception>
+        public static Mission Read(BinaryReader reader)
+        {
+            List<TankTemplate> tanks = new();
+            List<BlockTemplate> blocks = new();
+
+            var header = reader.ReadBytes(4);
+
+            if (!header.SequenceEqual(TankGame.LevelFileHeader))
+                throw new FileLoadException($"The byte header of this file does not match what this game expects!");
+
+            var version = reader.ReadInt32();
+
+            // if (version != TankGame.LevelEditorVersion)
+            //ChatSystem.SendMessage($"Warning: This level was saved with a different version of the level editor. It may not work correctly.", Color.Yellow);
 
             Mission mission = new();
 

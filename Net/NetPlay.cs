@@ -136,10 +136,10 @@ namespace TanksRebirth.Net
                     break;
                 case PacketType.SendCampaign:
                     var campaign = new Campaign();
-                    campaign.Properties.Name = reader.GetString();
-                    campaign.Properties.StartingLives = reader.GetInt();
-                    campaign.Properties.BackgroundColor = reader.GetColor();
-                    campaign.Properties.MissionStripColor = reader.GetColor();
+                    campaign.MetaData.Name = reader.GetString();
+                    campaign.MetaData.StartingLives = reader.GetInt();
+                    campaign.MetaData.BackgroundColor = reader.GetColor();
+                    campaign.MetaData.MissionStripColor = reader.GetColor();
 
                     var missionCount = reader.GetInt();
 

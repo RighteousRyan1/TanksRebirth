@@ -117,7 +117,7 @@ namespace TanksRebirth.GameContent.Systems
                 DrawShadowedString(TankGame.TextFontLarge, new Vector2(GameUtils.WindowWidth / 2 - 100.ToResolutionX(), GameUtils.WindowHeight / 2 + 350.ToResolutionY()), Vector2.One, lifeText, BackgroundColor, Vector2.One.ToResolution(), Alpha, new Vector2(0, TankGame.TextFontLarge.MeasureString(lifeText).Y / 2));
 
                 if (GameProperties.LoadedCampaign.CurrentMissionId == 0)
-                    DrawShadowedString(TankGame.TextFontLarge, new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2 - 295.ToResolutionY()), Vector2.One, $"Campaign: \"{GameProperties.LoadedCampaign.Properties.Name}\"", BackgroundColor, new Vector2(0.4f).ToResolution(), Alpha);
+                    DrawShadowedString(TankGame.TextFontLarge, new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2 - 295.ToResolutionY()), Vector2.One, $"Campaign: \"{GameProperties.LoadedCampaign.MetaData.Name}\"", BackgroundColor, new Vector2(0.4f).ToResolution(), Alpha);
 
                 DrawShadowedTexture(GameResources.GetGameResource<Texture2D>("Assets/textures/ui/playertank2d"), new Vector2(GameUtils.WindowWidth / 2 - 200.ToResolutionX(), GameUtils.WindowHeight / 2 + 375.ToResolutionY()), Vector2.One, Color.Blue, new Vector2(1.25f).ToResolution(), Alpha);
                 

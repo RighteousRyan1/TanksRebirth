@@ -739,21 +739,8 @@ namespace TanksRebirth
         public void FixedUpdate(GameTime gameTime)
         {
             // TODO: this
-            /*if (Input.KeyJustPressed(Keys.Up))
-            {
-                if (GameProperties.LoadedCampaign != null)
-                {
-                    using var writer = new BinaryWriter(File.Open(Path.Combine(SaveDirectory, "debug_campaign.camp"), FileMode.OpenOrCreate));
-
-                    // eventual .campaign format
-                    for (int i = 0; i < GameProperties.LoadedCampaign.CachedMissions.Length; i++)
-                    {
-                        var mission = GameProperties.LoadedCampaign.CachedMissions[i];
-
-                        Mission.Save();
-                    }
-                }
-            }*/
+            if (Input.KeyJustPressed(Keys.Up))
+                Campaign.Save(GameProperties.LoadedCampaign.MetaData.Name, GameProperties.LoadedCampaign);
 
             GameUpdateTime++;
 

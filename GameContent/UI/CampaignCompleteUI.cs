@@ -321,7 +321,7 @@ namespace TanksRebirth.GameContent.UI
 
             // then, we determine the number of possible lives by checking how many extra life missions
             // there were this campaign, along with adding the starting life count.
-            TotalPossibleLives = PlayerTank.StartingLives + campaign.Properties.ExtraLivesMissions.Length;
+            TotalPossibleLives = PlayerTank.StartingLives + campaign.MetaData.ExtraLivesMissions.Length;
 
             if (orderByTier)
                 KillsPerType = KillsPerType.OrderBy(tier => tier.Key).ToDictionary(x => x.Key, y => y.Value);
