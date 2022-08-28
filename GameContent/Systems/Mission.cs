@@ -50,7 +50,7 @@ namespace TanksRebirth.GameContent.Systems
         /// Creates a <see cref="Mission"/> instance from the current placement of everything.
         /// </summary>
         /// <returns>The mission that is currently active, or created.</returns>
-        public static Mission GetCurrent()
+        public static Mission GetCurrent(string name = null)
         {
             List<TankTemplate> tanks = new();
             List<BlockTemplate> blocks = new();
@@ -89,7 +89,7 @@ namespace TanksRebirth.GameContent.Systems
                 }
             }
 
-            return new(tanks.ToArray(), blocks.ToArray());
+            return new(tanks.ToArray(), blocks.ToArray()) { Name = name };
         }
         /// <summary>
         /// Loads a <see cref="Mission"/> and instantly applies it to the game field.

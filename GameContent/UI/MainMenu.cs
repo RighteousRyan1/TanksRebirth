@@ -706,7 +706,7 @@ namespace TanksRebirth.GameContent.UI
                     //elem.
                     elem.OnLeftClick += (el) =>
                     {
-                        var camp = Campaign.Load(Path.Combine(TankGame.SaveDirectory, "Campaigns", elem.Text + ".campaign"));
+                        var camp = Campaign.Load(Path.Combine("Campaigns", name));
 
                         // check if the CampaignCheckpoint number is less than the number of missions in the array
                         if (MissionCheckpoint >= camp.CachedMissions.Length)

@@ -30,12 +30,17 @@ namespace TanksRebirth.GameContent.Systems
         /// <summary>Returns the names of campaigns in the user's <c>Campaigns/</c> directory.</summary>
         public static string[] GetCampaignNames()
             => IOUtils.GetSubFolders(Path.Combine(TankGame.SaveDirectory, "Campaigns"), true);
-        public Mission[] CachedMissions { get; set; } = new Mission[MAX_MISSIONS];
+        public Mission[] CachedMissions = new Mission[MAX_MISSIONS];
         public Mission CurrentMission { get; private set; }
         public Mission LoadedMission { get; private set; }
         public int CurrentMissionId { get; private set; }
 
         public CampaignMetaData MetaData;
+
+        public Campaign()
+        {
+            MetaData = CampaignMetaData.GetDefault();
+        }
 
         public void LoadMission(Mission mission)
         {
@@ -48,12 +53,14 @@ namespace TanksRebirth.GameContent.Systems
             LoadedMission = CachedMissions[id];
 
             CurrentMissionId = id;
-
-            TrackedSpawnPoints = new (Vector2, bool)[LoadedMission.Tanks.Length];
-            for (int i = 0; i < LoadedMission.Tanks.Length; i++)
+            if (LoadedMission.Tanks != null)
             {
-                TrackedSpawnPoints[i].Item1 = LoadedMission.Tanks[i].Position;
-                TrackedSpawnPoints[i].Item2 = true;
+                TrackedSpawnPoints = new (Vector2, bool)[LoadedMission.Tanks.Length];
+                for (int i = 0; i < LoadedMission.Tanks.Length; i++)
+                {
+                    TrackedSpawnPoints[i].Item1 = LoadedMission.Tanks[i].Position;
+                    TrackedSpawnPoints[i].Item2 = true;
+                }
             }
         }
 
@@ -94,6 +101,7 @@ namespace TanksRebirth.GameContent.Systems
         /// <param name="spawnNewSet">If true, will spawn all tanks as if it's the first time the player(s) has/have entered this mission.</param>
         public void SetupLoadedMission(bool spawnNewSet)
         {
+            PlacementSquare.ResetSquares();
             //foreach (var body in Tank.CollisionsWorld.BodyList)
                 //Tank.CollisionsWorld.Remove(body);
             for (int a = 0; a < GameHandler.AllTanks.Length; a++)
@@ -292,12 +300,12 @@ namespace TanksRebirth.GameContent.Systems
         /// <summary>Does not work yet.</summary>
         public static void Save(string fileName, Campaign campaign)
         {
-            using var writer = new BinaryWriter(File.Open(fileName, FileMode.OpenOrCreate));
+            using var writer = new BinaryWriter(File.Open(fileName.Contains(".campaign") ? fileName : fileName + ".campaign", FileMode.OpenOrCreate));
 
             writer.Write(TankGame.LevelFileHeader);
             writer.Write(TankGame.LevelEditorVersion);
 
-            int totalMissions = campaign.CachedMissions.Length;
+            int totalMissions = campaign.CachedMissions.Count(m => m != default);
             writer.Write(totalMissions);
 
             writer.Write(campaign.MetaData.Name);
@@ -381,19 +389,7 @@ namespace TanksRebirth.GameContent.Systems
 
             public static CampaignMetaData Get(string path, string fileName)
             {
-                CampaignMetaData properties = new()
-                {
-                    Name = "Unnamed",
-                    Description = "No description",
-                    Author = "Unknown",
-                    Version = "0.0.0.0",
-                    Tags = new string[] { "N/A" },
-                    ExtraLivesMissions = Array.Empty<int>(),
-                    StartingLives = 3,
-                    BackgroundColor = IntermissionSystem.DefaultBackgroundColor,
-                    MissionStripColor = IntermissionSystem.DefaultStripColor,
-                    HasMajorVictory = false
-                };
+                var properties = CampaignMetaData.GetDefault();
 
                 var file = Path.Combine(path, fileName);
 
@@ -408,6 +404,23 @@ namespace TanksRebirth.GameContent.Systems
                 properties = handler.Deserialize();
 
                 return properties;
+            }
+
+            public static CampaignMetaData GetDefault()
+            {
+                return new()
+                {
+                    Name = "Unnamed",
+                    Description = "No description",
+                    Author = "Unknown",
+                    Version = "0.0.0.0",
+                    Tags = new string[] { "N/A" },
+                    ExtraLivesMissions = Array.Empty<int>(),
+                    StartingLives = 3,
+                    BackgroundColor = IntermissionSystem.DefaultBackgroundColor,
+                    MissionStripColor = IntermissionSystem.DefaultStripColor,
+                    HasMajorVictory = false
+                };
             }
         }
 

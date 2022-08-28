@@ -19,8 +19,6 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
     {
         // Drag-and-Drop
         public static bool IsPlacing { get; private set; }
-
-
         public bool HasItem => BlockId > -1 || TankId > -1;
 
         public static PlacementSquare CurrentlyHovered;
@@ -73,6 +71,13 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
                         }
                     };
                 }
+            }
+        }
+        public static void ResetSquares()
+        {
+            for (int i = 0; i < Placements.Count; i++) {
+                Placements[i].TankId = -1;
+                Placements[i].BlockId = -1;
             }
         }
         // TODO: need a sound for placement

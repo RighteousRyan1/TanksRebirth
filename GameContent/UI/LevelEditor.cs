@@ -117,7 +117,7 @@ namespace TanksRebirth.GameContent.UI
                 GUICategory = UICategory.LevelEditor;
                 if (MissionName.GetRealText() != string.Empty)
                     _loadedCampaign.CachedMissions[_loadedCampaign.CurrentMissionId].Name = MissionName.GetRealText();
-                SetupMissionsBar(_loadedCampaign);
+                SetupMissionsBar(_loadedCampaign, false);
             };
 
             SaveLevelConfirm = new("Save", TankGame.TextFont, Color.White);
@@ -125,7 +125,6 @@ namespace TanksRebirth.GameContent.UI
                 LevelContentsPanel.Y + LevelContentsPanel.Height - 60.ToResolutionY()),
                 () => new(200.ToResolutionX(),
                 50.ToResolutionY()));
-            SaveLevelConfirm.Tooltip = "Save your mission to a file.\nKeep in mind: you will need to name the missions in numerical order.";
             SaveLevelConfirm.OnLeftClick = (l) => {
                 // Mission.Save(LevelName.GetRealText(), )
                 var res = Dialog.FileSave(_viewMissionDetails ? "mission" : "campaign", TankGame.SaveDirectory);
@@ -139,14 +138,15 @@ namespace TanksRebirth.GameContent.UI
                             Mission.Save(name, path, false, realName);
                         else
                         {
-                            _loadedCampaign.MetaData.Name = CampaignName.Text;
-                            _loadedCampaign.MetaData.Description = CampaignDescription.Text;
-                            _loadedCampaign.MetaData.Author = CampaignAuthor.Text;
-                            _loadedCampaign.MetaData.Tags = CampaignTags.Text.Split(',');
-                            _loadedCampaign.MetaData.ExtraLivesMissions = ArrayUtils.SequenceToInt32Array(CampaignExtraLives.Text);
-                            _loadedCampaign.MetaData.Version = CampaignVersion.Text;
-                            _loadedCampaign.MetaData.BackgroundColor = UnpackedColor.FromStringFormat(CampaignLoadingBGColor.Text);
-                            _loadedCampaign.MetaData.MissionStripColor = UnpackedColor.FromStringFormat(CampaignLoadingStripColor.Text);
+                            _loadedCampaign.MetaData.Name = CampaignName.GetRealText();
+                            _loadedCampaign.MetaData.Description = CampaignDescription.GetRealText();
+                            _loadedCampaign.MetaData.Author = CampaignAuthor.GetRealText();
+                            var split = CampaignTags.GetRealText().Split(',');
+                            _loadedCampaign.MetaData.Tags = split;
+                            _loadedCampaign.MetaData.ExtraLivesMissions = ArrayUtils.SequenceToInt32Array(CampaignExtraLives.GetRealText());
+                            _loadedCampaign.MetaData.Version = CampaignVersion.GetRealText();
+                            _loadedCampaign.MetaData.BackgroundColor = UnpackedColor.FromStringFormat(CampaignLoadingBGColor.GetRealText());
+                            _loadedCampaign.MetaData.MissionStripColor = UnpackedColor.FromStringFormat(CampaignLoadingStripColor.GetRealText());
                             _loadedCampaign.MetaData.HasMajorVictory = _hasMajorVictory;
                             Campaign.Save(Path.Combine(path, realName), _loadedCampaign);
                         }
@@ -170,6 +170,8 @@ namespace TanksRebirth.GameContent.UI
 
             SwapMenu.OnLeftClick = (l) => {
                 _viewMissionDetails = !_viewMissionDetails;
+                if (MissionName.GetRealText() != string.Empty)
+                    _loadedCampaign.CachedMissions[_loadedCampaign.CurrentMissionId].Name = MissionName.GetRealText();
             };
 
             CampaignName = new(TankGame.TextFont, Color.White, 1f, 30);
@@ -183,34 +185,42 @@ namespace TanksRebirth.GameContent.UI
             CampaignDescription = new(TankGame.TextFont, Color.White, 1f, 100);
             CampaignDescription.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), LevelContentsPanel.Y + 120.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 50.ToResolutionY()));
             CampaignDescription.DefaultString = "Description";
+            CampaignDescription.Tooltip = "Sum up this campaign into your own words.";
 
             CampaignAuthor = new(TankGame.TextFont, Color.White, 1f, 25);
             CampaignAuthor.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), LevelContentsPanel.Y + 180.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 50.ToResolutionY()));
             CampaignAuthor.DefaultString = "Author";
+            CampaignAuthor.Tooltip = "You! The one who created this campaign. Sign it!";
 
             CampaignTags = new(TankGame.TextFont, Color.White, 1f, 35);
             CampaignTags.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), LevelContentsPanel.Y + 240.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 50.ToResolutionY()));
             CampaignTags.DefaultString = "Tags (split with ',')";
+            CampaignTags.Tooltip = "The tags that describe this campaign well. Be sure to split with ','";
 
             CampaignExtraLives = new(TankGame.TextFont, Color.White, 1f, 100);
             CampaignExtraLives.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), LevelContentsPanel.Y + 300.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 50.ToResolutionY()));
             CampaignExtraLives.DefaultString = "Extra Life Missions (split with ',')";
+            CampaignExtraLives.Tooltip = "The level indexes of missions to provide extra lives. Be sure to split with ','";
 
             CampaignVersion = new(TankGame.TextFont, Color.White, 1f, 10);
             CampaignVersion.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), LevelContentsPanel.Y + 360.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 50.ToResolutionY()));
             CampaignVersion.DefaultString = "Level Version";
+            CampaignVersion.Tooltip = "The version of THIS CAMPAIGN, not the game.";
 
             CampaignLoadingBGColor = new(TankGame.TextFont, Color.White, 1f, 11);
             CampaignLoadingBGColor.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), LevelContentsPanel.Y + 420.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 50.ToResolutionY()));
             CampaignLoadingBGColor.DefaultString = "Mission Loading: BG Color";
+            CampaignLoadingBGColor.Tooltip = "Changes the color of the background when transitioning missions.\nBe sure there are no spaces between commas.";
 
             CampaignLoadingStripColor = new(TankGame.TextFont, Color.White, 1f, 11);
             CampaignLoadingStripColor.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), LevelContentsPanel.Y + 480.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 50.ToResolutionY()));
             CampaignLoadingStripColor.DefaultString = "Mission Loading: Strip Color";
+            CampaignLoadingStripColor.Tooltip = "Changes the color of the strip that appears across\n the screen when transitioning missions.\nBe sure there are no spaces between commas.";
 
             CampaignMajorVictory = new("", TankGame.TextFont, Color.White, () => Vector2.One.ToResolution());
             CampaignMajorVictory.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), LevelContentsPanel.Y + 540.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 50.ToResolutionY()));
             CampaignMajorVictory.OnLeftClick = (a) => _hasMajorVictory = !_hasMajorVictory;
+            CampaignMajorVictory.Tooltip = "If yes, at the end of this campaign it will play a\ndifferent, more accomplishing soundtrack at the end.";
             SetSaveMenuVisibility(false);
 
             _campaignElems.Add(MissionName);
@@ -310,6 +320,7 @@ namespace TanksRebirth.GameContent.UI
             if (_initialized)
                 return;
             _initialized = true;
+
             #region Enumerable Init
             for (int i = 1; i < TeamID.Collection.Count; i++)
             {
@@ -444,7 +455,7 @@ namespace TanksRebirth.GameContent.UI
 
             UIElement.CunoSucks();
         }
-        public static void SetupMissionsBar(Campaign campaign)
+        public static void SetupMissionsBar(Campaign campaign, bool setCampaignData = true)
         {
             RemoveMissionButtons();
 
@@ -453,41 +464,72 @@ namespace TanksRebirth.GameContent.UI
             // campaign metadata editing
             // go to bed ryan
 
-            CampaignName.Text = campaign.MetaData.Name;
-            CampaignDescription.Text = campaign.MetaData.Description;
-            CampaignAuthor.Text = campaign.MetaData.Author;
-            CampaignTags.Text = string.Join(',', campaign.MetaData.Tags);
-            CampaignVersion.Text = campaign.MetaData.Version;
-            CampaignExtraLives.Text = string.Join(',', campaign.MetaData.ExtraLivesMissions);
-            CampaignVersion.Text = campaign.MetaData.Version;
-            CampaignLoadingBGColor.Text = campaign.MetaData.BackgroundColor.ToString();
-            CampaignLoadingStripColor.Text = campaign.MetaData.MissionStripColor.ToString();
-            _hasMajorVictory = campaign.MetaData.HasMajorVictory;
-
-            for (int i = 0; i < campaign.CachedMissions.Length; i++)
+            if (setCampaignData)
             {
-                var mission = campaign.CachedMissions[i];
-                var btn = new UITextButton(mission.Name, TankGame.TextFont, Color.White, () => Vector2.One.ToResolution());
-                btn.SetDimensions(() => new Vector2(_missionButtonScissor.X + 15.ToResolutionX(), _missionButtonScissor.Y + _missionsOffset), () => new Vector2(_missionButtonScissor.Width - 30.ToResolutionX(), 25.ToResolutionY()));
-                
-                btn.Offset = new(0, i * 30);
-                // _missionsMaxOff += btn.Offset.Y.ToResolutionY();
-                btn.HasScissor = true;
-                btn.Scissor = () => _missionButtonScissor;
-
-                int index = i;
-
-                btn.OnLeftClick = (a) =>
-                {
-                    _missionButtons.ForEach(x => x.Color = Color.White);
-                    btn.Color = Color.SkyBlue;
-                    _loadedCampaign.LoadMission(index);
-                    _loadedCampaign.SetupLoadedMission(true);
-
-                    MissionName.Text = _loadedCampaign.CachedMissions[index].Name;
-                };
-                _missionButtons.Add(btn);
+                CampaignName.Text = campaign.MetaData.Name;
+                CampaignDescription.Text = campaign.MetaData.Description;
+                CampaignAuthor.Text = campaign.MetaData.Author;
+                CampaignTags.Text = string.Join(',', campaign.MetaData.Tags);
+                CampaignVersion.Text = campaign.MetaData.Version;
+                CampaignExtraLives.Text = string.Join(',', campaign.MetaData.ExtraLivesMissions);
+                CampaignVersion.Text = campaign.MetaData.Version;
+                CampaignLoadingBGColor.Text = campaign.MetaData.BackgroundColor.ToString();
+                CampaignLoadingStripColor.Text = campaign.MetaData.MissionStripColor.ToString();
+                _hasMajorVictory = campaign.MetaData.HasMajorVictory;
             }
+
+            float totalOff = 0;
+
+            if (_loadedCampaign != null) {
+                for (int i = 0; i < campaign.CachedMissions.Length; i++) {
+                    var mission = campaign.CachedMissions[i];
+                    if (mission == default)
+                        break;
+                    var btn = new UITextButton(mission.Name, TankGame.TextFont, Color.White, () => Vector2.One.ToResolution());
+                    btn.SetDimensions(() => new Vector2(_missionButtonScissor.X + 15.ToResolutionX(), _missionButtonScissor.Y + _missionsOffset), () => new Vector2(_missionButtonScissor.Width - 30.ToResolutionX(), 25.ToResolutionY()));
+
+                    btn.Offset = new(0, i * 30);
+                    totalOff += btn.Offset.Y;
+
+                    btn.HasScissor = true;
+                    btn.Scissor = () => _missionButtonScissor;
+
+                    int index = i;
+
+                    btn.OnLeftClick = (a) =>
+                    {
+                        _loadedCampaign.CachedMissions[_loadedCampaign.CurrentMissionId] = Mission.GetCurrent(_loadedCampaign.CachedMissions[_loadedCampaign.CurrentMissionId].Name);
+
+                        _loadedCampaign.LoadMission(index);
+                        _loadedCampaign.SetupLoadedMission(true);
+
+                        MissionName.Text = _loadedCampaign.CachedMissions[index].Name;
+                    };
+                    _missionButtons.Add(btn);
+                }
+            }
+            var butn = new UITextButton("+", TankGame.TextFont, Color.White, () => Vector2.One.ToResolution());
+            butn.SetDimensions(() => new Vector2(_missionButtonScissor.X + 15.ToResolutionX(), _missionButtonScissor.Y + _missionsMaxOff - 30.ToResolutionY() + _missionsOffset), () => new Vector2(_missionButtonScissor.Width - 30.ToResolutionX(), 25.ToResolutionY()));
+            butn.OnLeftClick = (a) =>
+            {
+                _loadedCampaign.CachedMissions[_loadedCampaign.CurrentMissionId] = Mission.GetCurrent();
+
+                _missionButtons.ForEach(x => x.Color = Color.White);
+                butn.Color = Color.SkyBlue;
+
+                // Array.Resize(ref _loadedCampaign.CachedMissions, _loadedCampaign.CachedMissions.Length + 1);
+                var id = _loadedCampaign.CachedMissions.Count(c => c != default);
+                _loadedCampaign.CachedMissions[id] = new(Array.Empty<TankTemplate>(), Array.Empty<BlockTemplate>());
+                _loadedCampaign.LoadMission(id);
+                _loadedCampaign.SetupLoadedMission(true);
+
+                MissionName.Text = _loadedCampaign.CachedMissions[id].Name;
+
+                SetupMissionsBar(_loadedCampaign, false);
+            };
+            butn.HasScissor = true;
+            butn.Scissor = () => _missionButtonScissor;
+            _missionButtons.Add(butn);
             UIElement.CunoSucks();
         }
         private static void RemoveMissionButtons()
@@ -511,6 +553,11 @@ namespace TanksRebirth.GameContent.UI
                     TankGame.OverheadView = true;
                     Theme.Play();
                     SetLevelEditorVisibility(true);
+                    _loadedCampaign = new();
+                    _loadedCampaign.CachedMissions[0] = new(Array.Empty<TankTemplate>(), Array.Empty<BlockTemplate>()) {
+                        Name = "No Name"
+                    };
+                    SetupMissionsBar(_loadedCampaign);
                 });
             }
             else
@@ -532,10 +579,7 @@ namespace TanksRebirth.GameContent.UI
             SetSaveMenuVisibility(false);
             // SetMissionsVisibility(false);
             _loadedCampaign = null;
-            for (int i = 0; i < PlacementSquare.Placements.Count; i++) {
-                PlacementSquare.Placements[i].TankId = -1;
-                PlacementSquare.Placements[i].BlockId = -1;
-            }
+            PlacementSquare.ResetSquares();
         }
 
         private static Rectangle _clickRect;
@@ -781,16 +825,17 @@ namespace TanksRebirth.GameContent.UI
             if (!_initialized)
                 return;
 
-            _missionsOffset += Input.GetScrollWheelChange() * 30;
+            if (_missionButtonScissor.Contains(GameUtils.MousePosition))
+                _missionsOffset += Input.GetScrollWheelChange() * 30;
 
-            _missionsMaxOff = _missionButtons.Count * 25.ToResolutionY();
-
+            _missionsMaxOff = _missionButtons.Count * 30.ToResolutionY();
+            SaveLevelConfirm.Tooltip = _viewMissionDetails ? "Save your mission directly to a file." : "Save your campaign directly to a file.\nIt will need to be in your Campaigns folder to be detected.";
             CampaignMajorVictory.Text = "Has Major Victory Theme: " + (_hasMajorVictory ? "Yes" : "No");
 
             if (_missionsOffset > 0)
                 _missionsOffset = 0;
-            else if (_missionsOffset < -_missionsMaxOff)
-                _missionsOffset = -_missionsMaxOff;
+            else if (-_missionsMaxOff < -_missionButtonScissor.Height && _missionsOffset < -_missionsMaxOff + _missionButtonScissor.Height)
+                _missionsOffset = -_missionsMaxOff + _missionButtonScissor.Height;
 
             LevelContentsPanel = new Rectangle(GameUtils.WindowWidth / 4, (int)(GameUtils.WindowHeight * 0.1f), GameUtils.WindowWidth / 2, (int)(GameUtils.WindowHeight * 0.625f));
             PlacementSquare.PlacesBlock = CurCategory == Category.Blocks;
