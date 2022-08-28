@@ -42,14 +42,12 @@ namespace TanksRebirth.Internals.Common.GameUI
 
             // new - max (22 - 20) = 2
 
-            if (IsSelected() && Text.Length > 20)
-                Text = Text.Remove(20);
+            if (IsSelected() && Text.Length > MaxLength)
+                Text = Text.Remove(MaxLength);
 
             if (ActiveHandle)
                 if ((Input.CurrentKeySnapshot.IsKeyDown(Keys.LeftControl) || Input.CurrentKeySnapshot.IsKeyDown(Keys.RightControl)) && Input.KeyJustPressed(Keys.V))
-                {
                     Text += ClipboardService.GetText();
-                }
 
             if (MouseHovering)
             {
@@ -69,6 +67,7 @@ namespace TanksRebirth.Internals.Common.GameUI
                 Text = DefaultString;
 
             base.Draw(spriteBatch);
+            UniqueDraw?.Invoke(this, spriteBatch);
         }
 
         public bool IsEmpty() 

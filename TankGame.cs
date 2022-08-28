@@ -739,7 +739,7 @@ namespace TanksRebirth
         public void FixedUpdate(GameTime gameTime)
         {
             // TODO: this
-            if (Input.KeyJustPressed(Keys.Up))
+            if (Input.KeyJustPressed(Keys.Up) && DebugUtils.DebuggingEnabled)
                 Campaign.Save(GameProperties.LoadedCampaign.MetaData.Name, GameProperties.LoadedCampaign);
 
             GameUpdateTime++;

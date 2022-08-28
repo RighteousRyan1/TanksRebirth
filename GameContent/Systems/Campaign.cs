@@ -292,7 +292,7 @@ namespace TanksRebirth.GameContent.Systems
         /// <summary>Does not work yet.</summary>
         public static void Save(string fileName, Campaign campaign)
         {
-            using var writer = new BinaryWriter(File.Open(Path.Combine(TankGame.SaveDirectory, fileName) + ".campaign", FileMode.OpenOrCreate));
+            using var writer = new BinaryWriter(File.Open(fileName, FileMode.OpenOrCreate));
 
             writer.Write(TankGame.LevelFileHeader);
             writer.Write(TankGame.LevelEditorVersion);
@@ -315,6 +315,7 @@ namespace TanksRebirth.GameContent.Systems
 
             for (int i = 0; i < totalMissions; i++)
                 Mission.WriteContentsOf(writer, campaign.CachedMissions[i]);
+
             ChatSystem.SendMessage($"Saved campaign with {totalMissions} missions.", Color.Lime);
         }
 

@@ -76,7 +76,7 @@ namespace TanksRebirth.Internals.UI
 				{
 					if (Hitbox.Contains(GameUtils.MousePosition))
 					{
-						if ((HasScissor && Scissor.Contains(GameUtils.MousePosition)) || !HasScissor)
+						if ((HasScissor && Scissor.Invoke().Contains(GameUtils.MousePosition)) || !HasScissor)
 							return true;
 					}
 				}
@@ -200,7 +200,7 @@ namespace TanksRebirth.Internals.UI
 			{
 				if (Hitbox.Contains(GameUtils.MousePosition) && !_wasHovered)
 				{
-					if ((HasScissor && Scissor.Contains(GameUtils.MousePosition)) || !HasScissor)
+					if ((HasScissor && Scissor.Invoke().Contains(GameUtils.MousePosition)) || !HasScissor)
                     {
 						OnMouseOver?.Invoke(this);
 						MouseHovering = true;

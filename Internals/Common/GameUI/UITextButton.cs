@@ -20,7 +20,7 @@ namespace TanksRebirth.Internals.Common.GameUI
         public Func<Vector2> TextScale { get; set; }
 
         public static bool AutoResolutionHandle = true;
-
+        public bool DrawText = true;
         public UITextButton(string text, SpriteFontBase font, Color color, Func<Vector2> textScale) : base(null, 1, null)
         {
             Text = text;
@@ -61,7 +61,7 @@ namespace TanksRebirth.Internals.Common.GameUI
             spriteBatch.Draw(texture, new Rectangle(rightX, bottomY, border, border), new Rectangle(texture.Width - border, texture.Height - border, border, border), MouseHovering ? HoverColor : Color, 0f, GameUtils.GetAnchor(Anchor, texture.Size()), default, 0f);
             SpriteFontBase font = TankGame.TextFont;
             Vector2 drawOrigin = font.MeasureString(Text) / 2f;
-            if (TextScale != null)
+            if (TextScale != null && DrawText)
                 spriteBatch.DrawString(font, Text, Hitbox.Center.ToVector2(), Color.Black, AutoResolutionHandle ? TextScale.Invoke().ToResolution() : TextScale.Invoke(), 0, drawOrigin);
         }
     }

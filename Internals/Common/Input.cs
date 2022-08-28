@@ -69,7 +69,7 @@ namespace TanksRebirth.Internals.Common
         }
         public static Buttons[] GetPressedButtons(GamePadButtons buttons, bool excludeSystemButtons = false)
         {
-            Buttons[] pressedButtons = new Buttons[10];
+            var pressedButtons = new Buttons[10];
             if (buttons.A == ButtonState.Pressed)
             {
                 pressedButtons.Append(Buttons.A);
@@ -122,5 +122,8 @@ namespace TanksRebirth.Internals.Common
             return pressed;
         }
         public static int DeltaScrollWheel => CurrentMouseSnapshot.ScrollWheelValue / 120;
+        public static int OldDeltaScrollWheel => OldMouseSnapshot.ScrollWheelValue / 120;
+
+        public static int GetScrollWheelChange() => DeltaScrollWheel == OldDeltaScrollWheel ? 0 : DeltaScrollWheel - OldDeltaScrollWheel;
     }
 }

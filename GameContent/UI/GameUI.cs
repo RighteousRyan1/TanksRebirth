@@ -264,7 +264,7 @@ namespace TanksRebirth.GameContent.UI
             foreach (UIElement button in graphicsElements)
             {
                 button.HasScissor = true;
-                button.Scissor = new(0, (int)(GameUtils.WindowHeight * 0.05f), GameUtils.WindowWidth, (int)(GameUtils.WindowHeight * 0.7f));
+                button.Scissor = () => new(0, (int)(GameUtils.WindowHeight * 0.05f), GameUtils.WindowWidth, (int)(GameUtils.WindowHeight * 0.7f));
                 button.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick", SoundContext.Effect); };
             }
             foreach (var e in menuElements)

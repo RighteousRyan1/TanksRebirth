@@ -561,7 +561,7 @@ namespace TanksRebirth.GameContent
             if (CampaignCompleteUI.IsViewingResults)
                 CampaignCompleteUI.Render();
 
-            foreach (var body in Tank.CollisionsWorld.BodyList)
+            foreach (var body in Tank.CollisionsWorld.BodyList.ToList())
             {
                 DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"BODY", 
                     GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(body.Position.X, 0, body.Position.Y), TankGame.GameView, TankGame.GameProjection), centered: true);

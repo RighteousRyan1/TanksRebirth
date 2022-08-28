@@ -18,7 +18,7 @@ namespace TanksRebirth.Internals.UI
         public static Texture2D UIPanelBackground;
         public bool HasScissor { get; set; }
 
-        public Rectangle Scissor = new(-int.MaxValue, -int.MaxValue, 0, 0);
+        public Func<Rectangle> Scissor = () => new(-int.MaxValue, -int.MaxValue, 0, 0);
 
         public delegate void MouseEvent(UIElement affectedElement);
 
@@ -72,6 +72,8 @@ namespace TanksRebirth.Internals.UI
         /// <para>WARNING: Does not work graphically.</para></summary>
         public Anchor Anchor { get; set; } = Anchor.TopLeft;
 
+        public Vector2 Offset;
+
 
         /// <summary>Whether or not the <see cref="UIElement"/> should draw its children before itself.</summary>
         public bool ReverseDrawOrder { get; set; }
@@ -96,6 +98,15 @@ namespace TanksRebirth.Internals.UI
             InternalSize = new Vector2(width, height);
             _doUpdating = false;
             Recalculate();
+        }
+
+        /// <summary>Final elements just... dont work?</summary>
+        internal static void CunoSucks()
+        {
+            cunoSucksElement = new() { IsVisible = false };
+            cunoSucksElement.Remove();
+            cunoSucksElement = new();
+            cunoSucksElement.SetDimensions(-1000789342, -783218, 0, 0);
         }
 
         private Func<Vector2> _updatedPos;
@@ -164,7 +175,7 @@ namespace TanksRebirth.Internals.UI
 
                 TankGame.Instance.GraphicsDevice.RasterizerState = rastState;
 
-                TankGame.Instance.GraphicsDevice.ScissorRectangle = Scissor;
+                TankGame.Instance.GraphicsDevice.ScissorRectangle = Scissor.Invoke();
 
                 spriteBatch.Begin(rasterizerState: rastState);
 
@@ -370,7 +381,6 @@ namespace TanksRebirth.Internals.UI
                     el.MiddleUp();
 
                     el.MouseOver();
-
                 }
             }
 
@@ -380,8 +390,8 @@ namespace TanksRebirth.Internals.UI
                 {
                     if (element._doUpdating)
                     {
-                        element.Position = element._updatedPos.Invoke();
-                        element.Size = element._updatedSize.Invoke();
+                        element.Position = element.InternalPosition = element._updatedPos.Invoke() + element.Offset.ToResolution();
+                        element.Size = element.InternalSize = element._updatedSize.Invoke();
                     }
                 }
             }

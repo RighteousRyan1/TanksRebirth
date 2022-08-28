@@ -666,14 +666,12 @@ namespace TanksRebirth.GameContent.UI
             var path = Path.Combine(TankGame.SaveDirectory, "Campaigns");
             Directory.CreateDirectory(path);
             // add a new UIElement for each campaign folder
-            int totalOffset = 0;
 
             var campaignFiles = Directory.GetFiles(path).Where(file => file.EndsWith(".campaign")).ToArray()    ;
             
             for (int i = 0; i < campaignFiles.Length; i++)
             {
                 int offset = i * 60;
-                totalOffset += offset;
                 var name = campaignFiles[i];
 
                 int numTanks = 0;
