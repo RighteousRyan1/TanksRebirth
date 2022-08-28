@@ -26,6 +26,7 @@ namespace TanksRebirth.GameContent.UI
 {
     public static class LevelEditor
     {
+        // TODO: allow the moving of missions up and down in the level editor order.
         public static bool Active { get; private set; }
         public static OggMusic Theme = new("Level Editor Theme", "Content/Assets/mainmenu/editor", 0.7f);
 
@@ -134,7 +135,9 @@ namespace TanksRebirth.GameContent.UI
                         var name = _viewMissionDetails ? MissionName.Text : CampaignName.Text;
                         var realName = Path.HasExtension(res.Path) ? Path.GetFileNameWithoutExtension(res.Path) : Path.GetFileName(res.Path);
                         var path = res.Path.Replace(realName, string.Empty);
-                        if (_loadedCampaign == null)
+
+                        _loadedCampaign.CachedMissions[_loadedCampaign.CurrentMissionId] = Mission.GetCurrent();
+                        if (_viewMissionDetails)
                             Mission.Save(name, path, false, realName);
                         else
                         {
@@ -269,12 +272,26 @@ namespace TanksRebirth.GameContent.UI
         }
 
         private static List<UITextButton> _missionButtons = new();
-        private static Rectangle _missionTab = new(0, 150, 350, 500);
+        private static Rectangle _missionTab = new(0, 150, 350, 535);
         private static Rectangle _missionButtonScissor;
         private static float _missionsOffset;
         private static float _missionsMaxOff;
 
         private static bool _saveMenuOpen;
+
+        /// <summary>
+        /// Moves the currently loaded mission on the loaded levels tab. Will throw a <see cref="IndexOutOfRangeException"/> if the mission is too high or low.
+        /// </summary>
+        /// <param name="up">Whether to move it up (a mission BACK) or down (a mission FORWARD)</param>
+        private static void MoveMission(bool up)
+        {
+            var thisMission = _loadedCampaign.CurrentMission;
+            var targetMission = _loadedCampaign.CachedMissions[_loadedCampaign.CurrentMissionId + (up ? -1 : 1)];
+
+            // CHECKME: works?
+            _loadedCampaign.CachedMissions[_loadedCampaign.CurrentMissionId] = targetMission;
+            _loadedCampaign.CachedMissions[_loadedCampaign.CurrentMissionId + (up ? -1 : 1)] = thisMission;
+        }
         private static void SetBarUIVisibility(bool visible)
         {
             PlayerTanksCategory.IsVisible =
@@ -362,7 +379,7 @@ namespace TanksRebirth.GameContent.UI
             TestLevel.SetDimensions(() => new(GameUtils.WindowWidth * 0.01f, GameUtils.WindowHeight * 0.725f), () => new Vector2(200, 50).ToResolution());
 
             TestLevel.OnLeftClick = (l) => {
-                Close();
+                Close(false);
                 TankGame.OverheadView = false;
 
                 _cachedMission = Mission.GetCurrent();
@@ -498,6 +515,9 @@ namespace TanksRebirth.GameContent.UI
 
                     btn.OnLeftClick = (a) =>
                     {
+                        _missionButtons.ForEach(x => x.Color = Color.White);
+                        btn.Color = Color.SkyBlue;
+
                         _loadedCampaign.CachedMissions[_loadedCampaign.CurrentMissionId] = Mission.GetCurrent(_loadedCampaign.CachedMissions[_loadedCampaign.CurrentMissionId].Name);
 
                         _loadedCampaign.LoadMission(index);
@@ -509,26 +529,37 @@ namespace TanksRebirth.GameContent.UI
                 }
             }
             var butn = new UITextButton("+", TankGame.TextFont, Color.White, () => Vector2.One.ToResolution());
-            butn.SetDimensions(() => new Vector2(_missionButtonScissor.X + 15.ToResolutionX(), _missionButtonScissor.Y + _missionsMaxOff - 30.ToResolutionY() + _missionsOffset), () => new Vector2(_missionButtonScissor.Width - 30.ToResolutionX(), 25.ToResolutionY()));
+            butn.Tooltip = "Insert a blank mission after the currently selected mission.";
+            butn.SetDimensions(() => new Vector2(_missionButtonScissor.X + 15.ToResolutionX(), _missionButtonScissor.Y + _missionButtonScissor.Height + 5.ToResolutionY()/*_missionButtonScissor.Y + _missionsMaxOff - 30.ToResolutionY() + _missionsOffset*/), () => new Vector2(_missionButtonScissor.Width - 30.ToResolutionX(), 25.ToResolutionY()));
             butn.OnLeftClick = (a) =>
             {
-                _loadedCampaign.CachedMissions[_loadedCampaign.CurrentMissionId] = Mission.GetCurrent();
 
                 _missionButtons.ForEach(x => x.Color = Color.White);
                 butn.Color = Color.SkyBlue;
 
                 // Array.Resize(ref _loadedCampaign.CachedMissions, _loadedCampaign.CachedMissions.Length + 1);
-                var id = _loadedCampaign.CachedMissions.Count(c => c != default);
-                _loadedCampaign.CachedMissions[id] = new(Array.Empty<TankTemplate>(), Array.Empty<BlockTemplate>());
-                _loadedCampaign.LoadMission(id);
+                var count = _loadedCampaign.CachedMissions.Count(c => c != default);
+                var id = _loadedCampaign.CurrentMissionId;
+                _loadedCampaign.CachedMissions[id] = Mission.GetCurrent(_loadedCampaign.CachedMissions[id].Name);
+
+                // move every mission up by 1 in the array.
+                for (int i = count; i > id + 1; i--) {
+                    if (i + 1 > _loadedCampaign.CachedMissions.Length) {
+                        Array.Resize(ref _loadedCampaign.CachedMissions, _loadedCampaign.CachedMissions.Length + 1);
+                    }
+                    _loadedCampaign.CachedMissions[i] = _loadedCampaign.CachedMissions[i - 1];
+                }
+
+                _loadedCampaign.CachedMissions[id + 1] = new(Array.Empty<TankTemplate>(), Array.Empty<BlockTemplate>());
+                _loadedCampaign.LoadMission(id + 1);
                 _loadedCampaign.SetupLoadedMission(true);
 
                 MissionName.Text = _loadedCampaign.CachedMissions[id].Name;
 
                 SetupMissionsBar(_loadedCampaign, false);
             };
-            butn.HasScissor = true;
-            butn.Scissor = () => _missionButtonScissor;
+            //butn.HasScissor = true;
+            //butn.Scissor = () => _missionButtonScissor;
             _missionButtons.Add(butn);
             UIElement.CunoSucks();
         }
@@ -568,7 +599,7 @@ namespace TanksRebirth.GameContent.UI
             }
             Editing = true;
         }
-        public static void Close()
+        public static void Close(bool toMainMenu)
         {
             Active = false;
             RemoveMissionButtons();
@@ -578,7 +609,8 @@ namespace TanksRebirth.GameContent.UI
             SetLevelEditorVisibility(false);
             SetSaveMenuVisibility(false);
             // SetMissionsVisibility(false);
-            _loadedCampaign = null;
+            if (toMainMenu)
+                _loadedCampaign = null;
             PlacementSquare.ResetSquares();
         }
 
@@ -636,7 +668,7 @@ namespace TanksRebirth.GameContent.UI
 
             if (_loadedCampaign != null) {
                 var heightDiff = 40;
-                _missionButtonScissor = new Rectangle(_missionTab.X, _missionTab.Y + heightDiff, _missionTab.Width, _missionTab.Height - heightDiff).ToResolution();
+                _missionButtonScissor = new Rectangle(_missionTab.X, _missionTab.Y + heightDiff, _missionTab.Width, _missionTab.Height - heightDiff * 2).ToResolution();
                 TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, _missionTab.ToResolution(), null, Color.Gray, 0f, Vector2.Zero, default, 0f);
                 TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Rectangle(_missionTab.X, _missionTab.Y, _missionTab.Width, heightDiff).ToResolution(), null, Color.White, 0f, Vector2.Zero, default, 0f);
                 TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "Mission List", new Vector2(175, 153).ToResolution(), Color.Black, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(Anchor.TopCenter, TankGame.TextFont.MeasureString("Mission List")));

@@ -108,6 +108,7 @@ namespace TanksRebirth.GameContent.Systems
             for (int i = 0; i < mission.Tanks.Length; i++) {
                 var tnk = mission.Tanks[i];
                 var tank = tnk.GetTank();
+                tank.TankRotation = -tnk.Rotation;
                 tank.TargetTankRotation = -tank.TankRotation - MathHelper.Pi;
             }
             for (int i = 0; i < mission.Blocks.Length; i++) {

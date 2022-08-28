@@ -182,7 +182,7 @@ namespace TanksRebirth.GameContent.UI
                     MainMenu.campaignNames.Clear();
                     MainMenu.Open();
                     if (LevelEditor.Active) {
-                        LevelEditor.Close();
+                        LevelEditor.Close(true);
                         LevelEditor.Editing = false;
                     }
                 }
