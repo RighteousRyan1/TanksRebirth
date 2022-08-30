@@ -27,7 +27,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Aether.Physics2D.MG" Version="1.6.1" />
-    <PackageReference Include="FontStashSharp.MonoGame" Version="1.0.8" />
+    <PackageReference Include="FontStashSharp.MonoGame" Version="1.2.0" />
     <PackageReference Include="LiteNetLib" Version="0.9.5.2" />
     <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.0.1641" />
     <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.0.1641" />

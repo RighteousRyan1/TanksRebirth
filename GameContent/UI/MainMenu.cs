@@ -1120,8 +1120,8 @@ namespace TanksRebirth.GameContent.UI
                 if ((NetPlay.CurrentServer is not null && (Server.ConnectedClients is not null || NetPlay.ServerName is not null)) || (Client.IsConnected() && Client.lobbyDataReceived))
                 {
                     Vector2 initialPosition = new(GameUtils.WindowWidth * 0.75f, GameUtils.WindowHeight * 0.25f);
-                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"\"{NetPlay.ServerName}\"", initialPosition - new Vector2(0, 40), Color.White, 0.6f);
-                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"Connected Players:", initialPosition, Color.White, 0.6f);
+                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"\"{NetPlay.ServerName}\"", initialPosition - new Vector2(0, 40), Color.White, new Vector2(0.6f));
+                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"Connected Players:", initialPosition, Color.White, new Vector2(0.6f));
                     for (int i = 0; i < Server.ConnectedClients.Count(x => x is not null); i++)
                     {
                         var client = Server.ConnectedClients[i];
@@ -1130,7 +1130,7 @@ namespace TanksRebirth.GameContent.UI
                         if (NetPlay.CurrentClient.Id == i)
                             textCol = Color.Green;
 
-                        TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"{client.Name}" + $" ({client.Id})", initialPosition + new Vector2(0, 20) * (i + 1), textCol, 0.6f);
+                        TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"{client.Name}" + $" ({client.Id})", initialPosition + new Vector2(0, 20) * (i + 1), textCol, new Vector2(0.6f));
                     }
                 }
                 var tanksMessageSize = TankGame.TextFont.MeasureString(tanksMessage);
