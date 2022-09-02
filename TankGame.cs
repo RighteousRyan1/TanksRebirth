@@ -837,6 +837,7 @@ namespace TanksRebirth
                 var presentationParams = GraphicsDevice.PresentationParameters;
                 gameTarget = new RenderTarget2D(GraphicsDevice, presentationParams.BackBufferWidth, presentationParams.BackBufferHeight, false, presentationParams.BackBufferFormat, presentationParams.DepthStencilFormat, 0, RenderTargetUsage.PreserveContents);
             }
+
             GraphicsDevice.SetRenderTarget(gameTarget);
             try
             {
@@ -848,11 +849,7 @@ namespace TanksRebirth
                 GraphicsDevice.Clear(ClearColor);
 
                 // TankFootprint.DecalHandler.UpdateRenderTarget();
-
-
                 SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied/*, transformMatrix: Matrix2D*/, rasterizerState: DefaultRasterizer);
-
-
 
                 if (DebugUtils.DebuggingEnabled)
                     SpriteRenderer.DrawString(TextFont, "Debug Level: " + DebugUtils.CurDebugLabel, new Vector2(10), Color.White, new Vector2(0.6f));
@@ -918,14 +915,6 @@ namespace TanksRebirth
 
                 SpriteRenderer.End();
 
-                base.Draw(gameTime);
-
-                SpriteRenderer.Begin(blendState: BlendState.AlphaBlend, effect: GameShaders.MouseShader, rasterizerState: DefaultRasterizer);
-
-                MouseRenderer.DrawMouse();
-
-                SpriteRenderer.End();
-
                 foreach (var triangle in Triangle2D.triangles)
                     triangle.DrawImmediate();
                 foreach (var qu in Quad3D.quads)
@@ -942,8 +931,19 @@ namespace TanksRebirth
 
             GraphicsDevice.SetRenderTarget(null);
 
-            SpriteRenderer.Begin();
+            SpriteRenderer.Begin(effect: GameShaders.TestShader);
             SpriteRenderer.Draw(gameTarget, Vector2.Zero, Color.White);
+            SpriteRenderer.End();
+
+            SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: DefaultRasterizer);
+            GameHandler.RenderUI();
+            IntermissionSystem.Draw(SpriteRenderer);
+            SpriteRenderer.End();
+
+            SpriteRenderer.Begin(blendState: BlendState.AlphaBlend, effect: GameShaders.MouseShader, rasterizerState: DefaultRasterizer);
+
+            MouseRenderer.DrawMouse();
+
             SpriteRenderer.End();
 
             OnPostDraw?.Invoke(gameTime);

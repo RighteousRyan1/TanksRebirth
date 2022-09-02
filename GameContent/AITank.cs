@@ -187,7 +187,7 @@ namespace TanksRebirth.GameContent
         {
             Tier = tier;
 
-            if ((int)tier <= (int)TankID.Marble)
+            if (tier <= (int)TankID.Marble)
                 _tankTexture = Assets[$"tank_" + tier.ToString().ToLower()];
             #region Special
 

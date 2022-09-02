@@ -171,13 +171,14 @@ namespace TanksRebirth.GameContent.Systems
                         var tank = template.GetAiTank();
 
                         tank.Position = template.Position;
-                        tank.TankRotation = -template.Rotation;
-                        tank.TargetTankRotation = template.Rotation - MathHelper.Pi;
-                        tank.TurretRotation = -template.Rotation;
+                        tank.TankRotation = template.Rotation;
+                        tank.TargetTankRotation = -template.Rotation + MathHelper.Pi;
+                        tank.TurretRotation = template.Rotation;
                         tank.Dead = false;
                         tank.Team = template.Team;
                         if (GameProperties.ShouldMissionsProgress)
                         {
+                            // TODO: fix the leak, dumbass
                             tank.OnDestroy += (sender, e) =>
                             {
                                 TrackedSpawnPoints[Array.IndexOf(TrackedSpawnPoints, TrackedSpawnPoints.First(pos => pos.Item1 == template.Position))].Item2 = false; // make sure the tank is not spawned again

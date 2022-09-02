@@ -401,6 +401,10 @@ namespace TanksRebirth.Internals.Common.Utilities
         {
             return new Vector2(input.X / WindowWidth - 0.5f, input.Y / WindowHeight - 0.5f) * 2;
         }
+        public static Vector2 ToCartesianCoordinates(this Vector2 input)
+        {
+            return new Vector2(input.X / WindowWidth, input.Y / WindowHeight);
+        }
         public static Vector2 Flatten(this Vector3 vector) => new(vector.X, vector.Y);
 
         public static Vector2 FlattenZ(this Vector3 vector) => new(vector.X, vector.Z);

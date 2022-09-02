@@ -573,25 +573,6 @@ namespace TanksRebirth.GameContent
                 DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"{achievement.Name}: {(achievement.IsComplete ? "Complete" : "Incomplete")}",
                     new Vector2(8, 24 + (i * 20)), level: DebugUtils.Id.AchievementData, centered: false);
             }
-            // TODO: Fix translation
-            // TODO: Scaling with screen size.
-
-            foreach (var element in UIElement.AllUIElements.ToList()) {
-                // element.Position = Vector2.Transform(element.Position, UIMatrix * Matrix.CreateTranslation(element.Position.X, element.Position.Y, 0));
-                if (element.Parent != null)
-                    continue;
-
-                if (element.HasScissor)
-                    TankGame.SpriteRenderer.End();
-
-                element?.Draw(TankGame.SpriteRenderer);
-
-                if (element.HasScissor)
-                    TankGame.SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: TankGame.DefaultRasterizer);
-            }
-            foreach (var element in UIElement.AllUIElements.ToList()) {
-                element?.DrawTooltips(TankGame.SpriteRenderer);
-            }
 
             tankToSpawnType = MathHelper.Clamp(tankToSpawnType, 2, TankID.Collection.Count - 1);
             tankToSpawnTeam = MathHelper.Clamp(tankToSpawnTeam, 0, TeamID.Collection.Count - 1);
@@ -627,7 +608,6 @@ namespace TanksRebirth.GameContent
                 }
                 IntermissionSystem.DrawShadowedString(TankGame.TextFontLarge, new Vector2(80.ToResolutionX(), GameUtils.WindowHeight * 0.9f - 14f.ToResolutionY()), Vector2.One, $"{PlayerTank.KillCount}", new(119, 190, 238), new Vector2(0.675f).ToResolution(), 1f);
             }
-            IntermissionSystem.Draw(TankGame.SpriteRenderer);
 
             ChatSystem.DrawMessages();
 
@@ -647,6 +627,25 @@ namespace TanksRebirth.GameContent
             }
             GameUI.MissionInfoBar.IsVisible = !MainMenu.Active && !LevelEditor.Active && !CampaignCompleteUI.IsViewingResults;
             OnPostRender?.Invoke();
+        }
+        public static void RenderUI()
+        {
+            foreach (var element in UIElement.AllUIElements.ToList())
+            {
+                // element.Position = Vector2.Transform(element.Position, UIMatrix * Matrix.CreateTranslation(element.Position.X, element.Position.Y, 0));
+                if (element.Parent != null)
+                    continue;
+
+                if (element.HasScissor)
+                    TankGame.SpriteRenderer.End();
+
+                element?.Draw(TankGame.SpriteRenderer);
+
+                if (element.HasScissor)
+                    TankGame.SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: TankGame.DefaultRasterizer);
+            }
+            foreach (var element in UIElement.AllUIElements.ToList())
+                element?.DrawTooltips(TankGame.SpriteRenderer);
         }
         private static int _oldelta;
         public static void HandleLevelEditorModifications()
@@ -1093,15 +1092,30 @@ namespace TanksRebirth.GameContent
     }
     public class GameShaders
     {
-        public static Effect MouseShader { get; set; }
-        public static Effect GaussianBlurShader { get; set; }
+        public static Effect MouseShader { get; private set; }
+        public static Effect GaussianBlurShader { get; private set; }
+
+        public static Effect TestShader { get; private set; }
+
+        private static bool _lantern;
+        public static bool LanternMode
+        {
+            get => _lantern;
+            set
+            {
+                _lantern = value;
+                TestShader.Parameters["oLantern"]?.SetValue(value);
+            }
+        }
 
         public static void Initialize()
         {
             GaussianBlurShader = GameResources.GetGameResource<Effect>("Assets/Shaders/GaussianBlur");
             MouseShader = GameResources.GetGameResource<Effect>("Assets/Shaders/MouseShader");
+            TestShader = GameResources.GetGameResource<Effect>("Assets/Shaders/testshader");
+            // LanternMode = true;
         }
-
+        //static float val = 1f;
         public static void UpdateShaders()
         {
             MouseShader.Parameters["oGlobalTime"].SetValue((float)TankGame.LastGameTime.TotalGameTime.TotalSeconds);
@@ -1112,6 +1126,22 @@ namespace TanksRebirth.GameContent
 
             GaussianBlurShader.Parameters["oResolution"].SetValue(new Vector2(GameUtils.WindowWidth, GameUtils.WindowHeight));
             GaussianBlurShader.Parameters["oBlurFactor"].SetValue(6f);
+
+            /*if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Up))
+                val += 0.01f;
+            else if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Down))
+                val -= 0.01f;*/
+
+
+            TestShader.Parameters["oTime"]?.SetValue((float)TankGame.LastGameTime.TotalGameTime.TotalSeconds);
+            //TestShader.Parameters["oBend"]?.SetValue(val);
+            //TestShader.Parameters["oDistortionFactor"].SetValue(GameUtils.MousePosition.X / GameUtils.WindowWidth);
+
+            var index = Array.FindIndex(GameHandler.AllPlayerTanks, x => x is not null && !x.Dead);
+            var pos = index > -1 ? GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(GameHandler.AllPlayerTanks[index].Position.X, 11, GameHandler.AllPlayerTanks[index].Position.Y), TankGame.GameView, TankGame.GameProjection).ToCartesianCoordinates() : new Vector2(-1);
+            // var val = (float)TankGame.LastGameTime.TotalGameTime.TotalSeconds;
+            TestShader.Parameters["oPower"]?.SetValue(MainMenu.Active ? 100f : GameHandler.GameRand.NextFloat(0.195f, 0.20f));
+            TestShader.Parameters["oPosition"]?.SetValue(pos/*GameUtils.MousePosition.ToCartesianCoordinates()*/);
         }
     }
 }

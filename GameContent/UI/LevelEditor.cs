@@ -136,7 +136,8 @@ namespace TanksRebirth.GameContent.UI
                         var realName = Path.HasExtension(res.Path) ? Path.GetFileNameWithoutExtension(res.Path) : Path.GetFileName(res.Path);
                         var path = res.Path.Replace(realName, string.Empty);
 
-                        _loadedCampaign.CachedMissions[_loadedCampaign.CurrentMissionId] = Mission.GetCurrent();
+                        var misName = _loadedCampaign.CachedMissions[_loadedCampaign.CurrentMissionId].Name;
+                        _loadedCampaign.CachedMissions[_loadedCampaign.CurrentMissionId] = Mission.GetCurrent(misName);
                         if (_viewMissionDetails)
                             Mission.Save(name, path, false, realName);
                         else
@@ -382,7 +383,8 @@ namespace TanksRebirth.GameContent.UI
                 Close(false);
                 TankGame.OverheadView = false;
 
-                _cachedMission = Mission.GetCurrent();
+                var name = _loadedCampaign.CachedMissions[_loadedCampaign.CurrentMissionId].Name;
+                _cachedMission = Mission.GetCurrent(name);
             };
 
             ReturnToEditor = new("Return to Editor", TankGame.TextFont, Color.White);
@@ -394,6 +396,7 @@ namespace TanksRebirth.GameContent.UI
                 GameProperties.InMission = false;
                 GameHandler.CleanupScene();
                 Mission.LoadDirectly(_cachedMission);
+                SetupMissionsBar(_loadedCampaign);
             };
 
             Perspective = new("Perspective", TankGame.TextFont, Color.White);
@@ -518,7 +521,9 @@ namespace TanksRebirth.GameContent.UI
                         _missionButtons.ForEach(x => x.Color = Color.White);
                         btn.Color = Color.SkyBlue;
 
-                        _loadedCampaign.CachedMissions[_loadedCampaign.CurrentMissionId] = Mission.GetCurrent(_loadedCampaign.CachedMissions[_loadedCampaign.CurrentMissionId].Name);
+                        var mission = _loadedCampaign.CachedMissions[_loadedCampaign.CurrentMissionId];
+
+                        _loadedCampaign.CachedMissions[_loadedCampaign.CurrentMissionId] = Mission.GetCurrent(mission.Name);
 
                         _loadedCampaign.LoadMission(index);
                         _loadedCampaign.SetupLoadedMission(true);
