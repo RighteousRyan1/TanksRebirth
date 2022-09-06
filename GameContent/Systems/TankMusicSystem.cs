@@ -21,21 +21,31 @@ namespace TanksRebirth.GameContent.Systems
 
         public static OggMusic SnowLoop;
 
+        public static float Pitch = 0f;
+        public static float Pan = 0f;
+        public static float VolumeMultiplier = 1f;
+
         public static void Update()
         {
-            if (MapRenderer.Theme == MapTheme.Christmas)
-            {
+            Pitch = 0f;
+            Pan = 0f;
+            if (MapRenderer.Theme == MapTheme.Christmas) {
                 SnowLoop.SetVolume(TankGame.Settings.AmbientVolume);
                 return;
             }
 
             SnowLoop.Volume = 0;
 
-            var musicVolume = TankGame.Settings.MusicVolume;
+            if (GameShaders.LanternMode)
+            {
+                // Pitch -= 0.05f;
+            }
 
             foreach (var song in Songs)
                 if (song is not null)
                     song.SetVolume(0f);
+
+            var musicVolume = TankGame.Settings.MusicVolume * VolumeMultiplier;
 
 
             if (TierHighest == TankID.Brown)
@@ -93,7 +103,6 @@ namespace TanksRebirth.GameContent.Systems
 
 
             // vanilla above, master below
-
 
 
             if (TierHighest == TankID.Bronze)
@@ -212,6 +221,16 @@ namespace TanksRebirth.GameContent.Systems
             if (TierHighest == TankID.Commando)
                 commando.SetVolume(musicVolume);
 
+            int index = Array.FindIndex(Songs, x => x.Volume > 0);
+
+            if (index > -1)
+            {
+                Songs[index].BackingAudio.Instance.Pitch = Pitch;
+                Songs[index].BackingAudio.Instance.Pan = Pan;
+                CurrentSong = Songs[index];
+            }
+
+            
             // we call this hardcode hell in the west
         }
 
@@ -288,6 +307,7 @@ namespace TanksRebirth.GameContent.Systems
         public static OggMusic assassin;
         public static OggMusic commando;
         #endregion
+        public static OggMusic CurrentSong;
 
         public static OggMusic[] Songs;
 

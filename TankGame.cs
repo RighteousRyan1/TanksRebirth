@@ -938,6 +938,8 @@ namespace TanksRebirth
             SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: DefaultRasterizer);
             GameHandler.RenderUI();
             IntermissionSystem.Draw(SpriteRenderer);
+            if (CampaignCompleteUI.IsViewingResults)
+                CampaignCompleteUI.Render();
             SpriteRenderer.End();
 
             SpriteRenderer.Begin(blendState: BlendState.AlphaBlend, effect: GameShaders.MouseShader, rasterizerState: DefaultRasterizer);

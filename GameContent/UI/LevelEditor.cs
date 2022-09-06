@@ -95,6 +95,9 @@ namespace TanksRebirth.GameContent.UI
 
         private static readonly List<UITextInput> _campaignElems = new();
 
+        public static Color SelectedColor = Color.SkyBlue;
+        public static Color UnselectedColor = Color.White;
+
         // reduce hardcode -- make a variable that tracks height.
         public static void InitializeSaveMenu()
         {
@@ -286,12 +289,41 @@ namespace TanksRebirth.GameContent.UI
         /// <param name="up">Whether to move it up (a mission BACK) or down (a mission FORWARD)</param>
         private static void MoveMission(bool up)
         {
+            if (up)
+            {
+                if (_loadedCampaign.CurrentMissionId == 0)
+                {
+                    SoundPlayer.SoundError();
+                    ChatSystem.SendMessage("No mission above this one!", Color.Red);
+                    return;
+                }
+            }
+            else
+            {
+                var count = _loadedCampaign.CachedMissions.Count(x => x != default);
+                if (_loadedCampaign.CurrentMissionId >= count - 1)
+                {
+                    SoundPlayer.SoundError();
+                    ChatSystem.SendMessage("No mission below this one!", Color.Red);
+                    return;
+                }
+            }
+
+
             var thisMission = _loadedCampaign.CurrentMission;
             var targetMission = _loadedCampaign.CachedMissions[_loadedCampaign.CurrentMissionId + (up ? -1 : 1)];
 
             // CHECKME: works?
             _loadedCampaign.CachedMissions[_loadedCampaign.CurrentMissionId] = targetMission;
             _loadedCampaign.CachedMissions[_loadedCampaign.CurrentMissionId + (up ? -1 : 1)] = thisMission;
+
+            _loadedCampaign.LoadMission(_loadedCampaign.CurrentMissionId + (up ? -1 : 1));
+
+            // _campaignElems.First(x => x.Text == _loadedCampaign.CurrentMission.Name).Color = SelectedColor;
+
+            SetupMissionsBar(_loadedCampaign);
+
+            _missionButtons[_loadedCampaign.CurrentMissionId].Color = SelectedColor;
         }
         private static void SetBarUIVisibility(bool visible)
         {
@@ -518,8 +550,8 @@ namespace TanksRebirth.GameContent.UI
 
                     btn.OnLeftClick = (a) =>
                     {
-                        _missionButtons.ForEach(x => x.Color = Color.White);
-                        btn.Color = Color.SkyBlue;
+                        _missionButtons.ForEach(x => x.Color = UnselectedColor);
+                        btn.Color = SelectedColor;
 
                         var mission = _loadedCampaign.CachedMissions[_loadedCampaign.CurrentMissionId];
 
@@ -533,14 +565,15 @@ namespace TanksRebirth.GameContent.UI
                     _missionButtons.Add(btn);
                 }
             }
-            var butn = new UITextButton("+", TankGame.TextFont, Color.White, () => Vector2.One.ToResolution());
-            butn.Tooltip = "Insert a blank mission after the currently selected mission.";
-            butn.SetDimensions(() => new Vector2(_missionButtonScissor.X + 15.ToResolutionX(), _missionButtonScissor.Y + _missionButtonScissor.Height + 5.ToResolutionY()/*_missionButtonScissor.Y + _missionsMaxOff - 30.ToResolutionY() + _missionsOffset*/), () => new Vector2(_missionButtonScissor.Width - 30.ToResolutionX(), 25.ToResolutionY()));
-            butn.OnLeftClick = (a) =>
+            var addMission = new UITextButton("+", TankGame.TextFont, Color.White, () => Vector2.One.ToResolution()) {
+                Tooltip = "Insert a blank mission after the currently selected mission."
+            };
+            addMission.SetDimensions(() => new Vector2(_missionButtonScissor.X + 15.ToResolutionX(), _missionButtonScissor.Y + _missionButtonScissor.Height + 5.ToResolutionY()), () => new Vector2(_missionButtonScissor.Width / 2, 25.ToResolutionY()));
+            addMission.OnLeftClick = (a) =>
             {
 
                 _missionButtons.ForEach(x => x.Color = Color.White);
-                butn.Color = Color.SkyBlue;
+                addMission.Color = Color.SkyBlue;
 
                 // Array.Resize(ref _loadedCampaign.CachedMissions, _loadedCampaign.CachedMissions.Length + 1);
                 var count = _loadedCampaign.CachedMissions.Count(c => c != default);
@@ -562,10 +595,30 @@ namespace TanksRebirth.GameContent.UI
                 MissionName.Text = _loadedCampaign.CachedMissions[id].Name;
 
                 SetupMissionsBar(_loadedCampaign, false);
+
+                _missionButtons[id + 1].Color = SelectedColor;
             };
-            //butn.HasScissor = true;
-            //butn.Scissor = () => _missionButtonScissor;
-            _missionButtons.Add(butn);
+            _missionButtons.Add(addMission);
+
+            var moveMissionUp = new UITextButton("v", TankGame.TextFont, Color.White, () => Vector2.One.ToResolution()) {
+                Tooltip = "Swap the currently selected mission with the one above it.",
+                TextRotation = MathHelper.Pi
+            };
+            moveMissionUp.SetDimensions(() => new(addMission.Position.X + addMission.Size.X, addMission.Position.Y), () => new Vector2(_missionButtonScissor.Width / 5, addMission.Size.Y));
+            moveMissionUp.OnLeftClick = (a) => {
+                MoveMission(true);
+            };
+            _missionButtons.Add(moveMissionUp);
+
+            var moveMissionDown = new UITextButton("v", TankGame.TextFont, Color.White, () => Vector2.One.ToResolution())
+            {
+                Tooltip = "Swap the currently selected mission with the one below it.",
+            };
+            moveMissionDown.SetDimensions(() => new(addMission.Position.X + addMission.Size.X + moveMissionUp.Size.X, addMission.Position.Y), () => new Vector2(moveMissionUp.Size.X, addMission.Size.Y));
+            moveMissionDown.OnLeftClick = (a) => {
+                MoveMission(false);
+            };
+            _missionButtons.Add(moveMissionDown);
             UIElement.CunoSucks();
         }
         private static void RemoveMissionButtons()

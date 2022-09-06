@@ -80,7 +80,6 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
 
             return sfx;
         }
-
         public static SoundEffectInstance PlaySoundInstance(SoundEffect fromSound, SoundContext context, Vector3 position, Matrix world, float volume = 1f)
         {
             switch (context)
@@ -109,6 +108,8 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
 
             return sfx;
         }
+
+        public static OggAudio SoundError() => PlaySoundInstance("Assets/sounds/menu/menu_error", SoundContext.Effect);
     }
     public enum SoundContext : byte
     {

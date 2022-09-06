@@ -558,9 +558,6 @@ namespace TanksRebirth.GameContent
             if (LevelEditor.Active)
                 LevelEditor.Render();
 
-            if (CampaignCompleteUI.IsViewingResults)
-                CampaignCompleteUI.Render();
-
             foreach (var body in Tank.CollisionsWorld.BodyList.ToList())
             {
                 DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"BODY", 
@@ -584,7 +581,7 @@ namespace TanksRebirth.GameContent
             DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"CubeStack: {blockHeight} | CubeType: {BlockID.Collection.GetKey(blockType)}", GameUtils.WindowBottom - new Vector2(0, 20), 3, centered: true);
 
             DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"HighestTier: {AITank.GetHighestTierActive()}", new(10, GameUtils.WindowHeight * 0.26f), 1);
-            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"CurSong: {(Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f) != null ? Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f).Name : "N/A")}", new(10, GameUtils.WindowHeight - 100), 1);
+            // DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"CurSong: {(Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f) != null ? Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f).Name : "N/A")}", new(10, GameUtils.WindowHeight - 100), 1);
             for (int i = 0; i < TankID.Collection.Count; i++) {
                 DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"{TankID.Collection.GetKey(i)}: {AITank.GetTankCountOfType(i)}", new(10, GameUtils.WindowHeight * 0.3f + (i * 20)), 1);
             }
@@ -1113,7 +1110,6 @@ namespace TanksRebirth.GameContent
             GaussianBlurShader = GameResources.GetGameResource<Effect>("Assets/Shaders/GaussianBlur");
             MouseShader = GameResources.GetGameResource<Effect>("Assets/Shaders/MouseShader");
             TestShader = GameResources.GetGameResource<Effect>("Assets/Shaders/testshader");
-            // LanternMode = true;
         }
         //static float val = 1f;
         public static void UpdateShaders()

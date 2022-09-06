@@ -63,7 +63,7 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
         public void Resume()
             => BackingAudio?.Instance.Resume();
         public void SetVolume(float volume)
-            => BackingAudio.Instance.Volume = volume;
+            => Volume = volume;
         public void Stop()
             => BackingAudio?.Instance.Stop();
 

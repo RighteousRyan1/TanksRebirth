@@ -111,6 +111,8 @@ namespace TanksRebirth.GameContent.UI
 
         public static UITextButton FFA;
 
+        public static UITextButton LanternMode;
+
         #endregion
 
         private static float _tnkSpeed = 2.4f;
@@ -655,6 +657,17 @@ namespace TanksRebirth.GameContent.UI
                 OnLeftClick = (elem) => Difficulties.Types["FFA"] = !Difficulties.Types["FFA"]
             };
             FFA.SetDimensions(800, 400, 300, 40);
+
+            LanternMode = new("Lantern Mode", font, Color.White)
+            {
+                IsVisible = false,
+                Tooltip = "Everything is dark. Only you and your lantern can save you now.",
+                OnLeftClick = (elem) => {
+                    Difficulties.Types["LanternMode"] = !Difficulties.Types["LanternMode"];
+                    GameShaders.LanternMode = Difficulties.Types["LanternMode"];
+                }
+            };
+            LanternMode.SetDimensions(800, 450, 300, 40);
         }
         private static void SetCampaignDisplay()
         {
@@ -713,13 +726,13 @@ namespace TanksRebirth.GameContent.UI
                         {
                             // if it is, notify the user that the checkpoint is too high via the chat, and play the error sound
                             ChatSystem.SendMessage($"{elem.Text} has no mission {MissionCheckpoint + 1}.", Color.Red);
-                            SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_error", SoundContext.Effect);
+                            SoundPlayer.SoundError();
                             return;
                         }
                         else if (MissionCheckpoint < 0)
                         {
                             ChatSystem.SendMessage($"You scallywag! No campaign has a mission {MissionCheckpoint + 1}!", Color.Red);
-                            SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_error", SoundContext.Effect);
+                            SoundPlayer.SoundError();
                             return;
                         }
 
@@ -826,6 +839,7 @@ namespace TanksRebirth.GameContent.UI
             RandomizedPlayer.IsVisible = visible;
             BulletBlocking.IsVisible = visible;
             FFA.IsVisible = visible;
+            LanternMode.IsVisible = visible;
         }
         internal static void SetPrimaryMenuButtonsVisibility(bool visible)
         {
@@ -925,6 +939,7 @@ namespace TanksRebirth.GameContent.UI
             RandomizedPlayer.Color = Difficulties.Types["RandomPlayer"] ? Color.Lime : Color.Red;
             BulletBlocking.Color = Difficulties.Types["BulletBlocking"] ? Color.Lime : Color.Red;
             FFA.Color = Difficulties.Types["FFA"] ? Color.Lime : Color.Red;
+            LanternMode.Color = Difficulties.Types["LanternMode"] ? Color.Lime : Color.Red;
 
             if (_musicFading)
             {

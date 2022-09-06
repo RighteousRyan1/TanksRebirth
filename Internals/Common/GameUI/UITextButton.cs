@@ -19,6 +19,8 @@ namespace TanksRebirth.Internals.Common.GameUI
 
         public Func<Vector2> TextScale { get; set; }
 
+        public float TextRotation;
+
         public static bool AutoResolutionHandle = true;
         public bool DrawText = true;
         public UITextButton(string text, SpriteFontBase font, Color color, Func<Vector2> textScale) : base(null, 1, null)
@@ -62,7 +64,7 @@ namespace TanksRebirth.Internals.Common.GameUI
             SpriteFontBase font = TankGame.TextFont;
             Vector2 drawOrigin = font.MeasureString(Text) / 2f;
             if (TextScale != null && DrawText)
-                spriteBatch.DrawString(font, Text, Hitbox.Center.ToVector2(), Color.Black, AutoResolutionHandle ? TextScale.Invoke().ToResolution() : TextScale.Invoke(), 0, drawOrigin);
+                spriteBatch.DrawString(font, Text, Hitbox.Center.ToVector2(), Color.Black, AutoResolutionHandle ? TextScale.Invoke().ToResolution() : TextScale.Invoke(), TextRotation, drawOrigin);
         }
     }
 }
