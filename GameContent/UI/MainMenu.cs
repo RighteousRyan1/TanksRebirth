@@ -1165,11 +1165,16 @@ namespace TanksRebirth.GameContent.UI
                     TankGame.SpriteRenderer.DrawString(TankGame.TextFont, TankGame.Instance.MOTD, LogoPosition + LogoTexture.Size() * LogoScale * 0.3f, Color.White, LogoScale * 1.5f, LogoRotation - 0.25f, GameUtils.GetAnchor(Anchor.TopCenter, size));
                 }
 
-                if (campaignNames.Count == 1)
+                if (!campaignNames.Any(x =>
                 {
-                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"You have no campaigns!" +
-                        $"\nTry downloading the Vanilla campaign by pressing 'Enter' or making your own." +
-                        $"\nCampaign folders belong in '{Path.Combine(TankGame.SaveDirectory, "Campaigns")}' (press TAB to open on Windows)", new(12, 12), Color.White, new(0.75f), 0f, Vector2.Zero);
+                    if (x is UITextButton btn)
+                        return btn.Text == "Vanilla"; // i fucking hate this hardcode. but i'll cry about it later.
+                    return false;
+                }) && MenuState == State.Campaigns)
+                {
+                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"You are missing the vanilla campaign!" +
+                        $"\nTry downloading the Vanilla campaign by pressing 'Enter'." +
+                        $"\nCampaign files belong in '{Path.Combine(TankGame.SaveDirectory, "Campaigns").Replace(Environment.UserName, "%UserName%")}' (press TAB to open on Windows)", new(12, 12), Color.White, new(0.75f), 0f, Vector2.Zero);
 
                     if (Input.KeyJustPressed(Keys.Tab))
                     {
@@ -1180,14 +1185,20 @@ namespace TanksRebirth.GameContent.UI
                     if (Input.KeyJustPressed(Keys.Enter))
                     {
                         try {
-                            var bytes = WebUtils.DownloadWebFile("https://github.com/RighteousRyan1/tanks_rebirth_motds/blob/master/Vanilla.rar?raw=true", out var filename);
+                            /*var bytes = WebUtils.DownloadWebFile("https://github.com/RighteousRyan1/tanks_rebirth_motds/blob/master/Vanilla.rar?raw=true", out var filename);
                             var path = Path.Combine(TankGame.SaveDirectory, "Campaigns", filename);
                             File.WriteAllBytes(path, bytes);
 
                             using (var archive = new RarArchive(path))
                                 archive.ExtractToDirectory(Path.Combine(TankGame.SaveDirectory, "Campaigns", ""));
 
-                            File.Delete(path);
+                            File.Delete(path);*/
+                            // ^ before campaign files.
+
+                            var bytes = WebUtils.DownloadWebFile("https://github.com/RighteousRyan1/tanks_rebirth_motds/blob/master/Vanilla.campaign?raw=true", out var filename);
+                            var path = Path.Combine(TankGame.SaveDirectory, "Campaigns", filename);
+                            File.WriteAllBytes(path, bytes);
+
 
                             SetCampaignDisplay();
 

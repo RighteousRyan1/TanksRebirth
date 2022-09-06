@@ -103,7 +103,7 @@ namespace TanksRebirth.GameContent.Systems
         {
             PlacementSquare.ResetSquares();
             //foreach (var body in Tank.CollisionsWorld.BodyList)
-                //Tank.CollisionsWorld.Remove(body);
+            //Tank.CollisionsWorld.Remove(body);
             for (int a = 0; a < GameHandler.AllTanks.Length; a++)
                 GameHandler.AllTanks[a]?.Remove();
             for (int i = 0; i < LoadedMission.Tanks.Length; i++)
@@ -340,34 +340,32 @@ namespace TanksRebirth.GameContent.Systems
             var editorVersion = reader.ReadInt32();
             if (editorVersion < 2)
                 throw new FileLoadException($"Cannot load a campaign at this level editor version! File name = \"{fileName}\"");
-            else {
-                // first available version.
-                if (editorVersion == 2) {
-                    var totalMissions = reader.ReadInt32();
+            // first available version.
+            if (editorVersion == 2) {
+                var totalMissions = reader.ReadInt32();
 
-                    campaign.CachedMissions = new Mission[totalMissions];
+                campaign.CachedMissions = new Mission[totalMissions];
 
-                    campaign.MetaData.Name = reader.ReadString();
-                    campaign.MetaData.Description = reader.ReadString();
-                    campaign.MetaData.Author = reader.ReadString();
-                    campaign.MetaData.Tags = new string[reader.ReadInt32()];
-                    for (int j = 0; j < campaign.MetaData.Tags.Length; j++)
-                        campaign.MetaData.Tags[j] = reader.ReadString();
-                    campaign.MetaData.StartingLives = reader.ReadInt32();
-                    campaign.MetaData.ExtraLivesMissions = new int[reader.ReadInt32()];
-                    for (int j = 0; j < campaign.MetaData.ExtraLivesMissions.Length; j++)
-                        campaign.MetaData.ExtraLivesMissions[j] = reader.ReadInt32();
-                    campaign.MetaData.Version = reader.ReadString();
-                    campaign.MetaData.HasMajorVictory = reader.ReadBoolean();
-                    campaign.MetaData.MissionStripColor = reader.ReadColor();
-                    campaign.MetaData.BackgroundColor = reader.ReadColor();
+                campaign.MetaData.Name = reader.ReadString();
+                campaign.MetaData.Description = reader.ReadString();
+                campaign.MetaData.Author = reader.ReadString();
+                campaign.MetaData.Tags = new string[reader.ReadInt32()];
+                for (int j = 0; j < campaign.MetaData.Tags.Length; j++)
+                    campaign.MetaData.Tags[j] = reader.ReadString();
+                campaign.MetaData.StartingLives = reader.ReadInt32();
+                campaign.MetaData.ExtraLivesMissions = new int[reader.ReadInt32()];
+                for (int j = 0; j < campaign.MetaData.ExtraLivesMissions.Length; j++)
+                    campaign.MetaData.ExtraLivesMissions[j] = reader.ReadInt32();
+                campaign.MetaData.Version = reader.ReadString();
+                campaign.MetaData.HasMajorVictory = reader.ReadBoolean();
+                campaign.MetaData.MissionStripColor = reader.ReadColor();
+                campaign.MetaData.BackgroundColor = reader.ReadColor();
 
-                    for (int i = 0; i < totalMissions; i++)
-                    {
-                        // TODO: do for loop, load each.
+                for (int i = 0; i < totalMissions; i++)
+                {
+                    // TODO: do for loop, load each.
 
-                        campaign.CachedMissions[i] = Mission.Read(reader);
-                    }
+                    campaign.CachedMissions[i] = Mission.Read(reader);
                 }
             }
             return campaign;

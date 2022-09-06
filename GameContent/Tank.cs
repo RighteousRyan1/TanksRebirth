@@ -474,8 +474,7 @@ namespace TanksRebirth.GameContent
             if (CurMineCooldown > 0)
                 CurMineCooldown--;
 
-            if (CurShootStun > 0 || CurMineStun > 0 || Properties.Stationary && IsIngame)
-            {
+            if (CurShootStun > 0 || CurMineStun > 0 || Properties.Stationary && IsIngame) {
                 Body.LinearVelocity = Vector2.Zero;
                 Velocity = Vector2.Zero;
             }
@@ -798,16 +797,16 @@ namespace TanksRebirth.GameContent
                 $"Team: {Team}",
                 $"OwnedShellCount: {OwnedShellCount}",
                 $"OwnedMineCount: {OwnedMineCount}",
-                $"Speed / MaxSpeed / Velocity: {Properties.Speed} / {Properties.MaxSpeed} / {Velocity}",
-                $"Invisible: {Properties.Invisible}",
+                // $"Speed / MaxSpeed / Velocity: {Properties.Speed} / {Properties.MaxSpeed} / {Velocity}",
                 $"ShellCooldown: {Properties.ShellCooldown}",
-                $"MineCooldown: {Properties.MineCooldown}"
+                $"MineCooldown: {Properties.MineCooldown}",
+                $"Tank Rotation/Target: {TankRotation}/{TargetTankRotation}"
             };
 
             // TankGame.spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), CollisionBox2D, Color.White * 0.75f);
 
             for (int i = 0; i < info.Length; i++)
-                DebugUtils.DrawDebugString(TankGame.SpriteRenderer, info[i], GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, (info.Length * 20) + (i * 20)), 1, centered: true);
+                DebugUtils.DrawDebugString(TankGame.SpriteRenderer, info[i], GeometryUtils.ConvertWorldToScreen(Vector3.Up * 20, World, View, Projection) - new Vector2(0, i * (TankGame.TextFont.MeasureString(info[i]).Y * 0.6f + 8)), 1, centered: true);
 
         }
         public uint CurShootStun { get; private set; } = 0;
