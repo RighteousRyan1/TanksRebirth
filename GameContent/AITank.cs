@@ -2465,7 +2465,8 @@ namespace TanksRebirth.GameContent
 
                     #region TankRotation
 
-                    var targ = TargetTankRotation + MathHelper.Pi;
+                    // i really hope to remove this hardcode.
+                    var targ = TargetTankRotation + MathHelper.Pi; 
 
                     if (doMoveTowards)
                     {
@@ -2484,7 +2485,9 @@ namespace TanksRebirth.GameContent
                             }
                         }
 
-                        if (TankRotation > targ - Properties.MaximalTurn - MathHelper.ToRadians(5) && TankRotation < targ + Properties.MaximalTurn + MathHelper.ToRadians(5))
+                        IsTurning = !(TankRotation > targ - Properties.MaximalTurn - MathHelper.ToRadians(5) && TankRotation < targ + Properties.MaximalTurn + MathHelper.ToRadians(5))
+
+                        if (!IsTurning)
                         {
                             IsTurning = false;
                             Properties.Speed += Properties.Acceleration;
