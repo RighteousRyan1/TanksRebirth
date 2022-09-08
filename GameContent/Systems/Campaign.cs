@@ -110,63 +110,14 @@ namespace TanksRebirth.GameContent.Systems
             {
                 var template = LoadedMission.Tanks[i];
 
-                if (!spawnNewSet)
+                if (GameProperties.ShouldMissionsProgress)
                 {
-                    if (TrackedSpawnPoints[i].Item2) // check for alive tank
-                    {
-                        if (!template.IsPlayer)
-                        {
-                            var tank = template.GetAiTank();
-
-                            tank.Position = template.Position;
-                            tank.TankRotation = template.Rotation;
-                            tank.TargetTankRotation = template.Rotation - MathHelper.Pi;
-                            tank.TurretRotation = -template.Rotation;
-                            tank.Dead = false;
-                            tank.Team = template.Team;
-
-                            tank.OnDestroy += (sender, e) =>
-                            {
-                                TrackedSpawnPoints[Array.IndexOf(TrackedSpawnPoints, TrackedSpawnPoints.First(pos => pos.Item1 == template.Position))].Item2 = false; // make sure the tank is not spawned again
-                            };
-                        }
-                    }
-                    if (template.IsPlayer)
-                    {
-                        var tank = template.GetPlayerTank();
-
-                        tank.Position = template.Position;
-                        tank.TankRotation = template.Rotation;
-                        tank.Dead = false;
-                        tank.Team = template.Team;
-
-                        if (Difficulties.Types["AiCompanion"])
-                        {
-                            tank.Team = TeamID.Magenta;
-                            var tnk = new AITank(TankID.Black);
-                            tnk.Position = template.Position;
-                            tnk.Body.Position = template.Position;
-                            tnk.Team = tank.Team;
-                            tnk.TankRotation = -template.Rotation + MathHelper.Pi;
-                            tnk.TargetTankRotation = template.Rotation - MathHelper.Pi;
-                            tnk.TurretRotation = -template.Rotation;
-                            tnk.Dead = false;
-
-                            tnk.Swap(AITank.PickRandomTier());
-                        }
-
-                        if (NetPlay.IsClientMatched(tank.PlayerId))
-                            PlayerTank.MyTeam = tank.Team;
-                    }
+                    TrackedSpawnPoints[i].Item1 = LoadedMission.Tanks[i].Position;
+                    TrackedSpawnPoints[i].Item2 = true;
                 }
-                else
+                if (!template.IsPlayer)
                 {
-                    if (GameProperties.ShouldMissionsProgress)
-                    {
-                        TrackedSpawnPoints[i].Item1 = LoadedMission.Tanks[i].Position;
-                        TrackedSpawnPoints[i].Item2 = true;
-                    }
-                    if (!template.IsPlayer)
+                    if (TrackedSpawnPoints[i].Item2)
                     {
                         var tank = template.GetAiTank();
 
@@ -186,44 +137,46 @@ namespace TanksRebirth.GameContent.Systems
                         }
                         var placement = PlacementSquare.Placements.FindIndex(place => place.Position == tank.Position3D);
 
-                        if (placement > -1) {
-                            PlacementSquare.Placements[placement].TankId = tank.WorldId;
-                            PlacementSquare.Placements[placement].HasBlock = false;
-                        }
-                    }
-                    else
-                    {
-                        var tank = template.GetPlayerTank();
-
-                        tank.Position = template.Position;
-                        tank.TankRotation = template.Rotation;
-                        tank.Dead = false;
-                        tank.Team = template.Team;
-
-                        if (Difficulties.Types["AiCompanion"])
+                        if (placement > -1)
                         {
-                            tank.Team = TeamID.Magenta;
-                            var tnk = new AITank(TankID.Black);
-                            tnk.Position = template.Position;
-                            tnk.Body.Position = template.Position;
-                            tnk.Team = tank.Team;
-                            tnk.TankRotation = template.Rotation;
-                            tnk.TargetTankRotation = template.Rotation - MathHelper.Pi;
-                            tnk.TurretRotation = -template.Rotation;
-                            tnk.Dead = false;
-
-                            tnk.Swap(AITank.PickRandomTier());
-                        }
-                        var placement = PlacementSquare.Placements.FindIndex(place => place.Position == tank.Position3D);
-
-                        if (placement > -1) {
                             PlacementSquare.Placements[placement].TankId = tank.WorldId;
                             PlacementSquare.Placements[placement].HasBlock = false;
                         }
-
-                        if (NetPlay.IsClientMatched(tank.PlayerId))
-                            PlayerTank.MyTeam = tank.Team;
                     }
+                }
+                else
+                {
+                    var tank = template.GetPlayerTank();
+
+                    tank.Position = template.Position;
+                    tank.TankRotation = template.Rotation;
+                    tank.Dead = false;
+                    tank.Team = template.Team;
+
+                    if (Difficulties.Types["AiCompanion"])
+                    {
+                        tank.Team = TeamID.Magenta;
+                        var tnk = new AITank(TankID.Black);
+                        tnk.Position = template.Position;
+                        tnk.Body.Position = template.Position;
+                        tnk.Team = tank.Team;
+                        tnk.TankRotation = template.Rotation;
+                        tnk.TargetTankRotation = template.Rotation - MathHelper.Pi;
+                        tnk.TurretRotation = -template.Rotation;
+                        tnk.Dead = false;
+
+                        tnk.Swap(AITank.PickRandomTier());
+                    }
+                    var placement = PlacementSquare.Placements.FindIndex(place => place.Position == tank.Position3D);
+
+                    if (placement > -1)
+                    {
+                        PlacementSquare.Placements[placement].TankId = tank.WorldId;
+                        PlacementSquare.Placements[placement].HasBlock = false;
+                    }
+
+                    if (NetPlay.IsClientMatched(tank.PlayerId))
+                        PlayerTank.MyTeam = tank.Team;
                 }
             }
 

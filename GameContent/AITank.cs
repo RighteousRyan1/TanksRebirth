@@ -2502,6 +2502,8 @@ namespace TanksRebirth.GameContent
                             IsTurning = true;
                         }
 
+
+
                         var dir = Vector2.UnitY.RotatedByRadians(TankRotation);
                         Velocity.X = dir.X;
                         Velocity.Y = dir.Y;
