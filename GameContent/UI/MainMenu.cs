@@ -700,7 +700,7 @@ namespace TanksRebirth.GameContent.UI
                         numTanks += mission.Tanks.Count(x => !x.IsPlayer);
                     }
 
-                    var elem = new UITextButton(campaign.MetaData.Name, TankGame.TextFont, Color.White, 0.8f)
+                    var elem = new UITextButton(/*campaign.MetaData.Name*/Path.GetFileNameWithoutExtension(name), TankGame.TextFont, Color.White, 0.8f)
                     {
                         IsVisible = true,
                         Tooltip = missions.Length + " missions" +
@@ -768,9 +768,11 @@ namespace TanksRebirth.GameContent.UI
                     {
                         var path = Path.Combine(TankGame.SaveDirectory, "Campaigns", elem.Text);
 
-                        foreach (var file in Directory.GetFiles(path))
+                        /*foreach (var file in Directory.GetFiles(path))
                             File.Delete(file);
-                        Directory.Delete(path);
+                        Directory.Delete(path);*/ // old
+
+                        File.Delete(path + ".campaign");
                         SetCampaignDisplay();
                     };
                     elem.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick", SoundContext.Effect); };

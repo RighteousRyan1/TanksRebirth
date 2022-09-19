@@ -800,7 +800,7 @@ namespace TanksRebirth.GameContent
                 // $"Speed / MaxSpeed / Velocity: {Properties.Speed} / {Properties.MaxSpeed} / {Velocity}",
                 $"ShellCooldown: {Properties.ShellCooldown}",
                 $"MineCooldown: {Properties.MineCooldown}",
-                $"Tank Rotation/Target: {TankRotation}/{TargetTankRotation}"
+                $"Tank Rotation/Target: {TankRotation - MathHelper.Pi}/{TargetTankRotation}"
             };
 
             // TankGame.spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), CollisionBox2D, Color.White * 0.75f);

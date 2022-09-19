@@ -110,10 +110,11 @@ namespace TanksRebirth.GameContent.Systems
             {
                 var template = LoadedMission.Tanks[i];
 
-                if (GameProperties.ShouldMissionsProgress)
-                {
-                    TrackedSpawnPoints[i].Item1 = LoadedMission.Tanks[i].Position;
-                    TrackedSpawnPoints[i].Item2 = true;
+                if (spawnNewSet) {
+                    if (GameProperties.ShouldMissionsProgress) {
+                        TrackedSpawnPoints[i].Item1 = LoadedMission.Tanks[i].Position;
+                        TrackedSpawnPoints[i].Item2 = true;
+                    }
                 }
                 if (!template.IsPlayer)
                 {
@@ -156,14 +157,16 @@ namespace TanksRebirth.GameContent.Systems
                     if (Difficulties.Types["AiCompanion"])
                     {
                         tank.Team = TeamID.Magenta;
-                        var tnk = new AITank(TankID.Black);
-                        tnk.Position = template.Position;
+                        var tnk = new AITank(TankID.Black)
+                        {
+                            Position = template.Position,
+                            Team = tank.Team,
+                            TankRotation = template.Rotation,
+                            TargetTankRotation = template.Rotation - MathHelper.Pi,
+                            TurretRotation = -template.Rotation,
+                            Dead = false
+                        };
                         tnk.Body.Position = template.Position;
-                        tnk.Team = tank.Team;
-                        tnk.TankRotation = template.Rotation;
-                        tnk.TargetTankRotation = template.Rotation - MathHelper.Pi;
-                        tnk.TurretRotation = -template.Rotation;
-                        tnk.Dead = false;
 
                         tnk.Swap(AITank.PickRandomTier());
                     }

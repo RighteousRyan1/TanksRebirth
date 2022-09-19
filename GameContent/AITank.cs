@@ -2485,7 +2485,7 @@ namespace TanksRebirth.GameContent
                             }
                         }
 
-                        IsTurning = !(TankRotation > targ - Properties.MaximalTurn - MathHelper.ToRadians(5) && TankRotation < targ + Properties.MaximalTurn + MathHelper.ToRadians(5))
+                        IsTurning = !(TankRotation > targ - Properties.MaximalTurn - MathHelper.ToRadians(5) && TankRotation < targ + Properties.MaximalTurn + MathHelper.ToRadians(5));
 
                         if (!IsTurning)
                         {
@@ -2505,7 +2505,10 @@ namespace TanksRebirth.GameContent
                             IsTurning = true;
                         }
 
-
+                        if (TargetTankRotation > MathHelper.Tau)
+                            TargetTankRotation -= MathHelper.Tau;
+                        if (TargetTankRotation < 0)
+                            TargetTankRotation += MathHelper.Tau;
 
                         var dir = Vector2.UnitY.RotatedByRadians(TankRotation);
                         Velocity.X = dir.X;
