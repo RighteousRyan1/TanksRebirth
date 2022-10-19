@@ -165,13 +165,13 @@ namespace TanksRebirth.GameContent
             public static void LoadBounds()
             {
                 // 0 -> top, 1 -> right, 2 -> bottom, 3 -> left
-                Boundaries[0] = Tank.CollisionsWorld.CreateRectangle(1000, 5, 1f, new(MIN_X, MIN_Y - 7), 0f, BodyType.Static);
+                Boundaries[0] = Tank.CollisionsWorld.CreateRectangle(1000 / Tank.UNITS_PER_METER, 5 / Tank.UNITS_PER_METER, 1f, new Vector2(MIN_X, MIN_Y - 7) / Tank.UNITS_PER_METER, 0f, BodyType.Static);
 
-                Boundaries[1] = Tank.CollisionsWorld.CreateRectangle(5, 1000, 1f, new(MAX_X + 7, MAX_Y), 0f, BodyType.Static);
+                Boundaries[1] = Tank.CollisionsWorld.CreateRectangle(5 / Tank.UNITS_PER_METER, 1000 / Tank.UNITS_PER_METER, 1f, new Vector2(MAX_X + 7, MAX_Y) / Tank.UNITS_PER_METER, 0f, BodyType.Static);
 
-                Boundaries[2] = Tank.CollisionsWorld.CreateRectangle(1000, 5, 1f, new(MIN_X, MAX_Y + 7), 0f, BodyType.Static);
+                Boundaries[2] = Tank.CollisionsWorld.CreateRectangle(1000 / Tank.UNITS_PER_METER, 5 / Tank.UNITS_PER_METER, 1f, new Vector2(MIN_X, MAX_Y + 7) / Tank.UNITS_PER_METER, 0f, BodyType.Static);
 
-                Boundaries[3] = Tank.CollisionsWorld.CreateRectangle(5, 1000, 1f, new(MIN_X - 7, MAX_Y), 0f, BodyType.Static);
+                Boundaries[3] = Tank.CollisionsWorld.CreateRectangle(5 / Tank.UNITS_PER_METER, 1000 / Tank.UNITS_PER_METER, 1f, new Vector2(MIN_X - 7, MAX_Y) / Tank.UNITS_PER_METER, 0f, BodyType.Static);
                 
                 switch (Theme)
                 {

@@ -26,9 +26,9 @@ namespace TanksRebirth.GameContent
         {
             Block c = new(Type, Stack, Position);
 
-            c.Position = Position;
-            if (c.Body != null)
-                c.Body.Position = Position;
+            //c.Position = Position;
+            //if (c.Body != null)
+                //c.Body.Position = Position;
             c.TpLink = TpLink;
 
             for (int i = 0; i < PlacementSquare.Placements.Count; i++) {
@@ -138,15 +138,17 @@ namespace TanksRebirth.GameContent
                     break;
             }
 
-            if (Body != null)
-                Position = Body.Position;
-            else
-                Position = position;
+            //if (Body != null)
+               //Position = Body.Position * Tank.UNITS_PER_METER;
+            //else
+               // Position = position;
 
             OnInitialize?.Invoke(this);
 
             if (IsCollidable)
-                Body = Tank.CollisionsWorld.CreateRectangle(FULL_BLOCK_SIZE, FULL_BLOCK_SIZE, 1f, Position, 0f, BodyType.Static);
+                Body = Tank.CollisionsWorld.CreateRectangle(FULL_BLOCK_SIZE / Tank.UNITS_PER_METER, FULL_BLOCK_SIZE / Tank.UNITS_PER_METER, 1f, position / Tank.UNITS_PER_METER, 0f, BodyType.Static);
+
+            Position = Body.Position * Tank.UNITS_PER_METER;
 
             Id = Array.FindIndex(AllBlocks, block => block is null);
 
@@ -245,7 +247,7 @@ namespace TanksRebirth.GameContent
                         foreach (BasicEffect effect in mesh.Effects)
                         {
                             effect.View = TankGame.GameView;
-                            effect.World = i == 0 ? World : World * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0) * Matrix.CreateScale(1, 1, (float)Stack / 7f);
+                            effect.World = i == 0 ? World : World * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0) * Matrix.CreateScale(1, 1, Stack / 7f);
                             effect.Projection = TankGame.GameProjection;
 
                             effect.TextureEnabled = true;

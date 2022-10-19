@@ -44,7 +44,7 @@ namespace TanksRebirth.GameContent
                 throw new Exception($"{nameof(IsPlayer)} was true. This method cannot execute.");
 
             var ai = new AITank(AiTier);
-            ai.Body.Position = Position;
+            ai.Body.Position = Position / Tank.UNITS_PER_METER;
             ai.Position = Position;
             ai.TankRotation = Rotation;
             ai.TargetTankRotation = Rotation;
@@ -67,7 +67,7 @@ namespace TanksRebirth.GameContent
                 throw new Exception($"{nameof(IsPlayer)} was false. This method cannot execute.");
 
             var player = Difficulties.Types["RandomPlayer"] ? new PlayerTank(PlayerType, false, AITank.PickRandomTier()) : new PlayerTank(PlayerType);
-            player.Body.Position = Position;
+            player.Body.Position = Position / Tank.UNITS_PER_METER;
             player.Position = Position;
             player.TankRotation = Rotation;
             player.Dead = false;
@@ -271,7 +271,7 @@ namespace TanksRebirth.GameContent
         public Circle CollisionCircle => new() { Center = Position, Radius = TNK_WIDTH / 2 };
         /// <summary>The 2D rectangle-represented hitbox of this <see cref="Tank"/>.</summary>
         public Rectangle CollisionBox => new((int)(Position.X - TNK_WIDTH / 2 + 3), (int)(Position.Y - TNK_WIDTH / 2 + 2), (int)TNK_WIDTH - 8, (int)TNK_HEIGHT - 4);
-        /// <summary>How many times the <see cref="Shell"/> this <see cref="Tank"/> shoots can ricochet.</summary>
+        /// <summary>How many <see cref="Shell"/>s this <see cref="Tank"/> owns.</summary>
         public int OwnedShellCount { get; internal set; }
         /// <summary>How many <see cref="Mine"/>s this <see cref="Tank"/> owns.</summary>
         public int OwnedMineCount { get; internal set; }
@@ -292,6 +292,8 @@ namespace TanksRebirth.GameContent
         public Vector3 Position3D => Position.ExpandZ();
         public Vector3 Velocity3D => Velocity.ExpandZ();
         #endregion
+
+        public Vector3 Scaling = Vector3.One;
 
         #region ModelBone & ModelMesh
         public Matrix[] boneTransforms;
@@ -325,7 +327,7 @@ namespace TanksRebirth.GameContent
 
             if (IsIngame)
             {
-                Body = CollisionsWorld.CreateCircle(TNK_WIDTH * 0.4f, 1f, Position, BodyType.Dynamic);
+                Body = CollisionsWorld.CreateCircle(TNK_WIDTH * 0.4f / UNITS_PER_METER, 1f, Position / UNITS_PER_METER, BodyType.Dynamic);
                 // Body.LinearDamping = Deceleration * 10;
             }
 
@@ -450,12 +452,12 @@ namespace TanksRebirth.GameContent
         {
             OnPreUpdate?.Invoke(this);
 
-            Position = Body.Position;
+            Position = Body.Position * UNITS_PER_METER;
 
-            Body.LinearVelocity = Velocity * 0.55f;
+            Body.LinearVelocity = Velocity * 0.55f / UNITS_PER_METER;
 
             // try to make positive. i hate game
-            World = Matrix.CreateFromYawPitchRoll(-TankRotation - (Flip ? MathHelper.Pi : 0f), 0, 0)
+            World = Matrix.CreateScale(Scaling) * Matrix.CreateFromYawPitchRoll(-TankRotation - (Flip ? MathHelper.Pi : 0f), 0, 0)
                 * Matrix.CreateTranslation(Position3D);
 
             if (IsIngame)
@@ -463,6 +465,12 @@ namespace TanksRebirth.GameContent
                 Worldbox = new(Position3D - new Vector3(7, 0, 7), Position3D + new Vector3(10, 15, 10));
                 Projection = TankGame.GameProjection;
                 View = TankGame.GameView;
+
+                // try to make negative. go poopoo
+                CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
+                Model.Root.Transform = World;
+
+                Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
 
                 if (!GameProperties.InMission || IntermissionSystem.IsAwaitingNewMission)
                 {
@@ -815,12 +823,6 @@ namespace TanksRebirth.GameContent
                 $"Position3D: {Position3D}",
                 this is AITank ai ? $"Turret Rotation/Target: {TurretRotation}/{ai.TargetTurretRotation}" : $"Turret Rotation: {TurretRotation}"
             };
-
-            // try to make negative. go poopoo
-            CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
-            Model.Root.Transform = World;
-
-            Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
 
             // TankGame.spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), CollisionBox2D, Color.White * 0.75f);
 

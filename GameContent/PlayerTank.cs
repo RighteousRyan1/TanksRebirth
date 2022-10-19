@@ -137,7 +137,7 @@ namespace TanksRebirth.GameContent
             properties.ShellCooldown = 5;
             properties.ShootStun = 5;
             properties.ShellSpeed = 3f; // 3f
-            properties.MaxSpeed = 1.8f;
+            properties.MaxSpeed = 1.8f; // 1.8
             properties.RicochetCount = 1; // 1
             properties.ShellLimit = 5;
             properties.MineLimit = 2;

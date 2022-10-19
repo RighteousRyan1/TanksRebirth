@@ -561,7 +561,7 @@ namespace TanksRebirth.GameContent
             foreach (var body in Tank.CollisionsWorld.BodyList.ToList())
             {
                 DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"BODY", 
-                    GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(body.Position.X, 0, body.Position.Y), TankGame.GameView, TankGame.GameProjection), centered: true);
+                    GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(body.Position.X * Tank.UNITS_PER_METER, 0, body.Position.Y * Tank.UNITS_PER_METER), TankGame.GameView, TankGame.GameProjection), centered: true);
             }
 
             for (int i = 0; i < VanillaAchievements.Repository.GetAchievements().Count; i++)
@@ -737,7 +737,7 @@ namespace TanksRebirth.GameContent
 
             myTank.Team = team;
             myTank.Dead = false;
-            myTank.Body.Position = pos.FlattenZ();
+            myTank.Body.Position = pos.FlattenZ() / Tank.UNITS_PER_METER;
             myTank.Position = pos.FlattenZ();
 
             if (Client.IsConnected())
@@ -837,7 +837,7 @@ namespace TanksRebirth.GameContent
 
             x.Team = team;
             x.Dead = false;
-            x.Body.Position = position.FlattenZ();
+            x.Body.Position = position.FlattenZ() / Tank.UNITS_PER_METER;
             x.Position = position.FlattenZ();
             return x;
         }

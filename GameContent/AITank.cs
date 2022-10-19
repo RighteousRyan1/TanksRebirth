@@ -437,7 +437,7 @@ namespace TanksRebirth.GameContent
                     properties.ShellHoming = new();
 
                     properties.TreadPitch = 0.085f;
-                    properties.MaxSpeed = 1.2f;
+                    properties.MaxSpeed = 1.2f; // 1.2
 
                     properties.MineCooldown = 0;
                     properties.MineLimit = 0;
@@ -870,7 +870,7 @@ namespace TanksRebirth.GameContent
                     properties.ShellHoming = new();
 
                     properties.TreadPitch = 0.08f;
-                    properties.MaxSpeed = 1.2f;
+                    properties.MaxSpeed = 1.2f; // 1.2
                     properties.Acceleration = 0.4f;
                     properties.Deceleration = 0.6f;
 
@@ -2336,7 +2336,7 @@ namespace TanksRebirth.GameContent
                         {
                             if (Behaviors[6].IsModOf(indif))
                             {
-                                var direction = Vector2.UnitY.RotatedByRadians(shell.Position2D.DirectionOf(Position, false).ToRotation());
+                                var direction = -Vector2.UnitY.RotatedByRadians(shell.Position2D.DirectionOf(Position, false).ToRotation());
 
                                 TargetTankRotation = direction.ToRotation();
                             }
@@ -2378,7 +2378,7 @@ namespace TanksRebirth.GameContent
                         {
                             if (Behaviors[5].IsModOf(10))
                             {
-                                var direction = Vector2.UnitY.RotatedByRadians(mine.Position.DirectionOf(Position, false).ToRotation());
+                                var direction = -Vector2.UnitY.RotatedByRadians(mine.Position.DirectionOf(Position, false).ToRotation());
 
                                 TargetTankRotation = direction.ToRotation();
                             }
@@ -2417,10 +2417,7 @@ namespace TanksRebirth.GameContent
                             if (SpecialBehaviors[0].Value > 0)
                             SpecialBehaviors[0].Value--;
                         if (SpecialBehaviors[0].Value > 0)
-                        {
-
                             Properties.MaxSpeed = 2.2f;
-                        }
                         else
                             Properties.MaxSpeed = 1.35f;
                     }
@@ -2498,11 +2495,11 @@ namespace TanksRebirth.GameContent
                                 LayFootprint(Properties.TrackType == TrackID.Thick);
                             IsTurning = true;
                         }
-
-                        if (TargetTankRotation > MathHelper.Tau)
+                        // TODO: fix this pls.
+                        /*if (TargetTankRotation > MathHelper.Tau)
                             TargetTankRotation -= MathHelper.Tau;
                         if (TargetTankRotation < 0)
-                            TargetTankRotation += MathHelper.Tau;
+                            TargetTankRotation += MathHelper.Tau;*/
 
                         var dir = Vector2.UnitY.RotatedByRadians(TankRotation);
                         Velocity.X = dir.X;

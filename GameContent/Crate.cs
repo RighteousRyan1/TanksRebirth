@@ -189,7 +189,7 @@ namespace TanksRebirth.GameContent
                 if (Difficulties.Types["MasterModBuff"])
                     tier -= 9;
                 var t = new AITank(tier);
-                t.Body.Position = position.FlattenZ();
+                t.Body.Position = position.FlattenZ() / Tank.UNITS_PER_METER;
                 t.Position = position.FlattenZ();
                 t.Dead = false;
                 t.Team = TankToSpawn.Team;
