@@ -57,8 +57,6 @@ namespace TanksRebirth.GameContent
         private Texture2D _tankTexture;
         private static Texture2D _shadowTexture;
 
-        public Vector2 preterbedVelocity;
-
         public static Keybind controlUp = new("Up", Keys.W);
         public static Keybind controlDown = new("Down", Keys.S);
         public static Keybind controlLeft = new("Left", Keys.A);
@@ -69,12 +67,6 @@ namespace TanksRebirth.GameContent
         public static GamepadBind PlaceMine = new("Place Mine", Buttons.A);
 
         public Vector2 oldPosition;
-
-        #region ModelBone & ModelMesh
-        public Matrix[] boneTransforms;
-
-        public ModelMesh CannonMesh;
-        #endregion
 
         private bool _isPlayerModel;
 
@@ -110,9 +102,9 @@ namespace TanksRebirth.GameContent
 
             _isPlayerModel = isPlayerModel;
 
-            CannonMesh = Model.Meshes["Cannon"];
+            //CannonMesh = Model.Meshes["Cannon"];
 
-            boneTransforms = new Matrix[Model.Bones.Count];
+            //boneTransforms = new Matrix[Model.Bones.Count];
 
             _shadowTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank_shadow");
 
@@ -183,10 +175,10 @@ namespace TanksRebirth.GameContent
 
             base.Update();
 
-            CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
-            Model.Root.Transform = World;
+            //CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
+            //Model.Root.Transform = World;
 
-            Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
+            //Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
 
             if (GameProperties.InMission)
             {
@@ -285,13 +277,7 @@ namespace TanksRebirth.GameContent
 
             var treadPlaceTimer = (int)Math.Round(14 / Velocity.Length()) != 0 ? (int)Math.Round(14 / Velocity.Length()) : 1;
 
-            preterbedVelocity = new(leftStick.X, -leftStick.Y);
-
-            var norm = Vector2.Normalize(preterbedVelocity);
-
-            TargetTankRotation = norm.ToRotation() - MathHelper.PiOver2;
-
-            TankRotation = GameUtils.RoughStep(TankRotation, TargetTankRotation, Properties.TurningSpeed);
+            var preterbedVelocity = new Vector2(leftStick.X, -leftStick.Y);
 
             var rotationMet = TankRotation > TargetTankRotation - Properties.MaximalTurn && TankRotation < TargetTankRotation + Properties.MaximalTurn;
 
@@ -340,6 +326,12 @@ namespace TanksRebirth.GameContent
                 }
             }
 
+            var norm = Vector2.Normalize(preterbedVelocity);
+
+            TargetTankRotation = norm.ToRotation() - MathHelper.PiOver2;
+
+            TankRotation = GameUtils.RoughStep(TankRotation, TargetTankRotation, Properties.TurningSpeed);
+
             if (rightStick.Length() > 0)
             {
                 var unprojectedPosition = GeometryUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), World, View, Projection);
@@ -363,19 +355,13 @@ namespace TanksRebirth.GameContent
 
             IsTurning = false;
 
-            var norm = Vector2.Normalize(preterbedVelocity);
-
             var treadPlaceTimer = (int)Math.Round(14 / Velocity.Length()) != 0 ? (int)Math.Round(14 / Velocity.Length()) : 1;
-
-            TargetTankRotation = norm.ToRotation() - MathHelper.PiOver2;
-
-            TankRotation = GameUtils.RoughStep(TankRotation, TargetTankRotation, Properties.TurningSpeed);
 
             var rotationMet = TankRotation > TargetTankRotation - Properties.MaximalTurn && TankRotation < TargetTankRotation + Properties.MaximalTurn;
 
-            TankRotation %= MathHelper.Tau;
+            var preterbedVelocity = Vector2.Zero;
 
-            preterbedVelocity = Vector2.Zero;
+            TankRotation %= MathHelper.Tau;
 
             if (!rotationMet)
             {
@@ -415,6 +401,12 @@ namespace TanksRebirth.GameContent
                 playerControl_isBindPressed = true;
                 preterbedVelocity.X = 1;
             }
+
+            var norm = Vector2.Normalize(preterbedVelocity);
+
+            TargetTankRotation = norm.ToRotation() - MathHelper.PiOver2;
+
+            TankRotation = GameUtils.RoughStep(TankRotation, TargetTankRotation, Properties.TurningSpeed);
 
 
             if (TankGame.ThirdPerson)

@@ -124,7 +124,7 @@ namespace TanksRebirth.GameContent.Systems
 
                         tank.Position = template.Position;
                         tank.TankRotation = template.Rotation;
-                        tank.TargetTankRotation = -template.Rotation + MathHelper.Pi;
+                        tank.TargetTankRotation = template.Rotation;
                         tank.TurretRotation = template.Rotation;
                         tank.Dead = false;
                         tank.Team = template.Team;
@@ -159,6 +159,8 @@ namespace TanksRebirth.GameContent.Systems
                         tank.Team = TeamID.Magenta;
                         var tnk = new AITank(TankID.Black)
                         {
+                            // target = rot - pi
+                            // turret =  -rot
                             Position = template.Position,
                             Team = tank.Team,
                             TankRotation = template.Rotation,

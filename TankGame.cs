@@ -783,13 +783,12 @@ namespace TanksRebirth
                                     tnk.TurretRotation -= MathHelper.PiOver2;
                                     if (tnk is AITank ai)
                                     {
-                                        ai.TargetTurretRotation += MathHelper.PiOver2;
                                         ai.TargetTankRotation += MathHelper.PiOver2;
 
-                                        if (ai.TargetTurretRotation >= MathHelper.Tau)
-                                            ai.TargetTurretRotation -= MathHelper.Tau;
                                         if (ai.TargetTankRotation >= MathHelper.Tau)
                                             ai.TargetTankRotation -= MathHelper.Tau;
+                                        if (ai.TargetTankRotation <= 0)
+                                            ai.TargetTankRotation += MathHelper.Tau;
                                     }
                                     if (tnk.TankRotation >= MathHelper.Tau)
                                         tnk.TankRotation -= MathHelper.Tau;

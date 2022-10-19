@@ -162,11 +162,6 @@ namespace TanksRebirth.GameContent
         public float BaseExpValue { get; set; }
 
         #endregion
-        #region ModelBone & ModelMesh
-        public Matrix[] boneTransforms;
-
-        public ModelMesh CannonMesh;
-        #endregion
         public static int GetHighestTierActive()
         {
             var highest = TankID.None;
@@ -343,9 +338,9 @@ namespace TanksRebirth.GameContent
 
             #endregion
 
-            CannonMesh = Model.Meshes["Cannon"];
+            //CannonMesh = Model.Meshes["Cannon"];
 
-            boneTransforms = new Matrix[Model.Bones.Count];
+            //boneTransforms = new Matrix[Model.Bones.Count];
 
             _shadowTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank_shadow");
 
@@ -1720,7 +1715,7 @@ namespace TanksRebirth.GameContent
         {
             base.Update();
 
-            CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
+            //CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
 
             if (Tier == TankID.Commando)
             {
@@ -1744,9 +1739,9 @@ namespace TanksRebirth.GameContent
 
             _oldPosition = Position;
 
-            Model.Root.Transform = World;
+            //Model.Root.Transform = World;
 
-            Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
+            //Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
         }
 
         public override void Remove()
@@ -1843,6 +1838,8 @@ namespace TanksRebirth.GameContent
         public bool nearDestructibleObstacle;
 
         // make a new method for just any rectangle
+
+        // TODO: literally fix everything about these turret rotation values.
         private List<Tank> GetTanksInPath(Vector2 pathDir, out Vector2 rayEndpoint, bool draw = false, Vector2 offset = default, float missDist = 0f, Func<Block, bool> pattern = null, bool doBounceReset = true)
         {
             rayEndpoint = new(-999999, -999999);
@@ -1858,7 +1855,7 @@ namespace TanksRebirth.GameContent
             var whitePixel = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
             var pathPos = Position + offset.RotatedByRadians(-TurretRotation);
 
-            pathDir.Y *= -1;
+            pathDir.Y *= -1; // this may be a culprit and i hate it.
             pathDir *= PATH_UNIT_LENGTH;
             int pathRicochetCount = 0;
 
@@ -1952,7 +1949,7 @@ namespace TanksRebirth.GameContent
                 if (draw)
                 {
                     var pathPosScreen = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(pathPos.X, 11, pathPos.Y), TankGame.GameView, TankGame.GameProjection);
-                    TankGame.SpriteRenderer.Draw(whitePixel, pathPosScreen, null, Color.White * 0.9f, 0, whitePixel.Size() / 2, /*2 + (float)Math.Sin(i * Math.PI / 5 - TankGame.GameUpdateTime * 0.1f) * */realMiss, default, default);
+                    TankGame.SpriteRenderer.Draw(whitePixel, pathPosScreen, null, Color.White * 0.5f, 0, whitePixel.Size() / 2, /*2 + (float)Math.Sin(i * Math.PI / 5 - TankGame.GameUpdateTime * 0.1f) * */realMiss, default, default);
                     // DebugUtils.DrawDebugString(TankGame.spriteBatch, $"{goneThroughTeleporter}:{(block is not null ? $"{block.Type}" : "N/A")}", GeometryUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), Matrix.CreateTranslation(pathPos.X, 0, pathPos.Y), View, Projection), 1, centered: true);
                 }
 
@@ -1987,7 +1984,6 @@ namespace TanksRebirth.GameContent
             var whitePixel = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
             var pathPos = Position;
 
-            pathDir.Y *= -1;
             pathDir *= PATH_UNIT_LENGTH;
 
             for (int i = 0; i < checkDist; i++)
@@ -2273,7 +2269,7 @@ namespace TanksRebirth.GameContent
                         #region CubeNav
                         if (Behaviors[2].IsModOf(AiParams.BlockReadTime) && !isMineNear && !isShellNear)
                         {
-                            pathBlocked = IsObstacleInWay(AiParams.BlockWarinessDistance / PATH_UNIT_LENGTH, Vector2.UnitY.RotatedByRadians(-TargetTankRotation), out var travelPath, out var refPoints);
+                            pathBlocked = IsObstacleInWay(AiParams.BlockWarinessDistance / PATH_UNIT_LENGTH, Vector2.UnitY.RotatedByRadians(TargetTankRotation), out var travelPath, out var refPoints);
                             if (pathBlocked)
                             {
                                 if (refPoints.Length > 0)
@@ -2466,26 +2462,24 @@ namespace TanksRebirth.GameContent
                     #region TankRotation
 
                     // i really hope to remove this hardcode.
-                    var targ = TargetTankRotation + MathHelper.Pi; 
-
                     if (doMoveTowards)
                     {
                         if (IsTurning)
                         {
                             // var real = TankRotation + MathHelper.PiOver2;
-                            if (targ - TankRotation >= MathHelper.PiOver2)
+                            if (TargetTankRotation - TankRotation >= MathHelper.PiOver2)
                             {
                                 TankRotation += MathHelper.Pi;
                                 Flip = !Flip;
                             }
-                            else if (targ - TankRotation <= -MathHelper.PiOver2)
+                            else if (TargetTankRotation - TankRotation <= -MathHelper.PiOver2)
                             {
                                 TankRotation -= MathHelper.Pi;
                                 Flip = !Flip;
                             }
                         }
 
-                        IsTurning = !(TankRotation > targ - Properties.MaximalTurn - MathHelper.ToRadians(5) && TankRotation < targ + Properties.MaximalTurn + MathHelper.ToRadians(5));
+                        IsTurning = !(TankRotation > TargetTankRotation - Properties.MaximalTurn - MathHelper.ToRadians(5) && TankRotation < TargetTankRotation + Properties.MaximalTurn + MathHelper.ToRadians(5));
 
                         if (!IsTurning)
                         {
@@ -2517,7 +2511,7 @@ namespace TanksRebirth.GameContent
                         Velocity.Normalize();
 
                         Velocity *= Properties.Speed;
-                        TankRotation = GameUtils.RoughStep(TankRotation, targ, Properties.TurningSpeed);
+                        TankRotation = GameUtils.RoughStep(TankRotation, TargetTankRotation, Properties.TurningSpeed);
                     }
 
                     #endregion
@@ -2626,7 +2620,7 @@ namespace TanksRebirth.GameContent
                     DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"{TankID.Collection.GetKey(Tier)}: {poo.Count} tank(s) spotted", GeometryUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), World, View, Projection), 1, centered: true);
                     if (!Properties.Stationary)
                     {
-                        IsObstacleInWay(AiParams.BlockWarinessDistance / PATH_UNIT_LENGTH, Vector2.UnitY.RotatedByRadians(-TargetTankRotation), out var travelPos, out var refPoints, true);
+                        IsObstacleInWay(AiParams.BlockWarinessDistance / PATH_UNIT_LENGTH, Vector2.UnitY.RotatedByRadians(TargetTankRotation), out var travelPos, out var refPoints, true);
                         DebugUtils.DrawDebugString(TankGame.SpriteRenderer, "TRAVELENDPOINT", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(travelPos.X, 11, travelPos.Y), View, Projection), 1, centered: true);
                         DebugUtils.DrawDebugString(TankGame.SpriteRenderer, "ENDPOINT", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(rayEnd.X, 11, rayEnd.Y), View, Projection), 1, centered: true);
 

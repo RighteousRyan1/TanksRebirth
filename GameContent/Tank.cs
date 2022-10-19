@@ -239,6 +239,7 @@ namespace TanksRebirth.GameContent
         #endregion
 
         public static World CollisionsWorld = new(Vector2.Zero);
+        public const float UNITS_PER_METER = 10f;
         public const float TNK_WIDTH = 25;
         public const float TNK_HEIGHT = 25;
         #region Fields / Properties
@@ -292,6 +293,12 @@ namespace TanksRebirth.GameContent
         public Vector3 Velocity3D => Velocity.ExpandZ();
         #endregion
 
+        #region ModelBone & ModelMesh
+        public Matrix[] boneTransforms;
+
+        public ModelMesh CannonMesh;
+        #endregion
+
         public List<ICosmetic> Cosmetics = new();
         /// <summary>Apply all the default parameters for this <see cref="Tank"/>.</summary>
         public virtual void ApplyDefaults(ref TankProperties properties) {
@@ -301,6 +308,8 @@ namespace TanksRebirth.GameContent
 
         public virtual void Initialize()
         {
+            CannonMesh = Model.Meshes["Cannon"];
+            boneTransforms = new Matrix[Model.Bones.Count];
             if (TankGame.SecretCosmeticSetting)
             {
                 for (int i = 0; i < 1; i++)
@@ -445,7 +454,8 @@ namespace TanksRebirth.GameContent
 
             Body.LinearVelocity = Velocity * 0.55f;
 
-            World = Matrix.CreateFromYawPitchRoll(-TankRotation + (Flip ? MathHelper.Pi : 0f), 0, 0)
+            // try to make positive. i hate game
+            World = Matrix.CreateFromYawPitchRoll(-TankRotation - (Flip ? MathHelper.Pi : 0f), 0, 0)
                 * Matrix.CreateTranslation(Position3D);
 
             if (IsIngame)
@@ -478,6 +488,7 @@ namespace TanksRebirth.GameContent
                 Body.LinearVelocity = Vector2.Zero;
                 Velocity = Vector2.Zero;
             }
+
             // fix 2d peeopled
             foreach (var cosmetic in Cosmetics)
                 cosmetic?.UniqueBehavior?.Invoke(cosmetic, this);
@@ -800,13 +811,21 @@ namespace TanksRebirth.GameContent
                 // $"Speed / MaxSpeed / Velocity: {Properties.Speed} / {Properties.MaxSpeed} / {Velocity}",
                 $"ShellCooldown: {Properties.ShellCooldown}",
                 $"MineCooldown: {Properties.MineCooldown}",
-                $"Tank Rotation/Target: {TankRotation - MathHelper.Pi}/{TargetTankRotation}"
+                $"Tank Rotation/Target: {TankRotation}/{TargetTankRotation}",
+                $"Position3D: {Position3D}",
+                this is AITank ai ? $"Turret Rotation/Target: {TurretRotation}/{ai.TargetTurretRotation}" : $"Turret Rotation: {TurretRotation}"
             };
+
+            // try to make negative. go poopoo
+            CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
+            Model.Root.Transform = World;
+
+            Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
 
             // TankGame.spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), CollisionBox2D, Color.White * 0.75f);
 
             for (int i = 0; i < info.Length; i++)
-                DebugUtils.DrawDebugString(TankGame.SpriteRenderer, info[i], GeometryUtils.ConvertWorldToScreen(Vector3.Up * 20, World, View, Projection) - new Vector2(0, i * (TankGame.TextFont.MeasureString(info[i]).Y * 0.6f + 8)), 1, centered: true);
+                DebugUtils.DrawDebugString(TankGame.SpriteRenderer, info[i], GeometryUtils.ConvertWorldToScreen(Vector3.Up * 20, World, View, Projection) - new Vector2(0, (i * 20) + 8), 1, centered: true, color: Color.Red);
 
         }
         public uint CurShootStun { get; private set; } = 0;
