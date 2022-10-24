@@ -1739,6 +1739,8 @@ namespace TanksRebirth.GameContent
 
             _oldPosition = Position;
 
+            // TurretRotation = TankRotation;
+
             //Model.Root.Transform = World;
 
             //Model.CopyAbsoluteBoneTransformsTo(boneTransforms);

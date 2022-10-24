@@ -240,6 +240,7 @@ namespace TanksRebirth.GameContent
 
         public static World CollisionsWorld = new(Vector2.Zero);
         public const float UNITS_PER_METER = 10f;
+
         public const float TNK_WIDTH = 25;
         public const float TNK_HEIGHT = 25;
         #region Fields / Properties
@@ -466,22 +467,22 @@ namespace TanksRebirth.GameContent
                 Projection = TankGame.GameProjection;
                 View = TankGame.GameView;
 
-                // try to make negative. go poopoo
-                CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
-                Model.Root.Transform = World;
-
-                Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
-
                 if (!GameProperties.InMission || IntermissionSystem.IsAwaitingNewMission)
                 {
                     Velocity = Vector2.Zero;
-                    return;
+                    // return;
                 }
                 if (OwnedShellCount < 0)
                     OwnedShellCount = 0;
                 if (OwnedMineCount < 0)
                     OwnedMineCount = 0;
             }
+
+            // try to make negative. go poopoo
+            CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
+            Model.Root.Transform = World;
+
+            Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
 
             if (CurShootStun > 0)
                 CurShootStun--;
