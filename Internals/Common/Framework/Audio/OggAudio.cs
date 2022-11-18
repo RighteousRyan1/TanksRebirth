@@ -44,25 +44,6 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
             }
             _effect = new SoundEffect(audioData, sampleRate, (AudioChannels)channels);
             Instance = _effect.CreateInstance();
-
-            /*var buffer = File.ReadAllBytes(path);
-
-            var audioShort = StbVorbis.decode_vorbis_from_memory(buffer, out int sampleRate, out int channels);
-
-            byte[] audioData = new byte[audioShort.Length * 2];
-            for (var i = 0; i < audioShort.Length; ++i)
-            {
-                if (i * 2 >= audioData.Length)
-                    break;
-
-                short tempShort = audioShort[i];
-
-                audioData[i * 2] = (byte)tempShort;
-                audioData[i * 2 + 1] = (byte)(tempShort >> 8);
-            }
-
-            _effect = new SoundEffect(audioData, sampleRate, (AudioChannels)channels);
-            Instance = _effect.CreateInstance();*/
         }
 
         public bool IsPaused()

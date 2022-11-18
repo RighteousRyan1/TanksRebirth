@@ -56,7 +56,7 @@ namespace TanksRebirth.GameContent
         public static event InitializeDelegate OnInitialize;
 
         public sbyte TpLink = -1;
-        public int[] _tankCooldowns = new int[GameHandler.AllTanks.Length];
+        private int[] _tankCooldowns = new int[GameHandler.AllTanks.Length];
 
         public int Type { get; set; }
 

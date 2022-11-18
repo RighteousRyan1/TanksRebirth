@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using TanksRebirth.Enums;
+using TanksRebirth.GameContent.UI;
 using TanksRebirth.Internals;
 
 namespace TanksRebirth.GameContent.Systems
@@ -184,8 +185,8 @@ namespace TanksRebirth.GameContent.Systems
                 *   - Note (string) (VERSION 3 OR GREATER) (NOT IMPLEMENTED YET)
                 */
 
-            writer.Write(TankGame.LevelFileHeader);
-            writer.Write(TankGame.LevelEditorVersion);
+            writer.Write(LevelEditor.LevelFileHeader);
+            writer.Write(LevelEditor.LevelEditorVersion);
             writer.Write(name);
 
             int totalTanks = GameHandler.AllTanks.Count(tnk => tnk is not null && !tnk.Dead);
@@ -242,8 +243,8 @@ namespace TanksRebirth.GameContent.Systems
         }
         public static void WriteContentsOf(BinaryWriter writer, Mission mission)
         {
-            writer.Write(TankGame.LevelFileHeader);
-            writer.Write(TankGame.LevelEditorVersion);
+            writer.Write(LevelEditor.LevelFileHeader);
+            writer.Write(LevelEditor.LevelEditorVersion);
             writer.Write(mission.Name);
 
             var tanks = mission.Tanks;
@@ -318,7 +319,7 @@ namespace TanksRebirth.GameContent.Systems
 
             var header = reader.ReadBytes(4);
 
-            if (!header.SequenceEqual(TankGame.LevelFileHeader))
+            if (!header.SequenceEqual(LevelEditor.LevelFileHeader))
                 throw new FileLoadException($"The byte header of this file does not match what this game expects!");
 
             var version = reader.ReadInt32();

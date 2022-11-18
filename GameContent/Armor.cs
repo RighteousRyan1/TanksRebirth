@@ -1,28 +1,14 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System;
-using System.Collections.Generic;
-using TanksRebirth.Enums;
-using System.Linq;
-using TanksRebirth.Internals.Common.GameInput;
-using Microsoft.Xna.Framework.Input;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Internals;
-using Microsoft.Xna.Framework.Audio;
-using TanksRebirth.Internals.Common;
-using TanksRebirth.Internals.Core.Interfaces;
-using TanksRebirth.GameContent.GameMechanics;
-using TanksRebirth.GameContent.Systems;
-using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Graphics;
-using TanksRebirth.GameContent.Systems.Coordinates;
 
 namespace TanksRebirth.GameContent
 {
     public class Armor
     {
-
-
+        /// <summary>The tank who has this armor.</summary>
         public Tank Host;
 
         private int _hitpointsMax;
@@ -137,7 +123,7 @@ namespace TanksRebirth.GameContent
                 }
             }
         }
-
+        /// <summary>Remove this <see cref="Armor"/> from memory.</summary>
         public void Remove()
         {
             _healthBarTotal?.Destroy();

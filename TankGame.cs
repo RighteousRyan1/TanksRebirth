@@ -44,31 +44,29 @@ namespace TanksRebirth
 
     public class TankGame : Game
     {
+#pragma warning disable
         private static string GetGPU()
         {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (!IsWindows)
                 return "Unavailable: Only supported on Windows";
             using var searcher = new ManagementObjectSearcher("select * from Win32_VideoController");
 
             foreach (ManagementObject obj in searcher.Get())
-            {
-                return $"{obj["Name"]} - {obj["DriverVersion"]}";
-            }
+                return $"{obj["Name"]}"; // - {obj["DriverVersion"]}";
             return "Data not retrieved.";
         }
 
         public static string GetHardware(string hwclass, string syntax)
         {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (!IsWindows)
                 return "Unavailable: Only supported on Windows";
             using var searcher = new ManagementObjectSearcher($"SELECT * FROM {hwclass}");
 
             foreach (var obj in searcher.Get())
-            {
                 return $"{obj[syntax]}";
-            }
             return "Data not retrieved.";
         }
+#pragma warning restore
 
         public static Language GameLanguage = new();
 
@@ -98,10 +96,6 @@ namespace TanksRebirth
 
         internal static float GetInterpolatedFloat(float value)
             => value * (float)LastGameTime.ElapsedGameTime.TotalSeconds;
-
-        public const int LevelEditorVersion = 2;
-
-        public static readonly byte[] LevelFileHeader = { 84, 65, 78, 75 };
 
         public static Camera GameCamera;
 

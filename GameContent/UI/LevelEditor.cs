@@ -26,7 +26,11 @@ namespace TanksRebirth.GameContent.UI
 {
     public static class LevelEditor
     {
-        // TODO: allow the moving of missions up and down in the level editor order.
+        public static readonly byte[] LevelFileHeader = { 84, 65, 78, 75 };
+        public const int LevelEditorVersion = 2;
+
+        // TODO: allow the moving of missions up and down in the level editor order -- done... i think.
+
         public static bool Active { get; private set; }
         public static OggMusic Theme = new("Level Editor Theme", "Content/Assets/mainmenu/editor", 0.7f);
 

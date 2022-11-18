@@ -10,6 +10,7 @@ using TanksRebirth.Enums;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Properties;
 using TanksRebirth.GameContent.Systems.Coordinates;
+using TanksRebirth.GameContent.UI;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework;
 using TanksRebirth.Internals.Common.Framework.Graphics;
@@ -101,9 +102,8 @@ namespace TanksRebirth.GameContent.Systems
         /// <param name="spawnNewSet">If true, will spawn all tanks as if it's the first time the player(s) has/have entered this mission.</param>
         public void SetupLoadedMission(bool spawnNewSet)
         {
+            // FIXME: source of level editor bug.
             PlacementSquare.ResetSquares();
-            //foreach (var body in Tank.CollisionsWorld.BodyList)
-            //Tank.CollisionsWorld.Remove(body);
             for (int a = 0; a < GameHandler.AllTanks.Length; a++)
                 GameHandler.AllTanks[a]?.Remove();
             for (int i = 0; i < LoadedMission.Tanks.Length; i++)
@@ -136,10 +136,11 @@ namespace TanksRebirth.GameContent.Systems
                                 TrackedSpawnPoints[Array.IndexOf(TrackedSpawnPoints, TrackedSpawnPoints.First(pos => pos.Item1 == template.Position))].Item2 = false; // make sure the tank is not spawned again
                             };
                         }
-                        var placement = PlacementSquare.Placements.FindIndex(place => place.Position == tank.Position3D);
+                        var placement = PlacementSquare.Placements.FindIndex(place => Vector3.Distance(place.Position, tank.Position3D) < Block.FULL_BLOCK_SIZE / 2);
 
                         if (placement > -1)
                         {
+                            ChatSystem.SendMessage("Loaded " + TankID.Collection.GetKey(tank.Tier), Color.Blue);
                             PlacementSquare.Placements[placement].TankId = tank.WorldId;
                             PlacementSquare.Placements[placement].HasBlock = false;
                         }
@@ -172,10 +173,11 @@ namespace TanksRebirth.GameContent.Systems
 
                         tnk.Swap(AITank.PickRandomTier());
                     }
-                    var placement = PlacementSquare.Placements.FindIndex(place => place.Position == tank.Position3D);
+                    var placement = PlacementSquare.Placements.FindIndex(place => Vector3.Distance(place.Position, tank.Position3D) < Block.FULL_BLOCK_SIZE / 2);
 
                     if (placement > -1)
                     {
+                        ChatSystem.SendMessage("Loaded " + PlayerID.Collection.GetKey(tank.PlayerType), Color.Blue);
                         PlacementSquare.Placements[placement].TankId = tank.WorldId;
                         PlacementSquare.Placements[placement].HasBlock = false;
                     }
@@ -197,7 +199,7 @@ namespace TanksRebirth.GameContent.Systems
 
                 var block = template.GetBlock();
 
-                var placement = PlacementSquare.Placements.FindIndex(place => place.Position == block.Position3D);
+                var placement = PlacementSquare.Placements.FindIndex(place => Vector3.Distance(place.Position, block.Position3D) < Block.FULL_BLOCK_SIZE / 2);
                 if (placement > -1)
                 {
                     PlacementSquare.Placements[placement].BlockId = block.Id;
@@ -256,13 +258,17 @@ namespace TanksRebirth.GameContent.Systems
             return campaign;
         }
 
-        /// <summary>Does not work yet.</summary>
+        /// <summary>
+        /// Saves the campaign as a <c>.campaign</c> file.
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <param name="campaign"></param>
         public static void Save(string fileName, Campaign campaign)
         {
             using var writer = new BinaryWriter(File.Open(fileName.Contains(".campaign") ? fileName : fileName + ".campaign", FileMode.OpenOrCreate));
 
-            writer.Write(TankGame.LevelFileHeader);
-            writer.Write(TankGame.LevelEditorVersion);
+            writer.Write(LevelEditor.LevelFileHeader);
+            writer.Write(LevelEditor.LevelEditorVersion);
 
             int totalMissions = campaign.CachedMissions.Count(m => m != default);
             writer.Write(totalMissions);
@@ -293,7 +299,7 @@ namespace TanksRebirth.GameContent.Systems
             using var reader = new BinaryReader(File.Open(Path.Combine(TankGame.SaveDirectory, fileName), FileMode.Open, FileAccess.Read));
 
             var header = reader.ReadBytes(4);
-            if (!header.SequenceEqual(TankGame.LevelFileHeader))
+            if (!header.SequenceEqual(LevelEditor.LevelFileHeader))
                 throw new FileLoadException($"The byte header of this file does not match what this game expects! File name = \"{fileName}\"");
             var editorVersion = reader.ReadInt32();
             if (editorVersion < 2)
@@ -328,6 +334,7 @@ namespace TanksRebirth.GameContent.Systems
             }
             return campaign;
         }
+        /// <summary>The metadata for any given campaign.</summary>
         public struct CampaignMetaData {
             public string Name { get; set; }
             public string Description { get; set; }

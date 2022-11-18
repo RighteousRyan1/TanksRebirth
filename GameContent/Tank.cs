@@ -878,13 +878,13 @@ namespace TanksRebirth.GameContent
         public uint ShootStun { get; set; }
         /// <summary>How long this <see cref="Tank"/> will be immobile upon laying a mine.</summary>
         public uint MineStun { get; set; }
-        /// <summary>How long this <see cref="Tank"/> has to wait until it can fire another bullet..</summary>
+        /// <summary>How long this <see cref="Tank"/> has to wait until it can fire another bullet.</summary>
         public uint ShellCooldown { get; set; }
         /// <summary>How long until this <see cref="Tank"/> can lay another mine</summary>
         public uint MineCooldown { get; set; }
         /// <summary>How many times the <see cref="Shell"/> this <see cref="Tank"/> shoots can ricochet.</summary>
         public uint RicochetCount { get; set; }
-        /// <summary>How many bounces the <see cref="Shell"/> this <see cref="Tank"/> shoots has remaining.</summary>
+        /// <summary>How many <see cref="Shell"/>s this <see cref="Tank"/> can own at any given time.</summary>
         public int ShellLimit { get; set; }
         /// <summary>How fast this <see cref="Tank"/> turns.</summary>
         public float TurningSpeed { get; set; }
@@ -927,9 +927,9 @@ namespace TanksRebirth.GameContent
 
         /// <summary>Whether or not this <see cref="Tank"/> has a turret to fire shells with.</summary>
         public bool HasTurret { get; set; } = true;
-
+        /// <summary>Whether or not this <see cref="Tank"/> is able to be destroyed by <see cref="Mine"/>s.</summary>
         public bool VulnerableToMines { get; set; } = true;
-
+        /// <summary>Whether or not this <see cref="Tank"/> is unable to be destroyed.</summary>
         public bool Immortal { get; set; } = false;
 
         /// <summary>The homing properties of the shells this <see cref="Tank"/> shoots.</summary>

@@ -1,9 +1,9 @@
-﻿float2 oResolution;
-float oBlurFactor;
+﻿float2 oResolution : register(C0);
+float oBlurFactor : register(C2);
 
 sampler TexSampler : register(s0);
 
-float4 doBlur(float4 sampleColor : COLOR0, float2 coords : TEXCOORD0) : COLOR0
+float4 main(float4 sampleColor : COLOR0, float2 coords : TEXCOORD0) : COLOR0
 {
     float2 uv = coords / oResolution.xy;
 
@@ -32,6 +32,6 @@ technique GaussianBlur
 {
     pass BlurPass
     {
-        PixelShader = compile ps_3_0 doBlur();
+        PixelShader = compile ps_3_0 main();
     }
 }
