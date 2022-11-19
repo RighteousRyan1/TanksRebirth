@@ -269,6 +269,8 @@ namespace TanksRebirth.GameContent.UI
             }
             foreach (var e in menuElements)
                 e.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick", SoundContext.Effect); };
+
+            UIElement.ResizeAndRelocate();
         }
 
         private static void HandleBackButton()
@@ -384,6 +386,8 @@ namespace TanksRebirth.GameContent.UI
                     ControlsButton.IsVisible = false;
                 }
             }
+
+            UIElement.ResizeAndRelocate();
         }
 
         private static int _newScroll;

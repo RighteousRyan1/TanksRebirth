@@ -902,7 +902,7 @@ namespace TanksRebirth.GameContent
                     properties.ShootStun = 10;
                     properties.ShellCooldown = 60;
                     properties.ShellLimit = 3;
-                    properties.ShellSpeed = 6f;
+                    properties.ShellSpeed = 6f; // 6
                     properties.ShellType = ShellID.Standard;
                     properties.RicochetCount = 0;
 
@@ -911,7 +911,7 @@ namespace TanksRebirth.GameContent
                     properties.ShellHoming = new();
 
                     properties.TreadPitch = -0.08f;
-                    properties.MaxSpeed = 3.2f;
+                    properties.MaxSpeed = 3.2f; // 3.2
                     properties.Acceleration = 0.2f;
                     properties.Deceleration = 0.4f;
 
@@ -1804,9 +1804,9 @@ namespace TanksRebirth.GameContent
 
                         p.UniqueBehavior = (p) =>
                         {
-                            p.Position.Y += 0.1f;
+                            p.Position.Y += 0.1f * TankGame.DeltaTime;
 
-                            p.Alpha -= 0.01f;
+                            p.Alpha -= 0.01f * TankGame.DeltaTime;
 
                             if (p.Alpha <= 0)
                                 p.Destroy();
@@ -2031,7 +2031,7 @@ namespace TanksRebirth.GameContent
                 if (draw)
                 {
                     var pathPosScreen = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(pathPos.X, 11, pathPos.Y), TankGame.GameView, TankGame.GameProjection);
-                    TankGame.SpriteRenderer.Draw(whitePixel, pathPosScreen, null, Color.White, 0, whitePixel.Size() / 2, 2 + (float)Math.Sin(i * Math.PI / 5 - TankGame.GameUpdateTime * 0.3f), default, default);
+                    TankGame.SpriteRenderer.Draw(whitePixel, pathPosScreen, null, Color.White, 0, whitePixel.Size() / 2, 2 + (float)Math.Sin(i * Math.PI / 5 - TankGame.UpdateCount * 0.3f), default, default);
                 }
             }
             reflectPoints = list.ToArray();
@@ -2148,15 +2148,15 @@ namespace TanksRebirth.GameContent
             if (GameProperties.InMission)
             {
                 for (int i = 0; i < Behaviors.Length; i++)
-                    Behaviors[i].Value++;
+                    Behaviors[i].Value += TankGame.DeltaTime;
 
-                var treadPlaceTimer = (int)Math.Round(14 / Velocity.Length()) != 0 ? (int)Math.Round(14 / Velocity.Length()) : 1;
+                float treadPlaceTimer = (int)Math.Round(14 / Velocity.Length()) != 0 ? (int)Math.Round(14 / Velocity.Length()) : 1;
 
                 if (Position - _oldPosition != Vector2.Zero && !Properties.Stationary)
                 {
                     if (!Properties.IsSilent)
                     {
-                        if (TankGame.GameUpdateTime % MathHelper.Clamp(treadPlaceTimer / 2, 4, 6) == 0)
+                        if (TankGame.RunTime % MathHelper.Clamp(treadPlaceTimer / 2, 4, 6) <= TankGame.DeltaTime)
                         {
                             var treadPlace = $"Assets/sounds/tnk_tread_place_{GameHandler.GameRand.Next(1, 5)}";
                             var sfx = SoundPlayer.PlaySoundInstance(treadPlace, SoundContext.Effect, 0.05f);
@@ -2164,7 +2164,7 @@ namespace TanksRebirth.GameContent
                         }
                     }
 
-                    if (TankGame.GameUpdateTime % treadPlaceTimer == 0)
+                    if (TankGame.RunTime % treadPlaceTimer <= TankGame.DeltaTime)
                         LayFootprint(Properties.TrackType == TrackID.Thick);
                 }
                 enactBehavior = () =>
@@ -2232,7 +2232,7 @@ namespace TanksRebirth.GameContent
                     else if (diff < -MathHelper.Pi)
                         TargetTurretRotation += MathHelper.TwoPi;
 
-                    TurretRotation = GameUtils.RoughStep(TurretRotation, TargetTurretRotation, AiParams.TurretSpeed * TurretRotationMultiplier);
+                    TurretRotation = GameUtils.RoughStep(TurretRotation, TargetTurretRotation, AiParams.TurretSpeed * TurretRotationMultiplier * TankGame.DeltaTime);
                     bool targetExists = Array.IndexOf(GameHandler.AllTanks, TargetTank) > -1 && TargetTank is not null;
                     if (targetExists)
                     {
@@ -2417,7 +2417,7 @@ namespace TanksRebirth.GameContent
                         }
                         else
                             if (SpecialBehaviors[0].Value > 0)
-                            SpecialBehaviors[0].Value--;
+                            SpecialBehaviors[0].Value -= TankGame.DeltaTime;
                         if (SpecialBehaviors[0].Value > 0)
                             Properties.MaxSpeed = 2.2f;
                         else
@@ -2425,7 +2425,7 @@ namespace TanksRebirth.GameContent
                     }
                     else if (Tier == TankID.Commando)
                     {
-                        SpecialBehaviors[0].Value++;
+                        SpecialBehaviors[0].Value += TankGame.DeltaTime;
                         if (SpecialBehaviors[0].Value > 500)
                         {
                             SpecialBehaviors[0].Value = 0;
@@ -2483,17 +2483,17 @@ namespace TanksRebirth.GameContent
                         if (!IsTurning)
                         {
                             IsTurning = false;
-                            Properties.Speed += Properties.Acceleration;
+                            Properties.Speed += Properties.Acceleration * TankGame.DeltaTime;
                             if (Properties.Speed > Properties.MaxSpeed)
                                 Properties.Speed = Properties.MaxSpeed;
                         }
                         else
                         {
-                            Properties.Speed -= Properties.Deceleration;
+                            Properties.Speed -= Properties.Deceleration * TankGame.DeltaTime;
                             if (Properties.Speed < 0)
                                 Properties.Speed = 0;
                             treadPlaceTimer = (int)Math.Round(14 / Properties.TurningSpeed) != 0 ? (int)Math.Round(14 / Properties.TurningSpeed) : 1;
-                            if (TankGame.GameUpdateTime % treadPlaceTimer == 0)
+                            if (TankGame.UpdateCount % treadPlaceTimer == 0)
                                 LayFootprint(Properties.TrackType == TrackID.Thick);
                             IsTurning = true;
                         }
@@ -2510,7 +2510,7 @@ namespace TanksRebirth.GameContent
                         Velocity.Normalize();
 
                         Velocity *= Properties.Speed;
-                        TankRotation = GameUtils.RoughStep(TankRotation, TargetTankRotation, Properties.TurningSpeed);
+                        TankRotation = GameUtils.RoughStep(TankRotation, TargetTankRotation, Properties.TurningSpeed * TankGame.DeltaTime);
                     }
 
                     #endregion

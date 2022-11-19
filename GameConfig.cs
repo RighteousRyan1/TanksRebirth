@@ -17,6 +17,8 @@ namespace TanksRebirth
         public bool FullScreen { get; set; } = false;
         public bool MSAA { get; set; } = false;
         public bool FadeFootprints { get; set; } = false;
+
+        public int TargetFPS { get; set; } = 60;
         #endregion
 
         #region Controls Settings

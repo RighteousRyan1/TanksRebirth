@@ -47,7 +47,7 @@ namespace TanksRebirth.GameContent
         public float ExpanseRate = 1f;
         public float ShrinkRate = 1f;
 
-        public int ShrinkDelay = 40;
+        public float ShrinkDelay = 40;
 
         private bool _maxAchieved;
 
@@ -81,7 +81,7 @@ namespace TanksRebirth.GameContent
         public void Update() {
             if (!_maxAchieved) {
                 if (Scale < MaxScale)
-                    Scale += ExpanseRate;
+                    Scale += ExpanseRate * TankGame.DeltaTime;
 
                 if (Scale > MaxScale)
                     Scale = MaxScale;
@@ -90,7 +90,7 @@ namespace TanksRebirth.GameContent
                     _maxAchieved = true;
             }
             else if (ShrinkDelay <= 0)
-                Scale -= ShrinkRate;
+                Scale -= ShrinkRate * TankGame.DeltaTime;
 
             if (!IntermissionSystem.IsAwaitingNewMission) {
                 foreach (var mine in Mine.AllMines) {
@@ -124,12 +124,12 @@ namespace TanksRebirth.GameContent
             }
 
             if (_maxAchieved)
-                ShrinkDelay--;
+                ShrinkDelay -= TankGame.DeltaTime;
 
             if (Scale <= 0)
                 Remove();
 
-            Rotation += RotationSpeed;
+            Rotation += RotationSpeed * TankGame.DeltaTime;
 
             World = Matrix.CreateScale(Scale) * Matrix.CreateRotationY(Rotation) * Matrix.CreateTranslation(Position3D);
             View = TankGame.GameView;
@@ -161,7 +161,7 @@ namespace TanksRebirth.GameContent
                     effect.FogColor = Color.Orange.ToVector3();
 
                     if (ShrinkDelay <= 0)
-                        effect.Alpha -= 0.05f;
+                        effect.Alpha -= 0.05f * TankGame.DeltaTime;
                     else
                         effect.Alpha = 1f;
                 }

@@ -2,7 +2,10 @@
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using TanksRebirth.GameContent.Systems;
 using TanksRebirth.Internals.Common;
+using TanksRebirth.Internals.Common.GameUI;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Internals.Core;
 
@@ -66,9 +69,7 @@ namespace TanksRebirth.Internals.UI
 		protected bool CanRegisterInput(Func<bool> uniqueInput)
 		{
 			if (!TankGame.Instance.IsActive)
-			{
 				return false;
-			}
 
 			if (Parent is null || Parent.Hitbox.Contains(GameUtils.MousePosition))
 			{
@@ -101,9 +102,10 @@ namespace TanksRebirth.Internals.UI
 
 		public virtual void LeftDown()
 		{
-			if (CanRegisterInput(() => Input.MouseLeft))
+            if (CanRegisterInput(() => Input.MouseLeft))
 			{
-				OnLeftDown?.Invoke(this);
+                // ChatSystem.SendMessage(this is UISlider, Color.White);
+                OnLeftDown?.Invoke(this);
 			}
 		}
 
@@ -111,7 +113,7 @@ namespace TanksRebirth.Internals.UI
 
 		public virtual void LeftUp()
 		{
-			if (CanRegisterInput(() => !Input.MouseLeft))
+            if (CanRegisterInput(() => !Input.MouseLeft))
 			{
 				OnLeftUp?.Invoke(this);
 			}

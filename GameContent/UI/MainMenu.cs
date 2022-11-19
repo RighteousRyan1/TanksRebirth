@@ -442,7 +442,7 @@ namespace TanksRebirth.GameContent.UI
             LogoScale = (MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalMilliseconds / _bpm) / _sclMax + _sclOffset).ToResolution();
 
             if (_sclOffset < _sclApproach)
-                _sclOffset += _sclAcc;
+                _sclOffset += _sclAcc * TankGame.DeltaTime;
             else
                 _sclOffset = _sclApproach;
 
@@ -803,6 +803,8 @@ namespace TanksRebirth.GameContent.UI
             };
             campaignNames.Add(extra);
 
+            UIElement.ResizeAndRelocate();
+
             UIElement.cunoSucksElement = new() { IsVisible = false };
             UIElement.cunoSucksElement.Remove();
             UIElement.cunoSucksElement = new();
@@ -991,6 +993,8 @@ namespace TanksRebirth.GameContent.UI
             GameUI.OptionsButtonPos.Y -= 75;
 
             HideAll();
+            UIElement.ResizeAndRelocate();
+
             OnMenuClose?.Invoke();
         }
 
@@ -1053,6 +1057,8 @@ namespace TanksRebirth.GameContent.UI
             GameUI.OptionsButtonSize.Y = 50;
             GameUI.QuitButton.IsVisible = true;
             GameUI.OptionsButton.IsVisible = true;
+
+            UIElement.ResizeAndRelocate();
 
             OnMenuOpen?.Invoke();
         }

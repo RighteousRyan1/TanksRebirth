@@ -73,7 +73,7 @@ namespace TanksRebirth.GameContent.Cosmetics
                 cos.RelativePosition = new Vector3(sinx, 20 + siny / 5, 0f);
 
                 if (tnk.IsIngame && !tnk.Properties.Invisible)
-                    if (TankGame.GameUpdateTime % 10 == 0)
+                    if (TankGame.UpdateCount % 10 == 0)
                         GameHandler.ParticleSystem.MakeShineSpot(tnk.Position3D + new Vector3(0, 20 + siny / 5 + (Vector2.UnitY * 5).RotatedByRadians(GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi)).Y, 0), Color.Yellow, GameHandler.GameRand.NextFloat(0.3f, 0.5f));
             }
         };

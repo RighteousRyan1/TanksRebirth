@@ -10,13 +10,13 @@ namespace TanksRebirth.GameContent.GameMechanics
     {
         public string Label;
 
-        public long Value;
+        public float Value;
 
-        public bool IsModOf(long remainder)
+        public bool IsModOf(float remainder)
         {
             if (remainder == 0)
                 return false;
-            return Value % remainder == 0;
+            return Value % remainder <= TankGame.DeltaTime;
         }
     }
     public static class AiBehaviorExtensions

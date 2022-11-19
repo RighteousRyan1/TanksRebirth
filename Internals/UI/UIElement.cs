@@ -218,6 +218,7 @@ namespace TanksRebirth.Internals.UI
                 return;
 
             OnInitialize();
+            ResizeAndRelocate();
             Initialized = true;
         }
 
@@ -360,6 +361,21 @@ namespace TanksRebirth.Internals.UI
             spriteBatch.DrawString(font, Tooltip, Hitbox.Center.ToVector2(), Color.Black, new Vector2(1f).ToResolution(), 0f, scaleFont / 2, 0);
         }
 
+        public static void ResizeAndRelocate()
+        {
+            foreach (var element in AllUIElements)
+            {
+                if (element != null)
+                {
+                    if (element._doUpdating)
+                    {
+                        element.Position = element.InternalPosition = element._updatedPos.Invoke() + element.Offset.ToResolution();
+                        element.Size = element.InternalSize = element._updatedSize.Invoke();
+                    }
+                }
+            }
+        }
+
         public static void UpdateElements()
         {
             var focusedElements = GetElementsAt(GameUtils.MousePosition, true);
@@ -381,30 +397,19 @@ namespace TanksRebirth.Internals.UI
                     el.MiddleUp();
 
                     el.MouseOver();
+
                 }
             }
 
-            foreach (var element in AllUIElements)
-            {
-                if (element != null)
-                {
-                    if (element._doUpdating)
-                    {
-                        element.Position = element.InternalPosition = element._updatedPos.Invoke() + element.Offset.ToResolution();
-                        element.Size = element.InternalSize = element._updatedSize.Invoke();
-                    }
-                }
-            }
-
-            var trySlider = GetElementsAt(GameUtils.MousePosition);
+            /*var trySlider = GetElementsAt(GameUtils.MousePosition);
 
             if (trySlider.Count > 0)
             {
                 if (trySlider[0] != null)
                 {
                     UIElement elementWeWant = trySlider[0].GetElementAt(GameUtils.MousePosition);
-                    if (elementWeWant.GetType() != typeof(UIImage))
-                        return;
+                    //if (elementWeWant is not UIImage)
+                        //return;
 
                     elementWeWant.LeftClick();
                     elementWeWant.LeftDown();
@@ -420,7 +425,7 @@ namespace TanksRebirth.Internals.UI
 
                     elementWeWant.MouseOver();
                 }
-            }
+            }*/
 
             foreach (UIElement element in AllUIElements)
             {

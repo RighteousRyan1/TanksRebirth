@@ -64,7 +64,7 @@ namespace TanksRebirth.GameContent
 
                 var spark = MakeParticle(position, texture);
 
-                var vel = new Vector3(GameHandler.GameRand.NextFloat(-0.25f, 0.25f), GameHandler.GameRand.NextFloat(0, 0.75f), GameHandler.GameRand.NextFloat(-0.25f, 0.25f));
+                var vel = new Vector3(GameHandler.GameRand.NextFloat(-0.25f, 0.25f), GameHandler.GameRand.NextFloat(0, 0.75f), GameHandler.GameRand.NextFloat(-0.25f, 0.25f)) * 2;
 
                 spark.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
@@ -80,9 +80,8 @@ namespace TanksRebirth.GameContent
 
                 spark.UniqueBehavior = (part) =>
                 {
-                    part.Position += vel;
-                    part.Alpha -= 0.025f;
-                    part.Position += vel;
+                    part.Position += vel * TankGame.DeltaTime;
+                    part.Alpha -= 0.025f * TankGame.DeltaTime;
 
                     if (part.Alpha <= 0f)
                         part.Destroy();
@@ -112,17 +111,17 @@ namespace TanksRebirth.GameContent
                 smoke.UniqueBehavior = (p) =>
                 {
                     smoke.Position += velocity;
-                    GeometryUtils.Add(ref smoke.Scale, -0.01f);
+                    GeometryUtils.Add(ref smoke.Scale, -0.01f * TankGame.DeltaTime);
 
                     if (smoke.Scale.X <= 0f)
                         smoke.Destroy();
 
                     if (smoke.LifeTime > timeMovingSideways)
                     {
-                        smoke.Alpha -= 0.02f;
-                        smoke.Position.Y += GameHandler.GameRand.NextFloat(0.1f, 0.25f);
-                        velocity.X *= 0.9f;
-                        velocity.Z *= 0.9f;
+                        smoke.Alpha -= 0.02f * TankGame.DeltaTime;
+                        smoke.Position.Y += GameHandler.GameRand.NextFloat(0.1f, 0.25f) * TankGame.DeltaTime;
+                        velocity.X *= 0.9f * TankGame.DeltaTime;
+                        velocity.Z *= 0.9f * TankGame.DeltaTime;
                     }
                 };
             }
@@ -135,9 +134,9 @@ namespace TanksRebirth.GameContent
             p.Color = color;
             p.UniqueBehavior = (part) =>
             {
-                GeometryUtils.Add(ref p.Scale, -0.0175f);
+                GeometryUtils.Add(ref p.Scale, -0.0175f * TankGame.DeltaTime);
 
-                p.Alpha -= 0.025f;
+                p.Alpha -= 0.025f * TankGame.DeltaTime;
 
                 if (p.Alpha <= 0f || p.Scale.X <= 0f)
                     p.Destroy();

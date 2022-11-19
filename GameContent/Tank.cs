@@ -150,7 +150,7 @@ namespace TanksRebirth.GameContent
 
         public static string AssetRoot;
 
-        public static List<int> GetActiveTeams()
+        public static int[] GetActiveTeams()
         {
             var teams = new List<int>();
             foreach (var tank in GameHandler.AllTanks)
@@ -161,7 +161,7 @@ namespace TanksRebirth.GameContent
                         teams.Add(tank.Team);
                 }
             }
-            return teams;
+            return teams.ToArray();
         }
 
         public static void SetAssetNames()
@@ -410,10 +410,10 @@ namespace TanksRebirth.GameContent
                     if (lp.Scale.X < 5f)
                         GeometryUtils.Add(ref lp.Scale, 0.12f);
                     if (lp.Alpha < 1f && lp.Scale.X < 5f)
-                        lp.Alpha += 0.02f;
+                        lp.Alpha += 0.02f * TankGame.DeltaTime;
 
                     if (lp.LifeTime > 90)
-                        lp.Alpha -= 0.005f;
+                        lp.Alpha -= 0.005f * TankGame.DeltaTime;
 
                     if (lp.Scale.X < 0f)
                         lp.Destroy();
@@ -455,7 +455,7 @@ namespace TanksRebirth.GameContent
 
             Position = Body.Position * UNITS_PER_METER;
 
-            Body.LinearVelocity = Velocity * 0.55f / UNITS_PER_METER;
+            Body.LinearVelocity = Velocity * 0.55f / UNITS_PER_METER * TankGame.DeltaTime;
 
             // try to make positive. i hate game
             World = Matrix.CreateScale(Scaling) * Matrix.CreateFromYawPitchRoll(-TankRotation - (Flip ? MathHelper.Pi : 0f), 0, 0)
@@ -485,13 +485,13 @@ namespace TanksRebirth.GameContent
             Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
 
             if (CurShootStun > 0)
-                CurShootStun--;
+                CurShootStun -= TankGame.DeltaTime;
             if (CurShootCooldown > 0)
-                CurShootCooldown--;
+                CurShootCooldown -= TankGame.DeltaTime;
             if (CurMineStun > 0)
-                CurMineStun--;
+                CurMineStun -= TankGame.DeltaTime;
             if (CurMineCooldown > 0)
-                CurMineCooldown--;
+                CurMineCooldown -= TankGame.DeltaTime;
 
             if (CurShootStun > 0 || CurMineStun > 0 || Properties.Stationary && IsIngame) {
                 Body.LinearVelocity = Vector2.Zero;
@@ -600,10 +600,10 @@ namespace TanksRebirth.GameContent
 
                     part.UniqueBehavior = (p) =>
                     {
-                        part.Pitch += MathF.Sin(part.Position.Length() / 10);
+                        part.Pitch += MathF.Sin(part.Position.Length() / 10) * TankGame.DeltaTime;
                         vel.Y -= 0.2f;
-                        part.Position += vel;
-                        part.Alpha -= 0.025f;
+                        part.Position += vel * TankGame.DeltaTime;
+                        part.Alpha -= 0.025f * TankGame.DeltaTime;
 
                         if (part.Alpha <= 0f)
                             part.Destroy();
@@ -622,8 +622,8 @@ namespace TanksRebirth.GameContent
 
                 partExpl.UniqueBehavior = (p) =>
                 {
-                    GeometryUtils.Add(ref p.Scale, -0.3f);
-                    p.Alpha -= 0.06f;
+                    GeometryUtils.Add(ref p.Scale, -0.3f * TankGame.DeltaTime);
+                    p.Alpha -= 0.06f * TankGame.DeltaTime;
                     if (p.Scale.X <= 0f)
                         p.Destroy();
                 };
@@ -684,14 +684,14 @@ namespace TanksRebirth.GameContent
                     smoke.isAddative = false;
 
                     int achieveable = 80;
-                    int step = 1;
+                    float step = 1;
 
                     hit.UniqueBehavior = (part) =>
                     {
                         part.Color = Color.Orange;
 
                         if (part.LifeTime > 1)
-                            part.Alpha -= 0.1f;
+                            part.Alpha -= 0.1f * TankGame.DeltaTime;
                         if (part.Alpha <= 0)
                             part.Destroy();
                     };
@@ -701,12 +701,12 @@ namespace TanksRebirth.GameContent
                         part.Color.G = (byte)GameUtils.RoughStep(part.Color.G, achieveable, step);
                         part.Color.B = (byte)GameUtils.RoughStep(part.Color.B, achieveable, step);
 
-                        GeometryUtils.Add(ref part.Scale, 0.004f);
+                        GeometryUtils.Add(ref part.Scale, 0.004f * TankGame.DeltaTime);
 
                         if (part.Color.G == achieveable)
                         {
                             part.Color.B = (byte)achieveable;
-                            part.Alpha -= 0.04f;
+                            part.Alpha -= 0.04f * TankGame.DeltaTime;
 
                             if (part.Alpha <= 0)
                                 part.Destroy();
@@ -831,10 +831,10 @@ namespace TanksRebirth.GameContent
                 DebugUtils.DrawDebugString(TankGame.SpriteRenderer, info[i], GeometryUtils.ConvertWorldToScreen(Vector3.Up * 20, World, View, Projection) - new Vector2(0, (i * 20) + 8), 1, centered: true, color: Color.Red);
 
         }
-        public uint CurShootStun { get; private set; } = 0;
-        public uint CurShootCooldown { get; private set; } = 0;
-        public uint CurMineCooldown { get; private set; } = 0;
-        public uint CurMineStun { get; private set; } = 0;
+        public float CurShootStun { get; private set; } = 0;
+        public float CurShootCooldown { get; private set; } = 0;
+        public float CurMineCooldown { get; private set; } = 0;
+        public float CurMineStun { get; private set; } = 0;
 
         public uint timeSinceLastAction = 15000;
 

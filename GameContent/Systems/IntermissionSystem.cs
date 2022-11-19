@@ -33,15 +33,17 @@ namespace TanksRebirth.GameContent.Systems
         /// <summary>Renders the intermission.</summary>
         public static void Draw(SpriteBatch spriteBatch)
         {
+            TankGame.Interp = (Alpha <= 0 && BlackAlpha <= 0) && GameHandler.InterpCheck;
+
             if (TankGame.Instance.IsActive)
             {
                 if (TimeBlack > -1)
                 {
                     TimeBlack--;
-                    BlackAlpha += 1f / 45f;
+                    BlackAlpha += 1f / 45f * TankGame.DeltaTime;
                 }
                 else
-                    BlackAlpha -= 1f / 45f;
+                    BlackAlpha -= 1f / 45f * TankGame.DeltaTime;
             }
 
             if (BlackAlpha >= 1 && _oldBlack < 1)
@@ -66,8 +68,8 @@ namespace TanksRebirth.GameContent.Systems
 
             if (!GameUI.Paused)
             {
-                _offset.Y -= 1f;
-                _offset.X += 1f;
+                _offset.Y -= 1f * TankGame.DeltaTime;
+                _offset.X += 1f * TankGame.DeltaTime;
             }
             if (MainMenu.Active && BlackAlpha <= 0)
             {
@@ -126,6 +128,11 @@ namespace TanksRebirth.GameContent.Systems
 
 
             _oldBlack = BlackAlpha;
+        }
+
+        private static void DrawBonusLifeHUD()
+        {
+            // TODO: finish.
         }
 
         public static void DrawShadowedString(SpriteFontBase font, Vector2 position, Vector2 shadowDir, string text, Color color, Vector2 scale, float alpha, Vector2 origin = default, float shadowDistScale = 1f)

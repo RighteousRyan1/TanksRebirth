@@ -245,7 +245,6 @@ namespace TanksRebirth.GameContent.UI
             #region Tank Graphics
             float offY = 0;
             int xAdjust = 200;
-            int xAdjustCount = 0;
             for (int i = 0; i < KillsPerType.Count; i++)
             {
                 var display = KillsPerType.ElementAt(i);
@@ -254,8 +253,8 @@ namespace TanksRebirth.GameContent.UI
                 {
                     #region Handle Appearance
 
-                    _tierScales[i] -= _appearSpeed;
-                    _tierAlphas[i] += _appearSpeed;
+                    _tierScales[i] -= _appearSpeed * TankGame.DeltaTime;
+                    _tierAlphas[i] += _appearSpeed * TankGame.DeltaTime;
 
                     if (_tierScales[i] < _tankSize)
                         _tierScales[i] = _tankSize;
@@ -264,7 +263,7 @@ namespace TanksRebirth.GameContent.UI
                         _tierAlphas[i] = 1f;
                     #endregion
 
-                    xAdjustCount = (int)Math.Floor((float)i / TanksPerColumn);
+                    var xAdjustCount = (int)Math.Floor((float)i / TanksPerColumn);
 
                     var texture = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/tank2d");
 

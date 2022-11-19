@@ -41,7 +41,8 @@ namespace TanksRebirth.GameContent
     {
         public static Random GameRand = new();
 
-        private static int _tankFuncDelay = 190;
+        private static float _tankFuncDelay = 190;
+        private static float _oldDelay;
 
         public const int MAX_AI_TANKS = 1000;
         public const int MAX_PLAYERS = 1000;
@@ -53,21 +54,30 @@ namespace TanksRebirth.GameContent
 
         public static XpBar Xp;
 
-        public static Matrix UIMatrix => Matrix.CreateOrthographicOffCenter(0, TankGame.Instance.GraphicsDevice.Viewport.Width, TankGame.Instance.GraphicsDevice.Viewport.Height, 0, -1, 1);
-
         private static bool _wasOverhead;
 
         private static bool _wasInMission;
+
+        public static bool InterpCheck;
 
         public static ParticleSystem ParticleSystem { get; } = new(15000);
 
         internal static void MapEvents()
         {
             GameProperties.OnMissionEnd += DoEndMissionWorkload;
+            GameProperties.OnMissionStart += HandleStart;
         }
+
+        private static void HandleStart()
+        {
+            InterpCheck = true;
+        }
+
         public static void DoEndMissionWorkload(int delay, MissionEndContext context, bool result1up) // bool major = (if true, play M100 fanfare, else M20)
         {
             TankMusicSystem.StopAll();
+
+            InterpCheck = false;
 
             if (result1up && context != MissionEndContext.Lose)
                 delay += 200;
@@ -153,14 +163,17 @@ namespace TanksRebirth.GameContent
         private static void DoEndScene(TimeSpan delay, MissionEndContext context)
         {
             // i think this works.
+            // only adjusts speed for when this is called.
             Task.Run(async () =>
             {
-                await Task.Delay(delay).ConfigureAwait(false);
+                await Task.Delay(delay * TankGame.DeltaTime).ConfigureAwait(false);
                 CampaignCompleteUI.PerformSequence(context);
             });
         }
         internal static void UpdateAll()
         {
+            if (MainMenu.Active)
+                InterpCheck = true;
             // technically, level 0 in code is level 1, so we want to use that number (1) if the user is level 0.
             if (Xp is not null)
                 Xp.Value = TankGame.GameData.ExpLevel - MathF.Floor(TankGame.GameData.ExpLevel);
@@ -246,14 +259,14 @@ namespace TanksRebirth.GameContent
                 _tankFuncDelay = 190;
 
             if (_tankFuncDelay > 0)
-                _tankFuncDelay--;
-            if (_tankFuncDelay == 1)
+                _tankFuncDelay -= TankGame.DeltaTime;
+            if (_tankFuncDelay <= 0 && _oldDelay > 0 && !MainMenu.Active)
             {
                 // FIXME: maybe causes issues since the mission is 1 tick from starting?
                 if (!GameProperties.InMission)
                 {
                     GameProperties.InMission = true;
-                    GameProperties.InvokeSimpleDelegates();
+                    GameProperties.DoMissionStartInvoke();
                     TankMusicSystem.PlayAll();
                 }
             }
@@ -312,6 +325,7 @@ namespace TanksRebirth.GameContent
 
             _wasOverhead = TankGame.OverheadView;
             _wasInMission = GameProperties.InMission;
+            _oldDelay = _tankFuncDelay;
 
             if (TankGame.OverheadView)
                 HandleLevelEditorModifications();
@@ -413,7 +427,7 @@ namespace TanksRebirth.GameContent
                     return true;
                 }
                 // check if it's not only FFA, and if teams left doesnt contain ffa. 
-                else if (!activeTeams.Contains(TeamID.NoTeam) && activeTeams.Count <= 1)
+                else if (!activeTeams.Contains(TeamID.NoTeam) && activeTeams.Length <= 1)
                 {
                     victory = activeTeams.Contains(PlayerTank.MyTeam);
                     return true;
@@ -428,7 +442,7 @@ namespace TanksRebirth.GameContent
                     victory = true;
                     return true;
                 }
-                else if (!activeTeams.Contains(TeamID.NoTeam) && activeTeams.Count <= 1)
+                else if (!activeTeams.Contains(TeamID.NoTeam) && activeTeams.Length <= 1)
                 {
                     victory = true;
                     return true;

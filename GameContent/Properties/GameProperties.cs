@@ -22,7 +22,7 @@ namespace TanksRebirth.GameContent.Properties
 
         public static event MissionEndEvent OnMissionEnd;
 
-        internal static void InvokeSimpleDelegates()
+        internal static void DoMissionStartInvoke()
         {
             OnMissionStart?.Invoke();
         }

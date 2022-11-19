@@ -94,7 +94,7 @@ namespace TanksRebirth.GameContent
         private int _id;
 
         /// <summary>How long this shell has existed in the world.</summary>
-        public int LifeTime;
+        public float LifeTime;
 
         public bool CanFriendlyFire = true;
 
@@ -186,7 +186,7 @@ namespace TanksRebirth.GameContent
         internal void Update()
         {
             Rotation = Velocity.ToRotation() - MathHelper.PiOver2;
-            Position += Velocity * 0.62f;
+            Position += Velocity * 0.62f * TankGame.DeltaTime;
             World = Matrix.CreateFromYawPitchRoll(-Rotation, 0, 0)
                 * Matrix.CreateTranslation(Position);
             Projection = TankGame.GameProjection;
@@ -224,7 +224,7 @@ namespace TanksRebirth.GameContent
                     Ricochet(true);
                     break;
             }
-            LifeTime++;
+            LifeTime += TankGame.DeltaTime;
 			// todo: make a check so this doesn't consume cpu power.
             if (LifeTime > HomeProperties.Cooldown)
             {
@@ -264,14 +264,14 @@ namespace TanksRebirth.GameContent
             }
             CheckCollisions();
 
-            int bruh = Flaming ? (int)Math.Round(6 / Velocity2D.Length()) : (int)Math.Round(12 / Velocity2D.Length());
-            int nummy = bruh != 0 ? bruh : 5;
+            float bruh = Flaming ? (int)Math.Round(6 / Velocity2D.Length()) : (int)Math.Round(12 / Velocity2D.Length());
+            float nummy = bruh != 0 ? bruh : 5;
 
             int darkness = 255;
 
             if (EmitsSmoke)
             {
-                if (LifeTime % nummy == 0)
+                if (LifeTime % nummy <= TankGame.DeltaTime)
                 {
                     var p = GameHandler.ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi + GameHandler.GameRand.NextFloat(-0.3f, 0.3f)).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
                     p.FaceTowardsMe = false;
@@ -290,9 +290,9 @@ namespace TanksRebirth.GameContent
                             p.Destroy();
 
                         if (p.Alpha > 0)
-                            p.Alpha -= Flaming ? 0.03f : 0.02f;
+                            p.Alpha -= (Flaming ? 0.03f : 0.02f) * TankGame.DeltaTime;
 
-                        GeometryUtils.Add(ref p.Scale, 0.0075f);
+                        GeometryUtils.Add(ref p.Scale, 0.0075f * TankGame.DeltaTime);
                     };
                 }
             }
@@ -339,7 +339,7 @@ namespace TanksRebirth.GameContent
 
                 p.UniqueBehavior = (part) =>
                 {
-                    p.Alpha -= 0.02f;
+                    p.Alpha -= 0.02f * TankGame.DeltaTime;
 
                     if (p.Alpha <= 0)
                         p.Destroy();
@@ -348,7 +348,7 @@ namespace TanksRebirth.GameContent
                 var p2 = GameHandler.ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
 
                 p2.Roll = -MathHelper.PiOver2;
-                p2.Scale = new(/*0.4f*/ Velocity.Length() / 10 - 0.2f, 0.25f, 0.4f); // x is outward from bullet
+                p2.Scale = new(0.4f /*Velocity.Length() / 10 - 0.2f*/, 0.25f, 0.4f); // x is outward from bullet
                                                    // p.Scale = new(1f, 1f, 1f);
                 p2.Color = Color.Gray;
                 p2.isAddative = false;
@@ -361,7 +361,7 @@ namespace TanksRebirth.GameContent
 
                 p2.UniqueBehavior = (part) =>
                 {
-                    p2.Alpha -= 0.02f;
+                    p2.Alpha -= 0.02f * TankGame.DeltaTime;
 
                     if (p2.Alpha <= 0)
                         p2.Destroy();
@@ -369,41 +369,44 @@ namespace TanksRebirth.GameContent
             }
             if (Flaming)
             {
-                var p = GameHandler.ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/flame"));
-
-                p.Roll = -MathHelper.PiOver2;
-                var scaleRand = GameHandler.GameRand.NextFloat(0.5f, 0.75f);
-                p.Scale = new(scaleRand, 0.165f, 0.4f); // x is outward from bullet
-                p.Color = Color.Orange;
-                p.isAddative = false;
-                // GameHandler.GameRand.NextFloat(-2f, 2f)
-                p.Rotation2D = -MathHelper.PiOver2;
-
-                var rotoff = GameHandler.GameRand.NextFloat(-0.25f, 0.25f);
-                p.Origin2D = new(p.Texture.Size().X / 2, p.Texture.Size().Y);
-
-                var initialScale = p.Scale;
-
-                p.UniqueBehavior = (par) =>
+                if (LifeTime % 1 <= TankGame.DeltaTime)
                 {
-                    var flat = Position.FlattenZ();
+                    var p = GameHandler.ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/flame"));
 
-                    var off = flat + new Vector2(0, 0).RotatedByRadians(Rotation);
+                    p.Roll = -MathHelper.PiOver2;
+                    var scaleRand = GameHandler.GameRand.NextFloat(0.5f, 0.75f);
+                    p.Scale = new(scaleRand, 0.165f, 0.4f); // x is outward from bullet
+                    p.Color = Color.Orange;
+                    p.isAddative = false;
+                    // GameHandler.GameRand.NextFloat(-2f, 2f)
+                    p.Rotation2D = -MathHelper.PiOver2;
 
-                    p.Position = off.ExpandZ() + new Vector3(0, 11, 0);
+                    var rotoff = GameHandler.GameRand.NextFloat(-0.25f, 0.25f);
+                    p.Origin2D = new(p.Texture.Size().X / 2, p.Texture.Size().Y);
 
-                    p.Pitch = -Rotation - MathHelper.PiOver2 + rotoff;
+                    var initialScale = p.Scale;
+
+                    p.UniqueBehavior = (par) =>
+                    {
+                        var flat = Position.FlattenZ();
+
+                        var off = flat + Vector2.Zero.RotatedByRadians(Rotation);
+
+                        p.Position = off.ExpandZ() + new Vector3(0, 11, 0);
+
+                        p.Pitch = -Rotation - MathHelper.PiOver2 + rotoff;
 
                         //if (TankGame.GameUpdateTime % 2 == 0)
                         //p.Roll = GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi);
 
-                    var scalingConstant = 0.06f;
+                        var scalingConstant = 0.06f;
 
-                    p.Scale.X -= scalingConstant;
+                        p.Scale.X -= scalingConstant * TankGame.DeltaTime;
 
-                    if (p.Scale.X <= 0)
-                        p.Destroy();
-                };
+                        if (p.Scale.X <= 0)
+                            p.Destroy();
+                    };
+                }
             }
             OnPostUpdate?.Invoke(this);
         }
@@ -413,66 +416,6 @@ namespace TanksRebirth.GameContent
 
         private void TankGame_OnFocusLost(object sender, IntPtr e)
             => _loopingSound?.Instance?.Pause();
-        // deprecated.
-        private void MakeTrail()
-        {
-            var p = GameHandler.ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
-
-            p.Roll = -MathHelper.PiOver2;
-            p.Scale = new(1f, 0.165f, 0.4f); // x is outward from bullet
-                                              // p.Scale = new(1f, 1f, 1f);
-            p.Color = Color.Black;
-            p.isAddative = false;
-            // GameHandler.GameRand.NextFloat(-2f, 2f)
-            //p.TextureRotation = -MathHelper.PiOver2;
-            p.Origin2D = new(0, p.Texture.Size().Y / 2);
-
-            p.UniqueBehavior = (part) =>
-            {
-                p.Pitch = -Rotation - MathHelper.PiOver2;
-                var flat = Position.FlattenZ();
-
-                var off = flat + new Vector2(0, 0).RotatedByRadians(Rotation);
-                
-                p.Position = off.ExpandZ() + new Vector3(0, 11, 0);
-                
-                if (p.LifeTime < 120)
-                    p.Scale.X += 0.01f;
-                else
-                    p.Scale.X -= 0.01f;
-
-                if (p.Scale.X < 0)
-                    p.Destroy();
-            };
-            var p2 = GameHandler.ParticleSystem.MakeParticle(Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(), GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
-
-            p2.Roll = -MathHelper.PiOver2;
-            p2.Scale = new(1f, 0.165f, 0.4f); // x is outward from bullet
-                                             // p.Scale = new(1f, 1f, 1f);
-            p2.Color = Color.Black;
-            p2.isAddative = false;
-            // GameHandler.GameRand.NextFloat(-2f, 2f)
-            //p.TextureRotation = -MathHelper.PiOver2;
-            p2.Origin2D = new(0, p.Texture.Size().Y / 2);
-
-            p2.UniqueBehavior = (part) =>
-            {
-                p2.Pitch = -Rotation + MathHelper.PiOver2;
-                var flat = Position.FlattenZ();
-
-                var off = flat + new Vector2(0, 0).RotatedByRadians(Rotation);
-
-                p2.Position = off.ExpandZ() + new Vector3(0, 11, 0);
-
-                if (p2.LifeTime < 120)
-                    p2.Scale.X += 0.01f;
-                else
-                    p2.Scale.X -= 0.01f;
-
-                if (p2.Scale.X < 0)
-                    p2.Destroy();
-            };
-        }
 
         /// <summary>
         /// Ricochets this <see cref="Shell"/>.
@@ -513,12 +456,9 @@ namespace TanksRebirth.GameContent
         }
         public void CheckCollisions()
         {
-            foreach (var tank in GameHandler.AllTanks)
-            {
-                if (tank is not null)
-                {
-                    if (tank.CollisionCircle.Intersects(HitCircle))
-                    {
+            foreach (var tank in GameHandler.AllTanks) {
+                if (tank is not null) {
+                    if (tank.CollisionCircle.Intersects(HitCircle)) {
                         if (!CanFriendlyFire) {
                             if (tank.Team == Owner.Team && tank != Owner && tank.Team != TeamID.NoTeam)
                                 Destroy(DestructionContext.WithFriendlyTank);

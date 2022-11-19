@@ -283,9 +283,9 @@ namespace TanksRebirth.GameContent
 
             if (!rotationMet)
             {
-                if (TankGame.GameUpdateTime % treadPlaceTimer == 0)
+                if (TankGame.UpdateCount % treadPlaceTimer == 0)
                     LayFootprint(Properties.TrackType == TrackID.Thick);
-                Properties.Speed -= Properties.Deceleration;
+                Properties.Speed -= Properties.Deceleration * TankGame.DeltaTime;
                 if (Properties.Speed < 0)
                     Properties.Speed = 0;
                 IsTurning = true;
@@ -295,7 +295,7 @@ namespace TanksRebirth.GameContent
                 if (TankGame.ThirdPerson)
                     preterbedVelocity = preterbedVelocity.RotatedByRadians(-TurretRotation + MathHelper.Pi);
 
-                Properties.Speed += Properties.Acceleration;
+                Properties.Speed += Properties.Acceleration * TankGame.DeltaTime;
                 if (Properties.Speed > Properties.MaxSpeed)
                     Properties.Speed = Properties.MaxSpeed;
                 
@@ -330,7 +330,7 @@ namespace TanksRebirth.GameContent
 
             TargetTankRotation = norm.ToRotation() - MathHelper.PiOver2;
 
-            TankRotation = GameUtils.RoughStep(TankRotation, TargetTankRotation, Properties.TurningSpeed);
+            TankRotation = GameUtils.RoughStep(TankRotation, TargetTankRotation, Properties.TurningSpeed * TankGame.DeltaTime);
 
             if (rightStick.Length() > 0)
             {
@@ -355,7 +355,7 @@ namespace TanksRebirth.GameContent
 
             IsTurning = false;
 
-            var treadPlaceTimer = (int)Math.Round(14 / Velocity.Length()) != 0 ? (int)Math.Round(14 / Velocity.Length()) : 1;
+            float treadPlaceTimer = (int)Math.Round(14 / Velocity.Length()) != 0 ? (int)Math.Round(14 / Velocity.Length()) : 1;
 
             var rotationMet = TankRotation > TargetTankRotation - Properties.MaximalTurn && TankRotation < TargetTankRotation + Properties.MaximalTurn;
 
@@ -369,7 +369,7 @@ namespace TanksRebirth.GameContent
                 if (Properties.Speed < 0)
                     Properties.Speed = 0;
                 // treadPlaceTimer += MaxSpeed / 5;
-                if (TankGame.GameUpdateTime % treadPlaceTimer == 0)
+                if (TankGame.RunTime % treadPlaceTimer <= TankGame.DeltaTime)
                     LayFootprint(Properties.TrackType == TrackID.Thick);
                 IsTurning = true;
             }
@@ -406,7 +406,7 @@ namespace TanksRebirth.GameContent
 
             TargetTankRotation = norm.ToRotation() - MathHelper.PiOver2;
 
-            TankRotation = GameUtils.RoughStep(TankRotation, TargetTankRotation, Properties.TurningSpeed);
+            TankRotation = GameUtils.RoughStep(TankRotation, TargetTankRotation, Properties.TurningSpeed * TankGame.DeltaTime);
 
 
             if (TankGame.ThirdPerson)
@@ -450,11 +450,11 @@ namespace TanksRebirth.GameContent
             if (Velocity.Length() > 0 && playerControl_isBindPressed)
             {
                 var treadPlaceTimer = (int)Math.Round(14 / Velocity.Length()) != 0 ? (int)Math.Round(14 / Velocity.Length()) : 1;
-                if (TankGame.GameUpdateTime % treadPlaceTimer == 0  )
+                if (TankGame.RunTime % treadPlaceTimer <= TankGame.DeltaTime)
                     LayFootprint(Properties.TrackType == TrackID.Thick);
                 if (!Properties.IsSilent)
                 {
-                    if (TankGame.GameUpdateTime % MathHelper.Clamp(treadPlaceTimer / 2, 4, 6) == 0)
+                    if (TankGame.RunTime % MathHelper.Clamp(treadPlaceTimer / 2, 4, 6) <= TankGame.DeltaTime)
                     {
                         var treadPlace = $"Assets/sounds/tnk_tread_place_{GameHandler.GameRand.Next(1, 5)}";
                         var sfx = SoundPlayer.PlaySoundInstance(treadPlace, SoundContext.Effect, 0.2f);
@@ -528,7 +528,7 @@ namespace TanksRebirth.GameContent
                 pathPos += pathDir;
                 // tainicom.Aether.Physics2D.Collision.
                 var pathPosScreen = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(pathPos.X, 11, pathPos.Y), TankGame.GameView, TankGame.GameProjection);
-                var off = (float)Math.Sin(i * Math.PI / 5 - TankGame.GameUpdateTime * 0.3f);
+                var off = (float)Math.Sin(i * Math.PI / 5 - TankGame.UpdateCount * 0.3f);
                 TankGame.SpriteRenderer.Draw(whitePixel, pathPosScreen, null, (Color.White.ToVector3() * off).ToColor(), 0, whitePixel.Size() / 2, 2 + off, default, default);
             }
         }

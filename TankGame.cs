@@ -94,9 +94,6 @@ namespace TanksRebirth
             }
         }
 
-        internal static float GetInterpolatedFloat(float value)
-            => value * (float)LastGameTime.ElapsedGameTime.TotalSeconds;
-
         public static Camera GameCamera;
 
         public static readonly string SysGPU = $"GPU: {GetGPU()}";
@@ -111,6 +108,9 @@ namespace TanksRebirth
         public static double RenderFPS { get; private set; }
 
         public static long GCMemory => GC.GetTotalMemory(false);
+
+        public static float DeltaTime => Interp ? 60 / (float)LogicFPS : 1;
+
         public static long ProcessMemory
         {
             get
@@ -122,7 +122,9 @@ namespace TanksRebirth
         }
 
         public static GameTime LastGameTime { get; private set; }
-        public static uint GameUpdateTime { get; private set; }
+        public static uint UpdateCount { get; private set; }
+
+        public static float RunTime { get; private set; }
 
         public static Texture2D WhitePixel;
 
@@ -227,7 +229,8 @@ namespace TanksRebirth
 
         protected override void Initialize()
         {
-            try {
+            try
+            {
                 CurrentSessionTimer.Start();
 
                 GameHandler.MapEvents();
@@ -287,6 +290,8 @@ namespace TanksRebirth
             try
             {
                 var s = Stopwatch.StartNew();
+
+                Window.ClientSizeChanged += HandleResizing;
 
                 if (Debugger.IsAttached)
                 {
@@ -431,6 +436,11 @@ namespace TanksRebirth
             }
         }
 
+        private void HandleResizing(object sender, EventArgs e)
+        {
+            UIElement.ResizeAndRelocate();
+        }
+
         public static void WriteError(Exception e, bool notifyUser = true, bool openFile = true) {
             GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
             if (notifyUser)
@@ -456,7 +466,6 @@ namespace TanksRebirth
                     LevelEditor.Theme.Resume();
             }
         }
-
         private void TankGame_OnFocusLost(object sender, IntPtr e)
         {
             if (TankMusicSystem.IsLoaded)
@@ -502,15 +511,22 @@ namespace TanksRebirth
         public static bool SpeedrunMode;
 
         public static bool Interp = true;
-        public static float DeltaTime { get; private set; }
 
         public static bool HoveringAnyTank;
-
         protected override void Update(GameTime gameTime)
         {
             try
             {
-                DeltaTime = Interp ? (float)gameTime.ElapsedGameTime.TotalSeconds : 1; // if interpolation of frames is false, set delta time to 1
+                TargetElapsedTime = TimeSpan.FromMilliseconds(Interp ? 16.67 * (60f / Settings.TargetFPS) : 16.67);
+
+
+                // hardcode shit for initializing locations. (if needed)
+                //if (CurrentSessionTimer.Elapsed < TimeSpan.FromSeconds(5))
+                    //UIElement.ResizeAndRelocate();
+
+                if (!float.IsInfinity(DeltaTime))
+                    RunTime += DeltaTime;
+
                 if (Input.AreKeysJustPressed(Keys.LeftAlt, Keys.RightAlt))
                     Lighting.AccurateShadows = !Lighting.AccurateShadows;
                 if (Input.AreKeysJustPressed(Keys.LeftShift, Keys.RightShift))
@@ -553,7 +569,7 @@ namespace TanksRebirth
 
                 DiscordRichPresence.Update();
 
-                if (GameUpdateTime % 60 == 0 && DebugUtils.DebuggingEnabled) {
+                if (UpdateCount % 60 == 0 && DebugUtils.DebuggingEnabled) {
                     _memBytes = ProcessMemory;
                 }
 
@@ -703,14 +719,7 @@ namespace TanksRebirth
                     if (Input.MouseMiddle)
                         CameraFocusOffset += MouseVelocity;
                     GameUtils.GetMouseVelocity(GameUtils.WindowCenter);
-
-                    if (!SpeedrunMode)
-                        IsFixedTimeStep = !Input.CurrentKeySnapshot.IsKeyDown(Keys.Tab);
-                    else
-                        IsFixedTimeStep = true;
                 }
-                else
-                    IsFixedTimeStep = true;
 
                 FixedUpdate(gameTime);
 
@@ -733,10 +742,11 @@ namespace TanksRebirth
         public void FixedUpdate(GameTime gameTime)
         {
             // TODO: this
+            IsFixedTimeStep = !Settings.Vsync || !Interp;
             if (Input.KeyJustPressed(Keys.Up) && DebugUtils.DebuggingEnabled)
                 Campaign.Save(GameProperties.LoadedCampaign.MetaData.Name, GameProperties.LoadedCampaign);
 
-            GameUpdateTime++;
+            UpdateCount++;
 
             GameShaders.UpdateShaders();
 

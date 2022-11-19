@@ -47,7 +47,7 @@ namespace TanksRebirth.GameContent
 
         public Rectangle Hitbox;
 
-        public int DetonateTime;
+        public float DetonateTime;
         public readonly int DetonateTimeMax;
 
         private bool _tickRed;
@@ -127,7 +127,7 @@ namespace TanksRebirth.GameContent
 
             Hitbox = new((int)Position.X - 10, (int)Position.Y - 10, 20, 20); 
 
-            DetonateTime--;
+            DetonateTime -= TankGame.DeltaTime;
 
             if (DetonateTime < 120) {
                 if (DetonateTime % 2 == 0)
