@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using TanksRebirth.Enums;
+using TanksRebirth.GameContent.ID;
+using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.Internals;
 
@@ -109,13 +111,30 @@ namespace TanksRebirth.GameContent.Systems
             for (int i = 0; i < mission.Tanks.Length; i++) {
                 var tnk = mission.Tanks[i];
                 var tank = tnk.GetTank();
+
+                var placement = PlacementSquare.Placements.FindIndex(place => Vector3.Distance(place.Position, tank.Position3D) < Block.FULL_BLOCK_SIZE / 2);
+
+                if (placement > -1)
+                {
+                    PlacementSquare.Placements[placement].TankId = tank.WorldId;
+                    PlacementSquare.Placements[placement].HasBlock = false;
+                }
+
+                // FIXME: relates to tank rotation.
                 tank.TankRotation = tnk.Rotation;
                 tank.TargetTankRotation = -tank.TankRotation - MathHelper.Pi;
             }
             for (int i = 0; i < mission.Blocks.Length; i++) {
-                var block = mission.Blocks[i];
+                var blockr = mission.Blocks[i];
 
-                block.GetBlock();
+                var block = blockr.GetBlock();
+
+                var placement = PlacementSquare.Placements.FindIndex(place => Vector3.Distance(place.Position, block.Position3D) < Block.FULL_BLOCK_SIZE / 2);
+                if (placement > -1)
+                {
+                    PlacementSquare.Placements[placement].BlockId = block.Id;
+                    PlacementSquare.Placements[placement].HasBlock = true;
+                }
             }
         }
         /// <summary>

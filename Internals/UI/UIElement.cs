@@ -218,7 +218,7 @@ namespace TanksRebirth.Internals.UI
                 return;
 
             OnInitialize();
-            ResizeAndRelocate();
+            // ResizeAndRelocate();
             Initialized = true;
         }
 
@@ -400,6 +400,8 @@ namespace TanksRebirth.Internals.UI
 
                 }
             }
+
+            ResizeAndRelocate();
 
             /*var trySlider = GetElementsAt(GameUtils.MousePosition);
 

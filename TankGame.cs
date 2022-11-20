@@ -438,7 +438,7 @@ namespace TanksRebirth
 
         private void HandleResizing(object sender, EventArgs e)
         {
-            UIElement.ResizeAndRelocate();
+            // UIElement.ResizeAndRelocate();
         }
 
         public static void WriteError(Exception e, bool notifyUser = true, bool openFile = true) {

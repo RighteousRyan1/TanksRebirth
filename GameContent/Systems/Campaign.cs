@@ -177,7 +177,7 @@ namespace TanksRebirth.GameContent.Systems
 
                     if (placement > -1)
                     {
-                        ChatSystem.SendMessage("Loaded " + PlayerID.Collection.GetKey(tank.PlayerType), Color.Blue);
+                        //ChatSystem.SendMessage("Loaded " + PlayerID.Collection.GetKey(tank.PlayerType), Color.Blue);
                         PlacementSquare.Placements[placement].TankId = tank.WorldId;
                         PlacementSquare.Placements[placement].HasBlock = false;
                     }

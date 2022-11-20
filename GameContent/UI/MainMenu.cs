@@ -803,7 +803,7 @@ namespace TanksRebirth.GameContent.UI
             };
             campaignNames.Add(extra);
 
-            UIElement.ResizeAndRelocate();
+            // UIElement.ResizeAndRelocate();
 
             UIElement.cunoSucksElement = new() { IsVisible = false };
             UIElement.cunoSucksElement.Remove();
@@ -993,7 +993,7 @@ namespace TanksRebirth.GameContent.UI
             GameUI.OptionsButtonPos.Y -= 75;
 
             HideAll();
-            UIElement.ResizeAndRelocate();
+            // UIElement.ResizeAndRelocate();
 
             OnMenuClose?.Invoke();
         }
@@ -1058,7 +1058,7 @@ namespace TanksRebirth.GameContent.UI
             GameUI.QuitButton.IsVisible = true;
             GameUI.OptionsButton.IsVisible = true;
 
-            UIElement.ResizeAndRelocate();
+            //UIElement.ResizeAndRelocate();
 
             OnMenuOpen?.Invoke();
         }
