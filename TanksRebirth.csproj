@@ -47,5 +47,8 @@
     <Reference Include="MeltySynth">
       <HintPath>deps\MeltySynth.dll</HintPath>
     </Reference>
+    <Reference Include="WiimoteLib">
+      <HintPath>deps\WiimoteLib.dll</HintPath>
+    </Reference>
   </ItemGroup>
 </Project>

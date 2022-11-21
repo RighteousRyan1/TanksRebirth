@@ -111,17 +111,24 @@ namespace TanksRebirth.GameContent
             Stack = (sbyte)MathHelper.Clamp(height, 0, 7);
             Type = type;
 
+            var modelname = MapRenderer.Theme switch
+            {
+                MapTheme.Vanilla => IsAlternateModel ? "Assets/toy/cube_stack_alt" : "Assets/toy/cube_stack",
+                MapTheme.Christmas => IsAlternateModel ? "Assets/christmas/cube_stack_alt_snowy" : "Assets/christmas/cube_stack_snowy",
+                _ => ""
+            };
+
             switch (type) {
                 case BlockID.Wood:
                     _texture = MapRenderer.Assets["block.1"];
                     IsSolid = true;
-                    Model = IsAlternateModel ? GameResources.GetGameResource<Model>("Assets/toy/cube_stack_alt") : GameResources.GetGameResource<Model>("Assets/toy/cube_stack"); ;
+                    Model = GameResources.GetGameResource<Model>(modelname);
                     break;
                 case BlockID.Cork:
                     IsDestructible = true;
                     _texture = MapRenderer.Assets["block.2"];
                     IsSolid = true;
-                    Model = IsAlternateModel ? GameResources.GetGameResource<Model>("Assets/toy/cube_stack_alt") : GameResources.GetGameResource<Model>("Assets/toy/cube_stack"); ;
+                    Model = GameResources.GetGameResource<Model>(modelname);
                     break;
                 case BlockID.Hole:
                     Model = GameResources.GetGameResource<Model>("Assets/check");
@@ -251,7 +258,10 @@ namespace TanksRebirth.GameContent
                             effect.Projection = TankGame.GameProjection;
 
                             effect.TextureEnabled = true;
-                            effect.Texture = _texture;
+                            if (mesh.Name != "snow")
+                                effect.Texture = _texture;
+                            else
+                                effect.Texture = MapRenderer.Assets["snow"];
 
                             effect.SetDefaultGameLighting_IngameEntities(10f);
 

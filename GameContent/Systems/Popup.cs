@@ -12,8 +12,7 @@ namespace TanksRebirth.GameContent.Systems
     // TODO: finish
     public class Popup
     {
-        public enum PopupAnchor
-        {
+        public enum PopupAnchor {
             Top, 
             Bottom
         }

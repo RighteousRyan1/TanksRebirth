@@ -575,7 +575,6 @@ namespace TanksRebirth.GameContent.UI
             addMission.SetDimensions(() => new Vector2(_missionButtonScissor.X + 15.ToResolutionX(), _missionButtonScissor.Y + _missionButtonScissor.Height + 5.ToResolutionY()), () => new Vector2(_missionButtonScissor.Width / 2, 25.ToResolutionY()));
             addMission.OnLeftClick = (a) =>
             {
-
                 _missionButtons.ForEach(x => x.Color = Color.White);
                 addMission.Color = Color.SkyBlue;
 
@@ -586,12 +585,12 @@ namespace TanksRebirth.GameContent.UI
 
                 // move every mission up by 1 in the array.
                 for (int i = count; i > id + 1; i--) {
-                    if (i + 1 > _loadedCampaign.CachedMissions.Length) {
+                    if (i + 1 >= _loadedCampaign.CachedMissions.Length)
                         Array.Resize(ref _loadedCampaign.CachedMissions, _loadedCampaign.CachedMissions.Length + 1);
-                    }
                     _loadedCampaign.CachedMissions[i] = _loadedCampaign.CachedMissions[i - 1];
                 }
-
+                if (id + 1 >= _loadedCampaign.CachedMissions.Length)
+                    Array.Resize(ref _loadedCampaign.CachedMissions, _loadedCampaign.CachedMissions.Length + 1);
                 _loadedCampaign.CachedMissions[id + 1] = new(Array.Empty<TankTemplate>(), Array.Empty<BlockTemplate>());
                 _loadedCampaign.LoadMission(id + 1);
                 _loadedCampaign.SetupLoadedMission(true);

@@ -52,9 +52,6 @@ namespace TanksRebirth.GameContent.UI
         private static float _panelFadeSpeed = 0.03f;
 
         public static bool _skip;
-        // TODO: tomorrow do this stuff
-        // music loop, depending on end context
-        // tank grafiks
         private static bool[] _tierDisplays;
         private static bool _shouldShowGrade;
         private static float[] _tierAlphas;

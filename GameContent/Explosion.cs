@@ -63,7 +63,7 @@ namespace TanksRebirth.GameContent
             Position = pos;
             MaxScale = scaleMax;
             Source = owner;
-            _maskingTex = GameResources.GetGameResource<Texture2D>(/*"Assets/textures/mine/explosion_mask"*/"Assets/textures/misc/tank_smoke_ami");
+            _maskingTex = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smoke_ami");
 
             Model = GameResources.GetGameResource<Model>("Assets/mineexplosion");
 
@@ -71,7 +71,8 @@ namespace TanksRebirth.GameContent
 
             var destroysound = "Assets/sounds/tnk_destroy";
 
-            SoundPlayer.PlaySoundInstance(destroysound, SoundContext.Effect, 0.4f);
+            SoundPlayer.PlaySoundInstance(destroysound, SoundContext.Effect, 0.4f, 0f);
+            SoundPlayer.PlaySoundInstance(destroysound, SoundContext.Effect, 0.4f, 0f, -0.2f);
 
             _id = index;
 

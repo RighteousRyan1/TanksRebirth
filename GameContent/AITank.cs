@@ -2159,8 +2159,7 @@ namespace TanksRebirth.GameContent
                         if (TankGame.RunTime % MathHelper.Clamp(treadPlaceTimer / 2, 4, 6) <= TankGame.DeltaTime)
                         {
                             var treadPlace = $"Assets/sounds/tnk_tread_place_{GameHandler.GameRand.Next(1, 5)}";
-                            var sfx = SoundPlayer.PlaySoundInstance(treadPlace, SoundContext.Effect, 0.05f);
-                            sfx.Instance.Pitch = MathHelper.Clamp(Properties.TreadPitch, 0, 1);
+                            var sfx = SoundPlayer.PlaySoundInstance(treadPlace, SoundContext.Effect, 0.05f, 0f, Properties.TreadPitch);
                         }
                     }
 

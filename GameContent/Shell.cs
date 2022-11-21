@@ -228,7 +228,7 @@ namespace TanksRebirth.GameContent
                     break;
             }
             LifeTime += TankGame.DeltaTime;
-			// todo: make a check so this doesn't consume cpu power.
+
             if (LifeTime > HomeProperties.Cooldown)
             {
                 if (Owner != null)

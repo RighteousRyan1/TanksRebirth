@@ -198,7 +198,7 @@ namespace TanksRebirth.GameContent
                 if (Client.IsConnected())
                     ChatSystem.SendMessage($"PlayerId: {PlayerId} | ClientId: {NetPlay.CurrentClient.Id}", Color.White);
                 if (NetPlay.IsClientMatched(PlayerId) && !IntermissionSystem.IsAwaitingNewMission) {
-                    if (!TankGame.ThirdPerson) {
+                    if (!Difficulties.Types["ThirdPerson"]) {
                         Vector3 mouseWorldPos = GameUtils.GetWorldPosition(GameUtils.MousePosition, -11f);
                         if (!LevelEditor.Active)
                             TurretRotation = (-(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position).ToRotation()) + MathHelper.PiOver2;
@@ -292,7 +292,7 @@ namespace TanksRebirth.GameContent
             }
             else
             {
-                if (TankGame.ThirdPerson)
+                if (Difficulties.Types["ThirdPerson"])
                     preterbedVelocity = preterbedVelocity.RotatedByRadians(-TurretRotation + MathHelper.Pi);
 
                 Properties.Speed += Properties.Acceleration * TankGame.DeltaTime;
@@ -402,18 +402,16 @@ namespace TanksRebirth.GameContent
                 preterbedVelocity.X = 1;
             }
 
+            if (Difficulties.Types["ThirdPerson"])
+                preterbedVelocity = preterbedVelocity.RotatedByRadians(-TurretRotation + MathHelper.Pi);
+
             var norm = Vector2.Normalize(preterbedVelocity);
 
             TargetTankRotation = norm.ToRotation() - MathHelper.PiOver2;
 
             TankRotation = GameUtils.RoughStep(TankRotation, TargetTankRotation, Properties.TurningSpeed * TankGame.DeltaTime);
 
-
-            if (TankGame.ThirdPerson)
-                preterbedVelocity = preterbedVelocity.RotatedByRadians(-TurretRotation + MathHelper.Pi);
-
             Velocity = Vector2.UnitY.RotatedByRadians(TankRotation) * Properties.Speed;
-            //ChatSystem.SendMessage($"{preterbedVelocity} | " + preterbedVelocity.RotatedByRadians(-TurretRotation + MathHelper.Pi), Color.White);
         }
         public override void Destroy(ITankHurtContext context)
         {

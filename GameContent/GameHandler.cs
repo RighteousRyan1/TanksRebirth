@@ -222,6 +222,49 @@ namespace TanksRebirth.GameContent
 
             if (Difficulties.Types["ThunderMode"])
                 DoThunderStuff();
+            else if (MapRenderer.Theme == MapTheme.Christmas) {
+                TankGame.ClearColor = (Color.DeepSkyBlue.ToVector3() * 0.2f).ToColor();
+                if (GameRand.NextFloat(0, 1) <= 0.1f) {
+
+                    float y = 200f;
+
+                    float x = GameRand.NextFloat(-450f, 450f);
+                    float z = GameRand.NextFloat(-250f, 250f);
+
+                    int snowflake = GameRand.Next(0, 2);
+
+                    var p = ParticleSystem.MakeParticle(new Vector3(x, y, z), GameResources.GetGameResource<Texture2D>($"Assets/christmas/snowflake_{snowflake}"));
+
+                    p.Scale = new Vector3(GameRand.NextFloat(0.1f, 0.5f));
+
+                    Vector2 wind = new Vector2(0.05f, 0f);
+
+                    float weight = GameRand.NextFloat(0.02f, 0.08f);
+
+                    float rotFactor = GameRand.NextFloat(0.001f, 0.01f);
+
+                    p.UniqueBehavior = (a) =>
+                    {
+                        if (p.Position.Y <= 0) {
+                            GeometryUtils.Add(ref p.Scale, -0.006f * TankGame.DeltaTime);
+                            if (p.Scale.X <= 0)
+                                p.Destroy();
+
+                        }
+                        else {
+                            p.Position.X += wind.X * TankGame.DeltaTime;
+                            p.Position.Y -= weight;
+                            p.Position.Z += wind.Y * TankGame.DeltaTime;
+
+                            p.Rotation2D += 0.01f * TankGame.DeltaTime;
+
+                            p.Roll += rotFactor * TankGame.DeltaTime;
+
+                            p.Pitch += (rotFactor / 2) * TankGame.DeltaTime;
+                        }
+                    };
+                }
+            }
 
             if (GameProperties.ShouldMissionsProgress && !MainMenu.Active)
                 HandleMissionChanging();
@@ -355,6 +398,8 @@ namespace TanksRebirth.GameContent
                 Thunder.SoftRain.Instance.Play();
             Thunder.SoftRain.Instance.Volume = TankGame.Settings.AmbientVolume;
 
+
+            // TODO: should the chance be scaled by tps?
             if (GameRand.NextFloat(0, 1f) <= 0.003f)
             {
                 var rand = new Range<Thunder.ThunderType>(Thunder.ThunderType.Fast, Thunder.ThunderType.Instant2);

@@ -18,7 +18,6 @@ namespace TanksRebirth.GameContent
 
         public void RenderParticles()
         {
-
             foreach (var particle in CurrentParticles)
                 particle?.Render();
         }

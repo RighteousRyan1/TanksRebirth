@@ -130,9 +130,7 @@ namespace TanksRebirth.GameContent.Systems
                         tank.Team = template.Team;
                         if (GameProperties.ShouldMissionsProgress)
                         {
-                            // TODO: fix the leak, dumbass
-                            tank.OnDestroy += (sender, e) =>
-                            {
+                            tank.OnDestroy += (sender, e) => {
                                 TrackedSpawnPoints[Array.IndexOf(TrackedSpawnPoints, TrackedSpawnPoints.First(pos => pos.Item1 == template.Position))].Item2 = false; // make sure the tank is not spawned again
                             };
                         }
@@ -348,9 +346,6 @@ namespace TanksRebirth.GameContent.Systems
 
             public UnpackedColor BackgroundColor { get; set; }
             public UnpackedColor MissionStripColor { get; set; }
-
-            // TODO: support for custom mission results panel color?
-
             public static CampaignMetaData Get(string path, string fileName)
             {
                 var properties = CampaignMetaData.GetDefault();

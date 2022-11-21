@@ -1031,7 +1031,7 @@ namespace TanksRebirth.GameContent.UI
             GameUI.QuitButtonPos.Y -= 50;
             GameUI.OptionsButtonPos.Y += 75;
 
-            for (int i = 0; i < 10; i++)
+            /*for (int i = 0; i < 10; i++)
             {
                 for (int j = 0; j < 10; j++)
                 {
@@ -1042,7 +1042,7 @@ namespace TanksRebirth.GameContent.UI
                     else
                         t.Velocity.Y = -1f;
                 }
-            }
+            }*/
 
             TankMusicSystem.StopAll();
 

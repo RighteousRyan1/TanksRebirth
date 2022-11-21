@@ -25,7 +25,7 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
         private static float MusicVolume => TankGame.Settings.MusicVolume;
         private static float EffectsVolume => TankGame.Settings.EffectsVolume;
         private static float AmbientVolume => TankGame.Settings.AmbientVolume;
-        public static OggAudio PlaySoundInstance(string audioPath, SoundContext context, float volume = 1f, bool autoApplyContentPrefix = true)
+        public static OggAudio PlaySoundInstance(string audioPath, SoundContext context, float volume = 1f, float panOverride = 0f, float pitchOverride = 0f, bool autoApplyContentPrefix = true)
         {
             // because ogg is the only good audio format.
             var prepend = autoApplyContentPrefix ? TankGame.Instance.Content.RootDirectory + "/" : string.Empty;
@@ -57,6 +57,8 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
             //GameContent.Systems.ChatSystem.SendMessage($"{nameof(exists)}: {exists}", Color.White);
             //GameContent.Systems.ChatSystem.SendMessage($"new list count: {Sounds.Count}", Color.White);
 
+            sfx.Instance.Pan = panOverride;
+            sfx.Instance.Pitch = pitchOverride;
             sfx.Instance.Play();
             sfx.Instance.Volume = volume;
 

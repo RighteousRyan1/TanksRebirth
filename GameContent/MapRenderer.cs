@@ -47,7 +47,8 @@ namespace TanksRebirth.GameContent
             ["floor_face"] = null,
             ["floor_lower"] = null,
             ["teleporter"] = null,
-        };
+            ["snow"] = GameResources.GetGameResource<Texture2D>("Assets/christmas/snow")
+    };
 
         public static void LoadTexturePack(string folder)
         {
@@ -134,10 +135,8 @@ namespace TanksRebirth.GameContent
             // TODO: finish christmas stuff kekw failure
             public static void RenderFloor()
             {
-                foreach (var mesh in FloorModelBase.Meshes)
-                {
-                    foreach (BasicEffect effect in mesh.Effects)
-                    {
+                foreach (var mesh in FloorModelBase.Meshes) {
+                    foreach (BasicEffect effect in mesh.Effects) {
                         effect.View = View;
                         effect.Projection = Projection;
                         effect.World = World * Matrix.CreateScale(scale);
@@ -147,7 +146,11 @@ namespace TanksRebirth.GameContent
                         effect.TextureEnabled = true;
 
                         //effect.Texture = GameResources.GetGameResource<Texture2D>(AssetRoot + "floor_face");
-                        effect.Texture = Assets["floor_face"];
+                        effect.Texture = Theme switch {
+                            MapTheme.Vanilla => Assets["floor_face"],
+                            MapTheme.Christmas => Assets["snow"],
+                            _ => null
+                        };
                     }
 
                     mesh.Draw();
@@ -193,6 +196,26 @@ namespace TanksRebirth.GameContent
                         SetBlockTexture(BoundaryModel.Meshes["polygon32"], BoundaryTextureContext.floor_lower);
 
                         break;
+                    case MapTheme.Christmas:
+                        BoundaryModel = GameResources.GetGameResource<Model>("Assets/christmas/snowy");
+
+                        SetBlockTexture(BoundaryModel.Meshes["polygon48"], BoundaryTextureContext.block_other_c);
+                        SetBlockTexture(BoundaryModel.Meshes["polygon40"], BoundaryTextureContext.block_other_a);
+                        SetBlockTexture(BoundaryModel.Meshes["polygon33"], BoundaryTextureContext.block_other_b_test);
+                        SetBlockTexture(BoundaryModel.Meshes["polygon7"], BoundaryTextureContext.block_shadow_b);
+                        SetBlockTexture(BoundaryModel.Meshes["polygon15"], BoundaryTextureContext.block_shadow_b);
+
+                        SetBlockTexture(BoundaryModel.Meshes["polygon5"], BoundaryTextureContext.block_shadow_h);
+
+                        SetBlockTexture(BoundaryModel.Meshes["polygon20"], BoundaryTextureContext.block_shadow_d);
+
+                        SetBlockTexture(BoundaryModel.Meshes["polygon21"], BoundaryTextureContext.block_shadow_b);
+
+                        SetBlockTexture(BoundaryModel.Meshes["polygon32"], BoundaryTextureContext.floor_lower);
+
+                        SetBlockTexture(BoundaryModel.Meshes["snow_field"], "snow");
+                        SetBlockTexture(BoundaryModel.Meshes["snow_blocks"], "snow");
+                        break;
                 }
             }
 
@@ -201,14 +224,33 @@ namespace TanksRebirth.GameContent
                 switch (Theme)
                 {
                     case MapTheme.Vanilla:
-                        foreach (var mesh in BoundaryModel.Meshes)
-                        {
-                            foreach (BasicEffect effect in mesh.Effects)
-                            {
+                        foreach (var mesh in BoundaryModel.Meshes) {
+                            foreach (BasicEffect effect in mesh.Effects) {
                                 effect.View = View;
                                 effect.Projection = Projection;
                                 effect.World = World;
 
+                                if (mesh.Name == "polygon2")
+                                    effect.Alpha = 0.1f;
+                                else
+                                    effect.Alpha = 1f;
+
+                                effect.SetDefaultGameLighting();
+                            }
+
+                            mesh.Draw();
+                        }
+                        break;
+                    case MapTheme.Christmas:
+                        foreach (var mesh in BoundaryModel.Meshes) {
+                            foreach (BasicEffect effect in mesh.Effects) {
+                                effect.View = View;
+                                effect.Projection = Projection;
+                                effect.World = World;
+
+                                if (mesh.Name == "snow_field" || mesh.Name == "snow_blocks")
+                                    effect.World = Matrix.CreateRotationX(-MathHelper.PiOver2) * Matrix.CreateScale(62) * Matrix.CreateTranslation(Center);//Matrix.CreateScale(0.62f) * Matrix.CreateTranslation(0, 0, 130) * 
+                                        //Matrix.CreateRotationX(/*-MathHelper.PiOver2*/ GameUtils.MousePosition.X / 300) * Matrix.CreateScale(1f);
                                 if (mesh.Name == "polygon2")
                                     effect.Alpha = 0.1f;
                                 else
@@ -229,12 +271,13 @@ namespace TanksRebirth.GameContent
             /// <param name="mesh"></param>
             /// <param name="meshNameMatch"></param>
             /// <param name="textureContext"></param>
-            private static void SetBlockTexture(ModelMesh mesh, BoundaryTextureContext context)
-            {
+            private static void SetBlockTexture(ModelMesh mesh, BoundaryTextureContext context) {
                 foreach (BasicEffect effect in mesh.Effects)
-                {
                     effect.Texture = Assets[context.ToString()];//GameResources.GetGameResource<Texture2D>($"{AssetRoot}{context}");
-                }
+            }
+            private static void SetBlockTexture(ModelMesh mesh, string textureName) {
+                foreach (BasicEffect effect in mesh.Effects)
+                    effect.Texture = Assets[textureName.ToString()];//GameResources.GetGameResource<Texture2D>($"{AssetRoot}{context}");
             }
 
             private enum BoundaryTextureContext
@@ -275,11 +318,14 @@ namespace TanksRebirth.GameContent
             BoundsRenderer.LoadBounds();
         }
 
+        public static float Scale = 0.62f;
+        public static Vector3 Center = new Vector3(0, 0, 130);
+
         public static void RenderWorldModels()
         {
             View = TankGame.GameView;
             Projection = TankGame.GameProjection;
-            World = Matrix.CreateScale(0.62f) * Matrix.CreateTranslation(0, 0, 130);
+            World = Matrix.CreateScale(Scale) * Matrix.CreateTranslation(Center);
 
             if (ShouldRender)
             {

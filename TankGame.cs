@@ -38,10 +38,6 @@ using System.Threading.Tasks;
 
 namespace TanksRebirth
 {
-    // TODO: Implement block once all of above things are done
-    // TODO: AI in the middle to far future
-    // TODO: add some finishing touches to TankMusicSystem
-
     public class TankGame : Game
     {
 #pragma warning disable
@@ -68,6 +64,7 @@ namespace TanksRebirth
         }
 #pragma warning restore
 
+        #region Fields1
         public static Language GameLanguage = new();
 
         public static class MemoryParser
@@ -96,10 +93,8 @@ namespace TanksRebirth
 
         public static Camera GameCamera;
 
-        public static readonly string SysGPU = $"GPU: {GetGPU()}";
-        public static readonly string SysCPU = $"CPU: {GetHardware("Win32_Processor", "Name")}";
-        public static readonly string SysKeybd = $"Keyboard: {GetHardware("Win32_Keyboard", "Name")}";
-        public static readonly string SysMouse = $"Mouse: {GetHardware("Win32_PointingDevice", "Name")}";
+        public readonly string SysGPU;
+        public readonly string SysCPU;
 
         public static TimeSpan RenderTime { get; private set; }
         public static TimeSpan LogicTime { get; private set; }
@@ -164,6 +159,7 @@ namespace TanksRebirth
         public static bool IsLinux;
 
         public readonly string MOTD;
+        #endregion
 
         public TankGame() : base()
         {
@@ -193,6 +189,9 @@ namespace TanksRebirth
                     OperatingSystem = OSPlatform.Linux;
                     IsLinux = true;
                 }
+
+                SysGPU = $"GPU: {GetGPU()}";
+                SysCPU = $"CPU: {GetHardware("Win32_Processor", "Name")}";
 
                 GameHandler.ClientLog.Write($"Playing on Operating System '{OperatingSystem}'", LogType.Info);
 
@@ -293,6 +292,7 @@ namespace TanksRebirth
 
                 Window.ClientSizeChanged += HandleResizing;
 
+                // I forget why this check is needed...
                 if (Debugger.IsAttached)
                 {
                     GameResources.CopySrcFolderContents("Content/Assets/fonts");
@@ -326,6 +326,7 @@ namespace TanksRebirth
                     GameResources.CopySrcFolderContents("Content/Assets/toy", ".png");
                     GameResources.CopySrcFolderContents("Content/Assets/forest", ".png");
                     GameResources.CopySrcFolderContents("Content/Assets/cosmetics", ".png");
+                    GameResources.CopySrcFolderContents("Content/Assets/christmas", ".png");
 
                     GameHandler.ClientLog.Write($"Detected build: Copying source folders to output...", LogType.Info);
                 }
@@ -487,7 +488,6 @@ namespace TanksRebirth
         public static float AddativeZoom = 1f;
 
         public static Vector2 CameraFocusOffset;
-        public static bool ThirdPerson;
 
         private static bool _oView;
         public static bool OverheadView
@@ -501,8 +501,6 @@ namespace TanksRebirth
         }
 
         private static int transitionTimer;
-
-        private bool _justChanged = true;
 
         public static Vector3 ThirdPersonCameraPosition;
         public static Vector2 MouseVelocity => GameUtils.GetMouseVelocity(GameUtils.WindowCenter);
@@ -555,7 +553,7 @@ namespace TanksRebirth
                     Graphics.ApplyChanges();
                 }
 
-                MouseRenderer.ShouldRender = ThirdPerson ? (GameUI.Paused || MainMenu.Active) : true;
+                MouseRenderer.ShouldRender = Difficulties.Types["ThirdPerson"] ? (GameUI.Paused || MainMenu.Active) : true;
                 if (UIElement.delay > 0)
                     UIElement.delay--;
 
@@ -573,9 +571,6 @@ namespace TanksRebirth
                     _memBytes = ProcessMemory;
                 }
 
-                if (IntermissionSystem.Alpha >= 1)
-                    _justChanged = true;
-
                 LastGameTime = gameTime;
 
                 if (_wasActive && !IsActive)
@@ -586,22 +581,23 @@ namespace TanksRebirth
                     if (Input.KeyJustPressed(Keys.J))
                         OverheadView = !OverheadView;
 
-                if (!ThirdPerson)
+                if (!Difficulties.Types["ThirdPerson"])
                 {
                     if (transitionTimer > 0)
                     {
                         transitionTimer--;
                         if (OverheadView)
                         {
-                            GameUtils.SoftStep(ref CameraRotationVector.Y, MathHelper.PiOver2, 0.08f);
-                            GameUtils.SoftStep(ref AddativeZoom, 0.6f, 0.08f);
-                            GameUtils.RoughStep(ref CameraFocusOffset.Y, 82f, 2f);
+                            GameUtils.SoftStep(ref CameraRotationVector.Y, MathHelper.PiOver2, 0.08f * DeltaTime);
+                            GameUtils.SoftStep(ref AddativeZoom, 0.6f, 0.08f * DeltaTime);
+                            GameUtils.RoughStep(ref CameraFocusOffset.Y, 82f, 2f * DeltaTime);
                         }
                         else
                         {
-                            GameUtils.SoftStep(ref CameraRotationVector.Y, DEFAULT_ORTHOGRAPHIC_ANGLE, 0.08f);
-                            GameUtils.SoftStep(ref AddativeZoom, 1f, 0.08f);
-                            GameUtils.RoughStep(ref CameraFocusOffset.Y, 0f, 2f);
+                            GameUtils.SoftStep(ref CameraRotationVector.Y, DEFAULT_ORTHOGRAPHIC_ANGLE, 0.08f * DeltaTime);
+                            if (!LevelEditor.Active)
+                                GameUtils.SoftStep(ref AddativeZoom, 1f, 0.08f * DeltaTime);
+                            GameUtils.RoughStep(ref CameraFocusOffset.Y, 0f, 2f * DeltaTime);
                         }
                     }
 
@@ -624,20 +620,12 @@ namespace TanksRebirth
                             Matrix.CreateTranslation(CameraFocusOffset.X, -CameraFocusOffset.Y + 40, 0) *
                             Matrix.CreateRotationX(CameraRotationVector.Y) *
                             Matrix.CreateRotationY(CameraRotationVector.X);
+                    GameProjection = Matrix.CreateOrthographic(1920, 1080, -2000, 5000);
                     //Matrix.CreateTranslation(CameraFocusOffset.X, -CameraFocusOffset.Y, 0);
-
-                    if (_justChanged)
-                    {
-                        //if we just changed to third person, we don't want to reset the camera
-                        // use width or height?
-                        GameProjection = Matrix.CreateOrthographic(1920, 1080, -2000, 5000);
-
-                        _justChanged = false;
-                    }
                 }
                 else
                 {
-                    if (GameHandler.AllPlayerTanks.Count(x => x is not null && !x.Dead) > 0)
+                    if (GameHandler.AllPlayerTanks.Any(x => x is not null && !x.Dead))
                     {
                         ThirdPersonCameraPosition = GameHandler.AllPlayerTanks[0].Position.ExpandZ();
                         /*GameCamera.SetPosition(GameHandler.AllPlayerTanks[0].Position.ExpandZ());
@@ -656,11 +644,7 @@ namespace TanksRebirth
                         GameView = Matrix.CreateLookAt(ThirdPersonCameraPosition,
                             ThirdPersonCameraPosition + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-GameHandler.AllPlayerTanks[0].TurretRotation).ExpandZ()
                             , Vector3.Up) * Matrix.CreateScale(AddativeZoom) * Matrix.CreateRotationX(CameraRotationVector.Y - MathHelper.PiOver4) * Matrix.CreateRotationY(CameraRotationVector.X) * Matrix.CreateTranslation(0, -20, -40);
-                        if (_justChanged)
-                        {
-                            GameProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000);
-                            _justChanged = false;
-                        }
+                        GameProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000);
                     }
                     else
                     {
@@ -695,11 +679,7 @@ namespace TanksRebirth
                             GameView = Matrix.CreateLookAt(ThirdPersonCameraPosition,
                                 ThirdPersonCameraPosition + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-x.TurretRotation).ExpandZ()
                                 , Vector3.Up) * Matrix.CreateScale(AddativeZoom) * Matrix.CreateRotationX(CameraRotationVector.Y - MathHelper.PiOver4) * Matrix.CreateRotationY(CameraRotationVector.X) * Matrix.CreateTranslation(0, -20, -40) * Matrix.CreateScale(AddativeZoom);
-                            if (_justChanged)
-                            {
-                                GameProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000);
-                                _justChanged = false;
-                            }
+                            GameProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000);
                         }
                     }
                 }
@@ -713,8 +693,6 @@ namespace TanksRebirth
                         AddativeZoom += 0.01f;
                     if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Subtract))
                         AddativeZoom -= 0.01f;
-
-                    ThirdPerson = Difficulties.Types["ThirdPerson"];
 
                     if (Input.MouseMiddle)
                         CameraFocusOffset += MouseVelocity;
@@ -812,14 +790,7 @@ namespace TanksRebirth
 
             foreach (var bind in Keybind.AllKeybinds)
                 bind?.Update();
-
-            UiScale = GameUtils.MousePosition.X / GameUtils.WindowWidth * 5;
         }
-
-        public static Matrix Matrix2D;
-
-        public static float UiScale = 1f;
-
         public static Color ClearColor = Color.Black;
 
         public static bool RenderWireframe = false;
@@ -844,11 +815,6 @@ namespace TanksRebirth
             GraphicsDevice.SetRenderTarget(gameTarget);
             try
             {
-                // GraphicsDevice.RasterizerState = Default;
-
-                Matrix2D = Matrix.CreateOrthographicOffCenter(0, GameUtils.WindowWidth, GameUtils.WindowHeight, 0, -1, 1)
-                    * Matrix.CreateScale(UiScale);
-
                 GraphicsDevice.Clear(ClearColor);
 
                 // TankFootprint.DecalHandler.UpdateRenderTarget();

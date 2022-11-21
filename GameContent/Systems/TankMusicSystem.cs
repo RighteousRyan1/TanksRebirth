@@ -17,8 +17,6 @@ namespace TanksRebirth.GameContent.Systems
     {
         public static int TierHighest => AITank.GetHighestTierActive();
 
-        // TODO: ambience n stuff - remove music in forests
-
         public static OggMusic SnowLoop;
 
         public static float Pitch = 0f;
