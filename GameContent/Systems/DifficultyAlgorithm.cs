@@ -61,7 +61,9 @@ namespace TanksRebirth.GameContent.Systems
 
             foreach (var block in mission.Blocks)
             {
-                difficulty *= 0.985f;
+                // TODO: based on this, have a list of defaults per-block type.
+                if (block.Type != BlockID.Hole || block.Type == BlockID.Teleporter)
+                    difficulty *= 0.985f;
             }
 
             return difficulty;

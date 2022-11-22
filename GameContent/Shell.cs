@@ -203,7 +203,7 @@ namespace TanksRebirth.GameContent
 
             var dummy = Vector2.Zero;
 
-            Collision.HandleCollisionSimple_ForBlocks(Hitbox, Velocity2D, ref dummy, out var dir, out var block, out bool corner, false, (c) => c.IsSolid);
+            Collision.HandleCollisionSimple_ForBlocks(Hitbox, Velocity2D, ref dummy, out var dir, out var block, out bool corner, false/*, (c) => c.IsSolid*/);
 
             if (LifeTime <= 5 && (dir != CollisionDirection.None || corner))
                 Destroy(DestructionContext.WithObstacle);

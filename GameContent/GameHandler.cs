@@ -236,9 +236,9 @@ namespace TanksRebirth.GameContent
 
                     p.Scale = new Vector3(GameRand.NextFloat(0.1f, 0.25f));
 
-                    Vector2 wind = new Vector2(0.05f, 0f);
+                    Vector2 wind = new(0.05f, 0f);
 
-                    float weight = GameRand.NextFloat(0.02f, 0.08f);
+                    float weight = GameRand.NextFloat(0.05f, 0.15f);
 
                     float rotFactor = GameRand.NextFloat(0.001f, 0.01f);
 
@@ -1129,11 +1129,6 @@ namespace TanksRebirth.GameContent
             GaussianBlurShader = GameResources.GetGameResource<Effect>("Assets/Shaders/GaussianBlur");
             MouseShader = GameResources.GetGameResource<Effect>("Assets/Shaders/MouseShader");
             LanternShader = GameResources.GetGameResource<Effect>("Assets/Shaders/testshader");
-
-            var blurFactor = 0.005f; // GameUtils.MousePosition.X / GameUtils.WindowWidth;
-
-            GaussianBlurShader.Parameters["oResolution"].SetValue(Vector2.One);
-            GaussianBlurShader.Parameters["oBlurFactor"].SetValue(blurFactor);
         }
         //static float val = 1f;
         public static void UpdateShaders()
@@ -1144,6 +1139,9 @@ namespace TanksRebirth.GameContent
             MouseShader.Parameters["oSpeed"].SetValue(-20f);
             MouseShader.Parameters["oSpacing"].SetValue(10f);
 
+            var blurFactor = 0.0075f;
+            GaussianBlurShader.Parameters["oResolution"].SetValue(Vector2.One);
+            GaussianBlurShader.Parameters["oBlurFactor"].SetValue(blurFactor);
             GaussianBlurShader.Parameters["oEnabledBlur"].SetValue(MainMenu.Active);
 
             /*if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Up))

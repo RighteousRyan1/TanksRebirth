@@ -363,7 +363,7 @@ namespace TanksRebirth.Internals.UI
 
         public static void ResizeAndRelocate()
         {
-            foreach (var element in AllUIElements)
+            foreach (var element in AllUIElements.ToList())
             {
                 if (element != null)
                 {

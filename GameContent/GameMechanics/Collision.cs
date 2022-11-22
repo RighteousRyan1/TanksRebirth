@@ -176,39 +176,29 @@ namespace TanksRebirth.GameContent.GameMechanics
 
             collisionInfo.Value = 1f;
 
-            foreach (var cube in Block.AllBlocks)
-            {
-                if (cube is not null)
-                {
-                    if (movingBox.Intersects(cube.Hitbox))
-                    {
-                        if (exclude is not null)
-                        {
+            foreach (var cube in Block.AllBlocks) {
+                if (cube is not null) {
+                    if (movingBox.Intersects(cube.Hitbox)) {
+                        if (exclude is not null) {
                             if (exclude.Invoke(cube))
                                 cornerCollision = true;
                             break;
                         }
-                        else
-                        {
+                        else {
                             cornerCollision = true;
                             break;
                         }
                     }
-                    if (exclude is null)
-                    {
-                        if (IsColliding(movingBox, cube.Hitbox, velocity, out var info))
-                        {
+                    if (exclude is null) {
+                        if (IsColliding(movingBox, cube.Hitbox, velocity, out var info)) {
                             if (info.Value < collisionInfo.Value)
                                 collisionInfo = info;
                             block = cube;
                         }
                     }
-                    else
-                    {
-                        if (exclude.Invoke(cube))
-                        {
-                            if (IsColliding(movingBox, cube.Hitbox, velocity, out var info))
-                            {
+                    else {
+                        if (exclude.Invoke(cube)) {
+                            if (IsColliding(movingBox, cube.Hitbox, velocity, out var info)) {
                                 if (info.Value < collisionInfo.Value)
                                     collisionInfo = info;
                                 block = cube;

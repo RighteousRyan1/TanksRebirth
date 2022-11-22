@@ -972,6 +972,12 @@ namespace TanksRebirth.GameContent.UI
             Active = false;
             Theme.Stop();
 
+            for (int a = 0; a < Block.AllBlocks.Length; a++)
+                Block.AllBlocks[a]?.Remove();
+            for (int a = 0; a < GameHandler.AllTanks.Length; a++)
+                GameHandler.AllTanks[a]?.Remove();
+            GameHandler.CleanupScene();
+
             RemoveAllMenuTanks();
 
             GameUI.OptionsButtonSize.Y = 150;
@@ -1040,6 +1046,17 @@ namespace TanksRebirth.GameContent.UI
 
                 var b = new Block(GameHandler.GameRand.Next(0, BlockID.Hole), GameHandler.GameRand.Next(0, Block.MAX_BLOCK_HEIGHT), rand);
             }
+
+            // TODO: finish.
+
+            /*
+            var rand = GameHandler.GameRand.Next(1, 2);
+
+            var link = $"https://github.com/RighteousRyan1/tanks_rebirth_motds/blob/master/menu_missions/Menu{rand}.mission?raw=true";
+
+            var bytes = WebUtils.DownloadWebFile(link, out var name);
+
+            var reader = new BinaryReader();*/
 
             /*for (int i = 0; i < 10; i++)
             {

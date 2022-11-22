@@ -699,13 +699,13 @@ namespace TanksRebirth.GameContent
                     AiParams.Inaccuracy = 0.35f;
 
                     AiParams.ProjectileWarinessRadius_PlayerShot = 100;
-                    AiParams.MineWarinessRadius_PlayerLaid = 60;
+                    AiParams.MineWarinessRadius_PlayerLaid = 110; // 60
 
                     properties.TurningSpeed = 0.06f;
                     properties.MaximalTurn = MathHelper.ToRadians(5);
 
                     properties.ShootStun = 5;
-                    properties.ShellCooldown = 90;
+                    properties.ShellCooldown = 60;
                     properties.ShellLimit = 3;
                     properties.ShellSpeed = 6f;
                     properties.ShellType = ShellID.Rocket;

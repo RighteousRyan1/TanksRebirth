@@ -634,6 +634,7 @@ namespace TanksRebirth.GameContent.UI
         {
             if (fromMainMenu)
             {
+
                 IntermissionSystem.TimeBlack = 180;
                 GameProperties.ShouldMissionsProgress = false;
                 Task.Run(async () =>
