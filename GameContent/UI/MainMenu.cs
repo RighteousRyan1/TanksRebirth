@@ -1,35 +1,27 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using TanksRebirth.Internals.Common.GameInput;
-using TanksRebirth.Internals.Core;
-using TanksRebirth.Internals.Common.GameUI;
-using TanksRebirth.Internals.Common.Utilities;
-using TanksRebirth.GameContent.Systems;
 using TanksRebirth.Internals.Common;
-using TanksRebirth.Graphics;
 using System;
 using TanksRebirth.Internals.UI;
-using TanksRebirth.Internals.Common.Framework.Input;
 using System.Collections.Generic;
 using System.Linq;
 using FontStashSharp;
-using TanksRebirth.Internals.Common.Framework.Audio;
-using TanksRebirth.Internals;
-using Microsoft.Xna.Framework.Audio;
-using TanksRebirth.Enums;
-using TanksRebirth.Net;
 using System.IO;
+using System.Threading.Tasks;
 using System.Diagnostics;
 
-using Aspose.Zip;
-using Aspose.Zip.Rar;
 using TanksRebirth.GameContent.Properties;
 using TanksRebirth.GameContent.Cosmetics;
 using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Systems.Coordinates;
-using TanksRebirth.Internals.Common.Framework;
+using TanksRebirth.Internals.Common.GameUI;
+using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.GameContent.Systems;
+using TanksRebirth.Internals.Common.Framework.Audio;
+using TanksRebirth.Internals;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.UI
 {
@@ -403,7 +395,7 @@ namespace TanksRebirth.GameContent.UI
                 OnLeftClick = (a) => { MenuState = State.StatsMenu; },
                 Tooltip = "View your all-time statistics for this game!"
             };
-            StatsMenu.SetDimensions(() => new Vector2(GameUtils.WindowWidth / 2 - 90.ToResolutionX(), GameUtils.WindowHeight - 100.ToResolutionY()), () => new Vector2(180, 50).ToResolution());
+            StatsMenu.SetDimensions(() => new Vector2(WindowUtils.WindowWidth / 2 - 90.ToResolutionX(), WindowUtils.WindowHeight - 100.ToResolutionY()), () => new Vector2(180, 50).ToResolution());
             #endregion
 
             Open();
@@ -434,11 +426,11 @@ namespace TanksRebirth.GameContent.UI
 
         private static void UpdateLogo()
         {
-            LogoPosition = new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 4);
+            LogoPosition = new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 4);
 
-            //_bpm = GameUtils.MousePosition.Y / GameUtils.WindowHeight * 1000;
-            //_sclMax = GameUtils.MousePosition.X / GameUtils.WindowWidth * 1000;
-            // _rotDelta = GameUtils.MousePosition.Y / GameUtils.WindowHeight * 1000;
+            //_bpm = MouseUtils.MousePosition.Y / WindowUtils.WindowHeight * 1000;
+            //_sclMax = MouseUtils.MousePosition.X / WindowUtils.WindowWidth * 1000;
+            // _rotDelta = MouseUtils.MousePosition.Y / WindowUtils.WindowHeight * 1000;
 
             LogoRotation = MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalMilliseconds / _rotationBpm) / _rotDelta + _spinOffset;
             LogoScale = (MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalMilliseconds / _bpm) / _sclMax + _sclOffset).ToResolution();
@@ -900,20 +892,37 @@ namespace TanksRebirth.GameContent.UI
             }
             if (TankGame.GameData.ReadOutdatedFile)
                 TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"Outdated save file ({TankGame.GameData.Name})! Delete the old one!", new Vector2(8, 8), Color.White, Vector2.One, 0f, Vector2.Zero, 0f);
-            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "Press ESC to return", GameUtils.WindowBottom - Vector2.UnitY * 40, Color.White, Vector2.One, 0f, GameUtils.GetAnchor(aligning, TankGame.TextFont.MeasureString("Press ESC to leave")), 0f);
+            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "Press ESC to return", WindowUtils.WindowBottom - Vector2.UnitY * 40, Color.White, Vector2.One, 0f, GameUtils.GetAnchor(aligning, TankGame.TextFont.MeasureString("Press ESC to leave")), 0f);
         }
+
+        private static float _newMisCd;
+        private static float _timeToWait = 180;
 
         public static void Update()
         {
             if (!_initialized || !_diffButtonsInitialized)
                 return;
+
+            if (_curMenuMission.Blocks != null) {
+                var missionComplete = GameHandler.NothingCanHappenAnymore(_curMenuMission, out bool victory);
+
+                if (missionComplete) {
+                    // TODO: finish.
+                    _newMisCd += TankGame.DeltaTime;
+                    if (_newMisCd > _timeToWait)
+                        LoadTemplateMission();
+                }
+                else
+                    _newMisCd = 0;
+            }
+
+            #region General Stuff
             if (MenuState == State.StatsMenu)
-                if (Input.KeyJustPressed(Keys.Escape))
+                if (InputUtils.KeyJustPressed(Keys.Escape))
                     MenuState = State.PrimaryMenu;
             if (_spinCd > 0)
                 _spinCd--;
-            else
-            {
+            else {
                 _spinTarget += MathHelper.Tau;
                 _spinCd = 420;
             }
@@ -955,7 +964,7 @@ namespace TanksRebirth.GameContent.UI
             else
                 Theme.Volume = TankGame.Settings.MusicVolume * 0.1f;
 
-            UpdateLogo();
+            #endregion
         }
 
         public static void Leave()
@@ -972,10 +981,8 @@ namespace TanksRebirth.GameContent.UI
             Active = false;
             Theme.Stop();
 
-            for (int a = 0; a < Block.AllBlocks.Length; a++)
-                Block.AllBlocks[a]?.Remove();
-            for (int a = 0; a < GameHandler.AllTanks.Length; a++)
-                GameHandler.AllTanks[a]?.Remove();
+            GameHandler.CleanupEntities();
+            PlacementSquare.ResetSquares();
             GameHandler.CleanupScene();
 
             RemoveAllMenuTanks();
@@ -991,6 +998,8 @@ namespace TanksRebirth.GameContent.UI
 
             OnMenuClose?.Invoke();
         }
+
+        private static Mission _curMenuMission;
 
         public static void Open()
         {
@@ -1027,7 +1036,7 @@ namespace TanksRebirth.GameContent.UI
             GameUI.QuitButtonPos.Y -= 50;
             GameUI.OptionsButtonPos.Y += 75;
 
-            for (int i = 0; i < 5; i++)
+            /*for (int i = 0; i < 5; i++)
             {
                 var rand = PlacementSquare.Placements[GameHandler.GameRand.Next(0, PlacementSquare.Placements.Count - 1)].Position.FlattenZ();
 
@@ -1045,31 +1054,9 @@ namespace TanksRebirth.GameContent.UI
                 var rand = PlacementSquare.Placements[GameHandler.GameRand.Next(0, PlacementSquare.Placements.Count - 1)].Position.FlattenZ();
 
                 var b = new Block(GameHandler.GameRand.Next(0, BlockID.Hole), GameHandler.GameRand.Next(0, Block.MAX_BLOCK_HEIGHT), rand);
-            }
-
-            // TODO: finish.
-
-            /*
-            var rand = GameHandler.GameRand.Next(1, 2);
-
-            var link = $"https://github.com/RighteousRyan1/tanks_rebirth_motds/blob/master/menu_missions/Menu{rand}.mission?raw=true";
-
-            var bytes = WebUtils.DownloadWebFile(link, out var name);
-
-            var reader = new BinaryReader();*/
-
-            /*for (int i = 0; i < 10; i++)
-            {
-                for (int j = 0; j < 10; j++)
-                {
-                    var t = AddTravelingTank(AITank.PickRandomTier(), 1000 + (-i * 100), j * 55);
-
-                    if (i % 2 == 0)
-                        t.Velocity.Y = 1f;
-                    else
-                        t.Velocity.Y = -1f;
-                }
             }*/
+
+            LoadTemplateMission();
 
             TankMusicSystem.StopAll();
 
@@ -1090,6 +1077,50 @@ namespace TanksRebirth.GameContent.UI
             OnMenuOpen?.Invoke();
         }
 
+        private static bool _firstTime = true;
+        private static int _maxRand;
+
+        private static void LoadTemplateMission(bool autoSetup = true, bool loadForMenu = true)
+        {
+            if (_firstTime)
+            {
+                var attempt = 1;
+
+            tryAgain:
+                var linkTry = $"https://github.com/RighteousRyan1/tanks_rebirth_motds/blob/master/menu_missions/Menu{attempt}.mission?raw=true";
+                var exists = WebUtils.RemoteFileExists(linkTry);
+
+                if (exists)
+                {
+                    attempt++;
+                    goto tryAgain;
+                }
+
+                _maxRand = attempt;
+                _firstTime = false;
+            }
+
+            GameHandler.CleanupScene();
+
+            var rand = GameHandler.GameRand.Next(1, _maxRand);
+
+            var link = $"https://github.com/RighteousRyan1/tanks_rebirth_motds/blob/master/menu_missions/Menu{rand}.mission?raw=true";
+
+            var bytes = WebUtils.DownloadWebFile(link, out var name);
+
+            var reader = new BinaryReader(new MemoryStream(bytes));
+
+            var mission = Mission.Read(reader);
+
+            if (autoSetup)
+            {
+                GameProperties.LoadedCampaign.LoadMission(mission);
+                GameProperties.LoadedCampaign.SetupLoadedMission(true);
+            }
+            if (loadForMenu)
+                _curMenuMission = mission;
+        }
+
         private static void HideAll()
         {
             PlayButton.IsVisible = false;
@@ -1106,7 +1137,7 @@ namespace TanksRebirth.GameContent.UI
             tanks.Clear();
         }
 
-        private static readonly string tanksMessage = $"Tanks! Rebirth ALPHA v{TankGame.Instance.GameVersion}\nThe original game and assets used in this game belongs to Nintendo\nDeveloped by RighteousRyan\nTANKS to all our contributors!";
+        private static readonly string tanksMessage = $"Tanks! Rebirth ALPHA v{TankGame.Instance.GameVersion}\nOriginal game in Assets developed by Nintendo\nDeveloped by RighteousRyan\nTANKS to all our contributors!";
 
         private static int _oldwheel;
         public static void Render()
@@ -1115,39 +1146,40 @@ namespace TanksRebirth.GameContent.UI
                 return;
             if (Active)
             {
+                UpdateLogo();
                 if (MenuState == State.Cosmetics)
                     RenderCrate();
                 else if (MenuState == State.StatsMenu)
-                    RenderStats(new Vector2(GameUtils.WindowWidth * 0.3f, 200), new Vector2(GameUtils.WindowWidth * 0.7f, 40), Anchor.TopCenter);
+                    RenderStats(new Vector2(WindowUtils.WindowWidth * 0.3f, 200), new Vector2(WindowUtils.WindowWidth * 0.7f, 40), Anchor.TopCenter);
                 else if (MenuState == State.Difficulties)
-                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "Ideas are welcome! Let us know in our DISCORD server!", new(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 6), Color.White, new Vector2(1f), 0f, GameUtils.GetAnchor(Anchor.Center, TankGame.TextFont.MeasureString("Ideas are welcome! Let us know in our DISCORD server!")));
+                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "Ideas are welcome! Let us know in our DISCORD server!", new(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 6), Color.White, new Vector2(1f), 0f, GameUtils.GetAnchor(Anchor.Center, TankGame.TextFont.MeasureString("Ideas are welcome! Let us know in our DISCORD server!")));
                 else if (MenuState == State.LoadingMods)
                 {
                     var alpha = 0.7f;
-                    var width = GameUtils.WindowWidth / 3;
-                    TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2), null, Color.SkyBlue * alpha, 0f, GameUtils.GetAnchor(Anchor.Center, TankGame.WhitePixel.Size()), new Vector2(width, 200.ToResolutionY()), default, 0f);
+                    var width = WindowUtils.WindowWidth / 3;
+                    TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2), null, Color.SkyBlue * alpha, 0f, GameUtils.GetAnchor(Anchor.Center, TankGame.WhitePixel.Size()), new Vector2(width, 200.ToResolutionY()), default, 0f);
 
                     var barDims = new Vector2(width - 120, 20).ToResolution();
 
-                    TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2), null, Color.Goldenrod * alpha, 0f, GameUtils.GetAnchor(Anchor.Center, TankGame.WhitePixel.Size()), 
+                    TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2), null, Color.Goldenrod * alpha, 0f, GameUtils.GetAnchor(Anchor.Center, TankGame.WhitePixel.Size()), 
                         barDims, default, 0f);
                     var ratio = (float)ModLoader.ActionsComplete / ModLoader.ActionsNeeded;
                     if (ModLoader.ActionsNeeded == 0)
                         ratio = 0;
-                    TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2), null, Color.Yellow * alpha, 0f, GameUtils.GetAnchor(Anchor.Center, TankGame.WhitePixel.Size()), 
+                    TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2), null, Color.Yellow * alpha, 0f, GameUtils.GetAnchor(Anchor.Center, TankGame.WhitePixel.Size()), 
                         barDims * new Vector2(ratio, 1f).ToResolution(), default, 0f);
 
                     var txt = $"{ModLoader.Status} {ModLoader.ModBeingLoaded}...";
-                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, txt, new(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2 - 75.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(Anchor.Center, TankGame.TextFont.MeasureString(txt)));
+                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, txt, new(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 75.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(Anchor.Center, TankGame.TextFont.MeasureString(txt)));
 
                     txt = ModLoader.Error == string.Empty ? $"Loading your mods... {ratio * 100:0}% ({ModLoader.ActionsComplete} / {ModLoader.ActionsNeeded})" :
                     $"Error Loading '{ModLoader.ModBeingLoaded}' ({ModLoader.Error})";
-                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, txt, new(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2 - 150.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(Anchor.Center, TankGame.TextFont.MeasureString(txt)));
+                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, txt, new(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 150.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(Anchor.Center, TankGame.TextFont.MeasureString(txt)));
                 }
                 #region Various things
                 if ((NetPlay.CurrentServer is not null && (Server.ConnectedClients is not null || NetPlay.ServerName is not null)) || (Client.IsConnected() && Client.lobbyDataReceived))
                 {
-                    Vector2 initialPosition = new(GameUtils.WindowWidth * 0.75f, GameUtils.WindowHeight * 0.25f);
+                    Vector2 initialPosition = new(WindowUtils.WindowWidth * 0.75f, WindowUtils.WindowHeight * 0.25f);
                     TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"\"{NetPlay.ServerName}\"", initialPosition - new Vector2(0, 40), Color.White, new Vector2(0.6f));
                     TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"Connected Players:", initialPosition, Color.White, new Vector2(0.6f));
                     for (int i = 0; i < Server.ConnectedClients.Count(x => x is not null); i++)
@@ -1162,9 +1194,11 @@ namespace TanksRebirth.GameContent.UI
                     }
                 }
                 var tanksMessageSize = TankGame.TextFont.MeasureString(tanksMessage);
-                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, tanksMessage, new(8, GameUtils.WindowHeight - 8), Color.White, new(0.6f), 0f, new Vector2(0, tanksMessageSize.Y));
 
-                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, tanksMessage, new(8, GameUtils.WindowHeight - 8), Color.White, new(0.6f), 0f, new Vector2(0, tanksMessageSize.Y));
+
+                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, tanksMessage, new(8, WindowUtils.WindowHeight - 8), Color.White, new(0.6f), 0f, new Vector2(0, tanksMessageSize.Y));
+
+                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, tanksMessage, new(8, WindowUtils.WindowHeight - 8), Color.White, new(0.6f), 0f, new Vector2(0, tanksMessageSize.Y));
                 //if (PlayButton.IsVisible)
                 //TankGame.SpriteRenderer.DrawString(TankGame.TextFont, keyDisplay, new(12, 12), Color.White, new(0.6f), 0f, Vector2.Zero);
                 #endregion
@@ -1189,13 +1223,13 @@ namespace TanksRebirth.GameContent.UI
                         $"\nTry downloading the Vanilla campaign by pressing 'Enter'." +
                         $"\nCampaign files belong in '{Path.Combine(TankGame.SaveDirectory, "Campaigns").Replace(Environment.UserName, "%UserName%")}' (press TAB to open on Windows)", new(12, 12), Color.White, new(0.75f), 0f, Vector2.Zero);
 
-                    if (Input.KeyJustPressed(Keys.Tab))
+                    if (InputUtils.KeyJustPressed(Keys.Tab))
                     {
                         if (Directory.Exists(Path.Combine(TankGame.SaveDirectory, "Campaigns")))
                             Process.Start("explorer.exe", Path.Combine(TankGame.SaveDirectory, "Campaigns"));
                         // do note that this fails on windows lol
                     }
-                    if (Input.KeyJustPressed(Keys.Enter))
+                    if (InputUtils.KeyJustPressed(Keys.Enter))
                     {
                         try {
                             /*var bytes = WebUtils.DownloadWebFile("https://github.com/RighteousRyan1/tanks_rebirth_motds/blob/master/Vanilla.rar?raw=true", out var filename);
@@ -1227,18 +1261,18 @@ namespace TanksRebirth.GameContent.UI
                 if (MenuState == State.Campaigns)
                 {
 
-                    if (_oldwheel != Input.DeltaScrollWheel)
-                        MissionCheckpoint += Input.DeltaScrollWheel - _oldwheel;
+                    if (_oldwheel != InputUtils.DeltaScrollWheel)
+                        MissionCheckpoint += InputUtils.DeltaScrollWheel - _oldwheel;
                     
                     TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"You can scroll with your mouse to skip to a certain mission." +
                         $"\nCurrently, you will skip to mission {MissionCheckpoint + 1}." +
                         $"\nYou will be alerted if that mission does not exist.", new(12, 200), Color.White, new(0.75f), 0f, Vector2.Zero);
                 }
                 else if (MenuState == State.Cosmetics) {
-                    TankGame.SpriteRenderer.DrawString(TankGame.TextFontLarge, $"COMING SOON!", new(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 6), Color.White, new Vector2(0.75f) * (1920 / 1080 / TankGame.Instance.GraphicsDevice.Viewport.AspectRatio), 0f, TankGame.TextFontLarge.MeasureString($"COMING SOON!") / 2);
+                    TankGame.SpriteRenderer.DrawString(TankGame.TextFontLarge, $"COMING SOON!", new(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 6), Color.White, new Vector2(0.75f) * (1920 / 1080 / TankGame.Instance.GraphicsDevice.Viewport.AspectRatio), 0f, TankGame.TextFontLarge.MeasureString($"COMING SOON!") / 2);
                 }
             }
-            _oldwheel = Input.DeltaScrollWheel;
+            _oldwheel = InputUtils.DeltaScrollWheel;
         }
     }
 }

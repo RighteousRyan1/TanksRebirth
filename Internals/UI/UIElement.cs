@@ -190,7 +190,7 @@ namespace TanksRebirth.Internals.UI
                     DrawSelf(spriteBatch);
                 }
 
-                /*if (Tooltip is not null && Hitbox.Contains(GameUtils.MousePosition))
+                /*if (Tooltip is not null && Hitbox.Contains(MouseUtils.MousePosition))
                 {
                     QuickIndicator(spriteBatch, Color.White);
                 }*/
@@ -204,7 +204,7 @@ namespace TanksRebirth.Internals.UI
             if (!IsVisible)
                 return;
 
-            if (Tooltip is not null && Hitbox.Contains(GameUtils.MousePosition))
+            if (Tooltip is not null && Hitbox.Contains(MouseUtils.MousePosition))
             {
                 DrawTooltipBox(spriteBatch, Color.White);
             }
@@ -335,7 +335,7 @@ namespace TanksRebirth.Internals.UI
         {
             var font = TankGame.TextFont;
             var scaleFont = font.MeasureString(Tooltip);
-            var Hitbox = new Rectangle(GameUtils.MouseX + 5, GameUtils.MouseY + 5, (int)(scaleFont.X + 30).ToResolutionX(), (int)(scaleFont.Y + 30).ToResolutionY());
+            var Hitbox = new Rectangle(MouseUtils.MouseX + 5, MouseUtils.MouseY + 5, (int)(scaleFont.X + 30).ToResolutionX(), (int)(scaleFont.Y + 30).ToResolutionY());
             var texture = UIPanelBackground;
 
             int border = 12;
@@ -378,7 +378,7 @@ namespace TanksRebirth.Internals.UI
 
         public static void UpdateElements()
         {
-            var focusedElements = GetElementsAt(GameUtils.MousePosition, true);
+            var focusedElements = GetElementsAt(MouseUtils.MousePosition, true);
 
             foreach (UIElement el in focusedElements)
             {
@@ -403,13 +403,13 @@ namespace TanksRebirth.Internals.UI
 
             ResizeAndRelocate();
 
-            /*var trySlider = GetElementsAt(GameUtils.MousePosition);
+            /*var trySlider = GetElementsAt(MouseUtils.MousePosition);
 
             if (trySlider.Count > 0)
             {
                 if (trySlider[0] != null)
                 {
-                    UIElement elementWeWant = trySlider[0].GetElementAt(GameUtils.MousePosition);
+                    UIElement elementWeWant = trySlider[0].GetElementAt(MouseUtils.MousePosition);
                     //if (elementWeWant is not UIImage)
                         //return;
 

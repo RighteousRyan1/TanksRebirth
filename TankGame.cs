@@ -505,7 +505,7 @@ namespace TanksRebirth
         private static int transitionTimer;
 
         public static Vector3 ThirdPersonCameraPosition;
-        public static Vector2 MouseVelocity => GameUtils.GetMouseVelocity(GameUtils.WindowCenter);
+        public static Vector2 MouseVelocity => MouseUtils.GetMouseVelocity(WindowUtils.WindowCenter);
 
         public static bool SecretCosmeticSetting;
         public static bool SpeedrunMode;
@@ -540,20 +540,20 @@ namespace TanksRebirth
                 if (!float.IsInfinity(DeltaTime))
                     RunTime += DeltaTime;
 
-                if (Input.AreKeysJustPressed(Keys.LeftAlt, Keys.RightAlt))
+                if (InputUtils.AreKeysJustPressed(Keys.LeftAlt, Keys.RightAlt))
                     Lighting.AccurateShadows = !Lighting.AccurateShadows;
-                if (Input.AreKeysJustPressed(Keys.LeftShift, Keys.RightShift))
+                if (InputUtils.AreKeysJustPressed(Keys.LeftShift, Keys.RightShift))
                     RenderWireframe = !RenderWireframe;
 
-                if (DebugUtils.DebuggingEnabled && Input.AreKeysJustPressed(Keys.V, Keys.B))
+                if (DebugUtils.DebuggingEnabled && InputUtils.AreKeysJustPressed(Keys.V, Keys.B))
                     ModLoader.LoadMods();
 
-                if (Input.AreKeysJustPressed(Keys.Left, Keys.Right, Keys.Up, Keys.Down))
+                if (InputUtils.AreKeysJustPressed(Keys.Left, Keys.Right, Keys.Up, Keys.Down))
                 {
                     SecretCosmeticSetting = !SecretCosmeticSetting;
                     ChatSystem.SendMessage(SecretCosmeticSetting ? "Activated randomized cosmetics!" : "Deactivated randomized cosmetics.", SecretCosmeticSetting ? Color.Lime : Color.Red);
                 }
-                if (Input.KeyJustPressed(Keys.F1))
+                if (InputUtils.KeyJustPressed(Keys.F1))
                 {
                     SpeedrunMode = !SpeedrunMode;
                     if (SpeedrunMode)
@@ -562,7 +562,7 @@ namespace TanksRebirth
                         GameProperties.OnMissionStart -= GameHandler.StartSpeedrun;
                     ChatSystem.SendMessage(SpeedrunMode ? "Speedrun mode on!" : "Speedrun mode off.", SpeedrunMode ? Color.Lime : Color.Red);
                 }
-                if (Input.AreKeysJustPressed(Keys.LeftAlt | Keys.RightAlt, Keys.Enter))
+                if (InputUtils.AreKeysJustPressed(Keys.LeftAlt | Keys.RightAlt, Keys.Enter))
                 {
                     Graphics.IsFullScreen = !Graphics.IsFullScreen;
                     Graphics.ApplyChanges();
@@ -593,7 +593,7 @@ namespace TanksRebirth
                 if (!_wasActive && IsActive)
                     OnFocusRegained?.Invoke(this, Window.Handle);
                 if (!MainMenu.Active && DebugUtils.DebuggingEnabled)
-                    if (Input.KeyJustPressed(Keys.J))
+                    if (InputUtils.KeyJustPressed(Keys.J))
                         OverheadView = !OverheadView;
                 #endregion
                 if (!Difficulties.Types["ThirdPerson"])
@@ -601,15 +601,15 @@ namespace TanksRebirth
                     if (transitionTimer > 0) {
                         transitionTimer--;
                         if (OverheadView) {
-                            GameUtils.SoftStep(ref CameraRotationVector.Y, MathHelper.PiOver2, 0.08f * DeltaTime);
-                            GameUtils.SoftStep(ref AddativeZoom, 0.6f, 0.08f * DeltaTime);
-                            GameUtils.RoughStep(ref CameraFocusOffset.Y, 82f, 2f * DeltaTime);
+                            CameraRotationVector.Y = MathUtils.SoftStep(CameraRotationVector.Y, MathHelper.PiOver2, 0.08f * DeltaTime);
+                            AddativeZoom = MathUtils.SoftStep(AddativeZoom, 0.6f, 0.08f * DeltaTime);
+                            CameraFocusOffset.Y = MathUtils.RoughStep(CameraFocusOffset.Y, 82f, 2f * DeltaTime);
                         }
                         else {
-                            GameUtils.SoftStep(ref CameraRotationVector.Y, DEFAULT_ORTHOGRAPHIC_ANGLE, 0.08f * DeltaTime);
+                            CameraRotationVector.Y = MathUtils.SoftStep(CameraRotationVector.Y, DEFAULT_ORTHOGRAPHIC_ANGLE, 0.08f * DeltaTime);
                             if (!LevelEditor.Active)
-                                GameUtils.SoftStep(ref AddativeZoom, 1f, 0.08f * DeltaTime);
-                            GameUtils.RoughStep(ref CameraFocusOffset.Y, 0f, 2f * DeltaTime);
+                                AddativeZoom = MathUtils.SoftStep(AddativeZoom, 1f, 0.08f * DeltaTime);
+                            CameraFocusOffset.Y = MathUtils.RoughStep(CameraFocusOffset.Y, 0f, 2f * DeltaTime);
                         }
                     }
 
@@ -683,17 +683,17 @@ namespace TanksRebirth
 
                 if (!GameUI.Paused && !MainMenu.Active && DebugUtils.DebuggingEnabled)
                 {
-                    if (Input.MouseRight)
+                    if (InputUtils.MouseRight)
                         CameraRotationVector += MouseVelocity / 500;
 
-                    if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Add))
+                    if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Add))
                         AddativeZoom += 0.01f;
-                    if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Subtract))
+                    if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Subtract))
                         AddativeZoom -= 0.01f;
 
-                    if (Input.MouseMiddle)
+                    if (InputUtils.MouseMiddle)
                         CameraFocusOffset += MouseVelocity;
-                    GameUtils.GetMouseVelocity(GameUtils.WindowCenter);
+                    MouseUtils.GetMouseVelocity(WindowUtils.WindowCenter);
                 }
 
                 FixedUpdate(gameTime);
@@ -723,7 +723,7 @@ namespace TanksRebirth
 
             GameShaders.UpdateShaders();
 
-            Input.PollEvents();
+            InputUtils.PollEvents();
 
             bool shouldUpdate = Client.IsConnected() || IsActive && !GameUI.Paused;
 
@@ -740,10 +740,10 @@ namespace TanksRebirth
                     {
                         if (tnk is not null && !tnk.Dead)
                         {
-                            if (GameUtils.GetMouseToWorldRay().Intersects(tnk.Worldbox).HasValue)
+                            if (RayUtils.GetMouseToWorldRay().Intersects(tnk.Worldbox).HasValue)
                             {
                                 HoveringAnyTank = true;
-                                if (Input.KeyJustPressed(Keys.K))
+                                if (InputUtils.KeyJustPressed(Keys.K))
                                 {
                                     // var tnk = WPTR.AllAITanks.FirstOrDefault(tank => tank is not null && !tank.Dead && tank.tier == AITank.GetHighestTierActive());
 
@@ -751,7 +751,7 @@ namespace TanksRebirth
                                         tnk?.Destroy(new TankHurtContext_Other()); // hmmm
                                 }
 
-                                if (Input.CanDetectClick(rightClick: true))
+                                if (InputUtils.CanDetectClick(rightClick: true))
                                 {
                                     tnk.TankRotation -= MathHelper.PiOver2;
                                     tnk.TurretRotation -= MathHelper.PiOver2;
@@ -798,7 +798,7 @@ namespace TanksRebirth
 
         protected override void Draw(GameTime gameTime)
         {
-            if(gameTarget == null || gameTarget.IsDisposed || gameTarget.Size() != GameUtils.WindowBounds) {
+            if(gameTarget == null || gameTarget.IsDisposed || gameTarget.Size() != WindowUtils.WindowBounds) {
                 gameTarget?.Dispose();
                 var presentationParams = GraphicsDevice.PresentationParameters;
                 gameTarget = new RenderTarget2D(GraphicsDevice, presentationParams.BackBufferWidth, presentationParams.BackBufferHeight, false, presentationParams.BackBufferFormat, presentationParams.DepthStencilFormat, 0, RenderTargetUsage.PreserveContents);
@@ -846,17 +846,17 @@ namespace TanksRebirth
             if (DebugUtils.DebuggingEnabled)
                 SpriteRenderer.DrawString(TextFont, "Debug Level: " + DebugUtils.CurDebugLabel, new Vector2(10), Color.White, new Vector2(0.6f));
             DebugUtils.DrawDebugString(SpriteRenderer, $"Garbage Collection: {MemoryParser.FromMegabytes(GCMemory)} MB" +
-                $"\nProcess Memory: {MemoryParser.FromMegabytes(_memBytes)} MB", new(8, GameUtils.WindowHeight * 0.15f));
-            DebugUtils.DrawDebugString(SpriteRenderer, $"{SysGPU}\n{SysCPU}", new(8, GameUtils.WindowHeight * 0.2f));
+                $"\nProcess Memory: {MemoryParser.FromMegabytes(_memBytes)} MB", new(8, WindowUtils.WindowHeight * 0.15f));
+            DebugUtils.DrawDebugString(SpriteRenderer, $"{SysGPU}\n{SysCPU}", new(8, WindowUtils.WindowHeight * 0.2f));
 
-            DebugUtils.DrawDebugString(SpriteRenderer, $"Tank Kill Counts:", new(8, GameUtils.WindowHeight * 0.05f), 2);
+            DebugUtils.DrawDebugString(SpriteRenderer, $"Tank Kill Counts:", new(8, WindowUtils.WindowHeight * 0.05f), 2);
 
             for (int i = 0; i < PlayerTank.TankKills.Count; i++)
             {
                 var tier = PlayerTank.TankKills.ElementAt(i).Key;
                 var count = PlayerTank.TankKills.ElementAt(i).Value;
 
-                DebugUtils.DrawDebugString(SpriteRenderer, $"{tier}: {count}", new(8, GameUtils.WindowHeight * 0.05f + (14f * (i + 1))), 2);
+                DebugUtils.DrawDebugString(SpriteRenderer, $"{tier}: {count}", new(8, WindowUtils.WindowHeight * 0.05f + (14f * (i + 1))), 2);
             }
 
             DebugUtils.DrawDebugString(SpriteRenderer, $"Lives / StartingLives: {PlayerTank.Lives} / {PlayerTank.StartingLives}" +
@@ -866,7 +866,7 @@ namespace TanksRebirth
                 $"\nTotal Deaths: {GameData.Deaths}" +
                 $"\nTotal Suicides: {GameData.Suicides}" +
                 $"\nMissions Completed: {GameData.MissionsCompleted}" +
-                $"\nExp Level / DecayMultiplier: {GameData.ExpLevel} / {GameData.UniversalExpMultiplier}", new(8, GameUtils.WindowHeight * 0.4f), 2);
+                $"\nExp Level / DecayMultiplier: {GameData.ExpLevel} / {GameData.UniversalExpMultiplier}", new(8, WindowUtils.WindowHeight * 0.4f), 2);
 
             if (SpeedrunMode)
             {
@@ -898,13 +898,13 @@ namespace TanksRebirth
                 var tier = PlayerTank.TankKills.ElementAt(i).Key;
                 var count = PlayerTank.TankKills.ElementAt(i).Value;
 
-                DebugUtils.DrawDebugString(SpriteRenderer, $"{tier}: {count}", new(GameUtils.WindowWidth * 0.9f, 8 + (14f * (i + 1))), 2);
+                DebugUtils.DrawDebugString(SpriteRenderer, $"{tier}: {count}", new(WindowUtils.WindowWidth * 0.9f, 8 + (14f * (i + 1))), 2);
             }
 
             foreach (var body in Tank.CollisionsWorld.BodyList.ToList())
             {
                 DebugUtils.DrawDebugString(SpriteRenderer, $"BODY",
-                    GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(body.Position.X * Tank.UNITS_PER_METER, 0, body.Position.Y * Tank.UNITS_PER_METER), TankGame.GameView, TankGame.GameProjection), centered: true);
+                    MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(body.Position.X * Tank.UNITS_PER_METER, 0, body.Position.Y * Tank.UNITS_PER_METER), TankGame.GameView, TankGame.GameProjection), centered: true);
             }
 
             for (int i = 0; i < VanillaAchievements.Repository.GetAchievements().Count; i++)
@@ -915,16 +915,16 @@ namespace TanksRebirth
             }
 
             #region TankInfo
-            DebugUtils.DrawDebugString(SpriteRenderer, "Spawn Tank With Info:", GameUtils.WindowTop + new Vector2(0, 8), 3, centered: true);
-            DebugUtils.DrawDebugString(SpriteRenderer, $"Tier: {TankID.Collection.GetKey(GameHandler.tankToSpawnType)}", GameUtils.WindowTop + new Vector2(0, 24), 3, centered: true);
-            DebugUtils.DrawDebugString(SpriteRenderer, $"Team: {TeamID.Collection.GetKey(GameHandler.tankToSpawnTeam)}", GameUtils.WindowTop + new Vector2(0, 40), 3, centered: true);
-            DebugUtils.DrawDebugString(SpriteRenderer, $"CubeStack: {GameHandler.blockHeight} | CubeType: {BlockID.Collection.GetKey(GameHandler.blockType)}", GameUtils.WindowBottom - new Vector2(0, 20), 3, centered: true);
+            DebugUtils.DrawDebugString(SpriteRenderer, "Spawn Tank With Info:", WindowUtils.WindowTop + new Vector2(0, 8), 3, centered: true);
+            DebugUtils.DrawDebugString(SpriteRenderer, $"Tier: {TankID.Collection.GetKey(GameHandler.tankToSpawnType)}", WindowUtils.WindowTop + new Vector2(0, 24), 3, centered: true);
+            DebugUtils.DrawDebugString(SpriteRenderer, $"Team: {TeamID.Collection.GetKey(GameHandler.tankToSpawnTeam)}", WindowUtils.WindowTop + new Vector2(0, 40), 3, centered: true);
+            DebugUtils.DrawDebugString(SpriteRenderer, $"CubeStack: {GameHandler.blockHeight} | CubeType: {BlockID.Collection.GetKey(GameHandler.blockType)}", WindowUtils.WindowBottom - new Vector2(0, 20), 3, centered: true);
 
-            DebugUtils.DrawDebugString(SpriteRenderer, $"HighestTier: {AITank.GetHighestTierActive()}", new(10, GameUtils.WindowHeight * 0.26f), 1);
-            // DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"CurSong: {(Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f) != null ? Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f).Name : "N/A")}", new(10, GameUtils.WindowHeight - 100), 1);
+            DebugUtils.DrawDebugString(SpriteRenderer, $"HighestTier: {AITank.GetHighestTierActive()}", new(10, WindowUtils.WindowHeight * 0.26f), 1);
+            // DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"CurSong: {(Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f) != null ? Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f).Name : "N/A")}", new(10, WindowUtils.WindowHeight - 100), 1);
             for (int i = 0; i < TankID.Collection.Count; i++)
             {
-                DebugUtils.DrawDebugString(SpriteRenderer, $"{TankID.Collection.GetKey(i)}: {AITank.GetTankCountOfType(i)}", new(10, GameUtils.WindowHeight * 0.3f + (i * 20)), 1);
+                DebugUtils.DrawDebugString(SpriteRenderer, $"{TankID.Collection.GetKey(i)}: {AITank.GetTankCountOfType(i)}", new(10, WindowUtils.WindowHeight * 0.3f + (i * 20)), 1);
             }
 
             GameHandler.tankToSpawnType = MathHelper.Clamp(GameHandler.tankToSpawnType, 2, TankID.Collection.Count - 1);
@@ -936,7 +936,7 @@ namespace TanksRebirth
                 $"\n\nRender Time: {RenderTime.TotalMilliseconds:0.00}ms" +
                 $"\nRender FPS: {RenderFPS}", new(10, 500));
 
-            DebugUtils.DrawDebugString(SpriteRenderer, $"Current Mission: {GameProperties.LoadedCampaign.CurrentMission.Name}\nCurrent Campaign: {GameProperties.LoadedCampaign.MetaData.Name}", GameUtils.WindowBottomLeft - new Vector2(-4, 40), 3, centered: false);
+            DebugUtils.DrawDebugString(SpriteRenderer, $"Current Mission: {GameProperties.LoadedCampaign.CurrentMission.Name}\nCurrent Campaign: {GameProperties.LoadedCampaign.MetaData.Name}", WindowUtils.WindowBottomLeft - new Vector2(-4, 40), 3, centered: false);
 
             ChatSystem.DrawMessages();
 

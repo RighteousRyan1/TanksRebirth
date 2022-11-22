@@ -251,7 +251,7 @@ namespace TanksRebirth.GameContent
 
                                 if (mesh.Name == "snow_field" || mesh.Name == "snow_blocks")
                                     effect.World = Matrix.CreateRotationX(-MathHelper.PiOver2) * Matrix.CreateScale(62) * Matrix.CreateTranslation(Center);//Matrix.CreateScale(0.62f) * Matrix.CreateTranslation(0, 0, 130) * 
-                                        //Matrix.CreateRotationX(/*-MathHelper.PiOver2*/ GameUtils.MousePosition.X / 300) * Matrix.CreateScale(1f);
+                                        //Matrix.CreateRotationX(/*-MathHelper.PiOver2*/ MouseUtils.MousePosition.X / 300) * Matrix.CreateScale(1f);
                                 if (mesh.Name == "polygon2")
                                     effect.Alpha = 0.1f;
                                 else

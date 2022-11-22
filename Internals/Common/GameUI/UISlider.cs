@@ -7,6 +7,7 @@ using TanksRebirth.Internals.UI;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using TanksRebirth.GameContent.Systems;
+using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.Internals.Common.GameUI
 {
@@ -40,7 +41,7 @@ namespace TanksRebirth.Internals.Common.GameUI
 			{
                 // FIXME: huh? this isn't invoked.
                 ChatSystem.SendMessage("invoked.", Color.White);
-                int mouseXRelative = (int)Math.Round(Utilities.GameUtils.MouseX - uiElement.Position.X);
+                int mouseXRelative = (int)Math.Round(MouseUtils.MouseX - uiElement.Position.X);
 				InternalValue = MathHelper.Clamp(mouseXRelative / uiElement.Size.X, 0, 1);
 			};
 			Append(interactable);

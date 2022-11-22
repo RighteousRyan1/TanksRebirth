@@ -151,7 +151,7 @@ namespace TanksRebirth.GameContent
 
                     mesh.Draw();
                 }
-                var pos = GeometryUtils.ConvertWorldToScreen(default, Matrix.CreateTranslation(Position), TankGame.GameView, TankGame.GameProjection);
+                var pos = MatrixUtils.ConvertWorldToScreen(default, Matrix.CreateTranslation(Position), TankGame.GameView, TankGame.GameProjection);
 
                 DebugUtils.DrawDebugString(TankGame.SpriteRenderer, this, pos, 4, centered: true);
 
@@ -159,7 +159,7 @@ namespace TanksRebirth.GameContent
             }
             else
             {
-                var pos = GeometryUtils.ConvertWorldToScreen(default, AffectedTank.World, TankGame.GameView, TankGame.GameProjection);
+                var pos = MatrixUtils.ConvertWorldToScreen(default, AffectedTank.World, TankGame.GameView, TankGame.GameProjection);
 
                 DebugUtils.DrawDebugString(TankGame.SpriteRenderer, this, pos, 4, centered: true);
             }

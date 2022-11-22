@@ -35,6 +35,6 @@ namespace TanksRebirth.Localization
             "Lacking a lighting engine!",
             "Includes accurate physics!"
         };
-        public static string GetRandomMotd() => GameUtils.PickRandom(RandomMotds);
+        public static string GetRandomMotd() => RandomUtils.PickRandom(RandomMotds);
     }
 }

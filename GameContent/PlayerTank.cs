@@ -199,18 +199,18 @@ namespace TanksRebirth.GameContent
                     ChatSystem.SendMessage($"PlayerId: {PlayerId} | ClientId: {NetPlay.CurrentClient.Id}", Color.White);
                 if (NetPlay.IsClientMatched(PlayerId) && !IntermissionSystem.IsAwaitingNewMission) {
                     if (!Difficulties.Types["ThirdPerson"]) {
-                        Vector3 mouseWorldPos = GameUtils.GetWorldPosition(GameUtils.MousePosition, -11f);
+                        Vector3 mouseWorldPos = MatrixUtils.GetWorldPosition(MouseUtils.MousePosition, -11f);
                         if (!LevelEditor.Active)
                             TurretRotation = (-(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position).ToRotation()) + MathHelper.PiOver2;
                         else
                             TurretRotation = TankRotation;
                     }
                     else {
-                        //Mouse.SetPosition(Input.CurrentMouseSnapshot.X, GameUtils.WindowHeight / 2);
-                        if (Input.CurrentMouseSnapshot.X >= GameUtils.WindowWidth)
-                            Mouse.SetPosition(1, Input.CurrentMouseSnapshot.Y);
-                        if (Input.CurrentMouseSnapshot.X <= 0)
-                            Mouse.SetPosition(GameUtils.WindowWidth - 1, Input.CurrentMouseSnapshot.Y);
+                        //Mouse.SetPosition(Input.CurrentMouseSnapshot.X, WindowUtils.WindowHeight / 2);
+                        if (InputUtils.CurrentMouseSnapshot.X >= WindowUtils.WindowWidth)
+                            Mouse.SetPosition(1, InputUtils.CurrentMouseSnapshot.Y);
+                        if (InputUtils.CurrentMouseSnapshot.X <= 0)
+                            Mouse.SetPosition(WindowUtils.WindowWidth - 1, InputUtils.CurrentMouseSnapshot.Y);
                         //Mouse.SetPosition((int)GameUtils.WindowCenter.X, (int)GameUtils.WindowCenter.Y);
                         TurretRotation += -TankGame.MouseVelocity.X / 312; // terry evanswood
                     }
@@ -220,7 +220,7 @@ namespace TanksRebirth.GameContent
                     if (CurShootStun <= 0 && CurMineStun <= 0) {
                         if (!Properties.Stationary) {
                             if (NetPlay.IsClientMatched(PlayerId)) {
-                                if (Input.CurrentGamePadSnapshot.IsConnected)
+                                if (InputUtils.CurrentGamePadSnapshot.IsConnected)
                                     ControlHandle_ConsoleController();
                                 else
                                     ControlHandle_Keybinding();
@@ -231,7 +231,7 @@ namespace TanksRebirth.GameContent
 
                 if (GameProperties.InMission && !LevelEditor.Active) {
                     if (NetPlay.IsClientMatched(PlayerId)) {
-                        if (Input.CanDetectClick())
+                        if (InputUtils.CanDetectClick())
                             Shoot();
 
                         if (!Properties.Stationary)
@@ -271,9 +271,9 @@ namespace TanksRebirth.GameContent
         private void ControlHandle_ConsoleController()
         {
 
-            var leftStick = Input.CurrentGamePadSnapshot.ThumbSticks.Left;
-            var rightStick = Input.CurrentGamePadSnapshot.ThumbSticks.Right;
-            var dPad = Input.CurrentGamePadSnapshot.DPad;
+            var leftStick = InputUtils.CurrentGamePadSnapshot.ThumbSticks.Left;
+            var rightStick = InputUtils.CurrentGamePadSnapshot.ThumbSticks.Right;
+            var dPad = InputUtils.CurrentGamePadSnapshot.DPad;
 
             var treadPlaceTimer = (int)Math.Round(14 / Velocity.Length()) != 0 ? (int)Math.Round(14 / Velocity.Length()) : 1;
 
@@ -330,11 +330,11 @@ namespace TanksRebirth.GameContent
 
             TargetTankRotation = norm.ToRotation() - MathHelper.PiOver2;
 
-            TankRotation = GameUtils.RoughStep(TankRotation, TargetTankRotation, Properties.TurningSpeed * TankGame.DeltaTime);
+            TankRotation = MathUtils.RoughStep(TankRotation, TargetTankRotation, Properties.TurningSpeed * TankGame.DeltaTime);
 
             if (rightStick.Length() > 0)
             {
-                var unprojectedPosition = GeometryUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), World, View, Projection);
+                var unprojectedPosition = MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), World, View, Projection);
                 Mouse.SetPosition((int)(unprojectedPosition.X + rightStick.X * 250), (int)(unprojectedPosition.Y - rightStick.Y * 250));
                 //Mouse.SetPosition((int)(Input.CurrentMouseSnapshot.X + rightStick.X * TankGame.Instance.Settings.ControllerSensitivity), (int)(Input.CurrentMouseSnapshot.Y - rightStick.Y * TankGame.Instance.Settings.ControllerSensitivity));
             }
@@ -409,7 +409,7 @@ namespace TanksRebirth.GameContent
 
             TargetTankRotation = norm.ToRotation() - MathHelper.PiOver2;
 
-            TankRotation = GameUtils.RoughStep(TankRotation, TargetTankRotation, Properties.TurningSpeed * TankGame.DeltaTime);
+            TankRotation = MathUtils.RoughStep(TankRotation, TargetTankRotation, Properties.TurningSpeed * TankGame.DeltaTime);
 
             Velocity = Vector2.UnitY.RotatedByRadians(TankRotation) * Properties.Speed;
         }
@@ -525,7 +525,7 @@ namespace TanksRebirth.GameContent
 
                 pathPos += pathDir;
                 // tainicom.Aether.Physics2D.Collision.
-                var pathPosScreen = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(pathPos.X, 11, pathPos.Y), TankGame.GameView, TankGame.GameProjection);
+                var pathPosScreen = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(pathPos.X, 11, pathPos.Y), TankGame.GameView, TankGame.GameProjection);
                 var off = (float)Math.Sin(i * Math.PI / 5 - TankGame.UpdateCount * 0.3f);
                 TankGame.SpriteRenderer.Draw(whitePixel, pathPosScreen, null, (Color.White.ToVector3() * off).ToColor(), 0, whitePixel.Size() / 2, 2 + off, default, default);
             }
@@ -606,7 +606,7 @@ namespace TanksRebirth.GameContent
                 var tex1 = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/chevron_border");
                 var tex2 = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/chevron_inside");
 
-                var pos = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 125).ToResolution();
+                var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 125).ToResolution();
 
                 var playerColor = PlayerType == PlayerID.Blue ? Color.DeepSkyBlue : Color.Red;
 

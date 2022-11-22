@@ -33,7 +33,7 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
 
         private Model _model;
 
-        public bool IsHovered => GameUtils.GetMouseToWorldRay().Intersects(_box).HasValue;
+        public bool IsHovered => RayUtils.GetMouseToWorldRay().Intersects(_box).HasValue;
 
         public static bool PlacesBlock; // if false, tanks will be placed
 
@@ -88,7 +88,7 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
         /// <param name="place">Whether or not to place the block or remove the block. If false, the block is removed.</param>
         public void DoPlacementAction(bool place)
         {
-            if (UIElement.GetElementsAt(GameUtils.MousePosition).Count > 0)
+            if (UIElement.GetElementsAt(MouseUtils.MousePosition).Count > 0)
                 return;
             if (PlacesBlock)
             {
@@ -147,12 +147,12 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
             if (IsHovered)
             {
                 CurrentlyHovered = this;
-                if (Input.CanDetectClick())
+                if (InputUtils.CanDetectClick())
                     _onClick?.Invoke(this);
 
                 if (PlacesBlock)
                 {
-                    if (Input.MouseLeft)
+                    if (InputUtils.MouseLeft)
                     {
                         if (IsPlacing)
                         {
@@ -189,7 +189,7 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
 
         public void Render()
         {
-            var hoverUi = UIElement.GetElementsAt(GameUtils.MousePosition).Count > 0;
+            var hoverUi = UIElement.GetElementsAt(MouseUtils.MousePosition).Count > 0;
 
             foreach (var mesh in _model.Meshes)
             {
@@ -204,13 +204,13 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
                         {
                             if (Block.AllBlocks[BlockId].CanStack)
                             {
-                                var pos = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
+                                var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
 
                                 SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"{Block.AllBlocks[BlockId].Stack}", pos, Color.White, Color.Black, new Vector2(TankGame.AddativeZoom * 1.5f).ToResolution(), 0f);
                             }
                             if (Block.AllBlocks[BlockId].Type == BlockID.Teleporter)
                             {
-                                var pos = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
+                                var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
 
                                 SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"TP:{Block.AllBlocks[BlockId].TpLink}", pos, Color.White, Color.Black, new Vector2(TankGame.AddativeZoom * 1.5f).ToResolution(), 0f);
                             }

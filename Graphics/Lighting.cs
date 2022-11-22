@@ -76,8 +76,8 @@ namespace TanksRebirth.Graphics
             effect.DirectionalLight1.Enabled = false;
             effect.DirectionalLight2.Enabled = false;
 
-            var ting = GameUtils.MousePosition.X / (GameUtils.WindowWidth + GameUtils.WindowWidth / 2);
-            var ting2 = GameUtils.MousePosition.Y / (GameUtils.WindowHeight + GameUtils.WindowHeight / 2);
+            //var ting = MouseUtils.MousePosition.X / (WindowUtils.WindowWidth + WindowUtils.WindowWidth / 2);
+            //var ting2 = MouseUtils.MousePosition.Y / (WindowUtils.WindowHeight + WindowUtils.WindowHeight / 2);
 
             var lightingConstant = 0.9f;
 
@@ -102,8 +102,8 @@ namespace TanksRebirth.Graphics
             effect.DirectionalLight1.Enabled = false;
             effect.DirectionalLight2.Enabled = false;
 
-            var ting = GameUtils.MousePosition.X / (GameUtils.WindowWidth - GameUtils.WindowWidth / 2);
-            var ting2 = GameUtils.MousePosition.Y / (GameUtils.WindowHeight - GameUtils.WindowHeight / 2);
+            //var ting = MouseUtils.MousePosition.X / (WindowUtils.WindowWidth - WindowUtils.WindowWidth / 2);
+            //var ting2 = MouseUtils.MousePosition.Y / (WindowUtils.WindowHeight - WindowUtils.WindowHeight / 2);
 
             var lightingConstant = 1f * powerMultiplier;
 

@@ -108,7 +108,7 @@ namespace TanksRebirth.GameContent.UI
                     ResultsFanfare.Play();
                 }
                 // sleep the thread for the duration of the fanfare.
-                Vector2 basePos = new(GameUtils.WindowWidth / 2, GameUtils.WindowHeight * 0.2f);
+                Vector2 basePos = new(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight * 0.2f);
                 for (int i = 0; i < KillsPerType.Count; i++)
                 {
                     ModifyTracks();
@@ -138,7 +138,7 @@ namespace TanksRebirth.GameContent.UI
                 _skip = true;
                 _shouldShowGrade = true;
 
-                while (!Input.KeyJustPressed(Keys.Enter)) {
+                while (!InputUtils.KeyJustPressed(Keys.Enter)) {
                     ModifyTracks();
                     await Task.Delay(TankGame.LastGameTime.ElapsedGameTime).ConfigureAwait(false);
                 }
@@ -177,18 +177,18 @@ namespace TanksRebirth.GameContent.UI
         private static bool _soundPlayed;
         public static void Render()
         {
-            if (Input.KeyJustPressed(Keys.Enter))
+            if (InputUtils.KeyJustPressed(Keys.Enter))
                 _skip = true;
 
             _panelAlpha += _panelFadeSpeed;
             if (_panelAlpha > _panelAlphaMax)
                 _panelAlpha = _panelAlphaMax;
             float width = 350.ToResolutionX();
-            TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Vector2(0, GameUtils.WindowHeight / 3), null, Color.Beige * _panelAlpha, 0f, Vector2.Zero, new Vector2(width, GameUtils.WindowHeight / 2), default, 0f);
-            TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Vector2(0, GameUtils.WindowHeight / 3 + 50.ToResolutionY()), null, Color.Gold * _panelAlpha, 0f, Vector2.Zero, new Vector2(width, 5).ToResolution(), default, 0f);
+            TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Vector2(0, WindowUtils.WindowHeight / 3), null, Color.Beige * _panelAlpha, 0f, Vector2.Zero, new Vector2(width, WindowUtils.WindowHeight / 2), default, 0f);
+            TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Vector2(0, WindowUtils.WindowHeight / 3 + 50.ToResolutionY()), null, Color.Gold * _panelAlpha, 0f, Vector2.Zero, new Vector2(width, 5).ToResolution(), default, 0f);
             var txt = "Fun Facts";
             var measure = TankGame.TextFont.MeasureString(txt);
-            IntermissionSystem.DrawShadowedString(TankGame.TextFont, new Vector2(width / 2, GameUtils.WindowHeight / 3 + 5.ToResolutionY()), Vector2.One, 
+            IntermissionSystem.DrawShadowedString(TankGame.TextFont, new Vector2(width / 2, WindowUtils.WindowHeight / 3 + 5.ToResolutionY()), Vector2.One, 
                 txt, Color.DeepSkyBlue, Vector2.One.ToResolution(), 1f, new Vector2(measure.X / 2, 0), 0.4f);
 
             string[] funFacts = 
@@ -203,12 +203,12 @@ namespace TanksRebirth.GameContent.UI
                 var ff = funFacts[i];
                 measure = TankGame.TextFont.MeasureString(ff);
 
-                IntermissionSystem.DrawShadowedString(TankGame.TextFont, new Vector2(8.ToResolutionX(), GameUtils.WindowHeight / 3 + (75 + (i * 25)).ToResolutionY()), Vector2.One,
+                IntermissionSystem.DrawShadowedString(TankGame.TextFont, new Vector2(8.ToResolutionX(), WindowUtils.WindowHeight / 3 + (75 + (i * 25)).ToResolutionY()), Vector2.One,
                     ff, Color.DeepSkyBlue, new Vector2(0.75f).ToResolution(), 1f, new Vector2(0, measure.Y / 2), 0.4f);
             }
 
-            TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Vector2(GameUtils.WindowWidth / 3, 0), null, Color.Beige * _panelAlpha, 0f, Vector2.Zero, new Vector2(GameUtils.WindowWidth / 3, GameUtils.WindowHeight), default, 0f);
-            TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Vector2(GameUtils.WindowWidth / 3, (_tnkDrawYOff - 50f).ToResolutionY()), null, Color.Gold * _panelAlpha, 0f, Vector2.Zero, new Vector2(GameUtils.WindowWidth / 3, 10.ToResolutionY()), default, 0f);
+            TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Vector2(WindowUtils.WindowWidth / 3, 0), null, Color.Beige * _panelAlpha, 0f, Vector2.Zero, new Vector2(WindowUtils.WindowWidth / 3, WindowUtils.WindowHeight), default, 0f);
+            TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Vector2(WindowUtils.WindowWidth / 3, (_tnkDrawYOff - 50f).ToResolutionY()), null, Color.Gold * _panelAlpha, 0f, Vector2.Zero, new Vector2(WindowUtils.WindowWidth / 3, 10.ToResolutionY()), default, 0f);
 
             if (_shouldShowGrade) {
                 _gradeAlpha += _gradeFadeSpeed / 2;
@@ -226,16 +226,16 @@ namespace TanksRebirth.GameContent.UI
                     }
                 }
                 var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/grades");
-                TankGame.SpriteRenderer.Draw(tex, new Vector2(GameUtils.WindowWidth / 3 * 2, 250.ToResolutionY()), ParseGradeRect(Grade), Color.White * _gradeAlpha, 0f, new Vector2(64, 64), new Vector2(_gradeScale).ToResolution(), default, 0f);
+                TankGame.SpriteRenderer.Draw(tex, new Vector2(WindowUtils.WindowWidth / 3 * 2, 250.ToResolutionY()), ParseGradeRect(Grade), Color.White * _gradeAlpha, 0f, new Vector2(64, 64), new Vector2(_gradeScale).ToResolution(), default, 0f);
             }
 
             if (DebugUtils.DebuggingEnabled) {
-                if (Input.AreKeysJustPressed(Keys.O, Keys.P)) {
+                if (InputUtils.AreKeysJustPressed(Keys.O, Keys.P)) {
                     ResetThings();
 
                     PerformSequence(_lastContext);
                 }
-                else if (Input.KeyJustPressed(Keys.P))
+                else if (InputUtils.KeyJustPressed(Keys.P))
                     ResetThings();
             }
 
@@ -269,30 +269,30 @@ namespace TanksRebirth.GameContent.UI
                     // GameUtils.ToResolution is kinda wack here, so i'll exclude it.
                     IntermissionSystem.DrawShadowedTexture(texture,
                         new Vector2(
-                            GameUtils.WindowWidth / 3 + GameUtils.WindowWidth * 0.025f + xAdjust * xAdjustCount * ((float)GameUtils.WindowWidth / 1920),
-                            _tnkDrawYOff.ToResolutionY() + offY - (xAdjustCount * _spacePerTank * TanksPerColumn * _tankSize * ((float)GameUtils.WindowHeight / 1080))),
+                            WindowUtils.WindowWidth / 3 + WindowUtils.WindowWidth * 0.025f + xAdjust * xAdjustCount * ((float)WindowUtils.WindowWidth / 1920),
+                            _tnkDrawYOff.ToResolutionY() + offY - (xAdjustCount * _spacePerTank * TanksPerColumn * _tankSize * ((float)WindowUtils.WindowHeight / 1080))),
                         Vector2.One, AITank.TankDestructionColors[display.Key],
-                        new Vector2(_tierScales[i]) * (GameUtils.WindowBounds / new Vector2(1920, 1080)),
+                        new Vector2(_tierScales[i]) * (WindowUtils.WindowBounds / new Vector2(1920, 1080)),
                         _tierAlphas[i], texture.Size() / 2, shadowDistScale: 0.4f);
                     // draw the kill count text
                     IntermissionSystem.DrawShadowedString(TankGame.TextFont,
                         new Vector2(
-                            GameUtils.WindowWidth / 3 + GameUtils.WindowWidth * 0.025f + (xAdjust / 2).ToResolutionX() + xAdjust * xAdjustCount * ((float)GameUtils.WindowWidth / 1920),
-                            _tnkDrawYOff.ToResolutionY() - 2f.ToResolutionY() + offY - (xAdjustCount * _spacePerTank * TanksPerColumn * _tankSize * ((float)GameUtils.WindowHeight / 1080))),
-                        Vector2.One, $"{display.Value}", _textColor, new Vector2(_tierScales[i]) * (GameUtils.WindowBounds / new Vector2(1920, 1080)), _tierAlphas[i], TankGame.TextFont.MeasureString($"{display.Value}") / 2, 
+                            WindowUtils.WindowWidth / 3 + WindowUtils.WindowWidth * 0.025f + (xAdjust / 2).ToResolutionX() + xAdjust * xAdjustCount * ((float)WindowUtils.WindowWidth / 1920),
+                            _tnkDrawYOff.ToResolutionY() - 2f.ToResolutionY() + offY - (xAdjustCount * _spacePerTank * TanksPerColumn * _tankSize * ((float)WindowUtils.WindowHeight / 1080))),
+                        Vector2.One, $"{display.Value}", _textColor, new Vector2(_tierScales[i]) * (WindowUtils.WindowBounds / new Vector2(1920, 1080)), _tierAlphas[i], TankGame.TextFont.MeasureString($"{display.Value}") / 2, 
                         shadowDistScale: 0.4f);
 
-                    offY += _spacePerTank * _tankSize * ((float)GameUtils.WindowHeight / 1080);
+                    offY += _spacePerTank * _tankSize * ((float)WindowUtils.WindowHeight / 1080);
                 }
             }
             #endregion
             txt = _skip ? "Press 'Enter' to exit." : "Press 'Enter' to skip.";
             measure = TankGame.TextFont.MeasureString(txt);
-            IntermissionSystem.DrawShadowedString(TankGame.TextFont, new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight - 8), Vector2.One, txt, Color.Black, Vector2.One.ToResolution(), 1f, new Vector2(measure.X / 2, measure.Y), 0.4f);
+            IntermissionSystem.DrawShadowedString(TankGame.TextFont, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight - 8), Vector2.One, txt, Color.Black, Vector2.One.ToResolution(), 1f, new Vector2(measure.X / 2, measure.Y), 0.4f);
 
             txt = "Campaign Results";
             measure = TankGame.TextFontLarge.MeasureString(txt);
-            IntermissionSystem.DrawShadowedString(TankGame.TextFontLarge, new Vector2(GameUtils.WindowWidth / 2, 8), Vector2.One, txt, Color.DeepSkyBlue, new Vector2(0.5f).ToResolution(), _panelAlpha, new Vector2(measure.X / 2, 0));
+            IntermissionSystem.DrawShadowedString(TankGame.TextFontLarge, new Vector2(WindowUtils.WindowWidth / 2, 8), Vector2.One, txt, Color.DeepSkyBlue, new Vector2(0.5f).ToResolution(), _panelAlpha, new Vector2(measure.X / 2, 0));
         }
         // TODO: probably support multiple players L + ratio me
         public static void SetStats(Campaign campaign, PlayerTank.DeterministicPlayerStats stats, Dictionary<int, int> killCounts, bool orderByTier = true)

@@ -79,7 +79,7 @@ namespace TanksRebirth.GameContent.UI
             Vector2 drawOrigin = font.MeasureString("Unknown") / 2f;
             MissionInfoBar = new((uiPanel, spriteBatch) => spriteBatch.DrawString(font, "Unknown", uiPanel.Hitbox.Center.ToVector2(), Color.White, new Vector2(1.5f), 0f, drawOrigin));
             MissionInfoBar.BackgroundColor = Color.Red;
-            MissionInfoBar.SetDimensions(() => new Vector2(GameUtils.WindowWidth / 2 - 250.ToResolutionX(), GameUtils.WindowHeight - 75.ToResolutionY()), () => new Vector2(500, 50).ToResolution());
+            MissionInfoBar.SetDimensions(() => new Vector2(WindowUtils.WindowWidth / 2 - 250.ToResolutionX(), WindowUtils.WindowHeight - 75.ToResolutionY()), () => new Vector2(500, 50).ToResolution());
 
             ResumeButton = new(TankGame.GameLanguage.Resume, font, Color.WhiteSmoke)
             {
@@ -264,7 +264,7 @@ namespace TanksRebirth.GameContent.UI
             foreach (UIElement button in graphicsElements)
             {
                 button.HasScissor = true;
-                button.Scissor = () => new(0, (int)(GameUtils.WindowHeight * 0.05f), GameUtils.WindowWidth, (int)(GameUtils.WindowHeight * 0.7f));
+                button.Scissor = () => new(0, (int)(WindowUtils.WindowHeight * 0.05f), WindowUtils.WindowWidth, (int)(WindowUtils.WindowHeight * 0.7f));
                 button.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick", SoundContext.Effect); };
             }
             foreach (var e in menuElements)
@@ -401,7 +401,7 @@ namespace TanksRebirth.GameContent.UI
             }    
             if (!_initialized)
                 return;
-            _newScroll = Input.CurrentMouseSnapshot.ScrollWheelValue;
+            _newScroll = InputUtils.CurrentMouseSnapshot.ScrollWheelValue;
 
             if (_newScroll != _oldScroll)
             {
@@ -435,7 +435,7 @@ namespace TanksRebirth.GameContent.UI
             if (!MainMenu.Active)
                 TankMusicSystem.UpdateVolume();
 
-            if (_delay > 0 && !Input.MouseLeft)
+            if (_delay > 0 && !InputUtils.MouseLeft)
                 _delay--;
             if (_delay <= 0)
             {

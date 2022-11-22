@@ -5,7 +5,7 @@ using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.Internals.Common
 {
-    public static class Input
+    public static class InputUtils
     {
         public static KeyboardState CurrentKeySnapshot { get; internal set; }
 
@@ -51,12 +51,12 @@ namespace TanksRebirth.Internals.Common
         public static bool CanDetectClick(bool rightClick = false) {
             bool clicked = !rightClick ? (CurrentMouseSnapshot.LeftButton == ButtonState.Pressed && OldMouseSnapshot.LeftButton == ButtonState.Released)
                 : (CurrentMouseSnapshot.RightButton == ButtonState.Pressed && OldMouseSnapshot.RightButton == ButtonState.Released);
-            return GameUtils.WindowActive && clicked;
+            return WindowUtils.WindowActive && clicked;
         }
         public static bool CanDetectClickRelease(bool rightClick = false) {
             bool released = !rightClick ? (CurrentMouseSnapshot.LeftButton != ButtonState.Pressed && OldMouseSnapshot.LeftButton != ButtonState.Released)
                 : (CurrentMouseSnapshot.RightButton != ButtonState.Pressed && OldMouseSnapshot.RightButton != ButtonState.Released);
-            return GameUtils.WindowActive && released;
+            return WindowUtils.WindowActive && released;
         }
         public static Keys FirstPressedKey
         {

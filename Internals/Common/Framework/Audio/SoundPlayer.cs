@@ -100,9 +100,9 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
                     break;
             }
 
-            var pos2d = GeometryUtils.ConvertWorldToScreen(position, world, TankGame.GameView, TankGame.GameProjection);
+            var pos2d = MatrixUtils.ConvertWorldToScreen(position, world, TankGame.GameView, TankGame.GameProjection);
 
-            var lerp = GameUtils.ModifiedInverseLerp(-(GameUtils.WindowWidth / 2), GameUtils.WindowWidth + GameUtils.WindowWidth / 2, pos2d.X, true);
+            var lerp = MathUtils.ModifiedInverseLerp(-(WindowUtils.WindowWidth / 2), WindowUtils.WindowWidth + WindowUtils.WindowWidth / 2, pos2d.X, true);
 
             var sfx = fromSound.CreateInstance();
             sfx.Volume = volume;

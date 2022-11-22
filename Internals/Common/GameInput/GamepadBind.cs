@@ -19,8 +19,8 @@ namespace TanksRebirth.Internals.Common.GameInput
             get; private set;
         }
 
-        public bool JustPressed => Input.ButtonJustPressed(AssignedButton) && _bindingWait <= 0;
-        public bool IsPressed => Input.CurrentGamePadSnapshot.IsButtonDown(AssignedButton) && _bindingWait <= 0;
+        public bool JustPressed => InputUtils.ButtonJustPressed(AssignedButton) && _bindingWait <= 0;
+        public bool IsPressed => InputUtils.CurrentGamePadSnapshot.IsButtonDown(AssignedButton) && _bindingWait <= 0;
         public bool IsReassignPending
         {
             get; private set;
@@ -64,14 +64,14 @@ namespace TanksRebirth.Internals.Common.GameInput
 
         private bool TryAcceptReassign() {
             if (_bindingWait <= 0) {
-                if (Input.CurrentKeySnapshot.GetPressedKeys().Length > 0) {
-                    var firstButton = Input.GetPressedButtons(Input.CurrentGamePadSnapshot.Buttons)[0];
-                    if (Input.ButtonJustPressed(firstButton) && firstButton == AssignedButton) {
+                if (InputUtils.CurrentKeySnapshot.GetPressedKeys().Length > 0) {
+                    var firstButton = InputUtils.GetPressedButtons(InputUtils.CurrentGamePadSnapshot.Buttons)[0];
+                    if (InputUtils.ButtonJustPressed(firstButton) && firstButton == AssignedButton) {
                         Console.WriteLine($"Stopped the assigning of '{Name}'");
                         IsReassignPending = false;
                         return false;
                     }
-                    if (Input.ButtonJustPressed(firstButton) && firstButton == Buttons.Back) {
+                    if (InputUtils.ButtonJustPressed(firstButton) && firstButton == Buttons.Back) {
                         Console.WriteLine($"Unassigned '{Name}'");
                         AssignedButton = 0;
                         IsReassignPending = false;

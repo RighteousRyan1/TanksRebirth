@@ -38,13 +38,13 @@ namespace TanksRebirth.GameContent.Systems
             var measure = TankGame.TextFont.MeasureString(Text);
 
             _curPos = Anchor switch {
-                PopupAnchor.Top => new(GameUtils.WindowWidth / 2, -measure.Y * 1.2f),
-                PopupAnchor.Bottom => new(GameUtils.WindowWidth / 2, GameUtils.WindowHeight + measure.Y * 1.2f),
+                PopupAnchor.Top => new(WindowUtils.WindowWidth / 2, -measure.Y * 1.2f),
+                PopupAnchor.Bottom => new(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight + measure.Y * 1.2f),
                 _ => new()
             };
             float destination = Anchor switch {
                 PopupAnchor.Top => measure.Y * 1.2f,
-                PopupAnchor.Bottom => GameUtils.WindowHeight - measure.Y * 1.2f,
+                PopupAnchor.Bottom => WindowUtils.WindowHeight - measure.Y * 1.2f,
                 _ => 0f
             };
             // from here we start the popup appearance, then end it later

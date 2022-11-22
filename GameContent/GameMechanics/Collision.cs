@@ -263,7 +263,7 @@ namespace TanksRebirth.GameContent.GameMechanics
 
             // 20, 30
 
-            var pathDir = GameUtils.DirectionOf(start, destination).ToRotation();
+            var pathDir = MathUtils.DirectionOf(start, destination).ToRotation();
 
             var whitePixel = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
             var pathPos = start + Vector2.Zero.RotatedByRadians(pathDir);
@@ -301,11 +301,11 @@ namespace TanksRebirth.GameContent.GameMechanics
                 if (Vector2.Distance(pathPos, destination) < forgiveness)
                     return true;
 
-                pathPos += Vector2.Normalize(GameUtils.DirectionOf(start, destination));
+                pathPos += Vector2.Normalize(MathUtils.DirectionOf(start, destination));
 
                 if (draw)
                 {
-                    var pathPosScreen = GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(pathPos.X, 11, pathPos.Y), TankGame.GameView, TankGame.GameProjection);
+                    var pathPosScreen = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(pathPos.X, 11, pathPos.Y), TankGame.GameView, TankGame.GameProjection);
                     TankGame.SpriteRenderer.Draw(whitePixel, pathPosScreen, null, Color.White, 0, whitePixel.Size() / 2, 2 + (float)Math.Sin(i * Math.PI / 5 - TankGame.UpdateCount * 0.3f), default, default);
                 }
 

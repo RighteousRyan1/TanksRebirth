@@ -33,7 +33,7 @@ namespace TanksRebirth.Internals.Common.Framework.Graphics
         {
             World = Matrix.CreateTranslation(0, 0, 0);
             View = Matrix.Identity;
-            Projection = Matrix.CreateOrthographicOffCenter(0, GameUtils.WindowWidth, GameUtils.WindowHeight, 0, -1, 1);
+            Projection = Matrix.CreateOrthographicOffCenter(0, WindowUtils.WindowWidth, WindowUtils.WindowHeight, 0, -1, 1);
             Effect = new(TankGame.Instance.GraphicsDevice);
             this.color = color;
             vertices[0] = pos1;

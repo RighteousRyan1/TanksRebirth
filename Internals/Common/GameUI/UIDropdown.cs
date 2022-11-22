@@ -45,8 +45,8 @@ namespace TanksRebirth.Internals.Common.GameUI
         {
             base.DrawSelf(spriteBatch);
 
-            _newScroll = Input.CurrentMouseSnapshot.ScrollWheelValue;
-            if (_newScroll != _oldScroll && wrapper.Contains(GameUtils.MousePosition) && Dropped)
+            _newScroll = InputUtils.CurrentMouseSnapshot.ScrollWheelValue;
+            if (_newScroll != _oldScroll && wrapper.Contains(MouseUtils.MousePosition) && Dropped)
             {
                 _gpuSettingsOffset = _newScroll - _oldScroll;
                 _push += _gpuSettingsOffset;

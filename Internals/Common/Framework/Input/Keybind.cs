@@ -18,8 +18,8 @@ namespace TanksRebirth.Internals.Common.Framework.Input
 
         public bool JustReassigned { get; private set; }
 
-        public bool JustPressed => Common.Input.KeyJustPressed(AssignedKey) && !PendKeyReassign;
-        public bool IsPressed => Common.Input.CurrentKeySnapshot.IsKeyDown(AssignedKey) && !PendKeyReassign;
+        public bool JustPressed => Common.InputUtils.KeyJustPressed(AssignedKey) && !PendKeyReassign;
+        public bool IsPressed => Common.InputUtils.CurrentKeySnapshot.IsKeyDown(AssignedKey) && !PendKeyReassign;
         public bool PendKeyReassign { get; set; } = false;
 
         public Action<Keys> OnKeyReassigned;
@@ -39,16 +39,16 @@ namespace TanksRebirth.Internals.Common.Framework.Input
 
         private void PollReassign()
         {
-            if (Common.Input.CurrentKeySnapshot.GetPressedKeys().Length > 0)
+            if (Common.InputUtils.CurrentKeySnapshot.GetPressedKeys().Length > 0)
             {
-                var firstKey = Common.Input.CurrentKeySnapshot.GetPressedKeys()[0];
-                if (Common.Input.KeyJustPressed(firstKey) && firstKey == AssignedKey)
+                var firstKey = Common.InputUtils.CurrentKeySnapshot.GetPressedKeys()[0];
+                if (Common.InputUtils.KeyJustPressed(firstKey) && firstKey == AssignedKey)
                 {
                     OnKeyReassigned?.Invoke(AssignedKey);
                     PendKeyReassign = false;
                     return;
                 }
-                else if (Common.Input.KeyJustPressed(firstKey) && firstKey == Keys.Escape)
+                else if (Common.InputUtils.KeyJustPressed(firstKey) && firstKey == Keys.Escape)
                 {
                     AssignedKey = Keys.None;
                     OnKeyReassigned?.Invoke(AssignedKey);

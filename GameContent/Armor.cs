@@ -61,7 +61,7 @@ namespace TanksRebirth.GameContent
                 _healthBarTotal.Position = Host.Position3D + new Vector3(0, 40, 0);
                 _healthBarCurrent.Position = Host.Position3D + new Vector3(0, 40, 0);
             }
-            // DrawHealthBar(GeometryUtils.ConvertWorldToScreen(new Vector3(0, 20, 0f), Host.World, TankGame.GameView, TankGame.GameProjection) - new Vector2(0, 20), 50, 10);
+            // DrawHealthBar(MatrixUtils.ConvertWorldToScreen(new Vector3(0, 20, 0f), Host.World, TankGame.GameView, TankGame.GameProjection) - new Vector2(0, 20), 50, 10);
 
             if (HitPoints < 0) // so armor point amount is clamped to be greater than 0 at all times.
                 HitPoints = 0;

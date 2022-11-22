@@ -71,13 +71,13 @@ namespace TanksRebirth.Internals.UI
 			if (!TankGame.Instance.IsActive)
 				return false;
 
-			if (Parent is null || Parent.Hitbox.Contains(GameUtils.MousePosition))
+			if (Parent is null || Parent.Hitbox.Contains(MouseUtils.MousePosition))
 			{
 				if (uniqueInput is null || uniqueInput.Invoke())
 				{
-					if (Hitbox.Contains(GameUtils.MousePosition))
+					if (Hitbox.Contains(MouseUtils.MousePosition))
 					{
-						if ((HasScissor && Scissor.Invoke().Contains(GameUtils.MousePosition)) || !HasScissor)
+						if ((HasScissor && Scissor.Invoke().Contains(MouseUtils.MousePosition)) || !HasScissor)
 							return true;
 					}
 				}
@@ -90,7 +90,7 @@ namespace TanksRebirth.Internals.UI
 
 		public virtual void LeftClick()
 		{
-			if (CanRegisterInput(() => Input.MouseLeft && !Input.OldMouseLeft))
+			if (CanRegisterInput(() => InputUtils.MouseLeft && !InputUtils.OldMouseLeft))
 			{
 				if (delay <= 0)
 					OnLeftClick?.Invoke(this);
@@ -102,7 +102,7 @@ namespace TanksRebirth.Internals.UI
 
 		public virtual void LeftDown()
 		{
-            if (CanRegisterInput(() => Input.MouseLeft))
+            if (CanRegisterInput(() => InputUtils.MouseLeft))
 			{
                 // ChatSystem.SendMessage(this is UISlider, Color.White);
                 OnLeftDown?.Invoke(this);
@@ -113,7 +113,7 @@ namespace TanksRebirth.Internals.UI
 
 		public virtual void LeftUp()
 		{
-            if (CanRegisterInput(() => !Input.MouseLeft))
+            if (CanRegisterInput(() => !InputUtils.MouseLeft))
 			{
 				OnLeftUp?.Invoke(this);
 			}
@@ -125,7 +125,7 @@ namespace TanksRebirth.Internals.UI
 
 		public virtual void RightClick()
 		{
-			if (CanRegisterInput(() => Input.MouseRight && !Input.OldMouseRight))
+			if (CanRegisterInput(() => InputUtils.MouseRight && !InputUtils.OldMouseRight))
 			{
 				if (delay <= 0)
 					OnRightClick?.Invoke(this);
@@ -137,7 +137,7 @@ namespace TanksRebirth.Internals.UI
 
 		public virtual void RightDown()
 		{
-			if (CanRegisterInput(() => Input.MouseRight))
+			if (CanRegisterInput(() => InputUtils.MouseRight))
 			{
 				OnRightDown?.Invoke(this);
 			}
@@ -147,7 +147,7 @@ namespace TanksRebirth.Internals.UI
 
 		public virtual void RightUp()
 		{
-			if (CanRegisterInput(() => !Input.MouseRight))
+			if (CanRegisterInput(() => !InputUtils.MouseRight))
 			{
 				OnRightUp?.Invoke(this);
 			}
@@ -159,7 +159,7 @@ namespace TanksRebirth.Internals.UI
 
 		public virtual void MiddleClick()
 		{
-			if (CanRegisterInput(() => Input.MouseMiddle && !Input.OldMouseMiddle))
+			if (CanRegisterInput(() => InputUtils.MouseMiddle && !InputUtils.OldMouseMiddle))
 			{
 				if (delay <= 0)
 					OnMiddleClick?.Invoke(this);
@@ -171,7 +171,7 @@ namespace TanksRebirth.Internals.UI
 
 		public virtual void MiddleDown()
 		{
-			if (CanRegisterInput(() => Input.MouseMiddle))
+			if (CanRegisterInput(() => InputUtils.MouseMiddle))
 			{
 				OnMiddleDown?.Invoke(this);
 			}
@@ -181,7 +181,7 @@ namespace TanksRebirth.Internals.UI
 
 		public virtual void MiddleUp()
 		{
-			if (CanRegisterInput(() => !Input.MouseMiddle))
+			if (CanRegisterInput(() => !InputUtils.MouseMiddle))
 			{
 				OnMiddleUp?.Invoke(this);
 			}
@@ -198,11 +198,11 @@ namespace TanksRebirth.Internals.UI
 				return;
 			}
 
-			if (Parent is null || Parent.Hitbox.Contains(GameUtils.MousePosition))
+			if (Parent is null || Parent.Hitbox.Contains(MouseUtils.MousePosition))
 			{
-				if (Hitbox.Contains(GameUtils.MousePosition) && !_wasHovered)
+				if (Hitbox.Contains(MouseUtils.MousePosition) && !_wasHovered)
 				{
-					if ((HasScissor && Scissor.Invoke().Contains(GameUtils.MousePosition)) || !HasScissor)
+					if ((HasScissor && Scissor.Invoke().Contains(MouseUtils.MousePosition)) || !HasScissor)
                     {
 						OnMouseOver?.Invoke(this);
 						MouseHovering = true;
@@ -222,7 +222,7 @@ namespace TanksRebirth.Internals.UI
 				return;
 			}
 
-			if (!Hitbox.Contains(GameUtils.MousePosition))
+			if (!Hitbox.Contains(MouseUtils.MousePosition))
 			{
 				OnMouseOut?.Invoke(this);
 				MouseHovering = false;

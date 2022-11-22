@@ -1,38 +1,14 @@
-﻿using System;
+﻿using Microsoft.Xna.Framework;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.Xna.Framework;
 
 namespace TanksRebirth.Internals.Common.Utilities;
 
-public static class GeometryUtils
+public static class RayUtils
 {
-
-    public static T[] Shift<T>(ref T[] array, int index, int amount)
-    {
-        // extend the array by amount if we're out of bounds, then shift every element past index by amount
-        if (index + amount > array.Length)
-        {
-            var newArray = new T[index + amount];
-            array.CopyTo(newArray, 0);
-            array = newArray;
-        }
-        for (int i = index; i < array.Length; i++)
-        {
-            if (i >= index)
-                array[i] = array[i + amount];
-        }
-        return array;
-    }
-    // sigh no work
-
-    public static Vector2 PredictFuturePosition(Vector2 source, Vector2 velocity, float time)
-    {
-        return source + velocity * time;
-    }
     /// <summary>
     /// Create a ray on a 2D plane either covering the X and Y axes of a plane or the X and Z axes of a plane.
     /// </summary>
@@ -82,11 +58,6 @@ public static class GeometryUtils
         return new(distPos, reflected);
     }
 
-    public static Rectangle CreateRectangleFromCenter(int x, int y, int width, int height)
-    {
-        return new Rectangle(x - width / 2, y - height / 2, width, height);
-    }
-
     public static Ray Flatten(this Ray ray, bool zAxis = true)
     {
         Ray usedRay;
@@ -99,72 +70,11 @@ public static class GeometryUtils
         return usedRay;
     }
 
-    public static float GetPiRandom()
+    public static Ray GetMouseToWorldRay()
     {
-        var seed = new Random().Next(0, 4);
+        var nearPlane = MatrixUtils.ConvertScreenToWorld(new Vector3(MouseUtils.MousePosition, 0), Matrix.Identity, TankGame.GameView, TankGame.GameProjection);
+        var farPlane = MatrixUtils.ConvertScreenToWorld(new Vector3(MouseUtils.MousePosition, 1), Matrix.Identity, TankGame.GameView, TankGame.GameProjection);
 
-        return seed switch 
-        { 
-            0 => 0,
-            1 => MathHelper.PiOver2,
-            2 => MathHelper.Pi,
-            3 => MathHelper.Pi + MathHelper.PiOver2,
-            _ => 0
-        };
+        return new Ray(nearPlane, Vector3.Normalize(farPlane - nearPlane));
     }
-
-    public static EulerAngles AsEulerAngles(this Quaternion quaternion)
-    {
-        EulerAngles angles = new();
-
-        // roll
-        float wxyz = 2 * (quaternion.W * quaternion.X + quaternion.Y * quaternion.Z);
-        float xySq = 1 - 2 * (quaternion.X * quaternion.X + quaternion.Y * quaternion.Y);
-        angles.Roll = MathF.Atan2(wxyz, xySq);
-        // pitch
-        float diffSin = 2 * (quaternion.W * quaternion.Y - quaternion.Z * quaternion.X);
-        if (MathF.Abs(diffSin) >= 1)
-            angles.Pitch = MathF.CopySign(MathHelper.PiOver2, diffSin); // if sinp > 90 degrees, compress it to 90.
-        else
-            angles.Pitch = MathF.Asin(diffSin);
-
-        // yaw
-        float wzxy = 2 * (quaternion.W * quaternion.Z + quaternion.X * quaternion.Y);
-        float yzSq = 1 - 2 * (quaternion.Y * quaternion.Y + quaternion.Z * quaternion.Z);
-        angles.Yaw = MathF.Atan2(wzxy, yzSq);
-
-        return angles;
-    }
-
-    public static float GetQuarterRotation(sbyte rot)
-    {
-        return MathHelper.PiOver2 * rot;
-    }
-
-    public static void Add(ref Vector3 v, float scale)
-    {
-        v.X += scale;
-        v.Y += scale;
-        v.Z += scale;
-    }
-    public static void Multiply(ref Vector3 v, float scale)
-    {
-        v.X *= scale;
-        v.Y *= scale;
-        v.Z *= scale;
-    }
-
-    public static float Average(ref Vector3 v)
-    {
-        return (v.X + v.Y + v.Z) / 3;
-    }
-}
-/// <summary>
-/// Useful for conversion of <see cref="Quaternion"/>s to basic Yaw/Pitch/Roll angles.
-/// </summary>
-public struct EulerAngles
-{
-    public float Yaw;
-    public float Pitch;
-    public float Roll;
 }

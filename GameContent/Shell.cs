@@ -188,7 +188,7 @@ namespace TanksRebirth.GameContent
 
         internal void Update()
         {
-            Rotation = Velocity.ToRotation() - MathHelper.PiOver2;
+            Rotation = Velocity2D.ToRotation() - MathHelper.PiOver2;
             Position += Velocity * 0.62f * TankGame.DeltaTime;
             World = Matrix.CreateFromYawPitchRoll(-Rotation, 0, 0)
                 * Matrix.CreateTranslation(Position);
@@ -249,8 +249,8 @@ namespace TanksRebirth.GameContent
                         {
                             float dist = Vector2.Distance(Position2D, HomeProperties.Target);
 
-                            Velocity.X += GameUtils.DirectionOf(Position2D, HomeProperties.Target).X * HomeProperties.Power / dist;
-                            Velocity.Z += GameUtils.DirectionOf(Position2D, HomeProperties.Target).Y * HomeProperties.Power / dist;
+                            Velocity.X += MathUtils.DirectionOf(Position2D, HomeProperties.Target).X * HomeProperties.Power / dist;
+                            Velocity.Z += MathUtils.DirectionOf(Position2D, HomeProperties.Target).Y * HomeProperties.Power / dist;
 
                             Vector2 trueSpeed = Vector2.Normalize(Velocity2D) * HomeProperties.Speed;
 
@@ -519,7 +519,7 @@ namespace TanksRebirth.GameContent
 
             if (DebugUtils.DebugLevel == 1 && HomeProperties.Speed > 0)
                 Collision.DoRaycast(Position2D, HomeProperties.Target, (int)HomeProperties.Radius, true);
-            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"RicochetsLeft: {RicochetsRemaining}\nTier: {Tier}", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 20), 1, centered: true);
+            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"RicochetsLeft: {RicochetsRemaining}\nTier: {Tier}", MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 20), 1, centered: true);
 
             for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++)
             {

@@ -71,19 +71,19 @@ namespace TanksRebirth.GameContent.Systems
 
                         break;
                     case ChatMessageCorner.TopRight:
-                        basePosition = new(GameUtils.WindowWidth - 20, 20);
+                        basePosition = new(WindowUtils.WindowWidth - 20, 20);
                         drawOrigin = new(measure.X, measure.Y / 2);
                         offset = 15f;
 
                         break;
                     case ChatMessageCorner.BottomLeft:
-                        basePosition = new(20, GameUtils.WindowHeight - 20);
+                        basePosition = new(20, WindowUtils.WindowHeight - 20);
                         drawOrigin = new(0, measure.Y / 2);
                         offset = -15f;
 
                         break;
                     case ChatMessageCorner.BottomRight:
-                        basePosition = new(GameUtils.WindowWidth - 20, GameUtils.WindowHeight - 20);
+                        basePosition = new(WindowUtils.WindowWidth - 20, WindowUtils.WindowHeight - 20);
                         drawOrigin = new(measure.X, measure.Y / 2);
                         offset = -15f;
 

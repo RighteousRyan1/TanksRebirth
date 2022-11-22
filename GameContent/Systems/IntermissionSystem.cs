@@ -63,7 +63,7 @@ namespace TanksRebirth.GameContent.Systems
 
             spriteBatch.Draw(
                 TankGame.WhitePixel,
-                new Rectangle(0, 0, GameUtils.WindowWidth, GameUtils.WindowHeight),
+                new Rectangle(0, 0, WindowUtils.WindowWidth, WindowUtils.WindowHeight),
                 Color.Black * BlackAlpha);
 
             if (!GameUI.Paused)
@@ -84,7 +84,7 @@ namespace TanksRebirth.GameContent.Systems
 
                 spriteBatch.Draw(
                     TankGame.WhitePixel,
-                    new Rectangle(0, 0, GameUtils.WindowWidth, GameUtils.WindowHeight),
+                    new Rectangle(0, 0, WindowUtils.WindowWidth, WindowUtils.WindowHeight),
                     BackgroundColor * Alpha);
 
                 int padding = 10;
@@ -93,9 +93,9 @@ namespace TanksRebirth.GameContent.Systems
                 int texWidth = 64 * scale;
 
                 // draw small tank graphics using GameResources.GetGameResource
-                for (int i = -padding; i < GameUtils.WindowWidth / texWidth + padding; i++)
+                for (int i = -padding; i < WindowUtils.WindowWidth / texWidth + padding; i++)
                 {
-                    for (int j = -padding; j < GameUtils.WindowHeight / texWidth + padding; j++)
+                    for (int j = -padding; j < WindowUtils.WindowHeight / texWidth + padding; j++)
                     {
                         spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/ui/tank_background_billboard"), new Vector2(i, j) * texWidth + _offset, null, BackgroundColor * Alpha, 0f, Vector2.Zero, scale, default, default);
                     }
@@ -103,25 +103,25 @@ namespace TanksRebirth.GameContent.Systems
                 // why didn't i use this approach before? i'm kind of braindead sometimes.
                 for (int i = 0; i < 6; i++) {
                     var off = 75f;
-                    DrawStripe(spriteBatch, StripColor, GameUtils.WindowHeight * 0.16f + (off * i).ToResolutionY(), Alpha);
+                    DrawStripe(spriteBatch, StripColor, WindowUtils.WindowHeight * 0.16f + (off * i).ToResolutionY(), Alpha);
                 }
                 var wp = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
-                spriteBatch.Draw(wp, new Vector2(0, GameUtils.WindowHeight * 0.19f), null, Color.Yellow * Alpha, 0f, new Vector2(0, wp.Size().Y / 2), new Vector2(GameUtils.WindowWidth, 5), default, default);
-                spriteBatch.Draw(wp, new Vector2(0, GameUtils.WindowHeight * 0.19f + 400.ToResolutionY()), null, Color.Yellow * Alpha, 0f, new Vector2(0, wp.Size().Y / 2), new Vector2(GameUtils.WindowWidth, 5), default, default);
+                spriteBatch.Draw(wp, new Vector2(0, WindowUtils.WindowHeight * 0.19f), null, Color.Yellow * Alpha, 0f, new Vector2(0, wp.Size().Y / 2), new Vector2(WindowUtils.WindowWidth, 5), default, default);
+                spriteBatch.Draw(wp, new Vector2(0, WindowUtils.WindowHeight * 0.19f + 400.ToResolutionY()), null, Color.Yellow * Alpha, 0f, new Vector2(0, wp.Size().Y / 2), new Vector2(WindowUtils.WindowWidth, 5), default, default);
                 int mafs1 = GameProperties.LoadedCampaign.TrackedSpawnPoints.Count(p => p.Item2);
                 int mafs2 = GameProperties.LoadedCampaign.LoadedMission.Tanks.Count(x => x.IsPlayer);
                 int mafs = mafs1 - mafs2;
 
 
-                DrawShadowedString(TankGame.TextFontLarge, new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2 - 220.ToResolutionY()), Vector2.One, GameProperties.LoadedCampaign.LoadedMission.Name, BackgroundColor, Vector2.One.ToResolution(), Alpha);
-                DrawShadowedString(TankGame.TextFontLarge, new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2 - 50.ToResolutionY()), Vector2.One, $"Enemy tanks: {mafs}", BackgroundColor, new Vector2(0.8f).ToResolution(), Alpha);
+                DrawShadowedString(TankGame.TextFontLarge, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 220.ToResolutionY()), Vector2.One, GameProperties.LoadedCampaign.LoadedMission.Name, BackgroundColor, Vector2.One.ToResolution(), Alpha);
+                DrawShadowedString(TankGame.TextFontLarge, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 50.ToResolutionY()), Vector2.One, $"Enemy tanks: {mafs}", BackgroundColor, new Vector2(0.8f).ToResolution(), Alpha);
                 var lifeText = $"x   {PlayerTank.Lives}";
-                DrawShadowedString(TankGame.TextFontLarge, new Vector2(GameUtils.WindowWidth / 2 - 100.ToResolutionX(), GameUtils.WindowHeight / 2 + 350.ToResolutionY()), Vector2.One, lifeText, BackgroundColor, Vector2.One.ToResolution(), Alpha, new Vector2(0, TankGame.TextFontLarge.MeasureString(lifeText).Y / 2));
+                DrawShadowedString(TankGame.TextFontLarge, new Vector2(WindowUtils.WindowWidth / 2 - 100.ToResolutionX(), WindowUtils.WindowHeight / 2 + 350.ToResolutionY()), Vector2.One, lifeText, BackgroundColor, Vector2.One.ToResolution(), Alpha, new Vector2(0, TankGame.TextFontLarge.MeasureString(lifeText).Y / 2));
 
                 if (GameProperties.LoadedCampaign.CurrentMissionId == 0)
-                    DrawShadowedString(TankGame.TextFontLarge, new Vector2(GameUtils.WindowWidth / 2, GameUtils.WindowHeight / 2 - 295.ToResolutionY()), Vector2.One, $"Campaign: \"{GameProperties.LoadedCampaign.MetaData.Name}\"", BackgroundColor, new Vector2(0.4f).ToResolution(), Alpha);
+                    DrawShadowedString(TankGame.TextFontLarge, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 295.ToResolutionY()), Vector2.One, $"Campaign: \"{GameProperties.LoadedCampaign.MetaData.Name}\"", BackgroundColor, new Vector2(0.4f).ToResolution(), Alpha);
 
-                DrawShadowedTexture(GameResources.GetGameResource<Texture2D>("Assets/textures/ui/playertank2d"), new Vector2(GameUtils.WindowWidth / 2 - 200.ToResolutionX(), GameUtils.WindowHeight / 2 + 375.ToResolutionY()), Vector2.One, Color.Blue, new Vector2(1.25f).ToResolution(), Alpha);
+                DrawShadowedTexture(GameResources.GetGameResource<Texture2D>("Assets/textures/ui/playertank2d"), new Vector2(WindowUtils.WindowWidth / 2 - 200.ToResolutionX(), WindowUtils.WindowHeight / 2 + 375.ToResolutionY()), Vector2.One, Color.Blue, new Vector2(1.25f).ToResolution(), Alpha);
                 
                 
             }
@@ -151,13 +151,13 @@ namespace TanksRebirth.GameContent.Systems
         {
             var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/banner");
 
-            var scaling = new Vector2(3, 3f);//new Vector2(GameUtils.WindowWidth / tex.Width / 2 + 0.2f, GameUtils.WindowHeight / tex.Height / 18.2f); // 18.2 ratio
+            var scaling = new Vector2(3, 3f);//new Vector2(WindowUtils.WindowWidth / tex.Width / 2 + 0.2f, WindowUtils.WindowHeight / tex.Height / 18.2f); // 18.2 ratio
 
-            //var test = GameUtils.MousePosition.X / GameUtils.WindowWidth * 100;
+            //var test = MouseUtils.MousePosition.X / WindowUtils.WindowWidth * 100;
             //ChatSystem.SendMessage(test, Color.White);
 
             spriteBatch.Draw(tex, new Vector2(-15, offsetY), null, color * alpha, 0f, Vector2.Zero, scaling.ToResolution(), default, default);
-            spriteBatch.Draw(tex, new Vector2(GameUtils.WindowWidth / 2, offsetY), null, color * alpha, 0f, Vector2.Zero, scaling.ToResolution(), default, default);
+            spriteBatch.Draw(tex, new Vector2(WindowUtils.WindowWidth / 2, offsetY), null, color * alpha, 0f, Vector2.Zero, scaling.ToResolution(), default, default);
             //spriteBatch.Draw(tex, new Vector2(-30 + (float)(tex.Width * scaling.X) + (3 * scaling.X / 2.2f), offsetY), null, color * alpha, 0f, new Vector2(0, tex.Size().Y / 2), scaling, default, default);
             //spriteBatch.Draw(tex, new Vector2(-30 + (float)(tex.Width * 2 * scaling.X) - (8 * scaling.X / 2.2f), offsetY), null, color * alpha, 0f, new Vector2(0, tex.Size().Y / 2), scaling, default, default);
         }

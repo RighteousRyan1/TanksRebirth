@@ -47,6 +47,8 @@ namespace TanksRebirth.GameContent.Systems
         {
             if (string.IsNullOrEmpty(mission.Name))
                 return;
+
+            TrackedSpawnPoints = new (Vector2, bool)[mission.Tanks.Length];
             LoadedMission = mission;
         }
         public void LoadMission(int id)
@@ -138,7 +140,7 @@ namespace TanksRebirth.GameContent.Systems
 
                         if (placement > -1)
                         {
-                            ChatSystem.SendMessage("Loaded " + TankID.Collection.GetKey(tank.Tier), Color.Blue);
+                            // ChatSystem.SendMessage("Loaded " + TankID.Collection.GetKey(tank.Tier), Color.Blue);
                             PlacementSquare.Placements[placement].TankId = tank.WorldId;
                             PlacementSquare.Placements[placement].HasBlock = false;
                         }

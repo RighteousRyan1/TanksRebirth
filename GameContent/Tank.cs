@@ -685,9 +685,9 @@ namespace TanksRebirth.GameContent
                     };
                     smoke.UniqueBehavior = (part) =>
                     {
-                        part.Color.R = (byte)GameUtils.RoughStep(part.Color.R, achieveable, step);
-                        part.Color.G = (byte)GameUtils.RoughStep(part.Color.G, achieveable, step);
-                        part.Color.B = (byte)GameUtils.RoughStep(part.Color.B, achieveable, step);
+                        part.Color.R = (byte)MathUtils.RoughStep(part.Color.R, achieveable, step);
+                        part.Color.G = (byte)MathUtils.RoughStep(part.Color.G, achieveable, step);
+                        part.Color.B = (byte)MathUtils.RoughStep(part.Color.B, achieveable, step);
 
                         GeometryUtils.Add(ref part.Scale, 0.004f * TankGame.DeltaTime);
 
@@ -816,7 +816,7 @@ namespace TanksRebirth.GameContent
             // TankGame.spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), CollisionBox2D, Color.White * 0.75f);
 
             for (int i = 0; i < info.Length; i++)
-                DebugUtils.DrawDebugString(TankGame.SpriteRenderer, info[i], GeometryUtils.ConvertWorldToScreen(Vector3.Up * 20, World, View, Projection) - new Vector2(0, (i * 20) + 8), 1, centered: true, color: Color.Red);
+                DebugUtils.DrawDebugString(TankGame.SpriteRenderer, info[i], MatrixUtils.ConvertWorldToScreen(Vector3.Up * 20, World, View, Projection) - new Vector2(0, (i * 20) + 8), 1, centered: true, color: Color.Red);
 
         }
         public float CurShootStun { get; private set; } = 0;
@@ -991,7 +991,7 @@ namespace TanksRebirth.GameContent
 
             total_treads_placed++;
 
-            /*DecalHandler.AddDecal(texture, GeometryUtils.ConvertWorldToScreen(Vector3.Zero,
+            /*DecalHandler.AddDecal(texture, MatrixUtils.ConvertWorldToScreen(Vector3.Zero,
                 Matrix.CreateTranslation(Position), TankGame.GameView,
                 TankGame.GameProjection), null, Color.White, rotation, BlendState.Opaque);*/
 
