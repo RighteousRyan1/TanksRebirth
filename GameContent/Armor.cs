@@ -126,8 +126,8 @@ namespace TanksRebirth.GameContent
         /// <summary>Remove this <see cref="Armor"/> from memory.</summary>
         public void Remove()
         {
-            _healthBarTotal?.Destroy();
-            _healthBarCurrent?.Destroy();
+            _healthBarTotal.Destroy();
+            _healthBarCurrent.Destroy();
         }
     }
 }

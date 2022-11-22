@@ -97,11 +97,11 @@ namespace TanksRebirth.GameContent
                 EffectHandle.Projection = TankGame.GameProjection;
                 EffectHandle.TextureEnabled = true;
                 EffectHandle.Texture = Texture;
-                EffectHandle.AmbientLightColor = Color.ToVector3() * GameHandler.GameLight.Brightness;
-                EffectHandle.DiffuseColor = Color.ToVector3() * GameHandler.GameLight.Brightness;
-                EffectHandle.FogColor = Color.ToVector3() * GameHandler.GameLight.Brightness;
+                //EffectHandle.AmbientLightColor = Color.ToVector3() * GameHandler.GameLight.Brightness;
+                //EffectHandle.DiffuseColor = Color.ToVector3() * GameHandler.GameLight.Brightness;
+                //EffectHandle.FogColor = Color.ToVector3() * GameHandler.GameLight.Brightness;
                 EffectHandle.EmissiveColor = Color.ToVector3() * GameHandler.GameLight.Brightness;
-                EffectHandle.SpecularColor = Color.ToVector3() * GameHandler.GameLight.Brightness;
+                //EffectHandle.SpecularColor = Color.ToVector3() * GameHandler.GameLight.Brightness;
 
                 EffectHandle.Alpha = Alpha;
 

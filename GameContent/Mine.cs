@@ -122,8 +122,6 @@ namespace TanksRebirth.GameContent
 
         internal void Update() {
             World = Matrix.CreateScale(0.7f) * Matrix.CreateTranslation(Position3D);
-            View = TankGame.GameView;
-            Projection = TankGame.GameProjection;
 
             Hitbox = new((int)Position.X - 10, (int)Position.Y - 10, 20, 20); 
 
@@ -165,6 +163,8 @@ namespace TanksRebirth.GameContent
 
         internal void Render()
         {
+            View = TankGame.GameView;
+            Projection = TankGame.GameProjection;
             DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"Det: {DetonateTime}/{DetonateTimeMax}\nNearDestructibles: {IsNearDestructibles}", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 20), 1, centered: true);
             for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
                 foreach (ModelMesh mesh in Model.Meshes) {

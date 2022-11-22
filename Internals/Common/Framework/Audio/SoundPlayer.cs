@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using TanksRebirth.GameContent.UI;
 using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.Internals.Common.Framework.Audio
@@ -25,7 +26,7 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
         private static float MusicVolume => TankGame.Settings.MusicVolume;
         private static float EffectsVolume => TankGame.Settings.EffectsVolume;
         private static float AmbientVolume => TankGame.Settings.AmbientVolume;
-        public static OggAudio PlaySoundInstance(string audioPath, SoundContext context, float volume = 1f, float panOverride = 0f, float pitchOverride = 0f, bool autoApplyContentPrefix = true)
+        public static OggAudio PlaySoundInstance(string audioPath, SoundContext context, float volume = 1f, float panOverride = 0f, float pitchOverride = 0f, bool gameplaySound = false, bool autoApplyContentPrefix = true)
         {
             // because ogg is the only good audio format.
             var prepend = autoApplyContentPrefix ? TankGame.Instance.Content.RootDirectory + "/" : string.Empty;
@@ -38,6 +39,8 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
                     break;
                 case SoundContext.Effect:
                     volume *= EffectsVolume;
+                    if (gameplaySound && MainMenu.Active)
+                        volume *= 0.25f;
                     break;
                 case SoundContext.Ambient:
                     volume *= AmbientVolume;

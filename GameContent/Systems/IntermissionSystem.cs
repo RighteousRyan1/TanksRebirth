@@ -12,7 +12,7 @@ namespace TanksRebirth.GameContent.Systems
     public static class IntermissionSystem
     {
         public static int TimeBlack; // for black screen when entering this game
-        public static float BlackAlpha;
+        public static float BlackAlpha = 0;
 
         public static bool IsAwaitingNewMission => CurrentWaitTime > 240; // 3 seconds seems to be the opening fanfare duration
 

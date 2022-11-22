@@ -2,38 +2,28 @@
 using TanksRebirth.Internals.UI;
 using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.Utilities;
-using TanksRebirth.Internals.Common.GameInput;
 using TanksRebirth.Internals.Common.GameUI;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System.Linq;
 using TanksRebirth.Enums;
 using System;
-using Microsoft.Xna.Framework.Audio;
 using TanksRebirth.GameContent.Systems;
-using System.Collections.Generic;
-using TanksRebirth.Internals.Core.Interfaces;
 using Microsoft.Xna.Framework.Graphics;
-using TanksRebirth.Internals.Core;
 using TanksRebirth.GameContent.UI;
-using TanksRebirth.Graphics;
 using TanksRebirth.Internals.Common.Framework.Audio;
-using TanksRebirth.Internals.Common.Framework.Input;
 using System.IO;
 using System.Threading.Tasks;
 using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.Net;
-using System.Threading;
-using System.Diagnostics;
-using Microsoft.Xna.Framework.Media;
 using TanksRebirth.Internals.Common.Framework;
 using NativeFileDialogSharp;
-using TanksRebirth.IO;
 using TanksRebirth.Achievements;
 using TanksRebirth.GameContent.Properties;
 using TanksRebirth.GameContent.Speedrunning;
 using FontStashSharp;
 using TanksRebirth.GameContent.ID;
+using TanksRebirth.Graphics;
 
 namespace TanksRebirth.GameContent
 {
@@ -46,6 +36,8 @@ namespace TanksRebirth.GameContent
 
         public const int MAX_AI_TANKS = 1000;
         public const int MAX_PLAYERS = 1000;
+
+        // TODO: convert to lists.
         public static AITank[] AllAITanks = new AITank[MAX_AI_TANKS];
         public static PlayerTank[] AllPlayerTanks = new PlayerTank[MAX_PLAYERS];
         public static Tank[] AllTanks = new Tank[MAX_PLAYERS + MAX_AI_TANKS];
@@ -191,24 +183,25 @@ namespace TanksRebirth.GameContent
             foreach (var tank in AllTanks)
                 tank?.Update();
 
+            foreach (var mine in Mine.AllMines)
+                mine?.Update();
+
+            foreach (var bullet in Shell.AllShells)
+                bullet?.Update();
+
+            foreach (var fp in TankFootprint.footprints)
+                fp?.Update();
+
+
             if (GameProperties.InMission)
             {
                 TankMusicSystem.Update();
-
-                foreach (var mine in Mine.AllMines)
-                    mine?.Update();
-
-                foreach (var bullet in Shell.AllShells)
-                    bullet?.Update();
 
                 foreach (var crate in Crate.crates)
                     crate?.Update();
 
                 foreach (var pu in Powerup.Powerups)
                     pu?.Update();
-
-                foreach (var fp in TankFootprint.footprints)
-                    fp?.Update();
             }
             else
                 if (!GameProperties.InMission)
@@ -224,18 +217,20 @@ namespace TanksRebirth.GameContent
                 DoThunderStuff();
             else if (MapRenderer.Theme == MapTheme.Christmas) {
                 TankGame.ClearColor = (Color.DeepSkyBlue.ToVector3() * 0.2f).ToColor();
-                if (GameRand.NextFloat(0, 1) <= 0.1f) {
+                if (GameRand.NextFloat(0, 1) <= 0.3f) {
+
+                    // TODO: add some sort of snowflake limit because the damn renderer sucks ass.
 
                     float y = 200f;
 
                     float x = GameRand.NextFloat(-450f, 450f);
-                    float z = GameRand.NextFloat(-250f, 250f);
+                    float z = GameRand.NextFloat(-250f, 400f);
 
                     int snowflake = GameRand.Next(0, 2);
 
                     var p = ParticleSystem.MakeParticle(new Vector3(x, y, z), GameResources.GetGameResource<Texture2D>($"Assets/christmas/snowflake_{snowflake}"));
 
-                    p.Scale = new Vector3(GameRand.NextFloat(0.1f, 0.5f));
+                    p.Scale = new Vector3(GameRand.NextFloat(0.1f, 0.25f));
 
                     Vector2 wind = new Vector2(0.05f, 0f);
 
@@ -572,9 +567,8 @@ namespace TanksRebirth.GameContent
             if (_tankFuncDelay > 0 && !MainMenu.Active && !TankGame.OverheadView && !LevelEditor.Active)
                 // $"{MathF.Round(_tankFuncDelay / 60)}"
                 TankGame.SpriteRenderer.DrawString(TankGame.TextFontLarge, $"{MathF.Round(_tankFuncDelay / 60) + 1}", GameUtils.WindowCenter, Color.White, new Vector2(3).ToResolution(), 0f, TankGame.TextFontLarge.MeasureString($"{MathF.Round(_tankFuncDelay / 60) + 1}") / 2, 0f);
-
-            if (!MainMenu.Active)
-                MapRenderer.RenderWorldModels();
+            // CHECK: move this back if necessary
+            MapRenderer.RenderWorldModels();
 
             foreach (var tank in AllTanks)
                 tank?.Render();
@@ -611,47 +605,9 @@ namespace TanksRebirth.GameContent
 
             ParticleSystem.RenderParticles();
 
-            if (MainMenu.Active)
-            MainMenu.Render();
-
             if (LevelEditor.Active)
                 LevelEditor.Render();
 
-            foreach (var body in Tank.CollisionsWorld.BodyList.ToList())
-            {
-                DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"BODY", 
-                    GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(body.Position.X * Tank.UNITS_PER_METER, 0, body.Position.Y * Tank.UNITS_PER_METER), TankGame.GameView, TankGame.GameProjection), centered: true);
-            }
-
-            for (int i = 0; i < VanillaAchievements.Repository.GetAchievements().Count; i++)
-            {
-                var achievement = VanillaAchievements.Repository.GetAchievements()[i];
-                DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"{achievement.Name}: {(achievement.IsComplete ? "Complete" : "Incomplete")}",
-                    new Vector2(8, 24 + (i * 20)), level: DebugUtils.Id.AchievementData, centered: false);
-            }
-
-            tankToSpawnType = MathHelper.Clamp(tankToSpawnType, 2, TankID.Collection.Count - 1);
-            tankToSpawnTeam = MathHelper.Clamp(tankToSpawnTeam, 0, TeamID.Collection.Count - 1);
-
-            #region TankInfo
-            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, "Spawn Tank With Info:", GameUtils.WindowTop + new Vector2(0, 8), 3, centered: true);
-            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"Tier: {TankID.Collection.GetKey(tankToSpawnType)}", GameUtils.WindowTop + new Vector2(0, 24), 3, centered: true);
-            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"Team: {TeamID.Collection.GetKey(tankToSpawnTeam)}", GameUtils.WindowTop + new Vector2(0, 40), 3, centered: true);
-            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"CubeStack: {blockHeight} | CubeType: {BlockID.Collection.GetKey(blockType)}", GameUtils.WindowBottom - new Vector2(0, 20), 3, centered: true);
-
-            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"HighestTier: {AITank.GetHighestTierActive()}", new(10, GameUtils.WindowHeight * 0.26f), 1);
-            // DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"CurSong: {(Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f) != null ? Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f).Name : "N/A")}", new(10, GameUtils.WindowHeight - 100), 1);
-            for (int i = 0; i < TankID.Collection.Count; i++) {
-                DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"{TankID.Collection.GetKey(i)}: {AITank.GetTankCountOfType(i)}", new(10, GameUtils.WindowHeight * 0.3f + (i * 20)), 1);
-            }
-            #endregion
-
-            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"Logic Time: {TankGame.LogicTime.TotalMilliseconds:0.00}ms" +
-                $"\nLogic FPS: {TankGame.LogicFPS}" +
-                $"\n\nRender Time: {TankGame.RenderTime.TotalMilliseconds:0.00}ms" +
-                $"\nRender FPS: {TankGame.RenderFPS}", new(10, 500));
-
-            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"Current Mission: {GameProperties.LoadedCampaign.CurrentMission.Name}\nCurrent Campaign: {GameProperties.LoadedCampaign.MetaData.Name}", GameUtils.WindowBottomLeft - new Vector2(-4, 40), 3, centered: false);
             if (!MainMenu.Active && !LevelEditor.Active)
             {
                 if (IntermissionSystem.IsAwaitingNewMission)
@@ -664,8 +620,6 @@ namespace TanksRebirth.GameContent
                 }
                 IntermissionSystem.DrawShadowedString(TankGame.TextFontLarge, new Vector2(80.ToResolutionX(), GameUtils.WindowHeight * 0.9f - 14f.ToResolutionY()), Vector2.One, $"{PlayerTank.KillCount}", new(119, 190, 238), new Vector2(0.675f).ToResolution(), 1f);
             }
-
-            ChatSystem.DrawMessages();
 
             if (!MainMenu.Active)
             {
@@ -684,6 +638,8 @@ namespace TanksRebirth.GameContent
             GameUI.MissionInfoBar.IsVisible = !MainMenu.Active && !LevelEditor.Active && !CampaignCompleteUI.IsViewingResults;
             OnPostRender?.Invoke();
         }
+
+        #region Extra
         public static void RenderUI()
         {
             foreach (var element in UIElement.AllUIElements.ToList())
@@ -1073,7 +1029,7 @@ namespace TanksRebirth.GameContent
             }
         }
     }
-
+    #endregion
     public static class MouseRenderer
     {
         public static Texture2D MouseTexture { get; private set; }
@@ -1151,7 +1107,7 @@ namespace TanksRebirth.GameContent
         public static Effect MouseShader { get; private set; }
         public static Effect GaussianBlurShader { get; private set; }
 
-        public static Effect TestShader { get; private set; }
+        public static Effect LanternShader { get; private set; }
 
         private static bool _lantern;
         public static bool LanternMode
@@ -1160,7 +1116,7 @@ namespace TanksRebirth.GameContent
             set
             {
                 _lantern = value;
-                TestShader.Parameters["oLantern"]?.SetValue(value);
+                LanternShader.Parameters["oLantern"]?.SetValue(value);
             }
         }
 
@@ -1168,7 +1124,12 @@ namespace TanksRebirth.GameContent
         {
             GaussianBlurShader = GameResources.GetGameResource<Effect>("Assets/Shaders/GaussianBlur");
             MouseShader = GameResources.GetGameResource<Effect>("Assets/Shaders/MouseShader");
-            TestShader = GameResources.GetGameResource<Effect>("Assets/Shaders/testshader");
+            LanternShader = GameResources.GetGameResource<Effect>("Assets/Shaders/testshader");
+
+            var blurFactor = 0.005f; // GameUtils.MousePosition.X / GameUtils.WindowWidth;
+
+            GaussianBlurShader.Parameters["oResolution"].SetValue(Vector2.One);
+            GaussianBlurShader.Parameters["oBlurFactor"].SetValue(blurFactor);
         }
         //static float val = 1f;
         public static void UpdateShaders()
@@ -1179,8 +1140,7 @@ namespace TanksRebirth.GameContent
             MouseShader.Parameters["oSpeed"].SetValue(-20f);
             MouseShader.Parameters["oSpacing"].SetValue(10f);
 
-            GaussianBlurShader.Parameters["oResolution"].SetValue(new Vector2(GameUtils.WindowWidth, GameUtils.WindowHeight));
-            GaussianBlurShader.Parameters["oBlurFactor"].SetValue(6f);
+            GaussianBlurShader.Parameters["oEnabledBlur"].SetValue(MainMenu.Active);
 
             /*if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Up))
                 val += 0.01f;
@@ -1188,15 +1148,15 @@ namespace TanksRebirth.GameContent
                 val -= 0.01f;*/
 
 
-            TestShader.Parameters["oTime"]?.SetValue((float)TankGame.LastGameTime.TotalGameTime.TotalSeconds);
+            LanternShader.Parameters["oTime"]?.SetValue((float)TankGame.LastGameTime.TotalGameTime.TotalSeconds);
             //TestShader.Parameters["oBend"]?.SetValue(val);
             //TestShader.Parameters["oDistortionFactor"].SetValue(GameUtils.MousePosition.X / GameUtils.WindowWidth);
 
             var index = Array.FindIndex(GameHandler.AllPlayerTanks, x => x is not null && !x.Dead);
             var pos = index > -1 ? GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(GameHandler.AllPlayerTanks[index].Position.X, 11, GameHandler.AllPlayerTanks[index].Position.Y), TankGame.GameView, TankGame.GameProjection).ToCartesianCoordinates() : new Vector2(-1);
             // var val = (float)TankGame.LastGameTime.TotalGameTime.TotalSeconds;
-            TestShader.Parameters["oPower"]?.SetValue(MainMenu.Active ? 100f : GameHandler.GameRand.NextFloat(0.195f, 0.20f));
-            TestShader.Parameters["oPosition"]?.SetValue(pos/*GameUtils.MousePosition.ToCartesianCoordinates()*/);
+            LanternShader.Parameters["oPower"]?.SetValue(MainMenu.Active ? 100f : GameHandler.GameRand.NextFloat(0.195f, 0.20f));
+            LanternShader.Parameters["oPosition"]?.SetValue(pos/*GameUtils.MousePosition.ToCartesianCoordinates()*/);
         }
     }
 }

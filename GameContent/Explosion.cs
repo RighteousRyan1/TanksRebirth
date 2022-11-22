@@ -71,8 +71,8 @@ namespace TanksRebirth.GameContent
 
             var destroysound = "Assets/sounds/tnk_destroy";
 
-            SoundPlayer.PlaySoundInstance(destroysound, SoundContext.Effect, 0.4f, 0f);
-            SoundPlayer.PlaySoundInstance(destroysound, SoundContext.Effect, 0.4f, 0f, -0.2f);
+            SoundPlayer.PlaySoundInstance(destroysound, SoundContext.Effect, 0.4f, 0f, gameplaySound: true);
+            SoundPlayer.PlaySoundInstance(destroysound, SoundContext.Effect, 0.4f, 0f, -0.2f, gameplaySound: true);
 
             _id = index;
 

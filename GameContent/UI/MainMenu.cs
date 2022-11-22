@@ -28,6 +28,8 @@ using TanksRebirth.GameContent.Properties;
 using TanksRebirth.GameContent.Cosmetics;
 using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.ID;
+using TanksRebirth.GameContent.Systems.Coordinates;
+using TanksRebirth.Internals.Common.Framework;
 
 namespace TanksRebirth.GameContent.UI
 {
@@ -953,20 +955,6 @@ namespace TanksRebirth.GameContent.UI
             else
                 Theme.Volume = TankGame.Settings.MusicVolume * 0.1f;
 
-            for (int i = 0; i < tanks.Count; i++)
-            {
-                var tnk = tanks[i];
-                if (tnk is not AITank)
-                    return;
-                var pos = tnk.Body.Position;
-                if (pos.X > 500)
-                    pos.X = -500;
-
-                tnk.Velocity.Y = _tnkSpeed;
-
-                tnk.Body.Position = pos;
-            }
-
             UpdateLogo();
         }
 
@@ -1007,6 +995,8 @@ namespace TanksRebirth.GameContent.UI
             GameUI.Paused = false;
             Theme.Play();
 
+            TankGame.DoZoomStuff();
+
             foreach (var block in Block.AllBlocks)
                 block?.Remove();
             foreach (var mine in Mine.AllMines)
@@ -1030,6 +1020,26 @@ namespace TanksRebirth.GameContent.UI
 
             GameUI.QuitButtonPos.Y -= 50;
             GameUI.OptionsButtonPos.Y += 75;
+
+            for (int i = 0; i < 5; i++)
+            {
+                var rand = PlacementSquare.Placements[GameHandler.GameRand.Next(0, PlacementSquare.Placements.Count - 1)].Position.FlattenZ();
+
+                var t = new AITank(TankID.Random, new Range<int>(TankID.Brown, TankID.Black), isIngame: false)
+                {
+                    Dead = false,
+                };
+                t.Body.Position = rand / Tank.UNITS_PER_METER;
+                // t.Body.Position = t.Position / Tank.UNITS_PER_METER;
+                tanks.Add(t);
+            }
+
+            for (int i = 0; i < 12; i++)
+            {
+                var rand = PlacementSquare.Placements[GameHandler.GameRand.Next(0, PlacementSquare.Placements.Count - 1)].Position.FlattenZ();
+
+                var b = new Block(GameHandler.GameRand.Next(0, BlockID.Hole), GameHandler.GameRand.Next(0, Block.MAX_BLOCK_HEIGHT), rand);
+            }
 
             /*for (int i = 0; i < 10; i++)
             {
@@ -1072,32 +1082,10 @@ namespace TanksRebirth.GameContent.UI
 
             GameUI.BackButton.IsVisible = false;
         }
-
-        public static Tank AddTravelingTank(int tier, float xOffset, float yOffset)
-        {
-            var extank = new AITank(tier, default, false, false);
-            extank.Team = TeamID.NoTeam;
-            extank.Dead = false;
-            extank.Body.Position = new Vector2(-500 + xOffset, yOffset);
-
-            extank.TankRotation = MathHelper.PiOver2;
-
-            extank.TurretRotation = extank.TankRotation;
-
-            extank.View = View;
-            extank.Projection = Projection;
-
-            tanks.Add(extank);
-
-            return extank;
-        }
-
         public static void RemoveAllMenuTanks()
         {
             for (int i = 0; i < tanks.Count; i++)
-            {
                 tanks[i].Remove();
-            }
             tanks.Clear();
         }
 
@@ -1221,30 +1209,12 @@ namespace TanksRebirth.GameContent.UI
                 }
                 if (MenuState == State.Campaigns)
                 {
-                    static string getSuffix(int num)
-                    {
-                        var str = num.ToString();
-
-                        //if (num < 10 && num > 13)
-                        {
-                            if (str.EndsWith('1'))
-                                return "st";
-                            if (str.EndsWith('2'))
-                                return "nd";
-                            if (str.EndsWith('3'))
-                                return "rd";
-                            else
-                                return "th";
-                        }
-                        //else
-                            //return "th";
-                    }
 
                     if (_oldwheel != Input.DeltaScrollWheel)
                         MissionCheckpoint += Input.DeltaScrollWheel - _oldwheel;
                     
                     TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"You can scroll with your mouse to skip to a certain mission." +
-                        $"\nCurrently, you will skip to the {MissionCheckpoint + 1}{getSuffix(MissionCheckpoint + 1)} mission in the campaign." +
+                        $"\nCurrently, you will skip to mission {MissionCheckpoint + 1}." +
                         $"\nYou will be alerted if that mission does not exist.", new(12, 200), Color.White, new(0.75f), 0f, Vector2.Zero);
                 }
                 else if (MenuState == State.Cosmetics) {

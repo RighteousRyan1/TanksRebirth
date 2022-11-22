@@ -141,7 +141,7 @@ namespace TanksRebirth.GameContent
             if (Tier == ShellID.Rocket)
             {
                 Flaming = true;
-                _loopingSound = SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_rocket_loop", SoundContext.Effect, 0.3f);
+                _loopingSound = SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_rocket_loop", SoundContext.Effect, 0.3f, gameplaySound: true);
                 _loopingSound.Instance.IsLooped = true;
             }
             if (Tier == ShellID.TrailedRocket)
@@ -150,7 +150,7 @@ namespace TanksRebirth.GameContent
                 EmitsSmoke = false;
                 LeavesTrail = true;
                 Flaming = true;
-                _loopingSound = SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_ricochet_rocket_loop", SoundContext.Effect, 0.3f);
+                _loopingSound = SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_ricochet_rocket_loop", SoundContext.Effect, 0.3f, gameplaySound: true);
                 _loopingSound.Instance.IsLooped = true;
             }
 
@@ -158,12 +158,12 @@ namespace TanksRebirth.GameContent
             {
                 _shootSound = Tier switch
                 {
-                    ShellID.Player => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_regular_1", SoundContext.Effect, 0.3f),
-                    ShellID.Standard => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_regular_2", SoundContext.Effect, 0.3f),
-                    ShellID.Rocket => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_rocket", SoundContext.Effect, 0.3f),
-                    ShellID.TrailedRocket => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_ricochet_rocket", SoundContext.Effect, 0.3f),
-                    ShellID.Supressed => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_silencer", SoundContext.Effect, 0.3f),
-                    ShellID.Explosive => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_regular_2", SoundContext.Effect, 0.3f),
+                    ShellID.Player => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_regular_1", SoundContext.Effect, 0.3f, gameplaySound: true),
+                    ShellID.Standard => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_regular_2", SoundContext.Effect, 0.3f, gameplaySound: true),
+                    ShellID.Rocket => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_rocket", SoundContext.Effect, 0.3f, gameplaySound: true),
+                    ShellID.TrailedRocket => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_ricochet_rocket", SoundContext.Effect, 0.3f, gameplaySound: true),
+                    ShellID.Supressed => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_silencer", SoundContext.Effect, 0.3f, gameplaySound: true),
+                    ShellID.Explosive => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_regular_2", SoundContext.Effect, 0.3f, gameplaySound: true),
                     _ => throw new NotImplementedException()
                 };
                 _shootSound.Instance.Pitch = MathHelper.Clamp(owner.Properties.ShootPitch, -1, 1);
@@ -192,11 +192,6 @@ namespace TanksRebirth.GameContent
             Position += Velocity * 0.62f * TankGame.DeltaTime;
             World = Matrix.CreateFromYawPitchRoll(-Rotation, 0, 0)
                 * Matrix.CreateTranslation(Position);
-            Projection = TankGame.GameProjection;
-            View = TankGame.GameView;
-
-            if (!GameProperties.InMission)
-                return;
 
             if (Position2D.X < MapRenderer.MIN_X || Position2D.X > MapRenderer.MAX_X) {
                 OnRicochet?.Invoke(this);
@@ -414,14 +409,14 @@ namespace TanksRebirth.GameContent
 
             var sound = "Assets/sounds/bullet_ricochet";
 
-            var s = SoundPlayer.PlaySoundInstance(sound, SoundContext.Effect, 0.5f);
+            var s = SoundPlayer.PlaySoundInstance(sound, SoundContext.Effect, 0.5f, gameplaySound: true);
 
             if (Owner is not null)
             {
                 if (Owner.Properties.ShellType == ShellID.TrailedRocket)
                 {
                     s.Instance.Pitch = GameHandler.GameRand.NextFloat(0.15f, 0.25f);
-                    var s2 = SoundPlayer.PlaySoundInstance("Assets/sounds/ricochet_zip", SoundContext.Effect, 0.05f);
+                    var s2 = SoundPlayer.PlaySoundInstance("Assets/sounds/ricochet_zip", SoundContext.Effect, 0.05f, gameplaySound: true);
                     s2.Instance.Pitch = -0.65f;
                 }
                 else
@@ -492,7 +487,7 @@ namespace TanksRebirth.GameContent
             // ParticleSystem.MakeSparkEmission(Position, 10);
             if (context != DestructionContext.WithHostileTank && context != DestructionContext.WithMine && context != DestructionContext.WithExplosion) {
                 if (playSound) {
-                    var sfx = SoundPlayer.PlaySoundInstance("Assets/sounds/bullet_destroy", SoundContext.Effect, 0.5f);
+                    var sfx = SoundPlayer.PlaySoundInstance("Assets/sounds/bullet_destroy", SoundContext.Effect, 0.5f, gameplaySound: true);
                     sfx.Instance.Pitch = GameHandler.GameRand.NextFloat(-0.1f, 0.1f);
                 }
                 GameHandler.ParticleSystem.MakeSmallExplosion(Position, 8, 10, 1.25f, 15);
@@ -519,6 +514,9 @@ namespace TanksRebirth.GameContent
 
         internal void Render()
         {
+            Projection = TankGame.GameProjection;
+            View = TankGame.GameView;
+
             if (DebugUtils.DebugLevel == 1 && HomeProperties.Speed > 0)
                 Collision.DoRaycast(Position2D, HomeProperties.Target, (int)HomeProperties.Radius, true);
             DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"RicochetsLeft: {RicochetsRemaining}\nTier: {Tier}", GeometryUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 20), 1, centered: true);

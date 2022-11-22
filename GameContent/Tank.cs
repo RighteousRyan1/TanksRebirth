@@ -306,7 +306,7 @@ namespace TanksRebirth.GameContent
         /// <summary>Apply all the default parameters for this <see cref="Tank"/>.</summary>
         public virtual void ApplyDefaults(ref TankProperties properties) {
             PostApplyDefaults?.Invoke(this, ref properties);
-            Properties = properties; 
+            Properties = properties;
         }
 
         public virtual void Initialize()
@@ -326,11 +326,10 @@ namespace TanksRebirth.GameContent
                 }
             }
 
-            if (IsIngame)
-            {
-                Body = CollisionsWorld.CreateCircle(TNK_WIDTH * 0.4f / UNITS_PER_METER, 1f, Position / UNITS_PER_METER, BodyType.Dynamic);
-                // Body.LinearDamping = Deceleration * 10;
-            }
+            if (MapRenderer.Theme == MapTheme.Christmas)
+                Cosmetics.Add(CosmeticChest.SantaHat);
+
+            Body = CollisionsWorld.CreateCircle(TNK_WIDTH * 0.4f / UNITS_PER_METER, 1f, Position / UNITS_PER_METER, BodyType.Dynamic);
 
             foreach (var cos in Cosmetics)
                 if (cos is Cosmetic2D cos2d)
@@ -396,7 +395,7 @@ namespace TanksRebirth.GameContent
             if (Properties.Invisible && !Dead)
             {
                 var invis = "Assets/sounds/tnk_invisible";
-                SoundPlayer.PlaySoundInstance(invis, SoundContext.Effect, 0.3f);
+                SoundPlayer.PlaySoundInstance(invis, SoundContext.Effect, 0.3f, gameplaySound: true);
 
                 var lightParticle = GameHandler.ParticleSystem.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_particle"));
 
@@ -455,28 +454,20 @@ namespace TanksRebirth.GameContent
 
             Position = Body.Position * UNITS_PER_METER;
 
-            Body.LinearVelocity = Velocity * 0.55f / UNITS_PER_METER * TankGame.DeltaTime;
+            Body.LinearVelocity = Velocity * 0.55f / UNITS_PER_METER * TankGame.DeltaTime; 
 
             // try to make positive. i hate game
             World = Matrix.CreateScale(Scaling) * Matrix.CreateFromYawPitchRoll(-TankRotation - (Flip ? MathHelper.Pi : 0f), 0, 0)
                 * Matrix.CreateTranslation(Position3D);
 
-            if (IsIngame)
-            {
-                Worldbox = new(Position3D - new Vector3(7, 0, 7), Position3D + new Vector3(10, 15, 10));
-                Projection = TankGame.GameProjection;
-                View = TankGame.GameView;
+            Worldbox = new(Position3D - new Vector3(7, 0, 7), Position3D + new Vector3(10, 15, 10));
 
-                if (!GameProperties.InMission || IntermissionSystem.IsAwaitingNewMission)
-                {
-                    Velocity = Vector2.Zero;
-                    // return;
-                }
-                if (OwnedShellCount < 0)
-                    OwnedShellCount = 0;
-                if (OwnedMineCount < 0)
-                    OwnedMineCount = 0;
-            }
+            if (!MainMenu.Active && (!GameProperties.InMission || IntermissionSystem.IsAwaitingNewMission))
+                Velocity = Vector2.Zero;
+            if (OwnedShellCount < 0)
+                OwnedShellCount = 0;
+            if (OwnedMineCount < 0)
+                OwnedMineCount = 0;
 
             // try to make negative. go poopoo
             CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
@@ -493,7 +484,7 @@ namespace TanksRebirth.GameContent
             if (CurMineCooldown > 0)
                 CurMineCooldown -= TankGame.DeltaTime;
 
-            if (CurShootStun > 0 || CurMineStun > 0 || Properties.Stationary && IsIngame) {
+            if (CurShootStun > 0 || CurMineStun > 0 || Properties.Stationary) {
                 Body.LinearVelocity = Vector2.Zero;
                 Velocity = Vector2.Zero;
             }
@@ -503,9 +494,6 @@ namespace TanksRebirth.GameContent
                 cosmetic?.UniqueBehavior?.Invoke(cosmetic, this);
             OnPostUpdate?.Invoke(this);
         }
-        /// <summary>Get this <see cref="Tank"/>'s general stats.</summary>
-        public string GetGeneralStats()
-            => $"Pos2D: {Position} | Vel: {Velocity} | Dead: {Dead}";
         /// <summary>Damage this <see cref="Tank"/>. If it has no armor, <see cref="Destroy"/> it.</summary>
         public virtual void Damage(ITankHurtContext context) {
             if (Dead || Properties.Immortal)
@@ -514,7 +502,7 @@ namespace TanksRebirth.GameContent
                 OnDamage?.Invoke(this, Properties.Armor.HitPoints > 0, context);
                 if (Properties.Armor.HitPoints > 0) {
                     Properties.Armor.HitPoints--;
-                    var ding = SoundPlayer.PlaySoundInstance($"Assets/sounds/armor_ding_{GameHandler.GameRand.Next(1, 3)}", SoundContext.Effect);
+                    var ding = SoundPlayer.PlaySoundInstance($"Assets/sounds/armor_ding_{GameHandler.GameRand.Next(1, 3)}", SoundContext.Effect, gameplaySound: true);
                     ding.Instance.Pitch = GameHandler.GameRand.NextFloat(-0.1f, 0.1f);
                 }
                 else {
@@ -534,11 +522,11 @@ namespace TanksRebirth.GameContent
 
             OnDestroy?.Invoke(this, new());
             var killSound1 = "Assets/sounds/tnk_destroy";
-            SoundPlayer.PlaySoundInstance(killSound1, SoundContext.Effect, 0.2f);
+            SoundPlayer.PlaySoundInstance(killSound1, SoundContext.Effect, 0.2f, gameplaySound: true);
             if (this is AITank t)
             {
                 var killSound2 = "Assets/sounds/tnk_destroy_enemy";
-                SoundPlayer.PlaySoundInstance(killSound2, SoundContext.Effect, 0.3f);
+                SoundPlayer.PlaySoundInstance(killSound2, SoundContext.Effect, 0.3f, gameplaySound: true);
 
                 var dm = new TankDeathMark(TankDeathMark.CheckColor.White)
                 {
@@ -642,7 +630,7 @@ namespace TanksRebirth.GameContent
         }
         /// <summary>Shoot a <see cref="Shell"/> from this <see cref="Tank"/>.</summary>
         public virtual void Shoot() {
-            if (!GameProperties.InMission || !Properties.HasTurret)
+            if ((!MainMenu.Active && !GameProperties.InMission) || !Properties.HasTurret)
                 return;
 
             if (CurShootCooldown > 0 || OwnedShellCount >= Properties.ShellLimit / Properties.ShellShootCount)
@@ -760,7 +748,7 @@ namespace TanksRebirth.GameContent
             CurMineCooldown = Properties.MineCooldown;
             CurMineStun = Properties.MineStun;
             var sound = "Assets/sounds/mine_place";
-            SoundPlayer.PlaySoundInstance(sound, SoundContext.Effect, 0.5f);
+            SoundPlayer.PlaySoundInstance(sound, SoundContext.Effect, 0.5f, gameplaySound: true);
             OwnedMineCount++;
 
             timeSinceLastAction = 0;
@@ -769,44 +757,43 @@ namespace TanksRebirth.GameContent
             OnLayMine?.Invoke(this, ref mine);
         }
         public virtual void Render() {
-            if (IsIngame)
+            Projection = TankGame.GameProjection;
+            View = TankGame.GameView;
+            foreach (var cosmetic in Cosmetics)
             {
-                foreach (var cosmetic in Cosmetics)
+                //if (GameProperties.InMission && Properties.Invisible)
+                    //break;
+                if (cosmetic is Cosmetic3D cos3d)
                 {
-                    if (GameProperties.InMission && Properties.Invisible)
-                        break;
-                    if (cosmetic is Cosmetic3D cos3d)
+                    for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++)
                     {
-                        for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++)
+                        foreach (ModelMesh mesh in cos3d.Model.Meshes)
                         {
-                            foreach (ModelMesh mesh in cos3d.Model.Meshes)
+                            if (!cos3d.IgnoreMeshesByName.Any(meshname => meshname == mesh.Name))
                             {
-                                if (!cos3d.IgnoreMeshesByName.Any(meshname => meshname == mesh.Name))
+                                foreach (BasicEffect effect in mesh.Effects)
                                 {
-                                    foreach (BasicEffect effect in mesh.Effects)
-                                    {
-                                        float rotY;
-                                        if (cosmetic.LockOptions == CosmeticLockOptions.ToTurret)
-                                            rotY = cosmetic.Rotation.Y + TurretRotation;
-                                        else if (cosmetic.LockOptions == CosmeticLockOptions.ToTank)
-                                            rotY = cosmetic.Rotation.Y + TankRotation;
-                                        else
-                                            rotY = cosmetic.Rotation.Y;
-                                        effect.World = i == 0 ? Matrix.CreateRotationX(cosmetic.Rotation.X) * Matrix.CreateRotationY(rotY) * Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) * Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition)
-                                            : Matrix.CreateRotationX(cosmetic.Rotation.X) * Matrix.CreateRotationY(cosmetic.Rotation.Y) * Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) * Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition) * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
-                                        effect.View = View;
-                                        effect.Projection = Projection;
+                                    float rotY;
+                                    if (cosmetic.LockOptions == CosmeticLockOptions.ToTurret)
+                                        rotY = cosmetic.Rotation.Y + TurretRotation;
+                                    else if (cosmetic.LockOptions == CosmeticLockOptions.ToTank)
+                                        rotY = cosmetic.Rotation.Y + TankRotation;
+                                    else
+                                        rotY = cosmetic.Rotation.Y;
+                                    effect.World = i == 0 ? Matrix.CreateRotationX(cosmetic.Rotation.X) * Matrix.CreateRotationY(rotY) * Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) * Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition)
+                                        : Matrix.CreateRotationX(cosmetic.Rotation.X) * Matrix.CreateRotationY(cosmetic.Rotation.Y) * Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) * Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition) * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
+                                    effect.View = View;
+                                    effect.Projection = Projection;
 
-                                        effect.TextureEnabled = true;
-                                        if (i == 0)
-                                            effect.Texture = cos3d.ModelTexture;
-                                        else
-                                            effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/ingame/block_shadow_h");
-                                        
-                                        effect.SetDefaultGameLighting_IngameEntities();
-                                    }
-                                    mesh.Draw();
+                                    effect.TextureEnabled = true;
+                                    if (i == 0)
+                                        effect.Texture = cos3d.ModelTexture;
+                                    else
+                                        effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/ingame/block_shadow_h");
+
+                                    effect.SetDefaultGameLighting_IngameEntities();
                                 }
+                                mesh.Draw();
                             }
                         }
                     }
@@ -814,10 +801,11 @@ namespace TanksRebirth.GameContent
             }
             var info = new string[]
             {
-                $"Team: {Team}",
-                $"OwnedShellCount: {OwnedShellCount}",
-                $"OwnedMineCount: {OwnedMineCount}",
+                $"Team: {TeamID.Collection.GetKey(Team)}",
+                $"Shell Owned / Max: {OwnedShellCount} / {Properties.ShellLimit}",
+                $"Mine Owned / Max: {OwnedMineCount} / {Properties.MineLimit}",
                 // $"Speed / MaxSpeed / Velocity: {Properties.Speed} / {Properties.MaxSpeed} / {Velocity}",
+                $"Physics.LinearVelocity / Velocity: {Body.LinearVelocity} / {Velocity}",
                 $"ShellCooldown: {Properties.ShellCooldown}",
                 $"MineCooldown: {Properties.MineCooldown}",
                 $"Tank Rotation/Target: {TankRotation}/{TargetTankRotation}",

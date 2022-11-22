@@ -35,6 +35,7 @@ using TanksRebirth.GameContent.Properties;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.GameContent.ModSupport;
 using System.Threading.Tasks;
+using TanksRebirth.GameContent.ID;
 
 namespace TanksRebirth
 {
@@ -104,7 +105,7 @@ namespace TanksRebirth
 
         public static long GCMemory => GC.GetTotalMemory(false);
 
-        public static float DeltaTime => Interp ? 60 / (float)LogicFPS : 1;
+        public static float DeltaTime => Interp ? (!float.IsInfinity(60 / (float)LogicFPS) ? 60 / (float)LogicFPS : 0) : 1;
 
         public static long ProcessMemory
         {
@@ -402,6 +403,7 @@ namespace TanksRebirth
 
                 MainMenu.InitializeBasics();
 
+                GameHandler.SetupGraphics();
                 GameUI.Initialize();
                 MainMenu.InitializeUIGraphics();
 
@@ -421,7 +423,7 @@ namespace TanksRebirth
                     });
                 }
 
-                GameHandler.SetupGraphics();
+                
 
                 GameHandler.ClientLog.Write("Running in directory: " + Directory.GetCurrentDirectory(), LogType.Info);
 
@@ -511,10 +513,23 @@ namespace TanksRebirth
         public static bool Interp = true;
 
         public static bool HoveringAnyTank;
+
+        private static float _spinValue;
+
+        private const float ADD_DEF = 0.8f;
+        private static float _zoomAdd = ADD_DEF;
+
+        private const float GRAD_INC_DEF = 0.0075f;
+        private static float _gradualIncrease = GRAD_INC_DEF;
+
+        private static float _storedZoom;
+
+        public static void DoZoomStuff() => _zoomAdd = _storedZoom;
         protected override void Update(GameTime gameTime)
         {
             try
             {
+                #region Non-Camera
                 TargetElapsedTime = TimeSpan.FromMilliseconds(Interp ? 16.67 * (60f / Settings.TargetFPS) : 16.67);
 
 
@@ -580,20 +595,17 @@ namespace TanksRebirth
                 if (!MainMenu.Active && DebugUtils.DebuggingEnabled)
                     if (Input.KeyJustPressed(Keys.J))
                         OverheadView = !OverheadView;
-
+                #endregion
                 if (!Difficulties.Types["ThirdPerson"])
                 {
-                    if (transitionTimer > 0)
-                    {
+                    if (transitionTimer > 0) {
                         transitionTimer--;
-                        if (OverheadView)
-                        {
+                        if (OverheadView) {
                             GameUtils.SoftStep(ref CameraRotationVector.Y, MathHelper.PiOver2, 0.08f * DeltaTime);
                             GameUtils.SoftStep(ref AddativeZoom, 0.6f, 0.08f * DeltaTime);
                             GameUtils.RoughStep(ref CameraFocusOffset.Y, 82f, 2f * DeltaTime);
                         }
-                        else
-                        {
+                        else {
                             GameUtils.SoftStep(ref CameraRotationVector.Y, DEFAULT_ORTHOGRAPHIC_ANGLE, 0.08f * DeltaTime);
                             if (!LevelEditor.Active)
                                 GameUtils.SoftStep(ref AddativeZoom, 1f, 0.08f * DeltaTime);
@@ -614,12 +626,33 @@ namespace TanksRebirth
 
                     GameCamera.SetViewingDistances(-2000f, 5000f);*/
 
+                    if (!float.IsInfinity(DeltaTime))
+                        _spinValue +=  _gradualIncrease * DeltaTime;
+
+                    if (MainMenu.Active) {
+                        if (IntermissionSystem.IsAwaitingNewMission)
+                        {
+                            _gradualIncrease *= 1.075f;
+                            _zoomAdd += _gradualIncrease;
+                            _storedZoom = _zoomAdd;
+                        }
+                        else if (_zoomAdd > ADD_DEF)
+                            _zoomAdd -= _gradualIncrease;
+                        else
+                            _zoomAdd = ADD_DEF;
+                    }
+
+                    if (IntermissionSystem.BlackAlpha >= 1f) {
+                        _zoomAdd = ADD_DEF;
+                        _gradualIncrease = GRAD_INC_DEF;
+                    }
+
                     GameView =
-                            Matrix.CreateScale(DEFAULT_ZOOM * AddativeZoom) *
+                            Matrix.CreateScale(DEFAULT_ZOOM * AddativeZoom * (MainMenu.Active ? _zoomAdd : 1)) *
                             Matrix.CreateLookAt(new(0f, 0, 350f), Vector3.Zero, Vector3.Up) * // 0, 0, 350
                             Matrix.CreateTranslation(CameraFocusOffset.X, -CameraFocusOffset.Y + 40, 0) *
-                            Matrix.CreateRotationX(CameraRotationVector.Y) *
-                            Matrix.CreateRotationY(CameraRotationVector.X);
+                            Matrix.CreateRotationY(CameraRotationVector.X + (MainMenu.Active ? _spinValue : 0)) *
+                            Matrix.CreateRotationX(CameraRotationVector.Y);
                     GameProjection = Matrix.CreateOrthographic(1920, 1080, -2000, 5000);
                     //Matrix.CreateTranslation(CameraFocusOffset.X, -CameraFocusOffset.Y, 0);
                 }
@@ -645,42 +678,6 @@ namespace TanksRebirth
                             ThirdPersonCameraPosition + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-GameHandler.AllPlayerTanks[0].TurretRotation).ExpandZ()
                             , Vector3.Up) * Matrix.CreateScale(AddativeZoom) * Matrix.CreateRotationX(CameraRotationVector.Y - MathHelper.PiOver4) * Matrix.CreateRotationY(CameraRotationVector.X) * Matrix.CreateTranslation(0, -20, -40);
                         GameProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000);
-                    }
-                    else
-                    {
-                        var x = GameHandler.AllAITanks.FirstOrDefault(x => x is not null && !x.Dead);
-
-                        if (x is not null && Array.IndexOf(GameHandler.AllAITanks, x) > -1)
-                        {
-                            /*pos = x.Position3D;
-                            var t = GameUtils.MousePosition.X / GameUtils.WindowWidth;
-                            // GameCamera.Zoom(DEFAULT_ZOOM * AddativeZoom);
-                            GameCamera.SetPosition(pos - new Vector3(0, 0, 100).FlattenZ().RotatedByRadians(-x.TurretRotation).ExpandZ());
-
-                            GameCamera.SetLookAt(pos + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-x.TurretRotation).ExpandZ());                        
-                            GameCamera.Zoom(GameUtils.MousePosition.X / GameUtils.WindowWidth * 5);
-                            GameCamera.SetFov(90);
-                            //GameCamera.SetPosition(pos);
-                            //GameCamera.RotateY(GameUtils.MousePosition.X / 400);
-                            //GameCamera.RotateY(DEFAULT_ORTHOGRAPHIC_ANGLE);
-                            //GameCamera.RotateX(GameUtils.MousePosition.X / 400);
-
-                            GameCamera.RotateX(CameraRotationVector.Y - MathHelper.PiOver4);
-                            GameCamera.RotateY(CameraRotationVector.X);
-
-                            GameCamera.Translate(new Vector3(0, -20, -40));
-
-                            GameCamera.SetViewingDistances(0.1f, 10000f);
-
-                            GameCamera.SetCameraType(CameraType.FieldOfView);*/
-
-                            ThirdPersonCameraPosition = x.Position.ExpandZ();
-
-                            GameView = Matrix.CreateLookAt(ThirdPersonCameraPosition,
-                                ThirdPersonCameraPosition + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-x.TurretRotation).ExpandZ()
-                                , Vector3.Up) * Matrix.CreateScale(AddativeZoom) * Matrix.CreateRotationX(CameraRotationVector.Y - MathHelper.PiOver4) * Matrix.CreateRotationY(CameraRotationVector.X) * Matrix.CreateTranslation(0, -20, -40) * Matrix.CreateScale(AddativeZoom);
-                            GameProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000);
-                        }
                     }
                 }
 
@@ -721,8 +718,6 @@ namespace TanksRebirth
         {
             // TODO: this
             IsFixedTimeStep = !Settings.Vsync || !Interp;
-            if (Input.KeyJustPressed(Keys.Up) && DebugUtils.DebuggingEnabled)
-                Campaign.Save(GameProperties.LoadedCampaign.MetaData.Name, GameProperties.LoadedCampaign);
 
             UpdateCount++;
 
@@ -734,9 +729,6 @@ namespace TanksRebirth
 
             if (shouldUpdate)
             {
-                /*foreach (var type in systems)
-                    type?.Update();*/
-
                 GameHandler.UpdateAll();
 
                 Tank.CollisionsWorld.Step(1);
@@ -818,65 +810,7 @@ namespace TanksRebirth
                 GraphicsDevice.Clear(ClearColor);
 
                 // TankFootprint.DecalHandler.UpdateRenderTarget();
-                SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied/*, transformMatrix: Matrix2D*/, rasterizerState: DefaultRasterizer);
-
-                if (DebugUtils.DebuggingEnabled)
-                    SpriteRenderer.DrawString(TextFont, "Debug Level: " + DebugUtils.CurDebugLabel, new Vector2(10), Color.White, new Vector2(0.6f));
-                DebugUtils.DrawDebugString(SpriteRenderer, $"Garbage Collection: {MemoryParser.FromMegabytes(GCMemory)} MB" +
-                    $"\nProcess Memory: {MemoryParser.FromMegabytes(_memBytes)} MB", new(8, GameUtils.WindowHeight * 0.15f));
-                DebugUtils.DrawDebugString(SpriteRenderer, $"{SysGPU}\n{SysCPU}", new(8, GameUtils.WindowHeight * 0.2f));
-
-                DebugUtils.DrawDebugString(SpriteRenderer, $"Tank Kill Counts:", new(8, GameUtils.WindowHeight * 0.05f), 2);
-
-                for (int i = 0; i < PlayerTank.TankKills.Count; i++)
-                {
-                    var tier = PlayerTank.TankKills.ElementAt(i).Key;
-                    var count = PlayerTank.TankKills.ElementAt(i).Value;
-
-                    DebugUtils.DrawDebugString(SpriteRenderer, $"{tier}: {count}", new(8, GameUtils.WindowHeight * 0.05f + (14f*(i + 1))), 2);
-                }
-
-                DebugUtils.DrawDebugString(SpriteRenderer, $"Lives / StartingLives: {PlayerTank.Lives} / {PlayerTank.StartingLives}" +
-                    $"\nKillCount: {PlayerTank.KillCount}" +
-                    $"\n\nSaveable Game Data:" +
-                    $"\nTotal / Bullet / Mine / Bounce Kills: {GameData.TotalKills} / {GameData.BulletKills} / {GameData.MineKills} / {GameData.BounceKills}" +
-                    $"\nTotal Deaths: {GameData.Deaths}" +
-                    $"\nTotal Suicides: {GameData.Suicides}" +
-                    $"\nMissions Completed: {GameData.MissionsCompleted}" +
-                    $"\nExp Level / DecayMultiplier: {GameData.ExpLevel} / {GameData.UniversalExpMultiplier}", new(8, GameUtils.WindowHeight * 0.4f), 2);
-
-                if (SpeedrunMode)
-                {
-                    if (GameHandler.CurrentSpeedrun is not null)
-                    {
-                        int num = 0;
-
-                        if (GameProperties.LoadedCampaign.CurrentMissionId > 2)
-                            num = GameProperties.LoadedCampaign.CurrentMissionId - 2;
-                        else if (GameProperties.LoadedCampaign.CurrentMissionId == 1)
-                            num = GameProperties.LoadedCampaign.CurrentMissionId - 1;
-
-                        var len = GameProperties.LoadedCampaign.CurrentMissionId + 2 > GameProperties.LoadedCampaign.CachedMissions.Length ? GameProperties.LoadedCampaign.CachedMissions.Length - 1 : GameProperties.LoadedCampaign.CurrentMissionId + 2;
-
-                        SpriteRenderer.DrawString(TextFontLarge, $"Time: {GameHandler.CurrentSpeedrun.Timer.Elapsed}", new Vector2(10, 5), Color.White, new Vector2(0.15f), 0f, Vector2.Zero);
-                        for (int i = num; i <= len; i++) // current.times.count originally
-                        {
-                            var time = GameHandler.CurrentSpeedrun.MissionTimes.ElementAt(i);
-                            // display mission name and time taken
-                            SpriteRenderer.DrawString(TextFontLarge, $"{time.Key}: {time.Value.Item2}", new Vector2(10, 20 + ((i - num) * 15)), Color.White, new Vector2(0.15f), 0f, Vector2.Zero);
-                        }
-                    }
-                }
-
-                for (int i = 0; i < PlayerTank.TankKills.Count; i++)
-                {
-                    //var tier = GameData.KillCountsTiers[i];
-                    //var count = GameData.KillCountsCount[i];
-                    var tier = PlayerTank.TankKills.ElementAt(i).Key;
-                    var count = PlayerTank.TankKills.ElementAt(i).Value;
-
-                    DebugUtils.DrawDebugString(SpriteRenderer, $"{tier}: {count}", new(GameUtils.WindowWidth * 0.9f, 8 + (14f * (i + 1))), 2);
-                }
+                SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: DefaultRasterizer);
 
                 GraphicsDevice.DepthStencilState = new DepthStencilState() { };
 
@@ -900,8 +834,114 @@ namespace TanksRebirth
 
             GraphicsDevice.SetRenderTarget(null);
 
-            SpriteRenderer.Begin(effect: GameShaders.TestShader);
+            SpriteRenderer.Begin(effect: Difficulties.Types["LanternMode"] ? GameShaders.LanternShader : GameShaders.GaussianBlurShader);
             SpriteRenderer.Draw(gameTarget, Vector2.Zero, Color.White);
+
+            SpriteRenderer.End();
+
+            SpriteRenderer.Begin();
+            if (MainMenu.Active)
+                MainMenu.Render();
+            #region Debug
+            if (DebugUtils.DebuggingEnabled)
+                SpriteRenderer.DrawString(TextFont, "Debug Level: " + DebugUtils.CurDebugLabel, new Vector2(10), Color.White, new Vector2(0.6f));
+            DebugUtils.DrawDebugString(SpriteRenderer, $"Garbage Collection: {MemoryParser.FromMegabytes(GCMemory)} MB" +
+                $"\nProcess Memory: {MemoryParser.FromMegabytes(_memBytes)} MB", new(8, GameUtils.WindowHeight * 0.15f));
+            DebugUtils.DrawDebugString(SpriteRenderer, $"{SysGPU}\n{SysCPU}", new(8, GameUtils.WindowHeight * 0.2f));
+
+            DebugUtils.DrawDebugString(SpriteRenderer, $"Tank Kill Counts:", new(8, GameUtils.WindowHeight * 0.05f), 2);
+
+            for (int i = 0; i < PlayerTank.TankKills.Count; i++)
+            {
+                var tier = PlayerTank.TankKills.ElementAt(i).Key;
+                var count = PlayerTank.TankKills.ElementAt(i).Value;
+
+                DebugUtils.DrawDebugString(SpriteRenderer, $"{tier}: {count}", new(8, GameUtils.WindowHeight * 0.05f + (14f * (i + 1))), 2);
+            }
+
+            DebugUtils.DrawDebugString(SpriteRenderer, $"Lives / StartingLives: {PlayerTank.Lives} / {PlayerTank.StartingLives}" +
+                $"\nKillCount: {PlayerTank.KillCount}" +
+                $"\n\nSaveable Game Data:" +
+                $"\nTotal / Bullet / Mine / Bounce Kills: {GameData.TotalKills} / {GameData.BulletKills} / {GameData.MineKills} / {GameData.BounceKills}" +
+                $"\nTotal Deaths: {GameData.Deaths}" +
+                $"\nTotal Suicides: {GameData.Suicides}" +
+                $"\nMissions Completed: {GameData.MissionsCompleted}" +
+                $"\nExp Level / DecayMultiplier: {GameData.ExpLevel} / {GameData.UniversalExpMultiplier}", new(8, GameUtils.WindowHeight * 0.4f), 2);
+
+            if (SpeedrunMode)
+            {
+                if (GameHandler.CurrentSpeedrun is not null)
+                {
+                    int num = 0;
+
+                    if (GameProperties.LoadedCampaign.CurrentMissionId > 2)
+                        num = GameProperties.LoadedCampaign.CurrentMissionId - 2;
+                    else if (GameProperties.LoadedCampaign.CurrentMissionId == 1)
+                        num = GameProperties.LoadedCampaign.CurrentMissionId - 1;
+
+                    var len = GameProperties.LoadedCampaign.CurrentMissionId + 2 > GameProperties.LoadedCampaign.CachedMissions.Length ? GameProperties.LoadedCampaign.CachedMissions.Length - 1 : GameProperties.LoadedCampaign.CurrentMissionId + 2;
+
+                    SpriteRenderer.DrawString(TextFontLarge, $"Time: {GameHandler.CurrentSpeedrun.Timer.Elapsed}", new Vector2(10, 5), Color.White, new Vector2(0.15f), 0f, Vector2.Zero);
+                    for (int i = num; i <= len; i++) // current.times.count originally
+                    {
+                        var time = GameHandler.CurrentSpeedrun.MissionTimes.ElementAt(i);
+                        // display mission name and time taken
+                        SpriteRenderer.DrawString(TextFontLarge, $"{time.Key}: {time.Value.Item2}", new Vector2(10, 20 + ((i - num) * 15)), Color.White, new Vector2(0.15f), 0f, Vector2.Zero);
+                    }
+                }
+            }
+
+            for (int i = 0; i < PlayerTank.TankKills.Count; i++)
+            {
+                //var tier = GameData.KillCountsTiers[i];
+                //var count = GameData.KillCountsCount[i];
+                var tier = PlayerTank.TankKills.ElementAt(i).Key;
+                var count = PlayerTank.TankKills.ElementAt(i).Value;
+
+                DebugUtils.DrawDebugString(SpriteRenderer, $"{tier}: {count}", new(GameUtils.WindowWidth * 0.9f, 8 + (14f * (i + 1))), 2);
+            }
+
+            foreach (var body in Tank.CollisionsWorld.BodyList.ToList())
+            {
+                DebugUtils.DrawDebugString(SpriteRenderer, $"BODY",
+                    GeometryUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(body.Position.X * Tank.UNITS_PER_METER, 0, body.Position.Y * Tank.UNITS_PER_METER), TankGame.GameView, TankGame.GameProjection), centered: true);
+            }
+
+            for (int i = 0; i < VanillaAchievements.Repository.GetAchievements().Count; i++)
+            {
+                var achievement = VanillaAchievements.Repository.GetAchievements()[i];
+                DebugUtils.DrawDebugString(SpriteRenderer, $"{achievement.Name}: {(achievement.IsComplete ? "Complete" : "Incomplete")}",
+                    new Vector2(8, 24 + (i * 20)), level: DebugUtils.Id.AchievementData, centered: false);
+            }
+
+            #region TankInfo
+            DebugUtils.DrawDebugString(SpriteRenderer, "Spawn Tank With Info:", GameUtils.WindowTop + new Vector2(0, 8), 3, centered: true);
+            DebugUtils.DrawDebugString(SpriteRenderer, $"Tier: {TankID.Collection.GetKey(GameHandler.tankToSpawnType)}", GameUtils.WindowTop + new Vector2(0, 24), 3, centered: true);
+            DebugUtils.DrawDebugString(SpriteRenderer, $"Team: {TeamID.Collection.GetKey(GameHandler.tankToSpawnTeam)}", GameUtils.WindowTop + new Vector2(0, 40), 3, centered: true);
+            DebugUtils.DrawDebugString(SpriteRenderer, $"CubeStack: {GameHandler.blockHeight} | CubeType: {BlockID.Collection.GetKey(GameHandler.blockType)}", GameUtils.WindowBottom - new Vector2(0, 20), 3, centered: true);
+
+            DebugUtils.DrawDebugString(SpriteRenderer, $"HighestTier: {AITank.GetHighestTierActive()}", new(10, GameUtils.WindowHeight * 0.26f), 1);
+            // DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"CurSong: {(Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f) != null ? Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f).Name : "N/A")}", new(10, GameUtils.WindowHeight - 100), 1);
+            for (int i = 0; i < TankID.Collection.Count; i++)
+            {
+                DebugUtils.DrawDebugString(SpriteRenderer, $"{TankID.Collection.GetKey(i)}: {AITank.GetTankCountOfType(i)}", new(10, GameUtils.WindowHeight * 0.3f + (i * 20)), 1);
+            }
+
+            GameHandler.tankToSpawnType = MathHelper.Clamp(GameHandler.tankToSpawnType, 2, TankID.Collection.Count - 1);
+            GameHandler.tankToSpawnTeam = MathHelper.Clamp(GameHandler.tankToSpawnTeam, 0, TeamID.Collection.Count - 1);
+            #endregion
+
+            DebugUtils.DrawDebugString(SpriteRenderer, $"Logic Time: {LogicTime.TotalMilliseconds:0.00}ms" +
+                $"\nLogic FPS: {LogicFPS}" +
+                $"\n\nRender Time: {RenderTime.TotalMilliseconds:0.00}ms" +
+                $"\nRender FPS: {RenderFPS}", new(10, 500));
+
+            DebugUtils.DrawDebugString(SpriteRenderer, $"Current Mission: {GameProperties.LoadedCampaign.CurrentMission.Name}\nCurrent Campaign: {GameProperties.LoadedCampaign.MetaData.Name}", GameUtils.WindowBottomLeft - new Vector2(-4, 40), 3, centered: false);
+
+            ChatSystem.DrawMessages();
+
+            #endregion
+
             SpriteRenderer.End();
 
             SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: DefaultRasterizer);
