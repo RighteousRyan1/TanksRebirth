@@ -180,17 +180,21 @@ namespace TanksRebirth.GameContent
 
             if (Difficulties.Types["InfiniteLives"])
                 PlayerTank.Lives = PlayerTank.StartingLives;
-            foreach (var tank in AllTanks)
-                tank?.Update();
 
-            foreach (var mine in Mine.AllMines)
-                mine?.Update();
+            if (!IntermissionSystem.IsAwaitingNewMission)
+            {
+                foreach (var tank in AllTanks)
+                    tank?.Update();
 
-            foreach (var bullet in Shell.AllShells)
-                bullet?.Update();
+                foreach (var mine in Mine.AllMines)
+                    mine?.Update();
 
-            foreach (var fp in TankFootprint.footprints)
-                fp?.Update();
+                foreach (var bullet in Shell.AllShells)
+                    bullet?.Update();
+
+                foreach (var fp in TankFootprint.footprints)
+                    fp?.Update();
+            }
 
 
             if (GameProperties.InMission)
