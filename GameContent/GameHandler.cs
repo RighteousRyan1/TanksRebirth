@@ -220,6 +220,9 @@ namespace TanksRebirth.GameContent
             if (Difficulties.Types["ThunderMode"])
                 DoThunderStuff();
             else if (MapRenderer.Theme == MapTheme.Christmas) {
+                GameLight.Color = new(50, 50, 50, 50);
+                GameLight.Brightness = 0.4f;
+                GameLight.Apply(false);
                 TankGame.ClearColor = (Color.DeepSkyBlue.ToVector3() * 0.2f).ToColor();
                 if (GameRand.NextFloat(0, 1) <= 0.3f) {
 
@@ -741,9 +744,7 @@ namespace TanksRebirth.GameContent
             else
             {
                 foreach (var song in TankMusicSystem.Songs)
-                {
                     song.Stop();
-                }
                 TankMusicSystem.SnowLoop.Stop();
                 TankMusicSystem.SnowLoop.Play();
             }

@@ -1000,6 +1000,7 @@ namespace TanksRebirth.GameContent.UI
         }
 
         private static Mission _curMenuMission;
+        private static List<Mission> _cachedMissions = new();
 
         public static void Open()
         {
@@ -1011,6 +1012,7 @@ namespace TanksRebirth.GameContent.UI
             Theme.Play();
 
             TankGame.DoZoomStuff();
+            // GameHandler.CleanupEntities();
 
             foreach (var block in Block.AllBlocks)
                 block?.Remove();
@@ -1036,26 +1038,6 @@ namespace TanksRebirth.GameContent.UI
             GameUI.QuitButtonPos.Y -= 50;
             GameUI.OptionsButtonPos.Y += 75;
 
-            /*for (int i = 0; i < 5; i++)
-            {
-                var rand = PlacementSquare.Placements[GameHandler.GameRand.Next(0, PlacementSquare.Placements.Count - 1)].Position.FlattenZ();
-
-                var t = new AITank(TankID.Random, new Range<int>(TankID.Brown, TankID.Black), isIngame: false)
-                {
-                    Dead = false,
-                };
-                t.Body.Position = rand / Tank.UNITS_PER_METER;
-                // t.Body.Position = t.Position / Tank.UNITS_PER_METER;
-                tanks.Add(t);
-            }
-
-            for (int i = 0; i < 12; i++)
-            {
-                var rand = PlacementSquare.Placements[GameHandler.GameRand.Next(0, PlacementSquare.Placements.Count - 1)].Position.FlattenZ();
-
-                var b = new Block(GameHandler.GameRand.Next(0, BlockID.Hole), GameHandler.GameRand.Next(0, Block.MAX_BLOCK_HEIGHT), rand);
-            }*/
-
             LoadTemplateMission();
 
             TankMusicSystem.StopAll();
@@ -1078,7 +1060,6 @@ namespace TanksRebirth.GameContent.UI
         }
 
         private static bool _firstTime = true;
-        private static int _maxRand;
 
         private static void LoadTemplateMission(bool autoSetup = true, bool loadForMenu = true)
         {
@@ -1092,25 +1073,23 @@ namespace TanksRebirth.GameContent.UI
 
                 if (exists)
                 {
+                    var bytes1 = WebUtils.DownloadWebFile(linkTry, out var name1);
+
+                    var reader1 = new BinaryReader(new MemoryStream(bytes1));
+
+                    _cachedMissions.Add(Mission.Read(reader1));
                     attempt++;
                     goto tryAgain;
                 }
 
-                _maxRand = attempt;
                 _firstTime = false;
             }
 
             GameHandler.CleanupScene();
 
-            var rand = GameHandler.GameRand.Next(1, _maxRand);
+            var rand = GameHandler.GameRand.Next(1, _cachedMissions.Count);
 
-            var link = $"https://github.com/RighteousRyan1/tanks_rebirth_motds/blob/master/menu_missions/Menu{rand}.mission?raw=true";
-
-            var bytes = WebUtils.DownloadWebFile(link, out var name);
-
-            var reader = new BinaryReader(new MemoryStream(bytes));
-
-            var mission = Mission.Read(reader);
+            var mission = _cachedMissions[rand];
 
             if (autoSetup)
             {
@@ -1137,7 +1116,7 @@ namespace TanksRebirth.GameContent.UI
             tanks.Clear();
         }
 
-        private static readonly string tanksMessage = $"Tanks! Rebirth ALPHA v{TankGame.Instance.GameVersion}\nOriginal game in Assets developed by Nintendo\nDeveloped by RighteousRyan\nTANKS to all our contributors!";
+        private static readonly string tanksMessage = $"Tanks! Rebirth ALPHA v{TankGame.Instance.GameVersion}\nOriginal game and Assets developed by Nintendo\nProgrammed by RighteousRyan\nArt and Graphics by BigKitty1011\nTANKS to all our contributors!";
 
         private static int _oldwheel;
         public static void Render()

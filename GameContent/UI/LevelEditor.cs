@@ -1026,20 +1026,26 @@ namespace TanksRebirth.GameContent.UI
             }
             else if (Editing && !Active && _cachedMission != default && GameProperties.InMission)
                 if (GameHandler.NothingCanHappenAnymore(_cachedMission, out bool victory))
-                    QueueEditorReEntry(TimeSpan.FromSeconds(2), true);
+                    QueueEditorReEntry(120f);
             if (ReturnToEditor != null)
                 ReturnToEditor.IsVisible = Editing && !Active && !MainMenu.Active;
         }
 
-        private static void QueueEditorReEntry(TimeSpan delay, bool instant)
+        private static float _waitTime;
+        private static bool _isWaiting;
+        private static void QueueEditorReEntry(float delay)
         {
-            if (instant)
-                ReturnToEditor?.OnLeftClick?.Invoke(null);
-            Task.Run(async () =>
+            if (!_isWaiting)
+                _waitTime = delay;
+            _isWaiting = true;
+
+            _waitTime -= TankGame.DeltaTime;
+            if (_waitTime < 0)
             {
-                await Task.Delay(delay).ConfigureAwait(false);
                 ReturnToEditor?.OnLeftClick?.Invoke(null);
-            });
+                _waitTime = 0;
+                _isWaiting = false;
+            }
         }
     }
 }

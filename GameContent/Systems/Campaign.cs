@@ -106,17 +106,14 @@ namespace TanksRebirth.GameContent.Systems
         {
             // FIXME: source of level editor bug.
             PlacementSquare.ResetSquares();
-            for (int a = 0; a < GameHandler.AllTanks.Length; a++)
-                GameHandler.AllTanks[a]?.Remove();
+            GameHandler.CleanupEntities();
             for (int i = 0; i < LoadedMission.Tanks.Length; i++)
             {
                 var template = LoadedMission.Tanks[i];
 
                 if (spawnNewSet) {
-                    if (GameProperties.ShouldMissionsProgress) {
-                        TrackedSpawnPoints[i].Item1 = LoadedMission.Tanks[i].Position;
-                        TrackedSpawnPoints[i].Item2 = true;
-                    }
+                    TrackedSpawnPoints[i].Item1 = LoadedMission.Tanks[i].Position;
+                    TrackedSpawnPoints[i].Item2 = true;
                 }
                 if (!template.IsPlayer)
                 {
@@ -186,12 +183,6 @@ namespace TanksRebirth.GameContent.Systems
                         PlayerTank.MyTeam = tank.Team;
                 }
             }
-
-            for (int a = 0; a < Block.AllBlocks.Length; a++)
-                Block.AllBlocks[a]?.Remove();
-
-            for (int p = 0; p < PlacementSquare.Placements.Count; p++)
-                PlacementSquare.Placements[p].BlockId = -1;
 
             for (int b = 0; b < LoadedMission.Blocks.Length; b++)
             {

@@ -165,6 +165,7 @@ namespace TanksRebirth.GameContent.GameMechanics
             }
         }
 
+        // Only collides with solids by default.
         public static void HandleCollisionSimple_ForBlocks(Rectangle movingBox, Vector2 velocity, ref Vector2 position, out CollisionDirection direction, out Block block, out bool cornerCollision, bool setpos = true, Func<Block, bool> exclude = null)
         {
             cornerCollision = false;
@@ -176,11 +177,14 @@ namespace TanksRebirth.GameContent.GameMechanics
 
             collisionInfo.Value = 1f;
 
+            var collisionCount = 0;
+
             foreach (var cube in Block.AllBlocks) {
                 if (cube is not null) {
                     if (movingBox.Intersects(cube.Hitbox)) {
+                        collisionCount++;
                         if (exclude is not null) {
-                            if (exclude.Invoke(cube))
+                            if (exclude.Invoke(cube) && collisionCount == 1)
                                 cornerCollision = true;
                             break;
                         }

@@ -36,6 +36,8 @@ namespace TanksRebirth.Graphics
 
                 if (applySunPower)
                     LightPower = SunPower;
+                else
+                    LightPower = 0f;
 
                 if (Lighting.IsNight != IsNight)
                     TankMusicSystem.SnowLoop = new("Snow Loop", IsNight ? "Content/Assets/sounds/ambient/forestnight" : "Content/Assets/sounds/ambient/forestday", 1f);
