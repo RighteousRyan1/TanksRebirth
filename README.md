@@ -9,8 +9,8 @@ If you wish to keep up with development in real time, consider joining this serv
 
 ## Developers
 
-RighteousRyan - Lead Dev | Programming
-BigKitty1011 - Lead Dev | Graphics Design
+- RighteousRyan - Lead Dev | Programming
+- BigKitty1011 - Lead Dev | Graphics Design
 
 ## Code Contributors
 
