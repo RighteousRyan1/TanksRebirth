@@ -438,7 +438,6 @@ namespace TanksRebirth.GameContent
             GameHandler.AllTanks[WorldId] = null;
             base.Destroy(context);
         }
-
         public void UpdatePlayerMovement()
         {
             if (!GameProperties.InMission)
@@ -464,7 +463,6 @@ namespace TanksRebirth.GameContent
                 }
             }
         }
-
         private void DrawShootPath()
         {
             const int MAX_PATH_UNITS = 10000;
@@ -533,7 +531,6 @@ namespace TanksRebirth.GameContent
                 TankGame.SpriteRenderer.Draw(whitePixel, pathPosScreen, null, (Color.White.ToVector3() * off).ToColor(), 0, whitePixel.Size() / 2, 2 + off, default, default);
             }
         }
-
         public override void Render()
         {
             DrawExtras();
@@ -604,27 +601,28 @@ namespace TanksRebirth.GameContent
             if (Dead)
                 return;
 
-            if (GameProperties.ShouldMissionsProgress && !GameProperties.InMission && IsIngame && !IntermissionSystem.IsAwaitingNewMission)
+            bool needClarification = GameProperties.ShouldMissionsProgress && !GameProperties.InMission && IsIngame && !IntermissionSystem.IsAwaitingNewMission;
+
+            var playerColor = PlayerType == PlayerID.Blue ? Color.DeepSkyBlue : Color.Red;
+            var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 125).ToResolution(); ;
+
+            bool flip = false;
+
+            float rotation = 0f;
+
+            if (pos.Y <= 150) {
+                flip = true;
+                pos.Y += 225;
+                rotation = MathHelper.Pi;
+            }
+
+
+            if (needClarification)
             {
                 var tex1 = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/chevron_border");
                 var tex2 = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/chevron_inside");
 
-                var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 125).ToResolution();
-
-                var playerColor = PlayerType == PlayerID.Blue ? Color.DeepSkyBlue : Color.Red;
-
-                string pText = $"P{PlayerId + 1}"; // heeheeheeha
-
-                float rotation = 0f;
-
-                bool flip = false;
-
-                if (pos.Y <= 150)
-                {
-                    flip = true;
-                    pos.Y += 225;
-                    rotation = MathHelper.Pi;
-                }
+                string pText = Client.IsConnected() ? Server.ConnectedClients[PlayerId].Name : $"P{PlayerId + 1}"; // heeheeheeha
 
                 TankGame.SpriteRenderer.Draw(tex1, pos, null, Color.White, rotation, tex1.Size() / 2, 0.5f.ToResolution(), default, default);
                 TankGame.SpriteRenderer.Draw(tex2, pos, null, playerColor, rotation, tex2.Size() / 2, 0.5f.ToResolution(), default, default);

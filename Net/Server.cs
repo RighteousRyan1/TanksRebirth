@@ -6,7 +6,9 @@ using System.Threading.Tasks;
 using LiteNetLib;
 using LiteNetLib.Layers;
 using LiteNetLib.Utils;
+using Microsoft.Xna.Framework;
 using TanksRebirth.GameContent;
+using TanksRebirth.GameContent.Systems;
 
 namespace TanksRebirth.Net
 {
@@ -60,15 +62,18 @@ namespace TanksRebirth.Net
 
             serverNetManager.Start(port);
 
+            // serverNetManager.NatPunchEnabled = true;
+
             serverNetListener.ConnectionRequestEvent += request =>
             {
                 if (serverNetManager.ConnectedPeersCount < MaxClients)
                 {
+                    ChatSystem.SendMessage("Welcome!", Color.Red);
                     request.AcceptIfKey(password);
                 }
                 else
                 {
-                    Console.WriteLine($"Incorrect password.");
+                    ChatSystem.SendMessage("User rejected: Incorrect password.", Color.Red);
                     request.Reject();
                 }
 

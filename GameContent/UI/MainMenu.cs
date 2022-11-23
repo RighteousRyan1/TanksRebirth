@@ -259,32 +259,32 @@ namespace TanksRebirth.GameContent.UI
             };
             ConnectToServerButton.SetDimensions(() => new Vector2(700, 100).ToResolution(), () => new Vector2(500, 50).ToResolution());
             ConnectToServerButton.OnLeftClick = (uiButton) => {
-                /*if (UsernameInput.IsEmpty()) {
-                    SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_error", SoundContext.Effect);
+                if (UsernameInput.IsEmpty()) {
+                    SoundPlayer.SoundError();
                     ChatSystem.SendMessage("Your username is empty!", Color.Red);
                     return;
                 }
                 if (PortInput.IsEmpty()) {
-                    SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_error", SoundContext.Effect);
+                    SoundPlayer.SoundError();
                     ChatSystem.SendMessage("The port is empty!", Color.Red);
                     return;
                 }
                 if (IPInput.IsEmpty()) {
-                    SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_error", SoundContext.Effect);
+                    SoundPlayer.SoundError();
                     ChatSystem.SendMessage("The IP address is not valid.", Color.Red);
                     return;
-                }*/
+                }
 
                 if (int.TryParse(PortInput.Text, out var port)) {
                     Client.CreateClient(UsernameInput.GetRealText());
-                    Client.AttemptConnectionTo(IPInput.Text, port, PasswordInput.Text);
+                    Client.AttemptConnectionTo(IPInput.Text, port, PasswordInput.GetRealText());
                 }
                 else {
-                    //SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_error", SoundContext.Effect);
-                    //ChatSystem.SendMessage("That is not a valid port.", Color.Red);
+                    SoundPlayer.SoundError();
+                    ChatSystem.SendMessage("That is not a valid port.", Color.Red);
 
-                    Client.CreateClient("client");
-                    Client.AttemptConnectionTo("localhost", 7777, string.Empty);
+                    //Client.CreateClient("client");
+                    //Client.AttemptConnectionTo("localhost", 7777, string.Empty);
                 }
             };
 
@@ -296,6 +296,25 @@ namespace TanksRebirth.GameContent.UI
             CreateServerButton.SetDimensions(() => new Vector2(700, 350).ToResolution(), () => new Vector2(500, 50).ToResolution());
             CreateServerButton.OnLeftClick = (uiButton) =>
             {
+                if (UsernameInput.IsEmpty())
+                {
+                    SoundPlayer.SoundError();
+                    ChatSystem.SendMessage("Your username is empty!", Color.Red);
+                    return;
+                }
+                if (PortInput.IsEmpty())
+                {
+                    SoundPlayer.SoundError();
+                    ChatSystem.SendMessage("The port is empty!", Color.Red);
+                    return;
+                }
+                if (IPInput.IsEmpty())
+                {
+                    SoundPlayer.SoundError();
+                    ChatSystem.SendMessage("The IP address is not valid.", Color.Red);
+                    return;
+                }
+
                 if (int.TryParse(PortInput.Text, out var port))
                 {
                     Server.CreateServer();
@@ -310,11 +329,11 @@ namespace TanksRebirth.GameContent.UI
 
                     StartMPGameButton.IsVisible = true;
                 }
-                else // debuggin'!
+                else
                 {
-                    //SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_error", SoundContext.Effect);
-                    //ChatSystem.SendMessage("That is not a valid port.", Color.Red);
-                    Server.CreateServer();
+                    SoundPlayer.SoundError();
+                    ChatSystem.SendMessage("That is not a valid port.", Color.Red);
+                    /*Server.CreateServer();
 
                     Server.StartServer("test_name", 7777, "localhost", string.Empty);
 
@@ -323,7 +342,7 @@ namespace TanksRebirth.GameContent.UI
                     Client.CreateClient("host");
                     Client.AttemptConnectionTo("localhost", 7777, string.Empty);
 
-                    Server.ConnectedClients[0] = NetPlay.CurrentClient;
+                    Server.ConnectedClients[0] = NetPlay.CurrentClient;*/
                 }
 
             };
