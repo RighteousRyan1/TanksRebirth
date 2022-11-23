@@ -7,6 +7,11 @@ A complete rebuild of Wii Play's Tanks game mode. Attempting to stay true to the
 
 If you wish to keep up with development in real time, consider joining this server: https://discord.gg/KhfzvbrrKx
 
+## Developers
+
+RighteousRyan - Lead Dev | Programming
+BigKitty1011 - Lead Dev | Graphics Design
+
 ## Code Contributors
 
 - Cuno (on GitHub) for a primitive UI implementation.
