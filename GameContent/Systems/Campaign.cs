@@ -152,6 +152,20 @@ namespace TanksRebirth.GameContent.Systems
                     tank.Dead = false;
                     tank.Team = template.Team;
 
+                    if (tank.PlayerType != PlayerID.Blue)
+                    {
+                        if (!LevelEditor.Active)
+                        {
+                            if (!Client.IsConnected() || Server.ConnectedClients is null)
+                                tank.Remove();
+                            else if (NetPlay.IsClientMatched(tank.PlayerId))
+                            {
+                                PlayerTank.MyTeam = tank.Team;
+                                PlayerTank.MyTankType = tank.PlayerType;
+                            }
+                        }
+                    }
+
                     if (Difficulties.Types["AiCompanion"])
                     {
                         tank.Team = TeamID.Magenta;
@@ -174,13 +188,9 @@ namespace TanksRebirth.GameContent.Systems
 
                     if (placement > -1)
                     {
-                        //ChatSystem.SendMessage("Loaded " + PlayerID.Collection.GetKey(tank.PlayerType), Color.Blue);
                         PlacementSquare.Placements[placement].TankId = tank.WorldId;
                         PlacementSquare.Placements[placement].HasBlock = false;
                     }
-
-                    if (NetPlay.IsClientMatched(tank.PlayerId))
-                        PlayerTank.MyTeam = tank.Team;
                 }
             }
 

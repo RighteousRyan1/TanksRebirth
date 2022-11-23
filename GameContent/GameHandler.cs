@@ -72,8 +72,8 @@ namespace TanksRebirth.GameContent
 
             InterpCheck = false;
 
-            if (result1up && context != MissionEndContext.Lose)
-                delay += 200;
+            //if (result1up && context != MissionEndContext.Lose)
+                //delay += 200;
 
             if (context == MissionEndContext.CampaignCompleteMajor)
             {
@@ -715,8 +715,6 @@ namespace TanksRebirth.GameContent
         {
             DebugUtils.DebuggingEnabled = false;
 
-            LoadTnkScene();
-
             GameLight.Apply(false);
         }
 
@@ -724,6 +722,7 @@ namespace TanksRebirth.GameContent
         {
             GameShaders.Initialize();
             MapRenderer.InitializeRenderers();
+            LoadTnkScene();
 
             InitDebugUi();
             PlacementSquare.InitializeLevelEditorSquares();
@@ -1081,9 +1080,10 @@ namespace TanksRebirth.GameContent
                 return;
             if (!MainMenu.Active && !GameUI.Paused && !LevelEditor.Active)
             {
-                if (GameHandler.AllPlayerTanks[0] is not null)
+                var clientId = NetPlay.CurrentClient is null ? 0 : NetPlay.CurrentClient.Id;
+                if (GameHandler.AllPlayerTanks[clientId] is not null)
                 {
-                    var me = GameHandler.AllPlayerTanks[0];
+                    var me = GameHandler.AllPlayerTanks[clientId];
                     var tankPos = MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), me.World, TankGame.GameView, TankGame.GameProjection);
 
                     if (GameUtils.Distance_WiiTanksUnits(tankPos, MouseUtils.MousePosition) >= DistUntilPathTrace.ToResolutionX()) // any scale doesnt matter?
@@ -1158,8 +1158,9 @@ namespace TanksRebirth.GameContent
         public static void UpdateShaders()
         {
             MouseShader.Parameters["oGlobalTime"].SetValue((float)TankGame.LastGameTime.TotalGameTime.TotalSeconds);
-            MouseShader.Parameters["oColor"].SetValue(new Vector3(0f, 0f, 1f)
-                /*MouseRenderer.HsvToRgb(TankGame.GameUpdateTime % 255 / 255f * 360, 1, 1).ToVector3()*/);
+            var value = PlayerTank.MyTeam == PlayerID.Blue ? new Vector3(0f, 0f, 1f) : new Vector3(1f, 0f, 0f);
+            MouseShader.Parameters["oColor"].SetValue(value);
+            /*MouseRenderer.HsvToRgb(TankGame.GameUpdateTime % 255 / 255f * 360, 1, 1).ToVector3());*/
             MouseShader.Parameters["oSpeed"].SetValue(-20f);
             MouseShader.Parameters["oSpacing"].SetValue(10f);
 

@@ -87,14 +87,15 @@ namespace TanksRebirth.Net
 
             client.Send(message, DeliveryMethod.ReliableOrdered);
         }
-        public static void SyncTank(Tank tank)
+        public static void SyncPlayerTank(PlayerTank tank)
         {
             if (MainMenu.Active || !IsConnected())
                 return;
-            NetDataWriter message = new();
-            message.Put(PacketType.TankData);
 
-            message.Put(tank.WorldId);
+            NetDataWriter message = new();
+            message.Put(PacketType.SyncPlayer);
+
+            message.Put(tank.PlayerId);
             message.Put(tank.Body.Position.X);
             message.Put(tank.Body.Position.Y);
             message.Put(tank.TankRotation);
@@ -102,7 +103,24 @@ namespace TanksRebirth.Net
             message.Put(tank.Velocity.X);
             message.Put(tank.Velocity.Y);
 
-            //Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered);
+            client.Send(message, DeliveryMethod.Unreliable);
+        }
+        public static void SyncAITank(AITank tank)
+        {
+            if (MainMenu.Active || !IsConnected())
+                return;
+
+            NetDataWriter message = new();
+            message.Put(PacketType.SyncAiTank);
+
+            message.Put(tank.AITankId);
+            message.Put(tank.Body.Position.X);
+            message.Put(tank.Body.Position.Y);
+            message.Put(tank.TankRotation);
+            message.Put(tank.TurretRotation);
+            message.Put(tank.Velocity.X);
+            message.Put(tank.Velocity.Y);
+
             client.Send(message, DeliveryMethod.Unreliable);
         }
         /// <summary>Be sure to sync by accessing the index of the tank from the AllTanks array. (<see cref="GameHandler.AllTanks"/>)
@@ -110,7 +128,7 @@ namespace TanksRebirth.Net
         /// <c>AllTanks[<paramref name="tankId"/>].Shoot()</c>
         /// </summary>
         /// <param name="tankId">The identified of the <see cref="Tank"/> that fired.</param>
-        public static void SyncBulletFire(int type, Vector3 position, Vector3 velocity, int owner, uint ricochets, int id)
+        public static void SyncBulletFire(int type, Vector3 position, Vector3 velocity, uint ricochets, int owner)
         {
             if (MainMenu.Active || !IsConnected())
                 return;
@@ -121,9 +139,8 @@ namespace TanksRebirth.Net
             message.Put(type);
             message.Put(position);
             message.Put(velocity);
-            message.Put(owner);
             message.Put(ricochets);
-            message.Put(id);
+            message.Put(owner);
 
             // FIXME: could probably use more syncing... who cares?
 

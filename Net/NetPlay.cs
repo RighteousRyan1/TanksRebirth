@@ -194,7 +194,7 @@ namespace TanksRebirth.Net
                     tank.Team = team;
 
                     break;
-                case PacketType.TankData:
+                case PacketType.SyncPlayer:
                     int id = reader.GetInt();
                     float x2 = reader.GetFloat();
                     float y2 = reader.GetFloat();
@@ -203,13 +203,30 @@ namespace TanksRebirth.Net
                     float vX = reader.GetFloat();
                     float vY = reader.GetFloat();
 
-                    if (GameHandler.AllTanks[id] is null)
+                    if (GameHandler.AllPlayerTanks[id] is null)
                         break;
 
-                    GameHandler.AllTanks[id].Body.Position = new(x2, y2);
-                    GameHandler.AllTanks[id].TankRotation = tankRotation;
-                    GameHandler.AllTanks[id].TurretRotation = turretRotation;
-                    GameHandler.AllTanks[id].Velocity = new(vX, vY);
+                    GameHandler.AllPlayerTanks[id].Body.Position = new(x2, y2);
+                    GameHandler.AllPlayerTanks[id].TankRotation = tankRotation;
+                    GameHandler.AllPlayerTanks[id].TurretRotation = turretRotation;
+                    GameHandler.AllPlayerTanks[id].Velocity = new(vX, vY);
+                    break;
+                case PacketType.SyncAiTank:
+                    int id1 = reader.GetInt();
+                    float x3 = reader.GetFloat();
+                    float y3 = reader.GetFloat();
+                    float tankRotation1 = reader.GetFloat();
+                    float turretRotation1 = reader.GetFloat();
+                    float vX1 = reader.GetFloat();
+                    float vY1 = reader.GetFloat();
+
+                    if (GameHandler.AllAITanks[id1] is null)
+                        break;
+
+                    GameHandler.AllAITanks[id1].Body.Position = new(x3, y3);
+                    GameHandler.AllAITanks[id1].TankRotation = tankRotation1;
+                    GameHandler.AllAITanks[id1].TurretRotation = turretRotation1;
+                    GameHandler.AllAITanks[id1].Velocity = new(vX1, vY1);
                     break;
                 case PacketType.ChatMessage:
                     string msg = reader.GetString();
@@ -225,6 +242,7 @@ namespace TanksRebirth.Net
                     var shellRicochets = reader.GetUInt();
                     var shellOwner = reader.GetInt();
 
+                    // GameHandler.AllTanks[shellOwner].Shoot(true);
                     new Shell(shellPos, shellVel, shellType, GameHandler.AllTanks[shellOwner], ricochets: shellRicochets);
                     break;
                 case PacketType.MinePlacement:
@@ -322,7 +340,7 @@ namespace TanksRebirth.Net
 
                     Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered, peer);
                     break;
-                case PacketType.TankData:
+                case PacketType.SyncPlayer:
                     message = new();
                     message.Put(packet);
 
@@ -341,6 +359,28 @@ namespace TanksRebirth.Net
                     message.Put(turretRotation);
                     message.Put(vX);
                     message.Put(vY);
+
+                    Server.serverNetManager.SendToAll(message, DeliveryMethod.Unreliable, peer);
+                    break;
+                case PacketType.SyncAiTank:
+                    message = new();
+                    message.Put(packet);
+
+                    int id1 = reader.GetInt();
+                    float x3 = reader.GetFloat();
+                    float y3 = reader.GetFloat();
+                    float tankRotation1 = reader.GetFloat();
+                    float turretRotation1 = reader.GetFloat();
+                    float vX1 = reader.GetFloat();
+                    float vY1 = reader.GetFloat();
+
+                    message.Put(id1);
+                    message.Put(x3);
+                    message.Put(y3);
+                    message.Put(tankRotation1);
+                    message.Put(turretRotation1);
+                    message.Put(vX1);
+                    message.Put(vY1);
 
                     Server.serverNetManager.SendToAll(message, DeliveryMethod.Unreliable, peer);
                     break;
@@ -502,10 +542,10 @@ namespace TanksRebirth.Net
         LeaveGame,
 
         // Ingame packets: players
-        TankData,
+        SyncPlayer,
 
         // Ingame packets: ai
-        AiTankData,
+        SyncAiTank,
 
         // Ingame packets: tank mechanics
         MinePlacement,

@@ -95,6 +95,7 @@ namespace TanksRebirth.GameContent
         private Texture2D _shellTexture;
 
         private int _id;
+        private float _wallRicCooldown;
 
         /// <summary>How long this shell has existed in the world.</summary>
         public float LifeTime;
@@ -193,13 +194,22 @@ namespace TanksRebirth.GameContent
             World = Matrix.CreateFromYawPitchRoll(-Rotation, 0, 0)
                 * Matrix.CreateTranslation(Position);
 
-            if (Position2D.X < MapRenderer.MIN_X || Position2D.X > MapRenderer.MAX_X) {
-                OnRicochet?.Invoke(this);
-                Ricochet(true);
-            } if (Position2D.Y < MapRenderer.MIN_Y || Position2D.Y > MapRenderer.MAX_Y) {
-                OnRicochet?.Invoke(this);
-                Ricochet(false);
+            if (_wallRicCooldown <= 0) {
+                if (Position2D.X < MapRenderer.MIN_X || Position2D.X > MapRenderer.MAX_X) {
+                    OnRicochet?.Invoke(this);
+                    Ricochet(true);
+
+                    _wallRicCooldown = 5;
+                }
+                if (Position2D.Y < MapRenderer.MIN_Y || Position2D.Y > MapRenderer.MAX_Y) {
+                    OnRicochet?.Invoke(this);
+                    Ricochet(false);
+
+                    _wallRicCooldown = 5;
+                }
             }
+            else
+                _wallRicCooldown -= TankGame.DeltaTime;
 
             var dummy = Vector2.Zero;
 
@@ -209,18 +219,21 @@ namespace TanksRebirth.GameContent
                 Destroy(DestructionContext.WithObstacle);
             if (corner)
                 Destroy(DestructionContext.WithObstacle);
-            switch (dir)
+            if (_wallRicCooldown <= 0)
             {
-                case CollisionDirection.Up:
-                case CollisionDirection.Down:
-                    OnRicochetWithBlock?.Invoke(ref block, this);
-                    Ricochet(false);
-                    break;
-                case CollisionDirection.Left:
-                case CollisionDirection.Right:
-                    OnRicochetWithBlock?.Invoke(ref block, this);
-                    Ricochet(true);
-                    break;
+                switch (dir)
+                {
+                    case CollisionDirection.Up:
+                    case CollisionDirection.Down:
+                        OnRicochetWithBlock?.Invoke(ref block, this);
+                        Ricochet(false);
+                        break;
+                    case CollisionDirection.Left:
+                    case CollisionDirection.Right:
+                        OnRicochetWithBlock?.Invoke(ref block, this);
+                        Ricochet(true);
+                        break;
+                }
             }
             LifeTime += TankGame.DeltaTime;
 

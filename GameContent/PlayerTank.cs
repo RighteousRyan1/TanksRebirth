@@ -28,6 +28,7 @@ namespace TanksRebirth.GameContent
 
         #region The Rest
         public static int MyTeam;
+        public static int MyTankType;
 
         public static int StartingLives = 3;
         public static int Lives = 0;
@@ -72,7 +73,6 @@ namespace TanksRebirth.GameContent
 
         #endregion
         public void SwapTankTexture(Texture2D texture) => _tankTexture = texture;
-
         public PlayerTank(int playerType, bool isPlayerModel = true, int copyTier = TankID.None)
         {
             Model = GameResources.GetGameResource<Model>(isPlayerModel ? "Assets/tank_p" : "Assets/tank_e");
@@ -176,7 +176,7 @@ namespace TanksRebirth.GameContent
             base.Update();
 
             if (NetPlay.IsClientMatched(PlayerId))
-                Client.SyncTank(this);
+                Client.SyncPlayerTank(this);
 
             //CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
             //Model.Root.Transform = World;
@@ -235,7 +235,7 @@ namespace TanksRebirth.GameContent
                 if (GameProperties.InMission && !LevelEditor.Active) {
                     if (NetPlay.IsClientMatched(PlayerId)) {
                         if (InputUtils.CanDetectClick())
-                            Shoot();
+                            Shoot(false);
 
                         if (!Properties.Stationary)
                             UpdatePlayerMovement();
@@ -261,9 +261,9 @@ namespace TanksRebirth.GameContent
             base.Remove();
         }
 
-        public override void Shoot() {
+        public override void Shoot(bool fxOnly) {
             PlayerStatistics.ShellsShotThisCampaign++;
-            base.Shoot();
+            base.Shoot(false);
         }
 
         public override void LayMine() {
@@ -345,7 +345,7 @@ namespace TanksRebirth.GameContent
             Velocity = Vector2.UnitY.RotatedByRadians(TankRotation) * Properties.Speed;
 
             if (FireBullet.JustPressed)
-                Shoot();
+                Shoot(false);
             if (PlaceMine.JustPressed)
                 LayMine();
         }

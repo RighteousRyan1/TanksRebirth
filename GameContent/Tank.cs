@@ -631,7 +631,7 @@ namespace TanksRebirth.GameContent
             };
         }
         /// <summary>Shoot a <see cref="Shell"/> from this <see cref="Tank"/>.</summary>
-        public virtual void Shoot() {
+        public virtual void Shoot(bool fxOnly) {
             if ((!MainMenu.Active && !GameProperties.InMission) || !Properties.HasTurret)
                 return;
 
@@ -645,71 +645,28 @@ namespace TanksRebirth.GameContent
             {
                 if (i == 0)
                 {
-                    var shell = new Shell(Position3D, Vector3.Zero, Properties.ShellType, this, homing: Properties.ShellHoming);
                     var new2d = Vector2.UnitY.RotatedByRadians(TurretRotation);
 
                     var newPos = Position + new Vector2(0, 20).RotatedByRadians(-TurretRotation);
 
-                    shell.Position = new Vector3(newPos.X, 11, newPos.Y);
+                    var defPos = new Vector3(newPos.X, 11, newPos.Y);
 
-                    shell.Velocity = new Vector3(-new2d.X, 0, new2d.Y) * Properties.ShellSpeed;
-
-                    shell.RicochetsRemaining = Properties.RicochetCount;
-
-                    OnShoot?.Invoke(this, ref shell);
-
-                    #region Particles
-                    var hit = GameHandler.ParticleSystem.MakeParticle(shell.Position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
-                    var smoke = GameHandler.ParticleSystem.MakeParticle(shell.Position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
-
-                    hit.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
-                    smoke.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
-
-                    smoke.Scale = new(0.35f);
-                    hit.Scale = new(0.5f);
-
-                    smoke.Color = new(84, 22, 0, 255);
-
-                    smoke.isAddative = false;
-
-                    int achieveable = 80;
-                    float step = 1;
-
-                    hit.UniqueBehavior = (part) =>
+                    if (!fxOnly)
                     {
-                        part.Color = Color.Orange;
+                        var shell = new Shell(defPos, new Vector3(-new2d.X, 0, new2d.Y) * Properties.ShellSpeed, Properties.ShellType, this, Properties.RicochetCount, homing: Properties.ShellHoming);
 
-                        if (part.LifeTime > 1)
-                            part.Alpha -= 0.1f * TankGame.DeltaTime;
-                        if (part.Alpha <= 0)
-                            part.Destroy();
-                    };
-                    smoke.UniqueBehavior = (part) =>
-                    {
-                        part.Color.R = (byte)MathUtils.RoughStep(part.Color.R, achieveable, step);
-                        part.Color.G = (byte)MathUtils.RoughStep(part.Color.G, achieveable, step);
-                        part.Color.B = (byte)MathUtils.RoughStep(part.Color.B, achieveable, step);
+                        OnShoot?.Invoke(this, ref shell);
 
-                        GeometryUtils.Add(ref part.Scale, 0.004f * TankGame.DeltaTime);
-
-                        if (part.Color.G == achieveable)
+                        if (this is PlayerTank pt)
                         {
-                            part.Color.B = (byte)achieveable;
-                            part.Alpha -= 0.04f * TankGame.DeltaTime;
-
-                            if (part.Alpha <= 0)
-                                part.Destroy();
+                            if (NetPlay.IsClientMatched(pt.PlayerId))
+                                Client.SyncBulletFire(shell.Tier, shell.Position, shell.Velocity, Properties.RicochetCount, WorldId);
                         }
-                    };
-                    #endregion
-
-                    if (this is PlayerTank pt)
-                    {
-                        if (NetPlay.IsClientMatched(pt.PlayerId))
-                            Client.SyncBulletFire(shell.Tier, shell.Position, shell.Velocity, shell.Owner.WorldId, shell.RicochetsRemaining, WorldId);
                         else
-                            Client.SyncBulletFire(shell.Tier, shell.Position, shell.Velocity, shell.Owner.WorldId, shell.RicochetsRemaining, WorldId);
+                            Client.SyncBulletFire(shell.Tier, shell.Position, shell.Velocity, Properties.RicochetCount, WorldId);
                     }
+
+                    DoShootParticles(defPos);
                 }
                 else
                 {
@@ -747,6 +704,53 @@ namespace TanksRebirth.GameContent
             CurShootStun = Properties.ShootStun;
             CurShootCooldown = Properties.ShellCooldown;
         }
+
+        private void DoShootParticles(Vector3 position)
+        {
+            var hit = GameHandler.ParticleSystem.MakeParticle(position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
+            var smoke = GameHandler.ParticleSystem.MakeParticle(position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
+
+            hit.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
+            smoke.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
+
+            smoke.Scale = new(0.35f);
+            hit.Scale = new(0.5f);
+
+            smoke.Color = new(84, 22, 0, 255);
+
+            smoke.isAddative = false;
+
+            int achieveable = 80;
+            float step = 1;
+
+            hit.UniqueBehavior = (part) =>
+            {
+                part.Color = Color.Orange;
+
+                if (part.LifeTime > 1)
+                    part.Alpha -= 0.1f * TankGame.DeltaTime;
+                if (part.Alpha <= 0)
+                    part.Destroy();
+            };
+            smoke.UniqueBehavior = (part) =>
+            {
+                part.Color.R = (byte)MathUtils.RoughStep(part.Color.R, achieveable, step);
+                part.Color.G = (byte)MathUtils.RoughStep(part.Color.G, achieveable, step);
+                part.Color.B = (byte)MathUtils.RoughStep(part.Color.B, achieveable, step);
+
+                GeometryUtils.Add(ref part.Scale, 0.004f * TankGame.DeltaTime);
+
+                if (part.Color.G == achieveable)
+                {
+                    part.Color.B = (byte)achieveable;
+                    part.Alpha -= 0.04f * TankGame.DeltaTime;
+
+                    if (part.Alpha <= 0)
+                        part.Destroy();
+                }
+            };
+        }
+
         /// <summary>Make this <see cref="Tank"/> lay a <see cref="Mine"/>.</summary>
         public virtual void LayMine() {
             if (CurMineCooldown > 0 || OwnedMineCount >= Properties.MineLimit)
@@ -827,13 +831,14 @@ namespace TanksRebirth.GameContent
                 $"MineCooldown: {Properties.MineCooldown}",
                 $"Tank Rotation/Target: {TankRotation}/{TargetTankRotation}",
                 $"Position3D: {Position3D}",
+                $"WorldID: {WorldId}",
                 this is AITank ai ? $"Turret Rotation/Target: {TurretRotation}/{ai.TargetTurretRotation}" : $"Turret Rotation: {TurretRotation}"
             };
 
             // TankGame.spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), CollisionBox2D, Color.White * 0.75f);
 
             for (int i = 0; i < info.Length; i++)
-                DebugUtils.DrawDebugString(TankGame.SpriteRenderer, info[i], MatrixUtils.ConvertWorldToScreen(Vector3.Up * 20, World, View, Projection) - new Vector2(0, (i * 20) + 8), 1, centered: true, color: Color.Red);
+                DebugUtils.DrawDebugString(TankGame.SpriteRenderer, info[i], MatrixUtils.ConvertWorldToScreen(Vector3.Up * 20, World, View, Projection) - new Vector2(0, ((i * 20).ToResolutionY()) + 8), 1, centered: true, color: Color.Red);
 
         }
         public float CurShootStun { get; private set; } = 0;

@@ -1732,7 +1732,7 @@ namespace TanksRebirth.GameContent
                 DoAi(true, true, true);
 
                 if (this is AITank && IsIngame)
-                    Client.SyncTank(this);
+                    Client.SyncAITank(this);
             }
 
             _oldPosition = Position;
@@ -2116,13 +2116,13 @@ namespace TanksRebirth.GameContent
             {
                 if (SeesTarget && checkNoTeam && fireWhen)
                     if (CurShootCooldown <= 0)
-                        Shoot();
+                        Shoot(false);
             }
             else
             {
                 if (SeesTarget && checkNoTeam && !findsSelf && !findsFriendly && fireWhen)
                     if (CurShootCooldown <= 0)
-                        Shoot();
+                        Shoot(false);
             }
         }
 
@@ -2202,7 +2202,7 @@ namespace TanksRebirth.GameContent
                             rot %= MathHelper.Tau;
 
                             //if ((-TurretRotation + MathHelper.PiOver2).IsInRangeOf(TargetTurretRotation, 0.15f))
-                            Shoot();
+                            Shoot(false);
                         }
                     }
                 }
