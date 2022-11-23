@@ -12,6 +12,6 @@ namespace TanksRebirth.GameContent.ID
         public const int Standard = 0;
         public const int Thick = 1;
 
-        public static ReflectionDictionary<ShellID, int> Collection = new(MemberType.Fields);
+        public static readonly ReflectionDictionary<ShellID, int> Collection = new(MemberType.Fields);
     }
 }

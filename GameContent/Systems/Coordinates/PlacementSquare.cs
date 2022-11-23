@@ -105,8 +105,12 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
                 }
                 else
                 {
-                    Block.AllBlocks[BlockId].Remove();
+                    if (BlockId > -1)
+                        Block.AllBlocks[BlockId]?.Remove();
+                    if (TankId > -1)
+                        GameHandler.AllTanks[TankId]?.Remove();
                     BlockId = -1;
+                    TankId = -1;
 
                     HasBlock = true;
                     IsPlacing = false;

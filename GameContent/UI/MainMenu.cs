@@ -411,6 +411,7 @@ namespace TanksRebirth.GameContent.UI
                 IsVisible = false,
                 OnLeftClick = (arg) =>
                 {
+                    Client.SendDisconnect(NetPlay.CurrentClient.Id, NetPlay.CurrentClient.Name, "User left.");
                     Client.client.Disconnect();
                 }
             };

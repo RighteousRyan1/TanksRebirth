@@ -500,6 +500,10 @@ namespace TanksRebirth.GameContent
         public virtual void Damage(ITankHurtContext context) {
             if (Dead || Properties.Immortal)
                 return;
+
+            if (Server.serverNetManager != null)
+                Client.SyncDamage(WorldId);
+
             if (Properties.Armor is not null) {
                 OnDamage?.Invoke(this, Properties.Armor.HitPoints > 0, context);
                 if (Properties.Armor.HitPoints > 0) {

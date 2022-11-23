@@ -9,6 +9,6 @@ namespace TanksRebirth.GameContent.ID
         public const int Hole = 2;
         public const int Teleporter = 3;
 
-        public static ReflectionDictionary<BlockID, int> Collection = new(MemberType.Fields);
+        public static readonly ReflectionDictionary<BlockID, int> Collection = new(MemberType.Fields);
     }
 }

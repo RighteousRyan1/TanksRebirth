@@ -147,6 +147,43 @@ namespace TanksRebirth.Net
 
             client.Send(message, DeliveryMethod.Sequenced);
         }
+        public static void SyncDamage(int id/*, ITankHurtContext context*/)
+        {
+            if (!IsConnected() || MainMenu.Active)
+                return;
+            NetDataWriter message = new();
+            message.Put(PacketType.TankDamage);
+
+            message.Put(id);
+
+            //message.Put(context.TankId);
+            //message.Put(context.IsPlayer);
+
+            client.Send(message, DeliveryMethod.ReliableOrdered);
+        }
+        public static void SyncShellDestroy(int id, Shell.DestructionContext cxt)
+        {
+            if (!IsConnected() || MainMenu.Active)
+                return;
+            NetDataWriter message = new();
+            message.Put(PacketType.ShellDestroy);
+
+            message.Put(id);
+            message.Put((byte)cxt);
+
+            client.Send(message, DeliveryMethod.ReliableOrdered);
+        }
+        public static void SyncMineDetonate(int id)
+        {
+            if (!IsConnected() || MainMenu.Active)
+                return;
+            NetDataWriter message = new();
+            message.Put(PacketType.MineDetonate);
+
+            message.Put(id);
+
+            client.Send(message, DeliveryMethod.ReliableOrdered);
+        }
         public static void SyncMinePlace(Vector2 position, float detonateTime, int id)
         {
             if (MainMenu.Active || !IsConnected())
@@ -172,7 +209,7 @@ namespace TanksRebirth.Net
             message.Put(color);
             message.Put(sender);
 
-            client.Send(message, DeliveryMethod.ReliableOrdered); // send to the server for parsing...
+            client.Send(message, DeliveryMethod.ReliableOrdered);
         }
         public static bool IsConnected()
         {
@@ -258,6 +295,19 @@ namespace TanksRebirth.Net
             message.Put(PacketType.SendCampaignByName);
 
             message.Put(name);
+
+            client.Send(message, DeliveryMethod.ReliableOrdered);
+        }
+        public static void SendDisconnect(int peerId, string name, string reason)
+        {
+            if (!IsConnected())
+                return;
+            NetDataWriter message = new();
+            message.Put(PacketType.Disconnect);
+
+            message.Put(peerId);
+            message.Put(name);
+            message.Put(reason);
 
             client.Send(message, DeliveryMethod.ReliableOrdered);
         }

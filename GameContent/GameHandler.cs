@@ -1158,7 +1158,7 @@ namespace TanksRebirth.GameContent
         public static void UpdateShaders()
         {
             MouseShader.Parameters["oGlobalTime"].SetValue((float)TankGame.LastGameTime.TotalGameTime.TotalSeconds);
-            var value = PlayerTank.MyTeam == PlayerID.Blue ? new Vector3(0f, 0f, 1f) : new Vector3(1f, 0f, 0f);
+            var value = PlayerID.PlayerTankColors[PlayerTank.MyTankType];
             MouseShader.Parameters["oColor"].SetValue(value);
             /*MouseRenderer.HsvToRgb(TankGame.GameUpdateTime % 255 / 255f * 360, 1, 1).ToVector3());*/
             MouseShader.Parameters["oSpeed"].SetValue(-20f);

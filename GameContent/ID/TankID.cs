@@ -54,6 +54,6 @@ namespace TanksRebirth.GameContent.ID
         public const int Assassin = 33;
         public const int Commando = 34;
 
-        public static ReflectionDictionary<TankID, int> Collection = new(MemberType.Fields);
+        public static readonly ReflectionDictionary<TankID, int> Collection = new(MemberType.Fields);
     }
 }

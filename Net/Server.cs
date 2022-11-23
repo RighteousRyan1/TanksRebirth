@@ -37,8 +37,6 @@ namespace TanksRebirth.Net
             serverNetListener = new();
             serverNetManager = new(serverNetListener);
 
-            Console.ForegroundColor = ConsoleColor.Blue;
-
             ConnectedClients = new Client[maxClients];
 
             GameHandler.ClientLog.Write($"Server created.", Internals.LogType.Debug);
@@ -68,7 +66,6 @@ namespace TanksRebirth.Net
             {
                 if (serverNetManager.ConnectedPeersCount < MaxClients)
                 {
-                    ChatSystem.SendMessage("Welcome!", Color.Red);
                     request.AcceptIfKey(password);
                 }
                 else
@@ -79,7 +76,6 @@ namespace TanksRebirth.Net
 
                 serverNetListener.PeerConnectedEvent += peer =>
                 {
-                    Console.WriteLine($"{peer.EndPoint} has connected.");
                     NetDataWriter writer = new();
                     NetPacketProcessor processor = new();
 

@@ -152,7 +152,7 @@ namespace TanksRebirth.GameContent.Systems
                     tank.Dead = false;
                     tank.Team = template.Team;
 
-                    if (tank.PlayerType != PlayerID.Blue)
+                    if (tank.PlayerId <= Server.CurrentClientCount)
                     {
                         if (!LevelEditor.Active)
                         {

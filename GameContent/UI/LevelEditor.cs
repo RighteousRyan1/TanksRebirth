@@ -854,6 +854,8 @@ namespace TanksRebirth.GameContent.UI
                         {
                             PlayerID.Blue => "The blue player tank (P1)",
                             PlayerID.Red => "The red player tank. (P2)",
+                            PlayerID.GreenPlr => "The green player tank (P3)",
+                            PlayerID.YellowPlr => "The yellow player tank (P4)",
                             _ => "What?"
                         });
 

@@ -19,6 +19,6 @@ namespace TanksRebirth.GameContent.ID
         public const int Orange = 6;
         public const int Cyan = 7;
         public const int Magenta = 8;
-        public static ReflectionDictionary<TeamID, int> Collection = new(MemberType.Fields);
+        public static readonly ReflectionDictionary<TeamID, int> Collection = new(MemberType.Fields);
     }
 }

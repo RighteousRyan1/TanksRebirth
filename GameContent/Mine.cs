@@ -9,6 +9,7 @@ using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent
 {
@@ -40,7 +41,7 @@ namespace TanksRebirth.GameContent
         private static Texture2D _mineTexture;
         private static Texture2D _envTexture;
 
-        private int _worldId;
+        public readonly int Id;
 
         public ModelMesh MineMesh;
         public ModelMesh EnvMesh;
@@ -92,7 +93,7 @@ namespace TanksRebirth.GameContent
 
             int index = Array.IndexOf(AllMines, AllMines.First(mine => mine is null));
 
-            _worldId = index;
+            Id = index;
 
             AllMines[index] = this;
         }
@@ -116,11 +117,13 @@ namespace TanksRebirth.GameContent
 
             OnExplode?.Invoke(this);
 
+            Client.SyncMineDetonate(Id);
+
             Remove();
         }
 
         public void Remove() {
-            AllMines[_worldId] = null; 
+            AllMines[Id] = null; 
         }
 
         internal void Update() {
