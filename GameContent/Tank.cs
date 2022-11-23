@@ -18,6 +18,7 @@ using TanksRebirth.GameContent.UI;
 using TanksRebirth.GameContent.Properties;
 using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.GameContent.ID;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent
 {
@@ -492,6 +493,7 @@ namespace TanksRebirth.GameContent
             // fix 2d peeopled
             foreach (var cosmetic in Cosmetics)
                 cosmetic?.UniqueBehavior?.Invoke(cosmetic, this);
+
             OnPostUpdate?.Invoke(this);
         }
         /// <summary>Damage this <see cref="Tank"/>. If it has no armor, <see cref="Destroy"/> it.</summary>
@@ -637,7 +639,7 @@ namespace TanksRebirth.GameContent
                 return;
 
             bool flip = false;
-            float angle = 0f;
+            float angle = 0f;                
 
             for (int i = 0; i < Properties.ShellShootCount; i++)
             {
@@ -652,7 +654,6 @@ namespace TanksRebirth.GameContent
 
                     shell.Velocity = new Vector3(-new2d.X, 0, new2d.Y) * Properties.ShellSpeed;
 
-                    shell.Owner = this;
                     shell.RicochetsRemaining = Properties.RicochetCount;
 
                     OnShoot?.Invoke(this, ref shell);
@@ -701,6 +702,14 @@ namespace TanksRebirth.GameContent
                         }
                     };
                     #endregion
+
+                    if (this is PlayerTank pt)
+                    {
+                        if (NetPlay.IsClientMatched(pt.PlayerId))
+                            Client.SyncBulletFire(shell.Tier, shell.Position, shell.Velocity, shell.Owner.WorldId, shell.RicochetsRemaining, WorldId);
+                        else
+                            Client.SyncBulletFire(shell.Tier, shell.Position, shell.Velocity, shell.Owner.WorldId, shell.RicochetsRemaining, WorldId);
+                    }
                 }
                 else
                 {
@@ -721,10 +730,8 @@ namespace TanksRebirth.GameContent
 
                     shell.Position = new Vector3(newPos.X, 11, newPos.Y);
 
-
                     shell.Velocity = new Vector3(-new2d.X, 0, new2d.Y).FlattenZ().RotatedByRadians(newAngle).ExpandZ() * Properties.ShellSpeed;
 
-                    shell.Owner = this;
                     shell.RicochetsRemaining = Properties.RicochetCount;
                 }
             }
@@ -747,13 +754,23 @@ namespace TanksRebirth.GameContent
 
             CurMineCooldown = Properties.MineCooldown;
             CurMineStun = Properties.MineStun;
-            var sound = "Assets/sounds/mine_place";
-            SoundPlayer.PlaySoundInstance(sound, SoundContext.Effect, 0.5f, gameplaySound: true);
+
             OwnedMineCount++;
 
             timeSinceLastAction = 0;
 
             var mine = new Mine(this, Position, 600);
+
+            if (this is PlayerTank pt)
+            {
+                if (NetPlay.IsClientMatched(pt.PlayerId))
+                    Client.SyncMinePlace(mine.Position, mine.DetonateTime, WorldId);
+            }
+            else
+            {
+                Client.SyncMinePlace(mine.Position, mine.DetonateTime, WorldId);
+            }
+
             OnLayMine?.Invoke(this, ref mine);
         }
         public virtual void Render() {

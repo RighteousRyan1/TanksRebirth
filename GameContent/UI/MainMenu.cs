@@ -22,6 +22,7 @@ using TanksRebirth.GameContent.Systems;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals;
 using TanksRebirth.Net;
+using System.Xml.Linq;
 
 namespace TanksRebirth.GameContent.UI
 {
@@ -258,7 +259,7 @@ namespace TanksRebirth.GameContent.UI
             };
             ConnectToServerButton.SetDimensions(() => new Vector2(700, 100).ToResolution(), () => new Vector2(500, 50).ToResolution());
             ConnectToServerButton.OnLeftClick = (uiButton) => {
-                if (UsernameInput.IsEmpty()) {
+                /*if (UsernameInput.IsEmpty()) {
                     SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_error", SoundContext.Effect);
                     ChatSystem.SendMessage("Your username is empty!", Color.Red);
                     return;
@@ -272,15 +273,18 @@ namespace TanksRebirth.GameContent.UI
                     SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_error", SoundContext.Effect);
                     ChatSystem.SendMessage("The IP address is not valid.", Color.Red);
                     return;
-                }
+                }*/
 
                 if (int.TryParse(PortInput.Text, out var port)) {
-                    Client.CreateClient(UsernameInput.Text);
+                    Client.CreateClient(UsernameInput.GetRealText());
                     Client.AttemptConnectionTo(IPInput.Text, port, PasswordInput.Text);
                 }
                 else {
-                    SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_error", SoundContext.Effect);
-                    ChatSystem.SendMessage("That is not a valid port.", Color.Red);
+                    //SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_error", SoundContext.Effect);
+                    //ChatSystem.SendMessage("That is not a valid port.", Color.Red);
+
+                    Client.CreateClient("client");
+                    Client.AttemptConnectionTo("localhost", 7777, string.Empty);
                 }
             };
 
@@ -295,20 +299,31 @@ namespace TanksRebirth.GameContent.UI
                 if (int.TryParse(PortInput.Text, out var port))
                 {
                     Server.CreateServer();
-                    Server.StartServer(ServerNameInput.GetRealText(), port, IPInput.Text, PasswordInput.Text);
-                    NetPlay.ServerName = ServerNameInput.Text;
 
-                    Client.CreateClient(UsernameInput.Text);
-                    Client.AttemptConnectionTo(IPInput.Text, port, PasswordInput.Text);
+                    Server.StartServer(ServerNameInput.GetRealText(), port, IPInput.GetRealText(), PasswordInput.GetRealText());
+                    NetPlay.ServerName = ServerNameInput.GetRealText();
+
+                    Client.CreateClient(UsernameInput.GetRealText());
+                    Client.AttemptConnectionTo(IPInput.GetRealText(), port, PasswordInput.GetRealText());
 
                     Server.ConnectedClients[0] = NetPlay.CurrentClient;
 
                     StartMPGameButton.IsVisible = true;
                 }
-                else
+                else // debuggin'!
                 {
-                    SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_error", SoundContext.Effect);
-                    ChatSystem.SendMessage("That is not a valid port.", Color.Red);
+                    //SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_error", SoundContext.Effect);
+                    //ChatSystem.SendMessage("That is not a valid port.", Color.Red);
+                    Server.CreateServer();
+
+                    Server.StartServer("test_name", 7777, "localhost", string.Empty);
+
+                    NetPlay.ServerName = ServerNameInput.GetRealText();
+
+                    Client.CreateClient("host");
+                    Client.AttemptConnectionTo("localhost", 7777, string.Empty);
+
+                    Server.ConnectedClients[0] = NetPlay.CurrentClient;
                 }
 
             };
@@ -666,7 +681,7 @@ namespace TanksRebirth.GameContent.UI
         private static void SetCampaignDisplay()
         {
             SetPlayButtonsVisibility(false);
-            
+
             foreach (var elem in campaignNames)
                 elem?.Remove();
             // get all the campaign folders from the SaveDirectory + Campaigns
@@ -674,107 +689,56 @@ namespace TanksRebirth.GameContent.UI
             Directory.CreateDirectory(path);
             // add a new UIElement for each campaign folder
 
-            var campaignFiles = Directory.GetFiles(path).Where(file => file.EndsWith(".campaign")).ToArray()    ;
-            
+            var campaignFiles = Directory.GetFiles(path).Where(file => file.EndsWith(".campaign")).ToArray();
+
             for (int i = 0; i < campaignFiles.Length; i++)
             {
                 int offset = i * 60;
                 var name = campaignFiles[i];
 
                 int numTanks = 0;
+                var campaign = Campaign.Load(name);
 
-                try {
-                    var campaign = Campaign.Load(name);
+                var missions = campaign.CachedMissions;
 
-                    var missions = campaign.CachedMissions;
-
-                    foreach (var mission in missions)
-                    {
-                        // load the mission file, then count each tank, then add that to the total
-                        numTanks += mission.Tanks.Count(x => !x.IsPlayer);
-                    }
-
-                    var elem = new UITextButton(/*campaign.MetaData.Name*/Path.GetFileNameWithoutExtension(name), TankGame.TextFont, Color.White, 0.8f)
-                    {
-                        IsVisible = true,
-                        Tooltip = missions.Length + " missions" +
-                        $"\n{numTanks} tanks total" +
-                        $"\n\nName: {campaign.MetaData.Name}" +
-                        $"\nDescription: {campaign.MetaData.Description}" +
-                        $"\nVersion: {campaign.MetaData.Version}" +
-                        $"\nStarting Lives: {campaign.MetaData.StartingLives}" +
-                        $"\nBonus Life Count: {campaign.MetaData.ExtraLivesMissions.Length}" +
-                        // display all tags in a string
-                        $"\nTags: {string.Join(", ", campaign.MetaData.Tags)}" +
-                        $"\n\nRight click to DELETE ME."
-                    };
-                    elem.SetDimensions(() => new Vector2(700, 100 + offset).ToResolution(), () => new Vector2(300, 40).ToResolution());
-                    //elem.HasScissor = true;
-                    //elem.
-                    elem.OnLeftClick += (el) =>
-                    {
-                        var camp = Campaign.Load(Path.Combine("Campaigns", name));
-
-                        // check if the CampaignCheckpoint number is less than the number of missions in the array
-                        if (MissionCheckpoint >= camp.CachedMissions.Length)
-                        {
-                            // if it is, notify the user that the checkpoint is too high via the chat, and play the error sound
-                            ChatSystem.SendMessage($"{elem.Text} has no mission {MissionCheckpoint + 1}.", Color.Red);
-                            SoundPlayer.SoundError();
-                            return;
-                        }
-                        else if (MissionCheckpoint < 0)
-                        {
-                            ChatSystem.SendMessage($"You scallywag! No campaign has a mission {MissionCheckpoint + 1}!", Color.Red);
-                            SoundPlayer.SoundError();
-                            return;
-                        }
-
-                        // if it is, load the mission
-                        GameProperties.LoadedCampaign = camp;
-
-                        if (Server.serverNetManager is null)
-                            GameProperties.LoadedCampaign.LoadMission(MissionCheckpoint); // loading the mission specified
-                        else
-                        {
-                            Client.SendCampaign(camp);
-                            Client.RequestStartGame(true);
-                        }
-
-                        PlayerTank.StartingLives = camp.MetaData.StartingLives;
-                        IntermissionSystem.StripColor = camp.MetaData.MissionStripColor;
-                        IntermissionSystem.BackgroundColor = camp.MetaData.BackgroundColor;
-
-
-                        
-                        foreach (var elem in campaignNames)
-                            elem.Remove();
-
-                        IntermissionSystem.TimeBlack = 240;
-
-                        GameProperties.ShouldMissionsProgress = true;
-
-                        _musicFading = true;
-
-                        IntermissionSystem.SetTime(600);
-                    };
-                    elem.OnRightClick += (el) =>
-                    {
-                        var path = Path.Combine(TankGame.SaveDirectory, "Campaigns", elem.Text);
-
-                        /*foreach (var file in Directory.GetFiles(path))
-                            File.Delete(file);
-                        Directory.Delete(path);*/ // old
-
-                        File.Delete(path + ".campaign");
-                        SetCampaignDisplay();
-                    };
-                    elem.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick", SoundContext.Effect); };
-                    campaignNames.Add(elem);
+                foreach (var mission in missions)
+                {
+                    // load the mission file, then count each tank, then add that to the total
+                    numTanks += mission.Tanks.Count(x => !x.IsPlayer);
                 }
-                catch (System.Text.Json.JsonException e) {
-                    GameHandler.ClientLog.Write($"Silently Caught Exception: {e.Message}\n{e.StackTrace}", LogType.Error);
-                }
+
+                var elem = new UITextButton(Path.GetFileNameWithoutExtension(name), TankGame.TextFont, Color.White, 0.8f)
+                {
+                    IsVisible = true,
+                    Tooltip = missions.Length + " missions" +
+                    $"\n{numTanks} tanks total" +
+                    $"\n\nName: {campaign.MetaData.Name}" +
+                    $"\nDescription: {campaign.MetaData.Description}" +
+                    $"\nVersion: {campaign.MetaData.Version}" +
+                    $"\nStarting Lives: {campaign.MetaData.StartingLives}" +
+                    $"\nBonus Life Count: {campaign.MetaData.ExtraLivesMissions.Length}" +
+                    // display all tags in a string
+                    $"\nTags: {string.Join(", ", campaign.MetaData.Tags)}" +
+                    $"\n\nRight click to DELETE ME."
+                };
+                elem.SetDimensions(() => new Vector2(700, 100 + offset).ToResolution(), () => new Vector2(300, 40).ToResolution());
+                //elem.HasScissor = true;
+                //elem.
+                elem.OnLeftClick += (el) =>
+                {
+                    var noExt = Path.GetFileNameWithoutExtension(name);
+                    PrepareGameplay(noExt);
+                    TransitionToGame();
+                };
+                elem.OnRightClick += (el) =>
+                {
+                    var path = Path.Combine(TankGame.SaveDirectory, "Campaigns", elem.Text);
+
+                    File.Delete(path + ".campaign");
+                    SetCampaignDisplay();
+                };
+                elem.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick", SoundContext.Effect); };
+                campaignNames.Add(elem);
             }
             var extra = new UITextButton("Freeplay", TankGame.TextFont, Color.White, 0.8f)
             {
@@ -793,16 +757,50 @@ namespace TanksRebirth.GameContent.UI
                 GameProperties.ShouldMissionsProgress = false;
 
                 IntermissionSystem.TimeBlack = 150;
-                // Leave();
             };
             campaignNames.Add(extra);
 
-            // UIElement.ResizeAndRelocate();
+            UIElement.CunoSucks();
+        }
+        public static void PrepareGameplay(string name, bool throughNet = false)
+        {
+            var camp = Campaign.Load(Path.Combine("Campaigns", name + ".campaign"));
 
-            UIElement.cunoSucksElement = new() { IsVisible = false };
-            UIElement.cunoSucksElement.Remove();
-            UIElement.cunoSucksElement = new();
-            UIElement.cunoSucksElement.SetDimensions(-1000789342, -783218, 0, 0);
+            // check if the CampaignCheckpoint number is less than the number of missions in the array
+            if (MissionCheckpoint >= camp.CachedMissions.Length)
+            {
+                // if it is, notify the user that the checkpoint is too high via the chat, and play the error sound
+                ChatSystem.SendMessage($"Campaign '{name}' has no mission {MissionCheckpoint + 1}.", Color.Red);
+                SoundPlayer.SoundError();
+                return;
+            }
+
+            // if it is, load the mission
+            GameProperties.LoadedCampaign = camp;
+
+            GameProperties.LoadedCampaign.LoadMission(MissionCheckpoint); // loading the mission specified
+            if (Client.IsConnected() && !throughNet)
+            {
+                //Client.SendCampaignBytes(camp);
+                Client.SendCampaign(name);
+                Client.RequestStartGame(MissionCheckpoint, true);
+            }
+            PlayerTank.StartingLives = camp.MetaData.StartingLives;
+            IntermissionSystem.StripColor = camp.MetaData.MissionStripColor;
+            IntermissionSystem.BackgroundColor = camp.MetaData.BackgroundColor;
+        }
+        public static void TransitionToGame()
+        {
+            foreach (var elem in campaignNames)
+                elem?.Remove();
+
+            IntermissionSystem.TimeBlack = 240;
+
+            GameProperties.ShouldMissionsProgress = true;
+
+            _musicFading = true;
+
+            IntermissionSystem.SetTime(600);
         }
         internal static void SetPlayButtonsVisibility(bool visible)
         {
@@ -1242,6 +1240,8 @@ namespace TanksRebirth.GameContent.UI
 
                     if (_oldwheel != InputUtils.DeltaScrollWheel)
                         MissionCheckpoint += InputUtils.DeltaScrollWheel - _oldwheel;
+                    if (MissionCheckpoint < 0)
+                        MissionCheckpoint = 0;
                     
                     TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"You can scroll with your mouse to skip to a certain mission." +
                         $"\nCurrently, you will skip to mission {MissionCheckpoint + 1}." +

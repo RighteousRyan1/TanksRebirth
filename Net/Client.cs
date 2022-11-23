@@ -1,14 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using LiteNetLib;
-using LiteNetLib.Layers;
 using LiteNetLib.Utils;
 using Microsoft.Xna.Framework;
 using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.Systems;
+using TanksRebirth.GameContent.UI;
 
 namespace TanksRebirth.Net
 {
@@ -66,61 +62,92 @@ namespace TanksRebirth.Net
 
             client.Send(message, DeliveryMethod.ReliableOrdered);
         }
-        public static void RequestStartGame(bool shouldProgressMissions)
+        public static void RequestStartGame(int checkpoint, bool shouldProgressMissions)
         {
             NetDataWriter message = new();
             message.Put(PacketType.StartGame);
+            message.Put(checkpoint);
             message.Put(shouldProgressMissions);
 
-            Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered);
+            client.Send(message, DeliveryMethod.ReliableOrdered);
         }
         public static void RequestPlayerTankSpawn(PlayerTank tank)
         {
             NetDataWriter message = new();
             message.Put(PacketType.PlayerSpawn);
 
-            message.Put((byte)tank.PlayerType);
-            message.Put((byte)tank.Team);
+            message.Put(tank.PlayerType);
+            message.Put(tank.Team);
             message.Put(tank.Body.Position.X);
             message.Put(tank.Body.Position.Y);
             message.Put(tank.TankRotation);
             message.Put(tank.TurretRotation);
 
-            // Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered);
+            //Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered);
 
             client.Send(message, DeliveryMethod.ReliableOrdered);
         }
-        public static void SyncPlayer(PlayerTank tank)
+        public static void SyncTank(Tank tank)
         {
+            if (MainMenu.Active || !IsConnected())
+                return;
             NetDataWriter message = new();
-            message.Put(PacketType.PlayerData);
+            message.Put(PacketType.TankData);
 
-            message.Put(tank.PlayerId);
+            message.Put(tank.WorldId);
             message.Put(tank.Body.Position.X);
             message.Put(tank.Body.Position.Y);
             message.Put(tank.TankRotation);
             message.Put(tank.TurretRotation);
-            message.Put(tank.Body.LinearVelocity.X);
-            message.Put(tank.Body.LinearVelocity.Y);
+            message.Put(tank.Velocity.X);
+            message.Put(tank.Velocity.Y);
 
-            client.Send(message, DeliveryMethod.ReliableOrdered);
+            //Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered);
+            client.Send(message, DeliveryMethod.Unreliable);
         }
         /// <summary>Be sure to sync by accessing the index of the tank from the AllTanks array. (<see cref="GameHandler.AllTanks"/>)
         /// <para></para>
-        /// <c>AllTanks[tankId].Shoot()</c>
+        /// <c>AllTanks[<paramref name="tankId"/>].Shoot()</c>
         /// </summary>
         /// <param name="tankId">The identified of the <see cref="Tank"/> that fired.</param>
-        public static void SyncTankFire(int tankId)
+        public static void SyncBulletFire(int type, Vector3 position, Vector3 velocity, int owner, uint ricochets, int id)
         {
+            if (MainMenu.Active || !IsConnected())
+                return;
+
             NetDataWriter message = new();
-            message.Put(PacketType.PlayerData);
+            message.Put(PacketType.BulletFire);
 
-            message.Put(tankId);
+            message.Put(type);
+            message.Put(position);
+            message.Put(velocity);
+            message.Put(owner);
+            message.Put(ricochets);
+            message.Put(id);
 
-            client.Send(message, DeliveryMethod.ReliableOrdered);
+            // FIXME: could probably use more syncing... who cares?
+
+
+            client.Send(message, DeliveryMethod.Sequenced);
+        }
+        public static void SyncMinePlace(Vector2 position, float detonateTime, int id)
+        {
+            if (MainMenu.Active || !IsConnected())
+                return;
+
+            NetDataWriter message = new();
+            message.Put(PacketType.MinePlacement);
+
+            message.Put(position);
+            message.Put(detonateTime);
+            message.Put(id);
+
+            client.Send(message, DeliveryMethod.Sequenced);
         }
         public static void SendMessage(string text, Color color, string sender)
         {
+            if (!IsConnected())
+                return;
             NetDataWriter message = new();
             message.Put(PacketType.ChatMessage);
 
@@ -128,7 +155,7 @@ namespace TanksRebirth.Net
             message.Put(color);
             message.Put(sender);
 
-            client.Send(message, DeliveryMethod.ReliableOrdered);
+            client.Send(message, DeliveryMethod.ReliableOrdered); // send to the server for parsing...
         }
         public static bool IsConnected()
         {
@@ -139,6 +166,8 @@ namespace TanksRebirth.Net
 
         public static void SendServerNameChange(string newName)
         {
+            if (!IsConnected())
+                return;
             NetDataWriter message = new();
             message.Put(PacketType.ServerNameSync);
 
@@ -158,8 +187,10 @@ namespace TanksRebirth.Net
         /// 
         /// </summary>
         /// <param name="campaign">The campaign to send.</param>
-        public static void SendCampaign(Campaign campaign)
+        public static void SendCampaignBytes(Campaign campaign)
         {
+            if (!IsConnected())
+                return;
             NetDataWriter message = new();
             message.Put(PacketType.SendCampaign);
 
@@ -181,7 +212,7 @@ namespace TanksRebirth.Net
                 foreach (var block in mission.Blocks)
                 {
                     message.Put(block.Position);
-                    message.Put((byte)block.Type);
+                    message.Put(block.Type);
                     message.Put(block.Stack);
                     message.Put(block.TpLink);
                 }
@@ -190,16 +221,28 @@ namespace TanksRebirth.Net
                     message.Put(tank.Position);
                     message.Put(tank.Rotation);
                     message.Put(tank.IsPlayer);
-                    message.Put((byte)tank.Team);
+                    message.Put(tank.Team);
 
                     if (tank.IsPlayer)
-                        message.Put((byte)tank.PlayerType);
+                        message.Put(tank.PlayerType);
                     else
-                        message.Put((byte)tank.AiTier);
+                        message.Put(tank.AiTier);
                 }
             }
 
-            Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered, client); // TODO: find a way to make this not send back to the sender. done.
+            client.Send(message, DeliveryMethod.Sequenced);
+        }
+
+        public static void SendCampaign(string name)
+        {
+            if (!IsConnected())
+                return;
+            NetDataWriter message = new();
+            message.Put(PacketType.SendCampaignByName);
+
+            message.Put(name);
+
+            client.Send(message, DeliveryMethod.ReliableOrdered);
         }
     }
 }

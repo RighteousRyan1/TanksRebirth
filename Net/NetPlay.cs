@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using TanksRebirth.Enums;
 using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.Properties;
@@ -50,7 +51,8 @@ namespace TanksRebirth.Net
         {
             var packet = reader.GetPacket();
 
-            GameHandler.ClientLog.Write($"Packet Recieved: {packet} from server {peer.Id}.", Internals.LogType.Debug);
+            if (deliveryMethod != DeliveryMethod.Unreliable)
+                GameHandler.ClientLog.Write($"Packet Recieved: {packet} from server {peer.Id}.", Internals.LogType.Debug);
 
             switch (packet)
             {
@@ -88,16 +90,96 @@ namespace TanksRebirth.Net
                     Client.lobbyDataReceived = true;
 
                     break;
+                case PacketType.SendCampaign:
+                    var campaign = new Campaign();
+
+                    var cName = reader.GetString();
+                    var startLives = reader.GetInt();
+                    var bgColor = reader.GetColor();
+                    var stripColor = reader.GetColor();
+
+                    campaign.MetaData.Name = cName;
+                    campaign.MetaData.StartingLives = startLives;
+                    campaign.MetaData.BackgroundColor = bgColor;
+                    campaign.MetaData.MissionStripColor = stripColor;
+
+                    var missionCount = reader.GetInt();
+
+                    campaign.CachedMissions = new Mission[missionCount];
+
+                    for (int i = 0; i < missionCount; i++)
+                    {
+                        var blockLen = reader.GetInt();
+                        var tnkLen = reader.GetInt();
+
+                        var missionName = reader.GetString();
+                        var note = reader.GetString();
+
+                        List<BlockTemplate> blockTotal = new();
+                        List<TankTemplate> tankTotal = new();
+
+                        for (int m = 0; m < blockLen; m++)
+                        {
+                            var bPos = reader.GetVector2();
+                            var bType = reader.GetInt();
+                            var bStack = reader.GetSByte();
+                            var tpLink = reader.GetSByte();
+
+                            blockTotal.Add(new()
+                            {
+                                Position = bPos,
+                                Type = bType,
+                                Stack = bStack,
+                                TpLink = tpLink,
+                            });
+                        }
+                        for (var t = 0; t < tnkLen; t++)
+                        {
+                            var tPos = reader.GetVector2();
+                            var tRot = reader.GetFloat();
+                            var tIsPlayer = reader.GetBool();
+                            var tTeam = reader.GetInt();
+                            var typeOrTier = reader.GetInt();
+
+                            TankTemplate tmp = new()
+                            {
+                                Position = tPos,
+                                Rotation = tRot,
+                                IsPlayer = tIsPlayer,
+                                Team = tTeam
+                            };
+
+                            if (tmp.IsPlayer)
+                                tmp.PlayerType = typeOrTier;
+                            else
+                                tmp.AiTier = typeOrTier;
+
+                            tankTotal.Add(tmp);
+                        }
+
+                        campaign.CachedMissions[i] = new(tankTotal.ToArray(), blockTotal.ToArray())
+                        {
+                            Name = missionName,
+                            Note = note
+                        };
+                    }
+                    GameProperties.LoadedCampaign = campaign;
+
+                    break;
                 case PacketType.StartGame:
+                    int checkpoint = reader.GetInt();
                     bool shouldProgress = reader.GetBool();
                     GameProperties.ShouldMissionsProgress = shouldProgress;
-                    MainMenu.FFA.OnLeftClick?.Invoke(null); // launches the game to freeplay, but when recieved, missions should be synced anyway.
+
+                    GameProperties.LoadedCampaign.LoadMission(checkpoint); // maybe change to checkpoints eventually.
+
+                    MainMenu.TransitionToGame();
 
                     break;
                 case PacketType.PlayerSpawn:
 
-                    var type = reader.GetByte();
-                    var team = reader.GetByte();
+                    var type = reader.GetInt();
+                    var team = reader.GetInt();
 
                     float x = reader.GetFloat();
                     float y = reader.GetFloat();
@@ -112,8 +194,7 @@ namespace TanksRebirth.Net
                     tank.Team = team;
 
                     break;
-                case PacketType.PlayerData:
-
+                case PacketType.TankData:
                     int id = reader.GetInt();
                     float x2 = reader.GetFloat();
                     float y2 = reader.GetFloat();
@@ -122,73 +203,42 @@ namespace TanksRebirth.Net
                     float vX = reader.GetFloat();
                     float vY = reader.GetFloat();
 
-                    GameHandler.AllPlayerTanks[id].Body.Position = new(x2, y2);
-                    GameHandler.AllPlayerTanks[id].TankRotation = tankRotation;
-                    GameHandler.AllPlayerTanks[id].TurretRotation = turretRotation;
-                    GameHandler.AllPlayerTanks[id].Velocity = new(vX, vY);
+                    if (GameHandler.AllTanks[id] is null)
+                        break;
+
+                    GameHandler.AllTanks[id].Body.Position = new(x2, y2);
+                    GameHandler.AllTanks[id].TankRotation = tankRotation;
+                    GameHandler.AllTanks[id].TurretRotation = turretRotation;
+                    GameHandler.AllTanks[id].Velocity = new(vX, vY);
                     break;
                 case PacketType.ChatMessage:
                     string msg = reader.GetString();
                     Color color = reader.GetColor();
                     string sender = reader.GetString();
 
-                    ChatSystem.SendMessage(msg, color, sender);
+                    ChatSystem.SendMessage(msg, color, sender, true);
                     break;
-                case PacketType.SendCampaign:
-                    var campaign = new Campaign();
-                    campaign.MetaData.Name = reader.GetString();
-                    campaign.MetaData.StartingLives = reader.GetInt();
-                    campaign.MetaData.BackgroundColor = reader.GetColor();
-                    campaign.MetaData.MissionStripColor = reader.GetColor();
+                case PacketType.BulletFire:
+                    var shellType = reader.GetInt();
+                    var shellPos = reader.GetVector3();
+                    var shellVel = reader.GetVector3();
+                    var shellRicochets = reader.GetUInt();
+                    var shellOwner = reader.GetInt();
 
-                    var missionCount = reader.GetInt();
+                    new Shell(shellPos, shellVel, shellType, GameHandler.AllTanks[shellOwner], ricochets: shellRicochets);
+                    break;
+                case PacketType.MinePlacement:
+                    var minePos = reader.GetVector2();
+                    var detTime = reader.GetFloat();
+                    var mineOwner = reader.GetInt();
 
-                    campaign.CachedMissions = new Mission[missionCount];
+                    new Mine(GameHandler.AllTanks[mineOwner], minePos, detTime);
 
-                    for (int i = 0; i < missionCount; i++)
-                    {
-                        var blockLen = reader.GetInt();
-                        var tnkLen = reader.GetInt();
+                    break;
+                case PacketType.SendCampaignByName:
+                    var campName = reader.GetString();
 
-                        var name = reader.GetString();
-                        var note = reader.GetString();
-
-                        List<BlockTemplate> blockTotal = new();
-                        List<TankTemplate> tankTotal = new();
-
-                        for (int m = 0; m < blockLen; m++)
-                        {
-                            blockTotal.Add(new()
-                            {
-                                Position = reader.GetVector2(),
-                                Type = reader.GetByte(),
-                                Stack = reader.GetSByte(),
-                                TpLink = reader.GetSByte(),
-                            });
-                        }
-                        for (var t = 0; t < tnkLen; t++)
-                        {
-                            TankTemplate tmp = new()
-                            {
-                                Position = reader.GetVector2(),
-                                Rotation = reader.GetFloat(),
-                                IsPlayer = reader.GetBool(),
-                                Team = reader.GetByte()
-                            };
-
-                            if (tmp.IsPlayer)
-                                tmp.PlayerType = reader.GetByte();
-                            else
-                                tmp.AiTier = reader.GetByte();
-                        }
-
-                        campaign.CachedMissions[i] = new(tankTotal.ToArray(), blockTotal.ToArray())
-                        {
-                            Name = name,
-                            Note = note
-                        };
-                    }
-
+                    MainMenu.PrepareGameplay(campName, true);
                     break;
             }
 
@@ -240,7 +290,6 @@ namespace TanksRebirth.Net
                             Client client = Server.ConnectedClients[i];
                             message.Put((byte)client.Id);
                             message.Put(client.Name);
-                            // fix desync of client ids
                         }
                     }
 
@@ -248,12 +297,174 @@ namespace TanksRebirth.Net
                     peer.Send(message, deliveryMethod);     //This sends it back to the guy who sent
 
                     break;
-                case PacketType.StartGame:
+                case PacketType.ChatMessage:
+                    message = new();
+                    message.Put(packet);
+
+                    string msg = reader.GetString();
+                    Color color = reader.GetColor();
+                    string sender = reader.GetString();
+
+                    message.Put(msg);
+                    message.Put(color);
+                    message.Put(sender);
+
+                    Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered, peer);
+                    break;
+                case PacketType.StartGame: // TODO: work on.
+                    message = new();
+                    message.Put(packet);
+
+                    int checkpoint = reader.GetInt();
+                    bool shouldMissionsProgress = reader.GetBool();
+                    message.Put(checkpoint);
+                    message.Put(shouldMissionsProgress);
+
+                    Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered, peer);
+                    break;
+                case PacketType.TankData:
+                    message = new();
+                    message.Put(packet);
+
+                    int id = reader.GetInt();
+                    float x2 = reader.GetFloat();
+                    float y2 = reader.GetFloat();
+                    float tankRotation = reader.GetFloat();
+                    float turretRotation = reader.GetFloat();
+                    float vX = reader.GetFloat();
+                    float vY = reader.GetFloat();
+
+                    message.Put(id);
+                    message.Put(x2);
+                    message.Put(y2);
+                    message.Put(tankRotation);
+                    message.Put(turretRotation);
+                    message.Put(vX);
+                    message.Put(vY);
+
+                    Server.serverNetManager.SendToAll(message, DeliveryMethod.Unreliable, peer);
+                    break;
                 case PacketType.PlayerSpawn:
                     message = new();
                     message.Put(packet);
+
+                    var type = reader.GetInt();
+                    var team = reader.GetInt();
+
+                    float x = reader.GetFloat();
+                    float y = reader.GetFloat();
+                    float tnkRot = reader.GetFloat();
+                    float turRot = reader.GetFloat();
+
+                    message.Put(type);
+                    message.Put(team);
+                    message.Put(x);
+                    message.Put(y);
+                    message.Put(tnkRot);
+                    message.Put(turRot);
+
                     Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered, peer);
-                    // We don't need to do anything since it's handled in the Client's method.
+                    break;
+                case PacketType.BulletFire:
+                    message = new();
+                    message.Put(packet);
+
+                    var shellType = reader.GetInt();
+                    var shellPos = reader.GetVector3();
+                    var shellVel = reader.GetVector3();
+                    var shellRicochets = reader.GetUInt();
+                    var shellOwner = reader.GetInt();
+
+                    message.Put(shellType);
+                    message.Put(shellPos);
+                    message.Put(shellVel);
+                    message.Put(shellRicochets);
+                    message.Put(shellOwner);
+
+                    Server.serverNetManager.SendToAll(message, DeliveryMethod.Sequenced, peer);
+                    break;
+                case PacketType.MinePlacement:
+                    message = new();
+                    message.Put(packet);
+
+                    var minePos = reader.GetVector2();
+                    var detTime = reader.GetFloat();
+                    var mineOwner = reader.GetInt();
+
+                    message.Put(minePos);
+                    message.Put(detTime);
+                    message.Put(mineOwner);
+                    Server.serverNetManager.SendToAll(message, DeliveryMethod.Sequenced, peer);
+                    break;
+                case PacketType.SendCampaign:
+                    message = new();
+                    message.Put(packet);
+
+                    var cName = reader.GetString();
+                    var startLives = reader.GetInt();
+                    var bgColor = reader.GetColor();
+                    var stripColor = reader.GetColor();
+
+                    var missionCount = reader.GetInt();
+
+                    message.Put(cName);
+                    message.Put(startLives);
+                    message.Put(bgColor);
+                    message.Put(stripColor);
+                    message.Put(missionCount);
+
+                    for (int i = 0; i < missionCount; i++)
+                    {
+                        var blockLen = reader.GetInt();
+                        var tnkLen = reader.GetInt();
+
+                        var missionName = reader.GetString();
+                        var note = reader.GetString();
+
+                        message.Put(blockLen);
+                        message.Put(tnkLen);
+
+                        message.Put(missionName);
+                        message.Put(note);
+
+                        for (int m = 0; m < blockLen; m++)
+                        {
+                            var bPos = reader.GetVector2();
+                            var bType = reader.GetInt();
+                            var bStack = reader.GetSByte();
+                            var tpLink = reader.GetSByte();
+
+                            message.Put(bPos);
+                            message.Put(bType);
+                            message.Put(bStack);
+                            message.Put(tpLink);
+                        }
+                        for (var t = 0; t < tnkLen; t++)
+                        {
+                            var tPos = reader.GetVector2();
+                            var tRot = reader.GetFloat();
+                            var tIsPlayer = reader.GetBool();
+                            var tTeam = reader.GetInt();
+                            var typeOrTier = reader.GetInt();
+
+                            message.Put(tPos);
+                            message.Put(tRot);
+                            message.Put(tIsPlayer);
+                            message.Put(tTeam);
+                            message.Put(typeOrTier);
+                        }
+                    }
+
+                    Server.serverNetManager.SendToAll(message, DeliveryMethod.Sequenced, peer);
+                    break;
+                case PacketType.SendCampaignByName:
+                    message = new();
+                    message.Put(packet);
+
+                    var campName = reader.GetString();
+                    message.Put(campName);
+
+                    Server.serverNetManager.SendToAll(message, DeliveryMethod.Sequenced, peer);
                     break;
             }
 
@@ -291,7 +502,7 @@ namespace TanksRebirth.Net
         LeaveGame,
 
         // Ingame packets: players
-        PlayerData,
+        TankData,
 
         // Ingame packets: ai
         AiTankData,
@@ -317,6 +528,7 @@ namespace TanksRebirth.Net
         // map sync
 
         SendCampaign,
+        SendCampaignByName,
         SendMission
     }
 }

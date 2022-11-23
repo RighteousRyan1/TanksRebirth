@@ -48,7 +48,7 @@ namespace TanksRebirth.GameContent
         public Rectangle Hitbox;
 
         public float DetonateTime;
-        public readonly int DetonateTimeMax;
+        public readonly float DetonateTimeMax;
 
         private bool _tickRed;
 
@@ -69,7 +69,7 @@ namespace TanksRebirth.GameContent
         /// <param name="pos">The position of this <see cref="Mine"/> in the game world.</param>
         /// <param name="detonateTime">The time it takes for this <see cref="Mine"/> to detonate.</param>
         /// <param name="radius">The radius of this <see cref="Mine"/>'s explosion.</param>
-        public Mine(Tank owner, Vector2 pos, int detonateTime, float radius = 65f)
+        public Mine(Tank owner, Vector2 pos, float detonateTime, float radius = 65f)
         {
             Owner = owner;
             ExplosionRadius = radius;
@@ -80,6 +80,9 @@ namespace TanksRebirth.GameContent
             DetonateTimeMax = detonateTime;
 
             Position = pos;
+
+            if (owner != null)
+                SoundPlayer.PlaySoundInstance("Assets/sounds/mine_place", SoundContext.Effect, 0.5f, gameplaySound: true);
 
             MineMesh = Model.Meshes["polygon1"];
             EnvMesh = Model.Meshes["polygon0"];

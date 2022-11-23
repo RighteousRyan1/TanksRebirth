@@ -725,7 +725,7 @@ namespace TanksRebirth
 
             InputUtils.PollEvents();
 
-            bool shouldUpdate = Client.IsConnected() || IsActive && !GameUI.Paused;
+            bool shouldUpdate = Client.IsConnected() || (IsActive && !GameUI.Paused);
 
             if (shouldUpdate)
             {
@@ -843,6 +843,9 @@ namespace TanksRebirth
             if (MainMenu.Active)
                 MainMenu.Render();
             #region Debug
+            if (Debugger.IsAttached)
+                SpriteRenderer.DrawString(TextFont, "DEBUGGER ATTACHED", new Vector2(10, 50), Color.Red, new Vector2(0.8f));
+
             if (DebugUtils.DebuggingEnabled)
                 SpriteRenderer.DrawString(TextFont, "Debug Level: " + DebugUtils.CurDebugLabel, new Vector2(10), Color.White, new Vector2(0.6f));
             DebugUtils.DrawDebugString(SpriteRenderer, $"Garbage Collection: {MemoryParser.FromMegabytes(GCMemory)} MB" +

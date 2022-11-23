@@ -126,7 +126,7 @@ namespace TanksRebirth.GameContent
             /// <summary>How far ahead of this tank (in the direction the tank is going) that it is aware of obstacles and navigates around them.</summary>
             public int BlockWarinessDistance { get; set; } = 50;
             /// <summary>How often this tank reads the obstacles around it and navigates around them.</summary>
-            public int BlockReadTime { get; set; } = 3;
+            public int BlockReadTime { get; set; } = 1;
             /// <summary>How far this tank must be from a teammate before it can lay a mine or fire a bullet.</summary>
             public float TankWarinessRadius { get; set; } = 50f;
             /// <summary>Whether or not this tank tries to find calculations all around it. This is not recommended for mobile tanks.</summary>
@@ -1720,17 +1720,19 @@ namespace TanksRebirth.GameContent
                 Model.Meshes["Dish"].ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
             }
 
-            if (!Dead)
+            if ((Server.serverNetManager is not null && Client.IsConnected()) || (!Client.IsConnected() && !Dead))
             {
 
                 // TargetTankRotation = (MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - MouseUtils.MousePosition).ToRotation() - MathHelper.PiOver2;
-
                 timeSinceLastAction++;
 
                 if (!MainMenu.Active)
                     if (!GameProperties.InMission || IntermissionSystem.IsAwaitingNewMission || LevelEditor.Active)
                         Velocity = Vector2.Zero;
                 DoAi(true, true, true);
+
+                if (this is AITank && IsIngame)
+                    Client.SyncTank(this);
             }
 
             _oldPosition = Position;

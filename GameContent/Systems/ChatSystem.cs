@@ -29,11 +29,11 @@ namespace TanksRebirth.GameContent.Systems
         /// <param name="text">The content of the <see cref="ChatMessage"/>.</param>
         /// <param name="color">The color in which to render the content of the <see cref="ChatMessage"/>.</param>
         /// <returns>The <see cref="ChatMessage"/> sent to the chat.</returns>
-        public static ChatMessage SendMessage(object text, Color color, object sender = null)
+        public static ChatMessage SendMessage(object text, Color color, object sender = null, bool wasRecieved = false)
         {
             ChatMessage msg;
             if (sender is not null)
-                msg = new ChatMessage($"{sender}: {text}", color);
+                msg = new ChatMessage($"<{sender}> {text}", color);
             else
                 msg = new ChatMessage($"{text}", color);
 
@@ -43,7 +43,7 @@ namespace TanksRebirth.GameContent.Systems
             if (sender is not null)
             {
                 SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick", SoundContext.Effect);
-                if (Client.IsConnected())
+                if (Client.IsConnected() && !wasRecieved)
                     Client.SendMessage(text.ToString(), color, sender.ToString());
             }
 
@@ -90,21 +90,21 @@ namespace TanksRebirth.GameContent.Systems
                         break;
                 }
 
+                // change 5 to a not hardcoded limit of messages.
                 if (i > 5)
-                {
-                    ChatMessages[4].lifeTime = 0;
-                }
+                    ChatMessages[4].LifeTime = 0;
 
                 sb.DrawString(ChatMessage.Font, ChatMessages[i].Content, basePosition + new Vector2(0, i * offset), ChatMessages[i].Color, new Vector2(0.8f), 0f, drawOrigin);
 
-                ChatMessages[i].lifeTime--;
+                ChatMessages[i].LifeTime--;
 
-                if (ChatMessages[i].lifeTime <= 0)
+                if (ChatMessages[i].LifeTime <= 0)
                     ChatMessages.RemoveAt(i);
             }
         }
     }
 
+    // TODO: perhaps struct.
     /// <summary>Represents a system used to store messages and their contents in use with the <see cref="ChatSystem"/>.</summary>
     public sealed class ChatMessage
     {
@@ -118,7 +118,7 @@ namespace TanksRebirth.GameContent.Systems
         public static SpriteFontBase Font = TankGame.TextFont;
 
         /// <summary>The duration this <see cref="ChatMessage"/> will persist for.</summary>
-        public int lifeTime = 150;
+        public int LifeTime = 150;
 
         /// <summary>
         /// Creates a new <see cref="ChatMessage"/>.

@@ -175,6 +175,9 @@ namespace TanksRebirth.GameContent
 
             base.Update();
 
+            if (NetPlay.IsClientMatched(PlayerId))
+                Client.SyncTank(this);
+
             //CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
             //Model.Root.Transform = World;
 
@@ -195,8 +198,8 @@ namespace TanksRebirth.GameContent
             }
 
             if (IsIngame) {
-                if (Client.IsConnected())
-                    ChatSystem.SendMessage($"PlayerId: {PlayerId} | ClientId: {NetPlay.CurrentClient.Id}", Color.White);
+                //if (Client.IsConnected())
+                    //ChatSystem.SendMessage($"PlayerId: {PlayerId} | ClientId: {NetPlay.CurrentClient.Id}", Color.White);
                 if (NetPlay.IsClientMatched(PlayerId) && !IntermissionSystem.IsAwaitingNewMission) {
                     if (!Difficulties.Types["ThirdPerson"]) {
                         Vector3 mouseWorldPos = MatrixUtils.GetWorldPosition(MouseUtils.MousePosition, -11f);

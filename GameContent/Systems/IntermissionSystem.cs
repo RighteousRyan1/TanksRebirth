@@ -33,7 +33,7 @@ namespace TanksRebirth.GameContent.Systems
         /// <summary>Renders the intermission.</summary>
         public static void Draw(SpriteBatch spriteBatch)
         {
-            TankGame.Interp = (Alpha <= 0 && BlackAlpha <= 0) && GameHandler.InterpCheck;
+            TankGame.Interp = Alpha <= 0 && BlackAlpha <= 0 && GameHandler.InterpCheck;
 
             if (TankGame.Instance.IsActive)
             {
@@ -146,7 +146,6 @@ namespace TanksRebirth.GameContent.Systems
             TankGame.SpriteRenderer.Draw(texture, position + (Vector2.Normalize(shadowDir) * 10f * shadowDistScale * scale).ToResolution(), null, Color.Black * alpha * 0.75f, 0f, origin == default ? texture.Size() / 2 : origin, scale, flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, default);
             TankGame.SpriteRenderer.Draw(texture, position, null, color * alpha, 0f, origin == default ? texture.Size() / 2 : origin, scale, flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, default);
         }
-
         private static void DrawStripe(SpriteBatch spriteBatch, Color color, float offsetY, float alpha)
         {
             var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/banner");
@@ -161,13 +160,11 @@ namespace TanksRebirth.GameContent.Systems
             //spriteBatch.Draw(tex, new Vector2(-30 + (float)(tex.Width * scaling.X) + (3 * scaling.X / 2.2f), offsetY), null, color * alpha, 0f, new Vector2(0, tex.Size().Y / 2), scaling, default, default);
             //spriteBatch.Draw(tex, new Vector2(-30 + (float)(tex.Width * 2 * scaling.X) - (8 * scaling.X / 2.2f), offsetY), null, color * alpha, 0f, new Vector2(0, tex.Size().Y / 2), scaling, default, default);
         }
-
         public static void SetTime(int time)
         {
             WaitTime = time;
             CurrentWaitTime = time;
         }
-
         public static void Tick(int delta)
         {
             if (CurrentWaitTime - delta < 0)

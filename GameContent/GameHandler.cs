@@ -29,6 +29,7 @@ namespace TanksRebirth.GameContent
 {
     public class GameHandler
     {
+        #region Non-test
         public static Random GameRand = new();
 
         private static float _tankFuncDelay = 190;
@@ -164,6 +165,7 @@ namespace TanksRebirth.GameContent
         }
         internal static void UpdateAll()
         {
+
             if (MainMenu.Active)
                 InterpCheck = true;
             // technically, level 0 in code is level 1, so we want to use that number (1) if the user is level 0.
@@ -464,6 +466,11 @@ namespace TanksRebirth.GameContent
         /// <returns>Whether or not one team or one player dominates the map.</returns>
         public static bool NothingCanHappenAnymore(Mission mission, out bool victory)
         {
+            if (mission.Tanks is null)
+            {
+                victory = false;
+                return false;
+            }
             if (mission.Tanks.Any(tnk => tnk.IsPlayer))
             {
                 var activeTeams = Tank.GetActiveTeams();
@@ -645,7 +652,7 @@ namespace TanksRebirth.GameContent
             GameUI.MissionInfoBar.IsVisible = !MainMenu.Active && !LevelEditor.Active && !CampaignCompleteUI.IsViewingResults;
             OnPostRender?.Invoke();
         }
-
+        #endregion
         #region Extra
         public static void RenderUI()
         {
@@ -1041,8 +1048,16 @@ namespace TanksRebirth.GameContent
                 TankFootprint.footprints[i] = null;
             }
         }
+        #endregion
+
+        private static void SendTestMsg()
+        {
+            if (Client.IsConnected())
+            {
+                ChatSystem.SendMessage("You suck.", Color.Green, "Ryan");
+            }
+        }
     }
-    #endregion
     public static class MouseRenderer
     {
         public static Texture2D MouseTexture { get; private set; }
