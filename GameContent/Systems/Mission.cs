@@ -107,7 +107,7 @@ namespace TanksRebirth.GameContent.Systems
             foreach (var shell in Shell.AllShells)
                 shell?.Remove();
             foreach (var tank in GameHandler.AllTanks)
-                tank?.Remove();
+                tank?.Remove(true);
             for (int i = 0; i < mission.Tanks.Length; i++) {
                 var tnk = mission.Tanks[i];
                 var tank = tnk.GetTank();

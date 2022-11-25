@@ -18,16 +18,18 @@ public static class ArrayUtils
 
         Array.Copy(array, arrayCopy, array.Length);
 
+        adjust = -adjust;
+
         if (w == 0)
             w = array.Length;
 
         for (int i = z; i < w; i++) {
-            if (i == 0 && adjust > 0)
+            if (i == 0 && adjust < 0)
                 array[0] = default;
-            else if (i == array.Length - 1 && adjust < 0)
+            else if (i == array.Length - 1 && adjust > 0)
                 array[^1] = default;
 
-            if (adjust < 0) {
+            if (adjust > 0) {
                 if (i != array.Length - 1)
                     array[i] = array[i + adjust];
             }

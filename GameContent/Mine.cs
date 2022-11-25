@@ -41,7 +41,7 @@ namespace TanksRebirth.GameContent
         private static Texture2D _mineTexture;
         private static Texture2D _envTexture;
 
-        public readonly int Id;
+        public int Id { get; private set; }
 
         public ModelMesh MineMesh;
         public ModelMesh EnvMesh;
@@ -62,6 +62,8 @@ namespace TanksRebirth.GameContent
         public bool Detonated { get; set; }
 
         public int MineReactTime = 30;
+
+        public void ReassignId(int newId) => Id = newId;
 
         /// <summary>
         /// Creates a new <see cref="Mine"/>.
@@ -117,7 +119,7 @@ namespace TanksRebirth.GameContent
 
             OnExplode?.Invoke(this);
 
-            Client.SyncMineDetonate(Id);
+            // Client.SyncMineDetonate(Id);
 
             Remove();
         }
@@ -129,37 +131,47 @@ namespace TanksRebirth.GameContent
         internal void Update() {
             World = Matrix.CreateScale(0.7f) * Matrix.CreateTranslation(Position3D);
 
-            Hitbox = new((int)Position.X - 10, (int)Position.Y - 10, 20, 20); 
+            Hitbox = new((int)Position.X - 10, (int)Position.Y - 10, 20, 20);
 
-            DetonateTime -= TankGame.DeltaTime;
+            if (Server.serverNetManager != null || !Client.IsConnected())
+            {
+                DetonateTime -= TankGame.DeltaTime;
 
-            if (DetonateTime < 120) {
-                if (DetonateTime % 2 == 0)
-                    _tickRed = !_tickRed;
-            }
-
-            if (DetonateTime <= 0)
-                Detonate();
-
-            foreach (var shell in Shell.AllShells) {
-                if (shell is not null && shell.Hitbox.Intersects(Hitbox)) {
-                    shell.Destroy(Shell.DestructionContext.WithMine);
-                    Detonate();
+                if (DetonateTime < 120)
+                {
+                    if (DetonateTime % 2 == 0)
+                        _tickRed = !_tickRed;
                 }
-            }
 
-            if (Position != _oldPosition) // magicqe number
-                IsNearDestructibles = Block.AllBlocks.Any(b => b != null && Position.Distance(b.Position) <= ExplosionRadius - 6f && b.IsDestructible);
-            List<Tank> tanksNear = new();
+                if (DetonateTime <= 0)
+                    Detonate();
 
-            if (DetonateTime > MineReactTime) {
-                foreach (var tank in GameHandler.AllTanks) {
-                    if (tank is not null && Vector2.Distance(tank.Position, Position) < ExplosionRadius * 0.8f) {
-                        tanksNear.Add(tank);
+                foreach (var shell in Shell.AllShells)
+                {
+                    if (shell is not null && shell.Hitbox.Intersects(Hitbox))
+                    {
+                        shell.Destroy(Shell.DestructionContext.WithMine);
+                        Detonate();
                     }
                 }
-                if (!tanksNear.Any(tnk => tnk == Owner) && tanksNear.Count > 0)
-                    DetonateTime = MineReactTime;
+
+                if (Position != _oldPosition) // magicqe number
+                    IsNearDestructibles = Block.AllBlocks.Any(b => b != null && Position.Distance(b.Position) <= ExplosionRadius - 6f && b.IsDestructible);
+                List<Tank> tanksNear = new();
+
+                // NOTE: this scope may be inconsistent over a server? check soon.
+                if (DetonateTime > MineReactTime)
+                {
+                    foreach (var tank in GameHandler.AllTanks)
+                    {
+                        if (tank is not null && Vector2.Distance(tank.Position, Position) < ExplosionRadius * 0.8f)
+                        {
+                            tanksNear.Add(tank);
+                        }
+                    }
+                    if (!tanksNear.Any(tnk => tnk == Owner) && tanksNear.Count > 0)
+                        DetonateTime = MineReactTime;
+                }
             }
 
             _oldPosition = Position;
@@ -171,7 +183,7 @@ namespace TanksRebirth.GameContent
         {
             View = TankGame.GameView;
             Projection = TankGame.GameProjection;
-            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"Det: {DetonateTime}/{DetonateTimeMax}\nNearDestructibles: {IsNearDestructibles}", MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 20), 1, centered: true);
+            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"DetonationTime: {DetonateTime}/{DetonateTimeMax}\nNearDestructibles: {IsNearDestructibles}\nId: {Id}", MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 20), 1, centered: true);
             for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
                 foreach (ModelMesh mesh in Model.Meshes) {
                     foreach (BasicEffect effect in mesh.Effects) {

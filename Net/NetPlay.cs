@@ -52,9 +52,13 @@ namespace TanksRebirth.Net
         private static void OnPacketRecieve_Client(NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod)
         {
             var packet = reader.GetPacket();
+            if (DebugUtils.DebuggingEnabled) {
+                if (deliveryMethod != DeliveryMethod.Unreliable) {
+                    GameHandler.ClientLog.Write($"Packet Recieved: {packet} from peer {peer.Id}.", Internals.LogType.Debug);
 
-            if (deliveryMethod != DeliveryMethod.Unreliable)
-                GameHandler.ClientLog.Write($"Packet Recieved: {packet} from server {peer.Id}.", Internals.LogType.Debug);
+                    ChatSystem.SendMessage($"[DEBUG]: Recieved packet {packet} from peer {peer.Id}", Color.Blue);
+                }
+            }
 
             switch (packet)
             {
@@ -67,7 +71,6 @@ namespace TanksRebirth.Net
                     break;
 
                 case PacketType.LobbyInfo:
-                    ServerName = "ServerName";
                     int serverMaxClients = reader.GetByte();
 
                     string servName = reader.GetString();
@@ -92,6 +95,9 @@ namespace TanksRebirth.Net
                             };
                         }
                     }
+
+                    Server.CurrentClientCount = reader.GetInt();
+
                     Client.lobbyDataReceived = true;
 
                     SoundPlayer.PlaySoundInstance("Assets/sounds/menu/client_join", SoundContext.Effect, 0.75f);
@@ -241,10 +247,12 @@ namespace TanksRebirth.Net
 
                     break;
                 case PacketType.ShellDestroy:
-                    var destroyedShellId = reader.GetInt();
+                    var ownerId = reader.GetInt();
+                    var ownerShellIndex = reader.GetInt();
                     var cxt = reader.GetByte();
 
-                    Shell.AllShells[destroyedShellId]?.Destroy((Shell.DestructionContext)cxt);
+                    GameHandler.AllTanks[ownerId].OwnedShells[ownerShellIndex].Destroy((Shell.DestructionContext)cxt);
+                    //Shell.AllShells[destroyedShellId]?.Destroy((Shell.DestructionContext)cxt);
 
                     break;
                 case PacketType.MineDetonate:
@@ -252,7 +260,7 @@ namespace TanksRebirth.Net
 
                     Mine.AllMines[destroyedMineId]?.Detonate();
                     break;
-                case PacketType.BulletFire:
+                case PacketType.ShellFire:
                     var shellType = reader.GetInt();
                     var shellPos = reader.GetVector3();
                     var shellVel = reader.GetVector3();
@@ -274,6 +282,9 @@ namespace TanksRebirth.Net
                     var campName = reader.GetString();
 
                     MainMenu.PrepareGameplay(campName, true);
+                    break;
+                case PacketType.Cleanup:
+                    GameHandler.CleanupScene();
                     break;
                 #endregion
                 #region ConstantSends
@@ -311,6 +322,12 @@ namespace TanksRebirth.Net
                     GameHandler.AllAITanks[id1].TurretRotation = turretRotation1;
                     GameHandler.AllAITanks[id1].Velocity = new(vX1, vY1);
                     break;
+                case PacketType.SyncLives:
+                    var clid = reader.GetInt();
+                    var lives = reader.GetInt();
+
+                    PlayerTank.Lives[clid] = lives;
+                    break;
                 #endregion
             }
 
@@ -323,6 +340,13 @@ namespace TanksRebirth.Net
         private static void OnPacketRecieve_Server(NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod)
         {
             var packet = reader.GetPacket();
+            if (DebugUtils.DebuggingEnabled) {
+                if (deliveryMethod != DeliveryMethod.Unreliable) {
+                    GameHandler.ClientLog.Write($"Packet Recieved: {packet} from peer {peer.Id}.", Internals.LogType.Debug);
+
+                    ChatSystem.SendMessage($"[DEBUG]: Server recieved packet {packet} from peer {peer.Id}", Color.Blue);
+                }
+            }
 
             NetDataWriter message = new();
 
@@ -363,6 +387,8 @@ namespace TanksRebirth.Net
                             message.Put(client.Name);
                         }
                     }
+
+                    message.Put(Server.CurrentClientCount);
 
                     Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered, peer);     //This sends to everyone but the one who sent
                     peer.Send(message, deliveryMethod);     //This sends it back to the guy who sent
@@ -426,8 +452,13 @@ namespace TanksRebirth.Net
                     Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered, peer);
                     break;
                 case PacketType.ShellDestroy:
-                    var destroyedShellId = reader.GetInt();
-                    message.Put(destroyedShellId);
+                    var ownerId = reader.GetInt();
+                    var ownerShellIndex = reader.GetInt();
+                    var cxt = reader.GetByte();
+
+                    message.Put(ownerId);
+                    message.Put(ownerShellIndex);
+                    message.Put(cxt);
 
                     Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered, peer);
                     break;
@@ -437,7 +468,7 @@ namespace TanksRebirth.Net
 
                     Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered, peer);
                     break;
-                case PacketType.BulletFire:
+                case PacketType.ShellFire:
                     var shellType = reader.GetInt();
                     var shellPos = reader.GetVector3();
                     var shellVel = reader.GetVector3();
@@ -526,6 +557,9 @@ namespace TanksRebirth.Net
 
                     Server.serverNetManager.SendToAll(message, DeliveryMethod.Sequenced, peer);
                     break;
+                case PacketType.Cleanup:
+                    Server.serverNetManager.SendToAll(message, DeliveryMethod.Sequenced, peer);
+                    break;
                 #endregion
                 #region ConstantSends
                 case PacketType.SyncPlayer:
@@ -566,6 +600,16 @@ namespace TanksRebirth.Net
 
                     Server.serverNetManager.SendToAll(message, DeliveryMethod.Unreliable, peer);
                     break;
+                case PacketType.SyncLives:
+
+                    var clid = reader.GetInt();
+                    var lives = reader.GetInt();
+
+                    message.Put(clid);
+                    message.Put(lives);
+
+                    Server.serverNetManager.SendToAll(message, DeliveryMethod.Unreliable, peer);
+                    break;
                     #endregion
             }
 
@@ -602,6 +646,7 @@ namespace TanksRebirth.Net
 
         // Ingame packets: players
         SyncPlayer,
+        SyncLives,
 
         // Ingame packets: ai
         SyncAiTank,
@@ -613,7 +658,7 @@ namespace TanksRebirth.Net
 
         // Ingame packets: tank mechanics
         MinePlacement,
-        BulletFire,
+        ShellFire,
 
         // Human communication
 
@@ -636,6 +681,11 @@ namespace TanksRebirth.Net
 
         SendCampaign,
         SendCampaignByName,
-        SendMission
+        SendMission,
+
+        // misc
+
+        SyncShellId,
+        Cleanup
     }
 }

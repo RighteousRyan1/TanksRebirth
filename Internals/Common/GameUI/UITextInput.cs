@@ -59,7 +59,7 @@ namespace TanksRebirth.Internals.Common.GameUI
                         TankGame.Instance.Window.TextInput += HandleText;
                     }
                     if (Text == DefaultString)
-                        Text = "";
+                        Text = string.Empty;
                     currentActiveBox = Id;
                 }
             }

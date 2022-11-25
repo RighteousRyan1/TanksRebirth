@@ -25,13 +25,31 @@ namespace TanksRebirth.GameContent
 {
     public class PlayerTank : Tank
     {
+        public static int[] Lives = new int[4];
+
+        public static int GetMyLives() => Client.IsConnected() ? Lives[NetPlay.CurrentClient.Id] : Lives[0];
+        public static void AddLives(int num)
+        {
+            if (Client.IsConnected())
+                Lives[NetPlay.CurrentClient.Id] += num;
+            else
+                for (int i = 0; i < Lives.Length; i++)
+                    Lives[i] += num;
+        }
+        public static void SetLives(int num)
+        {
+            if (Client.IsConnected())
+                Lives[NetPlay.CurrentClient.Id] = num;
+            else
+                for (int i = 0; i < Lives.Length; i++)
+                    Lives[i] = num;
+        }
 
         #region The Rest
         public static int MyTeam;
         public static int MyTankType;
 
         public static int StartingLives = 3;
-        public static int Lives = 0;
 
         // public static Dictionary<PlayerType, Dictionary<TankTier, int>> TanksKillDict = new(); // this campaign only!
         public static Dictionary<int, int> TankKills = new(); // this campaign only!
@@ -97,7 +115,7 @@ namespace TanksRebirth.GameContent
 
                 Properties = dummy.Properties;
 
-                dummy.Remove();
+                dummy.Remove(true);
             }
 
             _isPlayerModel = isPlayerModel;
@@ -155,7 +173,9 @@ namespace TanksRebirth.GameContent
             properties.DestructionColor = PlayerType switch
             {
                 PlayerID.Blue => Color.Blue,
-                PlayerID.Red => Color.Red,
+                PlayerID.Red => Color.Crimson,
+                PlayerID.GreenPlr => Color.Lime,
+                PlayerID.YellowPlr => Color.Yellow,
                 _ => throw new Exception("What did you do?")
             };
             base.ApplyDefaults(ref properties);
@@ -253,12 +273,13 @@ namespace TanksRebirth.GameContent
             oldPosition = Position;
         }
 
-        public override void Remove()
+        public override void Remove(bool nullifyMe)
         {
-            Dead = true;
-            GameHandler.AllPlayerTanks[PlayerId] = null;
-            GameHandler.AllTanks[WorldId] = null;
-            base.Remove();
+            if (nullifyMe) {
+                GameHandler.AllPlayerTanks[PlayerId] = null;
+                GameHandler.AllTanks[WorldId] = null;
+            }
+            base.Remove(nullifyMe);
         }
 
         public override void Shoot(bool fxOnly) {
@@ -418,24 +439,30 @@ namespace TanksRebirth.GameContent
         }
         public override void Destroy(ITankHurtContext context)
         {
-            if (context.IsPlayer) {
-                // this probably makes sense
-                TankGame.GameData.Suicides++;
-                PlayerStatistics.SuicidesThisCampaign++;
-                // check if player id matches client id, if so, increment that player's kill count, then sync to the server
-                // TODO: convert TankHurtContext into a struct and use it here
-                // Will be used to track the reason of death and who caused the death, if any tank owns a shell or mine
-                //
-                // if (context.PlayerId == Client.PlayerId)
-                // {
-                //    PlayerTank.KillCount++;
-                //    Client.Send(new TankKillCountUpdateMessage(PlayerTank.KillCount)); 
-                //    not a bad idea actually
+            if (NetPlay.IsClientMatched(PlayerId))
+                AddLives(-1);
+
+            if (context is not null)
+            {
+                if (context.IsPlayer)
+                {
+                    // this probably makes sense
+                    TankGame.GameData.Suicides++;
+                    PlayerStatistics.SuicidesThisCampaign++;
+                    // check if player id matches client id, if so, increment that player's kill count, then sync to the server
+                    // TODO: convert TankHurtContext into a struct and use it here
+                    // Will be used to track the reason of death and who caused the death, if any tank owns a shell or mine
+                    //
+                    // if (context.PlayerId == Client.PlayerId)
+                    // {
+                    //    PlayerTank.KillCount++;
+                    //    Client.Send(new TankKillCountUpdateMessage(PlayerTank.KillCount)); 
+                    //    not a bad idea actually
+                }
             }
             TankGame.GameData.Deaths++;
 
-            GameHandler.AllPlayerTanks[PlayerId] = null;
-            GameHandler.AllTanks[WorldId] = null;
+            Remove(false);
             base.Destroy(context);
         }
         public void UpdatePlayerMovement()
@@ -533,6 +560,9 @@ namespace TanksRebirth.GameContent
         }
         public override void Render()
         {
+            base.Render();
+            if (Dead)
+                return;
             DrawExtras();
             if (Properties.Invisible && GameProperties.InMission)
                 return;
@@ -593,9 +623,7 @@ namespace TanksRebirth.GameContent
                     }
                 }
             }
-            base.Render();
         }
-
         private void DrawExtras()
         {
             if (Dead)

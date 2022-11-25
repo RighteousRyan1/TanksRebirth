@@ -129,7 +129,7 @@ namespace TanksRebirth.GameContent.Systems
                         tank.Team = template.Team;
                         if (GameProperties.ShouldMissionsProgress)
                         {
-                            tank.OnDestroy += (sender, e) => {
+                            tank.OnDestroy += () => {
                                 TrackedSpawnPoints[Array.IndexOf(TrackedSpawnPoints, TrackedSpawnPoints.First(pos => pos.Item1 == template.Position))].Item2 = false; // make sure the tank is not spawned again
                             };
                         }
@@ -156,14 +156,19 @@ namespace TanksRebirth.GameContent.Systems
                     {
                         if (!LevelEditor.Active)
                         {
-                            if (!Client.IsConnected() || Server.ConnectedClients is null)
-                                tank.Remove();
-                            else if (NetPlay.IsClientMatched(tank.PlayerId))
+                            if (NetPlay.IsClientMatched(tank.PlayerId))
                             {
                                 PlayerTank.MyTeam = tank.Team;
                                 PlayerTank.MyTankType = tank.PlayerType;
                             }
                         }
+                    }
+                    else if (!LevelEditor.Active)
+                        tank.Remove(true);
+                    if (Client.IsConnected())
+                    {
+                        if (PlayerTank.Lives[tank.PlayerId] == 0)
+                            tank.Remove(true);
                     }
 
                     if (Difficulties.Types["AiCompanion"])

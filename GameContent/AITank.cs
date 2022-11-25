@@ -35,23 +35,18 @@ namespace TanksRebirth.GameContent
         public static event PostExecuteAI OnPostUpdateAI;
         public AiBehavior[] Behaviors { get; private set; } // each of these should keep track of an action the tank performs
         public AiBehavior[] SpecialBehaviors { get; private set; }
-
         public int Tier;
-
         private Texture2D _tankTexture;
         private static Texture2D _shadowTexture;
-
         public Action enactBehavior;
-
         public int AITankId { get; }
-
         public static Dictionary<int, Color> TankDestructionColors = new()
         {
             [TankID.Brown] = new(152, 96, 26),
             [TankID.Ash] = Color.Gray,
             [TankID.Marine] = Color.Teal,
             [TankID.Yellow] = Color.Yellow,
-            [TankID.Pink] = Color.Pink,
+            [TankID.Pink] = Color.HotPink,
             [TankID.Green] = Color.LimeGreen,
             [TankID.Violet] = Color.Purple,
             [TankID.White] = Color.White,
@@ -81,7 +76,6 @@ namespace TanksRebirth.GameContent
             [TankID.Electro] = Color.Blue,
             [TankID.Explosive] = Color.DarkGray,
         };
-
         public void SwapTankTexture(Texture2D texture) => _tankTexture = texture;
         #region AiTankParams
 
@@ -1720,7 +1714,7 @@ namespace TanksRebirth.GameContent
                 Model.Meshes["Dish"].ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
             }
 
-            if ((Server.serverNetManager is not null && Client.IsConnected()) || (!Client.IsConnected() && !Dead))
+            if ((Server.serverNetManager is not null && Client.IsConnected()) || (!Client.IsConnected() && !Dead) || MainMenu.Active)
             {
 
                 // TargetTankRotation = (MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - MouseUtils.MousePosition).ToRotation() - MathHelper.PiOver2;
@@ -1738,15 +1732,13 @@ namespace TanksRebirth.GameContent
             _oldPosition = Position;
         }
 
-        public override void Remove()
+        public override void Remove(bool nullifyMe)
         {
-            GameProperties.OnMissionStart -= OnMissionStart;
-            Dead = true;
-            Behaviors = null;
-            SpecialBehaviors = null;
-            GameHandler.AllAITanks[AITankId] = null;
-            GameHandler.AllTanks[WorldId] = null;
-            base.Remove();
+            if (nullifyMe) {
+                GameHandler.AllAITanks[AITankId] = null;
+                GameHandler.AllTanks[WorldId] = null;
+            }
+            base.Remove(nullifyMe);
         }
         public override void Destroy(ITankHurtContext context)
         {
@@ -1817,8 +1809,6 @@ namespace TanksRebirth.GameContent
                 //    PlayerTank.KillCount++;
                 //    Client.Send(new TankKillCountUpdateMessage(PlayerTank.KillCount)); // not a bad idea actually
             }
-            GameHandler.AllAITanks[AITankId] = null;
-            GameHandler.AllTanks[WorldId] = null;
             base.Destroy(context);
         }
 
@@ -2509,6 +2499,9 @@ namespace TanksRebirth.GameContent
         }
         public override void Render()
         {
+            base.Render();
+            if (Dead)
+                return;
             TankGame.Instance.GraphicsDevice.BlendState = BlendState.AlphaBlend;
             DrawExtras();
             if ((MainMenu.Active && Properties.Invisible) || (Properties.Invisible && GameProperties.InMission))
@@ -2574,8 +2567,6 @@ namespace TanksRebirth.GameContent
                     }
                 }
             }
-
-            base.Render();
         }
         private void DrawExtras()
         {

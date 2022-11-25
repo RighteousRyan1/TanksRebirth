@@ -6,6 +6,8 @@ using TanksRebirth.GameContent.UI;
 using FontStashSharp;
 using System.Linq;
 using TanksRebirth.GameContent.Properties;
+using TanksRebirth.Net;
+using TanksRebirth.GameContent.ID;
 
 namespace TanksRebirth.GameContent.Systems
 {
@@ -105,28 +107,41 @@ namespace TanksRebirth.GameContent.Systems
                     var off = 75f;
                     DrawStripe(spriteBatch, StripColor, WindowUtils.WindowHeight * 0.16f + (off * i).ToResolutionY(), Alpha);
                 }
-                var wp = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
+                var wp = TankGame.WhitePixel;
                 spriteBatch.Draw(wp, new Vector2(0, WindowUtils.WindowHeight * 0.19f), null, Color.Yellow * Alpha, 0f, new Vector2(0, wp.Size().Y / 2), new Vector2(WindowUtils.WindowWidth, 5), default, default);
                 spriteBatch.Draw(wp, new Vector2(0, WindowUtils.WindowHeight * 0.19f + 400.ToResolutionY()), null, Color.Yellow * Alpha, 0f, new Vector2(0, wp.Size().Y / 2), new Vector2(WindowUtils.WindowWidth, 5), default, default);
                 int mafs1 = GameProperties.LoadedCampaign.TrackedSpawnPoints.Count(p => p.Item2);
                 int mafs2 = GameProperties.LoadedCampaign.LoadedMission.Tanks.Count(x => x.IsPlayer);
                 int mafs = mafs1 - mafs2;
 
-
                 DrawShadowedString(TankGame.TextFontLarge, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 220.ToResolutionY()), Vector2.One, GameProperties.LoadedCampaign.LoadedMission.Name, BackgroundColor, Vector2.One.ToResolution(), Alpha);
                 DrawShadowedString(TankGame.TextFontLarge, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 50.ToResolutionY()), Vector2.One, $"Enemy tanks: {mafs}", BackgroundColor, new Vector2(0.8f).ToResolution(), Alpha);
-                var lifeText = $"x   {PlayerTank.Lives}";
-                DrawShadowedString(TankGame.TextFontLarge, new Vector2(WindowUtils.WindowWidth / 2 - 100.ToResolutionX(), WindowUtils.WindowHeight / 2 + 350.ToResolutionY()), Vector2.One, lifeText, BackgroundColor, Vector2.One.ToResolution(), Alpha, new Vector2(0, TankGame.TextFontLarge.MeasureString(lifeText).Y / 2));
 
-                if (GameProperties.LoadedCampaign.CurrentMissionId == 0)
-                    DrawShadowedString(TankGame.TextFontLarge, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 295.ToResolutionY()), Vector2.One, $"Campaign: \"{GameProperties.LoadedCampaign.MetaData.Name}\"", BackgroundColor, new Vector2(0.4f).ToResolution(), Alpha);
+                var tnk2d = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/playertank2d");
 
-                DrawShadowedTexture(GameResources.GetGameResource<Texture2D>("Assets/textures/ui/playertank2d"), new Vector2(WindowUtils.WindowWidth / 2 - 200.ToResolutionX(), WindowUtils.WindowHeight / 2 + 375.ToResolutionY()), Vector2.One, Color.Blue, new Vector2(1.25f).ToResolution(), Alpha);
-                
-                
+                var count = Server.CurrentClientCount > 0 ? Server.CurrentClientCount : Server.CurrentClientCount + 1;
+
+                //var count = 2;
+
+                for (int i = 0; i < count; i++)
+                {
+                    var name = Client.IsConnected() ? Server.ConnectedClients[i].Name : string.Empty;
+
+                    //var name = "name" + i;
+
+                    if (GameProperties.LoadedCampaign.CurrentMissionId == 0)
+                        DrawShadowedString(TankGame.TextFontLarge, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 295.ToResolutionY()), Vector2.One, $"Campaign: \"{GameProperties.LoadedCampaign.MetaData.Name}\"", BackgroundColor, new Vector2(0.4f).ToResolution(), Alpha);
+
+                    var pos = new Vector2(WindowUtils.WindowWidth / (count + 1) * (i + 1), WindowUtils.WindowHeight / 2 + 375.ToResolutionY());
+
+                    var lifeText = $"x  {PlayerTank.Lives[i]}";
+                    DrawShadowedString(TankGame.TextFontLarge, pos + new Vector2(75, -25).ToResolution(), Vector2.One, lifeText, BackgroundColor, Vector2.One.ToResolution(), Alpha, TankGame.TextFontLarge.MeasureString(lifeText) / 2);
+
+                    DrawShadowedString(TankGame.TextFontLarge, pos - new Vector2(0, 75).ToResolution(), Vector2.One, name, PlayerID.PlayerTankColors[i].ToColor(), 
+                        new Vector2(0.5f).ToResolution(), Alpha, TankGame.TextFontLarge.MeasureString(name) / 2);
+                    DrawShadowedTexture(tnk2d, pos - new Vector2(130, 0).ToResolution(), Vector2.One, PlayerID.PlayerTankColors[i].ToColor(), new Vector2(1.25f), Alpha, tnk2d.Size() / 2);
+                }
             }
-
-
             _oldBlack = BlackAlpha;
         }
 

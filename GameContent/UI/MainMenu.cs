@@ -987,7 +987,7 @@ namespace TanksRebirth.GameContent.UI
 
         public static void Leave()
         {
-            PlayerTank.Lives = PlayerTank.StartingLives;
+            PlayerTank.SetLives(PlayerTank.StartingLives);
             GameHandler.StartTnkScene();
             SetMPButtonsVisibility(false);
             SetPlayButtonsVisibility(false);
@@ -1039,7 +1039,7 @@ namespace TanksRebirth.GameContent.UI
             foreach (var shell in Shell.AllShells)
                 shell?.Remove();
             foreach (var tank in GameHandler.AllTanks)
-                tank?.Remove();
+                tank?.Remove(true);
 
             PlayerTank.TankKills.Clear();
 
@@ -1130,7 +1130,7 @@ namespace TanksRebirth.GameContent.UI
         public static void RemoveAllMenuTanks()
         {
             for (int i = 0; i < tanks.Count; i++)
-                tanks[i].Remove();
+                tanks[i].Remove(true);
             tanks.Clear();
         }
 

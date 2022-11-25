@@ -108,7 +108,7 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
                     if (BlockId > -1)
                         Block.AllBlocks[BlockId]?.Remove();
                     if (TankId > -1)
-                        GameHandler.AllTanks[TankId]?.Remove();
+                        GameHandler.AllTanks[TankId]?.Remove(true);
                     BlockId = -1;
                     TankId = -1;
 
@@ -125,7 +125,7 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
                 if (!HasBlock && HasItem)
                 {
                     // FIXME: why does this even craaaash?
-                    GameHandler.AllTanks[TankId].Remove();
+                    GameHandler.AllTanks[TankId].Remove(true);
                     TankId = -1;
                     return;
                 }

@@ -46,6 +46,30 @@ namespace TanksRebirth.Net
             clientNetManager.Start();
             client = clientNetManager.Connect(address, port, password);
         }
+        public static void SendLives()
+        {
+            if (MainMenu.Active || !IsConnected())
+                return;
+
+            NetDataWriter message = new();
+            message.Put(PacketType.SyncLives);
+
+            message.Put(NetPlay.CurrentClient.Id);
+            message.Put(PlayerTank.GetMyLives());
+
+            client.Send(message, DeliveryMethod.Unreliable);
+        }
+
+        public static void SyncCleanup()
+        {
+            if (MainMenu.Active || !IsConnected())
+                return;
+
+            NetDataWriter message = new();
+            message.Put(PacketType.Cleanup);
+
+            client.Send(message, DeliveryMethod.Unreliable);
+        }
 
         public static void SendClientInfo()
         {
@@ -128,19 +152,20 @@ namespace TanksRebirth.Net
         /// <c>AllTanks[<paramref name="tankId"/>].Shoot()</c>
         /// </summary>
         /// <param name="tankId">The identified of the <see cref="Tank"/> that fired.</param>
-        public static void SyncBulletFire(int type, Vector3 position, Vector3 velocity, uint ricochets, int owner)
+        public static void SyncBulletFire(int type, Vector3 position, Vector3 velocity, uint ricochets, int owner, int id)
         {
             if (MainMenu.Active || !IsConnected())
                 return;
 
             NetDataWriter message = new();
-            message.Put(PacketType.BulletFire);
+            message.Put(PacketType.ShellFire);
 
             message.Put(type);
             message.Put(position);
             message.Put(velocity);
             message.Put(ricochets);
             message.Put(owner);
+            message.Put(id);
 
             // FIXME: could probably use more syncing... who cares?
 
@@ -161,29 +186,33 @@ namespace TanksRebirth.Net
 
             client.Send(message, DeliveryMethod.ReliableOrdered);
         }
-        public static void SyncShellDestroy(int id, Shell.DestructionContext cxt)
+        public static void SyncShellDestroy(Shell shell, Shell.DestructionContext cxt)
         {
             if (!IsConnected() || MainMenu.Active)
                 return;
             NetDataWriter message = new();
             message.Put(PacketType.ShellDestroy);
 
-            message.Put(id);
+            message.Put(shell.Owner.WorldId);
+            // send the index of the shell in the owner's OwnedShell array for destruction on other clients
+            message.Put(shell.Owner.OwnedShells.IndexOf(shell));
             message.Put((byte)cxt);
 
             client.Send(message, DeliveryMethod.ReliableOrdered);
         }
-        public static void SyncMineDetonate(int id)
+        // maybe have owner stuff go here?
+        public static void SyncMineDetonate(Mine mine)
         {
             if (!IsConnected() || MainMenu.Active)
                 return;
             NetDataWriter message = new();
             message.Put(PacketType.MineDetonate);
 
-            message.Put(id);
+            message.Put(mine.Id);
 
             client.Send(message, DeliveryMethod.ReliableOrdered);
         }
+
         public static void SyncMinePlace(Vector2 position, float detonateTime, int id)
         {
             if (MainMenu.Active || !IsConnected())

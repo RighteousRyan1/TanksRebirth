@@ -35,8 +35,8 @@ namespace TanksRebirth.GameContent
         private static float _tankFuncDelay = 190;
         private static float _oldDelay;
 
-        public const int MAX_AI_TANKS = 1000;
-        public const int MAX_PLAYERS = 1000;
+        public const int MAX_AI_TANKS = 50;
+        public const int MAX_PLAYERS = 4;
 
         // TODO: convert to lists.
         public static AITank[] AllAITanks = new AITank[MAX_AI_TANKS];
@@ -90,37 +90,55 @@ namespace TanksRebirth.GameContent
             if (result1up && context == MissionEndContext.Win)
             {
                 TankGame.GameData.MissionsCompleted++;
-                PlayerTank.Lives++;
+                PlayerTank.AddLives(1);
                 var lifeget = "Assets/fanfares/life_get";
                 SoundPlayer.PlaySoundInstance(lifeget, SoundContext.Effect, 0.5f);
             }
-
-            if (context == MissionEndContext.Lose)
+            if (!Client.IsConnected())
             {
-                PlayerTank.Lives--;
+                if (context == MissionEndContext.Lose)
+                {
+                    PlayerTank.AddLives(-1);
 
-                // what is this comment?
-                /*int len = $"{VanillaCampaign.CachedMissions.Count(x => !string.IsNullOrEmpty(x.Name))}".Length;
-                int diff = len - $"{VanillaCampaign.CurrentMissionId}".Length;
+                    // what is this comment?
+                    /*int len = $"{VanillaCampaign.CachedMissions.Count(x => !string.IsNullOrEmpty(x.Name))}".Length;
+                    int diff = len - $"{VanillaCampaign.CurrentMissionId}".Length;
 
-                string realName = "";
+                    string realName = "";
 
-                for (int i = 0; i < diff; i++)
-                    realName += "0";
-                realName += $"{VanillaCampaign.CurrentMissionId + 1}";
+                    for (int i = 0; i < diff; i++)
+                        realName += "0";
+                    realName += $"{VanillaCampaign.CurrentMissionId + 1}";
 
-                VanillaCampaign.CachedMissions[VanillaCampaign.CurrentMissionId] = Mission.Load(realName, VanillaCampaign.Name);*/
-                var deathSound = "Assets/fanfares/tank_player_death";
-                SoundPlayer.PlaySoundInstance(deathSound, SoundContext.Effect, 0.3f);
+                    VanillaCampaign.CachedMissions[VanillaCampaign.CurrentMissionId] = Mission.Load(realName, VanillaCampaign.Name);*/
+                    var deathSound = "Assets/fanfares/tank_player_death";
+                    SoundPlayer.PlaySoundInstance(deathSound, SoundContext.Effect, 0.3f);
+                }
+                else if (context == MissionEndContext.GameOver)
+                {
+                    PlayerTank.AddLives(-1);
+
+                    var deathSound = "Assets/fanfares/gameover_playerdeath";
+                    SoundPlayer.PlaySoundInstance(deathSound, SoundContext.Effect, 0.3f);
+                }
             }
-            else if (context == MissionEndContext.GameOver)
+            else
             {
-                PlayerTank.Lives--;
+                if (context == MissionEndContext.Lose)
+                {
+                    // PlayerTank.AddLives(-1);
 
-                var deathSound = "Assets/fanfares/gameover_playerdeath";
-                SoundPlayer.PlaySoundInstance(deathSound, SoundContext.Effect, 0.3f);
+                    var deathSound = "Assets/fanfares/tank_player_death";
+                    SoundPlayer.PlaySoundInstance(deathSound, SoundContext.Effect, 0.3f);
+                }
+                /*if (PlayerTank.Lives.All(x => x == 0))
+                {
+                    var deathSound = "Assets/fanfares/gameover_playerdeath";
+                    SoundPlayer.PlaySoundInstance(deathSound, SoundContext.Effect, 0.3f);
+                }*/
+
             }
-            else if (context == MissionEndContext.Win)
+            if (context == MissionEndContext.Win)
             {
                 TankGame.GameData.MissionsCompleted++;
                 GameProperties.LoadedCampaign.LoadNextMission();
@@ -165,7 +183,8 @@ namespace TanksRebirth.GameContent
         }
         internal static void UpdateAll()
         {
-
+            if (MainMenu.Active)
+                PlayerTank.SetLives(5);
             if (MainMenu.Active)
                 InterpCheck = true;
             // technically, level 0 in code is level 1, so we want to use that number (1) if the user is level 0.
@@ -175,13 +194,15 @@ namespace TanksRebirth.GameContent
                 Xp = new();
 
             VanillaAchievements.Repository.UpdateCompletions();
+
+            Client.SendLives();
             /* uh, yeah. this is the decay-per-level calculation. people don't want it!
             var floor1 = MathF.Floor(TankGame.GameData.ExpLevel + 1f);
             var floor0 = MathF.Floor(TankGame.GameData.ExpLevel);
             GameData.UniversalExpMultiplier = floor1 - (GameData.DecayPerLevel * floor0);*/
 
             if (Difficulties.Types["InfiniteLives"])
-                PlayerTank.Lives = PlayerTank.StartingLives;
+                PlayerTank.SetLives(PlayerTank.StartingLives);
 
             if (!IntermissionSystem.IsAwaitingNewMission)
             {
@@ -351,7 +372,7 @@ namespace TanksRebirth.GameContent
                     if (InputUtils.KeyJustPressed(Keys.OemSemicolon))
                         new Mine(null, MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ(), 400);
                     if (InputUtils.KeyJustPressed(Keys.OemQuotes))
-                        new Shell(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition) + new Vector3(0, 11, 0), Vector3.Zero, ShellID.Standard, null, 0, playSpawnSound: false);
+                        new Shell(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition) + new Vector3(0, 11, 0), Vector3.Zero, ShellID.Standard, null, 0);
                     if (InputUtils.KeyJustPressed(Keys.End))
                         SpawnCrateAtMouse();
 
@@ -521,8 +542,8 @@ namespace TanksRebirth.GameContent
                     if (victory)
                     {
                         int restartTime = 600;
-                        if (isExtraLifeMission)
-                            restartTime += 200;
+                        //if (isExtraLifeMission)
+                            //restartTime += 200;
 
                         var cxt = MissionEndContext.Win;
 
@@ -537,8 +558,21 @@ namespace TanksRebirth.GameContent
 
                         // if a 1-up mission, extend by X amount of time (TBD?)
                         // we check <= 1 since the lives haven't actually been deducted yet.
-                        MissionEndContext cxt = !AllPlayerTanks.Any(tnk => tnk != null && !tnk.Dead) ? (PlayerTank.Lives <= 1 ? MissionEndContext.GameOver : MissionEndContext.Lose) : MissionEndContext.Win;
 
+                        if (Client.IsConnected())
+                        {
+                            for (int i = 0; i < PlayerTank.Lives.Length; i++)
+                            {
+                                if (i >= Server.CurrentClientCount)
+                                {
+                                    PlayerTank.Lives[i] = 0;
+                                }
+                            }
+                        }
+                        // doesnt work on 1 client
+                        bool check = Client.IsConnected() ? PlayerTank.Lives.All(x => x == 0) : PlayerTank.GetMyLives() <= 1;
+
+                        var cxt = !AllPlayerTanks.Any(tnk => tnk != null && !tnk.Dead) ? (check ? MissionEndContext.GameOver : MissionEndContext.Lose) : MissionEndContext.Win;
 
                         GameProperties.MissionEndEvent_Invoke(restartTime, cxt, isExtraLifeMission);
                     }
@@ -803,10 +837,13 @@ namespace TanksRebirth.GameContent
             for (int a = 0; a < Block.AllBlocks.Length; a++)
                 Block.AllBlocks[a]?.Remove();
             for (int a = 0; a < AllTanks.Length; a++)
-                AllTanks[a]?.Remove();
+                AllTanks[a]?.Remove(true);
         }
-        public static void CleanupScene()
+        public static void CleanupScene(bool sync = false)
         {
+            if (sync)
+                Client.SyncCleanup();
+
             foreach (var mine in Mine.AllMines)
                 mine?.Remove();
 

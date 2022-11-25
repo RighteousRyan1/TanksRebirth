@@ -94,22 +94,16 @@ namespace TanksRebirth.GameContent
         public Color SmokeColor { get; set; } = new Color(255, 255, 255, 255);
 
         private Texture2D _shellTexture;
-
-        public readonly int Id;
+        public int Id { get; private set; }
         private float _wallRicCooldown;
-
         /// <summary>How long this shell has existed in the world.</summary>
         public float LifeTime;
-
         public bool CanFriendlyFire = true;
-
         // private Particle _flame;
-
         public readonly int Tier;
-
         private OggAudio _loopingSound;
-
         public bool IsDestructible { get; set; } = true;
+        public void ReassignId(int newId) => Id = newId;
 
         /// <summary>
         /// Creates a new <see cref="Shell"/>.
@@ -180,6 +174,9 @@ namespace TanksRebirth.GameContent
             Id = index;
 
             AllShells[index] = this;
+
+            if (owner != null)
+                Owner.OwnedShells.Add(this);
         }
 
         private void StopSounds(int delay, MissionEndContext context, bool result1up)
@@ -444,58 +441,59 @@ namespace TanksRebirth.GameContent
         }
         public void CheckCollisions()
         {
-            if (Server.serverNetManager != null || !Client.IsConnected())
+            var cxt = DestructionContext.WithHostileTank;
+            foreach (var tank in GameHandler.AllTanks)
             {
-                var cxt = DestructionContext.WithHostileTank;
-                foreach (var tank in GameHandler.AllTanks)
+                if (tank is not null)
                 {
-                    if (tank is not null)
+                    if (tank.CollisionCircle.Intersects(HitCircle))
                     {
-                        if (tank.CollisionCircle.Intersects(HitCircle))
+                        if (!CanFriendlyFire)
                         {
-                            if (!CanFriendlyFire)
-                            {
-                                if (tank.Team == Owner.Team && tank != Owner && tank.Team != TeamID.NoTeam)
-                                    cxt = DestructionContext.WithFriendlyTank;
-                            }
-                            else if (Owner != null)
-                            {
-                                if (tank == Owner)
-                                    cxt = DestructionContext.WithFriendlyTank;
-                                if (tank.Team == Owner.Team && tank != Owner && tank.Team != TeamID.NoTeam)
-                                    cxt = DestructionContext.WithFriendlyTank;
-                                else
-                                    cxt = DestructionContext.WithHostileTank;
-                            }
-                            Destroy(cxt);
-                            tank.Damage(new TankHurtContext_Bullet(Owner is PlayerTank, Ricochets, Tier, Owner is not null ? Owner.WorldId : -1));
+                            if (tank.Team == Owner.Team && tank != Owner && tank.Team != TeamID.NoTeam)
+                                cxt = DestructionContext.WithFriendlyTank;
                         }
+                        else if (Owner != null)
+                        {
+                            if (tank == Owner)
+                                cxt = DestructionContext.WithFriendlyTank;
+                            if (tank.Team == Owner.Team && tank != Owner && tank.Team != TeamID.NoTeam)
+                                cxt = DestructionContext.WithFriendlyTank;
+                            else
+                                cxt = DestructionContext.WithHostileTank;
+                        }
+                        Destroy(cxt);
+                        tank.Damage(new TankHurtContext_Bullet(Owner is PlayerTank, Ricochets, Tier, Owner is not null ? Owner.WorldId : -1));
                     }
                 }
+            }
 
-                foreach (var bullet in AllShells)
+            foreach (var bullet in AllShells)
+            {
+                if (bullet is not null && bullet != this)
                 {
-                    if (bullet is not null && bullet != this)
+                    if (bullet.Hitbox.Intersects(Hitbox))
                     {
-                        if (bullet.Hitbox.Intersects(Hitbox))
-                        {
-                            if (bullet.IsDestructible)
-                                bullet.Destroy(DestructionContext.WithShell);
-                            if (IsDestructible)
-                                Destroy(DestructionContext.WithShell);
+                        if (bullet.IsDestructible)
+                            bullet.Destroy(DestructionContext.WithShell);
+                        if (IsDestructible)
+                            Destroy(DestructionContext.WithShell);
 
-                            // if two indestructible bullets come together, destroy them both. too powerful!
-                            if (!bullet.IsDestructible && !IsDestructible)
-                            {
-                                bullet.Destroy(DestructionContext.WithShell);
-                                Destroy(DestructionContext.WithShell);
-                            }
+                        // if two indestructible bullets come together, destroy them both. too powerful!
+                        if (!bullet.IsDestructible && !IsDestructible)
+                        {
+                            bullet.Destroy(DestructionContext.WithShell);
+                            Destroy(DestructionContext.WithShell);
                         }
                     }
                 }
             }
         }
         public void Remove() {
+            if (Owner != null)
+                if (Owner.OwnedShells != null)
+                    Owner.OwnedShells.Remove(this);
+
             TankGame.OnFocusLost -= TankGame_OnFocusLost;
             TankGame.OnFocusRegained -= TankGame_OnFocusRegained;
             GameProperties.OnMissionEnd -= StopSounds;
@@ -520,8 +518,6 @@ namespace TanksRebirth.GameContent
                 }
                 GameHandler.ParticleSystem.MakeSmallExplosion(Position, 8, 10, 1.25f, 15);
             }
-            if (Owner != null)
-                Owner.OwnedShellCount--;
             //_flame?.Destroy();
             _loopingSound?.Instance?.Stop();
             _loopingSound?.Dispose();
@@ -536,8 +532,7 @@ namespace TanksRebirth.GameContent
                     if (context == DestructionContext.WithHostileTank || context == DestructionContext.WithMine || context == DestructionContext.WithShell)
                         PlayerTank.PlayerStatistics.ShellHitsThisCampaign++;
             }
-            if (Server.serverNetManager != null)
-                Client.SyncShellDestroy(Id, context);
+            // Client.SyncShellDestroy(Id, context);
             OnDestroy?.Invoke(this, context);
             Remove();
         }
@@ -549,7 +544,7 @@ namespace TanksRebirth.GameContent
 
             if (DebugUtils.DebugLevel == 1 && HomeProperties.Speed > 0)
                 Collision.DoRaycast(Position2D, HomeProperties.Target, (int)HomeProperties.Radius, true);
-            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"RicochetsLeft: {RicochetsRemaining}\nTier: {Tier}", MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 20), 1, centered: true);
+            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"RicochetsLeft: {RicochetsRemaining}\nTier: {Tier}\nId: {Id}", MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 20), 1, centered: true);
 
             for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++)
             {

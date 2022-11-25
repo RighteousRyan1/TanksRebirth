@@ -313,7 +313,7 @@ namespace TanksRebirth.GameContent.UI
 
             SuicideCount = stats.SuicidesThisCampaign;
 
-            LivesRemaining = PlayerTank.Lives;
+            LivesRemaining = PlayerTank.GetMyLives();
 
             // then, we determine the number of possible lives by checking how many extra life missions
             // there were this campaign, along with adding the starting life count.

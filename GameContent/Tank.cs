@@ -147,6 +147,7 @@ namespace TanksRebirth.GameContent
     }
     public abstract class Tank
     {
+        #region TexPack
         public static Dictionary<string, Texture2D> Assets = new();
 
         public static string AssetRoot;
@@ -221,6 +222,7 @@ namespace TanksRebirth.GameContent
                 }
             }
         }
+        #endregion
 
         #region Events
         public delegate void DamageDelegate(Tank victim, bool destroy, ITankHurtContext context);
@@ -237,6 +239,9 @@ namespace TanksRebirth.GameContent
         public static event PreUpdateDelegate OnPreUpdate;
         public delegate void PostUpdateDelegate(Tank tank);
         public static event PostUpdateDelegate OnPostUpdate;
+
+        public delegate void InstancedDestroyDelegate();
+        public event InstancedDestroyDelegate OnDestroy;
         #endregion
 
         public static World CollisionsWorld = new(Vector2.Zero);
@@ -255,12 +260,11 @@ namespace TanksRebirth.GameContent
         public Matrix View { get; set; }
         /// <summary>The projection from the screen to the <see cref="Model"/>.</summary>
         public Matrix Projection { get; set; }
-
-        public event EventHandler OnDestroy;
-
         public int WorldId { get; set; }
 
         public TankProperties Properties = new();
+
+        public List<Shell> OwnedShells = new();
 
         public Vector2 Position;
         public Vector2 Velocity;
@@ -274,7 +278,7 @@ namespace TanksRebirth.GameContent
         /// <summary>The 2D rectangle-represented hitbox of this <see cref="Tank"/>.</summary>
         public Rectangle CollisionBox => new((int)(Position.X - TNK_WIDTH / 2 + 3), (int)(Position.Y - TNK_WIDTH / 2 + 2), (int)TNK_WIDTH - 8, (int)TNK_HEIGHT - 4);
         /// <summary>How many <see cref="Shell"/>s this <see cref="Tank"/> owns.</summary>
-        public int OwnedShellCount { get; internal set; }
+        public int OwnedShellCount => OwnedShells.Count;
         /// <summary>How many <see cref="Mine"/>s this <see cref="Tank"/> owns.</summary>
         public int OwnedMineCount { get; internal set; }
         /// <summary>Whether or not this <see cref="Tank"/> is currently turning.</summary>
@@ -290,12 +294,10 @@ namespace TanksRebirth.GameContent
         public bool Dead { get; set; }
         /// <summary>Whether or not this tank is used for ingame purposes or not.</summary>
         public bool IsIngame { get; set; } = true;
-
         public Vector3 Position3D => Position.ExpandZ();
         public Vector3 Velocity3D => Velocity.ExpandZ();
-        #endregion
-
         public Vector3 Scaling = Vector3.One;
+        #endregion
 
         #region ModelBone & ModelMesh
         public Matrix[] boneTransforms;
@@ -465,8 +467,6 @@ namespace TanksRebirth.GameContent
 
             if (!MainMenu.Active && (!GameProperties.InMission || IntermissionSystem.IsAwaitingNewMission))
                 Velocity = Vector2.Zero;
-            if (OwnedShellCount < 0)
-                OwnedShellCount = 0;
             if (OwnedMineCount < 0)
                 OwnedMineCount = 0;
 
@@ -501,7 +501,7 @@ namespace TanksRebirth.GameContent
             if (Dead || Properties.Immortal)
                 return;
 
-            if (Server.serverNetManager != null)
+            // if (Server.serverNetManager != null)
                 Client.SyncDamage(WorldId);
 
             if (Properties.Armor is not null) {
@@ -526,7 +526,11 @@ namespace TanksRebirth.GameContent
 
             GameProperties.OnMissionStart -= OnMissionStart;
 
-            OnDestroy?.Invoke(this, new());
+            // i think this is right?
+            Dead = true;
+
+            OnDestroy?.Invoke();
+
             var killSound1 = "Assets/sounds/tnk_destroy";
             SoundPlayer.PlaySoundInstance(killSound1, SoundContext.Effect, 0.2f, gameplaySound: true);
             if (this is AITank t)
@@ -554,6 +558,8 @@ namespace TanksRebirth.GameContent
                 {
                     PlayerID.Blue => TankDeathMark.CheckColor.Blue,
                     PlayerID.Red => TankDeathMark.CheckColor.Red,
+                    PlayerID.GreenPlr => TankDeathMark.CheckColor.Green,
+                    PlayerID.YellowPlr => TankDeathMark.CheckColor.Yellow, // TODO: change these colors.
                     _ => throw new Exception()
                 };
 
@@ -624,7 +630,7 @@ namespace TanksRebirth.GameContent
                 GameHandler.ParticleSystem.MakeSmallExplosion(Position3D, 15, 20, 1.3f, 30);
             }
             doDestructionFx();
-            Remove();
+            Remove(false);
         }
         /// <summary>Lay a <see cref="TankFootprint"/> under this <see cref="Tank"/>.</summary>
         public virtual void LayFootprint(bool alt) {
@@ -664,10 +670,10 @@ namespace TanksRebirth.GameContent
                         if (this is PlayerTank pt)
                         {
                             if (NetPlay.IsClientMatched(pt.PlayerId))
-                                Client.SyncBulletFire(shell.Tier, shell.Position, shell.Velocity, Properties.RicochetCount, WorldId);
+                                Client.SyncBulletFire(shell.Tier, shell.Position, shell.Velocity, Properties.RicochetCount, WorldId, shell.Id);
                         }
                         else
-                            Client.SyncBulletFire(shell.Tier, shell.Position, shell.Velocity, Properties.RicochetCount, WorldId);
+                            Client.SyncBulletFire(shell.Tier, shell.Position, shell.Velocity, Properties.RicochetCount, WorldId, shell.Id);
                     }
 
                     DoShootParticles(defPos);
@@ -700,8 +706,6 @@ namespace TanksRebirth.GameContent
             /*var force = (Position - newPos) * Recoil;
             Velocity = force;
             Body.ApplyForce(force);*/
-
-            OwnedShellCount += Properties.ShellShootCount;
 
             timeSinceLastAction = 0;
 
@@ -775,13 +779,19 @@ namespace TanksRebirth.GameContent
                     Client.SyncMinePlace(mine.Position, mine.DetonateTime, WorldId);
             }
             else
-            {
                 Client.SyncMinePlace(mine.Position, mine.DetonateTime, WorldId);
-            }
 
             OnLayMine?.Invoke(this, ref mine);
         }
         public virtual void Render() {
+            foreach (var shell in OwnedShells) {
+                SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"Owned by: {(this is PlayerTank ? PlayerID.Collection.GetKey(((PlayerTank)shell.Owner).PlayerType) : TankID.Collection.GetKey(((AITank)shell.Owner).Tier))}",
+                    MatrixUtils.ConvertWorldToScreen(Vector3.Zero, shell.World, shell.View, shell.Projection) - new Vector2(0, 20), this is PlayerTank ? PlayerID.PlayerTankColors[((PlayerTank)shell.Owner).PlayerType].ToColor() : AITank.TankDestructionColors[((AITank)shell.Owner).Tier], Color.White, Vector2.One.ToResolution(), 0f, 2f);
+            }
+
+            if (Dead)
+                return;
+
             Projection = TankGame.GameProjection;
             View = TankGame.GameView;
             foreach (var cosmetic in Cosmetics)
@@ -843,16 +853,13 @@ namespace TanksRebirth.GameContent
 
             for (int i = 0; i < info.Length; i++)
                 DebugUtils.DrawDebugString(TankGame.SpriteRenderer, info[i], MatrixUtils.ConvertWorldToScreen(Vector3.Up * 20, World, View, Projection) - new Vector2(0, ((i * 20).ToResolutionY()) + 8), 1, centered: true, color: Color.Red);
-
         }
         public float CurShootStun { get; private set; } = 0;
         public float CurShootCooldown { get; private set; } = 0;
         public float CurMineCooldown { get; private set; } = 0;
         public float CurMineStun { get; private set; } = 0;
-
         public uint timeSinceLastAction = 15000;
-
-        public virtual void Remove() 
+        public virtual void Remove(bool nullifyMe) 
         {            
             if (CollisionsWorld.BodyList.Contains(Body))
                 CollisionsWorld.Remove(Body);
@@ -861,6 +868,9 @@ namespace TanksRebirth.GameContent
                     if ((string)particle.Tag == $"cosmetic_2d_{GetHashCode()}") // remove all particles related to this tank
                         particle.Destroy();
             GameProperties.OnMissionStart -= OnMissionStart;
+
+            if (nullifyMe)
+                OwnedShells = null;
         }
     }
     public class TankProperties
@@ -1053,6 +1063,8 @@ namespace TanksRebirth.GameContent
         {
             Blue,
             Red,
+            Green,
+            Yellow,
             White
         }
         /// <summary>Resurrects <see cref="StoredTank"/>.</summary>

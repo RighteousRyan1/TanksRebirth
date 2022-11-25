@@ -725,7 +725,7 @@ namespace TanksRebirth
 
             InputUtils.PollEvents();
 
-            bool shouldUpdate = Client.IsConnected() || (IsActive && !GameUI.Paused);
+            bool shouldUpdate = Client.IsConnected() || (IsActive && !GameUI.Paused && !CampaignCompleteUI.IsViewingResults);
 
             if (shouldUpdate)
             {
@@ -941,11 +941,10 @@ namespace TanksRebirth
 
             DebugUtils.DrawDebugString(SpriteRenderer, $"Current Mission: {GameProperties.LoadedCampaign.CurrentMission.Name}\nCurrent Campaign: {GameProperties.LoadedCampaign.MetaData.Name}", WindowUtils.WindowBottomLeft - new Vector2(-4, 40), 3, centered: false);
 
-            ChatSystem.DrawMessages();
-
             #endregion
-
             SpriteRenderer.End();
+
+            ChatSystem.DrawMessages();
 
             SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: DefaultRasterizer);
             GameHandler.RenderUI();
