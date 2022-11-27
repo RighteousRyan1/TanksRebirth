@@ -54,7 +54,7 @@ namespace TanksRebirth.Net
             var packet = reader.GetPacket();
             if (DebugUtils.DebuggingEnabled) {
                 if (deliveryMethod != DeliveryMethod.Unreliable) {
-                    GameHandler.ClientLog.Write($"Packet Recieved: {packet} from peer {peer.Id}.", Internals.LogType.Debug);
+                    // GameHandler.ClientLog.Write($"Packet Recieved: {packet} from peer {peer.Id}.", Internals.LogType.Debug);
 
                     ChatSystem.SendMessage($"[DEBUG]: Recieved packet {packet} from peer {peer.Id}", Color.Blue);
                 }
@@ -256,10 +256,12 @@ namespace TanksRebirth.Net
                     // reality: -1, 0
                     // equation: -1 > 0
                     // result: break from the loop
-                    if (GameHandler.AllTanks[ownerId] is null || GameHandler.AllTanks[ownerId].OwnedShells.Count > ownerShellIndex - 1
-                        || GameHandler.AllTanks[ownerId].OwnedShells.Count <= ownerShellIndex)
-                        break;
-                    GameHandler.AllTanks[ownerId].OwnedShells[ownerShellIndex].Destroy((Shell.DestructionContext)cxt);
+                    //if (GameHandler.AllTanks[ownerId].OwnedShells.Count <= ownerShellIndex - 1)
+                        //break;
+                    if (GameHandler.AllTanks[ownerId] is not null) 
+                        if (GameHandler.AllTanks[ownerId].OwnedShells.Count > 0)
+                            if (GameHandler.AllTanks[ownerId].OwnedShells.Count > ownerShellIndex)
+                            GameHandler.AllTanks[ownerId].OwnedShells[ownerShellIndex].Destroy((Shell.DestructionContext)cxt, wasSentByAnotherClient: true);
                     //Shell.AllShells[destroyedShellId]?.Destroy((Shell.DestructionContext)cxt);
 
                     break;
@@ -352,7 +354,7 @@ namespace TanksRebirth.Net
             var packet = reader.GetPacket();
             if (DebugUtils.DebuggingEnabled) {
                 if (deliveryMethod != DeliveryMethod.Unreliable) {
-                    GameHandler.ClientLog.Write($"Packet Recieved: {packet} from peer {peer.Id}.", Internals.LogType.Debug);
+                    // GameHandler.ClientLog.Write($"Packet Recieved: {packet} from peer {peer.Id}.", Internals.LogType.Debug);
 
                     ChatSystem.SendMessage($"[DEBUG]: Server recieved packet {packet} from peer {peer.Id}", Color.Blue);
                 }

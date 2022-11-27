@@ -931,17 +931,20 @@ namespace TanksRebirth.GameContent.UI
             if (!_initialized || !_diffButtonsInitialized)
                 return;
 
-            if (_curMenuMission.Blocks != null) {
-                var missionComplete = GameHandler.NothingCanHappenAnymore(_curMenuMission, out bool victory);
+            if (!IntermissionSystem.IsAwaitingNewMission || IntermissionSystem.BlackAlpha <= 0f)
+            {
+                if (_curMenuMission.Blocks != null) {
+                    var missionComplete = GameHandler.NothingCanHappenAnymore(_curMenuMission, out bool victory);
 
-                if (missionComplete) {
-                    // TODO: finish.
-                    _newMisCd += TankGame.DeltaTime;
-                    if (_newMisCd > _timeToWait)
-                        LoadTemplateMission();
+                    if (missionComplete) {
+                        // TODO: finish.
+                        _newMisCd += TankGame.DeltaTime;
+                        if (_newMisCd > _timeToWait)
+                            LoadTemplateMission();
+                    }
+                    else
+                        _newMisCd = 0;
                 }
-                else
-                    _newMisCd = 0;
             }
 
             #region General Stuff

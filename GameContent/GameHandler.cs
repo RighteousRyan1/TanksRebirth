@@ -61,8 +61,7 @@ namespace TanksRebirth.GameContent
             GameProperties.OnMissionStart += HandleStart;
         }
 
-        private static void HandleStart()
-        {
+        private static void HandleStart() {
             InterpCheck = true;
         }
 
@@ -183,14 +182,6 @@ namespace TanksRebirth.GameContent
         }
         internal static void UpdateAll()
         {
-            if (InputUtils.KeyJustPressed(Keys.Y))
-            {
-                using (var fs = new FileStream("C:\\Users\\ryanr\\Desktop\\screenshot.png", FileMode.OpenOrCreate))
-                {
-                    TankGame.GameTarget.SaveAsPng(fs, TankGame.GameTarget.Width, TankGame.GameTarget.Height);
-                    ChatSystem.SendMessage("Saved image to " + fs.Name, Color.Lime);
-                }
-            }
             if (MainMenu.Active)
                 PlayerTank.SetLives(5);
             if (MainMenu.Active)
@@ -226,8 +217,6 @@ namespace TanksRebirth.GameContent
                 foreach (var fp in TankFootprint.footprints)
                     fp?.Update();
             }
-
-
             if (GameProperties.InMission)
             {
                 TankMusicSystem.Update();
@@ -240,9 +229,9 @@ namespace TanksRebirth.GameContent
             }
             else
                 if (!GameProperties.InMission)
-                if (TankMusicSystem.Songs is not null)
-                    foreach (var song in TankMusicSystem.Songs)
-                        song.Volume = 0;
+                    if (TankMusicSystem.Songs is not null)
+                        foreach (var song in TankMusicSystem.Songs)
+                            song.Volume = 0;
             LevelEditor.Update();
 
             foreach (var expl in Explosion.Explosions)

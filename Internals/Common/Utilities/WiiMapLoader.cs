@@ -8,6 +8,9 @@ namespace TanksRebirth.Internals.Common.Utilities;
 // todo: implement
 public readonly struct WiiMap
 {
+    public const int TNK_PLR_ID = -1;
+    public const int TNK_E_ID = -2;
+
     public readonly byte[] RawData;
 
     public readonly int Width;
@@ -33,17 +36,11 @@ public readonly struct WiiMap
             for (int j = 0; j < Height; j++) {
                 var blockTypeOrig = BitUtils.GetInt(RawData, (((j * Width) + i) << 2) + 0x10);
 
-                var blockType = BitUtils.ConvertToEditorSpace(blockTypeOrig);
+                var blockType = ConvertToEditorSpace(blockTypeOrig);
                 MapItems.Add(new(new(i, j), blockType));
             }
         }
     }
-}
-
-public static class BitUtils
-{
-    public const int TNK_PLR_ID = -1;
-    public const int TNK_E_ID = -2;
     public static KeyValuePair<int, int> ConvertToEditorSpace(int input)
     {
         if (input == 0)
@@ -62,17 +59,5 @@ public static class BitUtils
             throw new Exception("Invalid conversion process to a " + nameof(WiiMap) + ".");
         // unfortunately we cannot do much more than this, since enemy spawns are handled in the parameter file.
         // ...but we can find where they would spawn. go ahead and put a brown tank on the blue team there.
-    }
-    public static int GetInt(byte[] buffer, int offset)
-    {
-        if (offset >= buffer.Length)
-            return 0;
-        if (BitConverter.IsLittleEndian) {
-            byte[] _buffer = new byte[0x4];
-            for (int i = 0x0; i < 0x4; i++)
-                _buffer[i ^ 0x3] = buffer[offset + i];
-            return BitConverter.ToInt32(_buffer, 0x0);
-        }
-        return BitConverter.ToInt32(buffer, offset);
     }
 }

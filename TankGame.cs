@@ -796,6 +796,13 @@ namespace TanksRebirth
 
         public static event Action<GameTime> OnPostDraw;
 
+        public static void SaveRenderTarget(string path = "C:\\Users\\ryanr\\Desktop\\screenshot.png")
+        {
+            using var fs = new FileStream(path, FileMode.OpenOrCreate);
+            GameTarget.SaveAsPng(fs, GameTarget.Width, GameTarget.Height);
+            ChatSystem.SendMessage("Saved image to " + fs.Name, Color.Lime);
+        }
+
         protected override void Draw(GameTime gameTime)
         {
             if(gameTarget == null || gameTarget.IsDisposed || gameTarget.Size() != WindowUtils.WindowBounds) {

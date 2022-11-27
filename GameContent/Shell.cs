@@ -507,7 +507,7 @@ namespace TanksRebirth.GameContent
         /// Destroys this <see cref="Shell"/>.
         /// </summary>
         /// <param name="playSound">Whether or not to play the bullet destruction sound.</param>
-        public void Destroy(DestructionContext context, bool playSound = true)
+        public void Destroy(DestructionContext context, bool playSound = true, bool wasSentByAnotherClient = false)
         {
             _shootSound?.Instance?.Stop(true);
             // ParticleSystem.MakeSparkEmission(Position, 10);
@@ -532,7 +532,8 @@ namespace TanksRebirth.GameContent
                     if (context == DestructionContext.WithHostileTank || context == DestructionContext.WithMine || context == DestructionContext.WithShell)
                         PlayerTank.PlayerStatistics.ShellHitsThisCampaign++;
             }
-            Client.SyncShellDestroy(this, context);
+            if (!wasSentByAnotherClient)
+                Client.SyncShellDestroy(this, context);
             OnDestroy?.Invoke(this, context);
             Remove();
         }
