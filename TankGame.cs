@@ -947,6 +947,8 @@ namespace TanksRebirth
             ChatSystem.DrawMessages();
 
             SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: DefaultRasterizer);
+            if (LevelEditor.Active)
+                LevelEditor.Render();
             GameHandler.RenderUI();
             IntermissionSystem.Draw(SpriteRenderer);
             if (CampaignCompleteUI.IsViewingResults)

@@ -1707,6 +1707,8 @@ namespace TanksRebirth.GameContent
 
             //CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
 
+            if (Dead)
+                return;
             if (Tier == TankID.Commando)
             {
                 Model.Meshes["Laser_Beam"].ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));

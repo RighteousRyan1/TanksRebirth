@@ -3,6 +3,7 @@ using System;
 using TanksRebirth.Internals.Common.Framework.Input;
 using TanksRebirth.Internals.Common.GameUI;
 using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Internals.UI;
 
 namespace TanksRebirth.GameContent.UI
 {
@@ -82,6 +83,7 @@ namespace TanksRebirth.GameContent.UI
                 IsVisible = false
             };
             AmbientText.SetDimensions(() => new Vector2(950, 675).ToResolution(), () => new Vector2(500, 150).ToResolution());
+            UIElement.CunoSucks();
         }
 
         public static void HideAll()

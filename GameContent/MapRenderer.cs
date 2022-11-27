@@ -90,7 +90,7 @@ namespace TanksRebirth.GameContent
         {
             AssetRoot = "Assets/textures/ingame";
             static Texture2D get(string s)
-                => GameResources.GetGameResource<Texture2D>(Path.Combine(AssetRoot, s));
+                => GameResources.GetGameResource<Texture2D>(Path.Combine(AssetRoot, s), premultiply: true);
 
             Assets["block.1"] = get("block.1");
             Assets["block.2"] = get("block.2");

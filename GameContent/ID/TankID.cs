@@ -35,7 +35,7 @@ namespace TanksRebirth.GameContent.ID
         public const int Gold = 18;
         public const int Obsidian = 19;
 
-        // here separates the master mod tanks from the advanced mod tanks
+        // here separates the master mod tanks from the marble mod tanks
 
         public const int Granite = 20;
         public const int Bubblegum = 21;

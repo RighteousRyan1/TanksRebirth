@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.Internals
 {
@@ -45,7 +46,7 @@ namespace TanksRebirth.Internals
 			return loaded;
 		}
 
-		public static T GetGameResource<T>(string name, bool addDotPng = true, bool addContentPrefix = true) where T : class
+		public static T GetGameResource<T>(string name, bool addDotPng = true, bool addContentPrefix = true, bool premultiply = false) where T : class
 		{
 			if (TankGame.Instance is null)
 				QueueAsset<T>(name);
@@ -58,6 +59,11 @@ namespace TanksRebirth.Internals
 				object result = Texture2D.FromFile(TankGame.Instance.GraphicsDevice, Path.Combine(addContentPrefix ? TankGame.Instance.Content.RootDirectory : string.Empty, name + (addDotPng ? ".png" : string.Empty)));
 				ResourceCache[name + (addDotPng ? ".png" : string.Empty)] = result;
 
+				if (premultiply) {
+					var refUse = (Texture2D)result;
+					ColorUtils.FromPremultiplied(ref refUse);
+					result = refUse;
+				}
 				return (T)result;
 			}
 

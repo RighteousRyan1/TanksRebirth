@@ -250,7 +250,15 @@ namespace TanksRebirth.Net
                     var ownerId = reader.GetInt();
                     var ownerShellIndex = reader.GetInt();
                     var cxt = reader.GetByte();
-
+                    // sends: 0
+                    // count: 0
+                    // perform: 0 - 1
+                    // reality: -1, 0
+                    // equation: -1 > 0
+                    // result: break from the loop
+                    if (GameHandler.AllTanks[ownerId] is null || GameHandler.AllTanks[ownerId].OwnedShells.Count > ownerShellIndex - 1
+                        || GameHandler.AllTanks[ownerId].OwnedShells.Count <= ownerShellIndex)
+                        break;
                     GameHandler.AllTanks[ownerId].OwnedShells[ownerShellIndex].Destroy((Shell.DestructionContext)cxt);
                     //Shell.AllShells[destroyedShellId]?.Destroy((Shell.DestructionContext)cxt);
 
@@ -268,7 +276,9 @@ namespace TanksRebirth.Net
                     var shellOwner = reader.GetInt();
 
                     // GameHandler.AllTanks[shellOwner].Shoot(true);
-                    new Shell(shellPos, shellVel, shellType, GameHandler.AllTanks[shellOwner], ricochets: shellRicochets);
+                    var shell = new Shell(shellPos, shellVel, shellType, GameHandler.AllTanks[shellOwner], ricochets: shellRicochets);
+
+                    // ChatSystem.SendMessage($"Pos: {shell.Position} | Vel: {shell.Velocity}", Color.White);
                     break;
                 case PacketType.MinePlacement:
                     var minePos = reader.GetVector2();

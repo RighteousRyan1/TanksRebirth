@@ -183,6 +183,14 @@ namespace TanksRebirth.GameContent
         }
         internal static void UpdateAll()
         {
+            if (InputUtils.KeyJustPressed(Keys.Y))
+            {
+                using (var fs = new FileStream("C:\\Users\\ryanr\\Desktop\\screenshot.png", FileMode.OpenOrCreate))
+                {
+                    TankGame.GameTarget.SaveAsPng(fs, TankGame.GameTarget.Width, TankGame.GameTarget.Height);
+                    ChatSystem.SendMessage("Saved image to " + fs.Name, Color.Lime);
+                }
+            }
             if (MainMenu.Active)
                 PlayerTank.SetLives(5);
             if (MainMenu.Active)
@@ -338,6 +346,9 @@ namespace TanksRebirth.GameContent
                     TankMusicSystem.PlayAll();
                 }
             }
+            if (LevelEditor.Active)
+                if (InputUtils.KeyJustPressed(Keys.T))
+                    PlacementSquare.DrawStacks = !PlacementSquare.DrawStacks;
             if (!MainMenu.Active)
             {
                 if (InputUtils.KeyJustPressed(Keys.Z))
@@ -653,9 +664,6 @@ namespace TanksRebirth.GameContent
 
             ParticleSystem.RenderParticles();
 
-            if (LevelEditor.Active)
-                LevelEditor.Render();
-
             if (!MainMenu.Active && !LevelEditor.Active)
             {
                 if (IntermissionSystem.IsAwaitingNewMission)
@@ -792,7 +800,7 @@ namespace TanksRebirth.GameContent
 
         public static PlayerTank SpawnMe(int playerType, int team)
         {
-            var pos = TankGame.OverheadView ? PlacementSquare.CurrentlyHovered.Position : MatrixUtils.GetWorldPosition(MouseUtils.MousePosition);
+            var pos = LevelEditor.Active ? PlacementSquare.CurrentlyHovered.Position : MatrixUtils.GetWorldPosition(MouseUtils.MousePosition);
             var myTank = new PlayerTank(playerType);
 
             myTank.Team = team;

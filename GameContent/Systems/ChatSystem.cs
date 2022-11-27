@@ -19,6 +19,8 @@ namespace TanksRebirth.GameContent.Systems
         }
 
         public static List<ChatMessage> ChatMessages { get; private set; } = new();
+        public static int Alerts;
+        public static bool IsOpen;
         public static ChatMessageCorner Corner { get; set; } = ChatMessageCorner.TopLeft;
 
         public static Vector2 Scale = new(0.8f);
@@ -36,15 +38,10 @@ namespace TanksRebirth.GameContent.Systems
         /// <param name="sender">The sender of the message.</param>
         /// <param name="wasRecieved">If true, will not send the message to the server in a multiplayer context.</param>
         /// <returns>The <see cref="ChatMessage"/> sent to the chat.</returns>
-        public static ChatMessage SendMessage(object text, Color color, object sender = null, bool wasRecieved = false)
+        public static ChatMessage[] SendMessage(string text, Color color, object sender = null, bool wasRecieved = false)
         {
-            ChatMessage msg;
-            if (sender is not null)
-                msg = new ChatMessage($"<{sender}> {text}", color);
-            else
-                msg = new ChatMessage($"{text}", color);
 
-            ChatMessages.Add(msg);
+            List<ChatMessage> msgs = new();
 
             if (sender is not null)
             {
@@ -53,13 +50,24 @@ namespace TanksRebirth.GameContent.Systems
                     Client.SendMessage(text.ToString(), color, sender.ToString());
             }
 
-            return msg;
+            var split = text.Split('\n');
+
+            for (int i = 0; i < split.Length; i++)
+            {
+                if (sender is not null)
+                    msgs.Add(new ChatMessage($"<{sender}> {text}", color));
+                else
+                    msgs.Add(new ChatMessage($"{text}", color));
+                Alerts++;
+            }
+            ChatMessages.AddRange(msgs);
+            return msgs.ToArray();
         }
 
         private static void DrawChatBox(out Rectangle chatBox, out Rectangle typeBox)
         {
             var measureY = ChatMessage.Font.MeasureString("X").Y * Scale.Y;
-            var chatRect = new Rectangle(8, 8, 600, (int)(measureY * MessagesAtOnce)).ToResolution();
+            var chatRect = new Rectangle(8, 8, 1000, (int)(measureY * MessagesAtOnce)).ToResolution();
 
             var typeRect = new Rectangle(chatRect.X, chatRect.Y + chatRect.Height + (int)8.ToResolutionY(), chatRect.Width, (int)(ChatMessage.Font.MeasureString(CurTyping).Y + 32.ToResolutionY()));
 
@@ -71,16 +79,16 @@ namespace TanksRebirth.GameContent.Systems
             typeBox = typeRect;
         }
 
-        private static bool _shouldDrawChat;
-
         public static void DrawMessages()
         {
             if (InputUtils.KeyJustPressed(Keys.PageUp))
-                _shouldDrawChat = false;
+                IsOpen = false;
             if (InputUtils.KeyJustPressed(Keys.PageDown))
-                _shouldDrawChat = true;
-            if (_shouldDrawChat)
+                IsOpen = true;
+            if (IsOpen)
             {
+                Alerts = 0;
+
                 TankGame.SpriteRenderer.Begin();
 
                 DrawChatBox(out var chatRect, out var typeRect);
@@ -178,6 +186,10 @@ namespace TanksRebirth.GameContent.Systems
 
                 TankGame.SpriteRenderer.End();
             }
+            else
+            {
+                // TODO: draw an alertbox saying "!1" or something similar.
+            }
         }
 
         private static void HandleInput(object sender, TextInputEventArgs e)
@@ -202,7 +214,7 @@ namespace TanksRebirth.GameContent.Systems
                     TankGame.Instance.Window.TextInput -= HandleInput;
                     ActiveHandle = false;
 
-                    if (CurTyping.Contains('\n'))
+                    /*if (CurTyping.Contains('\n'))
                     {
                         var split = CurTyping.Split('\n');
 
@@ -224,7 +236,12 @@ namespace TanksRebirth.GameContent.Systems
                             sender1 = NetPlay.CurrentClient.Name;
 
                         SendMessage(CurTyping, Color.White, sender1);
-                    }
+                    }*/
+                    string sender1 = null;
+
+                    if (Client.IsConnected())
+                        sender1 = NetPlay.CurrentClient.Name;
+                    SendMessage(CurTyping, Color.White, sender1);
                     CurTyping = string.Empty;
                 }
                 else

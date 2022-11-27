@@ -152,7 +152,7 @@ namespace TanksRebirth.Net
         /// <c>AllTanks[<paramref name="tankId"/>].Shoot()</c>
         /// </summary>
         /// <param name="tankId">The identified of the <see cref="Tank"/> that fired.</param>
-        public static void SyncBulletFire(int type, Vector3 position, Vector3 velocity, uint ricochets, int owner, int id)
+        public static void SyncShellFire(Shell shell)
         {
             if (MainMenu.Active || !IsConnected())
                 return;
@@ -160,12 +160,14 @@ namespace TanksRebirth.Net
             NetDataWriter message = new();
             message.Put(PacketType.ShellFire);
 
-            message.Put(type);
-            message.Put(position);
-            message.Put(velocity);
-            message.Put(ricochets);
-            message.Put(owner);
-            message.Put(id);
+            message.Put(shell.Tier);
+            message.Put(shell.Position);
+            message.Put(shell.Velocity);
+            message.Put(shell.RicochetsRemaining);
+            message.Put(shell.Owner.WorldId);
+            message.Put(shell.Id);
+
+            // ChatSystem.SendMessage($"Pos: {shell.Position} | Vel: {shell.Velocity}", Color.White);
 
             // FIXME: could probably use more syncing... who cares?
 
@@ -192,6 +194,7 @@ namespace TanksRebirth.Net
                 return;
             NetDataWriter message = new();
             message.Put(PacketType.ShellDestroy);
+            // TODO: bool hasOwner to decide whether or not to subtract from an owner's shell count
 
             message.Put(shell.Owner.WorldId);
             // send the index of the shell in the owner's OwnedShell array for destruction on other clients

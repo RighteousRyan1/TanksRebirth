@@ -22,7 +22,6 @@ using TanksRebirth.GameContent.Systems;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals;
 using TanksRebirth.Net;
-using System.Xml.Linq;
 
 namespace TanksRebirth.GameContent.UI
 {
@@ -173,7 +172,7 @@ namespace TanksRebirth.GameContent.UI
             Crate.Rotation.X = -MathHelper.PiOver4;
             Crate.Rotation.Z = 0f;
             Crate.LidRotation = Crate.Rotation;
-            LogoTexture = GameResources.GetGameResource<Texture2D>("Assets/tanks_rebirth_logo");
+            LogoTexture = GameResources.GetGameResource<Texture2D>("Assets/tanks_rebirth_logo", premultiply: true);
 
             Projection = Matrix.CreateOrthographic(TankGame.Instance.GraphicsDevice.Viewport.Width, TankGame.Instance.GraphicsDevice.Viewport.Height, -2000f, 5000f);
             //Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), TankGame.Instance.GraphicsDevice.Viewport.AspectRatio, 0.01f, 1000f);
@@ -430,6 +429,11 @@ namespace TanksRebirth.GameContent.UI
                 OnLeftClick = (a) => { MenuState = State.StatsMenu; },
                 Tooltip = "View your all-time statistics for this game!"
             };
+            StatsMenu.OnLeftClick = (a) =>
+            {
+                RequestStats();
+                MenuState = State.StatsMenu;
+            };
             StatsMenu.SetDimensions(() => new Vector2(WindowUtils.WindowWidth / 2 - 90.ToResolutionX(), WindowUtils.WindowHeight - 100.ToResolutionY()), () => new Vector2(180, 50).ToResolution());
             #endregion
 
@@ -443,6 +447,7 @@ namespace TanksRebirth.GameContent.UI
 
             foreach (var e in _menuElements)
                 e.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick", SoundContext.Effect); };
+            UIElement.CunoSucks();
         }
 
         public static void RenderCrate()
@@ -485,6 +490,7 @@ namespace TanksRebirth.GameContent.UI
             Projection = Matrix.CreateOrthographic(TankGame.Instance.GraphicsDevice.Viewport.Width, TankGame.Instance.GraphicsDevice.Viewport.Height, -2000f, 5000f);
             View = Matrix.CreateScale(2) * Matrix.CreateLookAt(new(0, 0, 500), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(MathHelper.PiOver2);
         }
+
         private static bool _diffButtonsInitialized;
         private static void InitializeDifficultyButtons()
         {
@@ -882,10 +888,10 @@ namespace TanksRebirth.GameContent.UI
             StartMPGameButton.IsVisible = visible && Server.serverNetManager is not null;
         }
 
-        // this method is causing considerable amounts of garbage collection!
-        internal static void RenderStats(Vector2 genericStatsPos, Vector2 tankKillsPos, Anchor aligning)
+        private static string[] _info;
+        public static void RequestStats()
         {
-            List<string> info = new()
+            _info = new string[]
             {
                 $"Total Tank Kills: {TankGame.GameData.TotalKills}",
                 $"Tank Kills w/Bullets: {TankGame.GameData.BulletKills}",
@@ -898,9 +904,13 @@ namespace TanksRebirth.GameContent.UI
                 $"Time Played Total: {TankGame.GameData.TimePlayed.StringFormat()} ({(TankGame.GameData.TimePlayed.TotalMinutes < 120 ? $"{TankGame.GameData.TimePlayed.TotalMinutes:0.#} minutes" : $"{TankGame.GameData.TimePlayed.TotalHours:#.#} hours")})",
                 $"Current Play Session: {TankGame.CurrentSessionTimer.Elapsed.StringFormat()}"
             };
+        }
+        // this method is causing considerable amounts of garbage collection!
+        internal static void RenderStats(Vector2 genericStatsPos, Vector2 tankKillsPos, Anchor aligning)
+        {
 
-            for (int i = 0; i < info.Count; i++)
-                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, info[i], genericStatsPos + Vector2.UnitY * (i * 25), Color.White, Vector2.One, 0f, GameUtils.GetAnchor(aligning, TankGame.TextFont.MeasureString(info[i])), 0f); 
+            for (int i = 0; i < _info.Length; i++)
+                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, _info[i], genericStatsPos + Vector2.UnitY * (i * 25), Color.White, Vector2.One, 0f, GameUtils.GetAnchor(aligning, TankGame.TextFont.MeasureString(_info[i])), 0f); 
             TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "Tanks Killed by Type:", tankKillsPos, Color.White, Vector2.One, 0f, GameUtils.GetAnchor(aligning, TankGame.TextFont.MeasureString("Tanks Killed by Type:")), 0f);
             for (int i = 2; i < TankGame.GameData.TankKills.Count; i++) {
                 var elem = TankGame.GameData.TankKills.ElementAt(i);

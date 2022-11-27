@@ -444,7 +444,7 @@ namespace TanksRebirth.GameContent
             var cxt = DestructionContext.WithHostileTank;
             foreach (var tank in GameHandler.AllTanks)
             {
-                if (tank is not null)
+                if (tank is not null && !tank.Dead)
                 {
                     if (tank.CollisionCircle.Intersects(HitCircle))
                     {
@@ -532,7 +532,7 @@ namespace TanksRebirth.GameContent
                     if (context == DestructionContext.WithHostileTank || context == DestructionContext.WithMine || context == DestructionContext.WithShell)
                         PlayerTank.PlayerStatistics.ShellHitsThisCampaign++;
             }
-            // Client.SyncShellDestroy(Id, context);
+            Client.SyncShellDestroy(this, context);
             OnDestroy?.Invoke(this, context);
             Remove();
         }

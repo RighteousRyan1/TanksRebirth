@@ -170,7 +170,7 @@ namespace TanksRebirth.GameContent.Systems
                         if (PlayerTank.Lives[tank.PlayerId] == 0)
                             tank.Remove(true);
                     }
-
+                    // TODO: note to self, this code above is what causes the skill issue.
                     if (Difficulties.Types["AiCompanion"])
                     {
                         tank.Team = TeamID.Magenta;

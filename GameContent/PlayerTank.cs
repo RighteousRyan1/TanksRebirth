@@ -198,6 +198,9 @@ namespace TanksRebirth.GameContent
             if (NetPlay.IsClientMatched(PlayerId))
                 Client.SyncPlayerTank(this);
 
+            if (Dead)
+                return;
+
             //CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
             //Model.Root.Transform = World;
 

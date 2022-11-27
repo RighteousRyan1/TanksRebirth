@@ -78,7 +78,7 @@ namespace TanksRebirth.Internals.UI
         /// <summary>Whether or not the <see cref="UIElement"/> should draw its children before itself.</summary>
         public bool ReverseDrawOrder { get; set; }
 
-        internal static UIPanel cunoSucksElement;
+        private static UIPanel cunoSucksElement;
 
         internal UIElement()
         {

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 
 namespace TanksRebirth.Internals.Common.Utilities;
@@ -103,6 +104,15 @@ public static class ColorUtils
         }
 
         return c;
+    }
+    public static void FromPremultiplied(ref Texture2D texture)
+    {
+        var buffer =  new Color[texture.Width * texture.Height];
+        texture.GetData(buffer);
+
+        for (int i = 0; i < buffer.Length; i++)
+            buffer[i] = Color.FromNonPremultiplied(buffer[i].R, buffer[i].G, buffer[i].B, buffer[i].A);
+        texture.SetData(buffer);
     }
     public static Color ToColor(this Vector3 vec) => new((int)Math.Round(vec.X * 255), (int)Math.Round(vec.Y * 255), (int)Math.Round(vec.Z * 255));
 }

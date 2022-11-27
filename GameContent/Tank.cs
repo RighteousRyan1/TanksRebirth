@@ -311,7 +311,6 @@ namespace TanksRebirth.GameContent
             PostApplyDefaults?.Invoke(this, ref properties);
             Properties = properties;
         }
-
         public virtual void Initialize()
         {
             CannonMesh = Model.Meshes["Cannon"];
@@ -364,7 +363,6 @@ namespace TanksRebirth.GameContent
 
             GameProperties.OnMissionStart += OnMissionStart;
         }
-
         public void Add2DCosmetic(Cosmetic2D cos2d, Func<bool> destroyOn = null)
         {
             if (!MainMenu.Active && IsIngame)
@@ -453,6 +451,9 @@ namespace TanksRebirth.GameContent
         /// <summary>Update this <see cref="Tank"/>.</summary>
         public virtual void Update()
         {
+            if (Dead)
+                return;
+
             OnPreUpdate?.Invoke(this);
 
             Position = Body.Position * UNITS_PER_METER;
@@ -670,10 +671,10 @@ namespace TanksRebirth.GameContent
                         if (this is PlayerTank pt)
                         {
                             if (NetPlay.IsClientMatched(pt.PlayerId))
-                                Client.SyncBulletFire(shell.Tier, shell.Position, shell.Velocity, Properties.RicochetCount, WorldId, shell.Id);
+                                Client.SyncShellFire(shell);
                         }
                         else
-                            Client.SyncBulletFire(shell.Tier, shell.Position, shell.Velocity, Properties.RicochetCount, WorldId, shell.Id);
+                            Client.SyncShellFire(shell);
                     }
 
                     DoShootParticles(defPos);
@@ -784,13 +785,13 @@ namespace TanksRebirth.GameContent
             OnLayMine?.Invoke(this, ref mine);
         }
         public virtual void Render() {
-            foreach (var shell in OwnedShells) {
+            /*foreach (var shell in OwnedShells) {
                 SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"Owned by: {(this is PlayerTank ? PlayerID.Collection.GetKey(((PlayerTank)shell.Owner).PlayerType) : TankID.Collection.GetKey(((AITank)shell.Owner).Tier))}",
                     MatrixUtils.ConvertWorldToScreen(Vector3.Zero, shell.World, shell.View, shell.Projection) - new Vector2(0, 20), this is PlayerTank ? PlayerID.PlayerTankColors[((PlayerTank)shell.Owner).PlayerType].ToColor() : AITank.TankDestructionColors[((AITank)shell.Owner).Tier], Color.White, Vector2.One.ToResolution(), 0f, 2f);
-            }
+            }*/
 
-            if (Dead)
-                return;
+            //if (Dead)
+                //return;
 
             Projection = TankGame.GameProjection;
             View = TankGame.GameView;

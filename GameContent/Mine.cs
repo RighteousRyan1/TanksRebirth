@@ -119,7 +119,7 @@ namespace TanksRebirth.GameContent
 
             OnExplode?.Invoke(this);
 
-            // Client.SyncMineDetonate(Id);
+            Client.SyncMineDetonate(this);
 
             Remove();
         }

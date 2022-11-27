@@ -12,12 +12,14 @@ using TanksRebirth.GameContent.UI;
 using TanksRebirth.Enums;
 using TanksRebirth.Internals.UI;
 using TanksRebirth.GameContent.ID;
+using Microsoft.Xna.Framework.Input;
 
 namespace TanksRebirth.GameContent.Systems.Coordinates
 {
     public class PlacementSquare
     {
         // Drag-and-Drop
+        public static bool DrawStacks = true;
         public static bool IsPlacing { get; private set; }
         public bool HasItem => BlockId > -1 || TankId > -1;
 
@@ -203,23 +205,23 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
                     effect.View = TankGame.GameView;
                     effect.Projection = TankGame.GameProjection;
 
-                    if (BlockId > -1)
-                        if (displayHeights && Block.AllBlocks[BlockId] is not null)
-                        {
-                            if (Block.AllBlocks[BlockId].CanStack)
+                    if (DrawStacks) {
+                        if (BlockId > -1) {
+                            if (displayHeights && Block.AllBlocks[BlockId] is not null)
                             {
-                                var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
+                                if (Block.AllBlocks[BlockId].CanStack) {
+                                    var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
 
-                                SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"{Block.AllBlocks[BlockId].Stack}", pos, Color.White, Color.Black, new Vector2(TankGame.AddativeZoom * 1.5f).ToResolution(), 0f);
-                            }
-                            if (Block.AllBlocks[BlockId].Type == BlockID.Teleporter)
-                            {
-                                var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
+                                    SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"{Block.AllBlocks[BlockId].Stack}", pos, Color.White, Color.Black, new Vector2(TankGame.AddativeZoom * 1.5f).ToResolution(), 0f);
+                                }
+                                if (Block.AllBlocks[BlockId].Type == BlockID.Teleporter) {
+                                    var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
 
-                                SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"TP:{Block.AllBlocks[BlockId].TpLink}", pos, Color.White, Color.Black, new Vector2(TankGame.AddativeZoom * 1.5f).ToResolution(), 0f);
+                                    SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"TP:{Block.AllBlocks[BlockId].TpLink}", pos, Color.White, Color.Black, new Vector2(TankGame.AddativeZoom * 1.5f).ToResolution(), 0f);
+                                }
                             }
                         }
-
+                    }
                     effect.TextureEnabled = true;
                     effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
 
