@@ -42,7 +42,6 @@ namespace TanksRebirth.GameContent
     /// <summary>A class that is used for obstacles for <see cref="Tank"/>s.</summary>
     public class Block : IGameSystem
     {
-
         public delegate void DestroyDelegate(Block block);
         public static event DestroyDelegate OnDestroy;
 
