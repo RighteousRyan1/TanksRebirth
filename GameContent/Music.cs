@@ -66,7 +66,6 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
             => Volume = volume;
         public void Stop()
             => BackingAudio?.Instance.Stop();
-
         public bool IsPaused()
             => BackingAudio.Instance.State == SoundState.Paused;
         public bool IsStopped()

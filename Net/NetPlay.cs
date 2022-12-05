@@ -258,11 +258,14 @@ namespace TanksRebirth.Net
                     // result: break from the loop
                     //if (GameHandler.AllTanks[ownerId].OwnedShells.Count <= ownerShellIndex - 1)
                         //break;
+
+                    // FIXME: crashes if recieving on a dead player. weird.
                     if (GameHandler.AllTanks[ownerId] is not null) 
                         if (GameHandler.AllTanks[ownerId].OwnedShells.Count > 0)
-                            if (GameHandler.AllTanks[ownerId].OwnedShells.Count > ownerShellIndex)
-                            GameHandler.AllTanks[ownerId].OwnedShells[ownerShellIndex].Destroy((Shell.DestructionContext)cxt, wasSentByAnotherClient: true);
-                    //Shell.AllShells[destroyedShellId]?.Destroy((Shell.DestructionContext)cxt);
+                            if (ownerShellIndex > -1)
+                                if (GameHandler.AllTanks[ownerId].OwnedShells.Count > ownerShellIndex)
+                                    if (GameHandler.AllTanks[ownerId]?.OwnedShells[ownerShellIndex] is not null)
+                                        GameHandler.AllTanks[ownerId]?.OwnedShells[ownerShellIndex]?.Destroy((Shell.DestructionContext)cxt, wasSentByAnotherClient: true);
 
                     break;
                 case PacketType.MineDetonate:

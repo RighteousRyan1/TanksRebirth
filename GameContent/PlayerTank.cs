@@ -95,10 +95,7 @@ namespace TanksRebirth.GameContent
         {
             Model = GameResources.GetGameResource<Model>(isPlayerModel ? "Assets/tank_p" : "Assets/tank_e");
             if (copyTier == TankID.None)
-            {
                 _tankTexture = Assets[$"tank_" + PlayerID.Collection.GetKey(playerType).ToLower()];
-                ApplyDefaults(ref Properties);
-            }
             else
             {
                 _tankTexture = Assets[$"tank_" + TankID.Collection.GetKey(copyTier).ToLower()];
@@ -128,18 +125,17 @@ namespace TanksRebirth.GameContent
 
             PlayerType = playerType;
 
-            if (playerType == PlayerID.Red)
-                Properties.ShootPitch = 0.1f;
-
             Team = TeamID.Red;
 
             Dead = true;
 
-            int index = Array.IndexOf(GameHandler.AllPlayerTanks, GameHandler.AllAITanks.First(tank => tank is null));
+            //int index = Array.IndexOf(GameHandler.AllPlayerTanks, GameHandler.AllAITanks.First(tank => tank is null));
 
-            PlayerId = index;
+            PlayerId = playerType; //index;
 
-            GameHandler.AllPlayerTanks[index] = this;
+            GameHandler.AllPlayerTanks[PlayerId] = this;
+            if (copyTier == TankID.None)
+                ApplyDefaults(ref Properties);
 
             int index2 = Array.IndexOf(GameHandler.AllTanks, GameHandler.AllTanks.First(tank => tank is null));
 
@@ -152,19 +148,21 @@ namespace TanksRebirth.GameContent
 
         public override void ApplyDefaults(ref TankProperties properties)
         {
-            properties.ShellCooldown = 5;
-            properties.ShootStun = 5;
+            properties.ShellCooldown = 5; // 5
+            properties.ShootStun = 5; // 5
             properties.ShellSpeed = 3f; // 3f
             properties.MaxSpeed = 1.8f; // 1.8
             properties.RicochetCount = 1; // 1
-            properties.ShellLimit = 5;
-            properties.MineLimit = 2;
-            properties.MineStun = 8;
+            properties.ShellLimit = 5; // 5
+            properties.MineLimit = 2; // 2
+            properties.MineStun = 8; // 8
             properties.Invisible = false;
             properties.Acceleration = 0.3f;
             properties.Deceleration = 0.6f;
             properties.TurningSpeed = 0.1f;
             properties.MaximalTurn = MathHelper.ToRadians(10); // normally it's 10 degrees, but we want to make it easier for keyboard players.
+
+            Properties.ShootPitch = 0.1f * PlayerType;
 
             properties.ShellType = ShellID.Player;
 
@@ -200,6 +198,24 @@ namespace TanksRebirth.GameContent
 
             if (Dead)
                 return;
+
+            if (Velocity.Length() > 0)
+            {
+                float treadPlaceTimer = MathF.Round(14 / Velocity.Length()) != 0 ? MathF.Round(14 / Velocity.Length()) : 1;
+
+                if (TankGame.RunTime % treadPlaceTimer <= TankGame.DeltaTime)
+                    LayFootprint(Properties.TrackType == TrackID.Thick);
+                if (!Properties.IsSilent)
+                {
+                    // why did i clamp? i hate old code
+                    if (TankGame.RunTime % MathHelper.Clamp(treadPlaceTimer / 2, 4, 6) <= TankGame.DeltaTime)
+                    {
+                        var treadPlace = $"Assets/sounds/tnk_tread_place_{GameHandler.GameRand.Next(1, 5)}";
+                        var sfx = SoundPlayer.PlaySoundInstance(treadPlace, SoundContext.Effect, 0.2f);
+                        sfx.Instance.Pitch = Properties.TreadPitch;
+                    }
+                }
+            }
 
             //CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
             //Model.Root.Transform = World;
@@ -302,16 +318,12 @@ namespace TanksRebirth.GameContent
             var rightStick = InputUtils.CurrentGamePadSnapshot.ThumbSticks.Right;
             var dPad = InputUtils.CurrentGamePadSnapshot.DPad;
 
-            var treadPlaceTimer = (int)Math.Round(14 / Velocity.Length()) != 0 ? (int)Math.Round(14 / Velocity.Length()) : 1;
-
             var preterbedVelocity = new Vector2(leftStick.X, -leftStick.Y);
 
             var rotationMet = TankRotation > TargetTankRotation - Properties.MaximalTurn && TankRotation < TargetTankRotation + Properties.MaximalTurn;
 
             if (!rotationMet)
             {
-                if (TankGame.UpdateCount % treadPlaceTimer == 0)
-                    LayFootprint(Properties.TrackType == TrackID.Thick);
                 Properties.Speed -= Properties.Deceleration * TankGame.DeltaTime;
                 if (Properties.Speed < 0)
                     Properties.Speed = 0;
@@ -382,8 +394,6 @@ namespace TanksRebirth.GameContent
 
             IsTurning = false;
 
-            float treadPlaceTimer = (int)Math.Round(14 / Velocity.Length()) != 0 ? (int)Math.Round(14 / Velocity.Length()) : 1;
-
             var rotationMet = TankRotation > TargetTankRotation - Properties.MaximalTurn && TankRotation < TargetTankRotation + Properties.MaximalTurn;
 
             var preterbedVelocity = Vector2.Zero;
@@ -395,9 +405,6 @@ namespace TanksRebirth.GameContent
                 Properties.Speed -= Properties.Deceleration;
                 if (Properties.Speed < 0)
                     Properties.Speed = 0;
-                // treadPlaceTimer += MaxSpeed / 5;
-                if (TankGame.RunTime % treadPlaceTimer <= TankGame.DeltaTime)
-                    LayFootprint(Properties.TrackType == TrackID.Thick);
                 IsTurning = true;
             }
             else
@@ -476,22 +483,6 @@ namespace TanksRebirth.GameContent
                 //Velocity.Y = 0;
             //if (!controlLeft.IsPressed && !controlRight.IsPressed && leftStick.X == 0)
                 //Velocity.X = 0;
-
-            if (Velocity.Length() > 0 && playerControl_isBindPressed)
-            {
-                var treadPlaceTimer = (int)Math.Round(14 / Velocity.Length()) != 0 ? (int)Math.Round(14 / Velocity.Length()) : 1;
-                if (TankGame.RunTime % treadPlaceTimer <= TankGame.DeltaTime)
-                    LayFootprint(Properties.TrackType == TrackID.Thick);
-                if (!Properties.IsSilent)
-                {
-                    if (TankGame.RunTime % MathHelper.Clamp(treadPlaceTimer / 2, 4, 6) <= TankGame.DeltaTime)
-                    {
-                        var treadPlace = $"Assets/sounds/tnk_tread_place_{GameHandler.GameRand.Next(1, 5)}";
-                        var sfx = SoundPlayer.PlaySoundInstance(treadPlace, SoundContext.Effect, 0.2f);
-                        sfx.Instance.Pitch = Properties.TreadPitch;
-                    }
-                }
-            }
         }
         private void DrawShootPath()
         {
@@ -634,7 +625,7 @@ namespace TanksRebirth.GameContent
 
             bool needClarification = GameProperties.ShouldMissionsProgress && !GameProperties.InMission && IsIngame && !IntermissionSystem.IsAwaitingNewMission;
 
-            var playerColor = PlayerType == PlayerID.Blue ? Color.DeepSkyBlue : Color.Red;
+            var playerColor = PlayerID.PlayerTankColors[PlayerType].ToColor();
             var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 125).ToResolution(); ;
 
             bool flip = false;

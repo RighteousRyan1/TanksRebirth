@@ -8,7 +8,6 @@ using System.Collections.Generic;
 using System.Linq;
 using FontStashSharp;
 using System.IO;
-using System.Threading.Tasks;
 using System.Diagnostics;
 
 using TanksRebirth.GameContent.Properties;
@@ -180,8 +179,7 @@ namespace TanksRebirth.GameContent.UI
 
             // AddTravelingTank(TankTier.Black, 200, 200);
 
-            Theme = new("Main Menu Theme", "Content/Assets/mainmenu/theme", TankGame.Settings.MusicVolume);
-            Theme.Volume = TankGame.Settings.MusicVolume * 0.1f;
+            // LogoTexture = SteamworksUtils.GetAvatar(Steamworks.SteamUser.GetSteamID());
         }
         public static void InitializeUIGraphics()
         {
@@ -436,8 +434,6 @@ namespace TanksRebirth.GameContent.UI
             };
             StatsMenu.SetDimensions(() => new Vector2(WindowUtils.WindowWidth / 2 - 90.ToResolutionX(), WindowUtils.WindowHeight - 100.ToResolutionY()), () => new Vector2(180, 50).ToResolution());
             #endregion
-
-            Open();
 
             _menuElements = new UIElement[] 
             { PlayButton, PlayButton_SinglePlayer, PlayButton_LevelEditor, PlayButton_Multiplayer, ConnectToServerButton, 
@@ -926,10 +922,14 @@ namespace TanksRebirth.GameContent.UI
         private static float _newMisCd;
         private static float _timeToWait = 180;
 
+        public static float VolumeMultiplier = 1f;
+
         public static void Update()
         {
             if (!_initialized || !_diffButtonsInitialized)
                 return;
+
+            VolumeMultiplier = SteamworksUtils.IsOverlayActive ? 0.25f : 1f;
 
             if (!IntermissionSystem.IsAwaitingNewMission || IntermissionSystem.BlackAlpha <= 0f)
             {
@@ -992,8 +992,8 @@ namespace TanksRebirth.GameContent.UI
                 if (Theme.Volume > 0)
                     Theme.Volume -= 0.0075f;
             }
-            else
-                Theme.Volume = TankGame.Settings.MusicVolume * 0.1f;
+            else if (Active)
+                Theme.Volume = TankGame.Settings.MusicVolume * 0.1f * VolumeMultiplier;
 
             #endregion
         }
@@ -1032,7 +1032,6 @@ namespace TanksRebirth.GameContent.UI
 
         private static Mission _curMenuMission;
         private static List<Mission> _cachedMissions = new();
-
         public static void Open()
         {
             _musicFading = false;
@@ -1040,6 +1039,8 @@ namespace TanksRebirth.GameContent.UI
             MenuState = State.PrimaryMenu;
             Active = true;
             GameUI.Paused = false;
+            if (Theme is null)
+                Theme = new("Main Menu Theme", "Content/Assets/mainmenu/theme", TankGame.Settings.MusicVolume);
             Theme.Play();
 
             TankGame.DoZoomStuff();
@@ -1089,9 +1090,7 @@ namespace TanksRebirth.GameContent.UI
 
             OnMenuOpen?.Invoke();
         }
-
         private static bool _firstTime = true;
-
         private static void LoadTemplateMission(bool autoSetup = true, bool loadForMenu = true)
         {
             if (_firstTime)
@@ -1130,7 +1129,6 @@ namespace TanksRebirth.GameContent.UI
             if (loadForMenu)
                 _curMenuMission = mission;
         }
-
         private static void HideAll()
         {
             PlayButton.IsVisible = false;
@@ -1204,7 +1202,6 @@ namespace TanksRebirth.GameContent.UI
                     }
                 }
                 var tanksMessageSize = TankGame.TextFont.MeasureString(tanksMessage);
-
 
                 TankGame.SpriteRenderer.DrawString(TankGame.TextFont, tanksMessage, new(8, WindowUtils.WindowHeight - 8), Color.White, new(0.6f), 0f, new Vector2(0, tanksMessageSize.Y));
 
@@ -1283,6 +1280,8 @@ namespace TanksRebirth.GameContent.UI
                 else if (MenuState == State.Cosmetics) {
                     TankGame.SpriteRenderer.DrawString(TankGame.TextFontLarge, $"COMING SOON!", new(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 6), Color.White, new Vector2(0.75f) * (1920 / 1080 / TankGame.Instance.GraphicsDevice.Viewport.AspectRatio), 0f, TankGame.TextFontLarge.MeasureString($"COMING SOON!") / 2);
                 }
+                if (SteamworksUtils.IsInitialized)
+                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"STEAM LAUNCH!\nLogged in as '{SteamworksUtils.MyUsername}'\nYou have {SteamworksUtils.FriendsCount} friends.", Vector2.One * 8, Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
             }
             _oldwheel = InputUtils.DeltaScrollWheel;
         }

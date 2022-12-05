@@ -41,6 +41,8 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
                     volume *= EffectsVolume;
                     if (gameplaySound && MainMenu.Active)
                         volume *= 0.25f;
+                    if (SteamworksUtils.IsOverlayActive)
+                        volume *= 0.5f;
                     break;
                 case SoundContext.Ambient:
                     volume *= AmbientVolume;

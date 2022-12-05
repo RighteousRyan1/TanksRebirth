@@ -185,11 +185,11 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
                     if (Block.AllBlocks[BlockId] is null)
                         BlockId = -1;
                 }
-                else
-                {
-                    if (GameHandler.AllTanks[BlockId] is null)
-                        TankId = -1;
-                }
+            }
+            else if (TankId > -1)
+            {
+                if (GameHandler.AllTanks[TankId] is null)
+                    TankId = -1;
             }
         }
 

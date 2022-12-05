@@ -43,6 +43,8 @@ namespace TanksRebirth.GameContent.Systems
                 if (song is not null)
                     song.SetVolume(0f);
 
+            VolumeMultiplier = SteamworksUtils.IsOverlayActive ? 0.25f : 1f;
+
             var musicVolume = TankGame.Settings.MusicVolume * VolumeMultiplier;
 
 

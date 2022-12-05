@@ -1716,6 +1716,23 @@ namespace TanksRebirth.GameContent
                 Model.Meshes["Dish"].ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
             }
 
+            float treadPlaceTimer = MathF.Round(14 / Velocity.Length()) != 0 ? MathF.Round(14 / Velocity.Length()) : 1;
+
+            if (Position - _oldPosition != Vector2.Zero && !Properties.Stationary)
+            {
+                if (!Properties.IsSilent)
+                {
+                    if (TankGame.RunTime % MathHelper.Clamp(treadPlaceTimer / 2, 4, 6) <= TankGame.DeltaTime)
+                    {
+                        var treadPlace = $"Assets/sounds/tnk_tread_place_{GameHandler.GameRand.Next(1, 5)}";
+                        SoundPlayer.PlaySoundInstance(treadPlace, SoundContext.Effect, 0.05f, 0f, Properties.TreadPitch, gameplaySound: true);
+                    }
+                }
+
+                if (TankGame.RunTime % treadPlaceTimer <= TankGame.DeltaTime)
+                    LayFootprint(Properties.TrackType == TrackID.Thick);
+            }
+
             if ((Server.serverNetManager is not null && Client.IsConnected()) || (!Client.IsConnected() && !Dead) || MainMenu.Active)
             {
 
@@ -1830,8 +1847,7 @@ namespace TanksRebirth.GameContent
         {
             rayEndpoint = new(-999999, -999999);
             List<Tank> tanks = new();
-            if (pattern is null)
-                pattern = (c) => c.IsSolid || c.Type == BlockID.Teleporter;
+            pattern ??= (c) => c.IsSolid || c.Type == BlockID.Teleporter;
 
             const int MAX_PATH_UNITS = 1000;
             const int PATH_UNIT_LENGTH = 8;
@@ -1942,16 +1958,19 @@ namespace TanksRebirth.GameContent
                 foreach (var enemy in GameHandler.AllTanks)
                     if (enemy is not null)
                     {
-                        if (!tanks.Contains(enemy))
+                        if (!enemy.Dead)
                         {
-                            if (i > 15)
+                            if (!tanks.Contains(enemy))
                             {
-                                if (GameUtils.Distance_WiiTanksUnits(enemy.Position, pathPos) <= realMiss)
+                                if (i > 15)
+                                {
+                                    if (GameUtils.Distance_WiiTanksUnits(enemy.Position, pathPos) <= realMiss)
+                                        tanks.Add(enemy);
+                                }
+                                else if (enemy.CollisionBox.Intersects(pathHitbox))
+                                {
                                     tanks.Add(enemy);
-                            }
-                            else if (enemy.CollisionBox.Intersects(pathHitbox))
-                            {
-                                tanks.Add(enemy);
+                                }
                             }
                         }
                     }
@@ -2131,22 +2150,6 @@ namespace TanksRebirth.GameContent
             for (int i = 0; i < Behaviors.Length; i++)
                 Behaviors[i].Value += TankGame.DeltaTime;
 
-            float treadPlaceTimer = (int)Math.Round(14 / Velocity.Length()) != 0 ? (int)Math.Round(14 / Velocity.Length()) : 1;
-
-            if (Position - _oldPosition != Vector2.Zero && !Properties.Stationary)
-            {
-                if (!Properties.IsSilent)
-                {
-                    if (TankGame.RunTime % MathHelper.Clamp(treadPlaceTimer / 2, 4, 6) <= TankGame.DeltaTime)
-                    {
-                        var treadPlace = $"Assets/sounds/tnk_tread_place_{GameHandler.GameRand.Next(1, 5)}";
-                        var sfx = SoundPlayer.PlaySoundInstance(treadPlace, SoundContext.Effect, 0.05f, 0f, Properties.TreadPitch, gameplaySound: true);
-                    }
-                }
-
-                if (TankGame.RunTime % treadPlaceTimer <= TankGame.DeltaTime)
-                    LayFootprint(Properties.TrackType == TrackID.Thick);
-            }
             enactBehavior = () =>
             {
                 TargetTank = GameHandler.AllTanks.FirstOrDefault(tnk => tnk is not null && !tnk.Dead && (tnk.Team != Team || tnk.Team == TeamID.NoTeam) && tnk != this);
@@ -2472,9 +2475,6 @@ namespace TanksRebirth.GameContent
                         Properties.Speed -= Properties.Deceleration * TankGame.DeltaTime;
                         if (Properties.Speed < 0)
                             Properties.Speed = 0;
-                        treadPlaceTimer = (int)Math.Round(14 / Properties.TurningSpeed) != 0 ? (int)Math.Round(14 / Properties.TurningSpeed) : 1;
-                        if (TankGame.UpdateCount % treadPlaceTimer == 0)
-                            LayFootprint(Properties.TrackType == TrackID.Thick);
                         IsTurning = true;
                     }
                     // TODO: fix this pls.

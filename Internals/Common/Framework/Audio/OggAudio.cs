@@ -23,9 +23,9 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
         public OggAudio(string path)
         {
             SongPath = path + ".ogg";
-            LoadSong(SongPath);
+            Load(SongPath);
         }
-        private void LoadSong(string path)
+        private void Load(string path)
         {
             var buffer = File.ReadAllBytes(path);
 

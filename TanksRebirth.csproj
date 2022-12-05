@@ -47,8 +47,22 @@
     <Reference Include="MeltySynth">
       <HintPath>deps\MeltySynth.dll</HintPath>
     </Reference>
+    <Reference Include="Steamworks.NET">
+      <HintPath>deps\Steamworks.NET.dll</HintPath>
+    </Reference>
     <Reference Include="WiimoteLib">
       <HintPath>deps\WiimoteLib.dll</HintPath>
     </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="deps\steam_api64.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="steam_api64.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="steam_appid.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>
