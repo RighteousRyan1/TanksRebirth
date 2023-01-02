@@ -1,6 +1,8 @@
 # Tanks Rebirth
 A complete rebuild of Wii Play's Tanks game mode. Attempting to stay true to the original game.
 
+Have fun shooting around in this arcade shooter where you attempt to take on the world with your small, blue tank.
+
 !------------------------------------------------!
 
 ***REMINDER: MAKE IMAGE README.***
