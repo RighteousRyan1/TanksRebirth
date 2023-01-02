@@ -35,6 +35,8 @@ namespace TanksRebirth.GameContent.Systems
         public static bool ActiveHandle;
         public static int MaxLength = 100;
         public static int BoxWidth = 750;
+
+        public static bool ChatBoxHover;
         /// <summary>
         /// Sends a new <see cref="ChatMessage"/> to the chat.
         /// </summary>
@@ -100,6 +102,8 @@ namespace TanksRebirth.GameContent.Systems
 
             var alpha1 = crc ? 0.9f : 0.45f;
             var alpha2 = trc ? 0.9f : 0.45f;
+
+            ChatBoxHover = crc || trc;
 
             // var alpha = shiftAlpha ? 0.9f : 0.45f;
 

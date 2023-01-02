@@ -222,15 +222,12 @@ namespace TanksRebirth.GameContent
 
             //Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
 
-            if (GameProperties.InMission)
-            {
-                if (TargetTankRotation - TankRotation >= MathHelper.PiOver2)
-                {
+            if (GameProperties.InMission) {
+                if (TargetTankRotation - TankRotation >= MathHelper.PiOver2) {
                     TankRotation += MathHelper.Pi;
                     Flip = !Flip;
                 }
-                else if (TargetTankRotation - TankRotation <= -MathHelper.PiOver2)
-                {
+                else if (TargetTankRotation - TankRotation <= -MathHelper.PiOver2) {
                     TankRotation -= MathHelper.Pi;
                     Flip = !Flip;
                 }
@@ -258,7 +255,7 @@ namespace TanksRebirth.GameContent
                     }
                 }
 
-                if (GameProperties.InMission && !LevelEditor.Active) {
+                if (GameProperties.InMission && !LevelEditor.Active && !ChatSystem.ActiveHandle) {
                     if (CurShootStun <= 0 && CurMineStun <= 0) {
                         if (!Properties.Stationary) {
                             if (NetPlay.IsClientMatched(PlayerId)) {
@@ -274,7 +271,8 @@ namespace TanksRebirth.GameContent
                 if (GameProperties.InMission && !LevelEditor.Active) {
                     if (NetPlay.IsClientMatched(PlayerId)) {
                         if (InputUtils.CanDetectClick())
-                            Shoot(false);
+                            if (!ChatSystem.ChatBoxHover && !ChatSystem.ActiveHandle)
+                                Shoot(false);
 
                         if (!Properties.Stationary)
                             UpdatePlayerMovement();
