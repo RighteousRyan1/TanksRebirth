@@ -207,8 +207,7 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
 
                     if (DrawStacks) {
                         if (BlockId > -1) {
-                            if (displayHeights && Block.AllBlocks[BlockId] is not null)
-                            {
+                            if (displayHeights && Block.AllBlocks[BlockId] is not null) {
                                 if (Block.AllBlocks[BlockId].CanStack) {
                                     var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
 
@@ -220,6 +219,11 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
                                     SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"TP:{Block.AllBlocks[BlockId].TpLink}", pos, Color.White, Color.Black, new Vector2(TankGame.AddativeZoom * 1.5f).ToResolution(), 0f);
                                 }
                             }
+                        }
+                        else if (TankId > -1) {
+                            var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
+
+                            SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"{TeamID.Collection.GetKey(GameHandler.AllTanks[TankId].Team)}", pos, TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.Black, new Vector2(1) * TankGame.AddativeZoom, 0f);
                         }
                     }
                     effect.TextureEnabled = true;

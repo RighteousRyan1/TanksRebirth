@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Xna.Framework;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -20,5 +21,18 @@ namespace TanksRebirth.GameContent.ID
         public const int Cyan = 7;
         public const int Magenta = 8;
         public static readonly ReflectionDictionary<TeamID, int> Collection = new(MemberType.Fields);
+
+        public static readonly Dictionary<int, Color> TeamColors = new()
+        {
+            [NoTeam] = Color.Black,
+            [Red] = Color.Red,
+            [Blue] = Color.Blue,
+            [Green] = Color.Green,
+            [Yellow] = Color.Yellow,
+            [Purple] = Color.Purple,
+            [Orange] = Color.Orange,
+            [Cyan] = Color.Cyan,
+            [Magenta] = Color.Magenta
+        };
     }
 }

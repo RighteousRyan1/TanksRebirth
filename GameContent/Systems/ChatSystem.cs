@@ -5,8 +5,10 @@ using FontStashSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.Framework.Audio;
+using TanksRebirth.Internals.Common.Framework.Input;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
 
@@ -23,6 +25,8 @@ namespace TanksRebirth.GameContent.Systems
         public static bool IsOpen;
         public static ChatMessageCorner Corner { get; set; } = ChatMessageCorner.TopLeft;
 
+        public static Vector2 OpenOrigin = new(8, 8);
+
         public static Vector2 Scale = new(0.8f);
 
         public static int MessagesAtOnce = 10;
@@ -30,6 +34,7 @@ namespace TanksRebirth.GameContent.Systems
         public static string CurTyping = string.Empty;
         public static bool ActiveHandle;
         public static int MaxLength = 100;
+        public static int BoxWidth = 750;
         /// <summary>
         /// Sends a new <see cref="ChatMessage"/> to the chat.
         /// </summary>
@@ -58,8 +63,8 @@ namespace TanksRebirth.GameContent.Systems
                     msgs.Add(new ChatMessage($"<{sender}> {text}", color));
                 else
                     msgs.Add(new ChatMessage($"{text}", color));
-                Alerts++;
             }
+            Alerts++;
             ChatMessages.AddRange(msgs);
             return msgs.ToArray();
         }
@@ -67,9 +72,10 @@ namespace TanksRebirth.GameContent.Systems
         private static void DrawChatBox(out Rectangle chatBox, out Rectangle typeBox)
         {
             var measureY = ChatMessage.Font.MeasureString("X").Y * Scale.Y;
-            var chatRect = new Rectangle(8, 8, 1000, (int)(measureY * MessagesAtOnce)).ToResolution();
+            // draw it out of view if not open chat box.
+            var chatRect = new Rectangle((int)OpenOrigin.X, IsOpen ? (int)OpenOrigin.Y : -400, BoxWidth, (int)(measureY * MessagesAtOnce)).ToResolution();
 
-            var typeRect = new Rectangle(chatRect.X, chatRect.Y + chatRect.Height + (int)8.ToResolutionY(), chatRect.Width, (int)(ChatMessage.Font.MeasureString(CurTyping).Y + 32.ToResolutionY()));
+            var typeRect = new Rectangle(chatRect.X, chatRect.Y + chatRect.Height + (int)8.ToResolutionY(), chatRect.Width, (int)(ChatMessage.Font.MeasureString(CurTyping).Y + (CurTyping.Length == 0 ? 32.ToResolutionY() : 0)));
 
             // TODO: do it. do it.
 
@@ -78,139 +84,117 @@ namespace TanksRebirth.GameContent.Systems
             chatBox = chatRect;
             typeBox = typeRect;
         }
-
+        public static Keybind ToggleChat = new("Toggle Chat", Keys.F2);
         public static void DrawMessages()
         {
-            if (InputUtils.KeyJustPressed(Keys.PageUp))
-                IsOpen = false;
-            if (InputUtils.KeyJustPressed(Keys.PageDown))
-                IsOpen = true;
-            if (IsOpen)
+            if (ToggleChat.JustPressed)
+                IsOpen = !IsOpen;
+            #region Draw Chat
+
+            TankGame.SpriteRenderer.Begin();
+
+            DrawChatBox(out var chatRect, out var typeRect);
+
+            var crc = chatRect.Contains(MouseUtils.MousePosition);
+            var trc = typeRect.Contains(MouseUtils.MousePosition);
+
+            var alpha1 = crc ? 0.9f : 0.45f;
+            var alpha2 = trc ? 0.9f : 0.45f;
+
+            // var alpha = shiftAlpha ? 0.9f : 0.45f;
+
+            TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, chatRect, Color.Gray * alpha1);
+            TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, typeRect, Color.Gray * alpha2);
+            TankGame.SpriteRenderer.DrawString(ChatMessage.Font, CurTyping, new Vector2(typeRect.X, typeRect.Y), Color.White, Scale.ToResolution());
+
+            TankGame.SpriteRenderer.End();
+
+            var boxRasterizer = new RasterizerState()
             {
-                Alerts = 0;
+                ScissorTestEnable = true,
+            };
 
-                TankGame.SpriteRenderer.Begin();
+            TankGame.SpriteRenderer.Begin(rasterizerState: boxRasterizer);
 
-                DrawChatBox(out var chatRect, out var typeRect);
+            TankGame.Instance.GraphicsDevice.ScissorRectangle = chatRect;
 
-                var crc = chatRect.Contains(MouseUtils.MousePosition);
-                var trc = typeRect.Contains(MouseUtils.MousePosition);
-                var shiftAlpha = crc || trc;
+            var basePosition = new Vector2(chatRect.X + 8.ToResolutionX(), chatRect.Y + 8.ToResolutionY());
+            var offset = 20f;
 
-                var alpha = shiftAlpha ? 0.9f : 0.45f;
+            var drawOrigin = new Vector2();
 
-                TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, chatRect, Color.Gray * alpha);
-                TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, typeRect, Color.Gray * alpha);
-                TankGame.SpriteRenderer.DrawString(ChatMessage.Font, CurTyping, new Vector2(typeRect.X, typeRect.Y), Color.White, Scale.ToResolution());
+            var measure = ChatMessage.Font.MeasureString(CurTyping).X * Scale.X;
 
-                TankGame.SpriteRenderer.End();
-
-                var boxRasterizer = new RasterizerState()
-                {
-                    ScissorTestEnable = true,
-                };
-
-                TankGame.SpriteRenderer.Begin(rasterizerState: boxRasterizer);
-
-                TankGame.Instance.GraphicsDevice.ScissorRectangle = chatRect;
-
-                var basePosition = new Vector2(chatRect.X + 8.ToResolutionX(), chatRect.Y + 8.ToResolutionY());
-                var offset = 20f;
-
-                var drawOrigin = new Vector2();
-
-                //for (int i = 0; i < ChatMessages.Count; i++)
-                //{
-                /*switch (Corner)
-                {
-                    case ChatMessageCorner.TopLeft:
-                        basePosition = new(20);
-                        drawOrigin = new(0, measure.Y / 2);
-                        offset = 15f;
-
-                        break;
-                    case ChatMessageCorner.TopRight:
-                        basePosition = new(WindowUtils.WindowWidth - 20, 20);
-                        drawOrigin = new(measure.X, measure.Y / 2);
-                        offset = 15f;
-
-                        break;
-                    case ChatMessageCorner.BottomLeft:
-                        basePosition = new(20, WindowUtils.WindowHeight - 20);
-                        drawOrigin = new(0, measure.Y / 2);
-                        offset = -15f;
-
-                        break;
-                    case ChatMessageCorner.BottomRight:
-                        basePosition = new(WindowUtils.WindowWidth - 20, WindowUtils.WindowHeight - 20);
-                        drawOrigin = new(measure.X, measure.Y / 2);
-                        offset = -15f;
-
-                        break;
-                }*/
-                //}
-
-                var measure = ChatMessage.Font.MeasureString(CurTyping).X * Scale.X;
-
-                if (measure > typeRect.Width)
-                {
-                    var lastChar = CurTyping[^1];
-                    CurTyping = CurTyping.Remove(CurTyping.Length - 1);
-                    CurTyping += '\n';
-                    CurTyping += lastChar;
-                }
-
-                if (InputUtils.CanDetectClick())
-                {
-                    if (trc)
-                    {
-                        TankGame.Instance.Window.TextInput += HandleInput;
-                        ActiveHandle = true;
-                    }
-                }
-
-                if (ChatMessages.Count >= MessagesAtOnce)
-                {
-                    ChatMessages[0] = default;
-                    var arr = ChatMessages.ToArray();
-                    arr = ArrayUtils.Shift(arr, -1);
-                    Array.Resize(ref arr, arr.Length - 1);
-                    ChatMessages = arr.ToList();
-                }
-
-                for (int i = 0; i < ChatMessages.Count; i++)
-                {
-                    var pos = basePosition + new Vector2(0, (i * offset).ToResolutionY());
-                    TankGame.SpriteRenderer.DrawString(ChatMessage.Font, ChatMessages[i].Content, pos, ChatMessages[i].Color, Scale, 0f, drawOrigin);
-                }
-
-                TankGame.SpriteRenderer.End();
+            if (measure > typeRect.Width)
+            {
+                var lastChar = CurTyping[^1];
+                CurTyping = CurTyping.Remove(CurTyping.Length - 1);
+                CurTyping += '\n';
+                CurTyping += lastChar;
             }
-            else
+
+            if (InputUtils.CanDetectClick())
             {
+                if (trc && !ActiveHandle)
+                {
+                    TankGame.Instance.Window.TextInput += HandleInput;
+                    ActiveHandle = true;
+                }
+            }
+
+            if (ChatMessages.Count >= MessagesAtOnce)
+            {
+                ChatMessages[0] = default;
+                var arr = ChatMessages.ToArray();
+                arr = ArrayUtils.Shift(arr, -1);
+                Array.Resize(ref arr, arr.Length - 1);
+                ChatMessages = arr.ToList();
+            }
+
+            for (int i = 0; i < ChatMessages.Count; i++)
+            {
+                var pos = basePosition + new Vector2(0, (i * offset).ToResolutionY());
+                TankGame.SpriteRenderer.DrawString(ChatMessage.Font, ChatMessages[i].Content, pos, ChatMessages[i].Color, Scale, 0f, drawOrigin);
+            }
+
+            TankGame.SpriteRenderer.End();
+
+            #endregion
+
+            if (IsOpen) {
+                Alerts = 0;
+            }
+            else {
+                TankGame.SpriteRenderer.Begin();
+                var scale = new Vector2(0.2f);
+                if (Alerts > 0) {
+                    var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/chatalert");
+                    TankGame.SpriteRenderer.Draw(tex, OpenOrigin.ToResolution(), null, Color.White, 0f, Vector2.Zero, scale, default, default);
+                    TankGame.SpriteRenderer.DrawString(ChatMessage.Font, Alerts.ToString(), OpenOrigin.ToResolution() + (tex.Size() * scale) - new Vector2(12, 12).ToResolution(), Color.White, scale * 3f);
+                    TankGame.SpriteRenderer.DrawString(ChatMessage.Font, $"Press [{ToggleChat.AssignedKey}] to open chat.", OpenOrigin.ToResolution() + new Vector2(tex.Size().X * scale.X + 10.ToResolutionX(), 0), Color.White, scale * 3f);
+                }
+                else
+                    TankGame.SpriteRenderer.DrawString(ChatMessage.Font, $"Press [{ToggleChat.AssignedKey}] to open chat.", OpenOrigin.ToResolution(), Color.White, scale * 3f);
                 // TODO: draw an alertbox saying "!1" or something similar.
+                TankGame.SpriteRenderer.End();
             }
         }
 
         private static void HandleInput(object sender, TextInputEventArgs e)
         {
-            if (TankGame.Instance.IsActive)
-            {
-                if (e.Key == Keys.Back)
-                {
+            if (TankGame.Instance.IsActive) {
+                if (e.Key == Keys.Back) {
                     if (CurTyping.Length > 0)
                         CurTyping = CurTyping.Remove(CurTyping.Length - 1);
                 }
-                else if (e.Key == Keys.Escape)
-                {
+                else if (e.Key == Keys.Escape) {
                     CurTyping = string.Empty;
                     TankGame.Instance.Window.TextInput -= HandleInput;
                     ActiveHandle = false;
                 }
                 else if (e.Key == Keys.Tab)
                     CurTyping += "   ";
-                else if (e.Key == Keys.Enter)
-                {
+                else if (e.Key == Keys.Enter) {
                     TankGame.Instance.Window.TextInput -= HandleInput;
                     ActiveHandle = false;
 

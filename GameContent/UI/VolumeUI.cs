@@ -40,9 +40,9 @@ namespace TanksRebirth.GameContent.UI
 
             MusicText = new(TankGame.GameLanguage.MusicVolume, TankGame.TextFont, Color.Black)
             {
-                IgnoreMouseInteractions = true,
+                // IgnoreMouseInteractions = true,
                 IsVisible = false,
-                FallThroughInputs = true
+                // FallThroughInputs = true
             };
             MusicText.SetDimensions(() => new Vector2(950, 175).ToResolution(), () => new Vector2(500, 150).ToResolution());
 
@@ -60,7 +60,7 @@ namespace TanksRebirth.GameContent.UI
 
             EffectsText = new(TankGame.GameLanguage.EffectsVolume, TankGame.TextFont, Color.Black)
             {
-                IgnoreMouseInteractions = true,
+                //IgnoreMouseInteractions = true,
                 IsVisible = false
             };
             EffectsText.SetDimensions(() => new Vector2(950, 425).ToResolution(), () => new Vector2(500, 150).ToResolution());
@@ -79,7 +79,7 @@ namespace TanksRebirth.GameContent.UI
 
             AmbientText = new(TankGame.GameLanguage.AmbientVolume, TankGame.TextFont, Color.Black)
             {
-                IgnoreMouseInteractions = true,
+                //IgnoreMouseInteractions = true,
                 IsVisible = false
             };
             AmbientText.SetDimensions(() => new Vector2(950, 675).ToResolution(), () => new Vector2(500, 150).ToResolution());

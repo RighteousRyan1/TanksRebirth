@@ -107,6 +107,8 @@ namespace TanksRebirth.GameContent.Systems
             // FIXME: source of level editor bug.
             PlacementSquare.ResetSquares();
             GameHandler.CleanupEntities();
+
+            int numPlayers = 0;
             for (int i = 0; i < LoadedMission.Tanks.Length; i++)
             {
                 var template = LoadedMission.Tanks[i];
@@ -145,56 +147,60 @@ namespace TanksRebirth.GameContent.Systems
                 }
                 else
                 {
-                    var tank = template.GetPlayerTank();
-
-                    tank.Position = template.Position;
-                    tank.TankRotation = template.Rotation;
-                    tank.Dead = false;
-                    tank.Team = template.Team;
-
-                    if (tank.PlayerId <= Server.CurrentClientCount)
+                    numPlayers++;
+                    if ((Client.IsConnected() && numPlayers <= Server.ConnectedClients.Count(x => x is not null)) || !Client.IsConnected())
                     {
-                        if (!LevelEditor.Active)
+                        var tank = template.GetPlayerTank();
+
+                        tank.Position = template.Position;
+                        tank.TankRotation = template.Rotation;
+                        tank.Dead = false;
+                        tank.Team = template.Team;
+
+                        if (tank.PlayerId <= Server.CurrentClientCount)
                         {
-                            if (NetPlay.IsClientMatched(tank.PlayerId))
+                            if (!LevelEditor.Active)
                             {
-                                PlayerTank.MyTeam = tank.Team;
-                                PlayerTank.MyTankType = tank.PlayerType;
+                                if (NetPlay.IsClientMatched(tank.PlayerId))
+                                {
+                                    PlayerTank.MyTeam = tank.Team;
+                                    PlayerTank.MyTankType = tank.PlayerType;
+                                }
                             }
                         }
-                    }
-                    else if (!LevelEditor.Active)
-                        tank.Remove(true);
-                    if (Client.IsConnected())
-                    {
-                        if (PlayerTank.Lives[tank.PlayerId] == 0)
+                        else if (!LevelEditor.Active)
                             tank.Remove(true);
-                    }
-                    // TODO: note to self, this code above is what causes the skill issue.
-                    if (Difficulties.Types["AiCompanion"])
-                    {
-                        tank.Team = TeamID.Magenta;
-                        var tnk = new AITank(TankID.Black)
+                        if (Client.IsConnected())
                         {
-                            // target = rot - pi
-                            // turret =  -rot
-                            Position = template.Position,
-                            Team = tank.Team,
-                            TankRotation = template.Rotation,
-                            TargetTankRotation = template.Rotation - MathHelper.Pi,
-                            TurretRotation = -template.Rotation,
-                            Dead = false
-                        };
-                        tnk.Body.Position = template.Position;
+                            if (PlayerTank.Lives[tank.PlayerId] == 0)
+                                tank.Remove(true);
+                        }
+                        // TODO: note to self, this code above is what causes the skill issue.
+                        if (Difficulties.Types["AiCompanion"])
+                        {
+                            tank.Team = TeamID.Magenta;
+                            var tnk = new AITank(TankID.Black)
+                            {
+                                // target = rot - pi
+                                // turret =  -rot
+                                Position = template.Position,
+                                Team = tank.Team,
+                                TankRotation = template.Rotation,
+                                TargetTankRotation = template.Rotation - MathHelper.Pi,
+                                TurretRotation = -template.Rotation,
+                                Dead = false
+                            };
+                            tnk.Body.Position = template.Position;
 
-                        tnk.Swap(AITank.PickRandomTier());
-                    }
-                    var placement = PlacementSquare.Placements.FindIndex(place => Vector3.Distance(place.Position, tank.Position3D) < Block.FULL_BLOCK_SIZE / 2);
+                            tnk.Swap(AITank.PickRandomTier());
+                        }
+                        var placement = PlacementSquare.Placements.FindIndex(place => Vector3.Distance(place.Position, tank.Position3D) < Block.FULL_BLOCK_SIZE / 2);
 
-                    if (placement > -1)
-                    {
-                        PlacementSquare.Placements[placement].TankId = tank.WorldId;
-                        PlacementSquare.Placements[placement].HasBlock = false;
+                        if (placement > -1)
+                        {
+                            PlacementSquare.Placements[placement].TankId = tank.WorldId;
+                            PlacementSquare.Placements[placement].HasBlock = false;
+                        }
                     }
                 }
             }

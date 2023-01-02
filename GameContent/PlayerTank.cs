@@ -449,8 +449,9 @@ namespace TanksRebirth.GameContent
         }
         public override void Destroy(ITankHurtContext context)
         {
-            if (NetPlay.IsClientMatched(PlayerId))
-                AddLives(-1);
+            if (Client.IsConnected())
+                if (NetPlay.IsClientMatched(PlayerId))
+                    AddLives(-1);
 
             if (context is not null)
             {
@@ -542,7 +543,7 @@ namespace TanksRebirth.GameContent
                 if (pathRicochetCount > Properties.RicochetCount)
                     return;
 
-                if (GameHandler.AllTanks.Any(tnk => tnk is not null && tnk.CollisionCircle.Intersects(new Internals.Common.Framework.Circle() { Center = pathPos, Radius = 4 })))
+                if (GameHandler.AllTanks.Any(tnk => tnk is not null && !tnk.Dead && tnk.CollisionCircle.Intersects(new Internals.Common.Framework.Circle() { Center = pathPos, Radius = 4 })))
                     return;
 
                 pathPos += pathDir;
@@ -644,6 +645,8 @@ namespace TanksRebirth.GameContent
                 var tex1 = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/chevron_border");
                 var tex2 = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/chevron_inside");
 
+                // var p = GameHandler.AllPlayerTanks;
+                //string pText = "nerd";
                 string pText = Client.IsConnected() ? Server.ConnectedClients[PlayerId].Name : $"P{PlayerId + 1}"; // heeheeheeha
 
                 TankGame.SpriteRenderer.Draw(tex1, pos, null, Color.White, rotation, tex1.Size() / 2, 0.5f.ToResolution(), default, default);

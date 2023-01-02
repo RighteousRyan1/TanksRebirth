@@ -1,22 +1,14 @@
 ﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using TanksRebirth.Internals.Common.GameInput;
-using TanksRebirth.Internals.Core;
 using TanksRebirth.Internals.Common.GameUI;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.Internals.Common;
-using TanksRebirth.Graphics;
 using System;
 using TanksRebirth.Internals.UI;
 using TanksRebirth.Internals.Common.Framework.Input;
-using System.Collections.Generic;
-using System.Linq;
 using FontStashSharp;
 using TanksRebirth.Internals.Common.Framework.Audio;
-using TanksRebirth.Internals;
-using Microsoft.Xna.Framework.Audio;
 using TanksRebirth.Net;
 using TanksRebirth.GameContent.Properties;
 
@@ -185,9 +177,10 @@ namespace TanksRebirth.GameContent.UI
                         LevelEditor.Close(true);
                         LevelEditor.Editing = false;
                     }
+
+                    Client.SendQuit();
                 }
-                else
-                {
+                else {
                     TankGame.Quit();
                 }
             };
@@ -367,7 +360,7 @@ namespace TanksRebirth.GameContent.UI
 
                         MainMenu.MenuState = MainMenu.State.PrimaryMenu;    
                     }
-                    else if (MainMenu.ConnectToServerButton.IsVisible)
+                    else if (MainMenu.ConnectToServerButton.IsVisible || MainMenu.DisconnectButton.IsVisible)
                     {
                         MainMenu.MenuState = MainMenu.State.PlayList;
                     }
@@ -419,9 +412,13 @@ namespace TanksRebirth.GameContent.UI
             MissionInfoBar.UniqueDraw =
                 (uiPanel, spriteBatch) => spriteBatch.DrawString(TankGame.TextFont, text, uiPanel.Hitbox.Center.ToVector2(), Color.White, new Vector2(1.5f).ToResolution(), 0, drawOrigin);
 
-            TankGame.Settings.MusicVolume = VolumeUI.MusicVolume.Value;
-            TankGame.Settings.EffectsVolume = VolumeUI.EffectsVolume.Value;
-            TankGame.Settings.AmbientVolume = VolumeUI.AmbientVolume.Value;
+            //TankGame.Settings.MusicVolume = VolumeUI.MusicVolume.Value;
+            //TankGame.Settings.EffectsVolume = VolumeUI.EffectsVolume.Value;
+            //TankGame.Settings.AmbientVolume = VolumeUI.AmbientVolume.Value;
+            VolumeUI.MusicVolume.Value = TankGame.Settings.MusicVolume;
+            VolumeUI.EffectsVolume.Value = TankGame.Settings.EffectsVolume;
+            VolumeUI.AmbientVolume.Value = TankGame.Settings.AmbientVolume;
+            // remove this once i somehow fix these damn sliders ^
 
             if (VolumeUI.MusicVolume.Value <= 0.01f)
                 VolumeUI.MusicVolume.Value = 0f;

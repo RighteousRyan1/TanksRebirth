@@ -377,13 +377,6 @@ namespace TanksRebirth.GameContent.UI
             _initialized = true;
 
             #region Enumerable Init
-            for (int i = 1; i < TeamID.Collection.Count; i++)
-            {
-                var team = TeamID.Collection.GetKey(i);
-
-                var colorToAdd = (Color)typeof(Color).GetProperty(team).GetValue(null);
-                TeamColors.Add(colorToAdd);
-            }
             foreach (var file in Directory.GetFiles(Path.Combine("Content", "Assets", "textures", "ui", "leveledit")))
             {
                 var fileName = Path.GetFileNameWithoutExtension(file);
@@ -684,8 +677,6 @@ namespace TanksRebirth.GameContent.UI
         private static string _curDescription = string.Empty;
         private static Rectangle _curHoverRect;
 
-        private static readonly List<Color> TeamColors = new();
-
         public static Color SelectionColor = Color.NavajoWhite;
         public static Color HoverBoxColor = Color.SkyBlue;
 
@@ -750,14 +741,14 @@ namespace TanksRebirth.GameContent.UI
             {
                 helpText = "UP and DOWN to change teams.";
                 start = new(WindowUtils.WindowWidth - 250.ToResolutionX(), 140.ToResolutionY());
-
+                // TODO: should be optimised. do later.
                 TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "Tank Teams", new Vector2(start.X + 45.ToResolutionX(), start.Y - 80.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, TankGame.TextFont.MeasureString("Tank Teams") / 2);
 
                 TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Rectangle((int)start.X, (int)(start.Y - 40.ToResolutionY()), (int)40.ToResolutionX(), (int)40.ToResolutionY()), null, Color.Black, 0f, Vector2.Zero, default, 0f);
                 TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "No Team", new Vector2(start.X + 45.ToResolutionX(), start.Y - 40.ToResolutionY()), Color.Black, Vector2.One.ToResolution(), 0f, Vector2.Zero);
                 for (int i = 0; i < TeamID.Collection.Count - 1; i++)
                 {
-                    var color = TeamColors[i];
+                    var color = TeamID.TeamColors[i + 1];
                     TankGame.SpriteRenderer.DrawString(TankGame.TextFont, TeamID.Collection.GetKey(i + 1), new Vector2(start.X + 45.ToResolutionX(), start.Y + (i * 40).ToResolutionY()), color, Vector2.One.ToResolution(), 0f, Vector2.Zero); ;
                     TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Rectangle((int)start.X, (int)(start.Y + (i * 40).ToResolutionY()), (int)40.ToResolutionX(), (int)40.ToResolutionY()), null, color, 0f, Vector2.Zero, default, 0f);
                 }

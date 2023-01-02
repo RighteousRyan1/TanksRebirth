@@ -24,6 +24,7 @@ using TanksRebirth.GameContent.Speedrunning;
 using FontStashSharp;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.Graphics;
+using System.Collections.Generic;
 
 namespace TanksRebirth.GameContent
 {
@@ -115,7 +116,7 @@ namespace TanksRebirth.GameContent
                 }
                 else if (context == MissionEndContext.GameOver)
                 {
-                    PlayerTank.AddLives(-1);
+                    //PlayerTank.AddLives(-1);
 
                     var deathSound = "Assets/fanfares/gameover_playerdeath";
                     SoundPlayer.PlaySoundInstance(deathSound, SoundContext.Effect, 0.3f);
@@ -681,8 +682,10 @@ namespace TanksRebirth.GameContent
                 CampaignName.IsVisible = DebugUtils.DebuggingEnabled && DebugUtils.DebugLevel == 3;
             }
             GameUI.MissionInfoBar.IsVisible = !MainMenu.Active && !LevelEditor.Active && !CampaignCompleteUI.IsViewingResults;
+
             OnPostRender?.Invoke();
         }
+
         #endregion
         #region Extra
         public static void RenderUI()
@@ -1213,11 +1216,14 @@ namespace TanksRebirth.GameContent
             //TestShader.Parameters["oBend"]?.SetValue(val);
             //TestShader.Parameters["oDistortionFactor"].SetValue(MouseUtils.MousePosition.X / WindowUtils.WindowWidth);
 
-            var index = Array.FindIndex(GameHandler.AllPlayerTanks, x => x is not null && !x.Dead);
-            var pos = index > -1 ? MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(GameHandler.AllPlayerTanks[index].Position.X, 11, GameHandler.AllPlayerTanks[index].Position.Y), TankGame.GameView, TankGame.GameProjection).ToCartesianCoordinates() : new Vector2(-1);
-            // var val = (float)TankGame.LastGameTime.TotalGameTime.TotalSeconds;
-            LanternShader.Parameters["oPower"]?.SetValue(MainMenu.Active ? 100f : GameHandler.GameRand.NextFloat(0.195f, 0.20f));
-            LanternShader.Parameters["oPosition"]?.SetValue(pos/*MouseUtils.MousePosition.ToCartesianCoordinates()*/);
+            if (Difficulties.Types["LanternMode"])
+            {
+                var index = NetPlay.GetMyClientId(); //Array.FindIndex(GameHandler.AllPlayerTanks, x => x is not null && !x.Dead);
+                var pos = index > -1 && !MainMenu.Active ? MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(GameHandler.AllPlayerTanks[index].Position.X, 11, GameHandler.AllPlayerTanks[index].Position.Y), TankGame.GameView, TankGame.GameProjection).ToCartesianCoordinates() : new Vector2(-1);
+                // var val = (float)TankGame.LastGameTime.TotalGameTime.TotalSeconds;
+                LanternShader.Parameters["oPower"]?.SetValue(MainMenu.Active ? 100f : GameHandler.GameRand.NextFloat(0.195f, 0.20f));
+                LanternShader.Parameters["oPosition"]?.SetValue(pos/*MouseUtils.MousePosition.ToCartesianCoordinates()*/);
+            }
         }
     }
 }

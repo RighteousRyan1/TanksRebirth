@@ -4,7 +4,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <PublishReadyToRun>false</PublishReadyToRun>
     <TieredCompilation>false</TieredCompilation>
-    <AssemblyVersion>1.5.1</AssemblyVersion>
+    <AssemblyVersion>1.6</AssemblyVersion>
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationManifest>app.manifest</ApplicationManifest>
@@ -64,5 +64,8 @@
     <None Update="steam_appid.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Graphics\Cameras\" />
   </ItemGroup>
 </Project>

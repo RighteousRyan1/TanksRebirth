@@ -103,6 +103,8 @@ namespace TanksRebirth.Net
                     SoundPlayer.PlaySoundInstance("Assets/sounds/menu/client_join", SoundContext.Effect, 0.75f);
 
                     ChatSystem.SendMessage($"Welcome {Server.ConnectedClients[clientId].Name}!", Color.Lime, wasRecieved: true);
+
+                    MainMenu.ShouldServerButtonsBeVisible = false;
                     break;
                 case PacketType.Disconnect:
                     var cId = reader.GetInt();
@@ -213,6 +215,9 @@ namespace TanksRebirth.Net
                     MainMenu.TransitionToGame();
 
                     break;
+                case PacketType.QuitLevel:
+                    GameUI.QuitButton.OnLeftClick?.Invoke(null);
+                    break;
                 case PacketType.PlayerSpawn:
 
                     var type = reader.GetInt();
@@ -260,6 +265,8 @@ namespace TanksRebirth.Net
                         //break;
 
                     // FIXME: crashes if recieving on a dead player. weird.
+                    // FIXME? wait for results.
+
                     if (GameHandler.AllTanks[ownerId] is not null) 
                         if (GameHandler.AllTanks[ownerId].OwnedShells.Count > 0)
                             if (ownerShellIndex > -1)
@@ -296,10 +303,22 @@ namespace TanksRebirth.Net
                 case PacketType.SendCampaignByName:
                     var campName = reader.GetString();
 
-                    MainMenu.PrepareGameplay(campName, true);
+                    /*var success = */MainMenu.PrepareGameplay(campName, true, true); // second param to false when doing a check
+                    //Client.SendCampaignSuccess(campName, CurrentClient.Id, success); // if this player doesn't own said campaign, cancel the operation.
                     break;
                 case PacketType.Cleanup:
                     GameHandler.CleanupScene();
+                    break;
+                case PacketType.CampaignSendSuccess:
+                    var camName = reader.GetString();
+                    var senderId = reader.GetInt();
+                    var successful = reader.GetBool();
+                    if (successful)
+                        MainMenu.PrepareGameplay(camName, true, true);
+                    else {
+                        ChatSystem.SendMessage($"{Server.ConnectedClients[senderId].Name} does not own this campaign! Send it to them to be able to play it.", Color.Red);
+                        SoundPlayer.SoundError();
+                    }
                     break;
                 #endregion
                 #region ConstantSends
@@ -441,6 +460,9 @@ namespace TanksRebirth.Net
 
                     Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered, peer);
                     break;
+                case PacketType.QuitLevel:
+                    Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered, peer);
+                    break;
                 case PacketType.PlayerSpawn:
                     var type = reader.GetInt();
                     var team = reader.GetInt();
@@ -575,6 +597,15 @@ namespace TanksRebirth.Net
                 case PacketType.Cleanup:
                     Server.serverNetManager.SendToAll(message, DeliveryMethod.Sequenced, peer);
                     break;
+                case PacketType.CampaignSendSuccess:
+                    var camName = reader.GetString();
+                    var cliId = reader.GetInt();
+                    var success = reader.GetBool();
+                    message.Put(camName);
+                    message.Put(cliId);
+                    message.Put(success);
+                    Server.serverNetManager.SendToAll(message, DeliveryMethod.Sequenced, peer);
+                    break;
                 #endregion
                 #region ConstantSends
                 case PacketType.SyncPlayer:
@@ -630,7 +661,7 @@ namespace TanksRebirth.Net
 
             // peer.Send(message, DeliveryMethod.ReliableOrdered);
 
-            GameHandler.ClientLog.Write($"Packet Recieved: {packet} from client {peer.Id}. Current clients connected: {Server.CurrentClientCount}", Internals.LogType.Debug);
+            // GameHandler.ClientLog.Write($"Packet Recieved: {packet} from client {peer.Id}. Current clients connected: {Server.CurrentClientCount}", Internals.LogType.Debug);
             reader.Recycle();
         }
         public static bool IsClientMatched(int otherId)
@@ -642,6 +673,12 @@ namespace TanksRebirth.Net
             if (CurrentClient.Id != otherId)
                 return false;
             return true;
+        }
+        public static int GetMyClientId() {
+            if (!Client.IsConnected())
+                return 0;
+            else
+                return CurrentClient.Id;
         }
     }
 
@@ -701,6 +738,8 @@ namespace TanksRebirth.Net
         // misc
 
         SyncShellId,
-        Cleanup
+        Cleanup,
+        QuitLevel,
+        CampaignSendSuccess // i.e: whether another client doesn't have something a host does, such as a campaign
     }
 }

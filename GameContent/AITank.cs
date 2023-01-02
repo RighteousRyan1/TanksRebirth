@@ -1761,7 +1761,8 @@ namespace TanksRebirth.GameContent
         }
         public override void Destroy(ITankHurtContext context)
         {
-            if (!Client.IsConnected())
+            // might not account for level testing via the level editor?
+            if (!MainMenu.Active && !LevelEditor.Active && !Client.IsConnected()) // goofy ahh...
             {
                 PlayerTank.KillCount++;
 
@@ -1797,7 +1798,6 @@ namespace TanksRebirth.GameContent
                         // i will keep this commented if anything else happens.
                         //var gain = (BaseExpValue + rand) * GameData.UniversalExpMultiplier;
                         TankGame.GameData.ExpLevel += gain;
-
 
                         var p = GameHandler.ParticleSystem.MakeParticle(Position3D + new Vector3(0, 30, 0), $"+{gain * 100:0.00} XP");
 

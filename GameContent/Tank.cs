@@ -795,41 +795,44 @@ namespace TanksRebirth.GameContent
 
             Projection = TankGame.GameProjection;
             View = TankGame.GameView;
-            foreach (var cosmetic in Cosmetics)
+            if (!Dead)
             {
-                //if (GameProperties.InMission && Properties.Invisible)
-                    //break;
-                if (cosmetic is Cosmetic3D cos3d)
+                foreach (var cosmetic in Cosmetics)
                 {
-                    for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++)
+                    //if (GameProperties.InMission && Properties.Invisible)
+                    //break;
+                    if (cosmetic is Cosmetic3D cos3d)
                     {
-                        foreach (ModelMesh mesh in cos3d.Model.Meshes)
+                        for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++)
                         {
-                            if (!cos3d.IgnoreMeshesByName.Any(meshname => meshname == mesh.Name))
+                            foreach (ModelMesh mesh in cos3d.Model.Meshes)
                             {
-                                foreach (BasicEffect effect in mesh.Effects)
+                                if (!cos3d.IgnoreMeshesByName.Any(meshname => meshname == mesh.Name))
                                 {
-                                    float rotY;
-                                    if (cosmetic.LockOptions == CosmeticLockOptions.ToTurret)
-                                        rotY = cosmetic.Rotation.Y + TurretRotation;
-                                    else if (cosmetic.LockOptions == CosmeticLockOptions.ToTank)
-                                        rotY = cosmetic.Rotation.Y + TankRotation;
-                                    else
-                                        rotY = cosmetic.Rotation.Y;
-                                    effect.World = i == 0 ? Matrix.CreateRotationX(cosmetic.Rotation.X) * Matrix.CreateRotationY(rotY) * Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) * Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition)
-                                        : Matrix.CreateRotationX(cosmetic.Rotation.X) * Matrix.CreateRotationY(cosmetic.Rotation.Y) * Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) * Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition) * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
-                                    effect.View = View;
-                                    effect.Projection = Projection;
+                                    foreach (BasicEffect effect in mesh.Effects)
+                                    {
+                                        float rotY;
+                                        if (cosmetic.LockOptions == CosmeticLockOptions.ToTurret)
+                                            rotY = cosmetic.Rotation.Y + TurretRotation;
+                                        else if (cosmetic.LockOptions == CosmeticLockOptions.ToTank)
+                                            rotY = cosmetic.Rotation.Y + TankRotation;
+                                        else
+                                            rotY = cosmetic.Rotation.Y;
+                                        effect.World = i == 0 ? Matrix.CreateRotationX(cosmetic.Rotation.X) * Matrix.CreateRotationY(rotY) * Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) * Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition)
+                                            : Matrix.CreateRotationX(cosmetic.Rotation.X) * Matrix.CreateRotationY(cosmetic.Rotation.Y) * Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) * Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition) * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
+                                        effect.View = View;
+                                        effect.Projection = Projection;
 
-                                    effect.TextureEnabled = true;
-                                    if (i == 0)
-                                        effect.Texture = cos3d.ModelTexture;
-                                    else
-                                        effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/ingame/block_shadow_h");
+                                        effect.TextureEnabled = true;
+                                        if (i == 0)
+                                            effect.Texture = cos3d.ModelTexture;
+                                        else
+                                            effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/ingame/block_shadow_h");
 
-                                    effect.SetDefaultGameLighting_IngameEntities();
+                                        effect.SetDefaultGameLighting_IngameEntities();
+                                    }
+                                    mesh.Draw();
                                 }
-                                mesh.Draw();
                             }
                         }
                     }

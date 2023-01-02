@@ -37,6 +37,8 @@ using TanksRebirth.GameContent.ModSupport;
 using System.Threading.Tasks;
 using TanksRebirth.GameContent.ID;
 using Steamworks;
+using TanksRebirth.Graphics.Cameras;
+using System.Globalization;
 
 namespace TanksRebirth
 {
@@ -228,12 +230,15 @@ namespace TanksRebirth
 
         public static Stopwatch CurrentSessionTimer = new();
 
+        public static DateTime LaunchTime;
+        public static bool IsSouthernHemi;
+
         protected override void Initialize()
         {
             try
             {
-                if (SteamAPI.IsSteamRunning())
-                    SteamworksUtils.Initialize();
+                //if (SteamAPI.IsSteamRunning())
+                    //SteamworksUtils.Initialize();
                 CurrentSessionTimer.Start();
 
                 GameHandler.MapEvents();
@@ -246,7 +251,7 @@ namespace TanksRebirth
 
                 ResolutionHandler.Initialize(Graphics);
 
-                GameCamera = new Camera(GraphicsDevice);
+                GameCamera = new OrthographicCamera(0, WindowUtils.WindowWidth, WindowUtils.WindowHeight, 0f, 0.01f, 2000f);
 
                 SpriteRenderer = new(GraphicsDevice);
 
@@ -373,6 +378,8 @@ namespace TanksRebirth
                     SettingsHandler = new(Settings, Path.Combine(SaveDirectory, "settings.json"));
                     Settings = SettingsHandler.Deserialize();
                 }
+                LaunchTime = DateTime.Now;
+                IsSouthernHemi = RegionUtils.IsSouthernHemisphere(RegionInfo.CurrentRegion.EnglishName);
 
                 GameHandler.ClientLog.Write($"Loaded user settings.", LogType.Info);
 
@@ -385,7 +392,12 @@ namespace TanksRebirth
                 PlayerTank.controlLeft.AssignedKey = Settings.LeftKeybind;
                 PlayerTank.controlRight.AssignedKey = Settings.RightKeybind;
                 PlayerTank.controlMine.AssignedKey = Settings.MineKeybind;
-                MapRenderer.Theme = Settings.GameTheme;
+
+                if (!IsSouthernHemi ? LaunchTime.Month != 12 : LaunchTime.Month != 7)
+                    MapRenderer.Theme = Settings.GameTheme;
+                else
+                    MapRenderer.Theme = MapTheme.Christmas;
+
                 TankFootprint.ShouldTracksFade = Settings.FadeFootprints;
 
                 Graphics.PreferredBackBufferWidth = Settings.ResWidth;
@@ -660,7 +672,7 @@ namespace TanksRebirth
                 {
                     if (GameHandler.AllPlayerTanks.Any(x => x is not null && !x.Dead))
                     {
-                        ThirdPersonCameraPosition = GameHandler.AllPlayerTanks[0].Position.ExpandZ();
+                        ThirdPersonCameraPosition = GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()].Position.ExpandZ();
                         /*GameCamera.SetPosition(GameHandler.AllPlayerTanks[0].Position.ExpandZ());
                         GameCamera.SetLookAt(GameHandler.AllPlayerTanks[0].Position.ExpandZ());
                         GameCamera.Zoom(DEFAULT_ZOOM * AddativeZoom);
@@ -698,6 +710,7 @@ namespace TanksRebirth
 
                 FixedUpdate(gameTime);
 
+                DoWorkaroundVolumes();
                 //GameView = GameCamera.GetView();
                 //GameProjection = GameCamera.GetProjection();
 
@@ -796,7 +809,38 @@ namespace TanksRebirth
 
         public static event Action<GameTime> OnPostDraw;
 
-        public static void SaveRenderTarget(string path = "C:\\Users\\ryanr\\Desktop\\screenshot.png")
+        static byte volmode; // TEMPORARY.
+
+        private static void DoWorkaroundVolumes()
+        {
+            if (!VolumeUI.BatchVisible)
+                return;
+
+            float val = 0f;
+
+            if (InputUtils.KeyJustPressed(Keys.RightShift))
+                volmode++;
+            if (volmode > 2)
+                volmode = 0;
+
+            if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Up))
+                val += 0.01f * DeltaTime;
+            if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Down))
+                val -= 0.01f * DeltaTime;
+
+            if (volmode == 0)
+                Settings.MusicVolume += val;
+            if (volmode == 1)
+                Settings.EffectsVolume += val;
+            if (volmode == 2)
+                Settings.AmbientVolume += val;
+
+            Settings.MusicVolume = MathHelper.Clamp(Settings.MusicVolume, 0, 1);
+            Settings.EffectsVolume = MathHelper.Clamp(Settings.EffectsVolume, 0, 1);
+            Settings.AmbientVolume = MathHelper.Clamp(Settings.AmbientVolume, 0, 1);
+        }
+
+        public static void SaveRenderTarget(string path = "screenshot.png")
         {
             using var fs = new FileStream(path, FileMode.OpenOrCreate);
             GameTarget.SaveAsPng(fs, GameTarget.Width, GameTarget.Height);
@@ -949,6 +993,23 @@ namespace TanksRebirth
                 if (LevelEditor.Active)
                     LevelEditor.Render();
                 GameHandler.RenderUI();
+
+                // cuno made me do this actually
+                if (VolumeUI.BatchVisible)
+                {
+                    Dictionary<byte, string> display = new()
+                    {
+                        [0] = $"Music: {Math.Round(Settings.MusicVolume * 100, 1)}",
+                        [1] = $"Effects: {Math.Round(Settings.EffectsVolume * 100, 1)}",
+                        [2] = $"Ambient: {Math.Round(Settings.AmbientVolume * 100, 1)}",
+                    };
+
+                    SpriteRenderer.DrawString(TextFont, $"Since for some reason these sliders are broken, use these keybinds." +
+                        $"\nPress [RIGHTSHIFT] to change what volume to change. (Music, Effects, Ambient)" +
+                        $"\n-- {display[volmode]}% --" +
+                        $"\nPress UP (arrow) to INCREASE this volume." +
+                        $"\nPress DOWN (arrow) to DECREASE this volume.", new Vector2(12, 12).ToResolution(), Color.White, new Vector2(0.75f).ToResolution(), 0f, Vector2.Zero);
+                }
                 IntermissionSystem.Draw(SpriteRenderer);
                 if (CampaignCompleteUI.IsViewingResults)
                     CampaignCompleteUI.Render();

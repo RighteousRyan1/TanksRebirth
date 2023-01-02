@@ -410,6 +410,8 @@ namespace TanksRebirth.GameContent.UI
                 {
                     Client.SendDisconnect(NetPlay.CurrentClient.Id, NetPlay.CurrentClient.Name, "User left.");
                     Client.client.Disconnect();
+
+                    ShouldServerButtonsBeVisible = true;
                 }
             };
             DisconnectButton.SetDimensions(() => new Vector2(100, 800).ToResolution(), () => new Vector2(500, 50).ToResolution());
@@ -748,9 +750,13 @@ namespace TanksRebirth.GameContent.UI
                 //elem.
                 elem.OnLeftClick += (el) =>
                 {
+                    if (Client.IsConnected() && Server.serverNetManager is null) {
+                        ChatSystem.SendMessage("You cannot initiate a game as you are not the host!", Color.Red);
+                        SoundPlayer.SoundError();
+                        return;
+                    }
                     var noExt = Path.GetFileNameWithoutExtension(name);
-                    PrepareGameplay(noExt);
-                    TransitionToGame();
+                    PrepareGameplay(noExt, true, false); // switch second param to !Client.IsConnected() when it should check first.
                 };
                 elem.OnRightClick += (el) =>
                 {
@@ -784,32 +790,49 @@ namespace TanksRebirth.GameContent.UI
 
             UIElement.CunoSucks();
         }
-        public static void PrepareGameplay(string name, bool throughNet = false)
+        public static bool PrepareGameplay(string name, bool wasConfirmed = true, bool netRecieved = false)
         {
-            var camp = Campaign.Load(Path.Combine("Campaigns", name + ".campaign"));
+            // FIXME: find the feedback loop that causes the recieving client to start a mission anyway...
+            
+            var path = Path.Combine("Campaigns", name + ".campaign");
+
+            var checkPath = Path.Combine(TankGame.SaveDirectory, "Campaigns", $"{name}.campaign");
+
+            //if (!File.Exists(checkPath))
+                //return false;
+            var camp = Campaign.Load(path);
 
             // check if the CampaignCheckpoint number is less than the number of missions in the array
-            if (MissionCheckpoint >= camp.CachedMissions.Length)
-            {
+            if (MissionCheckpoint >= camp.CachedMissions.Length) {
                 // if it is, notify the user that the checkpoint is too high via the chat, and play the error sound
                 ChatSystem.SendMessage($"Campaign '{name}' has no mission {MissionCheckpoint + 1}.", Color.Red);
                 SoundPlayer.SoundError();
-                return;
+                return false;
             }
 
-            // if it is, load the mission
-            GameProperties.LoadedCampaign = camp;
-
-            GameProperties.LoadedCampaign.LoadMission(MissionCheckpoint); // loading the mission specified
-            if (Client.IsConnected() && !throughNet)
-            {
-                //Client.SendCampaignBytes(camp);
-                Client.SendCampaign(name);
-                Client.RequestStartGame(MissionCheckpoint, true);
+            if (!netRecieved) { // when switch, do !wasConfirmed && !netRecieved
+                if (Client.IsConnected()) {
+                    //Client.SendCampaignBytes(camp);
+                    Client.SendCampaign(name);
+                    Client.RequestStartGame(MissionCheckpoint, true);
+                }
             }
+            /*if (wasConfirmed) {
+
+                if (!File.Exists(checkPath))
+                    return false;*/
+
+                // if it is, load the mission
+                GameProperties.LoadedCampaign = camp;
+
+                GameProperties.LoadedCampaign.LoadMission(MissionCheckpoint); // loading the mission specified
+                TransitionToGame();
+            //}
             PlayerTank.StartingLives = camp.MetaData.StartingLives;
             IntermissionSystem.StripColor = camp.MetaData.MissionStripColor;
             IntermissionSystem.BackgroundColor = camp.MetaData.BackgroundColor;
+
+            return true;
         }
         public static void TransitionToGame()
         {
@@ -871,15 +894,38 @@ namespace TanksRebirth.GameContent.UI
 
             StatsMenu.IsVisible = visible;
         }
+
+        private static bool _ssbbv = true;
+        public static bool ShouldServerButtonsBeVisible
+        {
+            get => _ssbbv;
+            set
+            {
+                _ssbbv = value;
+                ConnectToServerButton.IsVisible = value;
+                CreateServerButton.IsVisible = value;
+                ConnectToServerButton.IsVisible = value;
+                CreateServerButton.IsVisible = value;
+                UsernameInput.IsVisible = value;
+                IPInput.IsVisible = value;
+                PasswordInput.IsVisible = value;
+                PortInput.IsVisible = value;
+                ServerNameInput.IsVisible = value && !Client.IsConnected();
+
+            }
+        }
         internal static void SetMPButtonsVisibility(bool visible)
         {
-            ConnectToServerButton.IsVisible = visible;
-            CreateServerButton.IsVisible = visible;
-            UsernameInput.IsVisible = visible;
-            IPInput.IsVisible = visible;
-            PasswordInput.IsVisible = visible;
-            PortInput.IsVisible = visible;
-            ServerNameInput.IsVisible = visible && !Client.IsConnected();
+            if (ShouldServerButtonsBeVisible)
+            {
+                ConnectToServerButton.IsVisible = visible;
+                CreateServerButton.IsVisible = visible;
+                UsernameInput.IsVisible = visible;
+                IPInput.IsVisible = visible;
+                PasswordInput.IsVisible = visible;
+                PortInput.IsVisible = visible;
+                ServerNameInput.IsVisible = visible && !Client.IsConnected();
+            }
             DisconnectButton.IsVisible = visible && Client.IsConnected();
             StartMPGameButton.IsVisible = visible && Server.serverNetManager is not null;
         }
@@ -1039,8 +1085,11 @@ namespace TanksRebirth.GameContent.UI
             MenuState = State.PrimaryMenu;
             Active = true;
             GameUI.Paused = false;
-            if (Theme is null)
-                Theme = new("Main Menu Theme", "Content/Assets/mainmenu/theme", TankGame.Settings.MusicVolume);
+            Theme ??= MapRenderer.Theme switch {
+                    MapTheme.Vanilla => new("Main Menu Theme", "Content/Assets/mainmenu/theme", TankGame.Settings.MusicVolume),
+                    MapTheme.Christmas => new("Main Menu Theme", "Content/Assets/mainmenu/theme_christmas", TankGame.Settings.MusicVolume),
+                    _ => throw new Exception("Invalid game theme for menu music.")
+                };
             Theme.Play();
 
             TankGame.DoZoomStuff();
@@ -1145,7 +1194,7 @@ namespace TanksRebirth.GameContent.UI
             tanks.Clear();
         }
 
-        private static readonly string tanksMessage = $"Tanks! Rebirth ALPHA v{TankGame.Instance.GameVersion}\nOriginal game and Assets developed by Nintendo\nProgrammed by RighteousRyan\nArt and Graphics by BigKitty1011\nTANKS to all our contributors!";
+        private static readonly string tanksMessage = $"Tanks Rebirth ALPHA v{TankGame.Instance.GameVersion}\nOriginal game and assets developed by Nintendo\nProgrammed by RighteousRyan\nArt and graphics by BigKitty1011\nTANKS to all our contributors!";
 
         private static int _oldwheel;
         public static void Render()
@@ -1224,11 +1273,14 @@ namespace TanksRebirth.GameContent.UI
                     if (x is UITextButton btn)
                         return btn.Text == "Vanilla"; // i fucking hate this hardcode. but i'll cry about it later.
                     return false;
-                }) && MenuState == State.Campaigns)
+                }) && MenuState == State.Campaigns) 
                 {
                     TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"You are missing the vanilla campaign!" +
                         $"\nTry downloading the Vanilla campaign by pressing 'Enter'." +
-                        $"\nCampaign files belong in '{Path.Combine(TankGame.SaveDirectory, "Campaigns").Replace(Environment.UserName, "%UserName%")}' (press TAB to open on Windows)", new(12, 12), Color.White, new(0.75f), 0f, Vector2.Zero);
+                        $"\nCampaign files belong in '{Path.Combine(TankGame.SaveDirectory, "Campaigns").Replace(Environment.UserName, "%UserName%")}' (press TAB to open on Windows)", new Vector2(12, 12).ToResolution(), Color.White, new Vector2(0.75f).ToResolution(), 0f, Vector2.Zero);
+
+                    if (Client.IsConnected() && Server.serverNetManager is not null)
+                        TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"The people who are connected to you MUST own this\ncampaign, and it MUST have the same file name.\nOtherwise, the campaign will not load.", new(12, WindowUtils.WindowHeight / 2), Color.White, new Vector2(0.75f).ToResolution(), 0f, Vector2.Zero);
 
                     if (InputUtils.KeyJustPressed(Keys.Tab))
                     {
@@ -1257,11 +1309,7 @@ namespace TanksRebirth.GameContent.UI
                             SetCampaignDisplay();
 
                         } catch(Exception e) {
-                            Process.Start(new ProcessStartInfo("https://github.com/RighteousRyan1/TanksRebirth/releases/download/1.3.4-alpha/Vanilla.rar")
-                            {
-                                UseShellExecute = true,
-                            });
-                            GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
+                            TankGame.WriteError(e);
                         }
                     }
                 }
@@ -1275,7 +1323,7 @@ namespace TanksRebirth.GameContent.UI
                     
                     TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"You can scroll with your mouse to skip to a certain mission." +
                         $"\nCurrently, you will skip to mission {MissionCheckpoint + 1}." +
-                        $"\nYou will be alerted if that mission does not exist.", new(12, 200), Color.White, new(0.75f), 0f, Vector2.Zero);
+                        $"\nYou will be alerted if that mission does not exist.", new Vector2(12, 200).ToResolution(), Color.White, new Vector2(0.75f).ToResolution(), 0f, Vector2.Zero);
                 }
                 else if (MenuState == State.Cosmetics) {
                     TankGame.SpriteRenderer.DrawString(TankGame.TextFontLarge, $"COMING SOON!", new(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 6), Color.White, new Vector2(0.75f) * (1920 / 1080 / TankGame.Instance.GraphicsDevice.Viewport.AspectRatio), 0f, TankGame.TextFontLarge.MeasureString($"COMING SOON!") / 2);

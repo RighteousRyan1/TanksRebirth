@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Xml.Linq;
 using LiteNetLib;
 using LiteNetLib.Utils;
 using Microsoft.Xna.Framework;
@@ -45,6 +46,17 @@ namespace TanksRebirth.Net
             GameHandler.ClientLog.Write($"Attempting connection to server...", Internals.LogType.Debug);
             clientNetManager.Start();
             client = clientNetManager.Connect(address, port, password);
+        }
+
+        public static void SendQuit()
+        {
+            if (MainMenu.Active || !IsConnected())
+                return;
+
+            NetDataWriter message = new();
+            message.Put(PacketType.QuitLevel);
+
+            client.Send(message, DeliveryMethod.ReliableOrdered);
         }
         public static void SendLives()
         {
@@ -256,6 +268,7 @@ namespace TanksRebirth.Net
                 return;
             NetDataWriter message = new();
             message.Put(PacketType.ServerNameSync);
+            message.Put(newName);
 
             Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered);
         }
@@ -340,6 +353,20 @@ namespace TanksRebirth.Net
             message.Put(peerId);
             message.Put(name);
             message.Put(reason);
+
+            client.Send(message, DeliveryMethod.ReliableOrdered);
+        }
+
+        public static void SendCampaignSuccess(string campaignName, int clientId, bool success)
+        {
+            if (!IsConnected())
+                return;
+            NetDataWriter message = new();
+            message.Put(PacketType.CampaignSendSuccess);
+
+            message.Put(campaignName);
+            message.Put(clientId);
+            message.Put(success);
 
             client.Send(message, DeliveryMethod.ReliableOrdered);
         }

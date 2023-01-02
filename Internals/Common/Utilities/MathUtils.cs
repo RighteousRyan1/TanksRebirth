@@ -213,4 +213,11 @@ public static class MathUtils
     public static Rectangle GetScreenRect() => new(0, 0, TankGame.Instance.Window.ClientBounds.Width, TankGame.Instance.Window.ClientBounds.Height);
     public static float Damp(float source, float destination, float smoothing, float dt) => MathHelper.Lerp(source, destination, 1f - MathF.Pow(smoothing, dt));
     public static Vector2 Damp(Vector2 source, Vector2 destination, float smoothing, float dt) => new(Damp(source.X, destination.X, smoothing, dt), Damp(source.Y, destination.Y, smoothing, dt));
+    public static Vector4 RoundV4(Vector4 value) => new Vector4(
+            MathF.Round(value.X),
+            MathF.Round(value.Y),
+            MathF.Round(value.Z),
+            MathF.Round(value.W));
+
+    public static Vector3 ToVector3(this Vector4 value) => new Vector3(value.X, value.Y, value.Z) / value.W;
 }
