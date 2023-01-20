@@ -43,16 +43,18 @@ namespace TanksRebirth.GameContent
 
         public int Id { get; private set; }
 
-        public ModelMesh MineMesh;
-        public ModelMesh EnvMesh;
+        private ModelMesh _mineMesh;
+        private ModelMesh _envMesh;
 
         public Rectangle Hitbox;
 
+        /// <summary>The time left (in ticks) until detonation.</summary>
         public float DetonateTime;
+        /// <summary>The time until detonation (in ticks) from when this <see cref="Mine"/> was/is created.</summary>
         public readonly float DetonateTimeMax;
 
         private bool _tickRed;
-
+        /// <summary>Whether or not this <see cref="Mine"/> is near destructible <see cref="Block"/>s.</summary>
         public bool IsNearDestructibles { get; private set; }
 
         /// <summary>The radius of this <see cref="Mine"/>'s explosion.</summary>
@@ -61,9 +63,11 @@ namespace TanksRebirth.GameContent
         /// <summary>Whether or not this <see cref="Mine"/> has detonated.</summary>
         public bool Detonated { get; set; }
 
+        /// <summary>The amount of time until detonation this <see cref="Mine"/> is set to when an enemy is within <see cref="MineReactRadius"/>.</summary>
         public int MineReactTime = 30;
-
-        public void ReassignId(int newId) => Id = newId;
+        /// <summary>The radius of which this mine will shorten its detonation time to <see cref="MineReactTime"/>.<para></para>
+        /// Is automatically set to <see cref="ExplosionRadius"/><c> * 0.8f</c></summary>
+        public float MineReactRadius;
 
         /// <summary>
         /// Creates a new <see cref="Mine"/>.
@@ -87,11 +91,13 @@ namespace TanksRebirth.GameContent
             if (owner != null)
                 SoundPlayer.PlaySoundInstance("Assets/sounds/mine_place", SoundContext.Effect, 0.5f, gameplaySound: true);
 
-            MineMesh = Model.Meshes["polygon1"];
-            EnvMesh = Model.Meshes["polygon0"];
+            _mineMesh = Model.Meshes["polygon1"];
+            _envMesh = Model.Meshes["polygon0"];
 
             _mineTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/mine/mine_env");
             _envTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/mine/mine_shadow");
+
+            MineReactRadius = ExplosionRadius * 0.8f;
 
             int index = Array.IndexOf(AllMines, AllMines.First(mine => mine is null));
 
@@ -164,7 +170,7 @@ namespace TanksRebirth.GameContent
                 {
                     foreach (var tank in GameHandler.AllTanks)
                     {
-                        if (tank is not null && Vector2.Distance(tank.Position, Position) < ExplosionRadius * 0.8f)
+                        if (tank is not null && Vector2.Distance(tank.Position, Position) < MineReactRadius)
                         {
                             tanksNear.Add(tank);
                         }
@@ -193,7 +199,7 @@ namespace TanksRebirth.GameContent
 
                         effect.TextureEnabled = true;
 
-                        if (mesh == MineMesh) {
+                        if (mesh == _mineMesh) {
                             if (!_tickRed) {
                                 effect.EmissiveColor = new Vector3(1, 1, 0) * GameHandler.GameLight.Brightness;
                             }

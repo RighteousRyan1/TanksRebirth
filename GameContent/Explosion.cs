@@ -132,10 +132,6 @@ namespace TanksRebirth.GameContent
 
             Rotation += RotationSpeed * TankGame.DeltaTime;
 
-            World = Matrix.CreateScale(Scale) * Matrix.CreateRotationY(Rotation) * Matrix.CreateTranslation(Position3D);
-            View = TankGame.GameView;
-            Projection = TankGame.GameProjection;
-
             OnPostUpdate?.Invoke(this);
         }
 
@@ -145,6 +141,11 @@ namespace TanksRebirth.GameContent
         }
 
         public void Render() {
+
+            World = Matrix.CreateScale(Scale) * Matrix.CreateRotationY(Rotation) * Matrix.CreateTranslation(Position3D);
+            View = TankGame.GameView;
+            Projection = TankGame.GameProjection;
+
             foreach (ModelMesh mesh in Model.Meshes) {
                 foreach (BasicEffect effect in mesh.Effects) {
                     effect.World = World;

@@ -264,7 +264,8 @@ namespace TanksRebirth.GameContent
 
         public TankProperties Properties = new();
 
-        public List<Shell> OwnedShells = new();
+        private int _oldShellLimit;
+        public Shell[] OwnedShells = new Shell[0];
 
         public Vector2 Position;
         public Vector2 Velocity;
@@ -278,7 +279,7 @@ namespace TanksRebirth.GameContent
         /// <summary>The 2D rectangle-represented hitbox of this <see cref="Tank"/>.</summary>
         public Rectangle CollisionBox => new((int)(Position.X - TNK_WIDTH / 2 + 3), (int)(Position.Y - TNK_WIDTH / 2 + 2), (int)TNK_WIDTH - 8, (int)TNK_HEIGHT - 4);
         /// <summary>How many <see cref="Shell"/>s this <see cref="Tank"/> owns.</summary>
-        public int OwnedShellCount => OwnedShells.Count;
+        public int OwnedShellCount => OwnedShells.Count(x => x is not null);
         /// <summary>How many <see cref="Mine"/>s this <see cref="Tank"/> owns.</summary>
         public int OwnedMineCount { get; internal set; }
         /// <summary>Whether or not this <see cref="Tank"/> is currently turning.</summary>
@@ -313,6 +314,8 @@ namespace TanksRebirth.GameContent
         }
         public virtual void Initialize()
         {
+            OwnedShells = new Shell[Properties.ShellLimit];
+
             CannonMesh = Model.Meshes["Cannon"];
             boneTransforms = new Matrix[Model.Bones.Count];
             if (TankGame.SecretCosmeticSetting)
@@ -712,6 +715,11 @@ namespace TanksRebirth.GameContent
 
             CurShootStun = Properties.ShootStun;
             CurShootCooldown = Properties.ShellCooldown;
+
+            if (_oldShellLimit != Properties.ShellLimit)
+                Array.Resize(ref OwnedShells, Properties.ShellLimit);
+
+            _oldShellLimit = Properties.ShellLimit;
         }
 
         private void DoShootParticles(Vector3 position)

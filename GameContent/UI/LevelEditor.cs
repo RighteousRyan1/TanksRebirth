@@ -469,7 +469,7 @@ namespace TanksRebirth.GameContent.UI
 
             LoadLevel.SetDimensions(() => new(WindowUtils.WindowWidth * 0.575f - (width / 2).ToResolutionX(), 10.ToResolutionY()), () => new Vector2(width, 50).ToResolution());
             LoadLevel.OnLeftClick = (a) => {
-                var res = Dialog.FileOpen("mission,campaign", TankGame.SaveDirectory);
+                var res = Dialog.FileOpen("mission,campaign,bin", TankGame.SaveDirectory);
                 if (res.Path != null && res.IsOk)
                 {
                     try {
@@ -481,17 +481,26 @@ namespace TanksRebirth.GameContent.UI
                             Mission.LoadDirectly(Mission.Load(res.Path, null));
                             //_loadedCampaign = null;
                         }
-                        else {
+                        else if (ext == ".campaign") {
                             _loadedCampaign = Campaign.Load(res.Path);
                             _loadedCampaign.LoadMission(0);
                             _loadedCampaign.SetupLoadedMission(true);
                             MissionName.Text = _loadedCampaign.CachedMissions[0].Name;
                             SetupMissionsBar(_loadedCampaign);
                         }
+                        else if (ext == ".bin")
+                        {
+                            var map = new WiiMap(res.Path);
+                            ChatSystem.SendMessage($"(Width, Height): ({map.Width}, {map.Height})", Color.White);
+                            ChatSystem.SendMessage($"(QVal, PValue): ({map.QValue}, {map.PValue})", Color.White);
+
+                            WiiMap.ApplyToGameWorld(map);
+                        }
 
                         ChatSystem.SendMessage($"Loaded '{Path.GetFileName(res.Path)}'.", Color.White);
-                    } catch {
+                    } catch (Exception e) {
                         ChatSystem.SendMessage("Failed to load.", Color.Red);
+                        ChatSystem.SendMessage(e.Message, Color.Red);
                     }
                 }
                 return;

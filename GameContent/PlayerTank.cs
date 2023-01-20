@@ -244,7 +244,7 @@ namespace TanksRebirth.GameContent
                         else
                             TurretRotation = TankRotation;
                     }
-                    else {
+                    else if (!GameUI.Paused) {
                         //Mouse.SetPosition(Input.CurrentMouseSnapshot.X, WindowUtils.WindowHeight / 2);
                         if (InputUtils.CurrentMouseSnapshot.X >= WindowUtils.WindowWidth)
                             Mouse.SetPosition(1, InputUtils.CurrentMouseSnapshot.Y);
@@ -448,8 +448,11 @@ namespace TanksRebirth.GameContent
         public override void Destroy(ITankHurtContext context)
         {
             if (Client.IsConnected())
+            {
+                TankGame.SpectateValidTank(PlayerId, true);
                 if (NetPlay.IsClientMatched(PlayerId))
                     AddLives(-1);
+            }
 
             if (context is not null)
             {

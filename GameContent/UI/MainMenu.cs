@@ -312,12 +312,12 @@ namespace TanksRebirth.GameContent.UI
                     return;
                 }
 
-                if (int.TryParse(PortInput.Text, out var port))
+                if (int.TryParse(PortInput.GetRealText(), out var port))
                 {
                     Server.CreateServer();
 
-                    Server.StartServer(ServerNameInput.GetRealText(), port, IPInput.GetRealText(), PasswordInput.GetRealText());
-                    NetPlay.ServerName = ServerNameInput.GetRealText();
+                    NetPlay.ServerName = ServerNameInput.GetRealText() == string.Empty ? "Unnamed" : ServerNameInput.GetRealText();
+                    Server.StartServer(NetPlay.ServerName, port, IPInput.GetRealText(), PasswordInput.GetRealText());
 
                     Client.CreateClient(UsernameInput.GetRealText());
                     Client.AttemptConnectionTo(IPInput.GetRealText(), port, PasswordInput.GetRealText());
@@ -410,6 +410,15 @@ namespace TanksRebirth.GameContent.UI
                 {
                     Client.SendDisconnect(NetPlay.CurrentClient.Id, NetPlay.CurrentClient.Name, "User left.");
                     Client.client.Disconnect();
+
+                    NetPlay.CurrentClient = null;
+                    NetPlay.CurrentServer = null;
+
+                    Server.ConnectedClients = null;
+                    Server.serverNetManager = null;
+
+                    NetPlay.UnmapClientNetworking();
+                    NetPlay.UnmapServerNetworking();
 
                     ShouldServerButtonsBeVisible = true;
                 }

@@ -11,6 +11,7 @@ namespace TanksRebirth.Net
 {
     public class Client
     {
+
         public static NetManager clientNetManager;
         public static EventBasedNetListener clientNetListener;
         public static NetPeer client;
@@ -54,7 +55,7 @@ namespace TanksRebirth.Net
                 return;
 
             NetDataWriter message = new();
-            message.Put(PacketType.QuitLevel);
+            message.Put(PacketID.QuitLevel);
 
             client.Send(message, DeliveryMethod.ReliableOrdered);
         }
@@ -64,7 +65,7 @@ namespace TanksRebirth.Net
                 return;
 
             NetDataWriter message = new();
-            message.Put(PacketType.SyncLives);
+            message.Put(PacketID.SyncLives);
 
             message.Put(NetPlay.CurrentClient.Id);
             message.Put(PlayerTank.GetMyLives());
@@ -78,7 +79,7 @@ namespace TanksRebirth.Net
                 return;
 
             NetDataWriter message = new();
-            message.Put(PacketType.Cleanup);
+            message.Put(PacketID.Cleanup);
 
             client.Send(message, DeliveryMethod.Unreliable);
         }
@@ -86,7 +87,7 @@ namespace TanksRebirth.Net
         public static void SendClientInfo()
         {
             NetDataWriter message = new();
-            message.Put(PacketType.ClientInfo);
+            message.Put(PacketID.ClientInfo);
             message.Put(NetPlay.CurrentClient.Name);
 
             client.Send(message, DeliveryMethod.ReliableOrdered);
@@ -94,14 +95,14 @@ namespace TanksRebirth.Net
         public static void RequestLobbyInfo()
         {
             NetDataWriter message = new();
-            message.Put(PacketType.LobbyInfo);
+            message.Put(PacketID.LobbyInfo);
 
             client.Send(message, DeliveryMethod.ReliableOrdered);
         }
         public static void RequestStartGame(int checkpoint, bool shouldProgressMissions)
         {
             NetDataWriter message = new();
-            message.Put(PacketType.StartGame);
+            message.Put(PacketID.StartGame);
             message.Put(checkpoint);
             message.Put(shouldProgressMissions);
 
@@ -110,7 +111,7 @@ namespace TanksRebirth.Net
         public static void RequestPlayerTankSpawn(PlayerTank tank)
         {
             NetDataWriter message = new();
-            message.Put(PacketType.PlayerSpawn);
+            message.Put(PacketID.PlayerSpawn);
 
             message.Put(tank.PlayerType);
             message.Put(tank.Team);
@@ -129,7 +130,7 @@ namespace TanksRebirth.Net
                 return;
 
             NetDataWriter message = new();
-            message.Put(PacketType.SyncPlayer);
+            message.Put(PacketID.SyncPlayer);
 
             message.Put(tank.PlayerId);
             message.Put(tank.Body.Position.X);
@@ -147,7 +148,7 @@ namespace TanksRebirth.Net
                 return;
 
             NetDataWriter message = new();
-            message.Put(PacketType.SyncAiTank);
+            message.Put(PacketID.SyncAiTank);
 
             message.Put(tank.AITankId);
             message.Put(tank.Body.Position.X);
@@ -170,7 +171,7 @@ namespace TanksRebirth.Net
                 return;
 
             NetDataWriter message = new();
-            message.Put(PacketType.ShellFire);
+            message.Put(PacketID.ShellFire);
 
             message.Put(shell.Tier);
             message.Put(shell.Position);
@@ -191,7 +192,7 @@ namespace TanksRebirth.Net
             if (!IsConnected() || MainMenu.Active)
                 return;
             NetDataWriter message = new();
-            message.Put(PacketType.TankDamage);
+            message.Put(PacketID.TankDamage);
 
             message.Put(id);
 
@@ -205,12 +206,12 @@ namespace TanksRebirth.Net
             if (!IsConnected() || MainMenu.Active)
                 return;
             NetDataWriter message = new();
-            message.Put(PacketType.ShellDestroy);
+            message.Put(PacketID.ShellDestroy);
             // TODO: bool hasOwner to decide whether or not to subtract from an owner's shell count
 
             message.Put(shell.Owner.WorldId);
             // send the index of the shell in the owner's OwnedShell array for destruction on other clients
-            message.Put(shell.Owner.OwnedShells.IndexOf(shell));
+            message.Put(Array.IndexOf(shell.Owner.OwnedShells, shell));
             message.Put((byte)cxt);
 
             client.Send(message, DeliveryMethod.ReliableOrdered);
@@ -221,7 +222,7 @@ namespace TanksRebirth.Net
             if (!IsConnected() || MainMenu.Active)
                 return;
             NetDataWriter message = new();
-            message.Put(PacketType.MineDetonate);
+            message.Put(PacketID.MineDetonate);
 
             message.Put(mine.Id);
 
@@ -234,7 +235,7 @@ namespace TanksRebirth.Net
                 return;
 
             NetDataWriter message = new();
-            message.Put(PacketType.MinePlacement);
+            message.Put(PacketID.MinePlacement);
 
             message.Put(position);
             message.Put(detonateTime);
@@ -247,7 +248,7 @@ namespace TanksRebirth.Net
             if (!IsConnected())
                 return;
             NetDataWriter message = new();
-            message.Put(PacketType.ChatMessage);
+            message.Put(PacketID.ChatMessage);
 
             message.Put(text);
             message.Put(color);
@@ -267,7 +268,7 @@ namespace TanksRebirth.Net
             if (!IsConnected())
                 return;
             NetDataWriter message = new();
-            message.Put(PacketType.ServerNameSync);
+            message.Put(PacketID.ServerNameSync);
             message.Put(newName);
 
             Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered);
@@ -291,7 +292,7 @@ namespace TanksRebirth.Net
             if (!IsConnected())
                 return;
             NetDataWriter message = new();
-            message.Put(PacketType.SendCampaign);
+            message.Put(PacketID.SendCampaign);
 
             message.Put(campaign.MetaData.Name);
             message.Put(campaign.MetaData.StartingLives);
@@ -337,7 +338,7 @@ namespace TanksRebirth.Net
             if (!IsConnected())
                 return;
             NetDataWriter message = new();
-            message.Put(PacketType.SendCampaignByName);
+            message.Put(PacketID.SendCampaignByName);
 
             message.Put(name);
 
@@ -348,7 +349,7 @@ namespace TanksRebirth.Net
             if (!IsConnected())
                 return;
             NetDataWriter message = new();
-            message.Put(PacketType.Disconnect);
+            message.Put(PacketID.Disconnect);
 
             message.Put(peerId);
             message.Put(name);
@@ -362,7 +363,7 @@ namespace TanksRebirth.Net
             if (!IsConnected())
                 return;
             NetDataWriter message = new();
-            message.Put(PacketType.CampaignSendSuccess);
+            message.Put(PacketID.CampaignSendSuccess);
 
             message.Put(campaignName);
             message.Put(clientId);

@@ -69,5 +69,15 @@ namespace TanksRebirth.Internals.Common.Framework.Collections
         public bool ContainsValue(TValue value) => _dictionary.ContainsValue(value);
 
         public Dictionary<string, TValue> GetContents() => _dictionary;
+
+        public int ForcefullyInsert(string key, TValue value) {
+            if (_dictionary.ContainsKey(key))
+                return _dictionary.Keys.ToList().IndexOf(key);
+            else if (_dictionary.ContainsValue(value))
+                return _dictionary.Values.ToList().IndexOf(value);
+
+            _dictionary.Add(key, value);
+            return _dictionary.Keys.ToList().IndexOf(key);
+        }
     }
 }

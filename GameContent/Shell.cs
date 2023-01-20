@@ -176,7 +176,11 @@ namespace TanksRebirth.GameContent
             AllShells[index] = this;
 
             if (owner != null)
-                Owner.OwnedShells.Add(this);
+            {
+                var idx = Array.IndexOf(Owner.OwnedShells, null);
+                if (idx > -1)
+                    Owner.OwnedShells[idx] = this;
+            }
         }
 
         private void StopSounds(int delay, MissionEndContext context, bool result1up)
@@ -491,8 +495,11 @@ namespace TanksRebirth.GameContent
         }
         public void Remove() {
             if (Owner != null)
-                if (Owner.OwnedShells != null)
-                    Owner.OwnedShells.Remove(this);
+                if (Owner.OwnedShells != null) {
+                    var idx = Array.IndexOf(Owner.OwnedShells, this);
+                    if (idx > -1)
+                        Owner.OwnedShells[idx] = null;
+                }
 
             TankGame.OnFocusLost -= TankGame_OnFocusLost;
             TankGame.OnFocusRegained -= TankGame_OnFocusRegained;

@@ -46,6 +46,10 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
 
         public bool HasBlock; // if false, a tank exists here
 
+        public readonly int Id;
+
+        public Point RelativePosition;
+
         public PlacementSquare(Vector3 position, float dimensions)
         {
             Position = position;
@@ -53,6 +57,7 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
 
             _model = GameResources.GetGameResource<Model>("Assets/check");
 
+            Id = Placements.Count;
 
             Placements.Add(this);
         }
@@ -70,7 +75,8 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
                                 place.DoPlacementAction(true);
                             else
                                 place.DoPlacementAction(false);
-                        }
+                        },
+                        RelativePosition = new Point(i, j)
                     };
                 }
             }
@@ -99,8 +105,8 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
 
                 if (place)
                 {
-                    var cube = new Block(LevelEditor.Active ? LevelEditor.SelectedBlockType : GameHandler.blockType, LevelEditor.Active ?  LevelEditor.BlockHeight : GameHandler.blockHeight, Position.FlattenZ());
-                    BlockId = cube.Id;
+                    var block = new Block(LevelEditor.Active ? LevelEditor.SelectedBlockType : GameHandler.blockType, LevelEditor.Active ?  LevelEditor.BlockHeight : GameHandler.blockHeight, Position.FlattenZ());
+                    BlockId = block.Id;
 
                     HasBlock = true;
                     IsPlacing = true;
@@ -197,13 +203,15 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
         {
             var hoverUi = UIElement.GetElementsAt(MouseUtils.MousePosition).Count > 0;
 
-            foreach (var mesh in _model.Meshes)
-            {
-                foreach (BasicEffect effect in mesh.Effects)
-                {
+            foreach (var mesh in _model.Meshes) {
+                foreach (BasicEffect effect in mesh.Effects) {
                     effect.World = Matrix.CreateScale(0.68f) * Matrix.CreateTranslation(Position + new Vector3(0, 0.1f, 0));
                     effect.View = TankGame.GameView;
                     effect.Projection = TankGame.GameProjection;
+
+                    //var pos1 = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
+
+                    //SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"{Id}\n({RelativePosition.X}, {RelativePosition.Y})", pos1, Color.White, Color.Black, new Vector2(TankGame.AddativeZoom * 0.8f).ToResolution(), 0f);
 
                     if (DrawStacks) {
                         if (BlockId > -1) {

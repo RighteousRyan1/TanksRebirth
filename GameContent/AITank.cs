@@ -2,25 +2,16 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
-using TanksRebirth.Enums;
 using System.Linq;
-using TanksRebirth.Internals.Common.GameInput;
-using Microsoft.Xna.Framework.Input;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Internals;
-using Microsoft.Xna.Framework.Audio;
-using TanksRebirth.Internals.Common;
-using TanksRebirth.Internals.Core.Interfaces;
 using TanksRebirth.GameContent.GameMechanics;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Graphics;
 using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.Internals.Common.Framework;
-using TanksRebirth.Internals.Common.IO;
-using System.Reflection;
 using TanksRebirth.Net;
-using TanksRebirth.IO;
 using TanksRebirth.GameContent.Properties;
 using TanksRebirth.GameContent.Cosmetics;
 using TanksRebirth.GameContent.UI;
@@ -1732,11 +1723,11 @@ namespace TanksRebirth.GameContent
                 if (TankGame.RunTime % treadPlaceTimer <= TankGame.DeltaTime)
                     LayFootprint(Properties.TrackType == TrackID.Thick);
             }
-
+            if (TankGame.SuperSecretDevOption)
+                if (AITankId == 0)
+                    TargetTankRotation = (MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - MouseUtils.MousePosition).ToRotation() + MathHelper.PiOver2;
             if ((Server.serverNetManager is not null && Client.IsConnected()) || (!Client.IsConnected() && !Dead) || MainMenu.Active)
             {
-
-                // TargetTankRotation = (MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - MouseUtils.MousePosition).ToRotation() - MathHelper.PiOver2;
                 timeSinceLastAction++;
 
                 if (!MainMenu.Active)
@@ -2140,6 +2131,9 @@ namespace TanksRebirth.GameContent
         public Tank TargetTank;
 
         public float TurretRotationMultiplier = 1f;
+
+        private bool _oldPathBlocked;
+        private int _pathHitCount;
         public void DoAi(bool doMoveTowards = true, bool doMovements = true, bool doFire = true)
         {
             if (!MainMenu.Active && !GameProperties.InMission)
@@ -2251,7 +2245,7 @@ namespace TanksRebirth.GameContent
                     if (Properties.Stationary)
                         return;
 
-                    #region CubeNav
+                    #region BlockNav
                     if (Behaviors[2].IsModOf(AiParams.BlockReadTime) && !isMineNear && !isShellNear)
                     {
                         pathBlocked = IsObstacleInWay(AiParams.BlockWarinessDistance / PATH_UNIT_LENGTH, Vector2.UnitY.RotatedByRadians(TargetTankRotation), out var travelPath, out var refPoints);
@@ -2268,6 +2262,16 @@ namespace TanksRebirth.GameContent
                                 TargetTankRotation = MathUtils.RoughStep(TargetTankRotation, /*TargetTankRotation <= MathHelper.Pi ? -refAngle + MathHelper.PiOver2 : */refAngle, refAngle / 6);
                             }
                         }
+                        // FIXME: experimental.
+                        if (pathBlocked && !_oldPathBlocked) {
+                            //if (GameHandler.GameRand.NextFloat(0f, 1f) <= 0.25f)
+                            _pathHitCount++;
+                            if (_pathHitCount % 10 == 0)
+                                TargetTankRotation = -TargetTankRotation + MathHelper.PiOver2;
+                        }
+
+                        _oldPathBlocked = pathBlocked;
+
                         // TODO: i literally do not understand this
                     }
 
@@ -2495,7 +2499,6 @@ namespace TanksRebirth.GameContent
 
                 #endregion
             };
-
             enactBehavior?.Invoke();
             OnPostUpdateAI?.Invoke(this);
         }
@@ -2509,12 +2512,9 @@ namespace TanksRebirth.GameContent
             if ((MainMenu.Active && Properties.Invisible) || (Properties.Invisible && GameProperties.InMission))
                 return;
 
-            for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++)
-            {
-                foreach (ModelMesh mesh in Model.Meshes)
-                {
-                    foreach (BasicEffect effect in mesh.Effects)
-                    {
+            for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
+                foreach (ModelMesh mesh in Model.Meshes) {
+                    foreach (BasicEffect effect in mesh.Effects) {
                         effect.World = i == 0 ? boneTransforms[mesh.ParentBone.Index] : boneTransforms[mesh.ParentBone.Index] * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
                         effect.View = View;
                         effect.Projection = Projection;
@@ -2592,7 +2592,7 @@ namespace TanksRebirth.GameContent
                         Aimtarget).ToRotation() - MathHelper.PiOver2;
                     GetTanksInPath(Vector2.UnitY.RotatedByRadians(rot), out var rayEnd2, true, Vector2.Zero, pattern: x => x.IsSolid | x.Type == BlockID.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
                 }
-                DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"{TankID.Collection.GetKey(Tier)}: {poo.Count} tank(s) spotted", MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), World, View, Projection), 1, centered: true);
+                DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"{TankID.Collection.GetKey(Tier)}: {poo.Count} tank(s) spotted | pathC: {_pathHitCount % 10} / 10", MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), World, View, Projection), 1, centered: true);
                 if (!Properties.Stationary)
                 {
                     IsObstacleInWay(AiParams.BlockWarinessDistance / PATH_UNIT_LENGTH, Vector2.UnitY.RotatedByRadians(TargetTankRotation), out var travelPos, out var refPoints, true);

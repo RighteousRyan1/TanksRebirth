@@ -17,7 +17,7 @@ float4 main(float4 sampleColor : COLOR0, float2 coords : TEXCOORD0) : COLOR0
     float PiOver2 = 6.28318530718;
 
     float Directions = 16.0;
-    float Quality = 16.0; // normally 3.0
+    float Quality = 6.0; // normally 3.0
     
     float2 Radius = oBlurFactor / oResolution.xy;
     

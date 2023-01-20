@@ -790,9 +790,12 @@ namespace TanksRebirth.GameContent
             }
         }
 
-        public static PlayerTank SpawnMe(int playerType, int team)
+        public static PlayerTank SpawnMe(int playerType, int team, Vector3 posOverride = default)
         {
             var pos = LevelEditor.Active ? PlacementSquare.CurrentlyHovered.Position : MatrixUtils.GetWorldPosition(MouseUtils.MousePosition);
+
+            if (posOverride != default)
+                pos = posOverride;
             var myTank = new PlayerTank(playerType);
 
             myTank.Team = team;

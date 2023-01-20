@@ -42,11 +42,18 @@ namespace TanksRebirth.GameContent.ModSupport
         private static bool _firstLoad = true;
 
         public static string Error = string.Empty;
-        private static void Compile(string modName)
+        private static void AttemptCompile(string modName)
         {
             if (!TankGame.IsWindows) {
                 GameHandler.ClientLog.Write("Auto-compilation of mod failed. Specified OS architecture is not Windows.", Internals.LogType.Warn);
                 return;
+            }
+            else {
+                var checkPath = "C:\\Program Files\\dotnet\\sdk";
+                if (!Directory.Exists(checkPath) || !Directory.GetDirectories(checkPath).Any(x => x.Contains("6.0"))) {
+                    GameHandler.ClientLog.Write("Auto-compilation of mod failed. Specified OS architecture is not Windows.", Internals.LogType.Warn);
+                    return;
+                }
             }
             Status = LoadStatus.Compiling;
             Process process = new();
@@ -88,6 +95,8 @@ namespace TanksRebirth.GameContent.ModSupport
             var folders = Directory.GetDirectories(ModsPath);
 
             if (folders.Length == 0) {
+                _firstLoad = true;
+                ChatSystem.SendMessage(_firstLoad ? $"Loaded {_loadedAssemblies.Count} mod(s)." : $"Reloaded {_loadedAssemblies.Count} mod(s).", Color.Lime);
                 return;
             }
             LoadingMods = true;
@@ -111,7 +120,7 @@ namespace TanksRebirth.GameContent.ModSupport
                                 _loadingActions.Add(() =>
                                 {
                                     ModBeingLoaded = modName;
-                                    Compile(modName);
+                                    AttemptCompile(modName);
                                     Status = LoadStatus.Loading;
                                     string filepath = Path.Combine(folder, "bin", "Release", ModNETVersion, $"{modName}.dll");
                                     string pdb = Path.ChangeExtension(filepath, ".pdb");

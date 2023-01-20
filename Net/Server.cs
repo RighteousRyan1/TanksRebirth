@@ -30,7 +30,7 @@ namespace TanksRebirth.Net
 
         public static int CurrentClientCount;
 
-        public static void CreateServer(ushort maxClients = 8)
+        public static void CreateServer(ushort maxClients = 4)
         {
             MaxClients = maxClients;
 
@@ -73,11 +73,9 @@ namespace TanksRebirth.Net
                     ChatSystem.SendMessage("User rejected: Incorrect password.", Color.Red);
                     request.Reject();
                 }
-
                 serverNetListener.PeerConnectedEvent += peer =>
                 {
                     NetDataWriter writer = new();
-                    NetPacketProcessor processor = new();
 
                     writer.Put("Client successfully connected.");
 

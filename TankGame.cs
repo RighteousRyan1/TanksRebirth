@@ -97,6 +97,10 @@ namespace TanksRebirth
 
         public static Camera GameCamera;
 
+        public static OrthographicCamera OrthographicCamera;
+        public static SpectatorCamera SpectatorCamera;
+        public static PerspectiveCamera PerspectiveCamera;
+
         public readonly string SysGPU;
         public readonly string SysCPU;
 
@@ -301,6 +305,10 @@ namespace TanksRebirth
 
                 Window.ClientSizeChanged += HandleResizing;
 
+                OrthographicCamera = new(0, 0, 1920, 1080, -2000, 5000);
+                SpectatorCamera = new(MathHelper.ToRadians(100), GraphicsDevice.Viewport.AspectRatio, 0.1f, 5000f);
+                PerspectiveCamera = new(MathHelper.ToRadians(90), GraphicsDevice.Viewport.AspectRatio, 0.1f, 5000f);
+
                 // I forget why this check is needed...
                 if (Debugger.IsAttached)
                 {
@@ -412,15 +420,12 @@ namespace TanksRebirth
 
                 Language.LoadLang(ref GameLanguage, Settings.Language);
 
-                #endregion
-
-                ModLoader.LoadMods();
-
-                MainMenu.InitializeBasics();
-
                 GameHandler.SetupGraphics();
                 GameUI.Initialize();
                 MainMenu.InitializeUIGraphics();
+                MainMenu.InitializeBasics();
+
+                #endregion
 
                 /*TankFootprint.DecalHandler.Effect = new(GraphicsDevice)
                 {
@@ -429,7 +434,13 @@ namespace TanksRebirth
                     Projection = GameProjection,
                 };*/
 
-                if (ModLoader.LoadingMods) {
+                MainMenu.Open();
+
+
+                ModLoader.LoadMods();
+
+                if (ModLoader.LoadingMods)
+                {
                     MainMenu.MenuState = MainMenu.State.LoadingMods;
                     Task.Run(async () => {
                         while (ModLoader.LoadingMods)
@@ -437,8 +448,6 @@ namespace TanksRebirth
                         MainMenu.MenuState = MainMenu.State.PrimaryMenu;
                     });
                 }
-
-                MainMenu.Open();
 
                 GameHandler.ClientLog.Write("Running in directory: " + Directory.GetCurrentDirectory(), LogType.Info);
 
@@ -497,7 +506,7 @@ namespace TanksRebirth
                     LevelEditor.Theme.Pause();
             }
         }
-
+        #region Various Fields
         public const float DEFAULT_ORTHOGRAPHIC_ANGLE = 0.75f;
         public static Vector2 CameraRotationVector = new(0, DEFAULT_ORTHOGRAPHIC_ANGLE);
 
@@ -519,7 +528,8 @@ namespace TanksRebirth
 
         private static int transitionTimer;
 
-        public static Vector3 ThirdPersonCameraPosition;
+        public static Vector3 ThirdPersonCameraPosition = new(0, 100, 0);
+        public static float ThirdPersonCameraRotation;
         public static Vector2 MouseVelocity => MouseUtils.GetMouseVelocity(WindowUtils.WindowCenter);
 
         public static bool SecretCosmeticSetting;
@@ -538,12 +548,45 @@ namespace TanksRebirth
         private static float _gradualIncrease = GRAD_INC_DEF;
 
         private static float _storedZoom;
+        #endregion
+
+        //private static Vector3 _rot;
+        //private static Vector2 _mOld;
+
+        public static int SpectatorId;
 
         public static void DoZoomStuff() => _zoomAdd = _storedZoom;
+
+        public static int SpectateValidTank(int id, bool increase)
+        {
+            var arr = GameHandler.AllPlayerTanks;
+
+            var newId = id + (increase ? 1 : -1);
+
+            if (newId < 0)
+                return arr.Length - 1;
+            else if (newId >= arr.Length)
+                return 0;
+
+            if (arr[newId] is null || arr[newId].Dead)
+                return SpectateValidTank(newId, increase);
+            else return newId;
+        }
         protected override void Update(GameTime gameTime)
         {
             try
             {
+                //SpectatorCamera.FieldOfView = MathHelper.ToRadians(100);
+                //SpectatorCamera.AspectRatio = GraphicsDevice.Viewport.AspectRatio;
+                //PerspectiveCamera.FieldOfView = MathHelper.ToRadians(90);
+                //PerspectiveCamera.AspectRatio = GraphicsDevice.Viewport.AspectRatio;
+                //SpectatorCamera.Position = new Vector3(0, 100, 0);
+                //SpectatorCamera.Update();
+
+                //OrthographicCamera.Translation = new(CameraFocusOffset.X, -CameraFocusOffset.Y + 40, 0);
+
+                //GameCamera = SpectatorCamera;
+
                 #region Non-Camera
                 TargetElapsedTime = TimeSpan.FromMilliseconds(Interp ? 16.67 * (60f / Settings.TargetFPS) : 16.67);
 
@@ -608,7 +651,7 @@ namespace TanksRebirth
                     if (InputUtils.KeyJustPressed(Keys.J))
                         OverheadView = !OverheadView;
                 #endregion
-                if (!Difficulties.Types["ThirdPerson"])
+                if (!Difficulties.Types["ThirdPerson"] || MainMenu.Active)
                 {
                     if (transitionTimer > 0) {
                         transitionTimer--;
@@ -624,19 +667,6 @@ namespace TanksRebirth
                             CameraFocusOffset.Y = MathUtils.RoughStep(CameraFocusOffset.Y, 0f, 2f * DeltaTime);
                         }
                     }
-
-                    /*GameCamera.SetPosition(new Vector3(0, 0, 350));
-                    GameCamera.SetLookAt(new Vector3(0, 0, 0));
-                    GameCamera.Zoom(DEFAULT_ZOOM * AddativeZoom);
-
-                    GameCamera.RotateX(CameraRotationVector.Y);
-                    GameCamera.RotateY(CameraRotationVector.X);
-
-                    GameCamera.SetCameraType(CameraType.Orthographic);
-
-                    GameCamera.Translate(new Vector3(CameraFocusOffset.X, -CameraFocusOffset.Y + 40, 0));
-
-                    GameCamera.SetViewingDistances(-2000f, 5000f);*/
 
                     if (!float.IsInfinity(DeltaTime))
                         _spinValue +=  _gradualIncrease * DeltaTime;
@@ -666,31 +696,70 @@ namespace TanksRebirth
                             Matrix.CreateRotationY(CameraRotationVector.X + (MainMenu.Active ? _spinValue : 0)) *
                             Matrix.CreateRotationX(CameraRotationVector.Y);
                     GameProjection = Matrix.CreateOrthographic(1920, 1080, -2000, 5000);
+                    
                     //Matrix.CreateTranslation(CameraFocusOffset.X, -CameraFocusOffset.Y, 0);
+                    OrthographicCamera.SetLookAt(new(0f, 0, 350f), Vector3.Zero, Vector3.Up);
+
                 }
-                else
+                else if (!MainMenu.Active)
                 {
-                    if (GameHandler.AllPlayerTanks.Any(x => x is not null && !x.Dead))
+                    if (GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()] is not null && !GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()].Dead)
                     {
+                        SpectatorId = NetPlay.GetMyClientId();
                         ThirdPersonCameraPosition = GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()].Position.ExpandZ();
-                        /*GameCamera.SetPosition(GameHandler.AllPlayerTanks[0].Position.ExpandZ());
-                        GameCamera.SetLookAt(GameHandler.AllPlayerTanks[0].Position.ExpandZ());
-                        GameCamera.Zoom(DEFAULT_ZOOM * AddativeZoom);
-
-                        GameCamera.RotateX(CameraRotationVector.Y);
-                        GameCamera.RotateY(CameraRotationVector.X);
-
-                        GameCamera.SetCameraType(CameraType.Orthographic);
-
-                        GameCamera.Translate(new Vector3(CameraFocusOffset.X, -CameraFocusOffset.Y + 40, 0));
-
-                        GameCamera.SetViewingDistances(-2000f, 5000f);*/
-
-                        GameView = Matrix.CreateLookAt(ThirdPersonCameraPosition,
-                            ThirdPersonCameraPosition + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(-GameHandler.AllPlayerTanks[0].TurretRotation).ExpandZ()
-                            , Vector3.Up) * Matrix.CreateScale(AddativeZoom) * Matrix.CreateRotationX(CameraRotationVector.Y - MathHelper.PiOver4) * Matrix.CreateRotationY(CameraRotationVector.X) * Matrix.CreateTranslation(0, -20, -40);
-                        GameProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000);
+                        ThirdPersonCameraRotation = -GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()].TurretRotation;
                     }
+                    else
+                    {
+
+                        if (InputUtils.KeyJustPressed(Keys.Left))
+                            SpectatorId = SpectateValidTank(SpectatorId, false);
+                        else if (InputUtils.KeyJustPressed(Keys.Right))
+                            SpectatorId = SpectateValidTank(SpectatorId, true);
+
+                        ThirdPersonCameraPosition = GameHandler.AllPlayerTanks[SpectatorId].Position.ExpandZ();
+                        ThirdPersonCameraRotation = -GameHandler.AllPlayerTanks[SpectatorId].TurretRotation;
+
+
+                        /*var moveSpeed = 2f * DeltaTime;
+
+
+                        if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Up))
+                            ThirdPersonCameraPosition += GameView.Forward * moveSpeed;
+                        if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Down))
+                            ThirdPersonCameraPosition += GameView.Backward * moveSpeed;
+                        if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Left))
+                            ThirdPersonCameraPosition += GameView.Left * moveSpeed;
+                        if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Right))
+                            ThirdPersonCameraPosition += GameView.Right * moveSpeed;*/
+
+                        /*var rotationSpeed = 0.005f;
+
+                        if (MouseUtils.MousePosition != _mOld)
+                        {
+                            _rot.X += (MouseUtils.MousePosition - _mOld).X * rotationSpeed;
+                            _rot.Y += (MouseUtils.MousePosition - _mOld).Y * rotationSpeed;
+
+                            MathHelper.Clamp(_rot.Y, -MathHelper.PiOver2, MathHelper.PiOver2);
+                        }
+
+                        _mOld = MouseUtils.MousePosition;
+                        GameView = Matrix.CreateLookAt(ThirdPersonCameraPosition + new Vector3(0, 20, 0),
+                            GameView.Forward, Vector3.Up) *
+                            Matrix.CreateScale(AddativeZoom) *
+                            Matrix.CreateRotationY(_rot.X) *
+                            Matrix.CreateRotationX(_rot.Y) *
+                            Matrix.CreateRotationZ(_rot.Z);*/
+                    }
+
+                    GameView = Matrix.CreateLookAt(ThirdPersonCameraPosition,
+                        ThirdPersonCameraPosition + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(ThirdPersonCameraRotation).ExpandZ(), 
+                        Vector3.Up) * Matrix.CreateScale(AddativeZoom) *
+                        Matrix.CreateRotationX(CameraRotationVector.Y - MathHelper.PiOver4) *
+                        Matrix.CreateRotationY(CameraRotationVector.X) *
+                        Matrix.CreateTranslation(0, -20, -40);
+
+                    GameProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000);
                 }
 
                 if (!GameUI.Paused && !MainMenu.Active && DebugUtils.DebuggingEnabled)
@@ -711,8 +780,9 @@ namespace TanksRebirth
                 FixedUpdate(gameTime);
 
                 DoWorkaroundVolumes();
-                //GameView = GameCamera.GetView();
-                //GameProjection = GameCamera.GetProjection();
+
+                //GameView = GameCamera.View;
+                //GameProjection = GameCamera.Projection;
 
                 LogicTime = gameTime.ElapsedGameTime;
 
@@ -742,6 +812,15 @@ namespace TanksRebirth
 
             if (shouldUpdate)
             {
+                if (InputUtils.AreKeysJustPressed(Keys.S, Keys.U, Keys.P, Keys.E, Keys.R))
+                {
+                    if (!SuperSecretDevOption)
+                        ChatSystem.SendMessage("You're a devious young one, aren't you?", Color.Orange, "DEBUG", true);
+                    else
+                        ChatSystem.SendMessage("I guess you aren't a devious one.", Color.Orange, "DEBUG", true);
+                    SuperSecretDevOption = !SuperSecretDevOption;
+                }
+
                 GameHandler.UpdateAll();
 
                 Tank.CollisionsWorld.Step(1);
@@ -846,6 +925,8 @@ namespace TanksRebirth
             GameTarget.SaveAsPng(fs, GameTarget.Width, GameTarget.Height);
             ChatSystem.SendMessage("Saved image to " + fs.Name, Color.Lime);
         }
+
+        public static bool SuperSecretDevOption;
 
         protected override void Draw(GameTime gameTime)
         {

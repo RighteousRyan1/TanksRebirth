@@ -43,21 +43,28 @@ namespace TanksRebirth.GameContent
     public class Block : IGameSystem
     {
         public delegate void DestroyDelegate(Block block);
+        /// <summary>Called after this <see cref="Block"/> is destroyed.</summary>
         public static event DestroyDelegate OnDestroy;
 
         public delegate void UpdateDelegate(Block block);
+        /// <summary>Called after this <see cref="Block"/> is updated on the CPU.</summary>
         public static event UpdateDelegate OnPostUpdate;
 
         public delegate void PostRenderDelegate(Block block);
+        /// <summary>Called after this <see cref="Block"/> is rendered on the GPU.</summary>
         public static event PostRenderDelegate OnPostRender;
 
         public delegate void InitializeDelegate(Block block);
+        /// <summary>Called after this <see cref="Block"/> is initialized.</summary>
         public static event InitializeDelegate OnInitialize;
 
+        /// <summary>The teleportation index for this <see cref="Block"/>. Make sure that no more than 2 teleporters share this same number.</summary>
         public sbyte TpLink = -1;
         private int[] _tankCooldowns = new int[GameHandler.AllTanks.Length];
 
+        /// <summary>The type of this <see cref="Block"/>. (i.e: Wood, Cork, Hole)</summary>
         public int Type { get; set; }
+        /// <summary>All <see cref="Block"/>s stored in the same array.</summary>
 
         public static Block[] AllBlocks = new Block[CubeMapPosition.MAP_WIDTH * CubeMapPosition.MAP_HEIGHT * 5];
 
@@ -70,41 +77,51 @@ namespace TanksRebirth.GameContent
         public Matrix View;
         public Matrix Projection;
 
+        /// <summary>The physics body for this <see cref="Block"/>.</summary>
         public Body Body;
-
+        /// <summary>The hitbox for this <see cref="Block"/>.</summary>
         public Rectangle Hitbox;
 
         public Texture2D _texture;
 
+        /// <summary>How tall this <see cref="Block"/> is.</summary>
         public sbyte Stack;
-
+        /// <summary>The maximum height of any <see cref="Block"/>.</summary>
         public const sbyte MAX_BLOCK_HEIGHT = 7;
 
+        /// <summary>The floating point square-rooted dimensions of any <see cref="Block"/>.</summary>
         public const float FULL_BLOCK_SIZE = 21.7f; // 24.5 = 0.7 | 21 = 0.6
+        /// <summary>The floating-point height of any <see cref="Block"/> that has a slab in its height.</summary>
         public const float SLAB_SIZE = 11.5142857114f; // 13 = 0.7 | 11.14285714 = 0.6
 
         // 36, 18 respectively for normal size
-
+        /// <summary>The total height of a <see cref="Block"/> when its stack is <see cref="MAX_BLOCK_HEIGHT"/>.</summary>
         public const float FULL_SIZE = 89.28f; // 100.8 = 0.7 | 86.4 = 0.6
 
         // 141 for normal
 
-        public int Id;
+        /// <summary>The identifier for this <see cref="Block"/>.</summary>
+        public readonly int Id;
 
         private Vector3 _offset;
+        /// <summary>Whether or not this <see cref="Block"/> is destructible from explosions.</summary>
         public bool IsDestructible { get; set; }
+        /// <summary>Whether or not this <see cref="Block"/> is solid. This only affects <see cref="Shell"/>s and their ability to pass through.</summary>
         public bool IsSolid { get; set; } = true;
+        /// <summary>Whether or not this <see cref="Block"/> is collidable. This only affects things with physics bodies (i.e: <see cref="Tank"/>s).</summary>
         public bool IsCollidable { get; set; } = true;
+        /// <summary>Whether or not an <see cref="AITank"/> should calculate a bounce off of this <see cref="Block"/>.</summary>
         public bool AllowShotPathBounce { get; set; } = true;
-        /// <summary>Set to negative to increase the amount. Set to 0 to make nothing happen.</summary>
+        /// <summary> How many bounces a <see cref="Shell"/> should regain from hitting this <see cref="Block"/>.
+        /// <para></para>Set to negative to increase the amount. Set to 0 to make nothing happen.</summary>
         public int PathBounceCount { get; set; } = 1;
-
+        /// <summary>Whether or not this <see cref="Block"/> can stack. This will make the level editor UI not show a stack count.</summary>
         public bool CanStack { get; set; } = true;
-
+        /// <summary>Whether or not this <see cref="Block"/> is using its alternate model.</summary>
         public bool IsAlternateModel => Stack == 3 || Stack == 6;
-
+        /// <summary>Change this <see cref="Block"/>'s texture.</summary>
         public void SwapTexture(Texture2D texture) => _texture = texture;
-
+        /// <summary>Construct a <see cref="Block"/>.</summary>
         public Block(int type, int height, Vector2 position)
         {
             Stack = (sbyte)MathHelper.Clamp(height, 0, 7);
@@ -186,6 +203,7 @@ namespace TanksRebirth.GameContent
             }
             UpdateOffset();
         }
+        /// <summary>Remove this <see cref="Block"/> from the game scene and memory.</summary>
         public void Remove()
         {
             var index = Array.FindIndex(GameHandler.ParticleSystem.CurrentParticles, a => {
@@ -200,6 +218,7 @@ namespace TanksRebirth.GameContent
                 Tank.CollisionsWorld.Remove(Body);
             AllBlocks[Id] = null;
         }
+        /// <summary>Make destruction particle effects and later, <see cref="Remove"/> this <see cref="Block"/>.</summary>
         public void Destroy()
         {
             if (IsDestructible)

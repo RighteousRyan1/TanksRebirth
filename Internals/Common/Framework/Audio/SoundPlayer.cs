@@ -19,9 +19,8 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
         public static List<SoundDefinition> Sounds = new();
         public static TimeSpan GetLengthOfSound(string filePath)
         {
-            byte[] bytes = File.ReadAllBytes(filePath);
-
-            return SoundEffect.GetSampleDuration(bytes.Length, sizeof(byte) * bytes.Length, AudioChannels.Stereo);
+            byte[] soundData = File.ReadAllBytes(filePath);
+            return SoundEffect.GetSampleDuration(soundData.Length, 44100, AudioChannels.Stereo);
         }
         private static float MusicVolume => TankGame.Settings.MusicVolume;
         private static float EffectsVolume => TankGame.Settings.EffectsVolume;
@@ -62,10 +61,10 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
             //GameContent.Systems.ChatSystem.SendMessage($"{nameof(exists)}: {exists}", Color.White);
             //GameContent.Systems.ChatSystem.SendMessage($"new list count: {Sounds.Count}", Color.White);
 
-            sfx.Instance.Pan = panOverride;
-            sfx.Instance.Pitch = pitchOverride;
+            sfx.Instance.Pan = MathHelper.Clamp(panOverride, -1f, 1f);
+            sfx.Instance.Pitch = MathHelper.Clamp(pitchOverride, -1f, 1f);
             sfx.Instance.Play();
-            sfx.Instance.Volume = volume;
+            sfx.Instance.Volume = MathHelper.Clamp(volume, 0f, 1f);
 
             /*if (exists)
             {

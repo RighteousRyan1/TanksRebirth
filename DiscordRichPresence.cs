@@ -8,6 +8,7 @@ using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.Properties;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.UI;
+using TanksRebirth.Net;
 
 namespace TanksRebirth
 {
@@ -90,8 +91,13 @@ namespace TanksRebirth
                             SetDetails("Testing their luck");
                             break;
                         case MainMenu.State.Mulitplayer:
-                            if (Net.Server.serverNetManager is not null)
-                                SetDetails($"In a multiplayer lobby '{Net.NetPlay.CurrentServer.Name}' ({Net.Server.serverNetManager.ConnectedPeersCount}/{Net.Server.MaxClients})");
+                            if (Client.IsConnected())
+                            {
+                                if (Server.serverNetManager is not null)
+                                    SetDetails($"Hosting a multiplayer lobby '{NetPlay.CurrentServer.Name}'");
+                                else
+                                    SetDetails($"In a multiplayer lobby '{NetPlay.CurrentServer.Name}'");
+                            }
                             else
                                 SetDetails("Creating a multiplayer server");
                             break;
@@ -106,12 +112,11 @@ namespace TanksRebirth
                 }
                 else
                 {
-                    tnkCnt = $"Fighting {AITank.CountAll()} tank(s)";
+                    //tnkCnt = $"Fighting {AITank.CountAll()} tank(s)";
                     // get the names of each difficulty mode active, then join them together
                     if (GameProperties.ShouldMissionsProgress)
                     {
-                        SetDetails($"Playing campaign '{GameProperties.LoadedCampaign.MetaData.Name}' on mission '{GameProperties.LoadedCampaign.CurrentMission.Name}'" +
-                            $"\n{tnkCnt}");
+                        SetDetails($"Campaign: '{GameProperties.LoadedCampaign.MetaData.Name}' | Mission: '{GameProperties.LoadedCampaign.CurrentMission.Name}'");
                     }
                     else
                     {
@@ -131,7 +136,7 @@ namespace TanksRebirth
 
         public static void SetDetails(string details)
         {
-            _rp.Details = details;
+            _rp.Details = details + (Client.IsConnected() ? $" ({Server.serverNetManager.ConnectedPeersCount}/{Server.MaxClients})" : string.Empty);
         }
 
         public static void SetLargeAsset(string key = null, string details = null)

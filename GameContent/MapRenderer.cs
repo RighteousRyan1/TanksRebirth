@@ -23,6 +23,13 @@ namespace TanksRebirth.GameContent
     {
         public static bool ShouldRender = true;
 
+        public delegate void PostLoadBoundsDelegate();
+        public static event PostLoadBoundsDelegate PostLoadBounds;
+        public delegate void PostLoadFloorDelegate();
+        public static event PostLoadFloorDelegate PostLoadFloor;
+        public delegate void PostLoadTexturesDelegate();
+        public static event PostLoadTexturesDelegate PostLoadTextures;
+
         public static Matrix View;
         public static Matrix Projection;
         public static Matrix World;
@@ -107,6 +114,8 @@ namespace TanksRebirth.GameContent
             Assets["floor_face"] = get("floor_face");
             Assets["floor_lower"] = get("floor_lower");
             Assets["teleporter"] = get("teleporter");
+
+            PostLoadTextures?.Invoke();
         }
 
         public static class FloorRenderer
@@ -132,6 +141,7 @@ namespace TanksRebirth.GameContent
 
                         break;
                 }
+                PostLoadFloor?.Invoke();
             }
             // TODO: finish christmas stuff kekw failure
             public static void RenderFloor()
@@ -218,6 +228,7 @@ namespace TanksRebirth.GameContent
                         SetBlockTexture(BoundaryModel.Meshes["snow_blocks"], "snow");
                         break;
                 }
+                PostLoadBounds?.Invoke();
             }
 
             public static void RenderBounds()

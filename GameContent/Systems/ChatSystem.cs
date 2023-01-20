@@ -20,6 +20,9 @@ namespace TanksRebirth.GameContent.Systems
             // TODO: start
         }
 
+        public delegate void OnMessageAddedDelegate(string message);
+        public static event OnMessageAddedDelegate OnMessageAdded;
+
         public static List<ChatMessage> ChatMessages { get; private set; } = new();
         public static int Alerts;
         public static bool IsOpen;
@@ -40,12 +43,12 @@ namespace TanksRebirth.GameContent.Systems
         /// <summary>
         /// Sends a new <see cref="ChatMessage"/> to the chat.
         /// </summary>
-        /// <param name="text">The content of the <see cref="ChatMessage"/>.</param>
+        /// <param name="message">The content of the <see cref="ChatMessage"/>.</param>
         /// <param name="color">The color in which to render the content of the <see cref="ChatMessage"/>.</param>
         /// <param name="sender">The sender of the message.</param>
-        /// <param name="wasRecieved">If true, will not send the message to the server in a multiplayer context.</param>
+        /// <param name="netSend">If true, will not send the message to the server in a multiplayer context.</param>
         /// <returns>The <see cref="ChatMessage"/> sent to the chat.</returns>
-        public static ChatMessage[] SendMessage(string text, Color color, object sender = null, bool wasRecieved = false)
+        public static ChatMessage[] SendMessage(string message, Color color, string sender = null, bool netSend = false)
         {
 
             List<ChatMessage> msgs = new();
@@ -53,21 +56,23 @@ namespace TanksRebirth.GameContent.Systems
             if (sender is not null)
             {
                 SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick", SoundContext.Effect);
-                if (Client.IsConnected() && !wasRecieved)
-                    Client.SendMessage(text.ToString(), color, sender.ToString());
+                if (Client.IsConnected() && !netSend)
+                    Client.SendMessage(message.ToString(), color, sender.ToString());
             }
 
-            var split = text.Split('\n');
+            var split = message.Split('\n');
 
             for (int i = 0; i < split.Length; i++)
             {
                 if (sender is not null)
-                    msgs.Add(new ChatMessage($"<{sender}> {text}", color));
+                    msgs.Add(new ChatMessage($"<{sender}> {message}", color));
                 else
-                    msgs.Add(new ChatMessage($"{text}", color));
+                    msgs.Add(new ChatMessage($"{message}", color));
             }
             Alerts++;
             ChatMessages.AddRange(msgs);
+
+            OnMessageAdded?.Invoke(message);
             return msgs.ToArray();
         }
 
