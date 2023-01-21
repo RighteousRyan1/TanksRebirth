@@ -24,7 +24,7 @@ namespace TanksRebirth.GameContent.ID
 
         public static readonly Dictionary<int, Color> TeamColors = new()
         {
-            [NoTeam] = Color.Black,
+            [NoTeam] = Color.White,
             [Red] = Color.Red,
             [Blue] = Color.Blue,
             [Green] = Color.Green,

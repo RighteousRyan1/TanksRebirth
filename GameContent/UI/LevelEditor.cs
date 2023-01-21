@@ -705,6 +705,8 @@ namespace TanksRebirth.GameContent.UI
 
             if (!ShouldDrawBarUI)
                 return;
+            var info = "If you are using this editor to export to Tanks! .bin maps,\nplaytestingthe level will be liable to switching up the\nIDs of the tanks. Playtest at your own risk";
+            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, info, new Vector2(WindowUtils.WindowWidth - 175.ToResolutionX(), WindowUtils.WindowHeight / 2 - 20.ToResolutionY()), Color.White, new Vector2(0.425f).ToResolution(), 0f, TankGame.TextFont.MeasureString(info) / 2);
 
             #region Main UI
             int xOff = 0;

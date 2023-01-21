@@ -231,10 +231,12 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
                         else if (TankId > -1) {
                             var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
 
-                            SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"{TeamID.Collection.GetKey(GameHandler.AllTanks[TankId].Team)}", pos, TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.Black, new Vector2(1) * TankGame.AddativeZoom, 0f);
+                            SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"{TeamID.Collection.GetKey(GameHandler.AllTanks[TankId].Team)}", pos - new Vector2(0, 8), TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.Black, new Vector2(0.9f) * TankGame.AddativeZoom, 0f);
 
                             if (GameHandler.AllTanks[TankId] is AITank ai)
-                                SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"{ai.AITankId}", pos - new Vector2(0, 30), TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.Black, new Vector2(1) * TankGame.AddativeZoom, 0f);
+                                SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"ID: {ai.AITankId}", pos + new Vector2(0, 8), TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.White, new Vector2(0.8f) * TankGame.AddativeZoom, 0f);
+                            if (GameHandler.AllTanks[TankId] is PlayerTank player)
+                                SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"ID: {player.PlayerId}", pos + new Vector2(0, 8), TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.White, new Vector2(0.8f) * TankGame.AddativeZoom, 0f);
                         }
                     }
                     effect.TextureEnabled = true;
