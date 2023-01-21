@@ -30,7 +30,10 @@ namespace TanksRebirth.GameContent
         private Texture2D _tankTexture;
         private static Texture2D _shadowTexture;
         public Action enactBehavior;
-        public int AITankId { get; }
+        public int AITankId { get; private set; }
+
+        public void ReassignId(int newId) => AITankId = newId;
+
         public static Dictionary<int, Color> TankDestructionColors = new()
         {
             [TankID.Brown] = new(152, 96, 26),
@@ -2417,8 +2420,8 @@ namespace TanksRebirth.GameContent
                     {
                         SpecialBehaviors[0].Value = 0;
 
-                        var crate = Crate.SpawnCrate(CubeMapPosition.Convert3D(new CubeMapPosition(GameHandler.GameRand.Next(0, CubeMapPosition.MAP_WIDTH),
-                            GameHandler.GameRand.Next(0, CubeMapPosition.MAP_HEIGHT))) + new Vector3(0, 500, 0), 2f);
+                        var crate = Crate.SpawnCrate(BlockMapPosition.Convert3D(new BlockMapPosition(GameHandler.GameRand.Next(0, BlockMapPosition.MAP_WIDTH_169),
+                            GameHandler.GameRand.Next(0, BlockMapPosition.MAP_HEIGHT))) + new Vector3(0, 500, 0), 2f);
                         crate.TankToSpawn = new TankTemplate()
                         {
                             AiTier = PickRandomTier(),

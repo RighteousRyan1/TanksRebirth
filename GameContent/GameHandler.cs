@@ -811,9 +811,9 @@ namespace TanksRebirth.GameContent
 
         public static void SpawnTankInCrate(int tierOverride = default, int teamOverride = default, bool createEvenDrop = false)
         {
-            var random = new CubeMapPosition(GameRand.Next(0, 26), GameRand.Next(0, 20));
+            var random = new BlockMapPosition(GameRand.Next(0, 26), GameRand.Next(0, 20));
 
-            var drop = Crate.SpawnCrate(new(CubeMapPosition.Convert3D(random).X, 500 + (createEvenDrop ? 0 : GameRand.Next(-300, 301)), CubeMapPosition.Convert3D(random).Z), 2f);
+            var drop = Crate.SpawnCrate(new(BlockMapPosition.Convert3D(random).X, 500 + (createEvenDrop ? 0 : GameRand.Next(-300, 301)), BlockMapPosition.Convert3D(random).Z), 2f);
             drop.scale = 1.25f;
             drop.TankToSpawn = new TankTemplate()
             {
@@ -894,7 +894,7 @@ namespace TanksRebirth.GameContent
             t.TurretRotation = rot;
             t.Team = team;
             t.Dead = false;
-            var pos = new CubeMapPosition(GameRand.Next(0, 27), GameRand.Next(0, 20));
+            var pos = new BlockMapPosition(GameRand.Next(0, 27), GameRand.Next(0, 20));
             t.Body.Position = pos;
             t.Position = pos;
 
@@ -919,7 +919,7 @@ namespace TanksRebirth.GameContent
         {
             for (int i = 0; i < 5; i++)
             {
-                var random = new CubeMapPosition(GameRand.Next(0, 23),GameRand.Next(0, 18));
+                var random = new BlockMapPosition(GameRand.Next(0, 23),GameRand.Next(0, 18));
                 var rot = GeometryUtils.GetPiRandom();
                 var t = new AITank(useCurTank ? tankToSpawnType : AITank.PickRandomTier());
                 t.TankRotation = rot;

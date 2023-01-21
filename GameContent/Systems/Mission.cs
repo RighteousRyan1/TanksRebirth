@@ -154,7 +154,7 @@ namespace TanksRebirth.GameContent.Systems
             else
                 root = campaignName;
 
-            var path = Path.Combine(root, (fileName ?? name) + ".mission");
+            var path = Path.Combine(root, fileName ?? name);
             if (useDefaultPaths)
                 Directory.CreateDirectory(root);
 

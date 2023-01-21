@@ -136,7 +136,7 @@ namespace TanksRebirth.GameContent.UI
                 50.ToResolutionY()));
             SaveLevelConfirm.OnLeftClick = (l) => {
                 // Mission.Save(LevelName.GetRealText(), )
-                var res = Dialog.FileSave(_viewMissionDetails ? "mission" : "campaign", TankGame.SaveDirectory);
+                var res = Dialog.FileSave(_viewMissionDetails ? "mission,bin" : "campaign", TankGame.SaveDirectory);
                 if (res.Path != null && res.IsOk)
                 {
                     try {
@@ -147,7 +147,13 @@ namespace TanksRebirth.GameContent.UI
                         var misName = _loadedCampaign.CachedMissions[_loadedCampaign.CurrentMissionId].Name;
                         _loadedCampaign.CachedMissions[_loadedCampaign.CurrentMissionId] = Mission.GetCurrent(misName);
                         if (_viewMissionDetails)
-                            Mission.Save(name, path, false, realName);
+                        {
+                            var ext = Path.GetExtension(res.Path);
+                            if (ext == ".mission")
+                                Mission.Save(name, path, false, realName);
+                            else if (ext == ".bin")
+                                WiiMap.SaveToTanksBinFile(res.Path, true);
+                        }
                         else
                         {
                             _loadedCampaign.MetaData.Name = CampaignName.GetRealText();

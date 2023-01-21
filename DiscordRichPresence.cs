@@ -93,10 +93,11 @@ namespace TanksRebirth
                         case MainMenu.State.Mulitplayer:
                             if (Client.IsConnected())
                             {
+                                var name = NetPlay.CurrentServer is not null ? NetPlay.CurrentServer.Name : "Loading...";
                                 if (Server.serverNetManager is not null)
-                                    SetDetails($"Hosting a multiplayer lobby '{NetPlay.CurrentServer.Name}'");
+                                    SetDetails($"Hosting a multiplayer lobby '{name}'");
                                 else
-                                    SetDetails($"In a multiplayer lobby '{NetPlay.CurrentServer.Name}'");
+                                    SetDetails($"In a multiplayer lobby '{name}'");
                             }
                             else
                                 SetDetails("Creating a multiplayer server");
@@ -136,7 +137,8 @@ namespace TanksRebirth
 
         public static void SetDetails(string details)
         {
-            _rp.Details = details + (Client.IsConnected() ? $" ({Server.serverNetManager.ConnectedPeersCount}/{Server.MaxClients})" : string.Empty);
+            var count = Server.ConnectedClients is not null ? Server.ConnectedClients.Count(x => x.Name != null) : 0;
+            _rp.Details = details + (Client.IsConnected() ? $" ({count}/{Server.MaxClients})" : string.Empty);
         }
 
         public static void SetLargeAsset(string key = null, string details = null)

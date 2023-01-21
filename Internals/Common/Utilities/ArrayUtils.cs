@@ -49,6 +49,29 @@ public static class ArrayUtils
                 newArray[i, j] = original[i, j];
         return newArray;
     }
+
+    public static int FindFirstMismatch<T>(T[] first, T[] second, out T firstValue, out T secondValue, out int mismatchCount)
+    {
+        firstValue = default;
+        secondValue = default;
+        mismatchCount = 0;
+
+        int firstMismatch = -1;
+        if (first.Length != second.Length)
+            return -1;
+        for (int i = 0; i < first.Length; i++)
+        {
+            if (!first[i].Equals(second[i])) {
+                mismatchCount++;
+                firstValue = first[i];
+                secondValue = second[i];
+                if (firstMismatch < 0)
+                    firstMismatch = i;
+            }
+        }
+
+        return firstMismatch;
+    }
     public static byte[] SequenceToUInt8Array(string sequence) => sequence == string.Empty ? Array.Empty<byte>() : sequence.Split(',').Select(str => byte.Parse(str)).ToArray();
     public static short[] SequenceToInt16Array(string sequence) => sequence == string.Empty ? Array.Empty<short>() : sequence.Split(',').Select(str => short.Parse(str)).ToArray();
     public static int[] SequenceToInt32Array(string sequence) => sequence == string.Empty ? Array.Empty<int>() : sequence.Split(',').Select(str => int.Parse(str)).ToArray();

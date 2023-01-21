@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using TanksRebirth.GameContent;
@@ -13,19 +14,20 @@ namespace TanksRebirth.Internals.Common.Utilities;
 // todo: implement
 public readonly struct WiiMap
 {
-
     public readonly struct WiiMapTileData {
-        public readonly CubeMapPosition Position;
+        public readonly BlockMapPosition Position;
         public readonly int Type;
         /// <summary>-1 for player tank, -2 for enemy tank.</summary>
         public readonly int Stack;
 
-        public WiiMapTileData(CubeMapPosition pos, int type, int stack) {
+        public WiiMapTileData(BlockMapPosition pos, int type, int stack) {
             Position = pos;
             Type = type;
             Stack = stack;
         }
     }
+
+    public const int LargeMapBytepool = 1512;
 
     public const int TNK_PLR_ID = -1;
     public const int TNK_E_ID = -2;
@@ -38,7 +40,6 @@ public readonly struct WiiMap
     public readonly int QValue;
     public readonly int PValue;
     public readonly List<WiiMapTileData> MapItems; // Point (xy pos), Kvp<int, int> (type, stack)
-
     public WiiMap(string file)
     {
         RawData = File.ReadAllBytes(file);
@@ -55,15 +56,67 @@ public readonly struct WiiMap
         QValue = RawData[0xF];
         MapItems = new();
         for (int i = 0; i < Width * Height; i++) {
-            //for (int j = 0; j < Height; j++) {
-            var blockTypeOrig = RawData[i * 4 + /*0xF*/ 19];//BitUtils.GetInt(RawData, (((j * Width) + i) << 2) + 0x10);
+            var blockTypeOrig = RawData[i * 0x4 + 0x13];
 
             var tileMetaData = ConvertToEditorSpace(blockTypeOrig);
-
+            // 731 == player tank byte position for the vanilla map
             var x = i % Width;
-            MapItems.Add(new WiiMapTileData(new CubeMapPosition(x, i / Width), tileMetaData.Key, tileMetaData.Value));
-            //}
+            MapItems.Add(new WiiMapTileData(new BlockMapPosition(x, i / Width), tileMetaData.Key, tileMetaData.Value));
         }
+    }
+    public static void SaveToTanksBinFile(string fileLocation, bool largeMap = true)
+    {
+        byte[] rawData = new byte[LargeMapBytepool];
+
+        int byteOffset = 0x3;
+
+        void set(int data) {
+            rawData[byteOffset] = (byte)data;
+            byteOffset += 0x4;
+        }
+
+        set((byte)(largeMap ? BlockMapPosition.MAP_WIDTH_169 : BlockMapPosition.MAP_WIDTH_43));
+
+        set(BlockMapPosition.MAP_HEIGHT);
+
+        set(0);
+        set(0);
+
+        foreach (var pl in PlacementSquare.Placements) {
+            if (pl.BlockId > -1 && pl.HasBlock) {
+                var block = Block.AllBlocks[pl.BlockId];
+                if (block.Type == BlockID.Wood)
+                    set(block.Stack + 200);
+                else if(block.Type == BlockID.Cork)
+                    set(block.Stack + 100);
+                else if (block.Type == BlockID.Hole)
+                    set(200);
+            }
+            if (pl.TankId > -1) {
+                var tank = GameHandler.AllTanks[pl.TankId];
+
+                if (tank is PlayerTank player) {
+                    if (player.PlayerType < 2) {
+                        rawData[byteOffset - 0x1] = 1;
+                        set(player.PlayerType + 44);
+                    }
+                }
+                else if (tank is AITank ai) {
+                    rawData[byteOffset - 0x1] = 1;
+                    set(ai.AITankId + 144);
+                }
+            }
+            if (pl.BlockId == -1 && pl.TankId == -1) {
+                set(0);
+            }
+        }
+        var bytes1 = File.ReadAllBytes(@"C:\Users\ryanr\Documents\My Games\Tanks Rebirth\test_map.bin");
+        var bytes2 = File.ReadAllBytes(@"C:\Users\ryanr\Documents\My Games\Tanks Rebirth\TnkMapData_P2_01_1.bin");
+
+        var mismatch = ArrayUtils.FindFirstMismatch(bytes1, bytes2, out var f, out var s, out var count);
+        ChatSystem.SendMessage($"Idx: {mismatch} ({f} != {s}) (count: {count})", Color.Purple);
+
+        File.WriteAllBytes(fileLocation, rawData);
     }
 
     public static void ApplyToGameWorld(WiiMap map)
@@ -90,8 +143,8 @@ public readonly struct WiiMap
                 {
                     float tnkRot = 0f;
 
-                    var halfW = CubeMapPosition.MAP_WIDTH / 2;
-                    var halfH = CubeMapPosition.MAP_HEIGHT / 2;
+                    var halfW = BlockMapPosition.MAP_WIDTH_169 / 2;
+                    var halfH = BlockMapPosition.MAP_HEIGHT / 2;
 
                     // face right.
                     if (tile.RelativePosition.X <= tile.RelativePosition.Y && tile.RelativePosition.X < halfW)
@@ -121,6 +174,7 @@ public readonly struct WiiMap
                         ai.TargetTankRotation = tnkRot;
                         ai.TurretRotation = tnkRot;
                         tile.TankId = ai.WorldId;
+                        ai.ReassignId(item.Type);
                     }
                     tile.HasBlock = false;
                 }

@@ -4,30 +4,32 @@ using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.GameContent.Systems.Coordinates
 {
-    public struct CubeMapPosition
+    public struct BlockMapPosition
     {
-        public const int MAP_WIDTH = 22;
+        public const int MAP_WIDTH_169 = 22;
         public const int MAP_HEIGHT = 17;
 
-        public static implicit operator CubeMapPosition(Vector3 position) => ConvertFromVector3(position);
-        public static implicit operator Vector2(CubeMapPosition position) => Convert2D(position);
-        public static implicit operator Vector3(CubeMapPosition position) => Convert3D(position);
+        public const int MAP_WIDTH_43 = 16;
+
+        public static implicit operator BlockMapPosition(Vector3 position) => ConvertFromVector3(position);
+        public static implicit operator Vector2(BlockMapPosition position) => Convert2D(position);
+        public static implicit operator Vector3(BlockMapPosition position) => Convert3D(position);
 
         public int X;
         public int Y;
 
-        public CubeMapPosition(int x, int y)
+        public BlockMapPosition(int x, int y)
         {
             X = x;
             Y = y;
         }
-        public CubeMapPosition(int xy)
+        public BlockMapPosition(int xy)
         {
             X = xy;
             Y = xy;
         }
 
-        public static Vector2 Convert2D(CubeMapPosition pos)
+        public static Vector2 Convert2D(BlockMapPosition pos)
         {
             // (0, 0) == (MIN_X, MIN_Y)
 
@@ -38,7 +40,7 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
             return real;
         }
 
-        public static Vector3 Convert3D(CubeMapPosition pos)
+        public static Vector3 Convert3D(BlockMapPosition pos)
         {
             // (0, 0) == (MIN_X, MIN_Y)
 
@@ -54,22 +56,22 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
         /// </summary>
         /// <param name="position"></param>
         /// <returns></returns>
-        public static CubeMapPosition ConvertFromVector3(Vector3 position)
+        public static BlockMapPosition ConvertFromVector3(Vector3 position)
         {
             // convert position into a CubeMapPosition, and grid lock it
             var invarX = (int)MathF.Round(position.X % Block.FULL_BLOCK_SIZE, 1);
             var invarY = (int)MathF.Round(position.Z % Block.FULL_BLOCK_SIZE, 1);
-            var invar = new CubeMapPosition(invarX, invarY);
+            var invar = new BlockMapPosition(invarX, invarY);
 
             return invar;
 
         }
-        public static CubeMapPosition ConvertFromVector2(Vector2 position)
+        public static BlockMapPosition ConvertFromVector2(Vector2 position)
         {
             // convert position into a CubeMapPosition, and grid lock it
             var invarX = (int)MathF.Round(position.X % Block.FULL_BLOCK_SIZE, 1);
             var invarY = (int)MathF.Round(position.Y % Block.FULL_BLOCK_SIZE, 1);
-            var invar = new CubeMapPosition(invarX, invarY);
+            var invar = new BlockMapPosition(invarX, invarY);
 
             return invar;
 

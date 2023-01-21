@@ -66,7 +66,7 @@ namespace TanksRebirth.GameContent
         public int Type { get; set; }
         /// <summary>All <see cref="Block"/>s stored in the same array.</summary>
 
-        public static Block[] AllBlocks = new Block[CubeMapPosition.MAP_WIDTH * CubeMapPosition.MAP_HEIGHT * 5];
+        public static Block[] AllBlocks = new Block[BlockMapPosition.MAP_WIDTH_169 * BlockMapPosition.MAP_HEIGHT * 5];
 
         public Vector2 Position;
         public Vector3 Position3D => Position.ExpandZ();

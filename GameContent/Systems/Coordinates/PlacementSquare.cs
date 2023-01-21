@@ -63,11 +63,11 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
         }
         public static void InitializeLevelEditorSquares()
         {
-            for (int i = 0; i < CubeMapPosition.MAP_WIDTH; i++)
+            for (int j = 0; j < BlockMapPosition.MAP_HEIGHT; j++)
             {
-                for (int j = 0; j < CubeMapPosition.MAP_HEIGHT; j++)
+                for (int i = 0; i < BlockMapPosition.MAP_WIDTH_169; i++)
                 {
-                    new PlacementSquare(new CubeMapPosition(i, j), Block.FULL_BLOCK_SIZE)
+                    new PlacementSquare(new BlockMapPosition(i, j), Block.FULL_BLOCK_SIZE)
                     {
                         _onClick = (place) =>
                         {
@@ -232,6 +232,9 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
                             var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
 
                             SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"{TeamID.Collection.GetKey(GameHandler.AllTanks[TankId].Team)}", pos, TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.Black, new Vector2(1) * TankGame.AddativeZoom, 0f);
+
+                            if (GameHandler.AllTanks[TankId] is AITank ai)
+                                SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"{ai.AITankId}", pos - new Vector2(0, 30), TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.Black, new Vector2(1) * TankGame.AddativeZoom, 0f);
                         }
                     }
                     effect.TextureEnabled = true;
