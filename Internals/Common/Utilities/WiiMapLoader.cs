@@ -110,11 +110,6 @@ public readonly struct WiiMap
                 set(0);
             }
         }
-        var bytes1 = File.ReadAllBytes(@"C:\Users\ryanr\Documents\My Games\Tanks Rebirth\test_map.bin");
-        var bytes2 = File.ReadAllBytes(@"C:\Users\ryanr\Documents\My Games\Tanks Rebirth\TnkMapData_P2_01_1.bin");
-
-        var mismatch = ArrayUtils.FindFirstMismatch(bytes1, bytes2, out var f, out var s, out var count);
-        ChatSystem.SendMessage($"Idx: {mismatch} ({f} != {s}) (count: {count})", Color.Purple);
 
         File.WriteAllBytes(fileLocation, rawData);
     }
