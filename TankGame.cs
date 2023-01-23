@@ -623,7 +623,7 @@ namespace TanksRebirth
                     Graphics.ApplyChanges();
                 }
 
-                MouseRenderer.ShouldRender = Difficulties.Types["ThirdPerson"] ? (GameUI.Paused || MainMenu.Active) : true;
+                MouseRenderer.ShouldRender = Difficulties.Types["ThirdPerson"] ? (GameUI.Paused || MainMenu.Active || LevelEditor.Active) : true;
                 if (UIElement.delay > 0)
                     UIElement.delay--;
 
@@ -651,7 +651,7 @@ namespace TanksRebirth
                     if (InputUtils.KeyJustPressed(Keys.J))
                         OverheadView = !OverheadView;
                 #endregion
-                if (!Difficulties.Types["ThirdPerson"] || MainMenu.Active)
+                if (!Difficulties.Types["ThirdPerson"] || MainMenu.Active || LevelEditor.Active)
                 {
                     if (transitionTimer > 0) {
                         transitionTimer--;
@@ -701,7 +701,7 @@ namespace TanksRebirth
                     OrthographicCamera.SetLookAt(new(0f, 0, 350f), Vector3.Zero, Vector3.Up);
 
                 }
-                else if (!MainMenu.Active)
+                else
                 {
                     if (GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()] is not null && !GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()].Dead)
                     {
@@ -709,7 +709,7 @@ namespace TanksRebirth
                         ThirdPersonCameraPosition = GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()].Position.ExpandZ();
                         ThirdPersonCameraRotation = -GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()].TurretRotation;
                     }
-                    else
+                    else if (GameHandler.AllPlayerTanks[SpectatorId] is not null)
                     {
 
                         if (InputUtils.KeyJustPressed(Keys.Left))

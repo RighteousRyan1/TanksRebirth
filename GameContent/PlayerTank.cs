@@ -148,6 +148,7 @@ namespace TanksRebirth.GameContent
 
         public override void ApplyDefaults(ref TankProperties properties)
         {
+            properties.TreadVolume = 0.2f;
             properties.ShellCooldown = 5; // 5
             properties.ShootStun = 5; // 5
             properties.ShellSpeed = 3f; // 3f
@@ -199,24 +200,6 @@ namespace TanksRebirth.GameContent
             if (Dead)
                 return;
 
-            if (Velocity.Length() > 0)
-            {
-                float treadPlaceTimer = MathF.Round(14 / Velocity.Length()) != 0 ? MathF.Round(14 / Velocity.Length()) : 1;
-
-                if (TankGame.RunTime % treadPlaceTimer <= TankGame.DeltaTime)
-                    LayFootprint(Properties.TrackType == TrackID.Thick);
-                if (!Properties.IsSilent)
-                {
-                    // why did i clamp? i hate old code
-                    if (TankGame.RunTime % MathHelper.Clamp(treadPlaceTimer / 2, 4, 6) <= TankGame.DeltaTime)
-                    {
-                        var treadPlace = $"Assets/sounds/tnk_tread_place_{GameHandler.GameRand.Next(1, 5)}";
-                        var sfx = SoundPlayer.PlaySoundInstance(treadPlace, SoundContext.Effect, 0.2f);
-                        sfx.Instance.Pitch = Properties.TreadPitch;
-                    }
-                }
-            }
-
             //CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
             //Model.Root.Transform = World;
 
@@ -237,7 +220,7 @@ namespace TanksRebirth.GameContent
                 //if (Client.IsConnected())
                     //ChatSystem.SendMessage($"PlayerId: {PlayerId} | ClientId: {NetPlay.CurrentClient.Id}", Color.White);
                 if (NetPlay.IsClientMatched(PlayerId) && !IntermissionSystem.IsAwaitingNewMission) {
-                    if (!Difficulties.Types["ThirdPerson"]) {
+                    if (!Difficulties.Types["ThirdPerson"] || LevelEditor.Active || MainMenu.Active) {
                         Vector3 mouseWorldPos = MatrixUtils.GetWorldPosition(MouseUtils.MousePosition, -11f);
                         if (!LevelEditor.Active)
                             TurretRotation = (-(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position).ToRotation()) + MathHelper.PiOver2;
@@ -245,13 +228,14 @@ namespace TanksRebirth.GameContent
                             TurretRotation = TankRotation;
                     }
                     else if (!GameUI.Paused) {
+                        Mouse.SetPosition(InputUtils.CurrentMouseSnapshot.X, WindowUtils.WindowHeight / 2);
                         //Mouse.SetPosition(Input.CurrentMouseSnapshot.X, WindowUtils.WindowHeight / 2);
                         if (InputUtils.CurrentMouseSnapshot.X >= WindowUtils.WindowWidth)
                             Mouse.SetPosition(1, InputUtils.CurrentMouseSnapshot.Y);
                         if (InputUtils.CurrentMouseSnapshot.X <= 0)
-                            Mouse.SetPosition(WindowUtils.WindowWidth - 1, InputUtils.CurrentMouseSnapshot.Y);
+                            Mouse.SetPosition(WindowUtils.WindowWidth - 1, WindowUtils.WindowHeight / 2);
                         //Mouse.SetPosition((int)GameUtils.WindowCenter.X, (int)GameUtils.WindowCenter.Y);
-                        TurretRotation += -TankGame.MouseVelocity.X / 312; // terry evanswood
+                        TurretRotation += -TankGame.MouseVelocity.X / (312.ToResolutionX()); // terry evanswood
                     }
                 }
 

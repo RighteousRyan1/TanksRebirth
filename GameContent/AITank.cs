@@ -145,8 +145,6 @@ namespace TanksRebirth.GameContent
         /// <summary>The target rotation for this tank's turret. <see cref="Tank.TurretRotation"/> will move towards this value at a rate of <see cref="TurretSpeed"/>.</summary>
         public float TargetTurretRotation;
 
-        private Vector2 _oldPosition;
-
         public float BaseExpValue { get; set; }
 
         #endregion
@@ -170,15 +168,17 @@ namespace TanksRebirth.GameContent
         {
             Tier = tier;
 
-            if (tier <= (int)TankID.Marble)
-                _tankTexture = Assets[$"tank_" + tier.ToString().ToLower()];
+            var tierName = TankID.Collection.GetKey(tier).ToLower();
+
+            if (tier <= TankID.Marble)
+                SwapTankTexture(Assets[$"tank_" + tierName]);
             #region Special
 
             if (tier == TankID.Commando)
             {
                 Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_commando");
 
-                _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_commando");
+                SwapTankTexture(GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_commando"));
 
                 foreach (var mesh in Model.Meshes)
                 {
@@ -198,25 +198,25 @@ namespace TanksRebirth.GameContent
             {
                 Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_assassin");
 
-                _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_assassin");
+                SwapTankTexture(GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_assassin"));
             }
             else if (tier == TankID.RocketDefender)
             {
                 Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_rocket");
 
-                _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_rocket");
+                SwapTankTexture(GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_rocket"));
             }
             else if (tier == TankID.Electro)
             {
                 Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_electro");
 
-                _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_electro");
+                SwapTankTexture(GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_electro"));
             }
             else if (tier == TankID.Explosive)
             {
                 Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_explosive");
 
-                _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_explosive");
+                SwapTankTexture(GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_explosive"));
             }
             else
             {
@@ -1693,6 +1693,7 @@ namespace TanksRebirth.GameContent
                 else if (fld.GetValue(Properties) is bool && fld.Name != "Immortal")
                     fld.SetValue(Properties, GameHandler.GameRand.Next(0, 2) == 0);
             }*/
+            properties.TreadVolume = 0.05f;
             base.ApplyDefaults(ref properties);
         }
         public override void Update()
@@ -1709,23 +1710,6 @@ namespace TanksRebirth.GameContent
                 Model.Meshes["Barrel_Laser"].ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
                 Model.Meshes["Dish"].ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
             }
-
-            float treadPlaceTimer = MathF.Round(14 / Velocity.Length()) != 0 ? MathF.Round(14 / Velocity.Length()) : 1;
-
-            if (Position - _oldPosition != Vector2.Zero && !Properties.Stationary)
-            {
-                if (!Properties.IsSilent)
-                {
-                    if (TankGame.RunTime % MathHelper.Clamp(treadPlaceTimer / 2, 4, 6) <= TankGame.DeltaTime)
-                    {
-                        var treadPlace = $"Assets/sounds/tnk_tread_place_{GameHandler.GameRand.Next(1, 5)}";
-                        SoundPlayer.PlaySoundInstance(treadPlace, SoundContext.Effect, 0.05f, 0f, Properties.TreadPitch, gameplaySound: true);
-                    }
-                }
-
-                if (TankGame.RunTime % treadPlaceTimer <= TankGame.DeltaTime)
-                    LayFootprint(Properties.TrackType == TrackID.Thick);
-            }
             if (TankGame.SuperSecretDevOption)
                 if (AITankId == 0)
                     TargetTankRotation = (MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - MouseUtils.MousePosition).ToRotation() + MathHelper.PiOver2;
@@ -1741,8 +1725,6 @@ namespace TanksRebirth.GameContent
                 if (this is AITank && IsIngame)
                     Client.SyncAITank(this);
             }
-
-            _oldPosition = Position;
         }
 
         public override void Remove(bool nullifyMe)

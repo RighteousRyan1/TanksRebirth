@@ -411,7 +411,7 @@ namespace TanksRebirth.GameContent
                 {
                     lp.Position = Position3D;
                     if (lp.Scale.X < 5f)
-                        GeometryUtils.Add(ref lp.Scale, 0.12f);
+                        GeometryUtils.Add(ref lp.Scale, 0.12f * TankGame.DeltaTime);
                     if (lp.Alpha < 1f && lp.Scale.X < 5f)
                         lp.Alpha += 0.02f * TankGame.DeltaTime;
 
@@ -434,13 +434,13 @@ namespace TanksRebirth.GameContent
 
                     lp.UniqueBehavior = (elp) =>
                     {
-                        elp.Position.X += velocity.X;
-                        elp.Position.Z += velocity.Y;
+                        elp.Position.X += velocity.X * TankGame.DeltaTime;
+                        elp.Position.Z += velocity.Y * TankGame.DeltaTime;
 
                         if (elp.LifeTime > 15)
                         {
-                            GeometryUtils.Add(ref elp.Scale, -0.03f);
-                            elp.Alpha -= 0.03f;
+                            GeometryUtils.Add(ref elp.Scale, -0.03f * TankGame.DeltaTime);
+                            elp.Alpha -= 0.03f * TankGame.DeltaTime;
                         }
 
                         if (elp.Scale.X <= 0f || elp.Alpha <= 0f)
@@ -451,6 +451,8 @@ namespace TanksRebirth.GameContent
         }
 
         public bool Flip;
+
+        private Vector2 _oldPosition;
         /// <summary>Update this <see cref="Tank"/>.</summary>
         public virtual void Update()
         {
@@ -473,6 +475,25 @@ namespace TanksRebirth.GameContent
                 Velocity = Vector2.Zero;
             if (OwnedMineCount < 0)
                 OwnedMineCount = 0;
+
+            if (Velocity.Length() > 0 && !Properties.Stationary && Position - _oldPosition != Vector2.Zero)
+            {
+                var rnd = MathF.Round(12 / Velocity.Length());
+                float treadPlaceTimer = rnd != 0 ? rnd : 1;
+
+                if (TankGame.RunTime % treadPlaceTimer <= TankGame.DeltaTime)
+                    LayFootprint(Properties.TrackType == TrackID.Thick);
+                if (!Properties.IsSilent)
+                {
+                    // why did i clamp? i hate old code
+                    if (TankGame.RunTime % MathHelper.Clamp(treadPlaceTimer / 2, 4, 6) <= TankGame.DeltaTime)
+                    {
+                        var treadPlace = $"Assets/sounds/tnk_tread_place_{GameHandler.GameRand.Next(1, 5)}";
+                        var sfx = SoundPlayer.PlaySoundInstance(treadPlace, SoundContext.Effect, Properties.TreadVolume, 0f, Properties.TreadPitch, gameplaySound: true);
+                        sfx.Instance.Pitch = Properties.TreadPitch;
+                    }
+                }
+            }
 
             // try to make negative. go poopoo
             CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
@@ -497,6 +518,8 @@ namespace TanksRebirth.GameContent
             // fix 2d peeopled
             foreach (var cosmetic in Cosmetics)
                 cosmetic?.UniqueBehavior?.Invoke(cosmetic, this);
+
+            _oldPosition = Position;
 
             OnPostUpdate?.Invoke(this);
         }
@@ -901,7 +924,8 @@ namespace TanksRebirth.GameContent
         public float MaxSpeed { get; set; }
         /// <summary>How fast the bullets this <see cref="Tank"/> shoot are.</summary>
         public float ShellSpeed { get; set; }
-        /// <summary>The rotation of this <see cref="Tank"/>'s barrel. Generally should not be modified in a player context.</summary>
+        /// <summary>The volume of the footprint placement sounds.</summary>
+        public float TreadVolume { get; set; }
         /// <summary>The pitch of the footprint placement sounds.</summary>
         public float TreadPitch { get; set; }
         /// <summary>The pitch of the shoot sound.</summary>
