@@ -37,8 +37,6 @@ namespace TanksRebirth.GameContent.ModSupport
         public static bool LoadingMods { get; private set; }
         public static string ModsPath { get; } = Path.Combine(TankGame.SaveDirectory, "Mods");
 
-        private static List<Assembly> _loadedAssemblies = new();
-
         public const string ModNETVersion = "net6.0";
 
         private volatile static List<Action> _loadingActions = new();
@@ -130,7 +128,7 @@ namespace TanksRebirth.GameContent.ModSupport
 
             if (folders.Length == 0) {
                 _firstLoad = true;
-                ChatSystem.SendMessage(_firstLoad ? $"Loaded {_loadedAlcs.Count} mod(s)." : $"Reloaded {_loadedAssemblies.Count} mod(s).", Color.Lime);
+                ChatSystem.SendMessage(_firstLoad ? $"Loaded {_loadedAlcs.Count} mod(s)." : $"Reloaded {_loadedAlcs.Count} mod(s).", Color.Lime);
                 return;
             }
             LoadingMods = true;
