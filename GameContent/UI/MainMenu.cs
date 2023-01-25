@@ -456,7 +456,6 @@ namespace TanksRebirth.GameContent.UI
                 e.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick", SoundContext.Effect); };
             UIElement.CunoSucks();
         }
-
         public static void RenderCrate()
         {
             Crate.View = View;
@@ -470,7 +469,6 @@ namespace TanksRebirth.GameContent.UI
             else
                 Crate.LidPosition = Crate.ChestPosition;
         }
-
         private static void UpdateLogo()
         {
             LogoPosition = new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 4);
@@ -491,7 +489,6 @@ namespace TanksRebirth.GameContent.UI
                 //GameUtils.SoftStep(ref _spinOffset, _spinTarget, _spinSpeed
                 // considerations...
         }
-
         private static void UpdateProjection(object sender, EventArgs e)
         {
             Projection = Matrix.CreateOrthographic(TankGame.Instance.GraphicsDevice.Viewport.Width, TankGame.Instance.GraphicsDevice.Viewport.Height, -2000f, 5000f);
@@ -1087,6 +1084,15 @@ namespace TanksRebirth.GameContent.UI
 
         private static Mission _curMenuMission;
         private static List<Mission> _cachedMissions = new();
+
+        public static OggMusic GetAppropriateMusic() {
+            OggMusic music = MapRenderer.Theme switch {
+                MapTheme.Vanilla => new OggMusic("Main Menu Theme", "Content/Assets/mainmenu/theme", 1f),
+                MapTheme.Christmas => new OggMusic("Main Menu Theme", "Content/Assets/mainmenu/theme_christmas", 1f),
+                _ => throw new Exception("Invalid game theme for menu music.")
+            };
+            return music;
+        }
         public static void Open()
         {
             _musicFading = false;
@@ -1094,11 +1100,8 @@ namespace TanksRebirth.GameContent.UI
             MenuState = State.PrimaryMenu;
             Active = true;
             GameUI.Paused = false;
-            Theme ??= MapRenderer.Theme switch {
-                    MapTheme.Vanilla => new("Main Menu Theme", "Content/Assets/mainmenu/theme", TankGame.Settings.MusicVolume),
-                    MapTheme.Christmas => new("Main Menu Theme", "Content/Assets/mainmenu/theme_christmas", TankGame.Settings.MusicVolume),
-                    _ => throw new Exception("Invalid game theme for menu music.")
-                };
+
+            Theme = GetAppropriateMusic();
             Theme.Play();
 
             TankGame.DoZoomStuff();
@@ -1115,10 +1118,8 @@ namespace TanksRebirth.GameContent.UI
 
             PlayerTank.TankKills.Clear();
 
-            if (GameHandler.ClearTracks is not null)
-                GameHandler.ClearTracks.OnLeftClick?.Invoke(null);
-            if (GameHandler.ClearChecks is not null)
-                GameHandler.ClearChecks.OnLeftClick?.Invoke(null);
+            GameHandler.ClearTracks?.OnLeftClick?.Invoke(null);
+            GameHandler.ClearChecks?.OnLeftClick?.Invoke(null);
 
             TankGame.OverheadView = false;
             TankGame.CameraRotationVector.Y = TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;

@@ -137,7 +137,7 @@ namespace TanksRebirth
 
         public static void SetDetails(string details)
         {
-            var count = Server.ConnectedClients is not null ? Server.ConnectedClients.Count(x => x.Name != null) : 0;
+            var count = Server.ConnectedClients is not null ? Server.ConnectedClients.Count(x => x != null) : 0;
             _rp.Details = details + (Client.IsConnected() ? $" ({count}/{Server.MaxClients})" : string.Empty);
         }
 

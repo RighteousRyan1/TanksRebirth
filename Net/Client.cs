@@ -9,8 +9,7 @@ using TanksRebirth.GameContent.UI;
 
 namespace TanksRebirth.Net
 {
-    public class Client
-    {
+    public class Client {
 
         public static NetManager clientNetManager;
         public static EventBasedNetListener clientNetListener;
@@ -21,8 +20,7 @@ namespace TanksRebirth.Net
         public int Id;
         public string Name;
 
-        public static void CreateClient(string username)
-        {
+        public static void CreateClient(string username) {
             clientNetListener = new();
             clientNetManager = new(clientNetListener);
             clientNetManager.NatPunchEnabled = true;
@@ -42,15 +40,24 @@ namespace TanksRebirth.Net
             NetPlay.CurrentClient = c;
         }
 
-        public static void AttemptConnectionTo(string address, int port, string password)
-        {
+        public static void AttemptConnectionTo(string address, int port, string password) {
             GameHandler.ClientLog.Write($"Attempting connection to server...", Internals.LogType.Debug);
             clientNetManager.Start();
             client = clientNetManager.Connect(address, port, password);
         }
 
-        public static void SendQuit()
-        {
+        public static void SendCommandUsage(string command) {
+            if (!IsConnected())
+                return;
+
+            NetDataWriter message = new();
+            message.Put(PacketID.SendCommandUsage);
+            message.Put(command);
+
+            client.Send(message, DeliveryMethod.ReliableOrdered);
+        }
+
+        public static void SendQuit() {
             if (MainMenu.Active || !IsConnected())
                 return;
 
@@ -59,8 +66,7 @@ namespace TanksRebirth.Net
 
             client.Send(message, DeliveryMethod.ReliableOrdered);
         }
-        public static void SendLives()
-        {
+        public static void SendLives() {
             if (MainMenu.Active || !IsConnected())
                 return;
 
@@ -73,8 +79,7 @@ namespace TanksRebirth.Net
             client.Send(message, DeliveryMethod.Unreliable);
         }
 
-        public static void SyncCleanup()
-        {
+        public static void SyncCleanup() {
             if (MainMenu.Active || !IsConnected())
                 return;
 
@@ -84,23 +89,20 @@ namespace TanksRebirth.Net
             client.Send(message, DeliveryMethod.Unreliable);
         }
 
-        public static void SendClientInfo()
-        {
+        public static void SendClientInfo() {
             NetDataWriter message = new();
             message.Put(PacketID.ClientInfo);
             message.Put(NetPlay.CurrentClient.Name);
 
             client.Send(message, DeliveryMethod.ReliableOrdered);
         }
-        public static void RequestLobbyInfo()
-        {
+        public static void RequestLobbyInfo() {
             NetDataWriter message = new();
             message.Put(PacketID.LobbyInfo);
 
             client.Send(message, DeliveryMethod.ReliableOrdered);
         }
-        public static void RequestStartGame(int checkpoint, bool shouldProgressMissions)
-        {
+        public static void RequestStartGame(int checkpoint, bool shouldProgressMissions) {
             NetDataWriter message = new();
             message.Put(PacketID.StartGame);
             message.Put(checkpoint);
@@ -108,8 +110,7 @@ namespace TanksRebirth.Net
 
             client.Send(message, DeliveryMethod.ReliableOrdered);
         }
-        public static void RequestPlayerTankSpawn(PlayerTank tank)
-        {
+        public static void RequestPlayerTankSpawn(PlayerTank tank) {
             NetDataWriter message = new();
             message.Put(PacketID.PlayerSpawn);
 
@@ -124,8 +125,7 @@ namespace TanksRebirth.Net
 
             client.Send(message, DeliveryMethod.ReliableOrdered);
         }
-        public static void SyncPlayerTank(PlayerTank tank)
-        {
+        public static void SyncPlayerTank(PlayerTank tank) {
             if (MainMenu.Active || !IsConnected())
                 return;
 
@@ -142,8 +142,7 @@ namespace TanksRebirth.Net
 
             client.Send(message, DeliveryMethod.Unreliable);
         }
-        public static void SyncAITank(AITank tank)
-        {
+        public static void SyncAITank(AITank tank) {
             if (MainMenu.Active || !IsConnected())
                 return;
 
@@ -165,8 +164,7 @@ namespace TanksRebirth.Net
         /// <c>AllTanks[<paramref name="tankId"/>].Shoot()</c>
         /// </summary>
         /// <param name="tankId">The identified of the <see cref="Tank"/> that fired.</param>
-        public static void SyncShellFire(Shell shell)
-        {
+        public static void SyncShellFire(Shell shell) {
             if (MainMenu.Active || !IsConnected())
                 return;
 
@@ -187,8 +185,7 @@ namespace TanksRebirth.Net
 
             client.Send(message, DeliveryMethod.Sequenced);
         }
-        public static void SyncDamage(int id/*, ITankHurtContext context*/)
-        {
+        public static void SyncDamage(int id/*, ITankHurtContext context*/) {
             if (!IsConnected() || MainMenu.Active)
                 return;
             NetDataWriter message = new();
@@ -201,8 +198,7 @@ namespace TanksRebirth.Net
 
             client.Send(message, DeliveryMethod.ReliableOrdered);
         }
-        public static void SyncShellDestroy(Shell shell, Shell.DestructionContext cxt)
-        {
+        public static void SyncShellDestroy(Shell shell, Shell.DestructionContext cxt) {
             if (!IsConnected() || MainMenu.Active)
                 return;
             NetDataWriter message = new();
@@ -217,8 +213,7 @@ namespace TanksRebirth.Net
             client.Send(message, DeliveryMethod.ReliableOrdered);
         }
         // maybe have owner stuff go here?
-        public static void SyncMineDetonate(Mine mine)
-        {
+        public static void SyncMineDetonate(Mine mine) {
             if (!IsConnected() || MainMenu.Active)
                 return;
             NetDataWriter message = new();
@@ -229,8 +224,7 @@ namespace TanksRebirth.Net
             client.Send(message, DeliveryMethod.ReliableOrdered);
         }
 
-        public static void SyncMinePlace(Vector2 position, float detonateTime, int id)
-        {
+        public static void SyncMinePlace(Vector2 position, float detonateTime, int id) {
             if (MainMenu.Active || !IsConnected())
                 return;
 
@@ -243,8 +237,7 @@ namespace TanksRebirth.Net
 
             client.Send(message, DeliveryMethod.Sequenced);
         }
-        public static void SendMessage(string text, Color color, string sender)
-        {
+        public static void SendMessage(string text, Color color, string sender) {
             if (!IsConnected())
                 return;
             NetDataWriter message = new();
@@ -256,15 +249,13 @@ namespace TanksRebirth.Net
 
             client.Send(message, DeliveryMethod.ReliableOrdered);
         }
-        public static bool IsConnected()
-        {
+        public static bool IsConnected() {
             if (client is not null)
                 return client.ConnectionState == ConnectionState.Connected;
             return false;
         }
 
-        public static void SendServerNameChange(string newName)
-        {
+        public static void SendServerNameChange(string newName) {
             if (!IsConnected())
                 return;
             NetDataWriter message = new();
@@ -287,8 +278,7 @@ namespace TanksRebirth.Net
         /// 
         /// </summary>
         /// <param name="campaign">The campaign to send.</param>
-        public static void SendCampaignBytes(Campaign campaign)
-        {
+        public static void SendCampaignBytes(Campaign campaign) {
             if (!IsConnected())
                 return;
             NetDataWriter message = new();
@@ -301,23 +291,20 @@ namespace TanksRebirth.Net
 
             message.Put(campaign.CachedMissions.Length);
 
-            foreach (var mission in campaign.CachedMissions)
-            {
+            foreach (var mission in campaign.CachedMissions) {
                 message.Put(mission.Blocks.Length);
                 message.Put(mission.Tanks.Length);
 
                 message.Put(mission.Name);
                 message.Put(mission.Note);
 
-                foreach (var block in mission.Blocks)
-                {
+                foreach (var block in mission.Blocks) {
                     message.Put(block.Position);
                     message.Put(block.Type);
                     message.Put(block.Stack);
                     message.Put(block.TpLink);
                 }
-                foreach (var tank in mission.Tanks)
-                {
+                foreach (var tank in mission.Tanks) {
                     message.Put(tank.Position);
                     message.Put(tank.Rotation);
                     message.Put(tank.IsPlayer);
@@ -333,8 +320,7 @@ namespace TanksRebirth.Net
             client.Send(message, DeliveryMethod.Sequenced);
         }
 
-        public static void SendCampaign(string name)
-        {
+        public static void SendCampaign(string name) {
             if (!IsConnected())
                 return;
             NetDataWriter message = new();
@@ -344,8 +330,7 @@ namespace TanksRebirth.Net
 
             client.Send(message, DeliveryMethod.ReliableOrdered);
         }
-        public static void SendDisconnect(int peerId, string name, string reason)
-        {
+        public static void SendDisconnect(int peerId, string name, string reason) {
             if (!IsConnected())
                 return;
             NetDataWriter message = new();
@@ -358,8 +343,7 @@ namespace TanksRebirth.Net
             client.Send(message, DeliveryMethod.ReliableOrdered);
         }
 
-        public static void SendCampaignSuccess(string campaignName, int clientId, bool success)
-        {
+        public static void SendCampaignSuccess(string campaignName, int clientId, bool success) {
             if (!IsConnected())
                 return;
             NetDataWriter message = new();

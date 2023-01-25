@@ -1,4 +1,4 @@
-using Microsoft.Xna.Framework;
+ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
@@ -1702,7 +1702,7 @@ namespace TanksRebirth.GameContent
 
             //CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
 
-            if (Dead)
+            if (Dead || !MapRenderer.ShouldRender)
                 return;
             if (AiTankType == TankID.Commando)
             {

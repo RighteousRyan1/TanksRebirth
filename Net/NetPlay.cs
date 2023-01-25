@@ -148,6 +148,10 @@ namespace TanksRebirth.Net
                     break;
                 #endregion
                 #region One-Off
+                case PacketID.SendCommandUsage:
+                    var cmd = reader.GetString();
+                    ChatSystem.SendMessage(cmd, Color.White, "cmd_sync");
+                    break;
                 case PacketID.SendCampaign:
                     var campaign = new Campaign();
 
@@ -462,6 +466,12 @@ namespace TanksRebirth.Net
                     break;
                 #endregion
                 #region One-Off
+                case PacketID.SendCommandUsage:
+                    var cmd = reader.GetString();
+                    message.Put(cmd);
+
+                    Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered, peer);
+                    break;
                 case PacketID.ChatMessage:
                     string msg = reader.GetString();
                     Color color = reader.GetColor();

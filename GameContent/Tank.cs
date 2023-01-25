@@ -245,7 +245,7 @@ namespace TanksRebirth.GameContent
         #endregion
 
         public static World CollisionsWorld = new(Vector2.Zero);
-        public const float UNITS_PER_METER = 10f;
+        public const float UNITS_PER_METER = 20f;
 
         public const float TNK_WIDTH = 25;
         public const float TNK_HEIGHT = 25;
@@ -580,7 +580,7 @@ namespace TanksRebirth.GameContent
                     var sin = MathF.Sin(TankGame.RunTime * speed) * height;
                     part.Position.Y = origPos.Y + sin * TankGame.DeltaTime;
 
-                    if (a.LifeTime > 180)
+                    if (a.LifeTime > 90)
                         GeometryUtils.Add(ref a.Scale, -0.05f * TankGame.DeltaTime);
 
                     height -= 0.02f;
