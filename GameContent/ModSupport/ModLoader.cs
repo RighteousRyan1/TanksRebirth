@@ -37,8 +37,6 @@ namespace TanksRebirth.GameContent.ModSupport
         public static bool LoadingMods { get; private set; }
         public static string ModsPath { get; } = Path.Combine(TankGame.SaveDirectory, "Mods");
 
-        private static List<Assembly> _loadedAssemblies = new();
-
         public const string ModNETVersion = "net6.0";
 
         private volatile static List<Action> _loadingActions = new();
@@ -47,8 +45,7 @@ namespace TanksRebirth.GameContent.ModSupport
         private static bool _firstLoad = true;
         /// <summary>The error given from the mod-loading process.</summary>
         public static string Error = string.Empty;
-        private static void AttemptCompile(string modName)
-        {
+        private static void AttemptCompile(string modName) {
             if (!TankGame.IsWindows) {
                 GameHandler.ClientLog.Write("Auto-compilation of mod failed. Specified OS architecture is not Windows.", Internals.LogType.Warn);
                 return;
@@ -108,7 +105,6 @@ namespace TanksRebirth.GameContent.ModSupport
         }
         /// <summary>Prepare your garbage collector!</summary>
         internal static void LoadMods() {
-            //_loadedAssemblies.Clear();
             if (Status == LoadStatus.Unloading) {
                 ChatSystem.SendMessage("Mods are currently unloading! Unable to load mods.", Color.Red);
             }
@@ -130,7 +126,7 @@ namespace TanksRebirth.GameContent.ModSupport
 
             if (folders.Length == 0) {
                 _firstLoad = true;
-                ChatSystem.SendMessage(_firstLoad ? $"Loaded {_loadedAlcs.Count} mod(s)." : $"Reloaded {_loadedAssemblies.Count} mod(s).", Color.Lime);
+                ChatSystem.SendMessage(_firstLoad ? $"Loaded {_loadedAlcs.Count} mod(s)." : $"Reloaded {_loadedAlcs.Count} mod(s).", Color.Lime);
                 return;
             }
             LoadingMods = true;
@@ -152,26 +148,18 @@ namespace TanksRebirth.GameContent.ModSupport
                                     Status = LoadStatus.Loading;
                                     string filepath = Path.Combine(folder, "bin", "Release", ModNETVersion, $"{modName}.dll");
                                     string pdb = Path.ChangeExtension(filepath, ".pdb");
-                                    //var assembly = Assembly.Load(File.ReadAllBytes(filepath), File.ReadAllBytes(pdb));
-                                    //_loadedAssemblies.Add(assembly);
+                                    // TODO: load PDB into the ALC.
                                     var alc = new AssemblyLoadContext(modName, true);
                                     alc.LoadFromAssemblyPath(filepath);
                                     _loadedAlcs.Add(alc);
 
                                     var assembly = alc.Assemblies.First();
 
-                                    _sandboxingActions.Add(() =>
-                                    {
+                                    _sandboxingActions.Add(() => {
                                         try {
                                             Status = LoadStatus.Sandboxing;
                                             var types = alc.Assemblies.First().GetTypes();
                                             foreach (var type in types) {
-                                                /*if (type.Name == "MainRun") {
-                                                    var methods = type.GetMethods(BindingFlags.Static | BindingFlags.Public);
-                                                    foreach (var method in methods)
-                                                        if (method.Name != "Main")
-                                                            method.Invoke(null, null);
-                                                }*/
                                                 if (type.IsSubclassOf(typeof(TanksMod))) {
                                                     // let's run the virtually overridden methods.
                                                     var tanksMod = Activator.CreateInstance(type) as TanksMod;
@@ -181,14 +169,11 @@ namespace TanksRebirth.GameContent.ModSupport
 
                                                     tanksMod.OnLoad();
                                                 }
-                                                //Thread.Sleep(250);
                                             }
-                                        } catch (Exception e)
-                                        {
+                                        }  catch (Exception e) {
                                             Error = e.Message;
                                             return;
                                         }
-                                        // ActionsComplete++;
                                     });
 
                                     ActionsComplete++;
