@@ -6,6 +6,7 @@ using FontStashSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using TanksRebirth.GameContent.UI;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.Framework.Audio;
@@ -65,7 +66,7 @@ namespace TanksRebirth.GameContent.Systems
                     MapRenderer.ShouldRender = newValue;
             })
         };
-        // TODO: ^ how to process input, since input is hardcoded.
+        // TODO: add more here.
         public struct ChatTag {
             // TODO: start sometime eventually?
         }
