@@ -27,7 +27,7 @@ namespace TanksRebirth.GameContent.ID
             [NoTeam] = Color.White,
             [Red] = Color.Red,
             [Blue] = Color.Blue,
-            [Green] = Color.Green,
+            [Green] = Color.LimeGreen,
             [Yellow] = Color.Yellow,
             [Purple] = Color.Purple,
             [Orange] = Color.Orange,

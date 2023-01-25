@@ -188,7 +188,7 @@ namespace TanksRebirth.GameContent
                 {
                     p.Roll = MathHelper.PiOver2;
                     p.Scale = new(1f);
-                    p.isAddative = false;
+                    p.HasAddativeBlending = false;
                     p.TextureCrop = new(0, 0, 32, 32);
                     p.Alpha = 1f;
 
@@ -232,7 +232,7 @@ namespace TanksRebirth.GameContent
                     var part = GameHandler.ParticleSystem.MakeParticle(Position3D, tex);
                     // var part = ParticleSystem.MakeParticle(Position3D, "wtf");
 
-                    part.isAddative = false;
+                    part.HasAddativeBlending = false;
 
                     var vel = new Vector3(GameHandler.GameRand.NextFloat(-3, 3), GameHandler.GameRand.NextFloat(4, 6), GameHandler.GameRand.NextFloat(-3, 3));
 
@@ -257,20 +257,18 @@ namespace TanksRebirth.GameContent
             OnDestroy?.Invoke(this);
             Remove();
         }
-        public void Render()
-        {
-            if (Type != BlockID.Teleporter)
-            {
+        public void Render() {
+            if (!MapRenderer.ShouldRender)
+                return;
+            // TODO: seeing this, don't make this poor CPU have overhead (use derived types!)
+            if (Type != BlockID.Teleporter) {
                 World = Matrix.CreateScale(0.62f) * Matrix.CreateTranslation(Position3D - _offset);
                 Projection = TankGame.GameProjection;
                 View = TankGame.GameView;
 
-                for (int i = 0; i < /*(Lighting.AccurateShadows ? 2 : 1)*/ 1; i++) // shadows later if i can fix it
-                {
-                    foreach (var mesh in Model.Meshes)
-                    {
-                        foreach (BasicEffect effect in mesh.Effects)
-                        {
+                for (int i = 0; i < /*(Lighting.AccurateShadows ? 2 : 1)*/ 1; i++) { // shadows later if i can fix it {
+                    foreach (var mesh in Model.Meshes) {
+                        foreach (BasicEffect effect in mesh.Effects) {
                             effect.View = TankGame.GameView;
                             effect.World = i == 0 ? World : World * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0) * Matrix.CreateScale(1, 1, Stack / 7f);
                             effect.Projection = TankGame.GameProjection;
@@ -287,17 +285,13 @@ namespace TanksRebirth.GameContent
 
                             effect.Alpha = 1f;
                         }
-
                         mesh.Draw();
                     }
                 }
             }
-            else
-            {
-                foreach (var mesh in Model.Meshes)
-                {
-                    foreach (BasicEffect effect in mesh.Effects)
-                    {
+            else {
+                foreach (var mesh in Model.Meshes) {
+                    foreach (BasicEffect effect in mesh.Effects) {
                         effect.View = TankGame.GameView;
                         effect.World = World;
                         effect.Projection = TankGame.GameProjection;
@@ -306,18 +300,15 @@ namespace TanksRebirth.GameContent
 
                         // are the mesh definitions confused?
                         // the .fbx file has them named as they should be
-                        if (mesh.Name == "Teleporter_Button")
-                        {
+                        if (mesh.Name == "Teleporter_Button") {
                             World = Matrix.CreateRotationX(-MathHelper.PiOver2) * Matrix.CreateScale(10f) * Matrix.CreateTranslation(Position3D);
                             effect.Texture = _texture;
                         }
-                        else if (mesh.Name == "Teleporter_Shadow")
-                        {
+                        else if (mesh.Name == "Teleporter_Shadow") {
                             World = Matrix.CreateRotationX(-MathHelper.PiOver2) * Matrix.CreateScale(10f) * Matrix.CreateTranslation(Position3D);
                             effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/mine/mine_shadow");
                         }
-                        else if (mesh.Name == "Teleporter_Ring")
-                        {
+                        else if (mesh.Name == "Teleporter_Ring") {
                             World = Matrix.CreateScale(1f) * Matrix.CreateTranslation(Position3D);
                             effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_rocket");
                         }
@@ -328,14 +319,16 @@ namespace TanksRebirth.GameContent
 
                         effect.Alpha = 1f;
                     }
-
                     mesh.Draw();
                 }
             }
             OnPostRender?.Invoke(this);
         }
-        public void Update()
-        {
+        public void Update() {
+
+            if (!MapRenderer.ShouldRender)
+                return;
+
             Hitbox = new((int)(Position.X - FULL_BLOCK_SIZE / 2 + 1), (int)(Position.Y - FULL_BLOCK_SIZE / 2), (int)FULL_BLOCK_SIZE - 1, (int)FULL_BLOCK_SIZE);
             _offset = new();
 

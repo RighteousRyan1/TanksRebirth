@@ -12,7 +12,6 @@ public static class SpriteFontUtils
         for (int i = 0; i < 4; i++)
             spriteBatch.DrawString(font, text, position + new Vector2(0, 2f * borderThickness).RotatedByRadians(MathHelper.PiOver2 * i + MathHelper.PiOver4), 
                 borderColor, scale, rotation, font.MeasureString(text) / 2, 0f);
-
-        spriteBatch.DrawString(font, text, position, textColor, scale, rotation, font.MeasureString(text) / 2, 0f);
+        spriteBatch.DrawString(font, text, position, textColor, scale, rotation, font.MeasureString(text) / 2, 1f);
     }
 }

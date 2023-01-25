@@ -1145,12 +1145,12 @@ namespace TanksRebirth.GameContent
             if (DoTrail)
             {
                 var p = GameHandler.ParticleSystem.MakeParticle(new Vector3(MouseUtils.MousePosition.X, MouseUtils.MousePosition.Y, 0), TankGame.WhitePixel);
-                p.Is2d = true;
+                p.IsIn2DSpace = true;
                 var dir = _oldMouse.DirectionOf(MouseUtils.MousePosition).ToResolution();
                 p.Rotation2D = dir.ToRotation();
                 p.TextureScale = new Vector2(dir.Length() * 1.1f, 20.ToResolutionY());
                 p.Origin2D = new(0, TankGame.WhitePixel.Size().Y / 2);
-                p.isAddative = false;
+                p.HasAddativeBlending = false;
                 p.ToScreenSpace = false;
                 p.UniqueBehavior = (pa) =>
                 {

@@ -100,7 +100,7 @@ namespace TanksRebirth.GameContent
         public float LifeTime;
         public bool CanFriendlyFire = true;
         // private Particle _flame;
-        public readonly int Tier;
+        public readonly int Type;
         private OggAudio _loopingSound;
         public bool IsDestructible { get; set; } = true;
         public void ReassignId(int newId) => Id = newId;
@@ -110,19 +110,21 @@ namespace TanksRebirth.GameContent
         /// </summary>
         /// <param name="position">The position of the created <see cref="Shell"/>.</param>
         /// <param name="velocity">The velocity of the created <see cref="Shell"/>.</param>
+        /// <param name="type">The type of <see cref="Shell"/> to be fired.</param>
+        /// <param name="owner">Which <see cref="Tank"/> owns this <see cref="Shell"/>.</param>
         /// <param name="ricochets">How many times the newly created <see cref="Shell"/> can ricochet.</param>
         /// <param name="homing">Whether or not the newly created <see cref="Shell"/> homes in on enemies.</param>
-        public Shell(Vector3 position, Vector3 velocity, int tier, Tank owner, uint ricochets = 0, HomingProperties homing = default, bool useDarkTexture = false, bool playSpawnSound = true)
+        public Shell(Vector3 position, Vector3 velocity, int type, Tank owner, uint ricochets = 0, HomingProperties homing = default, bool useDarkTexture = false, bool playSpawnSound = true)
         {
-            Tier = tier;
+            Type = type;
             RicochetsRemaining = ricochets;
             Position = position;
             Model = GameResources.GetGameResource<Model>("Assets/bullet");
 
-            if (tier == ShellID.Supressed || tier == ShellID.Explosive)
+            if (type == ShellID.Supressed || type == ShellID.Explosive)
                 useDarkTexture = true;
 
-            if (tier == ShellID.Explosive)
+            if (type == ShellID.Explosive)
                 IsDestructible = false;
 
             _shellTexture = useDarkTexture ? GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/explosive_bullet") : GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/bullet");
@@ -134,13 +136,13 @@ namespace TanksRebirth.GameContent
 
             Velocity = velocity;
 
-            if (Tier == ShellID.Rocket)
+            if (Type == ShellID.Rocket)
             {
                 Flaming = true;
                 _loopingSound = SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_rocket_loop", SoundContext.Effect, 0.3f, gameplaySound: true);
                 _loopingSound.Instance.IsLooped = true;
             }
-            if (Tier == ShellID.TrailedRocket)
+            if (Type == ShellID.TrailedRocket)
             {
                 // MakeTrail();
                 EmitsSmoke = false;
@@ -152,7 +154,7 @@ namespace TanksRebirth.GameContent
 
             if (owner is not null)
             {
-                _shootSound = Tier switch
+                _shootSound = Type switch
                 {
                     ShellID.Player => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_regular_1", SoundContext.Effect, 0.3f, gameplaySound: true),
                     ShellID.Standard => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_regular_2", SoundContext.Effect, 0.3f, gameplaySound: true),
@@ -191,6 +193,9 @@ namespace TanksRebirth.GameContent
 
         internal void Update()
         {
+            if (!MapRenderer.ShouldRender)
+                return;
+
             Rotation = Velocity2D.ToRotation() - MathHelper.PiOver2;
             Position += Velocity * 0.62f * TankGame.DeltaTime;
             World = Matrix.CreateFromYawPitchRoll(-Rotation, 0, 0)
@@ -291,7 +296,7 @@ namespace TanksRebirth.GameContent
 
                     p.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
                     // 
-                    p.isAddative = false;
+                    p.HasAddativeBlending = false;
                     p.Color = SmokeColor;
                     p.Alpha = 0.5f;
 
@@ -317,7 +322,7 @@ namespace TanksRebirth.GameContent
                     p.Scale = new(0.4f, 0.25f, 0.4f); // x is outward from bullet
                                                       // p.Scale = new(1f, 1f, 1f);
                     p.Color = TrailColor;
-                    p.isAddative = false;
+                    p.HasAddativeBlending = false;
                     // GameHandler.GameRand.NextFloat(-2f, 2f)
                     //p.TextureRotation = -MathHelper.PiOver2;
                     p.TextureScale = new(Velocity.Length() / 10 - 0.2f);
@@ -339,7 +344,7 @@ namespace TanksRebirth.GameContent
                     p2.Scale = new(0.4f /*Velocity.Length() / 10 - 0.2f*/, 0.25f, 0.4f); // x is outward from bullet
                                                                                          // p.Scale = new(1f, 1f, 1f);
                     p2.Color = TrailColor;
-                    p2.isAddative = false;
+                    p2.HasAddativeBlending = false;
                     // GameHandler.GameRand.NextFloat(-2f, 2f)
                     //p.TextureRotation = -MathHelper.PiOver2;
                     p.TextureScale = new(Velocity.Length() / 10 - 0.2f);
@@ -366,7 +371,7 @@ namespace TanksRebirth.GameContent
                     var scaleRand = GameHandler.GameRand.NextFloat(0.5f, 0.75f);
                     p.Scale = new(scaleRand, 0.165f, 0.4f); // x is outward from bullet
                     p.Color = FlameColor;
-                    p.isAddative = false;
+                    p.HasAddativeBlending = false;
                     // GameHandler.GameRand.NextFloat(-2f, 2f)
                     p.Rotation2D = -MathHelper.PiOver2;
 
@@ -467,7 +472,7 @@ namespace TanksRebirth.GameContent
                                 cxt = DestructionContext.WithHostileTank;
                         }
                         Destroy(cxt);
-                        tank.Damage(new TankHurtContext_Bullet(Owner is PlayerTank, Ricochets, Tier, Owner is not null ? Owner.WorldId : -1));
+                        tank.Damage(new TankHurtContext_Shell(Owner is PlayerTank, Ricochets, Type, this));
                     }
                 }
             }
@@ -547,12 +552,15 @@ namespace TanksRebirth.GameContent
 
         internal void Render()
         {
+            if (!MapRenderer.ShouldRender)
+                return;
+
             Projection = TankGame.GameProjection;
             View = TankGame.GameView;
 
             if (DebugUtils.DebugLevel == 1 && HomeProperties.Speed > 0)
                 Collision.DoRaycast(Position2D, HomeProperties.Target, (int)HomeProperties.Radius, true);
-            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"RicochetsLeft: {RicochetsRemaining}\nTier: {Tier}\nId: {Id}", MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 20), 1, centered: true);
+            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"RicochetsLeft: {RicochetsRemaining}\nTier: {Type}\nId: {Id}", MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 20), 1, centered: true);
 
             for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++)
             {

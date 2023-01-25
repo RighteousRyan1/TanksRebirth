@@ -38,7 +38,7 @@ namespace TanksRebirth.GameContent.UI
         public static UITextButton TestLevel;
         public static UITextButton Perspective;
 
-        public static UITextButton BlocksCategory;
+        public static UITextButton TerrainCategory;
         public static UITextButton EnemyTanksCategory;
         public static UITextButton PlayerTanksCategory;
 
@@ -77,7 +77,7 @@ namespace TanksRebirth.GameContent.UI
         private static Mission _cachedMission;
         public enum Category {
             EnemyTanks,
-            Blocks,
+            Terrain,
             PlayerTanks
         }
 
@@ -212,27 +212,27 @@ namespace TanksRebirth.GameContent.UI
 
             CampaignTags = new(TankGame.TextFont, Color.White, 1f, 35);
             CampaignTags.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), LevelContentsPanel.Y + 240.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 50.ToResolutionY()));
-            CampaignTags.DefaultString = "Tags (split with ',')";
+            CampaignTags.DefaultString = "Tags";
             CampaignTags.Tooltip = "The tags that describe this campaign well. Be sure to split with ','";
 
             CampaignExtraLives = new(TankGame.TextFont, Color.White, 1f, 100);
             CampaignExtraLives.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), LevelContentsPanel.Y + 300.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 50.ToResolutionY()));
-            CampaignExtraLives.DefaultString = "Extra Life Missions (split with ',')";
+            CampaignExtraLives.DefaultString = "Extra Life Missions";
             CampaignExtraLives.Tooltip = "The level indexes of missions to provide extra lives. Be sure to split with ','";
 
             CampaignVersion = new(TankGame.TextFont, Color.White, 1f, 10);
             CampaignVersion.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), LevelContentsPanel.Y + 360.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 50.ToResolutionY()));
-            CampaignVersion.DefaultString = "Level Version";
+            CampaignVersion.DefaultString = "Version";
             CampaignVersion.Tooltip = "The version of THIS CAMPAIGN, not the game.";
 
             CampaignLoadingBGColor = new(TankGame.TextFont, Color.White, 1f, 11);
             CampaignLoadingBGColor.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), LevelContentsPanel.Y + 420.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 50.ToResolutionY()));
-            CampaignLoadingBGColor.DefaultString = "Mission Loading: BG Color";
+            CampaignLoadingBGColor.DefaultString = "Background Color";
             CampaignLoadingBGColor.Tooltip = "Changes the color of the background when transitioning missions.\nBe sure there are no spaces between commas.";
 
             CampaignLoadingStripColor = new(TankGame.TextFont, Color.White, 1f, 11);
             CampaignLoadingStripColor.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), LevelContentsPanel.Y + 480.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 50.ToResolutionY()));
-            CampaignLoadingStripColor.DefaultString = "Mission Loading: Strip Color";
+            CampaignLoadingStripColor.DefaultString = "Strip Color";
             CampaignLoadingStripColor.Tooltip = "Changes the color of the strip that appears across\n the screen when transitioning missions.\nBe sure there are no spaces between commas.";
 
             CampaignMajorVictory = new("", TankGame.TextFont, Color.White, () => Vector2.One.ToResolution());
@@ -340,7 +340,7 @@ namespace TanksRebirth.GameContent.UI
         {
             PlayerTanksCategory.IsVisible =
                 EnemyTanksCategory.IsVisible =
-                BlocksCategory.IsVisible =
+                TerrainCategory.IsVisible =
                 Perspective.IsVisible =
                 Properties.IsVisible = 
                 LoadLevel.IsVisible = 
@@ -369,7 +369,7 @@ namespace TanksRebirth.GameContent.UI
         private static void SetLevelEditorVisibility(bool visible)
         {
             EnemyTanksCategory.IsVisible = visible;
-            BlocksCategory.IsVisible = visible;
+            TerrainCategory.IsVisible = visible;
             TestLevel.IsVisible = visible;
             Perspective.IsVisible = visible;
             PlayerTanksCategory.IsVisible = visible;
@@ -442,10 +442,10 @@ namespace TanksRebirth.GameContent.UI
                 TankGame.OverheadView = !TankGame.OverheadView;
             };
 
-            BlocksCategory = new("Blocks", TankGame.TextFont, Color.White);
-            BlocksCategory.SetDimensions(() => new(WindowUtils.WindowWidth * 0.75f, WindowUtils.WindowHeight * 0.725f), () => new Vector2(200, 50).ToResolution());
-            BlocksCategory.OnLeftClick = (l) => {
-                CurCategory = Category.Blocks;
+            TerrainCategory = new("Terrain", TankGame.TextFont, Color.White);
+            TerrainCategory.SetDimensions(() => new(WindowUtils.WindowWidth * 0.75f, WindowUtils.WindowHeight * 0.725f), () => new Vector2(200, 50).ToResolution());
+            TerrainCategory.OnLeftClick = (l) => {
+                CurCategory = Category.Terrain;
             };
 
             EnemyTanksCategory = new("Enemies", TankGame.TextFont, Color.White);
@@ -705,7 +705,7 @@ namespace TanksRebirth.GameContent.UI
 
             if (!ShouldDrawBarUI)
                 return;
-            var info = "If you are using this editor to export to Tanks! .bin maps,\nplaytestingthe level will be liable to switching up the\nIDs of the tanks. Playtest at your own risk";
+            var info = "If you are using this editor to export to Tanks! .bin maps,\nplaytestingthe level will be liable to switching up the\nIDs of the tanks. Playtest at your own risk.";
             TankGame.SpriteRenderer.DrawString(TankGame.TextFont, info, new Vector2(WindowUtils.WindowWidth - 175.ToResolutionX(), WindowUtils.WindowHeight / 2 - 20.ToResolutionY()), Color.White, new Vector2(0.425f).ToResolution(), 0f, TankGame.TextFont.MeasureString(info) / 2);
 
             #region Main UI
@@ -750,8 +750,8 @@ namespace TanksRebirth.GameContent.UI
             TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Rectangle(WindowUtils.WindowWidth - (int)350.ToResolutionX(), 0, (int)350.ToResolutionX(), (int)500.ToResolutionY()), null, Color.Gray, 0f, Vector2.Zero, default, 0f);
             TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Rectangle(WindowUtils.WindowWidth - (int)350.ToResolutionX(), 0, (int)350.ToResolutionX(), (int)40.ToResolutionY()), null, Color.White, 0f, Vector2.Zero, default, 0f);
             TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "Placement Information", new Vector2(WindowUtils.WindowWidth - 325.ToResolutionX(), 3.ToResolutionY()), Color.Black, Vector2.One.ToResolution(), 0f, Vector2.Zero);
-            if (CurCategory == Category.Blocks)
-                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"Block Stack: {BlockHeight}", new Vector2(WindowUtils.WindowWidth - 335.ToResolutionX(), 40.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
+            //if (CurCategory == Category.Blocks)
+                //TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"Block Stack: {BlockHeight}", new Vector2(WindowUtils.WindowWidth - 335.ToResolutionX(), 40.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
             var helpText = "";
             Vector2 start = new();
             if (CurCategory == Category.EnemyTanks || CurCategory == Category.PlayerTanks)
@@ -776,7 +776,7 @@ namespace TanksRebirth.GameContent.UI
                 if (SelectedTankTeam != TeamID.NoTeam)
                     TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "v", new Vector2(start.X - 25.ToResolutionX(), start.Y + ((int)(SelectedTankTeam - 1) * 40 - 10).ToResolutionY()), Color.White, Vector2.One.ToResolution(), MathHelper.Pi, TankGame.TextFont.MeasureString("v") / 2);
             }
-            else if (CurCategory == Category.Blocks)
+            else if (CurCategory == Category.Terrain)
             {
                 helpText = "UP and DOWN to change stack.";
                 // TODO: add static dict for specific types?
@@ -836,7 +836,7 @@ namespace TanksRebirth.GameContent.UI
                 }
                 _maxScroll = xOff;
             }
-            else if (CurCategory == Category.Blocks)
+            else if (CurCategory == Category.Terrain)
             {
                 for (int i = 0; i < _renderNamesBlocks.Count; i++)
                 {
@@ -943,21 +943,21 @@ namespace TanksRebirth.GameContent.UI
                 _missionsOffset = -_missionsMaxOff + _missionButtonScissor.Height;
 
             LevelContentsPanel = new Rectangle(WindowUtils.WindowWidth / 4, (int)(WindowUtils.WindowHeight * 0.1f), WindowUtils.WindowWidth / 2, (int)(WindowUtils.WindowHeight * 0.625f));
-            PlacementSquare.PlacesBlock = CurCategory == Category.Blocks;
+            PlacementSquare.PlacesBlock = CurCategory == Category.Terrain;
             switch (CurCategory) {
                 case Category.EnemyTanks:
                     EnemyTanksCategory.Color = Color.DeepSkyBlue;
-                    BlocksCategory.Color = Color.White;
+                    TerrainCategory.Color = Color.White;
                     PlayerTanksCategory.Color = Color.White;
                     break;
-                case Category.Blocks:
+                case Category.Terrain:
                     EnemyTanksCategory.Color = Color.White;
-                    BlocksCategory.Color = Color.DeepSkyBlue;
+                    TerrainCategory.Color = Color.DeepSkyBlue;
                     PlayerTanksCategory.Color = Color.White;
                     break;
                 case Category.PlayerTanks:
                     EnemyTanksCategory.Color = Color.White;
-                    BlocksCategory.Color = Color.White;
+                    TerrainCategory.Color = Color.White;
                     PlayerTanksCategory.Color = Color.DeepSkyBlue;
                     break;
             }
@@ -989,7 +989,7 @@ namespace TanksRebirth.GameContent.UI
                         {
                             if (CurCategory == Category.EnemyTanks)
                                 SelectedTankTier = evt.Value.Item1;
-                            else if (CurCategory == Category.Blocks)
+                            else if (CurCategory == Category.Terrain)
                                 SelectedBlockType = evt.Value.Item1;
                             else if (CurCategory == Category.PlayerTanks)
                                 SelectedPlayerType = evt.Value.Item1;
@@ -1022,7 +1022,7 @@ namespace TanksRebirth.GameContent.UI
                     if (SelectedTankTeam < TeamID.NoTeam)
                         SelectedTankTeam = TeamID.NoTeam;
                 }
-                else if (CurCategory == Category.Blocks)
+                else if (CurCategory == Category.Terrain)
                 {
                     if (InputUtils.KeyJustPressed(Microsoft.Xna.Framework.Input.Keys.Up))
                         BlockHeight++;

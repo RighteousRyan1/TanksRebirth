@@ -95,7 +95,7 @@ namespace TanksRebirth.GameContent
 
                 var smoke = MakeParticle(position, texture);
 
-                smoke.isAddative = true;
+                smoke.HasAddativeBlending = true;
 
                 smoke.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
 

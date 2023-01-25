@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using FontStashSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -14,10 +15,59 @@ using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.Systems
 {
+    /// <summary>A system for handling chat.</summary>
     public sealed record ChatSystem
     {
+        /// <summary>Realistically, why should this have to exist...</summary>
+        public interface ICommandOutput {
+
+        }
+        /// <summary>A structure which represents the input of a command.</summary>
+        public readonly struct CommandInput {
+            /// <summary>The name of this <see cref="CommandInput"/>.</summary>
+            public readonly string Name;
+            /// <summary>The description of this <see cref="CommandInput"/>.</summary>
+            public readonly string Description;
+            /// <summary>Define a command.</summary>
+            /// <param name="name">The name of this <see cref="CommandInput"/>.</param>
+            /// <param name="description">The description of this <see cref="CommandInput"/>.</param>
+            public CommandInput(string name, string description) {
+                Name = name;
+                Description = description;
+            }
+            /// <summary>Implicit casting to a tuple containing 2 <see cref="string"/>s.</summary>
+            public static implicit operator CommandInput(ValueTuple<string, string> input) => new(input.Item1, input.Item2);
+            // public static implicit operator CommandInput(string input) => 
+        }
+        /// <summary>A structure which represents the metadata of the output of a command. This parameter should be fed the handle of a type.</summary>
+        public readonly struct CommandOutput<T> : ICommandOutput where T : struct {
+            /// <summary>Whether or not this <see cref="CommandInput"/>'s corresponding <see cref="CommandOutput{T}"/> should sync across a multiplayer server.</summary>
+            public readonly bool NetSync;
+            /// <summary>The action to perform if this <see cref="CommandOutput{T}"/> is successful.</summary>
+            public readonly Action<T> ActionToPerform;
+            /// <summary>Create the output of a command.</summary>
+            /// /// <param name="actionToPerform">The action to perform if this <see cref="CommandOutput{T}"/> is successful.</param>
+            /// /// <param name="netSync">Whether or not this <see cref="CommandInput"/>'s corresponding <see cref="CommandOutput{T}"/> should sync across a multiplayer server.</param>
+            public CommandOutput(bool netSync, Action<T> actionToPerform) {
+                /*if (!_primitiveTypes.Any(hndl => hndl.Equals(expectedPrimitiveType)))
+                    throw new Exception("Unexpected type (non-primitive): " + Type.GetTypeFromHandle(expectedPrimitiveType));*/
+                ActionToPerform = actionToPerform;
+                NetSync = netSync;
+            }
+        }
+        /// <summary>The expected prefix to prepend before writing down a command.</summary>
+        public const char ExpectedPrefix = '/';
+        /// <summary>Commands for the chat. Feel free to add your own here.</summary>
+        public static Dictionary<CommandInput, ICommandOutput> Commands = new() {
+            // re = render engine
+            [new CommandInput(name: "re_rendermenu", description: "Disables the rendering and updating of the main menu. " +
+                "Also disables all shaders pertaining to the game world.")] = new CommandOutput<bool>(netSync: false, (newValue) => {
+                    MapRenderer.ShouldRender = newValue;
+            })
+        };
+        // TODO: ^ how to process input, since input is hardcoded.
         public struct ChatTag {
-            // TODO: start
+            // TODO: start sometime eventually?
         }
 
         public delegate void OnMessageAddedDelegate(string message);
@@ -50,6 +100,53 @@ namespace TanksRebirth.GameContent.Systems
         /// <returns>The <see cref="ChatMessage"/> sent to the chat.</returns>
         public static ChatMessage[] SendMessage(string message, Color color, string sender = null, bool netSend = false)
         {
+            if (message.Length > 0 && message[0] == ExpectedPrefix) {
+                var cmdSplit = message.Remove(0, 1).Split(' ');
+                var cmdName = cmdSplit[0];
+                var index = Commands.Keys.ToList().FindIndex(cmd => cmd.Name == cmdName);
+                if (index > -1) {
+                    var value = Commands.ElementAt(index).Value;
+
+                    /*var t = typeof(CommandOutput<>).GetGenericArguments()
+
+                    var tValueType = value.GetType();
+
+                    var tValueHandle = tValueType.GetGenericArguments()[0].TypeHandle;
+
+                    if (ReflectionUtils.PrimitiveTypes.Any(handle => handle.Equals(tValueHandle))) {
+                        var reflection = tValueType
+                            .GetType()
+                            .GetMethod("TryParse", BindingFlags.Public | BindingFlags.Instance);
+
+                        bool wasParseable = (bool)reflection.Invoke()
+                    }*/
+                    // TODO: ^ make this plausible magic work.
+                    if (cmdSplit.Length <= 1) {
+                        SendMessage("Invalid command syntax! Parameter needed.", Color.Red);
+                        return null;
+                    }
+                    var cmdArg0 = cmdSplit[1];
+
+                    if (value is CommandOutput<bool> booleanCmd) {
+                        if (bool.TryParse(cmdArg0, out var result)) {
+                            booleanCmd.ActionToPerform.Invoke(result);
+                            return null;
+                        }
+                    }
+                    else if (value is CommandOutput<int> intCmd) {
+                        if (int.TryParse(cmdArg0, out var result)) {
+                            intCmd.ActionToPerform.Invoke(result);
+                            return null;
+                        }
+                    }
+                    else if (value is CommandOutput<float> floatCmd) {
+                        if (float.TryParse(cmdArg0, out var result)) {
+                            floatCmd.ActionToPerform.Invoke(result);
+                            return null;
+                        }
+                    }
+                }
+            }
 
             List<ChatMessage> msgs = new();
 
@@ -205,7 +302,11 @@ namespace TanksRebirth.GameContent.Systems
                     CurTyping += "   ";
                 else if (e.Key == Keys.Enter) {
                     TankGame.Instance.Window.TextInput -= HandleInput;
+
                     ActiveHandle = false;
+
+                    if (CurTyping == string.Empty)
+                        return;
 
                     /*if (CurTyping.Contains('\n'))
                     {

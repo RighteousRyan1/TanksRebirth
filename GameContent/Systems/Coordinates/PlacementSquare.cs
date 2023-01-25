@@ -234,9 +234,9 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
                             SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"{TeamID.Collection.GetKey(GameHandler.AllTanks[TankId].Team)}", pos - new Vector2(0, 8), TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.Black, new Vector2(0.9f) * TankGame.AddativeZoom, 0f);
 
                             if (GameHandler.AllTanks[TankId] is AITank ai)
-                                SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"ID: {ai.AITankId}", pos + new Vector2(0, 8), TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.White, new Vector2(0.8f) * TankGame.AddativeZoom, 0f);
+                                SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"ID: {ai.AITankId}", pos + new Vector2(0, 8), TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.Black, new Vector2(0.8f) * TankGame.AddativeZoom, 0f);
                             if (GameHandler.AllTanks[TankId] is PlayerTank player)
-                                SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"ID: {player.PlayerId}", pos + new Vector2(0, 8), TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.White, new Vector2(0.8f) * TankGame.AddativeZoom, 0f);
+                                SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"ID: {player.PlayerId}", pos + new Vector2(0, 8), TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.Black, new Vector2(0.8f) * TankGame.AddativeZoom, 0f);
                         }
                     }
                     effect.TextureEnabled = true;

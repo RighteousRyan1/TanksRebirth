@@ -19,6 +19,7 @@ using TanksRebirth.GameContent.Properties;
 using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.Net;
+using DiscordRPC;
 
 namespace TanksRebirth.GameContent
 {
@@ -86,7 +87,6 @@ namespace TanksRebirth.GameContent
     public interface ITankHurtContext
     {
         bool IsPlayer { get; set; }
-        int TankId { get; set; }
 
         // PlayerType PlayerType { get; set; } // don't use if IsPlayer is false.
     }
@@ -118,31 +118,31 @@ namespace TanksRebirth.GameContent
             TankId = -1;
         }
     }
-    public struct TankHurtContext_Bullet : ITankHurtContext
+    public struct TankHurtContext_Shell : ITankHurtContext
     {
         public bool IsPlayer { get; set; }
         public uint Bounces { get; set; }
 
-        public int TankId { get; set; }
-
         public int ShellType { get; set; }
 
-        public TankHurtContext_Bullet(bool isPlayer, uint bounces, int type, int tankId)
+        public Shell Shell { get; set; }
+
+        public TankHurtContext_Shell(bool isPlayer, uint bounces, int type, Shell shell)
         {
             IsPlayer = isPlayer;
             Bounces = bounces;
             ShellType = type;
-            TankId = tankId;
+            Shell = shell;
         }
     }
     public struct TankHurtContext_Mine : ITankHurtContext
     {
         public bool IsPlayer { get; set; }
-        public int TankId { get; set; }
-        public TankHurtContext_Mine(bool isPlayer, int tankId)
+        public Explosion MineExplosion { get; set; }
+        public TankHurtContext_Mine(bool isPlayer, Explosion mineExplosion)
         {
             IsPlayer = isPlayer;
-            TankId = tankId;
+            MineExplosion = mineExplosion;
         }
     }
     public abstract class Tank
@@ -306,6 +306,7 @@ namespace TanksRebirth.GameContent
         public ModelMesh CannonMesh;
         #endregion
 
+        /// <summary>This <see cref="Tank"/>'s swag apparel as a <see cref="List{T}"/> of <see cref="ICosmetic"/>s.</summary>
         public List<ICosmetic> Cosmetics = new();
         /// <summary>Apply all the default parameters for this <see cref="Tank"/>.</summary>
         public virtual void ApplyDefaults(ref TankProperties properties) {
@@ -377,7 +378,7 @@ namespace TanksRebirth.GameContent
 
                 particle.Scale = cos2d.Scale;
                 particle.Tag = $"cosmetic_2d_{GetHashCode()}"; // store the hash code of this tank, so when we destroy the cosmetic's particle, it destroys all belonging to this tank!
-                particle.isAddative = false;
+                particle.HasAddativeBlending = false;
                 particle.UniqueBehavior = (z) =>
                 {
                     particle.Position = Position3D + cos2d.RelativePosition;
@@ -405,7 +406,7 @@ namespace TanksRebirth.GameContent
 
                 lightParticle.Scale = new(0.25f);
                 lightParticle.Alpha = 0f;
-                lightParticle.Is2d = true;
+                lightParticle.IsIn2DSpace = true;
 
                 lightParticle.UniqueBehavior = (lp) =>
                 {
@@ -456,7 +457,7 @@ namespace TanksRebirth.GameContent
         /// <summary>Update this <see cref="Tank"/>.</summary>
         public virtual void Update()
         {
-            if (Dead)
+            if (Dead || !MapRenderer.ShouldRender)
                 return;
 
             OnPreUpdate?.Invoke(this);
@@ -523,13 +524,81 @@ namespace TanksRebirth.GameContent
 
             OnPostUpdate?.Invoke(this);
         }
+
+        public static string HitString = "Hit!";
         /// <summary>Damage this <see cref="Tank"/>. If it has no armor, <see cref="Destroy"/> it.</summary>
         public virtual void Damage(ITankHurtContext context) {
             if (Dead || Properties.Immortal)
                 return;
 
             // if (Server.serverNetManager != null)
-                Client.SyncDamage(WorldId);
+            Client.SyncDamage(WorldId);
+
+            void doTextPopup()
+            {
+                var part = GameHandler.ParticleSystem.MakeParticle(Position3D + new Vector3(0, 15, 0), HitString);
+
+                part.IsIn2DSpace = true;
+                part.ToScreenSpace = true;
+
+                if (context is TankHurtContext_Mine thcm)
+                {
+                    if (thcm.MineExplosion.Source is PlayerTank pl)
+                    {
+                        part.Color = PlayerID.PlayerTankColors[pl.PlayerType].ToColor();
+                    }
+                    if (thcm.MineExplosion.Source is AITank ai)
+                    {
+                        part.Color = AITank.TankDestructionColors[ai.AiTankType];
+                    }
+                }
+                else if (context is TankHurtContext_Shell thcs)
+                {
+                    if (thcs.Shell.Owner is PlayerTank pl)
+                    {
+                        part.Color = PlayerID.PlayerTankColors[pl.PlayerType].ToColor();
+                    }
+                    if (thcs.Shell.Owner is AITank ai)
+                    {
+                        part.Color = AITank.TankDestructionColors[ai.AiTankType];
+                    }
+                }
+                part.HasAddativeBlending = false;
+                part.Origin2D = TankGame.TextFont.MeasureString(HitString) / 2;
+                part.Scale = new(1);
+                part.Alpha = 0;
+
+                // TODO: Fix layering bullshit.
+                part.Layer = 1;
+
+                var origPos = part.Position;
+                var speed = 0.5f;
+                float height = 5f;
+
+                part.UniqueBehavior = (a) => {
+
+                    var sin = MathF.Sin(TankGame.RunTime * speed) * height;
+                    part.Position.Y = origPos.Y + sin * TankGame.DeltaTime;
+
+                    if (a.LifeTime > 180)
+                        GeometryUtils.Add(ref a.Scale, -0.05f * TankGame.DeltaTime);
+
+                    height -= 0.02f;
+
+                    // ChatSystem.SendMessage(sin.ToString(), Color.White);
+
+                    if (a.Scale.X < 0)
+                        a.Destroy();
+                };
+                part.UniqueDraw = (a) =>
+                {
+                    SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFontLarge, part.Text,
+                    MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(part.Position), TankGame.GameView, TankGame.GameProjection),
+                    part.Color, Color.White, new(part.Scale.X, part.Scale.Y), 0f, 1f);
+                };
+            }
+
+            doTextPopup();
 
             if (Properties.Armor is not null) {
                 OnDamage?.Invoke(this, Properties.Armor.HitPoints > 0, context);
@@ -572,7 +641,7 @@ namespace TanksRebirth.GameContent
 
                 dm.StoredTank = new()
                 {
-                    AiTier = t.Tier,
+                    AiTier = t.AiTankType,
                     IsPlayer = false,
                     Position = dm.Position.FlattenZ(),
                     Rotation = t.TankRotation,
@@ -615,7 +684,7 @@ namespace TanksRebirth.GameContent
 
                     var part = GameHandler.ParticleSystem.MakeParticle(Position3D, tex);
 
-                    part.isAddative = false;
+                    part.HasAddativeBlending = false;
 
                     var vel = new Vector3(GameHandler.GameRand.NextFloat(-3, 3), GameHandler.GameRand.NextFloat(3, 6), GameHandler.GameRand.NextFloat(-3, 3));
 
@@ -643,9 +712,9 @@ namespace TanksRebirth.GameContent
 
                 partExpl.ToScreenSpace = true;
 
-                partExpl.Scale = new(5f);
+                partExpl.TextureScale = new(5f);
 
-                partExpl.Is2d = true;
+                partExpl.IsIn2DSpace = true;
 
                 partExpl.UniqueBehavior = (p) =>
                 {
@@ -657,6 +726,7 @@ namespace TanksRebirth.GameContent
                 GameHandler.ParticleSystem.MakeSmallExplosion(Position3D, 15, 20, 1.3f, 30);
             }
             doDestructionFx();
+
             Remove(false);
         }
         /// <summary>Lay a <see cref="TankFootprint"/> under this <see cref="Tank"/>.</summary>
@@ -758,7 +828,7 @@ namespace TanksRebirth.GameContent
 
             smoke.Color = new(84, 22, 0, 255);
 
-            smoke.isAddative = false;
+            smoke.HasAddativeBlending = false;
 
             int achieveable = 80;
             float step = 1;
@@ -816,6 +886,8 @@ namespace TanksRebirth.GameContent
             OnLayMine?.Invoke(this, ref mine);
         }
         public virtual void Render() {
+            if (!MapRenderer.ShouldRender)
+                return;
             /*foreach (var shell in OwnedShells) {
                 SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"Owned by: {(this is PlayerTank ? PlayerID.Collection.GetKey(((PlayerTank)shell.Owner).PlayerType) : TankID.Collection.GetKey(((AITank)shell.Owner).Tier))}",
                     MatrixUtils.ConvertWorldToScreen(Vector3.Zero, shell.World, shell.View, shell.Projection) - new Vector2(0, 20), this is PlayerTank ? PlayerID.PlayerTankColors[((PlayerTank)shell.Owner).PlayerType].ToColor() : AITank.TankDestructionColors[((AITank)shell.Owner).Tier], Color.White, Vector2.One.ToResolution(), 0f, 2f);
@@ -826,22 +898,15 @@ namespace TanksRebirth.GameContent
 
             Projection = TankGame.GameProjection;
             View = TankGame.GameView;
-            if (!Dead)
-            {
-                foreach (var cosmetic in Cosmetics)
-                {
+            if (!Dead) {
+                foreach (var cosmetic in Cosmetics) {
                     //if (GameProperties.InMission && Properties.Invisible)
                     //break;
-                    if (cosmetic is Cosmetic3D cos3d)
-                    {
-                        for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++)
-                        {
-                            foreach (ModelMesh mesh in cos3d.Model.Meshes)
-                            {
-                                if (!cos3d.IgnoreMeshesByName.Any(meshname => meshname == mesh.Name))
-                                {
-                                    foreach (BasicEffect effect in mesh.Effects)
-                                    {
+                    if (cosmetic is Cosmetic3D cos3d) {
+                        for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
+                            foreach (ModelMesh mesh in cos3d.Model.Meshes) {
+                                if (!cos3d.IgnoreMeshesByName.Any(meshname => meshname == mesh.Name)) {
+                                    foreach (BasicEffect effect in mesh.Effects) {
                                         float rotY;
                                         if (cosmetic.LockOptions == CosmeticLockOptions.ToTurret)
                                             rotY = cosmetic.Rotation.Y + TurretRotation;
@@ -869,8 +934,7 @@ namespace TanksRebirth.GameContent
                     }
                 }
             }
-            var info = new string[]
-            {
+            var info = new string[] {
                 $"Team: {TeamID.Collection.GetKey(Team)}",
                 $"Shell Owned / Max: {OwnedShellCount} / {Properties.ShellLimit}",
                 $"Mine Owned / Max: {OwnedMineCount} / {Properties.MineLimit}",
@@ -1036,7 +1100,7 @@ namespace TanksRebirth.GameContent
 
             var track = GameHandler.ParticleSystem.MakeParticle(Position, texture);
 
-            track.isAddative = false;
+            track.HasAddativeBlending = false;
 
             track.Roll = -MathHelper.PiOver2;
             track.Scale = new(0.5f, 0.55f, 0.5f);
@@ -1118,8 +1182,9 @@ namespace TanksRebirth.GameContent
             texture = GameResources.GetGameResource<Texture2D>($"Assets/textures/check/check_{color.ToString().ToLower()}");
 
             check = GameHandler.ParticleSystem.MakeParticle(Position + new Vector3(0, 0.1f, 0), texture);
-            check.isAddative = false;
+            check.HasAddativeBlending = false;
             check.Roll = -MathHelper.PiOver2;
+            check.Layer = 0;
 
             deathMarks[total_death_marks] = this;
         }

@@ -173,7 +173,7 @@ namespace TanksRebirth.Net
             NetDataWriter message = new();
             message.Put(PacketID.ShellFire);
 
-            message.Put(shell.Tier);
+            message.Put(shell.Type);
             message.Put(shell.Position);
             message.Put(shell.Velocity);
             message.Put(shell.RicochetsRemaining);

@@ -28,8 +28,8 @@ namespace TanksRebirth.GameContent
             _healthBarTotal = GameHandler.ParticleSystem.MakeParticle(Host.Position3D + new Vector3(0, 20, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"));
             _healthBarCurrent = GameHandler.ParticleSystem.MakeParticle(Host.Position3D + new Vector3(0, 20, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"));
 
-            _healthBarTotal.isAddative = false;
-            _healthBarCurrent.isAddative = false;
+            _healthBarTotal.HasAddativeBlending = false;
+            _healthBarCurrent.HasAddativeBlending = false;
 
             _healthBarTotal.Color = Color.Red;
             _healthBarCurrent.Color = Color.Lime;

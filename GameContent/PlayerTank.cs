@@ -67,8 +67,6 @@ namespace TanksRebirth.GameContent
         public static bool _drawShotPath;
 
         public static int KillCount = 0;
-        
-        private bool playerControl_isBindPressed;
 
         public int PlayerId { get; }
         public int PlayerType { get; }
@@ -84,6 +82,8 @@ namespace TanksRebirth.GameContent
         public static Keybind controlFirePath = new("Draw Shot Path", Keys.Q);
         public static GamepadBind FireBullet = new("Fire Bullet", Buttons.RightTrigger);
         public static GamepadBind PlaceMine = new("Place Mine", Buttons.A);
+
+        private bool playerControl_isBindPressed;
 
         public Vector2 oldPosition;
 

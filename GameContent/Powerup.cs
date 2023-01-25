@@ -110,6 +110,8 @@ namespace TanksRebirth.GameContent
 
         public void Update()
         {
+            if (!MapRenderer.ShouldRender)
+                return;
             if (HasOwner)
             {
                //  AffectedTank.ApplyDefaults();
@@ -132,6 +134,8 @@ namespace TanksRebirth.GameContent
 
         public void Render()
         {
+            if (!MapRenderer.ShouldRender)
+                return;
             if (!HasOwner)
             {
                 foreach (ModelMesh mesh in _model.Meshes)
@@ -182,7 +186,7 @@ namespace TanksRebirth.GameContent
             if (AffectedTank is PlayerTank)
                 return $"duration: {Duration} | HasOwner: {HasOwner}" + (HasOwner ? $" | OwnerTier: {(AffectedTank as PlayerTank).PlayerType}" : "");
             else
-                return $"duration: {Duration} | HasOwner: {HasOwner}" + (HasOwner ? $" | OwnerTier: {(AffectedTank as AITank).Tier}" : "");
+                return $"duration: {Duration} | HasOwner: {HasOwner}" + (HasOwner ? $" | OwnerTier: {(AffectedTank as AITank).AiTankType}" : "");
         }
     }
     /// <summary>A template for creating a <see cref="Powerup"/>. The fields in this class are identical to the ones in <see cref="Powerup"/>.</summary>

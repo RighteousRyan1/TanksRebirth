@@ -80,6 +80,8 @@ namespace TanksRebirth.GameContent
         }
 
         public void Update() {
+            if (!MapRenderer.ShouldRender)
+                return;
             if (!_maxAchieved) {
                 if (Scale < MaxScale)
                     Scale += ExpanseRate * TankGame.DeltaTime;
@@ -116,9 +118,9 @@ namespace TanksRebirth.GameContent
                                         tank.Damage(new TankHurtContext_Other(TankHurtContext_Other.HurtContext.FromIngame));
                                     else if (Source is not null) {
                                         if (Source is AITank)
-                                            tank.Damage(new TankHurtContext_Mine(false, Source.WorldId));
+                                            tank.Damage(new TankHurtContext_Mine(false, this));
                                         else
-                                            tank.Damage(new TankHurtContext_Mine(true, Source.WorldId));
+                                            tank.Damage(new TankHurtContext_Mine(true, this));
                                     }
                                 }
                 }
@@ -141,7 +143,8 @@ namespace TanksRebirth.GameContent
         }
 
         public void Render() {
-
+            if (!MapRenderer.ShouldRender)
+                return;
             World = Matrix.CreateScale(Scale) * Matrix.CreateRotationY(Rotation) * Matrix.CreateTranslation(Position3D);
             View = TankGame.GameView;
             Projection = TankGame.GameProjection;

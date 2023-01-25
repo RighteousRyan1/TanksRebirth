@@ -418,7 +418,7 @@ namespace TanksRebirth
                 Tank.LoadTexturePack(Settings.TankPack);
                 Graphics.ApplyChanges();
 
-                Language.LoadLang(ref GameLanguage, Settings.Language);
+                Language.LoadLang(Settings.Language, out GameLanguage);
 
                 GameHandler.SetupGraphics();
                 GameUI.Initialize();
@@ -598,8 +598,10 @@ namespace TanksRebirth
                 if (InputUtils.AreKeysJustPressed(Keys.LeftShift, Keys.RightShift))
                     RenderWireframe = !RenderWireframe;
 
-                if (DebugUtils.DebuggingEnabled && InputUtils.AreKeysJustPressed(Keys.V, Keys.B))
+                if (DebugUtils.DebuggingEnabled && InputUtils.AreKeysJustPressed(Keys.O, Keys.P))
                     ModLoader.LoadMods();
+                if (DebugUtils.DebuggingEnabled && InputUtils.AreKeysJustPressed(Keys.U, Keys.I))
+                    ModLoader.UnloadAll();
                 if (SteamworksUtils.IsInitialized)
                     SteamworksUtils.Update();
 
@@ -958,7 +960,11 @@ namespace TanksRebirth
 
                 GraphicsDevice.SetRenderTarget(null);
 
-                SpriteRenderer.Begin(effect: Difficulties.Types["LanternMode"] ? GameShaders.LanternShader : (MainMenu.Active ? GameShaders.GaussianBlurShader : null));
+                var vfx = Difficulties.Types["LanternMode"] ? GameShaders.LanternShader : (MainMenu.Active ? GameShaders.GaussianBlurShader : null);
+
+                if (!MapRenderer.ShouldRender)
+                    vfx = null;
+                SpriteRenderer.Begin(effect: vfx);
                 SpriteRenderer.Draw(gameTarget, Vector2.Zero, Color.White);
 
                 SpriteRenderer.End();
