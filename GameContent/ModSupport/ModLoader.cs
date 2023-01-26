@@ -24,7 +24,9 @@ namespace TanksRebirth.GameContent.ModSupport
     }
     public static class ModLoader
     {
-        public delegate void PostLoadModContent();
+        public delegate void FinishModLoading();
+        public static event FinishModLoading OnFinishModLoading;
+        public delegate void PostLoadModContent(TanksMod mod);
         public static event PostLoadModContent OnPostModLoad;
 
         public static List<TanksMod> _loadedMods = new();
@@ -168,6 +170,8 @@ namespace TanksRebirth.GameContent.ModSupport
                                                     _loadedMods.Add(tanksMod);
 
                                                     tanksMod.OnLoad();
+
+                                                    OnPostModLoad?.Invoke(tanksMod);
                                                 }
                                             }
                                         }  catch (Exception e) {
@@ -192,10 +196,11 @@ namespace TanksRebirth.GameContent.ModSupport
                 while (Error != string.Empty)
                     await Task.Delay(10).ConfigureAwait(false);
                 LoadingMods = false;
+                ModBeingLoaded = string.Empty;
                 Status = LoadStatus.Complete;
                 ChatSystem.SendMessage(_firstLoad ? $"Loaded {_loadedAlcs.Count} mod(s)." : $"Reloaded {_loadedAlcs.Count} mod(s).", Color.Lime);
                 _firstLoad = false;
-                OnPostModLoad?.Invoke();
+                OnFinishModLoading?.Invoke();
             });
         }
     }
