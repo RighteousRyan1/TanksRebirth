@@ -314,7 +314,6 @@ namespace TanksRebirth
                 {
                     GameResources.CopySrcFolderContents("Content/Assets/fonts");
                     GameResources.CopySrcFolderContents("Content/Assets/music");
-                    GameResources.CopySrcFolderContents("Content/Assets/music/marble");
                     GameResources.CopySrcFolderContents("Content/Assets/sounds");
                     GameResources.CopySrcFolderContents("Content/Assets/sounds/ambient");
                     GameResources.CopySrcFolderContents("Content/Assets/sounds/crate");
@@ -352,7 +351,7 @@ namespace TanksRebirth
 
                 UIElement.UIPanelBackground = GameResources.GetGameResource<Texture2D>("Assets/UIPanelBackground");
 
-                Thunder.SoftRain = new OggAudio("Content/Assets/sounds/ambient/soft_rain");
+                Thunder.SoftRain = new OggAudio("Content/Assets/sounds/ambient/soft_rain.ogg");
                 Thunder.SoftRain.Instance.Volume = 0;
                 Thunder.SoftRain.Instance.IsLooped = true;
 
@@ -658,6 +657,8 @@ namespace TanksRebirth
                     if (transitionTimer > 0) {
                         transitionTimer--;
                         if (OverheadView) {
+                            //var bounce = Easings.OutBounce(DeltaTime / 2);
+                            //CameraRotationVector.Y += bounce;
                             CameraRotationVector.Y = MathUtils.SoftStep(CameraRotationVector.Y, MathHelper.PiOver2, 0.08f * DeltaTime);
                             AddativeZoom = MathUtils.SoftStep(AddativeZoom, 0.6f, 0.08f * DeltaTime);
                             CameraFocusOffset.Y = MathUtils.RoughStep(CameraFocusOffset.Y, 82f, 2f * DeltaTime);
@@ -1056,9 +1057,7 @@ namespace TanksRebirth
                 DebugUtils.DrawDebugString(SpriteRenderer, $"HighestTier: {AITank.GetHighestTierActive()}", new(10, WindowUtils.WindowHeight * 0.26f), 1);
                 // DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"CurSong: {(Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f) != null ? Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f).Name : "N/A")}", new(10, WindowUtils.WindowHeight - 100), 1);
                 for (int i = 0; i < TankID.Collection.Count; i++)
-                {
                     DebugUtils.DrawDebugString(SpriteRenderer, $"{TankID.Collection.GetKey(i)}: {AITank.GetTankCountOfType(i)}", new(10, WindowUtils.WindowHeight * 0.3f + (i * 20)), 1);
-                }
 
                 GameHandler.tankToSpawnType = MathHelper.Clamp(GameHandler.tankToSpawnType, 2, TankID.Collection.Count - 1);
                 GameHandler.tankToSpawnTeam = MathHelper.Clamp(GameHandler.tankToSpawnTeam, 0, TeamID.Collection.Count - 1);
@@ -1067,7 +1066,9 @@ namespace TanksRebirth
                 DebugUtils.DrawDebugString(SpriteRenderer, $"Logic Time: {LogicTime.TotalMilliseconds:0.00}ms" +
                     $"\nLogic FPS: {LogicFPS}" +
                     $"\n\nRender Time: {RenderTime.TotalMilliseconds:0.00}ms" +
-                    $"\nRender FPS: {RenderFPS}", new(10, 500));
+                    $"\nRender FPS: {RenderFPS}" +
+                    $"\nKeys U + I: Unload All Mods" +
+                    $"\nKeys O + P: Reload All Mods", new(10, 500));
 
                 DebugUtils.DrawDebugString(SpriteRenderer, $"Current Mission: {GameProperties.LoadedCampaign.CurrentMission.Name}\nCurrent Campaign: {GameProperties.LoadedCampaign.MetaData.Name}", WindowUtils.WindowBottomLeft - new Vector2(-4, 40), 3, centered: false);
 

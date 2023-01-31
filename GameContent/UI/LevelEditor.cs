@@ -33,7 +33,7 @@ namespace TanksRebirth.GameContent.UI
         // TODO: allow the moving of missions up and down in the level editor order -- done... i think.
 
         public static bool Active { get; private set; }
-        public static OggMusic Theme = new("Level Editor Theme", "Content/Assets/mainmenu/editor", 0.7f);
+        public static OggMusic Theme = new("Level Editor Theme", "Content/Assets/mainmenu/editor.ogg", 0.7f);
 
         public static UITextButton TestLevel;
         public static UITextButton Perspective;

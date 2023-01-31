@@ -279,8 +279,20 @@ namespace TanksRebirth.GameContent
             SpecialBehaviors[1].Label = "SpecialBehavior2";
             SpecialBehaviors[2].Label = "SpecialBehavior3";
 
-            if (tier <= TankID.Cherry)
-                _tankTexture = Assets[$"tank_" + TankID.Collection.GetKey(tier).ToLower()];
+            if (tier <= TankID.Cherry) {
+
+                var tnkAsset = Assets[$"tank_" + TankID.Collection.GetKey(tier).ToLower()];
+
+                var t = new Texture2D(TankGame.Instance.GraphicsDevice, tnkAsset.Width, tnkAsset.Height);
+
+                var colors = new Color[tnkAsset.Width * tnkAsset.Height];
+
+                tnkAsset.GetData(colors);
+
+                t.SetData(colors);
+
+                _tankTexture = t;
+            }
 
             #region Special
 
@@ -1710,9 +1722,12 @@ namespace TanksRebirth.GameContent
                 Model.Meshes["Barrel_Laser"].ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
                 Model.Meshes["Dish"].ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
             }
-            if (TankGame.SuperSecretDevOption)
-                if (AITankId == 0)
-                    TargetTankRotation = (MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - MouseUtils.MousePosition).ToRotation() + MathHelper.PiOver2;
+            if (TankGame.SuperSecretDevOption) {
+                var tnkGet = Array.FindIndex(GameHandler.AllAITanks, x => x is not null && !x.Dead && !x.Properties.Stationary);
+                if (tnkGet > -1)
+                    if (AITankId == GameHandler.AllAITanks[tnkGet].AITankId)
+                        TargetTankRotation = (MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - MouseUtils.MousePosition).ToRotation() + MathHelper.PiOver2;
+            }
             if ((Server.serverNetManager is not null && Client.IsConnected()) || (!Client.IsConnected() && !Dead) || MainMenu.Active)
             {
                 timeSinceLastAction++;
@@ -2225,8 +2240,7 @@ namespace TanksRebirth.GameContent
                 }
 
                 #endregion
-                if (doMovements)
-                {
+                if (doMovements) {
                     if (Properties.Stationary)
                         return;
 
@@ -2306,13 +2320,13 @@ namespace TanksRebirth.GameContent
 
                     var indif = 3;
 
-                    if (isShellNear)
-                    {
-                        if (Behaviors[6].IsModOf(indif))
-                        {
-                            var direction = -Vector2.UnitY.RotatedByRadians(shell.Position2D.DirectionOf(Position, false).ToRotation());
+                    if (isShellNear) {
+                        if (CurMineStun <= 0 && CurShootStun <= 0) {
+                            if (Behaviors[6].IsModOf(indif)) {
+                                var direction = -Vector2.UnitY.RotatedByRadians(shell.Position2D.DirectionOf(Position, false).ToRotation());
 
-                            TargetTankRotation = direction.ToRotation();
+                                TargetTankRotation = direction.ToRotation();
+                            }
                         }
                     }
 
@@ -2487,8 +2501,7 @@ namespace TanksRebirth.GameContent
             enactBehavior?.Invoke();
             OnPostUpdateAI?.Invoke(this);
         }
-        public override void Render()
-        {
+        public override void Render() {
             base.Render();
             if (Dead || !MapRenderer.ShouldRender)
                 return;
@@ -2510,44 +2523,38 @@ namespace TanksRebirth.GameContent
                             if (mesh.Name == "Cannon")
                                 return;
 
-                        if (mesh.Name == "Shadow")
-                        {
-                            if (!Lighting.AccurateShadows)
-                            {
+                        if (mesh.Name == "Shadow") {
+                            if (!Lighting.AccurateShadows) {
                                 effect.Texture = _shadowTexture;
                                 effect.Alpha = 0.5f;
                                 mesh.Draw();
                             }
                         }
-                        else
-                        {
+                        else {
                             if (IsHoveredByMouse)
                                 effect.EmissiveColor = Color.White.ToVector3();
                             else
                                 effect.EmissiveColor = Color.Black.ToVector3();
 
-                            var tex = _tankTexture;
-
-                            effect.Texture = tex;
-
+                            effect.Texture = _tankTexture;
                             effect.Alpha = 1;
                             mesh.Draw();
-                            /*var ex = new Color[1024];
 
-                            Array.Fill(ex, new Color(GameHandler.GameRand.Next(0, 256), GameHandler.GameRand.Next(0, 256), GameHandler.GameRand.Next(0, 256)));
+                            // TODO: uncomment code when disabling implementation is re-implemented.
 
-                            effect.Texture.SetData(0, new Rectangle(0, 8, 32, 15), ex, 0, 480);
+                            /*if (Team != TeamID.NoTeam && false) {
+                                //var ex = new Color[1024];
 
-                            if (Team != Team.NoTeam)
-                            {
+                                //Array.Fill(ex, new Color(GameHandler.GameRand.Next(0, 256), GameHandler.GameRand.Next(0, 256), GameHandler.GameRand.Next(0, 256)));
+
+                                //effect.Texture.SetData(0, new Rectangle(0, 8, 32, 15), ex, 0, 480);
                                 var ex = new Color[1024];
 
-                                Array.Fill(ex, (Color)typeof(Color).GetProperty(Team.ToString(), System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public).GetValue(null));
+                                Array.Fill(ex, TeamID.TeamColors[Team]);
 
-                                tex.SetData(0, new Rectangle(0, 0, 32, 9), ex, 0, 288);
-                                tex.SetData(0, new Rectangle(0, 23, 32, 9), ex, 0, 288);
+                                effect.Texture.SetData(0, new Rectangle(0, 0, 32, 9), ex, 0, 288);
+                                effect.Texture.SetData(0, new Rectangle(0, 23, 32, 9), ex, 0, 288);
                             }*/
-                            // removed temporarily
                         }
 
                         effect.SetDefaultGameLighting_IngameEntities(0.9f);

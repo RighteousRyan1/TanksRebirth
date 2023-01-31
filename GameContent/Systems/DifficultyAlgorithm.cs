@@ -11,8 +11,7 @@ namespace TanksRebirth.GameContent.Systems
     public static class DifficultyAlgorithm
     {
 
-        private static Dictionary<int, float> _tankDiffs = new()
-        {
+        private static Dictionary<int, float> _tankDiffs = new() {
             [TankID.Brown] = 0.01f,
             [TankID.Ash] = 0.025f,
             [TankID.Marine] = 0.12f,
@@ -40,6 +39,10 @@ namespace TanksRebirth.GameContent.Systems
             [TankID.Creeper] = 0.45f,
             [TankID.Gamma] = 0.35f,
             [TankID.Marble] = 0.85f,
+            [TankID.Assassin] = 0.775f,
+            [TankID.Explosive] = 0.48f,
+            [TankID.Commando] = 0.65f,
+            [TankID.Cherry] = 0.6f,
         };
 
         public static float GetDifficulty(Mission mission)

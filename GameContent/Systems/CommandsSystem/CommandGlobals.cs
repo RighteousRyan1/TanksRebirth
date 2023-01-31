@@ -9,7 +9,7 @@ using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.Systems.CommandsSystem;
-
+#pragma warning disable
 public static class CommandGlobals {
 
     public static bool AreCheatsEnabled;
@@ -18,11 +18,27 @@ public static class CommandGlobals {
     public const char ExpectedPrefix = '/';
     /// <summary>Commands for the chat. Feel free to add your own here.</summary>
     public static Dictionary<CommandInput, CommandOutput> Commands = new() {
+        // general
+        [new CommandInput(name: "help", description: "Get a list of all commands.")] = new CommandOutput(netSync: false, (args) => {
+            for (int i = 0; i < Commands.Count; i++) {
+                var elem = Commands.ElementAt(i);
+
+                ChatSystem.SendMessage($"{elem.Key.Name}: {elem.Key.Description}", Color.Khaki);
+            }
+        }),
+        [new CommandInput(name: "musicvolume", description: "Set music volume.")] = new CommandOutput(netSync: false, (args) => {
+            TankGame.Settings.MusicVolume = float.Parse(args[0]);
+        }),
+        [new CommandInput(name: "soundvolume", description: "Set sound volume.")] = new CommandOutput(netSync: false, (args) => {
+            TankGame.Settings.EffectsVolume = float.Parse(args[0]);
+        }),
+        [new CommandInput(name: "ambvolume", description: "Set ambient volume.")] = new CommandOutput(netSync: false, (args) => {
+            TankGame.Settings.AmbientVolume = float.Parse(args[0]);
+        }),
         // render engine
-        [new CommandInput(name: "rendermenu", description: "Disables the rendering and updating of the main menu. " +
-            "Also disables all shaders pertaining to the game world.")] = new CommandOutput(netSync: false, (args) => {
+        [new CommandInput(name: "rendermenu", description: "Disable game rendering/updating in main menu.")] = new CommandOutput(netSync: false, (args) => {
                 MapRenderer.ShouldRender = bool.Parse(args[0]);
-            }),
+        }),
         // main menu
         [new CommandInput(name: "uselegacymenumusic", description: "Switch to and from the legacy menu music.")] = new CommandOutput(netSync: false, (args) => {
             if (bool.Parse(args[0])) {
@@ -38,13 +54,11 @@ public static class CommandGlobals {
             MainMenu.Theme.Play();
         }),
         // server side
-        [new CommandInput(name: "cheats", description: "Enables cheats on the server" +
-            "Also disables all shaders pertaining to the game world.")] = new CommandOutput(netSync: true, (args) => {
+        [new CommandInput(name: "cheats", description: "Enables cheats on the server")] = new CommandOutput(netSync: true, (args) => {
                 AreCheatsEnabled = bool.Parse(args[0]);
                 ChatSystem.SendMessage("Cheats are now " + (AreCheatsEnabled ? "enabled" : "disabled" + ".") + ".", AreCheatsEnabled ? Color.Green : Color.Red);
-            }),
-        [new CommandInput(name: "changetnkproperty", description: "Changes a property parameter of your tank." +
-            "Also disables all shaders pertaining to the game world.")] = new CommandOutput(netSync: false, (args) => {
+        }),
+        [new CommandInput(name: "changetnkproperty", description: "Changes a property parameter of your tank.")] = new CommandOutput(netSync: false, (args) => {
                 if (!AreCheatsEnabled) {
                     ChatSystem.SendMessage("In order to use this command, cheats must be True.", Color.Red);
                     return;
@@ -67,11 +81,12 @@ public static class CommandGlobals {
                             if (oldValue is float)
                                 tnkprops[idxFind].SetValue(tnk.Properties, float.Parse(args[1]));
                             ChatSystem.SendMessage($"Modified property '{args[0]}' from {oldValue} to {args[1]}", Color.Green);
-                        } catch {
+                        }
+                        catch {
                             ChatSystem.SendMessage($"Property '{args[0]}' is not asssignable from the given argument.", Color.Red);
                         }
                     }
                 }
-            })
+        })
     };
 }

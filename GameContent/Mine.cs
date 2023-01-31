@@ -89,7 +89,7 @@ namespace TanksRebirth.GameContent
             Position = pos;
 
             if (owner != null)
-                SoundPlayer.PlaySoundInstance("Assets/sounds/mine_place", SoundContext.Effect, 0.5f, gameplaySound: true);
+                SoundPlayer.PlaySoundInstance("Assets/sounds/mine_place.ogg", SoundContext.Effect, 0.5f, gameplaySound: true);
 
             _mineMesh = Model.Meshes["polygon1"];
             _envMesh = Model.Meshes["polygon0"];

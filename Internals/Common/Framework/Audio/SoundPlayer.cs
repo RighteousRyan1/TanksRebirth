@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.Internals.Common.Utilities;
 
@@ -11,12 +12,8 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
 {
     public static class SoundPlayer
     {
-        public readonly struct SoundDefinition {
-            public readonly OggAudio Sound { get; init; }
-            public readonly string Name { get; init; }
-        }
 
-        public static List<SoundDefinition> Sounds = new();
+        public static Dictionary<string, OggAudio> SavedSounds = new();
         public static TimeSpan GetLengthOfSound(string filePath)
         {
             byte[] soundData = File.ReadAllBytes(filePath);
@@ -25,10 +22,10 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
         private static float MusicVolume => TankGame.Settings.MusicVolume;
         private static float EffectsVolume => TankGame.Settings.EffectsVolume;
         private static float AmbientVolume => TankGame.Settings.AmbientVolume;
-        public static OggAudio PlaySoundInstance(string audioPath, SoundContext context, float volume = 1f, float panOverride = 0f, float pitchOverride = 0f, bool gameplaySound = false, bool autoApplyContentPrefix = true)
+        public static OggAudio PlaySoundInstance(string audioPath, SoundContext context, float volume = 1f, float panOverride = 0f, float pitchOverride = 0f, bool gameplaySound = false, bool rememberMe = false)
         {
             // because ogg is the only good audio format.
-            var prepend = autoApplyContentPrefix ? TankGame.Instance.Content.RootDirectory + "/" : string.Empty;
+            var prepend = TankGame.Instance.Content.RootDirectory + "/";
             audioPath = prepend + audioPath;
 
             switch (context)
@@ -47,24 +44,40 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
                     volume *= AmbientVolume;
                     break;
             }
-            var sfx = new OggAudio(audioPath);
 
-            var soundDef = new SoundDefinition()
-            {
-                Sound = sfx,
-                Name = sfx.Name,
-            };
+            OggAudio sfx = null;
 
             // check if it exists in the cache first
-            bool exists = Sounds.Any(ogg => ogg.Name == sfx.Name);
+            if (rememberMe) {
+                bool exists = SavedSounds.ContainsKey(audioPath);
+
+                if (!exists) {
+                    sfx = new OggAudio(audioPath);
+                    SavedSounds.Add(audioPath, sfx);
+
+                    sfx.Instance.Pan = MathHelper.Clamp(panOverride, -1f, 1f);
+                    sfx.Instance.Pitch = MathHelper.Clamp(pitchOverride, -1f, 1f);
+                    sfx.Instance.Play();
+                    sfx.Instance.Volume = MathHelper.Clamp(volume, 0f, 1f);
+                }
+                else {
+                    sfx = SavedSounds[SavedSounds.Keys.ToList().First(x => x == audioPath)];
+                    sfx.Instance.Pan = MathHelper.Clamp(panOverride, -1f, 1f);
+                    sfx.Instance.Pitch = MathHelper.Clamp(pitchOverride, -1f, 1f);
+                    sfx.Instance.Play();
+                    sfx.Instance.Volume = MathHelper.Clamp(volume, 0f, 1f);
+                }
+            }
+            else {
+                sfx = new OggAudio(audioPath);
+                sfx.Instance.Pan = MathHelper.Clamp(panOverride, -1f, 1f);
+                sfx.Instance.Pitch = MathHelper.Clamp(pitchOverride, -1f, 1f);
+                sfx.Instance.Play();
+                sfx.Instance.Volume = MathHelper.Clamp(volume, 0f, 1f);
+            }
 
             //GameContent.Systems.ChatSystem.SendMessage($"{nameof(exists)}: {exists}", Color.White);
             //GameContent.Systems.ChatSystem.SendMessage($"new list count: {Sounds.Count}", Color.White);
-
-            sfx.Instance.Pan = MathHelper.Clamp(panOverride, -1f, 1f);
-            sfx.Instance.Pitch = MathHelper.Clamp(pitchOverride, -1f, 1f);
-            sfx.Instance.Play();
-            sfx.Instance.Volume = MathHelper.Clamp(volume, 0f, 1f);
 
             /*if (exists)
             {

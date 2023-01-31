@@ -119,7 +119,7 @@ namespace TanksRebirth.Net
 
                     Client.lobbyDataReceived = true;
 
-                    SoundPlayer.PlaySoundInstance("Assets/sounds/menu/client_join", SoundContext.Effect, 0.75f);
+                    SoundPlayer.PlaySoundInstance("Assets/sounds/menu/client_join.ogg", SoundContext.Effect, 0.75f);
 
                     ChatSystem.SendMessage($"Welcome {Server.ConnectedClients[clientId].Name}!", Color.Lime, netSend: true);
 
@@ -144,7 +144,7 @@ namespace TanksRebirth.Net
                     // i.e: [ "Name1", "Name2", "Name4", "Name5", null, null, null, null ]
                     Server.ConnectedClients = ArrayUtils.Shift(Server.ConnectedClients, -1, cId, 0);
 
-                    SoundPlayer.PlaySoundInstance("Assets/sounds/menu/client_join", SoundContext.Effect, 0.75f);
+                    SoundPlayer.PlaySoundInstance("Assets/sounds/menu/client_join.ogg", SoundContext.Effect, 0.75f);
                     break;
                 #endregion
                 #region One-Off

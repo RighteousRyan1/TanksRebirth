@@ -69,11 +69,11 @@ namespace TanksRebirth.GameContent.UI
 
         public static Dictionary<MissionEndContext, (OggAudio, TimeSpan)> FanfaresAndDurations = new()
         {
-            [MissionEndContext.CampaignCompleteMinor] = (new OggAudio("Content/Assets/fanfares/mission_complete_M20"), TimeSpan.FromMilliseconds(3400)), // 4327
-            [MissionEndContext.CampaignCompleteMajor] = (new OggAudio("Content/Assets/fanfares/mission_complete_M100"), TimeSpan.FromMilliseconds(2600)), // 3350
-            [MissionEndContext.GameOver] = (new OggAudio("Content/Assets/fanfares/gameover_playerdeath"), TimeSpan.FromMilliseconds(1400)) // 1883
+            [MissionEndContext.CampaignCompleteMinor] = (new OggAudio("Content/Assets/fanfares/mission_complete_M20.ogg"), TimeSpan.FromMilliseconds(3400)), // 4327
+            [MissionEndContext.CampaignCompleteMajor] = (new OggAudio("Content/Assets/fanfares/mission_complete_M100.ogg"), TimeSpan.FromMilliseconds(2600)), // 3350
+            [MissionEndContext.GameOver] = (new OggAudio("Content/Assets/fanfares/gameover_playerdeath.ogg"), TimeSpan.FromMilliseconds(1400)) // 1883
         };
-        public static OggMusic ResultsFanfare = new("Results Fanfare", "Content/Assets/fanfares/endresults", 0.6f);
+        public static OggMusic ResultsFanfare = new("Results Fanfare", "Content/Assets/fanfares/endresults.ogg", 0.6f);
 
         /// <summary>Perform a multithreaded operation that will display tanks killed and their kill counts for the player.</summary>
         public static void PerformSequence(MissionEndContext context)
@@ -122,9 +122,9 @@ namespace TanksRebirth.GameContent.UI
                     if (!_skip)
                     {
                         if (i % 4 == 3) // i think this is the value
-                            SoundPlayer.PlaySoundInstance("Assets/sounds/results/whistle_double", SoundContext.Effect, 1f);
+                            SoundPlayer.PlaySoundInstance("Assets/sounds/results/whistle_double.ogg", SoundContext.Effect, 1f);
                         else
-                            SoundPlayer.PlaySoundInstance("Assets/sounds/results/whistle_singular", SoundContext.Effect, 1f);
+                            SoundPlayer.PlaySoundInstance("Assets/sounds/results/whistle_singular.ogg", SoundContext.Effect, 1f);
 
                         await Task.Delay(_delayPerTank).ConfigureAwait(false);
 
@@ -133,7 +133,7 @@ namespace TanksRebirth.GameContent.UI
                 }
 
                 //ChatSystem.SendMessage("whistle", Color.White);
-                SoundPlayer.PlaySoundInstance("Assets/sounds/results/whistle_full", SoundContext.Effect, 1f);
+                SoundPlayer.PlaySoundInstance("Assets/sounds/results/whistle_full.ogg", SoundContext.Effect, 1f);
 
                 _skip = true;
                 _shouldShowGrade = true;
@@ -221,7 +221,7 @@ namespace TanksRebirth.GameContent.UI
 
                     if (!_soundPlayed)
                     {
-                        SoundPlayer.PlaySoundInstance("Assets/sounds/results/punch", SoundContext.Effect);
+                        SoundPlayer.PlaySoundInstance("Assets/sounds/results/punch.ogg", SoundContext.Effect);
                         _soundPlayed = true;
                     }
                 }

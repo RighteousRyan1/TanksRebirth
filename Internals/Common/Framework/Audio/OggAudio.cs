@@ -22,7 +22,7 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
 
         public OggAudio(string path)
         {
-            SongPath = path + ".ogg";
+            SongPath = path;
             Load(SongPath);
         }
         private void Load(string path)

@@ -78,21 +78,21 @@ namespace TanksRebirth.GameContent
             if (context == MissionEndContext.CampaignCompleteMajor)
             {
                 TankGame.GameData.CampaignsCompleted++;
-                string victory = "Assets/fanfares/mission_complete_M100";
-                SoundPlayer.PlaySoundInstance(victory, SoundContext.Effect, 0.5f);
+                string victory = "Assets/fanfares/mission_complete_M100.ogg";
+                SoundPlayer.PlaySoundInstance(victory, SoundContext.Effect, 0.5f, rememberMe: true);
             }
             else if (context == MissionEndContext.CampaignCompleteMinor)
             {
                 TankGame.GameData.CampaignsCompleted++;
-                var victory = "Assets/fanfares/mission_complete_M20";
-                SoundPlayer.PlaySoundInstance(victory, SoundContext.Effect, 0.5f);
+                var victory = "Assets/fanfares/mission_complete_M20.ogg";
+                SoundPlayer.PlaySoundInstance(victory, SoundContext.Effect, 0.5f, rememberMe: true);
             }
             if (result1up && context == MissionEndContext.Win)
             {
                 TankGame.GameData.MissionsCompleted++;
                 PlayerTank.AddLives(1);
-                var lifeget = "Assets/fanfares/life_get";
-                SoundPlayer.PlaySoundInstance(lifeget, SoundContext.Effect, 0.5f);
+                var lifeget = "Assets/fanfares/life_get.ogg";
+                SoundPlayer.PlaySoundInstance(lifeget, SoundContext.Effect, 0.5f, rememberMe: true);
             }
             if (!Client.IsConnected())
             {
@@ -111,14 +111,14 @@ namespace TanksRebirth.GameContent
                     realName += $"{VanillaCampaign.CurrentMissionId + 1}";
 
                     VanillaCampaign.CachedMissions[VanillaCampaign.CurrentMissionId] = Mission.Load(realName, VanillaCampaign.Name);*/
-                    var deathSound = "Assets/fanfares/tank_player_death";
+                    var deathSound = "Assets/fanfares/tank_player_death.ogg";
                     SoundPlayer.PlaySoundInstance(deathSound, SoundContext.Effect, 0.3f);
                 }
                 else if (context == MissionEndContext.GameOver)
                 {
                     //PlayerTank.AddLives(-1);
 
-                    var deathSound = "Assets/fanfares/gameover_playerdeath";
+                    var deathSound = "Assets/fanfares/gameover_playerdeath.ogg";
                     SoundPlayer.PlaySoundInstance(deathSound, SoundContext.Effect, 0.3f);
                 }
             }
@@ -128,7 +128,7 @@ namespace TanksRebirth.GameContent
                 {
                     // PlayerTank.AddLives(-1);
 
-                    var deathSound = "Assets/fanfares/tank_player_death";
+                    var deathSound = "Assets/fanfares/tank_player_death.ogg";
                     SoundPlayer.PlaySoundInstance(deathSound, SoundContext.Effect, 0.3f);
                 }
                 /*if (PlayerTank.Lives.All(x => x == 0))
@@ -142,7 +142,7 @@ namespace TanksRebirth.GameContent
             {
                 TankGame.GameData.MissionsCompleted++;
                 GameProperties.LoadedCampaign.LoadNextMission();
-                var victorySound = "Assets/fanfares/mission_complete";
+                var victorySound = "Assets/fanfares/mission_complete.ogg";
                 SoundPlayer.PlaySoundInstance(victorySound, SoundContext.Effect, 0.5f);
                 if (CurrentSpeedrun is not null)
                 {
@@ -232,7 +232,7 @@ namespace TanksRebirth.GameContent
                 if (!GameProperties.InMission)
                     if (TankMusicSystem.Songs is not null)
                         foreach (var song in TankMusicSystem.Songs)
-                            song.Volume = 0;
+                            song.Value.Volume = 0;
             LevelEditor.Update();
 
             foreach (var expl in Explosion.Explosions)
@@ -597,7 +597,7 @@ namespace TanksRebirth.GameContent
             if (IntermissionSystem.CurrentWaitTime == IntermissionSystem.WaitTime - 180)
             {
                 CleanupScene();
-                var missionStarting = "Assets/fanfares/mission_starting";
+                var missionStarting = "Assets/fanfares/mission_starting.ogg";
                 SoundPlayer.PlaySoundInstance(missionStarting, SoundContext.Effect, 0.8f);
             }
         }
@@ -784,7 +784,7 @@ namespace TanksRebirth.GameContent
             else
             {
                 foreach (var song in TankMusicSystem.Songs)
-                    song.Stop();
+                    song.Value.Stop();
                 TankMusicSystem.SnowLoop.Stop();
                 TankMusicSystem.SnowLoop.Play();
             }
@@ -873,7 +873,7 @@ namespace TanksRebirth.GameContent
 
             TankMusicSystem.StopAll();
 
-            var tune = "Assets/fanfares/mission_snare";
+            var tune = "Assets/fanfares/mission_snare.ogg";
 
             SoundPlayer.PlaySoundInstance(tune, SoundContext.Music, 1f);
 

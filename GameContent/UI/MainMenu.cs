@@ -453,7 +453,7 @@ namespace TanksRebirth.GameContent.UI
             };
 
             foreach (var e in _menuElements)
-                e.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick", SoundContext.Effect); };
+                e.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick.ogg", SoundContext.Effect, rememberMe: true); };
             UIElement.CunoSucks();
         }
         public static void RenderCrate()
@@ -771,7 +771,7 @@ namespace TanksRebirth.GameContent.UI
                     File.Delete(path + ".campaign");
                     SetCampaignDisplay();
                 };
-                elem.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick", SoundContext.Effect); };
+                elem.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick.ogg", SoundContext.Effect); };
                 campaignNames.Add(elem);
             }
             var extra = new UITextButton("Freeplay", TankGame.TextFont, Color.White, 0.8f)
@@ -780,7 +780,7 @@ namespace TanksRebirth.GameContent.UI
                 Tooltip = "Play without a campaign!",
             };
             extra.SetDimensions(() => new Vector2(1150, 100).ToResolution(), () => new Vector2(300, 40).ToResolution());
-            extra.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick", SoundContext.Effect); };
+            extra.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick.ogg", SoundContext.Effect); };
             //elem.HasScissor = true;
             //elem.
             extra.OnLeftClick += (el) =>
@@ -1087,8 +1087,8 @@ namespace TanksRebirth.GameContent.UI
 
         public static OggMusic GetAppropriateMusic() {
             OggMusic music = MapRenderer.Theme switch {
-                MapTheme.Vanilla => new OggMusic("Main Menu Theme", "Content/Assets/mainmenu/theme", 1f),
-                MapTheme.Christmas => new OggMusic("Main Menu Theme", "Content/Assets/mainmenu/theme_christmas", 1f),
+                MapTheme.Vanilla => new OggMusic("Main Menu Theme", "Content/Assets/mainmenu/theme.ogg", 1f),
+                MapTheme.Christmas => new OggMusic("Main Menu Theme", "Content/Assets/mainmenu/theme_christmas.ogg", 1f),
                 _ => throw new Exception("Invalid game theme for menu music.")
             };
             return music;

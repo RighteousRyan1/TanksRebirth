@@ -62,10 +62,10 @@ public sealed record ChatSystem {
                 try {
                     var value = CommandGlobals.Commands.ElementAt(index).Value;
                     var args = cmdSplit[1..];
-                    if (args.Length == 0) {
+                    /*if (args.Length == 0) {
                         SendMessage("Invalid command syntax! Parameter needed.", Color.Red);
                         return null;
-                    }
+                    }*/
 
                     if (value.NetSync && Client.IsConnected()) {
                         if (sender != "cmd_sync" && Server.serverNetManager is null) {
@@ -88,7 +88,7 @@ public sealed record ChatSystem {
 
         if (sender is not null)
         {
-            SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick", SoundContext.Effect);
+            SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick.ogg", SoundContext.Effect);
             if (Client.IsConnected() && !netSend)
                 Client.SendMessage(message.ToString(), color, sender.ToString());
         }

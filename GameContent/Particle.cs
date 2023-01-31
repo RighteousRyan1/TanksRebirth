@@ -156,8 +156,7 @@ namespace TanksRebirth.GameContent
             TankGame.SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
         }
 
-        public void Destroy()
-        {
+        public void Destroy() {
             UniqueBehavior = null;
             GameHandler.ParticleSystem.CurrentParticles[Id] = null;
         }

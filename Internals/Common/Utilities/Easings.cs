@@ -1,15 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace TanksRebirth.Internals.Common.Utilities;
 #pragma warning disable
-public static class EasingFunctions
+public static class Easings
 {
     public static float Linear(float t) => t;
-
     public static float InQuad(float t) => t * t;
     public static float OutQuad(float t) => 1 - InQuad(1 - t);
     public static float InOutQuad(float t) {
