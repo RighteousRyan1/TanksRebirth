@@ -149,8 +149,8 @@ namespace TanksRebirth.GameContent.UI
                         if (_viewMissionDetails)
                         {
                             var ext = Path.GetExtension(res.Path);
-                            if (ext == ".mission")
-                                Mission.Save(name, path, false, realName);
+                            if (ext == ".mission" || ext == string.Empty)
+                                Mission.Save(res.Path, name);
                             else if (ext == ".bin")
                                 WiiMap.SaveToTanksBinFile(res.Path, true);
                         }

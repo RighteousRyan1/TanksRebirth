@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Xml.Linq;
 using LiteNetLib;
 using LiteNetLib.Utils;
@@ -352,6 +353,34 @@ namespace TanksRebirth.Net
             message.Put(campaignName);
             message.Put(clientId);
             message.Put(success);
+
+            client.Send(message, DeliveryMethod.ReliableOrdered);
+        }
+
+        public static void SendFile(string filePath) {
+            var fBytes = File.ReadAllBytes(filePath);
+
+            const int MAX_SEND_LEN = 1024; // i think?
+
+            int numPacketsToSend = sizeof(byte) * fBytes.Length / MAX_SEND_LEN;
+
+            // NetDataWriter message = new();
+
+            // message.Put(numPacketsToSend);
+
+            for (int i = 0; i < numPacketsToSend; i++) {
+                var byteSplit = fBytes[(numPacketsToSend * i)..(numPacketsToSend * (i + 1))];
+
+                // message.Put(byteSplit);
+                SendCampaignBytes(byteSplit);
+            }
+        }
+
+        public static void SendCampaignBytes(byte[] bytes) {
+            NetDataWriter message = new();
+
+            //message.Put(PacketID.SendCampaignBytes);
+            message.Put(bytes);
 
             client.Send(message, DeliveryMethod.ReliableOrdered);
         }

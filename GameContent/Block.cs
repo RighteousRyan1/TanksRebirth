@@ -168,10 +168,12 @@ namespace TanksRebirth.GameContent
 
             OnInitialize?.Invoke(this);
 
-            if (IsCollidable)
+            if (IsCollidable) {
                 Body = Tank.CollisionsWorld.CreateRectangle(FULL_BLOCK_SIZE / Tank.UNITS_PER_METER, FULL_BLOCK_SIZE / Tank.UNITS_PER_METER, 1f, position / Tank.UNITS_PER_METER, 0f, BodyType.Static);
-
-            Position = Body.Position * Tank.UNITS_PER_METER;
+                Position = Body.Position * Tank.UNITS_PER_METER;
+            }
+            else
+                Position = position;
 
             Id = Array.FindIndex(AllBlocks, block => block is null);
 
@@ -270,7 +272,7 @@ namespace TanksRebirth.GameContent
                     foreach (var mesh in Model.Meshes) {
                         foreach (BasicEffect effect in mesh.Effects) {
                             effect.View = TankGame.GameView;
-                            effect.World = i == 0 ? World : World * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0) * Matrix.CreateScale(1, 1, Stack / 7f);
+                            effect.World = i == 0 ? World: World * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0) * Matrix.CreateScale(1, 1, Stack / 7f);
                             effect.Projection = TankGame.GameProjection;
 
                             effect.TextureEnabled = true;
@@ -350,7 +352,7 @@ namespace TanksRebirth.GameContent
                                     otherTp._tankCooldowns[tnk.WorldId] = 120;
 
                                     tnk.Position = otherTp.Position;
-                                    tnk.Body.Position = otherTp.Position;
+                                    tnk.Body.Position = otherTp.Position / Tank.UNITS_PER_METER;
                                 }
                             }
                         }

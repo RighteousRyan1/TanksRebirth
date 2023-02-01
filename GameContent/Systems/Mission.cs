@@ -101,10 +101,8 @@ namespace TanksRebirth.GameContent.Systems
         public static void LoadDirectly(Mission mission)
         {
             GameHandler.CleanupEntities();
-            foreach (var mine in Mine.AllMines)
-                mine?.Remove();
-            foreach (var shell in Shell.AllShells)
-                shell?.Remove();
+            PlacementSquare.ResetSquares();
+            GameHandler.CleanupScene();
             for (int i = 0; i < mission.Tanks.Length; i++) {
                 var tnk = mission.Tanks[i];
                 var tank = tnk.GetTank();
@@ -138,36 +136,22 @@ namespace TanksRebirth.GameContent.Systems
         /// Saves a mission as a <c>.mission</c> file for reading later.
         /// </summary>
         /// <param name="name">The name of the mission to save.</param>
-        /// <param name="campaignName">The mission folder to save this to. If the directory does not exist, one will be created.<para></para>If null, saves to the <c>Missions/</c> directory by default.</param>
         /// <param name="useDefaultPaths">If true, the path for the location of the mission file will be located in <paramref name="campaignName"/></param>
         /// <param name="fileName">If not null, will use this instead of <paramref name="name"/> for the file name.</param>
-        public static void Save(string name, string campaignName, bool useDefaultPaths = true, string fileName = null)
+        public static void Save(string path, string name)
         {
-            string root;
-            if (useDefaultPaths)
-            {
-                if (campaignName is not null)
-                    root = Path.Combine(TankGame.SaveDirectory, "Campaigns", campaignName);
-                else
-                    root = Path.Combine(TankGame.SaveDirectory, "Missions");
-            }
-            else
-                root = campaignName;
-
-            var path = Path.Combine(root, fileName ?? name);
-            if (useDefaultPaths)
-                Directory.CreateDirectory(root);
+            if (Path.GetExtension(path) == string.Empty)
+                path += ".mission";
 
             using var writer = new BinaryWriter(File.Open(path, FileMode.OpenOrCreate, FileAccess.ReadWrite));
 
             WriteCurrent(writer, name);
 
-            if (File.Exists(path))
-            {
+            if (File.Exists(path)) {
                 GameHandler.ClientLog.Write($"Overwrote \"{name}.mission\" in map save path.", LogType.Info);
                 return;
             }
-            GameHandler.ClientLog.Write($"Saved stage file \"{name}.mission\" in map save path.", LogType.Info);
+            GameHandler.ClientLog.Write($"Saved mission file \"{name}.mission\" in map save path.", LogType.Info);
         }
 
         public static void WriteCurrent(BinaryWriter writer, string name)

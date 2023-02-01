@@ -75,7 +75,7 @@ namespace TanksRebirth.GameContent
         /// <returns>The <see cref="Crate"/> spawned.</returns>
         public static Crate SpawnCrate(Vector3 pos, float gravity)
         {
-            var spawnSfx = "Assets/sounds/crate/CrateSpawn";
+            var spawnSfx = "Assets/sounds/crate/CrateSpawn.ogg";
 
             SoundPlayer.PlaySoundInstance(spawnSfx, SoundContext.Effect, 0.2f);
 
@@ -139,17 +139,17 @@ namespace TanksRebirth.GameContent
         {
             if (!IsOpening)
             {
-                velocity.Y -= gravity * 0.05f;
+                velocity.Y -= gravity * 0.05f * TankGame.DeltaTime;
 
                 // dropSpeed += dropSpeedAccel;
 
-                position += velocity;
+                position += velocity * TankGame.DeltaTime;
 
                 if (position.Y <= (9.6f * scale))
                 {
                     if (velocity.Y <= -1f)
                     {
-                        var spawnSfx = "Assets/sounds/crate/CrateImpact";
+                        var spawnSfx = "Assets/sounds/crate/CrateImpact.ogg";
 
                         SoundPlayer.PlaySoundInstance(spawnSfx, SoundContext.Effect, 0.2f);
 

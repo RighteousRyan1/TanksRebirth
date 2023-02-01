@@ -229,6 +229,8 @@ public abstract class Tank
     public event InstancedDestroyDelegate OnDestroy;
     #endregion
 
+    public static bool ShowTeamVisuals = false;
+
     public static World CollisionsWorld = new(Vector2.Zero);
     public const float UNITS_PER_METER = 20f;
 

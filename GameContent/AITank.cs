@@ -345,13 +345,21 @@ namespace TanksRebirth.GameContent
             if (setTankDefaults)
                 ApplyDefaults(ref Properties);
 
-            int index = Array.IndexOf(GameHandler.AllAITanks, GameHandler.AllAITanks.First(tank => tank is null));
+            int index = Array.IndexOf(GameHandler.AllAITanks, null);
+
+            if (index < 0) {
+                return;
+            }
 
             AITankId = index;
 
             GameHandler.AllAITanks[index] = this;
 
-            int index2 = Array.IndexOf(GameHandler.AllTanks, GameHandler.AllTanks.First(tank => tank is null));
+            int index2 = Array.IndexOf(GameHandler.AllTanks, null);
+
+            if (index2 < 0) {
+                return;
+            }
 
             WorldId = index2;
 
@@ -1737,7 +1745,7 @@ namespace TanksRebirth.GameContent
                         Velocity = Vector2.Zero;
                 DoAi(true, true, true);
 
-                if (this is AITank && IsIngame)
+                if (IsIngame)
                     Client.SyncAITank(this);
             }
         }
@@ -2377,6 +2385,8 @@ namespace TanksRebirth.GameContent
 
                 #region Special Tank Behavior
 
+                // TODO: just use inheritance?
+
                 if (AiTankType == TankID.Creeper)
                 {
                     if (Array.IndexOf(GameHandler.AllTanks, TargetTank) > -1 && TargetTank is not null)
@@ -2396,7 +2406,7 @@ namespace TanksRebirth.GameContent
                     {
                         if (SpecialBehaviors[0].Value <= 0)
                         {
-                            SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_event/alert", SoundContext.Effect, 0.6f, gameplaySound: true);
+                            SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_event/alert.ogg", SoundContext.Effect, 0.6f, gameplaySound: true);
                             Add2DCosmetic(CosmeticChest.Anger, () => SpecialBehaviors[0].Value <= 0);
                         }
                         SpecialBehaviors[0].Value = 300;
@@ -2408,6 +2418,33 @@ namespace TanksRebirth.GameContent
                         Properties.MaxSpeed = 2.2f;
                     else
                         Properties.MaxSpeed = 1.35f;
+                }
+                else if (AiTankType == TankID.Electro) {
+                    SpecialBehaviors[0].Value += TankGame.DeltaTime;
+
+                    if (SpecialBehaviors[1].Value == 0)
+                        SpecialBehaviors[1].Value = GameHandler.GameRand.NextFloat(180, 360);
+
+                    if (SpecialBehaviors[0].Value > SpecialBehaviors[1].Value) {
+                        SpecialBehaviors[2].Value += TankGame.DeltaTime;
+
+                        GameHandler.ParticleSystem.MakeShineSpot(Position3D, Color.Blue, 1f);
+
+                        if (SpecialBehaviors[2].Value > 180f) {
+
+                            SpecialBehaviors[2].Value = 0f;
+                            SpecialBehaviors[0].Value = 0f;
+                            SpecialBehaviors[1].Value = GameHandler.GameRand.NextFloat(180, 360);
+
+                            retry:
+                            var r = RandomUtils.PickRandom(PlacementSquare.Placements.ToArray());
+
+                            if (r.BlockId > -1)
+                                goto retry;
+
+                            Body.Position = r.Position.FlattenZ() / UNITS_PER_METER;
+                        }
+                    }
                 }
                 else if (AiTankType == TankID.Commando)
                 {
@@ -2542,19 +2579,21 @@ namespace TanksRebirth.GameContent
 
                             // TODO: uncomment code when disabling implementation is re-implemented.
 
-                            /*if (Team != TeamID.NoTeam && false) {
-                                //var ex = new Color[1024];
+                            if (ShowTeamVisuals) {
+                                if (Team != TeamID.NoTeam) {
+                                    //var ex = new Color[1024];
 
-                                //Array.Fill(ex, new Color(GameHandler.GameRand.Next(0, 256), GameHandler.GameRand.Next(0, 256), GameHandler.GameRand.Next(0, 256)));
+                                    //Array.Fill(ex, new Color(GameHandler.GameRand.Next(0, 256), GameHandler.GameRand.Next(0, 256), GameHandler.GameRand.Next(0, 256)));
 
-                                //effect.Texture.SetData(0, new Rectangle(0, 8, 32, 15), ex, 0, 480);
-                                var ex = new Color[1024];
+                                    //effect.Texture.SetData(0, new Rectangle(0, 8, 32, 15), ex, 0, 480);
+                                    var ex = new Color[1024];
 
-                                Array.Fill(ex, TeamID.TeamColors[Team]);
+                                    Array.Fill(ex, TeamID.TeamColors[Team]);
 
-                                effect.Texture.SetData(0, new Rectangle(0, 0, 32, 9), ex, 0, 288);
-                                effect.Texture.SetData(0, new Rectangle(0, 23, 32, 9), ex, 0, 288);
-                            }*/
+                                    effect.Texture.SetData(0, new Rectangle(0, 0, 32, 9), ex, 0, 288);
+                                    effect.Texture.SetData(0, new Rectangle(0, 23, 32, 9), ex, 0, 288);
+                                }
+                            }
                         }
 
                         effect.SetDefaultGameLighting_IngameEntities(0.9f);
