@@ -563,7 +563,7 @@ public abstract class Tank
             }
             part.HasAddativeBlending = false;
             part.Origin2D = TankGame.TextFont.MeasureString(HitString) / 2;
-            part.Scale = new(1);
+            part.Scale = new Vector3(Vector2.One.ToResolution(), 1);
             part.Alpha = 0;
 
             // TODO: Fix layering bullshit.

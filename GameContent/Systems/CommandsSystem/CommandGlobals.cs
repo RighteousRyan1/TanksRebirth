@@ -53,12 +53,17 @@ public static class CommandGlobals {
             MainMenu.Theme = MainMenu.GetAppropriateMusic();
             MainMenu.Theme.Play();
         }),
+        // client side
+        [new CommandInput(name: "showtankteams", description: "Shows tank teams visually. Applies for each new tank.")] = new CommandOutput(netSync: true, (args) => {
+            Tank.ShowTeamVisuals = bool.Parse(args[0]);
+            ChatSystem.SendMessage("Tank team visuals are now " + (Tank.ShowTeamVisuals ? "enabled" : "disabled" + ".") + ".", Tank.ShowTeamVisuals ? Color.Green : Color.Red);
+        }),
         // server side
         [new CommandInput(name: "cheats", description: "Enables cheats on the server")] = new CommandOutput(netSync: true, (args) => {
                 AreCheatsEnabled = bool.Parse(args[0]);
                 ChatSystem.SendMessage("Cheats are now " + (AreCheatsEnabled ? "enabled" : "disabled" + ".") + ".", AreCheatsEnabled ? Color.Green : Color.Red);
         }),
-        [new CommandInput(name: "changetnkproperty", description: "Changes a property parameter of your tank.")] = new CommandOutput(netSync: false, (args) => {
+        [new CommandInput(name: "changetankproperty", description: "Changes a property parameter of your tank.")] = new CommandOutput(netSync: false, (args) => {
                 if (!AreCheatsEnabled) {
                     ChatSystem.SendMessage("In order to use this command, cheats must be True.", Color.Red);
                     return;

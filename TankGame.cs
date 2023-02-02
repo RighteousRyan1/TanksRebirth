@@ -580,8 +580,7 @@ namespace TanksRebirth
         }
         protected override void Update(GameTime gameTime)
         {
-            try
-            {
+            try {
                 //SpectatorCamera.FieldOfView = MathHelper.ToRadians(100);
                 //SpectatorCamera.AspectRatio = GraphicsDevice.Viewport.AspectRatio;
                 //PerspectiveCamera.FieldOfView = MathHelper.ToRadians(90);
@@ -611,13 +610,11 @@ namespace TanksRebirth
                 if (SteamworksUtils.IsInitialized)
                     SteamworksUtils.Update();
 
-                if (InputUtils.AreKeysJustPressed(Keys.Left, Keys.Right, Keys.Up, Keys.Down))
-                {
+                if (InputUtils.AreKeysJustPressed(Keys.Left, Keys.Right, Keys.Up, Keys.Down)) {
                     SecretCosmeticSetting = !SecretCosmeticSetting;
                     ChatSystem.SendMessage(SecretCosmeticSetting ? "Activated randomized cosmetics!" : "Deactivated randomized cosmetics.", SecretCosmeticSetting ? Color.Lime : Color.Red);
                 }
-                if (InputUtils.KeyJustPressed(Keys.F1))
-                {
+                if (InputUtils.KeyJustPressed(Keys.F1)) {
                     SpeedrunMode = !SpeedrunMode;
                     if (SpeedrunMode)
                         GameProperties.OnMissionStart += GameHandler.StartSpeedrun;
@@ -625,13 +622,12 @@ namespace TanksRebirth
                         GameProperties.OnMissionStart -= GameHandler.StartSpeedrun;
                     ChatSystem.SendMessage(SpeedrunMode ? "Speedrun mode on!" : "Speedrun mode off.", SpeedrunMode ? Color.Lime : Color.Red);
                 }
-                if (InputUtils.AreKeysJustPressed(Keys.LeftAlt | Keys.RightAlt, Keys.Enter))
-                {
+                if (InputUtils.AreKeysJustPressed(Keys.LeftAlt | Keys.RightAlt, Keys.Enter)) {
                     Graphics.IsFullScreen = !Graphics.IsFullScreen;
                     Graphics.ApplyChanges();
                 }
 
-                MouseRenderer.ShouldRender = Difficulties.Types["ThirdPerson"] ? (GameUI.Paused || MainMenu.Active || LevelEditor.Active) : true;
+                MouseRenderer.ShouldRender = !Difficulties.Types["ThirdPerson"] || GameUI.Paused || MainMenu.Active || LevelEditor.Active;
                 if (UIElement.delay > 0)
                     UIElement.delay--;
 

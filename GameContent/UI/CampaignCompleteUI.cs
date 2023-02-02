@@ -230,7 +230,7 @@ namespace TanksRebirth.GameContent.UI
             }
 
             if (DebugUtils.DebuggingEnabled) {
-                if (InputUtils.AreKeysJustPressed(Keys.O, Keys.P)) {
+                if (InputUtils.AreKeysJustPressed(Keys.OemOpenBrackets, Keys.OemCloseBrackets)) {
                     ResetThings();
 
                     PerformSequence(_lastContext);

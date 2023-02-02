@@ -104,6 +104,8 @@ namespace TanksRebirth.Net
             client.Send(message, DeliveryMethod.ReliableOrdered);
         }
         public static void RequestStartGame(int checkpoint, bool shouldProgressMissions) {
+            if (MainMenu.Active || !IsConnected())
+                return;
             NetDataWriter message = new();
             message.Put(PacketID.StartGame);
             message.Put(checkpoint);

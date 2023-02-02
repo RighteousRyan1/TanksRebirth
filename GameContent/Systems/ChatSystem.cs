@@ -52,7 +52,7 @@ public sealed record ChatSystem {
     /// <param name="sender">The sender of the message.</param>
     /// <param name="netSend">If true, will not send the message to the server in a multiplayer context.</param>
     /// <returns>The <see cref="ChatMessage"/> sent to the chat.</returns>
-    public static ChatMessage[] SendMessage(string message, Color color, string sender = null, bool netSend = false)
+    public static void SendMessage(string message, Color color, string sender = null, bool netSend = false)
     {
         if (message.Length > 0 && message[0] == CommandGlobals.ExpectedPrefix) {
             var cmdSplit = message.Remove(0, 1).Split(' ');
@@ -70,13 +70,13 @@ public sealed record ChatSystem {
                     if (value.NetSync && Client.IsConnected()) {
                         if (sender != "cmd_sync" && Server.serverNetManager is null) {
                             SendMessage("You cannot use this command as you are not the host of the server.", Color.Red);
-                            return null;
+                            return;
                         }
                         if (Server.serverNetManager is not null)
                             Client.SendCommandUsage(message);
                     }
                     value.ActionToPerform?.Invoke(args);
-                    return null;
+                    return;
                 }
                 catch {
                     SendMessage("Error with command.", Color.Orange);
@@ -97,21 +97,22 @@ public sealed record ChatSystem {
 
         for (int i = 0; i < split.Length; i++)
         {
-            if (sender is not null)
-                msgs.Add(new ChatMessage($"<{sender}> {message}", color));
+            if (i == 0 && sender is not null)
+                msgs.Add(new ChatMessage($"<{sender}> {split[i]}", color));
             else
-                msgs.Add(new ChatMessage($"{message}", color));
+                msgs.Add(new ChatMessage($"{split[i]}", color));
         }
         Alerts++;
+
         ChatMessages.AddRange(msgs);
 
         OnMessageAdded?.Invoke(message);
-        return msgs.ToArray();
+        // return msgs.ToArray();
     }
 
     private static void DrawChatBox(out Rectangle chatBox, out Rectangle typeBox)
     {
-        var measureY = ChatMessage.Font.MeasureString("X").Y * Scale.Y;
+        var measureY = (ChatMessage.Font.MeasureString("X").Y * Scale.Y).ToResolutionY();
         // draw it out of view if not open chat box.
         var chatRect = new Rectangle((int)OpenOrigin.X, IsOpen ? (int)OpenOrigin.Y : -400, BoxWidth, (int)(measureY * MessagesAtOnce)).ToResolution();
 
