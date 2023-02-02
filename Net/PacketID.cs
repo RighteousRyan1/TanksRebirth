@@ -58,7 +58,7 @@ public sealed class PacketID
     public const int SyncShellId = 21;
     public const int Cleanup = 22;
     public const int QuitLevel = 23;
-    public const int CampaignSendSuccess = 24; // i.e: whether another client doesn't have something a host does, such as a campaign
+    public const int SendCampaignStatus = 24; // i.e: whether another client doesn't have something a host does, such as a campaign
     public const int SendCommandUsage = 25;
 
     public static int AddPacketId(string name, int id) => Collection.ForcefullyInsert(name, id);

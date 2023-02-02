@@ -115,7 +115,7 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
                 {
                     if (BlockId > -1)
                         Block.AllBlocks[BlockId]?.Remove();
-                    if (TankId > -1)
+                    if (TankId > -1) { }
                         GameHandler.AllTanks[TankId]?.Remove(true);
                     BlockId = -1;
                     TankId = -1;
@@ -123,6 +123,7 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
                     HasBlock = true;
                     IsPlacing = false;
                 }
+                LevelEditor.missionToRate = Mission.GetCurrent();
             }
             else {
                 // var team = LevelEditor.Active ? LevelEditor.SelectedTankTeam : (TankTeam)GameHandler.tankToSpawnTeam;
@@ -135,6 +136,7 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
                     // FIXME: why does this even craaaash?
                     GameHandler.AllTanks[TankId].Remove(true);
                     TankId = -1;
+                    LevelEditor.missionToRate = Mission.GetCurrent();
                     return;
                 }
 
@@ -152,6 +154,7 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
                     var me = GameHandler.SpawnMe(LevelEditor.Active ? LevelEditor.SelectedPlayerType : PlayerID.Blue, team);
                     TankId = me.WorldId;
                 }
+                LevelEditor.missionToRate = Mission.GetCurrent();
             }
         }
         public void Update()

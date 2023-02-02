@@ -38,8 +38,7 @@ namespace TanksRebirth.GameContent.Systems
 
         public CampaignMetaData MetaData;
 
-        public Campaign()
-        {
+        public Campaign() {
             MetaData = CampaignMetaData.GetDefault();
         }
 
@@ -125,7 +124,7 @@ namespace TanksRebirth.GameContent.Systems
 
                         tank.Position = template.Position;
                         tank.TankRotation = template.Rotation;
-                        tank.TargetTankRotation = template.Rotation;
+                        tank.TargetTankRotation = -template.Rotation;
                         tank.TurretRotation = template.Rotation;
                         tank.Dead = false;
                         tank.Team = template.Team;
@@ -186,8 +185,8 @@ namespace TanksRebirth.GameContent.Systems
                                 Position = template.Position,
                                 Team = tank.Team,
                                 TankRotation = template.Rotation,
-                                TargetTankRotation = template.Rotation - MathHelper.Pi,
-                                TurretRotation = -template.Rotation,
+                                TargetTankRotation = -template.Rotation,
+                                TurretRotation = template.Rotation,
                                 Dead = false
                             };
                             tnk.Body.Position = template.Position;

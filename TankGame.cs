@@ -39,6 +39,7 @@ using TanksRebirth.GameContent.ID;
 using Steamworks;
 using TanksRebirth.Graphics.Cameras;
 using System.Globalization;
+using System.Threading;
 
 namespace TanksRebirth
 {
@@ -70,6 +71,10 @@ namespace TanksRebirth
 
         #region Fields1
         public static Language GameLanguage = new();
+
+        public static int MainThreadId { get; private set; }
+
+        public static bool IsMainThread => Environment.CurrentManagedThreadId == MainThreadId;
 
         public static class MemoryParser
         {
@@ -302,6 +307,8 @@ namespace TanksRebirth
             try
             {
                 var s = Stopwatch.StartNew();
+
+                MainThreadId = Thread.CurrentThread.ManagedThreadId;
 
                 Window.ClientSizeChanged += HandleResizing;
 
@@ -856,14 +863,17 @@ namespace TanksRebirth
 
                                         if (ai.TargetTankRotation >= MathHelper.Tau)
                                             ai.TargetTankRotation -= MathHelper.Tau;
-                                        if (ai.TargetTankRotation <= 0)
-                                            ai.TargetTankRotation += MathHelper.Tau;
-                                    }
-                                    if (tnk.TankRotation >= MathHelper.Tau)
-                                        tnk.TankRotation -= MathHelper.Tau;
 
-                                    if (tnk.TurretRotation >= MathHelper.Tau)
-                                        tnk.TurretRotation -= MathHelper.Tau;
+                                        //if (ai.TargetTankRotation >= MathHelper.Tau)
+                                            //ai.TargetTankRotation -= MathHelper.Tau;
+                                        //if (ai.TargetTankRotation <= 0)
+                                            //ai.TargetTankRotation += MathHelper.Tau;
+                                    }
+                                    if (tnk.TankRotation <= -MathHelper.Tau)
+                                        tnk.TankRotation += MathHelper.Tau;
+
+                                    if (tnk.TurretRotation <= -MathHelper.Tau)
+                                        tnk.TurretRotation += MathHelper.Tau;
                                 }
 
                                 tnk.IsHoveredByMouse = true;

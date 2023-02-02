@@ -256,6 +256,8 @@ namespace TanksRebirth.GameContent.UI
             SavingThings,
         }
 
+        internal static Mission missionToRate = new(Array.Empty<TankTemplate>(), Array.Empty<BlockTemplate>());
+
         private static bool _sdbui;
         public static bool ShouldDrawBarUI {
             get => _sdbui;
@@ -732,7 +734,7 @@ namespace TanksRebirth.GameContent.UI
             TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Rectangle(0, 0, 350, 40).ToResolution(), null, Color.White, 0f, Vector2.Zero, default, 0f);
             TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "Level Information", new Vector2(175, 3).ToResolution(), Color.Black, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(Anchor.TopCenter, TankGame.TextFont.MeasureString("Level Information")));
             TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"Total Enemy Tanks: {AITank.CountAll()}", new Vector2(10, 40).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
-            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"Difficulty Rating: {DifficultyAlgorithm.GetDifficulty(Mission.GetCurrent()):0.00}", new Vector2(10, 80).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
+            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"Difficulty Rating: {DifficultyAlgorithm.GetDifficulty(missionToRate):0.00}", new Vector2(10, 80).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
 
 
             // render campaign missions ui 

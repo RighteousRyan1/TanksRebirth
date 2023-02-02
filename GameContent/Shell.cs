@@ -8,6 +8,7 @@ using TanksRebirth.Enums;
 using TanksRebirth.GameContent.GameMechanics;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Properties;
+using TanksRebirth.GameContent.UI;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework;
@@ -193,7 +194,7 @@ namespace TanksRebirth.GameContent
 
         internal void Update()
         {
-            if (!MapRenderer.ShouldRender)
+            if (!MapRenderer.ShouldRender || (!GameProperties.InMission && !MainMenu.Active))
                 return;
 
             Rotation = Velocity2D.ToRotation() - MathHelper.PiOver2;

@@ -278,14 +278,6 @@ namespace TanksRebirth.Net
                     var ownerId = reader.GetInt();
                     var ownerShellIndex = reader.GetInt();
                     var cxt = reader.GetByte();
-                    // sends: 0
-                    // count: 0
-                    // perform: 0 - 1
-                    // reality: -1, 0
-                    // equation: -1 > 0
-                    // result: break from the loop
-                    //if (GameHandler.AllTanks[ownerId].OwnedShells.Count <= ownerShellIndex - 1)
-                        //break;
 
                     // FIXME: crashes if recieving on a dead player. weird.
                     // FIXME? wait for results.
@@ -312,6 +304,7 @@ namespace TanksRebirth.Net
 
                     // GameHandler.AllTanks[shellOwner].Shoot(true);
                     var shell = new Shell(shellPos, shellVel, shellType, GameHandler.AllTanks[shellOwner], ricochets: shellRicochets);
+                    GameHandler.AllTanks[shellOwner].DoShootParticles(shell.Position);
 
                     // ChatSystem.SendMessage($"Pos: {shell.Position} | Vel: {shell.Velocity}", Color.White);
                     break;
@@ -326,21 +319,29 @@ namespace TanksRebirth.Net
                 case PacketID.SendCampaignByName:
                     var campName = reader.GetString();
 
-                    /*var success = */MainMenu.PrepareGameplay(campName, true, true); // second param to false when doing a check
-                    //Client.SendCampaignSuccess(campName, CurrentClient.Id, success); // if this player doesn't own said campaign, cancel the operation.
+                    // if this solution fails, simply change param 2 (wasConfirmed) to true
+                    var success = MainMenu.PrepareGameplay(campName, false, true); // second param to false when doing a check
+                    Client.SendCampaignStatus(campName, CurrentClient.Id, success); // if this player doesn't own said campaign, cancel the operation.
                     break;
                 case PacketID.Cleanup:
                     GameHandler.CleanupScene();
                     break;
-                case PacketID.CampaignSendSuccess:
-                    var camName = reader.GetString();
-                    var senderId = reader.GetInt();
-                    var successful = reader.GetBool();
-                    if (successful)
-                        MainMenu.PrepareGameplay(camName, true, true);
-                    else {
-                        ChatSystem.SendMessage($"{Server.ConnectedClients[senderId].Name} does not own this campaign! Send it to them to be able to play it.", Color.Red);
-                        SoundPlayer.SoundError();
+                case PacketID.SendCampaignStatus:
+                    if (Server.serverNetManager is not null) {
+                        var camName = reader.GetString();
+                        var senderId = reader.GetInt();
+                        var successful = reader.GetBool();
+                        if (successful) {
+                            MainMenu.plrsConfirmed++;
+                            if (MainMenu.plrsConfirmed == Server.CurrentClientCount - 1)
+                                MainMenu.PrepareGameplay(camName, true, false);
+                            // lowkey praying this works.
+                        }
+                        //MainMenu.PrepareGameplay(camName, true, true);
+                        else {
+                            ChatSystem.SendMessage($"{Server.ConnectedClients[senderId].Name} does not own this campaign! Send it to them to be able to play it.", Color.Red);
+                            SoundPlayer.SoundError();
+                        }
                     }
                     break;
                 #endregion
@@ -628,13 +629,14 @@ namespace TanksRebirth.Net
                 case PacketID.Cleanup:
                     Server.serverNetManager.SendToAll(message, DeliveryMethod.Sequenced, peer);
                     break;
-                case PacketID.CampaignSendSuccess:
+                case PacketID.SendCampaignStatus:
                     var camName = reader.GetString();
                     var cliId = reader.GetInt();
                     var success = reader.GetBool();
                     message.Put(camName);
                     message.Put(cliId);
                     message.Put(success);
+                    //peer.Send(message, DeliveryMethod.Sequenced);
                     Server.serverNetManager.SendToAll(message, DeliveryMethod.Sequenced, peer);
                     break;
                 #endregion

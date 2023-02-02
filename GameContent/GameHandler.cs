@@ -366,7 +366,7 @@ namespace TanksRebirth.GameContent
                     if (InputUtils.KeyJustPressed(Keys.PageUp))
                         SpawnTankPlethorae(true);
                     if (InputUtils.KeyJustPressed(Keys.PageDown))
-                        SpawnMe(/*PlayerID.Blue*/GameHandler.GameRand.Next(PlayerID.Blue, PlayerID.YellowPlr + 1), tankToSpawnTeam);
+                        SpawnMe(/*PlayerID.Blue*/GameRand.Next(PlayerID.Blue, PlayerID.YellowPlr + 1), tankToSpawnTeam);
                     if (InputUtils.KeyJustPressed(Keys.Home))
                         SpawnTankAt(!TankGame.OverheadView ? MatrixUtils.GetWorldPosition(MouseUtils.MousePosition) : PlacementSquare.CurrentlyHovered.Position, tankToSpawnType, tankToSpawnTeam);
 
@@ -905,7 +905,7 @@ namespace TanksRebirth.GameContent
             var rot = 0f;
 
             var x = new AITank(tier);
-            x.TargetTankRotation = rot + MathHelper.Pi;
+            x.TargetTankRotation = rot;
             x.TankRotation = rot;
             x.TurretRotation = -rot;
 

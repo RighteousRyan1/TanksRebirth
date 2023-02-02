@@ -306,9 +306,9 @@ namespace TanksRebirth.GameContent
 
             if (!rotationMet)
             {
-                Properties.Speed -= Properties.Deceleration * TankGame.DeltaTime;
-                if (Properties.Speed < 0)
-                    Properties.Speed = 0;
+                Speed -= Properties.Deceleration * TankGame.DeltaTime;
+                if (Speed < 0)
+                    Speed = 0;
                 IsTurning = true;
             }
             else
@@ -316,9 +316,9 @@ namespace TanksRebirth.GameContent
                 if (Difficulties.Types["ThirdPerson"])
                     preterbedVelocity = preterbedVelocity.RotatedByRadians(-TurretRotation + MathHelper.Pi);
 
-                Properties.Speed += Properties.Acceleration * TankGame.DeltaTime;
-                if (Properties.Speed > Properties.MaxSpeed)
-                    Properties.Speed = Properties.MaxSpeed;
+                Speed += Properties.Acceleration * TankGame.DeltaTime;
+                if (Speed > Properties.MaxSpeed)
+                    Speed = Properties.MaxSpeed;
                 
                 if (leftStick.Length() > 0)
                 {
@@ -360,7 +360,7 @@ namespace TanksRebirth.GameContent
                 //Mouse.SetPosition((int)(Input.CurrentMouseSnapshot.X + rightStick.X * TankGame.Instance.Settings.ControllerSensitivity), (int)(Input.CurrentMouseSnapshot.Y - rightStick.Y * TankGame.Instance.Settings.ControllerSensitivity));
             }
 
-            Velocity = Vector2.UnitY.RotatedByRadians(TankRotation) * Properties.Speed;
+            Velocity = Vector2.UnitY.RotatedByRadians(TankRotation) * Speed;
 
             if (FireBullet.JustPressed)
                 Shoot(false);
@@ -384,16 +384,16 @@ namespace TanksRebirth.GameContent
 
             if (!rotationMet)
             {
-                Properties.Speed -= Properties.Deceleration;
-                if (Properties.Speed < 0)
-                    Properties.Speed = 0;
+                Speed -= Properties.Deceleration;
+                if (Speed < 0)
+                    Speed = 0;
                 IsTurning = true;
             }
             else
             {
-                Properties.Speed += Properties.Acceleration;
-                if (Properties.Speed > Properties.MaxSpeed)
-                    Properties.Speed = Properties.MaxSpeed;
+                Speed += Properties.Acceleration;
+                if (Speed > Properties.MaxSpeed)
+                    Speed = Properties.MaxSpeed;
             }
 
 
@@ -427,7 +427,7 @@ namespace TanksRebirth.GameContent
 
             TankRotation = MathUtils.RoughStep(TankRotation, TargetTankRotation, Properties.TurningSpeed * TankGame.DeltaTime);
 
-            Velocity = Vector2.UnitY.RotatedByRadians(TankRotation) * Properties.Speed;
+            Velocity = Vector2.UnitY.RotatedByRadians(TankRotation) * Speed;
         }
         public override void Destroy(ITankHurtContext context)
         {
@@ -552,7 +552,7 @@ namespace TanksRebirth.GameContent
                 {
                     foreach (BasicEffect effect in mesh.Effects)
                     {
-                        effect.World = i == 0 ? boneTransforms[mesh.ParentBone.Index] : boneTransforms[mesh.ParentBone.Index] * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
+                        effect.World = i == 0 ? _boneTransforms[mesh.ParentBone.Index] : _boneTransforms[mesh.ParentBone.Index] * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
                         effect.View = View;
                         effect.Projection = Projection;
                         effect.TextureEnabled = true;

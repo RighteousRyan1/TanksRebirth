@@ -238,6 +238,7 @@ namespace TanksRebirth.GameContent
         public AITank(int tier, Range<int> tankRange = default, bool setTankDefaults = true, bool isIngame = true, bool isRandomizable = true)
         {
             IsIngame = isIngame;
+            // TargetTankRotation = MathHelper.Pi;
             if (IsIngame)
             {
                 if (Difficulties.Types["BumpUp"])
@@ -279,20 +280,24 @@ namespace TanksRebirth.GameContent
             SpecialBehaviors[1].Label = "SpecialBehavior2";
             SpecialBehaviors[2].Label = "SpecialBehavior3";
 
-            if (tier <= TankID.Cherry) {
+            if (TankGame.IsMainThread) {
+                if (tier < TankID.Cherry) {
 
-                var tnkAsset = Assets[$"tank_" + TankID.Collection.GetKey(tier).ToLower()];
+                    var tnkAsset = Assets[$"tank_" + TankID.Collection.GetKey(tier).ToLower()];
 
-                var t = new Texture2D(TankGame.Instance.GraphicsDevice, tnkAsset.Width, tnkAsset.Height);
+                    var t = new Texture2D(TankGame.Instance.GraphicsDevice, tnkAsset.Width, tnkAsset.Height);
 
-                var colors = new Color[tnkAsset.Width * tnkAsset.Height];
+                    var colors = new Color[tnkAsset.Width * tnkAsset.Height];
 
-                tnkAsset.GetData(colors);
+                    tnkAsset.GetData(colors);
 
-                t.SetData(colors);
+                    t.SetData(colors);
 
-                _tankTexture = t;
+                    _tankTexture = t;
+                }
             }
+            else
+                _tankTexture = Assets[$"tank_" + TankID.Collection.GetKey(tier).ToLower()];
 
             #region Special
 
@@ -2506,15 +2511,15 @@ namespace TanksRebirth.GameContent
                     if (!IsTurning)
                     {
                         IsTurning = false;
-                        Properties.Speed += Properties.Acceleration * TankGame.DeltaTime;
-                        if (Properties.Speed > Properties.MaxSpeed)
-                            Properties.Speed = Properties.MaxSpeed;
+                        Speed += Properties.Acceleration * TankGame.DeltaTime;
+                        if (Speed > Properties.MaxSpeed)
+                            Speed = Properties.MaxSpeed;
                     }
                     else
                     {
-                        Properties.Speed -= Properties.Deceleration * TankGame.DeltaTime;
-                        if (Properties.Speed < 0)
-                            Properties.Speed = 0;
+                        Speed -= Properties.Deceleration * TankGame.DeltaTime;
+                        if (Speed < 0)
+                            Speed = 0;
                         IsTurning = true;
                     }
                     // TODO: fix this pls.
@@ -2529,7 +2534,7 @@ namespace TanksRebirth.GameContent
 
                     Velocity.Normalize();
 
-                    Velocity *= Properties.Speed;
+                    Velocity *= Speed;
                     TankRotation = MathUtils.RoughStep(TankRotation, TargetTankRotation, Properties.TurningSpeed * TankGame.DeltaTime);
                 }
 
@@ -2550,7 +2555,7 @@ namespace TanksRebirth.GameContent
             for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
                 foreach (ModelMesh mesh in Model.Meshes) {
                     foreach (BasicEffect effect in mesh.Effects) {
-                        effect.World = i == 0 ? boneTransforms[mesh.ParentBone.Index] : boneTransforms[mesh.ParentBone.Index] * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
+                        effect.World = i == 0 ? _boneTransforms[mesh.ParentBone.Index] : _boneTransforms[mesh.ParentBone.Index] * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
                         effect.View = View;
                         effect.Projection = Projection;
 
@@ -2623,7 +2628,7 @@ namespace TanksRebirth.GameContent
                         Aimtarget).ToRotation() - MathHelper.PiOver2;
                     GetTanksInPath(Vector2.UnitY.RotatedByRadians(rot), out var rayEnd2, true, Vector2.Zero, pattern: x => x.IsSolid | x.Type == BlockID.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
                 }
-                DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"{TankID.Collection.GetKey(AiTankType)}: {poo.Count} tank(s) spotted | pathC: {_pathHitCount % 10} / 10", MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), World, View, Projection), 1, centered: true);
+                DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"{poo.Count} tank(s) spotted | pathC: {_pathHitCount % 10} / 10", MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), World, View, Projection), 1, centered: true);
                 if (!Properties.Stationary)
                 {
                     IsObstacleInWay(AiParams.BlockWarinessDistance / PATH_UNIT_LENGTH, Vector2.UnitY.RotatedByRadians(TargetTankRotation), out var travelPos, out var refPoints, true);

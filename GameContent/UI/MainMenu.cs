@@ -762,7 +762,7 @@ namespace TanksRebirth.GameContent.UI
                         return;
                     }
                     var noExt = Path.GetFileNameWithoutExtension(name);
-                    PrepareGameplay(noExt, true, false); // switch second param to !Client.IsConnected() when it should check first.
+                    PrepareGameplay(noExt, !Client.IsConnected() || Server.CurrentClientCount == 1, false); // switch second param to !Client.IsConnected() when it should check first.
                 };
                 elem.OnRightClick += (el) =>
                 {
@@ -796,6 +796,8 @@ namespace TanksRebirth.GameContent.UI
 
             UIElement.CunoSucks();
         }
+        // this is super workaround-y.
+        internal static int plrsConfirmed;
         public static bool PrepareGameplay(string name, bool wasConfirmed = true, bool netRecieved = false)
         {
             // FIXME: find the feedback loop that causes the recieving client to start a mission anyway...
@@ -804,39 +806,49 @@ namespace TanksRebirth.GameContent.UI
 
             var checkPath = Path.Combine(TankGame.SaveDirectory, "Campaigns", $"{name}.campaign");
 
-            //if (!File.Exists(checkPath))
-                //return false;
-            var camp = Campaign.Load(path);
-
-            // check if the CampaignCheckpoint number is less than the number of missions in the array
-            if (MissionCheckpoint >= camp.CachedMissions.Length) {
-                // if it is, notify the user that the checkpoint is too high via the chat, and play the error sound
-                ChatSystem.SendMessage($"Campaign '{name}' has no mission {MissionCheckpoint + 1}.", Color.Red);
-                SoundPlayer.SoundError();
-                return false;
-            }
-
-            if (!netRecieved) { // when switch, do !wasConfirmed && !netRecieved
-                if (Client.IsConnected()) {
-                    //Client.SendCampaignBytes(camp);
-                    Client.SendCampaign(name);
-                    Client.RequestStartGame(MissionCheckpoint, true);
-                }
-            }
-            /*if (wasConfirmed) {
-
-                if (!File.Exists(checkPath))
-                    return false;*/
-
-                // if it is, load the mission
-                GameProperties.LoadedCampaign = camp;
+            void completePreparation(Campaign campaign) {
+                GameProperties.LoadedCampaign = campaign;
 
                 GameProperties.LoadedCampaign.LoadMission(MissionCheckpoint); // loading the mission specified
+
+                PlayerTank.StartingLives = campaign.MetaData.StartingLives;
+                IntermissionSystem.StripColor = campaign.MetaData.MissionStripColor;
+                IntermissionSystem.BackgroundColor = campaign.MetaData.BackgroundColor;
+            }
+
+            if (!wasConfirmed && netRecieved) {
+                var ret = File.Exists(checkPath);
+                if (ret)
+                    completePreparation(Campaign.Load(path));
+                return ret;
+            }
+
+            if (!netRecieved && !wasConfirmed) { // when switch, do !wasConfirmed && !netRecieved
+                if (Client.IsConnected()) {
+                    //Client.SendCampaignBytes(camp);
+                    Client.SendCampaignByName(name);
+                    return true;
+                }
+            }
+            if (wasConfirmed) {
+
+                Client.RequestStartGame(MissionCheckpoint, true);
+
+                var camp = Campaign.Load(path);
+
+                // check if the CampaignCheckpoint number is less than the number of missions in the array
+                if (MissionCheckpoint >= camp.CachedMissions.Length) {
+                    // if it is, notify the user that the checkpoint is too high via the chat, and play the error sound
+                    ChatSystem.SendMessage($"Campaign '{name}' has no mission {MissionCheckpoint + 1}.", Color.Red);
+                    SoundPlayer.SoundError();
+                    return false;
+                }
+
+                // if it is, load the mission
+                completePreparation(camp);
+
                 TransitionToGame();
-            //}
-            PlayerTank.StartingLives = camp.MetaData.StartingLives;
-            IntermissionSystem.StripColor = camp.MetaData.MissionStripColor;
-            IntermissionSystem.BackgroundColor = camp.MetaData.BackgroundColor;
+            }
 
             return true;
         }
@@ -980,6 +992,16 @@ namespace TanksRebirth.GameContent.UI
         {
             if (!_initialized || !_diffButtonsInitialized)
                 return;
+
+            if (MenuState == State.Mulitplayer) {
+                if (DebugUtils.DebuggingEnabled)
+                    if (InputUtils.AreKeysJustPressed(Keys.Q, Keys.W)) {
+                        IPInput.Text = "localhost";
+                        PortInput.Text = "7777";
+                        ServerNameInput.Text = "TestServer";
+                        UsernameInput.Text = GameHandler.GameRand.Next(0, ushort.MaxValue).ToString();
+                    }
+            }
 
             VolumeMultiplier = SteamworksUtils.IsOverlayActive ? 0.25f : 1f;
 

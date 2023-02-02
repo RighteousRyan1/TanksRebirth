@@ -4,7 +4,9 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TanksRebirth.GameContent.Properties;
 using TanksRebirth.GameContent.Systems;
+using TanksRebirth.GameContent.UI;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework.Audio;
@@ -136,7 +138,7 @@ namespace TanksRebirth.GameContent
 
         internal void Update() {
 
-            if (!MapRenderer.ShouldRender)
+            if (!MapRenderer.ShouldRender || (!GameProperties.InMission && !MainMenu.Active))
                 return;
 
             World = Matrix.CreateScale(0.7f) * Matrix.CreateTranslation(Position3D);
@@ -149,7 +151,7 @@ namespace TanksRebirth.GameContent
 
                 if (DetonateTime < 120)
                 {
-                    if (DetonateTime % 2 == 0)
+                    if (DetonateTime % 2 <= TankGame.DeltaTime)
                         _tickRed = !_tickRed;
                 }
 

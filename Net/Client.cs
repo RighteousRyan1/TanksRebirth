@@ -321,7 +321,7 @@ namespace TanksRebirth.Net
             client.Send(message, DeliveryMethod.Sequenced);
         }
 
-        public static void SendCampaign(string name) {
+        public static void SendCampaignByName(string name) {
             if (!IsConnected())
                 return;
             NetDataWriter message = new();
@@ -344,11 +344,11 @@ namespace TanksRebirth.Net
             client.Send(message, DeliveryMethod.ReliableOrdered);
         }
 
-        public static void SendCampaignSuccess(string campaignName, int clientId, bool success) {
+        public static void SendCampaignStatus(string campaignName, int clientId, bool success) {
             if (!IsConnected())
                 return;
             NetDataWriter message = new();
-            message.Put(PacketID.CampaignSendSuccess);
+            message.Put(PacketID.SendCampaignStatus);
 
             message.Put(campaignName);
             message.Put(clientId);

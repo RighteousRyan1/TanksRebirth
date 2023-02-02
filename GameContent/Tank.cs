@@ -288,9 +288,9 @@ public abstract class Tank
     #endregion
 
     #region ModelBone & ModelMesh
-    public Matrix[] boneTransforms;
+    internal Matrix[] _boneTransforms;
 
-    public ModelMesh CannonMesh;
+    internal ModelMesh _cannonMesh;
     #endregion
 
     public static int[] GetActiveTeams() {
@@ -315,8 +315,8 @@ public abstract class Tank
     {
         OwnedShells = new Shell[Properties.ShellLimit];
 
-        CannonMesh = Model.Meshes["Cannon"];
-        boneTransforms = new Matrix[Model.Bones.Count];
+        _cannonMesh = Model.Meshes["Cannon"];
+        _boneTransforms = new Matrix[Model.Bones.Count];
         if (TankGame.SecretCosmeticSetting)
         {
             for (int i = 0; i < 1; i++)
@@ -495,10 +495,10 @@ public abstract class Tank
         }
 
         // try to make negative. go poopoo
-        CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
+        _cannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
         Model.Root.Transform = World;
 
-        Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
+        Model.CopyAbsoluteBoneTransformsTo(_boneTransforms);
 
         if (CurShootStun > 0)
             CurShootStun -= TankGame.DeltaTime;
@@ -813,7 +813,7 @@ public abstract class Tank
         _oldShellLimit = Properties.ShellLimit;
     }
 
-    private void DoShootParticles(Vector3 position)
+    public void DoShootParticles(Vector3 position)
     {
         var hit = GameHandler.ParticleSystem.MakeParticle(position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
         var smoke = GameHandler.ParticleSystem.MakeParticle(position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
@@ -933,15 +933,11 @@ public abstract class Tank
             }
         }
         var info = new string[] {
-            $"Team: {TeamID.Collection.GetKey(Team)}",
-            $"Shell Owned / Max: {OwnedShellCount} / {Properties.ShellLimit}",
-            $"Mine Owned / Max: {OwnedMineCount} / {Properties.MineLimit}",
-            // $"Speed / MaxSpeed / Velocity: {Properties.Speed} / {Properties.MaxSpeed} / {Velocity}",
-            $"Physics.LinearVelocity / Velocity: {Body.LinearVelocity} / {Velocity}",
-            $"ShellCooldown: {Properties.ShellCooldown}",
-            $"MineCooldown: {Properties.MineCooldown}",
+            //$"Team: {TeamID.Collection.GetKey(Team)}",
+            //$"Shell Owned / Max: {OwnedShellCount} / {Properties.ShellLimit}",
+            //$"Mine Owned / Max: {OwnedMineCount} / {Properties.MineLimit}",
+            //$"Physics.LinearVelocity / Velocity: {Body.LinearVelocity} / {Velocity}",
             $"Tank Rotation/Target: {TankRotation}/{TargetTankRotation}",
-            $"Position3D: {Position3D}",
             $"WorldID: {WorldId}",
             this is AITank ai ? $"Turret Rotation/Target: {TurretRotation}/{ai.TargetTurretRotation}" : $"Turret Rotation: {TurretRotation}"
         };
@@ -949,8 +945,10 @@ public abstract class Tank
         // TankGame.spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), CollisionBox2D, Color.White * 0.75f);
 
         for (int i = 0; i < info.Length; i++)
-            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, info[i], MatrixUtils.ConvertWorldToScreen(Vector3.Up * 20, World, View, Projection) - new Vector2(0, ((i * 20).ToResolutionY()) + 8), 1, centered: true, color: Color.Red);
+            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, info[i], MatrixUtils.ConvertWorldToScreen(Vector3.Up * 20, World, View, Projection) - new Vector2(0, ((i + 1) * 20).ToResolutionY() + 8), 1, centered: true, color: Color.Aqua);
     }
+    /// <summary>The current speed of this tank.</summary>
+    public float Speed { get; set; }
     public float CurShootStun { get; private set; } = 0;
     public float CurShootCooldown { get; private set; } = 0;
     public float CurMineCooldown { get; private set; } = 0;
@@ -980,8 +978,6 @@ public class TankProperties
     public float Acceleration { get; set; } = 0.6f;
     /// <summary>How fast the tank should decelerate when not moving.</summary>
     public float Deceleration { get; set; } = 0.3f;
-    /// <summary>The current speed of this tank.</summary>
-    public float Speed { get; set; }
     /// <summary>The maximum speed this tank can achieve.</summary>
     public float MaxSpeed { get; set; }
     /// <summary>How fast the bullets this <see cref="Tank"/> shoot are.</summary>
@@ -1042,18 +1038,15 @@ public class TankProperties
     public Color DestructionColor { get; set; } = Color.Black;
     /// <summary>The armor properties this <see cref="Tank"/> has.</summary>
     public Armor Armor { get; set; } = null;
-
     // Get it working before using this.
     /// <summary>How much this <see cref="Tank"/> is launched backward after firing a shell.</summary>
     public float Recoil { get; set; } = 0f;
-
     /// <summary>Whether or not this <see cref="Tank"/> has a turret to fire shells with.</summary>
     public bool HasTurret { get; set; } = true;
     /// <summary>Whether or not this <see cref="Tank"/> is able to be destroyed by <see cref="Mine"/>s.</summary>
     public bool VulnerableToMines { get; set; } = true;
     /// <summary>Whether or not this <see cref="Tank"/> is unable to be destroyed.</summary>
     public bool Immortal { get; set; } = false;
-
     /// <summary>The homing properties of the shells this <see cref="Tank"/> shoots.</summary>
     public Shell.HomingProperties ShellHoming = new();
 }

@@ -117,7 +117,8 @@ namespace TanksRebirth.GameContent.Systems
 
                 // FIXME: relates to tank rotation.
                 tank.TankRotation = tnk.Rotation;
-                tank.TargetTankRotation = -tank.TankRotation - MathHelper.Pi;
+                // REMINDER: go here if you're editing load values again.
+                tank.TargetTankRotation = -tank.TankRotation;
             }
             for (int i = 0; i < mission.Blocks.Length; i++) {
                 var blockr = mission.Blocks[i];
