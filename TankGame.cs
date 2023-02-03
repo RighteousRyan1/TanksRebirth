@@ -426,6 +426,8 @@ namespace TanksRebirth
 
                 Language.LoadLang(Settings.Language, out GameLanguage);
 
+                // Language.GenerateLocalizationTemplate("en_US.loc");
+
                 GameHandler.SetupGraphics();
                 GameUI.Initialize();
                 MainMenu.InitializeUIGraphics();

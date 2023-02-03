@@ -230,10 +230,10 @@ public sealed record ChatSystem {
                 var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/chatalert");
                 TankGame.SpriteRenderer.Draw(tex, OpenOrigin.ToResolution(), null, Color.White, 0f, Vector2.Zero, scale, default, default);
                 TankGame.SpriteRenderer.DrawString(ChatMessage.Font, Alerts.ToString(), OpenOrigin.ToResolution() + (tex.Size() * scale) - new Vector2(12, 12).ToResolution(), Color.White, scale * 3f);
-                TankGame.SpriteRenderer.DrawString(ChatMessage.Font, $"Press [{ToggleChat.AssignedKey}] to open chat.", OpenOrigin.ToResolution() + new Vector2(tex.Size().X * scale.X + 10.ToResolutionX(), 0), Color.White, scale * 3f);
+                TankGame.SpriteRenderer.DrawString(ChatMessage.Font, TankGame.GameLanguage.Press + $" [{ToggleChat.AssignedKey}] " + TankGame.GameLanguage.ToToggleChat, OpenOrigin.ToResolution() + new Vector2(tex.Size().X * scale.X + 10.ToResolutionX(), 0), Color.White, scale * 3f);
             }
             else
-                TankGame.SpriteRenderer.DrawString(ChatMessage.Font, $"Press [{ToggleChat.AssignedKey}] to open chat.", OpenOrigin.ToResolution(), Color.White, scale * 3f);
+                TankGame.SpriteRenderer.DrawString(ChatMessage.Font, TankGame.GameLanguage.Press + $" [{ToggleChat.AssignedKey}] " + TankGame.GameLanguage.ToToggleChat, OpenOrigin.ToResolution(), Color.White, scale * 3f);
             // TODO: draw an alertbox saying "!1" or something similar.
             TankGame.SpriteRenderer.End();
         }

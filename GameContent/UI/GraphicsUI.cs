@@ -24,6 +24,7 @@ namespace TanksRebirth.GameContent.UI
         public static UIImage FullScreenToggle;
 
         public static UITextButton ResolutionButton;
+        private static bool _initialized;
 
         private static int _idxPair;
 
@@ -49,7 +50,15 @@ namespace TanksRebirth.GameContent.UI
 
         public static void Initialize()
         {
-
+            if (_initialized) {
+                foreach (var field in typeof(GraphicsUI).GetFields()) {
+                    if (field.GetValue(null) is UIElement) {
+                        ((UIElement)field.GetValue(null)).Remove();
+                        field.SetValue(null, null);
+                    }
+                }
+            }
+            _initialized = true;
             //Per-Pixel Lighting
             PerPixelLightingToggle = new(null, 1, (uiImage, spriteBatch) => DrawBooleanIndicator(spriteBatch, uiImage.Hitbox, TankGame.Settings.PerPixelLighting))
             {

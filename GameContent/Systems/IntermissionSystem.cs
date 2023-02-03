@@ -115,7 +115,7 @@ namespace TanksRebirth.GameContent.Systems
                 int mafs = mafs1 - mafs2;
 
                 DrawShadowedString(TankGame.TextFontLarge, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 220.ToResolutionY()), Vector2.One, GameProperties.LoadedCampaign.LoadedMission.Name, BackgroundColor, Vector2.One.ToResolution(), Alpha);
-                DrawShadowedString(TankGame.TextFontLarge, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 50.ToResolutionY()), Vector2.One, $"Enemy tanks: {mafs}", BackgroundColor, new Vector2(0.8f).ToResolution(), Alpha);
+                DrawShadowedString(TankGame.TextFontLarge, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 50.ToResolutionY()), Vector2.One, $"{TankGame.GameLanguage.EnemyTanks}: {mafs}", BackgroundColor, new Vector2(0.8f).ToResolution(), Alpha);
 
                 var tnk2d = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/playertank2d");
 
@@ -130,7 +130,7 @@ namespace TanksRebirth.GameContent.Systems
                     //var name = "name" + i;
 
                     if (GameProperties.LoadedCampaign.CurrentMissionId == 0)
-                        DrawShadowedString(TankGame.TextFontLarge, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 295.ToResolutionY()), Vector2.One, $"Campaign: \"{GameProperties.LoadedCampaign.MetaData.Name}\"", BackgroundColor, new Vector2(0.4f).ToResolution(), Alpha);
+                        DrawShadowedString(TankGame.TextFontLarge, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 295.ToResolutionY()), Vector2.One, $"{TankGame.GameLanguage.Campaign}: \"{GameProperties.LoadedCampaign.MetaData.Name}\"", BackgroundColor, new Vector2(0.4f).ToResolution(), Alpha);
 
                     var pos = new Vector2(WindowUtils.WindowWidth / (count + 1) * (i + 1), WindowUtils.WindowHeight / 2 + 375.ToResolutionY());
 
@@ -147,7 +147,7 @@ namespace TanksRebirth.GameContent.Systems
 
         private static void DrawBonusLifeHUD()
         {
-            // TODO: finish.
+            // TODO: implement.
         }
 
         public static void DrawShadowedString(SpriteFontBase font, Vector2 position, Vector2 shadowDir, string text, Color color, Vector2 scale, float alpha, Vector2 origin = default, float shadowDistScale = 1f)

@@ -21,15 +21,14 @@ namespace TanksRebirth.Internals.Common.IO
             Object = type;
             JsonPath = path;
 
-            JsonDir = JsonPath.Remove(JsonPath.Length - new FileInfo(JsonPath).Name.Length);
+            JsonDir = JsonPath.Remove(JsonPath.Length - Path.GetFileName(JsonPath).Length);
         }
 
-        public string Serialize(JsonSerializerOptions options, bool writeToFile = false)
-        {
+        public string Serialize(JsonSerializerOptions options, bool writeToFile = false) {
             var serialized = JsonSerializer.Serialize(Object, options);
-            if (writeToFile)
-            {
-                Directory.CreateDirectory(JsonDir);
+            if (writeToFile) {
+                if (!string.IsNullOrEmpty(JsonDir))
+                    Directory.CreateDirectory(JsonDir);
                 File.WriteAllText(JsonPath, serialized);
             }
             return serialized;

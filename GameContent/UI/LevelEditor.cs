@@ -21,7 +21,8 @@ using TanksRebirth.GameContent.Systems.Coordinates;
 using NativeFileDialogSharp;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.Internals.Common.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
+using System.Reflection;
+using TanksRebirth.Localization;
 
 namespace TanksRebirth.GameContent.UI
 {
@@ -114,9 +115,9 @@ namespace TanksRebirth.GameContent.UI
                 LevelContentsPanel.Y + 60.ToResolutionY()),
                 () => new(LevelContentsPanel.Width - 40.ToResolutionX(),
                 50.ToResolutionY()));
-            MissionName.DefaultString = "Name";
+            MissionName.DefaultString = TankGame.GameLanguage.Name;
 
-            SaveMenuReturn = new("Return", TankGame.TextFont, Color.White);
+            SaveMenuReturn = new(TankGame.GameLanguage.Return, TankGame.TextFont, Color.White);
             SaveMenuReturn.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(),
                 LevelContentsPanel.Y + LevelContentsPanel.Height - 60.ToResolutionY()),
                 () => new(200.ToResolutionX(),
@@ -129,7 +130,7 @@ namespace TanksRebirth.GameContent.UI
                 SetupMissionsBar(_loadedCampaign, false);
             };
 
-            SaveLevelConfirm = new("Save", TankGame.TextFont, Color.White);
+            SaveLevelConfirm = new(TankGame.GameLanguage.Save, TankGame.TextFont, Color.White);
             SaveLevelConfirm.SetDimensions(() => new Vector2(LevelContentsPanel.X + 40.ToResolutionX() + SaveMenuReturn.Size.X,
                 LevelContentsPanel.Y + LevelContentsPanel.Height - 60.ToResolutionY()),
                 () => new(200.ToResolutionX(),
@@ -180,7 +181,7 @@ namespace TanksRebirth.GameContent.UI
             float width = 300;
             float height = 50;
 
-            SwapMenu = new("Campaign Details", TankGame.TextFont, Color.White);
+            SwapMenu = new(TankGame.GameLanguage.CampaignDetails, TankGame.TextFont, Color.White);
             SwapMenu.SetDimensions(() => new Vector2(LevelContentsPanel.X + LevelContentsPanel.Width - width.ToResolutionX() - 20.ToResolutionX(),
                 LevelContentsPanel.Y + LevelContentsPanel.Height - height.ToResolutionY() - 10.ToResolutionY()),
                 () => new(width.ToResolutionX(),
@@ -197,48 +198,48 @@ namespace TanksRebirth.GameContent.UI
                 LevelContentsPanel.Y + 60.ToResolutionY()),
                 () => new(LevelContentsPanel.Width - 40.ToResolutionX(),
                 50.ToResolutionY()));
-            CampaignName.DefaultString = "Campaign Name";
-            CampaignName.Tooltip = "The campaign this mission belongs to.";
+            CampaignName.DefaultString = TankGame.GameLanguage.Name;
+            CampaignName.Tooltip = TankGame.GameLanguage.CampaignNameFlavor;
 
             CampaignDescription = new(TankGame.TextFont, Color.White, 1f, 100);
             CampaignDescription.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), LevelContentsPanel.Y + 120.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 50.ToResolutionY()));
-            CampaignDescription.DefaultString = "Description";
-            CampaignDescription.Tooltip = "Sum up this campaign into your own words.";
+            CampaignDescription.DefaultString = TankGame.GameLanguage.Description;
+            CampaignDescription.Tooltip = TankGame.GameLanguage.DescriptionFlavor;
 
             CampaignAuthor = new(TankGame.TextFont, Color.White, 1f, 25);
             CampaignAuthor.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), LevelContentsPanel.Y + 180.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 50.ToResolutionY()));
-            CampaignAuthor.DefaultString = "Author";
-            CampaignAuthor.Tooltip = "You! The one who created this campaign. Sign it!";
+            CampaignAuthor.DefaultString = TankGame.GameLanguage.Author;
+            CampaignAuthor.Tooltip = TankGame.GameLanguage.AuthorFlavor;
 
             CampaignTags = new(TankGame.TextFont, Color.White, 1f, 35);
             CampaignTags.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), LevelContentsPanel.Y + 240.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 50.ToResolutionY()));
-            CampaignTags.DefaultString = "Tags";
-            CampaignTags.Tooltip = "The tags that describe this campaign well. Be sure to split with ','";
+            CampaignTags.DefaultString = TankGame.GameLanguage.Tags;
+            CampaignTags.Tooltip = TankGame.GameLanguage.TagsFlavor;
 
             CampaignExtraLives = new(TankGame.TextFont, Color.White, 1f, 100);
             CampaignExtraLives.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), LevelContentsPanel.Y + 300.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 50.ToResolutionY()));
-            CampaignExtraLives.DefaultString = "Extra Life Missions";
-            CampaignExtraLives.Tooltip = "The level indexes of missions to provide extra lives. Be sure to split with ','";
+            CampaignExtraLives.DefaultString = TankGame.GameLanguage.ExtraLifeMissions;
+            CampaignExtraLives.Tooltip = TankGame.GameLanguage.ExtraLifeMissionsFlavor;
 
             CampaignVersion = new(TankGame.TextFont, Color.White, 1f, 10);
             CampaignVersion.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), LevelContentsPanel.Y + 360.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 50.ToResolutionY()));
-            CampaignVersion.DefaultString = "Version";
-            CampaignVersion.Tooltip = "The version of THIS CAMPAIGN, not the game.";
+            CampaignVersion.DefaultString = TankGame.GameLanguage.Version;
+            CampaignVersion.Tooltip = TankGame.GameLanguage.VersionFlavor;
 
             CampaignLoadingBGColor = new(TankGame.TextFont, Color.White, 1f, 11);
             CampaignLoadingBGColor.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), LevelContentsPanel.Y + 420.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 50.ToResolutionY()));
-            CampaignLoadingBGColor.DefaultString = "Background Color";
-            CampaignLoadingBGColor.Tooltip = "Changes the color of the background when transitioning missions.\nBe sure there are no spaces between commas.";
+            CampaignLoadingBGColor.DefaultString = TankGame.GameLanguage.BGColor;
+            CampaignLoadingBGColor.Tooltip = TankGame.GameLanguage.BGColorFlavor;
 
             CampaignLoadingStripColor = new(TankGame.TextFont, Color.White, 1f, 11);
             CampaignLoadingStripColor.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), LevelContentsPanel.Y + 480.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 50.ToResolutionY()));
-            CampaignLoadingStripColor.DefaultString = "Strip Color";
-            CampaignLoadingStripColor.Tooltip = "Changes the color of the strip that appears across\n the screen when transitioning missions.\nBe sure there are no spaces between commas.";
+            CampaignLoadingStripColor.DefaultString = TankGame.GameLanguage.StripColor;
+            CampaignLoadingStripColor.Tooltip = TankGame.GameLanguage.StripColorFlavor;
 
             CampaignMajorVictory = new("", TankGame.TextFont, Color.White, () => Vector2.One.ToResolution());
             CampaignMajorVictory.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), LevelContentsPanel.Y + 540.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 50.ToResolutionY()));
             CampaignMajorVictory.OnLeftClick = (a) => _hasMajorVictory = !_hasMajorVictory;
-            CampaignMajorVictory.Tooltip = "If yes, at the end of this campaign it will play a\ndifferent, more accomplishing soundtrack at the end.";
+            CampaignMajorVictory.Tooltip = TankGame.GameLanguage.HasMajorVictoryThemeFlavor;
             SetSaveMenuVisibility(false);
 
             _campaignElems.Add(MissionName);
@@ -295,6 +296,8 @@ namespace TanksRebirth.GameContent.UI
         private static float _missionsMaxOff;
 
         private static bool _saveMenuOpen;
+
+        public static List<string> TeamColorsLocalized = new();
 
         /// <summary>
         /// Moves the currently loaded mission on the loaded levels tab. Will throw a <see cref="IndexOutOfRangeException"/> if the mission is too high or low.
@@ -380,41 +383,55 @@ namespace TanksRebirth.GameContent.UI
         }
         public static void Initialize()
         {
-            if (_initialized)
-                return;
-            _initialized = true;
+            if (_initialized) {
+                foreach (var field in typeof(LevelEditor).GetFields()) {
+                    if (field.GetValue(null) is UIElement) {
+                        ((UIElement)field.GetValue(null)).Remove();
+                        field.SetValue(null, null);
+                    }
+                }
+            }
+            TeamColorsLocalized.Clear();
+            for (int i = 0; i < TeamID.Collection.Count; i++) {
+                var name = TeamID.Collection.GetKey(i);
+                TeamColorsLocalized.Add((string)typeof(Language).GetProperty(name).GetValue(TankGame.GameLanguage));
+            }
 
             #region Enumerable Init
-            foreach (var file in Directory.GetFiles(Path.Combine("Content", "Assets", "textures", "ui", "leveledit")))
-            {
-                var fileName = Path.GetFileNameWithoutExtension(file);
-                var assetName = file;
-                RenderTextures.Add(fileName, GameResources.GetGameResource<Texture2D>(assetName, false, false));
-            }
-            var names = TankID.Collection.Keys;
-            for (int i = 0; i < names.Length; i++) {
-                var nTL = names[i];
+            if (!_initialized) {
 
-                if (RenderTextures.ContainsKey(nTL))
-                    _renderNamesTanks.Add(nTL);
-            }
-            names = BlockID.Collection.Keys;
-            for (int i = 0; i < names.Length; i++) {
-                var nTL = names[i];
+                foreach (var file in Directory.GetFiles(Path.Combine("Content", "Assets", "textures", "ui", "leveledit"))) {
+                    var fileName = Path.GetFileNameWithoutExtension(file);
+                    var assetName = file;
+                    RenderTextures.Add(fileName, GameResources.GetGameResource<Texture2D>(assetName, false, false));
+                }
+                var names = TankID.Collection.Keys;
+                for (int i = 0; i < names.Length; i++) {
+                    var nTL = names[i];
 
-                if (RenderTextures.ContainsKey(nTL))
-                    _renderNamesBlocks.Add(nTL);
-            }
-            names = PlayerID.Collection.Keys;
-            for (int i = 0; i < names.Length; i++) {
-                var nTL = names[i];
+                    if (RenderTextures.ContainsKey(nTL))
+                        _renderNamesTanks.Add(nTL);
+                }
+                names = BlockID.Collection.Keys;
+                for (int i = 0; i < names.Length; i++) {
+                    var nTL = names[i];
 
-                if (RenderTextures.ContainsKey(nTL))
-                    _renderNamesPlayers.Add(nTL);
+                    if (RenderTextures.ContainsKey(nTL))
+                        _renderNamesBlocks.Add(nTL);
+                }
+                names = PlayerID.Collection.Keys;
+                for (int i = 0; i < names.Length; i++) {
+                    var nTL = names[i];
+
+                    if (RenderTextures.ContainsKey(nTL))
+                        _renderNamesPlayers.Add(nTL);
+                }
             }
             #endregion
 
-            TestLevel = new("Test Level", TankGame.TextFont, Color.White);
+            _initialized = true;
+
+            TestLevel = new(TankGame.GameLanguage.TestLevel, TankGame.TextFont, Color.White);
             TestLevel.SetDimensions(() => new(WindowUtils.WindowWidth * 0.01f, WindowUtils.WindowHeight * 0.725f), () => new Vector2(200, 50).ToResolution());
 
             TestLevel.OnLeftClick = (l) => {
@@ -425,7 +442,7 @@ namespace TanksRebirth.GameContent.UI
                 _cachedMission = Mission.GetCurrent(name);
             };
 
-            ReturnToEditor = new("Return to Editor", TankGame.TextFont, Color.White);
+            ReturnToEditor = new(TankGame.GameLanguage.Return, TankGame.TextFont, Color.White);
             ReturnToEditor.SetDimensions(() => new(WindowUtils.WindowWidth * 0.01f, WindowUtils.WindowHeight * 0.02f), () => new Vector2(250, 50).ToResolution());
 
             ReturnToEditor.OnLeftClick = (l) => {
@@ -437,31 +454,31 @@ namespace TanksRebirth.GameContent.UI
                 SetupMissionsBar(_loadedCampaign);
             };
 
-            Perspective = new("Perspective", TankGame.TextFont, Color.White);
+            Perspective = new(TankGame.GameLanguage.Perspective, TankGame.TextFont, Color.White);
             Perspective.SetDimensions(() => new(WindowUtils.WindowWidth * 0.125f, WindowUtils.WindowHeight * 0.725f), () => new Vector2(200, 50).ToResolution());
-            Perspective.Tooltip = "View your mission at the perspective of the player.";
+            Perspective.Tooltip = TankGame.GameLanguage.PerspectiveFlavor;
             Perspective.OnLeftClick = (l) => {
                 TankGame.OverheadView = !TankGame.OverheadView;
             };
 
-            TerrainCategory = new("Terrain", TankGame.TextFont, Color.White);
+            TerrainCategory = new(TankGame.GameLanguage.Terrain, TankGame.TextFont, Color.White);
             TerrainCategory.SetDimensions(() => new(WindowUtils.WindowWidth * 0.75f, WindowUtils.WindowHeight * 0.725f), () => new Vector2(200, 50).ToResolution());
             TerrainCategory.OnLeftClick = (l) => {
                 CurCategory = Category.Terrain;
             };
 
-            EnemyTanksCategory = new("Enemies", TankGame.TextFont, Color.White);
+            EnemyTanksCategory = new(TankGame.GameLanguage.AIControlled, TankGame.TextFont, Color.White);
             EnemyTanksCategory.SetDimensions(() => new(WindowUtils.WindowWidth * 0.875f, WindowUtils.WindowHeight * 0.725f), () => new Vector2(200, 50).ToResolution());
             EnemyTanksCategory.OnLeftClick = (l) => {
                 CurCategory = Category.EnemyTanks;
             };
-            PlayerTanksCategory = new("Players", TankGame.TextFont, Color.White);
+            PlayerTanksCategory = new(TankGame.GameLanguage.Players, TankGame.TextFont, Color.White);
             PlayerTanksCategory.SetDimensions(() => new(WindowUtils.WindowWidth * 0.875f, WindowUtils.WindowHeight * 0.65f), () => new Vector2(200, 50).ToResolution());
             PlayerTanksCategory.OnLeftClick = (l) => {
                 CurCategory = Category.PlayerTanks;
             };
 
-            Properties = new("Properties", TankGame.TextFont, Color.White);
+            Properties = new(TankGame.GameLanguage.Properties, TankGame.TextFont, Color.White);
 
             float width = 200;
 
@@ -473,7 +490,7 @@ namespace TanksRebirth.GameContent.UI
                     GUICategory = UICategory.LevelEditor;
             };
 
-            LoadLevel = new("Load", TankGame.TextFont, Color.White);
+            LoadLevel = new(TankGame.GameLanguage.Load, TankGame.TextFont, Color.White);
 
             LoadLevel.SetDimensions(() => new(WindowUtils.WindowWidth * 0.575f - (width / 2).ToResolutionX(), 10.ToResolutionY()), () => new Vector2(width, 50).ToResolution());
             LoadLevel.OnLeftClick = (a) => {
@@ -707,7 +724,7 @@ namespace TanksRebirth.GameContent.UI
 
             if (!ShouldDrawBarUI)
                 return;
-            var info = "If you are using this editor to export to Tanks! .bin maps,\nplaytestingthe level will be liable to switching up the\nIDs of the tanks. Playtest at your own risk.";
+            var info = TankGame.GameLanguage.BinDisclaimer;
             TankGame.SpriteRenderer.DrawString(TankGame.TextFont, info, new Vector2(WindowUtils.WindowWidth - 175.ToResolutionX(), WindowUtils.WindowHeight / 2 - 20.ToResolutionY()), Color.White, new Vector2(0.425f).ToResolution(), 0f, TankGame.TextFont.MeasureString(info) / 2);
 
             #region Main UI
@@ -732,9 +749,9 @@ namespace TanksRebirth.GameContent.UI
             // level info
             TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Rectangle(0, 0, 350, 125).ToResolution(), null, Color.Gray, 0f, Vector2.Zero, default, 0f);
             TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Rectangle(0, 0, 350, 40).ToResolution(), null, Color.White, 0f, Vector2.Zero, default, 0f);
-            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "Level Information", new Vector2(175, 3).ToResolution(), Color.Black, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(Anchor.TopCenter, TankGame.TextFont.MeasureString("Level Information")));
-            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"Total Enemy Tanks: {AITank.CountAll()}", new Vector2(10, 40).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
-            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"Difficulty Rating: {DifficultyAlgorithm.GetDifficulty(missionToRate):0.00}", new Vector2(10, 80).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
+            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, TankGame.GameLanguage.LevelInfo, new Vector2(175, 3).ToResolution(), Color.Black, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(Anchor.TopCenter, TankGame.TextFont.MeasureString(TankGame.GameLanguage.LevelInfo)));
+            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"{TankGame.GameLanguage.EnemyTankTotal}: {AITank.CountAll()}", new Vector2(10, 40).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
+            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"{TankGame.GameLanguage.DifficultyRating}: {DifficultyAlgorithm.GetDifficulty(missionToRate):0.00}", new Vector2(10, 80).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
 
 
             // render campaign missions ui 
@@ -744,31 +761,32 @@ namespace TanksRebirth.GameContent.UI
                 _missionButtonScissor = new Rectangle(_missionTab.X, _missionTab.Y + heightDiff, _missionTab.Width, _missionTab.Height - heightDiff * 2).ToResolution();
                 TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, _missionTab.ToResolution(), null, Color.Gray, 0f, Vector2.Zero, default, 0f);
                 TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Rectangle(_missionTab.X, _missionTab.Y, _missionTab.Width, heightDiff).ToResolution(), null, Color.White, 0f, Vector2.Zero, default, 0f);
-                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "Mission List", new Vector2(175, 153).ToResolution(), Color.Black, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(Anchor.TopCenter, TankGame.TextFont.MeasureString("Mission List")));
+                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, TankGame.GameLanguage.MissionList, new Vector2(175, 153).ToResolution(), Color.Black, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(Anchor.TopCenter, TankGame.TextFont.MeasureString(TankGame.GameLanguage.MissionList)));
             }
             // render teams
 
             // placement information
             TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Rectangle(WindowUtils.WindowWidth - (int)350.ToResolutionX(), 0, (int)350.ToResolutionX(), (int)500.ToResolutionY()), null, Color.Gray, 0f, Vector2.Zero, default, 0f);
             TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Rectangle(WindowUtils.WindowWidth - (int)350.ToResolutionX(), 0, (int)350.ToResolutionX(), (int)40.ToResolutionY()), null, Color.White, 0f, Vector2.Zero, default, 0f);
-            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "Placement Information", new Vector2(WindowUtils.WindowWidth - 325.ToResolutionX(), 3.ToResolutionY()), Color.Black, Vector2.One.ToResolution(), 0f, Vector2.Zero);
+            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, TankGame.GameLanguage.PlaceInfo, new Vector2(WindowUtils.WindowWidth - 175.ToResolutionX(), 3.ToResolutionY()), Color.Black, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(Anchor.TopCenter, TankGame.TextFont.MeasureString(TankGame.GameLanguage.PlaceInfo)));
             //if (CurCategory == Category.Blocks)
                 //TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"Block Stack: {BlockHeight}", new Vector2(WindowUtils.WindowWidth - 335.ToResolutionX(), 40.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
             var helpText = "";
             Vector2 start = new();
             if (CurCategory == Category.EnemyTanks || CurCategory == Category.PlayerTanks)
             {
-                helpText = "UP and DOWN to change teams.";
+                helpText = TankGame.GameLanguage.PlacementTeamInfo;
                 start = new(WindowUtils.WindowWidth - 250.ToResolutionX(), 140.ToResolutionY());
                 // TODO: should be optimised. do later.
-                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "Tank Teams", new Vector2(start.X + 45.ToResolutionX(), start.Y - 80.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, TankGame.TextFont.MeasureString("Tank Teams") / 2);
+                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, TankGame.GameLanguage.TankTeams, new Vector2(start.X + 45.ToResolutionX(), start.Y - 80.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, TankGame.TextFont.MeasureString("Tank Teams") / 2);
 
                 TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Rectangle((int)start.X, (int)(start.Y - 40.ToResolutionY()), (int)40.ToResolutionX(), (int)40.ToResolutionY()), null, Color.Black, 0f, Vector2.Zero, default, 0f);
-                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "No Team", new Vector2(start.X + 45.ToResolutionX(), start.Y - 40.ToResolutionY()), Color.Black, Vector2.One.ToResolution(), 0f, Vector2.Zero);
+                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, TankGame.GameLanguage.NoTeam, new Vector2(start.X + 45.ToResolutionX(), start.Y - 40.ToResolutionY()), Color.Black, Vector2.One.ToResolution(), 0f, Vector2.Zero);
                 for (int i = 0; i < TeamID.Collection.Count - 1; i++)
                 {
                     var color = TeamID.TeamColors[i + 1];
-                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, TeamID.Collection.GetKey(i + 1), new Vector2(start.X + 45.ToResolutionX(), start.Y + (i * 40).ToResolutionY()), color, Vector2.One.ToResolution(), 0f, Vector2.Zero); ;
+
+                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, TeamColorsLocalized[i + 1], new Vector2(start.X + 45.ToResolutionX(), start.Y + (i * 40).ToResolutionY()), color, Vector2.One.ToResolution(), 0f, Vector2.Zero);
                     TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Rectangle((int)start.X, (int)(start.Y + (i * 40).ToResolutionY()), (int)40.ToResolutionX(), (int)40.ToResolutionY()), null, color, 0f, Vector2.Zero, default, 0f);
                 }
                 TankGame.SpriteRenderer.DrawString(TankGame.TextFontLarge, ">", new Vector2(start.X - 25.ToResolutionX(), start.Y + ((int)(SelectedTankTeam - 1) * 40).ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, TankGame.TextFontLarge.MeasureString(">") / 2);
@@ -803,34 +821,34 @@ namespace TanksRebirth.GameContent.UI
                     ClickEventsPerItem[new Rectangle((int)(34.ToResolutionX() + xOff + _barOffset), (int)(WindowUtils.WindowBottom.Y * 0.8f), (int)234.ToResolutionX(), (int)(WindowUtils.WindowHeight * 0.2f))] =
                         (i + 2, (i + 2) switch
                         {
-                            TankID.Brown => "An easy to defeat, stationary, slow firing enemy.",
-                            TankID.Ash => "Similar to the Brown tank, but can move slowly and fire more often.",
-                            TankID.Marine => "A slow-moving, passive and methodical enemy.\nShoots off rockets instead of standard shells.",
-                            TankID.Yellow => "Not incredibly dangerous. Lays mines often and move fast.",
-                            TankID.Pink => "A slow, but incredibly persistent and aggressive tank.\nCan fire multiple bullets at once.",
-                            TankID.Green => "A highly-dangerous but stationary tank.\nShoots multiple rockets that can bounce twice.",
-                            TankID.Violet => "A fast-moving, intelligent tank that can spray\nup to 5 bullets at once and can lay mines.",
-                            TankID.White => "A slow-moving, powerful tank that turns invisible\nat the start of the mission and can fire multiple bullets and lay mines.",
-                            TankID.Black => "A tank that moves faster than the player, fires rockets often,\nis aggressive, and can dodge well. Can lay mines.",
-                            TankID.Bronze => "A simple, stationary tank that can fire multiple bullets\nand aims directly at its target.",
-                            TankID.Silver => "An advanced and difficult mobile tank that can fire up\nto 8 bullets at fast rates and can dodge well. Can lay mines",
-                            TankID.Sapphire => "A deadly tank that can rapidly fire up to 3 rockets\nin a single volley. Can lay mines.",
-                            TankID.Ruby => "A slow, but very aggressive tank that constantly fires shells.",
-                            TankID.Citrine => "An insanely fast tank that shoots very fast shells at its target.\nLays mines frequently.",
-                            TankID.Amethyst => "A fast, very agile, and dodgy tank that fires a spread\nof shells at its target. Can lay mines.",
-                            TankID.Emerald => "A stationary tank that turns invisible at the start of the round.\nFires multiple double-bounce rockets at its target.",
-                            TankID.Gold => "A slow and mobile tank that turns invisible at the start of the round\nand lays no tracks for players to see. Can lay mines.",
-                            TankID.Obsidian => "A very fast, but very unintelligent tank that fires\nfast rockets frequently with 2 bounces. Can lay mines.",
-                            TankID.Granite => "A very slow, mobile tank that becomes stunned\n for a while upon firing. Shoots faster-than-normal shells.",
-                            TankID.Bubblegum => "A medium-speed, fast-firing dodgy tank that can lay mines.",
-                            TankID.Water => "A medium-speed tank that moves linearly.\nFires rockets that bounce one time, and can also lay mines.",
-                            TankID.Crimson => "A slow tank that fires in a burst of 5 shells. Can lay mines.",
-                            TankID.Tiger => "A very wary tank that strafes very often and dodges very often.\nFires shells fast and lays mines often.",
-                            TankID.Fade => "A tank that is mainly focused on dodging threats.\nFires often and can lay mines.",
-                            TankID.Creeper => "A highly dangerous tank that fires very fast rockets\n that bounce 3 times. Moves very slowly.",
-                            TankID.Gamma => "A stationary tank that fires insanely fast bullets at rapid frequency.",
-                            TankID.Marble => "An apex predator tank that is good at dodging, good at\ncalculating shots, is fast, and fires fast rockets rapidly.",
-                            _ => "What?"
+                            TankID.Brown => TankGame.GameLanguage.BrownFlavor,
+                            TankID.Ash => TankGame.GameLanguage.AshFlavor,
+                            TankID.Marine => TankGame.GameLanguage.MarineFlavor,
+                            TankID.Yellow => TankGame.GameLanguage.YellowFlavor,
+                            TankID.Pink => TankGame.GameLanguage.PinkFlavor,
+                            TankID.Green => TankGame.GameLanguage.GreenFlavor,
+                            TankID.Violet => TankGame.GameLanguage.VioletFlavor,
+                            TankID.White => TankGame.GameLanguage.WhiteFlavor,
+                            TankID.Black => TankGame.GameLanguage.BlackFlavor,
+                            TankID.Bronze => TankGame.GameLanguage.BronzeFlavor,
+                            TankID.Silver => TankGame.GameLanguage.SilverFlavor,
+                            TankID.Sapphire => TankGame.GameLanguage.SapphireFlavor,
+                            TankID.Ruby => TankGame.GameLanguage.RubyFlavor,
+                            TankID.Citrine => TankGame.GameLanguage.CitrineFlavor,
+                            TankID.Amethyst => TankGame.GameLanguage.AmethystFlavor,
+                            TankID.Emerald => TankGame.GameLanguage.EmeraldFlavor,
+                            TankID.Gold => TankGame.GameLanguage.GoldFlavor,
+                            TankID.Obsidian => TankGame.GameLanguage.ObsidianFlavor,
+                            TankID.Granite => TankGame.GameLanguage.GraniteFlavor,
+                            TankID.Bubblegum => TankGame.GameLanguage.BubblegumFlavor,
+                            TankID.Water => TankGame.GameLanguage.WaterFlavor,
+                            TankID.Crimson => TankGame.GameLanguage.CrimsonFlavor,
+                            TankID.Tiger => TankGame.GameLanguage.TigerFlavor,
+                            TankID.Fade => TankGame.GameLanguage.FadeFlavor,
+                            TankID.Creeper => TankGame.GameLanguage.CreeperFlavor,
+                            TankID.Gamma => TankGame.GameLanguage.GammaFlavor,
+                            TankID.Marble => TankGame.GameLanguage.MarbleFlavor,
+                            _ => "Did Not Load (DNL)"
                         }); // TODO: localize this. i hate english.
 
                     TankGame.SpriteRenderer.Draw(RenderTextures[_renderNamesTanks[i]], new Vector2(24.ToResolutionX() + xOff + _barOffset, WindowUtils.WindowBottom.Y * 0.75f), null, (int)SelectedTankTier - 2 == i ? SelectionColor : Color.White, 0f, Vector2.Zero, Vector2.One.ToResolution(), default, 0f);
@@ -845,10 +863,10 @@ namespace TanksRebirth.GameContent.UI
                     ClickEventsPerItem[new Rectangle((int)(34.ToResolutionX() + xOff + _barOffset), (int)(WindowUtils.WindowBottom.Y * 0.8f), (int)234.ToResolutionX(), (int)(WindowUtils.WindowHeight * 0.2f))] =
                         (i, i switch
                         {
-                            BlockID.Wood => "An indestructible obstacle.",
-                            BlockID.Cork => "An obstacle that can be destroyed by mines.",
-                            BlockID.Hole => "An obstacle that tanks cannot travel through, but shells can.",
-                            _ => "What?"
+                            BlockID.Wood => TankGame.GameLanguage.WoodFlavor,
+                            BlockID.Cork => TankGame.GameLanguage.CorkFlavor,
+                            BlockID.Hole => TankGame.GameLanguage.HoleFlavor,
+                            _ => "Did Not Load (DNL)"
                         });
 
                     TankGame.SpriteRenderer.Draw(RenderTextures[_renderNamesBlocks[i]], new Vector2(24.ToResolutionX() + xOff + _barOffset, WindowUtils.WindowBottom.Y * 0.75f), null, (int)SelectedBlockType == i ? SelectionColor : Color.White, 0f, Vector2.Zero, Vector2.One.ToResolution(), default, 0f);
@@ -863,11 +881,11 @@ namespace TanksRebirth.GameContent.UI
                     ClickEventsPerItem[new Rectangle((int)(34.ToResolutionX() + xOff + _barOffset), (int)(WindowUtils.WindowBottom.Y * 0.8f), (int)234.ToResolutionX(), (int)(WindowUtils.WindowHeight * 0.2f))] =
                         (i, i switch
                         {
-                            PlayerID.Blue => "The blue player tank (P1)",
-                            PlayerID.Red => "The red player tank. (P2)",
-                            PlayerID.GreenPlr => "The green player tank (P3)",
-                            PlayerID.YellowPlr => "The yellow player tank (P4)",
-                            _ => "What?"
+                            PlayerID.Blue => TankGame.GameLanguage.P1TankFlavor,
+                            PlayerID.Red => TankGame.GameLanguage.P2TankFlavor,
+                            PlayerID.GreenPlr => TankGame.GameLanguage.P3TankFlavor,
+                            PlayerID.YellowPlr => TankGame.GameLanguage.P4TankFlavor,
+                            _ => "Did Not Load (DNL)"
                         });
 
                     TankGame.SpriteRenderer.Draw(RenderTextures[_renderNamesPlayers[i]], new Vector2(24.ToResolutionX() + xOff + _barOffset, WindowUtils.WindowBottom.Y * 0.75f), null, (int)SelectedPlayerType == i ? SelectionColor : Color.White, 0f, Vector2.Zero, Vector2.One.ToResolution(), default, 0f);
@@ -899,7 +917,7 @@ namespace TanksRebirth.GameContent.UI
             if (Active && GUICategory == UICategory.SavingThings)
                 TankGame.SpriteRenderer.Draw(TankGame.WhitePixel,
                    LevelContentsPanel, null, Color.Gray, 0f, Vector2.Zero, default, 0f);
-            var txt = !_viewMissionDetails ? "Campaign Details" : "Mission Details";
+            var txt = !_viewMissionDetails ? TankGame.GameLanguage.CampaignDetails : TankGame.GameLanguage.MissionDetails;
 
             if (GUICategory == UICategory.SavingThings)
                 TankGame.SpriteRenderer.DrawString(TankGame.TextFont, txt, new Vector2(LevelContentsPanel.X + LevelContentsPanel.Width / 2, LevelContentsPanel.Y + 10.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, new Vector2(TankGame.TextFont.MeasureString(txt).X / 2, 0));
@@ -936,8 +954,8 @@ namespace TanksRebirth.GameContent.UI
                 _missionsOffset += InputUtils.GetScrollWheelChange() * 30;
 
             _missionsMaxOff = _missionButtons.Count * 30.ToResolutionY();
-            SaveLevelConfirm.Tooltip = _viewMissionDetails ? "Save your mission directly to a file." : "Save your campaign directly to a file.\nIt will need to be in your Campaigns folder to be detected.";
-            CampaignMajorVictory.Text = "Has Major Victory Theme: " + (_hasMajorVictory ? "Yes" : "No");
+            SaveLevelConfirm.Tooltip = _viewMissionDetails ? TankGame.GameLanguage.MissionSaveFlavor : TankGame.GameLanguage.CampaignSaveFlavor;
+            CampaignMajorVictory.Text = TankGame.GameLanguage.HasMajorVictoryTheme + ": " + (_hasMajorVictory ? TankGame.GameLanguage.Yes : TankGame.GameLanguage.No);
 
             if (_missionsOffset > 0)
                 _missionsOffset = 0;

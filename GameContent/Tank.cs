@@ -523,7 +523,6 @@ public abstract class Tank
         OnPostUpdate?.Invoke(this);
     }
 
-    public static string HitString = "Hit!";
     /// <summary>Damage this <see cref="Tank"/>. If it has no armor, <see cref="Destroy"/> it.</summary>
     public virtual void Damage(ITankHurtContext context) {
         if (Dead || Properties.Immortal)
@@ -534,7 +533,7 @@ public abstract class Tank
 
         void doTextPopup()
         {
-            var part = GameHandler.ParticleSystem.MakeParticle(Position3D + new Vector3(0, 15, 0), HitString);
+            var part = GameHandler.ParticleSystem.MakeParticle(Position3D + new Vector3(0, 15, 0), TankGame.GameLanguage.Hit);
 
             part.IsIn2DSpace = true;
             part.ToScreenSpace = true;
@@ -562,7 +561,7 @@ public abstract class Tank
                 }
             }
             part.HasAddativeBlending = false;
-            part.Origin2D = TankGame.TextFont.MeasureString(HitString) / 2;
+            part.Origin2D = TankGame.TextFont.MeasureString(TankGame.GameLanguage.Hit) / 2;
             part.Scale = new Vector3(Vector2.One.ToResolution(), 1);
             part.Alpha = 0;
 

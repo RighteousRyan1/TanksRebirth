@@ -23,8 +23,19 @@ namespace TanksRebirth.GameContent.UI
 
         public static bool BatchVisible { get; set; }
 
+        private static bool _initialized;
+
         public static void Initialize()
         {
+            if (_initialized) {
+                foreach (var field in typeof(VolumeUI).GetFields()) {
+                    if (field.GetValue(null) is UIElement) {
+                        ((UIElement)field.GetValue(null)).Remove();
+                        field.SetValue(null, null);
+                    }
+                }
+            }
+            _initialized = true;
             //Music
             MusicVolume = new()
             {

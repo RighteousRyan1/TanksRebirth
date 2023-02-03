@@ -64,6 +64,14 @@ namespace TanksRebirth.GameContent.UI
 
         internal static void Initialize()
         {
+            if (_initialized) {
+                foreach (var field in typeof(GameUI).GetFields()) {
+                    if (field.GetValue(null) is UIElement) {
+                        ((UIElement)field.GetValue(null)).Remove();
+                        field.SetValue(null, null);
+                    }
+                }
+            }
             _initialized = true;
             var ttColor = Color.LightGray;
             SpriteFontBase font = TankGame.TextFont;

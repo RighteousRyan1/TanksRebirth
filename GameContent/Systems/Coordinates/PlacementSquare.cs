@@ -115,7 +115,7 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
                 {
                     if (BlockId > -1)
                         Block.AllBlocks[BlockId]?.Remove();
-                    if (TankId > -1) { }
+                    if (TankId > -1)
                         GameHandler.AllTanks[TankId]?.Remove(true);
                     BlockId = -1;
                     TankId = -1;
@@ -234,7 +234,7 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
                         else if (TankId > -1) {
                             var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
 
-                            SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"{TeamID.Collection.GetKey(GameHandler.AllTanks[TankId].Team)}", pos - new Vector2(0, 8), TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.Black, new Vector2(0.9f) * TankGame.AddativeZoom, 0f);
+                            SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"{LevelEditor.TeamColorsLocalized[GameHandler.AllTanks[TankId].Team]}", pos - new Vector2(0, 8), TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.Black, new Vector2(0.9f) * TankGame.AddativeZoom, 0f);
 
                             if (GameHandler.AllTanks[TankId] is AITank ai)
                                 SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"ID: {ai.AITankId}", pos + new Vector2(0, 8), TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.Black, new Vector2(0.8f) * TankGame.AddativeZoom, 0f);

@@ -181,6 +181,14 @@ namespace TanksRebirth.GameContent.UI
         }
         public static void InitializeUIGraphics()
         {
+            if (_initialized) {
+                foreach (var field in typeof(MainMenu).GetFields()) {
+                    if (field.GetValue(null) is UIElement uielem) {
+                        uielem.Remove();
+                        uielem = null;
+                    }
+                }
+            }
             _initialized = true;
 
             TankGame.Instance.Window.ClientSizeChanged += UpdateProjection;
@@ -200,7 +208,7 @@ namespace TanksRebirth.GameContent.UI
             PlayButton_Multiplayer = new(TankGame.GameLanguage.Multiplayer, font, Color.WhiteSmoke)
             {
                 IsVisible = false,
-                Tooltip = "In the works!"
+                Tooltip = TankGame.GameLanguage.MultiplayerFlavor
             };
             PlayButton_Multiplayer.SetDimensions(() => new Vector2(700, 750).ToResolution(), () => new Vector2(500, 50).ToResolution());
 
@@ -214,7 +222,7 @@ namespace TanksRebirth.GameContent.UI
             DifficultiesButton = new(TankGame.GameLanguage.Difficulties, font, Color.WhiteSmoke)
             {
                 IsVisible = false,
-                Tooltip = "Change the difficulty of the game."
+                Tooltip = TankGame.GameLanguage.DifficultiesFlavor
             };
             DifficultiesButton.SetDimensions(() => new Vector2(700, 550).ToResolution(), () => new Vector2(500, 50).ToResolution());
             DifficultiesButton.OnLeftClick = (element) =>
@@ -226,7 +234,7 @@ namespace TanksRebirth.GameContent.UI
             PlayButton_SinglePlayer = new(TankGame.GameLanguage.SinglePlayer, font, Color.WhiteSmoke)
             {
                 IsVisible = false,
-                Tooltip = "Choose from your downloaded campaigns."
+                Tooltip = TankGame.GameLanguage.SinglePlayerFlavor
             };
             PlayButton_SinglePlayer.SetDimensions(() => new Vector2(700, 450).ToResolution(), () => new Vector2(500, 50).ToResolution());
 
@@ -240,7 +248,7 @@ namespace TanksRebirth.GameContent.UI
 
             PlayButton_LevelEditor = new(TankGame.GameLanguage.LevelEditor, font, Color.WhiteSmoke) {
                 IsVisible = false,
-                Tooltip = "Create your own levels and campaigns with ease!"
+                Tooltip = TankGame.GameLanguage.LevelEditFlavor
             };
             PlayButton_LevelEditor.SetDimensions(() => new Vector2(700, 650).ToResolution(), () => new Vector2(500, 50).ToResolution());
             PlayButton_LevelEditor.OnLeftClick = (b) => {
@@ -356,10 +364,10 @@ namespace TanksRebirth.GameContent.UI
             };
             StartMPGameButton.SetDimensions(() => new Vector2(700, 600).ToResolution(), () => new Vector2(500, 50).ToResolution());
 
-            CosmeticsMenuButton = new("Cosmetics Menu", font, Color.WhiteSmoke)
+            CosmeticsMenuButton = new(TankGame.GameLanguage.CosmeticsMenu, font, Color.WhiteSmoke)
             {
                 IsVisible = false,
-                Tooltip = "Use some of your currency and luck out\non items for your tank!"
+                Tooltip = TankGame.GameLanguage.CosmeticsFlavor
             };
             CosmeticsMenuButton.SetDimensions(() => new Vector2(50, 50).ToResolution(), () => new Vector2(300, 50).ToResolution());
             CosmeticsMenuButton.OnLeftClick += (elem) =>
@@ -430,7 +438,7 @@ namespace TanksRebirth.GameContent.UI
             };
             ServerNameInput.SetDimensions(() => new Vector2(100, 800).ToResolution(), () => new Vector2(500, 50).ToResolution());
 
-            StatsMenu = new("Game Stats", font, Color.WhiteSmoke)
+            StatsMenu = new(TankGame.GameLanguage.GameStats, font, Color.WhiteSmoke)
             { 
                 IsVisible = false,
                 OnLeftClick = (a) => { MenuState = State.StatsMenu; },
@@ -951,16 +959,16 @@ namespace TanksRebirth.GameContent.UI
         {
             _info = new string[]
             {
-                $"Total Tank Kills: {TankGame.GameData.TotalKills}",
-                $"Tank Kills w/Bullets: {TankGame.GameData.BulletKills}",
-                $"Tank Kills w/Bounced Bullets: {TankGame.GameData.BounceKills}",
-                $"Tank Kills w/Mines: {TankGame.GameData.MineKills}",
-                $"Missions Completed: {TankGame.GameData.MissionsCompleted}",
-                $"Campaigns Completed: {TankGame.GameData.CampaignsCompleted}",
-                $"Deaths: {TankGame.GameData.Deaths}",
-                $"Suicides: {TankGame.GameData.Suicides}",
-                $"Time Played Total: {TankGame.GameData.TimePlayed.StringFormat()} ({(TankGame.GameData.TimePlayed.TotalMinutes < 120 ? $"{TankGame.GameData.TimePlayed.TotalMinutes:0.#} minutes" : $"{TankGame.GameData.TimePlayed.TotalHours:#.#} hours")})",
-                $"Current Play Session: {TankGame.CurrentSessionTimer.Elapsed.StringFormat()}"
+                $"{TankGame.GameLanguage.TankKillsTotal}: {TankGame.GameData.TotalKills}",
+                $"{TankGame.GameLanguage.TankKillsTotalBullets}: {TankGame.GameData.BulletKills}",
+                $"{TankGame.GameLanguage.TankKillsTotalBulletsBounced}: {TankGame.GameData.BounceKills}",
+                $"{TankGame.GameLanguage.TankKillsTotalMines}: {TankGame.GameData.MineKills}",
+                $"{TankGame.GameLanguage.MissionsCompleted}: {TankGame.GameData.MissionsCompleted}",
+                $"{TankGame.GameLanguage.CampaignsCompleted}: {TankGame.GameData.CampaignsCompleted}",
+                $"{TankGame.GameLanguage.Deaths}: {TankGame.GameData.Deaths}",
+                $"{TankGame.GameLanguage.Suicides}: {TankGame.GameData.Suicides}",
+                $"{TankGame.GameLanguage.TimePlayedTotal}: {TankGame.GameData.TimePlayed.TotalHours:0.0} hrs",
+                $"{TankGame.GameLanguage.TimePlayedCurrent}: {TankGame.CurrentSessionTimer.Elapsed.TotalMinutes:0.0} mins   "
             };
         }
         // this method is causing considerable amounts of garbage collection!

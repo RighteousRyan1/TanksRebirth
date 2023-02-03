@@ -1,11 +1,13 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Localization;
 using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.Systems.CommandsSystem;
@@ -24,6 +26,24 @@ public static class CommandGlobals {
                 var elem = Commands.ElementAt(i);
 
                 ChatSystem.SendMessage($"{elem.Key.Name}: {elem.Key.Description}", Color.Khaki);
+            }
+        }),
+        [new CommandInput(name: "setlang", description: "Set the game's language.")] = new CommandOutput(netSync: false, (args) => {
+            var lang = args[0];
+
+            var exists = File.Exists(Path.Combine("Localization", lang + ".loc"));
+            if (exists) {
+                var parseLang = LangCode.Parse(lang);
+                Language.LoadLang(parseLang, out TankGame.GameLanguage);
+                TankGame.Settings.Language = parseLang;
+
+                MainMenu.InitializeUIGraphics();
+                GameUI.Initialize();
+                VolumeUI.Initialize();
+                GraphicsUI.Initialize();
+                LevelEditor.Initialize();
+                LevelEditor.InitializeSaveMenu();
+                // ControlsUI.Initialize();
             }
         }),
         [new CommandInput(name: "musicvolume", description: "Set music volume.")] = new CommandOutput(netSync: false, (args) => {

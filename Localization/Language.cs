@@ -25,7 +25,7 @@ namespace TanksRebirth.Localization
 
         #endregion
         #region General
-        public string OpenChatFlavor { get; set; }
+        public string ToToggleChat { get; set; }
         public string Mission { get; set; }
         public string Resume { get; set; }
         public string StartOver { get; set; }
@@ -48,7 +48,6 @@ namespace TanksRebirth.Localization
         public string PressAKey { get; set; }
         public string Back { get; set; }
         #endregion
-
         #region Main Menu
 
         public string Play { get; set; }
@@ -58,19 +57,18 @@ namespace TanksRebirth.Localization
         public string ConnectToServer { get; set; }
         public string CreateServer { get; set; }
         public string Difficulties { get; set; }
-        public string ModLoadingFlavor { get; set; }
-        public string Loading { get; set; }
-        public string Sandboxing { get; set; }
-        public string Compiling { get; set; }
         public string GameStats { get; set; }
-        public string SinglePlayerTooltip { get; set; }
+        public string CosmeticsMenu { get; set; }
+        public string CosmeticsFlavor { get; set; }
+        public string SinglePlayerFlavor { get; set; }
         public string DifficultiesFlavor { get; set; }
         public string LevelEditFlavor { get; set; }
+        public string MultiplayerFlavor { get; set; }
         #region GameStats
-        public string TankKillTotal { get; set; }
+        public string TankKillsTotal { get; set; }
         public string TankKillsTotalBullets { get; set; }
-        public string TankKillTotalBulletsBounced { get; set; }
-        public string TankKillTotalMines { get; set; }
+        public string TankKillsTotalBulletsBounced { get; set; }
+        public string TankKillsTotalMines { get; set; }
         public string MissionsCompleted { get; set; }
         public string CampaignsCompleted { get; set; }
         public string Deaths { get; set; }
@@ -81,13 +79,13 @@ namespace TanksRebirth.Localization
         #endregion
 
         #endregion
-
         #region LevelEdit
 
         public string BinDisclaimer { get; set; } // thinking this might be weird?
 
         public string TestLevel { get; set; }
         public string Perspective { get; set; }
+        public string PerspectiveFlavor { get; set; }
         public string Players { get; set; }
         public string Terrain { get; set; }
         public string AIControlled { get; set; }
@@ -97,19 +95,20 @@ namespace TanksRebirth.Localization
         public string Properties  { get; set; }
         public string Load { get; set; }
         public string PlaceInfo { get; set; }
+        public string TankTeams { get; set; }
         public string PlacementTeamInfo { get; set; }
         public string PlacementStackInfo { get; set; }
         public string EnemyTankTotal { get; set; }
         public string DifficultyRating { get; set; }
 
         #region PropertiesMenu
-
+        public string Return { get; set; }
         public string Name { get; set; }
         public string Save { get; set; }
-        public string SaveFlavor { get; set; }
+        public string MissionSaveFlavor { get; set; }
+        public string CampaignSaveFlavor { get; set; }
         public string CampaignDetails { get; set; }
         public string MissionDetails { get; set; }
-        public string CampaignName { get; set; }
         public string CampaignNameFlavor { get; set; }
         public string Description { get; set; }
         public string DescriptionFlavor { get; set; }
@@ -126,6 +125,7 @@ namespace TanksRebirth.Localization
         public string StripColor { get; set; }
         public string StripColorFlavor { get; set; }
         public string HasMajorVictoryTheme { get; set; }
+        public string HasMajorVictoryThemeFlavor { get; set; }
 
         #endregion
 
@@ -183,6 +183,21 @@ namespace TanksRebirth.Localization
         #endregion
 
         #endregion
+        #region Gameplay
+        public string Hit { get; set; }
+        #endregion
+        #region Other
+        public string CampaignResults { get; set; }
+        public string FunFacts { get; set; }
+        public string Press { get; set; }
+        public string ToExit { get; set; }
+        public string ShotsHit { get; set; }
+        public string MineEffect { get; set; }
+        public string LivesEarned { get; set; }
+        public string MissionsComplete { get; set; }
+        public string EnemyTanks { get; set; }
+        public string Campaign { get; set; }
+        #endregion
 
 #pragma warning enable
         /// <summary>
@@ -193,23 +208,19 @@ namespace TanksRebirth.Localization
         public static void LoadLang(LangCode code, out Language lang) {
             // for example, it would be sane to have en_US or es_SP or jp_JA
             lang = new();
-            try {
-                var path = Path.Combine(Path.Combine("Localization", $"{code}.json"));
+            try { 
+                var path = Path.Combine(Path.Combine("Localization", $"{code}.loc"));
                 JsonHandler<Language> handler = new(lang, path);
 
-                var newLang = handler.Deserialize();
-
-                lang = newLang;
-
+                lang = handler.Deserialize();
                 GameContent.GameHandler.ClientLog.Write($"Loading language '{code}'... [ " + path + " ]", Internals.LogType.Debug);
             }
             catch {
-                GameContent.GameHandler.ClientLog.Write($"Loading language '{code}'... Could not find localization file! Using default language 'en_US' instead.", Internals.LogType.Debug);
-                var path = Path.Combine(Path.Combine("Localization", $"en_US.json"));
+                GameContent.GameHandler.ClientLog.Write($"Loading language '{code}'... Could not find localization file or error loading! Using default language '{LangCode.English}' instead.", Internals.LogType.Debug);
+                var path = Path.Combine(Path.Combine("Localization", $"en_US.loc"));
                 JsonHandler<Language> handler = new(lang, path);
-                var newLang = handler.Deserialize();
+                lang = handler.Deserialize();
 
-                lang = newLang;
                 return;
             }
         }
@@ -217,7 +228,7 @@ namespace TanksRebirth.Localization
         public static void GenerateLocalizationTemplate(string path) {
             var lang = new Language();
             JsonHandler<Language> handler = new(lang, path);
-            var newLang = handler.Serialize(new() { WriteIndented = true });
+            var newLang = handler.Serialize(new() { WriteIndented = true }, true);
         }
     }
 }
