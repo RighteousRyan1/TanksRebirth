@@ -60,15 +60,15 @@ namespace TanksRebirth.GameContent
 
         public static void LoadTexturePack(string folder)
         {
+            LoadVanillaTextures();
             if (folder.ToLower() == "vanilla")
             {
-                LoadVanillaTextures();
                 GameHandler.ClientLog.Write($"Loaded vanilla textures for Scene.", LogType.Info);
                 return;
             }
 
-            var baseRoot = Path.Combine(TankGame.SaveDirectory, "Texture Packs");
-            var rootGameScene = Path.Combine(TankGame.SaveDirectory, "Texture Packs", "Scene");
+            var baseRoot = Path.Combine(TankGame.SaveDirectory, "Resource Packs");
+            var rootGameScene = Path.Combine(baseRoot, "Scene");
             var path = Path.Combine(rootGameScene, folder);
 
             // ensure that these directories exist before dealing with them

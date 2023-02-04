@@ -51,6 +51,7 @@ namespace TanksRebirth
         public MapTheme GameTheme { get; set; } = MapTheme.Vanilla;
         public string MapPack { get; set; } = "Vanilla";
         public string TankPack { get; set; } = "Vanilla";
+        public string MusicPack { get; set; } = "Vanilla";
 
         #endregion
 

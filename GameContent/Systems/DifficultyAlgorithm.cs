@@ -43,6 +43,7 @@ namespace TanksRebirth.GameContent.Systems
             [TankID.Explosive] = 0.48f,
             [TankID.Commando] = 0.65f,
             [TankID.Cherry] = 0.6f,
+            [TankID.Electro] = 0.35f
         };
 
         public static float GetDifficulty(Mission mission)

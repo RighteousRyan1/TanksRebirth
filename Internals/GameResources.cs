@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.Internals
@@ -48,10 +49,10 @@ namespace TanksRebirth.Internals
 
 		public static T GetGameResource<T>(string name, bool addDotPng = true, bool addContentPrefix = true, bool premultiply = false) where T : class
 		{
-			if (TankGame.Instance is null)
+            if (TankGame.Instance is null)
 				QueueAsset<T>(name);
 
-			if (ResourceCache.ContainsKey(name + ".png"))
+		if (ResourceCache.ContainsKey(name + ".png"))
 				return (T)ResourceCache[name + ".png"];
 			else if (typeof(T) == typeof(Texture2D))
 			{

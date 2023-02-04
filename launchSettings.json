@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "TanksRebirth": {
+      "commandName": "Executable",
+      "executablePath": "dotnet",
+      "commandLineArgs": "TanksRebirth.dll",
+      "workingDirectory": "$C:\Users\ryanr\Desktop\TanksRebirth\bin\Debug\net6.0"
+    }
+  }
+}

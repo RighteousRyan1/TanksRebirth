@@ -140,5 +140,7 @@
   "ShotsHit": "Disparos acertados",
   "MineEffect": "Efecto mina",
   "LivesEarned": "Vidas ganadas",
-  "MissionsComplete": "Missions Complete"
+  "MissionsComplete": "Missions Complete",
+  "EnemyTanks": "Tanques enemigos",
+  "Campaign": "Campaña"
 }

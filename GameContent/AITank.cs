@@ -16,6 +16,7 @@ using TanksRebirth.GameContent.Properties;
 using TanksRebirth.GameContent.Cosmetics;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.GameContent.ID;
+using TanksRebirth.GameContent.ModSupport;
 
 namespace TanksRebirth.GameContent
 {
@@ -1723,6 +1724,9 @@ namespace TanksRebirth.GameContent
         }
         public override void Update()
         {
+            if (ModLoader.Status != LoadStatus.Complete)
+                return;
+
             base.Update();
 
             //CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
@@ -2103,7 +2107,7 @@ namespace TanksRebirth.GameContent
             if (AiParams.SmartRicochets)
             {
                 //if (!seeks)
-                seekRotation += AiParams.TurretSpeed;
+                seekRotation += AiParams.TurretSpeed * 0.5f;
                 var canShoot = !(CurShootCooldown > 0 || OwnedShellCount >= Properties.ShellLimit);
                 if (canShoot)
                 {
@@ -2111,7 +2115,7 @@ namespace TanksRebirth.GameContent
 
                     var findsEnemy2 = tanks.Any(tnk => tnk is not null && (tnk.Team != Team || tnk.Team == TeamID.NoTeam) && tnk != this);
                     // var findsSelf2 = tanks.Any(tnk => tnk is not null && tnk == this);
-                    var findsFriendly2 = tanks.Any(tnk => tnk is not null && (tnk.Team == Team && tnk.Team != TeamID.NoTeam));
+                    // var findsFriendly2 = tanks.Any(tnk => tnk is not null && (tnk.Team == Team && tnk.Team != TeamID.NoTeam));
                     // ChatSystem.SendMessage($"{findsEnemy2} {findsFriendly2} | seek: {seeks}", Color.White);
                     if (findsEnemy2/* && !findsFriendly2*/)
                     {
@@ -2221,8 +2225,6 @@ namespace TanksRebirth.GameContent
                     TargetTurretRotation -= MathHelper.TwoPi;
                 else if (diff < -MathHelper.Pi)
                     TargetTurretRotation += MathHelper.TwoPi;
-
-                TurretRotation = MathUtils.RoughStep(TurretRotation, TargetTurretRotation, AiParams.TurretSpeed * TurretRotationMultiplier * TankGame.DeltaTime);
                 bool targetExists = Array.IndexOf(GameHandler.AllTanks, TargetTank) > -1 && TargetTank is not null;
                 if (targetExists)
                 {
@@ -2250,6 +2252,8 @@ namespace TanksRebirth.GameContent
 
                     if (doFire)
                         UpdateAim(tanksNearMe, !isMineNear);
+
+                    TurretRotation = MathUtils.RoughStep(TurretRotation, TargetTurretRotation, AiParams.TurretSpeed * TurretRotationMultiplier * TankGame.DeltaTime);
                 }
 
                 #endregion
@@ -2439,13 +2443,9 @@ namespace TanksRebirth.GameContent
 
                             SpecialBehaviors[2].Value = 0f;
                             SpecialBehaviors[0].Value = 0f;
-                            SpecialBehaviors[1].Value = GameHandler.GameRand.NextFloat(180, 360);
+                            SpecialBehaviors[1].Value = 0f;
 
-                            retry:
-                            var r = RandomUtils.PickRandom(PlacementSquare.Placements.ToArray());
-
-                            if (r.BlockId > -1)
-                                goto retry;
+                            var r = RandomUtils.PickRandom(PlacementSquare.Placements.Where(x => x.BlockId == -1).ToArray());
 
                             Body.Position = r.Position.FlattenZ() / UNITS_PER_METER;
                         }
@@ -2454,33 +2454,21 @@ namespace TanksRebirth.GameContent
                 else if (AiTankType == TankID.Commando)
                 {
                     SpecialBehaviors[0].Value += TankGame.DeltaTime;
-                    if (SpecialBehaviors[0].Value > 500)
-                    {
-                        SpecialBehaviors[0].Value = 0;
+                    if (SpecialBehaviors[1].Value == 0)
+                        SpecialBehaviors[1].Value = GameHandler.GameRand.NextFloat(400, 600);
 
-                        var crate = Crate.SpawnCrate(BlockMapPosition.Convert3D(new BlockMapPosition(GameHandler.GameRand.Next(0, BlockMapPosition.MAP_WIDTH_169),
-                            GameHandler.GameRand.Next(0, BlockMapPosition.MAP_HEIGHT))) + new Vector3(0, 500, 0), 2f);
-                        crate.TankToSpawn = new TankTemplate()
-                        {
+                    if (SpecialBehaviors[0].Value > SpecialBehaviors[1].Value) {
+                        SpecialBehaviors[1].Value = 0f;
+                        SpecialBehaviors[0].Value = 0f;
+
+                        var r = RandomUtils.PickRandom(PlacementSquare.Placements.Where(x => x.BlockId == -1).ToArray());
+
+                        var crate = Crate.SpawnCrate(r.Position + new Vector3(0, 500, 0), 2f);
+                        crate.TankToSpawn = new TankTemplate() {
                             AiTier = PickRandomTier(),
                             IsPlayer = false,
                             Team = Team
                         };
-
-                        /*foreach (var mesh in Model.Meshes)
-                        {
-                            foreach (BasicEffect effect in mesh.Effects)
-                            {
-                                if (mesh.Name == "Dish")
-                                {
-                                    effect.AmbientLightColor = Color.Red.ToVector3();
-                                    effect.SpecularColor = Color.Red.ToVector3();
-                                    effect.DiffuseColor = Color.Red.ToVector3();
-                                    effect.FogColor = Color.Red.ToVector3();
-                                    effect.EmissiveColor = Color.Red.ToVector3();
-                                }
-                            }
-                        }*/
                     }
                 }
 

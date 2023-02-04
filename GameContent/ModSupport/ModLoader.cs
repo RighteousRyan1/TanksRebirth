@@ -47,6 +47,7 @@ namespace TanksRebirth.GameContent.ModSupport
         private static bool _firstLoad = true;
         /// <summary>The error given from the mod-loading process.</summary>
         public static string Error = string.Empty;
+        public static string LoadType = string.Empty;
         private static void AttemptCompile(string modName) {
             if (!TankGame.IsWindows) {
                 GameHandler.ClientLog.Write("Auto-compilation of mod failed. Specified OS architecture is not Windows.", Internals.LogType.Warn);
@@ -63,6 +64,7 @@ namespace TanksRebirth.GameContent.ModSupport
             Status = LoadStatus.Compiling;
             Process process = new();
             try {
+                LoadType = Debugger.IsAttached ? "Debug" : "Release";
                 ProcessStartInfo startInfo = new() {
                     UseShellExecute = false,
 
@@ -70,7 +72,7 @@ namespace TanksRebirth.GameContent.ModSupport
                     WindowStyle = ProcessWindowStyle.Hidden,
                     FileName = @"C:\Windows\system32\cmd.exe",
                     WorkingDirectory = Path.Combine(ModsPath, modName),
-                    Arguments = $"/c dotnet build -c Release"
+                    Arguments = $"/c dotnet build -c " + LoadType
                 };
 
                 process.StartInfo = startInfo;
@@ -105,8 +107,14 @@ namespace TanksRebirth.GameContent.ModSupport
             ChatSystem.SendMessage("Mod unload successful!", Color.Lime);
             Status = LoadStatus.Complete;
         }
+        //private delegate Assembly AsmInternalLoad(ReadOnlySpan<byte> arrAssembly, ReadOnlySpan<byte> arrSymbols);
         /// <summary>Prepare your garbage collector!</summary>
         internal static void LoadMods() {
+
+            /*var method = typeof(AssemblyLoadContext)
+                .GetMethod("InternalLoad", BindingFlags.NonPublic | BindingFlags.Instance)
+                .CreateDelegate<AsmInternalLoad>();*/
+
             if (Status == LoadStatus.Unloading) {
                 ChatSystem.SendMessage("Mods are currently unloading! Unable to load mods.", Color.Red);
             }
@@ -148,11 +156,13 @@ namespace TanksRebirth.GameContent.ModSupport
                                     ModBeingLoaded = modName;
                                     AttemptCompile(modName);
                                     Status = LoadStatus.Loading;
-                                    string filepath = Path.Combine(folder, "bin", "Release", ModNETVersion, $"{modName}.dll");
+                                    string filepath = Path.Combine(folder, "bin", LoadType, ModNETVersion, $"{modName}.dll");
                                     string pdb = Path.ChangeExtension(filepath, ".pdb");
                                     // TODO: load PDB into the ALC.
                                     var alc = new AssemblyLoadContext(modName, true);
-                                    alc.LoadFromAssemblyPath(filepath);
+                                    // alc.LoadFromAssemblyPath(filepath);
+                                    alc.LoadFromStream(File.Open(filepath, FileMode.Open), File.Open(pdb, FileMode.Open));
+                                    
                                     _loadedAlcs.Add(alc);
 
                                     var assembly = alc.Assemblies.First();
@@ -160,9 +170,14 @@ namespace TanksRebirth.GameContent.ModSupport
                                     _sandboxingActions.Add(() => {
                                         try {
                                             Status = LoadStatus.Sandboxing;
-                                            var types = alc.Assemblies.First().GetTypes();
+                                            var types = assembly.GetTypes();
+                                            int modClassCount = 0;
                                             foreach (var type in types) {
-                                                if (type.IsSubclassOf(typeof(TanksMod))) {
+                                                if (type.IsSubclassOf(typeof(TanksMod)) && !type.IsAbstract) {
+
+                                                    modClassCount++;
+                                                    if (modClassCount > 1)
+                                                        throw new Exception("Too many mod classes. Only one is allowed per-mod.");
                                                     // let's run the virtually overridden methods.
                                                     var tanksMod = Activator.CreateInstance(type) as TanksMod;
                                                     tanksMod.InternalName = modName;
@@ -175,6 +190,7 @@ namespace TanksRebirth.GameContent.ModSupport
                                                 }
                                             }
                                         }  catch (Exception e) {
+                                            TankGame.WriteError(e, true, true);
                                             Error = e.Message;
                                             return;
                                         }
@@ -183,6 +199,7 @@ namespace TanksRebirth.GameContent.ModSupport
                                     ActionsComplete++;
                                     GameHandler.ClientLog.Write($"Loaded mod assembly '{assembly.GetName().Name}', version '{assembly.GetName().Version}'", Internals.LogType.Info);
                                 });
+                                break;
                             }
                         }
                     }

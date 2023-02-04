@@ -177,8 +177,9 @@ namespace TanksRebirth
         public TankGame() : base()
         {
             Directory.CreateDirectory(SaveDirectory);
-            Directory.CreateDirectory(Path.Combine(SaveDirectory, "Texture Packs", "Scene"));
-            Directory.CreateDirectory(Path.Combine(SaveDirectory, "Texture Packs", "Tank"));
+            Directory.CreateDirectory(Path.Combine(SaveDirectory, "Resource Packs", "Scene"));
+            Directory.CreateDirectory(Path.Combine(SaveDirectory, "Resource Packs", "Tank"));
+            Directory.CreateDirectory(Path.Combine(SaveDirectory, "Resource Packs", "Music"));
             Directory.CreateDirectory(Path.Combine(SaveDirectory, "Logs"));
             GameHandler.ClientLog = new(Path.Combine(SaveDirectory, "Logs"), "client");
             try {
@@ -242,10 +243,13 @@ namespace TanksRebirth
         public static DateTime LaunchTime;
         public static bool IsSouthernHemi;
 
+        public static string GameDir { get; private set; }
+
         protected override void Initialize()
         {
             try
             {
+                GameDir = Directory.GetCurrentDirectory();
                 //if (SteamAPI.IsSteamRunning())
                     //SteamworksUtils.Initialize();
                 CurrentSessionTimer.Start();
@@ -420,7 +424,9 @@ namespace TanksRebirth
                 GameHandler.ClientLog.Write($"Applied user settings.", LogType.Info);
 
                 Tank.SetAssetNames();
+                TankMusicSystem.SetAssetAssociations();
                 MapRenderer.LoadTexturePack(Settings.MapPack);
+                TankMusicSystem.LoadSoundPack(Settings.MusicPack);
                 Tank.LoadTexturePack(Settings.TankPack);
                 Graphics.ApplyChanges();
 

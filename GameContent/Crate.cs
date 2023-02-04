@@ -153,7 +153,7 @@ namespace TanksRebirth.GameContent
 
                         SoundPlayer.PlaySoundInstance(spawnSfx, SoundContext.Effect, 0.2f);
 
-                        velocity.Y = -velocity.Y * 0.5f;
+                        velocity.Y = -velocity.Y * 0.3f;
 
                         _bounceCount++;
                     }

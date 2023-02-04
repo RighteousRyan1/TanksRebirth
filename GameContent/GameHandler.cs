@@ -230,8 +230,8 @@ namespace TanksRebirth.GameContent
             }
             else
                 if (!GameProperties.InMission)
-                    if (TankMusicSystem.Songs is not null)
-                        foreach (var song in TankMusicSystem.Songs)
+                    if (TankMusicSystem.Audio is not null)
+                        foreach (var song in TankMusicSystem.Audio)
                             song.Value.Volume = 0;
             LevelEditor.Update();
 
@@ -776,14 +776,12 @@ namespace TanksRebirth.GameContent
         {
             if (!_musicLoaded)
             {
-                TankMusicSystem.LoadMusic();
-                TankMusicSystem.LoadAmbienceTracks();
                 OnLoadTankScene?.Invoke();
                 _musicLoaded = true;
             }
             else
             {
-                foreach (var song in TankMusicSystem.Songs)
+                foreach (var song in TankMusicSystem.Audio)
                     song.Value.Stop();
                 TankMusicSystem.SnowLoop.Stop();
                 TankMusicSystem.SnowLoop.Play();
