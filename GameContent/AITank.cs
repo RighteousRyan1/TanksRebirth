@@ -364,6 +364,8 @@ namespace TanksRebirth.GameContent
             int index2 = Array.IndexOf(GameHandler.AllTanks, null);
 
             if (index2 < 0) {
+                WorldId = -1;
+                GC.Collect(); // guh?
                 return;
             }
 

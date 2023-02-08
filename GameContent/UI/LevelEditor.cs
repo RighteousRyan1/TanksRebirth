@@ -31,6 +31,16 @@ namespace TanksRebirth.GameContent.UI
         public static readonly byte[] LevelFileHeader = { 84, 65, 78, 75 };
         public const int LevelEditorVersion = 2;
 
+        public static string AlertText;
+        private static float _alertTime;
+        public static float DefaultAlertDuration { get; set; } = 120;
+
+        public static void Alert(string alert, float timeOverride = 0f) {
+            _alertTime = timeOverride != 0f ? timeOverride : DefaultAlertDuration;
+            AlertText = alert;
+            SoundPlayer.SoundError();
+        }
+
         // TODO: allow the moving of missions up and down in the level editor order -- done... i think.
 
         public static bool Active { get; private set; }
@@ -109,7 +119,7 @@ namespace TanksRebirth.GameContent.UI
         {
             LevelContentsPanel = new Rectangle(WindowUtils.WindowWidth / 4, (int)(WindowUtils.WindowHeight * 0.1f), WindowUtils.WindowWidth / 2, (int)(WindowUtils.WindowHeight * 0.625f));
 
-            MissionName = new(TankGame.TextFont, Color.White, 1f, 20);
+            MissionName = new(TankGame.TextFont, Color.White, 1f, 30);
 
             MissionName.SetDimensions(() => new(LevelContentsPanel.X + 20.ToResolutionX(),
                 LevelContentsPanel.Y + 60.ToResolutionY()),
@@ -192,7 +202,6 @@ namespace TanksRebirth.GameContent.UI
                 if (MissionName.GetRealText() != string.Empty)
                     _loadedCampaign.CachedMissions[_loadedCampaign.CurrentMissionId].Name = MissionName.GetRealText();
             };
-
             CampaignName = new(TankGame.TextFont, Color.White, 1f, 30);
             CampaignName.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(),
                 LevelContentsPanel.Y + 60.ToResolutionY()),
@@ -517,7 +526,6 @@ namespace TanksRebirth.GameContent.UI
                         {
                             var map = new WiiMap(res.Path);
                             ChatSystem.SendMessage($"(Width, Height): ({map.Width}, {map.Height})", Color.White);
-                            ChatSystem.SendMessage($"(QVal, PValue): ({map.QValue}, {map.PValue})", Color.White);
 
                             WiiMap.ApplyToGameWorld(map);
                         }
@@ -530,14 +538,12 @@ namespace TanksRebirth.GameContent.UI
                 }
                 return;
             };
-            // TODO: non-windows support. i am lazy. fuck this.
+            // TODO: non-windows support. i am lazy. fuck this. also localize bozo
             LoadLevel.Tooltip = "Will open a file dialog for\nyou to choose what mission/campaign to load.";
 
             InitializeSaveMenu();
 
             SetLevelEditorVisibility(false);
-
-            UIElement.CunoSucks();
         }
         public static void SetupMissionsBar(Campaign campaign, bool setCampaignData = true)
         {
@@ -579,6 +585,8 @@ namespace TanksRebirth.GameContent.UI
                     btn.Scissor = () => _missionButtonScissor;
 
                     int index = i;
+                    var len = btn.Text.Length;
+                    btn.TextScale = () => Vector2.One * (len > 20 ? 1f - ((len - 20) * 0.03f) : 1f);
 
                     btn.OnLeftClick = (a) =>
                     {
@@ -650,7 +658,6 @@ namespace TanksRebirth.GameContent.UI
                 MoveMission(false);
             };
             _missionButtons.Add(moveMissionDown);
-            UIElement.CunoSucks();
         }
         private static void RemoveMissionButtons()
         {
@@ -722,6 +729,14 @@ namespace TanksRebirth.GameContent.UI
             ShouldDrawBarUI = !GameUI.Paused;
             SwapMenu.Text = _viewMissionDetails ? "Campaign Details" : "Mission Details";
 
+            var measure = TankGame.TextFont.MeasureString(AlertText);
+
+            if (_alertTime > 0) {
+                var scale = 0.5f;
+                TankGame.SpriteRenderer.Draw(ChatSystem.ChatAlert, new Vector2(WindowUtils.WindowWidth / 2, (WindowUtils.WindowHeight * 0.625f) - (ChatSystem.ChatAlert.Size().Y.ToResolutionY() * scale)), null, Color.White, 0f, ChatSystem.ChatAlert.Size() / 2, new Vector2(scale).ToResolution(), default, default);
+                SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFontLarge, AlertText, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight * 0.625f), Color.Red, Color.White, new Vector2(0.4f).ToResolution(), 0f);
+                _alertTime--;
+            }
             if (!ShouldDrawBarUI)
                 return;
             var info = TankGame.GameLanguage.BinDisclaimer;
@@ -732,7 +747,7 @@ namespace TanksRebirth.GameContent.UI
             _clickRect = new(0, (int)(WindowUtils.WindowBottom.Y * 0.8f), WindowUtils.WindowWidth, (int)(WindowUtils.WindowHeight * 0.2f));
             TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, _clickRect, null, Color.White, 0f, Vector2.Zero, default, 0f);
 
-            var measure = TankGame.TextFont.MeasureString(_curDescription);
+            measure = TankGame.TextFont.MeasureString(_curDescription);
 
             if (_curDescription != null && _curDescription != string.Empty)
             {

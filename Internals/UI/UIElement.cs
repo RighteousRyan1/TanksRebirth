@@ -103,8 +103,8 @@ namespace TanksRebirth.Internals.UI
         /// <summary>Final elements just... dont work?</summary>
         internal static void CunoSucks()
         {
-            cunoSucksElement = new() { IsVisible = false };
-            cunoSucksElement.Remove();
+            cunoSucksElement ??= new() { IsVisible = false };
+            cunoSucksElement?.Remove();
             cunoSucksElement = new();
             cunoSucksElement.SetDimensions(-1000789342, -783218, 0, 0);
         }
@@ -118,6 +118,7 @@ namespace TanksRebirth.Internals.UI
             _updatedPos = position;
             _updatedSize = dimensions;
             _doUpdating = true;
+            CunoSucks();
         }
 
         /// <summary>
@@ -218,7 +219,6 @@ namespace TanksRebirth.Internals.UI
                 return;
 
             OnInitialize();
-            // ResizeAndRelocate();
             Initialized = true;
         }
 

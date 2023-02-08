@@ -144,10 +144,10 @@ namespace TanksRebirth.GameContent.Systems
 
             var tierHighestName = TankID.Collection.GetKey(TierHighest);
             var all = AITank.CountAll();
-            string num = (MaxSongNumPerTank[TierHighest] > 1 ? 
+            string num = MaxSongNumPerTank[TierHighest] > 1 ? 
                 (TierExclusionRule_Uses3ToUpgrade.Contains(TierHighest) ? 
-                (all == 2 || all == 1 ? 1 : MaxSongNumPerTank[TierHighest]).ToString() : MaxSongNumPerTank[TierHighest].ToString()) 
-                : string.Empty);
+                (all == 2 || all == 1 ? 1 : MaxSongNumPerTank[TierHighest]).ToString() : (Math.Min(all, MaxSongNumPerTank[TierHighest])).ToString()) 
+                : string.Empty;
 
             var name = tierHighestName.ToLower() + num;
 

@@ -30,7 +30,7 @@ namespace TanksRebirth.Internals.Common.Framework.Graphics
             if (count < 2)
                 throw new System.Exception($"Invalid parse pargument. Parameter = {nameof(format)}");
 
-            var bytes = format.Split(',').Select(str => byte.Parse(str)).ToArray();
+            var bytes = format.Split(',').Select(str => byte.Parse(str.Trim())).ToArray();
 
             return new(bytes[0], bytes[1], bytes[2], bytes.Length == 4 ? bytes[3] : 0);
         }

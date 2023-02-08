@@ -94,7 +94,6 @@ namespace TanksRebirth.GameContent.UI
                 IsVisible = false
             };
             AmbientText.SetDimensions(() => new Vector2(950, 675).ToResolution(), () => new Vector2(500, 150).ToResolution());
-            UIElement.CunoSucks();
         }
 
         public static void HideAll()

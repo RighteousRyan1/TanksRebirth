@@ -460,7 +460,6 @@ namespace TanksRebirth.GameContent.UI
 
             foreach (var e in _menuElements)
                 e.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick.ogg", SoundContext.Effect, rememberMe: true); };
-            UIElement.CunoSucks();
         }
         public static void RenderCrate()
         {
@@ -799,8 +798,6 @@ namespace TanksRebirth.GameContent.UI
                 IntermissionSystem.TimeBlack = 150;
             };
             campaignNames.Add(extra);
-
-            UIElement.CunoSucks();
         }
         // this is super workaround-y.
         internal static int plrsConfirmed;

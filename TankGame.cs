@@ -26,11 +26,8 @@ using TanksRebirth.Internals.Common.Framework.Graphics;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.Net;
 using System.Runtime.InteropServices;
-using Microsoft.Xna.Framework.Audio;
 using TanksRebirth.IO;
-using TanksRebirth.Enums;
 using TanksRebirth.Achievements;
-using TanksRebirth.GameContent.Speedrunning;
 using TanksRebirth.GameContent.Properties;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.GameContent.ModSupport;
@@ -450,7 +447,6 @@ namespace TanksRebirth
 
                 MainMenu.Open();
 
-
                 ModLoader.LoadMods();
 
                 if (ModLoader.LoadingMods)
@@ -463,7 +459,7 @@ namespace TanksRebirth
                     });
                 }
 
-                GameHandler.ClientLog.Write("Running in directory: " + Directory.GetCurrentDirectory(), LogType.Info);
+                GameHandler.ClientLog.Write("Running in directory: " + GameDir, LogType.Info);
 
                 GameHandler.ClientLog.Write($"Content loaded in {s.Elapsed}.", LogType.Debug);
                 GameHandler.ClientLog.Write($"DebugMode: {Debugger.IsAttached}", LogType.Debug);
@@ -840,7 +836,7 @@ namespace TanksRebirth
                 Tank.CollisionsWorld.Step(1);
 
                 HoveringAnyTank = false;
-                if (!MainMenu.Active && OverheadView)
+                if (!MainMenu.Active && (OverheadView || LevelEditor.Active))
                 {
                     foreach (var tnk in GameHandler.AllTanks)
                     {

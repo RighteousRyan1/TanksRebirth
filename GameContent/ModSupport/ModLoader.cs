@@ -110,7 +110,6 @@ namespace TanksRebirth.GameContent.ModSupport
         //private delegate Assembly AsmInternalLoad(ReadOnlySpan<byte> arrAssembly, ReadOnlySpan<byte> arrSymbols);
         /// <summary>Prepare your garbage collector!</summary>
         internal static void LoadMods() {
-
             /*var method = typeof(AssemblyLoadContext)
                 .GetMethod("InternalLoad", BindingFlags.NonPublic | BindingFlags.Instance)
                 .CreateDelegate<AsmInternalLoad>();*/
@@ -136,6 +135,7 @@ namespace TanksRebirth.GameContent.ModSupport
 
             if (folders.Length == 0) {
                 _firstLoad = true;
+                Status = LoadStatus.Complete;
                 ChatSystem.SendMessage(_firstLoad ? $"Loaded {_loadedAlcs.Count} mod(s)." : $"Reloaded {_loadedAlcs.Count} mod(s).", Color.Lime);
                 return;
             }
