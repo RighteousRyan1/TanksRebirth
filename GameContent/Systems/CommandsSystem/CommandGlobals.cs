@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TanksRebirth.GameContent.UI;
+using TanksRebirth.Internals.Common.Framework.Input;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Localization;
 using TanksRebirth.Net;
@@ -28,6 +29,13 @@ public static class CommandGlobals {
                 ChatSystem.SendMessage($"{elem.Key.Name}: {elem.Key.Description}", Color.Khaki);
             }
         }),
+        /*[new CommandInput(name: "setbind", description: "Change a keybind by a given internal name.")] = new CommandOutput(netSync: false, (args) => {
+            for (int i = 0; i < Keybind.AllKeybinds.Count; i++) {
+                var elem = Commands[i];
+
+                ChatSystem.SendMessage($"{elem.Name}: {elem.Key.Description}", Color.Khaki);
+            }
+        }),*/
         [new CommandInput(name: "setlang", description: "Set the game's language.")] = new CommandOutput(netSync: false, (args) => {
             var lang = args[0];
 

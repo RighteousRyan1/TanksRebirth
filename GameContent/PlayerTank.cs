@@ -376,13 +376,13 @@ namespace TanksRebirth.GameContent
 
             IsTurning = false;
 
-            var rotationMet = TankRotation > TargetTankRotation - Properties.MaximalTurn && TankRotation < TargetTankRotation + Properties.MaximalTurn;
+            //var rotationMet = TankRotation > TargetTankRotation - Properties.MaximalTurn && TankRotation < TargetTankRotation + Properties.MaximalTurn;
 
             var preterbedVelocity = Vector2.Zero;
 
             TankRotation %= MathHelper.Tau;
 
-            if (!rotationMet)
+            /*if (!rotationMet)
             {
                 Speed -= Properties.Deceleration;
                 if (Speed < 0)
@@ -394,7 +394,7 @@ namespace TanksRebirth.GameContent
                 Speed += Properties.Acceleration;
                 if (Speed > Properties.MaxSpeed)
                     Speed = Properties.MaxSpeed;
-            }
+            }*/
 
 
             if (controlDown.IsPressed)

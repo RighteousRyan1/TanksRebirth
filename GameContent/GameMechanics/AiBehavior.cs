@@ -16,7 +16,7 @@ namespace TanksRebirth.GameContent.GameMechanics
         {
             if (remainder == 0)
                 return false;
-            return Value % remainder <= TankGame.DeltaTime;
+            return Value % remainder < TankGame.DeltaTime;
         }
     }
     public static class AiBehaviorExtensions

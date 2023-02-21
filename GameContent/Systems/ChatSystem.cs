@@ -45,7 +45,11 @@ public sealed record ChatSystem {
 
     public static bool ChatBoxHover;
 
-    public static Texture2D ChatAlert = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/chatalert");
+    public static Texture2D ChatAlert;
+
+    public static void Initialize() {
+        ChatAlert = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/chatalert");
+    }
     /// <summary>
     /// Sends a new <see cref="ChatMessage"/> to the chat.
     /// </summary>

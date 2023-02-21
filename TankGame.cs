@@ -37,34 +37,12 @@ using Steamworks;
 using TanksRebirth.Graphics.Cameras;
 using System.Globalization;
 using System.Threading;
+using TanksRebirth.Internals.Common.Framework;
 
 namespace TanksRebirth
 {
     public class TankGame : Game
     {
-#pragma warning disable
-        private static string GetGPU()
-        {
-            if (!IsWindows)
-                return "Unavailable: Only supported on Windows";
-            using var searcher = new ManagementObjectSearcher("select * from Win32_VideoController");
-
-            foreach (ManagementObject obj in searcher.Get())
-                return $"{obj["Name"]}"; // - {obj["DriverVersion"]}";
-            return "Data not retrieved.";
-        }
-
-        public static string GetHardware(string hwclass, string syntax)
-        {
-            if (!IsWindows)
-                return "Unavailable: Only supported on Windows";
-            using var searcher = new ManagementObjectSearcher($"SELECT * FROM {hwclass}");
-
-            foreach (var obj in searcher.Get())
-                return $"{obj[syntax]}";
-            return "Data not retrieved.";
-        }
-#pragma warning restore
 
         #region Fields1
         public static Language GameLanguage = new();
@@ -73,38 +51,13 @@ namespace TanksRebirth
 
         public static bool IsMainThread => Environment.CurrentManagedThreadId == MainThreadId;
 
-        public static class MemoryParser
-        {
-            public static ulong FromBits(long bytes)
-            {
-                return (ulong)bytes * 8;
-            }
-            public static long FromKilobytes(long bytes)
-            {
-                return bytes / 1000;
-            }
-            public static long FromMegabytes(long bytes)
-            {
-                return bytes / 1000 / 1000;
-            }
-            public static long FromGigabytes(long bytes)
-            {
-                return bytes / 1000 / 1000 / 1000;
-            }
-            public static long FromTerabytes(long bytes)
-            {
-                return bytes / 1000 / 1000 / 1000 / 1000;
-            }
-        }
-
         public static Camera GameCamera;
 
         public static OrthographicCamera OrthographicCamera;
         public static SpectatorCamera SpectatorCamera;
         public static PerspectiveCamera PerspectiveCamera;
 
-        public readonly string SysGPU;
-        public readonly string SysCPU;
+        public readonly ComputerSpecs ComputerSpecs;
 
         public static TimeSpan RenderTime { get; private set; }
         public static TimeSpan LogicTime { get; private set; }
@@ -112,7 +65,7 @@ namespace TanksRebirth
         public static double LogicFPS { get; private set; }
         public static double RenderFPS { get; private set; }
 
-        public static long GCMemory => GC.GetTotalMemory(false);
+        public static ulong GCMemory => (ulong)GC.GetTotalMemory(false);
 
         public static float DeltaTime => Interp ? (!float.IsInfinity(60 / (float)LogicFPS) ? 60 / (float)LogicFPS : 0) : 1;
 
@@ -201,8 +154,11 @@ namespace TanksRebirth
                     IsLinux = true;
                 }
 
-                SysGPU = $"GPU: {GetGPU()}";
-                SysCPU = $"CPU: {GetHardware("Win32_Processor", "Name")}";
+                ComputerSpecs = ComputerSpecs.GetSpecs(out bool error);
+
+                if (error) {
+                    GameHandler.ClientLog.Write("Unable to load computer specs: Specified OS Architecture is not Windows.", LogType.Warn);
+                }
 
                 GameHandler.ClientLog.Write($"Playing on Operating System '{OperatingSystem}'", LogType.Info);
 
@@ -233,7 +189,7 @@ namespace TanksRebirth
             }
         }
 
-        private long _memBytes;
+        private ulong _memBytes;
 
         public static Stopwatch CurrentSessionTimer = new();
 
@@ -256,6 +212,8 @@ namespace TanksRebirth
 
                 DiscordRichPresence.Load();
                 GameHandler.ClientLog.Write($"Loaded Discord Rich Presence...", LogType.Info);
+
+                ChatSystem.Initialize();
 
                 // systems = ReflectionUtils.GetInheritedTypesOf<IGameSystem>(Assembly.GetExecutingAssembly());
 
@@ -309,13 +267,23 @@ namespace TanksRebirth
             {
                 var s = Stopwatch.StartNew();
 
-                MainThreadId = Thread.CurrentThread.ManagedThreadId;
+                MainThreadId = Environment.CurrentManagedThreadId;
 
                 Window.ClientSizeChanged += HandleResizing;
 
                 OrthographicCamera = new(0, 0, 1920, 1080, -2000, 5000);
                 SpectatorCamera = new(MathHelper.ToRadians(100), GraphicsDevice.Viewport.AspectRatio, 0.1f, 5000f);
                 PerspectiveCamera = new(MathHelper.ToRadians(90), GraphicsDevice.Viewport.AspectRatio, 0.1f, 5000f);
+
+                /*var profiler = new SpecAnalysis(ComputerSpecs.GPU, ComputerSpecs.CPU, ComputerSpecs.RAM);
+
+                profiler.Analyze(false, out var ramr, out var gpur, out var cpur);
+
+                ChatSystem.SendMessage(ramr, Color.White);
+                ChatSystem.SendMessage(gpur, Color.White);
+                ChatSystem.SendMessage(cpur, Color.White);
+
+                ChatSystem.SendMessage(profiler.ToString(), Color.Brown);*/
 
                 // I forget why this check is needed...
                 if (Debugger.IsAttached)
@@ -646,7 +614,7 @@ namespace TanksRebirth
                 DiscordRichPresence.Update();
 
                 if (UpdateCount % 60 == 0 && DebugUtils.DebuggingEnabled) {
-                    _memBytes = ProcessMemory;
+                    _memBytes = (ulong)ProcessMemory;
                 }
 
                 LastGameTime = gameTime;
@@ -989,9 +957,11 @@ namespace TanksRebirth
 
                 if (DebugUtils.DebuggingEnabled)
                     SpriteRenderer.DrawString(TextFont, "Debug Level: " + DebugUtils.CurDebugLabel, new Vector2(10), Color.White, new Vector2(0.6f));
-                DebugUtils.DrawDebugString(SpriteRenderer, $"Garbage Collection: {MemoryParser.FromMegabytes(GCMemory)} MB" +
-                    $"\nProcess Memory: {MemoryParser.FromMegabytes(_memBytes)} MB", new(8, WindowUtils.WindowHeight * 0.15f));
-                DebugUtils.DrawDebugString(SpriteRenderer, $"{SysGPU}\n{SysCPU}", new(8, WindowUtils.WindowHeight * 0.2f));
+                DebugUtils.DrawDebugString(SpriteRenderer, $"Garbage Collection: {MemoryParser.FromMegabytes(GCMemory):0} MB" +
+                    $"\nPhysical Memory: {ComputerSpecs.RAM}" +
+                    $"\nGPU: {ComputerSpecs.GPU}" +
+                    $"\nCPU: {ComputerSpecs.CPU}" +
+                    $"\nProcess Memory: {MemoryParser.FromMegabytes(_memBytes):0} MB / Total Memory: {MemoryParser.FromMegabytes(ComputerSpecs.RAM.TotalPhysical):0}MB", new(8, WindowUtils.WindowHeight * 0.15f));
 
                 DebugUtils.DrawDebugString(SpriteRenderer, $"Tank Kill Counts:", new(8, WindowUtils.WindowHeight * 0.05f), 2);
 

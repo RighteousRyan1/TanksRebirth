@@ -144,15 +144,13 @@ public struct TankHurtContext_Mine : ITankHurtContext
         MineExplosion = mineExplosion;
     }
 }
-public abstract class Tank
-{
+public abstract class Tank {
     #region TexPack
     public static Dictionary<string, Texture2D> Assets = new();
 
     public static string AssetRoot;
 
-    public static void SetAssetNames()
-    {
+    public static void SetAssetNames() {
         Assets.Clear();
         // TankTier.Collection.GetKey(tankToSpawnType)
         foreach (var tier in TankID.Collection.Keys.Where(tier => TankID.Collection.GetValue(tier) > TankID.Random && TankID.Collection.GetValue(tier) < TankID.Explosive))
@@ -160,8 +158,7 @@ public abstract class Tank
         foreach (var type in PlayerID.Collection.Keys)
             Assets.Add($"tank_" + type.ToLower(), null);
     }
-    public static void LoadVanillaTextures()
-    {
+    public static void LoadVanillaTextures() {
         Assets.Clear();
 
         foreach (var tier in TankID.Collection.Keys.Where(tier => TankID.Collection.GetValue(tier) > TankID.Random && TankID.Collection.GetValue(tier) < TankID.Explosive))
@@ -173,11 +170,9 @@ public abstract class Tank
         AssetRoot = "Assets/textures/tank";
     }
 
-    public static void LoadTexturePack(string folder)
-    {
+    public static void LoadTexturePack(string folder) {
         LoadVanillaTextures();
-        if (folder.ToLower() == "vanilla")
-        {
+        if (folder.ToLower() == "vanilla") {
             GameHandler.ClientLog.Write($"Loaded vanilla textures for Tank.", LogType.Info);
             return;
         }
@@ -190,18 +185,15 @@ public abstract class Tank
         Directory.CreateDirectory(baseRoot);
         Directory.CreateDirectory(rootGameScene);
 
-        if (!Directory.Exists(path))
-        {
+        if (!Directory.Exists(path)) {
             GameHandler.ClientLog.Write($"Error: Directory '{path}' not found when attempting texture pack load.", LogType.Warn);
             return;
         }
 
         AssetRoot = path;
 
-        foreach (var file in Directory.GetFiles(path))
-        {
-            if (Assets.Any(type => type.Key == Path.GetFileNameWithoutExtension(file)))
-            {
+        foreach (var file in Directory.GetFiles(path)) {
+            if (Assets.Any(type => type.Key == Path.GetFileNameWithoutExtension(file))) {
                 Assets[Path.GetFileNameWithoutExtension(file)] = Texture2D.FromFile(TankGame.Instance.GraphicsDevice, Path.Combine(path, Path.GetFileName(file)));
                 GameHandler.ClientLog.Write($"Texture pack '{folder}' overrided texture '{Path.GetFileNameWithoutExtension(file)}'", LogType.Info);
             }
@@ -311,16 +303,13 @@ public abstract class Tank
         PostApplyDefaults?.Invoke(this, ref properties);
         Properties = properties;
     }
-    public virtual void Initialize()
-    {
+    public virtual void Initialize() {
         OwnedShells = new Shell[Properties.ShellLimit];
 
         _cannonMesh = Model.Meshes["Cannon"];
         _boneTransforms = new Matrix[Model.Bones.Count];
-        if (TankGame.SecretCosmeticSetting)
-        {
-            for (int i = 0; i < 1; i++)
-            {
+        if (TankGame.SecretCosmeticSetting) {
+            for (int i = 0; i < 1; i++) {
                 var recieved = CosmeticChest.Basic.Open();
 
                 if (recieved is Cosmetic3D cosmetic1)
@@ -339,12 +328,10 @@ public abstract class Tank
             if (cos is Cosmetic2D cos2d)
                 Add2DCosmetic(cos2d);
 
-        if (IsIngame)
-        {
+        if (IsIngame) {
             if (Difficulties.Types["BulletHell"])
                 Properties.RicochetCount *= 3;
-            if (Difficulties.Types["MachineGuns"])
-            {
+            if (Difficulties.Types["MachineGuns"]) {
                 Properties.ShellCooldown = 5;
                 Properties.ShellLimit = 50;
                 Properties.ShootStun = 0;
@@ -352,8 +339,7 @@ public abstract class Tank
                 if (this is AITank tank)
                     tank.AiParams.Inaccuracy *= 2;
             }
-            if (Difficulties.Types["Shotguns"])
-            {
+            if (Difficulties.Types["Shotguns"]) {
                 Properties.ShellSpread = 0.3f;
                 Properties.ShellShootCount = 3;
                 Properties.ShellLimit *= 3;
@@ -365,10 +351,8 @@ public abstract class Tank
 
         GameProperties.OnMissionStart += OnMissionStart;
     }
-    public void Add2DCosmetic(Cosmetic2D cos2d, Func<bool> destroyOn = null)
-    {
-        if (!MainMenu.Active && IsIngame)
-        {
+    public void Add2DCosmetic(Cosmetic2D cos2d, Func<bool> destroyOn = null) {
+        if (!MainMenu.Active && IsIngame) {
             if (Cosmetics.Contains(cos2d))
                 return;
             Cosmetics.Add(cos2d);
@@ -377,8 +361,7 @@ public abstract class Tank
             particle.Scale = cos2d.Scale;
             particle.Tag = $"cosmetic_2d_{GetHashCode()}"; // store the hash code of this tank, so when we destroy the cosmetic's particle, it destroys all belonging to this tank!
             particle.HasAddativeBlending = false;
-            particle.UniqueBehavior = (z) =>
-            {
+            particle.UniqueBehavior = (z) => {
                 particle.Position = Position3D + cos2d.RelativePosition;
                 particle.Roll = cos2d.Rotation.X;
                 particle.Pitch = cos2d.Rotation.Y;
@@ -391,12 +374,10 @@ public abstract class Tank
             };
         }
     }
-    void OnMissionStart()
-    {
+    void OnMissionStart() {
         if (Difficulties.Types["FFA"])
             Team = TeamID.NoTeam;
-        if (Properties.Invisible && !Dead)
-        {
+        if (Properties.Invisible && !Dead) {
             var invis = "Assets/sounds/tnk_invisible.ogg";
             SoundPlayer.PlaySoundInstance(invis, SoundContext.Effect, 0.3f, gameplaySound: true);
 
@@ -406,8 +387,7 @@ public abstract class Tank
             lightParticle.Alpha = 0f;
             lightParticle.IsIn2DSpace = true;
 
-            lightParticle.UniqueBehavior = (lp) =>
-            {
+            lightParticle.UniqueBehavior = (lp) => {
                 lp.Position = Position3D;
                 if (lp.Scale.X < 5f)
                     GeometryUtils.Add(ref lp.Scale, 0.12f * TankGame.DeltaTime);
@@ -423,21 +403,18 @@ public abstract class Tank
 
             const int NUM_LOCATIONS = 8;
 
-            for (int i = 0; i < NUM_LOCATIONS; i++)
-            {
+            for (int i = 0; i < NUM_LOCATIONS; i++) {
                 var lp = GameHandler.ParticleSystem.MakeParticle(Position3D + new Vector3(0, 5, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
 
                 var velocity = Vector2.UnitY.RotatedByRadians(MathHelper.ToRadians(360f / NUM_LOCATIONS * i));
 
                 lp.Scale = new(1f);
 
-                lp.UniqueBehavior = (elp) =>
-                {
+                lp.UniqueBehavior = (elp) => {
                     elp.Position.X += velocity.X * TankGame.DeltaTime;
                     elp.Position.Z += velocity.Y * TankGame.DeltaTime;
 
-                    if (elp.LifeTime > 15)
-                    {
+                    if (elp.LifeTime > 15) {
                         GeometryUtils.Add(ref elp.Scale, -0.03f * TankGame.DeltaTime);
                         elp.Alpha -= 0.03f * TankGame.DeltaTime;
                     }
@@ -453,8 +430,7 @@ public abstract class Tank
 
     private Vector2 _oldPosition;
     /// <summary>Update this <see cref="Tank"/>.</summary>
-    public virtual void Update()
-    {
+    public virtual void Update() {
         if (Dead || !MapRenderer.ShouldRender)
             return;
 
@@ -462,7 +438,7 @@ public abstract class Tank
 
         Position = Body.Position * UNITS_PER_METER;
 
-        Body.LinearVelocity = Velocity * 0.55f / UNITS_PER_METER * TankGame.DeltaTime; 
+        Body.LinearVelocity = Velocity * 0.55f / UNITS_PER_METER * TankGame.DeltaTime;
 
         // try to make positive. i hate game
         World = Matrix.CreateScale(Scaling) * Matrix.CreateFromYawPitchRoll(-TankRotation - (Flip ? MathHelper.Pi : 0f), 0, 0)
@@ -474,19 +450,18 @@ public abstract class Tank
             Velocity = Vector2.Zero;
         if (OwnedMineCount < 0)
             OwnedMineCount = 0;
+        if (DecelerationRateDecayTime > 0)
+            DecelerationRateDecayTime -= TankGame.DeltaTime;
 
-        if (Velocity.Length() > 0 && !Properties.Stationary && Position - _oldPosition != Vector2.Zero)
-        {
+        if (!Properties.Stationary && Velocity.Length() > 0) {
             var rnd = MathF.Round(12 / Velocity.Length());
             float treadPlaceTimer = rnd != 0 ? rnd : 1;
-
-            if (TankGame.RunTime % treadPlaceTimer <= TankGame.DeltaTime)
+            // MAYBE: change back to <= delta time if it doesn't work.
+            if (TankGame.RunTime % treadPlaceTimer < TankGame.DeltaTime)
                 LayFootprint(Properties.TrackType == TrackID.Thick);
-            if (!Properties.IsSilent)
-            {
+            if (!Properties.IsSilent) {
                 // why did i clamp? i hate old code
-                if (TankGame.RunTime % MathHelper.Clamp(treadPlaceTimer / 2, 4, 6) <= TankGame.DeltaTime)
-                {
+                if (TankGame.RunTime % MathHelper.Clamp(treadPlaceTimer / 2, 4, 6) < TankGame.DeltaTime) {
                     var treadPlace = $"Assets/sounds/tnk_tread_place_{GameHandler.GameRand.Next(1, 5)}.ogg";
                     var sfx = SoundPlayer.PlaySoundInstance(treadPlace, SoundContext.Effect, Properties.TreadVolume, 0f, Properties.TreadPitch, gameplaySound: true);
                     sfx.Instance.Pitch = Properties.TreadPitch;
@@ -494,6 +469,32 @@ public abstract class Tank
             }
         }
 
+        if (IsTurning) {
+            // var real = TankRotation + MathHelper.PiOver2;
+            if (TargetTankRotation - TankRotation >= MathHelper.PiOver2) {
+                TankRotation += MathHelper.Pi;
+                Flip = !Flip;
+            }
+            else if (TargetTankRotation - TankRotation <= -MathHelper.PiOver2) {
+                TankRotation -= MathHelper.Pi;
+                Flip = !Flip;
+            }
+        }
+
+        IsTurning = !(TankRotation > TargetTankRotation - Properties.MaximalTurn - MathHelper.ToRadians(5) && TankRotation < TargetTankRotation + Properties.MaximalTurn + MathHelper.ToRadians(5));
+
+        if (!IsTurning) {
+            IsTurning = false;
+            Speed += Properties.Acceleration * TankGame.DeltaTime;
+            if (Speed > Properties.MaxSpeed)
+                Speed = Properties.MaxSpeed;
+        }
+        if (IsTurning || CurShootStun > 0 || CurMineStun > 0 || Properties.Stationary) {
+            Speed -= Properties.Deceleration * (DecelerationRateDecayTime > 0 ? 0.25f : 1f) * TankGame.DeltaTime;
+            if (Speed < 0)
+                Speed = 0;
+            IsTurning = true;
+        }
         // try to make negative. go poopoo
         _cannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
         Model.Root.Transform = World;
@@ -508,11 +509,6 @@ public abstract class Tank
             CurMineStun -= TankGame.DeltaTime;
         if (CurMineCooldown > 0)
             CurMineCooldown -= TankGame.DeltaTime;
-
-        if (CurShootStun > 0 || CurMineStun > 0 || Properties.Stationary) {
-            Body.LinearVelocity = Vector2.Zero;
-            Velocity = Vector2.Zero;
-        }
 
         // fix 2d peeopled
         foreach (var cosmetic in Cosmetics)
@@ -734,6 +730,7 @@ public abstract class Tank
             Position = Position3D + new Vector3(0, 0.1f, 0),
         };
     }
+    public float DecelerationRateDecayTime;
     /// <summary>Shoot a <see cref="Shell"/> from this <see cref="Tank"/>.</summary>
     public virtual void Shoot(bool fxOnly) {
         if ((!MainMenu.Active && !GameProperties.InMission) || !Properties.HasTurret)
@@ -769,7 +766,10 @@ public abstract class Tank
                     else
                         Client.SyncShellFire(shell);
                 }
-
+                var force = (Position - defPos.FlattenZ()) * Properties.Recoil;
+                Velocity = force / UNITS_PER_METER;
+                DecelerationRateDecayTime = 20 * Properties.Recoil;
+                //Body.ApplyForce(force / UNITS_PER_METER);
                 DoShootParticles(defPos);
             }
             else
@@ -796,10 +796,6 @@ public abstract class Tank
                 shell.RicochetsRemaining = Properties.RicochetCount;
             }
         }
-
-        /*var force = (Position - newPos) * Recoil;
-        Velocity = force;
-        Body.ApplyForce(force);*/
 
         timeSinceLastAction = 0;
 

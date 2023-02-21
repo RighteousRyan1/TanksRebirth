@@ -385,6 +385,7 @@ namespace TanksRebirth.GameContent
         public override void ApplyDefaults(ref TankProperties properties)
         {
             properties.DestructionColor = TankDestructionColors[AiTankType];
+            //properties.Recoil = 5f;
             switch (AiTankType)
             {
                 #region VanillaTanks
@@ -1651,6 +1652,11 @@ namespace TanksRebirth.GameContent
                     break;
                     #endregion
             }
+
+            if (properties.Stationary) {
+                properties.Deceleration = 0.2f;
+            }
+                
             if (Difficulties.Types["TanksAreCalculators"])
                 if (properties.RicochetCount >= 1)
                     if (properties.HasTurret)
@@ -2481,50 +2487,25 @@ namespace TanksRebirth.GameContent
                 // i really hope to remove this hardcode.
                 if (doMoveTowards)
                 {
-                    if (IsTurning)
-                    {
-                        // var real = TankRotation + MathHelper.PiOver2;
-                        if (TargetTankRotation - TankRotation >= MathHelper.PiOver2)
-                        {
-                            TankRotation += MathHelper.Pi;
-                            Flip = !Flip;
-                        }
-                        else if (TargetTankRotation - TankRotation <= -MathHelper.PiOver2)
-                        {
-                            TankRotation -= MathHelper.Pi;
-                            Flip = !Flip;
-                        }
-                    }
-
-                    IsTurning = !(TankRotation > TargetTankRotation - Properties.MaximalTurn - MathHelper.ToRadians(5) && TankRotation < TargetTankRotation + Properties.MaximalTurn + MathHelper.ToRadians(5));
-
-                    if (!IsTurning)
-                    {
-                        IsTurning = false;
-                        Speed += Properties.Acceleration * TankGame.DeltaTime;
-                        if (Speed > Properties.MaxSpeed)
-                            Speed = Properties.MaxSpeed;
-                    }
-                    else
-                    {
-                        Speed -= Properties.Deceleration * TankGame.DeltaTime;
-                        if (Speed < 0)
-                            Speed = 0;
-                        IsTurning = true;
-                    }
                     // TODO: fix this pls.
                     /*if (TargetTankRotation > MathHelper.Tau)
                         TargetTankRotation -= MathHelper.Tau;
                     if (TargetTankRotation < 0)
                         TargetTankRotation += MathHelper.Tau;*/
 
-                    var dir = Vector2.UnitY.RotatedByRadians(TankRotation);
-                    Velocity.X = dir.X;
-                    Velocity.Y = dir.Y;
+                    // TODO: ai tank recoil failure here vvvv
 
-                    Velocity.Normalize();
+                    //if (DecelerationRateDecayTime <= 0) {
+                        var dir = Vector2.UnitY.RotatedByRadians(TankRotation);
+                        Velocity.X += dir.X;
+                        Velocity.Y += dir.Y;
 
-                    Velocity *= Speed;
+                        Velocity.Normalize();
+                        Velocity *= Speed;
+                        // TODO: this is also why decel decay isn't properly applied. FIX LATER.
+                    //}
+                    //Velocity.Normalize();
+                    //Velocity *= Speed;
                     TankRotation = MathUtils.RoughStep(TankRotation, TargetTankRotation, Properties.TurningSpeed * TankGame.DeltaTime);
                 }
 

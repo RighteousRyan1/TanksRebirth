@@ -322,6 +322,9 @@ namespace TanksRebirth.Net
                     // if this solution fails, simply change param 2 (wasConfirmed) to true
                     var success = MainMenu.PrepareGameplay(campName, false, true); // second param to false when doing a check
                     Client.SendCampaignStatus(campName, CurrentClient.Id, success); // if this player doesn't own said campaign, cancel the operation.
+                    if (success) {
+                        MainMenu.PrepareGameplay(campName, true, true);
+                    }
                     break;
                 case PacketID.Cleanup:
                     GameHandler.CleanupScene();

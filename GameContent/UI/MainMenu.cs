@@ -1143,6 +1143,7 @@ namespace TanksRebirth.GameContent.UI
         }
         public static void Open()
         {
+            MainMenu.plrsConfirmed = 0;
             _musicFading = false;
             _sclOffset = 0;
             MenuState = State.PrimaryMenu;

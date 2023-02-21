@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.Internals.Common.Framework
 {
@@ -23,5 +24,8 @@ namespace TanksRebirth.Internals.Common.Framework
         /// <summary>Gets the circumference of this <see cref="Circle"/>.</summary>
         public float GetCircumference()
             => Radius * 2 * MathHelper.Pi;
+
+        public Vector2 GetRotatedPoint(float rads) 
+            => Center + new Vector2(Radius, 0).RotatedByRadians(rads);
     }
 }
