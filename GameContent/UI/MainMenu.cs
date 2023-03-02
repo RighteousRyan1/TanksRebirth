@@ -458,9 +458,11 @@ namespace TanksRebirth.GameContent.UI
                 DifficultiesButton
             };
 
-            foreach (var e in _menuElements)
+            foreach (var e in _menuElements) {
                 e.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick.ogg", SoundContext.Effect, rememberMe: true); };
+            }
         }
+
         public static void RenderCrate()
         {
             Crate.View = View;
@@ -932,7 +934,6 @@ namespace TanksRebirth.GameContent.UI
                 PasswordInput.IsVisible = value;
                 PortInput.IsVisible = value;
                 ServerNameInput.IsVisible = value && !Client.IsConnected();
-
             }
         }
         internal static void SetMPButtonsVisibility(bool visible)
@@ -1027,6 +1028,8 @@ namespace TanksRebirth.GameContent.UI
             if (MenuState == State.StatsMenu)
                 if (InputUtils.KeyJustPressed(Keys.Escape))
                     MenuState = State.PrimaryMenu;
+
+            // todo: do transitions
             SetPlayButtonsVisibility(MenuState == State.PlayList);
             SetMPButtonsVisibility(MenuState == State.Mulitplayer);
             SetPrimaryMenuButtonsVisibility(MenuState == State.PrimaryMenu);

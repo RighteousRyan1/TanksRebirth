@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Security.Cryptography;
+
 namespace TanksRebirth.Internals.Common.Utilities;
 #pragma warning disable
 public static class Easings
@@ -95,4 +97,55 @@ public static class Easings
         if (t < 0.5) return InBounce(t * 2) / 2;
         return 1 - InBounce((1 - t) * 2) / 2;
     }
+
+    public static float GetEasingBehavior(EasingType easingType, float easeValue) {
+        return easingType switch {
+            EasingType.Linear => Easings.Linear(easeValue),
+            EasingType.InQuad => Easings.InQuad(easeValue),
+            EasingType.OutQuad => Easings.OutQuad(easeValue),
+            EasingType.InOutQuad => Easings.InOutQuad(easeValue),
+            EasingType.InCubic => Easings.InCubic(easeValue),
+            EasingType.OutCubic => Easings.OutCubic(easeValue),
+            EasingType.InOutCubic => Easings.InOutCubic(easeValue),
+            EasingType.InQuart => Easings.InQuart(easeValue),
+            EasingType.OutQuart => Easings.OutQuart(easeValue),
+            EasingType.InOutQuart => Easings.InOutQuart(easeValue),
+            EasingType.InQuint => Easings.InQuint(easeValue),
+            EasingType.OutQuint => Easings.OutQuint(easeValue),
+            EasingType.InOutQuint => Easings.InOutQuint(easeValue),
+            EasingType.InSine => Easings.InSine(easeValue),
+            EasingType.OutSine => Easings.OutSine(easeValue),
+            EasingType.InOutSine => Easings.InOutSine(easeValue),
+            EasingType.InExpo => Easings.InExpo(easeValue),
+            EasingType.OutExpo => Easings.OutExpo(easeValue),
+            EasingType.InOutExpo => Easings.InOutExpo(easeValue),
+            EasingType.InCirc => Easings.InCirc(easeValue),
+            EasingType.OutCirc => Easings.OutCirc(easeValue),
+            EasingType.InOutCirc => Easings.InOutCirc(easeValue),
+            EasingType.InElastic => Easings.InElastic(easeValue),
+            EasingType.OutElastic => Easings.OutElastic(easeValue),
+            EasingType.InOutElastic => Easings.InOutElastic(easeValue),
+            EasingType.InBack => Easings.InBack(easeValue),
+            EasingType.OutBack => Easings.OutBack(easeValue),
+            EasingType.InOutBack => Easings.InOutBack(easeValue),
+            EasingType.InBounce => Easings.InBounce(easeValue),
+            EasingType.OutBounce => Easings.OutBounce(easeValue),
+            EasingType.InOutBounce => Easings.InOutBounce(easeValue),
+            _ => throw new Exception()
+        };
+    }
+}
+public enum EasingType
+{
+    Linear,
+    InQuad, OutQuad, InOutQuad,
+    InCubic, OutCubic, InOutCubic,
+    InQuart, OutQuart, InOutQuart,
+    InQuint, OutQuint, InOutQuint,
+    InSine, OutSine, InOutSine,
+    InExpo, OutExpo, InOutExpo,
+    InCirc, OutCirc, InOutCirc,
+    InElastic, OutElastic, InOutElastic,
+    InBack, OutBack, InOutBack,
+    InBounce, OutBounce, InOutBounce
 }
