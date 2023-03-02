@@ -25,6 +25,7 @@ using FontStashSharp;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.Graphics;
 using System.Collections.Generic;
+using TanksRebirth.GameContent.Systems.PingSystem;
 
 namespace TanksRebirth.GameContent
 {
@@ -203,6 +204,9 @@ namespace TanksRebirth.GameContent
 
             if (Difficulties.Types["InfiniteLives"])
                 PlayerTank.SetLives(PlayerTank.StartingLives);
+
+            foreach (var ping in IngamePing.AllIngamePings)
+                ping?.Update();
 
             if (!IntermissionSystem.IsAwaitingNewMission)
             {
@@ -635,8 +639,11 @@ namespace TanksRebirth.GameContent
             foreach (var mark in TankDeathMark.deathMarks)
                 mark?.Render();
 
+            foreach (var ping in IngamePing.AllIngamePings)
+                ping?.Render();
+
             //foreach (var print in TankFootprint.footprints)
-                //print?.Render();
+            //print?.Render();
 
             foreach (var crate in Crate.crates)
                 crate?.Render();

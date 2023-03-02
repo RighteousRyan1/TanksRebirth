@@ -1068,7 +1068,7 @@ public class TankFootprint
 
     public int id = 0;
 
-    public static DecalSystem DecalHandler; // = new(TankGame.SpriteRenderer, TankGame.Instance.GraphicsDevice);
+    //public static DecalSystem DecalHandler; // = new(TankGame.SpriteRenderer, TankGame.Instance.GraphicsDevice);
 
     public TankFootprint(Tank owner, float rotation, bool alt = false)
     {

@@ -10,6 +10,7 @@ using TanksRebirth.Internals.Common.Framework.Input;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Localization;
 using TanksRebirth.Net;
+using Microsoft.Xna.Framework.Input;
 
 namespace TanksRebirth.GameContent.Systems.CommandsSystem;
 #pragma warning disable
@@ -29,13 +30,23 @@ public static class CommandGlobals {
                 ChatSystem.SendMessage($"{elem.Key.Name}: {elem.Key.Description}", Color.Khaki);
             }
         }),
-        /*[new CommandInput(name: "setbind", description: "Change a keybind by a given internal name.")] = new CommandOutput(netSync: false, (args) => {
+        [new CommandInput(name: "setbind", description: "Change a keybind by a given internal name.")] = new CommandOutput(netSync: false, (args) => {
             for (int i = 0; i < Keybind.AllKeybinds.Count; i++) {
-                var elem = Commands[i];
+                var bind = Keybind.AllKeybinds[i];
+                if (bind.Name == args[0]) {
+                    if (Enum.TryParse<Keys>(args[1], true, out var result)) {
+                        bind.ForceReassign(result);
+                        ChatSystem.SendMessage($"Changed keybind '{args[0]}' to '{args[1]}'", Color.DodgerBlue);
+                        return;
+                    }
+                    else {
+                        ChatSystem.SendMessage($"Invalid key code '{args[1]}'", Color.Red);
+                    }
+                }
 
-                ChatSystem.SendMessage($"{elem.Name}: {elem.Key.Description}", Color.Khaki);
+                ChatSystem.SendMessage($"No keybind matches name '{args[0]}'", Color.Khaki);
             }
-        }),*/
+        }),
         [new CommandInput(name: "setlang", description: "Set the game's language.")] = new CommandOutput(netSync: false, (args) => {
             var lang = args[0];
 

@@ -38,6 +38,7 @@ using TanksRebirth.Graphics.Cameras;
 using System.Globalization;
 using System.Threading;
 using TanksRebirth.Internals.Common.Framework;
+using TanksRebirth.GameContent.Systems.PingSystem;
 
 namespace TanksRebirth
 {
@@ -288,6 +289,7 @@ namespace TanksRebirth
                 // I forget why this check is needed...
                 if (Debugger.IsAttached)
                 {
+                    // eventually just load this thru build
                     GameResources.CopySrcFolderContents("Content/Assets/fonts");
                     GameResources.CopySrcFolderContents("Content/Assets/music");
                     GameResources.CopySrcFolderContents("Content/Assets/sounds");
@@ -312,6 +314,7 @@ namespace TanksRebirth
                     GameResources.CopySrcFolderContents("Content/Assets/textures/tank/wee");
                     GameResources.CopySrcFolderContents("Content/Assets/textures/ui");
                     GameResources.CopySrcFolderContents("Content/Assets/textures/ui/leveledit");
+                    GameResources.CopySrcFolderContents("Content/Assets/textures/ui/ping");
 
                     GameResources.CopySrcFolderContents("Content/Assets/textures", ".png");
                     GameResources.CopySrcFolderContents("Content/Assets", ".png");
@@ -370,11 +373,11 @@ namespace TanksRebirth
 
                 Graphics.SynchronizeWithVerticalRetrace = Settings.Vsync;
                 Graphics.IsFullScreen = Settings.FullScreen;
-                PlayerTank.controlUp.AssignedKey = Settings.UpKeybind;
-                PlayerTank.controlDown.AssignedKey = Settings.DownKeybind;
-                PlayerTank.controlLeft.AssignedKey = Settings.LeftKeybind;
-                PlayerTank.controlRight.AssignedKey = Settings.RightKeybind;
-                PlayerTank.controlMine.AssignedKey = Settings.MineKeybind;
+                PlayerTank.controlUp.ForceReassign(Settings.UpKeybind);
+                PlayerTank.controlDown.ForceReassign(Settings.DownKeybind);
+                PlayerTank.controlLeft.ForceReassign(Settings.LeftKeybind);
+                PlayerTank.controlRight.ForceReassign(Settings.RightKeybind);
+                PlayerTank.controlMine.ForceReassign(Settings.MineKeybind);
 
                 if (!IsSouthernHemi ? LaunchTime.Month != 12 : LaunchTime.Month != 7)
                     MapRenderer.Theme = Settings.GameTheme;
@@ -553,6 +556,8 @@ namespace TanksRebirth
         protected override void Update(GameTime gameTime)
         {
             try {
+                if (InputUtils.KeyJustPressed(Keys.K))
+                    new IngamePing(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition), PingID.Generic, PlayerID.PlayerTankColors[Client.IsConnected() ? NetPlay.CurrentClient.Id : PlayerID.Blue].ToColor());
                 //SpectatorCamera.FieldOfView = MathHelper.ToRadians(100);
                 //SpectatorCamera.AspectRatio = GraphicsDevice.Viewport.AspectRatio;
                 //PerspectiveCamera.FieldOfView = MathHelper.ToRadians(90);
