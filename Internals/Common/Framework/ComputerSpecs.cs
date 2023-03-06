@@ -13,96 +13,104 @@ public struct ComputerSpecs {
     public CPU CPU;
 
     public RAM RAM;
+    private static string GetHardwareData(string hwclass, string syntax) {
+        using var searcher = new ManagementObjectSearcher($"SELECT * FROM {hwclass}");
+
+        foreach (var obj in searcher.Get())
+            return $"{obj[syntax]}";
+        return "Data not retrieved.";
+    }
     public static ComputerSpecs GetSpecs(out bool error) {
         error = false;
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
             error = true;
             return default;
         }
-
-        string getData(string hwclass, string syntax) {
-            using var searcher = new ManagementObjectSearcher($"SELECT * FROM {hwclass}");
-
-            foreach (var obj in searcher.Get())
-                return $"{obj[syntax]}";
-            return "Data not retrieved.";
-        }
-
-        var specs = default(ComputerSpecs);
-
+        
         try {
-            var cpuCores = int.Parse(getData("Win32_Processor", "NumberOfCores"));
-            var cpuName = getData("Win32_Processor", "Name");
-            var cpuThreads = int.Parse(getData("Win32_Processor", "ThreadCount"));
-
-            var gpuName = getData("Win32_VideoController", "Name");
-            var gpuDriverVersion = Version.Parse(getData("Win32_VideoController", "DriverVersion"));
-            var gpuVram = uint.Parse(getData("Win32_VideoController", "AdapterRAM"));
-
-            var ramTotalStickPhysical = ulong.Parse(getData("Win32_ComputerSystem", "TotalPhysicalMemory"));
-            var ram1xStickPhysical = ulong.Parse(getData("Win32_PhysicalMemory", "Capacity"));
-            var ramClockSpeed = uint.Parse(getData("Win32_PhysicalMemory", "ConfiguredClockSpeed"));
-            var ramSpeed = uint.Parse(getData("Win32_PhysicalMemory", "Speed"));
-            var ramManufacturer = getData("Win32_PhysicalMemory", "Manufacturer");
-            
-            var type = uint.Parse(getData("Win32_PhysicalMemory", "SMBIOSMemoryType"));
-
-            var ramType = type switch {
-                0x0 => "Unknown",
-                0x1 => "Other",
-                0x2 => "DRAM",
-                0x3 => "Synchronous DRAM",
-                0x4 => "Cache DRAM",
-                0x5 => "EDO",
-                0x6 => "EDRAM",
-                0x7 => "VRAM",
-                0x8 => "SRAM",
-                0x9 => "RAM",
-                0xa => "ROM",
-                0xb => "Flash",
-                0xc => "EEPROM",
-                0xd => "FEPROM",
-                0xe => "EPROM",
-                0xf => "CDRAM",
-                0x10 => "3DRAM",
-                0x11 => "SDRAM",
-                0x12 => "SGRAM",
-                0x13 => "RDRAM",
-                0x14 => "DDR",
-                0x15 => "DDR2",
-                0x16 => "DDR2 FB-DIMM",
-                0x17 => "Undefined 23",
-                0x18 => "DDR3",
-                0x19 => "FBD2",
-                0x1a => "DDR4",
-                _ => "Undefined",
+            return new ComputerSpecs {
+                GPU = GetGPUInformation(),
+                CPU = GetCpuInformation(),
+                RAM = GetRamInformation()
             };
-
-            specs = new() {
-                GPU = new() {
-                    VRAM = gpuVram,
-                    Name = gpuName,
-                    DriverVersion = gpuDriverVersion,
-                },
-                CPU = new() {
-                    Cores = cpuCores,
-                    Threads = cpuThreads,
-                    Name = cpuName
-                },
-                RAM = {
-                    TotalPhysical = ramTotalStickPhysical,
-                    StickPhysical = ram1xStickPhysical,
-                    ClockSpeed= ramClockSpeed,
-                    Manufacturer = ramManufacturer,
-                    Speed = ramSpeed,
-                    Type = ramType
-                }
-            };
-            return specs;
         } catch {
             error = true;
-            return specs;
+            return default;
         }
+    }
+
+    private static GPU GetGPUInformation() {
+        var gpuName = GetHardwareData("Win32_VideoController", "Name");
+        var gpuDriverVersion = Version.Parse(GetHardwareData("Win32_VideoController", "DriverVersion"));
+        var gpuVram = uint.Parse(GetHardwareData("Win32_VideoController", "AdapterRAM"));
+        return new GPU {
+            VRAM = gpuVram,
+            Name = gpuName,
+            DriverVersion = gpuDriverVersion,
+        };
+    }
+
+    private static CPU GetCpuInformation() {
+        var cpuCores = int.Parse(GetHardwareData("Win32_Processor", "NumberOfCores"));
+        var cpuName = GetHardwareData("Win32_Processor", "Name");
+        var cpuThreads = int.Parse(GetHardwareData("Win32_Processor", "ThreadCount"));
+        return new CPU {
+            Cores = cpuCores,
+            Threads = cpuThreads,
+            Name = cpuName
+        };
+    }
+
+    private static RAM GetRamInformation() {
+        var ramTotalStickPhysical = ulong.Parse(GetHardwareData("Win32_ComputerSystem", "TotalPhysicalMemory"));
+        var ram1xStickPhysical = ulong.Parse(GetHardwareData("Win32_PhysicalMemory", "Capacity"));
+        var ramClockSpeed = uint.Parse(GetHardwareData("Win32_PhysicalMemory", "ConfiguredClockSpeed"));
+        var ramSpeed = uint.Parse(GetHardwareData("Win32_PhysicalMemory", "Speed"));
+        var ramManufacturer = GetHardwareData("Win32_PhysicalMemory", "Manufacturer");
+        var type = uint.Parse(GetHardwareData("Win32_PhysicalMemory", "SMBIOSMemoryType"));
+        var ramType = GetRamType(type);
+        return new RAM {
+            TotalPhysical = ramTotalStickPhysical,
+            StickPhysical = ram1xStickPhysical,
+            ClockSpeed = ramClockSpeed,
+            Manufacturer = ramManufacturer,
+            Speed = ramSpeed,
+            Type = ramType
+        };
+    }
+    
+    private static string GetRamType(uint type) {
+        var ramType = type switch {
+            0x0 => "Unknown",
+            0x1 => "Other",
+            0x2 => "DRAM",
+            0x3 => "Synchronous DRAM",
+            0x4 => "Cache DRAM",
+            0x5 => "EDO",
+            0x6 => "EDRAM",
+            0x7 => "VRAM",
+            0x8 => "SRAM",
+            0x9 => "RAM",
+            0xa => "ROM",
+            0xb => "Flash",
+            0xc => "EEPROM",
+            0xd => "FEPROM",
+            0xe => "EPROM",
+            0xf => "CDRAM",
+            0x10 => "3DRAM",
+            0x11 => "SDRAM",
+            0x12 => "SGRAM",
+            0x13 => "RDRAM",
+            0x14 => "DDR",
+            0x15 => "DDR2",
+            0x16 => "DDR2 FB-DIMM",
+            0x17 => "Undefined 23",
+            0x18 => "DDR3",
+            0x19 => "FBD2",
+            0x1a => "DDR4",
+            _ => "Undefined",
+        };
+        return ramType;
     }
 }
 
