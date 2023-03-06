@@ -3,14 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Security.Authentication;
 using System.Text;
 using System.Threading.Tasks;
 using TanksRebirth.Net;
 
 namespace TanksRebirth.Internals.Common.Utilities;
 
-public static class WebUtils
-{
+public static class WebUtils {
+    private static HttpClient _client = new(new HttpClientHandler { SslProtocols = SslProtocols.Tls12 });
+
     public static byte[] DownloadWebFile(string url, out string fileName)
     {
         var data = m_DownloadWebFile(url).GetAwaiter().GetResult();
@@ -20,9 +22,7 @@ public static class WebUtils
     }
     private static async Task<(byte[], string)> m_DownloadWebFile(string url)
     {
-        using var client = new HttpClient();
-
-        var file = await client.GetByteArrayAsync(url);
+        var file = await _client.GetByteArrayAsync(url);
 
         // GameHandler.ClientLog.Write($"WebRequest sent to '{url}'", LogType.Debug); make a logger.. of course.
 
@@ -31,22 +31,24 @@ public static class WebUtils
         return (file, name);
     }
 
+    public static async Task<bool> RemoteFileExistsAsync(string url)
+    {
+        var request = new HttpRequestMessage
+        {
+                Method = HttpMethod.Head,
+                RequestUri = new(url),
+        };
+        
+        var response = await _client.SendAsync(request);
+        
+        return response.StatusCode is HttpStatusCode.OK;
+    }
+    
     public static bool RemoteFileExists(string url)
     {
-        try
+        try 
         {
-            // i copied this code lmfao.
-
-            //Creating the HttpWebRequest
-            var request = WebRequest.Create(url) as HttpWebRequest;
-            //Setting the Request method HEAD, you can also use GET too.
-            request.Method = "HEAD";
-            //Getting the Web Response.
-            var response = request.GetResponse() as HttpWebResponse;
-            //Returns TRUE if the Status code == 200
-            var code = response.StatusCode;
-            response.Close();
-            return (code == HttpStatusCode.OK);
+            return RemoteFileExistsAsync(url).GetAwaiter().GetResult();
         }
         catch
         {
