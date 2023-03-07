@@ -35,12 +35,6 @@ namespace TanksRebirth.Internals.Common.Framework.Input
         }
 
         public static string ParseKey(this Keys key) {
-            foreach (var num in nums) {
-                if (key.ToString() == $"D{num}") {
-                    return num.ToString();
-                }
-            }
-
             switch (key)
             {
                 case OemPlus:
@@ -68,6 +62,11 @@ namespace TanksRebirth.Internals.Common.Framework.Input
                 case OemTilde:
                     return "`";
                 default:
+                    foreach (var num in nums) {
+                        if (key.ToString() == $"D{num}") {
+                            return num.ToString();
+                        }
+                    }
                     return key.ToString();
             }
         }
