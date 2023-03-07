@@ -11,8 +11,8 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
 {
     public class MidiPlayer : IDisposable
     {
-        private static readonly int sampleRate = 44100;
-        private static readonly int bufferLength = sampleRate / 10;
+        private const int DEFAULT_SAMPLERATE = 44100;
+        private const int DEFAULT_BUFFER_LENGTH = DEFAULT_SAMPLERATE / 10;
 
         private Synthesizer synthesizer;
         private MidiFileSequencer sequencer;
@@ -24,15 +24,15 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
         {
             if (settings is not null)
             {
-                settings.SampleRate = sampleRate;
+                settings.SampleRate = DEFAULT_SAMPLERATE;
                 synthesizer = new Synthesizer(soundFontPath, settings);
             }
             else
                 synthesizer = new Synthesizer(soundFontPath, settings);
             sequencer = new MidiFileSequencer(synthesizer);
 
-            dynamicSound = new DynamicSoundEffectInstance(sampleRate, AudioChannels.Stereo);
-            buffer = new byte[4 * bufferLength];
+            dynamicSound = new DynamicSoundEffectInstance(DEFAULT_SAMPLERATE, AudioChannels.Stereo);
+            buffer = new byte[4 * DEFAULT_BUFFER_LENGTH];
 
             dynamicSound.BufferNeeded += (s, e) => SubmitBuffer();
         }
