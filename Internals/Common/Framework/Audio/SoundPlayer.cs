@@ -56,8 +56,7 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
         /// <returns>
         ///     An <see cref="OggAudio"/> instance that can be used to play the sound.
         /// </returns>
-        public static OggAudio PlaySoundInstance(string audioPath, SoundContext context, float volume = 1f, float panOverride = 0f, float pitchOverride = 0f, bool gameplaySound = false, bool rememberMe = false)
-        {
+        public static OggAudio PlaySoundInstance(string audioPath, SoundContext context, float volume = 1f, float panOverride = 0f, float pitchOverride = 0f, bool gameplaySound = false, bool rememberMe = false) {
             // because ogg is the only good audio format.
             audioPath = Path.Combine(TankGame.Instance.Content.RootDirectory, audioPath);
 
@@ -78,28 +77,20 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
                     break;
             }
 
-            OggAudio sfx = null;
+            OggAudio sfx;
 
             // check if it exists in the cache first
             if (rememberMe) {
                 bool exists = SavedSounds.ContainsKey(audioPath);
 
-                if (!exists) {
-                    sfx = new OggAudio(audioPath);
+                sfx = exists ? SavedSounds[SavedSounds.Keys.ToList().First(x => x == audioPath)] : new OggAudio(audioPath);
+                if (!exists)
                     SavedSounds.Add(audioPath, sfx);
-
-                    sfx.Instance.Pan = MathHelper.Clamp(panOverride, -1f, 1f);
-                    sfx.Instance.Pitch = MathHelper.Clamp(pitchOverride, -1f, 1f);
-                    sfx.Instance.Play();
-                    sfx.Instance.Volume = MathHelper.Clamp(volume, 0f, 1f);
-                }
-                else {
-                    sfx = SavedSounds[SavedSounds.Keys.ToList().First(x => x == audioPath)];
-                    sfx.Instance.Pan = MathHelper.Clamp(panOverride, -1f, 1f);
-                    sfx.Instance.Pitch = MathHelper.Clamp(pitchOverride, -1f, 1f);
-                    sfx.Instance.Play();
-                    sfx.Instance.Volume = MathHelper.Clamp(volume, 0f, 1f);
-                }
+                
+                sfx.Instance.Pan = MathHelper.Clamp(panOverride, -1f, 1f);
+                sfx.Instance.Pitch = MathHelper.Clamp(pitchOverride, -1f, 1f);
+                sfx.Instance.Play();
+                sfx.Instance.Volume = MathHelper.Clamp(volume, 0f, 1f);
             }
             else {
                 sfx = new OggAudio(audioPath);
