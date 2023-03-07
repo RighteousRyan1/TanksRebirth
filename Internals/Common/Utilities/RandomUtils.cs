@@ -17,23 +17,21 @@ public static class RandomUtils
     public static T PickRandom<T>(T[] input) => input[DefaultSeed.Next(0, input.Length)];
     public static List<T> PickRandom<T>(T[] input, int amount)
     {
-        List<T> values = new();
-        List<int> chosenTs = new();
-        for (int i = 0; i < amount; i++)
-        {
-        ReRoll:
-            int rand = new Random().Next(0, input.Length);
+        List<T> values = new(amount);
+        List<int> chosenTs = new(amount);
+        for (var i = 0; i < amount; i++) {
+            while (true) {
+                var rand = new Random().Next(0, input.Length);
 
-            if (!chosenTs.Contains(rand))
-            {
+                if (chosenTs.Contains(rand)) continue;
                 chosenTs.Add(rand);
                 values.Add(input[rand]);
+                break;
             }
-            else
-                goto ReRoll;
         }
         chosenTs.Clear();
         return values;
     }
-    public static TEnum PickRandom<TEnum>() where TEnum : struct, Enum => (TEnum)(object)DefaultSeed.Next(0, Enum.GetNames<TEnum>().Length);
+    public static TEnum PickRandom<TEnum>() where TEnum : struct, Enum
+        => (TEnum)(object)DefaultSeed.Next(0, Enum.GetNames<TEnum>().Length);
 }

@@ -11,8 +11,8 @@ namespace TanksRebirth.Internals.Common.Framework;
 public struct ComputerSpecs {
     public GPU GPU;
     public CPU CPU;
-
     public RAM RAM;
+
     private static string GetHardwareData(string hwclass, string syntax) {
         using var searcher = new ManagementObjectSearcher($"SELECT * FROM {hwclass}");
 
