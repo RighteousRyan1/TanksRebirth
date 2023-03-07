@@ -9,27 +9,20 @@ namespace TanksRebirth.Internals.Common.Framework.Input
 {
     public static class KeybindParser
     {
-        public static List<int> nums = new()
-        {
-            1,
-            2,
-            3,
-            4,
-            5,
-            6,
-            7,
-            8,
-            9,
+        public static readonly int[] nums = {
+            1, 2, 3,
+            4, 5, 6,
+            7, 8, 9,
             0,
         };
 
         public static bool IsNum(this Keys key, out int num) {
             num = -1;
             foreach (var number in nums) {
-                if (key.ToString() == $"D{number}") {
-                    num = number;
-                    return true;
-                }
+                if (key.ToString() != $"D{number}") continue;
+
+                num = number;
+                return true;
             }
             return false;
         }
