@@ -22,64 +22,53 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
 
         public MidiPlayer(string soundFontPath, SynthesizerSettings settings = null)
         {
-            if (settings is not null)
-            {
-                settings.SampleRate = DEFAULT_SAMPLERATE;
-                synthesizer = new Synthesizer(soundFontPath, settings);
-            }
-            else
-                synthesizer = new Synthesizer(soundFontPath, settings);
-            sequencer = new MidiFileSequencer(synthesizer);
-
             dynamicSound = new DynamicSoundEffectInstance(DEFAULT_SAMPLERATE, AudioChannels.Stereo);
             buffer = new byte[4 * DEFAULT_BUFFER_LENGTH];
+            dynamicSound.BufferNeeded += (_, _) => SubmitBuffer();
 
-            dynamicSound.BufferNeeded += (s, e) => SubmitBuffer();
+            if (settings is null) {
+                synthesizer = new Synthesizer(soundFontPath, settings);
+                sequencer = new MidiFileSequencer(synthesizer);
+                return;
+            }
+            settings = new(DEFAULT_SAMPLERATE);
+            synthesizer = new Synthesizer(soundFontPath, settings);
+            sequencer = new MidiFileSequencer(synthesizer);
         }
 
-        public void Play(MidiFile midiFile, bool loop)
-        {
+        public void Play(MidiFile midiFile, bool loop) {
             sequencer.Play(midiFile, loop);
 
-            if (dynamicSound.State != SoundState.Playing)
-            {
-                SubmitBuffer();
-                dynamicSound.Play();
-            }
+            if (dynamicSound.State == SoundState.Playing) return;
+            SubmitBuffer();
+            dynamicSound.Play();
         }
 
-        public void Stop()
-        {
+        public void Stop() {
             sequencer.Stop();
         }
 
-        private void SubmitBuffer()
-        {
+        private void SubmitBuffer() {
             sequencer.RenderInterleavedInt16(MemoryMarshal.Cast<byte, short>(buffer));
             dynamicSound.SubmitBuffer(buffer, 0, buffer.Length);
         }
 
-        public void Dispose()
-        {
-            if (dynamicSound != null)
-            {
-                dynamicSound.Dispose();
-                dynamicSound = null;
-            }
+        public void Dispose() {
+            if (dynamicSound == null) return;
+            dynamicSound.Dispose();
+            dynamicSound = null;
+            GC.SuppressFinalize(this);
         }
 
-        public void NoteOn(int channel, int key, int velocity)
-        {
+        public void NoteOn(int channel, int key, int velocity) {
             synthesizer.NoteOn(channel, key, velocity);
         }
 
-        public void NoteOff(int channel, int key)
-        {
+        public void NoteOff(int channel, int key) {
             synthesizer.NoteOff(channel, key);
         }
 
-        public void NoteOffAll()
-        {
+        public void NoteOffAll() {
             synthesizer.NoteOffAll(true);
         }
 
