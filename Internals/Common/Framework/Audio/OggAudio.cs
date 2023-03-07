@@ -12,10 +12,16 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
 {
     public class OggAudio : IDisposable
     {
-        public void Dispose() => GC.SuppressFinalize(this);
+        public void Dispose() {
+            GC.SuppressFinalize(this);
+            Instance.Dispose();
+            _effect.Dispose();
+            IsDisposed = true;
+        }
 
         private SoundEffect _effect;
         public SoundEffectInstance Instance;
+        public bool IsDisposed { get; private set; }
         public string SongPath { get; }
 
         public string Name { get; set; }
