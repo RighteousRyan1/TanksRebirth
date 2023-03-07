@@ -86,8 +86,8 @@ namespace TanksRebirth.Internals.Common.Framework.Graphics
         {
             VertexBuffer.Dispose();
             Effect.Dispose();
-
             triangles.Remove(this);
+            GC.SuppressFinalize(this);
         }
 
         public float FindSideLength(int side)
