@@ -79,26 +79,16 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
 
             OggAudio sfx;
 
-            // check if it exists in the cache first
-            if (rememberMe) {
-                bool exists = SavedSounds.ContainsKey(audioPath);
-
-                sfx = exists ? SavedSounds[SavedSounds.Keys.ToList().First(x => x == audioPath)] : new OggAudio(audioPath);
-                if (!exists)
-                    SavedSounds.Add(audioPath, sfx);
-                
-                sfx.Instance.Pan = MathHelper.Clamp(panOverride, -1f, 1f);
-                sfx.Instance.Pitch = MathHelper.Clamp(pitchOverride, -1f, 1f);
-                sfx.Instance.Play();
-                sfx.Instance.Volume = MathHelper.Clamp(volume, 0f, 1f);
-            }
-            else {
-                sfx = new OggAudio(audioPath);
-                sfx.Instance.Pan = MathHelper.Clamp(panOverride, -1f, 1f);
-                sfx.Instance.Pitch = MathHelper.Clamp(pitchOverride, -1f, 1f);
-                sfx.Instance.Play();
-                sfx.Instance.Volume = MathHelper.Clamp(volume, 0f, 1f);
-            }
+            // Verify that the sound exists and we are told to remember it, if so, load the sound from the dictionary.
+            // And proceed to cache it.
+            var existsInDictionary = SavedSounds.ContainsKey(audioPath) && rememberMe;
+            sfx = existsInDictionary ? SavedSounds[SavedSounds.Keys.ToList().First(x => x == audioPath)] : new OggAudio(audioPath);
+            if (!existsInDictionary && rememberMe)
+                SavedSounds.Add(audioPath, sfx);
+            sfx.Instance.Pan = MathHelper.Clamp(panOverride, -1f, 1f);
+            sfx.Instance.Pitch = MathHelper.Clamp(pitchOverride, -1f, 1f);
+            sfx.Instance.Play();
+            sfx.Instance.Volume = MathHelper.Clamp(volume, 0f, 1f);
 
             //GameContent.Systems.ChatSystem.SendMessage($"{nameof(exists)}: {exists}", Color.White);
             //GameContent.Systems.ChatSystem.SendMessage($"new list count: {Sounds.Count}", Color.White);
