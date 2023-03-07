@@ -38,13 +38,13 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
 
             var audioShort = StbVorbis.decode_vorbis_from_memory(buffer, out int sampleRate, out int channels);
 
-            byte[] audioData = new byte[audioShort.Length * 2];
+            var audioData = new byte[audioShort.Length * 2];
             for (var i = 0; i < audioShort.Length; ++i)
             {
                 if (i * 2 >= audioData.Length)
                     break;
 
-                short tempShort = audioShort[i];
+                var tempShort = audioShort[i];
 
                 audioData[i * 2] = (byte)tempShort;
                 audioData[i * 2 + 1] = (byte)(tempShort >> 8);
@@ -55,7 +55,7 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
 
         private void ThrowIfDisposed() { // Helper throw method.
             if (!IsDisposed) return;
-            throw new ObjectDisposedException(Name, "This sound effect instance with the name of {Name} file has been already disposed!");
+            throw new ObjectDisposedException(Name, $"This sound effect instance with the name of {{Name}} file has been already disposed!");
         }
         /// <summary>
         ///     Verifies if the sound is paused.
