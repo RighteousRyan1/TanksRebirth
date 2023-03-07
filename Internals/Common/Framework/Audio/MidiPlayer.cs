@@ -27,7 +27,7 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
             dynamicSound.BufferNeeded += (_, _) => SubmitBuffer();
 
             if (settings is null) {
-                synthesizer = new Synthesizer(soundFontPath, settings);
+                synthesizer = new Synthesizer(soundFontPath, settings); // FIXME: Possible UB.
                 sequencer = new MidiFileSequencer(synthesizer);
                 return;
             }
