@@ -82,7 +82,7 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
             // Verify that the sound exists and we are told to remember it, if so, load the sound from the dictionary.
             // And proceed to cache it.
             var existsInDictionary = SavedSounds.ContainsKey(audioPath) && rememberMe;
-            sfx = existsInDictionary ? SavedSounds[SavedSounds.Keys.ToList().First(x => x == audioPath)] : new OggAudio(audioPath);
+            sfx = existsInDictionary ? SavedSounds[audioPath] : new OggAudio(audioPath);
             if (!existsInDictionary && rememberMe)
                 SavedSounds.Add(audioPath, sfx);
             sfx.Instance.Pan = MathHelper.Clamp(panOverride, -1f, 1f);
