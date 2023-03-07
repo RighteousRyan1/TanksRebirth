@@ -166,8 +166,11 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
 
             return sfx;
         }
-
-        public static OggAudio SoundError() => PlaySoundInstance("Assets/sounds/menu/menu_error.ogg", SoundContext.Effect);
+        /// <summary>
+        /// Play an error sound effect
+        /// </summary>
+        /// <returns>An <see cref="OggAudio"/> representing the sound effect used for errors.</returns>
+        public static OggAudio SoundError() => PlaySoundInstance("Assets/sounds/menu/menu_error.ogg", SoundContext.Effect, rememberMe: true);
     }
     public enum SoundContext : byte
     {
