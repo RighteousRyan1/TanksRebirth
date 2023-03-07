@@ -109,7 +109,7 @@ namespace TanksRebirth.Internals.Common.Framework.Graphics
         }
 
         /// <summary>
-        /// Determines whether or not this <see cref="Triangle2D"/> is a Right Triangle.1
+        /// Determines whether or not this <see cref="Triangle2D"/> is a Right Triangle.
         /// </summary>
         /// <returns>True if the Triangle abides the to the Pythagorean theorem.</returns>
         public bool IsRight() {
