@@ -41,28 +41,24 @@ namespace TanksRebirth.Internals.Common.Framework.Collections
                 foreach (var field in typeof(TClass).GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic))
                     if (field.FieldType == typeof(TValue))
                         _dictionary.Add(field.Name, (TValue)field.GetValue(null));
-            if (_members.HasFlag(MemberType.Properties))
-                foreach (var property in typeof(TClass).GetProperties(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic))
-                    if (property.PropertyType == typeof(TValue))
-                        _dictionary.Add(property.Name, (TValue)property.GetValue(null));
+
+            if (!_members.HasFlag(MemberType.Properties)) return;
+
+            foreach (var property in typeof(TClass).GetProperties(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic))
+                if (property.PropertyType == typeof(TValue))
+                    _dictionary.Add(property.Name, (TValue)property.GetValue(null));
         }
         /// <summary>Attempts to retrieve the value of the given key. If it doesn't exist, returns the default value.</summary>
         /// <param name="key">The key of which to grab the value from.</param>
         /// <returns>The corresponding value.</returns>
-        public TValue GetValue(string key)
-        {
-            if (ContainsKey(key))
-                return _dictionary[key];
-            return default;
+        public TValue GetValue(string key) {
+            return ContainsKey(key) ? _dictionary[key] : default;
         }
         /// <summary>Attempts to retrieve the key of the given value. If it doesn't exist, returns the default value.</summary>
         /// <param name="value">The value of which to grab the key from.</param>
         /// <returns>The corresponding key.</returns>
-        public string GetKey(TValue value)
-        {
-            if (ContainsValue(value))
-                return _dictionary.FirstOrDefault(x => x.Value.Equals(value)).Key;
-            return default;
+        public string GetKey(TValue value) {
+            return ContainsValue(value) ? _dictionary.FirstOrDefault(x => x.Value.Equals(value)).Key : default;
         }
 
         public bool ContainsKey(string key) => _dictionary.ContainsKey(key);
