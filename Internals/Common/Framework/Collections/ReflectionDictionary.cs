@@ -73,7 +73,8 @@ namespace TanksRebirth.Internals.Common.Framework.Collections
         public int ForcefullyInsert(string key, TValue value) {
             if (_dictionary.ContainsKey(key))
                 return _dictionary.Keys.ToList().IndexOf(key);
-            else if (_dictionary.ContainsValue(value))
+
+            if (_dictionary.ContainsValue(value))
                 return _dictionary.Values.ToList().IndexOf(value);
 
             _dictionary.Add(key, value);
