@@ -51,8 +51,9 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
         ///     Should the sound be kept in memory even if its not used anymore?
         /// </param>
         /// <remarks>
-        ///     This method is ONLY able to play .ogg sounds using the Vorbis codec.
+        ///     This method is <b>ONLY</b> able to play <b>.ogg</b> files using the <b>Vorbis</b> codec.
         /// </remarks>
+        /// <exception cref="ArgumentOutOfRangeException">This exceptions occurs when the given <see cref="SoundContext"/> value is not supported.</exception>
         /// <returns>
         ///     An <see cref="OggAudio"/> instance that can be used to play the sound.
         /// </returns>
@@ -75,6 +76,8 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
                 case SoundContext.Ambient:
                     volume *= AmbientVolume;
                     break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(context), context, "Uh oh! Seems like a new sound type was implemented, but I was not given a way to handle it!");
             }
 
             OggAudio sfx;
