@@ -23,11 +23,43 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
         private static float MusicVolume => TankGame.Settings.MusicVolume;
         private static float EffectsVolume => TankGame.Settings.EffectsVolume;
         private static float AmbientVolume => TankGame.Settings.AmbientVolume;
+        /// <summary>
+        ///     Loads a sound from a file and plays it.
+        /// </summary>
+        /// <param name="audioPath">
+        ///     The path to the audio file.
+        /// </param>
+        /// <param name="context">
+        ///     The type of sound as defined in <see cref="SoundContext"/>.
+        /// </param>
+        /// <param name="volume">
+        ///     The volume the audio will be played as.
+        ///     Maximum value is 1. Minimum value is 0.
+        /// </param>
+        /// <param name="panOverride">
+        ///     An override to the sounds panning.
+        ///     Maximum value is 1. Minimum value is -1.
+        /// </param>
+        /// <param name="pitchOverride">
+        ///     An override to the sounds pitch.
+        ///     Maximum value is 1. Minimum value is -1.
+        /// </param>
+        /// <param name="gameplaySound">
+        ///     Is this sound related to Gameplay?
+        /// </param>
+        /// <param name="rememberMe">
+        ///     Should the sound be kept in memory even if its not used anymore?
+        /// </param>
+        /// <remarks>
+        ///     This method is ONLY able to play .ogg sounds using the Vorbis codec.
+        /// </remarks>
+        /// <returns>
+        ///     An <see cref="OggAudio"/> instance that can be used to play the sound.
+        /// </returns>
         public static OggAudio PlaySoundInstance(string audioPath, SoundContext context, float volume = 1f, float panOverride = 0f, float pitchOverride = 0f, bool gameplaySound = false, bool rememberMe = false)
         {
             // because ogg is the only good audio format.
-            var prepend = TankGame.Instance.Content.RootDirectory + "/";
-            audioPath = prepend + audioPath;
+            audioPath = Path.Combine(TankGame.Instance.Content.RootDirectory, audioPath);
 
             switch (context)
             {
