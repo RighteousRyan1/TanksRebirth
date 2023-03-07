@@ -116,6 +116,26 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
 
             return sfx;
         }
+        /// <summary>
+        ///     Play a sound at a given position in a world.
+        /// </summary>
+        /// <param name="fromSound">
+        ///     The <see cref="SoundEffect"/> containing information on the sound to play.
+        /// </param>
+        /// <param name="context">
+        ///     The type of sound as defined in <see cref="SoundContext"/>.
+        /// </param>
+        /// <param name="position">
+        ///     The position of the sound in the world
+        /// </param>
+        /// <param name="world">
+        ///     The world itself.
+        /// </param>
+        /// <param name="volume">
+        ///     The volume of the sound.
+        /// </param>
+        /// <exception cref="ArgumentOutOfRangeException">This exceptions occurs when the given <see cref="SoundContext"/> value is not supported.</exception>
+        /// <returns>An instance used to play the sound.</returns>
         public static SoundEffectInstance PlaySoundInstance(SoundEffect fromSound, SoundContext context, Vector3 position, Matrix world, float volume = 1f)
         {
             switch (context)
@@ -129,17 +149,19 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
                 case SoundContext.Ambient:
                     volume *= AmbientVolume;
                     break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(context), context, "Uh oh! Seems like a new sound type was implemented, but I was not given a way to handle it!");
             }
 
             var pos2d = MatrixUtils.ConvertWorldToScreen(position, world, TankGame.GameView, TankGame.GameProjection);
-
-            var lerp = MathUtils.ModifiedInverseLerp(-(WindowUtils.WindowWidth / 2), WindowUtils.WindowWidth + WindowUtils.WindowWidth / 2, pos2d.X, true);
+            var WindowWidthHalfed = WindowUtils.WindowWidth / 2;
+            var lerp = MathUtils.ModifiedInverseLerp(-WindowWidthHalfed, WindowUtils.WindowWidth + WindowWidthHalfed, pos2d.X, true);
 
             var sfx = fromSound.CreateInstance();
             sfx.Volume = volume;
 
             // System.Diagnostics.Debug.WriteLine(sfx.Pan);
-            sfx?.Play();
+            sfx.Play();
             sfx.Pan = lerp;
 
             return sfx;
