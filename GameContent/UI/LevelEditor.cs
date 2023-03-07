@@ -414,21 +414,21 @@ namespace TanksRebirth.GameContent.UI
                     var assetName = file;
                     RenderTextures.Add(fileName, GameResources.GetGameResource<Texture2D>(assetName, false, false));
                 }
-                var names = TankID.Collection.Keys;
+                var names = TankID.Collection.Keys.ToArray();
                 for (int i = 0; i < names.Length; i++) {
                     var nTL = names[i];
 
                     if (RenderTextures.ContainsKey(nTL))
                         _renderNamesTanks.Add(nTL);
                 }
-                names = BlockID.Collection.Keys;
+                names = BlockID.Collection.Keys.ToArray();
                 for (int i = 0; i < names.Length; i++) {
                     var nTL = names[i];
 
                     if (RenderTextures.ContainsKey(nTL))
                         _renderNamesBlocks.Add(nTL);
                 }
-                names = PlayerID.Collection.Keys;
+                names = PlayerID.Collection.Keys.ToArray();
                 for (int i = 0; i < names.Length; i++) {
                     var nTL = names[i];
 

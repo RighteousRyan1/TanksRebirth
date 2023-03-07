@@ -19,8 +19,8 @@ namespace TanksRebirth.Internals.Common.Framework.Collections
     public class ReflectionDictionary<TClass, TValue> where TClass : class, new()
     {
         public int Count => _dictionary.Count;
-        public string[] Keys => _dictionary.Keys.ToArray();
-        public TValue[] Values => _dictionary.Values.ToArray();
+        public IEnumerable<string> Keys => _dictionary.Keys.AsEnumerable();
+        public IEnumerable<TValue> Values => _dictionary.Values.AsEnumerable();
         private Dictionary<string, TValue> _dictionary;
 
         private MemberType _members;
