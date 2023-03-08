@@ -16,8 +16,7 @@ public static class RayUtils
     /// <param name="destination">The place that will be the termination of this <see cref="Ray"/>.</param>
     /// <param name="zAxis">Whether or not this <see cref="Ray"/> will go along the Y or Z axis from the X axis.</param>
     /// <returns>The ray created.</returns>
-    public static Ray CreateRayFrom2D(Vector2 origin, Vector2 destination, float excludedAxisOffset = 0f, bool zAxis = true)
-    {
+    public static Ray CreateRayFrom2D(Vector2 origin, Vector2 destination, float excludedAxisOffset = 0f, bool zAxis = true) {
         var ray = zAxis ? 
             new Ray(new Vector3(origin.X, excludedAxisOffset, origin.Y), new Vector3(destination.X, 0, destination.Y)) : 
             new Ray(new Vector3(origin.X, origin.Y, excludedAxisOffset), new Vector3(destination.X, destination.Y, 0));
@@ -31,17 +30,15 @@ public static class RayUtils
     /// <param name="destination">The place that will be the termination of this <see cref="Ray"/>.</param>
     /// <param name="zAxis">Whether or not this <see cref="Ray"/> will go along the Y or Z axis from the X axis.</param>
     /// <returns>The ray created.</returns>
-    public static Ray CreateRayFrom2D(Vector3 origin, Vector2 destination, float excludedAxisOffset = 0f, bool zAxis = true)
-    {
+    public static Ray CreateRayFrom2D(Vector3 origin, Vector2 destination, float excludedAxisOffset = 0f, bool zAxis = true) {
         var ray = zAxis ? 
-            new Ray(origin + new Vector3(0, excludedAxisOffset, 0), new Vector3(destination.X, 0, destination.Y)) : 
+            new Ray(origin + new Vector3(0, excludedAxisOffset, 0), new Vector3(destination.X, 0, destination.Y)) :
             new Ray(origin + new Vector3(0, 0, excludedAxisOffset), new Vector3(destination.X, destination.Y, 0));
 
         return ray;
     }
 
-    public static Ray Reflect(Ray ray, float? distanceAlongRay)
-    {
+    public static Ray Reflect(Ray ray, float? distanceAlongRay) {
         if (!distanceAlongRay.HasValue)
             throw new NullReferenceException("The distance along the ray was null.");
 
@@ -52,17 +49,17 @@ public static class RayUtils
         return new(distPos, reflected);
     }
 
-    public static Ray Flatten(this Ray ray, bool zAxis = true)
-    {
-        var usedRay = zAxis ? 
+    public static Ray Flatten(this Ray ray, bool zAxis = true) {
+        Ray usedRay;
+
+        usedRay = zAxis ? 
             new Ray(new Vector3(ray.Position.X, 0, ray.Position.Y), new Vector3(ray.Direction.X, 0, ray.Direction.Y)) : 
             new Ray(new Vector3(ray.Position.X, ray.Position.Y, 0), new Vector3(ray.Direction.X, ray.Direction.Y, 0));
 
         return usedRay;
     }
 
-    public static Ray GetMouseToWorldRay()
-    {
+    public static Ray GetMouseToWorldRay() {
         var nearPlane = MatrixUtils.ConvertScreenToWorld(new Vector3(MouseUtils.MousePosition, 0), Matrix.Identity, TankGame.GameView, TankGame.GameProjection);
         var farPlane = MatrixUtils.ConvertScreenToWorld(new Vector3(MouseUtils.MousePosition, 1), Matrix.Identity, TankGame.GameView, TankGame.GameProjection);
 
