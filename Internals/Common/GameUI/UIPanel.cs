@@ -18,26 +18,31 @@ namespace TanksRebirth.Internals.Common.GameUI
         public override void DrawSelf(SpriteBatch spriteBatch) {
             base.DrawSelf(spriteBatch);
 
-            Texture2D texture = UIPanelBackground;
-            int border = 12;
+            var texture = UIPanelBackground;
+            const int PANEL_BORDER = 12;
+            
+            // X
+            var middleX = Hitbox.X + PANEL_BORDER;
+            var rightX = Hitbox.Right - PANEL_BORDER;
 
-            int middleX = Hitbox.X + border;
-            int rightX = Hitbox.Right - border;
+            // Y
+            var middleY = Hitbox.Y + PANEL_BORDER;
+            var bottomY = Hitbox.Bottom - PANEL_BORDER;
 
-            int middleY = Hitbox.Y + border;
-            int bottomY = Hitbox.Bottom - border;
+            // hit box (?)
+            spriteBatch.Draw(texture, new Rectangle(Hitbox.X, Hitbox.Y, PANEL_BORDER, PANEL_BORDER), new Rectangle(0, 0, PANEL_BORDER, PANEL_BORDER), BackgroundColor);
+            spriteBatch.Draw(texture, new Rectangle(middleX, Hitbox.Y, Hitbox.Width - PANEL_BORDER * 2, PANEL_BORDER), new Rectangle(PANEL_BORDER, 0, texture.Width - PANEL_BORDER * 2, PANEL_BORDER), BackgroundColor);
+            spriteBatch.Draw(texture, new Rectangle(rightX, Hitbox.Y, PANEL_BORDER, PANEL_BORDER), new Rectangle(texture.Width - PANEL_BORDER, 0, PANEL_BORDER, PANEL_BORDER), BackgroundColor);
 
-            spriteBatch.Draw(texture, new Rectangle(Hitbox.X, Hitbox.Y, border, border), new Rectangle(0, 0, border, border), BackgroundColor);
-            spriteBatch.Draw(texture, new Rectangle(middleX, Hitbox.Y, Hitbox.Width - border * 2, border), new Rectangle(border, 0, texture.Width - border * 2, border), BackgroundColor);
-            spriteBatch.Draw(texture, new Rectangle(rightX, Hitbox.Y, border, border), new Rectangle(texture.Width - border, 0, border, border), BackgroundColor);
+            // Middle (?)
+            spriteBatch.Draw(texture, new Rectangle(Hitbox.X, middleY, PANEL_BORDER, Hitbox.Height - PANEL_BORDER * 2), new Rectangle(0, PANEL_BORDER, PANEL_BORDER, texture.Height - PANEL_BORDER * 2), BackgroundColor);
+            spriteBatch.Draw(texture, new Rectangle(middleX, middleY, Hitbox.Width - PANEL_BORDER * 2, Hitbox.Height - PANEL_BORDER * 2), new Rectangle(PANEL_BORDER, PANEL_BORDER, texture.Width - PANEL_BORDER * 2, texture.Height - PANEL_BORDER * 2), BackgroundColor);
+            spriteBatch.Draw(texture, new Rectangle(rightX, middleY, PANEL_BORDER, Hitbox.Height - PANEL_BORDER * 2), new Rectangle(texture.Width - PANEL_BORDER, PANEL_BORDER, PANEL_BORDER, texture.Height - PANEL_BORDER * 2), BackgroundColor);
 
-            spriteBatch.Draw(texture, new Rectangle(Hitbox.X, middleY, border, Hitbox.Height - border * 2), new Rectangle(0, border, border, texture.Height - border * 2), BackgroundColor);
-            spriteBatch.Draw(texture, new Rectangle(middleX, middleY, Hitbox.Width - border * 2, Hitbox.Height - border * 2), new Rectangle(border, border, texture.Width - border * 2, texture.Height - border * 2), BackgroundColor);
-            spriteBatch.Draw(texture, new Rectangle(rightX, middleY, border, Hitbox.Height - border * 2), new Rectangle(texture.Width - border, border, border, texture.Height - border * 2), BackgroundColor);
-
-            spriteBatch.Draw(texture, new Rectangle(Hitbox.X, bottomY, border, border), new Rectangle(0, texture.Height - border, border, border), BackgroundColor);
-            spriteBatch.Draw(texture, new Rectangle(middleX, bottomY, Hitbox.Width - border * 2, border), new Rectangle(border, texture.Height - border, texture.Width - border * 2, border), BackgroundColor);
-            spriteBatch.Draw(texture, new Rectangle(rightX, bottomY, border, border), new Rectangle(texture.Width - border, texture.Height - border, border, border), BackgroundColor);
+            // Bottom (?)
+            spriteBatch.Draw(texture, new Rectangle(Hitbox.X, bottomY, PANEL_BORDER, PANEL_BORDER), new Rectangle(0, texture.Height - PANEL_BORDER, PANEL_BORDER, PANEL_BORDER), BackgroundColor);
+            spriteBatch.Draw(texture, new Rectangle(middleX, bottomY, Hitbox.Width - PANEL_BORDER * 2, PANEL_BORDER), new Rectangle(PANEL_BORDER, texture.Height - PANEL_BORDER, texture.Width - PANEL_BORDER * 2, PANEL_BORDER), BackgroundColor);
+            spriteBatch.Draw(texture, new Rectangle(rightX, bottomY, PANEL_BORDER, PANEL_BORDER), new Rectangle(texture.Width - PANEL_BORDER, texture.Height - PANEL_BORDER, PANEL_BORDER, PANEL_BORDER), BackgroundColor);
 
             UniqueDraw?.Invoke(this, spriteBatch);
         }
