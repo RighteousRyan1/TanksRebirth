@@ -16,12 +16,14 @@ namespace TanksRebirth.Internals.Common.IO
 
         public T Object;
         
-        public JsonHandler(T type, string path)
-        {
-            Object = type;
+        public JsonHandler(T obj, string path) {
+            Object = obj;
             JsonPath = path;
 
-            JsonDir = JsonPath.Remove(JsonPath.Length - Path.GetFileName(JsonPath).Length);
+            JsonDir = Path.GetDirectoryName(JsonPath);
+    
+            if (!Directory.Exists(JsonDir))
+                Directory.CreateDirectory(JsonDir);
         }
 
         public string Serialize(JsonSerializerOptions options, bool writeToFile = false) {
