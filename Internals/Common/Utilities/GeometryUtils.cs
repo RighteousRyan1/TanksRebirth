@@ -10,18 +10,15 @@ namespace TanksRebirth.Internals.Common.Utilities;
 
 public static class GeometryUtils
 {
-
-    public static T[] Shift<T>(ref T[] array, int index, int amount)
-    {
+    /// <remarks>This method is NOT pure.</remarks>
+    public static T[] Shift<T>(ref T[] array, int index, int amount) {
         // extend the array by amount if we're out of bounds, then shift every element past index by amount
-        if (index + amount > array.Length)
-        {
+        if (index + amount > array.Length) {
             var newArray = new T[index + amount];
             array.CopyTo(newArray, 0);
             array = newArray;
         }
-        for (int i = index; i < array.Length; i++)
-        {
+        for (var i = index; i < array.Length; i++) {
             if (i >= index)
                 array[i] = array[i + amount];
         }
@@ -29,8 +26,7 @@ public static class GeometryUtils
     }
     // sigh no work
 
-    public static Vector2 PredictFuturePosition(Vector2 source, Vector2 velocity, float time)
-    {
+    public static Vector2 PredictFuturePosition(Vector2 source, Vector2 velocity, float time) {
         return source + velocity * time;
     }
     /// <summary>
@@ -40,14 +36,10 @@ public static class GeometryUtils
     /// <param name="destination">The place that will be the termination of this <see cref="Ray"/>.</param>
     /// <param name="zAxis">Whether or not this <see cref="Ray"/> will go along the Y or Z axis from the X axis.</param>
     /// <returns>The ray created.</returns>
-    public static Ray CreateRayFrom2D(Vector2 origin, Vector2 destination, float excludedAxisOffset = 0f, bool zAxis = true)
-    {
-        Ray ray;
-
-        if (zAxis)
-            ray = new Ray(new Vector3(origin.X, excludedAxisOffset, origin.Y), new Vector3(destination.X, 0, destination.Y));
-        else
-            ray = new Ray(new Vector3(origin.X, origin.Y, excludedAxisOffset), new Vector3(destination.X, destination.Y, 0));
+    public static Ray CreateRayFrom2D(this Vector2 origin, Vector2 destination, float excludedAxisOffset = 0f, bool zAxis = true) {
+        var ray = zAxis ? 
+            new Ray(new Vector3(origin.X, excludedAxisOffset, origin.Y), new Vector3(destination.X, 0, destination.Y)) : 
+            new Ray(new Vector3(origin.X, origin.Y, excludedAxisOffset), new Vector3(destination.X, destination.Y, 0));
 
         return ray;
     }
@@ -58,20 +50,15 @@ public static class GeometryUtils
     /// <param name="destination">The place that will be the termination of this <see cref="Ray"/>.</param>
     /// <param name="zAxis">Whether or not this <see cref="Ray"/> will go along the Y or Z axis from the X axis.</param>
     /// <returns>The ray created.</returns>
-    public static Ray CreateRayFrom2D(Vector3 origin, Vector2 destination, float excludedAxisOffset = 0f, bool zAxis = true)
-    {
-        Ray ray;
-
-        if (zAxis)
-            ray = new Ray(origin + new Vector3(0, excludedAxisOffset, 0), new Vector3(destination.X, 0, destination.Y));
-        else
-            ray = new Ray(origin + new Vector3(0, 0, excludedAxisOffset), new Vector3(destination.X, destination.Y, 0));
+    public static Ray CreateRayFrom2D(this Vector3 origin, Vector2 destination, float excludedAxisOffset = 0f, bool zAxis = true) {
+        var ray = zAxis ? 
+            new Ray(origin + new Vector3(0, excludedAxisOffset, 0), new Vector3(destination.X, 0, destination.Y)) : 
+            new Ray(origin + new Vector3(0, 0, excludedAxisOffset), new Vector3(destination.X, destination.Y, 0));
 
         return ray;
     }
 
-    public static Ray Reflect(Ray ray, float? distanceAlongRay)
-    {
+    public static Ray Reflect(this Ray ray, float? distanceAlongRay) {
         if (!distanceAlongRay.HasValue)
             throw new NullReferenceException("The distance along the ray was null.");
 
@@ -82,8 +69,7 @@ public static class GeometryUtils
         return new(distPos, reflected);
     }
 
-    public static Rectangle CreateRectangleFromCenter(int x, int y, int width, int height)
-    {
+    public static Rectangle CreateRectangleFromCenter(int x, int y, int width, int height) {
         return new Rectangle(x - width / 2, y - height / 2, width, height);
     }
 
@@ -99,13 +85,14 @@ public static class GeometryUtils
         return usedRay;
     }
 
-    public static float GetPiRandom()
-    {
-        var seed = new Random().Next(0, 4);
+    public static float GetPiRandom() {
+        return new Random().GetPiRandom();
+    }
 
-        return seed switch 
-        { 
-            0 => 0,
+    public static float GetPiRandom(this Random rand) {
+        var seed = rand.Next(0, 4);
+
+        return seed switch { 
             1 => MathHelper.PiOver2,
             2 => MathHelper.Pi,
             3 => MathHelper.Pi + MathHelper.PiOver2,
@@ -113,40 +100,44 @@ public static class GeometryUtils
         };
     }
 
-    public static EulerAngles AsEulerAngles(this Quaternion quaternion)
-    {
+    /// <summary>
+    /// Converts the current <see cref="Quaternion"/> instance into a <see cref="EulerAngles"/> instance.
+    /// </summary>
+    /// <param name="quaternion">Quaternion Instance</param>
+    /// <returns>The Quaternion represented as Euler Angles</returns>
+    public static EulerAngles ToEulerAngles(this Quaternion quaternion) {
         EulerAngles angles = new();
 
-        // roll
-        float wxyz = 2 * (quaternion.W * quaternion.X + quaternion.Y * quaternion.Z);
-        float xySq = 1 - 2 * (quaternion.X * quaternion.X + quaternion.Y * quaternion.Y);
+        // Roll
+        var wxyz = 2 * (quaternion.W * quaternion.X + quaternion.Y * quaternion.Z);
+        var xySq = 1 - 2 * (quaternion.X * quaternion.X + quaternion.Y * quaternion.Y);
         angles.Roll = MathF.Atan2(wxyz, xySq);
-        // pitch
-        float diffSin = 2 * (quaternion.W * quaternion.Y - quaternion.Z * quaternion.X);
-        if (MathF.Abs(diffSin) >= 1)
-            angles.Pitch = MathF.CopySign(MathHelper.PiOver2, diffSin); // if sinp > 90 degrees, compress it to 90.
-        else
-            angles.Pitch = MathF.Asin(diffSin);
+        
+        // Pitch
+        var diffSin = 2 * (quaternion.W * quaternion.Y - quaternion.Z * quaternion.X);
+        angles.Pitch = MathF.Abs(diffSin) >= 1 ? 
+            MathF.CopySign(MathHelper.PiOver2, diffSin) : // if sinp > 90 degrees, compress it to 90.
+            MathF.Asin(diffSin);
 
-        // yaw
-        float wzxy = 2 * (quaternion.W * quaternion.Z + quaternion.X * quaternion.Y);
-        float yzSq = 1 - 2 * (quaternion.Y * quaternion.Y + quaternion.Z * quaternion.Z);
+        // Yaw
+        var wzxy = 2 * (quaternion.W * quaternion.Z + quaternion.X * quaternion.Y);
+        var yzSq = 1 - 2 * (quaternion.Y * quaternion.Y + quaternion.Z * quaternion.Z);
         angles.Yaw = MathF.Atan2(wzxy, yzSq);
 
         return angles;
     }
 
-    public static float GetQuarterRotation(sbyte rot)
-    {
+    public static float GetQuarterRotation(sbyte rot) {
         return MathHelper.PiOver2 * rot;
     }
 
-    public static void Add(ref Vector3 v, float scale)
-    {
+    /// <remarks>This method is NOT pure</remarks>
+    public static void Add(ref Vector3 v, float scale) {
         v.X += scale;
         v.Y += scale;
         v.Z += scale;
     }
+    /// <remarks>This method is NOT pure</remarks>
     public static void Multiply(ref Vector3 v, float scale)
     {
         v.X *= scale;
@@ -154,16 +145,15 @@ public static class GeometryUtils
         v.Z *= scale;
     }
 
-    public static float Average(ref Vector3 v)
-    {
+    /// <remarks>This method is NOT pure</remarks>
+    public static float Average(ref Vector3 v) {
         return (v.X + v.Y + v.Z) / 3;
     }
 }
 /// <summary>
 /// Useful for conversion of <see cref="Quaternion"/>s to basic Yaw/Pitch/Roll angles.
 /// </summary>
-public struct EulerAngles
-{
+public struct EulerAngles {
     public float Yaw;
     public float Pitch;
     public float Roll;
