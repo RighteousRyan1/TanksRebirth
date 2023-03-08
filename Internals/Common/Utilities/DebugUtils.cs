@@ -6,30 +6,25 @@ namespace TanksRebirth.Internals.Common.Utilities;
 
 public static class DebugUtils
 {
-    public readonly struct Id
-    {
+    public readonly struct Id {
         public const int General = 0;
         public const int EntityData = 1;
         public const int PlayerData = 2;
         public const int LevelEditDebug = 3;
-        public const int Powerups = 4;
+        public const int PowerUps = 4;
         public const int AchievementData = 5;
     }
-    public static string CurDebugLabel
-    {
-        get
-        {
+    public static string CurDebugLabel {
+        get {
             if (DebugLevel < 0 || DebugLevel >= DebuggingNames.Length)
                 return $"Unknown - {DebugLevel}";
-            else
-                return DebuggingNames[DebugLevel];
+            return DebuggingNames[DebugLevel];
         }
     }
     public static bool DebuggingEnabled { get; set; }
     public static int DebugLevel { get; set; }
 
-    private static readonly string[] DebuggingNames =
-    {
+    private static readonly string[] DebuggingNames = {
         "General",
         "Entity Data",
         "Player Data",
@@ -37,8 +32,7 @@ public static class DebugUtils
         "Powerups",
         "Achievement Data"
     };
-    public static void DrawDebugString(SpriteBatch sb, object info, Vector2 position, int level = Id.General, float scale = 1f, bool centered = false, Color color = default, bool beginSb = false)
-    {
+    public static void DrawDebugString(this SpriteBatch sb, object info, Vector2 position, int level = Id.General, float scale = 1f, bool centered = false, Color color = default, bool beginSb = false) {
         if (!DebuggingEnabled || DebugLevel != level)
             return;
 
@@ -52,8 +46,7 @@ public static class DebugUtils
         if (beginSb)
             sb.End();
     }
-    public static void DrawDebugString(SpriteFontBase font, SpriteBatch sb, object info, Vector2 position, int level = Id.General, float scale = 1f, bool centered = false, Color color = default, bool beginSb = false)
-    {
+    public static void DrawDebugString(this SpriteFontBase font, SpriteBatch sb, object info, Vector2 position, int level = Id.General, float scale = 1f, bool centered = false, Color color = default, bool beginSb = false) {
         if (!DebuggingEnabled || DebugLevel != level)
             return;
 
@@ -67,8 +60,7 @@ public static class DebugUtils
         if (beginSb)
             sb.End();
     }
-    public static void DrawDebugTexture(SpriteBatch sb, Texture2D texture, Vector2 position, int level = Id.General, float scale = 1f, Color color = default, bool centered = false, bool beginSb = false)
-    {
+    public static void DrawDebugTexture(this SpriteBatch sb, Texture2D texture, Vector2 position, int level = Id.General, float scale = 1f, Color color = default, bool centered = false, bool beginSb = false) {
         if (!DebuggingEnabled || DebugLevel != level)
             return;
 
