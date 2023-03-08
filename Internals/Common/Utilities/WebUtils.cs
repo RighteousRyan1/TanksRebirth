@@ -13,22 +13,26 @@ namespace TanksRebirth.Internals.Common.Utilities;
 public static class WebUtils {
     private static HttpClient _client = new(new HttpClientHandler { SslProtocols = SslProtocols.Tls12 });
 
-    public static byte[] DownloadWebFile(string url, out string fileName)
-    {
-        var data = m_DownloadWebFile(url).GetAwaiter().GetResult();
+    public static byte[] DownloadWebFile(string url, out string fileName) {
+        var data = Inner_DownloadWebFile(url).GetAwaiter().GetResult();
 
         fileName = data.Item2;
         return data.Item1;
     }
-    private static async Task<(byte[], string)> m_DownloadWebFile(string url)
-    {
-        var file = await _client.GetByteArrayAsync(url);
+    private static async Task<(byte[], string)> Inner_DownloadWebFile(string url) {
+        var response = await _client.GetAsync(url); // Get the whole response
 
+        var fileName = response.Content.Headers.ContentDisposition.FileName;
+        
         // GameHandler.ClientLog.Write($"WebRequest sent to '{url}'", LogType.Debug); make a logger.. of course.
 
-        var name = System.IO.Path.GetFileName(url).Split('?')[0];
-
-        return (file, name);
+        try {
+            return (await response.Content.ReadAsByteArrayAsync(), fileName);
+        } catch (HttpRequestException ex) {
+            throw new Exception("Failed to download file!", ex);
+        } finally {
+            response.Dispose(); // Get rid of the unmanaged/managed resources of the response.
+        }
     }
 
     public static async Task<bool> RemoteFileExistsAsync(string url)
