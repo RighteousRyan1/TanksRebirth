@@ -18,12 +18,9 @@ public static class RayUtils
     /// <returns>The ray created.</returns>
     public static Ray CreateRayFrom2D(Vector2 origin, Vector2 destination, float excludedAxisOffset = 0f, bool zAxis = true)
     {
-        Ray ray;
-
-        if (zAxis)
-            ray = new Ray(new Vector3(origin.X, excludedAxisOffset, origin.Y), new Vector3(destination.X, 0, destination.Y));
-        else
-            ray = new Ray(new Vector3(origin.X, origin.Y, excludedAxisOffset), new Vector3(destination.X, destination.Y, 0));
+        var ray = zAxis ? 
+            new Ray(new Vector3(origin.X, excludedAxisOffset, origin.Y), new Vector3(destination.X, 0, destination.Y)) : 
+            new Ray(new Vector3(origin.X, origin.Y, excludedAxisOffset), new Vector3(destination.X, destination.Y, 0));
 
         return ray;
     }
@@ -36,12 +33,9 @@ public static class RayUtils
     /// <returns>The ray created.</returns>
     public static Ray CreateRayFrom2D(Vector3 origin, Vector2 destination, float excludedAxisOffset = 0f, bool zAxis = true)
     {
-        Ray ray;
-
-        if (zAxis)
-            ray = new Ray(origin + new Vector3(0, excludedAxisOffset, 0), new Vector3(destination.X, 0, destination.Y));
-        else
-            ray = new Ray(origin + new Vector3(0, 0, excludedAxisOffset), new Vector3(destination.X, destination.Y, 0));
+        var ray = zAxis ? 
+            new Ray(origin + new Vector3(0, excludedAxisOffset, 0), new Vector3(destination.X, 0, destination.Y)) : 
+            new Ray(origin + new Vector3(0, 0, excludedAxisOffset), new Vector3(destination.X, destination.Y, 0));
 
         return ray;
     }
@@ -60,12 +54,9 @@ public static class RayUtils
 
     public static Ray Flatten(this Ray ray, bool zAxis = true)
     {
-        Ray usedRay;
-
-        if (zAxis)
-            usedRay = new Ray(new Vector3(ray.Position.X, 0, ray.Position.Y), new Vector3(ray.Direction.X, 0, ray.Direction.Y));
-        else
-            usedRay = new Ray(new Vector3(ray.Position.X, ray.Position.Y, 0), new Vector3(ray.Direction.X, ray.Direction.Y, 0));
+        var usedRay = zAxis ? 
+            new Ray(new Vector3(ray.Position.X, 0, ray.Position.Y), new Vector3(ray.Direction.X, 0, ray.Direction.Y)) : 
+            new Ray(new Vector3(ray.Position.X, ray.Position.Y, 0), new Vector3(ray.Direction.X, ray.Direction.Y, 0));
 
         return usedRay;
     }
