@@ -524,10 +524,13 @@ namespace TanksRebirth.GameContent.UI
                         }
                         else if (ext == ".bin")
                         {
-                            var map = new WiiMap(res.Path);
-                            ChatSystem.SendMessage($"(Width, Height): ({map.Width}, {map.Height})", Color.White);
-
-                            WiiMap.ApplyToGameWorld(map);
+                            try {
+                                var map = new WiiMap(res.Path);
+                                ChatSystem.SendMessage($"(Width, Height): ({map.Width}, {map.Height})", Color.White);
+                                WiiMap.ApplyToGameWorld(map);
+                            } catch {
+                                ChatSystem.SendMessage($"Failed to load map: {res.Path}. Is this an original Wii Tanks map? If it is a custom map, you should try loading it as a '.mission' file.", Color.Red);  
+                            }
                         }
 
                         ChatSystem.SendMessage($"Loaded '{Path.GetFileName(res.Path)}'.", Color.White);
