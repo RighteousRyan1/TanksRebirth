@@ -45,16 +45,13 @@ public static class SteamworksUtils
         var validSize = SteamUtils.GetImageSize(avatar, out var pnWidth, out var pnHeight);
 
         // we make this buffer the size of an RGBA color (4 bytes per-word)
-        if (validSize) {
-            var buffer = new byte[pnWidth * pnHeight * 4];
-            var validRgba = SteamUtils.GetImageRGBA(avatar, buffer, (int)(pnWidth * pnHeight * 4));
+        if (!validSize) return null;
+        var buffer = new byte[pnWidth * pnHeight * 4];
+        var validRgba = SteamUtils.GetImageRGBA(avatar, buffer, (int)(pnWidth * pnHeight * 4));
 
-            if (validRgba) {
-                var tex = new Texture2D(TankGame.Instance.GraphicsDevice, (int)pnWidth, (int)pnHeight);
-                tex.SetData(buffer);
-                return tex;
-            }
-        }
-        return null;
+        if (!validRgba) return null;
+        var tex = new Texture2D(TankGame.Instance.GraphicsDevice, (int)pnWidth, (int)pnHeight);
+        tex.SetData(buffer);
+        return tex;
     }
 }
