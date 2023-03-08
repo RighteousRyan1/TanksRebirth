@@ -21,18 +21,14 @@ public static class WebUtils {
     }
     private static async Task<(byte[], string)> Inner_DownloadWebFile(string url) {
         var response = await _client.GetAsync(url); // Get the whole response
-
-        var fileName = response.Content.Headers.ContentDisposition.FileName;
         
+        var fileName = response.Content.Headers.ContentDisposition != null ? 
+                response.Content.Headers.ContentDisposition.FileName : 
+                System.IO.Path.GetFileName(url).Split('?')[0];
+            
         // GameHandler.ClientLog.Write($"WebRequest sent to '{url}'", LogType.Debug); make a logger.. of course.
 
-        try {
-            return (await response.Content.ReadAsByteArrayAsync(), fileName);
-        } catch (HttpRequestException ex) {
-            throw new Exception("Failed to download file!", ex);
-        } finally {
-            response.Dispose(); // Get rid of the unmanaged/managed resources of the response.
-        }
+        return (await response.Content.ReadAsByteArrayAsync(), fileName);
     }
 
     public static async Task<bool> RemoteFileExistsAsync(string url)
