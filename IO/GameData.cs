@@ -112,7 +112,7 @@ namespace TanksRebirth.IO
 
                 TimePlayed = TimeSpan.FromMilliseconds(reader.ReadDouble());
 
-                for (int i = 0; i < TankKills.Count; i++)
+                for (var i = 0; i < TankKills.Count; i++)
                     TankKills[i] = reader.ReadUInt32();
 
                 //VanillaAchievements.Repository.Load(reader);
