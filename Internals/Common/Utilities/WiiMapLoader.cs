@@ -80,6 +80,8 @@ public readonly struct WiiMap
         set(0);
         set(0);
 
+        byte tankAiCount = 0, playerCount = 0;
+        
         foreach (var pl in PlacementSquare.Placements) {
             if (pl.BlockId > -1 && pl.HasBlock) {
                 var block = Block.AllBlocks[pl.BlockId];
@@ -100,6 +102,7 @@ public readonly struct WiiMap
 
                 switch (tank) {
                     case PlayerTank player: {
+                        playerCount++;
                         if (player.PlayerType < 2) {
                             rawData[byteOffset - 0x1] = 1;
                             set(player.PlayerType + 44);
@@ -107,17 +110,46 @@ public readonly struct WiiMap
                         break;
                     }
                     case AITank ai:
+                        tankAiCount++;
                         rawData[byteOffset - 0x1] = 1;
                         set(ai.AITankId + 144);
                         break;
                 }
             }
-            if (pl.BlockId == -1 && pl.TankId == -1) {
+            if (pl is { BlockId: -1, TankId: -1 }) {
                 set(0);
             }
         }
 
+        if (!ValidateWiiMap(tankAiCount, playerCount)) {
+            LevelEditor.Alert("There are, or more than 8 enemy tanks,\nor more than two players in the map.\nConsider using the .mission format instead of .bin.", 5000f);
+            return;
+        }
         File.WriteAllBytes(fileLocation, rawData);
+    }
+
+    private static bool ValidateWiiMap(byte tankAiCount, byte playerCount) // Cheeping out in six bytes since 1998
+        => tankAiCount < 8 && playerCount < 2;
+    
+    private bool ValidateCustomMapAsWii() {
+        var tankAiCount = 0;
+        var playerCount = 0;
+        for (var i = 0; i < PlacementSquare.Placements.Count; i++) {
+            var pl = PlacementSquare.Placements[i];
+
+            if (tankAiCount > 8 || playerCount > 2) return false;
+            
+            switch (pl.TankId) {
+                case PLAYER_TANK_ID:
+                    playerCount++;
+                    break;
+                case ENEMY_TANK_ID:
+                    tankAiCount++;
+                    break;
+            }
+        }
+
+        return true;
     }
 
     public static void ApplyToGameWorld(WiiMap map) {
