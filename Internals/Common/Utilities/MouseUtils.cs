@@ -14,7 +14,7 @@ public static class MouseUtils
     public static Vector2 MousePosition => new(InputUtils.CurrentMouseSnapshot.X, InputUtils.CurrentMouseSnapshot.Y);
     public static bool MouseOnScreen => MousePosition.X >= 0 && MousePosition.X <= WindowUtils.WindowWidth && MousePosition.Y >= 0 && MousePosition.Y < WindowUtils.WindowHeight;
     public static bool MouseOnScreenProtected => MousePosition.X > 16 && MousePosition.X < WindowUtils.WindowWidth - 16 && MousePosition.Y > 16 && MousePosition.Y < WindowUtils.WindowHeight - 16;
-    private static Vector2 _oldMousePos;
+    private static Vector2 _oldMousePos = new(0, 0); 
     public static Vector2 GetMouseVelocity(Vector2 fromOffset = default)
     {
         var pos = MousePosition + fromOffset;

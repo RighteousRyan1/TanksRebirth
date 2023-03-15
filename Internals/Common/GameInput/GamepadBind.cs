@@ -41,8 +41,8 @@ namespace TanksRebirth.Internals.Common.GameInput
         public bool PendKeyReassign() {
             _bindingWait = 5;
             bool isOtherBindAssigning() {
-                int reassignCounts = 0;
-                for (int i = 0; i < AllGamepadBinds.Count; i++) {
+                var reassignCounts = 0;
+                for (var i = 0; i < AllGamepadBinds.Count; i++) {
                     var kBind = AllGamepadBinds[i];
 
                     if (kBind.IsReassignPending)
@@ -63,31 +63,29 @@ namespace TanksRebirth.Internals.Common.GameInput
         }
 
         private bool TryAcceptReassign() {
-            if (_bindingWait <= 0) {
-                if (InputUtils.CurrentKeySnapshot.GetPressedKeys().Length > 0) {
-                    var firstButton = InputUtils.GetPressedButtons(InputUtils.CurrentGamePadSnapshot.Buttons)[0];
-                    if (InputUtils.ButtonJustPressed(firstButton) && firstButton == AssignedButton) {
-                        Console.WriteLine($"Stopped the assigning of '{Name}'");
-                        IsReassignPending = false;
-                        return false;
-                    }
-                    if (InputUtils.ButtonJustPressed(firstButton) && firstButton == Buttons.Back) {
-                        Console.WriteLine($"Unassigned '{Name}'");
-                        AssignedButton = 0;
-                        IsReassignPending = false;
-                        return false;
-                    }
-                    Console.WriteLine($"Keybind of name '{Name}' key assigned from {AssignedButton} to '{firstButton}'");
-                    AssignedButton = firstButton;
+            if (_bindingWait > 0) return false;
+            if (InputUtils.CurrentKeySnapshot.GetPressedKeys().Length <= 0) return false;
+            var firstButton = InputUtils.GetPressedButtons(InputUtils.CurrentGamePadSnapshot.Buttons)[0];
 
-                    _rebindAlertTime = 45;
-                    IsReassignPending = false;
-                    JustReassigned = true;
-                    _bindingWait = 5;
-                    return true;
-                }
+            if (InputUtils.ButtonJustPressed(firstButton) && firstButton == AssignedButton) {
+                Console.WriteLine($"Stopped the assigning of '{Name}'");
+                IsReassignPending = false;
+                return false;
             }
-            return false;
+            if (InputUtils.ButtonJustPressed(firstButton) && firstButton == Buttons.Back) {
+                Console.WriteLine($"Unassigned '{Name}'");
+                AssignedButton = 0;
+                IsReassignPending = false;
+                return false;
+            }
+            Console.WriteLine($"Keybind of name '{Name}' key assigned from {AssignedButton} to '{firstButton}'");
+            AssignedButton = firstButton;
+
+            _rebindAlertTime = 45;
+            IsReassignPending = false;
+            JustReassigned = true;
+            _bindingWait = 5;
+            return true;
         }
 
         internal void Update() {
