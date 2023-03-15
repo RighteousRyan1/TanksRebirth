@@ -214,8 +214,6 @@ namespace TanksRebirth
                 DiscordRichPresence.Load();
                 GameHandler.ClientLog.Write($"Loaded Discord Rich Presence...", LogType.Info);
 
-                ChatSystem.Initialize();
-
                 // systems = ReflectionUtils.GetInheritedTypesOf<IGameSystem>(Assembly.GetExecutingAssembly());
 
                 ResolutionHandler.Initialize(Graphics);
@@ -325,6 +323,8 @@ namespace TanksRebirth
 
                     GameHandler.ClientLog.Write($"Detected build: Copying source folders to output...", LogType.Info);
                 }
+
+                ChatSystem.Initialize();
 
                 _cachedState = GraphicsDevice.RasterizerState;
 
