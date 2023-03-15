@@ -118,29 +118,42 @@ namespace TanksRebirth.Internals.Common.Framework.Graphics
         }
 
         /// <summary>
-        /// Determines whether or not this <see cref="Triangle2D"/> is a Right Triangle.
-        /// <para>This is not finished yet.</para>
+        /// Determines whether or not this <see cref="Triangle2D"/> is a Right Triangle.1
         /// </summary>
-        /// <returns></returns>
-        public bool IsRight()
-        {
-            /*float longestSide = 0;
-            float side1 = 0;
-            float side2 = 0;
-            for (int i = 0; i < 3; i++)
-            {
-                if (FindSideLength(i) > longestSide)
-                    longestSide = FindSideLength(i);
-                else
-                {
-                    side1 = FindSideLength(i);
-                }
-            }*/
-            return false;
+        /// <returns>True if the Triangle abides the to the Pythagorean theorem.</returns>
+        public bool IsRight() {
+            
+            // Pythagorean theorem to determine if a triangle is a right triangle.
+            // a is hypotenuse; b/c are any side.
+            // a = sqrt(b^2 + c^2); 
+            
+            // A --- B
+            // |   /
+            // C /
 
-            //return dist_0_1 + dist_1_2 == dist_2_0; // a simple check using the pathagorean theorem
+            Span<float> sidesWithHyp = stackalloc float[3] { FindSideLength(0), FindSideLength(1), FindSideLength(3) };
+
+            var longestSide = 0f;
+            var indexOfLongestSide = -1;
+            // Get hypotenuse
+            for (var i = 0; i < sidesWithHyp.Length; i++) {
+                if (longestSide > sidesWithHyp[i]) continue;
+                longestSide = sidesWithHyp[i];
+                indexOfLongestSide = i;
+            }
+
+            var sidesIndexPos = -1;
+            Span<float> sides = stackalloc float[2];
+            // Get Sides
+            for (var i = 0; i < sides.Length; i++) {
+                if (i == indexOfLongestSide) continue;
+                
+                sidesIndexPos++;
+                sides[sidesIndexPos] = sidesWithHyp[i];
+            }
+            
+            return MathF.Sqrt(MathF.Pow(sides[0], 2) + MathF.Pow(sides[1], 2)) == longestSide;
         }
-
         public bool IsIcoceles()
         {
             var dist_0_1 = FindSideLength(0);
