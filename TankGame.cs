@@ -190,6 +190,20 @@ namespace TanksRebirth
             }
         }
 
+<<<<<<< HEAD
+        private static void CreateGameDirectories() {
+            Directory.CreateDirectory(SaveDirectory);
+            Directory.CreateDirectory(Path.Combine(SaveDirectory, "Resource Packs", "Scene"));
+            Directory.CreateDirectory(Path.Combine(SaveDirectory, "Resource Packs", "Tank"));
+            Directory.CreateDirectory(Path.Combine(SaveDirectory, "Resource Packs", "Music"));
+            Directory.CreateDirectory(Path.Combine(SaveDirectory, "Logs"));
+=======
+        private void PreparingDeviceSettingsListener(object sender, PreparingDeviceSettingsEventArgs ev)
+        {
+            ev.GraphicsDeviceInformation.PresentationParameters.RenderTargetUsage = RenderTargetUsage.PreserveContents;
+>>>>>>> parent of 28d8888 (Merge branch 'master' into master)
+        }
+
         private ulong _memBytes;
 
         public static Stopwatch CurrentSessionTimer = new();
