@@ -199,6 +199,10 @@ namespace TanksRebirth
 
         public static string GameDir { get; private set; }
 
+        private void PreparingDeviceSettingsListener(object sender, PreparingDeviceSettingsEventArgs ev) {
+            ev.GraphicsDeviceInformation.PresentationParameters.RenderTargetUsage = RenderTargetUsage.PreserveContents;
+        }
+
         protected override void Initialize()
         {
             try
@@ -223,6 +227,9 @@ namespace TanksRebirth
                 SpriteRenderer = new(GraphicsDevice);
 
                 Graphics.PreferMultiSampling = true;
+
+                // Prevent the backbuffer from being wiped when switching render targets... to be reimplemented...
+                // Graphics.PreparingDeviceSettings += PreparingDeviceSettingsListener;
 
                 Graphics.ApplyChanges();
 
