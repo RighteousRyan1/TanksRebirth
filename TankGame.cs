@@ -183,6 +183,10 @@ namespace TanksRebirth
             }
         }
 
+        private void PreparingDeviceSettingsListener(object sender, PreparingDeviceSettingsEventArgs ev)
+        {
+            ev.GraphicsDeviceInformation.PresentationParameters.RenderTargetUsage = RenderTargetUsage.PreserveContents;
+        }
         private static void CreateGameDirectories() {
             Directory.CreateDirectory(SaveDirectory);
             Directory.CreateDirectory(Path.Combine(SaveDirectory, "Resource Packs", "Scene"));
@@ -226,7 +230,9 @@ namespace TanksRebirth
                 SpriteRenderer = new(GraphicsDevice);
 
                 Graphics.PreferMultiSampling = true;
-
+                // Prevent the backbuffer from being wiped when switching render targets
+				Graphics.PreparingDeviceSettings += PreparingDeviceSettingsListener;
+				
                 Graphics.ApplyChanges();
 
                 GameHandler.ClientLog.Write($"Applying changes to graphics device... ({Graphics.PreferredBackBufferWidth}x{Graphics.PreferredBackBufferHeight})", LogType.Info);
