@@ -13,7 +13,7 @@ namespace TanksRebirth.Internals.Common.GameUI
 
         public static int currentActiveBox = -1;
 
-        public readonly int MaxLength;
+        public int MaxLength;
 
         public string DefaultString;
 
@@ -21,7 +21,7 @@ namespace TanksRebirth.Internals.Common.GameUI
 
         public static event EventHandler OnConfirmContents;
 
-        /// <summary>Dysfunctional right now.</summary>
+        /// <summary>Disfunctional right now.</summary>
         public bool UseDefaultStringWithText;
 
         public UITextInput(SpriteFontBase font, Color color, float scale, int maxLength) : base("", font, color, scale) {
@@ -75,49 +75,49 @@ namespace TanksRebirth.Internals.Common.GameUI
             => Text == DefaultString || string.IsNullOrEmpty(Text);
         public bool IsSelected()
             => currentActiveBox == Id;
-        private void HandleText(object sender, TextInputEventArgs e) {
-            if (!IsSelected()) {
+        private void HandleText(object sender, TextInputEventArgs e)
+        {
+            if (!IsSelected())
+            {
                 // if another box is clicked, confirm contents
                 if (ActiveHandle)
-                    OnConfirmContents?.Invoke(this, EventArgs.Empty);
+                    OnConfirmContents?.Invoke(this, new());
 
                 ActiveHandle = false;
                 TankGame.Instance.Window.TextInput -= HandleText;
                 return;
             }
-
-            if (!TankGame.Instance.IsActive) return;
-            
-            // e == TextInputEventArguments
-            switch (e) {
-                case { Key: Keys.Back }: {
+            if (TankGame.Instance.IsActive)
+            {
+                if (e.Key == Keys.Back)
+                {
                     if (Text.Length > 0)
                         Text = Text.Remove(Text.Length - 1);
-                    break;
                 }
-                case { Key: Keys.Escape }:
+                else if (e.Key == Keys.Escape)
+                {
                     Text = string.Empty;
                     TankGame.Instance.Window.TextInput -= HandleText;
                     ActiveHandle = false;
                     currentActiveBox = -1;
-                    OnConfirmContents?.Invoke(this, EventArgs.Empty);
-                    break;
-                case { Key: Keys.Tab }:
+                    OnConfirmContents?.Invoke(this, new());
+                }
+                else if (e.Key == Keys.Tab)
                     Text += "   ";
-                    break;
-                case { Key: Keys.Enter }:
+                else if (e.Key == Keys.Enter)
+                {
                     TankGame.Instance.Window.TextInput -= HandleText;
                     ActiveHandle = false;
                     currentActiveBox = -1;
-                    OnConfirmContents?.Invoke(this, EventArgs.Empty);
-                    break;
-                default: {
+                    OnConfirmContents?.Invoke(this, new());
+                }
+                else
+                {
                     //if (!TankGame.TextFont.Characters.Contains(args.Character))
                     //return;
 
                     if (Text.Length < MaxLength)
                         Text += e.Character;
-                    break;
                 }
             }
         }

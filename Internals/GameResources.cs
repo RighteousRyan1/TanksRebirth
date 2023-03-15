@@ -17,17 +17,23 @@ namespace TanksRebirth.Internals
 
 		private static Dictionary<string, object> QueuedResources { get; set; } = new();
 
-		public static T GetResource<T>(this ContentManager manager, string name) where T : class {
-			if (ResourceCache.TryGetValue(manager != null ? Path.Combine(manager.RootDirectory, name) : name, out var val) && val is T content)
+		public static T GetResource<T>(this ContentManager manager, string name) where T : class
+		{
+			if (manager != null) {
+				if (ResourceCache.TryGetValue(Path.Combine(manager.RootDirectory, name), out var val) && val is T content)
+					return content;
+			}
+			else if (ResourceCache.TryGetValue(name, out var val) && val is T content)
 				return content;
 
 			return LoadResource<T>(manager, name);
 		}
-		public static T LoadResource<T>(ContentManager manager, string name) where T : class {
+		public static T LoadResource<T>(ContentManager manager, string name) where T : class
+		{
 			if (ResourceCache.ContainsKey(name))
 				return (T)ResourceCache[name];
-			
-			if (typeof(T) == typeof(Texture2D)) {
+			else if (typeof(T) == typeof(Texture2D))
+			{
 				// var texture = (Texture2D)Convert.ChangeType(result, typeof(Texture2D));
 				object result = Texture2D.FromFile(TankGame.Instance.GraphicsDevice, name);
 				ResourceCache[name] = result;
@@ -35,7 +41,7 @@ namespace TanksRebirth.Internals
 				return (T)result;
 			}
 
-			var loaded = manager.Load<T>(name);
+			T loaded = manager.Load<T>(name);
 
 			ResourceCache[name] = loaded;
 			return loaded;
@@ -46,30 +52,41 @@ namespace TanksRebirth.Internals
             if (TankGame.Instance is null)
 				QueueAsset<T>(name);
 
-			if (ResourceCache.ContainsKey(name + ".png"))
+		if (ResourceCache.ContainsKey(name + ".png"))
 				return (T)ResourceCache[name + ".png"];
+			else if (typeof(T) == typeof(Texture2D))
+			{
+				// var texture = (Texture2D)Convert.ChangeType(result, typeof(Texture2D));
+				object result = Texture2D.FromFile(TankGame.Instance.GraphicsDevice, Path.Combine(addContentPrefix ? TankGame.Instance.Content.RootDirectory : string.Empty, name + (addDotPng ? ".png" : string.Empty)));
+				ResourceCache[name + (addDotPng ? ".png" : string.Empty)] = result;
 
-			if (typeof(T) != typeof(Texture2D)) return GetResource<T>(TankGame.Instance.Content, name);
-			
-			// var texture = (Texture2D)Convert.ChangeType(result, typeof(Texture2D));
-			object result = Texture2D.FromFile(TankGame.Instance.GraphicsDevice, Path.Combine(addContentPrefix ? TankGame.Instance.Content.RootDirectory : string.Empty, name + (addDotPng ? ".png" : string.Empty)));
-			ResourceCache[name + (addDotPng ? ".png" : string.Empty)] = result;
+				if (premultiply) {
+					var refUse = (Texture2D)result;
+					ColorUtils.FromPremultiplied(ref refUse);
+					result = refUse;
+				}
+				return (T)result;
+			}
 
-			if (!premultiply) return (T)result;
-				
-			var refUse = (Texture2D)result;
-			ColorUtils.FromPremultiplied(ref refUse);
-			result = refUse;
-			return (T)result;
+			return GetResource<T>(TankGame.Instance.Content, name);
+        }
 
-		}
-
-		public static void QueueAsset<T>(string name) {
+		public static void QueueAsset<T>(string name)
+        {
 			if (!QueuedResources.TryGetValue(name, out var val) || val is not T)
 				QueuedResources[name] = typeof(T);
         }
 
-		public static T GetRawAsset<T>(this ContentManager manager, string assetName) where T : class {
+		public static void LoadQueuedAssets()
+		{
+			Task.Run(() => { }); // rndunfsdauif fd saoidf s
+			foreach (var resource in QueuedResources)
+            {
+
+			}
+        }
+		public static T GetRawAsset<T>(this ContentManager manager, string assetName) where T : class
+        {
 			var t = typeof(ContentManager).GetMethod("ReadAsset", BindingFlags.Instance | BindingFlags.NonPublic);
 
 			var generic = t.MakeGenericMethod(typeof(T)).Invoke(manager, new object[] { assetName, null} ) as T;
@@ -77,7 +94,8 @@ namespace TanksRebirth.Internals
 			return generic;
         }
 
-		public static T GetRawGameAsset<T>(string assetName) where T : class {
+		public static T GetRawGameAsset<T>(string assetName) where T : class
+		{
 			var t = typeof(ContentManager).GetMethod("ReadAsset", BindingFlags.Instance | BindingFlags.NonPublic);
 
 			var generic = t.MakeGenericMethod(typeof(T)).Invoke(TankGame.Instance.Content, new object[] { assetName, null }) as T;
@@ -85,16 +103,14 @@ namespace TanksRebirth.Internals
 			return generic;
 		}
 
-		public static string ProjectDirectory = "";
-		public static void CopySrcFolderContents(string path, string extension = null, bool overWrite = true) {
-			if (ProjectDirectory == "") // Lazy init.
-				ProjectDirectory = Directory.GetCurrentDirectory().Replace("bin", "").Replace("Debug", "").Replace("net6.0", "")
-					.Replace("Release", "") + "/";
-			
+		public static string ProjectDirectory = Directory.GetCurrentDirectory().Replace("bin", "").Replace("Debug", "").Replace("net6.0", "").Replace("Release", "") + "/";
+		public static void CopySrcFolderContents(string path, string extension = null, bool overWrite = true)
+        {
 			var files = extension != null ? Directory.GetFiles(Path.Combine(ProjectDirectory, path)).Where(file => file.EndsWith(extension)).ToArray() : Directory.GetFiles(Path.Combine(ProjectDirectory, path));
 			Directory.CreateDirectory(path);
 
-			foreach (var file in files) {
+			foreach (var file in files)
+            {
 				var fileName = Path.GetFileName(file);
 				File.Copy(file, Path.Combine(path, fileName), overWrite);
             }

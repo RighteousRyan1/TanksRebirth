@@ -26,18 +26,21 @@ namespace TanksRebirth.Localization
             => $"{Language}_{Country}";
 
         public static LangCode Parse(string lang) {
-            if (!TryParse(lang, out var langCode)) {
+            var spl = lang.Split('_');
+
+            if (spl.Length > 2 || spl.Length < 2) {
                 throw new Exception("Failure to parse " + lang + "into a " + nameof(LangCode) + ".");
             }
 
-            return langCode;
+            return new(spl[0], spl[1]);
         }
         public static bool TryParse(string lang, out LangCode result) {
             result = default;
             var spl = lang.Split('_');
 
-            if (spl.Length != 2) // The split length should ALWAYS be 2, regardless.
+            if (spl.Length > 2 || spl.Length < 2) {
                 return false;
+            }
             result = new(spl[0], spl[1]);
             return true;
         }

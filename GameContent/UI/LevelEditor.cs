@@ -414,21 +414,21 @@ namespace TanksRebirth.GameContent.UI
                     var assetName = file;
                     RenderTextures.Add(fileName, GameResources.GetGameResource<Texture2D>(assetName, false, false));
                 }
-                var names = TankID.Collection.Keys.ToArray();
+                var names = TankID.Collection.Keys;
                 for (int i = 0; i < names.Length; i++) {
                     var nTL = names[i];
 
                     if (RenderTextures.ContainsKey(nTL))
                         _renderNamesTanks.Add(nTL);
                 }
-                names = BlockID.Collection.Keys.ToArray();
+                names = BlockID.Collection.Keys;
                 for (int i = 0; i < names.Length; i++) {
                     var nTL = names[i];
 
                     if (RenderTextures.ContainsKey(nTL))
                         _renderNamesBlocks.Add(nTL);
                 }
-                names = PlayerID.Collection.Keys.ToArray();
+                names = PlayerID.Collection.Keys;
                 for (int i = 0; i < names.Length; i++) {
                     var nTL = names[i];
 
@@ -524,16 +524,10 @@ namespace TanksRebirth.GameContent.UI
                         }
                         else if (ext == ".bin")
                         {
-                            try {
-                                var map = new WiiMap(res.Path);
-                                ChatSystem.SendMessage($"(Width, Height): ({map.Width}, {map.Height})", Color.White);
-                                WiiMap.ApplyToGameWorld(map);
-                            } catch {
-                                ChatSystem.SendMessage($"Failed to load map: {res.Path}.", Color.Red);
-                                ChatSystem.SendMessage("Is this an original Wii Tanks map?", Color.Red);
-                                ChatSystem.SendMessage("If this file is a custom map, you should try loading it as a '.mission' file.", Color.Yellow);
-                                return;
-                            }
+                            var map = new WiiMap(res.Path);
+                            ChatSystem.SendMessage($"(Width, Height): ({map.Width}, {map.Height})", Color.White);
+
+                            WiiMap.ApplyToGameWorld(map);
                         }
 
                         ChatSystem.SendMessage($"Loaded '{Path.GetFileName(res.Path)}'.", Color.White);

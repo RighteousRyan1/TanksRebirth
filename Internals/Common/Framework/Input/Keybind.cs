@@ -34,26 +34,29 @@ namespace TanksRebirth.Internals.Common.Framework.Input
             JustReassigned = true;
         }
 
-        private void PollReassign() {
-            var currentlyPressedKeys = InputUtils.CurrentKeySnapshot.GetPressedKeys();
-            if (currentlyPressedKeys.Length <= 0) return;
-            var firstKey = currentlyPressedKeys[0];
-            if (InputUtils.KeyJustPressed(firstKey) && firstKey == AssignedKey) {
+        private void PollReassign()
+        {
+            if (InputUtils.CurrentKeySnapshot.GetPressedKeys().Length > 0)
+            {
+                var firstKey = InputUtils.CurrentKeySnapshot.GetPressedKeys()[0];
+                if (InputUtils.KeyJustPressed(firstKey) && firstKey == AssignedKey)
+                {
+                    OnKeyReassigned?.Invoke(AssignedKey);
+                    PendKeyReassign = false;
+                    return;
+                }
+                else if (InputUtils.KeyJustPressed(firstKey) && firstKey == Keys.Escape)
+                {
+                    AssignedKey = Keys.None;
+                    OnKeyReassigned?.Invoke(AssignedKey);
+                    PendKeyReassign = false;
+                    return;
+                }
+                AssignedKey = firstKey;
                 OnKeyReassigned?.Invoke(AssignedKey);
                 PendKeyReassign = false;
                 return;
             }
-            
-            if (InputUtils.KeyJustPressed(firstKey) && firstKey == Keys.Escape) {
-                AssignedKey = Keys.None;
-                OnKeyReassigned?.Invoke(AssignedKey);
-                PendKeyReassign = false;
-                return;
-            }
-
-            AssignedKey = firstKey;
-            OnKeyReassigned?.Invoke(AssignedKey);
-            PendKeyReassign = false;
         }
 
         public void Fire() { KeybindPressAction?.Invoke(this); }

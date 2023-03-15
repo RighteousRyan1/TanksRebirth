@@ -2,7 +2,7 @@
 
 namespace TanksRebirth.Internals.Common.Utilities;
 
-public static class StringUtils {
-    private static readonly Regex _camelCaseRegex = new("([A-Z])", RegexOptions.Compiled);
-    public static string SplitByCamel(this string input) => _camelCaseRegex.Replace(input, " $1").Trim();
+public static class StringUtils
+{
+    public static string SplitByCamel(this string input) => Regex.Replace(input, "([A-Z])", " $1", RegexOptions.Compiled).Trim();
 }

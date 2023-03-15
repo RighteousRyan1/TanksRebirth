@@ -13,7 +13,7 @@ public static class ArrayUtils
     /// <param name="z">Where to start adjusting.</param>
     /// <param name="w">Where to end adjusting. If 0, defaults to the end of the array.</param>
     /// <returns>The shifted array.</returns>
-    public static T[] Shift<T>(this T[] array, int adjust, int z = 0, int w = 0) {
+    public static T[] Shift<T>(T[] array, int adjust, int z = 0, int w = 0) {
         T[] arrayCopy = new T[array.Length];
 
         Array.Copy(array, arrayCopy, array.Length);
@@ -50,47 +50,30 @@ public static class ArrayUtils
         return newArray;
     }
 
-    /// <summary>
-    /// Finds the first mismatch between two arrays.
-    /// </summary>
-    /// <param name="first">First Array; self</param>
-    /// <param name="second">Second array.</param>
-    /// <param name="firstValue">The value in the first array where the mismatch occurred.</param>
-    /// <param name="secondValue">The value in the second array where the mismatch occurred.</param>
-    /// <param name="mismatchCount">The amount of mis matches that occurred</param>
-    /// <typeparam name="T">Type for the Array.</typeparam>
-    /// <returns>An <see cref="int"/> containing the index of the first mismatch in the array.</returns>
-    public static int FindFirstMismatch<T>(this T[] first, T[] second, out T firstValue, out T secondValue, out int mismatchCount) {
+    public static int FindFirstMismatch<T>(T[] first, T[] second, out T firstValue, out T secondValue, out int mismatchCount)
+    {
         firstValue = default;
         secondValue = default;
         mismatchCount = 0;
 
-        var firstMismatch = -1;
+        int firstMismatch = -1;
         if (first.Length != second.Length)
             return -1;
-        for (var i = 0; i < first.Length; i++) {
-            if (first[i].Equals(second[i])) continue;
-
-            mismatchCount++;
-            firstValue = first[i];
-            secondValue = second[i];
-
-            if (firstMismatch == -1)
-                firstMismatch = i;
+        for (int i = 0; i < first.Length; i++)
+        {
+            if (!first[i].Equals(second[i])) {
+                mismatchCount++;
+                firstValue = first[i];
+                secondValue = second[i];
+                if (firstMismatch < 0)
+                    firstMismatch = i;
+            }
         }
 
         return firstMismatch;
     }
-    public static byte[] SequenceToUInt8Array(this string sequence) => InnerSequenceParser<byte>(sequence);
-    public static short[] SequenceToInt16Array(this string sequence) => InnerSequenceParser<short>(sequence);
-    public static int[] SequenceToInt32Array(this string sequence) => InnerSequenceParser<int>(sequence);
-    public static long[] SequenceToInt64Array(this string sequence) => InnerSequenceParser<long>(sequence);
-
-    private static T[] InnerSequenceParser<T>(string sequence) {
-        if (string.IsNullOrEmpty(sequence))
-            return Array.Empty<T>();
-        ReadOnlySpan<char> strAsSpan = sequence;
-        
-        return sequence.Split(',').Select(x => (T)Convert.ChangeType(x, typeof(T))).ToArray();
-    }
+    public static byte[] SequenceToUInt8Array(string sequence) => sequence == string.Empty ? Array.Empty<byte>() : sequence.Split(',').Select(str => byte.Parse(str)).ToArray();
+    public static short[] SequenceToInt16Array(string sequence) => sequence == string.Empty ? Array.Empty<short>() : sequence.Split(',').Select(str => short.Parse(str)).ToArray();
+    public static int[] SequenceToInt32Array(string sequence) => sequence == string.Empty ? Array.Empty<int>() : sequence.Split(',').Select(str => int.Parse(str)).ToArray();
+    public static long[] SequenceToInt64Array(string sequence) => sequence == string.Empty ? Array.Empty<long>() : sequence.Split(',').Select(str => long.Parse(str)).ToArray();
 }

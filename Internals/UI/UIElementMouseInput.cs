@@ -27,154 +27,206 @@ namespace TanksRebirth.Internals.UI
 
 			if (!getHighest)
             {
-				for (var i = AllUIElements.Count - 1; i >= 0; i--) {
-					var currentElement = AllUIElements[i];
-					if (currentElement is not { IgnoreMouseInteractions: false, IsVisible: true } ||
-					    !currentElement.Hitbox.Contains(position)) continue;
-					focusedElements.Add(currentElement);
-					if (!currentElement.FallThroughInputs)
-						break;
+				for (int iterator = AllUIElements.Count - 1; iterator >= 0; iterator--)
+				{
+					UIElement currentElement = AllUIElements[iterator];
+					if (!currentElement.IgnoreMouseInteractions && currentElement.IsVisible && currentElement.Hitbox.Contains(position))
+					{
+						focusedElements.Add(currentElement);
+						if (!currentElement.FallThroughInputs)
+							break;
+					}
 				}
-				return focusedElements;
-            }
-			for (var i = 0; i < AllUIElements.Count - 1; i++) {
-				var currentElement = AllUIElements[i];
-				if (currentElement is not { IgnoreMouseInteractions: false, IsVisible: true } ||
-				    !currentElement.Hitbox.Contains(position)) continue;
-				
-				focusedElements.Add(currentElement);
-				
-				if (i + 1 > AllUIElements.Count) continue;
-				
-				if (currentElement.FallThroughInputs)
-					focusedElements.Add(AllUIElements[i + 1]);
-				else
-					break;
+			}
+			else
+            {
+				for (int iterator = 0; iterator < AllUIElements.Count - 1; iterator++)
+				{
+					UIElement currentElement = AllUIElements[iterator];
+					if (!currentElement.IgnoreMouseInteractions && currentElement.IsVisible && currentElement.Hitbox.Contains(position))
+					{
+						focusedElements.Add(currentElement);
+						if (iterator + 1 <= AllUIElements.Count)
+                        {
+							if (currentElement.FallThroughInputs)
+                            {
+								focusedElements.Add(AllUIElements[iterator + 1]);
+                            }
+							else
+                            {
+								break;
+                            }
+                        }
+						//if (!currentElement.FallThroughInputs)
+							//break;
+					}
+				}
 			}
 
 			return focusedElements;
 		}
 
-		protected bool CanRegisterInput(Func<bool> uniqueInput) {
+		protected bool CanRegisterInput(Func<bool> uniqueInput)
+		{
 			if (!TankGame.Instance.IsActive)
 				return false;
 
-			if (Parent is not null && !Parent.Hitbox.Contains(MouseUtils.MousePosition)) return false;
-			
-			if (uniqueInput is not null && !uniqueInput.Invoke()) return false;
-			
-			if (!Hitbox.Contains(MouseUtils.MousePosition)) return false;
-			
-			return (HasScissor && Scissor.Invoke().Contains(MouseUtils.MousePosition)) || !HasScissor;
+			if (Parent is null || Parent.Hitbox.Contains(MouseUtils.MousePosition))
+			{
+				if (uniqueInput is null || uniqueInput.Invoke())
+				{
+					if (Hitbox.Contains(MouseUtils.MousePosition))
+					{
+						if ((HasScissor && Scissor.Invoke().Contains(MouseUtils.MousePosition)) || !HasScissor)
+							return true;
+					}
+				}
+			}
+
+			return false;
 		}
 
 		public Action<UIElement> OnLeftClick;
 
-		public virtual void LeftClick() {
-			if (!CanRegisterInput(() => InputUtils.MouseLeft && !InputUtils.OldMouseLeft)) return;
-			
-			if (delay <= 0)
-				OnLeftClick?.Invoke(this);
-			delay = 2;
+		public virtual void LeftClick()
+		{
+			if (CanRegisterInput(() => InputUtils.MouseLeft && !InputUtils.OldMouseLeft))
+			{
+				if (delay <= 0)
+					OnLeftClick?.Invoke(this);
+				delay = 2;
+			}
 		}
 
 		public Action<UIElement> OnLeftDown;
 
-		public virtual void LeftDown() {
+		public virtual void LeftDown()
+		{
             if (CanRegisterInput(() => InputUtils.MouseLeft))
+			{
+                // ChatSystem.SendMessage(this is UISlider, Color.White);
                 OnLeftDown?.Invoke(this);
+			}
 		}
 
 		public Action<UIElement> OnLeftUp;
 
-		public virtual void LeftUp() {
+		public virtual void LeftUp()
+		{
             if (CanRegisterInput(() => !InputUtils.MouseLeft))
+			{
 				OnLeftUp?.Invoke(this);
+			}
 		}
 
 		//---------------------------------------------------------
 
 		public Action<UIElement> OnRightClick;
 
-		public virtual void RightClick() {
-			if (!CanRegisterInput(() => InputUtils.MouseRight && !InputUtils.OldMouseRight)) return;
-			
-			if (delay <= 0)
-				OnRightClick?.Invoke(this);
-			delay = 2;
+		public virtual void RightClick()
+		{
+			if (CanRegisterInput(() => InputUtils.MouseRight && !InputUtils.OldMouseRight))
+			{
+				if (delay <= 0)
+					OnRightClick?.Invoke(this);
+				delay = 2;
+			}
 		}
 
 		public Action<UIElement> OnRightDown;
 
-		public virtual void RightDown() {
+		public virtual void RightDown()
+		{
 			if (CanRegisterInput(() => InputUtils.MouseRight))
+			{
 				OnRightDown?.Invoke(this);
+			}
 		}
 
 		public Action<UIElement> OnRightUp;
 
-		public virtual void RightUp() {
+		public virtual void RightUp()
+		{
 			if (CanRegisterInput(() => !InputUtils.MouseRight))
+			{
 				OnRightUp?.Invoke(this);
+			}
 		}
 
 		//--------------------------------------------------------
 
 		public Action<UIElement> OnMiddleClick;
 
-		public virtual void MiddleClick() {
-			if (!CanRegisterInput(() => InputUtils.MouseMiddle && !InputUtils.OldMouseMiddle)) return;
-			
-			if (delay <= 0)
-				OnMiddleClick?.Invoke(this);
-			delay = 2;
+		public virtual void MiddleClick()
+		{
+			if (CanRegisterInput(() => InputUtils.MouseMiddle && !InputUtils.OldMouseMiddle))
+			{
+				if (delay <= 0)
+					OnMiddleClick?.Invoke(this);
+				delay = 2;
+			}
 		}
 
 		public Action<UIElement> OnMiddleDown;
 
-		public virtual void MiddleDown() {
+		public virtual void MiddleDown()
+		{
 			if (CanRegisterInput(() => InputUtils.MouseMiddle))
+			{
 				OnMiddleDown?.Invoke(this);
+			}
 		}
 
 		public Action<UIElement> OnMiddleUp;
 
-		public virtual void MiddleUp() {
+		public virtual void MiddleUp()
+		{
 			if (CanRegisterInput(() => !InputUtils.MouseMiddle))
+			{
 				OnMiddleUp?.Invoke(this);
+			}
 		}
 
 		//--------------------------------------------------------
 
 		public Action<UIElement> OnMouseOver;
 
-		public virtual void MouseOver() {
+		public virtual void MouseOver()
+		{
 			if (!TankGame.Instance.IsActive)
+			{
 				return;
+			}
 
-			if (Parent is not null && !Parent.Hitbox.Contains(MouseUtils.MousePosition)) return;
-			
-			if (!Hitbox.Contains(MouseUtils.MousePosition) || _wasHovered) return;
-			
-			if ((!HasScissor || !Scissor.Invoke().Contains(MouseUtils.MousePosition)) && HasScissor) return;
-			
-			OnMouseOver?.Invoke(this);
-			MouseHovering = true;
+			if (Parent is null || Parent.Hitbox.Contains(MouseUtils.MousePosition))
+			{
+				if (Hitbox.Contains(MouseUtils.MousePosition) && !_wasHovered)
+				{
+					if ((HasScissor && Scissor.Invoke().Contains(MouseUtils.MousePosition)) || !HasScissor)
+                    {
+						OnMouseOver?.Invoke(this);
+						MouseHovering = true;
+					}
+				}
+			}
 
 			_wasHovered = MouseHovering;
 		}
 
 		public Action<UIElement> OnMouseOut;
 
-		public virtual void MouseOut() {
+		public virtual void MouseOut()
+		{
 			if (!TankGame.Instance.IsActive)
+			{
 				return;
+			}
 
-			if (Hitbox.Contains(MouseUtils.MousePosition)) return;
-
-			OnMouseOut?.Invoke(this);
-			MouseHovering = false;
-			_wasHovered = MouseHovering;
+			if (!Hitbox.Contains(MouseUtils.MousePosition))
+			{
+				OnMouseOut?.Invoke(this);
+				MouseHovering = false;
+			}
 		}
 	}
 }

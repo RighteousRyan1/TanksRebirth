@@ -33,16 +33,15 @@ namespace TanksRebirth.Internals.Common.GameUI
 
 		public override void OnInitialize()
 		{
-			UIImage interactable = new(TankGame.WhitePixel, 1f, (image, spriteBatch) => spriteBatch.Draw(image.Texture, image.Hitbox, Color.Transparent)) {
-				Tooltip = Tooltip,
-				FallThroughInputs = true
-			};
-			interactable.SetDimensions(Position.X + 2, Position.Y + 2, Size.X - 4, Size.Y - 4);
+			UIImage interactable = new(TankGame.WhitePixel, 1f, (image, spriteBatch) => spriteBatch.Draw(image.Texture, image.Hitbox, Color.Transparent));
+			interactable.Tooltip = Tooltip;
+			interactable.FallThroughInputs = true;
+			interactable.SetDimensions((int)Position.X + 2, (int)Position.Y + 2, (int)Size.X - 4, (int)Size.Y - 4);
 			interactable.OnLeftDown = (uiElement) =>
 			{
-				// FIXME: huh? this isn't invoked. 
+                // FIXME: huh? this isn't invoked.
                 ChatSystem.SendMessage("invoked.", Color.White);
-                var mouseXRelative = (int)Math.Round(MouseUtils.MouseX - uiElement.Position.X);
+                int mouseXRelative = (int)Math.Round(MouseUtils.MouseX - uiElement.Position.X);
 				InternalValue = MathHelper.Clamp(mouseXRelative / uiElement.Size.X, 0, 1);
 			};
 			Append(interactable);

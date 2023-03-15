@@ -6,7 +6,6 @@
     <TieredCompilation>false</TieredCompilation>
     <AssemblyVersion>1.6.1</AssemblyVersion>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <Nullable>enable</Nullable>
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationManifest>app.manifest</ApplicationManifest>
