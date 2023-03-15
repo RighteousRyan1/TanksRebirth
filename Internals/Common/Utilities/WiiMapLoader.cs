@@ -29,8 +29,8 @@ public readonly struct WiiMap
 
     public const int LargeMapBytepool = 1512;
 
-    public const int TNK_PLR_ID = -1;
-    public const int TNK_E_ID = -2;
+    public const int PLAYER_TANK_ID = -1;
+    public const int ENEMY_TANK_ID = -2;
 
     public readonly byte[] RawData;
 
@@ -40,14 +40,13 @@ public readonly struct WiiMap
     public readonly int QValue;
     public readonly int PValue;
     public readonly List<WiiMapTileData> MapItems; // Point (xy pos), Kvp<int, int> (type, stack)
-    public WiiMap(string file)
-    {
+    public WiiMap(string file) {
         RawData = File.ReadAllBytes(file);
         if (RawData.Length < 0x10)
             throw new Exception("The file is too short to be a valid Wii Tanks map file.");
 
-        Width = BitUtils.GetInt(RawData, 0x0);
-        Height = BitUtils.GetInt(RawData, 0x4);
+        Width = RawData.GetInt(0x0);
+        Height = RawData.GetInt(0x4);
 
         if (RawData.Length != 0x10 + ((Height * Width) << 2))
             throw new Exception("The file header is invalid.");
@@ -55,7 +54,7 @@ public readonly struct WiiMap
         PValue = RawData[0xB];
         QValue = RawData[0xF];
         MapItems = new();
-        for (int i = 0; i < Width * Height; i++) {
+        for (var i = 0; i < Width * Height; i++) {
             var blockTypeOrig = RawData[i * 0x4 + 0x13];
 
             var tileMetaData = ConvertToEditorSpace(blockTypeOrig);
@@ -64,141 +63,183 @@ public readonly struct WiiMap
             MapItems.Add(new WiiMapTileData(new BlockMapPosition(x, i / Width), tileMetaData.Key, tileMetaData.Value));
         }
     }
-    public static void SaveToTanksBinFile(string fileLocation, bool largeMap = true)
-    {
-        byte[] rawData = new byte[LargeMapBytepool];
+    public static void SaveToTanksBinFile(string fileLocation, bool largeMap = true) {
 
-        int byteOffset = 0x3;
+        // Validate map before allocating memory and wasting resources in saving something we just can not save correctly.
+        if (!ValidateWiiMap()) {
+            LevelEditor.Alert("There are, or more than 8 enemy tanks,\nor more than two players in the map.\nConsider using the .mission format instead of .bin.", 5000f);
+            return;
+        }
+        
+        var rawData = new byte[LargeMapBytepool];
+        var byteOffset = 0x3; // 3 bytes
 
-        void set(int data) {
-            rawData[byteOffset] = (byte)data;
-            byteOffset += 0x4;
+        void SetBit(byte[] dataCollection, int data) {
+            dataCollection[byteOffset] = (byte)data;
+            byteOffset += 0x4; // 4 bytes per tile (int == 32 bits (32 / 8 = 4))
         }
 
-        set((byte)(largeMap ? BlockMapPosition.MAP_WIDTH_169 : BlockMapPosition.MAP_WIDTH_43));
+        SetBit(rawData, (byte)(largeMap ? BlockMapPosition.MAP_WIDTH_169 : BlockMapPosition.MAP_WIDTH_43));
 
-        set(BlockMapPosition.MAP_HEIGHT);
+        SetBit(rawData, BlockMapPosition.MAP_HEIGHT);
 
-        set(0);
-        set(0);
+        SetBit(rawData, 0);
+        SetBit(rawData, 0);
 
         foreach (var pl in PlacementSquare.Placements) {
             if (pl.BlockId > -1 && pl.HasBlock) {
                 var block = Block.AllBlocks[pl.BlockId];
-                if (block.Type == BlockID.Wood)
-                    set(block.Stack + 200);
-                else if(block.Type == BlockID.Cork)
-                    set(block.Stack + 100);
-                else if (block.Type == BlockID.Hole)
-                    set(200);
+                switch (block.Type) {
+                    case BlockID.Wood:
+                        SetBit(rawData, block.Stack + 200);
+                        break;
+                    case BlockID.Cork:
+                        SetBit(rawData, block.Stack + 100);
+                        break;
+                    case BlockID.Hole:
+                        SetBit(rawData, 200);
+                        break;
+                }
             }
             if (pl.TankId > -1) {
                 var tank = GameHandler.AllTanks[pl.TankId];
 
-                if (tank is PlayerTank player) {
-                    if (player.PlayerType < 2) {
-                        rawData[byteOffset - 0x1] = 1;
-                        set(player.PlayerType + 44);
+                switch (tank) {
+                    case PlayerTank player: {
+                        if (player.PlayerType < 2) {
+                            rawData[byteOffset - 0x1] = 1;
+                            SetBit(rawData, player.PlayerType + 44);
+                        }
+                        break;
                     }
-                }
-                else if (tank is AITank ai) {
-                    rawData[byteOffset - 0x1] = 1;
-                    set(ai.AITankId + 144);
+                    case AITank ai:
+                        rawData[byteOffset - 0x1] = 1;
+                        SetBit(rawData, ai.AITankId + 144);
+                        break;
                 }
             }
-            if (pl.BlockId == -1 && pl.TankId == -1) {
-                set(0);
+            if (pl is { BlockId: -1, TankId: -1 }) {
+                SetBit(rawData, 0);
             }
         }
 
         File.WriteAllBytes(fileLocation, rawData);
     }
 
-    public static void ApplyToGameWorld(WiiMap map)
-    {
+    private static bool ValidateWiiMap() {
+        var tankAiCount = 0;
+        var playerCount = 0;
+        for (var i = 0; i < PlacementSquare.Placements.Count; i++) {
+            var pl = PlacementSquare.Placements[i];
+
+            if (tankAiCount > 8 || playerCount > 2) return false;
+            
+            switch (pl.TankId) {
+                case PLAYER_TANK_ID:
+                    playerCount++;
+                    break;
+                case ENEMY_TANK_ID:
+                    tankAiCount++;
+                    break;
+            }
+        }
+
+        return true;
+    }
+
+    public static void ApplyToGameWorld(WiiMap map) {
         PlacementSquare.ResetSquares();
         GameHandler.CleanupEntities();
 
-        foreach (var item in map.MapItems)
-        {
-            //var tile = PlacementSquare.Placements[map.Width * item.Key.Y + item.Key.X]; // access from the list like it's a 2D array
-
-            // this is because the coordinates for the placements are actually just (row, column) ughh
-            var tile = PlacementSquare.Placements.First(
-                sq => sq.RelativePosition.X == item.Position.X && sq.RelativePosition.Y == item.Position.Y);
-
-            /*if (tile.RelativePosition == new Point(5, 1))
-            {
-                ChatSystem.SendMessage($"Type: {item.Type}", Color.White);
-                ChatSystem.SendMessage($"Stack: {item.Stack}", Color.White);
-            }*/
-            if (item.Type > -1)
-            {
-                if (item.Stack == -1 || item.Stack == -2)
-                {
-                    float tnkRot = 0f;
-
-                    var halfW = BlockMapPosition.MAP_WIDTH_169 / 2;
-                    var halfH = BlockMapPosition.MAP_HEIGHT / 2;
-
-                    // face right.
-                    if (tile.RelativePosition.X <= tile.RelativePosition.Y && tile.RelativePosition.X < halfW)
-                        tnkRot = -MathHelper.PiOver2 * 3;
-                    // face left
-                    if ((tile.RelativePosition.X - halfW) <= tile.RelativePosition.Y && tile.RelativePosition.X > halfW)
-                        tnkRot = -MathHelper.PiOver2;
-                    // face up
-                    if (tile.RelativePosition.X > (tile.RelativePosition.Y - halfH) && tile.RelativePosition.Y > halfH)
-                        tnkRot = -MathHelper.Pi;
-                    // face downwards.
-                    else if (tile.RelativePosition.X >= tile.RelativePosition.Y && tile.RelativePosition.Y < halfH)
-                        tnkRot = 0;
-
-                    if (item.Stack == -1)
-                    {
-                        var pl = GameHandler.SpawnMe(item.Type, TeamID.Red, tile.Position);
-                        pl.TankRotation = tnkRot;
-                        pl.TargetTankRotation = tnkRot;
-                        pl.TurretRotation = tnkRot;
-                        tile.TankId = pl.WorldId;
-                    }
-                    if (item.Stack == -2)
-                    {
-                        var ai = GameHandler.SpawnTankAt(tile.Position, AITank.PickRandomTier(), TeamID.Blue);
-                        ai.TankRotation = tnkRot;
-                        ai.TargetTankRotation = tnkRot;
-                        ai.TurretRotation = tnkRot;
-                        tile.TankId = ai.WorldId;
-                        ai.ReassignId(item.Type);
-                    }
-                    tile.HasBlock = false;
-                }
-                else
-                {
-                    var bl = new Block(item.Type, item.Stack, tile.Position.FlattenZ());
-                    tile.BlockId = bl.Id;
-                    tile.HasBlock = true;
-                }
-            }
+        foreach (var mapTile in map.MapItems) {
+            ProcessWiiMapTile(mapTile);
         }
     }
 
-    public static KeyValuePair<int, int> ConvertToEditorSpace(int input)
-    {
-        if (input == 0)
-            return new(-1, 0); // this is an empty space.
-        else if (input >= 101 && input <= 107)
-            return new(BlockID.Cork, input - 100); // this would be a cork block in the binary file. (base 10 101-107)
-        else if (input == 200)
-            return new(BlockID.Hole, 0); // this is a hole in the binary file.
-        else if (input >= 201 && input <= 207)
-            return new(BlockID.Wood, input - 200); // this would be a wood block in the binary file. (base 10 201-207)
-        else if (input >= 44 && input <= 45)
-            return new(input - 44, TNK_PLR_ID); // respective blue and red player tank. -1 stack because we want to identify it.
-        else if (input >= 144 && input <= 151)
-            return new(input - 144, TNK_E_ID); // -2 stack to identify as well, and since we can't identify the tank type, too bad.
-        else
-            throw new Exception("Invalid conversion process to a " + nameof(WiiMap) + ".");
+    private static void ProcessWiiMapTile(WiiMapTileData mapTile) {
+        //var tile = PlacementSquare.Placements[map.Width * item.Key.Y + item.Key.X]; // access from the list like it's a 2D array
+
+        // The coordinates for the placements are actually just Row and Column. Annoying...
+        var tile = PlacementSquare.Placements.First(sq =>
+            sq.RelativePosition.X == mapTile.Position.X && sq.RelativePosition.Y == mapTile.Position.Y);
+
+        /* Code used to debug Map processing, somewhat:
+         *  if (tile.RelativePosition == new Point(5, 1))
+         *  {
+         *      ChatSystem.SendMessage($"Type: {item.Type}", Color.White);
+         *      ChatSystem.SendMessage($"Stack: {item.Stack}", Color.White);
+         *  }
+         */
+
+        if (mapTile.Type <= -1) return;
+
+        if (mapTile.Stack is not (-1 or -2)) { // Normal tile, not a player.
+            var bl = new Block(mapTile.Type, mapTile.Stack, tile.Position.FlattenZ());
+            tile.BlockId = bl.Id;
+            tile.HasBlock = true;
+            return;
+        }
+
+        // This tile is basically a tank.
+
+        var tnkRot = 0f;
+
+        const int HALF_MAP_WIDTH = BlockMapPosition.MAP_WIDTH_169 / 2;
+        const int HALF_MAP_HEIGHT = BlockMapPosition.MAP_HEIGHT / 2;
+
+
+        // The tank will face rightward.
+        if (tile.RelativePosition.X <= tile.RelativePosition.Y && tile.RelativePosition.X < HALF_MAP_WIDTH)
+            tnkRot = -MathHelper.PiOver2 * 3;
+        // The tank will face downward.
+        else if (tile.RelativePosition.X >= tile.RelativePosition.Y && tile.RelativePosition.Y < HALF_MAP_HEIGHT)
+            tnkRot = 0;
+
+        // The tank will face leftward.
+        if ((tile.RelativePosition.X - HALF_MAP_WIDTH) <= tile.RelativePosition.Y &&
+            tile.RelativePosition.X > HALF_MAP_WIDTH)
+            tnkRot = -MathHelper.PiOver2;
+
+        // The tank will face upward.
+        else if (tile.RelativePosition.X > (tile.RelativePosition.Y - HALF_MAP_HEIGHT) &&
+                 tile.RelativePosition.Y > HALF_MAP_HEIGHT)
+            tnkRot = -MathHelper.Pi;
+
+        switch (mapTile.Stack) {
+            case PLAYER_TANK_ID: { // Player Tank, That's us!
+                var pl = GameHandler.SpawnMe(mapTile.Type, TeamID.Red, tile.Position);
+                pl.TankRotation = tnkRot;
+                pl.TargetTankRotation = tnkRot;
+                pl.TurretRotation = tnkRot;
+                tile.TankId = pl.WorldId;
+                break;
+            }
+            case ENEMY_TANK_ID: { // Enemy Tank.
+                var ai = GameHandler.SpawnTankAt(tile.Position, AITank.PickRandomTier(), TeamID.Blue);
+                ai.TankRotation = tnkRot;
+                ai.TargetTankRotation = tnkRot;
+                ai.TurretRotation = tnkRot;
+                tile.TankId = ai.WorldId;
+                ai.ReassignId(mapTile.Type);
+                break;
+            }
+        }
+
+        tile.HasBlock = false;
+        return;
+    }
+
+    public static KeyValuePair<int, int> ConvertToEditorSpace(int input) {
+        return input switch {
+            0 => new(-1, 0), // this is an empty space.
+            >= 101 and <= 107 => new(BlockID.Cork, input - 100),                    // this would be a cork block in the binary file. (base 10 101-107)
+            200 => new(BlockID.Hole, 0),                                            // this is a hole in the binary file.
+            >= 201 and <= 207 => new(BlockID.Wood, input - 200),                    // this would be a wood block in the binary file. (base 10 201-207)
+            >= 44 and <= 45 => new(input - 44, PLAYER_TANK_ID),                     // respective blue and red player tank. -1 stack because we want to identify it.
+            >= 144 and <= 151 => new(input - 144, ENEMY_TANK_ID),                   // -2 stack to identify as well, and since we can't identify the tank type, too bad.
+            _ => throw new Exception($"Invalid conversion process to a {nameof(WiiMap)}.")
+        };
+
         // unfortunately we cannot do much more than this, since enemy spawns are handled in the parameter file.
         // ...but we can find where they would spawn. go ahead and put a brown tank on the blue team there.
     }
