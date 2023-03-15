@@ -16,52 +16,58 @@ namespace TanksRebirth.Internals.Common.IO
 
         public T Object;
         
-        public JsonHandler(T type, string path)
-        {
-            Object = type;
+        public JsonHandler(T obj, string path) {
+            Object = obj;
             JsonPath = path;
 
-            JsonDir = JsonPath.Remove(JsonPath.Length - Path.GetFileName(JsonPath).Length);
+            JsonDir = Path.GetDirectoryName(JsonPath);
+    
+            if (!Directory.Exists(JsonDir))
+                Directory.CreateDirectory(JsonDir);
         }
 
         public string Serialize(JsonSerializerOptions options, bool writeToFile = false) {
             var serialized = JsonSerializer.Serialize(Object, options);
-            if (writeToFile) {
-                if (!string.IsNullOrEmpty(JsonDir))
-                    Directory.CreateDirectory(JsonDir);
-                File.WriteAllText(JsonPath, serialized);
-            }
+
+            if (!writeToFile) return serialized;
+    
+            if (!string.IsNullOrEmpty(JsonDir))
+                Directory.CreateDirectory(JsonDir);
+
+            File.WriteAllText(JsonPath, serialized);
             return serialized;
         }
 
-        public T Deserialize()
-        {
-            if (!File.Exists(JsonPath))
+        public T Deserialize() {
+            // The file doesn't exist, create it and write the default value for the time in it to avoid crashes in the future.
+            if (!File.Exists(JsonPath)) {
                 File.Create(JsonPath);
+                File.WriteAllText(JsonPath, JsonSerializer.Serialize<T>(default));
+                return default;
+            }
+
             var asDeserialized = JsonSerializer.Deserialize<T>(File.ReadAllText(JsonPath));
             Object = asDeserialized;
             return asDeserialized;
         }
 
-        public string ReadDeserialized()
-        {
-            using StreamReader reader = File.OpenText(JsonPath);
+        public string ReadDeserialized() {
+            StringBuilder builder = new("\nDeserialized: {\n");
+            var instanceProperties = Object.GetType().GetProperties();
+            
+            for (var i = 0; i < instanceProperties.Length; i++) {
+                var propInfo = instanceProperties[i];
 
-            var deserialized = JsonSerializer.Deserialize<T>(File.ReadAllText(JsonPath));
-
-            var def = "";
-            var i = 0;
-            def += "\nDeserialized: {\n";
-            foreach (var fld in Object.GetType().GetProperties())
-            {
-                if (i < Object.GetType().GetProperties().Length - 1)
-                    def += $"  \"{fld.Name}\": {fld.GetValue(Object)},\n";
+                builder.Append("  \"").Append(propInfo.Name).Append("\": ").Append(propInfo.GetValue(Object));
+                
+                if (i < instanceProperties.Length - 1)
+                    builder.Append(",\n");
                 else
-                    def += $"  \"{fld.Name}\": {fld.GetValue(Object)}\n";
-                i++;
+                    builder.Append('}');
+                    
             }
-            def += "}";
-            return def;
+
+            return builder.ToString();
         }
     }
 }

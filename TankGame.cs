@@ -70,14 +70,11 @@ namespace TanksRebirth
 
         public static float DeltaTime => Interp ? (!float.IsInfinity(60 / (float)LogicFPS) ? 60 / (float)LogicFPS : 0) : 1;
 
-        public static long ProcessMemory
-        {
-            get
-            {
-                using Process process = Process.GetCurrentProcess(); 
+        public static long ProcessMemory {
+            get {
+                using var process = Process.GetCurrentProcess(); 
                 return process.PrivateMemorySize64;
             }
-            private set { }
         }
 
         public static GameTime LastGameTime { get; private set; }
@@ -127,11 +124,7 @@ namespace TanksRebirth
 
         public TankGame() : base()
         {
-            Directory.CreateDirectory(SaveDirectory);
-            Directory.CreateDirectory(Path.Combine(SaveDirectory, "Resource Packs", "Scene"));
-            Directory.CreateDirectory(Path.Combine(SaveDirectory, "Resource Packs", "Tank"));
-            Directory.CreateDirectory(Path.Combine(SaveDirectory, "Resource Packs", "Music"));
-            Directory.CreateDirectory(Path.Combine(SaveDirectory, "Logs"));
+            CreateGameDirectories();
             GameHandler.ClientLog = new(Path.Combine(SaveDirectory, "Logs"), "client");
             try {
                 try {
@@ -158,7 +151,7 @@ namespace TanksRebirth
                 ComputerSpecs = ComputerSpecs.GetSpecs(out bool error);
 
                 if (error) {
-                    GameHandler.ClientLog.Write("Unable to load computer specs: Specified OS Architecture is not Windows.", LogType.Warn);
+                    GameHandler.ClientLog.Write("Unable to load computer specs: Either The Host OS is not Windows or some values may not exist.", LogType.Warn);
                 }
 
                 GameHandler.ClientLog.Write($"Playing on Operating System '{OperatingSystem}'", LogType.Info);
@@ -193,6 +186,13 @@ namespace TanksRebirth
         private void PreparingDeviceSettingsListener(object sender, PreparingDeviceSettingsEventArgs ev)
         {
             ev.GraphicsDeviceInformation.PresentationParameters.RenderTargetUsage = RenderTargetUsage.PreserveContents;
+        }
+        private static void CreateGameDirectories() {
+            Directory.CreateDirectory(SaveDirectory);
+            Directory.CreateDirectory(Path.Combine(SaveDirectory, "Resource Packs", "Scene"));
+            Directory.CreateDirectory(Path.Combine(SaveDirectory, "Resource Packs", "Tank"));
+            Directory.CreateDirectory(Path.Combine(SaveDirectory, "Resource Packs", "Music"));
+            Directory.CreateDirectory(Path.Combine(SaveDirectory, "Logs"));
         }
 
         private ulong _memBytes;
@@ -481,18 +481,19 @@ namespace TanksRebirth
                     LevelEditor.Theme.Resume();
             }
         }
-        private void TankGame_OnFocusLost(object sender, IntPtr e)
-        {
-            if (TankMusicSystem.IsLoaded)
-            {
-                if (Thunder.SoftRain.IsPlaying())
-                    Thunder.SoftRain.Instance.Pause();
-                TankMusicSystem.PauseAll();
-                if (MainMenu.Active)
-                    MainMenu.Theme.Pause();
-                if (LevelEditor.Active)
-                    LevelEditor.Theme.Pause();
-            }
+        private void TankGame_OnFocusLost(object sender, IntPtr e) {
+            if (!TankMusicSystem.IsLoaded) return;
+
+            if (Thunder.SoftRain.IsPlaying())
+                Thunder.SoftRain.Instance.Pause();
+
+            TankMusicSystem.PauseAll();
+
+            if (MainMenu.Active)
+                MainMenu.Theme.Pause();
+
+            if (LevelEditor.Active)
+                LevelEditor.Theme.Pause();
         }
         #region Various Fields
         public const float DEFAULT_ORTHOGRAPHIC_ANGLE = 0.75f;
@@ -800,68 +801,64 @@ namespace TanksRebirth
 
             bool shouldUpdate = Client.IsConnected() || (IsActive && !GameUI.Paused && !CampaignCompleteUI.IsViewingResults);
 
-            if (shouldUpdate)
+            if (!shouldUpdate) {
+                foreach (var bind in Keybind.AllKeybinds)
+                    bind?.Update();
+                return;
+            }
+
+            if (InputUtils.AreKeysJustPressed(Keys.S, Keys.U, Keys.P, Keys.E, Keys.R)) {
+                ChatSystem.SendMessage(
+                    !SuperSecretDevOption
+                        ? "You're a devious young one, aren't you?"
+                        : "I guess you aren't a devious one.", Color.Orange, "DEBUG", true);
+                SuperSecretDevOption = !SuperSecretDevOption;
+            }
+
+            GameHandler.UpdateAll();
+
+            Tank.CollisionsWorld.Step(1);
+
+            HoveringAnyTank = false;
+            if (!MainMenu.Active && (OverheadView || LevelEditor.Active))
             {
-                if (InputUtils.AreKeysJustPressed(Keys.S, Keys.U, Keys.P, Keys.E, Keys.R))
-                {
-                    if (!SuperSecretDevOption)
-                        ChatSystem.SendMessage("You're a devious young one, aren't you?", Color.Orange, "DEBUG", true);
-                    else
-                        ChatSystem.SendMessage("I guess you aren't a devious one.", Color.Orange, "DEBUG", true);
-                    SuperSecretDevOption = !SuperSecretDevOption;
-                }
-
-                GameHandler.UpdateAll();
-
-                Tank.CollisionsWorld.Step(1);
-
-                HoveringAnyTank = false;
-                if (!MainMenu.Active && (OverheadView || LevelEditor.Active))
-                {
-                    foreach (var tnk in GameHandler.AllTanks)
-                    {
-                        if (tnk is not null && !tnk.Dead)
-                        {
-                            if (RayUtils.GetMouseToWorldRay().Intersects(tnk.Worldbox).HasValue)
-                            {
-                                HoveringAnyTank = true;
-                                if (InputUtils.KeyJustPressed(Keys.K))
-                                {
-                                    // var tnk = WPTR.AllAITanks.FirstOrDefault(tank => tank is not null && !tank.Dead && tank.tier == AITank.GetHighestTierActive());
-
-                                    if (Array.IndexOf(GameHandler.AllTanks, tnk) > -1)
-                                        tnk?.Destroy(new TankHurtContext_Other()); // hmmm
-                                }
-
-                                if (InputUtils.CanDetectClick(rightClick: true))
-                                {
-                                    tnk.TankRotation -= MathHelper.PiOver2;
-                                    tnk.TurretRotation -= MathHelper.PiOver2;
-                                    if (tnk is AITank ai)
-                                    {
-                                        ai.TargetTankRotation += MathHelper.PiOver2;
-
-                                        if (ai.TargetTankRotation >= MathHelper.Tau)
-                                            ai.TargetTankRotation -= MathHelper.Tau;
-
-                                        //if (ai.TargetTankRotation >= MathHelper.Tau)
-                                            //ai.TargetTankRotation -= MathHelper.Tau;
-                                        //if (ai.TargetTankRotation <= 0)
-                                            //ai.TargetTankRotation += MathHelper.Tau;
-                                    }
-                                    if (tnk.TankRotation <= -MathHelper.Tau)
-                                        tnk.TankRotation += MathHelper.Tau;
-
-                                    if (tnk.TurretRotation <= -MathHelper.Tau)
-                                        tnk.TurretRotation += MathHelper.Tau;
-                                }
-
-                                tnk.IsHoveredByMouse = true;
-                            }
-                            else
-                                tnk.IsHoveredByMouse = false;
-                        }
+                foreach (var tnk in GameHandler.AllTanks) {
+                    if (tnk is null || tnk.Dead) continue;
+                    if (!RayUtils.GetMouseToWorldRay().Intersects(tnk.Worldbox).HasValue) {
+                        tnk.IsHoveredByMouse = false;
+                        continue;
                     }
+                    HoveringAnyTank = true;
+                    if (InputUtils.KeyJustPressed(Keys.K)) {
+                        // var tnk = WPTR.AllAITanks.FirstOrDefault(tank => tank is not null && !tank.Dead && tank.tier == AITank.GetHighestTierActive());
+
+                        if (Array.IndexOf(GameHandler.AllTanks, tnk) > -1)
+                            tnk?.Destroy(new TankHurtContext_Other()); // hmmm
+                    }
+
+                    if (InputUtils.CanDetectClick(rightClick: true)) {
+                        tnk.TankRotation -= MathHelper.PiOver2;
+                        tnk.TurretRotation -= MathHelper.PiOver2;
+                        if (tnk is AITank ai) {
+                            ai.TargetTankRotation += MathHelper.PiOver2;
+
+                            if (ai.TargetTankRotation >= MathHelper.Tau)
+                                ai.TargetTankRotation -= MathHelper.Tau;
+
+                            //if (ai.TargetTankRotation >= MathHelper.Tau)
+                            //ai.TargetTankRotation -= MathHelper.Tau;
+                            //if (ai.TargetTankRotation <= 0)
+                            //ai.TargetTankRotation += MathHelper.Tau;
+                        }
+
+                        if (tnk.TankRotation <= -MathHelper.Tau)
+                            tnk.TankRotation += MathHelper.Tau;
+
+                        if (tnk.TurretRotation <= -MathHelper.Tau)
+                            tnk.TurretRotation += MathHelper.Tau;
+                    }
+
+                    tnk.IsHoveredByMouse = true;
                 }
             }
 
@@ -900,12 +897,17 @@ namespace TanksRebirth
             if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Down))
                 val -= 0.01f * DeltaTime;
 
-            if (volmode == 0)
-                Settings.MusicVolume += val;
-            if (volmode == 1)
-                Settings.EffectsVolume += val;
-            if (volmode == 2)
-                Settings.AmbientVolume += val;
+            switch (volmode) {
+                case 0:
+                    Settings.MusicVolume += val;
+                    break;
+                case 1:
+                    Settings.EffectsVolume += val;
+                    break;
+                case 2:
+                    Settings.AmbientVolume += val;
+                    break;
+            }
 
             Settings.MusicVolume = MathHelper.Clamp(Settings.MusicVolume, 0, 1);
             Settings.EffectsVolume = MathHelper.Clamp(Settings.EffectsVolume, 0, 1);

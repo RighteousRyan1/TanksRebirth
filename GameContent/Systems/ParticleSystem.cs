@@ -67,7 +67,7 @@ namespace TanksRebirth.GameContent
 
                 spark.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
-                var angles = GeometryUtils.AsEulerAngles(new Quaternion(new Vector3(spark.Roll, spark.Pitch, spark.Yaw), 0f));
+                var angles = GeometryUtils.ToEulerAngles(new Quaternion(new Vector3(spark.Roll, spark.Pitch, spark.Yaw), 0f));
 
                 spark.Roll = angles.Roll;
                 spark.Pitch = angles.Pitch;

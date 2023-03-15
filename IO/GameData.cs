@@ -48,17 +48,12 @@ namespace TanksRebirth.IO
 
         public float ExpLevel; // every whole number is an XP level | 1.000 = XP level 1
 
-        public void Setup()
-        {
-            for (int i = 0; i < TankID.Collection.Count; i++)
-            {
+        public void Setup() {
+            for (int i = 0; i < TankID.Collection.Count; i++) {
                 TankKills.Add(i, 0);
             }
         }
-        public void Serialize()
-        {
-
-
+        public void Serialize() {
             using var writer = new BinaryWriter(File.Open(Path.Combine(Directory, Name), FileMode.OpenOrCreate));
             /* File Serialization Order:
              * Do note: If you edit the game's data, you are scum
@@ -72,41 +67,38 @@ namespace TanksRebirth.IO
              */
 
             // writer.Write(_message);
-            writer.Write(GameDataVersion);
+            writer.Write(GameDataVersion);                      // Write the version of the save file.
+            writer.Write(TotalKills);                           // Total career kills.
+            writer.Write(BulletKills);                          // Kills with bullets
+            writer.Write(BounceKills);                          // Kills with ricochet
+            writer.Write(MineKills);                            // Kills with mines.
+            writer.Write(MissionsCompleted);                    // Total missions completed.
+            writer.Write(CampaignsCompleted);                   // Total campaigns completed.
+            writer.Write(Deaths);                               // Total deaths.
+            writer.Write(Suicides);                             // Total suicides.
+            writer.Write(TimePlayed.TotalSeconds);              // Total time played.
 
-            writer.Write(TotalKills);
-            writer.Write(BulletKills);
-            writer.Write(BounceKills);
-            writer.Write(MineKills);
-            writer.Write(MissionsCompleted);
-            writer.Write(CampaignsCompleted);
-            writer.Write(Deaths);
-            writer.Write(Suicides);
-
-            writer.Write(TimePlayed.TotalMilliseconds);
-
-            for (int i = 0; i < TankKills.Count; i++)
-                writer.Write(TankKills[i]);
+            for (var i = 0; i < TankKills.Count; i++)
+                writer.Write(TankKills[i]);                     // Write the kills for each type of tank.
 
             //VanillaAchievements.Repository.Save(writer);
 
             writer.Write(ExpLevel);
-
         }
-        public void Deserialize()
-        {
+        public void Deserialize() {
             using var reader = new BinaryReader(File.Open(Path.Combine(Directory, Name), FileMode.OpenOrCreate));
 
             // reader.ReadString();
 
-            var vers = reader.ReadByte();
+            var saveFileVersion = reader.ReadByte();
 
-            if (vers != GameDataVersion)
-            {
-                GameHandler.ClientLog.Write($"Loading an outdated {Name}!", LogType.Warn);
+            if (saveFileVersion != GameDataVersion) {
+                GameHandler.ClientLog.Write($"Loading an outdated save file {Name}!", LogType.Warn);
                 ReadOutdatedFile = true;
             }
 
+            // File Size in Bytes (roughly) => (4 * 9) + 8 + (TankID.Collection.Count * 4)
+            
             try {
 
                 TotalKills = reader.ReadUInt32();
@@ -120,7 +112,7 @@ namespace TanksRebirth.IO
 
                 TimePlayed = TimeSpan.FromMilliseconds(reader.ReadDouble());
 
-                for (int i = 0; i < TankKills.Count; i++)
+                for (var i = 0; i < TankKills.Count; i++)
                     TankKills[i] = reader.ReadUInt32();
 
                 //VanillaAchievements.Repository.Load(reader);
@@ -128,7 +120,7 @@ namespace TanksRebirth.IO
                 ExpLevel = reader.ReadSingle();
 
                 GameHandler.Xp = new() { MaxValue = 1f, Value = ExpLevel - MathF.Floor(ExpLevel) };
-            } catch(Exception e) {
+            } catch (Exception e) {
                 TankGame.WriteError(e);
                 GameHandler.ClientLog.Write($"This error was thrown because your save file was out-of-date. For now, delete it and restart. Sorry!", LogType.Info);
             }

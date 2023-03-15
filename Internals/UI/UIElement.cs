@@ -32,7 +32,7 @@ namespace TanksRebirth.Internals.UI
         public Anchor TooltipAnchor;
 
         /// <summary>A list of all <see cref="UIElement"/>s.</summary>
-        public static List<UIElement> AllUIElements { get; internal set; } = new();
+        public static List<UIElement> AllUIElements { get; internal set; } = new(); // Global Mutable state == Evil :(
 
         /// <summary>The parent of this <see cref="UIElement"/>.</summary>
         public UIElement Parent { get; private set; }
@@ -80,8 +80,7 @@ namespace TanksRebirth.Internals.UI
 
         private static UIPanel cunoSucksElement;
 
-        internal UIElement()
-        {
+        internal UIElement() {
             AllUIElements.Add(this);
         }
 
@@ -92,8 +91,7 @@ namespace TanksRebirth.Internals.UI
         /// <param name="y">The y-coordinate of the top left corner of the created <see cref="UIElement"/>.</param>
         /// <param name="width">The width of the created <see cref="UIElement"/>.</param>
         /// <param name="height">The height of the created <see cref="UIElement"/>.</param>
-        public void SetDimensions(float x, float y, float width, float height)
-        {
+        public void SetDimensions(float x, float y, float width, float height) {
             InternalPosition = new Vector2(x, y);
             InternalSize = new Vector2(width, height);
             _doUpdating = false;
@@ -101,10 +99,9 @@ namespace TanksRebirth.Internals.UI
         }
 
         /// <summary>Final elements just... dont work?</summary>
-        internal static void CunoSucks()
-        {
+        internal static void CunoSucks() {
             cunoSucksElement ??= new() { IsVisible = false };
-            cunoSucksElement?.Remove();
+            cunoSucksElement.Remove();
             cunoSucksElement = new();
             cunoSucksElement.SetDimensions(-1000789342, -783218, 0, 0);
         }
@@ -113,8 +110,7 @@ namespace TanksRebirth.Internals.UI
         private Func<Vector2> _updatedSize;
         private bool _doUpdating;
 
-        public void SetDimensions(Func<Vector2> position, Func<Vector2> dimensions)
-        {
+        public void SetDimensions(Func<Vector2> position, Func<Vector2> dimensions) {
             _updatedPos = position;
             _updatedSize = dimensions;
             _doUpdating = true;
@@ -125,22 +121,18 @@ namespace TanksRebirth.Internals.UI
         /// Sets the dimensions of this <see cref="UIElement"/>.
         /// </summary>
         /// <param name="rect">The <see cref="Rectangle"/> dictating the created <see cref="UIElement"/>'s dimensions.</param>
-        public void SetDimensions(Rectangle rect)
-        {
+        public void SetDimensions(Rectangle rect, bool autoRecalculate = true) {
             InternalPosition = new Vector2(rect.X, rect.Y);
             InternalSize = new Vector2(rect.Width, rect.Height);
-            Recalculate();
-            cunoSucksElement = new() { IsVisible = false };
-            cunoSucksElement.Remove();
-            cunoSucksElement = new();
-            cunoSucksElement.SetDimensions(-1000789342, -783218, 0, 0);
+            if (autoRecalculate)
+                Recalculate();
+            CunoSucks();
         }
 
         /// <summary>
         /// Recalculates the position and size of this <see cref="UIElement"/>. Called automatically after <see cref="SetDimensions"/>. Generally does not need to be called.
         /// </summary>
-        public void Recalculate()
-        {
+        public void Recalculate() {
             Position = InternalPosition;
             Size = InternalSize;
         }
@@ -160,45 +152,41 @@ namespace TanksRebirth.Internals.UI
                 {
                     DrawSelf(spriteBatch);
                     DrawChildren(spriteBatch);
+                    return;
                 }
-                else
-                {
-                    DrawChildren(spriteBatch);
-                    DrawSelf(spriteBatch);
-                }
+                DrawChildren(spriteBatch);
+                DrawSelf(spriteBatch);
+
+                return;
+            }
+            // Draw with Scissor.
+            
+            var rastState = new RasterizerState {
+                ScissorTestEnable = true
+            };
+
+            TankGame.Instance.GraphicsDevice.RasterizerState = rastState;
+
+            TankGame.Instance.GraphicsDevice.ScissorRectangle = Scissor.Invoke();
+
+            spriteBatch.Begin(rasterizerState: rastState);
+
+            if (!ReverseDrawOrder) {
+                DrawSelf(spriteBatch);
+                DrawChildren(spriteBatch);
             }
             else
             {
-                var rastState = new RasterizerState
-                {
-                    ScissorTestEnable = true
-                };
-
-                TankGame.Instance.GraphicsDevice.RasterizerState = rastState;
-
-                TankGame.Instance.GraphicsDevice.ScissorRectangle = Scissor.Invoke();
-
-                spriteBatch.Begin(rasterizerState: rastState);
-
-                if (!ReverseDrawOrder)
-                {
-                    DrawSelf(spriteBatch);
-                    DrawChildren(spriteBatch);
-                }
-                else
-                {
-                    DrawChildren(spriteBatch);
-                    DrawSelf(spriteBatch);
-                }
-
-                /*if (Tooltip is not null && Hitbox.Contains(MouseUtils.MousePosition))
-                {
-                    QuickIndicator(spriteBatch, Color.White);
-                }*/
-
-                spriteBatch.End();
-                // draw with schissor
+                DrawChildren(spriteBatch);
+                DrawSelf(spriteBatch);
             }
+
+            /*if (Tooltip is not null && Hitbox.Contains(MouseUtils.MousePosition))
+            {
+                QuickIndicator(spriteBatch, Color.White);
+            }*/
+
+            spriteBatch.End();
         }
         public virtual void DrawTooltips(SpriteBatch spriteBatch)
         {
@@ -206,15 +194,12 @@ namespace TanksRebirth.Internals.UI
                 return;
 
             if (Tooltip is not null && Hitbox.Contains(MouseUtils.MousePosition))
-            {
                 DrawTooltipBox(spriteBatch, Color.White);
-            }
         }
         /// <summary>
         /// Initializes this <see cref="UIElement">.
         /// </summary>
-        public void Initialize()
-        {
+        public void Initialize() {
             if (Initialized)
                 return;
 
@@ -225,10 +210,8 @@ namespace TanksRebirth.Internals.UI
         /// <summary>
         /// Runs directly after <see cref="Initialize"/>. Call the base value if overriding to call <see cref="Initialize"/> for all this <see cref="UIElement"/>'s children.
         /// </summary>
-        public virtual void OnInitialize()
-        {
-            foreach (UIElement child in Children)
-            {
+        public virtual void OnInitialize() {
+            foreach (var child in Children) {
                 child.Initialize();
             }
         }
@@ -245,11 +228,13 @@ namespace TanksRebirth.Internals.UI
         /// <param name="spriteBatch">The <see cref="SpriteBatch"/> being used to draw this <see cref="UIElement"/>'s children with.</param>
         public virtual void DrawChildren(SpriteBatch spriteBatch)
         {
-            foreach (UIElement child in Children) {
+            foreach (var child in Children) {
+                if (child == null) continue; // Null check. Reason: old code had a conditional operator for child.Draw();
+                
                 if (child.HasScissor)
                     spriteBatch.End();
 
-                child?.Draw(spriteBatch);
+                child.Draw(spriteBatch);
 
                 if (child.HasScissor)
                     spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied);
@@ -262,8 +247,7 @@ namespace TanksRebirth.Internals.UI
         /// <param name="predicate">The method used to find the child of this <see cref="UIElement"/>.</param>
         /// <param name="child">The child of the <see cref="UIElement"/>, if found.</param>
         /// <returns><see langword="true"/> if a child was found; otherwise, returns <see langword="false"/>.</returns>
-        public virtual bool GetChildSafely(Func<UIElement, bool> predicate, out UIElement child)
-        {
+        public virtual bool GetChildSafely(Func<UIElement, bool> predicate, out UIElement? child) {
             child = Children.FirstOrDefault(predicate);
             return child != null;
         }
@@ -272,8 +256,7 @@ namespace TanksRebirth.Internals.UI
         /// Adds a child to this <see cref="UIElement"/>.
         /// </summary>
         /// <param name="element">The <see cref="UIElement"/> to add as a child.</param>
-        public virtual void Append(UIElement element)
-        {
+        public virtual void Append(UIElement element) {
             element.Remove();
             element.Parent = this;
             Children.Add(element);
@@ -282,8 +265,7 @@ namespace TanksRebirth.Internals.UI
         /// <summary>
         /// Removes this <see cref="UIElement"/>.
         /// </summary>
-        public virtual void Remove()
-        {
+        public virtual void Remove() {
             Parent?.Children.Remove(this);
             AllUIElements.Remove(this);
             Parent = null;
@@ -293,8 +275,7 @@ namespace TanksRebirth.Internals.UI
         /// Removes a child from this <see cref="UIElement"/>.
         /// </summary>
         /// <param name="child">The <see cref="UIElement"/> to remove.</param>
-        public virtual void Remove(UIElement child)
-        {
+        public virtual void Remove(UIElement child) {
             Children.Remove(child);
             child.Parent = null;
         }
@@ -304,75 +285,67 @@ namespace TanksRebirth.Internals.UI
         /// </summary>
         /// <param name="position">The position to get the <see cref="UIElement"/> at.</param>
         /// <returns>The <see cref="UIElement"/> at the specified position, if one exists; otherwise, returns <see langword="null"/>.</returns>
-        public virtual UIElement GetElementAt(Vector2 position)
-        {
+        public virtual UIElement GetElementAt(Vector2 position) {
             UIElement focusedElement = null;
-            for (int iterator = Children.Count - 1; iterator >= 0; iterator--)
-            {
-                UIElement currentElement = Children[iterator];
-                if (!currentElement.IgnoreMouseInteractions && currentElement.IsVisible && currentElement.Hitbox.Contains(position))
-                {
-                    focusedElement = currentElement;
-                    break;
-                }
+            for (var i = Children.Count - 1; i >= 0; i--) {
+                var currentElement = Children[i];
+                if (currentElement.IgnoreMouseInteractions || 
+                    !currentElement.IsVisible ||
+                    !currentElement.Hitbox.Contains(position)) continue;
+                
+                focusedElement = currentElement;
+                break;
             }
 
             if (focusedElement != null)
-            {
                 return focusedElement.GetElementAt(position);
-            }
 
             if (IgnoreMouseInteractions)
-            {
                 return null;
-            }
 
             return Hitbox.Contains(position) ? this : null;
         }
 
         // TODO: tooltip anchors
-        internal void DrawTooltipBox(SpriteBatch spriteBatch, Color color)
-        {
+        internal void DrawTooltipBox(SpriteBatch spriteBatch, Color color) {
             var font = TankGame.TextFont;
             var scaleFont = font.MeasureString(Tooltip);
             var Hitbox = new Rectangle(MouseUtils.MouseX + 5, MouseUtils.MouseY + 5, (int)(scaleFont.X + 30).ToResolutionX(), (int)(scaleFont.Y + 30).ToResolutionY());
             var texture = UIPanelBackground;
 
-            int border = 12;
+            const int TOOLTIP_BORDER = 12;
 
-            int middleX = Hitbox.X + border;
-            int rightX = Hitbox.Right - border;
+            var middleX = Hitbox.X + TOOLTIP_BORDER;
+            var rightX = Hitbox.Right - TOOLTIP_BORDER;
 
-            int middleY = Hitbox.Y + border;
-            int bottomY = Hitbox.Bottom - border;
+            var middleY = Hitbox.Y + TOOLTIP_BORDER;
+            var bottomY = Hitbox.Bottom - TOOLTIP_BORDER;
 
-            spriteBatch.Draw(texture, new Rectangle(Hitbox.X, Hitbox.Y, border, border), new Rectangle(0, 0, border, border), color);
-            spriteBatch.Draw(texture, new Rectangle(middleX, Hitbox.Y, Hitbox.Width - border * 2, border), new Rectangle(border, 0, texture.Width - border * 2, border), color);
-            spriteBatch.Draw(texture, new Rectangle(rightX, Hitbox.Y, border, border), new Rectangle(texture.Width - border, 0, border, border), color);
+            // hit box (?)
+            spriteBatch.Draw(texture, new Rectangle(Hitbox.X, Hitbox.Y, TOOLTIP_BORDER, TOOLTIP_BORDER), new Rectangle(0, 0, TOOLTIP_BORDER, TOOLTIP_BORDER), color);
+            spriteBatch.Draw(texture, new Rectangle(middleX, Hitbox.Y, Hitbox.Width - TOOLTIP_BORDER * 2, TOOLTIP_BORDER), new Rectangle(TOOLTIP_BORDER, 0, texture.Width - TOOLTIP_BORDER * 2, TOOLTIP_BORDER), color);
+            spriteBatch.Draw(texture, new Rectangle(rightX, Hitbox.Y, TOOLTIP_BORDER, TOOLTIP_BORDER), new Rectangle(texture.Width - TOOLTIP_BORDER, 0, TOOLTIP_BORDER, TOOLTIP_BORDER), color);
 
-            spriteBatch.Draw(texture, new Rectangle(Hitbox.X, middleY, border, Hitbox.Height - border * 2), new Rectangle(0, border, border, texture.Height - border * 2), color);
-            spriteBatch.Draw(texture, new Rectangle(middleX, middleY, Hitbox.Width - border * 2, Hitbox.Height - border * 2), new Rectangle(border, border, texture.Width - border * 2, texture.Height - border * 2), color);
-            spriteBatch.Draw(texture, new Rectangle(rightX, middleY, border, Hitbox.Height - border * 2), new Rectangle(texture.Width - border, border, border, texture.Height - border * 2), color);
+            // Middle (?)
+            spriteBatch.Draw(texture, new Rectangle(Hitbox.X, middleY, TOOLTIP_BORDER, Hitbox.Height - TOOLTIP_BORDER * 2), new Rectangle(0, TOOLTIP_BORDER, TOOLTIP_BORDER, texture.Height - TOOLTIP_BORDER * 2), color);
+            spriteBatch.Draw(texture, new Rectangle(middleX, middleY, Hitbox.Width - TOOLTIP_BORDER * 2, Hitbox.Height - TOOLTIP_BORDER * 2), new Rectangle(TOOLTIP_BORDER, TOOLTIP_BORDER, texture.Width - TOOLTIP_BORDER * 2, texture.Height - TOOLTIP_BORDER * 2), color);
+            spriteBatch.Draw(texture, new Rectangle(rightX, middleY, TOOLTIP_BORDER, Hitbox.Height - TOOLTIP_BORDER * 2), new Rectangle(texture.Width - TOOLTIP_BORDER, TOOLTIP_BORDER, TOOLTIP_BORDER, texture.Height - TOOLTIP_BORDER * 2), color);
 
-            spriteBatch.Draw(texture, new Rectangle(Hitbox.X, bottomY, border, border), new Rectangle(0, texture.Height - border, border, border), color);
-            spriteBatch.Draw(texture, new Rectangle(middleX, bottomY, Hitbox.Width - border * 2, border), new Rectangle(border, texture.Height - border, texture.Width - border * 2, border), color);
-            spriteBatch.Draw(texture, new Rectangle(rightX, bottomY, border, border), new Rectangle(texture.Width - border, texture.Height - border, border, border), color);
+            // Bottom (?)
+            spriteBatch.Draw(texture, new Rectangle(Hitbox.X, bottomY, TOOLTIP_BORDER, TOOLTIP_BORDER), new Rectangle(0, texture.Height - TOOLTIP_BORDER, TOOLTIP_BORDER, TOOLTIP_BORDER), color);
+            spriteBatch.Draw(texture, new Rectangle(middleX, bottomY, Hitbox.Width - TOOLTIP_BORDER * 2, TOOLTIP_BORDER), new Rectangle(TOOLTIP_BORDER, texture.Height - TOOLTIP_BORDER, texture.Width - TOOLTIP_BORDER * 2, TOOLTIP_BORDER), color);
+            spriteBatch.Draw(texture, new Rectangle(rightX, bottomY, TOOLTIP_BORDER, TOOLTIP_BORDER), new Rectangle(texture.Width - TOOLTIP_BORDER, texture.Height - TOOLTIP_BORDER, TOOLTIP_BORDER, TOOLTIP_BORDER), color);
 
             spriteBatch.DrawString(font, Tooltip, Hitbox.Center.ToVector2(), Color.Black, new Vector2(1f).ToResolution(), 0f, scaleFont / 2, 0);
         }
 
-        public static void ResizeAndRelocate()
-        {
-            foreach (var element in AllUIElements.ToList())
-            {
-                if (element != null)
-                {
-                    if (element._doUpdating)
-                    {
-                        element.Position = element.InternalPosition = element._updatedPos.Invoke() + element.Offset.ToResolution();
-                        element.Size = element.InternalSize = element._updatedSize.Invoke();
-                    }
-                }
+        public static void ResizeAndRelocate() {
+            for (var i = 0; i < AllUIElements.Count; i++) {
+                var element = AllUIElements[i];
+                if (element is not { _doUpdating: true }) continue;
+                element.Position = element.InternalPosition =
+                    element._updatedPos.Invoke() + element.Offset.ToResolution();
+                element.Size = element.InternalSize = element._updatedSize.Invoke();
             }
         }
 
@@ -380,57 +353,56 @@ namespace TanksRebirth.Internals.UI
         {
             var focusedElements = GetElementsAt(MouseUtils.MousePosition, true);
 
-            foreach (UIElement el in focusedElements)
-            {
-                if (el is not null)
-                {
-                    el.LeftClick();
-                    el.LeftDown();
-                    el.LeftUp();
+            for (var i = 0; i < focusedElements.Count; i++) {
+                var el = focusedElements[i];
+                if (el is null) continue;
+                el.LeftClick();
+                el.LeftDown();
+                el.LeftUp();
 
-                    el.RightClick();
-                    el.RightDown();
-                    el.RightUp();
+                el.RightClick();
+                el.RightDown();
+                el.RightUp();
 
-                    el.MiddleClick();
-                    el.MiddleDown();
-                    el.MiddleUp();
+                el.MiddleClick();
+                el.MiddleDown();
+                el.MiddleUp();
 
-                    el.MouseOver();
-
-                }
+                el.MouseOver();
             }
 
             ResizeAndRelocate();
 
-            /*var trySlider = GetElementsAt(MouseUtils.MousePosition);
+            var trySlider = GetElementsAt(MouseUtils.MousePosition);
 
-            if (trySlider.Count > 0)
-            {
-                if (trySlider[0] != null)
-                {
-                    UIElement elementWeWant = trySlider[0].GetElementAt(MouseUtils.MousePosition);
-                    //if (elementWeWant is not UIImage)
-                        //return;
-
-                    elementWeWant.LeftClick();
-                    elementWeWant.LeftDown();
-                    elementWeWant.LeftUp();
-
-                    elementWeWant.RightClick();
-                    elementWeWant.RightDown();
-                    elementWeWant.RightUp();
-
-                    elementWeWant.MiddleClick();
-                    elementWeWant.MiddleDown();
-                    elementWeWant.MiddleUp();
-
-                    elementWeWant.MouseOver();
+            if (trySlider.Count <= 0 || trySlider[0] == null) {
+                foreach (var element in AllUIElements) {
+                    if (element.MouseHovering)
+                        element.MouseOut();
                 }
-            }*/
 
-            foreach (UIElement element in AllUIElements)
-            {
+                return;
+            }
+
+            var elementWeWant = trySlider[0].GetElementAt(MouseUtils.MousePosition);
+            if (elementWeWant is not UIImage)
+                return;
+
+            elementWeWant.LeftClick();
+            elementWeWant.LeftDown();
+            elementWeWant.LeftUp();
+
+            elementWeWant.RightClick();
+            elementWeWant.RightDown();
+            elementWeWant.RightUp();
+
+            elementWeWant.MiddleClick();
+            elementWeWant.MiddleDown();
+            elementWeWant.MiddleUp();
+
+            elementWeWant.MouseOver();
+
+            foreach (var element in AllUIElements) {
                 if (element.MouseHovering)
                     element.MouseOut();
             }
