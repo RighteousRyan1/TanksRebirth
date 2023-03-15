@@ -6,10 +6,8 @@ using System.Threading.Tasks;
 
 namespace TanksRebirth.Internals.Common.Utilities;
 
-public static class BitUtils
-{
-    public static int GetInt(byte[] buffer, int offset)
-    {
+public static class BitUtils {
+    public static int GetInt(this byte[] buffer, int offset) {
         if (offset >= buffer.Length)
             return 0;
         if (BitConverter.IsLittleEndian)
