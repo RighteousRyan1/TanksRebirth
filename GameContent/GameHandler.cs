@@ -237,8 +237,7 @@ namespace TanksRebirth.GameContent
                     if (TankMusicSystem.Audio is not null)
                         foreach (var song in TankMusicSystem.Audio)
                             song.Value.Volume = 0;
-            if (LevelEditor.Active)
-                LevelEditor.Update();
+            LevelEditor.Update();
 
             foreach (var expl in Explosion.Explosions)
                 expl?.Update();

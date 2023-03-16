@@ -67,7 +67,7 @@ public class IngamePing {
         _lifeTime += TankGame.DeltaTime;
 
         if (_lifeTime > MaxLifeTime) {
-            //_delete = true;
+            _delete = true;
         }
     }
 

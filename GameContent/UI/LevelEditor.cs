@@ -1073,7 +1073,7 @@ namespace TanksRebirth.GameContent.UI
             else if (Editing && !Active && _cachedMission != default && GameProperties.InMission)
                 if (GameHandler.NothingCanHappenAnymore(_cachedMission, out bool victory))
                     QueueEditorReEntry(120f);
-            if (ReturnToEditor != null)
+            // if (ReturnToEditor != null)
                 ReturnToEditor.IsVisible = Editing && !Active && !MainMenu.Active;
         }
 

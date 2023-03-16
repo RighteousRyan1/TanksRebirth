@@ -66,8 +66,20 @@ public readonly struct WiiMap
     public static void SaveToTanksBinFile(string fileLocation, bool largeMap = true) {
 
         // Validate map before allocating memory and wasting resources in saving something we just can not save correctly.
-        if (!ValidateWiiMap()) {
-            LevelEditor.Alert("There are, or more than 8 enemy tanks,\nor more than two players in the map.\nConsider using the .mission format instead of .bin.", 5000f);
+        var validation = ValidateWiiMap();
+        if (validation == WiiMapValidationResult.FailureTooManyPlayers) {
+            LevelEditor.Alert("Too many players for Tanks! file format.", 240f);
+            LevelEditor.GUICategory = LevelEditor.UICategory.LevelEditor;
+            return;
+        }
+        else if (validation == WiiMapValidationResult.FailureTooManyAI) {
+            LevelEditor.Alert("Too many AI for Tanks! file format.", 240f);
+            LevelEditor.GUICategory = LevelEditor.UICategory.LevelEditor;
+            return;
+        }
+        else if (validation == (WiiMapValidationResult.FailureTooManyPlayers | WiiMapValidationResult.FailureTooManyAI)) {
+            LevelEditor.Alert("Too many AI AND players for Tanks! file format.", 240f);
+            LevelEditor.GUICategory = LevelEditor.UICategory.LevelEditor;
             return;
         }
         
@@ -126,25 +138,29 @@ public readonly struct WiiMap
         File.WriteAllBytes(fileLocation, rawData);
     }
 
-    private static bool ValidateWiiMap() {
+    private static WiiMapValidationResult ValidateWiiMap() {
+        var result = WiiMapValidationResult.Success;
         var tankAiCount = 0;
         var playerCount = 0;
         for (var i = 0; i < PlacementSquare.Placements.Count; i++) {
             var pl = PlacementSquare.Placements[i];
-
-            if (tankAiCount > 8 || playerCount > 2) return false;
-            
-            switch (pl.TankId) {
-                case PLAYER_TANK_ID:
+            if (pl.TankId > -1) {
+                var tnk = GameHandler.AllTanks[pl.TankId];
+                if (tnk is PlayerTank)
                     playerCount++;
-                    break;
-                case ENEMY_TANK_ID:
+                else if (tnk is AITank)
                     tankAiCount++;
-                    break;
             }
         }
+        if (tankAiCount > 8) result = WiiMapValidationResult.FailureTooManyAI;
+        if (playerCount > 2) {
+            if (result == WiiMapValidationResult.Success)
+                result = WiiMapValidationResult.FailureTooManyPlayers;
+            else
+                result |= WiiMapValidationResult.FailureTooManyPlayers;
+        }
 
-        return true;
+        return result;
     }
 
     public static void ApplyToGameWorld(WiiMap map) {
@@ -243,4 +259,10 @@ public readonly struct WiiMap
         // unfortunately we cannot do much more than this, since enemy spawns are handled in the parameter file.
         // ...but we can find where they would spawn. go ahead and put a brown tank on the blue team there.
     }
+}
+[Flags]
+public enum WiiMapValidationResult {
+    Success, 
+    FailureTooManyAI, 
+    FailureTooManyPlayers
 }
