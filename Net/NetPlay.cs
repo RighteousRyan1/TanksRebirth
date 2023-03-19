@@ -235,6 +235,7 @@ namespace TanksRebirth.Net
 
                     GameProperties.LoadedCampaign.LoadMission(checkpoint); // maybe change to checkpoints eventually.
 
+
                     MainMenu.TransitionToGame();
 
                     break;
@@ -304,7 +305,7 @@ namespace TanksRebirth.Net
 
                     // GameHandler.AllTanks[shellOwner].Shoot(true);
                     var shell = new Shell(shellPos, shellVel, shellType, GameHandler.AllTanks[shellOwner], ricochets: shellRicochets);
-                    GameHandler.AllTanks[shellOwner].DoShootParticles(shell.Position);
+                    GameHandler.AllTanks[shellOwner]?.DoShootParticles(shell.Position);
 
                     // ChatSystem.SendMessage($"Pos: {shell.Position} | Vel: {shell.Velocity}", Color.White);
                     break;
@@ -322,9 +323,8 @@ namespace TanksRebirth.Net
                     // if this solution fails, simply change param 2 (wasConfirmed) to true
                     var success = MainMenu.PrepareGameplay(campName, false, true); // second param to false when doing a check
                     Client.SendCampaignStatus(campName, CurrentClient.Id, success); // if this player doesn't own said campaign, cancel the operation.
-                    if (success) {
+                    if (success)
                         MainMenu.PrepareGameplay(campName, true, true);
-                    }
                     break;
                 case PacketID.Cleanup:
                     GameHandler.CleanupScene();
