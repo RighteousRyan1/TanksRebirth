@@ -57,7 +57,7 @@ namespace TanksRebirth.GameContent
 
         public float RotationSpeed;
 
-        public Explosion(Vector2 pos, float scaleMax, Tank owner = null, float rotationSpeed = 1f)
+        public Explosion(Vector2 pos, float scaleMax, Tank owner = null, float rotationSpeed = 1f, float soundPitch = -0.3f)
         {
             RotationSpeed = rotationSpeed;
             Position = pos;
@@ -71,8 +71,8 @@ namespace TanksRebirth.GameContent
 
             var destroysound = "Assets/sounds/tnk_destroy.ogg";
 
-            SoundPlayer.PlaySoundInstance(destroysound, SoundContext.Effect, 0.4f, 0f, gameplaySound: true);
-            SoundPlayer.PlaySoundInstance(destroysound, SoundContext.Effect, 0.4f, 0f, -0.2f, gameplaySound: true);
+            SoundPlayer.PlaySoundInstance(destroysound, SoundContext.Effect, 1f, 0f, soundPitch, gameplaySound: true);
+            // SoundPlayer.PlaySoundInstance(destroysound, SoundContext.Effect, 0.4f, 0f, -0.2f, gameplaySound: true);
 
             _id = index;
 
