@@ -6,6 +6,7 @@ namespace TanksRebirth.Internals.Common.Utilities;
 
 public static class ColorUtils
 {
+    public static Color DiscoPartyColor => HsvToRgb(TankGame.UpdateCount % 255 / 255f * 360, 1, 1);
     public static Color HsvToRgb(double h, double S, double V)
     {
         Color c = new();

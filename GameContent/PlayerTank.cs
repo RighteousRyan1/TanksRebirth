@@ -20,6 +20,7 @@ using FontStashSharp;
 using TanksRebirth.GameContent.Properties;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.GameContent.ID;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace TanksRebirth.GameContent
 {
@@ -608,6 +609,21 @@ namespace TanksRebirth.GameContent
         {
             if (Dead)
                 return;
+            if (NetPlay.IsClientMatched(PlayerId)) {
+                var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/bullet_ui");
+                var scale = 0.5f; // the graphic gets smaller for each availiable shell.
+                for (int i = 0; i < Properties.ShellLimit; i++) {
+                    var scalar = 0.95f + (i * 0.001f); //changetankproperty ShellLimit 
+                    scalar = MathHelper.Clamp(scalar, 0f, 0.99f);
+                    scale *= scalar;
+                }
+                var realSize = (tex.Size() * scale).ToResolution();
+                for (int i = 1; i <= Properties.ShellLimit; i++) {
+                    var colorToUse = i > OwnedShellCount ? ColorUtils.DiscoPartyColor : Color.DarkGray;
+                    var position = new Vector2(WindowUtils.WindowWidth - realSize.X, realSize.Y + 40.ToResolutionY());
+                    TankGame.SpriteRenderer.Draw(tex, position + new Vector2(0, i * (realSize.Y + (scale * 20).ToResolutionY())), null, colorToUse, 0f, new Vector2(tex.Size().X, 0), new Vector2(scale).ToResolution(), default, default);
+                }
+            }
 
             bool needClarification = GameProperties.ShouldMissionsProgress && !GameProperties.InMission && IsIngame && !IntermissionSystem.IsAwaitingNewMission;
 

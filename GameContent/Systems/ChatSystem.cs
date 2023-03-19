@@ -81,7 +81,14 @@ public sealed record ChatSystem {
                         if (Server.serverNetManager is not null)
                             Client.SendCommandUsage(message);
                     }
-                    value.ActionToPerform?.Invoke(args);
+                    if (value.RequireCheats) {
+                        if (CommandGlobals.AreCheatsEnabled)
+                            value.ActionToPerform?.Invoke(args);
+                        else
+                            SendMessage("In order to use this command, cheats must be True.", Color.Red, "CMD");
+                    }
+                    else
+                        value.ActionToPerform?.Invoke(args);
                     return;
                 }
                 catch {

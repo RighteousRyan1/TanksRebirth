@@ -127,8 +127,6 @@ namespace TanksRebirth.GameContent.Systems
                 {
                     var name = Client.IsConnected() ? Server.ConnectedClients[i].Name : string.Empty;
 
-                    //var name = "name" + i;
-
                     if (GameProperties.LoadedCampaign.CurrentMissionId == 0)
                         DrawShadowedString(TankGame.TextFontLarge, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 295.ToResolutionY()), Vector2.One, $"{TankGame.GameLanguage.Campaign}: \"{GameProperties.LoadedCampaign.MetaData.Name}\"", BackgroundColor, new Vector2(0.4f).ToResolution(), Alpha);
 
@@ -138,7 +136,7 @@ namespace TanksRebirth.GameContent.Systems
                     DrawShadowedString(TankGame.TextFontLarge, pos + new Vector2(75, -25).ToResolution(), Vector2.One, lifeText, BackgroundColor, Vector2.One.ToResolution(), Alpha, TankGame.TextFontLarge.MeasureString(lifeText) / 2);
 
                     DrawShadowedString(TankGame.TextFontLarge, pos - new Vector2(0, 75).ToResolution(), Vector2.One, name, PlayerID.PlayerTankColors[i].ToColor(), 
-                        new Vector2(0.5f).ToResolution(), Alpha, TankGame.TextFontLarge.MeasureString(name) / 2);
+                        new Vector2(0.3f).ToResolution(), Alpha, TankGame.TextFontLarge.MeasureString(name) / 2);
                     DrawShadowedTexture(tnk2d, pos - new Vector2(130, 0).ToResolution(), Vector2.One, PlayerID.PlayerTankColors[i].ToColor(), new Vector2(1.25f), Alpha, tnk2d.Size() / 2);
                 }
             }
