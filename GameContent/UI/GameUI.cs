@@ -282,6 +282,26 @@ namespace TanksRebirth.GameContent.UI
                 MainMenu.MenuState = MainMenu.State.PlayList;
             if (MainMenu.MenuState == MainMenu.State.StatsMenu)
                 MainMenu.MenuState = MainMenu.State.PrimaryMenu;
+
+            // We are on the main menu and in the settings menu.
+            if (MainMenu.MenuState == MainMenu.State.Options && MainMenu.Active && VolumeButton.IsVisible != false) {
+                // Set to main menu, we are going back to it after all.
+                MainMenu.MenuState = MainMenu.State.PrimaryMenu;
+                
+                // Hide Options buttons and load MMenu buttons.
+                MainMenu.PlayButton.IsVisible = true;
+                OptionsButton.IsVisible = true;
+                QuitButton.IsVisible = true;
+                
+                ResumeButton.IsVisible = false;
+                RestartButton.IsVisible = false;
+                BackButton.IsVisible = false;
+                ControlsButton.IsVisible = false;
+                GraphicsButton.IsVisible = false;
+                VolumeButton.IsVisible = false;
+            }
+            
+
             if (VolumeButton.IsVisible && !MainMenu.Active)
             {
                 ResumeButton.IsVisible = true;
