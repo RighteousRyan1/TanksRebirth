@@ -284,7 +284,7 @@ namespace TanksRebirth.GameContent.UI
                 MainMenu.MenuState = MainMenu.State.PrimaryMenu;
 
             // We are on the main menu and in the settings menu.
-            if (MainMenu.MenuState == MainMenu.State.Options && MainMenu.Active) {
+            if (MainMenu.MenuState == MainMenu.State.Options && MainMenu.Active && VolumeButton.IsVisible != false) {
                 // Set to main menu, we are going back to it after all.
                 MainMenu.MenuState = MainMenu.State.PrimaryMenu;
                 
