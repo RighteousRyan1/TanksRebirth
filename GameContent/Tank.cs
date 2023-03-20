@@ -490,7 +490,7 @@ public abstract class Tank {
                 Speed = Properties.MaxSpeed;
         }
         if (IsTurning || CurShootStun > 0 || CurMineStun > 0 || Properties.Stationary) {
-            Speed -= Properties.Deceleration * (DecelerationRateDecayTime > 0 ? 0.25f : 1f) * TankGame.DeltaTime;
+            Speed -= Properties.Deceleration/* * (DecelerationRateDecayTime > 0 ? 0.25f : 1f)*/ * TankGame.DeltaTime;
             if (Speed < 0)
                 Speed = 0;
             IsTurning = true;
