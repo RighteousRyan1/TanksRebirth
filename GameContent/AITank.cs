@@ -163,8 +163,19 @@ namespace TanksRebirth.GameContent
             }
             return highest;
         }
-        public static int CountAll()
-            => GameHandler.AllAITanks.Count(tnk => tnk is not null && !tnk.Dead);
+
+        public static int CountAll() {
+            int cnt = 0;
+            Span<AITank> tanks = GameHandler.AllAITanks;
+
+            ref var tanksSearchSpace = ref MemoryMarshal.GetReference(tanks);
+            for (var i = 0; i < tanks.Length; i++) {
+                var tnk = Unsafe.Add(ref tanksSearchSpace, i);
+                if (tnk is not null && !tnk.Dead) cnt++;
+            }
+
+            return cnt;
+        }
         public static int GetTankCountOfType(int tier) {
             int cnt = 0;
             Span<AITank> tanks = GameHandler.AllAITanks;
