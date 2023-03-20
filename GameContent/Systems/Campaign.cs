@@ -4,6 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using TanksRebirth.Enums;
@@ -244,17 +246,24 @@ namespace TanksRebirth.GameContent.Systems
 
             CampaignMetaData properties = CampaignMetaData.Get(path, "_properties.json");
 
-            List<Mission> missions = new();
-
             var files = Directory.GetFiles(path).Where(file => file.EndsWith(".mission")).ToArray();
 
-            foreach (var file in files)
-            {
-                missions.Add(Mission.Load(file, ""));
+            Mission[] missions = new Mission[files.Length];
+
+            Span<Mission> missionSpan = missions;
+            ReadOnlySpan<string> missionFileSpan = files;
+            
+            ref var searchSpaceMissions = ref MemoryMarshal.GetReference(missionSpan);
+            ref var searchSpaceFiles = ref MemoryMarshal.GetReference(missionFileSpan);
+            for (var i = 0; i < files.Length; i++) {
+                ref var mission = ref Unsafe.Add(ref searchSpaceMissions, i); 
+                var file = Unsafe.Add(ref searchSpaceFiles, i);
+                
+                mission = Mission.Load(file, "");
                 // campaignName argument is empty since we are loading from the campaign folder anyway. 
 
-                campaign.CachedMissions = missions.ToArray();
             }
+            campaign.CachedMissions = missions;
 
             if (autoSetLoadedMission)
             {
