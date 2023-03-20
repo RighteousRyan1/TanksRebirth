@@ -830,8 +830,8 @@ namespace TanksRebirth.GameContent.UI
 
             if (!netRecieved && !wasConfirmed) { // when switch, do !wasConfirmed && !netRecieved
                 if (Client.IsConnected()) {
-                    //Client.SendCampaignBytes(camp);
-                    Client.SendCampaignByName(name);
+                    Client.SendCampaignByName(name, MissionCheckpoint);
+                    // Client.SendCampaignBytes(camp);
                     return true;
                 }
             }

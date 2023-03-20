@@ -319,8 +319,10 @@ namespace TanksRebirth.Net
                     break;
                 case PacketID.SendCampaignByName:
                     var campName = reader.GetString();
-
+                    var checkPoint = reader.GetInt();
                     // if this solution fails, simply change param 2 (wasConfirmed) to true
+                    MainMenu.MissionCheckpoint = checkPoint; // Set the given id.
+
                     var success = MainMenu.PrepareGameplay(campName, false, true); // second param to false when doing a check
                     Client.SendCampaignStatus(campName, CurrentClient.Id, success); // if this player doesn't own said campaign, cancel the operation.
                     if (success)
@@ -625,7 +627,9 @@ namespace TanksRebirth.Net
                     break;
                 case PacketID.SendCampaignByName:
                     var campName = reader.GetString();
+                    var campaignId = reader.GetInt();
                     message.Put(campName);
+                    message.Put(campaignId);
 
                     Server.serverNetManager.SendToAll(message, DeliveryMethod.Sequenced, peer);
                     break;
