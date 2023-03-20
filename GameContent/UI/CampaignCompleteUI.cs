@@ -193,8 +193,8 @@ namespace TanksRebirth.GameContent.UI
 
             string[] funFacts = 
             {
-                $"% Shots Hit: {ShotToKillRatio * 100:0}% ({ShellsFired}/{ShellHits})",
-                $"% Mine Effect: {MineToKillRatio * 100:0}% ({MinesLaid}/{MineHits})",
+                $"% Shots Hit: {ShotToKillRatio * 100:0}% ({ShellHits}/{ShellsFired})",
+                $"% Mine Effect: {MineToKillRatio * 100:0}% ({MineHits}/{MinesLaid})",
                 $"% Lives Earned: {LifeRatio * 100:0}% ({LivesRemaining}/{TotalPossibleLives})",
                 $"% Missions Complete: {MissionRatio * 100:0}% ({GameProperties.LoadedCampaign.CurrentMissionId + 1}/{GameProperties.LoadedCampaign.CachedMissions.Length})"
             };
