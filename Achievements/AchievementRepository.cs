@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -31,18 +33,29 @@ namespace TanksRebirth.Achievements
                     _achievements[i].Complete();
         }
 
-        public void UpdateCompletions()
-        {
-            for (int i = 0; i < _achievements.Count; i++)
-            {
-                var achievement = _achievements[i];
-                if (achievement.Requirements.Length > 0)
-                {
-                    if (_achievements[i].Requirements.All(req => req.Invoke()))
-                    {
-                        _achievements[i].Complete();
-                    }
+        public void UpdateCompletions() {
+            Span<IAchievement> achievements = CollectionsMarshal.AsSpan(_achievements);
+
+            ref var achievementSearchSpace = ref MemoryMarshal.GetReference(achievements);
+            for (int i = 0; i < _achievements.Count; i++) {
+                var achievement = Unsafe.Add(ref achievementSearchSpace, i);
+                if (achievement.Requirements.Length <= 0 || achievement.IsComplete) continue; // If the achivement has no requiements or is complete continue;
+                var allOk = true;
+                
+                Span<Func<bool>> achievementsReq = achievement.Requirements;
+
+                ref var achievementReqSearchSpace = ref MemoryMarshal.GetReference(achievementsReq);
+
+                for (var j = 0; j < achievementsReq.Length; j++) {
+                    var req = Unsafe.Add(ref achievementReqSearchSpace, j);
+
+                    if (req == null) continue;
+                    
+                    if (!req.Invoke())
+                        allOk = false;
                 }
+                if (allOk)
+                    achievement.Complete();
             }
         }
     }

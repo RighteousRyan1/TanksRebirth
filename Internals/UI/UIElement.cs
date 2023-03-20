@@ -4,6 +4,8 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using TanksRebirth.Internals.Common.GameUI;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Internals.Core;
@@ -361,18 +363,19 @@ namespace TanksRebirth.Internals.UI
             spriteBatch.DrawString(font, Tooltip, Hitbox.Center.ToVector2(), Color.Black, new Vector2(1f).ToResolution(), 0f, scaleFont / 2, 0);
         }
 
-        public static void ResizeAndRelocate()
-        {
-            foreach (var element in AllUIElements.ToList())
-            {
-                if (element != null)
-                {
-                    if (element._doUpdating)
-                    {
-                        element.Position = element.InternalPosition = element._updatedPos.Invoke() + element.Offset.ToResolution();
-                        element.Size = element.InternalSize = element._updatedSize.Invoke();
-                    }
-                }
+        public static void ResizeAndRelocate() {
+            Span<UIElement> allUiElements = CollectionsMarshal.AsSpan(AllUIElements);
+            ref var uiSearchSpace = ref MemoryMarshal.GetReference(allUiElements);
+            for (var i = 0; i < allUiElements.Length; i++) {
+                var element = Unsafe.Add(ref uiSearchSpace, i);
+                
+                // If it is null and we should not update do not.
+                if (element == null) continue;
+                if (!element._doUpdating) continue;
+                
+                element.Position = element.InternalPosition =
+                    element._updatedPos.Invoke() + element.Offset.ToResolution();
+                element.Size = element.InternalSize = element._updatedSize.Invoke();
             }
         }
 

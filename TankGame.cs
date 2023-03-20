@@ -984,15 +984,15 @@ namespace TanksRebirth
 
                     DebugUtils.DrawDebugString(SpriteRenderer, $"{tier}: {count}", new(8, WindowUtils.WindowHeight * 0.05f + (14f * (i + 1))), 2);
                 }
-
-                DebugUtils.DrawDebugString(SpriteRenderer, $"Lives / StartingLives: {PlayerTank.Lives} / {PlayerTank.StartingLives}" +
-                    $"\nKillCount: {PlayerTank.KillCount}" +
-                    $"\n\nSaveable Game Data:" +
-                    $"\nTotal / Bullet / Mine / Bounce Kills: {GameData.TotalKills} / {GameData.BulletKills} / {GameData.MineKills} / {GameData.BounceKills}" +
-                    $"\nTotal Deaths: {GameData.Deaths}" +
-                    $"\nTotal Suicides: {GameData.Suicides}" +
-                    $"\nMissions Completed: {GameData.MissionsCompleted}" +
-                    $"\nExp Level / DecayMultiplier: {GameData.ExpLevel} / {GameData.UniversalExpMultiplier}", new(8, WindowUtils.WindowHeight * 0.4f), 2);
+                if (DebugUtils.DebuggingEnabled)
+                    DebugUtils.DrawDebugString(SpriteRenderer, $"Lives / StartingLives: {PlayerTank.Lives} / {PlayerTank.StartingLives}" +
+                                                               $"\nKillCount: {PlayerTank.KillCount}" +
+                                                               $"\n\nSaveable Game Data:" +
+                                                               $"\nTotal / Bullet / Mine / Bounce Kills: {GameData.TotalKills} / {GameData.BulletKills} / {GameData.MineKills} / {GameData.BounceKills}" +
+                                                               $"\nTotal Deaths: {GameData.Deaths}" +
+                                                               $"\nTotal Suicides: {GameData.Suicides}" +
+                                                               $"\nMissions Completed: {GameData.MissionsCompleted}" +
+                                                               $"\nExp Level / DecayMultiplier: {GameData.ExpLevel} / {GameData.UniversalExpMultiplier}", new(8, WindowUtils.WindowHeight * 0.4f), 2);
 
                 if (SpeedrunMode)
                 {
@@ -1036,8 +1036,9 @@ namespace TanksRebirth
                 for (int i = 0; i < VanillaAchievements.Repository.GetAchievements().Count; i++)
                 {
                     var achievement = VanillaAchievements.Repository.GetAchievements()[i];
-                    DebugUtils.DrawDebugString(SpriteRenderer, $"{achievement.Name}: {(achievement.IsComplete ? "Complete" : "Incomplete")}",
-                        new Vector2(8, 24 + (i * 20)), level: DebugUtils.Id.AchievementData, centered: false);
+                    if (DebugUtils.DebuggingEnabled)
+                        DebugUtils.DrawDebugString(SpriteRenderer, $"{achievement.Name}: {(achievement.IsComplete ? "Complete" : "Incomplete")}",
+                            new Vector2(8, 24 + (i * 20)), level: DebugUtils.Id.AchievementData, centered: false);
                 }
 
                 #region TankInfo
@@ -1048,8 +1049,9 @@ namespace TanksRebirth
 
                 DebugUtils.DrawDebugString(SpriteRenderer, $"HighestTier: {AITank.GetHighestTierActive()}", new(10, WindowUtils.WindowHeight * 0.26f), 1);
                 // DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"CurSong: {(Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f) != null ? Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f).Name : "N/A")}", new(10, WindowUtils.WindowHeight - 100), 1);
-                for (int i = 0; i < TankID.Collection.Count; i++)
-                    DebugUtils.DrawDebugString(SpriteRenderer, $"{TankID.Collection.GetKey(i)}: {AITank.GetTankCountOfType(i)}", new(10, WindowUtils.WindowHeight * 0.3f + (i * 20)), 1);
+                if (DebugUtils.DebuggingEnabled)
+                    for (int i = 0; i < TankID.Collection.Count; i++)
+                        DebugUtils.DrawDebugString(SpriteRenderer, $"{TankID.Collection.GetKey(i)}: {AITank.GetTankCountOfType(i)}", new(10, WindowUtils.WindowHeight * 0.3f + (i * 20)), 1);
 
                 GameHandler.tankToSpawnType = MathHelper.Clamp(GameHandler.tankToSpawnType, 2, TankID.Collection.Count - 1);
                 GameHandler.tankToSpawnTeam = MathHelper.Clamp(GameHandler.tankToSpawnTeam, 0, TeamID.Collection.Count - 1);
