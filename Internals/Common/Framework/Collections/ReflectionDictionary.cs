@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -49,19 +51,26 @@ namespace TanksRebirth.Internals.Common.Framework.Collections
         /// <summary>Attempts to retrieve the value of the given key. If it doesn't exist, returns the default value.</summary>
         /// <param name="key">The key of which to grab the value from.</param>
         /// <returns>The corresponding value.</returns>
-        public TValue GetValue(string key)
-        {
-            if (ContainsKey(key))
-                return _dictionary[key];
-            return default;
+        public TValue GetValue(string key) {
+            // Simply try getting the value, if it fails, return default.
+            return _dictionary.TryGetValue(key, out var value) ? value : default;
         }
         /// <summary>Attempts to retrieve the key of the given value. If it doesn't exist, returns the default value.</summary>
         /// <param name="value">The value of which to grab the key from.</param>
         /// <returns>The corresponding key.</returns>
-        public string GetKey(TValue value)
-        {
-            if (ContainsValue(value))
-                return _dictionary.FirstOrDefault(x => x.Value.Equals(value)).Key;
+        public string GetKey(TValue value) {
+            // We still need to iterate through the whole Dictionary anyways... 
+            Span<KeyValuePair<string, TValue>> dictSpan = _dictionary.ToArray();
+
+            ref var searchSpace = ref MemoryMarshal.GetReference(dictSpan);
+
+            for (var i = 0; i < dictSpan.Length; i++) {
+                var keyValPair = Unsafe.Add(ref searchSpace, i);
+
+                if (keyValPair.Value.Equals(value)) // Can not optimize this to avoid Boxing smh.
+                    return keyValPair.Key;
+            }
+            
             return default;
         }
 
