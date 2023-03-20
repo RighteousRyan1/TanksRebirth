@@ -1,6 +1,8 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace TanksRebirth.Internals.Common.Utilities;
 
@@ -111,8 +113,12 @@ public static class ColorUtils
         var buffer =  new Color[texture.Width * texture.Height];
         texture.GetData(buffer);
 
-        for (int i = 0; i < buffer.Length; i++)
-            buffer[i] = Color.FromNonPremultiplied(buffer[i].R, buffer[i].G, buffer[i].B, buffer[i].A);
+        Span<Color> bufSpan = buffer;
+        ref var searchSpaceBuf = ref MemoryMarshal.GetReference(bufSpan);
+        for (int i = 0; i < buffer.Length; i++) {
+            ref var buf = ref Unsafe.Add(ref searchSpaceBuf, i);
+            buf = Color.FromNonPremultiplied(buf.R, buf.G, buf.B, buf.A);
+        }
         texture.SetData(buffer);
     }
     public static Color ToColor(this Vector3 vec) => new((int)Math.Round(vec.X * 255), (int)Math.Round(vec.Y * 255), (int)Math.Round(vec.Z * 255));
