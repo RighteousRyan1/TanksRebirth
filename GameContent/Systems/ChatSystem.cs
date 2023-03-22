@@ -67,12 +67,14 @@ public sealed record ChatSystem {
             if (index > -1) {
                 try {
                     var value = CommandGlobals.Commands.ElementAt(index).Value;
-                    var args = cmdSplit[1..];
+
+                    // if the length is equal to zero, the user has provided no arguments.
+                    var args = cmdSplit.Length == 0 ? new string[cmdSplit.Length] : cmdSplit[1..];
+
                     /*if (args.Length == 0) {
                         SendMessage("Invalid command syntax! Parameter needed.", Color.Red);
                         return null;
                     }*/
-
                     if (value.NetSync && Client.IsConnected()) {
                         if (sender != "cmd_sync" && Server.serverNetManager is null) {
                             SendMessage("You cannot use this command as you are not the host of the server.", Color.Red);
@@ -85,7 +87,7 @@ public sealed record ChatSystem {
                         if (CommandGlobals.AreCheatsEnabled)
                             value.ActionToPerform?.Invoke(args);
                         else
-                            SendMessage("In order to use this command, cheats must be True.", Color.Red, "CMD");
+                            SendMessage("In order to use this command, cheats must be enabled.", Color.Red, "CMD");
                     }
                     else
                         value.ActionToPerform?.Invoke(args);
