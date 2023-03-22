@@ -3,6 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using TanksRebirth.GameContent.UI;
@@ -11,11 +14,13 @@ using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Localization;
 using TanksRebirth.Net;
 using Microsoft.Xna.Framework.Input;
+using TanksRebirth.Internals;
 
 namespace TanksRebirth.GameContent.Systems.CommandsSystem;
 #pragma warning disable
 public static class CommandGlobals {
 
+    private static PropertyInfo[] _playerPropertyInfoCache = null; // Cached PropertyInfo[] for the PlayerTank class. Used in changetankproperty
     public static bool AreCheatsEnabled;
 
     /// <summary>The expected prefix to prepend before writing down a command.</summary>
@@ -108,28 +113,58 @@ public static class CommandGlobals {
                 ChatSystem.SendMessage("Cheats are now " + (AreCheatsEnabled ? "enabled" : "disabled" + ".") + ".", AreCheatsEnabled ? Color.Green : Color.Red);
         }),
         [new CommandInput(name: "changetankproperty", description: "Changes a property parameter of your tank.")] = new CommandOutput(netSync: false, true, (args) => {
-                var tnk = GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()];
-                if (tnk != null) {
-                    var tnkprops = tnk.Properties.GetType()
-                    .GetProperties();
+                PlayerTank? playerTank = null;
+                if (NetPlay.GetMyClientId() <= GameHandler.AllPlayerTanks.Length)
+                    playerTank = GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()];
 
-                    var idxFind = Array.FindIndex(tnkprops, prop => prop.Name == args[0]);
+                if (playerTank == null) { // The playerTank was out of range... Somehow...
+                    GameHandler.ClientLog.Write(
+                        $"\'changetankproperty\' command failed! The tank identifier was out of the range of the array! The tank identifier is {NetPlay.GetMyClientId()}, while the length of the list was {GameHandler.AllPlayerTanks.Length}", 
+                        LogType.Error,
+                        false);
+                    return;
+                }
+                // The class is not likely going to change dynamically, just set the props once.
+                _playerPropertyInfoCache ??= playerTank.Properties.GetType().GetProperties();
 
-                    if (idxFind > -1) {
-                        try {
-                            var oldValue = tnkprops[idxFind].GetValue(tnk.Properties);
+                var tankProperty = args[0];
+                var newValueOfProperty = args[1];
+                var idxFind = -1;
+                
+                { // Use diff scope to not pollute outer scope.
+                    ref var searchSpace = ref MemoryMarshal.GetArrayDataReference(_playerPropertyInfoCache);
+                    for (int i = 0; i < _playerPropertyInfoCache.Length; i++) {
+                        var currProp = Unsafe.Add(ref searchSpace,i);
+                        if (currProp.Name != tankProperty) continue;
+                        idxFind = i;
+                        break;
+                    }
+                }
+                
+                if (idxFind > -1) {
+                    try {
+                        var oldValue = _playerPropertyInfoCache[idxFind].GetValue(playerTank.Properties);
 
-                            if (oldValue is int)
-                                tnkprops[idxFind].SetValue(tnk.Properties, int.Parse(args[1]));
-                            if (oldValue is bool)
-                                tnkprops[idxFind].SetValue(tnk.Properties, bool.Parse(args[1]));
-                            if (oldValue is float)
-                                tnkprops[idxFind].SetValue(tnk.Properties, float.Parse(args[1]));
-                            ChatSystem.SendMessage($"Modified property '{args[0]}' from {oldValue} to {args[1]}", Color.Green);
+                        switch (oldValue) {
+                            case int:
+                                _playerPropertyInfoCache[idxFind].SetValue(playerTank.Properties, int.Parse(newValueOfProperty));
+                                break;
+                            case uint:
+                                _playerPropertyInfoCache[idxFind].SetValue(playerTank.Properties, uint.Parse(newValueOfProperty));
+                                break;
+                            case bool:
+                                _playerPropertyInfoCache[idxFind].SetValue(playerTank.Properties, bool.Parse(newValueOfProperty));
+                                break;
+                            case float:
+                                _playerPropertyInfoCache[idxFind].SetValue(playerTank.Properties, float.Parse(newValueOfProperty));
+                                break;
                         }
-                        catch {
-                            ChatSystem.SendMessage($"Property '{args[0]}' is not asssignable from the given argument.", Color.Red);
-                        }
+                        
+                        ChatSystem.SendMessage($"Modified property '{args[0]}' from {oldValue} to {args[1]}", Color.Green);
+                    }
+                    catch (TargetInvocationException targetInvex){
+                        ChatSystem.SendMessage($"Property '{args[0]}' is not asssignable from the given argument.", Color.Red);
+                        GameHandler.ClientLog.Write(targetInvex.ToString(), LogType.Error, false);
                     }
                 }
         })
