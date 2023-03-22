@@ -367,7 +367,7 @@ namespace TanksRebirth.Internals.UI
             Span<UIElement> allUiElements = CollectionsMarshal.AsSpan(AllUIElements);
             ref var uiSearchSpace = ref MemoryMarshal.GetReference(allUiElements);
             for (var i = 0; i < allUiElements.Length; i++) {
-                var element = Unsafe.Add(ref uiSearchSpace, i);
+                ref var element = ref Unsafe.Add(ref uiSearchSpace, i);
                 
                 // If it is null and we should not update do not.
                 if (element == null) continue;
