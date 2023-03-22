@@ -69,12 +69,13 @@ public sealed record ChatSystem {
                     var value = CommandGlobals.Commands.ElementAt(index).Value;
 
                     // if the length is equal to zero, the user has provided no arguments.
-                    var args = cmdSplit.Length == 0 ? new string[cmdSplit.Length] : cmdSplit[1..];
+                    var args = cmdSplit.Length == 0 ? Array.Empty<string>() : cmdSplit[1..];
 
-                    /*if (args.Length == 0) {
-                        SendMessage("Invalid command syntax! Parameter needed.", Color.Red);
-                        return null;
-                    }*/
+                    if (args.Length == 0 && !cmdSplit[0].Contains("help")) {
+                        SendMessage("Invalid command syntax! Arguments missing.", Color.Red);
+                        return;
+                    }
+                    
                     if (value.NetSync && Client.IsConnected()) {
                         if (sender != "cmd_sync" && Server.serverNetManager is null) {
                             SendMessage("You cannot use this command as you are not the host of the server.", Color.Red);
