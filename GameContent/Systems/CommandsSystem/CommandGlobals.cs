@@ -127,6 +127,11 @@ public static class CommandGlobals {
                 // The class is not likely going to change dynamically, just set the props once.
                 _playerPropertyInfoCache ??= playerTank.Properties.GetType().GetProperties();
 
+                if (args.Length != 2) {
+                    ChatSystem.SendMessage("Usage: /changetankproperty <property name> <new property value>", Color.Red);
+                    return;
+                }
+
                 var tankProperty = args[0];
                 var newValueOfProperty = args[1];
                 var idxFind = -1;
@@ -140,33 +145,36 @@ public static class CommandGlobals {
                         break;
                     }
                 }
-                
-                if (idxFind > -1) {
-                    try {
-                        var oldValue = _playerPropertyInfoCache[idxFind].GetValue(playerTank.Properties);
 
-                        switch (oldValue) {
-                            case int:
-                                _playerPropertyInfoCache[idxFind].SetValue(playerTank.Properties, int.Parse(newValueOfProperty));
-                                break;
-                            case uint:
-                                _playerPropertyInfoCache[idxFind].SetValue(playerTank.Properties, uint.Parse(newValueOfProperty));
-                                break;
-                            case bool:
-                                _playerPropertyInfoCache[idxFind].SetValue(playerTank.Properties, bool.Parse(newValueOfProperty));
-                                break;
-                            case float:
-                                _playerPropertyInfoCache[idxFind].SetValue(playerTank.Properties, float.Parse(newValueOfProperty));
-                                break;
-                        }
-                        
-                        ChatSystem.SendMessage($"Modified property '{args[0]}' from {oldValue} to {args[1]}", Color.Green);
-                    }
-                    catch (TargetInvocationException targetInvex){
-                        ChatSystem.SendMessage($"Property '{args[0]}' is not asssignable from the given argument.", Color.Red);
-                        GameHandler.ClientLog.Write(targetInvex.ToString(), LogType.Error, false);
-                    }
+                if (idxFind == -1) {
+                    ChatSystem.SendMessage($"No such field as \'{tankProperty}\' in the player tank.", Color.Maroon);
+                    return;
                 }
-        })
+                
+                try {
+                    var oldValue = _playerPropertyInfoCache[idxFind].GetValue(playerTank.Properties);
+
+                    switch (oldValue) {
+                        case int:
+                            _playerPropertyInfoCache[idxFind].SetValue(playerTank.Properties, int.Parse(newValueOfProperty));
+                            break;
+                        case uint:
+                            _playerPropertyInfoCache[idxFind].SetValue(playerTank.Properties, uint.Parse(newValueOfProperty));
+                            break;
+                        case bool:
+                            _playerPropertyInfoCache[idxFind].SetValue(playerTank.Properties, bool.Parse(newValueOfProperty));
+                            break;
+                        case float:
+                            _playerPropertyInfoCache[idxFind].SetValue(playerTank.Properties, float.Parse(newValueOfProperty));
+                            break;
+                    }
+                        
+                    ChatSystem.SendMessage($"Modified property '{args[0]}' from {oldValue} to {args[1]}", Color.Green);
+                }
+                catch (TargetInvocationException targetInvex){
+                    ChatSystem.SendMessage($"Property '{args[0]}' is not asssignable from the given argument.", Color.Red);
+                    GameHandler.ClientLog.Write(targetInvex.ToString(), LogType.Error, false);
+                }
+            })
     };
 }
