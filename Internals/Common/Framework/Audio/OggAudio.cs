@@ -95,9 +95,7 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
             ref var searchSpace = ref MemoryMarshal.GetReference(audioData);
             
             // The following converts a Short into a byte in a convoluted way, enjoyyyyy.
-            for (var i = 0; i < audioShort.Length; i++) {
-                if (i * 2 >= audioData.Length)
-                    break;
+            for (var i = 0; i < audioShort.Length && i * 2 <= audioData.Length; i++) {
 
                 ref var currentShort = ref Unsafe.Add(ref shortSearchSpace, i);
                 ref var currentDuped = ref Unsafe.Add(ref searchSpace, i * 2);
