@@ -13,17 +13,16 @@ using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.IO
 {
-    public class GameData : IFileSerializable
-    {
-        public const byte GameDataVersion = 0;
+    public class GameData : IFileSerializable {
+        private const byte CURRENT_GAME_DATA_VERSION = 0;
 
-        public bool ReadOutdatedFile;
+        public bool ReadingOutdatedFile;
 
         public string Directory { get; } = TankGame.SaveDirectory;
         public string Name { get; } = "GameData.dat";
 
-        public const float DecayPerLevel = 1.01f;
-        public static float UniversalExpMultiplier { get; internal set; }
+        public const float DECAY_PER_LEVEL = 1.01f;
+        public static float UniversalExpMultiplier { get; internal set; } = 1f;
 
         private static byte[] _message = IOUtils.ToAsciiBytes("If you ever choose to modify this file manually, just know you are making the game unfun for yourself."); // hmm...
 
@@ -48,17 +47,12 @@ namespace TanksRebirth.IO
 
         public float ExpLevel; // every whole number is an XP level | 1.000 = XP level 1
 
-        public void Setup()
-        {
-            for (int i = 0; i < TankID.Collection.Count; i++)
-            {
+        public void Setup() {
+            for (int i = 0; i < TankID.Collection.Count; i++) {
                 TankKills.Add(i, 0);
             }
         }
-        public void Serialize()
-        {
-
-
+        public void Serialize() {
             using var writer = new BinaryWriter(File.Open(Path.Combine(Directory, Name), FileMode.OpenOrCreate));
             /* File Serialization Order:
              * Do note: If you edit the game's data, you are scum
@@ -72,7 +66,7 @@ namespace TanksRebirth.IO
              */
 
             // writer.Write(_message);
-            writer.Write(GameDataVersion);
+            writer.Write(CURRENT_GAME_DATA_VERSION);
 
             writer.Write(TotalKills);
             writer.Write(BulletKills);
@@ -99,12 +93,11 @@ namespace TanksRebirth.IO
 
             // reader.ReadString();
 
-            var vers = reader.ReadByte();
+            var saveVersion = reader.ReadByte();
 
-            if (vers != GameDataVersion)
-            {
-                GameHandler.ClientLog.Write($"Loading an outdated {Name}!", LogType.Warn);
-                ReadOutdatedFile = true;
+            if (saveVersion != CURRENT_GAME_DATA_VERSION) {
+                GameHandler.ClientLog.Write($"Loading an outdated {Name}! (Save File: {saveVersion}. Game Data Version: {CURRENT_GAME_DATA_VERSION})", LogType.Warn);
+                ReadingOutdatedFile = true;
             }
 
             try {
@@ -128,9 +121,17 @@ namespace TanksRebirth.IO
                 ExpLevel = reader.ReadSingle();
 
                 GameHandler.Xp = new() { MaxValue = 1f, Value = ExpLevel - MathF.Floor(ExpLevel) };
-            } catch(Exception e) {
+            }
+            catch (Exception e) when (ReadingOutdatedFile) {
                 TankGame.WriteError(e);
-                GameHandler.ClientLog.Write($"This error was thrown because your save file was out-of-date. For now, delete it and restart. Sorry!", LogType.Info);
+                GameHandler.ClientLog.Write(
+                    "An error occurred, possibly due to your save file being out-of-date. For now, delete it and restart the game. Sorry!",
+                    LogType.Info);
+            } catch (IOException e) { // IO Error.
+                TankGame.WriteError(e);
+                GameHandler.ClientLog.Write(
+                    "An error was thrown while attempting to read your save file. Please try to restart the game. If this error persists please delete your save file and try again. Sorry!",
+                    LogType.Info);
             }
         }
     }

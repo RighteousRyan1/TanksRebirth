@@ -981,7 +981,7 @@ namespace TanksRebirth.GameContent.UI
                 var display = $"{split}: {elem.Value}";
                 TankGame.SpriteRenderer.DrawString(TankGame.TextFont, display, tankKillsPos + Vector2.UnitY * ((i - 1) * 25).ToResolutionY(), Color.White, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(aligning, TankGame.TextFont.MeasureString(display)), 0f);
             }
-            if (TankGame.GameData.ReadOutdatedFile)
+            if (TankGame.GameData.ReadingOutdatedFile)
                 TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"Outdated save file ({TankGame.GameData.Name})! Delete the old one!", new Vector2(8, 8), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero, 0f);
             TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "Press ESC to return", WindowUtils.WindowBottom - Vector2.UnitY * 40.ToResolutionY(), Color.White, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(aligning, TankGame.TextFont.MeasureString("Press ESC to leave")), 0f);
         }
