@@ -89,24 +89,26 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
 
             var audioShort = StbVorbis.decode_vorbis_from_memory(buffer, out int sampleRate, out int channels);
 
-            byte[] audioData_Backing = new byte[audioShort.Length * 2];
-            Span<byte> audioData = audioData_Backing;
-            
+            Span<byte> audioData = new byte[audioShort.Length * 2];
+
+            ref var shortSearchSpace = ref MemoryMarshal.GetArrayDataReference(audioShort);
             ref var searchSpace = ref MemoryMarshal.GetReference(audioData);
             
-            for (var i = 0; i < audioShort.Length; ++i) {
+            // The following converts a Short into a byte in a convoluted way, enjoyyyyy.
+            for (var i = 0; i < audioShort.Length; i++) {
                 if (i * 2 >= audioData.Length)
                     break;
 
-                ref var currentByte = ref Unsafe.Add(ref searchSpace, i);
+                ref var currentShort = ref Unsafe.Add(ref shortSearchSpace, i);
                 ref var currentDuped = ref Unsafe.Add(ref searchSpace, i * 2);
                 ref var currentDupedPlusOne = ref Unsafe.Add(ref searchSpace, (i * 2) + 1);
 
-
-                currentDuped = currentByte;
-                currentDupedPlusOne = (byte)(currentByte >> 8);
+                unsafe {
+                    Unsafe.Write(Unsafe.AsPointer(ref currentDuped), (byte)currentShort);
+                    Unsafe.Write(Unsafe.AsPointer(ref currentDupedPlusOne), (byte)(currentShort >> 8));
+                }
             }
-            _effect = new SoundEffect(audioData_Backing, sampleRate, (AudioChannels)channels);
+            _effect = new SoundEffect(audioData.ToArray(), sampleRate, (AudioChannels)channels);
             Instance = _effect.CreateInstance();
         }
 
