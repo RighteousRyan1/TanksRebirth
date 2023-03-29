@@ -26,7 +26,7 @@ public static class CommandGlobals {
         [new CommandInput(name: "help", description: "Get a list of all commands.")] = new CommandOutput(netSync: false, false, (args) => {
             for (int i = 0; i < Commands.Count; i++) {
                 var elem = Commands.ElementAt(i);
-                if (args[0].ToLower() == "cheats") {
+                if (args.Length > 0 && args[0].ToLower() == "cheats") {
                     if (elem.Value.RequireCheats) {
                         ChatSystem.SendMessage($"{elem.Key.Name}: {elem.Key.Description}", Color.Khaki);
                     }
