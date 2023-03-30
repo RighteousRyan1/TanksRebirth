@@ -67,7 +67,7 @@ namespace TanksRebirth.GameContent
 
             Model = GameResources.GetGameResource<Model>("Assets/mineexplosion");
 
-            int index = Array.IndexOf(Explosions, Explosions.First(t => t is null));
+            int index = Array.IndexOf(Explosions, null);
 
             var destroysound = "Assets/sounds/tnk_destroy.ogg";
 
