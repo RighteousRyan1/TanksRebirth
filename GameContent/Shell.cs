@@ -411,7 +411,7 @@ public class Shell {
     }
 
     private void RenderFlamingParticle() {
-        if (!(LifeTime <= TankGame.DeltaTime)) return;
+        if (!(0 <= TankGame.DeltaTime)) return;
 
         var p = GameHandler.ParticleSystem.MakeParticle(
             Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(),
