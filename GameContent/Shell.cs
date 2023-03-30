@@ -4,6 +4,8 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using TanksRebirth.Enums;
 using TanksRebirth.GameContent.GameMechanics;
 using TanksRebirth.GameContent.ID;
@@ -188,7 +190,7 @@ public class Shell {
                     SoundContext.Effect, 0.3f, gameplaySound: true),
                 ShellID.Explosive => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_regular_2.ogg",
                     SoundContext.Effect, 0.3f, gameplaySound: true),
-                _ => throw new NotImplementedException()
+                _ => throw new NotImplementedException($"Sound for the shell type {Type} is not implemented, yet."),
             };
             _shootSound.Instance.Pitch = MathHelper.Clamp(owner.Properties.ShootPitch, -1, 1);
         }
@@ -197,17 +199,18 @@ public class Shell {
         TankGame.OnFocusLost += TankGame_OnFocusLost;
         TankGame.OnFocusRegained += TankGame_OnFocusRegained;
 
-        int index = Array.BinarySearch(AllShells, null);
+        int index = Array.IndexOf(AllShells, null);
 
         Id = index;
 
         AllShells[index] = this;
 
-        if (owner != null) {
-            var idx = Array.BinarySearch(Owner.OwnedShells, null);
-            if (idx > -1)
-                Owner.OwnedShells[idx] = this;
-        }
+        if (owner == null) return;
+        
+        var idx = Array.IndexOf(Owner.OwnedShells, null);
+        
+        if (idx > -1)
+            Owner.OwnedShells[idx] = this;
     }
 
     private void StopSounds(int delay, MissionEndContext context, bool result1up) {
@@ -225,14 +228,14 @@ public class Shell {
                 * Matrix.CreateTranslation(Position);
 
         if (_wallRicCooldown <= 0) {
-            if (Position2D.X < MapRenderer.MIN_X || Position2D.X > MapRenderer.MAX_X) {
+            if (Position2D.X is < MapRenderer.MIN_X or > MapRenderer.MAX_X) {
                 OnRicochet?.Invoke(this);
                 Ricochet(true);
 
                 _wallRicCooldown = 5;
             }
 
-            if (Position2D.Y < MapRenderer.MIN_Y || Position2D.Y > MapRenderer.MAX_Y) {
+            if (Position2D.Y is < MapRenderer.MIN_Y or > MapRenderer.MAX_Y) {
                 OnRicochet?.Invoke(this);
                 Ricochet(false);
 
@@ -268,167 +271,184 @@ public class Shell {
 
         LifeTime += TankGame.DeltaTime;
 
-        if (LifeTime > HomeProperties.Cooldown) {
-            if (Owner != null) {
-                foreach (var target in GameHandler.AllTanks) {
-                    if (target is not null && target != Owner &&
-                        Vector2.Distance(Position2D, target.Position) <= HomeProperties.Radius) {
-                        if (target.Team != Owner.Team || target.Team == TeamID.NoTeam) {
-                            if (HomeProperties.HeatSeeks && target.Velocity != Vector2.Zero)
-                                HomeProperties.Target = target.Position;
-                            if (!HomeProperties.HeatSeeks)
-                                HomeProperties.Target = target.Position;
-                        }
-                    }
-                }
+        while (LifeTime > HomeProperties.Cooldown) { // Use loop to reduce nesting smh.
+            if (Owner == null)
+                break;
 
-                if (HomeProperties.Target != Vector2.Zero) {
-                    bool hits = Collision.DoRaycast(Position2D, HomeProperties.Target, (int)HomeProperties.Radius * 2);
+            ref var tanksSSpace = ref MemoryMarshal.GetReference((Span
+                <Tank>)GameHandler.AllTanks);
 
-                    if (hits) {
-                        float dist = Vector2.Distance(Position2D, HomeProperties.Target);
+            for (var i = 0; i < GameHandler.AllTanks.Length; i++) {
+                var target = Unsafe.Add(ref tanksSSpace, i);
 
-                        Velocity.X += MathUtils.DirectionOf(Position2D, HomeProperties.Target).X *
-                            HomeProperties.Power / dist;
-                        Velocity.Z += MathUtils.DirectionOf(Position2D, HomeProperties.Target).Y *
-                            HomeProperties.Power / dist;
+                if (target is null || target == Owner ||
+                    !(Vector2.Distance(Position2D, target.Position) <= HomeProperties.Radius)) continue;
 
-                        Vector2 trueSpeed = Vector2.Normalize(Velocity2D) * HomeProperties.Speed;
+                if (target.Team == Owner.Team && target.Team != TeamID.NoTeam) continue;
+
+                if (HomeProperties.HeatSeeks && target.Velocity != Vector2.Zero)
+                    HomeProperties.Target = target.Position;
+                if (!HomeProperties.HeatSeeks)
+                    HomeProperties.Target = target.Position;
+            }
+
+            if (HomeProperties.Target != Vector2.Zero) {
+                bool hits = Collision.DoRaycast(Position2D, HomeProperties.Target, (int)HomeProperties.Radius * 2);
+
+                if (hits) {
+                    float dist = Vector2.Distance(Position2D, HomeProperties.Target);
+
+                    Velocity.X += MathUtils.DirectionOf(Position2D, HomeProperties.Target).X *
+                        HomeProperties.Power / dist;
+                    Velocity.Z += MathUtils.DirectionOf(Position2D, HomeProperties.Target).Y *
+                        HomeProperties.Power / dist;
+
+                    Vector2 trueSpeed = Vector2.Normalize(Velocity2D) * HomeProperties.Speed;
 
 
-                        Velocity = trueSpeed.ExpandZ();
-                    }
+                    Velocity = trueSpeed.ExpandZ();
                 }
             }
+
+            break;
         }
 
         CheckCollisions();
 
-        float bruh = Flaming ? (int)Math.Round(6 / Velocity2D.Length()) : (int)Math.Round(12 / Velocity2D.Length());
-        float nummy = bruh != 0 ? bruh : 5;
+        var bruh = Flaming ? (int)Math.Round(6 / Velocity2D.Length()) : (int)Math.Round(12 / Velocity2D.Length());
+        var nummy = bruh != 0 ? bruh : 5f;
 
-        if (EmitsSmoke) {
-            if (LifeTime % nummy <= TankGame.DeltaTime) {
-                var p = GameHandler.ParticleSystem.MakeParticle(
-                    Position + new Vector3(0, 0, 5).FlattenZ()
-                                                   .RotatedByRadians(Rotation + MathHelper.Pi +
-                                                                     GameHandler.GameRand.NextFloat(-0.3f, 0.3f))
-                                                   .ExpandZ(),
-                    GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
-                p.FaceTowardsMe = false;
-                p.Scale = new(0.3f);
-                // p.color = new Color(50, 50, 50, 150);
+        if (EmitsSmoke)
+            RenderSmokeParticle(nummy);
 
-                p.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
-                // 
-                p.HasAddativeBlending = false;
-                p.Color = SmokeColor;
-                p.Alpha = 0.5f;
+        if (LeavesTrail)
+            RenderLeaveTrail(nummy);
 
-                p.UniqueBehavior = (p) => {
-                    if (p.Alpha <= 0)
-                        p.Destroy();
-
-                    if (p.Alpha > 0)
-                        p.Alpha -= (Flaming ? 0.03f : 0.02f) * TankGame.DeltaTime;
-
-                    GeometryUtils.Add(ref p.Scale, 0.0075f * TankGame.DeltaTime);
-                };
-            }
-        }
-
-        if (LeavesTrail) {
-            if (LifeTime % (nummy / 2) <= TankGame.DeltaTime) {
-                var p = GameHandler.ParticleSystem.MakeParticle(
-                    Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(),
-                    GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
-
-                p.Roll = -MathHelper.PiOver2;
-                p.Scale = new(0.4f, 0.25f, 0.4f); // x is outward from bullet
-                // p.Scale = new(1f, 1f, 1f);
-                p.Color = TrailColor;
-                p.HasAddativeBlending = false;
-                // GameHandler.GameRand.NextFloat(-2f, 2f)
-                //p.TextureRotation = -MathHelper.PiOver2;
-                p.TextureScale = new(Velocity.Length() / 10 - 0.2f);
-                p.Origin2D = new(p.Texture.Size().X / 2, 0);
-
-                p.Pitch = -Rotation - MathHelper.PiOver2;
-
-                p.UniqueBehavior = (part) => {
-                    p.Alpha -= 0.02f * TankGame.DeltaTime;
-
-                    if (p.Alpha <= 0)
-                        p.Destroy();
-                };
-
-                var p2 = GameHandler.ParticleSystem.MakeParticle(
-                    Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(),
-                    GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
-
-                p2.Roll = -MathHelper.PiOver2;
-                p2.Scale = new(0.4f /*Velocity.Length() / 10 - 0.2f*/, 0.25f, 0.4f); // x is outward from bullet
-                // p.Scale = new(1f, 1f, 1f);
-                p2.Color = TrailColor;
-                p2.HasAddativeBlending = false;
-                // GameHandler.GameRand.NextFloat(-2f, 2f)
-                //p.TextureRotation = -MathHelper.PiOver2;
-                p.TextureScale = new(Velocity.Length() / 10 - 0.2f);
-                p2.Origin2D = new(p.Texture.Size().X / 2, 0);
-
-                p2.Pitch = -Rotation + MathHelper.PiOver2;
-
-                p2.UniqueBehavior = (part) => {
-                    p2.Alpha -= 0.02f * TankGame.DeltaTime;
-
-                    if (p2.Alpha <= 0)
-                        p2.Destroy();
-                };
-            }
-        }
-
-        if (Flaming) {
-            if (LifeTime % 1 <= TankGame.DeltaTime) {
-                var p = GameHandler.ParticleSystem.MakeParticle(
-                    Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(),
-                    GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/flame"));
-
-                p.Roll = -MathHelper.PiOver2;
-                var scaleRand = GameHandler.GameRand.NextFloat(0.5f, 0.75f);
-                p.Scale = new(scaleRand, 0.165f, 0.4f); // x is outward from bullet
-                p.Color = FlameColor;
-                p.HasAddativeBlending = false;
-                // GameHandler.GameRand.NextFloat(-2f, 2f)
-                p.Rotation2D = -MathHelper.PiOver2;
-
-                var rotoff = GameHandler.GameRand.NextFloat(-0.25f, 0.25f);
-                p.Origin2D = new(p.Texture.Size().X / 2, p.Texture.Size().Y);
-
-                var initialScale = p.Scale;
-
-                p.UniqueBehavior = (par) => {
-                    const float scalingConstant = 0.06f;
-                    var flat = Position.FlattenZ();
-
-                    var off = flat + Vector2.Zero.RotatedByRadians(Rotation);
-
-                    par.Position = off.ExpandZ() + new Vector3(0, 11, 0);
-
-                    par.Pitch = -Rotation - MathHelper.PiOver2 + rotoff;
-
-                    //if (TankGame.GameUpdateTime % 2 == 0)
-                    //p.Roll = GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi);
-
-
-                    par.Scale.X -= scalingConstant * TankGame.DeltaTime;
-
-                    if (par.Scale.X <= 0)
-                        par.Destroy();
-                };
-            }
-        }
+        if (Flaming)
+            RenderFlamingParticle();
 
         OnPostUpdate?.Invoke(this);
+    }
+
+    private void RenderSmokeParticle(float nummy) {
+        if (!(LifeTime % nummy <= TankGame.DeltaTime)) return;
+
+        var p = GameHandler.ParticleSystem.MakeParticle(
+            Position + new Vector3(0, 0, 5).FlattenZ()
+                                           .RotatedByRadians(Rotation + MathHelper.Pi +
+                                                             GameHandler.GameRand.NextFloat(-0.3f, 0.3f))
+                                           .ExpandZ(),
+            GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
+        p.FaceTowardsMe = false;
+        p.Scale = new(0.3f);
+        // p.color = new Color(50, 50, 50, 150);
+
+        p.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
+        // 
+        p.HasAddativeBlending = false;
+        p.Color = SmokeColor;
+        p.Alpha = 0.5f;
+
+        p.UniqueBehavior = (particle) => {
+            if (particle.Alpha <= 0)
+                particle.Destroy();
+
+            if (particle.Alpha > 0)
+                particle.Alpha -= (Flaming ? 0.03f : 0.02f) * TankGame.DeltaTime;
+
+            GeometryUtils.Add(ref particle.Scale, 0.0075f * TankGame.DeltaTime);
+        };
+    }
+
+    private void RenderLeaveTrail(float nummy) {
+        if (!(LifeTime % (nummy / 2) <= TankGame.DeltaTime)) return;
+
+        var p = GameHandler.ParticleSystem.MakeParticle(
+            Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(),
+            GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
+
+        p.Roll = -MathHelper.PiOver2;
+        p.Scale = new(0.4f, 0.25f, 0.4f); // x is outward from bullet
+        // p.Scale = new(1f, 1f, 1f);
+        p.Color = TrailColor;
+        p.HasAddativeBlending = false;
+        // GameHandler.GameRand.NextFloat(-2f, 2f)
+        //p.TextureRotation = -MathHelper.PiOver2;
+        p.TextureScale = new(Velocity.Length() / 10 - 0.2f);
+        p.Origin2D = new(p.Texture.Size().X / 2, 0);
+
+        p.Pitch = -Rotation - MathHelper.PiOver2;
+
+        p.UniqueBehavior = (part) => {
+            p.Alpha -= 0.02f * TankGame.DeltaTime;
+
+            if (p.Alpha <= 0)
+                p.Destroy();
+        };
+
+        var p2 = GameHandler.ParticleSystem.MakeParticle(
+            Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(),
+            GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
+
+        p2.Roll = -MathHelper.PiOver2;
+        p2.Scale = new(0.4f /*Velocity.Length() / 10 - 0.2f*/, 0.25f, 0.4f); // x is outward from bullet
+        // p.Scale = new(1f, 1f, 1f);
+        p2.Color = TrailColor;
+        p2.HasAddativeBlending = false;
+        // GameHandler.GameRand.NextFloat(-2f, 2f)
+        //p.TextureRotation = -MathHelper.PiOver2;
+        p.TextureScale = new(Velocity.Length() / 10 - 0.2f);
+        p2.Origin2D = new(p.Texture.Size().X / 2, 0);
+
+        p2.Pitch = -Rotation + MathHelper.PiOver2;
+
+        p2.UniqueBehavior = (part) => {
+            p2.Alpha -= 0.02f * TankGame.DeltaTime;
+
+            if (p2.Alpha <= 0)
+                p2.Destroy();
+        };
+    }
+
+    private void RenderFlamingParticle() {
+        if (!(LifeTime <= TankGame.DeltaTime)) return;
+
+        var p = GameHandler.ParticleSystem.MakeParticle(
+            Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(),
+            GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/flame"));
+
+        p.Roll = -MathHelper.PiOver2;
+        var scaleRand = GameHandler.GameRand.NextFloat(0.5f, 0.75f);
+        p.Scale = new(scaleRand, 0.165f, 0.4f); // x is outward from bullet
+        p.Color = FlameColor;
+        p.HasAddativeBlending = false;
+        // GameHandler.GameRand.NextFloat(-2f, 2f)
+        p.Rotation2D = -MathHelper.PiOver2;
+
+        var rotoff = GameHandler.GameRand.NextFloat(-0.25f, 0.25f);
+        p.Origin2D = new(p.Texture.Size().X / 2, p.Texture.Size().Y);
+
+        var initialScale = p.Scale;
+
+        p.UniqueBehavior = (par) => {
+            const float scalingConstant = 0.06f;
+            var flat = Position.FlattenZ();
+
+            var off = flat + Vector2.Zero.RotatedByRadians(Rotation);
+
+            par.Position = off.ExpandZ() + new Vector3(0, 11, 0);
+
+            par.Pitch = -Rotation - MathHelper.PiOver2 + rotoff;
+
+            //if (TankGame.GameUpdateTime % 2 == 0)
+            //p.Roll = GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi);
+
+
+            par.Scale.X -= scalingConstant * TankGame.DeltaTime;
+
+            if (par.Scale.X <= 0)
+                par.Destroy();
+        };
     }
 
     private void TankGame_OnFocusRegained(object sender, IntPtr e)
@@ -442,6 +462,8 @@ public class Shell {
     /// </summary>
     /// <param name="horizontal">Whether or not the ricochet is done off of a horizontal axis.</param>
     public void Ricochet(bool horizontal) {
+        const string ricochetSound = "Assets/sounds/bullet_ricochet.ogg";
+
         if (RicochetsRemaining <= 0) {
             Destroy(DestructionContext.WithObstacle);
             return;
@@ -452,19 +474,19 @@ public class Shell {
         else
             Velocity.Z = -Velocity.Z;
 
-        var sound = "Assets/sounds/bullet_ricochet.ogg";
 
-        var s = SoundPlayer.PlaySoundInstance(sound, SoundContext.Effect, 0.5f, gameplaySound: true);
+        var sound = SoundPlayer.PlaySoundInstance(ricochetSound, SoundContext.Effect, 0.5f, gameplaySound: true);
 
         if (Owner is not null) {
             if (Owner.Properties.ShellType == ShellID.TrailedRocket) {
-                s.Instance.Pitch = GameHandler.GameRand.NextFloat(0.15f, 0.25f);
-                var s2 = SoundPlayer.PlaySoundInstance("Assets/sounds/ricochet_zip.ogg", SoundContext.Effect, 0.05f,
+                sound.Instance.Pitch = GameHandler.GameRand.NextFloat(0.15f, 0.25f);
+                var rocketRSound = SoundPlayer.PlaySoundInstance("Assets/sounds/ricochet_zip.ogg", SoundContext.Effect,
+                    0.05f,
                     gameplaySound: true);
-                s2.Instance.Pitch = -0.65f;
+                rocketRSound.Instance.Pitch = -0.65f;
             }
             else {
-                s.Instance.Pitch = GameHandler.GameRand.NextFloat(-0.05f, 0.05f);
+                sound.Instance.Pitch = GameHandler.GameRand.NextFloat(-0.05f, 0.05f);
             }
         }
 
@@ -475,43 +497,47 @@ public class Shell {
 
     public void CheckCollisions() {
         var cxt = DestructionContext.WithHostileTank;
-        foreach (var tank in GameHandler.AllTanks) {
-            if (tank is not null && !tank.Dead) {
-                if (tank.CollisionCircle.Intersects(HitCircle)) {
-                    if (!CanFriendlyFire) {
-                        if (tank.Team == Owner.Team && tank != Owner && tank.Team != TeamID.NoTeam)
-                            cxt = DestructionContext.WithFriendlyTank;
-                    }
-                    else if (Owner != null) {
-                        if (tank == Owner)
-                            cxt = DestructionContext.WithFriendlyTank;
-                        if (tank.Team == Owner.Team && tank != Owner && tank.Team != TeamID.NoTeam)
-                            cxt = DestructionContext.WithFriendlyTank;
-                        else
-                            cxt = DestructionContext.WithHostileTank;
-                    }
 
-                    Destroy(cxt);
-                    tank.Damage(new TankHurtContext_Shell(Owner is PlayerTank, Ricochets, Type, this));
-                }
+        ref var tankSSpace = ref MemoryMarshal.GetReference((Span<Tank>)GameHandler.AllTanks);
+
+        for (var i = 0; i < GameHandler.AllTanks.Length; i++) {
+            var tank = Unsafe.Add(ref tankSSpace, i);
+            if (tank == null || tank.Dead) continue;
+
+            if (!tank.CollisionCircle.Intersects(HitCircle)) continue;
+
+            if (!CanFriendlyFire) {
+                if (tank.Team == Owner?.Team && tank != Owner && tank.Team != TeamID.NoTeam)
+                    cxt = DestructionContext.WithFriendlyTank;
             }
+            else if (Owner != null) {
+                if (tank.Team == Owner?.Team && tank != Owner && tank.Team != TeamID.NoTeam)
+                    cxt = DestructionContext.WithFriendlyTank;
+                else
+                    cxt = DestructionContext.WithHostileTank;
+            }
+
+            Destroy(cxt);
+            tank.Damage(new TankHurtContext_Shell(Owner is PlayerTank, Ricochets, Type, this));
         }
 
-        foreach (var bullet in AllShells) {
-            if (bullet is not null && bullet != this) {
-                if (bullet.Hitbox.Intersects(Hitbox)) {
-                    if (bullet.IsDestructible)
-                        bullet.Destroy(DestructionContext.WithShell);
-                    if (IsDestructible)
-                        Destroy(DestructionContext.WithShell);
+        ref var bulletSSpace = ref MemoryMarshal.GetReference((Span<Shell>)AllShells);
 
-                    // if two indestructible bullets come together, destroy them both. too powerful!
-                    if (!bullet.IsDestructible && !IsDestructible) {
-                        bullet.Destroy(DestructionContext.WithShell);
-                        Destroy(DestructionContext.WithShell);
-                    }
-                }
-            }
+        for (var i = 0; i < AllShells.Length; i++) {
+            ref var bullet = ref Unsafe.Add(ref bulletSSpace, i);
+            if (bullet == null || bullet == this) continue;
+            if (!bullet.Hitbox.Intersects(Hitbox)) continue;
+
+            if (bullet.IsDestructible)
+                bullet.Destroy(DestructionContext.WithShell);
+            if (IsDestructible)
+                Destroy(DestructionContext.WithShell);
+
+            // if two indestructible bullets come together, destroy them both. too powerful!
+            if (bullet is { IsDestructible: true, } || IsDestructible) continue;
+
+            bullet.Destroy(DestructionContext.WithShell);
+            Destroy(DestructionContext.WithShell);
         }
     }
 
@@ -525,17 +551,18 @@ public class Shell {
         TankGame.OnFocusLost -= TankGame_OnFocusLost;
         TankGame.OnFocusRegained -= TankGame_OnFocusRegained;
         GameProperties.OnMissionEnd -= StopSounds;
+
         _loopingSound?.Instance?.Stop();
-        // _shootSound?.Stop();
         _loopingSound = null;
-        // _shootSound = null;
         AllShells[Id] = null;
     }
 
     /// <summary>
     /// Destroys this <see cref="Shell"/>.
     /// </summary>
+    /// <param name="context">The context in which this bullet was destroyed.</param>
     /// <param name="playSound">Whether or not to play the bullet destruction sound.</param>
+    /// <param name="wasSentByAnotherClient">Whether or not the Destroy was sent by another client.</param>
     public void Destroy(DestructionContext context, bool playSound = true, bool wasSentByAnotherClient = false) {
         _shootSound?.Instance?.Stop(true);
         // ParticleSystem.MakeSparkEmission(Position, 10);
@@ -550,7 +577,6 @@ public class Shell {
             GameHandler.ParticleSystem.MakeSmallExplosion(Position, 8, 10, 1.25f, 15);
         }
 
-        //_flame?.Destroy();
         _loopingSound?.Instance?.Stop();
         _loopingSound?.Dispose();
         _loopingSound = null;
@@ -578,33 +604,44 @@ public class Shell {
         Projection = TankGame.GameProjection;
         View = TankGame.GameView;
 
-        if (DebugUtils.DebugLevel == 1 && HomeProperties.Speed > 0)
+        if (DebugUtils.DebuggingEnabled && DebugUtils.DebugLevel == 1 && HomeProperties.Speed > 0)
             Collision.DoRaycast(Position2D, HomeProperties.Target, (int)HomeProperties.Radius, true);
-        DebugUtils.DrawDebugString(TankGame.SpriteRenderer,
-            $"RicochetsLeft: {RicochetsRemaining}\nTier: {Type}\nId: {Id}",
-            MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 20), 1,
-            centered: true);
+        if (DebugUtils.DebuggingEnabled)
+            DebugUtils.DrawDebugString(TankGame.SpriteRenderer,
+                $"RicochetsLeft: {RicochetsRemaining}\nTier: {Type}\nId: {Id}",
+                MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 20), 1,
+                centered: true);
 
-        for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
-            foreach (ModelMesh mesh in Model.Meshes) {
-                foreach (BasicEffect effect in mesh.Effects) {
-                    effect.World = i == 0
-                        ? World
-                        : World * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) *
-                          Matrix.CreateTranslation(0, 0.2f, 0);
-                    effect.View = View;
-                    effect.Projection = Projection;
-                    effect.TextureEnabled = true;
-
-                    effect.Texture = _shellTexture;
-
-                    effect.SetDefaultGameLighting_IngameEntities();
-                }
-
-                mesh.Draw();
-            }
+        for (var i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
+            DrawShellMesh(i);
         }
 
         OnPostRender?.Invoke(this);
+    }
+
+    private void DrawShellMesh(int currentIteration) {
+        void RenderMeshEffects(int i, ModelMesh mesh) {
+            for (var j = 0; j < mesh.Effects.Count; j++) {
+                var effect = (BasicEffect)mesh.Effects[j];
+                effect.World = i == 0
+                    ? World
+                    : World * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) *
+                      Matrix.CreateTranslation(0, 0.2f, 0);
+
+                effect.View = View;
+                effect.Projection = Projection;
+                effect.TextureEnabled = true;
+
+                effect.Texture = _shellTexture;
+
+                effect.SetDefaultGameLighting_IngameEntities();
+            }
+        }
+        
+        for (var i = 0; i < Model.Meshes.Count; i++) {
+            var mesh = Model.Meshes[i];
+            RenderMeshEffects(currentIteration, mesh);
+            mesh.Draw();
+        }
     }
 }
