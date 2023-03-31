@@ -49,16 +49,17 @@ namespace TanksRebirth.Internals
 
 		public static T GetGameResource<T>(string name, bool addDotPng = true, bool addContentPrefix = true, bool premultiply = false) where T : class
 		{
+			var realResourceName = name + (addDotPng ? ".png" : string.Empty);
             if (TankGame.Instance is null)
-				QueueAsset<T>(name);
+				QueueAsset<T>(realResourceName);
 
-		if (ResourceCache.ContainsKey(name + ".png"))
-				return (T)ResourceCache[name + ".png"];
+			if (ResourceCache.ContainsKey(realResourceName))
+					return (T)ResourceCache[realResourceName];
 			else if (typeof(T) == typeof(Texture2D))
 			{
 				// var texture = (Texture2D)Convert.ChangeType(result, typeof(Texture2D));
-				object result = Texture2D.FromFile(TankGame.Instance.GraphicsDevice, Path.Combine(addContentPrefix ? TankGame.Instance.Content.RootDirectory : string.Empty, name + (addDotPng ? ".png" : string.Empty)));
-				ResourceCache[name + (addDotPng ? ".png" : string.Empty)] = result;
+				object result = Texture2D.FromFile(TankGame.Instance.GraphicsDevice, Path.Combine(addContentPrefix ? TankGame.Instance.Content.RootDirectory : string.Empty, realResourceName));
+				ResourceCache[realResourceName] = result;
 
 				if (premultiply) {
 					var refUse = (Texture2D)result;

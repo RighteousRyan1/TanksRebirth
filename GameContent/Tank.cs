@@ -12,6 +12,8 @@ using TanksRebirth.Internals.Common.Framework;
 using TanksRebirth.GameContent.Systems;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using TanksRebirth.GameContent.Cosmetics;
 using TanksRebirth.Graphics;
 using TanksRebirth.GameContent.UI;
@@ -42,7 +44,7 @@ public struct TankTemplate
     public AITank GetAiTank()
     {
         if (IsPlayer)
-            throw new Exception($"{nameof(IsPlayer)} was true. This method cannot execute.");
+            throw new Exception($"{nameof(IsPlayer)} is true. This method cannot execute.");
 
         var ai = new AITank(AiTier);
         ai.Body.Position = Position / Tank.UNITS_PER_METER;
@@ -65,7 +67,7 @@ public struct TankTemplate
     public PlayerTank GetPlayerTank()
     {
         if (!IsPlayer)
-            throw new Exception($"{nameof(IsPlayer)} was false. This method cannot execute.");
+            throw new Exception($"{nameof(IsPlayer)} is false. This method cannot execute.");
 
         var player = Difficulties.Types["RandomPlayer"] ? new PlayerTank(PlayerType, false, AITank.PickRandomTier()) : new PlayerTank(PlayerType);
         player.Body.Position = Position / Tank.UNITS_PER_METER;
@@ -361,68 +363,70 @@ public abstract class Tank {
             particle.Scale = cos2d.Scale;
             particle.Tag = $"cosmetic_2d_{GetHashCode()}"; // store the hash code of this tank, so when we destroy the cosmetic's particle, it destroys all belonging to this tank!
             particle.HasAddativeBlending = false;
-            particle.UniqueBehavior = (z) => {
+            particle.UniqueBehavior = particle => {
                 particle.Position = Position3D + cos2d.RelativePosition;
                 particle.Roll = cos2d.Rotation.X;
                 particle.Pitch = cos2d.Rotation.Y;
                 particle.Yaw = cos2d.Rotation.Z;
                 particle.Scale = (Properties.Invisible && GameProperties.InMission) ? Vector3.Zero : cos2d.Scale;
 
-                if (destroyOn != null)
-                    if (destroyOn.Invoke())
-                        particle.Destroy();
+                if (destroyOn == null) return;
+                
+                if (destroyOn.Invoke())
+                    particle.Destroy();
             };
         }
     }
     void OnMissionStart() {
+        const string invisibleTankSound = "Assets/sounds/tnk_invisible.ogg";
+        
         if (Difficulties.Types["FFA"])
             Team = TeamID.NoTeam;
-        if (Properties.Invisible && !Dead) {
-            var invis = "Assets/sounds/tnk_invisible.ogg";
-            SoundPlayer.PlaySoundInstance(invis, SoundContext.Effect, 0.3f, gameplaySound: true);
+        if (!Properties.Invisible || Dead) return;
+        
+        SoundPlayer.PlaySoundInstance(invisibleTankSound, SoundContext.Effect, 0.3f, gameplaySound: true);
 
-            var lightParticle = GameHandler.ParticleSystem.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_particle"));
+        var lightParticle = GameHandler.ParticleSystem.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_particle"));
 
-            lightParticle.Scale = new(0.25f);
-            lightParticle.Alpha = 0f;
-            lightParticle.IsIn2DSpace = true;
+        lightParticle.Scale = new(0.25f);
+        lightParticle.Alpha = 0f;
+        lightParticle.IsIn2DSpace = true;
 
-            lightParticle.UniqueBehavior = (lp) => {
-                lp.Position = Position3D;
-                if (lp.Scale.X < 5f)
-                    GeometryUtils.Add(ref lp.Scale, 0.12f * TankGame.DeltaTime);
-                if (lp.Alpha < 1f && lp.Scale.X < 5f)
-                    lp.Alpha += 0.02f * TankGame.DeltaTime;
+        lightParticle.UniqueBehavior = (lp) => {
+            lp.Position = Position3D;
+            if (lp.Scale.X < 5f)
+                GeometryUtils.Add(ref lp.Scale, 0.12f * TankGame.DeltaTime);
+            if (lp.Alpha < 1f && lp.Scale.X < 5f)
+                lp.Alpha += 0.02f * TankGame.DeltaTime;
 
-                if (lp.LifeTime > 90)
-                    lp.Alpha -= 0.005f * TankGame.DeltaTime;
+            if (lp.LifeTime > 90)
+                lp.Alpha -= 0.005f * TankGame.DeltaTime;
 
-                if (lp.Scale.X < 0f)
-                    lp.Destroy();
+            if (lp.Scale.X < 0f)
+                lp.Destroy();
+        };
+
+        const int NUM_LOCATIONS = 8;
+
+        for (int i = 0; i < NUM_LOCATIONS; i++) {
+            var lp = GameHandler.ParticleSystem.MakeParticle(Position3D + new Vector3(0, 5, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
+
+            var velocity = Vector2.UnitY.RotatedByRadians(MathHelper.ToRadians(360f / NUM_LOCATIONS * i));
+
+            lp.Scale = new(1f);
+
+            lp.UniqueBehavior = (elp) => {
+                elp.Position.X += velocity.X * TankGame.DeltaTime;
+                elp.Position.Z += velocity.Y * TankGame.DeltaTime;
+
+                if (elp.LifeTime > 15) {
+                    GeometryUtils.Add(ref elp.Scale, -0.03f * TankGame.DeltaTime);
+                    elp.Alpha -= 0.03f * TankGame.DeltaTime;
+                }
+
+                if (elp.Scale.X <= 0f || elp.Alpha <= 0f)
+                    elp.Destroy();
             };
-
-            const int NUM_LOCATIONS = 8;
-
-            for (int i = 0; i < NUM_LOCATIONS; i++) {
-                var lp = GameHandler.ParticleSystem.MakeParticle(Position3D + new Vector3(0, 5, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
-
-                var velocity = Vector2.UnitY.RotatedByRadians(MathHelper.ToRadians(360f / NUM_LOCATIONS * i));
-
-                lp.Scale = new(1f);
-
-                lp.UniqueBehavior = (elp) => {
-                    elp.Position.X += velocity.X * TankGame.DeltaTime;
-                    elp.Position.Z += velocity.Y * TankGame.DeltaTime;
-
-                    if (elp.LifeTime > 15) {
-                        GeometryUtils.Add(ref elp.Scale, -0.03f * TankGame.DeltaTime);
-                        elp.Alpha -= 0.03f * TankGame.DeltaTime;
-                    }
-
-                    if (elp.Scale.X <= 0f || elp.Alpha <= 0f)
-                        elp.Destroy();
-                };
-            }
         }
     }
 
@@ -534,28 +538,21 @@ public abstract class Tank {
             part.IsIn2DSpace = true;
             part.ToScreenSpace = true;
 
-            if (context is TankHurtContext_Mine thcm)
-            {
-                if (thcm.MineExplosion.Source is PlayerTank pl)
-                {
-                    part.Color = PlayerID.PlayerTankColors[pl.PlayerType].ToColor();
-                }
-                if (thcm.MineExplosion.Source is AITank ai)
-                {
-                    part.Color = AITank.TankDestructionColors[ai.AiTankType];
-                }
-            }
-            else if (context is TankHurtContext_Shell thcs)
-            {
-                if (thcs.Shell.Owner is PlayerTank pl)
-                {
-                    part.Color = PlayerID.PlayerTankColors[pl.PlayerType].ToColor();
-                }
-                if (thcs.Shell.Owner is AITank ai)
-                {
-                    part.Color = AITank.TankDestructionColors[ai.AiTankType];
-                }
-            }
+            // Switch on the context the tank got hurt on.
+            part.Color = context switch {
+                TankHurtContext_Mine thcm => thcm.MineExplosion.Source switch {
+                    PlayerTank pl => PlayerID.PlayerTankColors[pl.PlayerType].ToColor(),
+                    AITank ai => AITank.TankDestructionColors[ai.AiTankType],
+                    _ => part.Color,
+                },
+            
+                TankHurtContext_Shell thcs => thcs.Shell.Owner switch {
+                    PlayerTank pl => PlayerID.PlayerTankColors[pl.PlayerType].ToColor(),
+                    AITank ai => AITank.TankDestructionColors[ai.AiTankType],
+                    _ => part.Color,
+                },
+                _ => part.Color,
+            };
             part.HasAddativeBlending = false;
             part.Origin2D = TankGame.TextFont.MeasureString(TankGame.GameLanguage.Hit) / 2;
             part.Scale = new Vector3(Vector2.One.ToResolution(), 1);
@@ -583,11 +580,11 @@ public abstract class Tank {
                 if (a.Scale.X < 0)
                     a.Destroy();
             };
-            part.UniqueDraw = (a) =>
+            part.UniqueDraw = particle =>
             {
-                SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFontLarge, part.Text,
-                MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(part.Position), TankGame.GameView, TankGame.GameProjection),
-                part.Color, Color.White, new(part.Scale.X, part.Scale.Y), 0f, 1f);
+                SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFontLarge, particle.Text,
+                MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(particle.Position), TankGame.GameView, TankGame.GameProjection),
+                particle.Color, Color.White, new(particle.Scale.X, particle.Scale.Y), 0f, 1f);
             };
         }
 
@@ -599,118 +596,114 @@ public abstract class Tank {
                 Properties.Armor.HitPoints--;
                 var ding = SoundPlayer.PlaySoundInstance($"Assets/sounds/armor_ding_{GameHandler.GameRand.Next(1, 3)}.ogg", SoundContext.Effect, gameplaySound: true);
                 ding.Instance.Pitch = GameHandler.GameRand.NextFloat(-0.1f, 0.1f);
-            }
-            else {
+            } else {
                 OnDamage?.Invoke(this, true, context);
                 Destroy(context);
             }
+
+            return;
         }
-        else {
-            OnDamage?.Invoke(this, true, context);
-            Destroy(context);
-        }
+        
+        OnDamage?.Invoke(this, true, context);
+        Destroy(context);
     }
     /// <summary>Destroy this <see cref="Tank"/>.</summary>
     public virtual void Destroy(ITankHurtContext context) {
 
         GameProperties.OnMissionStart -= OnMissionStart;
 
-        // i think this is right?
+        // i think this is right? | (Probably, a destroyed tank is a dead tank!)
         Dead = true;
 
         OnDestroy?.Invoke();
 
-        var killSound1 = "Assets/sounds/tnk_destroy.ogg";
-        SoundPlayer.PlaySoundInstance(killSound1, SoundContext.Effect, 0.2f, gameplaySound: true);
-        if (this is AITank t)
-        {
-            var killSound2 = "Assets/sounds/tnk_destroy_enemy.ogg";
-            SoundPlayer.PlaySoundInstance(killSound2, SoundContext.Effect, 0.3f, gameplaySound: true);
+        const string tankDestroySound0 = "Assets/sounds/tnk_destroy.ogg";
+        SoundPlayer.PlaySoundInstance(tankDestroySound0, SoundContext.Effect, 0.2f, gameplaySound: true);
+        
+        switch (this) {
+            case AITank t: {
+                const string tankDestroySound1 = "Assets/sounds/tnk_destroy_enemy.ogg";
+                SoundPlayer.PlaySoundInstance(tankDestroySound1, SoundContext.Effect, 0.3f, gameplaySound: true);
 
-            var dm = new TankDeathMark(TankDeathMark.CheckColor.White)
-            {
-                Position = Position3D + new Vector3(0, 0.1f, 0),
-            };
+                var aiDeathMark = new TankDeathMark(TankDeathMark.CheckColor.White) {
+                    Position = Position3D + new Vector3(0, 0.1f, 0),
+                };
 
-            dm.StoredTank = new()
-            {
-                AiTier = t.AiTankType,
-                IsPlayer = false,
-                Position = dm.Position.FlattenZ(),
-                Rotation = t.TankRotation,
-                Team = t.Team,
-            };
-        }
-        else if (this is PlayerTank p)
-        {
-            var c = p.PlayerType switch
-            {
-                PlayerID.Blue => TankDeathMark.CheckColor.Blue,
-                PlayerID.Red => TankDeathMark.CheckColor.Red,
-                PlayerID.GreenPlr => TankDeathMark.CheckColor.Green,
-                PlayerID.YellowPlr => TankDeathMark.CheckColor.Yellow, // TODO: change these colors.
-                _ => throw new Exception()
-            };
+                aiDeathMark.StoredTank = new TankTemplate {
+                    AiTier = t.AiTankType,
+                    IsPlayer = false,
+                    Position = aiDeathMark.Position.FlattenZ(),
+                    Rotation = t.TankRotation,
+                    Team = t.Team,
+                };
+                
+                break;
+            }
+            case PlayerTank p: {
+                var c = p.PlayerType switch {
+                    PlayerID.Blue => TankDeathMark.CheckColor.Blue,
+                    PlayerID.Red => TankDeathMark.CheckColor.Red,
+                    PlayerID.GreenPlr => TankDeathMark.CheckColor.Green,
+                    PlayerID.YellowPlr => TankDeathMark.CheckColor.Yellow, // TODO: change these colors.
+                    _ => throw new Exception($"Player Death Mark for colour {p.PlayerType} is not supported."),
+                };
 
-            var dm = new TankDeathMark(c)
-            {
-                Position = Position3D + new Vector3(0, 0.1f, 0)
-            };
+                var playerDeathMark = new TankDeathMark(c) {
+                    Position = Position3D + new Vector3(0, 0.1f, 0),
+                };
 
-            dm.StoredTank = new()
-            {
-                IsPlayer = true,
-                Position = dm.Position.FlattenZ(),
-                Rotation = p.TankRotation,
-                Team = p.Team,
-                PlayerType = p.PlayerType
-            };
+                playerDeathMark.StoredTank = new TankTemplate {
+                    IsPlayer = true,
+                    Position = playerDeathMark.Position.FlattenZ(),
+                    Rotation = p.TankRotation,
+                    Team = p.Team,
+                    PlayerType = p.PlayerType,
+                };
+                break;
+            }
         }
 
         Properties.Armor?.Remove();
         Properties.Armor = null;
-        void doDestructionFx()
-        {
-            for (int i = 0; i < 12; i++)
-            {
+        
+        void doDestructionFx() {
+            for (int i = 0; i < 12; i++)  {
                 var tex = GameResources.GetGameResource<Texture2D>(GameHandler.GameRand.Next(0, 2) == 0 ? "Assets/textures/misc/tank_rock" : "Assets/textures/misc/tank_rock_2");
 
-                var part = GameHandler.ParticleSystem.MakeParticle(Position3D, tex);
+                var particle = GameHandler.ParticleSystem.MakeParticle(Position3D, tex);
 
-                part.HasAddativeBlending = false;
+                particle.HasAddativeBlending = false;
 
                 var vel = new Vector3(GameHandler.GameRand.NextFloat(-3, 3), GameHandler.GameRand.NextFloat(3, 6), GameHandler.GameRand.NextFloat(-3, 3));
 
-                part.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
+                particle.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
-                part.Scale = new(0.55f);
+                particle.Scale = new(0.55f);
 
-                part.Color = Properties.DestructionColor;
+                particle.Color = Properties.DestructionColor;
 
-                part.UniqueBehavior = (p) =>
-                {
-                    part.Pitch += MathF.Sin(part.Position.Length() / 10) * TankGame.DeltaTime;
+                particle.UniqueBehavior = particle => { // Hide local var from outer scope with same name.
+                    particle.Pitch += MathF.Sin(particle.Position.Length() / 10) * TankGame.DeltaTime;
                     vel.Y -= 0.2f;
-                    part.Position += vel * TankGame.DeltaTime;
-                    part.Alpha -= 0.025f * TankGame.DeltaTime;
+                    particle.Position += vel * TankGame.DeltaTime;
+                    particle.Alpha -= 0.025f * TankGame.DeltaTime;
 
-                    if (part.Alpha <= 0f)
-                        part.Destroy();
+                    if (particle.Alpha <= 0f)
+                        particle.Destroy();
                 };
             }
 
-            var partExpl = GameHandler.ParticleSystem.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
+            var explosionParticle = GameHandler.ParticleSystem.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
 
-            partExpl.Color = Color.Yellow * 0.75f;
+            explosionParticle.Color = Color.Yellow * 0.75f;
 
-            partExpl.ToScreenSpace = true;
+            explosionParticle.ToScreenSpace = true;
 
-            partExpl.TextureScale = new(5f);
+            explosionParticle.TextureScale = new(5f);
 
-            partExpl.IsIn2DSpace = true;
+            explosionParticle.IsIn2DSpace = true;
 
-            partExpl.UniqueBehavior = (p) =>
-            {
+            explosionParticle.UniqueBehavior = (p) => {
                 GeometryUtils.Add(ref p.Scale, -0.3f * TankGame.DeltaTime);
                 p.Alpha -= 0.06f * TankGame.DeltaTime;
                 if (p.Scale.X <= 0f)
@@ -892,41 +885,80 @@ public abstract class Tank {
         Projection = TankGame.GameProjection;
         View = TankGame.GameView;
         if (!Dead) {
-            foreach (var cosmetic in Cosmetics) {
+            ReadOnlySpan<ICosmetic> cosmetics = CollectionsMarshal.AsSpan(Cosmetics);
+
+            ref var cosmeticSSpace = ref MemoryMarshal.GetReference(cosmetics);
+            
+            for (var j = 0; j < Cosmetics.Count; j++) {
                 //if (GameProperties.InMission && Properties.Invisible)
                 //break;
-                if (cosmetic is Cosmetic3D cos3d) {
-                    for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
-                        foreach (ModelMesh mesh in cos3d.Model.Meshes) {
-                            if (!cos3d.IgnoreMeshesByName.Any(meshname => meshname == mesh.Name)) {
-                                foreach (BasicEffect effect in mesh.Effects) {
-                                    float rotY;
-                                    if (cosmetic.LockOptions == CosmeticLockOptions.ToTurret)
-                                        rotY = cosmetic.Rotation.Y + TurretRotation;
-                                    else if (cosmetic.LockOptions == CosmeticLockOptions.ToTank)
-                                        rotY = cosmetic.Rotation.Y + TankRotation;
-                                    else
-                                        rotY = cosmetic.Rotation.Y;
-                                    effect.World = i == 0 ? Matrix.CreateRotationX(cosmetic.Rotation.X) * Matrix.CreateRotationY(rotY) * Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) * Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition)
-                                        : Matrix.CreateRotationX(cosmetic.Rotation.X) * Matrix.CreateRotationY(cosmetic.Rotation.Y) * Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) * Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition) * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
-                                    effect.View = View;
-                                    effect.Projection = Projection;
+                
+                var cosmetic = Unsafe.Add(ref cosmeticSSpace, j);
+                
+                if (cosmetic is not Cosmetic3D cos3d) continue;
 
-                                    effect.TextureEnabled = true;
-                                    if (i == 0)
-                                        effect.Texture = cos3d.ModelTexture;
-                                    else
-                                        effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/ingame/block_shadow_h");
+                for (var i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
+                    // Render mesh
+                    ref var meshNameSSpace = ref MemoryMarshal.GetReference((Span<string>)cos3d.IgnoreMeshesByName);
 
-                                    effect.SetDefaultGameLighting_IngameEntities();
-                                }
-                                mesh.Draw();
-                            }
+                    var meshesToRender = new List<ModelMesh>(cos3d.Model.Meshes.Count - cos3d.IgnoreMeshesByName.Length); // Set some capacity for a "good case" scenario.
+
+                    // Determine which meshes should we render
+                    for (var z = 0; z < cos3d.IgnoreMeshesByName.Length; z++) {
+                        var ignoredMeshName = Unsafe.Add(ref meshNameSSpace, z);
+                        
+                        if (string.IsNullOrEmpty(ignoredMeshName)) continue;
+                        
+                        for (var k = 0; k < cos3d.Model.Meshes.Count; k++) {
+                            if (cos3d.Model.Meshes[k].Name == ignoredMeshName) continue; // If the names match, we will not render it.
+                            meshesToRender.Add(cos3d.Model.Meshes[k]);
                         }
+                    }
+
+                    ref var meshesToRenderSSpace = ref MemoryMarshal.GetReference(CollectionsMarshal.AsSpan(meshesToRender));
+
+
+                    for (var z = 0; z < meshesToRender.Count; z++) {
+                        var mesh = Unsafe.Add(ref meshesToRenderSSpace, z);
+
+                        // Render submesh effects.
+                        foreach (BasicEffect effect in mesh.Effects) {
+                            var rotY = cosmetic.LockOptions switch {
+                                CosmeticLockOptions.ToTurret => cosmetic.Rotation.Y + TurretRotation,
+                                CosmeticLockOptions.ToTank => cosmetic.Rotation.Y + TankRotation,
+                                _ => cosmetic.Rotation.Y
+                            };
+                            
+                            effect.World = i == 0
+                                ? Matrix.CreateRotationX(cosmetic.Rotation.X) * Matrix.CreateRotationY(rotY) *
+                                  Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) *
+                                  Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition)
+                                : Matrix.CreateRotationX(cosmetic.Rotation.X) *
+                                  Matrix.CreateRotationY(cosmetic.Rotation.Y) *
+                                  Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) *
+                                  Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition) *
+                                  Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) *
+                                  Matrix.CreateTranslation(0, 0.2f, 0);
+                            effect.View = View;
+                            effect.Projection = Projection;
+
+                            effect.TextureEnabled = true;
+                            effect.Texture = i == 0
+                                ? cos3d.ModelTexture
+                                : GameResources.GetGameResource<Texture2D>("Assets/textures/ingame/block_shadow_h");
+
+                            effect.SetDefaultGameLighting_IngameEntities();
+                        }
+
+                        // Render submesh.
+                        mesh.Draw();
                     }
                 }
             }
         }
+
+        if (!DebugUtils.DebuggingEnabled) return;
+
         var info = new string[] {
             //$"Team: {TeamID.Collection.GetKey(Team)}",
             //$"Shell Owned / Max: {OwnedShellCount} / {Properties.ShellLimit}",
@@ -1049,9 +1081,9 @@ public class TankFootprint
 {
     public static bool ShouldTracksFade;
 
-    public const int MAX_FOOTPRINTS = 100000;
+    private static int MaxFootprintsAllowed => TankGame.Settings.TankFootprintLimit;
 
-    public static TankFootprint[] footprints = new TankFootprint[TankGame.Settings.TankFootprintLimit];
+    public static TankFootprint[] footprints = new TankFootprint[MaxFootprintsAllowed];
 
     public Vector3 Position;
     public float rotation;
@@ -1075,8 +1107,36 @@ public class TankFootprint
         this.rotation = rotation;
         alternate = alt;
         this.owner = owner;
-        if (total_treads_placed + 1 > MAX_FOOTPRINTS)
-            footprints[Array.IndexOf(footprints, footprints.Min(x => x.lifeTime > 0))] = null; // i think?
+        if (total_treads_placed + 1 >= MaxFootprintsAllowed) {
+            // Old implementation of this code in case of any regressions.
+            // footprints[Array.IndexOf(footprints, footprints.Min(x => x.lifeTime > 0))] = null; // i think?
+            
+            Span<TankFootprint> footPrints = footprints;
+            ref var footprintSearchSpace = ref MemoryMarshal.GetReference(footPrints);
+
+            var lifeTimeOfCurrentOldest = 0L;
+            var indexOfOldest = 0;
+            
+            // Gets the index of the tank footprint that has the longest life, then sets it as null, deleting it (?)
+            for (var i = 1; i < footPrints.Length; i++) {
+                if (footPrints.Length <= i) break;
+                var currentFprint = Unsafe.Add(ref footprintSearchSpace, i);
+
+                if (currentFprint == null) continue;
+                
+                
+                if (currentFprint.lifeTime <= lifeTimeOfCurrentOldest) continue;
+
+                indexOfOldest = i;
+                lifeTimeOfCurrentOldest = currentFprint.lifeTime;
+            }
+
+            if (footPrints[indexOfOldest] != null && !footPrints[indexOfOldest]._destroy) {
+                footPrints[indexOfOldest]?.Remove(); // The particle will (on next update) Destroy itself and remove itself from the array.
+                footprints[indexOfOldest] = null;
+                total_treads_placed--;
+            }
+        }
 
         alternate = alt;
         id = total_treads_placed;
@@ -1092,24 +1152,22 @@ public class TankFootprint
         track.Scale = new(0.5f, 0.55f, 0.5f);
         track.Alpha = 0.7f;
         track.Color = Color.White;
-        track.UniqueBehavior = (a) =>
-        {
+        track.UniqueBehavior = track => {
             track.Position = Position;
             track.Pitch = rotation;
+            
             if (ShouldTracksFade)
                 track.Alpha -= 0.001f;
-            if (track.Alpha <= 0 || _destroy)
-            {
+            
+            if (track.Alpha <= 0 || _destroy) {
                 track.Destroy();
-                footprints[id] = null;
-                total_treads_placed--;
             }
 
             track.Position = Position;
             track.Pitch = rotation;
         };
 
-        footprints[total_treads_placed] = this;
+        footprints[Array.IndexOf(footprints, null)] = this;
 
         total_treads_placed++;
 
@@ -1126,7 +1184,7 @@ public class TankFootprint
 }
 public class TankDeathMark
 {
-    public const int MAX_DEATH_MARKS = 1000;
+    private const int MAX_DEATH_MARKS = 1000;
 
     public static TankDeathMark[] deathMarks = new TankDeathMark[MAX_DEATH_MARKS];
 

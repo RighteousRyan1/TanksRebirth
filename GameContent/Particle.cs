@@ -95,7 +95,7 @@ namespace TanksRebirth.GameContent
         {
             Position = position;
             System = system;
-            int index = Array.IndexOf(GameHandler.ParticleSystem.CurrentParticles, GameHandler.ParticleSystem.CurrentParticles.First(particle => particle == null));
+            int index = Array.IndexOf(GameHandler.ParticleSystem.CurrentParticles, null);
 
             Id = index;
 

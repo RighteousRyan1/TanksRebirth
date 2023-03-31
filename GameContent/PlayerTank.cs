@@ -138,17 +138,16 @@ namespace TanksRebirth.GameContent
             if (copyTier == TankID.None)
                 ApplyDefaults(ref Properties);
 
-            int index2 = Array.IndexOf(GameHandler.AllTanks, GameHandler.AllTanks.First(tank => tank is null));
+            var newTankIndex = Array.IndexOf(GameHandler.AllTanks, null);
 
-            WorldId = index2;
+            WorldId = newTankIndex;
 
-            GameHandler.AllTanks[index2] = this;
+            GameHandler.AllTanks[newTankIndex] = this;
 
             base.Initialize();
         }
 
-        public override void ApplyDefaults(ref TankProperties properties)
-        {
+        public sealed override void ApplyDefaults(ref TankProperties properties)  {
             properties.TreadVolume = 0.2f;
             properties.ShellCooldown = 5; // 5
             properties.ShootStun = 5; // 5
@@ -170,19 +169,18 @@ namespace TanksRebirth.GameContent
 
             properties.ShellHoming = new();
 
-            properties.DestructionColor = PlayerType switch
-            {
+            properties.DestructionColor = PlayerType switch {
                 PlayerID.Blue => Color.Blue,
                 PlayerID.Red => Color.Crimson,
                 PlayerID.GreenPlr => Color.Lime,
                 PlayerID.YellowPlr => Color.Yellow,
-                _ => throw new Exception("What did you do?")
+                _ => throw new Exception($"The player type with number \"{PlayerType}\" is not mapped to a color!"),
             };
+            
             base.ApplyDefaults(ref properties);
         }
 
-        public override void Update()
-        {
+        public override void Update()  {
             /*if (Input.KeyJustPressed(Keys.P))
                 foreach (var m in TankDeathMark.deathMarks)
                     m?.ResurrectTank();*/

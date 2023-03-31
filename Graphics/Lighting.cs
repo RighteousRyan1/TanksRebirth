@@ -3,119 +3,113 @@ using Microsoft.Xna.Framework.Graphics;
 using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.Internals;
+using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Utilities;
 
-namespace TanksRebirth.Graphics
+namespace TanksRebirth.Graphics;
+/// <summary>Represents a system in which to render lighting for the world.</summary>
+public static class Lighting
 {
-    /// <summary>Represents a system in which to render lighting for the world.</summary>
-    public static class Lighting
+    /// <summary>A custom time of day for the lighting and brightness.</summary>
+    public struct LightProfile
     {
-        /// <summary>A custom time of day for the lighting and brightness.</summary>
-        public struct LightProfile
-        {
-            public float Brightness;
-            public Color Color;
+        public float Brightness;
+        public Color Color;
 
-            public bool IsNight;
+        public bool IsNight;
 
-            public float SunPower;
-            public LightProfile(float brightness, Color color)
-            {
-                Brightness = brightness;
-                Color = color;
+        public float SunPower;
+        public LightProfile(float brightness, Color color) {
+            Brightness = brightness;
+            Color = color;
 
-                IsNight = true;
+            IsNight = true;
 
-                SunPower = 0f;
-            }
-
-            public void Apply(bool applySunPower)
-            {
-                LightColor = Color;
-                ColorBrightness = Brightness;
-
-                if (applySunPower)
-                    LightPower = SunPower;
-                else
-                    LightPower = 0f;
-
-                if (Lighting.IsNight != IsNight)
-                    TankMusicSystem.SnowLoop = new("Snow Loop", IsNight ? "Content/Assets/sounds/ambient/forestnight" : "Content/Assets/sounds/ambient/forestday", 1f);
-
-                Lighting.IsNight = IsNight;
-            }
+            SunPower = 0f;
         }
 
-        public static bool AccurateShadows = false;
+        public void Apply(bool applySunPower) {
+            LightColor = Color;
+            ColorBrightness = Brightness;
 
-        public static Vector3 AccurateLightingDirection = new(0.25f, 1, -0.5f);
+            LightPower = applySunPower ? SunPower : 0f;
 
-        public static Color LightColor = DefaultLightingColor;
-        public static float ColorBrightness = 1f;
+            if (Lighting.IsNight != IsNight)
+                TankMusicSystem.SnowLoop = new OggMusic("Snow Loop", IsNight ? "Content/Assets/sounds/ambient/forestnight" : "Content/Assets/sounds/ambient/forestday", 1f);
 
-        public static float LightPower = 0f;
-        public static bool IsNight { get; set; }
-
-        public static LightProfile Dawn => new(0.5f, new Color(0, 25, 0)) { IsNight = true, SunPower = 0.6f };
-
-        public static LightProfile Noon => new(0.65f, new Color(200, 200, 200)) { IsNight = false, SunPower = 1f };
-
-        public static LightProfile Dusk => new(0.4f, new Color(255, 165, 0)) { IsNight = true, SunPower = 0.7f };
-
-        public static LightProfile Midnight => new(0.15f, new Color(0, 0, 0)) { IsNight = true, SunPower = 0.5f };
-
-        public static Color DefaultLightingColor => new Vector3(0.05333332f, 0.09882354f, 0.1819608f).ToColor();
-
-        public static void SetDefaultGameLighting(this BasicEffect effect)
-        {
-            effect.LightingEnabled = true;
-            effect.PreferPerPixelLighting = TankGame.Settings.PerPixelLighting;
-            effect.EnableDefaultLighting();
-
-            effect.TextureEnabled = true;
-
-            effect.DirectionalLight0.Enabled = true;
-            effect.DirectionalLight1.Enabled = false;
-            effect.DirectionalLight2.Enabled = false;
-
-            //var ting = MouseUtils.MousePosition.X / (WindowUtils.WindowWidth + WindowUtils.WindowWidth / 2);
-            //var ting2 = MouseUtils.MousePosition.Y / (WindowUtils.WindowHeight + WindowUtils.WindowHeight / 2);
-
-            var lightingConstant = 0.9f;
-
-            //effect.DirectionalLight0.Direction = new Vector3(0, -0.7f, -0.7f);
-            //effect.DirectionalLight1.Direction = new Vector3(0, -0.7f, 0.7f);
-            effect.DirectionalLight0.Direction = Vector3.Down * lightingConstant; //+ new Vector3(ting, 0, ting2);
-
-            effect.SpecularColor = new Vector3(LightPower) * (IsNight ? new Vector3(1) : LightColor.ToVector3());
-
-            effect.AmbientLightColor = LightColor.ToVector3();
-
-            effect.DiffuseColor = new(ColorBrightness);
+            Lighting.IsNight = IsNight;
         }
+    }
 
-        public static void SetDefaultGameLighting_IngameEntities(this BasicEffect effect, float powerMultiplier = 1f, float ambientMultiplier = 1f, bool specular = false)
-        {
-            effect.LightingEnabled = true;
-            effect.PreferPerPixelLighting = TankGame.Settings.PerPixelLighting;
-            effect.EnableDefaultLighting();
+    public static bool AccurateShadows = false;
 
-            effect.DirectionalLight0.Enabled = true;
-            effect.DirectionalLight1.Enabled = false;
-            effect.DirectionalLight2.Enabled = false;
+    public static readonly Vector3 AccurateLightingDirection = new(0.25f, 1, -0.5f);
 
-            //var ting = MouseUtils.MousePosition.X / (WindowUtils.WindowWidth - WindowUtils.WindowWidth / 2);
-            //var ting2 = MouseUtils.MousePosition.Y / (WindowUtils.WindowHeight - WindowUtils.WindowHeight / 2);
+    private static Color LightColor = DefaultLightingColor;
+    private static float ColorBrightness = 1f;
 
-            var lightingConstant = 1f * powerMultiplier;
+    private static float LightPower = 0f;
+    private static bool IsNight { get; set; }
 
-            effect.DirectionalLight0.Direction = new Vector3(0, -1f, 0) * lightingConstant; //+ new Vector3(ting, 0, ting2);
+    public static readonly LightProfile Dawn = new(0.5f, new Color(0, 25, 0)) { IsNight = true, SunPower = 0.6f };
 
-            effect.SpecularColor = specular ? (Color.White.ToVector3() * LightPower) : new Vector3(LightPower) * (IsNight ? new Vector3(1) : LightColor.ToVector3());
+    public static readonly LightProfile Noon = new(0.65f, new Color(200, 200, 200)) { IsNight = false, SunPower = 1f };
 
-            effect.AmbientLightColor = LightColor.ToVector3() * ambientMultiplier;
+    public static readonly LightProfile Dusk = new(0.4f, new Color(255, 165, 0)) { IsNight = true, SunPower = 0.7f };
 
-            effect.DiffuseColor = new(ColorBrightness);
-        }
+    public static readonly LightProfile Midnight = new(0.15f, new Color(0, 0, 0)) { IsNight = true, SunPower = 0.5f };
+
+    private static readonly Color DefaultLightingColor = new Vector3(0.05333332f, 0.09882354f, 0.1819608f).ToColor();
+
+    public static void SetDefaultGameLighting(this BasicEffect effect) {
+        const float lightingConstant = 0.9f;
+
+        effect.LightingEnabled = true;
+        effect.PreferPerPixelLighting = TankGame.Settings.PerPixelLighting;
+        effect.EnableDefaultLighting();
+
+        effect.TextureEnabled = true;
+
+        effect.DirectionalLight0.Enabled = true;
+        effect.DirectionalLight1.Enabled = false;
+        effect.DirectionalLight2.Enabled = false;
+
+        //var ting = MouseUtils.MousePosition.X / (WindowUtils.WindowWidth + WindowUtils.WindowWidth / 2);
+        //var ting2 = MouseUtils.MousePosition.Y / (WindowUtils.WindowHeight + WindowUtils.WindowHeight / 2);
+
+
+        //effect.DirectionalLight0.Direction = new Vector3(0, -0.7f, -0.7f);
+        //effect.DirectionalLight1.Direction = new Vector3(0, -0.7f, 0.7f);
+        effect.DirectionalLight0.Direction = Vector3.Down * lightingConstant; //+ new Vector3(ting, 0, ting2);
+
+        effect.SpecularColor = new Vector3(LightPower) * (IsNight ? new Vector3(1) : LightColor.ToVector3());
+
+        effect.AmbientLightColor = LightColor.ToVector3();
+
+        effect.DiffuseColor = new(ColorBrightness);
+    }
+
+    public static void SetDefaultGameLighting_IngameEntities(this BasicEffect effect, float powerMultiplier = 1f, float ambientMultiplier = 1f, bool specular = false)
+    {
+        effect.LightingEnabled = true;
+        effect.PreferPerPixelLighting = TankGame.Settings.PerPixelLighting;
+        effect.EnableDefaultLighting();
+
+        effect.DirectionalLight0.Enabled = true;
+        effect.DirectionalLight1.Enabled = false;
+        effect.DirectionalLight2.Enabled = false;
+
+        //var ting = MouseUtils.MousePosition.X / (WindowUtils.WindowWidth - WindowUtils.WindowWidth / 2);
+        //var ting2 = MouseUtils.MousePosition.Y / (WindowUtils.WindowHeight - WindowUtils.WindowHeight / 2);
+
+        var lightingConstant = 1f * powerMultiplier;
+
+        effect.DirectionalLight0.Direction = new Vector3(0, -1f, 0) * lightingConstant; //+ new Vector3(ting, 0, ting2);
+
+        effect.SpecularColor = specular ? (Color.White.ToVector3() * LightPower) : new Vector3(LightPower) * (IsNight ? new Vector3(1) : LightColor.ToVector3());
+
+        effect.AmbientLightColor = LightColor.ToVector3() * ambientMultiplier;
+
+        effect.DiffuseColor = new(ColorBrightness);
     }
 }

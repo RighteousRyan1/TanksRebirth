@@ -697,7 +697,7 @@ namespace TanksRebirth.GameContent
         #region Extra
         public static void RenderUI()
         {
-            foreach (var element in UIElement.AllUIElements.ToList())
+            foreach (var element in UIElement.AllUIElements)
             {
                 // element.Position = Vector2.Transform(element.Position, UIMatrix * Matrix.CreateTranslation(element.Position.X, element.Position.Y, 0));
                 if (element.Parent != null)
@@ -711,7 +711,7 @@ namespace TanksRebirth.GameContent
                 if (element.HasScissor)
                     TankGame.SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: TankGame.DefaultRasterizer);
             }
-            foreach (var element in UIElement.AllUIElements.ToList())
+            foreach (var element in UIElement.AllUIElements)
                 element?.DrawTooltips(TankGame.SpriteRenderer);
         }
         private static int _oldelta;

@@ -849,7 +849,16 @@ namespace TanksRebirth
                                         //if (ai.TargetTankRotation <= 0)
                                             //ai.TargetTankRotation += MathHelper.Tau;
                                     }
-                                     if (tnk.TankRotation <= -MathHelper.Tau)
+                                    else {
+                                        // TODO: This solution causes the player tank to stutter if the rotation is **TOO FAST**.
+                                        // Preferably coming up with a better solution than this is better
+                                        tnk.TargetTankRotation -= MathHelper.PiOver2;
+
+                                        if (tnk.TargetTankRotation <= MathHelper.Tau)
+                                            tnk.TargetTankRotation += MathHelper.Tau;
+
+                                    }
+                                    if (tnk.TankRotation <= -MathHelper.Tau)
                                         tnk.TankRotation += MathHelper.Tau;
 
                                     if (tnk.TurretRotation <= -MathHelper.Tau)
@@ -984,15 +993,15 @@ namespace TanksRebirth
 
                     DebugUtils.DrawDebugString(SpriteRenderer, $"{tier}: {count}", new(8, WindowUtils.WindowHeight * 0.05f + (14f * (i + 1))), 2);
                 }
-
-                DebugUtils.DrawDebugString(SpriteRenderer, $"Lives / StartingLives: {PlayerTank.Lives} / {PlayerTank.StartingLives}" +
-                    $"\nKillCount: {PlayerTank.KillCount}" +
-                    $"\n\nSaveable Game Data:" +
-                    $"\nTotal / Bullet / Mine / Bounce Kills: {GameData.TotalKills} / {GameData.BulletKills} / {GameData.MineKills} / {GameData.BounceKills}" +
-                    $"\nTotal Deaths: {GameData.Deaths}" +
-                    $"\nTotal Suicides: {GameData.Suicides}" +
-                    $"\nMissions Completed: {GameData.MissionsCompleted}" +
-                    $"\nExp Level / DecayMultiplier: {GameData.ExpLevel} / {GameData.UniversalExpMultiplier}", new(8, WindowUtils.WindowHeight * 0.4f), 2);
+                if (DebugUtils.DebuggingEnabled)
+                    DebugUtils.DrawDebugString(SpriteRenderer, $"Lives / StartingLives: {PlayerTank.Lives} / {PlayerTank.StartingLives}" +
+                                                               $"\nKillCount: {PlayerTank.KillCount}" +
+                                                               $"\n\nSaveable Game Data:" +
+                                                               $"\nTotal / Bullet / Mine / Bounce Kills: {GameData.TotalKills} / {GameData.BulletKills} / {GameData.MineKills} / {GameData.BounceKills}" +
+                                                               $"\nTotal Deaths: {GameData.Deaths}" +
+                                                               $"\nTotal Suicides: {GameData.Suicides}" +
+                                                               $"\nMissions Completed: {GameData.MissionsCompleted}" +
+                                                               $"\nExp Level / DecayMultiplier: {GameData.ExpLevel} / {GameData.UniversalExpMultiplier}", new(8, WindowUtils.WindowHeight * 0.4f), 2);
 
                 if (SpeedrunMode)
                 {
@@ -1017,53 +1026,60 @@ namespace TanksRebirth
                     }
                 }
 
-                for (int i = 0; i < PlayerTank.TankKills.Count; i++)
-                {
-                    //var tier = GameData.KillCountsTiers[i];
-                    //var count = GameData.KillCountsCount[i];
-                    var tier = PlayerTank.TankKills.ElementAt(i).Key;
-                    var count = PlayerTank.TankKills.ElementAt(i).Value;
+                if (DebugUtils.DebuggingEnabled) {
+                    for (int i = 0; i < PlayerTank.TankKills.Count; i++) {
+                        //var tier = GameData.KillCountsTiers[i];
+                        //var count = GameData.KillCountsCount[i];
+                        var tier = PlayerTank.TankKills.ElementAt(i).Key;
+                        var count = PlayerTank.TankKills.ElementAt(i).Value;
 
-                    DebugUtils.DrawDebugString(SpriteRenderer, $"{tier}: {count}", new(WindowUtils.WindowWidth * 0.9f, 8 + (14f * (i + 1))), 2);
+                        DebugUtils.DrawDebugString(SpriteRenderer, $"{tier}: {count}", new(WindowUtils.WindowWidth * 0.9f, 8 + (14f * (i + 1))), 2);
+                    }
+                    
+                    foreach (var body in Tank.CollisionsWorld.BodyList) {
+                        DebugUtils.DrawDebugString(SpriteRenderer, $"BODY",
+                            MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(body.Position.X * Tank.UNITS_PER_METER, 0, body.Position.Y * Tank.UNITS_PER_METER), TankGame.GameView, TankGame.GameProjection), centered: true);
+                    }
+
+                    for (int i = 0; i < VanillaAchievements.Repository.GetAchievements().Count; i++) {
+                        var achievement = VanillaAchievements.Repository.GetAchievements()[i];
+
+                        DebugUtils.DrawDebugString(SpriteRenderer, $"{achievement.Name}: {(achievement.IsComplete ? "Complete" : "Incomplete")}",
+                            new Vector2(8, 24 + (i * 20)), level: DebugUtils.Id.AchievementData, centered: false);
+                    }
                 }
 
-                foreach (var body in Tank.CollisionsWorld.BodyList.ToList())
-                {
-                    DebugUtils.DrawDebugString(SpriteRenderer, $"BODY",
-                        MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(body.Position.X * Tank.UNITS_PER_METER, 0, body.Position.Y * Tank.UNITS_PER_METER), TankGame.GameView, TankGame.GameProjection), centered: true);
-                }
-
-                for (int i = 0; i < VanillaAchievements.Repository.GetAchievements().Count; i++)
-                {
-                    var achievement = VanillaAchievements.Repository.GetAchievements()[i];
-                    DebugUtils.DrawDebugString(SpriteRenderer, $"{achievement.Name}: {(achievement.IsComplete ? "Complete" : "Incomplete")}",
-                        new Vector2(8, 24 + (i * 20)), level: DebugUtils.Id.AchievementData, centered: false);
-                }
 
                 #region TankInfo
-                DebugUtils.DrawDebugString(SpriteRenderer, "Spawn Tank With Info:", WindowUtils.WindowTop + new Vector2(0, 8), 3, centered: true);
-                DebugUtils.DrawDebugString(SpriteRenderer, $"Tier: {TankID.Collection.GetKey(GameHandler.tankToSpawnType)}", WindowUtils.WindowTop + new Vector2(0, 24), 3, centered: true);
-                DebugUtils.DrawDebugString(SpriteRenderer, $"Team: {TeamID.Collection.GetKey(GameHandler.tankToSpawnTeam)}", WindowUtils.WindowTop + new Vector2(0, 40), 3, centered: true);
-                DebugUtils.DrawDebugString(SpriteRenderer, $"CubeStack: {GameHandler.blockHeight} | CubeType: {BlockID.Collection.GetKey(GameHandler.blockType)}", WindowUtils.WindowBottom - new Vector2(0, 20), 3, centered: true);
+                
+                if (DebugUtils.DebuggingEnabled) {
+                    DebugUtils.DrawDebugString(SpriteRenderer, "Spawn Tank With Info:", WindowUtils.WindowTop + new Vector2(0, 8), 3, centered: true);
+                    DebugUtils.DrawDebugString(SpriteRenderer, $"Tier: {TankID.Collection.GetKey(GameHandler.tankToSpawnType)}", WindowUtils.WindowTop + new Vector2(0, 24), 3, centered: true);
+                    DebugUtils.DrawDebugString(SpriteRenderer, $"Team: {TeamID.Collection.GetKey(GameHandler.tankToSpawnTeam)}", WindowUtils.WindowTop + new Vector2(0, 40), 3, centered: true);
+                    DebugUtils.DrawDebugString(SpriteRenderer, $"CubeStack: {GameHandler.blockHeight} | CubeType: {BlockID.Collection.GetKey(GameHandler.blockType)}", WindowUtils.WindowBottom - new Vector2(0, 20), 3, centered: true);
 
-                DebugUtils.DrawDebugString(SpriteRenderer, $"HighestTier: {AITank.GetHighestTierActive()}", new(10, WindowUtils.WindowHeight * 0.26f), 1);
-                // DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"CurSong: {(Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f) != null ? Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f).Name : "N/A")}", new(10, WindowUtils.WindowHeight - 100), 1);
-                for (int i = 0; i < TankID.Collection.Count; i++)
-                    DebugUtils.DrawDebugString(SpriteRenderer, $"{TankID.Collection.GetKey(i)}: {AITank.GetTankCountOfType(i)}", new(10, WindowUtils.WindowHeight * 0.3f + (i * 20)), 1);
+                    DebugUtils.DrawDebugString(SpriteRenderer, $"HighestTier: {AITank.GetHighestTierActive()}", new(10, WindowUtils.WindowHeight * 0.26f), 1);
+                    // DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"CurSong: {(Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f) != null ? Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f).Name : "N/A")}", new(10, WindowUtils.WindowHeight - 100), 1);
 
+                    for (int i = 0; i < TankID.Collection.Count; i++)
+                        DebugUtils.DrawDebugString(SpriteRenderer, $"{TankID.Collection.GetKey(i)}: {AITank.GetTankCountOfType(i)}", new(10, WindowUtils.WindowHeight * 0.3f + (i * 20)), 1);
+                }
+                
                 GameHandler.tankToSpawnType = MathHelper.Clamp(GameHandler.tankToSpawnType, 2, TankID.Collection.Count - 1);
                 GameHandler.tankToSpawnTeam = MathHelper.Clamp(GameHandler.tankToSpawnTeam, 0, TeamID.Collection.Count - 1);
                 #endregion
 
-                DebugUtils.DrawDebugString(SpriteRenderer, $"Logic Time: {LogicTime.TotalMilliseconds:0.00}ms" +
-                    $"\nLogic FPS: {LogicFPS}" +
-                    $"\n\nRender Time: {RenderTime.TotalMilliseconds:0.00}ms" +
-                    $"\nRender FPS: {RenderFPS}" +
-                    $"\nKeys U + I: Unload All Mods" +
-                    $"\nKeys O + P: Reload All Mods", new(10, 500));
+                if (DebugUtils.DebuggingEnabled) {
+                    DebugUtils.DrawDebugString(SpriteRenderer, $"Logic Time: {LogicTime.TotalMilliseconds:0.00}ms" +
+                                                               $"\nLogic FPS: {LogicFPS}" +
+                                                               $"\n\nRender Time: {RenderTime.TotalMilliseconds:0.00}ms" +
+                                                               $"\nRender FPS: {RenderFPS}" +
+                                                               $"\nKeys U + I: Unload All Mods" +
+                                                               $"\nKeys O + P: Reload All Mods", new(10, 500));
 
-                DebugUtils.DrawDebugString(SpriteRenderer, $"Current Mission: {GameProperties.LoadedCampaign.CurrentMission.Name}\nCurrent Campaign: {GameProperties.LoadedCampaign.MetaData.Name}", WindowUtils.WindowBottomLeft - new Vector2(-4, 40), 3, centered: false);
-
+                    DebugUtils.DrawDebugString(SpriteRenderer, $"Current Mission: {GameProperties.LoadedCampaign.CurrentMission.Name}\nCurrent Campaign: {GameProperties.LoadedCampaign.MetaData.Name}", WindowUtils.WindowBottomLeft - new Vector2(-4, 40), 3, centered: false);
+                }
+                
                 #endregion
                 SpriteRenderer.End();
 
