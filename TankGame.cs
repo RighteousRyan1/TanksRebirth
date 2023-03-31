@@ -849,6 +849,15 @@ namespace TanksRebirth
                                         //if (ai.TargetTankRotation <= 0)
                                             //ai.TargetTankRotation += MathHelper.Tau;
                                     }
+                                    else {
+                                        // TODO: This solution causes the player tank to stutter if the rotation is **TOO FAST**.
+                                        // Preferably coming up with a better solution than this is better
+                                        tnk.TargetTankRotation -= MathHelper.PiOver2;
+
+                                        if (tnk.TargetTankRotation <= MathHelper.Tau)
+                                            tnk.TargetTankRotation += MathHelper.Tau;
+
+                                    }
                                     if (tnk.TankRotation <= -MathHelper.Tau)
                                         tnk.TankRotation += MathHelper.Tau;
 
