@@ -849,7 +849,7 @@ namespace TanksRebirth
                                         //if (ai.TargetTankRotation <= 0)
                                             //ai.TargetTankRotation += MathHelper.Tau;
                                     }
-                                    if (tnk.TankRotation <= -MathHelper.Tau)
+                                     if (tnk.TankRotation <= -MathHelper.Tau)
                                         tnk.TankRotation += MathHelper.Tau;
 
                                     if (tnk.TurretRotation <= -MathHelper.Tau)
