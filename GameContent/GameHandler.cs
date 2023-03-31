@@ -912,7 +912,7 @@ namespace TanksRebirth.GameContent
             var x = new AITank(tier);
             x.TargetTankRotation = rot;
             x.TankRotation = rot;
-            x.TurretRotation = -rot;
+            x.TurretRotation = rot;
 
             x.Team = team;
             x.Dead = false;

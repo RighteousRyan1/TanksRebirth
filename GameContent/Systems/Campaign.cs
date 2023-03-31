@@ -124,8 +124,8 @@ namespace TanksRebirth.GameContent.Systems
 
                         tank.Position = template.Position;
                         tank.TankRotation = template.Rotation;
-                        tank.TargetTankRotation = -template.Rotation;
-                        tank.TurretRotation = template.Rotation;
+                        tank.TargetTankRotation = template.Rotation;
+                        tank.TurretRotation = -template.Rotation;
                         tank.Dead = false;
                         tank.Team = template.Team;
                         if (GameProperties.ShouldMissionsProgress)
