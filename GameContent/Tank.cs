@@ -1081,9 +1081,9 @@ public class TankFootprint
 {
     public static bool ShouldTracksFade;
 
-    public const int MAX_FOOTPRINTS = 100000;
+    private static int MaxFootprintsAllowed => TankGame.Settings.TankFootprintLimit;
 
-    public static TankFootprint[] footprints = new TankFootprint[TankGame.Settings.TankFootprintLimit];
+    public static TankFootprint[] footprints = new TankFootprint[MaxFootprintsAllowed];
 
     public Vector3 Position;
     public float rotation;
@@ -1107,8 +1107,36 @@ public class TankFootprint
         this.rotation = rotation;
         alternate = alt;
         this.owner = owner;
-        if (total_treads_placed + 1 > MAX_FOOTPRINTS)
-            footprints[Array.IndexOf(footprints, footprints.Min(x => x.lifeTime > 0))] = null; // i think?
+        if (total_treads_placed + 1 >= MaxFootprintsAllowed) {
+            // Old implementation of this code in case of any regressions.
+            // footprints[Array.IndexOf(footprints, footprints.Min(x => x.lifeTime > 0))] = null; // i think?
+            
+            Span<TankFootprint> footPrints = footprints;
+            ref var footprintSearchSpace = ref MemoryMarshal.GetReference(footPrints);
+
+            var lifeTimeOfCurrentOldest = 0L;
+            var indexOfOldest = 0;
+            
+            // Gets the index of the tank footprint that has the longest life, then sets it as null, deleting it (?)
+            for (var i = 1; i < footPrints.Length; i++) {
+                if (footPrints.Length <= i) break;
+                var currentFprint = Unsafe.Add(ref footprintSearchSpace, i);
+
+                if (currentFprint == null) continue;
+                
+                
+                if (currentFprint.lifeTime <= lifeTimeOfCurrentOldest) continue;
+
+                indexOfOldest = i;
+                lifeTimeOfCurrentOldest = currentFprint.lifeTime;
+            }
+
+            if (footPrints[indexOfOldest] != null && !footPrints[indexOfOldest]._destroy) {
+                footPrints[indexOfOldest]?.Remove(); // The particle will (on next update) Destroy itself and remove itself from the array.
+                footprints[indexOfOldest] = null;
+                total_treads_placed--;
+            }
+        }
 
         alternate = alt;
         id = total_treads_placed;
@@ -1133,15 +1161,13 @@ public class TankFootprint
             
             if (track.Alpha <= 0 || _destroy) {
                 track.Destroy();
-                footprints[id] = null;
-                total_treads_placed--;
             }
 
             track.Position = Position;
             track.Pitch = rotation;
         };
 
-        footprints[total_treads_placed] = this;
+        footprints[Array.IndexOf(footprints, null)] = this;
 
         total_treads_placed++;
 
