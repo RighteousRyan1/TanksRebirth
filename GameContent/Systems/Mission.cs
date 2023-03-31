@@ -158,33 +158,33 @@ namespace TanksRebirth.GameContent.Systems
         public static void WriteCurrent(BinaryWriter writer, string name)
         {
             /* File Order / Format
-                * 1) File Header (TANK in ASCII) (byte[])
-                * 2) Level Editor version (to check if older levels might cause anomalies!)
-                * 3) Name (string)
-                * 
-                * 4) Total Tanks Used (int)
-                 * 
-                * 5) Storing of Tanks (their respective templates)
-                 *  - IsPlayer (bool)
-                *  - X (float)
-                *  - Y (float)
-                *  - Rotation (float)
-                *  - AiType (byte) - should be as default if it's a player.
-                *  - PlayerType (byte) - should be as default if it's an AI.
-                *  - Team (byte)
-                *  
-                * 6) Total Blocks Used (int)
-                *  
-                * 7) Storing of Blocks (their respective templates)
-                *  - Type (byte)
-                *  - Stack (sbyte)
-                *  - X (float)
-                *  - Y (float)
-                *  - TpLink (sbyte) (VERSION 2 or GREATER)
-                *  
-                *  8) Extras
-                *   - Note (string) (VERSION 3 OR GREATER) (NOT IMPLEMENTED YET)
-                */
+             * 1) File Header (TANK in ASCII) (byte[])
+             * 2) Level Editor version (to check if older levels might cause anomalies!)
+             * 3) Name (string)
+             * 
+             * 4) Total Tanks Used (int)
+             * 
+             * 5) Storing of Tanks (their respective templates)
+             *  - IsPlayer (bool)
+             *  - X (float)
+             *  - Y (float)
+             *  - Rotation (float)
+             *  - AiType (byte) - should be as default if it's a player.
+             *  - PlayerType (byte) - should be as default if it's an AI.
+             *  - Team (byte)
+             *  
+             * 6) Total Blocks Used (int)
+             *  
+             * 7) Storing of Blocks (their respective templates)
+             *  - Type (byte)
+             *  - Stack (sbyte)
+             *  - X (float)
+             *  - Y (float)
+             *  - TpLink (sbyte) (VERSION 2 or GREATER)
+             *  
+             *  8) Extras
+             *   - Note (string) (VERSION 3 OR GREATER) (NOT IMPLEMENTED YET)
+             */
 
             writer.Write(LevelEditor.LevelFileHeader);
             writer.Write(LevelEditor.LevelEditorVersion);
@@ -192,30 +192,35 @@ namespace TanksRebirth.GameContent.Systems
 
             int totalTanks = GameHandler.AllTanks.Count(tnk => tnk is not null && !tnk.Dead);
             writer.Write(totalTanks);
+            
             for (int i = 0; i < GameHandler.AllTanks.Length; i++)
             {
                 var tank = GameHandler.AllTanks[i];
-                if (tank is not null && !tank.Dead)
-                {
-                    var temp = new TankTemplate();
-                    if (tank is AITank ai)
+                if (tank is null || tank.Dead) continue;
+                
+                var temp = new TankTemplate();
+                
+                switch (tank) {
+                    case AITank ai:
                         temp.AiTier = ai.AiTankType;
-                    else if (tank is PlayerTank player)
+                        break;
+                    case PlayerTank player:
                         temp.PlayerType = player.PlayerType;
-
-                    temp.IsPlayer = tank is PlayerTank;
-                    temp.Position = tank.Position;
-                    temp.Rotation = tank.TankRotation;
-                    temp.Team = tank.Team;
-
-                    writer.Write(temp.IsPlayer);
-                    writer.Write(temp.Position.X);
-                    writer.Write(temp.Position.Y);
-                    writer.Write(temp.Rotation);
-                    writer.Write((byte)temp.AiTier);
-                    writer.Write((byte)temp.PlayerType);
-                    writer.Write((byte)temp.Team);
+                        break;
                 }
+
+                temp.IsPlayer = tank is PlayerTank;
+                temp.Position = tank.Position;
+                temp.Rotation = tank.TankRotation;
+                temp.Team = tank.Team;
+
+                writer.Write(temp.IsPlayer);
+                writer.Write(temp.Position.X);
+                writer.Write(temp.Position.Y);
+                writer.Write(temp.Rotation);
+                writer.Write((byte)temp.AiTier);
+                writer.Write((byte)temp.PlayerType);
+                writer.Write((byte)temp.Team);
             }
 
             int totalBlocks = Block.AllBlocks.Count(x => x is not null);
@@ -390,7 +395,7 @@ namespace TanksRebirth.GameContent.Systems
                     var isPlayer = reader.ReadBoolean();
                     var x = reader.ReadSingle();
                     var y = reader.ReadSingle();
-                    var rotation = reader.ReadSingle(); // i genuinely hate having to make this negative :(
+                    var rotation = -reader.ReadSingle(); // i genuinely hate having to make this negative :(
                     var tier = reader.ReadByte();
                     var pType = reader.ReadByte();
                     var team = reader.ReadByte();
