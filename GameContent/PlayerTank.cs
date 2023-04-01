@@ -192,7 +192,9 @@ namespace TanksRebirth.GameContent
             // 3/4pi = left
 
             base.Update();
-
+            
+            if (LevelEditor.Active) return;
+            
             if (NetPlay.IsClientMatched(PlayerId))
                 Client.SyncPlayerTank(this);
 

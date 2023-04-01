@@ -118,6 +118,15 @@ namespace TanksRebirth.GameContent.Systems
                     TrackedSpawnPoints[i].Item1 = LoadedMission.Tanks[i].Position;
                     TrackedSpawnPoints[i].Item2 = true;
                 }
+
+                while (template.Rotation < 0) {
+                    template.Rotation += MathHelper.Tau;
+                }
+                
+                while (template.Rotation > MathHelper.Tau) {
+                    template.Rotation -= MathHelper.Tau;
+                }
+                
                 if (!template.IsPlayer)
                 {
                     if (TrackedSpawnPoints[i].Item2)
@@ -127,7 +136,7 @@ namespace TanksRebirth.GameContent.Systems
                         tank.Position = template.Position;
                         tank.TankRotation = MathF.Round(template.Rotation, roundingFactor);
                         tank.TargetTankRotation = MathF.Round(template.Rotation, roundingFactor);
-                        tank.TurretRotation = MathF.Round(template.Rotation, roundingFactor);
+                        tank.TurretRotation = MathF.Round(-template.Rotation, roundingFactor);
                         tank.Dead = false;
                         tank.Team = template.Team;
                         if (GameProperties.ShouldMissionsProgress)
@@ -156,6 +165,7 @@ namespace TanksRebirth.GameContent.Systems
                         tank.Position = template.Position;
                         tank.TankRotation = MathF.Round(template.Rotation, roundingFactor);
                         tank.TargetTankRotation = MathF.Round(template.Rotation, roundingFactor);
+                        tank.TurretRotation = MathF.Round(-template.Rotation, roundingFactor);
                         tank.Dead = false;
                         tank.Team = template.Team;
 
@@ -189,7 +199,7 @@ namespace TanksRebirth.GameContent.Systems
                                 Team = tank.Team,
                                 TankRotation = MathF.Round(template.Rotation, roundingFactor),
                                 TargetTankRotation = MathF.Round(template.Rotation, roundingFactor),
-                                TurretRotation = MathF.Round(template.Rotation, roundingFactor),
+                                TurretRotation = MathF.Round(-template.Rotation, roundingFactor),
                                 Dead = false
                             };
                             tnk.Body.Position = template.Position;
