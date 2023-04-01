@@ -33,11 +33,11 @@ public struct TankTemplate {
 
     public Vector2 Position;
 
-    private float backingRotationField;
+    private float _backingRotationField;
 
     public float Rotation { // Rounded to avoid issues when calculating rotation.
-        get => backingRotationField;
-        set => backingRotationField = MathF.Round(value, 4);
+        get => _backingRotationField;
+        set => _backingRotationField = MathF.Round(value, 5);
     }
 
     public int Team;

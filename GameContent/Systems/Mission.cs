@@ -53,8 +53,8 @@ namespace TanksRebirth.GameContent.Systems
         /// Creates a <see cref="Mission"/> instance from the current placement of everything.
         /// </summary>
         /// <returns>The mission that is currently active, or created.</returns>
-        public static Mission GetCurrent(string name = null)
-        {
+        public static Mission GetCurrent(string name = null) {
+            const int roundingFactor = 5;
             List<TankTemplate> tanks = new();
             List<BlockTemplate> blocks = new();
 
@@ -66,7 +66,7 @@ namespace TanksRebirth.GameContent.Systems
                     {
                         IsPlayer = tank is PlayerTank,
                         Position = tank.Position,
-                        Rotation = tank.TankRotation,
+                        Rotation = MathF.Round(tank.TankRotation, roundingFactor),
                         Team = tank.Team,
                     };
 
