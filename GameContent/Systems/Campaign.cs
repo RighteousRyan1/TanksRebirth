@@ -108,7 +108,7 @@ namespace TanksRebirth.GameContent.Systems
             // FIXME: source of level editor bug.
             PlacementSquare.ResetSquares();
             GameHandler.CleanupEntities();
-
+            const int roundingFactor = 5;
             int numPlayers = 0;
             for (int i = 0; i < LoadedMission.Tanks.Length; i++)
             {
@@ -118,6 +118,15 @@ namespace TanksRebirth.GameContent.Systems
                     TrackedSpawnPoints[i].Item1 = LoadedMission.Tanks[i].Position;
                     TrackedSpawnPoints[i].Item2 = true;
                 }
+
+                while (template.Rotation < 0) {
+                    template.Rotation += MathHelper.Tau;
+                }
+                
+                while (template.Rotation > MathHelper.Tau) {
+                    template.Rotation -= MathHelper.Tau;
+                }
+                
                 if (!template.IsPlayer)
                 {
                     if (TrackedSpawnPoints[i].Item2)
@@ -125,9 +134,9 @@ namespace TanksRebirth.GameContent.Systems
                         var tank = template.GetAiTank();
 
                         tank.Position = template.Position;
-                        tank.TankRotation = template.Rotation;
-                        tank.TargetTankRotation = template.Rotation;
-                        tank.TurretRotation = -template.Rotation;
+                        tank.TankRotation = MathF.Round(template.Rotation, roundingFactor);
+                        tank.TargetTankRotation = MathF.Round(template.Rotation, roundingFactor);
+                        tank.TurretRotation = MathF.Round(-template.Rotation, roundingFactor);
                         tank.Dead = false;
                         tank.Team = template.Team;
                         if (GameProperties.ShouldMissionsProgress)
@@ -154,7 +163,9 @@ namespace TanksRebirth.GameContent.Systems
                         var tank = template.GetPlayerTank();
 
                         tank.Position = template.Position;
-                        tank.TankRotation = template.Rotation;
+                        tank.TankRotation = MathF.Round(template.Rotation, roundingFactor);
+                        tank.TargetTankRotation = MathF.Round(template.Rotation, roundingFactor);
+                        tank.TurretRotation = MathF.Round(-template.Rotation, roundingFactor);
                         tank.Dead = false;
                         tank.Team = template.Team;
 
@@ -186,9 +197,9 @@ namespace TanksRebirth.GameContent.Systems
                                 // turret =  -rot
                                 Position = template.Position,
                                 Team = tank.Team,
-                                TankRotation = template.Rotation,
-                                TargetTankRotation = -template.Rotation,
-                                TurretRotation = template.Rotation,
+                                TankRotation = MathF.Round(template.Rotation, roundingFactor),
+                                TargetTankRotation = MathF.Round(template.Rotation, roundingFactor),
+                                TurretRotation = MathF.Round(-template.Rotation, roundingFactor),
                                 Dead = false
                             };
                             tnk.Body.Position = template.Position;
