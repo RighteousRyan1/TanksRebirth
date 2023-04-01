@@ -833,20 +833,31 @@ namespace TanksRebirth
                                         tnk?.Destroy(new TankHurtContext_Other()); // hmmm
                                 }
 
-                                if (InputUtils.CanDetectClick(rightClick: true)) {
+                                if (InputUtils.CanDetectClick(rightClick: true))
+                                {
                                     tnk.TankRotation -= MathHelper.PiOver2;
-                                    tnk.TurretRotation -= MathHelper.Tau;
-                                    
-                                    tnk.TargetTankRotation += MathHelper.PiOver2;
+                                    tnk.TurretRotation -= MathHelper.PiOver2;
+                                    if (tnk is AITank ai)
+                                    {
+                                        ai.TargetTankRotation += MathHelper.PiOver2;
 
-                                    if (tnk.TargetTankRotation >= MathHelper.Tau)
-                                        tnk.TargetTankRotation -= MathHelper.Tau;
+                                        if (ai.TargetTankRotation >= MathHelper.Tau)
+                                            ai.TargetTankRotation -= MathHelper.Tau;
 
-                                    //if (ai.TargetTankRotation >= MathHelper.Tau)
-                                        //ai.TargetTankRotation -= MathHelper.Tau;
-                                    //if (ai.TargetTankRotation <= 0)
-                                        //ai.TargetTankRotation += MathHelper.Tau;
-                                    
+                                        //if (ai.TargetTankRotation >= MathHelper.Tau)
+                                            //ai.TargetTankRotation -= MathHelper.Tau;
+                                        //if (ai.TargetTankRotation <= 0)
+                                            //ai.TargetTankRotation += MathHelper.Tau;
+                                    }
+                                    else {
+                                        // TODO: This solution causes the player tank to stutter if the rotation is **TOO FAST**.
+                                        // Preferably coming up with a better solution than this is better
+                                        tnk.TargetTankRotation -= MathHelper.PiOver2;
+
+                                        if (tnk.TargetTankRotation <= MathHelper.Tau)
+                                            tnk.TargetTankRotation += MathHelper.Tau;
+
+                                    }
                                     if (tnk.TankRotation <= -MathHelper.Tau)
                                         tnk.TankRotation += MathHelper.Tau;
 
