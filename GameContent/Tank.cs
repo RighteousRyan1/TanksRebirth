@@ -24,8 +24,7 @@ using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent;
 
-public struct TankTemplate
-{
+public struct TankTemplate {
     /// <summary>If false, the template will contain data for an AI tank.</summary>
     public bool IsPlayer;
 
@@ -34,7 +33,12 @@ public struct TankTemplate
 
     public Vector2 Position;
 
-    public float Rotation;
+    private float backingRotationField;
+
+    public float Rotation { // Rounded to avoid issues when calculating rotation.
+        get => backingRotationField;
+        set => backingRotationField = MathF.Round(value, 4);
+    }
 
     public int Team;
 
