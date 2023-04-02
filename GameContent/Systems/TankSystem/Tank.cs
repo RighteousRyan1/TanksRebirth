@@ -138,16 +138,24 @@ public abstract class Tank {
 
     public Body Body { get; set; } = new();
 
-    /// <summary>This <see cref="Tank"/>'s model.</summary>
+    /// <summary>
+    /// This <see cref="Tank"/>'s model.
+    /// </summary>
     public Model Model { get; set; }
 
-    /// <summary>This <see cref="Tank"/>'s world position. Used to change the actual location of the model relative to the <see cref="View"/> and <see cref="Projection"/>.</summary>
+    /// <summary>
+    /// This <see cref="Tank"/>'s world position. Used to change the actual location of the model relative to the <see cref="View"/> and <see cref="Projection"/>.
+    /// </summary>
     public Matrix World { get; set; }
 
-    /// <summary>How the <see cref="Model"/> is viewed through the <see cref="Projection"/>.</summary>
+    /// <summary>
+    /// How the <see cref="Model"/> is viewed through the <see cref="Projection"/>.
+    /// </summary>
     public Matrix View { get; set; }
 
-    /// <summary>The projection from the screen to the <see cref="Model"/>.</summary>
+    /// <summary>
+    /// The projection from the screen to the <see cref="Model"/>.
+    /// </summary>
     public Matrix Projection { get; set; }
 
     public int WorldId { get; set; }
@@ -160,43 +168,67 @@ public abstract class Tank {
     public Vector2 Position;
     public Vector2 Velocity;
 
-    /// <summary>This <see cref="Tank"/>'s <see cref="TeamID"/>.</summary>
+    /// <summary>
+    /// This <see cref="Tank"/>'s <see cref="TeamID"/>.
+    /// </summary>
     public int Team { get; set; }
 
-    /// <summary>The rotation of this <see cref="Tank"/>'s barrel. Generally should not be modified in a player context.</summary>>
+    /// <summary>
+    /// The rotation of this <see cref="Tank"/>'s barrel. Generally should not be modified in a player context.
+    /// </summary>>
     public BoundingBox Worldbox { get; set; }
 
-    /// <summary>The 2D circle-represented hitbox of this <see cref="Tank"/>.</summary>
+    /// <summary>
+    /// The 2D circle-represented hitbox of this <see cref="Tank"/>.
+    /// </summary>
     public Circle CollisionCircle => new() { Center = Position, Radius = TNK_WIDTH / 2 };
 
-    /// <summary>The 2D rectangle-represented hitbox of this <see cref="Tank"/>.</summary>
+    /// <summary>
+    /// The 2D rectangle-represented hitbox of this <see cref="Tank"/>.
+    /// </summary>
     public Rectangle CollisionBox => new((int)(Position.X - TNK_WIDTH / 2 + 3), (int)(Position.Y - TNK_WIDTH / 2 + 2),
         (int)TNK_WIDTH - 8, (int)TNK_HEIGHT - 4);
 
-    /// <summary>How many <see cref="Shell"/>s this <see cref="Tank"/> owns.</summary>
+    /// <summary>
+    /// How many <see cref="Shell"/>s this <see cref="Tank"/> owns.
+    /// </summary>
     public int OwnedShellCount => OwnedShells.Count(x => x is not null);
 
-    /// <summary>How many <see cref="Mine"/>s this <see cref="Tank"/> owns.</summary>
+    /// <summary>
+    /// How many <see cref="Mine"/>s this <see cref="Tank"/> owns.
+    /// </summary>
     public int OwnedMineCount { get; internal set; }
 
-    /// <summary>Whether or not this <see cref="Tank"/> is currently turning.</summary>
+    /// <summary>
+    /// Whether or not this <see cref="Tank"/> is currently turning.
+    /// </summary>
     public bool IsTurning { get; internal set; }
 
-    /// <summary>Whether or not this <see cref="Tank"/> is being hovered by the pointer.</summary>
+    /// <summary>
+    /// Whether or not this <see cref="Tank"/> is being hovered by the pointer.
+    /// </summary>
     public bool IsHoveredByMouse { get; internal set; }
 
     public float TurretRotation { get; set; }
 
-    /// <summary>The rotation of this <see cref="Tank"/>.</summary>
+    /// <summary>
+    /// The rotation of this <see cref="Tank"/>.
+    /// </summary>
     public float TankRotation { get; set; }
 
-    /// <summary>The rotation this <see cref="Tank"/> will pivot to.</summary>
+    /// <summary>
+    /// The rotation this <see cref="Tank"/> will pivot to.
+    /// </summary>
     public float TargetTankRotation;
 
-    /// <summary>Whether or not the tank has been destroyed or not.</summary>
+    /// <summary>
+    /// Whether or not the tank has been destroyed or not.
+    /// </summary>
     public bool Dead { get; set; }
 
-    /// <summary>Whether or not this tank is used for ingame purposes or not.</summary>
+    /// <summary>
+    /// Whether or not this tank is used for ingame purposes or not.
+    /// </summary>
     public bool IsIngame { get; set; } = true;
 
     public Vector3 Position3D => Position.ExpandZ();
