@@ -941,6 +941,7 @@ namespace TanksRebirth
 
         public static bool SuperSecretDevOption;
 
+        private static DepthStencilState _stencilState = new() { };
         protected override void Draw(GameTime gameTime)
         {
             if (gameTarget == null || gameTarget.IsDisposed || gameTarget.Size() != WindowUtils.WindowBounds)
@@ -958,7 +959,7 @@ namespace TanksRebirth
                 // TankFootprint.DecalHandler.UpdateRenderTarget();
                 SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: DefaultRasterizer);
 
-                GraphicsDevice.DepthStencilState = new DepthStencilState() { };
+                GraphicsDevice.DepthStencilState = _stencilState;
 
                 GameHandler.RenderAll();
 
@@ -987,13 +988,14 @@ namespace TanksRebirth
                 if (Debugger.IsAttached)
                     SpriteRenderer.DrawString(TextFont, "DEBUGGER ATTACHED", new Vector2(10, 50), Color.Red, new Vector2(0.8f));
 
-                if (DebugUtils.DebuggingEnabled)
+                if (DebugUtils.DebuggingEnabled) {
                     SpriteRenderer.DrawString(TextFont, "Debug Level: " + DebugUtils.CurDebugLabel, new Vector2(10), Color.White, new Vector2(0.6f));
-                DebugUtils.DrawDebugString(SpriteRenderer, $"Garbage Collection: {MemoryParser.FromMegabytes(GCMemory):0} MB" +
-                    $"\nPhysical Memory: {ComputerSpecs.RAM}" +
-                    $"\nGPU: {ComputerSpecs.GPU}" +
-                    $"\nCPU: {ComputerSpecs.CPU}" +
-                    $"\nProcess Memory: {MemoryParser.FromMegabytes(_memBytes):0} MB / Total Memory: {MemoryParser.FromMegabytes(ComputerSpecs.RAM.TotalPhysical):0}MB", new(8, WindowUtils.WindowHeight * 0.15f));
+                    DebugUtils.DrawDebugString(SpriteRenderer, $"Garbage Collection: {MemoryParser.FromMegabytes(GCMemory):0} MB" +
+                        $"\nPhysical Memory: {ComputerSpecs.RAM}" +
+                        $"\nGPU: {ComputerSpecs.GPU}" +
+                        $"\nCPU: {ComputerSpecs.CPU}" +
+                        $"\nProcess Memory: {MemoryParser.FromMegabytes(_memBytes):0} MB / Total Memory: {MemoryParser.FromMegabytes(ComputerSpecs.RAM.TotalPhysical):0}MB", new(8, WindowUtils.WindowHeight * 0.15f));
+                }
 
                 DebugUtils.DrawDebugString(SpriteRenderer, $"Tank Kill Counts:", new(8, WindowUtils.WindowHeight * 0.05f), 2);
 

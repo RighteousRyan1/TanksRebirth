@@ -22,6 +22,86 @@ using TanksRebirth.GameContent.ModSupport;
 
 namespace TanksRebirth.GameContent
 {
+    public class AITankHelper {
+        // PR TODO: Fix weird AI behaviour.
+        // Lists all the valid enemies.
+        public static List<Tank> GetAllEnemies(Tank thisTank) {
+            // GameHandler.AllTanks.FirstOrDefault(tnk => tnk is not null && !tnk.Dead && (tnk.Team != Team || tnk.Team == TeamID.NoTeam) && tnk != this);
+            List<Tank> tanksAvailable = new(GameHandler.AllTanks.Length - 1);
+            
+            ref var tankSSpace = ref MemoryMarshal.GetReference((Span<Tank>)GameHandler.AllTanks);
+            
+            for (var i = 0; i < GameHandler.AllTanks.Length; i++) {
+                var tank = Unsafe.Add(ref tankSSpace, i);
+
+                if (tank is not null && !tank.Dead && (tank.Team != thisTank.Team || tank.Team == TeamID.NoTeam) &&
+                    tank != thisTank)
+                    tanksAvailable.Add(tank);
+            }
+
+            return tanksAvailable;
+        }
+
+        // Gets the closest enemy that is nearby to this AiTank
+        public static Tank GetClosestEnemy(Tank thisTank, out int targetTankIndex) {
+            var possibleTarget = GameHandler.AllTanks.FirstOrDefault(tnk => tnk is not null && !tnk.Dead && tnk != thisTank);
+            targetTankIndex = -1;
+            var closestTank = possibleTarget;
+            
+            ref var tankSSpace = ref MemoryMarshal.GetReference((Span<Tank>)GameHandler.AllTanks);
+            
+            for (var i = 0; i < GameHandler.AllTanks.Length; i++) {
+                var tank = Unsafe.Add(ref tankSSpace, i);
+
+                if (tank is null || tank.Dead || (tank.Team == thisTank.Team && tank.Team != TeamID.NoTeam) ||
+                    tank == thisTank) continue; 
+                
+                if (!(GameUtils.Distance_WiiTanksUnits(tank.Position, thisTank.Position) <
+                      GameUtils.Distance_WiiTanksUnits(closestTank.Position, thisTank.Position))) continue;
+
+                if ((!tank.Properties.Invisible || tank.timeSinceLastAction > 60) &&
+                    tank.Properties.Invisible) continue;
+                
+                closestTank = tank;
+                targetTankIndex = i;
+            }
+
+            return closestTank;
+        }
+
+        // Gets all the tanks that are nearby this AiTank
+        public static List<Tank> GetNearbyTanks(Tank thisTank, AITank.Params aiParameters) {
+            List<Tank> tankList = new(12); // A normal level has few tanks.
+            
+            ref var tankSSpace = ref MemoryMarshal.GetReference((Span<Tank>)GameHandler.AllTanks);
+            
+            for (var i = 0; i < GameHandler.AllTanks.Length; i++) {
+                var tank = Unsafe.Add(ref tankSSpace, i);
+
+                if (tank != null && tank != thisTank && !tank.Dead && 
+                    GameUtils.Distance_WiiTanksUnits(tank.Position, thisTank.Position) <= aiParameters.TankWarinessRadius)
+                    tankList.Add(tank);
+            }
+
+            return tankList;
+        }
+        
+        // Gets all the blocks that are nearby this AiTank
+        public static List<Block> GetNearbyBlocks(Tank thisTank, AITank.Params aiParameters) {
+            List<Block> blockList = new(64); // A normal level has a fair number of blocks.
+            
+            ref var blockSSpace = ref MemoryMarshal.GetReference((Span<Block>)Block.AllBlocks);
+            
+            for (var i = 0; i < Block.AllBlocks.Length; i++) {
+                var block = Unsafe.Add(ref blockSSpace, i);
+
+                if (block is not null && GameUtils.Distance_WiiTanksUnits(thisTank.Position, block.Position) <= aiParameters.BlockWarinessDistance)
+                    blockList.Add(block);
+            }
+
+            return blockList;
+        }
+    }
     public class AITank : Tank
     {
         // TODO: Make smoke bombs!
@@ -32,7 +112,7 @@ namespace TanksRebirth.GameContent
         public int AiTankType;
         private Texture2D _tankTexture;
         private static Texture2D _shadowTexture;
-        public Action enactBehavior;
+        public Action<bool,bool,bool> enactBehavior;
         public int AITankId { get; private set; }
 
         public void ReassignId(int newId) => AITankId = newId;
@@ -154,13 +234,17 @@ namespace TanksRebirth.GameContent
         public static int GetHighestTierActive()
         {
             var highest = TankID.None;
-
-            foreach (var tank in GameHandler.AllAITanks)
-            {
-                if (tank is not null && !tank.Dead)
-                    if (tank.AiTankType > highest)
-                        highest = tank.AiTankType;
+            Span<AITank> tanks = GameHandler.AllAITanks;
+            ref var tanksSearchSpace = ref MemoryMarshal.GetReference(tanks);
+            
+            for (var i = 0; i < GameHandler.AllAITanks.Length; i++) {
+                var tank = Unsafe.Add(ref tanksSearchSpace, i);
+                if (tank is null || tank.Dead) continue;
+                if (tank.AiTankType <= highest) continue;
+                
+                highest = tank.AiTankType;
             }
+
             return highest;
         }
 
@@ -389,7 +473,7 @@ namespace TanksRebirth.GameContent
 
             if (index2 < 0) {
                 WorldId = -1;
-                GC.Collect(); // guh?
+                //GC.Collect(); // guh?
                 return;
             }
 
@@ -1946,19 +2030,15 @@ namespace TanksRebirth.GameContent
                     else {
                         if (block.AllowShotPathBounce) {
                             switch (dir) {
-                                case CollisionDirection.Up:
-                                case CollisionDirection.Down:
+                                case CollisionDirection.Up or CollisionDirection.Down:
                                     pathDir.Y *= -1;
-                                    pathRicochetCount += block.PathBounceCount;
-                                    resetIterations();
                                     break;
-                                case CollisionDirection.Left:
-                                case CollisionDirection.Right:
+                                case CollisionDirection.Left or CollisionDirection.Right:
                                     pathDir.X *= -1;
-                                    pathRicochetCount += block.PathBounceCount;
-                                    resetIterations();
                                     break;
                             }
+                            pathRicochetCount += block.PathBounceCount;
+                            resetIterations();
                         }
                     }
                 }
@@ -1968,7 +2048,23 @@ namespace TanksRebirth.GameContent
 
                 void resetIterations() { if (doBounceReset) uninterruptedIterations = 0; }
 
-                if (i == 0 && Block.AllBlocks.Any(x => x is not null && x.Hitbox.Intersects(pathHitbox) && pattern is not null ? pattern.Invoke(x) : false))
+                var foundAnyBlockIntersectHit = false;
+                {
+                    Span<Block> mapBlocks = Block.AllBlocks;
+
+                    ref var mapSearchSpace = ref MemoryMarshal.GetReference(mapBlocks);
+
+                    for (var j = 0; j < mapBlocks.Length; j++) {
+                        var mapBlock = Unsafe.Add(ref mapSearchSpace, j);
+                        if (mapBlock is null || !mapBlock.Hitbox.Intersects(pathHitbox) || pattern is null || !pattern.Invoke(mapBlock))
+                            continue;
+
+                        foundAnyBlockIntersectHit = true;
+                        break;
+                    }
+                }
+
+                if (i == 0 && foundAnyBlockIntersectHit)
                 {
                     rayEndpoint = pathPos;
                     return tanks;
@@ -2193,56 +2289,48 @@ namespace TanksRebirth.GameContent
             for (int i = 0; i < Behaviors.Length; i++)
                 Behaviors[i].Value += TankGame.DeltaTime;
 
-            enactBehavior = () =>
-            {
-                TargetTank = GameHandler.AllTanks.FirstOrDefault(tnk => tnk is not null && !tnk.Dead && (tnk.Team != Team || tnk.Team == TeamID.NoTeam) && tnk != this);
+            if (enactBehavior == null) SetBehaviourLoop();
+            
+            enactBehavior?.Invoke(doMoveTowards, doMovements, doFire);
+            OnPostUpdateAI?.Invoke(this);
+        }
 
-                foreach (var tank in GameHandler.AllTanks)
-                {
-                    if (tank is not null && !tank.Dead && (tank.Team != Team || tank.Team == TeamID.NoTeam) && tank != this)
-                        if (GameUtils.Distance_WiiTanksUnits(tank.Position, Position) < GameUtils.Distance_WiiTanksUnits(TargetTank.Position, Position))
-                            if ((tank.Properties.Invisible && tank.timeSinceLastAction < 60) || !tank.Properties.Invisible)
-                                TargetTank = tank;
+        private void SetBehaviourLoop() {
+            enactBehavior = (doMoveTowards, doMovements, doFire) => {
+                // Gets the closest enemy of all available enemies.
+                TargetTank = AITankHelper.GetClosestEnemy(this, out var targetTankIndex);
+
+                if (TargetTank == default) {
+                    return; // The AI loop can not continue. It could not find a valid tank.
                 }
-
+                
                 // ai stuff not implemented for AIShot and AILaid
                 bool isShellNear = TryGetShellNear(AiParams.ProjectileWarinessRadius_PlayerShot, out var shell);
                 bool isMineNear = TryGetMineNear(AiParams.MineWarinessRadius_PlayerLaid, out var mine);
 
-                var tanksNearMe = new List<Tank>();
-                var cubesNearMe = new List<Block>();
+                var tanksNearMe = AITankHelper.GetNearbyTanks(this, AiParams);
+                var cubesNearMe = AITankHelper.GetNearbyBlocks(this, AiParams);
+                
+                while (AiParams.DeflectsBullets) {
+                    if (!isShellNear) break;
+                    if (shell.LifeTime < 60) break;
+                    
+                    var dir = Position.DirectionOf(shell.Position2D);
+                    var rotation = dir.ToRotation();
+                    var calculation = (Position.Distance(shell.Position2D) - 20f) / (float)(Properties.ShellSpeed * 1.2f);
+                    var rot = -Position.DirectionOf(GeometryUtils.PredictFuturePosition(shell.Position2D, shell.Velocity2D, calculation))
+                                         .ToRotation() + MathHelper.PiOver2;
 
-                foreach (var tank in GameHandler.AllTanks)
-                    if (tank != this && tank is not null && !tank.Dead && GameUtils.Distance_WiiTanksUnits(tank.Position, Position) <= AiParams.TankWarinessRadius)
-                        tanksNearMe.Add(tank);
+                    TargetTurretRotation = rot;
 
-                foreach (var block in Block.AllBlocks)
-                    if (block is not null && GameUtils.Distance_WiiTanksUnits(Position, block.Position) < AiParams.BlockWarinessDistance)
-                        cubesNearMe.Add(block);
+                    TurretRotationMultiplier = 4f;
 
-                if (AiParams.DeflectsBullets)
-                {
-                    if (isShellNear)
-                    {
-                        if (shell.LifeTime > 60)
-                        {
-                            var dir = MathUtils.DirectionOf(Position, shell.Position2D);
-                            var rotation = dir.ToRotation();
-                            var calculation = (Position.Distance(shell.Position2D) - 20f) / (float)(Properties.ShellSpeed * 1.2f);
-                            float rot = -MathUtils.DirectionOf(Position,
-                                GeometryUtils.PredictFuturePosition(shell.Position2D, shell.Velocity2D, calculation))
-                                .ToRotation() + MathHelper.PiOver2;
+                    rot %= MathHelper.Tau;
 
-                            TargetTurretRotation = rot;
+                    //if ((-TurretRotation + MathHelper.PiOver2).IsInRangeOf(TargetTurretRotation, 0.15f))
+                    Shoot(false);
 
-                            TurretRotationMultiplier = 4f;
-
-                            rot %= MathHelper.Tau;
-
-                            //if ((-TurretRotation + MathHelper.PiOver2).IsInRangeOf(TargetTurretRotation, 0.15f))
-                            Shoot(false);
-                        }
-                    }
+                    break;
                 }
 
                 #region TurretHandle
@@ -2253,12 +2341,19 @@ namespace TanksRebirth.GameContent
 
                 var diff = TargetTurretRotation - TurretRotation;
 
-                if (diff > MathHelper.Pi)
-                    TargetTurretRotation -= MathHelper.TwoPi;
-                else if (diff < -MathHelper.Pi)
-                    TargetTurretRotation += MathHelper.TwoPi;
-                bool targetExists = Array.IndexOf(GameHandler.AllTanks, TargetTank) > -1 && TargetTank is not null;
-                if (targetExists)
+                switch (diff) {
+                    case > MathHelper.Pi:
+                        TargetTurretRotation -= MathHelper.TwoPi;
+                        break;
+                    case < -MathHelper.Pi:
+                        TargetTurretRotation += MathHelper.TwoPi;
+                        break;
+                }
+                
+                // Check index exists, is within the range of the array and the TargetTank is not null. 
+                var targetExists = targetTankIndex > -1 && GameHandler.AllTanks.Length > targetTankIndex && TargetTank != null;
+                
+                if (targetExists) // The target exists.
                 {
                     if (!seeks && !_predicts)
                     {
@@ -2535,9 +2630,8 @@ namespace TanksRebirth.GameContent
 
                 #endregion
             };
-            enactBehavior?.Invoke();
-            OnPostUpdateAI?.Invoke(this);
         }
+        
         public override void Render() {
             base.Render();
             if (Dead || !MapRenderer.ShouldRender)

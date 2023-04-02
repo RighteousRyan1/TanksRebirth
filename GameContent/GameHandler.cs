@@ -41,7 +41,7 @@ namespace TanksRebirth.GameContent
         public const int MAX_PLAYERS = 4;
 
         // TODO: convert to lists.
-        public static AITank[] AllAITanks = new AITank[MAX_AI_TANKS];
+        public static volatile AITank[] AllAITanks = new AITank[MAX_AI_TANKS];
         public static PlayerTank[] AllPlayerTanks = new PlayerTank[MAX_PLAYERS];
         public static Tank[] AllTanks = new Tank[MAX_PLAYERS + MAX_AI_TANKS];
 
@@ -650,9 +650,11 @@ namespace TanksRebirth.GameContent
             foreach (var powerup in Powerup.Powerups)
                 powerup?.Render();
 
-            if ((DebugUtils.DebuggingEnabled && DebugUtils.DebugLevel == DebugUtils.Id.LevelEditDebug && TankGame.OverheadView) || LevelEditor.Active)
+            if ((DebugUtils.DebuggingEnabled && DebugUtils.DebugLevel == DebugUtils.Id.LevelEditDebug && TankGame.OverheadView) || LevelEditor.Active) {
                 foreach (var sq in PlacementSquare.Placements)
                     sq?.Render();
+                
+            }
 
             TankGame.Instance.GraphicsDevice.BlendState = BlendState.Additive;
             foreach (var expl in Explosion.Explosions)

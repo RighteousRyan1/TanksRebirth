@@ -23,7 +23,7 @@ namespace TanksRebirth.Internals.UI
 		/// <returns>The <see cref="UIElement"/> at the specified position, if one exists; otherwise, returns <see langword="null"/>.</returns>
 		public static List<UIElement> GetElementsAt(Vector2 position, bool getHighest = false)
 		{
-			List<UIElement> focusedElements = new();
+			List<UIElement> focusedElements = new(AllUIElements.Count / 8);
 
 			if (!getHighest)
             {
