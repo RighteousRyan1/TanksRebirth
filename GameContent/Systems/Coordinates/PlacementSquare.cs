@@ -145,7 +145,7 @@ namespace TanksRebirth.GameContent.Systems.Coordinates
                 {
                     if (LevelEditor.Active && LevelEditor.SelectedTankTier < TankID.Brown)
                         return;
-                    if (AITank.CountAll() >= 50) {
+                    if (AiHelpers.CountAll() >= 50) {
                         LevelEditor.Alert("You are at enemy tank capacity!");
                         return;
                     }

@@ -129,7 +129,8 @@ namespace TanksRebirth
                             SetDetails($"Testing a level");
                     }
 
-                    SetSmallAsset($"tank_{AITank.GetHighestTierActive().ToString().ToLower()}", $"Currently fighting {getArticle(AITank.GetHighestTierActive().ToString())} {AITank.GetHighestTierActive()} Tank");
+                    var highestTierTank = AiHelpers.GetHighestTierActive();
+                    SetSmallAsset($"tank_{highestTierTank.ToString().ToLower()}", $"Currently fighting {getArticle(highestTierTank.ToString())} {highestTierTank} Tank");
                 }
                 _client?.SetPresence(_rp);
             }
