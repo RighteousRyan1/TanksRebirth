@@ -1324,48 +1324,33 @@ public partial class AITank : Tank  {
         shell = closest;
         return returned;
     }
-    public bool TryGetMineNear(float distance, out Mine mine)
-    {
-        /*mine = null;
-        foreach (var yours in Mine.AllMines)
-        {
-            if (yours is not null)
-            {
-                if (Vector2.Distance(Position, yours.Position) < distance)
-                {
-                    mine = yours;
-                    return true;
-                }
-            }
-        }*/
+    public bool TryGetMineNear(float distance, out Mine mine) {
+
         mine = null;
 
         Mine closest = null;
+        
+        Span<Mine> mines = Mine.AllMines;
 
-        bool returned = false;
+        ref var minesSearchSpace = ref MemoryMarshal.GetReference(mines);
+        
+        for (var i = 0; i < Mine.AllMines.Length; i++) {
+            var currentMine = Unsafe.Add(ref minesSearchSpace, i);
 
-        foreach (var min in Mine.AllMines)
-        {
-            if (min is not null)
-            {
-                if (GameUtils.Distance_WiiTanksUnits(Position, min.Position) < distance)
-                {
-                    if (closest == null)
-                        closest = min;
-                    else if (GameUtils.Distance_WiiTanksUnits(Position, min.Position) < GameUtils.Distance_WiiTanksUnits(Position, closest.Position))
-                        closest = min;
-                    //var rotationTo = MathUtils.DirectionOf(Position, bullet.Position2D).ToRotation();
+            if (currentMine is null) continue;
 
-                    //if (Math.Abs(rotationTo - TankRotation + MathHelper.Pi) < MathHelper.PiOver2 /*|| Vector2.Distance(Position, bullet.Position2D) < distance / 2*/)
-                    //
-                    returned = true;
-                    //
-                }
+            var distanceFromMineToSelf = GameUtils.Distance_WiiTanksUnits(Position, currentMine.Position);
+            
+            if (!(distanceFromMineToSelf < distance)) continue;
+
+            if (closest == null || distanceFromMineToSelf <
+                GameUtils.Distance_WiiTanksUnits(Position, closest.Position)) {
+                closest = currentMine;
             }
         }
 
         mine = closest;
-        return returned;
+        return closest != null;
     }
 
     private static readonly int[] workingTiers =
