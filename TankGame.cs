@@ -292,45 +292,6 @@ namespace TanksRebirth
                 ChatSystem.SendMessage(profiler.ToString(), Color.Brown);*/
 
                 // I forget why this check is needed...
-                if (Debugger.IsAttached)
-                {
-                    // eventually just load this thru build
-                    GameResources.CopySrcFolderContents("Content/Assets/fonts");
-                    GameResources.CopySrcFolderContents("Content/Assets/music");
-                    GameResources.CopySrcFolderContents("Content/Assets/sounds");
-                    GameResources.CopySrcFolderContents("Content/Assets/sounds/ambient");
-                    GameResources.CopySrcFolderContents("Content/Assets/sounds/crate");
-                    GameResources.CopySrcFolderContents("Content/Assets/sounds/menu");
-                    GameResources.CopySrcFolderContents("Content/Assets/sounds/thunder");
-                    GameResources.CopySrcFolderContents("Content/Assets/sounds/tnk_event");
-                    GameResources.CopySrcFolderContents("Content/Assets/sounds/results");
-                    GameResources.CopySrcFolderContents("Content/Assets/fanfares");
-                    GameResources.CopySrcFolderContents("Content/Assets/mainmenu");
-                    GameResources.CopySrcFolderContents("Localization");
-
-                    GameResources.CopySrcFolderContents("Content/Assets/textures/bullet");
-                    GameResources.CopySrcFolderContents("Content/Assets/textures/check");
-                    GameResources.CopySrcFolderContents("Content/Assets/textures/chest");
-                    GameResources.CopySrcFolderContents("Content/Assets/textures/ingame");
-                    GameResources.CopySrcFolderContents("Content/Assets/textures/medal");
-                    GameResources.CopySrcFolderContents("Content/Assets/textures/mine");
-                    GameResources.CopySrcFolderContents("Content/Assets/textures/misc");
-                    GameResources.CopySrcFolderContents("Content/Assets/textures/tank");
-                    GameResources.CopySrcFolderContents("Content/Assets/textures/tank/wee");
-                    GameResources.CopySrcFolderContents("Content/Assets/textures/ui");
-                    GameResources.CopySrcFolderContents("Content/Assets/textures/ui/leveledit");
-                    GameResources.CopySrcFolderContents("Content/Assets/textures/ui/ping");
-
-                    GameResources.CopySrcFolderContents("Content/Assets/textures", ".png");
-                    GameResources.CopySrcFolderContents("Content/Assets", ".png");
-                    GameResources.CopySrcFolderContents("Content/Assets/toy", ".png");
-                    GameResources.CopySrcFolderContents("Content/Assets/forest", ".png");
-                    GameResources.CopySrcFolderContents("Content/Assets/cosmetics", ".png");
-                    GameResources.CopySrcFolderContents("Content/Assets/christmas", ".png");
-
-                    GameHandler.ClientLog.Write($"Detected build: Copying source folders to output...", LogType.Info);
-                }
-
                 ChatSystem.Initialize();
 
                 _cachedState = GraphicsDevice.RasterizerState;

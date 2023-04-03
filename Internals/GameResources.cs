@@ -103,18 +103,5 @@ namespace TanksRebirth.Internals
 
 			return generic;
 		}
-
-		public static string ProjectDirectory = Directory.GetCurrentDirectory().Replace("bin", "").Replace("Debug", "").Replace("net6.0", "").Replace("Release", "") + "/";
-		public static void CopySrcFolderContents(string path, string extension = null, bool overWrite = true)
-        {
-			var files = extension != null ? Directory.GetFiles(Path.Combine(ProjectDirectory, path)).Where(file => file.EndsWith(extension)).ToArray() : Directory.GetFiles(Path.Combine(ProjectDirectory, path));
-			Directory.CreateDirectory(path);
-
-			foreach (var file in files)
-            {
-				var fileName = Path.GetFileName(file);
-				File.Copy(file, Path.Combine(path, fileName), overWrite);
-            }
-        }
 	}
 }
