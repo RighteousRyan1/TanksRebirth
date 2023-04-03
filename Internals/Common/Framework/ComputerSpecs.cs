@@ -13,10 +13,12 @@ public struct ComputerSpecs {
     public CPU CPU;
     public RAM RAM;
 
+    private static ManagementObjectSearcher? _searcher;
     private static string GetHardwareData(string hwclass, string syntax) {
-        using var searcher = new ManagementObjectSearcher($"SELECT * FROM {hwclass}");
-
-        foreach (var obj in searcher.Get())
+        _searcher ??= new(); // If null, initialize.
+        _searcher.Query = new($"SELECT * FROM {hwclass}");
+        
+        foreach (var obj in _searcher.Get())
             return $"{obj[syntax]}";
         return "Data not retrieved.";
     }
@@ -26,7 +28,7 @@ public struct ComputerSpecs {
             error = true;
             return default;
         }
-        
+
         try {
             return new ComputerSpecs {
                 GPU = GetGPUInformation(),
@@ -36,6 +38,9 @@ public struct ComputerSpecs {
         } catch {
             error = true;
             return default;
+        } finally {
+            _searcher?.Dispose();
+            _searcher = null;
         }
     }
 
