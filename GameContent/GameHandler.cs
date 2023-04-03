@@ -470,7 +470,7 @@ namespace TanksRebirth.GameContent
 
             GameLight.Apply(false);
         }
-        public static Speedrun CurrentSpeedrun;
+        public static Speedrun? CurrentSpeedrun;
         public static void StartSpeedrun()
         {
             if (GameProperties.ShouldMissionsProgress)

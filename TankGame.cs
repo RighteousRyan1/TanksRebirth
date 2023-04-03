@@ -118,9 +118,9 @@ namespace TanksRebirth
         public readonly string GameVersion;
 
         public static OSPlatform OperatingSystem;
-        public static bool IsWindows;
-        public static bool IsMac;
-        public static bool IsLinux;
+        public static bool IsWindows => OperatingSystem == OSPlatform.Windows;
+        public static bool IsMac => OperatingSystem == OSPlatform.OSX;
+        public static bool IsLinux => OperatingSystem == OSPlatform.Linux;
 
         public readonly string MOTD;
         #endregion
@@ -135,30 +135,32 @@ namespace TanksRebirth
             GameHandler.ClientLog = new(Path.Combine(SaveDirectory, "Logs"), "client");
             try {
                 try {
-                    var bytes = WebUtils.DownloadWebFile("https://raw.githubusercontent.com/RighteousRyan1/tanks_rebirth_motds/master/motd.txt", out var name);
+                    var bytes = WebUtils.DownloadWebFile(
+                        "https://raw.githubusercontent.com/RighteousRyan1/tanks_rebirth_motds/master/motd.txt",
+                        out var name);
                     MOTD = System.Text.Encoding.Default.GetString(bytes);
-                } catch {
+                }
+                catch {
                     // in the case that an HTTPRequestException is thrown (no internet access)
                     MOTD = LocalizationRandoms.GetRandomMotd();
                 }
+
                 // check if platform is windows, mac, or linux
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
                     OperatingSystem = OSPlatform.Windows;
-                    IsWindows = true;
                 }
-                else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)){
+                else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
                     OperatingSystem = OSPlatform.OSX;
-                    IsMac = true;
                 }
                 else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
                     OperatingSystem = OSPlatform.Linux;
-                    IsLinux = true;
                 }
 
                 ComputerSpecs = ComputerSpecs.GetSpecs(out bool error);
 
                 if (error) {
-                    GameHandler.ClientLog.Write("Unable to load computer specs: Specified OS Architecture is not Windows.", LogType.Warn);
+                    GameHandler.ClientLog.Write(
+                        "Unable to load computer specs: Specified OS Architecture is not Windows.", LogType.Warn);
                 }
 
                 GameHandler.ClientLog.Write($"Playing on Operating System '{OperatingSystem}'", LogType.Info);
@@ -181,10 +183,10 @@ namespace TanksRebirth
 
                 GameVersion = typeof(TankGame).Assembly.GetName().Version.ToString();
 
-                GameHandler.ClientLog.Write($"Running {typeof(TankGame).Assembly.GetName().Name} on version {GameVersion}'", LogType.Info);
+                GameHandler.ClientLog.Write(
+                    $"Running {typeof(TankGame).Assembly.GetName().Name} on version {GameVersion}'", LogType.Info);
             }
-            catch (Exception e) when (!Debugger.IsAttached)
-            {
+            catch (Exception e) when (!Debugger.IsAttached) {
                 WriteError(e);
                 throw;
             }
@@ -955,48 +957,44 @@ namespace TanksRebirth
                         $"\nPhysical Memory: {ComputerSpecs.RAM}" +
                         $"\nGPU: {ComputerSpecs.GPU}" +
                         $"\nCPU: {ComputerSpecs.CPU}" +
-                        $"\nProcess Memory: {MemoryParser.FromMegabytes(_memBytes):0} MB / Total Memory: {MemoryParser.FromMegabytes(ComputerSpecs.RAM.TotalPhysical):0}MB", new(8, WindowUtils.WindowHeight * 0.15f));
-                }
+                            $"\nProcess Memory: {MemoryParser.FromMegabytes(_memBytes):0} MB / Total Memory: {MemoryParser.FromMegabytes(ComputerSpecs.RAM.TotalPhysical):0}MB", new(8, WindowUtils.WindowHeight * 0.15f));
 
-                DebugUtils.DrawDebugString(SpriteRenderer, $"Tank Kill Counts:", new(8, WindowUtils.WindowHeight * 0.05f), 2);
+                    DebugUtils.DrawDebugString(SpriteRenderer, $"Tank Kill Counts:", new(8, WindowUtils.WindowHeight * 0.05f), 2);
 
-                for (int i = 0; i < PlayerTank.TankKills.Count; i++)
-                {
-                    var tier = PlayerTank.TankKills.ElementAt(i).Key;
-                    var count = PlayerTank.TankKills.ElementAt(i).Value;
+                    for (int i = 0; i < PlayerTank.TankKills.Count; i++)
+                    {
+                        var tier = PlayerTank.TankKills.ElementAt(i).Key;
+                        var count = PlayerTank.TankKills.ElementAt(i).Value;
 
-                    DebugUtils.DrawDebugString(SpriteRenderer, $"{tier}: {count}", new(8, WindowUtils.WindowHeight * 0.05f + (14f * (i + 1))), 2);
-                }
-                if (DebugUtils.DebuggingEnabled)
+                        DebugUtils.DrawDebugString(SpriteRenderer, $"{tier}: {count}", new(8, WindowUtils.WindowHeight * 0.05f + (14f * (i + 1))), 2);
+                    }
                     DebugUtils.DrawDebugString(SpriteRenderer, $"Lives / StartingLives: {PlayerTank.Lives} / {PlayerTank.StartingLives}" +
                                                                $"\nKillCount: {PlayerTank.KillCount}" +
-                                                               $"\n\nSaveable Game Data:" +
+                                                               $"\n\nSavable Game Data:" +
                                                                $"\nTotal / Bullet / Mine / Bounce Kills: {GameData.TotalKills} / {GameData.BulletKills} / {GameData.MineKills} / {GameData.BounceKills}" +
                                                                $"\nTotal Deaths: {GameData.Deaths}" +
                                                                $"\nTotal Suicides: {GameData.Suicides}" +
-                                                               $"\nMissions Completed: {GameData.MissionsCompleted}" +
+                                                               $"\nMissions Completed: {GameData.MissionsCompleted}" + 
                                                                $"\nExp Level / DecayMultiplier: {GameData.ExpLevel} / {GameData.UniversalExpMultiplier}", new(8, WindowUtils.WindowHeight * 0.4f), 2);
+                }
 
-                if (SpeedrunMode)
+
+                if (SpeedrunMode && GameHandler.CurrentSpeedrun is not null)
                 {
-                    if (GameHandler.CurrentSpeedrun is not null)
-                    {
-                        int num = 0;
+                    var num = GameProperties.LoadedCampaign.CurrentMissionId switch {
+                        >2 => GameProperties.LoadedCampaign.CurrentMissionId - 2,
+                        1 => GameProperties.LoadedCampaign.CurrentMissionId - 1,
+                        _ => 0,
+                    };
 
-                        if (GameProperties.LoadedCampaign.CurrentMissionId > 2)
-                            num = GameProperties.LoadedCampaign.CurrentMissionId - 2;
-                        else if (GameProperties.LoadedCampaign.CurrentMissionId == 1)
-                            num = GameProperties.LoadedCampaign.CurrentMissionId - 1;
+                    var len = GameProperties.LoadedCampaign.CurrentMissionId + 2 > GameProperties.LoadedCampaign.CachedMissions.Length ? GameProperties.LoadedCampaign.CachedMissions.Length - 1 : GameProperties.LoadedCampaign.CurrentMissionId + 2;
 
-                        var len = GameProperties.LoadedCampaign.CurrentMissionId + 2 > GameProperties.LoadedCampaign.CachedMissions.Length ? GameProperties.LoadedCampaign.CachedMissions.Length - 1 : GameProperties.LoadedCampaign.CurrentMissionId + 2;
+                    SpriteRenderer.DrawString(TextFontLarge, $"Time: {GameHandler.CurrentSpeedrun.Timer.Elapsed}", new Vector2(10, 5), Color.White, new Vector2(0.15f), 0f, Vector2.Zero);
+                    for (int i = num; i <= len; i++) { // current.times.count originally
 
-                        SpriteRenderer.DrawString(TextFontLarge, $"Time: {GameHandler.CurrentSpeedrun.Timer.Elapsed}", new Vector2(10, 5), Color.White, new Vector2(0.15f), 0f, Vector2.Zero);
-                        for (int i = num; i <= len; i++) // current.times.count originally
-                        {
-                            var time = GameHandler.CurrentSpeedrun.MissionTimes.ElementAt(i);
-                            // display mission name and time taken
-                            SpriteRenderer.DrawString(TextFontLarge, $"{time.Key}: {time.Value.Item2}", new Vector2(10, 20 + ((i - num) * 15)), Color.White, new Vector2(0.15f), 0f, Vector2.Zero);
-                        }
+                        var time = GameHandler.CurrentSpeedrun.MissionTimes.ElementAt(i);
+                        // display mission name and time taken
+                        SpriteRenderer.DrawString(TextFontLarge, $"{time.Key}: {time.Value.Item2}", new Vector2(10, 20 + ((i - num) * 15)), Color.White, new Vector2(0.15f), 0f, Vector2.Zero);
                     }
                 }
 
