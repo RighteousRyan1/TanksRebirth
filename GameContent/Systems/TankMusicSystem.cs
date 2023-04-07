@@ -20,7 +20,7 @@ namespace TanksRebirth.GameContent.Systems
     public static class TankMusicSystem
     {
         public static string AssetRoot;
-        public static int TierHighest => AITank.GetHighestTierActive();
+        public static int TierHighest => AiHelpers.GetHighestTierActive();
 
         public static OggMusic SnowLoop;
 
@@ -128,7 +128,7 @@ namespace TanksRebirth.GameContent.Systems
             foreach (var song in Audio)
                 song.Value?.SetVolume(0f);
 
-            if (MainMenu.Active && AITank.CountAll() == 0 || TierHighest == TankID.None) {
+            if (MainMenu.Active && AiHelpers.CountAll() == 0 || TierHighest == TankID.None) {
                 return;
             }
 
@@ -143,7 +143,7 @@ namespace TanksRebirth.GameContent.Systems
                 return;
 
             var tierHighestName = TankID.Collection.GetKey(TierHighest);
-            var all = AITank.CountAll();
+            var all = AiHelpers.CountAll();
             string num = MaxSongNumPerTank[TierHighest] > 1 ? 
                 (TierExclusionRule_Uses3ToUpgrade.Contains(TierHighest) ? 
                 (all == 2 || all == 1 ? 1 : MaxSongNumPerTank[TierHighest]).ToString() : (Math.Min(all, MaxSongNumPerTank[TierHighest])).ToString()) 

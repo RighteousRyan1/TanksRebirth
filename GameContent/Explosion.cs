@@ -115,12 +115,12 @@ namespace TanksRebirth.GameContent
                                 if (tank.Properties.VulnerableToMines) {
                                     HasHit[tank.WorldId] = true;
                                     if (Source is null)
-                                        tank.Damage(new TankHurtContext_Other(TankHurtContext_Other.HurtContext.FromIngame));
+                                        tank.Damage(new TankHurtContextOther(TankHurtContextOther.HurtContext.FromIngame));
                                     else if (Source is not null) {
                                         if (Source is AITank)
-                                            tank.Damage(new TankHurtContext_Mine(false, this));
+                                            tank.Damage(new TankHurtContextMine(false, this));
                                         else
-                                            tank.Damage(new TankHurtContext_Mine(true, this));
+                                            tank.Damage(new TankHurtContextMine(true, this));
                                     }
                                 }
                 }

@@ -518,7 +518,7 @@ public class Shell {
             }
 
             Destroy(cxt);
-            tank.Damage(new TankHurtContext_Shell(Owner is PlayerTank, Ricochets, Type, this));
+            tank.Damage(new TankHurtContextShell(Owner is PlayerTank, Ricochets, Type, this));
         }
 
         ref var bulletSSpace = ref MemoryMarshal.GetReference((Span<Shell>)AllShells);

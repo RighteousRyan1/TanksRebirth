@@ -90,7 +90,7 @@ namespace TanksRebirth.Internals.Common.Framework.Audio
             var audioShort = StbVorbis.decode_vorbis_from_memory(buffer, out int sampleRate, out int channels);
 
             Span<byte> audioData = new byte[audioShort.Length * 2];
-
+            
             ref var shortSearchSpace = ref MemoryMarshal.GetArrayDataReference(audioShort);
             ref var searchSpace = ref MemoryMarshal.GetReference(audioData);
             

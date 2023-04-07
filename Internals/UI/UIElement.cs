@@ -147,6 +147,7 @@ namespace TanksRebirth.Internals.UI
             Size = InternalSize;
         }
 
+        private static RasterizerState _state = new(){ScissorTestEnable = true};
         /// <summary>
         /// Draws the <see cref="UIElement"/> and associated content.
         /// </summary>
@@ -171,16 +172,12 @@ namespace TanksRebirth.Internals.UI
             }
             else
             {
-                var rastState = new RasterizerState
-                {
-                    ScissorTestEnable = true
-                };
 
-                TankGame.Instance.GraphicsDevice.RasterizerState = rastState;
+                TankGame.Instance.GraphicsDevice.RasterizerState = _state;
 
                 TankGame.Instance.GraphicsDevice.ScissorRectangle = Scissor.Invoke();
 
-                spriteBatch.Begin(rasterizerState: rastState);
+                spriteBatch.Begin(rasterizerState: _state);
 
                 if (!ReverseDrawOrder)
                 {

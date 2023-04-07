@@ -135,6 +135,7 @@ namespace TanksRebirth.GameContent
             PlayerId = playerType; //index;
 
             GameHandler.AllPlayerTanks[PlayerId] = this;
+            
             if (copyTier == TankID.None)
                 ApplyDefaults(ref Properties);
 

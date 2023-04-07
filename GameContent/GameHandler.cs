@@ -470,7 +470,7 @@ namespace TanksRebirth.GameContent
 
             GameLight.Apply(false);
         }
-        public static Speedrun CurrentSpeedrun;
+        public static Speedrun? CurrentSpeedrun;
         public static void StartSpeedrun()
         {
             if (GameProperties.ShouldMissionsProgress)
@@ -650,9 +650,11 @@ namespace TanksRebirth.GameContent
             foreach (var powerup in Powerup.Powerups)
                 powerup?.Render();
 
-            if ((DebugUtils.DebuggingEnabled && DebugUtils.DebugLevel == DebugUtils.Id.LevelEditDebug && TankGame.OverheadView) || LevelEditor.Active)
+            if ((DebugUtils.DebuggingEnabled && DebugUtils.DebugLevel == DebugUtils.Id.LevelEditDebug && TankGame.OverheadView) || LevelEditor.Active) {
                 foreach (var sq in PlacementSquare.Placements)
                     sq?.Render();
+                
+            }
 
             TankGame.Instance.GraphicsDevice.BlendState = BlendState.Additive;
             foreach (var expl in Explosion.Explosions)
