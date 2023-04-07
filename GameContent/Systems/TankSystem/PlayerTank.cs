@@ -252,6 +252,10 @@ namespace TanksRebirth.GameContent
                             }
                         }
                     }
+                } else {
+                    // Due to a problem of Inheritance, the tank will move 1.8 in the x coordinate for no reason. Thanks OOP, a revolution in Computer Science.
+                    // To avoid this, just force the damn speed to zero when we are not in a mission.
+                    Speed = 0;
                 }
 
                 if (GameProperties.InMission && !LevelEditor.Active) {
