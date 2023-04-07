@@ -70,19 +70,19 @@ public class TankProperties {
     public int TrackType { get; set; }
 
     /// <summary>If <see cref="ShellShootCount"/> is greater than 1, this is how many radians each shot's offset will be when this <see cref="Tank"/> shoots.
-    /// <para></para>
+    /// <para/>
     /// A common formula to calculate values for when the bullets won't instantly collide is:
-    /// <para></para>
+    /// <para/>
     /// <c>(ShellShootCount / 12) - 0.05</c>
-    /// <para></para>
+    /// <para/>
     /// A table:
-    /// <para></para>
+    /// <para/>
     /// 3 = 0.3
-    /// <para></para>
+    /// <para/>
     /// 5 = 0.4
-    /// <para></para>
+    /// <para/>
     /// 7 = 0.65
-    /// <para></para>
+    /// <para/>
     /// 9 = 0.8
     /// </summary>
     public float ShellSpread { get; set; } = 0f;
