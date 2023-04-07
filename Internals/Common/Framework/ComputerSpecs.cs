@@ -11,8 +11,17 @@ namespace TanksRebirth.Internals.Common.Framework;
 public struct ComputerSpecs {
     public GPU GPU;
     public CPU CPU;
-
     public RAM RAM;
+
+    private static ManagementObjectSearcher? _searcher;
+    private static string GetHardwareData(string hwclass, string syntax) {
+        _searcher ??= new(); // If null, initialize.
+        _searcher.Query = new($"SELECT * FROM {hwclass}");
+        
+        foreach (var obj in _searcher.Get())
+            return $"{obj[syntax]}";
+        return "Data not retrieved.";
+    }
     public static ComputerSpecs GetSpecs(out bool error) {
         error = false;
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
@@ -20,89 +29,93 @@ public struct ComputerSpecs {
             return default;
         }
 
-        string getData(string hwclass, string syntax) {
-            using var searcher = new ManagementObjectSearcher($"SELECT * FROM {hwclass}");
-
-            foreach (var obj in searcher.Get())
-                return $"{obj[syntax]}";
-            return "Data not retrieved.";
-        }
-
-        var specs = default(ComputerSpecs);
-
         try {
-            var cpuCores = int.Parse(getData("Win32_Processor", "NumberOfCores"));
-            var cpuName = getData("Win32_Processor", "Name");
-            var cpuThreads = int.Parse(getData("Win32_Processor", "ThreadCount"));
-
-            var gpuName = getData("Win32_VideoController", "Name");
-            var gpuDriverVersion = Version.Parse(getData("Win32_VideoController", "DriverVersion"));
-            var gpuVram = uint.Parse(getData("Win32_VideoController", "AdapterRAM"));
-
-            var ramTotalStickPhysical = ulong.Parse(getData("Win32_ComputerSystem", "TotalPhysicalMemory"));
-            var ram1xStickPhysical = ulong.Parse(getData("Win32_PhysicalMemory", "Capacity"));
-            var ramClockSpeed = uint.Parse(getData("Win32_PhysicalMemory", "ConfiguredClockSpeed"));
-            var ramSpeed = uint.Parse(getData("Win32_PhysicalMemory", "Speed"));
-            var ramManufacturer = getData("Win32_PhysicalMemory", "Manufacturer");
-            
-            var type = uint.Parse(getData("Win32_PhysicalMemory", "SMBIOSMemoryType"));
-
-            var ramType = type switch {
-                0x0 => "Unknown",
-                0x1 => "Other",
-                0x2 => "DRAM",
-                0x3 => "Synchronous DRAM",
-                0x4 => "Cache DRAM",
-                0x5 => "EDO",
-                0x6 => "EDRAM",
-                0x7 => "VRAM",
-                0x8 => "SRAM",
-                0x9 => "RAM",
-                0xa => "ROM",
-                0xb => "Flash",
-                0xc => "EEPROM",
-                0xd => "FEPROM",
-                0xe => "EPROM",
-                0xf => "CDRAM",
-                0x10 => "3DRAM",
-                0x11 => "SDRAM",
-                0x12 => "SGRAM",
-                0x13 => "RDRAM",
-                0x14 => "DDR",
-                0x15 => "DDR2",
-                0x16 => "DDR2 FB-DIMM",
-                0x17 => "Undefined 23",
-                0x18 => "DDR3",
-                0x19 => "FBD2",
-                0x1a => "DDR4",
-                _ => "Undefined",
+            return new ComputerSpecs {
+                GPU = GetGPUInformation(),
+                CPU = GetCpuInformation(),
+                RAM = GetRamInformation()
             };
-
-            specs = new() {
-                GPU = new() {
-                    VRAM = gpuVram,
-                    Name = gpuName,
-                    DriverVersion = gpuDriverVersion,
-                },
-                CPU = new() {
-                    Cores = cpuCores,
-                    Threads = cpuThreads,
-                    Name = cpuName
-                },
-                RAM = {
-                    TotalPhysical = ramTotalStickPhysical,
-                    StickPhysical = ram1xStickPhysical,
-                    ClockSpeed= ramClockSpeed,
-                    Manufacturer = ramManufacturer,
-                    Speed = ramSpeed,
-                    Type = ramType
-                }
-            };
-            return specs;
         } catch {
             error = true;
-            return specs;
+            return default;
+        } finally {
+            _searcher?.Dispose();
+            _searcher = null;
         }
+    }
+
+    private static GPU GetGPUInformation() {
+        var gpuName = GetHardwareData("Win32_VideoController", "Name");
+        var gpuDriverVersion = Version.Parse(GetHardwareData("Win32_VideoController", "DriverVersion"));
+        var gpuVram = uint.Parse(GetHardwareData("Win32_VideoController", "AdapterRAM"));
+        return new GPU {
+            VRAM = gpuVram,
+            Name = gpuName,
+            DriverVersion = gpuDriverVersion,
+        };
+    }
+
+    private static CPU GetCpuInformation() {
+        var cpuCores = int.Parse(GetHardwareData("Win32_Processor", "NumberOfCores"));
+        var cpuName = GetHardwareData("Win32_Processor", "Name");
+        var cpuThreads = int.Parse(GetHardwareData("Win32_Processor", "ThreadCount"));
+        return new CPU {
+            Cores = cpuCores,
+            Threads = cpuThreads,
+            Name = cpuName
+        };
+    }
+
+    private static RAM GetRamInformation() {
+        var ramTotalStickPhysical = ulong.Parse(GetHardwareData("Win32_ComputerSystem", "TotalPhysicalMemory"));
+        var ram1xStickPhysical = ulong.Parse(GetHardwareData("Win32_PhysicalMemory", "Capacity"));
+        var ramClockSpeed = uint.Parse(GetHardwareData("Win32_PhysicalMemory", "ConfiguredClockSpeed"));
+        var ramSpeed = uint.Parse(GetHardwareData("Win32_PhysicalMemory", "Speed"));
+        var ramManufacturer = GetHardwareData("Win32_PhysicalMemory", "Manufacturer");
+        var type = uint.Parse(GetHardwareData("Win32_PhysicalMemory", "SMBIOSMemoryType"));
+        var ramType = GetRamType(type);
+        return new RAM {
+            TotalPhysical = ramTotalStickPhysical,
+            StickPhysical = ram1xStickPhysical,
+            ClockSpeed = ramClockSpeed,
+            Manufacturer = ramManufacturer,
+            Speed = ramSpeed,
+            Type = ramType
+        };
+    }
+    
+    private static string GetRamType(uint type) {
+        var ramType = type switch {
+            0x0 => "Unknown",
+            0x1 => "Other",
+            0x2 => "DRAM",
+            0x3 => "Synchronous DRAM",
+            0x4 => "Cache DRAM",
+            0x5 => "EDO",
+            0x6 => "EDRAM",
+            0x7 => "VRAM",
+            0x8 => "SRAM",
+            0x9 => "RAM",
+            0xa => "ROM",
+            0xb => "Flash",
+            0xc => "EEPROM",
+            0xd => "FEPROM",
+            0xe => "EPROM",
+            0xf => "CDRAM",
+            0x10 => "3DRAM",
+            0x11 => "SDRAM",
+            0x12 => "SGRAM",
+            0x13 => "RDRAM",
+            0x14 => "DDR",
+            0x15 => "DDR2",
+            0x16 => "DDR2 FB-DIMM",
+            0x17 => "Undefined 23",
+            0x18 => "DDR3",
+            0x19 => "FBD2",
+            0x1a => "DDR4",
+            _ => "Undefined",
+        };
+        return ramType;
     }
 }
 
@@ -181,47 +194,56 @@ public struct SpecAnalysis {
                 ramResponse = "Sufficient memory.";
                 break;
         }
-        // todo: finish
-        if (CpuMake == "AMD") {
-            var split = CpuModel.Split(' ');
-            var cpuGen = int.Parse(split.First(str => int.TryParse(str, out var x)));
 
-            cpuResponse = "AMD CPU detected.";
+        switch (CpuMake) {
+            // TODO: Finish code to obtain CPU name.
+            case "AMD": {
+                var split = CpuModel.Split(' ');
+                var cpuGen = int.Parse(split.First(str => int.TryParse(str, out var x)));
+
+                cpuResponse = "AMD CPU detected.";
+                break;
+            }
+            case "Intel": {
+                var split = CpuModel.Split(' ');
+                var cpuModelNum = int.Parse(split.First(str => int.TryParse(str, out var x)));
+                cpuResponse = "Intel CPU detected.";
+                break;
+            }
         }
-        if (CpuMake == "Intel") {
-            var split = CpuModel.Split(' ');
-            var cpuModelNum = int.Parse(split.First(str => int.TryParse(str, out var x)));
-            cpuResponse = "Intel CPU detected.";
-        }
+
         var gpuModelNum = int.Parse(GpuModel.Split(' ').First(str => int.TryParse(str, out var x)));
-        if (GpuMake == "NVIDIA") {
+
+        switch (GpuMake) {
             // gtx titan moment
-            if (GpuModel.Contains("RTX")) {
+            case "NVIDIA" when GpuModel.Contains("RTX"):
                 gpuResponse = "RTX card detected. Highly sufficient GPU.";
+                break;
+            case "NVIDIA" when GpuModel.Contains("GTX"): {
+                gpuResponse = gpuModelNum switch {
+                    < 750 => "Lower-end GTX card detected, FPS will be substantial under normal conditions.",
+                    >= 750 and <= 1000 => "Mid-range GTX card detected. FPS will be good normal conditions.",
+                    _ => "High-end GTX Card detected. FPS will be great under normal conditions."
+                };
+                break;
             }
-            else if (GpuModel.Contains("GTX")) {
-                if (gpuModelNum < 750) {
-                    gpuResponse = "Lower-end GTX card detected, FPS will be substantial under normal conditions.";
-                }
-                else if (gpuModelNum >= 750 && gpuModelNum <= 1000) {
-                    gpuResponse = "Mid-range GTX card detected. FPS will be good normal conditions.";
-                }
-                else {
-                    gpuResponse = "High-end GTX Card detected. FPS will be great under normal conditions.";
-                }
-            }
-            else if (GpuModel.Contains("GT") && !GpuModel.Contains("GTX")) {
+            case "NVIDIA" when GpuModel.Contains("GT") && !GpuModel.Contains("GTX"): {
                 gpuResponse = "Low-end graphics card detected (GT). Expect GPU bottlenecks.";
+                break;
             }
-        }
-        else if (GpuMake == "AMD") {
-            gpuResponse = "AMD GPU detected.";
-        }
-        else if (GpuMake == "Intel") {
-            gpuResponse = "Intel GPU detected. Intel GPUs remain untested.";
+            case "AMD":
+                gpuResponse = "AMD GPU detected.";
+                break;
+            case "Intel":
+                gpuResponse = "Intel GPU detected. Intel GPUs remain untested.";
+                break;
         }
 
-        // todo: finish
+        // User requested to take no actions.
+        if (!takeActions) 
+            return;
+        
+        // TODO: Write the required actions to take according to our analysis.
 
         actionsToTake.ForEach(action => action?.Invoke());
     }
