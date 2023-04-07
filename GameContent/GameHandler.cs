@@ -41,7 +41,7 @@ namespace TanksRebirth.GameContent
         public const int MAX_PLAYERS = 4;
 
         // TODO: convert to lists.
-        public static volatile AITank[] AllAITanks = new AITank[MAX_AI_TANKS];
+        public static AITank[] AllAITanks = new AITank[MAX_AI_TANKS];
         public static PlayerTank[] AllPlayerTanks = new PlayerTank[MAX_PLAYERS];
         public static Tank[] AllTanks = new Tank[MAX_PLAYERS + MAX_AI_TANKS];
 
