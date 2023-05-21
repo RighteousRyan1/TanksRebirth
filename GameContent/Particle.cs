@@ -51,9 +51,9 @@ namespace TanksRebirth.GameContent
         /// <summary>Whether to billboard this <see cref="Particle"/> towards the camera, if in a 3D space.</summary>
         public bool FaceTowardsMe;
 
-        /// <summary>Whether or not this <see cref="Particle"/> should exist in a 3D space.</summary>
+        /// <summary>Whether or not this <see cref="Particle"/> should exist in a 2D space.</summary>
         public bool IsIn2DSpace;
-        /// <summary>Whether or not this 3D particle should be translated from a 3D vector to screen space, if it exists in a 2D space.</summary>
+        /// <summary>Whether or not this 2D particle should be translated from a 3D vector to screen space, if it exists in a 2D space.</summary>
         public bool ToScreenSpace = true;
 
         /// <summary>What this <see cref="Particle"/> should do every given update.</summary>
@@ -69,7 +69,7 @@ namespace TanksRebirth.GameContent
         public Rectangle? TextureCrop = null; // for framing a particle's texture
 
         /// <summary>How long (in ticks) this <see cref="Particle"/> particle has existed.</summary>
-        public int LifeTime;
+        public float LifeTime;
 
         /// <summary>Whether or not this <see cref="Particle"/> uses text instead of a texture.</summary>
         public bool IsText;
@@ -105,7 +105,7 @@ namespace TanksRebirth.GameContent
         public void Update()
         {
             UniqueBehavior?.Invoke(this);
-            LifeTime++;
+            LifeTime += TankGame.DeltaTime;
         }
 
         public static BasicEffect EffectHandle = new(TankGame.Instance.GraphicsDevice);
@@ -149,7 +149,7 @@ namespace TanksRebirth.GameContent
                 if (!IsText)
                     TankGame.SpriteRenderer.Draw(Texture, ToScreenSpace ? MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(Position), TankGame.GameView, TankGame.GameProjection) : new Vector2(Position.X, Position.Y), TextureCrop, Color * Alpha, Rotation2D, Origin2D != default ? Origin2D : Texture.Size() / 2, TextureScale, default, Layer);
                 else
-                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, Text, ToScreenSpace ? MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(Position), TankGame.GameView, TankGame.GameProjection) : new Vector2(Position.X, Position.Y), Color * Alpha, new Vector2(Scale.X, Scale.Y), Rotation2D, Origin2D, Layer);
+                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, Text, ToScreenSpace ? MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(Position), TankGame.GameView, TankGame.GameProjection) : new Vector2(Position.X, Position.Y), Color * Alpha, TextureScale, Rotation2D, Origin2D, Layer);
             }
             UniqueDraw?.Invoke(this);
             TankGame.SpriteRenderer.End();

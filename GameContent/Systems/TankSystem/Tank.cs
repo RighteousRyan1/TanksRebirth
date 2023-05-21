@@ -323,13 +323,21 @@ public abstract class Tank {
         var lightParticle = GameHandler.ParticleSystem.MakeParticle(Position3D,
             GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_particle"));
 
-        lightParticle.Scale = new(0.25f);
-        lightParticle.Alpha = 0f;
+        // lightParticle.TextureScale = new(5f);
+        lightParticle.Alpha = 1;
         lightParticle.IsIn2DSpace = true;
+        lightParticle.Color = Color.SkyBlue;
 
         lightParticle.UniqueBehavior = (lp) => {
             lp.Position = Position3D;
-            if (lp.Scale.X < 5f)
+            lp.TextureScale = new(5);
+
+            if (lp.LifeTime > 90)
+                lp.Alpha -= 0.01f * TankGame.DeltaTime;
+
+            if (lp.Alpha <= 0)
+                lp.Destroy();
+            /*if (lp.Scale.X < 5f)
                 GeometryUtils.Add(ref lp.Scale, 0.12f * TankGame.DeltaTime);
             if (lp.Alpha < 1f && lp.Scale.X < 5f)
                 lp.Alpha += 0.02f * TankGame.DeltaTime;
@@ -338,7 +346,7 @@ public abstract class Tank {
                 lp.Alpha -= 0.005f * TankGame.DeltaTime;
 
             if (lp.Scale.X < 0f)
-                lp.Destroy();
+                lp.Destroy();*/
         };
 
         const int NUM_LOCATIONS = 8;
@@ -346,6 +354,8 @@ public abstract class Tank {
         for (int i = 0; i < NUM_LOCATIONS; i++) {
             var lp = GameHandler.ParticleSystem.MakeParticle(Position3D + new Vector3(0, 5, 0),
                 GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
+
+            lp.Color = Color.SkyBlue;
 
             var velocity = Vector2.UnitY.RotatedByRadians(MathHelper.ToRadians(360f / NUM_LOCATIONS * i));
 

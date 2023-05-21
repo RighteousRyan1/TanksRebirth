@@ -294,14 +294,7 @@ public partial class AITank : Tank  {
 
         GameHandler.AllTanks[index2] = this;
 
-        GameProperties.OnMissionStart += OnMissionStart;
-
         base.Initialize();
-    }
-    private void OnMissionStart()
-    {
-        // other things can be done here
-        //UpdateAim(new List<Tank>(), true);
     }
     public override void ApplyDefaults(ref TankProperties properties) {
         properties.DestructionColor = TankDestructionColors[AiTankType];
