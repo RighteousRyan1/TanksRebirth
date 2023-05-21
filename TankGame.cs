@@ -981,7 +981,7 @@ namespace TanksRebirth
 
                         DebugUtils.DrawDebugString(SpriteRenderer, $"{tier}: {count}", new(8, WindowUtils.WindowHeight * 0.05f + (14f * (i + 1))), 2);
                     }
-                    DebugUtils.DrawDebugString(SpriteRenderer, $"Lives / StartingLives: {PlayerTank.Lives} / {PlayerTank.StartingLives}" +
+                    DebugUtils.DrawDebugString(SpriteRenderer, $"Lives / StartingLives: {PlayerTank.Lives[Client.IsConnected() ? NetPlay.CurrentClient.Id : 0]} / {PlayerTank.StartingLives}" +
                                                                $"\nKillCount: {PlayerTank.KillCount}" +
                                                                $"\n\nSavable Game Data:" +
                                                                $"\nTotal / Bullet / Mine / Bounce Kills: {GameData.TotalKills} / {GameData.BulletKills} / {GameData.MineKills} / {GameData.BounceKills}" +
