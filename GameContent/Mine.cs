@@ -137,7 +137,6 @@ namespace TanksRebirth.GameContent
         }
 
         internal void Update() {
-
             if (!MapRenderer.ShouldRender || (!GameProperties.InMission && !MainMenu.Active))
                 return;
 

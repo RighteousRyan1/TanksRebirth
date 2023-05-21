@@ -59,9 +59,11 @@ namespace TanksRebirth.Achievements
             #endregion
             #region Misc
             new("See through the dragon's eyes", "Complete a campaign in third-person mode."),
+            new("TANKS a lot!", "Be destroyed by one of your teammates."),
+            new("I cannon believe you've done this.", "Destroy one of your teammates."),
             #endregion
             #region Secrets
-            new("You found me!", "It's a secret... Shhh...."), // uh, click title logo
+            new("Nice tunes, bro", "This is a hidden achievement!"), // click main menu logo
             #endregion
             #region Time Played
             new("A Good Start", "Play for your first 10 minutes.", 
@@ -74,6 +76,8 @@ namespace TanksRebirth.Achievements
                 () => TankGame.CurrentSessionTimer.Elapsed + TankGame.GameData.TimePlayed >= TimeSpan.FromHours(5)),
             new("Please go outside", "Play for 10 hours!",
                 () => TankGame.CurrentSessionTimer.Elapsed + TankGame.GameData.TimePlayed >= TimeSpan.FromHours(10)),
+            new("Grass exists, bro", "Play for 100 hours!",
+                () => TankGame.CurrentSessionTimer.Elapsed + TankGame.GameData.TimePlayed >= TimeSpan.FromHours(100)),
             #endregion
             #region Creation!
             new("The Power of Creation", "Create a campaign."),

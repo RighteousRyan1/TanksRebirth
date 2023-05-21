@@ -49,6 +49,9 @@
     <Reference Include="MeltySynth">
       <HintPath>deps\MeltySynth.dll</HintPath>
     </Reference>
+    <Reference Include="Octokit">
+      <HintPath>deps\Octokit.dll</HintPath>
+    </Reference>
     <Reference Include="Steamworks.NET">
       <HintPath>deps\Steamworks.NET.dll</HintPath>
     </Reference>

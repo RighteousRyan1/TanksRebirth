@@ -825,7 +825,7 @@ public partial class AITank : Tank  {
 
         enactBehavior = () =>
         {
-            TargetTank = GameHandler.AllTanks.FirstOrDefault(tnk => tnk is not null && !tnk.Dead && (tnk.Team != Team || tnk.Team == TeamID.NoTeam) && tnk != this);
+            TargetTank = GameHandler.AllTanks.FirstOrDefault(tnk => tnk is not null && !tnk.Dead && (tnk.Team != Team || tnk.Team == TeamID.NoTeam) && tnk != this)!;
 
             foreach (var tank in GameHandler.AllTanks)
             {
@@ -995,6 +995,7 @@ public partial class AITank : Tank  {
                 }
                 #endregion
 
+                // fix the floatiness
                 #region ShellAvoidance
 
                 var indif = 3;
@@ -1003,7 +1004,6 @@ public partial class AITank : Tank  {
                     if (CurMineStun <= 0 && CurShootStun <= 0) {
                         if (Behaviors[6].IsModOf(indif)) {
                             var direction = -Vector2.UnitY.RotatedByRadians(shell.Position2D.DirectionOf(Position, false).ToRotation());
-
                             TargetTankRotation = direction.ToRotation();
                         }
                     }
@@ -1141,25 +1141,39 @@ public partial class AITank : Tank  {
             // i really hope to remove this hardcode.
             if (doMoveTowards)
             {
+                // this is repeated in AITank for less obfuscation.
+                var negDif = TargetTankRotation - Properties.MaximalTurn - MathHelper.ToRadians(5);
+                var posDif = TargetTankRotation + Properties.MaximalTurn + MathHelper.ToRadians(5);
+
+                IsTurning = !(TankRotation > negDif && TankRotation < posDif);
+
+                if (!IsTurning) {
+                    Speed += Properties.Acceleration * TankGame.DeltaTime;
+                    if (Speed > Properties.MaxSpeed)
+                        Speed = Properties.MaxSpeed;
+                }
+                else {
+                    Speed -= Properties.Deceleration * TankGame.DeltaTime;
+                    if (Speed < 0)
+                        Speed = 0;
+                }
                 // TODO: fix this pls.
-                /*if (TargetTankRotation > MathHelper.Tau)
+                /*if (TankRotation > MathHelper.Tau)
+                    TankRotation -= MathHelper.Tau;
+                if (TankRotation < 0)
+                    TankRotation += MathHelper.Tau;*/
+                if (TargetTankRotation > MathHelper.Tau)
                     TargetTankRotation -= MathHelper.Tau;
                 if (TargetTankRotation < 0)
-                    TargetTankRotation += MathHelper.Tau;*/
+                    TargetTankRotation += MathHelper.Tau;
 
-                // TODO: ai tank recoil failure here vvvv
+                var dir = Vector2.UnitY.RotatedByRadians(TankRotation);
+                Velocity.X = dir.X;
+                Velocity.Y = dir.Y;
 
-                //if (DecelerationRateDecayTime <= 0) {
-                    var dir = Vector2.UnitY.RotatedByRadians(TankRotation);
-                    Velocity.X += dir.X;
-                    Velocity.Y += dir.Y;
+                Velocity.Normalize();
 
-                    Velocity.Normalize();
-                    Velocity *= Speed;
-                    // TODO: this is also why decel decay isn't properly applied. FIX LATER.
-                //}
-                //Velocity.Normalize();
-                //Velocity *= Speed;
+                Velocity *= Speed;
                 TankRotation = MathUtils.RoughStep(TankRotation, TargetTankRotation, Properties.TurningSpeed * TankGame.DeltaTime);
             }
 

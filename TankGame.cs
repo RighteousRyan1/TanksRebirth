@@ -39,6 +39,7 @@ using System.Globalization;
 using System.Threading;
 using TanksRebirth.Internals.Common.Framework;
 using TanksRebirth.GameContent.Systems.PingSystem;
+using TanksRebirth.GameContent.Systems.CommandsSystem;
 
 namespace TanksRebirth
 {
@@ -115,7 +116,7 @@ namespace TanksRebirth
 
         private bool _wasActive;
 
-        public readonly string GameVersion;
+        public readonly System.Version GameVersion;
 
         public static OSPlatform OperatingSystem;
         public static bool IsWindows => OperatingSystem == OSPlatform.Windows;
@@ -181,7 +182,7 @@ namespace TanksRebirth
 
                 _fontSystem = new();
 
-                GameVersion = typeof(TankGame).Assembly.GetName().Version.ToString();
+                GameVersion = typeof(TankGame).Assembly.GetName().Version!;
 
                 GameHandler.ClientLog.Write(
                     $"Running {typeof(TankGame).Assembly.GetName().Name} on version {GameVersion}'", LogType.Info);
@@ -200,6 +201,8 @@ namespace TanksRebirth
         public static bool IsSouthernHemi;
 
         public static string GameDir { get; private set; }
+
+        public static AutoUpdater AutoUpdater;
 
         private void PreparingDeviceSettingsListener(object sender, PreparingDeviceSettingsEventArgs ev) {
             ev.GraphicsDeviceInformation.PresentationParameters.RenderTargetUsage = RenderTargetUsage.PreserveContents;
@@ -404,6 +407,16 @@ namespace TanksRebirth
 
                 GameHandler.ClientLog.Write($"Content loaded in {s.Elapsed}.", LogType.Debug);
                 GameHandler.ClientLog.Write($"DebugMode: {Debugger.IsAttached}", LogType.Debug);
+
+                // it isnt really an autoupdater tho.
+                AutoUpdater = new("https://github.com/RighteousRyan1/TanksRebirth", GameVersion);
+
+                if (AutoUpdater.IsOutdated) {
+                    CommandGlobals.IsUpdatePending = true;
+                    ChatSystem.SendMessage($"Outdated game version detected (current={GameVersion}, recent={AutoUpdater.GetRecentVersion()}).", Color.Red);
+                    //ChatSystem.SendMessage("Type /update to update the game and automatically restart.", Color.Red);
+                    SoundPlayer.SoundError();
+                }
 
                 s.Stop();
             }

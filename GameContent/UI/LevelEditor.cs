@@ -458,7 +458,7 @@ namespace TanksRebirth.GameContent.UI
                 Open(false);
                 TankGame.OverheadView = true;
                 GameProperties.InMission = false;
-                GameHandler.CleanupScene();
+                // GameHandler.CleanupScene();
                 Mission.LoadDirectly(_cachedMission);
                 SetupMissionsBar(_loadedCampaign);
             };

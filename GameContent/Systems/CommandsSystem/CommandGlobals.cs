@@ -23,6 +23,8 @@ public static class CommandGlobals {
     private static PropertyInfo[] _playerPropertyInfoCache = null; // Cached PropertyInfo[] for the PlayerTank class. Used in changetankproperty
     public static bool AreCheatsEnabled;
 
+    public static bool IsUpdatePending;
+
     /// <summary>The expected prefix to prepend before writing down a command.</summary>
     public const char ExpectedPrefix = '/';
     /// <summary>Commands for the chat. Feel free to add your own here.</summary>
@@ -40,6 +42,13 @@ public static class CommandGlobals {
                     ChatSystem.SendMessage($"{elem.Key.Name}: {elem.Key.Description}", Color.Khaki);
             }
         }),
+        /*[new CommandInput(name: "update", description: "Download any pending updates and restart the game.")] = new CommandOutput(netSync: false, false, (args) => {
+            TankGame.AutoUpdater.FetchData();
+            TankGame.AutoUpdater.DownloadUpdate();
+            TankGame.AutoUpdater.OnDownloadComplete += (name, link) => {
+
+            };
+        }),*/
         [new CommandInput(name: "setbind", description: "Change a keybind by a given internal name.")] = new CommandOutput(netSync: false, false, (args) => {
             for (int i = 0; i < Keybind.AllKeybinds.Count; i++) {
                 var bind = Keybind.AllKeybinds[i];

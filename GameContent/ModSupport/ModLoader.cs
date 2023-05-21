@@ -29,8 +29,8 @@ namespace TanksRebirth.GameContent.ModSupport
         public delegate void PostLoadModContent(TanksMod mod);
         public static event PostLoadModContent OnPostModLoad;
 
-        public static List<TanksMod> _loadedMods = new();
-        public static List<AssemblyLoadContext> _loadedAlcs = new();
+        private static List<TanksMod> _loadedMods = new();
+        private static List<AssemblyLoadContext> _loadedAlcs = new();
 
         public static int ActionsNeeded { get; private set; }
         public static int ActionsComplete { get; private set; }
@@ -97,6 +97,7 @@ namespace TanksRebirth.GameContent.ModSupport
             _sandboxingActions.Clear();
             _loadedMods.ForEach(mod => {
                 mod.OnUnload();
+                UnloadModContent(ref mod);
             });
             _loadedMods.Clear();
             _loadedAlcs.ForEach(asm => {
@@ -106,6 +107,17 @@ namespace TanksRebirth.GameContent.ModSupport
             _loadedAlcs.Clear();
             ChatSystem.SendMessage("Mod unload successful!", Color.Lime);
             Status = LoadStatus.Complete;
+        }
+        private static void UnloadModContent(ref TanksMod mod) {
+            // unfinished for now.
+            /*var types = mod.GetType().Assembly.GetTypes();
+
+            for (int i = 0; i < types.Length; i++) {
+                var members = types[i].GetMembers();
+                for (int j = 0; j < members.Length; i++) {
+                    members[j].GetType().get
+                }
+            }*/
         }
         //private delegate Assembly AsmInternalLoad(ReadOnlySpan<byte> arrAssembly, ReadOnlySpan<byte> arrSymbols);
         /// <summary>Prepare your garbage collector!</summary>
