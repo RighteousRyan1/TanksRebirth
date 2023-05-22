@@ -60,6 +60,7 @@ public struct TankTemplate {
         player.Body.Position = Position / Tank.UNITS_PER_METER;
         player.Position = Position;
         player.TankRotation = Rotation;
+        player.TurretRotation = Rotation;
         player.Dead = false;
         player.Team = Team;
 
