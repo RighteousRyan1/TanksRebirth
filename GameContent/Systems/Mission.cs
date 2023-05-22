@@ -105,6 +105,8 @@ namespace TanksRebirth.GameContent.Systems
             GameHandler.CleanupScene();
             for (int i = 0; i < mission.Tanks.Length; i++) {
                 var tnk = mission.Tanks[i];
+                tnk.Rotation = tnk.Rotation; // Use setter for magical purposes.
+                
                 var tank = tnk.GetTank();
 
                 var placement = PlacementSquare.Placements.FindIndex(place => Vector3.Distance(place.Position, tank.Position3D) < Block.FULL_BLOCK_SIZE / 2);
@@ -116,10 +118,10 @@ namespace TanksRebirth.GameContent.Systems
                 }
 
                 // FIXME: relates to tank rotation.
-                tank.TankRotation = tnk.Rotation;
+                tank.TankRotation = -MathF.Round(tnk.Rotation, 5);
                 // REMINDER: go here if you're editing load values again.
                 tank.TargetTankRotation = -tank.TankRotation;
-
+                tank.TurretRotation = -tank.TurretRotation;
                 // FIXME: tanks placed on a horizontal axis (left, right) are flipped upon loading directly. fix that.
             }
             for (int i = 0; i < mission.Blocks.Length; i++) {

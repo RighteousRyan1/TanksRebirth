@@ -225,7 +225,7 @@ namespace TanksRebirth.GameContent
                     if (!Difficulties.Types["ThirdPerson"] || LevelEditor.Active || MainMenu.Active) {
                         Vector3 mouseWorldPos = MatrixUtils.GetWorldPosition(MouseUtils.MousePosition, -11f);
                         if (!LevelEditor.Active)
-                            TurretRotation = (-(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position).ToRotation()) + MathHelper.PiOver2;
+                            TurretRotation = -(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position).ToRotation() + MathHelper.PiOver2;
                         else
                             TurretRotation = TankRotation;
                     }
