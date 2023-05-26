@@ -706,6 +706,8 @@ public partial class AITank : Tank  {
     }
 
     private bool _predicts;
+
+    // TODO: make view distance, and make tanks in path public
     public void UpdateAim(List<Tank> tanksNear, bool fireWhen)
     {
         _predicts = false;
@@ -937,6 +939,7 @@ public partial class AITank : Tank  {
                     if (pathBlocked && !_oldPathBlocked) {
                         //if (GameHandler.GameRand.NextFloat(0f, 1f) <= 0.25f)
                         _pathHitCount++;
+                        // this check probably isn't doing what it should.
                         if (_pathHitCount % 10 == 0)
                             TargetTankRotation = -TargetTankRotation + MathHelper.PiOver2;
                     }
@@ -1290,7 +1293,7 @@ public partial class AITank : Tank  {
 
         }
 
-        if (Properties.Invisible && GameProperties.InMission)
+        if (Properties.Invisible && (GameProperties.InMission || MainMenu.Active))
             return;
 
         Properties.Armor?.Render();
