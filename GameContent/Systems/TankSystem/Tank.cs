@@ -845,77 +845,34 @@ public abstract class Tank {
         Projection = TankGame.GameProjection;
         View = TankGame.GameView;
         if (!Dead) {
-            ReadOnlySpan<ICosmetic> cosmetics = CollectionsMarshal.AsSpan(Cosmetics);
-
-            ref var cosmeticSSpace = ref MemoryMarshal.GetReference(cosmetics);
-
-            for (var j = 0; j < Cosmetics.Count; j++) {
+            foreach (var cosmetic in Cosmetics) {
                 //if (GameProperties.InMission && Properties.Invisible)
                 //break;
+                if (cosmetic is not Cosmetic3D cos3d)
+                    continue;
 
-                var cosmetic = Unsafe.Add(ref cosmeticSSpace, j);
+                for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
+                    foreach (var mesh in cos3d.Model.Meshes) {
+                        if (cos3d.IgnoreMeshesByName.Any(meshName => meshName == mesh.Name))
+                            continue;
 
-                if (cosmetic is not Cosmetic3D cos3d) continue;
-
-                for (var i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
-                    // Render mesh
-                    ref var meshNameSSpace = ref MemoryMarshal.GetReference((Span<string>)cos3d.IgnoreMeshesByName);
-
-                    var meshesToRender =
-                        new List<ModelMesh>(cos3d.Model.Meshes.Count -
-                                            cos3d.IgnoreMeshesByName
-                                                 .Length); // Set some capacity for a "good case" scenario.
-
-                    // Determine which meshes should we render
-                    for (var z = 0; z < cos3d.IgnoreMeshesByName.Length; z++) {
-                        var ignoredMeshName = Unsafe.Add(ref meshNameSSpace, z);
-
-                        if (string.IsNullOrEmpty(ignoredMeshName)) continue;
-
-                        for (var k = 0; k < cos3d.Model.Meshes.Count; k++) {
-                            if (cos3d.Model.Meshes[k].Name == ignoredMeshName)
-                                continue; // If the names match, we will not render it.
-                            meshesToRender.Add(cos3d.Model.Meshes[k]);
-                        }
-                    }
-
-                    ref var meshesToRenderSSpace =
-                        ref MemoryMarshal.GetReference(CollectionsMarshal.AsSpan(meshesToRender));
-
-
-                    for (var z = 0; z < meshesToRender.Count; z++) {
-                        var mesh = Unsafe.Add(ref meshesToRenderSSpace, z);
-
-                        // Render submesh effects.
                         foreach (BasicEffect effect in mesh.Effects) {
                             var rotY = cosmetic.LockOptions switch {
                                 CosmeticLockOptions.ToTurret => cosmetic.Rotation.Y + TurretRotation,
                                 CosmeticLockOptions.ToTank => cosmetic.Rotation.Y + TankRotation,
-                                _ => cosmetic.Rotation.Y
+                                _ => cosmetic.Rotation.Y,
                             };
-
-                            effect.World = i == 0
-                                ? Matrix.CreateRotationX(cosmetic.Rotation.X) * Matrix.CreateRotationY(rotY) *
-                                  Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) *
-                                  Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition)
-                                : Matrix.CreateRotationX(cosmetic.Rotation.X) *
-                                  Matrix.CreateRotationY(cosmetic.Rotation.Y) *
-                                  Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) *
-                                  Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition) *
-                                  Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) *
-                                  Matrix.CreateTranslation(0, 0.2f, 0);
+                            
+                            effect.World = i == 0 ? Matrix.CreateRotationX(cosmetic.Rotation.X) * Matrix.CreateRotationY(rotY) * Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) * Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition)
+                                : Matrix.CreateRotationX(cosmetic.Rotation.X) * Matrix.CreateRotationY(cosmetic.Rotation.Y) * Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) * Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition) * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
                             effect.View = View;
                             effect.Projection = Projection;
 
                             effect.TextureEnabled = true;
-                            effect.Texture = i == 0
-                                ? cos3d.ModelTexture
-                                : GameResources.GetGameResource<Texture2D>("Assets/textures/ingame/block_shadow_h");
-
+                            effect.Texture = i == 0 ? cos3d.ModelTexture : GameResources.GetGameResource<Texture2D>("Assets/textures/ingame/block_shadow_h");
                             effect.SetDefaultGameLighting_IngameEntities();
                         }
-
-                        // Render submesh.
+                        
                         mesh.Draw();
                     }
                 }
