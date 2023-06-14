@@ -44,6 +44,8 @@ namespace TanksRebirth.GameContent.ModSupport
         private volatile static List<Action> _loadingActions = new();
         private volatile static List<Action> _sandboxingActions = new();
 
+        private static Dictionary<TanksMod, List<ModTank>> _modTankDictionary = new();
+
         private static bool _firstLoad = true;
         /// <summary>The error given from the mod-loading process.</summary>
         public static string Error = string.Empty;
@@ -96,6 +98,8 @@ namespace TanksRebirth.GameContent.ModSupport
             _loadingActions.Clear();
             _sandboxingActions.Clear();
             _loadedMods.ForEach(mod => {
+                // for indivudally unloaded mods.
+                _modTankDictionary[mod].Clear();
                 mod.OnUnload();
                 UnloadModContent(ref mod);
             });
@@ -104,6 +108,8 @@ namespace TanksRebirth.GameContent.ModSupport
                 asm.Unload();
                 ChatSystem.SendMessage($"Unloaded '{asm.Name}'", Color.Orange);
             });
+            // for when the unloading process is done.
+            _modTankDictionary.Clear();
             _loadedAlcs.Clear();
             ChatSystem.SendMessage("Mod unload successful!", Color.Lime);
             Status = LoadStatus.Complete;
@@ -186,13 +192,23 @@ namespace TanksRebirth.GameContent.ModSupport
                                             int modClassCount = 0;
                                             foreach (var type in types) {
                                                 if (type.IsSubclassOf(typeof(TanksMod)) && !type.IsAbstract) {
-
                                                     modClassCount++;
                                                     if (modClassCount > 1)
                                                         throw new Exception("Too many mod classes. Only one is allowed per-mod.");
                                                     // let's run the virtually overridden methods.
                                                     var tanksMod = Activator.CreateInstance(type) as TanksMod;
-                                                    tanksMod.InternalName = modName;
+                                                    tanksMod!.InternalName = modName;
+
+                                                    _modTankDictionary.Add(tanksMod, new());
+
+                                                    // now lets scan the mod's content for ModTanks
+                                                    // i feel like this is gravely inefficient but it can be changed
+                                                    foreach (var type2 in tanksMod.GetType().Assembly.GetTypes()) {
+                                                        if (type2.IsSubclassOf(typeof(ModTank)) && !type.IsAbstract) {
+                                                            var modTank = Activator.CreateInstance(type2) as ModTank;
+                                                            _modTankDictionary[tanksMod].Add(modTank!);
+                                                        }
+                                                    }
 
                                                     _loadedMods.Add(tanksMod);
 
@@ -202,7 +218,7 @@ namespace TanksRebirth.GameContent.ModSupport
                                                 }
                                             }
                                         }  catch (Exception e) {
-                                            TankGame.WriteError(e, true, true);
+                                            TankGame.ReportError(e, true, true);
                                             Error = e.Message;
                                             return;
                                         }

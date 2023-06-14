@@ -1349,7 +1349,7 @@ namespace TanksRebirth.GameContent.UI
                             SetCampaignDisplay();
 
                         } catch (Exception e) {
-                            TankGame.WriteError(e);
+                            TankGame.ReportError(e);
                         }
                     }
                 }

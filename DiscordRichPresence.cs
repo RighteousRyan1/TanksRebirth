@@ -57,16 +57,14 @@ namespace TanksRebirth
             {
                 static string getArticle(string word)
                 {
-                    if (word.ToLower().StartsWith('a') || word.ToLower().StartsWith('e') || word.ToLower().StartsWith('i') || word.ToLower().StartsWith('o') || word.ToLower().StartsWith('u'))
-                    {
+                    if (word.ToLower().StartsWith('a') || word.ToLower().StartsWith('e') || word.ToLower().StartsWith('i') || word.ToLower().StartsWith('o') || word.ToLower().StartsWith('u')) {
                         return "an";
                     }
-                    else
-                    {
+                    else {
                         return "a";
                     }
                 }
-                SetLargeAsset("tank_ash_large", $"v{TankGame.Instance.GameVersion}");
+                SetLargeAsset("tanks_physical_logo", $"v{TankGame.Instance.GameVersion}");
                 if (MainMenu.Active)
                 {
                     switch (MainMenu.MenuState)

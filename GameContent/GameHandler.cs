@@ -610,6 +610,7 @@ namespace TanksRebirth.GameContent
         public static int blockHeight = 1;
         public static int tankToSpawnType;
         public static int tankToSpawnTeam;
+
         internal static void RenderAll()
         {
             TankGame.Instance.GraphicsDevice.BlendState = BlendState.AlphaBlend;
@@ -618,7 +619,6 @@ namespace TanksRebirth.GameContent
                 Xp?.Render(TankGame.SpriteRenderer, new(WindowUtils.WindowWidth / 2, 50.ToResolutionY()), new Vector2(100, 20).ToResolution(), Anchor.Center, Color.Red, Color.Lime);
 
             if (_tankFuncDelay > 0 && !MainMenu.Active && !TankGame.OverheadView && !LevelEditor.Active)
-                // $"{MathF.Round(_tankFuncDelay / 60)}"
                 TankGame.SpriteRenderer.DrawString(TankGame.TextFontLarge, $"{MathF.Round(_tankFuncDelay / 60) + 1}", WindowUtils.WindowCenter, Color.White, new Vector2(3).ToResolution(), 0f, TankGame.TextFontLarge.MeasureString($"{MathF.Round(_tankFuncDelay / 60) + 1}") / 2, 0f);
             // CHECK: move this back if necessary
             MapRenderer.RenderWorldModels();
@@ -693,6 +693,21 @@ namespace TanksRebirth.GameContent
             GameUI.MissionInfoBar.IsVisible = !MainMenu.Active && !LevelEditor.Active && !CampaignCompleteUI.IsViewingResults;
 
             OnPostRender?.Invoke();
+        }
+
+        private static float _readyScl;
+        private static float _setScl;
+        private static float _goScl;
+        // have that multiple-overlayed alpha expansion
+
+        // TODO: Finish
+        private static void HandleMissionCountdownGraphics() {
+            var sec = MathF.Round(_tankFuncDelay / 60) + 1;
+
+            var scale = 1.2f;
+            // remember: in the future, localize "Ready, Set, and Go"
+            if (sec == 2)
+                SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFontLarge, "Ready", WindowUtils.WindowCenter, Color.Beige, Color.IndianRed, new Vector2(scale), 0f, 1f);
         }
 
         #endregion
@@ -1095,14 +1110,6 @@ namespace TanksRebirth.GameContent
             }
         }
         #endregion
-
-        private static void SendTestMsg()
-        {
-            if (Client.IsConnected())
-            {
-                ChatSystem.SendMessage("You suck.", Color.Green, "Ryan");
-            }
-        }
     }
     public static class MouseRenderer
     {

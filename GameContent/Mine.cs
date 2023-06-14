@@ -78,7 +78,7 @@ namespace TanksRebirth.GameContent
         /// <param name="pos">The position of this <see cref="Mine"/> in the game world.</param>
         /// <param name="detonateTime">The time it takes for this <see cref="Mine"/> to detonate.</param>
         /// <param name="radius">The radius of this <see cref="Mine"/>'s explosion.</param>
-        public Mine(Tank owner, Vector2 pos, float detonateTime, float radius = 65f)
+        public Mine(Tank owner, Vector2 pos, float detonateTime, float radius = 85f)
         {
             Owner = owner;
             ExplosionRadius = radius;
@@ -175,11 +175,12 @@ namespace TanksRebirth.GameContent
                 {
                     foreach (var tank in GameHandler.AllTanks)
                     {
-                        if (tank is not null && Vector2.Distance(tank.Position, Position) < MineReactRadius)
+                        if (tank is not null && GameUtils.Distance_WiiTanksUnits(tank.Position, Position) < MineReactRadius)
                         {
                             tanksNear.Add(tank);
                         }
                     }
+                    // this is apparently causing near-instant explosion
                     if (!tanksNear.Any(tnk => tnk == Owner) && tanksNear.Count > 0)
                         DetonateTime = MineReactTime;
                 }

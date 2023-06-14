@@ -102,7 +102,13 @@ namespace TanksRebirth.Internals.Common.Framework.Collections {
 
             return result;
         }
-        
+        /// <summary>
+        /// Forcefully inserts an entry into this <see cref="ReflectionDictionary{TClass, TValue}"/>. 
+        /// <para>Give a <see cref="string"/> key, and the method returns where the value was inserted.</para>
+        /// </summary>
+        /// <param name="key">The <see cref="string"/> key that should be used to access a given value.</param>
+        /// /// <param name="value">The value to insert at this given location.</param>
+        /// <returns></returns>
         public int ForcefullyInsert(string key, TValue value) {
             return ForcefullyInsert(key, value, true);
         }
@@ -111,7 +117,7 @@ namespace TanksRebirth.Internals.Common.Framework.Collections {
             if (_dictionary.ContainsKey(key))
                 return Array.IndexOf(Keys, key);
             if (_dictionary.ContainsValue(value))
-                return Array.IndexOf(Values, key);
+                return Array.IndexOf(Values, value);
 
             _dictionary.Add(key, value);
 

@@ -39,10 +39,11 @@ namespace TanksRebirth.Achievements
             ref var achievementSearchSpace = ref MemoryMarshal.GetReference(achievements);
             for (int i = 0; i < _achievements.Count; i++) {
                 var achievement = Unsafe.Add(ref achievementSearchSpace, i);
-                if (achievement.Requirements.Length <= 0 || achievement.IsComplete) continue; // If the achivement has no requiements or is complete continue;
+                if (achievement.Requirement is null || achievement.IsComplete) continue; // If the achivement has no requiements or is complete continue;
                 var allOk = true;
-                
-                Span<Func<bool>> achievementsReq = achievement.Requirements;
+
+                // hmm... workaround fix...?
+                Span<Func<bool>> achievementsReq = new(new[] { achievement.Requirement });
 
                 ref var achievementReqSearchSpace = ref MemoryMarshal.GetReference(achievementsReq);
 

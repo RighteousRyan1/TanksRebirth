@@ -369,10 +369,13 @@ namespace TanksRebirth.Internals.UI
                 // If it is null and we should not update do not.
                 if (element == null) continue;
                 if (!element._doUpdating) continue;
-                
-                element.Position = element.InternalPosition =
+                // this may need revertation. 
+                /* element.Position = element.InternalPosition =
                     element._updatedPos.Invoke() + element.Offset.ToResolution();
-                element.Size = element.InternalSize = element._updatedSize.Invoke();
+                element.Size = element.InternalSize = element._updatedSize.Invoke();*/
+                element.Position = element.InternalPosition =
+                    element._updatedPos.Invoke().ToResolution() + element.Offset.ToResolution();
+                element.Size = element.InternalSize = element._updatedSize.Invoke().ToResolution();
             }
         }
 
@@ -429,7 +432,7 @@ namespace TanksRebirth.Internals.UI
                 }
             }*/
 
-            foreach (UIElement element in AllUIElements)
+                foreach (UIElement element in AllUIElements)
             {
                 if (element.MouseHovering)
                     element.MouseOut();

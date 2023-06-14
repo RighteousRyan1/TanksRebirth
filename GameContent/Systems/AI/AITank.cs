@@ -74,7 +74,7 @@ public partial class AITank : Tank  {
     #region AiTankParams
 
     /// <summary>The AI parameter collection of this AI Tank.</summary>
-    public AiParameters AiParams { get; private set; } = new();
+    public AiParameters AiParams { get; set; } = new();
 
     public Vector2 Aimtarget;
 

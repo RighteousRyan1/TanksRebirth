@@ -6,6 +6,7 @@ namespace TanksRebirth.Localization
     /// <summary>Localization to load a <see cref="Language"/> from a .json entry. Defaults to English if no <see cref="LangCode"/> is loaded.</summary>
     public class Language
     {
+        public LangCode ActiveLang { get; private set; }
 #pragma warning disable
         #region Basic
 
@@ -212,8 +213,9 @@ namespace TanksRebirth.Localization
                 var path = Path.Combine(Path.Combine("Localization", $"{code}.loc"));
                 JsonHandler<Language> handler = new(lang, path);
 
-                lang = handler.Deserialize();
                 GameContent.GameHandler.ClientLog.Write($"Loading language '{code}'... [ " + path + " ]", Internals.LogType.Debug);
+                lang.ActiveLang = code;
+                lang = handler.Deserialize();
             }
             catch {
                 GameContent.GameHandler.ClientLog.Write($"Loading language '{code}'... Could not find localization file or error loading! Using default language '{LangCode.English}' instead.", Internals.LogType.Debug);

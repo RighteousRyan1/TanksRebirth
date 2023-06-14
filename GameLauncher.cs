@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using System;
+using System.Diagnostics;
 using TanksRebirth;
 
 namespace TanksRebirth
@@ -11,8 +12,14 @@ namespace TanksRebirth
         public static void LaunchGame()
         {
             IsRunning = true;
-            using var game = new TankGame();
+            //try {
+                using var game = new TankGame();
                 game.Run();
+            //}
+            //catch (Exception e) /*when (!Debugger.IsAttached)*/ {
+                //TankGame.WriteError(e);
+                // throw;
+            //}
         }
         [STAThread]
         static void Main()

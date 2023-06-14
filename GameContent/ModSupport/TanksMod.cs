@@ -9,7 +9,7 @@ public abstract class TanksMod : ILoadable {
     /// <summary>The display name of this mod. Generally named the internal name, but split by PascalCase.</summary>
     public virtual string Name { get; }
     /// <summary>The internal name of this mod. This is the name of the project the mod was built in.</summary>
-    public virtual string InternalName { get; internal set; }
+    public string InternalName { get; internal set; }
     /// <summary>
     /// This method is called when your mod is loaded.<para></para>
     /// Use this method to initialize hooking, add things to your mod, load content, etc.

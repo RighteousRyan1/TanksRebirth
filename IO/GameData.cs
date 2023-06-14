@@ -123,12 +123,12 @@ namespace TanksRebirth.IO
                 GameHandler.Xp = new() { MaxValue = 1f, Value = ExpLevel - MathF.Floor(ExpLevel) };
             }
             catch (Exception e) when (ReadingOutdatedFile) {
-                TankGame.WriteError(e);
+                TankGame.ReportError(e);
                 GameHandler.ClientLog.Write(
                     "An error occurred, possibly due to your save file being out-of-date. For now, delete it and restart the game. Sorry!",
                     LogType.Info);
             } catch (IOException e) { // IO Error.
-                TankGame.WriteError(e);
+                TankGame.ReportError(e);
                 GameHandler.ClientLog.Write(
                     "An error was thrown while attempting to read your save file. Please try to restart the game. If this error persists please delete your save file and try again. Sorry!",
                     LogType.Info);

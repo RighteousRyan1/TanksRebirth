@@ -1,16 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace TanksRebirth.Achievements
-{
-    public interface IAchievement
-    {
-        void Complete();
-        Func<bool>[] Requirements { get; set; }
-        bool IsComplete { get; set; }
-        string Name { get; set; }
-    }
+namespace TanksRebirth.Achievements;
+
+public interface IAchievement {
+    void Complete();
+    Func<bool>? Requirement { get; set; }
+    bool IsComplete { get; set; }
+    string Name { get; set; }
 }

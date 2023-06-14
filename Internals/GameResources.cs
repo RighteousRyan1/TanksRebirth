@@ -34,8 +34,11 @@ namespace TanksRebirth.Internals
 				return (T)ResourceCache[name];
 			else if (typeof(T) == typeof(Texture2D))
 			{
-				// var texture = (Texture2D)Convert.ChangeType(result, typeof(Texture2D));
-				object result = Texture2D.FromFile(TankGame.Instance.GraphicsDevice, name);
+				// we call this BOXING HELL. anyway.
+				var texture = Texture2D.FromFile(TankGame.Instance.GraphicsDevice, name);
+				texture.Name = name;
+
+                object result = texture;
 				ResourceCache[name] = result;
 
 				return (T)result;
@@ -57,8 +60,11 @@ namespace TanksRebirth.Internals
 					return (T)ResourceCache[realResourceName];
 			else if (typeof(T) == typeof(Texture2D))
 			{
-				// var texture = (Texture2D)Convert.ChangeType(result, typeof(Texture2D));
-				object result = Texture2D.FromFile(TankGame.Instance.GraphicsDevice, Path.Combine(addContentPrefix ? TankGame.Instance.Content.RootDirectory : string.Empty, realResourceName));
+                // Bustin' all the bells out the box
+                var texture = Texture2D.FromFile(TankGame.Instance.GraphicsDevice, Path.Combine(addContentPrefix ? TankGame.Instance.Content.RootDirectory : string.Empty, realResourceName));
+				texture.Name = name;
+
+                object result = texture;
 				ResourceCache[realResourceName] = result;
 
 				if (premultiply) {
