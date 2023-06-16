@@ -803,8 +803,12 @@ namespace TanksRebirth.GameContent.UI
         }
         // this is super workaround-y.
         internal static int plrsConfirmed;
-        public static bool PrepareGameplay(string name, bool wasConfirmed = true, bool netRecieved = false)
-        {
+        public static bool PrepareGameplay(string name, bool wasConfirmed = true, bool netRecieved = false, int? missionId = null) {
+            if (missionId.HasValue) {
+                ChatSystem.SendMessage("We have received a custom mission identifier", Color.Green);
+                MissionCheckpoint = missionId.Value;
+            }
+
             // FIXME: find the feedback loop that causes the recieving client to start a mission anyway...
             
             var path = Path.Combine("Campaigns", name + ".campaign");
@@ -831,7 +835,7 @@ namespace TanksRebirth.GameContent.UI
             if (!netRecieved && !wasConfirmed) { // when switch, do !wasConfirmed && !netRecieved
                 if (Client.IsConnected()) {
                     //Client.SendCampaignBytes(camp);
-                    Client.SendCampaignByName(name);
+                    Client.SendCampaignByName(name, MissionCheckpoint);
                     return true;
                 }
             }

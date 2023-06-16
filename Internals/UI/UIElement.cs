@@ -370,12 +370,12 @@ namespace TanksRebirth.Internals.UI
                 if (element == null) continue;
                 if (!element._doUpdating) continue;
                 // this may need revertation. 
-                /* element.Position = element.InternalPosition =
+                 element.Position = element.InternalPosition =
                     element._updatedPos.Invoke() + element.Offset.ToResolution();
-                element.Size = element.InternalSize = element._updatedSize.Invoke();*/
-                element.Position = element.InternalPosition =
+                element.Size = element.InternalSize = element._updatedSize.Invoke();
+                /*element.Position = element.InternalPosition =
                     element._updatedPos.Invoke().ToResolution() + element.Offset.ToResolution();
-                element.Size = element.InternalSize = element._updatedSize.Invoke().ToResolution();
+                element.Size = element.InternalSize = element._updatedSize.Invoke().ToResolution();*/
             }
         }
 
