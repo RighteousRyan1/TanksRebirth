@@ -318,12 +318,13 @@ namespace TanksRebirth.Net
                     break;
                 case PacketID.SendCampaignByName:
                     var campName = reader.GetString();
+                    var missionId = reader.GetInt();        // Obtain the mission id from the server itself. Fixes issues when loading missions.
 
                     // if this solution fails, simply change param 2 (wasConfirmed) to true
-                    var success = MainMenu.PrepareGameplay(campName, false, true); // second param to false when doing a check
+                    var success = MainMenu.PrepareGameplay(campName, false, true, missionId); // second param to false when doing a check
                     Client.SendCampaignStatus(campName, CurrentClient.Id, success); // if this player doesn't own said campaign, cancel the operation.
                     if (success) {
-                        MainMenu.PrepareGameplay(campName, true, true);
+                        MainMenu.PrepareGameplay(campName, true, true, missionId);
                     }
                     break;
                 case PacketID.Cleanup:
@@ -625,7 +626,9 @@ namespace TanksRebirth.Net
                     break;
                 case PacketID.SendCampaignByName:
                     var campName = reader.GetString();
+                    var missionId = reader.GetInt();
                     message.Put(campName);
+                    message.Put(missionId);
 
                     Server.serverNetManager.SendToAll(message, DeliveryMethod.Sequenced, peer);
                     break;
