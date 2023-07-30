@@ -6,7 +6,6 @@ namespace TanksRebirth.Achievements;
 public class Achievement : IAchievement {
 
     public static Texture2D MysteryTexture;
-
     public Func<bool>? Requirement { get; set; }
     public bool IsComplete { get; set; }
     public string Name { get; set; }

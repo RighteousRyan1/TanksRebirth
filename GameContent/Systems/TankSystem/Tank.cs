@@ -414,6 +414,7 @@ public abstract class Tank {
             if (!Properties.IsSilent) {
                 // why did i clamp? i hate old code
                 if (TankGame.RunTime % MathHelper.Clamp(treadPlaceTimer / 2, 4, 6) < TankGame.DeltaTime) {
+                    Properties.TreadPitch = MathHelper.Clamp(Properties.TreadPitch, -1f, 1f);
                     var treadPlace = $"Assets/sounds/tnk_tread_place_{GameHandler.GameRand.Next(1, 5)}.ogg";
                     var sfx = SoundPlayer.PlaySoundInstance(treadPlace, SoundContext.Effect, Properties.TreadVolume, 0f,
                         Properties.TreadPitch, gameplaySound: true);

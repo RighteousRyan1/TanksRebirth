@@ -60,9 +60,9 @@ public struct ComputerSpecs {
         var cpuName = GetHardwareData("Win32_Processor", "Name");
         var cpuThreads = int.Parse(GetHardwareData("Win32_Processor", "ThreadCount"));
         return new CPU {
-            Cores = cpuCores,
+            CoreCount = cpuCores,
             Threads = cpuThreads,
-            Name = cpuName
+            Name = cpuName.Trim()
         };
     }
 
@@ -128,7 +128,7 @@ public struct GPU {
 }
 
 public struct CPU {
-    public int Cores;
+    public int CoreCount;
     public int Threads;
     public string Name;
 

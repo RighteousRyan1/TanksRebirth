@@ -41,10 +41,10 @@ namespace TanksRebirth.GameContent.Systems
                 cRed++;*/
 
             if (cBlue > 1 || cRed > 1)
-                GameHandler.ClientLog.Write("Only one color allowed per-player.", LogType.Error, true);
+                GameHandler.ClientLog.Write("Only one color allowed per-player.", LogType.ErrorFatal, true);
 
             if (cBlue + cRed > 2)
-                GameHandler.ClientLog.Write("As of now, only 2 local players are supported.", LogType.Error, true);
+                GameHandler.ClientLog.Write("As of now, only 2 local players are supported.", LogType.ErrorFatal, true);
 
             Tanks = tanks;
             Blocks = obstacles;

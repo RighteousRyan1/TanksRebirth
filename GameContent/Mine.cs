@@ -78,7 +78,7 @@ namespace TanksRebirth.GameContent
         /// <param name="pos">The position of this <see cref="Mine"/> in the game world.</param>
         /// <param name="detonateTime">The time it takes for this <see cref="Mine"/> to detonate.</param>
         /// <param name="radius">The radius of this <see cref="Mine"/>'s explosion.</param>
-        public Mine(Tank owner, Vector2 pos, float detonateTime, float radius = 85f)
+        public Mine(Tank owner, Vector2 pos, float detonateTime, float radius = 65f)
         {
             Owner = owner;
             ExplosionRadius = radius;

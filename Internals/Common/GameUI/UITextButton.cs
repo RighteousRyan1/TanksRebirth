@@ -23,14 +23,14 @@ namespace TanksRebirth.Internals.Common.GameUI
 
         public static bool AutoResolutionHandle = true;
         public bool DrawText = true;
-        public UITextButton(string text, SpriteFontBase font, Color color, Func<Vector2> textScale) : base(null, 1, null)
+        public UITextButton(string text, SpriteFontBase font, Color color, Func<Vector2> textScale) : base(null, new(1), null)
         {
             Text = text;
             Font = font;
             Color = color;
             TextScale = textScale;
         }
-        public UITextButton(string text, SpriteFontBase font, Color color, float textScale = 1f) : base(null, 1, null)
+        public UITextButton(string text, SpriteFontBase font, Color color, float textScale = 1f) : base(null, new(1), null)
         {
             Text = text;
             Font = font;

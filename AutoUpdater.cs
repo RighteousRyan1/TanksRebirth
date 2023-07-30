@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using Aspose.Zip.Rar;
 using DiscordRPC;
 using Octokit;
+using TanksRebirth.GameContent;
+using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth;
@@ -26,15 +28,20 @@ public class AutoUpdater {
 
 #pragma warning disable
     public AutoUpdater(string ghLink, Version? versionToCheckAgainst) {
-        m_getRepo(out var tag, out var name, out var assets);
-        if (!Version.TryParse(tag.Replace("-alpha", string.Empty), out _expectedVersion))
-            throw new Exception("Failed to grab a recent version from GitHub.");
-        _tag = tag;
-        _name = name;
-        _assets = assets;
-        _ghLink = ghLink;
-        _versionToCheckAgainst = versionToCheckAgainst;
-        IsOutdated = _versionToCheckAgainst < _expectedVersion;
+        try {
+            m_getRepo(out var tag, out var name, out var assets);
+            if (!Version.TryParse(tag.Replace("-alpha", string.Empty), out _expectedVersion))
+                throw new Exception("Failed to grab a recent version from GitHub.");
+            _tag = tag;
+            _name = name;
+            _assets = assets;
+            _ghLink = ghLink;
+            _versionToCheckAgainst = versionToCheckAgainst;
+            IsOutdated = _versionToCheckAgainst < _expectedVersion;
+        } catch(Exception e) {
+            GameHandler.ClientLog.Write($"{e.Message}\n{e.StackTrace}", LogType.ErrorFatal);
+            GameHandler.ClientLog.Write($"An exception was thrown during TanksRebirth Version fetching process. Auto-Update backend and version checking cannot execute.", LogType.ErrorFatal);
+        }
     }
 
     public void FetchData() {
