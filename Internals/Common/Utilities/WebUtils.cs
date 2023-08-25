@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -13,6 +14,24 @@ namespace TanksRebirth.Internals.Common.Utilities;
 public static class WebUtils {
     private static HttpClient _client = new(new HttpClientHandler { SslProtocols = SslProtocols.Tls12 });
 
+    public static bool CheckInternetConnection(int timeout, string url) {
+        try {
+            url ??= CultureInfo.InstalledUICulture switch { 
+                { Name: var n } when n.StartsWith("fa") => "http://www.aparat.com", 
+                { Name: var n } when n.StartsWith("zh") => "http://baidu.com",
+                _ => "http://www.gstatic.com/generate_204"
+            };
+
+            var request = WebRequest.Create(url) as HttpWebRequest;
+            request.KeepAlive = false;
+            request.Timeout = timeout;
+            using (var response = request.GetResponse() as HttpWebResponse)
+                return true;
+        }
+        catch { 
+            return false; 
+        }
+    }
     public static byte[] DownloadWebFile(string url, out string fileName) {
         var data = Inner_DownloadWebFile(url).GetAwaiter().GetResult();
 

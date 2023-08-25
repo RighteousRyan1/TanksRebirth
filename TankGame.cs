@@ -396,14 +396,14 @@ namespace TanksRebirth
             GameHandler.ClientLog.Write($"DebugMode: {Debugger.IsAttached}", LogType.Debug);
 
             // it isnt really an autoupdater tho.
-            AutoUpdater = new("https://github.com/RighteousRyan1/TanksRebirth", GameVersion);
+            // AutoUpdater = new("https://github.com/RighteousRyan1/TanksRebirth", GameVersion);
 
-            if (AutoUpdater.IsOutdated) {
+            /*if (AutoUpdater.IsOutdated) {
                 CommandGlobals.IsUpdatePending = true;
                 ChatSystem.SendMessage($"Outdated game version detected (current={GameVersion}, recent={AutoUpdater.GetRecentVersion()}).", Color.Red);
                 //ChatSystem.SendMessage("Type /update to update the game and automatically restart.", Color.Red);
                 SoundPlayer.SoundError();
-            }
+            }*/
 
             s.Stop();
         }

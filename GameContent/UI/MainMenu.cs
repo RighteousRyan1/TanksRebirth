@@ -1135,18 +1135,24 @@ namespace TanksRebirth.GameContent.UI
             return music;
         }
         private static void GetSpeedruns() {
-            var bytes = WebUtils.DownloadWebFile("https://raw.githubusercontent.com/RighteousRyan1/tanks_rebirth_motds/master/topspeedruns_0-20", out var name);
-            var str = System.Text.Encoding.Default.GetString(bytes);
+            try {
+                var bytes = WebUtils.DownloadWebFile("https://raw.githubusercontent.com/RighteousRyan1/tanks_rebirth_motds/master/topspeedruns_0-20", out var name);
+                var str = System.Text.Encoding.Default.GetString(bytes);
 
-            var strSplit = str.Split('\n').Where(x => x != string.Empty).ToArray();
+                var strSplit = str.Split('\n').Where(x => x != string.Empty).ToArray();
 
-            var data = new SpeedrunData[strSplit.Length];
+                var data = new SpeedrunData[strSplit.Length];
 
-            for (int i = 0; i < strSplit.Length; i++) {
-                var spl = strSplit[i].Split('|');
-                data[i] = new(spl[0], TimeSpan.Parse(spl[1]), DateTime.Parse(spl[2], CultureInfo.InvariantCulture, styles: DateTimeStyles.None));
+                for (int i = 0; i < strSplit.Length; i++) {
+                    var spl = strSplit[i].Split('|');
+                    data[i] = new(spl[0], TimeSpan.Parse(spl[1]), DateTime.Parse(spl[2], CultureInfo.InvariantCulture, styles: DateTimeStyles.None));
+                }
+                _speedruns = data;
             }
-            _speedruns = data;
+            catch {
+                _speedruns = new SpeedrunData[1];
+                _speedruns[0] = new("Unable to fetch speedrun data.", TimeSpan.Zero, DateTime.UnixEpoch);
+            }
         }
         public static void Open()
         {
@@ -1215,41 +1221,43 @@ namespace TanksRebirth.GameContent.UI
         private static bool _firstTime = true;
         private static void LoadTemplateMission(bool autoSetup = true, bool loadForMenu = true)
         {
-            if (_firstTime)
-            {
-                var attempt = 1;
+            try {
+                if (_firstTime) {
+                    var attempt = 1;
 
-            tryAgain:
-                var linkTry = $"https://github.com/RighteousRyan1/tanks_rebirth_motds/blob/master/menu_missions/Menu{attempt}.mission?raw=true";
-                var exists = WebUtils.RemoteFileExists(linkTry);
+                tryAgain:
+                    var linkTry = $"https://github.com/RighteousRyan1/tanks_rebirth_motds/blob/master/menu_missions/Menu{attempt}.mission?raw=true";
+                    var exists = WebUtils.RemoteFileExists(linkTry);
 
-                if (exists)
-                {
-                    var bytes1 = WebUtils.DownloadWebFile(linkTry, out var name1);
+                    if (exists) {
+                        var bytes1 = WebUtils.DownloadWebFile(linkTry, out var name1);
 
-                    using var reader1 = new BinaryReader(new MemoryStream(bytes1));
+                        using var reader1 = new BinaryReader(new MemoryStream(bytes1));
 
-                    _cachedMissions.Add(Mission.Read(reader1));
-                    attempt++;
-                    goto tryAgain;
+                        _cachedMissions.Add(Mission.Read(reader1));
+                        attempt++;
+                        goto tryAgain;
+                    }
+
+                    _firstTime = false;
                 }
 
-                _firstTime = false;
+                GameHandler.CleanupScene();
+
+                var rand = GameHandler.GameRand.Next(1, _cachedMissions.Count);
+
+                var mission = _cachedMissions[rand];
+
+                if (autoSetup) {
+                    GameProperties.LoadedCampaign.LoadMission(mission);
+                    GameProperties.LoadedCampaign.SetupLoadedMission(true);
+                }
+                if (loadForMenu)
+                    _curMenuMission = mission;
             }
-
-            GameHandler.CleanupScene();
-
-            var rand = GameHandler.GameRand.Next(1, _cachedMissions.Count);
-
-            var mission = _cachedMissions[rand];
-
-            if (autoSetup)
-            {
-                GameProperties.LoadedCampaign.LoadMission(mission);
-                GameProperties.LoadedCampaign.SetupLoadedMission(true);
+            catch {
+                GameHandler.ClientLog.Write("Unable to fetch map data via the internet. Oops!", LogType.Warn);
             }
-            if (loadForMenu)
-                _curMenuMission = mission;
         }
         private static void HideAll()
         {
@@ -1298,20 +1306,30 @@ namespace TanksRebirth.GameContent.UI
                     TankGame.SpriteRenderer.DrawString(TankGame.TextFont, txt, new(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 150.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(Anchor.Center, TankGame.TextFont.MeasureString(txt)));
                 }
                 #region Various things
-                if ((NetPlay.CurrentServer is not null && (Server.ConnectedClients is not null || NetPlay.ServerName is not null)) || (Client.IsConnected() && Client.lobbyDataReceived)) {
+                if (Server.ConnectedClients is null) {
+                    Server.ConnectedClients = new Client[4];
+                    NetPlay.ServerName = "ServerName";
+                    for (int i = 0; i < 4; i++) {
+                        Server.ConnectedClients[i] = new() {
+                            Id = i,
+                            Name = "Client" + i
+                        };
+                    }
+                }
+                //if ((NetPlay.CurrentServer is not null && (Server.ConnectedClients is not null || NetPlay.ServerName is not null)) || (Client.IsConnected() && Client.lobbyDataReceived)) {
                     Vector2 initialPosition = new(WindowUtils.WindowWidth * 0.75f, WindowUtils.WindowHeight * 0.25f);
                     TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"\"{NetPlay.ServerName}\"", initialPosition - new Vector2(0, 40), Color.White, new Vector2(0.6f));
                     TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"Connected Players:", initialPosition, Color.White, new Vector2(0.6f));
                     for (int i = 0; i < Server.ConnectedClients.Count(x => x is not null); i++) {
                         var client = Server.ConnectedClients[i];
-
+                    // TODO: when u work on this again be sure to like, re-enable this code, cuz like, if u dont, u die.
                         Color textCol = Color.White;
-                        if (NetPlay.CurrentClient.Id == i)
-                            textCol = Color.Green;
+                        //if (NetPlay.CurrentClient.Id == i)
+                            //textCol = Color.Green;
 
                         TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"{client.Name}" + $" ({client.Id})", initialPosition + new Vector2(0, 20) * (i + 1), textCol, new Vector2(0.6f));
                     }
-                }
+                //}
                 var tanksMessageSize = TankGame.TextFont.MeasureString(tanksMessage);
 
                 TankGame.SpriteRenderer.DrawString(TankGame.TextFont, tanksMessage, new(8, WindowUtils.WindowHeight - 8), Color.White, new Vector2(0.6f).ToResolution(), 0f, new Vector2(0, tanksMessageSize.Y));

@@ -436,6 +436,10 @@ public partial class AITank : Tank  {
 
             if (context.IsPlayer)
             {
+                var rnd = GameHandler.GameRand.NextFloat(0, 1);
+
+                // check if less than certain values for different value coins
+
                 if (context is TankHurtContextShell cxt1)
                 {
                     TankGame.GameData.BulletKills++;
