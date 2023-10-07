@@ -20,6 +20,7 @@ using FontStashSharp;
 using TanksRebirth.GameContent.Systems.Coordinates;
 using NativeFileDialogSharp;
 using Microsoft.Xna.Framework.Input;
+using TanksRebirth.GameContent.ID;
 
 namespace TanksRebirth.GameContent.UI
 {
@@ -274,6 +275,13 @@ namespace TanksRebirth.GameContent.UI
                         Vector2.One, AITank.TankDestructionColors[display.Key],
                         new Vector2(_tierScales[i]) * (WindowUtils.WindowBounds / new Vector2(1920, 1080)),
                         _tierAlphas[i], texture.Size() / 2, shadowDistScale: 0.4f);
+                    // draw the name of the tank just to make things nicer.
+                    IntermissionSystem.DrawShadowedString(TankGame.TextFont,
+                        new Vector2(
+                            WindowUtils.WindowWidth / 3 + WindowUtils.WindowWidth * 0.025f + xAdjust * xAdjustCount * ((float)WindowUtils.WindowWidth / 1920),
+                            _tnkDrawYOff.ToResolutionY() + offY - (-5f + xAdjustCount * _spacePerTank * TanksPerColumn * _tankSize * ((float)WindowUtils.WindowHeight / 1080))),
+                        Vector2.One, $"{TankID.Collection.GetKey(display.Key)}", Color.LightGray, new Vector2(_tierScales[i]) * (WindowUtils.WindowBounds / new Vector2(1920, 1080)) * 0.3f, _tierAlphas[i], TankGame.TextFont.MeasureString($"{TankID.Collection.GetKey(display.Key)}") / 2,
+                        shadowDistScale: 0.4f);
                     // draw the kill count text
                     IntermissionSystem.DrawShadowedString(TankGame.TextFont,
                         new Vector2(
