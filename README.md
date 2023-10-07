@@ -30,3 +30,25 @@ If you wish to keep up with development in real time, consider joining this serv
 - SnowManPimp (on Discord) for fr_FR translations.
 - vnaka (on GitHub) for pt_BR translations.
 - vsjoqvist (on GitHub) for sv_SV translations.
+
+# Computer Hardware
+
+These values may not be entirely accurate, as I have limited ways to test hardware capability. From what I've tested, here is a good idea.
+
+Storage: 80 MB available space
+Sound Card: OpenGL Compatible
+Network: Broadband Internet connection
+OpenGL Version: 4.6 Core Profile
+Graphics: Any OpenGL supported GPU
+
+## Recommendeded
+
+OS: Windows 10 or newer
+Processor: 2 Core processor at least 2 GHz
+Memory: 1024 MB RAM, 256MB VRAM
+
+## Minimum
+
+OS: Windows 7
+Processor: 2 Core processor at least 1 GHz
+Memory: 512 MB RAM, 128MB VRAM
