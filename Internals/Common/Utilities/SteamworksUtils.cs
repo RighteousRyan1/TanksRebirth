@@ -14,7 +14,7 @@ namespace TanksRebirth.Internals.Common.Utilities;
 public static class SteamworksUtils
 {
     public static bool IsInitialized { get; private set; }
-    public static string MyUsername { get; private set; }
+    public static string? MyUsername { get; private set; }
     public static int FriendsCount { get; private set; }
 
     public static bool IsOverlayActive { get; private set; }
@@ -56,5 +56,9 @@ public static class SteamworksUtils
             }
         }
         return null;
+    }
+
+    public static void SetSteamStatus(string status, string description) {
+        SteamFriends.SetRichPresence(status, description);
     }
 }

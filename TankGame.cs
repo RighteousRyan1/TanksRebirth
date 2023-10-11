@@ -159,6 +159,11 @@ namespace TanksRebirth
                 GameHandler.ClientLog.Write(
                     "Unable to load computer specs: Specified OS Architecture is not Windows.", LogType.Warn);
             }
+            else {
+                GameHandler.ClientLog.Write($"CPU: {ComputerSpecs.CPU.Name} (Core Count: {ComputerSpecs.CPU.CoreCount})", LogType.Info);
+                GameHandler.ClientLog.Write($"GPU: {ComputerSpecs.GPU.Name} (Driver Version: {ComputerSpecs.GPU.DriverVersion} | VRAM: {MathF.Round(MemoryParser.FromGigabytes(ComputerSpecs.GPU.VRAM))} GB)", LogType.Info);
+                GameHandler.ClientLog.Write($"Physical Memory (RAM): {ComputerSpecs.RAM.Manufacturer} {MathF.Round(MemoryParser.FromGigabytes(ComputerSpecs.RAM.TotalPhysical))} GB {ComputerSpecs.RAM.Type}@{ComputerSpecs.RAM.ClockSpeed}Mhz", LogType.Info);
+            }
 
             GameHandler.ClientLog.Write($"Playing on Operating System '{OperatingSystem}'", LogType.Info);
 
@@ -201,8 +206,8 @@ namespace TanksRebirth
 
         protected override void Initialize() {
             GameDir = Directory.GetCurrentDirectory();
-            //if (SteamAPI.IsSteamRunning())
-            //SteamworksUtils.Initialize();
+            if (Debugger.IsAttached && SteamAPI.IsSteamRunning())
+                SteamworksUtils.Initialize();
             CurrentSessionTimer.Start();
 
             GameHandler.MapEvents();
@@ -351,13 +356,17 @@ namespace TanksRebirth
             // Language.GenerateLocalizationTemplate("en_US.loc");
 
             Achievement.MysteryTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/achievement/secret");
-            AchievementsUI.GetVanillaAchievementsToList();
-            AchievementsUI.InitBtns();
 
             GameHandler.SetupGraphics();
             GameUI.Initialize();
             MainMenu.InitializeUIGraphics();
             MainMenu.InitializeBasics();
+
+            // this is achievements stuff
+            // TODO: fucking do it mate
+            // AchievementsUI.GetVanillaAchievementsToList();
+            // AchievementsUI.AchievementsPerRow = 10;
+            // AchievementsUI.InitBtns();
 
             #endregion
 
@@ -405,7 +414,7 @@ namespace TanksRebirth
 
         public static void ReportError(Exception e, bool notifyUser = true, bool openFile = true, bool writeToLog = true) {
             if (writeToLog)
-                GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.Error);
+                GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.ErrorFatal);
             if (notifyUser) {
                 var str = $"The error above is important for the developer of this game. If you are able to report it, explain how to reproduce it.";
                 if (openFile)
@@ -507,9 +516,14 @@ namespace TanksRebirth
         }
         protected override void Update(GameTime gameTime) {
             try {
+                /*if (Debugger.IsAttached) {
+                    SteamworksUtils.SetSteamStatus("balls", "inspector");
+                    SteamFriends.GetFriendGamePlayed(SteamFriends.GetFriendByIndex(0, EFriendFlags.k_EFriendFlagAll), out var x);
+                    
+                }*/
                 DoUpdate(gameTime);
             }
-            catch (Exception e) {
+            catch (Exception e) when (!Debugger.IsAttached) {
                 ReportError(e, false, false);
 
                 MainMenu.Theme.Volume = 0f;
@@ -729,6 +743,13 @@ namespace TanksRebirth
             DoUpdate2(gameTime);
 
             DoWorkaroundVolumes();
+
+            // AchievementsUI.UpdateBtns();
+
+            //for (int i = 0; i < AchievementsUI.AchBtns.Count; i++) {
+                //var ach = AchievementsUI.AchBtns[i];
+                // ach.Position -= new Vector2(2000);
+            //}
 
             //GameView = GameCamera.View;
             //GameProjection = GameCamera.Projection;

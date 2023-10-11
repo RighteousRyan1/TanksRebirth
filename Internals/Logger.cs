@@ -10,7 +10,8 @@ namespace TanksRebirth.Internals
     public enum LogType {
         Info,
         Warn,
-        Error,
+        ErrorFatal,
+        ErrorSilent,
         Debug
     }
     
@@ -74,7 +75,7 @@ namespace TanksRebirth.Internals
             return type switch {
                 LogType.Info => "Info",
                 LogType.Warn => "Warn",
-                LogType.Error => "Error",
+                LogType.ErrorFatal => "Error",
                 LogType.Debug => "Debug",
                 _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
             };

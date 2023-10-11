@@ -8,7 +8,7 @@ namespace TanksRebirth.Internals.Common.GameUI
 {
     public class UIImageButton : UIImage
     {
-        public UIImageButton(Texture2D texture, float scale, Action<UIImage, SpriteBatch> uniqueDraw = null) : base(texture, scale, uniqueDraw)
+        public UIImageButton(Texture2D texture, Vector2 scale, Action<UIImage, SpriteBatch> uniqueDraw = null) : base(texture, scale, uniqueDraw)
         {
             Texture = texture;
             Scale = scale;

@@ -24,7 +24,7 @@ namespace TanksRebirth.Net
 
         public string Name;
 
-        public static ushort MaxClients;
+        public static ushort MaxClients = 4;
 
         public static Client[] ConnectedClients;
 

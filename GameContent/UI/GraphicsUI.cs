@@ -60,7 +60,7 @@ namespace TanksRebirth.GameContent.UI
             }
             _initialized = true;
             //Per-Pixel Lighting
-            PerPixelLightingToggle = new(null, 1, (uiImage, spriteBatch) => DrawBooleanIndicator(spriteBatch, uiImage.Hitbox, TankGame.Settings.PerPixelLighting))
+            PerPixelLightingToggle = new(null, new(1), (uiImage, spriteBatch) => DrawBooleanIndicator(spriteBatch, uiImage.Hitbox, TankGame.Settings.PerPixelLighting))
             {
                 IsVisible = false,
                 IgnoreMouseInteractions = true
@@ -79,7 +79,7 @@ namespace TanksRebirth.GameContent.UI
             };
 
             //Vsync
-            VsyncToggle = new(null, 1, (uiImage, spriteBatch) => DrawBooleanIndicator(spriteBatch, uiImage.Hitbox, TankGame.Settings.Vsync))
+            VsyncToggle = new(null, new(1), (uiImage, spriteBatch) => DrawBooleanIndicator(spriteBatch, uiImage.Hitbox, TankGame.Settings.Vsync))
             {
                 IsVisible = false,
                 IgnoreMouseInteractions = true
@@ -99,7 +99,7 @@ namespace TanksRebirth.GameContent.UI
             };
 
             //Borderless Window
-            FullScreenToggle = new(null, 1, (uiImage, spriteBatch) => DrawBooleanIndicator(spriteBatch, uiImage.Hitbox, TankGame.Settings.FullScreen))
+            FullScreenToggle = new(null, new(1), (uiImage, spriteBatch) => DrawBooleanIndicator(spriteBatch, uiImage.Hitbox, TankGame.Settings.FullScreen))
             {
                 IsVisible = false,
                 IgnoreMouseInteractions = true

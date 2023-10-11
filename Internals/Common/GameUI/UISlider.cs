@@ -33,7 +33,7 @@ namespace TanksRebirth.Internals.Common.GameUI
 
 		public override void OnInitialize()
 		{
-			UIImage interactable = new(TankGame.WhitePixel, 1f, (image, spriteBatch) => spriteBatch.Draw(image.Texture, image.Hitbox, Color.Transparent));
+			UIImage interactable = new(TankGame.WhitePixel, new(1f), (image, spriteBatch) => spriteBatch.Draw(image.Texture, image.Hitbox, Color.Transparent));
 			interactable.Tooltip = Tooltip;
 			interactable.FallThroughInputs = true;
 			interactable.SetDimensions((int)Position.X + 2, (int)Position.Y + 2, (int)Size.X - 4, (int)Size.Y - 4);
