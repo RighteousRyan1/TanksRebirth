@@ -118,10 +118,10 @@ namespace TanksRebirth.GameContent.Systems
                 }
 
                 // FIXME: relates to tank rotation.
-                tank.TankRotation = -MathF.Round(tnk.Rotation, 5);
+                tank.TankRotation = MathF.Round(tnk.Rotation, 5);
                 // REMINDER: go here if you're editing load values again.
                 tank.TargetTankRotation = -tank.TankRotation;
-                tank.TurretRotation = -tank.TurretRotation;
+                tank.TurretRotation = tank.TurretRotation;
                 // FIXME: tanks placed on a horizontal axis (left, right) are flipped upon loading directly. fix that.
             }
             for (int i = 0; i < mission.Blocks.Length; i++) {
