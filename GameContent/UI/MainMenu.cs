@@ -162,8 +162,9 @@ namespace TanksRebirth.GameContent.UI
         public static void InitializeBasics()
         {
             MenuState = State.PrimaryMenu;
-            Crate = new(new(0, 0, 0), TankGame.GameView, TankGame.GameProjection);
-            Crate.ChestPosition = new(0, 500, 250);
+            Crate = new(new(0, 0, 0), TankGame.GameView, TankGame.GameProjection) {
+                ChestPosition = new(0, 500, 250)
+            };
             Crate.LidPosition = Crate.ChestPosition; //new(67.5f, 500, 137.5f);
             Crate.Rotation.Y = MathHelper.Pi + 0.25f;
             Crate.Rotation.X = -MathHelper.PiOver4;
@@ -714,6 +715,7 @@ namespace TanksRebirth.GameContent.UI
                 }
             };
             LanternMode.SetDimensions(800, 450, 300, 40);
+            // make all buttons not-interactable for non-host clients.
         }
         private static void SetCampaignDisplay()
         {
@@ -1010,6 +1012,14 @@ namespace TanksRebirth.GameContent.UI
                     }
             }
 
+            if (Active) {
+                if (Client.IsConnected()) {
+                    if (Server.serverNetManager is not null) {
+                        Client.SendDiffiulties();
+                    }
+                }
+            }
+
             VolumeMultiplier = SteamworksUtils.IsOverlayActive ? 0.25f : 1f;
 
             if (!IntermissionSystem.IsAwaitingNewMission || IntermissionSystem.BlackAlpha <= 0f)
@@ -1038,7 +1048,8 @@ namespace TanksRebirth.GameContent.UI
             SetMPButtonsVisibility(MenuState == State.Mulitplayer);
             SetPrimaryMenuButtonsVisibility(MenuState == State.PrimaryMenu);
             SetDifficultiesButtonsVisibility(MenuState == State.Difficulties);
-
+            
+            // me in march 2024: what the fuck is this code.
             TanksAreCalculators.Color = Difficulties.Types["TanksAreCalculators"] ? Color.Lime : Color.Red;
             PieFactory.Color = Difficulties.Types["PieFactory"] ? Color.Lime : Color.Red;
             UltraMines.Color = Difficulties.Types["UltraMines"] ? Color.Lime : Color.Red;
@@ -1063,6 +1074,7 @@ namespace TanksRebirth.GameContent.UI
             BulletBlocking.Color = Difficulties.Types["BulletBlocking"] ? Color.Lime : Color.Red;
             FFA.Color = Difficulties.Types["FFA"] ? Color.Lime : Color.Red;
             LanternMode.Color = Difficulties.Types["LanternMode"] ? Color.Lime : Color.Red;
+
 
             if (_musicFading)
             {
@@ -1114,10 +1126,10 @@ namespace TanksRebirth.GameContent.UI
         [StructLayout(LayoutKind.Sequential)]
         private readonly struct SpeedrunData {
             public readonly TimeSpan TimeTaken = TimeSpan.Zero;
-            public readonly string Runner = null;
+            public readonly string? Runner = null;
             public readonly DateTime Date = DateTime.UnixEpoch;
 
-            public SpeedrunData(string runner, TimeSpan timeTaken, DateTime date) {
+            public SpeedrunData(string? runner, TimeSpan timeTaken, DateTime date) {
                 Runner = runner;
                 Date = date;
                 TimeTaken = timeTaken;
@@ -1306,6 +1318,7 @@ namespace TanksRebirth.GameContent.UI
                     TankGame.SpriteRenderer.DrawString(TankGame.TextFont, txt, new(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 150.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(Anchor.Center, TankGame.TextFont.MeasureString(txt)));
                 }
                 #region Various things
+                // buttsex
                 if (Server.ConnectedClients is null) {
                     Server.ConnectedClients = new Client[4];
                     NetPlay.ServerName = "ServerName";

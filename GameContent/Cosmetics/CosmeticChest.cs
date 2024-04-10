@@ -16,7 +16,8 @@ namespace TanksRebirth.GameContent.Cosmetics
             UniqueBehavior = (cos, tnk) =>
             {
                 var sin = MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalMilliseconds / 350) / 6;
-                cos.Scale = new(MathF.Abs(sin) + 0.15f);
+                cos.Scale = new Vector3(MathF.Abs(sin) + 0.15f) * 0.1f;
+                // apparently this stuff aint updating or sum.
             }
         };
         public static Cosmetic3D DefaultBlenderCube = new("Default Blender Cube", GameResources.GetGameResource<Model>("Assets/cosmetics/blender_default_cube")
@@ -29,8 +30,18 @@ namespace TanksRebirth.GameContent.Cosmetics
             },
             Scale = new(10f)
         };
-        public static Cosmetic3D KingsCrown = new("King's Crown", GameResources.GetGameResource<Model>("Assets/cosmetics/crown"), GameResources.GetGameResource<Texture2D>("Assets/cosmetics/crown_tex"), new(0, 21, 0), CosmeticLockOptions.ToTurret)
-        {
+        public static Cosmetic3D KingsCrown = new("King's Crown", GameResources.GetGameResource<Model>("Assets/cosmetics/crown"), GameResources.GetGameResource<Texture2D>("Assets/cosmetics/crown_tex"), new(0, 21, 0), CosmeticLockOptions.ToTurret) {
+            UniqueBehavior = (cos, tnk) => {
+                /*cos.LockOptions = CosmeticLockOptions.None;
+                cos.Rotation = new(-MathHelper.PiOver2 - 0.3f, 0, -MathHelper.PiOver4 / 2);
+                cos.RelativePosition = new Vector3(5, 19, -3);
+                cos.Scale = new(2.7f);
+
+                var v2 = new Vector2(cos.RelativePosition.X, cos.RelativePosition.Z);
+                var rot = v2.RotatedByRadians(tnk.TurretRotation);
+                cos.RelativePosition += new Vector3(rot.X, 0, rot.Y);
+                cos.Rotation += new */
+            },
             Rotation = new(-MathHelper.PiOver2, 0, 0),
             Scale = new(3.5f)
         };

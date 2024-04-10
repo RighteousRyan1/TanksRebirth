@@ -200,6 +200,8 @@ namespace TanksRebirth
 
         public static AutoUpdater AutoUpdater;
 
+        public static AchievementPopupHandler VanillaAchievementPopupHandler;
+
         private void PreparingDeviceSettingsListener(object sender, PreparingDeviceSettingsEventArgs ev) {
             ev.GraphicsDeviceInformation.PresentationParameters.RenderTargetUsage = RenderTargetUsage.PreserveContents;
         }
@@ -240,6 +242,8 @@ namespace TanksRebirth
             GameHandler.ClientLog.Write($"Loaded save data.", LogType.Info);
 
             VanillaAchievements.InitializeToRepository();
+
+            VanillaAchievementPopupHandler = new(VanillaAchievements.Repository);
 
             base.Initialize();
         }
@@ -333,10 +337,10 @@ namespace TanksRebirth
             PlayerTank.controlRight.ForceReassign(Settings.RightKeybind);
             PlayerTank.controlMine.ForceReassign(Settings.MineKeybind);
 
-            if (!IsSouthernHemi ? LaunchTime.Month != 12 : LaunchTime.Month != 7)
+            /*if (!IsSouthernHemi ? LaunchTime.Month != 12 : LaunchTime.Month != 7)
                 MapRenderer.Theme = Settings.GameTheme;
             else
-                MapRenderer.Theme = MapTheme.Christmas;
+                MapRenderer.Theme = MapTheme.Christmas;*/
 
             TankFootprint.ShouldTracksFade = Settings.FadeFootprints;
 
@@ -938,6 +942,7 @@ namespace TanksRebirth
 
             if (!MapRenderer.ShouldRender)
                 vfx = null;
+
             SpriteRenderer.Begin(effect: vfx);
             SpriteRenderer.Draw(gameTarget, Vector2.Zero, Color.White);
 
@@ -946,6 +951,8 @@ namespace TanksRebirth
             SpriteRenderer.Begin();
             if (MainMenu.Active)
                 MainMenu.Render();
+            // i really wish i didn't have to draw this here.
+            VanillaAchievementPopupHandler.DrawPopup(SpriteRenderer);
             #region Debug
             if (Debugger.IsAttached)
                 SpriteRenderer.DrawString(TextFont, "DEBUGGER ATTACHED", new Vector2(10, 50), Color.Red, new Vector2(0.8f));

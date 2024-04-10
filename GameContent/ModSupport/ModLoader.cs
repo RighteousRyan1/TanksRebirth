@@ -199,7 +199,7 @@ namespace TanksRebirth.GameContent.ModSupport
                                                     var tanksMod = Activator.CreateInstance(type) as TanksMod;
                                                     tanksMod!.InternalName = modName;
 
-                                                    _modTankDictionary.Add(tanksMod, new());
+                                                    /*_modTankDictionary.Add(tanksMod, new());
 
                                                     // now lets scan the mod's content for ModTanks
                                                     // i feel like this is gravely inefficient but it can be changed
@@ -208,7 +208,7 @@ namespace TanksRebirth.GameContent.ModSupport
                                                             var modTank = Activator.CreateInstance(type2) as ModTank;
                                                             _modTankDictionary[tanksMod].Add(modTank!);
                                                         }
-                                                    }
+                                                    }*/
 
                                                     _loadedMods.Add(tanksMod);
 

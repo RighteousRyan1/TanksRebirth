@@ -56,8 +56,7 @@ public sealed record ChatSystem {
     /// <param name="message">The content of the <see cref="ChatMessage"/>.</param>
     /// <param name="color">The color in which to render the content of the <see cref="ChatMessage"/>.</param>
     /// <param name="sender">The sender of the message.</param>
-    /// <param name="netSend">If true, will not send the message to the server in a multiplayer context.</param>
-    /// <returns>The <see cref="ChatMessage"/> sent to the chat.</returns>
+    /// <param name="netSend">If true, will send the message to the server in a multiplayer context.</param>
     public static void SendMessage(string message, Color color, string sender = null, bool netSend = false)
     {
         if (message.Length > 0 && message[0] == CommandGlobals.ExpectedPrefix) {

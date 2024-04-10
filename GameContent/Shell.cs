@@ -10,6 +10,7 @@ using TanksRebirth.Enums;
 using TanksRebirth.GameContent.GameMechanics;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Properties;
+using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
@@ -20,7 +21,7 @@ using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent;
 
-public class Shell {
+public class Shell : IAITankDanger {
     public delegate void BlockRicochetDelegate(ref Block block, Shell shell);
 
     /// <summary>Only called when it bounces from wall-bounce code.</summary>
@@ -72,8 +73,8 @@ public class Shell {
     /// <summary>The <see cref="Tank"/> which shot this <see cref="Shell"/>.</summary>
     public Tank Owner;
 
-    public Vector2 Position2D => Position.FlattenZ();
-    public Vector2 Velocity2D => Velocity.FlattenZ();
+    public Vector3 Position3D => Position.ExpandZ() + new Vector3(0, 11, 0);
+    public Vector3 Velocity3D => Velocity.ExpandZ();
 
     /// <summary>How many times this <see cref="Shell"/> can hit walls.</summary>
     public uint RicochetsRemaining;
@@ -84,8 +85,8 @@ public class Shell {
     /// <summary>The homing properties of this <see cref="Shell"/>.</summary>
     public HomingProperties HomeProperties = default;
 
-    public Vector3 Position;
-    public Vector3 Velocity;
+    public Vector2 Position { get; set; }
+    public Vector2 Velocity;
 
     public Matrix View;
     public Matrix Projection;
@@ -93,13 +94,13 @@ public class Shell {
 
     public Model Model;
 
-    private OggAudio _shootSound;
+    private OggAudio? _shootSound;
 
     /// <summary>The hurtbox on the 2D backing map for the game.</summary>
-    public Rectangle Hitbox => new((int)(Position2D.X - 2), (int)(Position2D.Y - 2), 4, 4);
+    public Rectangle Hitbox => new((int)(Position.X - 2), (int)(Position.Y - 2), 4, 4);
 
     /// <summary>The hurtcircle on the 2D backing map for the game.</summary>
-    public Circle HitCircle => new() { Center = Position2D, Radius = 4 };
+    public Circle HitCircle => new() { Center = Position, Radius = 4 };
 
     /// <summary>Whether or not this shell should emit flames from behind it.</summary>
     public bool Flaming { get; set; }
@@ -109,8 +110,9 @@ public class Shell {
     public Color TrailColor { get; set; } = Color.Gray;
     public bool EmitsSmoke { get; set; } = true;
     public Color SmokeColor { get; set; } = new Color(255, 255, 255, 255);
+    public bool IsPlayerSourced { get; set; }
 
-    private Texture2D _shellTexture;
+    private Texture2D? _shellTexture;
     public int Id { get; private set; }
     private float _wallRicCooldown;
 
@@ -121,7 +123,7 @@ public class Shell {
 
     // private Particle _flame;
     public readonly int Type;
-    private OggAudio _loopingSound;
+    private OggAudio? _loopingSound;
     public bool IsDestructible { get; set; } = true;
     public void ReassignId(int newId) => Id = newId;
 
@@ -134,12 +136,15 @@ public class Shell {
     /// <param name="owner">Which <see cref="Tank"/> owns this <see cref="Shell"/>.</param>
     /// <param name="ricochets">How many times the newly created <see cref="Shell"/> can ricochet.</param>
     /// <param name="homing">Whether or not the newly created <see cref="Shell"/> homes in on enemies.</param>
-    public Shell(Vector3 position, Vector3 velocity, int type, Tank owner, uint ricochets = 0,
+    public Shell(Vector2 position, Vector2 velocity, int type, Tank owner, uint ricochets = 0,
         HomingProperties homing = default, bool useDarkTexture = false, bool playSpawnSound = true) {
         Type = type;
         RicochetsRemaining = ricochets;
         Position = position;
         Model = GameResources.GetGameResource<Model>("Assets/bullet");
+
+        AITank.Dangers.Add(this);
+        IsPlayerSourced = owner is PlayerTank;
 
         if (type == ShellID.Supressed || type == ShellID.Explosive)
             useDarkTexture = true;
@@ -222,20 +227,20 @@ public class Shell {
         if (!MapRenderer.ShouldRender || (!GameProperties.InMission && !MainMenu.Active))
             return;
 
-        Rotation = Velocity2D.ToRotation() - MathHelper.PiOver2;
+        Rotation = Velocity.ToRotation() - MathHelper.PiOver2;
         Position += Velocity * 0.62f * TankGame.DeltaTime;
         World = Matrix.CreateFromYawPitchRoll(-Rotation, 0, 0)
-                * Matrix.CreateTranslation(Position);
+                * Matrix.CreateTranslation(Position3D);
 
         if (_wallRicCooldown <= 0) {
-            if (Position2D.X is < MapRenderer.MIN_X or > MapRenderer.MAX_X) {
+            if (Position.X is < MapRenderer.MIN_X or > MapRenderer.MAX_X) {
                 OnRicochet?.Invoke(this);
                 Ricochet(true);
 
                 _wallRicCooldown = 5;
             }
 
-            if (Position2D.Y is < MapRenderer.MIN_Y or > MapRenderer.MAX_Y) {
+            if (Position.Y is < MapRenderer.MIN_Y or > MapRenderer.MAX_Y) {
                 OnRicochet?.Invoke(this);
                 Ricochet(false);
 
@@ -247,7 +252,7 @@ public class Shell {
 
         var dummy = Vector2.Zero;
 
-        Collision.HandleCollisionSimple_ForBlocks(Hitbox, Velocity2D, ref dummy, out var dir, out var block,
+        Collision.HandleCollisionSimple_ForBlocks(Hitbox, Velocity, ref dummy, out var dir, out var block,
             out bool corner, false, (c) => c.IsSolid);
 
         if (LifeTime <= 5 && (dir != CollisionDirection.None || corner))
@@ -282,7 +287,7 @@ public class Shell {
                 var target = Unsafe.Add(ref tanksSSpace, i);
 
                 if (target is null || target == Owner ||
-                    !(Vector2.Distance(Position2D, target.Position) <= HomeProperties.Radius)) continue;
+                    !(Vector2.Distance(Position, target.Position) <= HomeProperties.Radius)) continue;
 
                 if (target.Team == Owner.Team && target.Team != TeamID.NoTeam) continue;
 
@@ -293,20 +298,20 @@ public class Shell {
             }
 
             if (HomeProperties.Target != Vector2.Zero) {
-                bool hits = Collision.DoRaycast(Position2D, HomeProperties.Target, (int)HomeProperties.Radius * 2);
+                bool hits = Collision.DoRaycast(Position, HomeProperties.Target, (int)HomeProperties.Radius * 2);
 
                 if (hits) {
-                    float dist = Vector2.Distance(Position2D, HomeProperties.Target);
+                    float dist = Vector2.Distance(Position, HomeProperties.Target);
 
-                    Velocity.X += MathUtils.DirectionOf(Position2D, HomeProperties.Target).X *
+                    Velocity.X += MathUtils.DirectionOf(Position, HomeProperties.Target).X *
                         HomeProperties.Power / dist;
-                    Velocity.Z += MathUtils.DirectionOf(Position2D, HomeProperties.Target).Y *
+                    Velocity.Y += MathUtils.DirectionOf(Position, HomeProperties.Target).Y *
                         HomeProperties.Power / dist;
 
-                    Vector2 trueSpeed = Vector2.Normalize(Velocity2D) * HomeProperties.Speed;
+                    Vector2 trueSpeed = Vector2.Normalize(Velocity) * HomeProperties.Speed;
 
 
-                    Velocity = trueSpeed.ExpandZ();
+                    Velocity = trueSpeed;
                 }
             }
 
@@ -315,14 +320,14 @@ public class Shell {
 
         CheckCollisions();
 
-        var bruh = Flaming ? (int)Math.Round(6 / Velocity2D.Length()) : (int)Math.Round(12 / Velocity2D.Length());
-        var nummy = bruh != 0 ? bruh : 5f;
+        var bruh = Flaming ? (int)Math.Round(6 / Velocity.Length()) : (int)Math.Round(12 / Velocity.Length());
+        var num = bruh != 0 ? bruh : 5f;
 
         if (EmitsSmoke)
-            RenderSmokeParticle(nummy);
+            RenderSmokeParticle(num);
 
         if (LeavesTrail)
-            RenderLeaveTrail(nummy);
+            RenderLeaveTrail(num);
 
         if (Flaming)
             RenderFlamingParticle();
@@ -330,11 +335,11 @@ public class Shell {
         OnPostUpdate?.Invoke(this);
     }
 
-    private void RenderSmokeParticle(float nummy) {
-        if (!(LifeTime % nummy <= TankGame.DeltaTime)) return;
+    private void RenderSmokeParticle(float timer) {
+        if (!(LifeTime % timer <= TankGame.DeltaTime)) return;
 
         var p = GameHandler.ParticleSystem.MakeParticle(
-            Position + new Vector3(0, 0, 5).FlattenZ()
+            Position3D + new Vector3(0, 0, 5).FlattenZ()
                                            .RotatedByRadians(Rotation + MathHelper.Pi +
                                                              GameHandler.GameRand.NextFloat(-0.3f, 0.3f))
                                            .ExpandZ(),
@@ -360,11 +365,11 @@ public class Shell {
         };
     }
 
-    private void RenderLeaveTrail(float nummy) {
-        if (!(LifeTime % (nummy / 2) <= TankGame.DeltaTime)) return;
+    private void RenderLeaveTrail(float timer) {
+        if (!(LifeTime % (timer / 2) <= TankGame.DeltaTime)) return;
 
         var p = GameHandler.ParticleSystem.MakeParticle(
-            Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(),
+            Position3D + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(),
             GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
 
         p.Roll = -MathHelper.PiOver2;
@@ -387,7 +392,7 @@ public class Shell {
         };
 
         var p2 = GameHandler.ParticleSystem.MakeParticle(
-            Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(),
+            Position3D + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(),
             GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
 
         p2.Roll = -MathHelper.PiOver2;
@@ -414,7 +419,7 @@ public class Shell {
         if (!(0 <= TankGame.DeltaTime)) return;
 
         var p = GameHandler.ParticleSystem.MakeParticle(
-            Position + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(),
+            Position3D + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(),
             GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/flame"));
 
         p.Roll = -MathHelper.PiOver2;
@@ -432,7 +437,7 @@ public class Shell {
 
         p.UniqueBehavior = (par) => {
             const float scalingConstant = 0.06f;
-            var flat = Position.FlattenZ();
+            var flat = Position;
 
             var off = flat + Vector2.Zero.RotatedByRadians(Rotation);
 
@@ -472,7 +477,7 @@ public class Shell {
         if (horizontal)
             Velocity.X = -Velocity.X;
         else
-            Velocity.Z = -Velocity.Z;
+            Velocity.Y = -Velocity.Y;
 
 
         var sound = SoundPlayer.PlaySoundInstance(ricochetSound, SoundContext.Effect, 0.5f, gameplaySound: true);
@@ -490,7 +495,7 @@ public class Shell {
             }
         }
 
-        GameHandler.ParticleSystem.MakeShineSpot(Position, Color.Orange, 0.8f);
+        GameHandler.ParticleSystem.MakeShineSpot(Position3D, Color.Orange, 0.8f);
         Ricochets++;
         RicochetsRemaining--;
     }
@@ -554,6 +559,7 @@ public class Shell {
 
         _loopingSound?.Instance?.Stop();
         _loopingSound = null;
+        AITank.Dangers.Remove(this);
         AllShells[Id] = null;
     }
 
@@ -574,7 +580,7 @@ public class Shell {
                 sfx.Instance.Pitch = GameHandler.GameRand.NextFloat(-0.1f, 0.1f);
             }
 
-            GameHandler.ParticleSystem.MakeSmallExplosion(Position, 8, 10, 1.25f, 15);
+            GameHandler.ParticleSystem.MakeSmallExplosion(Position3D, 8, 10, 1.25f, 15);
         }
 
         _loopingSound?.Instance?.Stop();
@@ -583,7 +589,7 @@ public class Shell {
 
         if (Owner is not null) {
             if (Owner.Properties.ShellType == ShellID.Explosive)
-                new Explosion(Position2D, 7f, Owner, 0.25f);
+                new Explosion(Position, 7f, Owner, 0.25f);
             if (Owner is PlayerTank)
                 // in case the player wants to destroy a mine that may be impeding progress- we don't want to penalize them.
                 if (context == DestructionContext.WithHostileTank || context == DestructionContext.WithMine ||
@@ -605,7 +611,7 @@ public class Shell {
         View = TankGame.GameView;
 
         if (DebugUtils.DebuggingEnabled && DebugUtils.DebugLevel == 1 && HomeProperties.Speed > 0)
-            Collision.DoRaycast(Position2D, HomeProperties.Target, (int)HomeProperties.Radius, true);
+            Collision.DoRaycast(Position, HomeProperties.Target, (int)HomeProperties.Radius, true);
         if (DebugUtils.DebuggingEnabled)
             DebugUtils.DrawDebugString(TankGame.SpriteRenderer,
                 $"RicochetsLeft: {RicochetsRemaining}\nTier: {Type}\nId: {Id}",

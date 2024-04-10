@@ -184,6 +184,12 @@ namespace TanksRebirth.GameContent
         }
         internal static void UpdateAll()
         {
+            if (DebugUtils.DebuggingEnabled) {
+                if (InputUtils.KeyJustPressed(Keys.G)) {
+                    TankGame.VanillaAchievementPopupHandler.SummonOrQueue(GameRand.Next(VanillaAchievements.Repository.GetAchievements().Count));
+                    ChatSystem.SendMessage("Should have appeared...", Color.Crimson);
+                }
+            }
             if (MainMenu.Active)
                 PlayerTank.SetLives(5);
             if (MainMenu.Active)
@@ -194,7 +200,7 @@ namespace TanksRebirth.GameContent
             else
                 Xp = new();
 
-            VanillaAchievements.Repository.UpdateCompletions();
+            VanillaAchievements.Repository.UpdateCompletions(TankGame.VanillaAchievementPopupHandler);
 
             Client.SendLives();
             /* uh, yeah. this is the decay-per-level calculation. people don't want it!
@@ -341,8 +347,9 @@ namespace TanksRebirth.GameContent
                 }
             }
             if (LevelEditor.Active)
-                if (InputUtils.KeyJustPressed(Keys.T))
-                    PlacementSquare.DrawStacks = !PlacementSquare.DrawStacks;
+                if (DebugUtils.DebuggingEnabled)
+                    if (InputUtils.KeyJustPressed(Keys.T))
+                        PlacementSquare.DrawStacks = !PlacementSquare.DrawStacks;
             if (!MainMenu.Active)
             {
                 if (InputUtils.KeyJustPressed(Keys.Z))
@@ -377,7 +384,7 @@ namespace TanksRebirth.GameContent
                     if (InputUtils.KeyJustPressed(Keys.OemSemicolon))
                         new Mine(null, MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ(), 400);
                     if (InputUtils.KeyJustPressed(Keys.OemQuotes))
-                        new Shell(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition) + new Vector3(0, 11, 0), Vector3.Zero, ShellID.Standard, null, 0);
+                        new Shell(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ(), Vector2.Zero, ShellID.Standard, null, 0);
                     if (InputUtils.KeyJustPressed(Keys.End))
                         SpawnCrateAtMouse();
 

@@ -387,5 +387,15 @@ namespace TanksRebirth.Net
 
             client.Send(message, DeliveryMethod.ReliableOrdered);
         }
+
+        public static void SendDiffiulties() {
+            NetDataWriter message = new();
+
+            message.Put(PacketID.SyncDifficulties);
+            foreach (var item in Difficulties.Types) {
+                message.Put(item.Value); 
+            }
+            client.Send(message, DeliveryMethod.Sequenced);
+        }
     }
 }

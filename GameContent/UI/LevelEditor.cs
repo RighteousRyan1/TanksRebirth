@@ -4,10 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
-using TanksRebirth.Enums;
 using TanksRebirth.GameContent.Properties;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.Internals;
@@ -21,7 +18,6 @@ using TanksRebirth.GameContent.Systems.Coordinates;
 using NativeFileDialogSharp;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.Internals.Common.Framework.Graphics;
-using System.Reflection;
 using TanksRebirth.Localization;
 
 namespace TanksRebirth.GameContent.UI

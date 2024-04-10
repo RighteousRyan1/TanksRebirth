@@ -296,6 +296,8 @@ public abstract class Tank {
             particle.Tag =
                 $"cosmetic_2d_{GetHashCode()}"; // store the hash code of this tank, so when we destroy the cosmetic's particle, it destroys all belonging to this tank!
             particle.HasAddativeBlending = false;
+            // += vs =  ?
+            // TODO: this prolly is the culprit of 2d cosmetics not doin nun
             particle.UniqueBehavior = particle => {
                 particle.Position = Position3D + cos2d.RelativePosition;
                 particle.Roll = cos2d.Rotation.X;
@@ -705,10 +707,10 @@ public abstract class Tank {
 
                 var newPos = Position + new Vector2(0, 20).RotatedByRadians(-TurretRotation);
 
-                var defPos = new Vector3(newPos.X, 11, newPos.Y);
+                var defPos = new Vector2(newPos.X, newPos.Y);
 
                 if (!fxOnly) {
-                    var shell = new Shell(defPos, new Vector3(-new2d.X, 0, new2d.Y) * Properties.ShellSpeed,
+                    var shell = new Shell(defPos, new Vector2(-new2d.X, new2d.Y) * Properties.ShellSpeed,
                         Properties.ShellType, this, Properties.RicochetCount, homing: Properties.ShellHoming);
 
                     OnShoot?.Invoke(this, ref shell);
@@ -721,11 +723,11 @@ public abstract class Tank {
                         Client.SyncShellFire(shell);
                 }
 
-                var force = (Position - defPos.FlattenZ()) * Properties.Recoil;
+                var force = (Position - defPos) * Properties.Recoil;
                 Velocity = force / UNITS_PER_METER;
                 DecelerationRateDecayTime = 20 * Properties.Recoil;
                 //Body.ApplyForce(force / UNITS_PER_METER);
-                DoShootParticles(defPos);
+                DoShootParticles(new Vector3(defPos.X, 11, defPos.Y));
             }
             else {
                 // i == 0 : null, 0 rads
@@ -738,15 +740,15 @@ public abstract class Tank {
                     angle += Properties.ShellSpread;
                 var newAngle = flip ? -angle : angle;
 
-                var shell = new Shell(Position3D, Vector3.Zero, Properties.ShellType, this,
+                var shell = new Shell(Position, Vector2.Zero, Properties.ShellType, this,
                     homing: Properties.ShellHoming);
                 var new2d = Vector2.UnitY.RotatedByRadians(TurretRotation);
 
                 var newPos = Position + new Vector2(0, 20).RotatedByRadians(-TurretRotation + newAngle);
 
-                shell.Position = new Vector3(newPos.X, 11, newPos.Y);
+                shell.Position = new Vector2(newPos.X, newPos.Y);
 
-                shell.Velocity = new Vector3(-new2d.X, 0, new2d.Y).FlattenZ().RotatedByRadians(newAngle).ExpandZ() *
+                shell.Velocity = new Vector2(-new2d.X, new2d.Y).RotatedByRadians(newAngle) *
                                  Properties.ShellSpeed;
 
                 shell.RicochetsRemaining = Properties.RicochetCount;

@@ -75,6 +75,7 @@ public static class CommandGlobals {
                 Language.LoadLang(parseLang, out TankGame.GameLanguage);
                 TankGame.Settings.Language = parseLang;
 
+                // TODO: try to only initialize the localization lol (causes UI to appear when it shouldn't)
                 MainMenu.InitializeUIGraphics();
                 GameUI.Initialize();
                 VolumeUI.Initialize();

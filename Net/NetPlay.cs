@@ -297,14 +297,14 @@ namespace TanksRebirth.Net
                     break;
                 case PacketID.ShellFire:
                     var shellType = reader.GetInt();
-                    var shellPos = reader.GetVector3();
-                    var shellVel = reader.GetVector3();
+                    var shellPos = reader.GetVector2();
+                    var shellVel = reader.GetVector2();
                     var shellRicochets = reader.GetUInt();
                     var shellOwner = reader.GetInt();
 
                     // GameHandler.AllTanks[shellOwner].Shoot(true);
                     var shell = new Shell(shellPos, shellVel, shellType, GameHandler.AllTanks[shellOwner], ricochets: shellRicochets);
-                    GameHandler.AllTanks[shellOwner].DoShootParticles(shell.Position);
+                    GameHandler.AllTanks[shellOwner].DoShootParticles(shell.Position3D);
 
                     // ChatSystem.SendMessage($"Pos: {shell.Position} | Vel: {shell.Velocity}", Color.White);
                     break;
@@ -389,6 +389,11 @@ namespace TanksRebirth.Net
                     var lives = reader.GetInt();
 
                     PlayerTank.Lives[clid] = lives;
+                    break;
+                case PacketID.SyncDifficulties:
+                    for (int i = 0; i < Difficulties.Types.Count; i++) {
+                        Difficulties.Types[Difficulties.Types.Keys.ElementAt(i)] = reader.GetBool();
+                    }
                     break;
                 #endregion
             }
@@ -543,8 +548,8 @@ namespace TanksRebirth.Net
                     break;
                 case PacketID.ShellFire:
                     var shellType = reader.GetInt();
-                    var shellPos = reader.GetVector3();
-                    var shellVel = reader.GetVector3();
+                    var shellPos = reader.GetVector2();
+                    var shellVel = reader.GetVector2();
                     var shellRicochets = reader.GetUInt();
                     var shellOwner = reader.GetInt();
 
@@ -695,7 +700,14 @@ namespace TanksRebirth.Net
 
                     Server.serverNetManager.SendToAll(message, deliveryMethod, peer);
                     break;
-                #endregion
+                case PacketID.SyncDifficulties:
+                    for (int i = 0; i < Difficulties.Types.Count; i++) {
+                        var val = reader.GetBool();
+                        message.Put(val);
+                    }
+                    Server.serverNetManager.SendToAll(message, deliveryMethod, peer);
+                    break;
+                    #endregion
             }
 
             // peer.Send(message, DeliveryMethod.ReliableOrdered);

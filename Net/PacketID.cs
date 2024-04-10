@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TanksRebirth.GameContent.ID;
-using TanksRebirth.Internals.Common.Framework.Collections;
+﻿using TanksRebirth.Internals.Common.Framework.Collections;
 
 namespace TanksRebirth.Net;
 
@@ -60,6 +54,9 @@ public sealed class PacketID
     public const int QuitLevel = 23;
     public const int SendCampaignStatus = 24; // i.e: whether another client doesn't have something a host does, such as a campaign
     public const int SendCommandUsage = 25;
+
+    // difficulty sync.
+    public const int SyncDifficulties = 26;
 
     public static int AddPacketId(string name, int id) => Collection.ForcefullyInsert(name, id);
 
