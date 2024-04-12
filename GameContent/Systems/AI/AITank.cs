@@ -32,8 +32,8 @@ public partial class AITank : Tank  {
     public AiBehavior[] Behaviors { get; private set; } // each of these should keep track of an action the tank performs
     public AiBehavior[] SpecialBehaviors { get; private set; }
     public int AiTankType;
-    private Texture2D _tankTexture;
-    private static Texture2D _shadowTexture;
+    private Texture2D? _tankTexture;
+    private static Texture2D? _shadowTexture;
     public Action enactBehavior;
     public int AITankId { get; private set; }
 
@@ -843,10 +843,12 @@ public partial class AITank : Tank  {
 
             var isShellNear = isThereDanger && danger is Shell;
             var isMineNear = isThereDanger && danger is Mine;
+            var isExplNear = isThereDanger && danger is Explosion;
 
             // only use if checking the respective boolean!
             var shell = (danger as Shell)!;
             var mine = (danger as Mine)!;
+            var explosion = (danger as Explosion)!;
 
             var tanksNearMe = new List<Tank>();
             var blocksNearMe = new List<Block>();
@@ -1029,7 +1031,7 @@ public partial class AITank : Tank  {
                         }
                     }
                 }
-                if (isMineNear && !isShellNear) {
+                if (isMineNear && !isShellNear && !isExplNear) {
                     if (Behaviors[5].IsModOf(10)) {
                         var direction = -Vector2.UnitY.RotatedByRadians(mine.Position.DirectionOf(Position, false).ToRotation());
 
@@ -1038,6 +1040,14 @@ public partial class AITank : Tank  {
                 }
                 #endregion
 
+                #region ExplosionAvoidance
+
+                if (isExplNear) {
+                    var direction = -Vector2.UnitY.RotatedByRadians(explosion.Position.DirectionOf(Position, false).ToRotation());
+                    TargetTankRotation = direction.ToRotation();
+                }
+
+                #endregion
             }
 
             #region Special Tank Behavior

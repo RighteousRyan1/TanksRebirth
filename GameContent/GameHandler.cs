@@ -189,6 +189,9 @@ namespace TanksRebirth.GameContent
                     TankGame.VanillaAchievementPopupHandler.SummonOrQueue(GameRand.Next(VanillaAchievements.Repository.GetAchievements().Count));
                     ChatSystem.SendMessage("Should have appeared...", Color.Crimson);
                 }
+                if (InputUtils.KeyJustPressed(Keys.OemPipe)) {
+                    var expl = new Explosion(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ(), 5f);
+                }
             }
             if (MainMenu.Active)
                 PlayerTank.SetLives(5);
