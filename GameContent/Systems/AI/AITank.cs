@@ -209,7 +209,7 @@ public partial class AITank : Tank  {
         if (TankGame.IsMainThread) {
             if (tier < TankID.Cherry) {
 
-                var tnkAsset = Assets[$"tank_" + TankID.Collection.GetKey(tier).ToLower()];
+                var tnkAsset = Assets[$"tank_" + TankID.Collection.GetKey(tier)!.ToLower()];
 
                 var t = new Texture2D(TankGame.Instance.GraphicsDevice, tnkAsset.Width, tnkAsset.Height);
 
@@ -293,6 +293,10 @@ public partial class AITank : Tank  {
             GC.Collect(); // guh?
             return;
         }
+
+        // so not all tanks pursuit at the same time (it looks mad weird if they do)
+        if (AiParams.PursuitFrequency > 0)
+            AiParams.PursuitFrequency += GameHandler.GameRand.Next(-AiParams.PursuitFrequency / 4, AiParams.PursuitFrequency / 4);
 
         WorldId = index2;
 
@@ -962,11 +966,6 @@ public partial class AITank : Tank  {
                 if (!isMineNear && !isShellNear && !IsTurning && CurMineStun <= 0 && CurShootStun <= 0) {
                     if (!pathBlocked) {
                         if (Behaviors[0].IsModOf(AiParams.MeanderFrequency)) {
-                            float dir = -100;
-
-                            if (targetExists)
-                                dir = MathUtils.DirectionOf(Position, TargetTank!.Position).ToRotation();
-
                             var random = GameHandler.GameRand.NextFloat(-AiParams.MeanderAngle / 2, AiParams.MeanderAngle / 2);
 
                             TargetTankRotation += random;
@@ -974,16 +973,15 @@ public partial class AITank : Tank  {
                         if (targetExists) {
                             if (AiParams.PursuitFrequency != 0) {
                                 if (Behaviors[0].IsModOf(AiParams.PursuitFrequency)) {
-                                    float dir = -100;
+                                    float angleToTarget = MathUtils.DirectionOf(Position, TargetTank!.Position).ToRotation() - MathHelper.PiOver2;
 
-                                    if (targetExists)
-                                        dir = MathUtils.DirectionOf(Position, TargetTank!.Position).ToRotation();
+                                    // we want to go AWAY from the target.
+                                    if (AiParams.PursuitLevel < 0)
+                                        angleToTarget += MathHelper.PiOver2;
 
-                                    var random = GameHandler.GameRand.NextFloat(-AiParams.MeanderAngle / 2, AiParams.MeanderAngle / 2);
+                                    var targetAngle = (angleToTarget) * AiParams.PursuitLevel;
 
-                                    var meanderRandom = dir != -100 ? random + (dir + MathHelper.PiOver2) + (0.2f * AiParams.PursuitLevel) : random;
-
-                                    TargetTankRotation = meanderRandom;
+                                    TargetTankRotation = targetAngle;
                                 }
                             }
                         }
@@ -997,9 +995,13 @@ public partial class AITank : Tank  {
                 var indif = 3;
 
                 if (isShellNear) {
-                    if (shell.LifeTime > 30) {
+                    if (Behaviors[6].IsModOf(indif)) {
+                        // with .IsHeadingTowards we don't need a lifetime check anymore lol.
+
+                        // TODO: add all shells that may or may not be near, average their position and make the tank go away from that position
                         if (CurMineStun <= 0 && CurShootStun <= 0) {
-                            if (Behaviors[6].IsModOf(indif)) {
+                            var dist = shell.IsPlayerSourced ? AiParams.ProjectileWarinessRadius_PlayerShot : AiParams.ProjectileWarinessRadius_AIShot;
+                            if (shell.IsHeadingTowards(Position, dist, MathHelper.PiOver2)) {
                                 var direction = -Vector2.UnitY.RotatedByRadians(shell.Position.DirectionOf(Position, false).ToRotation());
                                 TargetTankRotation = direction.ToRotation();
                             }
@@ -1012,11 +1014,13 @@ public partial class AITank : Tank  {
                 #region MineHandle / MineAvoidance
                 if (!isMineNear && !isShellNear) {
                     if (Properties.MineLimit > 0) {
+                        // why is 60 hardcoded xd
                         if (Behaviors[4].IsModOf(60)) {
                             if (!tanksNearMe.Any(x => x.Team == Team)) {
                                 nearDestructibleObstacle = blocksNearMe.Any(c => c.IsDestructible);
                                 if (AiParams.SmartMineLaying) {
                                     if (nearDestructibleObstacle) {
+                                        // (100, 100)? why?
                                         TargetTankRotation = new Vector2(100, 100).RotatedByRadians(GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi))/*.ExpandZ()*/.ToRotation();
                                         LayMine();
                                     }
@@ -1032,7 +1036,9 @@ public partial class AITank : Tank  {
                     }
                 }
                 if (isMineNear && !isShellNear && !isExplNear) {
+                    // why is 10 hardcoded xd
                     if (Behaviors[5].IsModOf(10)) {
+                        var dist = mine.IsPlayerSourced ? AiParams.MineWarinessRadius_PlayerLaid : AiParams.MineWarinessRadius_AILaid;
                         var direction = -Vector2.UnitY.RotatedByRadians(mine.Position.DirectionOf(Position, false).ToRotation());
 
                         TargetTankRotation = direction.ToRotation();
@@ -1042,9 +1048,13 @@ public partial class AITank : Tank  {
 
                 #region ExplosionAvoidance
 
+                // FIXME?: is the modulus check more sensible to come first or not? only time will tell.
                 if (isExplNear) {
-                    var direction = -Vector2.UnitY.RotatedByRadians(explosion.Position.DirectionOf(Position, false).ToRotation());
-                    TargetTankRotation = direction.ToRotation();
+                    if (Behaviors[5].IsModOf(10)) {
+                        var dist = explosion.IsPlayerSourced ? AiParams.MineWarinessRadius_PlayerLaid : AiParams.MineWarinessRadius_AILaid;
+                        var direction = -Vector2.UnitY.RotatedByRadians(explosion.Position.DirectionOf(Position, false).ToRotation());
+                        TargetTankRotation = direction.ToRotation();
+                    }
                 }
 
                 #endregion
@@ -1297,82 +1307,30 @@ public partial class AITank : Tank  {
         Properties.Armor?.Render();
     }
     public bool TryGetDangerNear(float distance, out IAITankDanger? danger) {
-        // do the stuff.
-        danger = null;
-        bool success = false;
         IAITankDanger? closest = null;
-        for (int i = 0; i < Dangers.Count; i++) {
-            var cDanger = Dangers[i];
-            var dist = GameUtils.Distance_WiiTanksUnits(Position, cDanger.Position);
-            if (dist < distance) {
-                if (closest == null)
-                    closest = cDanger;
-                else if (GameUtils.Distance_WiiTanksUnits(Position, cDanger.Position) < GameUtils.Distance_WiiTanksUnits(Position, closest.Position))
-                    closest = cDanger;
-                success = true;
-            }
-        }
-        danger = closest;
-        return success;
-    }
-    /*public bool TryGetShellNear(float distance, out Shell? shell)
-    {
-        shell = null;
 
-        Shell? closest = null;
+        Span<IAITankDanger> dangers = Dangers.ToArray();
 
-        bool returned = false;
+        ref var dangersSearchSpace = ref MemoryMarshal.GetReference(dangers);
 
-        foreach (var bullet in Shell.AllShells)
-        {
-            if (bullet is not null)
-            {
-                if (bullet.LifeTime > 30)
-                {
-                    var dist = GameUtils.Distance_WiiTanksUnits(Position, bullet.Position);
-                    if (dist < distance)
-                    {
-                        if (closest == null)
-                            closest = bullet;
-                        else if (GameUtils.Distance_WiiTanksUnits(Position, bullet.Position) < GameUtils.Distance_WiiTanksUnits(Position, closest.Position))
-                            closest = bullet;
-                        returned = true;
-                    }
-                }
-            }
-        }
+        for (var i = 0; i < Dangers.Count; i++) {
+            var currentDanger = Unsafe.Add(ref dangersSearchSpace, i);
 
-        shell = closest;
-        return returned;
-    }
-    public bool TryGetMineNear(float distance, out Mine mine) {
+            if (currentDanger is null) continue;
 
-        mine = null;
+            var distanceFromMineToSelf = GameUtils.Distance_WiiTanksUnits(Position, currentDanger.Position);
 
-        Mine closest = null;
-        
-        Span<Mine> mines = Mine.AllMines;
-
-        ref var minesSearchSpace = ref MemoryMarshal.GetReference(mines);
-        
-        for (var i = 0; i < Mine.AllMines.Length; i++) {
-            var currentMine = Unsafe.Add(ref minesSearchSpace, i);
-
-            if (currentMine is null) continue;
-
-            var distanceFromMineToSelf = GameUtils.Distance_WiiTanksUnits(Position, currentMine.Position);
-            
             if (!(distanceFromMineToSelf < distance)) continue;
 
             if (closest == null || distanceFromMineToSelf <
                 GameUtils.Distance_WiiTanksUnits(Position, closest.Position)) {
-                closest = currentMine;
+                closest = currentDanger;
             }
         }
 
-        mine = closest;
+        danger = closest;
         return closest != null;
-    }*/
+    }
 
     private static readonly int[] workingTiers =
     {

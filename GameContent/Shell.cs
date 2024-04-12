@@ -650,4 +650,18 @@ public class Shell : IAITankDanger {
             mesh.Draw();
         }
     }
+    /// <summary>Check if this <see cref="Shell"/> is heading towards <paramref name="targetPosition"/>, based on <paramref name="arc"/>.</summary>
+    /// <param name="targetPosition">The position to check whether or not this <see cref="Shell"/> is on a collision path with.</param>
+    /// <param name="distance">The distance the target must be from this <see cref="Shell"/>.</param>
+    /// <param name="arc">The arc length (from the angular rotation of <see cref="Velocity"/> to <c>arc / 2</c> to check.</param>
+    /// <returns></returns>
+    public bool IsHeadingTowards(Vector2 targetPosition, float distance, float arc) {
+        var rotation = Velocity.ToRotation();
+
+        // check if the direction to the position's rotation is similar on (-arc / 2, arc / 2)
+        var targetAngularRotation = (Position - targetPosition).ToRotation();
+
+        // check if the direction 
+        return ((targetAngularRotation < rotation + arc / 2) || (targetAngularRotation > rotation - arc / 2)) && GameUtils.Distance_WiiTanksUnits(Position, targetPosition) < distance;
+    }
 }

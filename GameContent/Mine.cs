@@ -28,7 +28,7 @@ public sealed class Mine : IAITankDanger
     public const int MAX_MINES = 500;
     public static Mine[] AllMines { get; } = new Mine[MAX_MINES];
 
-    public Tank Owner;
+    public Tank? Owner;
 
     public Vector2 Position { get; set; }
     private Vector2 _oldPosition;
@@ -80,7 +80,7 @@ public sealed class Mine : IAITankDanger
     /// <param name="pos">The position of this <see cref="Mine"/> in the game world.</param>
     /// <param name="detonateTime">The time it takes for this <see cref="Mine"/> to detonate.</param>
     /// <param name="radius">The radius of this <see cref="Mine"/>'s explosion.</param>
-    public Mine(Tank owner, Vector2 pos, float detonateTime, float radius = 65f)
+    public Mine(Tank? owner, Vector2 pos, float detonateTime, float radius = 65f)
     {
         Owner = owner;
         ExplosionRadius = radius;

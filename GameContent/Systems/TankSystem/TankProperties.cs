@@ -94,7 +94,7 @@ public class TankProperties {
     public Color DestructionColor { get; set; } = Color.Black;
 
     /// <summary>The armor properties this <see cref="Tank"/> has.</summary>
-    public Armor Armor { get; set; } = null;
+    public Armor? Armor { get; set; } = null;
 
     // Get it working before using this.
     /// <summary>How much this <see cref="Tank"/> is launched backward after firing a shell.</summary>

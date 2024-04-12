@@ -98,6 +98,9 @@ public static class AiHelpers {
                 aiParams.ProjectileWarinessRadius_PlayerShot = 40;
                 aiParams.MineWarinessRadius_PlayerLaid = 80;
 
+                aiParams.PursuitFrequency = 180;
+                aiParams.PursuitLevel = -0.8f;
+
                 properties.TurningSpeed = 0.2f;
                 properties.MaximalTurn = MathHelper.ToRadians(10);
 
@@ -491,8 +494,8 @@ public static class AiHelpers {
 
                 aiParams.Inaccuracy = 0.6f;
 
-                //AiParams.PursuitLevel = 0.1f;
-                //AiParams.PursuitFrequency = 30;
+                aiParams.PursuitLevel = 0.8f;
+                aiParams.PursuitFrequency = 180;
 
                 aiParams.ProjectileWarinessRadius_PlayerShot = 50;
                 aiParams.MineWarinessRadius_PlayerLaid = 70;

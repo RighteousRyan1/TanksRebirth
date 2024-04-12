@@ -12,14 +12,13 @@ using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.GameContent;
 
-public class Explosion : IAITankDanger
-{
+public class Explosion : IAITankDanger {
     // model, blah blah blah
 
     public delegate void PostUpdateDelegate(Explosion explosion);
-    public static event PostUpdateDelegate OnPostUpdate;
+    public static event PostUpdateDelegate? OnPostUpdate;
     public delegate void PostRenderDelegate(Explosion explosion);
-    public static event PostRenderDelegate OnPostRender;
+    public static event PostRenderDelegate? OnPostRender;
 
     public Tank? Source;
 
