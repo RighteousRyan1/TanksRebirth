@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 namespace TanksRebirth.Internals.Common.Framework;
 
 // todo: finish when needed.
+/// <summary>Construct a radial that can be used for visuals.</summary>
 public class Radial {
     private uint _divs;
     public uint Divisions {

@@ -97,32 +97,32 @@ public abstract class Tank {
 
     public delegate void DamageDelegate(Tank victim, bool destroy, ITankHurtContext context);
 
-    public static event DamageDelegate OnDamage;
+    public static event DamageDelegate? OnDamage;
 
     public delegate void ApplyDefaultsDelegate(Tank tank, ref TankProperties properties);
 
-    public static event ApplyDefaultsDelegate PostApplyDefaults;
+    public static event ApplyDefaultsDelegate? PostApplyDefaults;
 
     public delegate void ShootDelegate(Tank tank, ref Shell shell);
 
     /// <summary>Does not run for spread-fire.</summary>
-    public static event ShootDelegate OnShoot;
+    public static event ShootDelegate? OnShoot;
 
     public delegate void LayMineDelegate(Tank tank, ref Mine mine);
 
-    public static event LayMineDelegate OnLayMine;
+    public static event LayMineDelegate? OnLayMine;
 
     public delegate void PreUpdateDelegate(Tank tank);
 
-    public static event PreUpdateDelegate OnPreUpdate;
+    public static event PreUpdateDelegate? OnPreUpdate;
 
     public delegate void PostUpdateDelegate(Tank tank);
 
-    public static event PostUpdateDelegate OnPostUpdate;
+    public static event PostUpdateDelegate? OnPostUpdate;
 
     public delegate void InstancedDestroyDelegate();
 
-    public event InstancedDestroyDelegate OnDestroy;
+    public event InstancedDestroyDelegate? OnDestroy;
 
     #endregion
 
@@ -139,7 +139,7 @@ public abstract class Tank {
     public Body Body { get; set; } = new();
 
     /// <summary>This <see cref="Tank"/>'s model.</summary>
-    public Model Model { get; set; }
+    public Model? Model { get; set; }
 
     /// <summary>This <see cref="Tank"/>'s world position. Used to change the actual location of the model relative to the <see cref="View"/> and <see cref="Projection"/>.</summary>
     public Matrix World { get; set; }
@@ -155,7 +155,7 @@ public abstract class Tank {
     public TankProperties Properties = new();
 
     private int _oldShellLimit;
-    public Shell[] OwnedShells = new Shell[0];
+    public Shell[] OwnedShells = Array.Empty<Shell>();
 
     public Vector2 Position;
     public Vector2 Velocity;
@@ -237,7 +237,7 @@ public abstract class Tank {
     public virtual void Initialize() {
         OwnedShells = new Shell[Properties.ShellLimit];
 
-        _cannonMesh = Model.Meshes["Cannon"];
+        _cannonMesh = Model!.Meshes["Cannon"];
         _boneTransforms = new Matrix[Model.Bones.Count];
         if (TankGame.SecretCosmeticSetting) {
             for (int i = 0; i < 1; i++) {
@@ -380,8 +380,6 @@ public abstract class Tank {
 
     public bool Flip;
 
-    private Vector2 _oldPosition;
-
     /// <summary>Update this <see cref="Tank"/>.</summary>
     public virtual void Update() {
         if (Dead || !MapRenderer.ShouldRender)
@@ -391,7 +389,7 @@ public abstract class Tank {
 
         Position = Body.Position * UNITS_PER_METER;
 
-        Body.LinearVelocity = Velocity * 0.55f / UNITS_PER_METER * TankGame.DeltaTime;
+        Body.LinearVelocity = Velocity * 0.55f / UNITS_PER_METER;
 
         // try to make positive. i hate game
         World = Matrix.CreateScale(Scaling) * Matrix.CreateFromYawPitchRoll(-TankRotation - (Flip ? MathHelper.Pi : 0f),
@@ -457,7 +455,7 @@ public abstract class Tank {
         // try to make negative. go poopoo
         _cannonMesh.ParentBone.Transform =
             Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
-        Model.Root.Transform = World;
+        Model!.Root.Transform = World;
 
         Model.CopyAbsoluteBoneTransformsTo(_boneTransforms);
 
@@ -473,8 +471,6 @@ public abstract class Tank {
         // fix 2d peeopled
         foreach (var cosmetic in Cosmetics)
             cosmetic?.UniqueBehavior?.Invoke(cosmetic, this);
-
-        _oldPosition = Position;
 
         OnPostUpdate?.Invoke(this);
     }

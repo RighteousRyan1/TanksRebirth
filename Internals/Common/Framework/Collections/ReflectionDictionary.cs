@@ -2,10 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TanksRebirth.Internals.Common.Framework.Collections {
     [Flags]
@@ -14,7 +10,7 @@ namespace TanksRebirth.Internals.Common.Framework.Collections {
         Properties
     }
 
-    /// <summary>Creates a dictionary of member names to </summary>
+    /// <summary>Creates a dictionary of member names within a given type.</summary>
     /// <typeparam name="TClass"></typeparam>
     /// <typeparam name="TValue"></typeparam>
     public class ReflectionDictionary<TClass, TValue> where TClass : class, new() {

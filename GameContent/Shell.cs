@@ -24,25 +24,25 @@ namespace TanksRebirth.GameContent;
 public class Shell : IAITankDanger {
     public delegate void BlockRicochetDelegate(ref Block block, Shell shell);
 
-    /// <summary>Only called when it bounces from wall-bounce code.</summary>
-    public static event BlockRicochetDelegate OnRicochetWithBlock;
+    /// <summary>Only called when it bounces from block-bounce code.</summary>
+    public static event BlockRicochetDelegate? OnRicochetWithBlock;
 
     public delegate void RicochetDelegate(Shell shell);
 
     /// <summary>Only called when it bounces from wall-bounce code.</summary>
-    public static event RicochetDelegate OnRicochet;
+    public static event RicochetDelegate? OnRicochet;
 
     public delegate void PostUpdateDelegate(Shell shell);
 
-    public static event PostUpdateDelegate OnPostUpdate;
+    public static event PostUpdateDelegate? OnPostUpdate;
 
     public delegate void PostRenderDelegate(Shell shell);
 
-    public static event PostRenderDelegate OnPostRender;
+    public static event PostRenderDelegate? OnPostRender;
 
     public delegate void DestroyDelegate(Shell shell, DestructionContext context);
 
-    public static event DestroyDelegate OnDestroy;
+    public static event DestroyDelegate? OnDestroy;
 
     public enum DestructionContext {
         WithObstacle,
@@ -71,7 +71,7 @@ public class Shell : IAITankDanger {
     public static Shell[] AllShells { get; } = new Shell[MaxShells];
 
     /// <summary>The <see cref="Tank"/> which shot this <see cref="Shell"/>.</summary>
-    public Tank Owner;
+    public Tank? Owner;
 
     public Vector3 Position3D => Position.ExpandZ() + new Vector3(0, 11, 0);
     public Vector3 Velocity3D => Velocity.ExpandZ();
@@ -136,6 +136,8 @@ public class Shell : IAITankDanger {
     /// <param name="owner">Which <see cref="Tank"/> owns this <see cref="Shell"/>.</param>
     /// <param name="ricochets">How many times the newly created <see cref="Shell"/> can ricochet.</param>
     /// <param name="homing">Whether or not the newly created <see cref="Shell"/> homes in on enemies.</param>
+    /// <param name="useDarkTexture">Whether or not to use the black texture for this <see cref="Shell"/>.</param>
+    /// <param name="playSpawnSound">Play the shooting sound associated with this <see cref="Shell"/>.</param>
     public Shell(Vector2 position, Vector2 velocity, int type, Tank owner, uint ricochets = 0,
         HomingProperties homing = default, bool useDarkTexture = false, bool playSpawnSound = true) {
         Type = type;
@@ -656,7 +658,7 @@ public class Shell : IAITankDanger {
     /// <param name="arc">The arc length (from the angular rotation of <see cref="Velocity"/> to <c>arc / 2</c> to check.</param>
     /// <returns></returns>
     public bool IsHeadingTowards(Vector2 targetPosition, float distance, float arc) {
-        var rotation = Velocity.ToRotation();
+        var rotation = Velocity != Vector2.Zero ? Velocity.ToRotation() : Vector2.UnitX.ToRotation();
 
         // check if the direction to the position's rotation is similar on (-arc / 2, arc / 2)
         var targetAngularRotation = (Position - targetPosition).ToRotation();

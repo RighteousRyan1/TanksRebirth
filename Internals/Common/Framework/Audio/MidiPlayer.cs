@@ -1,11 +1,7 @@
 ﻿using MeltySynth;
 using Microsoft.Xna.Framework.Audio;
-using StbVorbisSharp;
 using System;
-using System.IO;
 using System.Runtime.InteropServices;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace TanksRebirth.Internals.Common.Framework.Audio
 {

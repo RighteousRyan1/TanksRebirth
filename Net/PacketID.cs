@@ -2,8 +2,7 @@
 
 namespace TanksRebirth.Net;
 
-public sealed class PacketID
-{
+public sealed class PacketID {
     // First-time networking
     public const int ClientInfo = 0;
     public const int LobbyInfo = 1;
@@ -50,9 +49,13 @@ public sealed class PacketID
     // misc
 
     public const int SyncShellId = 21;
+    /// <summary>The packet for map cleanup (removal of death X's, etc)</summary>
     public const int Cleanup = 22;
+    /// <summary>When the host leaves the level.</summary>
     public const int QuitLevel = 23;
-    public const int SendCampaignStatus = 24; // i.e: whether another client doesn't have something a host does, such as a campaign
+    /// <summary>To check if another client doesn't have something a host does, such as a campaign.</summary>
+    public const int SendCampaignStatus = 24;
+    /// <summary>Sent across the network when a command is used that has serverside effects.</summary>
     public const int SendCommandUsage = 25;
 
     // difficulty sync.

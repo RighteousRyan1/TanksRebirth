@@ -9,7 +9,8 @@ public record AiParameters {
     /// <summary>How often this tank will take a turn at <see cref="MeanderAngle"/> radians.</summary>
     public int MeanderFrequency { get; set; }
 
-    /// <summary>Determines how much this tank will move in attempt to get closer to its target. Keep value between -1 and 1.</summary>
+    /// <summary>Determines how much this tank will move in attempt to get closer to its target. Keep value between -1 and 1.<para></para>
+    /// This value does not directly translate from Wii Tanks. 0.1 in Wii Tanks = ~0.5 in Tanks Rebirth.</summary>
     public float PursuitLevel { get; set; }
 
     /// <summary>Determines how often this tank will try to move towards its target.</summary>

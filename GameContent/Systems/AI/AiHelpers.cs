@@ -57,6 +57,9 @@ public static class AiHelpers {
 
                 aiParams.Inaccuracy = 0.9f;
 
+                aiParams.PursuitLevel = 0.4f;
+                aiParams.PursuitFrequency = 120;
+
                 aiParams.ProjectileWarinessRadius_PlayerShot = 40;
                 aiParams.MineWarinessRadius_PlayerLaid = 40;
 
@@ -99,7 +102,7 @@ public static class AiHelpers {
                 aiParams.MineWarinessRadius_PlayerLaid = 80;
 
                 aiParams.PursuitFrequency = 180;
-                aiParams.PursuitLevel = -0.8f;
+                aiParams.PursuitLevel = -0.6f;
 
                 properties.TurningSpeed = 0.2f;
                 properties.MaximalTurn = MathHelper.ToRadians(10);
@@ -187,6 +190,9 @@ public static class AiHelpers {
 
                 aiParams.Inaccuracy = 1.3f;
 
+                aiParams.PursuitLevel = 0.7f;
+                aiParams.PursuitFrequency = 180;
+
                 aiParams.ProjectileWarinessRadius_PlayerShot = 40;
                 aiParams.MineWarinessRadius_PlayerLaid = 160;
 
@@ -225,6 +231,9 @@ public static class AiHelpers {
 
                 aiParams.TurretSpeed = 0.03f;
                 aiParams.AimOffset = 0.18f;
+
+                aiParams.PursuitLevel = 0.6f;
+                aiParams.PursuitFrequency = 240;
 
                 aiParams.ProjectileWarinessRadius_PlayerShot = 60;
                 aiParams.MineWarinessRadius_PlayerLaid = 160;
@@ -302,6 +311,9 @@ public static class AiHelpers {
 
                 aiParams.Inaccuracy = 0.8f;
 
+                aiParams.PursuitLevel = 0.6f;
+                aiParams.PursuitFrequency = 240;
+
                 aiParams.ProjectileWarinessRadius_PlayerShot = 40;
                 aiParams.MineWarinessRadius_PlayerLaid = 160;
 
@@ -344,6 +356,9 @@ public static class AiHelpers {
 
                 aiParams.Inaccuracy = 0.35f;
 
+                aiParams.PursuitLevel = 0.8f;
+                aiParams.PursuitFrequency = 240;
+
                 aiParams.ProjectileWarinessRadius_PlayerShot = 100;
                 aiParams.MineWarinessRadius_PlayerLaid = 110; // 60
 
@@ -362,7 +377,7 @@ public static class AiHelpers {
                 properties.ShellHoming = new();
 
                 properties.TreadPitch = -0.26f;
-                properties.MaxSpeed = 2.4f;
+                properties.MaxSpeed = 2.4f; // 2.4
                 properties.Acceleration = 0.3f;
 
                 properties.ShootPitch = -0.2f; // 0.2f
@@ -376,6 +391,7 @@ public static class AiHelpers {
                 aiParams.BlockWarinessDistance = 60;
 
                 baseExpValue = 0.145f;
+
                 break;
 
             #endregion
@@ -416,6 +432,9 @@ public static class AiHelpers {
 
                 aiParams.Inaccuracy = 0.4f;
 
+                aiParams.PursuitLevel = 0.4f;
+                aiParams.PursuitFrequency = 120;
+
                 aiParams.ProjectileWarinessRadius_PlayerShot = 70;
                 aiParams.MineWarinessRadius_PlayerLaid = 140;
 
@@ -454,6 +473,9 @@ public static class AiHelpers {
                 aiParams.AimOffset = 0.01f;
 
                 aiParams.Inaccuracy = 0.4f;
+
+                aiParams.PursuitLevel = -0.6f;
+                aiParams.PursuitFrequency = 240;
 
                 aiParams.ProjectileWarinessRadius_PlayerShot = 40;
                 aiParams.MineWarinessRadius_PlayerLaid = 70;
@@ -494,8 +516,8 @@ public static class AiHelpers {
 
                 aiParams.Inaccuracy = 0.6f;
 
-                aiParams.PursuitLevel = 0.8f;
-                aiParams.PursuitFrequency = 180;
+                aiParams.PursuitLevel = 0.9f;
+                aiParams.PursuitFrequency = 360;
 
                 aiParams.ProjectileWarinessRadius_PlayerShot = 50;
                 aiParams.MineWarinessRadius_PlayerLaid = 70;
@@ -537,6 +559,10 @@ public static class AiHelpers {
                 aiParams.AimOffset = 0.3f;
 
                 aiParams.Inaccuracy = 0.25f;
+
+                // max aggression from blud lmfao
+                aiParams.PursuitLevel = 1f;
+                aiParams.PursuitFrequency = 240;
 
                 aiParams.ProjectileWarinessRadius_PlayerShot = 80;
                 aiParams.MineWarinessRadius_PlayerLaid = 140;
@@ -581,6 +607,9 @@ public static class AiHelpers {
 
                 aiParams.Inaccuracy = 0.65f;
 
+                aiParams.PursuitLevel = 0.25f;
+                aiParams.PursuitFrequency = 180;
+
                 aiParams.ProjectileWarinessRadius_PlayerShot = 70;
                 aiParams.MineWarinessRadius_PlayerLaid = 140;
 
@@ -599,7 +628,7 @@ public static class AiHelpers {
                 properties.ShellHoming = new();
 
                 properties.TreadPitch = -0.2f;
-                properties.MaxSpeed = 2f;
+                properties.MaxSpeed = 2f; // 2
                 properties.Acceleration = 0.6f;
                 properties.Deceleration = 0.9f;
 
@@ -641,6 +670,9 @@ public static class AiHelpers {
                 aiParams.AimOffset = 0.14f;
 
                 aiParams.Inaccuracy = 0.4f;
+
+                aiParams.PursuitLevel = 0.6f;
+                aiParams.PursuitFrequency = 240;
 
                 aiParams.ShootChance = 0.7f;
 
@@ -687,6 +719,9 @@ public static class AiHelpers {
 
                 aiParams.Inaccuracy = 0.9f;
 
+                aiParams.PursuitLevel = 0.6f;
+                aiParams.PursuitFrequency = 240;
+
                 aiParams.ProjectileWarinessRadius_PlayerShot = 70;
                 aiParams.MineWarinessRadius_PlayerLaid = 140;
 
@@ -716,7 +751,7 @@ public static class AiHelpers {
                 aiParams.MinePlacementChance = 0.1f;
 
                 aiParams.BlockWarinessDistance = 50;
-                aiParams.BlockReadTime = 30;
+                aiParams.BlockReadTime = 10;
 
                 baseExpValue = 0.175f;
                 break;
