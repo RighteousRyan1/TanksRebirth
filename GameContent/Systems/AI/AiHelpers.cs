@@ -378,7 +378,7 @@ public static class AiHelpers {
 
                 properties.TreadPitch = -0.26f;
                 properties.MaxSpeed = 2.4f; // 2.4
-                properties.Acceleration = 0.3f;
+                properties.Acceleration = 0.3f; //0.3
 
                 properties.ShootPitch = -0.2f; // 0.2f
 

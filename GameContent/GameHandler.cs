@@ -26,6 +26,7 @@ using TanksRebirth.GameContent.ID;
 using TanksRebirth.Graphics;
 using System.Collections.Generic;
 using TanksRebirth.GameContent.Systems.PingSystem;
+using TanksRebirth.Internals.Common.Framework.Animation;
 
 namespace TanksRebirth.GameContent;
 
@@ -181,7 +182,7 @@ public class GameHandler
             CampaignCompleteUI.PerformSequence(context);
         });
     }
-    internal static void UpdateAll() {
+    internal static void UpdateAll(GameTime gameTime) {
         // ChatSystem.CurTyping = SoundPlayer.GetLengthOfSound("Content/Assets/sounds/tnk_shoot_ricochet_rocket_loop.ogg").ToString();
         if (DebugUtils.DebuggingEnabled) {
             if (InputUtils.KeyJustPressed(Keys.G)) {
@@ -211,6 +212,9 @@ public class GameHandler
 
         if (Difficulties.Types["InfiniteLives"])
             PlayerTank.SetLives(PlayerTank.StartingLives);
+
+        for (int i = 0; i < Animator.Animators.Count; i++)
+            Animator.Animators[i].PlayAnimation(gameTime);
 
         foreach (var ping in IngamePing.AllIngamePings)
             ping?.Update();
@@ -417,7 +421,7 @@ public class GameHandler
     {
         if (IntermissionSystem.BlackAlpha > 0 || IntermissionSystem.Alpha >= 1f || MainMenu.Active || GameUI.Paused)
         {
-            if (Thunder.SoftRain.IsPlaying())
+            if (Thunder.SoftRain!.IsPlaying())
             {
                 Thunder.SoftRain.Instance.Stop();
                 TankGame.ClearColor = Color.Black;

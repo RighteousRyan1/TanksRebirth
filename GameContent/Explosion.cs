@@ -58,8 +58,7 @@ public class Explosion : IAITankDanger {
 
     public float RotationSpeed;
 
-    public Explosion(Vector2 pos, float scaleMax, Tank? owner = null, float rotationSpeed = 1f, float soundPitch = -0.3f)
-    {
+    public Explosion(Vector2 pos, float scaleMax, Tank? owner = null, float rotationSpeed = 1f, float soundPitch = -0.3f) {
         RotationSpeed = rotationSpeed;
         Position = pos;
         MaxScale = scaleMax;

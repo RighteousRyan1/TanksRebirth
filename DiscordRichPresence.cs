@@ -98,7 +98,7 @@ public static class DiscordRichPresence {
                 //tnkCnt = $"Fighting {AITank.CountAll()} tank(s)";
                 // get the names of each difficulty mode active, then join them together
                 if (GameProperties.ShouldMissionsProgress) {
-                    SetDetails($"Campaign: '{GameProperties.LoadedCampaign.MetaData.Name}' on '{GameProperties.LoadedCampaign.CurrentMission.Name}' | Lives: {PlayerTank.Lives[NetPlay.CurrentClient.Id]}");
+                    SetDetails($"Campaign: '{GameProperties.LoadedCampaign.MetaData.Name}' on '{GameProperties.LoadedCampaign.CurrentMission.Name}' | Lives: {PlayerTank.Lives[NetPlay.GetMyClientId()]}");
                 }
                 else {
                     if (LevelEditor.Active)

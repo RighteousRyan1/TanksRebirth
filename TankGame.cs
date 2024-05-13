@@ -789,8 +789,10 @@ public class TankGame : Game {
                     SuperSecretDevOption = !SuperSecretDevOption;
                 }
 
-                GameHandler.UpdateAll();
+                GameHandler.UpdateAll(gameTime);
 
+                // questionable as to why it causes hella lag on game start
+                // TODO: try and find out why this happens lol.
                 Tank.CollisionsWorld.Step(float.IsInfinity(DeltaTime) ? 1f : DeltaTime);
 
                 HoveringAnyTank = false;
@@ -807,7 +809,7 @@ public class TankGame : Game {
                                 }
 
                                 if (InputUtils.CanDetectClick(rightClick: true)) {
-                                    while (tnk.TankRotation < 0) {
+                                    while (tnk!.TankRotation < 0) {
                                         tnk.TankRotation += MathHelper.Tau;
                                     }
 
