@@ -47,7 +47,7 @@ public class Animator
         RestartInternal();
         Animators.Add(this);
     }
-    /// <summary>The first frame does not require a <see cref="Duration"/> or <see cref="Easing"/>. Easing defaults to <see cref="EasingFunction.Linear"/>.
+    /// <summary>The last frame does not require a <see cref="Duration"/> or <see cref="Easing"/>. Easing defaults to <see cref="EasingFunction.Linear"/>.
     /// <para>
     /// Construct your animation by appending <c>.WithFrame(KeyFrame frame)</c> to this method. This can be chained.
     /// </para></summary>
@@ -78,6 +78,14 @@ public class Animator
         _isRunning = false;
     }
     public Animator WithFrame(KeyFrame frame) {
+        if (KeyFrames.Count > 0) {
+            if (KeyFrames[^1].BezierPoints.Count > 2) {
+                KeyFrames[^1].BezierPoints.Add(frame.Position);
+            }
+        }
+        else {
+            frame.BezierPoints.Insert(0, frame.Position);
+        }
         KeyFrames.Add(frame);
         return this;
     }
@@ -120,16 +128,14 @@ public class Animator
 
         var futureFrame = KeyFrames[CurrentId + 1];
 
-        var timeUntilThisFrame = TimeSpan.Zero;
-        for (int i = 0; i < CurrentId; i++) {
-            timeUntilThisFrame += KeyFrames[i].Duration;
-        }
-
         CurrentInterpolation += (float)(gameTime.ElapsedGameTime.TotalSeconds / futureFrame.Duration.TotalSeconds);
         _elapsedInternal += gameTime.ElapsedGameTime;
 
-        var ease = Easings.GetEasingBehavior(futureFrame.Easing, CurrentInterpolation);
-        CurrentPosition = Current.Position + (futureFrame.Position - Current.Position) * ease;
+        var ease = Easings.GetEasingBehavior(Current.Easing, CurrentInterpolation);
+
+        var hasBezier = Current.BezierPoints.Count > 2;
+        CurrentPosition = hasBezier ? MathUtils.Bezier(ease, Current.BezierPoints.ToArray()) :
+            Current.Position + (futureFrame.Position - Current.Position) * ease;
         CurrentScale = Current.Scale + (futureFrame.Scale - Current.Scale) * ease;
         CurrentRotation = Current.Rotation + (futureFrame.Rotation - Current.Rotation) * ease;
 
@@ -140,9 +146,8 @@ public class Animator
             CurrentScale = Current.Scale;
             CurrentRotation = Current.Rotation;
 
-            if (CurrentId == KeyFrames.Count - 1) {
+            if (CurrentId == KeyFrames.Count - 1)
                 _isRunning = false;
-            }
         }
     }
 }
