@@ -14,7 +14,7 @@ public readonly struct KeyFrame
     public Vector2 Scale { get; }
     public float Rotation { get; }
     public List<Vector2> BezierPoints { get; }
-    public KeyFrame(Vector2 position, Vector2 scale, float rotation, TimeSpan duration, EasingFunction easing = EasingFunction.Linear) {
+    public KeyFrame(Vector2 position, Vector2 scale, float rotation, TimeSpan duration = default, EasingFunction easing = EasingFunction.Linear) {
         Easing = easing;
         Position = position;
         Duration = duration;
@@ -23,7 +23,7 @@ public readonly struct KeyFrame
         BezierPoints = new();
     }
     /// <summary>BezierPoints automatically prepends <see cref="Position"/> and appends the next <see cref="KeyFrame"/>'s <see cref="Position"/> when implemented into an <see cref="Animator"/>.</summary>
-    public KeyFrame(Vector2 position, List<Vector2> bezierPoints, Vector2 scale, float rotation, TimeSpan duration, EasingFunction easing = EasingFunction.Linear) {
+    public KeyFrame(Vector2 position, List<Vector2> bezierPoints, Vector2 scale, float rotation, TimeSpan duration = default, EasingFunction easing = EasingFunction.Linear) {
         Easing = easing;
         Duration = duration;
         Scale = scale;

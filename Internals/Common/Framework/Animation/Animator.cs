@@ -42,12 +42,15 @@ public class Animator
     public float CurrentInterpolation { get; private set; }
     /// <summary>The interpolated value from 0 to 1 representing the total percent completion of the entire animation stored in this <see cref="Animator"/>.</summary>
     public float Interpolated { get; private set; }
+
+    public delegate void OnKeyFrameEnd(KeyFrame frame);
+    public event OnKeyFrameEnd? OnKeyFrameFinish;
     private Animator() {
         KeyFrames = new();
         RestartInternal();
         Animators.Add(this);
     }
-    /// <summary>The last frame does not require a <see cref="Duration"/> or <see cref="Easing"/>. Easing defaults to <see cref="EasingFunction.Linear"/>.
+    /// <summary>The last frame does not require a <see cref="KeyFrame.Duration"/> or <see cref="EasingFunction"/>. Easing defaults to <see cref="EasingFunction.Linear"/>.
     /// <para>
     /// Construct your animation by appending <c>.WithFrame(KeyFrame frame)</c> to this method. This can be chained.
     /// </para></summary>
@@ -84,7 +87,7 @@ public class Animator
             }
         }
         else {
-            frame.BezierPoints.Insert(0, frame.Position);
+            frame.BezierPoints?.Insert(0, frame.Position);
         }
         KeyFrames.Add(frame);
         return this;
@@ -128,7 +131,7 @@ public class Animator
 
         var futureFrame = KeyFrames[CurrentId + 1];
 
-        CurrentInterpolation += (float)(gameTime.ElapsedGameTime.TotalSeconds / futureFrame.Duration.TotalSeconds);
+        CurrentInterpolation += (float)(gameTime.ElapsedGameTime.TotalSeconds / Current.Duration.TotalSeconds);
         _elapsedInternal += gameTime.ElapsedGameTime;
 
         var ease = Easings.GetEasingBehavior(Current.Easing, CurrentInterpolation);

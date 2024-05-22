@@ -24,7 +24,6 @@ using TanksRebirth.GameContent.Speedrunning;
 using FontStashSharp;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.Graphics;
-using System.Collections.Generic;
 using TanksRebirth.GameContent.Systems.PingSystem;
 using TanksRebirth.Internals.Common.Framework.Animation;
 
@@ -790,7 +789,6 @@ public class GameHandler
         GameShaders.Initialize();
         MapRenderer.InitializeRenderers();
         LoadTnkScene();
-
         InitDebugUi();
         PlacementSquare.InitializeLevelEditorSquares();
     }
