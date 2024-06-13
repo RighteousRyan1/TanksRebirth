@@ -473,7 +473,6 @@ public static class MainMenu
             e.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick.ogg", SoundContext.Effect, rememberMe: true); };
         }
     }
-
     public static void RenderCrate()
     {
         Crate.View = View;
@@ -1329,7 +1328,7 @@ public static class MainMenu
                 TankGame.SpriteRenderer.DrawString(TankGame.TextFont, txt, new(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 150.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(Anchor.Center, TankGame.TextFont.MeasureString(txt)));
             }
             #region Various things
-            // buttsex
+            // TODO: buttsex
             if (Server.ConnectedClients is null) {
                 Server.ConnectedClients = new Client[4];
                 NetPlay.ServerName = "ServerName";

@@ -36,6 +36,7 @@ public static class IntermissionSystem {
 
     private static float _oldBlack;
 
+    // TODO: turn this intermission stuff into animators, lol.
     /// <summary>Renders the intermission.</summary>
     public static void Draw(SpriteBatch spriteBatch) {
         TankGame.Interp = Alpha <= 0 && BlackAlpha <= 0 && GameHandler.InterpCheck;
@@ -156,7 +157,6 @@ public static class IntermissionSystem {
         }
         _oldBlack = BlackAlpha;
     }
-
     private static void DrawBonusLifeHUD() {
         // TODO: implement.
     }

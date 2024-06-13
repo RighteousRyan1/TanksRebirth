@@ -1,11 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static TanksRebirth.Internals.Common.Utilities.TweenUtils;
 using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.Internals.Common.Framework.Animation;
@@ -16,7 +11,9 @@ public class Animator
 
     private TimeSpan _elapsedOffset;
     private TimeSpan _elapsedInternal;
+    /// <summary>Total time elapsed in the animation.</summary>
     public TimeSpan ElapsedTime => _elapsedInternal + _elapsedOffset;
+    /// <summary>The time left before the animation is complete.</summary>
     public TimeSpan TimeRemaining => EstimatedCompletionTime - ElapsedTime;
     public TimeSpan EstimatedCompletionTime {
         get {
@@ -28,8 +25,11 @@ public class Animator
         }
     }
     private bool _isRunning;
+    /// <summary>The current position of the given animation.</summary>
     public Vector2 CurrentPosition { get; private set; }
+    /// <summary>The current two-dimensional scale of the given animation.</summary>
     public Vector2 CurrentScale { get; private set; }
+    /// <summary>The current rotation of the given animation. You can use this to match to any float you want.</summary>
     public float CurrentRotation { get; private set; }
 
     /// <summary>The list of <see cref="KeyFrame"/>s.</summary>
@@ -44,6 +44,7 @@ public class Animator
     public float Interpolated { get; private set; }
 
     public delegate void OnKeyFrameEnd(KeyFrame frame);
+    /// <summary>Invocated once a keyframe finishes playing in this animation.</summary>
     public event OnKeyFrameEnd? OnKeyFrameFinish;
     private Animator() {
         KeyFrames = new();
