@@ -46,6 +46,7 @@ public class GameHandler
     public static PlayerTank[] AllPlayerTanks = new PlayerTank[MAX_PLAYERS];
     public static Tank[] AllTanks = new Tank[MAX_PLAYERS + MAX_AI_TANKS];
 
+    /// <summary>The handle of the game's logging file. Used to write information to a file that can be read after the game closes.</summary>
     public static Logger ClientLog { get; set; }
 
     public static XpBar Xp;
@@ -58,8 +59,7 @@ public class GameHandler
 
     public static ParticleSystem ParticleSystem { get; } = new(15000);
 
-    internal static void MapEvents()
-    {
+    internal static void MapEvents() {
         GameProperties.OnMissionEnd += DoEndMissionWorkload;
         GameProperties.OnMissionStart += HandleStart;
     }
@@ -385,7 +385,7 @@ public class GameHandler
                 if (InputUtils.KeyJustPressed(Keys.OemSemicolon))
                     new Mine(null, MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ(), 400);
                 if (InputUtils.KeyJustPressed(Keys.OemQuotes))
-                    new Shell(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ(), Vector2.Zero, ShellID.Standard, null, 0);
+                    new Shell(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ(), Vector2.Zero, ShellID.Standard, null!, 0);
                 if (InputUtils.KeyJustPressed(Keys.End))
                     SpawnCrateAtMouse();
 

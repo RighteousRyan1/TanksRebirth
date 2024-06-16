@@ -70,10 +70,10 @@ public sealed record ChatSystem {
                     // if the length is equal to zero, the user has provided no arguments.
                     var args = cmdSplit.Length == 0 ? Array.Empty<string>() : cmdSplit[1..];
 
-                    if (args.Length == 0 && !cmdSplit[0].Contains("help")) {
+                    /*if (args.Length == 0 && !cmdSplit[0].Contains("help")) {
                         SendMessage("Invalid command syntax! Arguments missing.", Color.Red);
                         return;
-                    }
+                    }*/
                     
                     if (value.NetSync && Client.IsConnected()) {
                         if (sender != "cmd_sync" && Server.serverNetManager is null) {
@@ -93,7 +93,8 @@ public sealed record ChatSystem {
                         value.ActionToPerform?.Invoke(args);
                     return;
                 }
-                catch {
+                catch(Exception e) {
+                    TankGame.ReportError(e);
                     SendMessage("Error with command.", Color.Orange);
                 }
             }

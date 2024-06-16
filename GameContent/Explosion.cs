@@ -41,6 +41,8 @@ public class Explosion : IAITankDanger {
 
     private static Texture2D? _maskingTex;
 
+    public const float MAGIC_EXPLOSION_NUMBER = 9f;
+
     public float Scale;
 
     public float MaxScale;
@@ -100,32 +102,27 @@ public class Explosion : IAITankDanger {
 
         if (!IntermissionSystem.IsAwaitingNewMission) {
             foreach (var mine in Mine.AllMines) {
-                if (mine is not null && Vector2.Distance(mine.Position, Position) <= Scale * 9) // magick
+                if (mine is not null && Vector2.Distance(mine.Position, Position) <= Scale * MAGIC_EXPLOSION_NUMBER) // magick
                     mine.Detonate();
             }
             foreach (var block in Block.AllBlocks) {
-                if (block is not null && Vector2.Distance(block.Position, Position) <= Scale * 9 && block.IsDestructible)
+                if (block is not null && Vector2.Distance(block.Position, Position) <= Scale * MAGIC_EXPLOSION_NUMBER && block.IsDestructible)
                     block.Destroy();
             }
             foreach (var shell in Shell.AllShells) {
-                if (shell is not null && Vector2.Distance(shell.Position, Position) < Scale * 9)
+                if (shell is not null && Vector2.Distance(shell.Position, Position) < Scale * MAGIC_EXPLOSION_NUMBER)
                     shell.Destroy(Shell.DestructionContext.WithExplosion);
             }
             foreach (var tank in GameHandler.AllTanks) {
-                if (tank is not null && Vector2.Distance(tank.Position, Position) < Scale * 9)
-                    if (!tank.Dead)
-                        if (!HasHit[tank.WorldId])
-                            if (tank.Properties.VulnerableToMines) {
-                                HasHit[tank.WorldId] = true;
-                                if (Source is null)
-                                    tank.Damage(new TankHurtContextOther(TankHurtContextOther.HurtContext.FromIngame));
-                                else if (Source is not null) {
-                                    if (Source is AITank)
-                                        tank.Damage(new TankHurtContextMine(false, this));
-                                    else
-                                        tank.Damage(new TankHurtContextMine(true, this));
-                                }
-                            }
+                if (tank is null || Vector2.Distance(tank.Position, Position) > Scale * MAGIC_EXPLOSION_NUMBER
+                    || tank.Dead || HasHit[tank.WorldId] || !tank.Properties.VulnerableToMines)
+                    continue;
+                HasHit[tank.WorldId] = true;
+                if (Source is null)
+                    tank.Damage(new TankHurtContextOther(TankHurtContextOther.HurtContext.FromIngame));
+                else if (Source is not null) {
+                    tank.Damage(new TankHurtContextMine(Source is not AITank, this));
+                }
             }
         }
 

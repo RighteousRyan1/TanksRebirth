@@ -20,6 +20,7 @@ using TanksRebirth.GameContent.UI;
 using TanksRebirth.GameContent.Properties;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.Net;
+using TanksRebirth.GameContent.ModSupport;
 
 namespace TanksRebirth.GameContent;
 
@@ -119,10 +120,6 @@ public abstract class Tank {
     public delegate void PostUpdateDelegate(Tank tank);
 
     public static event PostUpdateDelegate? OnPostUpdate;
-
-    public delegate void InstancedDestroyDelegate();
-
-    public event InstancedDestroyDelegate? OnDestroy;
 
     #endregion
 
@@ -231,6 +228,16 @@ public abstract class Tank {
     /// <summary>Apply all the default parameters for this <see cref="Tank"/>.</summary>
     public virtual void ApplyDefaults(ref TankProperties properties) {
         PostApplyDefaults?.Invoke(this, ref properties);
+        if (this is AITank ai) {
+            for (int i = 0; i < ModLoader.ModTanks.Length; i++) {
+                if (ai.AiTankType == ModLoader.ModTanks[i].Type) {
+                    properties = ModLoader.ModTanks[i].Properties;
+                    ModLoader.ModTanks[i].PostApplyDefaults(ai);
+                    return;
+                }
+            }
+
+        }
         Properties = properties;
     }
 
@@ -386,6 +393,11 @@ public abstract class Tank {
             return;
 
         OnPreUpdate?.Invoke(this);
+        if (this is AITank ai) {
+            for (int i = 0; i < ModLoader.ModTanks.Length; i++)
+                if (ai.AiTankType == ModLoader.ModTanks[i].Type)
+                    ModLoader.ModTanks[i].PreUpdate(ai);
+        }
 
         Position = Body.Position * UNITS_PER_METER;
 
@@ -542,16 +554,28 @@ public abstract class Tank {
         doTextPopup();
 
         if (Properties.Armor is not null) {
-            OnDamage?.Invoke(this, Properties.Armor.HitPoints > 0, context);
             if (Properties.Armor.HitPoints > 0) {
                 Properties.Armor.HitPoints--;
                 var ding = SoundPlayer.PlaySoundInstance(
                     $"Assets/sounds/armor_ding_{GameHandler.GameRand.Next(1, 3)}.ogg", SoundContext.Effect,
                     gameplaySound: true);
                 ding.Instance.Pitch = GameHandler.GameRand.NextFloat(-0.1f, 0.1f);
+                OnDamage?.Invoke(this, Properties.Armor.HitPoints == 0, context);
+                if (this is AITank ai) {
+                    for (int i = 0; i < ModLoader.ModTanks.Length; i++)
+                        if (ai.AiTankType == ModLoader.ModTanks[i].Type) {
+                            ModLoader.ModTanks[i].TakeDamage(ai, Properties.Armor.HitPoints == 0, context);
+                        }
+                }
             }
             else {
                 OnDamage?.Invoke(this, true, context);
+                if (this is AITank ai) {
+                    for (int i = 0; i < ModLoader.ModTanks.Length; i++)
+                        if (ai.AiTankType == ModLoader.ModTanks[i].Type) {
+                            ModLoader.ModTanks[i].TakeDamage(ai, true, context);
+                        }
+                }
                 Destroy(context);
             }
 
@@ -568,8 +592,6 @@ public abstract class Tank {
 
         // i think this is right? | (Probably, a destroyed tank is a dead tank!)
         Dead = true;
-
-        OnDestroy?.Invoke();
 
         const string tankDestroySound0 = "Assets/sounds/tnk_destroy.ogg";
         SoundPlayer.PlaySoundInstance(tankDestroySound0, SoundContext.Effect, 0.2f, gameplaySound: true);
@@ -711,6 +733,12 @@ public abstract class Tank {
 
                     OnShoot?.Invoke(this, ref shell);
 
+                    if (this is AITank ai) {
+                        for (int j = 0; j < ModLoader.ModTanks.Length; j++)
+                            if (ai.AiTankType == ModLoader.ModTanks[j].Type)
+                                ModLoader.ModTanks[j].Shoot(ai, ref shell);
+                    }
+
                     if (this is PlayerTank pt) {
                         if (NetPlay.IsClientMatched(pt.PlayerId))
                             Client.SyncShellFire(shell);
@@ -828,6 +856,11 @@ public abstract class Tank {
             Client.SyncMinePlace(mine.Position, mine.DetonateTime, WorldId);
 
         OnLayMine?.Invoke(this, ref mine);
+        if (this is AITank ai) {
+            for (int i = 0; i < ModLoader.ModTanks.Length; i++)
+                if (ai.AiTankType == ModLoader.ModTanks[i].Type)
+                    ModLoader.ModTanks[i].LayMine(ai, ref mine);
+        }
     }
 
     public virtual void Render() {

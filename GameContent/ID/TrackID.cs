@@ -5,13 +5,12 @@ using System.Text;
 using System.Threading.Tasks;
 using TanksRebirth.Internals.Common.Framework.Collections;
 
-namespace TanksRebirth.GameContent.ID
-{
-    public sealed class TrackID
-    {
-        public const int Standard = 0;
-        public const int Thick = 1;
+namespace TanksRebirth.GameContent.ID;
 
-        public static readonly ReflectionDictionary<ShellID, int> Collection = new(MemberType.Fields);
-    }
+public sealed class TrackID
+{
+    public const int Standard = 0;
+    public const int Thick = 1;
+
+    public static ReflectionDictionary<ShellID> Collection { get; internal set; } = new(MemberType.Fields);
 }

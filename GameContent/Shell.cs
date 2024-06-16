@@ -333,7 +333,6 @@ public class Shell : IAITankDanger {
 
         if (Flaming)
             RenderFlamingParticle();
-
         OnPostUpdate?.Invoke(this);
     }
 
@@ -543,7 +542,8 @@ public class Shell : IAITankDanger {
             // if two indestructible bullets come together, destroy them both. too powerful!
             if (bullet is { IsDestructible: true, } || IsDestructible) continue;
 
-            bullet.Destroy(DestructionContext.WithShell);
+			// bullet is sometimes null here? so null safety is key
+            bullet?.Destroy(DestructionContext.WithShell);
             Destroy(DestructionContext.WithShell);
         }
     }

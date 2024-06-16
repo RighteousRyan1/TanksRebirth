@@ -26,24 +26,30 @@ public partial class AITank : Tank  {
     // TODO: Make smoke bombs!
     /// <summary>A list of all active dangers on the map to <see cref="AITank"/>s. Includes <see cref="Shell"/>s, <see cref="Mine"/>s,
     /// and <see cref="Explosion"/>s by default. To make an AI Tank behave towards any thing you would like, make it inherit from <see cref="IAITankDanger"/>
-    /// and change the tank's behavior when running away by hooking into <see cref="IsDangerDetected"/>.</summary>
+    /// and change the tank's behavior when running away by hooking into <see cref="WhileDangerDetected"/>.</summary>
     public static List<IAITankDanger> Dangers = new();
 
     public delegate void PostExecuteAI(AITank tank);
     public static event PostExecuteAI? OnPostUpdateAI;
 
     public delegate void DangerDetected(AITank tank, IAITankDanger danger);
-    public static event DangerDetected? IsDangerDetected;
+    public static event DangerDetected? WhileDangerDetected;
+
+    public delegate void InstancedDestroy();
+    public event InstancedDestroy? OnDestroy;
     /// <summary>Each of these keep track of certain behaviors that take place during the AI Cycle, including, but not limited to:<para></para>
     /// Navigation, Shell/Mine avoidance, Mine Laying, Shell Shooting</summary>
     public AiBehavior[] Behaviors { get; private set; }
     /// <summary>Each of these are for super special tanks (by default). The currently unimplemented tanks have special abilities that
     /// use this.</summary>
     public AiBehavior[] SpecialBehaviors { get; private set; }
+    /// <summary>The AI Tank Tier/Type of this <see cref="AITank"/>. For instance, a Brown tank would be <see cref="TankID.Brown"/>.</summary>
     public int AiTankType;
     private Texture2D? _tankTexture;
     private static Texture2D? _shadowTexture;
+    /// <summary>The invoked method for performing the actions of the tank's AI.</summary>
     public Action? AIBehaviorAction;
+    /// <summary>The position of this <see cref="AITank"/> in the <see cref="GameHandler.AllAITanks"/> array.</summary>
     public int AITankId { get; private set; }
     /// <summary>Only use if you know what you're doing!</summary>
     /// <param name="newId">The new ID to be assigned to this <see cref="AITank"/>.</param>
@@ -90,7 +96,7 @@ public partial class AITank : Tank  {
     #region AiTankParams
     /// <summary>The AI parameter collection of this AI Tank.</summary>
     public AiParameters AiParams { get; set; } = new();
-    /// <summary></summary>
+    /// <summary>The position of the target this <see cref="AITank"/> is currently attempting to aim at.</summary>
     public Vector2 AimTarget;
     /// <summary>Whether or not this tank sees its target. Generally should not be set, but the tank will shoot if able when this is true.</summary>
     public bool SeesTarget { get; set; }
@@ -105,7 +111,7 @@ public partial class AITank : Tank  {
     public void Swap(int tier, bool setDefaults = true) {
         AiTankType = tier;
 
-        var tierName = TankID.Collection.GetKey(tier).ToLower();
+        var tierName = TankID.Collection.GetKey(tier)!.ToLower();
 
         if (tier <= TankID.Marble)
             SwapTankTexture(Assets[$"tank_" + tierName]);
@@ -236,9 +242,6 @@ public partial class AITank : Tank  {
         }
         else
             _tankTexture = Assets[$"tank_" + TankID.Collection.GetKey(tier)!.ToLower()];
-
-        
-
         #region Special
 
         if (tier == TankID.Commando)
@@ -446,6 +449,7 @@ public partial class AITank : Tank  {
     public override void Destroy(ITankHurtContext context)
     {
         // might not account for level testing via the level editor?
+        OnDestroy?.Invoke();
         if (!MainMenu.Active && !LevelEditor.Active && !Client.IsConnected()) // goofy ahh...
         {
             PlayerTank.KillCount++;
@@ -858,8 +862,12 @@ public partial class AITank : Tank  {
             var biggest = radii.Max();
             bool isThereDanger = TryGetDangerNear(biggest, out var danger);
 
-            if (isThereDanger)
-                IsDangerDetected?.Invoke(this, danger!);
+            if (isThereDanger) {
+                WhileDangerDetected?.Invoke(this, danger!);
+                for (int i = 0; i < ModLoader.ModTanks.Length; i++)
+                    if (AiTankType == ModLoader.ModTanks[i].Type)
+                        ModLoader.ModTanks[i].DangerDetected(this, danger!);
+            }
 
             var isShellNear = isThereDanger && danger is Shell;
             var isMineNear = isThereDanger && danger is Mine;
@@ -1203,6 +1211,9 @@ public partial class AITank : Tank  {
         if (AutoEnactAIBehavior)
             AIBehaviorAction?.Invoke();
         OnPostUpdateAI?.Invoke(this);
+        for (int i = 0; i < ModLoader.ModTanks.Length; i++)
+            if (AiTankType == ModLoader.ModTanks[i].Type)
+                ModLoader.ModTanks[i].PostUpdate(this);
     }
     public override void Render() {
         base.Render();
@@ -1355,7 +1366,6 @@ public partial class AITank : Tank  {
         TankID.Brown, TankID.Marine, TankID.Yellow, TankID.Black, TankID.White, TankID.Pink, TankID.Violet, TankID.Green, TankID.Ash,
         TankID.Bronze, TankID.Silver, TankID.Sapphire, TankID.Ruby, TankID.Citrine, TankID.Amethyst, TankID.Emerald, TankID.Gold, TankID.Obsidian,
         TankID.Granite, TankID.Bubblegum, TankID.Water, TankID.Crimson, TankID.Tiger, TankID.Creeper, TankID.Gamma, TankID.Marble,
-        // TankTier.Assassin
     };
     public static int PickRandomTier()
         => workingTiers[GameHandler.GameRand.Next(0, workingTiers.Length)];

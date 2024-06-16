@@ -61,7 +61,7 @@ public sealed class PacketID {
     // difficulty sync.
     public const int SyncDifficulties = 26;
 
-    public static int AddPacketId(string name, int id) => Collection.ForcefullyInsert(name, id);
+    public static int AddPacketId(string name) => Collection.ForcefullyInsert(name);
 
-    public static readonly ReflectionDictionary<PacketID, int> Collection = new(MemberType.Fields);
+    public static ReflectionDictionary<PacketID> Collection { get; internal set; } = new(MemberType.Fields);
 }

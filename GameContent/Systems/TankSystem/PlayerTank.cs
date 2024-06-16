@@ -26,9 +26,20 @@ namespace TanksRebirth.GameContent
 {
     public class PlayerTank : Tank
     {
+        /// <summary>The amount of lives for every existing player.<para>Lives[0] = Blue Tank's Lives</para>
+        /// Lives[1] = Red Tank's Lives
+        /// <para>Lives[2] = Green Tank's Lives</para>
+        /// Lives[3] = Yellow Tank's Lives
+        /// <para>Note that lives are always synced on multiplayer.</para>
+        /// </summary>
         public static int[] Lives = new int[4];
 
+        /// <summary>In multiplayer, gets the lives of the client that this code is currently being called on.</summary>
         public static int GetMyLives() => Client.IsConnected() ? Lives[NetPlay.CurrentClient.Id] : Lives[0];
+        /// <summary>
+        /// Adds lives to the player in Single-Player, adds to the lives of all players in Multiplayer.
+        /// </summary>
+        /// <param name="num">How many lives to add.</param>
         public static void AddLives(int num)
         {
             if (Client.IsConnected())
@@ -37,6 +48,10 @@ namespace TanksRebirth.GameContent
                 for (int i = 0; i < Lives.Length; i++)
                     Lives[i] += num;
         }
+        /// <summary>
+        /// Sets the lives of the player in Single-Player, sets the lives of all players in Multiplayer.
+        /// </summary>
+        /// <param name="num">How many lives to set the player(s) to.</param>
         public static void SetLives(int num)
         {
             if (Client.IsConnected())
