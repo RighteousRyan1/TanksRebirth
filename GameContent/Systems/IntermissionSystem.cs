@@ -67,10 +67,10 @@ public static class IntermissionSystem {
 
         }
         if (BlackAlpha <= 0.9f && _oldBlack > 0.9f) {
-            TextAnimatorLarge.Restart();
-            TextAnimatorSmall.Restart();
-            TextAnimatorLarge.Run();
-            TextAnimatorSmall.Run();
+            TextAnimatorLarge?.Restart();
+            TextAnimatorSmall?.Restart();
+            TextAnimatorLarge?.Run();
+            TextAnimatorSmall?.Run();
         }
 
         BlackAlpha = MathHelper.Clamp(BlackAlpha, 0f, 1f);

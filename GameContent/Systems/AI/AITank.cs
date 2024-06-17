@@ -20,6 +20,7 @@ using TanksRebirth.GameContent.UI;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.Systems.AI;
+using System.Threading.Tasks;
 
 namespace TanksRebirth.GameContent;
 public partial class AITank : Tank  {
@@ -966,11 +967,11 @@ public partial class AITank : Tank  {
                         // TODO: add all shells that may or may not be near, average their position and make the tank go away from that position
                         if (CurMineStun <= 0 && CurShootStun <= 0) {
                             var dist = shell.IsPlayerSourced ? AiParams.ProjectileWarinessRadius_PlayerShot : AiParams.ProjectileWarinessRadius_AIShot;
-                            //isShellNear = shell.IsHeadingTowards(Position, dist, MathHelper.PiOver2);
-                            //if (isShellNear) {
+                            isShellNear = shell.LifeTime > 60; //shell.IsHeadingTowards(Position, dist, MathHelper.PiOver2);
+                            if (isShellNear) {
                                 var direction = -Vector2.UnitY.RotatedByRadians(shell.Position.DirectionOf(Position, false).ToRotation());
                                 TargetTankRotation = direction.ToRotation();
-                            //}
+                            }
                         }
                     }
                 }

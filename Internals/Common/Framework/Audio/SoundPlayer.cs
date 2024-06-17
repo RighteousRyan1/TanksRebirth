@@ -22,29 +22,17 @@ public static class SoundPlayer
     private static float MusicVolume => TankGame.Settings.MusicVolume;
     private static float EffectsVolume => TankGame.Settings.EffectsVolume;
     private static float AmbientVolume => TankGame.Settings.AmbientVolume;
-
+    // my spidey senses are telling me this is horribly inefficient.
     public static OggAudio PlaySoundInstance(string audioPath, SoundContext context, float volume = 1f, float panOverride = 0f, float pitchOverride = 0f, bool gameplaySound = false, bool rememberMe = false) {
         // because ogg is the only good audio format.
         audioPath = Path.Combine(TankGame.Instance.Content.RootDirectory, audioPath);
 
-        switch (context)
-        {
-            case SoundContext.Music:
-                volume *= MusicVolume;
-                break;
-            case SoundContext.Effect:
-                volume *= EffectsVolume;
-                if (gameplaySound && MainMenu.Active)
-                    volume *= 0.25f;
-                if (SteamworksUtils.IsOverlayActive)
-                    volume *= 0.5f;
-                break;
-            case SoundContext.Ambient:
-                volume *= AmbientVolume;
-                break;
-            default:
-                throw new ArgumentOutOfRangeException(nameof(context), context, "Uh oh! Seems like a new sound type was implemented, but I was not given a way to handle it!");
-        }
+        volume *= context switch {
+            SoundContext.Music => MusicVolume,
+            SoundContext.Effect => EffectsVolume,
+            SoundContext.Ambient => AmbientVolume,
+            _ => throw new ArgumentOutOfRangeException(nameof(context), context, "Uh oh! Seems like a new sound type was implemented, but I was not given a way to handle it!"),
+        };
 
         OggAudio sfx;
 
@@ -84,21 +72,12 @@ public static class SoundPlayer
     }
     public static SoundEffectInstance PlaySoundInstance(SoundEffect fromSound, SoundContext context, Vector3 position, Matrix world, float volume = 1f)
     {
-        switch (context)
-        {
-            case SoundContext.Music:
-                volume *= MusicVolume;
-                break;
-            case SoundContext.Effect:
-                volume *= EffectsVolume;
-                break;
-            case SoundContext.Ambient:
-                volume *= AmbientVolume;
-                break;
-            default:
-                throw new ArgumentOutOfRangeException(nameof(context), context, "Uh oh! Seems like a new sound type was implemented, but I was not given a way to handle it!");
-        }
-
+        volume *= context switch {
+            SoundContext.Music => MusicVolume,
+            SoundContext.Effect => EffectsVolume,
+            SoundContext.Ambient => AmbientVolume,
+            _ => throw new ArgumentOutOfRangeException(nameof(context), context, "Uh oh! Seems like a new sound type was implemented, but I was not given a way to handle it!"),
+        };
         var pos2d = MatrixUtils.ConvertWorldToScreen(position, world, TankGame.GameView, TankGame.GameProjection);
         var WindowWidthHalfed = WindowUtils.WindowWidth / 2;
         var lerp = MathUtils.ModifiedInverseLerp(-WindowWidthHalfed, WindowUtils.WindowWidth + WindowWidthHalfed, pos2d.X, true);
@@ -111,6 +90,16 @@ public static class SoundPlayer
         sfx.Pan = lerp;
 
         return sfx;
+    }
+    public static void PlaySoundInstance(OggAudio fromSound, SoundContext context, float volume = 1f) {
+        volume *= context switch {
+            SoundContext.Music => MusicVolume,
+            SoundContext.Effect => EffectsVolume,
+            SoundContext.Ambient => AmbientVolume,
+            _ => throw new ArgumentOutOfRangeException(nameof(context), context, "Uh oh! Seems like a new sound type was implemented, but I was not given a way to handle it!"),
+        };
+        fromSound.Play();
+        fromSound.Volume = volume;
     }
     public static OggAudio SoundError() => PlaySoundInstance("Assets/sounds/menu/menu_error.ogg", SoundContext.Effect, rememberMe: true);
 }

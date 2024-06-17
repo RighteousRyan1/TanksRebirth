@@ -82,6 +82,9 @@ public class Shell : IAITankDanger {
     public uint Ricochets;
     public float Rotation;
 
+    /// <summary>The amount of times this bullet can penetrate other ones. A value of -1 will penetrate infinitely.</summary>
+    public int Penetration;
+
     /// <summary>The homing properties of this <see cref="Shell"/>.</summary>
     public HomingProperties HomeProperties = default;
 
@@ -104,11 +107,15 @@ public class Shell : IAITankDanger {
 
     /// <summary>Whether or not this shell should emit flames from behind it.</summary>
     public bool Flaming { get; set; }
-
+    /// <summary>The color of the flame particles emitted by this <see cref="Shell"/> when <see cref="Flaming"/> is true.</summary>
     public Color FlameColor { get; set; } = Color.Orange;
+    /// <summary>Whether or not this <see cref="Shell"/> should emit a blazing trail.</summary>
     public bool LeavesTrail { get; set; }
+    /// <summary>The color of the blazing trail emitted when <see cref="LeavesTrail"/> is true.</summary>
     public Color TrailColor { get; set; } = Color.Gray;
+    /// <summary>Whether or not this <see cref="Shell"/> emits smoke puffs.</summary>
     public bool EmitsSmoke { get; set; } = true;
+    /// <summary>The color of the smoke puffs left by this <see cref="Shell"/> when <see cref="EmitsSmoke"/> is true.</summary>
     public Color SmokeColor { get; set; } = new Color(255, 255, 255, 255);
     public bool IsPlayerSourced { get; set; }
 
@@ -555,8 +562,8 @@ public class Shell : IAITankDanger {
                 Owner.OwnedShells[idx] = null;
         }
 
-        TankGame.OnFocusLost -= TankGame_OnFocusLost;
-        TankGame.OnFocusRegained -= TankGame_OnFocusRegained;
+        TankGame.OnFocusLost -= TankGame_OnFocusLost!;
+        TankGame.OnFocusRegained -= TankGame_OnFocusRegained!;
         GameProperties.OnMissionEnd -= StopSounds;
 
         _loopingSound?.Instance?.Stop();

@@ -17,8 +17,7 @@ namespace TanksRebirth.GameContent.ModSupport;
 // 3) invoke per-ModTank type, like a modded X tank will only invoke Y method within the X ModTank class.
 #pragma warning disable CS8618
 /// <summary>
-/// Create your own tank for this game!<para></para>
-/// In order for everything to function properly,
+/// Create your own tank for this game!
 /// </summary>
 public class ModTank : ILoadable {
     private List<OggMusic> _music;

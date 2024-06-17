@@ -2,41 +2,45 @@
 using System.IO;
 using System.Text.Json;
 using System.Reflection;
+using System.Globalization;
+using System.Collections.Generic;
+using System.Linq;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Threading.Tasks;
+
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+
+using FontStashSharp;
+
+using Steamworks;
+
+using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.Utilities;
-using TanksRebirth.GameContent;
-using TanksRebirth.Internals;
 using TanksRebirth.Internals.UI;
-using System.Collections.Generic;
-using System.Linq;
 using TanksRebirth.Internals.Common.IO;
-using System.Diagnostics;
-using TanksRebirth.GameContent.UI;
-using TanksRebirth.Graphics;
 using TanksRebirth.Internals.Common.Framework.Input;
+using TanksRebirth.Internals.Common.Framework.Core;
 using TanksRebirth.Internals.Core;
-using TanksRebirth.Localization;
-using FontStashSharp;
+using TanksRebirth.Internals.Common.Framework.Audio;
+using TanksRebirth.Internals.Common.Framework;
 using TanksRebirth.Internals.Common.Framework.Graphics;
+using TanksRebirth.GameContent;
+using TanksRebirth.GameContent.UI;
+using TanksRebirth.GameContent.ModSupport;
+using TanksRebirth.GameContent.ID;
+using TanksRebirth.GameContent.Properties;
+using TanksRebirth.GameContent.Systems.PingSystem;
 using TanksRebirth.GameContent.Systems;
+using TanksRebirth.Graphics;
+using TanksRebirth.Graphics.Cameras;
+using TanksRebirth.Localization;
 using TanksRebirth.Net;
-using System.Runtime.InteropServices;
 using TanksRebirth.IO;
 using TanksRebirth.Achievements;
-using TanksRebirth.GameContent.Properties;
-using TanksRebirth.Internals.Common.Framework.Audio;
-using TanksRebirth.GameContent.ModSupport;
-using System.Threading.Tasks;
-using TanksRebirth.GameContent.ID;
-using Steamworks;
-using TanksRebirth.Graphics.Cameras;
-using System.Globalization;
-using TanksRebirth.Internals.Common.Framework;
-using TanksRebirth.GameContent.Systems.PingSystem;
-using TanksRebirth.Internals.Common.Framework.Core;
 
 namespace TanksRebirth;
 
@@ -212,6 +216,7 @@ public class TankGame : Game {
         if (Debugger.IsAttached && SteamAPI.IsSteamRunning())
             SteamworksUtils.Initialize();
         CurrentSessionTimer.Start();
+        PingMenu.Initialize();
 
         GameHandler.MapEvents();
         GameHandler.ClientLog.Write($"Mapped events...", LogType.Info);
@@ -269,7 +274,7 @@ public class TankGame : Game {
 
         MainThreadId = Environment.CurrentManagedThreadId;
 
-        Window.ClientSizeChanged += HandleResizing;
+        Window.ClientSizeChanged += HandleResizing!; // IDE won't stop talking. so ! is the solution.
 
         OrthographicCamera = new(0, 0, 1920, 1080, -2000, 5000);
         SpectatorCamera = new(MathHelper.ToRadians(100), GraphicsDevice.Viewport.AspectRatio, 0.1f, 5000f);
@@ -296,8 +301,8 @@ public class TankGame : Game {
         Thunder.SoftRain.Instance.Volume = 0;
         Thunder.SoftRain.Instance.IsLooped = true;
 
-        OnFocusLost += TankGame_OnFocusLost;
-        OnFocusRegained += TankGame_OnFocusRegained;
+        OnFocusLost += TankGame_OnFocusLost!;
+        OnFocusRegained += TankGame_OnFocusRegained!;
 
         WhitePixel = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
 
@@ -544,7 +549,7 @@ public class TankGame : Game {
 
     private void DoUpdate(GameTime gameTime) {
         if (InputUtils.KeyJustPressed(Keys.K))
-            new IngamePing(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition), PingID.Generic, PlayerID.PlayerTankColors[Client.IsConnected() ? NetPlay.CurrentClient.Id : PlayerID.Blue].ToColor());
+            new IngamePing(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition), GameHandler.GameRand.Next(PingID.Collection.Count), PlayerID.PlayerTankColors[Client.IsConnected() ? NetPlay.CurrentClient.Id : PlayerID.Blue].ToColor());
         //SpectatorCamera.FieldOfView = MathHelper.ToRadians(100);
         //SpectatorCamera.AspectRatio = GraphicsDevice.Viewport.AspectRatio;
         //PerspectiveCamera.FieldOfView = MathHelper.ToRadians(90);
@@ -592,7 +597,7 @@ public class TankGame : Game {
                 Graphics.ApplyChanges();
             }
 
-            MouseRenderer.ShouldRender = !Difficulties.Types["ThirdPerson"] || GameUI.Paused || MainMenu.Active || LevelEditor.Active;
+            RebirthMouse.ShouldRender = !Difficulties.Types["ThirdPerson"] || GameUI.Paused || MainMenu.Active || LevelEditor.Active;
             if (UIElement.delay > 0)
                 UIElement.delay--;
         }
@@ -1095,7 +1100,7 @@ public class TankGame : Game {
 
         SpriteRenderer.Begin(blendState: BlendState.AlphaBlend, effect: GameShaders.MouseShader, rasterizerState: DefaultRasterizer);
 
-        MouseRenderer.DrawMouse();
+        RebirthMouse.DrawMouse();
 
         SpriteRenderer.End();
 
