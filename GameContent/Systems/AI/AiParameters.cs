@@ -40,7 +40,6 @@ public record AiParameters {
     /// <summary>On a given tick, it has this chance out of 1 to lay a mine. <para>Do note that this value must be greater than 0 and less than or equal to 1.</para></summary>
     public float MinePlacementChance { get; set; } // 0.0f to 1.0f
 
-
     /// <summary>The distance from the main shot calculation ray an enemy must be before this tank is allowed to fire.</summary>
     public float Inaccuracy { get; set; }
 

@@ -31,7 +31,9 @@ public static class LevelEditor
     public static string AlertText;
     private static float _alertTime;
     public static float DefaultAlertDuration { get; set; } = 120;
-
+    /// <summary>Displays an alert to the screen.</summary>
+    /// <param name="alert">The text to show in the alert.</param>
+    /// <param name="timeOverride">The amount of time to display the alert for. Defaults to <see cref="DefaultAlertDuration"/>.</param>
     public static void Alert(string alert, float timeOverride = 0f) {
         _alertTime = timeOverride != 0f ? timeOverride : DefaultAlertDuration;
         AlertText = alert;
@@ -830,6 +832,8 @@ public static class LevelEditor
         {
             for (int i = 0; i < _renderNamesTanks.Count; i++)
             {
+                // TODO: i come back to this code and i think "what kind of drugs was ryan on?" to my surprise i have no clue.
+                // the magic numbers here hurt my brain.
                 ClickEventsPerItem[new Rectangle((int)(34.ToResolutionX() + xOff + _barOffset), (int)(WindowUtils.WindowBottom.Y * 0.8f), (int)234.ToResolutionX(), (int)(WindowUtils.WindowHeight * 0.2f))] =
                     (i + 2, (i + 2) switch
                     {

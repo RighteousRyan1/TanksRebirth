@@ -536,8 +536,7 @@ public partial class AITank : Tank  {
     // make a new method for just any rectangle
 
     // TODO: literally fix everything about these turret rotation values.
-    private List<Tank> GetTanksInPath(Vector2 pathDir, out Vector2 rayEndpoint, bool draw = false, Vector2 offset = default, float missDist = 0f, Func<Block, bool> pattern = null, bool doBounceReset = true)
-    {
+    private List<Tank> GetTanksInPath(Vector2 pathDir, out Vector2 rayEndpoint, bool draw = false, Vector2 offset = default, float missDist = 0f, Func<Block, bool> pattern = null, bool doBounceReset = true) {
         rayEndpoint = new(-999999, -999999);
         List<Tank> tanks = new();
         pattern ??= (c) => c.IsSolid || c.Type == BlockID.Teleporter;
@@ -590,7 +589,7 @@ public partial class AITank : Tank  {
 
                         if (Array.IndexOf(Block.AllBlocks, otherTp) > -1) {
                             //pathPos = otherTp.Position;
-                            tpos = otherTp.Position;
+                            tpos = otherTp!.Position;
                             goneThroughTeleporter = true;
                             tpidx = i + 1;
                         }
@@ -621,47 +620,38 @@ public partial class AITank : Tank  {
 
             void resetIterations() { if (doBounceReset) uninterruptedIterations = 0; }
 
-            if (i == 0 && Block.AllBlocks.Any(x => x is not null && x.Hitbox.Intersects(pathHitbox) && pattern is not null ? pattern.Invoke(x) : false))
-            {
+            if (i == 0 && Block.AllBlocks.Any(x => x is not null && x.Hitbox.Intersects(pathHitbox) && pattern is not null && pattern.Invoke(x))) {
                 rayEndpoint = pathPos;
                 return tanks;
             }
 
-            if (i < (int)Properties.ShellSpeed / 2 && pathRicochetCount > 0)
-            {
+            if (i < (int)Properties.ShellSpeed / 2 && pathRicochetCount > 0) {
                 rayEndpoint = pathPos;
                 return tanks;
             }
 
-            if (pathRicochetCount > Properties.RicochetCount)
-            {
+            if (pathRicochetCount > Properties.RicochetCount) {
                 rayEndpoint = pathPos;
                 return tanks;
             }
 
             pathPos += pathDir;
             var realMiss = 1f + (missDist * uninterruptedIterations);
-            if (draw)
-            {
+            if (draw) {
                 var pathPosScreen = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(pathPos.X, 11, pathPos.Y), TankGame.GameView, TankGame.GameProjection);
                 TankGame.SpriteRenderer.Draw(whitePixel, pathPosScreen, null, Color.White * 0.5f, 0, whitePixel.Size() / 2, /*2 + (float)Math.Sin(i * Math.PI / 5 - TankGame.GameUpdateTime * 0.1f) * */realMiss, default, default);
                 // DebugUtils.DrawDebugString(TankGame.spriteBatch, $"{goneThroughTeleporter}:{(block is not null ? $"{block.Type}" : "N/A")}", MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), Matrix.CreateTranslation(pathPos.X, 0, pathPos.Y), View, Projection), 1, centered: true);
             }
 
             foreach (var enemy in GameHandler.AllTanks)
-                if (enemy is not null)
-                {
-                    if (!enemy.Dead)
-                    {
-                        if (!tanks.Contains(enemy))
-                        {
-                            if (i > 15)
-                            {
+                if (enemy is not null) {
+                    if (!enemy.Dead) {
+                        if (!tanks.Contains(enemy)) {
+                            if (i > 15) {
                                 if (GameUtils.Distance_WiiTanksUnits(enemy.Position, pathPos) <= realMiss)
                                     tanks.Add(enemy);
                             }
-                            else if (enemy.CollisionBox.Intersects(pathHitbox))
-                            {
+                            else if (enemy.CollisionBox.Intersects(pathHitbox)) {
                                 tanks.Add(enemy);
                             }
                         }

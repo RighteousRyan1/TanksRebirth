@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Systems;
@@ -58,10 +60,12 @@ public static class AiHelpers {
                 aiParams.Inaccuracy = 0.9f;
 
                 aiParams.PursuitLevel = 0.4f;
-                aiParams.PursuitFrequency = 120;
+                aiParams.PursuitFrequency = 300;
 
                 aiParams.ProjectileWarinessRadius_PlayerShot = 40;
+                aiParams.ProjectileWarinessRadius_AIShot = 70;
                 aiParams.MineWarinessRadius_PlayerLaid = 40;
+                aiParams.MineWarinessRadius_AILaid = 70;
 
                 properties.TurningSpeed = 0.08f;
                 properties.MaximalTurn = MathHelper.ToRadians(10);
@@ -285,7 +289,7 @@ public static class AiHelpers {
                 properties.ShellLimit = 2;
                 properties.ShellSpeed = 6f; // 6f
                 properties.ShellType = ShellID.TrailedRocket;
-                properties.RicochetCount = 2; // 2
+                properties.RicochetCount = 6; // 2
 
                 properties.Invisible = false;
                 properties.ShellHoming = new();
@@ -1332,7 +1336,7 @@ public static class AiHelpers {
         return aiParams;
     }
 
-    public static int GetHighestTierActive() {
+    public static int GetHighestTierActive(Func<AITank, bool>? predicate = null) {
         var highest = TankID.None;
 
         Span<AITank> tanks = GameHandler.AllAITanks;
@@ -1341,7 +1345,7 @@ public static class AiHelpers {
         for (var i = 0; i < GameHandler.AllAITanks.Length; i++) {
             var tank = Unsafe.Add(ref tanksSearchSpace, i);
 
-            if (tank is null || tank.Dead) continue;
+            if (tank is null || tank.Dead || (predicate is not null && !predicate.Invoke(tank))) continue;
 
             if (tank.AiTankType > highest)
                 highest = tank.AiTankType;
@@ -1350,14 +1354,14 @@ public static class AiHelpers {
         return highest;
     }
 
-    public static int CountAll() {
+    public static int CountAll(Func<AITank, bool>? predicate = null) {
         var cnt = 0;
         Span<AITank> tanks = GameHandler.AllAITanks;
 
         ref var tanksSearchSpace = ref MemoryMarshal.GetReference(tanks);
         for (var i = 0; i < tanks.Length; i++) {
-            var tnk = Unsafe.Add(ref tanksSearchSpace, i);
-            if (tnk is not null && !tnk.Dead) cnt++;
+            var tank = Unsafe.Add(ref tanksSearchSpace, i);
+            if (tank is not null && !tank.Dead && (predicate is not null && predicate.Invoke(tank))) cnt++;
         }
 
         return cnt;

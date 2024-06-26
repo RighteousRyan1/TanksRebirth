@@ -3,6 +3,7 @@ using System.IO;
 using LiteNetLib;
 using LiteNetLib.Utils;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics.PackedVector;
 using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.UI;
@@ -10,7 +11,10 @@ using TanksRebirth.GameContent.UI;
 namespace TanksRebirth.Net;
 /// <summary>Contains many ways to send information across the nets. Used for vanilla packet handling.</summary>
 public class Client {
-
+    public delegate void ClientStart(Client client);
+    public static event ClientStart? OnClientStart;
+    public delegate void ClientDisconnected(Client client);
+    public static event ClientDisconnected? OnClientDisconnect;
     public static NetManager clientNetManager;
     public static EventBasedNetListener clientNetListener;
     public static NetPeer client;
@@ -34,8 +38,6 @@ public class Client {
         // set client name to username
         c.Name = username;
 
-        // var tank = new PlayerTank(Enums.PlayerType.Blue);
-
         GameHandler.ClientLog.Write($"Created a new client with name '{username}'.", Internals.LogType.Debug);
         NetPlay.CurrentClient = c;
     }
@@ -44,6 +46,8 @@ public class Client {
         GameHandler.ClientLog.Write($"Attempting connection to server...", Internals.LogType.Debug);
         clientNetManager.Start();
         client = clientNetManager.Connect(address, port, password);
+        if (client is not null)
+            OnClientStart?.Invoke(NetPlay.CurrentClient);
     }
 
     public static void SendCommandUsage(string command) {
@@ -56,7 +60,6 @@ public class Client {
 
         client.Send(message, DeliveryMethod.ReliableOrdered);
     }
-
     public static void SendQuit() {
         if (MainMenu.Active || !IsConnected())
             return;
@@ -78,7 +81,6 @@ public class Client {
 
         client.Send(message, DeliveryMethod.Unreliable);
     }
-
     public static void SyncCleanup() {
         if (MainMenu.Active || !IsConnected())
             return;
@@ -88,7 +90,6 @@ public class Client {
 
         client.Send(message, DeliveryMethod.Unreliable);
     }
-
     public static void SendClientInfo() {
         NetDataWriter message = new();
         message.Put(PacketID.ClientInfo);
@@ -122,8 +123,6 @@ public class Client {
         message.Put(tank.Body.Position.Y);
         message.Put(tank.TankRotation);
         message.Put(tank.TurretRotation);
-
-        //Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered);
 
         client.Send(message, DeliveryMethod.ReliableOrdered);
     }
@@ -177,7 +176,7 @@ public class Client {
         message.Put(shell.Position);
         message.Put(shell.Velocity);
         message.Put(shell.RicochetsRemaining);
-        message.Put(shell.Owner.WorldId);
+        message.Put(shell.Owner!.WorldId);
         message.Put(shell.Id);
 
         // ChatSystem.SendMessage($"Pos: {shell.Position} | Vel: {shell.Velocity}", Color.White);
@@ -336,6 +335,7 @@ public class Client {
     public static void SendDisconnect(int peerId, string name, string reason) {
         if (!IsConnected())
             return;
+        OnClientDisconnect?.Invoke(NetPlay.CurrentClient);
         NetDataWriter message = new();
         message.Put(PacketID.Disconnect);
 
@@ -395,5 +395,16 @@ public class Client {
             message.Put(item.Value); 
         }
         client.Send(message, DeliveryMethod.Sequenced);
+    }
+
+    public static void SendMapPing(Vector3 location, int pingId, int playerId) {
+        NetDataWriter message = new();
+
+        message.Put(PacketID.MapPing);
+        message.Put(location);
+        message.Put(pingId);
+        message.Put(playerId);
+
+        client.Send(message, DeliveryMethod.ReliableOrdered);
     }
 }

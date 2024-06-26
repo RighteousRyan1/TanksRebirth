@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,6 +9,9 @@ using TanksRebirth.GameContent.ID;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework;
 using TanksRebirth.Internals.Common.Framework.Audio;
+using TanksRebirth.Internals.Common.Framework.Input;
+using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.Systems.PingSystem;
 
@@ -25,40 +29,51 @@ public static class PingMenu {
         [PingID.GroupHere] = "Group Here"
     };
 
-    public const int ALERT = 0;
-    public const int FLAT = 1;
-    public const int GENERIC = 2;
-    public const int NOTICE = 3;
-
-    public static Dictionary<int, OggAudio> PingIdToAudio;
-
-    public static List<OggAudio> PingSounds = new();
-
     public static void Initialize() {
         static string specialReplace(string s) => s.Replace(' ', '_').ToLower();
         for (int i = 0; i < PingIdToName.Count; i++) {
             PingIdToTexture[i] = GameResources.GetGameResource<Texture2D>($"Assets/textures/ui/ping/{specialReplace(PingIdToName[i])}");
         }
-        PingSounds.AddRange(new OggAudio[] {
-            new("Content/Assets/sounds/ping/ping_alert.ogg"),
-            new("Content/Assets/sounds/ping/ping_flat.ogg"),
-            new("Content/Assets/sounds/ping/ping_generic.ogg"),
-            new("Content/Assets/sounds/ping/ping_notice.ogg"),
-        });
-        PingIdToAudio = new() {
-            [PingID.Generic] = PingSounds[GENERIC],
-            [PingID.StayHere] = PingSounds[NOTICE],
-            [PingID.WatchHere] = PingSounds[ALERT],
-            [PingID.AvoidHere] = PingSounds[ALERT],
-            [PingID.GoHere] = PingSounds[FLAT],
-            [PingID.FocusHere] = PingSounds[FLAT],
-            [PingID.GroupHere] = PingSounds[NOTICE]
-        };
     }
+    public static Keybind PingGeneral = new(nameof(PingGeneral), Keys.D1) {
+        KeybindPressAction = (bind) => {
+            IngamePing.CreateFromTankSender(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition), PingID.Generic, NetPlay.GetMyClientId(), Client.IsConnected());
+        }
+    };
+    public static Keybind PingStay = new(nameof(PingStay), Keys.D2) {
+        KeybindPressAction = (bind) => {
+            IngamePing.CreateFromTankSender(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition), PingID.StayHere, NetPlay.GetMyClientId(), Client.IsConnected());
+        }
+    };
+    public static Keybind PingWatch = new(nameof(PingWatch), Keys.D3) {
+        KeybindPressAction = (bind) => {
+            IngamePing.CreateFromTankSender(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition), PingID.WatchHere, NetPlay.GetMyClientId(), Client.IsConnected());
+        }
+    };
+    public static Keybind PingAvoid = new(nameof(PingAvoid), Keys.D4) {
+        KeybindPressAction = (bind) => {
+            IngamePing.CreateFromTankSender(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition), PingID.AvoidHere, NetPlay.GetMyClientId(), Client.IsConnected());
+        }
+    };
+    public static Keybind PingGo = new(nameof(PingGo), Keys.D5) {
+        KeybindPressAction = (bind) => {
+            IngamePing.CreateFromTankSender(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition), PingID.GoHere, NetPlay.GetMyClientId(), Client.IsConnected());
+        }
+    };
+    public static Keybind PingFocus = new(nameof(PingFocus), Keys.D6) {
+        KeybindPressAction = (bind) => {
+            IngamePing.CreateFromTankSender(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition), PingID.FocusHere, NetPlay.GetMyClientId(), Client.IsConnected());
+        }
+    };
+    public static Keybind PingGroup = new(nameof(PingGroup), Keys.D7) {
+        KeybindPressAction = (bind) => {
+            IngamePing.CreateFromTankSender(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition), PingID.GroupHere, NetPlay.GetMyClientId(), Client.IsConnected());
+        }
+    };
     // i dont think a radial would be optimal. Scroll wheel would even be better
-    public static Radial RadialMenu = new(2, new Circle());
+    //public static Radial RadialMenu = new(2, new Circle());
 
-    private static int _curPingId;
-    
+    //private static int _curPingId;
+
     // todo: finish impl
 }

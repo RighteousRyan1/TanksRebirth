@@ -136,7 +136,7 @@ public abstract class Tank {
     public Body Body { get; set; } = new();
 
     /// <summary>This <see cref="Tank"/>'s model.</summary>
-    public Model? Model { get; set; }
+    public Model Model { get; set; }
 
     /// <summary>This <see cref="Tank"/>'s world position. Used to change the actual location of the model relative to the <see cref="View"/> and <see cref="Projection"/>.</summary>
     public Matrix World { get; set; }
@@ -232,6 +232,7 @@ public abstract class Tank {
             for (int i = 0; i < ModLoader.ModTanks.Length; i++) {
                 if (ai.AiTankType == ModLoader.ModTanks[i].Type) {
                     properties = ModLoader.ModTanks[i].Properties;
+                    ai.AiParams = ModLoader.ModTanks[i].AiParameters;
                     ModLoader.ModTanks[i].PostApplyDefaults(ai);
                     return;
                 }

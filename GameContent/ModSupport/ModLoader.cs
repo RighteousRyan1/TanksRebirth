@@ -30,7 +30,7 @@ public static class ModLoader
     public delegate void PostLoadModContent(TanksMod mod);
     public static event PostLoadModContent? OnPostModLoad;
 
-    private static List<TanksMod> _loadedMods = new();
+    public static List<TanksMod> LoadedMods { get; set; } = new();
     private static List<AssemblyLoadContext> _loadedAlcs = new();
 
     public static int ActionsNeeded { get; private set; }
@@ -100,7 +100,7 @@ public static class ModLoader
         Status = LoadStatus.Unloading;
         _loadingActions.Clear();
         _sandboxingActions.Clear();
-        _loadedMods.ForEach(mod => {
+        LoadedMods.ForEach(mod => {
             // for indivudally unloaded mods.
 
             // unload modded tanks and all of their data.
@@ -111,7 +111,7 @@ public static class ModLoader
             mod.OnUnload();
             UnloadModContent(ref mod);
         });
-        _loadedMods.Clear();
+        LoadedMods.Clear();
         _loadedAlcs.ForEach(asm => {
             asm.Unload();
             ChatSystem.SendMessage($"Unloaded '{asm.Name}'", Color.Orange);
@@ -153,7 +153,7 @@ public static class ModLoader
         if (Status == LoadStatus.Loading || Status == LoadStatus.Compiling || Status == LoadStatus.Sandboxing) {
             ChatSystem.SendMessage("Mods are currently loading! Unable to load mods.", Color.Red);
         }
-        if (_loadedMods.Count > 0)
+        if (LoadedMods.Count > 0)
             UnloadAll();
 
         ActionsNeeded = 0;
@@ -233,7 +233,7 @@ public static class ModLoader
                                                     }
                                                 }
 
-                                                _loadedMods.Add(tanksMod);
+                                                LoadedMods.Add(tanksMod);
 
                                                 tanksMod.OnLoad();
 

@@ -23,7 +23,7 @@ public class Keybind {
     public Keys AssignedKey { get; private set; } = Keys.None;
     public string Name { get; set; } = "Not Named";
 
-    public Action<Keybind>? KeybindPressAction { get; set; } = null;
+    public Action<Keybind> KeybindPressAction { get; set; } = null;
 
     public void ForceReassign(Keys newKey) {
         AssignedKey = newKey;

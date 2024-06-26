@@ -7,12 +7,17 @@ using System.Net;
 using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.Properties;
 using TanksRebirth.GameContent.Systems;
+using TanksRebirth.GameContent.Systems.PingSystem;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.Net;
 
+/// <summary>
+/// Holds the keys to all of what happens through the networking of the game.
+/// 
+/// </summary>
 public class NetPlay {
     public static IPEndPoint Ip;
     public static int Port;
@@ -26,10 +31,10 @@ public class NetPlay {
 
     public delegate void OnRecieveServerPacketDelegate(int packet, NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod);
     /// <summary>Called when a packet is recieved server-side. This is called before all packets are handled.</summary>
-    public static event OnRecieveServerPacketDelegate OnRecieveServerPacket;
+    public static event OnRecieveServerPacketDelegate OnReceiveServerPacket;
     public delegate void OnRecieveClientPacketDelegate(int packet, NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod);
     /// <summary>Called when a packet is recieved client-side. This is called before all packets are handled.</summary>
-    public static event OnRecieveClientPacketDelegate OnRecieveClientPacket;
+    public static event OnRecieveClientPacketDelegate OnReceiveClientPacket;
 
     public static void MapClientNetworking() {
         Client.clientNetListener.NetworkReceiveEvent += OnPacketRecieve_Client;
@@ -63,7 +68,7 @@ public class NetPlay {
                 ChatSystem.SendMessage($"[DEBUG]: Recieved packet {PacketID.Collection.GetKey(packet)} from peer {peer.Id}", Color.Blue);
             }
         }
-        OnRecieveClientPacket?.Invoke(packet, peer, reader, deliveryMethod);
+        OnReceiveClientPacket?.Invoke(packet, peer, reader, deliveryMethod);
 
         switch (packet) {
             #region Info
@@ -324,6 +329,13 @@ public class NetPlay {
                     }
                 }
                 break;
+            case PacketID.MapPing:
+                var loc = reader.GetVector3();
+                var pingId = reader.GetInt();
+                var pid = reader.GetInt();
+
+                IngamePing.CreateFromTankSender(loc, pingId, pid);
+                break;
             #endregion
             #region ConstantSends
             case PacketID.SyncPlayer:
@@ -394,9 +406,7 @@ public class NetPlay {
 
         message.Put(packet);
 
-        OnRecieveServerPacket?.Invoke(packet, peer, reader, deliveryMethod);
-
-        //message.Put(packet);
+        OnReceiveServerPacket?.Invoke(packet, peer, reader, deliveryMethod);
 
         switch (packet) {
             #region Info
@@ -493,7 +503,6 @@ public class NetPlay {
 
                 Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered, peer);
                 break;
-
             case PacketID.TankDamage:
                 var hurtTankId = reader.GetInt();
                 message.Put(hurtTankId);
@@ -617,6 +626,16 @@ public class NetPlay {
                 message.Put(success);
                 //peer.Send(message, DeliveryMethod.Sequenced);
                 Server.serverNetManager.SendToAll(message, DeliveryMethod.Sequenced, peer);
+                break;
+            case PacketID.MapPing:
+                var loc = reader.GetVector3();
+                var pingId = reader.GetInt();
+                var pid = reader.GetInt();
+                message.Put(loc);
+                message.Put(pingId);
+                message.Put(pid);
+
+                Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered, peer);
                 break;
             #endregion
             #region ConstantSends

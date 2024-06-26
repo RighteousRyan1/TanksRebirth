@@ -289,9 +289,9 @@ public static class MainMenu
                 return;
             }
 
-            if (int.TryParse(PortInput.Text, out var port)) {
+            if (int.TryParse(PortInput.GetRealText(), out var port)) {
                 Client.CreateClient(UsernameInput.GetRealText());
-                Client.AttemptConnectionTo(IPInput.Text, port, PasswordInput.GetRealText());
+                Client.AttemptConnectionTo(IPInput.GetRealText(), port, PasswordInput.GetRealText());
             }
             else {
                 SoundPlayer.SoundError();
@@ -419,7 +419,6 @@ public static class MainMenu
             DefaultString = "Server Password (Empty = None)"
         };
         PasswordInput.SetDimensions(() => new Vector2(100, 700).ToResolution(), () => new Vector2(500, 50).ToResolution());
-
         DisconnectButton = new("Disconnect", font, Color.WhiteSmoke, 1f)
         {
             IsVisible = false,

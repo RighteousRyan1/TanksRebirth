@@ -548,8 +548,6 @@ public class TankGame : Game {
     }
 
     private void DoUpdate(GameTime gameTime) {
-        if (InputUtils.KeyJustPressed(Keys.K))
-            new IngamePing(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition), GameHandler.GameRand.Next(PingID.Collection.Count), PlayerID.PlayerTankColors[Client.IsConnected() ? NetPlay.CurrentClient.Id : PlayerID.Blue].ToColor());
         //SpectatorCamera.FieldOfView = MathHelper.ToRadians(100);
         //SpectatorCamera.AspectRatio = GraphicsDevice.Viewport.AspectRatio;
         //PerspectiveCamera.FieldOfView = MathHelper.ToRadians(90);
