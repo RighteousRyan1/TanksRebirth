@@ -168,19 +168,17 @@ public struct SpecAnalysis {
         CpuMake = cpuInfo[0];
         CpuModel = string.Join(" ", cpuInfo[1..]).Trim();
 
-        RamInGB = (uint)MemoryParser.FromGigabytes(ram.TotalPhysical);
+        RamInGB = (uint)Math.Round(MemoryParser.FromGigabytes(ram.TotalPhysical));
     }
     /// <summary></summary>
     /// <param name="takeActions">Whether or not to take ingame action for things like lowering graphics settings.</param>
     /// <param name="ramResponse">The response to the given RAM specs.</param>
     /// <param name="gpuResponse">The response to the given GPU specs.</param>
     /// <param name="cpuResponse">The response to the given CPU specs.</param>
-    public readonly void Analyze(bool takeActions, out string? ramResponse, out string? gpuResponse, out string? cpuResponse) {
+    public readonly void Analyze(bool takeActions, out string ramResponse, out string gpuResponse, out string cpuResponse) {
         List<Action> actionsToTake = new();
 
-        ramResponse = null;
-        gpuResponse = null;
-        cpuResponse = null;
+        ramResponse = gpuResponse = cpuResponse = string.Empty;
 
         switch (RamInGB) {
             case <= 2:
@@ -219,12 +217,12 @@ public struct SpecAnalysis {
         switch (GpuMake) {
             // gtx titan moment
             case "NVIDIA" when GpuModel.Contains("RTX"):
-                gpuResponse = "RTX card detected. Highly sufficient GPU, expect excellent FPS at nearly all times.";
+                gpuResponse = "RTX card detected. GPU will never be a problem.";
                 break;
             case "NVIDIA" when GpuModel.Contains("GTX"): {
                 gpuResponse = gpuModelNum switch {
-                    < 750 => "Lower-end GTX card detected, FPS will be substantial under normal conditions.",
-                    >= 750 and <= 1000 => "Mid-range GTX card detected. FPS will be good normal conditions.",
+                    < 750 => "Lower-end GTX card detected, FPS will usually be decent.",
+                    >= 750 and <= 1000 => "Mid-range GTX card detected. FPS will usually be good.",
                     _ => "High-end GTX Card detected. FPS will be great under normal conditions."
                 };
                 break;
@@ -250,7 +248,7 @@ public struct SpecAnalysis {
         actionsToTake.ForEach(action => action?.Invoke());
     }
 
-    public override readonly string ToString() => $"CPU: {CpuMake}:{CpuModel} | GPU: {GpuMake}:{GpuModel}";
+    public override readonly string ToString() => $"CPU: {CpuMake}:{CpuModel}\nGPU: {GpuMake}:{GpuModel}\nRAM: {RamInGB}GB";
 }
 
 public static class MemoryParser {

@@ -112,7 +112,7 @@ namespace TanksRebirth.GameContent
 
         internal void Render()
         {
-            if (!MapRenderer.ShouldRender)
+            if (!MapRenderer.ShouldRenderAll)
                 return;
             if (!IsIn2DSpace)
             {

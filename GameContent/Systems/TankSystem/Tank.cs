@@ -390,7 +390,7 @@ public abstract class Tank {
 
     /// <summary>Update this <see cref="Tank"/>.</summary>
     public virtual void Update() {
-        if (Dead || !MapRenderer.ShouldRender)
+        if (Dead || !MapRenderer.ShouldRenderAll)
             return;
 
         OnPreUpdate?.Invoke(this);
@@ -865,7 +865,7 @@ public abstract class Tank {
     }
 
     public virtual void Render() {
-        if (!MapRenderer.ShouldRender)
+        if (!MapRenderer.ShouldRenderAll)
             return;
         /*foreach (var shell in OwnedShells) {
             SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"Owned by: {(this is PlayerTank ? PlayerID.Collection.GetKey(((PlayerTank)shell.Owner).PlayerType) : TankID.Collection.GetKey(((AITank)shell.Owner).Tier))}",

@@ -262,7 +262,7 @@ public class Block : IGameSystem
         Remove();
     }
     public void Render() {
-        if (!MapRenderer.ShouldRender)
+        if (!MapRenderer.ShouldRenderAll)
             return;
         // TODO: seeing this, don't make this poor CPU have overhead (use derived types!)
         if (Type != BlockID.Teleporter) {
@@ -330,7 +330,7 @@ public class Block : IGameSystem
     }
     public void Update() {
 
-        if (!MapRenderer.ShouldRender)
+        if (!MapRenderer.ShouldRenderAll)
             return;
 
         Hitbox = new((int)(Position.X - FULL_BLOCK_SIZE / 2 + 1), (int)(Position.Y - FULL_BLOCK_SIZE / 2), (int)FULL_BLOCK_SIZE - 1, (int)FULL_BLOCK_SIZE);

@@ -14,10 +14,10 @@ using TanksRebirth.Internals.Common.Utilities;
 namespace TanksRebirth;
 
 public class AutoUpdater {
-    private string _ghLink;
-    private string _tag;
-    private string _name;
-    private string[] _assets;
+    private readonly string _ghLink;
+    private readonly string _tag;
+    private readonly string _name;
+    private readonly string[] _assets;
     private Version? _versionToCheckAgainst;
     private Version? _expectedVersion;
     public bool IsOutdated { get; private set; }

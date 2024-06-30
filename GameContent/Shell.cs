@@ -230,7 +230,7 @@ public class Shell : IAITankDanger {
     }
 
     internal void Update() {
-        if (!MapRenderer.ShouldRender || (!GameProperties.InMission && !MainMenu.Active))
+        if (!MapRenderer.ShouldRenderAll || (!GameProperties.InMission && !MainMenu.Active))
             return;
 
         Rotation = Velocity.ToRotation() - MathHelper.PiOver2;
@@ -610,7 +610,7 @@ public class Shell : IAITankDanger {
     }
 
     internal void Render() {
-        if (!MapRenderer.ShouldRender)
+        if (!MapRenderer.ShouldRenderAll)
             return;
 
         Projection = TankGame.GameProjection;

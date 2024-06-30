@@ -85,7 +85,7 @@ public class Explosion : IAITankDanger {
     }
 
     public void Update() {
-        if (!MapRenderer.ShouldRender)
+        if (!MapRenderer.ShouldRenderAll)
             return;
         if (!_maxAchieved) {
             if (Scale < MaxScale)
@@ -143,7 +143,7 @@ public class Explosion : IAITankDanger {
     }
 
     public void Render() {
-        if (!MapRenderer.ShouldRender)
+        if (!MapRenderer.ShouldRenderAll)
             return;
         World = Matrix.CreateScale(Scale) * Matrix.CreateRotationY(Rotation) * Matrix.CreateTranslation(Position3D);
         View = TankGame.GameView;

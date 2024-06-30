@@ -95,8 +95,18 @@ public static class CommandGlobals {
             TankGame.Settings.AmbientVolume = float.Parse(args[0]);
         }),
         // render engine
-        [new CommandInput(name: "rendermenu", description: "Disable game rendering/updating in main menu.")] = new CommandOutput(netSync: false, false, (args) => {
-                MapRenderer.ShouldRender = bool.Parse(args[0]);
+        [new CommandInput(name: "rendermenu", description: "Disable/enable game rendering/updating in main menu.")] = new CommandOutput(netSync: false, false, (args) => {
+                MapRenderer.ShouldRenderAll = bool.Parse(args[0]);
+        }),
+        [new CommandInput(name: "renderbounds", description: "Disable/enable the drawing of the outer bounds of the map.")] = new CommandOutput(netSync: false, false, (args) => {
+            MapRenderer.ShouldRenderBounds = bool.Parse(args[0]);
+        }),
+        [new CommandInput(name: "renderfloor", description: "Disable/enable the drawing of the floor of the map.")] = new CommandOutput(netSync: false, false, (args) => {
+            if (bool.TryParse(args[0], out bool truefalse)) {
+                MapRenderer.ShouldRenderFloor = truefalse;
+            } else if (args[0].ToLower() == "black") {
+                MapRenderer.RenderFloorAsBlack = !MapRenderer.RenderFloorAsBlack;
+            }
         }),
         // main menu
         [new CommandInput(name: "uselegacymenumusic", description: "Switch to and from the legacy menu music.")] = new CommandOutput(netSync: false, false, (args) => {

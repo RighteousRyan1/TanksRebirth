@@ -289,7 +289,7 @@ public static class AiHelpers {
                 properties.ShellLimit = 2;
                 properties.ShellSpeed = 6f; // 6f
                 properties.ShellType = ShellID.TrailedRocket;
-                properties.RicochetCount = 6; // 2
+                properties.RicochetCount = 2; // 2
 
                 properties.Invisible = false;
                 properties.ShellHoming = new();
@@ -1361,7 +1361,7 @@ public static class AiHelpers {
         ref var tanksSearchSpace = ref MemoryMarshal.GetReference(tanks);
         for (var i = 0; i < tanks.Length; i++) {
             var tank = Unsafe.Add(ref tanksSearchSpace, i);
-            if (tank is not null && !tank.Dead && (predicate is not null && predicate.Invoke(tank))) cnt++;
+            if (tank is not null && !tank.Dead && ((predicate is not null && predicate.Invoke(tank)) || predicate is null)) cnt++;
         }
 
         return cnt;

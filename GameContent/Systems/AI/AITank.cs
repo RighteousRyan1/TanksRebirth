@@ -412,7 +412,7 @@ public partial class AITank : Tank  {
 
         //CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
 
-        if (Dead || !MapRenderer.ShouldRender)
+        if (Dead || !MapRenderer.ShouldRenderAll)
             return;
         if (AiTankType == TankID.Commando)
         {
@@ -1208,7 +1208,7 @@ public partial class AITank : Tank  {
     }
     public override void Render() {
         base.Render();
-        if (Dead || !MapRenderer.ShouldRender)
+        if (Dead || !MapRenderer.ShouldRenderAll)
             return;
         TankGame.Instance.GraphicsDevice.BlendState = BlendState.AlphaBlend;
         DrawExtras();

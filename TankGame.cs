@@ -280,7 +280,7 @@ public class TankGame : Game {
         SpectatorCamera = new(MathHelper.ToRadians(100), GraphicsDevice.Viewport.AspectRatio, 0.1f, 5000f);
         PerspectiveCamera = new(MathHelper.ToRadians(90), GraphicsDevice.Viewport.AspectRatio, 0.1f, 5000f);
 
-        /*var profiler = new SpecAnalysis(ComputerSpecs.GPU, ComputerSpecs.CPU, ComputerSpecs.RAM);
+        var profiler = new SpecAnalysis(CompSpecs.GPU, CompSpecs.CPU, CompSpecs.RAM);
 
         profiler.Analyze(false, out var ramr, out var gpur, out var cpur);
 
@@ -288,7 +288,7 @@ public class TankGame : Game {
         ChatSystem.SendMessage(gpur, Color.White);
         ChatSystem.SendMessage(cpur, Color.White);
 
-        ChatSystem.SendMessage(profiler.ToString(), Color.Brown);*/
+        ChatSystem.SendMessage(profiler.ToString(), Color.Brown);
 
         // I forget why this check is needed...
         ChatSystem.Initialize();
@@ -406,18 +406,61 @@ public class TankGame : Game {
         GameHandler.ClientLog.Write($"Content loaded in {s.Elapsed}.", LogType.Debug);
         GameHandler.ClientLog.Write($"DebugMode: {Debugger.IsAttached}", LogType.Debug);
 
-        // it isnt really an autoupdater tho.
-        // AutoUpdater = new("https://github.com/RighteousRyan1/TanksRebirth", GameVersion);
+        s.Stop();
 
-        /*if (AutoUpdater.IsOutdated) {
-            CommandGlobals.IsUpdatePending = true;
+        // it isnt really an autoupdater tho.
+        AutoUpdater = new("https://github.com/RighteousRyan1/TanksRebirth", GameVersion);
+
+        if (AutoUpdater.IsOutdated) {
+            //CommandGlobals.IsUpdatePending = true;
             ChatSystem.SendMessage($"Outdated game version detected (current={GameVersion}, recent={AutoUpdater.GetRecentVersion()}).", Color.Red);
             //ChatSystem.SendMessage("Type /update to update the game and automatically restart.", Color.Red);
             SoundPlayer.SoundError();
-        }*/
+        }
+        // magic.
+        const float SECRET_BASE_POS_X = MapRenderer.MIN_X - 28.5f;
+        const float SECRET_BASE_POS_Y = 22;
+        const float SECRET_BASE_POS_Z = 20;
+        _secret1_1 = GameHandler.ParticleSystem.MakeParticle(new Vector3(100, 0.1f, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/secret/special"));
+        _secret1_1.UniqueBehavior = (p) => {
+            _secret1_1.Position = new Vector3(SECRET_BASE_POS_X, SECRET_BASE_POS_Y, SECRET_BASE_POS_Z);
+            _secret1_1.Roll = MathHelper.Pi;
+            _secret1_1.Pitch = MathHelper.PiOver2;
+            _secret1_1.Scale = Vector3.One * 0.3f;
+            _secret1_1.HasAddativeBlending = false;
+        };
+        _secret1_2 = GameHandler.ParticleSystem.MakeParticle(new Vector3(100, 0.1f, 0), "Litzy <3");
+        _secret1_2.UniqueBehavior = (p) => {
+            _secret1_2.Position = new Vector3(SECRET_BASE_POS_X, SECRET_BASE_POS_Y + 20, SECRET_BASE_POS_Z - 8);
+            _secret1_2.Roll = MathHelper.Pi;
+            _secret1_2.Pitch = -MathHelper.PiOver2;
+            _secret1_2.Scale = Vector3.One * 0.3f;
+            _secret1_2.HasAddativeBlending = false;
+        };
 
-        s.Stop();
+        _secret2_1 = GameHandler.ParticleSystem.MakeParticle(new Vector3(100, 0.1f, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/secret/special2"));
+        _secret2_1.UniqueBehavior = (p) => {
+            _secret2_1.Position = new Vector3(SECRET_BASE_POS_X, SECRET_BASE_POS_Y, SECRET_BASE_POS_Z - 40);
+            _secret2_1.Roll = MathHelper.Pi;
+            _secret2_1.Pitch = MathHelper.PiOver2;
+            _secret2_1.Scale = Vector3.One * 0.3f;
+            _secret2_1.HasAddativeBlending = false;
+        };
+        _secret2_2 = GameHandler.ParticleSystem.MakeParticle(new Vector3(100, 0.1f, 0), "Ziggy <3");
+        _secret2_2.UniqueBehavior = (p) => {
+            _secret2_2.Position = new Vector3(SECRET_BASE_POS_X, SECRET_BASE_POS_Y + 20, SECRET_BASE_POS_Z - 8 - 40);
+            _secret2_2.Roll = MathHelper.Pi;
+            _secret2_2.Pitch = -MathHelper.PiOver2;
+            _secret2_2.Scale = Vector3.One * 0.3f;
+            _secret2_2.HasAddativeBlending = false;
+        };
     }
+
+    private Particle _secret1_1;
+    private Particle _secret1_2;
+
+    private Particle _secret2_1;
+    private Particle _secret2_2;
 
     private void HandleResizing(object sender, EventArgs e) {
         // UIElement.ResizeAndRelocate();
@@ -947,7 +990,7 @@ public class TankGame : Game {
 
         var vfx = Difficulties.Types["LanternMode"] ? GameShaders.LanternShader : (MainMenu.Active ? GameShaders.GaussianBlurShader : null);
 
-        if (!MapRenderer.ShouldRender)
+        if (!MapRenderer.ShouldRenderAll)
             vfx = null;
 
         SpriteRenderer.Begin(effect: vfx);
