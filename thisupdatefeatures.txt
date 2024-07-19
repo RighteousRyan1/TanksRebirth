@@ -10,6 +10,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 
 - Made the mission display show what number mission you're on, to know how many you have left/what mission you're on (numerically)
 - Re-hauled the multiplayer lobby screen.
+- The game now uses .NET 8.0, which means there will be performance improvements around the board
 
 ## Fixes
 

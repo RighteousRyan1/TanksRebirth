@@ -12,7 +12,7 @@ using TanksRebirth.Internals.Common.Framework.Animation;
 using System;
 
 namespace TanksRebirth.GameContent.Systems;
-
+#pragma warning disable
 public static class IntermissionSystem {
     public static Animator TextAnimatorLarge;
     public static Animator TextAnimatorSmall;

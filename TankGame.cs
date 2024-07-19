@@ -91,7 +91,7 @@ public class TankGame : Game {
     public static Texture2D WhitePixel;
 
     public static TankGame Instance { get; private set; }
-    public static readonly string ExePath = Assembly.GetExecutingAssembly().Location.Replace(@$"\WiiPlayTanksRemake.dll", string.Empty);
+    public static readonly string ExePath = Assembly.GetExecutingAssembly().Location.Replace(@$"\{nameof(TanksRebirth)}.dll", string.Empty);
     /// <summary>The index/vertex buffer used to render to a framebuffer.</summary>
     public static SpriteBatch SpriteRenderer;
 
@@ -735,6 +735,7 @@ public class TankGame : Game {
                     ThirdPersonCameraPosition = GameHandler.AllPlayerTanks[SpectatorId].Position.ExpandZ();
                     ThirdPersonCameraRotation = -GameHandler.AllPlayerTanks[SpectatorId].TurretRotation;
 
+                    // free camera movement test
 
                     /*var moveSpeed = 2f * DeltaTime;
 

@@ -147,7 +147,7 @@ public static class CommandGlobals {
                 // The class is not likely going to change dynamically, just set the props once.
                 _playerPropertyInfoCache ??= playerTank.Properties.GetType().GetProperties();
 
-                if (args.Length != 2) {
+                if (args.Length < 2) {
                     ChatSystem.SendMessage("Usage: /changetankproperty <property name> <new property value>", Color.Red);
                     return;
                 }

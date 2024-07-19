@@ -246,11 +246,11 @@ public readonly struct WiiMap
     public static KeyValuePair<int, int> ConvertToEditorSpace(int input) {
         return input switch {
             0 => new(-1, 0), // this is an empty space.
-            >= 101 and <= 107 => new(BlockID.Cork, input - 100),                    // this would be a cork block in the binary file. (base 10 101-107)
-            200 => new(BlockID.Hole, 0),                                            // this is a hole in the binary file.
-            >= 201 and <= 207 => new(BlockID.Wood, input - 200),                    // this would be a wood block in the binary file. (base 10 201-207)
-            >= 44 and <= 45 => new(input - 44, PLAYER_TANK_ID),                     // respective blue and red player tank. -1 stack because we want to identify it.
-            >= 144 and <= 151 => new(input - 144, ENEMY_TANK_ID),                   // -2 stack to identify as well, and since we can't identify the tank type, too bad.
+            >= 101 and <= 107 => new(BlockID.Cork, input - 100),  // this would be a cork block in the binary file. (base 10 101-107)
+            200 => new(BlockID.Hole, 0),                          // this is a hole in the binary file.
+            >= 201 and <= 207 => new(BlockID.Wood, input - 200),  // this would be a wood block in the binary file. (base 10 201-207)
+            >= 44 and <= 45 => new(input - 44, PLAYER_TANK_ID),   // respective blue and red player tank. -1 stack because we want to identify it.
+            >= 144 and <= 151 => new(input - 144, ENEMY_TANK_ID), // -2 stack to identify as well, and since we can't identify the tank type, too bad.
             _ => throw new Exception($"Invalid conversion process to a {nameof(WiiMap)}.")
         };
 

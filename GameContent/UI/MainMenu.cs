@@ -39,8 +39,10 @@ public static class MainMenu
 
     public delegate void MenuOpenDelegate();
     public delegate void MenuCloseDelegate();
+    public delegate void CampaignSelectedDelegate(Campaign campaign);
     public static event MenuOpenDelegate OnMenuOpen;
     public static event MenuCloseDelegate OnMenuClose;
+    public static event CampaignSelectedDelegate OnCampaignSelected;
 
     public static Animator LogoAnimation;
 
@@ -781,6 +783,7 @@ public static class MainMenu
                 }
                 var noExt = Path.GetFileNameWithoutExtension(name);
                 PrepareGameplay(noExt, !Client.IsConnected() || Server.CurrentClientCount == 1, false); // switch second param to !Client.IsConnected() when it should check first.
+                OnCampaignSelected?.Invoke(GameProperties.LoadedCampaign);
             };
             elem.OnRightClick += (el) =>
             {
@@ -1177,7 +1180,7 @@ public static class MainMenu
     }
     public static void Open()
     {
-        MainMenu.plrsConfirmed = 0;
+        plrsConfirmed = 0;
         _musicFading = false;
         _sclOffset = 0;
         MenuState = State.PrimaryMenu;

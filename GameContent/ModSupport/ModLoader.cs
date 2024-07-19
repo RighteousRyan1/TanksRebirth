@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using Steamworks;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -61,13 +62,35 @@ public static class ModLoader
         else {
             // painfully local code.
             var checkPath = "C:\\Program Files\\dotnet\\sdk";
-            if (!Directory.Exists(checkPath) || !Directory.GetDirectories(checkPath).Any(x => x.Contains("6.0"))) {
-                GameHandler.ClientLog.Write("Auto-compilation of mod failed. Specified OS architecture is not Windows.", Internals.LogType.Warn);
+            Process process = new();
+            process.StartInfo.FileName = "dotnet.exe";
+            process.StartInfo.Arguments = "--list-sdks";
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.RedirectStandardOutput = true;
+            process.Start();
+
+            string[] versions = process.StandardOutput
+                .ReadToEnd()
+                .TrimEnd()
+                .Replace("[", string.Empty)
+                .Replace("]", string.Empty)
+                .Replace("\r", string.Empty)
+                .Replace(checkPath, string.Empty)
+                .Split("\n")
+                .Select(x => x.Trim())
+                .ToArray();
+
+            var versionsSingular = string.Join(", ", versions);
+
+            process.WaitForExit();
+            // check if any version starts with a '8' to indicate that it is a .NET 8.0 SDK.
+            if (!versions.Any(x => x.StartsWith('6'))) {
+                GameHandler.ClientLog.Write("Auto-compilation of mod failed. User does not have a .NET 8.0 SDK installed.", LogType.Warn);
                 return;
             }
         }
         Status = LoadStatus.Compiling;
-        Process process = new();
+        Process proc = new();
         try {
             LoadType = Debugger.IsAttached ? "Debug" : "Release";
             ProcessStartInfo startInfo = new() {
@@ -80,13 +103,13 @@ public static class ModLoader
                 Arguments = $"/c dotnet build -c " + LoadType
             };
 
-            process.StartInfo = startInfo;
-            process.Start();
-            process.WaitForExit();
+            proc.StartInfo = startInfo;
+            proc.Start();
+            proc.WaitForExit();
         } catch (Exception e) {
             Error = e.Message;
-            process.Dispose();
-            process.Close();
+            proc.Dispose();
+            proc.Close();
         }
     }
 
