@@ -23,6 +23,10 @@ using TanksRebirth.Internals.Common.Framework.Animation;
 
 namespace TanksRebirth.GameContent.UI;
 
+// TODO: bugs to fix
+/* Rotation seemingly becomes negative upon level editor return
+ * Horizontally facing tanks get reversed, PiOver2 becomes -PiOver2.
+ */
 public static class LevelEditor
 {
     public static readonly byte[] LevelFileHeader = { 84, 65, 78, 75 };

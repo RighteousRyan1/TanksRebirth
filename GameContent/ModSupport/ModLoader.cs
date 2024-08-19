@@ -31,8 +31,8 @@ public static class ModLoader
     public delegate void PostLoadModContent(TanksMod mod);
     public static event PostLoadModContent? OnPostModLoad;
 
-    public static List<TanksMod> LoadedMods { get; set; } = new();
-    private static List<AssemblyLoadContext> _loadedAlcs = new();
+    public static List<TanksMod> LoadedMods { get; set; } = [];
+    private static List<AssemblyLoadContext> _loadedAlcs = [];
 
     public static int ActionsNeeded { get; private set; }
     public static int ActionsComplete { get; private set; }
@@ -41,13 +41,13 @@ public static class ModLoader
     public static bool LoadingMods { get; private set; }
     public static string ModsPath { get; } = Path.Combine(TankGame.SaveDirectory, "Mods");
 
-    public const string ModNETVersion = "net6.0";
+    public const string ModNETVersion = "net8.0";
 
-    private volatile static List<Action> _loadingActions = new();
-    private volatile static List<Action> _sandboxingActions = new();
+    private volatile static List<Action> _loadingActions = [];
+    private volatile static List<Action> _sandboxingActions = [];
 
     private static Dictionary<TanksMod, List<ModTank>> _modTankDictionary = new();
-    public static ModTank[] ModTanks { get; private set; } = Array.Empty<ModTank>();
+    public static ModTank[] ModTanks { get; private set; } = [];
     private static List<ModTank> _modTanks = new();
 
     private static bool _firstLoad = true;
@@ -84,7 +84,7 @@ public static class ModLoader
 
             process.WaitForExit();
             // check if any version starts with a '8' to indicate that it is a .NET 8.0 SDK.
-            if (!versions.Any(x => x.StartsWith('6'))) {
+            if (!versions.Any(x => x.StartsWith('8'))) {
                 GameHandler.ClientLog.Write("Auto-compilation of mod failed. User does not have a .NET 8.0 SDK installed.", LogType.Warn);
                 return;
             }
@@ -208,6 +208,14 @@ public static class ModLoader
                         if (fileName == modName + ".csproj") {
                             ActionsNeeded++;
 
+                            var lines = File.ReadAllLines(file2);
+                            var netVer = GetCsprojPropertyValue(lines, LocateCsprojProperty(lines, "TargetFramework"));
+
+                            if (netVer != "net8.0") {
+                                Error = "This mod does not match TanksRebirth's .NET version (8.0)";
+                                return;
+                            }
+
                             _loadingActions.Add(() => {
                                 ModBeingLoaded = modName;
                                 AttemptCompile(modName);
@@ -294,5 +302,16 @@ public static class ModLoader
             OnFinishModLoading?.Invoke();
             ModTanks = _modTanks.ToArray();
         });
+    }
+    public static int LocateCsprojProperty(string[] contents, string match) {
+        return Array.FindIndex(contents, x => {
+            var trim = x.Trim().Split('>')[0].Replace("<", "");
+            return trim == match;
+        });
+    }
+    public static string GetCsprojPropertyValue(string[] contents, int line) {
+        var str = contents[line];
+        var property = str.Split('>')[1].Split('<')[0];
+        return property;
     }
 }

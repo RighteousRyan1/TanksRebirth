@@ -26,6 +26,7 @@ using TanksRebirth.GameContent.ID;
 using TanksRebirth.Graphics;
 using TanksRebirth.GameContent.Systems.PingSystem;
 using TanksRebirth.Internals.Common.Framework.Animation;
+using Microsoft.Xna.Framework.Audio;
 
 namespace TanksRebirth.GameContent;
 
@@ -181,7 +182,63 @@ public class GameHandler
             CampaignCompleteUI.PerformSequence(context);
         });
     }
+
+    // todo: balls
+    private static void SmokeNadeDebug() {
+        var pl = AllPlayerTanks.First(x => x is not null);
+        var p = ParticleSystem.MakeParticle(pl.Position3D + new Vector3(0, 10, 0), GameResources.GetGameResource<Model>("Assets/smokenade"), GameResources.GetGameResource<Texture2D>("Assets/textures/smoke/smokenade"));
+        bool exploded = false;
+
+        float gravity = 0.01f;
+        Vector3 initialVelocity = new(0, 1, 0);
+        Vector3 velocity = initialVelocity;
+        int hits = 5;
+
+        p.UniqueBehavior = (a) => {
+            p.Scale = new(125);
+            p.IsIn2DSpace = false;
+
+            p.Position += velocity;
+            velocity.Y -= gravity;
+
+            if (p.Position.Y < 10 && hits > 0) {
+                hits--;
+                velocity.Y = initialVelocity.Y * hits / 5;
+            }
+            else if (hits <= 0)
+                p.Position.Y = 10;
+
+            if (p.LifeTime >= 180 && !exploded) {
+                exploded = true;
+                SoundPlayer.PlaySoundInstance("Assets/sounds/smoke_hiss.ogg", SoundContext.Effect, 0.3f, gameplaySound: true);
+                for (int i = 0; i < 8; i++) {
+                    var c = ParticleSystem.MakeParticle(p.Position, 
+                        GameResources.GetGameResource<Model>("Assets/smoke"), GameResources.GetGameResource<Texture2D>("Assets/textures/smoke/smoke"));
+                    var randDir = new Vector3(GameRand.NextFloat(-30, 30), 0, GameRand.NextFloat(-30, 30));
+                    c.Position += randDir;
+                    var randSize = GameRand.NextFloat(5, 10);
+                    c.Scale.X = randSize;
+                    c.Scale.Z = randSize;
+                    c.UniqueBehavior = (b) => {
+                        c.Pitch += 0.005f * TankGame.DeltaTime;
+                        if (c.Scale.Y < randSize && c.LifeTime < 600)
+                            c.Scale.Y += 0.1f * TankGame.DeltaTime;
+                        if (c.LifeTime >= 600) {
+                            c.Scale.Y -= 0.06f * TankGame.DeltaTime;
+
+                            if (c.Scale.Y <= 0) {
+                                c.Destroy();
+                           }
+                        }
+                    };
+                }
+                p.Destroy();
+            }
+        };
+    }
     internal static void UpdateAll(GameTime gameTime) {
+        if (InputUtils.KeyJustPressed(Keys.M))
+            SmokeNadeDebug();
         // ChatSystem.CurTyping = SoundPlayer.GetLengthOfSound("Content/Assets/sounds/tnk_shoot_ricochet_rocket_loop.ogg").ToString();
         if (DebugUtils.DebuggingEnabled) {
             if (InputUtils.KeyJustPressed(Keys.G)) {
@@ -208,6 +265,8 @@ public class GameHandler
         var floor1 = MathF.Floor(TankGame.GameData.ExpLevel + 1f);
         var floor0 = MathF.Floor(TankGame.GameData.ExpLevel);
         GameData.UniversalExpMultiplier = floor1 - (GameData.DecayPerLevel * floor0);*/
+
+
 
         if (Difficulties.Types["InfiniteLives"])
             PlayerTank.SetLives(PlayerTank.StartingLives);
@@ -657,6 +716,8 @@ public class GameHandler
 
         foreach (var powerup in Powerup.Powerups)
             powerup?.Render();
+
+        ParticleSystem.RenderModelParticles();
 
         if ((DebugUtils.DebuggingEnabled && DebugUtils.DebugLevel == DebugUtils.Id.LevelEditDebug && TankGame.OverheadView) || LevelEditor.Active) {
             foreach (var sq in PlacementSquare.Placements)

@@ -14,6 +14,7 @@ public static class DebugUtils
         public const int LevelEditDebug = 3;
         public const int Powerups = 4;
         public const int AchievementData = 5;
+        // public const int NavData = 6;
     }
     public static string CurDebugLabel
     {

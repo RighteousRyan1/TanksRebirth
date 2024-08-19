@@ -91,7 +91,7 @@ public static class MainMenu
     public static UITextButton Armored;
     public static UITextButton AllHoming;
     public static UITextButton BumpUp;
-    public static UITextButton MeanGreens;
+    public static UITextButton Monochrome;
     public static UITextButton InfiniteLives;
 
     public static UITextButton MasterModBuff;
@@ -110,6 +110,8 @@ public static class MainMenu
     public static UITextButton FFA;
 
     public static UITextButton LanternMode;
+
+    public static int MonochromeValue;
 
     #endregion
 
@@ -597,14 +599,30 @@ public static class MainMenu
         };
         BumpUp.SetDimensions(100, 700, 300, 40);
 
-        MeanGreens = new("Mean Greens", font, Color.White)
-        {
+        Monochrome = new("Monochrome", font, Color.White) {
             IsVisible = false,
-            Tooltip = "Makes every tank a green tank." +
-            "\n\"Bump Up\" effects are nullified.",
-            OnLeftClick = (elem) => Difficulties.Types["MeanGreens"] = !Difficulties.Types["MeanGreens"]
+            Tooltip = "Makes every tank the tank of your choice." +
+            "\n\"Bump Up\" effects are ignored.",
+            OnLeftClick = (elem) => {
+                if (MonochromeValue + 1 >= TankID.Collection.Count)
+                    MonochromeValue = TankID.None;
+                else if (MonochromeValue + 1 == TankID.Random) // we do a little defensive programming xd
+                    MonochromeValue = TankID.Brown;
+                else
+                    MonochromeValue++;
+                Difficulties.Types["Monochrome"] = MonochromeValue != TankID.None;
+            },
+            OnRightClick = (elem) => {
+                if (MonochromeValue - 1 < TankID.None)
+                    MonochromeValue = TankID.Collection.Count - 1;
+                else if (MonochromeValue - 1 == TankID.Random)
+                    MonochromeValue = TankID.None;
+                else
+                    MonochromeValue--;
+                Difficulties.Types["Monochrome"] = MonochromeValue != TankID.None;
+            }
         };
-        MeanGreens.SetDimensions(100, 750, 300, 40);
+        Monochrome.SetDimensions(100, 750, 300, 40);
 
         InfiniteLives = new("Infinite Lives", font, Color.White)
         {
@@ -907,7 +925,7 @@ public static class MainMenu
         Armored.IsVisible = visible;
         AllHoming.IsVisible = visible;
         BumpUp.IsVisible = visible;
-        MeanGreens.IsVisible = visible;
+        Monochrome.IsVisible = visible;
         InfiniteLives.IsVisible = visible;
         MasterModBuff.IsVisible = visible;
         MarbleModBuff.IsVisible = visible;
@@ -1013,7 +1031,7 @@ public static class MainMenu
     {
         if (!_initialized || !_diffButtonsInitialized)
             return;
-
+        Monochrome.Text = "Monochrome: " + TankID.Collection.GetKey(MonochromeValue);
         if (MenuState == State.Mulitplayer) {
             if (DebugUtils.DebuggingEnabled)
                 if (InputUtils.AreKeysJustPressed(Keys.Q, Keys.W)) {
@@ -1071,7 +1089,7 @@ public static class MainMenu
         AllHoming.Color = Difficulties.Types["AllHoming"] ? Color.Lime : Color.Red;
         Armored.Color = Difficulties.Types["Armored"] ? Color.Lime : Color.Red;
         BumpUp.Color = Difficulties.Types["BumpUp"] ? Color.Lime : Color.Red;
-        MeanGreens.Color = Difficulties.Types["MeanGreens"] ? Color.Lime : Color.Red;
+        Monochrome.Color = Difficulties.Types["Monochrome"] ? Color.Lime : Color.Red;
         InfiniteLives.Color = Difficulties.Types["InfiniteLives"] ? Color.Lime : Color.Red;
         MasterModBuff.Color = Difficulties.Types["MasterModBuff"] ? Color.Lime : Color.Red;
         MarbleModBuff.Color = Difficulties.Types["MarbleModBuff"] ? Color.Lime : Color.Red;

@@ -21,6 +21,12 @@ namespace TanksRebirth.GameContent
             foreach (var particle in CurrentParticles)
                 particle?.Render();
         }
+        public void RenderModelParticles() {
+            foreach (var particle in CurrentParticles)
+                if (particle is not null)
+                    if (particle.Model != null)
+                        particle.RenderModels();
+        }
         public void UpdateParticles()
         {
             foreach (var particle in CurrentParticles)
@@ -34,9 +40,12 @@ namespace TanksRebirth.GameContent
         {
             return new(position, this)
             {
-                //IsText = true,
-                //Text = "fuck",
-                //Roll = MathHelper.Pi,
+                Texture = texture
+            };
+        }
+        public Particle MakeParticle(Vector3 position, Model model, Texture2D texture) {
+            return new(position, this) {
+                Model = model,
                 Texture = texture
             };
         }

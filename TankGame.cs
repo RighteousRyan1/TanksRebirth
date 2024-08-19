@@ -995,7 +995,7 @@ public class TankGame : Game {
             vfx = null;
 
         SpriteRenderer.Begin(effect: vfx);
-        SpriteRenderer.Draw(gameTarget, Vector2.Zero, Color.White);
+        SpriteRenderer.Draw(gameTarget, Vector2.Zero, null, Color.White, 0f, Vector2.Zero, Vector2.One, default, 0f);
 
         SpriteRenderer.End();
 
@@ -1158,8 +1158,8 @@ public class TankGame : Game {
         SpriteRenderer.DrawString(TextFontLarge, ":(", new Vector2(100, 100).ToResolution(), Color.White, (Vector2.One).ToResolution());
         SpriteRenderer.DrawString(TextFontLarge, "Your game ran into a problem and might need to restart. We're just" +
             "\nshowing you what's wrong, and how it might affect your game.", new Vector2(100, 250).ToResolution(), Color.White, (Vector2.One * 0.4f).ToResolution());
-        SpriteRenderer.DrawString(TextFontLarge, CrashInfo.Reason, new Vector2(100, 500).ToResolution(), Color.White, (Vector2.One * 0.5f).ToResolution());
-        SpriteRenderer.DrawString(TextFontLarge, CrashInfo.Description, new Vector2(100, 550).ToResolution(), Color.White, (Vector2.One * 0.25f).ToResolution());
+        SpriteRenderer.DrawString(TextFontLarge, CrashInfo.Reason, new Vector2(100, 500).ToResolution(), Color.White, (Vector2.One * 0.3f).ToResolution());
+        SpriteRenderer.DrawString(TextFontLarge, CrashInfo.Description, new Vector2(100, 550).ToResolution(), Color.White, (Vector2.One * 0.2f).ToResolution());
 
         var yMsg = "Press 'Y' to proceed with closing the game.";
         var nMsg = "Press 'N' to attempt to carry on with the game.";
