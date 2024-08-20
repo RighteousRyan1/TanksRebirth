@@ -180,63 +180,75 @@ public struct SpecAnalysis {
 
         ramResponse = gpuResponse = cpuResponse = string.Empty;
 
-        switch (RamInGB) {
-            case <= 2:
-                ramResponse = "2GB or less of memory. Can cause performance issues.";
-                break;
-            case > 2 and <= 4:
-                ramResponse = "4GB or less of memory. Decent potential for performance issues.";
-                break;
-            case > 4 and < 8:
-                ramResponse = "Less than 8GB of memory. Issues may occur depending on how many processes are open.";
-                break;
-            case >= 8:
-                ramResponse = "Sufficient memory.";
-                break;
+        try {
+            switch (RamInGB) {
+                case <= 2:
+                    ramResponse = "2GB or less of memory. Can cause performance issues.";
+                    break;
+                case > 2 and <= 4:
+                    ramResponse = "4GB or less of memory. Decent potential for performance issues.";
+                    break;
+                case > 4 and < 8:
+                    ramResponse = "Less than 8GB of memory. Issues may occur depending on how many processes are open.";
+                    break;
+                case >= 8:
+                    ramResponse = "Sufficient memory.";
+                    break;
+            }
+        } catch {
+            ramResponse = "Error";
         }
 
-        switch (CpuMake) {
-            // TODO: Finish code to obtain CPU name.
-            case "AMD": {
-                var split = CpuModel.Split(' ');
-                var cpuGen = int.Parse(split.First(str => int.TryParse(str, out var x)));
+        try {
+            switch (CpuMake) {
+                // TODO: Finish code to obtain CPU name.
+                case "AMD": {
+                        var split = CpuModel.Split(' ');
+                        var cpuGen = int.Parse(split.First(str => int.TryParse(str, out var x)));
 
-                cpuResponse = "AMD CPU detected.";
-                break;
+                        cpuResponse = "AMD CPU detected.";
+                        break;
+                    }
+                case "Intel": {
+                        var split = CpuModel.Split(' ');
+                        var cpuModelNum = int.Parse(split.First(str => int.TryParse(str, out var x)));
+                        cpuResponse = "Intel CPU detected.";
+                        break;
+                    }
             }
-            case "Intel": {
-                var split = CpuModel.Split(' ');
-                var cpuModelNum = int.Parse(split.First(str => int.TryParse(str, out var x)));
-                cpuResponse = "Intel CPU detected.";
-                break;
-            }
+        } catch {
+            cpuResponse = "Error";
         }
 
-        var gpuModelNum = int.Parse(GpuModel.Split(' ').First(str => int.TryParse(str, out var x)));
+        try {
+            var gpuModelNum = int.Parse(GpuModel.Split(' ').First(str => int.TryParse(str, out var x)));
 
-        switch (GpuMake) {
-            // gtx titan moment
-            case "NVIDIA" when GpuModel.Contains("RTX"):
-                gpuResponse = "RTX card detected. GPU will never be a problem.";
-                break;
-            case "NVIDIA" when GpuModel.Contains("GTX"): {
-                gpuResponse = gpuModelNum switch {
-                    < 750 => "Lower-end GTX card detected, FPS will usually be decent.",
-                    >= 750 and <= 1000 => "Mid-range GTX card detected. FPS will usually be good.",
-                    _ => "High-end GTX Card detected. FPS will be great under normal conditions."
-                };
-                break;
+            switch (GpuMake) {
+                // gtx titan moment
+                case "NVIDIA" when GpuModel.Contains("RTX"):
+                    gpuResponse = "RTX card detected. GPU will never be a problem.";
+                    break;
+                case "NVIDIA" when GpuModel.Contains("GTX"): {
+                        gpuResponse = gpuModelNum switch {
+                            < 750 => "Lower-end GTX card detected, FPS will usually be decent.",
+                            >= 750 and <= 1000 => "Mid-range GTX card detected. FPS will usually be good.",
+                            _ => "High-end GTX Card detected. FPS will be great under normal conditions."
+                        };
+                        break;
+                    }
+                case "NVIDIA" when GpuModel.Contains("GT") && !GpuModel.Contains("GTX"): {
+                        gpuResponse = "Low-end graphics card detected (GT). Expect GPU bottlenecks.";
+                        break;
+                    }
+                case "AMD":
+                    gpuResponse = "AMD GPU detected.";
+                    break;
+                case "Intel":
+                    gpuResponse = "Intel GPU detected. Intel GPUs remain untested.";
+                    break;
             }
-            case "NVIDIA" when GpuModel.Contains("GT") && !GpuModel.Contains("GTX"): {
-                gpuResponse = "Low-end graphics card detected (GT). Expect GPU bottlenecks.";
-                break;
-            }
-            case "AMD":
-                gpuResponse = "AMD GPU detected.";
-                break;
-            case "Intel":
-                gpuResponse = "Intel GPU detected. Intel GPUs remain untested.";
-                break;
+        } catch {
+            gpuResponse = "Error";
         }
 
         // User requested to take no actions.
