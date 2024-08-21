@@ -51,7 +51,7 @@ public readonly struct WiiMap
 
         PValue = RawData[0xB];
         QValue = RawData[0xF];
-        MapItems = new();
+        MapItems = [];
         for (var i = 0; i < Width * Height; i++) {
             var blockTypeOrig = RawData[i * 0x4 + 0x13];
 

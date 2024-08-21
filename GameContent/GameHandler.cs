@@ -218,7 +218,7 @@ public class GameHandler
                 for (int i = 0; i < 8; i++) {
                     var c = ParticleSystem.MakeParticle(p.Position, 
                         GameResources.GetGameResource<Model>("Assets/smoke"), GameResources.GetGameResource<Texture2D>("Assets/textures/smoke/smoke"));
-                    var randDir = new Vector3(GameRand.NextFloat(-30, 30), 0, GameRand.NextFloat(-30, 30));
+                    var randDir = new Vector3(GameRand.NextFloat(-60, 60), 0, GameRand.NextFloat(-60, 60));
                     c.Position += randDir;
                     var randSize = GameRand.NextFloat(5, 10);
                     c.Scale.X = randSize;

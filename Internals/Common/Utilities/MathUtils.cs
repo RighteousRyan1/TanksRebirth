@@ -36,6 +36,13 @@ public static class MathUtils
     }
     public static float GetRotationVectorOf(Vector2 initial, Vector2 target) => (target - initial).ToRotation();
     public static float ToRotation(this Vector2 vector) => MathF.Atan2(vector.Y, vector.X);
+    public static float UnitClamp(this float angle) => angle % MathHelper.Tau;
+    public static float AngleBetween(float a, float b) {
+        return (a - b + MathF.PI * 3) % (MathF.PI * 2) - MathF.PI;
+    }
+    public static float AbsoluteAngleBetween(float a, float b) {
+        return MathF.Abs((a - b + MathF.PI * 3) % (MathF.PI * 2) - MathF.PI);
+    }
     public static Point ToPoint(this Vector2 vector2) => new((int)vector2.X, (int)vector2.Y);
     public static Vector2 RotatedByRadians(this Vector2 spinPoint, double radians, Vector2 center = default)
     {
