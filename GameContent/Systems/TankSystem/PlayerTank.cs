@@ -582,8 +582,6 @@ namespace TanksRebirth.GameContent
                             if (mesh.Name == "Cannon")
                                 return;
 
-                        //effect.SpecularColor = Color.White.ToVector3();
-                        //effect.SpecularPower = 10;
 
                         if (mesh.Name != "Shadow")
                         {
@@ -594,7 +592,8 @@ namespace TanksRebirth.GameContent
                                 effect.EmissiveColor = Color.White.ToVector3();
                             else
                                 effect.EmissiveColor = Color.Black.ToVector3();
-
+                            //effect.SpecularColor = Color.White.ToVector3();
+                            //effect.SpecularPower = 10f;
                             /*var ex = new Color[1024];
 
                             Array.Fill(ex, Team != Team.NoTeam ? (Color)typeof(Color).GetProperty(Team.ToString(), System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public).GetValue(null) : default);

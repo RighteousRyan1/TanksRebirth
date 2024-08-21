@@ -798,7 +798,7 @@ public partial class AITank : Tank  {
     public float TurretRotationMultiplier = 1f;
 
     private bool _oldPathBlocked;
-    private int _pathHitCount;
+    private float _pathHitCount;
     public bool AutoEnactAIBehavior = true;
 
     public static int TankPathCheckSize = 3;
@@ -950,8 +950,12 @@ public partial class AITank : Tank  {
                     if (IsPathBlocked) {
                         if (refPoints.Length > 0) {
                             // up = PiOver2
+                            if (AiTankType == TankID.Violet)
+                                ChatSystem.SendMessage(Velocity.ToString(), Color.White);
                             var dirOf = MathUtils.DirectionOf(travelPath, Position).ToRotation();
                             var refAngle = dirOf + MathHelper.PiOver2;
+
+                            // if (veloci)
 
                             if (refAngle % MathHelper.PiOver2 == 0) {
                                 refAngle += GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi);
@@ -960,12 +964,13 @@ public partial class AITank : Tank  {
                         }
                     }
                     // FIXME: experimental.
-                    if (IsPathBlocked && !_oldPathBlocked) {
-                        //if (GameHandler.GameRand.NextFloat(0f, 1f) <= 0.25f)
-                        _pathHitCount++;
-                        // this check probably isn't doing what it should.
-                        //if (_pathHitCount % PathHitMax == 0)
-                            //TargetTankRotation = -TargetTankRotation + MathHelper.PiOver2;
+                    if (IsPathBlocked)
+                        _pathHitCount += TankGame.DeltaTime; //+= TankGame.DeltaTime;
+                    else
+                        _pathHitCount = 0;
+                    if (_pathHitCount >= 30) {
+                        TargetTankRotation += MathHelper.Pi;
+                        _pathHitCount = 0;
                     }
 
                     _oldPathBlocked = IsPathBlocked;
@@ -987,17 +992,21 @@ public partial class AITank : Tank  {
                         // disabling aggression for now.
                         /*if (targetExists) {
                             if (AiParams.PursuitFrequency != 0) {
-                                if (Behaviors[0].IsModOf(AiParams.PursuitFrequency)) {
-                                    float angleToTarget = MathUtils.DirectionOf(Position, TargetTank!.Position).ToRotation() - MathHelper.PiOver2;
+                                //if (Behaviors[0].IsModOf(AiParams.PursuitFrequency)) {
+                                float angleToTarget = MathUtils.DirectionOf(Position, TargetTank!.Position).ToRotation();
 
                                     // we want to go AWAY from the target.
                                     if (AiParams.PursuitLevel < 0)
-                                        angleToTarget += MathHelper.PiOver2;
+                                        angleToTarget += MathHelper.Pi;
+                                    // TODO: FIX THIS HORRIBLE DAMN CODE BY FIXING THE BROKEN ASS ROTATION MATH IN TANKS. HOLY SHIT. actually going to poop my pants
+                                    // if this problem isnt fixed.
+                                    var targetAngle = (angleToTarget + MathHelper.PiOver2 * 3) * AiParams.PursuitLevel;
+                                if (targetAngle + MathHelper.Pi > MathHelper.Tau)
+                                    targetAngle -= MathHelper.Tau;
+                                ChatSystem.SendMessage(angleToTarget.ToString() + ", " + targetAngle.ToString(), Color.White);
 
-                                    var targetAngle = (angleToTarget) * AiParams.PursuitLevel;
-
-                                    TargetTankRotation = targetAngle;
-                                }
+                                TargetTankRotation = targetAngle;
+                                //}
                             }
                         }*/
                     }

@@ -185,7 +185,11 @@ public class GameHandler
 
     // todo: balls
     private static void SmokeNadeDebug() {
-        var pl = AllPlayerTanks.First(x => x is not null);
+
+        var pl = AllPlayerTanks.FirstOrDefault(x => x is not null);
+
+        if (pl is null)
+            return;
         var p = ParticleSystem.MakeParticle(pl.Position3D + new Vector3(0, 10, 0), GameResources.GetGameResource<Model>("Assets/smokenade"), GameResources.GetGameResource<Texture2D>("Assets/textures/smoke/smokenade"));
         bool exploded = false;
 

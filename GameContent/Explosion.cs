@@ -76,6 +76,15 @@ public class Explosion : IAITankDanger {
 
         var destroysound = "Assets/sounds/tnk_destroy.ogg";
 
+        int vertLayers = 5;
+        int horizLayers = 15;
+        for (int i = 0; i < vertLayers; i++) {
+            for (int j = 0; j < horizLayers; j++) {
+                var rot = MathHelper.Tau / horizLayers * i;
+
+            }
+        }
+
         SoundPlayer.PlaySoundInstance(destroysound, SoundContext.Effect, 1f, 0f, soundPitch, gameplaySound: true);
         // SoundPlayer.PlaySoundInstance(destroysound, SoundContext.Effect, 0.4f, 0f, -0.2f, gameplaySound: true);
 
