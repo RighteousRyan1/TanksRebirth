@@ -508,7 +508,7 @@ public partial class AITank : Tank  {
     // TODO: literally fix everything about these turret rotation values.
     private List<Tank> GetTanksInPath(Vector2 pathDir, out Vector2 rayEndpoint, bool draw = false, Vector2 offset = default, float missDist = 0f, Func<Block, bool> pattern = null, bool doBounceReset = true) {
         rayEndpoint = new(-999999, -999999);
-        List<Tank> tanks = new();
+        List<Tank> tanks = [];
         pattern ??= (c) => c.IsSolid || c.Type == BlockID.Teleporter;
 
         const int MAX_PATH_UNITS = 1000;
@@ -613,21 +613,24 @@ public partial class AITank : Tank  {
                 // DebugUtils.DrawDebugString(TankGame.spriteBatch, $"{goneThroughTeleporter}:{(block is not null ? $"{block.Type}" : "N/A")}", MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), Matrix.CreateTranslation(pathPos.X, 0, pathPos.Y), View, Projection), 1, centered: true);
             }
 
-            foreach (var enemy in GameHandler.AllTanks)
-                if (enemy is not null) {
-                    if (!enemy.Dead) {
-                        if (!tanks.Contains(enemy)) {
-                            if (i > 15) {
-                                if (GameUtils.Distance_WiiTanksUnits(enemy.Position, pathPos) <= realMiss)
-                                    tanks.Add(enemy);
-                            }
-                            else if (enemy.CollisionBox.Intersects(pathHitbox)) {
-                                tanks.Add(enemy);
-                            }
-                        }
+            foreach (var enemy in GameHandler.AllTanks) {
+                if (enemy is null)
+                    continue;
+                if (enemy.Dead || tanks.Contains(enemy))
+                    continue;
+                if (i > 15) {
+                    if (GameUtils.Distance_WiiTanksUnits(enemy.Position, pathPos) <= realMiss) {
+                        var rot = pathDir.ToRotation();
+                        var angle = MathUtils.DirectionOf(pathPos, enemy.Position).ToRotation();
+
+                        if (MathUtils.AbsoluteAngleBetween(rot, angle) >= MathHelper.PiOver2)
+                            tanks.Add(enemy);
                     }
                 }
-
+                else if (enemy.CollisionBox.Intersects(pathHitbox)) {
+                    tanks.Add(enemy);
+                }
+            }
         }
         return tanks;
     }
@@ -743,6 +746,7 @@ public partial class AITank : Tank  {
                 }
             }
         }
+        // TODO: is findsSelf even necessary? findsEnemy is only true if findsSelf is false. eh, whatever. my brain is fucked.
         var findsEnemy = tanksDef.Any(tnk => tnk is not null && (tnk.Team != Team || tnk.Team == TeamID.NoTeam) && tnk != this);
         var findsSelf = tanksDef.Any(tnk => tnk is not null && tnk == this);
         var findsFriendly = tanksDef.Any(tnk => tnk is not null && (tnk.Team == Team && tnk.Team != TeamID.NoTeam));
@@ -926,12 +930,10 @@ public partial class AITank : Tank  {
 
                 if (isShellNear) {
                     if (Behaviors[6].IsModOf(indif)) {
-                        // with .IsHeadingTowards we don't need a lifetime check anymore lol.
-
                         // TODO: add all shells that may or may not be near, average their position and make the tank go away from that position
                         if (CurMineStun <= 0 && CurShootStun <= 0) {
                             var dist = shell.IsPlayerSourced ? AiParams.ProjectileWarinessRadius_PlayerShot : AiParams.ProjectileWarinessRadius_AIShot;
-                            isShellNear = shell.LifeTime > 60; //shell.IsHeadingTowards(Position, dist, MathHelper.PiOver2);
+                            isShellNear = shell.IsHeadingTowards(Position, dist, MathHelper.Pi);
                             if (isShellNear) {
                                 var direction = -Vector2.UnitY.RotatedByRadians(shell.Position.DirectionOf(Position, false).ToRotation());
                                 TargetTankRotation = direction.ToRotation();
@@ -955,11 +957,10 @@ public partial class AITank : Tank  {
                             var dirOf = MathUtils.DirectionOf(travelPath, Position).ToRotation();
                             var refAngle = dirOf + MathHelper.PiOver2;
 
-                            // if (veloci)
-
-                            if (refAngle % MathHelper.PiOver2 == 0) {
+                            // this is a very bandaid fix....
+                            /*if (refAngle % MathHelper.PiOver2 == 0) {
                                 refAngle += GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi);
-                            }
+                            }*/
                             TargetTankRotation = refAngle;
                         }
                     }
@@ -968,7 +969,9 @@ public partial class AITank : Tank  {
                         _pathHitCount += TankGame.DeltaTime; //+= TankGame.DeltaTime;
                     else
                         _pathHitCount = 0;
-                    if (_pathHitCount >= 30) {
+
+                    // if we're getting stuck in a corner, fucking evacuate
+                    if (_pathHitCount >= 60) {
                         TargetTankRotation += MathHelper.Pi;
                         _pathHitCount = 0;
                     }

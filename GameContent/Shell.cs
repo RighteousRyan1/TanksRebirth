@@ -7,6 +7,7 @@ using TanksRebirth.Enums;
 using TanksRebirth.GameContent.GameMechanics;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Properties;
+using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.Graphics;
@@ -664,10 +665,18 @@ public class Shell : IAITankDanger {
     public bool IsHeadingTowards(Vector2 targetPosition, float distance, float arc) {
         var rotation = Velocity != Vector2.Zero ? Velocity.ToRotation() : Vector2.UnitX.ToRotation();
 
-        // check if the direction to the position's rotation is similar on (-arc / 2, arc / 2)
-        var targetAngularRotation = (Position - targetPosition).ToRotation();
+        var rotToTarget = MathUtils.DirectionOf(Position, targetPosition).ToRotation();
 
+        var inDistance = GameUtils.Distance_WiiTanksUnits(Position, targetPosition) < distance;
+
+        var angleBetween = MathUtils.AbsoluteAngleBetween(rotation, rotToTarget);
+
+        var isInAngle = angleBetween <= arc / 2;
+
+        if (inDistance) {
+            ChatSystem.SendMessage(angleBetween.ToString(), Color.White);
+        }
         // check if the direction 
-        return ((targetAngularRotation < rotation + arc / 2) || (targetAngularRotation > rotation - arc / 2)) && GameUtils.Distance_WiiTanksUnits(Position, targetPosition) < distance;
+        return isInAngle && inDistance;
     }
 }

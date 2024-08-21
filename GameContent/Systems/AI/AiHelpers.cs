@@ -1331,7 +1331,10 @@ public static class AiHelpers {
 
             #endregion
         }
-
+        if (aiParams.ProjectileWarinessRadius_AIShot == 0)
+            aiParams.ProjectileWarinessRadius_AIShot = aiParams.ProjectileWarinessRadius_PlayerShot;
+        if (aiParams.MineWarinessRadius_AILaid == 0)
+            aiParams.MineWarinessRadius_AILaid = aiParams.MineWarinessRadius_PlayerLaid;
         tank.BaseExpValue = baseExpValue;
         return aiParams;
     }
