@@ -466,11 +466,9 @@ public static class MainMenu
         StatsMenu.SetDimensions(() => new Vector2(WindowUtils.WindowWidth / 2 - 90.ToResolutionX(), WindowUtils.WindowHeight - 100.ToResolutionY()), () => new Vector2(180, 50).ToResolution());
         #endregion
 
-        _menuElements = new UIElement[] 
-        { PlayButton, PlayButton_SinglePlayer, PlayButton_LevelEditor, PlayButton_Multiplayer, ConnectToServerButton, 
+        _menuElements = [PlayButton, PlayButton_SinglePlayer, PlayButton_LevelEditor, PlayButton_Multiplayer, ConnectToServerButton,
             CreateServerButton, UsernameInput, IPInput, PortInput, PasswordInput, ServerNameInput,
-            DifficultiesButton
-        };
+            DifficultiesButton ];
 
         foreach (var e in _menuElements) {
             e.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick.ogg", SoundContext.Effect, rememberMe: true); };
@@ -991,8 +989,7 @@ public static class MainMenu
     private static string[] _info;
     public static void RequestStats()
     {
-        _info = new string[]
-        {
+        _info = [
             $"{TankGame.GameLanguage.TankKillsTotal}: {TankGame.GameData.TotalKills}",
             $"{TankGame.GameLanguage.TankKillsTotalBullets}: {TankGame.GameData.BulletKills}",
             $"{TankGame.GameLanguage.TankKillsTotalBulletsBounced}: {TankGame.GameData.BounceKills}",
@@ -1002,8 +999,8 @@ public static class MainMenu
             $"{TankGame.GameLanguage.Deaths}: {TankGame.GameData.Deaths}",
             $"{TankGame.GameLanguage.Suicides}: {TankGame.GameData.Suicides}",
             $"{TankGame.GameLanguage.TimePlayedTotal}: {TankGame.GameData.TimePlayed.TotalHours:0.0} hrs",
-            $"{TankGame.GameLanguage.TimePlayedCurrent}: {TankGame.CurrentSessionTimer.Elapsed.TotalMinutes:0.0} mins   "
-        };
+            $"{TankGame.GameLanguage.TimePlayedCurrent}: {TankGame.CurrentSessionTimer.Elapsed.TotalMinutes:0.0} mins"
+        ];
     }
     // this method is causing considerable amounts of garbage collection!
     internal static void RenderStats(Vector2 genericStatsPos, Vector2 tankKillsPos, Anchor aligning)
@@ -1359,7 +1356,8 @@ public static class MainMenu
                     };
                 }
             }
-            //if ((NetPlay.CurrentServer is not null && (Server.ConnectedClients is not null || NetPlay.ServerName is not null)) || (Client.IsConnected() && Client.lobbyDataReceived)) {
+            // TODO: rework this very rudimentary ui
+            if ((NetPlay.CurrentServer is not null && (Server.ConnectedClients is not null || NetPlay.ServerName is not null)) || (Client.IsConnected() && Client.lobbyDataReceived)) {
                 Vector2 initialPosition = new(WindowUtils.WindowWidth * 0.75f, WindowUtils.WindowHeight * 0.25f);
                 TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"\"{NetPlay.ServerName}\"", initialPosition - new Vector2(0, 40), Color.White, new Vector2(0.6f));
                 TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"Connected Players:", initialPosition, Color.White, new Vector2(0.6f));
@@ -1372,7 +1370,7 @@ public static class MainMenu
 
                     TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"{client.Name}" + $" ({client.Id})", initialPosition + new Vector2(0, 20) * (i + 1), textCol, new Vector2(0.6f));
                 }
-            //}
+            }
             var tanksMessageSize = TankGame.TextFont.MeasureString(tanksMessage);
 
             TankGame.SpriteRenderer.DrawString(TankGame.TextFont, tanksMessage, new(8, WindowUtils.WindowHeight - 8), Color.White, new Vector2(0.6f).ToResolution(), 0f, new Vector2(0, tanksMessageSize.Y));
