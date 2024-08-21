@@ -1,0 +1,26 @@
+Update!
+
+Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed later) speedruns will get their spot on the main menu!
+
+## Additions
+
+- Achievements you unlock will appear at the top of your screen when unlocked!
+
+## Changes
+
+- Made the mission display show what number mission you're on, to know how many you have left/what mission you're on (numerically)
+- Re-hauled the multiplayer lobby screen.
+- The game now uses .NET 8.0, which means there will be performance improvements around the board
+- Largely overhauled enemy AI.
+
+## Fixes
+
+- TBA
+
+## TODO
+
+- [ ] Bonus life screen
+
+PLEASE, if you find anything wrong, go to my [discord](https://discord.gg/KhfzvbrrKx) server and report bugs in the #bugs channel, or, if you want to suggest something, suggest them in the #suggestions channel.
+
+Happy tanking!

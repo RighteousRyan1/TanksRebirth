@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using tainicom.Aether.Physics2D.Collision;
+using System.Runtime.CompilerServices;
 
 namespace TanksRebirth.Internals.Common.Utilities;
 
@@ -220,4 +221,29 @@ public static class MathUtils
             MathF.Round(value.W));
 
     public static Vector3 ToVector3(this Vector4 value) => new Vector3(value.X, value.Y, value.Z) / value.W;
+
+    private static Vector2 BezierDestructive(float amount, Span<Vector2> points) {
+        for (int i = points.Length - 1; i > 0; i--)
+            for (int j = 0; j < i; j++)
+                points[j] = new(MathHelper.Lerp(points[j].X, points[j + 1].X, amount), MathHelper.Lerp(points[j].Y, points[j + 1].Y, amount));
+        return points[0];
+    }
+    public static Vector2 Bezier(float progress, ReadOnlySpan<Vector2> points) {
+        // allow for a small element count before allocating 
+        if (points.Length <= 33) {
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            static Vector2 ByStackalloc(float progress, ReadOnlySpan<Vector2> points) {
+                Span<Vector2> copy = stackalloc Vector2[32];
+                for (int j = 0, jj = points.Length - 1; j < jj; j++)
+                    copy[j] = new(MathHelper.Lerp(points[j].X, points[j + 1].X, progress), MathHelper.Lerp(points[j].Y, points[j + 1].Y, progress));
+                return BezierDestructive(progress, copy[..(points.Length - 1)]);
+            }
+            return ByStackalloc(progress, points);
+        }
+
+        Vector2[] copy = GC.AllocateUninitializedArray<Vector2>(points.Length - 1);
+        for (int j = 0, jj = points.Length - 1; j < jj; j++)
+            copy[j] = new(MathHelper.Lerp(points[j].X, points[j + 1].X, progress), MathHelper.Lerp(points[j].Y, points[j + 1].Y, progress));
+        return BezierDestructive(progress, copy);
+    }
 }

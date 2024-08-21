@@ -110,7 +110,7 @@ namespace TanksRebirth.GameContent
 
         public void Update()
         {
-            if (!MapRenderer.ShouldRender)
+            if (!MapRenderer.ShouldRenderAll)
                 return;
             if (HasOwner)
             {
@@ -125,7 +125,7 @@ namespace TanksRebirth.GameContent
             }
             else
             {
-                Rotation.X += 0.05f;
+                Rotation.X += 0.05f * TankGame.DeltaTime;
                 if (GameHandler.AllTanks.TryGetFirst(tnk => tnk is not null && Vector3.Distance(Position, tnk.Position3D) <= PickupRadius, out Tank tank))
                     Pickup(tank);
             }
@@ -134,7 +134,7 @@ namespace TanksRebirth.GameContent
 
         public void Render()
         {
-            if (!MapRenderer.ShouldRender)
+            if (!MapRenderer.ShouldRenderAll)
                 return;
             if (!HasOwner)
             {

@@ -1,15 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TanksRebirth.GameContent.ID;
-using TanksRebirth.Internals.Common.Framework.Collections;
+﻿using TanksRebirth.Internals.Common.Framework.Collections;
 
 namespace TanksRebirth.Net;
 
-public sealed class PacketID
-{
+public sealed class PacketID {
     // First-time networking
     public const int ClientInfo = 0;
     public const int LobbyInfo = 1;
@@ -33,35 +26,43 @@ public sealed class PacketID
     // Human communication
 
     public const int ChatMessage = 10;
+    public const int MapPing = 11;
 
     // Debugging packets:
 
-    public const int PlayerSpawn = 11;
-    public const int AiTankSpawn = 12;
-    public const int CrateSpawn = 13;
+    public const int PlayerSpawn = 13;
+    public const int AiTankSpawn = 14;
+    public const int CrateSpawn = 15;
 
     // more server syncing
 
-    public const int ServerNameSync = 14;
-    public const int StartGame = 15;
-    public const int LeaveGame = 16;
-    public const int Disconnect = 17;
+    public const int ServerNameSync = 16;
+    public const int StartGame = 17;
+    public const int LeaveGame = 18;
+    public const int Disconnect = 19;
 
     // map sync
 
-    public const int SendCampaign = 18;
-    public const int SendCampaignByName = 19;
-    public const int SendMission = 20;
+    public const int SendCampaign = 20;
+    public const int SendCampaignByName = 21;
+    public const int SendMission = 22;
 
     // misc
 
-    public const int SyncShellId = 21;
-    public const int Cleanup = 22;
-    public const int QuitLevel = 23;
-    public const int SendCampaignStatus = 24; // i.e: whether another client doesn't have something a host does, such as a campaign
-    public const int SendCommandUsage = 25;
+    public const int SyncShellId = 22;
+    /// <summary>The packet for map cleanup (removal of death X's, etc)</summary>
+    public const int Cleanup = 23;
+    /// <summary>When the host leaves the level.</summary>
+    public const int QuitLevel = 24;
+    /// <summary>To check if another client doesn't have something a host does, such as a campaign.</summary>
+    public const int SendCampaignStatus = 25;
+    /// <summary>Sent across the network when a command is used that has serverside effects.</summary>
+    public const int SendCommandUsage = 26;
 
-    public static int AddPacketId(string name, int id) => Collection.ForcefullyInsert(name, id);
+    // difficulty sync.
+    public const int SyncDifficulties = 27;
 
-    public static readonly ReflectionDictionary<PacketID, int> Collection = new(MemberType.Fields);
+    public static int AddPacketId(string name) => Collection.ForcefullyInsert(name);
+
+    public static ReflectionDictionary<PacketID> Collection { get; internal set; } = new(MemberType.Fields);
 }

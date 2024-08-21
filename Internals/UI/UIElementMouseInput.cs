@@ -14,6 +14,8 @@ namespace TanksRebirth.Internals.UI
     public abstract partial class UIElement
     {
 		private bool _wasHovered;
+		/// <summary>Whether or not the user is able to interact with this <see cref="UIElement"/>.</summary>
+		public bool IsInteractable { get; set; } = true;
 
 		/// <summary>
 		/// Gets a <see cref="UIElement"/> at the specified position.
@@ -68,7 +70,7 @@ namespace TanksRebirth.Internals.UI
 
 		protected bool CanRegisterInput(Func<bool> uniqueInput)
 		{
-			if (!TankGame.Instance.IsActive)
+			if (!TankGame.Instance.IsActive || !IsInteractable)
 				return false;
 
 			if (Parent is null || Parent.Hitbox.Contains(MouseUtils.MousePosition))

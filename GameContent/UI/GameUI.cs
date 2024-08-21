@@ -38,12 +38,6 @@ namespace TanksRebirth.GameContent.UI
 
         public static UITextButton BackButton;
 
-        // public static UIDropdown testdropdwn;
-
-        //public static UITextButton testbuttondrop1;
-        //public static UITextButton testbuttondrop2;
-        //public static UITextButton testbuttondrop3;
-
         public static UIElement[] menuElements;
         public static UIElement[] graphicsElements;
 

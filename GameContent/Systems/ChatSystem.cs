@@ -56,8 +56,7 @@ public sealed record ChatSystem {
     /// <param name="message">The content of the <see cref="ChatMessage"/>.</param>
     /// <param name="color">The color in which to render the content of the <see cref="ChatMessage"/>.</param>
     /// <param name="sender">The sender of the message.</param>
-    /// <param name="netSend">If true, will not send the message to the server in a multiplayer context.</param>
-    /// <returns>The <see cref="ChatMessage"/> sent to the chat.</returns>
+    /// <param name="netSend">If true, will send the message to the server in a multiplayer context.</param>
     public static void SendMessage(string message, Color color, string sender = null, bool netSend = false)
     {
         if (message.Length > 0 && message[0] == CommandGlobals.ExpectedPrefix) {
@@ -71,10 +70,10 @@ public sealed record ChatSystem {
                     // if the length is equal to zero, the user has provided no arguments.
                     var args = cmdSplit.Length == 0 ? Array.Empty<string>() : cmdSplit[1..];
 
-                    if (args.Length == 0 && !cmdSplit[0].Contains("help")) {
+                    /*if (args.Length == 0 && !cmdSplit[0].Contains("help")) {
                         SendMessage("Invalid command syntax! Arguments missing.", Color.Red);
                         return;
-                    }
+                    }*/
                     
                     if (value.NetSync && Client.IsConnected()) {
                         if (sender != "cmd_sync" && Server.serverNetManager is null) {
@@ -94,7 +93,8 @@ public sealed record ChatSystem {
                         value.ActionToPerform?.Invoke(args);
                     return;
                 }
-                catch {
+                catch(Exception e) {
+                    TankGame.ReportError(e);
                     SendMessage("Error with command.", Color.Orange);
                 }
             }

@@ -20,6 +20,7 @@ using TanksRebirth.GameContent.UI;
 using TanksRebirth.GameContent.Properties;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.Net;
+using TanksRebirth.GameContent.ModSupport;
 
 namespace TanksRebirth.GameContent;
 
@@ -97,32 +98,28 @@ public abstract class Tank {
 
     public delegate void DamageDelegate(Tank victim, bool destroy, ITankHurtContext context);
 
-    public static event DamageDelegate OnDamage;
+    public static event DamageDelegate? OnDamage;
 
     public delegate void ApplyDefaultsDelegate(Tank tank, ref TankProperties properties);
 
-    public static event ApplyDefaultsDelegate PostApplyDefaults;
+    public static event ApplyDefaultsDelegate? PostApplyDefaults;
 
     public delegate void ShootDelegate(Tank tank, ref Shell shell);
 
     /// <summary>Does not run for spread-fire.</summary>
-    public static event ShootDelegate OnShoot;
+    public static event ShootDelegate? OnShoot;
 
     public delegate void LayMineDelegate(Tank tank, ref Mine mine);
 
-    public static event LayMineDelegate OnLayMine;
+    public static event LayMineDelegate? OnLayMine;
 
     public delegate void PreUpdateDelegate(Tank tank);
 
-    public static event PreUpdateDelegate OnPreUpdate;
+    public static event PreUpdateDelegate? OnPreUpdate;
 
     public delegate void PostUpdateDelegate(Tank tank);
 
-    public static event PostUpdateDelegate OnPostUpdate;
-
-    public delegate void InstancedDestroyDelegate();
-
-    public event InstancedDestroyDelegate OnDestroy;
+    public static event PostUpdateDelegate? OnPostUpdate;
 
     #endregion
 
@@ -155,7 +152,7 @@ public abstract class Tank {
     public TankProperties Properties = new();
 
     private int _oldShellLimit;
-    public Shell[] OwnedShells = new Shell[0];
+    public Shell[] OwnedShells = Array.Empty<Shell>();
 
     public Vector2 Position;
     public Vector2 Velocity;
@@ -231,13 +228,24 @@ public abstract class Tank {
     /// <summary>Apply all the default parameters for this <see cref="Tank"/>.</summary>
     public virtual void ApplyDefaults(ref TankProperties properties) {
         PostApplyDefaults?.Invoke(this, ref properties);
+        if (this is AITank ai) {
+            for (int i = 0; i < ModLoader.ModTanks.Length; i++) {
+                if (ai.AiTankType == ModLoader.ModTanks[i].Type) {
+                    properties = ModLoader.ModTanks[i].Properties;
+                    ai.AiParams = ModLoader.ModTanks[i].AiParameters;
+                    ModLoader.ModTanks[i].PostApplyDefaults(ai);
+                    return;
+                }
+            }
+
+        }
         Properties = properties;
     }
 
     public virtual void Initialize() {
         OwnedShells = new Shell[Properties.ShellLimit];
 
-        _cannonMesh = Model.Meshes["Cannon"];
+        _cannonMesh = Model!.Meshes["Cannon"];
         _boneTransforms = new Matrix[Model.Bones.Count];
         if (TankGame.SecretCosmeticSetting) {
             for (int i = 0; i < 1; i++) {
@@ -296,6 +304,8 @@ public abstract class Tank {
             particle.Tag =
                 $"cosmetic_2d_{GetHashCode()}"; // store the hash code of this tank, so when we destroy the cosmetic's particle, it destroys all belonging to this tank!
             particle.HasAddativeBlending = false;
+            // += vs =  ?
+            // TODO: this prolly is the culprit of 2d cosmetics not doin nun
             particle.UniqueBehavior = particle => {
                 particle.Position = Position3D + cos2d.RelativePosition;
                 particle.Roll = cos2d.Rotation.X;
@@ -378,18 +388,21 @@ public abstract class Tank {
 
     public bool Flip;
 
-    private Vector2 _oldPosition;
-
     /// <summary>Update this <see cref="Tank"/>.</summary>
     public virtual void Update() {
-        if (Dead || !MapRenderer.ShouldRender)
+        if (Dead || !MapRenderer.ShouldRenderAll)
             return;
 
         OnPreUpdate?.Invoke(this);
+        if (this is AITank ai) {
+            for (int i = 0; i < ModLoader.ModTanks.Length; i++)
+                if (ai.AiTankType == ModLoader.ModTanks[i].Type)
+                    ModLoader.ModTanks[i].PreUpdate(ai);
+        }
 
         Position = Body.Position * UNITS_PER_METER;
 
-        Body.LinearVelocity = Velocity * 0.55f / UNITS_PER_METER * TankGame.DeltaTime;
+        Body.LinearVelocity = Velocity * 0.55f / UNITS_PER_METER;
 
         // try to make positive. i hate game
         World = Matrix.CreateScale(Scaling) * Matrix.CreateFromYawPitchRoll(-TankRotation - (Flip ? MathHelper.Pi : 0f),
@@ -455,7 +468,7 @@ public abstract class Tank {
         // try to make negative. go poopoo
         _cannonMesh.ParentBone.Transform =
             Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
-        Model.Root.Transform = World;
+        Model!.Root.Transform = World;
 
         Model.CopyAbsoluteBoneTransformsTo(_boneTransforms);
 
@@ -471,8 +484,6 @@ public abstract class Tank {
         // fix 2d peeopled
         foreach (var cosmetic in Cosmetics)
             cosmetic?.UniqueBehavior?.Invoke(cosmetic, this);
-
-        _oldPosition = Position;
 
         OnPostUpdate?.Invoke(this);
     }
@@ -544,16 +555,28 @@ public abstract class Tank {
         doTextPopup();
 
         if (Properties.Armor is not null) {
-            OnDamage?.Invoke(this, Properties.Armor.HitPoints > 0, context);
             if (Properties.Armor.HitPoints > 0) {
                 Properties.Armor.HitPoints--;
                 var ding = SoundPlayer.PlaySoundInstance(
                     $"Assets/sounds/armor_ding_{GameHandler.GameRand.Next(1, 3)}.ogg", SoundContext.Effect,
                     gameplaySound: true);
                 ding.Instance.Pitch = GameHandler.GameRand.NextFloat(-0.1f, 0.1f);
+                OnDamage?.Invoke(this, Properties.Armor.HitPoints == 0, context);
+                if (this is AITank ai) {
+                    for (int i = 0; i < ModLoader.ModTanks.Length; i++)
+                        if (ai.AiTankType == ModLoader.ModTanks[i].Type) {
+                            ModLoader.ModTanks[i].TakeDamage(ai, Properties.Armor.HitPoints == 0, context);
+                        }
+                }
             }
             else {
                 OnDamage?.Invoke(this, true, context);
+                if (this is AITank ai) {
+                    for (int i = 0; i < ModLoader.ModTanks.Length; i++)
+                        if (ai.AiTankType == ModLoader.ModTanks[i].Type) {
+                            ModLoader.ModTanks[i].TakeDamage(ai, true, context);
+                        }
+                }
                 Destroy(context);
             }
 
@@ -570,8 +593,6 @@ public abstract class Tank {
 
         // i think this is right? | (Probably, a destroyed tank is a dead tank!)
         Dead = true;
-
-        OnDestroy?.Invoke();
 
         const string tankDestroySound0 = "Assets/sounds/tnk_destroy.ogg";
         SoundPlayer.PlaySoundInstance(tankDestroySound0, SoundContext.Effect, 0.2f, gameplaySound: true);
@@ -705,13 +726,19 @@ public abstract class Tank {
 
                 var newPos = Position + new Vector2(0, 20).RotatedByRadians(-TurretRotation);
 
-                var defPos = new Vector3(newPos.X, 11, newPos.Y);
+                var defPos = new Vector2(newPos.X, newPos.Y);
 
                 if (!fxOnly) {
-                    var shell = new Shell(defPos, new Vector3(-new2d.X, 0, new2d.Y) * Properties.ShellSpeed,
+                    var shell = new Shell(defPos, new Vector2(-new2d.X, new2d.Y) * Properties.ShellSpeed,
                         Properties.ShellType, this, Properties.RicochetCount, homing: Properties.ShellHoming);
 
                     OnShoot?.Invoke(this, ref shell);
+
+                    if (this is AITank ai) {
+                        for (int j = 0; j < ModLoader.ModTanks.Length; j++)
+                            if (ai.AiTankType == ModLoader.ModTanks[j].Type)
+                                ModLoader.ModTanks[j].Shoot(ai, ref shell);
+                    }
 
                     if (this is PlayerTank pt) {
                         if (NetPlay.IsClientMatched(pt.PlayerId))
@@ -721,11 +748,11 @@ public abstract class Tank {
                         Client.SyncShellFire(shell);
                 }
 
-                var force = (Position - defPos.FlattenZ()) * Properties.Recoil;
+                var force = (Position - defPos) * Properties.Recoil;
                 Velocity = force / UNITS_PER_METER;
                 DecelerationRateDecayTime = 20 * Properties.Recoil;
                 //Body.ApplyForce(force / UNITS_PER_METER);
-                DoShootParticles(defPos);
+                DoShootParticles(new Vector3(defPos.X, 11, defPos.Y));
             }
             else {
                 // i == 0 : null, 0 rads
@@ -738,15 +765,15 @@ public abstract class Tank {
                     angle += Properties.ShellSpread;
                 var newAngle = flip ? -angle : angle;
 
-                var shell = new Shell(Position3D, Vector3.Zero, Properties.ShellType, this,
+                var shell = new Shell(Position, Vector2.Zero, Properties.ShellType, this,
                     homing: Properties.ShellHoming);
                 var new2d = Vector2.UnitY.RotatedByRadians(TurretRotation);
 
                 var newPos = Position + new Vector2(0, 20).RotatedByRadians(-TurretRotation + newAngle);
 
-                shell.Position = new Vector3(newPos.X, 11, newPos.Y);
+                shell.Position = new Vector2(newPos.X, newPos.Y);
 
-                shell.Velocity = new Vector3(-new2d.X, 0, new2d.Y).FlattenZ().RotatedByRadians(newAngle).ExpandZ() *
+                shell.Velocity = new Vector2(-new2d.X, new2d.Y).RotatedByRadians(newAngle) *
                                  Properties.ShellSpeed;
 
                 shell.RicochetsRemaining = Properties.RicochetCount;
@@ -830,10 +857,15 @@ public abstract class Tank {
             Client.SyncMinePlace(mine.Position, mine.DetonateTime, WorldId);
 
         OnLayMine?.Invoke(this, ref mine);
+        if (this is AITank ai) {
+            for (int i = 0; i < ModLoader.ModTanks.Length; i++)
+                if (ai.AiTankType == ModLoader.ModTanks[i].Type)
+                    ModLoader.ModTanks[i].LayMine(ai, ref mine);
+        }
     }
 
     public virtual void Render() {
-        if (!MapRenderer.ShouldRender)
+        if (!MapRenderer.ShouldRenderAll)
             return;
         /*foreach (var shell in OwnedShells) {
             SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"Owned by: {(this is PlayerTank ? PlayerID.Collection.GetKey(((PlayerTank)shell.Owner).PlayerType) : TankID.Collection.GetKey(((AITank)shell.Owner).Tier))}",

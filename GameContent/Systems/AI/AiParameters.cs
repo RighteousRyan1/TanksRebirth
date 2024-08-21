@@ -9,10 +9,11 @@ public record AiParameters {
     /// <summary>How often this tank will take a turn at <see cref="MeanderAngle"/> radians.</summary>
     public int MeanderFrequency { get; set; }
 
-    /// <summary>Not implemented (yet). Determines how much this tank will move un attempt to get closer to its target.</summary>
+    /// <summary>Determines how much this tank will move in attempt to get closer to its target. Keep value between -1 and 1.<para></para>
+    /// This value does not directly translate from Wii Tanks. 0.1 in Wii Tanks = ~0.5 in Tanks Rebirth.</summary>
     public float PursuitLevel { get; set; }
 
-    /// <summary>Not implemented (yet). Determines how often this tank will try to move towards its target.</summary>
+    /// <summary>Determines how often this tank will try to move towards its target.</summary>
     public int PursuitFrequency { get; set; }
 
     /// <summary>How often this tank will move its turret in the target's direction. It will be inaccurate at the measure of <see cref="AimOffset"/>.</summary>
@@ -27,7 +28,7 @@ public record AiParameters {
     /// <summary>The distance of which this tank is wary of projectiles shot by <see cref="PlayerTank"/>s and tries to move away from them.</summary>
     public float ProjectileWarinessRadius_PlayerShot { get; set; }
 
-    /// <summary>The distance of which this tank is wary of projectiles shot by <see cref="PlayerTank"/>s and tries to move away from them.</summary>
+    /// <summary>The distance of which this tank is wary of projectiles shot by <see cref="AITank"/>s and tries to move away from them.</summary>
     public float ProjectileWarinessRadius_AIShot { get; set; }
 
     /// <summary>The distance of which this tank is wary of mines laid by <see cref="PlayerTank"/>s and tries to move away from them.</summary>
@@ -38,7 +39,6 @@ public record AiParameters {
 
     /// <summary>On a given tick, it has this chance out of 1 to lay a mine. <para>Do note that this value must be greater than 0 and less than or equal to 1.</para></summary>
     public float MinePlacementChance { get; set; } // 0.0f to 1.0f
-
 
     /// <summary>The distance from the main shot calculation ray an enemy must be before this tank is allowed to fire.</summary>
     public float Inaccuracy { get; set; }

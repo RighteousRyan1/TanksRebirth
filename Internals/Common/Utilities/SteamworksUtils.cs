@@ -40,7 +40,7 @@ public static class SteamworksUtils
         SteamAPI.RunCallbacks();
     }
 
-    public static Texture2D GetAvatar(CSteamID id) {
+    public static Texture2D? GetAvatar(CSteamID id) {
         var avatar = SteamFriends.GetLargeFriendAvatar(id);
         var validSize = SteamUtils.GetImageSize(avatar, out var pnWidth, out var pnHeight);
 

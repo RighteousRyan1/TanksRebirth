@@ -1,87 +1,85 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using LiteNetLib;
-using LiteNetLib.Layers;
+﻿using LiteNetLib;
 using LiteNetLib.Utils;
 using Microsoft.Xna.Framework;
 using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.Systems;
 
-namespace TanksRebirth.Net
+namespace TanksRebirth.Net;
+
+// moderately confused as to why this class isn't static... ¯\_(ツ)_/¯
+public class Server
 {
-    public class Server
+    public delegate void ServerStartDelegate(Server server);
+    /// <summary>Fired when a server is created. Here you can hook into <see cref="serverNetListener"/>'s "NetworkReceiveEvent" to handle your packets.</summary>
+    public static event ServerStartDelegate OnServerStart;
+    public static NetManager serverNetManager;
+
+    public static EventBasedNetListener serverNetListener;
+
+    public string Password;
+    public string Address;
+    public int Port;
+
+    public string Name;
+
+    public static ushort MaxClients = 4;
+
+    public static Client[] ConnectedClients;
+
+    public static int CurrentClientCount;
+
+    public static void CreateServer(ushort maxClients = 4)
     {
-        public static NetManager serverNetManager;
+        MaxClients = maxClients;
 
-        public static EventBasedNetListener serverNetListener;
+        serverNetListener = new();
+        serverNetManager = new(serverNetListener);
 
-        public string Password;
-        public string Address;
-        public int Port;
+        ConnectedClients = new Client[maxClients];
 
-        public string Name;
+        GameHandler.ClientLog.Write($"Server created.", Internals.LogType.Debug);
 
-        public static ushort MaxClients = 4;
+        NetPlay.MapServerNetworking();
+    }
 
-        public static Client[] ConnectedClients;
-
-        public static int CurrentClientCount;
-
-        public static void CreateServer(ushort maxClients = 4)
+    public static void StartServer(string name, int port, string address, string password)
+    {
+        var server = new Server
         {
-            MaxClients = maxClients;
+            Port = port,
+            Address = address,
+            Password = password,
+            Name = name
+        };
 
-            serverNetListener = new();
-            serverNetManager = new(serverNetListener);
+        NetPlay.CurrentServer = server;
+        OnServerStart?.Invoke(server);
 
-            ConnectedClients = new Client[maxClients];
+        GameHandler.ClientLog.Write($"Server started. (Name = \"{name}\" | Port = \"{port}\" | Address = \"{address}\" | Password = \"{password}\")", Internals.LogType.Debug);
 
-            GameHandler.ClientLog.Write($"Server created.", Internals.LogType.Debug);
+        serverNetManager.Start(port);
 
-            NetPlay.MapServerNetworking();
-        }
+        // serverNetManager.NatPunchEnabled = true;
 
-        public static void StartServer(string name, int port, string address, string password)
+        serverNetListener.ConnectionRequestEvent += request =>
         {
-            var server = new Server
+            if (serverNetManager.ConnectedPeersCount < MaxClients)
             {
-                Port = port,
-                Address = address,
-                Password = password,
-                Name = name
-            };
-
-            NetPlay.CurrentServer = server;
-
-            GameHandler.ClientLog.Write($"Server started. (Name = \"{name}\" | Port = \"{port}\" | Address = \"{address}\" | Password = \"{password}\")", Internals.LogType.Debug);
-
-            serverNetManager.Start(port);
-
-            // serverNetManager.NatPunchEnabled = true;
-
-            serverNetListener.ConnectionRequestEvent += request =>
+                request.AcceptIfKey(password);
+            }
+            else
             {
-                if (serverNetManager.ConnectedPeersCount < MaxClients)
-                {
-                    request.AcceptIfKey(password);
-                }
-                else
-                {
-                    ChatSystem.SendMessage("User rejected: Incorrect password.", Color.Red);
-                    request.Reject();
-                }
-                serverNetListener.PeerConnectedEvent += peer =>
-                {
-                    NetDataWriter writer = new();
+                ChatSystem.SendMessage("User rejected: Incorrect password.", Color.Red);
+                request.Reject();
+            }
+            serverNetListener.PeerConnectedEvent += peer =>
+            {
+                NetDataWriter writer = new();
 
-                    writer.Put("Client successfully connected.");
+                writer.Put("Client successfully connected.");
 
-                    peer.Send(writer, DeliveryMethod.ReliableOrdered);
-                };
+                peer.Send(writer, DeliveryMethod.ReliableOrdered);
             };
-        }
+        };
     }
 }
