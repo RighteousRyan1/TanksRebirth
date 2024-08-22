@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.ID;
+using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.GameContent.UI;
 
@@ -163,7 +164,7 @@ public readonly struct WiiMap
 
     public static void ApplyToGameWorld(WiiMap map) {
         PlacementSquare.ResetSquares();
-        GameHandler.CleanupEntities();
+        SceneManager.CleanupEntities();
 
         foreach (var mapTile in map.MapItems) {
             ProcessWiiMapTile(mapTile);
@@ -221,7 +222,7 @@ public readonly struct WiiMap
 
         switch (mapTile.Stack) {
             case PLAYER_TANK_ID: { // Player Tank, That's us!
-                var pl = GameHandler.SpawnMe(mapTile.Type, TeamID.Red, tile.Position);
+                var pl = DebugManager.SpawnMe(mapTile.Type, TeamID.Red, tile.Position);
                 pl.TankRotation = tnkRot;
                 pl.TargetTankRotation = tnkRot;
                 pl.TurretRotation = tnkRot;
@@ -229,7 +230,7 @@ public readonly struct WiiMap
                 break;
             }
             case ENEMY_TANK_ID: { // Enemy Tank.
-                var ai = GameHandler.SpawnTankAt(tile.Position, AITank.PickRandomTier(), TeamID.Blue);
+                var ai = DebugManager.SpawnTankAt(tile.Position, AITank.PickRandomTier(), TeamID.Blue);
                 ai.TankRotation = tnkRot;
                 ai.TargetTankRotation = tnkRot;
                 ai.TurretRotation = tnkRot;

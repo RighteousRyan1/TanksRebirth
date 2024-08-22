@@ -21,6 +21,7 @@ using TanksRebirth.GameContent.Properties;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.Net;
 using TanksRebirth.GameContent.ModSupport;
+using TanksRebirth.GameContent.RebirthUtils;
 
 namespace TanksRebirth.GameContent;
 
@@ -298,7 +299,7 @@ public abstract class Tank {
             if (Cosmetics.Contains(cos2d))
                 return;
             Cosmetics.Add(cos2d);
-            var particle = GameHandler.ParticleSystem.MakeParticle(Position3D + cos2d.RelativePosition, cos2d.Texture);
+            var particle = GameHandler.Particles.MakeParticle(Position3D + cos2d.RelativePosition, cos2d.Texture);
 
             particle.Scale = cos2d.Scale;
             particle.Tag =
@@ -330,7 +331,7 @@ public abstract class Tank {
 
         SoundPlayer.PlaySoundInstance(invisibleTankSound, SoundContext.Effect, 0.3f, gameplaySound: true);
 
-        var lightParticle = GameHandler.ParticleSystem.MakeParticle(Position3D,
+        var lightParticle = GameHandler.Particles.MakeParticle(Position3D,
             GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_particle"));
 
         // lightParticle.TextureScale = new(5f);
@@ -362,7 +363,7 @@ public abstract class Tank {
         const int NUM_LOCATIONS = 8;
 
         for (int i = 0; i < NUM_LOCATIONS; i++) {
-            var lp = GameHandler.ParticleSystem.MakeParticle(Position3D + new Vector3(0, 5, 0),
+            var lp = GameHandler.Particles.MakeParticle(Position3D + new Vector3(0, 5, 0),
                 GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
 
             lp.Color = Color.SkyBlue;
@@ -497,7 +498,7 @@ public abstract class Tank {
         Client.SyncDamage(WorldId);
 
         void doTextPopup() {
-            var part = GameHandler.ParticleSystem.MakeParticle(Position3D + new Vector3(0, 15, 0),
+            var part = GameHandler.Particles.MakeParticle(Position3D + new Vector3(0, 15, 0),
                 TankGame.GameLanguage.Hit);
 
             part.IsIn2DSpace = true;
@@ -649,7 +650,7 @@ public abstract class Tank {
                     ? "Assets/textures/misc/tank_rock"
                     : "Assets/textures/misc/tank_rock_2");
 
-                var particle = GameHandler.ParticleSystem.MakeParticle(Position3D, tex);
+                var particle = GameHandler.Particles.MakeParticle(Position3D, tex);
 
                 particle.HasAddativeBlending = false;
 
@@ -673,7 +674,7 @@ public abstract class Tank {
                 };
             }
 
-            var explosionParticle = GameHandler.ParticleSystem.MakeParticle(Position3D,
+            var explosionParticle = GameHandler.Particles.MakeParticle(Position3D,
                 GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
 
             explosionParticle.Color = Color.Yellow * 0.75f;
@@ -690,7 +691,7 @@ public abstract class Tank {
                 if (p.Scale.X <= 0f)
                     p.Destroy();
             };
-            GameHandler.ParticleSystem.MakeSmallExplosion(Position3D, 15, 20, 1.3f, 30);
+            GameHandler.Particles.MakeSmallExplosion(Position3D, 15, 20, 1.3f, 30);
         }
 
         doDestructionFx();
@@ -792,9 +793,9 @@ public abstract class Tank {
     }
 
     public void DoShootParticles(Vector3 position) {
-        var hit = GameHandler.ParticleSystem.MakeParticle(position,
+        var hit = GameHandler.Particles.MakeParticle(position,
             GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
-        var smoke = GameHandler.ParticleSystem.MakeParticle(position,
+        var smoke = GameHandler.Particles.MakeParticle(position,
             GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
 
         hit.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
@@ -912,7 +913,7 @@ public abstract class Tank {
             }
         }
 
-        if (!DebugUtils.DebuggingEnabled) return;
+        if (!DebugManager.DebuggingEnabled) return;
 
         var info = new string[] {
             //$"Team: {TeamID.Collection.GetKey(Team)}",
@@ -929,7 +930,7 @@ public abstract class Tank {
         // TankGame.spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), CollisionBox2D, Color.White * 0.75f);
 
         for (int i = 0; i < info.Length; i++)
-            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, info[i],
+            DebugManager.DrawDebugString(TankGame.SpriteRenderer, info[i],
                 MatrixUtils.ConvertWorldToScreen(Vector3.Up * 20, World, View, Projection) -
                 new Vector2(0, ((i + 1) * 20).ToResolutionY() + 8), 1, centered: true, color: Color.Aqua);
     }
@@ -946,7 +947,7 @@ public abstract class Tank {
     public virtual void Remove(bool nullifyMe) {
         if (CollisionsWorld.BodyList.Contains(Body))
             CollisionsWorld.Remove(Body);
-        foreach (var particle in GameHandler.ParticleSystem.CurrentParticles)
+        foreach (var particle in GameHandler.Particles.CurrentParticles)
             if (particle is not null)
                 if ((string)particle.Tag == $"cosmetic_2d_{GetHashCode()}") // remove all particles related to this tank
                     particle.Destroy();

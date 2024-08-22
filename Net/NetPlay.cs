@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.Properties;
+using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.PingSystem;
 using TanksRebirth.GameContent.UI;
@@ -61,7 +62,7 @@ public class NetPlay {
 
     private static void OnPacketRecieve_Client(NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod) {
         var packet = reader.GetInt();
-        if (DebugUtils.DebuggingEnabled) {
+        if (DebugManager.DebuggingEnabled) {
             if (deliveryMethod != DeliveryMethod.Unreliable) {
                 // GameHandler.ClientLog.Write($"Packet Recieved: {packet} from peer {peer.Id}.", Internals.LogType.Debug);
 
@@ -309,7 +310,7 @@ public class NetPlay {
                 }
                 break;
             case PacketID.Cleanup:
-                GameHandler.CleanupScene();
+                SceneManager.CleanupScene();
                 break;
             case PacketID.SendCampaignStatus:
                 if (Server.serverNetManager is not null) {
@@ -394,7 +395,7 @@ public class NetPlay {
 
     private static void OnPacketRecieve_Server(NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod) {
         var packet = reader.GetInt();
-        if (DebugUtils.DebuggingEnabled) {
+        if (DebugManager.DebuggingEnabled) {
             if (deliveryMethod != DeliveryMethod.Unreliable) {
                 // GameHandler.ClientLog.Write($"Packet Recieved: {packet} from peer {peer.Id}.", Internals.LogType.Debug);
 

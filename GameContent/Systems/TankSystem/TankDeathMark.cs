@@ -44,7 +44,7 @@ public class TankDeathMark {
 
         texture = GameResources.GetGameResource<Texture2D>($"Assets/textures/check/check_{color.ToString().ToLower()}");
 
-        check = GameHandler.ParticleSystem.MakeParticle(Position + new Vector3(0, 0.1f, 0), texture);
+        check = GameHandler.Particles.MakeParticle(Position + new Vector3(0, 0.1f, 0), texture);
         check.HasAddativeBlending = false;
         check.Roll = -MathHelper.PiOver2;
         check.Layer = 0;

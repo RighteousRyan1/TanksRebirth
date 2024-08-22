@@ -5,9 +5,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 ## Additions
 
 - Achievements you unlock will appear at the top of your screen when unlocked!
-- New AI tank aggression system (depending on the tank type, will either make advances towards you or will avoid you)
-- New smoke grenades difficulty.
-- New player callouts system!
+- New player callouts/pings system!
 	-Use the numbers at the top of your keyboard to make pings, choosing from (in ascending order):
 		- General
 		- Stay
@@ -16,6 +14,8 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 		- Go To
 		- Focus
 		- Group up
+
+- Mission countdown now is the common "Ready? Set, Start!" from most games with countdowns.
 
 ## Changes
 
@@ -27,10 +27,19 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 	- The shooting system (tanks now shoot at walls with a tank on the other side much less often)
 	- Mine laying system (tanks will trap themselves with mines LESS OFTEN)
 	- Shell avoidance system (tanks will now only avoid shells if the shell is heading in their direction)
+- Everything in the game is now framerate independent.
+- Main menu rotation speed decreased for sensitive eyes.
+- Made the grading system much less strict.
+
+## Source Code Changes (for modders)
+
+- Moved a lot of methods from GameHandler into their own files.
+	- Lots of game-specific debug methods have been moved to DebugManager
+	- Game Scene management is now all moved to SceneManager
+	- Mission intermission handling is now moved to IntermissionHandler
 
 ## Fixes
 
-- Re-entering the level editor from testing will now no longer flip the tanks around the Y-axis.
 - Fixed level editor warnings disappearing fast on high refresh rates.
 
 ## TODO
@@ -38,6 +47,10 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 - [ ] Bonus life screen
 - [ ] Overhaul the multiplayer lobby screen
 - [ ] Math operations optimization
+- [ ] Level Editor bug fixes (rotation bug, etc.)
+	- Re-entering the level editor from testing will now no longer flip the tanks around the Y-axis.
+- [ ] New AI tank aggression system (depending on the tank type, will either make advances towards you or will avoid you)
+
 
 PLEASE, if you find anything wrong, go to my [discord](https://discord.gg/KhfzvbrrKx) server and report bugs in the #bugs 
 channel, or, if you want to suggest something, suggest them in the #suggestions channel.

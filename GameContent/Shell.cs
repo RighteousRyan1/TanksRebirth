@@ -7,6 +7,7 @@ using TanksRebirth.Enums;
 using TanksRebirth.GameContent.GameMechanics;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Properties;
+using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.UI;
@@ -344,7 +345,7 @@ public class Shell : IAITankDanger {
     private void RenderSmokeParticle(float timer) {
         if (!(LifeTime % timer <= TankGame.DeltaTime)) return;
 
-        var p = GameHandler.ParticleSystem.MakeParticle(
+        var p = GameHandler.Particles.MakeParticle(
             Position3D + new Vector3(0, 0, 5).FlattenZ()
                                            .RotatedByRadians(Rotation + MathHelper.Pi +
                                                              GameHandler.GameRand.NextFloat(-0.3f, 0.3f))
@@ -374,7 +375,7 @@ public class Shell : IAITankDanger {
     private void RenderLeaveTrail(float timer) {
         if (!(LifeTime % (timer / 2) <= TankGame.DeltaTime)) return;
 
-        var p = GameHandler.ParticleSystem.MakeParticle(
+        var p = GameHandler.Particles.MakeParticle(
             Position3D + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(),
             GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
 
@@ -397,7 +398,7 @@ public class Shell : IAITankDanger {
                 p.Destroy();
         };
 
-        var p2 = GameHandler.ParticleSystem.MakeParticle(
+        var p2 = GameHandler.Particles.MakeParticle(
             Position3D + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(),
             GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
 
@@ -424,7 +425,7 @@ public class Shell : IAITankDanger {
     private void RenderFlamingParticle() {
         if (!(0 <= TankGame.DeltaTime)) return;
 
-        var p = GameHandler.ParticleSystem.MakeParticle(
+        var p = GameHandler.Particles.MakeParticle(
             Position3D + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(),
             GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/flame"));
 
@@ -501,7 +502,7 @@ public class Shell : IAITankDanger {
             }
         }
 
-        GameHandler.ParticleSystem.MakeShineSpot(Position3D, Color.Orange, 0.8f);
+        GameHandler.Particles.MakeShineSpot(Position3D, Color.Orange, 0.8f);
         Ricochets++;
         RicochetsRemaining--;
     }
@@ -587,7 +588,7 @@ public class Shell : IAITankDanger {
                 sfx.Instance.Pitch = GameHandler.GameRand.NextFloat(-0.1f, 0.1f);
             }
 
-            GameHandler.ParticleSystem.MakeSmallExplosion(Position3D, 8, 10, 1.25f, 15);
+            GameHandler.Particles.MakeSmallExplosion(Position3D, 8, 10, 1.25f, 15);
         }
 
         _loopingSound?.Instance?.Stop();
@@ -617,10 +618,11 @@ public class Shell : IAITankDanger {
         Projection = TankGame.GameProjection;
         View = TankGame.GameView;
 
-        if (DebugUtils.DebuggingEnabled && DebugUtils.DebugLevel == 1 && HomeProperties.Speed > 0)
+        // TODO: wtf? DoRaycast failing?
+        if (DebugManager.DebuggingEnabled && DebugManager.DebugLevel == 1 && HomeProperties.Speed > 0)
             Collision.DoRaycast(Position, HomeProperties.Target, (int)HomeProperties.Radius, true);
-        if (DebugUtils.DebuggingEnabled)
-            DebugUtils.DrawDebugString(TankGame.SpriteRenderer,
+        if (DebugManager.DebuggingEnabled)
+            DebugManager.DrawDebugString(TankGame.SpriteRenderer,
                 $"RicochetsLeft: {RicochetsRemaining}\nTier: {Type}\nId: {Id}",
                 MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 20), 1,
                 centered: true);
@@ -673,9 +675,6 @@ public class Shell : IAITankDanger {
 
         var isInAngle = angleBetween <= arc / 2;
 
-        if (inDistance) {
-            ChatSystem.SendMessage(angleBetween.ToString(), Color.White);
-        }
         // check if the direction 
         return isInAngle && inDistance;
     }

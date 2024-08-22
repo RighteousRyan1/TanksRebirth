@@ -1,15 +1,18 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using TanksRebirth.GameContent.Systems;
 using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.Internals.Common.Framework.Animation;
 
-public class Animator
-{
-    public static List<Animator> Animators = new();
+public class Animator {
+    public static List<Animator> Animators = [];
 
+    // added to after every frame is complete. the frame's completion time is added
     private TimeSpan _elapsedOffset;
+    // the current elapsed time of the current frame only
     private TimeSpan _elapsedInternal;
     /// <summary>Total time elapsed in the animation.</summary>
     public TimeSpan ElapsedTime => _elapsedInternal + _elapsedOffset;
@@ -30,7 +33,7 @@ public class Animator
     /// <summary>The current two-dimensional scale of the given animation.</summary>
     public Vector2 CurrentScale { get; private set; }
     /// <summary>The current rotation of the given animation. You can use this to match to any float you want.</summary>
-    public float CurrentRotation { get; private set; }
+    public float[] CurrentFloats { get; private set; }
 
     /// <summary>The list of <see cref="KeyFrame"/>s.</summary>
     public List<KeyFrame> KeyFrames { get; set; }
@@ -46,8 +49,12 @@ public class Animator
     public delegate void OnKeyFrameEnd(KeyFrame frame);
     /// <summary>Invocated once a keyframe finishes playing in this animation.</summary>
     public event OnKeyFrameEnd? OnKeyFrameFinish;
+    public delegate void OnRun();
+    /// <summary>Invocated once a keyframe finishes playing in this animation.</summary>
+    public event OnRun? OnAnimationRun;
     private Animator() {
-        KeyFrames = new();
+        CurrentFloats = [];
+        KeyFrames = [];
         RestartInternal();
         Animators.Add(this);
     }
@@ -67,7 +74,7 @@ public class Animator
     public void Restart() {
         CurrentPosition = KeyFrames[0].Position;
         CurrentScale = KeyFrames[0].Scale;
-        CurrentRotation = KeyFrames[0].Rotation;
+        CurrentFloats = KeyFrames[0].Floats;
         _isRunning = false;
         RestartInternal();
     }
@@ -75,6 +82,8 @@ public class Animator
     public void Run() {
         if (CurrentId == KeyFrames.Count - 1)
             return;
+
+        OnAnimationRun?.Invoke();
 
         _isRunning = true;
     }
@@ -91,10 +100,13 @@ public class Animator
             frame.BezierPoints?.Insert(0, frame.Position);
         }
         KeyFrames.Add(frame);
+        CurrentFloats = KeyFrames[0].Floats;
         return this;
     }
     /// <summary>Advances this <see cref="Animator"/> by one frame.</summary>
     public void Step(int steps) {
+        OnKeyFrameFinish?.Invoke(Current);
+        //_elapsedInternal += Current.Duration;
         CurrentId += steps;
     }
     /// <summary>Seek an entirely separate frame, starting at <paramref name="frameId"/>.</summary>
@@ -125,12 +137,15 @@ public class Animator
         }
         return (float)(timeBefore.TotalSeconds / EstimatedCompletionTime.TotalSeconds);
     }
-
+    // TODO: fix the last keyframe not firing an event.
     internal void PlayAnimation(GameTime gameTime) {
-        if (!_isRunning || CurrentId == KeyFrames.Count - 1)
+        if (!_isRunning)
             return;
 
-        var futureFrame = KeyFrames[CurrentId + 1];
+        Interpolated = (float)(ElapsedTime.TotalSeconds / EstimatedCompletionTime.TotalSeconds);
+
+        var id = CurrentId + 1;
+        var futureFrame = KeyFrames[id];
 
         CurrentInterpolation += (float)(gameTime.ElapsedGameTime.TotalSeconds / Current.Duration.TotalSeconds);
         _elapsedInternal += gameTime.ElapsedGameTime;
@@ -141,17 +156,33 @@ public class Animator
         CurrentPosition = hasBezier ? MathUtils.Bezier(ease, Current.BezierPoints.ToArray()) :
             Current.Position + (futureFrame.Position - Current.Position) * ease;
         CurrentScale = Current.Scale + (futureFrame.Scale - Current.Scale) * ease;
-        CurrentRotation = Current.Rotation + (futureFrame.Rotation - Current.Rotation) * ease;
+        if (CurrentFloats is not null)
+            for (int i = 0; i < CurrentFloats.Length; i++)
+                if (CurrentFloats != null && futureFrame.Floats != null && Current.Floats != null
+                    && CurrentFloats.Length > 0 && futureFrame.Floats.Length > 0 && Current.Floats.Length > 0)
+                    CurrentFloats[i] = Current.Floats[i] + (futureFrame.Floats[i] - Current.Floats[i]) * ease;
 
-        if (CurrentInterpolation > 1) {
+        /* current floats will blend into the future floats
+         * current scale into future scale
+         * current time is the time it takes to get to the next frame, final frame time will not matter
+         * current scale blends into future scale
+         * 
+         */
+        // code below is in case the code above fails.
+        // CurrentFloats = Current.Floats + (futureFrame.Floats - Current.Floats) * ease;
+
+        if (CurrentInterpolation >= 1 && CurrentId < KeyFrames.Count - 1) {
             CurrentInterpolation = 0;
             Step(1);
             CurrentPosition = Current.Position;
             CurrentScale = Current.Scale;
-            CurrentRotation = Current.Rotation;
+            CurrentFloats = Current.Floats!;
 
-            if (CurrentId == KeyFrames.Count - 1)
+            if (CurrentId >= KeyFrames.Count - 1) {
                 _isRunning = false;
+            }
         }
+        if (KeyFrames[1].Duration == TimeSpan.FromSeconds(3.5))
+            Debug.WriteLine(ElapsedTime.TotalSeconds + " : " + Interpolated);
     }
 }

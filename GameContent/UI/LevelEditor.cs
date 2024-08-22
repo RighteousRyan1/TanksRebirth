@@ -19,7 +19,8 @@ using NativeFileDialogSharp;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.Internals.Common.Framework.Graphics;
 using TanksRebirth.Localization;
-using TanksRebirth.Internals.Common.Framework.Animation;
+using Microsoft.Xna.Framework.Input;
+using TanksRebirth.GameContent.RebirthUtils;
 
 namespace TanksRebirth.GameContent.UI;
 
@@ -117,6 +118,23 @@ public static class LevelEditor
     public static Color SelectedColor = Color.SkyBlue;
     public static Color UnselectedColor = Color.White;
 
+    private static int _oldelta;
+    public static void HandleLevelEditorModifications() {
+        var cur = PlacementSquare.CurrentlyHovered;
+
+        if (cur is not null && cur.HasItem && cur.HasBlock && cur.BlockId > -1 && cur.BlockId < Block.AllBlocks.Length) {
+            if (Block.AllBlocks[cur.BlockId] != null) {
+                if (Block.AllBlocks[cur.BlockId].Type == BlockID.Teleporter) {
+                    // ChatSystem.SendMessage($"{Input.DeltaScrollWheel}", Color.White);
+
+                    if (InputUtils.DeltaScrollWheel != _oldelta)
+                        Block.AllBlocks[cur.BlockId].TpLink += (sbyte)(InputUtils.DeltaScrollWheel - _oldelta);
+                }
+            }
+        }
+
+        _oldelta = InputUtils.DeltaScrollWheel;
+    }
     // reduce hardcode -- make a variable that tracks height.
     public static void InitializeSaveMenu()
     {
@@ -768,7 +786,7 @@ public static class LevelEditor
         TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Rectangle(0, 0, 350, 125).ToResolution(), null, Color.Gray, 0f, Vector2.Zero, default, 0f);
         TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Rectangle(0, 0, 350, 40).ToResolution(), null, Color.White, 0f, Vector2.Zero, default, 0f);
         TankGame.SpriteRenderer.DrawString(TankGame.TextFont, TankGame.GameLanguage.LevelInfo, new Vector2(175, 3).ToResolution(), Color.Black, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(Anchor.TopCenter, TankGame.TextFont.MeasureString(TankGame.GameLanguage.LevelInfo)));
-        TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"{TankGame.GameLanguage.EnemyTankTotal}: {AiHelpers.CountAll()}", new Vector2(10, 40).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
+        TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"{TankGame.GameLanguage.EnemyTankTotal}: {AIManager.CountAll()}", new Vector2(10, 40).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
         TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"{TankGame.GameLanguage.DifficultyRating}: {DifficultyAlgorithm.GetDifficulty(missionToRate):0.00}", new Vector2(10, 80).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
 
 
@@ -913,15 +931,15 @@ public static class LevelEditor
             }
             _maxScroll = xOff;
         }
-        if (DebugUtils.DebuggingEnabled)
+        if (DebugManager.DebuggingEnabled)
         {
             int a = 0;
             foreach (var thing in ClickEventsPerItem)
             {
-                if (DebugUtils.DebugLevel == 3)
+                if (DebugManager.DebugLevel == 3)
                     TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, thing.Key, null, Color.Red * 0.5f, 0f, Vector2.Zero, default, 0f);
                 var text = thing.Key.Contains(MouseUtils.MousePosition.ToPoint()) ? $"{thing.Key} ---- {thing.Value.Item1} (HOVERED)" : $"{thing.Key} ---- {thing.Value.Item1}";
-                DebugUtils.DrawDebugString(TankGame.SpriteRenderer, text, new Vector2(500, 20 + a), 3);
+                DebugManager.DrawDebugString(TankGame.SpriteRenderer, text, new Vector2(500, 20 + a), 3);
                 a += 20;
             }
         }
@@ -969,6 +987,13 @@ public static class LevelEditor
     {
         if (!_initialized)
             return;
+
+        if (Active) {
+            IntermissionHandler.TankFunctionWait = 190;
+            if (DebugManager.DebuggingEnabled)
+                if (InputUtils.KeyJustPressed(Keys.T))
+                    PlacementSquare.DrawStacks = !PlacementSquare.DrawStacks;
+        }
 
         if (_missionButtonScissor.Contains(MouseUtils.MousePosition))
             _missionsOffset += InputUtils.GetScrollWheelChange() * 30;
@@ -1076,7 +1101,7 @@ public static class LevelEditor
             ClickEventsPerItem.Clear();
         }
         else if (Editing && !Active && _cachedMission != default && GameProperties.InMission)
-            if (GameHandler.NothingCanHappenAnymore(_cachedMission, out bool victory))
+            if (IntermissionHandler.NothingCanHappenAnymore(_cachedMission, out bool victory))
                 QueueEditorReEntry(120f);
         // if (ReturnToEditor != null)
             ReturnToEditor.IsVisible = Editing && !Active && !MainMenu.Active;

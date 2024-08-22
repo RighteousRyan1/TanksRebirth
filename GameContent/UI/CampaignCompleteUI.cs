@@ -21,6 +21,7 @@ using TanksRebirth.GameContent.Systems.Coordinates;
 using NativeFileDialogSharp;
 using Microsoft.Xna.Framework.Input;
 using TanksRebirth.GameContent.ID;
+using TanksRebirth.GameContent.RebirthUtils;
 
 namespace TanksRebirth.GameContent.UI;
 
@@ -204,8 +205,8 @@ public static class CampaignCompleteUI
         TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Vector2(WindowUtils.WindowWidth / 3, (_tnkDrawYOff - 50f).ToResolutionY()), null, Color.Gold * _panelAlpha, 0f, Vector2.Zero, new Vector2(WindowUtils.WindowWidth / 3, 10.ToResolutionY()), default, 0f);
 
         if (_shouldShowGrade) {
-            _gradeAlpha += _gradeFadeSpeed / 2;
-            _gradeScale -= _gradeFadeSpeed;
+            _gradeAlpha += _gradeFadeSpeed / 2 * TankGame.DeltaTime;
+            _gradeScale -= _gradeFadeSpeed * TankGame.DeltaTime;
             if (_gradeAlpha > 1f)
                 _gradeAlpha = 1f;
             if (_gradeScale <= _gradeTargetScale) {
@@ -220,7 +221,7 @@ public static class CampaignCompleteUI
             TankGame.SpriteRenderer.Draw(tex, new Vector2(WindowUtils.WindowWidth / 3 * 2, 250.ToResolutionY()), ParseGradeRect(Grade), Color.White * _gradeAlpha, 0f, new Vector2(64, 64), new Vector2(_gradeScale).ToResolution(), default, 0f);
         }
 
-        if (DebugUtils.DebuggingEnabled) {
+        if (DebugManager.DebuggingEnabled) {
             if (InputUtils.AreKeysJustPressed(Keys.OemOpenBrackets, Keys.OemCloseBrackets)) {
                 ResetThings();
 
@@ -334,11 +335,11 @@ public static class CampaignCompleteUI
         // (min, max]
         bool isBetween(float input, float min, float max) => input >= min && input < max;
         // redundant code but whatever i love men
-        if (ShotToKillRatio > 0.5f)
+        if (ShotToKillRatio > 0.4f)
             grade += 0;
-        else if (isBetween(ShotToKillRatio, 0.3f, 0.5f))
+        else if (isBetween(ShotToKillRatio, 0.2f, 0.4f))
             grade += 1;
-        else if (isBetween(ShotToKillRatio, 0.15f, 0.3f))
+        else if (isBetween(ShotToKillRatio, 0.1f, 0.2f))
             grade += 2;
         else
             grade += 3;
@@ -351,13 +352,13 @@ public static class CampaignCompleteUI
 
         // check >= just incase something goofy happens.
         // 
-        if (LifeRatio >= 0.7f)
+        if (LifeRatio >= 0.5f)
             grade += 0;
-        else if (isBetween(LifeRatio, 0.5f, 0.7f))
+        else if (isBetween(LifeRatio, 0.3f, 0.5f))
             grade += 1;
-        else if (isBetween(LifeRatio, 0.2f, 0.5f))
+        else if (isBetween(LifeRatio, 0.15f, 0.3f))
             grade += 2;
-        else if (isBetween(LifeRatio, 0.05f, 0.2f))
+        else if (isBetween(LifeRatio, 0.05f, 0.15f))
             grade += 3;
         else if (LifeRatio < 0.05f)
             grade += 4;
@@ -377,7 +378,7 @@ public static class CampaignCompleteUI
                 grade += 5;
         }
 
-        grade += SuicideCount;
+        grade += SuicideCount / 2;
 
         if (grade > Grade.FMinus)
             grade = Grade.FMinus;

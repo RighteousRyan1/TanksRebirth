@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Utilities;
@@ -157,7 +158,7 @@ namespace TanksRebirth.GameContent
                 }
                 var pos = MatrixUtils.ConvertWorldToScreen(default, Matrix.CreateTranslation(Position), TankGame.GameView, TankGame.GameProjection);
 
-                DebugUtils.DrawDebugString(TankGame.SpriteRenderer, this, pos, 4, centered: true);
+                DebugManager.DrawDebugString(TankGame.SpriteRenderer, this, pos, 4, centered: true);
 
                 // TankGame.spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), GeometryUtils.CreateRectangleFromCenter((int)pos.X, (int)pos.Y, 25, 25), Color.White * 0.9f);
             }
@@ -165,7 +166,7 @@ namespace TanksRebirth.GameContent
             {
                 var pos = MatrixUtils.ConvertWorldToScreen(default, AffectedTank.World, TankGame.GameView, TankGame.GameProjection);
 
-                DebugUtils.DrawDebugString(TankGame.SpriteRenderer, this, pos, 4, centered: true);
+                DebugManager.DrawDebugString(TankGame.SpriteRenderer, this, pos, 4, centered: true);
             }
             OnPostRender?.Invoke(this);
         }

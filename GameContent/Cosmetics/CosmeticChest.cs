@@ -85,7 +85,7 @@ namespace TanksRebirth.GameContent.Cosmetics
 
                 if (tnk.IsIngame && !tnk.Properties.Invisible)
                     if (TankGame.UpdateCount % 10 == 0)
-                        GameHandler.ParticleSystem.MakeShineSpot(tnk.Position3D + new Vector3(0, 20 + siny / 5 + (Vector2.UnitY * 5).RotatedByRadians(GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi)).Y, 0), Color.Yellow, GameHandler.GameRand.NextFloat(0.3f, 0.5f));
+                        GameHandler.Particles.MakeShineSpot(tnk.Position3D + new Vector3(0, 20 + siny / 5 + (Vector2.UnitY * 5).RotatedByRadians(GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi)).Y, 0), Color.Yellow, GameHandler.GameRand.NextFloat(0.3f, 0.5f));
             }
         };
         public static Cosmetic3D ArmyHat = new Cosmetic3D("Army Hat", GameResources.GetGameResource<Model>("Assets/cosmetics/army_hat"), GameResources.GetGameResource<Texture2D>("Assets/cosmetics/army_hat_tex"), new(0, 13.5f, 0), CosmeticLockOptions.ToTurret)

@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using TanksRebirth.Enums;
 using TanksRebirth.GameContent.ID;
+using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.Internals;
@@ -77,9 +78,9 @@ public record struct Mission
     /// </summary>
     /// <param name="mission">The mission instance to load.</param>
     public static void LoadDirectly(Mission mission) {
-        GameHandler.CleanupEntities();
+        SceneManager.CleanupEntities();
         PlacementSquare.ResetSquares();
-        GameHandler.CleanupScene();
+        SceneManager.CleanupScene();
         for (int i = 0; i < mission.Tanks.Length; i++) {
             var tnk = mission.Tanks[i];
             tnk.Rotation = tnk.Rotation; // Use setter for magical purposes.
