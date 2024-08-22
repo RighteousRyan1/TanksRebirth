@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using TanksRebirth.GameContent.Properties;
+using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.UI;
@@ -204,7 +205,7 @@ public sealed class Mine : IAITankDanger
 
         View = TankGame.GameView;
         Projection = TankGame.GameProjection;
-        DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"DetonationTime: {DetonateTime}/{DetonateTimeMax}\nNearDestructibles: {IsNearDestructibles}\nId: {Id}", MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 20), 1, centered: true);
+        DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"DetonationTime: {DetonateTime}/{DetonateTimeMax}\nNearDestructibles: {IsNearDestructibles}\nId: {Id}", MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 20), 1, centered: true);
         for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
             foreach (ModelMesh mesh in Model.Meshes) {
                 foreach (BasicEffect effect in mesh.Effects) {
@@ -216,10 +217,10 @@ public sealed class Mine : IAITankDanger
 
                     if (mesh == _mineMesh) {
                         if (!_tickRed) {
-                            effect.EmissiveColor = new Vector3(1, 1, 0) * GameHandler.GameLight.Brightness;
+                            effect.EmissiveColor = new Vector3(1, 1, 0) * SceneManager.GameLight.Brightness;
                         }
                         else {
-                            effect.EmissiveColor = new Vector3(1, 0, 0) * GameHandler.GameLight.Brightness;
+                            effect.EmissiveColor = new Vector3(1, 0, 0) * SceneManager.GameLight.Brightness;
                         }
                         effect.Texture = _mineTexture;
 

@@ -10,6 +10,9 @@ using TanksRebirth.Net;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.Internals.Common.Framework.Animation;
 using System;
+using TanksRebirth.GameContent.RebirthUtils;
+using TanksRebirth.Internals.Common.Framework.Audio;
+using System.Runtime.Intrinsics.X86;
 
 namespace TanksRebirth.GameContent.Systems;
 #pragma warning disable
@@ -17,14 +20,16 @@ public static class IntermissionSystem {
     public static Animator TextAnimatorLarge;
     public static Animator TextAnimatorSmall;
 
-    public static int TimeBlack; // for black screen when entering this game
+    public static Animator IntermissionAnimator;
+
+    public static float TimeBlack; // for black screen when entering this game
     public static float BlackAlpha = 0;
 
     public static bool IsAwaitingNewMission => CurrentWaitTime > 240; // 3 seconds seems to be the opening fanfare duration
 
     public static float Alpha;
-    public static int WaitTime { get; private set; }
-    public static int CurrentWaitTime { get; private set; }
+    public static float WaitTime { get; private set; }
+    public static float CurrentWaitTime { get; private set; }
 
     public static readonly Color DefaultBackgroundColor = new(228, 231, 173); // color picked lol
     public static readonly Color DefaultStripColor = Color.DarkRed;
@@ -36,14 +41,68 @@ public static class IntermissionSystem {
 
     private static float _oldBlack;
 
+    public static void InitializeAnmiations() {
+        IntermissionHandler.Initialize();
+        // should this be where the animator is re-instantiated?
+        TextAnimatorSmall = Animator.Create()
+            .WithFrame(new(Vector2.Zero, Vector2.Zero, [0f], TimeSpan.FromSeconds(0.25), EasingFunction.OutBack))
+            .WithFrame(new(Vector2.Zero, Vector2.One * 0.4f, [0f], TimeSpan.FromSeconds(0.25), EasingFunction.OutBack));
+        TextAnimatorLarge = Animator.Create()
+            .WithFrame(new(Vector2.Zero, Vector2.Zero, [0f], TimeSpan.FromSeconds(0.35), EasingFunction.OutBack))
+            .WithFrame(new(Vector2.Zero, Vector2.One, [0f], TimeSpan.FromSeconds(0.35), EasingFunction.OutBack));
+
+        IntermissionAnimator = Animator.Create()
+            .WithFrame(new([], TimeSpan.FromSeconds(3), EasingFunction.Linear))
+            .WithFrame(new([], TimeSpan.FromSeconds(0.5), EasingFunction.Linear))
+            .WithFrame(new([], TimeSpan.FromSeconds(3.66), EasingFunction.Linear))
+            .WithFrame(new([], TimeSpan.FromSeconds(0), EasingFunction.Linear));
+        IntermissionAnimator.OnKeyFrameFinish += DoMidAnimationActions;
+    }
+    public static void InitializeCountdowns() {
+        // 10 seconds to complete the entire thing
+        // at 3 seconds in, the opening fanfare plays (but for some reason i gotta use 4 in this.)
+        // at 220 frames left (3.66 seconds), the snare drums begin, and the scene is visible
+        // at halfway through, the next mission is set-up
+        float secs1 = 3;
+        float secs2 = 3f;
+        if (TimeBlack > 0) {
+            secs1 = 4;
+            secs2 = 3;
+        }
+        IntermissionAnimator.KeyFrames[0] = new([], TimeSpan.FromSeconds(secs1), EasingFunction.Linear);
+        IntermissionAnimator.KeyFrames[2] = new([], TimeSpan.FromSeconds(secs2), EasingFunction.Linear);
+        // the last frame is filler because i dunno how to fix the last frame finish event firing bug
+        // ignore the last frame
+        // TODO: fix this fuckery above
+    }
+
+    private static void DoMidAnimationActions(KeyFrame frame) {
+        var frameId = IntermissionAnimator.KeyFrames.FindIndex(f => f.Equals(frame));
+
+        // play the opening fanfare n shit. xd.
+        if (frameId == 0) {
+            SceneManager.CleanupScene();
+            var missionStarting = "Assets/fanfares/mission_starting.ogg";
+            SoundPlayer.PlaySoundInstance(missionStarting, SoundContext.Effect, 0.8f);
+        }
+        else if (frameId == 1) {
+            GameProperties.LoadedCampaign.SetupLoadedMission(GameHandler.AllPlayerTanks.Any(tnk => tnk != null && !tnk.Dead));
+        }
+        else if (frameId == 2) {
+            IntermissionHandler.BeginIntroSequence();
+            IntermissionHandler.CountdownAnimator?.Restart();
+            IntermissionHandler.CountdownAnimator?.Run();
+        }
+    }
+
     // TODO: turn this intermission stuff into animators, lol.
     /// <summary>Renders the intermission.</summary>
     public static void Draw(SpriteBatch spriteBatch) {
-        TankGame.Interp = Alpha <= 0 && BlackAlpha <= 0 && GameHandler.InterpCheck;
+        // TankGame.Interp = Alpha <= 0 && BlackAlpha <= 0 && GameHandler.InterpCheck;
 
         if (TankGame.Instance.IsActive) {
             if (TimeBlack > -1) {
-                TimeBlack--;
+                TimeBlack -= TankGame.DeltaTime;
                 BlackAlpha += 1f / 45f * TankGame.DeltaTime;
             }
             else
@@ -56,13 +115,6 @@ public static class IntermissionSystem {
             if (GameProperties.ShouldMissionsProgress) {
                 // todo: should this happen?
                 GameProperties.LoadedCampaign.SetupLoadedMission(true);
-                // should this be where the animator is re-instantiated?
-                TextAnimatorSmall = Animator.Create()
-                    .WithFrame(new(Vector2.Zero, Vector2.Zero, 0f, TimeSpan.FromSeconds(0.25), EasingFunction.OutBack))
-                    .WithFrame(new(Vector2.Zero, Vector2.One * 0.4f, 0f, TimeSpan.FromSeconds(0.25), EasingFunction.OutBack));
-                TextAnimatorLarge = Animator.Create()
-                    .WithFrame(new(Vector2.Zero, Vector2.Zero, 0f, TimeSpan.FromSeconds(0.35), EasingFunction.OutBack))
-                    .WithFrame(new(Vector2.Zero, Vector2.One, 0f, TimeSpan.FromSeconds(0.35), EasingFunction.OutBack));
             }
 
         }
@@ -160,34 +212,30 @@ public static class IntermissionSystem {
     private static void DrawBonusLifeHUD() {
         // TODO: implement.
     }
-
     public static void DrawShadowedString(SpriteFontBase font, Vector2 position, Vector2 shadowDir, string text, Color color, Vector2 scale, float alpha, Vector2 origin = default, float shadowDistScale = 1f) {
-        TankGame.SpriteRenderer.DrawString(font, text, position + (Vector2.Normalize(shadowDir) * 10f * shadowDistScale * scale).ToResolution(), Color.Black * alpha * 0.75f, scale, 0f, origin == default ? TankGame.TextFontLarge.MeasureString(text) / 2 : origin, 0f);
+        TankGame.SpriteRenderer.DrawString(font, text, position + Vector2.Normalize(shadowDir) * (10f * shadowDistScale * scale), Color.Black * alpha * 0.75f, scale, 0f, origin == default ? TankGame.TextFontLarge.MeasureString(text) / 2 : origin, 0f);
 
         TankGame.SpriteRenderer.DrawString(font, text, position, color * alpha, scale, 0f, origin == default ? TankGame.TextFontLarge.MeasureString(text) / 2 : origin, 0f);
     }
     public static void DrawShadowedTexture(Texture2D texture, Vector2 position, Vector2 shadowDir, Color color, Vector2 scale, float alpha, Vector2 origin = default, bool flip = false, float shadowDistScale = 1f) {
-        TankGame.SpriteRenderer.Draw(texture, position + (Vector2.Normalize(shadowDir) * 10f * shadowDistScale * scale).ToResolution(), null, Color.Black * alpha * 0.75f, 0f, origin == default ? texture.Size() / 2 : origin, scale, flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, default);
+        TankGame.SpriteRenderer.Draw(texture, position + Vector2.Normalize(shadowDir) * (10f * shadowDistScale * scale), null, Color.Black * alpha * 0.75f, 0f, origin == default ? texture.Size() / 2 : origin, scale, flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, default);
         TankGame.SpriteRenderer.Draw(texture, position, null, color * alpha, 0f, origin == default ? texture.Size() / 2 : origin, scale, flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, default);
     }
     private static void DrawStripe(SpriteBatch spriteBatch, Color color, float offsetY, float alpha) {
         var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/banner");
 
-        var scaling = new Vector2(3, 3f);//new Vector2(WindowUtils.WindowWidth / tex.Width / 2 + 0.2f, WindowUtils.WindowHeight / tex.Height / 18.2f); // 18.2 ratio
-
-        //var test = MouseUtils.MousePosition.X / WindowUtils.WindowWidth * 100;
-        //ChatSystem.SendMessage(test, Color.White);
+        var scaling = new Vector2(3, 3f);
 
         spriteBatch.Draw(tex, new Vector2(-15, offsetY), null, color * alpha, 0f, Vector2.Zero, scaling.ToResolution(), default, default);
         spriteBatch.Draw(tex, new Vector2(WindowUtils.WindowWidth / 2, offsetY), null, color * alpha, 0f, Vector2.Zero, scaling.ToResolution(), default, default);
-        //spriteBatch.Draw(tex, new Vector2(-30 + (float)(tex.Width * scaling.X) + (3 * scaling.X / 2.2f), offsetY), null, color * alpha, 0f, new Vector2(0, tex.Size().Y / 2), scaling, default, default);
-        //spriteBatch.Draw(tex, new Vector2(-30 + (float)(tex.Width * 2 * scaling.X) - (8 * scaling.X / 2.2f), offsetY), null, color * alpha, 0f, new Vector2(0, tex.Size().Y / 2), scaling, default, default);
     }
-    public static void SetTime(int time) {
+    public static void BeginOperation(float time) {
         WaitTime = time;
         CurrentWaitTime = time;
+        IntermissionAnimator?.Restart();
+        IntermissionAnimator?.Run();
     }
-    public static void Tick(int delta) {
+    public static void Tick(float delta) {
         if (CurrentWaitTime - delta < 0)
             CurrentWaitTime = 0;
         else

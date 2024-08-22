@@ -50,7 +50,7 @@ public static class RebirthMouse
         }
 
         if (DoTrail) {
-            var p = GameHandler.ParticleSystem.MakeParticle(new Vector3(MouseUtils.MousePosition.X, MouseUtils.MousePosition.Y, 0), TankGame.WhitePixel);
+            var p = GameHandler.Particles.MakeParticle(new Vector3(MouseUtils.MousePosition.X, MouseUtils.MousePosition.Y, 0), TankGame.WhitePixel);
             p.IsIn2DSpace = true;
             var dir = _oldMouse.DirectionOf(MouseUtils.MousePosition).ToResolution();
             p.Rotation2D = dir.ToRotation();

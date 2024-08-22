@@ -25,8 +25,8 @@ namespace TanksRebirth.GameContent
             HitPoints = _hitpointsMax = hitPoints;
             _maskingTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/armor");
 
-            _healthBarTotal = GameHandler.ParticleSystem.MakeParticle(Host.Position3D + new Vector3(0, 20, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"));
-            _healthBarCurrent = GameHandler.ParticleSystem.MakeParticle(Host.Position3D + new Vector3(0, 20, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"));
+            _healthBarTotal = GameHandler.Particles.MakeParticle(Host.Position3D + new Vector3(0, 20, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"));
+            _healthBarCurrent = GameHandler.Particles.MakeParticle(Host.Position3D + new Vector3(0, 20, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"));
 
             _healthBarTotal.HasAddativeBlending = false;
             _healthBarCurrent.HasAddativeBlending = false;

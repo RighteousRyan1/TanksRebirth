@@ -9,7 +9,7 @@ using TanksRebirth.GameContent.Systems;
 
 namespace TanksRebirth.GameContent;
 
-public static class AiHelpers {
+public static class AIManager {
     public static AiParameters GetAiDefaults(this AITank tank, TankProperties properties, int tankType) {
         var baseExpValue = 0f;
         var aiParams = new AiParameters();
@@ -1338,7 +1338,6 @@ public static class AiHelpers {
         tank.BaseExpValue = baseExpValue;
         return aiParams;
     }
-
     public static int GetHighestTierActive(Func<AITank, bool>? predicate = null) {
         var highest = TankID.None;
 
@@ -1356,7 +1355,6 @@ public static class AiHelpers {
 
         return highest;
     }
-
     public static int CountAll(Func<AITank, bool>? predicate = null) {
         var cnt = 0;
         Span<AITank> tanks = GameHandler.AllAITanks;
@@ -1369,7 +1367,6 @@ public static class AiHelpers {
 
         return cnt;
     }
-
     public static int GetTankCountOfType(int tier) {
         var cnt = 0;
         Span<AITank> tanks = GameHandler.AllAITanks;

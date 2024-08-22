@@ -429,7 +429,7 @@ namespace TanksRebirth.GameContent.UI
                 // ChatSystem.SendMessage(_gpuSettingsOffset, Color.White, "<Debug>");
             }
             var text = /*$"{TankGame.GameLanguage.Mission} 1        x{AITank.CountAll()}";*/
-                $"{GameProperties.LoadedCampaign.CurrentMission.Name ?? $"{TankGame.GameLanguage.Mission}"} x{AiHelpers.CountAll()}";
+                $"{GameProperties.LoadedCampaign.CurrentMission.Name ?? $"{TankGame.GameLanguage.Mission}"} x{AIManager.CountAll()}";
             Vector2 drawOrigin = TankGame.TextFont.MeasureString(text) / 2f;
             MissionInfoBar.UniqueDraw =
                 (uiPanel, spriteBatch) => spriteBatch.DrawString(TankGame.TextFont, text, uiPanel.Hitbox.Center.ToVector2(), Color.White, new Vector2(1.5f).ToResolution(), 0, drawOrigin);

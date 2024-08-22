@@ -21,10 +21,10 @@ using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.Systems.AI;
 using System.Threading.Tasks;
+using TanksRebirth.GameContent.RebirthUtils;
 
 namespace TanksRebirth.GameContent;
 public partial class AITank : Tank  {
-    // TODO: Make smoke bombs!
     /// <summary>A list of all active dangers on the map to <see cref="AITank"/>s. Includes <see cref="Shell"/>s, <see cref="Mine"/>s,
     /// and <see cref="Explosion"/>s by default. To make an AI Tank behave towards any thing you would like, make it inherit from <see cref="IAITankDanger"/>
     /// and change the tank's behavior when running away by hooking into <see cref="WhileDangerDetected"/>.</summary>
@@ -462,7 +462,7 @@ public partial class AITank : Tank  {
                     //var gain = (BaseExpValue + rand) * GameData.UniversalExpMultiplier;
                     TankGame.GameData.ExpLevel += gain;
 
-                    var p = GameHandler.ParticleSystem.MakeParticle(Position3D + new Vector3(0, 30, 0), $"+{gain * 100:0.00} XP");
+                    var p = GameHandler.Particles.MakeParticle(Position3D + new Vector3(0, 30, 0), $"+{gain * 100:0.00} XP");
 
                     p.Scale = new(0.5f);
                     p.Roll = MathHelper.Pi;
@@ -952,21 +952,19 @@ public partial class AITank : Tank  {
                     if (IsPathBlocked) {
                         if (refPoints.Length > 0) {
                             // up = PiOver2
-                            if (AiTankType == TankID.Violet)
-                                ChatSystem.SendMessage(Velocity.ToString(), Color.White);
                             var dirOf = MathUtils.DirectionOf(travelPath, Position).ToRotation();
                             var refAngle = dirOf + MathHelper.PiOver2;
 
                             // this is a very bandaid fix....
-                            /*if (refAngle % MathHelper.PiOver2 == 0) {
+                            if (refAngle % MathHelper.PiOver2 == 0) {
                                 refAngle += GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi);
-                            }*/
+                            }
                             TargetTankRotation = refAngle;
                         }
                     }
                     // FIXME: experimental.
                     if (IsPathBlocked)
-                        _pathHitCount += TankGame.DeltaTime; //+= TankGame.DeltaTime;
+                        _pathHitCount += TankGame.DeltaTime;
                     else
                         _pathHitCount = 0;
 
@@ -1107,7 +1105,7 @@ public partial class AITank : Tank  {
                 if (SpecialBehaviors[0].Value > SpecialBehaviors[1].Value) {
                     SpecialBehaviors[2].Value += TankGame.DeltaTime;
 
-                    GameHandler.ParticleSystem.MakeShineSpot(Position3D, Color.Blue, 1f);
+                    GameHandler.Particles.MakeShineSpot(Position3D, Color.Blue, 1f);
 
                     if (SpecialBehaviors[2].Value > 180f) {
 
@@ -1263,7 +1261,7 @@ public partial class AITank : Tank  {
         if (Dead)
             return;
 
-        if (DebugUtils.DebugLevel == DebugUtils.Id.EntityData)
+        if (DebugManager.DebugLevel == DebugManager.Id.EntityData)
         {
             float calculation = 0f;
 
@@ -1280,14 +1278,14 @@ public partial class AITank : Tank  {
                     AimTarget).ToRotation() - MathHelper.PiOver2;
                 GetTanksInPath(Vector2.UnitY.RotatedByRadians(rot), out var rayEnd2, true, Vector2.Zero, pattern: x => x.IsSolid | x.Type == BlockID.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
             }
-            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"{poo.Count} tank(s) spotted | pathC: {_pathHitCount % PathHitMax} / 10", MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), World, View, Projection), 1, centered: true);
+            DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"{poo.Count} tank(s) spotted | pathC: {_pathHitCount % PathHitMax} / 10", MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), World, View, Projection), 1, centered: true);
 
         }
-        if (DebugUtils.DebugLevel == 6 && !Properties.Stationary) {
+        if (DebugManager.DebugLevel == 6 && !Properties.Stationary) {
             IsObstacleInWay(AiParams.BlockWarinessDistance / PATH_UNIT_LENGTH, Vector2.UnitY.RotatedByRadians(TargetTankRotation), out var travelPos, out var refPoints, TankPathCheckSize, draw: true);
-            DebugUtils.DrawDebugString(TankGame.SpriteRenderer, "TEP", MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(travelPos.X, 11, travelPos.Y), View, Projection), 6, centered: true);
+            DebugManager.DrawDebugString(TankGame.SpriteRenderer, "TEP", MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(travelPos.X, 11, travelPos.Y), View, Projection), 6, centered: true);
             foreach (var pt in refPoints)
-                DebugUtils.DrawDebugString(TankGame.SpriteRenderer, "pt", MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), Matrix.CreateTranslation(pt.X, 0, pt.Y), View, Projection), 6, centered: true);
+                DebugManager.DrawDebugString(TankGame.SpriteRenderer, "pt", MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), Matrix.CreateTranslation(pt.X, 0, pt.Y), View, Projection), 6, centered: true);
 
 
             //DebugUtils.DrawDebugString(TankGame.SpriteRenderer, "end", MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(MathUtils.DirectionOf(travelPos, Position).X, 0, MathUtils.DirectionOf(travelPos, Position).Y), View, Projection), 6, centered: true);

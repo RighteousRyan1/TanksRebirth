@@ -20,7 +20,7 @@ using FontStashSharp;
 using TanksRebirth.GameContent.Properties;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.GameContent.ID;
-using static System.Net.Mime.MediaTypeNames;
+using TanksRebirth.GameContent.RebirthUtils;
 
 namespace TanksRebirth.GameContent
 {
@@ -675,7 +675,7 @@ namespace TanksRebirth.GameContent
                 SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFontLarge, pText, new(pos.X, pos.Y + (flip ? 100 : -125).ToResolutionY()), playerColor, Color.White, Vector2.One.ToResolution(), 0f, 2f);
             }
 
-            if (DebugUtils.DebugLevel == 1 || _drawShotPath)
+            if (DebugManager.DebugLevel == 1 || _drawShotPath)
                 DrawShootPath();
 
             if (Properties.Invisible && GameProperties.InMission)

@@ -75,7 +75,7 @@ public class TankFootprint {
             ? $"Assets/textures/tank_footprint_alt"
             : $"Assets/textures/tank_footprint");
 
-        var track = GameHandler.ParticleSystem.MakeParticle(Position, texture);
+        var track = GameHandler.Particles.MakeParticle(Position, texture);
 
         track.HasAddativeBlending = false;
 

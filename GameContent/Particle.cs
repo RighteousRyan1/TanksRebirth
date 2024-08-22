@@ -7,6 +7,7 @@ using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Utilities;
 using FontStashSharp;
 using tainicom.Aether.Physics2D.Dynamics;
+using TanksRebirth.GameContent.RebirthUtils;
 
 namespace TanksRebirth.GameContent;
 
@@ -99,11 +100,11 @@ public class Particle
     {
         Position = position;
         System = system;
-        int index = Array.IndexOf(GameHandler.ParticleSystem.CurrentParticles, null);
+        int index = Array.IndexOf(GameHandler.Particles.CurrentParticles, null);
 
         Id = index;
 
-        GameHandler.ParticleSystem.CurrentParticles[index] = this;
+        GameHandler.Particles.CurrentParticles[index] = this;
     }
 
     public void Update()
@@ -134,7 +135,7 @@ public class Particle
                     effect.Alpha = Alpha;
 
                     effect.FogEnabled = false;
-                    effect.EmissiveColor = Color.ToVector3() * GameHandler.GameLight.Brightness;
+                    effect.EmissiveColor = Color.ToVector3() * SceneManager.GameLight.Brightness;
 
                     effect.SetDefaultGameLighting_IngameEntities(LightPower);
                 }
@@ -160,7 +161,7 @@ public class Particle
                 EffectHandle.Projection = TankGame.GameProjection;
                 EffectHandle.TextureEnabled = true;
                 EffectHandle.Texture = Texture;
-                EffectHandle.EmissiveColor = Color.ToVector3() * GameHandler.GameLight.Brightness;
+                EffectHandle.EmissiveColor = Color.ToVector3() * SceneManager.GameLight.Brightness;
 
                 EffectHandle.Alpha = Alpha;
 
@@ -192,6 +193,6 @@ public class Particle
 
     public void Destroy() {
         UniqueBehavior = null;
-        GameHandler.ParticleSystem.CurrentParticles[Id] = null;
+        GameHandler.Particles.CurrentParticles[Id] = null;
     }
 }

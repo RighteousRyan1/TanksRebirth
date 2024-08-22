@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using TanksRebirth.Enums;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Properties;
+using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.Internals;
@@ -108,7 +109,7 @@ public class Campaign
     {
         // FIXME: source of level editor bug.
         PlacementSquare.ResetSquares();
-        GameHandler.CleanupEntities();
+        SceneManager.CleanupEntities();
         const int roundingFactor = 5;
         int numPlayers = 0;
         for (int i = 0; i < LoadedMission.Tanks.Length; i++)

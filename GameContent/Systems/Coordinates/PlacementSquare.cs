@@ -13,259 +13,232 @@ using TanksRebirth.Enums;
 using TanksRebirth.Internals.UI;
 using TanksRebirth.GameContent.ID;
 using Microsoft.Xna.Framework.Input;
+using TanksRebirth.GameContent.RebirthUtils;
 
-namespace TanksRebirth.GameContent.Systems.Coordinates
-{
-    public class PlacementSquare
-    {
-        // Drag-and-Drop
-        public static bool DrawStacks = true;
-        public static bool IsPlacing { get; private set; }
-        public bool HasItem => BlockId > -1 || TankId > -1;
+namespace TanksRebirth.GameContent.Systems.Coordinates;
 
-        public static PlacementSquare CurrentlyHovered;
+public class PlacementSquare {
+    // Drag-and-Drop
+    public static bool DrawStacks = true;
+    public static bool IsPlacing { get; private set; }
+    public bool HasItem => BlockId > -1 || TankId > -1;
 
-        public static bool displayHeights = true;
+    public static PlacementSquare CurrentlyHovered;
 
-        public static List<PlacementSquare> Placements = new();
+    public static bool displayHeights = true;
 
-        public Vector3 Position { get; set; }
+    public static List<PlacementSquare> Placements = new();
 
-        private BoundingBox _box;
+    public Vector3 Position { get; set; }
 
-        private Model _model;
+    private BoundingBox _box;
 
-        public bool IsHovered => RayUtils.GetMouseToWorldRay().Intersects(_box).HasValue;
+    private Model _model;
 
-        public static bool PlacesBlock; // if false, tanks will be placed
+    public bool IsHovered => RayUtils.GetMouseToWorldRay().Intersects(_box).HasValue;
 
-        public int TankId = -1;
-        public int BlockId = -1;
+    public static bool PlacesBlock; // if false, tanks will be placed
 
-        private Action<PlacementSquare> _onClick = null;
+    public int TankId = -1;
+    public int BlockId = -1;
 
-        public bool HasBlock; // if false, a tank exists here
+    private Action<PlacementSquare> _onClick = null;
 
-        public readonly int Id;
+    public bool HasBlock; // if false, a tank exists here
 
-        public Point RelativePosition;
+    public readonly int Id;
 
-        public PlacementSquare(Vector3 position, float dimensions)
-        {
-            Position = position;
-            _box = new(position - new Vector3(dimensions / 2, 0, dimensions / 2), position + new Vector3(dimensions / 2, 0, dimensions / 2));
+    public Point RelativePosition;
 
-            _model = GameResources.GetGameResource<Model>("Assets/check");
+    public PlacementSquare(Vector3 position, float dimensions) {
+        Position = position;
+        _box = new(position - new Vector3(dimensions / 2, 0, dimensions / 2), position + new Vector3(dimensions / 2, 0, dimensions / 2));
 
-            Id = Placements.Count;
+        _model = GameResources.GetGameResource<Model>("Assets/check");
 
-            Placements.Add(this);
-        }
-        public static void InitializeLevelEditorSquares()
-        {
-            for (int j = 0; j < BlockMapPosition.MAP_HEIGHT; j++)
-            {
-                for (int i = 0; i < BlockMapPosition.MAP_WIDTH_169; i++)
-                {
-                    new PlacementSquare(new BlockMapPosition(i, j), Block.FULL_BLOCK_SIZE)
-                    {
-                        _onClick = (place) =>
-                        {
-                            if (!place.HasItem)
-                                place.DoPlacementAction(true);
-                            else
-                                place.DoPlacementAction(false);
-                        },
-                        RelativePosition = new Point(i, j)
-                    };
-                }
+        Id = Placements.Count;
+
+        Placements.Add(this);
+    }
+    public static void InitializeLevelEditorSquares() {
+        for (int j = 0; j < BlockMapPosition.MAP_HEIGHT; j++) {
+            for (int i = 0; i < BlockMapPosition.MAP_WIDTH_169; i++) {
+                new PlacementSquare(new BlockMapPosition(i, j), Block.FULL_BLOCK_SIZE) {
+                    _onClick = (place) => {
+                        if (!place.HasItem)
+                            place.DoPlacementAction(true);
+                        else
+                            place.DoPlacementAction(false);
+                    },
+                    RelativePosition = new Point(i, j)
+                };
             }
         }
-        public static void ResetSquares()
-        {
-            for (int i = 0; i < Placements.Count; i++) {
-                Placements[i].TankId = -1;
-                Placements[i].BlockId = -1;
-            }
+    }
+    public static void ResetSquares() {
+        for (int i = 0; i < Placements.Count; i++) {
+            Placements[i].TankId = -1;
+            Placements[i].BlockId = -1;
         }
-        // TODO: need a sound for placement
+    }
+    // TODO: need a sound for placement
 
-        /// <summary>
-        /// Does default block placement/removal.
-        /// </summary>
-        /// <param name="place">Whether or not to place the block or remove the block. If false, the block is removed.</param>
-        public void DoPlacementAction(bool place)
-        {
-            if (UIElement.GetElementsAt(MouseUtils.MousePosition).Count > 0)
+    /// <summary>
+    /// Does default block placement/removal.
+    /// </summary>
+    /// <param name="place">Whether or not to place the block or remove the block. If false, the block is removed.</param>
+    public void DoPlacementAction(bool place) {
+        if (UIElement.GetElementsAt(MouseUtils.MousePosition).Count > 0)
+            return;
+        if (PlacesBlock) {
+            if (!HasBlock && HasItem)
                 return;
-            if (PlacesBlock)
-            {
-                if (!HasBlock && HasItem)
-                    return;
 
-                if (place)
-                {
-                    var block = new Block(LevelEditor.Active ? LevelEditor.SelectedBlockType : GameHandler.blockType, LevelEditor.Active ?  LevelEditor.BlockHeight : GameHandler.blockHeight, Position.FlattenZ());
-                    BlockId = block.Id;
+            if (place) {
+                var block = new Block(LevelEditor.Active ? LevelEditor.SelectedBlockType : DebugManager.blockType, LevelEditor.Active ? LevelEditor.BlockHeight : DebugManager.blockHeight, Position.FlattenZ());
+                BlockId = block.Id;
 
-                    HasBlock = true;
-                    IsPlacing = true;
-                }
-                else
-                {
-                    if (BlockId > -1)
-                        Block.AllBlocks[BlockId]?.Remove();
-                    if (TankId > -1)
-                        GameHandler.AllTanks[TankId]?.Remove(true);
-                    BlockId = -1;
-                    TankId = -1;
-
-                    HasBlock = true;
-                    IsPlacing = false;
-                }
-                LevelEditor.missionToRate = Mission.GetCurrent();
+                HasBlock = true;
+                IsPlacing = true;
             }
             else {
-                // var team = LevelEditor.Active ? LevelEditor.SelectedTankTeam : (TankTeam)GameHandler.tankToSpawnTeam;
+                if (BlockId > -1)
+                    Block.AllBlocks[BlockId]?.Remove();
+                if (TankId > -1)
+                    GameHandler.AllTanks[TankId]?.Remove(true);
+                BlockId = -1;
+                TankId = -1;
 
-                if (HasBlock && HasItem)
-                    return;
+                HasBlock = true;
+                IsPlacing = false;
+            }
+            LevelEditor.missionToRate = Mission.GetCurrent();
+        }
+        else {
+            // var team = LevelEditor.Active ? LevelEditor.SelectedTankTeam : (TankTeam)GameHandler.tankToSpawnTeam;
 
-                if (!HasBlock && HasItem)
-                {
-                    // FIXME: why does this even craaaash?
-                    GameHandler.AllTanks[TankId].Remove(true);
-                    TankId = -1;
-                    LevelEditor.missionToRate = Mission.GetCurrent();
-                    return;
-                }
+            if (HasBlock && HasItem)
+                return;
 
-                var team = LevelEditor.Active ? LevelEditor.SelectedTankTeam : GameHandler.tankToSpawnTeam;
-                if (LevelEditor.CurCategory == LevelEditor.Category.EnemyTanks)
-                {
-                    if (LevelEditor.Active && LevelEditor.SelectedTankTier < TankID.Brown)
-                        return;
-                    if (AiHelpers.CountAll() >= 50) {
-                        LevelEditor.Alert("You are at enemy tank capacity!");
-                        return;
-                    }
-                    var tnk = GameHandler.SpawnTankAt(Position, LevelEditor.Active ? LevelEditor.SelectedTankTier : GameHandler.tankToSpawnType, team); // todo: finish
-                    HasBlock = false;
-                    TankId = tnk.WorldId;
-                }
-                else
-                {
-                    var type = LevelEditor.Active ? LevelEditor.SelectedPlayerType : PlayerID.Blue;
-
-                    var idx = Array.FindIndex(GameHandler.AllPlayerTanks, x => x is not null && x.PlayerType == type);
-                    if (idx > -1) {
-                        LevelEditor.Alert($"This color player tank already exists! (ID {idx})");
-                        return;
-                    }
-
-                    var me = GameHandler.SpawnMe(type, team);
-                    TankId = me.WorldId;
-                }
+            if (!HasBlock && HasItem) {
+                // FIXME: why does this even craaaash?
+                GameHandler.AllTanks[TankId].Remove(true);
+                TankId = -1;
                 LevelEditor.missionToRate = Mission.GetCurrent();
+                return;
             }
-        }
-        public void Update()
-        {
-            if (IsHovered)
-            {
-                CurrentlyHovered = this;
-                if (InputUtils.CanDetectClick())
-                    _onClick?.Invoke(this);
 
-                if (PlacesBlock)
-                {
-                    if (InputUtils.MouseLeft)
-                    {
-                        if (IsPlacing)
-                        {
-                            if (!HasItem)
-                            {
-                                DoPlacementAction(true);
-                            }
+            var team = LevelEditor.Active ? LevelEditor.SelectedTankTeam : DebugManager.tankToSpawnTeam;
+            if (LevelEditor.CurCategory == LevelEditor.Category.EnemyTanks) {
+                if (LevelEditor.Active && LevelEditor.SelectedTankTier < TankID.Brown)
+                    return;
+                if (AIManager.CountAll() >= 50) {
+                    LevelEditor.Alert("You are at enemy tank capacity!");
+                    return;
+                }
+                var tnk = DebugManager.SpawnTankAt(Position, LevelEditor.Active ? LevelEditor.SelectedTankTier : DebugManager.tankToSpawnType, team); // todo: finish
+                HasBlock = false;
+                TankId = tnk.WorldId;
+            }
+            else {
+                var type = LevelEditor.Active ? LevelEditor.SelectedPlayerType : PlayerID.Blue;
+
+                var idx = Array.FindIndex(GameHandler.AllPlayerTanks, x => x is not null && x.PlayerType == type);
+                if (idx > -1) {
+                    LevelEditor.Alert($"This color player tank already exists! (ID {idx})");
+                    return;
+                }
+
+                var me = DebugManager.SpawnMe(type, team);
+                TankId = me.WorldId;
+            }
+            LevelEditor.missionToRate = Mission.GetCurrent();
+        }
+    }
+    public void Update() {
+        if (IsHovered) {
+            CurrentlyHovered = this;
+            if (InputUtils.CanDetectClick())
+                _onClick?.Invoke(this);
+
+            if (PlacesBlock) {
+                if (InputUtils.MouseLeft) {
+                    if (IsPlacing) {
+                        if (!HasItem) {
+                            DoPlacementAction(true);
                         }
-                        else
-                        {
-                            if (HasItem)
-                            {
-                                DoPlacementAction(false);
-                            }
+                    }
+                    else {
+                        if (HasItem) {
+                            DoPlacementAction(false);
                         }
                     }
                 }
             }
-
-            if (BlockId > -1)
-            {
-                if (PlacesBlock)
-                {
-                    if (Block.AllBlocks[BlockId] is null)
-                        BlockId = -1;
-                }
-            }
-            else if (TankId > -1)
-            {
-                if (GameHandler.AllTanks[TankId] is null)
-                    TankId = -1;
-            }
         }
 
-        public void Render()
-        {
-            var hoverUi = UIElement.GetElementsAt(MouseUtils.MousePosition).Count > 0;
+        if (BlockId > -1) {
+            if (PlacesBlock) {
+                if (Block.AllBlocks[BlockId] is null)
+                    BlockId = -1;
+            }
+        }
+        else if (TankId > -1) {
+            if (GameHandler.AllTanks[TankId] is null)
+                TankId = -1;
+        }
+    }
 
-            foreach (var mesh in _model.Meshes) {
-                foreach (BasicEffect effect in mesh.Effects) {
-                    effect.World = Matrix.CreateScale(0.68f) * Matrix.CreateTranslation(Position + new Vector3(0, 0.1f, 0));
-                    effect.View = TankGame.GameView;
-                    effect.Projection = TankGame.GameProjection;
+    public void Render() {
+        var hoverUi = UIElement.GetElementsAt(MouseUtils.MousePosition).Count > 0;
 
-                    //var pos1 = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
+        foreach (var mesh in _model.Meshes) {
+            foreach (BasicEffect effect in mesh.Effects) {
+                effect.World = Matrix.CreateScale(0.68f) * Matrix.CreateTranslation(Position + new Vector3(0, 0.1f, 0));
+                effect.View = TankGame.GameView;
+                effect.Projection = TankGame.GameProjection;
 
-                    //SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"{Id}\n({RelativePosition.X}, {RelativePosition.Y})", pos1, Color.White, Color.Black, new Vector2(TankGame.AddativeZoom * 0.8f).ToResolution(), 0f);
+                //var pos1 = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
 
-                    if (DrawStacks) {
-                        if (BlockId > -1) {
-                            if (displayHeights && Block.AllBlocks[BlockId] is not null) {
-                                if (Block.AllBlocks[BlockId].CanStack) {
-                                    var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
+                //SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"{Id}\n({RelativePosition.X}, {RelativePosition.Y})", pos1, Color.White, Color.Black, new Vector2(TankGame.AddativeZoom * 0.8f).ToResolution(), 0f);
 
-                                    SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"{Block.AllBlocks[BlockId].Stack}", pos, Color.White, Color.Black, new Vector2(TankGame.AddativeZoom * 1.5f).ToResolution(), 0f);
-                                }
-                                if (Block.AllBlocks[BlockId].Type == BlockID.Teleporter) {
-                                    var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
+                if (DrawStacks) {
+                    if (BlockId > -1) {
+                        if (displayHeights && Block.AllBlocks[BlockId] is not null) {
+                            if (Block.AllBlocks[BlockId].CanStack) {
+                                var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
 
-                                    SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"TP:{Block.AllBlocks[BlockId].TpLink}", pos, Color.White, Color.Black, new Vector2(TankGame.AddativeZoom * 1.5f).ToResolution(), 0f);
-                                }
+                                SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"{Block.AllBlocks[BlockId].Stack}", pos, Color.White, Color.Black, new Vector2(TankGame.AddativeZoom * 1.5f).ToResolution(), 0f);
+                            }
+                            if (Block.AllBlocks[BlockId].Type == BlockID.Teleporter) {
+                                var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
+
+                                SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"TP:{Block.AllBlocks[BlockId].TpLink}", pos, Color.White, Color.Black, new Vector2(TankGame.AddativeZoom * 1.5f).ToResolution(), 0f);
                             }
                         }
-                        else if (TankId > -1) {
-                            var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
-
-                            SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"{LevelEditor.TeamColorsLocalized[GameHandler.AllTanks[TankId].Team]}", pos - new Vector2(0, 8).ToResolution(), TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.Black, new Vector2(0.9f).ToResolution() * TankGame.AddativeZoom, 0f);
-
-                            if (GameHandler.AllTanks[TankId] is AITank ai)
-                                SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"ID: {ai.AITankId}", pos + new Vector2(0, 8), TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.Black, new Vector2(0.8f).ToResolution() * TankGame.AddativeZoom, 0f);
-                            if (GameHandler.AllTanks[TankId] is PlayerTank player)
-                                SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"ID: {player.PlayerId}", pos + new Vector2(0, 8), TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.Black, new Vector2(0.8f).ToResolution() * TankGame.AddativeZoom, 0f);
-                        }
                     }
-                    effect.TextureEnabled = true;
-                    effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
+                    else if (TankId > -1) {
+                        var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
 
-                    if (IsHovered && !hoverUi)
-                        effect.Alpha = 0.7f;
-                    else
-                        effect.Alpha = 0f;
+                        SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"{LevelEditor.TeamColorsLocalized[GameHandler.AllTanks[TankId].Team]}", pos - new Vector2(0, 8).ToResolution(), TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.Black, new Vector2(0.9f).ToResolution() * TankGame.AddativeZoom, 0f);
 
-                    effect.SetDefaultGameLighting_IngameEntities();
+                        if (GameHandler.AllTanks[TankId] is AITank ai)
+                            SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"ID: {ai.AITankId}", pos + new Vector2(0, 8), TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.Black, new Vector2(0.8f).ToResolution() * TankGame.AddativeZoom, 0f);
+                        if (GameHandler.AllTanks[TankId] is PlayerTank player)
+                            SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"ID: {player.PlayerId}", pos + new Vector2(0, 8), TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.Black, new Vector2(0.8f).ToResolution() * TankGame.AddativeZoom, 0f);
+                    }
                 }
-                mesh.Draw();
+                effect.TextureEnabled = true;
+                effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
+
+                if (IsHovered && !hoverUi)
+                    effect.Alpha = 0.7f;
+                else
+                    effect.Alpha = 0f;
+
+                effect.SetDefaultGameLighting_IngameEntities();
             }
+            mesh.Draw();
         }
     }
 }

@@ -109,7 +109,7 @@ public static class DiscordRichPresence {
                         SetDetails($"Testing a level");
                 }
 
-                var highestTierTank = AiHelpers.GetHighestTierActive();
+                var highestTierTank = AIManager.GetHighestTierActive();
                 SetSmallAsset($"tank_{highestTierTank.ToString().ToLower()}", $"Currently fighting {getArticle(highestTierTank.ToString())} {highestTierTank} Tank");
             }
             _client?.SetPresence(_rp);

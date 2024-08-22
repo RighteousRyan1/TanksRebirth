@@ -24,11 +24,11 @@ using TanksRebirth.Net;
 using System.Runtime.InteropServices;
 using System.Globalization;
 using TanksRebirth.Internals.Common.Framework.Animation;
+using TanksRebirth.GameContent.RebirthUtils;
 
 namespace TanksRebirth.GameContent.UI;
 
-public static class MainMenu
-{
+public static class MainMenu {
     public static bool Active { get; private set; } = true;
 
     public static OggMusic Theme;
@@ -62,7 +62,7 @@ public static class MainMenu
     public static UITextButton StartMPGameButton;
 
     public static UITextButton DifficultiesButton;
-    
+
     private static UIElement[] _menuElements;
 
     internal static List<UIElement> campaignNames = new();
@@ -133,7 +133,6 @@ public static class MainMenu
 
     public static RenderableCrate Crate;
 
-    private static int _spinCd = 30;
     private static float _spinOffset; // shut up IDE pls CS0649 bs
 
     //private static float _spinMod = 0.001f;
@@ -145,8 +144,7 @@ public static class MainMenu
 
     // not always properly set, fix later
     // this code is becoming so shit i want to vomit but i don't know any better
-    public enum State
-    {
+    public enum State {
         LoadingMods,
         PrimaryMenu,
         PlayList,
@@ -166,14 +164,13 @@ public static class MainMenu
 
     private static bool _initialized;
 
-    public static void InitializeBasics()
-    {
-        /*var pts = new List<Vector2>() {
-            new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 4)
-        };*/
+    public static void InitializeBasics() {
+        // we will start at {-200, 200}
+        // go to middle, upper after 4 seconds
+        // will scale down to 0.5
         LogoAnimation = Animator.Create()
-            .WithFrame(new(new Vector2(-200, 200), Vector2.Zero, 0f, TimeSpan.FromSeconds(4), EasingFunction.OutBack))
-            .WithFrame(new(new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 4), Vector2.One * 0.5f, 0f, TimeSpan.FromSeconds(2)));
+            .WithFrame(new(new Vector2(-200, 200), Vector2.Zero, [0f], TimeSpan.FromSeconds(4), EasingFunction.OutBack))
+            .WithFrame(new(new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 4), Vector2.One * 0.5f, [0f], TimeSpan.FromSeconds(2)));
         LogoAnimation.Run();
         MenuState = State.PrimaryMenu;
         Crate = new(new(0, 0, 0), TankGame.GameView, TankGame.GameProjection) {
@@ -194,8 +191,7 @@ public static class MainMenu
 
         // LogoTexture = SteamworksUtils.GetAvatar(Steamworks.SteamUser.GetSteamID());
     }
-    public static void InitializeUIGraphics()
-    {
+    public static void InitializeUIGraphics() {
         if (_initialized) {
             foreach (var field in typeof(MainMenu).GetFields()) {
                 if (field.GetValue(null) is UIElement uielem) {
@@ -209,52 +205,44 @@ public static class MainMenu
         TankGame.Instance.Window.ClientSizeChanged += UpdateProjection;
         var font = TankGame.TextFont;
         #region Init Standard Buttons
-        PlayButton = new(TankGame.GameLanguage.Play, font, Color.WhiteSmoke)
-        {
+        PlayButton = new(TankGame.GameLanguage.Play, font, Color.WhiteSmoke) {
             IsVisible = true,
         };
         PlayButton.SetDimensions(() => new Vector2(700, 550).ToResolution(), () => new Vector2(500, 50).ToResolution());
-        PlayButton.OnLeftClick = (uiElement) =>
-        {
+        PlayButton.OnLeftClick = (uiElement) => {
             GameUI.BackButton.IsVisible = true;
             MenuState = State.PlayList;
         };
 
-        PlayButton_Multiplayer = new(TankGame.GameLanguage.Multiplayer, font, Color.WhiteSmoke)
-        {
+        PlayButton_Multiplayer = new(TankGame.GameLanguage.Multiplayer, font, Color.WhiteSmoke) {
             IsVisible = false,
             Tooltip = TankGame.GameLanguage.MultiplayerFlavor
         };
         PlayButton_Multiplayer.SetDimensions(() => new Vector2(700, 750).ToResolution(), () => new Vector2(500, 50).ToResolution());
 
-        PlayButton_Multiplayer.OnLeftClick = (uiElement) =>
-        {
+        PlayButton_Multiplayer.OnLeftClick = (uiElement) => {
             SetPlayButtonsVisibility(false);
             SetMPButtonsVisibility(true);
             MenuState = State.Mulitplayer;
         };
 
-        DifficultiesButton = new(TankGame.GameLanguage.Difficulties, font, Color.WhiteSmoke)
-        {
+        DifficultiesButton = new(TankGame.GameLanguage.Difficulties, font, Color.WhiteSmoke) {
             IsVisible = false,
             Tooltip = TankGame.GameLanguage.DifficultiesFlavor
         };
         DifficultiesButton.SetDimensions(() => new Vector2(700, 550).ToResolution(), () => new Vector2(500, 50).ToResolution());
-        DifficultiesButton.OnLeftClick = (element) =>
-        {
+        DifficultiesButton.OnLeftClick = (element) => {
             MenuState = State.Difficulties;
         };
 
 
-        PlayButton_SinglePlayer = new(TankGame.GameLanguage.SinglePlayer, font, Color.WhiteSmoke)
-        {
+        PlayButton_SinglePlayer = new(TankGame.GameLanguage.SinglePlayer, font, Color.WhiteSmoke) {
             IsVisible = false,
             Tooltip = TankGame.GameLanguage.SinglePlayerFlavor
         };
         PlayButton_SinglePlayer.SetDimensions(() => new Vector2(700, 450).ToResolution(), () => new Vector2(500, 50).ToResolution());
 
-        PlayButton_SinglePlayer.OnLeftClick = (uiElement) =>
-        {
+        PlayButton_SinglePlayer.OnLeftClick = (uiElement) => {
             SetCampaignDisplay();
             MenuState = State.Campaigns;
         };
@@ -306,35 +294,29 @@ public static class MainMenu
             }
         };
 
-        CreateServerButton = new(TankGame.GameLanguage.CreateServer, font, Color.WhiteSmoke)
-        {
+        CreateServerButton = new(TankGame.GameLanguage.CreateServer, font, Color.WhiteSmoke) {
             IsVisible = false,
             Tooltip = "Create a server with the written IP and Port in the form of ip:port"
         };
         CreateServerButton.SetDimensions(() => new Vector2(700, 350).ToResolution(), () => new Vector2(500, 50).ToResolution());
-        CreateServerButton.OnLeftClick = (uiButton) =>
-        {
-            if (UsernameInput.IsEmpty())
-            {
+        CreateServerButton.OnLeftClick = (uiButton) => {
+            if (UsernameInput.IsEmpty()) {
                 SoundPlayer.SoundError();
                 ChatSystem.SendMessage("Your username is empty!", Color.Red);
                 return;
             }
-            if (PortInput.IsEmpty())
-            {
+            if (PortInput.IsEmpty()) {
                 SoundPlayer.SoundError();
                 ChatSystem.SendMessage("The port is empty!", Color.Red);
                 return;
             }
-            if (IPInput.IsEmpty())
-            {
+            if (IPInput.IsEmpty()) {
                 SoundPlayer.SoundError();
                 ChatSystem.SendMessage("The IP address is not valid.", Color.Red);
                 return;
             }
 
-            if (int.TryParse(PortInput.GetRealText(), out var port))
-            {
+            if (int.TryParse(PortInput.GetRealText(), out var port)) {
                 Server.CreateServer();
 
                 NetPlay.ServerName = ServerNameInput.GetRealText() == string.Empty ? "Unnamed" : ServerNameInput.GetRealText();
@@ -347,8 +329,7 @@ public static class MainMenu
 
                 StartMPGameButton.IsVisible = true;
             }
-            else
-            {
+            else {
                 SoundPlayer.SoundError();
                 ChatSystem.SendMessage("That is not a valid port.", Color.Red);
                 /*Server.CreateServer();
@@ -364,13 +345,11 @@ public static class MainMenu
             }
 
         };
-        StartMPGameButton = new(TankGame.GameLanguage.Play, font, Color.WhiteSmoke)
-        {
+        StartMPGameButton = new(TankGame.GameLanguage.Play, font, Color.WhiteSmoke) {
             IsVisible = false,
             Tooltip = "Start the game with every client that is connected"
         };
-        StartMPGameButton.OnLeftClick = (uiButton) =>
-        {
+        StartMPGameButton.OnLeftClick = (uiButton) => {
             PlayButton_SinglePlayer.OnLeftClick?.Invoke(null); // starts the game
 
             SetPlayButtonsVisibility(false);
@@ -379,14 +358,12 @@ public static class MainMenu
         };
         StartMPGameButton.SetDimensions(() => new Vector2(700, 600).ToResolution(), () => new Vector2(500, 50).ToResolution());
 
-        CosmeticsMenuButton = new(TankGame.GameLanguage.CosmeticsMenu, font, Color.WhiteSmoke)
-        {
+        CosmeticsMenuButton = new(TankGame.GameLanguage.CosmeticsMenu, font, Color.WhiteSmoke) {
             IsVisible = false,
             Tooltip = TankGame.GameLanguage.CosmeticsFlavor
         };
         CosmeticsMenuButton.SetDimensions(() => new Vector2(50, 50).ToResolution(), () => new Vector2(300, 50).ToResolution());
-        CosmeticsMenuButton.OnLeftClick += (elem) =>
-        {
+        CosmeticsMenuButton.OnLeftClick += (elem) => {
             CosmeticsMenuButton.IsVisible = false;
             SetPlayButtonsVisibility(false);
             SetMPButtonsVisibility(false);
@@ -396,38 +373,32 @@ public static class MainMenu
         };
         #endregion
         #region Input Boxes
-        UsernameInput = new(font, Color.WhiteSmoke, 1f, 20)
-        {
+        UsernameInput = new(font, Color.WhiteSmoke, 1f, 20) {
             IsVisible = false,
             DefaultString = "Username"
         };
         UsernameInput.SetDimensions(() => new Vector2(100, 400).ToResolution(), () => new Vector2(500, 50).ToResolution());
 
-        IPInput = new(font, Color.WhiteSmoke, 1f, 15)
-        {
+        IPInput = new(font, Color.WhiteSmoke, 1f, 15) {
             IsVisible = false,
             DefaultString = "Server IP address"
         };
         IPInput.SetDimensions(() => new Vector2(100, 500).ToResolution(), () => new Vector2(500, 50).ToResolution());
 
-        PortInput = new(font, Color.WhiteSmoke, 1f, 5)
-        {
+        PortInput = new(font, Color.WhiteSmoke, 1f, 5) {
             IsVisible = false,
             DefaultString = "Server Port"
         };
         PortInput.SetDimensions(() => new Vector2(100, 600).ToResolution(), () => new Vector2(500, 50).ToResolution());
 
-        PasswordInput = new(font, Color.WhiteSmoke, 1f, 10)
-        {
+        PasswordInput = new(font, Color.WhiteSmoke, 1f, 10) {
             IsVisible = false,
             DefaultString = "Server Password (Empty = None)"
         };
         PasswordInput.SetDimensions(() => new Vector2(100, 700).ToResolution(), () => new Vector2(500, 50).ToResolution());
-        DisconnectButton = new("Disconnect", font, Color.WhiteSmoke, 1f)
-        {
+        DisconnectButton = new("Disconnect", font, Color.WhiteSmoke, 1f) {
             IsVisible = false,
-            OnLeftClick = (arg) =>
-            {
+            OnLeftClick = (arg) => {
                 Client.SendDisconnect(NetPlay.CurrentClient.Id, NetPlay.CurrentClient.Name, "User left.");
                 Client.client.Disconnect();
 
@@ -445,21 +416,18 @@ public static class MainMenu
         };
         DisconnectButton.SetDimensions(() => new Vector2(100, 800).ToResolution(), () => new Vector2(500, 50).ToResolution());
 
-        ServerNameInput = new(font, Color.WhiteSmoke, 1f, 10)
-        {
+        ServerNameInput = new(font, Color.WhiteSmoke, 1f, 10) {
             IsVisible = false,
             DefaultString = "Server Name (Server Creation)"
         };
         ServerNameInput.SetDimensions(() => new Vector2(100, 800).ToResolution(), () => new Vector2(500, 50).ToResolution());
 
-        StatsMenu = new(TankGame.GameLanguage.GameStats, font, Color.WhiteSmoke)
-        { 
+        StatsMenu = new(TankGame.GameLanguage.GameStats, font, Color.WhiteSmoke) {
             IsVisible = false,
             OnLeftClick = (a) => { MenuState = State.StatsMenu; },
             Tooltip = "View your all-time statistics for this game!"
         };
-        StatsMenu.OnLeftClick = (a) =>
-        {
+        StatsMenu.OnLeftClick = (a) => {
             RequestStats();
             MenuState = State.StatsMenu;
         };
@@ -474,8 +442,7 @@ public static class MainMenu
             e.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick.ogg", SoundContext.Effect, rememberMe: true); };
         }
     }
-    public static void RenderCrate()
-    {
+    public static void RenderCrate() {
         Crate.View = View;
         Crate.Projection = Projection;
         Crate?.Render();
@@ -487,8 +454,7 @@ public static class MainMenu
         else
             Crate.LidPosition = Crate.ChestPosition;
     }
-    private static void UpdateLogo()
-    {
+    private static void UpdateLogo() {
         LogoPosition = LogoAnimation.CurrentPosition; //new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 4);
         //LogoRotation = LogoAnimation.CurrentRotation;
         //LogoScale = LogoAnimation.CurrentScale;
@@ -505,22 +471,19 @@ public static class MainMenu
             _sclOffset = _sclApproach;
 
         //if (_spinOffset <= _spinTarget)
-            //GameUtils.SoftStep(ref _spinOffset, _spinTarget, _spinSpeed
-            // considerations...
+        //GameUtils.SoftStep(ref _spinOffset, _spinTarget, _spinSpeed
+        // considerations...
     }
-    private static void UpdateProjection(object sender, EventArgs e)
-    {
+    private static void UpdateProjection(object sender, EventArgs e) {
         Projection = Matrix.CreateOrthographic(TankGame.Instance.GraphicsDevice.Viewport.Width, TankGame.Instance.GraphicsDevice.Viewport.Height, -2000f, 5000f);
         View = Matrix.CreateScale(2) * Matrix.CreateLookAt(new(0, 0, 500), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(MathHelper.PiOver2);
     }
 
     private static bool _diffButtonsInitialized;
-    private static void InitializeDifficultyButtons()
-    {
+    private static void InitializeDifficultyButtons() {
         _diffButtonsInitialized = true;
         SpriteFontBase font = TankGame.TextFont;
-        TanksAreCalculators = new("Tanks are Calculators", font, Color.White)
-        {
+        TanksAreCalculators = new("Tanks are Calculators", font, Color.White) {
             IsVisible = false,
             Tooltip = "ALL tanks will begin to look for angles" +
             "\non you (and other enemies) outside of their immediate aim." +
@@ -529,8 +492,7 @@ public static class MainMenu
         };
         TanksAreCalculators.SetDimensions(100, 300, 300, 40);
 
-        PieFactory = new("Lemon Pie Factory", font, Color.White)
-        {
+        PieFactory = new("Lemon Pie Factory", font, Color.White) {
             IsVisible = false,
             Tooltip = "Makes yellow tanks absurdly more dangerous by" +
             "\nturning them into mine-laying machines." +
@@ -539,8 +501,7 @@ public static class MainMenu
         };
         PieFactory.SetDimensions(100, 350, 300, 40);
 
-        UltraMines = new("Ultra Mines", font, Color.White)
-        {
+        UltraMines = new("Ultra Mines", font, Color.White) {
             IsVisible = false,
             Tooltip = "Mines are now 2x as deadly!" +
             "\nTheir explosion radii are now 2x as big!",
@@ -548,24 +509,21 @@ public static class MainMenu
         };
         UltraMines.SetDimensions(100, 400, 300, 40);
 
-        BulletHell = new("東方 Mode", font, Color.White)
-        {
+        BulletHell = new("東方 Mode", font, Color.White) {
             IsVisible = false,
             Tooltip = "Ricochet counts are now tripled!",
             OnLeftClick = (elem) => Difficulties.Types["BulletHell"] = !Difficulties.Types["BulletHell"]
         };
         BulletHell.SetDimensions(100, 450, 300, 40);
 
-        AllInvisible = new("All Invisible", font, Color.White)
-        {
+        AllInvisible = new("All Invisible", font, Color.White) {
             IsVisible = false,
             Tooltip = "Every single non-player tank is now invisible and no longer lay tracks!",
             OnLeftClick = (elem) => Difficulties.Types["AllInvisible"] = !Difficulties.Types["AllInvisible"]
         };
         AllInvisible.SetDimensions(100, 500, 300, 40);
 
-        AllStationary = new("All Stationary", font, Color.White)
-        {
+        AllStationary = new("All Stationary", font, Color.White) {
             IsVisible = false,
             Tooltip = "Every single non-player tank is now stationary." +
             "\nThis should REDUCE difficulty.",
@@ -573,24 +531,21 @@ public static class MainMenu
         };
         AllStationary.SetDimensions(100, 550, 300, 40);
 
-        AllHoming = new("Seekers", font, Color.White)
-        {
+        AllHoming = new("Seekers", font, Color.White) {
             IsVisible = false,
             Tooltip = "Every enemy tank now has homing bullets.",
             OnLeftClick = (elem) => Difficulties.Types["AllHoming"] = !Difficulties.Types["AllHoming"]
         };
         AllHoming.SetDimensions(100, 600, 300, 40);
 
-        Armored = new("Armored", font, Color.White)
-        {
+        Armored = new("Armored", font, Color.White) {
             IsVisible = false,
             Tooltip = "Every single non-player tank has 3 armor points added to it.",
             OnLeftClick = (elem) => Difficulties.Types["Armored"] = !Difficulties.Types["Armored"]
         };
         Armored.SetDimensions(100, 650, 300, 40);
 
-        BumpUp = new("Bump Up", font, Color.White)
-        {
+        BumpUp = new("Bump Up", font, Color.White) {
             IsVisible = false,
             Tooltip = "Makes the game a bit harder by \"Bumping up\" each tank, giving them one extra tier.",
             OnLeftClick = (elem) => Difficulties.Types["BumpUp"] = !Difficulties.Types["BumpUp"]
@@ -622,16 +577,14 @@ public static class MainMenu
         };
         Monochrome.SetDimensions(100, 750, 300, 40);
 
-        InfiniteLives = new("Infinite Lives", font, Color.White)
-        {
+        InfiniteLives = new("Infinite Lives", font, Color.White) {
             IsVisible = false,
             Tooltip = "You now have infinite lives. Have fun!",
             OnLeftClick = (elem) => Difficulties.Types["InfiniteLives"] = !Difficulties.Types["InfiniteLives"]
         };
         InfiniteLives.SetDimensions(450, 300, 300, 40);
 
-        MasterModBuff = new("Master Mod Buff", font, Color.White)
-        {
+        MasterModBuff = new("Master Mod Buff", font, Color.White) {
             IsVisible = false,
             Tooltip = "Vanilla tanks become their master mod counterparts." +
             "\nWill not work with \"Marble Mod Buff\" enabled.",
@@ -639,8 +592,7 @@ public static class MainMenu
         };
         MasterModBuff.SetDimensions(450, 350, 300, 40);
 
-        MarbleModBuff = new("Marble Mod Buff", font, Color.White)
-        {
+        MarbleModBuff = new("Marble Mod Buff", font, Color.White) {
             IsVisible = false,
             Tooltip = "Vanilla tanks become their marble mod counterparts." +
             "\nWill not work with \"Master Mod Buff\" enabled.",
@@ -648,33 +600,29 @@ public static class MainMenu
         };
         MarbleModBuff.SetDimensions(450, 400, 300, 40);
 
-        MachineGuns = new("Machine Guns", font, Color.White)
-        {
+        MachineGuns = new("Machine Guns", font, Color.White) {
             IsVisible = false,
             Tooltip = "Every tank now sprays bullets at you.",
             OnLeftClick = (elem) => Difficulties.Types["MachineGuns"] = !Difficulties.Types["MachineGuns"]
         };
         MachineGuns.SetDimensions(450, 450, 300, 40);
-        
-        RandomizedTanks = new("Randomized Tanks", font, Color.White)
-        {
+
+        RandomizedTanks = new("Randomized Tanks", font, Color.White) {
             IsVisible = false,
             Tooltip = "Every tank is now randomized." +
             "\nA black tank could appear where a brown tank would be!",
             OnLeftClick = (elem) => Difficulties.Types["RandomizedTanks"] = !Difficulties.Types["RandomizedTanks"]
         };
         RandomizedTanks.SetDimensions(450, 500, 300, 40);
-        
-        ThunderMode = new("Thunder Mode", font, Color.White)
-        {
+
+        ThunderMode = new("Thunder Mode", font, Color.White) {
             IsVisible = false,
             Tooltip = "The scene is much darker, and thunder is your only source of decent light.",
             OnLeftClick = (elem) => Difficulties.Types["ThunderMode"] = !Difficulties.Types["ThunderMode"]
         };
         ThunderMode.SetDimensions(450, 550, 300, 40);
-        
-        ThirdPerson = new("Third Person Mode", font, Color.White)
-        {
+
+        ThirdPerson = new("Third Person Mode", font, Color.White) {
             IsVisible = false,
             Tooltip = "Make the game a third person shooter!" +
             "\nYou can move around inter-directionally with WASD, and aim by dragging the mouse.",
@@ -682,16 +630,14 @@ public static class MainMenu
         };
         ThirdPerson.SetDimensions(450, 600, 300, 40);
 
-        AiCompanion = new("AI Companion", font, Color.White)
-        {
+        AiCompanion = new("AI Companion", font, Color.White) {
             IsVisible = false,
             Tooltip = "A random tank will spawn at your location and help you throughout every mission.",
             OnLeftClick = (elem) => Difficulties.Types["AiCompanion"] = !Difficulties.Types["AiCompanion"]
         };
         AiCompanion.SetDimensions(450, 650, 300, 40);
 
-        Shotguns = new("Shotguns", font, Color.White)
-        {
+        Shotguns = new("Shotguns", font, Color.White) {
             IsVisible = false,
             Tooltip = "Every tank now fires a spread of bullets.",
             OnLeftClick = (elem) => Difficulties.Types["Shotguns"] = !Difficulties.Types["Shotguns"]
@@ -699,24 +645,21 @@ public static class MainMenu
         Shotguns.SetDimensions(450, 700, 300, 40);
 
         //init predictions
-        Predictions = new("Predictions", font, Color.White)
-        {
+        Predictions = new("Predictions", font, Color.White) {
             IsVisible = false,
             Tooltip = "Every tank predicts your future position.",
             OnLeftClick = (elem) => Difficulties.Types["Predictions"] = !Difficulties.Types["Predictions"]
         };
         Predictions.SetDimensions(450, 750, 300, 40);
 
-        RandomizedPlayer = new("Randomized Player", font, Color.White)
-        {
+        RandomizedPlayer = new("Randomized Player", font, Color.White) {
             IsVisible = false,
             Tooltip = "You become a random enemy tank every life.",
             OnLeftClick = (elem) => Difficulties.Types["RandomPlayer"] = !Difficulties.Types["RandomPlayer"]
         };
         RandomizedPlayer.SetDimensions(800, 300, 300, 40);
 
-        BulletBlocking = new("Bullet Blocking", font, Color.White)
-        {
+        BulletBlocking = new("Bullet Blocking", font, Color.White) {
             IsVisible = false,
             Tooltip = "Enemies *attempt* to block your bullets." +
             "\nIt doesn't always work, sometimes even killing teammates.\nHigh fire-rate enemies are mostly affected.",
@@ -724,16 +667,14 @@ public static class MainMenu
         };
         BulletBlocking.SetDimensions(800, 350, 300, 40);
 
-        FFA = new("Free-for-all", font, Color.White)
-        {
+        FFA = new("Free-for-all", font, Color.White) {
             IsVisible = false,
             Tooltip = "Every tank is on their own!",
             OnLeftClick = (elem) => Difficulties.Types["FFA"] = !Difficulties.Types["FFA"]
         };
         FFA.SetDimensions(800, 400, 300, 40);
 
-        LanternMode = new("Lantern Mode", font, Color.White)
-        {
+        LanternMode = new("Lantern Mode", font, Color.White) {
             IsVisible = false,
             Tooltip = "Everything is dark. Only you and your lantern can save you now.",
             OnLeftClick = (elem) => {
@@ -744,8 +685,7 @@ public static class MainMenu
         LanternMode.SetDimensions(800, 450, 300, 40);
         // make all buttons not-interactable for non-host clients.
     }
-    private static void SetCampaignDisplay()
-    {
+    private static void SetCampaignDisplay() {
         SetPlayButtonsVisibility(false);
 
         foreach (var elem in campaignNames)
@@ -757,8 +697,7 @@ public static class MainMenu
 
         var campaignFiles = Directory.GetFiles(path).Where(file => file.EndsWith(".campaign")).ToArray();
 
-        for (int i = 0; i < campaignFiles.Length; i++)
-        {
+        for (int i = 0; i < campaignFiles.Length; i++) {
             int offset = i * 60;
             var name = campaignFiles[i];
 
@@ -767,14 +706,12 @@ public static class MainMenu
 
             var missions = campaign.CachedMissions;
 
-            foreach (var mission in missions)
-            {
+            foreach (var mission in missions) {
                 // load the mission file, then count each tank, then add that to the total
                 numTanks += mission.Tanks.Count(x => !x.IsPlayer);
             }
 
-            var elem = new UITextButton(Path.GetFileNameWithoutExtension(name), TankGame.TextFont, Color.White, 0.8f)
-            {
+            var elem = new UITextButton(Path.GetFileNameWithoutExtension(name), TankGame.TextFont, Color.White, 0.8f) {
                 IsVisible = true,
                 Tooltip = missions.Length + " missions" +
                 $"\n{numTanks} tanks total" +
@@ -790,8 +727,7 @@ public static class MainMenu
             elem.SetDimensions(() => new Vector2(700, 100 + offset).ToResolution(), () => new Vector2(300, 40).ToResolution());
             //elem.HasScissor = true;
             //elem.
-            elem.OnLeftClick += (el) =>
-            {
+            elem.OnLeftClick += (el) => {
                 if (Client.IsConnected() && Server.serverNetManager is null) {
                     ChatSystem.SendMessage("You cannot initiate a game as you are not the host!", Color.Red);
                     SoundPlayer.SoundError();
@@ -801,8 +737,7 @@ public static class MainMenu
                 PrepareGameplay(noExt, !Client.IsConnected() || Server.CurrentClientCount == 1, false); // switch second param to !Client.IsConnected() when it should check first.
                 OnCampaignSelected?.Invoke(GameProperties.LoadedCampaign);
             };
-            elem.OnRightClick += (el) =>
-            {
+            elem.OnRightClick += (el) => {
                 var path = Path.Combine(TankGame.SaveDirectory, "Campaigns", elem.Text);
 
                 File.Delete(path + ".campaign");
@@ -811,8 +746,7 @@ public static class MainMenu
             elem.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick.ogg", SoundContext.Effect); };
             campaignNames.Add(elem);
         }
-        var extra = new UITextButton("Freeplay", TankGame.TextFont, Color.White, 0.8f)
-        {
+        var extra = new UITextButton("Freeplay", TankGame.TextFont, Color.White, 0.8f) {
             IsVisible = true,
             Tooltip = "Play without a campaign!",
         };
@@ -820,8 +754,7 @@ public static class MainMenu
         extra.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick.ogg", SoundContext.Effect); };
         //elem.HasScissor = true;
         //elem.
-        extra.OnLeftClick += (el) =>
-        {
+        extra.OnLeftClick += (el) => {
             foreach (var elem in campaignNames)
                 elem.Remove();
 
@@ -840,7 +773,7 @@ public static class MainMenu
         }
 
         // FIXME: find the feedback loop that causes the recieving client to start a mission anyway...
-        
+
         var path = Path.Combine("Campaigns", name + ".campaign");
 
         var checkPath = Path.Combine(TankGame.SaveDirectory, "Campaigns", $"{name}.campaign");
@@ -891,8 +824,7 @@ public static class MainMenu
 
         return true;
     }
-    public static void TransitionToGame()
-    {
+    public static void TransitionToGame() {
         foreach (var elem in campaignNames)
             elem?.Remove();
 
@@ -902,18 +834,18 @@ public static class MainMenu
 
         _musicFading = true;
 
-        IntermissionSystem.SetTime(600);
+        IntermissionSystem.InitializeCountdowns();
+
+        IntermissionSystem.BeginOperation(600);
     }
-    internal static void SetPlayButtonsVisibility(bool visible)
-    {
+    internal static void SetPlayButtonsVisibility(bool visible) {
         PlayButton_SinglePlayer.IsVisible = visible;
         PlayButton_LevelEditor.IsVisible = visible;
         PlayButton_Multiplayer.IsVisible = visible;
         DifficultiesButton.IsVisible = visible;
         CosmeticsMenuButton.IsVisible = visible;
     }
-    internal static void SetDifficultiesButtonsVisibility(bool visible)
-    {
+    internal static void SetDifficultiesButtonsVisibility(bool visible) {
         TanksAreCalculators.IsVisible = visible;
         PieFactory.IsVisible = visible;
         UltraMines.IsVisible = visible;
@@ -939,8 +871,7 @@ public static class MainMenu
         FFA.IsVisible = visible;
         LanternMode.IsVisible = visible;
     }
-    internal static void SetPrimaryMenuButtonsVisibility(bool visible)
-    {
+    internal static void SetPrimaryMenuButtonsVisibility(bool visible) {
         GameUI.OptionsButton.IsVisible = visible;
 
         GameUI.QuitButton.IsVisible = visible;
@@ -953,11 +884,9 @@ public static class MainMenu
     }
 
     private static bool _ssbbv = true;
-    public static bool ShouldServerButtonsBeVisible
-    {
+    public static bool ShouldServerButtonsBeVisible {
         get => _ssbbv;
-        set
-        {
+        set {
             _ssbbv = value;
             ConnectToServerButton.IsVisible = value;
             CreateServerButton.IsVisible = value;
@@ -970,10 +899,8 @@ public static class MainMenu
             ServerNameInput.IsVisible = value && !Client.IsConnected();
         }
     }
-    internal static void SetMPButtonsVisibility(bool visible)
-    {
-        if (ShouldServerButtonsBeVisible)
-        {
+    internal static void SetMPButtonsVisibility(bool visible) {
+        if (ShouldServerButtonsBeVisible) {
             ConnectToServerButton.IsVisible = visible;
             CreateServerButton.IsVisible = visible;
             UsernameInput.IsVisible = visible;
@@ -987,8 +914,7 @@ public static class MainMenu
     }
 
     private static string[] _info;
-    public static void RequestStats()
-    {
+    public static void RequestStats() {
         _info = [
             $"{TankGame.GameLanguage.TankKillsTotal}: {TankGame.GameData.TotalKills}",
             $"{TankGame.GameLanguage.TankKillsTotalBullets}: {TankGame.GameData.BulletKills}",
@@ -1003,10 +929,9 @@ public static class MainMenu
         ];
     }
     // this method is causing considerable amounts of garbage collection!
-    internal static void RenderStats(Vector2 genericStatsPos, Vector2 tankKillsPos, Anchor aligning)
-    {
+    internal static void RenderStats(Vector2 genericStatsPos, Vector2 tankKillsPos, Anchor aligning) {
         for (int i = 0; i < _info.Length; i++)
-            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, _info[i], genericStatsPos + Vector2.UnitY * (i * 25).ToResolutionY(), Color.White, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(aligning, TankGame.TextFont.MeasureString(_info[i])), 0f); 
+            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, _info[i], genericStatsPos + Vector2.UnitY * (i * 25).ToResolutionY(), Color.White, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(aligning, TankGame.TextFont.MeasureString(_info[i])), 0f);
         TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "Tanks Killed by Type:", tankKillsPos, Color.White, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(aligning, TankGame.TextFont.MeasureString("Tanks Killed by Type:")), 0f);
         for (int i = 2; i < TankGame.GameData.TankKills.Count; i++) {
             var elem = TankGame.GameData.TankKills.ElementAt(i);
@@ -1024,13 +949,12 @@ public static class MainMenu
 
     public static float VolumeMultiplier = 1f;
 
-    public static void Update()
-    {
+    public static void Update() {
         if (!_initialized || !_diffButtonsInitialized)
             return;
         Monochrome.Text = "Monochrome: " + TankID.Collection.GetKey(MonochromeValue);
         if (MenuState == State.Mulitplayer) {
-            if (DebugUtils.DebuggingEnabled)
+            if (DebugManager.DebuggingEnabled)
                 if (InputUtils.AreKeysJustPressed(Keys.Q, Keys.W)) {
                     IPInput.Text = "localhost";
                     PortInput.Text = "7777";
@@ -1049,10 +973,9 @@ public static class MainMenu
 
         VolumeMultiplier = SteamworksUtils.IsOverlayActive ? 0.25f : 1f;
 
-        if (!IntermissionSystem.IsAwaitingNewMission || IntermissionSystem.BlackAlpha <= 0f)
-        {
+        if (!IntermissionSystem.IsAwaitingNewMission || IntermissionSystem.BlackAlpha <= 0f) {
             if (_curMenuMission.Blocks != null) {
-                var missionComplete = GameHandler.NothingCanHappenAnymore(_curMenuMission, out bool victory);
+                var missionComplete = IntermissionHandler.NothingCanHappenAnymore(_curMenuMission, out bool victory);
 
                 if (missionComplete) {
                     // TODO: finish.
@@ -1075,7 +998,7 @@ public static class MainMenu
         SetMPButtonsVisibility(MenuState == State.Mulitplayer);
         SetPrimaryMenuButtonsVisibility(MenuState == State.PrimaryMenu);
         SetDifficultiesButtonsVisibility(MenuState == State.Difficulties);
-        
+
         // me in march 2024: what the fuck is this code.
         TanksAreCalculators.Color = Difficulties.Types["TanksAreCalculators"] ? Color.Lime : Color.Red;
         PieFactory.Color = Difficulties.Types["PieFactory"] ? Color.Lime : Color.Red;
@@ -1103,8 +1026,7 @@ public static class MainMenu
         LanternMode.Color = Difficulties.Types["LanternMode"] ? Color.Lime : Color.Red;
 
 
-        if (_musicFading)
-        {
+        if (_musicFading) {
             if (Theme.Volume > 0)
                 Theme.Volume -= 0.0075f;
         }
@@ -1114,10 +1036,9 @@ public static class MainMenu
         #endregion
     }
 
-    public static void Leave()
-    {
+    public static void Leave() {
         PlayerTank.SetLives(PlayerTank.StartingLives);
-        GameHandler.StartTnkScene();
+        SceneManager.StartTnkScene();
         SetMPButtonsVisibility(false);
         SetPlayButtonsVisibility(false);
         SetPrimaryMenuButtonsVisibility(false);
@@ -1128,9 +1049,9 @@ public static class MainMenu
         Active = false;
         Theme.Stop();
 
-        GameHandler.CleanupEntities();
+        SceneManager.CleanupEntities();
         PlacementSquare.ResetSquares();
-        GameHandler.CleanupScene();
+        SceneManager.CleanupScene();
 
         GameUI.OptionsButtonSize.Y = 150;
         GameUI.QuitButtonSize.Y = 150;
@@ -1187,14 +1108,12 @@ public static class MainMenu
                 data[i] = new(spl[0], TimeSpan.Parse(spl[1]), DateTime.Parse(spl[2], CultureInfo.InvariantCulture, styles: DateTimeStyles.None));
             }
             _speedruns = data;
-        }
-        catch {
+        } catch {
             _speedruns = new SpeedrunData[1];
             _speedruns[0] = new("Unable to fetch speedrun data.", TimeSpan.Zero, DateTime.UnixEpoch);
         }
     }
-    public static void Open()
-    {
+    public static void Open() {
         plrsConfirmed = 0;
         _musicFading = false;
         _sclOffset = 0;
@@ -1225,8 +1144,8 @@ public static class MainMenu
 
         PlayerTank.TankKills.Clear();
 
-        GameHandler.ClearTracks?.OnLeftClick?.Invoke(null);
-        GameHandler.ClearChecks?.OnLeftClick?.Invoke(null);
+        DebugManager.ClearTracks?.OnLeftClick?.Invoke(null);
+        DebugManager.ClearChecks?.OnLeftClick?.Invoke(null);
 
         TankGame.OverheadView = false;
         TankGame.CameraRotationVector.Y = TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
@@ -1258,8 +1177,7 @@ public static class MainMenu
     }
 
     private static bool _firstTime = true;
-    private static void LoadTemplateMission(bool autoSetup = true, bool loadForMenu = true)
-    {
+    private static void LoadTemplateMission(bool autoSetup = true, bool loadForMenu = true) {
         try {
             if (_firstTime) {
                 var attempt = 1;
@@ -1281,7 +1199,7 @@ public static class MainMenu
                 _firstTime = false;
             }
 
-            GameHandler.CleanupScene();
+            SceneManager.CleanupScene();
 
             var rand = GameHandler.GameRand.Next(1, _cachedMissions.Count);
 
@@ -1293,13 +1211,11 @@ public static class MainMenu
             }
             if (loadForMenu)
                 _curMenuMission = mission;
-        }
-        catch {
+        } catch {
             GameHandler.ClientLog.Write("Unable to fetch map data via the internet. Oops!", LogType.Warn);
         }
     }
-    private static void HideAll()
-    {
+    private static void HideAll() {
         PlayButton.IsVisible = false;
         PlayButton_SinglePlayer.IsVisible = false;
         PlayButton_Multiplayer.IsVisible = false;
@@ -1363,10 +1279,10 @@ public static class MainMenu
                 TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"Connected Players:", initialPosition, Color.White, new Vector2(0.6f));
                 for (int i = 0; i < Server.ConnectedClients.Count(x => x is not null); i++) {
                     var client = Server.ConnectedClients[i];
-                // TODO: when u work on this again be sure to like, re-enable this code, cuz like, if u dont, u die.
+                    // TODO: when u work on this again be sure to like, re-enable this code, cuz like, if u dont, u die.
                     Color textCol = Color.White;
                     //if (NetPlay.CurrentClient.Id == i)
-                        //textCol = Color.Green;
+                    //textCol = Color.Green;
 
                     TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"{client.Name}" + $" ({client.Id})", initialPosition + new Vector2(0, 20) * (i + 1), textCol, new Vector2(0.6f));
                 }
