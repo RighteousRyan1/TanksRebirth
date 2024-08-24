@@ -50,7 +50,6 @@ namespace TanksRebirth.Localization
         public string Back { get; set; }
         #endregion
         #region Main Menu
-
         public string Play { get; set; }
         public string SinglePlayer { get; set; }
         public string LevelEditor { get; set; }

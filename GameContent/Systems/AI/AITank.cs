@@ -22,6 +22,7 @@ using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.Systems.AI;
 using System.Threading.Tasks;
 using TanksRebirth.GameContent.RebirthUtils;
+using TanksRebirth.GameContent.Systems.PingSystem;
 
 namespace TanksRebirth.GameContent;
 public partial class AITank : Tank  {
@@ -824,6 +825,18 @@ public partial class AITank : Tank  {
                     if (GameUtils.Distance_WiiTanksUnits(tank.Position, Position) < GameUtils.Distance_WiiTanksUnits(TargetTank.Position, Position))
                         if ((tank.Properties.Invisible && tank.timeSinceLastAction < 60) || !tank.Properties.Invisible)
                             TargetTank = tank;
+            }
+
+            if (GameHandler.AllPlayerTanks.Any(x => x is not null && x.Team == Team)) {
+                foreach (var ping in IngamePing.AllIngamePings) {
+                    if (ping is null)
+                        break;
+                    if (ping.TrackedTank is null)
+                        break;
+                    if (ping.TrackedTank.Team == Team) // prevent friendly fire xd
+                        break;
+                    TargetTank = ping.TrackedTank;
+                }
             }
 
             // measure the biggest WarinessRadius, player or ai, then check the larger, then do manual calculations.

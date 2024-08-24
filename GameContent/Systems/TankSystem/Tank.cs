@@ -389,6 +389,8 @@ public abstract class Tank {
 
     public bool Flip;
 
+    private float _oldRotation;
+
     /// <summary>Update this <see cref="Tank"/>.</summary>
     public virtual void Update() {
         if (Dead || !MapRenderer.ShouldRenderAll)
@@ -412,31 +414,6 @@ public abstract class Tank {
 
         Worldbox = new(Position3D - new Vector3(7, 0, 7), Position3D + new Vector3(10, 15, 10));
 
-        if (!MainMenu.Active && (!GameProperties.InMission || IntermissionSystem.IsAwaitingNewMission))
-            Velocity = Vector2.Zero;
-        if (OwnedMineCount < 0)
-            OwnedMineCount = 0;
-        if (DecelerationRateDecayTime > 0)
-            DecelerationRateDecayTime -= TankGame.DeltaTime;
-
-        if (!Properties.Stationary && Velocity.Length() > 0) {
-            var rnd = MathF.Round(12 / Velocity.Length());
-            float treadPlaceTimer = rnd != 0 ? rnd : 1;
-            // MAYBE: change back to <= delta time if it doesn't work.
-            if (TankGame.RunTime % treadPlaceTimer < TankGame.DeltaTime)
-                LayFootprint(Properties.TrackType == TrackID.Thick);
-            if (!Properties.IsSilent) {
-                // why did i clamp? i hate old code
-                if (TankGame.RunTime % MathHelper.Clamp(treadPlaceTimer / 2, 4, 6) < TankGame.DeltaTime) {
-                    Properties.TreadPitch = MathHelper.Clamp(Properties.TreadPitch, -1f, 1f);
-                    var treadPlace = $"Assets/sounds/tnk_tread_place_{GameHandler.GameRand.Next(1, 5)}.ogg";
-                    var sfx = SoundPlayer.PlaySoundInstance(treadPlace, SoundContext.Effect, Properties.TreadVolume, 0f,
-                        Properties.TreadPitch, gameplaySound: true);
-                    sfx.Instance.Pitch = Properties.TreadPitch;
-                }
-            }
-        }
-
         if (IsTurning) {
             // var real = TankRotation + MathHelper.PiOver2;
             if (TargetTankRotation - TankRotation >= MathHelper.PiOver2) {
@@ -451,6 +428,39 @@ public abstract class Tank {
 
         IsTurning = !(TankRotation > TargetTankRotation - Properties.MaximalTurn - MathHelper.ToRadians(5) &&
                       TankRotation < TargetTankRotation + Properties.MaximalTurn + MathHelper.ToRadians(5));
+
+        if (!MainMenu.Active && (!GameProperties.InMission || IntermissionSystem.IsAwaitingNewMission))
+            Velocity = Vector2.Zero;
+        if (OwnedMineCount < 0)
+            OwnedMineCount = 0;
+        if (DecelerationRateDecayTime > 0)
+            DecelerationRateDecayTime -= TankGame.DeltaTime;
+
+        if (!Properties.Stationary) {
+            float treadPlaceTimer = 0;
+            if (Velocity.Length() != 0) {
+                treadPlaceTimer = MathF.Round(11 / Velocity.Length());
+                // MAYBE: change back to <= delta time if it doesn't work.
+                if (TankGame.RunTime % treadPlaceTimer < TankGame.DeltaTime)
+                    LayFootprint(Properties.TrackType == TrackID.Thick);
+            }
+            if (IsTurning && TankRotation != _oldRotation) {
+                treadPlaceTimer = Properties.TurningSpeed * 150;
+                // MAYBE: change back to <= delta time if it doesn't work.
+                if (TankGame.RunTime % treadPlaceTimer < TankGame.DeltaTime)
+                    LayFootprint(Properties.TrackType == TrackID.Thick);
+            }
+            if (!Properties.IsSilent && Velocity.Length() > 0) {
+                // why did i clamp? i hate old code
+                if (TankGame.RunTime % MathHelper.Clamp(treadPlaceTimer / 2, 4, 6) < TankGame.DeltaTime) {
+                    Properties.TreadPitch = MathHelper.Clamp(Properties.TreadPitch, -1f, 1f);
+                    var treadPlace = $"Assets/sounds/tnk_tread_place_{GameHandler.GameRand.Next(1, 5)}.ogg";
+                    var sfx = SoundPlayer.PlaySoundInstance(treadPlace, SoundContext.Effect, Properties.TreadVolume, 0f,
+                        Properties.TreadPitch, gameplaySound: true);
+                    sfx.Instance.Pitch = Properties.TreadPitch;
+                }
+            }
+        }
 
         if (!IsTurning) {
             IsTurning = false;
@@ -485,6 +495,8 @@ public abstract class Tank {
         // fix 2d peeopled
         foreach (var cosmetic in Cosmetics)
             cosmetic?.UniqueBehavior?.Invoke(cosmetic, this);
+
+        _oldRotation = TankRotation;
 
         OnPostUpdate?.Invoke(this);
     }

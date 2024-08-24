@@ -4,43 +4,22 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 
 ## Additions
 
-- Achievements you unlock will appear at the top of your screen when unlocked!
-- New player callouts/pings system!
-	-Use the numbers at the top of your keyboard to make pings, choosing from (in ascending order):
-		- General
-		- Stay
-		- Watch
-		- Avoid
-		- Go To
-		- Focus
-		- Group up
 
-- Mission countdown now is the common "Ready? Set, Start!" from most games with countdowns.
 
 ## Changes
 
-- Made the mission display show what number mission you're on, to know how many you have left/what mission you're on (numerically)
-- Re-hauled the multiplayer lobby screen.
-- The game now uses .NET 8.0, which means there will be performance improvements around the board.
-- Largely overhauled enemy AI, including changes to:
-	- The pathing system (tanks now prefer exploration instead of wandering in circles endlessly)
-	- The shooting system (tanks now shoot at walls with a tank on the other side much less often)
-	- Mine laying system (tanks will trap themselves with mines LESS OFTEN)
-	- Shell avoidance system (tanks will now only avoid shells if the shell is heading in their direction)
-- Everything in the game is now framerate independent.
-- Main menu rotation speed decreased for sensitive eyes.
-- Made the grading system much less strict.
+- Made stats screen good-er...?
+- Chat box now shows messages from the bottom up, and text is properly scaled now.
+- Made tracks more closely packed together.
 
 ## Source Code Changes (for modders)
 
-- Moved a lot of methods from GameHandler into their own files.
-	- Lots of game-specific debug methods have been moved to DebugManager
-	- Game Scene management is now all moved to SceneManager
-	- Mission intermission handling is now moved to IntermissionHandler
+
 
 ## Fixes
 
-- Fixed level editor warnings disappearing fast on high refresh rates.
+- Fixed AI companion bug
+- Fixed tank tracks not being placed during tank rotation
 
 ## TODO
 

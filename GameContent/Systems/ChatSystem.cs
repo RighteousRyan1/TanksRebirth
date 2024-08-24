@@ -128,11 +128,12 @@ public sealed record ChatSystem {
 
     private static void DrawChatBox(out Rectangle chatBox, out Rectangle typeBox)
     {
+        // tallest letter i'm guessing?
         var measureY = (ChatMessage.Font.MeasureString("X").Y * Scale.Y).ToResolutionY();
         // draw it out of view if not open chat box.
-        var chatRect = new Rectangle((int)OpenOrigin.X, IsOpen ? (int)OpenOrigin.Y : -400, BoxWidth, (int)(measureY * MessagesAtOnce)).ToResolution();
+        var chatRect = new Rectangle((int)OpenOrigin.X, IsOpen ? (int)OpenOrigin.Y : -400, (int)BoxWidth.ToResolutionX(), (int)(measureY.ToResolutionY() * MessagesAtOnce));
 
-        var typeRect = new Rectangle(chatRect.X, chatRect.Y + chatRect.Height + (int)8.ToResolutionY(), chatRect.Width, (int)(ChatMessage.Font.MeasureString(CurTyping).Y + (CurTyping.Length == 0 ? 32.ToResolutionY() : 0)));
+        var typeRect = new Rectangle(chatRect.X, chatRect.Y + chatRect.Height + (int)8.ToResolutionY(), chatRect.Width, (int)(ChatMessage.Font.MeasureString(CurTyping).Y.ToResolutionY() + (CurTyping.Length == 0 ? 32.ToResolutionY() : 0)));
 
         // TODO: do it. do it.
 
@@ -141,11 +142,11 @@ public sealed record ChatSystem {
         chatBox = chatRect;
         typeBox = typeRect;
     }
-    public static Keybind ToggleChat = new("Toggle Chat", Keys.F2);
+    public static Keybind ToggleChat = new("Toggle Chat", Keys.F2) {
+        KeybindPressAction = (a) => IsOpen = !IsOpen
+    };
     public static void DrawMessages()
     {
-        if (ToggleChat.JustPressed)
-            IsOpen = !IsOpen;
         #region Draw Chat
 
         TankGame.SpriteRenderer.Begin();
@@ -177,7 +178,7 @@ public sealed record ChatSystem {
 
         TankGame.Instance.GraphicsDevice.ScissorRectangle = chatRect;
 
-        var basePosition = new Vector2(chatRect.X + 8.ToResolutionX(), chatRect.Y + 8.ToResolutionY());
+        var basePosition = new Vector2(chatRect.X + 8.ToResolutionX(), chatRect.Y + chatRect.Height - 8.ToResolutionY());
         var offset = 20f;
 
         var drawOrigin = new Vector2();
@@ -223,13 +224,13 @@ public sealed record ChatSystem {
             var arr = ChatMessages.ToArray();
             arr = ArrayUtils.Shift(arr, -1);
             Array.Resize(ref arr, arr.Length - 1);
-            ChatMessages = arr.ToList();
+            ChatMessages = [.. arr];
         }
 
-        for (int i = 0; i < ChatMessages.Count; i++)
+        for (int i = ChatMessages.Count - 1; i >= 0; i--)
         {
-            var pos = basePosition + new Vector2(0, (i * offset).ToResolutionY());
-            TankGame.SpriteRenderer.DrawString(ChatMessage.Font, ChatMessages[i].Content, pos, ChatMessages[i].Color, Scale, 0f, drawOrigin);
+            var pos = basePosition - new Vector2(0, ((ChatMessages.Count - i) * offset).ToResolutionY());
+            TankGame.SpriteRenderer.DrawString(ChatMessage.Font, ChatMessages[i].Content, pos, ChatMessages[i].Color, Scale.ToResolution(), 0f, drawOrigin);
         }
 
         TankGame.SpriteRenderer.End();
