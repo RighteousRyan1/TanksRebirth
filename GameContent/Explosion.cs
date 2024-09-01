@@ -80,7 +80,7 @@ public class Explosion : IAITankDanger {
 
         var destroysound = "Assets/sounds/tnk_destroy.ogg";
 
-        int vertLayers = 5;
+        /*int vertLayers = 5;
         int horizLayers = 15;
 
         // my brain hurts help pls
@@ -114,7 +114,7 @@ public class Explosion : IAITankDanger {
                     }
                 };
             }
-        }
+        }*/
 
         SoundPlayer.PlaySoundInstance(destroysound, SoundContext.Effect, 1f, 0f, soundPitch, gameplaySound: true);
 
