@@ -26,7 +26,8 @@ public sealed class Mine : IAITankDanger
     public delegate void PostRenderDelegate(Mine mine);
     public static event PostRenderDelegate? OnPostRender;
 
-    public const int MAX_MINES = 500;
+    // this used to be 500. why?
+    public const int MAX_MINES = 50;
     public static Mine[] AllMines { get; } = new Mine[MAX_MINES];
 
     public Tank? Owner;

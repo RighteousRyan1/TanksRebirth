@@ -64,8 +64,9 @@ public class Shell : IAITankDanger {
         public bool HeatSeeks;
     }
 
+    // this used to be 1500. why?
     /// <summary>The maximum shells allowed at any given time.</summary>
-    private const int MaxShells = 1500;
+    private const int MaxShells = 200;
 
     public static Shell[] AllShells { get; } = new Shell[MaxShells];
 
