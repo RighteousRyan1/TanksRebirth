@@ -13,22 +13,25 @@ using TanksRebirth.Internals.Common.Utilities;
 namespace TanksRebirth.GameContent;
 
 public class Explosion : IAITankDanger {
-    // model, blah blah blah
-
     public delegate void PostUpdateDelegate(Explosion explosion);
     public static event PostUpdateDelegate? OnPostUpdate;
     public delegate void PostRenderDelegate(Explosion explosion);
     public static event PostRenderDelegate? OnPostRender;
 
+    /// <summary>The "owner" of this explosion.</summary>
     public Tank? Source;
 
-    public const int MINE_EXPLOSIONS_MAX = 500;
+    // 500 -> 80
+    public const int MINE_EXPLOSIONS_MAX = 80;
 
     public static Explosion[] Explosions = new Explosion[MINE_EXPLOSIONS_MAX];
 
     public Vector2 Position { get; set; }
     public bool IsPlayerSourced { get; set; }
-
+    /// <summary>
+    /// An array representation of what tanks this explosion has already hit.
+    /// If a tank's global ID is in this array, it has been damaged by this <see cref="Explosion"/>, and will not be damaged again by it.
+    /// </summary>
     public bool[] HasHit = new bool[GameHandler.AllTanks.Length];
 
     public Vector3 Position3D => Position.ExpandZ();
@@ -41,6 +44,7 @@ public class Explosion : IAITankDanger {
 
     private static Texture2D? _maskingTex;
 
+    /// <summary>Only merlin himself could decode why I use this... Use this number with any explosion-based calculations.</summary>
     public const float MAGIC_EXPLOSION_NUMBER = 9f;
 
     public float Scale;
@@ -68,7 +72,7 @@ public class Explosion : IAITankDanger {
         _maskingTex = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smoke_ami");
 
         AITank.Dangers.Add(this);
-        IsPlayerSourced = owner is null ? false : owner is PlayerTank;
+        IsPlayerSourced = owner is not null && owner is PlayerTank;
 
         Model = GameResources.GetGameResource<Model>("Assets/mineexplosion");
 
@@ -78,15 +82,41 @@ public class Explosion : IAITankDanger {
 
         int vertLayers = 5;
         int horizLayers = 15;
-        for (int i = 0; i < vertLayers; i++) {
-            for (int j = 0; j < horizLayers; j++) {
-                var rot = MathHelper.Tau / horizLayers * i;
 
+        // my brain hurts help pls
+        // employ 3d rotation tactics
+        for (int i = 0; i <= vertLayers; i++) {
+            for (int j = 0; j <= horizLayers; j++) {
+                var rotX = MathHelper.Pi / horizLayers * j;
+                var rotZ = MathHelper.Pi / vertLayers * i;
+
+                // DirectionOf(position.XY, Position3D.XY
+
+                var explScalar = 45f;
+
+                var position = Vector3.Transform(Vector3.UnitX * explScalar, Matrix.CreateFromYawPitchRoll(rotZ, 0, rotX) * Matrix.CreateTranslation(Position3D));
+
+                var particle = GameHandler.Particles.MakeParticle(position, GameHandler.AllTanks.First().Model, Tank.Assets.ElementAt(GameHandler.GameRand.Next(Tank.Assets.Count)).Value);
+
+                var flatDir = MathUtils.DirectionOf(position.FlattenZ(), Position3D.FlattenZ());
+
+                // TODO: make particles face center of explosion
+
+                particle.Scale = new(0.5f);
+                particle.Alpha = 1f;
+                particle.HasAddativeBlending = false;
+                //particle.Yaw = rotZ.ToRotation();
+                //particle.Roll = rotX.ToRotation();
+
+                particle.UniqueBehavior = (a) => {
+                    if (particle.LifeTime > 60) {
+                        particle.Destroy();
+                    }
+                };
             }
         }
 
         SoundPlayer.PlaySoundInstance(destroysound, SoundContext.Effect, 1f, 0f, soundPitch, gameplaySound: true);
-        // SoundPlayer.PlaySoundInstance(destroysound, SoundContext.Effect, 0.4f, 0f, -0.2f, gameplaySound: true);
 
         _id = index;
 

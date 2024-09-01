@@ -220,7 +220,7 @@ public abstract class Tank {
             }
         }
 
-        return teams.ToArray();
+        return [.. teams];
     }
 
     /// <summary>This <see cref="Tank"/>'s swag apparel as a <see cref="List{T}"/> of <see cref="ICosmetic"/>s.</summary>
