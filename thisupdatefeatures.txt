@@ -11,6 +11,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 - Made stats screen good-er...?
 - Chat box now shows messages from the bottom up, and text is properly scaled now.
 - Made tracks more closely packed together.
+- Tracks now fade at the same scale, ignoring framerate.
 
 ## Source Code Changes (for modders)
 
@@ -20,6 +21,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 
 - Fixed AI companion bug
 - Fixed tank tracks not being placed during tank rotation
+- Made infinite lives actually work on campaigns with one starting life.
 
 ## TODO
 
