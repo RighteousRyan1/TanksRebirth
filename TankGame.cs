@@ -1070,7 +1070,7 @@ public class TankGame : Game {
 
         #endregion
         SpriteRenderer.End();
-
+        
         ChatSystem.DrawMessages();
 
         SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: DefaultRasterizer);
