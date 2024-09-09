@@ -51,8 +51,11 @@ public sealed class Mine : IAITankDanger
     private ModelMesh? _mineMesh;
     private ModelMesh? _envMesh;
 
+    public OggAudio TickingNoise;
+
     public Rectangle Hitbox;
 
+    private float _oldDetonateTime;
     /// <summary>The time left (in ticks) until detonation.</summary>
     public float DetonateTime;
     /// <summary>The time until detonation (in ticks) from when this <see cref="Mine"/> was/is created.</summary>
@@ -75,6 +78,8 @@ public sealed class Mine : IAITankDanger
     /// Is automatically set to <see cref="ExplosionRadius"/><c> * 0.8f</c></summary>
     public float MineReactRadius;
 
+    public const float TICKS_OF_FLASHING = 120;
+
     /// <summary>
     /// Creates a new <see cref="Mine"/>.
     /// </summary>
@@ -82,8 +87,7 @@ public sealed class Mine : IAITankDanger
     /// <param name="pos">The position of this <see cref="Mine"/> in the game world.</param>
     /// <param name="detonateTime">The time it takes for this <see cref="Mine"/> to detonate.</param>
     /// <param name="radius">The radius of this <see cref="Mine"/>'s explosion.</param>
-    public Mine(Tank? owner, Vector2 pos, float detonateTime, float radius = 65f)
-    {
+    public Mine(Tank? owner, Vector2 pos, float detonateTime, float radius = 65f) {
         Owner = owner;
         ExplosionRadius = radius;
 
@@ -116,8 +120,7 @@ public sealed class Mine : IAITankDanger
     }
 
     /// <summary>Detonates this <see cref="Mine"/>.</summary>
-    public void Detonate()
-    {
+    public void Detonate() {
         Detonated = true;
 
         var expl = new Explosion(Position, ExplosionRadius * 0.101f, Owner, 0.3f);
@@ -132,6 +135,9 @@ public sealed class Mine : IAITankDanger
         if (Owner != null)
             Owner.OwnedMineCount--;
 
+        if (TickingNoise is not null)
+            TickingNoise.Stop();
+
         OnExplode?.Invoke(this);
 
         Client.SyncMineDetonate(this);
@@ -141,7 +147,7 @@ public sealed class Mine : IAITankDanger
 
     public void Remove() {
         AITank.Dangers.Remove(this);
-        AllMines[Id] = null; 
+        AllMines[Id] = null;
     }
 
     internal void Update() {
@@ -152,23 +158,27 @@ public sealed class Mine : IAITankDanger
 
         Hitbox = new((int)Position.X - 10, (int)Position.Y - 10, 20, 20);
 
-        if (Server.serverNetManager != null || !Client.IsConnected())
-        {
+        if (Server.serverNetManager != null || !Client.IsConnected()) {
             DetonateTime -= TankGame.DeltaTime;
 
-            if (DetonateTime < 120)
-            {
-                if (DetonateTime % 2 <= TankGame.DeltaTime)
+            if (DetonateTime < TICKS_OF_FLASHING) {
+                if (DetonateTime % 2 <= TankGame.DeltaTime) {
                     _tickRed = !_tickRed;
+                }
+                if (_oldDetonateTime > TICKS_OF_FLASHING && Owner is not null && Owner is PlayerTank) {
+                    SoundPlayer.PlaySoundInstance("Assets/sounds/mine_trip.ogg", SoundContext.Effect, 1f, gameplaySound: true);
+                }
+            }
+            if (DetonateTime < TICKS_OF_FLASHING - 5 && _oldDetonateTime > TICKS_OF_FLASHING - 5) {
+                TickingNoise = SoundPlayer.PlaySoundInstance("Assets/sounds/mine_tick.ogg", SoundContext.Effect, 0.7f, gameplaySound: true);
+                TickingNoise.Instance.IsLooped = true;
             }
 
             if (DetonateTime <= 0)
                 Detonate();
 
-            foreach (var shell in Shell.AllShells)
-            {
-                if (shell is not null && shell.Hitbox.Intersects(Hitbox))
-                {
+            foreach (var shell in Shell.AllShells) {
+                if (shell is not null && shell.Hitbox.Intersects(Hitbox)) {
                     shell.Destroy(Shell.DestructionContext.WithMine);
                     Detonate();
                 }
@@ -176,15 +186,12 @@ public sealed class Mine : IAITankDanger
 
             if (Position != _oldPosition) // magicqe number
                 IsNearDestructibles = Block.AllBlocks.Any(b => b != null && Position.Distance(b.Position) <= ExplosionRadius - 6f && b.IsDestructible);
-            List<Tank> tanksNear = new();
+            List<Tank> tanksNear = [];
 
             // NOTE: this scope may be inconsistent over a server? check soon.
-            if (DetonateTime > MineReactTime)
-            {
-                foreach (var tank in GameHandler.AllTanks)
-                {
-                    if (tank is not null && GameUtils.Distance_WiiTanksUnits(tank.Position, Position) < MineReactRadius)
-                    {
+            if (DetonateTime > MineReactTime) {
+                foreach (var tank in GameHandler.AllTanks) {
+                    if (tank is not null && GameUtils.Distance_WiiTanksUnits(tank.Position, Position) < MineReactRadius) {
                         tanksNear.Add(tank);
                     }
                 }
@@ -195,12 +202,12 @@ public sealed class Mine : IAITankDanger
         }
 
         _oldPosition = Position;
+        _oldDetonateTime = DetonateTime;
 
         OnPostUpdate?.Invoke(this);
     }
 
-    internal void Render()
-    {
+    internal void Render() {
         if (!MapRenderer.ShouldRenderAll)
             return;
 

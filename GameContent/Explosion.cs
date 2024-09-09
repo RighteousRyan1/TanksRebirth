@@ -78,43 +78,50 @@ public class Explosion : IAITankDanger {
 
         int index = Array.IndexOf(Explosions, null);
 
-        var destroysound = "Assets/sounds/tnk_destroy.ogg";
+        var destroysound = "Assets/sounds/mine_explode.ogg";
 
-        /*int vertLayers = 5;
+        int vertLayers = 5;
         int horizLayers = 15;
 
         // my brain hurts help pls
         // employ 3d rotation tactics
+        // the spherically displayed particles.
         for (int i = 0; i <= vertLayers; i++) {
             for (int j = 0; j <= horizLayers; j++) {
                 var rotX = MathHelper.Pi / horizLayers * j;
                 var rotZ = MathHelper.Pi / vertLayers * i;
 
-                // DirectionOf(position.XY, Position3D.XY
+                float rotation = 0f;
 
                 var explScalar = 45f;
 
                 var position = Vector3.Transform(Vector3.UnitX * explScalar, Matrix.CreateFromYawPitchRoll(rotZ, 0, rotX) * Matrix.CreateTranslation(Position3D));
-
-                var particle = GameHandler.Particles.MakeParticle(position, GameHandler.AllTanks.First().Model, Tank.Assets.ElementAt(GameHandler.GameRand.Next(Tank.Assets.Count)).Value);
-
-                var flatDir = MathUtils.DirectionOf(position.FlattenZ(), Position3D.FlattenZ());
-
+                // this will become a model.
+                var particle = GameHandler.Particles.MakeParticle(position, GameResources.GetGameResource<Texture2D>("Assets/textures/tnk_tank_env"));
                 // TODO: make particles face center of explosion
 
                 particle.Scale = new(0.5f);
                 particle.Alpha = 1f;
-                particle.HasAddativeBlending = false;
+                particle.HasAddativeBlending = true;
                 //particle.Yaw = rotZ.ToRotation();
                 //particle.Roll = rotX.ToRotation();
 
                 particle.UniqueBehavior = (a) => {
-                    if (particle.LifeTime > 60) {
-                        particle.Destroy();
+                    rotation += 0.025f * TankGame.DeltaTime;
+                    position = Vector3.Transform(Vector3.UnitX * explScalar, Matrix.CreateFromYawPitchRoll(rotZ + rotation, 0, rotX) * Matrix.CreateTranslation(Position3D));
+                    particle.Position = position;
+                    //var dir = MathUtils.DirectionOf(position.FlattenZ(), Position3D.FlattenZ()).ToRotation();
+
+                    particle.Pitch = (position.FlattenZ() - Position3D.FlattenZ()).ToRotation() + MathHelper.PiOver2;
+                    particle.Roll = (position.Flatten() - Position3D.Flatten()).ToRotation() + MathHelper.PiOver2;
+                    if (particle.LifeTime > 20) {
+                        particle.Scale -= Vector3.One * 0.01f * TankGame.DeltaTime;
                     }
+                    if (particle.Scale.X < 0)
+                        particle.Destroy();
                 };
             }
-        }*/
+        }
 
         SoundPlayer.PlaySoundInstance(destroysound, SoundContext.Effect, 1f, 0f, soundPitch, gameplaySound: true);
 

@@ -693,7 +693,10 @@ public abstract class Tank {
 
             explosionParticle.ToScreenSpace = true;
 
-            explosionParticle.TextureScale = new(5f);
+            explosionParticle.Scale = new(50f);
+            explosionParticle.TextureScale = new(4f);
+
+            explosionParticle.HasAddativeBlending = true;
 
             explosionParticle.IsIn2DSpace = true;
 
@@ -703,7 +706,7 @@ public abstract class Tank {
                 if (p.Scale.X <= 0f)
                     p.Destroy();
             };
-            GameHandler.Particles.MakeSmallExplosion(Position3D, 15, 20, 1.3f, 30);
+            GameHandler.Particles.MakeSmallExplosion(Position3D, 15, 20, 1.3f, 15);
         }
 
         doDestructionFx();
