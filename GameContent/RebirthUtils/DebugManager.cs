@@ -23,13 +23,14 @@ public static class DebugManager {
     public static int tankToSpawnTeam;
 
     public readonly struct Id {
+        public const int SceneMetrics = -1;
         public const int General = 0;
         public const int EntityData = 1;
         public const int PlayerData = 2;
         public const int LevelEditDebug = 3;
         public const int Powerups = 4;
         public const int AchievementData = 5;
-        // public const int NavData = 6;
+        public const int NavData = 6;
     }
     public static string CurDebugLabel {
         get {
@@ -114,7 +115,6 @@ public static class DebugManager {
     public static UITextButton LoadCampaign;
 
     private static int mode;
-
     public static void InitDebugUI() {
         MissionName = new(TankGame.TextFont, Color.White, 0.75f, 20) {
             DefaultString = "Mission Name",
@@ -281,7 +281,6 @@ public static class DebugManager {
         blockHeight = MathHelper.Clamp(blockHeight, 1, 7);
         blockType = MathHelper.Clamp(blockType, 0, 3);
     }
-
     public static void SpawnCrateAtMouse() {
         var pos = MatrixUtils.GetWorldPosition(MouseUtils.MousePosition);
 
@@ -292,7 +291,6 @@ public static class DebugManager {
             Team = TeamID.NoTeam
         };
     }
-
     public static AITank SpawnTank(int tier, int team) {
         var rot = GeometryUtils.GetPiRandom();
 
@@ -351,7 +349,6 @@ public static class DebugManager {
 
         return myTank;
     }
-
     public static void SpawnTankInCrate(int tierOverride = default, int teamOverride = default, bool createEvenDrop = false) {
         var random = new BlockMapPosition(GameHandler.GameRand.Next(0, 26), GameHandler.GameRand.Next(0, 20));
 

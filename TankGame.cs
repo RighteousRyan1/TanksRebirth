@@ -422,7 +422,18 @@ public class TankGame : Game {
         }
         PlaceSecrets();
     }
-
+    public void DrawDebugMetrics() {
+        var information = new string[] {
+            $"PrimitiveCount: {Graphics.GraphicsDevice.Metrics.PrimitiveCount}",
+            $"Vx: {Graphics.GraphicsDevice.Metrics.VertexShaderCount}",
+            $"Px: {Graphics.GraphicsDevice.Metrics.PixelShaderCount}",
+            $"Draw calls: {Graphics.GraphicsDevice.Metrics.DrawCount}",
+            $"Sprites: {Graphics.GraphicsDevice.Metrics.SpriteCount}",
+            $"Textures: {Graphics.GraphicsDevice.Metrics.TextureCount}",
+            $"Targets: {Graphics.GraphicsDevice.Metrics.TargetCount}"
+        };
+        DebugManager.DrawDebugString(TextFont, SpriteRenderer, string.Join('\n', information), Vector2.Zero, -1);
+    }
     private void HandleResizing(object sender, EventArgs e) {
         // UIElement.ResizeAndRelocate();
     }
@@ -1102,6 +1113,8 @@ public class TankGame : Game {
         SpriteRenderer.End();
 
         SpriteRenderer.Begin(blendState: BlendState.AlphaBlend, effect: GameShaders.MouseShader, rasterizerState: DefaultRasterizer);
+
+        DrawDebugMetrics();
 
         RebirthMouse.DrawMouse();
 
