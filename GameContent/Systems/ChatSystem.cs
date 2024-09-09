@@ -25,7 +25,7 @@ public sealed record ChatSystem {
     }
 
     public delegate void OnMessageAddedDelegate(string message);
-    public static event OnMessageAddedDelegate OnMessageAdded;
+    public static event OnMessageAddedDelegate? OnMessageAdded;
 
     public static List<ChatMessage> ChatMessages { get; private set; } = new();
     public static int Alerts;
@@ -131,7 +131,7 @@ public sealed record ChatSystem {
         // tallest letter i'm guessing?
         var measureY = (ChatMessage.Font.MeasureString("X").Y * Scale.Y).ToResolutionY();
         // draw it out of view if not open chat box.
-        var chatRect = new Rectangle((int)OpenOrigin.X, IsOpen ? (int)OpenOrigin.Y : -400, (int)BoxWidth.ToResolutionX(), (int)(measureY.ToResolutionY() * MessagesAtOnce));
+        var chatRect = new Rectangle((int)OpenOrigin.X, IsOpen ? (int)OpenOrigin.Y : -5000, (int)BoxWidth.ToResolutionX(), (int)(measureY.ToResolutionY() * MessagesAtOnce));
 
         var typeRect = new Rectangle(chatRect.X, chatRect.Y + chatRect.Height + (int)8.ToResolutionY(), chatRect.Width, (int)(ChatMessage.Font.MeasureString(CurTyping).Y.ToResolutionY() + (CurTyping.Length == 0 ? 32.ToResolutionY() : 0)));
 
@@ -235,8 +235,6 @@ public sealed record ChatSystem {
 
         TankGame.SpriteRenderer.End();
 
-        #endregion
-
         if (IsOpen) {
             Alerts = 0;
         }
@@ -253,6 +251,8 @@ public sealed record ChatSystem {
             // TODO: draw an alertbox saying "!1" or something similar.
             TankGame.SpriteRenderer.End();
         }
+
+        #endregion
     }
 
     private static void HandleInput(object sender, TextInputEventArgs e)

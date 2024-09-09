@@ -83,6 +83,7 @@ public class Explosion : IAITankDanger {
         int vertLayers = 5;
         int horizLayers = 15;
 
+        // TODO: particle hell
         // my brain hurts help pls
         // employ 3d rotation tactics
         // the spherically displayed particles.
