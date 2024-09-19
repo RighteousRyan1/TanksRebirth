@@ -1,5 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System;
+using tainicom.Aether.Physics2D.Fluids;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Utilities;
 
@@ -50,7 +52,35 @@ public class ParticleSystem
             Text = text
         };
     }
+    public Particle MakeExplosionFlameParticle(Vector3 position, out Action<Particle> ourAction, float lingerMultiplier = 1f, float particleScaleMultiplier = 1f) {
+        var t = GameResources.GetGameResource<Texture2D>("Assets/textures/mine/explosion");
+        var p = MakeParticle(position, t);
 
+        int frame = 0;
+        int frameHeight = 66;
+
+        p.Scale = new(particleScaleMultiplier);
+        p.IsIn2DSpace = false;
+        p.HasAddativeBlending = false;
+        p.Alpha = 1;
+        p.Origin2D = new Vector2(t.Width / 2, frameHeight / 2);
+        void act(Particle b) {
+            b.TextureCrop = new Rectangle(0, frame * frameHeight, t.Width, frameHeight);
+
+            if (frame < 50) {
+                if (b.LifeTime % 0.8f <= TankGame.DeltaTime)
+                    frame++;
+            } else {
+                if (b.LifeTime % (0.8f * lingerMultiplier) <= TankGame.DeltaTime)
+                    frame++;
+            }
+
+            if (frame * frameHeight >= t.Height)
+                p.Destroy();
+        }
+        ourAction = act;
+        return p;
+    }
     public void MakeSmallExplosion(Vector3 position, int numClouds, int numSparks, float shineScale, int movementFactor) {
         MakeSmokeCloud(position, movementFactor, numClouds);
         MakeSparkEmission(position, numSparks);

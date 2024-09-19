@@ -28,6 +28,7 @@ using TanksRebirth.GameContent.Systems.PingSystem;
 using TanksRebirth.Internals.Common.Framework.Animation;
 using Microsoft.Xna.Framework.Audio;
 using TanksRebirth.GameContent.RebirthUtils;
+using System.Text;
 
 namespace TanksRebirth.GameContent;
 
@@ -118,9 +119,10 @@ public class GameHandler
             }
         };
     }
+    
     internal static void UpdateAll(GameTime gameTime) {
         //if (InputUtils.KeyJustPressed(Keys.M))
-            //SmokeNadeDebug();
+        //SmokeNadeDebug();
         // ChatSystem.CurTyping = SoundPlayer.GetLengthOfSound("Content/Assets/sounds/tnk_shoot_ricochet_rocket_loop.ogg").ToString();
         if (DebugManager.DebuggingEnabled) {
             if (InputUtils.KeyJustPressed(Keys.G)) {
@@ -261,9 +263,6 @@ public class GameHandler
             
         }
 
-        TankGame.Instance.GraphicsDevice.BlendState = BlendState.Additive;
-        foreach (var expl in Explosion.Explosions)
-            expl?.Render();
         TankGame.Instance.GraphicsDevice.BlendState = BlendState.NonPremultiplied;
 
         Particles.RenderParticles();

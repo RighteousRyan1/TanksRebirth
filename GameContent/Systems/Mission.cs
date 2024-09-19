@@ -40,8 +40,8 @@ public record struct Mission
     /// <returns>The mission that is currently active, or created.</returns>
     public static Mission GetCurrent(string name = null) {
         const int roundingFactor = 5;
-        List<TankTemplate> tanks = new();
-        List<BlockTemplate> blocks = new();
+        List<TankTemplate> tanks = [];
+        List<BlockTemplate> blocks = [];
 
         foreach (var tank in GameHandler.AllTanks) {
             if (tank is not null) {
@@ -71,7 +71,7 @@ public record struct Mission
             }
         }
 
-        return new(tanks.ToArray(), blocks.ToArray()) { Name = name };
+        return new([.. tanks], [.. blocks]) { Name = name };
     }
     /// <summary>
     /// Loads a <see cref="Mission"/> and instantly applies it to the game field.
@@ -94,6 +94,7 @@ public record struct Mission
                 PlacementSquare.Placements[placement].HasBlock = false;
             }
 
+            // TODO: fix flipping (once again)
             // FIXME: relates to tank rotation.
             tank.TankRotation = MathF.Round(tnk.Rotation, 5);
             // REMINDER: go here if you're editing load values again.
@@ -303,50 +304,7 @@ public record struct Mission
 
         Mission mission = new();
 
-        if (version == 1) {
-            var name = reader.ReadString();
-
-            var totalTanks = reader.ReadInt32();
-
-            for (int i = 0; i < totalTanks; i++) {
-                var isPlayer = reader.ReadBoolean();
-                var x = reader.ReadSingle();
-                var y = reader.ReadSingle();
-                var rotation = -reader.ReadSingle(); // i genuinely hate having to make this negative :(
-                var tier = reader.ReadByte();
-                var pType = reader.ReadByte();
-                var team = reader.ReadByte();
-
-                tanks.Add(new() {
-                    IsPlayer = isPlayer,
-                    Position = new(x, y),
-                    Rotation = rotation,
-                    AiTier = tier,
-                    PlayerType = pType,
-                    Team = team
-                });
-            }
-
-            var totalBlocks = reader.ReadInt32();
-
-            for (int i = 0; i < totalBlocks; i++) {
-                var type = reader.ReadByte();
-                var stack = reader.ReadSByte();
-                var x = reader.ReadSingle();
-                var y = reader.ReadSingle();
-
-                blocks.Add(new() {
-                    Type = type,
-                    Stack = stack,
-                    Position = new(x, y),
-                });
-            }
-
-            mission = new Mission(tanks.ToArray(), blocks.ToArray()) {
-                Name = name
-            };
-        }
-        else if (version == 2) {
+        if (version == 2) {
             var name = reader.ReadString();
 
             var totalTanks = reader.ReadInt32();

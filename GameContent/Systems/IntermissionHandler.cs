@@ -309,7 +309,7 @@ public static class IntermissionHandler {
         if (!MainMenu.Active && !TankGame.OverheadView && !LevelEditor.Active/* && TankFunctionWait > 0*/) {
             var txt = $"{MathF.Round(TankFunctionWait / 60) + 1}";
             SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFontLarge, PrepareDisplay, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 3), 
-                IntermissionSystem.BackgroundColor, IntermissionSystem.StripColor, CountdownAnimator.CurrentScale.ToResolution(), 0f, 3);
+                IntermissionSystem.BackgroundColor, IntermissionSystem.StripColor, CountdownAnimator.CurrentScale.ToResolution(), 0f, Anchor.Center, 3);
         }
     }
 }

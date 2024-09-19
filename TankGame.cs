@@ -981,7 +981,8 @@ public class TankGame : Game {
             SpriteRenderer.DrawString(TextFont, "DEBUGGER ATTACHED", new Vector2(10, 50), Color.Red, new Vector2(0.8f));
 
         if (DebugManager.DebuggingEnabled) {
-            SpriteRenderer.DrawString(TextFont, "Debug Level: " + DebugManager.CurDebugLabel, new Vector2(10), Color.White, new Vector2(0.6f));
+            SpriteRenderer.DrawString(TextFont, "Debug Level: " + DebugManager.CurDebugLabel, WindowUtils.WindowBottom - new Vector2(0, 15), Color.White, new Vector2(0.6f),
+                origin: TextFont.MeasureString("Debug Level: " + DebugManager.CurDebugLabel) / 2);
             DebugManager.DrawDebugString(SpriteRenderer, $"Garbage Collection: {MemoryParser.FromMegabytes(GCMemory):0} MB" +
                 $"\nPhysical Memory: {CompSpecs.RAM}" +
                 $"\nGPU: {CompSpecs.GPU}" +
@@ -1076,7 +1077,7 @@ public class TankGame : Game {
                                                        $"\nKeys U + I: Unload All Mods" +
                                                        $"\nKeys O + P: Reload All Mods", new(10, 500));
 
-            DebugManager.DrawDebugString(SpriteRenderer, $"Current Mission: {GameProperties.LoadedCampaign.CurrentMission.Name}\nCurrent Campaign: {GameProperties.LoadedCampaign.MetaData.Name}", WindowUtils.WindowBottomLeft - new Vector2(-4, 40), 3, centered: false);
+            DebugManager.DrawDebugString(SpriteRenderer, $"Current Mission: {GameProperties.LoadedCampaign.CurrentMission.Name}\nCurrent Campaign: {GameProperties.LoadedCampaign.MetaData.Name}", WindowUtils.WindowBottomLeft - new Vector2(-4, 60), 3, centered: false);
         }
 
         #endregion

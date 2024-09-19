@@ -13,6 +13,7 @@ using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.Net;
 using TanksRebirth.Internals.Common;
+using System.Collections.Generic;
 
 namespace TanksRebirth.GameContent.RebirthUtils;
 
@@ -34,7 +35,7 @@ public static class DebugManager {
     }
     public static string CurDebugLabel {
         get {
-            if (DebugLevel < 0 || DebugLevel >= DebuggingNames.Length)
+            if (DebugLevel < Id.SceneMetrics || DebugLevel > Id.NavData)
                 return $"Unknown - {DebugLevel}";
             else
                 return DebuggingNames[DebugLevel];
@@ -43,15 +44,16 @@ public static class DebugManager {
     public static bool DebuggingEnabled { get; set; }
     public static int DebugLevel { get; set; }
 
-    private static readonly string[] DebuggingNames =
-    [
-        "General",
-        "Entity Data",
-        "Player Data",
-        "Level Edit Debug",
-        "Powerups",
-        "Achievement Data"
-    ];
+    private static readonly Dictionary<int, string> DebuggingNames = new() {
+        [Id.SceneMetrics] = "metrics",
+        [Id.General] = "gen", // general
+        [Id.EntityData] = "entdat", // entity data
+        [Id.PlayerData] = "plrdat", // plrdat
+        [Id.LevelEditDebug] = "lvlmake", // level editor debug
+        [Id.Powerups] = "pwrup", // powerup
+        [Id.AchievementData] = "achdat", // achievement data
+        [Id.NavData] = "tnknav" // ai tank navigation
+    };
     private static readonly PowerupTemplate[] powerups =
      [Powerup.Speed,
          Powerup.ShellHome,
@@ -234,16 +236,16 @@ public static class DebugManager {
         if (InputUtils.KeyJustPressed(Keys.Insert))
             DebuggingEnabled = !DebuggingEnabled;
 
-        if (InputUtils.KeyJustPressed(Keys.Multiply))
+        if (InputUtils.KeyJustPressed(Keys.Right))
             DebugLevel++;
-        if (InputUtils.KeyJustPressed(Keys.Divide))
+        if (InputUtils.KeyJustPressed(Keys.Left))
             DebugLevel--;
         if (!MainMenu.Active) {
             if (InputUtils.KeyJustPressed(Keys.Z))
                 blockType--;
             if (InputUtils.KeyJustPressed(Keys.X))
                 blockType++;
-            if (DebugManager.DebuggingEnabled) {
+            if (DebuggingEnabled) {
                 if (InputUtils.KeyJustPressed(Keys.NumPad7))
                     tankToSpawnType--;
                 if (InputUtils.KeyJustPressed(Keys.NumPad9))
@@ -263,7 +265,7 @@ public static class DebugManager {
                 if (InputUtils.KeyJustPressed(Keys.PageUp))
                     SpawnTankPlethorae(true);
                 if (InputUtils.KeyJustPressed(Keys.PageDown))
-                    SpawnMe(/*PlayerID.Blue*/GameHandler.GameRand.Next(PlayerID.Blue, PlayerID.YellowPlr + 1), tankToSpawnTeam);
+                    SpawnMe(GameHandler.GameRand.Next(PlayerID.Blue, PlayerID.YellowPlr + 1), tankToSpawnTeam);
                 if (InputUtils.KeyJustPressed(Keys.Home))
                     SpawnTankAt(!TankGame.OverheadView ? MatrixUtils.GetWorldPosition(MouseUtils.MousePosition) : PlacementSquare.CurrentlyHovered.Position, tankToSpawnType, tankToSpawnTeam);
 
@@ -273,6 +275,9 @@ public static class DebugManager {
                     new Shell(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ(), Vector2.Zero, ShellID.Standard, null!, 0);
                 if (InputUtils.KeyJustPressed(Keys.End))
                     SpawnCrateAtMouse();
+
+                if (InputUtils.KeyJustPressed(Keys.OemQuestion))
+                    new Block(blockType, blockHeight, MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ());
 
                 if (InputUtils.KeyJustPressed(Keys.I) && DebugManager.DebugLevel == 4)
                     new Powerup(powerups[mode]) { Position = MatrixUtils.GetWorldPosition(MouseUtils.MousePosition) + new Vector3(0, 10, 0) };

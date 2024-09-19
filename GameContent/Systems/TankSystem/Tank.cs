@@ -561,7 +561,7 @@ public abstract class Tank {
                 SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFontLarge, particle.Text,
                     MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(particle.Position),
                         TankGame.GameView, TankGame.GameProjection),
-                    particle.Color, Color.White, new(particle.Scale.X, particle.Scale.Y), 0f, 1f);
+                    particle.Color, Color.White, new(particle.Scale.X, particle.Scale.Y), 0f, Anchor.Center);
             };
         }
 
