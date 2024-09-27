@@ -114,6 +114,9 @@ public static class MainMenu {
 
     public static int MonochromeValue;
 
+    public static int RandomTanksUpper;
+    public static int RandomTanksLower;
+
     #endregion
 
     private static float _tnkSpeed = 2.4f;
@@ -608,11 +611,30 @@ public static class MainMenu {
         };
         MachineGuns.SetDimensions(450, 450, 300, 40);
 
-        RandomizedTanks = new("Randomized Tanks", font, Color.White) {
+        RandomizedTanks = new("Randomized Tanks", font, Color.White, 0.5f) {
             IsVisible = false,
             Tooltip = "Every tank is now randomized." +
-            "\nA black tank could appear where a brown tank would be!",
-            OnLeftClick = (elem) => Difficulties.Types["RandomizedTanks"] = !Difficulties.Types["RandomizedTanks"]
+            "\nA black tank could appear where a brown tank would be!" +
+            "\n\nLeft click to increase the upper limit." +
+            "\nRight click to increase the lower limit.",
+            OnLeftClick = (elem) => {
+                if (RandomTanksUpper + 1 >= TankID.Collection.Count)
+                    RandomTanksUpper = TankID.None;
+                else if (RandomTanksUpper + 1 == TankID.Random) // we do a little defensive programming xd
+                    RandomTanksUpper = TankID.Brown;
+                else
+                    RandomTanksUpper++;
+                Difficulties.Types["RandomizedTanks"] = RandomTanksLower != TankID.None && RandomTanksUpper != TankID.None;
+            },
+            OnRightClick = (elem) => {
+                if (RandomTanksLower + 1 >= TankID.Collection.Count)
+                    RandomTanksLower = TankID.None;
+                else if (RandomTanksLower + 1 == TankID.Random) // we do a little defensive programming xd
+                    RandomTanksLower = TankID.Brown;
+                else
+                    RandomTanksLower++;
+                Difficulties.Types["RandomizedTanks"] = RandomTanksLower != TankID.None && RandomTanksUpper != TankID.None;
+            }
         };
         RandomizedTanks.SetDimensions(450, 500, 300, 40);
 
@@ -962,6 +984,7 @@ public static class MainMenu {
         if (!_initialized || !_diffButtonsInitialized)
             return;
         Monochrome.Text = "Monochrome: " + TankID.Collection.GetKey(MonochromeValue);
+        RandomizedTanks.Text = $"Randomized Tanks\nLower: {TankID.Collection.GetKey(RandomTanksLower)} | Upper: {TankID.Collection.GetKey(RandomTanksUpper)}";
         if (MenuState == State.Mulitplayer) {
             if (DebugManager.DebuggingEnabled)
                 if (InputUtils.AreKeysJustPressed(Keys.Q, Keys.W)) {

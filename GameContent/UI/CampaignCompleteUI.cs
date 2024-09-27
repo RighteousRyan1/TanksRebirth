@@ -181,7 +181,7 @@ public static class CampaignCompleteUI
         float width = 350.ToResolutionX();
         TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Vector2(0, WindowUtils.WindowHeight / 3), null, Color.Beige * _panelAlpha, 0f, Vector2.Zero, new Vector2(width, WindowUtils.WindowHeight / 2), default, 0f);
         TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Vector2(0, WindowUtils.WindowHeight / 3 + 50.ToResolutionY()), null, Color.Gold * _panelAlpha, 0f, Vector2.Zero, new Vector2(width, 5).ToResolution(), default, 0f);
-        var txt = "Fun Facts";
+        var txt = TankGame.GameLanguage.FunFacts;
         var measure = TankGame.TextFont.MeasureString(txt);
         IntermissionSystem.DrawShadowedString(TankGame.TextFont, new Vector2(width / 2, WindowUtils.WindowHeight / 3 + 5.ToResolutionY()), Vector2.One,
             txt, Color.DeepSkyBlue, Vector2.One.ToResolution(), 1f, new Vector2(measure.X / 2, 0), 0.4f);

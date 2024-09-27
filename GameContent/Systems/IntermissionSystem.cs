@@ -79,6 +79,13 @@ public static class IntermissionSystem {
     private static void DoMidAnimationActions(KeyFrame frame) {
         var frameId = IntermissionAnimator.KeyFrames.FindIndex(f => f.Equals(frame));
 
+        if (MainMenu.Active) {
+            if (frameId > 0) {
+                IntermissionAnimator?.Stop(); // the player dipped during the intermission lol
+                return;
+            }
+        }
+
         // play the opening fanfare n shit. xd.
         if (frameId == 0) {
             SceneManager.CleanupScene();
@@ -86,6 +93,12 @@ public static class IntermissionSystem {
             SoundPlayer.PlaySoundInstance(missionStarting, SoundContext.Effect, 0.8f);
         }
         else if (frameId == 1) {
+            if (Difficulties.Types["RandomizedTanks"]) {
+                if (GameProperties.LoadedCampaign.CurrentMissionId == MainMenu.MissionCheckpoint && IntermissionHandler.LastResult != Enums.MissionEndContext.Lose) {
+                    GameProperties.LoadedCampaign.CachedMissions[GameProperties.LoadedCampaign.CurrentMissionId].Tanks
+                        = Difficulties.HijackTanks(GameProperties.LoadedCampaign.CachedMissions[GameProperties.LoadedCampaign.CurrentMissionId].Tanks);
+                }
+            }
             GameProperties.LoadedCampaign.SetupLoadedMission(GameHandler.AllPlayerTanks.Any(tnk => tnk != null && !tnk.Dead));
         }
         else if (frameId == 2) {

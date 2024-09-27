@@ -18,6 +18,7 @@ using TanksRebirth.GameContent.RebirthUtils;
 namespace TanksRebirth.GameContent.Systems.Coordinates;
 
 public class PlacementSquare {
+    private static bool _initialized;
     // Drag-and-Drop
     public static bool DrawStacks = true;
     public static bool IsPlacing { get; private set; }
@@ -61,6 +62,8 @@ public class PlacementSquare {
         Placements.Add(this);
     }
     public static void InitializeLevelEditorSquares() {
+        if (_initialized)
+            return;
         for (int j = 0; j < BlockMapPosition.MAP_HEIGHT; j++) {
             for (int i = 0; i < BlockMapPosition.MAP_WIDTH_169; i++) {
                 new PlacementSquare(new BlockMapPosition(i, j), Block.FULL_BLOCK_SIZE) {
@@ -74,6 +77,7 @@ public class PlacementSquare {
                 };
             }
         }
+        _initialized = true;
     }
     public static void ResetSquares() {
         for (int i = 0; i < Placements.Count; i++) {

@@ -6,24 +6,24 @@ using System.Linq;
 using TanksRebirth.Enums;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
+using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.Internals;
 
 namespace TanksRebirth.GameContent.Systems;
 
-public record struct Mission
-{
+public record struct Mission {
     /// <summary>The name of this <see cref="Mission"/>.</summary>
     public string Name { get; set; } = "No Name";
 
     /// <summary>The popup text that will display at the beginning of this <see cref="Mission"/>.</summary>
     public string Note { get; set; } = string.Empty;
     /// <summary>The <see cref="Tank"/>s that will be spawned upon mission load.</summary>
-    public TankTemplate[] Tanks { get; }
+    public TankTemplate[] Tanks { get; set; }
 
     /// <summary>The obstacles in the <see cref="Mission"/>.</summary>
-    public BlockTemplate[] Blocks { get; }
+    public BlockTemplate[] Blocks { get; set; }
 
     /// <summary>
     /// Construct a mission. Should generally never be called by the user unless you want to use a lot of time figuring things out.
@@ -289,8 +289,8 @@ public record struct Mission
     /// <returns>The read mission data.</returns>
     /// <exception cref="FileLoadException"></exception>
     public static Mission Read(BinaryReader reader) {
-        List<TankTemplate> tanks = new();
-        List<BlockTemplate> blocks = new();
+        List<TankTemplate> tanks = [];
+        List<BlockTemplate> blocks = [];
 
         var header = reader.ReadBytes(4);
 
@@ -345,7 +345,7 @@ public record struct Mission
                 });
             }
 
-            mission = new Mission(tanks.ToArray(), blocks.ToArray()) {
+            mission = new Mission([.. tanks], [.. blocks]) {
                 Name = name
             };
         }

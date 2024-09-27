@@ -77,7 +77,7 @@ public class Campaign
 
         list.AddRange(missions);
 
-        CachedMissions = list.ToArray();
+        CachedMissions = [.. list];
     }
 
     /// <summary>Loads the next mission in the <see cref="Campaign"/>.</summary>
@@ -101,7 +101,7 @@ public class Campaign
         // run line 120 and 121 in each when i get back
     }
 
-    public (Vector2, bool)[] TrackedSpawnPoints; // position of spawn, alive
+    public (Vector2 Position, bool Alive)[] TrackedSpawnPoints { get; set; } // position of spawn, alive
 
     /// <summary>Sets up the <see cref="Mission"/> that is loaded.</summary>
     /// <param name="spawnNewSet">If true, will spawn all tanks as if it's the first time the player(s) has/have entered this mission.</param>

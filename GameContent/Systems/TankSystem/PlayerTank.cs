@@ -115,7 +115,7 @@ public class PlayerTank : Tank
         else
         {
             _tankTexture = Assets[$"tank_" + TankID.Collection.GetKey(copyTier).ToLower()];
-            var dummy = new AITank(copyTier, default, true, false, false);
+            var dummy = new AITank(copyTier, true, false);
 
             // ugly hardcode fix lol - prevents nantuple instead of triple bounces
             // maybe inefficient on memory
