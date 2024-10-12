@@ -15,6 +15,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 - Player-laid mines now activate and tick with sound cues.
 - Explosions now look much more accurate to the original
 - AI companion mode now spawns your companions in un-occupied player tank spots.
+- Difficulties menu "Random Tanks" now includes support for a range of tanks.
 
 ## Source Code Changes (for modders)
 
