@@ -283,16 +283,22 @@ public class TankGame : Game {
         SpectatorCamera = new(MathHelper.ToRadians(100), GraphicsDevice.Viewport.AspectRatio, 0.1f, 5000f);
         PerspectiveCamera = new(MathHelper.ToRadians(90), GraphicsDevice.Viewport.AspectRatio, 0.1f, 5000f);
 
-        var profiler = new SpecAnalysis(CompSpecs.GPU, CompSpecs.CPU, CompSpecs.RAM);
+        if (!CompSpecs.Equals(default(ComputerSpecs))) {
+            var profiler = new SpecAnalysis(CompSpecs.GPU, CompSpecs.CPU, CompSpecs.RAM);
 
-        profiler.Analyze(false, out var ramr, out var gpur, out var cpur);
+            profiler.Analyze(false, out var ramr, out var gpur, out var cpur);
 
-        ChatSystem.SendMessage(ramr, Color.White);
-        ChatSystem.SendMessage(gpur, Color.White);
-        ChatSystem.SendMessage(cpur, Color.White);
+            ChatSystem.SendMessage(ramr, Color.White);
+            ChatSystem.SendMessage(gpur, Color.White);
+            ChatSystem.SendMessage(cpur, Color.White);
 
-        ChatSystem.SendMessage(profiler.ToString(), Color.Brown);
+            ChatSystem.SendMessage(profiler.ToString(), Color.Brown);
 
+            GameHandler.ClientLog.Write("Sucessfully analyzed hardware.", LogType.Info);
+        }
+        else {
+            GameHandler.ClientLog.Write("Failed to analyze hardware.", LogType.Warn);
+        }
         // I forget why this check is needed...
         ChatSystem.Initialize();
 
@@ -333,6 +339,11 @@ public class TankGame : Game {
         }
         LaunchTime = DateTime.Now;
         IsSouthernHemi = RegionUtils.IsSouthernHemisphere(RegionInfo.CurrentRegion.EnglishName);
+
+        if (IsSouthernHemi)
+            GameHandler.ClientLog.Write("User is in the southern hemisphere.", LogType.Info);
+        else
+            GameHandler.ClientLog.Write("User is in the northern hemisphere.", LogType.Info);
 
         GameHandler.ClientLog.Write($"Loaded user settings.", LogType.Info);
 
