@@ -20,7 +20,7 @@ public enum LogType {
     /// <summary>For an error that would normally be fatal, but has been supressed to allow the process to continue
     /// using defensive programming techniques.</summary>
     ErrorSilent,
-    /// <summary>For when the logger is writing debug info, such as computer hardware/specs.</summary>
+    /// <summary>For when the logger is writing debug information.</summary>
     Debug
 }
 

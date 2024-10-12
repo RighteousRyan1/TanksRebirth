@@ -6,25 +6,16 @@ public static class GameLauncher
 {
     public static bool AutoLaunch = true;
     public static bool IsRunning { get; private set; }
-    public static void LaunchGame()
-    {
+    public static void LaunchGame() {
         IsRunning = true;
-        //try {
-            using var game = new TankGame();
-            game.Run();
-        //}
-        //catch (Exception e) /*when (!Debugger.IsAttached)*/ {
-            //TankGame.WriteError(e);
-            // throw;
-        //}
+        using var game = new TankGame();
+        game.Run();
     }
-    [STAThread]
-    static void Main()
-    {
+    //[STAThread]
+    static void Main() {
         if (AutoLaunch)
             LaunchGame();
     }
 
-    public static void CloseGame()
-        => TankGame.Instance.Exit();
+    public static void CloseGame() => TankGame.Instance.Exit();
 }

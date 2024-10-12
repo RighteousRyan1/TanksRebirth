@@ -13,6 +13,7 @@ using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.Net;
 using TanksRebirth.Internals.Common;
+using System.Collections.Generic;
 
 namespace TanksRebirth.GameContent.RebirthUtils;
 
@@ -23,17 +24,18 @@ public static class DebugManager {
     public static int tankToSpawnTeam;
 
     public readonly struct Id {
+        public const int SceneMetrics = -1;
         public const int General = 0;
         public const int EntityData = 1;
         public const int PlayerData = 2;
         public const int LevelEditDebug = 3;
         public const int Powerups = 4;
         public const int AchievementData = 5;
-        // public const int NavData = 6;
+        public const int NavData = 6;
     }
     public static string CurDebugLabel {
         get {
-            if (DebugLevel < 0 || DebugLevel >= DebuggingNames.Length)
+            if (DebugLevel < Id.SceneMetrics || DebugLevel > Id.NavData)
                 return $"Unknown - {DebugLevel}";
             else
                 return DebuggingNames[DebugLevel];
@@ -42,15 +44,16 @@ public static class DebugManager {
     public static bool DebuggingEnabled { get; set; }
     public static int DebugLevel { get; set; }
 
-    private static readonly string[] DebuggingNames =
-    [
-        "General",
-        "Entity Data",
-        "Player Data",
-        "Level Edit Debug",
-        "Powerups",
-        "Achievement Data"
-    ];
+    private static readonly Dictionary<int, string> DebuggingNames = new() {
+        [Id.SceneMetrics] = "metrics",
+        [Id.General] = "gen", // general
+        [Id.EntityData] = "entdat", // entity data
+        [Id.PlayerData] = "plrdat", // plrdat
+        [Id.LevelEditDebug] = "lvlmake", // level editor debug
+        [Id.Powerups] = "pwrup", // powerup
+        [Id.AchievementData] = "achdat", // achievement data
+        [Id.NavData] = "tnknav" // ai tank navigation
+    };
     private static readonly PowerupTemplate[] powerups =
      [Powerup.Speed,
          Powerup.ShellHome,
@@ -114,7 +117,6 @@ public static class DebugManager {
     public static UITextButton LoadCampaign;
 
     private static int mode;
-
     public static void InitDebugUI() {
         MissionName = new(TankGame.TextFont, Color.White, 0.75f, 20) {
             DefaultString = "Mission Name",
@@ -234,16 +236,16 @@ public static class DebugManager {
         if (InputUtils.KeyJustPressed(Keys.Insert))
             DebuggingEnabled = !DebuggingEnabled;
 
-        if (InputUtils.KeyJustPressed(Keys.Multiply))
+        if (InputUtils.KeyJustPressed(Keys.Right))
             DebugLevel++;
-        if (InputUtils.KeyJustPressed(Keys.Divide))
+        if (InputUtils.KeyJustPressed(Keys.Left))
             DebugLevel--;
         if (!MainMenu.Active) {
             if (InputUtils.KeyJustPressed(Keys.Z))
                 blockType--;
             if (InputUtils.KeyJustPressed(Keys.X))
                 blockType++;
-            if (DebugManager.DebuggingEnabled) {
+            if (DebuggingEnabled) {
                 if (InputUtils.KeyJustPressed(Keys.NumPad7))
                     tankToSpawnType--;
                 if (InputUtils.KeyJustPressed(Keys.NumPad9))
@@ -263,7 +265,7 @@ public static class DebugManager {
                 if (InputUtils.KeyJustPressed(Keys.PageUp))
                     SpawnTankPlethorae(true);
                 if (InputUtils.KeyJustPressed(Keys.PageDown))
-                    SpawnMe(/*PlayerID.Blue*/GameHandler.GameRand.Next(PlayerID.Blue, PlayerID.YellowPlr + 1), tankToSpawnTeam);
+                    SpawnMe(GameHandler.GameRand.Next(PlayerID.Blue, PlayerID.YellowPlr + 1), tankToSpawnTeam);
                 if (InputUtils.KeyJustPressed(Keys.Home))
                     SpawnTankAt(!TankGame.OverheadView ? MatrixUtils.GetWorldPosition(MouseUtils.MousePosition) : PlacementSquare.CurrentlyHovered.Position, tankToSpawnType, tankToSpawnTeam);
 
@@ -274,6 +276,9 @@ public static class DebugManager {
                 if (InputUtils.KeyJustPressed(Keys.End))
                     SpawnCrateAtMouse();
 
+                if (InputUtils.KeyJustPressed(Keys.OemQuestion))
+                    new Block(blockType, blockHeight, MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ());
+
                 if (InputUtils.KeyJustPressed(Keys.I) && DebugManager.DebugLevel == 4)
                     new Powerup(powerups[mode]) { Position = MatrixUtils.GetWorldPosition(MouseUtils.MousePosition) + new Vector3(0, 10, 0) };
             }
@@ -281,7 +286,6 @@ public static class DebugManager {
         blockHeight = MathHelper.Clamp(blockHeight, 1, 7);
         blockType = MathHelper.Clamp(blockType, 0, 3);
     }
-
     public static void SpawnCrateAtMouse() {
         var pos = MatrixUtils.GetWorldPosition(MouseUtils.MousePosition);
 
@@ -292,7 +296,6 @@ public static class DebugManager {
             Team = TeamID.NoTeam
         };
     }
-
     public static AITank SpawnTank(int tier, int team) {
         var rot = GeometryUtils.GetPiRandom();
 
@@ -351,7 +354,6 @@ public static class DebugManager {
 
         return myTank;
     }
-
     public static void SpawnTankInCrate(int tierOverride = default, int teamOverride = default, bool createEvenDrop = false) {
         var random = new BlockMapPosition(GameHandler.GameRand.Next(0, 26), GameHandler.GameRand.Next(0, 20));
 

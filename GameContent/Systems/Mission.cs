@@ -6,24 +6,24 @@ using System.Linq;
 using TanksRebirth.Enums;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
+using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.Internals;
 
 namespace TanksRebirth.GameContent.Systems;
 
-public record struct Mission
-{
+public record struct Mission {
     /// <summary>The name of this <see cref="Mission"/>.</summary>
     public string Name { get; set; } = "No Name";
 
     /// <summary>The popup text that will display at the beginning of this <see cref="Mission"/>.</summary>
     public string Note { get; set; } = string.Empty;
     /// <summary>The <see cref="Tank"/>s that will be spawned upon mission load.</summary>
-    public TankTemplate[] Tanks { get; }
+    public TankTemplate[] Tanks { get; set; }
 
     /// <summary>The obstacles in the <see cref="Mission"/>.</summary>
-    public BlockTemplate[] Blocks { get; }
+    public BlockTemplate[] Blocks { get; set; }
 
     /// <summary>
     /// Construct a mission. Should generally never be called by the user unless you want to use a lot of time figuring things out.
@@ -40,8 +40,8 @@ public record struct Mission
     /// <returns>The mission that is currently active, or created.</returns>
     public static Mission GetCurrent(string name = null) {
         const int roundingFactor = 5;
-        List<TankTemplate> tanks = new();
-        List<BlockTemplate> blocks = new();
+        List<TankTemplate> tanks = [];
+        List<BlockTemplate> blocks = [];
 
         foreach (var tank in GameHandler.AllTanks) {
             if (tank is not null) {
@@ -71,7 +71,7 @@ public record struct Mission
             }
         }
 
-        return new(tanks.ToArray(), blocks.ToArray()) { Name = name };
+        return new([.. tanks], [.. blocks]) { Name = name };
     }
     /// <summary>
     /// Loads a <see cref="Mission"/> and instantly applies it to the game field.
@@ -94,6 +94,7 @@ public record struct Mission
                 PlacementSquare.Placements[placement].HasBlock = false;
             }
 
+            // TODO: fix flipping (once again)
             // FIXME: relates to tank rotation.
             tank.TankRotation = MathF.Round(tnk.Rotation, 5);
             // REMINDER: go here if you're editing load values again.
@@ -288,8 +289,8 @@ public record struct Mission
     /// <returns>The read mission data.</returns>
     /// <exception cref="FileLoadException"></exception>
     public static Mission Read(BinaryReader reader) {
-        List<TankTemplate> tanks = new();
-        List<BlockTemplate> blocks = new();
+        List<TankTemplate> tanks = [];
+        List<BlockTemplate> blocks = [];
 
         var header = reader.ReadBytes(4);
 
@@ -303,50 +304,7 @@ public record struct Mission
 
         Mission mission = new();
 
-        if (version == 1) {
-            var name = reader.ReadString();
-
-            var totalTanks = reader.ReadInt32();
-
-            for (int i = 0; i < totalTanks; i++) {
-                var isPlayer = reader.ReadBoolean();
-                var x = reader.ReadSingle();
-                var y = reader.ReadSingle();
-                var rotation = -reader.ReadSingle(); // i genuinely hate having to make this negative :(
-                var tier = reader.ReadByte();
-                var pType = reader.ReadByte();
-                var team = reader.ReadByte();
-
-                tanks.Add(new() {
-                    IsPlayer = isPlayer,
-                    Position = new(x, y),
-                    Rotation = rotation,
-                    AiTier = tier,
-                    PlayerType = pType,
-                    Team = team
-                });
-            }
-
-            var totalBlocks = reader.ReadInt32();
-
-            for (int i = 0; i < totalBlocks; i++) {
-                var type = reader.ReadByte();
-                var stack = reader.ReadSByte();
-                var x = reader.ReadSingle();
-                var y = reader.ReadSingle();
-
-                blocks.Add(new() {
-                    Type = type,
-                    Stack = stack,
-                    Position = new(x, y),
-                });
-            }
-
-            mission = new Mission(tanks.ToArray(), blocks.ToArray()) {
-                Name = name
-            };
-        }
-        else if (version == 2) {
+        if (version == 2) {
             var name = reader.ReadString();
 
             var totalTanks = reader.ReadInt32();
@@ -387,7 +345,7 @@ public record struct Mission
                 });
             }
 
-            mission = new Mission(tanks.ToArray(), blocks.ToArray()) {
+            mission = new Mission([.. tanks], [.. blocks]) {
                 Name = name
             };
         }

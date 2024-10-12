@@ -64,8 +64,11 @@ public class Shell : IAITankDanger {
         public bool HeatSeeks;
     }
 
+    private Vector2 _oldPosition;
+
+    // this used to be 1500. why?
     /// <summary>The maximum shells allowed at any given time.</summary>
-    private const int MaxShells = 1500;
+    private const int MaxShells = 200;
 
     public static Shell[] AllShells { get; } = new Shell[MaxShells];
 
@@ -340,6 +343,8 @@ public class Shell : IAITankDanger {
         if (Flaming)
             RenderFlamingParticle();
         OnPostUpdate?.Invoke(this);
+
+        _oldPosition = Position;
     }
 
     private void RenderSmokeParticle(float timer) {
@@ -371,9 +376,33 @@ public class Shell : IAITankDanger {
             GeometryUtils.Add(ref particle.Scale, 0.0075f * TankGame.DeltaTime);
         };
     }
-
+    // TODO: work on this more.
     private void RenderLeaveTrail(float timer) {
-        if (!(LifeTime % (timer / 2) <= TankGame.DeltaTime)) return;
+        // _oldPosition and Position are *not* the same during method call.
+        // TODO: make more particles added depending on the positions between 2 distinct frames
+        //var numToAdd
+
+        var p = GameHandler.Particles.MakeParticle(
+            Position3D + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(),
+            GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
+        p.Roll = -MathHelper.PiOver2 + (TankGame.RunTime % MathHelper.Tau);
+        p.Color = TrailColor;
+        p.HasAddativeBlending = false;
+        p.Scale = new(0.45f, 0.5f, 2f); // x = length, y = height, z = width
+                                          // defaults = (x = 0.4, y = 0.25, 0.4)
+
+        p.UniqueBehavior = (a) => {
+            var diff = 0.05f * TankGame.DeltaTime;
+            p.Roll += diff;
+            p.Pitch += diff;
+
+            p.Alpha -= 0.02f * TankGame.DeltaTime;
+
+            if (p.Alpha <= 0f)
+                p.Destroy();
+        };
+
+        /*if (!(LifeTime % (timer / 2) <= TankGame.DeltaTime)) return;
 
         var p = GameHandler.Particles.MakeParticle(
             Position3D + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(),
@@ -403,7 +432,8 @@ public class Shell : IAITankDanger {
             GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
 
         p2.Roll = -MathHelper.PiOver2;
-        p2.Scale = new(0.4f /*Velocity.Length() / 10 - 0.2f*/, 0.25f, 0.4f); // x is outward from bullet
+        p2.Scale = new(0.4f, 0.25f, 0.4f); // x is outward from bullet
+        // oldXScale = Velocity.Length() / 10 - 0.2f
         // p.Scale = new(1f, 1f, 1f);
         p2.Color = TrailColor;
         p2.HasAddativeBlending = false;
@@ -419,7 +449,7 @@ public class Shell : IAITankDanger {
 
             if (p2.Alpha <= 0)
                 p2.Destroy();
-        };
+        };*/
     }
 
     private void RenderFlamingParticle() {

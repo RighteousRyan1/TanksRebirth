@@ -88,7 +88,7 @@ public class TankFootprint {
             track.Pitch = rotation;
 
             if (ShouldTracksFade)
-                track.Alpha -= 0.001f;
+                track.Alpha -= 0.001f * TankGame.DeltaTime;
 
             if (track.Alpha <= 0 || _destroy) {
                 track.Destroy();

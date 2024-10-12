@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using Microsoft.Win32;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -13,80 +14,112 @@ using TanksRebirth.Internals.Common.Utilities;
 namespace TanksRebirth.GameContent;
 
 public class Explosion : IAITankDanger {
-    // model, blah blah blah
-
     public delegate void PostUpdateDelegate(Explosion explosion);
     public static event PostUpdateDelegate? OnPostUpdate;
-    public delegate void PostRenderDelegate(Explosion explosion);
-    public static event PostRenderDelegate? OnPostRender;
 
+    /// <summary>The "owner" of this explosion.</summary>
     public Tank? Source;
 
-    public const int MINE_EXPLOSIONS_MAX = 500;
+    // 500 -> 80
+    public const int MINE_EXPLOSIONS_MAX = 80;
 
     public static Explosion[] Explosions = new Explosion[MINE_EXPLOSIONS_MAX];
-
     public Vector2 Position { get; set; }
     public bool IsPlayerSourced { get; set; }
-
+    /// <summary>
+    /// An array representation of what tanks this explosion has already hit.
+    /// If a tank's global ID is in this array, it has been damaged by this <see cref="Explosion"/>, and will not be damaged again by it.
+    /// </summary>
     public bool[] HasHit = new bool[GameHandler.AllTanks.Length];
-
     public Vector3 Position3D => Position.ExpandZ();
 
-    public Matrix View;
-    public Matrix Projection;
-    public Matrix World;
-
-    public Model Model;
-
-    private static Texture2D? _maskingTex;
-
+    /// <summary>Only merlin himself could decode why I use this... Use this number with any explosion-based calculations.</summary>
     public const float MAGIC_EXPLOSION_NUMBER = 9f;
-
-    public float Scale;
-
-    public float MaxScale;
-
-    public float ExpanseRate = 1f;
-    public float ShrinkRate = 1f;
-
-    public float ShrinkDelay = 40;
-
-    private bool _maxAchieved;
-
     private int _id;
 
+    public float Scale;
+    public float LingerDuration = 60f;
     public float Rotation;
-
     public float RotationSpeed;
 
-    public Explosion(Vector2 pos, float scaleMax, Tank? owner = null, float rotationSpeed = 1f, float soundPitch = -0.3f) {
+    public float LifeTime;
+
+    public Color ExplosionColor = Color.White;
+
+    public Explosion(Vector2 pos, float scale, Tank? owner = null, float rotationSpeed = 1f, float soundPitch = -0.3f) {
         RotationSpeed = rotationSpeed;
         Position = pos;
-        MaxScale = scaleMax;
+        Scale = scale;
         Source = owner;
-        _maskingTex = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smoke_ami");
 
         AITank.Dangers.Add(this);
-        IsPlayerSourced = owner is null ? false : owner is PlayerTank;
-
-        Model = GameResources.GetGameResource<Model>("Assets/mineexplosion");
+        IsPlayerSourced = owner is not null && owner is PlayerTank;
 
         int index = Array.IndexOf(Explosions, null);
 
-        var destroysound = "Assets/sounds/tnk_destroy.ogg";
+        var destroysound = "Assets/sounds/mine_explode.ogg";
 
-        int vertLayers = 5;
-        int horizLayers = 15;
-        for (int i = 0; i < vertLayers; i++) {
-            for (int j = 0; j < horizLayers; j++) {
-                var rot = MathHelper.Tau / horizLayers * i;
+        //int vertLayers = (int)(scale * 2.5f); // 16
+        //int horizLayers = (int)scale; // 5
 
+        int horizLayers = (int)(scale * 1.5f); // 10
+        int vertLayers = (int)(scale * 1.1f); // 8
+
+        var ring = GameHandler.Particles.MakeParticle(Position3D + Vector3.UnitY, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/ring"));
+        ring.Scale = new(1.3f);
+        ring.Roll = MathHelper.PiOver2;
+        ring.HasAddativeBlending = true;
+        ring.Color = ExplosionColor == Color.White ? Color.Yellow : ExplosionColor;
+
+        ring.UniqueBehavior = (a) => {
+            ring.Alpha -= 0.08f * TankGame.DeltaTime;
+
+            GeometryUtils.Add(ref ring.Scale, 0.04f * TankGame.DeltaTime);
+            if (ring.Alpha <= 0)
+                ring.Destroy();
+        };
+
+        // TODO: particle hell
+        // my brain hurts help pls
+        // employ 3d rotation tactics
+        // the spherically displayed particles.
+        for (int i = 0; i <= horizLayers; i++) {
+            for (int j = 0; j <= vertLayers; j++) {
+                var rotX = MathHelper.Pi / vertLayers * j;
+                var rotZ = MathHelper.Pi / horizLayers * i;
+
+                float rotation = 0f;
+                float rotationSpeed1 = 0.03f;
+
+                //var explScalar = (MAGIC_EXPLOSION_NUMBER - 3) * Scale;
+
+                //var position = Vector3.Transform(Vector3.UnitX * explScalar, Matrix.CreateFromYawPitchRoll(rotZ, 0, rotX) * Matrix.CreateTranslation(Position3D));
+                // this will become a model.
+                var lingerRandom = GameHandler.GameRand.NextFloat(0.8f, 1.2f);
+                var particle = GameHandler.Particles.MakeExplosionFlameParticle(new Vector3(0, -100, 0), out var act, LingerDuration / 60f * lingerRandom);
+                // TODO: make particles face center of explosion
+                particle.UniqueBehavior = (a) => {
+                    act?.Invoke(particle);
+                    particle.Color = ExplosionColor;
+                    rotation += rotationSpeed1 * TankGame.DeltaTime;
+
+                    var explScalar = MAGIC_EXPLOSION_NUMBER * Scale;
+                    // find why the rotation isnt rotating the right way. maybe needs a unit circle offset? piover2?
+                    var position = Vector3.Transform(Vector3.UnitX * explScalar, Matrix.CreateFromYawPitchRoll(rotZ + rotation, 0, rotX) * Matrix.CreateTranslation(Position3D));
+                    particle.Position = position;
+                    //var dir = MathUtils.DirectionOf(position.FlattenZ(), Position3D.FlattenZ()).ToRotation();
+                    // when the particle is rotating on the left side of the sphere, it locks "rot" to Pi?
+                    // otherwise it turns into an angle greater than the unit circle. truly so confusing.
+                    particle.Yaw = 0;
+                    var rot = (position.Flatten() - Position3D.Flatten()).ToRotation();
+                    particle.Roll = rot > MathHelper.PiOver2 ? rot : -rot; // this works to a very slight extent
+                    particle.Pitch = -(position.FlattenZ() - Position3D.FlattenZ()).ToRotation() + MathHelper.PiOver2;
+                };
             }
+            horizLayers -= (int)MathF.Round((float)horizLayers / vertLayers);
         }
 
         SoundPlayer.PlaySoundInstance(destroysound, SoundContext.Effect, 1f, 0f, soundPitch, gameplaySound: true);
-        // SoundPlayer.PlaySoundInstance(destroysound, SoundContext.Effect, 0.4f, 0f, -0.2f, gameplaySound: true);
 
         _id = index;
 
@@ -94,21 +127,6 @@ public class Explosion : IAITankDanger {
     }
 
     public void Update() {
-        if (!MapRenderer.ShouldRenderAll)
-            return;
-        if (!_maxAchieved) {
-            if (Scale < MaxScale)
-                Scale += ExpanseRate * TankGame.DeltaTime;
-
-            if (Scale > MaxScale)
-                Scale = MaxScale;
-
-            if (Scale >= MaxScale)
-                _maxAchieved = true;
-        }
-        else if (ShrinkDelay <= 0)
-            Scale -= ShrinkRate * TankGame.DeltaTime;
-
         if (!IntermissionSystem.IsAwaitingNewMission) {
             foreach (var mine in Mine.AllMines) {
                 if (mine is not null && Vector2.Distance(mine.Position, Position) <= Scale * MAGIC_EXPLOSION_NUMBER) // magick
@@ -134,14 +152,11 @@ public class Explosion : IAITankDanger {
                 }
             }
         }
-
-        if (_maxAchieved)
-            ShrinkDelay -= TankGame.DeltaTime;
-
-        if (Scale <= 0)
+        if (LifeTime > LingerDuration)
             Remove();
 
         Rotation += RotationSpeed * TankGame.DeltaTime;
+        LifeTime += TankGame.DeltaTime;
 
         OnPostUpdate?.Invoke(this);
     }
@@ -149,38 +164,5 @@ public class Explosion : IAITankDanger {
     public void Remove() {
         AITank.Dangers.Remove(this);
         Explosions[_id] = null;
-    }
-
-    public void Render() {
-        if (!MapRenderer.ShouldRenderAll)
-            return;
-        World = Matrix.CreateScale(Scale) * Matrix.CreateRotationY(Rotation) * Matrix.CreateTranslation(Position3D);
-        View = TankGame.GameView;
-        Projection = TankGame.GameProjection;
-
-        foreach (ModelMesh mesh in Model.Meshes) {
-            foreach (BasicEffect effect in mesh.Effects) {
-                effect.World = World;
-                effect.View = View;
-                effect.Projection = Projection;
-                effect.TextureEnabled = true;
-
-                effect.Texture = _maskingTex;
-
-                effect.SetDefaultGameLighting_IngameEntities();
-
-                effect.AmbientLightColor = Color.Orange.ToVector3();
-                effect.DiffuseColor = Color.Orange.ToVector3();
-                effect.EmissiveColor = Color.Orange.ToVector3();
-                effect.FogColor = Color.Orange.ToVector3();
-
-                if (ShrinkDelay <= 0)
-                    effect.Alpha -= 0.05f * TankGame.DeltaTime;
-                else
-                    effect.Alpha = 1f;
-            }
-            mesh.Draw();
-        }
-        OnPostRender?.Invoke(this);
     }
 }

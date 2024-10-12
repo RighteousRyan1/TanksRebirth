@@ -25,6 +25,7 @@ using System.Runtime.InteropServices;
 using System.Globalization;
 using TanksRebirth.Internals.Common.Framework.Animation;
 using TanksRebirth.GameContent.RebirthUtils;
+using TanksRebirth.Localization;
 
 namespace TanksRebirth.GameContent.UI;
 
@@ -112,6 +113,9 @@ public static class MainMenu {
     public static UITextButton LanternMode;
 
     public static int MonochromeValue;
+
+    public static int RandomTanksUpper;
+    public static int RandomTanksLower;
 
     #endregion
 
@@ -607,11 +611,30 @@ public static class MainMenu {
         };
         MachineGuns.SetDimensions(450, 450, 300, 40);
 
-        RandomizedTanks = new("Randomized Tanks", font, Color.White) {
+        RandomizedTanks = new("Randomized Tanks", font, Color.White, 0.5f) {
             IsVisible = false,
             Tooltip = "Every tank is now randomized." +
-            "\nA black tank could appear where a brown tank would be!",
-            OnLeftClick = (elem) => Difficulties.Types["RandomizedTanks"] = !Difficulties.Types["RandomizedTanks"]
+            "\nA black tank could appear where a brown tank would be!" +
+            "\n\nLeft click to increase the upper limit." +
+            "\nRight click to increase the lower limit.",
+            OnLeftClick = (elem) => {
+                if (RandomTanksUpper + 1 >= TankID.Collection.Count)
+                    RandomTanksUpper = TankID.None;
+                else if (RandomTanksUpper + 1 == TankID.Random) // we do a little defensive programming xd
+                    RandomTanksUpper = TankID.Brown;
+                else
+                    RandomTanksUpper++;
+                Difficulties.Types["RandomizedTanks"] = RandomTanksLower != TankID.None && RandomTanksUpper != TankID.None;
+            },
+            OnRightClick = (elem) => {
+                if (RandomTanksLower + 1 >= TankID.Collection.Count)
+                    RandomTanksLower = TankID.None;
+                else if (RandomTanksLower + 1 == TankID.Random) // we do a little defensive programming xd
+                    RandomTanksLower = TankID.Brown;
+                else
+                    RandomTanksLower++;
+                Difficulties.Types["RandomizedTanks"] = RandomTanksLower != TankID.None && RandomTanksUpper != TankID.None;
+            }
         };
         RandomizedTanks.SetDimensions(450, 500, 300, 40);
 
@@ -931,17 +954,25 @@ public static class MainMenu {
     // this method is causing considerable amounts of garbage collection!
     internal static void RenderStats(Vector2 genericStatsPos, Vector2 tankKillsPos, Anchor aligning) {
         for (int i = 0; i < _info.Length; i++)
-            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, _info[i], genericStatsPos + Vector2.UnitY * (i * 25).ToResolutionY(), Color.White, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(aligning, TankGame.TextFont.MeasureString(_info[i])), 0f);
-        TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "Tanks Killed by Type:", tankKillsPos, Color.White, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(aligning, TankGame.TextFont.MeasureString("Tanks Killed by Type:")), 0f);
+            SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, _info[i], genericStatsPos + Vector2.UnitY * (i * 25).ToResolutionY(), Color.White, Color.Black, Vector2.One.ToResolution(), 0f, Anchor.Center);
+        //TankGame.SpriteRenderer.DrawString(TankGame.TextFont, _info[i], genericStatsPos + Vector2.UnitY * (i * 25).ToResolutionY(), Color.White, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(aligning, TankGame.TextFont.MeasureString(_info[i])), 0f);
+        SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, TankGame.GameLanguage.TankKillsPerType + ":", tankKillsPos, Color.White, Color.Black, Vector2.One.ToResolution(), 0f, Anchor.Center);
+        // GameUtils.GetAnchor(aligning, TankGame.TextFont.MeasureString("Tanks Killed by Type:"))
+        int count = 1;
         for (int i = 2; i < TankGame.GameData.TankKills.Count; i++) {
             var elem = TankGame.GameData.TankKills.ElementAt(i);
+            if (elem.Value == 0)
+                continue;
+            count++;
             var split = TankID.Collection.GetKey(elem.Key).SplitByCamel();
             var display = $"{split}: {elem.Value}";
-            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, display, tankKillsPos + Vector2.UnitY * ((i - 1) * 25).ToResolutionY(), Color.White, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(aligning, TankGame.TextFont.MeasureString(display)), 0f);
+            SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, display, tankKillsPos + Vector2.UnitY * ((count - 1) * 25).ToResolutionY(), AITank.TankDestructionColors[elem.Key], Color.Black, Vector2.One.ToResolution(), 0f, Anchor.Center);
+            //TankGame.SpriteRenderer.DrawString(TankGame.TextFont, display, tankKillsPos + Vector2.UnitY * ((i - 1) * 25).ToResolutionY(), Color.White, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(aligning, TankGame.TextFont.MeasureString(display)), 0f);
         }
         if (TankGame.GameData.ReadingOutdatedFile)
             TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"Outdated save file ({TankGame.GameData.Name})! Delete the old one!", new Vector2(8, 8), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero, 0f);
-        TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "Press ESC to return", WindowUtils.WindowBottom - Vector2.UnitY * 40.ToResolutionY(), Color.White, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(aligning, TankGame.TextFont.MeasureString("Press ESC to leave")), 0f);
+        SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, "Press ESC to return", WindowUtils.WindowBottom - Vector2.UnitY * 40.ToResolutionY(), Color.White, Color.Black, Vector2.One.ToResolution(), 0f, Anchor.Center);
+        // GameUtils.GetAnchor(aligning, TankGame.TextFont.MeasureString("Press ESC to return"))
     }
 
     private static float _newMisCd;
@@ -953,6 +984,7 @@ public static class MainMenu {
         if (!_initialized || !_diffButtonsInitialized)
             return;
         Monochrome.Text = "Monochrome: " + TankID.Collection.GetKey(MonochromeValue);
+        RandomizedTanks.Text = $"Randomized Tanks\nLower: {TankID.Collection.GetKey(RandomTanksLower)} | Upper: {TankID.Collection.GetKey(RandomTanksUpper)}";
         if (MenuState == State.Mulitplayer) {
             if (DebugManager.DebuggingEnabled)
                 if (InputUtils.AreKeysJustPressed(Keys.Q, Keys.W)) {
@@ -1338,15 +1370,19 @@ public static class MainMenu {
                 if (MissionCheckpoint < 0)
                     MissionCheckpoint = 0;
 
-                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"You can scroll with your mouse to skip to a certain mission." +
+                SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"You can scroll with your mouse to skip to a certain mission." +
                     $"\nCurrently, you will skip to mission {MissionCheckpoint + 1}." +
-                    $"\nYou will be alerted if that mission does not exist.", new Vector2(12, 200).ToResolution(), Color.White, new Vector2(0.75f).ToResolution(), 0f, Vector2.Zero);
+                    $"\nYou will be alerted if that mission does not exist.", new Vector2(12, 200).ToResolution(),
+                    Color.White, Color.Black, new Vector2(0.75f).ToResolution(), 0f, Anchor.TopLeft);
+                //TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"You can scroll with your mouse to skip to a certain mission." +
+                    //$"\nCurrently, you will skip to mission {MissionCheckpoint + 1}." +
+                    //$"\nYou will be alerted if that mission does not exist.", new Vector2(12, 200).ToResolution(), Color.White, new Vector2(0.75f).ToResolution(), 0f, Vector2.Zero);
 
                 var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/trophy");
                 var defPos = new Vector2(60, 380);
                 TankGame.SpriteRenderer.Draw(tex, defPos.ToResolution(), null, Color.White, 0f, new Vector2(tex.Size().X, tex.Size().Y / 2), new Vector2(0.1f).ToResolution(), default, default);
                 var text = $"Top {_speedruns.Length} speedruns:\n" + string.Join(Environment.NewLine, _speedruns);
-                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, text, defPos.ToResolution(), Color.White, new Vector2(0.75f).ToResolution(), 0f, new Vector2(0, TankGame.TextFont.MeasureString(text).Y));
+                SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, text, defPos.ToResolution(), Color.White, Color.Black, new Vector2(0.75f).ToResolution(), 0f, Anchor.LeftCenter);
             }
             else if (MenuState == State.Cosmetics) {
                 TankGame.SpriteRenderer.DrawString(TankGame.TextFontLarge, $"COMING SOON!", new(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 6), Color.White, new Vector2(0.75f).ToResolution(), 0f, TankGame.TextFontLarge.MeasureString($"COMING SOON!") / 2);

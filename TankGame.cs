@@ -283,16 +283,22 @@ public class TankGame : Game {
         SpectatorCamera = new(MathHelper.ToRadians(100), GraphicsDevice.Viewport.AspectRatio, 0.1f, 5000f);
         PerspectiveCamera = new(MathHelper.ToRadians(90), GraphicsDevice.Viewport.AspectRatio, 0.1f, 5000f);
 
-        var profiler = new SpecAnalysis(CompSpecs.GPU, CompSpecs.CPU, CompSpecs.RAM);
+        if (!CompSpecs.Equals(default(ComputerSpecs))) {
+            var profiler = new SpecAnalysis(CompSpecs.GPU, CompSpecs.CPU, CompSpecs.RAM);
 
-        profiler.Analyze(false, out var ramr, out var gpur, out var cpur);
+            profiler.Analyze(false, out var ramr, out var gpur, out var cpur);
 
-        ChatSystem.SendMessage(ramr, Color.White);
-        ChatSystem.SendMessage(gpur, Color.White);
-        ChatSystem.SendMessage(cpur, Color.White);
+            ChatSystem.SendMessage(ramr, Color.White);
+            ChatSystem.SendMessage(gpur, Color.White);
+            ChatSystem.SendMessage(cpur, Color.White);
 
-        ChatSystem.SendMessage(profiler.ToString(), Color.Brown);
+            ChatSystem.SendMessage(profiler.ToString(), Color.Brown);
 
+            GameHandler.ClientLog.Write("Sucessfully analyzed hardware.", LogType.Info);
+        }
+        else {
+            GameHandler.ClientLog.Write("Failed to analyze hardware.", LogType.Warn);
+        }
         // I forget why this check is needed...
         ChatSystem.Initialize();
 
@@ -333,6 +339,11 @@ public class TankGame : Game {
         }
         LaunchTime = DateTime.Now;
         IsSouthernHemi = RegionUtils.IsSouthernHemisphere(RegionInfo.CurrentRegion.EnglishName);
+
+        if (IsSouthernHemi)
+            GameHandler.ClientLog.Write("User is in the southern hemisphere.", LogType.Info);
+        else
+            GameHandler.ClientLog.Write("User is in the northern hemisphere.", LogType.Info);
 
         GameHandler.ClientLog.Write($"Loaded user settings.", LogType.Info);
 
@@ -422,7 +433,18 @@ public class TankGame : Game {
         }
         PlaceSecrets();
     }
-
+    public void DrawDebugMetrics() {
+        var information = new string[] {
+            $"PrimitiveCount: {Graphics.GraphicsDevice.Metrics.PrimitiveCount}",
+            $"Vx: {Graphics.GraphicsDevice.Metrics.VertexShaderCount}",
+            $"Px: {Graphics.GraphicsDevice.Metrics.PixelShaderCount}",
+            $"Draw calls: {Graphics.GraphicsDevice.Metrics.DrawCount}",
+            $"Sprites: {Graphics.GraphicsDevice.Metrics.SpriteCount}",
+            $"Textures: {Graphics.GraphicsDevice.Metrics.TextureCount}",
+            $"Targets: {Graphics.GraphicsDevice.Metrics.TargetCount}"
+        };
+        DebugManager.DrawDebugString(TextFont, SpriteRenderer, string.Join('\n', information), Vector2.Zero, -1);
+    }
     private void HandleResizing(object sender, EventArgs e) {
         // UIElement.ResizeAndRelocate();
     }
@@ -970,7 +992,8 @@ public class TankGame : Game {
             SpriteRenderer.DrawString(TextFont, "DEBUGGER ATTACHED", new Vector2(10, 50), Color.Red, new Vector2(0.8f));
 
         if (DebugManager.DebuggingEnabled) {
-            SpriteRenderer.DrawString(TextFont, "Debug Level: " + DebugManager.CurDebugLabel, new Vector2(10), Color.White, new Vector2(0.6f));
+            SpriteRenderer.DrawString(TextFont, "Debug Level: " + DebugManager.CurDebugLabel, WindowUtils.WindowBottom - new Vector2(0, 15), Color.White, new Vector2(0.6f),
+                origin: TextFont.MeasureString("Debug Level: " + DebugManager.CurDebugLabel) / 2);
             DebugManager.DrawDebugString(SpriteRenderer, $"Garbage Collection: {MemoryParser.FromMegabytes(GCMemory):0} MB" +
                 $"\nPhysical Memory: {CompSpecs.RAM}" +
                 $"\nGPU: {CompSpecs.GPU}" +
@@ -1065,12 +1088,12 @@ public class TankGame : Game {
                                                        $"\nKeys U + I: Unload All Mods" +
                                                        $"\nKeys O + P: Reload All Mods", new(10, 500));
 
-            DebugManager.DrawDebugString(SpriteRenderer, $"Current Mission: {GameProperties.LoadedCampaign.CurrentMission.Name}\nCurrent Campaign: {GameProperties.LoadedCampaign.MetaData.Name}", WindowUtils.WindowBottomLeft - new Vector2(-4, 40), 3, centered: false);
+            DebugManager.DrawDebugString(SpriteRenderer, $"Current Mission: {GameProperties.LoadedCampaign.CurrentMission.Name}\nCurrent Campaign: {GameProperties.LoadedCampaign.MetaData.Name}", WindowUtils.WindowBottomLeft - new Vector2(-4, 60), 3, centered: false);
         }
 
         #endregion
         SpriteRenderer.End();
-
+        
         ChatSystem.DrawMessages();
 
         SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: DefaultRasterizer);
@@ -1102,6 +1125,8 @@ public class TankGame : Game {
         SpriteRenderer.End();
 
         SpriteRenderer.Begin(blendState: BlendState.AlphaBlend, effect: GameShaders.MouseShader, rasterizerState: DefaultRasterizer);
+
+        DrawDebugMetrics();
 
         RebirthMouse.DrawMouse();
 

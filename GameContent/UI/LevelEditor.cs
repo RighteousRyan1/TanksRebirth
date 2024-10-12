@@ -755,7 +755,7 @@ public static class LevelEditor
         if (_alertTime > 0) {
             var scale = 0.5f;
             TankGame.SpriteRenderer.Draw(ChatSystem.ChatAlert, new Vector2(WindowUtils.WindowWidth / 2, (WindowUtils.WindowHeight * 0.625f) - (ChatSystem.ChatAlert.Size().Y.ToResolutionY() * scale)), null, Color.White, 0f, ChatSystem.ChatAlert.Size() / 2, new Vector2(scale).ToResolution(), default, default);
-            SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFontLarge, AlertText, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight * 0.625f), Color.Red, Color.White, new Vector2(0.4f).ToResolution(), 0f);
+            SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFontLarge, AlertText, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight * 0.625f), Color.Red, Color.White, new Vector2(0.4f).ToResolution(), 0f, Anchor.Center);
             _alertTime -= TankGame.DeltaTime;
         }
         if (!ShouldDrawBarUI)

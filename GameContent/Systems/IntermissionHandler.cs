@@ -25,9 +25,13 @@ public static class IntermissionHandler {
     /// <summary>The time (in ticks) the game waits before initiating the mission after the intermission screen is finished.</summary>
     public static float TankFunctionWait = 190;
     private static float _oldWait;
+
+    public static MissionEndContext LastResult = (MissionEndContext)(-1);
     public static void DoEndMissionWorkload(int delay, MissionEndContext context, bool result1up) // bool major = (if true, play M100 fanfare, else M20)
     {
         TankMusicSystem.StopAll();
+
+        LastResult = context;
 
         //if (result1up && context != MissionEndContext.Lose)
         //delay += 200;
@@ -50,7 +54,9 @@ public static class IntermissionHandler {
         }
         if (!Client.IsConnected()) {
             if (context == MissionEndContext.Lose) {
-                PlayerTank.AddLives(-1);
+                // hardcode hell
+                if (!Difficulties.Types["InfiniteLives"])
+                    PlayerTank.AddLives(-1);
 
                 // what is this comment?
                 /*int len = $"{VanillaCampaign.CachedMissions.Count(x => !string.IsNullOrEmpty(x.Name))}".Length;
@@ -90,8 +96,11 @@ public static class IntermissionHandler {
         if (context == MissionEndContext.Win) {
             TankGame.GameData.MissionsCompleted++;
             GameProperties.LoadedCampaign.LoadNextMission();
-            var victorySound = "Assets/fanfares/mission_complete.ogg";
-            SoundPlayer.PlaySoundInstance(victorySound, SoundContext.Effect, 0.5f);
+            // hijack the next mission if random tanks is enabled.
+            // IntermissionSystem.cs line 89 contains when the next mission is actually set-up.
+            GameProperties.LoadedCampaign.CachedMissions[GameProperties.LoadedCampaign.CurrentMissionId].Tanks
+                        = Difficulties.HijackTanks(GameProperties.LoadedCampaign.CachedMissions[GameProperties.LoadedCampaign.CurrentMissionId].Tanks);
+            SoundPlayer.PlaySoundInstance("Assets/fanfares/mission_complete.ogg", SoundContext.Effect, 0.5f);
             if (Speedrun.CurrentSpeedrun is not null) {
                 if (GameProperties.LoadedCampaign.CurrentMissionId > 1) {
                     var prevTime = Speedrun.CurrentSpeedrun.MissionTimes.ElementAt(GameProperties.LoadedCampaign.CurrentMissionId - 2).Value; // previous mission time.
@@ -190,6 +199,10 @@ public static class IntermissionHandler {
                     bool check = Client.IsConnected() ? PlayerTank.Lives.All(x => x == 0) : PlayerTank.GetMyLives() <= 1;
 
                     var cxt = !GameHandler.AllPlayerTanks.Any(tnk => tnk != null && !tnk.Dead) ? (check ? MissionEndContext.GameOver : MissionEndContext.Lose) : MissionEndContext.Win;
+
+                    // hardcode hell 2: electric boogaloo
+                    if (Difficulties.Types["InfiniteLives"])
+                        cxt = MissionEndContext.Lose;
 
                     GameProperties.MissionEndEvent_Invoke(restartTime, cxt, isExtraLifeMission);
                 }
@@ -303,7 +316,7 @@ public static class IntermissionHandler {
         if (!MainMenu.Active && !TankGame.OverheadView && !LevelEditor.Active/* && TankFunctionWait > 0*/) {
             var txt = $"{MathF.Round(TankFunctionWait / 60) + 1}";
             SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFontLarge, PrepareDisplay, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 3), 
-                IntermissionSystem.BackgroundColor, IntermissionSystem.StripColor, CountdownAnimator.CurrentScale.ToResolution(), 0f, 3);
+                IntermissionSystem.BackgroundColor, IntermissionSystem.StripColor, CountdownAnimator.CurrentScale.ToResolution(), 0f, Anchor.Center, 3);
         }
     }
 }

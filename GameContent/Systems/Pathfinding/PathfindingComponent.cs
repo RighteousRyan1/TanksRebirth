@@ -2,7 +2,6 @@
 using Microsoft.Xna.Framework;
 using System.Collections.Generic;
 using TanksRebirth.GameContent.Systems.Coordinates;
-using TopDownShooterPrompt;
 
 namespace TanksRebirth.GameContent.Systems.Pathfinding;
 
