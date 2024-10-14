@@ -191,7 +191,7 @@ public sealed class Mine : IAITankDanger
                     }
                 }
                 // this is apparently causing near-instant explosion
-                if (!tanksNear.Any(tnk => tnk == Owner) && tanksNear.Count > 0)
+                if (!tanksNear.Any(tnk => tnk == Owner && !tnk.Dead) && tanksNear.Count > 0)
                     DetonateTime = MineReactTime;
             }
         }
