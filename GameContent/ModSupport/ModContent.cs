@@ -15,6 +15,6 @@ public static class ModContent {
     /// <returns>A singleton instance of a <see cref="ModTank"/>.</returns>
     public static T GetModTank<T>() where T : ModTank {
         var modTank = moddedTypes.OfType<T>().FirstOrDefault();
-        return modTank;
+        return modTank!;
     }
 }

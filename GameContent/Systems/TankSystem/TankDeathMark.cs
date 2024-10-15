@@ -22,6 +22,7 @@ public class TankDeathMark {
 
     public Texture2D texture;
 
+    /// <summary>The tank that died here.</summary>
     public TankTemplate StoredTank;
 
     public enum CheckColor {

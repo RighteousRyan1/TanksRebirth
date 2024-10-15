@@ -30,7 +30,7 @@ public partial class AITank : Tank
     /// <summary>A list of all active dangers on the map to <see cref="AITank"/>s. Includes <see cref="Shell"/>s, <see cref="Mine"/>s,
     /// and <see cref="Explosion"/>s by default. To make an AI Tank behave towards any thing you would like, make it inherit from <see cref="IAITankDanger"/>
     /// and change the tank's behavior when running away by hooking into <see cref="WhileDangerDetected"/>.</summary>
-    public static List<IAITankDanger> Dangers = new();
+    public static List<IAITankDanger> Dangers = [];
 
     public delegate void PostExecuteAI(AITank tank);
     public static event PostExecuteAI? OnPostUpdateAI;
@@ -171,10 +171,8 @@ public partial class AITank : Tank
     /// Creates a new <see cref="AITank"/>.
     /// </summary>
     /// <param name="tier">The tier of this <see cref="AITank"/>. If '<see cref="TankID.Random"/>', it will be randomly chosen.</param>
-    /// <param name="tankRange">The randomization range that this <see cref="AITank"/> can become.</param>
     /// <param name="setTankDefaults">Whether or not to give this <see cref="AITank"/> the default values.</param>
     /// <param name="isIngame">Whether or not this <see cref="AITank"/> is a gameplay tank or a cosmetic tank (i.e: display models on menus, etc).</param>
-    /// <param name="isRandomizable">Whether or not this <see cref="AITank"/> can be randomized or not using <paramref name="tankRange"/>.</param>
     public AITank(int tier, bool setTankDefaults = true, bool isIngame = true) {
         IsIngame = isIngame;
         // TargetTankRotation = MathHelper.Pi;
@@ -188,13 +186,6 @@ public partial class AITank : Tank
                 tier += 9;
             if (Difficulties.Types["MarbleModBuff"] && !Difficulties.Types["MasterModBuff"])
                 tier += 18;
-            /*if (Difficulties.Types["RandomizedTanks"]) {
-                if (GameProperties.LoadedCampaign.TrackedSpawnPoints != null
-                    && GameProperties.LoadedCampaign.TrackedSpawnPoints.Length > 0) {
-                    tier = TankID.Random;
-                    tankRange = new Range<int>(MainMenu.RandomTanksLower, MainMenu.RandomTanksUpper);
-                }
-            }*/
         }
 
         Behaviors = new AiBehavior[10];
@@ -299,10 +290,6 @@ public partial class AITank : Tank
             return;
         }
 
-        // so not all tanks pursuit at the same time (it looks mad weird if they do)
-        if (AiParams.PursuitFrequency > 0)
-            AiParams.PursuitFrequency += GameHandler.GameRand.Next(-AiParams.PursuitFrequency / 4, AiParams.PursuitFrequency / 4 + 1);
-
         WorldId = index2;
 
         GameHandler.AllTanks[index2] = this;
@@ -311,7 +298,7 @@ public partial class AITank : Tank
     }
     public override void ApplyDefaults(ref TankProperties properties) {
         properties.DestructionColor = TankDestructionColors[AiTankType];
-        AiParams = this.GetAiDefaults(properties, AiTankType);
+        AiParams = this.GetAiDefaults(AiTankType);
 
         if (properties.Stationary) {
             properties.Deceleration = 0.2f;

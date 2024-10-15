@@ -10,7 +10,14 @@ using TanksRebirth.GameContent.Systems;
 namespace TanksRebirth.GameContent;
 
 public static class AIManager {
-    public static AiParameters GetAiDefaults(this AITank tank, TankProperties properties, int tankType) {
+    /// <summary>
+    /// Fetch the default AI parameters from the given input tank type.
+    /// </summary>
+    /// <param name="tank">The AI tank to set the defaults of.</param>
+    /// <param name="tankType">The type of the tank to retrieve the defaults from.</param>
+    /// <returns></returns>
+    public static AiParameters GetAiDefaults(this AITank tank, int tankType) {
+        var properties = tank.Properties;
         var baseExpValue = 0f;
         var aiParams = new AiParameters();
         switch (tankType) {
@@ -1338,6 +1345,11 @@ public static class AIManager {
         tank.BaseExpValue = baseExpValue;
         return aiParams;
     }
+    /// <summary>
+    /// Gets the highest tier that is present in-game, following the pattern you give.
+    /// </summary>
+    /// <param name="predicate">The pattern to take account for when searching. If null, just finds the highest active.</param>
+    /// <returns></returns>
     public static int GetHighestTierActive(Func<AITank, bool>? predicate = null) {
         var highest = TankID.None;
 
@@ -1355,6 +1367,11 @@ public static class AIManager {
 
         return highest;
     }
+    /// <summary>
+    /// Counts every AI tank present in-game, following the pattern you give.
+    /// </summary>
+    /// <param name="predicate">The pattern to take account for when searching. If null, just counts every AI tank.</param>
+    /// <returns></returns>
     public static int CountAll(Func<AITank, bool>? predicate = null) {
         var cnt = 0;
         Span<AITank> tanks = GameHandler.AllAITanks;
@@ -1367,6 +1384,11 @@ public static class AIManager {
 
         return cnt;
     }
+    /// <summary>
+    /// Counts all tanks of a given tank type.
+    /// </summary>
+    /// <param name="tier">The tank type to search for and count.</param>
+    /// <returns></returns>
     public static int GetTankCountOfType(int tier) {
         var cnt = 0;
         Span<AITank> tanks = GameHandler.AllAITanks;

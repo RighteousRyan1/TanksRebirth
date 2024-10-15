@@ -33,16 +33,17 @@ public class Campaign
     public const int MAX_MISSIONS = 100;
     /// <summary>Returns the names of campaigns in the user's <c>Campaigns/</c> directory.</summary>
     public static string[] GetCampaignNames()
-        => IOUtils.GetSubFolders(Path.Combine(TankGame.SaveDirectory, "Campaigns"), true);
+        => Directory.GetFiles(Path.Combine(TankGame.SaveDirectory, "Campaigns")); //IOUtils.GetSubFolders(Path.Combine(TankGame.SaveDirectory, "Campaigns"), true);
     public Mission[] CachedMissions = new Mission[MAX_MISSIONS];
     public Mission CurrentMission { get; private set; }
     public Mission LoadedMission { get; private set; }
     public int CurrentMissionId { get; private set; }
 
+    /// <summary>The meta-data for this campaign.</summary>
     public CampaignMetaData MetaData;
 
     public Campaign() {
-        TrackedSpawnPoints = Array.Empty<(Vector2, bool)>();
+        TrackedSpawnPoints = [];
         MetaData = CampaignMetaData.GetDefault();
     }
 
@@ -101,6 +102,7 @@ public class Campaign
         // run line 120 and 121 in each when i get back
     }
 
+    // FIXME: not sure why this is public?
     public (Vector2 Position, bool Alive)[] TrackedSpawnPoints { get; set; } // position of spawn, alive
 
     /// <summary>Sets up the <see cref="Mission"/> that is loaded.</summary>
