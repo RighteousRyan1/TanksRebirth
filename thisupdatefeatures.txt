@@ -16,7 +16,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 
 ## Fixes
 
-
+- Mines now no longer try to explode prematurely.
 
 ## TODO
 
