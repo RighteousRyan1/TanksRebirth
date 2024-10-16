@@ -22,6 +22,62 @@ public sealed record ChatSystem {
     // TODO: add more here.
     public struct ChatTag {
         // TODO: start sometime eventually?
+        // [HEX###:text]
+        // [r,g,b: text]
+
+        public static readonly char[] Hexadecimals = [
+            'A', 'B', 'C', 'D', 'E', 'F',
+            '0','1','2','3','4','5','6','7','8','9'
+        ];
+
+        /// <summary>The color for each character in the string array.</summary>
+        public readonly Color[] Colors;
+        public readonly string ParsedString;
+        public ChatTag(string tag) {
+            ParsedString = string.Empty;
+            Colors = new Color[tag.Length];
+
+            var lastOpenBracket = -1;
+
+            for (int i = 0; i < tag.Length; i++) {
+                var c = tag[i];
+
+                if (c == '[') {
+                    lastOpenBracket = i;
+                    bool success = true;
+                    // check all characters within 6 spaces ahead of the open bracket to see if it is hexadecimal
+                    for (int j = 1; j <= 6; j++) {
+                        if (!Hexadecimals.Contains(c)) {
+                            success = false;
+                            break;
+                        }
+                    }
+                    if (!success)
+                        continue;
+                    // check one space after the final hexadecimal value, since the check was successful.
+                    if (tag[i + 7] != ':')
+                        continue;
+                    // now read the rest of the string as intended.
+                    bool endRead = false;
+                    for (int k = i + 8; k < tag.Length; k++) {
+                        var v = tag[k];
+
+                        if (v == ']') {
+                            endRead = true;
+                            break;
+                        }
+                        else {
+                            ParsedString += v;
+                        }
+                        // no clue if ts works :sob:
+                    }
+                }
+            }
+        }
+
+        private void Colorize(int from, int to) {
+
+        }
     }
 
     public delegate void OnMessageAddedDelegate(string message);
