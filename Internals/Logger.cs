@@ -94,6 +94,7 @@ public sealed class Logger : IDisposable {
     public void Dispose() {
         sWriter.Dispose();
         fStream.Dispose();
+        GC.SuppressFinalize(this);
     }
     ~Logger() {
         Dispose();

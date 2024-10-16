@@ -26,10 +26,7 @@ namespace TanksRebirth.GameContent;
 
 public class PlayerTank : Tank
 {
-    /// <summary>The amount of lives for every existing player.<para>Lives[0] = Blue Tank's Lives</para>
-    /// Lives[1] = Red Tank's Lives
-    /// <para>Lives[2] = Green Tank's Lives</para>
-    /// Lives[3] = Yellow Tank's Lives
+    /// <summary>The amount of lives for every existing player. Access a certain player's life count via indexing this array with a PlayerID entry.
     /// <para>Note that lives are always synced on multiplayer.</para>
     /// </summary>
     public static int[] Lives { get; set; } = new int[4];
@@ -68,7 +65,7 @@ public class PlayerTank : Tank
     public static int StartingLives = 3;
 
     // public static Dictionary<PlayerType, Dictionary<TankTier, int>> TanksKillDict = new(); // this campaign only!
-    public static Dictionary<int, int> TankKills = new(); // this campaign only!
+    public static Dictionary<int, int> TankKills = []; // this campaign only!
 
     public struct DeterministicPlayerStats {
         public int ShellsShotThisCampaign;
@@ -88,7 +85,7 @@ public class PlayerTank : Tank
     public int PlayerType { get; }
 
     private Texture2D _tankTexture;
-    private static Texture2D _shadowTexture;
+    private static Texture2D? _shadowTexture;
 
     public static Keybind controlUp = new("Up", Keys.W);
     public static Keybind controlDown = new("Down", Keys.S);
