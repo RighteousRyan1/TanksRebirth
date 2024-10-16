@@ -98,8 +98,9 @@ public static class IntermissionHandler {
             GameProperties.LoadedCampaign.LoadNextMission();
             // hijack the next mission if random tanks is enabled.
             // IntermissionSystem.cs line 89 contains when the next mission is actually set-up.
-            GameProperties.LoadedCampaign.CachedMissions[GameProperties.LoadedCampaign.CurrentMissionId].Tanks
-                        = Difficulties.HijackTanks(GameProperties.LoadedCampaign.CachedMissions[GameProperties.LoadedCampaign.CurrentMissionId].Tanks);
+            if (Difficulties.Types["RandomizedTanks"])
+                GameProperties.LoadedCampaign.CachedMissions[GameProperties.LoadedCampaign.CurrentMissionId].Tanks
+                            = Difficulties.HijackTanks(GameProperties.LoadedCampaign.CachedMissions[GameProperties.LoadedCampaign.CurrentMissionId].Tanks);
             SoundPlayer.PlaySoundInstance("Assets/fanfares/mission_complete.ogg", SoundContext.Effect, 0.5f);
             if (Speedrun.CurrentSpeedrun is not null) {
                 if (GameProperties.LoadedCampaign.CurrentMissionId > 1) {

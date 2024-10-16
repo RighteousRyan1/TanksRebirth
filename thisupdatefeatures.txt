@@ -1,4 +1,4 @@
-Sorry, been a while. Got caught up in stuff... Anyway, finally another update!
+/* Enter message here */
 
 Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed later) speedruns will get their spot on the main menu!
 
@@ -8,14 +8,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 
 ## Changes
 
-- Made stats screen better?
-- Chat box now shows messages from the bottom up, and text is properly scaled now.
-- Made tracks more closely packed together.
-- Tracks now fade at the same scale, ignoring framerate.
-- Player-laid mines now activate and tick with sound cues.
-- Explosions now look much more accurate to the original
-- AI companion mode now spawns your companions in un-occupied player tank spots.
-- Difficulties menu "Random Tanks" now includes support for a range of tanks.
+
 
 ## Source Code Changes (for modders)
 
@@ -23,9 +16,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 
 ## Fixes
 
-- Fixed AI companion bug
-- Fixed tank tracks not being placed during tank rotation
-- Made infinite lives actually work on campaigns with one starting life.
+- Mines now no longer try to explode prematurely.
 
 ## TODO
 
