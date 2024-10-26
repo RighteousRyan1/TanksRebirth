@@ -46,9 +46,9 @@ public static class ModLoader
     private volatile static List<Action> _loadingActions = [];
     private volatile static List<Action> _sandboxingActions = [];
 
-    private static Dictionary<TanksMod, List<ModTank>> _modTankDictionary = new();
+    private static Dictionary<TanksMod, List<ModTank>> _modTankDictionary = [];
     public static ModTank[] ModTanks { get; private set; } = [];
-    private static List<ModTank> _modTanks = new();
+    private static List<ModTank> _modTanks = [];
 
     private static bool _firstLoad = true;
     /// <summary>The error given from the mod-loading process.</summary>
@@ -100,11 +100,31 @@ public static class ModLoader
                 WindowStyle = ProcessWindowStyle.Hidden,
                 FileName = @"C:\Windows\system32\cmd.exe",
                 WorkingDirectory = Path.Combine(ModsPath, modName),
-                Arguments = $"/c dotnet build -c " + LoadType
+                Arguments = $"/c dotnet build -c " + LoadType,
+                RedirectStandardOutput = true,
             };
 
             proc.StartInfo = startInfo;
             proc.Start();
+
+            var lines = proc.StandardOutput
+                .ReadToEnd()
+                .Replace("\n", "")
+                .Split('\r')
+                .Select(x => x.Trim())
+                .Where(x => !string.IsNullOrEmpty(x))
+                .ToArray();
+
+            // find a build failure
+
+            var idx = Array.FindIndex(lines, l => l.Contains("build failed", StringComparison.CurrentCultureIgnoreCase));
+            if (idx > -1) {
+                var reasonP = Environment.NewLine + lines[idx - 1];
+                var reason = reasonP.Remove(Array.FindIndex(reasonP.ToArray(), x => x == '['));
+                Error = reason;
+                TankGame.ReportError(new Exception(reason));
+            }
+
             proc.WaitForExit();
         } catch (Exception e) {
             Error = e.Message;
