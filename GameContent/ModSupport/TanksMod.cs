@@ -1,5 +1,4 @@
 ﻿using System.IO;
-using System.Reflection;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework.Interfaces;
 
@@ -7,10 +6,13 @@ namespace TanksRebirth.GameContent.ModSupport;
 
 /// <summary>A class that contains an entrypoint into the game.</summary>
 public abstract class TanksMod : ILoadable {
+    /// <summary>The folder within your mod path that contains project references with <c>.dll</c>.</summary>
+    public string RefsFolder { get;} = "modrefs";
     /// <summary>The display name of this mod. Generally named the internal name, but split by PascalCase.</summary>
     public virtual string Name { get; internal set; } = "";
     /// <summary>The internal name of this mod. This is the name of the project the mod was built in.</summary>
     public string InternalName { get; internal set; } = "";
+    /// <summary>The local path to this mod. Generally used in tandem with <see cref="ImportAsset{T}(string)"/> or with other manners of loading content.</summary>
     public string ModPath => Path.Combine(TankGame.SaveDirectory, "Mods", InternalName);
     /// <summary>The place where music for tanks is loaded from in your mod.</summary>
     public string MusicFolder { get; } = "Music";

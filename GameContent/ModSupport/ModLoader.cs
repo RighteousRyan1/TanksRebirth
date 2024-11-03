@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.Loader;
 using System.Threading.Tasks;
 using TanksRebirth.GameContent.ID;
@@ -37,7 +38,7 @@ public static class ModLoader
     public static int ActionsNeeded { get; private set; }
     public static int ActionsComplete { get; private set; }
     public static LoadStatus Status { get; private set; } = LoadStatus.Inactive; 
-    public static string ModBeingLoaded { get; private set; } = "";
+    public static string ModBeingLoaded { get; private set; } = string.Empty;
     public static bool LoadingMods { get; private set; }
     public static string ModsPath { get; } = Path.Combine(TankGame.SaveDirectory, "Mods");
 
@@ -46,6 +47,7 @@ public static class ModLoader
     private volatile static List<Action> _loadingActions = [];
     private volatile static List<Action> _sandboxingActions = [];
 
+    private static Dictionary<string, AssemblyLoadContext> _modDeps = [];
     private static Dictionary<TanksMod, List<ModTank>> _modTankDictionary = [];
     public static ModTank[] ModTanks { get; private set; } = [];
     private static List<ModTank> _modTanks = [];
@@ -159,6 +161,12 @@ public static class ModLoader
             asm.Unload();
             ChatSystem.SendMessage($"Unloaded '{asm.Name}'", Color.Orange);
         });
+        foreach (var entry in _modDeps) {
+            var alc = entry.Value;
+            var mod = entry.Key;
+
+            ChatSystem.SendMessage($"Unloaded dependency '{alc.Name}' from {mod}", Color.DarkOrange);
+        }
         // for when the unloading process is done.
         _modTankDictionary.Clear();
         ModContent.moddedTypes.Clear();
@@ -178,24 +186,30 @@ public static class ModLoader
         TrackID.Collection = new(MemberType.Fields);
     }
     private static void UnloadModContent(ref TanksMod mod) {
+        return;
         // unfinished for now.
         /*var types = mod.GetType().Assembly.GetTypes();
 
         for (int i = 0; i < types.Length; i++) {
-            var members = types[i].GetMembers();
-            for (int j = 0; j < members.Length; i++) {
-                members[j].GetType().get
+            var fields = types[i].GetFields();
+            for (int j = 0; j < fields.Length; i++) {
+                var events = fields[j].FieldType.GetEvents();
+
+                for (int k = 0; k < events.Length; k++) {
+                    var @event = events[k];
+                    var eventType = @event.EventHandlerType;
+                    var cEvent = @event.get
+                    foreach (var subscriber in )
+                }
             }
         }*/
     }
     /// <summary>Prepare your garbage collector!</summary>
     internal static void LoadMods() {
-        if (Status == LoadStatus.Unloading) {
+        if (Status == LoadStatus.Unloading)
             ChatSystem.SendMessage("Mods are currently unloading! Unable to load mods.", Color.Red);
-        }
-        if (Status == LoadStatus.Loading || Status == LoadStatus.Compiling || Status == LoadStatus.Sandboxing) {
+        if (Status == LoadStatus.Loading || Status == LoadStatus.Compiling || Status == LoadStatus.Sandboxing)
             ChatSystem.SendMessage("Mods are currently loading! Unable to load mods.", Color.Red);
-        }
         if (LoadedMods.Count > 0)
             UnloadAll();
 
@@ -231,13 +245,27 @@ public static class ModLoader
                             var lines = File.ReadAllLines(file2);
                             var netVer = GetCsprojPropertyValue(lines, LocateCsprojProperty(lines, "TargetFramework"));
 
-                            if (netVer != "net8.0") {
-                                Error = "This mod does not match TanksRebirth's .NET version (8.0)";
+                            if (netVer != ModNETVersion) {
+                                Error = $"This mod does not match TanksRebirth's .NET version ({ModNETVersion})";
                                 return;
                             }
 
                             _loadingActions.Add(() => {
                                 ModBeingLoaded = modName;
+                                // load assemblies included in the modrefs folder
+                                var dirPath = Path.Combine(folder, "modrefs");
+
+                                // TODO: what the sigma? (translation - "why does this always throw an error when AttemptCompile is called?")
+                                if (Directory.Exists(dirPath)) {
+                                    foreach (var dllPath in Directory.GetFiles(dirPath).Where(x => x.EndsWith(".dll"))) {
+                                        var dll = Path.GetFileName(dllPath);
+                                        var depAlc = new AssemblyLoadContext(Path.GetFileNameWithoutExtension(dllPath), true);
+
+                                        _modDeps[modName] = depAlc;
+
+                                        depAlc.LoadFromStream(File.Open(dllPath, FileMode.Open));
+                                    }
+                                }
                                 AttemptCompile(modName);
                                 Status = LoadStatus.Loading;
                                 string filepath = Path.Combine(folder, "bin", LoadType, ModNETVersion, $"{modName}.dll");
@@ -246,7 +274,7 @@ public static class ModLoader
                                 var alc = new AssemblyLoadContext(modName, true);
                                 // alc.LoadFromAssemblyPath(filepath);
                                 alc.LoadFromStream(File.Open(filepath, FileMode.Open), File.Open(pdb, FileMode.Open));
-                                
+
                                 _loadedAlcs.Add(alc);
 
                                 var assembly = alc.Assemblies.First();
@@ -261,12 +289,13 @@ public static class ModLoader
                                                 modClassCount++;
                                                 if (modClassCount > 1)
                                                     throw new Exception("Too many mod classes. Only one is allowed per-mod.");
+
                                                 // let's run the virtually overridden methods.
                                                 var tanksMod = Activator.CreateInstance(type) as TanksMod;
                                                 tanksMod!.InternalName = modName;
                                                 tanksMod!.Name = modName;
 
-                                                _modTankDictionary.Add(tanksMod, new());
+                                                _modTankDictionary.Add(tanksMod, []);
 
                                                 // now lets scan the mod's content for ModTanks
                                                 // i feel like this is gravely inefficient but it can be changed
@@ -291,7 +320,8 @@ public static class ModLoader
                                                 OnPostModLoad?.Invoke(tanksMod);
                                             }
                                         }
-                                    }  catch (Exception e) {
+                                    }
+                                    catch (Exception e) {
                                         TankGame.ReportError(e, true, true);
                                         Error = e.Message;
                                         return;
@@ -322,6 +352,7 @@ public static class ModLoader
             OnFinishModLoading?.Invoke();
             ModTanks = _modTanks.ToArray();
         });
+
     }
     public static int LocateCsprojProperty(string[] contents, string match) {
         return Array.FindIndex(contents, x => {
