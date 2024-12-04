@@ -38,8 +38,13 @@ public abstract partial class UIElement {
     /// <summary>This <see cref="UIElement"/>'s children.</summary>
     protected IList<UIElement> Children { get; set; } = new List<UIElement>();
 
+    private Rectangle? _backingHitbox;
+
     /// <summary>The hitbox of this <see cref="UIElement"/>.</summary>
-    public Rectangle Hitbox => new((int)Position.X, (int)Position.Y, (int)Size.X, (int)Size.Y);
+    public Rectangle Hitbox {
+        protected set { _backingHitbox = value; }
+        get { return _backingHitbox ?? new Rectangle((int)Position.X, (int)Position.Y, (int)Size.X, (int)Size.Y); }
+    }
 
     /// <summary>The position of this <see cref="UIElement"/>.</summary>
     public Vector2 Position;
@@ -95,6 +100,7 @@ public abstract partial class UIElement {
         _doUpdating = false;
         Recalculate();
     }
+
     private Func<Vector2> _updatedPos;
     private Func<Vector2> _updatedSize;
     private bool _doUpdating;
