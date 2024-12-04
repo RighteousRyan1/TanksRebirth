@@ -25,7 +25,7 @@ namespace TanksRebirth.Internals.UI {
             List<UIElement> focusedElements = new(AllUIElements.Count / 8);
 
             if (!getHighest) {
-                for (int iterator = AllUIElements.Count - 1; iterator >= 0; iterator--) {
+                for (int iterator = AllUIElements.Count; iterator >= 0; iterator--) {
                     UIElement currentElement = AllUIElements[iterator];
                     if (!currentElement.IgnoreMouseInteractions && currentElement.IsVisible && currentElement.Hitbox.Contains(position)) {
                         focusedElements.Add(currentElement);
@@ -35,7 +35,7 @@ namespace TanksRebirth.Internals.UI {
                 }
             }
             else {
-                for (int iterator = 0; iterator < AllUIElements.Count - 1; iterator++) {
+                for (int iterator = 0; iterator < AllUIElements.Count; iterator++) {
                     UIElement currentElement = AllUIElements[iterator];
                     if (!currentElement.IgnoreMouseInteractions && currentElement.IsVisible && currentElement.Hitbox.Contains(position)) {
                         focusedElements.Add(currentElement);

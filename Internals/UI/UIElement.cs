@@ -95,15 +95,6 @@ public abstract partial class UIElement {
         _doUpdating = false;
         Recalculate();
     }
-
-    /// <summary>Final elements just... dont work?</summary>
-    internal static void CunoSucks() {
-        cunoSucksElement ??= new() { IsVisible = false };
-        cunoSucksElement?.Remove();
-        cunoSucksElement = new();
-        cunoSucksElement.SetDimensions(-1000789342, -783218, 0, 0);
-    }
-
     private Func<Vector2> _updatedPos;
     private Func<Vector2> _updatedSize;
     private bool _doUpdating;
@@ -112,7 +103,6 @@ public abstract partial class UIElement {
         _updatedPos = position;
         _updatedSize = dimensions;
         _doUpdating = true;
-        CunoSucks();
     }
 
     /// <summary>
@@ -351,7 +341,7 @@ public abstract partial class UIElement {
     public static void UpdateElements() {
         var focusedElements = GetElementsAt(MouseUtils.MousePosition, true);
 
-        foreach (UIElement el in focusedElements) {
+        foreach (var el in focusedElements) {
             el.LeftClick();
             el.LeftDown();
             el.LeftUp();
