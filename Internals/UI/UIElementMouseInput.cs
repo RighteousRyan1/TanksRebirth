@@ -56,7 +56,7 @@ namespace TanksRebirth.Internals.UI {
             return focusedElements;
         }
 
-        protected bool CanRegisterInput(bool? requiredInput) {
+        private bool IsInputValid(bool? requiredInput) {
             if (!TankGame.Instance.IsActive || !IsInteractable)
                 return false;
 
@@ -74,116 +74,130 @@ namespace TanksRebirth.Internals.UI {
 
         public Action<UIElement> OnLeftClick;
 
-        public virtual void LeftClick() {
-            if (CanRegisterInput(InputUtils.MouseLeft && !InputUtils.OldMouseLeft)) {
-                if (delay <= 0)
-                    OnLeftClick?.Invoke(this);
-                delay = 2;
-            }
+        public void LeftClick() {
+            if (!IsInputValid(InputUtils.MouseLeft && !InputUtils.OldMouseLeft))
+                return;
+
+            if (delay <= 0)
+                OnLeftClick?.Invoke(this);
+            delay = 2;
         }
 
         public Action<UIElement> OnLeftDown;
 
-        public virtual void LeftDown() {
-            if (CanRegisterInput(InputUtils.MouseLeft))
-                OnLeftDown?.Invoke(this);
+        public void LeftDown() {
+            if (!IsInputValid(InputUtils.MouseLeft))
+                return;
+
+            OnLeftDown?.Invoke(this);
         }
 
         public Action<UIElement> OnLeftUp;
 
-        public virtual void LeftUp() {
-            if (CanRegisterInput(!InputUtils.MouseLeft)) {
-                OnLeftUp?.Invoke(this);
-            }
+        public void LeftUp() {
+            if (!IsInputValid(!InputUtils.MouseLeft))
+                return;
+
+            OnLeftUp?.Invoke(this);
         }
 
         //---------------------------------------------------------
 
         public Action<UIElement> OnRightClick;
 
-        public virtual void RightClick() {
-            if (CanRegisterInput(InputUtils.MouseRight && !InputUtils.OldMouseRight)) {
-                if (delay <= 0)
-                    OnRightClick?.Invoke(this);
-                delay = 2;
-            }
+        public void RightClick() {
+            if (!IsInputValid(InputUtils.MouseRight && !InputUtils.OldMouseRight))
+                return;
+
+            if (delay <= 0)
+                OnRightClick?.Invoke(this);
+
+            delay = 2;
         }
 
         public Action<UIElement> OnRightDown;
 
-        public virtual void RightDown() {
-            if (CanRegisterInput(InputUtils.MouseRight)) {
-                OnRightDown?.Invoke(this);
-            }
+        public void RightDown() {
+            if (!IsInputValid(InputUtils.MouseRight))
+                return;
+
+            OnRightDown?.Invoke(this);
         }
 
         public Action<UIElement> OnRightUp;
 
-        public virtual void RightUp() {
-            if (CanRegisterInput(!InputUtils.MouseRight)) {
-                OnRightUp?.Invoke(this);
-            }
+        public void RightUp() {
+            if (!IsInputValid(!InputUtils.MouseRight))
+                return;
+            OnRightUp?.Invoke(this);
         }
 
         //--------------------------------------------------------
 
         public Action<UIElement> OnMiddleClick;
 
-        public virtual void MiddleClick() {
-            if (CanRegisterInput(InputUtils.MouseMiddle && !InputUtils.OldMouseMiddle)) {
-                if (delay <= 0)
-                    OnMiddleClick?.Invoke(this);
-                delay = 2;
-            }
+        public void MiddleClick() {
+            if (!IsInputValid(InputUtils.MouseMiddle && !InputUtils.OldMouseMiddle))
+                return;
+
+            if (delay <= 0)
+                OnMiddleClick?.Invoke(this);
+            delay = 2;
         }
 
         public Action<UIElement> OnMiddleDown;
 
-        public virtual void MiddleDown() {
-            if (CanRegisterInput(InputUtils.MouseMiddle)) {
-                OnMiddleDown?.Invoke(this);
-            }
+        public void MiddleDown() {
+            if (!IsInputValid(InputUtils.MouseMiddle))
+                return;
+
+            OnMiddleDown?.Invoke(this);
         }
 
         public Action<UIElement> OnMiddleUp;
 
-        public virtual void MiddleUp() {
-            if (CanRegisterInput(!InputUtils.MouseMiddle)) {
-                OnMiddleUp?.Invoke(this);
-            }
+        public void MiddleUp() {
+            if (!IsInputValid(!InputUtils.MouseMiddle))
+                return;
+
+            OnMiddleUp?.Invoke(this);
         }
 
         //--------------------------------------------------------
 
         public Action<UIElement> OnMouseOver;
 
-        public virtual void MouseOver() {
+        public void MouseOver() {
             if (!TankGame.Instance.IsActive)
                 return;
 
-            if (Parent is null || Parent.Hitbox.Contains(MouseUtils.MousePosition)) {
-                if (Hitbox.Contains(MouseUtils.MousePosition) && !_wasHovered) {
-                    if ((HasScissor && Scissor.Invoke().Contains(MouseUtils.MousePosition)) || !HasScissor) {
-                        OnMouseOver?.Invoke(this);
-                        MouseHovering = true;
-                    }
-                }
-            }
+            _wasHovered = MouseHovering;
 
+            if (Parent is not null && !Parent.Hitbox.Contains(MouseUtils.MousePosition))
+                return;
+
+            if (!Hitbox.Contains(MouseUtils.MousePosition) || _wasHovered)
+                return;
+
+            if ((!HasScissor || !Scissor.Invoke().Contains(MouseUtils.MousePosition)) && HasScissor)
+                return;
+
+            OnMouseOver?.Invoke(this);
+            MouseHovering = true;
             _wasHovered = MouseHovering;
         }
 
         public Action<UIElement> OnMouseOut;
 
-        public virtual void MouseOut() {
-            if (!TankGame.Instance.IsActive) {
+        public void MouseOut() {
+            if (!TankGame.Instance.IsActive)
                 return;
-            }
 
-            if (!Hitbox.Contains(MouseUtils.MousePosition)) {
-                OnMouseOut?.Invoke(this);
-                MouseHovering = false;
-            }
+            if (Hitbox.Contains(MouseUtils.MousePosition))
+                return;
+
+            OnMouseOut?.Invoke(this);
+            MouseHovering = false;
         }
     }
 }
