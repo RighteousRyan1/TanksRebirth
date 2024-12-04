@@ -227,8 +227,6 @@ public class TankGame : Game {
 
         // systems = ReflectionUtils.GetInheritedTypesOf<IGameSystem>(Assembly.GetExecutingAssembly());
 
-        ResolutionHandler.Initialize(Graphics);
-
         GameCamera = new OrthographicCamera(0, WindowUtils.WindowWidth, WindowUtils.WindowHeight, 0f, 0.01f, 2000f);
 
         SpriteRenderer = new(GraphicsDevice);
