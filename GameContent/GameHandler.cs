@@ -32,17 +32,20 @@ using System.Text;
 
 namespace TanksRebirth.GameContent;
 
-public class GameHandler
-{
+public class GameHandler {
 #pragma warning disable CS8618
+
     #region Non-test
 
     public const int MAX_AI_TANKS = 50;
     public const int MAX_PLAYERS = 4;
 
     public delegate void PostRender();
+
     public static event PostRender? OnPostRender;
+
     public delegate void PostUpdate();
+
     public static event PostUpdate? OnPostUpdate;
 
     public static Random GameRand = new();
@@ -95,8 +98,9 @@ public class GameHandler
                 exploded = true;
                 SoundPlayer.PlaySoundInstance("Assets/sounds/smoke_hiss.ogg", SoundContext.Effect, 0.3f, gameplaySound: true);
                 for (int i = 0; i < 8; i++) {
-                    var c = Particles.MakeParticle(p.Position, 
-                        GameResources.GetGameResource<Model>("Assets/smoke"), GameResources.GetGameResource<Texture2D>("Assets/textures/smoke/smoke"));
+                    var c = Particles.MakeParticle(p.Position,
+                        GameResources.GetGameResource<Model>("Assets/smoke"),
+                        GameResources.GetGameResource<Texture2D>("Assets/textures/smoke/smoke"));
                     var randDir = new Vector3(GameRand.NextFloat(-60, 60), 0, GameRand.NextFloat(-60, 60));
                     c.Position += randDir;
                     var randSize = GameRand.NextFloat(5, 10);
@@ -111,7 +115,7 @@ public class GameHandler
 
                             if (c.Scale.Y <= 0) {
                                 c.Destroy();
-                           }
+                            }
                         }
                     };
                 }
@@ -119,7 +123,7 @@ public class GameHandler
             }
         };
     }
-    
+
     internal static void UpdateAll(GameTime gameTime) {
         //if (InputUtils.KeyJustPressed(Keys.M))
         //SmokeNadeDebug();
@@ -179,11 +183,10 @@ public class GameHandler
             foreach (var pu in Powerup.Powerups)
                 pu?.Update();
         }
-        else
-            if (!GameProperties.InMission)
-                if (TankMusicSystem.Audio is not null)
-                    foreach (var song in TankMusicSystem.Audio)
-                        song.Value.Volume = 0;
+        else if (!GameProperties.InMission)
+            if (TankMusicSystem.Audio is not null)
+                foreach (var song in TankMusicSystem.Audio)
+                    song.Value.Volume = 0;
         LevelEditor.Update();
 
         foreach (var expl in Explosion.Explosions)
@@ -193,7 +196,7 @@ public class GameHandler
             IntermissionHandler.HandleMissionChanging();
 
         foreach (var cube in Block.AllBlocks)
-            cube?.Update();
+            cube?.OnUpdate();
 
         if ((DebugManager.DebuggingEnabled && DebugManager.DebugLevel == DebugManager.Id.LevelEditDebug && TankGame.OverheadView) || LevelEditor.Active)
             foreach (var sq in PlacementSquare.Placements)
@@ -219,8 +222,7 @@ public class GameHandler
         OnPostUpdate?.Invoke();
     }
 
-    internal static void RenderAll()
-    {
+    internal static void RenderAll() {
         TankGame.Instance.GraphicsDevice.BlendState = BlendState.AlphaBlend;
 
         if (!MainMenu.Active && !LevelEditor.Editing)
@@ -232,7 +234,7 @@ public class GameHandler
             tank?.Render();
 
         foreach (var cube in Block.AllBlocks)
-            cube?.Render();
+            cube?.OnRender();
 
         foreach (var mine in Mine.AllMines)
             mine?.Render();
@@ -260,7 +262,7 @@ public class GameHandler
         if ((DebugManager.DebuggingEnabled && DebugManager.DebugLevel == DebugManager.Id.LevelEditDebug && TankGame.OverheadView) || LevelEditor.Active) {
             foreach (var sq in PlacementSquare.Placements)
                 sq?.Render();
-            
+
         }
 
         TankGame.Instance.GraphicsDevice.BlendState = BlendState.NonPremultiplied;
@@ -269,15 +271,19 @@ public class GameHandler
 
         IntermissionHandler.RenderCountdownGraphics();
 
-        if (!MainMenu.Active && !LevelEditor.Active)
-        {
-            if (IntermissionSystem.IsAwaitingNewMission)
-            {
+        if (!MainMenu.Active && !LevelEditor.Active) {
+            if (IntermissionSystem.IsAwaitingNewMission) {
                 // uhhh... what was i doing here?
             }
-            for (int i = -4; i < 10; i++)
-            {
-                IntermissionSystem.DrawShadowedTexture(GameResources.GetGameResource<Texture2D>("Assets/textures/ui/scoreboard"), new Vector2((i * 14).ToResolutionX(), WindowUtils.WindowHeight * 0.9f), Vector2.UnitY, Color.White, new Vector2(2f).ToResolution(), 1f, new(0, GameResources.GetGameResource<Texture2D>("Assets/textures/ui/scoreboard").Size().Y / 2), true);
+            for (int i = -4; i < 10; i++) {
+                IntermissionSystem.DrawShadowedTexture(GameResources.GetGameResource<Texture2D>("Assets/textures/ui/scoreboard"),
+                    new Vector2((i * 14).ToResolutionX(), WindowUtils.WindowHeight * 0.9f),
+                    Vector2.UnitY,
+                    Color.White,
+                    new Vector2(2f).ToResolution(),
+                    1f,
+                    new(0, GameResources.GetGameResource<Texture2D>("Assets/textures/ui/scoreboard").Size().Y / 2),
+                    true);
             }
             IntermissionSystem.DrawShadowedString(TankGame.TextFontLarge, new Vector2(80.ToResolutionX(), WindowUtils.WindowHeight * 0.9f - 14f.ToResolutionY()), Vector2.One, $"{PlayerTank.KillCount}", new(119, 190, 238), new Vector2(0.675f).ToResolution(), 1f);
         }
@@ -287,11 +293,11 @@ public class GameHandler
     }
 
     #endregion
+
     #region Extra
-    public static void RenderUI()
-    {
-        foreach (var element in UIElement.AllUIElements)
-        {
+
+    public static void RenderUI() {
+        foreach (var element in UIElement.AllUIElements) {
             // element.Position = Vector2.Transform(element.Position, UIMatrix * Matrix.CreateTranslation(element.Position.X, element.Position.Y, 0));
             if (element.Parent != null)
                 continue;
@@ -310,13 +316,13 @@ public class GameHandler
 
     // fix shitty mission init (innit?)
 
-    public static void SetupGraphics()
-    {
+    public static void SetupGraphics() {
         GameShaders.Initialize();
         MapRenderer.InitializeRenderers();
         SceneManager.LoadGameScene();
         DebugManager.InitDebugUI();
         PlacementSquare.InitializeLevelEditorSquares();
     }
+
     #endregion
 }

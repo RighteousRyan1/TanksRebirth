@@ -15,20 +15,18 @@ using TanksRebirth.Internals.Core.Interfaces;
 
 namespace TanksRebirth.GameContent;
 
-public struct BlockTemplate
-{
+public struct BlockTemplate {
     public sbyte Stack;
     public int Type;
     public Vector2 Position;
     public sbyte TpLink;
 
-    public Block GetBlock()
-    {
+    public Block GetBlock() {
         Block c = new(Type, Stack, Position);
 
         //c.Position = Position;
         //if (c.Body != null)
-            //c.Body.Position = Position;
+        //c.Body.Position = Position;
         c.TpLink = TpLink;
 
         for (int i = 0; i < PlacementSquare.Placements.Count; i++) {
@@ -39,25 +37,31 @@ public struct BlockTemplate
         return c;
     }
 }
+
 /// <summary>A class that is used for obstacles for <see cref="Tank"/>s.</summary>
-public class Block : IGameSystem
-{
+public class Block : IGameObject {
     public delegate void DestroyDelegate(Block block);
+
     /// <summary>Called after this <see cref="Block"/> is destroyed.</summary>
     public static event DestroyDelegate OnDestroy;
 
     public delegate void UpdateDelegate(Block block);
+
     /// <summary>Called after this <see cref="Block"/> is updated on the CPU.</summary>
     public static event UpdateDelegate OnPostUpdate;
 
     public delegate void PostRenderDelegate(Block block);
+
     /// <summary>Called after this <see cref="Block"/> is rendered on the GPU.</summary>
     public static event PostRenderDelegate OnPostRender;
 
     public delegate void InitializeDelegate(Block block);
+
     /// <summary>Called after this <see cref="Block"/> is initialized.</summary>
     public static event InitializeDelegate OnInitialize;
+
     public delegate void RicochetDelegate(Block block, Shell shell);
+
     public static event RicochetDelegate OnRicochet;
 
     /// <summary>The teleportation index for this <see cref="Block"/>. Make sure that no more than 2 teleporters share this same number.</summary>
@@ -67,7 +71,6 @@ public class Block : IGameSystem
     /// <summary>The type of this <see cref="Block"/>. (i.e: Wood, Cork, Hole)</summary>
     public int Type { get; set; }
     /// <summary>All <see cref="Block"/>s stored in the same array.</summary>
-
     public static Block[] AllBlocks = new Block[BlockMapPosition.MAP_WIDTH_169 * BlockMapPosition.MAP_HEIGHT * 5];
 
     public Vector2 Position;
@@ -121,16 +124,16 @@ public class Block : IGameSystem
     public bool CanStack { get; set; } = true;
     /// <summary>Whether or not this <see cref="Block"/> is using its alternate model.</summary>
     public bool IsAlternateModel => Stack == 3 || Stack == 6;
+
     /// <summary>Change this <see cref="Block"/>'s texture.</summary>
     public void SwapTexture(Texture2D texture) => _texture = texture;
+
     /// <summary>Construct a <see cref="Block"/>.</summary>
-    public Block(int type, int height, Vector2 position)
-    {
+    public Block(int type, int height, Vector2 position) {
         Stack = (sbyte)MathHelper.Clamp(height, 0, 7);
         Type = type;
 
-        var modelname = MapRenderer.Theme switch
-        {
+        var modelname = MapRenderer.Theme switch {
             MapTheme.Vanilla => IsAlternateModel ? "Assets/toy/cube_stack_alt" : "Assets/toy/cube_stack",
             MapTheme.Christmas => IsAlternateModel ? "Assets/christmas/cube_stack_alt_snowy" : "Assets/christmas/cube_stack_snowy",
             _ => ""
@@ -164,9 +167,9 @@ public class Block : IGameSystem
         }
 
         //if (Body != null)
-           //Position = Body.Position * Tank.UNITS_PER_METER;
+        //Position = Body.Position * Tank.UNITS_PER_METER;
         //else
-           // Position = position;
+        // Position = position;
 
         if (IsCollidable) {
             Body = Tank.CollisionsWorld.CreateRectangle(FULL_BLOCK_SIZE / Tank.UNITS_PER_METER, FULL_BLOCK_SIZE / Tank.UNITS_PER_METER, 1f, position / Tank.UNITS_PER_METER, 0f, BodyType.Static);
@@ -179,15 +182,13 @@ public class Block : IGameSystem
 
         AllBlocks[Id] = this;
 
-        if (CanStack)
-        {
+        if (CanStack) {
             // fix this, but dont worry about it for now
             var p = GameHandler.Particles.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>($"Assets/toy/cube_shadow_tex"));
             p.Tag = "block_shadow_" + Id;
             bool moveL = true;
             bool moveD = true;
-            p.UniqueBehavior = (a) =>
-            {
+            p.UniqueBehavior = (a) => {
                 p.Roll = MathHelper.PiOver2;
                 p.Scale = new(1f);
                 p.HasAddativeBlending = false;
@@ -207,13 +208,14 @@ public class Block : IGameSystem
         UpdateOffset();
         OnInitialize?.Invoke(this);
     }
+
     /// <summary>Remove this <see cref="Block"/> from the game scene and memory.</summary>
-    public void Remove()
-    {
-        var index = Array.FindIndex(GameHandler.Particles.CurrentParticles, a => {
-            if (a == null)
-                return false;
-            return (string)a.Tag == "block_shadow_" + Id;
+    public void Remove() {
+        var index = Array.FindIndex(GameHandler.Particles.CurrentParticles,
+            a => {
+                if (a == null)
+                    return false;
+                return (string)a.Tag == "block_shadow_" + Id;
             });
         if (index > -1)
             GameHandler.Particles.CurrentParticles[index].Destroy();
@@ -222,15 +224,13 @@ public class Block : IGameSystem
             Tank.CollisionsWorld.Remove(Body);
         AllBlocks[Id] = null;
     }
+
     /// <summary>Make destruction particle effects and later, <see cref="Remove"/> this <see cref="Block"/>.</summary>
-    public void Destroy()
-    {
-        if (IsDestructible)
-        {
+    public void Destroy() {
+        if (IsDestructible) {
             const int PARTICLE_COUNT = 12;
 
-            for (int i = 0; i < PARTICLE_COUNT; i++)
-            {
+            for (int i = 0; i < PARTICLE_COUNT; i++) {
                 var tex = GameResources.GetGameResource<Texture2D>(GameHandler.GameRand.Next(0, 2) == 0 ? "Assets/textures/misc/tank_rock" : "Assets/textures/misc/tank_rock_2");
 
                 var part = GameHandler.Particles.MakeParticle(Position3D, tex);
@@ -246,8 +246,7 @@ public class Block : IGameSystem
 
                 part.Color = Color.Coral;
 
-                part.UniqueBehavior = (p) =>
-                {
+                part.UniqueBehavior = (p) => {
                     vel.Y -= 0.2f;
                     part.Position += vel;
                     part.Alpha -= 0.025f;
@@ -261,7 +260,49 @@ public class Block : IGameSystem
         OnDestroy?.Invoke(this);
         Remove();
     }
-    public void Render() {
+
+    private void UpdateOffset() {
+        if (CanStack) {
+            var newFullSize = FULL_SIZE;
+            switch (Stack) {
+                case 1:
+                    _offset = new(0, newFullSize - FULL_BLOCK_SIZE, 0);
+                    break;
+                case 2:
+                    _offset = new(0, newFullSize - (FULL_BLOCK_SIZE + SLAB_SIZE), 0);
+                    break;
+                case 3:
+                    _offset = new(0, newFullSize - (FULL_BLOCK_SIZE + SLAB_SIZE * 3), 0);
+                    break;
+                case 4:
+                    _offset = new(0, newFullSize - (FULL_BLOCK_SIZE * 2 + SLAB_SIZE), 0);
+                    break;
+                case 5:
+                    _offset = new(0, newFullSize - (FULL_BLOCK_SIZE * 2 + SLAB_SIZE * 2), 0);
+                    break;
+                case 6:
+                    _offset = new(0, newFullSize - (FULL_BLOCK_SIZE * 2 + SLAB_SIZE * 4), 0);
+                    break;
+                case 7:
+                    _offset = new(0, newFullSize - (FULL_BLOCK_SIZE * 3 + SLAB_SIZE * 2), 0);
+                    break;
+            }
+        }
+        else
+            _offset.Y -= 0.1f;
+    }
+
+    void IGameObject.OnDestroy() {
+        OnDestroy?.Invoke(this);
+    }
+
+    void IGameObject.OnInitialize() {
+        OnInitialize?.Invoke(this);
+    }
+
+    public void OnPreRender() { }
+
+    public void OnRender() {
         if (!MapRenderer.ShouldRenderAll)
             return;
         // TODO: seeing this, don't make this poor CPU have overhead (use derived types!)
@@ -274,7 +315,7 @@ public class Block : IGameSystem
                 foreach (var mesh in Model.Meshes) {
                     foreach (BasicEffect effect in mesh.Effects) {
                         effect.View = TankGame.GameView;
-                        effect.World = i == 0 ? World: World * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0) * Matrix.CreateScale(1, 1, Stack / 7f);
+                        effect.World = i == 0 ? World : World * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0) * Matrix.CreateScale(1, 1, Stack / 7f);
                         effect.Projection = TankGame.GameProjection;
 
                         effect.TextureEnabled = true;
@@ -328,8 +369,12 @@ public class Block : IGameSystem
         }
         OnPostRender?.Invoke(this);
     }
-    public void Update() {
 
+    void IGameObject.OnPostRender() {
+        OnPostRender?.Invoke(this);
+    }
+
+    public void OnUpdate() {
         if (!MapRenderer.ShouldRenderAll)
             return;
 
@@ -338,58 +383,28 @@ public class Block : IGameSystem
 
         if (Type == BlockID.Teleporter) {
             foreach (var tnk in GameHandler.AllTanks) {
-                if (tnk is not null) {
-                    _tankCooldowns[tnk.WorldId]--;
-                    if (_tankCooldowns[tnk.WorldId] <= 0) {
-                        if (Vector2.Distance(tnk.Position, Position) < FULL_BLOCK_SIZE) {
-                            var otherTp = AllBlocks.FirstOrDefault(bl => bl != null && bl != this && bl.TpLink == TpLink);
+                if (tnk is null)
+                    continue;
 
-                            if (Array.IndexOf(AllBlocks, otherTp) > -1) {
-                                otherTp!._tankCooldowns[tnk.WorldId] = 120;
+                if (--_tankCooldowns[tnk.WorldId] > 0)
+                    continue;
 
-                                tnk.Position = otherTp.Position;
-                                tnk.Body.Position = otherTp.Position / Tank.UNITS_PER_METER;
-                            }
-                        }
-                    }
-                }
+                if (!(Vector2.Distance(tnk.Position, Position) < FULL_BLOCK_SIZE))
+                    continue;
+
+                var otherTp = AllBlocks.FirstOrDefault(bl => bl != null && bl != this && bl.TpLink == TpLink);
+
+                if (Array.IndexOf(AllBlocks, otherTp) <= -1)
+                    continue;
+
+                otherTp!._tankCooldowns[tnk.WorldId] = 120;
+
+                tnk.Position = otherTp.Position;
+                tnk.Body.Position = otherTp.Position / Tank.UNITS_PER_METER;
             }
         }
         UpdateOffset();
 
         OnPostUpdate?.Invoke(this);
-    }
-    private void UpdateOffset()
-    {
-        if (CanStack)
-        {
-            var newFullSize = FULL_SIZE;
-            switch (Stack)
-            {
-                case 1:
-                    _offset = new(0, newFullSize - FULL_BLOCK_SIZE, 0);
-                    break;
-                case 2:
-                    _offset = new(0, newFullSize - (FULL_BLOCK_SIZE + SLAB_SIZE), 0);
-                    break;
-                case 3:
-                    _offset = new(0, newFullSize - (FULL_BLOCK_SIZE + SLAB_SIZE * 3), 0);
-                    break;
-                case 4:
-                    _offset = new(0, newFullSize - (FULL_BLOCK_SIZE * 2 + SLAB_SIZE), 0);
-                    break;
-                case 5:
-                    _offset = new(0, newFullSize - (FULL_BLOCK_SIZE * 2 + SLAB_SIZE * 2), 0);
-                    break;
-                case 6:
-                    _offset = new(0, newFullSize - (FULL_BLOCK_SIZE * 2 + SLAB_SIZE * 4), 0);
-                    break;
-                case 7:
-                    _offset = new(0, newFullSize - (FULL_BLOCK_SIZE * 3 + SLAB_SIZE * 2), 0);
-                    break;
-            }
-        }
-        else
-            _offset.Y -= 0.1f;
     }
 }
