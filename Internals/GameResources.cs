@@ -49,17 +49,15 @@ public static class GameResources {
     }
 
     public static T GetGameResource<T>(string name, bool addDotPng = true, bool addContentPrefix = true, bool premultiply = false) where T : class {
-        var realResourceName = name + (addDotPng ? ".png" : string.Empty);
-
-        if (ResourceCache.TryGetValue(realResourceName, out var value))
+        if (ResourceCache.TryGetValue(name, out var value))
             return (T)value;
         else if (typeof(T) == typeof(Texture2D)) {
             // Bustin' all the bells out the box
-            var texture = Texture2D.FromFile(TankGame.Instance.GraphicsDevice, Path.Combine(addContentPrefix ? TankGame.Instance.Content.RootDirectory : string.Empty, realResourceName));
+            var texture = Texture2D.FromFile(TankGame.Instance.GraphicsDevice, Path.Combine(addContentPrefix ? TankGame.Instance.Content.RootDirectory : string.Empty, name + (addDotPng ? ".png" : string.Empty)));
             texture.Name = name;
 
             object result = texture;
-            ResourceCache[realResourceName] = result;
+            ResourceCache[name] = result;
 
             if (!premultiply)
                 return (T)result;
