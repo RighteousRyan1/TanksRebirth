@@ -83,7 +83,7 @@ public sealed record ChatSystem {
     public delegate void OnMessageAddedDelegate(string message);
     public static event OnMessageAddedDelegate? OnMessageAdded;
 
-    public static List<ChatMessage> ChatMessages { get; private set; } = new();
+    public static List<ChatMessage> ChatMessages { get; private set; } = [];
     public static int Alerts;
     public static bool IsOpen;
     public static ChatMessageCorner Corner { get; set; } = ChatMessageCorner.TopLeft;
@@ -111,7 +111,7 @@ public sealed record ChatSystem {
     /// </summary>
     /// <param name="message">The content of the <see cref="ChatMessage"/>.</param>
     /// <param name="color">The color in which to render the content of the <see cref="ChatMessage"/>.</param>
-    /// <param name="sender">The sender of the message.</param>
+    /// <param name="sender">The sender of the message, e.g: a player</param>
     /// <param name="netSend">If true, will send the message to the server in a multiplayer context.</param>
     public static void SendMessage(string message, Color color, string sender = null, bool netSend = false)
     {
@@ -310,7 +310,6 @@ public sealed record ChatSystem {
 
         #endregion
     }
-
     private static void HandleInput(object sender, TextInputEventArgs e)
     {
         if (TankGame.Instance.IsActive) {
