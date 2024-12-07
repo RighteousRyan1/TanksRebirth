@@ -46,7 +46,8 @@ public class Campaign
         TrackedSpawnPoints = [];
         MetaData = CampaignMetaData.GetDefault();
     }
-
+    /// <summary>Load a specific mission into the current mission.</summary>
+    /// <param name="mission">The mission.</param>
     public void LoadMission(Mission mission)
     {
         if (string.IsNullOrEmpty(mission.Name))
@@ -55,6 +56,8 @@ public class Campaign
         TrackedSpawnPoints = new (Vector2, bool)[mission.Tanks.Length];
         LoadedMission = mission;
     }
+    /// <summary>Load a mission already in memory by ID.</summary>
+    /// <param name="id">The index of the mission in the <see cref="CachedMissions"/> array.</param>
     public void LoadMission(int id)
     {
         LoadedMission = CachedMissions[id];
@@ -65,8 +68,8 @@ public class Campaign
             TrackedSpawnPoints = new (Vector2, bool)[LoadedMission.Tanks.Length];
             for (int i = 0; i < LoadedMission.Tanks.Length; i++)
             {
-                TrackedSpawnPoints[i].Item1 = LoadedMission.Tanks[i].Position;
-                TrackedSpawnPoints[i].Item2 = true;
+                TrackedSpawnPoints[i].Position = LoadedMission.Tanks[i].Position;
+                TrackedSpawnPoints[i].Alive = true;
             }
         }
     }
