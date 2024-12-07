@@ -11,6 +11,7 @@ using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
+using TanksRebirth.Internals.Common.Framework;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
@@ -68,7 +69,7 @@ public sealed class Mine : IAITankDanger
 
     /// <summary>The radius of this <see cref="Mine"/>'s explosion.</summary>
     public float ExplosionRadius;
-    public float ExplosionRadiusInUnits;
+    public float ExplosionRadiusInUnits => ExplosionRadius * 65f;
 
     /// <summary>Whether or not this <see cref="Mine"/> has detonated.</summary>
     public bool Detonated { get; set; }
@@ -91,7 +92,6 @@ public sealed class Mine : IAITankDanger
     public Mine(Tank? owner, Vector2 pos, float detonateTime, float radius = 1f) { // radius, old = 65
         Owner = owner;
         ExplosionRadius = radius;
-        ExplosionRadiusInUnits = radius * 65f;
 
         AITank.Dangers.Add(this);
         IsPlayerSourced = owner is PlayerTank;
