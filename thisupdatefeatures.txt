@@ -16,6 +16,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 
 ## Fixes
 
+- Fixed UI slider bug, sliders now work as expected.
 - Mines now no longer try to explode prematurely.
 
 ## TODO

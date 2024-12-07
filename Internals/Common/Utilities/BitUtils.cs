@@ -12,12 +12,12 @@ public static class BitUtils {
             return 0;
 
         if (!BitConverter.IsLittleEndian) return BitConverter.ToInt32(buffer, offset);
-        
+
         Span<byte> _buffer = stackalloc byte[0x4]; // 4 bytes 
 
         for (var i = 0x0; i < 0x4; i++)
             _buffer[i ^ 0x3] = buffer[offset + i];
-        
-        return BitConverter.ToInt32(_buffer.ToArray(), 0x0);
+
+        return BitConverter.ToInt32(_buffer);
     }
 }

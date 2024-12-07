@@ -53,7 +53,7 @@ namespace TanksRebirth.GameContent.UI
             {
                 // IgnoreMouseInteractions = true,
                 IsVisible = false,
-                // FallThroughInputs = true
+                FallThroughInputs = true
             };
             MusicText.SetDimensions(() => new Vector2(950, 175).ToResolution(), () => new Vector2(500, 150).ToResolution());
 

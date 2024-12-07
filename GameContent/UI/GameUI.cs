@@ -434,13 +434,9 @@ namespace TanksRebirth.GameContent.UI
             MissionInfoBar.UniqueDraw =
                 (uiPanel, spriteBatch) => spriteBatch.DrawString(TankGame.TextFont, text, uiPanel.Hitbox.Center.ToVector2(), Color.White, new Vector2(1.5f).ToResolution(), 0, drawOrigin);
 
-            //TankGame.Settings.MusicVolume = VolumeUI.MusicVolume.Value;
-            //TankGame.Settings.EffectsVolume = VolumeUI.EffectsVolume.Value;
-            //TankGame.Settings.AmbientVolume = VolumeUI.AmbientVolume.Value;
-            VolumeUI.MusicVolume.Value = TankGame.Settings.MusicVolume;
-            VolumeUI.EffectsVolume.Value = TankGame.Settings.EffectsVolume;
-            VolumeUI.AmbientVolume.Value = TankGame.Settings.AmbientVolume;
-            // remove this once i somehow fix these damn sliders ^
+            TankGame.Settings.MusicVolume = VolumeUI.MusicVolume.Value;
+            TankGame.Settings.EffectsVolume = VolumeUI.EffectsVolume.Value;
+            TankGame.Settings.AmbientVolume = VolumeUI.AmbientVolume.Value;
 
             if (VolumeUI.MusicVolume.Value <= 0.01f)
                 VolumeUI.MusicVolume.Value = 0f;
