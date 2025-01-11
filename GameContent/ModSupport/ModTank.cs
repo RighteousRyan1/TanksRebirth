@@ -95,27 +95,31 @@ public class ModTank : ILoadable {
         AITank.TankDestructionColors.Remove(Type);
         if (!HasSong)
             TankMusicSystem.TierExclusionRule_DoesntHaveSong.Remove(Type);
-        else {
-            TankMusicSystem.Audio.Remove(name);
-        }
         for (int i = 0; i < _music.Count; i++) {
             _music[i].Stop();
             _music[i].BackingAudio.Dispose();
+            TankMusicSystem.Audio.Remove($"{name.ToLower()}{i + 1}");
         }
     }
 
     internal void Register() {
         var name = Name.GetLocalizedString(LangCode.English);
-        _music = new();
+        _music = [];
         Type = TankID.Collection.ForcefullyInsert(name);
         TankMusicSystem.MaxSongNumPerTank[Type] = Songs;
         AITank.TankDestructionColors[Type] = AssociatedColor;
         if (Songs > 1) {
             for (int i = 0; i < Songs; i++) {
-                _music.Add(new OggMusic(name.ToLower(), $"{Mod.ModPath}/{Mod.MusicFolder}/{name.ToLower()}.ogg", 1f));
+                var fileName = $"{name.ToLower()}{i + 1}";
+                var oggMusic = new OggMusic(name.ToLower(), $"{Mod.ModPath}/{Mod.MusicFolder}/{fileName}.ogg", 1f);
+                _music.Add(oggMusic);
+                TankMusicSystem.Audio.Add(fileName, oggMusic);
             }
         } else if (Songs == 1) {
-            _music.Add(new OggMusic(name.ToLower(), $"{Mod.ModPath}/{Mod.MusicFolder}/{name.ToLower()}.ogg", 1f));
+            var fileName = $"{Mod.ModPath}/{Mod.MusicFolder}/{name.ToLower()}.ogg";
+            var oggMusic = new OggMusic(name.ToLower(), fileName, 1f);
+            _music.Add(oggMusic);
+            TankMusicSystem.Audio.Add(fileName, oggMusic);
         } else if (!HasSong) {
             TankMusicSystem.TierExclusionRule_DoesntHaveSong.Add(Type);
         }
@@ -124,7 +128,5 @@ public class ModTank : ILoadable {
 
         Properties = new();
         AiParameters = new();
-
-        _music.ForEach(x => TankMusicSystem.Audio.Add(name.ToLower(), x));
     }
 }
