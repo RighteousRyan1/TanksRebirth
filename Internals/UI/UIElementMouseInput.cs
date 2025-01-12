@@ -60,7 +60,7 @@ namespace TanksRebirth.Internals.UI {
             List<UIElement> focusedElements = new(AllUIElements.Count / 8);
 
             if (!getHighest) {
-                for (var iterator = AllUIElements.Count; iterator >= 0; iterator--) {
+                for (var iterator = AllUIElements.Count - 1; iterator >= 0; iterator--) {
                     var currentElement = AllUIElements[iterator];
                     if (currentElement.IgnoreMouseInteractions || !currentElement.IsVisible || !currentElement.Hitbox.Contains(position))
                         continue;

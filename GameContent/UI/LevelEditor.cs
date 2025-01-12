@@ -118,6 +118,7 @@ public static class LevelEditor
     public static Color SelectedColor = Color.SkyBlue;
     public static Color UnselectedColor = Color.White;
 
+    private static Task? _loadTask;
     private static int _oldelta;
     public static void HandleLevelEditorModifications() {
         var cur = PlacementSquare.CurrentlyHovered;
@@ -693,21 +694,31 @@ public static class LevelEditor
 
             IntermissionSystem.TimeBlack = 180;
             GameProperties.ShouldMissionsProgress = false;
-            Task.Run(async () =>
-            {
-                while (IntermissionSystem.BlackAlpha > 0.8f || MainMenu.Active)
+            if (_loadTask == null)
+                _loadTask = Task.Run(async () => {
                     await Task.Delay(TankGame.LogicTime).ConfigureAwait(false);
+                    while (IntermissionSystem.BlackAlpha > 0.8f || MainMenu.Active) {
+                        if (IntermissionSystem.BlackAlpha == 0) {
+                            // The user has exited without completing the transition by our greatly hardcoded poorly parallelized code.
+                            // why did we design this like this?
+                            // - Dottik
+                            _loadTask = null;
+                            return;
+                        }
+                        await Task.Delay(TankGame.LogicTime).ConfigureAwait(false);
+                    }
 
-                Active = true;
-                TankGame.OverheadView = true;
-                Theme.Play();
-                SetLevelEditorVisibility(true);
-                _loadedCampaign = new();
-                _loadedCampaign.CachedMissions[0] = new(Array.Empty<TankTemplate>(), Array.Empty<BlockTemplate>()) {
-                    Name = "No Name"
-                };
-                SetupMissionsBar(_loadedCampaign);
-            });
+                    Active = true;
+                    TankGame.OverheadView = true;
+                    Theme.Play();
+                    SetLevelEditorVisibility(true);
+                    _loadedCampaign = new();
+                    _loadedCampaign.CachedMissions[0] = new(Array.Empty<TankTemplate>(), Array.Empty<BlockTemplate>()) {
+                        Name = "No Name"
+                    };
+                    SetupMissionsBar(_loadedCampaign);
+                    _loadTask = null;
+                });
         }
         else
         {

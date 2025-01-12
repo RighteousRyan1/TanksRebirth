@@ -870,6 +870,13 @@ public class TankGame : Game {
                                     if (tnk.TargetTankRotation >= MathHelper.Tau)
                                         tnk.TargetTankRotation -= MathHelper.Tau;
 
+                                    if (tnk is AITank aiTank) {
+                                        aiTank.TargetTurretRotation += MathHelper.Tau;
+
+                                        if (aiTank.TargetTurretRotation >= MathHelper.Tau)
+                                            aiTank.TargetTurretRotation -= MathHelper.Tau;
+                                    }
+
                                     if (tnk.TankRotation <= -MathHelper.Tau)
                                         tnk.TankRotation += MathHelper.Tau;
 
