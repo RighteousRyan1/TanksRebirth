@@ -34,6 +34,7 @@ public record struct Mission {
         Tanks = tanks;
         Blocks = obstacles;
     }
+
     /// <summary>
     /// Creates a <see cref="Mission"/> instance from the current placement of everything.
     /// </summary>
@@ -73,6 +74,7 @@ public record struct Mission {
 
         return new([.. tanks], [.. blocks]) { Name = name };
     }
+
     /// <summary>
     /// Loads a <see cref="Mission"/> and instantly applies it to the game field.
     /// </summary>
@@ -93,14 +95,24 @@ public record struct Mission {
                 PlacementSquare.Placements[placement].TankId = tank.WorldId;
                 PlacementSquare.Placements[placement].HasBlock = false;
             }
+            
+            // TODO: Find the root cause that causes us to manually have to add Math.PI to 1.57.
+            // Explanation for hack fix: When rotating in the editor, we add Math.Pi / 2 to the rotation.
+            // However for some unknown reason, when returning from test play, this value gets automatically increased to Math.Pi. With no reason.
+            // This bug does not appear to manifest should Math.Pi + 1.57 be used. Potentially caused by some old, left over code somewhere in the past.
+            // However trying to trail it down in this codebase would take much longer than this hack fix.
+            // Ignore the warning posted by the code, it should probably work fine (tested it).
+            // - Dottik
 
-            // TODO: fix flipping (once again)
-            // FIXME: relates to tank rotation.
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
+            if (float.Round(tnk.Rotation) == float.Round(1.57f))
+                tnk.Rotation += MathF.PI;
+
             tank.TankRotation = MathF.Round(tnk.Rotation, 5);
-            // REMINDER: go here if you're editing load values again.
             tank.TargetTankRotation = tank.TankRotation;
-            tank.TurretRotation = tank.TurretRotation;
-            // FIXME: tanks placed on a horizontal axis (left, right) are flipped upon loading directly. fix that.
+            tank.TurretRotation = tank.TankRotation;
+            if (tank is AITank aiTank)
+                aiTank.TargetTurretRotation = tank.TurretRotation;
         }
         for (int i = 0; i < mission.Blocks.Length; i++) {
             var blockr = mission.Blocks[i];
@@ -114,6 +126,7 @@ public record struct Mission {
             }
         }
     }
+
     /// <summary>
     /// Saves a mission as a <c>.mission</c> file for reading later.
     /// </summary>
@@ -140,9 +153,9 @@ public record struct Mission {
          * 1) File Header (TANK in ASCII) (byte[])
          * 2) Level Editor version (to check if older levels might cause anomalies!)
          * 3) Name (string)
-         * 
+         *
          * 4) Total Tanks Used (int)
-         * 
+         *
          * 5) Storing of Tanks (their respective templates)
          *  - IsPlayer (bool)
          *  - X (float)
@@ -151,16 +164,16 @@ public record struct Mission {
          *  - AiType (byte) - should be as default if it's a player.
          *  - PlayerType (byte) - should be as default if it's an AI.
          *  - Team (byte)
-         *  
+         *
          * 6) Total Blocks Used (int)
-         *  
+         *
          * 7) Storing of Blocks (their respective templates)
          *  - Type (byte)
          *  - Stack (sbyte)
          *  - X (float)
          *  - Y (float)
          *  - TpLink (sbyte) (VERSION 2 or GREATER)
-         *  
+         *
          *  8) Extras
          *   - Note (string) (VERSION 3 OR GREATER) (NOT IMPLEMENTED YET)
          */
@@ -222,6 +235,7 @@ public record struct Mission {
         }
         ChatSystem.SendMessage($"Saved mission with {totalTanks} tank(s) and {totalBlocks} block(s).", Color.Lime);
     }
+
     public static void WriteContentsOf(BinaryWriter writer, Mission mission) {
         writer.Write(LevelEditor.LevelFileHeader);
         writer.Write(LevelEditor.LevelEditorVersion);
@@ -282,6 +296,7 @@ public record struct Mission {
 
         return Read(reader);
     }
+
     /// <summary>
     /// Reads from the current position in the <paramref name="reader"/>'s stream and returns the mission.
     /// </summary>
