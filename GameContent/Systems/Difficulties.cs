@@ -30,7 +30,7 @@ public record Difficulties
         ["MachineGuns"] = false,
         ["RandomizedTanks"] = false,
         ["ThunderMode"] = false,
-        ["ThirdPerson"] = false,
+        ["POV"] = false,
         ["AiCompanion"] = false,
         ["Shotguns"] = false,
         ["Predictions"] = false,

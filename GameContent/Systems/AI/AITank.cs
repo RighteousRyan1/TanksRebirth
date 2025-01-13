@@ -405,7 +405,8 @@ public partial class AITank : Tank
                     TankGame.GameData.BulletKills++;
                     TankGame.GameData.TotalKills++;
 
-                    if (cxt1.Bounces > 0)
+                    // if the ricochets remaining is less than the ricochets the bullet has, it has bounced at least once.
+                    if (cxt1.Shell.RicochetsRemaining < cxt1.Shell.Ricochets)
                         TankGame.GameData.BounceKills++;
                 }
                 if (context is TankHurtContextMine cxt2) {
@@ -1028,7 +1029,7 @@ public partial class AITank : Tank
                 if (Array.IndexOf(GameHandler.AllTanks, TargetTank) > -1 && TargetTank is not null) {
                     float explosionDist = 90f;
                     if (GameUtils.Distance_WiiTanksUnits(TargetTank.Position, Position) < explosionDist) {
-                        Destroy(new TankHurtContextOther("CreeperTankExplosion"));
+                        Destroy(new TankHurtContextOther(false, TankHurtContextOther.HurtContext.FromIngame, "CreeperTankExplosion", this));
 
                         new Explosion(Position, 10f, this, 0.2f);
                     }

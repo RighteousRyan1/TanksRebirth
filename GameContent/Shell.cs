@@ -560,7 +560,7 @@ public class Shell : IAITankDanger {
             }
 
             Destroy(cxt);
-            tank.Damage(new TankHurtContextShell(Owner is PlayerTank, Ricochets, Type, this));
+            tank.Damage(new TankHurtContextShell(this));
         }
 
         ref var bulletSSpace = ref MemoryMarshal.GetReference((Span<Shell>)AllShells);

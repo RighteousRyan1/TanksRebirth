@@ -108,7 +108,7 @@ public static class LevelEditor
 
     private static bool _initialized;
 
-    private static Campaign? _loadedCampaign;
+    internal static Campaign? loadedCampaign;
 
     private static bool _viewMissionDetails = true;
     private static bool _hasMajorVictory;
@@ -158,8 +158,8 @@ public static class LevelEditor
         SaveMenuReturn.OnLeftClick = (l) => {
             GUICategory = UICategory.LevelEditor;
             if (MissionName.GetRealText() != string.Empty)
-                _loadedCampaign.CachedMissions[_loadedCampaign.CurrentMissionId].Name = MissionName.GetRealText();
-            SetupMissionsBar(_loadedCampaign, false);
+                loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId].Name = MissionName.GetRealText();
+            SetupMissionsBar(loadedCampaign, false);
         };
 
         SaveLevelConfirm = new(TankGame.GameLanguage.Save, TankGame.TextFont, Color.White);
@@ -167,7 +167,7 @@ public static class LevelEditor
             LevelContentsPanel.Y + LevelContentsPanel.Height - 60.ToResolutionY()),
             () => new(200.ToResolutionX(),
             50.ToResolutionY()));
-        SaveLevelConfirm.OnLeftClick = (l) => {
+            SaveLevelConfirm.OnLeftClick = (l) => {
             // Mission.Save(LevelName.GetRealText(), )
             var res = Dialog.FileSave(_viewMissionDetails ? "mission,bin" : "campaign", TankGame.SaveDirectory);
             if (res.Path != null && res.IsOk)
@@ -177,8 +177,8 @@ public static class LevelEditor
                     var realName = Path.HasExtension(res.Path) ? Path.GetFileNameWithoutExtension(res.Path) : Path.GetFileName(res.Path);
                     var path = res.Path.Replace(realName, string.Empty);
 
-                    var misName = _loadedCampaign.CachedMissions[_loadedCampaign.CurrentMissionId].Name;
-                    _loadedCampaign.CachedMissions[_loadedCampaign.CurrentMissionId] = Mission.GetCurrent(misName);
+                    var misName = loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId].Name;
+                    loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId] = Mission.GetCurrent(misName);
                     if (_viewMissionDetails)
                     {
                         var ext = Path.GetExtension(res.Path);
@@ -189,17 +189,17 @@ public static class LevelEditor
                     }
                     else
                     {
-                        _loadedCampaign.MetaData.Name = CampaignName.GetRealText();
-                        _loadedCampaign.MetaData.Description = CampaignDescription.GetRealText();
-                        _loadedCampaign.MetaData.Author = CampaignAuthor.GetRealText();
+                        loadedCampaign.MetaData.Name = CampaignName.GetRealText();
+                        loadedCampaign.MetaData.Description = CampaignDescription.GetRealText();
+                        loadedCampaign.MetaData.Author = CampaignAuthor.GetRealText();
                         var split = CampaignTags.GetRealText().Split(',');
-                        _loadedCampaign.MetaData.Tags = split;
-                        _loadedCampaign.MetaData.ExtraLivesMissions = ArrayUtils.SequenceToInt32Array(CampaignExtraLives.GetRealText());
-                        _loadedCampaign.MetaData.Version = CampaignVersion.GetRealText();
-                        _loadedCampaign.MetaData.BackgroundColor = UnpackedColor.FromStringFormat(CampaignLoadingBGColor.GetRealText());
-                        _loadedCampaign.MetaData.MissionStripColor = UnpackedColor.FromStringFormat(CampaignLoadingStripColor.GetRealText());
-                        _loadedCampaign.MetaData.HasMajorVictory = _hasMajorVictory;
-                        Campaign.Save(Path.Combine(path, realName), _loadedCampaign);
+                        loadedCampaign.MetaData.Tags = split;
+                        loadedCampaign.MetaData.ExtraLivesMissions = ArrayUtils.SequenceToInt32Array(CampaignExtraLives.GetRealText());
+                        loadedCampaign.MetaData.Version = CampaignVersion.GetRealText();
+                        loadedCampaign.MetaData.BackgroundColor = UnpackedColor.FromStringFormat(CampaignLoadingBGColor.GetRealText());
+                        loadedCampaign.MetaData.MissionStripColor = UnpackedColor.FromStringFormat(CampaignLoadingStripColor.GetRealText());
+                        loadedCampaign.MetaData.HasMajorVictory = _hasMajorVictory;
+                        Campaign.Save(Path.Combine(path, realName), loadedCampaign);
                     }
                 }
                 catch {
@@ -222,7 +222,7 @@ public static class LevelEditor
         SwapMenu.OnLeftClick = (l) => {
             _viewMissionDetails = !_viewMissionDetails;
             if (MissionName.GetRealText() != string.Empty)
-                _loadedCampaign.CachedMissions[_loadedCampaign.CurrentMissionId].Name = MissionName.GetRealText();
+                loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId].Name = MissionName.GetRealText();
         };
         CampaignName = new(TankGame.TextFont, Color.White, 1f, 30);
         CampaignName.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(),
@@ -338,7 +338,7 @@ public static class LevelEditor
     {
         if (up)
         {
-            if (_loadedCampaign.CurrentMissionId == 0)
+            if (loadedCampaign.CurrentMissionId == 0)
             {
                 SoundPlayer.SoundError();
                 ChatSystem.SendMessage("No mission above this one!", Color.Red);
@@ -347,8 +347,8 @@ public static class LevelEditor
         }
         else
         {
-            var count = _loadedCampaign.CachedMissions.Count(x => x != default);
-            if (_loadedCampaign.CurrentMissionId >= count - 1)
+            var count = loadedCampaign.CachedMissions.Count(x => x != default);
+            if (loadedCampaign.CurrentMissionId >= count - 1)
             {
                 SoundPlayer.SoundError();
                 ChatSystem.SendMessage("No mission below this one!", Color.Red);
@@ -357,20 +357,20 @@ public static class LevelEditor
         }
 
 
-        var thisMission = _loadedCampaign.CurrentMission;
-        var targetMission = _loadedCampaign.CachedMissions[_loadedCampaign.CurrentMissionId + (up ? -1 : 1)];
+        var thisMission = loadedCampaign.CurrentMission;
+        var targetMission = loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId + (up ? -1 : 1)];
 
         // CHECKME: works?
-        _loadedCampaign.CachedMissions[_loadedCampaign.CurrentMissionId] = targetMission;
-        _loadedCampaign.CachedMissions[_loadedCampaign.CurrentMissionId + (up ? -1 : 1)] = thisMission;
+        loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId] = targetMission;
+        loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId + (up ? -1 : 1)] = thisMission;
 
-        _loadedCampaign.LoadMission(_loadedCampaign.CurrentMissionId + (up ? -1 : 1));
+        loadedCampaign.LoadMission(loadedCampaign.CurrentMissionId + (up ? -1 : 1));
 
         // _campaignElems.First(x => x.Text == _loadedCampaign.CurrentMission.Name).Color = SelectedColor;
 
-        SetupMissionsBar(_loadedCampaign);
+        SetupMissionsBar(loadedCampaign);
 
-        _missionButtons[_loadedCampaign.CurrentMissionId].Color = SelectedColor;
+        _missionButtons[loadedCampaign.CurrentMissionId].Color = SelectedColor;
     }
     private static void SetBarUIVisibility(bool visible)
     {
@@ -469,7 +469,7 @@ public static class LevelEditor
             Close(false);
             TankGame.OverheadView = false;
 
-            var name = _loadedCampaign.CachedMissions[_loadedCampaign.CurrentMissionId].Name;
+            var name = loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId].Name;
             _cachedMission = Mission.GetCurrent(name);
         };
 
@@ -482,7 +482,7 @@ public static class LevelEditor
             GameProperties.InMission = false;
             // GameHandler.CleanupScene();
             Mission.LoadDirectly(_cachedMission);
-            SetupMissionsBar(_loadedCampaign);
+            SetupMissionsBar(loadedCampaign);
         };
 
         Perspective = new(TankGame.GameLanguage.Perspective, TankGame.TextFont, Color.White);
@@ -538,11 +538,11 @@ public static class LevelEditor
                         //_loadedCampaign = null;
                     }
                     else if (ext == ".campaign") {
-                        _loadedCampaign = Campaign.Load(res.Path);
-                        _loadedCampaign.LoadMission(0);
-                        _loadedCampaign.SetupLoadedMission(true);
-                        MissionName.Text = _loadedCampaign.CachedMissions[0].Name;
-                        SetupMissionsBar(_loadedCampaign);
+                        loadedCampaign = Campaign.Load(res.Path);
+                        loadedCampaign.LoadMission(0);
+                        loadedCampaign.SetupLoadedMission(true);
+                        MissionName.Text = loadedCampaign.CachedMissions[0].Name;
+                        SetupMissionsBar(loadedCampaign);
                     }
                     else if (ext == ".bin")
                     {
@@ -592,7 +592,7 @@ public static class LevelEditor
 
         float totalOff = 0;
 
-        if (_loadedCampaign != null) {
+        if (loadedCampaign != null) {
             for (int i = 0; i < campaign.CachedMissions.Length; i++) {
                 var mission = campaign.CachedMissions[i];
                 if (mission == default)
@@ -615,14 +615,14 @@ public static class LevelEditor
                     _missionButtons.ForEach(x => x.Color = UnselectedColor);
                     btn.Color = SelectedColor;
 
-                    var mission = _loadedCampaign.CachedMissions[_loadedCampaign.CurrentMissionId];
+                    var mission = loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId];
 
-                    _loadedCampaign.CachedMissions[_loadedCampaign.CurrentMissionId] = Mission.GetCurrent(mission.Name);
+                    loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId] = Mission.GetCurrent(mission.Name);
 
-                    _loadedCampaign.LoadMission(index);
-                    _loadedCampaign.SetupLoadedMission(true);
+                    loadedCampaign.LoadMission(index);
+                    loadedCampaign.SetupLoadedMission(true);
 
-                    MissionName.Text = _loadedCampaign.CachedMissions[index].Name;
+                    MissionName.Text = loadedCampaign.CachedMissions[index].Name;
                 };
                 _missionButtons.Add(btn);
             }
@@ -637,25 +637,25 @@ public static class LevelEditor
             addMission.Color = Color.SkyBlue;
 
             // Array.Resize(ref _loadedCampaign.CachedMissions, _loadedCampaign.CachedMissions.Length + 1);
-            var count = _loadedCampaign.CachedMissions.Count(c => c != default);
-            var id = _loadedCampaign.CurrentMissionId;
-            _loadedCampaign.CachedMissions[id] = Mission.GetCurrent(_loadedCampaign.CachedMissions[id].Name);
+            var count = loadedCampaign.CachedMissions.Count(c => c != default);
+            var id = loadedCampaign.CurrentMissionId;
+            loadedCampaign.CachedMissions[id] = Mission.GetCurrent(loadedCampaign.CachedMissions[id].Name);
 
             // move every mission up by 1 in the array.
             for (int i = count; i > id + 1; i--) {
-                if (i + 1 >= _loadedCampaign.CachedMissions.Length)
-                    Array.Resize(ref _loadedCampaign.CachedMissions, _loadedCampaign.CachedMissions.Length + 1);
-                _loadedCampaign.CachedMissions[i] = _loadedCampaign.CachedMissions[i - 1];
+                if (i + 1 >= loadedCampaign.CachedMissions.Length)
+                    Array.Resize(ref loadedCampaign.CachedMissions, loadedCampaign.CachedMissions.Length + 1);
+                loadedCampaign.CachedMissions[i] = loadedCampaign.CachedMissions[i - 1];
             }
-            if (id + 1 >= _loadedCampaign.CachedMissions.Length)
-                Array.Resize(ref _loadedCampaign.CachedMissions, _loadedCampaign.CachedMissions.Length + 1);
-            _loadedCampaign.CachedMissions[id + 1] = new(Array.Empty<TankTemplate>(), Array.Empty<BlockTemplate>());
-            _loadedCampaign.LoadMission(id + 1);
-            _loadedCampaign.SetupLoadedMission(true);
+            if (id + 1 >= loadedCampaign.CachedMissions.Length)
+                Array.Resize(ref loadedCampaign.CachedMissions, loadedCampaign.CachedMissions.Length + 1);
+            loadedCampaign.CachedMissions[id + 1] = new(Array.Empty<TankTemplate>(), Array.Empty<BlockTemplate>());
+            loadedCampaign.LoadMission(id + 1);
+            loadedCampaign.SetupLoadedMission(true);
 
-            MissionName.Text = _loadedCampaign.CachedMissions[id].Name;
+            MissionName.Text = loadedCampaign.CachedMissions[id].Name;
 
-            SetupMissionsBar(_loadedCampaign, false);
+            SetupMissionsBar(loadedCampaign, false);
 
             _missionButtons[id + 1].Color = SelectedColor;
         };
@@ -712,11 +712,11 @@ public static class LevelEditor
                     TankGame.OverheadView = true;
                     Theme.Play();
                     SetLevelEditorVisibility(true);
-                    _loadedCampaign = new();
-                    _loadedCampaign.CachedMissions[0] = new(Array.Empty<TankTemplate>(), Array.Empty<BlockTemplate>()) {
+                    loadedCampaign = new();
+                    loadedCampaign.CachedMissions[0] = new(Array.Empty<TankTemplate>(), Array.Empty<BlockTemplate>()) {
                         Name = "No Name"
                     };
-                    SetupMissionsBar(_loadedCampaign);
+                    SetupMissionsBar(loadedCampaign);
                     _loadTask = null;
                 });
         }
@@ -739,7 +739,7 @@ public static class LevelEditor
         SetSaveMenuVisibility(false);
         // SetMissionsVisibility(false);
         if (toMainMenu)
-            _loadedCampaign = null;
+            loadedCampaign = null;
         PlacementSquare.ResetSquares();
     }
 
@@ -803,7 +803,7 @@ public static class LevelEditor
 
         // render campaign missions ui 
 
-        if (_loadedCampaign != null) {
+        if (loadedCampaign != null) {
             var heightDiff = 40;
             _missionButtonScissor = new Rectangle(_missionTab.X, _missionTab.Y + heightDiff, _missionTab.Width, _missionTab.Height - heightDiff * 2).ToResolution();
             TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, _missionTab.ToResolution(), null, Color.Gray, 0f, Vector2.Zero, default, 0f);

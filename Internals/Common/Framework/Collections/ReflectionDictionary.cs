@@ -143,7 +143,8 @@ namespace TanksRebirth.Internals.Common.Framework.Collections {
         public bool TryRemove(int id) {
             if (id > _dictionary.Count)
                 return false;
-            _dictionary.Remove(_dictionary.ElementAt(id).Key);
+            var element = _dictionary.ElementAt(id);
+            _dictionary.Remove(element.Key);
             Keys = _dictionary.Keys.ToArray();
             Values = _dictionary.Values.ToArray();
             return true;

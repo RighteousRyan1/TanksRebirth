@@ -3,7 +3,6 @@ using System.IO;
 using LiteNetLib;
 using LiteNetLib.Utils;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics.PackedVector;
 using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.UI;

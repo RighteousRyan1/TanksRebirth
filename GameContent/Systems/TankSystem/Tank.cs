@@ -246,8 +246,7 @@ public abstract class Tank {
     public virtual void Initialize() {
         OwnedShells = new Shell[Properties.ShellLimit];
 
-        _cannonMesh = Model!.Meshes["Cannon"];
-        _boneTransforms = new Matrix[Model.Bones.Count];
+        InitModelSemantics();
         if (TankGame.SecretCosmeticSetting) {
             for (int i = 0; i < 1; i++) {
                 var recieved = CosmeticChest.Basic.Open();
@@ -259,11 +258,10 @@ public abstract class Tank {
             }
         }
 
+        InitPhysics();
+
         if (MapRenderer.Theme == MapTheme.Christmas)
             Cosmetics.Add(CosmeticChest.SantaHat);
-
-        Body = CollisionsWorld.CreateCircle(TNK_WIDTH * 0.4f / UNITS_PER_METER, 1f, Position / UNITS_PER_METER,
-            BodyType.Dynamic);
 
         foreach (var cos in Cosmetics)
             if (cos is Cosmetic2D cos2d)
@@ -292,6 +290,17 @@ public abstract class Tank {
         }
 
         GameProperties.OnMissionStart += OnMissionStart;
+    }
+    /// <summary>Initializes the physics body for this tank. Only use if you know what you're doing with it.</summary>
+    public void InitPhysics() {
+        Body = CollisionsWorld.CreateCircle(TNK_WIDTH * 0.4f / UNITS_PER_METER, 1f, Position / UNITS_PER_METER,
+            BodyType.Dynamic);
+    }
+    /// <summary>Initializes bone transforms and mesh assignments. You will want to call this method if you're modifying a tank model, and the new model
+    /// contains a different number of bones than the original one.</summary>
+    public void InitModelSemantics() {
+        _cannonMesh = Model!.Meshes["Cannon"];
+        _boneTransforms = new Matrix[Model.Bones.Count];
     }
 
     public void Add2DCosmetic(Cosmetic2D cos2d, Func<bool> destroyOn = null) {
@@ -334,7 +343,6 @@ public abstract class Tank {
         var lightParticle = GameHandler.Particles.MakeParticle(Position3D,
             GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_particle"));
 
-        // lightParticle.TextureScale = new(5f);
         lightParticle.Alpha = 1;
         lightParticle.IsIn2DSpace = true;
         lightParticle.Color = Color.SkyBlue;
@@ -518,7 +526,7 @@ public abstract class Tank {
 
             // Switch on the context the tank got hurt on.
             part.Color = context switch {
-                TankHurtContextMine thcm => thcm.MineExplosion.Source switch {
+                TankHurtContextMine thcm => thcm.MineExplosion.Owner switch {
                     PlayerTank pl => PlayerID.PlayerTankColors[pl.PlayerType].ToColor(),
                     AITank ai => AITank.TankDestructionColors[ai.AiTankType],
                     _ => part.Color,
@@ -582,18 +590,16 @@ public abstract class Tank {
                         }
                 }
             }
-            else {
-                OnDamage?.Invoke(this, true, context);
-                if (this is AITank ai) {
-                    for (int i = 0; i < ModLoader.ModTanks.Length; i++)
-                        if (ai.AiTankType == ModLoader.ModTanks[i].Type) {
-                            ModLoader.ModTanks[i].TakeDamage(ai, true, context);
-                        }
-                }
-                Destroy(context);
-            }
 
             return;
+        }
+        else {
+            if (this is AITank ai) {
+                for (int i = 0; i < ModLoader.ModTanks.Length; i++)
+                    if (ai.AiTankType == ModLoader.ModTanks[i].Type) {
+                        ModLoader.ModTanks[i].TakeDamage(ai, true, context);
+                    }
+            }
         }
 
         OnDamage?.Invoke(this, true, context);
@@ -719,7 +725,7 @@ public abstract class Tank {
         if (!Properties.CanLayTread)
             return;
         new TankFootprint(this, -TankRotation, alt) {
-            Position = Position3D + new Vector3(0, 0.1f, 0),
+            Position = Position3D + new Vector3(0, 0.15f, 0),
         };
     }
 

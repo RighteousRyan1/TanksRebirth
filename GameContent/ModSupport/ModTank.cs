@@ -88,13 +88,15 @@ public class ModTank : ILoadable {
 
     // Pre/Post render soon...
 
+    internal static int unloadOffset = 0;
+
     internal void Unload() {
         var name = Name.GetLocalizedString(LangCode.English);
-        // think about what to do here lol.
-        TankID.Collection.TryRemove(Type);
+        // if more than one mod has a modded tank, the game unloads that, and indexes are not adjusted
+        TankID.Collection.TryRemove(Type - unloadOffset);
         AITank.TankDestructionColors.Remove(Type);
         if (!HasSong)
-            TankMusicSystem.TierExclusionRule_DoesntHaveSong.Remove(Type);
+            TankMusicSystem.TierExclusionRule_DoesntHaveSong.Remove(Type); 
         for (int i = 0; i < _music.Count; i++) {
             _music[i].Stop();
             _music[i].BackingAudio.Dispose();

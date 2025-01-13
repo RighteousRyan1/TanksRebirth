@@ -1,7 +1,6 @@
 ﻿namespace TanksRebirth.GameContent;
 
-public interface ITankHurtContext {
-    bool IsPlayer { get; set; }
-
-    // PlayerType PlayerType { get; set; } // don't use if IsPlayer is false.
+/// <summary>Used for a family of things.</summary>
+public interface ITankHurtContext { 
+    bool IsPlayer { get; }
 }

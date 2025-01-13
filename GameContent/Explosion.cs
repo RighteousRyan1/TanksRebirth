@@ -18,7 +18,7 @@ public class Explosion : IAITankDanger {
     public static event PostUpdateDelegate? OnPostUpdate;
 
     /// <summary>The "owner" of this explosion.</summary>
-    public Tank? Source;
+    public Tank? Owner;
 
     // 500 -> 80
     public const int MINE_EXPLOSIONS_MAX = 80;
@@ -50,7 +50,7 @@ public class Explosion : IAITankDanger {
         RotationSpeed = rotationSpeed;
         Position = pos;
         Scale = scale;
-        Source = owner;
+        Owner = owner;
 
         AITank.Dangers.Add(this);
         IsPlayerSourced = owner is not null && owner is PlayerTank;
@@ -145,10 +145,10 @@ public class Explosion : IAITankDanger {
                     || tank.Dead || HasHit[tank.WorldId] || !tank.Properties.VulnerableToMines)
                     continue;
                 HasHit[tank.WorldId] = true;
-                if (Source is null)
-                    tank.Damage(new TankHurtContextOther(TankHurtContextOther.HurtContext.FromIngame));
-                else if (Source is not null) {
-                    tank.Damage(new TankHurtContextMine(Source is not AITank, this));
+                if (Owner is null)
+                    tank.Damage(new TankHurtContextOther(false, TankHurtContextOther.HurtContext.FromIngame, "Unowned Explosion", this));
+                else if (Owner is not null) {
+                    tank.Damage(new TankHurtContextMine(this));
                 }
             }
         }

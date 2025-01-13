@@ -1,14 +1,11 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using tainicom.Aether.Physics2D.Dynamics;
-using TanksRebirth.GameContent.UI;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
-using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.GameContent;
 
@@ -192,13 +189,17 @@ public static class MapRenderer
         public static void LoadBounds()
         {
             // 0 -> top, 1 -> right, 2 -> bottom, 3 -> left
-            Boundaries[0] = Tank.CollisionsWorld.CreateRectangle(1000 / Tank.UNITS_PER_METER, 5 / Tank.UNITS_PER_METER, 1f, new Vector2(MIN_X, MIN_Y - 7) / Tank.UNITS_PER_METER, 0f, BodyType.Static);
+            Boundaries[0] = Tank.CollisionsWorld.CreateRectangle(1000 / Tank.UNITS_PER_METER, 5 / Tank.UNITS_PER_METER, 1f, 
+                new Vector2(MIN_X, MIN_Y - 7) / Tank.UNITS_PER_METER, 0f, BodyType.Static);
 
-            Boundaries[1] = Tank.CollisionsWorld.CreateRectangle(5 / Tank.UNITS_PER_METER, 1000 / Tank.UNITS_PER_METER, 1f, new Vector2(MAX_X + 7, MAX_Y) / Tank.UNITS_PER_METER, 0f, BodyType.Static);
+            Boundaries[1] = Tank.CollisionsWorld.CreateRectangle(5 / Tank.UNITS_PER_METER, 1000 / Tank.UNITS_PER_METER, 1f, 
+                new Vector2(MAX_X + 7, MAX_Y) / Tank.UNITS_PER_METER, 0f, BodyType.Static);
 
-            Boundaries[2] = Tank.CollisionsWorld.CreateRectangle(1000 / Tank.UNITS_PER_METER, 5 / Tank.UNITS_PER_METER, 1f, new Vector2(MIN_X, MAX_Y + 7) / Tank.UNITS_PER_METER, 0f, BodyType.Static);
+            Boundaries[2] = Tank.CollisionsWorld.CreateRectangle(1000 / Tank.UNITS_PER_METER, 5 / Tank.UNITS_PER_METER, 1f, 
+                new Vector2(MIN_X, MAX_Y + 7) / Tank.UNITS_PER_METER, 0f, BodyType.Static);
 
-            Boundaries[3] = Tank.CollisionsWorld.CreateRectangle(5 / Tank.UNITS_PER_METER, 1000 / Tank.UNITS_PER_METER, 1f, new Vector2(MIN_X - 7, MAX_Y) / Tank.UNITS_PER_METER, 0f, BodyType.Static);
+            Boundaries[3] = Tank.CollisionsWorld.CreateRectangle(5 / Tank.UNITS_PER_METER, 1000 / Tank.UNITS_PER_METER, 1f, 
+                new Vector2(MIN_X - 7, MAX_Y) / Tank.UNITS_PER_METER, 0f, BodyType.Static);
             
             switch (Theme)
             {

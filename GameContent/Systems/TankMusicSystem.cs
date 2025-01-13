@@ -125,7 +125,7 @@ public static class TankMusicSystem
         SnowLoop.Volume = 0;
         VolumeMultiplier = SteamworksUtils.IsOverlayActive ? 0.25f : 1f;
 
-        foreach (var song in Audio)
+        foreach (var song in Audio.ToList())
             song.Value?.SetVolume(0f);
 
         if (MainMenu.Active && AIManager.CountAll() == 0 || TierHighest == TankID.None) {

@@ -185,7 +185,7 @@ public class GameHandler {
         }
         else if (!GameProperties.InMission)
             if (TankMusicSystem.Audio is not null)
-                foreach (var song in TankMusicSystem.Audio)
+                foreach (var song in TankMusicSystem.Audio.ToList())
                     song.Value.Volume = 0;
         LevelEditor.Update();
 

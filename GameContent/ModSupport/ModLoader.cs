@@ -149,9 +149,12 @@ public static class ModLoader
             // for indivudally unloaded mods.
 
             // unload modded tanks and all of their data.
+            var modTankCount = _modTankDictionary[mod].Count;
             for (int i = 0; i < _modTankDictionary[mod].Count; i++) {
                 _modTankDictionary[mod][i].Unload();
             }
+            // this allows the next mod to unload properly... or supposedly?
+            ModTank.unloadOffset -= modTankCount;
             _modTankDictionary[mod].Clear();
             mod.OnUnload();
             UnloadModContent(ref mod);
@@ -172,6 +175,7 @@ public static class ModLoader
         ModContent.moddedTypes.Clear();
         ResetContentDictionaries();
         _loadedAlcs.Clear();
+        ModTank.unloadOffset = 0;
         ChatSystem.SendMessage("Mod unload successful!", Color.Lime);
         Status = LoadStatus.Complete;
     }

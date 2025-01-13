@@ -100,7 +100,7 @@ public static class MainMenu {
     public static UITextButton MachineGuns;
     public static UITextButton RandomizedTanks;
     public static UITextButton ThunderMode;
-    public static UITextButton ThirdPerson;
+    public static UITextButton POVMode;
     public static UITextButton AiCompanion;
     public static UITextButton Shotguns;
     public static UITextButton Predictions;
@@ -645,13 +645,13 @@ public static class MainMenu {
         };
         ThunderMode.SetDimensions(450, 550, 300, 40);
 
-        ThirdPerson = new("Third Person Mode", font, Color.White) {
+        POVMode = new("POV Mode", font, Color.White) {
             IsVisible = false,
-            Tooltip = "Make the game a third person shooter!" +
+            Tooltip = "Play the game in the POV of your tank!" +
             "\nYou can move around inter-directionally with WASD, and aim by dragging the mouse.",
-            OnLeftClick = (elem) => Difficulties.Types["ThirdPerson"] = !Difficulties.Types["ThirdPerson"]
+            OnLeftClick = (elem) => Difficulties.Types["POV"] = !Difficulties.Types["POV"]
         };
-        ThirdPerson.SetDimensions(450, 600, 300, 40);
+        POVMode.SetDimensions(450, 600, 300, 40);
 
         AiCompanion = new("AI Companion", font, Color.White) {
             IsVisible = false,
@@ -885,7 +885,7 @@ public static class MainMenu {
         MachineGuns.IsVisible = visible;
         RandomizedTanks.IsVisible = visible;
         ThunderMode.IsVisible = visible;
-        ThirdPerson.IsVisible = visible;
+        POVMode.IsVisible = visible;
         AiCompanion.IsVisible = visible;
         Shotguns.IsVisible = visible;
         Predictions.IsVisible = visible;
@@ -1048,7 +1048,7 @@ public static class MainMenu {
         MachineGuns.Color = Difficulties.Types["MachineGuns"] ? Color.Lime : Color.Red;
         RandomizedTanks.Color = Difficulties.Types["RandomizedTanks"] ? Color.Lime : Color.Red;
         ThunderMode.Color = Difficulties.Types["ThunderMode"] ? Color.Lime : Color.Red;
-        ThirdPerson.Color = Difficulties.Types["ThirdPerson"] ? Color.Lime : Color.Red;
+        POVMode.Color = Difficulties.Types["POV"] ? Color.Lime : Color.Red;
         AiCompanion.Color = Difficulties.Types["AiCompanion"] ? Color.Lime : Color.Red;
         Shotguns.Color = Difficulties.Types["Shotguns"] ? Color.Lime : Color.Red;
         Predictions.Color = Difficulties.Types["Predictions"] ? Color.Lime : Color.Red;
@@ -1180,7 +1180,7 @@ public static class MainMenu {
         DebugManager.ClearChecks?.OnLeftClick?.Invoke(null);
 
         TankGame.OverheadView = false;
-        TankGame.CameraRotationVector.Y = TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
+        TankGame.POVRotationVector.Y = TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
         TankGame.AddativeZoom = 1f;
         TankGame.CameraFocusOffset.Y = 0f;
 

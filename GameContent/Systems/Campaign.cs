@@ -191,7 +191,7 @@ public class Campaign
                         tank.Remove(true);
                     if (Client.IsConnected())
                     {
-                        if (PlayerTank.Lives[tank.PlayerId] == 0)
+                        if (PlayerTank.Lives[tank.PlayerId] <= 0)
                             tank.Remove(true);
                     }
                     // TODO: note to self, this code above is what causes the skill issue.

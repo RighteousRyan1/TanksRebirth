@@ -55,8 +55,8 @@ public static class IntermissionHandler {
         if (!Client.IsConnected()) {
             if (context == MissionEndContext.Lose) {
                 // hardcode hell
-                if (!Difficulties.Types["InfiniteLives"])
-                    PlayerTank.AddLives(-1);
+                /*if (!Difficulties.Types["InfiniteLives"])
+                    PlayerTank.AddLives(-1);*/
 
                 // what is this comment?
                 /*int len = $"{VanillaCampaign.CachedMissions.Count(x => !string.IsNullOrEmpty(x.Name))}".Length;
@@ -197,7 +197,7 @@ public static class IntermissionHandler {
                         }
                     }
                     // doesnt work on 1 client
-                    bool check = Client.IsConnected() ? PlayerTank.Lives.All(x => x == 0) : PlayerTank.GetMyLives() <= 1;
+                    bool check = Client.IsConnected() ? PlayerTank.Lives.All(x => x == 0) : PlayerTank.GetMyLives() <= 0;
 
                     var cxt = !GameHandler.AllPlayerTanks.Any(tnk => tnk != null && !tnk.Dead) ? (check ? MissionEndContext.GameOver : MissionEndContext.Lose) : MissionEndContext.Win;
 

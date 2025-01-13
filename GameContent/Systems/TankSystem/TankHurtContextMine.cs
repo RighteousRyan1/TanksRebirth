@@ -1,11 +1,6 @@
 ﻿namespace TanksRebirth.GameContent;
 
-public struct TankHurtContextMine : ITankHurtContext {
-    public bool IsPlayer { get; set; }
-    public Explosion MineExplosion { get; set; }
-
-    public TankHurtContextMine(bool isPlayer, Explosion mineExplosion) {
-        IsPlayer = isPlayer;
-        MineExplosion = mineExplosion;
-    }
+public struct TankHurtContextMine(Explosion mineExplosion) : ITankHurtContext {
+    public bool IsPlayer { get; } = mineExplosion.Owner is not null && mineExplosion.Owner is PlayerTank;
+    public Explosion MineExplosion { get; set; } = mineExplosion;
 }

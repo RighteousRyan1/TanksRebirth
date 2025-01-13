@@ -1,17 +1,6 @@
 ﻿namespace TanksRebirth.GameContent;
 
-public struct TankHurtContextShell : ITankHurtContext {
-    public bool IsPlayer { get; set; }
-    public uint Bounces { get; set; }
-
-    public int ShellType { get; set; }
-
-    public Shell Shell { get; set; }
-
-    public TankHurtContextShell(bool isPlayer, uint bounces, int type, Shell shell) {
-        IsPlayer = isPlayer;
-        Bounces = bounces;
-        ShellType = type;
-        Shell = shell;
-    }
+public struct TankHurtContextShell(Shell shell) : ITankHurtContext {
+    public bool IsPlayer { get; } = shell.Owner is not null && shell.Owner is PlayerTank;
+    public Shell Shell { get; set; } = shell;
 }

@@ -24,7 +24,6 @@ using TanksRebirth.Internals.UI;
 using TanksRebirth.Internals.Common.IO;
 using TanksRebirth.Internals.Common.Framework.Input;
 using TanksRebirth.Internals.Common.Framework.Core;
-using TanksRebirth.Internals.Core;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Framework;
 using TanksRebirth.Internals.Common.Framework.Graphics;
@@ -44,11 +43,12 @@ using TanksRebirth.Achievements;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Speedrunning;
 
+using tainicom.Aether.Physics2D.Collision;
+
 namespace TanksRebirth;
 
 #pragma warning disable CS8618
 public class TankGame : Game {
-
     #region Fields1
     public static Language GameLanguage = new();
 
@@ -130,7 +130,6 @@ public class TankGame : Game {
 
     public readonly string MOTD;
     #endregion
-
     public TankGame() : base() {
         Directory.CreateDirectory(SaveDirectory);
         Directory.CreateDirectory(Path.Combine(SaveDirectory, "Resource Packs", "Scene"));
@@ -487,7 +486,7 @@ public class TankGame : Game {
     }
     #region Various Fields
     public const float DEFAULT_ORTHOGRAPHIC_ANGLE = 0.75f;
-    public static Vector2 CameraRotationVector = new(0, DEFAULT_ORTHOGRAPHIC_ANGLE);
+    public static Vector2 POVRotationVector = new(0, DEFAULT_ORTHOGRAPHIC_ANGLE);
 
     public const float DEFAULT_ZOOM = 3.3f;
     public static float AddativeZoom = 1f;
@@ -505,8 +504,8 @@ public class TankGame : Game {
 
     private static int transitionTimer;
 
-    public static Vector3 ThirdPersonCameraPosition = new(0, 100, 0);
-    public static float ThirdPersonCameraRotation;
+    public static Vector3 POVCameraPosition = new(0, 100, 0);
+    public static float POVCameraRotation;
     public static Vector2 MouseVelocity => MouseUtils.GetMouseVelocity(WindowUtils.WindowCenter);
 
     public static bool SecretCosmeticSetting;
@@ -564,6 +563,10 @@ public class TankGame : Game {
 
             SoundPlayer.SoundError();
 
+            if (LevelEditor.Active) {
+                Campaign.Save(Path.Combine(SaveDirectory, "Backup", $"backup_{DateTime.Now.StringFormatCustom("_")}"), LevelEditor.loadedCampaign!);
+            }
+
             IsCrashInfoVisible = true;
             CrashInfo = new(e.Message, e.StackTrace ?? "No stack trace available.", e);
         }
@@ -617,7 +620,7 @@ public class TankGame : Game {
                 Graphics.ApplyChanges();
             }
 
-            RebirthMouse.ShouldRender = !Difficulties.Types["ThirdPerson"] || GameUI.Paused || MainMenu.Active || LevelEditor.Active;
+            RebirthMouse.ShouldRender = !Difficulties.Types["POV"] || GameUI.Paused || MainMenu.Active || LevelEditor.Active;
             if (UIElement.delay > 0)
                 UIElement.delay--;
         }
@@ -648,16 +651,16 @@ public class TankGame : Game {
                 OverheadView = !OverheadView;
         #endregion
         if (!IsCrashInfoVisible) {
-            if (!Difficulties.Types["ThirdPerson"] || MainMenu.Active || LevelEditor.Active) {
+            if (!Difficulties.Types["POV"] || MainMenu.Active || LevelEditor.Active) {
                 if (transitionTimer > 0) {
                     transitionTimer--;
                     if (OverheadView) {
-                        CameraRotationVector.Y = MathUtils.SoftStep(CameraRotationVector.Y, MathHelper.PiOver2, 0.08f * DeltaTime);
+                        POVRotationVector.Y = MathUtils.SoftStep(POVRotationVector.Y, MathHelper.PiOver2, 0.08f * DeltaTime);
                         AddativeZoom = MathUtils.SoftStep(AddativeZoom, 0.6f, 0.08f * DeltaTime);
                         CameraFocusOffset.Y = MathUtils.RoughStep(CameraFocusOffset.Y, 82f, 2f * DeltaTime);
                     }
                     else {
-                        CameraRotationVector.Y = MathUtils.SoftStep(CameraRotationVector.Y, DEFAULT_ORTHOGRAPHIC_ANGLE, 0.08f * DeltaTime);
+                        POVRotationVector.Y = MathUtils.SoftStep(POVRotationVector.Y, DEFAULT_ORTHOGRAPHIC_ANGLE, 0.08f * DeltaTime);
                         if (!LevelEditor.Active)
                             AddativeZoom = MathUtils.SoftStep(AddativeZoom, 1f, 0.08f * DeltaTime);
                         CameraFocusOffset.Y = MathUtils.RoughStep(CameraFocusOffset.Y, 0f, 2f * DeltaTime);
@@ -695,8 +698,8 @@ public class TankGame : Game {
                 GameView = Matrix.CreateScale(DEFAULT_ZOOM * AddativeZoom * (MainMenu.Active ? _zoomAdd : 1)) *
                         Matrix.CreateLookAt(new(0f, 0, 350f), Vector3.Zero, Vector3.Up) * // 0, 0, 350
                         Matrix.CreateTranslation(CameraFocusOffset.X, -CameraFocusOffset.Y + 40, 0) *
-                        Matrix.CreateRotationY(CameraRotationVector.X + (MainMenu.Active ? _spinValue : 0)) *
-                        Matrix.CreateRotationX(CameraRotationVector.Y);
+                        Matrix.CreateRotationY(POVRotationVector.X + (MainMenu.Active ? _spinValue : 0)) *
+                        Matrix.CreateRotationX(POVRotationVector.Y);
                 GameProjection = Matrix.CreateOrthographic(1920, 1080, -2000, 5000);
 
                 //Matrix.CreateTranslation(CameraFocusOffset.X, -CameraFocusOffset.Y, 0);
@@ -706,8 +709,8 @@ public class TankGame : Game {
             else {
                 if (GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()] is not null && !GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()].Dead) {
                     SpectatorId = NetPlay.GetMyClientId();
-                    ThirdPersonCameraPosition = GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()].Position.ExpandZ();
-                    ThirdPersonCameraRotation = -GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()].TurretRotation;
+                    POVCameraPosition = GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()].Position.ExpandZ();
+                    POVCameraRotation = -GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()].TurretRotation;
                 }
                 else if (GameHandler.AllPlayerTanks[SpectatorId] is not null) {
 
@@ -716,8 +719,8 @@ public class TankGame : Game {
                     else if (InputUtils.KeyJustPressed(Keys.Right))
                         SpectatorId = SpectateValidTank(SpectatorId, true);
 
-                    ThirdPersonCameraPosition = GameHandler.AllPlayerTanks[SpectatorId].Position.ExpandZ();
-                    ThirdPersonCameraRotation = -GameHandler.AllPlayerTanks[SpectatorId].TurretRotation;
+                    POVCameraPosition = GameHandler.AllPlayerTanks[SpectatorId].Position.ExpandZ();
+                    POVCameraRotation = -GameHandler.AllPlayerTanks[SpectatorId].TurretRotation;
 
                     // free camera movement test
 
@@ -752,19 +755,18 @@ public class TankGame : Game {
                         Matrix.CreateRotationZ(_rot.Z);*/
                 }
 
-                GameView = Matrix.CreateLookAt(ThirdPersonCameraPosition,
-                    ThirdPersonCameraPosition + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(ThirdPersonCameraRotation).ExpandZ(),
+                GameView = Matrix.CreateLookAt(POVCameraPosition,
+                    POVCameraPosition + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(POVCameraRotation).ExpandZ(),
                     Vector3.Up) * Matrix.CreateScale(AddativeZoom) *
-                    Matrix.CreateRotationX(CameraRotationVector.Y - MathHelper.PiOver4) *
-                    Matrix.CreateRotationY(CameraRotationVector.X) *
-                    Matrix.CreateTranslation(0, -20, -40);
+                    Matrix.CreateRotationX(POVRotationVector.Y - MathHelper.PiOver4) *
+                    Matrix.CreateRotationY(POVRotationVector.X) *
+                    Matrix.CreateTranslation(0, -20, 0);
 
                 GameProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000);
             }
-
             if (!GameUI.Paused && !MainMenu.Active && DebugManager.DebuggingEnabled) {
                 if (InputUtils.MouseRight)
-                    CameraRotationVector += MouseVelocity / 500;
+                    POVRotationVector += MouseVelocity / 500;
 
                 if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Add))
                     AddativeZoom += 0.01f;
@@ -830,8 +832,6 @@ public class TankGame : Game {
                             if (RayUtils.GetMouseToWorldRay().Intersects(tnk.Worldbox).HasValue) {
                                 HoveringAnyTank = true;
                                 if (InputUtils.KeyJustPressed(Keys.K)) {
-                                    // var tnk = WPTR.AllAITanks.FirstOrDefault(tank => tank is not null && !tank.Dead && tank.tier == AITank.GetHighestTierActive());
-
                                     if (Array.IndexOf(GameHandler.AllTanks, tnk) > -1)
                                         tnk?.Destroy(new TankHurtContextOther()); // hmmm
                                 }
@@ -1058,6 +1058,7 @@ public class TankGame : Game {
                                                        $"\nLogic FPS: {LogicFPS}" +
                                                        $"\n\nRender Time: {RenderTime.TotalMilliseconds:0.00}ms" +
                                                        $"\nRender FPS: {RenderFPS}" +
+                                                       $"\nKeys Q + W: Localhost Connect for Multiplayer Debug" +
                                                        $"\nKeys U + I: Unload All Mods" +
                                                        $"\nKeys O + P: Reload All Mods", new(10, 500));
 

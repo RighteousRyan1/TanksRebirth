@@ -17,25 +17,24 @@ namespace TanksRebirth.Net;
 
 /// <summary>
 /// Holds the keys to all of what happens through the networking of the game.
-/// 
 /// </summary>
 public class NetPlay {
-    public static IPEndPoint Ip;
+    public static IPEndPoint? Ip;
     public static int Port;
-    public static Client CurrentClient;
-    public static Server CurrentServer;
+    public static Client? CurrentClient;
+    public static Server? CurrentServer;
     /// <summary>Whether or not to log packets going out or coming in.</summary>
 
     public static bool DoPacketLogging = false;
 
-    public static string ServerName;
+    public static string? ServerName;
 
     public delegate void OnRecieveServerPacketDelegate(int packet, NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod);
     /// <summary>Called when a packet is recieved server-side. This is called before all packets are handled.</summary>
-    public static event OnRecieveServerPacketDelegate OnReceiveServerPacket;
+    public static event OnRecieveServerPacketDelegate? OnReceiveServerPacket;
     public delegate void OnRecieveClientPacketDelegate(int packet, NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod);
     /// <summary>Called when a packet is recieved client-side. This is called before all packets are handled.</summary>
-    public static event OnRecieveClientPacketDelegate OnReceiveClientPacket;
+    public static event OnRecieveClientPacketDelegate? OnReceiveClientPacket;
 
     public static void MapClientNetworking() {
         Client.clientNetListener.NetworkReceiveEvent += OnPacketRecieve_Client;
@@ -253,6 +252,12 @@ public class NetPlay {
                 //var causingTankId = reader.GetInt();
                 //var isPlayer = reader.GetBool();
 
+                if (GameHandler.AllTanks[hurtTankId] is PlayerTank player) {
+                    // checks if the damage recipient is themself
+                    if (IsClientMatched(hurtTankId)) {
+
+                    }
+                }
                 GameHandler.AllTanks[hurtTankId]?.Damage(null);
 
                 break;

@@ -50,17 +50,15 @@ namespace TanksRebirth.GameContent.Systems
         {
             float difficulty = 0;
             Dictionary<int, int> tankCounts = new();
-            foreach (var tank in mission.Tanks)
-            {
-                if (!tank.IsPlayer)
-                {
-                    if (!tankCounts.ContainsKey(tank.AiTier))
-                        tankCounts.Add(tank.AiTier, 1);
-                    else
-                        tankCounts[tank.AiTier]++;
+            foreach (var tank in mission.Tanks) {
+                if (tank.IsPlayer) continue;
 
-                    difficulty += _tankDiffs[tank.AiTier] / tankCounts[tank.AiTier] * 1.5f;
-                }
+                if (!tankCounts.ContainsKey(tank.AiTier))
+                    tankCounts.Add(tank.AiTier, 1);
+                else
+                    tankCounts[tank.AiTier]++;
+
+                difficulty += _tankDiffs[tank.AiTier] / tankCounts[tank.AiTier] * 1.5f;
             }
 
             foreach (var block in mission.Blocks) {

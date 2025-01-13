@@ -26,13 +26,16 @@ namespace TanksRebirth.GameContent;
 
 public class PlayerTank : Tank
 {
+    /// <summary>A <see cref="PlayerTank"/> instance which represents the current client's tank they *primarily* control. Will return null in cases where
+    /// the tank simply is inexistent (i.e: in the main menu). In a single-player context, this will always be the first player tank.</summary>
+    public static PlayerTank ClientTank => GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()];
     /// <summary>The amount of lives for every existing player. Access a certain player's life count via indexing this array with a PlayerID entry.
     /// <para>Note that lives are always synced on multiplayer.</para>
     /// </summary>
     public static int[] Lives { get; set; } = new int[4];
 
     /// <summary>In multiplayer, gets the lives of the client that this code is currently being called on.</summary>
-    public static int GetMyLives() => Client.IsConnected() ? Lives[NetPlay.CurrentClient.Id] : Lives[0];
+    public static int GetMyLives() => Lives[NetPlay.GetMyClientId()];
     /// <summary>
     /// Adds lives to the player in Single-Player, adds to the lives of all players in Multiplayer.
     /// </summary>
@@ -40,7 +43,7 @@ public class PlayerTank : Tank
     public static void AddLives(int num)
     {
         if (Client.IsConnected())
-            Lives[NetPlay.CurrentClient.Id] += num;
+            Lives[NetPlay.GetMyClientId()] += num;
         else
             for (int i = 0; i < Lives.Length; i++)
                 Lives[i] += num;
@@ -52,7 +55,7 @@ public class PlayerTank : Tank
     public static void SetLives(int num)
     {
         if (Client.IsConnected())
-            Lives[NetPlay.CurrentClient.Id] = num;
+            Lives[NetPlay.GetMyClientId()] = num;
         else
             for (int i = 0; i < Lives.Length; i++)
                 Lives[i] = num;
@@ -234,7 +237,7 @@ public class PlayerTank : Tank
             //if (Client.IsConnected())
                 //ChatSystem.SendMessage($"PlayerId: {PlayerId} | ClientId: {NetPlay.CurrentClient.Id}", Color.White);
             if (NetPlay.IsClientMatched(PlayerId) && !IntermissionSystem.IsAwaitingNewMission) {
-                if (!Difficulties.Types["ThirdPerson"] || LevelEditor.Active || MainMenu.Active) {
+                if (!Difficulties.Types["POV"] || LevelEditor.Active || MainMenu.Active) {
                     Vector3 mouseWorldPos = MatrixUtils.GetWorldPosition(MouseUtils.MousePosition, -11f);
                     if (!LevelEditor.Active)
                         TurretRotation = -(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position).ToRotation() + MathHelper.PiOver2;
@@ -331,7 +334,7 @@ public class PlayerTank : Tank
         }
         else
         {
-            if (Difficulties.Types["ThirdPerson"])
+            if (Difficulties.Types["POV"])
                 preterbedVelocity = preterbedVelocity.RotatedByRadians(-TurretRotation + MathHelper.Pi);
 
             Speed += Properties.Acceleration * TankGame.DeltaTime;
@@ -436,7 +439,7 @@ public class PlayerTank : Tank
             preterbedVelocity.X = 1;
         }
 
-        if (Difficulties.Types["ThirdPerson"])
+        if (Difficulties.Types["POV"])
             preterbedVelocity = preterbedVelocity.RotatedByRadians(-TurretRotation + MathHelper.Pi);
 
         var norm = Vector2.Normalize(preterbedVelocity);
@@ -449,17 +452,29 @@ public class PlayerTank : Tank
     }
     public override void Destroy(ITankHurtContext context)
     {
-        if (Client.IsConnected())
-        {
-            TankGame.SpectateValidTank(PlayerId, true);
-            if (NetPlay.IsClientMatched(PlayerId))
-                AddLives(-1);
+        if (Client.IsConnected()) {
+            Tank culprit = this;
+            if (context is TankHurtContextMine thcm) {
+                if (thcm.MineExplosion.Owner is not null)
+                    culprit = thcm.MineExplosion.Owner;
+            }
+            else if (context is TankHurtContextShell thcs) {
+                if (thcs.Shell.Owner is not null)
+                    culprit = thcs.Shell.Owner;
+            }
+            TankGame.SpectateValidTank(culprit.WorldId, true);
+            if (NetPlay.IsClientMatched(PlayerId)) {
+                Lives[PlayerId]--;
+            }
         }
+        else
+            AddLives(-1);
 
         if (context is not null)
         {
             if (context.IsPlayer)
             {
+                // friendly fire counts as suicides lol
                 // this probably makes sense
                 TankGame.GameData.Suicides++;
                 PlayerStatistics.SuicidesThisCampaign++;
@@ -635,7 +650,7 @@ public class PlayerTank : Tank
             }
             var realSize = (tex.Size() * scale).ToResolution();
             for (int i = 1; i <= Properties.ShellLimit; i++) {
-                var colorToUse = i > OwnedShellCount ? ColorUtils.DiscoPartyColor : Color.DarkGray;
+                var colorToUse = i > OwnedShellCount ? Color.White : Color.DimGray;
                 var position = new Vector2(WindowUtils.WindowWidth - realSize.X, realSize.Y + 40.ToResolutionY());
                 TankGame.SpriteRenderer.Draw(tex, position + new Vector2(0, i * (realSize.Y + (scale * 20).ToResolutionY())), null, colorToUse, 0f, new Vector2(tex.Size().X, 0), new Vector2(scale).ToResolution(), default, default);
             }

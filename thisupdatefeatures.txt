@@ -8,24 +8,22 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 
 ## Changes
 
-
+- Bullet tracking UI is now white for unused bullets
 
 ## Source Code Changes (for modders)
 
-
+- `ITankHurtContext`s' properties have been streamlined
+- `Explosion.Source` -> `Explosion.Owner`
 
 ## Fixes
 
-- Fixed UI slider bug, sliders now work as expected.
-- Mines now no longer try to explode prematurely.
+- Z-fighting on tank shadows no longer occurs
 
 ## TODO
 
 - [ ] Bonus life screen
 - [ ] Overhaul the multiplayer lobby screen
 - [ ] Math operations optimization
-- [ ] Level Editor bug fixes (rotation bug, etc.)
-	- Re-entering the level editor from testing will now no longer flip the tanks around the Y-axis.
 - [ ] New AI tank aggression system (depending on the tank type, will either make advances towards you or will avoid you)
 
 
