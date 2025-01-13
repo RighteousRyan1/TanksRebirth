@@ -204,6 +204,8 @@ public static class ModLoader
         ModShell.unloadOffset = 0;
         ChatSystem.SendMessage("Mod unload successful!", Color.Lime);
         Status = LoadStatus.Complete;
+
+        // TODO: something isn't being unloaded properly, which is why GetSingleton fails after mod reload...?
     }
     // doesn't work?
     private static void ResetContentDictionaries() {
