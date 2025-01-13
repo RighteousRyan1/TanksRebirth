@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -36,8 +37,8 @@ public class ModShell : ILoadable, IModContent {
             return;
         shell.SwapTexture(!string.IsNullOrEmpty(Texture) ? Mod.ImportAsset<Texture2D>(Texture) : GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/bullet"));
         if (shell.Properties.LeavesTrail)
-            shell.TrailSound = !string.IsNullOrEmpty(ShootSound) ? new OggAudio(TrailSound, 0.3f) : new OggAudio("Content/Assets/sounds/tnk_shoot_ricochet_rocket_loop.ogg", 0.3f);
-        shell.ShootSound = !string.IsNullOrEmpty(ShootSound) ? new OggAudio(ShootSound) : new OggAudio("Content/Assets/sounds/tnk_shoot_regular_1.ogg");
+            shell.TrailSound = !string.IsNullOrEmpty(ShootSound) ? new OggAudio(Path.Combine(Mod.ModPath, TrailSound), 0.3f) : new OggAudio("Content/Assets/sounds/tnk_shoot_ricochet_rocket_loop.ogg", 0.3f);
+        shell.ShootSound = !string.IsNullOrEmpty(ShootSound) ? new OggAudio(Path.Combine(Mod.ModPath, ShootSound)) : new OggAudio("Content/Assets/sounds/tnk_shoot_regular_1.ogg");
     }
     /// <summary>Called every update.</summary>
     public virtual void PostUpdate(Shell shell) { }

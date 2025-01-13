@@ -22,9 +22,13 @@ namespace TanksRebirth.GameContent;
 
 public class Shell : IAITankDanger
 {
-    public delegate void OnCreateDelegate(Shell shell);
+    public delegate void PostCreateDelegate(Shell shell);
 
-    public static event OnCreateDelegate? OnCreate;
+    public static event PostCreateDelegate? PostCreate;
+
+    public delegate void PreCreateDelegate(Shell shell);
+
+    public static event PreCreateDelegate? PreCreate;
     public delegate void BlockRicochetDelegate(Block block, Shell shell);
 
     /// <summary>Only called when it bounces from block-bounce code.</summary>
@@ -156,7 +160,7 @@ public class Shell : IAITankDanger
                 for (int i = 0; i < ModLoader.ModShells.Length; i++) {
                     if (Type == ModLoader.ModShells[i].Type) {
                         ModLoader.ModShells[i].OnCreate(this);
-                        return;
+                        break;
                     }
                 }
                 break;
@@ -190,18 +194,22 @@ public class Shell : IAITankDanger
 
         Velocity = velocity;
 
+        PreCreate?.Invoke(this);
+
         Swap(type);
 
         if (playSpawnSound) {
-            ShootSound = Type switch {
-                ShellID.Player => new OggAudio("Content/Assets/sounds/tnk_shoot_regular_1.ogg"),
-                ShellID.Standard => new OggAudio("Content/Assets/sounds/tnk_shoot_regular_2.ogg"),
-                ShellID.Rocket => new OggAudio("Content/Assets/sounds/tnk_shoot_rocket.ogg"),
-                ShellID.TrailedRocket => new OggAudio("Content/Assets/sounds/tnk_shoot_ricochet_rocket.ogg"),
-                ShellID.Supressed => new OggAudio("Content/Assets/sounds/tnk_shoot_silencer.ogg"),
-                ShellID.Explosive => new OggAudio("Content/Assets/sounds/tnk_shoot_regular_2.ogg"),
-                _ => throw new NotImplementedException($"Sound for the shell type {Type} is not implemented, yet."),
-            };
+            if (Type <= ShellID.Explosive) {
+                ShootSound = Type switch {
+                    ShellID.Player => new OggAudio("Content/Assets/sounds/tnk_shoot_regular_1.ogg"),
+                    ShellID.Standard => new OggAudio("Content/Assets/sounds/tnk_shoot_regular_2.ogg"),
+                    ShellID.Rocket => new OggAudio("Content/Assets/sounds/tnk_shoot_rocket.ogg"),
+                    ShellID.TrailedRocket => new OggAudio("Content/Assets/sounds/tnk_shoot_ricochet_rocket.ogg"),
+                    ShellID.Supressed => new OggAudio("Content/Assets/sounds/tnk_shoot_silencer.ogg"),
+                    ShellID.Explosive => new OggAudio("Content/Assets/sounds/tnk_shoot_regular_2.ogg"),
+                    // _ => throw new NotImplementedException($"Sound for the shell type {Type} is not implemented, yet."),
+                };
+            }
         }
 
         if (owner is not null && playSpawnSound) {
@@ -226,7 +234,7 @@ public class Shell : IAITankDanger
         if (idx > -1)
             Owner.OwnedShells[idx] = this;
 
-        OnCreate?.Invoke(this);
+        PostCreate?.Invoke(this);
     }
 
     private void StopSounds(int delay, MissionEndContext context, bool result1up) {

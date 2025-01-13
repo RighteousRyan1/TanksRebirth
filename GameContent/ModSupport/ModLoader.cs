@@ -161,21 +161,21 @@ public static class ModLoader
                 _modTankDictionary[mod][i].Unload();
             }
             // this allows the next mod to unload properly... thrice
-            ModTank.unloadOffset -= modTankCount;
+            ModTank.unloadOffset += modTankCount;
             _modTankDictionary[mod].Clear();
 
             var modBlockCount = _modBlockDictionary[mod].Count;
             for (int i = 0; i < _modBlockDictionary[mod].Count; i++) {
                 _modBlockDictionary[mod][i].Unload();
             }
-            ModBlock.unloadOffset -= modBlockCount;
+            ModBlock.unloadOffset += modBlockCount;
             _modBlockDictionary[mod].Clear();
 
             var modShellCount = _modShellDictionary[mod].Count;
             for (int i = 0; i < _modShellDictionary[mod].Count; i++) {
                 _modShellDictionary[mod][i].Unload();
             }
-            ModShell.unloadOffset -= modShellCount;
+            ModShell.unloadOffset += modShellCount;
             _modShellDictionary[mod].Clear();
 
             mod.OnUnload();
@@ -194,10 +194,14 @@ public static class ModLoader
         }
         // for when the unloading process is done.
         _modTankDictionary.Clear();
+        _modBlockDictionary.Clear();
+        _modShellDictionary.Clear();
         ModContent.moddedTypes.Clear();
         ResetContentDictionaries();
         _loadedAlcs.Clear();
         ModTank.unloadOffset = 0;
+        ModBlock.unloadOffset = 0;
+        ModShell.unloadOffset = 0;
         ChatSystem.SendMessage("Mod unload successful!", Color.Lime);
         Status = LoadStatus.Complete;
     }
@@ -361,9 +365,9 @@ public static class ModLoader
                                                         modShell!.Mod = tanksMod;
 
                                                         // again, but with modshels
+                                                        ModContent.moddedTypes.Add(modShell);
                                                         modShell.Name.AddLocalization(LangCode.English, $"{tanksMod.InternalName}.{modShell.GetType().Name}");
                                                         modShell.Register();
-                                                        ModContent.moddedTypes.Add(modShell);
                                                         GameHandler.ClientLog.Write($"Loaded modded shell '{modShell.Name.GetLocalizedString(LangCode.English)}'", LogType.Info);
                                                     }
                                                 }
