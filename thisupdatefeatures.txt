@@ -8,6 +8,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 
 ## Changes
 
+- "Third person" mode is now "POV" mode (first person).
 - Bullet tracking UI is now white for unused bullets
 
 ## Source Code Changes (for modders)
@@ -18,6 +19,9 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 ## Fixes
 
 - Z-fighting on tank shadows no longer occurs
+- Fixed campaign prematurely ending when the player had 1 life remaining sometimes
+- Fix modding crashes related to adding and removing content
+- Fix addition/removal of modded tanks within the level editor due to missing declarations for the modded tank
 
 ## TODO
 

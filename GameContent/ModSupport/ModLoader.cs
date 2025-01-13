@@ -313,6 +313,7 @@ public static class ModLoader
                                                         // load each tank and its data, add to moddedTypes the singleton of the ModTank.
                                                         ModContent.moddedTypes.Add(modTank);
                                                         modTank!.Register();
+                                                        DifficultyAlgorithm.TankDiffs[modTank.Type] = 0f;
                                                         GameHandler.ClientLog.Write($"Loaded modded tank '{modTank.Name.GetLocalizedString(LangCode.English)}'", LogType.Info);
                                                     }
                                                 }

@@ -186,7 +186,7 @@ public static class IntermissionHandler {
                 else {
                     int restartTime = 600;
 
-                    // if a 1-up mission, extend by X amount of time (TBD?)
+                    // TODO: if a 1-up mission, extend by X amount of time (TBD?)
                     // we check <= 1 since the lives haven't actually been deducted yet.
 
                     if (Client.IsConnected()) {

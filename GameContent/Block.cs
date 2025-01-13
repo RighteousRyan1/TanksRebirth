@@ -43,26 +43,26 @@ public class Block : IGameObject {
     public delegate void DestroyDelegate(Block block);
 
     /// <summary>Called after this <see cref="Block"/> is destroyed.</summary>
-    public static event DestroyDelegate OnDestroy;
+    public static event DestroyDelegate? OnDestroy;
 
     public delegate void UpdateDelegate(Block block);
 
     /// <summary>Called after this <see cref="Block"/> is updated on the CPU.</summary>
-    public static event UpdateDelegate OnPostUpdate;
+    public static event UpdateDelegate? OnPostUpdate;
 
     public delegate void PostRenderDelegate(Block block);
 
     /// <summary>Called after this <see cref="Block"/> is rendered on the GPU.</summary>
-    public static event PostRenderDelegate OnPostRender;
+    public static event PostRenderDelegate? OnPostRender;
 
     public delegate void InitializeDelegate(Block block);
 
     /// <summary>Called after this <see cref="Block"/> is initialized.</summary>
-    public static event InitializeDelegate OnInitialize;
+    public static event InitializeDelegate? OnInitialize;
 
     public delegate void RicochetDelegate(Block block, Shell shell);
 
-    public static event RicochetDelegate OnRicochet;
+    public static event RicochetDelegate? OnRicochet;
 
     /// <summary>The teleportation index for this <see cref="Block"/>. Make sure that no more than 2 teleporters share this same number.</summary>
     public sbyte TpLink = -1;
