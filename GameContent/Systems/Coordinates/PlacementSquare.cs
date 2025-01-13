@@ -66,7 +66,7 @@ public class PlacementSquare {
             return;
         for (int j = 0; j < BlockMapPosition.MAP_HEIGHT; j++) {
             for (int i = 0; i < BlockMapPosition.MAP_WIDTH_169; i++) {
-                new PlacementSquare(new BlockMapPosition(i, j), Block.FULL_BLOCK_SIZE) {
+                new PlacementSquare(new BlockMapPosition(i, j), Block.SIDE_LENGTH) {
                     _onClick = (place) => {
                         if (!place.HasItem)
                             place.DoPlacementAction(true);
@@ -209,7 +209,7 @@ public class PlacementSquare {
                 if (DrawStacks) {
                     if (BlockId > -1) {
                         if (displayHeights && Block.AllBlocks[BlockId] is not null) {
-                            if (Block.AllBlocks[BlockId].CanStack) {
+                            if (Block.AllBlocks[BlockId].Properties.CanStack) {
                                 var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
 
                                 SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"{Block.AllBlocks[BlockId].Stack}", pos, Color.White, Color.Black, new Vector2(TankGame.AddativeZoom * 1.5f).ToResolution(), 0f, Anchor.Center);

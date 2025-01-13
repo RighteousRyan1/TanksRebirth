@@ -89,7 +89,7 @@ public record struct Mission {
 
             var tank = tnk.GetTank();
 
-            var placement = PlacementSquare.Placements.FindIndex(place => Vector3.Distance(place.Position, tank.Position3D) < Block.FULL_BLOCK_SIZE / 2);
+            var placement = PlacementSquare.Placements.FindIndex(place => Vector3.Distance(place.Position, tank.Position3D) < Block.SIDE_LENGTH / 2);
 
             if (placement > -1) {
                 PlacementSquare.Placements[placement].TankId = tank.WorldId;
@@ -119,7 +119,7 @@ public record struct Mission {
 
             var block = blockr.GetBlock();
 
-            var placement = PlacementSquare.Placements.FindIndex(place => Vector3.Distance(place.Position, block.Position3D) < Block.FULL_BLOCK_SIZE / 2);
+            var placement = PlacementSquare.Placements.FindIndex(place => Vector3.Distance(place.Position, block.Position3D) < Block.SIDE_LENGTH / 2);
             if (placement > -1) {
                 PlacementSquare.Placements[placement].BlockId = block.Id;
                 PlacementSquare.Placements[placement].HasBlock = true;
@@ -347,7 +347,7 @@ public record struct Mission {
 
             for (int i = 0; i < totalBlocks; i++) {
                 var type = reader.ReadByte();
-                var stack = reader.ReadSByte();
+                var stack = reader.ReadByte();
                 var x = reader.ReadSingle();
                 var y = reader.ReadSingle();
                 var link = reader.ReadSByte();

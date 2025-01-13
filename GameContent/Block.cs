@@ -1,12 +1,10 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using tainicom.Aether.Physics2D.Dynamics;
-using TanksRebirth;
 using TanksRebirth.GameContent.ID;
+using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
@@ -16,7 +14,7 @@ using TanksRebirth.Internals.Core.Interfaces;
 namespace TanksRebirth.GameContent;
 
 public struct BlockTemplate {
-    public sbyte Stack;
+    public byte Stack;
     public int Type;
     public Vector2 Position;
     public sbyte TpLink;
@@ -40,6 +38,7 @@ public struct BlockTemplate {
 
 /// <summary>A class that is used for obstacles for <see cref="Tank"/>s.</summary>
 public class Block : IGameObject {
+    // TODO: ModBlock instance for the modblock used on this block instance...? to save performance in the future, obviously... same with other modded types
     public delegate void DestroyDelegate(Block block);
 
     /// <summary>Called after this <see cref="Block"/> is destroyed.</summary>
@@ -87,15 +86,15 @@ public class Block : IGameObject {
     /// <summary>The hitbox for this <see cref="Block"/>.</summary>
     public Rectangle Hitbox;
 
-    public Texture2D _texture;
+    private Texture2D _texture;
 
     /// <summary>How tall this <see cref="Block"/> is.</summary>
-    public sbyte Stack;
+    public byte Stack;
     /// <summary>The maximum height of any <see cref="Block"/>.</summary>
-    public const sbyte MAX_BLOCK_HEIGHT = 7;
+    public const byte MAX_BLOCK_HEIGHT = 7;
 
     /// <summary>The floating point square-rooted dimensions of any <see cref="Block"/>.</summary>
-    public const float FULL_BLOCK_SIZE = 21.7f; // 24.5 = 0.7 | 21 = 0.6
+    public const float SIDE_LENGTH = 21.7f; // 24.5 = 0.7 | 21 = 0.6
     /// <summary>The floating-point height of any <see cref="Block"/> that has a slab in its height.</summary>
     public const float SLAB_SIZE = 11.5142857114f; // 13 = 0.7 | 11.14285714 = 0.6
 
@@ -109,28 +108,14 @@ public class Block : IGameObject {
     public readonly int Id;
 
     private Vector3 _offset;
-    /// <summary>Whether or not this <see cref="Block"/> is destructible from explosions.</summary>
-    public bool IsDestructible { get; set; }
-    /// <summary>Whether or not this <see cref="Block"/> is solid. This only affects <see cref="Shell"/>s and their ability to pass through.</summary>
-    public bool IsSolid { get; set; } = true;
-    /// <summary>Whether or not this <see cref="Block"/> is collidable. This only affects things with physics bodies (i.e: <see cref="Tank"/>s).</summary>
-    public bool IsCollidable { get; set; } = true;
-    /// <summary>Whether or not an <see cref="AITank"/> should calculate a bounce off of this <see cref="Block"/>.</summary>
-    public bool AllowShotPathBounce { get; set; } = true;
-    /// <summary> How many bounces a <see cref="Shell"/> should regain from hitting this <see cref="Block"/>.
-    /// <para></para>Set to negative to increase the amount. Set to 0 to make nothing happen.</summary>
-    public int PathBounceCount { get; set; } = 1;
-    /// <summary>Whether or not this <see cref="Block"/> can stack. This will make the level editor UI not show a stack count.</summary>
-    public bool CanStack { get; set; } = true;
+
+    public BlockProperties Properties { get; set; } = new();
     /// <summary>Whether or not this <see cref="Block"/> is using its alternate model.</summary>
     public bool IsAlternateModel => Stack == 3 || Stack == 6;
 
     /// <summary>Change this <see cref="Block"/>'s texture.</summary>
     public void SwapTexture(Texture2D texture) => _texture = texture;
-
-    /// <summary>Construct a <see cref="Block"/>.</summary>
-    public Block(int type, int height, Vector2 position) {
-        Stack = (sbyte)MathHelper.Clamp(height, 0, 7);
+    public void Swap(int type) {
         Type = type;
 
         var modelname = MapRenderer.Theme switch {
@@ -142,47 +127,31 @@ public class Block : IGameObject {
         switch (type) {
             case BlockID.Wood:
                 _texture = MapRenderer.Assets["block.1"];
-                IsSolid = true;
+                Properties.IsSolid = true;
                 Model = GameResources.GetGameResource<Model>(modelname);
                 break;
             case BlockID.Cork:
-                IsDestructible = true;
+                Properties.IsDestructible = true;
                 _texture = MapRenderer.Assets["block.2"];
-                IsSolid = true;
+                Properties.IsSolid = true;
                 Model = GameResources.GetGameResource<Model>(modelname);
                 break;
             case BlockID.Hole:
                 Model = GameResources.GetGameResource<Model>("Assets/check");
-                IsSolid = false;
+                Properties.IsSolid = false;
                 _texture = MapRenderer.Assets["block_harf.1"];
-                CanStack = false;
+                Properties.CanStack = false;
+                Properties.HasShadow = false;
                 break;
             case BlockID.Teleporter:
                 Model = GameResources.GetGameResource<Model>("Assets/teleporter");
-                IsSolid = false;
-                IsCollidable = false;
+                Properties.IsSolid = false;
+                Properties.IsCollidable = false;
                 _texture = MapRenderer.Assets["teleporter"];
-                CanStack = false;
+                Properties.CanStack = false;
                 break;
         }
-
-        //if (Body != null)
-        //Position = Body.Position * Tank.UNITS_PER_METER;
-        //else
-        // Position = position;
-
-        if (IsCollidable) {
-            Body = Tank.CollisionsWorld.CreateRectangle(FULL_BLOCK_SIZE / Tank.UNITS_PER_METER, FULL_BLOCK_SIZE / Tank.UNITS_PER_METER, 1f, position / Tank.UNITS_PER_METER, 0f, BodyType.Static);
-            Position = Body.Position * Tank.UNITS_PER_METER;
-        }
-        else
-            Position = position;
-
-        Id = Array.FindIndex(AllBlocks, block => block is null);
-
-        AllBlocks[Id] = this;
-
-        if (CanStack) {
+        if (Properties.HasShadow) {
             // fix this, but dont worry about it for now
             var p = GameHandler.Particles.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>($"Assets/toy/cube_shadow_tex"));
             p.Tag = "block_shadow_" + Id;
@@ -204,6 +173,36 @@ public class Block : IGameObject {
             };
             // TODO: Finish collisions
         }
+        for (int i = 0; i < ModLoader.ModBlocks.Length; i++) {
+            if (Type == ModLoader.ModBlocks[i].Type) {
+                ModLoader.ModBlocks[i].PostInitialize(this);
+            }
+        }
+    }
+
+    /// <summary>Construct a <see cref="Block"/>.</summary>
+    public Block(int type, int height, Vector2 position) {
+        Stack = (byte)MathHelper.Clamp(height, 0, 7);
+        Type = type;
+
+        var modelname = MapRenderer.Theme switch {
+            MapTheme.Vanilla => IsAlternateModel ? "Assets/toy/cube_stack_alt" : "Assets/toy/cube_stack",
+            MapTheme.Christmas => IsAlternateModel ? "Assets/christmas/cube_stack_alt_snowy" : "Assets/christmas/cube_stack_snowy",
+            _ => ""
+        };
+
+        if (Properties.IsCollidable) {
+            Body = Tank.CollisionsWorld.CreateRectangle(SIDE_LENGTH / Tank.UNITS_PER_METER, SIDE_LENGTH / Tank.UNITS_PER_METER, 1f, position / Tank.UNITS_PER_METER, 0f, BodyType.Static);
+            Position = Body.Position * Tank.UNITS_PER_METER;
+        }
+        else
+            Position = position;
+        
+        Id = Array.FindIndex(AllBlocks, block => block is null);
+
+        Swap(type);
+
+        AllBlocks[Id] = this;
 
         UpdateOffset();
         OnInitialize?.Invoke(this);
@@ -227,8 +226,14 @@ public class Block : IGameObject {
 
     /// <summary>Make destruction particle effects and later, <see cref="Remove"/> this <see cref="Block"/>.</summary>
     public void Destroy() {
-        if (IsDestructible) {
+        if (Properties.IsDestructible) {
             const int PARTICLE_COUNT = 12;
+
+            for (int i = 0; i < ModLoader.ModBlocks.Length; i++) {
+                if (Type == ModLoader.ModBlocks[i].Type) {
+                    ModLoader.ModBlocks[i].OnDestroy(this);
+                }
+            }
 
             for (int i = 0; i < PARTICLE_COUNT; i++) {
                 var tex = GameResources.GetGameResource<Texture2D>(GameHandler.GameRand.Next(0, 2) == 0 ? "Assets/textures/misc/tank_rock" : "Assets/textures/misc/tank_rock_2");
@@ -262,29 +267,29 @@ public class Block : IGameObject {
     }
 
     private void UpdateOffset() {
-        if (CanStack) {
+        if (Properties.CanStack) {
             var newFullSize = FULL_SIZE;
             switch (Stack) {
                 case 1:
-                    _offset = new(0, newFullSize - FULL_BLOCK_SIZE, 0);
+                    _offset = new(0, newFullSize - SIDE_LENGTH, 0);
                     break;
                 case 2:
-                    _offset = new(0, newFullSize - (FULL_BLOCK_SIZE + SLAB_SIZE), 0);
+                    _offset = new(0, newFullSize - (SIDE_LENGTH + SLAB_SIZE), 0);
                     break;
                 case 3:
-                    _offset = new(0, newFullSize - (FULL_BLOCK_SIZE + SLAB_SIZE * 3), 0);
+                    _offset = new(0, newFullSize - (SIDE_LENGTH + SLAB_SIZE * 3), 0);
                     break;
                 case 4:
-                    _offset = new(0, newFullSize - (FULL_BLOCK_SIZE * 2 + SLAB_SIZE), 0);
+                    _offset = new(0, newFullSize - (SIDE_LENGTH * 2 + SLAB_SIZE), 0);
                     break;
                 case 5:
-                    _offset = new(0, newFullSize - (FULL_BLOCK_SIZE * 2 + SLAB_SIZE * 2), 0);
+                    _offset = new(0, newFullSize - (SIDE_LENGTH * 2 + SLAB_SIZE * 2), 0);
                     break;
                 case 6:
-                    _offset = new(0, newFullSize - (FULL_BLOCK_SIZE * 2 + SLAB_SIZE * 4), 0);
+                    _offset = new(0, newFullSize - (SIDE_LENGTH * 2 + SLAB_SIZE * 4), 0);
                     break;
                 case 7:
-                    _offset = new(0, newFullSize - (FULL_BLOCK_SIZE * 3 + SLAB_SIZE * 2), 0);
+                    _offset = new(0, newFullSize - (SIDE_LENGTH * 3 + SLAB_SIZE * 2), 0);
                     break;
             }
         }
@@ -367,6 +372,12 @@ public class Block : IGameObject {
                 mesh.Draw();
             }
         }
+        for (int i = 0; i < ModLoader.ModBlocks.Length; i++) {
+            if (Type == ModLoader.ModBlocks[i].Type) {
+                ModLoader.ModBlocks[i].PostRender(this);
+                return;
+            }
+        }
         OnPostRender?.Invoke(this);
     }
 
@@ -378,7 +389,7 @@ public class Block : IGameObject {
         if (!MapRenderer.ShouldRenderAll)
             return;
 
-        Hitbox = new((int)(Position.X - FULL_BLOCK_SIZE / 2 + 1), (int)(Position.Y - FULL_BLOCK_SIZE / 2), (int)FULL_BLOCK_SIZE - 1, (int)FULL_BLOCK_SIZE);
+        Hitbox = new((int)(Position.X - SIDE_LENGTH / 2 + 1), (int)(Position.Y - SIDE_LENGTH / 2), (int)SIDE_LENGTH - 1, (int)SIDE_LENGTH);
         _offset = new();
 
         if (Type == BlockID.Teleporter) {
@@ -389,7 +400,7 @@ public class Block : IGameObject {
                 if (--_tankCooldowns[tnk.WorldId] > 0)
                     continue;
 
-                if (!(Vector2.Distance(tnk.Position, Position) < FULL_BLOCK_SIZE))
+                if (!(Vector2.Distance(tnk.Position, Position) < SIDE_LENGTH))
                     continue;
 
                 var otherTp = AllBlocks.FirstOrDefault(bl => bl != null && bl != this && bl.TpLink == TpLink);
@@ -404,7 +415,12 @@ public class Block : IGameObject {
             }
         }
         UpdateOffset();
-
+        for (int i = 0; i < ModLoader.ModBlocks.Length; i++) {
+            if (Type == ModLoader.ModBlocks[i].Type) {
+                ModLoader.ModBlocks[i].PostUpdate(this);
+                return;
+            }
+        }
         OnPostUpdate?.Invoke(this);
     }
 }

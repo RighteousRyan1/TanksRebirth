@@ -329,10 +329,10 @@ public static class MapRenderer
     public const float MIN_Y = -48;
     public const float MAX_Y = 312;
 
-    public const float CUBE_MIN_X = MIN_X + Block.FULL_BLOCK_SIZE / 2 - 6f;
-    public const float CUBE_MAX_X = MAX_X - Block.FULL_BLOCK_SIZE / 2;
-    public const float CUBE_MIN_Y = MIN_Y + Block.FULL_BLOCK_SIZE / 2 - 6f;
-    public const float CUBE_MAX_Y = MAX_Y - Block.FULL_BLOCK_SIZE / 2;
+    public const float CUBE_MIN_X = MIN_X + Block.SIDE_LENGTH / 2 - 6f;
+    public const float CUBE_MAX_X = MAX_X - Block.SIDE_LENGTH / 2;
+    public const float CUBE_MIN_Y = MIN_Y + Block.SIDE_LENGTH / 2 - 6f;
+    public const float CUBE_MAX_Y = MAX_Y - Block.SIDE_LENGTH / 2;
 
     public static Vector3 TopLeft => new(CUBE_MIN_X, 0, CUBE_MAX_Y);
     public static Vector3 TopRight => new(CUBE_MAX_X, 0, CUBE_MAX_Y);

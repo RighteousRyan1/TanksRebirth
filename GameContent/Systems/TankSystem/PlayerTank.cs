@@ -534,25 +534,25 @@ public class PlayerTank : Tank
             var pathHitbox = new Rectangle((int)pathPos.X - 3, (int)pathPos.Y - 3, 6, 6);
 
             // Why is velocity passed by reference here lol
-            Collision.HandleCollisionSimple_ForBlocks(pathHitbox, pathDir, ref dummyPos, out var dir, out var block, out bool corner, false, (c) => c.IsSolid);
+            Collision.HandleCollisionSimple_ForBlocks(pathHitbox, pathDir, ref dummyPos, out var dir, out var block, out bool corner, false, (c) => c.Properties.IsSolid);
 
             if (corner)
                 return;
             if (block != null)
             {
-                if (block.AllowShotPathBounce)
+                if (block.Properties.AllowShotPathBounce)
                 {
                     switch (dir)
                     {
                         case CollisionDirection.Up:
                         case CollisionDirection.Down:
                             pathDir.Y *= -1;
-                            pathRicochetCount += block.PathBounceCount;
+                            pathRicochetCount += block.Properties.PathBounceCount;
                             break;
                         case CollisionDirection.Left:
                         case CollisionDirection.Right:
                             pathDir.X *= -1;
-                            pathRicochetCount += block.PathBounceCount;
+                            pathRicochetCount += block.Properties.PathBounceCount;
                             break;
                     }
                 }

@@ -169,7 +169,7 @@ public class NetPlay {
                     for (int m = 0; m < blockLen; m++) {
                         var bPos = reader.GetVector2();
                         var bType = reader.GetInt();
-                        var bStack = reader.GetSByte();
+                        var bStack = reader.GetByte();
                         var tpLink = reader.GetSByte();
 
                         blockTotal.Add(new() {

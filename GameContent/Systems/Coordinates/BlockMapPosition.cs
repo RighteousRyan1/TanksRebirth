@@ -35,7 +35,7 @@ public struct BlockMapPosition
 
         var orig = new Vector2(MapRenderer.CUBE_MIN_X, MapRenderer.CUBE_MIN_Y);
 
-        var real = new Vector2(orig.X + (pos.X * Block.FULL_BLOCK_SIZE), orig.Y + (pos.Y * Block.FULL_BLOCK_SIZE) - 110);
+        var real = new Vector2(orig.X + (pos.X * Block.SIDE_LENGTH), orig.Y + (pos.Y * Block.SIDE_LENGTH) - 110);
 
         return real;
     }
@@ -46,7 +46,7 @@ public struct BlockMapPosition
 
         var orig = new Vector3(MapRenderer.CUBE_MIN_X, 0, MapRenderer.CUBE_MIN_Y);
 
-        var real = new Vector3(orig.X + (pos.X * Block.FULL_BLOCK_SIZE) + 1f, 0, orig.Y + (pos.Y * Block.FULL_BLOCK_SIZE) - 43);
+        var real = new Vector3(orig.X + (pos.X * Block.SIDE_LENGTH) + 1f, 0, orig.Y + (pos.Y * Block.SIDE_LENGTH) - 43);
 
         return real;
     }
@@ -59,8 +59,8 @@ public struct BlockMapPosition
     public static BlockMapPosition ConvertFromVector3(Vector3 position)
     {
         // convert position into a CubeMapPosition, and grid lock it
-        var invarX = (int)MathF.Round(position.X % Block.FULL_BLOCK_SIZE, 1);
-        var invarY = (int)MathF.Round(position.Z % Block.FULL_BLOCK_SIZE, 1);
+        var invarX = (int)MathF.Round(position.X % Block.SIDE_LENGTH, 1);
+        var invarY = (int)MathF.Round(position.Z % Block.SIDE_LENGTH, 1);
         var invar = new BlockMapPosition(invarX, invarY);
 
         return invar;
@@ -69,8 +69,8 @@ public struct BlockMapPosition
     public static BlockMapPosition ConvertFromVector2(Vector2 position)
     {
         // convert position into a CubeMapPosition, and grid lock it
-        var invarX = (int)MathF.Round(position.X % Block.FULL_BLOCK_SIZE, 1);
-        var invarY = (int)MathF.Round(position.Y % Block.FULL_BLOCK_SIZE, 1);
+        var invarX = (int)MathF.Round(position.X % Block.SIDE_LENGTH, 1);
+        var invarY = (int)MathF.Round(position.Y % Block.SIDE_LENGTH, 1);
         var invar = new BlockMapPosition(invarX, invarY);
 
         return invar;

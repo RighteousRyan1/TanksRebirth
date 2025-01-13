@@ -406,7 +406,7 @@ public partial class AITank : Tank
                     TankGame.GameData.TotalKills++;
 
                     // if the ricochets remaining is less than the ricochets the bullet has, it has bounced at least once.
-                    if (cxt1.Shell.RicochetsRemaining < cxt1.Shell.Ricochets)
+                    if (cxt1.Shell.RicochetsRemaining < cxt1.Shell.Properties.Ricochets)
                         TankGame.GameData.BounceKills++;
                 }
                 if (context is TankHurtContextMine cxt2) {
@@ -470,7 +470,7 @@ public partial class AITank : Tank
     private List<Tank> GetTanksInPath(Vector2 pathDir, out Vector2 rayEndpoint, bool draw = false, Vector2 offset = default, float missDist = 0f, Func<Block, bool> pattern = null, bool doBounceReset = true) {
         rayEndpoint = new(-999999, -999999);
         List<Tank> tanks = [];
-        pattern ??= (c) => c.IsSolid || c.Type == BlockID.Teleporter;
+        pattern ??= (c) => c.Properties.IsSolid || c.Type == BlockID.Teleporter;
 
         const int MAX_PATH_UNITS = 1000;
         const int PATH_UNIT_LENGTH = 8;
@@ -527,18 +527,18 @@ public partial class AITank : Tank
                     }
                 }
                 else {
-                    if (block.AllowShotPathBounce) {
+                    if (block.Properties.AllowShotPathBounce) {
                         switch (dir) {
                             case CollisionDirection.Up:
                             case CollisionDirection.Down:
                                 pathDir.Y *= -1;
-                                pathRicochetCount += block.PathBounceCount;
+                                pathRicochetCount += block.Properties.PathBounceCount;
                                 resetIterations();
                                 break;
                             case CollisionDirection.Left:
                             case CollisionDirection.Right:
                                 pathDir.X *= -1;
-                                pathRicochetCount += block.PathBounceCount;
+                                pathRicochetCount += block.Properties.PathBounceCount;
                                 resetIterations();
                                 break;
                         }
@@ -667,7 +667,7 @@ public partial class AITank : Tank
         List<Tank> tanksDef;
 
         if (Properties.ShellType == ShellID.Explosive) {
-            tanksDef = GetTanksInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), out var rayEndpoint, offset: Vector2.UnitY * 20, pattern: x => (!x.IsDestructible && x.IsSolid) || x.Type == BlockID.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
+            tanksDef = GetTanksInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), out var rayEndpoint, offset: Vector2.UnitY * 20, pattern: x => (!x.Properties.IsDestructible && x.Properties.IsSolid) || x.Type == BlockID.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
             if (GameUtils.Distance_WiiTanksUnits(rayEndpoint, Position) < 150f) // TODO: change from hardcode to normalcode :YES:
                 tooCloseToExplosiveShell = true;
         }
@@ -978,7 +978,7 @@ public partial class AITank : Tank
                         // why is 60 hardcoded xd
                         if (Behaviors[4].IsModOf(60)) {
                             if (!tanksNearMe.Any(x => x.Team == Team)) {
-                                IsNearDestructibleObstacle = blocksNearMe.Any(c => c.IsDestructible);
+                                IsNearDestructibleObstacle = blocksNearMe.Any(c => c.Properties.IsDestructible);
                                 if (AiParams.SmartMineLaying) {
                                     if (IsNearDestructibleObstacle) {
                                         // (100, 100)? why?
@@ -1221,12 +1221,12 @@ public partial class AITank : Tank
 
             if (AiParams.SmartRicochets)
                 GetTanksInPath(Vector2.UnitY.RotatedByRadians(seekRotation), out var rayEndpoint, true, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
-            var poo = GetTanksInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), out var rayEnd, true, offset: Vector2.UnitY * 20, pattern: x => x.IsSolid | x.Type == BlockID.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
+            var poo = GetTanksInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), out var rayEnd, true, offset: Vector2.UnitY * 20, pattern: x => x.Properties.IsSolid | x.Type == BlockID.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
             if (AiParams.PredictsPositions) {
                 float rot = -MathUtils.DirectionOf(Position, TargetTank is not null ?
                     GeometryUtils.PredictFuturePosition(TargetTank.Position, TargetTank.Velocity, calculation) :
                     AimTarget).ToRotation() - MathHelper.PiOver2;
-                GetTanksInPath(Vector2.UnitY.RotatedByRadians(rot), out var rayEnd2, true, Vector2.Zero, pattern: x => x.IsSolid | x.Type == BlockID.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
+                GetTanksInPath(Vector2.UnitY.RotatedByRadians(rot), out var rayEnd2, true, Vector2.Zero, pattern: x => x.Properties.IsSolid | x.Type == BlockID.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
             }
             DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"{poo.Count} tank(s) spotted | pathC: {_pathHitCount % PathHitMax} / 10", MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), World, View, Projection), 1, centered: true);
 

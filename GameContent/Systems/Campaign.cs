@@ -152,7 +152,7 @@ public class Campaign
                             TrackedSpawnPoints[Array.IndexOf(TrackedSpawnPoints, TrackedSpawnPoints.First(pos => pos.Item1 == template.Position))].Item2 = false; // make sure the tank is not spawned again
                         };
                     }
-                    var placement = PlacementSquare.Placements.FindIndex(place => Vector3.Distance(place.Position, tank.Position3D) < Block.FULL_BLOCK_SIZE / 2);
+                    var placement = PlacementSquare.Placements.FindIndex(place => Vector3.Distance(place.Position, tank.Position3D) < Block.SIDE_LENGTH / 2);
 
                     if (placement > -1)
                     {
@@ -212,7 +212,7 @@ public class Campaign
 
                         tnk.Swap(AITank.PickRandomTier());
                     }
-                    var placement = PlacementSquare.Placements.FindIndex(place => Vector3.Distance(place.Position, tank.Position3D) < Block.FULL_BLOCK_SIZE / 2);
+                    var placement = PlacementSquare.Placements.FindIndex(place => Vector3.Distance(place.Position, tank.Position3D) < Block.SIDE_LENGTH / 2);
 
                     if (placement > -1)
                     {
@@ -229,7 +229,7 @@ public class Campaign
 
             var block = template.GetBlock();
 
-            var placement = PlacementSquare.Placements.FindIndex(place => Vector3.Distance(place.Position, block.Position3D) < Block.FULL_BLOCK_SIZE / 2);
+            var placement = PlacementSquare.Placements.FindIndex(place => Vector3.Distance(place.Position, block.Position3D) < Block.SIDE_LENGTH / 2);
             if (placement > -1)
             {
                 PlacementSquare.Placements[placement].BlockId = block.Id;

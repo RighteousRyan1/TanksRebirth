@@ -14,7 +14,7 @@ public class LocalizedString {
         return true;
     }
 
-    public string GetLocalizedString(LangCode langCode) => _langCodeToLocalizedStringConverter[langCode];
+    public string? GetLocalizedString(LangCode langCode) => _langCodeToLocalizedStringConverter.ContainsKey(langCode) ? _langCodeToLocalizedStringConverter[langCode] : null;
 
     public static implicit operator string(LocalizedString localizedString) => localizedString.GetLocalizedString(TankGame.GameLanguage.ActiveLang);
 }

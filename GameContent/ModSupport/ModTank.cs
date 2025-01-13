@@ -19,11 +19,12 @@ namespace TanksRebirth.GameContent.ModSupport;
 /// <summary>
 /// Create your own tank for this game!
 /// </summary>
-public class ModTank : ILoadable {
+public class ModTank : ILoadable, IModContent {
     private List<OggMusic> _music;
 
     /// <summary>The <see cref="TanksMod"/> that this <see cref="ModTank"/> is a part of.</summary>
-    public TanksMod Mod { get; internal set; }
+    public TanksMod Mod { get; set; }
+    public int Type { get; set; }
     private Texture2D? _texture;
     /// <summary>The path to the texture of this <see cref="ModTank"/>. Can be either the PNG or JPG image format.</summary>
     public virtual string Texture => string.Empty;
@@ -34,12 +35,11 @@ public class ModTank : ILoadable {
     /// </para>
     /// The English localized name will be the name that gets added to the game internally.
     /// </summary>
-    public virtual LocalizedString Name => default!;
+    public virtual LocalizedString Name => new(new());
     /// <summary>The properties that should be given to your tank when it spawns in the world.</summary>
     public TankProperties Properties { get; set; }
     /// <summary>The parameters of the AI that your tank will have when it spawns.</summary>
     public AiParameters AiParameters { get; set; }
-    public int Type { get; private set; }
     /// <summary>The color to associate with this <see cref="ModTank"/>. This color will be used for the "Hit!" graphics, the post-game
     /// results screen, and the color of the tank chunks when the tank is destroyed. Defaults to <see cref="Color.Black"/>.</summary>
     public virtual Color AssociatedColor => Color.Black;
@@ -92,7 +92,7 @@ public class ModTank : ILoadable {
 
     internal void Unload() {
         var name = Name.GetLocalizedString(LangCode.English);
-        // if more than one mod has a modded tank, the game unloads that, and indexes are not adjusted
+        // if more than one mod has a modded tank, the game unloads that, and indexes are not adjusted... unloadOffset fixes that
         TankID.Collection.TryRemove(Type - unloadOffset);
         AITank.TankDestructionColors.Remove(Type);
         if (!HasSong)

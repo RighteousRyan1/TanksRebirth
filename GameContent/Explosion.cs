@@ -133,7 +133,7 @@ public class Explosion : IAITankDanger {
                     mine.Detonate();
             }
             foreach (var block in Block.AllBlocks) {
-                if (block is not null && Vector2.Distance(block.Position, Position) <= Scale * MAGIC_EXPLOSION_NUMBER && block.IsDestructible)
+                if (block is not null && Vector2.Distance(block.Position, Position) <= Scale * MAGIC_EXPLOSION_NUMBER && block.Properties.IsDestructible)
                     block.Destroy();
             }
             foreach (var shell in Shell.AllShells) {

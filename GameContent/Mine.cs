@@ -180,7 +180,7 @@ public sealed class Mine : IAITankDanger
             }
 
             if (Position != _oldPosition) // magicqe number
-                IsNearDestructibles = Block.AllBlocks.Any(b => b != null && Position.Distance(b.Position) <= ExplosionRadius - 6f && b.IsDestructible);
+                IsNearDestructibles = Block.AllBlocks.Any(b => b != null && Position.Distance(b.Position) <= ExplosionRadius - 6f && b.Properties.IsDestructible);
             List<Tank> tanksNear = [];
 
             // NOTE: this scope may be inconsistent over a server? check soon.

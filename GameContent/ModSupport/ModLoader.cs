@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.Loader;
 using System.Threading.Tasks;
 using TanksRebirth.GameContent.ID;
@@ -49,8 +48,16 @@ public static class ModLoader
 
     private static Dictionary<string, AssemblyLoadContext> _modDeps = [];
     private static Dictionary<TanksMod, List<ModTank>> _modTankDictionary = [];
+    private static Dictionary<TanksMod, List<ModBlock>> _modBlockDictionary = [];
+    private static Dictionary<TanksMod, List<ModShell>> _modShellDictionary = [];
     public static ModTank[] ModTanks { get; private set; } = [];
     private static List<ModTank> _modTanks = [];
+
+    public static ModBlock[] ModBlocks { get; private set; } = [];
+    private static List<ModBlock> _modBlocks = [];
+
+    public static ModShell[] ModShells { get; private set; } = [];
+    private static List<ModShell> _modShells = [];
 
     private static bool _firstLoad = true;
     /// <summary>The error given from the mod-loading process.</summary>
@@ -148,14 +155,29 @@ public static class ModLoader
         LoadedMods.ForEach(mod => {
             // for indivudally unloaded mods.
 
-            // unload modded tanks and all of their data.
+            // unload modded stuff and all data
             var modTankCount = _modTankDictionary[mod].Count;
             for (int i = 0; i < _modTankDictionary[mod].Count; i++) {
                 _modTankDictionary[mod][i].Unload();
             }
-            // this allows the next mod to unload properly... or supposedly?
+            // this allows the next mod to unload properly... thrice
             ModTank.unloadOffset -= modTankCount;
             _modTankDictionary[mod].Clear();
+
+            var modBlockCount = _modBlockDictionary[mod].Count;
+            for (int i = 0; i < _modBlockDictionary[mod].Count; i++) {
+                _modBlockDictionary[mod][i].Unload();
+            }
+            ModBlock.unloadOffset -= modBlockCount;
+            _modBlockDictionary[mod].Clear();
+
+            var modShellCount = _modShellDictionary[mod].Count;
+            for (int i = 0; i < _modShellDictionary[mod].Count; i++) {
+                _modShellDictionary[mod][i].Unload();
+            }
+            ModShell.unloadOffset -= modShellCount;
+            _modShellDictionary[mod].Clear();
+
             mod.OnUnload();
             UnloadModContent(ref mod);
         });
@@ -300,9 +322,12 @@ public static class ModLoader
                                                 tanksMod!.Name = modName;
 
                                                 _modTankDictionary.Add(tanksMod, []);
+                                                _modBlockDictionary.Add(tanksMod, []);
+                                                _modShellDictionary.Add(tanksMod, []);
 
-                                                // now lets scan the mod's content for ModTanks
+                                                // now lets scan the mod's content
                                                 // i feel like this is gravely inefficient but it can be changed
+                                                // update: this is definitely somewhat horrid
                                                 foreach (var type2 in tanksMod.GetType().Assembly.GetTypes()) {
                                                     if (type2.IsSubclassOf(typeof(ModTank)) && !type.IsAbstract) {
                                                         var modTank = (Activator.CreateInstance(type2) as ModTank)!;
@@ -312,9 +337,34 @@ public static class ModLoader
 
                                                         // load each tank and its data, add to moddedTypes the singleton of the ModTank.
                                                         ModContent.moddedTypes.Add(modTank);
+                                                        modTank.Name.AddLocalization(LangCode.English, $"{tanksMod.InternalName}.{modTank.GetType().Name}");
                                                         modTank!.Register();
                                                         DifficultyAlgorithm.TankDiffs[modTank.Type] = 0f;
                                                         GameHandler.ClientLog.Write($"Loaded modded tank '{modTank.Name.GetLocalizedString(LangCode.English)}'", LogType.Info);
+                                                    } 
+                                                    else if (type2.IsSubclassOf(typeof(ModBlock)) && !type.IsAbstract) {
+                                                        var modBlock = (Activator.CreateInstance(type2) as ModBlock)!;
+                                                        _modBlockDictionary[tanksMod].Add(modBlock);
+                                                        _modBlocks.Add(modBlock);
+                                                        modBlock!.Mod = tanksMod;
+
+                                                        // again, but with modlbocks
+                                                        ModContent.moddedTypes.Add(modBlock);
+                                                        modBlock.Name.AddLocalization(LangCode.English, $"{tanksMod.InternalName}.{modBlock.GetType().Name}");
+                                                        modBlock.Register();
+                                                        GameHandler.ClientLog.Write($"Loaded modded block '{modBlock.Name.GetLocalizedString(LangCode.English)}'", LogType.Info);
+                                                    }
+                                                    else if (type2.IsSubclassOf(typeof(ModShell)) && !type.IsAbstract) {
+                                                        var modShell = (Activator.CreateInstance(type2) as ModShell)!;
+                                                        _modShellDictionary[tanksMod].Add(modShell);
+                                                        _modShells.Add(modShell);
+                                                        modShell!.Mod = tanksMod;
+
+                                                        // again, but with modshels
+                                                        modShell.Name.AddLocalization(LangCode.English, $"{tanksMod.InternalName}.{modShell.GetType().Name}");
+                                                        modShell.Register();
+                                                        ModContent.moddedTypes.Add(modShell);
+                                                        GameHandler.ClientLog.Write($"Loaded modded shell '{modShell.Name.GetLocalizedString(LangCode.English)}'", LogType.Info);
                                                     }
                                                 }
 
@@ -356,6 +406,8 @@ public static class ModLoader
             _firstLoad = false;
             OnFinishModLoading?.Invoke();
             ModTanks = _modTanks.ToArray();
+            ModBlocks = _modBlocks.ToArray();
+            ModShells = _modShells.ToArray();
         });
 
     }

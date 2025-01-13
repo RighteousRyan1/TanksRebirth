@@ -6,9 +6,9 @@ using System.Runtime.InteropServices;
 using TanksRebirth.Enums;
 using TanksRebirth.GameContent.GameMechanics;
 using TanksRebirth.GameContent.ID;
+using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.Properties;
 using TanksRebirth.GameContent.RebirthUtils;
-using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.Graphics;
@@ -20,8 +20,12 @@ using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent;
 
-public class Shell : IAITankDanger {
-    public delegate void BlockRicochetDelegate(ref Block block, Shell shell);
+public class Shell : IAITankDanger
+{
+    public delegate void OnCreateDelegate(Shell shell);
+
+    public static event OnCreateDelegate? OnCreate;
+    public delegate void BlockRicochetDelegate(Block block, Shell shell);
 
     /// <summary>Only called when it bounces from block-bounce code.</summary>
     public static event BlockRicochetDelegate? OnRicochetWithBlock;
@@ -43,7 +47,8 @@ public class Shell : IAITankDanger {
 
     public static event DestroyDelegate? OnDestroy;
 
-    public enum DestructionContext {
+    public enum DestructionContext
+    {
         WithObstacle,
         WithMine,
         WithFriendlyTank,
@@ -53,7 +58,8 @@ public class Shell : IAITankDanger {
     }
 
     /// <summary>A structure that allows you to give a <see cref="Shell"/> homing properties.</summary>
-    public struct HomingProperties {
+    public struct HomingProperties
+    {
         public float Power;
         public float Radius;
         public float Speed;
@@ -81,14 +87,7 @@ public class Shell : IAITankDanger {
     /// <summary>How many times this <see cref="Shell"/> can hit walls.</summary>
     public uint RicochetsRemaining;
 
-    public uint Ricochets;
     public float Rotation;
-
-    /// <summary>The amount of times this bullet can penetrate other ones. A value of -1 will penetrate infinitely.</summary>
-    public int Penetration;
-
-    /// <summary>The homing properties of this <see cref="Shell"/>.</summary>
-    public HomingProperties HomeProperties = default;
 
     public Vector2 Position { get; set; }
     public Vector2 Velocity;
@@ -99,26 +98,14 @@ public class Shell : IAITankDanger {
 
     public Model Model;
 
-    private OggAudio? _shootSound;
+    public OggAudio? ShootSound;
+    public OggAudio? TrailSound;
 
     /// <summary>The hurtbox on the 2D backing map for the game.</summary>
     public Rectangle Hitbox => new((int)(Position.X - 2), (int)(Position.Y - 2), 4, 4);
 
     /// <summary>The hurtcircle on the 2D backing map for the game.</summary>
     public Circle HitCircle => new() { Center = Position, Radius = 4 };
-
-    /// <summary>Whether or not this shell should emit flames from behind it.</summary>
-    public bool Flaming { get; set; }
-    /// <summary>The color of the flame particles emitted by this <see cref="Shell"/> when <see cref="Flaming"/> is true.</summary>
-    public Color FlameColor { get; set; } = Color.Orange;
-    /// <summary>Whether or not this <see cref="Shell"/> should emit a blazing trail.</summary>
-    public bool LeavesTrail { get; set; }
-    /// <summary>The color of the blazing trail emitted when <see cref="LeavesTrail"/> is true.</summary>
-    public Color TrailColor { get; set; } = Color.Gray;
-    /// <summary>Whether or not this <see cref="Shell"/> emits smoke puffs.</summary>
-    public bool EmitsSmoke { get; set; } = true;
-    /// <summary>The color of the smoke puffs left by this <see cref="Shell"/> when <see cref="EmitsSmoke"/> is true.</summary>
-    public Color SmokeColor { get; set; } = new Color(255, 255, 255, 255);
     public bool IsPlayerSourced { get; set; }
 
     private Texture2D? _shellTexture;
@@ -128,13 +115,51 @@ public class Shell : IAITankDanger {
     /// <summary>How long this shell has existed in the world.</summary>
     public float LifeTime;
 
-    public bool CanFriendlyFire = true;
+    public ShellProperties Properties { get; set; } = new();
 
     // private Particle _flame;
-    public readonly int Type;
-    private OggAudio? _loopingSound;
-    public bool IsDestructible { get; set; } = true;
+    public int Type { get; set; }
     public void ReassignId(int newId) => Id = newId;
+    public void SwapTexture(Texture2D texture) => _shellTexture = texture;
+    public void Swap(int type) {
+        Type = type;
+
+        switch (Type) {
+            case ShellID.Player:
+            case ShellID.Standard:
+                _shellTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/bullet");
+                break;
+            case ShellID.Rocket:
+                _shellTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/bullet");
+                Properties.Flaming = true;
+                TrailSound = new OggAudio("Content/Assets/sounds/tnk_shoot_rocket_loop.ogg", 0.3f);
+                TrailSound.Instance.IsLooped = true;
+                break;
+            case ShellID.TrailedRocket:
+                _shellTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/bullet");
+                Properties.EmitsSmoke = false;
+                Properties.LeavesTrail = true;
+                Properties.Flaming = true;
+                TrailSound = new OggAudio("Content/Assets/sounds/tnk_shoot_ricochet_rocket_loop.ogg", 0.3f);
+                TrailSound.Instance.IsLooped = true;
+                break;
+            case ShellID.Supressed:
+                _shellTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/explosive_bullet");
+                break;
+            case ShellID.Explosive:
+                _shellTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/explosive_bullet");
+                Properties.IsDestructible = false;
+                break;
+            default:
+                for (int i = 0; i < ModLoader.ModShells.Length; i++) {
+                    if (Type == ModLoader.ModShells[i].Type) {
+                        ModLoader.ModShells[i].OnCreate(this);
+                        return;
+                    }
+                }
+                break;
+        }
+    }
 
     /// <summary>
     /// Creates a new <see cref="Shell"/>.
@@ -145,10 +170,9 @@ public class Shell : IAITankDanger {
     /// <param name="owner">Which <see cref="Tank"/> owns this <see cref="Shell"/>.</param>
     /// <param name="ricochets">How many times the newly created <see cref="Shell"/> can ricochet.</param>
     /// <param name="homing">Whether or not the newly created <see cref="Shell"/> homes in on enemies.</param>
-    /// <param name="useDarkTexture">Whether or not to use the black texture for this <see cref="Shell"/>.</param>
     /// <param name="playSpawnSound">Play the shooting sound associated with this <see cref="Shell"/>.</param>
     public Shell(Vector2 position, Vector2 velocity, int type, Tank owner, uint ricochets = 0,
-        HomingProperties homing = default, bool useDarkTexture = false, bool playSpawnSound = true) {
+        HomingProperties homing = default, bool playSpawnSound = true) {
         Type = type;
         RicochetsRemaining = ricochets;
         Position = position;
@@ -157,58 +181,30 @@ public class Shell : IAITankDanger {
         AITank.Dangers.Add(this);
         IsPlayerSourced = owner is PlayerTank;
 
-        if (type == ShellID.Supressed || type == ShellID.Explosive)
-            useDarkTexture = true;
-
-        if (type == ShellID.Explosive)
-            IsDestructible = false;
-
-        _shellTexture = useDarkTexture
-            ? GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/explosive_bullet")
-            : GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/bullet");
-
-        HomeProperties = homing;
+        Properties.HomeProperties = homing;
         Owner = owner;
 
         // if explosive, black
 
         Velocity = velocity;
 
-        switch (Type) {
-            case ShellID.Rocket:
-                Flaming = true;
-                _loopingSound = SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_rocket_loop.ogg",
-                    SoundContext.Effect, 0.3f, gameplaySound: true);
-                _loopingSound.Instance.IsLooped = true;
-                break;
-            case ShellID.TrailedRocket:
-                // MakeTrail();
-                EmitsSmoke = false;
-                LeavesTrail = true;
-                Flaming = true;
-                _loopingSound = SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_ricochet_rocket_loop.ogg",
-                    SoundContext.Effect, 0.3f, gameplaySound: true);
-                _loopingSound.Instance.IsLooped = true;
-                break;
-        }
+        Swap(type);
 
-        if (owner is not null) {
-            _shootSound = Type switch {
-                ShellID.Player => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_regular_1.ogg",
-                    SoundContext.Effect, 0.3f, gameplaySound: true),
-                ShellID.Standard => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_regular_2.ogg",
-                    SoundContext.Effect, 0.3f, gameplaySound: true),
-                ShellID.Rocket => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_rocket.ogg",
-                    SoundContext.Effect, 0.3f, gameplaySound: true),
-                ShellID.TrailedRocket => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_ricochet_rocket.ogg",
-                    SoundContext.Effect, 0.3f, gameplaySound: true),
-                ShellID.Supressed => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_silencer.ogg",
-                    SoundContext.Effect, 0.3f, gameplaySound: true),
-                ShellID.Explosive => SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_shoot_regular_2.ogg",
-                    SoundContext.Effect, 0.3f, gameplaySound: true),
+        if (playSpawnSound) {
+            ShootSound = Type switch {
+                ShellID.Player => new OggAudio("Content/Assets/sounds/tnk_shoot_regular_1.ogg"),
+                ShellID.Standard => new OggAudio("Content/Assets/sounds/tnk_shoot_regular_2.ogg"),
+                ShellID.Rocket => new OggAudio("Content/Assets/sounds/tnk_shoot_rocket.ogg"),
+                ShellID.TrailedRocket => new OggAudio("Content/Assets/sounds/tnk_shoot_ricochet_rocket.ogg"),
+                ShellID.Supressed => new OggAudio("Content/Assets/sounds/tnk_shoot_silencer.ogg"),
+                ShellID.Explosive => new OggAudio("Content/Assets/sounds/tnk_shoot_regular_2.ogg"),
                 _ => throw new NotImplementedException($"Sound for the shell type {Type} is not implemented, yet."),
             };
-            _shootSound.Instance.Pitch = MathHelper.Clamp(owner.Properties.ShootPitch, -1, 1);
+        }
+
+        if (owner is not null && playSpawnSound) {
+            ShootSound!.Instance.Pitch = MathHelper.Clamp(owner.Properties.ShootPitch, -1, 1);
+            SoundPlayer.PlaySoundInstance(ShootSound, SoundContext.Effect, 0.3f);
         }
 
         GameProperties.OnMissionEnd += StopSounds;
@@ -222,18 +218,19 @@ public class Shell : IAITankDanger {
         AllShells[index] = this;
 
         if (owner == null) return;
-        
+
         var idx = Array.IndexOf(Owner.OwnedShells, null);
-        
+
         if (idx > -1)
             Owner.OwnedShells[idx] = this;
+
+        OnCreate?.Invoke(this);
     }
 
     private void StopSounds(int delay, MissionEndContext context, bool result1up) {
-        _loopingSound?.Instance?.Stop();
-        _shootSound?.Instance?.Stop();
+        TrailSound?.Instance?.Stop();
+        ShootSound?.Instance?.Stop();
     }
-
     internal void Update() {
         if (!MapRenderer.ShouldRenderAll || (!GameProperties.InMission && !MainMenu.Active))
             return;
@@ -248,12 +245,26 @@ public class Shell : IAITankDanger {
                 OnRicochet?.Invoke(this);
                 Ricochet(true);
 
+                for (int i = 0; i < ModLoader.ModShells.Length; i++) {
+                    if (Type == ModLoader.ModShells[i].Type) {
+                        ModLoader.ModShells[i].OnRicochet(this, null);
+                        return;
+                    }
+                }
+
                 _wallRicCooldown = 5;
             }
 
             if (Position.Y is < MapRenderer.MIN_Y or > MapRenderer.MAX_Y) {
                 OnRicochet?.Invoke(this);
                 Ricochet(false);
+
+                for (int i = 0; i < ModLoader.ModShells.Length; i++) {
+                    if (Type == ModLoader.ModShells[i].Type) {
+                        ModLoader.ModShells[i].OnRicochet(this, null);
+                        return;
+                    }
+                }
 
                 _wallRicCooldown = 5;
             }
@@ -264,7 +275,7 @@ public class Shell : IAITankDanger {
         var dummy = Vector2.Zero;
 
         Collision.HandleCollisionSimple_ForBlocks(Hitbox, Velocity, ref dummy, out var dir, out var block,
-            out bool corner, false, (c) => c.IsSolid);
+            out bool corner, false, (c) => c.Properties.IsSolid);
 
         if (LifeTime <= 5 && (dir != CollisionDirection.None || corner))
             Destroy(DestructionContext.WithObstacle);
@@ -274,12 +285,36 @@ public class Shell : IAITankDanger {
             switch (dir) {
                 case CollisionDirection.Up:
                 case CollisionDirection.Down:
-                    OnRicochetWithBlock?.Invoke(ref block, this);
+                    for (int i = 0; i < ModLoader.ModBlocks.Length; i++) {
+                        if (Type == ModLoader.ModBlocks[i].Type) {
+                            ModLoader.ModBlocks[i].OnRicochet(block, this);
+                            return;
+                        }
+                    }
+                    for (int i = 0; i < ModLoader.ModShells.Length; i++) {
+                        if (Type == ModLoader.ModShells[i].Type) {
+                            ModLoader.ModShells[i].OnRicochet(this, block);
+                            return;
+                        }
+                    }
+                    OnRicochetWithBlock?.Invoke(block, this);
                     Ricochet(false);
                     break;
                 case CollisionDirection.Left:
                 case CollisionDirection.Right:
-                    OnRicochetWithBlock?.Invoke(ref block, this);
+                    for (int i = 0; i < ModLoader.ModBlocks.Length; i++) {
+                        if (Type == ModLoader.ModBlocks[i].Type) {
+                            ModLoader.ModBlocks[i].OnRicochet(block, this);
+                            return;
+                        }
+                    }
+                    for (int i = 0; i < ModLoader.ModShells.Length; i++) {
+                        if (Type == ModLoader.ModShells[i].Type) {
+                            ModLoader.ModShells[i].OnRicochet(this, block);
+                            return;
+                        }
+                    }
+                    OnRicochetWithBlock?.Invoke(block, this);
                     Ricochet(true);
                     break;
             }
@@ -287,7 +322,7 @@ public class Shell : IAITankDanger {
 
         LifeTime += TankGame.DeltaTime;
 
-        while (LifeTime > HomeProperties.Cooldown) { // Use loop to reduce nesting smh.
+        while (LifeTime > Properties.HomeProperties.Cooldown) { // Use loop to reduce nesting smh.
             if (Owner == null)
                 break;
 
@@ -298,28 +333,28 @@ public class Shell : IAITankDanger {
                 var target = Unsafe.Add(ref tanksSSpace, i);
 
                 if (target is null || target == Owner ||
-                    !(Vector2.Distance(Position, target.Position) <= HomeProperties.Radius)) continue;
+                    !(Vector2.Distance(Position, target.Position) <= Properties.HomeProperties.Radius)) continue;
 
                 if (target.Team == Owner.Team && target.Team != TeamID.NoTeam) continue;
 
-                if (HomeProperties.HeatSeeks && target.Velocity != Vector2.Zero)
-                    HomeProperties.Target = target.Position;
-                if (!HomeProperties.HeatSeeks)
-                    HomeProperties.Target = target.Position;
+                if (Properties.HomeProperties.HeatSeeks && target.Velocity != Vector2.Zero)
+                    Properties.HomeProperties.Target = target.Position;
+                if (!Properties.HomeProperties.HeatSeeks)
+                    Properties.HomeProperties.Target = target.Position;
             }
 
-            if (HomeProperties.Target != Vector2.Zero) {
-                bool hits = Collision.DoRaycast(Position, HomeProperties.Target, (int)HomeProperties.Radius * 2);
+            if (Properties.HomeProperties.Target != Vector2.Zero) {
+                bool hits = Collision.DoRaycast(Position, Properties.HomeProperties.Target, (int)Properties.HomeProperties.Radius * 2);
 
                 if (hits) {
-                    float dist = Vector2.Distance(Position, HomeProperties.Target);
+                    float dist = Vector2.Distance(Position, Properties.HomeProperties.Target);
 
-                    Velocity.X += MathUtils.DirectionOf(Position, HomeProperties.Target).X *
-                        HomeProperties.Power / dist;
-                    Velocity.Y += MathUtils.DirectionOf(Position, HomeProperties.Target).Y *
-                        HomeProperties.Power / dist;
+                    Velocity.X += MathUtils.DirectionOf(Position, Properties.HomeProperties.Target).X *
+                        Properties.HomeProperties.Power / dist;
+                    Velocity.Y += MathUtils.DirectionOf(Position, Properties.HomeProperties.Target).Y *
+                        Properties.HomeProperties.Power / dist;
 
-                    Vector2 trueSpeed = Vector2.Normalize(Velocity) * HomeProperties.Speed;
+                    Vector2 trueSpeed = Vector2.Normalize(Velocity) * Properties.HomeProperties.Speed;
 
 
                     Velocity = trueSpeed;
@@ -331,22 +366,27 @@ public class Shell : IAITankDanger {
 
         CheckCollisions();
 
-        var bruh = Flaming ? (int)Math.Round(6 / Velocity.Length()) : (int)Math.Round(12 / Velocity.Length());
+        var bruh = Properties.Flaming ? (int)Math.Round(6 / Velocity.Length()) : (int)Math.Round(12 / Velocity.Length());
         var num = bruh != 0 ? bruh : 5f;
 
-        if (EmitsSmoke)
+        if (Properties.EmitsSmoke)
             RenderSmokeParticle(num);
 
-        if (LeavesTrail)
+        if (Properties.LeavesTrail)
             RenderLeaveTrail(num);
 
-        if (Flaming)
+        if (Properties.Flaming)
             RenderFlamingParticle();
+        for (int i = 0; i < ModLoader.ModShells.Length; i++) {
+            if (Type == ModLoader.ModShells[i].Type) {
+                ModLoader.ModShells[i].PostUpdate(this);
+                return;
+            }
+        }
         OnPostUpdate?.Invoke(this);
 
         _oldPosition = Position;
     }
-
     private void RenderSmokeParticle(float timer) {
         if (!(LifeTime % timer <= TankGame.DeltaTime)) return;
 
@@ -363,7 +403,7 @@ public class Shell : IAITankDanger {
         p.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
         // 
         p.HasAddativeBlending = false;
-        p.Color = SmokeColor;
+        p.Color = Properties.SmokeColor;
         p.Alpha = 0.5f;
 
         p.UniqueBehavior = (particle) => {
@@ -371,12 +411,11 @@ public class Shell : IAITankDanger {
                 particle.Destroy();
 
             if (particle.Alpha > 0)
-                particle.Alpha -= (Flaming ? 0.03f : 0.02f) * TankGame.DeltaTime;
+                particle.Alpha -= (Properties.Flaming ? 0.03f : 0.02f) * TankGame.DeltaTime;
 
             GeometryUtils.Add(ref particle.Scale, 0.0075f * TankGame.DeltaTime);
         };
     }
-    // TODO: work on this more.
     private void RenderLeaveTrail(float timer) {
         // _oldPosition and Position are *not* the same during method call.
         // TODO: make more particles added depending on the positions between 2 distinct frames
@@ -386,10 +425,10 @@ public class Shell : IAITankDanger {
             Position3D + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(),
             GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
         p.Roll = -MathHelper.PiOver2 + (TankGame.RunTime % MathHelper.Tau);
-        p.Color = TrailColor;
+        p.Color = Properties.TrailColor;
         p.HasAddativeBlending = false;
         p.Scale = new(0.45f, 0.5f, 2f); // x = length, y = height, z = width
-                                          // defaults = (x = 0.4, y = 0.25, 0.4)
+                                        // defaults = (x = 0.4, y = 0.25, 0.4)
 
         p.UniqueBehavior = (a) => {
             var diff = 0.05f * TankGame.DeltaTime;
@@ -401,57 +440,7 @@ public class Shell : IAITankDanger {
             if (p.Alpha <= 0f)
                 p.Destroy();
         };
-
-        /*if (!(LifeTime % (timer / 2) <= TankGame.DeltaTime)) return;
-
-        var p = GameHandler.Particles.MakeParticle(
-            Position3D + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(),
-            GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
-
-        p.Roll = -MathHelper.PiOver2;
-        p.Scale = new(0.4f, 0.25f, 0.4f); // x is outward from bullet
-        // p.Scale = new(1f, 1f, 1f);
-        p.Color = TrailColor;
-        p.HasAddativeBlending = false;
-        // GameHandler.GameRand.NextFloat(-2f, 2f)
-        //p.TextureRotation = -MathHelper.PiOver2;
-        p.TextureScale = new(Velocity.Length() / 10 - 0.2f);
-        p.Origin2D = new(p.Texture.Size().X / 2, 0);
-
-        p.Pitch = -Rotation - MathHelper.PiOver2;
-
-        p.UniqueBehavior = (part) => {
-            p.Alpha -= 0.02f * TankGame.DeltaTime;
-
-            if (p.Alpha <= 0)
-                p.Destroy();
-        };
-
-        var p2 = GameHandler.Particles.MakeParticle(
-            Position3D + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(),
-            GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
-
-        p2.Roll = -MathHelper.PiOver2;
-        p2.Scale = new(0.4f, 0.25f, 0.4f); // x is outward from bullet
-        // oldXScale = Velocity.Length() / 10 - 0.2f
-        // p.Scale = new(1f, 1f, 1f);
-        p2.Color = TrailColor;
-        p2.HasAddativeBlending = false;
-        // GameHandler.GameRand.NextFloat(-2f, 2f)
-        //p.TextureRotation = -MathHelper.PiOver2;
-        p.TextureScale = new(Velocity.Length() / 10 - 0.2f);
-        p2.Origin2D = new(p.Texture.Size().X / 2, 0);
-
-        p2.Pitch = -Rotation + MathHelper.PiOver2;
-
-        p2.UniqueBehavior = (part) => {
-            p2.Alpha -= 0.02f * TankGame.DeltaTime;
-
-            if (p2.Alpha <= 0)
-                p2.Destroy();
-        };*/
     }
-
     private void RenderFlamingParticle() {
         if (!(0 <= TankGame.DeltaTime)) return;
 
@@ -462,7 +451,7 @@ public class Shell : IAITankDanger {
         p.Roll = -MathHelper.PiOver2;
         var scaleRand = GameHandler.GameRand.NextFloat(0.5f, 0.75f);
         p.Scale = new(scaleRand, 0.165f, 0.4f); // x is outward from bullet
-        p.Color = FlameColor;
+        p.Color = Properties.FlameColor;
         p.HasAddativeBlending = false;
         // GameHandler.GameRand.NextFloat(-2f, 2f)
         p.Rotation2D = -MathHelper.PiOver2;
@@ -492,12 +481,10 @@ public class Shell : IAITankDanger {
                 par.Destroy();
         };
     }
-
     private void TankGame_OnFocusRegained(object sender, IntPtr e)
-        => _loopingSound?.Instance?.Resume();
-
+        => TrailSound?.Instance?.Resume();
     private void TankGame_OnFocusLost(object sender, IntPtr e)
-        => _loopingSound?.Instance?.Pause();
+        => TrailSound?.Instance?.Pause();
 
     /// <summary>
     /// Ricochets this <see cref="Shell"/>.
@@ -533,10 +520,9 @@ public class Shell : IAITankDanger {
         }
 
         GameHandler.Particles.MakeShineSpot(Position3D, Color.Orange, 0.8f);
-        Ricochets++;
+        Properties.Ricochets++;
         RicochetsRemaining--;
     }
-
     public void CheckCollisions() {
         var cxt = DestructionContext.WithHostileTank;
 
@@ -548,7 +534,7 @@ public class Shell : IAITankDanger {
 
             if (!tank.CollisionCircle.Intersects(HitCircle)) continue;
 
-            if (!CanFriendlyFire) {
+            if (!Properties.CanFriendlyFire) {
                 if (tank.Team == Owner?.Team && tank != Owner && tank.Team != TeamID.NoTeam)
                     cxt = DestructionContext.WithFriendlyTank;
             }
@@ -570,20 +556,19 @@ public class Shell : IAITankDanger {
             if (bullet == null || bullet == this) continue;
             if (!bullet.Hitbox.Intersects(Hitbox)) continue;
 
-            if (bullet.IsDestructible)
+            if (bullet.Properties.IsDestructible)
                 bullet.Destroy(DestructionContext.WithShell);
-            if (IsDestructible)
+            if (Properties.IsDestructible)
                 Destroy(DestructionContext.WithShell);
 
             // if two indestructible bullets come together, destroy them both. too powerful!
-            if (bullet is { IsDestructible: true, } || IsDestructible) continue;
+            if (bullet is { Properties.IsDestructible: true, } || Properties.IsDestructible) continue;
 
-			// bullet is sometimes null here? so null safety is key
+            // bullet is sometimes null here? so null safety is key
             bullet?.Destroy(DestructionContext.WithShell);
             Destroy(DestructionContext.WithShell);
         }
     }
-
     public void Remove() {
         if (Owner?.OwnedShells != null) {
             var idx = Array.IndexOf(Owner.OwnedShells, this);
@@ -595,8 +580,8 @@ public class Shell : IAITankDanger {
         TankGame.OnFocusRegained -= TankGame_OnFocusRegained!;
         GameProperties.OnMissionEnd -= StopSounds;
 
-        _loopingSound?.Instance?.Stop();
-        _loopingSound = null;
+        TrailSound?.Instance?.Stop();
+        TrailSound = null;
         AITank.Dangers.Remove(this);
         AllShells[Id] = null;
     }
@@ -608,8 +593,14 @@ public class Shell : IAITankDanger {
     /// <param name="playSound">Whether or not to play the bullet destruction sound.</param>
     /// <param name="wasSentByAnotherClient">Whether or not the Destroy was sent by another client.</param>
     public void Destroy(DestructionContext context, bool playSound = true, bool wasSentByAnotherClient = false) {
-        _shootSound?.Instance?.Stop(true);
+        ShootSound?.Instance?.Stop(true);
         // ParticleSystem.MakeSparkEmission(Position, 10);
+        for (int i = 0; i < ModLoader.ModShells.Length; i++) {
+            if (Type == ModLoader.ModShells[i].Type) {
+                ModLoader.ModShells[i].OnDestroy(this, context, ref playSound);
+                //return;
+            }
+        }
         if (context != DestructionContext.WithHostileTank && context != DestructionContext.WithMine &&
             context != DestructionContext.WithExplosion) {
             if (playSound) {
@@ -621,9 +612,9 @@ public class Shell : IAITankDanger {
             GameHandler.Particles.MakeSmallExplosion(Position3D, 8, 10, 1.25f, 15);
         }
 
-        _loopingSound?.Instance?.Stop();
-        _loopingSound?.Dispose();
-        _loopingSound = null;
+        TrailSound?.Instance?.Stop();
+        TrailSound?.Dispose();
+        TrailSound = null;
 
         if (Owner is not null) {
             if (Owner.Properties.ShellType == ShellID.Explosive)
@@ -649,8 +640,8 @@ public class Shell : IAITankDanger {
         View = TankGame.GameView;
 
         // TODO: wtf? DoRaycast failing?
-        if (DebugManager.DebuggingEnabled && DebugManager.DebugLevel == 1 && HomeProperties.Speed > 0)
-            Collision.DoRaycast(Position, HomeProperties.Target, (int)HomeProperties.Radius, true);
+        if (DebugManager.DebuggingEnabled && DebugManager.DebugLevel == 1 && Properties.HomeProperties.Speed > 0)
+            Collision.DoRaycast(Position, Properties.HomeProperties.Target, (int)Properties.HomeProperties.Radius, true);
         if (DebugManager.DebuggingEnabled)
             DebugManager.DrawDebugString(TankGame.SpriteRenderer,
                 $"RicochetsLeft: {RicochetsRemaining}\nTier: {Type}\nId: {Id}",
@@ -660,7 +651,12 @@ public class Shell : IAITankDanger {
         for (var i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
             DrawShellMesh(i);
         }
-
+        for (int i = 0; i < ModLoader.ModShells.Length; i++) {
+            if (Type == ModLoader.ModShells[i].Type) {
+                ModLoader.ModShells[i].PostRender(this);
+                return;
+            }
+        }
         OnPostRender?.Invoke(this);
     }
 
@@ -682,7 +678,7 @@ public class Shell : IAITankDanger {
                 effect.SetDefaultGameLighting_IngameEntities();
             }
         }
-        
+
         for (var i = 0; i < Model.Meshes.Count; i++) {
             var mesh = Model.Meshes[i];
             RenderMeshEffects(currentIteration, mesh);
