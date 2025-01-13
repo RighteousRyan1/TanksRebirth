@@ -25,6 +25,4 @@ public class ShellProperties
     public int Penetration;
     /// <summary>The homing properties of this <see cref="Shell"/>.</summary>
     public HomingProperties HomeProperties = default;
-    /// <summary>Maximum amount of times this <see cref="Shell"/> can bounce off walls.</summary>
-    public uint Ricochets { get; set; }
 }

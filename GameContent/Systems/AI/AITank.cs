@@ -406,7 +406,7 @@ public partial class AITank : Tank
                     TankGame.GameData.TotalKills++;
 
                     // if the ricochets remaining is less than the ricochets the bullet has, it has bounced at least once.
-                    if (cxt1.Shell.RicochetsRemaining < cxt1.Shell.Properties.Ricochets)
+                    if (cxt1.Shell.RicochetsRemaining < cxt1.Shell.Ricochets)
                         TankGame.GameData.BounceKills++;
                 }
                 if (context is TankHurtContextMine cxt2) {

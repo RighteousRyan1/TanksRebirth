@@ -84,6 +84,8 @@ public class Shell : IAITankDanger
     public Vector3 Position3D => Position.ExpandZ() + new Vector3(0, 11, 0);
     public Vector3 Velocity3D => Velocity.ExpandZ();
 
+    /// <summary>Maximum amount of times this <see cref="Shell"/> can bounce off walls.</summary>
+    public uint Ricochets;
     /// <summary>How many times this <see cref="Shell"/> can hit walls.</summary>
     public uint RicochetsRemaining;
 
@@ -520,7 +522,7 @@ public class Shell : IAITankDanger
         }
 
         GameHandler.Particles.MakeShineSpot(Position3D, Color.Orange, 0.8f);
-        Properties.Ricochets++;
+        Ricochets++;
         RicochetsRemaining--;
     }
     public void CheckCollisions() {
