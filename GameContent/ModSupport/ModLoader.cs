@@ -5,10 +5,14 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.Loader;
 using System.Threading.Tasks;
 using TanksRebirth.GameContent.ID;
+using TanksRebirth.GameContent.Properties;
+using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems;
+using TanksRebirth.GameContent.UI;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework.Collections;
 using TanksRebirth.Localization;
@@ -141,8 +145,11 @@ public static class ModLoader
             proc.Close();
         }
     }
-
     internal static void UnloadAll() {
+        if (MainMenu.Active) {
+            SceneManager.CleanupEntities();
+            SceneManager.CleanupScene();
+        }
         if (Status == LoadStatus.Unloading) {
             ChatSystem.SendMessage("Mods are currently unloading! Unable to unload mods.", Color.Red);
             return;
@@ -205,7 +212,6 @@ public static class ModLoader
         ChatSystem.SendMessage("Mod unload successful!", Color.Lime);
         Status = LoadStatus.Complete;
 
-        // TODO: something isn't being unloaded properly, which is why GetSingleton fails after mod reload...?
     }
     // doesn't work?
     private static void ResetContentDictionaries() {
@@ -410,6 +416,7 @@ public static class ModLoader
             Status = LoadStatus.Complete;
             ChatSystem.SendMessage(_firstLoad ? $"Loaded {_loadedAlcs.Count} mod(s)." : $"Reloaded {_loadedAlcs.Count} mod(s).", Color.Lime);
             _firstLoad = false;
+
             OnFinishModLoading?.Invoke();
             ModTanks = _modTanks.ToArray();
             ModBlocks = _modBlocks.ToArray();

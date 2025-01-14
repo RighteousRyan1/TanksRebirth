@@ -12,9 +12,11 @@ public static class ModContent {
     /// <typeparam name="T">The <see cref="Type"/> of the modded content you wish to request data from.</typeparam>
     /// <returns>A singleton instance of any form of supported mod content.</returns>
     public static T GetSingleton<T>() where T : IModContent {
-        // this fails with shells upon mod reload. why?
         var properTypes = moddedTypes.OfType<T>().ToArray();
         var modContent = properTypes.FirstOrDefault();
+
+        if (modContent == null)
+            throw new Exception("Modding Exception: Failed to retrieve moddedType '" + typeof(T).Name + "'. Did you forget to unsubscribe from an event?");
         return modContent!;
     }
 }
