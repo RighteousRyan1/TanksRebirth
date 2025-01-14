@@ -13,7 +13,8 @@ public static class ModContent {
     /// <returns>A singleton instance of any form of supported mod content.</returns>
     public static T GetSingleton<T>() where T : IModContent {
         // this fails with shells upon mod reload. why?
-        var modContent = moddedTypes.OfType<T>().FirstOrDefault();
+        var properTypes = moddedTypes.OfType<T>().ToArray();
+        var modContent = properTypes.FirstOrDefault();
         return modContent!;
     }
 }
