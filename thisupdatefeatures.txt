@@ -1,5 +1,5 @@
 /* Enter message here */
-
+This update fixes numerous bugs within multiplayer (and also single player)
 
 Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed later) speedruns will get their spot on the main menu!
 
@@ -17,7 +17,10 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 
 ## Fixes
 
-
+- Fix multiplayer seeding being desynchronized
+- Fix rare level editor crash
+- Fix armored difficulty creating problems
+- Fix 'change spectator' to not change debugging levels
 
 ## TODO
 
