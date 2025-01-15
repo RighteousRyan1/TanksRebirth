@@ -481,7 +481,8 @@ public static class LevelEditor
             TankGame.OverheadView = true;
             GameProperties.InMission = false;
             // GameHandler.CleanupScene();
-            Mission.LoadDirectly(_cachedMission);
+            if (_cachedMission != null)
+                Mission.LoadDirectly(_cachedMission);
             SetupMissionsBar(loadedCampaign);
         };
 
