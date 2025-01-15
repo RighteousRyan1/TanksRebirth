@@ -8,15 +8,11 @@ using System.Linq;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-
 using FontStashSharp;
-
 using Steamworks;
-
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.Utilities;
@@ -42,7 +38,6 @@ using TanksRebirth.IO;
 using TanksRebirth.Achievements;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Speedrunning;
-
 using tainicom.Aether.Physics2D.Collision;
 
 namespace TanksRebirth;
@@ -50,6 +45,7 @@ namespace TanksRebirth;
 #pragma warning disable CS8618
 public class TankGame : Game {
     #region Fields1
+
     public static Language GameLanguage = new();
     /// <summary>The identifier of the main thread.</summary>
     public static int MainThreadId { get; private set; }
@@ -73,6 +69,7 @@ public class TankGame : Game {
     public static ulong GCMemory => (ulong)GC.GetTotalMemory(false);
     /// <summary>The amount of ticks elapsed in a second of update time.</summary>
     public static float DeltaTime => Interp ? (!float.IsInfinity(60 / (float)LogicFPS) ? 60 / (float)LogicFPS : 0) : 1;
+
     /// <summary>Currently used physical memory by this application in bytes.</summary>
     public static long ProcessMemory {
         get {
@@ -80,6 +77,7 @@ public class TankGame : Game {
             return process.PrivateMemorySize64;
         }
     }
+
     public static GameTime LastGameTime { get; private set; }
     public static uint UpdateCount { get; private set; }
 
@@ -124,22 +122,27 @@ public class TankGame : Game {
     public static bool IsLinux => OperatingSystem == OSPlatform.Linux;
 
     public readonly string MOTD;
+
     #endregion
+
     /// <summary>The handle of the game's logging file. Used to write information to a file that can be read after the game closes.</summary>
     public static Logger ClientLog { get; private set; }
+
     public TankGame() : base() {
         Directory.CreateDirectory(SaveDirectory);
         Directory.CreateDirectory(Path.Combine(SaveDirectory, "Resource Packs", "Scene"));
         Directory.CreateDirectory(Path.Combine(SaveDirectory, "Resource Packs", "Tank"));
         Directory.CreateDirectory(Path.Combine(SaveDirectory, "Resource Packs", "Music"));
         Directory.CreateDirectory(Path.Combine(SaveDirectory, "Logs"));
+        Directory.CreateDirectory(Path.Combine(SaveDirectory, "Backup"));
         ClientLog = new(Path.Combine(SaveDirectory, "Logs"), "client");
         try {
             var bytes = WebUtils.DownloadWebFile(
                 "https://raw.githubusercontent.com/RighteousRyan1/tanks_rebirth_motds/master/motd.txt",
                 out var name);
             MOTD = System.Text.Encoding.Default.GetString(bytes);
-        } catch {
+        }
+        catch {
             // in the case that an HTTPRequestException is thrown (no internet access)
             MOTD = LocalizationRandoms.GetRandomMotd();
         }
@@ -159,7 +162,8 @@ public class TankGame : Game {
 
         if (error) {
             ClientLog.Write(
-                "Unable to load computer specs: Specified OS Architecture is not Windows.", LogType.Warn);
+                "Unable to load computer specs: Specified OS Architecture is not Windows.",
+                LogType.Warn);
         }
         else {
             ClientLog.Write($"CPU: {CompSpecs.CPU.Name} (Core Count: {CompSpecs.CPU.CoreCount})", LogType.Info);
@@ -188,7 +192,8 @@ public class TankGame : Game {
         GameVersion = typeof(TankGame).Assembly.GetName().Version!;
 
         ClientLog.Write(
-            $"Running {typeof(TankGame).Assembly.GetName().Name} on version {GameVersion}'", LogType.Info);
+            $"Running {typeof(TankGame).Assembly.GetName().Name} on version {GameVersion}'",
+            LogType.Info);
     }
 
     private ulong _memBytes;
@@ -267,6 +272,7 @@ public class TankGame : Game {
 
         DiscordRichPresence.Terminate();
     }
+
     protected override void LoadContent() {
         var s = Stopwatch.StartNew();
 
@@ -428,6 +434,7 @@ public class TankGame : Game {
         }
         PlaceSecrets();
     }
+
     public void DrawDebugMetrics() {
         var information = new string[] {
             $"PrimitiveCount: {Graphics.GraphicsDevice.Metrics.PrimitiveCount}",
@@ -440,6 +447,7 @@ public class TankGame : Game {
         };
         DebugManager.DrawDebugString(TextFont, SpriteRenderer, string.Join('\n', information), Vector2.Zero, -1);
     }
+
     private void HandleResizing(object sender, EventArgs e) {
         // UIElement.ResizeAndRelocate();
     }
@@ -471,6 +479,7 @@ public class TankGame : Game {
                 LevelEditor.Theme.Resume();
         }
     }
+
     private void TankGame_OnFocusLost(object sender, IntPtr e) {
         if (TankMusicSystem.IsLoaded) {
             if (Thunder.SoftRain.IsPlaying())
@@ -482,7 +491,9 @@ public class TankGame : Game {
                 LevelEditor.Theme.Pause();
         }
     }
+
     #region Various Fields
+
     public const float DEFAULT_ORTHOGRAPHIC_ANGLE = 0.75f;
     public static Vector2 POVRotationVector = new(0, DEFAULT_ORTHOGRAPHIC_ANGLE);
 
@@ -492,6 +503,7 @@ public class TankGame : Game {
     public static Vector2 CameraFocusOffset;
 
     private static bool _oView;
+
     public static bool OverheadView {
         get => _oView;
         set {
@@ -522,6 +534,7 @@ public class TankGame : Game {
     private static float _gradualIncrease = GRAD_INC_DEF;
 
     private static float _storedZoom;
+
     #endregion
 
     public static bool IsCrashInfoVisible;
@@ -545,15 +558,17 @@ public class TankGame : Game {
             return SpectateValidTank(newId, increase);
         else return newId;
     }
+
     protected override void Update(GameTime gameTime) {
         try {
             /*if (Debugger.IsAttached) {
                 SteamworksUtils.SetSteamStatus("balls", "inspector");
                 SteamFriends.GetFriendGamePlayed(SteamFriends.GetFriendByIndex(0, EFriendFlags.k_EFriendFlagAll), out var x);
-                
+
             }*/
             DoUpdate(gameTime);
-        } catch (Exception e) when (!Debugger.IsAttached) {
+        }
+        catch (Exception e) when (!Debugger.IsAttached) {
             ReportError(e, false, false);
 
             MainMenu.Theme.Volume = 0f;
@@ -561,7 +576,7 @@ public class TankGame : Game {
 
             SoundPlayer.SoundError();
 
-            if (LevelEditor.Active) {
+            if (LevelEditor.Active && LevelEditor.loadedCampaign != null) {
                 Campaign.Save(Path.Combine(SaveDirectory, "Backup", $"backup_{DateTime.Now.StringFormatCustom("_")}"), LevelEditor.loadedCampaign!);
             }
 
@@ -583,6 +598,7 @@ public class TankGame : Game {
         //GameCamera = SpectatorCamera;
 
         #region Non-Camera
+
         TargetElapsedTime = TimeSpan.FromMilliseconds(Interp ? 16.67 * (60f / Settings.TargetFPS) : 16.67);
 
         if (!float.IsInfinity(DeltaTime))
@@ -647,7 +663,9 @@ public class TankGame : Game {
         if (!MainMenu.Active && DebugManager.DebuggingEnabled)
             if (InputUtils.KeyJustPressed(Keys.J))
                 OverheadView = !OverheadView;
+
         #endregion
+
         if (!IsCrashInfoVisible) {
             if (!Difficulties.Types["POV"] || MainMenu.Active || LevelEditor.Active) {
                 if (transitionTimer > 0) {
@@ -694,10 +712,10 @@ public class TankGame : Game {
                 }
 
                 GameView = Matrix.CreateScale(DEFAULT_ZOOM * AddativeZoom * (MainMenu.Active ? _zoomAdd : 1)) *
-                        Matrix.CreateLookAt(new(0f, 0, 350f), Vector3.Zero, Vector3.Up) * // 0, 0, 350
-                        Matrix.CreateTranslation(CameraFocusOffset.X, -CameraFocusOffset.Y + 40, 0) *
-                        Matrix.CreateRotationY(POVRotationVector.X + (MainMenu.Active ? _spinValue : 0)) *
-                        Matrix.CreateRotationX(POVRotationVector.Y);
+                    Matrix.CreateLookAt(new(0f, 0, 350f), Vector3.Zero, Vector3.Up) * // 0, 0, 350
+                    Matrix.CreateTranslation(CameraFocusOffset.X, -CameraFocusOffset.Y + 40, 0) *
+                    Matrix.CreateRotationY(POVRotationVector.X + (MainMenu.Active ? _spinValue : 0)) *
+                    Matrix.CreateRotationX(POVRotationVector.Y);
                 GameProjection = Matrix.CreateOrthographic(1920, 1080, -2000, 5000);
 
                 //Matrix.CreateTranslation(CameraFocusOffset.X, -CameraFocusOffset.Y, 0);
@@ -754,8 +772,8 @@ public class TankGame : Game {
                 }
 
                 GameView = Matrix.CreateLookAt(POVCameraPosition,
-                    POVCameraPosition + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(POVCameraRotation).ExpandZ(),
-                    Vector3.Up) * Matrix.CreateScale(AddativeZoom) *
+                        POVCameraPosition + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(POVCameraRotation).ExpandZ(),
+                        Vector3.Up) * Matrix.CreateScale(AddativeZoom) *
                     Matrix.CreateRotationX(POVRotationVector.Y - MathHelper.PiOver4) *
                     Matrix.CreateRotationY(POVRotationVector.X) *
                     Matrix.CreateTranslation(0, -20, 0);
@@ -826,68 +844,61 @@ public class TankGame : Game {
                 HoveringAnyTank = false;
                 if (!MainMenu.Active && (OverheadView || LevelEditor.Active)) {
                     foreach (var tnk in GameHandler.AllTanks) {
-                        if (tnk is not null && !tnk.Dead) {
-                            if (RayUtils.GetMouseToWorldRay().Intersects(tnk.Worldbox).HasValue) {
-                                HoveringAnyTank = true;
-                                if (InputUtils.KeyJustPressed(Keys.K)) {
-                                    if (Array.IndexOf(GameHandler.AllTanks, tnk) > -1)
-                                        tnk?.Destroy(new TankHurtContextOther()); // hmmm
+                        // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+                        if (tnk == null) continue;
+
+                        if (tnk.Dead)
+                            continue;
+
+                        if (RayUtils.GetMouseToWorldRay().Intersects(tnk.Worldbox).HasValue) {
+                            HoveringAnyTank = true;
+                            if (InputUtils.KeyJustPressed(Keys.K) && Array.IndexOf(GameHandler.AllTanks, tnk) > -1)
+                                tnk?.Destroy(new TankHurtContextOther()); // hmmm
+
+                            if (InputUtils.CanDetectClick(rightClick: true)) {
+                                while (tnk!.TankRotation < 0) {
+                                    tnk.TankRotation += MathHelper.Tau;
                                 }
 
-                                if (InputUtils.CanDetectClick(rightClick: true)) {
-                                    while (tnk!.TankRotation < 0) {
-                                        tnk.TankRotation += MathHelper.Tau;
-                                    }
-
-                                    while (tnk.TankRotation > MathHelper.Tau) {
-                                        tnk.TankRotation -= MathHelper.Tau;
-                                    }
-
-                                    while (tnk.TargetTankRotation < 0) {
-                                        tnk.TargetTankRotation += MathHelper.Tau;
-                                    }
-
-                                    while (tnk.TargetTankRotation > MathHelper.Tau) {
-                                        tnk.TargetTankRotation -= MathHelper.Tau;
-                                    }
-
-                                    while (tnk.TurretRotation < 0) {
-                                        tnk.TurretRotation += MathHelper.Tau;
-                                    }
-
-                                    while (tnk.TurretRotation > MathHelper.Tau) {
-                                        tnk.TurretRotation -= MathHelper.Tau;
-                                    }
-
-
-                                    tnk.TankRotation -= MathHelper.PiOver2;
-                                    tnk.TurretRotation -= MathHelper.PiOver2;
-
-                                    tnk.TargetTankRotation += MathHelper.PiOver2;
-
-                                    if (tnk.TargetTankRotation >= MathHelper.Tau)
-                                        tnk.TargetTankRotation -= MathHelper.Tau;
-
-                                    if (tnk is AITank aiTank) {
-                                        aiTank.TargetTurretRotation += MathHelper.Tau;
-
-                                        if (aiTank.TargetTurretRotation >= MathHelper.Tau)
-                                            aiTank.TargetTurretRotation -= MathHelper.Tau;
-                                    }
-
-                                    if (tnk.TankRotation <= -MathHelper.Tau)
-                                        tnk.TankRotation += MathHelper.Tau;
-
-                                    if (tnk.TurretRotation <= -MathHelper.Tau)
-                                        tnk.TurretRotation += MathHelper.Tau;
-
+                                while (tnk.TankRotation > MathHelper.Tau) {
+                                    tnk.TankRotation -= MathHelper.Tau;
                                 }
 
-                                tnk.IsHoveredByMouse = true;
+                                while (tnk.TargetTankRotation < 0) {
+                                    tnk.TargetTankRotation += MathHelper.Tau;
+                                }
+
+                                while (tnk.TargetTankRotation > MathHelper.Tau) {
+                                    tnk.TargetTankRotation -= MathHelper.Tau;
+                                }
+
+                                while (tnk.TurretRotation < 0) {
+                                    tnk.TurretRotation += MathHelper.Tau;
+                                }
+
+                                while (tnk.TurretRotation > MathHelper.Tau) {
+                                    tnk.TurretRotation -= MathHelper.Tau;
+                                }
+
+
+                                tnk.TankRotation -= MathHelper.PiOver2;
+                                tnk.TurretRotation -= MathHelper.PiOver2;
+                                tnk.TargetTankRotation += MathHelper.PiOver2;
+
+                                if (tnk.TargetTankRotation >= MathHelper.Tau)
+                                    tnk.TargetTankRotation -= MathHelper.Tau;
+
+                                if (tnk.TankRotation <= -MathHelper.Tau)
+                                    tnk.TankRotation += MathHelper.Tau;
+
+                                if (tnk.TurretRotation <= -MathHelper.Tau)
+                                    tnk.TurretRotation += MathHelper.Tau;
                             }
-                            else
-                                tnk.IsHoveredByMouse = false;
+
+                            tnk.IsHoveredByMouse = true;
                         }
+                        else
+                            tnk.IsHoveredByMouse = false;
                     }
                 }
             }
@@ -895,6 +906,7 @@ public class TankGame : Game {
         foreach (var bind in Keybind.AllKeybinds)
             bind?.Update();
     }
+
     public static Color ClearColor = Color.Black;
 
     public static bool RenderWireframe = false;
@@ -917,6 +929,7 @@ public class TankGame : Game {
     public static bool SuperSecretDevOption;
 
     private static DepthStencilState _stencilState = new() { };
+
     protected override void Draw(GameTime gameTime) {
         if (gameTarget == null || gameTarget.IsDisposed || gameTarget.Size() != WindowUtils.WindowBounds) {
             gameTarget?.Dispose();
@@ -958,18 +971,26 @@ public class TankGame : Game {
             MainMenu.Render();
         // i really wish i didn't have to draw this here.
         VanillaAchievementPopupHandler.DrawPopup(SpriteRenderer);
+
         #region Debug
+
         if (Debugger.IsAttached)
             SpriteRenderer.DrawString(TextFont, "DEBUGGER ATTACHED", new Vector2(10, 50), Color.Red, new Vector2(0.8f));
 
         if (DebugManager.DebuggingEnabled) {
-            SpriteRenderer.DrawString(TextFont, "Debug Level: " + DebugManager.CurDebugLabel, WindowUtils.WindowBottom - new Vector2(0, 15), Color.White, new Vector2(0.6f),
+            SpriteRenderer.DrawString(TextFont,
+                "Debug Level: " + DebugManager.CurDebugLabel,
+                WindowUtils.WindowBottom - new Vector2(0, 15),
+                Color.White,
+                new Vector2(0.6f),
                 origin: TextFont.MeasureString("Debug Level: " + DebugManager.CurDebugLabel) / 2);
-            DebugManager.DrawDebugString(SpriteRenderer, $"Garbage Collection: {MemoryParser.FromMegabytes(GCMemory):0} MB" +
+            DebugManager.DrawDebugString(SpriteRenderer,
+                $"Garbage Collection: {MemoryParser.FromMegabytes(GCMemory):0} MB" +
                 $"\nPhysical Memory: {CompSpecs.RAM}" +
                 $"\nGPU: {CompSpecs.GPU}" +
                 $"\nCPU: {CompSpecs.CPU}" +
-                    $"\nProcess Memory: {MemoryParser.FromMegabytes(_memBytes):0} MB / Total Memory: {MemoryParser.FromMegabytes(CompSpecs.RAM.TotalPhysical):0}MB", new(8, WindowUtils.WindowHeight * 0.15f));
+                $"\nProcess Memory: {MemoryParser.FromMegabytes(_memBytes):0} MB / Total Memory: {MemoryParser.FromMegabytes(CompSpecs.RAM.TotalPhysical):0}MB",
+                new(8, WindowUtils.WindowHeight * 0.15f));
 
             DebugManager.DrawDebugString(SpriteRenderer, $"Tank Kill Counts:", new(8, WindowUtils.WindowHeight * 0.05f), 2);
 
@@ -979,14 +1000,17 @@ public class TankGame : Game {
 
                 DebugManager.DrawDebugString(SpriteRenderer, $"{tier}: {count}", new(8, WindowUtils.WindowHeight * 0.05f + (14f * (i + 1))), 2);
             }
-            DebugManager.DrawDebugString(SpriteRenderer, $"Lives / StartingLives: {PlayerTank.Lives[Client.IsConnected() ? NetPlay.CurrentClient.Id : 0]} / {PlayerTank.StartingLives}" +
-                                                       $"\nKillCount: {PlayerTank.KillCount}" +
-                                                       $"\n\nSavable Game Data:" +
-                                                       $"\nTotal / Bullet / Mine / Bounce Kills: {GameData.TotalKills} / {GameData.BulletKills} / {GameData.MineKills} / {GameData.BounceKills}" +
-                                                       $"\nTotal Deaths: {GameData.Deaths}" +
-                                                       $"\nTotal Suicides: {GameData.Suicides}" +
-                                                       $"\nMissions Completed: {GameData.MissionsCompleted}" +
-                                                       $"\nExp Level / DecayMultiplier: {GameData.ExpLevel} / {GameData.UniversalExpMultiplier}", new(8, WindowUtils.WindowHeight * 0.4f), 2);
+            DebugManager.DrawDebugString(SpriteRenderer,
+                $"Lives / StartingLives: {PlayerTank.Lives[Client.IsConnected() ? NetPlay.CurrentClient.Id : 0]} / {PlayerTank.StartingLives}" +
+                $"\nKillCount: {PlayerTank.KillCount}" +
+                $"\n\nSavable Game Data:" +
+                $"\nTotal / Bullet / Mine / Bounce Kills: {GameData.TotalKills} / {GameData.BulletKills} / {GameData.MineKills} / {GameData.BounceKills}" +
+                $"\nTotal Deaths: {GameData.Deaths}" +
+                $"\nTotal Suicides: {GameData.Suicides}" +
+                $"\nMissions Completed: {GameData.MissionsCompleted}" +
+                $"\nExp Level / DecayMultiplier: {GameData.ExpLevel} / {GameData.UniversalExpMultiplier}",
+                new(8, WindowUtils.WindowHeight * 0.4f),
+                2);
         }
 
 
@@ -1019,15 +1043,20 @@ public class TankGame : Game {
             }
 
             foreach (var body in Tank.CollisionsWorld.BodyList) {
-                DebugManager.DrawDebugString(SpriteRenderer, $"BODY",
-                    MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(body.Position.X * Tank.UNITS_PER_METER, 0, body.Position.Y * Tank.UNITS_PER_METER), GameView, GameProjection), centered: true);
+                DebugManager.DrawDebugString(SpriteRenderer,
+                    $"BODY",
+                    MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(body.Position.X * Tank.UNITS_PER_METER, 0, body.Position.Y * Tank.UNITS_PER_METER), GameView, GameProjection),
+                    centered: true);
             }
 
             for (int i = 0; i < VanillaAchievements.Repository.GetAchievements().Count; i++) {
                 var achievement = VanillaAchievements.Repository.GetAchievements()[i];
 
-                DebugManager.DrawDebugString(SpriteRenderer, $"{achievement.Name}: {(achievement.IsComplete ? "Complete" : "Incomplete")}",
-                    new Vector2(8, 24 + (i * 20)), level: DebugManager.Id.AchievementData, centered: false);
+                DebugManager.DrawDebugString(SpriteRenderer,
+                    $"{achievement.Name}: {(achievement.IsComplete ? "Complete" : "Incomplete")}",
+                    new Vector2(8, 24 + (i * 20)),
+                    level: DebugManager.Id.AchievementData,
+                    centered: false);
             }
         }
 
@@ -1049,23 +1078,27 @@ public class TankGame : Game {
 
         DebugManager.tankToSpawnType = MathHelper.Clamp(DebugManager.tankToSpawnType, 2, TankID.Collection.Count - 1);
         DebugManager.tankToSpawnTeam = MathHelper.Clamp(DebugManager.tankToSpawnTeam, 0, TeamID.Collection.Count - 1);
+
         #endregion
 
         if (DebugManager.DebuggingEnabled) {
-            DebugManager.DrawDebugString(SpriteRenderer, $"Logic Time: {LogicTime.TotalMilliseconds:0.00}ms" +
-                                                       $"\nLogic FPS: {LogicFPS}" +
-                                                       $"\n\nRender Time: {RenderTime.TotalMilliseconds:0.00}ms" +
-                                                       $"\nRender FPS: {RenderFPS}" +
-                                                       $"\nKeys Q + W: Localhost Connect for Multiplayer Debug" +
-                                                       $"\nKeys U + I: Unload All Mods" +
-                                                       $"\nKeys O + P: Reload All Mods", new(10, 500));
+            DebugManager.DrawDebugString(SpriteRenderer,
+                $"Logic Time: {LogicTime.TotalMilliseconds:0.00}ms" +
+                $"\nLogic FPS: {LogicFPS}" +
+                $"\n\nRender Time: {RenderTime.TotalMilliseconds:0.00}ms" +
+                $"\nRender FPS: {RenderFPS}" +
+                $"\nKeys Q + W: Localhost Connect for Multiplayer Debug" +
+                $"\nKeys U + I: Unload All Mods" +
+                $"\nKeys O + P: Reload All Mods",
+                new(10, 500));
 
             DebugManager.DrawDebugString(SpriteRenderer, $"Current Mission: {GameProperties.LoadedCampaign.CurrentMission.Name}\nCurrent Campaign: {GameProperties.LoadedCampaign.MetaData.Name}", WindowUtils.WindowBottomLeft - new Vector2(-4, 60), 3, centered: false);
         }
 
         #endregion
+
         SpriteRenderer.End();
-        
+
         ChatSystem.DrawMessages();
 
         SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: DefaultRasterizer);
@@ -1100,8 +1133,12 @@ public class TankGame : Game {
         SpriteRenderer.Draw(WhitePixel, WindowUtils.ScreenRect, Color.Blue);
 
         SpriteRenderer.DrawString(TextFontLarge, ":(", new Vector2(100, 100).ToResolution(), Color.White, (Vector2.One).ToResolution());
-        SpriteRenderer.DrawString(TextFontLarge, "Your game ran into a problem and might need to restart. We're just" +
-            "\nshowing you what's wrong, and how it might affect your game.", new Vector2(100, 250).ToResolution(), Color.White, (Vector2.One * 0.4f).ToResolution());
+        SpriteRenderer.DrawString(TextFontLarge,
+            "Your game ran into a problem and might need to restart. We're just" +
+            "\nshowing you what's wrong, and how it might affect your game.",
+            new Vector2(100, 250).ToResolution(),
+            Color.White,
+            (Vector2.One * 0.4f).ToResolution());
         SpriteRenderer.DrawString(TextFontLarge, CrashInfo.Reason, new Vector2(100, 500).ToResolution(), Color.White, (Vector2.One * 0.3f).ToResolution());
         SpriteRenderer.DrawString(TextFontLarge, CrashInfo.Description, new Vector2(100, 550).ToResolution(), Color.White, (Vector2.One * 0.2f).ToResolution());
 
@@ -1118,6 +1155,7 @@ public class TankGame : Game {
             TankMusicSystem.ResumeAll();
         }
     }
+
     private static Particle _secret1_1;
     private static Particle _secret1_2;
 

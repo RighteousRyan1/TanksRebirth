@@ -236,6 +236,9 @@ public static class DebugManager {
         if (InputUtils.KeyJustPressed(Keys.Insert))
             DebuggingEnabled = !DebuggingEnabled;
 
+        if (!DebuggingEnabled)
+            return; // won't update debug if debugging is not currently enabled.
+
         if (InputUtils.KeyJustPressed(Keys.Right))
             DebugLevel++;
         if (InputUtils.KeyJustPressed(Keys.Left))
