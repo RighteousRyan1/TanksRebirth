@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace TanksRebirth.Internals.Common.Framework;
 #pragma warning disable CA1416
-public struct ComputerSpecs {
+public struct ComputerSpecs : IEquatable<ComputerSpecs> {
     public GPU GPU;
     public CPU CPU;
     public RAM RAM;
@@ -117,25 +117,85 @@ public struct ComputerSpecs {
         };
         return ramType;
     }
+
+    public bool Equals(ComputerSpecs other) {
+        return GPU.Equals(other.GPU) && CPU.Equals(other.CPU) && RAM.Equals(other.RAM);
+    }
+
+    public override bool Equals(object? obj) {
+        return obj is ComputerSpecs other && Equals(other);
+    }
+
+    public override int GetHashCode() {
+        return HashCode.Combine(GPU, CPU, RAM);
+    }
+
+    public static bool operator ==(ComputerSpecs left, ComputerSpecs right) {
+        return left.Equals(right);
+    }
+
+    public static bool operator !=(ComputerSpecs left, ComputerSpecs right) {
+        return !left.Equals(right);
+    }
 }
 
-public struct GPU {
+public struct GPU : IEquatable<GPU> {
     public uint VRAM;
     public Version DriverVersion;
     public string Name;
 
     public override string ToString() => $"{Name}";
+
+    public bool Equals(GPU other) {
+        return VRAM == other.VRAM && DriverVersion.Equals(other.DriverVersion) && Name == other.Name;
+    }
+
+    public override bool Equals(object? obj) {
+        return obj is GPU other && Equals(other);
+    }
+
+    public override int GetHashCode() {
+        return HashCode.Combine(VRAM, DriverVersion, Name);
+    }
+
+    public static bool operator ==(GPU left, GPU right) {
+        return left.Equals(right);
+    }
+
+    public static bool operator !=(GPU left, GPU right) {
+        return !left.Equals(right);
+    }
 }
 
-public struct CPU {
+public struct CPU : IEquatable<CPU> {
     public int CoreCount;
     public int Threads;
     public string Name;
 
     public override readonly string ToString() => $"{Name}";
+
+    public bool Equals(CPU other) {
+        return CoreCount == other.CoreCount && Threads == other.Threads && Name == other.Name;
+    }
+
+    public override bool Equals(object? obj) {
+        return obj is CPU other && Equals(other);
+    }
+
+    public override int GetHashCode() {
+        return HashCode.Combine(CoreCount, Threads, Name);
+    }
+
+    public static bool operator ==(CPU left, CPU right) {
+        return left.Equals(right);
+    }
+
+    public static bool operator !=(CPU left, CPU right) {
+        return !left.Equals(right);
+    }
 }
 
-public struct RAM {
+public struct RAM : IEquatable<RAM> {
     public ulong TotalPhysical;
     public ulong StickPhysical;
     public uint ClockSpeed;
@@ -146,6 +206,26 @@ public struct RAM {
         var gb = MemoryParser.FromGigabytes(TotalPhysical);
         var mem = MathF.Ceiling(gb);
         return $"{Manufacturer} {mem}GB {Type} @{ClockSpeed}hz";
+    }
+
+    public bool Equals(RAM other) {
+        return TotalPhysical == other.TotalPhysical && StickPhysical == other.StickPhysical && ClockSpeed == other.ClockSpeed && Manufacturer == other.Manufacturer && Speed == other.Speed && Type == other.Type;
+    }
+
+    public override bool Equals(object? obj) {
+        return obj is RAM other && Equals(other);
+    }
+
+    public override int GetHashCode() {
+        return HashCode.Combine(TotalPhysical, StickPhysical, ClockSpeed, Manufacturer, Speed, Type);
+    }
+
+    public static bool operator ==(RAM left, RAM right) {
+        return left.Equals(right);
+    }
+
+    public static bool operator !=(RAM left, RAM right) {
+        return !left.Equals(right);
     }
 }
 /// <summary>
