@@ -1082,15 +1082,14 @@ public class TankGame : Game {
         #endregion
 
         if (DebugManager.DebuggingEnabled) {
-            DebugManager.DrawDebugString(SpriteRenderer,
-                $"Logic Time: {LogicTime.TotalMilliseconds:0.00}ms" +
-                $"\nLogic FPS: {LogicFPS}" +
-                $"\n\nRender Time: {RenderTime.TotalMilliseconds:0.00}ms" +
-                $"\nRender FPS: {RenderFPS}" +
-                $"\nKeys Q + W: Localhost Connect for Multiplayer Debug" +
-                $"\nKeys U + I: Unload All Mods" +
-                $"\nKeys O + P: Reload All Mods",
-                new(10, 500));
+            DebugManager.DrawDebugString(SpriteRenderer, $"Logic Time: {LogicTime.TotalMilliseconds:0.00}ms" +
+                                                       $"\nLogic FPS: {LogicFPS}" +
+                                                       $"\n\nRender Time: {RenderTime.TotalMilliseconds:0.00}ms" +
+                                                       $"\nRender FPS: {RenderFPS}" +
+                                                       $"\nKeys Q + W: Localhost Connect for Multiplayer Debug" +
+                                                       $"\nKeys U + I: Unload All Mods" +
+                                                       $"\nKeys O + P: Reload All Mods" +
+                                                       $"\nKeys J + K: Resynchronize Randoms", new(10, 500));
 
             DebugManager.DrawDebugString(SpriteRenderer, $"Current Mission: {GameProperties.LoadedCampaign.CurrentMission.Name}\nCurrent Campaign: {GameProperties.LoadedCampaign.MetaData.Name}", WindowUtils.WindowBottomLeft - new Vector2(-4, 60), 3, centered: false);
         }

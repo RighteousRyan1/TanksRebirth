@@ -31,6 +31,8 @@ public static class IntermissionHandler {
     {
         TankMusicSystem.StopAll();
 
+        // Server.SyncSeeds();
+
         LastResult = context;
 
         //if (result1up && context != MissionEndContext.Lose)

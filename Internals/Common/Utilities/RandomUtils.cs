@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.Internals.Common.Utilities;
 
 public static class RandomUtils
 {
-    public static Random DefaultSeed = new();
     public static float NextFloat(this Random random, float min, float max)
     => (float)(random.NextDouble() * (max - min) + min);
     public static double NextFloat(this Random random, double min, double max)
@@ -14,7 +14,7 @@ public static class RandomUtils
         => (short)random.Next(min, max);
     public static byte Next(this Random random, byte min, byte max)
         => (byte)random.Next(min, max);
-    public static T PickRandom<T>(T[] input) => input[DefaultSeed.Next(0, input.Length)];
+    public static T PickRandom<T>(T[] input) => input[Server.ServerRandom.Next(0, input.Length)];
     public static List<T> PickRandom<T>(T[] input, int amount)
     {
         List<T> values = new();
@@ -22,7 +22,7 @@ public static class RandomUtils
         for (int i = 0; i < amount; i++)
         {
         ReRoll:
-            int rand = new Random().Next(0, input.Length);
+            int rand = Server.ServerRandom.Next(0, input.Length);
 
             if (!chosenTs.Contains(rand))
             {
@@ -35,5 +35,5 @@ public static class RandomUtils
         chosenTs.Clear();
         return values;
     }
-    public static TEnum PickRandom<TEnum>() where TEnum : struct, Enum => (TEnum)(object)DefaultSeed.Next(0, Enum.GetNames<TEnum>().Length);
+    public static TEnum PickRandom<TEnum>() where TEnum : struct, Enum => (TEnum)(object)Server.ServerRandom.Next(0, Enum.GetNames<TEnum>().Length);
 }

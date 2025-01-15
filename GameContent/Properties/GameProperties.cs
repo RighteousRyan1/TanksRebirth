@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TanksRebirth.Enums;
 using TanksRebirth.GameContent.Systems;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.Properties
 {
@@ -24,6 +25,7 @@ namespace TanksRebirth.GameContent.Properties
 
         internal static void DoMissionStartInvoke()
         {
+            Server.SyncSeeds();
             OnMissionStart?.Invoke();
         }
         public static void MissionEndEvent_Invoke(int delay, MissionEndContext context, bool result1up)

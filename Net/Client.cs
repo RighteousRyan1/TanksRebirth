@@ -62,7 +62,7 @@ public class Client {
         NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
     public static void SendQuit() {
-        if (MainMenu.Active || !IsConnected() || !Client.IsHost())
+        if (MainMenu.Active || !IsConnected() || !IsHost())
             return;
 
         NetDataWriter message = new();

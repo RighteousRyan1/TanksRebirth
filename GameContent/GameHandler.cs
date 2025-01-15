@@ -140,6 +140,8 @@ public class GameHandler {
     }
 
     internal static void UpdateAll(GameTime gameTime) {
+        if (InputUtils.AreKeysJustPressed(Keys.J, Keys.K))
+            Server.SyncSeeds();
         //if (InputUtils.KeyJustPressed(Keys.M))
         //SmokeNadeDebug();
         // ChatSystem.CurTyping = SoundPlayer.GetLengthOfSound("Content/Assets/sounds/tnk_shoot_ricochet_rocket_loop.ogg").ToString();
