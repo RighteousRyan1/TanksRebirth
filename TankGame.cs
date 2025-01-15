@@ -864,7 +864,13 @@ public class TankGame : Game {
                                     tnk.TankRotation -= MathHelper.Tau;
                                 }
 
-                                tnk.TargetTankRotation = tnk.TankRotation;
+                                while (tnk.TargetTankRotation < 0) {
+                                    tnk.TargetTankRotation += MathHelper.Tau;
+                                }
+
+                                while (tnk.TargetTankRotation > MathHelper.Tau) {
+                                    tnk.TargetTankRotation -= MathHelper.Tau;
+                                }
 
                                 while (tnk.TurretRotation < 0) {
                                     tnk.TurretRotation += MathHelper.Tau;
@@ -874,30 +880,19 @@ public class TankGame : Game {
                                     tnk.TurretRotation -= MathHelper.Tau;
                                 }
 
-                                if (tnk is AITank aiTnk) 
-                                    aiTnk.TargetTurretRotation = tnk.TurretRotation;
-
 
                                 tnk.TankRotation -= MathHelper.PiOver2;
+                                tnk.TurretRotation -= MathHelper.PiOver2;
+                                tnk.TargetTankRotation += MathHelper.PiOver2;
+
+                                if (tnk.TargetTankRotation >= MathHelper.Tau)
+                                    tnk.TargetTankRotation -= MathHelper.Tau;
+
                                 if (tnk.TankRotation <= -MathHelper.Tau)
                                     tnk.TankRotation += MathHelper.Tau;
-                                
-                                tnk.TurretRotation -= MathHelper.PiOver2;
+
                                 if (tnk.TurretRotation <= -MathHelper.Tau)
                                     tnk.TurretRotation += MathHelper.Tau;
-                                
-                                tnk.TargetTankRotation -= MathHelper.PiOver2;
-                                if (tnk.TargetTankRotation <= MathHelper.Tau)
-                                    tnk.TargetTankRotation += MathHelper.Tau;
-
-
-
-                                if (tnk is AITank aiTank) {
-                                    aiTank.TargetTurretRotation -= MathHelper.Tau;
-
-                                    if (aiTank.TargetTurretRotation <= MathHelper.Tau)
-                                        aiTank.TargetTurretRotation += MathHelper.Tau;
-                                }
                             }
 
                             tnk.IsHoveredByMouse = true;
