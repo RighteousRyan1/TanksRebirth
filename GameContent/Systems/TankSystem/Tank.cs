@@ -580,23 +580,22 @@ public abstract class Tank {
                     gameplaySound: true);
                 ding.Instance.Pitch = GameHandler.GameRand.NextFloat(-0.1f, 0.1f);
                 OnDamage?.Invoke(this, Properties.Armor.HitPoints == 0, context);
-                if (this is AITank ai) {
-                    for (int i = 0; i < ModLoader.ModTanks.Length; i++)
-                        if (ai.AiTankType == ModLoader.ModTanks[i].Type) {
-                            ModLoader.ModTanks[i].TakeDamage(ai, Properties.Armor.HitPoints == 0, context);
-                        }
-                }
-            }
-
-            return;
-        }
-        else {
-            if (this is AITank ai) {
+                if (this is not AITank ai) 
+                    return;
+                
                 for (int i = 0; i < ModLoader.ModTanks.Length; i++)
-                    if (ai.AiTankType == ModLoader.ModTanks[i].Type) {
-                        ModLoader.ModTanks[i].TakeDamage(ai, true, context);
-                    }
+                    if (ai.AiTankType == ModLoader.ModTanks[i].Type) 
+                        ModLoader.ModTanks[i].TakeDamage(ai, Properties.Armor.HitPoints == 0, context);
+
+                return;
             }
+        }
+        
+        if (this is AITank _ai) {
+            for (int i = 0; i < ModLoader.ModTanks.Length; i++)
+                if (_ai.AiTankType == ModLoader.ModTanks[i].Type) {
+                    ModLoader.ModTanks[i].TakeDamage(_ai, true, context);
+                }
         }
 
         OnDamage?.Invoke(this, true, context);
