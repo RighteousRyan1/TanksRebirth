@@ -169,22 +169,7 @@ namespace TanksRebirth.GameContent.UI
             QuitButton.SetDimensions(() => QuitButtonPos.ToResolution(), () => QuitButtonSize.ToResolution());
             QuitButton.OnLeftClick = (ui) =>
             {
-                if (!MainMenu.Active)
-                {
-                    foreach (var elem in MainMenu.campaignNames)
-                        elem?.Remove();
-                    MainMenu.campaignNames.Clear();
-                    MainMenu.Open();
-                    if (LevelEditor.Active) {
-                        LevelEditor.Close(true);
-                        LevelEditor.Editing = false;
-                    }
-
-                    Client.SendQuit();
-                }
-                else {
-                    TankGame.Quit();
-                }
+                QuitOut();
             };
 
             BackButton = new(TankGame.GameLanguage.Back, font, Color.WhiteSmoke)
@@ -200,6 +185,30 @@ namespace TanksRebirth.GameContent.UI
             ControlsUI.Initialize();
             VolumeUI.Initialize();
             PostInitialize();
+        }
+
+        public static void QuitOut(bool netSent = false) {
+            if (!MainMenu.Active) {
+                // if a non-host client tries quitting, deny them
+                if (!netSent && Client.IsConnected() && !Client.IsHost()) {
+                    ChatSystem.SendMessage("Only the host can quit the campaign!", Color.Red);
+                    SoundPlayer.SoundError();
+                    return;
+                }
+                if (!netSent)
+                    Client.SendQuit();
+                foreach (var elem in MainMenu.campaignNames)
+                    elem?.Remove();
+                MainMenu.campaignNames.Clear();
+                MainMenu.Open();
+                if (LevelEditor.Active) {
+                    LevelEditor.Close(true);
+                    LevelEditor.Editing = false;
+                }
+            }
+            else {
+                TankGame.Quit();
+            }
         }
 
         private static void PostInitialize()

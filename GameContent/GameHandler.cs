@@ -39,22 +39,26 @@ public class GameHandler {
 
     public const int MAX_AI_TANKS = 50;
     public const int MAX_PLAYERS = 4;
+    public const int MAX_PARTICLES = 15000;
 
     public delegate void PostRender();
-
     public static event PostRender? OnPostRender;
-
     public delegate void PostUpdate();
-
     public static event PostUpdate? OnPostUpdate;
 
-    public static Random GameRand = new();
+    private static int _randSeed;
+    public static int GameRandSeed {
+        get => _randSeed;
+        set {
+            _randSeed = value;
+            GameRand = new(value);
+        }
+    }
+    /// <summary>The randomizing behind the game's events. The seed can be modified if you change <see cref="GameRandSeed"/>.</summary>
+    public static Random GameRand { get; private set; }
 
-    /// <summary>The handle of the game's logging file. Used to write information to a file that can be read after the game closes.</summary>
-    public static Logger ClientLog { get; set; }
-
-    public static XpBar Xp;
-    public static ParticleSystem Particles { get; } = new(15000);
+    public static XpBar ExperienceBar;
+    public static ParticleSystem Particles { get; private set; }
 
     // TODO: convert to lists.
     public static AITank[] AllAITanks = new AITank[MAX_AI_TANKS];
@@ -65,6 +69,17 @@ public class GameHandler {
         GameProperties.OnMissionEnd += IntermissionHandler.DoEndMissionWorkload;
     }
 
+    internal static void Initialize() {
+        GameRandSeed = DateTime.Now.Millisecond;
+        GameRand = new(GameRandSeed);
+
+        AllAITanks = new AITank[MAX_AI_TANKS];
+        AllPlayerTanks = new PlayerTank[MAX_PLAYERS];
+        AllTanks = new Tank[MAX_PLAYERS + MAX_AI_TANKS];
+
+        ExperienceBar = new();
+        Particles = new(MAX_PARTICLES);
+    }
     // todo: balls
     private static void SmokeNadeDebug() {
 
@@ -139,10 +154,7 @@ public class GameHandler {
         if (MainMenu.Active)
             PlayerTank.SetLives(999);
         // technically, level 0 in code is level 1, so we want to use that number (1) if the user is level 0.
-        if (Xp is not null)
-            Xp.Value = TankGame.GameData.ExpLevel - MathF.Floor(TankGame.GameData.ExpLevel);
-        else
-            Xp = new();
+        ExperienceBar.Value = TankGame.GameData.ExpLevel - MathF.Floor(TankGame.GameData.ExpLevel);
 
         VanillaAchievements.Repository.UpdateCompletions(TankGame.VanillaAchievementPopupHandler);
 
@@ -226,7 +238,7 @@ public class GameHandler {
         TankGame.Instance.GraphicsDevice.BlendState = BlendState.AlphaBlend;
 
         if (!MainMenu.Active && !LevelEditor.Editing)
-            Xp?.Render(TankGame.SpriteRenderer, new(WindowUtils.WindowWidth / 2, 50.ToResolutionY()), new Vector2(100, 20).ToResolution(), Anchor.Center, Color.Red, Color.Lime);
+            ExperienceBar?.Render(TankGame.SpriteRenderer, new(WindowUtils.WindowWidth / 2, 50.ToResolutionY()), new Vector2(100, 20).ToResolution(), Anchor.Center, Color.Red, Color.Lime);
         // CHECK: move this back if necessary
         MapRenderer.RenderWorldModels();
 

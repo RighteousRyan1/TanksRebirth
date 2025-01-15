@@ -66,7 +66,7 @@ public static class MapRenderer
         LoadVanillaTextures();
         if (folder.ToLower() == "vanilla")
         {
-            GameHandler.ClientLog.Write($"Loaded vanilla textures for Scene.", LogType.Info);
+            TankGame.ClientLog.Write($"Loaded vanilla textures for Scene.", LogType.Info);
             return;
         }
 
@@ -80,7 +80,7 @@ public static class MapRenderer
 
         if (!Directory.Exists(path))
         {
-            GameHandler.ClientLog.Write($"Error: Directory '{path}' not found when attempting texture pack load.", LogType.Warn);
+            TankGame.ClientLog.Write($"Error: Directory '{path}' not found when attempting texture pack load.", LogType.Warn);
             return;
         }
 
@@ -91,7 +91,7 @@ public static class MapRenderer
             if (Assets.Any(type => type.Key == Path.GetFileNameWithoutExtension(file)))
             {
                 Assets[Path.GetFileNameWithoutExtension(file)] = Texture2D.FromFile(TankGame.Instance.GraphicsDevice, Path.Combine(path, Path.GetFileName(file)));
-                GameHandler.ClientLog.Write($"Texture pack '{folder}' overrided texture '{Path.GetFileNameWithoutExtension(file)}'", LogType.Info);
+                TankGame.ClientLog.Write($"Texture pack '{folder}' overrided texture '{Path.GetFileNameWithoutExtension(file)}'", LogType.Info);
             }
         }
     }

@@ -112,10 +112,7 @@ public static class MainMenu {
 
     public static UITextButton LanternMode;
 
-    public static int MonochromeValue;
-
-    public static int RandomTanksUpper;
-    public static int RandomTanksLower;
+    public static UITextButton DisguiseMode;
 
     #endregion
 
@@ -139,8 +136,6 @@ public static class MainMenu {
 
     private static float _spinOffset; // shut up IDE pls CS0649 bs
 
-    //private static float _spinMod = 0.001f;
-    //private static float _spinLenience = 1.5f;
     private static float _bpm = 75;
     private static float _rotationBpm = 500; // more? (200 default)
     private static float _sclMax = 50; // 250 default
@@ -404,13 +399,13 @@ public static class MainMenu {
             IsVisible = false,
             OnLeftClick = (arg) => {
                 Client.SendDisconnect(NetPlay.CurrentClient.Id, NetPlay.CurrentClient.Name, "User left.");
-                Client.client.Disconnect();
+                Client.NetClient.Disconnect();
 
                 NetPlay.CurrentClient = null;
                 NetPlay.CurrentServer = null;
 
                 Server.ConnectedClients = null;
-                Server.serverNetManager = null;
+                Server.NetManager = null;
 
                 NetPlay.UnmapClientNetworking();
                 NetPlay.UnmapServerNetworking();
@@ -561,22 +556,22 @@ public static class MainMenu {
             Tooltip = "Makes every tank the tank of your choice." +
             "\n\"Bump Up\" effects are ignored.",
             OnLeftClick = (elem) => {
-                if (MonochromeValue + 1 >= TankID.Collection.Count)
-                    MonochromeValue = TankID.None;
-                else if (MonochromeValue + 1 == TankID.Random) // we do a little defensive programming xd
-                    MonochromeValue = TankID.Brown;
+                if (Difficulties.MonochromeValue + 1 >= TankID.Collection.Count)
+                    Difficulties.MonochromeValue = TankID.None;
+                else if (Difficulties.MonochromeValue + 1 == TankID.Random) // we do a little defensive programming xd
+                    Difficulties.MonochromeValue = TankID.Brown;
                 else
-                    MonochromeValue++;
-                Difficulties.Types["Monochrome"] = MonochromeValue != TankID.None;
+                    Difficulties.MonochromeValue++;
+                Difficulties.Types["Monochrome"] = Difficulties.MonochromeValue != TankID.None;
             },
             OnRightClick = (elem) => {
-                if (MonochromeValue - 1 < TankID.None)
-                    MonochromeValue = TankID.Collection.Count - 1;
-                else if (MonochromeValue - 1 == TankID.Random)
-                    MonochromeValue = TankID.None;
+                if (Difficulties.MonochromeValue - 1 < TankID.None)
+                    Difficulties.MonochromeValue = TankID.Collection.Count - 1;
+                else if (Difficulties.MonochromeValue - 1 == TankID.Random)
+                    Difficulties.MonochromeValue = TankID.None;
                 else
-                    MonochromeValue--;
-                Difficulties.Types["Monochrome"] = MonochromeValue != TankID.None;
+                    Difficulties.MonochromeValue--;
+                Difficulties.Types["Monochrome"] = Difficulties.MonochromeValue != TankID.None;
             }
         };
         Monochrome.SetDimensions(100, 750, 300, 40);
@@ -616,24 +611,29 @@ public static class MainMenu {
             Tooltip = "Every tank is now randomized." +
             "\nA black tank could appear where a brown tank would be!" +
             "\n\nLeft click to increase the upper limit." +
-            "\nRight click to increase the lower limit.",
+            "\nRight click to increase the lower limit." +
+            "\nMiddle click to reset both to 'None'.",
             OnLeftClick = (elem) => {
-                if (RandomTanksUpper + 1 >= TankID.Collection.Count)
-                    RandomTanksUpper = TankID.None;
-                else if (RandomTanksUpper + 1 == TankID.Random) // we do a little defensive programming xd
-                    RandomTanksUpper = TankID.Brown;
+                if (Difficulties.RandomTanksUpper + 1 >= TankID.Collection.Count)
+                    Difficulties.RandomTanksUpper = TankID.None;
+                else if (Difficulties.RandomTanksUpper + 1 == TankID.Random) // we do a little defensive programming xd
+                    Difficulties.RandomTanksUpper = TankID.Brown;
                 else
-                    RandomTanksUpper++;
-                Difficulties.Types["RandomizedTanks"] = RandomTanksLower != TankID.None && RandomTanksUpper != TankID.None;
+                    Difficulties.RandomTanksUpper++;
+                Difficulties.Types["RandomizedTanks"] = Difficulties.RandomTanksLower != TankID.None && Difficulties.RandomTanksUpper != TankID.None;
             },
             OnRightClick = (elem) => {
-                if (RandomTanksLower + 1 >= TankID.Collection.Count)
-                    RandomTanksLower = TankID.None;
-                else if (RandomTanksLower + 1 == TankID.Random) // we do a little defensive programming xd
-                    RandomTanksLower = TankID.Brown;
+                if (Difficulties.RandomTanksLower + 1 >= TankID.Collection.Count)
+                    Difficulties.RandomTanksLower = TankID.None;
+                else if (Difficulties.RandomTanksLower + 1 == TankID.Random) // we do a little defensive programming xd
+                    Difficulties.RandomTanksLower = TankID.Brown;
                 else
-                    RandomTanksLower++;
-                Difficulties.Types["RandomizedTanks"] = RandomTanksLower != TankID.None && RandomTanksUpper != TankID.None;
+                    Difficulties.RandomTanksLower++;
+                Difficulties.Types["RandomizedTanks"] = Difficulties.RandomTanksLower != TankID.None && Difficulties.RandomTanksUpper != TankID.None;
+            },
+            OnMiddleClick = (elem) => {
+                Difficulties.RandomTanksLower = TankID.None;
+                Difficulties.RandomTanksUpper = TankID.None;
             }
         };
         RandomizedTanks.SetDimensions(450, 500, 300, 40);
@@ -706,6 +706,29 @@ public static class MainMenu {
             }
         };
         LanternMode.SetDimensions(800, 450, 300, 40);
+        DisguiseMode = new("Disguise", font, Color.White) {
+            IsVisible = false,
+            Tooltip = "You become a tank of your choosing during gameplay.",
+            OnLeftClick = (elem) => {
+                if (Difficulties.DisguiseValue + 1 >= TankID.Collection.Count)
+                    Difficulties.DisguiseValue = TankID.None;
+                else if (Difficulties.DisguiseValue + 1 == TankID.Random) // we do a little defensive programming xd
+                    Difficulties.DisguiseValue = TankID.Brown;
+                else
+                    Difficulties.DisguiseValue++;
+                Difficulties.Types["Disguise"] = Difficulties.DisguiseValue != TankID.None;
+            },
+            OnRightClick = (elem) => {
+                if (Difficulties.DisguiseValue - 1 < TankID.None)
+                    Difficulties.DisguiseValue = TankID.Collection.Count - 1;
+                else if (Difficulties.DisguiseValue - 1 == TankID.Random)
+                    Difficulties.DisguiseValue = TankID.None;
+                else
+                    Difficulties.DisguiseValue--;
+                Difficulties.Types["Disguise"] = Difficulties.DisguiseValue != TankID.None;
+            }
+        };
+        DisguiseMode.SetDimensions(800, 500, 300, 40);
         // make all buttons not-interactable for non-host clients.
     }
     private static void SetCampaignDisplay() {
@@ -751,7 +774,7 @@ public static class MainMenu {
             //elem.HasScissor = true;
             //elem.
             elem.OnLeftClick += (el) => {
-                if (Client.IsConnected() && Server.serverNetManager is null) {
+                if (Client.IsConnected() && !Client.IsHost()) {
                     ChatSystem.SendMessage("You cannot initiate a game as you are not the host!", Color.Red);
                     SoundPlayer.SoundError();
                     return;
@@ -826,11 +849,11 @@ public static class MainMenu {
             }
         }
         if (wasConfirmed) {
+            var camp = Campaign.Load(path);
 
             Client.RequestStartGame(MissionCheckpoint, true);
 
-            var camp = Campaign.Load(path);
-
+            // if campaign verification across clients fails, RequestStartGame should come before this branch.
             // check if the CampaignCheckpoint number is less than the number of missions in the array
             if (MissionCheckpoint >= camp.CachedMissions.Length) {
                 // if it is, notify the user that the checkpoint is too high via the chat, and play the error sound
@@ -893,6 +916,7 @@ public static class MainMenu {
         BulletBlocking.IsVisible = visible;
         FFA.IsVisible = visible;
         LanternMode.IsVisible = visible;
+        DisguiseMode.IsVisible = visible;
     }
     internal static void SetPrimaryMenuButtonsVisibility(bool visible) {
         GameUI.OptionsButton.IsVisible = visible;
@@ -933,7 +957,7 @@ public static class MainMenu {
             ServerNameInput.IsVisible = visible && !Client.IsConnected();
         }
         DisconnectButton.IsVisible = visible && Client.IsConnected();
-        StartMPGameButton.IsVisible = visible && Server.serverNetManager is not null;
+        StartMPGameButton.IsVisible = visible && Client.IsHost();
     }
 
     private static string[] _info;
@@ -983,8 +1007,9 @@ public static class MainMenu {
     public static void Update() {
         if (!_initialized || !_diffButtonsInitialized)
             return;
-        Monochrome.Text = "Monochrome: " + TankID.Collection.GetKey(MonochromeValue);
-        RandomizedTanks.Text = $"Randomized Tanks\nLower: {TankID.Collection.GetKey(RandomTanksLower)} | Upper: {TankID.Collection.GetKey(RandomTanksUpper)}";
+        DisguiseMode.Text = "Disguise: " + TankID.Collection.GetKey(Difficulties.DisguiseValue);
+        Monochrome.Text = "Monochrome: " + TankID.Collection.GetKey(Difficulties.MonochromeValue);
+        RandomizedTanks.Text = $"Randomized Tanks\nLower: {TankID.Collection.GetKey(Difficulties.RandomTanksLower)} | Upper: {TankID.Collection.GetKey(Difficulties.RandomTanksUpper)}";
         if (MenuState == State.Mulitplayer) {
             if (DebugManager.DebuggingEnabled)
                 if (InputUtils.AreKeysJustPressed(Keys.Q, Keys.W)) {
@@ -995,13 +1020,8 @@ public static class MainMenu {
                 }
         }
 
-        if (Active) {
-            if (Client.IsConnected()) {
-                if (Server.serverNetManager is not null) {
-                    Client.SendDiffiulties();
-                }
-            }
-        }
+        if (Active && Client.IsConnected() && Client.IsHost())
+            Client.SendDiffiulties();
 
         VolumeMultiplier = SteamworksUtils.IsOverlayActive ? 0.25f : 1f;
 
@@ -1056,6 +1076,7 @@ public static class MainMenu {
         BulletBlocking.Color = Difficulties.Types["BulletBlocking"] ? Color.Lime : Color.Red;
         FFA.Color = Difficulties.Types["FFA"] ? Color.Lime : Color.Red;
         LanternMode.Color = Difficulties.Types["LanternMode"] ? Color.Lime : Color.Red;
+        DisguiseMode.Color = Difficulties.Types["Disguise"] ? Color.Lime : Color.Red;
 
 
         if (_musicFading) {
@@ -1244,7 +1265,7 @@ public static class MainMenu {
             if (loadForMenu)
                 _curMenuMission = mission;
         } catch {
-            GameHandler.ClientLog.Write("Unable to fetch map data via the internet. Oops!", LogType.Warn);
+            TankGame.ClientLog.Write("Unable to fetch map data via the internet. Oops!", LogType.Warn);
         }
     }
     private static void HideAll() {
@@ -1298,14 +1319,11 @@ public static class MainMenu {
                 Server.ConnectedClients = new Client[4];
                 NetPlay.ServerName = "ServerName";
                 for (int i = 0; i < 4; i++) {
-                    Server.ConnectedClients[i] = new() {
-                        Id = i,
-                        Name = "Client" + i
-                    };
+                    Server.ConnectedClients[i] = new(i, "Client" + i);
                 }
             }
             // TODO: rework this very rudimentary ui
-            if ((NetPlay.CurrentServer is not null && (Server.ConnectedClients is not null || NetPlay.ServerName is not null)) || (Client.IsConnected() && Client.lobbyDataReceived)) {
+            if ((NetPlay.CurrentServer is not null && (Server.ConnectedClients is not null || NetPlay.ServerName is not null)) || (Client.IsConnected() && Client.LobbyDataReceived)) {
                 Vector2 initialPosition = new(WindowUtils.WindowWidth * 0.75f, WindowUtils.WindowHeight * 0.25f);
                 TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"\"{NetPlay.ServerName}\"", initialPosition - new Vector2(0, 40), Color.White, new Vector2(0.6f));
                 TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"Connected Players:", initialPosition, Color.White, new Vector2(0.6f));
@@ -1343,7 +1361,7 @@ public static class MainMenu {
                     $"\nTry downloading the Vanilla campaign by pressing 'Enter'." +
                     $"\nCampaign files belong in '{Path.Combine(TankGame.SaveDirectory, "Campaigns").Replace(Environment.UserName, "%UserName%")}' (press TAB to open on Windows)", new Vector2(12, 12).ToResolution(), Color.White, new Vector2(0.75f).ToResolution(), 0f, Vector2.Zero);
 
-                if (Client.IsConnected() && Server.serverNetManager is not null)
+                if (Client.IsConnected() && Client.IsHost())
                     TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"The people who are connected to you MUST own this\ncampaign, and it MUST have the same file name.\nOtherwise, the campaign will not load.", new(12, WindowUtils.WindowHeight / 2), Color.White, new Vector2(0.75f).ToResolution(), 0f, Vector2.Zero);
 
                 if (InputUtils.KeyJustPressed(Keys.Tab)) {

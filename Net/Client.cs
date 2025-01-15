@@ -14,59 +14,61 @@ public class Client {
     public static event ClientStart? OnClientStart;
     public delegate void ClientDisconnected(Client client);
     public static event ClientDisconnected? OnClientDisconnect;
-    public static NetManager clientNetManager;
-    public static EventBasedNetListener clientNetListener;
-    public static NetPeer client;
+    public static NetManager ClientManager;
+    public static EventBasedNetListener ClientListener;
+    public static NetPeer NetClient;
     public static int PingTime = 60;
-    public static bool lobbyDataReceived;
+    public static bool LobbyDataReceived;
 
     public int Id;
     public string Name;
+    internal Client(int id, string username) {
+        Id = id;
+        Name = username;
+    }
 
     public static void CreateClient(string username) {
-        clientNetListener = new();
-        clientNetManager = new(clientNetListener);
-        clientNetManager.NatPunchEnabled = true;
-        clientNetManager.UpdateTime = 15;
-        clientNetManager.Start();
+        ClientListener = new();
+        ClientManager = new(ClientListener) {
+            NatPunchEnabled = true,
+            UpdateTime = 15
+        };
+        ClientManager.Start();
         NetPlay.MapClientNetworking();
 
         Console.ForegroundColor = ConsoleColor.Green;
 
-        Client c = new();
-        // set client name to username
-        c.Name = username;
+        Client c = new(0, username);
 
-        GameHandler.ClientLog.Write($"Created a new client with name '{username}'.", Internals.LogType.Debug);
+        TankGame.ClientLog.Write($"Created a new client with name '{username}'.", Internals.LogType.Debug);
         NetPlay.CurrentClient = c;
     }
 
     public static void AttemptConnectionTo(string address, int port, string password) {
-        GameHandler.ClientLog.Write($"Attempting connection to server...", Internals.LogType.Debug);
-        clientNetManager.Start();
-        client = clientNetManager.Connect(address, port, password);
-        if (client is not null)
-            OnClientStart?.Invoke(NetPlay.CurrentClient);
+        TankGame.ClientLog.Write($"Attempting connection to server...", Internals.LogType.Debug);
+        ClientManager?.Start();
+        NetClient = ClientManager!.Connect(address, port, password);
+        if (NetClient is not null)
+            OnClientStart?.Invoke(NetPlay.CurrentClient!);
     }
 
     public static void SendCommandUsage(string command) {
-        if (!IsConnected())
-            return;
+        if (!IsConnected()) return;
 
         NetDataWriter message = new();
         message.Put(PacketID.SendCommandUsage);
         message.Put(command);
 
-        client.Send(message, DeliveryMethod.ReliableOrdered);
+        NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
     public static void SendQuit() {
-        if (MainMenu.Active || !IsConnected())
+        if (MainMenu.Active || !IsConnected() || !Client.IsHost())
             return;
 
         NetDataWriter message = new();
         message.Put(PacketID.QuitLevel);
 
-        client.Send(message, DeliveryMethod.ReliableOrdered);
+        NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
     public static void SendLives() {
         if (MainMenu.Active || !IsConnected())
@@ -78,7 +80,7 @@ public class Client {
         message.Put(NetPlay.CurrentClient.Id);
         message.Put(PlayerTank.GetMyLives());
 
-        client.Send(message, DeliveryMethod.Unreliable);
+        NetClient.Send(message, DeliveryMethod.Unreliable);
     }
     public static void SyncCleanup() {
         if (MainMenu.Active || !IsConnected())
@@ -87,20 +89,20 @@ public class Client {
         NetDataWriter message = new();
         message.Put(PacketID.Cleanup);
 
-        client.Send(message, DeliveryMethod.Unreliable);
+        NetClient.Send(message, DeliveryMethod.Unreliable);
     }
     public static void SendClientInfo() {
         NetDataWriter message = new();
         message.Put(PacketID.ClientInfo);
         message.Put(NetPlay.CurrentClient.Name);
 
-        client.Send(message, DeliveryMethod.ReliableOrdered);
+        NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
     public static void RequestLobbyInfo() {
         NetDataWriter message = new();
         message.Put(PacketID.LobbyInfo);
 
-        client.Send(message, DeliveryMethod.ReliableOrdered);
+        NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
     public static void RequestStartGame(int checkpoint, bool shouldProgressMissions) {
         if (MainMenu.Active || !IsConnected())
@@ -110,7 +112,7 @@ public class Client {
         message.Put(checkpoint);
         message.Put(shouldProgressMissions);
 
-        client.Send(message, DeliveryMethod.ReliableOrdered);
+        NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
     public static void RequestPlayerTankSpawn(PlayerTank tank) {
         NetDataWriter message = new();
@@ -123,7 +125,7 @@ public class Client {
         message.Put(tank.TankRotation);
         message.Put(tank.TurretRotation);
 
-        client.Send(message, DeliveryMethod.ReliableOrdered);
+        NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
     public static void SyncPlayerTank(PlayerTank tank) {
         if (MainMenu.Active || !IsConnected())
@@ -140,7 +142,7 @@ public class Client {
         message.Put(tank.Velocity.X);
         message.Put(tank.Velocity.Y);
 
-        client.Send(message, DeliveryMethod.Unreliable);
+        NetClient.Send(message, DeliveryMethod.Unreliable);
     }
     public static void SyncAITank(AITank tank) {
         if (MainMenu.Active || !IsConnected())
@@ -157,7 +159,7 @@ public class Client {
         message.Put(tank.Velocity.X);
         message.Put(tank.Velocity.Y);
 
-        client.Send(message, DeliveryMethod.Unreliable);
+        NetClient.Send(message, DeliveryMethod.Unreliable);
     }
     /// <summary>Be sure to sync by accessing the index of the tank from the AllTanks array. (<see cref="GameHandler.AllTanks"/>)
     /// <para></para>
@@ -183,7 +185,7 @@ public class Client {
         // FIXME: could probably use more syncing... who cares?
 
 
-        client.Send(message, DeliveryMethod.Sequenced);
+        NetClient.Send(message, DeliveryMethod.Sequenced);
     }
     public static void SyncDamage(int id/*, ITankHurtContext context*/) {
         if (!IsConnected() || MainMenu.Active)
@@ -196,7 +198,7 @@ public class Client {
         //message.Put(context.TankId);
         //message.Put(context.IsPlayer);
 
-        client.Send(message, DeliveryMethod.ReliableOrdered);
+        NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
     public static void SyncShellDestroy(Shell shell, Shell.DestructionContext cxt) {
         if (!IsConnected() || MainMenu.Active)
@@ -210,7 +212,7 @@ public class Client {
         message.Put(Array.IndexOf(shell.Owner.OwnedShells, shell));
         message.Put((byte)cxt);
 
-        client.Send(message, DeliveryMethod.ReliableOrdered);
+        NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
     // maybe have owner stuff go here?
     public static void SyncMineDetonate(Mine mine) {
@@ -221,9 +223,8 @@ public class Client {
 
         message.Put(mine.Id);
 
-        client.Send(message, DeliveryMethod.ReliableOrdered);
+        NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
-
     public static void SyncMinePlace(Vector2 position, float detonateTime, int id) {
         if (MainMenu.Active || !IsConnected())
             return;
@@ -235,7 +236,7 @@ public class Client {
         message.Put(detonateTime);
         message.Put(id);
 
-        client.Send(message, DeliveryMethod.Sequenced);
+        NetClient.Send(message, DeliveryMethod.Sequenced);
     }
     public static void SendMessage(string text, Color color, string sender) {
         if (!IsConnected())
@@ -247,14 +248,8 @@ public class Client {
         message.Put(color);
         message.Put(sender);
 
-        client.Send(message, DeliveryMethod.ReliableOrdered);
+        NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
-    public static bool IsConnected() {
-        if (client is not null)
-            return client.ConnectionState == ConnectionState.Connected;
-        return false;
-    }
-
     public static void SendServerNameChange(string newName) {
         if (!IsConnected())
             return;
@@ -262,7 +257,7 @@ public class Client {
         message.Put(PacketID.ServerNameSync);
         message.Put(newName);
 
-        Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered);
+        Server.NetManager.SendToAll(message, DeliveryMethod.ReliableOrdered);
     }
     /// <summary>
     /// Sends a campaign through the connected server.
@@ -317,9 +312,8 @@ public class Client {
             }
         }
 
-        client.Send(message, DeliveryMethod.Sequenced);
+        NetClient.Send(message, DeliveryMethod.Sequenced);
     }
-
     public static void SendCampaignByName(string name, int missionId) {
         if (!IsConnected())
             return;
@@ -329,7 +323,7 @@ public class Client {
         message.Put(name);
         message.Put(missionId);
 
-        client.Send(message, DeliveryMethod.ReliableOrdered);
+        NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
     public static void SendDisconnect(int peerId, string name, string reason) {
         if (!IsConnected())
@@ -342,9 +336,8 @@ public class Client {
         message.Put(name);
         message.Put(reason);
 
-        client.Send(message, DeliveryMethod.ReliableOrdered);
+        NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
-
     public static void SendCampaignStatus(string campaignName, int clientId, bool success) {
         if (!IsConnected())
             return;
@@ -355,9 +348,8 @@ public class Client {
         message.Put(clientId);
         message.Put(success);
 
-        client.Send(message, DeliveryMethod.ReliableOrdered);
+        NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
-
     public static void SendFile(string filePath) {
         var fBytes = File.ReadAllBytes(filePath);
 
@@ -376,26 +368,27 @@ public class Client {
             SendCampaignBytes(byteSplit);
         }
     }
-
     public static void SendCampaignBytes(byte[] bytes) {
         NetDataWriter message = new();
 
         //message.Put(PacketID.SendCampaignBytes);
         message.Put(bytes);
 
-        client.Send(message, DeliveryMethod.ReliableOrdered);
+        NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
-
     public static void SendDiffiulties() {
         NetDataWriter message = new();
 
         message.Put(PacketID.SyncDifficulties);
         foreach (var item in Difficulties.Types) {
-            message.Put(item.Value); 
+            message.Put(item.Value);
         }
-        client.Send(message, DeliveryMethod.Sequenced);
+        message.Put(Difficulties.RandomTanksLower);
+        message.Put(Difficulties.RandomTanksUpper);
+        message.Put(Difficulties.MonochromeValue);
+        message.Put(Difficulties.DisguiseValue);
+        NetClient.Send(message, DeliveryMethod.Sequenced);
     }
-
     public static void SendMapPing(Vector3 location, int pingId, int playerId) {
         NetDataWriter message = new();
 
@@ -404,6 +397,12 @@ public class Client {
         message.Put(pingId);
         message.Put(playerId);
 
-        client.Send(message, DeliveryMethod.ReliableOrdered);
+        NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
+    public static bool IsConnected() {
+        if (NetClient is not null)
+            return NetClient.ConnectionState == ConnectionState.Connected;
+        return false;
+    }
+    public static bool IsHost() => IsConnected() && Server.NetManager is not null;
 }

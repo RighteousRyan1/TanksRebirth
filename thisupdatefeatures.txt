@@ -1,31 +1,23 @@
 /* Enter message here */
 
-This update brings a handful of changes to modding capabilities, the game itself, and many great fixes that people have complained about.
 
 Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed later) speedruns will get their spot on the main menu!
 
 ## Additions
 
-- No content additions! But additions to the modding capabilities have been made plenty.
+
 
 ## Changes
 
-- "Third person" mode is now "POV" mode (first person).
-- Bullet tracking UI is now white for unused bullets
+
 
 ## Source Code Changes (for modders)
 
-- `ITankHurtContext`s' properties have been streamlined
-- `Explosion.Source` -> `Explosion.Owner`
-- Added new `ModShell` and `ModBlock` for more extensive modding capabilities!
+
 
 ## Fixes
 
-- Z-fighting on tank shadows no longer occurs
-- Fixed campaign prematurely ending when the player had 1 life remaining sometimes
-- Fix modding crashes related to adding and removing content
-- Fix addition/removal of modded tanks within the level editor due to missing declarations for the modded tank
-- Fix animation bleeding when exiting missions/campaigns
+
 
 ## TODO
 

@@ -54,9 +54,15 @@ public struct TankTemplate {
         if (!IsPlayer)
             throw new Exception($"{nameof(IsPlayer)} is false. This method cannot execute.");
 
-        var player = Difficulties.Types["RandomPlayer"]
-            ? new PlayerTank(PlayerType, false, AITank.PickRandomTier())
-            : new PlayerTank(PlayerType);
+        PlayerTank player;
+
+        // change player based on chosen difficulties
+        if (Difficulties.Types["RandomPlayer"])
+            player = new PlayerTank(PlayerType, false, AITank.PickRandomTier());
+        else if (Difficulties.Types["Disguise"])
+            player = new PlayerTank(PlayerType, false, Difficulties.DisguiseValue);
+        else
+            player = new PlayerTank(PlayerType);
         player.Body.Position = Position / Tank.UNITS_PER_METER;
         player.Position = Position;
         player.TankRotation = Rotation;

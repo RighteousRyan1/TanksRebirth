@@ -1,19 +1,20 @@
 ﻿using Microsoft.Xna.Framework;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.Systems;
 
-public record Difficulties
-{
-    public static Dictionary<string, bool> Types = new()
-    {
+public record Difficulties {
+    public static int MonochromeValue { get; set; }
+    public static int RandomTanksUpper { get; set; }
+    public static int RandomTanksLower { get; set; }
+    public static int DisguiseValue { get; set; }
+
+    public static Dictionary<string, bool> Types = new() {
         ["TanksAreCalculators"] = false,
         ["PieFactory"] = false,
         ["UltraMines"] = false,
@@ -37,7 +38,8 @@ public record Difficulties
         ["RandomPlayer"] = false,
         ["BulletBlocking"] = false,
         ["FFA"] = false,
-        ["LanternMode"] = false
+        ["LanternMode"] = false,
+        ["Disguise"] = false
     };
     public static TankTemplate[] HijackTanks(TankTemplate[] tanks) {
         for (int i = 0; i < tanks.Length; i++) {
@@ -47,7 +49,7 @@ public record Difficulties
 
             var newTemplate = t;
 
-            newTemplate.AiTier = GameHandler.GameRand.Next(MainMenu.RandomTanksLower, MainMenu.RandomTanksUpper + 1);
+            newTemplate.AiTier = Server.ServerRandom.Next(RandomTanksLower, RandomTanksUpper + 1);
             tanks[i] = newTemplate;
         }
         return tanks;

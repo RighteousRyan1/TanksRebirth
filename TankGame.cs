@@ -51,9 +51,8 @@ namespace TanksRebirth;
 public class TankGame : Game {
     #region Fields1
     public static Language GameLanguage = new();
-
+    /// <summary>The identifier of the main thread.</summary>
     public static int MainThreadId { get; private set; }
-
     public static bool IsMainThread => Environment.CurrentManagedThreadId == MainThreadId;
 
     /// <summary>Currently not functional due to programming problems.</summary>
@@ -65,10 +64,8 @@ public class TankGame : Game {
 
     /// <summary>The hardware used by the user's computer.</summary>
     public readonly ComputerSpecs CompSpecs;
-
     public static TimeSpan RenderTime { get; private set; }
     public static TimeSpan LogicTime { get; private set; }
-
     public static double LogicFPS { get; private set; }
     public static double RenderFPS { get; private set; }
 
@@ -82,9 +79,7 @@ public class TankGame : Game {
             using Process process = Process.GetCurrentProcess();
             return process.PrivateMemorySize64;
         }
-        private set { }
     }
-
     public static GameTime LastGameTime { get; private set; }
     public static uint UpdateCount { get; private set; }
 
@@ -130,13 +125,15 @@ public class TankGame : Game {
 
     public readonly string MOTD;
     #endregion
+    /// <summary>The handle of the game's logging file. Used to write information to a file that can be read after the game closes.</summary>
+    public static Logger ClientLog { get; private set; }
     public TankGame() : base() {
         Directory.CreateDirectory(SaveDirectory);
         Directory.CreateDirectory(Path.Combine(SaveDirectory, "Resource Packs", "Scene"));
         Directory.CreateDirectory(Path.Combine(SaveDirectory, "Resource Packs", "Tank"));
         Directory.CreateDirectory(Path.Combine(SaveDirectory, "Resource Packs", "Music"));
         Directory.CreateDirectory(Path.Combine(SaveDirectory, "Logs"));
-        GameHandler.ClientLog = new(Path.Combine(SaveDirectory, "Logs"), "client");
+        ClientLog = new(Path.Combine(SaveDirectory, "Logs"), "client");
         try {
             var bytes = WebUtils.DownloadWebFile(
                 "https://raw.githubusercontent.com/RighteousRyan1/tanks_rebirth_motds/master/motd.txt",
@@ -161,16 +158,16 @@ public class TankGame : Game {
         CompSpecs = ComputerSpecs.GetSpecs(out bool error);
 
         if (error) {
-            GameHandler.ClientLog.Write(
+            ClientLog.Write(
                 "Unable to load computer specs: Specified OS Architecture is not Windows.", LogType.Warn);
         }
         else {
-            GameHandler.ClientLog.Write($"CPU: {CompSpecs.CPU.Name} (Core Count: {CompSpecs.CPU.CoreCount})", LogType.Info);
-            GameHandler.ClientLog.Write($"GPU: {CompSpecs.GPU.Name} (Driver Version: {CompSpecs.GPU.DriverVersion} | VRAM: {MathF.Round(MemoryParser.FromGigabytes(CompSpecs.GPU.VRAM))} GB)", LogType.Info);
-            GameHandler.ClientLog.Write($"Physical Memory (RAM): {CompSpecs.RAM.Manufacturer} {MathF.Round(MemoryParser.FromGigabytes(CompSpecs.RAM.TotalPhysical))} GB {CompSpecs.RAM.Type}@{CompSpecs.RAM.ClockSpeed}Mhz", LogType.Info);
+            ClientLog.Write($"CPU: {CompSpecs.CPU.Name} (Core Count: {CompSpecs.CPU.CoreCount})", LogType.Info);
+            ClientLog.Write($"GPU: {CompSpecs.GPU.Name} (Driver Version: {CompSpecs.GPU.DriverVersion} | VRAM: {MathF.Round(MemoryParser.FromGigabytes(CompSpecs.GPU.VRAM))} GB)", LogType.Info);
+            ClientLog.Write($"Physical Memory (RAM): {CompSpecs.RAM.Manufacturer} {MathF.Round(MemoryParser.FromGigabytes(CompSpecs.RAM.TotalPhysical))} GB {CompSpecs.RAM.Type}@{CompSpecs.RAM.ClockSpeed}Mhz", LogType.Info);
         }
 
-        GameHandler.ClientLog.Write($"Playing on Operating System '{OperatingSystem}'", LogType.Info);
+        ClientLog.Write($"Playing on Operating System '{OperatingSystem}'", LogType.Info);
 
         // IOUtils.SetAssociation(".mission", "MISSION_FILE", "TanksRebirth.exe", "Tanks Rebirth mission file");
 
@@ -190,7 +187,7 @@ public class TankGame : Game {
 
         GameVersion = typeof(TankGame).Assembly.GetName().Version!;
 
-        GameHandler.ClientLog.Write(
+        ClientLog.Write(
             $"Running {typeof(TankGame).Assembly.GetName().Name} on version {GameVersion}'", LogType.Info);
     }
 
@@ -212,6 +209,7 @@ public class TankGame : Game {
     }
 
     protected override void Initialize() {
+        GameHandler.Initialize();
         GameDir = Directory.GetCurrentDirectory();
         if (Debugger.IsAttached && SteamAPI.IsSteamRunning())
             SteamworksUtils.Initialize();
@@ -219,10 +217,10 @@ public class TankGame : Game {
         PingMenu.Initialize();
 
         GameHandler.MapEvents();
-        GameHandler.ClientLog.Write($"Mapped events...", LogType.Info);
+        ClientLog.Write($"Mapped events...", LogType.Info);
 
         DiscordRichPresence.Load();
-        GameHandler.ClientLog.Write($"Loaded Discord Rich Presence...", LogType.Info);
+        ClientLog.Write($"Loaded Discord Rich Presence...", LogType.Info);
 
         // systems = ReflectionUtils.GetInheritedTypesOf<IGameSystem>(Assembly.GetExecutingAssembly());
 
@@ -237,13 +235,13 @@ public class TankGame : Game {
 
         Graphics.ApplyChanges();
 
-        GameHandler.ClientLog.Write($"Applying changes to graphics device... ({Graphics.PreferredBackBufferWidth}x{Graphics.PreferredBackBufferHeight})", LogType.Info);
+        ClientLog.Write($"Applying changes to graphics device... ({Graphics.PreferredBackBufferWidth}x{Graphics.PreferredBackBufferHeight})", LogType.Info);
 
         GameData.Setup();
         if (File.Exists(Path.Combine(GameData.Directory, GameData.Name)))
             GameData.Deserialize();
 
-        GameHandler.ClientLog.Write($"Loaded save data.", LogType.Info);
+        ClientLog.Write($"Loaded save data.", LogType.Info);
 
         VanillaAchievements.InitializeToRepository();
 
@@ -258,10 +256,10 @@ public class TankGame : Game {
         => Instance.Exit();
 
     protected override void OnExiting(object sender, EventArgs args) {
-        GameHandler.ClientLog.Write($"Handling termination process...", LogType.Info);
+        ClientLog.Write($"Handling termination process...", LogType.Info);
         GameData.TimePlayed += CurrentSessionTimer.Elapsed;
         CurrentSessionTimer.Stop();
-        GameHandler.ClientLog.Dispose();
+        ClientLog.Dispose();
         SettingsHandler = new(Settings, Path.Combine(SaveDirectory, "settings.json"));
         JsonSerializerOptions opts = new() { WriteIndented = true };
         SettingsHandler.Serialize(opts, true);
@@ -291,10 +289,10 @@ public class TankGame : Game {
 
             ChatSystem.SendMessage(profiler.ToString(), Color.Brown);
 
-            GameHandler.ClientLog.Write("Sucessfully analyzed hardware.", LogType.Info);
+            ClientLog.Write("Sucessfully analyzed hardware.", LogType.Info);
         }
         else {
-            GameHandler.ClientLog.Write("Failed to analyze hardware.", LogType.Warn);
+            ClientLog.Write("Failed to analyze hardware.", LogType.Warn);
         }
         // I forget why this check is needed...
         ChatSystem.Initialize();
@@ -317,7 +315,7 @@ public class TankGame : Game {
         _fontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/es_ES.ttf"));
         _fontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/ru_RU.ttf"));
 
-        GameHandler.ClientLog.Write($"Loaded fonts.", LogType.Info);
+        ClientLog.Write($"Loaded fonts.", LogType.Info);
 
         TextFont = _fontSystem.GetFont(30);
         TextFontLarge = _fontSystem.GetFont(120);
@@ -338,11 +336,11 @@ public class TankGame : Game {
         IsSouthernHemi = RegionUtils.IsSouthernHemisphere(RegionInfo.CurrentRegion.EnglishName);
 
         if (IsSouthernHemi)
-            GameHandler.ClientLog.Write("User is in the southern hemisphere.", LogType.Info);
+            ClientLog.Write("User is in the southern hemisphere.", LogType.Info);
         else
-            GameHandler.ClientLog.Write("User is in the northern hemisphere.", LogType.Info);
+            ClientLog.Write("User is in the northern hemisphere.", LogType.Info);
 
-        GameHandler.ClientLog.Write($"Loaded user settings.", LogType.Info);
+        ClientLog.Write($"Loaded user settings.", LogType.Info);
 
         #region Config Initialization
 
@@ -365,7 +363,7 @@ public class TankGame : Game {
         Graphics.PreferredBackBufferWidth = Settings.ResWidth;
         Graphics.PreferredBackBufferHeight = Settings.ResHeight;
 
-        GameHandler.ClientLog.Write($"Applied user settings.", LogType.Info);
+        ClientLog.Write($"Applied user settings.", LogType.Info);
 
         Tank.SetAssetNames();
         TankMusicSystem.SetAssetAssociations();
@@ -412,10 +410,10 @@ public class TankGame : Game {
             });
         }
 
-        GameHandler.ClientLog.Write("Running in directory: " + GameDir, LogType.Info);
+        ClientLog.Write("Running in directory: " + GameDir, LogType.Info);
 
-        GameHandler.ClientLog.Write($"Content loaded in {s.Elapsed}.", LogType.Debug);
-        GameHandler.ClientLog.Write($"DebugMode: {Debugger.IsAttached}", LogType.Debug);
+        ClientLog.Write($"Content loaded in {s.Elapsed}.", LogType.Debug);
+        ClientLog.Write($"DebugMode: {Debugger.IsAttached}", LogType.Debug);
 
         s.Stop();
 
@@ -448,15 +446,15 @@ public class TankGame : Game {
 
     public static void ReportError(Exception e, bool notifyUser = true, bool openFile = true, bool writeToLog = true) {
         if (writeToLog)
-            GameHandler.ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.ErrorFatal);
+            ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.ErrorFatal);
         if (notifyUser) {
             var str = $"The error above is important for the developer of this game. If you are able to report it, explain how to reproduce it.";
             if (openFile)
                 str += $"\nThis file was opened for your sake of helping the developer out.";
-            GameHandler.ClientLog.Write(str, LogType.Info);
+            ClientLog.Write(str, LogType.Info);
         }
         if (openFile)
-            Process.Start(new ProcessStartInfo(GameHandler.ClientLog.FileName) {
+            Process.Start(new ProcessStartInfo(ClientLog.FileName) {
                 UseShellExecute = true,
                 WorkingDirectory = Path.Combine(SaveDirectory, "Logs"),
             });
@@ -626,9 +624,9 @@ public class TankGame : Game {
         }
 
         if (NetPlay.CurrentClient is not null)
-            Client.clientNetManager.PollEvents();
+            Client.ClientManager.PollEvents();
         if (NetPlay.CurrentServer is not null)
-            Server.serverNetManager.PollEvents();
+            Server.NetManager.PollEvents();
         if (!IsCrashInfoVisible) {
             UIElement.UpdateElements();
             GameUI.UpdateButtons();

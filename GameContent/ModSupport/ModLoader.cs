@@ -69,7 +69,7 @@ public static class ModLoader
     public static string LoadType = string.Empty;
     private static void AttemptCompile(string modName) {
         if (!TankGame.IsWindows) {
-            GameHandler.ClientLog.Write("Auto-compilation of mod failed. Specified OS architecture is not Windows.", Internals.LogType.Warn);
+            TankGame.ClientLog.Write("Auto-compilation of mod failed. Specified OS architecture is not Windows.", Internals.LogType.Warn);
             return;
         }
         else {
@@ -98,7 +98,7 @@ public static class ModLoader
             process.WaitForExit();
             // check if any version starts with a '8' to indicate that it is a .NET 8.0 SDK.
             if (!versions.Any(x => x.StartsWith('8'))) {
-                GameHandler.ClientLog.Write("Auto-compilation of mod failed. User does not have a .NET 8.0 SDK installed.", LogType.Warn);
+                TankGame.ClientLog.Write("Auto-compilation of mod failed. User does not have a .NET 8.0 SDK installed.", LogType.Warn);
                 return;
             }
         }
@@ -352,7 +352,7 @@ public static class ModLoader
                                                         modTank.Name.AddLocalization(LangCode.English, $"{tanksMod.InternalName}.{modTank.GetType().Name}");
                                                         modTank!.Register();
                                                         DifficultyAlgorithm.TankDiffs[modTank.Type] = 0f;
-                                                        GameHandler.ClientLog.Write($"Loaded modded tank '{modTank.Name.GetLocalizedString(LangCode.English)}'", LogType.Info);
+                                                        TankGame.ClientLog.Write($"Loaded modded tank '{modTank.Name.GetLocalizedString(LangCode.English)}'", LogType.Info);
                                                     } 
                                                     else if (type2.IsSubclassOf(typeof(ModBlock)) && !type.IsAbstract) {
                                                         var modBlock = (Activator.CreateInstance(type2) as ModBlock)!;
@@ -364,7 +364,7 @@ public static class ModLoader
                                                         ModContent.moddedTypes.Add(modBlock);
                                                         modBlock.Name.AddLocalization(LangCode.English, $"{tanksMod.InternalName}.{modBlock.GetType().Name}");
                                                         modBlock.Register();
-                                                        GameHandler.ClientLog.Write($"Loaded modded block '{modBlock.Name.GetLocalizedString(LangCode.English)}'", LogType.Info);
+                                                        TankGame.ClientLog.Write($"Loaded modded block '{modBlock.Name.GetLocalizedString(LangCode.English)}'", LogType.Info);
                                                     }
                                                     else if (type2.IsSubclassOf(typeof(ModShell)) && !type.IsAbstract) {
                                                         var modShell = (Activator.CreateInstance(type2) as ModShell)!;
@@ -376,7 +376,7 @@ public static class ModLoader
                                                         ModContent.moddedTypes.Add(modShell);
                                                         modShell.Name.AddLocalization(LangCode.English, $"{tanksMod.InternalName}.{modShell.GetType().Name}");
                                                         modShell.Register();
-                                                        GameHandler.ClientLog.Write($"Loaded modded shell '{modShell.Name.GetLocalizedString(LangCode.English)}'", LogType.Info);
+                                                        TankGame.ClientLog.Write($"Loaded modded shell '{modShell.Name.GetLocalizedString(LangCode.English)}'", LogType.Info);
                                                     }
                                                 }
 
@@ -396,7 +396,7 @@ public static class ModLoader
                                 });
 
                                 ActionsComplete++;
-                                GameHandler.ClientLog.Write($"Loaded mod assembly '{assembly.GetName().Name}', version '{assembly.GetName().Version}'", Internals.LogType.Info);
+                                TankGame.ClientLog.Write($"Loaded mod assembly '{assembly.GetName().Name}', version '{assembly.GetName().Version}'", Internals.LogType.Info);
                             });
                             break;
                         }

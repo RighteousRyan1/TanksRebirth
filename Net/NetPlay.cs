@@ -37,26 +37,26 @@ public class NetPlay {
     public static event OnRecieveClientPacketDelegate? OnReceiveClientPacket;
 
     public static void MapClientNetworking() {
-        Client.clientNetListener.NetworkReceiveEvent += OnPacketRecieve_Client;
-        Client.clientNetListener.PeerConnectedEvent += OnClientJoin;
+        Client.ClientListener.NetworkReceiveEvent += OnPacketRecieve_Client;
+        Client.ClientListener.PeerConnectedEvent += OnClientJoin;
     }
     public static void UnmapClientNetworking() {
-        Client.clientNetListener.NetworkReceiveEvent -= OnPacketRecieve_Client;
-        Client.clientNetListener.PeerConnectedEvent -= OnClientJoin;
+        Client.ClientListener.NetworkReceiveEvent -= OnPacketRecieve_Client;
+        Client.ClientListener.PeerConnectedEvent -= OnClientJoin;
     }
 
     private static void OnClientJoin(NetPeer peer) {
-        GameHandler.ClientLog.Write($"Connected to remote server.", Internals.LogType.Debug);
+        TankGame.ClientLog.Write($"Connected to remote server.", Internals.LogType.Debug);
         ChatSystem.SendMessage("Connected to server.", Color.Lime, netSend: true);
 
         Client.SendClientInfo();
     }
 
     public static void MapServerNetworking() {
-        Server.serverNetListener.NetworkReceiveEvent += OnPacketRecieve_Server;
+        Server.NetListener.NetworkReceiveEvent += OnPacketRecieve_Server;
     }
     public static void UnmapServerNetworking() {
-        Server.serverNetListener.NetworkReceiveEvent -= OnPacketRecieve_Server;
+        Server.NetListener.NetworkReceiveEvent -= OnPacketRecieve_Server;
     }
 
     private static void OnPacketRecieve_Client(NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod) {
@@ -78,7 +78,6 @@ public class NetPlay {
                 CurrentClient.Id = returnedID;
                 Client.RequestLobbyInfo();
                 break;
-
             case PacketID.LobbyInfo:
                 int serverMaxClients = reader.GetByte();
 
@@ -95,16 +94,13 @@ public class NetPlay {
                         clientId = reader.GetByte();
                         string clientName = reader.GetString();
 
-                        Server.ConnectedClients[i] = new Client() {
-                            Id = clientId,
-                            Name = clientName,
-                        };
+                        Server.ConnectedClients[i] = new Client(clientId, clientName);
                     }
                 }
 
                 Server.CurrentClientCount = reader.GetInt();
 
-                Client.lobbyDataReceived = true;
+                Client.LobbyDataReceived = true;
 
                 SoundPlayer.PlaySoundInstance("Assets/sounds/menu/client_join.ogg", SoundContext.Effect, 0.75f);
 
@@ -123,7 +119,6 @@ public class NetPlay {
                 Server.CurrentClientCount--;
 
                 // shift from the client id index in the array to the end of the array.
-
                 // i.e: [ "Name1", "Name2", "Name3", "Name4", "Name5", null, null, null ]
                 // client "Name3" now leaves...
                 // i.e: [ "Name1", "Name2", null, "Name4", "Name5", null, null, null ]
@@ -135,6 +130,11 @@ public class NetPlay {
                 break;
             #endregion
             #region One-Off
+            case PacketID.SyncSeeds:
+                var millis = reader.GetInt();
+                Server.RandSeed = millis;
+                ChatSystem.SendMessage("Seed synced: " + millis, Color.Lime);
+                break;
             case PacketID.SendCommandUsage:
                 var cmd = reader.GetString();
                 ChatSystem.SendMessage(cmd, Color.White, "cmd_sync");
@@ -220,7 +220,7 @@ public class NetPlay {
 
                 break;
             case PacketID.QuitLevel:
-                GameUI.QuitButton.OnLeftClick?.Invoke(null);
+                GameUI.QuitOut(true);
                 break;
             case PacketID.PlayerSpawn:
 
@@ -318,7 +318,7 @@ public class NetPlay {
                 SceneManager.CleanupScene();
                 break;
             case PacketID.SendCampaignStatus:
-                if (Server.serverNetManager is not null) {
+                if (Client.IsHost()) {
                     var camName = reader.GetString();
                     var senderId = reader.GetInt();
                     var successful = reader.GetBool();
@@ -388,6 +388,10 @@ public class NetPlay {
                 for (int i = 0; i < Difficulties.Types.Count; i++) {
                     Difficulties.Types[Difficulties.Types.Keys.ElementAt(i)] = reader.GetBool();
                 }
+                Difficulties.RandomTanksLower = reader.GetInt();
+                Difficulties.RandomTanksUpper = reader.GetInt();
+                Difficulties.MonochromeValue = reader.GetInt();
+                Difficulties.DisguiseValue = reader.GetInt();
                 break;
                 #endregion
         }
@@ -419,18 +423,17 @@ public class NetPlay {
             case PacketID.ClientInfo:
                 string name = reader.GetString();
 
-                Server.ConnectedClients[Server.CurrentClientCount] = new Client() {
-                    Id = Server.CurrentClientCount,
-                    Name = name
-                };
-                message.Put((byte)Server.CurrentClientCount);
+                Server.ConnectedClients[Server.CurrentClientCount] = new Client(Server.CurrentClientCount, name);
+                message.Put(Server.CurrentClientCount);
                 Server.CurrentClientCount++;
 
                 //Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered);
                 peer.Send(message, deliveryMethod);
+
+                Server.SyncSeeds();
                 break;
             case PacketID.LobbyInfo:
-                message.Put((byte)Server.MaxClients);     //This dang ushort was throwing the entire packet off
+                message.Put(Server.MaxClients);     //This dang ushort was throwing the entire packet off
 
                 message.Put(CurrentServer.Name);
 
@@ -446,7 +449,7 @@ public class NetPlay {
 
                 message.Put(Server.CurrentClientCount);
 
-                Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered, peer);     //This sends to everyone but the one who sent
+                Server.NetManager.SendToAll(message, deliveryMethod, peer);     //This sends to everyone but the one who sent
                 peer.Send(message, deliveryMethod);     //This sends it back to the guy who sent
 
                 break;
@@ -459,15 +462,18 @@ public class NetPlay {
                 message.Put(clientName);
                 message.Put(reason);
 
-                Server.serverNetManager.SendToAll(message, DeliveryMethod.Sequenced, peer);
+                Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;
             #endregion
             #region One-Off
+            case PacketID.SyncSeeds:
+                // no implementation since the server itself sends this packet.
+                break;
             case PacketID.SendCommandUsage:
                 var cmd = reader.GetString();
                 message.Put(cmd);
 
-                Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered, peer);
+                Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;
             case PacketID.ChatMessage:
                 string msg = reader.GetString();
@@ -478,7 +484,7 @@ public class NetPlay {
                 message.Put(color);
                 message.Put(sender);
 
-                Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered, peer);
+                Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;
             case PacketID.StartGame:
                 int checkpoint = reader.GetInt();
@@ -486,10 +492,10 @@ public class NetPlay {
                 message.Put(checkpoint);
                 message.Put(shouldMissionsProgress);
 
-                Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered, peer);
+                Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;
             case PacketID.QuitLevel:
-                Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered, peer);
+                Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;
             case PacketID.PlayerSpawn:
                 var type = reader.GetInt();
@@ -507,13 +513,13 @@ public class NetPlay {
                 message.Put(tnkRot);
                 message.Put(turRot);
 
-                Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered, peer);
+                Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;
             case PacketID.TankDamage:
                 var hurtTankId = reader.GetInt();
                 message.Put(hurtTankId);
 
-                Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered, peer);
+                Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;
             case PacketID.ShellDestroy:
                 var ownerId = reader.GetInt();
@@ -524,13 +530,13 @@ public class NetPlay {
                 message.Put(ownerShellIndex);
                 message.Put(cxt);
 
-                Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered, peer);
+                Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;
             case PacketID.MineDetonate:
                 var destroyedMineId = reader.GetInt();
                 message.Put(destroyedMineId);
 
-                Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered, peer);
+                Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;
             case PacketID.ShellFire:
                 var shellType = reader.GetInt();
@@ -545,7 +551,7 @@ public class NetPlay {
                 message.Put(shellRicochets);
                 message.Put(shellOwner);
 
-                Server.serverNetManager.SendToAll(message, DeliveryMethod.Sequenced, peer);
+                Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;
             case PacketID.MinePlacement:
                 var minePos = reader.GetVector2();
@@ -555,7 +561,7 @@ public class NetPlay {
                 message.Put(minePos);
                 message.Put(detTime);
                 message.Put(mineOwner);
-                Server.serverNetManager.SendToAll(message, DeliveryMethod.Sequenced, peer);
+                Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;
             case PacketID.SendCampaign:
                 var cName = reader.GetString();
@@ -610,7 +616,7 @@ public class NetPlay {
                     }
                 }
 
-                Server.serverNetManager.SendToAll(message, DeliveryMethod.Sequenced, peer);
+                Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;
             case PacketID.SendCampaignByName:
                 var campName = reader.GetString();
@@ -618,10 +624,10 @@ public class NetPlay {
                 message.Put(campName);
                 message.Put(missionId);
 
-                Server.serverNetManager.SendToAll(message, DeliveryMethod.Sequenced, peer);
+                Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;
             case PacketID.Cleanup:
-                Server.serverNetManager.SendToAll(message, DeliveryMethod.Sequenced, peer);
+                Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;
             case PacketID.SendCampaignStatus:
                 var camName = reader.GetString();
@@ -631,7 +637,7 @@ public class NetPlay {
                 message.Put(cliId);
                 message.Put(success);
                 //peer.Send(message, DeliveryMethod.Sequenced);
-                Server.serverNetManager.SendToAll(message, DeliveryMethod.Sequenced, peer);
+                Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;
             case PacketID.MapPing:
                 var loc = reader.GetVector3();
@@ -641,7 +647,7 @@ public class NetPlay {
                 message.Put(pingId);
                 message.Put(pid);
 
-                Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered, peer);
+                Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;
             #endregion
             #region ConstantSends
@@ -662,7 +668,7 @@ public class NetPlay {
                 message.Put(vX);
                 message.Put(vY);
 
-                Server.serverNetManager.SendToAll(message, deliveryMethod, peer);
+                Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;
             case PacketID.SyncAiTank:
                 int id1 = reader.GetInt();
@@ -681,7 +687,7 @@ public class NetPlay {
                 message.Put(vX1);
                 message.Put(vY1);
 
-                Server.serverNetManager.SendToAll(message, deliveryMethod, peer);
+                Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;
             case PacketID.SyncLives:
 
@@ -691,14 +697,22 @@ public class NetPlay {
                 message.Put(clid);
                 message.Put(lives);
 
-                Server.serverNetManager.SendToAll(message, deliveryMethod, peer);
+                Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;
             case PacketID.SyncDifficulties:
                 for (int i = 0; i < Difficulties.Types.Count; i++) {
                     var val = reader.GetBool();
                     message.Put(val);
                 }
-                Server.serverNetManager.SendToAll(message, deliveryMethod, peer);
+                var lower = reader.GetInt();
+                var upper = reader.GetInt();
+                var monoValue = reader.GetInt();
+                var disguiseValue = reader.GetInt();
+                message.Put(lower);
+                message.Put(upper);
+                message.Put(monoValue);
+                message.Put(disguiseValue);
+                Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;
                 #endregion
         }

@@ -89,7 +89,7 @@ public class Campaign
     {
         if (CurrentMissionId + 1 >= MAX_MISSIONS || CurrentMissionId + 1 >= CachedMissions.Length)
         {
-            GameHandler.ClientLog.Write($"CachedMissions[{CurrentMissionId + 1}] is not existent.", LogType.Warn);
+            TankGame.ClientLog.Write($"CachedMissions[{CurrentMissionId + 1}] is not existent.", LogType.Warn);
             return;
         }
         CurrentMissionId++;
@@ -99,8 +99,8 @@ public class Campaign
         TrackedSpawnPoints = new (Vector2, bool)[LoadedMission.Tanks.Length];
         for (int i = 0; i < LoadedMission.Tanks.Length; i++)
         {
-            TrackedSpawnPoints[i].Item1 = LoadedMission.Tanks[i].Position;
-            TrackedSpawnPoints[i].Item2 = true;
+            TrackedSpawnPoints[i].Position = LoadedMission.Tanks[i].Position;
+            TrackedSpawnPoints[i].Alive = true;
         }
         // run line 120 and 121 in each when i get back
     }
@@ -122,8 +122,8 @@ public class Campaign
             var template = LoadedMission.Tanks[i];
 
             if (spawnNewSet) {
-                TrackedSpawnPoints[i].Item1 = LoadedMission.Tanks[i].Position;
-                TrackedSpawnPoints[i].Item2 = true;
+                TrackedSpawnPoints[i].Position = LoadedMission.Tanks[i].Position;
+                TrackedSpawnPoints[i].Alive = true;
             }
 
             while (template.Rotation < 0) {
@@ -136,7 +136,7 @@ public class Campaign
             
             if (!template.IsPlayer)
             {
-                if (TrackedSpawnPoints[i].Item2)
+                if (TrackedSpawnPoints[i].Alive)
                 {
                     var tank = template.GetAiTank();
 
@@ -238,7 +238,7 @@ public class Campaign
         }
 
         CurrentMission = LoadedMission;
-        GameHandler.ClientLog.Write($"Loaded mission '{LoadedMission.Name}' with {LoadedMission.Tanks.Length} tanks and {LoadedMission.Blocks.Length} obstacles.", LogType.Info);
+        TankGame.ClientLog.Write($"Loaded mission '{LoadedMission.Name}' with {LoadedMission.Tanks.Length} tanks and {LoadedMission.Blocks.Length} obstacles.", LogType.Info);
 
         OnMissionLoad?.Invoke(ref GameHandler.AllTanks, ref Block.AllBlocks);
     }
@@ -257,7 +257,7 @@ public class Campaign
         Directory.CreateDirectory(root);
         if (!Directory.Exists(path))
         {
-            GameHandler.ClientLog.Write($"Could not find a campaign folder with name {campaignName}. Aborting folder load...", LogType.Warn);
+            TankGame.ClientLog.Write($"Could not find a campaign folder with name {campaignName}. Aborting folder load...", LogType.Warn);
             return default!;
         }
 

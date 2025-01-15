@@ -138,7 +138,7 @@ public static class CommandGlobals {
                     playerTank = GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()];
 
                 if (playerTank == null) { // The playerTank was out of range... Somehow...
-                    GameHandler.ClientLog.Write(
+                    TankGame.ClientLog.Write(
                         $"\'changetankproperty\' command failed! The tank identifier was out of the range of the array! The tank identifier is {NetPlay.GetMyClientId()}, while the length of the list was {GameHandler.AllPlayerTanks.Length}", 
                         LogType.ErrorFatal,
                         false);
@@ -193,7 +193,7 @@ public static class CommandGlobals {
                 }
                 catch (TargetInvocationException targetInvex){
                     ChatSystem.SendMessage($"Property '{args[0]}' is not asssignable from the given argument.", Color.Red);
-                    GameHandler.ClientLog.Write(targetInvex.ToString(), LogType.ErrorFatal, false);
+                    TankGame.ClientLog.Write(targetInvex.ToString(), LogType.ErrorFatal, false);
                 }
             })
     };

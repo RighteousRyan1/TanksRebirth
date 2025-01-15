@@ -77,7 +77,7 @@ public static class DiscordRichPresence {
                     case MainMenu.State.Mulitplayer:
                         if (Client.IsConnected()) {
                             var name = NetPlay.CurrentServer is not null ? NetPlay.CurrentServer.Name : "Loading...";
-                            if (Server.serverNetManager is not null)
+                            if (Client.IsHost())
                                 SetDetails($"Hosting a multiplayer lobby '{name}'");
                             else
                                 SetDetails($"In a multiplayer lobby '{name}'");

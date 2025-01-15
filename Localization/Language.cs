@@ -212,12 +212,12 @@ namespace TanksRebirth.Localization
                 var path = Path.Combine(Path.Combine("Localization", $"{code}.loc"));
                 JsonHandler<Language> handler = new(lang, path);
 
-                GameContent.GameHandler.ClientLog.Write($"Loading language '{code}'... [ " + path + " ]", Internals.LogType.Debug);
+                TankGame.ClientLog.Write($"Loading language '{code}'... [ " + path + " ]", Internals.LogType.Debug);
                 lang.ActiveLang = code;
                 lang = handler.Deserialize();
             }
             catch {
-                GameContent.GameHandler.ClientLog.Write($"Loading language '{code}'... Could not find localization file or error loading! Using default language '{LangCode.English}' instead.", Internals.LogType.Debug);
+                TankGame.ClientLog.Write($"Loading language '{code}'... Could not find localization file or error loading! Using default language '{LangCode.English}' instead.", Internals.LogType.Debug);
                 var path = Path.Combine(Path.Combine("Localization", $"en_US.loc"));
                 JsonHandler<Language> handler = new(lang, path);
                 lang = handler.Deserialize();

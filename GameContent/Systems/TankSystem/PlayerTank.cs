@@ -40,8 +40,7 @@ public class PlayerTank : Tank
     /// Adds lives to the player in Single-Player, adds to the lives of all players in Multiplayer.
     /// </summary>
     /// <param name="num">How many lives to add.</param>
-    public static void AddLives(int num)
-    {
+    public static void AddLives(int num) {
         if (Client.IsConnected())
             Lives[NetPlay.GetMyClientId()] += num;
         else
@@ -52,8 +51,7 @@ public class PlayerTank : Tank
     /// Sets the lives of the player in Single-Player, sets the lives of all players in Multiplayer.
     /// </summary>
     /// <param name="num">How many lives to set the player(s) to.</param>
-    public static void SetLives(int num)
-    {
+    public static void SetLives(int num) {
         if (Client.IsConnected())
             Lives[NetPlay.GetMyClientId()] = num;
         else
@@ -64,26 +62,20 @@ public class PlayerTank : Tank
     #region The Rest
     public static int MyTeam;
     public static int MyTankType;
-
     public static int StartingLives = 3;
-
     // public static Dictionary<PlayerType, Dictionary<TankTier, int>> TanksKillDict = new(); // this campaign only!
     public static Dictionary<int, int> TankKills = []; // this campaign only!
-
-    public struct DeterministicPlayerStats {
+    public struct DeterministicPlayerStats
+    {
         public int ShellsShotThisCampaign;
         public int ShellHitsThisCampaign;
         public int MinesLaidThisCampaign;
         public int MineHitsThisCampaign;
         public int SuicidesThisCampaign; // self-damage this campaign?
     }
-
     public static DeterministicPlayerStats PlayerStatistics;
-
     public static bool _drawShotPath;
-
     public static int KillCount = 0;
-
     public int PlayerId { get; }
     public int PlayerType { get; }
 
@@ -104,16 +96,13 @@ public class PlayerTank : Tank
     public Vector2 oldPosition;
 
     private bool _isPlayerModel;
-
     #endregion
     public void SwapTankTexture(Texture2D texture) => _tankTexture = texture;
-    public PlayerTank(int playerType, bool isPlayerModel = true, int copyTier = TankID.None)
-    {
+    public PlayerTank(int playerType, bool isPlayerModel = true, int copyTier = TankID.None) {
         Model = GameResources.GetGameResource<Model>(isPlayerModel ? "Assets/tank_p" : "Assets/tank_e");
         if (copyTier == TankID.None)
             _tankTexture = Assets[$"tank_" + PlayerID.Collection.GetKey(playerType).ToLower()];
-        else
-        {
+        else {
             _tankTexture = Assets[$"tank_" + TankID.Collection.GetKey(copyTier).ToLower()];
             var dummy = new AITank(copyTier, true, false);
 
@@ -122,7 +111,7 @@ public class PlayerTank : Tank
             // TODO: should probably be written better
 
 
-				// TODO: hardcode hell. bad. suck. balls
+            // TODO: hardcode hell. bad. suck. balls
             if (Difficulties.Types["BulletHell"])
                 dummy.Properties.RicochetCount /= 3;
 
@@ -150,7 +139,7 @@ public class PlayerTank : Tank
         PlayerId = playerType; //index;
 
         GameHandler.AllPlayerTanks[PlayerId] = this;
-        
+
         if (copyTier == TankID.None)
             ApplyDefaults(ref Properties);
 
@@ -162,8 +151,7 @@ public class PlayerTank : Tank
 
         base.Initialize();
     }
-
-    public sealed override void ApplyDefaults(ref TankProperties properties)  {
+    public sealed override void ApplyDefaults(ref TankProperties properties) {
         properties.TreadVolume = 0.2f;
         properties.ShellCooldown = 5; // 5
         properties.ShootStun = 5; // 5
@@ -192,11 +180,10 @@ public class PlayerTank : Tank
             PlayerID.YellowPlr => Color.Yellow,
             _ => throw new Exception($"The player type with number \"{PlayerType}\" is not mapped to a color!"),
         };
-        
+
         base.ApplyDefaults(ref properties);
     }
-
-    public override void Update()  {
+    public override void Update() {
         /*if (Input.KeyJustPressed(Keys.P))
             foreach (var m in TankDeathMark.deathMarks)
                 m?.ResurrectTank();*/
@@ -208,9 +195,9 @@ public class PlayerTank : Tank
         // 3/4pi = left
 
         base.Update();
-        
+
         if (LevelEditor.Active) return;
-        
+
         if (NetPlay.IsClientMatched(PlayerId))
             Client.SyncPlayerTank(this);
 
@@ -235,7 +222,7 @@ public class PlayerTank : Tank
 
         if (IsIngame) {
             //if (Client.IsConnected())
-                //ChatSystem.SendMessage($"PlayerId: {PlayerId} | ClientId: {NetPlay.CurrentClient.Id}", Color.White);
+            //ChatSystem.SendMessage($"PlayerId: {PlayerId} | ClientId: {NetPlay.CurrentClient.Id}", Color.White);
             if (NetPlay.IsClientMatched(PlayerId) && !IntermissionSystem.IsAwaitingNewMission) {
                 if (!Difficulties.Types["POV"] || LevelEditor.Active || MainMenu.Active) {
                     Vector3 mouseWorldPos = MatrixUtils.GetWorldPosition(MouseUtils.MousePosition, -11f);
@@ -267,7 +254,8 @@ public class PlayerTank : Tank
                         }
                     }
                 }
-            } else {
+            }
+            else {
                 // Due to a problem of Inheritance, the tank will move 1.8 in the x coordinate for no reason. Thanks OOP, a revolution in Computer Science.
                 // To avoid this, just force the damn speed to zero when we are not in a mission.
                 Speed = 0;
@@ -294,16 +282,13 @@ public class PlayerTank : Tank
 
         oldPosition = Position;
     }
-
-    public override void Remove(bool nullifyMe)
-    {
+    public override void Remove(bool nullifyMe) {
         if (nullifyMe) {
             GameHandler.AllPlayerTanks[PlayerId] = null;
             GameHandler.AllTanks[WorldId] = null;
         }
         base.Remove(nullifyMe);
     }
-
     public override void Shoot(bool fxOnly) {
         PlayerStatistics.ShellsShotThisCampaign++;
         base.Shoot(false);
@@ -314,8 +299,7 @@ public class PlayerTank : Tank
         base.LayMine();
     }
 
-    private void ControlHandle_ConsoleController()
-    {
+    private void ControlHandle_ConsoleController() {
 
         var leftStick = InputUtils.CurrentGamePadSnapshot.ThumbSticks.Left;
         var rightStick = InputUtils.CurrentGamePadSnapshot.ThumbSticks.Right;
@@ -325,44 +309,37 @@ public class PlayerTank : Tank
 
         var rotationMet = TankRotation > TargetTankRotation - Properties.MaximalTurn && TankRotation < TargetTankRotation + Properties.MaximalTurn;
 
-        if (!rotationMet)
-        {
+        if (!rotationMet) {
             Speed -= Properties.Deceleration * TankGame.DeltaTime;
             if (Speed < 0)
                 Speed = 0;
             IsTurning = true;
         }
-        else
-        {
+        else {
             if (Difficulties.Types["POV"])
                 preterbedVelocity = preterbedVelocity.RotatedByRadians(-TurretRotation + MathHelper.Pi);
 
             Speed += Properties.Acceleration * TankGame.DeltaTime;
             if (Speed > Properties.MaxSpeed)
                 Speed = Properties.MaxSpeed;
-            
-            if (leftStick.Length() > 0)
-            {
+
+            if (leftStick.Length() > 0) {
                 playerControl_isBindPressed = true;
             }
 
-            if (dPad.Down == ButtonState.Pressed)
-            {
+            if (dPad.Down == ButtonState.Pressed) {
                 playerControl_isBindPressed = true;
                 preterbedVelocity.Y = 1;
             }
-            if (dPad.Up == ButtonState.Pressed)
-            {
+            if (dPad.Up == ButtonState.Pressed) {
                 playerControl_isBindPressed = true;
                 preterbedVelocity.Y = -1;
             }
-            if (dPad.Left == ButtonState.Pressed)
-            {
+            if (dPad.Left == ButtonState.Pressed) {
                 playerControl_isBindPressed = true;
                 preterbedVelocity.X = -1;
             }
-            if (dPad.Right == ButtonState.Pressed)
-            {
+            if (dPad.Right == ButtonState.Pressed) {
                 playerControl_isBindPressed = true;
                 preterbedVelocity.X = 1;
             }
@@ -374,8 +351,7 @@ public class PlayerTank : Tank
 
         TankRotation = MathUtils.RoughStep(TankRotation, TargetTankRotation, Properties.TurningSpeed * TankGame.DeltaTime);
 
-        if (rightStick.Length() > 0)
-        {
+        if (rightStick.Length() > 0) {
             var unprojectedPosition = MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), World, View, Projection);
             Mouse.SetPosition((int)(unprojectedPosition.X + rightStick.X * 250), (int)(unprojectedPosition.Y - rightStick.Y * 250));
             //Mouse.SetPosition((int)(Input.CurrentMouseSnapshot.X + rightStick.X * TankGame.Instance.Settings.ControllerSensitivity), (int)(Input.CurrentMouseSnapshot.Y - rightStick.Y * TankGame.Instance.Settings.ControllerSensitivity));
@@ -388,8 +364,7 @@ public class PlayerTank : Tank
         if (PlaceMine.JustPressed)
             LayMine();
     }
-    private void ControlHandle_Keybinding()
-    {
+    private void ControlHandle_Keybinding() {
         if (controlFirePath.JustPressed)
             _drawShotPath = !_drawShotPath;
         if (controlMine.JustPressed)
@@ -418,23 +393,19 @@ public class PlayerTank : Tank
         }*/
 
 
-        if (controlDown.IsPressed)
-        {
+        if (controlDown.IsPressed) {
             playerControl_isBindPressed = true;
             preterbedVelocity.Y = 1;
         }
-        if (controlUp.IsPressed)
-        {
+        if (controlUp.IsPressed) {
             playerControl_isBindPressed = true;
             preterbedVelocity.Y = -1;
         }
-        if (controlLeft.IsPressed)
-        {
+        if (controlLeft.IsPressed) {
             playerControl_isBindPressed = true;
             preterbedVelocity.X = -1;
         }
-        if (controlRight.IsPressed)
-        {
+        if (controlRight.IsPressed) {
             playerControl_isBindPressed = true;
             preterbedVelocity.X = 1;
         }
@@ -450,8 +421,7 @@ public class PlayerTank : Tank
 
         Velocity = Vector2.UnitY.RotatedByRadians(TankRotation) * Speed;
     }
-    public override void Destroy(ITankHurtContext context)
-    {
+    public override void Destroy(ITankHurtContext context) {
         if (Client.IsConnected()) {
             Tank culprit = this;
             if (context is TankHurtContextMine thcm) {
@@ -470,10 +440,8 @@ public class PlayerTank : Tank
         else
             AddLives(-1);
 
-        if (context is not null)
-        {
-            if (context.IsPlayer)
-            {
+        if (context is not null) {
+            if (context.IsPlayer) {
                 // friendly fire counts as suicides lol
                 // this probably makes sense
                 TankGame.GameData.Suicides++;
@@ -494,17 +462,15 @@ public class PlayerTank : Tank
         Remove(false);
         base.Destroy(context);
     }
-    public void UpdatePlayerMovement()
-    {
+    public void UpdatePlayerMovement() {
         if (!GameProperties.InMission)
             return;
         //if (!controlDown.IsPressed && !controlUp.IsPressed && leftStick.Y == 0)
-            //Velocity.Y = 0;
+        //Velocity.Y = 0;
         //if (!controlLeft.IsPressed && !controlRight.IsPressed && leftStick.X == 0)
-            //Velocity.X = 0;
+        //Velocity.X = 0;
     }
-    private void DrawShootPath()
-    {
+    private void DrawShootPath() {
         const int MAX_PATH_UNITS = 10000;
 
         var whitePixel = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
@@ -516,17 +482,14 @@ public class PlayerTank : Tank
         var pathRicochetCount = 0;
 
 
-        for (int i = 0; i < MAX_PATH_UNITS; i++)
-        {
+        for (int i = 0; i < MAX_PATH_UNITS; i++) {
             var dummyPos = Vector2.Zero;
 
-            if (pathPos.X < MapRenderer.MIN_X || pathPos.X > MapRenderer.MAX_X)
-            {
+            if (pathPos.X < MapRenderer.MIN_X || pathPos.X > MapRenderer.MAX_X) {
                 pathRicochetCount++;
                 pathDir.X *= -1;
             }
-            if (pathPos.Y < MapRenderer.MIN_Y || pathPos.Y > MapRenderer.MAX_Y)
-            {
+            if (pathPos.Y < MapRenderer.MIN_Y || pathPos.Y > MapRenderer.MAX_Y) {
                 pathRicochetCount++;
                 pathDir.Y *= -1;
             }
@@ -538,12 +501,9 @@ public class PlayerTank : Tank
 
             if (corner)
                 return;
-            if (block != null)
-            {
-                if (block.Properties.AllowShotPathBounce)
-                {
-                    switch (dir)
-                    {
+            if (block != null) {
+                if (block.Properties.AllowShotPathBounce) {
+                    switch (dir) {
                         case CollisionDirection.Up:
                         case CollisionDirection.Down:
                             pathDir.Y *= -1;
@@ -565,26 +525,22 @@ public class PlayerTank : Tank
                 return;
 
             pathPos += pathDir;
-            // tainicom.Aether.Physics2D.Collision.
+
             var pathPosScreen = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(pathPos.X, 11, pathPos.Y), TankGame.GameView, TankGame.GameProjection);
             var off = (float)Math.Sin(i * Math.PI / 5 - TankGame.UpdateCount * 0.3f);
             TankGame.SpriteRenderer.Draw(whitePixel, pathPosScreen, null, (Color.White.ToVector3() * off).ToColor(), 0, whitePixel.Size() / 2, 2 + off, default, default);
         }
     }
-    public override void Render()
-    {
+    public override void Render() {
         base.Render();
         if (Dead)
             return;
         DrawExtras();
         if (Properties.Invisible && GameProperties.InMission)
             return;
-        for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++)
-        {
-            foreach (ModelMesh mesh in Model.Meshes)
-            {
-                foreach (BasicEffect effect in mesh.Effects)
-                {
+        for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
+            foreach (ModelMesh mesh in Model.Meshes) {
+                foreach (BasicEffect effect in mesh.Effects) {
                     effect.World = i == 0 ? _boneTransforms[mesh.ParentBone.Index] : _boneTransforms[mesh.ParentBone.Index] * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
                     effect.View = View;
                     effect.Projection = Projection;
@@ -595,8 +551,7 @@ public class PlayerTank : Tank
                             return;
 
 
-                    if (mesh.Name != "Shadow")
-                    {
+                    if (mesh.Name != "Shadow") {
                         effect.Alpha = 1f;
                         effect.Texture = _tankTexture;
 
@@ -618,12 +573,9 @@ public class PlayerTank : Tank
                         mesh.Draw();
                     }
 
-                    else
-                    {
-                        if (!Lighting.AccurateShadows)
-                        {
-                            if (IsIngame)
-                            {
+                    else {
+                        if (!Lighting.AccurateShadows) {
+                            if (IsIngame) {
                                 effect.Alpha = 0.5f;
                                 effect.Texture = _shadowTexture;
                                 mesh.Draw();
@@ -636,8 +588,7 @@ public class PlayerTank : Tank
             }
         }
     }
-    private void DrawExtras()
-    {
+    private void DrawExtras() {
         if (Dead)
             return;
         if (NetPlay.IsClientMatched(PlayerId)) {
@@ -672,8 +623,7 @@ public class PlayerTank : Tank
         }
 
 
-        if (needClarification)
-        {
+        if (needClarification) {
             var tex1 = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/chevron_border");
             var tex2 = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/chevron_inside");
 

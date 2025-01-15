@@ -39,8 +39,8 @@ public class AutoUpdater {
             _versionToCheckAgainst = versionToCheckAgainst;
             IsOutdated = _versionToCheckAgainst < _expectedVersion;
         } catch(Exception e) {
-            GameHandler.ClientLog.Write($"{e.Message}\n{e.StackTrace}", LogType.ErrorFatal);
-            GameHandler.ClientLog.Write($"An exception was thrown during TanksRebirth Version fetching process. Auto-Update backend and version checking cannot execute.", LogType.ErrorFatal);
+            TankGame.ClientLog.Write($"{e.Message}\n{e.StackTrace}", LogType.ErrorFatal);
+            TankGame.ClientLog.Write($"An exception was thrown during TanksRebirth Version fetching process. Auto-Update backend and version checking cannot execute.", LogType.ErrorFatal);
         }
     }
 

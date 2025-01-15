@@ -43,7 +43,7 @@ public class AchievementPopupHandler {
         var achs = Repo.GetAchievements();
 
         if (achievementId >= achs.Count) {
-            GameHandler.ClientLog.Write($"Invalid achievement has been unlocked. achievementId = {achievementId}, Count = {achs.Count}", LogType.ErrorSilent);
+            TankGame.ClientLog.Write($"Invalid achievement has been unlocked. achievementId = {achievementId}, Count = {achs.Count}", LogType.ErrorSilent);
         }
 
         var ach = achs[achievementId] as Achievement; // convert it to a standardized achievement.

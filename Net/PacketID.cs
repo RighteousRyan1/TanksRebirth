@@ -49,6 +49,7 @@ public sealed class PacketID {
 
     // misc
 
+    /// <summary>The game has to reassign identifiers of shells beacuse there can be a client-server mismatch of IDs.</summary>
     public const int SyncShellId = 22;
     /// <summary>The packet for map cleanup (removal of death X's, etc)</summary>
     public const int Cleanup = 23;
@@ -59,8 +60,9 @@ public sealed class PacketID {
     /// <summary>Sent across the network when a command is used that has serverside effects.</summary>
     public const int SendCommandUsage = 26;
 
-    // difficulty sync.
     public const int SyncDifficulties = 27;
+    /// <summary>Syncs randomization seeds to random events are synchronous on each client.</summary>
+    public const int SyncSeeds = 28;
 
     public static int AddPacketId(string name) => Collection.ForcefullyInsert(name);
 

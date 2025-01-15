@@ -14,7 +14,6 @@ public static class ModContent {
     public static T GetSingleton<T>() where T : IModContent {
         var properTypes = moddedTypes.OfType<T>().ToArray();
         var modContent = properTypes.FirstOrDefault();
-
         if (modContent == null)
             throw new Exception("Modding Exception: Failed to retrieve moddedType '" + typeof(T).Name + "'. Did you forget to unsubscribe from an event?");
         return modContent!;

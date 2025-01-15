@@ -130,9 +130,8 @@ public record struct Mission {
     /// <summary>
     /// Saves a mission as a <c>.mission</c> file for reading later.
     /// </summary>
+    /// <param name="path">The path to where the mission will be stored.</param>
     /// <param name="name">The name of the mission to save.</param>
-    /// <param name="useDefaultPaths">If true, the path for the location of the mission file will be located in <paramref name="campaignName"/></param>
-    /// <param name="fileName">If not null, will use this instead of <paramref name="name"/> for the file name.</param>
     public static void Save(string path, string name) {
         if (Path.GetExtension(path) == string.Empty)
             path += ".mission";
@@ -142,10 +141,10 @@ public record struct Mission {
         WriteCurrent(writer, name);
 
         if (File.Exists(path)) {
-            GameHandler.ClientLog.Write($"Overwrote \"{name}.mission\" in map save path.", LogType.Info);
+            TankGame.ClientLog.Write($"Overwrote \"{name}.mission\" in map save path.", LogType.Info);
             return;
         }
-        GameHandler.ClientLog.Write($"Saved mission file \"{name}.mission\" in map save path.", LogType.Info);
+        TankGame.ClientLog.Write($"Saved mission file \"{name}.mission\" in map save path.", LogType.Info);
     }
 
     public static void WriteCurrent(BinaryWriter writer, string name) {

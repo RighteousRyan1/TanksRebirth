@@ -151,7 +151,7 @@ public sealed class Mine : IAITankDanger
 
         Hitbox = new((int)Position.X - 10, (int)Position.Y - 10, 20, 20);
 
-        if (Server.serverNetManager != null || !Client.IsConnected()) {
+        if (Server.NetManager != null || !Client.IsConnected()) {
             DetonateTime -= TankGame.DeltaTime;
 
             if (DetonateTime < TICKS_OF_FLASHING) {

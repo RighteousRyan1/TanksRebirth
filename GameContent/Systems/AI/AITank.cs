@@ -178,10 +178,11 @@ public partial class AITank : Tank
         // TargetTankRotation = MathHelper.Pi;
         if (IsIngame) {
             // looking at this code makes me want to barf.
+            // maybe move this stuff to events within Difficulties.cs
             if (Difficulties.Types["BumpUp"])
                 tier++;
             if (Difficulties.Types["Monochrome"])
-                tier = MainMenu.MonochromeValue;
+                tier = Difficulties.MonochromeValue;
             if (Difficulties.Types["MasterModBuff"] && !Difficulties.Types["MarbleModBuff"])
                 tier += 9;
             if (Difficulties.Types["MarbleModBuff"] && !Difficulties.Types["MasterModBuff"])
@@ -365,7 +366,8 @@ public partial class AITank : Tank
                 if (AITankId == GameHandler.AllAITanks[tnkGet].AITankId)
                     TargetTankRotation = (MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - MouseUtils.MousePosition).ToRotation() + MathHelper.PiOver2;
         }
-        if ((Server.serverNetManager is not null && Client.IsConnected()) || (!Client.IsConnected() && !Dead) || MainMenu.Active) {
+        // do ai only if host, and send ai across the interweb
+        if ((Client.IsHost() && Client.IsConnected()) || (!Client.IsConnected() && !Dead) || MainMenu.Active) {
             timeSinceLastAction++;
 
             if (!MainMenu.Active)
@@ -467,8 +469,12 @@ public partial class AITank : Tank
     // make a new method for just any rectangle
 
     // TODO: literally fix everything about these turret rotation values.
-    private List<Tank> GetTanksInPath(Vector2 pathDir, out Vector2 rayEndpoint, bool draw = false, Vector2 offset = default, float missDist = 0f, Func<Block, bool> pattern = null, bool doBounceReset = true) {
-        rayEndpoint = new(-999999, -999999);
+    private List<Tank> GetTanksInPath(Vector2 pathDir, out Vector2[] ricochetPoints, out Vector2[] tankCollPoints,
+        bool draw = false, Vector2 offset = default, float missDist = 0f, Func<Block, bool> pattern = null, bool doBounceReset = true) {
+        var ricoPoints = new List<Vector2>();
+        var tnkPoints = new List<Vector2>();
+        ricochetPoints = [];
+        tankCollPoints = [];
         List<Tank> tanks = [];
         pattern ??= (c) => c.Properties.IsSolid || c.Type == BlockID.Teleporter;
 
@@ -488,7 +494,7 @@ public partial class AITank : Tank
 
         bool goneThroughTeleporter = false;
         int tpidx = -1;
-        Vector2 tpos = Vector2.Zero;
+        Vector2 tppos = Vector2.Zero;
 
         for (int i = 0; i < MAX_PATH_UNITS; i++) {
             var dummyPos = Vector2.Zero;
@@ -496,11 +502,13 @@ public partial class AITank : Tank
             uninterruptedIterations++;
 
             if (pathPos.X < MapRenderer.MIN_X || pathPos.X > MapRenderer.MAX_X) {
+                ricoPoints.Add(pathPos);
                 pathDir.X *= -1;
                 pathRicochetCount++;
                 resetIterations();
             }
             else if (pathPos.Y < MapRenderer.MIN_Y || pathPos.Y > MapRenderer.MAX_Y) {
+                ricoPoints.Add(pathPos);
                 pathDir.Y *= -1;
                 pathRicochetCount++;
                 resetIterations();
@@ -520,7 +528,7 @@ public partial class AITank : Tank
 
                         if (Array.IndexOf(Block.AllBlocks, otherTp) > -1) {
                             //pathPos = otherTp.Position;
-                            tpos = otherTp!.Position;
+                            tppos = otherTp!.Position;
                             goneThroughTeleporter = true;
                             tpidx = i + 1;
                         }
@@ -528,6 +536,7 @@ public partial class AITank : Tank
                 }
                 else {
                     if (block.Properties.AllowShotPathBounce) {
+                        ricoPoints.Add(pathPos);
                         switch (dir) {
                             case CollisionDirection.Up:
                             case CollisionDirection.Down:
@@ -547,24 +556,18 @@ public partial class AITank : Tank
             }
 
             if (goneThroughTeleporter && i == tpidx)
-                pathPos = tpos;
+                pathPos = tppos;
 
             void resetIterations() { if (doBounceReset) uninterruptedIterations = 0; }
 
-            if (i == 0 && Block.AllBlocks.Any(x => x is not null && x.Hitbox.Intersects(pathHitbox) && pattern is not null && pattern.Invoke(x))) {
-                rayEndpoint = pathPos;
-                return tanks;
-            }
+            tankCollPoints = [.. tnkPoints];
+            ricochetPoints = [.. ricoPoints];
 
-            if (i < (int)Properties.ShellSpeed / 2 && pathRicochetCount > 0) {
-                rayEndpoint = pathPos;
+            var hitsInstant = i == 0 && Block.AllBlocks.Any(x => x is not null && x.Hitbox.Intersects(pathHitbox) && pattern is not null && pattern.Invoke(x));
+            var hitsTooEarly = i < (int)Properties.ShellSpeed / 2 && pathRicochetCount > 0;
+            var shouldDestroy = pathRicochetCount > Properties.RicochetCount;
+            if (hitsInstant || hitsTooEarly || shouldDestroy)
                 return tanks;
-            }
-
-            if (pathRicochetCount > Properties.RicochetCount) {
-                rayEndpoint = pathPos;
-                return tanks;
-            }
 
             pathPos += pathDir;
             var realMiss = 1f + (missDist * uninterruptedIterations);
@@ -575,24 +578,27 @@ public partial class AITank : Tank
             }
 
             foreach (var enemy in GameHandler.AllTanks) {
-                if (enemy is null)
-                    continue;
-                if (enemy.Dead || tanks.Contains(enemy))
-                    continue;
+                if (enemy is null) continue;
+                if (enemy.Dead || tanks.Contains(enemy))continue;
                 if (i > 15) {
                     if (GameUtils.Distance_WiiTanksUnits(enemy.Position, pathPos) <= realMiss) {
                         var rot = pathDir.ToRotation();
                         var angle = MathUtils.DirectionOf(pathPos, enemy.Position).ToRotation();
 
-                        if (MathUtils.AbsoluteAngleBetween(rot, angle) >= MathHelper.PiOver2)
+                        if (MathUtils.AbsoluteAngleBetween(rot, angle) >= MathHelper.PiOver2) {
                             tanks.Add(enemy);
+                        }
                     }
                 }
-                else if (enemy.CollisionBox.Intersects(pathHitbox)) {
+                var pathCircle = new Circle() { Center = pathPos, Radius = 4 };
+                if (enemy.CollisionCircle.Intersects(pathCircle)) {
+                    tnkPoints.Add(pathPos);
                     tanks.Add(enemy);
                 }
             }
         }
+        tankCollPoints = [.. tnkPoints];
+        ricochetPoints = [.. ricoPoints];
         return tanks;
     }
 
@@ -657,6 +663,11 @@ public partial class AITank : Tank
 
     private bool _predicts;
 
+    /// <summary>The location(s) of which this tank's shot path hits an obstacle.</summary>
+    public Vector2[] ShotPathRicochetPoints { get; private set; } = [];
+    /// <summary>The location(s) of which this tank's shot path hits an tank.</summary>
+    public Vector2[] ShotPathTankCollPoints { get; private set; } = [];
+
     // TODO: make view distance, and make tanks in path public
     public void UpdateAim(List<Tank> tanksNear, bool fireWhen) {
         _predicts = false;
@@ -667,15 +678,19 @@ public partial class AITank : Tank
         List<Tank> tanksDef;
 
         if (Properties.ShellType == ShellID.Explosive) {
-            tanksDef = GetTanksInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), out var rayEndpoint, offset: Vector2.UnitY * 20, pattern: x => (!x.Properties.IsDestructible && x.Properties.IsSolid) || x.Type == BlockID.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
-            if (GameUtils.Distance_WiiTanksUnits(rayEndpoint, Position) < 150f) // TODO: change from hardcode to normalcode :YES:
+            tanksDef = GetTanksInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), out var ricP, out var tnkCol, offset: Vector2.UnitY * 20, pattern: x => (!x.Properties.IsDestructible && x.Properties.IsSolid) || x.Type == BlockID.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
+            if (GameUtils.Distance_WiiTanksUnits(ricP[^1], Position) < 150f) // TODO: change from hardcode to normalcode :YES:
                 tooCloseToExplosiveShell = true;
         }
-        else
+        else {
             tanksDef = GetTanksInPath(
                 Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi),
-                out var rayEndpoint, offset: Vector2.UnitY * 20,
+                out var ricP, out var tnkCol, offset: Vector2.UnitY * 20,
                 missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
+
+            ShotPathRicochetPoints = ricP;
+            ShotPathTankCollPoints = tnkCol;
+        }
         if (AiParams.PredictsPositions) {
             if (TargetTank is not null) {
                 var calculation = Position.Distance(TargetTank.Position) / (float)(Properties.ShellSpeed * 1.2f);
@@ -685,11 +700,12 @@ public partial class AITank : Tank
 
                 tanksDef = GetTanksInPath(
                 Vector2.UnitY.RotatedByRadians(-MathUtils.DirectionOf(Position, TargetTank.Position).ToRotation() - MathHelper.PiOver2),
-                out var rayEndpoint, offset: AiParams.PredictsPositions ? Vector2.Zero : Vector2.UnitY * 20,
+                out var ricP, out var tnkCol, offset: AiParams.PredictsPositions ? Vector2.Zero : Vector2.UnitY * 20,
                 missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
 
                 var targ = GeometryUtils.PredictFuturePosition(TargetTank.Position, TargetTank.Velocity, calculation);
-                var posPredict = GetTanksInPath(Vector2.UnitY.RotatedByRadians(rot), out var rayEndpoint2, offset: Vector2.UnitY * 20, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
+                var posPredict = GetTanksInPath(Vector2.UnitY.RotatedByRadians(rot),
+                    out var ricP1, out var tnkCol2, offset: Vector2.UnitY * 20, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
 
                 if (tanksDef.Contains(TargetTank)) {
                     _predicts = true;
@@ -712,7 +728,7 @@ public partial class AITank : Tank
             seekRotation += AiParams.TurretSpeed * 0.5f;
             var canShoot = !(CurShootCooldown > 0 || OwnedShellCount >= Properties.ShellLimit);
             if (canShoot) {
-                var tanks = GetTanksInPath(Vector2.UnitY.RotatedByRadians(seekRotation), out var rayEndpoint, false, default, AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
+                var tanks = GetTanksInPath(Vector2.UnitY.RotatedByRadians(seekRotation), out var ricP, out var tnkCol, false, default, AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
 
                 var findsEnemy2 = tanks.Any(tnk => tnk is not null && (tnk.Team != Team || tnk.Team == TeamID.NoTeam) && tnk != this);
                 // var findsSelf2 = tanks.Any(tnk => tnk is not null && tnk == this);
@@ -1220,13 +1236,22 @@ public partial class AITank : Tank
                 calculation = Position.Distance(TargetTank.Position) / (float)(Properties.ShellSpeed * 1.2f);
 
             if (AiParams.SmartRicochets)
-                GetTanksInPath(Vector2.UnitY.RotatedByRadians(seekRotation), out var rayEndpoint, true, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
-            var poo = GetTanksInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), out var rayEnd, true, offset: Vector2.UnitY * 20, pattern: x => x.Properties.IsSolid | x.Type == BlockID.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
+                GetTanksInPath(Vector2.UnitY.RotatedByRadians(seekRotation), out var ricP1, out var tnkCol1, true, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
+            // maybe not necessary. store from the cpu, draw on the gpu.
+            var poo = GetTanksInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), out var ricP2, out var tnkCol2, true, offset: Vector2.UnitY * 20, pattern: x => x.Properties.IsSolid | x.Type == BlockID.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
             if (AiParams.PredictsPositions) {
                 float rot = -MathUtils.DirectionOf(Position, TargetTank is not null ?
                     GeometryUtils.PredictFuturePosition(TargetTank.Position, TargetTank.Velocity, calculation) :
                     AimTarget).ToRotation() - MathHelper.PiOver2;
-                GetTanksInPath(Vector2.UnitY.RotatedByRadians(rot), out var rayEnd2, true, Vector2.Zero, pattern: x => x.Properties.IsSolid | x.Type == BlockID.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
+                GetTanksInPath(Vector2.UnitY.RotatedByRadians(rot), out var ricP3, out var tnkCol3, true, Vector2.Zero, pattern: x => x.Properties.IsSolid | x.Type == BlockID.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
+            }
+            for (int i = 0; i < ricP2.Length; i++) {
+                DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"ric{i}", MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0),
+                    Matrix.CreateTranslation(ricP2[i].X, 0, ricP2[i].Y), View, Projection), 1, centered: true);
+            }
+            for (int i = 0; i < tnkCol2.Length; i++) {
+                DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"col{i}", MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0),
+                    Matrix.CreateTranslation(tnkCol2[i].X, 0, tnkCol2[i].Y), View, Projection), 1, centered: true);
             }
             DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"{poo.Count} tank(s) spotted | pathC: {_pathHitCount % PathHitMax} / 10", MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), World, View, Projection), 1, centered: true);
 
@@ -1279,5 +1304,5 @@ public partial class AITank : Tank
         TankID.Granite, TankID.Bubblegum, TankID.Water, TankID.Crimson, TankID.Tiger, TankID.Creeper, TankID.Gamma, TankID.Marble,
     };
     public static int PickRandomTier()
-        => workingTiers[GameHandler.GameRand.Next(0, workingTiers.Length)];
+        => workingTiers[Server.ServerRandom.Next(0, workingTiers.Length)];
 }

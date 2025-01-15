@@ -96,7 +96,7 @@ namespace TanksRebirth.IO
             var saveVersion = reader.ReadByte();
 
             if (saveVersion != CURRENT_GAME_DATA_VERSION) {
-                GameHandler.ClientLog.Write($"Loading an outdated {Name}! (Save File: {saveVersion}. Game Data Version: {CURRENT_GAME_DATA_VERSION})", LogType.Warn);
+                TankGame.ClientLog.Write($"Loading an outdated {Name}! (Save File: {saveVersion}. Game Data Version: {CURRENT_GAME_DATA_VERSION})", LogType.Warn);
                 ReadingOutdatedFile = true;
             }
 
@@ -120,16 +120,16 @@ namespace TanksRebirth.IO
 
                 ExpLevel = reader.ReadSingle();
 
-                GameHandler.Xp = new() { MaxValue = 1f, Value = ExpLevel - MathF.Floor(ExpLevel) };
+                GameHandler.ExperienceBar = new() { MaxValue = 1f, Value = ExpLevel - MathF.Floor(ExpLevel) };
             }
             catch (Exception e) when (ReadingOutdatedFile) {
                 TankGame.ReportError(e);
-                GameHandler.ClientLog.Write(
+                TankGame.ClientLog.Write(
                     "An error occurred, possibly due to your save file being out-of-date. For now, delete it and restart the game. Sorry!",
                     LogType.Info);
             } catch (IOException e) { // IO Error.
                 TankGame.ReportError(e);
-                GameHandler.ClientLog.Write(
+                TankGame.ClientLog.Write(
                     "An error was thrown while attempting to read your save file. Please try to restart the game. If this error persists please delete your save file and try again. Sorry!",
                     LogType.Info);
             }

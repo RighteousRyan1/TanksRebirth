@@ -132,11 +132,11 @@ public sealed record ChatSystem {
                     }*/
                     
                     if (value.NetSync && Client.IsConnected()) {
-                        if (sender != "cmd_sync" && Server.serverNetManager is null) {
+                        if (sender != "cmd_sync" && !Client.IsHost()) {
                             SendMessage("You cannot use this command as you are not the host of the server.", Color.Red);
                             return;
                         }
-                        if (Server.serverNetManager is not null)
+                        if (Client.IsHost())
                             Client.SendCommandUsage(message);
                     }
                     if (value.RequireCheats) {

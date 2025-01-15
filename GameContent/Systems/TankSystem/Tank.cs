@@ -59,7 +59,7 @@ public abstract class Tank {
     public static void LoadTexturePack(string folder) {
         LoadVanillaTextures();
         if (folder.ToLower() == "vanilla") {
-            GameHandler.ClientLog.Write($"Loaded vanilla textures for Tank.", LogType.Info);
+            TankGame.ClientLog.Write($"Loaded vanilla textures for Tank.", LogType.Info);
             return;
         }
 
@@ -72,7 +72,7 @@ public abstract class Tank {
         Directory.CreateDirectory(rootGameScene);
 
         if (!Directory.Exists(path)) {
-            GameHandler.ClientLog.Write($"Error: Directory '{path}' not found when attempting texture pack load.",
+            TankGame.ClientLog.Write($"Error: Directory '{path}' not found when attempting texture pack load.",
                 LogType.Warn);
             return;
         }
@@ -83,7 +83,7 @@ public abstract class Tank {
             if (Assets.Any(type => type.Key == Path.GetFileNameWithoutExtension(file))) {
                 Assets[Path.GetFileNameWithoutExtension(file)] = Texture2D.FromFile(TankGame.Instance.GraphicsDevice,
                     Path.Combine(path, Path.GetFileName(file)));
-                GameHandler.ClientLog.Write(
+                TankGame.ClientLog.Write(
                     $"Texture pack '{folder}' overrided texture '{Path.GetFileNameWithoutExtension(file)}'",
                     LogType.Info);
             }
