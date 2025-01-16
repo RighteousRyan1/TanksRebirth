@@ -91,9 +91,13 @@ public class GameHandler {
         bool exploded = false;
 
         float gravity = 0.01f;
-        Vector3 initialVelocity = new(0, 1, 0);
+        Vector2 velXZ = Vector2.UnitY.RotatedByRadians(pl.TurretRotation) / 4;
+        Vector3 initialVelocity = new(-velXZ.X, 1 + pl.Velocity.Length() / 3, velXZ.Y);
         Vector3 velocity = initialVelocity;
         int hits = 5;
+        float timer = 0f;
+        bool startTimer = false;
+        bool isSmokeDestroyed = false;
 
         p.UniqueBehavior = (a) => {
             p.Scale = new(125);
@@ -102,23 +106,43 @@ public class GameHandler {
             p.Position += velocity;
             velocity.Y -= gravity;
 
-            if (p.Position.Y < 10 && hits > 0) {
+            if (hits > 0) {
+                p.Roll += 0.07f * velocity.Length() * TankGame.DeltaTime;
+                p.Pitch += 0.07f * velocity.Length() * TankGame.DeltaTime;
+            }
+
+            // bounce off walls
+            if (p.Position.Y <= 80) {
+                if ((p.Position.X <= MapRenderer.MIN_X && p.Position.X >= MapRenderer.MIN_X - 6) || (p.Position.X >= MapRenderer.MAX_X && p.Position.X <= MapRenderer.MAX_X + 6)) {
+                    velocity.X = -velocity.X * 0.75f;
+                }
+                if ((p.Position.Z <= MapRenderer.MIN_Y && p.Position.Z >= MapRenderer.MIN_Y - 6) || (p.Position.Z >= MapRenderer.MAX_Y && p.Position.Z <= MapRenderer.MAX_Y + 6)) {
+                    velocity.Z = -velocity.Z * 0.75f;
+                }
+            }
+
+            if (p.Position.Y < 7 && hits > 0) {
                 hits--;
                 velocity.Y = initialVelocity.Y * hits / 5;
             }
-            else if (hits <= 0)
-                p.Position.Y = 10;
+            else if (hits <= 0) {
+                velocity = Vector3.Zero;
+                p.Position.Y = 7;
+                startTimer = true;
+            }
 
-            if (p.LifeTime >= 180 && !exploded) {
+            if (startTimer) timer += TankGame.DeltaTime;
+
+            if (timer > 60 && !exploded) {
                 exploded = true;
                 SoundPlayer.PlaySoundInstance("Assets/sounds/smoke_hiss.ogg", SoundContext.Effect, 0.3f, gameplaySound: true);
                 for (int i = 0; i < 8; i++) {
                     var c = Particles.MakeParticle(p.Position,
                         GameResources.GetGameResource<Model>("Assets/smoke"),
                         GameResources.GetGameResource<Texture2D>("Assets/textures/smoke/smoke"));
-                    var randDir = new Vector3(GameRand.NextFloat(-60, 60), 0, GameRand.NextFloat(-60, 60));
+                    var randDir = new Vector3(Server.ServerRandom.NextFloat(-35, 35), 0, Server.ServerRandom.NextFloat(-35, 35));
                     c.Position += randDir;
-                    var randSize = GameRand.NextFloat(5, 10);
+                    var randSize = Server.ServerRandom.NextFloat(5, 10);
                     c.Scale.X = randSize;
                     c.Scale.Z = randSize;
                     c.UniqueBehavior = (b) => {
@@ -127,6 +151,7 @@ public class GameHandler {
                             c.Scale.Y += 0.1f * TankGame.DeltaTime;
                         if (c.LifeTime >= 600) {
                             c.Scale.Y -= 0.06f * TankGame.DeltaTime;
+                            c.Alpha -= 0.06f / randSize * TankGame.DeltaTime;
 
                             if (c.Scale.Y <= 0) {
                                 c.Destroy();
@@ -134,16 +159,34 @@ public class GameHandler {
                         }
                     };
                 }
+                isSmokeDestroyed = true;
                 p.Destroy();
             }
+        };
+
+        var shadow = Particles.MakeParticle(pl.Position3D, GameResources.GetGameResource<Texture2D>("Assets/textures/mine/mine_shadow"));
+        shadow.Scale = new(0.8f);
+        shadow.Color = Color.Black;
+        shadow.HasAddativeBlending = false;
+        shadow.Roll = -MathHelper.PiOver2;
+
+        shadow.UniqueBehavior = (a) => {
+            if (isSmokeDestroyed) {
+                shadow.Destroy();
+            }
+            shadow.Position.Y = 0.1f;
+            shadow.Position.X = p.Position.X;
+            shadow.Position.Z = p.Position.Z;
+
+            shadow.Alpha = MathUtils.InverseLerp(150, 7, p.Position.Y, true);
         };
     }
 
     internal static void UpdateAll(GameTime gameTime) {
         if (InputUtils.AreKeysJustPressed(Keys.J, Keys.K))
             Server.SyncSeeds();
-        //if (InputUtils.KeyJustPressed(Keys.M))
-        //SmokeNadeDebug();
+        if (InputUtils.KeyJustPressed(Keys.M) && DebugManager.DebuggingEnabled)
+            SmokeNadeDebug();
         // ChatSystem.CurTyping = SoundPlayer.GetLengthOfSound("Content/Assets/sounds/tnk_shoot_ricochet_rocket_loop.ogg").ToString();
         if (DebugManager.DebuggingEnabled) {
             if (InputUtils.KeyJustPressed(Keys.G)) {
@@ -283,12 +326,16 @@ public class GameHandler {
 
         Particles.RenderParticles();
 
+        if (GameProperties.ShouldMissionsProgress && !MainMenu.Active)
+            PingMenu.DrawPingHUD();
+
         IntermissionHandler.RenderCountdownGraphics();
 
         if (!MainMenu.Active && !LevelEditor.Active) {
             if (IntermissionSystem.IsAwaitingNewMission) {
                 // uhhh... what was i doing here?
             }
+            // this draws the amount of kills a player has.
             for (int i = -4; i < 10; i++) {
                 IntermissionSystem.DrawShadowedTexture(GameResources.GetGameResource<Texture2D>("Assets/textures/ui/scoreboard"),
                     new Vector2((i * 14).ToResolutionX(), WindowUtils.WindowHeight * 0.9f),
@@ -301,6 +348,7 @@ public class GameHandler {
             }
             IntermissionSystem.DrawShadowedString(TankGame.TextFontLarge, new Vector2(80.ToResolutionX(), WindowUtils.WindowHeight * 0.9f - 14f.ToResolutionY()), Vector2.One, $"{PlayerTank.KillCount}", new(119, 190, 238), new Vector2(0.675f).ToResolution(), 1f);
         }
+        // TODO: MissionInfoBar can be much better.
         GameUI.MissionInfoBar.IsVisible = !MainMenu.Active && !LevelEditor.Active && !CampaignCompleteUI.IsViewingResults;
 
         OnPostRender?.Invoke();
@@ -309,7 +357,6 @@ public class GameHandler {
     #endregion
 
     #region Extra
-
     public static void RenderUI() {
         foreach (var element in UIElement.AllUIElements) {
             // element.Position = Vector2.Transform(element.Position, UIMatrix * Matrix.CreateTranslation(element.Position.X, element.Position.Y, 0));
@@ -327,9 +374,6 @@ public class GameHandler {
         foreach (var element in UIElement.AllUIElements)
             element?.DrawTooltips(TankGame.SpriteRenderer);
     }
-
-    // fix shitty mission init (innit?)
-
     public static void SetupGraphics() {
         GameShaders.Initialize();
         MapRenderer.InitializeRenderers();
@@ -337,6 +381,5 @@ public class GameHandler {
         DebugManager.InitDebugUI();
         PlacementSquare.InitializeLevelEditorSquares();
     }
-
     #endregion
 }
