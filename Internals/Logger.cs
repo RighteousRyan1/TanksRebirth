@@ -78,10 +78,12 @@ public sealed class Logger : IDisposable {
             .Append(contentsAsString);
 
         var str = _stringBuilder.ToString();
-        sWriter.WriteLine(str);
-        Debug.WriteLine(str);
-        ConsoleWrite(str);
-        sWriter.Flush();
+        lock (sWriter) {
+            sWriter.WriteLine(str);
+            Debug.WriteLine(str);
+            ConsoleWrite(str);
+            sWriter.Flush();
+        }
 
         if (throwException)
             throw new Exception(contentsAsString);
