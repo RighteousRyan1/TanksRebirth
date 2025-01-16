@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Reflection;
 using System;
+using System.Globalization;
 using System.Text;
 using TanksRebirth.Internals.Common.Utilities;
 
@@ -53,6 +54,11 @@ public sealed class Logger : IDisposable {
         sWriter = new(fStream);
     }
 
+    [Conditional("DEBUG")]
+    void ConsoleWrite(string str) {
+        Console.WriteLine(str);
+    }
+
     /// <summary>
     /// Writes content to a logging file.
     /// </summary>
@@ -66,7 +72,7 @@ public sealed class Logger : IDisposable {
         _stringBuilder.Clear(); // Clear the sb to avoid writing stuff we don't really want.
         // Equivalent to $"[{DateTime.Now}] [{assembly.GetName().Name}] [{writeType}]: {contents}"
         _stringBuilder
-            .Append('[').Append(DateTime.Now.ToString()).Append("] ")
+            .Append('[').Append(DateTime.Now.ToString(CultureInfo.InvariantCulture)).Append("] ")
             .Append('[').Append(assembly.GetName().Name).Append("] ")
             .Append('[').Append(FromLogLevel(writeType)).Append("]: ")
             .Append(contentsAsString);
@@ -74,6 +80,7 @@ public sealed class Logger : IDisposable {
         var str = _stringBuilder.ToString();
         sWriter.WriteLine(str);
         Debug.WriteLine(str);
+        ConsoleWrite(str);
         sWriter.Flush();
 
         if (throwException)
