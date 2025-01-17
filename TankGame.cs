@@ -12,6 +12,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using FontStashSharp;
+using Microsoft.Xna.Framework.Audio;
 using Steamworks;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common;
@@ -343,9 +344,23 @@ public class TankGame : Game {
         GameResources.MassPreloadAssets<Texture2D, TexturePreloadSettings>(
             textures
         , new TexturePreloadSettings{});
+
+        // Prefix with Content for compatibility reasons with old code.
+        // Done mostly dynamcially, because easier than hardcoding for 20 minutes each audio.
+        List<string> sounds = [];
         
+        // ~~ Vanilla audio ~~
+        // sounds.AddRange(Directory.GetFiles("Content/Assets/music"));
+        sounds.AddRange(Directory.GetFiles("Content", "*.ogg", SearchOption.AllDirectories));
+
+        // ~~ Sound Effects ~~
+        // sounds.AddRange(Directory.GetFiles("Content/Assets/sounds", "*.ogg", SearchOption.AllDirectories));
+
+        GameResources.MassPreloadAssets<SoundEffect, TexturePreloadSettings>(
+            sounds.ToArray()
+            , default);
     }
-    
+
     protected override void LoadContent() {
         PreloadContent();
         var s = Stopwatch.StartNew();
@@ -371,7 +386,7 @@ public class TankGame : Game {
                 ClientLog.Write($"GPU: {CompSpecs.GPU.Name} (Driver Version: {CompSpecs.GPU.DriverVersion} | VRAM: {MathF.Round(MemoryParser.FromGigabytes(CompSpecs.GPU.VRAM))} GB)", LogType.Info);
                 ClientLog.Write($"Physical Memory (RAM): {CompSpecs.RAM.Manufacturer} {MathF.Round(MemoryParser.FromGigabytes(CompSpecs.RAM.TotalPhysical))} GB {CompSpecs.RAM.Type}@{CompSpecs.RAM.ClockSpeed}Mhz", LogType.Info);
             }
-        
+
             if (!CompSpecs.Equals(default(ComputerSpecs))) {
                 var profiler = new SpecAnalysis(CompSpecs.GPU, CompSpecs.CPU, CompSpecs.RAM);
 
@@ -472,7 +487,8 @@ public class TankGame : Game {
         // Language.GenerateLocalizationTemplate("en_US.loc");
 
         Achievement.MysteryTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/achievement/secret");
-
+    
+        GameResources.EnsurePreloadedAssetsArePreloaded();
         GameHandler.SetupGraphics();
         GameUI.Initialize();
         MainMenu.InitializeUIGraphics();
