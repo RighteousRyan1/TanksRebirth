@@ -89,17 +89,38 @@ public static class PingMenu {
     };
     // for now just a graphic on the top right
 
+    private static float _uiOpacity;
     public static void DrawPingHUD() {
-        float offX = new();
+        float offX = 0f;
         float scale = 0.2f;
         var cornerOff = new Vector2(-90, -120);
         var padding = 10f;
+        var rect = new Rectangle() {
+            X = (int)WindowUtils.WindowBottomRight.X - (int)padding,
+            Y = (int)(WindowUtils.WindowBottomRight.Y + cornerOff.Y)
+        };
+        for (int i = 0; i < PingIdToTexture.Count; i++) {
+            var texture = PingIdToTexture[i];
+            // 20 is y diff between text and texture
+            var h = (int)(texture.Height * scale);
+            if (h > rect.Height) rect.Height = h + 20;
+            int w = (int)(texture.Width * scale) + (int)padding;
+            rect.Width += w;
+            rect.X -= w;
+        }
+        if (rect.Contains(MouseUtils.MouseX, MouseUtils.MouseY)) {
+            _uiOpacity += 0.04f * TankGame.DeltaTime;
+            if (_uiOpacity > 1f) _uiOpacity = 1f;
+        } else {
+            _uiOpacity -= 0.04f * TankGame.DeltaTime;
+            if (_uiOpacity < 0.1f) _uiOpacity = 0.1f;
+        }
         for (int i = PingIdToName.Count - 1; i >= 0; i--) {
             var pos = WindowUtils.WindowBottomRight + cornerOff + new Vector2(offX, 0);
             SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFontLarge, $"{i + 1}. {PingIdToName[i]}",
-                pos, PlayerID.PlayerTankColors[NetPlay.GetMyClientId()].ToColor(), Color.White,
+                pos, PlayerID.PlayerTankColors[NetPlay.GetMyClientId()].ToColor(), Color.White * _uiOpacity,
                 Vector2.One * 0.75f * scale, 0f, Anchor.TopCenter);
-            TankGame.SpriteRenderer.Draw(PingIdToTexture[i], pos + new Vector2(0, 20), null, Color.White, 0f, 
+            TankGame.SpriteRenderer.Draw(PingIdToTexture[i], pos + new Vector2(0, 20), null, Color.White * _uiOpacity, 0f, 
                 Anchor.TopCenter.GetAnchor(PingIdToTexture[i].Size()), 1f * scale, default, 0f);
             offX -= PingIdToTexture[i].Width * scale + padding;
         }

@@ -139,6 +139,7 @@ public sealed class Mine : IAITankDanger
     }
 
     public void Remove() {
+        TickingNoise?.Stop();
         AITank.Dangers.Remove(this);
         AllMines[Id] = null;
     }
