@@ -98,8 +98,11 @@ public class GameHandler {
         float timer = 0f;
         bool startTimer = false;
         bool isSmokeDestroyed = false;
+        Vector3 oldPosition = p.Position;
+        float shadowPos = 0f;
 
         p.UniqueBehavior = (a) => {
+            shadowPos = 0.1f;
             p.Scale = new(125);
             p.IsIn2DSpace = false;
 
@@ -120,15 +123,43 @@ public class GameHandler {
                     velocity.Z = -velocity.Z * 0.75f;
                 }
             }
-
-            if (p.Position.Y < 7 && hits > 0) {
-                hits--;
-                velocity.Y = initialVelocity.Y * hits / 5;
+            // block collision
+            for (int i = 0; i < Block.AllBlocks.Length; i++) {
+                var block = Block.AllBlocks[i];
+                if (block is null) continue;
+                if (block.Hitbox.Contains(p.Position.FlattenZ())) {
+                    shadowPos = block.HeightFromGround;
+                    if (p.Position.Y < block.HeightFromGround) {
+                        if (oldPosition.X > block.Hitbox.X + block.Hitbox.Width
+                        || oldPosition.X < block.Hitbox.X)
+                            velocity.X = -velocity.X * 0.75f;
+                        else if (oldPosition.Z > block.Hitbox.Y + block.Hitbox.Height
+                        || oldPosition.Z < block.Hitbox.Y)
+                            velocity.Z = -velocity.Z * 0.75f;
+                        if (oldPosition.Y >= block.HeightFromGround) {
+                            // less bounces on blocks!
+                            if (hits <= 1) {
+                                velocity = Vector3.Zero;
+                                p.Position.Y = block.HeightFromGround;
+                                startTimer = true;
+                            }
+                            hits--;
+                            velocity.Y = initialVelocity.Y * hits / 5;
+                        }
+                    }
+                }
             }
-            else if (hits <= 0) {
-                velocity = Vector3.Zero;
-                p.Position.Y = 7;
-                startTimer = true;
+
+            if (!startTimer && p.Position.Y < 7) {
+                if (hits > 0) {
+                    hits--;
+                    velocity.Y = initialVelocity.Y * hits / 5;
+                }
+                else if (hits <= 0) {
+                    velocity = Vector3.Zero;
+                    p.Position.Y = 7;
+                    startTimer = true;
+                }
             }
 
             if (startTimer) timer += TankGame.DeltaTime;
@@ -162,6 +193,7 @@ public class GameHandler {
                 isSmokeDestroyed = true;
                 p.Destroy();
             }
+            oldPosition = p.Position;
         };
 
         var shadow = Particles.MakeParticle(pl.Position3D, GameResources.GetGameResource<Texture2D>("Assets/textures/mine/mine_shadow"));
@@ -174,7 +206,7 @@ public class GameHandler {
             if (isSmokeDestroyed) {
                 shadow.Destroy();
             }
-            shadow.Position.Y = 0.1f;
+            shadow.Position.Y = shadowPos;
             shadow.Position.X = p.Position.X;
             shadow.Position.Z = p.Position.Z;
 

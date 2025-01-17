@@ -80,7 +80,8 @@ public class Block : IGameObject {
     public Matrix World;
     public Matrix View;
     public Matrix Projection;
-
+    /// <summary>Represents how tall (in arbitrary units) the top of this block is from the ground.</summary>
+    public float HeightFromGround { get; private set; }
     /// <summary>The physics body for this <see cref="Block"/>.</summary>
     public Body Body;
     /// <summary>The hitbox for this <see cref="Block"/>.</summary>
@@ -88,8 +89,22 @@ public class Block : IGameObject {
 
     private Texture2D _texture;
 
+    private byte _stack;
     /// <summary>How tall this <see cref="Block"/> is.</summary>
-    public byte Stack;
+    public byte Stack {
+        get => _stack;
+        set {
+            // integer division on purpose, every 3 height values after stack '1' creates a new full block
+            var fullBlockCount = 1 + ((value - 1) / 3);
+            var fullBlockHeight = fullBlockCount * SIDE_LENGTH;
+            // 1, 2, 1, 2, 3, 2
+            var slabCount = (value / 4) + (value - 1) % 3;
+            if (value > 6) slabCount++;
+            var fullSlabHeight = slabCount * SLAB_SIZE;
+            HeightFromGround = fullBlockHeight + fullSlabHeight;
+            _stack = value;
+        }
+    }
     /// <summary>The maximum height of any <see cref="Block"/>.</summary>
     public const byte MAX_BLOCK_HEIGHT = 7;
 
