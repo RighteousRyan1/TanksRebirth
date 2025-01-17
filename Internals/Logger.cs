@@ -69,16 +69,16 @@ public sealed class Logger : IDisposable {
     public void Write(object contents, LogType writeType, bool throwException = false) {
         var contentsAsString = contents.ToString();
         fStream.Position = fStream.Length;
-        _stringBuilder.Clear(); // Clear the sb to avoid writing stuff we don't really want.
-        // Equivalent to $"[{DateTime.Now}] [{assembly.GetName().Name}] [{writeType}]: {contents}"
-        _stringBuilder
-            .Append('[').Append(DateTime.Now.ToString(CultureInfo.InvariantCulture)).Append("] ")
-            .Append('[').Append(assembly.GetName().Name).Append("] ")
-            .Append('[').Append(FromLogLevel(writeType)).Append("]: ")
-            .Append(contentsAsString);
-
-        var str = _stringBuilder.ToString();
         lock (sWriter) {
+            _stringBuilder.Clear(); // Clear the sb to avoid writing stuff we don't really want.
+            // Equivalent to $"[{DateTime.Now}] [{assembly.GetName().Name}] [{writeType}]: {contents}"
+            _stringBuilder
+                .Append('[').Append(DateTime.Now.ToString(CultureInfo.InvariantCulture)).Append("] ")
+                .Append('[').Append(assembly.GetName().Name).Append("] ")
+                .Append('[').Append(FromLogLevel(writeType)).Append("]: ")
+                .Append(contentsAsString);
+
+            var str = _stringBuilder.ToString();
             sWriter.WriteLine(str);
             Debug.WriteLine(str);
             ConsoleWrite(str);
