@@ -215,12 +215,19 @@ public class GameHandler {
     }
 
     internal static void UpdateAll(GameTime gameTime) {
-        if (InputUtils.AreKeysJustPressed(Keys.J, Keys.K))
-            Server.SyncSeeds();
-        if (InputUtils.KeyJustPressed(Keys.M) && DebugManager.DebuggingEnabled)
-            SmokeNadeDebug();
         // ChatSystem.CurTyping = SoundPlayer.GetLengthOfSound("Content/Assets/sounds/tnk_shoot_ricochet_rocket_loop.ogg").ToString();
         if (DebugManager.DebuggingEnabled) {
+            if (InputUtils.KeyJustPressed(Keys.H)) {
+                var plane = new Plane(new Vector3(0, 50, 0), Vector3.Zero, new() {
+                    Roll = 0f,
+                    Pitch = 0f,
+                    Yaw = 0f
+                }, 300f);
+            }
+            if (InputUtils.AreKeysJustPressed(Keys.J, Keys.K))
+                Server.SyncSeeds();
+            if (InputUtils.KeyJustPressed(Keys.M))
+                SmokeNadeDebug();
             if (InputUtils.KeyJustPressed(Keys.G)) {
                 TankGame.VanillaAchievementPopupHandler.SummonOrQueue(GameRand.Next(VanillaAchievements.Repository.GetAchievements().Count));
             }
@@ -260,8 +267,11 @@ public class GameHandler {
             foreach (var bullet in Shell.AllShells)
                 bullet?.Update();
 
-            foreach (var fp in TankFootprint.footprints)
+            foreach (var fp in TankFootprint.AllFootprints)
                 fp?.Update();
+
+            foreach (var p in Plane.AllPlanes)
+                p?.Update();
         }
         if (GameProperties.InMission) {
             TankMusicSystem.Update();
@@ -336,6 +346,9 @@ public class GameHandler {
 
         foreach (var ping in IngamePing.AllIngamePings)
             ping?.Render();
+
+        foreach (var p in Plane.AllPlanes)
+            p?.Render();
 
         //foreach (var print in TankFootprint.footprints)
         //print?.Render();

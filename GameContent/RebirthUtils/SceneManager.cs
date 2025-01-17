@@ -203,9 +203,9 @@ public static class SceneManager {
             GameHandler.AllTanks[a]?.Remove(true);
     }
     public static void ClearTankTracks() {
-        for (int i = 0; i < TankFootprint.footprints.Length; i++) {
-            TankFootprint.footprints[i]?.Remove();
-            TankFootprint.footprints[i] = null;
+        for (int i = 0; i < TankFootprint.AllFootprints.Length; i++) {
+            TankFootprint.AllFootprints[i]?.Remove();
+            TankFootprint.AllFootprints[i] = null;
         }
     }
     public static void StartTnkScene() {

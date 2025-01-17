@@ -164,7 +164,10 @@ public static class GeometryUtils
 /// </summary>
 public struct EulerAngles
 {
+    /// <summary>The Z rotation</summary>
     public float Yaw;
+    /// <summary>The Y rotation</summary>
     public float Pitch;
+    /// <summary>The X rotation</summary>
     public float Roll;
 }

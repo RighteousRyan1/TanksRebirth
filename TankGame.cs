@@ -84,6 +84,7 @@ public class TankGame : Game {
     public static float RunTime { get; private set; }
 
     public static Texture2D WhitePixel;
+    public static Texture2D BlackPixel;
 
     public static TankGame Instance { get; private set; }
     public static readonly string ExePath = Assembly.GetExecutingAssembly().Location.Replace(@$"\{nameof(TanksRebirth)}.dll", string.Empty);
@@ -127,7 +128,6 @@ public class TankGame : Game {
 
     /// <summary>The handle of the game's logging file. Used to write information to a file that can be read after the game closes.</summary>
     public static Logger ClientLog { get; private set; }
-
     public TankGame() : base() {
         Directory.CreateDirectory(SaveDirectory);
         Directory.CreateDirectory(Path.Combine(SaveDirectory, "Resource Packs", "Scene"));
@@ -315,6 +315,8 @@ public class TankGame : Game {
         OnFocusRegained += TankGame_OnFocusRegained!;
 
         WhitePixel = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
+        BlackPixel = new Texture2D(GraphicsDevice, 1, 1);
+        BlackPixel.SetData(new Color[] { Color.Black });
 
         _fontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/en_US.ttf"));
         _fontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/ja_JP.ttf"));

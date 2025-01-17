@@ -12,7 +12,7 @@ public class TankFootprint {
 
     private static int MaxFootprintsAllowed => TankGame.Settings.TankFootprintLimit;
 
-    public static TankFootprint[] footprints = new TankFootprint[MaxFootprintsAllowed];
+    public static TankFootprint[] AllFootprints = new TankFootprint[MaxFootprintsAllowed];
 
     public Vector3 Position;
     public float rotation;
@@ -39,7 +39,7 @@ public class TankFootprint {
             // Old implementation of this code in case of any regressions.
             // footprints[Array.IndexOf(footprints, footprints.Min(x => x.lifeTime > 0))] = null; // i think?
 
-            Span<TankFootprint> footPrints = footprints;
+            Span<TankFootprint> footPrints = AllFootprints;
             ref var footprintSearchSpace = ref MemoryMarshal.GetReference(footPrints);
 
             var lifeTimeOfCurrentOldest = 0L;
@@ -62,7 +62,7 @@ public class TankFootprint {
             if (footPrints[indexOfOldest] != null && !footPrints[indexOfOldest]._destroy) {
                 footPrints[indexOfOldest]
                   ?.Remove(); // The particle will (on next update) Destroy itself and remove itself from the array.
-                footprints[indexOfOldest] = null;
+                AllFootprints[indexOfOldest] = null;
                 total_treads_placed--;
             }
         }
@@ -98,7 +98,7 @@ public class TankFootprint {
             track.Pitch = rotation;
         };
 
-        footprints[Array.IndexOf(footprints, null)] = this;
+        AllFootprints[Array.IndexOf(AllFootprints, null)] = this;
 
         total_treads_placed++;
 
