@@ -6,12 +6,16 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.Xna.Framework.Audio;
 using TanksRebirth.GameContent.ModSupport;
+using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.Internals;
 
 public static class GameResources {
+    private static TextureQueue textureQueue = new();
+    private static AudioQueue audioQueue = new();
     private static Dictionary<string, object> ResourceCache { get; set; } = new();
 
     private static Dictionary<string, object> QueuedResources { get; set; } = new();
@@ -48,12 +52,50 @@ public static class GameResources {
         return loaded;
     }
 
-    public static T GetGameResource<T>(string name, bool addDotPng = true, bool addContentPrefix = true, bool premultiply = false) where T : class {
+    public static void PreloadAsset<T, U>(string name, U? preloadSettings = default, bool addDotPng = true, bool addContentPrefix = true) where T : class where U : IPreloadSettings {
+        if (typeof(T) == typeof(Texture2D))
+            textureQueue.PreLoadTexture(Path.Combine(addContentPrefix ? TankGame.Instance.Content.RootDirectory : string.Empty, name + (addDotPng ? ".png" : string.Empty)), preloadSettings);
+
+        if (typeof(T) == typeof(SoundEffect))
+            audioQueue.PreLoadAudio(name);
+    }
+
+    public static void MassPreloadAssets<T, U>(in Span<string> names, U? preloadSettings = default, bool addDotPng = true, bool addContentPrefix = true) where T : class where U : IPreloadSettings {
+        if (typeof(T) == typeof(Texture2D)) {
+
+            for (var i = 0; i < names.Length; i++)
+                textureQueue.PreLoadTexture(Path.Combine(addContentPrefix ? TankGame.Instance.Content.RootDirectory : string.Empty, names[i] + (addDotPng ? ".png" : string.Empty)), preloadSettings);
+        }
+
+        if (typeof(T) == typeof(SoundEffect)) {
+            for (var i = 0; i < names.Length; i++)
+                audioQueue.PreLoadAudio(names[i]);
+        }
+    }
+
+    public static T? GetGameResource<T>(string name, bool addDotPng = true, bool addContentPrefix = true, bool premultiply = false) where T : class {
         if (ResourceCache.TryGetValue(name, out var value))
             return (T)value;
-        else if (typeof(T) == typeof(Texture2D)) {
+
+        if (typeof(T) == typeof(SoundEffect)) {
+            var audio = audioQueue.GetSoundEffectFromPath(name);
+            return audio as T;
+        }
+
+        if (typeof(T) == typeof(Texture2D)) {
+            /*
+             *  Should the texture be preloaded, use that instead.
+             */
+            var texturePath = Path.Combine(addContentPrefix ? TankGame.Instance.Content.RootDirectory : string.Empty, name + (addDotPng ? ".png" : string.Empty));
+            var textureBefore = textureQueue.GetTextureFromPath(texturePath);
+            if (textureBefore != null) {
+                ResourceCache[name] = textureBefore; // Copy reference to resource cache.
+                return textureBefore as T;
+            }
+
+
             // Bustin' all the bells out the box
-            var texture = Texture2D.FromFile(TankGame.Instance.GraphicsDevice, Path.Combine(addContentPrefix ? TankGame.Instance.Content.RootDirectory : string.Empty, name + (addDotPng ? ".png" : string.Empty)));
+            var texture = Texture2D.FromFile(TankGame.Instance.GraphicsDevice, texturePath);
             texture.Name = name;
 
             object result = texture;
@@ -69,6 +111,16 @@ public static class GameResources {
         }
 
         return GetResource<T>(TankGame.Instance.Content, name);
+    }
+
+    public static void EnsurePreloadedAssetsArePreloaded() {
+        Task[] tasks =  [
+            textureQueue.AssureEverythingIsPreloaded(),
+            audioQueue.AssureEverythingIsPreloaded()
+        ];
+        
+        Task.WhenAll(tasks).GetAwaiter().GetResult();
+
     }
 
     public static void QueueAsset<T>(string name) {
