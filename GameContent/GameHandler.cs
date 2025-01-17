@@ -150,7 +150,7 @@ public class GameHandler {
                 }
             }
 
-            if (!startTimer && p.Position.Y < 7) {
+            if (p.Position.Y < 7) {
                 if (hits > 0) {
                     hits--;
                     velocity.Y = initialVelocity.Y * hits / 5;
