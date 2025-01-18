@@ -23,7 +23,7 @@ public class ParticleSystem
                 CurrentParticles[i]?.Render();
         }
         else {
-            for (int i = 0; i < CurrentParticles.Length; i--)
+            for (int i = 0; i < CurrentParticles.Length; i++)
                 CurrentParticles[i]?.Render();
         }
     }
@@ -37,7 +37,7 @@ public class ParticleSystem
             }
         }
         else {
-            for (int i = 0; i < CurrentParticles.Length; i--) {
+            for (int i = 0; i < CurrentParticles.Length; i++) {
                 var particle = CurrentParticles[i];
                 if (particle is not null)
                     if (particle.Model != null)

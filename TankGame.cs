@@ -387,7 +387,7 @@ public class TankGame : Game {
                 ClientLog.Write($"Physical Memory (RAM): {CompSpecs.RAM.Manufacturer} {MathF.Round(MemoryParser.FromGigabytes(CompSpecs.RAM.TotalPhysical))} GB {CompSpecs.RAM.Type}@{CompSpecs.RAM.ClockSpeed}Mhz", LogType.Info);
             }
 
-            if (!CompSpecs.Equals(default(ComputerSpecs))) {
+            if (!CompSpecs.Equals(default) && !error) {
                 var profiler = new SpecAnalysis(CompSpecs.GPU, CompSpecs.CPU, CompSpecs.RAM);
 
                 profiler.Analyze(false, out var ramr, out var gpur, out var cpur);
