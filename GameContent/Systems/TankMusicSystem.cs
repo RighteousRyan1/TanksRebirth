@@ -67,13 +67,13 @@ public static class TankMusicSystem
         [TankID.Commando] = 1
     };
     /// <summary>A dictionary of all stored/loaded tanks songs.</summary>
-    public static Dictionary<string, OggMusic> Audio = new();
+    public static Dictionary<string, OggMusic>? Audio = new();
 
     public static void LoadVanillaAudio() {
         var filePath = "Content/Assets/music";
         foreach (var file in Directory.GetFiles(filePath).Where(s => s.EndsWith(".ogg"))) {
             var name = Path.GetFileNameWithoutExtension(file);
-            Audio[name] = new OggMusic(name, file, 0.5f);
+            Audio[name] = new OggMusic(name, file.Replace("\\", "/"), 0.5f);
         }
         Audio["Snow Breeze"] = new("Snow Breeze", "Content/Assets/sounds/ambient/snowfall.ogg", 1f);
         SnowLoop = Audio["Snow Breeze"];

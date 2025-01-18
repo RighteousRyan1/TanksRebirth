@@ -12,6 +12,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using FontStashSharp;
+using Microsoft.Xna.Framework.Audio;
 using Steamworks;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common;
@@ -59,7 +60,7 @@ public class TankGame : Game {
     public static PerspectiveCamera PerspectiveCamera;
 
     /// <summary>The hardware used by the user's computer.</summary>
-    public readonly ComputerSpecs CompSpecs;
+    public  ComputerSpecs CompSpecs { get; private set; }
     public static TimeSpan RenderTime { get; private set; }
     public static TimeSpan LogicTime { get; private set; }
     public static double LogicFPS { get; private set; }
@@ -122,7 +123,7 @@ public class TankGame : Game {
     public static bool IsMac => OperatingSystem == OSPlatform.OSX;
     public static bool IsLinux => OperatingSystem == OSPlatform.Linux;
 
-    public readonly string MOTD;
+    public string MOTD { get; private set; }
 
     #endregion
 
@@ -136,16 +137,24 @@ public class TankGame : Game {
         Directory.CreateDirectory(Path.Combine(SaveDirectory, "Logs"));
         Directory.CreateDirectory(Path.Combine(SaveDirectory, "Backup"));
         ClientLog = new(Path.Combine(SaveDirectory, "Logs"), "client");
-        try {
-            var bytes = WebUtils.DownloadWebFile(
-                "https://raw.githubusercontent.com/RighteousRyan1/tanks_rebirth_motds/master/motd.txt",
-                out var name);
-            MOTD = System.Text.Encoding.Default.GetString(bytes);
-        }
-        catch {
-            // in the case that an HTTPRequestException is thrown (no internet access)
-            MOTD = LocalizationRandoms.GetRandomMotd();
-        }
+        Task.Run(() => {
+            try {
+                ClientLog.Write(
+                    "Obtaining message of the day (MOTD) from GitHub...",
+                    LogType.Info);
+                var bytes = WebUtils.DownloadWebFile(
+                    "https://raw.githubusercontent.com/RighteousRyan1/tanks_rebirth_motds/master/motd.txt",
+                    out var name);
+                MOTD = System.Text.Encoding.Default.GetString(bytes);
+            }
+            catch {
+                // in the case that an HTTPRequestException is thrown (no internet access)
+                ClientLog.Write(
+                    "Failed to obtain MOTD. Falling back to offline MOTDs.",
+                    LogType.Warn);
+                MOTD = LocalizationRandoms.GetRandomMotd();
+            }
+        });
 
         // check if platform is windows, mac, or linux
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
@@ -157,20 +166,7 @@ public class TankGame : Game {
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
             OperatingSystem = OSPlatform.Linux;
         }
-
-        CompSpecs = ComputerSpecs.GetSpecs(out bool error);
-
-        if (error) {
-            ClientLog.Write(
-                "Unable to load computer specs: Specified OS Architecture is not Windows.",
-                LogType.Warn);
-        }
-        else {
-            ClientLog.Write($"CPU: {CompSpecs.CPU.Name} (Core Count: {CompSpecs.CPU.CoreCount})", LogType.Info);
-            ClientLog.Write($"GPU: {CompSpecs.GPU.Name} (Driver Version: {CompSpecs.GPU.DriverVersion} | VRAM: {MathF.Round(MemoryParser.FromGigabytes(CompSpecs.GPU.VRAM))} GB)", LogType.Info);
-            ClientLog.Write($"Physical Memory (RAM): {CompSpecs.RAM.Manufacturer} {MathF.Round(MemoryParser.FromGigabytes(CompSpecs.RAM.TotalPhysical))} GB {CompSpecs.RAM.Type}@{CompSpecs.RAM.ClockSpeed}Mhz", LogType.Info);
-        }
-
+        
         ClientLog.Write($"Playing on Operating System '{OperatingSystem}'", LogType.Info);
 
         // IOUtils.SetAssociation(".mission", "MISSION_FILE", "TanksRebirth.exe", "Tanks Rebirth mission file");
@@ -192,7 +188,7 @@ public class TankGame : Game {
         GameVersion = typeof(TankGame).Assembly.GetName().Version!;
 
         ClientLog.Write(
-            $"Running {typeof(TankGame).Assembly.GetName().Name} on version {GameVersion}'",
+            $"Running {typeof(TankGame).Assembly.GetName().Name} on version '{GameVersion}'",
             LogType.Info);
     }
 
@@ -216,8 +212,10 @@ public class TankGame : Game {
     protected override void Initialize() {
         GameHandler.Initialize();
         GameDir = Directory.GetCurrentDirectory();
-        if (Debugger.IsAttached && SteamAPI.IsSteamRunning())
+        if (Debugger.IsAttached && SteamAPI.IsSteamRunning()) {
+            ClientLog.Write("Initialising SteamWorks API...", LogType.Debug);
             SteamworksUtils.Initialize();
+        }
         CurrentSessionTimer.Start();
         PingMenu.Initialize();
 
@@ -273,7 +271,98 @@ public class TankGame : Game {
         DiscordRichPresence.Terminate();
     }
 
+    void PreloadContent() {
+        string[] textures = [
+            /* Miscellaneous */
+            "Assets/christmas/snowflake_0",
+            "Assets/christmas/snowflake_1",
+            "Assets/christmas/snow",
+            "Assets/textures/misc/ring",
+            "Assets/textures/smoke/smokenade",
+            "Assets/textures/smoke/smoke",
+            "Assets/textures/misc/tank_rock",
+            "Assets/textures/misc/tank_rock_2",
+            "Assets/textures/ingame/block_shadow_h",
+            "Assets/textures/ingame/block_other_c",
+            "Assets/textures/misc/mouse_dot",
+            "Assets/textures/misc/cursor_1",
+            "Assets/textures/misc/tank_smokes",
+            "Assets/textures/misc/tank_smokes",
+            "Assets/textures/secret/special",
+            "Assets/textures/secret/special2",
+            
+            
+            /* Tanks Textures */
+            "Assets/textures/tank/wee/tank_commando",
+            "Assets/textures/tank/wee/tank_assassin",
+            "Assets/textures/tank/wee/tank_rocket",
+            "Assets/textures/tank/wee/tank_electro",
+            "Assets/textures/tank/wee/tank_explosive",
+            "Assets/textures/tank_shadow",
+            "Assets/textures/bullet/bullet",
+            "Assets/textures/bullet/flame",
+            "Assets/textures/bullet/smoketrail",
+            "Assets/textures/bullet/explosive_bullet",
+            "Assets/textures/misc/armor",
+            
+            "Assets/textures/check/check_blue",
+            "Assets/textures/check/check_red",
+            "Assets/textures/check/check_green",
+            "Assets/textures/check/check_yellow",
+            "Assets/textures/check/check_white",
+
+            "Assets/textures/tank_footprint",
+            "Assets/textures/tank_footprint_alt",
+
+            "Assets/textures/mine/mine_env",
+            "Assets/textures/mine/mine_shadow",
+            "Assets/textures/mine/explosion",
+
+            /* UI */
+            "Assets/textures/ui/bullet_ui",
+            "Assets/textures/WhitePixel",
+            "Assets/UIPanelBackground",
+            "Assets/textures/ui/ping/ping_tex",
+            "Assets/textures/ui/chatalert",
+            "Assets/textures/ui/chevron_border",
+            "Assets/textures/ui/chevron_inside",
+            "Assets/textures/misc/light_particle",
+            "Assets/textures/misc/tank_smokes",
+            "Assets/textures/misc/bot_hit",
+            "Assets/textures/ui/tank_background_billboard",
+            "Assets/textures/ui/playertank2d",
+            "Assets/textures/ui/banner",
+            "Assets/textures/ui/grades",
+            "Assets/textures/ui/scoreboard",
+            "Assets/textures/ui/tank2d",
+            "Assets/tanks_rebirth_logo",
+            "Assets/textures/ui/trophy",
+            "Assets/textures/ui/achievement/secret",
+
+        ];
+        
+        GameResources.MassPreloadAssets<Texture2D, TexturePreloadSettings>(
+            textures
+        , new TexturePreloadSettings{});
+
+        // Prefix with Content for compatibility reasons with old code.
+        // Done mostly dynamcially, because easier than hardcoding for 20 minutes each audio.
+        List<string> sounds = [];
+        
+        // ~~ Vanilla audio ~~
+        // sounds.AddRange(Directory.GetFiles("Content/Assets/music"));
+        sounds.AddRange(Directory.GetFiles("Content", "*.ogg", SearchOption.AllDirectories));
+
+        // ~~ Sound Effects ~~
+        // sounds.AddRange(Directory.GetFiles("Content/Assets/sounds", "*.ogg", SearchOption.AllDirectories));
+
+        GameResources.MassPreloadAssets<SoundEffect, TexturePreloadSettings>(
+            sounds.ToArray()
+            , default);
+    }
+
     protected override void LoadContent() {
+        PreloadContent();
         var s = Stopwatch.StartNew();
 
         MainThreadId = Environment.CurrentManagedThreadId;
@@ -284,22 +373,38 @@ public class TankGame : Game {
         SpectatorCamera = new(MathHelper.ToRadians(100), GraphicsDevice.Viewport.AspectRatio, 0.1f, 5000f);
         PerspectiveCamera = new(MathHelper.ToRadians(90), GraphicsDevice.Viewport.AspectRatio, 0.1f, 5000f);
 
-        if (!CompSpecs.Equals(default(ComputerSpecs))) {
-            var profiler = new SpecAnalysis(CompSpecs.GPU, CompSpecs.CPU, CompSpecs.RAM);
+        Task.Run(() => {
+            CompSpecs = ComputerSpecs.GetSpecs(out bool error);
 
-            profiler.Analyze(false, out var ramr, out var gpur, out var cpur);
+            if (error) {
+                ClientLog.Write(
+                    "Unable to load computer specs: Specified OS Architecture is not Windows.",
+                    LogType.Warn);
+            }
+            else {
+                ClientLog.Write($"CPU: {CompSpecs.CPU.Name} (Core Count: {CompSpecs.CPU.CoreCount})", LogType.Info);
+                ClientLog.Write($"GPU: {CompSpecs.GPU.Name} (Driver Version: {CompSpecs.GPU.DriverVersion} | VRAM: {MathF.Round(MemoryParser.FromGigabytes(CompSpecs.GPU.VRAM))} GB)", LogType.Info);
+                ClientLog.Write($"Physical Memory (RAM): {CompSpecs.RAM.Manufacturer} {MathF.Round(MemoryParser.FromGigabytes(CompSpecs.RAM.TotalPhysical))} GB {CompSpecs.RAM.Type}@{CompSpecs.RAM.ClockSpeed}Mhz", LogType.Info);
+            }
 
-            ChatSystem.SendMessage(ramr, Color.White);
-            ChatSystem.SendMessage(gpur, Color.White);
-            ChatSystem.SendMessage(cpur, Color.White);
+            if (!CompSpecs.Equals(default(ComputerSpecs))) {
+                var profiler = new SpecAnalysis(CompSpecs.GPU, CompSpecs.CPU, CompSpecs.RAM);
 
-            ChatSystem.SendMessage(profiler.ToString(), Color.Brown);
+                profiler.Analyze(false, out var ramr, out var gpur, out var cpur);
 
-            ClientLog.Write("Sucessfully analyzed hardware.", LogType.Info);
-        }
-        else {
-            ClientLog.Write("Failed to analyze hardware.", LogType.Warn);
-        }
+                ChatSystem.SendMessage(ramr, Color.White);
+                ChatSystem.SendMessage(gpur, Color.White);
+                ChatSystem.SendMessage(cpur, Color.White);
+
+                ChatSystem.SendMessage(profiler.ToString(), Color.Brown);
+
+                ClientLog.Write("Sucessfully analyzed hardware.", LogType.Info);
+            }
+            else {
+                ClientLog.Write("Failed to analyze hardware.", LogType.Warn);
+            }
+        });
+
         // I forget why this check is needed...
         ChatSystem.Initialize();
 
@@ -384,7 +489,8 @@ public class TankGame : Game {
         // Language.GenerateLocalizationTemplate("en_US.loc");
 
         Achievement.MysteryTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/achievement/secret");
-
+    
+        GameResources.EnsurePreloadedAssetsArePreloaded();
         GameHandler.SetupGraphics();
         GameUI.Initialize();
         MainMenu.InitializeUIGraphics();
@@ -426,14 +532,17 @@ public class TankGame : Game {
         s.Stop();
 
         // it isnt really an autoupdater tho.
-        AutoUpdater = new("https://github.com/RighteousRyan1/TanksRebirth", GameVersion);
+        Task.Run(() => {
+            AutoUpdater = new("https://github.com/RighteousRyan1/TanksRebirth", GameVersion);
 
-        if (AutoUpdater.IsOutdated) {
+            if (!AutoUpdater.IsOutdated) 
+                return;
+            
             //CommandGlobals.IsUpdatePending = true;
             ChatSystem.SendMessage($"Outdated game version detected (current={GameVersion}, recent={AutoUpdater.GetRecentVersion()}).", Color.Red);
             //ChatSystem.SendMessage("Type /update to update the game and automatically restart.", Color.Red);
             SoundPlayer.SoundError();
-        }
+        });
         PlaceSecrets();
     }
 

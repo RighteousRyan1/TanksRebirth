@@ -62,6 +62,11 @@ public class OggAudio : IDisposable, IAudio {
         Instance.Stop();
     }
 
+    public OggAudio(string path, SoundEffect effect) {
+        this.SongPath = path;
+        this._effect = effect;
+        this.Instance = effect.CreateInstance();
+    }
     public OggAudio(string path) {
         SongPath = path;
         Load(SongPath);
@@ -82,6 +87,13 @@ public class OggAudio : IDisposable, IAudio {
     }
 
     private void Load(string path) {
+        var soundEffect = GameResources.GetGameResource<SoundEffect>(path);
+        if (soundEffect != null) {
+            this._effect = soundEffect;
+            this.Instance = soundEffect.CreateInstance();
+            return;
+        }
+        
         var audioData = new OggDeserializer().Deserialize(path);
         _effect = new SoundEffect(audioData.binaryData, audioData.sampleRate, (AudioChannels)audioData.channelCount);
         Instance = _effect.CreateInstance();
