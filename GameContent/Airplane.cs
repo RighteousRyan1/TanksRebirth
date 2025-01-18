@@ -172,7 +172,7 @@ public class Airplane {
         WhileTrapDoorsOpened = null;
 
         PlaneLoop.Stop();
-        PlaneLoop.Dispose();
+        //PlaneLoop.Dispose();
         AllPlanes[Id] = null;
     }
     public void Update() {

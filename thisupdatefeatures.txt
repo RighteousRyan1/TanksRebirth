@@ -10,14 +10,15 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 ## Changes
 
 - Smoke is now 3 dimensional in first person mode.
+- If launched in Debug, the game will supply the user with a console.
 
 ## Source Code Changes (for modders)
 
-
+- Assets are feched much differently now (dottik you need to explain it, i don't wanna accidentally say something wrong)
 
 ## Fixes
 
-
+- Game now loads much faster.
 
 ## TODO
 
