@@ -182,7 +182,7 @@ public class Animator {
                 _isRunning = false;
             }
         }
-        if (KeyFrames[1].Duration == TimeSpan.FromSeconds(3.5))
-            Debug.WriteLine(ElapsedTime.TotalSeconds + " : " + Interpolated);
+        //if (KeyFrames[1].Duration == TimeSpan.FromSeconds(3.5))
+            //Debug.WriteLine(ElapsedTime.TotalSeconds + " : " + Interpolated);
     }
 }

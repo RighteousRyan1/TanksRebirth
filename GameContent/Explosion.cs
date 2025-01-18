@@ -62,8 +62,8 @@ public class Explosion : IAITankDanger {
         //int vertLayers = (int)(scale * 2.5f); // 16
         //int horizLayers = (int)scale; // 5
 
-        int horizLayers = (int)(scale * 1.5f); // 10
-        int vertLayers = (int)(scale * 1.1f); // 8
+        int horizLayers = 15;//(int)(scale * 1.5f) + 2; // 10
+        int vertLayers = 8;//(int)(scale * 1.1f) + 2; // 8
 
         var ring = GameHandler.Particles.MakeParticle(Position3D + Vector3.UnitY, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/ring"));
         ring.Scale = new(1.3f);
@@ -96,7 +96,8 @@ public class Explosion : IAITankDanger {
                 //var position = Vector3.Transform(Vector3.UnitX * explScalar, Matrix.CreateFromYawPitchRoll(rotZ, 0, rotX) * Matrix.CreateTranslation(Position3D));
                 // this will become a model.
                 var lingerRandom = GameHandler.GameRand.NextFloat(0.8f, 1.2f);
-                var particle = GameHandler.Particles.MakeExplosionFlameParticle(new Vector3(0, -100, 0), out var act, LingerDuration / 60f * lingerRandom);
+                var particle = GameHandler.Particles.MakeExplosionFlameParticle(new Vector3(0, -100, 0), out var act, LingerDuration / 60f * lingerRandom, scale / MAGIC_EXPLOSION_NUMBER * 1.1f);
+
                 // TODO: make particles face center of explosion
                 particle.UniqueBehavior = (a) => {
                     act?.Invoke(particle);

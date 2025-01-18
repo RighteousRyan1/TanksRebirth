@@ -80,154 +80,29 @@ public class GameHandler {
         ExperienceBar = new();
         Particles = new(MAX_PARTICLES);
     }
-    // todo: balls
-    private static void SmokeNadeDebug() {
-
-        var pl = AllPlayerTanks.FirstOrDefault(x => x is not null);
-
-        if (pl is null)
-            return;
-        var p = Particles.MakeParticle(pl.Position3D + new Vector3(0, 10, 0), GameResources.GetGameResource<Model>("Assets/smokenade"), GameResources.GetGameResource<Texture2D>("Assets/textures/smoke/smokenade"));
-        bool exploded = false;
-
-        float gravity = 0.01f;
-        Vector2 velXZ = Vector2.UnitY.RotatedByRadians(pl.TurretRotation) / 4;
-        Vector3 initialVelocity = new(-velXZ.X, 1 + pl.Velocity.Length() / 3, velXZ.Y);
-        Vector3 velocity = initialVelocity;
-        int hits = 5;
-        float timer = 0f;
-        bool startTimer = false;
-        bool isSmokeDestroyed = false;
-        Vector3 oldPosition = p.Position;
-        float shadowPos = 0f;
-
-        p.UniqueBehavior = (a) => {
-            shadowPos = 0.1f;
-            p.Scale = new(125);
-            p.IsIn2DSpace = false;
-
-            p.Position += velocity;
-            velocity.Y -= gravity;
-
-            if (hits > 0) {
-                p.Roll += 0.07f * velocity.Length() * TankGame.DeltaTime;
-                p.Pitch += 0.07f * velocity.Length() * TankGame.DeltaTime;
-            }
-
-            // bounce off walls
-            if (p.Position.Y <= 80) {
-                if ((p.Position.X <= MapRenderer.MIN_X && p.Position.X >= MapRenderer.MIN_X - 6) || (p.Position.X >= MapRenderer.MAX_X && p.Position.X <= MapRenderer.MAX_X + 6)) {
-                    velocity.X = -velocity.X * 0.75f;
-                }
-                if ((p.Position.Z <= MapRenderer.MIN_Y && p.Position.Z >= MapRenderer.MIN_Y - 6) || (p.Position.Z >= MapRenderer.MAX_Y && p.Position.Z <= MapRenderer.MAX_Y + 6)) {
-                    velocity.Z = -velocity.Z * 0.75f;
-                }
-            }
-            // block collision
-            for (int i = 0; i < Block.AllBlocks.Length; i++) {
-                var block = Block.AllBlocks[i];
-                if (block is null) continue;
-                if (block.Hitbox.Contains(p.Position.FlattenZ())) {
-                    shadowPos = block.HeightFromGround;
-                    if (p.Position.Y < block.HeightFromGround) {
-                        if (oldPosition.X > block.Hitbox.X + block.Hitbox.Width
-                        || oldPosition.X < block.Hitbox.X)
-                            velocity.X = -velocity.X * 0.75f;
-                        else if (oldPosition.Z > block.Hitbox.Y + block.Hitbox.Height
-                        || oldPosition.Z < block.Hitbox.Y)
-                            velocity.Z = -velocity.Z * 0.75f;
-                        if (oldPosition.Y >= block.HeightFromGround) {
-                            // less bounces on blocks!
-                            if (hits <= 1) {
-                                velocity = Vector3.Zero;
-                                p.Position.Y = block.HeightFromGround;
-                                startTimer = true;
-                            }
-                            hits--;
-                            velocity.Y = initialVelocity.Y * hits / 5;
-                        }
-                    }
-                }
-            }
-
-            if (p.Position.Y < 7) {
-                if (hits > 0) {
-                    hits--;
-                    velocity.Y = initialVelocity.Y * hits / 5;
-                }
-                else if (hits <= 0) {
-                    velocity = Vector3.Zero;
-                    p.Position.Y = 7;
-                    startTimer = true;
-                }
-            }
-
-            if (startTimer) timer += TankGame.DeltaTime;
-
-            if (timer > 60 && !exploded) {
-                exploded = true;
-                SoundPlayer.PlaySoundInstance("Assets/sounds/smoke_hiss.ogg", SoundContext.Effect, 0.3f, gameplaySound: true);
-                for (int i = 0; i < 8; i++) {
-                    var c = Particles.MakeParticle(p.Position,
-                        GameResources.GetGameResource<Model>("Assets/smoke"),
-                        GameResources.GetGameResource<Texture2D>("Assets/textures/smoke/smoke"));
-                    var randDir = new Vector3(Server.ServerRandom.NextFloat(-35, 35), 0, Server.ServerRandom.NextFloat(-35, 35));
-                    c.Position += randDir;
-                    var randSize = Server.ServerRandom.NextFloat(5, 10);
-                    c.Scale.X = randSize;
-                    c.Scale.Z = randSize;
-                    c.UniqueBehavior = (b) => {
-                        c.Pitch += 0.005f * TankGame.DeltaTime;
-                        if (c.Scale.Y < randSize && c.LifeTime < 600)
-                            c.Scale.Y += 0.1f * TankGame.DeltaTime;
-                        if (c.LifeTime >= 600) {
-                            c.Scale.Y -= 0.06f * TankGame.DeltaTime;
-                            c.Alpha -= 0.06f / randSize * TankGame.DeltaTime;
-
-                            if (c.Scale.Y <= 0) {
-                                c.Destroy();
-                            }
-                        }
-                    };
-                }
-                isSmokeDestroyed = true;
-                p.Destroy();
-            }
-            oldPosition = p.Position;
-        };
-
-        var shadow = Particles.MakeParticle(pl.Position3D, GameResources.GetGameResource<Texture2D>("Assets/textures/mine/mine_shadow"));
-        shadow.Scale = new(0.8f);
-        shadow.Color = Color.Black;
-        shadow.HasAddativeBlending = false;
-        shadow.Roll = -MathHelper.PiOver2;
-
-        shadow.UniqueBehavior = (a) => {
-            if (isSmokeDestroyed) {
-                shadow.Destroy();
-            }
-            shadow.Position.Y = shadowPos;
-            shadow.Position.X = p.Position.X;
-            shadow.Position.Z = p.Position.Z;
-
-            shadow.Alpha = MathUtils.InverseLerp(150, 7, p.Position.Y, true);
-        };
-    }
 
     internal static void UpdateAll(GameTime gameTime) {
         // ChatSystem.CurTyping = SoundPlayer.GetLengthOfSound("Content/Assets/sounds/tnk_shoot_ricochet_rocket_loop.ogg").ToString();
         if (DebugManager.DebuggingEnabled) {
-            if (InputUtils.KeyJustPressed(Keys.H)) {
-                var plane = new Plane(new Vector3(0, 50, 0), Vector3.Zero, new() {
-                    Roll = 0f,
-                    Pitch = 0f,
-                    Yaw = 0f
-                }, 300f);
+            if (/*InputUtils.KeyJustPressed(Keys.H)*/ DebugManager.DebugLevel == -2 && GameProperties.InMission) {
+                if (TankGame.RunTime % 300 <= TankGame.DeltaTime) {
+                    if (Server.ServerRandom.Next(2) == 0) {
+                        var pos = Airplane.ChooseRandomXZPosition(Server.ServerRandom);
+                        var vel = Airplane.ChooseRandomFlightTarget(Server.ServerRandom, pos, 0.5f, 0.5f);
+                        var plane = new Airplane(new Vector3(pos.X, 100, pos.Y), vel, 400f);
+                        plane.WhileTrapDoorsOpened = () => {
+                            if (TankGame.RunTime % 30 <= TankGame.DeltaTime) {
+                                ParticleGameplay.CreateSmokeGrenade(Particles, plane.Position, Vector3.Down + new Vector3(plane.Velocity.X, 0, plane.Velocity.Y) * 0.5f/* * GameRand.NextFloat(0.5f, 1.1f)*/);
+                            }
+                        };
+                    }
+                }
             }
-            if (InputUtils.AreKeysJustPressed(Keys.J, Keys.K))
+            if (InputUtils.AreKeysJustPressed(Keys.Q, Keys.E))
                 Server.SyncSeeds();
             if (InputUtils.KeyJustPressed(Keys.M))
-                SmokeNadeDebug();
+                if (PlayerTank.ClientTank is not null)
+                    ParticleGameplay.CreateSmokeGrenade(Particles, PlayerTank.ClientTank.Position3D + new Vector3(0, 10, 0), Vector3.Up);
             if (InputUtils.KeyJustPressed(Keys.G)) {
                 TankGame.VanillaAchievementPopupHandler.SummonOrQueue(GameRand.Next(VanillaAchievements.Repository.GetAchievements().Count));
             }
@@ -270,7 +145,7 @@ public class GameHandler {
             foreach (var fp in TankFootprint.AllFootprints)
                 fp?.Update();
 
-            foreach (var p in Plane.AllPlanes)
+            foreach (var p in Airplane.AllPlanes)
                 p?.Update();
         }
         if (GameProperties.InMission) {
@@ -347,7 +222,7 @@ public class GameHandler {
         foreach (var ping in IngamePing.AllIngamePings)
             ping?.Render();
 
-        foreach (var p in Plane.AllPlanes)
+        foreach (var p in Airplane.AllPlanes)
             p?.Render();
 
         //foreach (var print in TankFootprint.footprints)
@@ -361,10 +236,38 @@ public class GameHandler {
 
         Particles.RenderModelParticles();
 
-        if ((DebugManager.DebuggingEnabled && DebugManager.DebugLevel == DebugManager.Id.LevelEditDebug && TankGame.OverheadView) || LevelEditor.Active) {
-            foreach (var sq in PlacementSquare.Placements)
-                sq?.Render();
+        if (DebugManager.DebuggingEnabled) {
+            if ((DebugManager.DebugLevel == DebugManager.Id.LevelEditDebug && TankGame.OverheadView) || LevelEditor.Active)
+                foreach (var sq in PlacementSquare.Placements)
+                    sq?.Render();
 
+            DebugManager.DrawDebugString(TankGame.SpriteRenderer, "Spawn Tank With Info:", WindowUtils.WindowTop + new Vector2(0, 8), 3, centered: true);
+            DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"Tier: {TankID.Collection.GetKey(DebugManager.tankToSpawnType)}", WindowUtils.WindowTop + new Vector2(0, 24), 3, centered: true);
+            DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"Team: {TeamID.Collection.GetKey(DebugManager.tankToSpawnTeam)}", WindowUtils.WindowTop + new Vector2(0, 40), 3, centered: true);
+            DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"BlockStack: {DebugManager.blockHeight} | BlockType: {BlockID.Collection.GetKey(DebugManager.blockType)}", WindowUtils.WindowBottom - new Vector2(0, 20), 3, centered: true);
+
+            DebugManager.tankToSpawnType = MathHelper.Clamp(DebugManager.tankToSpawnType, 2, TankID.Collection.Count - 1);
+            DebugManager.tankToSpawnTeam = MathHelper.Clamp(DebugManager.tankToSpawnTeam, 0, TeamID.Collection.Count - 1);
+
+
+            if (DebugManager.DebuggingEnabled) {
+                DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"Logic Time: {TankGame.LogicTime.TotalMilliseconds:0.00}ms" +
+                                                           $"\nLogic FPS: {TankGame.LogicFPS}" +
+                                                           $"\n\nRender Time: {TankGame.RenderTime.TotalMilliseconds:0.00}ms" +
+                                                           $"\nRender FPS: {TankGame.RenderFPS}" +
+                                                           $"\nKeys Q + W: Localhost Connect for Multiplayer Debug" +
+                                                           $"\nKeys U + I: Unload All Mods" +
+                                                           $"\nKeys O + P: Reload All Mods" +
+                                                           $"\nKeys Q + E: Resynchronize Randoms", new(10, 500));
+
+                DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"Current Mission: {GameProperties.LoadedCampaign.CurrentMission.Name}\nCurrent Campaign: {GameProperties.LoadedCampaign.MetaData.Name}", WindowUtils.WindowBottomLeft - new Vector2(-4, 60), 3, centered: false);
+            }
+
+            DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"HighestTier: {AIManager.GetHighestTierActive()}", new(10, WindowUtils.WindowHeight * 0.26f), 1);
+            // DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"CurSong: {(Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f) != null ? Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f).Name : "N/A")}", new(10, WindowUtils.WindowHeight - 100), 1);
+
+            for (int i = 0; i < TankID.Collection.Count; i++)
+                DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"{TankID.Collection.GetKey(i)}: {AIManager.GetTankCountOfType(i)}", new(10, WindowUtils.WindowHeight * 0.3f + (i * 20)), 1);
         }
 
         TankGame.Instance.GraphicsDevice.BlendState = BlendState.NonPremultiplied;

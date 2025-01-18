@@ -9,6 +9,7 @@ using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.Properties;
 using TanksRebirth.GameContent.RebirthUtils;
+using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.Graphics;
@@ -265,7 +266,7 @@ public class Shell : IAITankDanger
                 _wallRicCooldown = 5;
             }
 
-            if (Position.Y is < MapRenderer.MIN_Y or > MapRenderer.MAX_Y) {
+            if (Position.Y is < MapRenderer.MIN_Z or > MapRenderer.MAX_Z) {
                 OnRicochet?.Invoke(this);
                 Ricochet(false);
 
@@ -398,16 +399,27 @@ public class Shell : IAITankDanger
         _oldPosition = Position;
     }
     private void RenderSmokeParticle(float timer) {
+        if (Difficulties.Types["POV"]) timer /= 2;
         if (!(LifeTime % timer <= TankGame.DeltaTime)) return;
 
-        var p = GameHandler.Particles.MakeParticle(
-            Position3D + new Vector3(0, 0, 5).FlattenZ()
-                                           .RotatedByRadians(Rotation + MathHelper.Pi +
-                                                             GameHandler.GameRand.NextFloat(-0.3f, 0.3f))
-                                           .ExpandZ(),
+        Particle p;
+        if (!Difficulties.Types["POV"]) {
+            p = GameHandler.Particles.MakeParticle(
+                Position3D + new Vector3(0, 0, 5).FlattenZ()
+                                            .RotatedByRadians(Rotation + MathHelper.Pi + GameHandler.GameRand.NextFloat(-0.3f, 0.3f))
+                                            .ExpandZ(),
             GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
+            p.Scale = new(0.3f);
+        }
+        else {
+            p = GameHandler.Particles.MakeParticle(Position3D + new Vector3(0, 0, 5).FlattenZ()
+                                            .RotatedByRadians(Rotation + MathHelper.Pi + GameHandler.GameRand.NextFloat(-0.3f, 0.3f))
+                                            .ExpandZ(),
+                        GameResources.GetGameResource<Model>("Assets/smoke"),
+                        GameResources.GetGameResource<Texture2D>("Assets/textures/smoke/smoke"));
+            p.Scale = new(0.5f);
+        }
         p.FaceTowardsMe = false;
-        p.Scale = new(0.3f);
         // p.color = new Color(50, 50, 50, 150);
 
         p.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;

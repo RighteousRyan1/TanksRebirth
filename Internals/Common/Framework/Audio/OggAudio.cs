@@ -31,13 +31,14 @@ public class OggAudio : IDisposable, IAudio {
     public float Volume {
         get => _backingVolume;
         set {
-            if (value > MaxVolume)
-                value = MaxVolume;
+            // changed from capping at MaxVolume to just multiplying volume by maxvolume.
+            if (value > 1f)
+                value = 1f;
             else if (value < 0)
-                value = 0;
+                value = 0f;
 
             _backingVolume = value;
-            Instance.Volume = value;
+            Instance.Volume = value * MaxVolume;
         }
     }
 

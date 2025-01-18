@@ -20,9 +20,11 @@ public class Keybind {
 
     public Action<Keys>? OnKeyReassigned;
 
+    public delegate void OnKeyPressedEvent();
+    public event OnKeyPressedEvent OnKeyPressed;
+
     public Keys AssignedKey { get; private set; } = Keys.None;
     public string Name { get; set; } = "Not Named";
-
     public Action<Keybind> KeybindPressAction { get; set; } = null;
 
     public void ForceReassign(Keys newKey) {
@@ -60,8 +62,10 @@ public class Keybind {
 
         JustReassigned = false;
 
-        if (JustPressed)
+        if (JustPressed) {
+            OnKeyPressed?.Invoke();
             KeybindPressAction?.Invoke(this);
+        }
     }
 
     public override string ToString() {

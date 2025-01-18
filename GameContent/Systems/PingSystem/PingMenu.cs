@@ -40,49 +40,49 @@ public static class PingMenu {
     }
     public static Keybind PingGeneral = new(nameof(PingGeneral), Keys.D1) {
         KeybindPressAction = (bind) => {
-            if (GameProperties.InMission || IntermissionSystem.IsAwaitingNewMission || ChatSystem.ActiveHandle)
+            if (MainMenu.Active || LevelEditor.Active || !GameProperties.ShouldMissionsProgress || ChatSystem.ActiveHandle)
                 return;
             IngamePing.CreateFromTankSender(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition), PingID.Generic, NetPlay.GetMyClientId(), Client.IsConnected());
         }
     };
     public static Keybind PingStay = new(nameof(PingStay), Keys.D2) {
         KeybindPressAction = (bind) => {
-            if (GameProperties.InMission || IntermissionSystem.IsAwaitingNewMission || ChatSystem.ActiveHandle)
+            if (MainMenu.Active || LevelEditor.Active || !GameProperties.ShouldMissionsProgress || ChatSystem.ActiveHandle)
                 return;
             IngamePing.CreateFromTankSender(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition), PingID.StayHere, NetPlay.GetMyClientId(), Client.IsConnected());
         }
     };
     public static Keybind PingWatch = new(nameof(PingWatch), Keys.D3) {
         KeybindPressAction = (bind) => {
-            if (GameProperties.InMission || IntermissionSystem.IsAwaitingNewMission || ChatSystem.ActiveHandle)
+            if (MainMenu.Active || LevelEditor.Active || !GameProperties.ShouldMissionsProgress || ChatSystem.ActiveHandle)
                 return;
             IngamePing.CreateFromTankSender(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition), PingID.WatchHere, NetPlay.GetMyClientId(), Client.IsConnected());
         }
     };
     public static Keybind PingAvoid = new(nameof(PingAvoid), Keys.D4) {
         KeybindPressAction = (bind) => {
-            if (GameProperties.InMission || IntermissionSystem.IsAwaitingNewMission || ChatSystem.ActiveHandle)
+            if (MainMenu.Active || LevelEditor.Active || !GameProperties.ShouldMissionsProgress || ChatSystem.ActiveHandle)
                 return;
             IngamePing.CreateFromTankSender(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition), PingID.AvoidHere, NetPlay.GetMyClientId(), Client.IsConnected());
         }
     };
     public static Keybind PingGo = new(nameof(PingGo), Keys.D5) {
         KeybindPressAction = (bind) => {
-            if (GameProperties.InMission || IntermissionSystem.IsAwaitingNewMission || ChatSystem.ActiveHandle)
+            if (MainMenu.Active || LevelEditor.Active || !GameProperties.ShouldMissionsProgress || ChatSystem.ActiveHandle)
                 return;
             IngamePing.CreateFromTankSender(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition), PingID.GoHere, NetPlay.GetMyClientId(), Client.IsConnected());
         }
     };
     public static Keybind PingFocus = new(nameof(PingFocus), Keys.D6) {
         KeybindPressAction = (bind) => {
-            if (GameProperties.InMission || IntermissionSystem.IsAwaitingNewMission || ChatSystem.ActiveHandle)
+            if (MainMenu.Active || LevelEditor.Active || !GameProperties.ShouldMissionsProgress || ChatSystem.ActiveHandle)
                 return;
             IngamePing.CreateFromTankSender(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition), PingID.FocusHere, NetPlay.GetMyClientId(), Client.IsConnected());
         }
     };
     public static Keybind PingGroup = new(nameof(PingGroup), Keys.D7) {
         KeybindPressAction = (bind) => {
-            if (GameProperties.InMission || IntermissionSystem.IsAwaitingNewMission || ChatSystem.ActiveHandle)
+            if (MainMenu.Active || LevelEditor.Active || !GameProperties.ShouldMissionsProgress || ChatSystem.ActiveHandle)
                 return;
             IngamePing.CreateFromTankSender(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition), PingID.GroupHere, NetPlay.GetMyClientId(), Client.IsConnected());
         }
@@ -92,8 +92,8 @@ public static class PingMenu {
     private static float _uiOpacity;
     public static void DrawPingHUD() {
         float offX = 0f;
-        float scale = 0.2f;
-        var cornerOff = new Vector2(-90, -120);
+        float scale = 0.15f;
+        var cornerOff = new Vector2(-60, -100).ToResolution();
         var padding = 10f;
         var rect = new Rectangle() {
             X = (int)WindowUtils.WindowBottomRight.X - (int)padding,
@@ -119,9 +119,9 @@ public static class PingMenu {
             var pos = WindowUtils.WindowBottomRight + cornerOff + new Vector2(offX, 0);
             SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFontLarge, $"{i + 1}. {PingIdToName[i]}",
                 pos, PlayerID.PlayerTankColors[NetPlay.GetMyClientId()].ToColor(), Color.White * _uiOpacity,
-                Vector2.One * 0.75f * scale, 0f, Anchor.TopCenter);
+                0.75f * scale.ToResolution(), 0f, Anchor.TopCenter);
             TankGame.SpriteRenderer.Draw(PingIdToTexture[i], pos + new Vector2(0, 20), null, Color.White * _uiOpacity, 0f, 
-                Anchor.TopCenter.GetAnchor(PingIdToTexture[i].Size()), 1f * scale, default, 0f);
+                Anchor.TopCenter.GetAnchor(PingIdToTexture[i].Size()), scale.ToResolution(), default, 0f);
             offX -= PingIdToTexture[i].Width * scale + padding;
         }
     }

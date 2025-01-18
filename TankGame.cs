@@ -695,7 +695,7 @@ public class TankGame : Game {
                             _gradualIncrease *= (0.1f * DeltaTime) + 1;
                             _zoomAdd += _gradualIncrease;
                             _storedZoom = _zoomAdd;
-                            Debug.WriteLine(_zoomAdd);
+                            //Debug.WriteLine(_zoomAdd);
                         }
                     }
                     else if (_zoomAdd > ADD_DEF) {
@@ -931,7 +931,8 @@ public class TankGame : Game {
     public static bool SuperSecretDevOption;
 
     private static DepthStencilState _stencilState = new() { };
-
+    
+    // FIXME: this method is a clusterfuck
     protected override void Draw(GameTime gameTime) {
         if (gameTarget == null || gameTarget.IsDisposed || gameTarget.Size() != WindowUtils.WindowBounds) {
             gameTarget?.Dispose();
@@ -1060,40 +1061,6 @@ public class TankGame : Game {
                     level: DebugManager.Id.AchievementData,
                     centered: false);
             }
-        }
-
-
-        #region TankInfo
-
-        if (DebugManager.DebuggingEnabled) {
-            DebugManager.DrawDebugString(SpriteRenderer, "Spawn Tank With Info:", WindowUtils.WindowTop + new Vector2(0, 8), 3, centered: true);
-            DebugManager.DrawDebugString(SpriteRenderer, $"Tier: {TankID.Collection.GetKey(DebugManager.tankToSpawnType)}", WindowUtils.WindowTop + new Vector2(0, 24), 3, centered: true);
-            DebugManager.DrawDebugString(SpriteRenderer, $"Team: {TeamID.Collection.GetKey(DebugManager.tankToSpawnTeam)}", WindowUtils.WindowTop + new Vector2(0, 40), 3, centered: true);
-            DebugManager.DrawDebugString(SpriteRenderer, $"CubeStack: {DebugManager.blockHeight} | CubeType: {BlockID.Collection.GetKey(DebugManager.blockType)}", WindowUtils.WindowBottom - new Vector2(0, 20), 3, centered: true);
-
-            DebugManager.DrawDebugString(SpriteRenderer, $"HighestTier: {AIManager.GetHighestTierActive()}", new(10, WindowUtils.WindowHeight * 0.26f), 1);
-            // DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"CurSong: {(Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f) != null ? Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f).Name : "N/A")}", new(10, WindowUtils.WindowHeight - 100), 1);
-
-            for (int i = 0; i < TankID.Collection.Count; i++)
-                DebugManager.DrawDebugString(SpriteRenderer, $"{TankID.Collection.GetKey(i)}: {AIManager.GetTankCountOfType(i)}", new(10, WindowUtils.WindowHeight * 0.3f + (i * 20)), 1);
-        }
-
-        DebugManager.tankToSpawnType = MathHelper.Clamp(DebugManager.tankToSpawnType, 2, TankID.Collection.Count - 1);
-        DebugManager.tankToSpawnTeam = MathHelper.Clamp(DebugManager.tankToSpawnTeam, 0, TeamID.Collection.Count - 1);
-
-        #endregion
-
-        if (DebugManager.DebuggingEnabled) {
-            DebugManager.DrawDebugString(SpriteRenderer, $"Logic Time: {LogicTime.TotalMilliseconds:0.00}ms" +
-                                                       $"\nLogic FPS: {LogicFPS}" +
-                                                       $"\n\nRender Time: {RenderTime.TotalMilliseconds:0.00}ms" +
-                                                       $"\nRender FPS: {RenderFPS}" +
-                                                       $"\nKeys Q + W: Localhost Connect for Multiplayer Debug" +
-                                                       $"\nKeys U + I: Unload All Mods" +
-                                                       $"\nKeys O + P: Reload All Mods" +
-                                                       $"\nKeys J + K: Resynchronize Randoms", new(10, 500));
-
-            DebugManager.DrawDebugString(SpriteRenderer, $"Current Mission: {GameProperties.LoadedCampaign.CurrentMission.Name}\nCurrent Campaign: {GameProperties.LoadedCampaign.MetaData.Name}", WindowUtils.WindowBottomLeft - new Vector2(-4, 60), 3, centered: false);
         }
 
         #endregion

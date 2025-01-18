@@ -507,7 +507,7 @@ public partial class AITank : Tank
                 pathRicochetCount++;
                 resetIterations();
             }
-            else if (pathPos.Y < MapRenderer.MIN_Y || pathPos.Y > MapRenderer.MAX_Y) {
+            else if (pathPos.Y < MapRenderer.MIN_Z || pathPos.Y > MapRenderer.MAX_Z) {
                 ricoPoints.Add(pathPos);
                 pathDir.Y *= -1;
                 pathRicochetCount++;
@@ -622,7 +622,7 @@ public partial class AITank : Tank
                 hasCollided = true;
                 list.Add(pathPos);
             }
-            if (pathPos.Y < MapRenderer.MIN_Y || pathPos.Y > MapRenderer.MAX_Y) {
+            if (pathPos.Y < MapRenderer.MIN_Z || pathPos.Y > MapRenderer.MAX_Z) {
                 pathDir.Y *= -1;
                 hasCollided = true;
                 list.Add(pathPos);

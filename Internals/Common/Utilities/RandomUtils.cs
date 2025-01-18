@@ -8,7 +8,7 @@ public static class RandomUtils
 {
     public static float NextFloat(this Random random, float min, float max)
     => (float)(random.NextDouble() * (max - min) + min);
-    public static double NextFloat(this Random random, double min, double max)
+    public static double NextDouble(this Random random, double min, double max)
         => random.NextDouble() * (max - min) + min;
     public static short Next(this Random random, short min, short max)
         => (short)random.Next(min, max);
@@ -17,8 +17,8 @@ public static class RandomUtils
     public static T PickRandom<T>(T[] input) => input[Server.ServerRandom.Next(0, input.Length)];
     public static List<T> PickRandom<T>(T[] input, int amount)
     {
-        List<T> values = new();
-        List<int> chosenTs = new();
+        List<T> values = [];
+        List<int> chosenTs = [];
         for (int i = 0; i < amount; i++)
         {
         ReRoll:
