@@ -251,9 +251,6 @@ public class Airplane {
         TrapDoorR.ParentBone.Transform = Matrix.CreateScale(100) * Matrix.CreateRotationX(-MathHelper.PiOver2) * Matrix.CreateRotationZ(-_doorRRotation)
             * Matrix.CreateTranslation(-11.565f, -4.4863f, -0.000009f);
         // x and z values grabbed from blender. is hacky but it works i guess
-        Model!.Root.Transform = World;
-
-        Model.CopyAbsoluteBoneTransformsTo(_boneTransforms);
 
         //var test = Vector3.Transform(Vector3.Zero, PropellerR.ParentBone.Transform);
         //GameHandler.Particles.MakeSmallExplosion(test, 10, 10, 2, 2);
@@ -275,6 +272,9 @@ public class Airplane {
             * Matrix.CreateTranslation(Position);    
         Projection = TankGame.GameProjection;
         View = TankGame.GameView;
+
+        Model.CopyAbsoluteBoneTransformsTo(_boneTransforms);
+        Model!.Root.Transform = World;
 
         for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
             foreach (var mesh in Model.Meshes) {

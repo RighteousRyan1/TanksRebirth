@@ -72,8 +72,8 @@ public static class GameResources {
                 audioQueue.PreLoadAudio(names[i]);
         }
     }
-
-    public static T? GetGameResource<T>(string name, bool addDotPng = true, bool addContentPrefix = true, bool premultiply = false) where T : class {
+    // Ryan - didn't really see the point of nullable, so i removed it.
+    public static T GetGameResource<T>(string name, bool addDotPng = true, bool addContentPrefix = true, bool premultiply = false) where T : class {
         if (ResourceCache.TryGetValue(name, out var value))
             return (T)value;
 

@@ -6,19 +6,25 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 ## Additions
 
 - New 'Air Support' gamemode!
+- New interactive logo!
 
 ## Changes
 
-- Smoke is now 3 dimensional in first person mode.
-- If launched in Debug, the game will supply the user with a console.
+- Smoke is now 3 dimensional in first person mode
+- If launched in Debug, the game will supply the user with a console
+- Explosions don't sound super low pitched by default anymore
+- Explosions rotate 2x faster
+- Revamped mission info bar
 
 ## Source Code Changes (for modders)
 
-- Assets are feched much differently now (dottik you need to explain it, i don't wanna accidentally say something wrong)
+- Many renames but not any move-arounds
 
 ## Fixes
 
-- Game now loads much faster.
+- Game now loads much faster
+- Fix crashes on window focus regained
+- 2D graphics on the playing field will no longer appear when looking away
 
 ## TODO
 

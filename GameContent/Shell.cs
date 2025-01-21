@@ -403,21 +403,21 @@ public class Shell : IAITankDanger
         if (!(LifeTime % timer <= TankGame.DeltaTime)) return;
 
         Particle p;
-        if (!Difficulties.Types["POV"]) {
+        if (Difficulties.Types["POV"] || DebugManager.IsFreecamEnabled) {
+            p = GameHandler.Particles.MakeParticle(Position3D + new Vector3(0, 0, 5).FlattenZ()
+                                .RotatedByRadians(Rotation + MathHelper.Pi + GameHandler.GameRand.NextFloat(-0.3f, 0.3f))
+                                .ExpandZ(),
+            GameResources.GetGameResource<Model>("Assets/smoke"),
+            GameResources.GetGameResource<Texture2D>("Assets/textures/smoke/smoke"));
+            p.Scale = new(0.7f);
+        }
+        else{
             p = GameHandler.Particles.MakeParticle(
                 Position3D + new Vector3(0, 0, 5).FlattenZ()
                                             .RotatedByRadians(Rotation + MathHelper.Pi + GameHandler.GameRand.NextFloat(-0.3f, 0.3f))
                                             .ExpandZ(),
             GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
             p.Scale = new(0.3f);
-        }
-        else {
-            p = GameHandler.Particles.MakeParticle(Position3D + new Vector3(0, 0, 5).FlattenZ()
-                                            .RotatedByRadians(Rotation + MathHelper.Pi + GameHandler.GameRand.NextFloat(-0.3f, 0.3f))
-                                            .ExpandZ(),
-                        GameResources.GetGameResource<Model>("Assets/smoke"),
-                        GameResources.GetGameResource<Texture2D>("Assets/textures/smoke/smoke"));
-            p.Scale = new(0.5f);
         }
         p.FaceTowardsMe = false;
         // p.color = new Color(50, 50, 50, 150);
@@ -503,10 +503,14 @@ public class Shell : IAITankDanger
                 par.Destroy();
         };
     }
-    private void TankGame_OnFocusRegained(object sender, IntPtr e)
-        => TrailSound?.Instance?.Resume();
-    private void TankGame_OnFocusLost(object sender, IntPtr e)
-        => TrailSound?.Instance?.Pause();
+    private void TankGame_OnFocusRegained(object sender, IntPtr e) {
+       // if (TrailSound is not null && TrailSound.Instance is not null)
+            //TrailSound.Instance?.Resume();
+    }
+    private void TankGame_OnFocusLost(object sender, IntPtr e) {
+        //if (TrailSound is not null && TrailSound.Instance is not null)
+            //TrailSound.Instance?.Pause();
+    }
 
     /// <summary>
     /// Ricochets this <see cref="Shell"/>.
@@ -598,8 +602,8 @@ public class Shell : IAITankDanger
                 Owner.OwnedShells[idx] = null;
         }
 
-        TankGame.OnFocusLost -= TankGame_OnFocusLost!;
-        TankGame.OnFocusRegained -= TankGame_OnFocusRegained!;
+        TankGame.OnFocusLost -= TankGame_OnFocusLost;
+        TankGame.OnFocusRegained -= TankGame_OnFocusRegained;
         GameProperties.OnMissionEnd -= StopSounds;
 
         TrailSound?.Instance?.Stop();

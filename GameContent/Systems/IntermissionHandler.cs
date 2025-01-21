@@ -20,10 +20,14 @@ using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.Systems;
 public static class IntermissionHandler {
+    public static Animator ThirdPersonTransitionAnimation;
+
     private static bool _wasOverhead;
     private static bool _wasInMission;
+
+    public const int TANK_FUNC_WAIT_MAX = 190;
     /// <summary>The time (in ticks) the game waits before initiating the mission after the intermission screen is finished.</summary>
-    public static float TankFunctionWait = 190;
+    public static float TankFunctionWait = TANK_FUNC_WAIT_MAX;
     private static float _oldWait;
 
     public static MissionEndContext LastResult = (MissionEndContext)(-1);
@@ -236,7 +240,9 @@ public static class IntermissionHandler {
     }
     /// <summary>This marks the beginning of the player seeing all of the tanks on the map, before the round begins.</summary>
     public static void BeginIntroSequence() {
-        TankFunctionWait = 190;
+        TankFunctionWait = TANK_FUNC_WAIT_MAX;
+
+
 
         TankMusicSystem.StopAll();
 
@@ -264,10 +270,6 @@ public static class IntermissionHandler {
                 TankMusicSystem.PlayAll();
             }
         }
-        if (LevelEditor.Active)
-            if (DebugManager.DebuggingEnabled)
-                if (InputUtils.KeyJustPressed(Keys.T))
-                    PlacementSquare.DrawStacks = !PlacementSquare.DrawStacks;
         DebugManager.UpdateDebug();
 
         if (MainMenu.Active) {
@@ -292,12 +294,12 @@ public static class IntermissionHandler {
     public static void Initialize() {
         CountdownAnimator = Animator.Create()
             // id = 0
-            .WithFrame(new(Vector2.One * 2, [], TimeSpan.FromSeconds(1.5), _ez))  // ready 
-            .WithFrame(new(Vector2.One * 1, [], TimeSpan.FromSeconds(0), _ez))  // ready 
-            .WithFrame(new(Vector2.One * 2, [], TimeSpan.FromSeconds(1.5), _ez))  // set
-            .WithFrame(new(Vector2.One * 1, [], TimeSpan.FromSeconds(0), _ez))  // set
-            .WithFrame(new(Vector2.One * 2, [], TimeSpan.FromSeconds(1), _ez))  // start 
-            .WithFrame(new(new Vector2(2, 0), [], TimeSpan.FromSeconds(1), _ez));
+            .WithFrame(new(scale: Vector2.One * 2, duration: TimeSpan.FromSeconds(1.5), easing: _ez))  // ready 
+            .WithFrame(new(scale: Vector2.One * 1, duration: TimeSpan.FromSeconds(0), easing: _ez))  // ready 
+            .WithFrame(new(scale: Vector2.One * 2, duration: TimeSpan.FromSeconds(1.5), easing: _ez))  // set
+            .WithFrame(new(scale: Vector2.One * 1, duration: TimeSpan.FromSeconds(0), easing: _ez))  // set
+            .WithFrame(new(scale: Vector2.One * 2, duration: TimeSpan.FromSeconds(1), easing: _ez))  // start 
+            .WithFrame(new(scale: new Vector2(2, 0), duration: TimeSpan.FromSeconds(1), easing: _ez));
         CountdownAnimator.OnKeyFrameFinish += CountdownAnimator_OnKeyFrameFinish;
         CountdownAnimator.OnAnimationRun += () => PrepareDisplay = "Ready?";
     }
@@ -314,11 +316,8 @@ public static class IntermissionHandler {
     }
 
     public static void RenderCountdownGraphics() {
-        var sec = MathF.Round(TankFunctionWait / 60) + 1;
-
         if (!MainMenu.Active && !TankGame.OverheadView && !LevelEditor.Active/* && TankFunctionWait > 0*/) {
-            var txt = $"{MathF.Round(TankFunctionWait / 60) + 1}";
-            SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFontLarge, PrepareDisplay, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 3), 
+            SpriteBatchUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFontLarge, PrepareDisplay, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 3), 
                 IntermissionSystem.BackgroundColor, IntermissionSystem.StripColor, CountdownAnimator.CurrentScale.ToResolution(), 0f, Anchor.Center, 3);
         }
     }

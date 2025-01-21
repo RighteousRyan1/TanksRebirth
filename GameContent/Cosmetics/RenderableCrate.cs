@@ -40,7 +40,9 @@ namespace TanksRebirth.GameContent.Cosmetics
         {
             foreach (var mesh in Model.Meshes)
             {
-                var rotmtx = mesh.Name == "Chest" ? Matrix.CreateFromYawPitchRoll(Rotation.Z, Rotation.Y, Rotation.X) : Matrix.CreateFromYawPitchRoll(LidRotation.Z, LidRotation.Y, LidRotation.X);
+                var rotmtx = mesh.Name == "Chest" ? 
+                    Matrix.CreateFromYawPitchRoll(Rotation.Z, Rotation.Y, Rotation.X) 
+                    : Matrix.CreateFromYawPitchRoll(LidRotation.Z, LidRotation.Y, LidRotation.X);
                 _world = Matrix.CreateScale(Scale) * rotmtx * Matrix.CreateTranslation(mesh.Name == "Chest" ? ChestPosition : LidPosition);
                 foreach (BasicEffect effect in mesh.Effects)
                 {

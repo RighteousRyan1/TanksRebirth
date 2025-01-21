@@ -183,7 +183,7 @@ public static class CampaignCompleteUI
         TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Vector2(0, WindowUtils.WindowHeight / 3 + 50.ToResolutionY()), null, Color.Gold * _panelAlpha, 0f, Vector2.Zero, new Vector2(width, 5).ToResolution(), default, 0f);
         var txt = TankGame.GameLanguage.FunFacts;
         var measure = TankGame.TextFont.MeasureString(txt);
-        IntermissionSystem.DrawShadowedString(TankGame.TextFont, new Vector2(width / 2, WindowUtils.WindowHeight / 3 + 5.ToResolutionY()), Vector2.One,
+        SpriteBatchUtils.DrawShadowedString(TankGame.TextFont, new Vector2(width / 2, WindowUtils.WindowHeight / 3 + 5.ToResolutionY()), Vector2.One,
             txt, Color.DeepSkyBlue, Vector2.One.ToResolution(), 1f, new Vector2(measure.X / 2, 0), 0.4f);
 
         string[] funFacts =
@@ -197,7 +197,7 @@ public static class CampaignCompleteUI
             var ff = funFacts[i];
             measure = TankGame.TextFont.MeasureString(ff);
 
-            IntermissionSystem.DrawShadowedString(TankGame.TextFont, new Vector2(8.ToResolutionX(), WindowUtils.WindowHeight / 3 + (75 + (i * 25)).ToResolutionY()), Vector2.One,
+            SpriteBatchUtils.DrawShadowedString(TankGame.TextFont, new Vector2(8.ToResolutionX(), WindowUtils.WindowHeight / 3 + (75 + (i * 25)).ToResolutionY()), Vector2.One,
                 ff, Color.DeepSkyBlue, new Vector2(0.75f).ToResolution(), 1f, new Vector2(0, measure.Y / 2), 0.4f);
         }
 
@@ -257,7 +257,7 @@ public static class CampaignCompleteUI
                 // draw the tank graphic
                 // i love weird math.
                 // GameUtils.ToResolution is kinda wack here, so i'll exclude it.
-                IntermissionSystem.DrawShadowedTexture(texture,
+                SpriteBatchUtils.DrawShadowedTexture(texture,
                     new Vector2(
                         WindowUtils.WindowWidth / 3 + WindowUtils.WindowWidth * 0.025f + xAdjust * xAdjustCount * ((float)WindowUtils.WindowWidth / 1920),
                         _tnkDrawYOff.ToResolutionY() + offY - (xAdjustCount * _spacePerTank * TanksPerColumn * _tankSize * ((float)WindowUtils.WindowHeight / 1080))),
@@ -265,14 +265,14 @@ public static class CampaignCompleteUI
                     new Vector2(_tierScales[i]) * (WindowUtils.WindowBounds / new Vector2(1920, 1080)),
                     _tierAlphas[i], texture.Size() / 2, shadowDistScale: 0.4f);
                 // draw the name of the tank just to make things nicer.
-                IntermissionSystem.DrawShadowedString(TankGame.TextFont,
+                SpriteBatchUtils.DrawShadowedString(TankGame.TextFont,
                     new Vector2(
                         WindowUtils.WindowWidth / 3 + WindowUtils.WindowWidth * 0.025f + xAdjust * xAdjustCount * ((float)WindowUtils.WindowWidth / 1920),
                         _tnkDrawYOff.ToResolutionY() + offY - (-5f + xAdjustCount * _spacePerTank * TanksPerColumn * _tankSize * ((float)WindowUtils.WindowHeight / 1080))),
                     Vector2.One, $"{TankID.Collection.GetKey(display.Key)}", Color.LightGray, new Vector2(_tierScales[i]) * (WindowUtils.WindowBounds / new Vector2(1920, 1080)) * 0.3f, _tierAlphas[i], TankGame.TextFont.MeasureString($"{TankID.Collection.GetKey(display.Key)}") / 2,
                     shadowDistScale: 0.4f);
                 // draw the kill count text
-                IntermissionSystem.DrawShadowedString(TankGame.TextFont,
+                SpriteBatchUtils.DrawShadowedString(TankGame.TextFont,
                     new Vector2(
                         WindowUtils.WindowWidth / 3 + WindowUtils.WindowWidth * 0.025f + (xAdjust / 2).ToResolutionX() + xAdjust * xAdjustCount * ((float)WindowUtils.WindowWidth / 1920),
                         _tnkDrawYOff.ToResolutionY() - 2f.ToResolutionY() + offY - (xAdjustCount * _spacePerTank * TanksPerColumn * _tankSize * ((float)WindowUtils.WindowHeight / 1080))),
@@ -285,11 +285,11 @@ public static class CampaignCompleteUI
         #endregion
         txt = _skip ? "Press 'Enter' to exit." : "Press 'Enter' to skip.";
         measure = TankGame.TextFont.MeasureString(txt);
-        IntermissionSystem.DrawShadowedString(TankGame.TextFont, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight - 8), Vector2.One, txt, Color.Black, Vector2.One.ToResolution(), 1f, new Vector2(measure.X / 2, measure.Y), 0.4f);
+        SpriteBatchUtils.DrawShadowedString(TankGame.TextFont, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight - 8), Vector2.One, txt, Color.Black, Vector2.One.ToResolution(), 1f, new Vector2(measure.X / 2, measure.Y), 0.4f);
 
         txt = "Campaign Results";
         measure = TankGame.TextFontLarge.MeasureString(txt);
-        IntermissionSystem.DrawShadowedString(TankGame.TextFontLarge, new Vector2(WindowUtils.WindowWidth / 2, 8), Vector2.One, txt, Color.DeepSkyBlue, new Vector2(0.5f).ToResolution(), _panelAlpha, new Vector2(measure.X / 2, 0));
+        SpriteBatchUtils.DrawShadowedString(TankGame.TextFontLarge, new Vector2(WindowUtils.WindowWidth / 2, 8), Vector2.One, txt, Color.DeepSkyBlue, new Vector2(0.5f).ToResolution(), _panelAlpha, new Vector2(measure.X / 2, 0));
     }
     // TODO: probably support multiple players L + ratio me
     public static void SetStats(Campaign campaign, PlayerTank.DeterministicPlayerStats stats, Dictionary<int, int> killCounts, bool orderByTier = true) {

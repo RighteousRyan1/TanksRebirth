@@ -236,10 +236,10 @@ public class GameHandler {
 
         Particles.RenderModelParticles();
 
+        if ((DebugManager.DebugLevel == DebugManager.Id.LevelEditDebug && TankGame.OverheadView) || LevelEditor.Active)
+            foreach (var sq in PlacementSquare.Placements)
+                sq?.Render();
         if (DebugManager.DebuggingEnabled) {
-            if ((DebugManager.DebugLevel == DebugManager.Id.LevelEditDebug && TankGame.OverheadView) || LevelEditor.Active)
-                foreach (var sq in PlacementSquare.Placements)
-                    sq?.Render();
 
             DebugManager.DrawDebugString(TankGame.SpriteRenderer, "Spawn Tank With Info:", WindowUtils.WindowTop + new Vector2(0, 8), 3, centered: true);
             DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"Tier: {TankID.Collection.GetKey(DebugManager.tankToSpawnType)}", WindowUtils.WindowTop + new Vector2(0, 24), 3, centered: true);
@@ -285,7 +285,7 @@ public class GameHandler {
             }
             // this draws the amount of kills a player has.
             for (int i = -4; i < 10; i++) {
-                IntermissionSystem.DrawShadowedTexture(GameResources.GetGameResource<Texture2D>("Assets/textures/ui/scoreboard"),
+                SpriteBatchUtils.DrawShadowedTexture(GameResources.GetGameResource<Texture2D>("Assets/textures/ui/scoreboard"),
                     new Vector2((i * 14).ToResolutionX(), WindowUtils.WindowHeight * 0.9f),
                     Vector2.UnitY,
                     Color.White,
@@ -294,10 +294,37 @@ public class GameHandler {
                     new(0, GameResources.GetGameResource<Texture2D>("Assets/textures/ui/scoreboard").Size().Y / 2),
                     true);
             }
-            IntermissionSystem.DrawShadowedString(TankGame.TextFontLarge, new Vector2(80.ToResolutionX(), WindowUtils.WindowHeight * 0.9f - 14f.ToResolutionY()), Vector2.One, $"{PlayerTank.KillCount}", new(119, 190, 238), new Vector2(0.675f).ToResolution(), 1f);
+            SpriteBatchUtils.DrawShadowedString(TankGame.TextFontLarge, new Vector2(80.ToResolutionX(), WindowUtils.WindowHeight * 0.9f - 14f.ToResolutionY()), Vector2.One, $"{PlayerTank.KillCount}", new(119, 190, 238), new Vector2(0.675f).ToResolution(), 1f);
+        }
+        // TODO: put this code elsewhere... idk where rn.
+        var shouldSeeInfo = !MainMenu.Active && !LevelEditor.Active && !CampaignCompleteUI.IsViewingResults;
+        if (shouldSeeInfo) {
+            var font = TankGame.TextFontLarge;
+            var infoScale = 0.5f;
+            var alpha = 1f;
+            var bar = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/mission_info");
+            var tnk = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/tank2d");
+            var barPos = new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight - (bar.Height + 35).ToResolutionY());
+            var missionInfo = $"{GameProperties.LoadedCampaign.CurrentMission.Name ?? $"{TankGame.GameLanguage.Mission}"}";
+            var infoMeasure = font.MeasureString(missionInfo) * infoScale;
+            var tanksRemaining = $"x {AIManager.CountAll()}";
+            var tanksRemMeasure = font.MeasureString(tanksRemaining) * infoScale;
+
+            SpriteBatchUtils.DrawShadowedTexture(bar, barPos,
+                Vector2.UnitY, IntermissionSystem.StripColor * 1.5f, Vector2.One.ToResolution(), alpha, bar.Size() / 2, shadowDistScale: 0.5f);
+
+            SpriteBatchUtils.DrawShadowedTexture(tnk, barPos + new Vector2(bar.Size().X * 0.25f, 0).ToResolution(),
+                Vector2.One, IntermissionSystem.BackgroundColor, new Vector2(1.5f).ToResolution(), alpha, tnk.Size() / 2, shadowDistScale: 0.5f);
+
+            SpriteBatchUtils.DrawShadowedString(font, barPos - new Vector2(bar.Size().X / 6, 7.5f).ToResolution(),
+                Vector2.One, missionInfo, IntermissionSystem.BackgroundColor, new Vector2(infoScale).ToResolution(),
+                1f, infoMeasure, shadowDistScale: 1.5f);
+
+            SpriteBatchUtils.DrawShadowedString(font, barPos + new Vector2(bar.Size().X * 0.375f, -7.5f).ToResolution(),
+                Vector2.One, tanksRemaining, IntermissionSystem.BackgroundColor, new Vector2(infoScale).ToResolution(),
+                alpha, tanksRemMeasure, shadowDistScale: 1.5f);
         }
         // TODO: MissionInfoBar can be much better.
-        GameUI.MissionInfoBar.IsVisible = !MainMenu.Active && !LevelEditor.Active && !CampaignCompleteUI.IsViewingResults;
 
         OnPostRender?.Invoke();
     }

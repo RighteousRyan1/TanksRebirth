@@ -20,8 +20,6 @@ public static class GameUI
 
     public static Keybind Pause = new("Pause", Keys.Escape);
 
-    public static UIPanel MissionInfoBar;
-
     public static UITextButton ResumeButton;
 
     public static UITextButton RestartButton;
@@ -68,12 +66,7 @@ public static class GameUI
         }
         _initialized = true;
         var ttColor = Color.LightGray;
-        SpriteFontBase font = TankGame.TextFont;
-
-        Vector2 drawOrigin = font.MeasureString("Unknown") / 2f;
-        MissionInfoBar = new((uiPanel, spriteBatch) => spriteBatch.DrawString(font, "Unknown", uiPanel.Hitbox.Center.ToVector2(), Color.White, new Vector2(1.5f), 0f, drawOrigin));
-        MissionInfoBar.BackgroundColor = Color.Red;
-        MissionInfoBar.SetDimensions(() => new Vector2(WindowUtils.WindowWidth / 2 - 250.ToResolutionX(), WindowUtils.WindowHeight - 75.ToResolutionY()), () => new Vector2(500, 50).ToResolution());
+        var font = TankGame.TextFont;
 
         ResumeButton = new(TankGame.GameLanguage.Resume, font, Color.WhiteSmoke)
         {
@@ -437,11 +430,6 @@ public static class GameUI
             }
             // ChatSystem.SendMessage(_gpuSettingsOffset, Color.White, "<Debug>");
         }
-        var text = /*$"{TankGame.GameLanguage.Mission} 1        x{AITank.CountAll()}";*/
-            $"{GameProperties.LoadedCampaign.CurrentMission.Name ?? $"{TankGame.GameLanguage.Mission}"} x{AIManager.CountAll()}";
-        Vector2 drawOrigin = TankGame.TextFont.MeasureString(text) / 2f;
-        MissionInfoBar.UniqueDraw =
-            (uiPanel, spriteBatch) => spriteBatch.DrawString(TankGame.TextFont, text, uiPanel.Hitbox.Center.ToVector2(), Color.White, new Vector2(1.5f).ToResolution(), 0, drawOrigin);
 
         TankGame.Settings.MusicVolume = VolumeUI.MusicVolume.Value;
         TankGame.Settings.EffectsVolume = VolumeUI.EffectsVolume.Value;

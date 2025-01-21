@@ -28,8 +28,10 @@ public class Animator {
         }
     }
     private bool _isRunning;
-    /// <summary>The current position of the given animation.</summary>
-    public Vector2 CurrentPosition { get; private set; }
+    /// <summary>The current 2D position of the given animation.</summary>
+    public Vector2 CurrentPosition2D { get; private set; }
+    /// <summary>The current 2D position of the given animation.</summary>
+    public Vector3 CurrentPosition3D { get; private set; }
     /// <summary>The current two-dimensional scale of the given animation.</summary>
     public Vector2 CurrentScale { get; private set; }
     /// <summary>The current rotation of the given animation. You can use this to match to any float you want.</summary>
@@ -72,7 +74,7 @@ public class Animator {
         Seek(0);
     }
     public void Restart() {
-        CurrentPosition = KeyFrames[0].Position;
+        CurrentPosition2D = KeyFrames[0].Position2D;
         CurrentScale = KeyFrames[0].Scale;
         CurrentFloats = KeyFrames[0].Floats;
         _isRunning = false;
@@ -93,11 +95,11 @@ public class Animator {
     public Animator WithFrame(KeyFrame frame) {
         if (KeyFrames.Count > 0) {
             if (KeyFrames[^1].BezierPoints.Count > 2) {
-                KeyFrames[^1].BezierPoints.Add(frame.Position);
+                KeyFrames[^1].BezierPoints.Add(frame.Position2D);
             }
         }
         else {
-            frame.BezierPoints?.Insert(0, frame.Position);
+            frame.BezierPoints?.Insert(0, frame.Position2D);
         }
         KeyFrames.Add(frame);
         CurrentFloats = KeyFrames[0].Floats;
@@ -153,9 +155,12 @@ public class Animator {
         var ease = Easings.GetEasingBehavior(Current.Easing, CurrentInterpolation);
 
         var hasBezier = Current.BezierPoints.Count > 2;
-        CurrentPosition = hasBezier ? MathUtils.Bezier(ease, Current.BezierPoints.ToArray()) :
-            Current.Position + (futureFrame.Position - Current.Position) * ease;
+        CurrentPosition2D = hasBezier ? MathUtils.Bezier(ease, Current.BezierPoints.ToArray()) :
+            Current.Position2D + (futureFrame.Position2D - Current.Position2D) * ease;
         CurrentScale = Current.Scale + (futureFrame.Scale - Current.Scale) * ease;
+        CurrentPosition3D = Current.Position3D + (futureFrame.Position3D - Current.Position3D) * ease;
+
+        // floats array goes by way faster than it should, skips animation basically
         if (CurrentFloats is not null)
             for (int i = 0; i < CurrentFloats.Length; i++)
                 if (CurrentFloats != null && futureFrame.Floats != null && Current.Floats != null
@@ -174,7 +179,7 @@ public class Animator {
         if (CurrentInterpolation >= 1 && CurrentId < KeyFrames.Count - 1) {
             CurrentInterpolation = 0;
             Step(1);
-            CurrentPosition = Current.Position;
+            CurrentPosition2D = Current.Position2D;
             CurrentScale = Current.Scale;
             CurrentFloats = Current.Floats!;
 

@@ -12,6 +12,9 @@ namespace TanksRebirth.Internals.Common.Utilities;
 
 public static class MathUtils
 {
+    public static float[] ToFloatArray(this Vector3 v) => [v.X, v.Y, v.Z];
+    /// <summary>Turns a 3-element array into a Vector3, must be ordered [x, y, z]</summary>
+    public static Vector3 ToVector3(this float[] f) => new(f[0], f[1], f[2]);
     public static Vector2 DirectionOf(this Vector2 vec, Vector2 other, bool from = false) => from switch {
             true => vec - other,
             _ => other - vec,

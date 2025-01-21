@@ -89,7 +89,7 @@ public static class Lighting
         effect.DiffuseColor = new(ColorBrightness);
     }
 
-    public static void SetDefaultGameLighting_IngameEntities(this BasicEffect effect, float powerMultiplier = 1f, float ambientMultiplier = 1f, bool specular = false)
+    public static void SetDefaultGameLighting_IngameEntities(this BasicEffect effect, float powerMultiplier = 1f, float ambientMultiplier = 1f, bool specular = false, Vector3 lightDir = default)
     {
         effect.LightingEnabled = true;
         effect.PreferPerPixelLighting = TankGame.Settings.PerPixelLighting;
@@ -104,7 +104,10 @@ public static class Lighting
 
         var lightingConstant = 1f * powerMultiplier;
 
-        effect.DirectionalLight0.Direction = new Vector3(0, -1f, 0) * lightingConstant; //+ new Vector3(ting, 0, ting2);
+        if (lightDir == default)
+            lightDir = Vector3.Down;
+
+        effect.DirectionalLight0.Direction = lightDir * lightingConstant; //+ new Vector3(ting, 0, ting2);
 
         effect.SpecularColor = specular ? (Color.White.ToVector3() * LightPower) : new Vector3(LightPower) * (IsNight ? new Vector3(1) : LightColor.ToVector3());
 
