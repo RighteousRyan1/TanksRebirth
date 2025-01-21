@@ -190,16 +190,16 @@ public static class MapRenderer
         {
             // 0 -> top, 1 -> right, 2 -> bottom, 3 -> left
             Boundaries[0] = Tank.CollisionsWorld.CreateRectangle(1000 / Tank.UNITS_PER_METER, 5 / Tank.UNITS_PER_METER, 1f, 
-                new Vector2(MIN_X, MIN_Y - 7) / Tank.UNITS_PER_METER, 0f, BodyType.Static);
+                new Vector2(MIN_X, MIN_Z - 7) / Tank.UNITS_PER_METER, 0f, BodyType.Static);
 
             Boundaries[1] = Tank.CollisionsWorld.CreateRectangle(5 / Tank.UNITS_PER_METER, 1000 / Tank.UNITS_PER_METER, 1f, 
-                new Vector2(MAX_X + 7, MAX_Y) / Tank.UNITS_PER_METER, 0f, BodyType.Static);
+                new Vector2(MAX_X + 7, MAX_Z) / Tank.UNITS_PER_METER, 0f, BodyType.Static);
 
             Boundaries[2] = Tank.CollisionsWorld.CreateRectangle(1000 / Tank.UNITS_PER_METER, 5 / Tank.UNITS_PER_METER, 1f, 
-                new Vector2(MIN_X, MAX_Y + 7) / Tank.UNITS_PER_METER, 0f, BodyType.Static);
+                new Vector2(MIN_X, MAX_Z + 7) / Tank.UNITS_PER_METER, 0f, BodyType.Static);
 
             Boundaries[3] = Tank.CollisionsWorld.CreateRectangle(5 / Tank.UNITS_PER_METER, 1000 / Tank.UNITS_PER_METER, 1f, 
-                new Vector2(MIN_X - 7, MAX_Y) / Tank.UNITS_PER_METER, 0f, BodyType.Static);
+                new Vector2(MIN_X - 7, MAX_Z) / Tank.UNITS_PER_METER, 0f, BodyType.Static);
             
             switch (Theme)
             {
@@ -321,18 +321,18 @@ public static class MapRenderer
 
     public const float TANKS_MIN_X = MIN_X + 6;
     public const float TANKS_MAX_X = MAX_X - 6;
-    public const float TANKS_MIN_Y = MIN_Y + 5;
-    public const float TANKS_MAX_Y = MAX_Y - 6;
+    public const float TANKS_MIN_Y = MIN_Z + 5;
+    public const float TANKS_MAX_Y = MAX_Z - 6;
 
     public const float MIN_X = -234;
     public const float MAX_X = 234;
-    public const float MIN_Y = -48;
-    public const float MAX_Y = 312;
+    public const float MIN_Z = -48;
+    public const float MAX_Z = 312;
 
     public const float CUBE_MIN_X = MIN_X + Block.SIDE_LENGTH / 2 - 6f;
     public const float CUBE_MAX_X = MAX_X - Block.SIDE_LENGTH / 2;
-    public const float CUBE_MIN_Y = MIN_Y + Block.SIDE_LENGTH / 2 - 6f;
-    public const float CUBE_MAX_Y = MAX_Y - Block.SIDE_LENGTH / 2;
+    public const float CUBE_MIN_Y = MIN_Z + Block.SIDE_LENGTH / 2 - 6f;
+    public const float CUBE_MAX_Y = MAX_Z - Block.SIDE_LENGTH / 2;
 
     public static Vector3 TopLeft => new(CUBE_MIN_X, 0, CUBE_MAX_Y);
     public static Vector3 TopRight => new(CUBE_MAX_X, 0, CUBE_MAX_Y);

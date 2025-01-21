@@ -171,6 +171,9 @@ public static class SceneManager {
         foreach (var pu in Powerup.Powerups)
             pu?.Remove();
 
+        foreach (var plane in Airplane.AllPlanes)
+            plane?.Remove();
+
         ClearTankDeathmarks();
         ClearTankTracks();
 

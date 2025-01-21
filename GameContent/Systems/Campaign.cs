@@ -238,7 +238,8 @@ public class Campaign
         }
 
         CurrentMission = LoadedMission;
-        TankGame.ClientLog.Write($"Loaded mission '{LoadedMission.Name}' with {LoadedMission.Tanks.Length} tanks and {LoadedMission.Blocks.Length} obstacles.", LogType.Info);
+        TankGame.ClientLog.Write($"Loaded mission '{LoadedMission.Name}' with {LoadedMission.Tanks.Length} " +
+            $"({LoadedMission.Tanks.Count(x => x.IsPlayer)} player(s), {LoadedMission.Tanks.Count(x => !x.IsPlayer)} AI(s)) tanks and {LoadedMission.Blocks.Length} obstacles.", LogType.Info);
 
         OnMissionLoad?.Invoke(ref GameHandler.AllTanks, ref Block.AllBlocks);
     }

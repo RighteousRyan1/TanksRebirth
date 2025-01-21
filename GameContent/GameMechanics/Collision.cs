@@ -281,7 +281,7 @@ namespace TanksRebirth.GameContent.GameMechanics
                 {
                     return false;
                 }
-                if (pathPos.Y < MapRenderer.MIN_Y || pathPos.Y > MapRenderer.MAX_Y)
+                if (pathPos.Y < MapRenderer.MIN_Z || pathPos.Y > MapRenderer.MAX_Z)
                 {
                     return false;
                 }

@@ -70,27 +70,6 @@ public static class SoundPlayer
 
         return sfx;
     }
-    public static SoundEffectInstance PlaySoundInstance(SoundEffect fromSound, SoundContext context, Vector3 position, Matrix world, float volume = 1f)
-    {
-        volume *= context switch {
-            SoundContext.Music => MusicVolume,
-            SoundContext.Effect => EffectsVolume,
-            SoundContext.Ambient => AmbientVolume,
-            _ => throw new ArgumentOutOfRangeException(nameof(context), context, "Uh oh! Seems like a new sound type was implemented, but I was not given a way to handle it!"),
-        };
-        var pos2d = MatrixUtils.ConvertWorldToScreen(position, world, TankGame.GameView, TankGame.GameProjection);
-        var WindowWidthHalfed = WindowUtils.WindowWidth / 2;
-        var lerp = MathUtils.ModifiedInverseLerp(-WindowWidthHalfed, WindowUtils.WindowWidth + WindowWidthHalfed, pos2d.X, true);
-
-        var sfx = fromSound.CreateInstance();
-        sfx.Volume = volume;
-
-        // System.Diagnostics.Debug.WriteLine(sfx.Pan);
-        sfx.Play();
-        sfx.Pan = lerp;
-
-        return sfx;
-    }
     public static void PlaySoundInstance(OggAudio fromSound, SoundContext context, float volume = 1f) {
         volume *= context switch {
             SoundContext.Music => MusicVolume,

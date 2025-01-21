@@ -45,17 +45,17 @@ public static class IntermissionSystem {
         IntermissionHandler.Initialize();
         // should this be where the animator is re-instantiated?
         TextAnimatorSmall = Animator.Create()
-            .WithFrame(new(Vector2.Zero, Vector2.Zero, [0f], TimeSpan.FromSeconds(0.25), EasingFunction.OutBack))
-            .WithFrame(new(Vector2.Zero, Vector2.One * 0.4f, [0f], TimeSpan.FromSeconds(0.25), EasingFunction.OutBack));
+            .WithFrame(new(position2d: Vector2.Zero, scale: Vector2.Zero, duration: TimeSpan.FromSeconds(0.25), easing: EasingFunction.OutBack))
+            .WithFrame(new(position2d: Vector2.Zero, scale: Vector2.One * 0.4f, duration: TimeSpan.FromSeconds(0.25), easing: EasingFunction.OutBack));
         TextAnimatorLarge = Animator.Create()
-            .WithFrame(new(Vector2.Zero, Vector2.Zero, [0f], TimeSpan.FromSeconds(0.35), EasingFunction.OutBack))
-            .WithFrame(new(Vector2.Zero, Vector2.One, [0f], TimeSpan.FromSeconds(0.35), EasingFunction.OutBack));
+            .WithFrame(new(position2d: Vector2.Zero, scale: Vector2.Zero, duration: TimeSpan.FromSeconds(0.35), easing: EasingFunction.OutBack))
+            .WithFrame(new(position2d: Vector2.Zero, scale: Vector2.One, duration: TimeSpan.FromSeconds(0.35), easing: EasingFunction.OutBack));
 
         IntermissionAnimator = Animator.Create()
-            .WithFrame(new([], TimeSpan.FromSeconds(3), EasingFunction.Linear))
-            .WithFrame(new([], TimeSpan.FromSeconds(0.5), EasingFunction.Linear))
-            .WithFrame(new([], TimeSpan.FromSeconds(3.66), EasingFunction.Linear))
-            .WithFrame(new([], TimeSpan.FromSeconds(0), EasingFunction.Linear));
+            .WithFrame(new(duration: TimeSpan.FromSeconds(3), easing: EasingFunction.Linear))
+            .WithFrame(new(duration: TimeSpan.FromSeconds(0.5), easing: EasingFunction.Linear))
+            .WithFrame(new(duration: TimeSpan.FromSeconds(3.66), easing: EasingFunction.Linear))
+            .WithFrame(new(duration: TimeSpan.FromSeconds(0), easing: EasingFunction.Linear));
         IntermissionAnimator.OnKeyFrameFinish += DoMidAnimationActions;
     }
 
@@ -70,8 +70,8 @@ public static class IntermissionSystem {
             secs1 = 4;
             secs2 = 3;
         }
-        IntermissionAnimator.KeyFrames[0] = new([], TimeSpan.FromSeconds(secs1), EasingFunction.Linear);
-        IntermissionAnimator.KeyFrames[2] = new([], TimeSpan.FromSeconds(secs2), EasingFunction.Linear);
+        IntermissionAnimator.KeyFrames[0] = new(duration: TimeSpan.FromSeconds(secs1), easing: EasingFunction.Linear);
+        IntermissionAnimator.KeyFrames[2] = new(duration: TimeSpan.FromSeconds(secs2), easing: EasingFunction.Linear);
         // the last frame is filler because i dunno how to fix the last frame finish event firing bug
         // ignore the last frame
         // TODO: fix this fuckery above
@@ -103,6 +103,16 @@ public static class IntermissionSystem {
             GameProperties.LoadedCampaign.SetupLoadedMission(GameHandler.AllPlayerTanks.Any(tnk => tnk != null && !tnk.Dead));
         }
         else if (frameId == 2) {
+            // TODO: fix float interp
+            if (PlayerTank.ClientTank is not null) {
+                // hacky using vectors for now.
+                IntermissionHandler.ThirdPersonTransitionAnimation = Animator.Create()
+                    //.WithFrame(new(position2d: Vector2.Zero, position3d: PlayerTank.ClientTank.Position3D + new Vector3(0, 100, 0), duration: TimeSpan.FromSeconds(2)))
+                    .WithFrame(new(position2d: Vector2.Zero, position3d: PlayerTank.ClientTank.Position3D + new Vector3(0, 100, 0), duration: TimeSpan.FromSeconds(3), easing: EasingFunction.InOutQuad))
+                    .WithFrame(new(position2d: new Vector2(-PlayerTank.ClientTank.TurretRotation), position3d: PlayerTank.ClientTank.Position3D));
+                IntermissionHandler.ThirdPersonTransitionAnimation?.Restart();
+                IntermissionHandler.ThirdPersonTransitionAnimation?.Run();
+            }
             IntermissionHandler.BeginIntroSequence();
             IntermissionHandler.CountdownAnimator?.Restart();
             IntermissionHandler.CountdownAnimator?.Run();
@@ -187,14 +197,14 @@ public static class IntermissionSystem {
             int mafs2 = GameProperties.LoadedCampaign.LoadedMission.Tanks.Count(x => x.IsPlayer);
             int mafs = mafs1 - mafs2; // waddafak. why is my old code so horrid.
 
-            DrawShadowedString(TankGame.TextFontLarge,
+            SpriteBatchUtils.DrawShadowedString(TankGame.TextFontLarge,
                 new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 220.ToResolutionY()),
                 Vector2.One,
                 GameProperties.LoadedCampaign.LoadedMission.Name,
                 BackgroundColor,
                 TextAnimatorLarge.CurrentScale.ToResolution(),
                 Alpha);
-            DrawShadowedString(TankGame.TextFontLarge,
+            SpriteBatchUtils.DrawShadowedString(TankGame.TextFontLarge,
                 new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 50.ToResolutionY()),
                 Vector2.One,
                 $"{TankGame.GameLanguage.EnemyTanks}: {mafs}",
@@ -212,7 +222,7 @@ public static class IntermissionSystem {
                 var pos = new Vector2(WindowUtils.WindowWidth / (count + 1) * (i + 1), WindowUtils.WindowHeight / 2 + 375.ToResolutionY());
 
                 var lifeText = $"x  {PlayerTank.Lives[i]}";
-                DrawShadowedString(TankGame.TextFontLarge,
+                SpriteBatchUtils.DrawShadowedString(TankGame.TextFontLarge,
                     pos + new Vector2(75, -25).ToResolution(),
                     Vector2.One,
                     lifeText,
@@ -221,7 +231,7 @@ public static class IntermissionSystem {
                     Alpha,
                     TankGame.TextFontLarge.MeasureString(lifeText) / 2);
 
-                DrawShadowedString(TankGame.TextFontLarge,
+                SpriteBatchUtils.DrawShadowedString(TankGame.TextFontLarge,
                     pos - new Vector2(0, 75).ToResolution(),
                     Vector2.One,
                     name,
@@ -229,11 +239,11 @@ public static class IntermissionSystem {
                     new Vector2(0.3f).ToResolution(),
                     Alpha,
                     TankGame.TextFontLarge.MeasureString(name) / 2);
-                DrawShadowedTexture(tnk2d, pos - new Vector2(130, 0).ToResolution(), Vector2.One, PlayerID.PlayerTankColors[i].ToColor(), new Vector2(1.25f), Alpha, tnk2d.Size() / 2);
+                SpriteBatchUtils.DrawShadowedTexture(tnk2d, pos - new Vector2(130, 0).ToResolution(), Vector2.One, PlayerID.PlayerTankColors[i].ToColor(), new Vector2(1.25f), Alpha, tnk2d.Size() / 2);
             }
             // draw mission data on the billboard (?) thing
             if (GameProperties.LoadedCampaign.CurrentMissionId == 0)
-                DrawShadowedString(TankGame.TextFontLarge,
+                SpriteBatchUtils.DrawShadowedString(TankGame.TextFontLarge,
                     new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 295.ToResolutionY()),
                     Vector2.One,
                     $"{TankGame.GameLanguage.Campaign}: \"{GameProperties.LoadedCampaign.MetaData.Name}\" ({TankGame.GameLanguage.Mission} #{GameProperties.LoadedCampaign.CurrentMissionId + 1})",
@@ -241,7 +251,7 @@ public static class IntermissionSystem {
                     TextAnimatorSmall.CurrentScale.ToResolution(),
                     Alpha);
             else
-                DrawShadowedString(TankGame.TextFontLarge,
+                SpriteBatchUtils.DrawShadowedString(TankGame.TextFontLarge,
                     new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 295.ToResolutionY()),
                     Vector2.One,
                     $"{TankGame.GameLanguage.Mission} #{GameProperties.LoadedCampaign.CurrentMissionId + 1}",
@@ -254,25 +264,6 @@ public static class IntermissionSystem {
 
     private static void DrawBonusLifeHUD() {
         // TODO: implement.
-    }
-
-    public static void DrawShadowedString(SpriteFontBase font, Vector2 position, Vector2 shadowDir, string text, Color color, Vector2 scale, float alpha, Vector2 origin = default, float shadowDistScale = 1f) {
-        TankGame.SpriteRenderer.DrawString(font, text, position + Vector2.Normalize(shadowDir) * (10f * shadowDistScale * scale), Color.Black * alpha * 0.75f, scale, 0f, origin == default ? TankGame.TextFontLarge.MeasureString(text) / 2 : origin, 0f);
-
-        TankGame.SpriteRenderer.DrawString(font, text, position, color * alpha, scale, 0f, origin == default ? TankGame.TextFontLarge.MeasureString(text) / 2 : origin, 0f);
-    }
-
-    public static void DrawShadowedTexture(Texture2D texture, Vector2 position, Vector2 shadowDir, Color color, Vector2 scale, float alpha, Vector2 origin = default, bool flip = false, float shadowDistScale = 1f) {
-        TankGame.SpriteRenderer.Draw(texture,
-            position + Vector2.Normalize(shadowDir) * (10f * shadowDistScale * scale),
-            null,
-            Color.Black * alpha * 0.75f,
-            0f,
-            origin == default ? texture.Size() / 2 : origin,
-            scale,
-            flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None,
-            default);
-        TankGame.SpriteRenderer.Draw(texture, position, null, color * alpha, 0f, origin == default ? texture.Size() / 2 : origin, scale, flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, default);
     }
 
     private static void DrawStripe(SpriteBatch spriteBatch, Color color, float offsetY, float alpha) {

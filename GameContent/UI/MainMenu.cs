@@ -116,10 +116,9 @@ public static class MainMenu {
 
     #endregion
 
-    private static float _tnkSpeed = 2.4f;
-
     public static int MissionCheckpoint = 0;
 
+    #region OldLogo
     public static Texture2D LogoTexture;
     public static Vector2 LogoPosition;
     public static Vector2 LogoScale = new(0.5f);
@@ -129,6 +128,7 @@ public static class MainMenu {
     private static float _sclOffset = 0f;
     private static float _sclApproach = 0.5f;
     private static float _sclAcc = 0.005f;
+    #endregion
 
     // TODO: get menu visuals working
 
@@ -163,17 +163,21 @@ public static class MainMenu {
 
     private static bool _initialized;
 
+    public static RebirthLogoModel RebirthLogo;
     public static void InitializeBasics() {
         // we will start at {-200, 200}
         // go to middle, upper after 4 seconds
         // will scale down to 0.5
         LogoAnimation = Animator.Create()
-            .WithFrame(new(new Vector2(-200, 200), Vector2.Zero, [0f], TimeSpan.FromSeconds(4), EasingFunction.OutBack))
-            .WithFrame(new(new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 4), Vector2.One * 0.5f, [0f], TimeSpan.FromSeconds(2)));
+            .WithFrame(new(position2d: new Vector2(-200, 200), scale: Vector2.Zero, duration: TimeSpan.FromSeconds(4), easing: EasingFunction.OutBack))
+            .WithFrame(new(position2d: new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 4), scale: Vector2.One * 0.5f, duration: TimeSpan.FromSeconds(2)));
         LogoAnimation.Run();
         MenuState = State.PrimaryMenu;
         Crate = new(new(0, 0, 0), TankGame.GameView, TankGame.GameProjection) {
             ChestPosition = new(0, 500, 250)
+        };
+        RebirthLogo = new() {
+            Position = new(0, 500, 250),
         };
         Crate.LidPosition = Crate.ChestPosition; //new(67.5f, 500, 137.5f);
         Crate.Rotation.Y = MathHelper.Pi + 0.25f;
@@ -181,10 +185,6 @@ public static class MainMenu {
         Crate.Rotation.Z = 0f;
         Crate.LidRotation = Crate.Rotation;
         LogoTexture = GameResources.GetGameResource<Texture2D>("Assets/tanks_rebirth_logo", premultiply: true);
-
-        Projection = Matrix.CreateOrthographic(TankGame.Instance.GraphicsDevice.Viewport.Width, TankGame.Instance.GraphicsDevice.Viewport.Height, -2000f, 5000f);
-        //Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), TankGame.Instance.GraphicsDevice.Viewport.AspectRatio, 0.01f, 1000f);
-        View = Matrix.CreateScale(2) * Matrix.CreateLookAt(new(0, 0, 500), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(MathHelper.PiOver2);
 
         // AddTravelingTank(TankTier.Black, 200, 200);
 
@@ -201,7 +201,6 @@ public static class MainMenu {
         }
         _initialized = true;
 
-        TankGame.Instance.Window.ClientSizeChanged += UpdateProjection;
         var font = TankGame.TextFont;
         #region Init Standard Buttons
         PlayButton = new(TankGame.GameLanguage.Play, font, Color.WhiteSmoke) {
@@ -441,10 +440,24 @@ public static class MainMenu {
             e.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick.ogg", SoundContext.Effect, rememberMe: true); };
         }
     }
-    public static void RenderCrate() {
+    private static void UpdateMatrices() {
+        RebirthLogo.Position = new Vector3(0, 0, -300.ToResolutionY());
+        Projection = Matrix.CreateOrthographic(TankGame.Instance.GraphicsDevice.Viewport.Width, TankGame.Instance.GraphicsDevice.Viewport.Height, -2000f, 5000f);
+        View = Matrix.CreateScale(1f) * Matrix.CreateLookAt(Vector3.Backward, Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(MathHelper.PiOver2);
+    }
+    public static void RenderModels() {
+        UpdateMatrices();
         Crate.View = View;
         Crate.Projection = Projection;
-        Crate?.Render();
+        if (MenuState == State.Cosmetics)
+            Crate?.Render();
+
+        //RebirthLogo.Rotation = new(MathF.Sin(TankGame.RunTime / 100) * MathHelper.PiOver4, 0, 0);
+        RebirthLogo.Scale = 0.8f.ToResolutionF();
+        RebirthLogo.View = View;
+        RebirthLogo.Projection = Projection;
+        if (MenuState == State.PrimaryMenu || MenuState == State.PlayList)
+            RebirthLogo.Render();
         //Crate.Rotation.Y = MathHelper.Pi;
         //Crate.Rotation.X = MathHelper.PiOver2;
 
@@ -454,13 +467,7 @@ public static class MainMenu {
             Crate.LidPosition = Crate.ChestPosition;
     }
     private static void UpdateLogo() {
-        LogoPosition = LogoAnimation.CurrentPosition; //new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 4);
-        //LogoRotation = LogoAnimation.CurrentRotation;
-        //LogoScale = LogoAnimation.CurrentScale;
-        //_bpm = MouseUtils.MousePosition.Y / WindowUtils.WindowHeight * 1000;
-        //_sclMax = MouseUtils.MousePosition.X / WindowUtils.WindowWidth * 1000;
-        // _rotDelta = MouseUtils.MousePosition.Y / WindowUtils.WindowHeight * 1000;
-
+        LogoPosition = LogoAnimation.CurrentPosition2D;
         LogoRotation = MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalMilliseconds / _rotationBpm) / _rotDelta + _spinOffset;
         LogoScale = (MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalMilliseconds / _bpm) / _sclMax + _sclOffset).ToResolution();
 
@@ -468,14 +475,6 @@ public static class MainMenu {
             _sclOffset += _sclAcc * TankGame.DeltaTime;
         else
             _sclOffset = _sclApproach;
-
-        //if (_spinOffset <= _spinTarget)
-        //GameUtils.SoftStep(ref _spinOffset, _spinTarget, _spinSpeed
-        // considerations...
-    }
-    private static void UpdateProjection(object sender, EventArgs e) {
-        Projection = Matrix.CreateOrthographic(TankGame.Instance.GraphicsDevice.Viewport.Width, TankGame.Instance.GraphicsDevice.Viewport.Height, -2000f, 5000f);
-        View = Matrix.CreateScale(2) * Matrix.CreateLookAt(new(0, 0, 500), Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(MathHelper.PiOver2);
     }
 
     private static bool _diffButtonsInitialized;
@@ -978,9 +977,9 @@ public static class MainMenu {
     // this method is causing considerable amounts of garbage collection!
     internal static void RenderStats(Vector2 genericStatsPos, Vector2 tankKillsPos, Anchor aligning) {
         for (int i = 0; i < _info.Length; i++)
-            SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, _info[i], genericStatsPos + Vector2.UnitY * (i * 25).ToResolutionY(), Color.White, Color.Black, Vector2.One.ToResolution(), 0f, Anchor.Center);
+            SpriteBatchUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, _info[i], genericStatsPos + Vector2.UnitY * (i * 25).ToResolutionY(), Color.White, Color.Black, Vector2.One.ToResolution(), 0f, Anchor.Center);
         //TankGame.SpriteRenderer.DrawString(TankGame.TextFont, _info[i], genericStatsPos + Vector2.UnitY * (i * 25).ToResolutionY(), Color.White, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(aligning, TankGame.TextFont.MeasureString(_info[i])), 0f);
-        SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, TankGame.GameLanguage.TankKillsPerType + ":", tankKillsPos, Color.White, Color.Black, Vector2.One.ToResolution(), 0f, Anchor.Center);
+        SpriteBatchUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, TankGame.GameLanguage.TankKillsPerType + ":", tankKillsPos, Color.White, Color.Black, Vector2.One.ToResolution(), 0f, Anchor.Center);
         // GameUtils.GetAnchor(aligning, TankGame.TextFont.MeasureString("Tanks Killed by Type:"))
         int count = 1;
         for (int i = 2; i < TankGame.GameData.TankKills.Count; i++) {
@@ -990,12 +989,12 @@ public static class MainMenu {
             count++;
             var split = TankID.Collection.GetKey(elem.Key).SplitByCamel();
             var display = $"{split}: {elem.Value}";
-            SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, display, tankKillsPos + Vector2.UnitY * ((count - 1) * 25).ToResolutionY(), AITank.TankDestructionColors[elem.Key], Color.Black, Vector2.One.ToResolution(), 0f, Anchor.Center);
+            SpriteBatchUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, display, tankKillsPos + Vector2.UnitY * ((count - 1) * 25).ToResolutionY(), AITank.TankDestructionColors[elem.Key], Color.Black, Vector2.One.ToResolution(), 0f, Anchor.Center);
             //TankGame.SpriteRenderer.DrawString(TankGame.TextFont, display, tankKillsPos + Vector2.UnitY * ((i - 1) * 25).ToResolutionY(), Color.White, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(aligning, TankGame.TextFont.MeasureString(display)), 0f);
         }
         if (TankGame.GameData.ReadingOutdatedFile)
             TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"Outdated save file ({TankGame.GameData.Name})! Delete the old one!", new Vector2(8, 8), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero, 0f);
-        SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, "Press ESC to return", WindowUtils.WindowBottom - Vector2.UnitY * 40.ToResolutionY(), Color.White, Color.Black, Vector2.One.ToResolution(), 0f, Anchor.Center);
+        SpriteBatchUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, "Press ESC to return", WindowUtils.WindowBottom - Vector2.UnitY * 40.ToResolutionY(), Color.White, Color.Black, Vector2.One.ToResolution(), 0f, Anchor.Center);
         // GameUtils.GetAnchor(aligning, TankGame.TextFont.MeasureString("Press ESC to return"))
     }
 
@@ -1201,7 +1200,7 @@ public static class MainMenu {
         DebugManager.ClearChecks?.OnLeftClick?.Invoke(null);
 
         TankGame.OverheadView = false;
-        TankGame.POVRotationVector.Y = TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
+        TankGame.OrthoRotationVector.Y = TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
         TankGame.AddativeZoom = 1f;
         TankGame.CameraFocusOffset.Y = 0f;
 
@@ -1277,7 +1276,12 @@ public static class MainMenu {
         GameUI.BackButton.IsVisible = false;
     }
 
-    private static readonly string tanksMessage = $"Tanks Rebirth ALPHA v{TankGame.Instance.GameVersion}\nOriginal game and assets developed by Nintendo\nProgrammed by RighteousRyan\nArt and graphics by BigKitty1011\nTANKS to all our contributors!";
+    private static readonly string tanksMessage = 
+        $"Tanks Rebirth ALPHA v{TankGame.Instance.GameVersion}" +
+        $"\nOriginal game and assets developed by Nintendo" +
+        $"\nProgrammed by RighteousRyan" +
+        $"\nArt and graphics by BigKitty1011" +
+        $"\nTANKS to all our contributors!";
 
     private static int _oldwheel;
     public static void Render() {
@@ -1285,9 +1289,7 @@ public static class MainMenu {
             return;
         if (Active) {
             UpdateLogo();
-            if (MenuState == State.Cosmetics)
-                RenderCrate();
-            else if (MenuState == State.StatsMenu)
+            if (MenuState == State.StatsMenu)
                 RenderStats(new Vector2(WindowUtils.WindowWidth * 0.3f, 200.ToResolutionY()), new Vector2(WindowUtils.WindowWidth * 0.7f, 40.ToResolutionY()), Anchor.TopCenter);
             else if (MenuState == State.Difficulties)
                 TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "Ideas are welcome! Let us know in our DISCORD server!", new(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 6), Color.White, new Vector2(1f), 0f, GameUtils.GetAnchor(Anchor.Center, TankGame.TextFont.MeasureString("Ideas are welcome! Let us know in our DISCORD server!")));
@@ -1325,28 +1327,39 @@ public static class MainMenu {
             // TODO: rework this very rudimentary ui
             if ((NetPlay.CurrentServer is not null && (Server.ConnectedClients is not null || NetPlay.ServerName is not null)) || (Client.IsConnected() && Client.LobbyDataReceived)) {
                 Vector2 initialPosition = new(WindowUtils.WindowWidth * 0.75f, WindowUtils.WindowHeight * 0.25f);
-                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"\"{NetPlay.ServerName}\"", initialPosition - new Vector2(0, 40), Color.White, new Vector2(0.6f));
-                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"Connected Players:", initialPosition, Color.White, new Vector2(0.6f));
+                SpriteBatchUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"\"{NetPlay.ServerName}\"", initialPosition - new Vector2(0, 40), 
+                    Color.White, Color.Black, new Vector2(0.6f).ToResolution(), 0f, Anchor.TopLeft, 0.8f);
+                SpriteBatchUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"Connected Players:", initialPosition, 
+                    Color.White, Color.Black, new Vector2(0.6f).ToResolution(), 0f, Anchor.TopLeft, 0.8f);
+
                 for (int i = 0; i < Server.ConnectedClients.Count(x => x is not null); i++) {
                     var client = Server.ConnectedClients[i];
                     // TODO: when u work on this again be sure to like, re-enable this code, cuz like, if u dont, u die.
-                    Color textCol = Color.White;
+                    Color textCol = PlayerID.PlayerTankColors[client.Id].ToColor();
                     //if (NetPlay.CurrentClient.Id == i)
                     //textCol = Color.Green;
 
-                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"{client.Name}" + $" ({client.Id})", initialPosition + new Vector2(0, 20) * (i + 1), textCol, new Vector2(0.6f));
+                    SpriteBatchUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"{client.Name}" + $" ({PlayerID.Collection.GetKey(client.Id)} tank)", 
+                        initialPosition + new Vector2(0, 20) * (i + 1), textCol, Color.Black, new Vector2(0.6f).ToResolution(), 0f, Anchor.TopLeft, 0.8f);
                 }
             }
             var tanksMessageSize = TankGame.TextFont.MeasureString(tanksMessage);
 
-            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, tanksMessage, new(8, WindowUtils.WindowHeight - 8), Color.White, new Vector2(0.6f).ToResolution(), 0f, new Vector2(0, tanksMessageSize.Y));
+            SpriteBatchUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, tanksMessage, new(8, WindowUtils.WindowHeight - 8),
+                Color.White, Color.Black, new Vector2(0.6f).ToResolution(), 0f, Anchor.BottomLeft, 0.5f);
+
+
+
+
+
+
             //if (PlayButton.IsVisible)
             //TankGame.SpriteRenderer.DrawString(TankGame.TextFont, keyDisplay, new(12, 12), Color.White, new(0.6f), 0f, Vector2.Zero);
             #endregion
 
             if (MenuState == State.PrimaryMenu || MenuState == State.PlayList) {
                 // draw the logo at it's position
-                TankGame.SpriteRenderer.Draw(LogoTexture, LogoPosition, null, Color.White, LogoRotation, LogoTexture.Size() / 2, LogoScale, default, default);
+                //TankGame.SpriteRenderer.Draw(LogoTexture, LogoPosition, null, Color.White, LogoRotation, LogoTexture.Size() / 2, LogoScale, default, default);
 
                 var size = TankGame.TextFont.MeasureString(TankGame.Instance.MOTD);
                 TankGame.SpriteRenderer.DrawString(TankGame.TextFont, TankGame.Instance.MOTD, LogoPosition + LogoTexture.Size() * LogoScale * 0.3f, Color.White, LogoScale * 1.5f, LogoRotation - 0.25f, GameUtils.GetAnchor(Anchor.TopCenter, size));
@@ -1388,7 +1401,7 @@ public static class MainMenu {
                 if (MissionCheckpoint < 0)
                     MissionCheckpoint = 0;
 
-                SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"You can scroll with your mouse to skip to a certain mission." +
+                SpriteBatchUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"You can scroll with your mouse to skip to a certain mission." +
                     $"\nCurrently, you will skip to mission {MissionCheckpoint + 1}." +
                     $"\nYou will be alerted if that mission does not exist.", new Vector2(12, 200).ToResolution(),
                     Color.White, Color.Black, new Vector2(0.75f).ToResolution(), 0f, Anchor.TopLeft);
@@ -1400,7 +1413,7 @@ public static class MainMenu {
                 var defPos = new Vector2(60, 380);
                 TankGame.SpriteRenderer.Draw(tex, defPos.ToResolution(), null, Color.White, 0f, new Vector2(tex.Size().X, tex.Size().Y / 2), new Vector2(0.1f).ToResolution(), default, default);
                 var text = $"Top {_speedruns.Length} speedruns:\n" + string.Join(Environment.NewLine, _speedruns);
-                SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, text, defPos.ToResolution(), Color.White, Color.Black, new Vector2(0.75f).ToResolution(), 0f, Anchor.LeftCenter);
+                SpriteBatchUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, text, defPos.ToResolution(), Color.White, Color.Black, new Vector2(0.75f).ToResolution(), 0f, Anchor.LeftCenter);
             }
             else if (MenuState == State.Cosmetics) {
                 TankGame.SpriteRenderer.DrawString(TankGame.TextFontLarge, $"COMING SOON!", new(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 6), Color.White, new Vector2(0.75f).ToResolution(), 0f, TankGame.TextFontLarge.MeasureString($"COMING SOON!") / 2);

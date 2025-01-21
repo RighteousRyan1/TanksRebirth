@@ -17,15 +17,33 @@ public class ParticleSystem
         CurrentParticles = new Particle[MaxParticles];
     }
 
-    public void RenderParticles() {
-        foreach (var particle in CurrentParticles)
-            particle?.Render();
+    public void RenderParticles(bool renderInReverseOrder = false) {
+        if (renderInReverseOrder) {
+            for (int i = CurrentParticles.Length - 1; i >= 0; i--)
+                CurrentParticles[i]?.Render();
+        }
+        else {
+            for (int i = 0; i < CurrentParticles.Length; i++)
+                CurrentParticles[i]?.Render();
+        }
     }
-    public void RenderModelParticles() {
-        foreach (var particle in CurrentParticles)
-            if (particle is not null)
-                if (particle.Model != null)
-                    particle.RenderModels();
+    public void RenderModelParticles(bool renderInReverseOrder = false) {
+        if (renderInReverseOrder) {
+            for (int i = CurrentParticles.Length - 1; i >= 0; i--) {
+                var particle = CurrentParticles[i];
+                if (particle is not null)
+                    if (particle.Model != null)
+                        particle.RenderModels();
+            }
+        }
+        else {
+            for (int i = 0; i < CurrentParticles.Length; i++) {
+                var particle = CurrentParticles[i];
+                if (particle is not null)
+                    if (particle.Model != null)
+                        particle.RenderModels();
+            }
+        }
     }
     public void UpdateParticles() {
         foreach (var particle in CurrentParticles)

@@ -31,13 +31,14 @@ public class OggAudio : IDisposable, IAudio {
     public float Volume {
         get => _backingVolume;
         set {
-            if (value > MaxVolume)
-                value = MaxVolume;
+            // changed from capping at MaxVolume to just multiplying volume by maxvolume.
+            if (value > 1f)
+                value = 1f;
             else if (value < 0)
-                value = 0;
+                value = 0f;
 
             _backingVolume = value;
-            Instance.Volume = value;
+            Instance.Volume = value * MaxVolume;
         }
     }
 
@@ -61,6 +62,11 @@ public class OggAudio : IDisposable, IAudio {
         Instance.Stop();
     }
 
+    public OggAudio(string path, SoundEffect effect) {
+        this.SongPath = path;
+        this._effect = effect;
+        this.Instance = effect.CreateInstance();
+    }
     public OggAudio(string path) {
         SongPath = path;
         Load(SongPath);
@@ -81,6 +87,13 @@ public class OggAudio : IDisposable, IAudio {
     }
 
     private void Load(string path) {
+        var soundEffect = GameResources.GetGameResource<SoundEffect>(path);
+        if (soundEffect != null) {
+            this._effect = soundEffect;
+            this.Instance = soundEffect.CreateInstance();
+            return;
+        }
+        
         var audioData = new OggDeserializer().Deserialize(path);
         _effect = new SoundEffect(audioData.binaryData, audioData.sampleRate, (AudioChannels)audioData.channelCount);
         Instance = _effect.CreateInstance();

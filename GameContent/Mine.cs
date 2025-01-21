@@ -125,7 +125,7 @@ public sealed class Mine : IAITankDanger
     public void Detonate() {
         Detonated = true;
         var scale = ExplosionRadiusInUnits * 0.101f * (Difficulties.Types["UltraMines"] ? 2 : 1);
-        var expl = new Explosion(Position, scale, Owner, 0.3f);
+        var expl = new Explosion(Position, scale, Owner);
 
         if (Owner != null)
             Owner.OwnedMineCount--;

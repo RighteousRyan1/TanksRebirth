@@ -143,23 +143,23 @@ public class Block : IGameObject {
             case BlockID.Wood:
                 _texture = MapRenderer.Assets["block.1"];
                 Properties.IsSolid = true;
-                Model = GameResources.GetGameResource<Model>(modelname);
+                Model = GameResources.GetGameResource<Model>(modelname)!;
                 break;
             case BlockID.Cork:
                 Properties.IsDestructible = true;
                 _texture = MapRenderer.Assets["block.2"];
                 Properties.IsSolid = true;
-                Model = GameResources.GetGameResource<Model>(modelname);
+                Model = GameResources.GetGameResource<Model>(modelname)!;
                 break;
             case BlockID.Hole:
-                Model = GameResources.GetGameResource<Model>("Assets/check");
+                Model = GameResources.GetGameResource<Model>("Assets/check")!;
                 Properties.IsSolid = false;
                 _texture = MapRenderer.Assets["block_harf.1"];
                 Properties.CanStack = false;
                 Properties.HasShadow = false;
                 break;
             case BlockID.Teleporter:
-                Model = GameResources.GetGameResource<Model>("Assets/teleporter");
+                Model = GameResources.GetGameResource<Model>("Assets/teleporter")!;
                 Properties.IsSolid = false;
                 Properties.IsCollidable = false;
                 _texture = MapRenderer.Assets["teleporter"];

@@ -46,7 +46,7 @@ public class Explosion : IAITankDanger {
 
     public Color ExplosionColor = Color.White;
 
-    public Explosion(Vector2 pos, float scale, Tank? owner = null, float rotationSpeed = 1f, float soundPitch = -0.3f) {
+    public Explosion(Vector2 pos, float scale, Tank? owner = null, float rotationSpeed = 1f, float soundPitch = 0f) {
         RotationSpeed = rotationSpeed;
         Position = pos;
         Scale = scale;
@@ -62,8 +62,8 @@ public class Explosion : IAITankDanger {
         //int vertLayers = (int)(scale * 2.5f); // 16
         //int horizLayers = (int)scale; // 5
 
-        int horizLayers = (int)(scale * 1.5f); // 10
-        int vertLayers = (int)(scale * 1.1f); // 8
+        int horizLayers = 10;//(int)(scale * 1.5f) + 2; // 10
+        int vertLayers = 8;//(int)(scale * 1.1f) + 2; // 8
 
         var ring = GameHandler.Particles.MakeParticle(Position3D + Vector3.UnitY, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/ring"));
         ring.Scale = new(1.3f);
@@ -83,20 +83,23 @@ public class Explosion : IAITankDanger {
         // my brain hurts help pls
         // employ 3d rotation tactics
         // the spherically displayed particles.
+
+        // there's a deadzone in each explosion. not sure why at all.
         for (int i = 0; i <= horizLayers; i++) {
             for (int j = 0; j <= vertLayers; j++) {
                 var rotX = MathHelper.Pi / vertLayers * j;
                 var rotZ = MathHelper.Pi / horizLayers * i;
 
                 float rotation = 0f;
-                float rotationSpeed1 = 0.03f;
+                float rotationSpeed1 = 0.06f * RotationSpeed;
 
                 //var explScalar = (MAGIC_EXPLOSION_NUMBER - 3) * Scale;
 
                 //var position = Vector3.Transform(Vector3.UnitX * explScalar, Matrix.CreateFromYawPitchRoll(rotZ, 0, rotX) * Matrix.CreateTranslation(Position3D));
                 // this will become a model.
                 var lingerRandom = GameHandler.GameRand.NextFloat(0.8f, 1.2f);
-                var particle = GameHandler.Particles.MakeExplosionFlameParticle(new Vector3(0, -100, 0), out var act, LingerDuration / 60f * lingerRandom);
+                var particle = GameHandler.Particles.MakeExplosionFlameParticle(new Vector3(0, -100, 0), out var act, LingerDuration / 60f);// * lingerRandom/*, scale / MAGIC_EXPLOSION_NUMBER * 1.1f*/);
+
                 // TODO: make particles face center of explosion
                 particle.UniqueBehavior = (a) => {
                     act?.Invoke(particle);
@@ -110,6 +113,12 @@ public class Explosion : IAITankDanger {
                     //var dir = MathUtils.DirectionOf(position.FlattenZ(), Position3D.FlattenZ()).ToRotation();
                     // when the particle is rotating on the left side of the sphere, it locks "rot" to Pi?
                     // otherwise it turns into an angle greater than the unit circle. truly so confusing.
+
+                    /*var rot = Quaternion.CreateFromRotationMatrix(Matrix.CreateLookAt(position, Position3D, Vector3.Up));
+                    particle.Roll = rot.X;
+                    particle.Pitch = rot.Y;
+                    particle.Yaw = rot.Z;*/
+
                     particle.Yaw = 0;
                     var rot = (position.Flatten() - Position3D.Flatten()).ToRotation();
                     particle.Roll = rot > MathHelper.PiOver2 ? rot : -rot; // this works to a very slight extent

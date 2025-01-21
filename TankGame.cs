@@ -12,6 +12,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using FontStashSharp;
+using Microsoft.Xna.Framework.Audio;
 using Steamworks;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common;
@@ -39,6 +40,7 @@ using TanksRebirth.Achievements;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Speedrunning;
 using tainicom.Aether.Physics2D.Collision;
+using TanksRebirth.GameContent.Systems.Coordinates;
 
 namespace TanksRebirth;
 
@@ -59,7 +61,7 @@ public class TankGame : Game {
     public static PerspectiveCamera PerspectiveCamera;
 
     /// <summary>The hardware used by the user's computer.</summary>
-    public readonly ComputerSpecs CompSpecs;
+    public static ComputerSpecs CompSpecs { get; private set; }
     public static TimeSpan RenderTime { get; private set; }
     public static TimeSpan LogicTime { get; private set; }
     public static double LogicFPS { get; private set; }
@@ -77,6 +79,8 @@ public class TankGame : Game {
             return process.PrivateMemorySize64;
         }
     }
+
+    public static Freecam RebirthFreecam;
 
     public static GameTime LastGameTime { get; private set; }
     public static uint UpdateCount { get; private set; }
@@ -122,7 +126,7 @@ public class TankGame : Game {
     public static bool IsMac => OperatingSystem == OSPlatform.OSX;
     public static bool IsLinux => OperatingSystem == OSPlatform.Linux;
 
-    public readonly string MOTD;
+    public string MOTD { get; private set; }
 
     #endregion
 
@@ -136,16 +140,24 @@ public class TankGame : Game {
         Directory.CreateDirectory(Path.Combine(SaveDirectory, "Logs"));
         Directory.CreateDirectory(Path.Combine(SaveDirectory, "Backup"));
         ClientLog = new(Path.Combine(SaveDirectory, "Logs"), "client");
-        try {
-            var bytes = WebUtils.DownloadWebFile(
-                "https://raw.githubusercontent.com/RighteousRyan1/tanks_rebirth_motds/master/motd.txt",
-                out var name);
-            MOTD = System.Text.Encoding.Default.GetString(bytes);
-        }
-        catch {
-            // in the case that an HTTPRequestException is thrown (no internet access)
-            MOTD = LocalizationRandoms.GetRandomMotd();
-        }
+        Task.Run(() => {
+            try {
+                ClientLog.Write(
+                    "Obtaining message of the day (MOTD) from GitHub...",
+                    LogType.Info);
+                var bytes = WebUtils.DownloadWebFile(
+                    "https://raw.githubusercontent.com/RighteousRyan1/tanks_rebirth_motds/master/motd.txt",
+                    out var name);
+                MOTD = System.Text.Encoding.Default.GetString(bytes);
+            }
+            catch {
+                // in the case that an HTTPRequestException is thrown (no internet access)
+                ClientLog.Write(
+                    "Failed to obtain MOTD. Falling back to offline MOTDs.",
+                    LogType.Warn);
+                MOTD = LocalizationRandoms.GetRandomMotd();
+            }
+        });
 
         // check if platform is windows, mac, or linux
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
@@ -157,20 +169,7 @@ public class TankGame : Game {
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
             OperatingSystem = OSPlatform.Linux;
         }
-
-        CompSpecs = ComputerSpecs.GetSpecs(out bool error);
-
-        if (error) {
-            ClientLog.Write(
-                "Unable to load computer specs: Specified OS Architecture is not Windows.",
-                LogType.Warn);
-        }
-        else {
-            ClientLog.Write($"CPU: {CompSpecs.CPU.Name} (Core Count: {CompSpecs.CPU.CoreCount})", LogType.Info);
-            ClientLog.Write($"GPU: {CompSpecs.GPU.Name} (Driver Version: {CompSpecs.GPU.DriverVersion} | VRAM: {MathF.Round(MemoryParser.FromGigabytes(CompSpecs.GPU.VRAM))} GB)", LogType.Info);
-            ClientLog.Write($"Physical Memory (RAM): {CompSpecs.RAM.Manufacturer} {MathF.Round(MemoryParser.FromGigabytes(CompSpecs.RAM.TotalPhysical))} GB {CompSpecs.RAM.Type}@{CompSpecs.RAM.ClockSpeed}Mhz", LogType.Info);
-        }
-
+        
         ClientLog.Write($"Playing on Operating System '{OperatingSystem}'", LogType.Info);
 
         // IOUtils.SetAssociation(".mission", "MISSION_FILE", "TanksRebirth.exe", "Tanks Rebirth mission file");
@@ -192,11 +191,11 @@ public class TankGame : Game {
         GameVersion = typeof(TankGame).Assembly.GetName().Version!;
 
         ClientLog.Write(
-            $"Running {typeof(TankGame).Assembly.GetName().Name} on version {GameVersion}'",
+            $"Running {typeof(TankGame).Assembly.GetName().Name} on version '{GameVersion}'",
             LogType.Info);
     }
 
-    private ulong _memBytes;
+    public static ulong MemoryUsageInBytes;
 
     public static Stopwatch CurrentSessionTimer = new();
 
@@ -216,8 +215,11 @@ public class TankGame : Game {
     protected override void Initialize() {
         GameHandler.Initialize();
         GameDir = Directory.GetCurrentDirectory();
-        if (Debugger.IsAttached && SteamAPI.IsSteamRunning())
+        RebirthFreecam = new(GraphicsDevice);
+        if (Debugger.IsAttached && SteamAPI.IsSteamRunning()) {
+            ClientLog.Write("Initialising SteamWorks API...", LogType.Debug);
             SteamworksUtils.Initialize();
+        }
         CurrentSessionTimer.Start();
         PingMenu.Initialize();
 
@@ -273,7 +275,98 @@ public class TankGame : Game {
         DiscordRichPresence.Terminate();
     }
 
+    void PreloadContent() {
+        string[] textures = [
+            /* Miscellaneous */
+            "Assets/christmas/snowflake_0",
+            "Assets/christmas/snowflake_1",
+            "Assets/christmas/snow",
+            "Assets/textures/misc/ring",
+            "Assets/textures/smoke/smokenade",
+            "Assets/textures/smoke/smoke",
+            "Assets/textures/misc/tank_rock",
+            "Assets/textures/misc/tank_rock_2",
+            "Assets/textures/ingame/block_shadow_h",
+            "Assets/textures/ingame/block_other_c",
+            "Assets/textures/misc/mouse_dot",
+            "Assets/textures/misc/cursor_1",
+            "Assets/textures/misc/tank_smokes",
+            "Assets/textures/misc/tank_smokes",
+            "Assets/textures/secret/special",
+            "Assets/textures/secret/special2",
+            
+            
+            /* Tanks Textures */
+            "Assets/textures/tank/wee/tank_commando",
+            "Assets/textures/tank/wee/tank_assassin",
+            "Assets/textures/tank/wee/tank_rocket",
+            "Assets/textures/tank/wee/tank_electro",
+            "Assets/textures/tank/wee/tank_explosive",
+            "Assets/textures/tank_shadow",
+            "Assets/textures/bullet/bullet",
+            "Assets/textures/bullet/flame",
+            "Assets/textures/bullet/smoketrail",
+            "Assets/textures/bullet/explosive_bullet",
+            "Assets/textures/misc/armor",
+            
+            "Assets/textures/check/check_blue",
+            "Assets/textures/check/check_red",
+            "Assets/textures/check/check_green",
+            "Assets/textures/check/check_yellow",
+            "Assets/textures/check/check_white",
+
+            "Assets/textures/tank_footprint",
+            "Assets/textures/tank_footprint_alt",
+
+            "Assets/textures/mine/mine_env",
+            "Assets/textures/mine/mine_shadow",
+            "Assets/textures/mine/explosion",
+
+            /* UI */
+            "Assets/textures/ui/bullet_ui",
+            "Assets/textures/WhitePixel",
+            "Assets/UIPanelBackground",
+            "Assets/textures/ui/ping/ping_tex",
+            "Assets/textures/ui/chatalert",
+            "Assets/textures/ui/chevron_border",
+            "Assets/textures/ui/chevron_inside",
+            "Assets/textures/misc/light_particle",
+            "Assets/textures/misc/tank_smokes",
+            "Assets/textures/misc/bot_hit",
+            "Assets/textures/ui/tank_background_billboard",
+            "Assets/textures/ui/playertank2d",
+            "Assets/textures/ui/banner",
+            "Assets/textures/ui/grades",
+            "Assets/textures/ui/scoreboard",
+            "Assets/textures/ui/tank2d",
+            "Assets/tanks_rebirth_logo",
+            "Assets/textures/ui/trophy",
+            "Assets/textures/ui/achievement/secret",
+
+        ];
+        
+        GameResources.MassPreloadAssets<Texture2D, TexturePreloadSettings>(
+            textures
+        , new TexturePreloadSettings{});
+
+        // Prefix with Content for compatibility reasons with old code.
+        // Done mostly dynamcially, because easier than hardcoding for 20 minutes each audio.
+        List<string> sounds = [];
+        
+        // ~~ Vanilla audio ~~
+        // sounds.AddRange(Directory.GetFiles("Content/Assets/music"));
+        sounds.AddRange(Directory.GetFiles("Content", "*.ogg", SearchOption.AllDirectories));
+
+        // ~~ Sound Effects ~~
+        // sounds.AddRange(Directory.GetFiles("Content/Assets/sounds", "*.ogg", SearchOption.AllDirectories));
+
+        GameResources.MassPreloadAssets<SoundEffect, TexturePreloadSettings>(
+            sounds.ToArray()
+            , default);
+    }
+
     protected override void LoadContent() {
+        PreloadContent();
         var s = Stopwatch.StartNew();
 
         MainThreadId = Environment.CurrentManagedThreadId;
@@ -284,22 +377,38 @@ public class TankGame : Game {
         SpectatorCamera = new(MathHelper.ToRadians(100), GraphicsDevice.Viewport.AspectRatio, 0.1f, 5000f);
         PerspectiveCamera = new(MathHelper.ToRadians(90), GraphicsDevice.Viewport.AspectRatio, 0.1f, 5000f);
 
-        if (!CompSpecs.Equals(default(ComputerSpecs))) {
-            var profiler = new SpecAnalysis(CompSpecs.GPU, CompSpecs.CPU, CompSpecs.RAM);
+        Task.Run(() => {
+            CompSpecs = ComputerSpecs.GetSpecs(out bool error);
 
-            profiler.Analyze(false, out var ramr, out var gpur, out var cpur);
+            if (error) {
+                ClientLog.Write(
+                    "Unable to load computer specs: Specified OS Architecture is not Windows.",
+                    LogType.Warn);
+            }
+            else {
+                ClientLog.Write($"CPU: {CompSpecs.CPU.Name} (Core Count: {CompSpecs.CPU.CoreCount})", LogType.Info);
+                ClientLog.Write($"GPU: {CompSpecs.GPU.Name} (Driver Version: {CompSpecs.GPU.DriverVersion} | VRAM: {MathF.Round(MemoryParser.FromGigabytes(CompSpecs.GPU.VRAM))} GB)", LogType.Info);
+                ClientLog.Write($"Physical Memory (RAM): {CompSpecs.RAM.Manufacturer} {MathF.Round(MemoryParser.FromGigabytes(CompSpecs.RAM.TotalPhysical))} GB {CompSpecs.RAM.Type}@{CompSpecs.RAM.ClockSpeed}Mhz", LogType.Info);
+            }
 
-            ChatSystem.SendMessage(ramr, Color.White);
-            ChatSystem.SendMessage(gpur, Color.White);
-            ChatSystem.SendMessage(cpur, Color.White);
+            if (!CompSpecs.Equals(default) && !error) {
+                var profiler = new SpecAnalysis(CompSpecs.GPU, CompSpecs.CPU, CompSpecs.RAM);
 
-            ChatSystem.SendMessage(profiler.ToString(), Color.Brown);
+                profiler.Analyze(false, out var ramr, out var gpur, out var cpur);
 
-            ClientLog.Write("Sucessfully analyzed hardware.", LogType.Info);
-        }
-        else {
-            ClientLog.Write("Failed to analyze hardware.", LogType.Warn);
-        }
+                ChatSystem.SendMessage(ramr, Color.White);
+                ChatSystem.SendMessage(gpur, Color.White);
+                ChatSystem.SendMessage(cpur, Color.White);
+
+                ChatSystem.SendMessage(profiler.ToString(), Color.Brown);
+
+                ClientLog.Write("Sucessfully analyzed hardware.", LogType.Info);
+            }
+            else {
+                ClientLog.Write("Failed to analyze hardware.", LogType.Warn);
+            }
+        });
+
         // I forget why this check is needed...
         ChatSystem.Initialize();
 
@@ -384,7 +493,8 @@ public class TankGame : Game {
         // Language.GenerateLocalizationTemplate("en_US.loc");
 
         Achievement.MysteryTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/achievement/secret");
-
+    
+        GameResources.EnsurePreloadedAssetsArePreloaded();
         GameHandler.SetupGraphics();
         GameUI.Initialize();
         MainMenu.InitializeUIGraphics();
@@ -426,28 +536,18 @@ public class TankGame : Game {
         s.Stop();
 
         // it isnt really an autoupdater tho.
-        AutoUpdater = new("https://github.com/RighteousRyan1/TanksRebirth", GameVersion);
+        Task.Run(() => {
+            AutoUpdater = new("https://github.com/RighteousRyan1/TanksRebirth", GameVersion);
 
-        if (AutoUpdater.IsOutdated) {
+            if (!AutoUpdater.IsOutdated) 
+                return;
+            
             //CommandGlobals.IsUpdatePending = true;
             ChatSystem.SendMessage($"Outdated game version detected (current={GameVersion}, recent={AutoUpdater.GetRecentVersion()}).", Color.Red);
             //ChatSystem.SendMessage("Type /update to update the game and automatically restart.", Color.Red);
             SoundPlayer.SoundError();
-        }
+        });
         PlaceSecrets();
-    }
-
-    public void DrawDebugMetrics() {
-        var information = new string[] {
-            $"PrimitiveCount: {Graphics.GraphicsDevice.Metrics.PrimitiveCount}",
-            $"Vx: {Graphics.GraphicsDevice.Metrics.VertexShaderCount}",
-            $"Px: {Graphics.GraphicsDevice.Metrics.PixelShaderCount}",
-            $"Draw calls: {Graphics.GraphicsDevice.Metrics.DrawCount}",
-            $"Sprites: {Graphics.GraphicsDevice.Metrics.SpriteCount}",
-            $"Textures: {Graphics.GraphicsDevice.Metrics.TextureCount}",
-            $"Targets: {Graphics.GraphicsDevice.Metrics.TargetCount}"
-        };
-        DebugManager.DrawDebugString(TextFont, SpriteRenderer, string.Join('\n', information), Vector2.Zero, -1);
     }
 
     private void HandleResizing(object sender, EventArgs e) {
@@ -497,7 +597,7 @@ public class TankGame : Game {
     #region Various Fields
 
     public const float DEFAULT_ORTHOGRAPHIC_ANGLE = 0.75f;
-    public static Vector2 POVRotationVector = new(0, DEFAULT_ORTHOGRAPHIC_ANGLE);
+    public static Vector2 OrthoRotationVector = new(0, DEFAULT_ORTHOGRAPHIC_ANGLE);
 
     public const float DEFAULT_ZOOM = 3.3f;
     public static float AddativeZoom = 1f;
@@ -518,7 +618,7 @@ public class TankGame : Game {
 
     public static Vector3 POVCameraPosition = new(0, 100, 0);
     public static float POVCameraRotation;
-    public static Vector2 MouseVelocity => MouseUtils.GetMouseVelocity(WindowUtils.WindowCenter);
+    public static Vector2 MouseVelocity;
 
     public static bool SecretCosmeticSetting;
     public static bool SpeedrunMode;
@@ -587,7 +687,10 @@ public class TankGame : Game {
         }
     }
 
+    private Vector2 _mOld;
     private void DoUpdate(GameTime gameTime) {
+        MouseUtils.MousePosition = new(InputUtils.CurrentMouseSnapshot.X, InputUtils.CurrentMouseSnapshot.Y);
+        MouseVelocity = MouseUtils.MousePosition - _mOld;
         //SpectatorCamera.FieldOfView = MathHelper.ToRadians(100);
         //SpectatorCamera.AspectRatio = GraphicsDevice.Viewport.AspectRatio;
         //PerspectiveCamera.FieldOfView = MathHelper.ToRadians(90);
@@ -653,7 +756,7 @@ public class TankGame : Game {
         DiscordRichPresence.Update();
 
         if (UpdateCount % 60 == 0 && DebugManager.DebuggingEnabled) {
-            _memBytes = (ulong)ProcessMemory;
+            MemoryUsageInBytes = (ulong)ProcessMemory;
         }
 
         LastGameTime = gameTime;
@@ -669,131 +772,168 @@ public class TankGame : Game {
         #endregion
 
         if (!IsCrashInfoVisible) {
-            if (!Difficulties.Types["POV"] || MainMenu.Active || LevelEditor.Active) {
-                if (transitionTimer > 0) {
-                    transitionTimer--;
-                    if (OverheadView) {
-                        POVRotationVector.Y = MathUtils.SoftStep(POVRotationVector.Y, MathHelper.PiOver2, 0.08f * DeltaTime);
-                        AddativeZoom = MathUtils.SoftStep(AddativeZoom, 0.6f, 0.08f * DeltaTime);
-                        CameraFocusOffset.Y = MathUtils.RoughStep(CameraFocusOffset.Y, 82f, 2f * DeltaTime);
-                    }
-                    else {
-                        POVRotationVector.Y = MathUtils.SoftStep(POVRotationVector.Y, DEFAULT_ORTHOGRAPHIC_ANGLE, 0.08f * DeltaTime);
-                        if (!LevelEditor.Active)
-                            AddativeZoom = MathUtils.SoftStep(AddativeZoom, 1f, 0.08f * DeltaTime);
-                        CameraFocusOffset.Y = MathUtils.RoughStep(CameraFocusOffset.Y, 0f, 2f * DeltaTime);
-                    }
-                }
-
-                if (!float.IsInfinity(DeltaTime))
-                    _spinValue += _gradualIncrease / 2 * DeltaTime;
-
-                if (MainMenu.Active) {
-                    if (IntermissionSystem.IsAwaitingNewMission) {
-                        // for some reason delta time can be 30??
-                        if (DeltaTime < 1.5f) {
-                            _gradualIncrease *= (0.1f * DeltaTime) + 1;
-                            _zoomAdd += _gradualIncrease;
-                            _storedZoom = _zoomAdd;
-                            Debug.WriteLine(_zoomAdd);
+            if (DebugManager.DebugLevel != DebugManager.Id.FreeCamTest && !DebugManager.persistFreecam) {
+                if (!Difficulties.Types["POV"] || MainMenu.Active || LevelEditor.Active) {
+                    if (transitionTimer > 0) {
+                        transitionTimer--;
+                        if (OverheadView) {
+                            OrthoRotationVector.Y = MathUtils.SoftStep(OrthoRotationVector.Y, MathHelper.PiOver2, 0.08f * DeltaTime);
+                            AddativeZoom = MathUtils.SoftStep(AddativeZoom, 0.6f, 0.08f * DeltaTime);
+                            CameraFocusOffset.Y = MathUtils.RoughStep(CameraFocusOffset.Y, 82f, 2f * DeltaTime);
+                        }
+                        else {
+                            OrthoRotationVector.Y = MathUtils.SoftStep(OrthoRotationVector.Y, DEFAULT_ORTHOGRAPHIC_ANGLE, 0.08f * DeltaTime);
+                            if (!LevelEditor.Active)
+                                AddativeZoom = MathUtils.SoftStep(AddativeZoom, 1f, 0.08f * DeltaTime);
+                            CameraFocusOffset.Y = MathUtils.RoughStep(CameraFocusOffset.Y, 0f, 2f * DeltaTime);
                         }
                     }
-                    else if (_zoomAdd > ADD_DEF) {
-                        _gradualIncrease *= (0.015f * DeltaTime) + 1;
-                        _zoomAdd -= _gradualIncrease;
+
+                    if (!float.IsInfinity(DeltaTime))
+                        _spinValue += _gradualIncrease / 2 * DeltaTime;
+
+                    if (MainMenu.Active) {
+                        if (IntermissionSystem.IsAwaitingNewMission) {
+                            // for some reason delta time can be 30??
+                            if (DeltaTime < 1.5f) {
+                                _gradualIncrease *= (0.1f * DeltaTime) + 1;
+                                _zoomAdd += _gradualIncrease;
+                                _storedZoom = _zoomAdd;
+                                //Debug.WriteLine(_zoomAdd);
+                            }
+                        }
+                        else if (_zoomAdd > ADD_DEF) {
+                            _gradualIncrease *= (0.015f * DeltaTime) + 1;
+                            _zoomAdd -= _gradualIncrease;
+                        }
+                        else {
+                            _zoomAdd = ADD_DEF;
+                            _gradualIncrease = GRAD_INC_DEF;
+                        }
                     }
-                    else {
+
+                    if (IntermissionSystem.BlackAlpha >= 1f) {
                         _zoomAdd = ADD_DEF;
                         _gradualIncrease = GRAD_INC_DEF;
                     }
+
+                    GameView = Matrix.CreateScale(DEFAULT_ZOOM * AddativeZoom * (MainMenu.Active ? _zoomAdd : 1)) *
+                        Matrix.CreateLookAt(new(0f, 0, 350f), Vector3.Zero, Vector3.Up) * // 0, 0, 350
+                        Matrix.CreateTranslation(CameraFocusOffset.X, -CameraFocusOffset.Y + 40, 0) *
+                        Matrix.CreateRotationY(OrthoRotationVector.X + (MainMenu.Active ? _spinValue : 0)) *
+                        Matrix.CreateRotationX(OrthoRotationVector.Y);
+                    GameProjection = Matrix.CreateOrthographic(1920, 1080, -2000, 5000);
+
+                    //Matrix.CreateTranslation(CameraFocusOffset.X, -CameraFocusOffset.Y, 0);
+                    OrthographicCamera.SetLookAt(new(0f, 0, 350f), Vector3.Zero, Vector3.Up);
+
                 }
+                else {
+                    if (GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()] is not null && !GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()].Dead) {
+                        SpectatorId = NetPlay.GetMyClientId();
+                        POVCameraPosition = GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()].Position.ExpandZ();
+                        POVCameraRotation = -GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()].TurretRotation;
+                    }
+                    else if (GameHandler.AllPlayerTanks[SpectatorId] is not null) {
 
-                if (IntermissionSystem.BlackAlpha >= 1f) {
-                    _zoomAdd = ADD_DEF;
-                    _gradualIncrease = GRAD_INC_DEF;
-                }
+                        if (InputUtils.KeyJustPressed(Keys.Left))
+                            SpectatorId = SpectateValidTank(SpectatorId, false);
+                        else if (InputUtils.KeyJustPressed(Keys.Right))
+                            SpectatorId = SpectateValidTank(SpectatorId, true);
 
-                GameView = Matrix.CreateScale(DEFAULT_ZOOM * AddativeZoom * (MainMenu.Active ? _zoomAdd : 1)) *
-                    Matrix.CreateLookAt(new(0f, 0, 350f), Vector3.Zero, Vector3.Up) * // 0, 0, 350
-                    Matrix.CreateTranslation(CameraFocusOffset.X, -CameraFocusOffset.Y + 40, 0) *
-                    Matrix.CreateRotationY(POVRotationVector.X + (MainMenu.Active ? _spinValue : 0)) *
-                    Matrix.CreateRotationX(POVRotationVector.Y);
-                GameProjection = Matrix.CreateOrthographic(1920, 1080, -2000, 5000);
-
-                //Matrix.CreateTranslation(CameraFocusOffset.X, -CameraFocusOffset.Y, 0);
-                OrthographicCamera.SetLookAt(new(0f, 0, 350f), Vector3.Zero, Vector3.Up);
-
-            }
-            else {
-                if (GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()] is not null && !GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()].Dead) {
-                    SpectatorId = NetPlay.GetMyClientId();
-                    POVCameraPosition = GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()].Position.ExpandZ();
-                    POVCameraRotation = -GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()].TurretRotation;
-                }
-                else if (GameHandler.AllPlayerTanks[SpectatorId] is not null) {
-
-                    if (InputUtils.KeyJustPressed(Keys.Left))
-                        SpectatorId = SpectateValidTank(SpectatorId, false);
-                    else if (InputUtils.KeyJustPressed(Keys.Right))
-                        SpectatorId = SpectateValidTank(SpectatorId, true);
-
-                    POVCameraPosition = GameHandler.AllPlayerTanks[SpectatorId].Position.ExpandZ();
-                    POVCameraRotation = -GameHandler.AllPlayerTanks[SpectatorId].TurretRotation;
-
-                    // free camera movement test
-
-                    /*var moveSpeed = 2f * DeltaTime;
-
-
-                    if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Up))
-                        ThirdPersonCameraPosition += GameView.Forward * moveSpeed;
-                    if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Down))
-                        ThirdPersonCameraPosition += GameView.Backward * moveSpeed;
-                    if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Left))
-                        ThirdPersonCameraPosition += GameView.Left * moveSpeed;
-                    if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Right))
-                        ThirdPersonCameraPosition += GameView.Right * moveSpeed;*/
-
-                    /*var rotationSpeed = 0.005f;
-
-                    if (MouseUtils.MousePosition != _mOld)
-                    {
-                        _rot.X += (MouseUtils.MousePosition - _mOld).X * rotationSpeed;
-                        _rot.Y += (MouseUtils.MousePosition - _mOld).Y * rotationSpeed;
-
-                        MathHelper.Clamp(_rot.Y, -MathHelper.PiOver2, MathHelper.PiOver2);
+                        POVCameraPosition = GameHandler.AllPlayerTanks[SpectatorId].Position.ExpandZ();
+                        POVCameraRotation = -GameHandler.AllPlayerTanks[SpectatorId].TurretRotation;
                     }
 
-                    _mOld = MouseUtils.MousePosition;
-                    GameView = Matrix.CreateLookAt(ThirdPersonCameraPosition + new Vector3(0, 20, 0),
-                        GameView.Forward, Vector3.Up) *
-                        Matrix.CreateScale(AddativeZoom) *
-                        Matrix.CreateRotationY(_rot.X) *
-                        Matrix.CreateRotationX(_rot.Y) *
-                        Matrix.CreateRotationZ(_rot.Z);*/
+
+                    // pov...
+
+                    if (IntermissionHandler.ThirdPersonTransitionAnimation != null && PlayerTank.ClientTank is not null) {
+                        IntermissionHandler.ThirdPersonTransitionAnimation.KeyFrames[1]
+                            = new(position2d: new Vector2(-PlayerTank.ClientTank.TurretRotation), position3d: PlayerTank.ClientTank.Position3D);
+                    }
+                    // TODO: this shit is ass.
+                    var povCameraRotationCurrent = IntermissionHandler.TankFunctionWait > 0 && IntermissionHandler.ThirdPersonTransitionAnimation != null ? 
+                        IntermissionHandler.ThirdPersonTransitionAnimation.CurrentPosition2D.X : POVCameraRotation;
+                    var povCameraPosCurrent = IntermissionHandler.TankFunctionWait > 0 && IntermissionHandler.ThirdPersonTransitionAnimation != null ? 
+                        IntermissionHandler.ThirdPersonTransitionAnimation.CurrentPosition3D : POVCameraPosition;
+
+                    GameView = Matrix.CreateLookAt(povCameraPosCurrent,
+                            POVCameraPosition + new Vector2(0, 20).RotatedByRadians(povCameraRotationCurrent).ExpandZ(),
+                            Vector3.Up) * Matrix.CreateScale(AddativeZoom) *
+                        Matrix.CreateTranslation(0, -20, 0);
+
+                    /*GameView = Matrix.CreateLookAt(POVCameraPosition,
+                            POVCameraPosition + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(POVCameraRotation).ExpandZ(),
+                            Vector3.Up) * Matrix.CreateScale(AddativeZoom) *
+                        Matrix.CreateRotationX(POVRotationVector.Y - MathHelper.PiOver4) *
+                        Matrix.CreateRotationY(POVRotationVector.X) *
+                        Matrix.CreateTranslation(0, -20, 0);*/
+
+                    GameProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000);
                 }
-
-                GameView = Matrix.CreateLookAt(POVCameraPosition,
-                        POVCameraPosition + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(POVCameraRotation).ExpandZ(),
-                        Vector3.Up) * Matrix.CreateScale(AddativeZoom) *
-                    Matrix.CreateRotationX(POVRotationVector.Y - MathHelper.PiOver4) *
-                    Matrix.CreateRotationY(POVRotationVector.X) *
-                    Matrix.CreateTranslation(0, -20, 0);
-
-                GameProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000);
             }
-            if (!GameUI.Paused && !MainMenu.Active && DebugManager.DebuggingEnabled) {
-                if (InputUtils.MouseRight)
-                    POVRotationVector += MouseVelocity / 500;
+            else if (!GameUI.Paused && !MainMenu.Active && DebugManager.DebuggingEnabled) {
+                if (DebugManager.DebugLevel == DebugManager.Id.FreeCamTest || DebugManager.persistFreecam) {
 
-                if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Add))
-                    AddativeZoom += 0.01f;
-                if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Subtract))
-                    AddativeZoom -= 0.01f;
+                    if (InputUtils.AreKeysJustPressed(Keys.Z, Keys.X)) {
+                        DebugManager.persistFreecam = !DebugManager.persistFreecam;
+                    }
+                    // free camera movement test
 
-                if (InputUtils.MouseMiddle)
-                    CameraFocusOffset += MouseVelocity;
-                MouseUtils.GetMouseVelocity(WindowUtils.WindowCenter);
+                    var moveSpeed = 1f * DeltaTime;
+
+                    var keysprint = LevelEditor.Active ? Keys.LeftShift : Keys.RightShift;
+
+                    if (InputUtils.CurrentKeySnapshot.IsKeyDown(keysprint))
+                        moveSpeed *= 2;
+
+                    var rotationSpeed = 0.01f;
+
+                    RebirthFreecam.NearViewDistance = 0.1f;
+                    RebirthFreecam.FarViewDistance = 10000f;
+                    RebirthFreecam.MinPitch = -180;
+                    RebirthFreecam.MaxPitch = 180;
+
+                    var keyf = LevelEditor.Active ? Keys.W : Keys.Up;
+                    var keyb = LevelEditor.Active ? Keys.S : Keys.Down;
+                    var keyl = LevelEditor.Active ? Keys.A : Keys.Left;
+                    var keyr = LevelEditor.Active ? Keys.D : Keys.Right;
+
+                    if (InputUtils.MouseRight)
+                        RebirthFreecam.Rotation -= new Vector3(0, MouseVelocity.Y * rotationSpeed, MouseVelocity.X * rotationSpeed);
+                    if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Add))
+                        RebirthFreecam.FieldOfView += 0.5f * DeltaTime;
+                    if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Subtract))
+                        RebirthFreecam.FieldOfView -= 0.5f * DeltaTime;
+                    if (InputUtils.MouseMiddle)
+                        RebirthFreecam.FieldOfView = 90;
+                    if (InputUtils.CurrentKeySnapshot.IsKeyDown(keyf))
+                        RebirthFreecam.Move(RebirthFreecam.World.Forward * moveSpeed);
+                    if (InputUtils.CurrentKeySnapshot.IsKeyDown(keyb))
+                        RebirthFreecam.Move(RebirthFreecam.World.Backward * moveSpeed);
+                    if (InputUtils.CurrentKeySnapshot.IsKeyDown(keyl))
+                        RebirthFreecam.Move(RebirthFreecam.World.Left * moveSpeed);
+                    if (InputUtils.CurrentKeySnapshot.IsKeyDown(keyr))
+                        RebirthFreecam.Move(RebirthFreecam.World.Right * moveSpeed);
+
+                    GameView = RebirthFreecam.View;
+                    GameProjection = RebirthFreecam.Projection;
+                }
+            }
+            if (DebugManager.DebuggingEnabled) {
+                if (DebugManager.DebugLevel != DebugManager.Id.FreeCamTest) {
+                    if (InputUtils.MouseRight)
+                        OrthoRotationVector += MouseVelocity / 500f;
+
+                    if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Add))
+                        AddativeZoom += 0.01f;
+                    if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Subtract))
+                        AddativeZoom -= 0.01f;
+
+                    if (InputUtils.MouseMiddle)
+                        CameraFocusOffset += MouseVelocity;
+                }
             }
         }
 
@@ -814,6 +954,8 @@ public class TankGame : Game {
         LogicFPS = Math.Round(1f / gameTime.ElapsedGameTime.TotalSeconds);
 
         _wasActive = IsActive;
+        //Console.WriteLine($"{MouseUtils.MousePosition} - {_mOld}");
+        _mOld = MouseUtils.MousePosition;
     }
 
     private void DoUpdate2(GameTime gameTime) {
@@ -931,7 +1073,8 @@ public class TankGame : Game {
     public static bool SuperSecretDevOption;
 
     private static DepthStencilState _stencilState = new() { };
-
+    
+    // FIXME: this method is a clusterfuck
     protected override void Draw(GameTime gameTime) {
         if (gameTarget == null || gameTarget.IsDisposed || gameTarget.Size() != WindowUtils.WindowBounds) {
             gameTarget?.Dispose();
@@ -965,57 +1108,22 @@ public class TankGame : Game {
 
         SpriteRenderer.Begin(effect: vfx);
         SpriteRenderer.Draw(gameTarget, Vector2.Zero, null, Color.White, 0f, Vector2.Zero, Vector2.One, default, 0f);
-
         SpriteRenderer.End();
+
+        // holy balls this sucks.
+        GraphicsDevice.DepthStencilState = _stencilState;
+            MainMenu.RenderModels();
 
         SpriteRenderer.Begin();
         if (MainMenu.Active)
             MainMenu.Render();
         // i really wish i didn't have to draw this here.
         VanillaAchievementPopupHandler.DrawPopup(SpriteRenderer);
-
         #region Debug
-
         if (Debugger.IsAttached)
             SpriteRenderer.DrawString(TextFont, "DEBUGGER ATTACHED", new Vector2(10, 50), Color.Red, new Vector2(0.8f));
-
-        if (DebugManager.DebuggingEnabled) {
-            SpriteRenderer.DrawString(TextFont,
-                "Debug Level: " + DebugManager.CurDebugLabel,
-                WindowUtils.WindowBottom - new Vector2(0, 15),
-                Color.White,
-                new Vector2(0.6f),
-                origin: TextFont.MeasureString("Debug Level: " + DebugManager.CurDebugLabel) / 2);
-            DebugManager.DrawDebugString(SpriteRenderer,
-                $"Garbage Collection: {MemoryParser.FromMegabytes(GCMemory):0} MB" +
-                $"\nPhysical Memory: {CompSpecs.RAM}" +
-                $"\nGPU: {CompSpecs.GPU}" +
-                $"\nCPU: {CompSpecs.CPU}" +
-                $"\nProcess Memory: {MemoryParser.FromMegabytes(_memBytes):0} MB / Total Memory: {MemoryParser.FromMegabytes(CompSpecs.RAM.TotalPhysical):0}MB",
-                new(8, WindowUtils.WindowHeight * 0.15f));
-
-            DebugManager.DrawDebugString(SpriteRenderer, $"Tank Kill Counts:", new(8, WindowUtils.WindowHeight * 0.05f), 2);
-
-            for (int i = 0; i < PlayerTank.TankKills.Count; i++) {
-                var tier = PlayerTank.TankKills.ElementAt(i).Key;
-                var count = PlayerTank.TankKills.ElementAt(i).Value;
-
-                DebugManager.DrawDebugString(SpriteRenderer, $"{tier}: {count}", new(8, WindowUtils.WindowHeight * 0.05f + (14f * (i + 1))), 2);
-            }
-            DebugManager.DrawDebugString(SpriteRenderer,
-                $"Lives / StartingLives: {PlayerTank.Lives[Client.IsConnected() ? NetPlay.CurrentClient.Id : 0]} / {PlayerTank.StartingLives}" +
-                $"\nKillCount: {PlayerTank.KillCount}" +
-                $"\n\nSavable Game Data:" +
-                $"\nTotal / Bullet / Mine / Bounce Kills: {GameData.TotalKills} / {GameData.BulletKills} / {GameData.MineKills} / {GameData.BounceKills}" +
-                $"\nTotal Deaths: {GameData.Deaths}" +
-                $"\nTotal Suicides: {GameData.Suicides}" +
-                $"\nMissions Completed: {GameData.MissionsCompleted}" +
-                $"\nExp Level / DecayMultiplier: {GameData.ExpLevel} / {GameData.UniversalExpMultiplier}",
-                new(8, WindowUtils.WindowHeight * 0.4f),
-                2);
-        }
-
-
+        DebugManager.DrawDebug(SpriteRenderer);
+        DebugManager.DrawDebugMetrics();
         if (SpeedrunMode && Speedrun.CurrentSpeedrun is not null) {
             var num = GameProperties.LoadedCampaign.CurrentMissionId switch {
                 > 2 => GameProperties.LoadedCampaign.CurrentMissionId - 2,
@@ -1033,69 +1141,6 @@ public class TankGame : Game {
                 SpriteRenderer.DrawString(TextFontLarge, $"{time.Key}: {time.Value.Item2}", new Vector2(10, 20 + ((i - num) * 15)), Color.White, new Vector2(0.15f), 0f, Vector2.Zero);
             }
         }
-
-        if (DebugManager.DebuggingEnabled) {
-            for (int i = 0; i < PlayerTank.TankKills.Count; i++) {
-                //var tier = GameData.KillCountsTiers[i];
-                //var count = GameData.KillCountsCount[i];
-                var tier = PlayerTank.TankKills.ElementAt(i).Key;
-                var count = PlayerTank.TankKills.ElementAt(i).Value;
-
-                DebugManager.DrawDebugString(SpriteRenderer, $"{tier}: {count}", new(WindowUtils.WindowWidth * 0.9f, 8 + (14f * (i + 1))), 2);
-            }
-
-            foreach (var body in Tank.CollisionsWorld.BodyList) {
-                DebugManager.DrawDebugString(SpriteRenderer,
-                    $"BODY",
-                    MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(body.Position.X * Tank.UNITS_PER_METER, 0, body.Position.Y * Tank.UNITS_PER_METER), GameView, GameProjection),
-                    centered: true);
-            }
-
-            for (int i = 0; i < VanillaAchievements.Repository.GetAchievements().Count; i++) {
-                var achievement = VanillaAchievements.Repository.GetAchievements()[i];
-
-                DebugManager.DrawDebugString(SpriteRenderer,
-                    $"{achievement.Name}: {(achievement.IsComplete ? "Complete" : "Incomplete")}",
-                    new Vector2(8, 24 + (i * 20)),
-                    level: DebugManager.Id.AchievementData,
-                    centered: false);
-            }
-        }
-
-
-        #region TankInfo
-
-        if (DebugManager.DebuggingEnabled) {
-            DebugManager.DrawDebugString(SpriteRenderer, "Spawn Tank With Info:", WindowUtils.WindowTop + new Vector2(0, 8), 3, centered: true);
-            DebugManager.DrawDebugString(SpriteRenderer, $"Tier: {TankID.Collection.GetKey(DebugManager.tankToSpawnType)}", WindowUtils.WindowTop + new Vector2(0, 24), 3, centered: true);
-            DebugManager.DrawDebugString(SpriteRenderer, $"Team: {TeamID.Collection.GetKey(DebugManager.tankToSpawnTeam)}", WindowUtils.WindowTop + new Vector2(0, 40), 3, centered: true);
-            DebugManager.DrawDebugString(SpriteRenderer, $"CubeStack: {DebugManager.blockHeight} | CubeType: {BlockID.Collection.GetKey(DebugManager.blockType)}", WindowUtils.WindowBottom - new Vector2(0, 20), 3, centered: true);
-
-            DebugManager.DrawDebugString(SpriteRenderer, $"HighestTier: {AIManager.GetHighestTierActive()}", new(10, WindowUtils.WindowHeight * 0.26f), 1);
-            // DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"CurSong: {(Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f) != null ? Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f).Name : "N/A")}", new(10, WindowUtils.WindowHeight - 100), 1);
-
-            for (int i = 0; i < TankID.Collection.Count; i++)
-                DebugManager.DrawDebugString(SpriteRenderer, $"{TankID.Collection.GetKey(i)}: {AIManager.GetTankCountOfType(i)}", new(10, WindowUtils.WindowHeight * 0.3f + (i * 20)), 1);
-        }
-
-        DebugManager.tankToSpawnType = MathHelper.Clamp(DebugManager.tankToSpawnType, 2, TankID.Collection.Count - 1);
-        DebugManager.tankToSpawnTeam = MathHelper.Clamp(DebugManager.tankToSpawnTeam, 0, TeamID.Collection.Count - 1);
-
-        #endregion
-
-        if (DebugManager.DebuggingEnabled) {
-            DebugManager.DrawDebugString(SpriteRenderer, $"Logic Time: {LogicTime.TotalMilliseconds:0.00}ms" +
-                                                       $"\nLogic FPS: {LogicFPS}" +
-                                                       $"\n\nRender Time: {RenderTime.TotalMilliseconds:0.00}ms" +
-                                                       $"\nRender FPS: {RenderFPS}" +
-                                                       $"\nKeys Q + W: Localhost Connect for Multiplayer Debug" +
-                                                       $"\nKeys U + I: Unload All Mods" +
-                                                       $"\nKeys O + P: Reload All Mods" +
-                                                       $"\nKeys J + K: Resynchronize Randoms", new(10, 500));
-
-            DebugManager.DrawDebugString(SpriteRenderer, $"Current Mission: {GameProperties.LoadedCampaign.CurrentMission.Name}\nCurrent Campaign: {GameProperties.LoadedCampaign.MetaData.Name}", WindowUtils.WindowBottomLeft - new Vector2(-4, 60), 3, centered: false);
-        }
-
         #endregion
 
         SpriteRenderer.End();
@@ -1105,9 +1150,9 @@ public class TankGame : Game {
         SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: DefaultRasterizer);
         if (LevelEditor.Active)
             LevelEditor.Render();
-        GameHandler.RenderUI();
 
         IntermissionSystem.Draw(SpriteRenderer);
+        GameHandler.RenderUI();
         if (CampaignCompleteUI.IsViewingResults)
             CampaignCompleteUI.Render();
 
@@ -1117,8 +1162,6 @@ public class TankGame : Game {
         SpriteRenderer.End();
 
         SpriteRenderer.Begin(blendState: BlendState.AlphaBlend, effect: GameShaders.MouseShader, rasterizerState: DefaultRasterizer);
-
-        DrawDebugMetrics();
 
         RebirthMouse.DrawMouse();
 

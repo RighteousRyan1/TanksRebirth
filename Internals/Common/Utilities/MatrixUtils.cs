@@ -15,6 +15,11 @@ public static class MatrixUtils
 
         var proj = viewport.Project(position, projection, view, world);
 
+        // means the projected position is off screen.
+        if (proj.Z > 1) {
+            proj.Y += 10000;
+        }
+        // if i replace proj.Y with proj.Z it could be an indicator something is offscreen...?
         return new(proj.X, proj.Y);
     }
     public static Vector3 ConvertScreenToWorld(Vector3 position, Matrix world, Matrix view, Matrix projection)

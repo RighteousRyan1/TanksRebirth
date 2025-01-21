@@ -12,6 +12,9 @@ namespace TanksRebirth.Internals.Common.Utilities;
 
 public static class MathUtils
 {
+    public static float[] ToFloatArray(this Vector3 v) => [v.X, v.Y, v.Z];
+    /// <summary>Turns a 3-element array into a Vector3, must be ordered [x, y, z]</summary>
+    public static Vector3 ToVector3(this float[] f) => new(f[0], f[1], f[2]);
     public static Vector2 DirectionOf(this Vector2 vec, Vector2 other, bool from = false) => from switch {
             true => vec - other,
             _ => other - vec,
@@ -77,6 +80,11 @@ public static class MathUtils
         returnValue = (value - min) / (max - min) * 2;
         return MathHelper.Clamp(returnValue, 0f, 1f);
     }
+    public static float CreateGradientCapped(float value, float min, float max) {
+        if (value > ((min + max) / 2))
+            return 1;
+        return CreateGradientValue(value, min, max);
+    }
     public static float InverseLerp(float begin, float end, float value, bool clamped = false)
     {
         if (clamped)
@@ -98,7 +106,7 @@ public static class MathUtils
         }
         return (value - begin) / (end - begin);
     }
-    public static float ModifiedInverseLerp(float begin, float end, float value, bool clamped = false) => InverseLerp(begin, end, value, clamped) * 2 - 1;
+    public static float ModifiedInverseLerp(float begin, float end, float value, bool clamped = false) => InverseLerp(begin, end, value, clamped) * 2 - 0.5f;
     public static float AngleLerp(this float curAngle, float targetAngle, float amount)
     {
         float angle;

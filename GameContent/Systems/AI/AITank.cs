@@ -507,7 +507,7 @@ public partial class AITank : Tank
                 pathRicochetCount++;
                 resetIterations();
             }
-            else if (pathPos.Y < MapRenderer.MIN_Y || pathPos.Y > MapRenderer.MAX_Y) {
+            else if (pathPos.Y < MapRenderer.MIN_Z || pathPos.Y > MapRenderer.MAX_Z) {
                 ricoPoints.Add(pathPos);
                 pathDir.Y *= -1;
                 pathRicochetCount++;
@@ -622,7 +622,7 @@ public partial class AITank : Tank
                 hasCollided = true;
                 list.Add(pathPos);
             }
-            if (pathPos.Y < MapRenderer.MIN_Y || pathPos.Y > MapRenderer.MAX_Y) {
+            if (pathPos.Y < MapRenderer.MIN_Z || pathPos.Y > MapRenderer.MAX_Z) {
                 pathDir.Y *= -1;
                 hasCollided = true;
                 list.Add(pathPos);
@@ -763,8 +763,6 @@ public partial class AITank : Tank
 
     public float TurretRotationMultiplier = 1f;
 
-    private bool _oldPathBlocked;
-    private float _pathHitCount;
     public bool AutoEnactAIBehavior = true;
 
     public static int TankPathCheckSize = 3;
@@ -936,19 +934,6 @@ public partial class AITank : Tank
                             TargetTankRotation = refAngle;
                         }
                     }
-                    // FIXME: experimental.
-                    if (IsPathBlocked)
-                        _pathHitCount += TankGame.DeltaTime;
-                    else
-                        _pathHitCount = 0;
-
-                    // if we're getting stuck in a corner, fucking evacuate
-                    if (_pathHitCount >= 60) {
-                        TargetTankRotation += MathHelper.Pi;
-                        _pathHitCount = 0;
-                    }
-
-                    _oldPathBlocked = IsPathBlocked;
 
                     // TODO: i literally do not understand this
                 }
@@ -1253,7 +1238,7 @@ public partial class AITank : Tank
                 DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"col{i}", MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0),
                     Matrix.CreateTranslation(tnkCol2[i].X, 0, tnkCol2[i].Y), View, Projection), 1, centered: true);
             }
-            DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"{poo.Count} tank(s) spotted | pathC: {_pathHitCount % PathHitMax} / 10", MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), World, View, Projection), 1, centered: true);
+            DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"{poo.Count} tank(s) spotted", MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), World, View, Projection), 1, centered: true);
 
         }
         if (DebugManager.DebugLevel == 6 && !Properties.Stationary) {

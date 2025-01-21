@@ -12,6 +12,7 @@ public static class WindowUtils
     public static Vector2 RenderResolution => new(1920, 1080);
     public static Vector2 ToResolution(this Vector2 input) => input * (WindowBounds / RenderResolution);
     public static Vector2 ToResolution(this float input) => input * (WindowBounds / RenderResolution);
+    public static float ToResolutionF(this float input) => input * (WindowBounds / RenderResolution).Length();
     public static Rectangle ToResolution(this Rectangle input) => new((int)(input.X * (WindowBounds.X / 1920)), (int)(input.Y * WindowBounds.Y / 1080), (int)(input.Width * (WindowBounds.X / 1920)), (int)(input.Height * WindowBounds.Y / 1080));
     public static float ToResolutionX(this float input) => ToResolution(input).X;
     public static float ToResolutionY(this float input) => ToResolution(input).Y;

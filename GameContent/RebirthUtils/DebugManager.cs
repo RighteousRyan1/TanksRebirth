@@ -14,16 +14,25 @@ using TanksRebirth.GameContent.UI;
 using TanksRebirth.Net;
 using TanksRebirth.Internals.Common;
 using System.Collections.Generic;
+using System.Linq;
+using System;
+using TanksRebirth.Internals.Common.Framework;
+using TanksRebirth.IO;
+using TanksRebirth.Achievements;
 
 namespace TanksRebirth.GameContent.RebirthUtils;
 
 public static class DebugManager {
+    public static bool IsFreecamEnabled => persistFreecam || DebugLevel == Id.FreeCamTest;
+    public static bool persistFreecam;
     public static int blockType = 0;
     public static int blockHeight = 1;
     public static int tankToSpawnType;
     public static int tankToSpawnTeam;
 
     public readonly struct Id {
+        public const int FreeCamTest = -3;
+        public const int AirplaneTest = -2;
         public const int SceneMetrics = -1;
         public const int General = 0;
         public const int EntityData = 1;
@@ -33,18 +42,13 @@ public static class DebugManager {
         public const int AchievementData = 5;
         public const int NavData = 6;
     }
-    public static string CurDebugLabel {
-        get {
-            if (DebugLevel < Id.SceneMetrics || DebugLevel > Id.NavData)
-                return $"Unknown - {DebugLevel}";
-            else
-                return DebuggingNames[DebugLevel];
-        }
-    }
+    public static string CurDebugLabel => !DebuggingNames.TryGetValue(DebugLevel, out string? value) ? $"Unknown - {DebugLevel}" : value;
     public static bool DebuggingEnabled { get; set; }
     public static int DebugLevel { get; set; }
 
     private static readonly Dictionary<int, string> DebuggingNames = new() {
+        [Id.FreeCamTest] = "freecam",
+        [Id.AirplaneTest] = "planetest",
         [Id.SceneMetrics] = "metrics",
         [Id.General] = "gen", // general
         [Id.EntityData] = "entdat", // entity data
@@ -239,9 +243,9 @@ public static class DebugManager {
         if (!DebuggingEnabled)
             return; // won't update debug if debugging is not currently enabled.
 
-        if (InputUtils.KeyJustPressed(Keys.Right))
+        if (InputUtils.KeyJustPressed(Keys.Multiply))
             DebugLevel++;
-        if (InputUtils.KeyJustPressed(Keys.Left))
+        if (InputUtils.KeyJustPressed(Keys.Divide))
             DebugLevel--;
         if (!MainMenu.Active) {
             if (InputUtils.KeyJustPressed(Keys.Z))
@@ -288,6 +292,87 @@ public static class DebugManager {
         }
         blockHeight = MathHelper.Clamp(blockHeight, 1, 7);
         blockType = MathHelper.Clamp(blockType, 0, 3);
+    }
+    public static void DrawDebug(SpriteBatch SpriteRenderer) {
+        if (!DebuggingEnabled) return;
+        SpriteRenderer.DrawString(TankGame.TextFont,
+                "Debug Level: " + DebugManager.CurDebugLabel,
+                WindowUtils.WindowBottom - new Vector2(0, 15),
+                Color.White,
+                new Vector2(0.6f),
+                origin: TankGame.TextFont.MeasureString("Debug Level: " + CurDebugLabel) / 2);
+        DrawDebugString(SpriteRenderer,
+            $"Garbage Collection: {MemoryParser.FromMegabytes(TankGame.GCMemory):0} MB" +
+            $"\nPhysical Memory: {TankGame.CompSpecs.RAM}" +
+            $"\nGPU: {TankGame.CompSpecs.GPU}" +
+            $"\nCPU: {TankGame.CompSpecs.CPU}" +
+            $"\nProcess Memory: {MemoryParser.FromMegabytes(TankGame.MemoryUsageInBytes):0} MB / Total Memory: {MemoryParser.FromMegabytes(TankGame.CompSpecs.RAM.TotalPhysical):0}MB",
+            new(8, WindowUtils.WindowHeight * 0.15f));
+
+        DrawDebugString(SpriteRenderer, $"Tank Kill Counts:", new(8, WindowUtils.WindowHeight * 0.05f), 2);
+
+        for (int i = 0; i < PlayerTank.TankKills.Count; i++) {
+            var tier = PlayerTank.TankKills.ElementAt(i).Key;
+            var count = PlayerTank.TankKills.ElementAt(i).Value;
+
+            DrawDebugString(SpriteRenderer, $"{tier}: {count}", new(8, WindowUtils.WindowHeight * 0.05f + (14f * (i + 1))), 2);
+        }
+        DrawDebugString(SpriteRenderer,
+            $"Lives / StartingLives: {PlayerTank.Lives[Client.IsConnected() ? NetPlay.GetMyClientId() : 0]} / {PlayerTank.StartingLives}" +
+            $"\nKillCount: {PlayerTank.KillCount}" +
+            $"\n\nSavable Game Data:" +
+            $"\nTotal / Bullet / Mine / Bounce Kills: {TankGame.GameData.TotalKills} / {TankGame.GameData.BulletKills} / {TankGame.GameData.MineKills} / {TankGame.GameData.BounceKills}" +
+            $"\nTotal Deaths: {TankGame.GameData.Deaths}" +
+            $"\nTotal Suicides: {TankGame.GameData.Suicides}" +
+            $"\nMissions Completed: {TankGame.GameData.MissionsCompleted}" +
+            $"\nExp Level / Multiplier: {TankGame.GameData.ExpLevel} / {GameData.UniversalExpMultiplier}",
+            new(8, WindowUtils.WindowHeight * 0.4f),
+            2);
+        for (int i = 0; i < PlayerTank.TankKills.Count; i++) {
+            //var tier = GameData.KillCountsTiers[i];
+            //var count = GameData.KillCountsCount[i];
+            var tier = PlayerTank.TankKills.ElementAt(i).Key;
+            var count = PlayerTank.TankKills.ElementAt(i).Value;
+
+            DrawDebugString(SpriteRenderer, $"{tier}: {count}", new(WindowUtils.WindowWidth * 0.9f, 8 + (14f * (i + 1))), 2);
+        }
+
+        foreach (var body in Tank.CollisionsWorld.BodyList) {
+            DrawDebugString(SpriteRenderer,
+                $"BODY",
+                MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(body.Position.X * Tank.UNITS_PER_METER, 0, body.Position.Y * Tank.UNITS_PER_METER), TankGame.GameView, TankGame.GameProjection),
+                centered: true);
+        }
+
+        for (int i = 0; i < VanillaAchievements.Repository.GetAchievements().Count; i++) {
+            var achievement = VanillaAchievements.Repository.GetAchievements()[i];
+
+            DrawDebugString(SpriteRenderer,
+                $"{achievement.Name}: {(achievement.IsComplete ? "Complete" : "Incomplete")}",
+                new Vector2(8, 24 + (i * 20)),
+                level: Id.AchievementData,
+                centered: false);
+        }
+        DrawDebugString(SpriteRenderer, $"Position: {TankGame.POVCameraPosition}" +
+            $"\nRotation: {TankGame.POVCameraRotation}" +
+            $"\nFOV: {TankGame.RebirthFreecam.FieldOfView}°" +
+            $"\nForward: {TankGame.GameView.Forward}" +
+            $"\nBackward: {TankGame.GameView.Backward}" +
+            $"\nLeft: {TankGame.GameView.Left}" +
+            $"\nRight: {TankGame.GameView.Right}" +
+            $"\n\nToggle Persist Freecam: Z + X (Currently {(persistFreecam ? "enabled" : "disabled")})", new Vector2(10, 80), Id.FreeCamTest);
+    }
+    public static void DrawDebugMetrics() {
+        var information = new string[] {
+            $"PrimitiveCount: {TankGame.Instance.Graphics.GraphicsDevice.Metrics.PrimitiveCount}",
+            $"Vx: {TankGame.Instance.Graphics.GraphicsDevice.Metrics.VertexShaderCount}",
+            $"Px: {TankGame.Instance.Graphics.GraphicsDevice.Metrics.PixelShaderCount}",
+            $"Draw calls: {TankGame.Instance.Graphics.GraphicsDevice.Metrics.DrawCount}",
+            $"Sprites: {TankGame.Instance.Graphics.GraphicsDevice.Metrics.SpriteCount}",
+            $"Textures: {TankGame.Instance.Graphics.GraphicsDevice.Metrics.TextureCount}",
+            $"Targets: {TankGame.Instance.Graphics.GraphicsDevice.Metrics.TargetCount}"
+        };
+        DrawDebugString(TankGame.TextFont, TankGame.SpriteRenderer, string.Join('\n', information), Vector2.Zero, -1);
     }
     public static void SpawnCrateAtMouse() {
         var pos = MatrixUtils.GetWorldPosition(MouseUtils.MousePosition);
