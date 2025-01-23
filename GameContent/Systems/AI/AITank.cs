@@ -1003,7 +1003,7 @@ public partial class AITank : Tank {
         return target;
     }
     public Tank? TryOverrideTarget() {
-        Tank? target = null;
+        Tank? target = TargetTank;
         if (GameHandler.AllPlayerTanks.Any(x => x is not null && x.Team == Team)) {
             foreach (var ping in IngamePing.AllIngamePings) {
                 if (ping is null) break;
