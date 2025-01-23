@@ -65,7 +65,7 @@ public class PlayerTank : Tank
     public static int StartingLives = 3;
     // public static Dictionary<PlayerType, Dictionary<TankTier, int>> TanksKillDict = new(); // this campaign only!
     public static Dictionary<int, int> TankKills = []; // this campaign only!
-    public struct DeterministicPlayerStats
+    public struct CampaignStats
     {
         public int ShellsShotThisCampaign;
         public int ShellHitsThisCampaign;
@@ -73,7 +73,7 @@ public class PlayerTank : Tank
         public int MineHitsThisCampaign;
         public int SuicidesThisCampaign; // self-damage this campaign?
     }
-    public static DeterministicPlayerStats PlayerStatistics;
+    public static CampaignStats PlayerStatistics;
     public static bool _drawShotPath;
     public static int KillCount = 0;
     public int PlayerId { get; }
@@ -96,6 +96,9 @@ public class PlayerTank : Tank
     public Vector2 oldPosition;
 
     private bool _isPlayerModel;
+
+    // 46 if using keyboard, 10 if using a controller
+    //private float _maxTurnInputBased;
     #endregion
     public void SwapTankTexture(Texture2D texture) => _tankTexture = texture;
     public PlayerTank(int playerType, bool isPlayerModel = true, int copyTier = TankID.None) {
@@ -165,6 +168,7 @@ public class PlayerTank : Tank
         properties.Acceleration = 0.3f;
         properties.Deceleration = 0.6f;
         properties.TurningSpeed = 0.1f;
+        // this changes depending on input (or should it?)
         properties.MaximalTurn = MathHelper.ToRadians(10); // normally it's 10 degrees, but we want to make it easier for keyboard players.
 
         Properties.ShootPitch = 0.1f * PlayerType;
@@ -221,8 +225,6 @@ public class PlayerTank : Tank
         }
 
         if (IsIngame) {
-            //if (Client.IsConnected())
-            //ChatSystem.SendMessage($"PlayerId: {PlayerId} | ClientId: {NetPlay.CurrentClient.Id}", Color.White);
             if (NetPlay.IsClientMatched(PlayerId) && !IntermissionSystem.IsAwaitingNewMission) {
                 if (!Difficulties.Types["POV"] || LevelEditor.Active || MainMenu.Active) {
                     Vector3 mouseWorldPos = MatrixUtils.GetWorldPosition(MouseUtils.MousePosition, -11f);
@@ -232,14 +234,17 @@ public class PlayerTank : Tank
                         TurretRotation = TankRotation;
                 }
                 else if (!GameUI.Paused) {
-                    Mouse.SetPosition(InputUtils.CurrentMouseSnapshot.X, WindowUtils.WindowHeight / 2);
-                    //Mouse.SetPosition(Input.CurrentMouseSnapshot.X, WindowUtils.WindowHeight / 2);
-                    if (InputUtils.CurrentMouseSnapshot.X >= WindowUtils.WindowWidth)
-                        Mouse.SetPosition(1, InputUtils.CurrentMouseSnapshot.Y);
-                    if (InputUtils.CurrentMouseSnapshot.X <= 0)
-                        Mouse.SetPosition(WindowUtils.WindowWidth - 1, WindowUtils.WindowHeight / 2);
-                    //Mouse.SetPosition((int)GameUtils.WindowCenter.X, (int)GameUtils.WindowCenter.Y);
-                    TurretRotation += -TankGame.MouseVelocity.X / (312.ToResolutionX()); // terry evanswood
+
+                    if (DebugManager.IsFreecamEnabled && InputUtils.MouseRight) { } else {
+                        Mouse.SetPosition(InputUtils.CurrentMouseSnapshot.X, WindowUtils.WindowHeight / 2);
+                        //Mouse.SetPosition(Input.CurrentMouseSnapshot.X, WindowUtils.WindowHeight / 2);
+                        if (InputUtils.CurrentMouseSnapshot.X >= WindowUtils.WindowWidth)
+                            Mouse.SetPosition(1, InputUtils.CurrentMouseSnapshot.Y);
+                        if (InputUtils.CurrentMouseSnapshot.X <= 0)
+                            Mouse.SetPosition(WindowUtils.WindowWidth - 1, WindowUtils.WindowHeight / 2);
+                        //Mouse.SetPosition((int)GameUtils.WindowCenter.X, (int)GameUtils.WindowCenter.Y);
+                        TurretRotation += -TankGame.MouseVelocity.X / (312.ToResolutionX()); // terry evanswood
+                    }
                 }
             }
 
@@ -249,8 +254,8 @@ public class PlayerTank : Tank
                         if (NetPlay.IsClientMatched(PlayerId)) {
                             if (InputUtils.CurrentGamePadSnapshot.IsConnected)
                                 ControlHandle_ConsoleController();
-                            else
-                                ControlHandle_Keybinding();
+                            // removed 'else' so players don't get confused when a controller is plugged in
+                            ControlHandle_Keybinding();
                         }
                     }
                 }
@@ -264,7 +269,7 @@ public class PlayerTank : Tank
             if (GameProperties.InMission && !LevelEditor.Active) {
                 if (NetPlay.IsClientMatched(PlayerId)) {
                     if (InputUtils.CanDetectClick())
-                        if (!ChatSystem.ChatBoxHover && !ChatSystem.ActiveHandle)
+                        if (!ChatSystem.ChatBoxHover && !ChatSystem.ActiveHandle && !GameUI.Paused)
                             Shoot(false);
 
                     if (!Properties.Stationary)
@@ -432,7 +437,8 @@ public class PlayerTank : Tank
                 if (thcs.Shell.Owner is not null)
                     culprit = thcs.Shell.Owner;
             }
-            TankGame.SpectateValidTank(culprit.WorldId, true);
+            // maybe make a camera transition to said tank.
+            TankGame.SpectatorId = TankGame.SpectateValidTank(culprit.WorldId, true);
             if (NetPlay.IsClientMatched(PlayerId)) {
                 Lives[PlayerId]--;
             }
@@ -559,17 +565,21 @@ public class PlayerTank : Tank
                             effect.EmissiveColor = Color.White.ToVector3();
                         else
                             effect.EmissiveColor = Color.Black.ToVector3();
-                        //effect.SpecularColor = Color.White.ToVector3();
-                        //effect.SpecularPower = 10f;
-                        /*var ex = new Color[1024];
+                        if (ShowTeamVisuals) {
+                            if (Team != TeamID.NoTeam) {
+                                //var ex = new Color[1024];
 
-                        Array.Fill(ex, Team != Team.NoTeam ? (Color)typeof(Color).GetProperty(Team.ToString(), System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public).GetValue(null) : default);
+                                //Array.Fill(ex, new Color(GameHandler.GameRand.Next(0, 256), GameHandler.GameRand.Next(0, 256), GameHandler.GameRand.Next(0, 256)));
 
-                        if (Team != Team.NoTeam)
-                        {
-                            effect.Texture.SetData(0, new Rectangle(0, 0, 32, 9), ex, 0, 288);
-                            effect.Texture.SetData(0, new Rectangle(0, 23, 32, 9), ex, 0, 288);
-                        }*/
+                                //effect.Texture.SetData(0, new Rectangle(0, 8, 32, 15), ex, 0, 480);
+                                var ex = new Color[1024];
+
+                                Array.Fill(ex, TeamID.TeamColors[Team]);
+
+                                effect.Texture.SetData(0, new Rectangle(0, 0, 32, 9), ex, 0, 288);
+                                effect.Texture.SetData(0, new Rectangle(0, 23, 32, 9), ex, 0, 288);
+                            }
+                        }
                         mesh.Draw();
                     }
 

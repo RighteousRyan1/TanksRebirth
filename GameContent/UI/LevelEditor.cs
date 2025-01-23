@@ -32,6 +32,8 @@ public static class LevelEditor {
     public static readonly byte[] LevelFileHeader = { 84, 65, 78, 75 };
     public const int LevelEditorVersion = 2;
 
+    public const int MAX_MISSION_CHARS = 30;
+
     public static string AlertText;
     private static float _alertTime;
     public static float DefaultAlertDuration { get; set; } = 120;
@@ -148,7 +150,8 @@ public static class LevelEditor {
     public static void InitializeSaveMenu() {
         LevelContentsPanel = new Rectangle(WindowUtils.WindowWidth / 4, (int)(WindowUtils.WindowHeight * 0.1f), WindowUtils.WindowWidth / 2, (int)(WindowUtils.WindowHeight * 0.625f));
 
-        MissionName = new(TankGame.TextFont, Color.White, 1f, 30);
+        // changed from 30 to 20.
+        MissionName = new(TankGame.TextFont, Color.White, 1f, MAX_MISSION_CHARS);
 
         MissionName.SetDimensions(() => new(LevelContentsPanel.X + 20.ToResolutionX(),
                 LevelContentsPanel.Y + 60.ToResolutionY()),
@@ -181,7 +184,6 @@ public static class LevelEditor {
                 try {
                     var name = _viewMissionDetails ? MissionName.Text : CampaignName.Text;
                     var realName = Path.HasExtension(res.Path) ? Path.GetFileNameWithoutExtension(res.Path) : Path.GetFileName(res.Path);
-                    var path = res.Path.Replace(realName, string.Empty);
 
                     var misName = loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId].Name;
                     loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId] = Mission.GetCurrent(misName);
@@ -203,7 +205,7 @@ public static class LevelEditor {
                         loadedCampaign.MetaData.BackgroundColor = UnpackedColor.FromStringFormat(CampaignLoadingBGColor.GetRealText());
                         loadedCampaign.MetaData.MissionStripColor = UnpackedColor.FromStringFormat(CampaignLoadingStripColor.GetRealText());
                         loadedCampaign.MetaData.HasMajorVictory = _hasMajorVictory;
-                        Campaign.Save(Path.Combine(path, realName), loadedCampaign);
+                        Campaign.Save(res.Path, loadedCampaign);
                     }
                 }
                 catch {
@@ -557,9 +559,7 @@ public static class LevelEditor {
         };
         // TODO: non-windows support. i am lazy. fuck this. also localize bozo
         LoadLevel.Tooltip = "Will open a file dialog for\nyou to choose what mission/campaign to load.";
-
         InitializeSaveMenu();
-
         SetLevelEditorVisibility(false);
     }
 
@@ -620,6 +620,7 @@ public static class LevelEditor {
                 _missionButtons.Add(btn);
             }
         }
+        // ig this is fine since it gets removed upon data update? but still bad since it isn't a member
         var addMission = new UITextButton("+", TankGame.TextFont, Color.White, () => Vector2.One.ToResolution()) {
             Tooltip = "Insert a blank mission after the currently selected mission."
         };
@@ -677,11 +678,9 @@ public static class LevelEditor {
 
     public static void Open(bool fromMainMenu = true) {
         if (fromMainMenu) {
-
             IntermissionSystem.TimeBlack = 180;
             GameProperties.ShouldMissionsProgress = false;
-            if (_loadTask == null)
-                _loadTask = Task.Run(async () => {
+            _loadTask ??= Task.Run(async () => {
                     await Task.Delay(TankGame.LogicTime).ConfigureAwait(false);
                     while (IntermissionSystem.BlackAlpha > 0.8f || MainMenu.Active) {
                         if (IntermissionSystem.BlackAlpha == 0) {
@@ -699,7 +698,7 @@ public static class LevelEditor {
                     Theme.Play();
                     SetLevelEditorVisibility(true);
                     loadedCampaign = new();
-                    loadedCampaign.CachedMissions[0] = new(Array.Empty<TankTemplate>(), Array.Empty<BlockTemplate>()) {
+                    loadedCampaign.CachedMissions[0] = new([], []) {
                         Name = "No Name"
                     };
                     SetupMissionsBar(loadedCampaign);
@@ -730,7 +729,7 @@ public static class LevelEditor {
 
     private static Rectangle _clickRect;
 
-    private static readonly Dictionary<Rectangle, (int, string)> ClickEventsPerItem = new(); // hover zone, id, description
+    private static readonly Dictionary<Rectangle, (int, string)> ClickEventsPerItem = []; // hover zone, id, description
 
     private static string _curDescription = string.Empty;
     private static Rectangle _curHoverRect;
@@ -738,6 +737,7 @@ public static class LevelEditor {
     public static Color SelectionColor = Color.NavajoWhite;
     public static Color HoverBoxColor = Color.SkyBlue;
 
+    // FIXME: this code hurts my eyes. who wrote this?
     public static void Render() {
         if (!_initialized)
             return;
@@ -877,6 +877,7 @@ public static class LevelEditor {
             for (int i = 0; i < _renderNamesTanks.Count; i++) {
                 // TODO: i come back to this code and i think "what kind of drugs was ryan on?" to my surprise i have no clue.
                 // the magic numbers here hurt my brain.
+                // 1/22/2025 ryan here: WHAT THE ACTUAL SHiT? weed couldn't even solve my problems atp
                 ClickEventsPerItem[new Rectangle((int)(34.ToResolutionX() + xOff + _barOffset), (int)(WindowUtils.WindowBottom.Y * 0.8f), (int)234.ToResolutionX(), (int)(WindowUtils.WindowHeight * 0.2f))] =
                     (i + 2, (i + 2) switch {
                         TankID.Brown => TankGame.GameLanguage.BrownFlavor,

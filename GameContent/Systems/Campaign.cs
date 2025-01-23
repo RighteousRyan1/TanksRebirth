@@ -303,7 +303,9 @@ public class Campaign
     /// <param name="campaign"></param>
     public static void Save(string fileName, Campaign campaign)
     {
-        using var writer = new BinaryWriter(File.Open(fileName.Contains(".campaign") ? fileName : fileName + ".campaign", FileMode.OpenOrCreate));
+        var endsWith = fileName.EndsWith(".campaign");
+        var newFileName = endsWith ? fileName : (fileName + ".campaign");
+        using var writer = new BinaryWriter(File.Open(newFileName, FileMode.OpenOrCreate));
 
         writer.Write(LevelEditor.LevelFileHeader);
         writer.Write(LevelEditor.LevelEditorVersion);

@@ -82,6 +82,25 @@ public class GameHandler {
     }
 
     internal static void UpdateAll(GameTime gameTime) {
+        void doTestWithFont() {
+            var str = 
+                "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+                "abcdefghijklmnopqrstuvwxyz" +
+                "1234567890" +
+                "`[]\\;',./~{}|:\"<>?";
+            int longestId = -1;
+            var longest = 0f;
+            for (int i = 0; i < str.Length; i++) {
+                var x = TankGame.TextFontLarge.MeasureString(str[i].ToString()).X;
+                if (x > longest) {
+                    longestId = i;
+                    longest = x;
+                }
+            }
+            Console.WriteLine($"{str[longestId]} is the longest. ({longest})");
+        }
+        if (InputUtils.KeyJustPressed(Keys.OemTilde))
+            doTestWithFont();
         // ChatSystem.CurTyping = SoundPlayer.GetLengthOfSound("Content/Assets/sounds/tnk_shoot_ricochet_rocket_loop.ogg").ToString();
         if (DebugManager.DebuggingEnabled) {
             if (/*InputUtils.KeyJustPressed(Keys.H)*/ DebugManager.DebugLevel == -2 && GameProperties.InMission) {
@@ -307,6 +326,7 @@ public class GameHandler {
             var barPos = new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight - (bar.Height + 35).ToResolutionY());
             var missionInfo = $"{GameProperties.LoadedCampaign.CurrentMission.Name ?? $"{TankGame.GameLanguage.Mission}"}";
             var infoMeasure = font.MeasureString(missionInfo) * infoScale;
+            var infoScaling = 1f - ((float)missionInfo.Length / LevelEditor.MAX_MISSION_CHARS) + 0.4f;
             var tanksRemaining = $"x {AIManager.CountAll()}";
             var tanksRemMeasure = font.MeasureString(tanksRemaining) * infoScale;
 
@@ -316,8 +336,8 @@ public class GameHandler {
             SpriteBatchUtils.DrawShadowedTexture(tnk, barPos + new Vector2(bar.Size().X * 0.25f, 0).ToResolution(),
                 Vector2.One, IntermissionSystem.BackgroundColor, new Vector2(1.5f).ToResolution(), alpha, tnk.Size() / 2, shadowDistScale: 0.5f);
 
-            SpriteBatchUtils.DrawShadowedString(font, barPos - new Vector2(bar.Size().X / 6, 7.5f).ToResolution(),
-                Vector2.One, missionInfo, IntermissionSystem.BackgroundColor, new Vector2(infoScale).ToResolution(),
+            SpriteBatchUtils.DrawShadowedString(font, barPos - new Vector2(bar.Size().X / 6, 7.5f * infoScaling).ToResolution(),
+                Vector2.One, missionInfo, IntermissionSystem.BackgroundColor, new Vector2(infoScale * infoScaling).ToResolution(),
                 1f, infoMeasure, shadowDistScale: 1.5f);
 
             SpriteBatchUtils.DrawShadowedString(font, barPos + new Vector2(bar.Size().X * 0.375f, -7.5f).ToResolution(),

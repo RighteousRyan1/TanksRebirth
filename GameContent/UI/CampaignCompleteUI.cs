@@ -292,7 +292,7 @@ public static class CampaignCompleteUI
         SpriteBatchUtils.DrawShadowedString(TankGame.TextFontLarge, new Vector2(WindowUtils.WindowWidth / 2, 8), Vector2.One, txt, Color.DeepSkyBlue, new Vector2(0.5f).ToResolution(), _panelAlpha, new Vector2(measure.X / 2, 0));
     }
     // TODO: probably support multiple players L + ratio me
-    public static void SetStats(Campaign campaign, PlayerTank.DeterministicPlayerStats stats, Dictionary<int, int> killCounts, bool orderByTier = true) {
+    public static void SetStats(Campaign campaign, PlayerTank.CampaignStats stats, Dictionary<int, int> killCounts, bool orderByTier = true) {
         // set everything properly...
         KillsPerType = killCounts;
         _tierAlphas = new float[killCounts.Count];

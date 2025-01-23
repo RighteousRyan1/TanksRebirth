@@ -446,6 +446,7 @@ public static class MainMenu {
         View = Matrix.CreateScale(1f) * Matrix.CreateLookAt(Vector3.Backward, Vector3.Zero, Vector3.Up) * Matrix.CreateRotationX(MathHelper.PiOver2);
     }
     public static void RenderModels() {
+        if (!Active) return;
         UpdateMatrices();
         Crate.View = View;
         Crate.Projection = Projection;
