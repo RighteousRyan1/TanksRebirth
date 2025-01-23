@@ -15,6 +15,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 - Explosions don't sound super low pitched by default anymore
 - Explosions rotate 2x faster
 - Revamped mission info bar
+- Player tank no longer struggles to move around when using keyboard
 
 ## Source Code Changes (for modders)
 

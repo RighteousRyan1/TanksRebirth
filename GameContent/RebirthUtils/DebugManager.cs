@@ -286,7 +286,7 @@ public static class DebugManager {
                 if (InputUtils.KeyJustPressed(Keys.OemQuestion))
                     new Block(blockType, blockHeight, MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ());
 
-                if (InputUtils.KeyJustPressed(Keys.I) && DebugManager.DebugLevel == 4)
+                if (InputUtils.KeyJustPressed(Keys.I) && DebugLevel == 4)
                     new Powerup(powerups[mode]) { Position = MatrixUtils.GetWorldPosition(MouseUtils.MousePosition) + new Vector3(0, 10, 0) };
             }
         }

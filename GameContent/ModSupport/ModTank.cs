@@ -91,7 +91,7 @@ public class ModTank : ILoadable, IModContent {
     internal static int unloadOffset = 0;
 
     internal void Unload() {
-        var name = Name.GetLocalizedString(LangCode.English);
+        var name = Name.GetLocalizedString(LangCode.English)!;
         // if more than one mod has a modded tank, the game unloads that, and indexes are not adjusted... unloadOffset fixes that
         TankID.Collection.TryRemove(Type - unloadOffset);
         AITank.TankDestructionColors.Remove(Type);
@@ -105,7 +105,7 @@ public class ModTank : ILoadable, IModContent {
     }
 
     internal void Register() {
-        var name = Name.GetLocalizedString(LangCode.English);
+        var name = Name.GetLocalizedString(LangCode.English)!;
         _music = [];
         Type = TankID.Collection.ForcefullyInsert(name);
         TankMusicSystem.MaxSongNumPerTank[Type] = Songs;
@@ -121,7 +121,8 @@ public class ModTank : ILoadable, IModContent {
             var fileName = $"{Mod.ModPath}/{Mod.MusicFolder}/{name.ToLower()}.ogg";
             var oggMusic = new OggMusic(name.ToLower(), fileName, 1f);
             _music.Add(oggMusic);
-            TankMusicSystem.Audio.Add(fileName, oggMusic);
+            // why was the first parameter "fileName" before instead of name.ToLower()?
+            TankMusicSystem.Audio.Add(name.ToLower(), oggMusic);
         } else if (!HasSong) {
             TankMusicSystem.TierExclusionRule_DoesntHaveSong.Add(Type);
         }
