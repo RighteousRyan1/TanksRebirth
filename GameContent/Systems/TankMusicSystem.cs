@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using TanksRebirth.GameContent.UI;
 using Microsoft.Xna.Framework.Graphics;
 using TanksRebirth.Internals;
+using TanksRebirth.Graphics;
 
 namespace TanksRebirth.GameContent.Systems;
 
@@ -132,7 +133,7 @@ public static class TankMusicSystem
             return;
         }
 
-        if (MapRenderer.Theme == MapTheme.Christmas) {
+        if (GameSceneRenderer.Theme == MapTheme.Christmas) {
             SnowLoop.SetVolume(TankGame.Settings.AmbientVolume);
             return;
         }
@@ -177,7 +178,7 @@ public static class TankMusicSystem
         foreach (var song in Audio)
             song.Value?.Play();
 
-        if (MapRenderer.Theme == MapTheme.Christmas)
+        if (GameSceneRenderer.Theme == MapTheme.Christmas)
             SnowLoop?.Play();
     }
 
@@ -213,7 +214,7 @@ public static class TankMusicSystem
             if (song.Value.Volume > 0)
             {
                 song.Value.SetVolume(TankGame.Settings.MusicVolume);
-                if (MapRenderer.Theme == MapTheme.Christmas)
+                if (GameSceneRenderer.Theme == MapTheme.Christmas)
                     SnowLoop.SetVolume(TankGame.Settings.AmbientVolume);
                 else
                     SnowLoop.SetVolume(0);

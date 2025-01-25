@@ -4,7 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <PublishReadyToRun>false</PublishReadyToRun>
     <TieredCompilation>false</TieredCompilation>
-    <AssemblyVersion>1.7.3.1</AssemblyVersion>
+    <AssemblyVersion>1.7.4</AssemblyVersion>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Nullable>enable</Nullable>
   </PropertyGroup>

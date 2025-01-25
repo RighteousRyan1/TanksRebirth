@@ -46,8 +46,9 @@ public class ParticleSystem
         }
     }
     public void UpdateParticles() {
-        foreach (var particle in CurrentParticles)
+        foreach (var particle in CurrentParticles) {
             particle?.Update();
+        }
     }
     /// <summary>Creates a particle.</summary>
     /// <param name="position">The initial position of this particle.</param>

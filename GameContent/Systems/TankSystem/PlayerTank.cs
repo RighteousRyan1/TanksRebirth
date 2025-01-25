@@ -26,13 +26,54 @@ namespace TanksRebirth.GameContent;
 
 public class PlayerTank : Tank
 {
+    #region The Rest
+    public static int MyTeam;
+    public static int MyTankType;
+    public static int StartingLives = 3;
+    // public static Dictionary<PlayerType, Dictionary<TankTier, int>> TanksKillDict = new(); // this campaign only!
+    public static Dictionary<int, int> TankKills = []; // this campaign only!
+    public struct CampaignStats
+    {
+        public int ShellsShotThisCampaign;
+        public int ShellHitsThisCampaign;
+        public int MinesLaidThisCampaign;
+        public int MineHitsThisCampaign;
+        public int SuicidesThisCampaign; // self-damage this campaign?
+    }
+    public static CampaignStats PlayerStatistics;
+    public static bool _drawShotPath;
+    public static int KillCount = 0;
+    public int PlayerId { get; }
+    public int PlayerType { get; }
+
+    private Texture2D _tankTexture;
+
+    public static Keybind controlUp = new("Up", Keys.W);
+    public static Keybind controlDown = new("Down", Keys.S);
+    public static Keybind controlLeft = new("Left", Keys.A);
+    public static Keybind controlRight = new("Right", Keys.D);
+    public static Keybind controlMine = new("Place Mine", Keys.Space);
+    public static Keybind controlFirePath = new("Draw Shot Path", Keys.Q);
+    public static GamepadBind FireBullet = new("Fire Bullet", Buttons.RightTrigger);
+    public static GamepadBind PlaceMine = new("Place Mine", Buttons.A);
+
+    private bool playerControl_isBindPressed;
+
+    public Vector2 oldPosition;
+
+    private bool _isPlayerModel;
+    private Texture2D? _shadowTexture;
+
+    // 46 if using keyboard, 10 if using a controller
+    //private float _maxTurnInputBased;
+    #endregion
     /// <summary>A <see cref="PlayerTank"/> instance which represents the current client's tank they *primarily* control. Will return null in cases where
     /// the tank simply is inexistent (i.e: in the main menu). In a single-player context, this will always be the first player tank.</summary>
     public static PlayerTank ClientTank => GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()];
     /// <summary>The amount of lives for every existing player. Access a certain player's life count via indexing this array with a PlayerID entry.
     /// <para>Note that lives are always synced on multiplayer.</para>
     /// </summary>
-    public static int[] Lives { get; set; } = new int[4];
+    public static int[] Lives { get; set; } = new int[Server.MaxClients];
 
     /// <summary>In multiplayer, gets the lives of the client that this code is currently being called on.</summary>
     public static int GetMyLives() => Lives[NetPlay.GetMyClientId()];
@@ -58,55 +99,13 @@ public class PlayerTank : Tank
             for (int i = 0; i < Lives.Length; i++)
                 Lives[i] = num;
     }
-
-    #region The Rest
-    public static int MyTeam;
-    public static int MyTankType;
-    public static int StartingLives = 3;
-    // public static Dictionary<PlayerType, Dictionary<TankTier, int>> TanksKillDict = new(); // this campaign only!
-    public static Dictionary<int, int> TankKills = []; // this campaign only!
-    public struct CampaignStats
-    {
-        public int ShellsShotThisCampaign;
-        public int ShellHitsThisCampaign;
-        public int MinesLaidThisCampaign;
-        public int MineHitsThisCampaign;
-        public int SuicidesThisCampaign; // self-damage this campaign?
-    }
-    public static CampaignStats PlayerStatistics;
-    public static bool _drawShotPath;
-    public static int KillCount = 0;
-    public int PlayerId { get; }
-    public int PlayerType { get; }
-
-    private Texture2D _tankTexture;
-    private static Texture2D? _shadowTexture;
-
-    public static Keybind controlUp = new("Up", Keys.W);
-    public static Keybind controlDown = new("Down", Keys.S);
-    public static Keybind controlLeft = new("Left", Keys.A);
-    public static Keybind controlRight = new("Right", Keys.D);
-    public static Keybind controlMine = new("Place Mine", Keys.Space);
-    public static Keybind controlFirePath = new("Draw Shot Path", Keys.Q);
-    public static GamepadBind FireBullet = new("Fire Bullet", Buttons.RightTrigger);
-    public static GamepadBind PlaceMine = new("Place Mine", Buttons.A);
-
-    private bool playerControl_isBindPressed;
-
-    public Vector2 oldPosition;
-
-    private bool _isPlayerModel;
-
-    // 46 if using keyboard, 10 if using a controller
-    //private float _maxTurnInputBased;
-    #endregion
     public void SwapTankTexture(Texture2D texture) => _tankTexture = texture;
     public PlayerTank(int playerType, bool isPlayerModel = true, int copyTier = TankID.None) {
         Model = GameResources.GetGameResource<Model>(isPlayerModel ? "Assets/tank_p" : "Assets/tank_e");
         if (copyTier == TankID.None)
-            _tankTexture = Assets[$"tank_" + PlayerID.Collection.GetKey(playerType).ToLower()];
+            _tankTexture = Assets[$"tank_" + PlayerID.Collection.GetKey(playerType)!.ToLower()];
         else {
-            _tankTexture = Assets[$"tank_" + TankID.Collection.GetKey(copyTier).ToLower()];
+            _tankTexture = Assets[$"tank_" + TankID.Collection.GetKey(copyTier)!.ToLower()];
             var dummy = new AITank(copyTier, true, false);
 
             // ugly hardcode fix lol - prevents nantuple instead of triple bounces
@@ -124,22 +123,11 @@ public class PlayerTank : Tank
         }
 
         _isPlayerModel = isPlayerModel;
-
-        //CannonMesh = Model.Meshes["Cannon"];
-
-        //boneTransforms = new Matrix[Model.Bones.Count];
-
-        _shadowTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank_shadow");
-
         PlayerType = playerType;
-
         Team = TeamID.Red;
-
         Dead = true;
-
-        //int index = Array.IndexOf(GameHandler.AllPlayerTanks, GameHandler.AllAITanks.First(tank => tank is null));
-
-        PlayerId = playerType; //index;
+        PlayerId = playerType;
+        _shadowTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank_shadow");
 
         GameHandler.AllPlayerTanks[PlayerId] = this;
 
@@ -169,7 +157,7 @@ public class PlayerTank : Tank
         properties.Deceleration = 0.6f;
         properties.TurningSpeed = 0.1f;
         // this changes depending on input (or should it?)
-        properties.MaximalTurn = MathHelper.ToRadians(10); // normally it's 10 degrees, but we want to make it easier for keyboard players.
+        properties.MaximalTurn = MathHelper.ToRadians(InputUtils.CurrentGamePadSnapshot.IsConnected ? 10 : 46); // normally it's 10 degrees, but we want to make it easier for keyboard players.
 
         Properties.ShootPitch = 0.1f * PlayerType;
 
@@ -298,12 +286,10 @@ public class PlayerTank : Tank
         PlayerStatistics.ShellsShotThisCampaign++;
         base.Shoot(false);
     }
-
     public override void LayMine() {
         PlayerStatistics.MinesLaidThisCampaign++;
         base.LayMine();
     }
-
     private void ControlHandle_ConsoleController() {
 
         var leftStick = InputUtils.CurrentGamePadSnapshot.ThumbSticks.Left;
@@ -491,11 +477,11 @@ public class PlayerTank : Tank
         for (int i = 0; i < MAX_PATH_UNITS; i++) {
             var dummyPos = Vector2.Zero;
 
-            if (pathPos.X < MapRenderer.MIN_X || pathPos.X > MapRenderer.MAX_X) {
+            if (pathPos.X < GameSceneRenderer.MIN_X || pathPos.X > GameSceneRenderer.MAX_X) {
                 pathRicochetCount++;
                 pathDir.X *= -1;
             }
-            if (pathPos.Y < MapRenderer.MIN_Z || pathPos.Y > MapRenderer.MAX_Z) {
+            if (pathPos.Y < GameSceneRenderer.MIN_Z || pathPos.Y > GameSceneRenderer.MAX_Z) {
                 pathRicochetCount++;
                 pathDir.Y *= -1;
             }
@@ -547,7 +533,9 @@ public class PlayerTank : Tank
         for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
             foreach (ModelMesh mesh in Model.Meshes) {
                 foreach (BasicEffect effect in mesh.Effects) {
-                    effect.World = i == 0 ? _boneTransforms[mesh.ParentBone.Index] : _boneTransforms[mesh.ParentBone.Index] * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
+                    effect.World = i == 0 ? _boneTransforms[mesh.ParentBone.Index] : 
+                        _boneTransforms[mesh.ParentBone.Index] 
+                        * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
                     effect.View = View;
                     effect.Projection = Projection;
                     effect.TextureEnabled = true;
@@ -556,34 +544,7 @@ public class PlayerTank : Tank
                         if (mesh.Name == "Cannon")
                             return;
 
-
-                    if (mesh.Name != "Shadow") {
-                        effect.Alpha = 1f;
-                        effect.Texture = _tankTexture;
-
-                        if (IsHoveredByMouse)
-                            effect.EmissiveColor = Color.White.ToVector3();
-                        else
-                            effect.EmissiveColor = Color.Black.ToVector3();
-                        if (ShowTeamVisuals) {
-                            if (Team != TeamID.NoTeam) {
-                                //var ex = new Color[1024];
-
-                                //Array.Fill(ex, new Color(GameHandler.GameRand.Next(0, 256), GameHandler.GameRand.Next(0, 256), GameHandler.GameRand.Next(0, 256)));
-
-                                //effect.Texture.SetData(0, new Rectangle(0, 8, 32, 15), ex, 0, 480);
-                                var ex = new Color[1024];
-
-                                Array.Fill(ex, TeamID.TeamColors[Team]);
-
-                                effect.Texture.SetData(0, new Rectangle(0, 0, 32, 9), ex, 0, 288);
-                                effect.Texture.SetData(0, new Rectangle(0, 23, 32, 9), ex, 0, 288);
-                            }
-                        }
-                        mesh.Draw();
-                    }
-
-                    else {
+                    if (mesh.Name == "Shadow") {
                         if (!Lighting.AccurateShadows) {
                             if (IsIngame) {
                                 effect.Alpha = 0.5f;
@@ -591,9 +552,33 @@ public class PlayerTank : Tank
                                 mesh.Draw();
                             }
                         }
+                        continue;
                     }
 
+                    effect.Alpha = 1f;
+                    effect.Texture = _tankTexture;
+
+                    if (IsHoveredByMouse)
+                        effect.EmissiveColor = Color.White.ToVector3();
+                    else
+                        effect.EmissiveColor = Color.Black.ToVector3();
+                    if (ShowTeamVisuals) {
+                        if (Team != TeamID.NoTeam) {
+                            //var ex = new Color[1024];
+
+                            //Array.Fill(ex, new Color(GameHandler.GameRand.Next(0, 256), GameHandler.GameRand.Next(0, 256), GameHandler.GameRand.Next(0, 256)));
+
+                            //effect.Texture.SetData(0, new Rectangle(0, 8, 32, 15), ex, 0, 480);
+                            var ex = new Color[1024];
+
+                            Array.Fill(ex, TeamID.TeamColors[Team]);
+
+                            effect.Texture.SetData(0, new Rectangle(0, 0, 32, 9), ex, 0, 288);
+                            effect.Texture.SetData(0, new Rectangle(0, 23, 32, 9), ex, 0, 288);
+                        }
+                    }
                     effect.SetDefaultGameLighting_IngameEntities(specular: _isPlayerModel, ambientMultiplier: _isPlayerModel ? 2f : 0.9f);
+                    mesh.Draw();
                 }
             }
         }
@@ -644,7 +629,7 @@ public class PlayerTank : Tank
             TankGame.SpriteRenderer.Draw(tex1, pos, null, Color.White, rotation, tex1.Size() / 2, 0.5f.ToResolution(), default, default);
             TankGame.SpriteRenderer.Draw(tex2, pos, null, playerColor, rotation, tex2.Size() / 2, 0.5f.ToResolution(), default, default);
 
-            SpriteBatchUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFontLarge, pText, new(pos.X, pos.Y + (flip ? 100 : -125).ToResolutionY()), playerColor, Color.White, Vector2.One.ToResolution(), 0f, Anchor.Center, 2f);
+            DrawUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFontLarge, pText, new(pos.X, pos.Y + (flip ? 100 : -125).ToResolutionY()), playerColor, Color.White, Vector2.One.ToResolution(), 0f, Anchor.Center, 2f);
         }
 
         if (DebugManager.DebugLevel == 1 || _drawShotPath)

@@ -237,15 +237,15 @@ public static class DebugManager {
             LoadCampaign.IsVisible = DebuggingEnabled && DebugLevel == 3;
             CampaignName.IsVisible = DebuggingEnabled && DebugLevel == 3;
         }
-        if (InputUtils.KeyJustPressed(Keys.F3))
+        if (InputUtils.KeyJustPressed(Keys.F4))
             DebuggingEnabled = !DebuggingEnabled;
 
         if (!DebuggingEnabled)
             return; // won't update debug if debugging is not currently enabled.
 
-        if (InputUtils.KeyJustPressed(Keys.F5))
+        if (InputUtils.KeyJustPressed(Keys.F6))
             DebugLevel++;
-        if (InputUtils.KeyJustPressed(Keys.F4))
+        if (InputUtils.KeyJustPressed(Keys.F5))
             DebugLevel--;
         if (!MainMenu.Active) {
             if (InputUtils.KeyJustPressed(Keys.Z))

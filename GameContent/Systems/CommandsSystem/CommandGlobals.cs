@@ -15,6 +15,7 @@ using TanksRebirth.Localization;
 using TanksRebirth.Net;
 using Microsoft.Xna.Framework.Input;
 using TanksRebirth.Internals;
+using TanksRebirth.Graphics;
 
 namespace TanksRebirth.GameContent.Systems.CommandsSystem;
 #pragma warning disable
@@ -96,16 +97,16 @@ public static class CommandGlobals {
         }),
         // render engine
         [new CommandInput(name: "rendermenu", description: "Disable/enable game rendering/updating in main menu.")] = new CommandOutput(netSync: false, false, (args) => {
-                MapRenderer.ShouldRenderAll = bool.Parse(args[0]);
+                GameSceneRenderer.ShouldRenderAll = bool.Parse(args[0]);
         }),
         [new CommandInput(name: "renderbounds", description: "Disable/enable the drawing of the outer bounds of the map.")] = new CommandOutput(netSync: false, false, (args) => {
-            MapRenderer.ShouldRenderBounds = bool.Parse(args[0]);
+            GameSceneRenderer.ShouldRenderBounds = bool.Parse(args[0]);
         }),
         [new CommandInput(name: "renderfloor", description: "Disable/enable the drawing of the floor of the map.")] = new CommandOutput(netSync: false, false, (args) => {
             if (bool.TryParse(args[0], out bool truefalse)) {
-                MapRenderer.ShouldRenderFloor = truefalse;
+                GameSceneRenderer.ShouldRenderFloor = truefalse;
             } else if (args[0].ToLower() == "black") {
-                MapRenderer.RenderFloorAsBlack = !MapRenderer.RenderFloorAsBlack;
+                GameSceneRenderer.RenderFloorAsBlack = !GameSceneRenderer.RenderFloorAsBlack;
             }
         }),
         // main menu

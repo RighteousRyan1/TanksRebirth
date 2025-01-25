@@ -29,6 +29,10 @@ namespace TanksRebirth.GameContent.UI;
  * Horizontally facing tanks get reversed, PiOver2 becomes -PiOver2.
  */
 public static class LevelEditor {
+    public enum UICategory {
+        LevelEditor,
+        SavingThings,
+    }
     public static readonly byte[] LevelFileHeader = { 84, 65, 78, 75 };
     public const int LevelEditorVersion = 2;
 
@@ -63,6 +67,11 @@ public static class LevelEditor {
     public static UITextButton LoadLevel;
 
     public static UITextButton ReturnToEditor;
+
+    public static UITextButton AddMissionBtn;
+    public static UITextButton RemoveMissionBtn;
+    public static UITextButton MoveMissionUp;
+    public static UITextButton MoveMissionDown;
 
     #region ConfirmLevelContents
 
@@ -121,7 +130,7 @@ public static class LevelEditor {
     private static bool _viewMissionDetails = true;
     private static bool _hasMajorVictory;
 
-    private static readonly List<UITextInput> _campaignElems = new();
+    private static readonly List<UITextInput> _campaignElems = [];
 
     public static Color SelectedColor = Color.SkyBlue;
     public static Color UnselectedColor = Color.White;
@@ -145,7 +154,6 @@ public static class LevelEditor {
 
         _oldelta = InputUtils.DeltaScrollWheel;
     }
-
     // reduce hardcode -- make a variable that tracks height.
     public static void InitializeSaveMenu() {
         LevelContentsPanel = new Rectangle(WindowUtils.WindowWidth / 4, (int)(WindowUtils.WindowHeight * 0.1f), WindowUtils.WindowWidth / 2, (int)(WindowUtils.WindowHeight * 0.625f));
@@ -167,9 +175,11 @@ public static class LevelEditor {
 
         SaveMenuReturn.OnLeftClick = (l) => {
             GUICategory = UICategory.LevelEditor;
+            var id = loadedCampaign.CurrentMissionId;
             if (MissionName.GetRealText() != string.Empty)
                 loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId].Name = MissionName.GetRealText();
             SetupMissionsBar(loadedCampaign, false);
+            _missionButtons[id].Color = SelectedColor;
         };
 
         SaveLevelConfirm = new(TankGame.GameLanguage.Save, TankGame.TextFont, Color.White);
@@ -290,15 +300,9 @@ public static class LevelEditor {
         _campaignElems.Add(CampaignDescription);
     }
 
-    public enum UICategory {
-        LevelEditor,
-        SavingThings,
-    }
-
-    internal static Mission missionToRate = new(Array.Empty<TankTemplate>(), Array.Empty<BlockTemplate>());
+    internal static Mission missionToRate = new([], []);
 
     private static bool _sdbui;
-
     public static bool ShouldDrawBarUI {
         get => _sdbui;
         set {
@@ -310,7 +314,6 @@ public static class LevelEditor {
     }
 
     private static UICategory _category;
-
     public static UICategory GUICategory {
         get => _category;
         set {
@@ -327,7 +330,8 @@ public static class LevelEditor {
         }
     }
 
-    private static List<UITextButton> _missionButtons = new();
+    private static List<UITextButton> _missionButtons = [];
+    private static List<UITextButton> _listModifyButtons = [];
     private static Rectangle _missionTab = new(0, 150, 350, 535);
     private static Rectangle _missionButtonScissor;
     private static float _missionsOffset;
@@ -335,46 +339,7 @@ public static class LevelEditor {
 
     private static bool _saveMenuOpen;
 
-    public static List<string> TeamColorsLocalized = new();
-
-    /// <summary>
-    /// Moves the currently loaded mission on the loaded levels tab. Will throw a <see cref="IndexOutOfRangeException"/> if the mission is too high or low.
-    /// </summary>
-    /// <param name="up">Whether to move it up (a mission BACK) or down (a mission FORWARD)</param>
-    private static void MoveMission(bool up) {
-        if (up) {
-            if (loadedCampaign.CurrentMissionId == 0) {
-                SoundPlayer.SoundError();
-                ChatSystem.SendMessage("No mission above this one!", Color.Red);
-                return;
-            }
-        }
-        else {
-            var count = loadedCampaign.CachedMissions.Count(x => x != default);
-            if (loadedCampaign.CurrentMissionId >= count - 1) {
-                SoundPlayer.SoundError();
-                ChatSystem.SendMessage("No mission below this one!", Color.Red);
-                return;
-            }
-        }
-
-
-        var thisMission = loadedCampaign.CurrentMission;
-        var targetMission = loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId + (up ? -1 : 1)];
-
-        // CHECKME: works?
-        loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId] = targetMission;
-        loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId + (up ? -1 : 1)] = thisMission;
-
-        loadedCampaign.LoadMission(loadedCampaign.CurrentMissionId + (up ? -1 : 1));
-
-        // _campaignElems.First(x => x.Text == _loadedCampaign.CurrentMission.Name).Color = SelectedColor;
-
-        SetupMissionsBar(loadedCampaign);
-
-        _missionButtons[loadedCampaign.CurrentMissionId].Color = SelectedColor;
-    }
-
+    public static List<string> TeamColorsLocalized = [];
     private static void SetBarUIVisibility(bool visible) {
         PlayerTanksCategory.IsVisible =
             EnemyTanksCategory.IsVisible =
@@ -385,7 +350,6 @@ public static class LevelEditor {
                                 TestLevel.IsVisible = visible;
         _missionButtons.ForEach(x => x.IsVisible = visible);
     }
-
     private static void SetSaveMenuVisibility(bool visible) {
         _saveMenuOpen = visible;
         MissionName.IsVisible = visible && _viewMissionDetails;
@@ -404,7 +368,6 @@ public static class LevelEditor {
         CampaignLoadingStripColor.IsVisible = visible && !_viewMissionDetails;
         CampaignMajorVictory.IsVisible = visible && !_viewMissionDetails;
     }
-
     private static void SetLevelEditorVisibility(bool visible) {
         EnemyTanksCategory.IsVisible = visible;
         TerrainCategory.IsVisible = visible;
@@ -414,7 +377,6 @@ public static class LevelEditor {
         Properties.IsVisible = visible;
         LoadLevel.IsVisible = visible;
     }
-
     public static void Initialize() {
         if (_initialized) {
             foreach (var field in typeof(LevelEditor).GetFields()) {
@@ -466,6 +428,52 @@ public static class LevelEditor {
 
         _initialized = true;
 
+        AddMissionBtn = new UITextButton("+", TankGame.TextFont, Color.White, () => Vector2.One.ToResolution()) {
+            Tooltip = "Insert a blank mission after the currently selected mission."
+        };
+        AddMissionBtn.SetDimensions(
+            () => new Vector2(_missionButtonScissor.X + 15.ToResolutionX(), _missionButtonScissor.Y + _missionButtonScissor.Height + 5.ToResolutionY()),
+            () => new Vector2(_missionButtonScissor.Width / 4.5f, 25.ToResolutionY()));
+        AddMissionBtn.OnLeftClick = (a) => {
+            AddMission();
+        };
+        _listModifyButtons.Add(AddMissionBtn);
+
+        RemoveMissionBtn = new UITextButton("-", TankGame.TextFont, Color.White, () => Vector2.One.ToResolution()) {
+            Tooltip = "Remove this mission from the missions list."
+        };
+        RemoveMissionBtn.SetDimensions(
+            () => new Vector2(AddMissionBtn.Position.X + AddMissionBtn.Size.X, AddMissionBtn.Position.Y),
+            () => new Vector2(AddMissionBtn.Size.X, AddMissionBtn.Size.Y));
+        RemoveMissionBtn.OnLeftClick = (a) => {
+            RemoveMission();
+        };
+        _listModifyButtons.Add(RemoveMissionBtn);
+
+        MoveMissionUp = new UITextButton("v", TankGame.TextFont, Color.White, () => Vector2.One.ToResolution()) {
+            Tooltip = "Swap the currently selected mission with the one above it.",
+            TextRotation = MathHelper.Pi
+        };
+        MoveMissionUp.SetDimensions(
+            () => new(RemoveMissionBtn.Position.X + RemoveMissionBtn.Size.X, RemoveMissionBtn.Position.Y),
+            () => new Vector2(AddMissionBtn.Size.X, RemoveMissionBtn.Size.Y));
+        MoveMissionUp.OnLeftClick = (a) => { MoveMission(true); };
+        _listModifyButtons.Add(MoveMissionUp);
+
+        MoveMissionDown = new UITextButton("v", TankGame.TextFont, Color.White, () => Vector2.One.ToResolution()) {
+            Tooltip = "Swap the currently selected mission with the one below it.",
+        };
+        MoveMissionDown.SetDimensions(
+            () => new(MoveMissionUp.Position.X + MoveMissionUp.Size.X, AddMissionBtn.Position.Y),
+            () => new Vector2(MoveMissionUp.Size.X, AddMissionBtn.Size.Y));
+        MoveMissionDown.OnLeftClick = (a) => { MoveMission(false); };
+        _listModifyButtons.Add(MoveMissionDown);
+
+        AddMissionBtn.IsVisible =
+            RemoveMissionBtn.IsVisible =
+            MoveMissionUp.IsVisible =
+            MoveMissionDown.IsVisible = Active;
+
         TestLevel = new(TankGame.GameLanguage.TestLevel, TankGame.TextFont, Color.White);
         TestLevel.SetDimensions(() => new(WindowUtils.WindowWidth * 0.01f, WindowUtils.WindowHeight * 0.725f), () => new Vector2(200, 50).ToResolution());
 
@@ -489,6 +497,8 @@ public static class LevelEditor {
                 Mission.LoadDirectly(_cachedMission);
             if (loadedCampaign is { })
                 SetupMissionsBar(loadedCampaign);
+
+            _missionButtons[loadedCampaign.CurrentMissionId].Color = SelectedColor;
         };
 
         Perspective = new(TankGame.GameLanguage.Perspective, TankGame.TextFont, Color.White);
@@ -562,7 +572,6 @@ public static class LevelEditor {
         InitializeSaveMenu();
         SetLevelEditorVisibility(false);
     }
-
     public static void SetupMissionsBar(Campaign campaign, bool setCampaignData = true) {
         RemoveMissionButtons();
 
@@ -589,7 +598,7 @@ public static class LevelEditor {
         if (loadedCampaign != null) {
             for (int i = 0; i < campaign.CachedMissions.Length; i++) {
                 var mission = campaign.CachedMissions[i];
-                if (mission == default)
+                if (mission == default || mission.Name is null)
                     break;
                 var btn = new UITextButton(mission.Name, TankGame.TextFont, Color.White, () => Vector2.One.ToResolution());
                 btn.SetDimensions(() => new Vector2(_missionButtonScissor.X + 15.ToResolutionX(), _missionButtonScissor.Y + _missionsOffset), () => new Vector2(_missionButtonScissor.Width - 30.ToResolutionX(), 25.ToResolutionY()));
@@ -617,65 +626,109 @@ public static class LevelEditor {
 
                     MissionName.Text = loadedCampaign.CachedMissions[index].Name;
                 };
+                btn.IsVisible = Active;
                 _missionButtons.Add(btn);
             }
         }
-        // ig this is fine since it gets removed upon data update? but still bad since it isn't a member
-        var addMission = new UITextButton("+", TankGame.TextFont, Color.White, () => Vector2.One.ToResolution()) {
-            Tooltip = "Insert a blank mission after the currently selected mission."
-        };
-        addMission.SetDimensions(() => new Vector2(_missionButtonScissor.X + 15.ToResolutionX(), _missionButtonScissor.Y + _missionButtonScissor.Height + 5.ToResolutionY()), () => new Vector2(_missionButtonScissor.Width / 2, 25.ToResolutionY()));
-        addMission.OnLeftClick = (a) => {
-            _missionButtons.ForEach(x => x.Color = Color.White);
-            addMission.Color = Color.SkyBlue;
-
-            // Array.Resize(ref _loadedCampaign.CachedMissions, _loadedCampaign.CachedMissions.Length + 1);
-            var count = loadedCampaign.CachedMissions.Count(c => c != default);
-            var id = loadedCampaign.CurrentMissionId;
-            loadedCampaign.CachedMissions[id] = Mission.GetCurrent(loadedCampaign.CachedMissions[id].Name);
-
-            // move every mission up by 1 in the array.
-            for (int i = count; i > id + 1; i--) {
-                if (i + 1 >= loadedCampaign.CachedMissions.Length)
-                    Array.Resize(ref loadedCampaign.CachedMissions, loadedCampaign.CachedMissions.Length + 1);
-                loadedCampaign.CachedMissions[i] = loadedCampaign.CachedMissions[i - 1];
-            }
-            if (id + 1 >= loadedCampaign.CachedMissions.Length)
-                Array.Resize(ref loadedCampaign.CachedMissions, loadedCampaign.CachedMissions.Length + 1);
-            loadedCampaign.CachedMissions[id + 1] = new(Array.Empty<TankTemplate>(), Array.Empty<BlockTemplate>());
-            loadedCampaign.LoadMission(id + 1);
-            loadedCampaign.SetupLoadedMission(true);
-
-            MissionName.Text = loadedCampaign.CachedMissions[id].Name;
-
-            SetupMissionsBar(loadedCampaign, false);
-
-            _missionButtons[id + 1].Color = SelectedColor;
-        };
-        _missionButtons.Add(addMission);
-
-        var moveMissionUp = new UITextButton("v", TankGame.TextFont, Color.White, () => Vector2.One.ToResolution()) {
-            Tooltip = "Swap the currently selected mission with the one above it.",
-            TextRotation = MathHelper.Pi
-        };
-        moveMissionUp.SetDimensions(() => new(addMission.Position.X + addMission.Size.X, addMission.Position.Y), () => new Vector2(_missionButtonScissor.Width / 5, addMission.Size.Y));
-        moveMissionUp.OnLeftClick = (a) => { MoveMission(true); };
-        _missionButtons.Add(moveMissionUp);
-
-        var moveMissionDown = new UITextButton("v", TankGame.TextFont, Color.White, () => Vector2.One.ToResolution()) {
-            Tooltip = "Swap the currently selected mission with the one below it.",
-        };
-        moveMissionDown.SetDimensions(() => new(addMission.Position.X + addMission.Size.X + moveMissionUp.Size.X, addMission.Position.Y), () => new Vector2(moveMissionUp.Size.X, addMission.Size.Y));
-        moveMissionDown.OnLeftClick = (a) => { MoveMission(false); };
-        _missionButtons.Add(moveMissionDown);
     }
+    public static void AddMission() {
+        _missionButtons.ForEach(x => x.Color = Color.White);
+        // addMission.Color = Color.SkyBlue;
 
+        // Array.Resize(ref _loadedCampaign.CachedMissions, _loadedCampaign.CachedMissions.Length + 1);
+        var count = loadedCampaign.CachedMissions.Count(c => c != default);
+        var id = loadedCampaign.CurrentMissionId;
+        loadedCampaign.CachedMissions[id] = Mission.GetCurrent(loadedCampaign.CachedMissions[id].Name);
+
+        // move every mission up by 1 in the array.
+        for (int i = count; i > id + 1; i--) {
+            if (i + 1 >= loadedCampaign.CachedMissions.Length)
+                Array.Resize(ref loadedCampaign.CachedMissions, loadedCampaign.CachedMissions.Length + 1);
+            loadedCampaign.CachedMissions[i] = loadedCampaign.CachedMissions[i - 1];
+        }
+        if (id + 1 >= loadedCampaign.CachedMissions.Length)
+            Array.Resize(ref loadedCampaign.CachedMissions, loadedCampaign.CachedMissions.Length + 1);
+        loadedCampaign.CachedMissions[id + 1] = new([], []) {
+            Name = $"Mission {id + 1}"
+        };
+        loadedCampaign.LoadMission(id + 1);
+        loadedCampaign.SetupLoadedMission(true);
+
+        MissionName.Text = loadedCampaign.CachedMissions[id].Name;
+
+        SetupMissionsBar(loadedCampaign, false);
+
+        _missionButtons[id + 1].Color = SelectedColor;
+    }
+    public static void RemoveMission() {
+        _missionButtons.ForEach(x => x.Color = Color.White);
+
+        // Array.Resize(ref _loadedCampaign.CachedMissions, _loadedCampaign.CachedMissions.Length + 1);
+        var count = loadedCampaign.CachedMissions.Count(c => c != default);
+        var id = loadedCampaign.CurrentMissionId;
+        loadedCampaign.CachedMissions[id] = Mission.GetCurrent(loadedCampaign.CachedMissions[id].Name);
+
+        // move every mission back by 1 in the array.
+        for (int i = id; i < loadedCampaign.CachedMissions.Length - 1; i++) {
+            loadedCampaign.CachedMissions[i] = loadedCampaign.CachedMissions[i + 1];
+        }
+        loadedCampaign.CachedMissions[^1] = default;
+        //if (id + 1 >= loadedCampaign.CachedMissions.Length)
+        //Array.Resize(ref loadedCampaign.CachedMissions, loadedCampaign.CachedMissions.Length + 1);
+        SetupMissionsBar(loadedCampaign, false);
+
+        loadedCampaign.LoadMission(id - 1);
+        loadedCampaign.SetupLoadedMission(true);
+
+        _missionButtons[id - 1].Color = SelectedColor;
+    }
+    /// <summary>
+    /// Moves the currently loaded mission on the loaded levels tab. Will throw a <see cref="IndexOutOfRangeException"/> if the mission is too high or low.
+    /// </summary>
+    /// <param name="up">Whether to move it up (a mission BACK) or down (a mission FORWARD)</param>
+    private static void MoveMission(bool up) {
+        if (up) {
+            if (loadedCampaign.CurrentMissionId == 0) {
+                SoundPlayer.SoundError();
+                ChatSystem.SendMessage("No mission above this one!", Color.Red);
+                return;
+            }
+        }
+        else {
+            var count = loadedCampaign.CachedMissions.Count(x => x != default);
+            if (loadedCampaign.CurrentMissionId >= count - 1) {
+                SoundPlayer.SoundError();
+                ChatSystem.SendMessage("No mission below this one!", Color.Red);
+                return;
+            }
+        }
+
+
+        var thisMission = loadedCampaign.CurrentMission;
+        var targetMission = loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId + (up ? -1 : 1)];
+
+        // CHECKME: works?
+        loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId] = targetMission;
+        loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId + (up ? -1 : 1)] = thisMission;
+
+        loadedCampaign.LoadMission(loadedCampaign.CurrentMissionId + (up ? -1 : 1));
+
+        // _campaignElems.First(x => x.Text == _loadedCampaign.CurrentMission.Name).Color = SelectedColor;
+
+        SetupMissionsBar(loadedCampaign);
+
+        _missionButtons[loadedCampaign.CurrentMissionId].Color = SelectedColor;
+    }
     private static void RemoveMissionButtons() {
         for (int i = 0; i < _missionButtons.Count; i++)
             _missionButtons[i].Remove();
         _missionButtons.Clear();
     }
-
+    private static void RemoveEditButtons() {
+        for (int i = 0; i < _listModifyButtons.Count; i++)
+            _listModifyButtons[i].Remove();
+        _listModifyButtons.Clear();
+    }
     public static void Open(bool fromMainMenu = true) {
         if (fromMainMenu) {
             IntermissionSystem.TimeBlack = 180;
@@ -712,7 +765,6 @@ public static class LevelEditor {
         }
         Editing = true;
     }
-
     public static void Close(bool toMainMenu) {
         Active = false;
         RemoveMissionButtons();
@@ -722,13 +774,19 @@ public static class LevelEditor {
         SetLevelEditorVisibility(false);
         SetSaveMenuVisibility(false);
         // SetMissionsVisibility(false);
-        if (toMainMenu)
-            loadedCampaign = null;
+        if (toMainMenu) {
+            RemoveEditButtons();
+            loadedCampaign = new();
+            loadedCampaign.CachedMissions[0] = new([], []) {
+                Name = "No Name"
+            };
+            SetupMissionsBar(loadedCampaign);
+        }
         PlacementSquare.ResetSquares();
     }
 
+    // this code is god-tier atrocious. rework soon.
     private static Rectangle _clickRect;
-
     private static readonly Dictionary<Rectangle, (int, string)> ClickEventsPerItem = []; // hover zone, id, description
 
     private static string _curDescription = string.Empty;
@@ -741,6 +799,12 @@ public static class LevelEditor {
     public static void Render() {
         if (!_initialized)
             return;
+
+        // called twice since Update() isn't called when paused, rip
+        AddMissionBtn.IsVisible =
+            RemoveMissionBtn.IsVisible =
+            MoveMissionUp.IsVisible =
+            MoveMissionDown.IsVisible = Active && !GameUI.Paused;
 
         ShouldDrawBarUI = !GameUI.Paused;
         SwapMenu.Text = _viewMissionDetails ? "Campaign Details" : "Mission Details";
@@ -758,7 +822,7 @@ public static class LevelEditor {
                 new Vector2(scale).ToResolution(),
                 default,
                 default);
-            SpriteBatchUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFontLarge, AlertText, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight * 0.625f), Color.Red, Color.White, new Vector2(0.4f).ToResolution(), 0f, Anchor.Center);
+            DrawUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFontLarge, AlertText, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight * 0.625f), Color.Red, Color.White, new Vector2(0.4f).ToResolution(), 0f, Anchor.Center);
             _alertTime -= TankGame.DeltaTime;
         }
         if (!ShouldDrawBarUI)
@@ -913,7 +977,7 @@ public static class LevelEditor {
                 TankGame.SpriteRenderer.Draw(RenderTextures[_renderNamesTanks[i]],
                     new Vector2(24.ToResolutionX() + xOff + _barOffset, WindowUtils.WindowBottom.Y * 0.75f),
                     null,
-                    (int)SelectedTankTier - 2 == i ? SelectionColor : Color.White,
+                    SelectedTankTier - 2 == i ? SelectionColor : Color.White,
                     0f,
                     Vector2.Zero,
                     Vector2.One.ToResolution(),
@@ -936,7 +1000,7 @@ public static class LevelEditor {
                 TankGame.SpriteRenderer.Draw(RenderTextures[_renderNamesBlocks[i]],
                     new Vector2(24.ToResolutionX() + xOff + _barOffset, WindowUtils.WindowBottom.Y * 0.75f),
                     null,
-                    (int)SelectedBlockType == i ? SelectionColor : Color.White,
+                    SelectedBlockType == i ? SelectionColor : Color.White,
                     0f,
                     Vector2.Zero,
                     Vector2.One.ToResolution(),
@@ -997,7 +1061,9 @@ public static class LevelEditor {
                 default,
                 0f);
         }
-        if (Active && GUICategory == UICategory.SavingThings)
+        var txt = !_viewMissionDetails ? TankGame.GameLanguage.CampaignDetails : TankGame.GameLanguage.MissionDetails;
+
+        if (GUICategory == UICategory.SavingThings) {
             TankGame.SpriteRenderer.Draw(TankGame.WhitePixel,
                 LevelContentsPanel,
                 null,
@@ -1006,17 +1072,15 @@ public static class LevelEditor {
                 Vector2.Zero,
                 default,
                 0f);
-        var txt = !_viewMissionDetails ? TankGame.GameLanguage.CampaignDetails : TankGame.GameLanguage.MissionDetails;
-
-        if (GUICategory == UICategory.SavingThings)
             TankGame.SpriteRenderer.DrawString(TankGame.TextFont,
-                txt,
-                new Vector2(LevelContentsPanel.X + LevelContentsPanel.Width / 2, LevelContentsPanel.Y + 10.ToResolutionY()),
-                Color.White,
-                Vector2.One.ToResolution(),
-                0f,
-                new Vector2(TankGame.TextFont.MeasureString(txt).X / 2, 0));
-
+                    txt,
+                    new Vector2(LevelContentsPanel.X + LevelContentsPanel.Width / 2, LevelContentsPanel.Y + 10.ToResolutionY()),
+                    Color.White,
+                    Vector2.One.ToResolution(),
+                    0f,
+                    new Vector2(TankGame.TextFont.MeasureString(txt).X / 2, 0));
+        }
+        // i beleive this makes the text left-origin instead of center-origin
         _campaignElems.ForEach(elem => {
             if (elem is UITextInput)
                 elem.DrawText = false;
@@ -1041,6 +1105,11 @@ public static class LevelEditor {
     public static void Update() {
         if (!_initialized)
             return;
+
+        AddMissionBtn.IsVisible =
+            RemoveMissionBtn.IsVisible =
+            MoveMissionUp.IsVisible =
+            MoveMissionDown.IsVisible = Active && !GameUI.Paused;
 
         if (Active) {
             IntermissionHandler.TankFunctionWait = 190;

@@ -49,14 +49,13 @@ public static class DifficultyAlgorithm
     public static float GetDifficulty(Mission mission)
     {
         float difficulty = 0;
-        Dictionary<int, int> tankCounts = new();
+        Dictionary<int, int> tankCounts = [];
+
         foreach (var tank in mission.Tanks) {
             if (tank.IsPlayer) continue;
 
-            if (!tankCounts.ContainsKey(tank.AiTier))
-                tankCounts.Add(tank.AiTier, 1);
-            else
-                tankCounts[tank.AiTier]++;
+            if (!tankCounts.ContainsKey(tank.AiTier)) tankCounts.Add(tank.AiTier, 1);
+            else tankCounts[tank.AiTier]++;
 
             difficulty += TankDiffs[tank.AiTier] / tankCounts[tank.AiTier] * 1.5f;
         }

@@ -197,14 +197,14 @@ public static class IntermissionSystem {
             int mafs2 = GameProperties.LoadedCampaign.LoadedMission.Tanks.Count(x => x.IsPlayer);
             int mafs = mafs1 - mafs2; // waddafak. why is my old code so horrid.
 
-            SpriteBatchUtils.DrawShadowedString(TankGame.TextFontLarge,
+            DrawUtils.DrawShadowedString(TankGame.TextFontLarge,
                 new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 220.ToResolutionY()),
                 Vector2.One,
                 GameProperties.LoadedCampaign.LoadedMission.Name,
                 BackgroundColor,
                 TextAnimatorLarge.CurrentScale.ToResolution(),
                 Alpha);
-            SpriteBatchUtils.DrawShadowedString(TankGame.TextFontLarge,
+            DrawUtils.DrawShadowedString(TankGame.TextFontLarge,
                 new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 50.ToResolutionY()),
                 Vector2.One,
                 $"{TankGame.GameLanguage.EnemyTanks}: {mafs}",
@@ -222,7 +222,7 @@ public static class IntermissionSystem {
                 var pos = new Vector2(WindowUtils.WindowWidth / (count + 1) * (i + 1), WindowUtils.WindowHeight / 2 + 375.ToResolutionY());
 
                 var lifeText = $"x  {PlayerTank.Lives[i]}";
-                SpriteBatchUtils.DrawShadowedString(TankGame.TextFontLarge,
+                DrawUtils.DrawShadowedString(TankGame.TextFontLarge,
                     pos + new Vector2(75, -25).ToResolution(),
                     Vector2.One,
                     lifeText,
@@ -231,7 +231,7 @@ public static class IntermissionSystem {
                     Alpha,
                     TankGame.TextFontLarge.MeasureString(lifeText) / 2);
 
-                SpriteBatchUtils.DrawShadowedString(TankGame.TextFontLarge,
+                DrawUtils.DrawShadowedString(TankGame.TextFontLarge,
                     pos - new Vector2(0, 75).ToResolution(),
                     Vector2.One,
                     name,
@@ -239,11 +239,11 @@ public static class IntermissionSystem {
                     new Vector2(0.3f).ToResolution(),
                     Alpha,
                     TankGame.TextFontLarge.MeasureString(name) / 2);
-                SpriteBatchUtils.DrawShadowedTexture(tnk2d, pos - new Vector2(130, 0).ToResolution(), Vector2.One, PlayerID.PlayerTankColors[i].ToColor(), new Vector2(1.25f), Alpha, tnk2d.Size() / 2);
+                DrawUtils.DrawShadowedTexture(tnk2d, pos - new Vector2(130, 0).ToResolution(), Vector2.One, PlayerID.PlayerTankColors[i].ToColor(), new Vector2(1.25f), Alpha, tnk2d.Size() / 2);
             }
             // draw mission data on the billboard (?) thing
             if (GameProperties.LoadedCampaign.CurrentMissionId == 0)
-                SpriteBatchUtils.DrawShadowedString(TankGame.TextFontLarge,
+                DrawUtils.DrawShadowedString(TankGame.TextFontLarge,
                     new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 295.ToResolutionY()),
                     Vector2.One,
                     $"{TankGame.GameLanguage.Campaign}: \"{GameProperties.LoadedCampaign.MetaData.Name}\" ({TankGame.GameLanguage.Mission} #{GameProperties.LoadedCampaign.CurrentMissionId + 1})",
@@ -251,7 +251,7 @@ public static class IntermissionSystem {
                     TextAnimatorSmall.CurrentScale.ToResolution(),
                     Alpha);
             else
-                SpriteBatchUtils.DrawShadowedString(TankGame.TextFontLarge,
+                DrawUtils.DrawShadowedString(TankGame.TextFontLarge,
                     new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 295.ToResolutionY()),
                     Vector2.One,
                     $"{TankGame.GameLanguage.Mission} #{GameProperties.LoadedCampaign.CurrentMissionId + 1}",

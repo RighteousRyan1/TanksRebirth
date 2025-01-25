@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace TanksRebirth.Internals.Common.Utilities;
 
-public static class SpriteBatchUtils
+public static class DrawUtils
 {
 	public static void DrawBorderedText(SpriteBatch spriteBatch, SpriteFontBase font, string text, Vector2 position, Color textColor, Color borderColor, Vector2 scale, float rotation, Anchor anchoring, float borderThickness = 1f)
     {

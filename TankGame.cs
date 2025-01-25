@@ -339,7 +339,7 @@ public class TankGame : Game {
             "Assets/textures/ui/grades",
             "Assets/textures/ui/scoreboard",
             "Assets/textures/ui/tank2d",
-            "Assets/tanks_rebirth_logo",
+            "Assets/tanks_rebirth_logo_2d_old",
             "Assets/textures/ui/trophy",
             "Assets/textures/ui/achievement/secret",
 
@@ -468,7 +468,7 @@ public class TankGame : Game {
         PlayerTank.controlLeft.ForceReassign(Settings.LeftKeybind);
         PlayerTank.controlRight.ForceReassign(Settings.RightKeybind);
         PlayerTank.controlMine.ForceReassign(Settings.MineKeybind);
-        MapRenderer.Theme = Settings.GameTheme;
+        GameSceneRenderer.Theme = Settings.GameTheme;
 
         /*if (!IsSouthernHemi ? LaunchTime.Month != 12 : LaunchTime.Month != 7)
             MapRenderer.Theme = Settings.GameTheme;
@@ -484,7 +484,7 @@ public class TankGame : Game {
 
         Tank.SetAssetNames();
         TankMusicSystem.SetAssetAssociations();
-        MapRenderer.LoadTexturePack(Settings.MapPack);
+        GameSceneRenderer.LoadTexturePack(Settings.MapPack);
         TankMusicSystem.LoadSoundPack(Settings.MusicPack);
         Tank.LoadTexturePack(Settings.TankPack);
         Graphics.ApplyChanges();
@@ -986,9 +986,9 @@ public class TankGame : Game {
                 Tank.CollisionsWorld.Step(float.IsInfinity(DeltaTime) ? 1f : DeltaTime);
 
                 HoveringAnyTank = false;
+                // TODO: why is this here and not LevelEditor
                 if (!MainMenu.Active && (OverheadView || LevelEditor.Active)) {
                     foreach (var tnk in GameHandler.AllTanks) {
-                        // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
                         if (tnk == null) continue;
 
                         if (tnk.Dead)
@@ -1103,7 +1103,7 @@ public class TankGame : Game {
 
         var vfx = Difficulties.Types["LanternMode"] ? GameShaders.LanternShader : (MainMenu.Active ? GameShaders.GaussianBlurShader : null);
 
-        if (!MapRenderer.ShouldRenderAll)
+        if (!GameSceneRenderer.ShouldRenderAll)
             vfx = null;
 
         SpriteRenderer.Begin(effect: vfx);
@@ -1151,8 +1151,9 @@ public class TankGame : Game {
         if (LevelEditor.Active)
             LevelEditor.Render();
 
-        IntermissionSystem.Draw(SpriteRenderer);
         GameHandler.RenderUI();
+        IntermissionSystem.Draw(SpriteRenderer);
+
         if (CampaignCompleteUI.IsViewingResults)
             CampaignCompleteUI.Render();
 
@@ -1208,7 +1209,7 @@ public class TankGame : Game {
 
     private static void PlaceSecrets() {
         // magic.
-        const float SECRET_BASE_POS_X = MapRenderer.MIN_X - 28.5f;
+        const float SECRET_BASE_POS_X = GameSceneRenderer.MIN_X - 28.5f;
         const float SECRET_BASE_POS_Y = 22;
         const float SECRET_BASE_POS_Z = 20;
         _secret1_1 = GameHandler.Particles.MakeParticle(new Vector3(100, 0.1f, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/secret/special"));

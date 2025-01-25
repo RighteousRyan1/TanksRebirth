@@ -111,7 +111,7 @@ namespace TanksRebirth.GameContent
 
         public void Update()
         {
-            if (!MapRenderer.ShouldRenderAll)
+            if (!GameSceneRenderer.ShouldRenderAll)
                 return;
             if (HasOwner)
             {
@@ -135,7 +135,7 @@ namespace TanksRebirth.GameContent
 
         public void Render()
         {
-            if (!MapRenderer.ShouldRenderAll)
+            if (!GameSceneRenderer.ShouldRenderAll)
                 return;
             if (!HasOwner)
             {

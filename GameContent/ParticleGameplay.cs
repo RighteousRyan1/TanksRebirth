@@ -5,6 +5,7 @@ using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Net;
 using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Graphics;
 
 namespace TanksRebirth.GameContent;
 
@@ -43,10 +44,10 @@ public static class ParticleGameplay {
 
             // bounce off walls
             if (p.Position.Y <= 80) {
-                if ((p.Position.X <= MapRenderer.MIN_X && p.Position.X >= MapRenderer.MIN_X - 6) || (p.Position.X >= MapRenderer.MAX_X && p.Position.X <= MapRenderer.MAX_X + 6)) {
+                if ((p.Position.X <= GameSceneRenderer.MIN_X && p.Position.X >= GameSceneRenderer.MIN_X - 6) || (p.Position.X >= GameSceneRenderer.MAX_X && p.Position.X <= GameSceneRenderer.MAX_X + 6)) {
                     velocity.X = -velocity.X * 0.5f;
                 }
-                if ((p.Position.Z <= MapRenderer.MIN_Z && p.Position.Z >= MapRenderer.MIN_Z - 6) || (p.Position.Z >= MapRenderer.MAX_Z && p.Position.Z <= MapRenderer.MAX_Z + 6)) {
+                if ((p.Position.Z <= GameSceneRenderer.MIN_Z && p.Position.Z >= GameSceneRenderer.MIN_Z - 6) || (p.Position.Z >= GameSceneRenderer.MAX_Z && p.Position.Z <= GameSceneRenderer.MAX_Z + 6)) {
                     velocity.Z = -velocity.Z * 0.5f;
                 }
             }

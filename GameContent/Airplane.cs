@@ -130,15 +130,15 @@ public class Airplane {
         var randomPos = new Vector2();
 
         if (spawnZAxis) {
-            if (spawnOtherSide) randomPos.Y = MapRenderer.MAX_Z + 150;
-            else randomPos.Y = MapRenderer.MIN_Z - 150;
+            if (spawnOtherSide) randomPos.Y = GameSceneRenderer.MAX_Z + 150;
+            else randomPos.Y = GameSceneRenderer.MIN_Z - 150;
 
-            randomPos.X = random.NextFloat(MapRenderer.MIN_X, MapRenderer.MAX_X);
+            randomPos.X = random.NextFloat(GameSceneRenderer.MIN_X, GameSceneRenderer.MAX_X);
         } else {
-            if (spawnOtherSide) randomPos.X = MapRenderer.MAX_X + 150;
-            else randomPos.X = MapRenderer.MIN_X - 150;
+            if (spawnOtherSide) randomPos.X = GameSceneRenderer.MAX_X + 150;
+            else randomPos.X = GameSceneRenderer.MIN_X - 150;
 
-            randomPos.Y = random.NextFloat(MapRenderer.MIN_Z, MapRenderer.MAX_Z);
+            randomPos.Y = random.NextFloat(GameSceneRenderer.MIN_Z, GameSceneRenderer.MAX_Z);
         }
         return randomPos;
     }
@@ -151,8 +151,8 @@ public class Airplane {
         // magic numbers used reduce bias towards negative Z from the origin
         var zOff = 132;
         var randomPosition = new Vector2 {
-            X = random.NextFloat(MapRenderer.MIN_X * xPotential, MapRenderer.MAX_X * xPotential),
-            Y = random.NextFloat((MapRenderer.MIN_Z - zOff) * zPotential, (MapRenderer.MAX_Z - zOff) * zPotential)
+            X = random.NextFloat(GameSceneRenderer.MIN_X * xPotential, GameSceneRenderer.MAX_X * xPotential),
+            Y = random.NextFloat((GameSceneRenderer.MIN_Z - zOff) * zPotential, (GameSceneRenderer.MAX_Z - zOff) * zPotential)
         };
         randomPosition.Y += zOff;
         
@@ -229,6 +229,7 @@ public class Airplane {
 
         var screenPos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection);
         if (Difficulties.Types["POV"]) {
+            // change to freecam pos soon?
             if (PlayerTank.ClientTank is not null) {
                 var maxSoundDist = 600f;
                 var dist = 1f - Vector3.Distance(PlayerTank.ClientTank.Position3D, Position) / maxSoundDist;
@@ -252,9 +253,6 @@ public class Airplane {
             * Matrix.CreateTranslation(-11.565f, -4.4863f, -0.000009f);
         // x and z values grabbed from blender. is hacky but it works i guess
 
-        //var test = Vector3.Transform(Vector3.Zero, PropellerR.ParentBone.Transform);
-        //GameHandler.Particles.MakeSmallExplosion(test, 10, 10, 2, 2);
-
         if (LifeTime > LifeSpan) Remove();
 
         View = TankGame.GameView;
@@ -263,7 +261,7 @@ public class Airplane {
         _wereDoorsFullyOpen = AreDoorsFullyOpen;
     }
     public void Render() {
-        if (!MapRenderer.ShouldRenderAll)
+        if (!GameSceneRenderer.ShouldRenderAll)
             return;
         World = Matrix.CreateScale(0.6f)
             * Matrix.CreateRotationY(Rotation) 

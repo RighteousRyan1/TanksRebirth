@@ -243,7 +243,7 @@ public class Shell : IAITankDanger
         ShootSound?.Instance?.Stop();
     }
     internal void Update() {
-        if (!MapRenderer.ShouldRenderAll || (!GameProperties.InMission && !MainMenu.Active))
+        if (!GameSceneRenderer.ShouldRenderAll || (!GameProperties.InMission && !MainMenu.Active))
             return;
 
         Rotation = Velocity.ToRotation() - MathHelper.PiOver2;
@@ -252,7 +252,7 @@ public class Shell : IAITankDanger
                 * Matrix.CreateTranslation(Position3D);
 
         if (_wallRicCooldown <= 0) {
-            if (Position.X is < MapRenderer.MIN_X or > MapRenderer.MAX_X) {
+            if (Position.X is < GameSceneRenderer.MIN_X or > GameSceneRenderer.MAX_X) {
                 OnRicochet?.Invoke(this);
                 Ricochet(true);
 
@@ -266,7 +266,7 @@ public class Shell : IAITankDanger
                 _wallRicCooldown = 5;
             }
 
-            if (Position.Y is < MapRenderer.MIN_Z or > MapRenderer.MAX_Z) {
+            if (Position.Y is < GameSceneRenderer.MIN_Z or > GameSceneRenderer.MAX_Z) {
                 OnRicochet?.Invoke(this);
                 Ricochet(false);
 
@@ -343,7 +343,7 @@ public class Shell : IAITankDanger
             for (var i = 0; i < GameHandler.AllTanks.Length; i++) {
                 var target = Unsafe.Add(ref tanksSSpace, i);
 
-                if (target is null || target == Owner ||
+                if (target is null || target.Dead || target == Owner ||
                     !(Vector2.Distance(Position, target.Position) <= Properties.HomeProperties.Radius)) continue;
 
                 if (target.Team == Owner.Team && target.Team != TeamID.NoTeam) continue;
@@ -659,7 +659,7 @@ public class Shell : IAITankDanger
     }
 
     internal void Render() {
-        if (!MapRenderer.ShouldRenderAll)
+        if (!GameSceneRenderer.ShouldRenderAll)
             return;
 
         Projection = TankGame.GameProjection;

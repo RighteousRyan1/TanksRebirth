@@ -221,7 +221,7 @@ public class GameHandler {
         if (!MainMenu.Active && !LevelEditor.Editing)
             ExperienceBar?.Render(TankGame.SpriteRenderer, new(WindowUtils.WindowWidth / 2, 50.ToResolutionY()), new Vector2(100, 20).ToResolution(), Anchor.Center, Color.Red, Color.Lime);
         // CHECK: move this back if necessary
-        MapRenderer.RenderWorldModels();
+        GameSceneRenderer.RenderWorldModels();
 
         foreach (var tank in AllTanks)
             tank?.Render();
@@ -304,7 +304,7 @@ public class GameHandler {
             }
             // this draws the amount of kills a player has.
             for (int i = -4; i < 10; i++) {
-                SpriteBatchUtils.DrawShadowedTexture(GameResources.GetGameResource<Texture2D>("Assets/textures/ui/scoreboard"),
+                DrawUtils.DrawShadowedTexture(GameResources.GetGameResource<Texture2D>("Assets/textures/ui/scoreboard"),
                     new Vector2((i * 14).ToResolutionX(), WindowUtils.WindowHeight * 0.9f),
                     Vector2.UnitY,
                     Color.White,
@@ -313,7 +313,7 @@ public class GameHandler {
                     new(0, GameResources.GetGameResource<Texture2D>("Assets/textures/ui/scoreboard").Size().Y / 2),
                     true);
             }
-            SpriteBatchUtils.DrawShadowedString(TankGame.TextFontLarge, new Vector2(80.ToResolutionX(), WindowUtils.WindowHeight * 0.9f - 14f.ToResolutionY()), Vector2.One, $"{PlayerTank.KillCount}", new(119, 190, 238), new Vector2(0.675f).ToResolution(), 1f);
+            DrawUtils.DrawShadowedString(TankGame.TextFontLarge, new Vector2(80.ToResolutionX(), WindowUtils.WindowHeight * 0.9f - 14f.ToResolutionY()), Vector2.One, $"{PlayerTank.KillCount}", new(119, 190, 238), new Vector2(0.675f).ToResolution(), 1f);
         }
         // TODO: put this code elsewhere... idk where rn.
         var shouldSeeInfo = !MainMenu.Active && !LevelEditor.Active && !CampaignCompleteUI.IsViewingResults;
@@ -330,17 +330,17 @@ public class GameHandler {
             var tanksRemaining = $"x {AIManager.CountAll()}";
             var tanksRemMeasure = font.MeasureString(tanksRemaining) * infoScale;
 
-            SpriteBatchUtils.DrawShadowedTexture(bar, barPos,
+            DrawUtils.DrawShadowedTexture(bar, barPos,
                 Vector2.UnitY, IntermissionSystem.StripColor * 1.5f, Vector2.One.ToResolution(), alpha, bar.Size() / 2, shadowDistScale: 0.5f);
 
-            SpriteBatchUtils.DrawShadowedTexture(tnk, barPos + new Vector2(bar.Size().X * 0.25f, 0).ToResolution(),
+            DrawUtils.DrawShadowedTexture(tnk, barPos + new Vector2(bar.Size().X * 0.25f, 0).ToResolution(),
                 Vector2.One, IntermissionSystem.BackgroundColor, new Vector2(1.5f).ToResolution(), alpha, tnk.Size() / 2, shadowDistScale: 0.5f);
 
-            SpriteBatchUtils.DrawShadowedString(font, barPos - new Vector2(bar.Size().X / 6, 7.5f * infoScaling).ToResolution(),
+            DrawUtils.DrawShadowedString(font, barPos - new Vector2(bar.Size().X / 6, 7.5f * infoScaling).ToResolution(),
                 Vector2.One, missionInfo, IntermissionSystem.BackgroundColor, new Vector2(infoScale * infoScaling).ToResolution(),
                 1f, infoMeasure, shadowDistScale: 1.5f);
 
-            SpriteBatchUtils.DrawShadowedString(font, barPos + new Vector2(bar.Size().X * 0.375f, -7.5f).ToResolution(),
+            DrawUtils.DrawShadowedString(font, barPos + new Vector2(bar.Size().X * 0.375f, -7.5f).ToResolution(),
                 Vector2.One, tanksRemaining, IntermissionSystem.BackgroundColor, new Vector2(infoScale).ToResolution(),
                 alpha, tanksRemMeasure, shadowDistScale: 1.5f);
         }
@@ -371,7 +371,7 @@ public class GameHandler {
     }
     public static void SetupGraphics() {
         GameShaders.Initialize();
-        MapRenderer.InitializeRenderers();
+        GameSceneRenderer.InitializeRenderers();
         SceneManager.LoadGameScene();
         DebugManager.InitDebugUI();
         PlacementSquare.InitializeLevelEditorSquares();

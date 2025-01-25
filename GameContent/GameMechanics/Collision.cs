@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Utilities;
 
@@ -277,11 +278,11 @@ namespace TanksRebirth.GameContent.GameMechanics
             {
                 var dummyPos = Vector2.Zero;
 
-                if (pathPos.X < MapRenderer.MIN_X || pathPos.X > MapRenderer.MAX_X)
+                if (pathPos.X < GameSceneRenderer.MIN_X || pathPos.X > GameSceneRenderer.MAX_X)
                 {
                     return false;
                 }
-                if (pathPos.Y < MapRenderer.MIN_Z || pathPos.Y > MapRenderer.MAX_Z)
+                if (pathPos.Y < GameSceneRenderer.MIN_Z || pathPos.Y > GameSceneRenderer.MAX_Z)
                 {
                     return false;
                 }

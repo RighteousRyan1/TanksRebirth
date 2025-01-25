@@ -19,6 +19,7 @@ using TanksRebirth.GameContent.ID;
 using TanksRebirth.Net;
 using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.RebirthUtils;
+using static TanksRebirth.GameContent.RebirthUtils.DebugManager;
 
 namespace TanksRebirth.GameContent;
 
@@ -129,8 +130,11 @@ public abstract class Tank {
     public const float TNK_WIDTH = 25;
     public const float TNK_HEIGHT = 25;
 
-    #region Fields / Properties
+    /// <summary>This <see cref="Tank"/>'s swag apparel as a <see cref="List{T}"/> of <see cref="IProp"/>s.</summary>
+    public List<IProp> Props = [];
 
+    #region Fields / Properties
+    private float _oldRotation;
     public Body Body { get; set; } = new();
 
     /// <summary>This <see cref="Tank"/>'s model.</summary>
@@ -138,25 +142,33 @@ public abstract class Tank {
 
     /// <summary>This <see cref="Tank"/>'s world position. Used to change the actual location of the model relative to the <see cref="View"/> and <see cref="Projection"/>.</summary>
     public Matrix World { get; set; }
-
     /// <summary>How the <see cref="Model"/> is viewed through the <see cref="Projection"/>.</summary>
     public Matrix View { get; set; }
-
     /// <summary>The projection from the screen to the <see cref="Model"/>.</summary>
     public Matrix Projection { get; set; }
 
     public int WorldId { get; set; }
+    public int Team { get; set; }
+
+    /// <summary>The current speed of this tank.</summary>
+    public float Speed { get; set; }
+    public float CurShootStun { get; private set; } = 0;
+    public float CurShootCooldown { get; private set; } = 0;
+    public float CurMineCooldown { get; private set; } = 0;
+    public float CurMineStun { get; private set; } = 0;
+
+    private int _oldShellLimit;
 
     public TankProperties Properties = new();
 
-    private int _oldShellLimit;
-    public Shell[] OwnedShells = Array.Empty<Shell>();
+    public Shell[] OwnedShells = [];
 
+    public Vector2 TurretPosition => Position + new Vector2(0, 20).RotatedByRadians(-TurretRotation);
+    public Vector3 TurretPosition3D => new(TurretPosition.X, 11, TurretPosition.Y);
     public Vector2 Position;
     public Vector2 Velocity;
 
     /// <summary>This <see cref="Tank"/>'s <see cref="TeamID"/>.</summary>
-    public int Team { get; set; }
 
     /// <summary>The rotation of this <see cref="Tank"/>'s barrel. Generally should not be modified in a player context.</summary>>
     public BoundingBox Worldbox { get; set; }
@@ -200,14 +212,15 @@ public abstract class Tank {
 
     #endregion
 
-    #region ModelBone & ModelMesh
+    #region Model Stuff
 
     internal Matrix[] _boneTransforms;
 
     internal ModelMesh _cannonMesh;
 
-    #endregion
+    public bool Flip;
 
+    #endregion
     public static int[] GetActiveTeams() {
         var teams = new List<int>();
         foreach (var tank in GameHandler.AllTanks) {
@@ -218,75 +231,6 @@ public abstract class Tank {
         }
 
         return [.. teams];
-    }
-
-    /// <summary>This <see cref="Tank"/>'s swag apparel as a <see cref="List{T}"/> of <see cref="ICosmetic"/>s.</summary>
-    public List<ICosmetic> Cosmetics = new();
-
-    /// <summary>Apply all the default parameters for this <see cref="Tank"/>.</summary>
-    public virtual void ApplyDefaults(ref TankProperties properties) {
-        PostApplyDefaults?.Invoke(this, ref properties);
-        if (this is AITank ai) {
-            for (int i = 0; i < ModLoader.ModTanks.Length; i++) {
-                if (ai.AiTankType == ModLoader.ModTanks[i].Type) {
-                    properties = ModLoader.ModTanks[i].Properties;
-                    ai.AiParams = ModLoader.ModTanks[i].AiParameters;
-                    ModLoader.ModTanks[i].PostApplyDefaults(ai);
-                    return;
-                }
-            }
-
-        }
-        Properties = properties;
-    }
-
-    public virtual void Initialize() {
-        OwnedShells = new Shell[Properties.ShellLimit];
-
-        InitModelSemantics();
-        if (TankGame.SecretCosmeticSetting) {
-            for (int i = 0; i < 1; i++) {
-                var recieved = CosmeticChest.Basic.Open();
-
-                if (recieved is Cosmetic3D cosmetic1)
-                    Cosmetics.Add(cosmetic1);
-                else if (recieved is Cosmetic2D cosmetic2)
-                    Add2DCosmetic(cosmetic2);
-            }
-        }
-
-        InitPhysics();
-
-        if (MapRenderer.Theme == MapTheme.Christmas)
-            Cosmetics.Add(CosmeticChest.SantaHat);
-
-        foreach (var cos in Cosmetics)
-            if (cos is Cosmetic2D cos2d)
-                Add2DCosmetic(cos2d);
-
-        if (IsIngame) {
-            if (Difficulties.Types["BulletHell"])
-                Properties.RicochetCount *= 3;
-            if (Difficulties.Types["MachineGuns"]) {
-                Properties.ShellCooldown = 5;
-                Properties.ShellLimit = 50;
-                Properties.ShootStun = 0;
-
-                if (this is AITank tank)
-                    tank.AiParams.Inaccuracy *= 2;
-            }
-
-            if (Difficulties.Types["Shotguns"]) {
-                Properties.ShellSpread = 0.3f;
-                Properties.ShellShootCount = 3;
-                Properties.ShellLimit *= 3;
-
-                if (this is AITank tank)
-                    tank.AiParams.Inaccuracy *= 2;
-            }
-        }
-
-        GameProperties.OnMissionStart += OnMissionStart;
     }
     /// <summary>Initializes the physics body for this tank. Only use if you know what you're doing with it.</summary>
     public void InitPhysics() {
@@ -299,26 +243,25 @@ public abstract class Tank {
         _cannonMesh = Model!.Meshes["Cannon"];
         _boneTransforms = new Matrix[Model.Bones.Count];
     }
-
-    public void Add2DCosmetic(Cosmetic2D cos2d, Func<bool> destroyOn = null) {
+    public void AddProp2D(Prop2D prop, Func<bool>? destroyOn = null) {
         if (!MainMenu.Active && IsIngame) {
-            if (Cosmetics.Contains(cos2d))
+            if (Props.Contains(prop))
                 return;
-            Cosmetics.Add(cos2d);
-            var particle = GameHandler.Particles.MakeParticle(Position3D + cos2d.RelativePosition, cos2d.Texture);
+            Props.Add(prop);
+            var particle = GameHandler.Particles.MakeParticle(Position3D + prop.RelativePosition, prop.Texture);
 
-            particle.Scale = cos2d.Scale;
+            particle.Scale = prop.Scale;
             particle.Tag =
                 $"cosmetic_2d_{GetHashCode()}"; // store the hash code of this tank, so when we destroy the cosmetic's particle, it destroys all belonging to this tank!
             particle.HasAddativeBlending = false;
             // += vs =  ?
             // TODO: this prolly is the culprit of 2d cosmetics not doin nun
             particle.UniqueBehavior = particle => {
-                particle.Position = Position3D + cos2d.RelativePosition;
-                particle.Roll = cos2d.Rotation.X;
-                particle.Pitch = cos2d.Rotation.Y;
-                particle.Yaw = cos2d.Rotation.Z;
-                particle.Scale = (Properties.Invisible && GameProperties.InMission) ? Vector3.Zero : cos2d.Scale;
+                particle.Position = Position3D + prop.RelativePosition;
+                particle.Roll = prop.Rotation.X;
+                particle.Pitch = prop.Rotation.Y;
+                particle.Yaw = prop.Rotation.Z;
+                particle.Scale = (Properties.Invisible && GameProperties.InMission) ? Vector3.Zero : prop.Scale;
 
                 if (destroyOn == null) return;
 
@@ -327,7 +270,6 @@ public abstract class Tank {
             };
         }
     }
-
     void OnMissionStart() {
         const string invisibleTankSound = "Assets/sounds/tnk_invisible.ogg";
 
@@ -391,14 +333,84 @@ public abstract class Tank {
             };
         }
     }
+    /// <summary>Apply all the default parameters for this <see cref="Tank"/>.</summary>
+    public virtual void ApplyDefaults(ref TankProperties properties) {
+        PostApplyDefaults?.Invoke(this, ref properties);
+        if (this is AITank ai) {
+            for (int i = 0; i < ModLoader.ModTanks.Length; i++) {
+                if (ai.AiTankType == ModLoader.ModTanks[i].Type) {
+                    properties = ModLoader.ModTanks[i].Properties;
+                    ai.AiParams = ModLoader.ModTanks[i].AiParameters;
+                    ModLoader.ModTanks[i].PostApplyDefaults(ai);
+                    return;
+                }
+            }
 
-    public bool Flip;
+        }
+        Properties = properties;
+    }
+    public virtual void Initialize() {
+        /*var shadow = GameHandler.Particles.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>("Assets/textures/tank_shadow"));
+        shadow.HasAddativeBlending = false;
+        shadow.IsIn2DSpace = false;
+        shadow.Roll = -MathHelper.PiOver2;
+        shadow.Scale = new(1f);
+        shadow.Tag = $"tank_{WorldId}_shadow";
+        shadow.UniqueBehavior = (p) => {
+            shadow.Alpha = Properties.Invisible ? 0f : 0.5f;
+            shadow.Position = Position3D + new Vector3(0, 0.1f, 0);
+            shadow.Rotation2D = -TankRotation;
+        };
+        OwnedShells = new Shell[Properties.ShellLimit];*/
 
-    private float _oldRotation;
+        InitModelSemantics();
+        if (TankGame.SecretCosmeticSetting) {
+            for (int i = 0; i < 1; i++) {
+                var recieved = CosmeticChest.Basic.Open();
 
+                if (recieved is Prop3D cosmetic1)
+                    Props.Add(cosmetic1);
+                else if (recieved is Prop2D cosmetic2)
+                    AddProp2D(cosmetic2);
+            }
+        }
+
+        InitPhysics();
+
+        if (GameSceneRenderer.Theme == MapTheme.Christmas)
+            Props.Add(CosmeticChest.SantaHat);
+
+        foreach (var cos in Props)
+            if (cos is Prop2D cos2d)
+                AddProp2D(cos2d);
+
+        if (IsIngame) {
+            if (Difficulties.Types["BulletHell"])
+                Properties.RicochetCount *= 3;
+            if (Difficulties.Types["MachineGuns"]) {
+                Properties.ShellCooldown = 5;
+                Properties.ShellLimit = 50;
+                Properties.ShootStun = 0;
+
+                if (this is AITank tank)
+                    tank.AiParams.Inaccuracy *= 2;
+            }
+
+            if (Difficulties.Types["Shotguns"]) {
+                Properties.ShellSpread = 0.3f;
+                Properties.ShellShootCount = 3;
+                Properties.ShellLimit *= 3;
+
+                if (this is AITank tank)
+                    tank.AiParams.Inaccuracy *= 2;
+            }
+        }
+
+        GameProperties.OnMissionStart += OnMissionStart;
+    }
     /// <summary>Update this <see cref="Tank"/>.</summary>
     public virtual void Update() {
-        if (Dead || !MapRenderer.ShouldRenderAll)
+        if (Dead || !GameSceneRenderer.ShouldRenderAll)
             return;
 
         OnPreUpdate?.Invoke(this);
@@ -413,9 +425,9 @@ public abstract class Tank {
         Body.LinearVelocity = Velocity * 0.55f / UNITS_PER_METER;
 
         // try to make positive. i hate game
-        World = Matrix.CreateScale(Scaling) * Matrix.CreateFromYawPitchRoll(-TankRotation - (Flip ? MathHelper.Pi : 0f),
-                                                0, 0)
-                                            * Matrix.CreateTranslation(Position3D);
+        World = Matrix.CreateScale(Scaling) 
+            * Matrix.CreateFromYawPitchRoll(-TankRotation - (Flip ? MathHelper.Pi : 0f), 0, 0)
+            * Matrix.CreateTranslation(Position3D);
 
         Worldbox = new(Position3D - new Vector3(7, 0, 7), Position3D + new Vector3(10, 15, 10));
 
@@ -431,8 +443,9 @@ public abstract class Tank {
             }
         }
 
-        IsTurning = !(TankRotation > TargetTankRotation - Properties.MaximalTurn - MathHelper.ToRadians(5) &&
-                      TankRotation < TargetTankRotation + Properties.MaximalTurn + MathHelper.ToRadians(5));
+        // FIXME: is the 'ToRadians(5)' operation necessary?
+        IsTurning = !(TankRotation > TargetTankRotation - Properties.MaximalTurn/* - MathHelper.ToRadians(5)*/ &&
+                      TankRotation < TargetTankRotation + Properties.MaximalTurn/* + MathHelper.ToRadians(5)*/);
 
         if (!MainMenu.Active && (!GameProperties.InMission || IntermissionSystem.IsAwaitingNewMission))
             Velocity = Vector2.Zero;
@@ -470,6 +483,8 @@ public abstract class Tank {
         if (!IsTurning) {
             IsTurning = false;
             Speed += Properties.Acceleration * TankGame.DeltaTime;
+
+
             if (Speed > Properties.MaxSpeed)
                 Speed = Properties.MaxSpeed;
         }
@@ -482,8 +497,7 @@ public abstract class Tank {
         }
 
         // try to make negative. go poopoo
-        _cannonMesh.ParentBone.Transform =
-            Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
+        _cannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
         Model!.Root.Transform = World;
 
         Model.CopyAbsoluteBoneTransformsTo(_boneTransforms);
@@ -498,7 +512,7 @@ public abstract class Tank {
             CurMineCooldown -= TankGame.DeltaTime;
 
         // fix 2d peeopled
-        foreach (var cosmetic in Cosmetics)
+        foreach (var cosmetic in Props)
             cosmetic?.UniqueBehavior?.Invoke(cosmetic, this);
 
         _oldRotation = TankRotation;
@@ -563,7 +577,7 @@ public abstract class Tank {
                     a.Destroy();
             };
             part.UniqueDraw = particle => {
-                SpriteBatchUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFontLarge, particle.Text,
+                DrawUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFontLarge, particle.Text,
                     MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(particle.Position),
                         TankGame.GameView, TankGame.GameProjection),
                     particle.Color, Color.White, new(particle.Scale.X, particle.Scale.Y), 0f, Anchor.Center);
@@ -742,12 +756,8 @@ public abstract class Tank {
             if (i == 0) {
                 var new2d = Vector2.UnitY.RotatedByRadians(TurretRotation);
 
-                var newPos = Position + new Vector2(0, 20).RotatedByRadians(-TurretRotation);
-
-                var defPos = new Vector2(newPos.X, newPos.Y);
-
                 if (!fxOnly) {
-                    var shell = new Shell(defPos, new Vector2(-new2d.X, new2d.Y) * Properties.ShellSpeed,
+                    var shell = new Shell(TurretPosition, new Vector2(-new2d.X, new2d.Y) * Properties.ShellSpeed,
                         Properties.ShellType, this, Properties.RicochetCount, homing: Properties.ShellHoming);
 
                     OnShoot?.Invoke(this, ref shell);
@@ -766,11 +776,11 @@ public abstract class Tank {
                         Client.SyncShellFire(shell);
                 }
 
-                var force = (Position - defPos) * Properties.Recoil;
-                Velocity = force / UNITS_PER_METER;
-                DecelerationRateDecayTime = 20 * Properties.Recoil;
+                // var force = (Position - defPos) * Properties.Recoil;
+                //Velocity = force / UNITS_PER_METER;
+                //DecelerationRateDecayTime = 20 * Properties.Recoil;
                 //Body.ApplyForce(force / UNITS_PER_METER);
-                DoShootParticles(new Vector3(defPos.X, 11, defPos.Y));
+                DoShootParticles(TurretPosition3D);
             }
             else {
                 // i == 0 : null, 0 rads
@@ -883,7 +893,7 @@ public abstract class Tank {
     }
 
     public virtual void Render() {
-        if (!MapRenderer.ShouldRenderAll)
+        if (!GameSceneRenderer.ShouldRenderAll)
             return;
         /*foreach (var shell in OwnedShells) {
             SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"Owned by: {(this is PlayerTank ? PlayerID.Collection.GetKey(((PlayerTank)shell.Owner).PlayerType) : TankID.Collection.GetKey(((AITank)shell.Owner).Tier))}",
@@ -896,21 +906,21 @@ public abstract class Tank {
         Projection = TankGame.GameProjection;
         View = TankGame.GameView;
         if (!Dead) {
-            foreach (var cosmetic in Cosmetics) {
+            foreach (var cosmetic in Props) {
                 //if (GameProperties.InMission && Properties.Invisible)
                 //break;
-                if (cosmetic is not Cosmetic3D cos3d)
+                if (cosmetic is not Prop3D cos3d)
                     continue;
 
                 for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
-                    foreach (var mesh in cos3d.Model.Meshes) {
+                    foreach (var mesh in cos3d.PropModel.Meshes) {
                         if (cos3d.IgnoreMeshesByName.Any(meshName => meshName == mesh.Name))
                             continue;
 
                         foreach (BasicEffect effect in mesh.Effects) {
                             var rotY = cosmetic.LockOptions switch {
-                                CosmeticLockOptions.ToTurret => cosmetic.Rotation.Y + TurretRotation,
-                                CosmeticLockOptions.ToTank => cosmetic.Rotation.Y + TankRotation,
+                                PropLockOptions.ToTurret => cosmetic.Rotation.Y + TurretRotation,
+                                PropLockOptions.ToTank => cosmetic.Rotation.Y + TankRotation,
                                 _ => cosmetic.Rotation.Y,
                             };
                             
@@ -936,7 +946,6 @@ public abstract class Tank {
             //$"Team: {TeamID.Collection.GetKey(Team)}",
             //$"Shell Owned / Max: {OwnedShellCount} / {Properties.ShellLimit}",
             //$"Mine Owned / Max: {OwnedMineCount} / {Properties.MineLimit}",
-            //$"Physics.LinearVelocity / Velocity: {Body.LinearVelocity} / {Velocity}",
             $"Tank Rotation/Target: {TankRotation}/{TargetTankRotation}",
             $"WorldID: {WorldId}",
             this is AITank ai
@@ -951,23 +960,17 @@ public abstract class Tank {
                 MatrixUtils.ConvertWorldToScreen(Vector3.Up * 20, World, View, Projection) -
                 new Vector2(0, ((i + 1) * 20).ToResolutionY() + 8), 1, centered: true, color: Color.Aqua);
     }
-
-    /// <summary>The current speed of this tank.</summary>
-    public float Speed { get; set; }
-
-    public float CurShootStun { get; private set; } = 0;
-    public float CurShootCooldown { get; private set; } = 0;
-    public float CurMineCooldown { get; private set; } = 0;
-    public float CurMineStun { get; private set; } = 0;
     public uint timeSinceLastAction = 15000;
 
     public virtual void Remove(bool nullifyMe) {
         if (CollisionsWorld.BodyList.Contains(Body))
             CollisionsWorld.Remove(Body);
-        foreach (var particle in GameHandler.Particles.CurrentParticles)
-            if (particle is not null)
-                if ((string)particle.Tag == $"cosmetic_2d_{GetHashCode()}") // remove all particles related to this tank
+        foreach (var particle in GameHandler.Particles.CurrentParticles) {
+            if (particle is not null && particle.Tag is string tag) {
+                if (tag == $"cosmetic_2d_{GetHashCode()}" || tag == $"tank_{WorldId}_shadow") // remove all particles related to this tank
                     particle.Destroy();
+            }
+        }
         GameProperties.OnMissionStart -= OnMissionStart;
 
         if (nullifyMe)

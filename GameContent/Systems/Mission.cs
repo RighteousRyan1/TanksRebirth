@@ -105,12 +105,12 @@ public record struct Mission {
             // - Dottik
 
             // ReSharper disable once CompareOfFloatsByEqualityOperator
-            if (float.Round(tnk.Rotation) == float.Round(1.57f))
-                tnk.Rotation += MathF.PI;
+            //if (float.Round(tnk.Rotation) == float.Round(1.57f))
+                //tnk.Rotation += MathF.PI * 2;
 
             tank.TankRotation = MathF.Round(tnk.Rotation, 5);
             tank.TargetTankRotation = tank.TankRotation;
-            tank.TurretRotation = tank.TankRotation;
+            tank.TurretRotation = -tank.TankRotation;
             if (tank is AITank aiTank)
                 aiTank.TargetTurretRotation = tank.TurretRotation;
         }
@@ -327,7 +327,7 @@ public record struct Mission {
                 var isPlayer = reader.ReadBoolean();
                 var x = reader.ReadSingle();
                 var y = reader.ReadSingle();
-                var rotation = -reader.ReadSingle(); // i genuinely hate having to make this negative :(
+                var rotation = reader.ReadSingle();
                 var tier = reader.ReadByte();
                 var pType = reader.ReadByte();
                 var team = reader.ReadByte();

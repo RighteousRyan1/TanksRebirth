@@ -4,10 +4,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using tainicom.Aether.Physics2D.Dynamics;
+using TanksRebirth.GameContent;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
 
-namespace TanksRebirth.GameContent;
+namespace TanksRebirth.Graphics;
 
 public enum MapTheme
 {
@@ -16,10 +17,9 @@ public enum MapTheme
 }
 
 // TODO: Chairs and Co (models)
-public static class MapRenderer
+public static class GameSceneRenderer
 {
     public static bool ShouldRenderAll { get; set; } = true;
-
     public static bool ShouldRenderFloor { get; set; } = true;
     public static bool ShouldRenderBounds { get; set; } = true;
     public static bool RenderFloorAsBlack { get; set; } = false;
@@ -135,15 +135,11 @@ public static class MapRenderer
             switch (Theme)
             {
                 case MapTheme.Vanilla:
-
                     AssetRoot = "Assets/textures/ingame/";
-
                     break;
 
                 case MapTheme.Christmas:
-
                     AssetRoot = "Assets/christmas/";
-
                     break;
             }
             PostLoadFloor?.Invoke();
@@ -295,8 +291,6 @@ public static class MapRenderer
         /// Sets a block texture in the boundary model to the context.
         /// </summary>
         /// <param name="mesh"></param>
-        /// <param name="meshNameMatch"></param>
-        /// <param name="textureContext"></param>
         private static void SetBlockTexture(ModelMesh mesh, BoundaryTextureContext context) {
             foreach (BasicEffect effect in mesh.Effects)
                 effect.Texture = Assets[context.ToString()];//GameResources.GetGameResource<Texture2D>($"{AssetRoot}{context}");

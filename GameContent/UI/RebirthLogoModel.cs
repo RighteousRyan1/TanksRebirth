@@ -152,15 +152,7 @@ public class RebirthLogoModel {
         _model.CopyAbsoluteBoneTransformsTo(_boneTransforms);
         _model.Root.Transform = World;
 
-        var lDir = Vector3.Zero;
-
-        var scalar = 0.4f;
-        var rotX = -((MouseUtils.MousePosition.X - WindowUtils.WindowWidth / 2) / (WindowUtils.WindowWidth / 2)) * scalar;
-        var rotY = (MouseUtils.MousePosition.Y - WindowUtils.WindowHeight / 4) / (WindowUtils.WindowHeight / 4) * scalar * 0.5f;
-        Rotation.X = rotX;
-        Rotation.Y = rotY;
-
-        //Rotation_Tanks.X += 0.1f * TankGame.DeltaTime;
+        var lDir = Vector3.Forward;
 
         foreach (var mesh in _model.Meshes) {
             foreach (BasicEffect effect in mesh.Effects) {

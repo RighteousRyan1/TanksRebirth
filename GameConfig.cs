@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework.Input;
 using TanksRebirth.GameContent;
+using TanksRebirth.Graphics;
 using TanksRebirth.Localization;
 
 namespace TanksRebirth;

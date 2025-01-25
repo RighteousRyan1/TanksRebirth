@@ -10,6 +10,7 @@ namespace TanksRebirth.Internals.Common.Framework.Animation;
 public class Animator {
     public static List<Animator> Animators = [];
 
+    private bool _isRunning;
     // added to after every frame is complete. the frame's completion time is added
     private TimeSpan _elapsedOffset;
     // the current elapsed time of the current frame only
@@ -27,7 +28,8 @@ public class Animator {
             return returned;
         }
     }
-    private bool _isRunning;
+    /// <summary>If > -1, the animation will move from the current frame to this ID in the array of KeyFrames.</summary>
+    public int NextKeyFrame = -1;
     /// <summary>The current 2D position of the given animation.</summary>
     public Vector2 CurrentPosition2D { get; private set; }
     /// <summary>The current 2D position of the given animation.</summary>
@@ -146,8 +148,7 @@ public class Animator {
 
         Interpolated = (float)(ElapsedTime.TotalSeconds / EstimatedCompletionTime.TotalSeconds);
 
-        var id = CurrentId + 1;
-        var futureFrame = KeyFrames[id];
+        var futureFrame = KeyFrames[NextKeyFrame > -1 ? NextKeyFrame : CurrentId + 1];
 
         CurrentInterpolation += (float)(gameTime.ElapsedGameTime.TotalSeconds / Current.Duration.TotalSeconds);
         _elapsedInternal += gameTime.ElapsedGameTime;

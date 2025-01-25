@@ -145,7 +145,7 @@ public class Particle
     }
     internal void Render()
     {
-        if (!MapRenderer.ShouldRenderAll)
+        if (!GameSceneRenderer.ShouldRenderAll)
             return;
         if (!IsIn2DSpace)
         {
