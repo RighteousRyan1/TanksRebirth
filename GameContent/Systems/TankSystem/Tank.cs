@@ -19,7 +19,7 @@ using TanksRebirth.GameContent.ID;
 using TanksRebirth.Net;
 using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.RebirthUtils;
-using static TanksRebirth.GameContent.RebirthUtils.DebugManager;
+using TanksRebirth.Internals.Common;
 
 namespace TanksRebirth.GameContent;
 
@@ -163,7 +163,7 @@ public abstract class Tank {
 
     public Shell[] OwnedShells = [];
 
-    public Vector2 TurretPosition => Position + new Vector2(0, 20).RotatedByRadians(-TurretRotation);
+    public Vector2 TurretPosition => Position + (Vector2.UnitY * 20).RotatedByRadians(TurretRotation);
     public Vector3 TurretPosition3D => new(TurretPosition.X, 11, TurretPosition.Y);
     public Vector2 Position;
     public Vector2 Velocity;
@@ -426,10 +426,31 @@ public abstract class Tank {
 
         // try to make positive. i hate game
         World = Matrix.CreateScale(Scaling) 
+            // we add Pi/2 to the x rotation so rotation starts on Sin(0)
+            // TankRotation is negative and we add TankRotation to TurretRotation for the cannon transform sowe can rotate in the same direction as our calculations
             * Matrix.CreateFromYawPitchRoll(-TankRotation - (Flip ? MathHelper.Pi : 0f), 0, 0)
             * Matrix.CreateTranslation(Position3D);
 
         Worldbox = new(Position3D - new Vector3(7, 0, 7), Position3D + new Vector3(10, 15, 10));
+
+        _cannonMesh.ParentBone.Transform = //Matrix.CreateScale(100) * 
+            //Matrix.CreateRotationX(-MathHelper.PiOver2) * 
+            Matrix.CreateRotationY(-TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
+
+        if (CurShootStun > 0)
+            CurShootStun -= TankGame.DeltaTime;
+        if (CurShootCooldown > 0)
+            CurShootCooldown -= TankGame.DeltaTime;
+        if (CurMineStun > 0)
+            CurMineStun -= TankGame.DeltaTime;
+        if (CurMineCooldown > 0)
+            CurMineCooldown -= TankGame.DeltaTime;
+
+        //return;
+
+        // FIXME: is the 'ToRadians(5)' operation necessary?
+        IsTurning = !(TankRotation > TargetTankRotation - Properties.MaximalTurn/* - MathHelper.ToRadians(5)*/ &&
+                      TankRotation < TargetTankRotation + Properties.MaximalTurn/* + MathHelper.ToRadians(5)*/);
 
         if (IsTurning) {
             // var real = TankRotation + MathHelper.PiOver2;
@@ -442,10 +463,6 @@ public abstract class Tank {
                 Flip = !Flip;
             }
         }
-
-        // FIXME: is the 'ToRadians(5)' operation necessary?
-        IsTurning = !(TankRotation > TargetTankRotation - Properties.MaximalTurn/* - MathHelper.ToRadians(5)*/ &&
-                      TankRotation < TargetTankRotation + Properties.MaximalTurn/* + MathHelper.ToRadians(5)*/);
 
         if (!MainMenu.Active && (!GameProperties.InMission || IntermissionSystem.IsAwaitingNewMission))
             Velocity = Vector2.Zero;
@@ -481,9 +498,9 @@ public abstract class Tank {
         }
 
         if (!IsTurning) {
+            // if not turning, make turning false :pe: what
             IsTurning = false;
             Speed += Properties.Acceleration * TankGame.DeltaTime;
-
 
             if (Speed > Properties.MaxSpeed)
                 Speed = Properties.MaxSpeed;
@@ -496,20 +513,28 @@ public abstract class Tank {
             IsTurning = true;
         }
 
+        // transforms were initially set here, incase of broken stuff
         // try to make negative. go poopoo
-        _cannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
         Model!.Root.Transform = World;
 
         Model.CopyAbsoluteBoneTransformsTo(_boneTransforms);
 
-        if (CurShootStun > 0)
-            CurShootStun -= TankGame.DeltaTime;
-        if (CurShootCooldown > 0)
-            CurShootCooldown -= TankGame.DeltaTime;
-        if (CurMineStun > 0)
-            CurMineStun -= TankGame.DeltaTime;
-        if (CurMineCooldown > 0)
-            CurMineCooldown -= TankGame.DeltaTime;
+        if (InputUtils.KeyJustPressed(Microsoft.Xna.Framework.Input.Keys.F7)) {
+            var rand = GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi);
+            Velocity = Vector2.Zero; // for rotation testing only
+                                     //if (TankGame.RunTime % 30 <= TankGame.DeltaTime)
+            TankRotation += MathHelper.PiOver4;//TargetTankRotation = MouseUtils.MousePosition.X / WindowUtils.WindowWidth * MathHelper.TwoPi;
+            TargetTankRotation = TankRotation;
+            TurretRotation = TankRotation; //MouseUtils.MousePosition.Y / WindowUtils.WindowHeight * MathHelper.TwoPi;
+        }
+
+        // this goes in the opposite direction of what it should be?
+        if (InputUtils.KeyJustPressed(Microsoft.Xna.Framework.Input.Keys.I))
+            Body.Position += Vector2.UnitY.RotatedByRadians(TankRotation);
+        if (InputUtils.KeyJustPressed(Microsoft.Xna.Framework.Input.Keys.Y))
+            LayFootprint(false);
+        if (InputUtils.KeyJustPressed(Microsoft.Xna.Framework.Input.Keys.F))
+            Shoot(false);
 
         // fix 2d peeopled
         foreach (var cosmetic in Props)
@@ -734,6 +759,7 @@ public abstract class Tank {
     public virtual void LayFootprint(bool alt) {
         if (!Properties.CanLayTread)
             return;
+        // figure out this thing
         new TankFootprint(this, -TankRotation, alt) {
             Position = Position3D + new Vector3(0, 0.15f, 0),
         };
@@ -754,10 +780,8 @@ public abstract class Tank {
 
         for (int i = 0; i < Properties.ShellShootCount; i++) {
             if (i == 0) {
-                var new2d = Vector2.UnitY.RotatedByRadians(TurretRotation);
-
                 if (!fxOnly) {
-                    var shell = new Shell(TurretPosition, new Vector2(-new2d.X, new2d.Y) * Properties.ShellSpeed,
+                    var shell = new Shell(TurretPosition, Vector2.UnitY.RotatedByRadians(TurretRotation) * Properties.ShellSpeed,
                         Properties.ShellType, this, Properties.RicochetCount, homing: Properties.ShellHoming);
 
                     OnShoot?.Invoke(this, ref shell);
@@ -795,7 +819,7 @@ public abstract class Tank {
 
                 var shell = new Shell(Position, Vector2.Zero, Properties.ShellType, this,
                     homing: Properties.ShellHoming);
-                var new2d = Vector2.UnitY.RotatedByRadians(TurretRotation);
+                var new2d = Vector2.UnitX.RotatedByRadians(TurretRotation);
 
                 var newPos = Position + new Vector2(0, 20).RotatedByRadians(-TurretRotation + newAngle);
 
