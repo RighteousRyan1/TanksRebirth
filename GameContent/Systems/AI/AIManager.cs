@@ -351,7 +351,7 @@ public static class AIManager {
 
                 aiParams.MinePlacementChance = 0.08f;
 
-                aiParams.BlockWarinessDistance = 30;
+                aiParams.BlockWarinessDistance = 40; // used to be 30 but it's short
 
                 properties.Invisible = true;
 
