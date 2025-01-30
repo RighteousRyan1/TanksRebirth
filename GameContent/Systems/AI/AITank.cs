@@ -371,7 +371,7 @@ public partial class AITank : Tank {
             timeSinceLastAction++;
 
             if (!MainMenu.Active)
-                if (!GameProperties.InMission || IntermissionSystem.IsAwaitingNewMission || LevelEditor.Active)
+                if (!CampaignGlobals.InMission || IntermissionSystem.IsAwaitingNewMission || LevelEditor.Active)
                     Velocity = Vector2.Zero;
             DoAi();
 
@@ -793,7 +793,7 @@ public partial class AITank : Tank {
     public void DoAi() {
         TanksNear.Clear();
         BlocksNear.Clear();
-        if (!MainMenu.Active && !GameProperties.InMission)
+        if (!MainMenu.Active && !CampaignGlobals.InMission)
             return;
 
         TurretRotationMultiplier = 1f;
@@ -1132,7 +1132,7 @@ public partial class AITank : Tank {
     public void ExplosionAvoid(Explosion explosion) {
         // FIXME?: is the modulus check more sensible to come first or not? only time will tell.
         if (Behaviors[5].IsModOf(10)) {
-            var dist = explosion.IsPlayerSourced ? AiParams.MineWarinessRadius_PlayerLaid : AiParams.MineWarinessRadius_AILaid;
+            //var dist = explosion.IsPlayerSourced ? AiParams.MineWarinessRadius_PlayerLaid : AiParams.MineWarinessRadius_AILaid;
             var direction = -Vector2.UnitY.RotatedByRadians(explosion.Position.DirectionOf(Position, false).ToRotation());
             TargetTankRotation = direction.ToRotation();
         }
@@ -1144,7 +1144,7 @@ public partial class AITank : Tank {
                 if (reflections.Length > 0) {
                     // up = PiOver2
                     //var normalRotation = reflections[0].Normal.RotatedByRadians(TargetTankRotation);
-                    var dirOf = MathUtils.DirectionOf(travelPath/*Position + normalRotation*/, Position).ToRotation();
+                    var dirOf = MathUtils.DirectionOf(travelPath/*Position + normalRotation*/, Position/*reflections[0].ReflectionPoint*/).ToRotation();
                     var refAngle = dirOf + MathHelper.PiOver2;
 
                     // this is a very bandaid fix....
@@ -1184,7 +1184,7 @@ public partial class AITank : Tank {
             return;
         TankGame.Instance.GraphicsDevice.BlendState = BlendState.AlphaBlend;
         DrawExtras();
-        if ((MainMenu.Active && Properties.Invisible) || (Properties.Invisible && GameProperties.InMission))
+        if ((MainMenu.Active && Properties.Invisible) || (Properties.Invisible && CampaignGlobals.InMission))
             return;
 
         for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
@@ -1277,7 +1277,7 @@ public partial class AITank : Tank {
             //DebugUtils.DrawDebugString(TankGame.SpriteRenderer, "end", MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(MathUtils.DirectionOf(travelPos, Position).X, 0, MathUtils.DirectionOf(travelPos, Position).Y), View, Projection), 6, centered: true);
         }
 
-        if (Properties.Invisible && (GameProperties.InMission || MainMenu.Active))
+        if (Properties.Invisible && (CampaignGlobals.InMission || MainMenu.Active))
             return;
 
         Properties.Armor?.Render();

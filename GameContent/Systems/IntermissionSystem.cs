@@ -95,12 +95,12 @@ public static class IntermissionSystem {
         }
         else if (frameId == 1) {
             if (Difficulties.Types["RandomizedTanks"]) {
-                if (GameProperties.LoadedCampaign.CurrentMissionId == MainMenu.MissionCheckpoint && IntermissionHandler.LastResult != Enums.MissionEndContext.Lose) {
-                    GameProperties.LoadedCampaign.CachedMissions[GameProperties.LoadedCampaign.CurrentMissionId].Tanks
-                        = Difficulties.HijackTanks(GameProperties.LoadedCampaign.CachedMissions[GameProperties.LoadedCampaign.CurrentMissionId].Tanks);
+                if (CampaignGlobals.LoadedCampaign.CurrentMissionId == MainMenu.MissionCheckpoint && IntermissionHandler.LastResult != Enums.MissionEndContext.Lose) {
+                    CampaignGlobals.LoadedCampaign.CachedMissions[CampaignGlobals.LoadedCampaign.CurrentMissionId].Tanks
+                        = Difficulties.HijackTanks(CampaignGlobals.LoadedCampaign.CachedMissions[CampaignGlobals.LoadedCampaign.CurrentMissionId].Tanks);
                 }
             }
-            GameProperties.LoadedCampaign.SetupLoadedMission(GameHandler.AllPlayerTanks.Any(tnk => tnk != null && !tnk.Dead));
+            CampaignGlobals.LoadedCampaign.SetupLoadedMission(GameHandler.AllPlayerTanks.Any(tnk => tnk != null && !tnk.Dead));
         }
         else if (frameId == 2) {
             // TODO: fix float interp
@@ -136,9 +136,9 @@ public static class IntermissionSystem {
         if (BlackAlpha >= 1 && _oldBlack < 1) {
             MainMenu.Leave();
 
-            if (GameProperties.ShouldMissionsProgress) {
+            if (CampaignGlobals.ShouldMissionsProgress) {
                 // todo: should this happen?
-                GameProperties.LoadedCampaign.SetupLoadedMission(true);
+                CampaignGlobals.LoadedCampaign.SetupLoadedMission(true);
             }
 
         }
@@ -193,14 +193,14 @@ public static class IntermissionSystem {
             var wp = TankGame.WhitePixel;
             spriteBatch.Draw(wp, new Vector2(0, WindowUtils.WindowHeight * 0.19f), null, Color.Yellow * Alpha, 0f, new Vector2(0, wp.Size().Y / 2), new Vector2(WindowUtils.WindowWidth, 5), default, default);
             spriteBatch.Draw(wp, new Vector2(0, WindowUtils.WindowHeight * 0.19f + 400.ToResolutionY()), null, Color.Yellow * Alpha, 0f, new Vector2(0, wp.Size().Y / 2), new Vector2(WindowUtils.WindowWidth, 5), default, default);
-            int mafs1 = GameProperties.LoadedCampaign.TrackedSpawnPoints.Count(p => p.Item2);
-            int mafs2 = GameProperties.LoadedCampaign.LoadedMission.Tanks.Count(x => x.IsPlayer);
+            int mafs1 = CampaignGlobals.LoadedCampaign.TrackedSpawnPoints.Count(p => p.Item2);
+            int mafs2 = CampaignGlobals.LoadedCampaign.LoadedMission.Tanks.Count(x => x.IsPlayer);
             int mafs = mafs1 - mafs2; // waddafak. why is my old code so horrid.
 
             DrawUtils.DrawShadowedString(TankGame.TextFontLarge,
                 new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 220.ToResolutionY()),
                 Vector2.One,
-                GameProperties.LoadedCampaign.LoadedMission.Name,
+                CampaignGlobals.LoadedCampaign.LoadedMission.Name,
                 BackgroundColor,
                 TextAnimatorLarge.CurrentScale.ToResolution(),
                 Alpha);
@@ -242,11 +242,11 @@ public static class IntermissionSystem {
                 DrawUtils.DrawShadowedTexture(tnk2d, pos - new Vector2(130, 0).ToResolution(), Vector2.One, PlayerID.PlayerTankColors[i].ToColor(), new Vector2(1.25f), Alpha, tnk2d.Size() / 2);
             }
             // draw mission data on the billboard (?) thing
-            if (GameProperties.LoadedCampaign.CurrentMissionId == 0)
+            if (CampaignGlobals.LoadedCampaign.CurrentMissionId == 0)
                 DrawUtils.DrawShadowedString(TankGame.TextFontLarge,
                     new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 295.ToResolutionY()),
                     Vector2.One,
-                    $"{TankGame.GameLanguage.Campaign}: \"{GameProperties.LoadedCampaign.MetaData.Name}\" ({TankGame.GameLanguage.Mission} #{GameProperties.LoadedCampaign.CurrentMissionId + 1})",
+                    $"{TankGame.GameLanguage.Campaign}: \"{CampaignGlobals.LoadedCampaign.MetaData.Name}\" ({TankGame.GameLanguage.Mission} #{CampaignGlobals.LoadedCampaign.CurrentMissionId + 1})",
                     BackgroundColor,
                     TextAnimatorSmall.CurrentScale.ToResolution(),
                     Alpha);
@@ -254,7 +254,7 @@ public static class IntermissionSystem {
                 DrawUtils.DrawShadowedString(TankGame.TextFontLarge,
                     new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 295.ToResolutionY()),
                     Vector2.One,
-                    $"{TankGame.GameLanguage.Mission} #{GameProperties.LoadedCampaign.CurrentMissionId + 1}",
+                    $"{TankGame.GameLanguage.Mission} #{CampaignGlobals.LoadedCampaign.CurrentMissionId + 1}",
                     BackgroundColor,
                     TextAnimatorSmall.CurrentScale.ToResolution(),
                     Alpha);

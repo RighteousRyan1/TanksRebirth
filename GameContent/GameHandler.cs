@@ -66,7 +66,7 @@ public class GameHandler {
     public static Tank[] AllTanks = new Tank[MAX_PLAYERS + MAX_AI_TANKS];
 
     internal static void MapEvents() {
-        GameProperties.OnMissionEnd += IntermissionHandler.DoEndMissionWorkload;
+        CampaignGlobals.OnMissionEnd += IntermissionHandler.DoEndMissionWorkload;
     }
 
     internal static void Initialize() {
@@ -103,7 +103,7 @@ public class GameHandler {
             doTestWithFont();
         // ChatSystem.CurTyping = SoundPlayer.GetLengthOfSound("Content/Assets/sounds/tnk_shoot_ricochet_rocket_loop.ogg").ToString();
         if (DebugManager.DebuggingEnabled) {
-            if (/*InputUtils.KeyJustPressed(Keys.H)*/ DebugManager.DebugLevel == -2 && GameProperties.InMission) {
+            if (/*InputUtils.KeyJustPressed(Keys.H)*/ DebugManager.DebugLevel == -2 && CampaignGlobals.InMission) {
                 if (TankGame.RunTime % 300 <= TankGame.DeltaTime) {
                     if (Server.ServerRandom.Next(2) == 0) {
                         var pos = Airplane.ChooseRandomXZPosition(Server.ServerRandom);
@@ -167,7 +167,7 @@ public class GameHandler {
             foreach (var p in Airplane.AllPlanes)
                 p?.Update();
         }
-        if (GameProperties.InMission) {
+        if (CampaignGlobals.InMission) {
             TankMusicSystem.Update();
 
             foreach (var crate in Crate.crates)
@@ -176,7 +176,7 @@ public class GameHandler {
             foreach (var pu in Powerup.Powerups)
                 pu?.Update();
         }
-        else if (!GameProperties.InMission)
+        else if (!CampaignGlobals.InMission)
             if (TankMusicSystem.Audio is not null)
                 foreach (var song in TankMusicSystem.Audio.ToList())
                     song.Value.Volume = 0;
@@ -185,7 +185,7 @@ public class GameHandler {
         foreach (var expl in Explosion.Explosions)
             expl?.Update();
 
-        if (GameProperties.ShouldMissionsProgress && !MainMenu.Active)
+        if (CampaignGlobals.ShouldMissionsProgress && !MainMenu.Active)
             IntermissionHandler.HandleMissionChanging();
 
         foreach (var cube in Block.AllBlocks)
@@ -201,7 +201,7 @@ public class GameHandler {
             MainMenu.Update();
 
         if ((TankGame.OverheadView || MainMenu.Active) && !LevelEditor.Active) {
-            GameProperties.InMission = false;
+            CampaignGlobals.InMission = false;
             IntermissionHandler.TankFunctionWait = 600;
         }
 
@@ -279,7 +279,7 @@ public class GameHandler {
                                                            $"\nKeys O + P: Reload All Mods" +
                                                            $"\nKeys Q + E: Resynchronize Randoms", new(10, 500));
 
-                DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"Current Mission: {GameProperties.LoadedCampaign.CurrentMission.Name}\nCurrent Campaign: {GameProperties.LoadedCampaign.MetaData.Name}", WindowUtils.WindowBottomLeft - new Vector2(-4, 60), 3, centered: false);
+                DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"Current Mission: {CampaignGlobals.LoadedCampaign.CurrentMission.Name}\nCurrent Campaign: {CampaignGlobals.LoadedCampaign.MetaData.Name}", WindowUtils.WindowBottomLeft - new Vector2(-4, 60), 3, centered: false);
             }
 
             DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"HighestTier: {AIManager.GetHighestTierActive()}", new(10, WindowUtils.WindowHeight * 0.26f), 1);
@@ -293,7 +293,7 @@ public class GameHandler {
 
         Particles.RenderParticles();
 
-        if (GameProperties.ShouldMissionsProgress && !MainMenu.Active)
+        if (CampaignGlobals.ShouldMissionsProgress && !MainMenu.Active)
             PingMenu.DrawPingHUD();
 
         IntermissionHandler.RenderCountdownGraphics();
@@ -324,7 +324,7 @@ public class GameHandler {
             var bar = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/mission_info");
             var tnk = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/tank2d");
             var barPos = new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight - (bar.Height + 35).ToResolutionY());
-            var missionInfo = $"{GameProperties.LoadedCampaign.CurrentMission.Name ?? $"{TankGame.GameLanguage.Mission}"}";
+            var missionInfo = $"{CampaignGlobals.LoadedCampaign.CurrentMission.Name ?? $"{TankGame.GameLanguage.Mission}"}";
             var infoMeasure = font.MeasureString(missionInfo) * infoScale;
             var infoScaling = 1f - ((float)missionInfo.Length / LevelEditor.MAX_MISSION_CHARS) + 0.4f;
             var tanksRemaining = $"x {AIManager.CountAll()}";

@@ -206,15 +206,15 @@ public class NetPlay {
                         Note = note
                     };
                 }
-                GameProperties.LoadedCampaign = campaign;
+                CampaignGlobals.LoadedCampaign = campaign;
 
                 break;
             case PacketID.StartGame:
                 int checkpoint = reader.GetInt();
                 bool shouldProgress = reader.GetBool();
-                GameProperties.ShouldMissionsProgress = shouldProgress;
+                CampaignGlobals.ShouldMissionsProgress = shouldProgress;
 
-                GameProperties.LoadedCampaign.LoadMission(checkpoint); // maybe change to checkpoints eventually.
+                CampaignGlobals.LoadedCampaign.LoadMission(checkpoint); // maybe change to checkpoints eventually.
 
                 MainMenu.TransitionToGame();
 

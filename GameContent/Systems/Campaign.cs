@@ -146,7 +146,7 @@ public class Campaign
                     tank.TurretRotation = MathF.Round(-template.Rotation, roundingFactor);
                     tank.Dead = false;
                     tank.Team = template.Team;
-                    if (GameProperties.ShouldMissionsProgress)
+                    if (CampaignGlobals.ShouldMissionsProgress)
                     {
                         tank.OnDestroy += () => {
                             TrackedSpawnPoints[Array.IndexOf(TrackedSpawnPoints, TrackedSpawnPoints.First(pos => pos.Item1 == template.Position))].Item2 = false; // make sure the tank is not spawned again

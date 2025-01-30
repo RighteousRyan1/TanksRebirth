@@ -201,7 +201,7 @@ public class PlayerTank : Tank
 
         //Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
 
-        if (GameProperties.InMission) {
+        if (CampaignGlobals.InMission) {
             if (TargetTankRotation - TankRotation >= MathHelper.PiOver2) {
                 TankRotation += MathHelper.Pi;
                 Flip = !Flip;
@@ -236,7 +236,7 @@ public class PlayerTank : Tank
                 }
             }
 
-            if (GameProperties.InMission && !LevelEditor.Active && !ChatSystem.ActiveHandle) {
+            if (CampaignGlobals.InMission && !LevelEditor.Active && !ChatSystem.ActiveHandle) {
                 if (CurShootStun <= 0 && CurMineStun <= 0) {
                     if (!Properties.Stationary) {
                         if (NetPlay.IsClientMatched(PlayerId)) {
@@ -254,7 +254,7 @@ public class PlayerTank : Tank
                 Speed = 0;
             }
 
-            if (GameProperties.InMission && !LevelEditor.Active) {
+            if (CampaignGlobals.InMission && !LevelEditor.Active) {
                 if (NetPlay.IsClientMatched(PlayerId)) {
                     if (InputUtils.CanDetectClick())
                         if (!ChatSystem.ChatBoxHover && !ChatSystem.ActiveHandle && !GameUI.Paused)
@@ -455,7 +455,7 @@ public class PlayerTank : Tank
         base.Destroy(context);
     }
     public void UpdatePlayerMovement() {
-        if (!GameProperties.InMission)
+        if (!CampaignGlobals.InMission)
             return;
         //if (!controlDown.IsPressed && !controlUp.IsPressed && leftStick.Y == 0)
         //Velocity.Y = 0;
@@ -528,7 +528,7 @@ public class PlayerTank : Tank
         if (Dead)
             return;
         DrawExtras();
-        if (Properties.Invisible && GameProperties.InMission)
+        if (Properties.Invisible && CampaignGlobals.InMission)
             return;
         for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
             foreach (ModelMesh mesh in Model.Meshes) {
@@ -602,7 +602,7 @@ public class PlayerTank : Tank
             }
         }
 
-        bool needClarification = GameProperties.ShouldMissionsProgress && !GameProperties.InMission && IsIngame && !IntermissionSystem.IsAwaitingNewMission;
+        bool needClarification = CampaignGlobals.ShouldMissionsProgress && !CampaignGlobals.InMission && IsIngame && !IntermissionSystem.IsAwaitingNewMission;
 
         var playerColor = PlayerID.PlayerTankColors[PlayerType].ToColor();
         var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 125).ToResolution(); ;
@@ -635,7 +635,7 @@ public class PlayerTank : Tank
         if (DebugManager.DebugLevel == 1 || _drawShotPath)
             DrawShootPath();
 
-        if (Properties.Invisible && GameProperties.InMission)
+        if (Properties.Invisible && CampaignGlobals.InMission)
             return;
 
         Properties.Armor?.Render();

@@ -101,21 +101,21 @@ public static class IntermissionHandler {
         }
         if (context == MissionEndContext.Win) {
             TankGame.GameData.MissionsCompleted++;
-            GameProperties.LoadedCampaign.LoadNextMission();
+            CampaignGlobals.LoadedCampaign.LoadNextMission();
             // hijack the next mission if random tanks is enabled.
             // IntermissionSystem.cs line 89 contains when the next mission is actually set-up.
             if (Difficulties.Types["RandomizedTanks"])
-                GameProperties.LoadedCampaign.CachedMissions[GameProperties.LoadedCampaign.CurrentMissionId].Tanks
-                            = Difficulties.HijackTanks(GameProperties.LoadedCampaign.CachedMissions[GameProperties.LoadedCampaign.CurrentMissionId].Tanks);
+                CampaignGlobals.LoadedCampaign.CachedMissions[CampaignGlobals.LoadedCampaign.CurrentMissionId].Tanks
+                            = Difficulties.HijackTanks(CampaignGlobals.LoadedCampaign.CachedMissions[CampaignGlobals.LoadedCampaign.CurrentMissionId].Tanks);
             SoundPlayer.PlaySoundInstance("Assets/fanfares/mission_complete.ogg", SoundContext.Effect, 0.5f);
             if (Speedrun.CurrentSpeedrun is not null) {
-                if (GameProperties.LoadedCampaign.CurrentMissionId > 1) {
-                    var prevTime = Speedrun.CurrentSpeedrun.MissionTimes.ElementAt(GameProperties.LoadedCampaign.CurrentMissionId - 2).Value; // previous mission time.
+                if (CampaignGlobals.LoadedCampaign.CurrentMissionId > 1) {
+                    var prevTime = Speedrun.CurrentSpeedrun.MissionTimes.ElementAt(CampaignGlobals.LoadedCampaign.CurrentMissionId - 2).Value; // previous mission time.
                     var realTime = Speedrun.CurrentSpeedrun.Timer.Elapsed - prevTime.Item1; // current total time - previous total time
-                    Speedrun.CurrentSpeedrun.MissionTimes[GameProperties.LoadedCampaign.CurrentMission.Name] = (Speedrun.CurrentSpeedrun.Timer.Elapsed, realTime);
+                    Speedrun.CurrentSpeedrun.MissionTimes[CampaignGlobals.LoadedCampaign.CurrentMission.Name] = (Speedrun.CurrentSpeedrun.Timer.Elapsed, realTime);
                 }
                 else
-                    Speedrun.CurrentSpeedrun.MissionTimes[GameProperties.LoadedCampaign.CurrentMission.Name] = (Speedrun.CurrentSpeedrun.Timer.Elapsed, Speedrun.CurrentSpeedrun.Timer.Elapsed);
+                    Speedrun.CurrentSpeedrun.MissionTimes[CampaignGlobals.LoadedCampaign.CurrentMission.Name] = (Speedrun.CurrentSpeedrun.Timer.Elapsed, Speedrun.CurrentSpeedrun.Timer.Elapsed);
             }
         }
 
@@ -167,16 +167,16 @@ public static class IntermissionHandler {
         return false;
     }
     public static void HandleMissionChanging() {
-        if (GameProperties.LoadedCampaign.CachedMissions[0].Name is null)
+        if (CampaignGlobals.LoadedCampaign.CachedMissions[0].Name is null)
             return;
 
-        var nothingAnymore = NothingCanHappenAnymore(GameProperties.LoadedCampaign.CurrentMission, out bool victory);
+        var nothingAnymore = NothingCanHappenAnymore(CampaignGlobals.LoadedCampaign.CurrentMission, out bool victory);
 
         if (nothingAnymore) {
-            GameProperties.InMission = false;
-            if (!GameProperties.InMission && _wasInMission) {
+            CampaignGlobals.InMission = false;
+            if (!CampaignGlobals.InMission && _wasInMission) {
                 IntermissionSystem.InitializeCountdowns();
-                bool isExtraLifeMission = GameProperties.LoadedCampaign.MetaData.ExtraLivesMissions.Contains(GameProperties.LoadedCampaign.CurrentMissionId + 1);
+                bool isExtraLifeMission = CampaignGlobals.LoadedCampaign.MetaData.ExtraLivesMissions.Contains(CampaignGlobals.LoadedCampaign.CurrentMissionId + 1);
                 if (victory) {
                     int restartTime = 600;
                     //if (isExtraLifeMission)
@@ -184,10 +184,10 @@ public static class IntermissionHandler {
 
                     var cxt = MissionEndContext.Win;
 
-                    if (GameProperties.LoadedCampaign.CurrentMissionId >= GameProperties.LoadedCampaign.CachedMissions.Length - 1)
-                        cxt = GameProperties.LoadedCampaign.MetaData.HasMajorVictory ? MissionEndContext.CampaignCompleteMajor : MissionEndContext.CampaignCompleteMinor;
+                    if (CampaignGlobals.LoadedCampaign.CurrentMissionId >= CampaignGlobals.LoadedCampaign.CachedMissions.Length - 1)
+                        cxt = CampaignGlobals.LoadedCampaign.MetaData.HasMajorVictory ? MissionEndContext.CampaignCompleteMajor : MissionEndContext.CampaignCompleteMinor;
 
-                    GameProperties.MissionEndEvent_Invoke(restartTime, cxt, isExtraLifeMission);
+                    CampaignGlobals.MissionEndEvent_Invoke(restartTime, cxt, isExtraLifeMission);
                 }
                 else {
                     int restartTime = 600;
@@ -211,7 +211,7 @@ public static class IntermissionHandler {
                     if (Difficulties.Types["InfiniteLives"])
                         cxt = MissionEndContext.Lose;
 
-                    GameProperties.MissionEndEvent_Invoke(restartTime, cxt, isExtraLifeMission);
+                    CampaignGlobals.MissionEndEvent_Invoke(restartTime, cxt, isExtraLifeMission);
                 }
             }
         }
@@ -256,7 +256,7 @@ public static class IntermissionHandler {
 
         SceneManager.CleanupScene();
 
-        GameProperties.InMission = false;
+        CampaignGlobals.InMission = false;
     }
 
     public static void Update() {
@@ -264,9 +264,9 @@ public static class IntermissionHandler {
             TankFunctionWait -= TankGame.DeltaTime;
         if (TankFunctionWait <= 0 && _oldWait > 0 && !MainMenu.Active) {
             // FIXME: maybe causes issues since the mission is 1 tick from starting?
-            if (!GameProperties.InMission) {
-                GameProperties.InMission = true;
-                GameProperties.DoMissionStartInvoke();
+            if (!CampaignGlobals.InMission) {
+                CampaignGlobals.InMission = true;
+                CampaignGlobals.DoMissionStartInvoke();
                 TankMusicSystem.PlayAll();
             }
         }
@@ -282,7 +282,7 @@ public static class IntermissionHandler {
             BeginIntroSequence();
 
         _wasOverhead = TankGame.OverheadView;
-        _wasInMission = GameProperties.InMission;
+        _wasInMission = CampaignGlobals.InMission;
         _oldWait = TankFunctionWait;
     }
 

@@ -218,7 +218,7 @@ public class Shell : IAITankDanger
             SoundPlayer.PlaySoundInstance(ShootSound, SoundContext.Effect, 0.3f);
         }
 
-        GameProperties.OnMissionEnd += StopSounds;
+        CampaignGlobals.OnMissionEnd += StopSounds;
         TankGame.OnFocusLost += TankGame_OnFocusLost;
         TankGame.OnFocusRegained += TankGame_OnFocusRegained;
 
@@ -243,7 +243,7 @@ public class Shell : IAITankDanger
         ShootSound?.Instance?.Stop();
     }
     internal void Update() {
-        if (!GameSceneRenderer.ShouldRenderAll || (!GameProperties.InMission && !MainMenu.Active))
+        if (!GameSceneRenderer.ShouldRenderAll || (!CampaignGlobals.InMission && !MainMenu.Active))
             return;
 
         Rotation = Velocity.ToRotation() - MathHelper.PiOver2;
@@ -604,7 +604,7 @@ public class Shell : IAITankDanger
 
         TankGame.OnFocusLost -= TankGame_OnFocusLost;
         TankGame.OnFocusRegained -= TankGame_OnFocusRegained;
-        GameProperties.OnMissionEnd -= StopSounds;
+        CampaignGlobals.OnMissionEnd -= StopSounds;
 
         TrailSound?.Instance?.Stop();
         TrailSound = null;

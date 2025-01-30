@@ -196,6 +196,11 @@ public static class SceneManager {
             TankDeathMark.deathMarks[i]?.check?.Destroy();
             TankDeathMark.deathMarks[i] = null;
         }
+        for (int i = 0; i < GameHandler.AllTanks.Length; i++) {
+            var tank = GameHandler.AllTanks[i];
+            if (tank is null) continue;
+            if (tank.Dead) tank.Remove(true);
+        }
 
         TankDeathMark.total_death_marks = 0;
     }

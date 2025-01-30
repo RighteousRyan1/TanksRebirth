@@ -145,7 +145,7 @@ public sealed class Mine : IAITankDanger
     }
 
     internal void Update() {
-        if (!GameSceneRenderer.ShouldRenderAll || (!GameProperties.InMission && !MainMenu.Active))
+        if (!GameSceneRenderer.ShouldRenderAll || (!CampaignGlobals.InMission && !MainMenu.Active))
             return;
 
         World = Matrix.CreateScale(0.7f) * Matrix.CreateTranslation(Position3D);

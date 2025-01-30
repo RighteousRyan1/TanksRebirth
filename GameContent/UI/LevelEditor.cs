@@ -491,7 +491,7 @@ public static class LevelEditor {
         ReturnToEditor.OnLeftClick = (l) => {
             Open(false);
             TankGame.OverheadView = true;
-            GameProperties.InMission = false;
+            CampaignGlobals.InMission = false;
             // GameHandler.CleanupScene();
             if (_cachedMission is { Tanks: not null, Blocks: not null, Name: not null, Note: not null })
                 Mission.LoadDirectly(_cachedMission);
@@ -732,7 +732,7 @@ public static class LevelEditor {
     public static void Open(bool fromMainMenu = true) {
         if (fromMainMenu) {
             IntermissionSystem.TimeBlack = 180;
-            GameProperties.ShouldMissionsProgress = false;
+            CampaignGlobals.ShouldMissionsProgress = false;
             _loadTask ??= Task.Run(async () => {
                     await Task.Delay(TankGame.LogicTime).ConfigureAwait(false);
                     while (IntermissionSystem.BlackAlpha > 0.8f || MainMenu.Active) {
@@ -1213,7 +1213,7 @@ public static class LevelEditor {
             }
             ClickEventsPerItem.Clear();
         }
-        else if (Editing && !Active && _cachedMission != default && GameProperties.InMission)
+        else if (Editing && !Active && _cachedMission != default && CampaignGlobals.InMission)
             if (IntermissionHandler.NothingCanHappenAnymore(_cachedMission, out bool victory))
                 QueueEditorReEntry(120f);
         // if (ReturnToEditor != null)

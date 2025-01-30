@@ -729,9 +729,9 @@ public class TankGame : Game {
             if (InputUtils.KeyJustPressed(Keys.F1)) {
                 SpeedrunMode = !SpeedrunMode;
                 if (SpeedrunMode)
-                    GameProperties.OnMissionStart += Speedrun.StartSpeedrun;
+                    CampaignGlobals.OnMissionStart += Speedrun.StartSpeedrun;
                 else
-                    GameProperties.OnMissionStart -= Speedrun.StartSpeedrun;
+                    CampaignGlobals.OnMissionStart -= Speedrun.StartSpeedrun;
                 ChatSystem.SendMessage(SpeedrunMode ? "Speedrun mode on!" : "Speedrun mode off.", SpeedrunMode ? Color.Lime : Color.Red);
             }
             if (InputUtils.AreKeysJustPressed(Keys.RightAlt, Keys.Enter) || InputUtils.AreKeysJustPressed(Keys.LeftAlt, Keys.Enter)) {
@@ -1125,13 +1125,13 @@ public class TankGame : Game {
         DebugManager.DrawDebug(SpriteRenderer);
         DebugManager.DrawDebugMetrics();
         if (SpeedrunMode && Speedrun.CurrentSpeedrun is not null) {
-            var num = GameProperties.LoadedCampaign.CurrentMissionId switch {
-                > 2 => GameProperties.LoadedCampaign.CurrentMissionId - 2,
-                1 => GameProperties.LoadedCampaign.CurrentMissionId - 1,
+            var num = CampaignGlobals.LoadedCampaign.CurrentMissionId switch {
+                > 2 => CampaignGlobals.LoadedCampaign.CurrentMissionId - 2,
+                1 => CampaignGlobals.LoadedCampaign.CurrentMissionId - 1,
                 _ => 0,
             };
 
-            var len = GameProperties.LoadedCampaign.CurrentMissionId + 2 > GameProperties.LoadedCampaign.CachedMissions.Length ? GameProperties.LoadedCampaign.CachedMissions.Length - 1 : GameProperties.LoadedCampaign.CurrentMissionId + 2;
+            var len = CampaignGlobals.LoadedCampaign.CurrentMissionId + 2 > CampaignGlobals.LoadedCampaign.CachedMissions.Length ? CampaignGlobals.LoadedCampaign.CachedMissions.Length - 1 : CampaignGlobals.LoadedCampaign.CurrentMissionId + 2;
 
             SpriteRenderer.DrawString(TextFontLarge, $"Time: {Speedrun.CurrentSpeedrun.Timer.Elapsed}", new Vector2(10, 5), Color.White, new Vector2(0.15f), 0f, Vector2.Zero);
             for (int i = num; i <= len; i++) { // current.times.count originally

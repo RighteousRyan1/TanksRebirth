@@ -9,7 +9,7 @@ using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.Properties;
 
-public class GameProperties
+public class CampaignGlobals
 {
     public static Campaign LoadedCampaign { get; set; } = new();
     public static bool InMission { get; set; } = false;

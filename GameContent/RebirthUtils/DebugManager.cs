@@ -152,8 +152,8 @@ public static class DebugManager {
                 var res = Dialog.FileOpen("mission", TankGame.SaveDirectory);
                 if (res.Path != null && res.IsOk) {
                     try {
-                        GameProperties.LoadedCampaign.LoadMission(Mission.Load(res.Path, null));
-                        GameProperties.LoadedCampaign.SetupLoadedMission(true);
+                        CampaignGlobals.LoadedCampaign.LoadMission(Mission.Load(res.Path, null));
+                        CampaignGlobals.LoadedCampaign.SetupLoadedMission(true);
 
                         ChatSystem.SendMessage($"Loaded mission '{Path.GetFileNameWithoutExtension(res.Path)}'.", Color.White);
                     } catch {
@@ -163,8 +163,8 @@ public static class DebugManager {
                 return;
             }
 
-            GameProperties.LoadedCampaign.LoadMission(Mission.Load(MissionName.GetRealText(), CampaignName.IsEmpty() ? null : CampaignName.GetRealText()));
-            GameProperties.LoadedCampaign.SetupLoadedMission(true);
+            CampaignGlobals.LoadedCampaign.LoadMission(Mission.Load(MissionName.GetRealText(), CampaignName.IsEmpty() ? null : CampaignName.GetRealText()));
+            CampaignGlobals.LoadedCampaign.SetupLoadedMission(true);
         };
         LoadMission.IsVisible = false;
         LoadMission.SetDimensions(145, 180, 105, 50);
@@ -175,8 +175,8 @@ public static class DebugManager {
                     ChatSystem.SendMessage("Invalid name for campaign.", Color.Red);
                     return;
                 }
-                GameProperties.LoadedCampaign = Campaign.LoadFromFolder(CampaignName.GetRealText(), true);
-                GameProperties.LoadedCampaign.SetupLoadedMission(true);
+                CampaignGlobals.LoadedCampaign = Campaign.LoadFromFolder(CampaignName.GetRealText(), true);
+                CampaignGlobals.LoadedCampaign.SetupLoadedMission(true);
             },
             IsVisible = false
         };

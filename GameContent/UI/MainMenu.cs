@@ -807,7 +807,7 @@ public static class MainMenu {
                 }
                 var noExt = Path.GetFileNameWithoutExtension(name);
                 PrepareGameplay(noExt, !Client.IsConnected() || Server.CurrentClientCount == 1, false); // switch second param to !Client.IsConnected() when it should check first.
-                OnCampaignSelected?.Invoke(GameProperties.LoadedCampaign);
+                OnCampaignSelected?.Invoke(CampaignGlobals.LoadedCampaign);
             };
             elem.OnRightClick += (el) => {
                 var path = Path.Combine(TankGame.SaveDirectory, "Campaigns", elem.Text);
@@ -830,7 +830,7 @@ public static class MainMenu {
             foreach (var elem in campaignNames)
                 elem.Remove();
 
-            GameProperties.ShouldMissionsProgress = false;
+            CampaignGlobals.ShouldMissionsProgress = false;
 
             IntermissionSystem.TimeBlack = 150;
         };
@@ -851,9 +851,9 @@ public static class MainMenu {
         var checkPath = Path.Combine(TankGame.SaveDirectory, "Campaigns", $"{name}.campaign");
 
         void completePreparation(Campaign campaign) {
-            GameProperties.LoadedCampaign = campaign;
+            CampaignGlobals.LoadedCampaign = campaign;
 
-            GameProperties.LoadedCampaign.LoadMission(MissionCheckpoint); // loading the mission specified
+            CampaignGlobals.LoadedCampaign.LoadMission(MissionCheckpoint); // loading the mission specified
 
             PlayerTank.StartingLives = campaign.MetaData.StartingLives;
             IntermissionSystem.StripColor = campaign.MetaData.MissionStripColor;
@@ -902,7 +902,7 @@ public static class MainMenu {
 
         IntermissionSystem.TimeBlack = 240;
 
-        GameProperties.ShouldMissionsProgress = true;
+        CampaignGlobals.ShouldMissionsProgress = true;
 
         _musicFading = true;
 
@@ -1247,8 +1247,8 @@ public static class MainMenu {
             var mission = _cachedMissions[rand];
 
             if (autoSetup) {
-                GameProperties.LoadedCampaign.LoadMission(mission);
-                GameProperties.LoadedCampaign.SetupLoadedMission(true);
+                CampaignGlobals.LoadedCampaign.LoadMission(mission);
+                CampaignGlobals.LoadedCampaign.SetupLoadedMission(true);
             }
             if (loadForMenu)
                 _curMenuMission = mission;

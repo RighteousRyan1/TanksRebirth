@@ -94,7 +94,7 @@ public static class CampaignCompleteUI
         // *insert code here*
 
         // finish this tomorrow i am very tired murder me.
-        SetStats(GameProperties.LoadedCampaign, PlayerTank.PlayerStatistics, PlayerTank.TankKills);
+        SetStats(CampaignGlobals.LoadedCampaign, PlayerTank.PlayerStatistics, PlayerTank.TankKills);
         Grade = FormulateGradeLevel(true);
 
         _skip = false;
@@ -191,7 +191,7 @@ public static class CampaignCompleteUI
             $"% Shots Hit: {ShotToKillRatio * 100:0}% ({ShellHits}/{ShellsFired})",
             $"% Mine Effect: {MineToKillRatio * 100:0}% ({MineHits}/{MinesLaid})",
             $"% Lives Earned: {LifeRatio * 100:0}% ({LivesRemaining}/{TotalPossibleLives})",
-            $"% Missions Complete: {MissionRatio * 100:0}% ({GameProperties.LoadedCampaign.CurrentMissionId + 1}/{GameProperties.LoadedCampaign.CachedMissions.Length})"
+            $"% Missions Complete: {MissionRatio * 100:0}% ({CampaignGlobals.LoadedCampaign.CurrentMissionId + 1}/{CampaignGlobals.LoadedCampaign.CachedMissions.Length})"
         };
         for (int i = 0; i < funFacts.Length; i++) {
             var ff = funFacts[i];
@@ -325,7 +325,7 @@ public static class CampaignCompleteUI
         ShotToKillRatio = (float)ShellHits / ShellsFired;
         MineToKillRatio = (float)MineHits / MinesLaid;
         LifeRatio = (float)LivesRemaining / TotalPossibleLives;
-        MissionRatio = (float)(GameProperties.LoadedCampaign.CurrentMissionId + 1) / GameProperties.LoadedCampaign.CachedMissions.Length;
+        MissionRatio = (float)(CampaignGlobals.LoadedCampaign.CurrentMissionId + 1) / CampaignGlobals.LoadedCampaign.CachedMissions.Length;
 
         if (float.IsNaN(ShotToKillRatio))
             ShotToKillRatio = 1f;

@@ -261,7 +261,7 @@ public abstract class Tank {
                 particle.Roll = prop.Rotation.X;
                 particle.Pitch = prop.Rotation.Y;
                 particle.Yaw = prop.Rotation.Z;
-                particle.Scale = (Properties.Invisible && GameProperties.InMission) ? Vector3.Zero : prop.Scale;
+                particle.Scale = (Properties.Invisible && CampaignGlobals.InMission) ? Vector3.Zero : prop.Scale;
 
                 if (destroyOn == null) return;
 
@@ -271,6 +271,9 @@ public abstract class Tank {
         }
     }
     void OnMissionStart() {
+        DoInvisibilityGFXandSFX();
+    }
+    public void DoInvisibilityGFXandSFX() {
         const string invisibleTankSound = "Assets/sounds/tnk_invisible.ogg";
 
         if (Difficulties.Types["FFA"])
@@ -406,7 +409,7 @@ public abstract class Tank {
             }
         }
 
-        GameProperties.OnMissionStart += OnMissionStart;
+        CampaignGlobals.OnMissionStart += OnMissionStart;
     }
     /// <summary>Update this <see cref="Tank"/>.</summary>
     public virtual void Update() {
@@ -447,7 +450,7 @@ public abstract class Tank {
         IsTurning = !(TankRotation > TargetTankRotation - Properties.MaximalTurn/* - MathHelper.ToRadians(5)*/ &&
                       TankRotation < TargetTankRotation + Properties.MaximalTurn/* + MathHelper.ToRadians(5)*/);
 
-        if (!MainMenu.Active && (!GameProperties.InMission || IntermissionSystem.IsAwaitingNewMission))
+        if (!MainMenu.Active && (!CampaignGlobals.InMission || IntermissionSystem.IsAwaitingNewMission))
             Velocity = Vector2.Zero;
         if (OwnedMineCount < 0)
             OwnedMineCount = 0;
@@ -618,7 +621,7 @@ public abstract class Tank {
 
     /// <summary>Destroy this <see cref="Tank"/>.</summary>
     public virtual void Destroy(ITankHurtContext context) {
-        GameProperties.OnMissionStart -= OnMissionStart;
+        CampaignGlobals.OnMissionStart -= OnMissionStart;
 
         // i think this is right? | (Probably, a destroyed tank is a dead tank!)
         Dead = true;
@@ -743,7 +746,7 @@ public abstract class Tank {
 
     /// <summary>Shoot a <see cref="Shell"/> from this <see cref="Tank"/>.</summary>
     public virtual void Shoot(bool fxOnly) {
-        if ((!MainMenu.Active && !GameProperties.InMission) || !Properties.HasTurret)
+        if ((!MainMenu.Active && !CampaignGlobals.InMission) || !Properties.HasTurret)
             return;
 
         if (CurShootCooldown > 0 || OwnedShellCount >= Properties.ShellLimit / Properties.ShellShootCount)
@@ -971,7 +974,7 @@ public abstract class Tank {
                     particle.Destroy();
             }
         }
-        GameProperties.OnMissionStart -= OnMissionStart;
+        CampaignGlobals.OnMissionStart -= OnMissionStart;
 
         if (nullifyMe)
             OwnedShells = null;

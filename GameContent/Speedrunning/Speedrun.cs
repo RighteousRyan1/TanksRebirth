@@ -65,10 +65,10 @@ public class Speedrun
 
     public static Speedrun? CurrentSpeedrun;
     public static void StartSpeedrun() {
-        if (GameProperties.ShouldMissionsProgress) {
-            if (GameProperties.LoadedCampaign.CurrentMissionId <= 0) {
-                CurrentSpeedrun = new(GameProperties.LoadedCampaign.MetaData.Name);
-                foreach (var mission in GameProperties.LoadedCampaign.CachedMissions)
+        if (CampaignGlobals.ShouldMissionsProgress) {
+            if (CampaignGlobals.LoadedCampaign.CurrentMissionId <= 0) {
+                CurrentSpeedrun = new(CampaignGlobals.LoadedCampaign.MetaData.Name);
+                foreach (var mission in CampaignGlobals.LoadedCampaign.CachedMissions)
                     CurrentSpeedrun.MissionTimes.Add(mission.Name, (TimeSpan.Zero, TimeSpan.Zero));
                 CurrentSpeedrun.Timer.Start();
             }
