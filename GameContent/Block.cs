@@ -134,7 +134,7 @@ public class Block : IGameObject {
         Type = type;
 
         var modelname = GameSceneRenderer.Theme switch {
-            MapTheme.Vanilla => IsAlternateModel ? "Assets/toy/cube_stack_alt" : "Assets/toy/cube_stack",
+            MapTheme.Vanilla => IsAlternateModel ? "Assets/models/scene/cube_stack_alt" : "Assets/models/scene/cube_stack",
             MapTheme.Christmas => IsAlternateModel ? "Assets/christmas/cube_stack_alt_snowy" : "Assets/christmas/cube_stack_snowy",
             _ => ""
         };
@@ -152,14 +152,14 @@ public class Block : IGameObject {
                 Model = GameResources.GetGameResource<Model>(modelname)!;
                 break;
             case BlockID.Hole:
-                Model = GameResources.GetGameResource<Model>("Assets/check")!;
+                Model = GameResources.GetGameResource<Model>("Assets/models/check")!;
                 Properties.IsSolid = false;
                 _texture = GameSceneRenderer.Assets["block_harf.1"];
                 Properties.CanStack = false;
                 Properties.HasShadow = false;
                 break;
             case BlockID.Teleporter:
-                Model = GameResources.GetGameResource<Model>("Assets/teleporter")!;
+                Model = GameResources.GetGameResource<Model>("Assets/models/teleporter")!;
                 Properties.IsSolid = false;
                 Properties.IsCollidable = false;
                 _texture = GameSceneRenderer.Assets["teleporter"];
@@ -168,7 +168,7 @@ public class Block : IGameObject {
         }
         if (Properties.HasShadow) {
             // fix this, but dont worry about it for now
-            var p = GameHandler.Particles.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>($"Assets/toy/cube_shadow_tex"));
+            var p = GameHandler.Particles.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>($"Assets/textures/cube_shadow_tex"));
             p.Tag = "block_shadow_" + Id;
             bool moveL = true;
             bool moveD = true;
@@ -201,7 +201,7 @@ public class Block : IGameObject {
         Type = type;
 
         var modelname = GameSceneRenderer.Theme switch {
-            MapTheme.Vanilla => IsAlternateModel ? "Assets/toy/cube_stack_alt" : "Assets/toy/cube_stack",
+            MapTheme.Vanilla => IsAlternateModel ? "Assets/models/scene/cube_stack_alt" : "Assets/models/scene/cube_stack",
             MapTheme.Christmas => IsAlternateModel ? "Assets/christmas/cube_stack_alt_snowy" : "Assets/christmas/cube_stack_snowy",
             _ => ""
         };

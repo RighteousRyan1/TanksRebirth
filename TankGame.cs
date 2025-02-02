@@ -339,7 +339,6 @@ public class TankGame : Game {
             "Assets/textures/ui/grades",
             "Assets/textures/ui/scoreboard",
             "Assets/textures/ui/tank2d",
-            "Assets/tanks_rebirth_logo_2d_old",
             "Assets/textures/ui/trophy",
             "Assets/textures/ui/achievement/secret",
 
@@ -1122,6 +1121,7 @@ public class TankGame : Game {
 
         SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: DefaultRasterizer);
         GameHandler.RenderUI();
+        IntermissionSystem.DrawBlack(SpriteRenderer);
         if (IsCrashInfoVisible) DrawErrorScreen();
         SpriteRenderer.End();
 

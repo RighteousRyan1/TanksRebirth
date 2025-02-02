@@ -69,11 +69,11 @@ public static class CampaignCompleteUI
     private static MissionEndContext _lastContext;
 
     public static Dictionary<MissionEndContext, (OggAudio, TimeSpan)> FanfaresAndDurations = new() {
-        [MissionEndContext.CampaignCompleteMinor] = (new OggAudio("Content/Assets/fanfares/mission_complete_M20.ogg"), TimeSpan.FromMilliseconds(3400)), // 4327
-        [MissionEndContext.CampaignCompleteMajor] = (new OggAudio("Content/Assets/fanfares/mission_complete_M100.ogg"), TimeSpan.FromMilliseconds(2600)), // 3350
-        [MissionEndContext.GameOver] = (new OggAudio("Content/Assets/fanfares/gameover_playerdeath.ogg"), TimeSpan.FromMilliseconds(1400)) // 1883
+        [MissionEndContext.CampaignCompleteMinor] = (new OggAudio("Content/Assets/music/fanfares/mission_complete_M20.ogg"), TimeSpan.FromMilliseconds(3400)), // 4327
+        [MissionEndContext.CampaignCompleteMajor] = (new OggAudio("Content/Assets/music/fanfares/mission_complete_M100.ogg"), TimeSpan.FromMilliseconds(2600)), // 3350
+        [MissionEndContext.GameOver] = (new OggAudio("Content/Assets/music/fanfares/gameover_playerdeath.ogg"), TimeSpan.FromMilliseconds(1400)) // 1883
     };
-    public static OggMusic ResultsFanfare = new("Results Fanfare", "Content/Assets/fanfares/endresults.ogg", 0.6f);
+    public static OggMusic ResultsFanfare = new("Results Fanfare", "Content/Assets/music/fanfares/endresults.ogg", 0.6f);
 
     /// <summary>Perform a multithreaded operation that will display tanks killed and their kill counts for the player.</summary>
     public static void PerformSequence(MissionEndContext context) {

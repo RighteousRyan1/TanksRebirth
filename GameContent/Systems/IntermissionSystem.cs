@@ -92,7 +92,7 @@ public static class IntermissionSystem {
         // play the opening fanfare n shit. xd.
         if (frameId == 0) {
             SceneManager.CleanupScene();
-            var missionStarting = "Assets/fanfares/mission_starting.ogg";
+            var missionStarting = "Assets/music/fanfares/mission_starting.ogg";
             SoundPlayer.PlaySoundInstance(missionStarting, SoundContext.Effect, 0.8f);
         }
         else if (frameId == 1) {
@@ -165,12 +165,7 @@ public static class IntermissionSystem {
             TextAnimatorLarge?.Run();
             TextAnimatorSmall?.Run();
         }
-        BlackAlpha = MathHelper.Clamp(BlackAlpha, 0f, 1f);
         Alpha = MathHelper.Clamp(Alpha, 0f, 1f);
-        spriteBatch.Draw(
-            TankGame.WhitePixel,
-            new Rectangle(0, 0, WindowUtils.WindowWidth, WindowUtils.WindowHeight),
-            Color.Black * BlackAlpha);
 
         if (!GameUI.Paused) {
             _offset.Y -= 1f * TankGame.DeltaTime;
@@ -285,6 +280,14 @@ public static class IntermissionSystem {
         //spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: TankGame.DefaultRasterizer);
         //spriteBatch.Draw(IntermissionSystem.FrameBuffer, Vector2.Zero, null, Color.White * Alpha, 0f, Vector2.Zero, Vector2.One, default, 0f);
         //spriteBatch.End();
+    }
+
+    public static void DrawBlack(SpriteBatch spriteBatch) {
+        BlackAlpha = MathHelper.Clamp(BlackAlpha, 0f, 1f);
+        spriteBatch.Draw(
+            TankGame.WhitePixel,
+            new Rectangle(0, 0, WindowUtils.WindowWidth, WindowUtils.WindowHeight),
+            Color.Black * BlackAlpha);
     }
 
     private static void DrawBonusLifeHUD() {

@@ -124,20 +124,20 @@ public class RebirthLogoModel {
         Rebirth_h__m = _model.Meshes["REBIRTH7_m"];
         Rebirth_h__b = _model.Meshes["REBIRTH7_b"];
 
-        _gradient_t = GameResources.GetGameResource<Texture2D>("Assets/mainmenu/logo/grad1");
-        _gradient_mb = GameResources.GetGameResource<Texture2D>("Assets/mainmenu/logo/grad2");
+        _gradient_t = GameResources.GetGameResource<Texture2D>("Assets/models/logo/grad1");
+        _gradient_mb = GameResources.GetGameResource<Texture2D>("Assets/models/logo/grad2");
 
-        _texture_tanks = GameResources.GetGameResource<Texture2D>("Assets/mainmenu/logo/tanks");
+        _texture_tanks = GameResources.GetGameResource<Texture2D>("Assets/models/logo/tanks");
 
-        _texture_tnk_t = GameResources.GetGameResource<Texture2D>("Assets/mainmenu/logo/grad3");
-        _texture_tnk_mb = GameResources.GetGameResource<Texture2D>("Assets/mainmenu/logo/tank");
+        _texture_tnk_t = GameResources.GetGameResource<Texture2D>("Assets/models/logo/grad3");
+        _texture_tnk_mb = GameResources.GetGameResource<Texture2D>("Assets/models/logo/tank");
 
         _boneTransforms = new Matrix[_model.Bones.Count];
     }
 
     public void Render() {
         if (TankGame.RunTime % 2 <= TankGame.DeltaTime) {
-            _gradient_t = GameResources.GetGameResource<Texture2D>($"Assets/mainmenu/logo/anim/anim_{_animNum:0000}");
+            _gradient_t = GameResources.GetGameResource<Texture2D>($"Assets/models/logo/anim/anim_{_animNum:0000}");
             _animNum++;
             if (_animNum > 159) _animNum = 0;
         }

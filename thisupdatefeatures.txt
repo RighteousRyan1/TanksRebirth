@@ -14,6 +14,9 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 
 - `GameProperties` -> `CampaignGlobals`
 - `TanksRebirth.GameContent.Properties` -> `TanksRebirth.GameContent.Globals`
+- Almost every asset is now stored in a more general folder.
+    - General-purpose models are now under `models`
+    - All music is now in `music` or a subfolder under `music`.
 
 ## Fixes
 

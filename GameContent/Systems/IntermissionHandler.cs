@@ -49,18 +49,18 @@ public static class IntermissionHandler {
 
         if (context == MissionEndContext.CampaignCompleteMajor) {
             TankGame.GameData.CampaignsCompleted++;
-            string victory = "Assets/fanfares/mission_complete_M100.ogg";
+            string victory = "Assets/music/fanfares/mission_complete_M100.ogg";
             SoundPlayer.PlaySoundInstance(victory, SoundContext.Effect, 0.5f, rememberMe: true);
         }
         else if (context == MissionEndContext.CampaignCompleteMinor) {
             TankGame.GameData.CampaignsCompleted++;
-            var victory = "Assets/fanfares/mission_complete_M20.ogg";
+            var victory = "Assets/music/fanfares/mission_complete_M20.ogg";
             SoundPlayer.PlaySoundInstance(victory, SoundContext.Effect, 0.5f, rememberMe: true);
         }
         if (result1up && context == MissionEndContext.Win) {
             TankGame.GameData.MissionsCompleted++;
             PlayerTank.AddLives(1);
-            var lifeget = "Assets/fanfares/life_get.ogg";
+            var lifeget = "Assets/music/fanfares/life_get.ogg";
             SoundPlayer.PlaySoundInstance(lifeget, SoundContext.Effect, 0.5f, rememberMe: true);
         }
         if (!Client.IsConnected()) {
@@ -80,13 +80,13 @@ public static class IntermissionHandler {
                 realName += $"{VanillaCampaign.CurrentMissionId + 1}";
 
                 VanillaCampaign.CachedMissions[VanillaCampaign.CurrentMissionId] = Mission.Load(realName, VanillaCampaign.Name);*/
-                var deathSound = "Assets/fanfares/tank_player_death.ogg";
+                var deathSound = "Assets/music/fanfares/tank_player_death.ogg";
                 SoundPlayer.PlaySoundInstance(deathSound, SoundContext.Effect, 0.3f);
             }
             else if (context == MissionEndContext.GameOver) {
                 //PlayerTank.AddLives(-1);
 
-                var deathSound = "Assets/fanfares/gameover_playerdeath.ogg";
+                var deathSound = "Assets/music/fanfares/gameover_playerdeath.ogg";
                 SoundPlayer.PlaySoundInstance(deathSound, SoundContext.Effect, 0.3f);
             }
         }
@@ -94,7 +94,7 @@ public static class IntermissionHandler {
             if (context == MissionEndContext.Lose) {
                 // PlayerTank.AddLives(-1);
 
-                var deathSound = "Assets/fanfares/tank_player_death.ogg";
+                var deathSound = "Assets/music/fanfares/tank_player_death.ogg";
                 SoundPlayer.PlaySoundInstance(deathSound, SoundContext.Effect, 0.3f);
             }
             /*if (PlayerTank.Lives.All(x => x == 0))
@@ -112,7 +112,7 @@ public static class IntermissionHandler {
             if (Difficulties.Types["RandomizedTanks"])
                 CampaignGlobals.LoadedCampaign.CachedMissions[CampaignGlobals.LoadedCampaign.CurrentMissionId].Tanks
                             = Difficulties.HijackTanks(CampaignGlobals.LoadedCampaign.CachedMissions[CampaignGlobals.LoadedCampaign.CurrentMissionId].Tanks);
-            SoundPlayer.PlaySoundInstance("Assets/fanfares/mission_complete.ogg", SoundContext.Effect, 0.5f);
+            SoundPlayer.PlaySoundInstance("Assets/music/fanfares/mission_complete.ogg", SoundContext.Effect, 0.5f);
             if (Speedrun.CurrentSpeedrun is not null) {
                 if (CampaignGlobals.LoadedCampaign.CurrentMissionId > 1) {
                     var prevTime = Speedrun.CurrentSpeedrun.MissionTimes.ElementAt(CampaignGlobals.LoadedCampaign.CurrentMissionId - 2).Value; // previous mission time.
@@ -238,7 +238,7 @@ public static class IntermissionHandler {
 
         TankMusicSystem.StopAll();
 
-        var tune = "Assets/fanfares/mission_snare.ogg";
+        var tune = "Assets/music/fanfares/mission_snare.ogg";
 
         SoundPlayer.PlaySoundInstance(tune, SoundContext.Music, 1f);
 

@@ -45,27 +45,6 @@ namespace TanksRebirth.GameContent.Cosmetics
             Rotation = new(-MathHelper.PiOver2, 0, 0),
             Scale = new(3.5f)
         };
-        public static Prop3D BigOlStump = new Prop3D("Big Ol' Stump", GameResources.GetGameResource<Model>("Assets/forest/tree_stump"), GameResources.GetGameResource<Texture2D>("Assets/forest/tree_log_tex"), new(0, 60, 0), PropLockOptions.None)
-        {
-            Rotation = new(-MathHelper.PiOver2, 0, 0),
-            UniqueBehavior = (cos, tnk) =>
-            {
-                cos.Rotation += new Vector3(0.075f, 0.05f, -0.025f);
-            },
-            Scale = new(10f)
-        };
-        public static Prop3D Chair = new Prop3D("A Literal Chair", GameResources.GetGameResource<Model>("Assets/toy/wooden_chair"), GameResources.GetGameResource<Texture2D>("Assets/toy/chair_tex"), new(0, 60, 0), PropLockOptions.None)
-        {
-            Rotation = new(-MathHelper.PiOver2, 0, -MathHelper.PiOver2),
-            UniqueBehavior = (cos, tnk) =>
-            {
-                var sinx = MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalMilliseconds / 100) * 30;
-                var siny = MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalMilliseconds / 150);
-                // cos.Rotation = new Vector3(0, 0, 0);
-                cos.RelativePosition = new Vector3(10 + sinx, 30 + MathF.Abs(siny) * 20, 0f);
-            },
-            Scale = new(1f)
-        };
         public static Prop3D DevilsHorns = new Prop3D("Devil Horns", GameResources.GetGameResource<Model>("Assets/cosmetics/horns"), GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), new(0, 11, 0), PropLockOptions.ToTurret)
         {
             Rotation = new(MathHelper.Pi, 0, 0),
@@ -98,30 +77,32 @@ namespace TanksRebirth.GameContent.Cosmetics
             Rotation = new(-MathHelper.PiOver2, MathHelper.Pi, 0),
             Scale = new(100f)
         };
-        public static CosmeticChest Basic = new(new()
+        public static CosmeticChest Basic = new(new List<IProp>()
         {
-            { Anger, 11.1111111111f },
-            { DefaultBlenderCube, 11.1111111111f },
-            { KingsCrown, 11.1111111111f },
-            { BigOlStump, 11.1111111111f },
-            { Chair, 11.1111111111f },
-            { DevilsHorns, 11.1111111111f },
-            { AngelHalo, 11.1111111111f },
-            { ArmyHat, 11.1111111111f },
-            { SantaHat, 11.1111111111f }
+            Anger,
+            DefaultBlenderCube,
+            KingsCrown,
+            DevilsHorns,
+            AngelHalo,
+            ArmyHat,
+            SantaHat,
         });
 
-        public static CosmeticChest Template = new(new()
+        public static CosmeticChest Template = new(new List<IProp>()
         {
 
         });
 
         /// <summary>All of the contents should add up to 100f.</summary>
-        public Dictionary<object, float> WeightedContents;
+        public Dictionary<IProp, float> WeightedContents;
 
-        public CosmeticChest(Dictionary<object, float> weightedContents)
+        public CosmeticChest(Dictionary<IProp, float> weightedContents)
         {
             WeightedContents = weightedContents;
+        }
+        public CosmeticChest(List<IProp> contents) {
+            var evenProportion = 1f / contents.Count;
+            WeightedContents = contents.ToDictionary(x => x, y => evenProportion);
         }
 
         public object Open()
@@ -134,7 +115,7 @@ namespace TanksRebirth.GameContent.Cosmetics
             var ordered = WeightedContents.Values.OrderBy(x => x).ToArray();
             var orderedDict = WeightedContents.OrderBy(x => x.Value);
 
-            Dictionary<(float, float), float> minMaxes = new();
+            Dictionary<(float, float), float> minMaxes = [];
 
             float cur = 0f;
             int pickedIdx = 0;

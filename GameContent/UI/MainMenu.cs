@@ -1052,8 +1052,8 @@ public static class MainMenu {
         VolumeMultiplier = SteamworksUtils.IsOverlayActive ? 0.25f : 1f;
 
         if (!IntermissionSystem.IsAwaitingNewMission || IntermissionSystem.BlackAlpha <= 0f) {
-            if (_curMenuMission.Blocks != null) {
-                var missionComplete = IntermissionHandler.NothingCanHappenAnymore(_curMenuMission, out bool victory);
+            if (curMenuMission.Blocks != null) {
+                var missionComplete = IntermissionHandler.NothingCanHappenAnymore(curMenuMission, out bool victory);
 
                 if (missionComplete) {
                     // TODO: finish.
@@ -1144,12 +1144,12 @@ public static class MainMenu {
         OnMenuClose?.Invoke();
     }
 
-    private static Mission _curMenuMission;
+    internal static Mission curMenuMission;
     private static List<Mission> _cachedMissions = [];
     public static OggMusic GetAppropriateMusic() {
         OggMusic music = GameSceneRenderer.Theme switch {
-            MapTheme.Vanilla => new OggMusic("Main Menu Theme", "Content/Assets/mainmenu/theme.ogg", 1f),
-            MapTheme.Christmas => new OggMusic("Main Menu Theme", "Content/Assets/mainmenu/theme_christmas.ogg", 1f),
+            MapTheme.Vanilla => new OggMusic("Main Menu Theme", "Content/Assets/music/mainmenu/theme.ogg", 1f),
+            MapTheme.Christmas => new OggMusic("Main Menu Theme", "Content/Assets/music/mainmenu/theme_christmas.ogg", 1f),
             _ => throw new Exception("Invalid game theme for menu music.")
         };
         return music;
@@ -1251,7 +1251,7 @@ public static class MainMenu {
                 CampaignGlobals.LoadedCampaign.SetupLoadedMission(true);
             }
             if (loadForMenu)
-                _curMenuMission = mission;
+                curMenuMission = mission;
         } catch {
             TankGame.ClientLog.Write("Unable to fetch map data via the internet. Oops!", LogType.Warn);
         }

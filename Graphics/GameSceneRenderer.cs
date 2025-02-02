@@ -131,7 +131,7 @@ public static class GameSceneRenderer
         {
             _blackPixel = new Texture2D(TankGame.Instance.GraphicsDevice, 1, 1);
             _blackPixel.SetData(new Color[] { Color.Black });
-            FloorModelBase = GameResources.GetGameResource<Model>("Assets/floor_big");
+            FloorModelBase = GameResources.GetGameResource<Model>("Assets/models/scene/floor_big");
             switch (Theme)
             {
                 case MapTheme.Vanilla:
@@ -200,7 +200,7 @@ public static class GameSceneRenderer
             switch (Theme)
             {
                 case MapTheme.Vanilla:
-                    BoundaryModel = GameResources.GetGameResource<Model>("Assets/toy/outerbounds");
+                    BoundaryModel = GameResources.GetGameResource<Model>("Assets/models/scene/outerbounds");
 
                     SetBlockTexture(BoundaryModel.Meshes["polygon48"], BoundaryTextureContext.block_other_c);
                     SetBlockTexture(BoundaryModel.Meshes["polygon40"], BoundaryTextureContext.block_other_a);
