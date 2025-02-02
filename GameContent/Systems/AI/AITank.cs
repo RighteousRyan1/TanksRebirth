@@ -14,7 +14,7 @@ using TanksRebirth.Graphics;
 using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.Internals.Common.Framework;
 using TanksRebirth.Net;
-using TanksRebirth.GameContent.Properties;
+using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Cosmetics;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.GameContent.ID;

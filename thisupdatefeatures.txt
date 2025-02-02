@@ -1,51 +1,23 @@
 /* Enter message here */
-This update fixes a plethora of bugs and problems, alongside some new cool content and a lot of good visual changes
 
 Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed later) speedruns will get their spot on the main menu!
 
 ## Additions
 
-- New 'Air Support' gamemode!
-- New interactive logo!
-- In-game missions now have their own names attributed to them, for fanciness.
-    - You can still see what mission number you are on
+
 
 ## Changes
 
-- New game icon
-- Smoke is now 3D in first person mode
-- If launched in Debug, the game will supply the user with a console
-- Explosions don't sound super low pitched by default anymore
-- Explosions rotate 2x faster
-- Revamped mission info bar
-- Player tank no longer struggles to move around when using keyboard
-- Missions added to the campaign list are now named what # mission they are in the entire campaign
-    - Players must delete and re-install the Vanilla campaign for the changes to appear
-- Some missions have had re-arranged player spawns for multiplayer
+
 
 ## Changes Important for Modders
 
-- Many renames but not any move-arounds
-- De-obfuscated AI Tank functions under the hood, as it now has many more methods to differentiate their thought process
-- Debug enable has been changed to F4, and debug level decrease/increase have been changed to F5/F6 respectively
-- `MapRenderer` -> `GameSceneRenderer`
+- `GameProperties` -> `CampaignGlobals`
+- `TanksRebirth.GameContent.Properties` -> `TanksRebirth.GameContent.Globals`
 
 ## Fixes
 
-- Game now loads much faster
-- Fix crashes on window focus regained
-- 2D graphics on the playing field will no longer appear when looking away
-- Fix finnicky campaign saving
-    - This means that players who have made their own campaigns need to update for the new fixes
-- Loading campaigns no longer flips tanks across their saved axis
-- Testing missions no causes strange things to happen to tanks
-- Level editor placement/removal actions are no longer possible when changing the properties
-- Fix Z-fighting/overlap with tank shadows
-- Harsh black shadowing on the bottom-right of the map is no longer harsh
-- Returning from level test now properly highlights which level you tested after testing is done
-- Fix homing shells targeting dead tanks
-- Tanks no longer freeze randomized movement while firing shells
-- Tanks should trap themselves almost never now
+- Pause UI now appears over everything
 
 ## TODO
 

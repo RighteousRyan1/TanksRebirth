@@ -10,7 +10,7 @@ using TanksRebirth.Internals.Common.Framework.Input;
 using FontStashSharp;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Net;
-using TanksRebirth.GameContent.Properties;
+using TanksRebirth.GameContent.Globals;
 
 namespace TanksRebirth.GameContent.UI;
 

@@ -14,7 +14,7 @@ using System.IO;
 using TanksRebirth.GameContent.Cosmetics;
 using TanksRebirth.Graphics;
 using TanksRebirth.GameContent.UI;
-using TanksRebirth.GameContent.Properties;
+using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.Net;
 using TanksRebirth.GameContent.ModSupport;

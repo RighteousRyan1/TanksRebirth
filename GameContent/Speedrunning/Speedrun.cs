@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -6,13 +8,15 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
-using TanksRebirth.GameContent.Properties;
+using TanksRebirth.GameContent.Globals;
 using TanksRebirth.Internals.Common.Utilities;
+using FontStashSharp;
 
 namespace TanksRebirth.GameContent.Speedrunning;
 
 public class Speedrun
 {
+    public static bool SpeedrunMode;
     public static bool AreSpeedrunsFetched { get; internal set; }
     public static SpeedrunData[] LoadedSpeedruns { get; private set; } = [];
 
@@ -71,6 +75,26 @@ public class Speedrun
                 foreach (var mission in CampaignGlobals.LoadedCampaign.CachedMissions)
                     CurrentSpeedrun.MissionTimes.Add(mission.Name, (TimeSpan.Zero, TimeSpan.Zero));
                 CurrentSpeedrun.Timer.Start();
+            }
+        }
+    }
+
+    public static void DrawSpeedrunHUD(SpriteBatch spriteBatch) {
+        if (SpeedrunMode && CurrentSpeedrun is not null) {
+            var num = CampaignGlobals.LoadedCampaign.CurrentMissionId switch {
+                > 2 => CampaignGlobals.LoadedCampaign.CurrentMissionId - 2,
+                1 => CampaignGlobals.LoadedCampaign.CurrentMissionId - 1,
+                _ => 0,
+            };
+
+            var len = CampaignGlobals.LoadedCampaign.CurrentMissionId + 2 > CampaignGlobals.LoadedCampaign.CachedMissions.Length ? CampaignGlobals.LoadedCampaign.CachedMissions.Length - 1 : CampaignGlobals.LoadedCampaign.CurrentMissionId + 2;
+
+            spriteBatch.DrawString(TankGame.TextFontLarge, $"Time: {CurrentSpeedrun.Timer.Elapsed}", new Vector2(10, 5), Color.White, new Vector2(0.15f), 0f, Vector2.Zero);
+            for (int i = num; i <= len; i++) { // current.times.count originally
+
+                var time = CurrentSpeedrun.MissionTimes.ElementAt(i);
+                // display mission name and time taken
+                spriteBatch.DrawString(TankGame.TextFontLarge, $"{time.Key}: {time.Value.Item2}", new Vector2(10, 20 + ((i - num) * 15)), Color.White, new Vector2(0.15f), 0f, Vector2.Zero);
             }
         }
     }

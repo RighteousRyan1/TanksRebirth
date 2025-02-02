@@ -10,7 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TanksRebirth.Enums;
 using TanksRebirth.GameContent.ID;
-using TanksRebirth.GameContent.Properties;
+using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.GameContent.UI;

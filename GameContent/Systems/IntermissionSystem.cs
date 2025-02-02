@@ -5,7 +5,7 @@ using TanksRebirth.Internals;
 using TanksRebirth.GameContent.UI;
 using FontStashSharp;
 using System.Linq;
-using TanksRebirth.GameContent.Properties;
+using TanksRebirth.GameContent.Globals;
 using TanksRebirth.Net;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.Internals.Common.Framework.Animation;
@@ -17,6 +17,8 @@ using System.Runtime.Intrinsics.X86;
 namespace TanksRebirth.GameContent.Systems;
 #pragma warning disable
 public static class IntermissionSystem {
+    public static RenderTarget2D FrameBuffer { get; private set; }
+
     public static Animator TextAnimatorLarge;
     public static Animator TextAnimatorSmall;
 
@@ -123,6 +125,22 @@ public static class IntermissionSystem {
     /// <summary>Renders the intermission.</summary>
     public static void Draw(SpriteBatch spriteBatch) {
         // TankGame.Interp = Alpha <= 0 && BlackAlpha <= 0 && GameHandler.InterpCheck;
+        /*if (FrameBuffer == null || FrameBuffer.IsDisposed || FrameBuffer.Size() != WindowUtils.WindowBounds) {
+            FrameBuffer?.Dispose();
+            var presentationParams = TankGame.Instance.GraphicsDevice.PresentationParameters;
+            FrameBuffer = new RenderTarget2D(TankGame.Instance.GraphicsDevice, 
+                presentationParams.BackBufferWidth, presentationParams.BackBufferHeight, false, 
+                presentationParams.BackBufferFormat, presentationParams.DepthStencilFormat, 0, RenderTargetUsage.PreserveContents);
+        }
+
+        // switch to RT, begin SB, do drawing, end SB, SetRenderTarget(null), begin SB again, draw RT, end SB
+        TankGame.Instance.GraphicsDevice.SetRenderTarget(FrameBuffer);*/
+
+        // placeholder until intermission screen is properly displayed through a framebuffer
+        var overallAlpha = Alpha;
+
+        spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: TankGame.DefaultRasterizer);
+        #region Draw Code
 
         if (TankGame.Instance.IsActive) {
             if (TimeBlack > -1) {
@@ -132,7 +150,6 @@ public static class IntermissionSystem {
             else
                 BlackAlpha -= 1f / 45f * TankGame.DeltaTime;
         }
-
         if (BlackAlpha >= 1 && _oldBlack < 1) {
             MainMenu.Leave();
 
@@ -148,9 +165,8 @@ public static class IntermissionSystem {
             TextAnimatorLarge?.Run();
             TextAnimatorSmall?.Run();
         }
-
         BlackAlpha = MathHelper.Clamp(BlackAlpha, 0f, 1f);
-
+        Alpha = MathHelper.Clamp(Alpha, 0f, 1f);
         spriteBatch.Draw(
             TankGame.WhitePixel,
             new Rectangle(0, 0, WindowUtils.WindowWidth, WindowUtils.WindowHeight),
@@ -164,6 +180,7 @@ public static class IntermissionSystem {
             Alpha = 0f;
             CurrentWaitTime = 0;
         }
+
         if (Alpha <= 0f)
             _offset = Vector2.Zero;
 
@@ -171,7 +188,7 @@ public static class IntermissionSystem {
             spriteBatch.Draw(
                 TankGame.WhitePixel,
                 new Rectangle(0, 0, WindowUtils.WindowWidth, WindowUtils.WindowHeight),
-                BackgroundColor * Alpha);
+                BackgroundColor * overallAlpha);
 
             int padding = 10;
             int scale = 2;
@@ -182,17 +199,17 @@ public static class IntermissionSystem {
             // draw small tank graphics using GameResources.GetGameResource
             for (int i = -padding; i < WindowUtils.WindowWidth / texWidth + padding; i++) {
                 for (int j = -padding; j < WindowUtils.WindowHeight / texWidth + padding; j++) {
-                    spriteBatch.Draw(tex, new Vector2(i, j) * texWidth + _offset, null, BackgroundColor * Alpha, 0f, Vector2.Zero, scale, default, default);
+                    spriteBatch.Draw(tex, new Vector2(i, j) * texWidth + _offset, null, BackgroundColor * overallAlpha, 0f, Vector2.Zero, scale, default, default);
                 }
             }
             // why didn't i use this approach before? i'm kind of braindead sometimes.
             for (int i = 0; i < 6; i++) {
                 var off = 75f;
-                DrawStripe(spriteBatch, StripColor, WindowUtils.WindowHeight * 0.16f + (off * i).ToResolutionY(), Alpha);
+                DrawStripe(spriteBatch, StripColor, WindowUtils.WindowHeight * 0.16f + (off * i).ToResolutionY(), overallAlpha);
             }
             var wp = TankGame.WhitePixel;
-            spriteBatch.Draw(wp, new Vector2(0, WindowUtils.WindowHeight * 0.19f), null, Color.Yellow * Alpha, 0f, new Vector2(0, wp.Size().Y / 2), new Vector2(WindowUtils.WindowWidth, 5), default, default);
-            spriteBatch.Draw(wp, new Vector2(0, WindowUtils.WindowHeight * 0.19f + 400.ToResolutionY()), null, Color.Yellow * Alpha, 0f, new Vector2(0, wp.Size().Y / 2), new Vector2(WindowUtils.WindowWidth, 5), default, default);
+            spriteBatch.Draw(wp, new Vector2(0, WindowUtils.WindowHeight * 0.19f), null, Color.Yellow * overallAlpha, 0f, new Vector2(0, wp.Size().Y / 2), new Vector2(WindowUtils.WindowWidth, 5), default, default);
+            spriteBatch.Draw(wp, new Vector2(0, WindowUtils.WindowHeight * 0.19f + 400.ToResolutionY()), null, Color.Yellow * overallAlpha, 0f, new Vector2(0, wp.Size().Y / 2), new Vector2(WindowUtils.WindowWidth, 5), default, default);
             int mafs1 = CampaignGlobals.LoadedCampaign.TrackedSpawnPoints.Count(p => p.Item2);
             int mafs2 = CampaignGlobals.LoadedCampaign.LoadedMission.Tanks.Count(x => x.IsPlayer);
             int mafs = mafs1 - mafs2; // waddafak. why is my old code so horrid.
@@ -203,14 +220,14 @@ public static class IntermissionSystem {
                 CampaignGlobals.LoadedCampaign.LoadedMission.Name,
                 BackgroundColor,
                 TextAnimatorLarge.CurrentScale.ToResolution(),
-                Alpha);
+                overallAlpha);
             DrawUtils.DrawShadowedString(TankGame.TextFontLarge,
                 new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 50.ToResolutionY()),
                 Vector2.One,
                 $"{TankGame.GameLanguage.EnemyTanks}: {mafs}",
                 BackgroundColor,
                 TextAnimatorLarge.CurrentScale.ToResolution(),
-                Alpha);
+                overallAlpha);
 
             var tnk2d = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/playertank2d");
 
@@ -228,7 +245,7 @@ public static class IntermissionSystem {
                     lifeText,
                     BackgroundColor,
                     Vector2.One.ToResolution(),
-                    Alpha,
+                    overallAlpha,
                     TankGame.TextFontLarge.MeasureString(lifeText) / 2);
 
                 DrawUtils.DrawShadowedString(TankGame.TextFontLarge,
@@ -237,9 +254,9 @@ public static class IntermissionSystem {
                     name,
                     PlayerID.PlayerTankColors[i].ToColor(),
                     new Vector2(0.3f).ToResolution(),
-                    Alpha,
+                    overallAlpha,
                     TankGame.TextFontLarge.MeasureString(name) / 2);
-                DrawUtils.DrawShadowedTexture(tnk2d, pos - new Vector2(130, 0).ToResolution(), Vector2.One, PlayerID.PlayerTankColors[i].ToColor(), new Vector2(1.25f), Alpha, tnk2d.Size() / 2);
+                DrawUtils.DrawShadowedTexture(tnk2d, pos - new Vector2(130, 0).ToResolution(), Vector2.One, PlayerID.PlayerTankColors[i].ToColor(), new Vector2(1.25f), overallAlpha, tnk2d.Size() / 2);
             }
             // draw mission data on the billboard (?) thing
             if (CampaignGlobals.LoadedCampaign.CurrentMissionId == 0)
@@ -249,7 +266,7 @@ public static class IntermissionSystem {
                     $"{TankGame.GameLanguage.Campaign}: \"{CampaignGlobals.LoadedCampaign.MetaData.Name}\" ({TankGame.GameLanguage.Mission} #{CampaignGlobals.LoadedCampaign.CurrentMissionId + 1})",
                     BackgroundColor,
                     TextAnimatorSmall.CurrentScale.ToResolution(),
-                    Alpha);
+                    overallAlpha);
             else
                 DrawUtils.DrawShadowedString(TankGame.TextFontLarge,
                     new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 295.ToResolutionY()),
@@ -257,9 +274,17 @@ public static class IntermissionSystem {
                     $"{TankGame.GameLanguage.Mission} #{CampaignGlobals.LoadedCampaign.CurrentMissionId + 1}",
                     BackgroundColor,
                     TextAnimatorSmall.CurrentScale.ToResolution(),
-                    Alpha);
+                    overallAlpha);
         }
         _oldBlack = BlackAlpha;
+
+        #endregion
+        spriteBatch.End();
+        //TankGame.Instance.GraphicsDevice.SetRenderTarget(null);
+
+        //spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: TankGame.DefaultRasterizer);
+        //spriteBatch.Draw(IntermissionSystem.FrameBuffer, Vector2.Zero, null, Color.White * Alpha, 0f, Vector2.Zero, Vector2.One, default, 0f);
+        //spriteBatch.End();
     }
 
     private static void DrawBonusLifeHUD() {

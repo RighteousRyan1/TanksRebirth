@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TanksRebirth.Enums;
 using TanksRebirth.GameContent.ID;
-using TanksRebirth.GameContent.Properties;
+using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Speedrunning;
 using TanksRebirth.GameContent.Systems.Coordinates;
@@ -21,6 +21,8 @@ using TanksRebirth.Net;
 namespace TanksRebirth.GameContent.Systems;
 public static class IntermissionHandler {
     public static Animator ThirdPersonTransitionAnimation;
+
+    public static Animator[] PopupAnimators;
 
     private static bool _wasOverhead;
     private static bool _wasInMission;
@@ -38,6 +40,9 @@ public static class IntermissionHandler {
         // Server.SyncSeeds();
 
         LastResult = context;
+
+        // initialize animators
+        //PopupAnimators = new Animator[CampaignGlobals.DeltaMissionStats.NumStatsWithDelta];
 
         //if (result1up && context != MissionEndContext.Lose)
         //delay += 200;
@@ -177,20 +182,20 @@ public static class IntermissionHandler {
             if (!CampaignGlobals.InMission && _wasInMission) {
                 IntermissionSystem.InitializeCountdowns();
                 bool isExtraLifeMission = CampaignGlobals.LoadedCampaign.MetaData.ExtraLivesMissions.Contains(CampaignGlobals.LoadedCampaign.CurrentMissionId + 1);
+                int restartTime;
+                MissionEndContext endContext;
                 if (victory) {
-                    int restartTime = 600;
+                    restartTime = 600;
                     //if (isExtraLifeMission)
                     //restartTime += 200;
 
-                    var cxt = MissionEndContext.Win;
+                    endContext = MissionEndContext.Win;
 
                     if (CampaignGlobals.LoadedCampaign.CurrentMissionId >= CampaignGlobals.LoadedCampaign.CachedMissions.Length - 1)
-                        cxt = CampaignGlobals.LoadedCampaign.MetaData.HasMajorVictory ? MissionEndContext.CampaignCompleteMajor : MissionEndContext.CampaignCompleteMinor;
-
-                    CampaignGlobals.MissionEndEvent_Invoke(restartTime, cxt, isExtraLifeMission);
+                        endContext = CampaignGlobals.LoadedCampaign.MetaData.HasMajorVictory ? MissionEndContext.CampaignCompleteMajor : MissionEndContext.CampaignCompleteMinor;
                 }
                 else {
-                    int restartTime = 600;
+                    restartTime = 600;
 
                     // TODO: if a 1-up mission, extend by X amount of time (TBD?)
                     // we check <= 1 since the lives haven't actually been deducted yet.
@@ -205,44 +210,31 @@ public static class IntermissionHandler {
                     // doesnt work on 1 client
                     bool check = Client.IsConnected() ? PlayerTank.Lives.All(x => x == 0) : PlayerTank.GetMyLives() <= 0;
 
-                    var cxt = !GameHandler.AllPlayerTanks.Any(tnk => tnk != null && !tnk.Dead) ? (check ? MissionEndContext.GameOver : MissionEndContext.Lose) : MissionEndContext.Win;
+                    // why is "win" a ternary result? it will never be "win" given the we are in the "!victory" branch. wtf ryan code once again
+                    endContext = !GameHandler.AllPlayerTanks.Any(tnk => tnk != null && !tnk.Dead) ? (check ? MissionEndContext.GameOver : MissionEndContext.Lose) : MissionEndContext.Win;
 
                     // hardcode hell 2: electric boogaloo
                     if (Difficulties.Types["InfiniteLives"])
-                        cxt = MissionEndContext.Lose;
-
-                    CampaignGlobals.MissionEndEvent_Invoke(restartTime, cxt, isExtraLifeMission);
+                        endContext = MissionEndContext.Lose;
                 }
+                CampaignGlobals.MissionEndEvent_Invoke(restartTime, endContext, isExtraLifeMission);
             }
         }
         if (IntermissionSystem.CurrentWaitTime > 0)
             IntermissionSystem.Tick(TankGame.DeltaTime);
 
-        //if (IntermissionSystem.CurrentWaitTime == 220)
-            //BeginIntroSequence();
-        //if (IntermissionSystem.CurrentWaitTime == IntermissionSystem.WaitTime / 2 && IntermissionSystem.CurrentWaitTime != 0)
-            // GameProperties.LoadedCampaign.SetupLoadedMission(GameHandler.AllPlayerTanks.Any(tnk => tnk != null && !tnk.Dead));
-        // waittime - 150
-        // between
         if (IntermissionSystem.CurrentWaitTime > 240 && IntermissionSystem.CurrentWaitTime < 450) {
             // this hardcode makes me want to commit neck rope
             // boolean is changed within the scope of the check so we check again. weird.
             IntermissionSystem.TickAlpha(1f / 60f * TankGame.DeltaTime);
             // ^ when the mission info popup starts to appear
         }
-        else // fading into black...
+        else
             IntermissionSystem.TickAlpha(-1f / 45f * TankGame.DeltaTime);
-        /*if (IntermissionSystem.CurrentWaitTime == 420) {
-            SceneManager.CleanupScene();
-            var missionStarting = "Assets/fanfares/mission_starting.ogg";
-            SoundPlayer.PlaySoundInstance(missionStarting, SoundContext.Effect, 0.8f);
-        }*/
     }
     /// <summary>This marks the beginning of the player seeing all of the tanks on the map, before the round begins.</summary>
     public static void BeginIntroSequence() {
         TankFunctionWait = TANK_FUNC_WAIT_MAX;
-
-
 
         TankMusicSystem.StopAll();
 
@@ -264,6 +256,7 @@ public static class IntermissionHandler {
             TankFunctionWait -= TankGame.DeltaTime;
         if (TankFunctionWait <= 0 && _oldWait > 0 && !MainMenu.Active) {
             // FIXME: maybe causes issues since the mission is 1 tick from starting?
+            // TODO: move this to the animator?
             if (!CampaignGlobals.InMission) {
                 CampaignGlobals.InMission = true;
                 CampaignGlobals.DoMissionStartInvoke();

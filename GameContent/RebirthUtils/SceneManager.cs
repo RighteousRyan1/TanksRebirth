@@ -5,7 +5,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using TanksRebirth.Enums;
-using TanksRebirth.GameContent.Properties;
+using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.Graphics;

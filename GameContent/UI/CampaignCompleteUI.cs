@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using TanksRebirth.Enums;
-using TanksRebirth.GameContent.Properties;
+using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common;
@@ -301,13 +301,13 @@ public static class CampaignCompleteUI
 
         Array.Fill(_tierScales, _defaultSize);
 
-        ShellsFired = stats.ShellsShotThisCampaign;
-        ShellHits = stats.ShellHitsThisCampaign;
+        ShellsFired = stats.ShellsShot;
+        ShellHits = stats.ShellHits;
 
-        MinesLaid = stats.MinesLaidThisCampaign;
-        MineHits = stats.MineHitsThisCampaign;
+        MinesLaid = stats.MinesLaid;
+        MineHits = stats.MineHits;
 
-        SuicideCount = stats.SuicidesThisCampaign;
+        SuicideCount = stats.Suicides;
 
         LivesRemaining = PlayerTank.GetMyLives();
 

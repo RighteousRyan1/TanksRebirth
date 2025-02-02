@@ -7,6 +7,7 @@ using TanksRebirth.Internals;
 
 namespace TanksRebirth.GameContent;
 
+// TODO: this can definitely become a rendertarget translated into 3d space.
 public class TankFootprint {
     public static bool ShouldTracksFade;
 

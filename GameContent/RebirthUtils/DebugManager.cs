@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using FontStashSharp;
 using TanksRebirth.Internals.Common.GameUI;
 using TanksRebirth.GameContent.Systems;
-using TanksRebirth.GameContent.Properties;
+using TanksRebirth.GameContent.Globals;
 using NativeFileDialogSharp;
 using System.IO;
 using TanksRebirth.Internals.Common.Utilities;

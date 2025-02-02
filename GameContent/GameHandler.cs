@@ -19,7 +19,7 @@ using TanksRebirth.Net;
 using TanksRebirth.Internals.Common.Framework;
 using NativeFileDialogSharp;
 using TanksRebirth.Achievements;
-using TanksRebirth.GameContent.Properties;
+using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Speedrunning;
 using FontStashSharp;
 using TanksRebirth.GameContent.ID;

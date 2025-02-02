@@ -10,7 +10,7 @@ using FontStashSharp;
 using System.IO;
 using System.Diagnostics;
 
-using TanksRebirth.GameContent.Properties;
+using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Cosmetics;
 using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.ID;

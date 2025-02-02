@@ -17,7 +17,7 @@ using TanksRebirth.Graphics;
 using TanksRebirth.Net;
 using TanksRebirth.GameContent.Systems;
 using FontStashSharp;
-using TanksRebirth.GameContent.Properties;
+using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
@@ -32,13 +32,14 @@ public class PlayerTank : Tank
     public static int StartingLives = 3;
     // public static Dictionary<PlayerType, Dictionary<TankTier, int>> TanksKillDict = new(); // this campaign only!
     public static Dictionary<int, int> TankKills = []; // this campaign only!
+    // questioning the validity of this struct but whatever
     public struct CampaignStats
     {
-        public int ShellsShotThisCampaign;
-        public int ShellHitsThisCampaign;
-        public int MinesLaidThisCampaign;
-        public int MineHitsThisCampaign;
-        public int SuicidesThisCampaign; // self-damage this campaign?
+        public int ShellsShot;
+        public int ShellHits;
+        public int MinesLaid;
+        public int MineHits;
+        public int Suicides; // self-damage this campaign?
     }
     public static CampaignStats PlayerStatistics;
     public static bool _drawShotPath;
@@ -283,11 +284,11 @@ public class PlayerTank : Tank
         base.Remove(nullifyMe);
     }
     public override void Shoot(bool fxOnly) {
-        PlayerStatistics.ShellsShotThisCampaign++;
+        PlayerStatistics.ShellsShot++;
         base.Shoot(false);
     }
     public override void LayMine() {
-        PlayerStatistics.MinesLaidThisCampaign++;
+        PlayerStatistics.MinesLaid++;
         base.LayMine();
     }
     private void ControlHandle_ConsoleController() {
@@ -437,7 +438,7 @@ public class PlayerTank : Tank
                 // friendly fire counts as suicides lol
                 // this probably makes sense
                 TankGame.GameData.Suicides++;
-                PlayerStatistics.SuicidesThisCampaign++;
+                PlayerStatistics.Suicides++;
                 // check if player id matches client id, if so, increment that player's kill count, then sync to the server
                 // TODO: convert TankHurtContext into a struct and use it here
                 // Will be used to track the reason of death and who caused the death, if any tank owns a shell or mine

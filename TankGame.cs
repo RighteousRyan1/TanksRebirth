@@ -28,7 +28,7 @@ using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.ID;
-using TanksRebirth.GameContent.Properties;
+using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Systems.PingSystem;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.Graphics;
@@ -621,7 +621,6 @@ public class TankGame : Game {
     public static Vector2 MouseVelocity;
 
     public static bool SecretCosmeticSetting;
-    public static bool SpeedrunMode;
 
     public static bool Interp { get; set; } = true;
 
@@ -727,12 +726,12 @@ public class TankGame : Game {
                 ChatSystem.SendMessage(SecretCosmeticSetting ? "Activated randomized cosmetics!" : "Deactivated randomized cosmetics.", SecretCosmeticSetting ? Color.Lime : Color.Red);
             }
             if (InputUtils.KeyJustPressed(Keys.F1)) {
-                SpeedrunMode = !SpeedrunMode;
-                if (SpeedrunMode)
+                Speedrun.SpeedrunMode = !Speedrun.SpeedrunMode;
+                if (Speedrun.SpeedrunMode)
                     CampaignGlobals.OnMissionStart += Speedrun.StartSpeedrun;
                 else
                     CampaignGlobals.OnMissionStart -= Speedrun.StartSpeedrun;
-                ChatSystem.SendMessage(SpeedrunMode ? "Speedrun mode on!" : "Speedrun mode off.", SpeedrunMode ? Color.Lime : Color.Red);
+                ChatSystem.SendMessage(Speedrun.SpeedrunMode ? "Speedrun mode on!" : "Speedrun mode off.", Speedrun.SpeedrunMode ? Color.Lime : Color.Red);
             }
             if (InputUtils.AreKeysJustPressed(Keys.RightAlt, Keys.Enter) || InputUtils.AreKeysJustPressed(Keys.LeftAlt, Keys.Enter)) {
                 Graphics.IsFullScreen = !Graphics.IsFullScreen;
@@ -1059,8 +1058,8 @@ public class TankGame : Game {
 
     public static RasterizerState DefaultRasterizer => RenderWireframe ? new() { FillMode = FillMode.WireFrame } : RasterizerState.CullNone;
 
-    static RenderTarget2D gameTarget;
-    public static RenderTarget2D GameTarget => gameTarget;
+    static RenderTarget2D GameFrameBuffer;
+    public static RenderTarget2D GameTarget => GameFrameBuffer;
 
     public static event Action<GameTime> OnPostDraw;
 
@@ -1076,96 +1075,58 @@ public class TankGame : Game {
     
     // FIXME: this method is a clusterfuck
     protected override void Draw(GameTime gameTime) {
-        if (gameTarget == null || gameTarget.IsDisposed || gameTarget.Size() != WindowUtils.WindowBounds) {
-            gameTarget?.Dispose();
+        if (GameFrameBuffer == null || GameFrameBuffer.IsDisposed || GameFrameBuffer.Size() != WindowUtils.WindowBounds) {
+            GameFrameBuffer?.Dispose();
             var presentationParams = GraphicsDevice.PresentationParameters;
-            gameTarget = new RenderTarget2D(GraphicsDevice, presentationParams.BackBufferWidth, presentationParams.BackBufferHeight, false, presentationParams.BackBufferFormat, presentationParams.DepthStencilFormat, 0, RenderTargetUsage.PreserveContents);
+            GameFrameBuffer = new RenderTarget2D(GraphicsDevice, presentationParams.BackBufferWidth, presentationParams.BackBufferHeight, false, presentationParams.BackBufferFormat, presentationParams.DepthStencilFormat, 0, RenderTargetUsage.PreserveContents);
         }
-
-        GraphicsDevice.SetRenderTarget(gameTarget);
+        // switch to RT, begin SB, do drawing, end SB, SetRenderTarget(null), begin SB again, draw RT, end SB
+        GraphicsDevice.SetRenderTarget(GameFrameBuffer);
         GraphicsDevice.Clear(ClearColor);
-
         // TankFootprint.DecalHandler.UpdateRenderTarget();
         SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: DefaultRasterizer);
-
         GraphicsDevice.DepthStencilState = _stencilState;
-
         GameHandler.RenderAll();
-
         SpriteRenderer.End();
 
-        foreach (var triangle in Triangle2D.triangles)
-            triangle.DrawImmediate();
-        foreach (var qu in Quad3D.quads)
-            qu.Render();
-
         GraphicsDevice.SetRenderTarget(null);
-
-        var vfx = Difficulties.Types["LanternMode"] ? GameShaders.LanternShader : (MainMenu.Active ? GameShaders.GaussianBlurShader : null);
-
-        if (!GameSceneRenderer.ShouldRenderAll)
-            vfx = null;
-
-        SpriteRenderer.Begin(effect: vfx);
-        SpriteRenderer.Draw(gameTarget, Vector2.Zero, null, Color.White, 0f, Vector2.Zero, Vector2.One, default, 0f);
+        var shader = Difficulties.Types["LanternMode"] ? GameShaders.LanternShader : (MainMenu.Active ? GameShaders.GaussianBlurShader : null);
+        if (!GameSceneRenderer.ShouldRenderAll) shader = null;
+        SpriteRenderer.Begin(effect: shader);
+        SpriteRenderer.Draw(GameFrameBuffer, Vector2.Zero, null, Color.White, 0f, Vector2.Zero, Vector2.One, default, 0f);
         SpriteRenderer.End();
 
         // holy balls this sucks.
         GraphicsDevice.DepthStencilState = _stencilState;
-            MainMenu.RenderModels();
+        MainMenu.RenderModels();
 
         SpriteRenderer.Begin();
-        if (MainMenu.Active)
-            MainMenu.Render();
+        if (MainMenu.Active) MainMenu.Render();
         // i really wish i didn't have to draw this here.
         VanillaAchievementPopupHandler.DrawPopup(SpriteRenderer);
-        #region Debug
-        if (Debugger.IsAttached)
-            SpriteRenderer.DrawString(TextFont, "DEBUGGER ATTACHED", new Vector2(10, 50), Color.Red, new Vector2(0.8f));
+        if (Debugger.IsAttached) SpriteRenderer.DrawString(TextFont, "DEBUGGER ATTACHED", new Vector2(10, 50), Color.Red, new Vector2(0.8f));
         DebugManager.DrawDebug(SpriteRenderer);
         DebugManager.DrawDebugMetrics();
-        if (SpeedrunMode && Speedrun.CurrentSpeedrun is not null) {
-            var num = CampaignGlobals.LoadedCampaign.CurrentMissionId switch {
-                > 2 => CampaignGlobals.LoadedCampaign.CurrentMissionId - 2,
-                1 => CampaignGlobals.LoadedCampaign.CurrentMissionId - 1,
-                _ => 0,
-            };
-
-            var len = CampaignGlobals.LoadedCampaign.CurrentMissionId + 2 > CampaignGlobals.LoadedCampaign.CachedMissions.Length ? CampaignGlobals.LoadedCampaign.CachedMissions.Length - 1 : CampaignGlobals.LoadedCampaign.CurrentMissionId + 2;
-
-            SpriteRenderer.DrawString(TextFontLarge, $"Time: {Speedrun.CurrentSpeedrun.Timer.Elapsed}", new Vector2(10, 5), Color.White, new Vector2(0.15f), 0f, Vector2.Zero);
-            for (int i = num; i <= len; i++) { // current.times.count originally
-
-                var time = Speedrun.CurrentSpeedrun.MissionTimes.ElementAt(i);
-                // display mission name and time taken
-                SpriteRenderer.DrawString(TextFontLarge, $"{time.Key}: {time.Value.Item2}", new Vector2(10, 20 + ((i - num) * 15)), Color.White, new Vector2(0.15f), 0f, Vector2.Zero);
-            }
-        }
-        #endregion
-
+        Speedrun.DrawSpeedrunHUD(SpriteRenderer);
         SpriteRenderer.End();
 
         ChatSystem.DrawMessages();
 
         SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: DefaultRasterizer);
-        if (LevelEditor.Active)
-            LevelEditor.Render();
+        if (LevelEditor.Active) LevelEditor.Render();
+        if (CampaignCompleteUI.IsViewingResults) CampaignCompleteUI.Render();
+        SpriteRenderer.End();
 
-        GameHandler.RenderUI();
+        // this method begins the spritebatch, since it's supposed to have its own
         IntermissionSystem.Draw(SpriteRenderer);
 
-        if (CampaignCompleteUI.IsViewingResults)
-            CampaignCompleteUI.Render();
-
-        if (IsCrashInfoVisible)
-            DrawErrorScreen();
-
+        SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: DefaultRasterizer);
+        GameHandler.RenderUI();
+        if (IsCrashInfoVisible) DrawErrorScreen();
         SpriteRenderer.End();
 
         SpriteRenderer.Begin(blendState: BlendState.AlphaBlend, effect: GameShaders.MouseShader, rasterizerState: DefaultRasterizer);
-
         RebirthMouse.DrawMouse();
-
         SpriteRenderer.End();
 
         OnPostDraw?.Invoke(gameTime);

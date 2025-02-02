@@ -7,7 +7,7 @@ using TanksRebirth.Enums;
 using TanksRebirth.GameContent.GameMechanics;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.ModSupport;
-using TanksRebirth.GameContent.Properties;
+using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.AI;
@@ -649,7 +649,7 @@ public class Shell : IAITankDanger
                 // in case the player wants to destroy a mine that may be impeding progress- we don't want to penalize them.
                 if (context == DestructionContext.WithHostileTank || context == DestructionContext.WithMine ||
                     context == DestructionContext.WithShell)
-                    PlayerTank.PlayerStatistics.ShellHitsThisCampaign++;
+                    PlayerTank.PlayerStatistics.ShellHits++;
         }
 
         if (!wasSentByAnotherClient)
