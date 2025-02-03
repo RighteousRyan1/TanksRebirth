@@ -779,9 +779,6 @@ public class TankGame : Game {
                             Matrix.CreateRotationY(OrthoRotationVector.X) *
                             Matrix.CreateRotationX(OrthoRotationVector.Y);
                         GameProjection = Matrix.CreateOrthographic(1920, 1080, -2000, 5000);
-
-                        //Matrix.CreateTranslation(CameraFocusOffset.X, -CameraFocusOffset.Y, 0);
-                        //OrthographicCamera.SetLookAt(new(0f, 0, 350f), Vector3.Zero, Vector3.Up);
                     }
                 }
                 else {
