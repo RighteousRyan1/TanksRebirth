@@ -104,7 +104,7 @@ public static class SceneManager {
                 TankGame.ClearColor = Color.Black;
 
                 GameLight.Color = new(150, 150, 170);
-                SceneManager.GameLight.Brightness = 0.71f;
+                GameLight.Brightness = 0.71f;
 
                 GameLight.Apply(false);
             }

@@ -4,7 +4,7 @@ using System;
 
 namespace TanksRebirth.GameContent.Cosmetics;
 
-public struct Prop3D(string name, Model model, Texture2D texture, Vector3 position, PropLockOptions lockOptions) : IProp
+public class Prop3D(string name, Model model, Texture2D texture, Vector3 position, PropLockOptions lockOptions) : IProp
 {
     /// <summary>The position of the cosmetic, relative to the tank's position.</summary>
     public Vector3 RelativePosition { get; set; } = position;

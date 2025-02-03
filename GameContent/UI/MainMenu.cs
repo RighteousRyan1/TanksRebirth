@@ -34,6 +34,8 @@ namespace TanksRebirth.GameContent.UI;
 public static class MainMenu {
     public static bool Active { get; private set; } = true;
 
+    public static Animator CameraPositionAnimator;
+
     public static OggMusic Theme;
     private static bool _musicFading;
 
@@ -48,8 +50,6 @@ public static class MainMenu {
     public static event MenuOpenDelegate OnMenuOpen;
     public static event MenuCloseDelegate OnMenuClose;
     public static event CampaignSelectedDelegate OnCampaignSelected;
-
-    public static Animator LogoAnimation;
 
     #region Button Fields
 
@@ -123,11 +123,8 @@ public static class MainMenu {
     public static int MissionCheckpoint = 0;
 
     #region OldLogo
-    public static Texture2D LogoTexture2D;
-    public static Vector2 LogoPosition;
-    public static Vector2 LogoScale = new(0.5f);
-    public static float LogoRotation;
-    public static float LogoRotationSpeed = 1f;
+    public static Vector2 MotdPos;
+    public static Vector2 MotdScale = new(0.5f);
 
     private static float _sclOffset = 0f;
     private static float _sclApproach = 0.5f;
@@ -137,13 +134,6 @@ public static class MainMenu {
     // TODO: get menu visuals working
 
     public static RenderableCrate Crate;
-
-    private static float _spinOffset; // shut up IDE pls CS0649 bs
-
-    private static float _bpm = 75;
-    private static float _rotationBpm = 500; // more? (200 default)
-    private static float _sclMax = 50; // 250 default
-    private static float _rotDelta = 5; // 300 usually?
 
     // not always properly set, fix later
     // this code is becoming so shit i want to vomit but i don't know any better
@@ -169,13 +159,15 @@ public static class MainMenu {
 
     public static RebirthLogoModel RebirthLogo;
     public static void InitializeBasics() {
-        // we will start at {-200, 200}
-        // go to middle, upper after 4 seconds
-        // will scale down to 0.5
-        LogoAnimation = Animator.Create()
-            .WithFrame(new(position2d: new Vector2(-200, 200), scale: Vector2.Zero, duration: TimeSpan.FromSeconds(4), easing: EasingFunction.OutBack))
-            .WithFrame(new(position2d: new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 4), scale: Vector2.One * 0.5f, duration: TimeSpan.FromSeconds(2)));
-        LogoAnimation.Run();
+        CameraPositionAnimator = Animator.Create()
+            .WithFrame(new(position3d: new Vector3(GameSceneRenderer.MAX_X / 2, 50, 0), duration: TimeSpan.FromSeconds(10), easing: EasingFunction.InOutQuad))
+            .WithFrame(new(position3d: new Vector3(0, 50, GameSceneRenderer.MAX_Z / 2), duration: TimeSpan.FromSeconds(10), easing: EasingFunction.InOutQuad))
+            .WithFrame(new(position3d: new Vector3(GameSceneRenderer.MIN_X / 2, 50, 0), duration: TimeSpan.FromSeconds(10), easing: EasingFunction.InOutQuad))
+            .WithFrame(new(position3d: new Vector3(0, 50, GameSceneRenderer.MIN_Z / 2), duration: TimeSpan.FromSeconds(10), easing: EasingFunction.InOutQuad))
+            .WithFrame(new(position3d: new Vector3(GameSceneRenderer.MAX_X / 2, 50, 0)));
+        CameraPositionAnimator.IsLooped = true;
+        CameraPositionAnimator.Restart();
+        CameraPositionAnimator.Run();
         MenuState = State.PrimaryMenu;
         Crate = new(new(0, 0, 0), TankGame.GameView, TankGame.GameProjection) {
             ChestPosition = new(0, 500, 250)
@@ -187,7 +179,6 @@ public static class MainMenu {
         Crate.Rotation.X = -MathHelper.PiOver4;
         Crate.Rotation.Z = 0f;
         Crate.LidRotation = Crate.Rotation;
-        LogoTexture2D = GameResources.GetGameResource<Texture2D>("Assets/tanks_rebirth_logo_2d_old", premultiply: true);
 
         // AddTravelingTank(TankTier.Black, 200, 200);
 
@@ -494,9 +485,8 @@ public static class MainMenu {
             Crate.LidPosition = Crate.ChestPosition;
     }
     private static void UpdateLogo() {
-        LogoPosition = LogoAnimation.CurrentPosition2D;
-        LogoRotation = MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalMilliseconds / _rotationBpm) / _rotDelta + _spinOffset;
-        LogoScale = (MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalMilliseconds / _bpm) / _sclMax + _sclOffset).ToResolution();
+        //MotdRot = MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalMilliseconds / _rotationBpm) / _rotDelta + _spinOffset;
+        //MotdScale = (MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalMilliseconds / _bpm) / _sclMax + _sclOffset).ToResolution();
 
         if (_sclOffset < _sclApproach)
             _sclOffset += _sclAcc * TankGame.DeltaTime;
@@ -1170,8 +1160,6 @@ public static class MainMenu {
 
             Speedrun.GetSpeedruns();
         }
-
-        TankGame.DoZoomStuff();
         // GameHandler.CleanupEntities();
 
         foreach (var block in Block.AllBlocks)
@@ -1276,6 +1264,7 @@ public static class MainMenu {
     public static void Render() {
         if (!_initialized || !_diffButtonsInitialized)
             return;
+        MotdPos = new Vector2(WindowUtils.WindowWidth / 2, 10);
         if (Active) {
             UpdateLogo();
             if (MenuState == State.StatsMenu)
@@ -1301,7 +1290,7 @@ public static class MainMenu {
                 //TankGame.SpriteRenderer.Draw(LogoTexture, LogoPosition, null, Color.White, LogoRotation, LogoTexture.Size() / 2, LogoScale, default, default);
 
                 var size = TankGame.TextFont.MeasureString(TankGame.Instance.MOTD);
-                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, TankGame.Instance.MOTD, LogoPosition + LogoTexture2D.Size() * LogoScale * 0.3f, Color.White, LogoScale * 1.5f, LogoRotation - 0.25f, GameUtils.GetAnchor(Anchor.TopCenter, size));
+                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, TankGame.Instance.MOTD, MotdPos, Color.White, MotdScale * 1.5f, 0f, GameUtils.GetAnchor(Anchor.TopCenter, size));
             }
             if (MenuState == State.Campaigns) {
                 if (!campaignNames.Any(x => {

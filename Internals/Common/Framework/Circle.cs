@@ -26,5 +26,5 @@ public struct Circle
         => Radius * 2 * MathHelper.Pi;
 
     public readonly Vector2 GetRotatedPoint(float rads) 
-        => Center + new Vector2(Radius, 0).RotatedByRadians(rads);
+        => Center + new Vector2(Radius, 0).Rotate(rads);
 }

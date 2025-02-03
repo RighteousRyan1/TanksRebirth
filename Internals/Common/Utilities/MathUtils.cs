@@ -47,15 +47,45 @@ public static class MathUtils
         return MathF.Abs((a - b + MathF.PI * 3) % (MathF.PI * 2) - MathF.PI);
     }
     public static Point ToPoint(this Vector2 vector2) => new((int)vector2.X, (int)vector2.Y);
-    public static Vector2 RotatedByRadians(this Vector2 spinPoint, double radians, Vector2 center = default)
+    public static Vector2 Rotate(this Vector2 spinPoint, float radians, Vector2 center = default)
     {
-        float cos = (float)Math.Cos(radians);
-        float sin = (float)Math.Sin(radians);
+        float cos = MathF.Cos(radians);
+        float sin = MathF.Sin(radians);
         Vector2 newPoint = spinPoint - center;
         Vector2 result = center;
         result.X += newPoint.X * cos - newPoint.Y * sin;
         result.Y += newPoint.X * sin + newPoint.Y * cos;
         return result;
+    }
+    public static Vector3 RotateXZ(this Vector3 spinPoint3d, float radians, Vector3 center3d = default) {
+        Vector2 spinPoint = spinPoint3d.FlattenZ();
+        Vector2 center = center3d.FlattenZ();
+
+        float cos = MathF.Cos(radians);
+        float sin = MathF.Sin(radians);
+        Vector2 newPoint = spinPoint - center;
+        Vector2 result = center;
+        result.X += newPoint.X * cos - newPoint.Y * sin;
+        result.Y += newPoint.X * sin + newPoint.Y * cos;
+
+        Vector3 result3d = result.ExpandZ();
+        result3d.Y = spinPoint3d.Y;
+        return result3d;
+    }
+    public static Vector3 RotateXY(this Vector3 spinPoint3d, float radians, Vector3 center3d = default) {
+        Vector2 spinPoint = spinPoint3d.Flatten();
+        Vector2 center = center3d.Flatten();
+
+        float cos = MathF.Cos(radians);
+        float sin = MathF.Sin(radians);
+        Vector2 newPoint = spinPoint - center;
+        Vector2 result = center;
+        result.X += newPoint.X * cos - newPoint.Y * sin;
+        result.Y += newPoint.X * sin + newPoint.Y * cos;
+
+        Vector3 result3d = result.Expand();
+        result3d.Z = spinPoint3d.Z;
+        return result3d;
     }
     public static float Distance(this Vector2 initial, Vector2 other) => Vector2.Distance(initial, other);
     public static float MaxDistanceValue(Vector2 initial, Vector2 end, float maxDist)

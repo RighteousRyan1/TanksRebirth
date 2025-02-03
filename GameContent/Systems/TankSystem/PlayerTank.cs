@@ -102,7 +102,7 @@ public class PlayerTank : Tank
     }
     public void SwapTankTexture(Texture2D texture) => _tankTexture = texture;
     public PlayerTank(int playerType, bool isPlayerModel = true, int copyTier = TankID.None) {
-        Model = GameResources.GetGameResource<Model>(isPlayerModel ? "Assets/tank_p" : "Assets/tank_e");
+        Model = GameResources.GetGameResource<Model>(isPlayerModel ? "Assets/models/tank_p" : "Assets/models/tank_e");
         if (copyTier == TankID.None)
             _tankTexture = Assets[$"tank_" + PlayerID.Collection.GetKey(playerType)!.ToLower()];
         else {
@@ -309,7 +309,7 @@ public class PlayerTank : Tank
         }
         else {
             if (Difficulties.Types["POV"])
-                preterbedVelocity = preterbedVelocity.RotatedByRadians(-TurretRotation + MathHelper.Pi);
+                preterbedVelocity = preterbedVelocity.Rotate(-TurretRotation + MathHelper.Pi);
 
             Speed += Properties.Acceleration * TankGame.DeltaTime;
             if (Speed > Properties.MaxSpeed)
@@ -349,7 +349,7 @@ public class PlayerTank : Tank
             //Mouse.SetPosition((int)(Input.CurrentMouseSnapshot.X + rightStick.X * TankGame.Instance.Settings.ControllerSensitivity), (int)(Input.CurrentMouseSnapshot.Y - rightStick.Y * TankGame.Instance.Settings.ControllerSensitivity));
         }
 
-        Velocity = Vector2.UnitY.RotatedByRadians(TankRotation) * Speed;
+        Velocity = Vector2.UnitY.Rotate(TankRotation) * Speed;
 
         if (FireBullet.JustPressed)
             Shoot(false);
@@ -403,7 +403,7 @@ public class PlayerTank : Tank
         }
 
         if (Difficulties.Types["POV"])
-            preterbedVelocity = preterbedVelocity.RotatedByRadians(-TurretRotation + MathHelper.Pi);
+            preterbedVelocity = preterbedVelocity.Rotate(-TurretRotation + MathHelper.Pi);
 
         var norm = Vector2.Normalize(preterbedVelocity);
 
@@ -411,7 +411,7 @@ public class PlayerTank : Tank
 
         TankRotation = MathUtils.RoughStep(TankRotation, TargetTankRotation, Properties.TurningSpeed * TankGame.DeltaTime);
 
-        Velocity = Vector2.UnitY.RotatedByRadians(TankRotation) * Speed;
+        Velocity = Vector2.UnitY.Rotate(TankRotation) * Speed;
     }
     public override void Destroy(ITankHurtContext context) {
         if (Client.IsConnected()) {
@@ -467,8 +467,8 @@ public class PlayerTank : Tank
         const int MAX_PATH_UNITS = 10000;
 
         var whitePixel = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
-        var pathPos = Position + new Vector2(0, 18).RotatedByRadians(-TurretRotation);
-        var pathDir = Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi);
+        var pathPos = Position + new Vector2(0, 18).Rotate(-TurretRotation);
+        var pathDir = Vector2.UnitY.Rotate(TurretRotation - MathHelper.Pi);
         pathDir.Y *= -1;
         pathDir *= Properties.ShellSpeed;
 

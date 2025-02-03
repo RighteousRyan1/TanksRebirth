@@ -183,7 +183,7 @@ public class Shell : IAITankDanger
         Type = type;
         RicochetsRemaining = ricochets;
         Position = position;
-        Model = GameResources.GetGameResource<Model>("Assets/bullet");
+        Model = GameResources.GetGameResource<Model>("Assets/models/bullet");
 
         AITank.Dangers.Add(this);
         IsPlayerSourced = owner is PlayerTank;
@@ -405,16 +405,16 @@ public class Shell : IAITankDanger
         Particle p;
         if (Difficulties.Types["POV"] || DebugManager.IsFreecamEnabled) {
             p = GameHandler.Particles.MakeParticle(Position3D + new Vector3(0, 0, 5).FlattenZ()
-                                .RotatedByRadians(Rotation + MathHelper.Pi + GameHandler.GameRand.NextFloat(-0.3f, 0.3f))
+                                .Rotate(Rotation + MathHelper.Pi + GameHandler.GameRand.NextFloat(-0.3f, 0.3f))
                                 .ExpandZ(),
-            GameResources.GetGameResource<Model>("Assets/smoke"),
+            GameResources.GetGameResource<Model>("Assets/models/smoke"),
             GameResources.GetGameResource<Texture2D>("Assets/textures/smoke/smoke"));
             p.Scale = new(0.7f);
         }
         else{
             p = GameHandler.Particles.MakeParticle(
                 Position3D + new Vector3(0, 0, 5).FlattenZ()
-                                            .RotatedByRadians(Rotation + MathHelper.Pi + GameHandler.GameRand.NextFloat(-0.3f, 0.3f))
+                                            .Rotate(Rotation + MathHelper.Pi + GameHandler.GameRand.NextFloat(-0.3f, 0.3f))
                                             .ExpandZ(),
             GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
             p.Scale = new(0.3f);
@@ -444,7 +444,7 @@ public class Shell : IAITankDanger
         //var numToAdd
 
         var p = GameHandler.Particles.MakeParticle(
-            Position3D + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(),
+            Position3D + new Vector3(0, 0, 5).FlattenZ().Rotate(Rotation + MathHelper.Pi).ExpandZ(),
             GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
         p.Roll = -MathHelper.PiOver2 + (TankGame.RunTime % MathHelper.Tau);
         p.Color = Properties.TrailColor;
@@ -467,7 +467,7 @@ public class Shell : IAITankDanger
         if (!(0 <= TankGame.DeltaTime)) return;
 
         var p = GameHandler.Particles.MakeParticle(
-            Position3D + new Vector3(0, 0, 5).FlattenZ().RotatedByRadians(Rotation + MathHelper.Pi).ExpandZ(),
+            Position3D + new Vector3(0, 0, 5).FlattenZ().Rotate(Rotation + MathHelper.Pi).ExpandZ(),
             GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/flame"));
 
         p.Roll = -MathHelper.PiOver2;
@@ -487,7 +487,7 @@ public class Shell : IAITankDanger
             const float scalingConstant = 0.06f;
             var flat = Position;
 
-            var off = flat + Vector2.Zero.RotatedByRadians(Rotation);
+            var off = flat + Vector2.Zero.Rotate(Rotation);
 
             par.Position = off.ExpandZ() + new Vector3(0, 11, 0);
 

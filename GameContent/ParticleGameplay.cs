@@ -13,7 +13,7 @@ namespace TanksRebirth.GameContent;
 public static class ParticleGameplay {
     // TODO: track smokes as objects, so ai can't shoot through?
     public static void CreateSmokeGrenade(ParticleSystem system, Vector3 position, Vector3 velocity) {
-        var p = system.MakeParticle(position, GameResources.GetGameResource<Model>("Assets/smokenade"), GameResources.GetGameResource<Texture2D>("Assets/textures/smoke/smokenade"));
+        var p = system.MakeParticle(position, GameResources.GetGameResource<Model>("Assets/models/smokenade"), GameResources.GetGameResource<Texture2D>("Assets/textures/smoke/smokenade"));
         bool exploded = false;
 
         float gravity = 0.03f;

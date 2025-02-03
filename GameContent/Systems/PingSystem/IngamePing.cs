@@ -39,7 +39,7 @@ public class IngamePing {
                 ping._lifeTime = MaxLifeTime;
             }
         }
-        _model = GameResources.GetGameResource<Model>("Assets/ping");
+        _model = GameResources.GetGameResource<Model>("Assets/models/ping");
         _pingTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/ping/ping_tex");
         _pingGraphic = PingMenu.PingIdToTexture[pingId];
         Id = Array.IndexOf(AllIngamePings, null); // will be bad if pings despawn at unassigned times.

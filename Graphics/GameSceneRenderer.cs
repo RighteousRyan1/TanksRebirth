@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using tainicom.Aether.Physics2D.Dynamics;
 using TanksRebirth.GameContent;
+using TanksRebirth.GameContent.UI;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
 
@@ -147,6 +148,7 @@ public static class GameSceneRenderer
         // TODO: finish christmas stuff kekw failure
         public static void RenderFloor()
         {
+            scale = 0.95f;
             if (!ShouldRenderFloor) return;
             foreach (var mesh in FloorModelBase.Meshes) {
                 foreach (BasicEffect effect in mesh.Effects) {
@@ -214,7 +216,7 @@ public static class GameSceneRenderer
 
                     SetBlockTexture(BoundaryModel.Meshes["polygon21"], BoundaryTextureContext.block_shadow_b);
 
-                    SetBlockTexture(BoundaryModel.Meshes["polygon32"], BoundaryTextureContext.floor_lower);
+                    //SetBlockTexture(BoundaryModel.Meshes["polygon32"], BoundaryTextureContext.floor_lower);
 
                     break;
                 case MapTheme.Christmas:
@@ -232,7 +234,7 @@ public static class GameSceneRenderer
 
                     SetBlockTexture(BoundaryModel.Meshes["polygon21"], BoundaryTextureContext.block_shadow_b);
 
-                    SetBlockTexture(BoundaryModel.Meshes["polygon32"], BoundaryTextureContext.floor_lower);
+                    //SetBlockTexture(BoundaryModel.Meshes["polygon32"], BoundaryTextureContext.floor_lower);
 
                     SetBlockTexture(BoundaryModel.Meshes["snow_field"], "snow");
                     SetBlockTexture(BoundaryModel.Meshes["snow_blocks"], "snow");
@@ -249,6 +251,11 @@ public static class GameSceneRenderer
                 case MapTheme.Vanilla:
                     foreach (var mesh in BoundaryModel.Meshes) {
                         foreach (BasicEffect effect in mesh.Effects) {
+
+                            if (mesh.Name.Contains("outer", System.StringComparison.InvariantCultureIgnoreCase)) {
+                                continue;
+                            }
+
                             effect.View = View;
                             effect.Projection = Projection;
                             effect.World = World;
@@ -336,6 +343,7 @@ public static class GameSceneRenderer
     {
         FloorRenderer.LoadFloor();
         BoundsRenderer.LoadBounds();
+        RoomSceneRenderer.Initialize();
     }
 
     public static float Scale = 0.62f;

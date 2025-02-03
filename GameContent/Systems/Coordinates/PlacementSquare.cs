@@ -56,7 +56,7 @@ public class PlacementSquare {
         Position = position;
         _box = new(position - new Vector3(dimensions / 2, 0, dimensions / 2), position + new Vector3(dimensions / 2, 0, dimensions / 2));
 
-        _model = GameResources.GetGameResource<Model>("Assets/check");
+        _model = GameResources.GetGameResource<Model>("Assets/models/check");
 
         Id = Placements.Count;
 

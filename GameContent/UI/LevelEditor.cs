@@ -398,8 +398,7 @@ public static class LevelEditor {
 
             foreach (var file in Directory.GetFiles(Path.Combine("Content", "Assets", "textures", "ui", "leveledit"))) {
                 var fileName = Path.GetFileNameWithoutExtension(file);
-                var assetName = file;
-                RenderTextures.Add(fileName, GameResources.GetGameResource<Texture2D>(assetName, false, false));
+                RenderTextures.Add(fileName, GameResources.GetGameResource<Texture2D>(file, false, false));
             }
             var names = TankID.Collection.Keys;
             for (int i = 0; i < names.Length; i++) {

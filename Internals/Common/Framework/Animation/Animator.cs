@@ -11,6 +11,8 @@ public class Animator {
     public static List<Animator> Animators = [];
 
     private bool _isRunning;
+    /// <summary>Whether or not this Animator shall loop itself upon completion.</summary>
+    public bool IsLooped { get; set; }
     // added to after every frame is complete. the frame's completion time is added
     private TimeSpan _elapsedOffset;
     // the current elapsed time of the current frame only
@@ -79,7 +81,6 @@ public class Animator {
         CurrentPosition2D = KeyFrames[0].Position2D;
         CurrentScale = KeyFrames[0].Scale;
         CurrentFloats = KeyFrames[0].Floats;
-        _isRunning = false;
         RestartInternal();
     }
     /// <summary>Run this animation from where it is located.</summary>
@@ -143,8 +144,8 @@ public class Animator {
     }
     // TODO: fix the last keyframe not firing an event.
     internal void PlayAnimation(GameTime gameTime) {
-        if (!_isRunning)
-            return;
+        if (!_isRunning) return;
+        if (double.IsNaN(gameTime.ElapsedGameTime.TotalSeconds)) return;
 
         Interpolated = (float)(ElapsedTime.TotalSeconds / EstimatedCompletionTime.TotalSeconds);
 
@@ -185,6 +186,11 @@ public class Animator {
             CurrentFloats = Current.Floats!;
 
             if (CurrentId >= KeyFrames.Count - 1) {
+                if (IsLooped) {
+                    Restart();
+                    Run();
+                    return;
+                }
                 _isRunning = false;
             }
         }

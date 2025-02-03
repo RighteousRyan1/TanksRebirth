@@ -146,7 +146,7 @@ public class ParticleSystem
 
             smoke.Scale = new(0.8f);
 
-            var velocity = Vector2.UnitY.RotatedByRadians(MathHelper.ToRadians(360f / numClouds * i)).ExpandZ() / 2;
+            var velocity = Vector2.UnitY.Rotate(MathHelper.ToRadians(360f / numClouds * i)).ExpandZ() / 2;
 
             smoke.Position.Y += 5f + GameHandler.GameRand.NextFloat(0f, 8f);
 

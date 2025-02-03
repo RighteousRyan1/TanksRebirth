@@ -115,4 +115,43 @@ public static class Lighting
 
         effect.DiffuseColor = new(ColorBrightness);
     }
+
+    public static void SetDefaultGameLighting_Room(this BasicEffect effect, Vector3 lightingDirection) {
+        const float lightingConstant = 0.9f;
+
+        effect.LightingEnabled = true;
+        effect.PreferPerPixelLighting = TankGame.Settings.PerPixelLighting;
+        effect.EnableDefaultLighting();
+        effect.SetDefaultGameLighting();
+
+        return;
+
+        effect.TextureEnabled = true;
+
+        //var ting = MouseUtils.MousePosition.X / (WindowUtils.WindowWidth + WindowUtils.WindowWidth / 2);
+        //var ting2 = MouseUtils.MousePosition.Y / (WindowUtils.WindowHeight + WindowUtils.WindowHeight / 2);
+
+        //effect.DirectionalLight0.Direction = new Vector3(0, -0.7f, -0.7f);
+        //effect.DirectionalLight1.Direction = new Vector3(0, -0.7f, 0.7f);
+        var lightVariation = 45;
+        //effect.DirectionalLight0.Direction = lightingDirection * lightingConstant; //+ new Vector3(ting, 0, ting2);
+        effect.DirectionalLight0.DiffuseColor = LightColor.ToVector3();
+        //effect.DirectionalLight1.Direction = lightingDirection.RotateXZ(MathHelper.ToRadians(lightVariation)) * lightingConstant;
+        effect.DirectionalLight1.DiffuseColor = LightColor.ToVector3();
+        //effect.DirectionalLight2.Direction = lightingDirection.RotateXZ(-MathHelper.ToRadians(lightVariation)) * lightingConstant;
+        effect.DirectionalLight2.DiffuseColor = LightColor.ToVector3();
+
+        effect.EmissiveColor = LightColor.ToVector3() * LightPower * 0.5f;
+
+        effect.FogEnabled = true;
+        effect.FogColor = LightColor.ToVector3();
+        effect.FogStart = 10000f;
+        effect.FogEnd = 75000f;
+
+        effect.SpecularColor = LightPower * LightColor.ToVector3();
+
+        effect.AmbientLightColor = LightColor.ToVector3();
+
+        effect.DiffuseColor = new(ColorBrightness);
+    }
 }

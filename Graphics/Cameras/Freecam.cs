@@ -57,6 +57,17 @@ public class Freecam {
             ChangeProjection();
         }
     }
+    private Vector3 _lookAt;
+    public Vector3 LookAt {
+        get => _lookAt;
+        set {
+            _lookAt = value;
+            if (!HasLookAt) return;
+            ChangeViewWorld();
+        }
+    }
+
+    public bool HasLookAt { get; set; }
 
     private float _near = 0.1f;
     public float NearViewDistance {
@@ -84,8 +95,9 @@ public class Freecam {
     }
 
     private void ChangeViewWorld() {
+        var lookAt = HasLookAt ? Matrix.CreateLookAt(Position, LookAt, Vector3.Up) : Matrix.Identity;
         World = Matrix.CreateFromYawPitchRoll(_rotation.Z, _rotation.Y, _rotation.X) * Matrix.CreateWorld(_position, Vector3.Forward, Vector3.Up);
-        View = Matrix.Invert(World);
+        View = Matrix.Invert(World) * lookAt;
     }
     private void ChangeProjection() {
         Projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(_fov), Device.Viewport.AspectRatio, _near, _far);

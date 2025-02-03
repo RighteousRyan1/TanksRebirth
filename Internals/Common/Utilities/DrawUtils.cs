@@ -10,7 +10,7 @@ public static class DrawUtils
     {
         // pos + new Vector2(0, 2f).RotatedByRadians(MathHelper.PiOver2 * i + MathHelper.PiOver4)
         for (int i = 0; i < 4; i++)
-            spriteBatch.DrawString(font, text, position + new Vector2(0, 2f * borderThickness).RotatedByRadians(MathHelper.PiOver2 * i + MathHelper.PiOver4), 
+            spriteBatch.DrawString(font, text, position + new Vector2(0, 2f * borderThickness).Rotate(MathHelper.PiOver2 * i + MathHelper.PiOver4), 
                 borderColor, scale, rotation, GameUtils.GetAnchor(anchoring, font.MeasureString(text)), 0f);
         spriteBatch.DrawString(font, text, position, textColor, scale, rotation, GameUtils.GetAnchor(anchoring, font.MeasureString(text)), 1f);
     }

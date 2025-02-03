@@ -526,6 +526,25 @@
 /processorParam:TextureFormat=Compressed
 /build:Assets/models/scene/outerbounds.fbx
 
+#begin Assets/models/scene/skybox/room_textureless.fbx
+/importer:FbxImporter
+/processor:ModelProcessor
+/processorParam:ColorKeyColor=0,0,0,0
+/processorParam:ColorKeyEnabled=True
+/processorParam:DefaultEffect=BasicEffect
+/processorParam:GenerateMipmaps=True
+/processorParam:GenerateTangentFrames=False
+/processorParam:PremultiplyTextureAlpha=True
+/processorParam:PremultiplyVertexColors=True
+/processorParam:ResizeTexturesToPowerOfTwo=False
+/processorParam:RotationX=0
+/processorParam:RotationY=0
+/processorParam:RotationZ=0
+/processorParam:Scale=1
+/processorParam:SwapWindingOrder=False
+/processorParam:TextureFormat=Compressed
+/build:Assets/models/scene/skybox/room_textureless.fbx
+
 #begin Assets/models/smoke.fbx
 /importer:FbxImporter
 /processor:ModelProcessor

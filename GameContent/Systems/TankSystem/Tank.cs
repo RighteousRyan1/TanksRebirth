@@ -163,7 +163,7 @@ public abstract class Tank {
 
     public Shell[] OwnedShells = [];
 
-    public Vector2 TurretPosition => Position + new Vector2(0, 20).RotatedByRadians(-TurretRotation);
+    public Vector2 TurretPosition => Position + new Vector2(0, 20).Rotate(-TurretRotation);
     public Vector3 TurretPosition3D => new(TurretPosition.X, 11, TurretPosition.Y);
     public Vector2 Position;
     public Vector2 Velocity;
@@ -318,7 +318,7 @@ public abstract class Tank {
 
             lp.Color = Color.SkyBlue;
 
-            var velocity = Vector2.UnitY.RotatedByRadians(MathHelper.ToRadians(360f / NUM_LOCATIONS * i));
+            var velocity = Vector2.UnitY.Rotate(MathHelper.ToRadians(360f / NUM_LOCATIONS * i));
 
             lp.Scale = new(1f);
 
@@ -757,7 +757,7 @@ public abstract class Tank {
 
         for (int i = 0; i < Properties.ShellShootCount; i++) {
             if (i == 0) {
-                var new2d = Vector2.UnitY.RotatedByRadians(TurretRotation);
+                var new2d = Vector2.UnitY.Rotate(TurretRotation);
 
                 if (!fxOnly) {
                     var shell = new Shell(TurretPosition, new Vector2(-new2d.X, new2d.Y) * Properties.ShellSpeed,
@@ -798,13 +798,13 @@ public abstract class Tank {
 
                 var shell = new Shell(Position, Vector2.Zero, Properties.ShellType, this,
                     homing: Properties.ShellHoming);
-                var new2d = Vector2.UnitY.RotatedByRadians(TurretRotation);
+                var new2d = Vector2.UnitY.Rotate(TurretRotation);
 
-                var newPos = Position + new Vector2(0, 20).RotatedByRadians(-TurretRotation + newAngle);
+                var newPos = Position + new Vector2(0, 20).Rotate(-TurretRotation + newAngle);
 
                 shell.Position = new Vector2(newPos.X, newPos.Y);
 
-                shell.Velocity = new Vector2(-new2d.X, new2d.Y).RotatedByRadians(newAngle) *
+                shell.Velocity = new Vector2(-new2d.X, new2d.Y).Rotate(newAngle) *
                                  Properties.ShellSpeed;
 
                 shell.RicochetsRemaining = Properties.RicochetCount;

@@ -96,7 +96,7 @@ public sealed class Mine : IAITankDanger
         AITank.Dangers.Add(this);
         IsPlayerSourced = owner is PlayerTank;
 
-        Model = GameResources.GetGameResource<Model>("Assets/mine");
+        Model = GameResources.GetGameResource<Model>("Assets/models/mine");
 
         DetonateTime = detonateTime;
         DetonateTimeMax = detonateTime;

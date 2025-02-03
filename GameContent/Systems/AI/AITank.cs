@@ -121,7 +121,7 @@ public partial class AITank : Tank {
         #region Special
 
         if (tier == TankID.Commando) {
-            Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_commando");
+            Model = GameResources.GetGameResource<Model>("Assets/models/specialtanks/tank_commando");
 
             SwapTankTexture(GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_commando"));
 
@@ -138,14 +138,14 @@ public partial class AITank : Tank {
             // fix?
         }
         else if (tier == TankID.Assassin) {
-            Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_assassin");
+            Model = GameResources.GetGameResource<Model>("Assets/models/specialtanks/tank_assassin");
 
-            SwapTankTexture(GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_assassin"));
+            SwapTankTexture(GameResources.GetGameResource<Texture2D>("Assets/models/textures/tank/wee/tank_assassin"));
         }
         else if (tier == TankID.RocketDefender) {
             Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_rocket");
 
-            SwapTankTexture(GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_rocket"));
+            SwapTankTexture(GameResources.GetGameResource<Texture2D>("Assets/models/textures/tank/wee/tank_rocket"));
         }
         else if (tier == TankID.Electro) {
             Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_electro");
@@ -153,12 +153,12 @@ public partial class AITank : Tank {
             SwapTankTexture(GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_electro"));
         }
         else if (tier == TankID.Explosive) {
-            Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_explosive");
+            Model = GameResources.GetGameResource<Model>("Assets/models/specialtanks/tank_explosive");
 
             SwapTankTexture(GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_explosive"));
         }
         else {
-            Model = GameResources.GetGameResource<Model>("Assets/tank_e");
+            Model = GameResources.GetGameResource<Model>("Assets/models/tank_e");
         }
 
         #endregion
@@ -257,7 +257,7 @@ public partial class AITank : Tank {
             _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_explosive");
         }
         else {
-            Model = GameResources.GetGameResource<Model>("Assets/tank_e");
+            Model = GameResources.GetGameResource<Model>("Assets/models/tank_e");
         }
 
         #endregion
@@ -484,7 +484,7 @@ public partial class AITank : Tank {
         // 20, 30
 
         var whitePixel = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
-        var pathPos = Position + offset.RotatedByRadians(-TurretRotation);
+        var pathPos = Position + offset.Rotate(-TurretRotation);
 
         pathDir.Y *= -1; // this may be a culprit and i hate it.
         pathDir *= PATH_UNIT_LENGTH;
@@ -686,13 +686,13 @@ public partial class AITank : Tank {
         List<Tank> tanksDef;
 
         if (Properties.ShellType == ShellID.Explosive) {
-            tanksDef = GetTanksInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), out var ricP, out var tnkCol, offset: Vector2.UnitY * 20, pattern: x => (!x.Properties.IsDestructible && x.Properties.IsSolid) || x.Type == BlockID.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
+            tanksDef = GetTanksInPath(Vector2.UnitY.Rotate(TurretRotation - MathHelper.Pi), out var ricP, out var tnkCol, offset: Vector2.UnitY * 20, pattern: x => (!x.Properties.IsDestructible && x.Properties.IsSolid) || x.Type == BlockID.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
             if (GameUtils.Distance_WiiTanksUnits(ricP[^1], Position) < 150f) // TODO: change from hardcode to normalcode :YES:
                 tooCloseToExplosiveShell = true;
         }
         else {
             tanksDef = GetTanksInPath(
-                Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi),
+                Vector2.UnitY.Rotate(TurretRotation - MathHelper.Pi),
                 out var ricP, out var tnkCol, offset: Vector2.UnitY * 20,
                 missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
 
@@ -707,12 +707,12 @@ public partial class AITank : Tank {
                     .ToRotation() - MathHelper.PiOver2;
 
                 tanksDef = GetTanksInPath(
-                Vector2.UnitY.RotatedByRadians(-MathUtils.DirectionOf(Position, TargetTank.Position).ToRotation() - MathHelper.PiOver2),
+                Vector2.UnitY.Rotate(-MathUtils.DirectionOf(Position, TargetTank.Position).ToRotation() - MathHelper.PiOver2),
                 out var ricP, out var tnkCol, offset: AiParams.PredictsPositions ? Vector2.Zero : Vector2.UnitY * 20,
                 missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
 
                 var targ = GeometryUtils.PredictFuturePosition(TargetTank.Position, TargetTank.Velocity, calculation);
-                var posPredict = GetTanksInPath(Vector2.UnitY.RotatedByRadians(rot),
+                var posPredict = GetTanksInPath(Vector2.UnitY.Rotate(rot),
                     out var ricP1, out var tnkCol2, offset: Vector2.UnitY * 20, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
 
                 if (tanksDef.Contains(TargetTank)) {
@@ -736,7 +736,7 @@ public partial class AITank : Tank {
             seekRotation += AiParams.TurretSpeed * 0.5f;
             var canShoot = !(CurShootCooldown > 0 || OwnedShellCount >= Properties.ShellLimit);
             if (canShoot) {
-                var tanks = GetTanksInPath(Vector2.UnitY.RotatedByRadians(seekRotation), out var ricP, out var tnkCol, false, default, AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
+                var tanks = GetTanksInPath(Vector2.UnitY.Rotate(seekRotation), out var ricP, out var tnkCol, false, default, AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
 
                 var findsEnemy2 = tanks.Any(tnk => tnk is not null && (tnk.Team != Team || tnk.Team == TeamID.NoTeam) && tnk != this);
                 // var findsSelf2 = tanks.Any(tnk => tnk is not null && tnk == this);
@@ -978,7 +978,7 @@ public partial class AITank : Tank {
                 if (TargetTankRotation < 0)
                     TargetTankRotation += MathHelper.Tau;
 
-                var dir = Vector2.UnitY.RotatedByRadians(TankRotation);
+                var dir = Vector2.UnitY.Rotate(TankRotation);
                 Velocity.X = dir.X;
                 Velocity.Y = dir.Y;
 
@@ -1003,7 +1003,8 @@ public partial class AITank : Tank {
         foreach (var tank in GameHandler.AllTanks) {
             if (tank is not null && !tank.Dead && (tank.Team != Team || tank.Team == TeamID.NoTeam) && tank != this) {
                 if (GameUtils.Distance_WiiTanksUnits(tank.Position, Position) < GameUtils.Distance_WiiTanksUnits(targetPosition, Position)) {
-                    if ((tank.Properties.Invisible && tank.timeSinceLastAction < 60) || !tank.Properties.Invisible) {
+                    // var closeness = Vector2.Distance(tank.Position, Position);
+                    if ((tank.Properties.Invisible && tank.timeSinceLastAction < 60) /*|| closeness <= Block.SIDE_LENGTH*/ || !tank.Properties.Invisible) {
                         target = tank;
                         targetPosition = tank.Position;
                     }
@@ -1049,14 +1050,14 @@ public partial class AITank : Tank {
                         AimTarget = TargetTank.Position;
                         IsEnemySpotted = true;
                     }
-
-                    var dirVec = Position - AimTarget;
-                    TargetTurretRotation = -dirVec.ToRotation() - MathHelper.PiOver2 + GameHandler.GameRand.NextFloat(-AiParams.AimOffset, AiParams.AimOffset);
                 }
             }
-
             if (DoAttack)
                 UpdateAim();
+        }
+        if (Behaviors[1].IsModOf(AiParams.TurretMeanderFrequency)) {
+            var dirVec = Position - AimTarget;
+            TargetTurretRotation = -dirVec.ToRotation() - MathHelper.PiOver2 + GameHandler.GameRand.NextFloat(-AiParams.AimOffset, AiParams.AimOffset);
         }
         TurretRotation = MathUtils.RoughStep(TurretRotation, TargetTurretRotation, AiParams.TurretSpeed * TurretRotationMultiplier * TankGame.DeltaTime);
     }
@@ -1115,7 +1116,7 @@ public partial class AITank : Tank {
         if (Behaviors[6].IsModOf(1)) {
             // TODO: add all shells that may or may not be near, average their position and make the tank go away from that position
             if (CurMineStun <= 0 && CurShootStun <= 0) {
-                var direction = -Vector2.UnitY.RotatedByRadians(shell.Position.DirectionOf(Position, false).ToRotation());
+                var direction = -Vector2.UnitY.Rotate(shell.Position.DirectionOf(Position, false).ToRotation());
                 TargetTankRotation = direction.ToRotation();
             }
         }
@@ -1124,7 +1125,7 @@ public partial class AITank : Tank {
         // why is 10 hardcoded xd
         if (Behaviors[5].IsModOf(1)) {
             var dist = mine.IsPlayerSourced ? AiParams.MineWarinessRadius_PlayerLaid : AiParams.MineWarinessRadius_AILaid;
-            var direction = -Vector2.UnitY.RotatedByRadians(mine.Position.DirectionOf(Position, false).ToRotation());
+            var direction = -Vector2.UnitY.Rotate(mine.Position.DirectionOf(Position, false).ToRotation());
 
             TargetTankRotation = direction.ToRotation();
         }
@@ -1133,13 +1134,13 @@ public partial class AITank : Tank {
         // FIXME?: is the modulus check more sensible to come first or not? only time will tell.
         if (Behaviors[5].IsModOf(10)) {
             //var dist = explosion.IsPlayerSourced ? AiParams.MineWarinessRadius_PlayerLaid : AiParams.MineWarinessRadius_AILaid;
-            var direction = -Vector2.UnitY.RotatedByRadians(explosion.Position.DirectionOf(Position, false).ToRotation());
+            var direction = -Vector2.UnitY.Rotate(explosion.Position.DirectionOf(Position, false).ToRotation());
             TargetTankRotation = direction.ToRotation();
         }
     }
     public void DoBlockNav() {
         if (Behaviors[2].IsModOf(AiParams.BlockReadTime)) {
-            IsPathBlocked = IsObstacleInWay(AiParams.BlockWarinessDistance / PATH_UNIT_LENGTH, Vector2.UnitY.RotatedByRadians(TargetTankRotation), out var travelPath, out var reflections, TankPathCheckSize);
+            IsPathBlocked = IsObstacleInWay(AiParams.BlockWarinessDistance / PATH_UNIT_LENGTH, Vector2.UnitY.Rotate(TargetTankRotation), out var travelPath, out var reflections, TankPathCheckSize);
             if (IsPathBlocked) {
                 if (reflections.Length > 0) {
                     // up = PiOver2
@@ -1247,14 +1248,14 @@ public partial class AITank : Tank {
                 calculation = Position.Distance(TargetTank.Position) / (float)(Properties.ShellSpeed * 1.2f);
 
             if (AiParams.SmartRicochets)
-                GetTanksInPath(Vector2.UnitY.RotatedByRadians(seekRotation), out var ricP1, out var tnkCol1, true, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
+                GetTanksInPath(Vector2.UnitY.Rotate(seekRotation), out var ricP1, out var tnkCol1, true, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
             // maybe not necessary. store from the cpu, draw on the gpu.
-            var poo = GetTanksInPath(Vector2.UnitY.RotatedByRadians(TurretRotation - MathHelper.Pi), out var ricP2, out var tnkCol2, true, offset: Vector2.UnitY * 20, pattern: x => x.Properties.IsSolid | x.Type == BlockID.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
+            var poo = GetTanksInPath(Vector2.UnitY.Rotate(TurretRotation - MathHelper.Pi), out var ricP2, out var tnkCol2, true, offset: Vector2.UnitY * 20, pattern: x => x.Properties.IsSolid | x.Type == BlockID.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
             if (AiParams.PredictsPositions) {
                 float rot = -MathUtils.DirectionOf(Position, TargetTank is not null ?
                     GeometryUtils.PredictFuturePosition(TargetTank.Position, TargetTank.Velocity, calculation) :
                     AimTarget).ToRotation() - MathHelper.PiOver2;
-                GetTanksInPath(Vector2.UnitY.RotatedByRadians(rot), out var ricP3, out var tnkCol3, true, Vector2.Zero, pattern: x => x.Properties.IsSolid | x.Type == BlockID.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
+                GetTanksInPath(Vector2.UnitY.Rotate(rot), out var ricP3, out var tnkCol3, true, Vector2.Zero, pattern: x => x.Properties.IsSolid | x.Type == BlockID.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
             }
             for (int i = 0; i < ricP2.Length; i++) {
                 DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"ric{i}", MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0),
@@ -1268,7 +1269,7 @@ public partial class AITank : Tank {
 
         }
         if (DebugManager.DebugLevel == DebugManager.Id.NavData && !Properties.Stationary) {
-            IsObstacleInWay(AiParams.BlockWarinessDistance / PATH_UNIT_LENGTH, Vector2.UnitY.RotatedByRadians(TargetTankRotation), out var travelPos, out var refPoints, TankPathCheckSize, draw: true);
+            IsObstacleInWay(AiParams.BlockWarinessDistance / PATH_UNIT_LENGTH, Vector2.UnitY.Rotate(TargetTankRotation), out var travelPos, out var refPoints, TankPathCheckSize, draw: true);
             DebugManager.DrawDebugString(TankGame.SpriteRenderer, "TEP", MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(travelPos.X, 11, travelPos.Y), View, Projection), 6, centered: true);
             foreach (var pt in refPoints)
                 DebugManager.DrawDebugString(TankGame.SpriteRenderer, "pt", MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), Matrix.CreateTranslation(pt.ReflectionPoint.X, 0, pt.ReflectionPoint.Y), View, Projection), 6, centered: true);

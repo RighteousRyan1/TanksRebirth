@@ -270,7 +270,7 @@ namespace TanksRebirth.GameContent.GameMechanics
 
             var pathDir = MathUtils.DirectionOf(start, destination).ToRotation();
 
-            var pathPos = start + Vector2.Zero.RotatedByRadians(pathDir);
+            var pathPos = start + Vector2.Zero.Rotate(pathDir);
 
             pathDir *= PATH_UNIT_LENGTH;
 

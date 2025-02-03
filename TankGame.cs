@@ -41,6 +41,7 @@ using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Speedrunning;
 using tainicom.Aether.Physics2D.Collision;
 using TanksRebirth.GameContent.Systems.Coordinates;
+using TanksRebirth.Internals.Common.Framework.Animation;
 
 namespace TanksRebirth;
 
@@ -276,6 +277,9 @@ public class TankGame : Game {
     }
 
     void PreloadContent() {
+
+        // TODO: is it emportant that these paths are all hardcoded? i'm doubtful.
+        // do more dynamically..?
         string[] textures = [
             /* Miscellaneous */
             "Assets/christmas/snowflake_0",
@@ -369,8 +373,6 @@ public class TankGame : Game {
         var s = Stopwatch.StartNew();
 
         MainThreadId = Environment.CurrentManagedThreadId;
-
-        Window.ClientSizeChanged += HandleResizing!; // IDE won't stop talking. so ! is the solution.
 
         OrthographicCamera = new(0, 0, 1920, 1080, -2000, 5000);
         SpectatorCamera = new(MathHelper.ToRadians(100), GraphicsDevice.Viewport.AspectRatio, 0.1f, 5000f);
@@ -547,12 +549,8 @@ public class TankGame : Game {
             SoundPlayer.SoundError();
         });
         PlaceSecrets();
+        SceneManager.GameLight.Apply(false);
     }
-
-    private void HandleResizing(object sender, EventArgs e) {
-        // UIElement.ResizeAndRelocate();
-    }
-
     public static void ReportError(Exception e, bool notifyUser = true, bool openFile = true, bool writeToLog = true) {
         if (writeToLog)
             ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.ErrorFatal);
@@ -568,7 +566,6 @@ public class TankGame : Game {
                 WorkingDirectory = Path.Combine(SaveDirectory, "Logs"),
             });
     }
-
     private void TankGame_OnFocusRegained(object sender, IntPtr e) {
         if (TankMusicSystem.IsLoaded) {
             if (Thunder.SoftRain.IsPaused())
@@ -580,7 +577,6 @@ public class TankGame : Game {
                 LevelEditor.Theme.Resume();
         }
     }
-
     private void TankGame_OnFocusLost(object sender, IntPtr e) {
         if (TankMusicSystem.IsLoaded) {
             if (Thunder.SoftRain.IsPlaying())
@@ -620,20 +616,9 @@ public class TankGame : Game {
     public static Vector2 MouseVelocity;
 
     public static bool SecretCosmeticSetting;
-
     public static bool Interp { get; set; } = true;
 
     public static bool HoveringAnyTank;
-
-    private static float _spinValue;
-
-    private const float ADD_DEF = 0.8f;
-    private static float _zoomAdd = ADD_DEF;
-
-    private const float GRAD_INC_DEF = 0.0075f;
-    private static float _gradualIncrease = GRAD_INC_DEF;
-
-    private static float _storedZoom;
 
     #endregion
 
@@ -641,8 +626,6 @@ public class TankGame : Game {
     public static CrashReportInfo CrashInfo;
 
     public static int SpectatorId;
-
-    public static void DoZoomStuff() => _zoomAdd = _storedZoom;
 
     public static int SpectateValidTank(int id, bool increase) {
         var arr = GameHandler.AllPlayerTanks;
@@ -771,62 +754,61 @@ public class TankGame : Game {
 
         if (!IsCrashInfoVisible) {
             if (DebugManager.DebugLevel != DebugManager.Id.FreeCamTest && !DebugManager.persistFreecam) {
-                if (!Difficulties.Types["POV"] || MainMenu.Active || LevelEditor.Active) {
-                    if (transitionTimer > 0) {
-                        transitionTimer--;
-                        if (OverheadView) {
-                            OrthoRotationVector.Y = MathUtils.SoftStep(OrthoRotationVector.Y, MathHelper.PiOver2, 0.08f * DeltaTime);
-                            AddativeZoom = MathUtils.SoftStep(AddativeZoom, 0.6f, 0.08f * DeltaTime);
-                            CameraFocusOffset.Y = MathUtils.RoughStep(CameraFocusOffset.Y, 82f, 2f * DeltaTime);
-                        }
-                        else {
-                            OrthoRotationVector.Y = MathUtils.SoftStep(OrthoRotationVector.Y, DEFAULT_ORTHOGRAPHIC_ANGLE, 0.08f * DeltaTime);
-                            if (!LevelEditor.Active)
-                                AddativeZoom = MathUtils.SoftStep(AddativeZoom, 1f, 0.08f * DeltaTime);
-                            CameraFocusOffset.Y = MathUtils.RoughStep(CameraFocusOffset.Y, 0f, 2f * DeltaTime);
-                        }
-                    }
-
-                    if (!float.IsInfinity(DeltaTime))
-                        _spinValue += _gradualIncrease / 2 * DeltaTime;
-
-                    if (MainMenu.Active) {
-                        if (IntermissionSystem.IsAwaitingNewMission) {
-                            // for some reason delta time can be 30??
-                            if (DeltaTime < 1.5f) {
-                                _gradualIncrease *= (0.1f * DeltaTime) + 1;
-                                _zoomAdd += _gradualIncrease;
-                                _storedZoom = _zoomAdd;
-                                //Debug.WriteLine(_zoomAdd);
+                if (!MainMenu.Active) {
+                    if (!Difficulties.Types["POV"] || LevelEditor.Active) {
+                        if (transitionTimer > 0) {
+                            transitionTimer--;
+                            if (OverheadView) {
+                                OrthoRotationVector.Y = MathUtils.SoftStep(OrthoRotationVector.Y, MathHelper.PiOver2, 0.08f * DeltaTime);
+                                AddativeZoom = MathUtils.SoftStep(AddativeZoom, 0.6f, 0.08f * DeltaTime);
+                                CameraFocusOffset.Y = MathUtils.RoughStep(CameraFocusOffset.Y, 82f, 2f * DeltaTime);
+                            }
+                            else {
+                                OrthoRotationVector.Y = MathUtils.SoftStep(OrthoRotationVector.Y, DEFAULT_ORTHOGRAPHIC_ANGLE, 0.08f * DeltaTime);
+                                if (!LevelEditor.Active)
+                                    AddativeZoom = MathUtils.SoftStep(AddativeZoom, 1f, 0.08f * DeltaTime);
+                                CameraFocusOffset.Y = MathUtils.RoughStep(CameraFocusOffset.Y, 0f, 2f * DeltaTime);
                             }
                         }
-                        else if (_zoomAdd > ADD_DEF) {
-                            _gradualIncrease *= (0.015f * DeltaTime) + 1;
-                            _zoomAdd -= _gradualIncrease;
-                        }
-                        else {
-                            _zoomAdd = ADD_DEF;
-                            _gradualIncrease = GRAD_INC_DEF;
-                        }
+
+                        GameView = Matrix.CreateScale(DEFAULT_ZOOM * AddativeZoom) *
+                            // TODO: the Z component is 350 because for some reason values have been offset by that amount. i'll have to dig into my code
+                            // to see where tf that happens but alright
+                            Matrix.CreateLookAt(new(0f, 0, 350f), Vector3.Zero, Vector3.Up) *
+                            Matrix.CreateTranslation(CameraFocusOffset.X, -CameraFocusOffset.Y + 40, 0) *
+                            Matrix.CreateRotationY(OrthoRotationVector.X) *
+                            Matrix.CreateRotationX(OrthoRotationVector.Y);
+                        GameProjection = Matrix.CreateOrthographic(1920, 1080, -2000, 5000);
+
+                        //Matrix.CreateTranslation(CameraFocusOffset.X, -CameraFocusOffset.Y, 0);
+                        //OrthographicCamera.SetLookAt(new(0f, 0, 350f), Vector3.Zero, Vector3.Up);
                     }
-
-                    if (IntermissionSystem.BlackAlpha >= 1f) {
-                        _zoomAdd = ADD_DEF;
-                        _gradualIncrease = GRAD_INC_DEF;
-                    }
-
-                    GameView = Matrix.CreateScale(DEFAULT_ZOOM * AddativeZoom * (MainMenu.Active ? _zoomAdd : 1)) *
-                        Matrix.CreateLookAt(new(0f, 0, 350f), Vector3.Zero, Vector3.Up) * // 0, 0, 350
-                        Matrix.CreateTranslation(CameraFocusOffset.X, -CameraFocusOffset.Y + 40, 0) *
-                        Matrix.CreateRotationY(OrthoRotationVector.X + (MainMenu.Active ? _spinValue : 0)) *
-                        Matrix.CreateRotationX(OrthoRotationVector.Y);
-                    GameProjection = Matrix.CreateOrthographic(1920, 1080, -2000, 5000);
-
-                    //Matrix.CreateTranslation(CameraFocusOffset.X, -CameraFocusOffset.Y, 0);
-                    OrthographicCamera.SetLookAt(new(0f, 0, 350f), Vector3.Zero, Vector3.Up);
-
                 }
                 else {
+                    // main menu animation semantics
+                    RebirthFreecam.Position = MainMenu.CameraPositionAnimator.CurrentPosition3D;
+                    RebirthFreecam.HasLookAt = true;
+                    RebirthFreecam.LookAt = new Vector3(0, 0, 50);
+                    RebirthFreecam.FieldOfView = 100f;
+                    RebirthFreecam.NearViewDistance = 0.1f;
+                    RebirthFreecam.FarViewDistance = 100000f;
+                    GameView = RebirthFreecam.View;
+                    GameProjection = RebirthFreecam.Projection;
+                    /*if (InputUtils.KeyJustPressed(Keys.G)) {
+                        MainMenu.CameraPositionAnimator = Animator.Create()
+        .WithFrame(new(position3d: new Vector3(GameSceneRenderer.MAX_X / 2, 50, 0), duration: TimeSpan.FromSeconds(10), easing: EasingFunction.InOutQuad))
+        .WithFrame(new(position3d: new Vector3(0, 50, GameSceneRenderer.MAX_Z / 2), duration: TimeSpan.FromSeconds(10), easing: EasingFunction.InOutQuad))
+        .WithFrame(new(position3d: new Vector3(GameSceneRenderer.MIN_X / 2, 50, 0), duration: TimeSpan.FromSeconds(10), easing: EasingFunction.InOutQuad))
+        .WithFrame(new(position3d: new Vector3(0, 50, GameSceneRenderer.MIN_Z / 2), duration: TimeSpan.FromSeconds(10), easing: EasingFunction.InOutQuad))
+        .WithFrame(new(position3d: new Vector3(GameSceneRenderer.MAX_X / 2, 50, 0)));
+                        
+                        MainMenu.CameraPositionAnimator.Restart();
+                        MainMenu.CameraPositionAnimator.Run();
+                        MainMenu.CameraPositionAnimator.IsLooped = true;
+                    }*/
+                    //GameProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), GraphicsDevice.Viewport.AspectRatio, 0.1f, 100000);
+                }
+                if (Difficulties.Types["POV"]) {
                     if (GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()] is not null && !GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()].Dead) {
                         SpectatorId = NetPlay.GetMyClientId();
                         POVCameraPosition = GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()].Position.ExpandZ();
@@ -851,13 +833,13 @@ public class TankGame : Game {
                             = new(position2d: new Vector2(-PlayerTank.ClientTank.TurretRotation), position3d: PlayerTank.ClientTank.Position3D);
                     }
                     // TODO: this shit is ass.
-                    var povCameraRotationCurrent = IntermissionHandler.TankFunctionWait > 0 && IntermissionHandler.ThirdPersonTransitionAnimation != null ? 
+                    var povCameraRotationCurrent = IntermissionHandler.TankFunctionWait > 0 && IntermissionHandler.ThirdPersonTransitionAnimation != null ?
                         IntermissionHandler.ThirdPersonTransitionAnimation.CurrentPosition2D.X : POVCameraRotation;
-                    var povCameraPosCurrent = IntermissionHandler.TankFunctionWait > 0 && IntermissionHandler.ThirdPersonTransitionAnimation != null ? 
+                    var povCameraPosCurrent = IntermissionHandler.TankFunctionWait > 0 && IntermissionHandler.ThirdPersonTransitionAnimation != null ?
                         IntermissionHandler.ThirdPersonTransitionAnimation.CurrentPosition3D : POVCameraPosition;
 
                     GameView = Matrix.CreateLookAt(povCameraPosCurrent,
-                            POVCameraPosition + new Vector2(0, 20).RotatedByRadians(povCameraRotationCurrent).ExpandZ(),
+                            POVCameraPosition + new Vector2(0, 20).Rotate(povCameraRotationCurrent).ExpandZ(),
                             Vector3.Up) * Matrix.CreateScale(AddativeZoom) *
                         Matrix.CreateTranslation(0, -20, 0);
 
@@ -868,7 +850,7 @@ public class TankGame : Game {
                         Matrix.CreateRotationY(POVRotationVector.X) *
                         Matrix.CreateTranslation(0, -20, 0);*/
 
-                    GameProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000);
+                    GameProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), GraphicsDevice.Viewport.AspectRatio, 0.1f, 10000);
                 }
             }
             else if (!GameUI.Paused && !MainMenu.Active && DebugManager.DebuggingEnabled) {
@@ -879,24 +861,27 @@ public class TankGame : Game {
                     }
                     // free camera movement test
 
-                    var moveSpeed = 1f * DeltaTime;
-
-                    var keysprint = LevelEditor.Active ? Keys.LeftShift : Keys.RightShift;
-
-                    if (InputUtils.CurrentKeySnapshot.IsKeyDown(keysprint))
-                        moveSpeed *= 2;
+                    var moveSpeed = 10f * DeltaTime;
 
                     var rotationSpeed = 0.01f;
 
                     RebirthFreecam.NearViewDistance = 0.1f;
-                    RebirthFreecam.FarViewDistance = 10000f;
+                    RebirthFreecam.FarViewDistance = 1000000f;
                     RebirthFreecam.MinPitch = -180;
                     RebirthFreecam.MaxPitch = 180;
+                    RebirthFreecam.HasLookAt = false;
 
-                    var keyf = LevelEditor.Active ? Keys.W : Keys.Up;
-                    var keyb = LevelEditor.Active ? Keys.S : Keys.Down;
-                    var keyl = LevelEditor.Active ? Keys.A : Keys.Left;
-                    var keyr = LevelEditor.Active ? Keys.D : Keys.Right;
+                    var isPlayerActive = PlayerTank.ClientTank is not null;
+
+                    var keysprint = LevelEditor.Active || !isPlayerActive ? Keys.LeftShift : Keys.RightShift;
+
+                    if (InputUtils.CurrentKeySnapshot.IsKeyDown(keysprint))
+                        moveSpeed *= 2;
+
+                    var keyf = LevelEditor.Active || !isPlayerActive ? Keys.W : Keys.Up;
+                    var keyb = LevelEditor.Active || !isPlayerActive ? Keys.S : Keys.Down;
+                    var keyl = LevelEditor.Active || !isPlayerActive ? Keys.A : Keys.Left;
+                    var keyr = LevelEditor.Active || !isPlayerActive ? Keys.D : Keys.Right;
 
                     if (InputUtils.MouseRight)
                         RebirthFreecam.Rotation -= new Vector3(0, MouseVelocity.Y * rotationSpeed, MouseVelocity.X * rotationSpeed);
@@ -1070,7 +1055,7 @@ public class TankGame : Game {
 
     public static bool SuperSecretDevOption;
 
-    private static DepthStencilState _stencilState = new() { };
+    private static DepthStencilState _stencilState = DepthStencilState.Default;
     
     // FIXME: this method is a clusterfuck
     protected override void Draw(GameTime gameTime) {
@@ -1085,11 +1070,12 @@ public class TankGame : Game {
         // TankFootprint.DecalHandler.UpdateRenderTarget();
         SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: DefaultRasterizer);
         GraphicsDevice.DepthStencilState = _stencilState;
+        RoomSceneRenderer.Render();
         GameHandler.RenderAll();
         SpriteRenderer.End();
 
         GraphicsDevice.SetRenderTarget(null);
-        var shader = Difficulties.Types["LanternMode"] ? GameShaders.LanternShader : (MainMenu.Active ? GameShaders.GaussianBlurShader : null);
+        var shader = Difficulties.Types["LanternMode"] && !MainMenu.Active ? GameShaders.LanternShader : (MainMenu.Active ? GameShaders.GaussianBlurShader : null);
         if (!GameSceneRenderer.ShouldRenderAll) shader = null;
         SpriteRenderer.Begin(effect: shader);
         SpriteRenderer.Draw(GameFrameBuffer, Vector2.Zero, null, Color.White, 0f, Vector2.Zero, Vector2.One, default, 0f);

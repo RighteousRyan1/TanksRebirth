@@ -15,8 +15,8 @@ namespace TanksRebirth.GameContent.Cosmetics
         {
             UniqueBehavior = (cos, tnk) =>
             {
-                var sin = MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalMilliseconds / 350) / 6;
-                cos.Scale = new Vector3(MathF.Abs(sin) + 0.15f) * 0.1f;
+                var sin = MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalMilliseconds / 500) / 8;
+                cos.Scale = new Vector3(MathF.Abs(sin) + 0.15f) * 1.25f;
                 // apparently this stuff aint updating or sum.
             }
         };
@@ -26,10 +26,11 @@ namespace TanksRebirth.GameContent.Cosmetics
             Rotation = new(-MathHelper.PiOver2, 0, 0),
             UniqueBehavior = (cos, tnk) =>
             {
-                cos.Rotation += new Vector3(0, 0, 0.075f);
+                cos.Rotation += new Vector3(0.0102f, 0.034f, 0.075f) * TankGame.DeltaTime;
             },
             Scale = new(10f)
         };
+        // cosmetics like this block the first person camera. fix it by either changing camera position or changing cosmetic location/rotation anchor
         public static Prop3D KingsCrown = new("King's Crown", GameResources.GetGameResource<Model>("Assets/cosmetics/crown"), GameResources.GetGameResource<Texture2D>("Assets/cosmetics/crown_tex"), new(0, 21, 0), PropLockOptions.ToTurret) {
             UniqueBehavior = (cos, tnk) => {
                 /*cos.LockOptions = CosmeticLockOptions.None;
@@ -62,9 +63,14 @@ namespace TanksRebirth.GameContent.Cosmetics
 
                 cos.RelativePosition = new Vector3(sinx, 20 + siny / 5, 0f);
 
-                if (tnk.IsIngame && !tnk.Properties.Invisible)
-                    if (TankGame.UpdateCount % 10 == 0)
-                        GameHandler.Particles.MakeShineSpot(tnk.Position3D + new Vector3(0, 20 + siny / 5 + (Vector2.UnitY * 5).RotatedByRadians(GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi)).Y, 0), Color.Yellow, GameHandler.GameRand.NextFloat(0.3f, 0.5f));
+                if (tnk.IsIngame && !tnk.Properties.Invisible) {
+                    float y = 20f;
+                    if (TankGame.UpdateCount % 10 == 0) {
+                        GameHandler.Particles.MakeShineSpot(tnk.Position3D +
+                            new Vector3(cos.RelativePosition.X, cos.RelativePosition.Y, siny / 5 + (Vector2.UnitY * 5).Rotate(GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi)).Y), 
+                            Color.Yellow, GameHandler.GameRand.NextFloat(0.3f, 0.5f));
+                    }
+                }
             }
         };
         public static Prop3D ArmyHat = new Prop3D("Army Hat", GameResources.GetGameResource<Model>("Assets/cosmetics/army_hat"), GameResources.GetGameResource<Texture2D>("Assets/cosmetics/army_hat_tex"), new(0, 13.5f, 0), PropLockOptions.ToTurret)
@@ -105,11 +111,11 @@ namespace TanksRebirth.GameContent.Cosmetics
             WeightedContents = contents.ToDictionary(x => x, y => evenProportion);
         }
 
-        public object Open()
+        public readonly IProp Open()
         {
             static bool between(float min, float max, float value) => value > min && value < max;
 
-            var rolledRand = GameHandler.GameRand.NextFloat(0, 100);
+            var rolledRand = GameHandler.GameRand.NextFloat(0, 1);
 
             // get the lowest float value in WeightedContents
             var ordered = WeightedContents.Values.OrderBy(x => x).ToArray();
@@ -133,6 +139,7 @@ namespace TanksRebirth.GameContent.Cosmetics
                 if (between(entry.Key.Item1, entry.Key.Item2, rolledRand))
                     pickedIdx = i;
             }
+            //var pickedIdx = (int)Math.Floor(rolledRand / )
 
             var pickedDictEntry = orderedDict.ElementAt(pickedIdx);// WeightedContents.First(pair => pair.Value == pickedIdx);
 

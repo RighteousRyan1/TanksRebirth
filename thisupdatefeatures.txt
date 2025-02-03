@@ -4,19 +4,24 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 
 ## Additions
 
-
+- Added an entire room that the entire game scene exists in! There is no longer a black void that consumes the game.
 
 ## Changes
 
-
+- Players can no longer *visually* peek through corners of map geometry
+- Blocks are now slightly bigger
+- Main menu animation is now much different
+- MOTD is now just plastered on the top of the screen
 
 ## Changes Important for Modders
 
 - `GameProperties` -> `CampaignGlobals`
 - `TanksRebirth.GameContent.Properties` -> `TanksRebirth.GameContent.Globals`
-- Almost every asset is now stored in a more general folder.
+- Almost every asset is now stored in a more general folder
     - General-purpose models are now under `models`
-    - All music is now in `music` or a subfolder under `music`.
+    - All music is now in `music` or a subfolder under `music`
+- Enabling "Lantern Mode" no longer makes the main menu blur go away
+- `RotatedByRadians` -> `Rotate`
 
 ## Fixes
 

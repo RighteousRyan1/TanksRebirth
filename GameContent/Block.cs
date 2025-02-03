@@ -124,6 +124,8 @@ public class Block : IGameObject {
 
     private Vector3 _offset;
 
+    private static Vector3 _scaling = new(0.646f);
+
     public BlockProperties Properties { get; set; } = new();
     /// <summary>Whether or not this <see cref="Block"/> is using its alternate model.</summary>
     public bool IsAlternateModel => Stack == 3 || Stack == 6;
@@ -310,6 +312,8 @@ public class Block : IGameObject {
         }
         else
             _offset.Y -= 0.1f;
+        // divide by 0.62f since that was the initial scale and it's what everything has been accounted for. might change in the future.
+        _offset *= (_scaling / 0.62f);
     }
 
     void IGameObject.OnDestroy() {
@@ -327,7 +331,7 @@ public class Block : IGameObject {
             return;
         // TODO: seeing this, don't make this poor CPU have overhead (use derived types!)
         if (Type != BlockID.Teleporter) {
-            World = Matrix.CreateScale(0.62f) * Matrix.CreateTranslation(Position3D - _offset);
+            World = Matrix.CreateScale(_scaling) * Matrix.CreateTranslation(Position3D - _offset);
             Projection = TankGame.GameProjection;
             View = TankGame.GameView;
 
