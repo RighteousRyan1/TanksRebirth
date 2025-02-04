@@ -17,6 +17,9 @@ public static class RoomSceneRenderer {
     // bro there is no construcor stop yapping stupid ide
     public static Model RoomSkyboxScene;
 
+    public static ModelMesh HandHour;
+    public static ModelMesh HandMinute;
+
     public static Dictionary<string, Texture2D> RoomSkyboxTextures = [];
     private static List<ModelMesh> _transparentFaces = [];
 
@@ -33,6 +36,8 @@ public static class RoomSceneRenderer {
         //return; // return for now, since .png breaks the UVs vs .jpg
         RoomSkyboxScene = GameResources.GetGameResource<Model>("Assets/models/scene/skybox/room_textureless");
         _boneTransforms = new Matrix[RoomSkyboxScene.Bones.Count];
+        HandHour = RoomSkyboxScene.Meshes["Clock_Hand_Hour"];
+        HandMinute = RoomSkyboxScene.Meshes["Clock_Hand_Minute"];
         GetSkyboxTextures();
     }
     public static void GetSkyboxTextures() {
@@ -109,7 +114,7 @@ public static class RoomSceneRenderer {
             "Clock_Wood1" => "wood_dark",
             "Clock_Wood2" => "wood_med",
             "Curtains" => "curtains",
-            "Desk_Book_page1" => "book1",
+            "Desk_Book_Page1" => "book1",
             "Desk_Book_Page2" => "book2",
             "Desk_Book_Side" => "book_side",
             "Desk_Lamp" => "brass",

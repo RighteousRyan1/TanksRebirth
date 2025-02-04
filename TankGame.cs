@@ -545,8 +545,8 @@ public class TankGame : Game {
                 ClientLog.Write("Game is up to date.", LogType.Info);
                 return;
             }
-            
-            ClientLog.Write($"Game is out of date (current={GameVersion}, recent={AutoUpdater.GetRecentVersion()}).", LogType.Warn)
+
+            ClientLog.Write($"Game is out of date (current={GameVersion}, recent={AutoUpdater.GetRecentVersion()}).", LogType.Warn);
             //CommandGlobals.IsUpdatePending = true;
             ChatSystem.SendMessage($"Outdated game version detected (current={GameVersion}, recent={AutoUpdater.GetRecentVersion()}).", Color.Red);
             //ChatSystem.SendMessage("Type /update to update the game and automatically restart.", Color.Red);
@@ -1057,7 +1057,15 @@ public class TankGame : Game {
     public static bool SuperSecretDevOption;
 
     private static DepthStencilState _stencilState = DepthStencilState.Default;
-    
+
+    public static SamplerState WrappingSampler = new() {
+        AddressU = TextureAddressMode.Wrap,
+        AddressV = TextureAddressMode.Wrap,
+    };
+    public static SamplerState ClampingSampler = new() {
+        AddressU = TextureAddressMode.Clamp,
+        AddressV = TextureAddressMode.Clamp,
+    };
     // FIXME: this method is a clusterfuck
     protected override void Draw(GameTime gameTime) {
         if (GameFrameBuffer == null || GameFrameBuffer.IsDisposed || GameFrameBuffer.Size() != WindowUtils.WindowBounds) {
@@ -1071,7 +1079,9 @@ public class TankGame : Game {
         // TankFootprint.DecalHandler.UpdateRenderTarget();
         SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: DefaultRasterizer);
         GraphicsDevice.DepthStencilState = _stencilState;
+        GraphicsDevice.SamplerStates[0] = WrappingSampler;
         RoomSceneRenderer.Render();
+        GraphicsDevice.SamplerStates[0] = ClampingSampler;
         GameHandler.RenderAll();
         SpriteRenderer.End();
 
