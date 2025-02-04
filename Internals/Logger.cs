@@ -9,8 +9,8 @@ using TanksRebirth.Internals.Common.Utilities;
 namespace TanksRebirth.Internals;
 
 public enum LogType {
-    /// <summary>Information about what is happening during runtime to potentially serve as a sequence of events to
-    /// any kind of potential fatal error.</summary>
+    /// <summary>Information about what is happening during runtime to serve as a sequence of events to
+    /// any kind of fatal error.</summary>
     Info,
     /// <summary>A logged warning that should serve as a heads-up to a developer or player that something
     /// has not gone as expected in runtime.</summary>

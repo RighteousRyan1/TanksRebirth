@@ -538,11 +538,15 @@ public class TankGame : Game {
 
         // it isnt really an autoupdater tho.
         Task.Run(() => {
+            ClientLog.Write("Checking for update...", LogType.Info);
             AutoUpdater = new("https://github.com/RighteousRyan1/TanksRebirth", GameVersion);
 
-            if (!AutoUpdater.IsOutdated) 
+            if (!AutoUpdater.IsOutdated) {
+                ClientLog.Write("Game is up to date.", LogType.Info);
                 return;
+            }
             
+            ClientLog.Write($"Game is out of date (current={GameVersion}, recent={AutoUpdater.GetRecentVersion()}).", LogType.Warn)
             //CommandGlobals.IsUpdatePending = true;
             ChatSystem.SendMessage($"Outdated game version detected (current={GameVersion}, recent={AutoUpdater.GetRecentVersion()}).", Color.Red);
             //ChatSystem.SendMessage("Type /update to update the game and automatically restart.", Color.Red);
