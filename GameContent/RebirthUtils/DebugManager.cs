@@ -353,14 +353,21 @@ public static class DebugManager {
                 level: Id.AchievementData,
                 centered: false);
         }
-        DrawDebugString(SpriteRenderer, $"Position: {TankGame.POVCameraPosition}" +
-            $"\nRotation: {TankGame.POVCameraRotation}" +
+        Console.WriteLine("POS: " + TankGame.RebirthFreecam.Position);
+        Console.WriteLine("ROT: " + TankGame.RebirthFreecam.Rotation);
+        DrawDebugString(SpriteRenderer, $"Position: {TankGame.RebirthFreecam.Position}" +
+            $"\nRotation: {TankGame.RebirthFreecam.Rotation}" +
             $"\nFOV: {TankGame.RebirthFreecam.FieldOfView}°" +
             $"\nForward: {TankGame.GameView.Forward}" +
             $"\nBackward: {TankGame.GameView.Backward}" +
             $"\nLeft: {TankGame.GameView.Left}" +
             $"\nRight: {TankGame.GameView.Right}" +
-            $"\n\nToggle Persist Freecam: Z + X (Currently {(persistFreecam ? "enabled" : "disabled")})", new Vector2(10, 80), Id.FreeCamTest);
+            $"\n\nToggle Persist Freecam: Z + X (Currently {(persistFreecam ? "enabled" : "disabled")})" +
+            $"\n\nCTRL + C: Copy Position and Rotation Vectors as C# Vector3 constructors", new Vector2(10, 80), Id.FreeCamTest);
+
+        if (InputUtils.AreKeysJustPressed(Keys.LeftControl, Keys.C)) {
+            TextCopy.ClipboardService.SetText($"{TankGame.RebirthFreecam.Position.ToCtor()}, {TankGame.RebirthFreecam.Rotation.ToCtor()}");
+        }
     }
     public static void DrawDebugMetrics() {
         var information = new string[] {

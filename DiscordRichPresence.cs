@@ -55,26 +55,26 @@ public static class DiscordRichPresence {
             SetLargeAsset("tanks_physical_logo", $"v{TankGame.Instance.GameVersion}");
             if (MainMenu.Active) {
                 switch (MainMenu.MenuState) {
-                    case MainMenu.State.PrimaryMenu:
-                    case MainMenu.State.PlayList:
+                    case MainMenu.UIState.PrimaryMenu:
+                    case MainMenu.UIState.PlayList:
                         SetDetails("Browsing the main menu");
                         break;
-                    case MainMenu.State.StatsMenu:
+                    case MainMenu.UIState.StatsMenu:
                         SetDetails("Looking at their all-time stats");
                         break;
-                    case MainMenu.State.Options:
+                    case MainMenu.UIState.Settings:
                         SetDetails("Making things juuuust right");
                         break;
-                    case MainMenu.State.Difficulties:
+                    case MainMenu.UIState.Difficulties:
                         var count = Difficulties.Types.Count(diff => diff.Value);
 
 
                         SetDetails($"Challenging themselves with {count} {(count == 1 ? "difficulty" : "difficulties")}");
                         break;
-                    case MainMenu.State.Cosmetics:
+                    case MainMenu.UIState.Cosmetics:
                         SetDetails("Testing their luck");
                         break;
-                    case MainMenu.State.Mulitplayer:
+                    case MainMenu.UIState.Mulitplayer:
                         if (Client.IsConnected()) {
                             var name = NetPlay.CurrentServer is not null ? NetPlay.CurrentServer.Name : "Loading...";
                             if (Client.IsHost())
@@ -85,7 +85,7 @@ public static class DiscordRichPresence {
                         else
                             SetDetails("Creating a multiplayer server");
                         break;
-                    case MainMenu.State.Campaigns:
+                    case MainMenu.UIState.Campaigns:
                         // subtract one because "Freeplay" counts as a campaign, even though it really isn't
                         SetDetails($"Choosing one of their {MainMenu.campaignNames.Count - 1} campaigns to play");
                         break;

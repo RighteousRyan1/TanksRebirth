@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TanksRebirth.GameContent.RebirthUtils;
+using TanksRebirth.GameContent.UI;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Utilities;
 
@@ -19,6 +20,7 @@ public static class RoomSceneRenderer {
 
     public static ModelMesh HandHour;
     public static ModelMesh HandMinute;
+    public static ModelMesh Pendulum;
 
     public static Dictionary<string, Texture2D> RoomSkyboxTextures = [];
     private static List<ModelMesh> _transparentFaces = [];
@@ -32,12 +34,25 @@ public static class RoomSceneRenderer {
     public static Matrix Projection;
 
     private static Matrix[] _boneTransforms;
+
+    private static Matrix _baseMinuteTransform;
+    private static Matrix _baseHourTransform;
+    private static Matrix _basePendulumTransform;
     public static void Initialize() {
         //return; // return for now, since .png breaks the UVs vs .jpg
         RoomSkyboxScene = GameResources.GetGameResource<Model>("Assets/models/scene/skybox/room_textureless");
         _boneTransforms = new Matrix[RoomSkyboxScene.Bones.Count];
         HandHour = RoomSkyboxScene.Meshes["Clock_Hand_Hour"];
         HandMinute = RoomSkyboxScene.Meshes["Clock_Hand_Minute"];
+        Pendulum = RoomSkyboxScene.Meshes["Clock_Pendulum"];
+
+        RoomSkyboxScene.CopyAbsoluteBoneTransformsTo(_boneTransforms);
+        RoomSkyboxScene!.Root.Transform = World;
+
+        _baseMinuteTransform = HandMinute.ParentBone.Transform;
+        _baseHourTransform = HandHour.ParentBone.Transform;
+        _basePendulumTransform = Pendulum.ParentBone.Transform;
+
         GetSkyboxTextures();
     }
     public static void GetSkyboxTextures() {
@@ -51,7 +66,18 @@ public static class RoomSceneRenderer {
         World = Matrix.CreateScale(Scale)
             * Matrix.CreateFromYawPitchRoll(Rotation.Z, Rotation.Y, Rotation.X)
             * Matrix.CreateTranslation(Position);
+        // TimeUtils GetInterpolationFromTime at hour and minute of hour.
+        //HandHour.ParentBone.Transform = HandMinute.ParentBone.Transform;//Matrix.CreateScale(50) * Matrix.CreateTranslation(503.22357f, 157.51393f, -318.4365f);
+        var interpHour = TimeUtils.InterpolateHourToDay(DateTime.Now);
+        var interpMinute = TimeUtils.InterpolateMinuteToHour(DateTime.Now);
+        var pendulumSwing = MathHelper.Pi / 32 * TimeUtils.SineForSecond(DateTime.Now, 2.5f);
+        HandHour.ParentBone.Transform = Matrix.CreateRotationY(interpHour * MathHelper.Tau) * _baseHourTransform;
+        HandMinute.ParentBone.Transform = Matrix.CreateRotationY(interpMinute * MathHelper.Tau) * _baseMinuteTransform;
+        Pendulum.ParentBone.Transform = Matrix.CreateRotationY(pendulumSwing) * _basePendulumTransform;
+        // TankGame.RebirthFreecam.Position = MainMenu.MenuCameraManipulations[MainMenu.UIState.StatsMenu].Position;
+        // Console.WriteLine($"{TimeUtils.GetHourFromCircle(interpHour)} | {TimeUtils.GetMinuteFromCircle(interpMinute)}");
         Scale = 10f;
+        // this is to line up the table with the game scene.
         Position = new Vector3(-350f, -61.7f, 325f) * Scale;
         View = TankGame.GameView;
         Projection = TankGame.GameProjection;

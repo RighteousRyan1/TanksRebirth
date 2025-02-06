@@ -91,6 +91,8 @@ public class TankGame : Game {
     public static Texture2D WhitePixel;
     public static Texture2D BlackPixel;
 
+    public static Dictionary<Color, Texture2D> Pixels = [];
+
     public static TankGame Instance { get; private set; }
     public static readonly string ExePath = Assembly.GetExecutingAssembly().Location.Replace(@$"\{nameof(TanksRebirth)}.dll", string.Empty);
     /// <summary>The index/vertex buffer used to render to a framebuffer.</summary>
@@ -217,6 +219,7 @@ public class TankGame : Game {
         GameHandler.Initialize();
         GameDir = Directory.GetCurrentDirectory();
         RebirthFreecam = new(GraphicsDevice);
+        RebirthFreecam.Position = MainMenu.MenuCameraManipulations[MainMenu.UIState.LoadingMods].Position;
         if (Debugger.IsAttached && SteamAPI.IsSteamRunning()) {
             ClientLog.Write("Initialising SteamWorks API...", LogType.Debug);
             SteamworksUtils.Initialize();
@@ -426,6 +429,16 @@ public class TankGame : Game {
 
         WhitePixel = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
         BlackPixel = new Texture2D(GraphicsDevice, 1, 1);
+
+        // make a pixel color for each default MonoGame color
+        var allColors = typeof(Color).GetProperties(BindingFlags.Static | BindingFlags.Public).Select(x => (Color)x.GetValue(null)!).ToArray();
+        for (int i = 0; i < allColors.Length; i++) {
+            if (Pixels.ContainsKey(allColors[i])) continue;
+            var texture = new Texture2D(GraphicsDevice, 1, 1);
+            texture.SetData(new Color[] { allColors[i] });
+            Pixels.Add(allColors[i], texture);
+        }
+        
         BlackPixel.SetData(new Color[] { Color.Black });
 
         _fontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/en_US.ttf"));
@@ -515,17 +528,18 @@ public class TankGame : Game {
             View = GameView,
             Projection = GameProjection,
         };*/
+        MainMenu.MenuState = MainMenu.UIState.PrimaryMenu;
 
         MainMenu.Open();
 
         ModLoader.LoadMods();
 
         if (ModLoader.LoadingMods) {
-            MainMenu.MenuState = MainMenu.State.LoadingMods;
+            MainMenu.MenuState = MainMenu.UIState.LoadingMods;
             Task.Run(async () => {
                 while (ModLoader.LoadingMods)
                     await Task.Delay(50).ConfigureAwait(false);
-                MainMenu.MenuState = MainMenu.State.PrimaryMenu;
+                MainMenu.MenuState = MainMenu.UIState.PrimaryMenu;
             });
         }
 
@@ -787,27 +801,18 @@ public class TankGame : Game {
                 }
                 else {
                     // main menu animation semantics
-                    RebirthFreecam.Position = MainMenu.CameraPositionAnimator.CurrentPosition3D;
-                    RebirthFreecam.HasLookAt = true;
-                    RebirthFreecam.LookAt = new Vector3(0, 0, 50);
+                    if (MainMenu.CameraPositionAnimator.CurrentPosition3D != Vector3.Zero) {
+                        RebirthFreecam.Position = MainMenu.CameraPositionAnimator.CurrentPosition3D;
+                        RebirthFreecam.Rotation = MainMenu.CameraRotationAnimator.CurrentPosition3D;
+                    }
+                    //RebirthFreecam.HasLookAt = true;
+                    //RebirthFreecam.LookAt = new Vector3(0, 0, 50);
                     RebirthFreecam.FieldOfView = 100f;
                     RebirthFreecam.NearViewDistance = 0.1f;
                     RebirthFreecam.FarViewDistance = 100000f;
+
                     GameView = RebirthFreecam.View;
                     GameProjection = RebirthFreecam.Projection;
-                    /*if (InputUtils.KeyJustPressed(Keys.G)) {
-                        MainMenu.CameraPositionAnimator = Animator.Create()
-        .WithFrame(new(position3d: new Vector3(GameSceneRenderer.MAX_X / 2, 50, 0), duration: TimeSpan.FromSeconds(10), easing: EasingFunction.InOutQuad))
-        .WithFrame(new(position3d: new Vector3(0, 50, GameSceneRenderer.MAX_Z / 2), duration: TimeSpan.FromSeconds(10), easing: EasingFunction.InOutQuad))
-        .WithFrame(new(position3d: new Vector3(GameSceneRenderer.MIN_X / 2, 50, 0), duration: TimeSpan.FromSeconds(10), easing: EasingFunction.InOutQuad))
-        .WithFrame(new(position3d: new Vector3(0, 50, GameSceneRenderer.MIN_Z / 2), duration: TimeSpan.FromSeconds(10), easing: EasingFunction.InOutQuad))
-        .WithFrame(new(position3d: new Vector3(GameSceneRenderer.MAX_X / 2, 50, 0)));
-                        
-                        MainMenu.CameraPositionAnimator.Restart();
-                        MainMenu.CameraPositionAnimator.Run();
-                        MainMenu.CameraPositionAnimator.IsLooped = true;
-                    }*/
-                    //GameProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), GraphicsDevice.Viewport.AspectRatio, 0.1f, 100000);
                 }
                 if (Difficulties.Types["POV"]) {
                     if (GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()] is not null && !GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()].Dead) {
@@ -875,9 +880,12 @@ public class TankGame : Game {
                     var isPlayerActive = PlayerTank.ClientTank is not null;
 
                     var keysprint = LevelEditor.Active || !isPlayerActive ? Keys.LeftShift : Keys.RightShift;
+                    var keyslow = LevelEditor.Active || !isPlayerActive ? Keys.LeftControl : Keys.RightControl;
 
                     if (InputUtils.CurrentKeySnapshot.IsKeyDown(keysprint))
                         moveSpeed *= 2;
+                    if (InputUtils.CurrentKeySnapshot.IsKeyDown(keyslow))
+                        moveSpeed /= 4;
 
                     var keyf = LevelEditor.Active || !isPlayerActive ? Keys.W : Keys.Up;
                     var keyb = LevelEditor.Active || !isPlayerActive ? Keys.S : Keys.Down;

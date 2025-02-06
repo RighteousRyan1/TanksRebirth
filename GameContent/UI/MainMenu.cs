@@ -35,6 +35,7 @@ public static class MainMenu {
     public static bool Active { get; private set; } = true;
 
     public static Animator CameraPositionAnimator;
+    public static Animator CameraRotationAnimator;
 
     public static OggMusic Theme;
     private static bool _musicFading;
@@ -131,13 +132,39 @@ public static class MainMenu {
     private static float _sclAcc = 0.005f;
     #endregion
 
+    #region MenuCameraPositions
+
+    public static EasingFunction CameraEasingFunction = EasingFunction.InOutQuad;
+    public static TimeSpan CameraTransitionTime = TimeSpan.FromSeconds(2);
+
+    // (most of) these magical vectors were found from flying around ingame.
+
+    // if this dict does not contain the UIState we want, we just default to CamPosMain
+    // cosmetics menu in the future can be just a simple transition over to a post where a player tank can render in front of the camera at
+    // the camera's position plus the Camera's world forward matrix times a certain amount for distance
+    public static Dictionary<UIState, (Vector3 Position, Vector3 Rotation)> MenuCameraManipulations = new() {
+        [UIState.Campaigns] = (new(330f, 204f, 879f), new(0, -0.18f, 0.29f)), // seat headrest
+        [UIState.PlayList] = (new Vector3(242.30f, 42.34f, 193.49f), new Vector3(0f, -0.364f, 1.35f)),
+        [UIState.Mulitplayer] = (new(51f, 34f, -140f), new(0, -0.36f, 3.7f)), // behind game scene
+        [UIState.Settings] = (new(1461f, 928f, 623f), new(0, -0.33f, 0.53f)), // near grandfather clock
+        [UIState.StatsMenu] = (new(-1121f, 176f, 439f), new(0, -0.231f, -0.67f)), // near sheet music
+        [UIState.Difficulties] = (new(-1189f, 288f, 2583f), new(0f, -0.25f, -2.27f)), // near books
+        [UIState.LoadingMods] = (new(-3443f, 2088f,3183f), new(0, -0.6307f, -0.91f)),
+        [UIState.Cosmetics] = (new(-953f, 1078f, 2753f), new(0f, -0.226f, -2.56f))
+    };
+
+    public static Vector3 CamPosMain = new(0, 150, GameSceneRenderer.MAX_Z + 100); // this is in front of the game scene, viewing it
+    public static Vector3 CamPosMainRotation = new(0, -0.5f, 0);
+
+    #endregion
+
     // TODO: get menu visuals working
 
     public static RenderableCrate Crate;
 
     // not always properly set, fix later
     // this code is becoming so shit i want to vomit but i don't know any better
-    public enum State {
+    public enum UIState {
         LoadingMods,
         PrimaryMenu,
         PlayList,
@@ -145,11 +172,38 @@ public static class MainMenu {
         Mulitplayer,
         Cosmetics,
         Difficulties,
-        Options,
+        Settings,
         StatsMenu
     }
 
-    public static State MenuState;
+    private static UIState _menuState;
+    public static UIState MenuState {
+        get => _menuState;
+        set {
+            _menuState = value;
+
+            if (!MenuCameraManipulations.ContainsKey(value)) {
+                CameraPositionAnimator = Animator.Create()
+                    .WithFrame(new(position3d: TankGame.RebirthFreecam.Position, duration: CameraTransitionTime, easing: CameraEasingFunction))
+                    .WithFrame(new(position3d: CamPosMain));
+                CameraRotationAnimator = Animator.Create()
+                    .WithFrame(new(position3d: TankGame.RebirthFreecam.Rotation, duration: CameraTransitionTime, easing: CameraEasingFunction))
+                    .WithFrame(new(position3d: CamPosMainRotation));
+            }
+            else {
+                CameraPositionAnimator = Animator.Create()
+                    .WithFrame(new(position3d: TankGame.RebirthFreecam.Position, duration: CameraTransitionTime, easing: CameraEasingFunction))
+                    .WithFrame(new(position3d: MenuCameraManipulations[value].Position));
+                CameraRotationAnimator = Animator.Create()
+                    .WithFrame(new(position3d: TankGame.RebirthFreecam.Rotation, duration: CameraTransitionTime, easing: CameraEasingFunction))
+                    .WithFrame(new(position3d: MenuCameraManipulations[value].Rotation));
+            }
+            CameraPositionAnimator.Restart();
+            CameraPositionAnimator.Run();
+            CameraRotationAnimator.Restart();
+            CameraRotationAnimator.Run();
+        }
+    }
 
     #region Chest Stuff
     private static bool _openingCrate; // we don't use this yet since the stuff isn't exactly implemented.
@@ -168,7 +222,7 @@ public static class MainMenu {
         CameraPositionAnimator.IsLooped = true;
         CameraPositionAnimator.Restart();
         CameraPositionAnimator.Run();
-        MenuState = State.PrimaryMenu;
+        MenuState = UIState.PrimaryMenu;
         Crate = new(new(0, 0, 0), TankGame.GameView, TankGame.GameProjection) {
             ChestPosition = new(0, 500, 250)
         };
@@ -203,7 +257,7 @@ public static class MainMenu {
         PlayButton.SetDimensions(() => new Vector2(700, 550).ToResolution(), () => new Vector2(500, 50).ToResolution());
         PlayButton.OnLeftClick = (uiElement) => {
             GameUI.BackButton.IsVisible = true;
-            MenuState = State.PlayList;
+            MenuState = UIState.PlayList;
         };
 
         PlayButton_Multiplayer = new(TankGame.GameLanguage.Multiplayer, font, Color.WhiteSmoke) {
@@ -215,7 +269,7 @@ public static class MainMenu {
         PlayButton_Multiplayer.OnLeftClick = (uiElement) => {
             SetPlayButtonsVisibility(false);
             SetMPButtonsVisibility(true);
-            MenuState = State.Mulitplayer;
+            MenuState = UIState.Mulitplayer;
         };
 
         DifficultiesButton = new(TankGame.GameLanguage.Difficulties, font, Color.WhiteSmoke) {
@@ -224,7 +278,7 @@ public static class MainMenu {
         };
         DifficultiesButton.SetDimensions(() => new Vector2(700, 550).ToResolution(), () => new Vector2(500, 50).ToResolution());
         DifficultiesButton.OnLeftClick = (element) => {
-            MenuState = State.Difficulties;
+            MenuState = UIState.Difficulties;
         };
 
         PlayButton_SinglePlayer = new(TankGame.GameLanguage.SinglePlayer, font, Color.WhiteSmoke) {
@@ -235,7 +289,7 @@ public static class MainMenu {
 
         PlayButton_SinglePlayer.OnLeftClick = (uiElement) => {
             SetCampaignDisplay();
-            MenuState = State.Campaigns;
+            MenuState = UIState.Campaigns;
         };
 
         InitializeDifficultyButtons();
@@ -345,7 +399,7 @@ public static class MainMenu {
 
             SetPlayButtonsVisibility(false);
 
-            MenuState = State.Campaigns;
+            MenuState = UIState.Campaigns;
         };
         StartMPGameButton.SetDimensions(() => new Vector2(700, 600).ToResolution(), () => new Vector2(500, 50).ToResolution());
 
@@ -360,7 +414,7 @@ public static class MainMenu {
             SetMPButtonsVisibility(false);
             SetPrimaryMenuButtonsVisibility(false);
 
-            MenuState = State.Cosmetics;
+            MenuState = UIState.Cosmetics;
         };
         #endregion
         #region Input Boxes
@@ -415,12 +469,12 @@ public static class MainMenu {
 
         StatsMenu = new(TankGame.GameLanguage.GameStats, font, Color.WhiteSmoke) {
             IsVisible = false,
-            OnLeftClick = (a) => { MenuState = State.StatsMenu; },
+            OnLeftClick = (a) => { MenuState = UIState.StatsMenu; },
             Tooltip = "View your all-time statistics for this game!"
         };
         StatsMenu.OnLeftClick = (a) => {
             RequestStats();
-            MenuState = State.StatsMenu;
+            MenuState = UIState.StatsMenu;
         };
         StatsMenu.SetDimensions(() => new Vector2(WindowUtils.WindowWidth / 2 - 90.ToResolutionX(), WindowUtils.WindowHeight - 100.ToResolutionY()), () => new Vector2(180, 50).ToResolution());
         #endregion
@@ -465,16 +519,18 @@ public static class MainMenu {
     public static void RenderModels() {
         if (!Active) return;
         UpdateModels();
+        // TODO: change this to world view/world projection...? i think it would look better if the crate existed in world space
+        // it would give reason to have the camera move over for the player.
         Crate.View = View;
         Crate.Projection = ProjectionPerspective;
-        if (MenuState == State.Cosmetics)
+        if (MenuState == UIState.Cosmetics)
             Crate?.Render();
 
         //RebirthLogo.Rotation = new(MathF.Sin(TankGame.RunTime / 100) * MathHelper.PiOver4, 0, 0);
         RebirthLogo.Scale = 0.8f.ToResolutionF();
         RebirthLogo.View = View;
         RebirthLogo.Projection = ProjectionOrtho;
-        if (MenuState == State.PrimaryMenu || MenuState == State.PlayList)
+        if (MenuState == UIState.PrimaryMenu || MenuState == UIState.PlayList)
             RebirthLogo.Render();
         //Crate.Rotation.Y = MathHelper.Pi;
         //Crate.Rotation.X = MathHelper.PiOver2;
@@ -1026,7 +1082,7 @@ public static class MainMenu {
         DisguiseMode.Text = "Disguise: " + TankID.Collection.GetKey(Difficulties.DisguiseValue);
         Monochrome.Text = "Monochrome: " + TankID.Collection.GetKey(Difficulties.MonochromeValue);
         RandomizedTanks.Text = $"Randomized Tanks\nLower: {TankID.Collection.GetKey(Difficulties.RandomTanksLower)} | Upper: {TankID.Collection.GetKey(Difficulties.RandomTanksUpper)}";
-        if (MenuState == State.Mulitplayer) {
+        if (MenuState == UIState.Mulitplayer) {
             if (DebugManager.DebuggingEnabled)
                 if (InputUtils.AreKeysJustPressed(Keys.Q, Keys.W)) {
                     IPInput.Text = "localhost";
@@ -1057,15 +1113,15 @@ public static class MainMenu {
         }
 
         #region General Stuff
-        if (MenuState == State.StatsMenu)
+        if (MenuState == UIState.StatsMenu)
             if (InputUtils.KeyJustPressed(Keys.Escape))
-                MenuState = State.PrimaryMenu;
+                MenuState = UIState.PrimaryMenu;
 
         // todo: do transitions
-        SetPlayButtonsVisibility(MenuState == State.PlayList);
-        SetMPButtonsVisibility(MenuState == State.Mulitplayer);
-        SetPrimaryMenuButtonsVisibility(MenuState == State.PrimaryMenu);
-        SetDifficultiesButtonsVisibility(MenuState == State.Difficulties);
+        SetPlayButtonsVisibility(MenuState == UIState.PlayList);
+        SetMPButtonsVisibility(MenuState == UIState.Mulitplayer);
+        SetPrimaryMenuButtonsVisibility(MenuState == UIState.PrimaryMenu);
+        SetDifficultiesButtonsVisibility(MenuState == UIState.Difficulties);
 
         // me in march 2024: what the fuck is this code.
         TanksAreCalculators.Color = Difficulties.Types["TanksAreCalculators"] ? Color.Lime : Color.Red;
@@ -1148,7 +1204,7 @@ public static class MainMenu {
         plrsConfirmed = 0;
         _musicFading = false;
         _sclOffset = 0;
-        MenuState = State.PrimaryMenu;
+        MenuState = UIState.PrimaryMenu;
         Active = true;
         GameUI.Paused = false;
 
@@ -1267,11 +1323,11 @@ public static class MainMenu {
         MotdPos = new Vector2(WindowUtils.WindowWidth / 2, 10);
         if (Active) {
             UpdateLogo();
-            if (MenuState == State.StatsMenu)
+            if (MenuState == UIState.StatsMenu)
                 RenderStats(new Vector2(WindowUtils.WindowWidth * 0.3f, 200.ToResolutionY()), new Vector2(WindowUtils.WindowWidth * 0.7f, 40.ToResolutionY()), Anchor.TopCenter);
-            else if (MenuState == State.Difficulties)
+            else if (MenuState == UIState.Difficulties)
                 DrawUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, "Ideas are welcome! Let us know in our DISCORD server!", new(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 6), Color.White, Color.Black, new Vector2(1f), 0f, Anchor.Center, 0.8f);
-            else if (MenuState == State.LoadingMods)
+            else if (MenuState == UIState.LoadingMods)
                 DrawModLoading();
             #region Various things
             // TODO: make it look much better
@@ -1285,14 +1341,14 @@ public static class MainMenu {
             //TankGame.SpriteRenderer.DrawString(TankGame.TextFont, keyDisplay, new(12, 12), Color.White, new(0.6f), 0f, Vector2.Zero);
             #endregion
 
-            if (MenuState == State.PrimaryMenu || MenuState == State.PlayList) {
+            if (MenuState == UIState.PrimaryMenu || MenuState == UIState.PlayList) {
                 // draw the logo at it's position
                 //TankGame.SpriteRenderer.Draw(LogoTexture, LogoPosition, null, Color.White, LogoRotation, LogoTexture.Size() / 2, LogoScale, default, default);
 
                 var size = TankGame.TextFont.MeasureString(TankGame.Instance.MOTD);
                 TankGame.SpriteRenderer.DrawString(TankGame.TextFont, TankGame.Instance.MOTD, MotdPos, Color.White, MotdScale * 1.5f, 0f, GameUtils.GetAnchor(Anchor.TopCenter, size));
             }
-            if (MenuState == State.Campaigns) {
+            if (MenuState == UIState.Campaigns) {
                 if (!campaignNames.Any(x => {
                     if (x is UITextButton btn)
                         return btn.Text == "Vanilla"; // i fucking hate this hardcode. but i'll cry about it later.
@@ -1302,7 +1358,7 @@ public static class MainMenu {
                 }
                 DrawCampaignMenuExtras();
             }
-            else if (MenuState == State.Cosmetics) {
+            else if (MenuState == UIState.Cosmetics) {
                 TankGame.SpriteRenderer.DrawString(TankGame.TextFontLarge, $"COMING SOON!", new(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 6), Color.White, new Vector2(0.75f).ToResolution(), 0f, TankGame.TextFontLarge.MeasureString($"COMING SOON!") / 2);
             }
             if (SteamworksUtils.IsInitialized)

@@ -99,7 +99,7 @@ public static class GameUI
             ControlsButton.IsVisible = true;
             BackButton.IsVisible = true;
 
-            MainMenu.MenuState = MainMenu.State.Options;
+            MainMenu.MenuState = MainMenu.UIState.Settings;
 
             BackButton.Size.Y = 150;
 
@@ -274,15 +274,15 @@ public static class GameUI
     {
         if (!_initialized)
             return;
-        if (MainMenu.MenuState == MainMenu.State.Cosmetics)
-            MainMenu.MenuState = MainMenu.State.PlayList;
-        if (MainMenu.MenuState == MainMenu.State.StatsMenu)
-            MainMenu.MenuState = MainMenu.State.PrimaryMenu;
+        if (MainMenu.MenuState == MainMenu.UIState.Cosmetics)
+            MainMenu.MenuState = MainMenu.UIState.PlayList;
+        if (MainMenu.MenuState == MainMenu.UIState.StatsMenu)
+            MainMenu.MenuState = MainMenu.UIState.PrimaryMenu;
 
         // We are on the main menu and in the settings menu.
-        if (MainMenu.MenuState == MainMenu.State.Options && MainMenu.Active && VolumeButton.IsVisible) {
+        if (MainMenu.MenuState == MainMenu.UIState.Settings && MainMenu.Active && VolumeButton.IsVisible) {
             // Set to main menu, we are going back to it after all.
-            MainMenu.MenuState = MainMenu.State.PrimaryMenu;
+            MainMenu.MenuState = MainMenu.UIState.PrimaryMenu;
             
             // Hide Options buttons and load MMenu buttons.
             MainMenu.PlayButton.IsVisible = true;
@@ -356,7 +356,7 @@ public static class GameUI
                 {
                     foreach (var elem in MainMenu.campaignNames)
                         elem.Remove();
-                    MainMenu.MenuState = MainMenu.State.PlayList;
+                    MainMenu.MenuState = MainMenu.UIState.PlayList;
 
                     MainMenu.campaignNames.Clear();
                 }
@@ -368,7 +368,7 @@ public static class GameUI
 
                     BackButton.IsVisible = false;
 
-                    MainMenu.MenuState = MainMenu.State.PrimaryMenu;
+                    MainMenu.MenuState = MainMenu.UIState.PrimaryMenu;
                 }
 
                 else if (GraphicsButton.IsVisible)
@@ -382,15 +382,15 @@ public static class GameUI
                     GraphicsUI.BatchVisible = false;
                     VolumeUI.BatchVisible = false;
 
-                    MainMenu.MenuState = MainMenu.State.PrimaryMenu;    
+                    MainMenu.MenuState = MainMenu.UIState.PrimaryMenu;    
                 }
                 else if (MainMenu.ConnectToServerButton.IsVisible || MainMenu.DisconnectButton.IsVisible)
                 {
-                    MainMenu.MenuState = MainMenu.State.PlayList;
+                    MainMenu.MenuState = MainMenu.UIState.PlayList;
                 }
                 if (MainMenu.TanksAreCalculators.IsVisible)
                 {
-                    MainMenu.MenuState = MainMenu.State.PlayList;
+                    MainMenu.MenuState = MainMenu.UIState.PlayList;
                 }
             }
             else

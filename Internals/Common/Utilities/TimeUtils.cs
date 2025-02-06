@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Xna.Framework;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -60,5 +61,35 @@ public static class TimeUtils
         int millisecs = span.Milliseconds;
 
         return $"{hours}:{mins}:{secs}:{millisecs}";
+    }
+    public static float InterpolateMinuteToHour(TimeSpan timeSpan) {
+        return (float)timeSpan.TotalMinutes % 60 / 60;
+    }
+    public static float InterpolateHourToDay(TimeSpan timeSpan) {
+        return (float)timeSpan.TotalHours % 24 / 12;
+    }
+    public static float SineForSecond(TimeSpan timeSpan, float mult = 1f) {
+        return MathF.Sin((float)timeSpan.TotalMilliseconds / 1000 * mult);
+    }
+    public static float InterpolateMinuteToHour(DateTime dateTime) {
+        var timeSpan = dateTime.TimeOfDay;
+        return (float)timeSpan.TotalMinutes % 60 / 60;
+    }
+    public static float InterpolateHourToDay(DateTime dateTime) {
+        var timeSpan = dateTime.TimeOfDay;
+        return (float)timeSpan.TotalHours % 24 / 12;
+    }
+    public static float SineForSecond(DateTime dateTime, float mult = 1f) {
+        var timeSpan = dateTime.TimeOfDay;
+        return MathF.Sin((float)timeSpan.TotalMilliseconds / 1000 * mult);
+    }
+
+    public static int GetHourFromCircle(float percentRotation) {
+        var time = percentRotation * MathHelper.TwoPi / (MathHelper.Tau / 12);
+        return (int)Math.Floor(time);
+    }
+    public static int GetMinuteFromCircle(float percentRotation) {
+        var time = percentRotation * MathHelper.TwoPi / (MathHelper.Tau / 60);
+        return (int)Math.Floor(time);
     }
 }

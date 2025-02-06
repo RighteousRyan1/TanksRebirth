@@ -1,12 +1,6 @@
-﻿using FontStashSharp;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System;
-using System.ComponentModel;
-using tainicom.Aether.Physics2D.Common;
-using tainicom.Aether.Physics2D.Dynamics;
 using TanksRebirth.Internals;
-using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.GameContent.Cosmetics;
 
@@ -57,7 +51,7 @@ public class RenderableCrate
             * Matrix.CreateTranslation(ChestPosition - new Vector3(0, 0, /*15.2424f*/0));
         LidMesh.ParentBone.Transform = Matrix.CreateScale(Scale)
             * Matrix.CreateFromYawPitchRoll(LidRotation.Z, LidRotation.Y, LidRotation.X)
-            * Matrix.CreateTranslation(LidPosition/* + new Vector3(0, 0.65f, -1.35f)*/);
+            * Matrix.CreateTranslation(LidPosition);
 
         Model.CopyAbsoluteBoneTransformsTo(_boneTransforms);
         Model!.Root.Transform = World;
