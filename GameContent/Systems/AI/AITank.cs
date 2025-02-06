@@ -483,7 +483,7 @@ public partial class AITank : Tank {
 
         // 20, 30
 
-        var whitePixel = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
+        var whitePixel = TextureGlobals.Pixels[Color.White];
         var pathPos = Position + offset.Rotate(-TurretRotation);
 
         pathDir.Y *= -1; // this may be a culprit and i hate it.
@@ -609,7 +609,7 @@ public partial class AITank : Tank {
 
         var list = new List<RaycastReflection>();
 
-        var whitePixel = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
+        var whitePixel = TextureGlobals.Pixels[Color.White];
         var pathPos = Position;
 
         pathDir *= PATH_UNIT_LENGTH;

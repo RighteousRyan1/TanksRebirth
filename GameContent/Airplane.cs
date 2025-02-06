@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using tainicom.Aether.Physics2D.Dynamics;
+using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.UI;
@@ -77,7 +78,7 @@ public class Airplane {
 
         BodyTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/plane/body");
         WingTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/plane/wings");
-        InteriorTexture = TankGame.BlackPixel;
+        InteriorTexture = TextureGlobals.Pixels[Color.Black];
 
         PlaneLoop.Volume = 0f;
         PlaneLoop.MaxVolume = 0.25f;

@@ -3,11 +3,15 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Reflection;
+using System.Linq;
 
 namespace TanksRebirth.Internals.Common.Utilities;
 
 public static class ColorUtils
 {
+    public static Color[] AllColors { get; } = typeof(Color).GetProperties(BindingFlags.Static | BindingFlags.Public).Select(x => (Color)x.GetValue(null)!).ToArray();
+    public static Color[] BrightColors { get; } = AllColors.Where(x => GetLuminosity(x) > 0.33f).ToArray();
     public static Color DiscoPartyColor => HsvToRgb(TankGame.UpdateCount % 255 / 255f * 360, 1, 1);
     public static Color HsvToRgb(double h, double S, double V)
     {
@@ -108,6 +112,7 @@ public static class ColorUtils
 
         return c;
     }
+    public static float GetLuminosity(Color color) => Vector3.Dot(color.ToVector3(), new Vector3(0.299f, 0.587f, 0.114f));
     public static void FromPremultiplied(ref Texture2D texture)
     {
         var buffer =  new Color[texture.Width * texture.Height];

@@ -178,12 +178,13 @@ public static class CampaignCompleteUI
         _panelAlpha += _panelFadeSpeed;
         if (_panelAlpha > _panelAlphaMax)
             _panelAlpha = _panelAlphaMax;
-        float width = 350.ToResolutionX();
-        TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Vector2(0, WindowUtils.WindowHeight / 3), null, Color.Beige * _panelAlpha, 0f, Vector2.Zero, new Vector2(width, WindowUtils.WindowHeight / 2), default, 0f);
-        TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Vector2(0, WindowUtils.WindowHeight / 3 + 50.ToResolutionY()), null, Color.Gold * _panelAlpha, 0f, Vector2.Zero, new Vector2(width, 5).ToResolution(), default, 0f);
+        float width = 400;
+        // IntermissionSystem.BackgroundColor looks too dull
+        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Vector2(0, WindowUtils.WindowHeight / 3), null, Color.Beige * _panelAlpha, 0f, Vector2.Zero, new Vector2(width.ToResolutionX(), WindowUtils.WindowHeight / 2), default, 0f);
+        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Vector2(0, WindowUtils.WindowHeight / 3 + 50.ToResolutionY()), null, Color.Gold * _panelAlpha, 0f, Vector2.Zero, new Vector2(width, 5).ToResolution(), default, 0f);
         var txt = TankGame.GameLanguage.FunFacts;
         var measure = TankGame.TextFont.MeasureString(txt);
-        DrawUtils.DrawShadowedString(TankGame.TextFont, new Vector2(width / 2, WindowUtils.WindowHeight / 3 + 5.ToResolutionY()), Vector2.One,
+        DrawUtils.DrawShadowedString(TankGame.TextFont, new Vector2(width.ToResolutionX() / 2, WindowUtils.WindowHeight / 3 + 5.ToResolutionY()), Vector2.One,
             txt, Color.DeepSkyBlue, Vector2.One.ToResolution(), 1f, new Vector2(measure.X / 2, 0), 0.4f);
 
         string[] funFacts =
@@ -201,8 +202,8 @@ public static class CampaignCompleteUI
                 ff, Color.DeepSkyBlue, new Vector2(0.75f).ToResolution(), 1f, new Vector2(0, measure.Y / 2), 0.4f);
         }
 
-        TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Vector2(WindowUtils.WindowWidth / 3, 0), null, Color.Beige * _panelAlpha, 0f, Vector2.Zero, new Vector2(WindowUtils.WindowWidth / 3, WindowUtils.WindowHeight), default, 0f);
-        TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Vector2(WindowUtils.WindowWidth / 3, (_tnkDrawYOff - 50f).ToResolutionY()), null, Color.Gold * _panelAlpha, 0f, Vector2.Zero, new Vector2(WindowUtils.WindowWidth / 3, 10.ToResolutionY()), default, 0f);
+        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Vector2(WindowUtils.WindowWidth / 3, 0), null, Color.Beige * _panelAlpha, 0f, Vector2.Zero, new Vector2(WindowUtils.WindowWidth / 3, WindowUtils.WindowHeight), default, 0f);
+        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Vector2(WindowUtils.WindowWidth / 3, (_tnkDrawYOff - 50f).ToResolutionY()), null, Color.Gold * _panelAlpha, 0f, Vector2.Zero, new Vector2(WindowUtils.WindowWidth / 3, 10.ToResolutionY()), default, 0f);
 
         if (_shouldShowGrade) {
             _gradeAlpha += _gradeFadeSpeed / 2 * TankGame.DeltaTime;

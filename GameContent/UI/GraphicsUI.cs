@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TanksRebirth.GameContent.Globals;
 using TanksRebirth.Internals.Common.GameUI;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Internals.UI;
@@ -45,7 +46,7 @@ namespace TanksRebirth.GameContent.UI
 
         public static void DrawBooleanIndicator(SpriteBatch spriteBatch, Rectangle hitbox, bool active)
         {
-            spriteBatch.Draw(TankGame.WhitePixel, hitbox, active ? Color.Green : Color.Red);
+            spriteBatch.Draw(TextureGlobals.Pixels[Color.White], hitbox, active ? Color.Green : Color.Red);
         }
 
         public static void Initialize()

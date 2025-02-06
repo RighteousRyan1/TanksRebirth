@@ -1320,16 +1320,16 @@ public static class MainMenu {
     public static void DrawModLoading() {
         var alpha = 0.7f;
         var width = WindowUtils.WindowWidth / 3;
-        TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2), null, Color.SkyBlue * alpha, 0f, GameUtils.GetAnchor(Anchor.Center, TankGame.WhitePixel.Size()), new Vector2(width, 200.ToResolutionY()), default, 0f);
+        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2), null, Color.SkyBlue * alpha, 0f, GameUtils.GetAnchor(Anchor.Center, TextureGlobals.Pixels[Color.White].Size()), new Vector2(width, 200.ToResolutionY()), default, 0f);
 
         var barDims = new Vector2(width - 120, 20).ToResolution();
 
-        TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2), null, Color.Goldenrod * alpha, 0f, GameUtils.GetAnchor(Anchor.Center, TankGame.WhitePixel.Size()),
+        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2), null, Color.Goldenrod * alpha, 0f, GameUtils.GetAnchor(Anchor.Center, TextureGlobals.Pixels[Color.White].Size()),
             barDims, default, 0f);
         var ratio = (float)ModLoader.ActionsComplete / ModLoader.ActionsNeeded;
         if (ModLoader.ActionsNeeded == 0)
             ratio = 0;
-        TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2), null, Color.Yellow * alpha, 0f, GameUtils.GetAnchor(Anchor.Center, TankGame.WhitePixel.Size()),
+        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2), null, Color.Yellow * alpha, 0f, GameUtils.GetAnchor(Anchor.Center, TextureGlobals.Pixels[Color.White].Size()),
             barDims * new Vector2(ratio, 1f).ToResolution(), default, 0f);
 
         var txt = $"{ModLoader.Status} {ModLoader.ModBeingLoaded}...";

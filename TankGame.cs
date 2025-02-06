@@ -83,17 +83,9 @@ public class TankGame : Game {
     }
 
     public static Freecam RebirthFreecam;
-
     public static GameTime LastGameTime { get; private set; }
     public static uint UpdateCount { get; private set; }
-
     public static float RunTime { get; private set; }
-
-    public static Texture2D WhitePixel;
-    public static Texture2D BlackPixel;
-
-    public static Dictionary<Color, Texture2D> Pixels = [];
-
     public static TankGame Instance { get; private set; }
     public static readonly string ExePath = Assembly.GetExecutingAssembly().Location.Replace(@$"\{nameof(TanksRebirth)}.dll", string.Empty);
     /// <summary>The index/vertex buffer used to render to a framebuffer.</summary>
@@ -129,9 +121,7 @@ public class TankGame : Game {
     public static bool IsWindows => OperatingSystem == OSPlatform.Windows;
     public static bool IsMac => OperatingSystem == OSPlatform.OSX;
     public static bool IsLinux => OperatingSystem == OSPlatform.Linux;
-
     public string MOTD { get; private set; }
-
     #endregion
 
     /// <summary>The handle of the game's logging file. Used to write information to a file that can be read after the game closes.</summary>
@@ -332,7 +322,6 @@ public class TankGame : Game {
 
             /* UI */
             "Assets/textures/ui/bullet_ui",
-            "Assets/textures/WhitePixel",
             "Assets/UIPanelBackground",
             "Assets/textures/ui/ping/ping_tex",
             "Assets/textures/ui/chatalert",
@@ -428,20 +417,8 @@ public class TankGame : Game {
         OnFocusLost += TankGame_OnFocusLost!;
         OnFocusRegained += TankGame_OnFocusRegained!;
 
-        WhitePixel = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
-        BlackPixel = new Texture2D(GraphicsDevice, 1, 1);
-
-        // make a pixel color for each default MonoGame color
-        var allColors = typeof(Color).GetProperties(BindingFlags.Static | BindingFlags.Public).Select(x => (Color)x.GetValue(null)!).ToArray();
-        for (int i = 0; i < allColors.Length; i++) {
-            if (Pixels.ContainsKey(allColors[i])) continue;
-            var texture = new Texture2D(GraphicsDevice, 1, 1);
-            texture.SetData(new Color[] { allColors[i] });
-            Pixels.Add(allColors[i], texture);
-        }
+        TextureGlobals.CreateDynamicTexturesAsync(GraphicsDevice);
         
-        BlackPixel.SetData(new Color[] { Color.Black });
-
         _fontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/en_US.ttf"));
         _fontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/ja_JP.ttf"));
         _fontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/es_ES.ttf"));
@@ -1132,7 +1109,7 @@ public class TankGame : Game {
 
     private static void DrawErrorScreen() {
 
-        SpriteRenderer.Draw(WhitePixel, WindowUtils.ScreenRect, Color.Blue);
+        SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], WindowUtils.ScreenRect, Color.Blue);
 
         SpriteRenderer.DrawString(TextFontLarge, ":(", new Vector2(100, 100).ToResolution(), Color.White, (Vector2.One).ToResolution());
         SpriteRenderer.DrawString(TextFontLarge,

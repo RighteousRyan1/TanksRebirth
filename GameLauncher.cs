@@ -5,6 +5,9 @@ using System.Threading;
 
 namespace TanksRebirth;
 
+// GENERAL PROBLEMS:
+// Something appears to be seriously eating at the game's performance. spikes happen but i'm not sure if it's just steam or what?
+// Could be expensive calculations with AI Controlled tanks in the menu
 public static partial class GameLauncher
 {
     public static bool AutoLaunch = true;

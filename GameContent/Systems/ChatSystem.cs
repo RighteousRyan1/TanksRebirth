@@ -6,6 +6,7 @@ using FontStashSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Systems.CommandsSystem;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.Internals;
@@ -219,8 +220,8 @@ public sealed record ChatSystem {
 
         // var alpha = shiftAlpha ? 0.9f : 0.45f;
 
-        TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, chatRect, Color.Gray * alpha1);
-        TankGame.SpriteRenderer.Draw(TankGame.WhitePixel, typeRect, Color.Gray * alpha2);
+        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], chatRect, Color.Gray * alpha1);
+        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], typeRect, Color.Gray * alpha2);
         TankGame.SpriteRenderer.DrawString(ChatMessage.Font, CurTyping, new Vector2(typeRect.X, typeRect.Y), Color.White, Scale.ToResolution());
 
         TankGame.SpriteRenderer.End();

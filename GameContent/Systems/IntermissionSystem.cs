@@ -181,7 +181,7 @@ public static class IntermissionSystem {
 
         if (Alpha > 0f) {
             spriteBatch.Draw(
-                TankGame.WhitePixel,
+                TextureGlobals.Pixels[Color.White],
                 new Rectangle(0, 0, WindowUtils.WindowWidth, WindowUtils.WindowHeight),
                 BackgroundColor * overallAlpha);
 
@@ -202,7 +202,7 @@ public static class IntermissionSystem {
                 var off = 75f;
                 DrawStripe(spriteBatch, StripColor, WindowUtils.WindowHeight * 0.16f + (off * i).ToResolutionY(), overallAlpha);
             }
-            var wp = TankGame.WhitePixel;
+            var wp = TextureGlobals.Pixels[Color.White];
             spriteBatch.Draw(wp, new Vector2(0, WindowUtils.WindowHeight * 0.19f), null, Color.Yellow * overallAlpha, 0f, new Vector2(0, wp.Size().Y / 2), new Vector2(WindowUtils.WindowWidth, 5), default, default);
             spriteBatch.Draw(wp, new Vector2(0, WindowUtils.WindowHeight * 0.19f + 400.ToResolutionY()), null, Color.Yellow * overallAlpha, 0f, new Vector2(0, wp.Size().Y / 2), new Vector2(WindowUtils.WindowWidth, 5), default, default);
             int mafs1 = CampaignGlobals.LoadedCampaign.TrackedSpawnPoints.Count(p => p.Item2);
@@ -285,7 +285,7 @@ public static class IntermissionSystem {
     public static void DrawBlack(SpriteBatch spriteBatch) {
         BlackAlpha = MathHelper.Clamp(BlackAlpha, 0f, 1f);
         spriteBatch.Draw(
-            TankGame.WhitePixel,
+            TextureGlobals.Pixels[Color.White],
             new Rectangle(0, 0, WindowUtils.WindowWidth, WindowUtils.WindowHeight),
             Color.Black * BlackAlpha);
     }

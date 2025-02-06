@@ -1,6 +1,7 @@
 ﻿using FontStashSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using TanksRebirth.GameContent.Globals;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Internals.UI;
 
@@ -62,8 +63,8 @@ namespace TanksRebirth.Internals.Common.GameUI
 
             if (Dropped)
             {
-                spriteBatch.Draw(TankGame.WhitePixel, wrapper, new Rectangle(0, 0, border, border), WrapperColor);
-                spriteBatch.Draw(TankGame.WhitePixel, scroll, new Rectangle(0, 0, border, border), ScrollBarColor);
+                spriteBatch.Draw(TextureGlobals.Pixels[Color.White], wrapper, new Rectangle(0, 0, border, border), WrapperColor);
+                spriteBatch.Draw(TextureGlobals.Pixels[Color.White], scroll, new Rectangle(0, 0, border, border), ScrollBarColor);
             }
 
             _oldScroll = _newScroll;

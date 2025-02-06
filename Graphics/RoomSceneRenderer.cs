@@ -6,10 +6,12 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.Graphics;
 
@@ -23,6 +25,7 @@ public static class RoomSceneRenderer {
     public static ModelMesh Pendulum;
 
     public static Dictionary<string, Texture2D> RoomSkyboxTextures = [];
+    public static Dictionary<string, Color> BookColors = [];
     private static List<ModelMesh> _transparentFaces = [];
 
     public static float Scale;
@@ -53,12 +56,23 @@ public static class RoomSceneRenderer {
         _baseHourTransform = HandHour.ParentBone.Transform;
         _basePendulumTransform = Pendulum.ParentBone.Transform;
 
-        GetSkyboxTextures();
+        InitializeTextures();
     }
-    public static void GetSkyboxTextures() {
+    public static void InitializeTextures() {
         foreach (var file in Directory.GetFiles(Path.Combine("Content", "Assets", "models", "scene", "skybox", "textures"))) {
             var fileName = Path.GetFileNameWithoutExtension(file);
             RoomSkyboxTextures.Add(fileName, GameResources.GetGameResource<Texture2D>(file, false, false));
+        }
+        AssignBookColors();
+    }
+    // these will be random, for fun.
+    public static void AssignBookColors() {
+        foreach (var mesh in RoomSkyboxScene.Meshes) {
+            if (!mesh.Name.Contains("Book")) continue;
+            if (mesh.Name.Contains("Side")) continue;
+            // X2CHECK: ServerRand should be fine to use since it's the same amount of randomization on each client.
+            var pickedColor = ColorUtils.BrightColors[Server.ServerRandom.Next(ColorUtils.BrightColors.Length)];
+            BookColors[mesh.Name] = pickedColor;
         }
     }
     public static void Render() {
@@ -94,7 +108,10 @@ public static class RoomSceneRenderer {
                 effect.Projection = Projection;
 
                 effect.TextureEnabled = true;
-                effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/models/scene/skybox/textures/" + GetMeshTexture(mesh));
+                if (!mesh.Name.Contains("Shelf_Book") || mesh.Name.Contains("Side"))
+                    effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/models/scene/skybox/textures/" + GetMeshTexture(mesh));
+                else
+                    effect.Texture = TextureGlobals.Pixels[BookColors[mesh.Name]];
                 effect.Alpha = GetMeshAlpha(mesh);
 
                 if (effect.Alpha < 1f) {
@@ -165,9 +182,6 @@ public static class RoomSceneRenderer {
             "Windows_Glass" => "glass",
             "Windows_Sides" => "window_sides",
             "Shelf" => "wood_dark",
-
-            // book stuff
-            // 'color_' indicates it will use a colored pixel.
             _ => "metal"
         };
     }

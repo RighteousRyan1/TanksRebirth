@@ -11,6 +11,7 @@ using TanksRebirth.Internals.Common.GameUI;
 using TanksRebirth.Internals.Common.Utilities;
 using FontStashSharp;
 using TanksRebirth.Internals.Common.Framework.Audio;
+using TanksRebirth.GameContent.Globals;
 
 namespace TanksRebirth.GameContent.UI;
 
@@ -95,7 +96,7 @@ public class AchievementPopupHandler {
     }
 
     public void DrawPopup(SpriteBatch spriteBatch) {
-        spriteBatch.Draw(TankGame.WhitePixel, _popupPos, null, (Color.Beige.ToVector3() * 0.33f).ToColor(), 0f, Vector2.Zero, _popupDims, default, 0f);
+        spriteBatch.Draw(TextureGlobals.Pixels[Color.White], _popupPos, null, (Color.Beige.ToVector3() * 0.33f).ToColor(), 0f, Vector2.Zero, _popupDims, default, 0f);
         var texOff = Vector2.Zero;
         if (_curTexture is not null) {
             texOff = new Vector2(100, _popupDims.Y / 2);

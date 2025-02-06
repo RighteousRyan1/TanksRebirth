@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TanksRebirth.Internals.Common.Utilities;
 using FontStashSharp;
+using TanksRebirth.GameContent.Globals;
 
 namespace TanksRebirth.GameContent.UI
 {
@@ -20,9 +21,9 @@ namespace TanksRebirth.GameContent.UI
             TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"Level: {MathF.Floor(TankGame.GameData.ExpLevel)} | {MathF.Floor(Value / MaxValue * 100)}%", position - (Vector2.UnitY * 20).ToResolution(), Color.White, new Vector2(0.6f).ToResolution(), 0f, TankGame.TextFont.MeasureString($"Level: {MathF.Floor(TankGame.GameData.ExpLevel)} | {MathF.Floor(Value / MaxValue * 100)}%") / 2, 0f);
             //TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"Level: {MathF.Floor(TankGame.GameData.ExpLevel)} | {MathF.Floor(Value / MaxValue * 100)}%", position + new Vector2(0, 20), Color.White, 0f, TankGame.TextFont.MeasureString($"Level: {MathF.Floor(TankGame.GameData.ExpLevel)} | {MathF.Floor(Value / MaxValue * 100)}%") / 2, 1f, 0f);
 
-            sb.Draw(TankGame.WhitePixel, position, null, emptyColor, 0f, GameUtils.GetAnchor(aligning, TankGame.WhitePixel.Size()), new Vector2(scale.X, scale.Y), default, 0f);
+            sb.Draw(TextureGlobals.Pixels[Color.White], position, null, emptyColor, 0f, GameUtils.GetAnchor(aligning, TextureGlobals.Pixels[Color.White].Size()), new Vector2(scale.X, scale.Y), default, 0f);
 
-            sb.Draw(TankGame.WhitePixel, position, null, fillColor, 0f, GameUtils.GetAnchor(aligning, TankGame.WhitePixel.Size()), new Vector2(scale.X * Value, scale.Y), default, 0f);
+            sb.Draw(TextureGlobals.Pixels[Color.White], position, null, fillColor, 0f, GameUtils.GetAnchor(aligning, TextureGlobals.Pixels[Color.White].Size()), new Vector2(scale.X * Value, scale.Y), default, 0f);
         }
     }
 }

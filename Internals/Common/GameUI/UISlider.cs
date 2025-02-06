@@ -8,6 +8,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.GameContent.Globals;
 
 namespace TanksRebirth.Internals.Common.GameUI {
     public class UISlider : UIElement {
@@ -31,7 +32,7 @@ namespace TanksRebirth.Internals.Common.GameUI {
         private float InternalValue;
 
         public override void OnInitialize() {
-            UIImage interactable = new(TankGame.WhitePixel, new(1f), (image, spriteBatch) => spriteBatch.Draw(image.Texture, image.Hitbox, Color.Transparent));
+            UIImage interactable = new(TextureGlobals.Pixels[Color.White], new(1f), (image, spriteBatch) => spriteBatch.Draw(image.Texture, image.Hitbox, Color.Transparent));
             interactable.Tooltip = Tooltip;
             interactable.FallThroughInputs = false;
             interactable.SetDimensions((int)Position.X + 2, (int)Position.Y + 2, (int)Size.X - 1, (int)Size.Y - 1);
@@ -59,13 +60,13 @@ namespace TanksRebirth.Internals.Common.GameUI {
         }
 
         public override void DrawSelf(SpriteBatch spriteBatch) {
-            spriteBatch.Draw(TankGame.WhitePixel, Hitbox, SliderColor);
+            spriteBatch.Draw(TextureGlobals.Pixels[Color.White], Hitbox, SliderColor);
         }
 
         private const int DEAD_ZONE = 16;
 
         public override void DrawChildren(SpriteBatch spriteBatch) {
-            spriteBatch.Draw(TankGame.WhitePixel, new Rectangle((int)Position.X + (int)(InternalValue * Size.X) - (InternalValue > 0.5 ? BarWidth / 2 : 0), (int)Position.Y - 2, BarWidth, (int)Size.Y + 4), BarColor);
+            spriteBatch.Draw(TextureGlobals.Pixels[Color.White], new Rectangle((int)Position.X + (int)(InternalValue * Size.X) - (InternalValue > 0.5 ? BarWidth / 2 : 0), (int)Position.Y - 2, BarWidth, (int)Size.Y + 4), BarColor);
             _slider.OverrideHitbox(new Rectangle(Hitbox.X, Hitbox.Y, Hitbox.Width + DEAD_ZONE, Hitbox.Height));
         }
     }

@@ -5,6 +5,7 @@ using TanksRebirth.GameContent.UI;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Internals;
 using TanksRebirth.Net;
+using TanksRebirth.GameContent.Globals;
 
 namespace TanksRebirth.GameContent;
 
@@ -50,12 +51,12 @@ public static class RebirthMouse
         }
 
         if (DoTrail) {
-            var p = GameHandler.Particles.MakeParticle(new Vector3(MouseUtils.MousePosition.X, MouseUtils.MousePosition.Y, 0), TankGame.WhitePixel);
+            var p = GameHandler.Particles.MakeParticle(new Vector3(MouseUtils.MousePosition.X, MouseUtils.MousePosition.Y, 0), TextureGlobals.Pixels[Color.White]);
             p.IsIn2DSpace = true;
             var dir = _oldMouse.DirectionOf(MouseUtils.MousePosition).ToResolution();
             p.Rotation2D = dir.ToRotation();
             p.TextureScale = new Vector2(dir.Length() * 1.1f, 20.ToResolutionY());
-            p.Origin2D = new(0, TankGame.WhitePixel.Size().Y / 2);
+            p.Origin2D = new(0, TextureGlobals.Pixels[Color.White].Size().Y / 2);
             p.HasAddativeBlending = false;
             p.ToScreenSpace = false;
             p.UniqueBehavior = (pa) => {

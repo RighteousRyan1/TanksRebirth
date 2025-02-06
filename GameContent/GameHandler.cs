@@ -54,14 +54,12 @@ public class GameHandler {
             _randSeed = value;
             GameRand = new(value);
         }
+
     }
     /// <summary>The randomizing behind the game's events. The seed can be modified if you change <see cref="GameRandSeed"/>.</summary>
     public static Random GameRand { get; private set; }
-
-    public static XpBar ExperienceBar;
     public static ParticleSystem Particles { get; private set; }
-
-    // TODO: convert to lists.
+    public static XpBar ExperienceBar;
     public static AITank[] AllAITanks = new AITank[MAX_AI_TANKS];
     public static PlayerTank[] AllPlayerTanks = new PlayerTank[MAX_PLAYERS];
     public static Tank[] AllTanks = new Tank[MAX_PLAYERS + MAX_AI_TANKS];
