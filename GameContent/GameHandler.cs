@@ -29,6 +29,7 @@ using TanksRebirth.Internals.Common.Framework.Animation;
 using Microsoft.Xna.Framework.Audio;
 using TanksRebirth.GameContent.RebirthUtils;
 using System.Text;
+using TanksRebirth.GameContent.Cosmetics;
 
 namespace TanksRebirth.GameContent;
 
@@ -79,6 +80,8 @@ public class GameHandler {
 
         ExperienceBar = new();
         Particles = new(MAX_PARTICLES);
+
+        CosmeticsUI.Initialize();
     }
 
     internal static void UpdateAll(GameTime gameTime) {
@@ -102,6 +105,8 @@ public class GameHandler {
         if (InputUtils.KeyJustPressed(Keys.OemTilde))
             doTestWithFont();
         // ChatSystem.CurTyping = SoundPlayer.GetLengthOfSound("Content/Assets/sounds/tnk_shoot_ricochet_rocket_loop.ogg").ToString();
+        if (MainMenu.Active)
+        CosmeticsUI.Update();
         if (DebugManager.DebuggingEnabled) {
             if (/*InputUtils.KeyJustPressed(Keys.H)*/ DebugManager.DebugLevel == -2 && CampaignGlobals.InMission) {
                 if (TankGame.RunTime % 300 <= TankGame.DeltaTime) {
@@ -293,8 +298,12 @@ public class GameHandler {
 
         Particles.RenderParticles();
 
-        if (CampaignGlobals.ShouldMissionsProgress && !MainMenu.Active)
+        // only draw if ingame + is multiplayer.
+        if (CampaignGlobals.ShouldMissionsProgress 
+            && !MainMenu.Active
+            && Client.IsConnected()) {
             PingMenu.DrawPingHUD();
+        }
 
         IntermissionHandler.RenderCountdownGraphics();
 

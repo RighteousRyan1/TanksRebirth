@@ -9,12 +9,15 @@ using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent;
 
+#pragma warning disable
 public class GameShaders
 {
     public static Effect MouseShader { get; private set; }
     public static Effect GaussianBlurShader { get; private set; }
 
     public static Effect LanternShader { get; private set; }
+
+    public static float BlurFactor = 0.0075f;
 
     private static bool _lantern;
     public static bool LanternMode {
@@ -39,9 +42,8 @@ public class GameShaders
         MouseShader.Parameters["oSpeed"].SetValue(-20f);
         MouseShader.Parameters["oSpacing"].SetValue(10f);
 
-        var blurFactor = 0.0075f;
         GaussianBlurShader.Parameters["oResolution"].SetValue(Vector2.One);
-        GaussianBlurShader.Parameters["oBlurFactor"].SetValue(blurFactor);
+        GaussianBlurShader.Parameters["oBlurFactor"].SetValue(BlurFactor);
         GaussianBlurShader.Parameters["oEnabledBlur"].SetValue(MainMenu.Active);
 
         /*if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Up))

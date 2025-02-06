@@ -49,8 +49,7 @@ public class RenderableCrate
         World = Matrix.CreateScale(Scale)
             * Matrix.CreateFromYawPitchRoll(Rotation.Z, Rotation.Y, Rotation.X)
             * Matrix.CreateTranslation(ChestPosition - new Vector3(0, 0, /*15.2424f*/0));
-        LidMesh.ParentBone.Transform = Matrix.CreateScale(Scale)
-            * Matrix.CreateFromYawPitchRoll(LidRotation.Z, LidRotation.Y, LidRotation.X)
+        LidMesh.ParentBone.Transform = Matrix.CreateFromYawPitchRoll(LidRotation.Z, LidRotation.Y, LidRotation.X)
             * Matrix.CreateTranslation(LidPosition);
 
         Model.CopyAbsoluteBoneTransformsTo(_boneTransforms);

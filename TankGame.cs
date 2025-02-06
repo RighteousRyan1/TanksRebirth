@@ -42,6 +42,7 @@ using TanksRebirth.GameContent.Speedrunning;
 using tainicom.Aether.Physics2D.Collision;
 using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.Internals.Common.Framework.Animation;
+using TanksRebirth.GameContent.Cosmetics;
 
 namespace TanksRebirth;
 
@@ -690,16 +691,6 @@ public class TankGame : Game {
     private void DoUpdate(GameTime gameTime) {
         MouseUtils.MousePosition = new(InputUtils.CurrentMouseSnapshot.X, InputUtils.CurrentMouseSnapshot.Y);
         MouseVelocity = MouseUtils.MousePosition - _mOld;
-        //SpectatorCamera.FieldOfView = MathHelper.ToRadians(100);
-        //SpectatorCamera.AspectRatio = GraphicsDevice.Viewport.AspectRatio;
-        //PerspectiveCamera.FieldOfView = MathHelper.ToRadians(90);
-        //PerspectiveCamera.AspectRatio = GraphicsDevice.Viewport.AspectRatio;
-        //SpectatorCamera.Position = new Vector3(0, 100, 0);
-        //SpectatorCamera.Update();
-
-        //OrthographicCamera.Translation = new(CameraFocusOffset.X, -CameraFocusOffset.Y + 40, 0);
-
-        //GameCamera = SpectatorCamera;
 
         #region Non-Camera
 
@@ -770,6 +761,7 @@ public class TankGame : Game {
 
         #endregion
 
+        // TODO: this is quite hellcode. reorganize.
         if (!IsCrashInfoVisible) {
             if (DebugManager.DebugLevel != DebugManager.Id.FreeCamTest && !DebugManager.persistFreecam) {
                 if (!MainMenu.Active) {
@@ -979,6 +971,7 @@ public class TankGame : Game {
 
                 HoveringAnyTank = false;
                 // TODO: why is this here and not LevelEditor
+                // ... or literally anywhere else
                 if (!MainMenu.Active && (OverheadView || LevelEditor.Active)) {
                     foreach (var tnk in GameHandler.AllTanks) {
                         if (tnk == null) continue;
@@ -1048,17 +1041,14 @@ public class TankGame : Game {
     public static bool RenderWireframe = false;
 
     public static RasterizerState _cachedState;
-
     public static RasterizerState DefaultRasterizer => RenderWireframe ? new() { FillMode = FillMode.WireFrame } : RasterizerState.CullNone;
 
-    static RenderTarget2D GameFrameBuffer;
-    public static RenderTarget2D GameTarget => GameFrameBuffer;
+    public static RenderTarget2D GameFrameBuffer;
 
     public static event Action<GameTime> OnPostDraw;
-
     public static void SaveRenderTarget(string path = "screenshot.png") {
         using var fs = new FileStream(path, FileMode.OpenOrCreate);
-        GameTarget.SaveAsPng(fs, GameTarget.Width, GameTarget.Height);
+        GameFrameBuffer.SaveAsPng(fs, GameFrameBuffer.Width, GameFrameBuffer.Height);
         ChatSystem.SendMessage("Saved image to " + fs.Name, Color.Lime);
     }
 
@@ -1089,12 +1079,13 @@ public class TankGame : Game {
         GraphicsDevice.DepthStencilState = _stencilState;
         GraphicsDevice.SamplerStates[0] = WrappingSampler;
         RoomSceneRenderer.Render();
+        CosmeticsUI.RenderCrates();
         GraphicsDevice.SamplerStates[0] = ClampingSampler;
         GameHandler.RenderAll();
         SpriteRenderer.End();
 
         GraphicsDevice.SetRenderTarget(null);
-        var shader = Difficulties.Types["LanternMode"] && !MainMenu.Active ? GameShaders.LanternShader : (MainMenu.Active ? GameShaders.GaussianBlurShader : null);
+        var shader = Difficulties.Types["LanternMode"] && !MainMenu.Active ? GameShaders.LanternShader : (MainMenu.Active ? GameShaders.GaussianBlurShader: null);
         if (!GameSceneRenderer.ShouldRenderAll) shader = null;
         SpriteRenderer.Begin(effect: shader);
         SpriteRenderer.Draw(GameFrameBuffer, Vector2.Zero, null, Color.White, 0f, Vector2.Zero, Vector2.One, default, 0f);

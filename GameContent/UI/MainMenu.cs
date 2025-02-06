@@ -21,8 +21,7 @@ using TanksRebirth.GameContent.Systems;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals;
 using TanksRebirth.Net;
-using System.Runtime.InteropServices;
-using System.Globalization;
+
 using TanksRebirth.Internals.Common.Framework.Animation;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.Localization;
@@ -158,10 +157,6 @@ public static class MainMenu {
 
     #endregion
 
-    // TODO: get menu visuals working
-
-    public static RenderableCrate Crate;
-
     // not always properly set, fix later
     // this code is becoming so shit i want to vomit but i don't know any better
     public enum UIState {
@@ -182,15 +177,7 @@ public static class MainMenu {
         set {
             _menuState = value;
 
-            if (!MenuCameraManipulations.ContainsKey(value)) {
-                CameraPositionAnimator = Animator.Create()
-                    .WithFrame(new(position3d: TankGame.RebirthFreecam.Position, duration: CameraTransitionTime, easing: CameraEasingFunction))
-                    .WithFrame(new(position3d: CamPosMain));
-                CameraRotationAnimator = Animator.Create()
-                    .WithFrame(new(position3d: TankGame.RebirthFreecam.Rotation, duration: CameraTransitionTime, easing: CameraEasingFunction))
-                    .WithFrame(new(position3d: CamPosMainRotation));
-            }
-            else {
+            if (MenuCameraManipulations.ContainsKey(value)) {
                 CameraPositionAnimator = Animator.Create()
                     .WithFrame(new(position3d: TankGame.RebirthFreecam.Position, duration: CameraTransitionTime, easing: CameraEasingFunction))
                     .WithFrame(new(position3d: MenuCameraManipulations[value].Position));
@@ -198,43 +185,31 @@ public static class MainMenu {
                     .WithFrame(new(position3d: TankGame.RebirthFreecam.Rotation, duration: CameraTransitionTime, easing: CameraEasingFunction))
                     .WithFrame(new(position3d: MenuCameraManipulations[value].Rotation));
             }
+            // if it doesn't have a proper camera position, just go to the regular one.
+            else {
+                CameraPositionAnimator = Animator.Create()
+                    .WithFrame(new(position3d: TankGame.RebirthFreecam.Position, duration: CameraTransitionTime, easing: CameraEasingFunction))
+                    .WithFrame(new(position3d: CamPosMain));
+                CameraRotationAnimator = Animator.Create()
+                    .WithFrame(new(position3d: TankGame.RebirthFreecam.Rotation, duration: CameraTransitionTime, easing: CameraEasingFunction))
+                    .WithFrame(new(position3d: CamPosMainRotation));
+            }
             CameraPositionAnimator.Restart();
             CameraPositionAnimator.Run();
             CameraRotationAnimator.Restart();
             CameraRotationAnimator.Run();
         }
     }
-
-    #region Chest Stuff
-    private static bool _openingCrate; // we don't use this yet since the stuff isn't exactly implemented.
-    #endregion
-
     private static bool _initialized;
 
     public static RebirthLogoModel RebirthLogo;
     public static void InitializeBasics() {
-        CameraPositionAnimator = Animator.Create()
-            .WithFrame(new(position3d: new Vector3(GameSceneRenderer.MAX_X / 2, 50, 0), duration: TimeSpan.FromSeconds(10), easing: EasingFunction.InOutQuad))
-            .WithFrame(new(position3d: new Vector3(0, 50, GameSceneRenderer.MAX_Z / 2), duration: TimeSpan.FromSeconds(10), easing: EasingFunction.InOutQuad))
-            .WithFrame(new(position3d: new Vector3(GameSceneRenderer.MIN_X / 2, 50, 0), duration: TimeSpan.FromSeconds(10), easing: EasingFunction.InOutQuad))
-            .WithFrame(new(position3d: new Vector3(0, 50, GameSceneRenderer.MIN_Z / 2), duration: TimeSpan.FromSeconds(10), easing: EasingFunction.InOutQuad))
-            .WithFrame(new(position3d: new Vector3(GameSceneRenderer.MAX_X / 2, 50, 0)));
-        CameraPositionAnimator.IsLooped = true;
-        CameraPositionAnimator.Restart();
-        CameraPositionAnimator.Run();
+        CameraPositionAnimator = Animator.Create();
+        CameraRotationAnimator = Animator.Create();
         MenuState = UIState.PrimaryMenu;
-        Crate = new(new(0, 0, 0), TankGame.GameView, TankGame.GameProjection) {
-            ChestPosition = new(0, 500, 250)
-        };
         RebirthLogo = new() {
             Position = new(0, 500, 250),
         };
-        Crate.Rotation.Y = MathHelper.Pi + 0.25f;
-        Crate.Rotation.X = -MathHelper.PiOver4;
-        Crate.Rotation.Z = 0f;
-        Crate.LidRotation = Crate.Rotation;
-
-        // AddTravelingTank(TankTier.Black, 200, 200);
 
         // LogoTexture = SteamworksUtils.GetAvatar(Steamworks.SteamUser.GetSteamID());
     }
@@ -487,11 +462,7 @@ public static class MainMenu {
             e.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick.ogg", SoundContext.Effect, rememberMe: true); };
         }
     }
-
-    private static float _interp;
-    private static bool _switch;
     private static void UpdateModels() {
-        Crate.ChestPosition = new(0, -150, 0);
         RebirthLogo.Position = new Vector3(0, 300.ToResolutionY(), 0);
         //var testX = MouseUtils.MousePosition.X / WindowUtils.WindowWidth;
         //var testY = MouseUtils.MousePosition.Y / WindowUtils.WindowHeight;
@@ -502,43 +473,23 @@ public static class MainMenu {
         RebirthLogo.Rotation.X = rotX;
         RebirthLogo.Rotation.Y = rotY;
 
-        _interp += (_switch ? 0.015f : -0.015f) * TankGame.DeltaTime;
-
-        if (TankGame.RunTime % 120 <= TankGame.DeltaTime) _switch = !_switch;
-        if (_interp > 1) _interp = 1;
-        if (_interp < 0) _interp = 0;
-
-        Crate.Rotation = new Vector3(0, 0, TankGame.RunTime * 0.01f);
-        Crate.LidPosition = new Vector3(0, 0, 0);
-        Crate.LidRotation = new Vector3(0, Easings.GetEasingBehavior(_switch ? EasingFunction.OutBounce : EasingFunction.OutSine, _interp) * (MathHelper.Pi + MathHelper.PiOver4 / 2), 0);
-
         ProjectionOrtho = Matrix.CreateOrthographic(TankGame.Instance.GraphicsDevice.Viewport.Width, TankGame.Instance.GraphicsDevice.Viewport.Height, -2000f, 5000f);
         ProjectionPerspective = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), TankGame.Instance.GraphicsDevice.Viewport.AspectRatio, 0.1f, 10000f);
         View = Matrix.CreateLookAt(Vector3.Backward, Vector3.Zero, Vector3.Up) * Matrix.CreateTranslation(0, 0, -500);
     }
     public static void RenderModels() {
-        if (!Active) return;
+
         UpdateModels();
         // TODO: change this to world view/world projection...? i think it would look better if the crate existed in world space
         // it would give reason to have the camera move over for the player.
-        Crate.View = View;
-        Crate.Projection = ProjectionPerspective;
-        if (MenuState == UIState.Cosmetics)
-            Crate?.Render();
 
+        if (!Active) return;
         //RebirthLogo.Rotation = new(MathF.Sin(TankGame.RunTime / 100) * MathHelper.PiOver4, 0, 0);
         RebirthLogo.Scale = 0.8f.ToResolutionF();
         RebirthLogo.View = View;
         RebirthLogo.Projection = ProjectionOrtho;
         if (MenuState == UIState.PrimaryMenu || MenuState == UIState.PlayList)
             RebirthLogo.Render();
-        //Crate.Rotation.Y = MathHelper.Pi;
-        //Crate.Rotation.X = MathHelper.PiOver2;
-
-        if (_openingCrate)
-            Crate.LidPosition.Z -= 1f;
-        else
-            Crate.LidPosition = Crate.ChestPosition;
     }
     private static void UpdateLogo() {
         //MotdRot = MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalMilliseconds / _rotationBpm) / _rotDelta + _spinOffset;

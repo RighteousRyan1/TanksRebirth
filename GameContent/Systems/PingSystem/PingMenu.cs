@@ -104,7 +104,7 @@ public static class PingMenu {
             // 20 is y diff between text and texture
             var h = (int)(texture.Height * scale);
             if (h > rect.Height) rect.Height = h + 20;
-            int w = (int)(texture.Width * scale) + (int)padding;
+            int w = (int)((texture.Width * scale) + (int)padding).ToResolutionX();
             rect.Width += w;
             rect.X -= w;
         }
@@ -122,7 +122,7 @@ public static class PingMenu {
                 0.75f * scale.ToResolution(), 0f, Anchor.TopCenter);
             TankGame.SpriteRenderer.Draw(PingIdToTexture[i], pos + new Vector2(0, 20), null, Color.White * _uiOpacity, 0f, 
                 Anchor.TopCenter.GetAnchor(PingIdToTexture[i].Size()), scale.ToResolution(), default, 0f);
-            offX -= PingIdToTexture[i].Width * scale + padding;
+            offX -= (PingIdToTexture[i].Width * scale + padding).ToResolutionX();
         }
     }
     // i dont think a radial would be optimal. Scroll wheel would even be better

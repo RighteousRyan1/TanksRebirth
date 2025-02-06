@@ -165,6 +165,9 @@ public static class RoomSceneRenderer {
             "Windows_Glass" => "glass",
             "Windows_Sides" => "window_sides",
             "Shelf" => "wood_dark",
+
+            // book stuff
+            // 'color_' indicates it will use a colored pixel.
             _ => "metal"
         };
     }
