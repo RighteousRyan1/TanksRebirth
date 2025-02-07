@@ -17,6 +17,7 @@ using TanksRebirth.Internals.Common.Framework.Animation;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
+using TanksRebirth.GameContent.UI.MainMenu;
 
 namespace TanksRebirth.GameContent.Systems;
 public static class IntermissionHandler {
@@ -254,7 +255,7 @@ public static class IntermissionHandler {
     public static void Update() {
         if (TankFunctionWait > 0)
             TankFunctionWait -= TankGame.DeltaTime;
-        if (TankFunctionWait <= 0 && _oldWait > 0 && !MainMenu.Active) {
+        if (TankFunctionWait <= 0 && _oldWait > 0 && !MainMenuUI.Active) {
             // FIXME: maybe causes issues since the mission is 1 tick from starting?
             // TODO: move this to the animator?
             if (!CampaignGlobals.InMission) {
@@ -265,7 +266,7 @@ public static class IntermissionHandler {
         }
         DebugManager.UpdateDebug();
 
-        if (MainMenu.Active) {
+        if (MainMenuUI.Active) {
             PlayerTank.KillCount = 0;
             // don't know if this fucks with the stack or not. to be determined.
             PlayerTank.PlayerStatistics = default;
@@ -309,7 +310,7 @@ public static class IntermissionHandler {
     }
 
     public static void RenderCountdownGraphics() {
-        if (!MainMenu.Active && !TankGame.OverheadView && !LevelEditor.Active/* && TankFunctionWait > 0*/) {
+        if (!MainMenuUI.Active && !TankGame.OverheadView && !LevelEditor.Active/* && TankFunctionWait > 0*/) {
             DrawUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFontLarge, PrepareDisplay, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 3), 
                 IntermissionSystem.BackgroundColor, IntermissionSystem.StripColor, CountdownAnimator.CurrentScale.ToResolution(), 0f, Anchor.Center, 3);
         }

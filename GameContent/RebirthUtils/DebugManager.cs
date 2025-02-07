@@ -19,6 +19,7 @@ using System;
 using TanksRebirth.Internals.Common.Framework;
 using TanksRebirth.IO;
 using TanksRebirth.Achievements;
+using TanksRebirth.GameContent.UI.MainMenu;
 
 namespace TanksRebirth.GameContent.RebirthUtils;
 
@@ -224,7 +225,7 @@ public static class DebugManager {
         };
     }
     public static void UpdateDebug() {
-        if (!MainMenu.Active) {
+        if (!MainMenuUI.Active) {
             ClearTracks.IsVisible = DebuggingEnabled && DebugLevel == 0;
             ClearChecks.IsVisible = DebuggingEnabled && DebugLevel == 0;
             SetupMissionAgain.IsVisible = DebuggingEnabled && DebugLevel == 0;
@@ -247,7 +248,7 @@ public static class DebugManager {
             DebugLevel++;
         if (InputUtils.KeyJustPressed(Keys.F5))
             DebugLevel--;
-        if (!MainMenu.Active) {
+        if (!MainMenuUI.Active) {
             if (InputUtils.KeyJustPressed(Keys.Z))
                 blockType--;
             if (InputUtils.KeyJustPressed(Keys.X))
@@ -312,7 +313,7 @@ public static class DebugManager {
         DrawDebugString(SpriteRenderer, $"Tank Kill Counts:", new(8, WindowUtils.WindowHeight * 0.05f), 2);
 
         for (int i = 0; i < PlayerTank.TankKills.Count; i++) {
-            var tier = PlayerTank.TankKills.ElementAt(i).Key;
+            var tier = TankID.Collection.GetKey(PlayerTank.TankKills.ElementAt(i).Key);
             var count = PlayerTank.TankKills.ElementAt(i).Value;
 
             DrawDebugString(SpriteRenderer, $"{tier}: {count}", new(8, WindowUtils.WindowHeight * 0.05f + (14f * (i + 1))), 2);

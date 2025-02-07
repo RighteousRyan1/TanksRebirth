@@ -2,10 +2,10 @@
 using Microsoft.Xna.Framework;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Systems;
-using TanksRebirth.GameContent.UI;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Internals;
 using TanksRebirth.Net;
+using TanksRebirth.GameContent.UI.MainMenu;
 
 namespace TanksRebirth.GameContent;
 
@@ -44,7 +44,7 @@ public class GameShaders
 
         GaussianBlurShader.Parameters["oResolution"].SetValue(Vector2.One);
         GaussianBlurShader.Parameters["oBlurFactor"].SetValue(BlurFactor);
-        GaussianBlurShader.Parameters["oEnabledBlur"].SetValue(MainMenu.Active);
+        GaussianBlurShader.Parameters["oEnabledBlur"].SetValue(MainMenuUI.Active);
 
         /*if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Up))
             val += 0.01f;
@@ -58,9 +58,9 @@ public class GameShaders
 
         if (Difficulties.Types["LanternMode"]) {
             var index = NetPlay.GetMyClientId(); //Array.FindIndex(GameHandler.AllPlayerTanks, x => x is not null && !x.Dead);
-            var pos = index > -1 && !MainMenu.Active ? MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(GameHandler.AllPlayerTanks[index].Position.X, 11, GameHandler.AllPlayerTanks[index].Position.Y), TankGame.GameView, TankGame.GameProjection).ToCartesianCoordinates() : new Vector2(-1);
+            var pos = index > -1 && !MainMenuUI.Active ? MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(GameHandler.AllPlayerTanks[index].Position.X, 11, GameHandler.AllPlayerTanks[index].Position.Y), TankGame.GameView, TankGame.GameProjection).ToCartesianCoordinates() : new Vector2(-1);
             // var val = (float)TankGame.LastGameTime.TotalGameTime.TotalSeconds;
-            LanternShader.Parameters["oPower"]?.SetValue(MainMenu.Active ? 100f : GameHandler.GameRand.NextFloat(0.195f, 0.20f));
+            LanternShader.Parameters["oPower"]?.SetValue(MainMenuUI.Active ? 100f : GameHandler.GameRand.NextFloat(0.195f, 0.20f));
             LanternShader.Parameters["oPosition"]?.SetValue(pos/*MouseUtils.MousePosition.ToCartesianCoordinates()*/);
         }
     }

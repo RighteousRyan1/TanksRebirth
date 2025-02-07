@@ -5,6 +5,7 @@ using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.UI;
+using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Net;
 
 namespace TanksRebirth;
@@ -53,28 +54,28 @@ public static class DiscordRichPresence {
                 }
             }
             SetLargeAsset("tanks_physical_logo", $"v{TankGame.Instance.GameVersion}");
-            if (MainMenu.Active) {
-                switch (MainMenu.MenuState) {
-                    case MainMenu.UIState.PrimaryMenu:
-                    case MainMenu.UIState.PlayList:
+            if (MainMenuUI.Active) {
+                switch (MainMenuUI.MenuState) {
+                    case MainMenuUI.UIState.PrimaryMenu:
+                    case MainMenuUI.UIState.PlayList:
                         SetDetails("Browsing the main menu");
                         break;
-                    case MainMenu.UIState.StatsMenu:
+                    case MainMenuUI.UIState.StatsMenu:
                         SetDetails("Looking at their all-time stats");
                         break;
-                    case MainMenu.UIState.Settings:
+                    case MainMenuUI.UIState.Settings:
                         SetDetails("Making things juuuust right");
                         break;
-                    case MainMenu.UIState.Difficulties:
+                    case MainMenuUI.UIState.Difficulties:
                         var count = Difficulties.Types.Count(diff => diff.Value);
 
 
                         SetDetails($"Challenging themselves with {count} {(count == 1 ? "difficulty" : "difficulties")}");
                         break;
-                    case MainMenu.UIState.Cosmetics:
+                    case MainMenuUI.UIState.Cosmetics:
                         SetDetails("Testing their luck");
                         break;
-                    case MainMenu.UIState.Mulitplayer:
+                    case MainMenuUI.UIState.Mulitplayer:
                         if (Client.IsConnected()) {
                             var name = NetPlay.CurrentServer is not null ? NetPlay.CurrentServer.Name : "Loading...";
                             if (Client.IsHost())
@@ -85,9 +86,9 @@ public static class DiscordRichPresence {
                         else
                             SetDetails("Creating a multiplayer server");
                         break;
-                    case MainMenu.UIState.Campaigns:
+                    case MainMenuUI.UIState.Campaigns:
                         // subtract one because "Freeplay" counts as a campaign, even though it really isn't
-                        SetDetails($"Choosing one of their {MainMenu.campaignNames.Count - 1} campaigns to play");
+                        SetDetails($"Choosing one of their {MainMenuUI.campaignNames.Count - 1} campaigns to play");
                         break;
                     default:
                         SetDetails($"Browsing the main menu");

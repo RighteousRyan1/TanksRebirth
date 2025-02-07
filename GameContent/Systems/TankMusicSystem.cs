@@ -11,10 +11,10 @@ using TanksRebirth.Internals.Common.Framework.Audio;
 using MeltySynth;
 using TanksRebirth.GameContent.ID;
 using System.Collections.Generic;
-using TanksRebirth.GameContent.UI;
 using Microsoft.Xna.Framework.Graphics;
 using TanksRebirth.Internals;
 using TanksRebirth.Graphics;
+using TanksRebirth.GameContent.UI.MainMenu;
 
 namespace TanksRebirth.GameContent.Systems;
 
@@ -129,7 +129,7 @@ public static class TankMusicSystem
         foreach (var song in Audio.ToList())
             song.Value?.SetVolume(0f);
 
-        if (MainMenu.Active && AIManager.CountAll() == 0 || TierHighest == TankID.None) {
+        if (MainMenuUI.Active && AIManager.CountAll() == 0 || TierHighest == TankID.None) {
             return;
         }
 

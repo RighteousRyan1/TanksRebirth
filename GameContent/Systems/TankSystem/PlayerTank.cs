@@ -21,6 +21,7 @@ using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
+using TanksRebirth.GameContent.UI.MainMenu;
 
 namespace TanksRebirth.GameContent;
 
@@ -215,7 +216,7 @@ public class PlayerTank : Tank
 
         if (IsIngame) {
             if (NetPlay.IsClientMatched(PlayerId) && !IntermissionSystem.IsAwaitingNewMission) {
-                if (!Difficulties.Types["POV"] || LevelEditor.Active || MainMenu.Active) {
+                if (!Difficulties.Types["POV"] || LevelEditor.Active || MainMenuUI.Active) {
                     Vector3 mouseWorldPos = MatrixUtils.GetWorldPosition(MouseUtils.MousePosition, -11f);
                     if (!LevelEditor.Active)
                         TurretRotation = -(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position).ToRotation() + MathHelper.PiOver2;

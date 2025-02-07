@@ -7,13 +7,13 @@ using TanksRebirth.Internals.Common;
 using System;
 using TanksRebirth.Internals.UI;
 using TanksRebirth.Internals.Common.Framework.Input;
-using FontStashSharp;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Net;
-using TanksRebirth.GameContent.Globals;
+using TanksRebirth.GameContent.UI.MainMenu;
 
 namespace TanksRebirth.GameContent.UI;
 
+// holy fucking shit. this class is beyond horrid. organize ts
 public static class GameUI
 {
     public static bool InOptions { get; set; }
@@ -99,13 +99,13 @@ public static class GameUI
             ControlsButton.IsVisible = true;
             BackButton.IsVisible = true;
 
-            MainMenu.MenuState = MainMenu.UIState.Settings;
+            MainMenuUI.MenuState = MainMenuUI.UIState.Settings;
 
             BackButton.Size.Y = 150;
 
-            if (MainMenu.Active)
+            if (MainMenuUI.Active)
             {
-                MainMenu.PlayButton.IsVisible = false;
+                MainMenuUI.PlayButton.IsVisible = false;
             }
         };
 
@@ -172,7 +172,7 @@ public static class GameUI
         BackButton.SetDimensions(() => new Vector2(700, 850).ToResolution(), () => new Vector2(500, 150).ToResolution());
         BackButton.OnLeftClick = (uiElement) => HandleBackButton();
 
-        // MainMenu.Initialize();
+        // MainMenuUI.Initialize();
 
         GraphicsUI.Initialize();
         ControlsUI.Initialize();
@@ -181,7 +181,7 @@ public static class GameUI
     }
 
     public static void QuitOut(bool netSent = false) {
-        if (!MainMenu.Active) {
+        if (!MainMenuUI.Active) {
             // if a non-host client tries quitting, deny them
             if (!netSent && Client.IsConnected() && !Client.IsHost()) {
                 ChatSystem.SendMessage("Only the host can quit the campaign!", Color.Red);
@@ -190,10 +190,10 @@ public static class GameUI
             }
             if (!netSent)
                 Client.SendQuit();
-            foreach (var elem in MainMenu.campaignNames)
+            foreach (var elem in MainMenuUI.campaignNames)
                 elem?.Remove();
-            MainMenu.campaignNames.Clear();
-            MainMenu.Open();
+            MainMenuUI.campaignNames.Clear();
+            MainMenuUI.Open();
             if (LevelEditor.Active) {
                 LevelEditor.Close(true);
                 LevelEditor.Editing = false;
@@ -215,7 +215,7 @@ public static class GameUI
                 HandleBackButton();
                 return;
             }
-            else if (!MainMenu.Active)
+            else if (!MainMenuUI.Active)
             {
                 Paused = !Paused;
                 if (Paused)
@@ -274,18 +274,18 @@ public static class GameUI
     {
         if (!_initialized)
             return;
-        if (MainMenu.MenuState == MainMenu.UIState.Cosmetics)
-            MainMenu.MenuState = MainMenu.UIState.PlayList;
-        if (MainMenu.MenuState == MainMenu.UIState.StatsMenu)
-            MainMenu.MenuState = MainMenu.UIState.PrimaryMenu;
+        if (MainMenuUI.MenuState == MainMenuUI.UIState.Cosmetics)
+            MainMenuUI.MenuState = MainMenuUI.UIState.PlayList;
+        if (MainMenuUI.MenuState == MainMenuUI.UIState.StatsMenu)
+            MainMenuUI.MenuState = MainMenuUI.UIState.PrimaryMenu;
 
         // We are on the main menu and in the settings menu.
-        if (MainMenu.MenuState == MainMenu.UIState.Settings && MainMenu.Active && VolumeButton.IsVisible) {
+        if (MainMenuUI.MenuState == MainMenuUI.UIState.Settings && MainMenuUI.Active && VolumeButton.IsVisible) {
             // Set to main menu, we are going back to it after all.
-            MainMenu.MenuState = MainMenu.UIState.PrimaryMenu;
+            MainMenuUI.MenuState = MainMenuUI.UIState.PrimaryMenu;
             
             // Hide Options buttons and load MMenu buttons.
-            MainMenu.PlayButton.IsVisible = true;
+            MainMenuUI.PlayButton.IsVisible = true;
             OptionsButton.IsVisible = true;
             QuitButton.IsVisible = true;
             
@@ -298,7 +298,7 @@ public static class GameUI
         }
         
 
-        if (VolumeButton.IsVisible && !MainMenu.Active)
+        if (VolumeButton.IsVisible && !MainMenuUI.Active)
         {
             ResumeButton.IsVisible = true;
             OptionsButton.IsVisible = true;
@@ -348,27 +348,27 @@ public static class GameUI
         }
         else
         {
-            if (MainMenu.Active)
+            if (MainMenuUI.Active)
             {
-                if (MainMenu.PlayButton.IsVisible)
+                if (MainMenuUI.PlayButton.IsVisible)
                     return;
-                if (MainMenu.campaignNames.Count > 0)
+                if (MainMenuUI.campaignNames.Count > 0)
                 {
-                    foreach (var elem in MainMenu.campaignNames)
+                    foreach (var elem in MainMenuUI.campaignNames)
                         elem.Remove();
-                    MainMenu.MenuState = MainMenu.UIState.PlayList;
+                    MainMenuUI.MenuState = MainMenuUI.UIState.PlayList;
 
-                    MainMenu.campaignNames.Clear();
+                    MainMenuUI.campaignNames.Clear();
                 }
-                else if (MainMenu.PlayButton_SinglePlayer.IsVisible)
+                else if (MainMenuUI.PlayButton_SinglePlayer.IsVisible)
                 {
-                    MainMenu.PlayButton.IsVisible = true;
+                    MainMenuUI.PlayButton.IsVisible = true;
                     OptionsButton.IsVisible = true;
                     QuitButton.IsVisible = true;
 
                     BackButton.IsVisible = false;
 
-                    MainMenu.MenuState = MainMenu.UIState.PrimaryMenu;
+                    MainMenuUI.MenuState = MainMenuUI.UIState.PrimaryMenu;
                 }
 
                 else if (GraphicsButton.IsVisible)
@@ -382,15 +382,15 @@ public static class GameUI
                     GraphicsUI.BatchVisible = false;
                     VolumeUI.BatchVisible = false;
 
-                    MainMenu.MenuState = MainMenu.UIState.PrimaryMenu;    
+                    MainMenuUI.MenuState = MainMenuUI.UIState.PrimaryMenu;    
                 }
-                else if (MainMenu.ConnectToServerButton.IsVisible || MainMenu.DisconnectButton.IsVisible)
+                else if (MainMenuUI.ConnectToServerButton.IsVisible || MainMenuUI.DisconnectButton.IsVisible)
                 {
-                    MainMenu.MenuState = MainMenu.UIState.PlayList;
+                    MainMenuUI.MenuState = MainMenuUI.UIState.PlayList;
                 }
-                if (MainMenu.TanksAreCalculators.IsVisible)
+                if (MainMenuUI.TanksAreCalculators.IsVisible)
                 {
-                    MainMenu.MenuState = MainMenu.UIState.PlayList;
+                    MainMenuUI.MenuState = MainMenuUI.UIState.PlayList;
                 }
             }
             else
@@ -444,7 +444,7 @@ public static class GameUI
         if (VolumeUI.AmbientVolume.Value <= 0.01f)
             VolumeUI.AmbientVolume.Value = 0f;
 
-        if (!MainMenu.Active)
+        if (!MainMenuUI.Active)
             TankMusicSystem.UpdateVolume();
 
         if (_delay > 0 && !InputUtils.MouseLeft)

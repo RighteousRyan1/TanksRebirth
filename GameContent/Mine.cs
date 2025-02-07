@@ -8,7 +8,7 @@ using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.AI;
-using TanksRebirth.GameContent.UI;
+using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework;
@@ -145,7 +145,7 @@ public sealed class Mine : IAITankDanger
     }
 
     internal void Update() {
-        if (!GameScene.ShouldRenderAll || (!CampaignGlobals.InMission && !MainMenu.Active))
+        if (!GameScene.ShouldRenderAll || (!CampaignGlobals.InMission && !MainMenuUI.Active))
             return;
 
         World = Matrix.CreateScale(0.7f) * Matrix.CreateTranslation(Position3D);

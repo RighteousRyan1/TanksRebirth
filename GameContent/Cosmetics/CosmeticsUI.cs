@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using TanksRebirth.GameContent.UI;
+using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.GameContent.Cosmetics;
@@ -13,7 +13,7 @@ namespace TanksRebirth.GameContent.Cosmetics;
 
 // ikik, not in the UI namespace but whatever
 public static class CosmeticsUI {
-    public static bool IsActive => MainMenu.MenuState == MainMenu.UIState.Cosmetics;
+    public static bool IsActive => MainMenuUI.MenuState == MainMenuUI.UIState.Cosmetics;
 
     private static float _interp;
     private static bool _switch;

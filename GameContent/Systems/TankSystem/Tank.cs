@@ -13,13 +13,13 @@ using System.Collections.Generic;
 using System.IO;
 using TanksRebirth.GameContent.Cosmetics;
 using TanksRebirth.Graphics;
-using TanksRebirth.GameContent.UI;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.Net;
 using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.RebirthUtils;
 using static TanksRebirth.GameContent.RebirthUtils.DebugManager;
+using TanksRebirth.GameContent.UI.MainMenu;
 
 namespace TanksRebirth.GameContent;
 
@@ -244,7 +244,7 @@ public abstract class Tank {
         _boneTransforms = new Matrix[Model.Bones.Count];
     }
     public void AddProp2D(Prop2D prop, Func<bool>? destroyOn = null) {
-        if (!MainMenu.Active && IsIngame) {
+        if (!MainMenuUI.Active && IsIngame) {
             if (Props.Contains(prop))
                 return;
             Props.Add(prop);
@@ -450,7 +450,7 @@ public abstract class Tank {
         IsTurning = !(TankRotation > TargetTankRotation - Properties.MaximalTurn/* - MathHelper.ToRadians(5)*/ &&
                       TankRotation < TargetTankRotation + Properties.MaximalTurn/* + MathHelper.ToRadians(5)*/);
 
-        if (!MainMenu.Active && (!CampaignGlobals.InMission || IntermissionSystem.IsAwaitingNewMission))
+        if (!MainMenuUI.Active && (!CampaignGlobals.InMission || IntermissionSystem.IsAwaitingNewMission))
             Velocity = Vector2.Zero;
         if (OwnedMineCount < 0)
             OwnedMineCount = 0;
@@ -746,7 +746,7 @@ public abstract class Tank {
 
     /// <summary>Shoot a <see cref="Shell"/> from this <see cref="Tank"/>.</summary>
     public virtual void Shoot(bool fxOnly) {
-        if ((!MainMenu.Active && !CampaignGlobals.InMission) || !Properties.HasTurret)
+        if ((!MainMenuUI.Active && !CampaignGlobals.InMission) || !Properties.HasTurret)
             return;
 
         if (CurShootCooldown > 0 || OwnedShellCount >= Properties.ShellLimit / Properties.ShellShootCount)

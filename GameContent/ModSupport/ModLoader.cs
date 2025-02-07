@@ -12,10 +12,12 @@ using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems;
-using TanksRebirth.GameContent.UI;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework.Collections;
 using TanksRebirth.Localization;
+using TanksRebirth.Internals.Common.Utilities;
+using FontStashSharp;
+using TanksRebirth.GameContent.UI.MainMenu;
 
 namespace TanksRebirth.GameContent.ModSupport;
 
@@ -146,7 +148,7 @@ public static class ModLoader
         }
     }
     internal static void UnloadAll() {
-        if (MainMenu.Active) {
+        if (MainMenuUI.Active) {
             SceneManager.CleanupEntities();
             SceneManager.CleanupScene();
         }
@@ -434,5 +436,30 @@ public static class ModLoader
         var str = contents[line];
         var property = str.Split('>')[1].Split('<')[0];
         return property;
+    }
+
+    // rendering
+
+    public static void DrawModLoading() {
+        var alpha = 0.7f;
+        var width = WindowUtils.WindowWidth / 3;
+        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2), null, Color.SkyBlue * alpha, 0f, GameUtils.GetAnchor(Anchor.Center, TextureGlobals.Pixels[Color.White].Size()), new Vector2(width, 200.ToResolutionY()), default, 0f);
+
+        var barDims = new Vector2(width - 120, 20).ToResolution();
+
+        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2), null, Color.Goldenrod * alpha, 0f, GameUtils.GetAnchor(Anchor.Center, TextureGlobals.Pixels[Color.White].Size()),
+            barDims, default, 0f);
+        var ratio = (float)ModLoader.ActionsComplete / ModLoader.ActionsNeeded;
+        if (ModLoader.ActionsNeeded == 0)
+            ratio = 0;
+        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2), null, Color.Yellow * alpha, 0f, GameUtils.GetAnchor(Anchor.Center, TextureGlobals.Pixels[Color.White].Size()),
+            barDims * new Vector2(ratio, 1f).ToResolution(), default, 0f);
+
+        var txt = $"{ModLoader.Status} {ModLoader.ModBeingLoaded}...";
+        TankGame.SpriteRenderer.DrawString(TankGame.TextFont, txt, new(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 75.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(Anchor.Center, TankGame.TextFont.MeasureString(txt)));
+
+        txt = ModLoader.Error == string.Empty ? $"Loading your mods... {ratio * 100:0}% ({ModLoader.ActionsComplete} / {ModLoader.ActionsNeeded})" :
+        $"Error Loading '{ModLoader.ModBeingLoaded}' ({ModLoader.Error})";
+        TankGame.SpriteRenderer.DrawString(TankGame.TextFont, txt, new(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 150.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(Anchor.Center, TankGame.TextFont.MeasureString(txt)));
     }
 }

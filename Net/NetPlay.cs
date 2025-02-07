@@ -10,6 +10,7 @@ using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.PingSystem;
 using TanksRebirth.GameContent.UI;
+using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Utilities;
 
@@ -106,7 +107,7 @@ public class NetPlay {
 
                 ChatSystem.SendMessage($"Welcome {Server.ConnectedClients[clientId].Name}!", Color.Lime, netSend: true);
 
-                MainMenu.ShouldServerButtonsBeVisible = false;
+                MainMenuUI.ShouldServerButtonsBeVisible = false;
                 break;
             case PacketID.Disconnect:
                 var cId = reader.GetInt();
@@ -216,7 +217,7 @@ public class NetPlay {
 
                 CampaignGlobals.LoadedCampaign.LoadMission(checkpoint); // maybe change to checkpoints eventually.
 
-                MainMenu.TransitionToGame();
+                MainMenuUI.TransitionToGame();
 
                 break;
             case PacketID.QuitLevel:
@@ -308,10 +309,10 @@ public class NetPlay {
                 var missionId = reader.GetInt();        // Obtain the mission id from the server itself. Fixes issues when loading missions.
 
                 // if this solution fails, simply change param 2 (wasConfirmed) to true
-                var success = MainMenu.PrepareGameplay(campName, false, true, missionId); // second param to false when doing a check
+                var success = MainMenuUI.PrepareGameplay(campName, false, true, missionId); // second param to false when doing a check
                 Client.SendCampaignStatus(campName, CurrentClient.Id, success); // if this player doesn't own said campaign, cancel the operation.
                 if (success) {
-                    MainMenu.PrepareGameplay(campName, true, true, missionId);
+                    MainMenuUI.PrepareGameplay(campName, true, true, missionId);
                 }
                 break;
             case PacketID.Cleanup:
@@ -323,9 +324,9 @@ public class NetPlay {
                     var senderId = reader.GetInt();
                     var successful = reader.GetBool();
                     if (successful) {
-                        MainMenu.plrsConfirmed++;
-                        if (MainMenu.plrsConfirmed == Server.CurrentClientCount - 1)
-                            MainMenu.PrepareGameplay(camName, true, false);
+                        MainMenuUI.plrsConfirmed++;
+                        if (MainMenuUI.plrsConfirmed == Server.CurrentClientCount - 1)
+                            MainMenuUI.PrepareGameplay(camName, true, false);
                         // lowkey praying this works.
                     }
                     //MainMenu.PrepareGameplay(camName, true, true);

@@ -5,7 +5,7 @@ using LiteNetLib.Utils;
 using Microsoft.Xna.Framework;
 using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.Systems;
-using TanksRebirth.GameContent.UI;
+using TanksRebirth.GameContent.UI.MainMenu;
 
 namespace TanksRebirth.Net;
 /// <summary>Contains many ways to send information across the nets. Used for vanilla packet handling.</summary>
@@ -62,7 +62,7 @@ public class Client {
         NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
     public static void SendQuit() {
-        if (MainMenu.Active || !IsConnected() || !IsHost())
+        if (MainMenuUI.Active || !IsConnected() || !IsHost())
             return;
 
         NetDataWriter message = new();
@@ -71,7 +71,7 @@ public class Client {
         NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
     public static void SendLives() {
-        if (MainMenu.Active || !IsConnected())
+        if (MainMenuUI.Active || !IsConnected())
             return;
 
         NetDataWriter message = new();
@@ -83,7 +83,7 @@ public class Client {
         NetClient.Send(message, DeliveryMethod.Unreliable);
     }
     public static void SyncCleanup() {
-        if (MainMenu.Active || !IsConnected())
+        if (MainMenuUI.Active || !IsConnected())
             return;
 
         NetDataWriter message = new();
@@ -105,7 +105,7 @@ public class Client {
         NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
     public static void RequestStartGame(int checkpoint, bool shouldProgressMissions) {
-        if (MainMenu.Active || !IsConnected())
+        if (MainMenuUI.Active || !IsConnected())
             return;
         NetDataWriter message = new();
         message.Put(PacketID.StartGame);
@@ -128,7 +128,7 @@ public class Client {
         NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
     public static void SyncPlayerTank(PlayerTank tank) {
-        if (MainMenu.Active || !IsConnected())
+        if (MainMenuUI.Active || !IsConnected())
             return;
 
         NetDataWriter message = new();
@@ -145,7 +145,7 @@ public class Client {
         NetClient.Send(message, DeliveryMethod.Unreliable);
     }
     public static void SyncAITank(AITank tank) {
-        if (MainMenu.Active || !IsConnected())
+        if (MainMenuUI.Active || !IsConnected())
             return;
 
         NetDataWriter message = new();
@@ -167,7 +167,7 @@ public class Client {
     /// </summary>
     /// <param name="tankId">The identified of the <see cref="Tank"/> that fired.</param>
     public static void SyncShellFire(Shell shell) {
-        if (MainMenu.Active || !IsConnected())
+        if (MainMenuUI.Active || !IsConnected())
             return;
 
         NetDataWriter message = new();
@@ -188,7 +188,7 @@ public class Client {
         NetClient.Send(message, DeliveryMethod.Sequenced);
     }
     public static void SyncDamage(int id/*, ITankHurtContext context*/) {
-        if (!IsConnected() || MainMenu.Active)
+        if (!IsConnected() || MainMenuUI.Active)
             return;
         NetDataWriter message = new();
         message.Put(PacketID.TankDamage);
@@ -201,7 +201,7 @@ public class Client {
         NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
     public static void SyncShellDestroy(Shell shell, Shell.DestructionContext cxt) {
-        if (!IsConnected() || MainMenu.Active)
+        if (!IsConnected() || MainMenuUI.Active)
             return;
         NetDataWriter message = new();
         message.Put(PacketID.ShellDestroy);
@@ -216,7 +216,7 @@ public class Client {
     }
     // maybe have owner stuff go here?
     public static void SyncMineDetonate(Mine mine) {
-        if (!IsConnected() || MainMenu.Active)
+        if (!IsConnected() || MainMenuUI.Active)
             return;
         NetDataWriter message = new();
         message.Put(PacketID.MineDetonate);
@@ -226,7 +226,7 @@ public class Client {
         NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
     public static void SyncMinePlace(Vector2 position, float detonateTime, int id) {
-        if (MainMenu.Active || !IsConnected())
+        if (MainMenuUI.Active || !IsConnected())
             return;
 
         NetDataWriter message = new();

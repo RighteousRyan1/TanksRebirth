@@ -8,6 +8,7 @@ using TanksRebirth.Enums;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.UI;
+using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework;
@@ -16,7 +17,7 @@ using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Internals.UI;
 using TanksRebirth.Net;
 
-namespace TanksRebirth.GameContent.RebirthUtils; 
+namespace TanksRebirth.GameContent.RebirthUtils;
 public static class SceneManager {
 
     public static Lighting.LightProfile GameLight = new() {
@@ -98,7 +99,7 @@ public static class SceneManager {
         }
     }
     private static void DoThunderStuff() {
-        if (IntermissionSystem.BlackAlpha > 0 || IntermissionSystem.Alpha >= 1f || MainMenu.Active || GameUI.Paused) {
+        if (IntermissionSystem.BlackAlpha > 0 || IntermissionSystem.Alpha >= 1f || MainMenuUI.Active || GameUI.Paused) {
             if (Thunder.SoftRain!.IsPlaying()) {
                 Thunder.SoftRain.Instance.Stop();
                 TankGame.ClearColor = Color.Black;

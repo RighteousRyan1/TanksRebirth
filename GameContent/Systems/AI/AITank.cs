@@ -24,6 +24,7 @@ using System.Threading.Tasks;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems.PingSystem;
 using TanksRebirth.Internals.Common.Framework.Collision;
+using TanksRebirth.GameContent.UI.MainMenu;
 
 namespace TanksRebirth.GameContent;
 public partial class AITank : Tank {
@@ -367,10 +368,10 @@ public partial class AITank : Tank {
                     TargetTankRotation = (MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - MouseUtils.MousePosition).ToRotation() + MathHelper.PiOver2;
         }
         // do ai only if host, and send ai across the interweb
-        if ((Client.IsHost() && Client.IsConnected()) || (!Client.IsConnected() && !Dead) || MainMenu.Active) {
+        if ((Client.IsHost() && Client.IsConnected()) || (!Client.IsConnected() && !Dead) || MainMenuUI.Active) {
             timeSinceLastAction++;
 
-            if (!MainMenu.Active)
+            if (!MainMenuUI.Active)
                 if (!CampaignGlobals.InMission || IntermissionSystem.IsAwaitingNewMission || LevelEditor.Active)
                     Velocity = Vector2.Zero;
             DoAi();
@@ -389,7 +390,7 @@ public partial class AITank : Tank {
     public override void Destroy(ITankHurtContext context) {
         // might not account for level testing via the level editor?
         OnDestroy?.Invoke();
-        if (!MainMenu.Active && !LevelEditor.Active && !Client.IsConnected()) // goofy ahh...
+        if (!MainMenuUI.Active && !LevelEditor.Active && !Client.IsConnected()) // goofy ahh...
         {
             PlayerTank.KillCount++;
 
@@ -793,7 +794,7 @@ public partial class AITank : Tank {
     public void DoAi() {
         TanksNear.Clear();
         BlocksNear.Clear();
-        if (!MainMenu.Active && !CampaignGlobals.InMission)
+        if (!MainMenuUI.Active && !CampaignGlobals.InMission)
             return;
 
         TurretRotationMultiplier = 1f;
@@ -1185,7 +1186,7 @@ public partial class AITank : Tank {
             return;
         TankGame.Instance.GraphicsDevice.BlendState = BlendState.AlphaBlend;
         DrawExtras();
-        if ((MainMenu.Active && Properties.Invisible) || (Properties.Invisible && CampaignGlobals.InMission))
+        if ((MainMenuUI.Active && Properties.Invisible) || (Properties.Invisible && CampaignGlobals.InMission))
             return;
 
         for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
@@ -1278,7 +1279,7 @@ public partial class AITank : Tank {
             //DebugUtils.DrawDebugString(TankGame.SpriteRenderer, "end", MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(MathUtils.DirectionOf(travelPos, Position).X, 0, MathUtils.DirectionOf(travelPos, Position).Y), View, Projection), 6, centered: true);
         }
 
-        if (Properties.Invisible && (CampaignGlobals.InMission || MainMenu.Active))
+        if (Properties.Invisible && (CampaignGlobals.InMission || MainMenuUI.Active))
             return;
 
         Properties.Armor?.Render();

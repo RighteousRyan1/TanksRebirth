@@ -13,6 +13,7 @@ using System;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using System.Runtime.Intrinsics.X86;
+using TanksRebirth.GameContent.UI.MainMenu;
 
 namespace TanksRebirth.GameContent.Systems;
 #pragma warning disable
@@ -82,7 +83,7 @@ public static class IntermissionSystem {
     private static void DoMidAnimationActions(KeyFrame frame) {
         var frameId = IntermissionAnimator.KeyFrames.FindIndex(f => f.Equals(frame));
 
-        if (MainMenu.Active) {
+        if (MainMenuUI.Active) {
             if (frameId > 0) {
                 IntermissionAnimator?.Stop(); // the player dipped during the intermission lol
                 return;
@@ -97,7 +98,7 @@ public static class IntermissionSystem {
         }
         else if (frameId == 1) {
             if (Difficulties.Types["RandomizedTanks"]) {
-                if (CampaignGlobals.LoadedCampaign.CurrentMissionId == MainMenu.MissionCheckpoint && IntermissionHandler.LastResult != Enums.MissionEndContext.Lose) {
+                if (CampaignGlobals.LoadedCampaign.CurrentMissionId == MainMenuUI.MissionCheckpoint && IntermissionHandler.LastResult != Enums.MissionEndContext.Lose) {
                     CampaignGlobals.LoadedCampaign.CachedMissions[CampaignGlobals.LoadedCampaign.CurrentMissionId].Tanks
                         = Difficulties.HijackTanks(CampaignGlobals.LoadedCampaign.CachedMissions[CampaignGlobals.LoadedCampaign.CurrentMissionId].Tanks);
                 }
@@ -151,7 +152,7 @@ public static class IntermissionSystem {
                 BlackAlpha -= 1f / 45f * TankGame.DeltaTime;
         }
         if (BlackAlpha >= 1 && _oldBlack < 1) {
-            MainMenu.Leave();
+            MainMenuUI.Leave();
 
             if (CampaignGlobals.ShouldMissionsProgress) {
                 // todo: should this happen?
@@ -171,7 +172,7 @@ public static class IntermissionSystem {
             _offset.Y -= 1f * TankGame.DeltaTime;
             _offset.X += 1f * TankGame.DeltaTime;
         }
-        if (MainMenu.Active && BlackAlpha <= 0) {
+        if (MainMenuUI.Active && BlackAlpha <= 0) {
             Alpha = 0f;
             CurrentWaitTime = 0;
         }

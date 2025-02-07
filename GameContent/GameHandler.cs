@@ -30,6 +30,7 @@ using Microsoft.Xna.Framework.Audio;
 using TanksRebirth.GameContent.RebirthUtils;
 using System.Text;
 using TanksRebirth.GameContent.Cosmetics;
+using TanksRebirth.GameContent.UI.MainMenu;
 
 namespace TanksRebirth.GameContent;
 
@@ -103,7 +104,7 @@ public class GameHandler {
         if (InputUtils.KeyJustPressed(Keys.OemTilde))
             doTestWithFont();
         // ChatSystem.CurTyping = SoundPlayer.GetLengthOfSound("Content/Assets/sounds/tnk_shoot_ricochet_rocket_loop.ogg").ToString();
-        if (MainMenu.Active)
+        if (MainMenuUI.Active)
         CosmeticsUI.Update();
         RoomScene.Update();
         if (DebugManager.DebuggingEnabled) {
@@ -133,7 +134,7 @@ public class GameHandler {
                 var expl = new Explosion(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ(), 5f);
             }
         }
-        if (MainMenu.Active)
+        if (MainMenuUI.Active)
             PlayerTank.SetLives(999);
         // technically, level 0 in code is level 1, so we want to use that number (1) if the user is level 0.
         ExperienceBar.Value = TankGame.GameData.ExpLevel - MathF.Floor(TankGame.GameData.ExpLevel);
@@ -189,7 +190,7 @@ public class GameHandler {
         foreach (var expl in Explosion.Explosions)
             expl?.Update();
 
-        if (CampaignGlobals.ShouldMissionsProgress && !MainMenu.Active)
+        if (CampaignGlobals.ShouldMissionsProgress && !MainMenuUI.Active)
             IntermissionHandler.HandleMissionChanging();
 
         foreach (var cube in Block.AllBlocks)
@@ -201,10 +202,10 @@ public class GameHandler {
 
         Particles.UpdateParticles();
 
-        if (MainMenu.Active)
-            MainMenu.Update();
+        if (MainMenuUI.Active)
+            MainMenuUI.Update();
 
-        if ((TankGame.OverheadView || MainMenu.Active) && !LevelEditor.Active) {
+        if ((TankGame.OverheadView || MainMenuUI.Active) && !LevelEditor.Active) {
             CampaignGlobals.InMission = false;
             IntermissionHandler.TankFunctionWait = 600;
         }
@@ -222,7 +223,7 @@ public class GameHandler {
     internal static void RenderAll() {
         TankGame.Instance.GraphicsDevice.BlendState = BlendState.AlphaBlend;
 
-        if (!MainMenu.Active && !LevelEditor.Editing)
+        if (!MainMenuUI.Active && !LevelEditor.Editing)
             ExperienceBar?.Render(TankGame.SpriteRenderer, new(WindowUtils.WindowWidth / 2, 50.ToResolutionY()), new Vector2(100, 20).ToResolution(), Anchor.Center, Color.Red, Color.Lime);
         // CHECK: move this back if necessary
         GameScene.RenderWorldModels();
@@ -299,14 +300,14 @@ public class GameHandler {
 
         // only draw if ingame + is multiplayer.
         if (CampaignGlobals.ShouldMissionsProgress 
-            && !MainMenu.Active
+            && !MainMenuUI.Active
             && Client.IsConnected()) {
             PingMenu.DrawPingHUD();
         }
 
         IntermissionHandler.RenderCountdownGraphics();
 
-        if (!MainMenu.Active && !LevelEditor.Active) {
+        if (!MainMenuUI.Active && !LevelEditor.Active) {
             if (IntermissionSystem.IsAwaitingNewMission) {
                 // uhhh... what was i doing here?
             }
@@ -324,7 +325,7 @@ public class GameHandler {
             DrawUtils.DrawShadowedString(TankGame.TextFontLarge, new Vector2(80.ToResolutionX(), WindowUtils.WindowHeight * 0.9f - 14f.ToResolutionY()), Vector2.One, $"{PlayerTank.KillCount}", new(119, 190, 238), new Vector2(0.675f).ToResolution(), 1f);
         }
         // TODO: put this code elsewhere... idk where rn.
-        var shouldSeeInfo = !MainMenu.Active && !LevelEditor.Active && !CampaignCompleteUI.IsViewingResults;
+        var shouldSeeInfo = !MainMenuUI.Active && !LevelEditor.Active && !CampaignCompleteUI.IsViewingResults;
         if (shouldSeeInfo) {
             var font = TankGame.TextFontLarge;
             var infoScale = 0.5f;

@@ -16,6 +16,7 @@ using TanksRebirth.Net;
 using Microsoft.Xna.Framework.Input;
 using TanksRebirth.Internals;
 using TanksRebirth.Graphics;
+using TanksRebirth.GameContent.UI.MainMenu;
 
 namespace TanksRebirth.GameContent.Systems.CommandsSystem;
 #pragma warning disable
@@ -77,7 +78,7 @@ public static class CommandGlobals {
                 TankGame.Settings.Language = parseLang;
 
                 // TODO: try to only initialize the localization lol (causes UI to appear when it shouldn't)
-                MainMenu.InitializeUIGraphics();
+                MainMenuUI.InitializeUI();
                 GameUI.Initialize();
                 VolumeUI.Initialize();
                 GraphicsUI.Initialize();
@@ -112,16 +113,16 @@ public static class CommandGlobals {
         // main menu
         [new CommandInput(name: "uselegacymenumusic", description: "Switch to and from the legacy menu music.")] = new CommandOutput(netSync: false, false, (args) => {
             if (bool.Parse(args[0])) {
-                MainMenu.Theme.Stop();
-                MainMenu.Theme = null;
-                MainMenu.Theme = new("Theme_Legacy", "Content/Assets/mainmenu/theme_legacy", 1f);
-                MainMenu.Theme.Play();
+                MainMenuUI.Theme.Stop();
+                MainMenuUI.Theme = null;
+                MainMenuUI.Theme = new("Theme_Legacy", "Content/Assets/mainmenu/theme_legacy", 1f);
+                MainMenuUI.Theme.Play();
                 return;
             }
-            MainMenu.Theme.Stop();
-            MainMenu.Theme = null;
-            MainMenu.Theme = MainMenu.GetAppropriateMusic();
-            MainMenu.Theme.Play();
+            MainMenuUI.Theme.Stop();
+            MainMenuUI.Theme = null;
+            MainMenuUI.Theme = MainMenuUI.GetAppropriateMusic();
+            MainMenuUI.Theme.Play();
         }),
         // client side
         [new CommandInput(name: "showtankteams", description: "Shows tank teams visually. Applies for each new tank.")] = new CommandOutput(netSync: true, false, (args) => {

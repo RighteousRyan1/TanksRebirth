@@ -22,6 +22,7 @@ using NativeFileDialogSharp;
 using Microsoft.Xna.Framework.Input;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
+using TanksRebirth.GameContent.UI.MainMenu;
 
 namespace TanksRebirth.GameContent.UI;
 
@@ -145,7 +146,7 @@ public static class CampaignCompleteUI
             IsViewingResults = false;
             if (!ResultsFanfare.IsStopped())
                 ResultsFanfare.Stop();
-            MainMenu.Open();
+            MainMenuUI.Open();
         });
         // changing bools in other threads = safe
         // - ryan

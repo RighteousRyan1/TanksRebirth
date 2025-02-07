@@ -43,6 +43,7 @@ using tainicom.Aether.Physics2D.Collision;
 using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.Internals.Common.Framework.Animation;
 using TanksRebirth.GameContent.Cosmetics;
+using TanksRebirth.GameContent.UI.MainMenu;
 
 namespace TanksRebirth;
 
@@ -210,7 +211,7 @@ public class TankGame : Game {
         GameHandler.Initialize();
         GameDir = Directory.GetCurrentDirectory();
         RebirthFreecam = new(GraphicsDevice);
-        RebirthFreecam.Position = MainMenu.MenuCameraManipulations[MainMenu.UIState.LoadingMods].Position;
+        RebirthFreecam.Position = MainMenuUI.MenuCameraManipulations[MainMenuUI.UIState.LoadingMods].Position;
         if (Debugger.IsAttached && SteamAPI.IsSteamRunning()) {
             ClientLog.Write("Initialising SteamWorks API...", LogType.Debug);
             SteamworksUtils.Initialize();
@@ -489,8 +490,8 @@ public class TankGame : Game {
         GameResources.EnsurePreloadedAssetsArePreloaded();
         GameHandler.SetupGraphics();
         GameUI.Initialize();
-        MainMenu.InitializeUIGraphics();
-        MainMenu.InitializeBasics();
+        MainMenuUI.InitializeUI();
+        MainMenuUI.InitializeBasics();
 
         // this is achievements stuff
         // TODO: fucking do it mate
@@ -506,18 +507,18 @@ public class TankGame : Game {
             View = GameView,
             Projection = GameProjection,
         };*/
-        MainMenu.MenuState = MainMenu.UIState.PrimaryMenu;
+        MainMenuUI.MenuState = MainMenuUI.UIState.PrimaryMenu;
 
-        MainMenu.Open();
+        MainMenuUI.Open();
 
         ModLoader.LoadMods();
 
         if (ModLoader.LoadingMods) {
-            MainMenu.MenuState = MainMenu.UIState.LoadingMods;
+            MainMenuUI.MenuState = MainMenuUI.UIState.LoadingMods;
             Task.Run(async () => {
                 while (ModLoader.LoadingMods)
                     await Task.Delay(50).ConfigureAwait(false);
-                MainMenu.MenuState = MainMenu.UIState.PrimaryMenu;
+                MainMenuUI.MenuState = MainMenuUI.UIState.PrimaryMenu;
             });
         }
 
@@ -567,8 +568,8 @@ public class TankGame : Game {
             if (Thunder.SoftRain.IsPaused())
                 Thunder.SoftRain.Instance.Resume();
             TankMusicSystem.ResumeAll();
-            if (MainMenu.Active)
-                MainMenu.Theme.Resume();
+            if (MainMenuUI.Active)
+                MainMenuUI.Theme.Resume();
             if (LevelEditor.Active)
                 LevelEditor.Theme.Resume();
         }
@@ -578,8 +579,8 @@ public class TankGame : Game {
             if (Thunder.SoftRain.IsPlaying())
                 Thunder.SoftRain.Instance.Pause();
             TankMusicSystem.PauseAll();
-            if (MainMenu.Active)
-                MainMenu.Theme.Pause();
+            if (MainMenuUI.Active)
+                MainMenuUI.Theme.Pause();
             if (LevelEditor.Active)
                 LevelEditor.Theme.Pause();
         }
@@ -650,7 +651,7 @@ public class TankGame : Game {
         catch (Exception e) when (!Debugger.IsAttached) {
             ReportError(e, false, false);
 
-            MainMenu.Theme.Volume = 0f;
+            MainMenuUI.Theme.Volume = 0f;
             TankMusicSystem.PauseAll();
 
             SoundPlayer.SoundError();
@@ -706,7 +707,7 @@ public class TankGame : Game {
                 Graphics.ApplyChanges();
             }
 
-            RebirthMouse.ShouldRender = !Difficulties.Types["POV"] || GameUI.Paused || MainMenu.Active || LevelEditor.Active;
+            RebirthMouse.ShouldRender = !Difficulties.Types["POV"] || GameUI.Paused || MainMenuUI.Active || LevelEditor.Active;
             if (UIElement.delay > 0)
                 UIElement.delay--;
         }
@@ -732,7 +733,7 @@ public class TankGame : Game {
             OnFocusLost?.Invoke(this, Window.Handle);
         if (!_wasActive && IsActive)
             OnFocusRegained?.Invoke(this, Window.Handle);
-        if (!MainMenu.Active && DebugManager.DebuggingEnabled)
+        if (!MainMenuUI.Active && DebugManager.DebuggingEnabled)
             if (InputUtils.KeyJustPressed(Keys.J))
                 OverheadView = !OverheadView;
 
@@ -741,7 +742,7 @@ public class TankGame : Game {
         // TODO: this is quite hellcode. reorganize.
         if (!IsCrashInfoVisible) {
             if (DebugManager.DebugLevel != DebugManager.Id.FreeCamTest && !DebugManager.persistFreecam) {
-                if (!MainMenu.Active) {
+                if (!MainMenuUI.Active) {
                     if (!Difficulties.Types["POV"] || LevelEditor.Active) {
                         if (transitionTimer > 0) {
                             transitionTimer--;
@@ -770,9 +771,9 @@ public class TankGame : Game {
                 }
                 else {
                     // main menu animation semantics
-                    if (MainMenu.CameraPositionAnimator.CurrentPosition3D != Vector3.Zero) {
-                        RebirthFreecam.Position = MainMenu.CameraPositionAnimator.CurrentPosition3D;
-                        RebirthFreecam.Rotation = MainMenu.CameraRotationAnimator.CurrentPosition3D;
+                    if (MainMenuUI.CameraPositionAnimator.CurrentPosition3D != Vector3.Zero) {
+                        RebirthFreecam.Position = MainMenuUI.CameraPositionAnimator.CurrentPosition3D;
+                        RebirthFreecam.Rotation = MainMenuUI.CameraRotationAnimator.CurrentPosition3D;
                     }
                     //RebirthFreecam.HasLookAt = true;
                     //RebirthFreecam.LookAt = new Vector3(0, 0, 50);
@@ -828,7 +829,7 @@ public class TankGame : Game {
                     GameProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), GraphicsDevice.Viewport.AspectRatio, 0.1f, 10000);
                 }
             }
-            else if (!GameUI.Paused && !MainMenu.Active && DebugManager.DebuggingEnabled) {
+            else if (!GameUI.Paused && !MainMenuUI.Active && DebugManager.DebuggingEnabled) {
                 if (DebugManager.DebugLevel == DebugManager.Id.FreeCamTest || DebugManager.persistFreecam) {
 
                     if (InputUtils.AreKeysJustPressed(Keys.Z, Keys.X)) {
@@ -949,7 +950,7 @@ public class TankGame : Game {
                 HoveringAnyTank = false;
                 // TODO: why is this here and not LevelEditor
                 // ... or literally anywhere else
-                if (!MainMenu.Active && (OverheadView || LevelEditor.Active)) {
+                if (!MainMenuUI.Active && (OverheadView || LevelEditor.Active)) {
                     foreach (var tnk in GameHandler.AllTanks) {
                         if (tnk == null) continue;
 
@@ -1062,7 +1063,7 @@ public class TankGame : Game {
         SpriteRenderer.End();
 
         GraphicsDevice.SetRenderTarget(null);
-        var shader = Difficulties.Types["LanternMode"] && !MainMenu.Active ? GameShaders.LanternShader : (MainMenu.Active ? GameShaders.GaussianBlurShader: null);
+        var shader = Difficulties.Types["LanternMode"] && !MainMenuUI.Active ? GameShaders.LanternShader : (MainMenuUI.Active ? GameShaders.GaussianBlurShader: null);
         if (!GameScene.ShouldRenderAll) shader = null;
         SpriteRenderer.Begin(effect: shader);
         SpriteRenderer.Draw(GameFrameBuffer, Vector2.Zero, null, Color.White, 0f, Vector2.Zero, Vector2.One, default, 0f);
@@ -1070,10 +1071,10 @@ public class TankGame : Game {
 
         // holy balls this sucks.
         GraphicsDevice.DepthStencilState = _stencilState;
-        MainMenu.RenderModels();
+        MainMenuUI.RenderModels();
 
         SpriteRenderer.Begin();
-        if (MainMenu.Active) MainMenu.Render();
+        if (MainMenuUI.Active) MainMenuUI.Render();
         // i really wish i didn't have to draw this here.
         VanillaAchievementPopupHandler.DrawPopup(SpriteRenderer);
         if (Debugger.IsAttached) SpriteRenderer.DrawString(TextFont, "DEBUGGER ATTACHED", new Vector2(10, 50), Color.Red, new Vector2(0.8f));

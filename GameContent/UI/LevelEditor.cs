@@ -21,6 +21,7 @@ using TanksRebirth.Internals.Common.Framework.Graphics;
 using TanksRebirth.Localization;
 using Microsoft.Xna.Framework.Input;
 using TanksRebirth.GameContent.RebirthUtils;
+using TanksRebirth.GameContent.UI.MainMenu;
 
 namespace TanksRebirth.GameContent.UI;
 
@@ -734,7 +735,7 @@ public static class LevelEditor {
             CampaignGlobals.ShouldMissionsProgress = false;
             _loadTask ??= Task.Run(async () => {
                     await Task.Delay(TankGame.LogicTime).ConfigureAwait(false);
-                    while (IntermissionSystem.BlackAlpha > 0.8f || MainMenu.Active) {
+                    while (IntermissionSystem.BlackAlpha > 0.8f || MainMenuUI.Active) {
                         if (IntermissionSystem.BlackAlpha == 0) {
                             // The user has exited without completing the transition by our greatly hardcoded poorly parallelized code.
                             // why did we design this like this?
@@ -1105,7 +1106,7 @@ public static class LevelEditor {
         if (!_initialized)
             return;
 
-        if (missionToRate == MainMenu.curMenuMission)
+        if (missionToRate == MainMenuUI.curMenuMission)
             ReturnToEditor.OnLeftClick?.Invoke(null);
 
         AddMissionBtn.IsVisible =
@@ -1219,7 +1220,7 @@ public static class LevelEditor {
             if (IntermissionHandler.NothingCanHappenAnymore(_cachedMission, out bool victory))
                 QueueEditorReEntry(120f);
         // if (ReturnToEditor != null)
-        ReturnToEditor.IsVisible = Editing && !Active && !MainMenu.Active;
+        ReturnToEditor.IsVisible = Editing && !Active && !MainMenuUI.Active;
     }
 
     private static float _waitTime;
