@@ -133,7 +133,7 @@ public static class TankMusicSystem
             return;
         }
 
-        if (GameSceneRenderer.Theme == MapTheme.Christmas) {
+        if (GameScene.Theme == MapTheme.Christmas) {
             SnowLoop.SetVolume(TankGame.Settings.AmbientVolume);
             return;
         }
@@ -178,7 +178,7 @@ public static class TankMusicSystem
         foreach (var song in Audio)
             song.Value?.Play();
 
-        if (GameSceneRenderer.Theme == MapTheme.Christmas)
+        if (GameScene.Theme == MapTheme.Christmas)
             SnowLoop?.Play();
     }
 
@@ -214,7 +214,7 @@ public static class TankMusicSystem
             if (song.Value.Volume > 0)
             {
                 song.Value.SetVolume(TankGame.Settings.MusicVolume);
-                if (GameSceneRenderer.Theme == MapTheme.Christmas)
+                if (GameScene.Theme == MapTheme.Christmas)
                     SnowLoop.SetVolume(TankGame.Settings.AmbientVolume);
                 else
                     SnowLoop.SetVolume(0);

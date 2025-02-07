@@ -25,7 +25,7 @@ public class OggAudio : IDisposable, IAudio {
 
     public SoundEffectInstance Instance;
     public bool IsDisposed { get; private set; }
-    public string SongPath { get; }
+    public string Path { get; }
 
 
     public float Volume {
@@ -63,26 +63,26 @@ public class OggAudio : IDisposable, IAudio {
     }
 
     public OggAudio(string path, SoundEffect effect) {
-        this.SongPath = path;
+        this.Path = path;
         this._effect = effect;
         this.Instance = effect.CreateInstance();
     }
     public OggAudio(string path) {
-        SongPath = path;
-        Load(SongPath);
+        Path = path;
+        Load(Path);
         this.MaxVolume = 1f;
     }
 
     public OggAudio(string path, string audioName, float maxVolume) {
-        SongPath = path;
+        Path = path;
         Name = audioName;
-        Load(SongPath);
+        Load(Path);
         this.MaxVolume = maxVolume;
     }
 
     public OggAudio(string path, float maxVolume) {
-        SongPath = path;
-        Load(SongPath);
+        Path = path;
+        Load(Path);
         this.MaxVolume = maxVolume;
     }
 

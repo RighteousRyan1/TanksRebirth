@@ -34,7 +34,7 @@ public struct BlockMapPosition
     {
         // (0, 0) == (MIN_X, MIN_Y)
 
-        var orig = new Vector2(GameSceneRenderer.CUBE_MIN_X, GameSceneRenderer.CUBE_MIN_Y);
+        var orig = new Vector2(GameScene.CUBE_MIN_X, GameScene.CUBE_MIN_Y);
 
         var real = new Vector2(orig.X + (pos.X * Block.SIDE_LENGTH), orig.Y + (pos.Y * Block.SIDE_LENGTH) - 110);
 
@@ -45,7 +45,7 @@ public struct BlockMapPosition
     {
         // (0, 0) == (MIN_X, MIN_Y)
 
-        var orig = new Vector3(GameSceneRenderer.CUBE_MIN_X, 0, GameSceneRenderer.CUBE_MIN_Y);
+        var orig = new Vector3(GameScene.CUBE_MIN_X, 0, GameScene.CUBE_MIN_Y);
 
         var real = new Vector3(orig.X + (pos.X * Block.SIDE_LENGTH) + 1f, 0, orig.Y + (pos.Y * Block.SIDE_LENGTH) - 43);
 

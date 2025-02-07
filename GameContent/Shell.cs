@@ -243,7 +243,7 @@ public class Shell : IAITankDanger
         ShootSound?.Instance?.Stop();
     }
     internal void Update() {
-        if (!GameSceneRenderer.ShouldRenderAll || (!CampaignGlobals.InMission && !MainMenu.Active))
+        if (!GameScene.ShouldRenderAll || (!CampaignGlobals.InMission && !MainMenu.Active))
             return;
 
         Rotation = Velocity.ToRotation() - MathHelper.PiOver2;
@@ -252,7 +252,7 @@ public class Shell : IAITankDanger
                 * Matrix.CreateTranslation(Position3D);
 
         if (_wallRicCooldown <= 0) {
-            if (Position.X is < GameSceneRenderer.MIN_X or > GameSceneRenderer.MAX_X) {
+            if (Position.X is < GameScene.MIN_X or > GameScene.MAX_X) {
                 OnRicochet?.Invoke(this);
                 Ricochet(true);
 
@@ -266,7 +266,7 @@ public class Shell : IAITankDanger
                 _wallRicCooldown = 5;
             }
 
-            if (Position.Y is < GameSceneRenderer.MIN_Z or > GameSceneRenderer.MAX_Z) {
+            if (Position.Y is < GameScene.MIN_Z or > GameScene.MAX_Z) {
                 OnRicochet?.Invoke(this);
                 Ricochet(false);
 
@@ -659,7 +659,7 @@ public class Shell : IAITankDanger
     }
 
     internal void Render() {
-        if (!GameSceneRenderer.ShouldRenderAll)
+        if (!GameScene.ShouldRenderAll)
             return;
 
         Projection = TankGame.GameProjection;

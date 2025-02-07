@@ -152,7 +152,7 @@ public static class MainMenu {
         [UIState.Cosmetics] = (new(-953f, 1078f, 2753f), new(0f, -0.226f, -2.56f))
     };
 
-    public static Vector3 CamPosMain = new(0, 150, GameSceneRenderer.MAX_Z + 100); // this is in front of the game scene, viewing it
+    public static Vector3 CamPosMain = new(0, 150, GameScene.MAX_Z + 100); // this is in front of the game scene, viewing it
     public static Vector3 CamPosMainRotation = new(0, -0.5f, 0);
 
     #endregion
@@ -1144,7 +1144,7 @@ public static class MainMenu {
     internal static Mission curMenuMission;
     private static List<Mission> _cachedMissions = [];
     public static OggMusic GetAppropriateMusic() {
-        OggMusic music = GameSceneRenderer.Theme switch {
+        OggMusic music = GameScene.Theme switch {
             MapTheme.Vanilla => new OggMusic("Main Menu Theme", "Content/Assets/music/mainmenu/theme.ogg", 1f),
             MapTheme.Christmas => new OggMusic("Main Menu Theme", "Content/Assets/music/mainmenu/theme_christmas.ogg", 1f),
             _ => throw new Exception("Invalid game theme for menu music.")

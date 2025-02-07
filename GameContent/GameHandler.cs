@@ -105,6 +105,7 @@ public class GameHandler {
         // ChatSystem.CurTyping = SoundPlayer.GetLengthOfSound("Content/Assets/sounds/tnk_shoot_ricochet_rocket_loop.ogg").ToString();
         if (MainMenu.Active)
         CosmeticsUI.Update();
+        RoomScene.Update();
         if (DebugManager.DebuggingEnabled) {
             if (/*InputUtils.KeyJustPressed(Keys.H)*/ DebugManager.DebugLevel == -2 && CampaignGlobals.InMission) {
                 if (TankGame.RunTime % 300 <= TankGame.DeltaTime) {
@@ -224,7 +225,7 @@ public class GameHandler {
         if (!MainMenu.Active && !LevelEditor.Editing)
             ExperienceBar?.Render(TankGame.SpriteRenderer, new(WindowUtils.WindowWidth / 2, 50.ToResolutionY()), new Vector2(100, 20).ToResolution(), Anchor.Center, Color.Red, Color.Lime);
         // CHECK: move this back if necessary
-        GameSceneRenderer.RenderWorldModels();
+        GameScene.RenderWorldModels();
 
         foreach (var tank in AllTanks)
             tank?.Render();
@@ -378,7 +379,7 @@ public class GameHandler {
     }
     public static void SetupGraphics() {
         GameShaders.Initialize();
-        GameSceneRenderer.InitializeRenderers();
+        GameScene.InitializeRenderers();
         SceneManager.LoadGameScene();
         DebugManager.InitDebugUI();
         PlacementSquare.InitializeLevelEditorSquares();

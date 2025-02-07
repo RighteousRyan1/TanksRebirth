@@ -16,9 +16,7 @@ public enum MapTheme
     Vanilla,
     Christmas,
 }
-
-// TODO: Chairs and Co (models)
-public static class GameSceneRenderer
+public static class GameScene
 {
     public static bool ShouldRenderAll { get; set; } = true;
     public static bool ShouldRenderFloor { get; set; } = true;
@@ -343,7 +341,7 @@ public static class GameSceneRenderer
     {
         FloorRenderer.LoadFloor();
         BoundsRenderer.LoadBounds();
-        RoomSceneRenderer.Initialize();
+        RoomScene.Initialize();
     }
 
     public static float Scale = 0.62f;

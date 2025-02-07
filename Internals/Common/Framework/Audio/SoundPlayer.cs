@@ -25,7 +25,7 @@ public static class SoundPlayer
     // my spidey senses are telling me this is horribly inefficient.
     public static OggAudio PlaySoundInstance(string audioPath, SoundContext context, float volume = 1f, float panOverride = 0f, float pitchOverride = 0f, bool gameplaySound = false, bool rememberMe = false) {
         // because ogg is the only good audio format.
-        audioPath = Path.Combine(TankGame.Instance.Content.RootDirectory, audioPath);
+        audioPath = Path.Combine(audioPath.Contains("Content/") ? "" : TankGame.Instance.Content.RootDirectory, audioPath);
 
         volume *= context switch {
             SoundContext.Music => MusicVolume,
@@ -70,16 +70,21 @@ public static class SoundPlayer
 
         return sfx;
     }
-    public static void PlaySoundInstance(OggAudio fromSound, SoundContext context, float volume = 1f) {
+    public static void PlaySoundInstance(OggAudio fromSound, SoundContext context, float volume = 1f, bool playNew = false, float panOverride = 0f, float pitchOverride = 0f) {
         volume *= context switch {
             SoundContext.Music => MusicVolume,
             SoundContext.Effect => EffectsVolume,
             SoundContext.Ambient => AmbientVolume,
             _ => throw new ArgumentOutOfRangeException(nameof(context), context, "Uh oh! Seems like a new sound type was implemented, but I was not given a way to handle it!"),
         };
+        if (playNew) {
+            PlaySoundInstance(fromSound.Path, context, volume, panOverride, pitchOverride, false);
+            return;
+        }
         fromSound.Play();
         fromSound.Volume = volume;
     }
+
     public static OggAudio SoundError() => PlaySoundInstance("Assets/sounds/menu/menu_error.ogg", SoundContext.Effect, rememberMe: true);
 }
 public enum SoundContext : byte

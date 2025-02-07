@@ -145,7 +145,7 @@ public sealed class Mine : IAITankDanger
     }
 
     internal void Update() {
-        if (!GameSceneRenderer.ShouldRenderAll || (!CampaignGlobals.InMission && !MainMenu.Active))
+        if (!GameScene.ShouldRenderAll || (!CampaignGlobals.InMission && !MainMenu.Active))
             return;
 
         World = Matrix.CreateScale(0.7f) * Matrix.CreateTranslation(Position3D);
@@ -204,7 +204,7 @@ public sealed class Mine : IAITankDanger
     }
 
     internal void Render() {
-        if (!GameSceneRenderer.ShouldRenderAll)
+        if (!GameScene.ShouldRenderAll)
             return;
 
         View = TankGame.GameView;

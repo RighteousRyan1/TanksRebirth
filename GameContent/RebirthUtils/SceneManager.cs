@@ -49,7 +49,7 @@ public static class SceneManager {
     public static void HandleSceneVisuals() {
         if (Difficulties.Types["ThunderMode"])
             DoThunderStuff();
-        else if (GameSceneRenderer.Theme == MapTheme.Christmas) {
+        else if (GameScene.Theme == MapTheme.Christmas) {
             GameLight.Color = new(50, 50, 50, 50);
             GameLight.Brightness = 0.4f;
             GameLight.Apply(false);

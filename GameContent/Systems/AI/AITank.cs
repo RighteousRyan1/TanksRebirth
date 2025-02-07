@@ -353,7 +353,7 @@ public partial class AITank : Tank {
 
         //CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
 
-        if (Dead || !GameSceneRenderer.ShouldRenderAll)
+        if (Dead || !GameScene.ShouldRenderAll)
             return;
         if (AiTankType == TankID.Commando) {
             Model.Meshes["Laser_Beam"].ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
@@ -501,13 +501,13 @@ public partial class AITank : Tank {
 
             uninterruptedIterations++;
 
-            if (pathPos.X < GameSceneRenderer.MIN_X || pathPos.X > GameSceneRenderer.MAX_X) {
+            if (pathPos.X < GameScene.MIN_X || pathPos.X > GameScene.MAX_X) {
                 ricoPoints.Add(pathPos);
                 pathDir.X *= -1;
                 pathRicochetCount++;
                 resetIterations();
             }
-            else if (pathPos.Y < GameSceneRenderer.MIN_Z || pathPos.Y > GameSceneRenderer.MAX_Z) {
+            else if (pathPos.Y < GameScene.MIN_Z || pathPos.Y > GameScene.MAX_Z) {
                 ricoPoints.Add(pathPos);
                 pathDir.Y *= -1;
                 pathRicochetCount++;
@@ -617,12 +617,12 @@ public partial class AITank : Tank {
         for (int i = 0; i < checkDist; i++) {
             var dummyPos = Vector2.Zero;
 
-            if (pathPos.X < GameSceneRenderer.MIN_X || pathPos.X > GameSceneRenderer.MAX_X) {
+            if (pathPos.X < GameScene.MIN_X || pathPos.X > GameScene.MAX_X) {
                 pathDir.X *= -1;
                 hasCollided = true;
                 list.Add(new(pathPos, Vector2.UnitY));
             }
-            if (pathPos.Y < GameSceneRenderer.MIN_Z || pathPos.Y > GameSceneRenderer.MAX_Z) {
+            if (pathPos.Y < GameScene.MIN_Z || pathPos.Y > GameScene.MAX_Z) {
                 pathDir.Y *= -1;
                 hasCollided = true;
                 list.Add(new(pathPos, -Vector2.UnitY));
@@ -1181,7 +1181,7 @@ public partial class AITank : Tank {
     }
     public override void Render() {
         base.Render();
-        if (Dead || !GameSceneRenderer.ShouldRenderAll)
+        if (Dead || !GameScene.ShouldRenderAll)
             return;
         TankGame.Instance.GraphicsDevice.BlendState = BlendState.AlphaBlend;
         DrawExtras();

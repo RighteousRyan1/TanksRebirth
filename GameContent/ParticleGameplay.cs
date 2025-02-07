@@ -44,10 +44,10 @@ public static class ParticleGameplay {
 
             // bounce off walls
             if (p.Position.Y <= 80) {
-                if ((p.Position.X <= GameSceneRenderer.MIN_X && p.Position.X >= GameSceneRenderer.MIN_X - 6) || (p.Position.X >= GameSceneRenderer.MAX_X && p.Position.X <= GameSceneRenderer.MAX_X + 6)) {
+                if ((p.Position.X <= GameScene.MIN_X && p.Position.X >= GameScene.MIN_X - 6) || (p.Position.X >= GameScene.MAX_X && p.Position.X <= GameScene.MAX_X + 6)) {
                     velocity.X = -velocity.X * 0.5f;
                 }
-                if ((p.Position.Z <= GameSceneRenderer.MIN_Z && p.Position.Z >= GameSceneRenderer.MIN_Z - 6) || (p.Position.Z >= GameSceneRenderer.MAX_Z && p.Position.Z <= GameSceneRenderer.MAX_Z + 6)) {
+                if ((p.Position.Z <= GameScene.MIN_Z && p.Position.Z >= GameScene.MIN_Z - 6) || (p.Position.Z >= GameScene.MAX_Z && p.Position.Z <= GameScene.MAX_Z + 6)) {
                     velocity.Z = -velocity.Z * 0.5f;
                 }
             }

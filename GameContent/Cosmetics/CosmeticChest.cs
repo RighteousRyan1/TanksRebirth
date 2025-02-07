@@ -134,8 +134,6 @@ namespace TanksRebirth.GameContent.Cosmetics
             {
                 var entry = minMaxes.ElementAt(i);
 
-                Console.WriteLine(entry);
-
                 if (between(entry.Key.Item1, entry.Key.Item2, rolledRand))
                     pickedIdx = i;
             }

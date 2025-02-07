@@ -478,11 +478,11 @@ public class PlayerTank : Tank
         for (int i = 0; i < MAX_PATH_UNITS; i++) {
             var dummyPos = Vector2.Zero;
 
-            if (pathPos.X < GameSceneRenderer.MIN_X || pathPos.X > GameSceneRenderer.MAX_X) {
+            if (pathPos.X < GameScene.MIN_X || pathPos.X > GameScene.MAX_X) {
                 pathRicochetCount++;
                 pathDir.X *= -1;
             }
-            if (pathPos.Y < GameSceneRenderer.MIN_Z || pathPos.Y > GameSceneRenderer.MAX_Z) {
+            if (pathPos.Y < GameScene.MIN_Z || pathPos.Y > GameScene.MAX_Z) {
                 pathRicochetCount++;
                 pathDir.Y *= -1;
             }

@@ -278,11 +278,11 @@ namespace TanksRebirth.GameContent.GameMechanics
             {
                 var dummyPos = Vector2.Zero;
 
-                if (pathPos.X < GameSceneRenderer.MIN_X || pathPos.X > GameSceneRenderer.MAX_X)
+                if (pathPos.X < GameScene.MIN_X || pathPos.X > GameScene.MAX_X)
                 {
                     return false;
                 }
-                if (pathPos.Y < GameSceneRenderer.MIN_Z || pathPos.Y > GameSceneRenderer.MAX_Z)
+                if (pathPos.Y < GameScene.MIN_Z || pathPos.Y > GameScene.MAX_Z)
                 {
                     return false;
                 }

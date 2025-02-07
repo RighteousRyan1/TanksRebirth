@@ -460,7 +460,7 @@ public class TankGame : Game {
         PlayerTank.controlLeft.ForceReassign(Settings.LeftKeybind);
         PlayerTank.controlRight.ForceReassign(Settings.RightKeybind);
         PlayerTank.controlMine.ForceReassign(Settings.MineKeybind);
-        GameSceneRenderer.Theme = Settings.GameTheme;
+        GameScene.Theme = Settings.GameTheme;
 
         /*if (!IsSouthernHemi ? LaunchTime.Month != 12 : LaunchTime.Month != 7)
             MapRenderer.Theme = Settings.GameTheme;
@@ -476,7 +476,7 @@ public class TankGame : Game {
 
         Tank.SetAssetNames();
         TankMusicSystem.SetAssetAssociations();
-        GameSceneRenderer.LoadTexturePack(Settings.MapPack);
+        GameScene.LoadTexturePack(Settings.MapPack);
         TankMusicSystem.LoadSoundPack(Settings.MusicPack);
         Tank.LoadTexturePack(Settings.TankPack);
         Graphics.ApplyChanges();
@@ -1055,7 +1055,7 @@ public class TankGame : Game {
         SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: DefaultRasterizer);
         GraphicsDevice.DepthStencilState = _stencilState;
         GraphicsDevice.SamplerStates[0] = WrappingSampler;
-        RoomSceneRenderer.Render();
+        RoomScene.Render();
         CosmeticsUI.RenderCrates();
         GraphicsDevice.SamplerStates[0] = ClampingSampler;
         GameHandler.RenderAll();
@@ -1063,7 +1063,7 @@ public class TankGame : Game {
 
         GraphicsDevice.SetRenderTarget(null);
         var shader = Difficulties.Types["LanternMode"] && !MainMenu.Active ? GameShaders.LanternShader : (MainMenu.Active ? GameShaders.GaussianBlurShader: null);
-        if (!GameSceneRenderer.ShouldRenderAll) shader = null;
+        if (!GameScene.ShouldRenderAll) shader = null;
         SpriteRenderer.Begin(effect: shader);
         SpriteRenderer.Draw(GameFrameBuffer, Vector2.Zero, null, Color.White, 0f, Vector2.Zero, Vector2.One, default, 0f);
         SpriteRenderer.End();
@@ -1143,7 +1143,7 @@ public class TankGame : Game {
 
     private static void PlaceSecrets() {
         // magic.
-        const float SECRET_BASE_POS_X = GameSceneRenderer.MIN_X - 28.5f;
+        const float SECRET_BASE_POS_X = GameScene.MIN_X - 28.5f;
         const float SECRET_BASE_POS_Y = 22;
         const float SECRET_BASE_POS_Z = 20;
         _secret1_1 = GameHandler.Particles.MakeParticle(new Vector3(100, 0.1f, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/secret/special"));

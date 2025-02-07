@@ -97,16 +97,16 @@ public static class CommandGlobals {
         }),
         // render engine
         [new CommandInput(name: "rendermenu", description: "Disable/enable game rendering/updating in main menu.")] = new CommandOutput(netSync: false, false, (args) => {
-                GameSceneRenderer.ShouldRenderAll = bool.Parse(args[0]);
+                GameScene.ShouldRenderAll = bool.Parse(args[0]);
         }),
         [new CommandInput(name: "renderbounds", description: "Disable/enable the drawing of the outer bounds of the map.")] = new CommandOutput(netSync: false, false, (args) => {
-            GameSceneRenderer.ShouldRenderBounds = bool.Parse(args[0]);
+            GameScene.ShouldRenderBounds = bool.Parse(args[0]);
         }),
         [new CommandInput(name: "renderfloor", description: "Disable/enable the drawing of the floor of the map.")] = new CommandOutput(netSync: false, false, (args) => {
             if (bool.TryParse(args[0], out bool truefalse)) {
-                GameSceneRenderer.ShouldRenderFloor = truefalse;
+                GameScene.ShouldRenderFloor = truefalse;
             } else if (args[0].ToLower() == "black") {
-                GameSceneRenderer.RenderFloorAsBlack = !GameSceneRenderer.RenderFloorAsBlack;
+                GameScene.RenderFloorAsBlack = !GameScene.RenderFloorAsBlack;
             }
         }),
         // main menu

@@ -353,8 +353,8 @@ public static class DebugManager {
                 level: Id.AchievementData,
                 centered: false);
         }
-        Console.WriteLine("POS: " + TankGame.RebirthFreecam.Position);
-        Console.WriteLine("ROT: " + TankGame.RebirthFreecam.Rotation);
+        //Console.WriteLine("POS: " + TankGame.RebirthFreecam.Position);
+        //Console.WriteLine("ROT: " + TankGame.RebirthFreecam.Rotation);
         DrawDebugString(SpriteRenderer, $"Position: {TankGame.RebirthFreecam.Position}" +
             $"\nRotation: {TankGame.RebirthFreecam.Rotation}" +
             $"\nFOV: {TankGame.RebirthFreecam.FieldOfView}°" +

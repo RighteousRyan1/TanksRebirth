@@ -135,7 +135,7 @@ public class Block : IGameObject {
     public void Swap(int type) {
         Type = type;
 
-        var modelname = GameSceneRenderer.Theme switch {
+        var modelname = GameScene.Theme switch {
             MapTheme.Vanilla => IsAlternateModel ? "Assets/models/scene/cube_stack_alt" : "Assets/models/scene/cube_stack",
             MapTheme.Christmas => IsAlternateModel ? "Assets/christmas/cube_stack_alt_snowy" : "Assets/christmas/cube_stack_snowy",
             _ => ""
@@ -143,20 +143,20 @@ public class Block : IGameObject {
 
         switch (type) {
             case BlockID.Wood:
-                _texture = GameSceneRenderer.Assets["block.1"];
+                _texture = GameScene.Assets["block.1"];
                 Properties.IsSolid = true;
                 Model = GameResources.GetGameResource<Model>(modelname)!;
                 break;
             case BlockID.Cork:
                 Properties.IsDestructible = true;
-                _texture = GameSceneRenderer.Assets["block.2"];
+                _texture = GameScene.Assets["block.2"];
                 Properties.IsSolid = true;
                 Model = GameResources.GetGameResource<Model>(modelname)!;
                 break;
             case BlockID.Hole:
                 Model = GameResources.GetGameResource<Model>("Assets/models/check")!;
                 Properties.IsSolid = false;
-                _texture = GameSceneRenderer.Assets["block_harf.1"];
+                _texture = GameScene.Assets["block_harf.1"];
                 Properties.CanStack = false;
                 Properties.HasShadow = false;
                 break;
@@ -164,7 +164,7 @@ public class Block : IGameObject {
                 Model = GameResources.GetGameResource<Model>("Assets/models/teleporter")!;
                 Properties.IsSolid = false;
                 Properties.IsCollidable = false;
-                _texture = GameSceneRenderer.Assets["teleporter"];
+                _texture = GameScene.Assets["teleporter"];
                 Properties.CanStack = false;
                 break;
         }
@@ -202,7 +202,7 @@ public class Block : IGameObject {
         Stack = (byte)MathHelper.Clamp(height, 0, 7);
         Type = type;
 
-        var modelname = GameSceneRenderer.Theme switch {
+        var modelname = GameScene.Theme switch {
             MapTheme.Vanilla => IsAlternateModel ? "Assets/models/scene/cube_stack_alt" : "Assets/models/scene/cube_stack",
             MapTheme.Christmas => IsAlternateModel ? "Assets/christmas/cube_stack_alt_snowy" : "Assets/christmas/cube_stack_snowy",
             _ => ""
@@ -327,7 +327,7 @@ public class Block : IGameObject {
     public void OnPreRender() { }
 
     public void OnRender() {
-        if (!GameSceneRenderer.ShouldRenderAll)
+        if (!GameScene.ShouldRenderAll)
             return;
         // TODO: seeing this, don't make this poor CPU have overhead (use derived types!)
         if (Type != BlockID.Teleporter) {
@@ -346,7 +346,7 @@ public class Block : IGameObject {
                         if (mesh.Name != "snow")
                             effect.Texture = _texture;
                         else
-                            effect.Texture = GameSceneRenderer.Assets["snow"];
+                            effect.Texture = GameScene.Assets["snow"];
 
                         effect.SetDefaultGameLighting_IngameEntities(10f);
 
@@ -405,7 +405,7 @@ public class Block : IGameObject {
     }
 
     public void OnUpdate() {
-        if (!GameSceneRenderer.ShouldRenderAll)
+        if (!GameScene.ShouldRenderAll)
             return;
 
         Hitbox = new((int)(Position.X - SIDE_LENGTH / 2 + 1), (int)(Position.Y - SIDE_LENGTH / 2), (int)SIDE_LENGTH - 1, (int)SIDE_LENGTH);
