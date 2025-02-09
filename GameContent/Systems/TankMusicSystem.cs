@@ -91,8 +91,7 @@ public static class TankMusicSystem
         // TODO: verify this works.
         IsLoaded = true;
         LoadVanillaAudio();
-        if (folder.ToLower() == "vanilla") {
-            // LoadVanillaAudio();
+        if (folder.Equals("vanilla", StringComparison.CurrentCultureIgnoreCase)) {
             TankGame.ClientLog.Write($"Loaded vanilla audio for Sound.", LogType.Info);
             return;
         }

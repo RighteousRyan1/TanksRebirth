@@ -773,21 +773,33 @@
 /processorParam:TextureFormat=Compressed
 /build:Assets/models/teleporter.fbx
 
-#begin Assets/Shaders/GaussianBlur.fx
+#begin Assets/shaders/BlackHue.fx
 /importer:EffectImporter
 /processor:EffectProcessor
 /processorParam:DebugMode=Auto
-/build:Assets/Shaders/GaussianBlur.fx
+/build:Assets/shaders/BlackHue.fx
 
-#begin Assets/Shaders/MouseShader.fx
+#begin Assets/shaders/ExampleVxShader.fx
 /importer:EffectImporter
 /processor:EffectProcessor
 /processorParam:DebugMode=Auto
-/build:Assets/Shaders/MouseShader.fx
+/build:Assets/shaders/ExampleVxShader.fx
 
-#begin Assets/Shaders/testshader.fx
+#begin Assets/shaders/GaussianBlur.fx
 /importer:EffectImporter
 /processor:EffectProcessor
 /processorParam:DebugMode=Auto
-/build:Assets/Shaders/testshader.fx
+/build:Assets/shaders/GaussianBlur.fx
+
+#begin Assets/shaders/MouseShader.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:Assets/shaders/MouseShader.fx
+
+#begin Assets/shaders/testshader.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:Assets/shaders/testshader.fx
 

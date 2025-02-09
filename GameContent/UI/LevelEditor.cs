@@ -498,7 +498,8 @@ public static class LevelEditor {
             if (loadedCampaign is { })
                 SetupMissionsBar(loadedCampaign);
 
-            _missionButtons[loadedCampaign.CurrentMissionId].Color = SelectedColor;
+            if (loadedCampaign is not null)
+                _missionButtons[loadedCampaign.CurrentMissionId].Color = SelectedColor;
         };
 
         Perspective = new(TankGame.GameLanguage.Perspective, TankGame.TextFont, Color.White);

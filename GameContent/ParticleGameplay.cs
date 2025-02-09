@@ -98,7 +98,7 @@ public static class ParticleGameplay {
                 SoundPlayer.PlaySoundInstance("Assets/sounds/smoke_hiss.ogg", SoundContext.Effect, 0.3f, gameplaySound: true);
                 for (int i = 0; i < 8; i++) {
                     var c = system.MakeParticle(p.Position,
-                        GameResources.GetGameResource<Model>("Assets/smoke"),
+                        GameResources.GetGameResource<Model>("Assets/models/smoke"),
                         GameResources.GetGameResource<Texture2D>("Assets/textures/smoke/smoke"));
                     var randDir = new Vector3(Server.ServerRandom.NextFloat(-35, 35), 0, Server.ServerRandom.NextFloat(-35, 35));
                     c.Position += randDir;

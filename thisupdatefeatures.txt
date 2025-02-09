@@ -26,6 +26,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 ## Fixes
 
 - Pause UI now appears over everything
+- Citrine Tank Music now is prioritized over Ruby
 
 ## TODO
 

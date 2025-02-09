@@ -104,7 +104,6 @@ public class GameHandler {
         if (InputUtils.KeyJustPressed(Keys.OemTilde))
             doTestWithFont();
         // ChatSystem.CurTyping = SoundPlayer.GetLengthOfSound("Content/Assets/sounds/tnk_shoot_ricochet_rocket_loop.ogg").ToString();
-        if (MainMenuUI.Active)
         CosmeticsUI.Update();
         RoomScene.Update();
         if (DebugManager.DebuggingEnabled) {
@@ -115,6 +114,13 @@ public class GameHandler {
                         var vel = Airplane.ChooseRandomFlightTarget(Server.ServerRandom, pos, 0.5f, 0.5f);
                         var plane = new Airplane(new Vector3(pos.X, 100, pos.Y), vel, 400f);
                         plane.WhileTrapDoorsOpened = () => {
+                            /*if (TankGame.RunTime % 10 <= TankGame.DeltaTime) {
+                                var t = new AITank(TankMusicSystem.TierHighest);
+                                t.Body.Position = plane.Position.FlattenZ() / Tank.UNITS_PER_METER;
+                            }*/
+                                //new Mine(null, plane.Position.FlattenZ(), 180);
+                                //new Explosion(plane.Position.FlattenZ(), 10f);
+                            
                             if (TankGame.RunTime % 30 <= TankGame.DeltaTime) {
                                 ParticleGameplay.CreateSmokeGrenade(Particles, plane.Position, Vector3.Down + new Vector3(plane.Velocity.X, 0, plane.Velocity.Y) * 0.5f/* * GameRand.NextFloat(0.5f, 1.1f)*/);
                             }
@@ -265,9 +271,10 @@ public class GameHandler {
                 sq?.Render();
         if (DebugManager.DebuggingEnabled) {
 
-            DebugManager.DrawDebugString(TankGame.SpriteRenderer, "Spawn Tank With Info:", WindowUtils.WindowTop + new Vector2(0, 8), 3, centered: true);
-            DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"Tier: {TankID.Collection.GetKey(DebugManager.tankToSpawnType)}", WindowUtils.WindowTop + new Vector2(0, 24), 3, centered: true);
-            DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"Team: {TeamID.Collection.GetKey(DebugManager.tankToSpawnTeam)}", WindowUtils.WindowTop + new Vector2(0, 40), 3, centered: true);
+            var posOffset = new Vector2(0, 80);
+            DebugManager.DrawDebugString(TankGame.SpriteRenderer, "Spawn Tank With Info:", WindowUtils.WindowTop + posOffset, 3, centered: true);
+            DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"Tier: {TankID.Collection.GetKey(DebugManager.tankToSpawnType)}", WindowUtils.WindowTop + posOffset + new Vector2(0, 16), 3, centered: true);
+            DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"Team: {TeamID.Collection.GetKey(DebugManager.tankToSpawnTeam)}", WindowUtils.WindowTop + posOffset + new Vector2(0, 32), 3, centered: true);
             DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"BlockStack: {DebugManager.blockHeight} | BlockType: {BlockID.Collection.GetKey(DebugManager.blockType)}", WindowUtils.WindowBottom - new Vector2(0, 20), 3, centered: true);
 
             DebugManager.tankToSpawnType = MathHelper.Clamp(DebugManager.tankToSpawnType, 2, TankID.Collection.Count - 1);

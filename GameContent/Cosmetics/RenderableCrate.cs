@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
 
 namespace TanksRebirth.GameContent.Cosmetics;
@@ -69,6 +70,8 @@ public class RenderableCrate
 
                 effect.TextureEnabled = true;
                 effect.Texture = Texture;
+
+                effect.SetDefaultGameLighting();
             }
             mesh.Draw();
         }

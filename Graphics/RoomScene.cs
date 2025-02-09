@@ -17,6 +17,7 @@ using TanksRebirth.Net;
 namespace TanksRebirth.Graphics;
 
 // when the room is added!
+// TODO: texture pack support
 public static class RoomScene {
     // bro there is no construcor stop yapping stupid ide
     public static Model RoomSkyboxScene;
@@ -164,7 +165,7 @@ public static class RoomScene {
         // quarter = 15 minutes * quarter.
         Task.Run(async () => {
             var timeBetweenSeqs = 3000;
-            var vol = SoundUtils.GetVolumeFromCameraPosition(ClockAudioPosition, TankGame.RebirthFreecam.Position, 2000);
+            var vol = SoundUtils.GetVolumeFromCameraPosition(ClockAudioPosition, TankGame.RebirthFreecam.Position, 2500);
             switch (quarter) {
                 case 1:
                     SoundPlayer.PlaySoundInstance(ChimeS1, SoundContext.Effect, playNew: true, volume: vol);
@@ -188,9 +189,10 @@ public static class RoomScene {
         });
     }
     public static void ChimeHourly(int hour) {
+        if (hour == 0) hour += 12;
         Task.Run(async () => {
             var timeBetweenSeqs = 3000;
-            var vol = SoundUtils.GetVolumeFromCameraPosition(ClockAudioPosition, TankGame.RebirthFreecam.Position, 2000);
+            var vol = SoundUtils.GetVolumeFromCameraPosition(ClockAudioPosition, TankGame.RebirthFreecam.Position, 2500);
             SoundPlayer.PlaySoundInstance(ChimeS2, SoundContext.Effect, playNew: true, volume: vol);
             await Task.Delay(timeBetweenSeqs);
             SoundPlayer.PlaySoundInstance(ChimeS3, SoundContext.Effect, playNew: true, volume: vol);
@@ -200,7 +202,7 @@ public static class RoomScene {
             SoundPlayer.PlaySoundInstance(ChimeS5, SoundContext.Effect, playNew: true, volume: vol);
             for (int i = 0; i < hour; i++) {
                 await Task.Delay(timeBetweenSeqs);
-                vol = SoundUtils.GetVolumeFromCameraPosition(ClockAudioPosition, TankGame.RebirthFreecam.Position, 2000);
+                vol = SoundUtils.GetVolumeFromCameraPosition(ClockAudioPosition, TankGame.RebirthFreecam.Position, 2500);
                 SoundPlayer.PlaySoundInstance(ChimeHour, SoundContext.Effect, playNew: true, volume: vol);
             }
         });
@@ -219,10 +221,10 @@ public static class RoomScene {
         View = TankGame.GameView;
         Projection = TankGame.GameProjection;
 
-        // var testX = MouseUtils.MousePosition.X / WindowUtils.WindowWidth;
+        //var testX = MouseUtils.MousePosition.X / WindowUtils.WindowWidth;
         HourHandRotation = TimeUtils.InterpolateHourToDay(DateTime.Now);
         MinuteHandRotation = TimeUtils.InterpolateMinuteToHour(DateTime.Now);
-        PendulumRotation = MathHelper.Pi / 32 * TimeUtils.SineForSecond(DateTime.Now, 2.5f);
+        PendulumRotation = MathHelper.Pi / 32 * TimeUtils.SineForSecond(DateTime.Now, 3f);
 
         Hour = TimeUtils.GetHourFromCircle(HourHandRotation);
         Minute = TimeUtils.GetMinuteFromCircle(MinuteHandRotation);

@@ -76,15 +76,6 @@ public static partial class MainMenuUI
 
     internal static List<UIElement> campaignNames = new();
 
-    public static UITextButton CreateServerButton;
-    public static UITextButton ConnectToServerButton;
-    public static UITextInput UsernameInput;
-    public static UITextInput IPInput;
-    public static UITextInput PortInput;
-    public static UITextInput PasswordInput;
-    public static UITextInput ServerNameInput;
-    public static UITextButton DisconnectButton;
-
     public static UITextButton CosmeticsMenuButton;
     public static UITextButton StatsMenu;
 
@@ -172,6 +163,24 @@ public static partial class MainMenuUI
         PlayButton_LevelEditor.IsVisible = false;
 
         GameUI.BackButton.IsVisible = false;
+    }
+    internal static void SetPlayButtonsVisibility(bool visible) {
+        PlayButton_SinglePlayer.IsVisible = visible;
+        PlayButton_LevelEditor.IsVisible = visible;
+        PlayButton_Multiplayer.IsVisible = visible;
+        DifficultiesButton.IsVisible = visible;
+        CosmeticsMenuButton.IsVisible = visible;
+    }
+    internal static void SetPrimaryMenuButtonsVisibility(bool visible) {
+        GameUI.OptionsButton.IsVisible = visible;
+
+        GameUI.QuitButton.IsVisible = visible;
+
+        GameUI.BackButton.Size.Y = 50;
+
+        PlayButton.IsVisible = visible;
+
+        StatsMenu.IsVisible = visible;
     }
 
     // the code is horrid but at least it's separated now

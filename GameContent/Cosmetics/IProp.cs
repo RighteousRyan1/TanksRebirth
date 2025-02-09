@@ -7,6 +7,8 @@ public enum PropLockOptions {
     None,
     ToTank,
     ToTurret,
+    /// <summary>Will Rotate around turret instead of rotating with turret.</summary>
+    ToTurretCentered
 };
 public interface IProp {
     Vector3 RelativePosition { get; set; }

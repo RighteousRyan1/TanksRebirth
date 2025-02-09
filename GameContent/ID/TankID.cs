@@ -28,8 +28,8 @@ public sealed class TankID
     public const int Bronze = 11;
     public const int Silver = 12;
     public const int Sapphire = 13;
-    public const int Citrine = 14;
-    public const int Ruby = 15;
+    public const int Ruby = 14;
+    public const int Citrine = 15;
     public const int Amethyst = 16;
     public const int Emerald = 17;
     public const int Gold = 18;

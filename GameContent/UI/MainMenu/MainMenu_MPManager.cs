@@ -1,7 +1,11 @@
 ﻿using FontStashSharp;
 using Microsoft.Xna.Framework;
+using System.Linq;
+using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Systems;
+using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.Framework.Audio;
+using TanksRebirth.Internals.Common.GameUI;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
 
@@ -9,7 +13,48 @@ namespace TanksRebirth.GameContent.UI.MainMenu;
 
 #pragma warning disable
 public static partial class MainMenuUI {
-    public static void InitializeMPMenu(SpriteFontBase font) {
+    private static bool _ssbbv = true;
+    public static bool ShouldServerButtonsBeVisible {
+        get => _ssbbv;
+        set {
+            _ssbbv = value;
+            ConnectToServerButton.IsVisible = value;
+            CreateServerButton.IsVisible = value;
+            ConnectToServerButton.IsVisible = value;
+            CreateServerButton.IsVisible = value;
+            UsernameInput.IsVisible = value;
+            IPInput.IsVisible = value;
+            PasswordInput.IsVisible = value;
+            PortInput.IsVisible = value;
+            ServerNameInput.IsVisible = value && !Client.IsConnected();
+        }
+    }
+
+    public static Vector2 PlayersGraphicOrigin = new Vector2(94.374275f, -94.35968f);
+    public static Vector3 PlayersGraphicRotationOrigin = new Vector3(0f, 0.03470005f, 0.3459305f);
+
+    public static UITextButton CreateServerButton;
+    public static UITextButton ConnectToServerButton;
+    public static UITextInput UsernameInput;
+    public static UITextInput IPInput;
+    public static UITextInput PortInput;
+    public static UITextInput PasswordInput;
+    public static UITextInput ServerNameInput;
+    public static UITextButton DisconnectButton;
+    internal static void SetMPButtonsVisibility(bool visible) {
+        if (ShouldServerButtonsBeVisible) {
+            ConnectToServerButton.IsVisible = visible;
+            CreateServerButton.IsVisible = visible;
+            UsernameInput.IsVisible = visible;
+            IPInput.IsVisible = visible;
+            PasswordInput.IsVisible = visible;
+            PortInput.IsVisible = visible;
+            ServerNameInput.IsVisible = visible && !Client.IsConnected();
+        }
+        DisconnectButton.IsVisible = visible && Client.IsConnected();
+        StartMPGameButton.IsVisible = visible && Client.IsHost();
+    }
+    public static void InitializeMP(SpriteFontBase font) {
         UsernameInput = new(font, Color.WhiteSmoke, 1f, 20) {
             IsVisible = false,
             DefaultString = "Username"
@@ -157,5 +202,64 @@ public static partial class MainMenuUI {
             MenuState = UIState.Campaigns;
         };
         StartMPGameButton.SetDimensions(() => new Vector2(700, 600).ToResolution(), () => new Vector2(500, 50).ToResolution());
+    }
+    public static void UpdateMP() {
+        var plrOffset = -10f;
+        if (!Client.IsConnected()) {
+            if (PlayerTank.ClientTank is null) {
+                var p = new PlayerTank(PlayerID.Blue);
+                p.Body.Position = (PlayersGraphicOrigin + new Vector2(0, plrOffset)) / Tank.UNITS_PER_METER;
+                p.TankRotation = PlayersGraphicRotationOrigin.Z;
+                p.Dead = false;
+            }else {
+                if (InputUtils.KeyJustPressed(Microsoft.Xna.Framework.Input.Keys.K))
+                    PlayerTank.ClientTank.Remove(true);
+            }
+            return;
+        }
+        for (int i = 0; i < Server.ConnectedClients.Length; i++) {
+            var client = Server.ConnectedClients[i];
+            if (client is null) continue;
+            // TODO: UHHH??????
+            if (client.IsOperatedByPlayer) continue;
+
+            if (GameHandler.AllPlayerTanks.Any(x => x is not null && x.PlayerId == i))
+                continue;
+
+            var p = new PlayerTank(client.Id);
+            p.Body.Position = (PlayersGraphicOrigin + new Vector2(0, plrOffset).Rotate(MathHelper.PiOver2 / 2 * i)) / Tank.UNITS_PER_METER;
+            p.TankRotation = PlayersGraphicRotationOrigin.Z;
+            p.Dead = false;
+        }
+    }
+    public static void RenderMP() {
+        if (Server.ConnectedClients is null) {
+            Server.ConnectedClients = new Client[4];
+            NetPlay.ServerName = "ServerName";
+            for (int i = 0; i < 4; i++) {
+                Server.ConnectedClients[i] = new(i, "Client" + i);
+            }
+        }
+        // TODO: rework this very rudimentary ui
+        if (NetPlay.CurrentServer is not null && 
+            (Server.ConnectedClients is not null || NetPlay.ServerName is not null) || 
+            Client.IsConnected() && Client.LobbyDataReceived) {
+            Vector2 initialPosition = new(WindowUtils.WindowWidth * 0.75f, WindowUtils.WindowHeight * 0.25f);
+            DrawUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"\"{NetPlay.ServerName}\"", initialPosition - new Vector2(0, 40),
+                Color.White, Color.Black, new Vector2(0.6f).ToResolution(), 0f, Anchor.TopLeft, 0.8f);
+            DrawUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"Connected Players:", initialPosition,
+                Color.White, Color.Black, new Vector2(0.6f).ToResolution(), 0f, Anchor.TopLeft, 0.8f);
+
+            for (int i = 0; i < Server.ConnectedClients.Count(x => x is not null); i++) {
+                var client = Server.ConnectedClients[i];
+                // TODO: when u work on this again be sure to like, re-enable this code, cuz like, if u dont, u die.
+                Color textCol = PlayerID.PlayerTankColors[client.Id].ToColor();
+                //if (NetPlay.CurrentClient.Id == i)
+                //textCol = Color.Green;
+
+                DrawUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"{client.Name}" + $" ({PlayerID.Collection.GetKey(client.Id)} tank)",
+                    initialPosition + new Vector2(0, 20) * (i + 1), textCol, Color.Black, new Vector2(0.6f).ToResolution(), 0f, Anchor.TopLeft, 0.8f);
+            }
+        }
     }
 }

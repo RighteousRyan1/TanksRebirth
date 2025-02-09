@@ -17,7 +17,7 @@ namespace TanksRebirth.GameContent;
 // TODO: plane sounds (done), explosive (bomb, missile?) 
 // potentially... plane can crash? into each other? into the ground?
 public class Airplane {
-    public const int MAX_PLANES = 5;
+    public const int MAX_PLANES = 30;
     public static Airplane[] AllPlanes = new Airplane[MAX_PLANES];
 
     // for modders.
@@ -69,8 +69,12 @@ public class Airplane {
 
         PlaneLoop = new OggAudio("Content/Assets/sounds/plane/plane_loop.ogg");
 
-        Model = GameResources.GetGameResource<Model>("Assets/plane");
+        Model = GameResources.GetRawGameAsset<Model>("Assets/models/plane"); //GameResources.GetGameResource<Model>("Assets/models/plane");
+
         _boneTransforms = new Matrix[Model.Bones.Count];
+        Model.CopyAbsoluteBoneTransformsTo(_boneTransforms);
+        Model!.Root.Transform = World;
+
         TrapDoorL = Model.Meshes["Plane_Door1"];
         TrapDoorR = Model.Meshes["Plane_Door2"];
         PropellerL = Model.Meshes["Plane_Prop1"];
@@ -174,6 +178,7 @@ public class Airplane {
 
         PlaneLoop.Stop();
         //PlaneLoop.Dispose();
+        Model = null;
         AllPlanes[Id] = null;
     }
     public void Update() {

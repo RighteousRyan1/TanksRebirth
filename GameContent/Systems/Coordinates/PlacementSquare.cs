@@ -14,6 +14,7 @@ using TanksRebirth.Internals.UI;
 using TanksRebirth.GameContent.ID;
 using Microsoft.Xna.Framework.Input;
 using TanksRebirth.GameContent.RebirthUtils;
+using TanksRebirth.GameContent.Globals;
 
 namespace TanksRebirth.GameContent.Systems.Coordinates;
 
@@ -234,7 +235,7 @@ public class PlacementSquare {
                     }
                 }
                 effect.TextureEnabled = true;
-                effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
+                effect.Texture = TextureGlobals.Pixels[Color.White];
 
                 if (IsHovered && !hoverUi)
                     effect.Alpha = 0.7f;

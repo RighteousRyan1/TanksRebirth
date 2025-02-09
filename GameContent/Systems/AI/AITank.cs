@@ -232,28 +232,28 @@ public partial class AITank : Tank {
         #region Special
 
         if (tier == TankID.Commando) {
-            Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_commando");
+            Model = GameResources.GetGameResource<Model>("Assets/models/specialtanks/tank_commando");
 
             _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_commando");
             // fix?
         }
         else if (tier == TankID.Assassin) {
-            Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_assassin");
+            Model = GameResources.GetGameResource<Model>("Assets/models/specialtanks/tank_assassin");
 
             _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_assassin");
         }
         else if (tier == TankID.RocketDefender) {
-            Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_rocket");
+            Model = GameResources.GetGameResource<Model>("Assets/models/specialtanks/tank_rocket");
 
             _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_rocket");
         }
         else if (tier == TankID.Electro) {
-            Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_electro");
+            Model = GameResources.GetGameResource<Model>("Assets/models/specialtanks/tank_electro");
 
             _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_electro");
         }
         else if (tier == TankID.Explosive) {
-            Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_explosive");
+            Model = GameResources.GetGameResource<Model>("Assets/models/specialtanks/tank_explosive");
 
             _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_explosive");
         }

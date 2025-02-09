@@ -22,6 +22,7 @@ using TanksRebirth.GameContent.UI;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.UI.MainMenu;
+using TanksRebirth.Internals.Common.Framework;
 
 namespace TanksRebirth.GameContent;
 
@@ -467,7 +468,7 @@ public class PlayerTank : Tank
     private void DrawShootPath() {
         const int MAX_PATH_UNITS = 10000;
 
-        var whitePixel = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
+        var whitePixel = TextureGlobals.Pixels[Color.White];
         var pathPos = Position + new Vector2(0, 18).Rotate(-TurretRotation);
         var pathDir = Vector2.UnitY.Rotate(TurretRotation - MathHelper.Pi);
         pathDir.Y *= -1;
@@ -512,19 +513,20 @@ public class PlayerTank : Tank
                 }
             }
 
-            if (pathRicochetCount > Properties.RicochetCount)
-                return;
-
-            if (GameHandler.AllTanks.Any(tnk => tnk is not null && !tnk.Dead && tnk.CollisionCircle.Intersects(new Internals.Common.Framework.Circle() { Center = pathPos, Radius = 4 })))
-                return;
+            var cannotBounce = pathRicochetCount > Properties.RicochetCount;
+            if (cannotBounce) return;
+            var isTankInPath = GameHandler.AllTanks.Any(
+                tnk => tnk is not null && !tnk.Dead && tnk.CollisionCircle.Intersects(new Circle() { Center = pathPos, Radius = 4 }));
+            if (isTankInPath) return;
 
             pathPos += pathDir;
 
             var pathPosScreen = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(pathPos.X, 11, pathPos.Y), TankGame.GameView, TankGame.GameProjection);
-            var off = MathF.Sin(i * MathF.PI / 5 - TankGame.RunTime * 0.3f);
+            var off = MathF.Abs(MathF.Sin(i * MathF.PI / 5 - TankGame.RunTime * 0.3f));
             var rgbColor = ColorUtils.HsvToRgb(TankGame.UpdateCount + i % 255 / 255f * 360, 1, 1);
+            var scale = Vector2.One * 4 * off;
             DrawUtils.DrawBorderedTexture(TankGame.SpriteRenderer, whitePixel, pathPosScreen, Color.Black,
-                rgbColor, Vector2.One * 4 * off, 0f, Anchor.Center, 1f);
+                rgbColor, scale, 0f, Anchor.Center, 1f);
             //TankGame.SpriteRenderer.Draw(whitePixel, pathPosScreen, null, ColorUtils.HsvToRgb(TankGame.UpdateCount + i % 255 / 255f * 360, 1, 1), 0, whitePixel.Size() / 2, new Vector2(3 + off).ToResolution(), default, default);
         }
     }
@@ -607,7 +609,9 @@ public class PlayerTank : Tank
             }
         }
 
-        bool needClarification = CampaignGlobals.ShouldMissionsProgress && !CampaignGlobals.InMission && IsIngame && !IntermissionSystem.IsAwaitingNewMission;
+        // a bit hardcoded but whatever
+        bool needClarification = CampaignGlobals.ShouldMissionsProgress 
+            && !CampaignGlobals.InMission && IsIngame && !IntermissionSystem.IsAwaitingNewMission && MainMenuUI.MenuState == MainMenuUI.UIState.Mulitplayer;
 
         var playerColor = PlayerID.PlayerTankColors[PlayerType].ToColor();
         var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 125).ToResolution(); ;

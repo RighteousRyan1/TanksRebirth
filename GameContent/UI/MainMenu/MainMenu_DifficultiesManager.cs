@@ -45,6 +45,34 @@ public static partial class MainMenuUI {
 
     public static UITextButton DisguiseMode;
 
+    internal static void SetDifficultiesButtonsVisibility(bool visible) {
+        TanksAreCalculators.IsVisible = visible;
+        PieFactory.IsVisible = visible;
+        UltraMines.IsVisible = visible;
+        BulletHell.IsVisible = visible;
+        AllInvisible.IsVisible = visible;
+        AllStationary.IsVisible = visible;
+        Armored.IsVisible = visible;
+        AllHoming.IsVisible = visible;
+        BumpUp.IsVisible = visible;
+        Monochrome.IsVisible = visible;
+        InfiniteLives.IsVisible = visible;
+        MasterModBuff.IsVisible = visible;
+        MarbleModBuff.IsVisible = visible;
+        MachineGuns.IsVisible = visible;
+        RandomizedTanks.IsVisible = visible;
+        ThunderMode.IsVisible = visible;
+        POVMode.IsVisible = visible;
+        AiCompanion.IsVisible = visible;
+        Shotguns.IsVisible = visible;
+        Predictions.IsVisible = visible;
+        RandomizedPlayer.IsVisible = visible;
+        BulletBlocking.IsVisible = visible;
+        FFA.IsVisible = visible;
+        LanternMode.IsVisible = visible;
+        DisguiseMode.IsVisible = visible;
+    }
+
     public static void UpdateDifficulties() {
         DisguiseMode.Text = "Disguise: " + TankID.Collection.GetKey(Difficulties.DisguiseValue);
         Monochrome.Text = "Monochrome: " + TankID.Collection.GetKey(Difficulties.MonochromeValue);

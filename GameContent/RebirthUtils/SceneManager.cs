@@ -26,6 +26,8 @@ public static class SceneManager {
         //isNight = true
     };
 
+    public static Color ThunderColor = Color.DeepSkyBlue;
+
     private static bool _musicLoaded;
 
     public delegate void LoadTankScene();
@@ -117,7 +119,7 @@ public static class SceneManager {
 
 
         // TODO: should the chance be scaled by tps?
-        if (GameHandler.GameRand.NextFloat(0, 1f) <= 0.003f) {
+        if (GameHandler.GameRand.NextFloat(0, 1f) <= 0.003f * TankGame.DeltaTime) {
             var rand = new Range<Thunder.ThunderType>(Thunder.ThunderType.Fast, Thunder.ThunderType.Instant2);
             var type = (Thunder.ThunderType)GameHandler.GameRand.Next((int)rand.Min, (int)rand.Max);
 
@@ -127,7 +129,7 @@ public static class SceneManager {
 
         Thunder brightest = null;
 
-        float minThresh = 0.005f;
+        float minThresh = 0.05f;
 
         foreach (var thun in Thunder.Thunders) {
             if (thun is not null) {
@@ -135,8 +137,7 @@ public static class SceneManager {
 
                 if (brightest is null)
                     brightest = thun;
-                else
-                    if (thun.CurBright > brightest.CurBright && thun.CurBright > minThresh)
+                else if (thun.CurBright > brightest.CurBright && thun.CurBright > minThresh)
                     brightest = thun;
             }
         }
@@ -144,12 +145,15 @@ public static class SceneManager {
         GameLight.Color = Color.Multiply(Color.DeepSkyBlue, 0.5f); // DeepSkyBlue
 
 
-        if (brightest is not null) {
+        if (brightest is not null && brightest.CurBright > minThresh) {
             TankGame.ClearColor = Color.DeepSkyBlue * brightest.CurBright;
-            GameLight.Brightness = brightest.CurBright / 6;
+            GameLight.Brightness = brightest.CurBright / 2;
+            Console.WriteLine("no balls");
         }
-        else
+        else {
+            Console.WriteLine("balls");
             GameLight.Brightness = minThresh;
+        }
 
         GameLight.Apply(false);
     }

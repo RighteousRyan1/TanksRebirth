@@ -22,9 +22,11 @@ public class Client {
 
     public int Id;
     public string Name;
-    internal Client(int id, string username) {
+    public bool IsOperatedByPlayer;
+    internal Client(int id, string username, bool isOperatedByPlayer = true) {
         Id = id;
         Name = username;
+        IsOperatedByPlayer = isOperatedByPlayer;
     }
 
     public static void CreateClient(string username) {

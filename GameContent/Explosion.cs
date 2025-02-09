@@ -62,8 +62,8 @@ public class Explosion : IAITankDanger {
         //int vertLayers = (int)(scale * 2.5f); // 16
         //int horizLayers = (int)scale; // 5
 
-        int horizLayers = 10;//(int)(scale * 1.5f) + 2; // 10
-        int vertLayers = 8;//(int)(scale * 1.1f) + 2; // 8
+        int horizLayers = (int)(scale * 1.5f) + 2; // 10
+        int vertLayers = (int)(scale * 1.1f) + 2; // 8
 
         var ring = GameHandler.Particles.MakeParticle(Position3D + Vector3.UnitY, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/ring"));
         ring.Scale = new(1.3f);

@@ -136,7 +136,7 @@ public static class GameResources {
     public static T GetRawAsset<T>(this ContentManager manager, string assetName) where T : class {
         var t = typeof(ContentManager).GetMethod("ReadAsset", BindingFlags.Instance | BindingFlags.NonPublic);
 
-        var generic = t.MakeGenericMethod(typeof(T)).Invoke(manager, new object[] { assetName, null }) as T;
+        var generic = t.MakeGenericMethod(typeof(T)).Invoke(manager, [assetName, null]) as T;
 
         return generic;
     }
@@ -144,7 +144,7 @@ public static class GameResources {
     public static T GetRawGameAsset<T>(string assetName) where T : class {
         var t = typeof(ContentManager).GetMethod("ReadAsset", BindingFlags.Instance | BindingFlags.NonPublic);
 
-        var generic = t.MakeGenericMethod(typeof(T)).Invoke(TankGame.Instance.Content, new object[] { assetName, null }) as T;
+        var generic = t.MakeGenericMethod(typeof(T)).Invoke(TankGame.Instance.Content, [assetName, null]) as T;
 
         return generic;
 

@@ -26,7 +26,9 @@ public static partial class GameLauncher
     public static void DebugCheck() {
         /*
          *  Boot up console for debugging purposes and other goods.
+         *  ...Only if a debugger is attached.
          */
+        if (!Debugger.IsAttached) return;
         AllocConsole();
         Thread.Sleep(1000);
         Console.OpenStandardOutput();

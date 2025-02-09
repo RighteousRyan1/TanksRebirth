@@ -20,6 +20,7 @@ using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.RebirthUtils;
 using static TanksRebirth.GameContent.RebirthUtils.DebugManager;
 using TanksRebirth.GameContent.UI.MainMenu;
+using TanksRebirth.GameContent.UI;
 
 namespace TanksRebirth.GameContent;
 
@@ -921,11 +922,14 @@ public abstract class Tank {
                             continue;
 
                         foreach (BasicEffect effect in mesh.Effects) {
-                            var rotY = cosmetic.LockOptions switch {
-                                PropLockOptions.ToTurret => cosmetic.Rotation.Y + TurretRotation,
-                                PropLockOptions.ToTank => cosmetic.Rotation.Y + TankRotation,
-                                _ => cosmetic.Rotation.Y,
-                            };
+                            float rotY = TurretRotation;
+                            if (cosmetic.LockOptions == PropLockOptions.ToTurret)
+                                rotY = cosmetic.Rotation.Y + TurretRotation;
+                            else if (cosmetic.LockOptions == PropLockOptions.ToTank)
+                                rotY = cosmetic.Rotation.Y + TankRotation;
+                            else if (cosmetic.LockOptions == PropLockOptions.ToTurretCentered)
+                                cosmetic.RelativePosition = cosmetic.RelativePosition.RotateXZ(-rotY);
+
                             
                             effect.World = i == 0 ? Matrix.CreateRotationX(cosmetic.Rotation.X) * Matrix.CreateRotationY(rotY) * Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) * Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition)
                                 : Matrix.CreateRotationX(cosmetic.Rotation.X) * Matrix.CreateRotationY(cosmetic.Rotation.Y) * Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) * Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition) * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);

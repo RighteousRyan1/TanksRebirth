@@ -95,7 +95,7 @@ public class NetPlay {
                         clientId = reader.GetByte();
                         string clientName = reader.GetString();
 
-                        Server.ConnectedClients[i] = new Client(clientId, clientName);
+                        Server.ConnectedClients[i] = new Client(clientId, clientName, isOperatedByPlayer: isClientAvailable);
                     }
                 }
 
