@@ -217,14 +217,14 @@ public static partial class MainMenuUI {
             }
             return;
         }
+        return; // run this code later lmfao
         for (int i = 0; i < Server.ConnectedClients.Length; i++) {
             var client = Server.ConnectedClients[i];
             if (client is null) continue;
             // TODO: UHHH??????
             if (client.IsOperatedByPlayer) continue;
 
-            if (GameHandler.AllPlayerTanks.Any(x => x is not null && x.PlayerId == i))
-                continue;
+            if (GameHandler.AllPlayerTanks[i] is not null) continue;
 
             var p = new PlayerTank(client.Id);
             p.Body.Position = (PlayersGraphicOrigin + new Vector2(0, plrOffset).Rotate(MathHelper.PiOver2 / 2 * i)) / Tank.UNITS_PER_METER;
@@ -241,9 +241,7 @@ public static partial class MainMenuUI {
             }
         }
         // TODO: rework this very rudimentary ui
-        if (NetPlay.CurrentServer is not null && 
-            (Server.ConnectedClients is not null || NetPlay.ServerName is not null) || 
-            Client.IsConnected() && Client.LobbyDataReceived) {
+        if (true || Server.ConnectedClients is not null && Client.IsConnected() && Client.LobbyDataReceived) {
             Vector2 initialPosition = new(WindowUtils.WindowWidth * 0.75f, WindowUtils.WindowHeight * 0.25f);
             DrawUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"\"{NetPlay.ServerName}\"", initialPosition - new Vector2(0, 40),
                 Color.White, Color.Black, new Vector2(0.6f).ToResolution(), 0f, Anchor.TopLeft, 0.8f);

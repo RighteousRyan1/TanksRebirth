@@ -7,7 +7,7 @@ using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems.Coordinates;
-using TanksRebirth.GameContent.UI;
+using TanksRebirth.GameContent.UI.LevelEditor;
 
 namespace TanksRebirth.Internals.Common.Utilities;
 // todo: implement
@@ -67,18 +67,18 @@ public readonly struct WiiMap
         // Validate map before allocating memory and wasting resources in saving something we just can not save correctly.
         var validation = ValidateWiiMap();
         if (validation == WiiMapValidationResult.FailureTooManyPlayers) {
-            LevelEditor.Alert("Too many players for Tanks! file format.", 240f);
-            LevelEditor.GUICategory = LevelEditor.UICategory.LevelEditor;
+            LevelEditorUI.Alert("Too many players for Tanks! file format.", 240f);
+            LevelEditorUI.GUICategory = LevelEditorUI.UICategory.LevelEditor;
             return;
         }
         else if (validation == WiiMapValidationResult.FailureTooManyAI) {
-            LevelEditor.Alert("Too many AI for Tanks! file format.", 240f);
-            LevelEditor.GUICategory = LevelEditor.UICategory.LevelEditor;
+            LevelEditorUI.Alert("Too many AI for Tanks! file format.", 240f);
+            LevelEditorUI.GUICategory = LevelEditorUI.UICategory.LevelEditor;
             return;
         }
         else if (validation == (WiiMapValidationResult.FailureTooManyPlayers | WiiMapValidationResult.FailureTooManyAI)) {
-            LevelEditor.Alert("Too many AI AND players for Tanks! file format.", 240f);
-            LevelEditor.GUICategory = LevelEditor.UICategory.LevelEditor;
+            LevelEditorUI.Alert("Too many AI AND players for Tanks! file format.", 240f);
+            LevelEditorUI.GUICategory = LevelEditorUI.UICategory.LevelEditor;
             return;
         }
         

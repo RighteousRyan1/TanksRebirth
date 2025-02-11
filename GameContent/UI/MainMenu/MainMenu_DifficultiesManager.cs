@@ -177,8 +177,6 @@ public static partial class MainMenuUI {
             OnLeftClick = (elem) => {
                 if (Difficulties.MonochromeValue + 1 >= TankID.Collection.Count)
                     Difficulties.MonochromeValue = TankID.None;
-                else if (Difficulties.MonochromeValue + 1 == TankID.Random) // we do a little defensive programming xd
-                    Difficulties.MonochromeValue = TankID.Brown;
                 else
                     Difficulties.MonochromeValue++;
                 Difficulties.Types["Monochrome"] = Difficulties.MonochromeValue != TankID.None;
@@ -186,8 +184,6 @@ public static partial class MainMenuUI {
             OnRightClick = (elem) => {
                 if (Difficulties.MonochromeValue - 1 < TankID.None)
                     Difficulties.MonochromeValue = TankID.Collection.Count - 1;
-                else if (Difficulties.MonochromeValue - 1 == TankID.Random)
-                    Difficulties.MonochromeValue = TankID.None;
                 else
                     Difficulties.MonochromeValue--;
                 Difficulties.Types["Monochrome"] = Difficulties.MonochromeValue != TankID.None;
@@ -235,8 +231,6 @@ public static partial class MainMenuUI {
             OnLeftClick = (elem) => {
                 if (Difficulties.RandomTanksUpper + 1 >= TankID.Collection.Count)
                     Difficulties.RandomTanksUpper = TankID.None;
-                else if (Difficulties.RandomTanksUpper + 1 == TankID.Random) // we do a little defensive programming xd
-                    Difficulties.RandomTanksUpper = TankID.Brown;
                 else
                     Difficulties.RandomTanksUpper++;
                 Difficulties.Types["RandomizedTanks"] = Difficulties.RandomTanksLower != TankID.None && Difficulties.RandomTanksUpper != TankID.None;
@@ -244,8 +238,6 @@ public static partial class MainMenuUI {
             OnRightClick = (elem) => {
                 if (Difficulties.RandomTanksLower + 1 >= TankID.Collection.Count)
                     Difficulties.RandomTanksLower = TankID.None;
-                else if (Difficulties.RandomTanksLower + 1 == TankID.Random) // we do a little defensive programming xd
-                    Difficulties.RandomTanksLower = TankID.Brown;
                 else
                     Difficulties.RandomTanksLower++;
                 Difficulties.Types["RandomizedTanks"] = Difficulties.RandomTanksLower != TankID.None && Difficulties.RandomTanksUpper != TankID.None;
@@ -331,8 +323,6 @@ public static partial class MainMenuUI {
             OnLeftClick = (elem) => {
                 if (Difficulties.DisguiseValue + 1 >= TankID.Collection.Count)
                     Difficulties.DisguiseValue = TankID.None;
-                else if (Difficulties.DisguiseValue + 1 == TankID.Random) // we do a little defensive programming xd
-                    Difficulties.DisguiseValue = TankID.Brown;
                 else
                     Difficulties.DisguiseValue++;
                 Difficulties.Types["Disguise"] = Difficulties.DisguiseValue != TankID.None;
@@ -340,8 +330,6 @@ public static partial class MainMenuUI {
             OnRightClick = (elem) => {
                 if (Difficulties.DisguiseValue - 1 < TankID.None)
                     Difficulties.DisguiseValue = TankID.Collection.Count - 1;
-                else if (Difficulties.DisguiseValue - 1 == TankID.Random)
-                    Difficulties.DisguiseValue = TankID.None;
                 else
                     Difficulties.DisguiseValue--;
                 Difficulties.Types["Disguise"] = Difficulties.DisguiseValue != TankID.None;

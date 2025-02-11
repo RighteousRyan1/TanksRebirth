@@ -31,6 +31,7 @@ using TanksRebirth.GameContent.RebirthUtils;
 using System.Text;
 using TanksRebirth.GameContent.Cosmetics;
 using TanksRebirth.GameContent.UI.MainMenu;
+using TanksRebirth.GameContent.UI.LevelEditor;
 
 namespace TanksRebirth.GameContent;
 
@@ -191,7 +192,7 @@ public class GameHandler {
             if (TankMusicSystem.Audio is not null)
                 foreach (var song in TankMusicSystem.Audio.ToList())
                     song.Value.Volume = 0;
-        LevelEditor.Update();
+        LevelEditorUI.Update();
 
         foreach (var expl in Explosion.Explosions)
             expl?.Update();
@@ -202,7 +203,7 @@ public class GameHandler {
         foreach (var cube in Block.AllBlocks)
             cube?.OnUpdate();
 
-        if ((DebugManager.DebuggingEnabled && DebugManager.DebugLevel == DebugManager.Id.LevelEditDebug && TankGame.OverheadView) || LevelEditor.Active)
+        if ((DebugManager.DebuggingEnabled && DebugManager.DebugLevel == DebugManager.Id.LevelEditDebug && TankGame.OverheadView) || LevelEditorUI.Active)
             foreach (var sq in PlacementSquare.Placements)
                 sq?.Update();
 
@@ -211,7 +212,7 @@ public class GameHandler {
         if (MainMenuUI.Active)
             MainMenuUI.Update();
 
-        if ((TankGame.OverheadView || MainMenuUI.Active) && !LevelEditor.Active) {
+        if ((TankGame.OverheadView || MainMenuUI.Active) && !LevelEditorUI.Active) {
             CampaignGlobals.InMission = false;
             IntermissionHandler.TankFunctionWait = 600;
         }
@@ -221,7 +222,7 @@ public class GameHandler {
         IntermissionHandler.Update();
 
         if (TankGame.OverheadView)
-            LevelEditor.HandleLevelEditorModifications();
+            LevelEditorUI.HandleLevelEditorModifications();
 
         OnPostUpdate?.Invoke();
     }
@@ -229,7 +230,7 @@ public class GameHandler {
     internal static void RenderAll() {
         TankGame.Instance.GraphicsDevice.BlendState = BlendState.AlphaBlend;
 
-        if (!MainMenuUI.Active && !LevelEditor.Editing)
+        if (!MainMenuUI.Active && !LevelEditorUI.Editing)
             ExperienceBar?.Render(TankGame.SpriteRenderer, new(WindowUtils.WindowWidth / 2, 50.ToResolutionY()), new Vector2(100, 20).ToResolution(), Anchor.Center, Color.Red, Color.Lime);
         // CHECK: move this back if necessary
         GameScene.RenderWorldModels();
@@ -266,7 +267,7 @@ public class GameHandler {
 
         Particles.RenderModelParticles();
 
-        if ((DebugManager.DebugLevel == DebugManager.Id.LevelEditDebug && TankGame.OverheadView) || LevelEditor.Active)
+        if ((DebugManager.DebugLevel == DebugManager.Id.LevelEditDebug && TankGame.OverheadView) || LevelEditorUI.Active)
             foreach (var sq in PlacementSquare.Placements)
                 sq?.Render();
         if (DebugManager.DebuggingEnabled) {
@@ -314,7 +315,7 @@ public class GameHandler {
 
         IntermissionHandler.RenderCountdownGraphics();
 
-        if (!MainMenuUI.Active && !LevelEditor.Active) {
+        if (!MainMenuUI.Active && !LevelEditorUI.Active) {
             if (IntermissionSystem.IsAwaitingNewMission) {
                 // uhhh... what was i doing here?
             }
@@ -332,7 +333,7 @@ public class GameHandler {
             DrawUtils.DrawShadowedString(TankGame.TextFontLarge, new Vector2(80.ToResolutionX(), WindowUtils.WindowHeight * 0.9f - 14f.ToResolutionY()), Vector2.One, $"{PlayerTank.KillCount}", new(119, 190, 238), new Vector2(0.675f).ToResolution(), 1f);
         }
         // TODO: put this code elsewhere... idk where rn.
-        var shouldSeeInfo = !MainMenuUI.Active && !LevelEditor.Active && !CampaignCompleteUI.IsViewingResults;
+        var shouldSeeInfo = !MainMenuUI.Active && !LevelEditorUI.Active && !CampaignCompleteUI.IsViewingResults;
         if (shouldSeeInfo) {
             var font = TankGame.TextFontLarge;
             var infoScale = 0.5f;
@@ -342,7 +343,7 @@ public class GameHandler {
             var barPos = new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight - (bar.Height + 35).ToResolutionY());
             var missionInfo = $"{CampaignGlobals.LoadedCampaign.CurrentMission.Name ?? $"{TankGame.GameLanguage.Mission}"}";
             var infoMeasure = font.MeasureString(missionInfo) * infoScale;
-            var infoScaling = 1f - ((float)missionInfo.Length / LevelEditor.MAX_MISSION_CHARS) + 0.4f;
+            var infoScaling = 1f - ((float)missionInfo.Length / LevelEditorUI.MAX_MISSION_CHARS) + 0.4f;
             var tanksRemaining = $"x {AIManager.CountAll()}";
             var tanksRemMeasure = font.MeasureString(tanksRemaining) * infoScale;
 

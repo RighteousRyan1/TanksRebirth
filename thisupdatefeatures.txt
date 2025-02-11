@@ -22,6 +22,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
     - All music is now in `music` or a subfolder under `music`
 - Enabling "Lantern Mode" no longer makes the main menu blur go away
 - `RotatedByRadians` -> `Rotate`
+- `TankID.None` and `Random` have been purged, for good reasons.
 
 ## Fixes
 

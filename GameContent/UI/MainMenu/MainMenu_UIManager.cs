@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
 using TanksRebirth.GameContent.Speedrunning;
 using TanksRebirth.GameContent.Systems;
+using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.Framework.Animation;
 using TanksRebirth.Internals.Common.GameUI;
@@ -128,8 +129,8 @@ public static partial class MainMenuUI
         };
         PlayButton_LevelEditor.SetDimensions(() => new Vector2(700, 650).ToResolution(), () => new Vector2(500, 50).ToResolution());
         PlayButton_LevelEditor.OnLeftClick = (b) => {
-            LevelEditor.Initialize();
-            LevelEditor.Open();
+            LevelEditorUI.Initialize();
+            LevelEditorUI.Open();
         };
         CosmeticsMenuButton = new(TankGame.GameLanguage.CosmeticsMenu, font, Color.WhiteSmoke) {
             IsVisible = false,

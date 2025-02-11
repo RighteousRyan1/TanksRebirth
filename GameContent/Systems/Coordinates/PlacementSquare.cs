@@ -8,13 +8,13 @@ using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.Utilities;
 using FontStashSharp;
 using System.Linq;
-using TanksRebirth.GameContent.UI;
 using TanksRebirth.Enums;
 using TanksRebirth.Internals.UI;
 using TanksRebirth.GameContent.ID;
 using Microsoft.Xna.Framework.Input;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Globals;
+using TanksRebirth.GameContent.UI.LevelEditor;
 
 namespace TanksRebirth.GameContent.Systems.Coordinates;
 
@@ -94,14 +94,14 @@ public class PlacementSquare {
     /// </summary>
     /// <param name="place">Whether or not to place the block or remove the block. If false, the block is removed.</param>
     public void DoPlacementAction(bool place) {
-        if (UIElement.GetElementsAt(MouseUtils.MousePosition).Count > 0 || LevelEditor.GUICategory == LevelEditor.UICategory.SavingThings)
+        if (UIElement.GetElementsAt(MouseUtils.MousePosition).Count > 0 || LevelEditorUI.GUICategory == LevelEditorUI.UICategory.SavingThings)
             return;
         if (PlacesBlock) {
             if (!HasBlock && HasItem)
                 return;
 
             if (place) {
-                var block = new Block(LevelEditor.Active ? LevelEditor.SelectedBlockType : DebugManager.blockType, LevelEditor.Active ? LevelEditor.BlockHeight : DebugManager.blockHeight, Position.FlattenZ());
+                var block = new Block(LevelEditorUI.Active ? LevelEditorUI.SelectedBlockType : DebugManager.blockType, LevelEditorUI.Active ? LevelEditorUI.BlockHeight : DebugManager.blockHeight, Position.FlattenZ());
                 BlockId = block.Id;
 
                 HasBlock = true;
@@ -118,7 +118,7 @@ public class PlacementSquare {
                 HasBlock = true;
                 IsPlacing = false;
             }
-            LevelEditor.missionToRate = Mission.GetCurrent();
+            LevelEditorUI.missionToRate = Mission.GetCurrent();
         }
         else {
             // var team = LevelEditor.Active ? LevelEditor.SelectedTankTeam : (TankTeam)GameHandler.tankToSpawnTeam;
@@ -130,35 +130,35 @@ public class PlacementSquare {
                 // FIXME: why does this even craaaash?
                 GameHandler.AllTanks[TankId].Remove(true);
                 TankId = -1;
-                LevelEditor.missionToRate = Mission.GetCurrent();
+                LevelEditorUI.missionToRate = Mission.GetCurrent();
                 return;
             }
 
-            var team = LevelEditor.Active ? LevelEditor.SelectedTankTeam : DebugManager.tankToSpawnTeam;
-            if (LevelEditor.CurCategory == LevelEditor.Category.EnemyTanks) {
-                if (LevelEditor.Active && LevelEditor.SelectedTankTier < TankID.Brown)
+            var team = LevelEditorUI.Active ? LevelEditorUI.SelectedTankTeam : DebugManager.tankToSpawnTeam;
+            if (LevelEditorUI.CurCategory == LevelEditorUI.Category.EnemyTanks) {
+                if (LevelEditorUI.Active && LevelEditorUI.SelectedTankTier < TankID.Brown)
                     return;
                 if (AIManager.CountAll() >= 50) {
-                    LevelEditor.Alert("You are at enemy tank capacity!");
+                    LevelEditorUI.Alert("You are at enemy tank capacity!");
                     return;
                 }
-                var tnk = DebugManager.SpawnTankAt(Position, LevelEditor.Active ? LevelEditor.SelectedTankTier : DebugManager.tankToSpawnType, team); // todo: finish
+                var tnk = DebugManager.SpawnTankAt(Position, LevelEditorUI.Active ? LevelEditorUI.SelectedTankTier : DebugManager.tankToSpawnType, team); // todo: finish
                 HasBlock = false;
                 TankId = tnk.WorldId;
             }
             else {
-                var type = LevelEditor.Active ? LevelEditor.SelectedPlayerType : PlayerID.Blue;
+                var type = LevelEditorUI.Active ? LevelEditorUI.SelectedPlayerType : PlayerID.Blue;
 
                 var idx = Array.FindIndex(GameHandler.AllPlayerTanks, x => x is not null && x.PlayerType == type);
                 if (idx > -1) {
-                    LevelEditor.Alert($"This color player tank already exists! (ID {idx})");
+                    LevelEditorUI.Alert($"This color player tank already exists! (ID {idx})");
                     return;
                 }
 
                 var me = DebugManager.SpawnMe(type, team);
                 TankId = me.WorldId;
             }
-            LevelEditor.missionToRate = Mission.GetCurrent();
+            LevelEditorUI.missionToRate = Mission.GetCurrent();
         }
     }
     public void Update() {
@@ -226,7 +226,7 @@ public class PlacementSquare {
                     else if (TankId > -1) {
                         var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
 
-                        DrawUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"{LevelEditor.TeamColorsLocalized[GameHandler.AllTanks[TankId].Team]}", pos - new Vector2(0, 8).ToResolution(), TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.Black, new Vector2(0.9f).ToResolution() * TankGame.AddativeZoom, 0f, Anchor.Center);
+                        DrawUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"{LevelEditorUI.TeamColorsLocalized[GameHandler.AllTanks[TankId].Team]}", pos - new Vector2(0, 8).ToResolution(), TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.Black, new Vector2(0.9f).ToResolution() * TankGame.AddativeZoom, 0f, Anchor.Center);
 
                         if (GameHandler.AllTanks[TankId] is AITank ai)
                             DrawUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"ID: {ai.AITankId}", pos + new Vector2(0, 8), TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.Black, new Vector2(0.8f).ToResolution() * TankGame.AddativeZoom, 0f, Anchor.Center);

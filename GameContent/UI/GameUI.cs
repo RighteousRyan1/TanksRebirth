@@ -10,6 +10,7 @@ using TanksRebirth.Internals.Common.Framework.Input;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Net;
 using TanksRebirth.GameContent.UI.MainMenu;
+using TanksRebirth.GameContent.UI.LevelEditor;
 
 namespace TanksRebirth.GameContent.UI;
 
@@ -194,9 +195,9 @@ public static class GameUI
                 elem?.Remove();
             MainMenuUI.campaignNames.Clear();
             MainMenuUI.Open();
-            if (LevelEditor.Active) {
-                LevelEditor.Close(true);
-                LevelEditor.Editing = false;
+            if (LevelEditorUI.Active) {
+                LevelEditorUI.Close(true);
+                LevelEditorUI.Editing = false;
             }
         }
         else {

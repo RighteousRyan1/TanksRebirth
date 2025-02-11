@@ -4,7 +4,7 @@ using System.Linq;
 using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Systems;
-using TanksRebirth.GameContent.UI;
+using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Net;
 
@@ -102,11 +102,11 @@ public static class DiscordRichPresence {
                     SetDetails($"Campaign: '{CampaignGlobals.LoadedCampaign.MetaData.Name}' on '{CampaignGlobals.LoadedCampaign.CurrentMission.Name}' | Lives: {PlayerTank.Lives[NetPlay.GetMyClientId()]}");
                 }
                 else {
-                    if (LevelEditor.Active)
+                    if (LevelEditorUI.Active)
                         SetDetails($"Editing a level");
-                    else if (!LevelEditor.Editing)
+                    else if (!LevelEditorUI.Editing)
                         SetDetails($"Playing freeplay | {tnkCnt}");
-                    else if (LevelEditor.Editing)
+                    else if (LevelEditorUI.Editing)
                         SetDetails($"Testing a level");
                 }
 

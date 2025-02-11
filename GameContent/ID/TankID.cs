@@ -10,49 +10,48 @@ namespace TanksRebirth.GameContent.ID;
 // should this be a dictionary for people to easily add to it?
 public sealed class TankID
 {
+    public const int None = -1;
     // this is going to be a while.
-    public const int None = 0;
-    public const int Random = 1;
-    public const int Brown = 2;
-    public const int Ash = 3;
-    public const int Marine = 4;
-    public const int Yellow = 5;
-    public const int Pink = 6;
-    public const int Violet = 7;
-    public const int Green = 8;
-    public const int White = 9;
-    public const int Black = 10;
+    public const int Brown = 0;
+    public const int Ash = 1;
+    public const int Marine = 2;
+    public const int Yellow = 3;
+    public const int Pink = 4;
+    public const int Violet = 5;
+    public const int Green = 6;
+    public const int White = 7;
+    public const int Black = 8;
 
     // here separates the vanilla tanks from the master mod tanks
 
-    public const int Bronze = 11;
-    public const int Silver = 12;
-    public const int Sapphire = 13;
-    public const int Ruby = 14;
-    public const int Citrine = 15;
-    public const int Amethyst = 16;
-    public const int Emerald = 17;
-    public const int Gold = 18;
-    public const int Obsidian = 19;
+    public const int Bronze = 9;
+    public const int Silver = 10;
+    public const int Sapphire = 11;
+    public const int Ruby = 12;
+    public const int Citrine = 13;
+    public const int Amethyst = 14;
+    public const int Emerald = 15;
+    public const int Gold = 16;
+    public const int Obsidian = 17;
 
     // here separates the master mod tanks from the marble mod tanks
 
-    public const int Granite = 20;
-    public const int Bubblegum = 21;
-    public const int Water = 22;
-    public const int Tiger = 23;
-    public const int Crimson = 24;
-    public const int Fade = 25;
-    public const int Creeper = 26;
-    public const int Gamma = 27;
-    public const int Marble = 28;
+    public const int Granite = 18;
+    public const int Bubblegum = 19;
+    public const int Water = 20;
+    public const int Tiger = 21;
+    public const int Crimson = 22;
+    public const int Fade = 23;
+    public const int Creeper = 24;
+    public const int Gamma = 25;
+    public const int Marble = 26;
 
-    public const int Cherry = 29;
-    public const int Explosive = 30;
-    public const int Electro = 31;
-    public const int RocketDefender = 32;
-    public const int Assassin = 33;
-    public const int Commando = 34;
+    public const int Cherry = 27;
+    public const int Explosive = 28;
+    public const int Electro = 29;
+    public const int RocketDefender = 30;
+    public const int Assassin = 31;
+    public const int Commando = 32;
 
     public static ReflectionDictionary<TankID> Collection { get; internal set; } = new(MemberType.Fields);
 }

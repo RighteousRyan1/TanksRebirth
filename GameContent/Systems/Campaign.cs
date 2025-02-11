@@ -13,13 +13,13 @@ using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems.Coordinates;
-using TanksRebirth.GameContent.UI;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework;
 using TanksRebirth.Internals.Common.Framework.Graphics;
 using TanksRebirth.Internals.Common.IO;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
+using TanksRebirth.GameContent.UI.LevelEditor;
 
 namespace TanksRebirth.GameContent.Systems;
 
@@ -178,7 +178,7 @@ public class Campaign
 
                     if (tank.PlayerId <= Server.CurrentClientCount)
                     {
-                        if (!LevelEditor.Active)
+                        if (!LevelEditorUI.Active)
                         {
                             if (NetPlay.IsClientMatched(tank.PlayerId))
                             {
@@ -187,7 +187,7 @@ public class Campaign
                             }
                         }
                     }
-                    else if (!LevelEditor.Active)
+                    else if (!LevelEditorUI.Active)
                         tank.Remove(true);
                     if (Client.IsConnected())
                     {
@@ -243,6 +243,7 @@ public class Campaign
 
         OnMissionLoad?.Invoke(ref GameHandler.AllTanks, ref Block.AllBlocks);
     }
+    [Obsolete("This is for the legacy version of TanksRebirth.")]
     /// <summary>
     /// Loads missions from inside the <paramref name="campaignName"/> folder to memory.
     /// </summary>
@@ -307,8 +308,8 @@ public class Campaign
         var newFileName = endsWith ? fileName : (fileName + ".campaign");
         using var writer = new BinaryWriter(File.Open(newFileName, FileMode.OpenOrCreate));
 
-        writer.Write(LevelEditor.LevelFileHeader);
-        writer.Write(LevelEditor.LevelEditorVersion);
+        writer.Write(LevelEditorUI.LevelFileHeader);
+        writer.Write(LevelEditorUI.EDITOR_VERSION);
 
         int totalMissions = campaign.CachedMissions.Count(m => m != default);
         writer.Write(totalMissions);
@@ -339,13 +340,13 @@ public class Campaign
         using var reader = new BinaryReader(File.Open(Path.Combine(TankGame.SaveDirectory, fileName), FileMode.Open, FileAccess.Read));
 
         var header = reader.ReadBytes(4);
-        if (!header.SequenceEqual(LevelEditor.LevelFileHeader))
+        if (!header.SequenceEqual(LevelEditorUI.LevelFileHeader))
             throw new FileLoadException($"The byte header of this file does not match what this game expects! File name = \"{fileName}\"");
         var editorVersion = reader.ReadInt32();
         if (editorVersion < 2)
             throw new FileLoadException($"Cannot load a campaign at this level editor version! File name = \"{fileName}\"");
         // first available version.
-        if (editorVersion == 2) {
+        if (editorVersion == 2 || editorVersion == 3) {
             var totalMissions = reader.ReadInt32();
 
             campaign.CachedMissions = new Mission[totalMissions];

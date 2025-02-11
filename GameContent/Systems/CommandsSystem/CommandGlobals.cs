@@ -17,6 +17,7 @@ using Microsoft.Xna.Framework.Input;
 using TanksRebirth.Internals;
 using TanksRebirth.Graphics;
 using TanksRebirth.GameContent.UI.MainMenu;
+using TanksRebirth.GameContent.UI.LevelEditor;
 
 namespace TanksRebirth.GameContent.Systems.CommandsSystem;
 #pragma warning disable
@@ -82,8 +83,8 @@ public static class CommandGlobals {
                 GameUI.Initialize();
                 VolumeUI.Initialize();
                 GraphicsUI.Initialize();
-                LevelEditor.Initialize();
-                LevelEditor.InitializeSaveMenu();
+                LevelEditorUI.Initialize();
+                LevelEditorUI.InitializeSaveMenu();
                 // ControlsUI.Initialize();
             }
         }),

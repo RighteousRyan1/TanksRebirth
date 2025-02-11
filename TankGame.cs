@@ -44,6 +44,7 @@ using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.Internals.Common.Framework.Animation;
 using TanksRebirth.GameContent.Cosmetics;
 using TanksRebirth.GameContent.UI.MainMenu;
+using TanksRebirth.GameContent.UI.LevelEditor;
 
 namespace TanksRebirth;
 
@@ -570,8 +571,8 @@ public class TankGame : Game {
             TankMusicSystem.ResumeAll();
             if (MainMenuUI.Active)
                 MainMenuUI.Theme.Resume();
-            if (LevelEditor.Active)
-                LevelEditor.Theme.Resume();
+            if (LevelEditorUI.Active)
+                LevelEditorUI.Theme.Resume();
         }
     }
     private void TankGame_OnFocusLost(object sender, IntPtr e) {
@@ -581,8 +582,8 @@ public class TankGame : Game {
             TankMusicSystem.PauseAll();
             if (MainMenuUI.Active)
                 MainMenuUI.Theme.Pause();
-            if (LevelEditor.Active)
-                LevelEditor.Theme.Pause();
+            if (LevelEditorUI.Active)
+                LevelEditorUI.Theme.Pause();
         }
     }
 
@@ -656,8 +657,8 @@ public class TankGame : Game {
 
             SoundPlayer.SoundError();
 
-            if (LevelEditor.Active && LevelEditor.loadedCampaign != null) {
-                Campaign.Save(Path.Combine(SaveDirectory, "Backup", $"backup_{DateTime.Now.StringFormatCustom("_")}"), LevelEditor.loadedCampaign!);
+            if (LevelEditorUI.Active && LevelEditorUI.loadedCampaign != null) {
+                Campaign.Save(Path.Combine(SaveDirectory, "Backup", $"backup_{DateTime.Now.StringFormatCustom("_")}"), LevelEditorUI.loadedCampaign!);
             }
 
             IsCrashInfoVisible = true;
@@ -707,7 +708,7 @@ public class TankGame : Game {
                 Graphics.ApplyChanges();
             }
 
-            RebirthMouse.ShouldRender = !Difficulties.Types["POV"] || GameUI.Paused || MainMenuUI.Active || LevelEditor.Active;
+            RebirthMouse.ShouldRender = !Difficulties.Types["POV"] || GameUI.Paused || MainMenuUI.Active || LevelEditorUI.Active;
             if (UIElement.delay > 0)
                 UIElement.delay--;
         }
@@ -743,7 +744,7 @@ public class TankGame : Game {
         if (!IsCrashInfoVisible) {
             if (DebugManager.DebugLevel != DebugManager.Id.FreeCamTest && !DebugManager.persistFreecam) {
                 if (!MainMenuUI.Active) {
-                    if (!Difficulties.Types["POV"] || LevelEditor.Active) {
+                    if (!Difficulties.Types["POV"] || LevelEditorUI.Active) {
                         if (transitionTimer > 0) {
                             transitionTimer--;
                             if (OverheadView) {
@@ -753,7 +754,7 @@ public class TankGame : Game {
                             }
                             else {
                                 OrthoRotationVector.Y = MathUtils.SoftStep(OrthoRotationVector.Y, DEFAULT_ORTHOGRAPHIC_ANGLE, 0.08f * DeltaTime);
-                                if (!LevelEditor.Active)
+                                if (!LevelEditorUI.Active)
                                     AddativeZoom = MathUtils.SoftStep(AddativeZoom, 1f, 0.08f * DeltaTime);
                                 CameraFocusOffset.Y = MathUtils.RoughStep(CameraFocusOffset.Y, 0f, 2f * DeltaTime);
                             }
@@ -849,18 +850,18 @@ public class TankGame : Game {
 
                     var isPlayerActive = PlayerTank.ClientTank is not null;
 
-                    var keysprint = LevelEditor.Active || !isPlayerActive ? Keys.LeftShift : Keys.RightShift;
-                    var keyslow = LevelEditor.Active || !isPlayerActive ? Keys.LeftControl : Keys.RightControl;
+                    var keysprint = LevelEditorUI.Active || !isPlayerActive ? Keys.LeftShift : Keys.RightShift;
+                    var keyslow = LevelEditorUI.Active || !isPlayerActive ? Keys.LeftControl : Keys.RightControl;
 
                     if (InputUtils.CurrentKeySnapshot.IsKeyDown(keysprint))
                         moveSpeed *= 2;
                     if (InputUtils.CurrentKeySnapshot.IsKeyDown(keyslow))
                         moveSpeed /= 4;
 
-                    var keyf = LevelEditor.Active || !isPlayerActive ? Keys.W : Keys.Up;
-                    var keyb = LevelEditor.Active || !isPlayerActive ? Keys.S : Keys.Down;
-                    var keyl = LevelEditor.Active || !isPlayerActive ? Keys.A : Keys.Left;
-                    var keyr = LevelEditor.Active || !isPlayerActive ? Keys.D : Keys.Right;
+                    var keyf = LevelEditorUI.Active || !isPlayerActive ? Keys.W : Keys.Up;
+                    var keyb = LevelEditorUI.Active || !isPlayerActive ? Keys.S : Keys.Down;
+                    var keyl = LevelEditorUI.Active || !isPlayerActive ? Keys.A : Keys.Left;
+                    var keyr = LevelEditorUI.Active || !isPlayerActive ? Keys.D : Keys.Right;
 
                     if (InputUtils.MouseRight)
                         RebirthFreecam.Rotation -= new Vector3(0, MouseVelocity.Y * rotationSpeed, MouseVelocity.X * rotationSpeed);
@@ -950,7 +951,7 @@ public class TankGame : Game {
                 HoveringAnyTank = false;
                 // TODO: why is this here and not LevelEditor
                 // ... or literally anywhere else
-                if (!MainMenuUI.Active && (OverheadView || LevelEditor.Active)) {
+                if (!MainMenuUI.Active && (OverheadView || LevelEditorUI.Active)) {
                     foreach (var tnk in GameHandler.AllTanks) {
                         if (tnk == null) continue;
 
@@ -1086,7 +1087,7 @@ public class TankGame : Game {
         ChatSystem.DrawMessages();
 
         SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: DefaultRasterizer);
-        if (LevelEditor.Active) LevelEditor.Render();
+        if (LevelEditorUI.Active) LevelEditorUI.Render();
         if (CampaignCompleteUI.IsViewingResults) CampaignCompleteUI.Render();
         SpriteRenderer.End();
 

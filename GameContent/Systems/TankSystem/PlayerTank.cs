@@ -23,6 +23,7 @@ using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Internals.Common.Framework;
+using TanksRebirth.GameContent.UI.LevelEditor;
 
 namespace TanksRebirth.GameContent;
 
@@ -103,10 +104,10 @@ public class PlayerTank : Tank
                 Lives[i] = num;
     }
     public void SwapTankTexture(Texture2D texture) => _tankTexture = texture;
-    public PlayerTank(int playerType, bool isPlayerModel = true, int copyTier = TankID.None) {
+    public PlayerTank(int playerType, bool isPlayerModel = true, int copyTier = -1) {
         Model = GameResources.GetGameResource<Model>(isPlayerModel ? "Assets/models/tank_p" : "Assets/models/tank_e");
-        if (copyTier == TankID.None)
-            _tankTexture = Assets[$"tank_" + PlayerID.Collection.GetKey(playerType)!.ToLower()];
+        if (copyTier == -1)
+            _tankTexture = Assets[$"plrtank_" + PlayerID.Collection.GetKey(playerType)!.ToLower()];
         else {
             _tankTexture = Assets[$"tank_" + TankID.Collection.GetKey(copyTier)!.ToLower()];
             var dummy = new AITank(copyTier, true, false);
@@ -134,7 +135,7 @@ public class PlayerTank : Tank
 
         GameHandler.AllPlayerTanks[PlayerId] = this;
 
-        if (copyTier == TankID.None)
+        if (copyTier == -1)
             ApplyDefaults(ref Properties);
 
         var newTankIndex = Array.IndexOf(GameHandler.AllTanks, null);
@@ -171,8 +172,8 @@ public class PlayerTank : Tank
         properties.DestructionColor = PlayerType switch {
             PlayerID.Blue => Color.Blue,
             PlayerID.Red => Color.Crimson,
-            PlayerID.GreenPlr => Color.Lime,
-            PlayerID.YellowPlr => Color.Yellow,
+            PlayerID.Green => Color.Lime,
+            PlayerID.Yellow => Color.Yellow,
             _ => throw new Exception($"The player type with number \"{PlayerType}\" is not mapped to a color!"),
         };
 
@@ -191,7 +192,7 @@ public class PlayerTank : Tank
 
         base.Update();
 
-        if (LevelEditor.Active) return;
+        if (LevelEditorUI.Active) return;
 
         if (NetPlay.IsClientMatched(PlayerId))
             Client.SyncPlayerTank(this);
@@ -217,9 +218,9 @@ public class PlayerTank : Tank
 
         if (IsIngame) {
             if (NetPlay.IsClientMatched(PlayerId) && !IntermissionSystem.IsAwaitingNewMission) {
-                if (!Difficulties.Types["POV"] || LevelEditor.Active || MainMenuUI.Active) {
+                if (!Difficulties.Types["POV"] || LevelEditorUI.Active || MainMenuUI.Active) {
                     Vector3 mouseWorldPos = MatrixUtils.GetWorldPosition(MouseUtils.MousePosition, -11f);
-                    if (!LevelEditor.Active)
+                    if (!LevelEditorUI.Active)
                         TurretRotation = -(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position).ToRotation() + MathHelper.PiOver2;
                     else
                         TurretRotation = TankRotation;
@@ -239,7 +240,7 @@ public class PlayerTank : Tank
                 }
             }
 
-            if (CampaignGlobals.InMission && !LevelEditor.Active && !ChatSystem.ActiveHandle) {
+            if (CampaignGlobals.InMission && !LevelEditorUI.Active && !ChatSystem.ActiveHandle) {
                 if (CurShootStun <= 0 && CurMineStun <= 0) {
                     if (!Properties.Stationary) {
                         if (NetPlay.IsClientMatched(PlayerId)) {
@@ -257,7 +258,7 @@ public class PlayerTank : Tank
                 Speed = 0;
             }
 
-            if (CampaignGlobals.InMission && !LevelEditor.Active) {
+            if (CampaignGlobals.InMission && !LevelEditorUI.Active) {
                 if (NetPlay.IsClientMatched(PlayerId)) {
                     if (InputUtils.CanDetectClick())
                         if (!ChatSystem.ChatBoxHover && !ChatSystem.ActiveHandle && !GameUI.Paused)

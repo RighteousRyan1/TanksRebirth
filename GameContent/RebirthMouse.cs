@@ -7,6 +7,7 @@ using TanksRebirth.Internals;
 using TanksRebirth.Net;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.UI.MainMenu;
+using TanksRebirth.GameContent.UI.LevelEditor;
 
 namespace TanksRebirth.GameContent;
 
@@ -30,7 +31,7 @@ public static class RebirthMouse
         numDots = 10;
         if (!ShouldRender)
             return;
-        if (!MainMenuUI.Active && !GameUI.Paused && !LevelEditor.Active) {
+        if (!MainMenuUI.Active && !GameUI.Paused && !LevelEditorUI.Active) {
             var clientId = NetPlay.CurrentClient is null ? 0 : NetPlay.CurrentClient.Id;
             if (GameHandler.AllPlayerTanks[clientId] is not null) {
                 var me = GameHandler.AllPlayerTanks[clientId];

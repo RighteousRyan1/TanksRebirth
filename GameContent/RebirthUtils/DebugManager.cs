@@ -10,7 +10,6 @@ using TanksRebirth.Internals.Common.Utilities;
 using Microsoft.Xna.Framework.Input;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Systems.Coordinates;
-using TanksRebirth.GameContent.UI;
 using TanksRebirth.Net;
 using TanksRebirth.Internals.Common;
 using System.Collections.Generic;
@@ -20,6 +19,7 @@ using TanksRebirth.Internals.Common.Framework;
 using TanksRebirth.IO;
 using TanksRebirth.Achievements;
 using TanksRebirth.GameContent.UI.MainMenu;
+using TanksRebirth.GameContent.UI.LevelEditor;
 
 namespace TanksRebirth.GameContent.RebirthUtils;
 
@@ -176,7 +176,7 @@ public static class DebugManager {
                     ChatSystem.SendMessage("Invalid name for campaign.", Color.Red);
                     return;
                 }
-                CampaignGlobals.LoadedCampaign = Campaign.LoadFromFolder(CampaignName.GetRealText(), true);
+                CampaignGlobals.LoadedCampaign = Campaign.Load(CampaignName.GetRealText());
                 CampaignGlobals.LoadedCampaign.SetupLoadedMission(true);
             },
             IsVisible = false
@@ -273,7 +273,7 @@ public static class DebugManager {
                 if (InputUtils.KeyJustPressed(Keys.PageUp))
                     SpawnTankPlethorae(true);
                 if (InputUtils.KeyJustPressed(Keys.PageDown))
-                    SpawnMe(GameHandler.GameRand.Next(PlayerID.Blue, PlayerID.YellowPlr + 1), tankToSpawnTeam);
+                    SpawnMe(GameHandler.GameRand.Next(PlayerID.Blue, PlayerID.Yellow + 1), tankToSpawnTeam);
                 if (InputUtils.KeyJustPressed(Keys.Home))
                     SpawnTankAt(!TankGame.OverheadView ? MatrixUtils.GetWorldPosition(MouseUtils.MousePosition) : PlacementSquare.CurrentlyHovered.Position, tankToSpawnType, tankToSpawnTeam);
 
@@ -434,7 +434,7 @@ public static class DebugManager {
         }
     }
     public static PlayerTank SpawnMe(int playerType, int team, Vector3 posOverride = default) {
-        var pos = LevelEditor.Active ? PlacementSquare.CurrentlyHovered.Position : MatrixUtils.GetWorldPosition(MouseUtils.MousePosition);
+        var pos = LevelEditorUI.Active ? PlacementSquare.CurrentlyHovered.Position : MatrixUtils.GetWorldPosition(MouseUtils.MousePosition);
 
         if (posOverride != default)
             pos = posOverride;

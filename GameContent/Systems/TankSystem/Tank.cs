@@ -18,49 +18,51 @@ using TanksRebirth.GameContent.ID;
 using TanksRebirth.Net;
 using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.RebirthUtils;
-using static TanksRebirth.GameContent.RebirthUtils.DebugManager;
 using TanksRebirth.GameContent.UI.MainMenu;
-using TanksRebirth.GameContent.UI;
 
 namespace TanksRebirth.GameContent;
 
+// TODO: have to load type by tier - 2, since constants have been changed
 public abstract class Tank {
     #region TexPack
 
-    public static Dictionary<string, Texture2D> Assets = new();
+    public static Dictionary<string, Texture2D> Assets = [];
 
     public static string AssetRoot;
 
     public static void SetAssetNames() {
         Assets.Clear();
         // TankTier.Collection.GetKey(tankToSpawnType)
-        foreach (var tier in TankID.Collection.Keys.Where(tier =>
-                     TankID.Collection.GetValue(tier) > TankID.Random &&
-                     TankID.Collection.GetValue(tier) < TankID.Explosive))
-            Assets.Add($"tank_" + tier.ToLower(), null);
-        foreach (var type in PlayerID.Collection.Keys)
-            Assets.Add($"tank_" + type.ToLower(), null);
+        for (int i = 0; i < TankID.Explosive; i++) {
+            var tier = TankID.Collection.GetKey(i)!.ToLower();
+            Assets.Add($"tank_" + tier, null);
+        }
+        for (int i = 0; i < PlayerID.Collection.Count; i++) {
+            var tier = PlayerID.Collection.GetKey(i)!.ToLower();
+            Assets.Add($"plrtank_" + tier, null);
+        }
     }
 
     public static void LoadVanillaTextures() {
-        Assets.Clear();
-
-        foreach (var tier in TankID.Collection.Keys.Where(tier =>
-                     TankID.Collection.GetValue(tier) > TankID.Random &&
-                     TankID.Collection.GetValue(tier) < TankID.Explosive))
-            if (!Assets.ContainsKey($"tank_" + tier.ToLower()))
-                Assets.Add($"tank_" + tier.ToLower(),
-                    GameResources.GetGameResource<Texture2D>($"Assets/textures/tank/tank_{tier.ToLower()}"));
-        foreach (var type in PlayerID.Collection.Keys)
-            if (!Assets.ContainsKey($"tank_" + type.ToLower()))
-                Assets.Add($"tank_" + type.ToLower(),
-                    GameResources.GetGameResource<Texture2D>($"Assets/textures/tank/tank_{type.ToLower()}"));
         AssetRoot = "Assets/textures/tank";
+
+        for (int i = 0; i < TankID.Explosive; i++) {
+            var tier = TankID.Collection.GetKey(i)!.ToLower();
+
+            var asset = $"tank_" + tier;
+            Assets[asset] = GameResources.GetGameResource<Texture2D>($"{AssetRoot}/{asset}");
+        }
+        for (int i = 0; i < PlayerID.Collection.Count; i++) {
+            var type = PlayerID.Collection.GetKey(i)!.ToLower();
+
+            var asset = $"plrtank_" + type;
+            Assets[asset] = GameResources.GetGameResource<Texture2D>($"{AssetRoot}/{asset}");
+        }
     }
 
     public static void LoadTexturePack(string folder) {
         LoadVanillaTextures();
-        if (folder.ToLower() == "vanilla") {
+        if (folder.Equals("vanilla", StringComparison.InvariantCultureIgnoreCase)) {
             TankGame.ClientLog.Write($"Loaded vanilla textures for Tank.", LogType.Info);
             return;
         }
@@ -653,8 +655,8 @@ public abstract class Tank {
                 var c = p.PlayerType switch {
                     PlayerID.Blue => TankDeathMark.CheckColor.Blue,
                     PlayerID.Red => TankDeathMark.CheckColor.Red,
-                    PlayerID.GreenPlr => TankDeathMark.CheckColor.Green,
-                    PlayerID.YellowPlr => TankDeathMark.CheckColor.Yellow, // TODO: change these colors.
+                    PlayerID.Green => TankDeathMark.CheckColor.Green,
+                    PlayerID.Yellow => TankDeathMark.CheckColor.Yellow, // TODO: change these colors.
                     _ => throw new Exception($"Player Death Mark for colour {p.PlayerType} is not supported."),
                 };
 

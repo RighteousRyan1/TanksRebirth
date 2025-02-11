@@ -23,19 +23,19 @@ using Microsoft.Xna.Framework.Input;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.UI.MainMenu;
 
-namespace TanksRebirth.GameContent.UI;
+namespace TanksRebirth.GameContent.UI.LevelEditor;
 
 // TODO: bugs to fix
 /* Rotation seemingly becomes negative upon level editor return
  * Horizontally facing tanks get reversed, PiOver2 becomes -PiOver2.
  */
-public static class LevelEditor {
+public static partial class LevelEditorUI {
     public enum UICategory {
         LevelEditor,
         SavingThings,
     }
-    public static readonly byte[] LevelFileHeader = { 84, 65, 78, 75 };
-    public const int LevelEditorVersion = 2;
+    public static readonly byte[] LevelFileHeader = { 84, 65, 78, 75 }; // T, A, N, K
+    public const int EDITOR_VERSION = 3;
 
     public const int MAX_MISSION_CHARS = 30;
 
@@ -57,46 +57,6 @@ public static class LevelEditor {
     public static bool Active { get; private set; }
     public static OggMusic Theme = new("Level Editor Theme", "Content/Assets/music/mainmenu/editor.ogg", 0.7f);
 
-    public static UITextButton TestLevel;
-    public static UITextButton Perspective;
-
-    public static UITextButton TerrainCategory;
-    public static UITextButton EnemyTanksCategory;
-    public static UITextButton PlayerTanksCategory;
-
-    public static UITextButton Properties;
-    public static UITextButton LoadLevel;
-
-    public static UITextButton ReturnToEditor;
-
-    public static UITextButton AddMissionBtn;
-    public static UITextButton RemoveMissionBtn;
-    public static UITextButton MoveMissionUp;
-    public static UITextButton MoveMissionDown;
-
-    #region ConfirmLevelContents
-
-    // finish confirmation stuff later.
-    public static Rectangle LevelContentsPanel;
-    public static UITextInput MissionName;
-    public static UITextInput CampaignName;
-    public static UITextInput CampaignDescription;
-    public static UITextInput CampaignAuthor;
-    public static UITextInput CampaignVersion;
-    public static UITextInput CampaignTags;
-    public static UITextInput CampaignExtraLives;
-    public static UITextInput CampaignLoadingStripColor;
-    public static UITextInput CampaignLoadingBGColor;
-    public static UITextButton SaveMenuReturn;
-    public static UITextButton SaveLevelConfirm;
-    public static UITextButton CampaignMajorVictory;
-
-    public static UITextButton SwapMenu;
-
-    #endregion
-
-    #region Variables / Properties
-
     public static Category CurCategory { get; private set; }
     public static int SelectedTankTier { get; private set; }
     public static int SelectedTankTeam { get; private set; }
@@ -113,17 +73,6 @@ public static class LevelEditor {
         PlayerTanks
     }
 
-    public static Dictionary<string, Texture2D> RenderTextures = new();
-
-    private static float _barOffset;
-    private static Vector2 _origClick;
-    private static float _maxScroll;
-    private static List<string> _renderNamesTanks = new();
-    private static List<string> _renderNamesBlocks = new();
-    private static List<string> _renderNamesPlayers = new();
-
-    #endregion
-
     private static bool _initialized;
 
     internal static Campaign? loadedCampaign;
@@ -131,14 +80,13 @@ public static class LevelEditor {
     private static bool _viewMissionDetails = true;
     private static bool _hasMajorVictory;
 
-    private static readonly List<UITextInput> _campaignElems = [];
-
     public static Color SelectedColor = Color.SkyBlue;
     public static Color UnselectedColor = Color.White;
 
     private static Task? _loadTask;
     private static int _oldelta;
 
+    private static readonly List<UITextInput> _campaignElems = [];
     public static void HandleLevelEditorModifications() {
         var cur = PlacementSquare.CurrentlyHovered;
 
@@ -218,8 +166,7 @@ public static class LevelEditor {
                         loadedCampaign.MetaData.HasMajorVictory = _hasMajorVictory;
                         Campaign.Save(res.Path, loadedCampaign);
                     }
-                }
-                catch {
+                } catch {
                     // guh...
                 }
             }
@@ -380,7 +327,7 @@ public static class LevelEditor {
     }
     public static void Initialize() {
         if (_initialized) {
-            foreach (var field in typeof(LevelEditor).GetFields()) {
+            foreach (var field in typeof(LevelEditorUI).GetFields()) {
                 if (field.GetValue(null) is UIElement) {
                     ((UIElement)field.GetValue(null)).Remove();
                     field.SetValue(null, null);
@@ -560,8 +507,7 @@ public static class LevelEditor {
                     }
 
                     ChatSystem.SendMessage($"Loaded '{Path.GetFileName(res.Path)}'.", Color.White);
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     ChatSystem.SendMessage("Failed to load.", Color.Red);
                     ChatSystem.SendMessage(e.Message, Color.Red);
                 }
@@ -612,7 +558,7 @@ public static class LevelEditor {
 
                 int index = i;
                 var len = btn.Text.Length;
-                btn.TextScale = () => Vector2.One * (len > 20 ? 1f - ((len - 20) * 0.03f) : 1f);
+                btn.TextScale = () => Vector2.One * (len > 20 ? 1f - (len - 20) * 0.03f : 1f);
 
                 btn.OnLeftClick = (a) => {
                     _missionButtons.ForEach(x => x.Color = UnselectedColor);
@@ -735,29 +681,29 @@ public static class LevelEditor {
             IntermissionSystem.TimeBlack = 180;
             CampaignGlobals.ShouldMissionsProgress = false;
             _loadTask ??= Task.Run(async () => {
-                    await Task.Delay(TankGame.LogicTime).ConfigureAwait(false);
-                    while (IntermissionSystem.BlackAlpha > 0.8f || MainMenuUI.Active) {
-                        if (IntermissionSystem.BlackAlpha == 0) {
-                            // The user has exited without completing the transition by our greatly hardcoded poorly parallelized code.
-                            // why did we design this like this?
-                            // - Dottik
-                            _loadTask = null;
-                            return;
-                        }
-                        await Task.Delay(TankGame.LogicTime).ConfigureAwait(false);
+                await Task.Delay(TankGame.LogicTime).ConfigureAwait(false);
+                while (IntermissionSystem.BlackAlpha > 0.8f || MainMenuUI.Active) {
+                    if (IntermissionSystem.BlackAlpha == 0) {
+                        // The user has exited without completing the transition by our greatly hardcoded poorly parallelized code.
+                        // why did we design this like this?
+                        // - Dottik
+                        _loadTask = null;
+                        return;
                     }
+                    await Task.Delay(TankGame.LogicTime).ConfigureAwait(false);
+                }
 
-                    Active = true;
-                    TankGame.OverheadView = true;
-                    Theme.Play();
-                    SetLevelEditorVisibility(true);
-                    loadedCampaign = new();
-                    loadedCampaign.CachedMissions[0] = new([], []) {
-                        Name = "No Name"
-                    };
-                    SetupMissionsBar(loadedCampaign);
-                    _loadTask = null;
-                });
+                Active = true;
+                TankGame.OverheadView = true;
+                Theme.Play();
+                SetLevelEditorVisibility(true);
+                loadedCampaign = new();
+                loadedCampaign.CachedMissions[0] = new([], []) {
+                    Name = "No Name"
+                };
+                SetupMissionsBar(loadedCampaign);
+                _loadTask = null;
+            });
         }
         else {
             Theme.Play();
@@ -815,7 +761,7 @@ public static class LevelEditor {
         if (_alertTime > 0) {
             var scale = 0.5f;
             TankGame.SpriteRenderer.Draw(ChatSystem.ChatAlert,
-                new Vector2(WindowUtils.WindowWidth / 2, (WindowUtils.WindowHeight * 0.625f) - (ChatSystem.ChatAlert.Size().Y.ToResolutionY() * scale)),
+                new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight * 0.625f - ChatSystem.ChatAlert.Size().Y.ToResolutionY() * scale),
                 null,
                 Color.White,
                 0f,
@@ -826,8 +772,7 @@ public static class LevelEditor {
             DrawUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFontLarge, AlertText, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight * 0.625f), Color.Red, Color.White, new Vector2(0.4f).ToResolution(), 0f, Anchor.Center);
             _alertTime -= TankGame.DeltaTime;
         }
-        if (!ShouldDrawBarUI)
-            return;
+        if (!ShouldDrawBarUI) return;
         var info = TankGame.GameLanguage.BinDisclaimer;
         TankGame.SpriteRenderer.DrawString(TankGame.TextFont, info, new Vector2(WindowUtils.WindowWidth - 175.ToResolutionX(), WindowUtils.WindowHeight / 2 - 20.ToResolutionY()), Color.White, new Vector2(0.425f).ToResolution(), 0f, TankGame.TextFont.MeasureString(info) / 2);
 
@@ -854,89 +799,22 @@ public static class LevelEditor {
 
         // i feel like i could turn these panels into their own method.
         // but whatever.
+        // Ryan, 2/11/25: this code is fucking archaic.
 
         TankGame.SpriteRenderer.DrawString(TankGame.TextFont, _curDescription, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight * 0.78f), Color.Black, Vector2.One.ToResolution(), 0f, new Vector2(measure.X / 2, measure.Y));
         // level info
         TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Rectangle(0, 0, 350, 125).ToResolution(), null, Color.Gray, 0f, Vector2.Zero, default, 0f);
         TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Rectangle(0, 0, 350, 40).ToResolution(), null, Color.White, 0f, Vector2.Zero, default, 0f);
-        TankGame.SpriteRenderer.DrawString(TankGame.TextFont, TankGame.GameLanguage.LevelInfo, new Vector2(175, 3).ToResolution(), Color.Black, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(Anchor.TopCenter, TankGame.TextFont.MeasureString(TankGame.GameLanguage.LevelInfo)));
+        TankGame.SpriteRenderer.DrawString(TankGame.TextFont, TankGame.GameLanguage.LevelInfo, new Vector2(175, 3).ToResolution(), Color.Black, Vector2.One.ToResolution(), 0f, Anchor.TopCenter.GetAnchor(TankGame.TextFont.MeasureString(TankGame.GameLanguage.LevelInfo)));
         TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"{TankGame.GameLanguage.EnemyTankTotal}: {AIManager.CountAll()}", new Vector2(10, 40).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
         TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"{TankGame.GameLanguage.DifficultyRating}: {DifficultyAlgorithm.GetDifficulty(missionToRate):0.00}", new Vector2(10, 80).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
 
-
-        // render campaign missions ui 
-
-        if (loadedCampaign != null) {
-            var heightDiff = 40;
-            _missionButtonScissor = new Rectangle(_missionTab.X, _missionTab.Y + heightDiff, _missionTab.Width, _missionTab.Height - heightDiff * 2).ToResolution();
-            TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], _missionTab.ToResolution(), null, Color.Gray, 0f, Vector2.Zero, default, 0f);
-            TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Rectangle(_missionTab.X, _missionTab.Y, _missionTab.Width, heightDiff).ToResolution(), null, Color.White, 0f, Vector2.Zero, default, 0f);
-            TankGame.SpriteRenderer.DrawString(TankGame.TextFont,
-                TankGame.GameLanguage.MissionList,
-                new Vector2(175, 153).ToResolution(),
-                Color.Black,
-                Vector2.One.ToResolution(),
-                0f,
-                GameUtils.GetAnchor(Anchor.TopCenter, TankGame.TextFont.MeasureString(TankGame.GameLanguage.MissionList)));
-        }
+        // render peripherals
+        DrawCampaigns();
+        DrawPlacementInfo();
         // render teams
-
-        // placement information
-        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Rectangle(WindowUtils.WindowWidth - (int)350.ToResolutionX(), 0, (int)350.ToResolutionX(), (int)500.ToResolutionY()), null, Color.Gray, 0f, Vector2.Zero, default, 0f);
-        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Rectangle(WindowUtils.WindowWidth - (int)350.ToResolutionX(), 0, (int)350.ToResolutionX(), (int)40.ToResolutionY()), null, Color.White, 0f, Vector2.Zero, default, 0f);
-        TankGame.SpriteRenderer.DrawString(TankGame.TextFont,
-            TankGame.GameLanguage.PlaceInfo,
-            new Vector2(WindowUtils.WindowWidth - 175.ToResolutionX(), 3.ToResolutionY()),
-            Color.Black,
-            Vector2.One.ToResolution(),
-            0f,
-            GameUtils.GetAnchor(Anchor.TopCenter, TankGame.TextFont.MeasureString(TankGame.GameLanguage.PlaceInfo)));
         //if (CurCategory == Category.Blocks)
         //TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"Block Stack: {BlockHeight}", new Vector2(WindowUtils.WindowWidth - 335.ToResolutionX(), 40.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
-        var helpText = "";
-        Vector2 start = new();
-        if (CurCategory == Category.EnemyTanks || CurCategory == Category.PlayerTanks) {
-            helpText = TankGame.GameLanguage.PlacementTeamInfo;
-            start = new(WindowUtils.WindowWidth - 250.ToResolutionX(), 140.ToResolutionY());
-            // TODO: should be optimised. do later.
-            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, TankGame.GameLanguage.TankTeams, new Vector2(start.X + 45.ToResolutionX(), start.Y - 80.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, TankGame.TextFont.MeasureString("Tank Teams") / 2);
-
-            TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Rectangle((int)start.X, (int)(start.Y - 40.ToResolutionY()), (int)40.ToResolutionX(), (int)40.ToResolutionY()), null, Color.Black, 0f, Vector2.Zero, default, 0f);
-            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, TankGame.GameLanguage.NoTeam, new Vector2(start.X + 45.ToResolutionX(), start.Y - 40.ToResolutionY()), Color.Black, Vector2.One.ToResolution(), 0f, Vector2.Zero);
-            for (int i = 0; i < TeamID.Collection.Count - 1; i++) {
-                var color = TeamID.TeamColors[i + 1];
-
-                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, TeamColorsLocalized[i + 1], new Vector2(start.X + 45.ToResolutionX(), start.Y + (i * 40).ToResolutionY()), color, Vector2.One.ToResolution(), 0f, Vector2.Zero);
-                TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Rectangle((int)start.X, (int)(start.Y + (i * 40).ToResolutionY()), (int)40.ToResolutionX(), (int)40.ToResolutionY()), null, color, 0f, Vector2.Zero, default, 0f);
-            }
-            TankGame.SpriteRenderer.DrawString(TankGame.TextFontLarge, ">", new Vector2(start.X - 25.ToResolutionX(), start.Y + ((int)(SelectedTankTeam - 1) * 40).ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, TankGame.TextFontLarge.MeasureString(">") / 2);
-
-            if (SelectedTankTeam != TeamID.Magenta)
-                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "v", new Vector2(start.X - 25.ToResolutionX(), start.Y + ((int)(SelectedTankTeam - 1) * 40 + 50).ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, TankGame.TextFont.MeasureString("v") / 2);
-            if (SelectedTankTeam != TeamID.NoTeam)
-                TankGame.SpriteRenderer.DrawString(TankGame.TextFont,
-                    "v",
-                    new Vector2(start.X - 25.ToResolutionX(), start.Y + ((int)(SelectedTankTeam - 1) * 40 - 10).ToResolutionY()),
-                    Color.White,
-                    Vector2.One.ToResolution(),
-                    MathHelper.Pi,
-                    TankGame.TextFont.MeasureString("v") / 2);
-        }
-        else if (CurCategory == Category.Terrain) {
-            helpText = "UP and DOWN to change stack.";
-            // TODO: add static dict for specific types?
-            var tex = SelectedBlockType != BlockID.Hole ? $"{BlockID.Collection.GetKey(SelectedBlockType)}_{BlockHeight}" : $"{BlockID.Collection.GetKey(SelectedBlockType)}";
-            var size = RenderTextures[tex].Size();
-            start = new Vector2(WindowUtils.WindowWidth - 175.ToResolutionX(), 450.ToResolutionY());
-            TankGame.SpriteRenderer.Draw(RenderTextures[tex], start, null, Color.White, 0f, new Vector2(size.X / 2, size.Y), Vector2.One.ToResolution(), default, 0f);
-            // TODO: reduce the hardcode for modders, yeah
-            if (SelectedBlockType != BlockID.Teleporter && SelectedBlockType != BlockID.Hole) {
-                TankGame.SpriteRenderer.DrawString(TankGame.TextFontLarge, "v", new Vector2(start.X + 100.ToResolutionX(), start.Y - 75.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, TankGame.TextFontLarge.MeasureString("v") / 2);
-                TankGame.SpriteRenderer.DrawString(TankGame.TextFontLarge, "v", new Vector2(start.X - 100.ToResolutionX(), start.Y - 25.ToResolutionY()), Color.White, Vector2.One.ToResolution(), MathHelper.Pi, TankGame.TextFontLarge.MeasureString("v") / 2);
-            }
-        }
-        TankGame.SpriteRenderer.DrawString(TankGame.TextFont, helpText, new Vector2(WindowUtils.WindowWidth - 175.ToResolutionX(), WindowUtils.WindowHeight / 2 - 70.ToResolutionY()), Color.White, new Vector2(0.5f).ToResolution(), 0f, TankGame.TextFont.MeasureString(helpText) / 2);
-        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], _curHoverRect, null, HoverBoxColor * 0.5f, 0f, Vector2.Zero, default, 0f);
 
         if (CurCategory == Category.EnemyTanks) {
             for (int i = 0; i < _renderNamesTanks.Count; i++) {
@@ -1017,15 +895,15 @@ public static class LevelEditor {
                     (i, i switch {
                         PlayerID.Blue => TankGame.GameLanguage.P1TankFlavor,
                         PlayerID.Red => TankGame.GameLanguage.P2TankFlavor,
-                        PlayerID.GreenPlr => TankGame.GameLanguage.P3TankFlavor,
-                        PlayerID.YellowPlr => TankGame.GameLanguage.P4TankFlavor,
+                        PlayerID.Green => TankGame.GameLanguage.P3TankFlavor,
+                        PlayerID.Yellow => TankGame.GameLanguage.P4TankFlavor,
                         _ => "Did Not Load (DNL)"
                     });
 
                 TankGame.SpriteRenderer.Draw(RenderTextures[_renderNamesPlayers[i]],
                     new Vector2(24.ToResolutionX() + xOff + _barOffset, WindowUtils.WindowBottom.Y * 0.75f),
                     null,
-                    (int)SelectedPlayerType == i ? SelectionColor : Color.White,
+                    SelectedPlayerType == i ? SelectionColor : Color.White,
                     0f,
                     Vector2.Zero,
                     Vector2.One.ToResolution(),
@@ -1136,6 +1014,8 @@ public static class LevelEditor {
 
         LevelContentsPanel = new Rectangle(WindowUtils.WindowWidth / 4, (int)(WindowUtils.WindowHeight * 0.1f), WindowUtils.WindowWidth / 2, (int)(WindowUtils.WindowHeight * 0.625f));
         PlacementSquare.PlacesBlock = CurCategory == Category.Terrain;
+
+        // the fact that i wrote this code should literally give me cancer and herpes
         switch (CurCategory) {
             case Category.EnemyTanks:
                 EnemyTanksCategory.Color = Color.DeepSkyBlue;
@@ -1196,9 +1076,9 @@ public static class LevelEditor {
 
             if (CurCategory == Category.EnemyTanks || CurCategory == Category.PlayerTanks) {
                 // tank place handling, etc
-                if (InputUtils.KeyJustPressed(Microsoft.Xna.Framework.Input.Keys.Up))
+                if (InputUtils.KeyJustPressed(Keys.Up))
                     SelectedTankTeam--;
-                if (InputUtils.KeyJustPressed(Microsoft.Xna.Framework.Input.Keys.Down))
+                if (InputUtils.KeyJustPressed(Keys.Down))
                     SelectedTankTeam++;
                 if (SelectedTankTeam > TeamID.Magenta)
                     SelectedTankTeam = TeamID.Magenta;
@@ -1206,9 +1086,9 @@ public static class LevelEditor {
                     SelectedTankTeam = TeamID.NoTeam;
             }
             else if (CurCategory == Category.Terrain) {
-                if (InputUtils.KeyJustPressed(Microsoft.Xna.Framework.Input.Keys.Up))
+                if (InputUtils.KeyJustPressed(Keys.Up))
                     BlockHeight++;
-                if (InputUtils.KeyJustPressed(Microsoft.Xna.Framework.Input.Keys.Down))
+                if (InputUtils.KeyJustPressed(Keys.Down))
                     BlockHeight--;
                 if (SelectedBlockType == BlockID.Hole || SelectedBlockType == BlockID.Teleporter)
                     BlockHeight = 1;

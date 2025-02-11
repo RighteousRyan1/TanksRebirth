@@ -16,7 +16,6 @@ using TanksRebirth.Internals.Common.Framework;
 using TanksRebirth.Net;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Cosmetics;
-using TanksRebirth.GameContent.UI;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.Systems.AI;
@@ -25,6 +24,7 @@ using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems.PingSystem;
 using TanksRebirth.Internals.Common.Framework.Collision;
 using TanksRebirth.GameContent.UI.MainMenu;
+using TanksRebirth.GameContent.UI.LevelEditor;
 
 namespace TanksRebirth.GameContent;
 public partial class AITank : Tank {
@@ -214,7 +214,8 @@ public partial class AITank : Tank {
         if (TankGame.IsMainThread) {
             if (tier < TankID.Cherry) {
 
-                var tnkAsset = Assets[$"tank_" + TankID.Collection.GetKey(tier)!.ToLower()];
+                var tierName = TankID.Collection.GetKey(tier)!.ToLower();
+                var tnkAsset = Assets[$"tank_" + tierName];
 
                 var t = new Texture2D(TankGame.Instance.GraphicsDevice, tnkAsset.Width, tnkAsset.Height);
 
@@ -372,7 +373,7 @@ public partial class AITank : Tank {
             timeSinceLastAction++;
 
             if (!MainMenuUI.Active)
-                if (!CampaignGlobals.InMission || IntermissionSystem.IsAwaitingNewMission || LevelEditor.Active)
+                if (!CampaignGlobals.InMission || IntermissionSystem.IsAwaitingNewMission || LevelEditorUI.Active)
                     Velocity = Vector2.Zero;
             DoAi();
 
@@ -390,7 +391,7 @@ public partial class AITank : Tank {
     public override void Destroy(ITankHurtContext context) {
         // might not account for level testing via the level editor?
         OnDestroy?.Invoke();
-        if (!MainMenuUI.Active && !LevelEditor.Active && !Client.IsConnected()) // goofy ahh...
+        if (!MainMenuUI.Active && !LevelEditorUI.Active && !Client.IsConnected()) // goofy ahh...
         {
             PlayerTank.KillCount++;
 
@@ -421,7 +422,7 @@ public partial class AITank : Tank {
                     TankGame.GameData.TankKills[AiTankType]++;
 
                 // haaaaaaarddddddcode
-                if (!LevelEditor.Editing) {
+                if (!LevelEditorUI.Editing) {
                     var rand = GameHandler.GameRand.NextFloat(-(BaseExpValue * 0.25f), BaseExpValue * 0.25f);
                     var gain = BaseExpValue + rand;
                     // i will keep this commented if anything else happens.

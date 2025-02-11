@@ -18,6 +18,7 @@ using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
 using TanksRebirth.GameContent.UI.MainMenu;
+using TanksRebirth.GameContent.UI.LevelEditor;
 
 namespace TanksRebirth.GameContent.Systems;
 public static class IntermissionHandler {
@@ -272,7 +273,7 @@ public static class IntermissionHandler {
             PlayerTank.PlayerStatistics = default;
         }
 
-        if (!TankGame.OverheadView && _wasOverhead && !LevelEditor.Active)
+        if (!TankGame.OverheadView && _wasOverhead && !LevelEditorUI.Active)
             BeginIntroSequence();
 
         _wasOverhead = TankGame.OverheadView;
@@ -310,7 +311,7 @@ public static class IntermissionHandler {
     }
 
     public static void RenderCountdownGraphics() {
-        if (!MainMenuUI.Active && !TankGame.OverheadView && !LevelEditor.Active/* && TankFunctionWait > 0*/) {
+        if (!MainMenuUI.Active && !TankGame.OverheadView && !LevelEditorUI.Active/* && TankFunctionWait > 0*/) {
             DrawUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFontLarge, PrepareDisplay, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 3), 
                 IntermissionSystem.BackgroundColor, IntermissionSystem.StripColor, CountdownAnimator.CurrentScale.ToResolution(), 0f, Anchor.Center, 3);
         }
