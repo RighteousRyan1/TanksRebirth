@@ -31,7 +31,7 @@ public partial class AITank : Tank {
     /// <summary>A list of all active dangers on the map to <see cref="AITank"/>s. Includes <see cref="Shell"/>s, <see cref="Mine"/>s,
     /// and <see cref="Explosion"/>s by default. To make an AI Tank behave towards any thing you would like, make it inherit from <see cref="IAITankDanger"/>
     /// and change the tank's behavior when running away by hooking into <see cref="WhileDangerDetected"/>.</summary>
-    public static List<IAITankDanger> Dangers = [];
+    public static readonly List<IAITankDanger> Dangers = [];
 
     public delegate void PostExecuteAI(AITank tank);
     public static event PostExecuteAI? OnPostUpdateAI;
@@ -672,7 +672,6 @@ public partial class AITank : Tank {
     }
 
     private bool _predicts;
-
     /// <summary>The location(s) of which this tank's shot path hits an obstacle.</summary>
     public Vector2[] ShotPathRicochetPoints { get; private set; } = [];
     /// <summary>The location(s) of which this tank's shot path hits an tank.</summary>
@@ -697,6 +696,8 @@ public partial class AITank : Tank {
                 Vector2.UnitY.Rotate(TurretRotation - MathHelper.Pi),
                 out var ricP, out var tnkCol, offset: Vector2.UnitY * 20,
                 missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
+
+            TanksSpotted = [.. tanksDef];
 
             ShotPathRicochetPoints = ricP;
             ShotPathTankCollPoints = tnkCol;
@@ -1239,10 +1240,12 @@ public partial class AITank : Tank {
             }
         }
     }
+    
     private void DrawExtras() {
         if (Dead)
             return;
 
+        // did i ever make any good programming choices before this past year or so?
         if (DebugManager.DebugLevel == DebugManager.Id.EntityData) {
             float calculation = 0f;
 
@@ -1267,8 +1270,6 @@ public partial class AITank : Tank {
                 DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"col{i}", MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0),
                     Matrix.CreateTranslation(tnkCol2[i].X, 0, tnkCol2[i].Y), View, Projection), 1, centered: true);
             }
-            DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"{poo.Count} tank(s) spotted", MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), World, View, Projection), 1, centered: true);
-
         }
         if (DebugManager.DebugLevel == DebugManager.Id.NavData && !Properties.Stationary) {
             IsObstacleInWay(AiParams.BlockWarinessDistance / PATH_UNIT_LENGTH, Vector2.UnitY.Rotate(TargetTankRotation), out var travelPos, out var refPoints, TankPathCheckSize, draw: true);

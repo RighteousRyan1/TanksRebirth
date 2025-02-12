@@ -14,7 +14,7 @@ public record Difficulties {
     public static int RandomTanksLower { get; set; }
     public static int DisguiseValue { get; set; }
 
-    public static Dictionary<string, bool> Types = new() {
+    public static readonly Dictionary<string, bool> Types = new() {
         ["TanksAreCalculators"] = false,
         ["PieFactory"] = false,
         ["UltraMines"] = false,

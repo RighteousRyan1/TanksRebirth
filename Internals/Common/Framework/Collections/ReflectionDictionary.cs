@@ -35,8 +35,8 @@ namespace TanksRebirth.Internals.Common.Framework.Collections {
             _dictionary = new(fields.Length);
             _members = members;
             Initialize(fields, properties);
-            Keys = _dictionary.Keys.ToArray();
-            Values = _dictionary.Values.ToArray();
+            Keys = [.. _dictionary.Keys];
+            Values = [.. _dictionary.Values];
         }
 
         private void Initialize(in FieldInfo[] fields, in PropertyInfo[] properties) {

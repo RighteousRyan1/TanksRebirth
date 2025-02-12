@@ -33,7 +33,7 @@ public abstract class Tank {
     public static void SetAssetNames() {
         Assets.Clear();
         // TankTier.Collection.GetKey(tankToSpawnType)
-        for (int i = 0; i < TankID.Explosive; i++) {
+        for (int i = TankID.Brown; i < TankID.Explosive; i++) {
             var tier = TankID.Collection.GetKey(i)!.ToLower();
             Assets.Add($"tank_" + tier, null);
         }
@@ -46,7 +46,7 @@ public abstract class Tank {
     public static void LoadVanillaTextures() {
         AssetRoot = "Assets/textures/tank";
 
-        for (int i = 0; i < TankID.Explosive; i++) {
+        for (int i = TankID.Brown; i < TankID.Explosive; i++) {
             var tier = TankID.Collection.GetKey(i)!.ToLower();
 
             var asset = $"tank_" + tier;
@@ -164,6 +164,7 @@ public abstract class Tank {
 
     public TankProperties Properties = new();
 
+    public Tank[] TanksSpotted = [];
     public Shell[] OwnedShells = [];
 
     public Vector2 TurretPosition => Position + new Vector2(0, 20).Rotate(-TurretRotation);
@@ -952,22 +953,24 @@ public abstract class Tank {
         if (!DebugManager.DebuggingEnabled) return;
 
         var info = new string[] {
-            //$"Team: {TeamID.Collection.GetKey(Team)}",
-            //$"Shell Owned / Max: {OwnedShellCount} / {Properties.ShellLimit}",
-            //$"Mine Owned / Max: {OwnedMineCount} / {Properties.MineLimit}",
             $"Tank Rotation/Target: {TankRotation}/{TargetTankRotation}",
             $"WorldID: {WorldId}",
             this is AITank ai
                 ? $"Turret Rotation/Target: {TurretRotation}/{ai.TargetTurretRotation}"
-                : $"Turret Rotation: {TurretRotation}"
+                : $"Turret Rotation: {TurretRotation}",
+            $"OwnedShells/ShellsLeft: {OwnedShellCount}/{Properties.ShellLimit - OwnedShellCount}",
+            $"{TanksSpotted.Length} tank(s) spotted"
         };
 
         // TankGame.spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), CollisionBox2D, Color.White * 0.75f);
 
-        for (int i = 0; i < info.Length; i++)
-            DebugManager.DrawDebugString(TankGame.SpriteRenderer, info[i],
-                MatrixUtils.ConvertWorldToScreen(Vector3.Up * 20, World, View, Projection) -
-                new Vector2(0, ((i + 1) * 20).ToResolutionY() + 8), 1, centered: true, color: Color.Aqua);
+        if (DebugManager.DebugLevel != DebugManager.Id.EntityData) return;
+        for (int i = 0; i < info.Length; i++) {
+            var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Up * 20, World, View, Projection) -
+                new Vector2(0, (i * 20));
+            DrawUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, info[i], pos, 
+                Color.Aqua, Color.Black, new Vector2(0.5f).ToResolution(), 0f, Anchor.TopCenter, 0.6f);
+        }
     }
     public uint timeSinceLastAction = 15000;
 

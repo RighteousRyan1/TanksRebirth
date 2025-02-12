@@ -119,7 +119,7 @@ public static class PingMenu {
         for (int i = PingIdToName.Count - 1; i >= 0; i--) {
             var pos = WindowUtils.WindowBottomRight + cornerOff + new Vector2(offX, 0);
             DrawUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFontLarge, $"{i + 1}. {PingIdToName[i]}",
-                pos, PlayerID.PlayerTankColors[NetPlay.GetMyClientId()].ToColor(), Color.White * _uiOpacity,
+                pos, PlayerID.PlayerTankColors[NetPlay.GetMyClientId()].ToColor() * _uiOpacity, Color.White * _uiOpacity,
                 0.75f * scale.ToResolution(), 0f, Anchor.TopCenter);
             TankGame.SpriteRenderer.Draw(PingIdToTexture[i], pos + new Vector2(0, 20), null, Color.White * _uiOpacity, 0f, 
                 Anchor.TopCenter.GetAnchor(PingIdToTexture[i].Size()), scale.ToResolution(), default, 0f);

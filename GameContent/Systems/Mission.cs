@@ -3,16 +3,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Threading.Tasks;
-using TanksRebirth.Enums;
-using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.Internals;
-using static System.Reflection.Metadata.BlobBuilder;
 
 namespace TanksRebirth.GameContent.Systems;
 
@@ -341,7 +336,7 @@ public record struct Mission {
 
             // this is due to the failures of removing 2 constants in TankID.
             // if the player doesn't update their campaign for a minute then oh well
-            if (!isPlayer) tier -= 2;
+            if (!isPlayer) tier -= 1;
             var pType = reader.ReadByte();
             var team = reader.ReadByte();
 

@@ -243,6 +243,7 @@ public class Campaign
 
         OnMissionLoad?.Invoke(ref GameHandler.AllTanks, ref Block.AllBlocks);
     }
+
     [Obsolete("This is for the legacy version of TanksRebirth.")]
     /// <summary>
     /// Loads missions from inside the <paramref name="campaignName"/> folder to memory.
@@ -416,8 +417,8 @@ public class Campaign
                 Description = "No description",
                 Author = "Unknown",
                 Version = "0.0.0.0",
-                Tags = new string[] { "N/A" },
-                ExtraLivesMissions = Array.Empty<int>(),
+                Tags = ["N/A"],
+                ExtraLivesMissions = [],
                 StartingLives = 3,
                 BackgroundColor = IntermissionSystem.DefaultBackgroundColor,
                 MissionStripColor = IntermissionSystem.DefaultStripColor,

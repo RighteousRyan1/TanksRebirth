@@ -516,9 +516,13 @@ public class PlayerTank : Tank
 
             var cannotBounce = pathRicochetCount > Properties.RicochetCount;
             if (cannotBounce) return;
-            var isTankInPath = GameHandler.AllTanks.Any(
+            var tankInPath = GameHandler.AllTanks.FirstOrDefault(
                 tnk => tnk is not null && !tnk.Dead && tnk.CollisionCircle.Intersects(new Circle() { Center = pathPos, Radius = 4 }));
-            if (isTankInPath) return;
+            if (Array.IndexOf(GameHandler.AllTanks, tankInPath) > -1 && tankInPath is not null) {
+                TanksSpotted = [tankInPath!];
+                return;
+            }
+            TanksSpotted = [];
 
             pathPos += pathDir;
 
