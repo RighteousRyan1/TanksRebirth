@@ -366,8 +366,8 @@ public static partial class LevelEditorUI {
             for (int i = 0; i < names.Length; i++) {
                 var nTL = names[i];
 
-                if (RenderTextures.ContainsKey(nTL))
-                    _renderNamesPlayers.Add(nTL);
+                if (RenderTextures.ContainsKey(nTL + "Plr"))
+                    _renderNamesPlayers.Add(nTL + "Plr");
             }
         }
 
