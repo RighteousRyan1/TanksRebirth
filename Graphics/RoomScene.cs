@@ -19,6 +19,10 @@ namespace TanksRebirth.Graphics;
 // when the room is added!
 // TODO: texture pack support
 public static class RoomScene {
+    public static readonly Vector3 TableScenePos = new(-350f, -61.7f, 325f);
+    public static readonly Vector3 FloorScenePos = new(-155f, -0.15f, 210f);
+
+
     // bro there is no construcor stop yapping stupid ide
     public static Model RoomSkyboxScene;
 
@@ -33,6 +37,7 @@ public static class RoomScene {
     public static float Scale;
     public static Vector3 Rotation;
     public static Vector3 Position;
+    public static Vector3 UsedPosition = TableScenePos;
 
     public static Matrix World;
     public static Matrix View;
@@ -209,17 +214,19 @@ public static class RoomScene {
     }
 
     public static void Update() {
+        UpdateRoom();
         UpdateClock();
+    }
+    public static void UpdateRoom() {
+        // this is to line up the table with the game scene.
+        // again, pretty magical values, but it is what it is.
+        Position = UsedPosition * Scale;
+        View = TankGame.GameView;
+        Projection = TankGame.GameProjection;
     }
     public static void UpdateClock() {
         // this is pretty magical, but it gives the room a good scale in comparison to the game scene.
         Scale = 10f;
-
-        // this is to line up the table with the game scene.
-        // again, pretty magical values, but it is what it is.
-        Position = new Vector3(-350f, -61.7f, 325f) * Scale;
-        View = TankGame.GameView;
-        Projection = TankGame.GameProjection;
 
         //var testX = MouseUtils.MousePosition.X / WindowUtils.WindowWidth;
         HourHandRotation = TimeUtils.InterpolateHourToDay(DateTime.Now);
