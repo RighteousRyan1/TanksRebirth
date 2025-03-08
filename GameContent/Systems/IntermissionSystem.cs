@@ -246,6 +246,9 @@ public static class IntermissionSystem {
             for (int i = 0; i < count; i++) {
                 var name = Client.IsConnected() ? Server.ConnectedClients[i].Name : string.Empty;
 
+                var brightPlayerColor = ColorUtils.ChangeColorBrightness(PlayerID.PlayerTankColors[i].ToColor(), 0.85f);
+                var brighterPlayerColor = ColorUtils.ChangeColorBrightness(PlayerID.PlayerTankColors[i].ToColor(), 0.25f);
+
                 var pos = new Vector2(WindowUtils.WindowWidth / (count + 1) * (i + 1), WindowUtils.WindowHeight / 2 + 375.ToResolutionY());
 
                 var lifeText = $"×  {PlayerTank.Lives[i]}";
@@ -253,7 +256,7 @@ public static class IntermissionSystem {
                     pos + new Vector2(75, -25).ToResolution(),
                     Vector2.One,
                     lifeText,
-                    ColorUtils.ChangeColorBrightness(PlayerID.PlayerTankColors[i].ToColor(), 0.85f),
+                    brightPlayerColor,
                     // hacky or not?
                     PlayerID.PlayerTankColors[i].ToColor(),
                     Vector2.One.ToResolution(),
@@ -269,7 +272,7 @@ public static class IntermissionSystem {
                     overallAlpha,
                     Anchor.Center, shadowDistScale: 1.5f, shadowAlpha: 0.5f);
                 DrawUtils.DrawTextureWithShadow(TankGame.SpriteRenderer, tnk2d, pos - new Vector2(130, 0).ToResolution(), Vector2.One, 
-                    PlayerID.PlayerTankColors[i].ToColor(), Vector2.One * 1.5f, overallAlpha, Anchor.Center, 
+                    brighterPlayerColor, Vector2.One * 1.5f, overallAlpha, Anchor.Center, 
                     shadowDistScale: 1f, shadowAlpha: 0.5f);
             }
             // draw mission data on the billboard (?) thing
