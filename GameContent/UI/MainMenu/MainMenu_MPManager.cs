@@ -243,9 +243,9 @@ public static partial class MainMenuUI {
         // TODO: rework this very rudimentary ui
         if (true || Server.ConnectedClients is not null && Client.IsConnected() && Client.LobbyDataReceived) {
             Vector2 initialPosition = new(WindowUtils.WindowWidth * 0.75f, WindowUtils.WindowHeight * 0.25f);
-            DrawUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"\"{NetPlay.ServerName}\"", initialPosition - new Vector2(0, 40),
+            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, TankGame.TextFont, $"\"{NetPlay.ServerName}\"", initialPosition - new Vector2(0, 40),
                 Color.White, Color.Black, new Vector2(0.6f).ToResolution(), 0f, Anchor.TopLeft, 0.8f);
-            DrawUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"Connected Players:", initialPosition,
+            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, TankGame.TextFont, $"Connected Players:", initialPosition,
                 Color.White, Color.Black, new Vector2(0.6f).ToResolution(), 0f, Anchor.TopLeft, 0.8f);
 
             for (int i = 0; i < Server.ConnectedClients.Count(x => x is not null); i++) {
@@ -255,7 +255,7 @@ public static partial class MainMenuUI {
                 //if (NetPlay.CurrentClient.Id == i)
                 //textCol = Color.Green;
 
-                DrawUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"{client.Name}" + $" ({PlayerID.Collection.GetKey(client.Id)} tank)",
+                DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, TankGame.TextFont, $"{client.Name}" + $" ({PlayerID.Collection.GetKey(client.Id)} tank)",
                     initialPosition + new Vector2(0, 20) * (i + 1), textCol, Color.Black, new Vector2(0.6f).ToResolution(), 0f, Anchor.TopLeft, 0.8f);
             }
         }

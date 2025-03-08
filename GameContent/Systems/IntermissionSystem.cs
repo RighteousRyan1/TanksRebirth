@@ -34,8 +34,8 @@ public static class IntermissionSystem {
     public static float WaitTime { get; private set; }
     public static float CurrentWaitTime { get; private set; }
 
-    public static readonly Color DefaultBackgroundColor = new(228, 231, 173); // color picked lol
-    public static readonly Color DefaultStripColor = Color.DarkRed;
+    public static readonly Color DefaultBackgroundColor = new(250, 230, 150); //new(228, 231, 173); // color picked lol
+    public static readonly Color DefaultStripColor = new(186, 62, 47); //Color.DarkRed;
 
     public static Color BackgroundColor = new(228, 231, 173); // color picked lol
     public static Color StripColor = Color.DarkRed;
@@ -52,7 +52,7 @@ public static class IntermissionSystem {
             .WithFrame(new(position2d: Vector2.Zero, scale: Vector2.One * 0.4f, duration: TimeSpan.FromSeconds(0.25), easing: EasingFunction.OutBack));
         TextAnimatorLarge = Animator.Create()
             .WithFrame(new(position2d: Vector2.Zero, scale: Vector2.Zero, duration: TimeSpan.FromSeconds(0.35), easing: EasingFunction.OutBack))
-            .WithFrame(new(position2d: Vector2.Zero, scale: Vector2.One, duration: TimeSpan.FromSeconds(0.35), easing: EasingFunction.OutBack));
+            .WithFrame(new(position2d: Vector2.Zero, scale: Vector2.One * 1.2f, duration: TimeSpan.FromSeconds(0.35), easing: EasingFunction.OutBack));
 
         IntermissionAnimator = Animator.Create()
             .WithFrame(new(duration: TimeSpan.FromSeconds(3), easing: EasingFunction.Linear))
@@ -204,26 +204,40 @@ public static class IntermissionSystem {
                 DrawStripe(spriteBatch, StripColor, WindowUtils.WindowHeight * 0.16f + (off * i).ToResolutionY(), overallAlpha);
             }
             var wp = TextureGlobals.Pixels[Color.White];
-            spriteBatch.Draw(wp, new Vector2(0, WindowUtils.WindowHeight * 0.19f), null, Color.Yellow * overallAlpha, 0f, new Vector2(0, wp.Size().Y / 2), new Vector2(WindowUtils.WindowWidth, 5), default, default);
-            spriteBatch.Draw(wp, new Vector2(0, WindowUtils.WindowHeight * 0.19f + 400.ToResolutionY()), null, Color.Yellow * overallAlpha, 0f, new Vector2(0, wp.Size().Y / 2), new Vector2(WindowUtils.WindowWidth, 5), default, default);
+            spriteBatch.Draw(wp, new Vector2(0, WindowUtils.WindowHeight * 0.18f), null, 
+                Color.Goldenrod * overallAlpha, 0f, new Vector2(0, wp.Size().Y / 2), new Vector2(WindowUtils.WindowWidth, 15), default, default);
+            spriteBatch.Draw(wp, new Vector2(0, WindowUtils.WindowHeight * 0.18f + 420.ToResolutionY()), null, 
+                Color.Goldenrod * overallAlpha, 0f, new Vector2(0, wp.Size().Y / 2), new Vector2(WindowUtils.WindowWidth, 15), default, default);
             int mafs1 = CampaignGlobals.LoadedCampaign.TrackedSpawnPoints.Count(p => p.Item2);
             int mafs2 = CampaignGlobals.LoadedCampaign.LoadedMission.Tanks.Count(x => x.IsPlayer);
             int mafs = mafs1 - mafs2; // waddafak. why is my old code so horrid.
 
-            DrawUtils.DrawShadowedString(TankGame.TextFontLarge,
-                new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 220.ToResolutionY()),
+            float spacing = 10;
+
+            string enemyTankDisplay = $"{TankGame.GameLanguage.EnemyTanks}: {mafs}";
+            string missionName = "4. Too Hard? OK."; //CampaignGlobals.LoadedCampaign.LoadedMission.Name;
+
+            float spacingEnemyTankDisplay = DrawUtils.GetTextXOffsetForSpacing(enemyTankDisplay, spacing) / TextAnimatorLarge.CurrentScale.ToResolution().X;
+            float spacingMissionName = DrawUtils.GetTextXOffsetForSpacing(missionName, spacing) / TextAnimatorLarge.CurrentScale.ToResolution().X;
+
+            // slight misalignment
+
+            DrawUtils.DrawBorderedStringWithShadow(TankGame.SpriteRenderer, TankGame.TextFontLarge,
+                new Vector2(WindowUtils.WindowWidth / 2 - spacingMissionName, WindowUtils.WindowHeight / 2 - 200.ToResolutionY()),
                 Vector2.One,
-                CampaignGlobals.LoadedCampaign.LoadedMission.Name,
+                missionName,
                 BackgroundColor,
+                (BackgroundColor * 0.35f) with { A = 255 },
                 TextAnimatorLarge.CurrentScale.ToResolution(),
-                overallAlpha);
-            DrawUtils.DrawShadowedString(TankGame.TextFontLarge,
-                new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 50.ToResolutionY()),
+                overallAlpha, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 3f, charSpacing: spacing);
+            DrawUtils.DrawBorderedStringWithShadow(TankGame.SpriteRenderer, TankGame.TextFontLarge,
+                new Vector2(WindowUtils.WindowWidth / 2 - spacingEnemyTankDisplay, WindowUtils.WindowHeight / 2 - 50.ToResolutionY()),
                 Vector2.One,
-                $"{TankGame.GameLanguage.EnemyTanks}: {mafs}",
+                enemyTankDisplay,
                 BackgroundColor,
-                TextAnimatorLarge.CurrentScale.ToResolution(),
-                overallAlpha);
+                (BackgroundColor * 0.35f) with { A = 255 },
+                TextAnimatorLarge.CurrentScale.ToResolution() * 0.75f,
+                overallAlpha, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 2.5f, charSpacing: spacing);
 
             var tnk2d = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/playertank2d");
 
@@ -234,43 +248,49 @@ public static class IntermissionSystem {
 
                 var pos = new Vector2(WindowUtils.WindowWidth / (count + 1) * (i + 1), WindowUtils.WindowHeight / 2 + 375.ToResolutionY());
 
-                var lifeText = $"x  {PlayerTank.Lives[i]}";
-                DrawUtils.DrawShadowedString(TankGame.TextFontLarge,
+                var lifeText = $"×  {PlayerTank.Lives[i]}";
+                DrawUtils.DrawBorderedStringWithShadow(TankGame.SpriteRenderer, TankGame.TextFontLarge,
                     pos + new Vector2(75, -25).ToResolution(),
                     Vector2.One,
                     lifeText,
-                    BackgroundColor,
+                    ColorUtils.ChangeColorBrightness(PlayerID.PlayerTankColors[i].ToColor(), 0.85f),
+                    // hacky or not?
+                    PlayerID.PlayerTankColors[i].ToColor(),
                     Vector2.One.ToResolution(),
                     overallAlpha,
-                    TankGame.TextFontLarge.MeasureString(lifeText) / 2);
+                    Anchor.Center, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 1f);
 
-                DrawUtils.DrawShadowedString(TankGame.TextFontLarge,
+                DrawUtils.DrawStringWithShadow(TankGame.SpriteRenderer, TankGame.TextFontLarge,
                     pos - new Vector2(0, 75).ToResolution(),
                     Vector2.One,
                     name,
                     PlayerID.PlayerTankColors[i].ToColor(),
                     new Vector2(0.3f).ToResolution(),
                     overallAlpha,
-                    TankGame.TextFontLarge.MeasureString(name) / 2);
-                DrawUtils.DrawShadowedTexture(tnk2d, pos - new Vector2(130, 0).ToResolution(), Vector2.One, PlayerID.PlayerTankColors[i].ToColor(), new Vector2(1.25f), overallAlpha, tnk2d.Size() / 2);
+                    Anchor.Center, shadowDistScale: 1.5f, shadowAlpha: 0.5f);
+                DrawUtils.DrawTextureWithShadow(TankGame.SpriteRenderer, tnk2d, pos - new Vector2(130, 0).ToResolution(), Vector2.One, 
+                    PlayerID.PlayerTankColors[i].ToColor(), Vector2.One * 1.5f, overallAlpha, Anchor.Center, 
+                    shadowDistScale: 1f, shadowAlpha: 0.5f);
             }
             // draw mission data on the billboard (?) thing
             if (CampaignGlobals.LoadedCampaign.CurrentMissionId == 0)
-                DrawUtils.DrawShadowedString(TankGame.TextFontLarge,
+                DrawUtils.DrawBorderedStringWithShadow(TankGame.SpriteRenderer, TankGame.TextFontLarge,
                     new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 295.ToResolutionY()),
                     Vector2.One,
                     $"{TankGame.GameLanguage.Campaign}: \"{CampaignGlobals.LoadedCampaign.MetaData.Name}\" ({TankGame.GameLanguage.Mission} #{CampaignGlobals.LoadedCampaign.CurrentMissionId + 1})",
                     BackgroundColor,
+                    (BackgroundColor * 0.35f) with { A = 255 },
                     TextAnimatorSmall.CurrentScale.ToResolution(),
-                    overallAlpha);
+                    overallAlpha, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 1.5f);
             else
-                DrawUtils.DrawShadowedString(TankGame.TextFontLarge,
+                DrawUtils.DrawBorderedStringWithShadow(TankGame.SpriteRenderer, TankGame.TextFontLarge,
                     new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 295.ToResolutionY()),
                     Vector2.One,
                     $"{TankGame.GameLanguage.Mission} #{CampaignGlobals.LoadedCampaign.CurrentMissionId + 1}",
                     BackgroundColor,
+                    (BackgroundColor * 0.35f) with { A = 255 },
                     TextAnimatorSmall.CurrentScale.ToResolution(),
-                    overallAlpha);
+                    overallAlpha, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 1.5f);
         }
         _oldBlack = BlackAlpha;
 

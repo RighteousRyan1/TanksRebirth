@@ -312,7 +312,7 @@ public static class IntermissionHandler {
 
     public static void RenderCountdownGraphics() {
         if (!MainMenuUI.Active && !TankGame.OverheadView && !LevelEditorUI.Active/* && TankFunctionWait > 0*/) {
-            DrawUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFontLarge, PrepareDisplay, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 3), 
+            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, TankGame.TextFontLarge, PrepareDisplay, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 3), 
                 IntermissionSystem.BackgroundColor, IntermissionSystem.StripColor, CountdownAnimator.CurrentScale.ToResolution(), 0f, Anchor.Center, 3);
         }
     }

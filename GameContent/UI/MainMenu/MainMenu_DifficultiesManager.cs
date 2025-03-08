@@ -93,7 +93,7 @@ public static partial class MainMenuUI {
     }
     public static void RenderDifficultiesMenu() {
         if (MenuState == UIState.Difficulties) {
-            DrawUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont,
+            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, TankGame.TextFont,
                 "Ideas are welcome! Let us know in our DISCORD server!",
                 new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 6), Color.White, Color.Black, new Vector2(1f), 0f, Anchor.Center, 0.8f);
         }

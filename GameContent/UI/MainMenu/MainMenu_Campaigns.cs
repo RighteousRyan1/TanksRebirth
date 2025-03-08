@@ -142,7 +142,7 @@ public static partial class MainMenuUI {
         if (MissionCheckpoint < 0)
             MissionCheckpoint = 0;
 
-        DrawUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"You can scroll with your mouse to skip to a certain mission." +
+        DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, TankGame.TextFont, $"You can scroll with your mouse to skip to a certain mission." +
             $"\nCurrently, you will skip to mission {MissionCheckpoint + 1}." +
             $"\nYou will be alerted if that mission does not exist.", new Vector2(12, 200).ToResolution(),
             Color.White, Color.Black, new Vector2(0.75f).ToResolution(), 0f, Anchor.TopLeft);
@@ -154,6 +154,6 @@ public static partial class MainMenuUI {
         var defPos = new Vector2(60, 380);
         TankGame.SpriteRenderer.Draw(tex, defPos.ToResolution(), null, Color.White, 0f, new Vector2(tex.Size().X, tex.Size().Y / 2), new Vector2(0.1f).ToResolution(), default, default);
         var text = $"Top {Speedrun.LoadedSpeedruns.Length} speedruns:\n" + string.Join(Environment.NewLine, Speedrun.LoadedSpeedruns);
-        DrawUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, text, defPos.ToResolution(), Color.White, Color.Black, new Vector2(0.75f).ToResolution(), 0f, Anchor.LeftCenter);
+        DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, TankGame.TextFont, text, defPos.ToResolution(), Color.White, Color.Black, new Vector2(0.75f).ToResolution(), 0f, Anchor.LeftCenter);
     }
 }

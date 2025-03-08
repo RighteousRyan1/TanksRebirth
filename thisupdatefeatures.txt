@@ -4,14 +4,17 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 
 ## Additions
 
-- Added an entire room that the entire game scene exists in! There is no longer a black void that consumes the game.
+- Added an entire room that the entire game scene exists in! There is no longer a black void that consumes the game
+- Added some handy-dandy FPS graphs at the user's disposal, if needed
 
 ## Changes
 
+- Changed the game's main font (for english only)
 - Players can no longer *visually* peek through corners of map geometry
 - Blocks are now slightly bigger
 - Main menu animation is now much different
 - MOTD is now just plastered on the top of the screen
+- Adjusted the look of the mission title bar / background
 
 ## Changes Important for Modders
 

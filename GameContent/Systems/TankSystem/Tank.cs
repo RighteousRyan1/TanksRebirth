@@ -584,7 +584,7 @@ public abstract class Tank {
                     a.Destroy();
             };
             part.UniqueDraw = particle => {
-                DrawUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFontLarge, particle.Text,
+                DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, TankGame.TextFontLarge, particle.Text,
                     MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(particle.Position),
                         TankGame.GameView, TankGame.GameProjection),
                     particle.Color, Color.White, new(particle.Scale.X, particle.Scale.Y), 0f, Anchor.Center);
@@ -968,7 +968,7 @@ public abstract class Tank {
         for (int i = 0; i < info.Length; i++) {
             var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Up * 20, World, View, Projection) -
                 new Vector2(0, (i * 20));
-            DrawUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, info[i], pos, 
+            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, TankGame.TextFont, info[i], pos, 
                 Color.Aqua, Color.Black, new Vector2(0.5f).ToResolution(), 0f, Anchor.TopCenter, 0.6f);
         }
     }

@@ -326,16 +326,18 @@ public class GameHandler {
             }
             // this draws the amount of kills a player has.
             for (int i = -4; i < 10; i++) {
-                DrawUtils.DrawShadowedTexture(GameResources.GetGameResource<Texture2D>("Assets/textures/ui/scoreboard"),
+                DrawUtils.DrawTextureWithShadow(TankGame.SpriteRenderer, GameResources.GetGameResource<Texture2D>("Assets/textures/ui/scoreboard"),
                     new Vector2((i * 14).ToResolutionX(), WindowUtils.WindowHeight * 0.9f),
                     Vector2.UnitY,
                     Color.White,
                     new Vector2(2f).ToResolution(),
                     1f,
-                    new(0, GameResources.GetGameResource<Texture2D>("Assets/textures/ui/scoreboard").Size().Y / 2),
+                    Anchor.LeftCenter,
                     true);
             }
-            DrawUtils.DrawShadowedString(TankGame.TextFontLarge, new Vector2(80.ToResolutionX(), WindowUtils.WindowHeight * 0.9f - 14f.ToResolutionY()), Vector2.One, $"{PlayerTank.KillCount}", new(119, 190, 238), new Vector2(0.675f).ToResolution(), 1f);
+            DrawUtils.DrawStringWithShadow(TankGame.SpriteRenderer, TankGame.TextFontLarge, new Vector2(80.ToResolutionX(), 
+                WindowUtils.WindowHeight * 0.9f - 14f.ToResolutionY()), 
+                Vector2.One, $"{PlayerTank.KillCount}", new(119, 190, 238), new Vector2(0.675f).ToResolution(), 1f);
         }
         // TODO: put this code elsewhere... idk where rn.
         var shouldSeeInfo = !MainMenuUI.Active && !LevelEditorUI.Active && !CampaignCompleteUI.IsViewingResults;
@@ -352,19 +354,19 @@ public class GameHandler {
             var tanksRemaining = $"x {AIManager.CountAll()}";
             var tanksRemMeasure = font.MeasureString(tanksRemaining) * infoScale;
 
-            DrawUtils.DrawShadowedTexture(bar, barPos,
-                Vector2.UnitY, IntermissionSystem.StripColor * 1.5f, Vector2.One.ToResolution(), alpha, bar.Size() / 2, shadowDistScale: 0.5f);
+            DrawUtils.DrawTextureWithShadow(TankGame.SpriteRenderer, bar, barPos,
+                Vector2.UnitY, IntermissionSystem.StripColor * 1.5f, Vector2.One.ToResolution(), alpha, Anchor.Center, shadowDistScale: 0.5f);
 
-            DrawUtils.DrawShadowedTexture(tnk, barPos + new Vector2(bar.Size().X * 0.25f, 0).ToResolution(),
-                Vector2.One, IntermissionSystem.BackgroundColor, new Vector2(1.5f).ToResolution(), alpha, tnk.Size() / 2, shadowDistScale: 0.5f);
+            DrawUtils.DrawTextureWithShadow(TankGame.SpriteRenderer, tnk, barPos + new Vector2(bar.Size().X * 0.25f, 0).ToResolution(),
+                Vector2.One, IntermissionSystem.BackgroundColor, new Vector2(1.5f).ToResolution(), alpha, Anchor.Center, shadowDistScale: 0.5f);
 
-            DrawUtils.DrawShadowedString(font, barPos - new Vector2(bar.Size().X / 6, 7.5f * infoScaling).ToResolution(),
+            DrawUtils.DrawStringWithShadow(TankGame.SpriteRenderer, font, barPos - new Vector2(bar.Size().X / 6, 7.5f * infoScaling).ToResolution(),
                 Vector2.One, missionInfo, IntermissionSystem.BackgroundColor, new Vector2(infoScale * infoScaling).ToResolution(),
-                1f, infoMeasure, shadowDistScale: 1.5f);
+                1f, /*infoMeasure*/ Anchor.BottomRight, shadowDistScale: 1.5f, origMeasureScale: infoScale);
 
-            DrawUtils.DrawShadowedString(font, barPos + new Vector2(bar.Size().X * 0.375f, -7.5f).ToResolution(),
+            DrawUtils.DrawStringWithShadow(TankGame.SpriteRenderer, font, barPos + new Vector2(bar.Size().X * 0.375f, -7.5f).ToResolution(),
                 Vector2.One, tanksRemaining, IntermissionSystem.BackgroundColor, new Vector2(infoScale).ToResolution(),
-                alpha, tanksRemMeasure, shadowDistScale: 1.5f);
+                alpha, /*tanksRemMeasure*/ Anchor.BottomRight, shadowDistScale: 1.5f, origMeasureScale: infoScale);
         }
         // TODO: MissionInfoBar can be much better.
 

@@ -530,7 +530,7 @@ public class PlayerTank : Tank
             var off = MathF.Abs(MathF.Sin(i * MathF.PI / 5 - TankGame.RunTime * 0.3f));
             var rgbColor = ColorUtils.HsvToRgb(TankGame.UpdateCount + i % 255 / 255f * 360, 1, 1);
             var scale = Vector2.One * 4 * off;
-            DrawUtils.DrawBorderedTexture(TankGame.SpriteRenderer, whitePixel, pathPosScreen, Color.Black,
+            DrawUtils.DrawTextureWithBorder(TankGame.SpriteRenderer, whitePixel, pathPosScreen, Color.Black,
                 rgbColor, scale, 0f, Anchor.Center, 1f);
             //TankGame.SpriteRenderer.Draw(whitePixel, pathPosScreen, null, ColorUtils.HsvToRgb(TankGame.UpdateCount + i % 255 / 255f * 360, 1, 1), 0, whitePixel.Size() / 2, new Vector2(3 + off).ToResolution(), default, default);
         }
@@ -643,7 +643,7 @@ public class PlayerTank : Tank
             TankGame.SpriteRenderer.Draw(tex1, pos, null, Color.White, rotation, tex1.Size() / 2, 0.5f.ToResolution(), default, default);
             TankGame.SpriteRenderer.Draw(tex2, pos, null, playerColor, rotation, tex2.Size() / 2, 0.5f.ToResolution(), default, default);
 
-            DrawUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFontLarge, pText, new(pos.X, pos.Y + (flip ? 100 : -125).ToResolutionY()), playerColor, Color.White, Vector2.One.ToResolution(), 0f, Anchor.Center, 2f);
+            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, TankGame.TextFontLarge, pText, new(pos.X, pos.Y + (flip ? 100 : -125).ToResolutionY()), playerColor, Color.White, Vector2.One.ToResolution(), 0f, Anchor.Center, 2f);
         }
 
         if (DebugManager.DebugLevel == 1 || _drawShotPath)
