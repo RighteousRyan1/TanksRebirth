@@ -120,11 +120,11 @@ public class NetPlay {
                 Server.CurrentClientCount--;
 
                 // shift from the client id index in the array to the end of the array.
-                // i.e: [ "Name1", "Name2", "Name3", "Name4", "Name5", null, null, null ]
+                // i.e: [ "Name1", "Name2", "Name3", "Name4" ]
                 // client "Name3" now leaves...
-                // i.e: [ "Name1", "Name2", null, "Name4", "Name5", null, null, null ]
+                // i.e: [ "Name1", "Name2", null, "Name4" ]
                 // fill in that gap
-                // i.e: [ "Name1", "Name2", "Name4", "Name5", null, null, null, null ]
+                // i.e: [ "Name1", "Name2", "Name4", null ]
                 Server.ConnectedClients = ArrayUtils.Shift(Server.ConnectedClients, -1, cId, 0);
 
                 SoundPlayer.PlaySoundInstance("Assets/sounds/menu/client_join.ogg", SoundContext.Effect, 0.75f);

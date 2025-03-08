@@ -22,6 +22,8 @@ public static class RoomScene {
     public static readonly Vector3 TableScenePos = new(-350f, -61.7f, 325f);
     public static readonly Vector3 FloorScenePos = new(-155f, -0.15f, 210f);
 
+    public static readonly float ClockRotation = MathHelper.PiOver4;
+
 
     // bro there is no construcor stop yapping stupid ide
     public static Model RoomSkyboxScene;
@@ -220,6 +222,9 @@ public static class RoomScene {
     public static void UpdateRoom() {
         // this is to line up the table with the game scene.
         // again, pretty magical values, but it is what it is.
+
+        Rotation = new(0, 0, 0);
+        //UsedPosition = TableScenePos; //new(/*-450f*/ -MouseUtils.Test.X * 1000, -200f, MouseUtils.Test.Y * 1000);
         Position = UsedPosition * Scale;
         View = TankGame.GameView;
         Projection = TankGame.GameProjection;

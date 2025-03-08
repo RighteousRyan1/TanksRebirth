@@ -120,8 +120,8 @@ public static class SceneManager {
 
         // TODO: should the chance be scaled by tps?
         if (GameHandler.GameRand.NextFloat(0, 1f) <= 0.003f * TankGame.DeltaTime) {
-            var rand = new Range<Thunder.ThunderType>(Thunder.ThunderType.Fast, Thunder.ThunderType.Instant2);
-            var type = (Thunder.ThunderType)GameHandler.GameRand.Next((int)rand.Min, (int)rand.Max);
+            var rand = new Range<byte>((byte)Thunder.ThunderType.Fast, (byte)Thunder.ThunderType.Instant2);
+            var type = (Thunder.ThunderType)GameHandler.GameRand.Next(rand.Min, rand.Max);
 
             if (!Thunder.Thunders.Any(x => x is not null && x.Type == type))
                 new Thunder(type);

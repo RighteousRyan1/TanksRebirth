@@ -11,6 +11,9 @@ public static class MouseUtils
 {
     public static int MouseX => (int)MousePosition.X;
     public static int MouseY => (int)MousePosition.Y;
+
+    public static Vector2 Test => MousePosition / WindowUtils.WindowBounds;
+
     public static Vector2 MousePosition;
     public static bool MouseOnScreen => MousePosition.X >= 0 && MousePosition.X <= WindowUtils.WindowWidth && MousePosition.Y >= 0 && MousePosition.Y < WindowUtils.WindowHeight;
     public static bool MouseOnScreenProtected => MousePosition.X > 16 && MousePosition.X < WindowUtils.WindowWidth - 16 && MousePosition.Y > 16 && MousePosition.Y < WindowUtils.WindowHeight - 16;

@@ -32,6 +32,7 @@ using System.Text;
 using TanksRebirth.GameContent.Cosmetics;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.GameContent.UI.LevelEditor;
+using TanksRebirth.Graphics.Metrics;
 
 namespace TanksRebirth.GameContent;
 
@@ -83,9 +84,13 @@ public class GameHandler {
 
         CosmeticsUI.Initialize();
     }
+    public static Graph RenderFpsGraph = new("Render", () => (float)TankGame.RenderFPS, 200, 50, 3, 0.35f);
+    public static Graph LogicFpsGraph = new("Logic", () => (float)TankGame.LogicFPS, 200, 50, 3, 0.35f);
 
+    public static Graph RenderTimeGraph = new("Render Time", () => TankGame.RenderTime.Milliseconds, 50, 50, 3, 0.35f);
+    public static Graph LogicTimeGraph = new("Logic Time", () => TankGame.LogicTime.Milliseconds, 50, 50, 3, 0.35f);
     internal static void UpdateAll(GameTime gameTime) {
-        void doTestWithFont() {
+        /*void doTestWithFont() {
             var str = 
                 "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
                 "abcdefghijklmnopqrstuvwxyz" +
@@ -103,7 +108,7 @@ public class GameHandler {
             Console.WriteLine($"{str[longestId]} is the longest. ({longest})");
         }
         if (InputUtils.KeyJustPressed(Keys.OemTilde))
-            doTestWithFont();
+            doTestWithFont();*/
         // ChatSystem.CurTyping = SoundPlayer.GetLengthOfSound("Content/Assets/sounds/tnk_shoot_ricochet_rocket_loop.ogg").ToString();
         CosmeticsUI.Update();
         RoomScene.Update();
@@ -385,6 +390,20 @@ public class GameHandler {
         }
         foreach (var element in UIElement.AllUIElements)
             element?.DrawTooltips(TankGame.SpriteRenderer);
+
+        if (DebugManager.DebugLevel == DebugManager.Id.SceneMetrics) {
+            if (TankGame.RunTime % 10f <= TankGame.DeltaTime) {
+                RenderFpsGraph.Update();
+                LogicFpsGraph.Update();
+
+                RenderTimeGraph.Update();
+                LogicTimeGraph.Update();
+            }
+            RenderFpsGraph.Draw(TankGame.SpriteRenderer, new Vector2(100, 200), 2);
+            LogicFpsGraph.Draw(TankGame.SpriteRenderer, new Vector2(100, 400), 2);
+            RenderTimeGraph.Draw(TankGame.SpriteRenderer, new Vector2(500, 200), 2);
+            LogicTimeGraph.Draw(TankGame.SpriteRenderer, new Vector2(500, 400), 2);
+        }
     }
     public static void SetupGraphics() {
         GameShaders.Initialize();

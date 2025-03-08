@@ -15,10 +15,7 @@ public static class MathUtils
     public static float[] ToFloatArray(this Vector3 v) => [v.X, v.Y, v.Z];
     /// <summary>Turns a 3-element array into a Vector3, must be ordered [x, y, z]</summary>
     public static Vector3 ToVector3(this float[] f) => new(f[0], f[1], f[2]);
-    public static Vector2 DirectionOf(this Vector2 vec, Vector2 other, bool from = false) => from switch {
-            true => vec - other,
-            _ => other - vec,
-        };
+    public static Vector2 DirectionTo(this Vector2 current, Vector2 destination) => destination - current;
     public static Rectangle ToRect(this AABB aabb) => AbsoluteRectangle(new((int)(aabb.Center.X - aabb.Width), (int)(aabb.Center.Y - aabb.Height), (int)aabb.Width, (int)aabb.Height));
     public static AABB ToAABB(this Rectangle rect) => new(new Vector2(rect.X, rect.Y), new Vector2(rect.X + rect.Width, rect.Y + rect.Width));
     public static Rectangle AbsoluteRectangle(Rectangle input)
@@ -156,54 +153,7 @@ public static class MathUtils
         }
         return MathHelper.WrapAngle(angle);
     }
-    public static T Clamp<T>(T value, T min, T max) where T : IComparable<T>
-    {
-        if (value.CompareTo(max) > 0)
-        {
-            return max;
-        }
-        if (value.CompareTo(min) < 0)
-        {
-            return min;
-        }
-        return value;
-    }
-    public static T Clamp<T>(ref T value, T min, T max) where T : IComparable<T>
-    {
-        if (value.CompareTo(max) > 0)
-        {
-            return max;
-        }
-        if (value.CompareTo(min) < 0)
-        {
-            return min;
-        }
-        return value;
-    }
     public static float RoughStep(float value, float goal, float step)
-    {
-        if (value < goal)
-        {
-            value += step;
-
-            if (value > goal)
-            {
-                return goal;
-            }
-        }
-        else if (value > goal)
-        {
-            value -= step;
-
-            if (value < goal)
-            {
-                return goal;
-            }
-        }
-
-        return value;
-    }
-    public static int RoughStep(int value, int goal, int step)
     {
         if (value < goal)
         {
@@ -290,5 +240,17 @@ public static class MathUtils
         for (int j = 0, jj = points.Length - 1; j < jj; j++)
             copy[j] = new(MathHelper.Lerp(points[j].X, points[j + 1].X, progress), MathHelper.Lerp(points[j].Y, points[j + 1].Y, progress));
         return BezierDestructive(progress, copy);
+    }
+    public static int RoundToClosest(this int i, int nearest) {
+        if (nearest <= 0 || nearest % 10 != 0)
+            throw new ArgumentOutOfRangeException("nearest", "Must round to a positive multiple of 10");
+
+        return (i + 5 * nearest / 10) / nearest * nearest;
+    }
+    public static float RoundToClosest(this float i, int nearest) {
+        if (nearest <= 0 || nearest % 10 != 0)
+            throw new ArgumentOutOfRangeException("nearest", "Must round to a positive multiple of 10");
+
+        return (i + 5 * nearest / 10) / nearest * nearest;
     }
 }

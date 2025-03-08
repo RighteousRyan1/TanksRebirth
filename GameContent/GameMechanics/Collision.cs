@@ -268,7 +268,7 @@ namespace TanksRebirth.GameContent.GameMechanics
 
             // 20, 30
 
-            var pathDir = MathUtils.DirectionOf(start, destination).ToRotation();
+            var pathDir = MathUtils.DirectionTo(start, destination).ToRotation();
 
             var pathPos = start + Vector2.Zero.Rotate(pathDir);
 
@@ -305,7 +305,7 @@ namespace TanksRebirth.GameContent.GameMechanics
                 if (Vector2.Distance(pathPos, destination) < forgiveness)
                     return true;
 
-                pathPos += Vector2.Normalize(MathUtils.DirectionOf(start, destination));
+                pathPos += Vector2.Normalize(MathUtils.DirectionTo(start, destination));
 
                 if (draw)
                 {

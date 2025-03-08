@@ -55,7 +55,7 @@ public static class RebirthMouse
         if (DoTrail) {
             var p = GameHandler.Particles.MakeParticle(new Vector3(MouseUtils.MousePosition.X, MouseUtils.MousePosition.Y, 0), TextureGlobals.Pixels[Color.White]);
             p.IsIn2DSpace = true;
-            var dir = _oldMouse.DirectionOf(MouseUtils.MousePosition).ToResolution();
+            var dir = _oldMouse.DirectionTo(MouseUtils.MousePosition).ToResolution();
             p.Rotation2D = dir.ToRotation();
             p.TextureScale = new Vector2(dir.Length() * 1.1f, 20.ToResolutionY());
             p.Origin2D = new(0, TextureGlobals.Pixels[Color.White].Size().Y / 2);

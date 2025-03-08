@@ -585,7 +585,7 @@ public partial class AITank : Tank {
                 if (i > 15) {
                     if (GameUtils.Distance_WiiTanksUnits(enemy.Position, pathPos) <= realMiss) {
                         var rot = pathDir.ToRotation();
-                        var angle = MathUtils.DirectionOf(pathPos, enemy.Position).ToRotation();
+                        var angle = MathUtils.DirectionTo(pathPos, enemy.Position).ToRotation();
 
                         if (MathUtils.AbsoluteAngleBetween(rot, angle) >= MathHelper.PiOver2) {
                             tanks.Add(enemy);
@@ -705,12 +705,12 @@ public partial class AITank : Tank {
         if (AiParams.PredictsPositions) {
             if (TargetTank is not null) {
                 var calculation = Position.Distance(TargetTank.Position) / (float)(Properties.ShellSpeed * 1.2f);
-                float rot = -MathUtils.DirectionOf(Position,
+                float rot = -MathUtils.DirectionTo(Position,
                     GeometryUtils.PredictFuturePosition(TargetTank.Position, TargetTank.Velocity, calculation))
                     .ToRotation() - MathHelper.PiOver2;
 
                 tanksDef = GetTanksInPath(
-                Vector2.UnitY.Rotate(-MathUtils.DirectionOf(Position, TargetTank.Position).ToRotation() - MathHelper.PiOver2),
+                Vector2.UnitY.Rotate(-MathUtils.DirectionTo(Position, TargetTank.Position).ToRotation() - MathHelper.PiOver2),
                 out var ricP, out var tnkCol, offset: AiParams.PredictsPositions ? Vector2.Zero : Vector2.UnitY * 20,
                 missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
 
@@ -1119,7 +1119,7 @@ public partial class AITank : Tank {
         if (Behaviors[6].IsModOf(1)) {
             // TODO: add all shells that may or may not be near, average their position and make the tank go away from that position
             if (CurMineStun <= 0 && CurShootStun <= 0) {
-                var direction = -Vector2.UnitY.Rotate(shell.Position.DirectionOf(Position, false).ToRotation());
+                var direction = -Vector2.UnitY.Rotate(shell.Position.DirectionTo(Position).ToRotation());
                 TargetTankRotation = direction.ToRotation();
             }
         }
@@ -1128,7 +1128,7 @@ public partial class AITank : Tank {
         // why is 10 hardcoded xd
         if (Behaviors[5].IsModOf(1)) {
             var dist = mine.IsPlayerSourced ? AiParams.MineWarinessRadius_PlayerLaid : AiParams.MineWarinessRadius_AILaid;
-            var direction = -Vector2.UnitY.Rotate(mine.Position.DirectionOf(Position, false).ToRotation());
+            var direction = -Vector2.UnitY.Rotate(mine.Position.DirectionTo(Position).ToRotation());
 
             TargetTankRotation = direction.ToRotation();
         }
@@ -1137,7 +1137,7 @@ public partial class AITank : Tank {
         // FIXME?: is the modulus check more sensible to come first or not? only time will tell.
         if (Behaviors[5].IsModOf(10)) {
             //var dist = explosion.IsPlayerSourced ? AiParams.MineWarinessRadius_PlayerLaid : AiParams.MineWarinessRadius_AILaid;
-            var direction = -Vector2.UnitY.Rotate(explosion.Position.DirectionOf(Position, false).ToRotation());
+            var direction = -Vector2.UnitY.Rotate(explosion.Position.DirectionTo(Position).ToRotation());
             TargetTankRotation = direction.ToRotation();
         }
     }
@@ -1148,7 +1148,7 @@ public partial class AITank : Tank {
                 if (reflections.Length > 0) {
                     // up = PiOver2
                     //var normalRotation = reflections[0].Normal.RotatedByRadians(TargetTankRotation);
-                    var dirOf = MathUtils.DirectionOf(travelPath/*Position + normalRotation*/, Position/*reflections[0].ReflectionPoint*/).ToRotation();
+                    var dirOf = MathUtils.DirectionTo(travelPath/*Position + normalRotation*/, Position/*reflections[0].ReflectionPoint*/).ToRotation();
                     var refAngle = dirOf + MathHelper.PiOver2;
 
                     // this is a very bandaid fix....
@@ -1164,10 +1164,10 @@ public partial class AITank : Tank {
     }
     public void DoDeflection(Shell shell) {
         if (shell.LifeTime > 60) {
-            var dir = MathUtils.DirectionOf(Position, shell.Position);
+            var dir = MathUtils.DirectionTo(Position, shell.Position);
             //var rotation = dir.ToRotation();
             var calculation = (Position.Distance(shell.Position) - 20f) / (float)(Properties.ShellSpeed * 1.2f);
-            float rot = -MathUtils.DirectionOf(Position,
+            float rot = -MathUtils.DirectionTo(Position,
                 GeometryUtils.PredictFuturePosition(shell.Position, shell.Velocity, calculation))
                 .ToRotation() + MathHelper.PiOver2;
 
@@ -1257,7 +1257,7 @@ public partial class AITank : Tank {
             // maybe not necessary. store from the cpu, draw on the gpu.
             var poo = GetTanksInPath(Vector2.UnitY.Rotate(TurretRotation - MathHelper.Pi), out var ricP2, out var tnkCol2, true, offset: Vector2.UnitY * 20, pattern: x => x.Properties.IsSolid | x.Type == BlockID.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);
             if (AiParams.PredictsPositions) {
-                float rot = -MathUtils.DirectionOf(Position, TargetTank is not null ?
+                float rot = -MathUtils.DirectionTo(Position, TargetTank is not null ?
                     GeometryUtils.PredictFuturePosition(TargetTank.Position, TargetTank.Velocity, calculation) :
                     AimTarget).ToRotation() - MathHelper.PiOver2;
                 GetTanksInPath(Vector2.UnitY.Rotate(rot), out var ricP3, out var tnkCol3, true, Vector2.Zero, pattern: x => x.Properties.IsSolid | x.Type == BlockID.Teleporter, missDist: AiParams.Inaccuracy, doBounceReset: AiParams.BounceReset);

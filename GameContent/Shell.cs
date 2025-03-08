@@ -360,9 +360,9 @@ public class Shell : IAITankDanger
                 if (hits) {
                     float dist = Vector2.Distance(Position, Properties.HomeProperties.Target);
 
-                    Velocity.X += MathUtils.DirectionOf(Position, Properties.HomeProperties.Target).X *
+                    Velocity.X += MathUtils.DirectionTo(Position, Properties.HomeProperties.Target).X *
                         Properties.HomeProperties.Power / dist;
-                    Velocity.Y += MathUtils.DirectionOf(Position, Properties.HomeProperties.Target).Y *
+                    Velocity.Y += MathUtils.DirectionTo(Position, Properties.HomeProperties.Target).Y *
                         Properties.HomeProperties.Power / dist;
 
                     Vector2 trueSpeed = Vector2.Normalize(Velocity) * Properties.HomeProperties.Speed;
@@ -719,7 +719,7 @@ public class Shell : IAITankDanger
     public bool IsHeadingTowards(Vector2 targetPosition, float distance, float arc) {
         var rotation = Velocity != Vector2.Zero ? Velocity.ToRotation() : Vector2.UnitX.ToRotation();
 
-        var rotToTarget = MathUtils.DirectionOf(Position, targetPosition).ToRotation();
+        var rotToTarget = MathUtils.DirectionTo(Position, targetPosition).ToRotation();
 
         var inDistance = GameUtils.Distance_WiiTanksUnits(Position, targetPosition) < distance;
 
