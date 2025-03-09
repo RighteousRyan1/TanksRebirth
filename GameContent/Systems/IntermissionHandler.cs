@@ -268,7 +268,7 @@ public static class IntermissionHandler {
         DebugManager.UpdateDebug();
 
         if (MainMenuUI.Active) {
-            PlayerTank.KillCount = 0;
+            PlayerTank.KillCounts[NetPlay.GetMyClientId()] = 0;
             // don't know if this fucks with the stack or not. to be determined.
             PlayerTank.PlayerStatistics = default;
         }

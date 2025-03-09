@@ -299,7 +299,18 @@ public abstract partial class UIElement {
     internal void DrawTooltipBox(SpriteBatch spriteBatch, Color color) {
         var font = TankGame.TextFont;
         var scaleFont = font.MeasureString(Tooltip);
-        var Hitbox = new Rectangle(MouseUtils.MouseX + 5, MouseUtils.MouseY + 5, (int)(scaleFont.X + 30).ToResolutionX(), (int)(scaleFont.Y + 30).ToResolutionY());
+
+        var x = MouseUtils.MouseX + 5;
+        var y = MouseUtils.MouseY + 5;
+        var width = (int)(scaleFont.X + 30).ToResolutionX();
+        var height = (int)(scaleFont.Y + 30).ToResolutionY();
+
+        // ensure the tooltip is on-screen
+        while (x + width > WindowUtils.WindowWidth) {
+            x--;
+        }
+
+        var Hitbox = new Rectangle(x, y, width, height);
         var texture = UIPanelBackground;
 
         int border = 12;

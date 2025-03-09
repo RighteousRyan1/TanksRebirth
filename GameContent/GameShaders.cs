@@ -14,8 +14,8 @@ public class GameShaders
 {
     public static Effect MouseShader { get; private set; }
     public static Effect GaussianBlurShader { get; private set; }
-
     public static Effect LanternShader { get; private set; }
+    public static Effect AnimatedRainbow { get; private set; }
 
     public static float BlurFactor = 0.0075f;
 
@@ -29,12 +29,19 @@ public class GameShaders
     }
 
     public static void Initialize() {
-        GaussianBlurShader = GameResources.GetGameResource<Effect>("Assets/Shaders/GaussianBlur");
-        MouseShader = GameResources.GetGameResource<Effect>("Assets/Shaders/MouseShader");
-        LanternShader = GameResources.GetGameResource<Effect>("Assets/Shaders/testshader");
+        GaussianBlurShader = GameResources.GetGameResource<Effect>("Assets/Shaders/gaussian_blur");
+        MouseShader = GameResources.GetGameResource<Effect>("Assets/Shaders/mouse");
+        LanternShader = GameResources.GetGameResource<Effect>("Assets/Shaders/lantern");
+        AnimatedRainbow = GameResources.GetGameResource<Effect>("Assets/Shaders/rainbow_grad_anim");
     }
     //static float val = 1f;
     public static void UpdateShaders() {
+        AnimatedRainbow.Parameters["oTime"]?.SetValue((float)TankGame.LastGameTime.TotalGameTime.TotalSeconds);
+        AnimatedRainbow.Parameters["oStrength"].SetValue(0.5f);
+        AnimatedRainbow.Parameters["oAngle"].SetValue(0f);
+        AnimatedRainbow.Parameters["oSpeed"].SetValue(0.5f);
+        AnimatedRainbow.Parameters["oMinLum"].SetValue(0.9f);
+
         MouseShader.Parameters["oGlobalTime"].SetValue((float)TankGame.LastGameTime.TotalGameTime.TotalSeconds);
         var value = PlayerID.PlayerTankColors[PlayerTank.MyTankType];
         MouseShader.Parameters["oColor"].SetValue(value);

@@ -215,7 +215,7 @@ public static class IntermissionSystem {
             float spacing = 10;
 
             string enemyTankDisplay = $"{TankGame.GameLanguage.EnemyTanks}: {mafs}";
-            string missionName = "4. Too Hard? OK."; //CampaignGlobals.LoadedCampaign.LoadedMission.Name;
+            string missionName = CampaignGlobals.LoadedCampaign.LoadedMission.Name;
 
             float spacingEnemyTankDisplay = DrawUtils.GetTextXOffsetForSpacing(enemyTankDisplay, spacing) / TextAnimatorLarge.CurrentScale.ToResolution().X;
             float spacingMissionName = DrawUtils.GetTextXOffsetForSpacing(missionName, spacing) / TextAnimatorLarge.CurrentScale.ToResolution().X;

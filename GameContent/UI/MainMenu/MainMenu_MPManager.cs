@@ -1,8 +1,11 @@
 ﻿using FontStashSharp;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System.Linq;
+using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Systems;
+using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.GameUI;
@@ -13,6 +16,11 @@ namespace TanksRebirth.GameContent.UI.MainMenu;
 
 #pragma warning disable
 public static partial class MainMenuUI {
+    private static Vector2 _panelPosition;
+    private static float _panelWidth;
+    private static float _panelHeaderHeight;
+    private static float _panelHeight;
+
     private static bool _ssbbv = true;
     public static bool ShouldServerButtonsBeVisible {
         get => _ssbbv;
@@ -55,30 +63,32 @@ public static partial class MainMenuUI {
         StartMPGameButton.IsVisible = visible && Client.IsHost();
     }
     public static void InitializeMP(SpriteFontBase font) {
-        UsernameInput = new(font, Color.WhiteSmoke, 1f, 20) {
+        var uiColor = Color.LightGray;
+        UsernameInput = new(font, uiColor, 1f, 15) {
             IsVisible = false,
             DefaultString = "Username"
         };
-        UsernameInput.SetDimensions(() => new Vector2(100, 400).ToResolution(), () => new Vector2(500, 50).ToResolution());
+        UsernameInput.SetDimensions(() => _panelPosition + new Vector2(0, _panelHeaderHeight / 4), () => new Vector2(240.ToResolutionX(), _panelHeaderHeight / 2));
 
-        IPInput = new(font, Color.WhiteSmoke, 1f, 15) {
+        IPInput = new(font, uiColor, 1f, 15) {
             IsVisible = false,
             DefaultString = "Server IP address"
         };
-        IPInput.SetDimensions(() => new Vector2(100, 500).ToResolution(), () => new Vector2(500, 50).ToResolution());
+        IPInput.SetDimensions(() => UsernameInput.Position + new Vector2(UsernameInput.Size.X, 0), () => UsernameInput.Size);
 
-        PortInput = new(font, Color.WhiteSmoke, 1f, 5) {
+        PortInput = new(font, uiColor, 1f, 5) {
             IsVisible = false,
             DefaultString = "Server Port"
         };
-        PortInput.SetDimensions(() => new Vector2(100, 600).ToResolution(), () => new Vector2(500, 50).ToResolution());
+        PortInput.SetDimensions(() => IPInput.Position + new Vector2(UsernameInput.Size.X, 0), () => UsernameInput.Size);
 
-        PasswordInput = new(font, Color.WhiteSmoke, 1f, 10) {
+        PasswordInput = new(font, uiColor, 1f, 10) {
             IsVisible = false,
-            DefaultString = "Server Password (Empty = None)"
+            DefaultString = "Server Password",
+            Tooltip = "Empty = none"
         };
-        PasswordInput.SetDimensions(() => new Vector2(100, 700).ToResolution(), () => new Vector2(500, 50).ToResolution());
-        DisconnectButton = new("Disconnect", font, Color.WhiteSmoke, 1f) {
+        PasswordInput.SetDimensions(() => PortInput.Position + new Vector2(UsernameInput.Size.X, 0), () => UsernameInput.Size);
+        DisconnectButton = new("Disconnect", font, uiColor, 1f) {
             IsVisible = false,
             OnLeftClick = (arg) => {
                 Client.SendDisconnect(NetPlay.CurrentClient.Id, NetPlay.CurrentClient.Name, "User left.");
@@ -96,19 +106,21 @@ public static partial class MainMenuUI {
                 ShouldServerButtonsBeVisible = true;
             }
         };
-        DisconnectButton.SetDimensions(() => new Vector2(100, 800).ToResolution(), () => new Vector2(500, 50).ToResolution());
+        DisconnectButton.SetDimensions(
+            () => _panelPosition + new Vector2(_panelWidth / 3 * 2 - DisconnectButton.Size.X / 2, _panelHeaderHeight / 4),
+            () => UsernameInput.Size);
 
-        ServerNameInput = new(font, Color.WhiteSmoke, 1f, 10) {
+        ServerNameInput = new(font, uiColor, 1f, 10) {
             IsVisible = false,
-            DefaultString = "Server Name (Server Creation)"
+            DefaultString = "Server Name"
         };
-        ServerNameInput.SetDimensions(() => new Vector2(100, 800).ToResolution(), () => new Vector2(500, 50).ToResolution());
+        ServerNameInput.SetDimensions(() => PasswordInput.Position + new Vector2(UsernameInput.Size.X, 0), () => UsernameInput.Size);
 
-        ConnectToServerButton = new(TankGame.GameLanguage.ConnectToServer, font, Color.WhiteSmoke) {
+        ConnectToServerButton = new(TankGame.GameLanguage.ConnectToServer, font, uiColor) {
             IsVisible = false,
             Tooltip = "Connect to the written IP and Port in the form of ip:port"
         };
-        ConnectToServerButton.SetDimensions(() => new Vector2(700, 100).ToResolution(), () => new Vector2(500, 50).ToResolution());
+        ConnectToServerButton.SetDimensions(() => ServerNameInput.Position + new Vector2(UsernameInput.Size.X, 0), () => UsernameInput.Size);
         ConnectToServerButton.OnLeftClick = (uiButton) => {
             if (UsernameInput.IsEmpty()) {
                 SoundPlayer.SoundError();
@@ -143,7 +155,9 @@ public static partial class MainMenuUI {
             IsVisible = false,
             Tooltip = "Create a server with the written IP and Port in the form of ip:port"
         };
-        CreateServerButton.SetDimensions(() => new Vector2(700, 350).ToResolution(), () => new Vector2(500, 50).ToResolution());
+        CreateServerButton.SetDimensions(
+            () => new Vector2(_panelPosition.X + _panelWidth / 2 - CreateServerButton.Size.X / 2, _panelPosition.Y + _panelHeaderHeight + _panelHeight - 30.ToResolutionY()), 
+            () => UsernameInput.Size);
         CreateServerButton.OnLeftClick = (uiButton) => {
             if (UsernameInput.IsEmpty()) {
                 SoundPlayer.SoundError();
@@ -190,7 +204,7 @@ public static partial class MainMenuUI {
             }
 
         };
-        StartMPGameButton = new(TankGame.GameLanguage.Play, font, Color.WhiteSmoke) {
+        StartMPGameButton = new(TankGame.GameLanguage.Play, font, uiColor) {
             IsVisible = false,
             Tooltip = "Start the game with every client that is connected"
         };
@@ -201,9 +215,12 @@ public static partial class MainMenuUI {
 
             MenuState = UIState.Campaigns;
         };
-        StartMPGameButton.SetDimensions(() => new Vector2(700, 600).ToResolution(), () => new Vector2(500, 50).ToResolution());
+        StartMPGameButton.SetDimensions(
+            () => _panelPosition + new Vector2(_panelWidth / 3 - DisconnectButton.Size.X / 2, _panelHeaderHeight / 4), 
+            () => UsernameInput.Size);
     }
     public static void UpdateMP() {
+  
         var plrOffset = -10f;
         if (!Client.IsConnected()) {
             if (PlayerTank.ClientTank is null) {
@@ -242,21 +259,43 @@ public static partial class MainMenuUI {
         }
         // TODO: rework this very rudimentary ui
         if (true || Server.ConnectedClients is not null && Client.IsConnected() && Client.LobbyDataReceived) {
-            Vector2 initialPosition = new(WindowUtils.WindowWidth * 0.75f, WindowUtils.WindowHeight * 0.25f);
-            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, TankGame.TextFont, $"\"{NetPlay.ServerName}\"", initialPosition - new Vector2(0, 40),
-                Color.White, Color.Black, new Vector2(0.6f).ToResolution(), 0f, Anchor.TopLeft, 0.8f);
-            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, TankGame.TextFont, $"Connected Players:", initialPosition,
-                Color.White, Color.Black, new Vector2(0.6f).ToResolution(), 0f, Anchor.TopLeft, 0.8f);
 
-            for (int i = 0; i < Server.ConnectedClients.Count(x => x is not null); i++) {
+            float divisor = 8;
+            float initialX = WindowUtils.WindowWidth / divisor;
+            _panelWidth = initialX * (divisor - 2);
+            _panelHeaderHeight = 50f.ToResolutionY();
+            _panelHeight = 300f.ToResolutionY();
+            _panelPosition = new Vector2(initialX, 50);
+
+            TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], _panelPosition, null, 
+                Color.White, 0f, Vector2.Zero, new Vector2(_panelWidth, _panelHeaderHeight), default, 0f);
+            TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], _panelPosition + new Vector2(0, _panelHeaderHeight), null,
+                Color.Gray, 0f, Vector2.Zero, new Vector2(_panelWidth, _panelHeight), default, 0f);
+
+            Vector2 serverNamePos = new(_panelPosition.X + _panelWidth / 2, _panelPosition.Y + _panelHeaderHeight + 20.ToResolutionY());
+
+            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, TankGame.TextFontLarge, $"\"{NetPlay.ServerName}\"", serverNamePos,
+                Color.White, Color.Black, new Vector2(0.6f).ToResolution(), 0f, Anchor.Center, 0.8f);
+            /*DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, TankGame.TextFont, $"Connected Players:", initialPosition + new Vector2(0, 40),
+                Color.White, Color.Black, new Vector2(0.6f).ToResolution(), 0f, Anchor.TopLeft, 0.8f);*/
+            var numClients = Server.ConnectedClients.Count(x => x is not null);
+
+            var divisions = numClients + 1;
+            var panelXCut = _panelWidth / divisions;
+
+            var borderColor = Color.Black;
+
+            for (int i = 0; i < numClients; i++) {
                 var client = Server.ConnectedClients[i];
                 // TODO: when u work on this again be sure to like, re-enable this code, cuz like, if u dont, u die.
                 Color textCol = PlayerID.PlayerTankColors[client.Id].ToColor();
-                //if (NetPlay.CurrentClient.Id == i)
-                //textCol = Color.Green;
 
-                DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, TankGame.TextFont, $"{client.Name}" + $" ({PlayerID.Collection.GetKey(client.Id)} tank)",
-                    initialPosition + new Vector2(0, 20) * (i + 1), textCol, Color.Black, new Vector2(0.6f).ToResolution(), 0f, Anchor.TopLeft, 0.8f);
+                var clientNamePos = new Vector2(_panelPosition.X + (panelXCut * (i + 1)), _panelPosition.Y + _panelHeaderHeight + _panelHeight / 3);
+
+                DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, TankGame.TextFontLarge, $"{client.Name}",
+                    clientNamePos, textCol, borderColor, new Vector2(0.3f).ToResolution(), 0f, Anchor.Center, 0.8f);
+                DrawUtils.DrawTextureWithBorder(TankGame.SpriteRenderer, GameResources.GetGameResource<Texture2D>("Assets/textures/ui/tank2d"),
+                    clientNamePos + new Vector2(0, 35).ToResolution(), textCol, borderColor, new Vector2(1f), 0f);
             }
         }
     }

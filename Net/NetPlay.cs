@@ -250,17 +250,26 @@ public class NetPlay {
                 break;
             case PacketID.TankDamage:
                 var hurtTankId = reader.GetInt();
-                //var causingTankId = reader.GetInt();
-                //var isPlayer = reader.GetBool();
+                var wasTank = reader.GetBool();
+                var wasPlayer = reader.GetBool();
+                var senderId = reader.GetInt();
 
-                if (GameHandler.AllTanks[hurtTankId] is PlayerTank player) {
+                /*if (GameHandler.AllTanks[hurtTankId] is PlayerTank player) {
                     // checks if the damage recipient is themself
                     if (IsClientMatched(hurtTankId)) {
 
                     }
-                }
-                GameHandler.AllTanks[hurtTankId]?.Damage(null);
+                }*/
+                /*if (wasTank) {
+                    if (wasPlayer) {
+                        var tnkSender = GameHandler.AllPlayerTanks[senderId];
 
+
+                    } else {
+                        var tnkSender = GameHandler.AllTanks[senderId];
+                    }
+                }*/
+                GameHandler.AllTanks[hurtTankId]?.Damage(null);
                 break;
             case PacketID.ShellDestroy:
                 var ownerId = reader.GetInt();
@@ -518,7 +527,14 @@ public class NetPlay {
                 break;
             case PacketID.TankDamage:
                 var hurtTankId = reader.GetInt();
+                var wasTank = reader.GetBool();
+                var wasPlayer = reader.GetBool();
+                var senderId = reader.GetInt();
+
                 message.Put(hurtTankId);
+                message.Put(wasTank);
+                message.Put(wasPlayer);
+                message.Put(senderId);
 
                 Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;

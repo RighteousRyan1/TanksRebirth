@@ -532,8 +532,21 @@ public abstract class Tank {
         if (Dead || Properties.Immortal)
             return;
 
-        // if (Server.serverNetManager != null)
-        Client.SyncDamage(WorldId);
+        if (context is TankHurtContextShell cxtshell) {
+            if (cxtshell.Shell.Owner is PlayerTank player)
+                Client.SyncDamage(WorldId, true, true, player.PlayerId);
+            else if (cxtshell.Shell.Owner is not null)
+                Client.SyncDamage(WorldId, true, true, cxtshell.Shell.Owner!.WorldId);
+        }
+        else if (context is TankHurtContextMine cxtmine) {
+            if (cxtmine.MineExplosion.Owner is PlayerTank player)
+                Client.SyncDamage(WorldId, true, true, player.PlayerId);
+            else if (cxtmine.MineExplosion.Owner is not null)
+                Client.SyncDamage(WorldId, true, true, cxtmine.MineExplosion.Owner!.WorldId);
+        }
+        else {
+            Client.SyncDamage(WorldId, false, false);
+        }
 
         void doTextPopup() {
             var part = GameHandler.Particles.MakeParticle(Position3D + new Vector3(0, 15, 0),

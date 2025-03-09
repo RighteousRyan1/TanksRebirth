@@ -6,6 +6,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 
 - Added an entire room that the entire game scene exists in! There is no longer a black void that consumes the game
 - Added some handy-dandy FPS graphs at the user's disposal, if needed
+- Added scores for every player in the game
 
 ## Changes
 
@@ -15,6 +16,9 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 - Main menu animation is now much different
 - MOTD is now just plastered on the top of the screen
 - Adjusted the look of the mission title bar / background
+- UI tooltips no longer go off-screen
+- Revamped the multiplayer UI a little bit
+- Player scoreboards have been changed in color and look
 
 ## Changes Important for Modders
 
@@ -25,7 +29,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
     - All music is now in `music` or a subfolder under `music`
 - Enabling "Lantern Mode" no longer makes the main menu blur go away
 - `RotatedByRadians` -> `Rotate`
-- `TankID.None` and `Random` have been purged, for good reasons.
+- `TankID.Random` has been purged, for good reasons.
 
 ## Fixes
 

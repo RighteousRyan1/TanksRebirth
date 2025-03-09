@@ -276,8 +276,10 @@ public class TankGame : Game {
 
         // TODO: is it emportant that these paths are all hardcoded? i'm doubtful.
         // do more dynamically..?
+
+        //List<string> textures = new();
         string[] textures = [
-            /* Miscellaneous */
+            // Misc
             "Assets/christmas/snowflake_0",
             "Assets/christmas/snowflake_1",
             "Assets/christmas/snow",
@@ -296,7 +298,7 @@ public class TankGame : Game {
             "Assets/textures/secret/special2",
             
             
-            /* Tanks Textures */
+            // Tank Textures
             "Assets/textures/tank/wee/tank_commando",
             "Assets/textures/tank/wee/tank_assassin",
             "Assets/textures/tank/wee/tank_rocket",
@@ -322,7 +324,7 @@ public class TankGame : Game {
             "Assets/textures/mine/mine_shadow",
             "Assets/textures/mine/explosion",
 
-            /* UI */
+            // UI
             "Assets/textures/ui/bullet_ui",
             "Assets/UIPanelBackground",
             "Assets/textures/ui/ping/ping_tex",
@@ -336,12 +338,28 @@ public class TankGame : Game {
             "Assets/textures/ui/playertank2d",
             "Assets/textures/ui/banner",
             "Assets/textures/ui/grades",
-            "Assets/textures/ui/scoreboard",
+            "Assets/textures/ui/scoreboard_inner",
+            "Assets/textures/ui/scoreboard_outer",
             "Assets/textures/ui/tank2d",
             "Assets/textures/ui/trophy",
             "Assets/textures/ui/achievement/secret",
 
         ];
+
+        /*var parent = Directory.GetFiles("Content\\Assets");
+        var subDirs = Directory.GetDirectories("Content\\Assets", "*", SearchOption.AllDirectories);
+
+        for (int i = 0; i < subDirs.Length; i++) {
+            var subDir = subDirs[i];
+
+            var files = Directory.GetFiles(subDir).Where(x => x.EndsWith(".png")).ToArray();
+
+            for (int j = 0; j < files.Length; j++) {
+                var file = files[j];
+
+                textures.Add(Path.GetFileNameWithoutExtension(file));
+            }
+        }*/
         
         GameResources.MassPreloadAssets<Texture2D, TexturePreloadSettings>(
             textures
@@ -1064,7 +1082,7 @@ public class TankGame : Game {
         SpriteRenderer.End();
 
         GraphicsDevice.SetRenderTarget(null);
-        var shader = Difficulties.Types["LanternMode"] && !MainMenuUI.Active ? GameShaders.LanternShader : (MainMenuUI.Active ? GameShaders.GaussianBlurShader: null);
+        var shader = Difficulties.Types["LanternMode"] && !MainMenuUI.Active ? GameShaders.LanternShader : (MainMenuUI.Active ? GameShaders.GaussianBlurShader : null);
         if (!GameScene.ShouldRenderAll) shader = null;
         SpriteRenderer.Begin(effect: shader);
         SpriteRenderer.Draw(GameFrameBuffer, Vector2.Zero, null, Color.White, 0f, Vector2.Zero, Vector2.One, default, 0f);

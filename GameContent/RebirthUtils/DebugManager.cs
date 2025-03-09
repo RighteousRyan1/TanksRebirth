@@ -320,7 +320,7 @@ public static class DebugManager {
         }
         DrawDebugString(SpriteRenderer,
             $"Lives / StartingLives: {PlayerTank.Lives[Client.IsConnected() ? NetPlay.GetMyClientId() : 0]} / {PlayerTank.StartingLives}" +
-            $"\nKillCount: {PlayerTank.KillCount}" +
+            $"\nKillCount: {PlayerTank.KillCounts}" +
             $"\n\nSavable Game Data:" +
             $"\nTotal / Bullet / Mine / Bounce Kills: {TankGame.GameData.TotalKills} / {TankGame.GameData.BulletKills} / {TankGame.GameData.MineKills} / {TankGame.GameData.BounceKills}" +
             $"\nTotal Deaths: {TankGame.GameData.Deaths}" +

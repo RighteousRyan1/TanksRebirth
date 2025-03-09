@@ -29,17 +29,21 @@ public static class DrawUtils {
         spriteBatch.DrawString(font, text, position, color * alpha, scale, 0f, anchor.GetAnchor(font.MeasureString(text) * origMeasureScale), 0f, characterSpacing: charSpacing);
     }
     public static void DrawTextureWithShadow(SpriteBatch spriteBatch, Texture2D texture, Vector2 position, Vector2 shadowDir, 
-        Color color, Vector2 scale, float alpha, Anchor anchor = Anchor.Center, bool flip = false, float shadowDistScale = 1f, float shadowAlpha = 1f) {
-        spriteBatch.Draw(texture,
-            position + Vector2.Normalize(shadowDir) * (10f * shadowDistScale * scale),
-            null,
-            Color.Black * alpha * shadowAlpha,
-            0f,
-            anchor.GetAnchor(texture.Size()),
-            scale,
-            flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None,
-            default);
-        spriteBatch.Draw(texture, position, null, color * alpha, 0f, anchor.GetAnchor(texture.Size()), scale, flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, default);
+        Color color, Vector2 scale, float alpha, Anchor anchor = Anchor.Center, 
+        bool flip = false, float shadowDistScale = 1f, float shadowAlpha = 1f, float rotation = 0f, Rectangle? srcRect = null) {
+
+        if (shadowAlpha > 0) {
+            spriteBatch.Draw(texture,
+                position + Vector2.Normalize(shadowDir) * (10f * shadowDistScale * scale),
+                srcRect,
+                Color.Black * alpha * shadowAlpha,
+                rotation,
+                anchor.GetAnchor(texture.Size()),
+                scale,
+                flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None,
+                default);
+        }
+        spriteBatch.Draw(texture, position, srcRect, color * alpha, rotation, anchor.GetAnchor(texture.Size()), scale, flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, default);
     }
     public static void DrawBorderedStringWithShadow(SpriteBatch spriteBatch, SpriteFontBase font, Vector2 position, Vector2 shadowDir, 
         string text, Color color, Color borderColor, Vector2 scale, float alpha, Anchor anchor = Anchor.Center, 

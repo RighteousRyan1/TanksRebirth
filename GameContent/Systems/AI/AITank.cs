@@ -393,16 +393,13 @@ public partial class AITank : Tank {
         OnDestroy?.Invoke();
         if (!MainMenuUI.Active && !LevelEditorUI.Active && !Client.IsConnected()) // goofy ahh...
         {
-            PlayerTank.KillCount++;
-
-            if (!PlayerTank.TankKills.ContainsKey(AiTankType))
+            if (!PlayerTank.TankKills.TryGetValue(AiTankType, out int value1))
                 PlayerTank.TankKills.Add(AiTankType, 1);
             else
-                PlayerTank.TankKills[AiTankType]++;
+                PlayerTank.TankKills[AiTankType] = ++value1;
 
             if (context.IsPlayer) {
-                var rnd = GameHandler.GameRand.NextFloat(0, 1);
-
+                // this code lowkey hurts to read
                 // check if less than certain values for different value coins
 
                 if (context is TankHurtContextShell cxt1) {
@@ -418,31 +415,12 @@ public partial class AITank : Tank {
                     TankGame.GameData.TotalKills++;
                 }
 
-                if (TankGame.GameData.TankKills.ContainsKey(AiTankType))
-                    TankGame.GameData.TankKills[AiTankType]++;
+                if (TankGame.GameData.TankKills.TryGetValue(AiTankType, out uint value))
+                    TankGame.GameData.TankKills[AiTankType] = ++value;
 
                 // haaaaaaarddddddcode
                 if (!LevelEditorUI.Editing) {
-                    var rand = GameHandler.GameRand.NextFloat(-(BaseExpValue * 0.25f), BaseExpValue * 0.25f);
-                    var gain = BaseExpValue + rand;
-                    // i will keep this commented if anything else happens.
-                    //var gain = (BaseExpValue + rand) * GameData.UniversalExpMultiplier;
-                    TankGame.GameData.ExpLevel += gain;
-
-                    var p = GameHandler.Particles.MakeParticle(Position3D + new Vector3(0, 30, 0), $"+{gain * 100:0.00} XP");
-
-                    p.Scale = new(0.5f);
-                    p.Roll = MathHelper.Pi;
-                    p.Origin2D = TankGame.TextFont.MeasureString($"+{gain * 100:0.00} XP") / 2;
-
-                    p.UniqueBehavior = (p) => {
-                        p.Position.Y += 0.1f * TankGame.DeltaTime;
-
-                        p.Alpha -= 0.01f * TankGame.DeltaTime;
-
-                        if (p.Alpha <= 0)
-                            p.Destroy();
-                    };
+                    GiveXP();
                 }
             }
         }
@@ -457,6 +435,31 @@ public partial class AITank : Tank {
             //    Client.Send(new TankKillCountUpdateMessage(PlayerTank.KillCount)); // not a bad idea actually
         }
         base.Destroy(context);
+    }
+
+    private void GiveXP() {
+        if (!LevelEditorUI.Editing) {
+            var rand = GameHandler.GameRand.NextFloat(-(BaseExpValue * 0.25f), BaseExpValue * 0.25f);
+            var gain = BaseExpValue + rand;
+            // i will keep this commented if anything else happens.
+            //var gain = (BaseExpValue + rand) * GameData.UniversalExpMultiplier;
+            TankGame.GameData.ExpLevel += gain;
+
+            var p = GameHandler.Particles.MakeParticle(Position3D + new Vector3(0, 30, 0), $"+{gain * 100:0.00} XP");
+
+            p.Scale = new(0.5f);
+            p.Roll = MathHelper.Pi;
+            p.Origin2D = TankGame.TextFont.MeasureString($"+{gain * 100:0.00} XP") / 2;
+
+            p.UniqueBehavior = (p) => {
+                p.Position.Y += 0.1f * TankGame.DeltaTime;
+
+                p.Alpha -= 0.01f * TankGame.DeltaTime;
+
+                if (p.Alpha <= 0)
+                    p.Destroy();
+            };
+        }
     }
 
     public bool IsPathBlocked;

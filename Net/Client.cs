@@ -189,7 +189,7 @@ public class Client {
 
         NetClient.Send(message, DeliveryMethod.Sequenced);
     }
-    public static void SyncDamage(int id/*, ITankHurtContext context*/) {
+    public static void SyncDamage(int id, bool wasTank, bool isPlayer, int sender = -1) {
         if (!IsConnected() || MainMenuUI.Active)
             return;
         NetDataWriter message = new();
@@ -197,8 +197,9 @@ public class Client {
 
         message.Put(id);
 
-        //message.Put(context.TankId);
-        //message.Put(context.IsPlayer);
+        message.Put(wasTank);
+        message.Put(isPlayer);
+        message.Put(sender);
 
         NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }

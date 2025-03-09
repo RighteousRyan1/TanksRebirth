@@ -191,8 +191,16 @@ public static partial class MainMenuUI
         if (SteamworksUtils.IsInitialized)
             TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"STEAM LAUNCH!\nLogged in as '{SteamworksUtils.MyUsername}'\n" +
                 $"You have {SteamworksUtils.FriendsCount} friends.", Vector2.One * 8, Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
+
+        TankGame.SpriteRenderer.End();
+        TankGame.SpriteRenderer.Begin(effect: GameShaders.AnimatedRainbow);
+
         DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, TankGame.TextFont, tanksMessage, new(8, WindowUtils.WindowHeight - 8),
-            Color.White, Color.Black, new Vector2(0.6f).ToResolution(), 0f, Anchor.BottomLeft, 0.5f);
+            Color.White, Color.Black, new Vector2(0.8f).ToResolution(), 0f, Anchor.BottomLeft, 0.5f);
+
+        TankGame.SpriteRenderer.End();
+        TankGame.SpriteRenderer.Begin();
+
         if (MenuState == UIState.PrimaryMenu || MenuState == UIState.PlayList) {
             var size = TankGame.TextFont.MeasureString(TankGame.Instance.MOTD);
             var MotdPos = new Vector2(WindowUtils.WindowWidth / 2, 10);
