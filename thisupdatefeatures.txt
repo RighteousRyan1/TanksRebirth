@@ -32,6 +32,8 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 - `RotatedByRadians` -> `Rotate`
 - `TankID.Random` has been purged, for good reasons
 - Lots of camera-related things from `TankGame` are now located in `CameraGlobals`
+	- This includes `GameView` and `GameProjection`, important matrices to include with custom 3D rendering involving gameplay
+- `GamepadBind` and `Keybind` now are `IInputBind<T>`s, which means you can use use them modularly within your code
 
 ## Fixes
 
