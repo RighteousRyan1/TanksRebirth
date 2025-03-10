@@ -20,6 +20,8 @@ public static class MouseUtils
     private static uint _lastUsedUpdate;
     private static Vector2 _velCache;
     private static Vector2 _oldMousePos;
+
+    public static Vector2 MouseVelocity { get; internal set; }
     public static Vector2 GetMouseVelocity(Vector2 fromOffset = default)
     {
         if (TankGame.UpdateCount == _lastUsedUpdate)

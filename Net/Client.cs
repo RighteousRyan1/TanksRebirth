@@ -91,7 +91,7 @@ public class Client {
         NetDataWriter message = new();
         message.Put(PacketID.Cleanup);
 
-        NetClient.Send(message, DeliveryMethod.Unreliable);
+        NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
     public static void SendClientInfo() {
         NetDataWriter message = new();
@@ -130,7 +130,7 @@ public class Client {
         NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
     public static void SyncPlayerTank(PlayerTank tank) {
-        if (MainMenuUI.Active || !IsConnected())
+        if (!IsConnected())
             return;
 
         NetDataWriter message = new();

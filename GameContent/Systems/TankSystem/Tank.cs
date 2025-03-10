@@ -599,7 +599,7 @@ public abstract class Tank {
             part.UniqueDraw = particle => {
                 DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, TankGame.TextFontLarge, particle.Text,
                     MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(particle.Position),
-                        TankGame.GameView, TankGame.GameProjection),
+                        CameraGlobals.GameView, CameraGlobals.GameProjection),
                     particle.Color, Color.White, new(particle.Scale.X, particle.Scale.Y), 0f, Anchor.Center);
             };
         }
@@ -705,7 +705,7 @@ public abstract class Tank {
                 var vel = new Vector3(GameHandler.GameRand.NextFloat(-3, 3), GameHandler.GameRand.NextFloat(3, 6),
                     GameHandler.GameRand.NextFloat(-3, 3));
 
-                particle.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
+                particle.Roll = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
                 particle.Scale = new(0.55f);
 
@@ -845,8 +845,8 @@ public abstract class Tank {
         var smoke = GameHandler.Particles.MakeParticle(position,
             GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
 
-        hit.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
-        smoke.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
+        hit.Roll = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
+        smoke.Roll = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
         smoke.Scale = new(0.35f);
         hit.Scale = new(0.5f);
@@ -923,8 +923,8 @@ public abstract class Tank {
         //if (Dead)
         //return;
 
-        Projection = TankGame.GameProjection;
-        View = TankGame.GameView;
+        Projection = CameraGlobals.GameProjection;
+        View = CameraGlobals.GameView;
         if (!Dead) {
             foreach (var cosmetic in Props) {
                 //if (GameProperties.InMission && Properties.Invisible)

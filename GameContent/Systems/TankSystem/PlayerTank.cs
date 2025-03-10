@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using TanksRebirth.Enums;
 using System.Linq;
-using TanksRebirth.Internals.Common.GameInput;
 using Microsoft.Xna.Framework.Input;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Internals;
@@ -235,7 +234,7 @@ public class PlayerTank : Tank
                         if (InputUtils.CurrentMouseSnapshot.X <= 0)
                             Mouse.SetPosition(WindowUtils.WindowWidth - 1, WindowUtils.WindowHeight / 2);
                         //Mouse.SetPosition((int)GameUtils.WindowCenter.X, (int)GameUtils.WindowCenter.Y);
-                        TurretRotation += -TankGame.MouseVelocity.X / (312.ToResolutionX()); // terry evanswood
+                        TurretRotation += -MouseUtils.MouseVelocity.X / (312.ToResolutionX()); // terry evanswood
                     }
                 }
             }
@@ -428,7 +427,7 @@ public class PlayerTank : Tank
                     culprit = thcs.Shell.Owner;
             }
             // maybe make a camera transition to said tank.
-            TankGame.SpectatorId = TankGame.SpectateValidTank(culprit.WorldId, true);
+            CameraGlobals.SpectatorId = CameraGlobals.SpectateValidTank(culprit.WorldId, true);
             if (NetPlay.IsClientMatched(PlayerId)) {
                 Lives[PlayerId]--;
             }
@@ -526,7 +525,7 @@ public class PlayerTank : Tank
 
             pathPos += pathDir;
 
-            var pathPosScreen = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(pathPos.X, 11, pathPos.Y), TankGame.GameView, TankGame.GameProjection);
+            var pathPosScreen = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(pathPos.X, 11, pathPos.Y), CameraGlobals.GameView, CameraGlobals.GameProjection);
             var off = MathF.Abs(MathF.Sin(i * MathF.PI / 5 - TankGame.RunTime * 0.3f));
             var rgbColor = ColorUtils.HsvToRgb(TankGame.UpdateCount + i % 255 / 255f * 360, 1, 1);
             var scale = Vector2.One * 4 * off;

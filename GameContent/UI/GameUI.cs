@@ -207,7 +207,7 @@ public static class GameUI
 
     private static void PostInitialize()
     {
-        Pause.KeybindPressAction = (p) =>
+        Pause.OnPress = () =>
         {
             if (CampaignCompleteUI.IsViewingResults)
                 return;
@@ -231,8 +231,8 @@ public static class GameUI
             OptionsButton.IsVisible = Paused;
         };
 
-        menuElements = new UIElement[]
-        {
+        menuElements =
+        [
             ResumeButton,
             RestartButton,
             QuitButton,
@@ -248,9 +248,9 @@ public static class GameUI
             VolumeUI.MusicVolume,
             VolumeUI.EffectsVolume,
             VolumeUI.AmbientVolume
-        };
-        graphicsElements = new UIElement[]
-        {
+        ];
+        graphicsElements =
+        [
             GraphicsUI.VsyncButton,
             GraphicsUI.VsyncToggle,
             GraphicsUI.PerPixelLightingButton,
@@ -258,7 +258,7 @@ public static class GameUI
             GraphicsUI.FullScreenButton,
             GraphicsUI.FullScreenToggle,
             GraphicsUI.ResolutionButton
-        };
+        ];
         foreach (UIElement button in graphicsElements)
         {
             button.HasScissor = true;

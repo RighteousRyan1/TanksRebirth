@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
@@ -144,8 +145,8 @@ namespace TanksRebirth.GameContent
                     foreach (BasicEffect effect in mesh.Effects)
                     {
                         effect.World = Matrix.CreateScale(10) * Matrix.CreateFromYawPitchRoll(Rotation.X, Rotation.Y, Rotation.Z) * Matrix.CreateTranslation(Position);
-                        effect.View = TankGame.GameView;
-                        effect.Projection = TankGame.GameProjection;
+                        effect.View = CameraGlobals.GameView;
+                        effect.Projection = CameraGlobals.GameProjection;
 
                         effect.SetDefaultGameLighting_IngameEntities();
 
@@ -156,7 +157,7 @@ namespace TanksRebirth.GameContent
 
                     mesh.Draw();
                 }
-                var pos = MatrixUtils.ConvertWorldToScreen(default, Matrix.CreateTranslation(Position), TankGame.GameView, TankGame.GameProjection);
+                var pos = MatrixUtils.ConvertWorldToScreen(default, Matrix.CreateTranslation(Position), CameraGlobals.GameView, CameraGlobals.GameProjection);
 
                 DebugManager.DrawDebugString(TankGame.SpriteRenderer, this, pos, 4, centered: true);
 
@@ -164,7 +165,7 @@ namespace TanksRebirth.GameContent
             }
             else
             {
-                var pos = MatrixUtils.ConvertWorldToScreen(default, AffectedTank.World, TankGame.GameView, TankGame.GameProjection);
+                var pos = MatrixUtils.ConvertWorldToScreen(default, AffectedTank.World, CameraGlobals.GameView, CameraGlobals.GameProjection);
 
                 DebugManager.DrawDebugString(TankGame.SpriteRenderer, this, pos, 4, centered: true);
             }

@@ -300,14 +300,17 @@ public abstract partial class UIElement {
         var font = TankGame.TextFont;
         var scaleFont = font.MeasureString(Tooltip);
 
-        var x = MouseUtils.MouseX + 5;
-        var y = MouseUtils.MouseY + 5;
+        var x = MouseUtils.MouseX + 10;
+        var y = MouseUtils.MouseY + 10;
         var width = (int)(scaleFont.X + 30).ToResolutionX();
         var height = (int)(scaleFont.Y + 30).ToResolutionY();
 
         // ensure the tooltip is on-screen
         while (x + width > WindowUtils.WindowWidth) {
             x--;
+        }
+        while (y + height > WindowUtils.WindowHeight) { 
+            y--; 
         }
 
         var Hitbox = new Rectangle(x, y, width, height);

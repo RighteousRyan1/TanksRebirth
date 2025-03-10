@@ -35,7 +35,7 @@ public static class RebirthMouse
             var clientId = NetPlay.CurrentClient is null ? 0 : NetPlay.CurrentClient.Id;
             if (GameHandler.AllPlayerTanks[clientId] is not null) {
                 var me = GameHandler.AllPlayerTanks[clientId];
-                var tankPos = MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), me.World, TankGame.GameView, TankGame.GameProjection);
+                var tankPos = MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), me.World, CameraGlobals.GameView, CameraGlobals.GameProjection);
 
                 if (GameUtils.Distance_WiiTanksUnits(tankPos, MouseUtils.MousePosition) >= DistUntilPathTrace.ToResolutionX()) // any scale doesnt matter?
                 {

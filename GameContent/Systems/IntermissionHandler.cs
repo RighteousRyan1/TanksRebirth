@@ -273,10 +273,10 @@ public static class IntermissionHandler {
             PlayerTank.PlayerStatistics = default;
         }
 
-        if (!TankGame.OverheadView && _wasOverhead && !LevelEditorUI.Active)
+        if (!CameraGlobals.OverheadView && _wasOverhead && !LevelEditorUI.Active)
             BeginIntroSequence();
 
-        _wasOverhead = TankGame.OverheadView;
+        _wasOverhead = CameraGlobals.OverheadView;
         _wasInMission = CampaignGlobals.InMission;
         _oldWait = TankFunctionWait;
     }
@@ -311,7 +311,7 @@ public static class IntermissionHandler {
     }
 
     public static void RenderCountdownGraphics() {
-        if (!MainMenuUI.Active && !TankGame.OverheadView && !LevelEditorUI.Active/* && TankFunctionWait > 0*/) {
+        if (!MainMenuUI.Active && !CameraGlobals.OverheadView && !LevelEditorUI.Active/* && TankFunctionWait > 0*/) {
             DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, TankGame.TextFontLarge, PrepareDisplay, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 3), 
                 IntermissionSystem.BackgroundColor, IntermissionSystem.StripColor, CountdownAnimator.CurrentScale.ToResolution(), 0f, Anchor.Center, 3);
         }

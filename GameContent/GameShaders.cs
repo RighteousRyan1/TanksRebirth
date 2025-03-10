@@ -6,6 +6,7 @@ using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Internals;
 using TanksRebirth.Net;
 using TanksRebirth.GameContent.UI.MainMenu;
+using TanksRebirth.GameContent.Globals;
 
 namespace TanksRebirth.GameContent;
 
@@ -65,7 +66,7 @@ public class GameShaders
 
         if (Difficulties.Types["LanternMode"]) {
             var index = NetPlay.GetMyClientId(); //Array.FindIndex(GameHandler.AllPlayerTanks, x => x is not null && !x.Dead);
-            var pos = index > -1 && !MainMenuUI.Active ? MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(GameHandler.AllPlayerTanks[index].Position.X, 11, GameHandler.AllPlayerTanks[index].Position.Y), TankGame.GameView, TankGame.GameProjection).ToCartesianCoordinates() : new Vector2(-1);
+            var pos = index > -1 && !MainMenuUI.Active ? MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(GameHandler.AllPlayerTanks[index].Position.X, 11, GameHandler.AllPlayerTanks[index].Position.Y), CameraGlobals.GameView, CameraGlobals.GameProjection).ToCartesianCoordinates() : new Vector2(-1);
             // var val = (float)TankGame.LastGameTime.TotalGameTime.TotalSeconds;
             LanternShader.Parameters["oPower"]?.SetValue(MainMenuUI.Active ? 100f : GameHandler.GameRand.NextFloat(0.195f, 0.20f));
             LanternShader.Parameters["oPosition"]?.SetValue(pos/*MouseUtils.MousePosition.ToCartesianCoordinates()*/);

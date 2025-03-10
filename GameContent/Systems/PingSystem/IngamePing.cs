@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using tainicom.Aether.Physics2D.Dynamics;
+using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
@@ -112,8 +113,8 @@ public class IngamePing {
         foreach (ModelMesh mesh in _model.Meshes) {
             foreach (BasicEffect effect in mesh.Effects) {
                 effect.World = Matrix.CreateScale(fullEase * 20f, fullEase * 20, fullEase * 30) * Matrix.CreateRotationX(-MathHelper.PiOver2) * Matrix.CreateRotationY(MathHelper.PiOver2) * Matrix.CreateTranslation(Position);
-                effect.View = TankGame.GameView;
-                effect.Projection = TankGame.GameProjection;
+                effect.View = CameraGlobals.GameView;
+                effect.Projection = CameraGlobals.GameProjection;
 
                 effect.TextureEnabled = true;
                 effect.Texture = _pingTexture;
@@ -130,7 +131,7 @@ public class IngamePing {
             mesh.Draw();
         }
         TankGame.SpriteRenderer.Draw(_pingGraphic, 
-            MatrixUtils.ConvertWorldToScreen(Position + new Vector3(0, fullEase * 2 * 30, 0), Matrix.Identity, TankGame.GameView, TankGame.GameProjection), 
+            MatrixUtils.ConvertWorldToScreen(Position + new Vector3(0, fullEase * 2 * 30, 0), Matrix.Identity, CameraGlobals.GameView, CameraGlobals.GameProjection), 
             null, Color, 0f, _pingGraphic.Size() / 2, Vector2.One * 0.25f * fullEase, default, 0f);
     }
     public static IngamePing CreateFromTankSender(Vector3 position3d, int pingId, int playerId, bool send = false) {

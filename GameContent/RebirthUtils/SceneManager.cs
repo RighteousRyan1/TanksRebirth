@@ -209,11 +209,17 @@ public static class SceneManager {
 
         TankDeathMark.total_death_marks = 0;
     }
-    public static void CleanupEntities() {
+    public static void CleanupEntities(bool cleanAiOnly = false) {
         for (int a = 0; a < Block.AllBlocks.Length; a++)
             Block.AllBlocks[a]?.Remove();
-        for (int a = 0; a < GameHandler.AllTanks.Length; a++)
-            GameHandler.AllTanks[a]?.Remove(true);
+        if (!cleanAiOnly) {
+            for (int a = 0; a < GameHandler.AllTanks.Length; a++)
+                GameHandler.AllTanks[a]?.Remove(true);
+        }
+        else {
+            for (int a = 0; a < GameHandler.AllPlayerTanks.Length; a++)
+                GameHandler.AllPlayerTanks[a]?.Remove(true);
+        }
     }
     public static void ClearTankTracks() {
         for (int i = 0; i < TankFootprint.AllFootprints.Length; i++) {

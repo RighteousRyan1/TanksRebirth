@@ -15,7 +15,7 @@ public static class GameSceneUI {
         // put any initialization logic here if needed
     }
     public static void DrawScores() {
-        DrawScore(PlayerID.PlayerTankColors[PlayerID.Blue].ToColor(), PlayerTank.KillCounts[NetPlay.GetMyClientId()], WindowUtils.WindowHeight * 0.9f);
+        DrawScore(PlayerID.PlayerTankColors[NetPlay.GetMyClientId()].ToColor(), PlayerTank.KillCounts[NetPlay.GetMyClientId()], WindowUtils.WindowHeight * 0.9f);
     }
     public static void DrawMissionInfoBar() {
         var font = TankGame.TextFontLarge;
@@ -24,24 +24,25 @@ public static class GameSceneUI {
         var bar = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/mission_info");
         var tnk = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/tank2d");
         var barPos = new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight - (bar.Height + 35).ToResolutionY());
-        var missionInfo = $"{CampaignGlobals.LoadedCampaign.CurrentMission.Name ?? $"{TankGame.GameLanguage.Mission}"}";
+        var missionInfo = LevelEditorUI.IsTestingLevel ? 
+            LevelEditorUI.cachedMission.Name : $"{CampaignGlobals.LoadedCampaign.CurrentMission.Name ?? $"{TankGame.GameLanguage.Mission}"}";
         var infoMeasure = font.MeasureString(missionInfo) * infoScale;
         var infoScaling = 1f - ((float)missionInfo.Length / LevelEditorUI.MAX_MISSION_CHARS) + 0.4f;
         var tanksRemaining = $"x {AIManager.CountAll()}";
 
         DrawUtils.DrawTextureWithShadow(TankGame.SpriteRenderer, bar, barPos,
-            Vector2.UnitY, IntermissionSystem.StripColor * 1.5f, Vector2.One.ToResolution(), alpha, Anchor.Center, shadowDistScale: 0.5f);
+            Vector2.UnitY, IntermissionSystem.StripColor, Vector2.One.ToResolution(), alpha, Anchor.Center, shadowDistScale: 0.5f, shadowAlpha: 0.5f);
 
         DrawUtils.DrawTextureWithShadow(TankGame.SpriteRenderer, tnk, barPos + new Vector2(bar.Size().X * 0.25f, 0).ToResolution(),
-            Vector2.One, IntermissionSystem.BackgroundColor, new Vector2(1.5f).ToResolution(), alpha, Anchor.Center, shadowDistScale: 0.5f);
+            Vector2.One, IntermissionSystem.BackgroundColor, new Vector2(1.5f).ToResolution(), alpha, Anchor.Center, shadowDistScale: 0.5f, shadowAlpha: 0.5f);
 
-        DrawUtils.DrawStringWithShadow(TankGame.SpriteRenderer, font, barPos - new Vector2(bar.Size().X / 6, 7.5f * infoScaling).ToResolution(),
-            Vector2.One, missionInfo, IntermissionSystem.BackgroundColor, new Vector2(infoScale * infoScaling).ToResolution(),
-            1f, Anchor.BottomRight, shadowDistScale: 1.5f, origMeasureScale: infoScale);
+        DrawUtils.DrawBorderedStringWithShadow(TankGame.SpriteRenderer, font, barPos - new Vector2(bar.Size().X / 6, 7.5f * infoScaling).ToResolution(),
+            Vector2.One, missionInfo, IntermissionSystem.BackgroundColor, IntermissionSystem.ColorForBorders, new Vector2(infoScale * infoScaling).ToResolution(),
+            1f, Anchor.BottomRight, shadowDistScale: 1.5f, origMeasureScale: infoScale, shadowAlpha: 0.5f, charSpacing: 10);
 
-        DrawUtils.DrawStringWithShadow(TankGame.SpriteRenderer, font, barPos + new Vector2(bar.Size().X * 0.375f, -7.5f).ToResolution(),
-            Vector2.One, tanksRemaining, IntermissionSystem.BackgroundColor, new Vector2(infoScale).ToResolution(),
-            alpha, Anchor.BottomRight, shadowDistScale: 1.5f, origMeasureScale: infoScale);
+        DrawUtils.DrawBorderedStringWithShadow(TankGame.SpriteRenderer, font, barPos + new Vector2(bar.Size().X * 0.375f, -7.5f).ToResolution(),
+            Vector2.One, tanksRemaining, IntermissionSystem.BackgroundColor, IntermissionSystem.ColorForBorders, new Vector2(infoScale).ToResolution(),
+            alpha, Anchor.BottomRight, shadowDistScale: 1.5f, origMeasureScale: infoScale, shadowAlpha: 0.5f, charSpacing: 5);
     }
 
     // helpers

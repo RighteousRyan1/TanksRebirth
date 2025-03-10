@@ -87,7 +87,7 @@ public class Graph(string name, Func<float> value, float rangeMax, int length = 
         // draw graph name
         DrawUtils.DrawTextWithBorder(sb, TankGame.TextFontLarge, Name,
             position - new Vector2(0, graphVisualHeight) * scale - new Vector2(0, 20),
-            Color.White, Color.Black, new Vector2(scale) * 0.05f, 0f, Anchor.LeftCenter, 0.65f);
+            Color.White, Color.Black, new Vector2(scale) * 0.08f, 0f, Anchor.LeftCenter, 0.65f, charSpacing: 8);
 
         // draw X plane
         sb.Draw(TextureGlobals.Pixels[Color.White], position, null, Color.White, 0f, Vector2.Zero, 
@@ -106,9 +106,10 @@ public class Graph(string name, Func<float> value, float rangeMax, int length = 
                 Color.White, Color.Black, new Vector2(scale) * 0.05f, 0f, Anchor.RightCenter, 0.65f);
         }
 
+        // draw current value
         DrawUtils.DrawTextWithBorder(sb, TankGame.TextFontLarge, CurrentValue.ToString(),
             position - new Vector2(-LengthBetweenPoints * scale * _numElements, CurrentValue * scale * HeightBetweenPoints),
-            Color.White, Color.Black, new Vector2(scale) * 0.05f, 0f, Anchor.LeftCenter, 0.65f);
+            Color.White, Color.Black, new Vector2(scale) * 0.05f, 0f, Anchor.LeftCenter, 0.65f, charSpacing: 8);
 
         // draw min, max, mean, range
 
@@ -121,19 +122,16 @@ public class Graph(string name, Func<float> value, float rangeMax, int length = 
         var average = MathF.Round(_values.Average());
 
         DrawUtils.DrawTextWithBorder(sb, TankGame.TextFontLarge, $"Min: {min}", position + new Vector2(0, 20),
-            Color.White, Color.Black, new Vector2(scale) * 0.05f, 0f, Anchor.LeftCenter, 0.65f);
+            Color.White, Color.Black, new Vector2(scale) * 0.07f, 0f, Anchor.LeftCenter, 0.65f, charSpacing: 8);
 
         DrawUtils.DrawTextWithBorder(sb, TankGame.TextFontLarge, $"Max: {max}", position + new Vector2(splitLen * scale, 20),
-            Color.White, Color.Black, new Vector2(scale) * 0.05f, 0f, Anchor.LeftCenter, 0.65f);
+            Color.White, Color.Black, new Vector2(scale) * 0.07f, 0f, Anchor.LeftCenter, 0.65f, charSpacing: 8);
 
         DrawUtils.DrawTextWithBorder(sb, TankGame.TextFontLarge, $"Avg: {average}", position + new Vector2(splitLen * 2 * scale, 20),
-            Color.White, Color.Black, new Vector2(scale) * 0.05f, 0f, Anchor.LeftCenter, 0.65f);
+            Color.White, Color.Black, new Vector2(scale) * 0.07f, 0f, Anchor.LeftCenter, 0.65f, charSpacing: 8);
 
         DrawUtils.DrawTextWithBorder(sb, TankGame.TextFontLarge, $"Range: {max - min}", position + new Vector2(splitLen * 3 * scale, 20),
-            Color.White, Color.Black, new Vector2(scale) * 0.05f, 0f, Anchor.LeftCenter, 0.65f);
-
-
-        // draw current value
+            Color.White, Color.Black, new Vector2(scale) * 0.07f, 0f, Anchor.LeftCenter, 0.65f, charSpacing: 8);
 
         // draw lines to connect points
         // only draw if there's more than one point

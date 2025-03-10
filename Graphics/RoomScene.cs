@@ -172,7 +172,7 @@ public static class RoomScene {
         // quarter = 15 minutes * quarter.
         Task.Run(async () => {
             var timeBetweenSeqs = 3000;
-            var vol = SoundUtils.GetVolumeFromCameraPosition(ClockAudioPosition, TankGame.RebirthFreecam.Position, 2500);
+            var vol = SoundUtils.GetVolumeFromCameraPosition(ClockAudioPosition, CameraGlobals.RebirthFreecam.Position, 2500);
             switch (quarter) {
                 case 1:
                     SoundPlayer.PlaySoundInstance(ChimeS1, SoundContext.Effect, playNew: true, volume: vol);
@@ -199,7 +199,7 @@ public static class RoomScene {
         if (hour == 0) hour += 12;
         Task.Run(async () => {
             var timeBetweenSeqs = 3000;
-            var vol = SoundUtils.GetVolumeFromCameraPosition(ClockAudioPosition, TankGame.RebirthFreecam.Position, 2500);
+            var vol = SoundUtils.GetVolumeFromCameraPosition(ClockAudioPosition, CameraGlobals.RebirthFreecam.Position, 2500);
             SoundPlayer.PlaySoundInstance(ChimeS2, SoundContext.Effect, playNew: true, volume: vol);
             await Task.Delay(timeBetweenSeqs);
             SoundPlayer.PlaySoundInstance(ChimeS3, SoundContext.Effect, playNew: true, volume: vol);
@@ -209,7 +209,7 @@ public static class RoomScene {
             SoundPlayer.PlaySoundInstance(ChimeS5, SoundContext.Effect, playNew: true, volume: vol);
             for (int i = 0; i < hour; i++) {
                 await Task.Delay(timeBetweenSeqs);
-                vol = SoundUtils.GetVolumeFromCameraPosition(ClockAudioPosition, TankGame.RebirthFreecam.Position, 2500);
+                vol = SoundUtils.GetVolumeFromCameraPosition(ClockAudioPosition, CameraGlobals.RebirthFreecam.Position, 2500);
                 SoundPlayer.PlaySoundInstance(ChimeHour, SoundContext.Effect, playNew: true, volume: vol);
             }
         });
@@ -226,8 +226,8 @@ public static class RoomScene {
         Rotation = new(0, 0, 0);
         //UsedPosition = TableScenePos; //new(/*-450f*/ -MouseUtils.Test.X * 1000, -200f, MouseUtils.Test.Y * 1000);
         Position = UsedPosition * Scale;
-        View = TankGame.GameView;
-        Projection = TankGame.GameProjection;
+        View = CameraGlobals.GameView;
+        Projection = CameraGlobals.GameProjection;
     }
     public static void UpdateClock() {
         // this is pretty magical, but it gives the room a good scale in comparison to the game scene.

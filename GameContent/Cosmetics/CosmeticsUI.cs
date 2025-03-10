@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Internals.Common.Utilities;
 
@@ -21,13 +22,13 @@ public static class CosmeticsUI {
     public static RenderableCrate CosmeticsChest;
 
     public static void Initialize() {
-        CosmeticsChest = new(new(0, 0, 0), TankGame.GameView, TankGame.GameProjection);
+        CosmeticsChest = new(new(0, 0, 0), CameraGlobals.GameView, CameraGlobals.GameProjection);
         CosmeticsChest.Rotation = new Vector3(0, 0, MathHelper.Pi + MathHelper.PiOver4);
     }
 
     public static void Update() {
-        CosmeticsChest.View = TankGame.GameView;
-        CosmeticsChest.Projection = TankGame.GameProjection;
+        CosmeticsChest.View = CameraGlobals.GameView;
+        CosmeticsChest.Projection = CameraGlobals.GameProjection;
 
         GameShaders.BlurFactor += (!IsActive ? 0.000075f : -0.000075f) * TankGame.DeltaTime;
         GameShaders.BlurFactor = MathHelper.Clamp(GameShaders.BlurFactor, 0f, 0.0075f);

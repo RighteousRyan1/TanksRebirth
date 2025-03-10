@@ -330,7 +330,7 @@ public class NetPlay {
             case PacketID.SendCampaignStatus:
                 if (Client.IsHost()) {
                     var camName = reader.GetString();
-                    var senderId = reader.GetInt();
+                    var returningId = reader.GetInt();
                     var successful = reader.GetBool();
                     if (successful) {
                         MainMenuUI.plrsConfirmed++;
@@ -340,7 +340,7 @@ public class NetPlay {
                     }
                     //MainMenu.PrepareGameplay(camName, true, true);
                     else {
-                        ChatSystem.SendMessage($"{Server.ConnectedClients[senderId].Name} does not own this campaign! Send it to them to be able to play it.", Color.Red);
+                        ChatSystem.SendMessage($"{Server.ConnectedClients[returningId].Name} does not own this campaign! Send it to them to be able to play it.", Color.Red);
                         SoundPlayer.SoundError();
                     }
                 }

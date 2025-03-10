@@ -207,8 +207,8 @@ public sealed class Mine : IAITankDanger
         if (!GameScene.ShouldRenderAll)
             return;
 
-        View = TankGame.GameView;
-        Projection = TankGame.GameProjection;
+        View = CameraGlobals.GameView;
+        Projection = CameraGlobals.GameProjection;
         DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"DetonationTime: {DetonateTime}/{DetonateTimeMax}\nNearDestructibles: {IsNearDestructibles}\nId: {Id}", MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 20), 1, centered: true);
         for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
             foreach (ModelMesh mesh in Model.Meshes) {

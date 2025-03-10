@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Internals;
 using TanksRebirth.Graphics;
+using TanksRebirth.GameContent.Globals;
 
 namespace TanksRebirth.GameContent;
 
@@ -36,8 +37,8 @@ public class Armor
         _healthBarTotal.Color = Color.Red;
         _healthBarCurrent.Color = Color.Lime;
 
-        _healthBarCurrent.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
-        _healthBarTotal.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
+        _healthBarCurrent.Roll = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
+        _healthBarTotal.Roll = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
     }
 
     private Particle _healthBarTotal;
@@ -64,7 +65,7 @@ public class Armor
             _healthBarTotal.Position = Host.Position3D + new Vector3(0, 40, 0);
             _healthBarCurrent.Position = Host.Position3D + new Vector3(0, 40, 0);
         }
-        // DrawHealthBar(MatrixUtils.ConvertWorldToScreen(new Vector3(0, 20, 0f), Host.World, TankGame.GameView, TankGame.GameProjection) - new Vector2(0, 20), 50, 10);
+        // DrawHealthBar(MatrixUtils.ConvertWorldToScreen(new Vector3(0, 20, 0f), Host.World, CameraGlobals.GameView, TankGame.GameProjection) - new Vector2(0, 20), 50, 10);
 
         if (HitPoints < 0) // so armor point amount is clamped to be greater than 0 at all times.
             HitPoints = 0;

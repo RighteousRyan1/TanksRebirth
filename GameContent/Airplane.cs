@@ -89,7 +89,7 @@ public class Airplane {
         PlaneLoop.Instance.IsLooped = true;
         PlaneLoop.Play();
 
-        GameUI.Pause.OnKeyPressed += PauseSounds;
+        GameUI.Pause.OnPress += PauseSounds;
         TankGame.OnFocusLost += PauseSoundsWindow;
         TankGame.OnFocusRegained += ResumeSounds;
 
@@ -166,7 +166,7 @@ public class Airplane {
         return Vector2.Normalize(randomPosition - posXZ);
     }
     public void Remove() {
-        GameUI.Pause.OnKeyPressed -= PauseSounds;
+        GameUI.Pause.OnPress -= PauseSounds;
         TankGame.OnFocusLost -= PauseSoundsWindow;
         TankGame.OnFocusRegained -= ResumeSounds;
 
@@ -257,8 +257,8 @@ public class Airplane {
 
         if (LifeTime > LifeSpan) Remove();
 
-        View = TankGame.GameView;
-        Projection = TankGame.GameProjection;
+        View = CameraGlobals.GameView;
+        Projection = CameraGlobals.GameProjection;
 
         _wereDoorsFullyOpen = AreDoorsFullyOpen;
     }
@@ -270,8 +270,8 @@ public class Airplane {
             //* Matrix.CreateRotationX(MathHelper.Pi) // for testing
             //* Matrix.CreateFromYawPitchRoll(Rotation.Yaw, Rotation.Pitch, Rotation.Roll) 
             * Matrix.CreateTranslation(Position);    
-        Projection = TankGame.GameProjection;
-        View = TankGame.GameView;
+        Projection = CameraGlobals.GameProjection;
+        View = CameraGlobals.GameView;
 
         Model.CopyAbsoluteBoneTransformsTo(_boneTransforms);
         Model!.Root.Transform = World;

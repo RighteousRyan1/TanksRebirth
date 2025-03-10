@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TanksRebirth.GameContent.Globals;
 
 namespace TanksRebirth.Internals.Common.Utilities;
 
@@ -35,8 +36,8 @@ public static class MatrixUtils
     {
         Plane gamePlane = new(Vector3.UnitY, offset);
 
-        var nearPlane = ConvertScreenToWorld(new Vector3(screenCoords, 0), Matrix.Identity, TankGame.GameView, TankGame.GameProjection);
-        var farPlane = ConvertScreenToWorld(new Vector3(screenCoords, 1), Matrix.Identity, TankGame.GameView, TankGame.GameProjection);
+        var nearPlane = ConvertScreenToWorld(new Vector3(screenCoords, 0), Matrix.Identity, CameraGlobals.GameView, CameraGlobals.GameProjection);
+        var farPlane = ConvertScreenToWorld(new Vector3(screenCoords, 1), Matrix.Identity, CameraGlobals.GameView, CameraGlobals.GameProjection);
 
         var mouseRay = new Ray(nearPlane, Vector3.Normalize(farPlane - nearPlane));
 
@@ -50,8 +51,8 @@ public static class MatrixUtils
 
     public static Ray GetMouseToWorldRay()
     {
-        var nearPlane = ConvertScreenToWorld(new Vector3(MouseUtils.MousePosition, 0), Matrix.Identity, TankGame.GameView, TankGame.GameProjection);
-        var farPlane = ConvertScreenToWorld(new Vector3(MouseUtils.MousePosition, 1), Matrix.Identity, TankGame.GameView, TankGame.GameProjection);
+        var nearPlane = ConvertScreenToWorld(new Vector3(MouseUtils.MousePosition, 0), Matrix.Identity, CameraGlobals.GameView, CameraGlobals.GameProjection);
+        var farPlane = ConvertScreenToWorld(new Vector3(MouseUtils.MousePosition, 1), Matrix.Identity, CameraGlobals.GameView, CameraGlobals.GameProjection);
 
         return new Ray(nearPlane, Vector3.Normalize(farPlane - nearPlane));
     }

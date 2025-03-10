@@ -8,6 +8,7 @@ using Microsoft.Xna.Framework.Audio;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Graphics;
 using TanksRebirth.GameContent.Systems;
+using TanksRebirth.GameContent.Globals;
 
 namespace TanksRebirth.GameContent;
 
@@ -117,8 +118,8 @@ public class Crate
                 foreach (BasicEffect effect in mesh.Effects)
                 {
                     effect.World = faceWorlds[i];
-                    effect.View = TankGame.GameView;
-                    effect.Projection = TankGame.GameProjection;
+                    effect.View = CameraGlobals.GameView;
+                    effect.Projection = CameraGlobals.GameProjection;
 
                     effect.SetDefaultGameLighting_IngameEntities();
 

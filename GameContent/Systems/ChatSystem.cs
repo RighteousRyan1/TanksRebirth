@@ -200,7 +200,7 @@ public sealed record ChatSystem {
         typeBox = typeRect;
     }
     public static Keybind ToggleChat = new("Toggle Chat", Keys.F2) {
-        KeybindPressAction = (a) => IsOpen = !IsOpen
+        OnPress = () => IsOpen = !IsOpen
     };
     public static void DrawMessages()
     {
@@ -301,10 +301,10 @@ public sealed record ChatSystem {
             if (Alerts > 0) {
                 TankGame.SpriteRenderer.Draw(ChatAlert, OpenOrigin.ToResolution(), null, Color.White, 0f, Vector2.Zero, scale, default, default);
                 TankGame.SpriteRenderer.DrawString(ChatMessage.Font, Alerts.ToString(), OpenOrigin.ToResolution() + (ChatAlert.Size() * scale) - new Vector2(12, 12).ToResolution(), Color.White, scale * 3f);
-                TankGame.SpriteRenderer.DrawString(ChatMessage.Font, TankGame.GameLanguage.Press + $" [{ToggleChat.AssignedKey}] " + TankGame.GameLanguage.ToToggleChat, OpenOrigin.ToResolution() + new Vector2(ChatAlert.Size().X * scale.X + 10.ToResolutionX(), 0), Color.White, scale * 3f);
+                TankGame.SpriteRenderer.DrawString(ChatMessage.Font, TankGame.GameLanguage.Press + $" [{ToggleChat.Assigned}] " + TankGame.GameLanguage.ToToggleChat, OpenOrigin.ToResolution() + new Vector2(ChatAlert.Size().X * scale.X + 10.ToResolutionX(), 0), Color.White, scale * 3f);
             }
             else
-                TankGame.SpriteRenderer.DrawString(ChatMessage.Font, TankGame.GameLanguage.Press + $" [{ToggleChat.AssignedKey}] " + TankGame.GameLanguage.ToToggleChat, OpenOrigin.ToResolution(), Color.White, scale * 3f);
+                TankGame.SpriteRenderer.DrawString(ChatMessage.Font, TankGame.GameLanguage.Press + $" [{ToggleChat.Assigned}] " + TankGame.GameLanguage.ToToggleChat, OpenOrigin.ToResolution(), Color.White, scale * 3f);
             // TODO: draw an alertbox saying "!1" or something similar.
             TankGame.SpriteRenderer.End();
         }

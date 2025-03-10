@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using tainicom.Aether.Physics2D.Fluids;
+using TanksRebirth.GameContent.Globals;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Utilities;
 
@@ -113,7 +114,7 @@ public class ParticleSystem
 
             var vel = new Vector3(GameHandler.GameRand.NextFloat(-0.25f, 0.25f), GameHandler.GameRand.NextFloat(0, 0.75f), GameHandler.GameRand.NextFloat(-0.25f, 0.25f)) * 2;
 
-            spark.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
+            spark.Roll = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
             var angles = GeometryUtils.AsEulerAngles(new Quaternion(new Vector3(spark.Roll, spark.Pitch, spark.Yaw), 0f));
 
@@ -142,7 +143,7 @@ public class ParticleSystem
 
             smoke.HasAddativeBlending = true;
 
-            smoke.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
+            smoke.Roll = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
             smoke.Scale = new(0.8f);
 

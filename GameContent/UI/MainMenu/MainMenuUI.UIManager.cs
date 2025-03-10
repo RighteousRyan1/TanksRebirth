@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
+using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Speedrunning;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.UI.LevelEditor;
@@ -10,7 +11,6 @@ using TanksRebirth.Internals.Common.Framework.Animation;
 using TanksRebirth.Internals.Common.GameUI;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Internals.UI;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace TanksRebirth.GameContent.UI.MainMenu;
 
@@ -45,19 +45,19 @@ public static partial class MainMenuUI
 
             if (MenuCameraManipulations.ContainsKey(value)) {
                 CameraPositionAnimator = Animator.Create()
-                    .WithFrame(new(position3d: TankGame.RebirthFreecam.Position, duration: CameraTransitionTime, easing: CameraEasingFunction))
+                    .WithFrame(new(position3d: CameraGlobals.RebirthFreecam.Position, duration: CameraTransitionTime, easing: CameraEasingFunction))
                     .WithFrame(new(position3d: MenuCameraManipulations[value].Position));
                 CameraRotationAnimator = Animator.Create()
-                    .WithFrame(new(position3d: TankGame.RebirthFreecam.Rotation, duration: CameraTransitionTime, easing: CameraEasingFunction))
+                    .WithFrame(new(position3d: CameraGlobals.RebirthFreecam.Rotation, duration: CameraTransitionTime, easing: CameraEasingFunction))
                     .WithFrame(new(position3d: MenuCameraManipulations[value].Rotation));
             }
             // if it doesn't have a proper camera position, just go to the regular one.
             else {
                 CameraPositionAnimator = Animator.Create()
-                    .WithFrame(new(position3d: TankGame.RebirthFreecam.Position, duration: CameraTransitionTime, easing: CameraEasingFunction))
+                    .WithFrame(new(position3d: CameraGlobals.RebirthFreecam.Position, duration: CameraTransitionTime, easing: CameraEasingFunction))
                     .WithFrame(new(position3d: CamPosMain));
                 CameraRotationAnimator = Animator.Create()
-                    .WithFrame(new(position3d: TankGame.RebirthFreecam.Rotation, duration: CameraTransitionTime, easing: CameraEasingFunction))
+                    .WithFrame(new(position3d: CameraGlobals.RebirthFreecam.Rotation, duration: CameraTransitionTime, easing: CameraEasingFunction))
                     .WithFrame(new(position3d: CamPosMainRotation));
             }
             CameraPositionAnimator.Restart();
@@ -257,10 +257,10 @@ public static partial class MainMenuUI
         MenuState = UIState.PrimaryMenu;
         Active = true;
         GameUI.Paused = false;
-        TankGame.OverheadView = false;
-        TankGame.OrthoRotationVector.Y = TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
-        TankGame.AddativeZoom = 1f;
-        TankGame.CameraFocusOffset.Y = 0f;
+        CameraGlobals.OverheadView = false;
+        CameraGlobals.OrthoRotationVector.Y = CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
+        CameraGlobals.AddativeZoom = 1f;
+        CameraGlobals.CameraFocusOffset.Y = 0f;
 
         // this manipulates the "back" button to be properly shown in the main menu
         // this will obviously be nuked during the UI rework

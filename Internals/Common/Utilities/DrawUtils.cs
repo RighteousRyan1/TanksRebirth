@@ -6,11 +6,12 @@ namespace TanksRebirth.Internals.Common.Utilities;
 
 public static class DrawUtils {
     public static void DrawTextWithBorder(SpriteBatch spriteBatch, SpriteFontBase font, string text, Vector2 position, 
-        Color textColor, Color borderColor, Vector2 scale, float rotation, Anchor anchor = Anchor.Center, float borderThickness = 1f, float charSpacing = 0) {
+        Color textColor, Color borderColor, Vector2 scale, float rotation, Anchor anchor = Anchor.Center, float borderThickness = 1f, float charSpacing = 0,
+        float origMeasureScale = 1f) {
         for (int i = 0; i < 4; i++)
             spriteBatch.DrawString(font, text, position + new Vector2(0, 2f * borderThickness).Rotate(MathHelper.PiOver2 * i + MathHelper.PiOver4),
-                borderColor, scale, rotation, GameUtils.GetAnchor(anchor, font.MeasureString(text)), 0f, characterSpacing: charSpacing);
-        spriteBatch.DrawString(font, text, position, textColor, scale, rotation, GameUtils.GetAnchor(anchor, font.MeasureString(text)), 1f, characterSpacing: charSpacing);
+                borderColor, scale, rotation, GameUtils.GetAnchor(anchor, font.MeasureString(text) * origMeasureScale), 0f, characterSpacing: charSpacing);
+        spriteBatch.DrawString(font, text, position, textColor, scale, rotation, GameUtils.GetAnchor(anchor, font.MeasureString(text) * origMeasureScale), 1f, characterSpacing: charSpacing);
     }
     public static void DrawTextureWithBorder(SpriteBatch spriteBatch, Texture2D texture, Vector2 position, Color textureColor, Color borderColor, 
         Vector2 scale, float rotation, Anchor anchor = Anchor.Center, float borderThickness = 1f) {
@@ -47,13 +48,13 @@ public static class DrawUtils {
     }
     public static void DrawBorderedStringWithShadow(SpriteBatch spriteBatch, SpriteFontBase font, Vector2 position, Vector2 shadowDir, 
         string text, Color color, Color borderColor, Vector2 scale, float alpha, Anchor anchor = Anchor.Center, 
-        float shadowDistScale = 1f, float shadowAlpha = 1f, float borderThickness = 1f, float charSpacing = 0) {
+        float shadowDistScale = 1f, float shadowAlpha = 1f, float borderThickness = 1f, float charSpacing = 0, float origMeasureScale = 1f) {
 
         spriteBatch.DrawString(font, text, position + 
             Vector2.Normalize(shadowDir) * (10f * shadowDistScale * scale), 
-            Color.Black * alpha * shadowAlpha, scale, 0f, anchor.GetAnchor(font.MeasureString(text)), 0f, characterSpacing: charSpacing);
+            Color.Black * alpha * shadowAlpha, scale, 0f, anchor.GetAnchor(font.MeasureString(text) * origMeasureScale), 0f, characterSpacing: charSpacing);
 
-        DrawTextWithBorder(spriteBatch, font, text, position, color * alpha, borderColor * alpha, scale, 0f, anchor, borderThickness, charSpacing: charSpacing); 
+        DrawTextWithBorder(spriteBatch, font, text, position, color * alpha, borderColor * alpha, scale, 0f, anchor, borderThickness, charSpacing: charSpacing, origMeasureScale: origMeasureScale); 
     }
 
 

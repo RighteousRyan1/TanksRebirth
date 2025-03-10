@@ -422,7 +422,7 @@ public class Shell : IAITankDanger
         p.FaceTowardsMe = false;
         // p.color = new Color(50, 50, 50, 150);
 
-        p.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
+        p.Roll = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
         // 
         p.HasAddativeBlending = false;
         p.Color = Properties.SmokeColor;
@@ -662,8 +662,8 @@ public class Shell : IAITankDanger
         if (!GameScene.ShouldRenderAll)
             return;
 
-        Projection = TankGame.GameProjection;
-        View = TankGame.GameView;
+        Projection = CameraGlobals.GameProjection;
+        View = CameraGlobals.GameView;
 
         // TODO: wtf? DoRaycast failing?
         if (DebugManager.DebuggingEnabled && DebugManager.DebugLevel == 1 && Properties.HomeProperties.Speed > 0)

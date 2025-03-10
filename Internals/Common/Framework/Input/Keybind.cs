@@ -4,71 +4,58 @@ using System.Collections.Generic;
 
 namespace TanksRebirth.Internals.Common.Framework.Input;
 
-public class Keybind {
-    public static List<Keybind> AllKeybinds { get; internal set; } = new();
+public class Keybind : IInputBind<Keys> {
+    public static List<Keybind> AllKeybinds { get; internal set; } = [];
 
+    public string Name { get; set; } = "Not Named";
+    public bool JustPressed => InputUtils.KeyJustPressed(Assigned) && !PendReassign;
+    public bool IsPressed => InputUtils.CurrentKeySnapshot.IsKeyDown(Assigned) && !PendReassign;
+    public bool PendReassign { get; set; } = false;
+    public Keys Assigned { get; set; } = Keys.None;
+    public Action OnPress { get; set; }
+    public Action<Keys> OnReassign { get; set; }
     public Keybind(string name, Keys defaultKey = Keys.None) {
         Name = name;
-        AssignedKey = defaultKey;
+        Assigned = defaultKey;
         AllKeybinds.Add(this);
     }
-
-    public bool JustReassigned { get; private set; }
-    public bool JustPressed => InputUtils.KeyJustPressed(AssignedKey) && !PendKeyReassign;
-    public bool IsPressed => InputUtils.CurrentKeySnapshot.IsKeyDown(AssignedKey) && !PendKeyReassign;
-    public bool PendKeyReassign { get; set; } = false;
-
-    public Action<Keys>? OnKeyReassigned;
-
-    public delegate void OnKeyPressedEvent();
-    public event OnKeyPressedEvent OnKeyPressed;
-
-    public Keys AssignedKey { get; private set; } = Keys.None;
-    public string Name { get; set; } = "Not Named";
-    public Action<Keybind> KeybindPressAction { get; set; } = null;
-
     public void ForceReassign(Keys newKey) {
-        AssignedKey = newKey;
-
-        JustReassigned = true;
+        Assigned = newKey;
     }
 
     private void PollReassign() {
         if (InputUtils.CurrentKeySnapshot.GetPressedKeys().Length > 0) {
             var firstKey = InputUtils.CurrentKeySnapshot.GetPressedKeys()[0];
-            if (InputUtils.KeyJustPressed(firstKey) && firstKey == AssignedKey) {
-                OnKeyReassigned?.Invoke(AssignedKey);
-                PendKeyReassign = false;
+            if (InputUtils.KeyJustPressed(firstKey) && firstKey == Assigned) {
+                OnReassign?.Invoke(Assigned);
+                PendReassign = false;
                 return;
             }
             else if (InputUtils.KeyJustPressed(firstKey) && firstKey == Keys.Escape) {
-                AssignedKey = Keys.None;
-                OnKeyReassigned?.Invoke(AssignedKey);
-                PendKeyReassign = false;
+                Assigned = Keys.None;
+                OnReassign?.Invoke(Assigned);
+                PendReassign = false;
                 return;
             }
-            AssignedKey = firstKey;
-            OnKeyReassigned?.Invoke(AssignedKey);
-            PendKeyReassign = false;
+            Assigned = firstKey;
+            OnReassign?.Invoke(Assigned);
+            PendReassign = false;
             return;
         }
     }
 
-    public void Fire() => KeybindPressAction?.Invoke(this);
+    public void Fire() => OnPress?.Invoke();
 
     internal void Update() {
-        if (PendKeyReassign)
+        if (PendReassign)
             PollReassign();
 
-        JustReassigned = false;
-
         if (JustPressed) {
-            OnKeyPressed?.Invoke();
-            KeybindPressAction?.Invoke(this);
+            OnPress?.Invoke();
         }
     }
 
     public override string ToString() {
-        return Name + " = {" + $"Key: {AssignedKey.ParseKey()} | Pressed: {IsPressed} | ReassignPending: {PendKeyReassign} " + "}";
+        return Name + " = {" + $"Key: {Assigned.KeyAsString()} | Pressed: {IsPressed} | ReassignPending: {PendReassign} " + "}";
     }
 }

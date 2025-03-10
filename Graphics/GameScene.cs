@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using tainicom.Aether.Physics2D.Dynamics;
 using TanksRebirth.GameContent;
+using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
@@ -349,8 +350,8 @@ public static class GameScene
 
     public static void RenderWorldModels()
     {
-        View = TankGame.GameView;
-        Projection = TankGame.GameProjection;
+        View = CameraGlobals.GameView;
+        Projection = CameraGlobals.GameProjection;
         World = Matrix.CreateScale(Scale) * Matrix.CreateTranslation(Center);
 
         if (ShouldRenderAll)

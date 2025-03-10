@@ -209,7 +209,7 @@ public class GameHandler {
         foreach (var cube in Block.AllBlocks)
             cube?.OnUpdate();
 
-        if ((DebugManager.DebuggingEnabled && DebugManager.DebugLevel == DebugManager.Id.LevelEditDebug && TankGame.OverheadView) || LevelEditorUI.Active)
+        if ((DebugManager.DebuggingEnabled && DebugManager.DebugLevel == DebugManager.Id.LevelEditDebug && CameraGlobals.OverheadView) || LevelEditorUI.Active)
             foreach (var sq in PlacementSquare.Placements)
                 sq?.Update();
 
@@ -218,7 +218,7 @@ public class GameHandler {
         if (MainMenuUI.Active)
             MainMenuUI.Update();
 
-        if ((TankGame.OverheadView || MainMenuUI.Active) && !LevelEditorUI.Active) {
+        if ((CameraGlobals.OverheadView || MainMenuUI.Active) && !LevelEditorUI.Active) {
             CampaignGlobals.InMission = false;
             IntermissionHandler.TankFunctionWait = 600;
         }
@@ -227,7 +227,7 @@ public class GameHandler {
 
         IntermissionHandler.Update();
 
-        if (TankGame.OverheadView)
+        if (CameraGlobals.OverheadView)
             LevelEditorUI.HandleLevelEditorModifications();
 
         OnPostUpdate?.Invoke();
@@ -273,7 +273,7 @@ public class GameHandler {
 
         Particles.RenderModelParticles();
 
-        if ((DebugManager.DebugLevel == DebugManager.Id.LevelEditDebug && TankGame.OverheadView) || LevelEditorUI.Active)
+        if ((DebugManager.DebugLevel == DebugManager.Id.LevelEditDebug && CameraGlobals.OverheadView) || LevelEditorUI.Active)
             foreach (var sq in PlacementSquare.Placements)
                 sq?.Render();
         if (DebugManager.DebuggingEnabled) {

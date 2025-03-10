@@ -40,49 +40,49 @@ public static class PingMenu {
         }
     }
     public static Keybind PingGeneral = new(nameof(PingGeneral), Keys.D1) {
-        KeybindPressAction = (bind) => {
+        OnPress = () => {
             if (MainMenuUI.Active || LevelEditorUI.Active || !CampaignGlobals.ShouldMissionsProgress || ChatSystem.ActiveHandle)
                 return;
             IngamePing.CreateFromTankSender(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition), PingID.Generic, NetPlay.GetMyClientId(), Client.IsConnected());
         }
     };
     public static Keybind PingStay = new(nameof(PingStay), Keys.D2) {
-        KeybindPressAction = (bind) => {
+        OnPress = () => {
             if (MainMenuUI.Active || LevelEditorUI.Active || !CampaignGlobals.ShouldMissionsProgress || ChatSystem.ActiveHandle)
                 return;
             IngamePing.CreateFromTankSender(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition), PingID.StayHere, NetPlay.GetMyClientId(), Client.IsConnected());
         }
     };
     public static Keybind PingWatch = new(nameof(PingWatch), Keys.D3) {
-        KeybindPressAction = (bind) => {
+        OnPress = () => {
             if (MainMenuUI.Active || LevelEditorUI.Active || !CampaignGlobals.ShouldMissionsProgress || ChatSystem.ActiveHandle)
                 return;
             IngamePing.CreateFromTankSender(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition), PingID.WatchHere, NetPlay.GetMyClientId(), Client.IsConnected());
         }
     };
     public static Keybind PingAvoid = new(nameof(PingAvoid), Keys.D4) {
-        KeybindPressAction = (bind) => {
+        OnPress = () => {
             if (MainMenuUI.Active || LevelEditorUI.Active || !CampaignGlobals.ShouldMissionsProgress || ChatSystem.ActiveHandle)
                 return;
             IngamePing.CreateFromTankSender(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition), PingID.AvoidHere, NetPlay.GetMyClientId(), Client.IsConnected());
         }
     };
     public static Keybind PingGo = new(nameof(PingGo), Keys.D5) {
-        KeybindPressAction = (bind) => {
+        OnPress = () => {
             if (MainMenuUI.Active || LevelEditorUI.Active || !CampaignGlobals.ShouldMissionsProgress || ChatSystem.ActiveHandle)
                 return;
             IngamePing.CreateFromTankSender(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition), PingID.GoHere, NetPlay.GetMyClientId(), Client.IsConnected());
         }
     };
     public static Keybind PingFocus = new(nameof(PingFocus), Keys.D6) {
-        KeybindPressAction = (bind) => {
+        OnPress = () => {
             if (MainMenuUI.Active || LevelEditorUI.Active || !CampaignGlobals.ShouldMissionsProgress || ChatSystem.ActiveHandle)
                 return;
             IngamePing.CreateFromTankSender(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition), PingID.FocusHere, NetPlay.GetMyClientId(), Client.IsConnected());
         }
     };
     public static Keybind PingGroup = new(nameof(PingGroup), Keys.D7) {
-        KeybindPressAction = (bind) => {
+        OnPress = () => {
             if (MainMenuUI.Active || LevelEditorUI.Active || !CampaignGlobals.ShouldMissionsProgress || ChatSystem.ActiveHandle)
                 return;
             IngamePing.CreateFromTankSender(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition), PingID.GroupHere, NetPlay.GetMyClientId(), Client.IsConnected());

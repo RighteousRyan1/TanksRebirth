@@ -234,12 +234,11 @@ public static partial class MainMenuUI {
             }
             return;
         }
-        return; // run this code later lmfao
-        for (int i = 0; i < Server.ConnectedClients.Length; i++) {
+        for (int i = 0; i < Server.CurrentClientCount; i++) {
             var client = Server.ConnectedClients[i];
             if (client is null) continue;
             // TODO: UHHH??????
-            if (client.IsOperatedByPlayer) continue;
+            //if (client.IsOperatedByPlayer) continue;
 
             if (GameHandler.AllPlayerTanks[i] is not null) continue;
 

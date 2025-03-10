@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Linq;
 using tainicom.Aether.Physics2D.Dynamics;
+using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.Systems.Coordinates;
@@ -262,7 +263,7 @@ public class Block : IGameObject {
 
                 var vel = new Vector3(GameHandler.GameRand.NextFloat(-3, 3), GameHandler.GameRand.NextFloat(4, 6), GameHandler.GameRand.NextFloat(-3, 3));
 
-                part.Roll = -TankGame.DEFAULT_ORTHOGRAPHIC_ANGLE;
+                part.Roll = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
                 part.Scale = new(0.7f);
 
@@ -332,15 +333,15 @@ public class Block : IGameObject {
         // TODO: seeing this, don't make this poor CPU have overhead (use derived types!)
         if (Type != BlockID.Teleporter) {
             World = Matrix.CreateScale(_scaling) * Matrix.CreateTranslation(Position3D - _offset);
-            Projection = TankGame.GameProjection;
-            View = TankGame.GameView;
+            Projection = CameraGlobals.GameProjection;
+            View = CameraGlobals.GameView;
 
             for (int i = 0; i < /*(Lighting.AccurateShadows ? 2 : 1)*/ 1; i++) { // shadows later if i can fix it {
                 foreach (var mesh in Model.Meshes) {
                     foreach (BasicEffect effect in mesh.Effects) {
-                        effect.View = TankGame.GameView;
+                        effect.View = View;
                         effect.World = i == 0 ? World : World * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0) * Matrix.CreateScale(1, 1, Stack / 7f);
-                        effect.Projection = TankGame.GameProjection;
+                        effect.Projection = Projection;
 
                         effect.TextureEnabled = true;
                         if (mesh.Name != "snow")
@@ -361,9 +362,9 @@ public class Block : IGameObject {
         else {
             foreach (var mesh in Model.Meshes) {
                 foreach (BasicEffect effect in mesh.Effects) {
-                    effect.View = TankGame.GameView;
+                    effect.View = CameraGlobals.GameView;
                     effect.World = World;
-                    effect.Projection = TankGame.GameProjection;
+                    effect.Projection = CameraGlobals.GameProjection;
 
                     effect.TextureEnabled = true;
 

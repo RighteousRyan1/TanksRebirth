@@ -254,6 +254,20 @@ public static class DebugManager {
             if (InputUtils.KeyJustPressed(Keys.X))
                 blockType++;
             if (DebuggingEnabled) {
+                if (InputUtils.KeyJustPressed(Keys.J))
+                    CameraGlobals.OverheadView = !CameraGlobals.OverheadView;
+                if (DebugLevel != Id.FreeCamTest) {
+                    if (InputUtils.MouseRight)
+                        CameraGlobals.OrthoRotationVector += MouseUtils.MouseVelocity / 500f;
+
+                    if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Add))
+                        CameraGlobals.AddativeZoom += 0.01f;
+                    if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Subtract))
+                        CameraGlobals.AddativeZoom -= 0.01f;
+
+                    if (InputUtils.MouseMiddle)
+                        CameraGlobals.CameraFocusOffset += MouseUtils.MouseVelocity;
+                }
                 if (InputUtils.KeyJustPressed(Keys.NumPad7))
                     tankToSpawnType--;
                 if (InputUtils.KeyJustPressed(Keys.NumPad9))
@@ -275,7 +289,7 @@ public static class DebugManager {
                 if (InputUtils.KeyJustPressed(Keys.PageDown))
                     SpawnMe(GameHandler.GameRand.Next(PlayerID.Blue, PlayerID.Yellow + 1), tankToSpawnTeam);
                 if (InputUtils.KeyJustPressed(Keys.Home))
-                    SpawnTankAt(!TankGame.OverheadView ? MatrixUtils.GetWorldPosition(MouseUtils.MousePosition) : PlacementSquare.CurrentlyHovered.Position, tankToSpawnType, tankToSpawnTeam);
+                    SpawnTankAt(!CameraGlobals.OverheadView ? MatrixUtils.GetWorldPosition(MouseUtils.MousePosition) : PlacementSquare.CurrentlyHovered.Position, tankToSpawnType, tankToSpawnTeam);
 
                 if (InputUtils.KeyJustPressed(Keys.OemSemicolon))
                     new Mine(null, MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ(), 400);
@@ -341,7 +355,7 @@ public static class DebugManager {
         foreach (var body in Tank.CollisionsWorld.BodyList) {
             DrawDebugString(SpriteRenderer,
                 $"BODY",
-                MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(body.Position.X * Tank.UNITS_PER_METER, 0, body.Position.Y * Tank.UNITS_PER_METER), TankGame.GameView, TankGame.GameProjection),
+                MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(body.Position.X * Tank.UNITS_PER_METER, 0, body.Position.Y * Tank.UNITS_PER_METER), CameraGlobals.GameView, CameraGlobals.GameProjection),
                 centered: true);
         }
 
@@ -354,20 +368,18 @@ public static class DebugManager {
                 level: Id.AchievementData,
                 centered: false);
         }
-        //Console.WriteLine("POS: " + TankGame.RebirthFreecam.Position);
-        //Console.WriteLine("ROT: " + TankGame.RebirthFreecam.Rotation);
-        DrawDebugString(SpriteRenderer, $"Position: {TankGame.RebirthFreecam.Position}" +
-            $"\nRotation: {TankGame.RebirthFreecam.Rotation}" +
-            $"\nFOV: {TankGame.RebirthFreecam.FieldOfView}°" +
-            $"\nForward: {TankGame.GameView.Forward}" +
-            $"\nBackward: {TankGame.GameView.Backward}" +
-            $"\nLeft: {TankGame.GameView.Left}" +
-            $"\nRight: {TankGame.GameView.Right}" +
+        DrawDebugString(SpriteRenderer, $"Position: {CameraGlobals.RebirthFreecam.Position}" +
+            $"\nRotation: {CameraGlobals.RebirthFreecam.Rotation}" +
+            $"\nFOV: {CameraGlobals.RebirthFreecam.FieldOfView}°" +
+            $"\nForward: {CameraGlobals.GameView.Forward}" +
+            $"\nBackward: {CameraGlobals.GameView.Backward}" +
+            $"\nLeft: {CameraGlobals.GameView.Left}" +
+            $"\nRight: {CameraGlobals.GameView.Right}" +
             $"\n\nToggle Persist Freecam: Z + X (Currently {(persistFreecam ? "enabled" : "disabled")})" +
             $"\n\nCTRL + C: Copy Position and Rotation Vectors as C# Vector3 constructors", new Vector2(10, 80), Id.FreeCamTest);
 
         if (InputUtils.AreKeysJustPressed(Keys.LeftControl, Keys.C)) {
-            TextCopy.ClipboardService.SetText($"{TankGame.RebirthFreecam.Position.ToCtor()}, {TankGame.RebirthFreecam.Rotation.ToCtor()}");
+            TextCopy.ClipboardService.SetText($"{CameraGlobals.RebirthFreecam.Position.ToCtor()}, {CameraGlobals.RebirthFreecam.Rotation.ToCtor()}");
         }
     }
     public static void DrawDebugMetrics() {

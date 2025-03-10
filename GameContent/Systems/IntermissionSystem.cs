@@ -34,10 +34,15 @@ public static class IntermissionSystem {
     public static float WaitTime { get; private set; }
     public static float CurrentWaitTime { get; private set; }
 
-    public static readonly Color DefaultBackgroundColor = new(250, 230, 150); //new(228, 231, 173); // color picked lol
-    public static readonly Color DefaultStripColor = new(186, 62, 47); //Color.DarkRed;
+    public static float ColorMultiplierForBorders = 0.35f;
 
-    public static Color BackgroundColor = new(228, 231, 173); // color picked lol
+    public static Color ColorForBorders => (BackgroundColor * ColorMultiplierForBorders) with { A = 255 };
+
+    // values are color-picked
+    public static readonly Color DefaultBackgroundColor = new(250, 230, 150);
+    public static readonly Color DefaultStripColor = new(186, 62, 47);
+
+    public static Color BackgroundColor = new(228, 231, 173);
     public static Color StripColor = Color.DarkRed;
 
     private static Vector2 _offset;
@@ -227,7 +232,7 @@ public static class IntermissionSystem {
                 Vector2.One,
                 missionName,
                 BackgroundColor,
-                (BackgroundColor * 0.35f) with { A = 255 },
+                ColorForBorders,
                 TextAnimatorLarge.CurrentScale.ToResolution(),
                 overallAlpha, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 3f, charSpacing: spacing);
             DrawUtils.DrawBorderedStringWithShadow(TankGame.SpriteRenderer, TankGame.TextFontLarge,
@@ -235,7 +240,7 @@ public static class IntermissionSystem {
                 Vector2.One,
                 enemyTankDisplay,
                 BackgroundColor,
-                (BackgroundColor * 0.35f) with { A = 255 },
+                ColorForBorders,
                 TextAnimatorLarge.CurrentScale.ToResolution() * 0.75f,
                 overallAlpha, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 2.5f, charSpacing: spacing);
 
@@ -282,7 +287,7 @@ public static class IntermissionSystem {
                     Vector2.One,
                     $"{TankGame.GameLanguage.Campaign}: \"{CampaignGlobals.LoadedCampaign.MetaData.Name}\" ({TankGame.GameLanguage.Mission} #{CampaignGlobals.LoadedCampaign.CurrentMissionId + 1})",
                     BackgroundColor,
-                    (BackgroundColor * 0.35f) with { A = 255 },
+                    ColorForBorders,
                     TextAnimatorSmall.CurrentScale.ToResolution(),
                     overallAlpha, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 1.5f);
             else
@@ -291,7 +296,7 @@ public static class IntermissionSystem {
                     Vector2.One,
                     $"{TankGame.GameLanguage.Mission} #{CampaignGlobals.LoadedCampaign.CurrentMissionId + 1}",
                     BackgroundColor,
-                    (BackgroundColor * 0.35f) with { A = 255 },
+                    ColorForBorders,
                     TextAnimatorSmall.CurrentScale.ToResolution(),
                     overallAlpha, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 1.5f);
         }
