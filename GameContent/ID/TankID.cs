@@ -34,24 +34,5 @@ public sealed class TankID
     public const int Gold = 17;
     public const int Obsidian = 18;
 
-    // here separates the master mod tanks from the marble mod tanks
-
-    public const int Granite = 19;
-    public const int Bubblegum = 20;
-    public const int Water = 21;
-    public const int Tiger = 22;
-    public const int Crimson = 23;
-    public const int Fade = 24;
-    public const int Creeper = 25;
-    public const int Gamma = 26;
-    public const int Marble = 27;
-
-    public const int Cherry = 28;
-    public const int Explosive = 29;
-    public const int Electro = 30;
-    public const int RocketDefender = 31;
-    public const int Assassin = 32;
-    public const int Commando = 33;
-
     public static ReflectionDictionary<TankID> Collection { get; internal set; } = new(MemberType.Fields);
 }

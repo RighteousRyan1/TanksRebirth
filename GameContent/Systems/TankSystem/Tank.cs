@@ -33,7 +33,7 @@ public abstract class Tank {
     public static void SetAssetNames() {
         Assets.Clear();
         // TankTier.Collection.GetKey(tankToSpawnType)
-        for (int i = TankID.Brown; i < TankID.Explosive; i++) {
+        for (int i = TankID.Brown; i < TankID.Collection.Count; i++) {
             var tier = TankID.Collection.GetKey(i)!.ToLower();
             Assets.Add($"tank_" + tier, null);
         }
@@ -46,7 +46,7 @@ public abstract class Tank {
     public static void LoadVanillaTextures() {
         AssetRoot = "Assets/textures/tank";
 
-        for (int i = TankID.Brown; i < TankID.Explosive; i++) {
+        for (int i = TankID.Brown; i < TankID.Collection.Count; i++) {
             var tier = TankID.Collection.GetKey(i)!.ToLower();
 
             var asset = $"tank_" + tier;
@@ -140,8 +140,9 @@ public abstract class Tank {
     private float _oldRotation;
     public Body Body { get; set; } = new();
 
-    /// <summary>This <see cref="Tank"/>'s model.</summary>
+    /// <summary>This <see cref="Tank"/>'s model. If this will be any different than the default, set <see cref="UsesCustomModel"/> to <c>true</c>.</summary>
     public Model Model { get; set; }
+    public bool UsesCustomModel { get; set; }
 
     /// <summary>This <see cref="Tank"/>'s world position. Used to change the actual location of the model relative to the <see cref="View"/> and <see cref="Projection"/>.</summary>
     public Matrix World { get; set; }

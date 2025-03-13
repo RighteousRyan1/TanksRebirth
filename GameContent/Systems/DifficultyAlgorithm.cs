@@ -30,20 +30,6 @@ public static class DifficultyAlgorithm
         [TankID.Emerald] = 0.42f,
         [TankID.Gold] = 0.61f,
         [TankID.Obsidian] = 0.69f,
-        [TankID.Granite] = 0.025f,
-        [TankID.Bubblegum] = 0.065f,
-        [TankID.Water] = 0.15f,
-        [TankID.Crimson] = 0.23f,
-        [TankID.Tiger] = 0.27f,
-        [TankID.Fade] = 0.29f,
-        [TankID.Creeper] = 0.45f,
-        [TankID.Gamma] = 0.35f,
-        [TankID.Marble] = 0.85f,
-        [TankID.Assassin] = 0.775f,
-        [TankID.Explosive] = 0.48f,
-        [TankID.Commando] = 0.65f,
-        [TankID.Cherry] = 0.6f,
-        [TankID.Electro] = 0.35f
     };
 
     public static float GetDifficulty(Mission mission)

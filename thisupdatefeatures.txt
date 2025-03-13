@@ -4,6 +4,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 
 ## Additions
 
+- New "Tactical Planes" mode
 - Added an entire room that the entire game scene exists in! There is no longer a black void that consumes the game
 - Added some handy-dandy FPS graphs at the user's disposal, if needed
 - Added scores for every player in the game
@@ -20,6 +21,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 - UI tooltips no longer go off-screen
 - Revamped the multiplayer UI a little bit
 - Player scoreboards have been changed in color and look
+- "東方 Mode" changed to "Bullet Hell"
 
 ## Changes Important for Modders
 
@@ -34,6 +36,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 - Lots of camera-related things from `TankGame` are now located in `CameraGlobals`
 	- This includes `GameView` and `GameProjection`, important matrices to include with custom 3D rendering involving gameplay
 - `GamepadBind` and `Keybind` now are `IInputBind<T>`s, which means you can use use them modularly within your code
+- When changing tank models, be sure to set `UsesCustomModel` to `true`
 
 ## Fixes
 
@@ -47,7 +50,6 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 
 - [ ] Bonus life screen
 - [ ] New AI tank aggression system (depending on the tank type, will either make advances towards you or will avoid you)
-
 
 PLEASE, if you find anything wrong, go to my [discord](https://discord.gg/KhfzvbrrKx) server and report bugs in the #bugs 
 channel, or, if you want to suggest something, suggest them in the #suggestions channel.
