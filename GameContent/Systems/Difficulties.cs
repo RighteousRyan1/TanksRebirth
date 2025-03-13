@@ -27,7 +27,7 @@ public record Difficulties {
         ["Monochrome"] = false,
         ["InfiniteLives"] = false,
         ["MasterModBuff"] = false,
-        ["MarbleModBuff"] = false,
+        ["TacticalPlanes"] = false,
         ["MachineGuns"] = false,
         ["RandomizedTanks"] = false,
         ["ThunderMode"] = false,

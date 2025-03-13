@@ -187,6 +187,7 @@ public class Airplane {
         Position.X += Velocity.X;
         Position.Z += Velocity.Y;
 
+        // TODO: unhardcode this.
         if (LifeTime > 60)
             OpenTrapDoors();
         if (LifeTime > 180)

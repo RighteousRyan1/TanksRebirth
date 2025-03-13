@@ -29,10 +29,10 @@ public static class TankMusicSystem
     public static float Pan = 0f;
     public static float VolumeMultiplier = 1f;
 
-    public static List<int> TierExclusionRule_DoesntHaveSong = new() { TankID.Cherry, TankID.Electro, TankID.RocketDefender, TankID.Explosive };
-    public static List<int> TierExclusionRule_Uses3ToUpgrade = new() { TankID.Ash, TankID.Silver, TankID.Bubblegum };
+    public static List<int> TierExclusionRule_DoesntHaveSong = [];
+    public static List<int> TierExclusionRule_Uses3ToUpgrade = [TankID.Ash, TankID.Silver];
 
-    public static Dictionary<int, int> MaxSongNumPerTank = new() {
+    public static readonly Dictionary<int, int> MaxSongNumPerTank = new() {
         [TankID.Brown] = 1,
         [TankID.Ash] = 2,
         [TankID.Marine] = 2,
@@ -51,24 +51,9 @@ public static class TankMusicSystem
         [TankID.Amethyst] = 3,
         [TankID.Gold] = 3,
         [TankID.Obsidian] = 1,
-        [TankID.Granite] = 1,
-        [TankID.Bubblegum] = 2,
-        [TankID.Water] = 2,
-        [TankID.Tiger] = 3,
-        [TankID.Crimson] = 3,
-        [TankID.Creeper] = 4,
-        [TankID.Fade] = 3,
-        [TankID.Gamma] = 3,
-        [TankID.Marble] = 1,
-        [TankID.Cherry] = 1,
-        [TankID.Explosive] = 1,
-        [TankID.Assassin] = 1,
-        [TankID.RocketDefender] = 1,
-        [TankID.Electro] = 1,
-        [TankID.Commando] = 1
     };
     /// <summary>A dictionary of all stored/loaded tanks songs.</summary>
-    public static Dictionary<string, OggMusic>? Audio = new();
+    public static Dictionary<string, OggMusic>? Audio = [];
 
     public static void LoadVanillaAudio() {
         var filePath = "Content/Assets/music";

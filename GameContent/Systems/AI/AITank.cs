@@ -78,21 +78,6 @@ public partial class AITank : Tank {
         [TankID.Emerald] = Color.Green,
         [TankID.Gold] = Color.Gold,
         [TankID.Obsidian] = Color.Black,
-        [TankID.Granite] = new(152, 96, 26),
-        [TankID.Bubblegum] = Color.LightPink,
-        [TankID.Water] = Color.LightBlue,
-        [TankID.Crimson] = Color.Crimson,
-        [TankID.Tiger] = Color.Yellow,
-        [TankID.Creeper] = Color.Green,
-        [TankID.Fade] = Color.Beige,
-        [TankID.Gamma] = Color.DarkGreen,
-        [TankID.Marble] = Color.Red,
-        [TankID.Cherry] = Color.DarkRed,
-        [TankID.Assassin] = Color.DarkGray,
-        [TankID.Commando] = Color.Olive,
-        [TankID.RocketDefender] = Color.DarkGray,
-        [TankID.Electro] = Color.Blue,
-        [TankID.Explosive] = Color.DarkGray,
     };
     /// <summary>Change the texture of this <see cref="AITank"/>.</summary>
     /// <param name="texture">The new texture.</param>
@@ -117,51 +102,16 @@ public partial class AITank : Tank {
 
         var tierName = TankID.Collection.GetKey(tier)!.ToLower();
 
-        if (tier <= TankID.Marble)
-            SwapTankTexture(Assets[$"tank_" + tierName]);
+        //if (tier <= TankID.Marble)
+        SwapTankTexture(Assets[$"tank_" + tierName]);
         #region Special
 
-        if (tier == TankID.Commando) {
-            Model = GameResources.GetGameResource<Model>("Assets/models/specialtanks/tank_commando");
 
-            SwapTankTexture(GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_commando"));
-
-            foreach (var mesh in Model.Meshes) {
-                foreach (BasicEffect effect in mesh.Effects) {
-                    if (mesh.Name == "Laser_Beam")
-                        effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/laser");
-                    if (mesh.Name == "Barrel_Laser")
-                        effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/armor");
-                    if (mesh.Name == "Dish")
-                        effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_commando");
-                }
-            }
-            // fix?
-        }
-        else if (tier == TankID.Assassin) {
-            Model = GameResources.GetGameResource<Model>("Assets/models/specialtanks/tank_assassin");
-
-            SwapTankTexture(GameResources.GetGameResource<Texture2D>("Assets/models/textures/tank/wee/tank_assassin"));
-        }
-        else if (tier == TankID.RocketDefender) {
-            Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_rocket");
-
-            SwapTankTexture(GameResources.GetGameResource<Texture2D>("Assets/models/textures/tank/wee/tank_rocket"));
-        }
-        else if (tier == TankID.Electro) {
-            Model = GameResources.GetGameResource<Model>("Assets/specialtanks/tank_electro");
-
-            SwapTankTexture(GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_electro"));
-        }
-        else if (tier == TankID.Explosive) {
-            Model = GameResources.GetGameResource<Model>("Assets/models/specialtanks/tank_explosive");
-
-            SwapTankTexture(GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_explosive"));
-        }
-        else {
-            Model = GameResources.GetGameResource<Model>("Assets/models/tank_e");
-        }
-
+        // if (UsesCustomModel) { }
+        //else {
+        // set model to default
+        //}
+        Model = GameResources.GetGameResource<Model>("Assets/models/tank_e");
         #endregion
 
         if (setDefaults)
@@ -184,10 +134,8 @@ public partial class AITank : Tank {
                 tier++;
             if (Difficulties.Types["Monochrome"])
                 tier = Difficulties.MonochromeValue;
-            if (Difficulties.Types["MasterModBuff"] && !Difficulties.Types["MarbleModBuff"])
+            if (Difficulties.Types["MasterModBuff"])
                 tier += 9;
-            if (Difficulties.Types["MarbleModBuff"] && !Difficulties.Types["MasterModBuff"])
-                tier += 18;
         }
 
         Behaviors = new AiBehavior[10];
@@ -212,7 +160,7 @@ public partial class AITank : Tank {
         SpecialBehaviors[2].Label = "SpecialBehavior3";
 
         if (TankGame.IsMainThread) {
-            if (tier < TankID.Cherry) {
+            if (!UsesCustomModel) {
 
                 var tierName = TankID.Collection.GetKey(tier)!.ToLower();
                 var tnkAsset = Assets[$"tank_" + tierName];
@@ -232,41 +180,11 @@ public partial class AITank : Tank {
             _tankTexture = Assets[$"tank_" + TankID.Collection.GetKey(tier)!.ToLower()];
         #region Special
 
-        if (tier == TankID.Commando) {
-            Model = GameResources.GetGameResource<Model>("Assets/models/specialtanks/tank_commando");
-
-            _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_commando");
-            // fix?
-        }
-        else if (tier == TankID.Assassin) {
-            Model = GameResources.GetGameResource<Model>("Assets/models/specialtanks/tank_assassin");
-
-            _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_assassin");
-        }
-        else if (tier == TankID.RocketDefender) {
-            Model = GameResources.GetGameResource<Model>("Assets/models/specialtanks/tank_rocket");
-
-            _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_rocket");
-        }
-        else if (tier == TankID.Electro) {
-            Model = GameResources.GetGameResource<Model>("Assets/models/specialtanks/tank_electro");
-
-            _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_electro");
-        }
-        else if (tier == TankID.Explosive) {
-            Model = GameResources.GetGameResource<Model>("Assets/models/specialtanks/tank_explosive");
-
-            _tankTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank/wee/tank_explosive");
-        }
-        else {
+        if (!UsesCustomModel) {
             Model = GameResources.GetGameResource<Model>("Assets/models/tank_e");
         }
 
         #endregion
-
-        //CannonMesh = Model.Meshes["Cannon"];
-
-        //boneTransforms = new Matrix[Model.Bones.Count];
 
         _shadowTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank_shadow");
 
@@ -357,11 +275,6 @@ public partial class AITank : Tank {
 
         if (Dead || !GameScene.ShouldRenderAll)
             return;
-        if (AiTankType == TankID.Commando) {
-            Model.Meshes["Laser_Beam"].ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
-            Model.Meshes["Barrel_Laser"].ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
-            Model.Meshes["Dish"].ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
-        }
         if (TankGame.SuperSecretDevOption) {
             var tnkGet = Array.FindIndex(GameHandler.AllAITanks, x => x is not null && !x.Dead && !x.Properties.Stationary);
             if (tnkGet > -1)
@@ -883,81 +796,6 @@ public partial class AITank : Tank {
                     ExplosionAvoid(explosion);
             }
 
-            #region Special Tank Behavior
-
-            // TODO: just use inheritance?
-
-            if (AiTankType == TankID.Creeper) {
-                if (Array.IndexOf(GameHandler.AllTanks, TargetTank) > -1 && TargetTank is not null) {
-                    float explosionDist = 90f;
-                    if (GameUtils.Distance_WiiTanksUnits(TargetTank.Position, Position) < explosionDist) {
-                        Destroy(new TankHurtContextOther(false, TankHurtContextOther.HurtContext.FromIngame, "CreeperTankExplosion", this));
-
-                        new Explosion(Position, 10f, this, 0.2f);
-                    }
-                }
-            }
-            else if (AiTankType == TankID.Cherry) {
-                if (SeesTarget) {
-                    if (SpecialBehaviors[0].Value <= 0) {
-                        SoundPlayer.PlaySoundInstance("Assets/sounds/tnk_event/alert.ogg", SoundContext.Effect, 0.6f, gameplaySound: true);
-                        AddProp2D(CosmeticChest.Anger, () => SpecialBehaviors[0].Value <= 0);
-                    }
-                    SpecialBehaviors[0].Value = 300;
-                }
-                else
-                    if (SpecialBehaviors[0].Value > 0)
-                    SpecialBehaviors[0].Value -= TankGame.DeltaTime;
-                if (SpecialBehaviors[0].Value > 0)
-                    Properties.MaxSpeed = 2.2f;
-                else
-                    Properties.MaxSpeed = 1.35f;
-            }
-            else if (AiTankType == TankID.Electro) {
-                SpecialBehaviors[0].Value += TankGame.DeltaTime;
-
-                if (SpecialBehaviors[1].Value == 0)
-                    SpecialBehaviors[1].Value = GameHandler.GameRand.NextFloat(180, 360);
-
-                if (SpecialBehaviors[0].Value > SpecialBehaviors[1].Value) {
-                    SpecialBehaviors[2].Value += TankGame.DeltaTime;
-
-                    GameHandler.Particles.MakeShineSpot(Position3D, Color.Blue, 1f);
-
-                    if (SpecialBehaviors[2].Value > 180f) {
-
-                        SpecialBehaviors[2].Value = 0f;
-                        SpecialBehaviors[0].Value = 0f;
-                        SpecialBehaviors[1].Value = 0f;
-
-                        var r = RandomUtils.PickRandom(PlacementSquare.Placements.Where(x => x.BlockId == -1).ToArray());
-
-                        Body.Position = r.Position.FlattenZ() / UNITS_PER_METER;
-                    }
-                }
-            }
-            else if (AiTankType == TankID.Commando) {
-                SpecialBehaviors[0].Value += TankGame.DeltaTime;
-                if (SpecialBehaviors[1].Value == 0)
-                    SpecialBehaviors[1].Value = GameHandler.GameRand.NextFloat(400, 600);
-
-                if (SpecialBehaviors[0].Value > SpecialBehaviors[1].Value) {
-                    SpecialBehaviors[1].Value = 0f;
-                    SpecialBehaviors[0].Value = 0f;
-
-                    var r = RandomUtils.PickRandom(PlacementSquare.Placements.Where(x => x.BlockId == -1).ToArray());
-
-                    var crate = Crate.SpawnCrate(r.Position + new Vector3(0, 500, 0), 2f);
-                    crate.TankToSpawn = new TankTemplate() {
-                        AiTier = PickRandomTier(),
-                        IsPlayer = false,
-                        Team = Team
-                    };
-                }
-            }
-
-            #endregion
-
             #region TankRotation
 
             // i really hope to remove this hardcode.
@@ -1319,7 +1157,6 @@ public partial class AITank : Tank {
     {
         TankID.Brown, TankID.Marine, TankID.Yellow, TankID.Black, TankID.White, TankID.Pink, TankID.Violet, TankID.Green, TankID.Ash,
         TankID.Bronze, TankID.Silver, TankID.Sapphire, TankID.Ruby, TankID.Citrine, TankID.Amethyst, TankID.Emerald, TankID.Gold, TankID.Obsidian,
-        TankID.Granite, TankID.Bubblegum, TankID.Water, TankID.Crimson, TankID.Tiger, TankID.Creeper, TankID.Gamma, TankID.Marble,
     };
     public static int PickRandomTier()
         => workingTiers[Server.ServerRandom.Next(0, workingTiers.Length)];

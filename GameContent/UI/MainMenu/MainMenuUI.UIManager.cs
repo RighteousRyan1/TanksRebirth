@@ -219,32 +219,6 @@ public static partial class MainMenuUI
         SetPrimaryMenuButtonsVisibility(MenuState == UIState.PrimaryMenu);
         SetDifficultiesButtonsVisibility(MenuState == UIState.Difficulties);
 
-        // me in march 2024: what the fuck is this code.
-        TanksAreCalculators.Color = Difficulties.Types["TanksAreCalculators"] ? Color.Lime : Color.Red;
-        PieFactory.Color = Difficulties.Types["PieFactory"] ? Color.Lime : Color.Red;
-        UltraMines.Color = Difficulties.Types["UltraMines"] ? Color.Lime : Color.Red;
-        BulletHell.Color = Difficulties.Types["BulletHell"] ? Color.Lime : Color.Red;
-        AllInvisible.Color = Difficulties.Types["AllInvisible"] ? Color.Lime : Color.Red;
-        AllStationary.Color = Difficulties.Types["AllStationary"] ? Color.Lime : Color.Red;
-        AllHoming.Color = Difficulties.Types["AllHoming"] ? Color.Lime : Color.Red;
-        Armored.Color = Difficulties.Types["Armored"] ? Color.Lime : Color.Red;
-        BumpUp.Color = Difficulties.Types["BumpUp"] ? Color.Lime : Color.Red;
-        Monochrome.Color = Difficulties.Types["Monochrome"] ? Color.Lime : Color.Red;
-        InfiniteLives.Color = Difficulties.Types["InfiniteLives"] ? Color.Lime : Color.Red;
-        MasterModBuff.Color = Difficulties.Types["MasterModBuff"] ? Color.Lime : Color.Red;
-        MarbleModBuff.Color = Difficulties.Types["MarbleModBuff"] ? Color.Lime : Color.Red;
-        MachineGuns.Color = Difficulties.Types["MachineGuns"] ? Color.Lime : Color.Red;
-        RandomizedTanks.Color = Difficulties.Types["RandomizedTanks"] ? Color.Lime : Color.Red;
-        ThunderMode.Color = Difficulties.Types["ThunderMode"] ? Color.Lime : Color.Red;
-        POVMode.Color = Difficulties.Types["POV"] ? Color.Lime : Color.Red;
-        AiCompanion.Color = Difficulties.Types["AiCompanion"] ? Color.Lime : Color.Red;
-        Shotguns.Color = Difficulties.Types["Shotguns"] ? Color.Lime : Color.Red;
-        Predictions.Color = Difficulties.Types["Predictions"] ? Color.Lime : Color.Red;
-        RandomizedPlayer.Color = Difficulties.Types["RandomPlayer"] ? Color.Lime : Color.Red;
-        BulletBlocking.Color = Difficulties.Types["BulletBlocking"] ? Color.Lime : Color.Red;
-        FFA.Color = Difficulties.Types["FFA"] ? Color.Lime : Color.Red;
-        LanternMode.Color = Difficulties.Types["LanternMode"] ? Color.Lime : Color.Red;
-        DisguiseMode.Color = Difficulties.Types["Disguise"] ? Color.Lime : Color.Red;
     }
     public static void OpenUI() {
         if (!Speedrun.AreSpeedrunsFetched) {

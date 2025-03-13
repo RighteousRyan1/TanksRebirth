@@ -814,15 +814,6 @@ public static partial class LevelEditorUI {
                         TankID.Emerald => TankGame.GameLanguage.EmeraldFlavor,
                         TankID.Gold => TankGame.GameLanguage.GoldFlavor,
                         TankID.Obsidian => TankGame.GameLanguage.ObsidianFlavor,
-                        TankID.Granite => TankGame.GameLanguage.GraniteFlavor,
-                        TankID.Bubblegum => TankGame.GameLanguage.BubblegumFlavor,
-                        TankID.Water => TankGame.GameLanguage.WaterFlavor,
-                        TankID.Crimson => TankGame.GameLanguage.CrimsonFlavor,
-                        TankID.Tiger => TankGame.GameLanguage.TigerFlavor,
-                        TankID.Fade => TankGame.GameLanguage.FadeFlavor,
-                        TankID.Creeper => TankGame.GameLanguage.CreeperFlavor,
-                        TankID.Gamma => TankGame.GameLanguage.GammaFlavor,
-                        TankID.Marble => TankGame.GameLanguage.MarbleFlavor,
                         _ => "Did Not Load (DNL)"
                     }); // TODO: localize this. i hate english.
 

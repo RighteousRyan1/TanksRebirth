@@ -26,8 +26,8 @@ public static partial class MainMenuUI {
     public static UITextButton Monochrome;
     public static UITextButton InfiniteLives;
 
-    public static UITextButton MasterModBuff;
-    public static UITextButton MarbleModBuff;
+    public static UITextButton MasterMode;
+    public static UITextButton TacticalPlanes;
     public static UITextButton MachineGuns;
     public static UITextButton RandomizedTanks;
     public static UITextButton ThunderMode;
@@ -45,6 +45,7 @@ public static partial class MainMenuUI {
 
     public static UITextButton DisguiseMode;
 
+    // TODO: UI Layers. This is fucking ugly.
     internal static void SetDifficultiesButtonsVisibility(bool visible) {
         TanksAreCalculators.IsVisible = visible;
         PieFactory.IsVisible = visible;
@@ -57,8 +58,8 @@ public static partial class MainMenuUI {
         BumpUp.IsVisible = visible;
         Monochrome.IsVisible = visible;
         InfiniteLives.IsVisible = visible;
-        MasterModBuff.IsVisible = visible;
-        MarbleModBuff.IsVisible = visible;
+        MasterMode.IsVisible = visible;
+        TacticalPlanes.IsVisible = visible;
         MachineGuns.IsVisible = visible;
         RandomizedTanks.IsVisible = visible;
         ThunderMode.IsVisible = visible;
@@ -87,6 +88,33 @@ public static partial class MainMenuUI {
                 }
             }
         }
+
+        // me in march 2024: what the fuck is this code.
+        TanksAreCalculators.Color = Difficulties.Types["TanksAreCalculators"] ? Color.Lime : Color.Red;
+        PieFactory.Color = Difficulties.Types["PieFactory"] ? Color.Lime : Color.Red;
+        UltraMines.Color = Difficulties.Types["UltraMines"] ? Color.Lime : Color.Red;
+        BulletHell.Color = Difficulties.Types["BulletHell"] ? Color.Lime : Color.Red;
+        AllInvisible.Color = Difficulties.Types["AllInvisible"] ? Color.Lime : Color.Red;
+        AllStationary.Color = Difficulties.Types["AllStationary"] ? Color.Lime : Color.Red;
+        AllHoming.Color = Difficulties.Types["AllHoming"] ? Color.Lime : Color.Red;
+        Armored.Color = Difficulties.Types["Armored"] ? Color.Lime : Color.Red;
+        BumpUp.Color = Difficulties.Types["BumpUp"] ? Color.Lime : Color.Red;
+        Monochrome.Color = Difficulties.Types["Monochrome"] ? Color.Lime : Color.Red;
+        InfiniteLives.Color = Difficulties.Types["InfiniteLives"] ? Color.Lime : Color.Red;
+        MasterMode.Color = Difficulties.Types["MasterModBuff"] ? Color.Lime : Color.Red;
+        TacticalPlanes.Color = Difficulties.Types["TacticalPlanes"] ? Color.Lime : Color.Red;
+        MachineGuns.Color = Difficulties.Types["MachineGuns"] ? Color.Lime : Color.Red;
+        RandomizedTanks.Color = Difficulties.Types["RandomizedTanks"] ? Color.Lime : Color.Red;
+        ThunderMode.Color = Difficulties.Types["ThunderMode"] ? Color.Lime : Color.Red;
+        POVMode.Color = Difficulties.Types["POV"] ? Color.Lime : Color.Red;
+        AiCompanion.Color = Difficulties.Types["AiCompanion"] ? Color.Lime : Color.Red;
+        Shotguns.Color = Difficulties.Types["Shotguns"] ? Color.Lime : Color.Red;
+        Predictions.Color = Difficulties.Types["Predictions"] ? Color.Lime : Color.Red;
+        RandomizedPlayer.Color = Difficulties.Types["RandomPlayer"] ? Color.Lime : Color.Red;
+        BulletBlocking.Color = Difficulties.Types["BulletBlocking"] ? Color.Lime : Color.Red;
+        FFA.Color = Difficulties.Types["FFA"] ? Color.Lime : Color.Red;
+        LanternMode.Color = Difficulties.Types["LanternMode"] ? Color.Lime : Color.Red;
+        DisguiseMode.Color = Difficulties.Types["Disguise"] ? Color.Lime : Color.Red;
 
         if (Active && Client.IsConnected() && Client.IsHost())
             Client.SendDiffiulties();
@@ -127,9 +155,9 @@ public static partial class MainMenuUI {
         };
         UltraMines.SetDimensions(100, 400, 300, 40);
 
-        BulletHell = new("東方 Mode", font, Color.White) {
+        BulletHell = new("Bullet Hell", font, Color.White) {
             IsVisible = false,
-            Tooltip = "Ricochet counts are now tripled!",
+            Tooltip = "Bullets now ricochet thrice as much as before!",
             OnLeftClick = (elem) => Difficulties.Types["BulletHell"] = !Difficulties.Types["BulletHell"]
         };
         BulletHell.SetDimensions(100, 450, 300, 40);
@@ -198,25 +226,25 @@ public static partial class MainMenuUI {
         };
         InfiniteLives.SetDimensions(450, 300, 300, 40);
 
-        MasterModBuff = new("Master Mod Buff", font, Color.White) {
+        MasterMode = new("Master Mode", font, Color.White) {
             IsVisible = false,
-            Tooltip = "Vanilla tanks become their master mod counterparts." +
-            "\nWill not work with \"Marble Mod Buff\" enabled.",
+            Tooltip = "Original tanks will become much more difficult." +
+            "\nNew music, mechanics, and more!",
             OnLeftClick = (elem) => Difficulties.Types["MasterModBuff"] = !Difficulties.Types["MasterModBuff"]
         };
-        MasterModBuff.SetDimensions(450, 350, 300, 40);
+        MasterMode.SetDimensions(450, 350, 300, 40);
 
-        MarbleModBuff = new("Marble Mod Buff", font, Color.White) {
+        TacticalPlanes = new("Tactical Planes", font, Color.White) {
             IsVisible = false,
-            Tooltip = "Vanilla tanks become their marble mod counterparts." +
-            "\nWill not work with \"Master Mod Buff\" enabled.",
-            OnLeftClick = (elem) => Difficulties.Types["MarbleModBuff"] = !Difficulties.Types["MarbleModBuff"]
+            Tooltip = "Airplanes will occasionally come through the sky" +
+            "\nand drop smoke grenades to block your vision!",
+            OnLeftClick = (elem) => Difficulties.Types["TacticalPlanes"] = !Difficulties.Types["TacticalPlanes"]
         };
-        MarbleModBuff.SetDimensions(450, 400, 300, 40);
+        TacticalPlanes.SetDimensions(450, 400, 300, 40);
 
         MachineGuns = new("Machine Guns", font, Color.White) {
             IsVisible = false,
-            Tooltip = "Every tank now sprays bullets at you.",
+            Tooltip = "Every tank (including the player) now has the ability to fire as fast as they want.",
             OnLeftClick = (elem) => Difficulties.Types["MachineGuns"] = !Difficulties.Types["MachineGuns"]
         };
         MachineGuns.SetDimensions(450, 450, 300, 40);

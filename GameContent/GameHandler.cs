@@ -113,28 +113,25 @@ public class GameHandler {
         // ChatSystem.CurTyping = SoundPlayer.GetLengthOfSound("Content/Assets/sounds/tnk_shoot_ricochet_rocket_loop.ogg").ToString();
         CosmeticsUI.Update();
         RoomScene.Update();
-        if (DebugManager.DebuggingEnabled) {
-            if (/*InputUtils.KeyJustPressed(Keys.H)*/ DebugManager.DebugLevel == -2 && CampaignGlobals.InMission) {
-                if (TankGame.RunTime % 300 <= TankGame.DeltaTime) {
-                    if (Server.ServerRandom.Next(2) == 0) {
-                        var pos = Airplane.ChooseRandomXZPosition(Server.ServerRandom);
-                        var vel = Airplane.ChooseRandomFlightTarget(Server.ServerRandom, pos, 0.5f, 0.5f);
-                        var plane = new Airplane(new Vector3(pos.X, 100, pos.Y), vel, 400f);
-                        plane.WhileTrapDoorsOpened = () => {
-                            /*if (TankGame.RunTime % 10 <= TankGame.DeltaTime) {
-                                var t = new AITank(TankMusicSystem.TierHighest);
-                                t.Body.Position = plane.Position.FlattenZ() / Tank.UNITS_PER_METER;
-                            }*/
-                                //new Mine(null, plane.Position.FlattenZ(), 180);
-                                //new Explosion(plane.Position.FlattenZ(), 10f);
-                            
-                            if (TankGame.RunTime % 30 <= TankGame.DeltaTime) {
-                                ParticleGameplay.CreateSmokeGrenade(Particles, plane.Position, Vector3.Down + new Vector3(plane.Velocity.X, 0, plane.Velocity.Y) * 0.5f/* * GameRand.NextFloat(0.5f, 1.1f)*/);
-                            }
-                        };
-                    }
+
+        // TODO: move this code elsewhere.
+        if (((DebugManager.DebuggingEnabled && DebugManager.DebugLevel == -2) || Difficulties.Types["TacticalPlanes"]) && CampaignGlobals.InMission) {
+            if (TankGame.RunTime % 300 <= TankGame.DeltaTime) {
+                // 25% chance every 5 seconds
+                if (Server.ServerRandom.Next(4) == 0) {
+                    // TODO: sync the plane over the net... soon!
+                    var pos = Airplane.ChooseRandomXZPosition(GameRand);
+                    var vel = Airplane.ChooseRandomFlightTarget(GameRand, pos, 0.5f, 0.5f);
+                    var plane = new Airplane(new Vector3(pos.X, 100, pos.Y), vel, 400f);
+                    plane.WhileTrapDoorsOpened = () => {
+                        if (TankGame.RunTime % 30 <= TankGame.DeltaTime) {
+                            ParticleGameplay.CreateSmokeGrenade(Particles, plane.Position, Vector3.Down + new Vector3(plane.Velocity.X, 0, plane.Velocity.Y) * 0.5f/* * GameRand.NextFloat(0.5f, 1.1f)*/);
+                        }
+                    };
                 }
             }
+        }
+        if (DebugManager.DebuggingEnabled) {
             if (InputUtils.AreKeysJustPressed(Keys.Q, Keys.E))
                 Server.SyncSeeds();
             if (InputUtils.KeyJustPressed(Keys.M))

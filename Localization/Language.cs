@@ -151,15 +151,6 @@ namespace TanksRebirth.Localization
         public string EmeraldFlavor { get; set; }
         public string GoldFlavor { get; set; }
         public string ObsidianFlavor { get; set; }
-        public string GraniteFlavor { get; set; }
-        public string BubblegumFlavor { get; set; }
-        public string WaterFlavor { get; set; }
-        public string TigerFlavor { get; set; }
-        public string CrimsonFlavor { get; set; }
-        public string FadeFlavor { get; set; }
-        public string CreeperFlavor { get; set; }
-        public string GammaFlavor { get; set; }
-        public string MarbleFlavor { get; set; }
 
         #endregion
 

@@ -311,8 +311,8 @@ public record struct Mission {
         //if (version != LevelEditorUI.EDITOR_VERSION)
             //ChatSystem.SendMessage($"Warning: This level was saved with a different version of the level editor. It may not work correctly.", Color.Yellow);
         return version switch {
-            2 => LoadMission2(reader),
-            3 => LoadMission3(reader),
+            2 => LoadMissionV2(reader),
+            3 => LoadMissionV3(reader),
             _ => throw new Exception("This is not supposed to happen."),
         };
     }
@@ -320,7 +320,7 @@ public record struct Mission {
     // methods of loading mission data
     // preceding numbers represent the version of the editor the level was saved with
 
-    public static Mission LoadMission2(BinaryReader reader) {
+    public static Mission LoadMissionV2(BinaryReader reader) {
         List<TankTemplate> tanks = [];
         List<BlockTemplate> blocks = [];
         var name = reader.ReadString();
@@ -371,7 +371,7 @@ public record struct Mission {
             Name = name
         };
     }
-    public static Mission LoadMission3(BinaryReader reader) {
+    public static Mission LoadMissionV3(BinaryReader reader) {
         List<TankTemplate> tanks = [];
         List<BlockTemplate> blocks = [];
         var name = reader.ReadString();

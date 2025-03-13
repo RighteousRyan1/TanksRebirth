@@ -293,11 +293,6 @@ public class TankGame : Game {
             
             
             // Tank Textures
-            "Assets/textures/tank/wee/tank_commando",
-            "Assets/textures/tank/wee/tank_assassin",
-            "Assets/textures/tank/wee/tank_rocket",
-            "Assets/textures/tank/wee/tank_electro",
-            "Assets/textures/tank/wee/tank_explosive",
             "Assets/textures/tank_shadow",
             "Assets/textures/bullet/bullet",
             "Assets/textures/bullet/flame",
