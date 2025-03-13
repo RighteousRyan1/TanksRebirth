@@ -20,6 +20,20 @@ using TanksRebirth.Graphics.Cameras;
 namespace TanksRebirth.GameContent.Globals;
 
 public static class CameraGlobals {
+    // screen camera stuff
+
+    public static Matrix ScreenView;
+    public static Matrix ScreenProjOrthographic;
+    public static Matrix ScreenProjPerspective;
+
+    public static void SetMatrices() {
+        ScreenProjOrthographic = Matrix.CreateOrthographic(TankGame.Instance.GraphicsDevice.Viewport.Width, TankGame.Instance.GraphicsDevice.Viewport.Height, -2000f, 5000f);
+        ScreenProjPerspective= Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), TankGame.Instance.GraphicsDevice.Viewport.AspectRatio, 0.1f, 10000f);
+        ScreenView = Matrix.CreateLookAt(Vector3.Backward, Vector3.Zero, Vector3.Up) * Matrix.CreateTranslation(0, 0, -500);
+    }
+
+    // game camera stuff
+
     private static bool _oView;
     private static int _transitionTimer;
     public static bool OverheadView {

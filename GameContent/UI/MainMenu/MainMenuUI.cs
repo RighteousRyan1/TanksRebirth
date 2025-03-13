@@ -41,11 +41,6 @@ public static partial class MainMenuUI
     public static OggMusic Theme;
     private static bool _musicFading;
 
-    private static Matrix View;
-
-    public static Matrix ProjectionOrtho;
-    public static Matrix ProjectionPerspective;
-
     public delegate void MenuOpenDelegate();
     public delegate void MenuCloseDelegate();
     public delegate void CampaignSelectedDelegate(Campaign campaign);
@@ -135,10 +130,6 @@ public static partial class MainMenuUI
         var rotY = MathHelper.PiOver2 + (MouseUtils.MousePosition.Y - WindowUtils.WindowHeight / 4) / (WindowUtils.WindowHeight / 4) * scalar * 0.5f;
         RebirthLogo.Rotation.X = rotX;
         RebirthLogo.Rotation.Y = rotY;
-
-        ProjectionOrtho = Matrix.CreateOrthographic(TankGame.Instance.GraphicsDevice.Viewport.Width, TankGame.Instance.GraphicsDevice.Viewport.Height, -2000f, 5000f);
-        ProjectionPerspective = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), TankGame.Instance.GraphicsDevice.Viewport.AspectRatio, 0.1f, 10000f);
-        View = Matrix.CreateLookAt(Vector3.Backward, Vector3.Zero, Vector3.Up) * Matrix.CreateTranslation(0, 0, -500);
     }
     public static void RenderModels() {
 
@@ -149,8 +140,8 @@ public static partial class MainMenuUI
         if (!Active) return;
         //RebirthLogo.Rotation = new(MathF.Sin(TankGame.RunTime / 100) * MathHelper.PiOver4, 0, 0);
         RebirthLogo.Scale = 0.8f.ToResolutionF();
-        RebirthLogo.View = View;
-        RebirthLogo.Projection = ProjectionOrtho;
+        RebirthLogo.View = CameraGlobals.ScreenView;
+        RebirthLogo.Projection = CameraGlobals.ScreenProjOrthographic;
         if (MenuState == UIState.PrimaryMenu || MenuState == UIState.PlayList)
             RebirthLogo.Render();
     }
