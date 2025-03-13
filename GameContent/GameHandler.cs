@@ -350,6 +350,7 @@ public class GameHandler {
         }
         foreach (var element in UIElement.AllUIElements)
             element?.DrawTooltips(TankGame.SpriteRenderer);
+        CameraGlobals.SetMatrices();
 
         if (DebugManager.DebugLevel == DebugManager.Id.SceneMetrics) {
             if (TankGame.RunTime % 10f <= TankGame.DeltaTime) {
