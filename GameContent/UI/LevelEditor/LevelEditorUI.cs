@@ -934,20 +934,21 @@ public static partial class LevelEditorUI {
                     return;
                 // fix why this isn't drawing???
                 var pos = new Vector2(elem.Position.X + 10.ToResolutionX(), elem.Position.Y + elem.Size.Y / 2);
-                //var pos = Vector2.Zero;
                 string text = elem.DefaultString + ": " + elem.GetRealText();
                 var msr1 = TankGame.TextFontLarge.MeasureString(text);
                 var msr2 = TankGame.TextFontLarge.MeasureString(elem.DefaultString);
                 float constScale = 0.4f.ToResolutionX();
-                float scale = /*elem.DefaultString.Length < 30 ?
-                msr2.X / msr1.X * 0.5f :
-                msr2.X / msr1.X * 0.3f;*/ msr1.X * constScale > elem.Size.X ? msr2.X / (msr1.X + msr2.X) : constScale;
+                float scale =  msr1.X * constScale > elem.Size.X ? msr2.X / (msr1.X + msr2.X) : constScale;
                 b.DrawString(TankGame.TextFontLarge, text, pos, Color.Black, new Vector2(scale).ToResolution(), 0f, new Vector2(0, msr1.Y / 2));
             };
         });
     }
 
     public static void Update() {
+
+        // it honestly hurts to look at this code. pls refactor soon
+        // With love,
+        //              Ryan
         if (!_initialized)
             return;
 

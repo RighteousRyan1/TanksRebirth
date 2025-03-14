@@ -1,5 +1,6 @@
 ﻿using FontStashSharp;
 using Microsoft.Xna.Framework;
+using System.Collections.Generic;
 using System.Linq;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.ID;
@@ -11,6 +12,13 @@ namespace TanksRebirth.GameContent.UI.LevelEditor;
 
 #pragma warning disable
 public static partial class LevelEditorUI {
+    // TODO: dynamically drawn 3d models on the UI.
+    // TODO: rework scrollbar UI code, massively. my sanity is starting to taper off and achieve an all time low.
+    // this will have the tanks at the bottom n stuff.
+    // take advantage of DrawUtils.CenteredOrthoToScreen
+    public static List<Particle> LevelEditorParticles = [];
+    // then have texts n stuff under it.
+
     public static string AlertText;
     private static float _alertTime;
     public static float DefaultAlertDuration { get; set; } = 120;
