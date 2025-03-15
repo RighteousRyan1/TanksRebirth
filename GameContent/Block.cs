@@ -4,6 +4,7 @@ using System;
 using System.Linq;
 using tainicom.Aether.Physics2D.Dynamics;
 using TanksRebirth.GameContent.Globals;
+using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.Systems.Coordinates;
@@ -136,33 +137,33 @@ public class Block : IGameObject {
     public void Swap(int type) {
         Type = type;
 
-        var modelname = GameScene.Theme switch {
-            MapTheme.Vanilla => IsAlternateModel ? "Assets/models/scene/cube_stack_alt" : "Assets/models/scene/cube_stack",
-            MapTheme.Christmas => IsAlternateModel ? "Assets/christmas/cube_stack_alt_snowy" : "Assets/christmas/cube_stack_snowy",
-            _ => ""
+        var model = GameScene.Theme switch {
+            MapTheme.Vanilla => IsAlternateModel ? ModelResources.BlockStackAlt : ModelResources.BlockStack,
+            MapTheme.Christmas => IsAlternateModel ? ModelResources.BlockStackAltSnowy : ModelResources.BlockStackSnowy,
+            _ => throw new Exception()
         };
 
         switch (type) {
             case BlockID.Wood:
                 _texture = GameScene.Assets["block.1"];
                 Properties.IsSolid = true;
-                Model = GameResources.GetGameResource<Model>(modelname)!;
+                Model = model.Asset;
                 break;
             case BlockID.Cork:
                 Properties.IsDestructible = true;
                 _texture = GameScene.Assets["block.2"];
                 Properties.IsSolid = true;
-                Model = GameResources.GetGameResource<Model>(modelname)!;
+                Model = model.Asset;
                 break;
             case BlockID.Hole:
-                Model = GameResources.GetGameResource<Model>("Assets/models/check")!;
+                Model = ModelResources.FlatFace.Asset;
                 Properties.IsSolid = false;
                 _texture = GameScene.Assets["block_harf.1"];
                 Properties.CanStack = false;
                 Properties.HasShadow = false;
                 break;
             case BlockID.Teleporter:
-                Model = GameResources.GetGameResource<Model>("Assets/models/teleporter")!;
+                Model = ModelResources.Teleporter.Asset;
                 Properties.IsSolid = false;
                 Properties.IsCollidable = false;
                 _texture = GameScene.Assets["teleporter"];
@@ -204,8 +205,8 @@ public class Block : IGameObject {
         Type = type;
 
         var modelname = GameScene.Theme switch {
-            MapTheme.Vanilla => IsAlternateModel ? "Assets/models/scene/cube_stack_alt" : "Assets/models/scene/cube_stack",
-            MapTheme.Christmas => IsAlternateModel ? "Assets/christmas/cube_stack_alt_snowy" : "Assets/christmas/cube_stack_snowy",
+            MapTheme.Vanilla => IsAlternateModel ? "Assets/models/scene/block_stack_alt" : "Assets/models/scene/block_stack",
+            MapTheme.Christmas => IsAlternateModel ? "Assets/christmas/block_stack_alt_snowy" : "Assets/christmas/block_stack_snowy",
             _ => ""
         };
 

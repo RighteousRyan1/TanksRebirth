@@ -9,6 +9,7 @@ using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Graphics;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Globals;
+using TanksRebirth.GameContent.Globals.Assets;
 
 namespace TanksRebirth.GameContent;
 
@@ -59,7 +60,7 @@ public class Crate
 
     private Crate() 
     {
-        Model = GameResources.GetGameResource<Model>("Assets/BoxFace");
+        Model = ModelResources.BoxFace.Asset;
 
         int index = Array.IndexOf(crates, crates.First(c => c is null));
 

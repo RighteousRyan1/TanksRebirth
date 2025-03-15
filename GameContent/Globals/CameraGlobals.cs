@@ -20,6 +20,9 @@ using TanksRebirth.Graphics.Cameras;
 namespace TanksRebirth.GameContent.Globals;
 
 public static class CameraGlobals {
+
+    public static bool IsUsingPOVCamera => MatrixUtils.AreMatricesEqual(GameProjection, RebirthFreecam.Projection, 0.1f);
+
     // screen camera stuff
 
     public static Matrix ScreenView;
@@ -107,6 +110,7 @@ public static class CameraGlobals {
                 RebirthFreecam.FieldOfView = 100f;
                 RebirthFreecam.NearViewDistance = 0.1f;
                 RebirthFreecam.FarViewDistance = 100000f;
+                RebirthFreecam.HasLookAt = false;
 
                 GameView = RebirthFreecam.View;
                 GameProjection = RebirthFreecam.Projection;
@@ -141,19 +145,18 @@ public static class CameraGlobals {
                 var povCameraPosCurrent = IntermissionHandler.TankFunctionWait > 0 && IntermissionHandler.ThirdPersonTransitionAnimation != null ?
                     IntermissionHandler.ThirdPersonTransitionAnimation.CurrentPosition3D : POVCameraPosition;
 
+                // i guess i have to leave this slop in for now
                 GameView = Matrix.CreateLookAt(povCameraPosCurrent,
                         POVCameraPosition + new Vector2(0, 20).Rotate(povCameraRotationCurrent).ExpandZ(),
                         Vector3.Up) * Matrix.CreateScale(AddativeZoom) *
                     Matrix.CreateTranslation(0, -20, 0);
 
-                /*GameView = Matrix.CreateLookAt(POVCameraPosition,
-                        POVCameraPosition + new Vector3(0, 0, 20).FlattenZ().RotatedByRadians(POVCameraRotation).ExpandZ(),
-                        Vector3.Up) * Matrix.CreateScale(AddativeZoom) *
-                    Matrix.CreateRotationX(POVRotationVector.Y - MathHelper.PiOver4) *
-                    Matrix.CreateRotationY(POVRotationVector.X) *
-                    Matrix.CreateTranslation(0, -20, 0);*/
+                /*RebirthFreecam.Position = povCameraPosCurrent - new Vector3(0, 20, 0);
+                RebirthFreecam.HasLookAt = true;
+                RebirthFreecam.LookAt = povCameraPosCurrent + new Vector2(0, 20).Rotate(povCameraRotationCurrent).ExpandZ();*/
 
-                GameProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), TankGame.Instance.GraphicsDevice.Viewport.AspectRatio, 0.1f, 10000);
+                RebirthFreecam.FieldOfView = 90f;
+                GameProjection = RebirthFreecam.Projection; //Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), TankGame.Instance.GraphicsDevice.Viewport.AspectRatio, 0.1f, 10000);
             }
         }
         else if (!GameUI.Paused && !MainMenuUI.Active && DebugManager.DebuggingEnabled) {

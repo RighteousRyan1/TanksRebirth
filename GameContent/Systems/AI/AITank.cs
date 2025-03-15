@@ -25,6 +25,7 @@ using TanksRebirth.GameContent.Systems.PingSystem;
 using TanksRebirth.Internals.Common.Framework.Collision;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.GameContent.UI.LevelEditor;
+using TanksRebirth.GameContent.Globals.Assets;
 
 namespace TanksRebirth.GameContent;
 public partial class AITank : Tank {
@@ -111,7 +112,7 @@ public partial class AITank : Tank {
         //else {
         // set model to default
         //}
-        Model = GameResources.GetGameResource<Model>("Assets/models/tank_e");
+        Model = ModelResources.TankEnemy.Asset;
         #endregion
 
         if (setDefaults)
@@ -181,7 +182,7 @@ public partial class AITank : Tank {
         #region Special
 
         if (!UsesCustomModel) {
-            Model = GameResources.GetGameResource<Model>("Assets/models/tank_e");
+            Model = ModelResources.TankEnemy.Asset;
         }
 
         #endregion

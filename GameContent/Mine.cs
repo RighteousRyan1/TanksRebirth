@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using TanksRebirth.GameContent.Globals;
+using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.AI;
@@ -96,7 +97,7 @@ public sealed class Mine : IAITankDanger
         AITank.Dangers.Add(this);
         IsPlayerSourced = owner is PlayerTank;
 
-        Model = GameResources.GetGameResource<Model>("Assets/models/mine");
+        Model = ModelResources.Mine.Asset;
 
         DetonateTime = detonateTime;
         DetonateTimeMax = detonateTime;

@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TanksRebirth.GameContent.Globals;
+using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
@@ -83,7 +84,7 @@ namespace TanksRebirth.GameContent
 
         public Powerup(PowerupTemplate template)
         {
-            _model = GameResources.GetGameResource<Model>("Assets/medal");
+            _model = ModelResources.Medal.Asset;
             PickupRadius = template.pickupRadius;
             Duration = template.duration;
             PowerupEffects = template.PowerupEffects;

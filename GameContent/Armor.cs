@@ -4,6 +4,7 @@ using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Internals;
 using TanksRebirth.Graphics;
 using TanksRebirth.GameContent.Globals;
+using TanksRebirth.GameContent.Globals.Assets;
 
 namespace TanksRebirth.GameContent;
 
@@ -23,7 +24,7 @@ public class Armor
 
     public Armor(Tank host, int hitPoints)
     {
-        _model = GameResources.GetGameResource<Model>("Assets/armor");
+        _model = ModelResources.Armor.Asset;
         Host = host;
         HitPoints = _hitpointsMax = hitPoints;
         _maskingTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/armor");

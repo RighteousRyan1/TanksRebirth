@@ -299,12 +299,12 @@ public class TankGame : Game {
             "Assets/textures/bullet/smoketrail",
             "Assets/textures/bullet/explosive_bullet",
             "Assets/textures/misc/armor",
-            
-            "Assets/textures/check/check_blue",
-            "Assets/textures/check/check_red",
-            "Assets/textures/check/check_green",
-            "Assets/textures/check/check_yellow",
-            "Assets/textures/check/check_white",
+
+            "Assets/textures/deathmark/deathmark_blue",
+            "Assets/textures/deathmark/deathmark_red",
+            "Assets/textures/deathmark/deathmark_green",
+            "Assets/textures/deathmark/deathmark_yellow",
+            "Assets/textures/deathmark/deathmark_white",
 
             "Assets/textures/tank_footprint",
             "Assets/textures/tank_footprint_alt",

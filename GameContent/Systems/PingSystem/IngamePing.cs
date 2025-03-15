@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using tainicom.Aether.Physics2D.Dynamics;
 using TanksRebirth.GameContent.Globals;
+using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
@@ -40,7 +41,7 @@ public class IngamePing {
                 ping._lifeTime = MaxLifeTime;
             }
         }
-        _model = GameResources.GetGameResource<Model>("Assets/models/ping");
+        _model = ModelResources.Ping.Asset;
         _pingTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/ping/ping_tex");
         _pingGraphic = PingMenu.PingIdToTexture[pingId];
         Id = Array.IndexOf(AllIngamePings, null); // will be bad if pings despawn at unassigned times.

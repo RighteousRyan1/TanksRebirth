@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
 
@@ -29,7 +30,7 @@ public class RenderableCrate
 
     public RenderableCrate(Vector3 position, Matrix view, Matrix proj)
     {
-        Model = GameResources.GetGameResource<Model>("Assets/models/chest");
+        Model = ModelResources.Chest.Asset;
         Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/chest/chest");
 
         LidMesh = Model.Meshes["Lid"];

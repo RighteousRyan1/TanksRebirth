@@ -18,6 +18,7 @@ using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
 using TanksRebirth.GameContent.UI.MainMenu;
+using TanksRebirth.GameContent.Globals.Assets;
 
 namespace TanksRebirth.GameContent;
 
@@ -183,7 +184,7 @@ public class Shell : IAITankDanger
         Type = type;
         RicochetsRemaining = ricochets;
         Position = position;
-        Model = GameResources.GetGameResource<Model>("Assets/models/bullet");
+        Model = ModelResources.Bullet.Asset;
 
         AITank.Dangers.Add(this);
         IsPlayerSourced = owner is PlayerTank;
@@ -399,15 +400,15 @@ public class Shell : IAITankDanger
         _oldPosition = Position;
     }
     private void RenderSmokeParticle(float timer) {
-        if (Difficulties.Types["POV"]) timer /= 2;
+        if (CameraGlobals.IsUsingPOVCamera) timer /= 2;
         if (!(LifeTime % timer <= TankGame.DeltaTime)) return;
 
         Particle p;
-        if (Difficulties.Types["POV"] || DebugManager.IsFreecamEnabled) {
+        if (CameraGlobals.IsUsingPOVCamera) {
             p = GameHandler.Particles.MakeParticle(Position3D + new Vector3(0, 0, 5).FlattenZ()
                                 .Rotate(Rotation + MathHelper.Pi + GameHandler.GameRand.NextFloat(-0.3f, 0.3f))
                                 .ExpandZ(),
-            GameResources.GetGameResource<Model>("Assets/models/smoke"),
+            ModelResources.Smoke.Asset,
             GameResources.GetGameResource<Texture2D>("Assets/textures/smoke/smoke"));
             p.Scale = new(0.7f);
         }

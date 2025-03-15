@@ -23,6 +23,7 @@ using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Internals.Common.Framework;
 using TanksRebirth.GameContent.UI.LevelEditor;
+using TanksRebirth.GameContent.Globals.Assets;
 
 namespace TanksRebirth.GameContent;
 
@@ -104,7 +105,7 @@ public class PlayerTank : Tank
     }
     public void SwapTankTexture(Texture2D texture) => _tankTexture = texture;
     public PlayerTank(int playerType, bool isPlayerModel = true, int copyTier = -1) {
-        Model = GameResources.GetGameResource<Model>(isPlayerModel ? "Assets/models/tank_p" : "Assets/models/tank_e");
+        Model = isPlayerModel ? ModelResources.TankPlayer.Asset : ModelResources.TankPlayer.Asset;
         if (copyTier == -1)
             _tankTexture = Assets[$"plrtank_" + PlayerID.Collection.GetKey(playerType)!.ToLower()];
         else {

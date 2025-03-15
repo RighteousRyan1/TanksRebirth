@@ -6,6 +6,7 @@ using System.Linq;
 using tainicom.Aether.Physics2D.Dynamics;
 using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.Globals;
+using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
@@ -131,7 +132,7 @@ public static class GameScene
         {
             _blackPixel = new Texture2D(TankGame.Instance.GraphicsDevice, 1, 1);
             _blackPixel.SetData(new Color[] { Color.Black });
-            FloorModelBase = GameResources.GetGameResource<Model>("Assets/models/scene/floor_big");
+            FloorModelBase = ModelResources.Floor.Asset;
             switch (Theme)
             {
                 case MapTheme.Vanilla:
@@ -201,7 +202,7 @@ public static class GameScene
             switch (Theme)
             {
                 case MapTheme.Vanilla:
-                    BoundaryModel = GameResources.GetGameResource<Model>("Assets/models/scene/outerbounds");
+                    BoundaryModel = ModelResources.GameBoundary.Asset;
 
                     SetBlockTexture(BoundaryModel.Meshes["polygon48"], BoundaryTextureContext.block_other_c);
                     SetBlockTexture(BoundaryModel.Meshes["polygon40"], BoundaryTextureContext.block_other_a);
@@ -219,7 +220,7 @@ public static class GameScene
 
                     break;
                 case MapTheme.Christmas:
-                    BoundaryModel = GameResources.GetGameResource<Model>("Assets/christmas/snowy");
+                    BoundaryModel = ModelResources.GameBoundarySnowy.Asset;
 
                     SetBlockTexture(BoundaryModel.Meshes["polygon48"], BoundaryTextureContext.block_other_c);
                     SetBlockTexture(BoundaryModel.Meshes["polygon40"], BoundaryTextureContext.block_other_a);

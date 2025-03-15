@@ -49,7 +49,7 @@ public class GameHandler {
     }
     /// <summary>The randomizing behind the game's events. The seed can be modified if you change <see cref="GameRandSeed"/>.</summary>
     public static Random GameRand { get; private set; }
-    public static ParticleSystem Particles { get; private set; }
+    public static ParticleSystem Particles { get; } = new(MAX_PARTICLES, () => CameraGlobals.GameView, () => CameraGlobals.GameProjection);
     public static XpBar ExperienceBar;
     public static AITank[] AllAITanks = new AITank[MAX_AI_TANKS];
     public static PlayerTank[] AllPlayerTanks = new PlayerTank[MAX_PLAYERS];
@@ -68,7 +68,6 @@ public class GameHandler {
         AllTanks = new Tank[MAX_PLAYERS + MAX_AI_TANKS];
 
         ExperienceBar = new();
-        Particles = new(MAX_PARTICLES);
 
         GameSceneUI.Initialize();
         CosmeticsUI.Initialize();
@@ -105,8 +104,8 @@ public class GameHandler {
         // TODO: move this code elsewhere.
         if (((DebugManager.DebuggingEnabled && DebugManager.DebugLevel == -2) || Difficulties.Types["TacticalPlanes"]) && CampaignGlobals.InMission) {
             if (TankGame.RunTime % 300 <= TankGame.DeltaTime) {
-                // 25% chance every 5 seconds
-                if (Server.ServerRandom.Next(4) == 0) {
+                // 33% chance every 5 seconds
+                if (Server.ServerRandom.Next(3) == 0) {
                     // TODO: sync the plane over the net... soon!
                     var pos = Airplane.ChooseRandomXZPosition(GameRand);
                     var vel = Airplane.ChooseRandomFlightTarget(GameRand, pos, 0.5f, 0.5f);

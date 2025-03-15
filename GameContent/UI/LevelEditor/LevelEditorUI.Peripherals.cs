@@ -12,10 +12,14 @@ namespace TanksRebirth.GameContent.UI.LevelEditor;
 
 #pragma warning disable
 public static partial class LevelEditorUI {
+
+    // 255 for now. no real need to make it bigger unless modders are ballin'
+    public static ParticleSystem EditorParticleSystem = new(255, () => CameraGlobals.ScreenView, () => CameraGlobals.ScreenProjOrthographic);
     // TODO: dynamically drawn 3d models on the UI.
     // TODO: rework scrollbar UI code, massively. my sanity is starting to taper off and achieve an all time low.
     // this will have the tanks at the bottom n stuff.
     // take advantage of DrawUtils.CenteredOrthoToScreen
+    // this will include the block model and each tank type
     public static List<Particle> LevelEditorParticles = [];
     // then have texts n stuff under it.
 
@@ -23,6 +27,13 @@ public static partial class LevelEditorUI {
     private static float _alertTime;
     public static float DefaultAlertDuration { get; set; } = 120;
 
+    private static void OpenPeripherals() {
+        // spawn block model particle
+        //EditorParticleSystem.MakeParticle(Vector3.Zero)
+    }
+    private static void ClosePeripherals() {
+
+    }
     /// <summary>Displays an alert to the screen.</summary>
     /// <param name="alert">The text to show in the alert.</param>
     /// <param name="timeOverride">The amount of time to display the alert for. Defaults to <see cref="DefaultAlertDuration"/>.</param>
@@ -30,21 +41,6 @@ public static partial class LevelEditorUI {
         _alertTime = timeOverride != 0f ? timeOverride : DefaultAlertDuration;
         AlertText = alert;
         SoundPlayer.SoundError();
-    }
-    public static void DrawCampaigns() {
-        if (loadedCampaign != null) {
-            var heightDiff = 40;
-            _missionButtonScissor = new Rectangle(_missionTab.X, _missionTab.Y + heightDiff, _missionTab.Width, _missionTab.Height - heightDiff * 2).ToResolution();
-            TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], _missionTab.ToResolution(), null, Color.Gray, 0f, Vector2.Zero, default, 0f);
-            TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Rectangle(_missionTab.X, _missionTab.Y, _missionTab.Width, heightDiff).ToResolution(), null, Color.White, 0f, Vector2.Zero, default, 0f);
-            TankGame.SpriteRenderer.DrawString(TankGame.TextFont,
-                TankGame.GameLanguage.MissionList,
-                new Vector2(175, 153).ToResolution(),
-                Color.Black,
-                Vector2.One.ToResolution(),
-                0f,
-                Anchor.TopCenter.GetAnchor(TankGame.TextFont.MeasureString(TankGame.GameLanguage.MissionList)));
-        }
     }
     public static void DrawPlacementInfo() {
         // placement information

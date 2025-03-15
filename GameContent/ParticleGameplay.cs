@@ -6,6 +6,7 @@ using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Net;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Graphics;
+using TanksRebirth.GameContent.Globals.Assets;
 
 namespace TanksRebirth.GameContent;
 
@@ -13,7 +14,7 @@ namespace TanksRebirth.GameContent;
 public static class ParticleGameplay {
     // TODO: track smokes as objects, so ai can't shoot through?
     public static void CreateSmokeGrenade(ParticleSystem system, Vector3 position, Vector3 velocity) {
-        var p = system.MakeParticle(position, GameResources.GetGameResource<Model>("Assets/models/smokenade"), GameResources.GetGameResource<Texture2D>("Assets/textures/smoke/smokenade"));
+        var p = system.MakeParticle(position, ModelResources.SmokeGrenade.Asset, GameResources.GetGameResource<Texture2D>("Assets/textures/smoke/smokenade"));
         bool exploded = false;
 
         float gravity = 0.03f;
@@ -98,7 +99,7 @@ public static class ParticleGameplay {
                 SoundPlayer.PlaySoundInstance("Assets/sounds/smoke_hiss.ogg", SoundContext.Effect, 0.3f, gameplaySound: true);
                 for (int i = 0; i < 8; i++) {
                     var c = system.MakeParticle(p.Position,
-                        GameResources.GetGameResource<Model>("Assets/models/smoke"),
+                        ModelResources.Smoke.Asset,
                         GameResources.GetGameResource<Texture2D>("Assets/textures/smoke/smoke"));
                     var randDir = new Vector3(Server.ServerRandom.NextFloat(-35, 35), 0, Server.ServerRandom.NextFloat(-35, 35));
                     c.Position += randDir;

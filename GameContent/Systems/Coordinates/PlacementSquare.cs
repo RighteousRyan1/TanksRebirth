@@ -15,6 +15,7 @@ using Microsoft.Xna.Framework.Input;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.UI.LevelEditor;
+using TanksRebirth.GameContent.Globals.Assets;
 
 namespace TanksRebirth.GameContent.Systems.Coordinates;
 
@@ -57,7 +58,7 @@ public class PlacementSquare {
         Position = position;
         _box = new(position - new Vector3(dimensions / 2, 0, dimensions / 2), position + new Vector3(dimensions / 2, 0, dimensions / 2));
 
-        _model = GameResources.GetGameResource<Model>("Assets/models/check");
+        _model = ModelResources.FlatFace.Asset;
 
         Id = Placements.Count;
 

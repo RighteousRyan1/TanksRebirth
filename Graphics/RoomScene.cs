@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TanksRebirth.GameContent.Globals;
+using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.Internals;
@@ -52,7 +53,7 @@ public static class RoomScene {
     private static Matrix _basePendulumTransform;
     public static void Initialize() {
         //return; // return for now, since .png breaks the UVs vs .jpg
-        RoomSkyboxScene = GameResources.GetGameResource<Model>("Assets/models/scene/skybox/room_textureless");
+        RoomSkyboxScene = ModelResources.Room.Asset;
         _boneTransforms = new Matrix[RoomSkyboxScene.Bones.Count];
         HandHour = RoomSkyboxScene.Meshes["Clock_Hand_Hour"];
         HandMinute = RoomSkyboxScene.Meshes["Clock_Hand_Minute"];

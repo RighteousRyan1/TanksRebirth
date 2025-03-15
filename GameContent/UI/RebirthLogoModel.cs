@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Utilities;
@@ -85,7 +86,7 @@ public class RebirthLogoModel {
     public RebirthLogoModel() {
         // mesh.ParentBone.Parent would be the word bone for a mesh 
 
-        _model = GameResources.GetGameResource<Model>("Assets/models/logo/logo");
+        _model = ModelResources.Logo.Asset;
         Tanks_T = _model.Meshes["TANKS1"];
         Tanks_a = _model.Meshes["TANKS2"];
         Tanks_n = _model.Meshes["TANKS3"];

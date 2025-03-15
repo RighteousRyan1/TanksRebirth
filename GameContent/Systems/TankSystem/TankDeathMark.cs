@@ -43,7 +43,7 @@ public class TankDeathMark {
             return;
         total_death_marks++;
 
-        texture = GameResources.GetGameResource<Texture2D>($"Assets/textures/check/check_{color.ToString().ToLower()}");
+        texture = GameResources.GetGameResource<Texture2D>($"Assets/textures/deathmark/deathmark_{color.ToString().ToLower()}");
 
         check = GameHandler.Particles.MakeParticle(Position + new Vector3(0, 0.1f, 0), texture);
         check.HasAddativeBlending = false;

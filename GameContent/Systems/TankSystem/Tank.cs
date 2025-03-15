@@ -19,6 +19,7 @@ using TanksRebirth.Net;
 using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.UI.MainMenu;
+using TanksRebirth.GameContent.Globals.Assets;
 
 namespace TanksRebirth.GameContent;
 
@@ -841,32 +842,46 @@ public abstract class Tank {
     }
 
     public void DoShootParticles(Vector3 position) {
-        var hit = GameHandler.Particles.MakeParticle(position,
-            GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
-        var smoke = GameHandler.Particles.MakeParticle(position,
-            GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
+        if (!CameraGlobals.IsUsingPOVCamera) {
+            var hit = GameHandler.Particles.MakeParticle(position,
+                GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
 
-        hit.Roll = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
-        smoke.Roll = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
+            hit.Roll = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
+            hit.Scale = new(0.5f);
+            hit.UniqueBehavior = (part) => {
+                part.Color = Color.Orange;
 
-        smoke.Scale = new(0.35f);
-        hit.Scale = new(0.5f);
+                if (part.LifeTime > 1)
+                    part.Alpha -= 0.1f * TankGame.DeltaTime;
+                if (part.Alpha <= 0)
+                    part.Destroy();
+            };
+        }
+        Particle smoke;
 
-        smoke.Color = new(84, 22, 0, 255);
+        if (CameraGlobals.IsUsingPOVCamera) {
+            smoke = GameHandler.Particles.MakeParticle(position,
+                ModelResources.Smoke.Asset,
+                GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
 
-        smoke.HasAddativeBlending = false;
+            smoke.Scale = new(1.25f);
+            smoke.Color = new(84, 22, 0, 255);
+            smoke.HasAddativeBlending = false;
+        }
+        else {
+            smoke = GameHandler.Particles.MakeParticle(position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
+
+            smoke.Roll = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
+
+            smoke.Scale = new(0.35f);
+
+            smoke.Color = new(84, 22, 0, 255);
+
+            smoke.HasAddativeBlending = false;
+        }
 
         int achieveable = 80;
         float step = 1;
-
-        hit.UniqueBehavior = (part) => {
-            part.Color = Color.Orange;
-
-            if (part.LifeTime > 1)
-                part.Alpha -= 0.1f * TankGame.DeltaTime;
-            if (part.Alpha <= 0)
-                part.Destroy();
-        };
         smoke.UniqueBehavior = (part) => {
             part.Color.R = (byte)MathUtils.RoughStep(part.Color.R, achieveable, step);
             part.Color.G = (byte)MathUtils.RoughStep(part.Color.G, achieveable, step);

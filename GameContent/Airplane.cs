@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using tainicom.Aether.Physics2D.Dynamics;
 using TanksRebirth.GameContent.Globals;
+using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.UI;
@@ -69,8 +70,7 @@ public class Airplane {
 
         PlaneLoop = new OggAudio("Content/Assets/sounds/plane/plane_loop.ogg");
 
-        Model = GameResources.GetRawGameAsset<Model>("Assets/models/plane"); //GameResources.GetGameResource<Model>("Assets/models/plane");
-
+        Model = ModelResources.Plane.Duplicate();
         _boneTransforms = new Matrix[Model.Bones.Count];
         Model.CopyAbsoluteBoneTransformsTo(_boneTransforms);
         Model!.Root.Transform = World;

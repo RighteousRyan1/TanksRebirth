@@ -40,6 +40,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 	- This includes `GameView` and `GameProjection`, important matrices to include with custom 3D rendering involving gameplay
 - `GamepadBind` and `Keybind` now are `IInputBind<T>`s, which means you can use use them modularly within your code
 - When changing tank models, be sure to set `UsesCustomModel` to `true`
+- Assets (only models, for now) are managed via `Resource<Model>`s within `ModelResources`.
 
 ## Fixes
 

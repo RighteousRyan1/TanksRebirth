@@ -13,9 +13,17 @@ public class ParticleSystem
     public int MaxParticles = 150000;
     public Particle[] CurrentParticles;
 
-    public ParticleSystem(int maxParticles) {
+    public Matrix SystemView => _viewFunc.Invoke();
+    public Matrix SystemProjection => _projFunc.Invoke();
+
+    private Func<Matrix> _viewFunc;
+    private Func<Matrix> _projFunc;
+
+    public ParticleSystem(int maxParticles, Func<Matrix> view, Func<Matrix> proj) {
         MaxParticles = maxParticles;
         CurrentParticles = new Particle[MaxParticles];
+        _viewFunc = view;
+        _projFunc = proj;
     }
 
     public void RenderParticles(bool renderInReverseOrder = false) {
