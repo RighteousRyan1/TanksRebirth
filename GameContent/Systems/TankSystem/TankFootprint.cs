@@ -80,13 +80,13 @@ public class TankFootprint {
 
         track.HasAddativeBlending = false;
 
-        track.Roll = -MathHelper.PiOver2;
+        track.Pitch = MathHelper.PiOver2;
         track.Scale = new(0.5f, 0.55f, 0.5f);
         track.Alpha = 0.7f;
         track.Color = Color.White;
         track.UniqueBehavior = track => {
             track.Position = Position;
-            track.Pitch = rotation;
+            track.Yaw = rotation;
 
             if (ShouldTracksFade)
                 track.Alpha -= 0.001f * TankGame.DeltaTime;
@@ -94,9 +94,6 @@ public class TankFootprint {
             if (track.Alpha <= 0 || _destroy) {
                 track.Destroy();
             }
-
-            track.Position = Position;
-            track.Pitch = rotation;
         };
 
         AllFootprints[Array.IndexOf(AllFootprints, null)] = this;

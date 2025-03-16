@@ -26,6 +26,12 @@ public class ParticleSystem
         _projFunc = proj;
     }
 
+    public void Empty() {
+        for (int i = 0; i < CurrentParticles.Length; i++) {
+            CurrentParticles[i]?.Destroy();
+        }
+    }
+
     public void RenderParticles(bool renderInReverseOrder = false) {
         if (renderInReverseOrder) {
             for (int i = CurrentParticles.Length - 1; i >= 0; i--)
@@ -71,7 +77,7 @@ public class ParticleSystem
     public Particle MakeParticle(Vector3 position, Model model, Texture2D texture) {
         return new(position, this) {
             Model = model,
-            Texture = texture
+            Texture = texture,
         };
     }
     public Particle MakeParticle(Vector3 position, string text) {
@@ -98,7 +104,8 @@ public class ParticleSystem
             if (frame < 50) {
                 if (b.LifeTime % 0.8f <= TankGame.DeltaTime)
                     frame++;
-            } else {
+            } 
+            else {
                 if (b.LifeTime % (0.8f * lingerMultiplier) <= TankGame.DeltaTime)
                     frame++;
             }

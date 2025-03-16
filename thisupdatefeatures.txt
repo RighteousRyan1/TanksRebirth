@@ -41,6 +41,10 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 - `GamepadBind` and `Keybind` now are `IInputBind<T>`s, which means you can use use them modularly within your code
 - When changing tank models, be sure to set `UsesCustomModel` to `true`
 - Assets (only models, for now) are managed via `Resource<Model>`s within `ModelResources`.
+- Particles now rotate on the proper Yaw-Pitch-Roll axes, conversion:
+	- Old Yaw -> Roll
+	- Old Pitch -> Yaw
+	- Old Roll -> Pitch
 
 ## Fixes
 

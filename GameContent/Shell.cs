@@ -385,7 +385,7 @@ public class Shell : IAITankDanger
             RenderSmokeParticle(num);
 
         if (Properties.LeavesTrail)
-            RenderLeaveTrail(num);
+            RenderLeaveTrail();
 
         if (Properties.Flaming)
             RenderFlamingParticle();
@@ -419,12 +419,11 @@ public class Shell : IAITankDanger
                                             .ExpandZ(),
             GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
             p.Scale = new(0.3f);
+
+            p.Pitch = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
         }
         p.FaceTowardsMe = false;
-        // p.color = new Color(50, 50, 50, 150);
 
-        p.Roll = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
-        // 
         p.HasAddativeBlending = false;
         p.Color = Properties.SmokeColor;
         p.Alpha = 0.5f;
@@ -439,7 +438,7 @@ public class Shell : IAITankDanger
             GeometryUtils.Add(ref particle.Scale, 0.0075f * TankGame.DeltaTime);
         };
     }
-    private void RenderLeaveTrail(float timer) {
+    private void RenderLeaveTrail() {
         // _oldPosition and Position are *not* the same during method call.
         // TODO: make more particles added depending on the positions between 2 distinct frames
         //var numToAdd
@@ -492,7 +491,7 @@ public class Shell : IAITankDanger
 
             par.Position = off.ExpandZ() + new Vector3(0, 11, 0);
 
-            par.Pitch = -Rotation - MathHelper.PiOver2 + rotoff;
+            par.Yaw = -Rotation - MathHelper.PiOver2 + rotoff;
 
             //if (TankGame.GameUpdateTime % 2 == 0)
             //p.Roll = GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi);

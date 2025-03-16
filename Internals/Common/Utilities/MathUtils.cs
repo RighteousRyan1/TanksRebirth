@@ -54,6 +54,29 @@ public static class MathUtils
         result.Y += newPoint.X * sin + newPoint.Y * cos;
         return result;
     }
+    public static Vector3 CalculateRotationToFaceCenter(Vector3 particlePosition, Vector3 centerPoint) {
+        Vector3 rotation = Vector3.Zero;
+
+        Vector3 direction = centerPoint - particlePosition;
+
+        if (direction.LengthSquared() < 0.0001f)
+            return rotation;
+
+        // Normalize the direction
+        direction.Normalize();
+
+        // XZ rotation (yaw)
+        rotation.Z = MathF.Atan2(direction.X, direction.Z);
+
+        // XY rotation (pitch)
+        float horizontalLength = MathF.Sqrt(direction.X * direction.X + direction.Z * direction.Z);
+        rotation.Y = MathF.Atan2(-direction.Y, horizontalLength);
+
+        // rotation around Z axis (Roll)
+        rotation.X = 0.0f;
+
+        return rotation; // Vector3(roll, pitch, yaw)
+    }
     public static Vector3 RotateXZ(this Vector3 spinPoint3d, float radians, Vector3 center3d = default) {
         Vector2 spinPoint = spinPoint3d.FlattenZ();
         Vector2 center = center3d.FlattenZ();

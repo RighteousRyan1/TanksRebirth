@@ -252,7 +252,7 @@ public sealed record ChatSystem {
 
         if (InputUtils.CanDetectClick())
         {
-            if (trc && !ActiveHandle) {
+            if (trc && !ActiveHandle) { 
                 TankGame.Instance.Window.TextInput += HandleInput;
                 ActiveHandle = true;
             }

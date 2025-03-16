@@ -296,6 +296,12 @@ public class GameHandler {
 
         Particles.RenderParticles();
 
+        // only render the level editor if it's active
+        // change depth stencil...?
+        if (LevelEditorUI.Active) {
+            LevelEditorUI.Render();
+        }
+
         // only draw if ingame + is multiplayer.
         if (CampaignGlobals.ShouldMissionsProgress 
             && !MainMenuUI.Active

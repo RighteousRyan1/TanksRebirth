@@ -47,7 +47,7 @@ public class TankDeathMark {
 
         check = GameHandler.Particles.MakeParticle(Position + new Vector3(0, 0.1f, 0), texture);
         check.HasAddativeBlending = false;
-        check.Roll = -MathHelper.PiOver2;
+        check.Pitch = -MathHelper.PiOver2;
         check.Layer = 0;
 
         deathMarks[total_death_marks] = this;

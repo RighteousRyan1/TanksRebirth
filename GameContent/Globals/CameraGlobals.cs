@@ -30,8 +30,11 @@ public static class CameraGlobals {
     public static Matrix ScreenProjPerspective;
 
     public static void SetMatrices() {
+        // old = Matrix.CreateOrthographicOffCenter(0f, WindowUtils.WindowWidth, WindowUtils.WindowHeight, 0f, 0.1f, 100000f); 
         ScreenProjOrthographic = Matrix.CreateOrthographic(TankGame.Instance.GraphicsDevice.Viewport.Width, TankGame.Instance.GraphicsDevice.Viewport.Height, -2000f, 5000f);
-        ScreenProjPerspective= Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), TankGame.Instance.GraphicsDevice.Viewport.AspectRatio, 0.1f, 10000f);
+        ScreenProjPerspective = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), TankGame.Instance.GraphicsDevice.Viewport.AspectRatio, 0.1f, 10000f);
+        
+        // still dont know why i offset z by -500
         ScreenView = Matrix.CreateLookAt(Vector3.Backward, Vector3.Zero, Vector3.Up) * Matrix.CreateTranslation(0, 0, -500);
     }
 

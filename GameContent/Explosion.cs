@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Linq;
+using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.Graphics;
@@ -38,7 +39,7 @@ public class Explosion : IAITankDanger {
     private int _id;
 
     public float Scale;
-    public float LingerDuration = 60f;
+    public float LingerDuration = 40f;
     public float Rotation;
     public float RotationSpeed;
 
@@ -65,9 +66,12 @@ public class Explosion : IAITankDanger {
         int horizLayers = (int)(scale * 1.5f) + 2; // 10
         int vertLayers = (int)(scale * 1.1f) + 2; // 8
 
-        var ring = GameHandler.Particles.MakeParticle(Position3D + Vector3.UnitY, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/ring"));
+        var ring = GameHandler.Particles.MakeParticle(Position3D + Vector3.UnitY, 
+            /*ModelResources.FlatFace.Asset, */
+            GameResources.GetGameResource<Texture2D>("Assets/textures/misc/ring"));
+
         ring.Scale = new(1.3f);
-        ring.Roll = MathHelper.PiOver2;
+        ring.Pitch = MathHelper.PiOver2;
         ring.HasAddativeBlending = true;
         ring.Color = ExplosionColor == Color.White ? Color.Yellow : ExplosionColor;
 
@@ -79,12 +83,6 @@ public class Explosion : IAITankDanger {
                 ring.Destroy();
         };
 
-        // TODO: particle hell
-        // my brain hurts help pls
-        // employ 3d rotation tactics
-        // the spherically displayed particles.
-
-        // there's a deadzone in each explosion. not sure why at all.
         for (int i = 0; i <= horizLayers; i++) {
             for (int j = 0; j <= vertLayers; j++) {
                 var rotX = MathHelper.Pi / vertLayers * j;
@@ -95,10 +93,8 @@ public class Explosion : IAITankDanger {
 
                 //var explScalar = (MAGIC_EXPLOSION_NUMBER - 3) * Scale;
 
-                //var position = Vector3.Transform(Vector3.UnitX * explScalar, Matrix.CreateFromYawPitchRoll(rotZ, 0, rotX) * Matrix.CreateTranslation(Position3D));
-                // this will become a model.
                 var lingerRandom = GameHandler.GameRand.NextFloat(0.8f, 1.2f);
-                var particle = GameHandler.Particles.MakeExplosionFlameParticle(new Vector3(0, -100, 0), out var act, LingerDuration / 60f);// * lingerRandom/*, scale / MAGIC_EXPLOSION_NUMBER * 1.1f*/);
+                var particle = GameHandler.Particles.MakeExplosionFlameParticle(new Vector3(0, -100, 0), out var act, LingerDuration / 60f * lingerRandom);// * lingerRandom/*, scale / MAGIC_EXPLOSION_NUMBER * 1.1f*/);
 
                 // TODO: make particles face center of explosion
                 particle.UniqueBehavior = (a) => {
@@ -110,19 +106,12 @@ public class Explosion : IAITankDanger {
                     // find why the rotation isnt rotating the right way. maybe needs a unit circle offset? piover2?
                     var position = Vector3.Transform(Vector3.UnitX * explScalar, Matrix.CreateFromYawPitchRoll(rotZ + rotation, 0, rotX) * Matrix.CreateTranslation(Position3D));
                     particle.Position = position;
-                    //var dir = MathUtils.DirectionOf(position.FlattenZ(), Position3D.FlattenZ()).ToRotation();
-                    // when the particle is rotating on the left side of the sphere, it locks "rot" to Pi?
-                    // otherwise it turns into an angle greater than the unit circle. truly so confusing.
 
-                    /*var rot = Quaternion.CreateFromRotationMatrix(Matrix.CreateLookAt(position, Position3D, Vector3.Up));
+                    var rot = MathUtils.CalculateRotationToFaceCenter(particle.Position, Position3D);
+
                     particle.Roll = rot.X;
                     particle.Pitch = rot.Y;
-                    particle.Yaw = rot.Z;*/
-
-                    particle.Yaw = 0;
-                    var rot = (position.Flatten() - Position3D.Flatten()).ToRotation();
-                    particle.Roll = rot > MathHelper.PiOver2 ? rot : -rot; // this works to a very slight extent
-                    particle.Pitch = -(position.FlattenZ() - Position3D.FlattenZ()).ToRotation() + MathHelper.PiOver2;
+                    particle.Yaw = rot.Z;
                 };
             }
             horizLayers -= (int)MathF.Round((float)horizLayers / vertLayers);

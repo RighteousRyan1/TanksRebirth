@@ -101,11 +101,11 @@ public class Particle
     {
         Position = position;
         System = system;
-        int index = Array.IndexOf(GameHandler.Particles.CurrentParticles, null);
+        int index = Array.IndexOf(System.CurrentParticles, null);
 
         Id = index;
 
-        GameHandler.Particles.CurrentParticles[index] = this;
+        System.CurrentParticles[index] = this;
     }
 
     public void Update()
@@ -117,6 +117,16 @@ public class Particle
     public static BasicEffect EffectHandle = new(TankGame.Instance.GraphicsDevice);
 
     internal void RenderModels() {
+
+        // this code causes draw order malfunction. ts pmo
+
+        //TankGame.SpriteRenderer.End();
+
+        //if (System.Scissor.HasValue) {
+        //    TankGame.Instance.GraphicsDevice.ScissorRectangle = System.Scissor.Value;
+        //}
+
+        //TankGame.SpriteRenderer.Begin(blendState: HasAddativeBlending ? BlendState.Additive : BlendState.NonPremultiplied, rasterizerState: System.Rasterizer);
         var world =
                 Matrix.CreateScale(Scale) *
                 Matrix.CreateRotationX(Roll) *
@@ -143,19 +153,20 @@ public class Particle
                 mesh.Draw();
             }
         }
+        // same here
+        //TankGame.SpriteRenderer.End();
+        //TankGame.SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
     }
     internal void Render()
     {
-        if (!GameScene.ShouldRenderAll)
+        if (!GameScene.ShouldRenderAll || Model is not null)
             return;
+
+        var world = Matrix.CreateScale(Scale) *
+            Matrix.CreateFromYawPitchRoll(Yaw, Pitch, Roll) * 
+            Matrix.CreateTranslation(Position);
         if (!IsIn2DSpace)
         {
-            var world =
-                Matrix.CreateScale(Scale) *
-                Matrix.CreateRotationX(Roll) *
-                Matrix.CreateRotationY(Pitch) *
-                Matrix.CreateRotationZ(Yaw) *
-                Matrix.CreateTranslation(Position);
             if (Model is null) {
                 EffectHandle.World = world;
                 EffectHandle.View = System.SystemView;
@@ -171,18 +182,19 @@ public class Particle
                 EffectHandle.FogEnabled = false;
 
                 TankGame.SpriteRenderer.End();
-                TankGame.SpriteRenderer.Begin(SpriteSortMode.FrontToBack, HasAddativeBlending ? BlendState.Additive : BlendState.NonPremultiplied, SamplerState.PointWrap, DepthStencilState.DepthRead, TankGame.DefaultRasterizer, EffectHandle);
-                if (!IsText)
+                TankGame.SpriteRenderer.Begin(SpriteSortMode.FrontToBack, HasAddativeBlending ? BlendState.Additive : BlendState.NonPremultiplied, SamplerState.PointWrap, DepthStencilState.DepthRead, TankGame.DefaultRasterizer, EffectHandle); if (!IsText)
                     TankGame.SpriteRenderer.Draw(Texture, Vector2.Zero, TextureCrop, Color * Alpha, Rotation2D, Origin2D != default ? Origin2D : Texture.Size() / 2, /*TextureScale*/ Scale.X, default, Layer);
                 else
                     TankGame.SpriteRenderer.DrawString(TankGame.TextFont, Text, Vector2.Zero, Color * Alpha, new Vector2(Scale.X, Scale.Y), Rotation2D, Origin2D, Layer);
+
+                TankGame.SpriteRenderer.End();
+                TankGame.SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
             }
         }
         else
         {
             TankGame.SpriteRenderer.End();
-            TankGame.SpriteRenderer.Begin(SpriteSortMode.FrontToBack, HasAddativeBlending ? BlendState.Additive : BlendState.NonPremultiplied, rasterizerState: TankGame.DefaultRasterizer);
-            if (!IsText)
+            TankGame.SpriteRenderer.Begin(SpriteSortMode.FrontToBack, HasAddativeBlending ? BlendState.Additive : BlendState.NonPremultiplied, rasterizerState: TankGame.DefaultRasterizer); if (!IsText)
                 TankGame.SpriteRenderer.Draw(Texture, ToScreenSpace ? 
                     MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(Position), System.SystemView, System.SystemProjection) : 
                     new Vector2(Position.X, Position.Y), TextureCrop, Color * Alpha, Rotation2D, Origin2D != default ? Origin2D : Texture.Size() / 2, TextureScale, default, Layer);
@@ -190,14 +202,14 @@ public class Particle
                 TankGame.SpriteRenderer.DrawString(TankGame.TextFont, Text, ToScreenSpace ? 
                     MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(Position), System.SystemView, System.SystemProjection) : 
                     new Vector2(Position.X, Position.Y), Color * Alpha, TextureScale, Rotation2D, Origin2D, Layer);
+            TankGame.SpriteRenderer.End();
+            TankGame.SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
         }
         UniqueDraw?.Invoke(this);
-        TankGame.SpriteRenderer.End();
-        TankGame.SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
     }
 
     public void Destroy() {
         UniqueBehavior = null;
-        GameHandler.Particles.CurrentParticles[Id] = null;
+        System.CurrentParticles[Id] = null;
     }
 }

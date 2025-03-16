@@ -23,7 +23,6 @@ using TanksRebirth.Internals.Common.Framework.Input;
 using TanksRebirth.Internals.Common.Framework.Core;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Framework;
-using TanksRebirth.Internals.Common.Framework.Graphics;
 using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.GameContent.ModSupport;
@@ -894,7 +893,7 @@ public class TankGame : Game {
         ChatSystem.DrawMessages();
 
         SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: DefaultRasterizer);
-        if (LevelEditorUI.Active) LevelEditorUI.Render();
+        //if (LevelEditorUI.Active) LevelEditorUI.Render();
         if (CampaignCompleteUI.IsViewingResults) CampaignCompleteUI.Render();
         SpriteRenderer.End();
 
@@ -958,16 +957,16 @@ public class TankGame : Game {
         _secret1_1 = GameHandler.Particles.MakeParticle(new Vector3(100, 0.1f, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/secret/special"));
         _secret1_1.UniqueBehavior = (p) => {
             _secret1_1.Position = new Vector3(SECRET_BASE_POS_X, SECRET_BASE_POS_Y, SECRET_BASE_POS_Z);
-            _secret1_1.Roll = MathHelper.Pi;
-            _secret1_1.Pitch = MathHelper.PiOver2;
+            _secret1_1.Pitch = 0;
+            _secret1_1.Yaw = MathHelper.PiOver2;
             _secret1_1.Scale = Vector3.One * 0.3f;
             _secret1_1.HasAddativeBlending = false;
         };
         _secret1_2 = GameHandler.Particles.MakeParticle(new Vector3(100, 0.1f, 0), "Litzy <3");
         _secret1_2.UniqueBehavior = (p) => {
             _secret1_2.Position = new Vector3(SECRET_BASE_POS_X, SECRET_BASE_POS_Y + 20, SECRET_BASE_POS_Z - 8);
-            _secret1_2.Roll = MathHelper.Pi;
-            _secret1_2.Pitch = -MathHelper.PiOver2;
+            _secret1_2.Pitch = 0;
+            _secret1_2.Yaw = MathHelper.PiOver2;
             _secret1_2.Scale = Vector3.One * 0.3f;
             _secret1_2.HasAddativeBlending = false;
         };
@@ -975,16 +974,17 @@ public class TankGame : Game {
         _secret2_1 = GameHandler.Particles.MakeParticle(new Vector3(100, 0.1f, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/secret/special2"));
         _secret2_1.UniqueBehavior = (p) => {
             _secret2_1.Position = new Vector3(SECRET_BASE_POS_X, SECRET_BASE_POS_Y, SECRET_BASE_POS_Z - 40);
-            _secret2_1.Roll = MathHelper.Pi;
-            _secret2_1.Pitch = MathHelper.PiOver2;
+            _secret2_1.Pitch = 0;
+            _secret2_1.Yaw = MathHelper.PiOver2;
             _secret2_1.Scale = Vector3.One * 0.3f;
             _secret2_1.HasAddativeBlending = false;
         };
         _secret2_2 = GameHandler.Particles.MakeParticle(new Vector3(100, 0.1f, 0), "Ziggy <3");
         _secret2_2.UniqueBehavior = (p) => {
             _secret2_2.Position = new Vector3(SECRET_BASE_POS_X, SECRET_BASE_POS_Y + 20, SECRET_BASE_POS_Z - 8 - 40);
-            _secret2_2.Roll = MathHelper.Pi;
-            _secret2_2.Pitch = -MathHelper.PiOver2;
+            _secret2_2.Pitch = 0;
+            _secret2_2.Yaw = MathHelper.PiOver2;
+
             _secret2_2.Scale = Vector3.One * 0.3f;
             _secret2_2.HasAddativeBlending = false;
         };

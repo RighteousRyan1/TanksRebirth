@@ -130,7 +130,8 @@ public static class ParticleGameplay {
         shadow.Scale = new(0.8f);
         shadow.Color = Color.Black;
         shadow.HasAddativeBlending = false;
-        shadow.Roll = -MathHelper.PiOver2;
+        // shadow.Roll = -MathHelper.PiOver2;
+        shadow.Pitch = MathHelper.PiOver2;
 
         shadow.UniqueBehavior = (a) => {
             if (isSmokeDestroyed) {

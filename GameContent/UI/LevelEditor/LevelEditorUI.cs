@@ -514,7 +514,7 @@ public static partial class LevelEditorUI {
     }
     public static void Open(bool fromMainMenu = true) {
         if (fromMainMenu) {
-            OpenPeripherals();
+            //OpenPeripherals();
             IntermissionSystem.TimeBlack = 180;
             CampaignGlobals.ShouldMissionsProgress = false;
             _loadTask ??= Task.Run(async () => {
@@ -560,7 +560,7 @@ public static partial class LevelEditorUI {
         SetSaveMenuVisibility(false);
         // SetMissionsVisibility(false);
         if (toMainMenu) {
-            ClosePeripherals();
+            //ClosePeripherals();
             RemoveEditButtons();
             loadedCampaign = new();
             loadedCampaign.CachedMissions[0] = new([], []) {
@@ -715,6 +715,12 @@ public static partial class LevelEditorUI {
             }
             _maxScroll = xOff;
         }
+
+        // TODO: Cum
+        // here lies model drawing code for the level editor
+        //EditorParticleSystem.Scissor = PlaceInfoRect;
+        // RenderEditorParticles();
+
         if (DebugManager.DebuggingEnabled) {
             int a = 0;
             foreach (var thing in ClickEventsPerItem) {
@@ -730,7 +736,8 @@ public static partial class LevelEditorUI {
 
         // TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], _missionButtonScissor, null, Color.Red * 0.5f, 0f, Vector2.Zero, default, 0f);
 
-        if (Active && TankGame.HoveringAnyTank) {
+        // used to have an Active check, but since we only call this method when Active is true, don't bother
+        if (TankGame.HoveringAnyTank) {
             var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/leveledit/rotate");
             TankGame.SpriteRenderer.Draw(tex,
                 MouseUtils.MousePosition + new Vector2(20, -20).ToResolution(),
@@ -796,13 +803,6 @@ public static partial class LevelEditorUI {
             MoveMissionUp.IsVisible =
             MoveMissionDown.IsVisible = Active && !GameUI.Paused;
 
-        if (Active) {
-            IntermissionHandler.TankFunctionWait = 190;
-            if (DebugManager.DebuggingEnabled)
-                if (InputUtils.KeyJustPressed(Keys.T))
-                    PlacementSquare.DrawStacks = !PlacementSquare.DrawStacks;
-        }
-
         if (_missionButtonScissor.Contains(MouseUtils.MousePosition))
             _missionsOffset += InputUtils.GetScrollWheelChange() * 30;
 
@@ -837,6 +837,15 @@ public static partial class LevelEditorUI {
                 break;
         }
         if (Active) {
+            if (TankGame.Instance.IsActive)
+                UpdateParticles();
+
+            // prevent any gameplay via this set to 190
+            IntermissionHandler.TankFunctionWait = 190;
+            if (DebugManager.DebuggingEnabled)
+                if (InputUtils.KeyJustPressed(Keys.T))
+                    PlacementSquare.DrawStacks = !PlacementSquare.DrawStacks;
+
             Theme.SetVolume(0.4f * TankGame.Settings.MusicVolume);
 
             _curDescription = string.Empty;

@@ -8,7 +8,9 @@ public static class DrawUtils {
     /// <summary>Converts a centered-orthographic coordinate to screen coordinates.</summary>
     public static Vector2 CenteredOrthoToScreen(Vector2 orthoPos) {
         // i think this works. probably not lol.
-        return orthoPos - WindowUtils.WindowBounds / 2;
+        var vector = orthoPos - WindowUtils.WindowBounds / 2;
+        var negativeVector = new Vector2(vector.X, -vector.Y);
+        return negativeVector;
     }
     public static void DrawTextWithBorder(SpriteBatch spriteBatch, SpriteFontBase font, string text, Vector2 position, 
         Color textColor, Color borderColor, Vector2 scale, float rotation, Anchor anchor = Anchor.Center, float borderThickness = 1f, float charSpacing = 0,

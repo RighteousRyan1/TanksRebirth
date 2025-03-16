@@ -846,7 +846,7 @@ public abstract class Tank {
             var hit = GameHandler.Particles.MakeParticle(position,
                 GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
 
-            hit.Roll = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
+            hit.Pitch = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
             hit.Scale = new(0.5f);
             hit.UniqueBehavior = (part) => {
                 part.Color = Color.Orange;
