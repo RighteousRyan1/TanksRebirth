@@ -172,23 +172,25 @@ public class Block : IGameObject {
         }
         if (Properties.HasShadow) {
             // fix this, but dont worry about it for now
-            var p = GameHandler.Particles.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>($"Assets/textures/cube_shadow_tex"));
+            var p = GameHandler.Particles.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>($"Assets/textures/tank_shadow"));
             p.Tag = "block_shadow_" + Id;
-            bool moveL = true;
-            bool moveD = true;
+            p.TextureCrop = null;
+            //bool moveL = true;
+            //bool moveD = true;
+            p.Pitch = MathHelper.PiOver2;
+            p.Scale = new(1f);
+            p.Alpha = 1f;
+            p.HasAddativeBlending = false;
             p.UniqueBehavior = (a) => {
-                p.Roll = MathHelper.PiOver2;
-                p.Scale = new(1f);
-                p.HasAddativeBlending = false;
-                p.TextureCrop = new(0, 0, 32, 32);
-                p.Alpha = 1f;
+                // TODO: save for when i make shadows look... proper.
+                //p.TextureCrop = new(0, 0, 32, 32);
 
-                moveL = p.TextureCrop.Value.X < 32;
-                moveD = p.TextureCrop.Value.Y < 32;
+                //moveL = p.TextureCrop.Value.X < 32;
+                //moveD = p.TextureCrop.Value.Y < 32;
 
-                float coordOff = 16 * p.Scale.X;
+                //float coordOff = 16 * p.Scale.X;
 
-                p.Position = new Vector3(Position3D.X + (moveL ? coordOff : -coordOff), 0.15f, Position3D.Z + (moveD ? coordOff : -coordOff));
+                p.Position = new Vector3(Position3D.X, 0.15f, Position3D.Z);
             };
             // TODO: Finish collisions
         }

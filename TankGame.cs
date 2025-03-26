@@ -858,6 +858,7 @@ public class TankGame : Game {
         }
         // switch to RT, begin SB, do drawing, end SB, SetRenderTarget(null), begin SB again, draw RT, end SB
         GraphicsDevice.SetRenderTarget(GameFrameBuffer);
+
         GraphicsDevice.Clear(ClearColor);
         // TankFootprint.DecalHandler.UpdateRenderTarget();
         SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: DefaultRasterizer);
@@ -868,8 +869,9 @@ public class TankGame : Game {
         GraphicsDevice.SamplerStates[0] = ClampingSampler;
         GameHandler.RenderAll();
         SpriteRenderer.End();
-
+        // stop drawing the regular game scene
         GraphicsDevice.SetRenderTarget(null);
+
         var shader = Difficulties.Types["LanternMode"] && !MainMenuUI.Active ? GameShaders.LanternShader : (MainMenuUI.Active ? GameShaders.GaussianBlurShader : null);
         if (!GameScene.ShouldRenderAll) shader = null;
         SpriteRenderer.Begin(effect: shader);

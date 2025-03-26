@@ -8,6 +8,8 @@ using TanksRebirth.Net;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.GameContent.UI.LevelEditor;
+using TanksRebirth.Graphics;
+using TanksRebirth.GameContent.ID;
 
 namespace TanksRebirth.GameContent;
 
@@ -25,7 +27,15 @@ public static class RebirthMouse
 
     private static Vector2 _oldMouse;
 
-    public static bool DoTrail = false;
+    public static bool DoTrail = true;
+
+    public static Trail? CursorTrail;
+
+    public const int TRAIL_POINTS_BASE = 20;
+
+    public static void Initialize() {
+        CursorTrail = new(TankGame.Instance.GraphicsDevice, ColorUtils.ChangeColorBrightness(PlayerID.PlayerTankColors[PlayerID.Blue].ToColor(), 0.5f));
+    }
 
     public static void DrawMouse() {
         numDots = 10;
@@ -52,7 +62,7 @@ public static class RebirthMouse
             }
         }
 
-        if (DoTrail) {
+        /*if (DoTrail) {
             var p = GameHandler.Particles.MakeParticle(new Vector3(MouseUtils.MousePosition.X, MouseUtils.MousePosition.Y, 0), TextureGlobals.Pixels[Color.White]);
             p.IsIn2DSpace = true;
             var dir = _oldMouse.DirectionTo(MouseUtils.MousePosition).ToResolution();
@@ -70,6 +80,19 @@ public static class RebirthMouse
 
                 p.Color = Color.SkyBlue;//GameUtils.HsvToRgb(TankGame.GameUpdateTime % 255 / 255f * 360, 1, 1);
             };
+        }*/
+        if (DoTrail) {
+            CursorTrail?.Update(MouseUtils.MousePosition.ToResolution(new(Trail.WIDTH_TRAILS_ENJOY, Trail.HEIGHT_TRAILS_ENJOY)));
+            CursorTrail?.Draw();
+            /*if (!float.IsInfinity(TankGame.DeltaTime)) {
+                if (TankGame.RunTime % 60 <= TankGame.DeltaTime) {
+                    var newVal = (int)(TRAIL_POINTS_BASE / TankGame.DeltaTime);
+
+                    Console.WriteLine(newVal);
+                    if (newVal > 0)
+                        CursorTrail.MaxTrailPoints = newVal;
+                }
+            }*/
         }
         _sinScale = MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalSeconds);
 

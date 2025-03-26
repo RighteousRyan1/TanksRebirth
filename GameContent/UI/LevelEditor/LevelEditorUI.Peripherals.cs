@@ -34,9 +34,6 @@ public static partial class LevelEditorUI {
 
     private static void OpenPeripherals() {
         // ensure particle trimming for blocks
-        EditorParticleSystem.Rasterizer = new() {
-            ScissorTestEnable = true,
-        };
         // spawn block model particle
         var bp = EditorParticleSystem.MakeParticle(Vector3.Zero, ModelResources.BlockStack.Duplicate(), GameScene.Assets["block.1"]);
         bp.Scale = Vector3.One;

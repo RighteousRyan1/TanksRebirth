@@ -26,8 +26,6 @@ public class OggAudio : IDisposable, IAudio {
     public SoundEffectInstance Instance;
     public bool IsDisposed { get; private set; }
     public string Path { get; }
-
-
     public float Volume {
         get => _backingVolume;
         set {
@@ -89,8 +87,8 @@ public class OggAudio : IDisposable, IAudio {
     private void Load(string path) {
         var soundEffect = GameResources.GetGameResource<SoundEffect>(path);
         if (soundEffect != null) {
-            this._effect = soundEffect;
-            this.Instance = soundEffect.CreateInstance();
+            _effect = soundEffect;
+            Instance = soundEffect.CreateInstance();
             return;
         }
         

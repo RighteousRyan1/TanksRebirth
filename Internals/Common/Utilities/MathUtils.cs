@@ -12,6 +12,16 @@ namespace TanksRebirth.Internals.Common.Utilities;
 
 public static class MathUtils
 {
+    public static Vector2 GetSmoothedDirection(Vector2[] points, int index) {
+        if (points.Length < 2) return Vector2.UnitX;
+
+        // Average direction between previous and next segments
+        Vector2 prev = index > 0 ? points[index] - points[index - 1] : Vector2.Zero;
+        Vector2 next = index < points.Length - 1 ? points[index + 1] - points[index] : Vector2.Zero;
+
+        Vector2 combined = prev + next;
+        return combined != Vector2.Zero ? Vector2.Normalize(combined) : Vector2.UnitX;
+    }
     public static float[] ToFloatArray(this Vector3 v) => [v.X, v.Y, v.Z];
     /// <summary>Turns a 3-element array into a Vector3, must be ordered [x, y, z]</summary>
     public static Vector3 ToVector3(this float[] f) => new(f[0], f[1], f[2]);

@@ -71,6 +71,7 @@ public class GameHandler {
 
         GameSceneUI.Initialize();
         CosmeticsUI.Initialize();
+        RebirthMouse.Initialize();
     }
     public static Graph RenderFpsGraph = new("Render", () => (float)TankGame.RenderFPS, 200, 50, 3, 0.35f);
     public static Graph LogicFpsGraph = new("Logic", () => (float)TankGame.LogicFPS, 200, 50, 3, 0.35f);
