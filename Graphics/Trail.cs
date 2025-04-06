@@ -26,7 +26,7 @@ public class Trail {
 
     // probably shouldn't be instanced per-trail. fix later.
     private readonly BasicEffect _effect;
-    private readonly Queue<Vector2> _positions = new Queue<Vector2>();
+    private readonly Queue<Vector2> _positions = [];
     private VertexPositionColor[] _vertices;
     private short[] _indices;
 
@@ -110,7 +110,7 @@ public class Trail {
                 borderColor);
 
             _vertices[i * 4 + 1] = new(
-                new Vector3(current - normal * borderWidth, 0),
+                new Vector3(current + normal * borderWidth, 0),
                 borderColor);
 
             // main trail vertices

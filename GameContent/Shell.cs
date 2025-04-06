@@ -119,13 +119,9 @@ public class Shell : IAITankDanger
     private Texture2D? _shellTexture;
     public int Id { get; private set; }
     private float _wallRicCooldown;
-
     /// <summary>How long this shell has existed in the world.</summary>
     public float LifeTime;
-
     public ShellProperties Properties { get; set; } = new();
-
-    // private Particle _flame;
     public int Type { get; set; }
     public void ReassignId(int newId) => Id = newId;
     public void SwapTexture(Texture2D texture) => _shellTexture = texture;
@@ -491,7 +487,7 @@ public class Shell : IAITankDanger
 
             par.Position = off.ExpandZ() + new Vector3(0, 11, 0);
 
-            par.Yaw = -Rotation - MathHelper.PiOver2 + rotoff;
+            par.Roll = -Rotation - MathHelper.PiOver2 + rotoff;
 
             //if (TankGame.GameUpdateTime % 2 == 0)
             //p.Roll = GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi);

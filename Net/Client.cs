@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using LiteNetLib;
 using LiteNetLib.Utils;
 using Microsoft.Xna.Framework;
@@ -189,7 +190,8 @@ public class Client {
 
         NetClient.Send(message, DeliveryMethod.Sequenced);
     }
-    public static void SyncDamage(int id, bool wasTank, bool isPlayer, int sender = -1) {
+    // maybe make contexts serializable?
+    public static void SyncDamage(int id, bool wasTank, bool isPlayer/*, ITankHurtContext cxt*/, int sender = -1) {
         if (!IsConnected() || MainMenuUI.Active)
             return;
         NetDataWriter message = new();
@@ -199,6 +201,9 @@ public class Client {
 
         message.Put(wasTank);
         message.Put(isPlayer);
+
+        // TODO: not syncing an ITankHurtContext is causing the "Hit!" visual to not gain color on receiving clients.
+        //message.Put(cxt.);
         message.Put(sender);
 
         NetClient.Send(message, DeliveryMethod.ReliableOrdered);
@@ -210,9 +215,18 @@ public class Client {
         message.Put(PacketID.ShellDestroy);
         // TODO: bool hasOwner to decide whether or not to subtract from an owner's shell count
 
-        message.Put(shell.Owner.WorldId);
+        message.Put(shell.Owner is not null ? shell.Owner.WorldId : -1);
+
+        // sending the shell id on the current client.
+        message.Put(shell.Id);
+
+        // to fix "ghost bullets": compare Array Length of Shells from server to each client, then
+        // add the difference between the client's # of shells from the server's # of shells.
+        // there's gotta be a way to make this more performant...
+        message.Put(Shell.AllShells.Count(x => x is not null));
+
         // send the index of the shell in the owner's OwnedShell array for destruction on other clients
-        message.Put(Array.IndexOf(shell.Owner.OwnedShells, shell));
+        // message.Put(Array.IndexOf(shell.Owner.OwnedShells, shell));
         message.Put((byte)cxt);
 
         NetClient.Send(message, DeliveryMethod.ReliableOrdered);

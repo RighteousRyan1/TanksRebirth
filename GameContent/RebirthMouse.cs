@@ -34,7 +34,7 @@ public static class RebirthMouse
     public const int TRAIL_POINTS_BASE = 20;
 
     public static void Initialize() {
-        CursorTrail = new(TankGame.Instance.GraphicsDevice, ColorUtils.ChangeColorBrightness(PlayerID.PlayerTankColors[PlayerID.Blue].ToColor(), 0.5f));
+        CursorTrail = new(TankGame.Instance.GraphicsDevice, ColorUtils.ChangeColorBrightness(PlayerID.PlayerTankColors[NetPlay.GetMyClientId()].ToColor(), 0.5f));
     }
 
     public static void DrawMouse() {
@@ -62,26 +62,8 @@ public static class RebirthMouse
             }
         }
 
-        /*if (DoTrail) {
-            var p = GameHandler.Particles.MakeParticle(new Vector3(MouseUtils.MousePosition.X, MouseUtils.MousePosition.Y, 0), TextureGlobals.Pixels[Color.White]);
-            p.IsIn2DSpace = true;
-            var dir = _oldMouse.DirectionTo(MouseUtils.MousePosition).ToResolution();
-            p.Rotation2D = dir.ToRotation();
-            p.TextureScale = new Vector2(dir.Length() * 1.1f, 20.ToResolutionY());
-            p.Origin2D = new(0, TextureGlobals.Pixels[Color.White].Size().Y / 2);
-            p.HasAddativeBlending = false;
-            p.ToScreenSpace = false;
-            p.UniqueBehavior = (pa) => {
-                p.Alpha -= 0.06f;
-                p.TextureScale -= new Vector2(0.06f);
-
-                if (p.Alpha <= 0)
-                    p.Destroy();
-
-                p.Color = Color.SkyBlue;//GameUtils.HsvToRgb(TankGame.GameUpdateTime % 255 / 255f * 360, 1, 1);
-            };
-        }*/
         if (DoTrail) {
+            CursorTrail.MainColor = ColorUtils.ChangeColorBrightness(PlayerID.PlayerTankColors[NetPlay.GetMyClientId()].ToColor(), 0.5f);
             CursorTrail?.Update(MouseUtils.MousePosition.ToResolution(new(Trail.WIDTH_TRAILS_ENJOY, Trail.HEIGHT_TRAILS_ENJOY)));
             CursorTrail?.Draw();
             /*if (!float.IsInfinity(TankGame.DeltaTime)) {

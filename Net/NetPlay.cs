@@ -273,18 +273,30 @@ public class NetPlay {
                 break;
             case PacketID.ShellDestroy:
                 var ownerId = reader.GetInt();
-                var ownerShellIndex = reader.GetInt();
+                var senderShellId = reader.GetInt();
+                var senderShellCount = reader.GetInt();
                 var cxt = reader.GetByte();
 
                 // FIXME: crashes if recieving on a dead player. weird.
                 // FIXME? wait for results.
                 // TODO: see if this works.
 
-                if (GameHandler.AllTanks[ownerId] is not null)
+                var idAdjust = senderShellId + (Shell.AllShells.Count(x => x is not null) - senderShellCount);
+
+                if (idAdjust < 0)
+                    return;
+
+                Shell.AllShells[idAdjust]?.Destroy((Shell.DestructionContext)cxt, wasSentByAnotherClient: true);
+
+
+
+                // old and stupid "ghost bullets" workaround
+                /*if (GameHandler.AllTanks[ownerId] is not null)
                     if (ownerShellIndex > -1)
                         if (GameHandler.AllTanks[ownerId].OwnedShells.Length > ownerShellIndex)
                             if (GameHandler.AllTanks[ownerId].OwnedShells[ownerShellIndex] is not null)
-                                GameHandler.AllTanks[ownerId].OwnedShells[ownerShellIndex]?.Destroy((Shell.DestructionContext)cxt, wasSentByAnotherClient: true);
+                                GameHandler.AllTanks[ownerId].OwnedShells[ownerShellIndex]?.Destroy((Shell.DestructionContext)cxt, wasSentByAnotherClient: true);*/
+
 
                 break;
             case PacketID.MineDetonate:
@@ -540,11 +552,13 @@ public class NetPlay {
                 break;
             case PacketID.ShellDestroy:
                 var ownerId = reader.GetInt();
-                var ownerShellIndex = reader.GetInt();
+                var senderShellId = reader.GetInt();
+                var senderShellCount = reader.GetInt();
                 var cxt = reader.GetByte();
 
                 message.Put(ownerId);
-                message.Put(ownerShellIndex);
+                message.Put(senderShellId);
+                message.Put(senderShellCount);
                 message.Put(cxt);
 
                 Server.NetManager.SendToAll(message, deliveryMethod, peer);

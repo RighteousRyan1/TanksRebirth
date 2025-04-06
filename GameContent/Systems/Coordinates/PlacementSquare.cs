@@ -31,7 +31,7 @@ public class PlacementSquare {
 
     public static bool displayHeights = true;
 
-    public static List<PlacementSquare> Placements = new();
+    public static List<PlacementSquare> Placements = [];
 
     public Vector3 Position { get; set; }
 
