@@ -415,6 +415,8 @@ public abstract class Tank {
             }
         }
 
+        _oldShellLimit = Properties.ShellLimit;
+        OwnedShells = new Shell[Properties.ShellLimit];
         CampaignGlobals.OnMissionStart += OnMissionStart;
     }
     /// <summary>Update this <see cref="Tank"/>.</summary>
@@ -774,37 +776,39 @@ public abstract class Tank {
         bool flip = false;
         float angle = 0f;
 
-        for (int i = 0; i < Properties.ShellShootCount; i++) {
-            if (i == 0) {
-                var new2d = Vector2.UnitY.Rotate(TurretRotation);
+        var new2d = Vector2.UnitY.Rotate(TurretRotation);
 
-                if (!fxOnly) {
-                    var shell = new Shell(TurretPosition, new Vector2(-new2d.X, new2d.Y) * Properties.ShellSpeed,
-                        Properties.ShellType, this, Properties.RicochetCount, homing: Properties.ShellHoming);
+        if (!fxOnly) {
+            var shell = new Shell(TurretPosition, new Vector2(-new2d.X, new2d.Y) * Properties.ShellSpeed,
+                Properties.ShellType, this, Properties.RicochetCount, homing: Properties.ShellHoming);
 
-                    OnShoot?.Invoke(this, ref shell);
+            OnShoot?.Invoke(this, ref shell);
 
-                    if (this is AITank ai) {
-                        for (int j = 0; j < ModLoader.ModTanks.Length; j++)
-                            if (ai.AiTankType == ModLoader.ModTanks[j].Type)
-                                ModLoader.ModTanks[j].Shoot(ai, ref shell);
-                    }
-
-                    if (this is PlayerTank pt) {
-                        if (NetPlay.IsClientMatched(pt.PlayerId))
-                            Client.SyncShellFire(shell);
-                    }
-                    else
-                        Client.SyncShellFire(shell);
-                }
-
-                // var force = (Position - defPos) * Properties.Recoil;
-                //Velocity = force / UNITS_PER_METER;
-                //DecelerationRateDecayTime = 20 * Properties.Recoil;
-                //Body.ApplyForce(force / UNITS_PER_METER);
-                DoShootParticles(TurretPosition3D);
+            if (this is AITank ai) {
+                for (int j = 0; j < ModLoader.ModTanks.Length; j++)
+                    if (ai.AiTankType == ModLoader.ModTanks[j].Type)
+                        ModLoader.ModTanks[j].Shoot(ai, ref shell);
             }
-            else {
+
+            if (this is PlayerTank pt) {
+                if (NetPlay.IsClientMatched(pt.PlayerId))
+                    Client.SyncShellFire(shell);
+            }
+            else
+                Client.SyncShellFire(shell);
+        }
+        DoShootParticles(TurretPosition3D);
+
+        // theoretical "recoil" velocity
+        // idea: separate recoil velocity from movement velocity
+
+        // var force = (Position - defPos) * Properties.Recoil;
+        //Velocity = force / UNITS_PER_METER;
+        //DecelerationRateDecayTime = 20 * Properties.Recoil;
+        //Body.ApplyForce(force / UNITS_PER_METER);
+
+        if (!fxOnly) {
+            for (int i = 1; i < Properties.ShellShootCount; i++) {
                 // i == 0 : null, 0 rads
                 // i == 1 : flipped, -0.15 rads
                 // i == 2 : !flipped, 0.15 rads
@@ -817,7 +821,7 @@ public abstract class Tank {
 
                 var shell = new Shell(Position, Vector2.Zero, Properties.ShellType, this,
                     homing: Properties.ShellHoming);
-                var new2d = Vector2.UnitY.Rotate(TurretRotation);
+                new2d = Vector2.UnitY.Rotate(TurretRotation);
 
                 var newPos = Position + new Vector2(0, 20).Rotate(-TurretRotation + newAngle);
 
