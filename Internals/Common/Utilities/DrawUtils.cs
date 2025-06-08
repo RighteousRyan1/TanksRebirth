@@ -74,4 +74,26 @@ public static class DrawUtils {
 
         return spacing * multiplicand;
     }
+    
+    public static void DrawNineSliced(SpriteBatch spriteBatch, Texture2D texture, int border, Rectangle area, Color color, Vector2 origin) {
+        Point useBorder = new Vector2(border, border).ToResolution().ToPoint();
+
+        int middleX = area.X + useBorder.X;
+        int rightX = area.Right - useBorder.X;
+
+        int middleY = area.Y + useBorder.Y;
+        int bottomY = area.Bottom - useBorder.Y;
+
+        spriteBatch.Draw(texture, new Rectangle(area.X, area.Y, useBorder.X, useBorder.Y), new Rectangle(0, 0, border, border), color);
+        spriteBatch.Draw(texture, new Rectangle(middleX, area.Y, area.Width - useBorder.X * 2, useBorder.Y), new Rectangle(border, 0, texture.Width - border * 2, border), color, 0f, origin, default, 0f);
+        spriteBatch.Draw(texture, new Rectangle(rightX, area.Y, useBorder.X, useBorder.Y), new Rectangle(texture.Width - border, 0, border, border), color, 0f, origin, default, 0f);
+
+        spriteBatch.Draw(texture, new Rectangle(area.X, middleY, useBorder.X, area.Height - useBorder.Y * 2), new Rectangle(0, border, border, texture.Height - border * 2), color, 0f, origin, default, 0f);
+        spriteBatch.Draw(texture, new Rectangle(middleX, middleY, area.Width - useBorder.X * 2, area.Height - useBorder.Y * 2), new Rectangle(border, border, texture.Width - border * 2, texture.Height - border * 2), color, 0f, origin, default, 0f);
+        spriteBatch.Draw(texture, new Rectangle(rightX, middleY, useBorder.X, area.Height - useBorder.Y * 2), new Rectangle(texture.Width - border, border, border, texture.Height - border * 2), color, 0f, origin, default, 0f);
+
+        spriteBatch.Draw(texture, new Rectangle(area.X, bottomY, useBorder.X, useBorder.Y), new Rectangle(0, texture.Height - border, border, border), color, 0f, origin, default, 0f);
+        spriteBatch.Draw(texture, new Rectangle(middleX, bottomY, area.Width - useBorder.X * 2, useBorder.Y), new Rectangle(border, texture.Height - border, texture.Width - border * 2, border), color, 0f, origin, default, 0f);
+        spriteBatch.Draw(texture, new Rectangle(rightX, bottomY, useBorder.X, useBorder.Y), new Rectangle(texture.Width - border, texture.Height - border, border, border), color, 0f, origin, default, 0f);
+    }
 }
