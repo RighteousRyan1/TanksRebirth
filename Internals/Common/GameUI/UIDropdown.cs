@@ -106,27 +106,7 @@ namespace TanksRebirth.Internals.Common.GameUI
                 base.DrawChildren(spriteBatch);
             }
 
-            Texture2D texture = UIPanelBackground;
-
-            const int border = 12;
-
-            int middleX = Hitbox.X + border;
-            int rightX = Hitbox.Right - border;
-
-            int middleY = Hitbox.Y + border;
-            int bottomY = Hitbox.Bottom - border;
-
-            spriteBatch.Draw(texture, new Rectangle(Hitbox.X, Hitbox.Y, border, border), new Rectangle(0, 0, border, border), MouseHovering ? Color.CornflowerBlue : Color);
-            spriteBatch.Draw(texture, new Rectangle(middleX, Hitbox.Y, Hitbox.Width - border * 2, border), new Rectangle(border, 0, texture.Width - border * 2, border), MouseHovering ? Color.CornflowerBlue : Color);
-            spriteBatch.Draw(texture, new Rectangle(rightX, Hitbox.Y, border, border), new Rectangle(texture.Width - border, 0, border, border), MouseHovering ? Color.CornflowerBlue : Color);
-
-            spriteBatch.Draw(texture, new Rectangle(Hitbox.X, middleY, border, Hitbox.Height - border * 2), new Rectangle(0, border, border, texture.Height - border * 2), MouseHovering ? Color.CornflowerBlue : Color);
-            spriteBatch.Draw(texture, new Rectangle(middleX, middleY, Hitbox.Width - border * 2, Hitbox.Height - border * 2), new Rectangle(border, border, texture.Width - border * 2, texture.Height - border * 2), MouseHovering ? Color.CornflowerBlue : Color);
-            spriteBatch.Draw(texture, new Rectangle(rightX, middleY, border, Hitbox.Height - border * 2), new Rectangle(texture.Width - border, border, border, texture.Height - border * 2), MouseHovering ? Color.CornflowerBlue : Color);
-
-            spriteBatch.Draw(texture, new Rectangle(Hitbox.X, bottomY, border, border), new Rectangle(0, texture.Height - border, border, border), MouseHovering ? Color.CornflowerBlue : Color);
-            spriteBatch.Draw(texture, new Rectangle(middleX, bottomY, Hitbox.Width - border * 2, border), new Rectangle(border, texture.Height - border, texture.Width - border * 2, border), MouseHovering ? Color.CornflowerBlue : Color);
-            spriteBatch.Draw(texture, new Rectangle(rightX, bottomY, border, border), new Rectangle(texture.Width - border, texture.Height - border, border, border), MouseHovering ? Color.CornflowerBlue : Color);
+            DrawUtils.DrawNineSliced(spriteBatch, UIPanelBackground, 12, Hitbox, MouseHovering ? Color.CornflowerBlue : Color, Vector2.Zero);
             SpriteFontBase font = TankGame.TextFont;
             Vector2 drawOrigin = font.MeasureString(Text) / 2f;
             spriteBatch.DrawString(font, Text, Hitbox.Center.ToVector2(), Color.Black, new Vector2(Scale), 0, drawOrigin);

@@ -300,43 +300,16 @@ public abstract partial class UIElement {
         var font = TankGame.TextFont;
         var scaleFont = font.MeasureString(Tooltip);
 
-        var x = MouseUtils.MouseX + 10;
-        var y = MouseUtils.MouseY + 10;
         var width = (int)(scaleFont.X + 30).ToResolutionX();
         var height = (int)(scaleFont.Y + 30).ToResolutionY();
 
-        // ensure the tooltip is on-screen
-        while (x + width > WindowUtils.WindowWidth) {
-            x--;
-        }
-        while (y + height > WindowUtils.WindowHeight) { 
-            y--; 
-        }
+        var x = Math.Clamp(MouseUtils.MouseX + 10, 0, WindowUtils.WindowWidth - width);
+        var y = Math.Clamp(MouseUtils.MouseY + 10, 0, WindowUtils.WindowHeight - height);
 
         var Hitbox = new Rectangle(x, y, width, height);
-        var texture = UIPanelBackground;
+        DrawUtils.DrawNineSliced(spriteBatch, UIPanelBackground, 12, Hitbox, color, Vector2.Zero);
 
-        int border = 12;
-
-        int middleX = Hitbox.X + border;
-        int rightX = Hitbox.Right - border;
-
-        int middleY = Hitbox.Y + border;
-        int bottomY = Hitbox.Bottom - border;
-
-        spriteBatch.Draw(texture, new Rectangle(Hitbox.X, Hitbox.Y, border, border), new Rectangle(0, 0, border, border), color);
-        spriteBatch.Draw(texture, new Rectangle(middleX, Hitbox.Y, Hitbox.Width - border * 2, border), new Rectangle(border, 0, texture.Width - border * 2, border), color);
-        spriteBatch.Draw(texture, new Rectangle(rightX, Hitbox.Y, border, border), new Rectangle(texture.Width - border, 0, border, border), color);
-
-        spriteBatch.Draw(texture, new Rectangle(Hitbox.X, middleY, border, Hitbox.Height - border * 2), new Rectangle(0, border, border, texture.Height - border * 2), color);
-        spriteBatch.Draw(texture, new Rectangle(middleX, middleY, Hitbox.Width - border * 2, Hitbox.Height - border * 2), new Rectangle(border, border, texture.Width - border * 2, texture.Height - border * 2), color);
-        spriteBatch.Draw(texture, new Rectangle(rightX, middleY, border, Hitbox.Height - border * 2), new Rectangle(texture.Width - border, border, border, texture.Height - border * 2), color);
-
-        spriteBatch.Draw(texture, new Rectangle(Hitbox.X, bottomY, border, border), new Rectangle(0, texture.Height - border, border, border), color);
-        spriteBatch.Draw(texture, new Rectangle(middleX, bottomY, Hitbox.Width - border * 2, border), new Rectangle(border, texture.Height - border, texture.Width - border * 2, border), color);
-        spriteBatch.Draw(texture, new Rectangle(rightX, bottomY, border, border), new Rectangle(texture.Width - border, texture.Height - border, border, border), color);
-
-        spriteBatch.DrawString(font, Tooltip, Hitbox.Center.ToVector2(), Color.Black, new Vector2(1f).ToResolution(), 0f, scaleFont / 2, 0);
+        spriteBatch.DrawString(font, Tooltip, Hitbox.Center.ToVector2(), Color.Black, new Vector2(1f).ToResolution(), 0f, scaleFont * 0.5f, 0);
     }
 
     public static void ResizeAndRelocate() {
