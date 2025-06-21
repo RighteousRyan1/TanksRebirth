@@ -770,43 +770,9 @@ public class TankGame : Game {
                                 tnk?.Destroy(new TankHurtContextOther()); // hmmm
 
                             if (InputUtils.CanDetectClick(rightClick: true)) {
-                                while (tnk!.TankRotation < 0) {
-                                    tnk.TankRotation += MathHelper.Tau;
-                                }
-
-                                while (tnk.TankRotation > MathHelper.Tau) {
-                                    tnk.TankRotation -= MathHelper.Tau;
-                                }
-
-                                while (tnk.TargetTankRotation < 0) {
-                                    tnk.TargetTankRotation += MathHelper.Tau;
-                                }
-
-                                while (tnk.TargetTankRotation > MathHelper.Tau) {
-                                    tnk.TargetTankRotation -= MathHelper.Tau;
-                                }
-
-                                while (tnk.TurretRotation < 0) {
-                                    tnk.TurretRotation += MathHelper.Tau;
-                                }
-
-                                while (tnk.TurretRotation > MathHelper.Tau) {
-                                    tnk.TurretRotation -= MathHelper.Tau;
-                                }
-
-
-                                tnk.TankRotation -= MathHelper.PiOver2;
-                                tnk.TurretRotation -= MathHelper.PiOver2;
-                                tnk.TargetTankRotation += MathHelper.PiOver2;
-
-                                if (tnk.TargetTankRotation >= MathHelper.Tau)
-                                    tnk.TargetTankRotation -= MathHelper.Tau;
-
-                                if (tnk.TankRotation <= -MathHelper.Tau)
-                                    tnk.TankRotation += MathHelper.Tau;
-
-                                if (tnk.TurretRotation <= -MathHelper.Tau)
-                                    tnk.TurretRotation += MathHelper.Tau;
+                                tnk!.TankRotation = (tnk.TankRotation - MathHelper.PiOver2).WrapTauAngle() - MathHelper.Pi;
+                                tnk!.TurretRotation = (tnk.TurretRotation - MathHelper.PiOver2).WrapTauAngle() - MathHelper.Pi;
+                                tnk!.TurretRotation = (tnk.TurretRotation + MathHelper.PiOver2).WrapTauAngle() - MathHelper.Pi;
                             }
 
                             tnk.IsHoveredByMouse = true;
