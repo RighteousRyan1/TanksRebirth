@@ -286,4 +286,12 @@ public static class MathUtils
 
         return (i + 5 * nearest / 10) / nearest * nearest;
     }
+
+    public static float WrapTauAngle(this float angle) {
+        return angle switch {
+            <0 => angle + (float)(Math.Ceiling(-angle / Math.Tau) * Math.Tau),
+            >(float)Math.Tau => angle - (float)((Math.Ceiling(angle / Math.Tau) - 1) * Math.Tau),
+            _ => angle
+        };
+    }
 }
