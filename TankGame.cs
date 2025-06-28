@@ -910,51 +910,31 @@ public class TankGame : Game {
             TankMusicSystem.ResumeAll();
         }
     }
-
-    private static Particle _secret1_1;
-    private static Particle _secret1_2;
-
-    private static Particle _secret2_1;
-    private static Particle _secret2_2;
+    private static Particle _secret;
+    private static Particle _secretText;
 
     private static void PlaceSecrets() {
         // magic.
         const float SECRET_BASE_POS_X = GameScene.MIN_X - 28.5f;
         const float SECRET_BASE_POS_Y = 22;
         const float SECRET_BASE_POS_Z = 20;
-        _secret1_1 = GameHandler.Particles.MakeParticle(new Vector3(100, 0.1f, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/secret/special"));
-        _secret1_1.UniqueBehavior = (p) => {
-            _secret1_1.Position = new Vector3(SECRET_BASE_POS_X, SECRET_BASE_POS_Y, SECRET_BASE_POS_Z);
-            _secret1_1.Pitch = 0;
-            _secret1_1.Yaw = MathHelper.PiOver2;
-            _secret1_1.Scale = Vector3.One * 0.3f;
-            _secret1_1.HasAddativeBlending = false;
-        };
-        _secret1_2 = GameHandler.Particles.MakeParticle(new Vector3(100, 0.1f, 0), "Litzy <3");
-        _secret1_2.UniqueBehavior = (p) => {
-            _secret1_2.Position = new Vector3(SECRET_BASE_POS_X, SECRET_BASE_POS_Y + 20, SECRET_BASE_POS_Z - 8);
-            _secret1_2.Pitch = 0;
-            _secret1_2.Yaw = MathHelper.PiOver2;
-            _secret1_2.Scale = Vector3.One * 0.3f;
-            _secret1_2.HasAddativeBlending = false;
-        };
 
-        _secret2_1 = GameHandler.Particles.MakeParticle(new Vector3(100, 0.1f, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/secret/special2"));
-        _secret2_1.UniqueBehavior = (p) => {
-            _secret2_1.Position = new Vector3(SECRET_BASE_POS_X, SECRET_BASE_POS_Y, SECRET_BASE_POS_Z - 40);
-            _secret2_1.Pitch = 0;
-            _secret2_1.Yaw = MathHelper.PiOver2;
-            _secret2_1.Scale = Vector3.One * 0.3f;
-            _secret2_1.HasAddativeBlending = false;
+        _secret = GameHandler.Particles.MakeParticle(new Vector3(100, 0.1f, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/secret/special2"));
+        _secret.UniqueBehavior = (p) => {
+            _secret.Position = new Vector3(SECRET_BASE_POS_X, SECRET_BASE_POS_Y, SECRET_BASE_POS_Z - 40);
+            _secret.Pitch = 0;
+            _secret.Yaw = MathHelper.PiOver2;
+            _secret.Scale = Vector3.One * 0.3f;
+            _secret.HasAddativeBlending = false;
         };
-        _secret2_2 = GameHandler.Particles.MakeParticle(new Vector3(100, 0.1f, 0), "Ziggy <3");
-        _secret2_2.UniqueBehavior = (p) => {
-            _secret2_2.Position = new Vector3(SECRET_BASE_POS_X, SECRET_BASE_POS_Y + 20, SECRET_BASE_POS_Z - 8 - 40);
-            _secret2_2.Pitch = 0;
-            _secret2_2.Yaw = MathHelper.PiOver2;
+        _secretText = GameHandler.Particles.MakeParticle(new Vector3(100, 0.1f, 0), "Ziggy <3");
+        _secretText.UniqueBehavior = (p) => {
+            _secretText.Position = new Vector3(SECRET_BASE_POS_X, SECRET_BASE_POS_Y + 20, SECRET_BASE_POS_Z - 8 - 40);
+            _secretText.Pitch = 0;
+            _secretText.Yaw = MathHelper.PiOver2;
 
-            _secret2_2.Scale = Vector3.One * 0.3f;
-            _secret2_2.HasAddativeBlending = false;
+            _secretText.Scale = Vector3.One * 0.3f;
+            _secretText.HasAddativeBlending = false;
         };
     }
 }
