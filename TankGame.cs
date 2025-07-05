@@ -287,7 +287,7 @@ public class TankGame : Game {
             "Assets/textures/misc/cursor_1",
             "Assets/textures/misc/tank_smokes",
             "Assets/textures/misc/tank_smokes",
-            "Assets/textures/secret/special",
+
             "Assets/textures/secret/special2",
             
             
@@ -331,7 +331,6 @@ public class TankGame : Game {
             "Assets/textures/ui/tank2d",
             "Assets/textures/ui/trophy",
             "Assets/textures/ui/achievement/secret",
-
         ];
 
         /*var parent = Directory.GetFiles("Content\\Assets");

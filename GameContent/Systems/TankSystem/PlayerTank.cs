@@ -29,6 +29,7 @@ namespace TanksRebirth.GameContent;
 
 public class PlayerTank : Tank
 {
+    private static bool _justCenteredMouse = false;
     #region The Rest
     public static int MyTeam;
     public static int MyTankType;
@@ -228,14 +229,23 @@ public class PlayerTank : Tank
                 else if (!GameUI.Paused) {
 
                     if (DebugManager.IsFreecamEnabled && InputUtils.MouseRight) { } else {
-                        Mouse.SetPosition(InputUtils.CurrentMouseSnapshot.X, WindowUtils.WindowHeight / 2);
-                        //Mouse.SetPosition(Input.CurrentMouseSnapshot.X, WindowUtils.WindowHeight / 2);
-                        if (InputUtils.CurrentMouseSnapshot.X >= WindowUtils.WindowWidth)
-                            Mouse.SetPosition(1, InputUtils.CurrentMouseSnapshot.Y);
-                        if (InputUtils.CurrentMouseSnapshot.X <= 0)
-                            Mouse.SetPosition(WindowUtils.WindowWidth - 1, WindowUtils.WindowHeight / 2);
-                        //Mouse.SetPosition((int)GameUtils.WindowCenter.X, (int)GameUtils.WindowCenter.Y);
-                        TurretRotation += -MouseUtils.MouseVelocity.X / (312.ToResolutionX()); // terry evanswood
+                        var mouseState = Mouse.GetState();
+                        var screenCenter = new Point(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2);
+
+                        if (_justCenteredMouse) {
+                            // skip to avoid jumps
+                            _justCenteredMouse = false;
+                            return;
+                        }
+
+                        // subtract mouse delta eventually
+                        int deltaX = mouseState.X - screenCenter.X;
+
+                        TurretRotation += -deltaX / (312f.ToResolutionX());
+
+                        // recenter
+                        Mouse.SetPosition(screenCenter.X, screenCenter.Y);
+                        _justCenteredMouse = true;
                     }
                 }
             }
