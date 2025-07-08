@@ -160,9 +160,8 @@ public partial class AITank : Tank {
         SpecialBehaviors[1].Label = "SpecialBehavior2";
         SpecialBehaviors[2].Label = "SpecialBehavior3";
 
-        if (TankGame.IsMainThread) {
+        if (RuntimeData.IsMainThread) {
             if (!UsesCustomModel) {
-
                 var tierName = TankID.Collection.GetKey(tier)!.ToLower();
                 var tnkAsset = Assets[$"tank_" + tierName];
 
@@ -276,7 +275,8 @@ public partial class AITank : Tank {
 
         if (Dead || !GameScene.ShouldRenderAll)
             return;
-        if (TankGame.SuperSecretDevOption) {
+
+        if (DebugManager.SuperSecretDevOption) {
             var tnkGet = Array.FindIndex(GameHandler.AllAITanks, x => x is not null && !x.Dead && !x.Properties.Stationary);
             if (tnkGet > -1)
                 if (AITankId == GameHandler.AllAITanks[tnkGet].AITankId)
@@ -366,9 +366,9 @@ public partial class AITank : Tank {
             p.Origin2D = TankGame.TextFont.MeasureString($"+{gain * 100:0.00} XP") / 2;
 
             p.UniqueBehavior = (p) => {
-                p.Position.Y += 0.1f * TankGame.DeltaTime;
+                p.Position.Y += 0.1f * RuntimeData.DeltaTime;
 
-                p.Alpha -= 0.01f * TankGame.DeltaTime;
+                p.Alpha -= 0.01f * RuntimeData.DeltaTime;
 
                 if (p.Alpha <= 0)
                     p.Destroy();
@@ -719,7 +719,7 @@ public partial class AITank : Tank {
         TurretRotationMultiplier = 1f;
         // AiParams.DeflectsBullets = true;
         for (int i = 0; i < Behaviors.Length; i++)
-            Behaviors[i].Value += TankGame.DeltaTime;
+            Behaviors[i].Value += RuntimeData.DeltaTime;
 
         // defining an Action isn't that intensive, right?
         AIBehaviorAction = () => {
@@ -809,12 +809,12 @@ public partial class AITank : Tank {
                 IsTurning = !(TankRotation > negDif && TankRotation < posDif);
 
                 if (!IsTurning) {
-                    Speed += Properties.Acceleration * TankGame.DeltaTime;
+                    Speed += Properties.Acceleration * RuntimeData.DeltaTime;
                     if (Speed > Properties.MaxSpeed)
                         Speed = Properties.MaxSpeed;
                 }
                 else {
-                    Speed -= Properties.Deceleration * TankGame.DeltaTime;
+                    Speed -= Properties.Deceleration * RuntimeData.DeltaTime;
                     if (Speed < 0)
                         Speed = 0;
                 }
@@ -830,7 +830,7 @@ public partial class AITank : Tank {
                 Velocity.Normalize();
 
                 Velocity *= Speed;
-                TankRotation = MathUtils.RoughStep(TankRotation, TargetTankRotation, Properties.TurningSpeed * TankGame.DeltaTime);
+                TankRotation = MathUtils.RoughStep(TankRotation, TargetTankRotation, Properties.TurningSpeed * RuntimeData.DeltaTime);
             }
 
             #endregion
@@ -904,7 +904,7 @@ public partial class AITank : Tank {
             var dirVec = Position - AimTarget;
             TargetTurretRotation = -dirVec.ToRotation() - MathHelper.PiOver2 + GameHandler.GameRand.NextFloat(-AiParams.AimOffset, AiParams.AimOffset);
         }
-        TurretRotation = MathUtils.RoughStep(TurretRotation, TargetTurretRotation, AiParams.TurretSpeed * TurretRotationMultiplier * TankGame.DeltaTime);
+        TurretRotation = MathUtils.RoughStep(TurretRotation, TargetTurretRotation, AiParams.TurretSpeed * TurretRotationMultiplier * RuntimeData.DeltaTime);
     }
     public void DoMovement() {
         bool shouldMove = !IsTurning && CurMineStun <= 0 && CurShootStun <= 0 && !IsPathBlocked;

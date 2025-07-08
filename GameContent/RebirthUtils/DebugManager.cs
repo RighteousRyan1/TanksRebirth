@@ -20,18 +20,14 @@ using TanksRebirth.IO;
 using TanksRebirth.Achievements;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.GameContent.UI.LevelEditor;
+using TanksRebirth.GameContent.ModSupport;
+using TanksRebirth.Graphics;
 
 namespace TanksRebirth.GameContent.RebirthUtils;
 
 public static class DebugManager {
-    public static bool IsFreecamEnabled => persistFreecam || DebugLevel == Id.FreeCamTest;
-    public static bool persistFreecam;
-    public static int blockType = 0;
-    public static int blockHeight = 1;
-    public static int tankToSpawnType;
-    public static int tankToSpawnTeam;
-
-    public readonly struct Id {
+    public readonly struct Id
+    {
         public const int FreeCamTest = -3;
         public const int AirplaneTest = -2;
         public const int SceneMetrics = -1;
@@ -43,10 +39,6 @@ public static class DebugManager {
         public const int AchievementData = 5;
         public const int NavData = 6;
     }
-    public static string CurDebugLabel => !DebuggingNames.TryGetValue(DebugLevel, out string? value) ? $"Unknown - {DebugLevel}" : value;
-    public static bool DebuggingEnabled { get; set; }
-    public static int DebugLevel { get; set; }
-
     private static readonly Dictionary<int, string> DebuggingNames = new() {
         [Id.FreeCamTest] = "freecam",
         [Id.AirplaneTest] = "planetest",
@@ -59,10 +51,40 @@ public static class DebugManager {
         [Id.AchievementData] = "achdat", // achievement data
         [Id.NavData] = "tnknav" // ai tank navigation
     };
-    private static readonly PowerupTemplate[] powerups =
-     [Powerup.Speed,
-         Powerup.ShellHome,
-         Powerup.Invisibility];
+
+    static int mode;
+
+    public static bool RenderWireframe = false;
+    public static bool IsFreecamEnabled => persistFreecam || DebugLevel == Id.FreeCamTest;
+    public static bool persistFreecam;
+    public static int blockType = 0;
+    public static int blockHeight = 1;
+    public static int tankToSpawnType;
+    public static int tankToSpawnTeam;
+    public static string CurDebugLabel => !DebuggingNames.TryGetValue(DebugLevel, out string? value) ? $"Unknown - {DebugLevel}" : value;
+    public static bool DebuggingEnabled { get; set; }
+    public static bool SecretCosmeticSetting;
+    public static bool SuperSecretDevOption;
+    public static int DebugLevel { get; set; }
+
+    public static UITextButton ClearTracks;
+    public static UITextButton ClearChecks;
+
+    public static UITextButton SetupMissionAgain;
+
+    public static UITextButton MovePURight;
+    public static UITextButton MovePULeft;
+
+    public static UITextButton Display;
+
+    public static UITextInput MissionName;
+    public static UITextInput CampaignName;
+    public static UITextButton LoadMission;
+    public static UITextButton SaveMission;
+
+    public static UITextButton LoadCampaign;
+
+    private static readonly PowerupTemplate[] powerups = [Powerup.Speed, Powerup.ShellHome, Powerup.Invisibility];
     public static void DrawDebugString(SpriteBatch sb, object info, Vector2 position, int level = Id.General, float scale = 1f, bool centered = false, Color color = default, bool beginSb = false) {
         if (!DebuggingEnabled || DebugLevel != level)
             return;
@@ -103,25 +125,6 @@ public static class DebugManager {
         if (beginSb)
             sb.End();
     }
-
-    public static UITextButton ClearTracks;
-    public static UITextButton ClearChecks;
-
-    public static UITextButton SetupMissionAgain;
-
-    public static UITextButton MovePURight;
-    public static UITextButton MovePULeft;
-
-    public static UITextButton Display;
-
-    public static UITextInput MissionName;
-    public static UITextInput CampaignName;
-    public static UITextButton LoadMission;
-    public static UITextButton SaveMission;
-
-    public static UITextButton LoadCampaign;
-
-    private static int mode;
     public static void InitDebugUI() {
         MissionName = new(TankGame.TextFont, Color.White, 0.75f, 20) {
             DefaultString = "Mission Name",
@@ -149,7 +152,7 @@ public static class DebugManager {
 
         LoadMission = new("Load", TankGame.TextFont, Color.White, 0.5f);
         LoadMission.OnLeftClick = (l) => {
-            if (TankGame.IsWindows && MissionName.IsEmpty()) {
+            if (RuntimeData.IsWindows && MissionName.IsEmpty()) {
                 var res = Dialog.FileOpen("mission", TankGame.SaveDirectory);
                 if (res.Path != null && res.IsOk) {
                     try {
@@ -225,6 +228,9 @@ public static class DebugManager {
         };
     }
     public static void UpdateDebug() {
+        if (InputUtils.KeyJustPressed(Keys.F4))
+            DebuggingEnabled = !DebuggingEnabled;
+
         if (!MainMenuUI.Active) {
             ClearTracks.IsVisible = DebuggingEnabled && DebugLevel == 0;
             ClearChecks.IsVisible = DebuggingEnabled && DebugLevel == 0;
@@ -238,11 +244,48 @@ public static class DebugManager {
             LoadCampaign.IsVisible = DebuggingEnabled && DebugLevel == 3;
             CampaignName.IsVisible = DebuggingEnabled && DebugLevel == 3;
         }
-        if (InputUtils.KeyJustPressed(Keys.F4))
-            DebuggingEnabled = !DebuggingEnabled;
 
         if (!DebuggingEnabled)
             return; // won't update debug if debugging is not currently enabled.
+
+        if (RuntimeData.RunTime % 60 <= RuntimeData.DeltaTime) {
+            RuntimeData.MemoryUsageInBytes = (ulong)RuntimeData.ProcessMemory;
+        }
+        if (DebugLevel == Id.SceneMetrics) {
+            if (RuntimeData.RunTime % 10f <= RuntimeData.DeltaTime) {
+                RuntimeData.RenderFpsGraph.Update();
+                RuntimeData.LogicFpsGraph.Update();
+
+                RuntimeData.RenderTimeGraph.Update();
+                RuntimeData.LogicTimeGraph.Update();
+            }
+            RuntimeData.RenderFpsGraph.Draw(TankGame.SpriteRenderer, new Vector2(100, 200), 2);
+            RuntimeData.LogicFpsGraph.Draw(TankGame.SpriteRenderer, new Vector2(100, 400), 2);
+            RuntimeData.RenderTimeGraph.Draw(TankGame.SpriteRenderer, new Vector2(500, 200), 2);
+            RuntimeData.LogicTimeGraph.Draw(TankGame.SpriteRenderer, new Vector2(500, 400), 2);
+        }
+
+        if (InputUtils.AreKeysJustPressed(Keys.LeftAlt, Keys.RightAlt))
+            Lighting.AccurateShadows = !Lighting.AccurateShadows;
+        if (InputUtils.AreKeysJustPressed(Keys.LeftShift, Keys.RightShift))
+            RenderWireframe = !RenderWireframe;
+        if (InputUtils.AreKeysJustPressed(Keys.O, Keys.P))
+            ModLoader.LoadMods();
+        if (DebuggingEnabled && InputUtils.AreKeysJustPressed(Keys.U, Keys.I))
+            ModLoader.UnloadAll();
+
+        if (InputUtils.AreKeysJustPressed(Keys.S, Keys.U, Keys.P, Keys.E, Keys.R)) {
+            if (!SuperSecretDevOption)
+                ChatSystem.SendMessage("You're a devious young one, aren't you?", Color.Orange, "DEBUG", true);
+            else
+                ChatSystem.SendMessage("I guess you aren't a devious one.", Color.Orange, "DEBUG", true);
+            SuperSecretDevOption = !SuperSecretDevOption;
+        }
+
+        if (InputUtils.AreKeysJustPressed(Keys.Left, Keys.Right, Keys.Up, Keys.Down)) {
+            SecretCosmeticSetting = !SecretCosmeticSetting;
+            ChatSystem.SendMessage(SecretCosmeticSetting ? "Activated randomized cosmetics!" : "Deactivated randomized cosmetics.", SecretCosmeticSetting ? Color.Lime : Color.Red);
+        }
 
         if (InputUtils.KeyJustPressed(Keys.F6))
             DebugLevel++;
@@ -253,57 +296,55 @@ public static class DebugManager {
                 blockType--;
             if (InputUtils.KeyJustPressed(Keys.X))
                 blockType++;
-            if (DebuggingEnabled) {
-                if (InputUtils.KeyJustPressed(Keys.J))
-                    CameraGlobals.OverheadView = !CameraGlobals.OverheadView;
-                if (DebugLevel != Id.FreeCamTest) {
-                    if (InputUtils.MouseRight)
-                        CameraGlobals.OrthoRotationVector += MouseUtils.MouseVelocity / 500f;
+            if (InputUtils.KeyJustPressed(Keys.J))
+                CameraGlobals.OverheadView = !CameraGlobals.OverheadView;
+            if (DebugLevel != Id.FreeCamTest) {
+                if (InputUtils.MouseRight)
+                    CameraGlobals.OrthoRotationVector += MouseUtils.MouseVelocity / 500f;
 
-                    if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Add))
-                        CameraGlobals.AddativeZoom += 0.01f;
-                    if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Subtract))
-                        CameraGlobals.AddativeZoom -= 0.01f;
+                if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Add))
+                    CameraGlobals.AddativeZoom += 0.01f;
+                if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Subtract))
+                    CameraGlobals.AddativeZoom -= 0.01f;
 
-                    if (InputUtils.MouseMiddle)
-                        CameraGlobals.CameraFocusOffset += MouseUtils.MouseVelocity;
-                }
-                if (InputUtils.KeyJustPressed(Keys.NumPad7))
-                    tankToSpawnType--;
-                if (InputUtils.KeyJustPressed(Keys.NumPad9))
-                    tankToSpawnType++;
-
-                if (InputUtils.KeyJustPressed(Keys.NumPad1))
-                    tankToSpawnTeam--;
-                if (InputUtils.KeyJustPressed(Keys.NumPad3))
-                    tankToSpawnTeam++;
-
-                if (InputUtils.KeyJustPressed(Keys.OemPeriod))
-                    blockHeight++;
-                if (InputUtils.KeyJustPressed(Keys.OemComma))
-                    blockHeight--;
-
-
-                if (InputUtils.KeyJustPressed(Keys.PageUp))
-                    SpawnTankPlethorae(true);
-                if (InputUtils.KeyJustPressed(Keys.PageDown))
-                    SpawnMe(GameHandler.GameRand.Next(PlayerID.Blue, PlayerID.Yellow + 1), tankToSpawnTeam);
-                if (InputUtils.KeyJustPressed(Keys.Home))
-                    SpawnTankAt(!CameraGlobals.OverheadView ? MatrixUtils.GetWorldPosition(MouseUtils.MousePosition) : PlacementSquare.CurrentlyHovered.Position, tankToSpawnType, tankToSpawnTeam);
-
-                if (InputUtils.KeyJustPressed(Keys.OemSemicolon))
-                    new Mine(null, MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ(), 400);
-                if (InputUtils.KeyJustPressed(Keys.OemQuotes))
-                    new Shell(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ(), Vector2.Zero, ShellID.Standard, null!, 0);
-                if (InputUtils.KeyJustPressed(Keys.End))
-                    SpawnCrateAtMouse();
-
-                if (InputUtils.KeyJustPressed(Keys.OemQuestion))
-                    new Block(blockType, blockHeight, MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ());
-
-                if (InputUtils.KeyJustPressed(Keys.I) && DebugLevel == 4)
-                    new Powerup(powerups[mode]) { Position = MatrixUtils.GetWorldPosition(MouseUtils.MousePosition) + new Vector3(0, 10, 0) };
+                if (InputUtils.MouseMiddle)
+                    CameraGlobals.CameraFocusOffset += MouseUtils.MouseVelocity;
             }
+            if (InputUtils.KeyJustPressed(Keys.NumPad7))
+                tankToSpawnType--;
+            if (InputUtils.KeyJustPressed(Keys.NumPad9))
+                tankToSpawnType++;
+
+            if (InputUtils.KeyJustPressed(Keys.NumPad1))
+                tankToSpawnTeam--;
+            if (InputUtils.KeyJustPressed(Keys.NumPad3))
+                tankToSpawnTeam++;
+
+            if (InputUtils.KeyJustPressed(Keys.OemPeriod))
+                blockHeight++;
+            if (InputUtils.KeyJustPressed(Keys.OemComma))
+                blockHeight--;
+
+
+            if (InputUtils.KeyJustPressed(Keys.PageUp))
+                SpawnTankPlethorae(true);
+            if (InputUtils.KeyJustPressed(Keys.PageDown))
+                SpawnMe(GameHandler.GameRand.Next(PlayerID.Blue, PlayerID.Yellow + 1), tankToSpawnTeam);
+            if (InputUtils.KeyJustPressed(Keys.Home))
+                SpawnTankAt(!CameraGlobals.OverheadView ? MatrixUtils.GetWorldPosition(MouseUtils.MousePosition) : PlacementSquare.CurrentlyHovered.Position, tankToSpawnType, tankToSpawnTeam);
+
+            if (InputUtils.KeyJustPressed(Keys.OemSemicolon))
+                new Mine(null, MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ(), 400);
+            if (InputUtils.KeyJustPressed(Keys.OemQuotes))
+                new Shell(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ(), Vector2.Zero, ShellID.Standard, null!, 0);
+            if (InputUtils.KeyJustPressed(Keys.End))
+                SpawnCrateAtMouse();
+
+            if (InputUtils.KeyJustPressed(Keys.OemQuestion))
+                new Block(blockType, blockHeight, MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ());
+
+            if (InputUtils.KeyJustPressed(Keys.I) && DebugLevel == 4)
+                new Powerup(powerups[mode]) { Position = MatrixUtils.GetWorldPosition(MouseUtils.MousePosition) + new Vector3(0, 10, 0) };
         }
         blockHeight = MathHelper.Clamp(blockHeight, 1, 7);
         blockType = MathHelper.Clamp(blockType, 0, 3);
@@ -317,12 +358,13 @@ public static class DebugManager {
                 new Vector2(0.6f),
                 origin: TankGame.TextFont.MeasureString("Debug Level: " + CurDebugLabel) / 2);
         DrawDebugString(SpriteRenderer,
-            $"Garbage Collection: {MemoryParser.FromMegabytes(TankGame.GCMemory):0} MB" +
-            $"\nPhysical Memory: {TankGame.CompSpecs.RAM}" +
-            $"\nGPU: {TankGame.CompSpecs.GPU}" +
-            $"\nCPU: {TankGame.CompSpecs.CPU}" +
-            $"\nProcess Memory: {MemoryParser.FromMegabytes(TankGame.MemoryUsageInBytes):0} MB / Total Memory: {MemoryParser.FromMegabytes(TankGame.CompSpecs.RAM.TotalPhysical):0}MB",
-            new(8, WindowUtils.WindowHeight * 0.15f));
+            $"Garbage Collection: {MemoryParser.To(MemoryParser.Size.Bytes, MemoryParser.Size.Megabytes, RuntimeData.GCMemory):0} MB" +
+            $"\nPhysical Memory: {RuntimeData.CompSpecs.RAM}" +
+            $"\nGPU: {RuntimeData.CompSpecs.GPU}" +
+            $"\nCPU: {RuntimeData.CompSpecs.CPU}" +
+            $"\nProcess Memory: {MemoryParser.To(MemoryParser.Size.Bytes, MemoryParser.Size.Megabytes, RuntimeData.MemoryUsageInBytes):0} MB / " +
+            $"Total Memory: {MemoryParser.To(MemoryParser.Size.Bytes, MemoryParser.Size.Megabytes, RuntimeData.CompSpecs.RAM.TotalPhysical):0}MB",
+            new Vector2(8, WindowUtils.WindowHeight * 0.15f));
 
         DrawDebugString(SpriteRenderer, $"Tank Kill Counts:", new(8, WindowUtils.WindowHeight * 0.05f), 2);
 

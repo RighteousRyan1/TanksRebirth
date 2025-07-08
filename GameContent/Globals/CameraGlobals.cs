@@ -1,10 +1,4 @@
 ﻿using Microsoft.Xna.Framework;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static System.TimeZoneInfo;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.Internals.Common.Utilities;
 using Microsoft.Xna.Framework.Graphics;
@@ -74,18 +68,20 @@ public static class CameraGlobals {
         if (_transitionTimer > 0) {
             _transitionTimer--;
             if (OverheadView) {
-                OrthoRotationVector.Y = MathUtils.SoftStep(OrthoRotationVector.Y, MathHelper.PiOver2, 0.08f * TankGame.DeltaTime);
-                AddativeZoom = MathUtils.SoftStep(AddativeZoom, 0.6f, 0.08f * TankGame.DeltaTime);
-                CameraFocusOffset.Y = MathUtils.RoughStep(CameraFocusOffset.Y, 82f, 2f * TankGame.DeltaTime);
+                OrthoRotationVector.Y = MathUtils.SoftStep(OrthoRotationVector.Y, MathHelper.PiOver2, 0.08f * RuntimeData.DeltaTime);
+                AddativeZoom = MathUtils.SoftStep(AddativeZoom, 0.6f, 0.08f * RuntimeData.DeltaTime);
+                CameraFocusOffset.Y = MathUtils.RoughStep(CameraFocusOffset.Y, 82f, 2f * RuntimeData.DeltaTime);
             }
             else {
-                OrthoRotationVector.Y = MathUtils.SoftStep(OrthoRotationVector.Y, DEFAULT_ORTHOGRAPHIC_ANGLE, 0.08f * TankGame.DeltaTime);
+                OrthoRotationVector.Y = MathUtils.SoftStep(OrthoRotationVector.Y, DEFAULT_ORTHOGRAPHIC_ANGLE, 0.08f * RuntimeData.DeltaTime);
                 if (!LevelEditorUI.Active)
-                    AddativeZoom = MathUtils.SoftStep(AddativeZoom, 1f, 0.08f * TankGame.DeltaTime);
-                CameraFocusOffset.Y = MathUtils.RoughStep(CameraFocusOffset.Y, 0f, 2f * TankGame.DeltaTime);
+                    AddativeZoom = MathUtils.SoftStep(AddativeZoom, 1f, 0.08f * RuntimeData.DeltaTime);
+                CameraFocusOffset.Y = MathUtils.RoughStep(CameraFocusOffset.Y, 0f, 2f * RuntimeData.DeltaTime);
             }
         }
     }
+
+    // TODO: this might be cluttered...
     public static void Update() {
         if (DebugManager.DebugLevel != DebugManager.Id.FreeCamTest && !DebugManager.persistFreecam) {
             if (!MainMenuUI.Active) {
@@ -170,7 +166,7 @@ public static class CameraGlobals {
                 }
                 // free camera movement test
 
-                var moveSpeed = 10f * TankGame.DeltaTime;
+                var moveSpeed = 10f * RuntimeData.DeltaTime;
 
                 var rotationSpeed = 0.01f;
 
@@ -198,9 +194,9 @@ public static class CameraGlobals {
                 if (InputUtils.MouseRight)
                     RebirthFreecam.Rotation -= new Vector3(0, MouseUtils.MouseVelocity.Y * rotationSpeed, MouseUtils.MouseVelocity.X * rotationSpeed);
                 if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Add))
-                    RebirthFreecam.FieldOfView += 0.5f * TankGame.DeltaTime;
+                    RebirthFreecam.FieldOfView += 0.5f * RuntimeData.DeltaTime;
                 if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Subtract))
-                    RebirthFreecam.FieldOfView -= 0.5f * TankGame.DeltaTime;
+                    RebirthFreecam.FieldOfView -= 0.5f * RuntimeData.DeltaTime;
                 if (InputUtils.MouseMiddle)
                     RebirthFreecam.FieldOfView = 90;
                 if (InputUtils.CurrentKeySnapshot.IsKeyDown(keyf))

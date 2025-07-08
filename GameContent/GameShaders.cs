@@ -39,9 +39,9 @@ public class GameShaders
     public static void UpdateShaders() {
         AnimatedRainbow.Parameters["oTime"]?.SetValue((float)TankGame.LastGameTime.TotalGameTime.TotalSeconds);
         AnimatedRainbow.Parameters["oStrength"].SetValue(0.5f);
-        AnimatedRainbow.Parameters["oAngle"].SetValue(0f);
+        AnimatedRainbow.Parameters["oAngle"].SetValue(TankGame.RunTime * 0.1f);
         AnimatedRainbow.Parameters["oSpeed"].SetValue(0.5f);
-        AnimatedRainbow.Parameters["oMinLum"].SetValue(0.9f);
+        AnimatedRainbow.Parameters["oMinLum"].SetValue(0.1f);
 
         MouseShader.Parameters["oGlobalTime"].SetValue((float)TankGame.LastGameTime.TotalGameTime.TotalSeconds);
         var value = PlayerID.PlayerTankColors[PlayerTank.MyTankType];

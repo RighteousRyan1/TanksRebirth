@@ -373,7 +373,7 @@ public abstract class Tank {
         OwnedShells = new Shell[Properties.ShellLimit];*/
 
         InitModelSemantics();
-        if (TankGame.SecretCosmeticSetting) {
+        if (DebugManager.SecretCosmeticSetting) {
             for (int i = 0; i < 1; i++) {
                 var recieved = CosmeticChest.Basic.Open();
 

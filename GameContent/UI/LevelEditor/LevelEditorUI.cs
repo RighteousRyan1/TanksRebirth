@@ -55,6 +55,8 @@ public static partial class LevelEditorUI {
     public static int SelectedBlockType { get; private set; }
     public static int BlockHeight { get; private set; }
     public static bool Editing { get; internal set; }
+    public static bool HoveringAnyTank;
+
     internal static Mission cachedMission;
     public enum Category {
         EnemyTanks,
@@ -518,7 +520,7 @@ public static partial class LevelEditorUI {
             IntermissionSystem.TimeBlack = 180;
             CampaignGlobals.ShouldMissionsProgress = false;
             _loadTask ??= Task.Run(async () => {
-                await Task.Delay(TankGame.LogicTime).ConfigureAwait(false);
+                await Task.Delay(RuntimeData.LogicTime).ConfigureAwait(false);
                 while (IntermissionSystem.BlackAlpha > 0.8f || MainMenuUI.Active) {
                     if (IntermissionSystem.BlackAlpha == 0) {
                         // The user has exited without completing the transition by our greatly hardcoded poorly parallelized code.
@@ -527,7 +529,7 @@ public static partial class LevelEditorUI {
                         _loadTask = null;
                         return;
                     }
-                    await Task.Delay(TankGame.LogicTime).ConfigureAwait(false);
+                    await Task.Delay(RuntimeData.LogicTime).ConfigureAwait(false);
                 }
 
                 Active = true;
@@ -737,7 +739,7 @@ public static partial class LevelEditorUI {
         // TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], _missionButtonScissor, null, Color.Red * 0.5f, 0f, Vector2.Zero, default, 0f);
 
         // used to have an Active check, but since we only call this method when Active is true, don't bother
-        if (TankGame.HoveringAnyTank) {
+        if (HoveringAnyTank) {
             var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/leveledit/rotate");
             TankGame.SpriteRenderer.Draw(tex,
                 MouseUtils.MousePosition + new Vector2(20, -20).ToResolution(),
@@ -768,7 +770,9 @@ public static partial class LevelEditorUI {
                     0f,
                     new Vector2(TankGame.TextFont.MeasureString(txt).X / 2, 0));
         }
-        // i beleive this makes the text left-origin instead of center-origin
+
+        // i believe this makes the text left-origin instead of center-origin
+        // TODO: make text origin in relation to the ui element a property of the UI itself..?
         _campaignElems.ForEach(elem => {
             if (elem is UITextInput)
                 elem.DrawText = false;
@@ -794,6 +798,34 @@ public static partial class LevelEditorUI {
         //              Ryan
         if (!_initialized)
             return;
+
+        HoveringAnyTank = false;
+        // TODO: why is this here and not LevelEditor
+        // ... or literally anywhere else
+        if (!MainMenuUI.Active && (CameraGlobals.OverheadView || Active)) {
+            foreach (var tnk in GameHandler.AllTanks) {
+                if (tnk == null) continue;
+
+                if (tnk.Dead)
+                    continue;
+
+                if (RayUtils.GetMouseToWorldRay().Intersects(tnk.Worldbox).HasValue) {
+                    HoveringAnyTank = true;
+                    if (InputUtils.KeyJustPressed(Keys.K) && Array.IndexOf(GameHandler.AllTanks, tnk) > -1)
+                        tnk?.Destroy(new TankHurtContextOther()); // hmmm
+
+                    if (InputUtils.CanDetectClick(rightClick: true)) {
+                        tnk!.TankRotation = (tnk.TankRotation - MathHelper.PiOver2).WrapTauAngle() - MathHelper.Pi;
+                        tnk!.TurretRotation = (tnk.TurretRotation - MathHelper.PiOver2).WrapTauAngle() - MathHelper.Pi;
+                        tnk!.TurretRotation = (tnk.TurretRotation + MathHelper.PiOver2).WrapTauAngle() - MathHelper.Pi;
+                    }
+
+                    tnk.IsHoveredByMouse = true;
+                }
+                else
+                    tnk.IsHoveredByMouse = false;
+            }
+        }
 
         if (missionToRate == MainMenuUI.curMenuMission)
             ReturnToEditor.OnLeftClick?.Invoke(null);
@@ -924,7 +956,7 @@ public static partial class LevelEditorUI {
             _waitTime = delay;
         _isWaiting = true;
 
-        _waitTime -= TankGame.DeltaTime;
+        _waitTime -= RuntimeData.DeltaTime;
         if (_waitTime < 0) {
             ReturnToEditor?.OnLeftClick?.Invoke(null);
             _waitTime = 0;

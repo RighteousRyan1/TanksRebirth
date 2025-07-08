@@ -35,7 +35,7 @@ public abstract class TanksMod : ILoadable {
     /// <param name="path"></param>
     /// <returns></returns>
     public T ImportAsset<T>(string path) where T : class {
-        var defaultContentPath = Path.Combine(TankGame.GameDir, TankGame.Instance.Content.RootDirectory);
+        var defaultContentPath = Path.Combine(TankGame.GameDirectory, TankGame.Instance.Content.RootDirectory);
         var modContentPath = Path.Combine(TankGame.SaveDirectory, "Mods", InternalName);
 
         TankGame.Instance.Content.RootDirectory = modContentPath;

@@ -10,6 +10,8 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 - Added scores for every player in the game
 - Added 'Total terrain' info to the Level Info bar within the level editor
 - Added cursor trail that matches player color
+- Added a button to the campaigns menu instead of the user having to press Enter to download the latest version
+- Added the ability for the game to obtain hardware information on any OS (MacOS, Linux) instead of only Windows
 
 ## Changes
 
@@ -26,6 +28,8 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 - Revamped the multiplayer UI a little bit
 - Player scoreboards have been changed in color and look
 - "東方 Mode" changed to "Bullet Hell"
+- Window title has been changed to "Tanks! Rebirth"
+- LARGELY improved the mission intermission look, which looks about 99.9% accurate now
 
 ## Changes Important for Modders
 
@@ -34,7 +38,6 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 - Almost every asset is now stored in a more general folder
     - General-purpose models are now under `models`
     - All music is now in `music` or a subfolder under `music`
-- Enabling "Lantern Mode" no longer makes the main menu blur go away
 - `RotatedByRadians` -> `Rotate`
 - `TankID.Random` has been purged, for good reasons
 - Lots of camera-related things from `TankGame` are now located in `CameraGlobals`
@@ -46,14 +49,21 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 	- Old Yaw -> Roll
 	- Old Pitch -> Yaw
 	- Old Roll -> Pitch
+- `TankGame.PostDraw` -> `TankGame.PostDrawEverything`
+- Numerous rendering-related things are now stored in `RenderGlobals`
+- Many things from `TankGame` (such as frame time, delta time, etc) have been moved to `RuntimeData`
 
 ## Fixes
 
 - Pause UI now appears over everything
 - Citrine Tank Music now is prioritized over Ruby
-- Optmized various mathematical operations around the code, making things a bit more performant
+- Optimized various mathematical operations around the code, making things a bit more performant
 - Level editor now properly displays the correct mission name on the info bar
 - Fixed crash involving deleting the first mission of a campaign
+- Enabling "Lantern Mode" no longer makes the main menu blur go away
+- Resolution is only changed upon leaving the settings menu if you are *not* in full screen, fixing the black screen bug
+- Fixed the mission intermission screen having "overlap" while fading in and out
+- Fixed game not properly retrieving hardware information
 
 ## TODO
 

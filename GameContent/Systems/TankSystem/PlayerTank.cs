@@ -537,8 +537,8 @@ public class PlayerTank : Tank
             pathPos += pathDir;
 
             var pathPosScreen = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(pathPos.X, 11, pathPos.Y), CameraGlobals.GameView, CameraGlobals.GameProjection);
-            var off = MathF.Abs(MathF.Sin(i * MathF.PI / 5 - TankGame.RunTime * 0.3f));
-            var rgbColor = ColorUtils.HsvToRgb(TankGame.UpdateCount + i % 255 / 255f * 360, 1, 1);
+            var off = MathF.Abs(MathF.Sin(i * MathF.PI / 5 - RuntimeData.RunTime * 0.3f));
+            var rgbColor = ColorUtils.HsvToRgb(RuntimeData.UpdateCount + i % 255 / 255f * 360, 1, 1);
             var scale = Vector2.One * 4 * off;
             DrawUtils.DrawTextureWithBorder(TankGame.SpriteRenderer, whitePixel, pathPosScreen, Color.Black,
                 rgbColor, scale, 0f, Anchor.Center, 1f);

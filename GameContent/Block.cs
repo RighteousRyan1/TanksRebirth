@@ -21,13 +21,13 @@ public struct BlockTemplate {
     public Vector2 Position;
     public sbyte TpLink;
 
-    public Block GetBlock() {
-        Block c = new(Type, Stack, Position);
-
-        //c.Position = Position;
-        //if (c.Body != null)
-        //c.Body.Position = Position;
-        c.TpLink = TpLink;
+    public readonly Block GetBlock() {
+        Block c = new(Type, Stack, Position) {
+            //c.Position = Position;
+            //if (c.Body != null)
+            //c.Body.Position = Position;
+            TpLink = TpLink
+        };
 
         for (int i = 0; i < PlacementSquare.Placements.Count; i++) {
             if (c.Position3D == PlacementSquare.Placements[i].Position)
@@ -39,7 +39,8 @@ public struct BlockTemplate {
 }
 
 /// <summary>A class that is used for obstacles for <see cref="Tank"/>s.</summary>
-public class Block : IGameObject {
+public class Block : IGameObject
+{
     // TODO: ModBlock instance for the modblock used on this block instance...? to save performance in the future, obviously... same with other modded types
     public delegate void DestroyDelegate(Block block);
 
@@ -218,7 +219,7 @@ public class Block : IGameObject {
         }
         else
             Position = position;
-        
+
         Id = Array.FindIndex(AllBlocks, block => block is null);
 
         Swap(type);

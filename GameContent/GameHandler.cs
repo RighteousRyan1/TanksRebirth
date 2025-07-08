@@ -73,11 +73,6 @@ public class GameHandler {
         CosmeticsUI.Initialize();
         RebirthMouse.Initialize();
     }
-    public static Graph RenderFpsGraph = new("Render", () => (float)TankGame.RenderFPS, 200, 50, 3, 0.35f);
-    public static Graph LogicFpsGraph = new("Logic", () => (float)TankGame.LogicFPS, 200, 50, 3, 0.35f);
-
-    public static Graph RenderTimeGraph = new("Render Time", () => TankGame.RenderTime.Milliseconds, 50, 50, 3, 0.35f);
-    public static Graph LogicTimeGraph = new("Logic Time", () => TankGame.LogicTime.Milliseconds, 50, 50, 3, 0.35f);
     internal static void UpdateAll(GameTime gameTime) {
         /*void doTestWithFont() {
             var str = 
@@ -104,7 +99,7 @@ public class GameHandler {
 
         // TODO: move this code elsewhere.
         if (((DebugManager.DebuggingEnabled && DebugManager.DebugLevel == -2) || Difficulties.Types["TacticalPlanes"]) && CampaignGlobals.InMission) {
-            if (TankGame.RunTime % 300 <= TankGame.DeltaTime) {
+            if (RuntimeData.RunTime % 300 <= RuntimeData.DeltaTime) {
                 // 33% chance every 5 seconds
                 if (Server.ServerRandom.Next(3) == 0) {
                     // TODO: sync the plane over the net... soon!
@@ -112,7 +107,7 @@ public class GameHandler {
                     var vel = Airplane.ChooseRandomFlightTarget(GameRand, pos, 0.5f, 0.5f);
                     var plane = new Airplane(new Vector3(pos.X, 100, pos.Y), vel, 400f);
                     plane.WhileTrapDoorsOpened = () => {
-                        if (TankGame.RunTime % 30 <= TankGame.DeltaTime) {
+                        if (RuntimeData.RunTime % 30 <= RuntimeData.DeltaTime) {
                             ParticleGameplay.CreateSmokeGrenade(Particles, plane.Position, Vector3.Down + new Vector3(plane.Velocity.X, 0, plane.Velocity.Y) * 0.5f/* * GameRand.NextFloat(0.5f, 1.1f)*/);
                         }
                     };
@@ -179,10 +174,10 @@ public class GameHandler {
             foreach (var pu in Powerup.Powerups)
                 pu?.Update();
         }
-        else if (!CampaignGlobals.InMission)
-            if (TankMusicSystem.Audio is not null)
-                foreach (var song in TankMusicSystem.Audio.ToList())
-                    song.Value.Volume = 0;
+        else {
+            TankMusicSystem.StopAll();
+        }
+
         LevelEditorUI.Update();
 
         foreach (var expl in Explosion.Explosions)
@@ -274,14 +269,14 @@ public class GameHandler {
 
 
             if (DebugManager.DebuggingEnabled) {
-                DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"Logic Time: {TankGame.LogicTime.TotalMilliseconds:0.00}ms" +
-                                                           $"\nLogic FPS: {TankGame.LogicFPS}" +
-                                                           $"\n\nRender Time: {TankGame.RenderTime.TotalMilliseconds:0.00}ms" +
-                                                           $"\nRender FPS: {TankGame.RenderFPS}" +
+                DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"Logic Time: {RuntimeData.LogicTime.TotalMilliseconds:0.00}ms" +
+                                                           $"\nLogic FPS: {RuntimeData.LogicFPS}" +
+                                                           $"\n\nRender Time: {RuntimeData.RenderTime.TotalMilliseconds:0.00}ms" +
+                                                           $"\nRender FPS: {RuntimeData.RenderFPS}" +
                                                            $"\nKeys Q + W: Localhost Connect for Multiplayer Debug" +
                                                            $"\nKeys U + I: Unload All Mods" +
                                                            $"\nKeys O + P: Reload All Mods" +
-                                                           $"\nKeys Q + E: Resynchronize Randoms", new(10, 500));
+                                                           $"\nKeys Q + E: Resynchronize Randoms", new Vector2(10, 500));
 
                 DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"Current Mission: {CampaignGlobals.LoadedCampaign.CurrentMission.Name}\nCurrent Campaign: {CampaignGlobals.LoadedCampaign.MetaData.Name}", WindowUtils.WindowBottomLeft - new Vector2(-4, 60), 3, centered: false);
             }
@@ -336,26 +331,12 @@ public class GameHandler {
 
             element?.Draw(TankGame.SpriteRenderer);
 
-            if (element.HasScissor)
-                TankGame.SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: TankGame.DefaultRasterizer);
+            if (element!.HasScissor)
+                TankGame.SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: RenderGlobals.DefaultRasterizer);
         }
         foreach (var element in UIElement.AllUIElements)
             element?.DrawTooltips(TankGame.SpriteRenderer);
         CameraGlobals.SetMatrices();
-
-        if (DebugManager.DebugLevel == DebugManager.Id.SceneMetrics) {
-            if (TankGame.RunTime % 10f <= TankGame.DeltaTime) {
-                RenderFpsGraph.Update();
-                LogicFpsGraph.Update();
-
-                RenderTimeGraph.Update();
-                LogicTimeGraph.Update();
-            }
-            RenderFpsGraph.Draw(TankGame.SpriteRenderer, new Vector2(100, 200), 2);
-            LogicFpsGraph.Draw(TankGame.SpriteRenderer, new Vector2(100, 400), 2);
-            RenderTimeGraph.Draw(TankGame.SpriteRenderer, new Vector2(500, 200), 2);
-            LogicTimeGraph.Draw(TankGame.SpriteRenderer, new Vector2(500, 400), 2);
-        }
     }
     public static void SetupGraphics() {
         GameShaders.Initialize();

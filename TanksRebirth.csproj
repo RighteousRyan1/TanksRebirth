@@ -4,7 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <PublishReadyToRun>false</PublishReadyToRun>
     <TieredCompilation>false</TieredCompilation>
-    <AssemblyVersion>1.7.4</AssemblyVersion>
+    <AssemblyVersion>1.8</AssemblyVersion>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Nullable>enable</Nullable>
   </PropertyGroup>
@@ -30,13 +30,14 @@
   <ItemGroup>
     <PackageReference Include="Aether.Physics2D.MG" Version="1.6.1" />
     <PackageReference Include="FontStashSharp.MonoGame" Version="1.2.8" />
+    <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.4" />
     <PackageReference Include="LiteNetLib" Version="0.9.5.2" />
     <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.0.1641" />
     <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.0.1641" />
     <PackageReference Include="NativeFileDialogSharp" Version="0.5.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="StbVorbisSharp" Version="1.22.4" />
-    <PackageReference Include="System.Management" Version="6.0.0" />
+    <PackageReference Include="System.Management" Version="9.0.0" />
     <PackageReference Include="TextCopy" Version="6.1.0" />
   </ItemGroup>
   <ItemGroup>
@@ -62,21 +63,7 @@
   
   <ItemGroup>
     <!--Copy the contents of this folders to the output directory, for reference, https://stackoverflow.com/questions/44374074/ -->
-    <Content Include=
-"Content/Assets/fonts/*.*;&#xD;&#xA;
-Content/Assets/music/**/*.*;&#xD;&#xA;
-Content/Assets/sounds/**/*.*;&#xD;&#xA;
-Content/Assets/fanfares/**/*.*;&#xD;&#xA;
-Content/Assets/mainmenu/**/*.*;&#xD;&#xA;
-Content/Assets/textures/**/*.*;&#xD;&#xA;
-Content/Assets/*.png;&#xD;&#xA;
-Content/Assets/models/logo/**/*.png;&#xD;&#xA;
-Content/Assets/models/scene/**/*.png;&#xD;&#xA;
-Content/Assets/toy/**/*.png;&#xD;&#xA;
-Content/Assets/forest/**/*.png;&#xD;&#xA;
-Content/Assets/cosmetics/**/*.png;&#xD;&#xA;
-Content/Assets/christmas/**/*.png;&#xD;&#xA;
-Content/Assets/models/cosmetics/*.png;">
+    <Content Include="Content/Assets/fonts/*.*;&#xD;&#xA;&#xD;&#xA;Content/Assets/music/**/*.*;&#xD;&#xA;&#xD;&#xA;Content/Assets/sounds/**/*.*;&#xD;&#xA;&#xD;&#xA;Content/Assets/fanfares/**/*.*;&#xD;&#xA;&#xD;&#xA;Content/Assets/mainmenu/**/*.*;&#xD;&#xA;&#xD;&#xA;Content/Assets/textures/**/*.*;&#xD;&#xA;&#xD;&#xA;Content/Assets/*.png;&#xD;&#xA;&#xD;&#xA;Content/Assets/models/logo/**/*.png;&#xD;&#xA;&#xD;&#xA;Content/Assets/models/scene/**/*.png;&#xD;&#xA;&#xD;&#xA;Content/Assets/toy/**/*.png;&#xD;&#xA;&#xD;&#xA;Content/Assets/forest/**/*.png;&#xD;&#xA;&#xD;&#xA;Content/Assets/cosmetics/**/*.png;&#xD;&#xA;&#xD;&#xA;Content/Assets/christmas/**/*.png;&#xD;&#xA;&#xD;&#xA;Content/Assets/models/cosmetics/*.png;">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

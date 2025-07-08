@@ -31,10 +31,12 @@ float4 rainbowGrad(float4 sampleColor : COLOR0, float2 coords : TEXCOORD0) : COL
         rainbow = float3(1.0, 0.0, x);
     
     float4 color = tex2D(TexSampler, coords);
-    if (lum(color.rgb) > oMinLum)
-        color = lerp(color, float4(rainbow, color.a), oStrength);
-    else if (color.a > 0)
-        color = float4(0, 0, 0, 255);
+    if (color.a > 0)
+        if (lum(color.rgb) > oMinLum)
+            color = lerp(color, float4(rainbow, color.a), oStrength);
+    //else if (color.a > 0)
+        //color = float4(0, 0, 0, 255);
+    
     return color;
 }
 

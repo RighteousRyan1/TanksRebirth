@@ -4,7 +4,6 @@ using System.Text.Json;
 using System.Reflection;
 using System.Globalization;
 using System.Collections.Generic;
-using System.Linq;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
@@ -14,6 +13,7 @@ using Microsoft.Xna.Framework.Input;
 using FontStashSharp;
 using Microsoft.Xna.Framework.Audio;
 using Steamworks;
+
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.Utilities;
@@ -26,7 +26,6 @@ using TanksRebirth.Internals.Common.Framework;
 using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.GameContent.ModSupport;
-using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Systems.PingSystem;
 using TanksRebirth.GameContent.Systems;
@@ -38,23 +37,44 @@ using TanksRebirth.IO;
 using TanksRebirth.Achievements;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Speedrunning;
-using tainicom.Aether.Physics2D.Collision;
-using TanksRebirth.GameContent.Systems.Coordinates;
-using TanksRebirth.Internals.Common.Framework.Animation;
 using TanksRebirth.GameContent.Cosmetics;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.GameContent.UI.LevelEditor;
 
 namespace TanksRebirth;
 
-#pragma warning disable CS8618
+#pragma warning disable CS8618, CA2211
 public class TankGame : Game {
-    #region Fields1
+
+    // ### STRINGS ###
+    public string MOTD { get; private set; }
+    public static string GameDirectory { get; private set; }
+    public static readonly string ExePath = Assembly.GetExecutingAssembly().Location.Replace(@$"\{nameof(TanksRebirth)}.dll", string.Empty);
+    public static readonly string SaveDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "My Games", "Tanks Rebirth");
+
+    // ### BOOLEANS ###
+
+    public static bool IsCrashInfoVisible;
+    private bool _wasActive;
+
+    // ### STRUCTURES / CLASSES ###
+
+    public static JsonHandler<GameConfig> SettingsHandler;
+
+    private Vector2 _mouseOld;
+
+    public static TankGame Instance { get; private set; }
+    public static GameData GameData { get; private set; } = new();
+    public static GameTime LastGameTime { get; private set; }
+    /// <summary>The handle of the game's logging file. Used to write information to a file that can be read after the game closes.</summary>
+    public static Logger ClientLog { get; private set; }
+
+    public static GameConfig Settings;
 
     public static Language GameLanguage = new();
-    /// <summary>The identifier of the main thread.</summary>
-    public static int MainThreadId { get; private set; }
-    public static bool IsMainThread => Environment.CurrentManagedThreadId == MainThreadId;
+    public static Stopwatch CurrentSessionTimer = new();
+    public static readonly FpsTracker ProcessLifetimeFpsTracker = new();
+    public readonly GraphicsDeviceManager Graphics;
 
     /// <summary>Currently not functional due to programming problems.</summary>
     public static Camera GameCamera;
@@ -62,67 +82,32 @@ public class TankGame : Game {
     public static OrthographicCamera OrthographicCamera;
     public static SpectatorCamera SpectatorCamera;
     public static PerspectiveCamera PerspectiveCamera;
-
-    /// <summary>The hardware used by the user's computer.</summary>
-    public static ComputerSpecs CompSpecs { get; private set; }
-    public static TimeSpan RenderTime { get; private set; }
-    public static TimeSpan LogicTime { get; private set; }
-    public static double LogicFPS { get; private set; }
-    public static double RenderFPS { get; private set; }
-
-    /// <summary>Total memory used by the Garbage Collector.</summary>
-    public static ulong GCMemory => (ulong)GC.GetTotalMemory(false);
-    /// <summary>The amount of ticks elapsed in a second of update time.</summary>
-    public static float DeltaTime => Interp ? (!float.IsInfinity(60 / (float)LogicFPS) ? 60 / (float)LogicFPS : 0) : 1;
-
-    /// <summary>Currently used physical memory by this application in bytes.</summary>
-    public static long ProcessMemory {
-        get {
-            using Process process = Process.GetCurrentProcess();
-            return process.PrivateMemorySize64;
-        }
-    }
-    public static GameTime LastGameTime { get; private set; }
-    public static uint UpdateCount { get; private set; }
-    public static float RunTime { get; private set; }
-    public static TankGame Instance { get; private set; }
-    public static readonly string ExePath = Assembly.GetExecutingAssembly().Location.Replace(@$"\{nameof(TanksRebirth)}.dll", string.Empty);
     /// <summary>The index/vertex buffer used to render to a framebuffer.</summary>
     public static SpriteBatch SpriteRenderer;
-
-    public readonly GraphicsDeviceManager Graphics;
-
-    // private static List<IGameSystem> systems = new();
-
-    public static GameConfig Settings;
-
-    public JsonHandler<GameConfig> SettingsHandler;
-
-    public static readonly string SaveDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "My Games", "Tanks Rebirth");
-    public static GameData GameData { get; private set; } = new();
-
-    private FontSystem _fontSystem;
 
     public static SpriteFontBase TextFont;
     public static SpriteFontBase TextFontLarge;
 
+    public static AutoUpdater AutoUpdater;
+    public static AchievementPopupHandler VanillaAchievementPopupHandler;
+
+    public static RenderTarget2D GameFrameBuffer;
+
+    private readonly FontSystem _fontSystem;
+    public static RasterizerState _cachedState;
+
+    private static Particle _secret;
+    private static Particle _secretText;
+
+    // ### EVENTS ###
+
     public static event EventHandler<IntPtr> OnFocusLost;
     public static event EventHandler<IntPtr> OnFocusRegained;
 
-    private bool _wasActive;
+    public static event Action<GameTime> PostDrawEverything;
 
-    public readonly System.Version GameVersion;
-
-    public static OSPlatform OperatingSystem;
-    public static bool IsWindows => OperatingSystem == OSPlatform.Windows;
-    public static bool IsMac => OperatingSystem == OSPlatform.OSX;
-    public static bool IsLinux => OperatingSystem == OSPlatform.Linux;
-    public string MOTD { get; private set; }
-    #endregion
-
-    /// <summary>The handle of the game's logging file. Used to write information to a file that can be read after the game closes.</summary>
-    public static Logger ClientLog { get; private set; }
     public TankGame() : base() {
+        // prepare IO
         Directory.CreateDirectory(SaveDirectory);
         Directory.CreateDirectory(Path.Combine(SaveDirectory, "Resource Packs", "Scene"));
         Directory.CreateDirectory(Path.Combine(SaveDirectory, "Resource Packs", "Tank"));
@@ -130,6 +115,8 @@ public class TankGame : Game {
         Directory.CreateDirectory(Path.Combine(SaveDirectory, "Logs"));
         Directory.CreateDirectory(Path.Combine(SaveDirectory, "Backup"));
         ClientLog = new(Path.Combine(SaveDirectory, "Logs"), "client");
+
+        // logging speaks for itself
         Task.Run(() => {
             try {
                 ClientLog.Write(
@@ -151,65 +138,50 @@ public class TankGame : Game {
 
         // check if platform is windows, mac, or linux
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
-            OperatingSystem = OSPlatform.Windows;
+            RuntimeData.OS = OSPlatform.Windows;
         }
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
-            OperatingSystem = OSPlatform.OSX;
+            RuntimeData.OS = OSPlatform.OSX;
         }
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
-            OperatingSystem = OSPlatform.Linux;
+            RuntimeData.OS = OSPlatform.Linux;
         }
         
-        ClientLog.Write($"Playing on Operating System '{OperatingSystem}'", LogType.Info);
+        ClientLog.Write($"Playing on Operating System '{RuntimeData.OS}'", LogType.Info);
 
         // IOUtils.SetAssociation(".mission", "MISSION_FILE", "TanksRebirth.exe", "Tanks Rebirth mission file");
 
-        Graphics = new(this) { PreferHalfPixelOffset = true };
-        Graphics.HardwareModeSwitch = false;
+        Graphics = new(this) {
+            PreferHalfPixelOffset = true,
+            HardwareModeSwitch = false,
+            IsFullScreen = false
+        };
 
         Content.RootDirectory = "Content";
         Instance = this;
-        Window.Title = "Tanks! Rebirth";
         Window.AllowUserResizing = true;
 
         IsMouseVisible = false;
 
-        Graphics.IsFullScreen = false;
-
         _fontSystem = new();
 
-        GameVersion = typeof(TankGame).Assembly.GetName().Version!;
+        RuntimeData.GameVersion = typeof(TankGame).Assembly.GetName().Version!;
 
         ClientLog.Write(
-            $"Running {typeof(TankGame).Assembly.GetName().Name} on version '{GameVersion}'",
+            $"Running {typeof(TankGame).Assembly.GetName().Name} on version '{RuntimeData.GameVersion}'",
             LogType.Info);
-    }
-
-    public static ulong MemoryUsageInBytes;
-
-    public static Stopwatch CurrentSessionTimer = new();
-
-    public static DateTime LaunchTime;
-    public static bool IsSouthernHemi;
-
-    public static string GameDir { get; private set; }
-
-    public static AutoUpdater AutoUpdater;
-
-    public static AchievementPopupHandler VanillaAchievementPopupHandler;
-
-    private void PreparingDeviceSettingsListener(object sender, PreparingDeviceSettingsEventArgs ev) {
-        ev.GraphicsDeviceInformation.PresentationParameters.RenderTargetUsage = RenderTargetUsage.PreserveContents;
     }
 
     protected override void Initialize() {
         GameHandler.Initialize();
-        GameDir = Directory.GetCurrentDirectory();
+        GameDirectory = Directory.GetCurrentDirectory();
         CameraGlobals.Initialize(GraphicsDevice);
         if (Debugger.IsAttached && SteamAPI.IsSteamRunning()) {
             ClientLog.Write("Initialising SteamWorks API...", LogType.Debug);
             SteamworksUtils.Initialize();
         }
+        Window.Title = "Tanks! Rebirth";
+
         CurrentSessionTimer.Start();
         PingMenu.Initialize();
 
@@ -226,9 +198,6 @@ public class TankGame : Game {
         SpriteRenderer = new(GraphicsDevice);
 
         Graphics.PreferMultiSampling = true;
-
-        // Prevent the backbuffer from being wiped when switching render targets... to be reimplemented...
-        // Graphics.PreparingDeviceSettings += PreparingDeviceSettingsListener;
 
         Graphics.ApplyChanges();
 
@@ -248,29 +217,33 @@ public class TankGame : Game {
 
         base.Initialize();
     }
-
-    public static void Quit()
-        => Instance.Exit();
-
     protected override void OnExiting(object sender, EventArgs args) {
         ClientLog.Write($"Handling termination process...", LogType.Info);
+
+        // update game-related numbers
         GameData.TimePlayed += CurrentSessionTimer.Elapsed;
-        CurrentSessionTimer.Stop();
-        ClientLog.Dispose();
+
+        // save everything related to game-data
         SettingsHandler = new(Settings, Path.Combine(SaveDirectory, "settings.json"));
         JsonSerializerOptions opts = new() { WriteIndented = true };
         SettingsHandler.Serialize(opts, true);
         GameData.Serialize();
 
         DiscordRichPresence.Terminate();
+
+        CurrentSessionTimer.Stop();
+
+        // write end-life metrics
+
+        ClientLog.Write($"Average overall FPS: {ProcessLifetimeFpsTracker.AverageFPS}", LogType.Info);
+        ClientLog.Write($"Session time: {CurrentSessionTimer.Elapsed.StringFormat()}", LogType.Info);
+
+        ClientLog.Dispose();
     }
-
-    void PreloadContent() {
-
+    private static void PreloadContent() {
         // TODO: is it emportant that these paths are all hardcoded? i'm doubtful.
         // do more dynamically..?
 
-        //List<string> textures = new();
         string[] textures = [
             // Misc
             "Assets/christmas/snowflake_0",
@@ -367,33 +340,32 @@ public class TankGame : Game {
             sounds.ToArray()
             , default);
     }
-
     protected override void LoadContent() {
         PreloadContent();
         var s = Stopwatch.StartNew();
 
-        MainThreadId = Environment.CurrentManagedThreadId;
+        RuntimeData.MainThreadId = Environment.CurrentManagedThreadId;
 
         OrthographicCamera = new(0, 0, 1920, 1080, -2000, 5000);
         SpectatorCamera = new(MathHelper.ToRadians(100), GraphicsDevice.Viewport.AspectRatio, 0.1f, 5000f);
         PerspectiveCamera = new(MathHelper.ToRadians(90), GraphicsDevice.Viewport.AspectRatio, 0.1f, 5000f);
 
         Task.Run(() => {
-            CompSpecs = ComputerSpecs.GetSpecs(out bool error);
+            RuntimeData.CompSpecs = ComputerSpecs.GetSpecs(out bool error);
 
             if (error) {
                 ClientLog.Write(
-                    "Unable to load computer specs: Specified OS Architecture is not Windows.",
+                    "Unable to load computer specs: Error.",
                     LogType.Warn);
             }
             else {
-                ClientLog.Write($"CPU: {CompSpecs.CPU.Name} (Core Count: {CompSpecs.CPU.CoreCount})", LogType.Info);
-                ClientLog.Write($"GPU: {CompSpecs.GPU.Name} (Driver Version: {CompSpecs.GPU.DriverVersion} | VRAM: {MathF.Round(MemoryParser.FromGigabytes(CompSpecs.GPU.VRAM))} GB)", LogType.Info);
-                ClientLog.Write($"Physical Memory (RAM): {CompSpecs.RAM.Manufacturer} {MathF.Round(MemoryParser.FromGigabytes(CompSpecs.RAM.TotalPhysical))} GB {CompSpecs.RAM.Type}@{CompSpecs.RAM.ClockSpeed}Mhz", LogType.Info);
+                ClientLog.Write($"CPU: {RuntimeData.CompSpecs.CPU}", LogType.Info);
+                ClientLog.Write($"GPU: {RuntimeData.CompSpecs.GPU}", LogType.Info);
+                ClientLog.Write($"Physical Memory (RAM): {RuntimeData.CompSpecs.RAM}", LogType.Info);
             }
 
-            if (!CompSpecs.Equals(default) && !error) {
-                var profiler = new SpecAnalysis(CompSpecs.GPU, CompSpecs.CPU, CompSpecs.RAM);
+            if (!RuntimeData.CompSpecs.Equals(default) && !error) {
+                var profiler = new SpecAnalysis(RuntimeData.CompSpecs.GPU, RuntimeData.CompSpecs.CPU, RuntimeData.CompSpecs.RAM);
 
                 profiler.Analyze(false, out var ramr, out var gpur, out var cpur);
 
@@ -448,10 +420,10 @@ public class TankGame : Game {
             SettingsHandler = new(Settings, Path.Combine(SaveDirectory, "settings.json"));
             Settings = SettingsHandler.Deserialize();
         }
-        LaunchTime = DateTime.Now;
-        IsSouthernHemi = RegionUtils.IsSouthernHemisphere(RegionInfo.CurrentRegion.EnglishName);
+        RuntimeData.LaunchTime = DateTime.Now;
+        RuntimeData.IsSouthernHemi = RegionUtils.IsSouthernHemisphere(RegionInfo.CurrentRegion.EnglishName);
 
-        if (IsSouthernHemi)
+        if (RuntimeData.IsSouthernHemi)
             ClientLog.Write("User is in the southern hemisphere.", LogType.Info);
         else
             ClientLog.Write("User is in the northern hemisphere.", LogType.Info);
@@ -528,7 +500,7 @@ public class TankGame : Game {
             });
         }
 
-        ClientLog.Write("Running in directory: " + GameDir, LogType.Info);
+        ClientLog.Write("Running in directory: " + GameDirectory, LogType.Info);
 
         ClientLog.Write($"Content loaded in {s.Elapsed}.", LogType.Debug);
         ClientLog.Write($"DebugMode: {Debugger.IsAttached}", LogType.Debug);
@@ -538,71 +510,23 @@ public class TankGame : Game {
         // it isnt really an autoupdater tho.
         Task.Run(() => {
             ClientLog.Write("Checking for update...", LogType.Info);
-            AutoUpdater = new("https://github.com/RighteousRyan1/TanksRebirth", GameVersion);
+            AutoUpdater = new("https://github.com/RighteousRyan1/TanksRebirth", RuntimeData.GameVersion);
 
             if (!AutoUpdater.IsOutdated) {
                 ClientLog.Write("Game is up to date.", LogType.Info);
                 return;
             }
 
-            ClientLog.Write($"Game is out of date (current={GameVersion}, recent={AutoUpdater.GetRecentVersion()}).", LogType.Warn);
+            ClientLog.Write($"Game is out of date (current={RuntimeData.GameVersion}, recent={AutoUpdater.GetRecentVersion()}).", LogType.Warn);
             //CommandGlobals.IsUpdatePending = true;
-            ChatSystem.SendMessage($"Outdated game version detected (current={GameVersion}, recent={AutoUpdater.GetRecentVersion()}).", Color.Red);
+            ChatSystem.SendMessage($"Outdated game version detected (current={RuntimeData.GameVersion}, recent={AutoUpdater.GetRecentVersion()}).", Color.Red);
             //ChatSystem.SendMessage("Type /update to update the game and automatically restart.", Color.Red);
             SoundPlayer.SoundError();
         });
         PlaceSecrets();
         SceneManager.GameLight.Apply(false);
     }
-    public static void ReportError(Exception e, bool notifyUser = true, bool openFile = true, bool writeToLog = true) {
-        if (writeToLog)
-            ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.ErrorFatal);
-        if (notifyUser) {
-            var str = $"The error above is important for the developer of this game. If you are able to report it, explain how to reproduce it.";
-            if (openFile)
-                str += $"\nThis file was opened for your sake of helping the developer out.";
-            ClientLog.Write(str, LogType.Info);
-        }
-        if (openFile)
-            Process.Start(new ProcessStartInfo(ClientLog.FileName) {
-                UseShellExecute = true,
-                WorkingDirectory = Path.Combine(SaveDirectory, "Logs"),
-            });
-    }
-    private void TankGame_OnFocusRegained(object sender, IntPtr e) {
-        if (TankMusicSystem.IsLoaded) {
-            if (Thunder.SoftRain.IsPaused())
-                Thunder.SoftRain.Instance.Resume();
-            TankMusicSystem.ResumeAll();
-            if (MainMenuUI.Active)
-                MainMenuUI.Theme.Resume();
-            if (LevelEditorUI.Active)
-                LevelEditorUI.Theme.Resume();
-        }
-    }
-    private void TankGame_OnFocusLost(object sender, IntPtr e) {
-        if (TankMusicSystem.IsLoaded) {
-            if (Thunder.SoftRain.IsPlaying())
-                Thunder.SoftRain.Instance.Pause();
-            TankMusicSystem.PauseAll();
-            if (MainMenuUI.Active)
-                MainMenuUI.Theme.Pause();
-            if (LevelEditorUI.Active)
-                LevelEditorUI.Theme.Pause();
-        }
-    }
-
-    #region Various Fields
-    public static bool SecretCosmeticSetting;
-    public static bool Interp { get; set; } = true;
-
-    public static bool HoveringAnyTank;
-
-    #endregion
-
-    public static bool IsCrashInfoVisible;
-    public static CrashReportInfo CrashInfo;
-
+    // FIXME: this method is a clusterfuck
     protected override void Update(GameTime gameTime) {
         try {
             /*if (Debugger.IsAttached) {
@@ -610,7 +534,7 @@ public class TankGame : Game {
                 SteamFriends.GetFriendGamePlayed(SteamFriends.GetFriendByIndex(0, EFriendFlags.k_EFriendFlagAll), out var x);
 
             }*/
-            DoUpdate(gameTime);
+            HandleLogic(gameTime);
         }
         catch (Exception e) when (!Debugger.IsAttached) {
             ReportError(e, false, false);
@@ -625,45 +549,31 @@ public class TankGame : Game {
             }
 
             IsCrashInfoVisible = true;
-            CrashInfo = new(e.Message, e.StackTrace ?? "No stack trace available.", e);
+            RuntimeData.CrashInfo = new(e.Message, e.StackTrace ?? "No stack trace available.", e);
         }
     }
-
-    private Vector2 _mOld;
-    private void DoUpdate(GameTime gameTime) {
+    private void HandleLogic(GameTime gameTime) {
         MouseUtils.MousePosition = new(InputUtils.CurrentMouseSnapshot.X, InputUtils.CurrentMouseSnapshot.Y);
-        MouseUtils.MouseVelocity = MouseUtils.MousePosition - _mOld;
+        MouseUtils.MouseVelocity = MouseUtils.MousePosition - _mouseOld;
 
         #region Non-Camera
 
-        TargetElapsedTime = TimeSpan.FromMilliseconds(Interp ? 16.67 * (60f / Settings.TargetFPS) : 16.67);
+        TargetElapsedTime = TimeSpan.FromMilliseconds(RuntimeData.Interp ? 16.67 * (60f / Settings.TargetFPS) : 16.67);
 
-        if (!float.IsInfinity(DeltaTime))
-            RunTime += DeltaTime;
+        if (!float.IsInfinity(RuntimeData.DeltaTime))
+            RuntimeData.RunTime += RuntimeData.DeltaTime;
 
         if (!IsCrashInfoVisible) {
-            if (InputUtils.AreKeysJustPressed(Keys.LeftAlt, Keys.RightAlt))
-                Lighting.AccurateShadows = !Lighting.AccurateShadows;
-            if (InputUtils.AreKeysJustPressed(Keys.LeftShift, Keys.RightShift))
-                RenderWireframe = !RenderWireframe;
-
-            if (DebugManager.DebuggingEnabled && InputUtils.AreKeysJustPressed(Keys.O, Keys.P))
-                ModLoader.LoadMods();
-            if (DebugManager.DebuggingEnabled && InputUtils.AreKeysJustPressed(Keys.U, Keys.I))
-                ModLoader.UnloadAll();
             if (SteamworksUtils.IsInitialized)
                 SteamworksUtils.Update();
 
-            if (InputUtils.AreKeysJustPressed(Keys.Left, Keys.Right, Keys.Up, Keys.Down)) {
-                SecretCosmeticSetting = !SecretCosmeticSetting;
-                ChatSystem.SendMessage(SecretCosmeticSetting ? "Activated randomized cosmetics!" : "Deactivated randomized cosmetics.", SecretCosmeticSetting ? Color.Lime : Color.Red);
-            }
             if (InputUtils.KeyJustPressed(Keys.F1)) {
                 Speedrun.SpeedrunMode = !Speedrun.SpeedrunMode;
                 if (Speedrun.SpeedrunMode)
                     CampaignGlobals.OnMissionStart += Speedrun.StartSpeedrun;
                 else
                     CampaignGlobals.OnMissionStart -= Speedrun.StartSpeedrun;
+
                 ChatSystem.SendMessage(Speedrun.SpeedrunMode ? "Speedrun mode on!" : "Speedrun mode off.", Speedrun.SpeedrunMode ? Color.Lime : Color.Red);
             }
             if (InputUtils.AreKeysJustPressed(Keys.RightAlt, Keys.Enter) || InputUtils.AreKeysJustPressed(Keys.LeftAlt, Keys.Enter)) {
@@ -672,24 +582,17 @@ public class TankGame : Game {
             }
 
             RebirthMouse.ShouldRender = !Difficulties.Types["POV"] || GameUI.Paused || MainMenuUI.Active || LevelEditorUI.Active;
+
+            UIElement.UpdateElements();
+            GameUI.UpdateButtons();
+
+            // i have NO clue what this does i forgot
             if (UIElement.delay > 0)
                 UIElement.delay--;
         }
 
-        if (NetPlay.CurrentClient is not null)
-            Client.ClientManager.PollEvents();
-        if (NetPlay.CurrentServer is not null)
-            Server.NetManager.PollEvents();
-        if (!IsCrashInfoVisible) {
-            UIElement.UpdateElements();
-            GameUI.UpdateButtons();
-        }
-
+        NetPlay.PollEvents();
         DiscordRichPresence.Update();
-
-        if (UpdateCount % 60 == 0 && DebugManager.DebuggingEnabled) {
-            MemoryUsageInBytes = (ulong)ProcessMemory;
-        }
 
         LastGameTime = gameTime;
 
@@ -717,20 +620,21 @@ public class TankGame : Game {
         //GameView = GameCamera.View;
         //GameProjection = GameCamera.Projection;
 
-        LogicTime = gameTime.ElapsedGameTime;
+        RuntimeData.LogicTime = gameTime.ElapsedGameTime;
 
-        LogicFPS = Math.Round(1f / gameTime.ElapsedGameTime.TotalSeconds);
+        RuntimeData.LogicFPS = Math.Round(1f / gameTime.ElapsedGameTime.TotalSeconds);
 
         _wasActive = IsActive;
         //Console.WriteLine($"{MouseUtils.MousePosition} - {_mOld}");
-        _mOld = MouseUtils.MousePosition;
+        _mouseOld = MouseUtils.MousePosition;
     }
 
+    // wtf is wrong with me btw this code is ass
     private void DoUpdate2(GameTime gameTime) {
         // TODO: this
-        IsFixedTimeStep = !Settings.Vsync || !Interp;
+        IsFixedTimeStep = !Settings.Vsync || !RuntimeData.Interp;
 
-        UpdateCount++;
+        RuntimeData.UpdateCount++;
 
         GameShaders.UpdateShaders();
 
@@ -739,151 +643,84 @@ public class TankGame : Game {
         bool shouldUpdate = Client.IsConnected() || (IsActive && !GameUI.Paused && !CampaignCompleteUI.IsViewingResults);
         if (!IsCrashInfoVisible) {
             if (shouldUpdate) {
-                if (InputUtils.AreKeysJustPressed(Keys.S, Keys.U, Keys.P, Keys.E, Keys.R)) {
-                    if (!SuperSecretDevOption)
-                        ChatSystem.SendMessage("You're a devious young one, aren't you?", Color.Orange, "DEBUG", true);
-                    else
-                        ChatSystem.SendMessage("I guess you aren't a devious one.", Color.Orange, "DEBUG", true);
-                    SuperSecretDevOption = !SuperSecretDevOption;
-                }
-
                 GameHandler.UpdateAll(gameTime);
 
                 // questionable as to why it causes hella lag on game start
                 // TODO: try and find out why this happens lol.
-                Tank.CollisionsWorld.Step(float.IsInfinity(DeltaTime) ? 1f : DeltaTime);
-
-                HoveringAnyTank = false;
-                // TODO: why is this here and not LevelEditor
-                // ... or literally anywhere else
-                if (!MainMenuUI.Active && (CameraGlobals.OverheadView || LevelEditorUI.Active)) {
-                    foreach (var tnk in GameHandler.AllTanks) {
-                        if (tnk == null) continue;
-
-                        if (tnk.Dead)
-                            continue;
-
-                        if (RayUtils.GetMouseToWorldRay().Intersects(tnk.Worldbox).HasValue) {
-                            HoveringAnyTank = true;
-                            if (InputUtils.KeyJustPressed(Keys.K) && Array.IndexOf(GameHandler.AllTanks, tnk) > -1)
-                                tnk?.Destroy(new TankHurtContextOther()); // hmmm
-
-                            if (InputUtils.CanDetectClick(rightClick: true)) {
-                                tnk!.TankRotation = (tnk.TankRotation - MathHelper.PiOver2).WrapTauAngle() - MathHelper.Pi;
-                                tnk!.TurretRotation = (tnk.TurretRotation - MathHelper.PiOver2).WrapTauAngle() - MathHelper.Pi;
-                                tnk!.TurretRotation = (tnk.TurretRotation + MathHelper.PiOver2).WrapTauAngle() - MathHelper.Pi;
-                            }
-
-                            tnk.IsHoveredByMouse = true;
-                        }
-                        else
-                            tnk.IsHoveredByMouse = false;
-                    }
-                }
+                if (!float.IsFinite(RuntimeData.DeltaTime))
+                    Tank.CollisionsWorld.Step(RuntimeData.DeltaTime);
             }
         }
         foreach (var bind in Keybind.AllKeybinds)
             bind?.Update();
     }
-
-    public static Color ClearColor = Color.Black;
-
-    public static bool RenderWireframe = false;
-
-    public static RasterizerState _cachedState;
-    public static RasterizerState DefaultRasterizer => RenderWireframe ? new() { FillMode = FillMode.WireFrame } : RasterizerState.CullNone;
-
-    public static RenderTarget2D GameFrameBuffer;
-
-    public static event Action<GameTime> OnPostDraw;
     public static void SaveRenderTarget(string path = "screenshot.png") {
         using var fs = new FileStream(path, FileMode.OpenOrCreate);
         GameFrameBuffer.SaveAsPng(fs, GameFrameBuffer.Width, GameFrameBuffer.Height);
         ChatSystem.SendMessage("Saved image to " + fs.Name, Color.Lime);
     }
-
-    public static bool SuperSecretDevOption;
-
-    private static DepthStencilState _stencilState = DepthStencilState.Default;
-
-    public static SamplerState WrappingSampler = new() {
-        AddressU = TextureAddressMode.Wrap,
-        AddressV = TextureAddressMode.Wrap,
-    };
-    public static SamplerState ClampingSampler = new() {
-        AddressU = TextureAddressMode.Clamp,
-        AddressV = TextureAddressMode.Clamp,
-    };
-    // FIXME: this method is a clusterfuck
-    protected override void Draw(GameTime gameTime) {
+    public static void ReportError(Exception? e, bool notifyUser = true, bool openFile = true, bool writeToLog = true) {
+        if (writeToLog)
+            ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.ErrorFatal);
+        if (notifyUser) {
+            var str = $"The error above is important for the developer of this game. If you are able to report it, explain how to reproduce it.";
+            if (openFile)
+                str += $"\nThis file was opened for your sake of helping the developer out.";
+            ClientLog.Write(str, LogType.Info);
+        }
+        if (openFile)
+            Process.Start(new ProcessStartInfo(ClientLog.FileName) {
+                UseShellExecute = true,
+                WorkingDirectory = Path.Combine(SaveDirectory, "Logs"),
+            });
+    }
+    public static void Quit() => Instance.Exit();
+    public void PrepareGameRT(SpriteBatch spriteBatch) {
         if (GameFrameBuffer == null || GameFrameBuffer.IsDisposed || GameFrameBuffer.Size() != WindowUtils.WindowBounds) {
             GameFrameBuffer?.Dispose();
             var presentationParams = GraphicsDevice.PresentationParameters;
             GameFrameBuffer = new RenderTarget2D(GraphicsDevice, presentationParams.BackBufferWidth, presentationParams.BackBufferHeight, false, presentationParams.BackBufferFormat, presentationParams.DepthStencilFormat, 0, RenderTargetUsage.PreserveContents);
         }
-        // switch to RT, begin SB, do drawing, end SB, SetRenderTarget(null), begin SB again, draw RT, end SB
-        GraphicsDevice.SetRenderTarget(GameFrameBuffer);
-
-        GraphicsDevice.Clear(ClearColor);
         // TankFootprint.DecalHandler.UpdateRenderTarget();
-        SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: DefaultRasterizer);
-        GraphicsDevice.DepthStencilState = _stencilState;
-        GraphicsDevice.SamplerStates[0] = WrappingSampler;
+        GraphicsDevice.SetRenderTarget(GameFrameBuffer);
+        GraphicsDevice.Clear(RenderGlobals.BackBufferColor);
+
+        spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: RenderGlobals.DefaultRasterizer);
+
+        GraphicsDevice.DepthStencilState = RenderGlobals.DefaultStencilState;
+
+        // so the meshes that need UV wrapping will work
+        GraphicsDevice.SamplerStates[0] = RenderGlobals.WrappingSampler;
         RoomScene.Render();
         CosmeticsUI.RenderCrates();
-        GraphicsDevice.SamplerStates[0] = ClampingSampler;
+        GraphicsDevice.SamplerStates[0] = RenderGlobals.ClampingSampler;
         GameHandler.RenderAll();
-        SpriteRenderer.End();
+
+        spriteBatch.End();
         // stop drawing the regular game scene
         GraphicsDevice.SetRenderTarget(null);
-
-        var shader = Difficulties.Types["LanternMode"] && !MainMenuUI.Active ? GameShaders.LanternShader : (MainMenuUI.Active ? GameShaders.GaussianBlurShader : null);
-        if (!GameScene.ShouldRenderAll) shader = null;
-        SpriteRenderer.Begin(effect: shader);
-        SpriteRenderer.Draw(GameFrameBuffer, Vector2.Zero, null, Color.White, 0f, Vector2.Zero, Vector2.One, default, 0f);
-        SpriteRenderer.End();
-
-        // holy balls this sucks.
-        GraphicsDevice.DepthStencilState = _stencilState;
-        MainMenuUI.RenderModels();
-
-        SpriteRenderer.Begin();
-        if (MainMenuUI.Active) MainMenuUI.Render();
-        // i really wish i didn't have to draw this here.
-        VanillaAchievementPopupHandler.DrawPopup(SpriteRenderer);
-        if (Debugger.IsAttached) SpriteRenderer.DrawString(TextFont, "DEBUGGER ATTACHED", new Vector2(10, 50), Color.Red, new Vector2(0.8f));
-        DebugManager.DrawDebug(SpriteRenderer);
-        DebugManager.DrawDebugMetrics();
-        Speedrun.DrawSpeedrunHUD(SpriteRenderer);
-        SpriteRenderer.End();
-
-        ChatSystem.DrawMessages();
-
-        SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: DefaultRasterizer);
-        //if (LevelEditorUI.Active) LevelEditorUI.Render();
-        if (CampaignCompleteUI.IsViewingResults) CampaignCompleteUI.Render();
-        SpriteRenderer.End();
-
-        // this method begins the spritebatch, since it's supposed to have its own
-        IntermissionSystem.Draw(SpriteRenderer);
-
-        SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: DefaultRasterizer);
-        GameHandler.RenderUI();
-        IntermissionSystem.DrawBlack(SpriteRenderer);
-        if (IsCrashInfoVisible) DrawErrorScreen();
-        SpriteRenderer.End();
-
-        SpriteRenderer.Begin(blendState: BlendState.AlphaBlend, effect: GameShaders.MouseShader, rasterizerState: DefaultRasterizer);
-        RebirthMouse.DrawMouse();
-        SpriteRenderer.End();
-
-        OnPostDraw?.Invoke(gameTime);
-        RenderTime = gameTime.ElapsedGameTime;
-        RenderFPS = Math.Round(1f / gameTime.ElapsedGameTime.TotalSeconds);
     }
+    protected override void Draw(GameTime gameTime) {
+        PrepareAllRTs();
 
+        DrawGameElements();
+
+        DrawNonInteractiveUI();
+
+        DrawInteractiveUI();
+
+        DrawCursor();
+
+        PostDrawEverything?.Invoke(gameTime);
+
+        RuntimeData.RenderTime = gameTime.ElapsedGameTime;
+        RuntimeData.RenderFPS = Math.Round(1f / gameTime.ElapsedGameTime.TotalSeconds);
+
+        // we only want to track frames where the game is active because if they aren't tabbed into the game, it locks to ~42fps
+        if (IsActive)
+            ProcessLifetimeFpsTracker.Update(gameTime.ElapsedGameTime.TotalSeconds);
+    }
     private static void DrawErrorScreen() {
-
         SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], WindowUtils.ScreenRect, Color.Blue);
 
         SpriteRenderer.DrawString(TextFontLarge, ":(", new Vector2(100, 100).ToResolution(), Color.White, (Vector2.One).ToResolution());
@@ -893,15 +730,15 @@ public class TankGame : Game {
             new Vector2(100, 250).ToResolution(),
             Color.White,
             (Vector2.One * 0.4f).ToResolution());
-        SpriteRenderer.DrawString(TextFontLarge, CrashInfo.Reason, new Vector2(100, 500).ToResolution(), Color.White, (Vector2.One * 0.3f).ToResolution());
-        SpriteRenderer.DrawString(TextFontLarge, CrashInfo.Description, new Vector2(100, 550).ToResolution(), Color.White, (Vector2.One * 0.2f).ToResolution());
+        SpriteRenderer.DrawString(TextFontLarge, RuntimeData.CrashInfo.Reason, new Vector2(100, 500).ToResolution(), Color.White, (Vector2.One * 0.3f).ToResolution());
+        SpriteRenderer.DrawString(TextFontLarge, RuntimeData.CrashInfo.Description, new Vector2(100, 550).ToResolution(), Color.White, (Vector2.One * 0.2f).ToResolution());
 
         var yMsg = "Press 'Y' to proceed with closing the game.";
         var nMsg = "Press 'N' to attempt to carry on with the game.";
         SpriteRenderer.DrawString(TextFontLarge, yMsg, WindowUtils.WindowBottomLeft + new Vector2(10, -10), Color.White, (Vector2.One * 0.2f).ToResolution(), origin: GameUtils.GetAnchor(Anchor.BottomLeft, TextFontLarge.MeasureString(yMsg)));
         SpriteRenderer.DrawString(TextFontLarge, nMsg, WindowUtils.WindowBottomRight + new Vector2(-10, -10), Color.White, (Vector2.One * 0.2f).ToResolution(), origin: GameUtils.GetAnchor(Anchor.BottomRight, TextFontLarge.MeasureString(nMsg)));
         if (InputUtils.KeyJustPressed(Keys.Y)) {
-            ReportError(CrashInfo.Cause, true, true, false);
+            ReportError(RuntimeData.CrashInfo.Cause, true, true, false);
             Quit();
         }
         if (InputUtils.KeyJustPressed(Keys.N)) {
@@ -909,9 +746,62 @@ public class TankGame : Game {
             TankMusicSystem.ResumeAll();
         }
     }
-    private static Particle _secret;
-    private static Particle _secretText;
+    public static void DrawInteractiveUI() {
+        ChatSystem.DrawMessages();
 
+        SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: RenderGlobals.DefaultRasterizer);
+
+        // if (LevelEditorUI.Active) LevelEditorUI.Render();
+        if (CampaignCompleteUI.IsViewingResults) CampaignCompleteUI.Render();
+        SpriteRenderer.End();
+
+        // this method begins the spritebatch, since it's supposed to have its own
+        IntermissionSystem.Draw(SpriteRenderer);
+
+        SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: RenderGlobals.DefaultRasterizer);
+
+        GameHandler.RenderUI();
+        IntermissionSystem.DrawBlack(SpriteRenderer);
+        if (IsCrashInfoVisible) DrawErrorScreen();
+
+        SpriteRenderer.End();
+    }
+    public void DrawNonInteractiveUI() {
+        // holy balls this sucks.
+        GraphicsDevice.DepthStencilState = RenderGlobals.DefaultStencilState;
+        MainMenuUI.RenderModels();
+
+        SpriteRenderer.Begin();
+
+        if (MainMenuUI.Active) MainMenuUI.Render();
+        // i really wish i didn't have to draw this here.
+        VanillaAchievementPopupHandler.DrawPopup(SpriteRenderer);
+
+        if (Debugger.IsAttached) SpriteRenderer.DrawString(TextFont, "DEBUGGER ATTACHED", new Vector2(10, 50), Color.Red, new Vector2(0.8f));
+        DebugManager.DrawDebug(SpriteRenderer);
+        DebugManager.DrawDebugMetrics();
+        Speedrun.DrawSpeedrunHUD(SpriteRenderer);
+
+        SpriteRenderer.End();
+    }
+    public void PrepareAllRTs() {
+        // switch to RT, begin SB, do drawing, end SB, SetRenderTarget(null), begin SB again, draw RT, end SB
+        MainMenuUI.PrepareTextRTs(GraphicsDevice, SpriteRenderer);
+        PrepareGameRT(SpriteRenderer);
+        IntermissionSystem.PrepareRTs(GraphicsDevice, SpriteRenderer);
+    }
+    public static void DrawGameElements() {
+        var shader = Difficulties.Types["LanternMode"] && !MainMenuUI.Active ? GameShaders.LanternShader : (MainMenuUI.Active ? GameShaders.GaussianBlurShader : null);
+        if (!GameScene.ShouldRenderAll) shader = null;
+        SpriteRenderer.Begin(effect: shader);
+        SpriteRenderer.Draw(GameFrameBuffer, Vector2.Zero, null, Color.White, 0f, Vector2.Zero, Vector2.One, default, 0f);
+        SpriteRenderer.End();
+    } 
+    public static void DrawCursor() {
+        SpriteRenderer.Begin(blendState: BlendState.AlphaBlend, effect: GameShaders.MouseShader, rasterizerState: RenderGlobals.DefaultRasterizer);
+        RebirthMouse.DrawMouse();
+        SpriteRenderer.End();
+    }
     private static void PlaceSecrets() {
         // magic.
         const float SECRET_BASE_POS_X = GameScene.MIN_X - 28.5f;
@@ -921,19 +811,41 @@ public class TankGame : Game {
         _secret = GameHandler.Particles.MakeParticle(new Vector3(100, 0.1f, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/secret/special2"));
         _secret.UniqueBehavior = (p) => {
             _secret.Position = new Vector3(SECRET_BASE_POS_X, SECRET_BASE_POS_Y, SECRET_BASE_POS_Z - 40);
-            _secret.Pitch = 0;
-            _secret.Yaw = MathHelper.PiOver2;
+            _secret.Pitch = MathHelper.Pi;
+            _secret.Yaw = -MathHelper.PiOver2;
+            _secret.Roll = RuntimeData.RunTime / 60 % 2 < 1 ? -MathHelper.PiOver4 / 4 : MathHelper.PiOver4 / 4;
+
             _secret.Scale = Vector3.One * 0.3f;
             _secret.HasAddativeBlending = false;
         };
         _secretText = GameHandler.Particles.MakeParticle(new Vector3(100, 0.1f, 0), "Ziggy <3");
         _secretText.UniqueBehavior = (p) => {
             _secretText.Position = new Vector3(SECRET_BASE_POS_X, SECRET_BASE_POS_Y + 20, SECRET_BASE_POS_Z - 8 - 40);
-            _secretText.Pitch = 0;
             _secretText.Yaw = MathHelper.PiOver2;
+            _secretText.Roll = MathHelper.Pi;
 
             _secretText.Scale = Vector3.One * 0.3f;
             _secretText.HasAddativeBlending = false;
         };
+    }
+    private void TankGame_OnFocusRegained(object sender, IntPtr e) {
+        if (TankMusicSystem.IsLoaded) {
+            Thunder.ResumeGlobalSounds();
+            TankMusicSystem.ResumeAll();
+            if (MainMenuUI.Active)
+                MainMenuUI.Theme.Resume();
+            if (LevelEditorUI.Active)
+                LevelEditorUI.Theme.Resume();
+        }
+    }
+    private void TankGame_OnFocusLost(object sender, IntPtr e) {
+        if (TankMusicSystem.IsLoaded) {
+            Thunder.PauseGlobalSounds();
+            TankMusicSystem.PauseAll();
+            if (MainMenuUI.Active)
+                MainMenuUI.Theme.Pause();
+            if (LevelEditorUI.Active)
+                LevelEditorUI.Theme.Pause();
+        }
     }
 }

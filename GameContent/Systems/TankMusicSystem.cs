@@ -20,10 +20,9 @@ namespace TanksRebirth.GameContent.Systems;
 
 public static class TankMusicSystem
 {
+    public static OggMusic SnowLoop;
     public static string AssetRoot;
     public static int TierHighest => AIManager.GetHighestTierActive(x => !TierExclusionRule_DoesntHaveSong.Contains(x.AiTankType));
-
-    public static OggMusic SnowLoop;
 
     public static float Pitch = 0f;
     public static float Pan = 0f;
@@ -53,7 +52,7 @@ public static class TankMusicSystem
         [TankID.Obsidian] = 1,
     };
     /// <summary>A dictionary of all stored/loaded tanks songs.</summary>
-    public static Dictionary<string, OggMusic>? Audio = [];
+    public static readonly Dictionary<string, OggMusic> Audio = [];
 
     public static void LoadVanillaAudio() {
         var filePath = "Content/Assets/music";
@@ -68,9 +67,9 @@ public static class TankMusicSystem
         var filePath = "Content/Assets/music";
         foreach (var file in Directory.GetFiles(filePath).Where(s => s.EndsWith(".ogg"))) {
             var name = Path.GetFileNameWithoutExtension(file);
-            Audio.Add(name, null);
+            Audio.Add(name, null!);
         }
-        Audio.Add("Snow Breeze", null);
+        Audio.Add("Snow Breeze", null!);
     }
     public static void LoadSoundPack(string folder) {
         // TODO: verify this works.
@@ -127,9 +126,9 @@ public static class TankMusicSystem
         var tierHighestName = TankID.Collection.GetKey(TierHighest);
         // only count the tanks that exist and are below the highest tier.
         var all = AIManager.CountAll(x => x.AiTankType <= TierHighest);
-        string num = MaxSongNumPerTank[TierHighest] > 1 ? 
-            (TierExclusionRule_Uses3ToUpgrade.Contains(TierHighest) ? 
-            (all == 2 || all == 1 ? 1 : MaxSongNumPerTank[TierHighest]).ToString() : Math.Min(all, MaxSongNumPerTank[TierHighest]).ToString()) 
+        string num = MaxSongNumPerTank[TierHighest] > 1 ?
+            (TierExclusionRule_Uses3ToUpgrade.Contains(TierHighest) ?
+            (all == 2 || all == 1 ? 1 : MaxSongNumPerTank[TierHighest]).ToString() : Math.Min(all, MaxSongNumPerTank[TierHighest]).ToString())
             : string.Empty;
 
         var name = tierHighestName!.ToLower() + num;
@@ -138,8 +137,7 @@ public static class TankMusicSystem
 
         int index = Audio.Values.ToList().FindIndex(x => x.Volume > 0);
 
-        if (index > -1)
-        {
+        if (index > -1) {
             Audio.ElementAt(index).Value.BackingAudio.Instance.Pitch = Pitch;
             Audio.ElementAt(index).Value.BackingAudio.Instance.Pan = Pan;
             CurrentSong = Audio.ElementAt(index).Value;
@@ -151,8 +149,7 @@ public static class TankMusicSystem
     //public static MidiFile MusicSoundFont;
 
     public static bool IsLoaded;
-    public static void PlayAll()
-    {
+    public static void PlayAll() {
         //if (MusicMidi.State == Microsoft.Xna.Framework.Audio.SoundState.Stopped)
         //MusicMidi.Play(MusicSoundFont, true);
 
@@ -166,37 +163,29 @@ public static class TankMusicSystem
             SnowLoop?.Play();
     }
 
-    public static void PauseAll()
-    {
+    public static void PauseAll() {
         SnowLoop?.Pause();
         foreach (var song in Audio)
-            if (!song.Value.IsPaused())
-                song.Value?.Pause();
+            song.Value.Pause();
     }
 
-    public static void ResumeAll()
-    {
+    public static void ResumeAll() {
         SnowLoop?.Play();
         foreach (var song in Audio)
             song.Value?.Resume();
     }
 
-    public static void StopAll()
-    {
+    public static void StopAll() {
         SnowLoop?.Stop();
-        if (Audio is not null)
-        {
+        if (Audio is not null) {
             foreach (var song in Audio)
                 song.Value?.Stop();
         }
     }
 
-    public static void UpdateVolume()
-    {
-        foreach (var song in Audio)
-        {
-            if (song.Value.Volume > 0)
-            {
+    public static void UpdateVolume() {
+        foreach (var song in Audio) {
+            if (song.Value.Volume > 0) {
                 song.Value.SetVolume(TankGame.Settings.MusicVolume);
                 if (GameScene.Theme == MapTheme.Christmas)
                     SnowLoop.SetVolume(TankGame.Settings.AmbientVolume);
@@ -205,4 +194,4 @@ public static class TankMusicSystem
             }
         }
     }
-}    
+}

@@ -11,6 +11,7 @@ using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Net;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.GameContent.UI.LevelEditor;
+using TanksRebirth.GameContent.Globals;
 
 namespace TanksRebirth.GameContent.UI;
 
@@ -219,10 +220,13 @@ public static class GameUI
             else if (!MainMenuUI.Active)
             {
                 Paused = !Paused;
-                if (Paused)
-                    TankMusicSystem.PauseAll();
-                else
-                    TankMusicSystem.ResumeAll();
+
+                if (CampaignGlobals.InMission) {
+                    if (Paused)
+                        TankMusicSystem.PauseAll();
+                    else
+                        TankMusicSystem.ResumeAll();
+                }
             }
 
             ResumeButton.IsVisible = Paused;
@@ -271,6 +275,8 @@ public static class GameUI
         // UIElement.ResizeAndRelocate();
     }
 
+    // 7/7/25 - WHAT THE FUCK IS THIS SHIT.
+    // TODO: pls get arctan to finish the rewrite
     private static void HandleBackButton()
     {
         if (!_initialized)
@@ -327,14 +333,15 @@ public static class GameUI
             GraphicsButton.IsVisible = true;
             ControlsButton.IsVisible = true;
 
-            TankGame.Settings.ResWidth = GraphicsUI.CurrentRes.Key;
-            TankGame.Settings.ResHeight = GraphicsUI.CurrentRes.Value;
+            if (!TankGame.Settings.FullScreen) {
+                TankGame.Settings.ResWidth = GraphicsUI.CurrentRes.Key;
+                TankGame.Settings.ResHeight = GraphicsUI.CurrentRes.Value;
 
+                TankGame.Instance.Graphics.PreferredBackBufferWidth = TankGame.Settings.ResWidth;
+                TankGame.Instance.Graphics.PreferredBackBufferHeight = TankGame.Settings.ResHeight;
 
-            TankGame.Instance.Graphics.PreferredBackBufferWidth = TankGame.Settings.ResWidth;
-            TankGame.Instance.Graphics.PreferredBackBufferHeight = TankGame.Settings.ResHeight;
-
-            TankGame.Instance.Graphics.ApplyChanges();
+                TankGame.Instance.Graphics.ApplyChanges();
+            }
 
             // FIXME: acts weird
             // TankGame.Instance.CalculateProjection();
@@ -349,6 +356,7 @@ public static class GameUI
         }
         else
         {
+            // WHAT THE HELL IS THIS CODE????
             if (MainMenuUI.Active)
             {
                 if (MainMenuUI.PlayButton.IsVisible)
@@ -360,6 +368,8 @@ public static class GameUI
                     MainMenuUI.MenuState = MainMenuUI.UIState.PlayList;
 
                     MainMenuUI.campaignNames.Clear();
+                    MainMenuUI.UpdateCampaignButton.IsVisible = false;
+                    MainMenuUI.UpdateCampaignButton.IsVisible = false;
                 }
                 else if (MainMenuUI.PlayButton_SinglePlayer.IsVisible)
                 {

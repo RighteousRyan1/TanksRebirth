@@ -53,6 +53,13 @@ public class NetPlay {
         Client.SendClientInfo();
     }
 
+    public static void PollEvents() {
+        if (CurrentClient is not null)
+            Client.ClientManager.PollEvents();
+        if (CurrentServer is not null)
+            Server.NetManager.PollEvents();
+    }
+
     public static void MapServerNetworking() {
         Server.NetListener.NetworkReceiveEvent += OnPacketRecieve_Server;
     }

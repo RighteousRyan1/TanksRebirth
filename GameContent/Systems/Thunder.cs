@@ -37,6 +37,14 @@ public class Thunder {
         Instant,
         Instant2
     }
+    public static void ResumeGlobalSounds() {
+        if (SoftRain!.IsPlaying())
+            SoftRain.Instance.Play();
+    }
+    public static void PauseGlobalSounds() {
+        if (SoftRain!.IsPlaying())
+            SoftRain.Instance.Pause();
+    }
     /// <summary>
     /// Creates and immediately starts a new <see cref="Thunder"/>.
     /// </summary>

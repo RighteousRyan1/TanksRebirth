@@ -15,25 +15,36 @@ using TanksRebirth.Internals;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.Internals.Common.Framework.Audio;
+using TanksRebirth.Internals.UI;
 
 namespace TanksRebirth.GameContent.UI.MainMenu;
 
 public static partial class MainMenuUI {
+    static bool _playerHasVanillaCampaign;
+
+    public static UITextButton UpdateCampaignButton = new("Validate", TankGame.TextFont, Color.Black);
     public static void DrawCampaignsUI() {
-        if (!campaignNames.Any(x => {
-            if (x is UITextButton btn)
-                return btn.Text == "Vanilla"; // i fucking hate this hardcode. but i'll cry about it later.
-            return false;
-        })) {
-            BotherUserForNotHavingVanillaCampaign();
-        }
         DrawCampaignMenuExtras();
     }
     private static void SetCampaignDisplay() {
         SetPlayButtonsVisibility(false);
 
+        float width = 150;
+        float height = 50;
+        UpdateCampaignButton.IsVisible = true;
+        UpdateCampaignButton.Text = "Validate";
+        UpdateCampaignButton.Tooltip = "Ensures your Vanilla campaign is up-to-date.";
+        UpdateCampaignButton.SetDimensions(WindowUtils.WindowWidth / 2 - width / 2, 10, width, height);
+        UpdateCampaignButton.Color = Color.White;
+        UpdateCampaignButton.Font = TankGame.TextFont;
+        UpdateCampaignButton.OnLeftClick = (a) => {
+            DownloadVanillaCampaign(true);
+            ChatSystem.SendMessage("Validation complete!", Color.Lime);
+        };
+
         foreach (var elem in campaignNames)
             elem?.Remove();
+
         // get all the campaign folders from the SaveDirectory + Campaigns
         var path = Path.Combine(TankGame.SaveDirectory, "Campaigns");
         Directory.CreateDirectory(path);
@@ -78,6 +89,9 @@ public static partial class MainMenuUI {
                     return;
                 }
                 var noExt = Path.GetFileNameWithoutExtension(name);
+
+                // i couldn't find where the campaign buttons are forcibly removed upon loading
+                UpdateCampaignButton.IsVisible = false;
                 PrepareGameplay(noExt, !Client.IsConnected() || Server.CurrentClientCount == 1, false); // switch second param to !Client.IsConnected() when it should check first.
                 OnCampaignSelected?.Invoke(CampaignGlobals.LoadedCampaign);
             };
@@ -109,33 +123,33 @@ public static partial class MainMenuUI {
         campaignNames.Add(extra);
     }
     public static void BotherUserForNotHavingVanillaCampaign() {
-        TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"You are missing the vanilla campaign!" +
-    $"\nTry downloading the Vanilla campaign by pressing 'Enter'." +
-    $"\nCampaign files belong in '{Path.Combine(TankGame.SaveDirectory, "Campaigns").Replace(Environment.UserName, "%UserName%")}' (press TAB to open on Windows)", new Vector2(12, 12).ToResolution(), Color.White, new Vector2(0.75f).ToResolution(), 0f, Vector2.Zero);
-
         if (Client.IsConnected() && Client.IsHost())
             TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"The people who are connected to you MUST own this\ncampaign, and it MUST have the same file name.\nOtherwise, the campaign will not load.", new(12, WindowUtils.WindowHeight / 2), Color.White, new Vector2(0.75f).ToResolution(), 0f, Vector2.Zero);
-
-        if (InputUtils.KeyJustPressed(Keys.Tab)) {
-            if (Directory.Exists(Path.Combine(TankGame.SaveDirectory, "Campaigns")))
-                Process.Start("explorer.exe", Path.Combine(TankGame.SaveDirectory, "Campaigns"));
-            // do note that this fails on windows lol
-        }
-        if (InputUtils.KeyJustPressed(Keys.Enter)) {
-            try {
-                var bytes = WebUtils.DownloadWebFile("https://github.com/RighteousRyan1/tanks_rebirth_motds/blob/master/Vanilla.campaign?raw=true", out var filename);
-                var path = Path.Combine(TankGame.SaveDirectory, "Campaigns", filename);
-                File.WriteAllBytes(path, bytes);
-
-                SetCampaignDisplay();
-
-            }
-            catch (Exception e) {
-                TankGame.ReportError(e);
-            }
-        }
     }
+    // dlBytes is only non-null values when campaignExists is true
+    public static bool IsVanillaCampaignUpToDate(out bool campaignExists, out byte[]? dlBytes, out string? dlName) {
+        var checkPath = Path.Combine(TankGame.SaveDirectory, "Campaigns", "Vanilla.campaign");
+        if (!File.Exists(checkPath)) {
+            dlBytes = null;
+            dlName = null;
+            campaignExists = false;
+            return false;
+        }
+        campaignExists = true;
+        dlBytes = WebUtils.DownloadWebFile("https://github.com/RighteousRyan1/tanks_rebirth_motds/blob/master/Vanilla.campaign?raw=true", out dlName);
+        var fileBytes = File.ReadAllBytes(checkPath);
 
+
+        return dlBytes.SequenceEqual(fileBytes);
+    }
+    public static void DownloadVanillaCampaign(bool inCampaignsMenu) {
+        var bytes = WebUtils.DownloadWebFile("https://github.com/RighteousRyan1/tanks_rebirth_motds/blob/master/Vanilla.campaign?raw=true", out var filename);
+        var path = Path.Combine(TankGame.SaveDirectory, "Campaigns", filename);
+        File.WriteAllBytes(path, bytes);
+
+        if (inCampaignsMenu)
+            SetCampaignDisplay();
+    }
     public static void DrawCampaignMenuExtras() {
         if (_oldwheel != InputUtils.DeltaScrollWheel)
             MissionCheckpoint += InputUtils.DeltaScrollWheel - _oldwheel;

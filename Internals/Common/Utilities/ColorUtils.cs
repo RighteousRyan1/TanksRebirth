@@ -12,7 +12,7 @@ public static class ColorUtils
 {
     public static Color[] AllColors { get; } = typeof(Color).GetProperties(BindingFlags.Static | BindingFlags.Public).Select(x => (Color)x.GetValue(null)!).ToArray();
     public static Color[] BrightColors { get; } = AllColors.Where(x => GetLuminosity(x) > 0.33f).ToArray();
-    public static Color DiscoPartyColor => HsvToRgb(TankGame.UpdateCount % 255 / 255f * 360, 1, 1);
+    public static Color DiscoPartyColor => HsvToRgb(RuntimeData.UpdateCount % 255 / 255f * 360, 1, 1);
     /// <summary>
     /// Creates color with corrected brightness.
     /// </summary>

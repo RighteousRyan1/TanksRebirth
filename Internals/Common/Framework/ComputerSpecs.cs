@@ -1,165 +1,162 @@
-﻿using System;
+﻿using LibreHardwareMonitor.Hardware;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
-using System.Management;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TanksRebirth.Internals.Common.Framework;
-#pragma warning disable CA1416
-public struct ComputerSpecs : IEquatable<ComputerSpecs> {
+
+public struct ComputerSpecs : IEquatable<ComputerSpecs>
+{
     public GPU GPU;
     public CPU CPU;
     public RAM RAM;
 
-    private static ManagementObjectSearcher? _searcher;
-
-    private static string GetHardwareData(string hwclass, string syntax) {
-        _searcher ??= new(); // If null, initialize.
-        _searcher.Query = new($"SELECT * FROM {hwclass}");
-
-        foreach (var obj in _searcher.Get())
-            return $"{obj[syntax]}";
-        return "Data not retrieved.";
-    }
+    private Computer _sysComputer;
 
     public static ComputerSpecs GetSpecs(out bool error) {
         error = false;
-        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
-            error = true;
-            return default;
-        }
 
         try {
-            return new ComputerSpecs {
-                GPU = GetGPUInformation(),
-                CPU = GetCpuInformation(),
-                RAM = GetRamInformation()
+            ComputerSpecs specs = new();
+
+
+            specs._sysComputer = new Computer {
+                IsGpuEnabled = true,
+                IsCpuEnabled = true,
+                IsMemoryEnabled = true
             };
+            specs._sysComputer.Open();
+
+            specs.GPU = specs.GetGpuInfo();
+            specs.CPU = specs.GetCpuInfo();
+            specs.RAM = specs.GetRamInfo();
+
+            return specs;
         }
-        catch {
+        catch when (!Debugger.IsAttached) {
             error = true;
             return default;
         }
-        finally {
-            _searcher?.Dispose();
-            _searcher = null;
+    }
+
+    private GPU GetGpuInfo() {
+        foreach (var hardware in _sysComputer.Hardware) {
+            if (hardware.HardwareType is HardwareType.GpuNvidia or HardwareType.GpuAmd or HardwareType.GpuIntel) {
+                hardware.Update();
+                var name = CleanGpuName(hardware.Name);
+                var vramSensor = hardware.Sensors.FirstOrDefault(s =>
+                    s.Name == "GPU Memory Total");
+
+                var gpu = new GPU {
+                    Name = name,
+                    VRAM = vramSensor != null ? (uint)vramSensor.Value.GetValueOrDefault() : 0,
+                };
+
+                //Console.WriteLine("GPU Sensors:\n " + string.Join("\n", hardware.Sensors.Select(x => x.Name)));
+
+                return gpu;
+            }
         }
+
+        throw new Exception("No suitable GPU found.");
     }
 
-    private static GPU GetGPUInformation() {
-        var gpuName = GetHardwareData("Win32_VideoController", "Name");
-        var gpuDriverVersion = Version.Parse(GetHardwareData("Win32_VideoController", "DriverVersion"));
-        var gpuVram = uint.Parse(GetHardwareData("Win32_VideoController", "AdapterRAM"));
-        return new GPU {
-            VRAM = gpuVram,
-            Name = gpuName,
-            DriverVersion = gpuDriverVersion,
+    private CPU GetCpuInfo() {
+        foreach (var hardware in _sysComputer.Hardware) {
+            if (hardware.HardwareType == HardwareType.Cpu) {
+                hardware.Update();
+
+                string name = CleanCpuName(hardware.Name);
+                int coreCount = hardware.Sensors
+                    .Where(s => s.SensorType == SensorType.Load && s.Name == "")
+                    .Select(s => s.Name)
+                    .Distinct()
+                    .Count();
+
+                //Console.WriteLine("CPU Sensors:\n " + string.Join("\n", hardware.Sensors.Select(x => x.Name)));
+
+                int threadCount = Environment.ProcessorCount;
+
+                return new CPU {
+                    Name = name,
+                    CoreCount = coreCount,
+                    Threads = threadCount
+                };
+            }
+        }
+
+        throw new Exception("No CPU found.");
+    }
+
+    private RAM GetRamInfo() {
+        var mem = _sysComputer.Hardware.FirstOrDefault(h => h.HardwareType == HardwareType.Memory) ?? throw new Exception("No memory hardware found.");
+
+        mem.Update();
+
+        //Console.WriteLine("RAM Sensors:\n " + string.Join("\n", mem.Sensors.Select(x => x.Name)));
+
+        // oh well, processing power gone, but for a good cause.
+        // also this code is placeholder and def doesn't work with LibreHardwareMonitorLib
+
+        float? used = mem.Sensors.FirstOrDefault(s => s.SensorType == SensorType.Data && s.Name == "Memory Used")?.Value;
+        float? available = mem.Sensors.FirstOrDefault(s => s.SensorType == SensorType.Data && s.Name == "Memory Available")?.Value;
+
+        var firstValidStick = _sysComputer.SMBios.MemoryDevices.First(x => x.ManufacturerName != "Unknown");
+
+        var ram = new RAM {
+            TotalPhysical = used.HasValue && available.HasValue ? 
+            (ulong)MemoryParser.To(MemoryParser.Size.Gigabytes, MemoryParser.Size.Bytes, (ulong)MathF.Round(used.Value + available.Value)) : 0ul,
+            // no safety checks because how tf are they running this game without physical memory?
+            Manufacturer = firstValidStick.ManufacturerName,
+            Speed = firstValidStick.ConfiguredSpeed,
+            Type = firstValidStick.Type
         };
+
+        return ram;
     }
 
-    private static CPU GetCpuInformation() {
-        var cpuCores = int.Parse(GetHardwareData("Win32_Processor", "NumberOfCores"));
-        var cpuName = GetHardwareData("Win32_Processor", "Name");
-        var cpuThreads = int.Parse(GetHardwareData("Win32_Processor", "ThreadCount"));
-        return new CPU {
-            CoreCount = cpuCores,
-            Threads = cpuThreads,
-            Name = cpuName.Trim()
-        };
+    private static string CleanGpuName(string name) {
+        return name?.Replace("(", "").Split(')')[0].Trim() ?? "Unknown";
     }
 
-    private static RAM GetRamInformation() {
-        var ramTotalStickPhysical = ulong.Parse(GetHardwareData("Win32_ComputerSystem", "TotalPhysicalMemory"));
-        var ram1xStickPhysical = ulong.Parse(GetHardwareData("Win32_PhysicalMemory", "Capacity"));
-        var ramClockSpeed = uint.Parse(GetHardwareData("Win32_PhysicalMemory", "ConfiguredClockSpeed"));
-        var ramSpeed = uint.Parse(GetHardwareData("Win32_PhysicalMemory", "Speed"));
-        var ramManufacturer = GetHardwareData("Win32_PhysicalMemory", "Manufacturer");
-        var type = uint.Parse(GetHardwareData("Win32_PhysicalMemory", "SMBIOSMemoryType"));
-        var ramType = GetRamType(type);
-        return new RAM {
-            TotalPhysical = ramTotalStickPhysical,
-            StickPhysical = ram1xStickPhysical,
-            ClockSpeed = ramClockSpeed,
-            Manufacturer = ramManufacturer,
-            Speed = ramSpeed,
-            Type = ramType
-        };
+    private static string CleanCpuName(string name) {
+        return name?
+            .Replace("Processor", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("CPU", "", StringComparison.OrdinalIgnoreCase)
+            .Trim() ?? "Unknown";
     }
 
-    private static string GetRamType(uint type) {
-        var ramType = type switch {
-            0x0 => "Unknown",
-            0x1 => "Other",
-            0x2 => "DRAM",
-            0x3 => "Synchronous DRAM",
-            0x4 => "Cache DRAM",
-            0x5 => "EDO",
-            0x6 => "EDRAM",
-            0x7 => "VRAM",
-            0x8 => "SRAM",
-            0x9 => "RAM",
-            0xa => "ROM",
-            0xb => "Flash",
-            0xc => "EEPROM",
-            0xd => "FEPROM",
-            0xe => "EPROM",
-            0xf => "CDRAM",
-            0x10 => "3DRAM",
-            0x11 => "SDRAM",
-            0x12 => "SGRAM",
-            0x13 => "RDRAM",
-            0x14 => "DDR",
-            0x15 => "DDR2",
-            0x16 => "DDR2 FB-DIMM",
-            0x17 => "Undefined 23",
-            0x18 => "DDR3",
-            0x19 => "FBD2",
-            0x1a => "DDR4",
-            _ => "Undefined",
-        };
-        return ramType;
-    }
-
-    public bool Equals(ComputerSpecs other) {
-        return GPU.Equals(other.GPU) && CPU.Equals(other.CPU) && RAM.Equals(other.RAM);
-    }
-
-    public override bool Equals(object? obj) {
-        return obj is ComputerSpecs other && Equals(other);
-    }
-
-    public override int GetHashCode() {
-        return HashCode.Combine(GPU, CPU, RAM);
-    }
-
-    public static bool operator ==(ComputerSpecs left, ComputerSpecs right) {
-        return left.Equals(right);
-    }
-
-    public static bool operator !=(ComputerSpecs left, ComputerSpecs right) {
-        return !left.Equals(right);
-    }
+    public readonly bool Equals(ComputerSpecs other) => GPU.Equals(other.GPU) && CPU.Equals(other.CPU) && RAM.Equals(other.RAM);
+    public override readonly bool Equals(object? obj) => obj is ComputerSpecs other && Equals(other);
+    public override readonly int GetHashCode() => HashCode.Combine(GPU, CPU, RAM);
+    public static bool operator ==(ComputerSpecs left, ComputerSpecs right) => left.Equals(right);
+    public static bool operator !=(ComputerSpecs left, ComputerSpecs right) => !left.Equals(right);
 }
 
 public struct GPU : IEquatable<GPU> {
     public uint VRAM;
-    public Version? DriverVersion;
+    // normally System.Version
+    // LH doesn't allow getting this :(
+    // public string? DriverVersion;
     public string Name;
 
-    public override string ToString() => $"{Name}";
-
-    public bool Equals(GPU other) {
-        return VRAM == other.VRAM && other.DriverVersion != null && this.DriverVersion != null && DriverVersion.Equals(other.DriverVersion) && Name == other.Name;
+    public override readonly string ToString() {
+        var gb = MemoryParser.To(MemoryParser.Size.Megabytes, MemoryParser.Size.Gigabytes, VRAM);
+        var gbRounded = MathF.Round(gb);
+        return $"{Name} (VRAM: {gbRounded} GB)";
     }
 
-    public override bool Equals(object? obj) {
+    public readonly bool Equals(GPU other) {
+        return VRAM == other.VRAM && Name == other.Name;
+    }
+
+    public override readonly bool Equals(object? obj) {
         return obj is GPU other && Equals(other);
     }
 
-    public override int GetHashCode() {
-        return HashCode.Combine(VRAM, DriverVersion, Name);
+    public override readonly int GetHashCode() {
+        return HashCode.Combine(VRAM, Name);
     }
 
     public static bool operator ==(GPU left, GPU right) {
@@ -170,15 +167,14 @@ public struct GPU : IEquatable<GPU> {
         return !left.Equals(right);
     }
 }
-
 public struct CPU : IEquatable<CPU> {
     public int CoreCount;
     public int Threads;
     public string Name;
 
-    public override readonly string ToString() => $"{Name}";
+    public override readonly string ToString() => $"{Name} (Core Count: {CoreCount})";
 
-    public bool Equals(CPU other) {
+    public readonly bool Equals(CPU other) {
         return CoreCount == other.CoreCount && Threads == other.Threads && Name == other.Name;
     }
 
@@ -186,7 +182,7 @@ public struct CPU : IEquatable<CPU> {
         return obj is CPU other && Equals(other);
     }
 
-    public override int GetHashCode() {
+    public override readonly int GetHashCode() {
         return HashCode.Combine(CoreCount, Threads, Name);
     }
 
@@ -198,31 +194,30 @@ public struct CPU : IEquatable<CPU> {
         return !left.Equals(right);
     }
 }
-
 public struct RAM : IEquatable<RAM> {
     public ulong TotalPhysical;
-    public ulong StickPhysical;
-    public uint ClockSpeed;
+
+    // one would assume these wouldn't be different on a per-stick basis...
     public string? Manufacturer;
     public uint Speed;
-    public string Type;
+    public MemoryType Type;
 
     public override readonly string ToString() {
-        var gb = MemoryParser.FromGigabytes(TotalPhysical);
-        var mem = MathF.Ceiling(gb);
-        return $"{Manufacturer} {mem}GB {Type} @{ClockSpeed}hz";
+        var gb = MemoryParser.To(MemoryParser.Size.Bytes, MemoryParser.Size.Gigabytes, TotalPhysical);
+        var mem = MathF.Ceiling(gb); // vs ceiling?
+        return $"{Manufacturer} {mem}GB {Type} @{Speed}hz";
     }
 
-    public bool Equals(RAM other) {
-        return TotalPhysical == other.TotalPhysical && StickPhysical == other.StickPhysical && ClockSpeed == other.ClockSpeed && Manufacturer == other.Manufacturer && Speed == other.Speed && Type == other.Type;
+    public readonly bool Equals(RAM other) {
+        return TotalPhysical == other.TotalPhysical && Manufacturer == other.Manufacturer && Speed == other.Speed && Type == other.Type;
     }
 
-    public override bool Equals(object? obj) {
+    public override readonly bool Equals(object? obj) {
         return obj is RAM other && Equals(other);
     }
 
-    public override int GetHashCode() {
-        return HashCode.Combine(TotalPhysical, StickPhysical, ClockSpeed, Manufacturer, Speed, Type);
+    public override readonly int GetHashCode() {
+        return HashCode.Combine(TotalPhysical, Manufacturer, Speed, Type);
     }
 
     public static bool operator ==(RAM left, RAM right) {
@@ -255,7 +250,7 @@ public struct SpecAnalysis {
         CpuMake = cpuInfo[0];
         CpuModel = string.Join(" ", cpuInfo[1..]).Trim();
 
-        RamInGB = (uint)Math.Round(MemoryParser.FromGigabytes(ram.TotalPhysical));
+        RamInGB = (uint)Math.Round(MemoryParser.To(MemoryParser.Size.Bytes, MemoryParser.Size.Gigabytes, ram.TotalPhysical));
     }
 
     /// <summary></summary>
@@ -355,9 +350,24 @@ public struct SpecAnalysis {
 }
 
 public static class MemoryParser {
+    // we go all the way because why the FUCK not
+    public enum Size : int {
+        Bytes       = 0x001,
+        Kilobytes   = 0x002,
+        Megabytes   = 0x003,
+        Gigabytes   = 0x004,
+        Terabytes   = 0x005,
+        Petabytes   = 0x006,
+        Exabytes    = 0x007,
+        Zettabytes  = 0x008,
+        Yottabytes  = 0x009,
+        Ronnabytes  = 0x00A,
+        Quettabytes = 0x00B
+    }
     public static ulong FromBits(ulong bytes)      => bytes * 8;
-    public static float FromKilobytes(ulong bytes) => bytes / 1024f;
-    public static float FromMegabytes(ulong bytes) => bytes / 1024f / 1024f;
-    public static float FromGigabytes(ulong bytes) => bytes / 1024f / 1024f / 1024f;
-    public static float FromTerabytes(ulong bytes) => bytes / 1024f / 1024f / 1024f / 1024f;
+
+    public static float To(Size from, Size to, float value) {
+        int exponentDiff = from - to;
+        return value * MathF.Pow(1024, exponentDiff);
+    }
 }

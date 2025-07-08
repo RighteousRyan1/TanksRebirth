@@ -19,19 +19,16 @@ public struct BlockMapPosition
     public int X;
     public int Y;
 
-    public BlockMapPosition(int x, int y)
-    {
+    public BlockMapPosition(int x, int y) {
         X = x;
         Y = y;
     }
-    public BlockMapPosition(int xy)
-    {
+    public BlockMapPosition(int xy) {
         X = xy;
         Y = xy;
     }
 
-    public static Vector2 Convert2D(BlockMapPosition pos)
-    {
+    public static Vector2 Convert2D(BlockMapPosition pos) {
         // (0, 0) == (MIN_X, MIN_Y)
 
         var orig = new Vector2(GameScene.CUBE_MIN_X, GameScene.CUBE_MIN_Y);
@@ -41,8 +38,7 @@ public struct BlockMapPosition
         return real;
     }
 
-    public static Vector3 Convert3D(BlockMapPosition pos)
-    {
+    public static Vector3 Convert3D(BlockMapPosition pos) {
         // (0, 0) == (MIN_X, MIN_Y)
 
         var orig = new Vector3(GameScene.CUBE_MIN_X, 0, GameScene.CUBE_MIN_Y);
@@ -57,8 +53,7 @@ public struct BlockMapPosition
     /// </summary>
     /// <param name="position"></param>
     /// <returns></returns>
-    public static BlockMapPosition ConvertFromVector3(Vector3 position)
-    {
+    public static BlockMapPosition ConvertFromVector3(Vector3 position) {
         // convert position into a CubeMapPosition, and grid lock it
         var invarX = (int)MathF.Round(position.X % Block.SIDE_LENGTH, 1);
         var invarY = (int)MathF.Round(position.Z % Block.SIDE_LENGTH, 1);
@@ -67,8 +62,7 @@ public struct BlockMapPosition
         return invar;
 
     }
-    public static BlockMapPosition ConvertFromVector2(Vector2 position)
-    {
+    public static BlockMapPosition ConvertFromVector2(Vector2 position) {
         // convert position into a CubeMapPosition, and grid lock it
         var invarX = (int)MathF.Round(position.X % Block.SIDE_LENGTH, 1);
         var invarY = (int)MathF.Round(position.Y % Block.SIDE_LENGTH, 1);
@@ -78,8 +72,7 @@ public struct BlockMapPosition
 
     }
 
-    public override string ToString()
-    {
+    public override string ToString() {
         var sb = new System.Text.StringBuilder()
             .Append("{ ")
             .Append($"X: {X} | Y: {Y}")

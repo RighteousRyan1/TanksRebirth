@@ -1,5 +1,6 @@
 ﻿using FontStashSharp;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
 using TanksRebirth.GameContent.Globals;
@@ -17,6 +18,9 @@ namespace TanksRebirth.GameContent.UI.MainMenu;
 #pragma warning disable
 public static partial class MainMenuUI
 {
+    // ok are rendertargets just a death sentence???
+    public static RenderTarget2D TextTarget;
+
     private static readonly string tanksMessage =
     $"Tanks Rebirth ALPHA v{TankGame.Instance.GameVersion}" +
     $"\nOriginal game and assets developed by Nintendo" +
@@ -75,12 +79,16 @@ public static partial class MainMenuUI
 
     private static UIElement[] _menuElements;
 
-    internal static List<UIElement> campaignNames = new();
+    internal static List<UIElement> campaignNames = [];
 
     public static UITextButton CosmeticsMenuButton;
     public static UITextButton StatsMenu;
 
     public static void InitializeMain(SpriteFontBase font) {
+        var presentationParams = TankGame.Instance.GraphicsDevice.PresentationParameters;
+        TextTarget = new(TankGame.Instance.GraphicsDevice, 420, 140, false, 
+            presentationParams.BackBufferFormat, presentationParams.DepthStencilFormat, 0, RenderTargetUsage.DiscardContents);
+        
         PlayButton = new(TankGame.GameLanguage.Play, font, Color.WhiteSmoke) {
             IsVisible = true,
         };
@@ -156,7 +164,6 @@ public static partial class MainMenuUI
         };
         StatsMenu.SetDimensions(() => new Vector2(WindowUtils.WindowWidth / 2 - 90.ToResolutionX(), WindowUtils.WindowHeight - 100.ToResolutionY()), () => new Vector2(180, 50).ToResolution());
     }
-
     private static void HideAll() {
         PlayButton.IsVisible = false;
         PlayButton_SinglePlayer.IsVisible = false;
@@ -174,9 +181,7 @@ public static partial class MainMenuUI
     }
     internal static void SetPrimaryMenuButtonsVisibility(bool visible) {
         GameUI.OptionsButton.IsVisible = visible;
-
         GameUI.QuitButton.IsVisible = visible;
-
         GameUI.BackButton.Size.Y = 50;
 
         PlayButton.IsVisible = visible;
@@ -185,20 +190,30 @@ public static partial class MainMenuUI
     }
 
     // the code is horrid but at least it's separated now
+    // TODO: make rainbow work, ask lolxd or someone knowledgeable
+    public static void PrepareTextRTs(GraphicsDevice device, SpriteBatch spriteBatch) {
+        device.SetRenderTarget(TextTarget);
+
+        device.Clear(TankGame.ClearColor);
+
+        spriteBatch.Begin();
+        DrawUtils.DrawTextWithBorder(spriteBatch, TankGame.TextFont, tanksMessage, Vector2.Zero,
+            Color.White, Color.Black, new Vector2(0.8f).ToResolution(), 0f, Anchor.TopLeft, 0.5f);
+        spriteBatch.End();
+
+        device.SetRenderTarget(null);
+    }
     public static void RenderGeneralUI() {
-        // draw the logo at it's position
-        //TankGame.SpriteRenderer.Draw(LogoTexture, LogoPosition, null, Color.White, LogoRotation, LogoTexture.Size() / 2, LogoScale, default, default);
         if (SteamworksUtils.IsInitialized)
             TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"STEAM LAUNCH!\nLogged in as '{SteamworksUtils.MyUsername}'\n" +
                 $"You have {SteamworksUtils.FriendsCount} friends.", Vector2.One * 8, Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
 
         TankGame.SpriteRenderer.End();
+
         TankGame.SpriteRenderer.Begin(effect: GameShaders.AnimatedRainbow);
-
-        DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, TankGame.TextFont, tanksMessage, new(8, WindowUtils.WindowHeight - 8),
-            Color.White, Color.Black, new Vector2(0.8f).ToResolution(), 0f, Anchor.BottomLeft, 0.5f);
-
+        TankGame.SpriteRenderer.Draw(TextTarget, new Vector2(10, WindowUtils.WindowHeight - 10), null, Color.White, 0f, Anchor.BottomLeft.GetTextureAnchor(TextTarget), 1f, default, 0f);
         TankGame.SpriteRenderer.End();
+
         TankGame.SpriteRenderer.Begin();
 
         if (MenuState == UIState.PrimaryMenu || MenuState == UIState.PlayList) {
@@ -208,7 +223,6 @@ public static partial class MainMenuUI
         }
     }
     public static void UpdateUI() {
-
         // quite unfortunate hardcode. fix later.
         if (MenuState == UIState.StatsMenu)
             if (InputUtils.KeyJustPressed(Keys.Escape))

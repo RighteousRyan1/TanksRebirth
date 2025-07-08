@@ -114,7 +114,7 @@ public sealed record ChatSystem {
     /// <param name="color">The color in which to render the content of the <see cref="ChatMessage"/>.</param>
     /// <param name="sender">The sender of the message, e.g: a player</param>
     /// <param name="netSend">If true, will send the message to the server in a multiplayer context.</param>
-    public static void SendMessage(string message, Color color, string sender = null, bool netSend = false)
+    public static void SendMessage(string message, Color color, string? sender = null, bool netSend = false)
     {
         if (message.Length > 0 && message[0] == CommandGlobals.ExpectedPrefix) {
             var cmdSplit = message.Remove(0, 1).Split(' ');
@@ -125,7 +125,7 @@ public sealed record ChatSystem {
                     var value = CommandGlobals.Commands.ElementAt(index).Value;
 
                     // if the length is equal to zero, the user has provided no arguments.
-                    var args = cmdSplit.Length == 0 ? Array.Empty<string>() : cmdSplit[1..];
+                    var args = cmdSplit.Length == 0 ? [] : cmdSplit[1..];
 
                     /*if (args.Length == 0 && !cmdSplit[0].Contains("help")) {
                         SendMessage("Invalid command syntax! Arguments missing.", Color.Red);
@@ -157,7 +157,7 @@ public sealed record ChatSystem {
             }
         }
 
-        List<ChatMessage> msgs = new();
+        List<ChatMessage> msgs = [];
 
         if (sender is not null)
         {
@@ -181,6 +181,10 @@ public sealed record ChatSystem {
 
         OnMessageAdded?.Invoke(message);
         // return msgs.ToArray();
+    }
+    /// <summary>Sends a message in the color white.</summary>
+    public static void SendMessage(string message, string? sender = null, bool netSend = false) {
+        SendMessage(message, Color.White, sender, netSend);
     }
 
     private static void DrawChatBox(out Rectangle chatBox, out Rectangle typeBox)
