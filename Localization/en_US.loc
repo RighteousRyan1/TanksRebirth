@@ -133,5 +133,6 @@
   "LivesEarned": "Lives Earned",
   "MissionsComplete": "Missions Complete",
   "EnemyTanks": "Enemy Tanks",
-  "Campaign": "Campaign"
+  "Campaign": "Campaign",
+  "BonusTank": "Bonus Tank!"
 }

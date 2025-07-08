@@ -191,7 +191,7 @@ public static partial class MainMenuUI
 
     // the code is horrid but at least it's separated now
     // TODO: make rainbow work, ask lolxd or someone knowledgeable
-    public static void PrepareTextRTs(GraphicsDevice device, SpriteBatch spriteBatch) {
+    public static void PrepareTextBuffers(GraphicsDevice device, SpriteBatch spriteBatch) {
         device.SetRenderTarget(TextTarget);
 
         device.Clear(RenderGlobals.BackBufferColor);

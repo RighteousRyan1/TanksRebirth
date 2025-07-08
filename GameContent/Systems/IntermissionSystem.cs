@@ -14,26 +14,37 @@ using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using System.Runtime.Intrinsics.X86;
 using TanksRebirth.GameContent.UI.MainMenu;
+using TanksRebirth.Enums;
+using TanksRebirth.Graphics.Shaders;
 
 namespace TanksRebirth.GameContent.Systems;
 #pragma warning disable
 public static class IntermissionSystem {
-    public static RenderTarget2D FrameBuffer { get; private set; }
+    public static RenderTarget2D BackgroundBuffer;
+    public static RenderTarget2D BannerBuffer;
+    public static RenderTarget2D BonusBannerBuffer;
+    public static RenderTarget2D BonusBannerTextBuffer;
 
     public static Animator TextAnimatorLarge;
     public static Animator TextAnimatorSmall;
 
     public static Animator IntermissionAnimator;
 
+    public static Animator BonusLifeAnimator;
+
     public static float TimeBlack; // for black screen when entering this game
     public static float BlackAlpha = 0;
 
-    public static bool IsAwaitingNewMission => CurrentWaitTime > 240; // 3 seconds seems to be the opening fanfare duration
+    public static bool IsAwaitingNewMission { get; internal set; } // 3 seconds seems to be the opening fanfare duration
+    public static bool ShouldDrawBanner = true;
+    public static bool ShouldFade;
+    public static bool ShouldFadeIn;
+
+    public const float ALPHA_FADE_CONSTANT = 1f / 45f;
+    public static float BannerAlpha = 1f;
+    public static float BonusBannerAlpha;
 
     public static float Alpha;
-    public static float WaitTime { get; private set; }
-    public static float CurrentWaitTime { get; private set; }
-
     public static float ColorMultiplierForBorders = 0.35f;
 
     public static Color ColorForBorders => (BackgroundColor * ColorMultiplierForBorders) with { A = 255 };
@@ -41,14 +52,35 @@ public static class IntermissionSystem {
     // values are color-picked
     public static readonly Color DefaultBackgroundColor = new(250, 230, 150);
     public static readonly Color DefaultStripColor = new(186, 62, 47);
+    public static readonly Color BonusBannerColor = new(93, 145, 92);
 
     public static Color BackgroundColor = new(228, 231, 173);
     public static Color StripColor = Color.DarkRed;
 
-    private static Vector2 _offset;
+    static Vector2 _offset;
+    static Rectangle _cutForLength;
+    static float _oldBlack;
 
-    private static float _oldBlack;
+    public static Texture2D BonusBannerBase;
+    public static Texture2D BonusBannerStar;
 
+    public static GradientEffect BonusTextGradient;
+    public static readonly Color GradientTopColor = new(223, 223, 28);
+    public static readonly Color GradientBottomColor = new(163, 157, 19);
+    public static readonly Color BonusBannerTextBorderColor = new(59, 66, 12);
+
+    public static void InitializeAllStartupLogic() {
+        InitializeAnmiations();
+        InitializeTextureLogic();
+
+        BonusTextGradient = new(GradientTopColor, GradientBottomColor);
+    }
+    private static void InitializeTextureLogic() {
+        BonusBannerBase = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/tnk_bonus_base");
+        BonusBannerStar = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/tnk_bonus_star");
+
+        _cutForLength = new Rectangle(31, 0, 1, BonusBannerBase.Height);
+    }
     public static void InitializeAnmiations() {
         IntermissionHandler.Initialize();
         // should this be where the animator is re-instantiated?
@@ -61,61 +93,109 @@ public static class IntermissionSystem {
 
         IntermissionAnimator = Animator.Create()
             .WithFrame(new(duration: TimeSpan.FromSeconds(3), easing: EasingFunction.Linear))
-            .WithFrame(new(duration: TimeSpan.FromSeconds(0.5), easing: EasingFunction.Linear))
-            .WithFrame(new(duration: TimeSpan.FromSeconds(3.66), easing: EasingFunction.Linear))
+            // this frame does not affect the timeline but instead what happens for loading
+            .WithFrame(new(duration: TimeSpan.FromSeconds(1), easing: EasingFunction.Linear))
+            .WithFrame(new(duration: TimeSpan.FromSeconds(4), easing: EasingFunction.Linear))
+            // 3.66?... also i just realized this number doesn't even fucking matter
+            .WithFrame(new(duration: TimeSpan.FromSeconds(3.16), easing: EasingFunction.Linear))
             .WithFrame(new(duration: TimeSpan.FromSeconds(0), easing: EasingFunction.Linear));
 
+        // TODO
+        BonusLifeAnimator = Animator.Create();
+
+        BonusLifeAnimator.OnKeyFrameFinish += DoActionsForBonusLife;
         IntermissionAnimator.OnKeyFrameFinish += DoMidAnimationActions;
     }
 
+    private static void DoActionsForBonusLife(KeyFrame frame) {
+        var frameId = BonusLifeAnimator.KeyFrames.FindIndex(f => f.Equals(frame));
+
+        // 0 is entirely placeholder
+        if (frameId == 0) {
+            PlayerTank.AddLives(1);
+            var lifeget = "Assets/music/fanfares/life_get.ogg";
+            SoundPlayer.PlaySoundInstance(lifeget, SoundContext.Effect, 0.5f, rememberMe: true);
+        }
+    }
+
     public static void InitializeCountdowns(bool oneUp = false) {
-        // 10 seconds to complete the entire thing
+        // 10 seconds to complete the entire thing (14 if one up)
         // at 3 seconds in, the opening fanfare plays (but for some reason i gotta use 4 in this.)
         // at 220 frames left (3.66 seconds), the snare drums begin, and the scene is visible
         // at halfway through, the next mission is set-up
         float secs1 = 3;
 
         // + 4 since DEF_PLUSLIFE_TIME is 240 ticks (4 seconds)
-        float secs2 = oneUp ? 3f : 7f;
+        float secs3 = 2.5f + (oneUp ? 1f : 0f);
+
+        // no bonus time if no one up
+        float secs2 = oneUp ? IntermissionHandler.DEF_PLUSLIFE_TIME / 60 : 0;
+
+        // for loading into a campaign
         if (TimeBlack > 0) {
             secs1 = 4;
-            secs2 = 3;
+            secs3 = 3;
         }
         IntermissionAnimator.KeyFrames[0] = new(duration: TimeSpan.FromSeconds(secs1), easing: EasingFunction.Linear);
+        // to allow for the bonus life animation
         IntermissionAnimator.KeyFrames[2] = new(duration: TimeSpan.FromSeconds(secs2), easing: EasingFunction.Linear);
+        IntermissionAnimator.KeyFrames[3] = new(duration: TimeSpan.FromSeconds(secs3), easing: EasingFunction.Linear);
 
 
         // the last frame is filler because i dunno how to fix the last frame finish event firing bug
         // ignore the last frame
         // TODO: fix this fuckery above
     }
-
     private static void DoMidAnimationActions(KeyFrame frame) {
         var frameId = IntermissionAnimator.KeyFrames.FindIndex(f => f.Equals(frame));
 
         if (MainMenuUI.Active) {
-            if (frameId > 0) {
-                IntermissionAnimator?.Stop(); // the player dipped during the intermission lol
-                return;
-            }
+            IntermissionAnimator?.Stop(); // the player dipped during the intermission lol
+            return;
         }
 
-        // play the opening fanfare n shit. xd.
+        // happens as soon as the intermission is fully opaque
         if (frameId == 0) {
+            // tell the game to fade the intermission screen into view
+            ShouldFade = true;
+            ShouldFadeIn = true;
             SceneManager.CleanupScene();
-            var missionStarting = "Assets/music/fanfares/mission_starting.ogg";
-            SoundPlayer.PlaySoundInstance(missionStarting, SoundContext.Effect, 0.8f);
+
+            // ShouldDrawBanner indicates there wasn't a bonus life to be had
+            if (ShouldDrawBanner)
+                PlayOpeningFanfare();
         }
+        // happens in the middle of full opaque-ness
         else if (frameId == 1) {
+            // tell the game to not fade at all
+            ShouldFade = false;
+            ShouldFadeIn = false;
+
             if (Difficulties.Types["RandomizedTanks"]) {
-                if (CampaignGlobals.LoadedCampaign.CurrentMissionId == MainMenuUI.MissionCheckpoint && IntermissionHandler.LastResult != Enums.MissionEndContext.Lose) {
+                if (CampaignGlobals.LoadedCampaign.CurrentMissionId == MainMenuUI.MissionCheckpoint
+                    && IntermissionHandler.LastResult != MissionEndContext.Lose) {
                     CampaignGlobals.LoadedCampaign.CachedMissions[CampaignGlobals.LoadedCampaign.CurrentMissionId].Tanks
                         = Difficulties.HijackTanks(CampaignGlobals.LoadedCampaign.CachedMissions[CampaignGlobals.LoadedCampaign.CurrentMissionId].Tanks);
                 }
             }
             CampaignGlobals.LoadedCampaign.SetupLoadedMission(GameHandler.AllPlayerTanks.Any(tnk => tnk != null && !tnk.Dead));
         }
-        else if (frameId == 2) {
+        else if (frameId == 2 && !ShouldDrawBanner) {
+            ShouldDrawBanner = true;
+
+            TextAnimatorLarge?.Restart();
+            TextAnimatorSmall?.Restart();
+            TextAnimatorLarge?.Run();
+            TextAnimatorSmall?.Run();
+
+            // only plays if the banner is fading in
+            PlayOpeningFanfare();
+        }
+        // as the intermission is beginning to fade to fully transparent
+        else if (frameId == 3) {
+            // tell the game to fade out to enter game scene view
+            IsAwaitingNewMission = false;
+            ShouldFade = true;
             // TODO: fix float interp
             if (PlayerTank.ClientTank is not null) {
                 // hacky using vectors for now.
@@ -131,43 +211,25 @@ public static class IntermissionSystem {
             IntermissionHandler.CountdownAnimator?.Run();
         }
     }
-
-    public static void PrepareRTs(GraphicsDevice device, SpriteBatch spriteBatch) {
-        if (FrameBuffer == null || FrameBuffer.IsDisposed || FrameBuffer.Size() != WindowUtils.WindowBounds) {
-            FrameBuffer?.Dispose();
-            var presentationParams = TankGame.Instance.GraphicsDevice.PresentationParameters;
-            FrameBuffer = new RenderTarget2D(device,
-                presentationParams.BackBufferWidth, presentationParams.BackBufferHeight, false,
-                presentationParams.BackBufferFormat, presentationParams.DepthStencilFormat, 0, RenderTargetUsage.PreserveContents);
-        }
-        // TankGame.Interp = Alpha <= 0 && BlackAlpha <= 0 && GameHandler.InterpCheck;
-        // switch to RT, begin SB, do drawing, end SB, SetRenderTarget(null), begin SB again, draw RT, end SB
-        device.SetRenderTarget(FrameBuffer);
-
-        device.Clear(RenderGlobals.BackBufferColor);
-
-        // 1f since transparency is being handled in the RTs draw
-        var overallAlpha = 1f;
-
-        spriteBatch.Begin(rasterizerState: RenderGlobals.DefaultRasterizer);
+    public static void PrepareBuffers(GraphicsDevice device, SpriteBatch spriteBatch) {
+        RenderGlobals.EnsureRenderTargetOK(ref BackgroundBuffer, TankGame.Instance.GraphicsDevice, WindowUtils.WindowWidth, WindowUtils.WindowHeight);
+        RenderGlobals.EnsureRenderTargetOK(ref BannerBuffer, TankGame.Instance.GraphicsDevice, WindowUtils.WindowWidth, WindowUtils.WindowHeight / 2);
+        RenderGlobals.EnsureRenderTargetOK(ref BonusBannerBuffer, TankGame.Instance.GraphicsDevice, WindowUtils.WindowWidth, BonusBannerBase.Height * 2);
+        RenderGlobals.EnsureRenderTargetOK(ref BonusBannerTextBuffer, TankGame.Instance.GraphicsDevice, WindowUtils.WindowWidth, 100);
 
         if (TankGame.Instance.IsActive) {
-            if (TimeBlack > -1) {
+            // System.Diagnostics.Debug.WriteLine(TimeBlack);
+            if (TimeBlack > 0) {
                 TimeBlack -= RuntimeData.DeltaTime;
-                BlackAlpha += 1f / 45f * RuntimeData.DeltaTime;
+                BlackAlpha += ALPHA_FADE_CONSTANT * RuntimeData.DeltaTime;
             }
             else
-                BlackAlpha -= 1f / 45f * RuntimeData.DeltaTime;
+                BlackAlpha -= ALPHA_FADE_CONSTANT * RuntimeData.DeltaTime;
         }
-        if (BlackAlpha >= 1 && _oldBlack < 1) {
+        if (BlackAlpha >= 1f && _oldBlack < 1f) {
             MainMenuUI.Leave();
-
-            if (CampaignGlobals.ShouldMissionsProgress) {
-                // todo: should this happen?
-                CampaignGlobals.LoadedCampaign.SetupLoadedMission(true);
-            }
-
         }
+        // wait a little bit to do animations so they are clearly visible to the user
         if (BlackAlpha <= 0.9f && _oldBlack > 0.9f) {
             TextAnimatorLarge?.Restart();
             TextAnimatorSmall?.Restart();
@@ -177,146 +239,299 @@ public static class IntermissionSystem {
         Alpha = MathHelper.Clamp(Alpha, 0f, 1f);
 
         if (!GameUI.Paused && TankGame.Instance.IsActive) {
+            // moves the background tank graphic
             _offset.Y -= 1f * RuntimeData.DeltaTime;
             _offset.X += 1f * RuntimeData.DeltaTime;
         }
         if (MainMenuUI.Active && BlackAlpha <= 0) {
             Alpha = 0f;
-            CurrentWaitTime = 0;
         }
 
-        if (Alpha <= 0f)
-            _offset = Vector2.Zero;
+        // System.Diagnostics.Debug.WriteLine($"{IntermissionAnimator.ElapsedTime} - {IntermissionAnimator.CurrentInterpolation}");
+        // TankGame.Interp = Alpha <= 0 && BlackAlpha <= 0 && GameHandler.InterpCheck;
+        // switch to RT, begin SB, do drawing, end SB, SetRenderTarget(null), begin SB again, draw RT, end SB
 
-        if (Alpha > 0f) {
-            spriteBatch.Draw(
-                TextureGlobals.Pixels[Color.White],
-                new Rectangle(0, 0, WindowUtils.WindowWidth, WindowUtils.WindowHeight),
-                BackgroundColor * overallAlpha);
+        #region RenderToBackground
 
-            int padding = 10;
-            int scale = 2;
+        device.SetRenderTarget(BackgroundBuffer);
 
-            int texWidth = 64 * scale;
+        device.Clear(RenderGlobals.BackBufferColor);
 
-            var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/tank_background_billboard");
-            // draw small tank graphics using GameResources.GetGameResource
-            for (int i = -padding; i < WindowUtils.WindowWidth / texWidth + padding; i++) {
-                for (int j = -padding; j < WindowUtils.WindowHeight / texWidth + padding; j++) {
-                    spriteBatch.Draw(tex, new Vector2(i, j) * texWidth + _offset, null, BackgroundColor * overallAlpha, 0f, Vector2.Zero, scale, default, default);
-                }
+        // 1f since transparency is being handled in the RTs draw
+        var overallAlpha = 1f;
+
+        spriteBatch.Begin(rasterizerState: RenderGlobals.DefaultRasterizer);
+
+        // draw the background color
+        spriteBatch.Draw(
+            TextureGlobals.Pixels[Color.White],
+            new Rectangle(0, 0, WindowUtils.WindowWidth, WindowUtils.WindowHeight),
+            BackgroundColor * overallAlpha);
+
+        int padding = 10;
+        int scale = 2;
+
+        int texWidth = 64 * scale;
+
+        // draw small tank graphics in the background
+        var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/tank_background_billboard");
+        for (int i = -padding; i < WindowUtils.WindowWidth / texWidth + padding; i++) {
+            for (int j = -padding; j < WindowUtils.WindowHeight / texWidth + padding; j++) {
+                spriteBatch.Draw(tex, new Vector2(i, j) * texWidth + _offset, null, BackgroundColor * overallAlpha, 0f, Vector2.Zero, scale, default, default);
             }
-            // why didn't i use this approach before? i'm kind of braindead sometimes.
-            for (int i = 0; i < 6; i++) {
-                var off = 75f;
-                DrawStripe(spriteBatch, StripColor, WindowUtils.WindowHeight * 0.16f + (off * i).ToResolutionY(), overallAlpha);
-            }
-            var wp = TextureGlobals.Pixels[Color.White];
-            spriteBatch.Draw(wp, new Vector2(0, WindowUtils.WindowHeight * 0.18f), null,
-                Color.Goldenrod * overallAlpha, 0f, new Vector2(0, wp.Size().Y / 2), new Vector2(WindowUtils.WindowWidth, 15), default, default);
-            spriteBatch.Draw(wp, new Vector2(0, WindowUtils.WindowHeight * 0.18f + 420.ToResolutionY()), null,
-                Color.Goldenrod * overallAlpha, 0f, new Vector2(0, wp.Size().Y / 2), new Vector2(WindowUtils.WindowWidth, 15), default, default);
-            int mafs1 = CampaignGlobals.LoadedCampaign.TrackedSpawnPoints.Count(p => p.Item2);
-            int mafs2 = CampaignGlobals.LoadedCampaign.LoadedMission.Tanks.Count(x => x.IsPlayer);
-            int mafs = mafs1 - mafs2; // waddafak. why is my old code so horrid.
-
-            float spacing = 10;
-
-            string enemyTankDisplay = $"{TankGame.GameLanguage.EnemyTanks}: {mafs}";
-            string missionName = CampaignGlobals.LoadedCampaign.LoadedMission.Name;
-
-            float spacingEnemyTankDisplay = DrawUtils.GetTextXOffsetForSpacing(enemyTankDisplay, spacing) / TextAnimatorLarge.CurrentScale.ToResolution().X;
-            float spacingMissionName = DrawUtils.GetTextXOffsetForSpacing(missionName, spacing) / TextAnimatorLarge.CurrentScale.ToResolution().X;
-
-            // slight misalignment
-
-            DrawUtils.DrawBorderedStringWithShadow(spriteBatch, FontGlobals.RebirthFontLarge,
-                new Vector2(WindowUtils.WindowWidth / 2 - spacingMissionName, WindowUtils.WindowHeight / 2 - 200.ToResolutionY()),
-                Vector2.One,
-                missionName,
-                BackgroundColor,
-                ColorForBorders,
-                TextAnimatorLarge.CurrentScale.ToResolution(),
-                overallAlpha, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 3f, charSpacing: spacing);
-            DrawUtils.DrawBorderedStringWithShadow(spriteBatch, FontGlobals.RebirthFontLarge,
-                new Vector2(WindowUtils.WindowWidth / 2 - spacingEnemyTankDisplay, WindowUtils.WindowHeight / 2 - 50.ToResolutionY()),
-                Vector2.One,
-                enemyTankDisplay,
-                BackgroundColor,
-                ColorForBorders,
-                TextAnimatorLarge.CurrentScale.ToResolution() * 0.75f,
-                overallAlpha, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 2.5f, charSpacing: spacing);
-
-            var tnk2d = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/playertank2d");
-
-            var count = Server.CurrentClientCount > 0 ? Server.CurrentClientCount : Server.CurrentClientCount + 1;
-
-            for (int i = 0; i < count; i++) {
-                var name = Client.IsConnected() ? Server.ConnectedClients[i].Name : string.Empty;
-
-                var brightPlayerColor = ColorUtils.ChangeColorBrightness(PlayerID.PlayerTankColors[i].ToColor(), 0.85f);
-                var brighterPlayerColor = ColorUtils.ChangeColorBrightness(PlayerID.PlayerTankColors[i].ToColor(), 0.25f);
-
-                var pos = new Vector2(WindowUtils.WindowWidth / (count + 1) * (i + 1), WindowUtils.WindowHeight / 2 + 375.ToResolutionY());
-
-                var lifeText = $"×  {PlayerTank.Lives[i]}";
-                DrawUtils.DrawBorderedStringWithShadow(spriteBatch, FontGlobals.RebirthFontLarge,
-                    pos + new Vector2(75, -25).ToResolution(),
-                    Vector2.One,
-                    lifeText,
-                    brightPlayerColor,
-                    // hacky or not?
-                    PlayerID.PlayerTankColors[i].ToColor(),
-                    Vector2.One.ToResolution(),
-                    overallAlpha,
-                    Anchor.Center, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 1f);
-
-                DrawUtils.DrawStringWithShadow(spriteBatch, FontGlobals.RebirthFontLarge,
-                    pos - new Vector2(0, 75).ToResolution(),
-                    Vector2.One,
-                    name,
-                    PlayerID.PlayerTankColors[i].ToColor(),
-                    new Vector2(0.3f).ToResolution(),
-                    overallAlpha,
-                    Anchor.Center, shadowDistScale: 1.5f, shadowAlpha: 0.5f);
-                DrawUtils.DrawTextureWithShadow(spriteBatch, tnk2d, pos - new Vector2(130, 0).ToResolution(), Vector2.One,
-                    brighterPlayerColor, Vector2.One * 1.5f, overallAlpha, Anchor.Center,
-                    shadowDistScale: 1f, shadowAlpha: 0.5f);
-            }
-            // draw mission data on the billboard (?) thing
-            if (CampaignGlobals.LoadedCampaign.CurrentMissionId == 0)
-                DrawUtils.DrawBorderedStringWithShadow(spriteBatch, FontGlobals.RebirthFontLarge,
-                    new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 295.ToResolutionY()),
-                    Vector2.One,
-                    $"{TankGame.GameLanguage.Campaign}: \"{CampaignGlobals.LoadedCampaign.MetaData.Name}\" ({TankGame.GameLanguage.Mission} #{CampaignGlobals.LoadedCampaign.CurrentMissionId + 1})",
-                    BackgroundColor,
-                    ColorForBorders,
-                    TextAnimatorSmall.CurrentScale.ToResolution(),
-                    overallAlpha, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 1.5f);
-            else
-                DrawUtils.DrawBorderedStringWithShadow(spriteBatch, FontGlobals.RebirthFontLarge,
-                    new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 295.ToResolutionY()),
-                    Vector2.One,
-                    $"{TankGame.GameLanguage.Mission} #{CampaignGlobals.LoadedCampaign.CurrentMissionId + 1}",
-                    BackgroundColor,
-                    ColorForBorders,
-                    TextAnimatorSmall.CurrentScale.ToResolution(),
-                    overallAlpha, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 1.5f);
         }
+
+        // draw player graphics & life remaining
+        var tnk2d = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/playertank2d");
+        var count = Server.CurrentClientCount > 0 ? Server.CurrentClientCount : Server.CurrentClientCount + 1;
+
+        for (int i = 0; i < count; i++) {
+            var name = Client.IsConnected() ? Server.ConnectedClients[i].Name : string.Empty;
+
+            var brightPlayerColor = ColorUtils.ChangeColorBrightness(PlayerID.PlayerTankColors[i].ToColor(), 0.85f);
+            var brighterPlayerColor = ColorUtils.ChangeColorBrightness(PlayerID.PlayerTankColors[i].ToColor(), 0.25f);
+
+            var pos = new Vector2(WindowUtils.WindowWidth / (count + 1) * (i + 1), WindowUtils.WindowHeight / 2 + 375.ToResolutionY());
+
+            var lifeText = $"×  {PlayerTank.Lives[i]}";
+            DrawUtils.DrawBorderedStringWithShadow(spriteBatch, FontGlobals.RebirthFontLarge,
+                pos + new Vector2(75, -25).ToResolution(),
+                Vector2.One,
+                lifeText,
+                brightPlayerColor,
+                // hacky or not?
+                PlayerID.PlayerTankColors[i].ToColor(),
+                Vector2.One.ToResolution(),
+                overallAlpha,
+                Anchor.Center, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 1f);
+
+            DrawUtils.DrawStringWithShadow(spriteBatch, FontGlobals.RebirthFontLarge,
+                pos - new Vector2(0, 75).ToResolution(),
+                Vector2.One,
+                name,
+                PlayerID.PlayerTankColors[i].ToColor(),
+                new Vector2(0.3f).ToResolution(),
+                overallAlpha,
+                Anchor.Center, shadowDistScale: 1.5f, shadowAlpha: 0.5f);
+            DrawUtils.DrawTextureWithShadow(spriteBatch, tnk2d, pos - new Vector2(130, 0).ToResolution(), Vector2.One,
+                brighterPlayerColor, Vector2.One * 1.5f, overallAlpha, Anchor.Center,
+                shadowDistScale: 1f, shadowAlpha: 0.5f);
+        }
+
         _oldBlack = BlackAlpha;
 
         spriteBatch.End();
 
         device.SetRenderTarget(null);
-    }
-    // TODO: turn this intermission stuff into animators, lol.
-    /// <summary>Renders the intermission.</summary>
-    public static void Draw(SpriteBatch spriteBatch) {
+
+        #endregion
+
+        #region RenderToBanner
+
+        // draw information to the BannerBuffer now
+
+        device.SetRenderTarget(BannerBuffer);
+
+        device.Clear(RenderGlobals.BackBufferColor);
+
         spriteBatch.Begin(rasterizerState: RenderGlobals.DefaultRasterizer);
-        spriteBatch.Draw(FrameBuffer, Vector2.Zero, Color.White * Alpha);
+
+        // why didn't i use this approach before? i'm kind of braindead sometimes.
+        // draws the plaid(?) banner across the screen
+        for (int i = 0; i < 6; i++) {
+            var off = 75f;
+            DrawStripe(spriteBatch, StripColor, (off * i).ToResolutionY(), overallAlpha);
+        }
+
+        // i got this by mathing 1080 * 0.18 - 1080 * 0.16 (what the old offset was)
+        // similar magic for the other values
+        var lineOffset = 21.6f.ToResolutionY();
+        var textOffsetMissionName = 167.2f.ToResolutionY();
+        var textOffsetTanksLeft = 317.2f.ToResolutionY();
+        var textOffsetDetails = 72.2f.ToResolutionY();
+
+        // draw the little golden lines across the plaid stripe
+        var wp = TextureGlobals.Pixels[Color.White];
+        spriteBatch.Draw(wp, new Vector2(0, lineOffset), null,
+            Color.Goldenrod * overallAlpha, 0f, new Vector2(0, wp.Size().Y / 2), new Vector2(WindowUtils.WindowWidth, 15), default, default);
+        spriteBatch.Draw(wp, new Vector2(0, lineOffset + 420.ToResolutionY()), null,
+            Color.Goldenrod * overallAlpha, 0f, new Vector2(0, wp.Size().Y / 2), new Vector2(WindowUtils.WindowWidth, 15), default, default);
+
+        // calculate total enemy tanks (remaining)
+        int mafs1 = CampaignGlobals.LoadedCampaign.TrackedSpawnPoints.Count(p => p.Item2);
+        int mafs2 = CampaignGlobals.LoadedCampaign.LoadedMission.Tanks.Count(x => x.IsPlayer);
+        int mafs = mafs1 - mafs2; // waddafak. why is my old code so horrid.
+
+        // draw large(r) text
+        float spacing = 10;
+        string enemyTankDisplay = $"{TankGame.GameLanguage.EnemyTanks}: {mafs}";
+        string missionName = CampaignGlobals.LoadedCampaign.LoadedMission.Name;
+
+        float spacingEnemyTankDisplay = DrawUtils.GetTextXOffsetForSpacing(enemyTankDisplay, spacing) / TextAnimatorLarge.CurrentScale.ToResolution().X;
+        float spacingMissionName = DrawUtils.GetTextXOffsetForSpacing(missionName, spacing) / TextAnimatorLarge.CurrentScale.ToResolution().X;
+
+        // slight misalignment
+
+        // draw mission name, tanks remaining
+        DrawUtils.DrawBorderedStringWithShadow(spriteBatch, FontGlobals.RebirthFontLarge,
+            new Vector2(WindowUtils.WindowWidth / 2 - spacingMissionName, textOffsetMissionName),
+            Vector2.One,
+            missionName,
+            BackgroundColor,
+            ColorForBorders,
+            TextAnimatorLarge.CurrentScale.ToResolution(),
+            overallAlpha, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 3f, charSpacing: spacing);
+        DrawUtils.DrawBorderedStringWithShadow(spriteBatch, FontGlobals.RebirthFontLarge,
+            new Vector2(WindowUtils.WindowWidth / 2 - spacingEnemyTankDisplay, textOffsetTanksLeft),
+            Vector2.One,
+            enemyTankDisplay,
+            BackgroundColor,
+            ColorForBorders,
+            TextAnimatorLarge.CurrentScale.ToResolution() * 0.75f,
+            overallAlpha, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 2.5f, charSpacing: spacing);
+
+        // draw campaign/mission data
+        if (CampaignGlobals.LoadedCampaign.CurrentMissionId == 0)
+            DrawUtils.DrawBorderedStringWithShadow(spriteBatch, FontGlobals.RebirthFontLarge,
+                new Vector2(WindowUtils.WindowWidth / 2, textOffsetDetails),
+                Vector2.One,
+                $"{TankGame.GameLanguage.Campaign}: \"{CampaignGlobals.LoadedCampaign.MetaData.Name}\" ({TankGame.GameLanguage.Mission} #{CampaignGlobals.LoadedCampaign.CurrentMissionId + 1})",
+                BackgroundColor,
+                ColorForBorders,
+                TextAnimatorSmall.CurrentScale.ToResolution(),
+                overallAlpha, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 1.5f);
+        else
+            DrawUtils.DrawBorderedStringWithShadow(spriteBatch, FontGlobals.RebirthFontLarge,
+                new Vector2(WindowUtils.WindowWidth / 2, textOffsetDetails),
+                Vector2.One,
+                $"{TankGame.GameLanguage.Mission} #{CampaignGlobals.LoadedCampaign.CurrentMissionId + 1}",
+                BackgroundColor,
+                ColorForBorders,
+                TextAnimatorSmall.CurrentScale.ToResolution(),
+                overallAlpha, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 1.5f);
+
         spriteBatch.End();
+
+        device.SetRenderTarget(null);
+
+        #endregion
+
+        #region RenderToBonusBanner
+
+        device.SetRenderTarget(BonusBannerBuffer);
+
+        device.Clear(RenderGlobals.BackBufferColor);
+
+        spriteBatch.Begin(rasterizerState: RenderGlobals.DefaultRasterizer, blendState: BlendState.NonPremultiplied);
+
+        DrawBonusLifeBanner(spriteBatch);
+
+        spriteBatch.End();
+
+        device.SetRenderTarget(null);
+        #endregion
+
+        #region RenderToBonusBannerText
+
+        device.SetRenderTarget(BonusBannerTextBuffer);
+
+        device.Clear(RenderGlobals.BackBufferColor);
+
+        spriteBatch.Begin(rasterizerState: RenderGlobals.DefaultRasterizer, blendState: BlendState.NonPremultiplied);
+
+        // slight offset to make the top color pop more...?
+        // TODO: make the animation that makes the player tank graphic grow and glow, as well as the banner
+        BonusTextGradient.Center = 0.6f;
+
+        spriteBatch.DrawString(FontGlobals.RebirthFontLarge, TankGame.GameLanguage.BonusTank, new Vector2(WindowUtils.WindowWidth / 2, BonusBannerTextBuffer.Height / 2), Color.White, Vector2.One * _bannerScale * 0.5f,
+            origin: Anchor.Center.GetAnchor(FontGlobals.RebirthFontLarge.MeasureString(TankGame.GameLanguage.BonusTank)));
+
+        spriteBatch.End();
+
+        device.SetRenderTarget(null);
+
+        #endregion
+        
+        // assign this to update position constantly
+        _renderY = WindowUtils.WindowHeight * 0.40f;
     }
 
+    static float _renderY;
+    static float _bannerScale = 2f;
+    /// <summary>Renders the intermission.</summary>
+    public static void Draw(SpriteBatch spriteBatch) {
+        if (Alpha > 0f) {
+            // ChatSystem.SendMessage(IsAwaitingNewMission.ToString());
+            spriteBatch.Begin(rasterizerState: RenderGlobals.DefaultRasterizer);
+            spriteBatch.Draw(BackgroundBuffer, Vector2.Zero, Color.White * Alpha);
+
+            // manage banner alpha
+            if (ShouldDrawBanner) {
+                BannerAlpha += ALPHA_FADE_CONSTANT * RuntimeData.DeltaTime;
+                BonusBannerAlpha -= ALPHA_FADE_CONSTANT * 2 * RuntimeData.DeltaTime;
+
+                if (BannerAlpha > 1) BannerAlpha = 1;
+                if (BonusBannerAlpha < 0) BonusBannerAlpha = 0;
+            }
+            else {
+                BannerAlpha = 0f;
+                BonusBannerAlpha = 1f;
+            }
+
+            // draw the banner only if we want it to
+            // fading out will not happen, only fading in
+            if (ShouldDrawBanner) {
+                var bannerPos = WindowUtils.WindowBottomLeft * 0.16f;
+                DrawUtils.DrawTextureWithShadow(TankGame.SpriteRenderer, BannerBuffer, bannerPos, Vector2.UnitY, Color.White,
+                    Vector2.One, BannerAlpha * Alpha, Anchor.TopLeft, shadowDistScale: 1.5f, shadowAlpha: 0.5f);
+                spriteBatch.Draw(BannerBuffer, WindowUtils.WindowBottomLeft * 0.16f, Color.White * Alpha * BonusBannerAlpha);
+            }
+
+            // render the bonus life banner now
+            var drawPos = new Vector2(WindowUtils.WindowWidth / 2, _renderY);
+
+            DrawUtils.DrawTextureWithShadow(TankGame.SpriteRenderer, BonusBannerBuffer, drawPos, 
+                Vector2.UnitY, BonusBannerColor, Vector2.One * _bannerScale, BonusBannerAlpha * Alpha, Anchor.Center, shadowDistScale: 1f, shadowAlpha: 0.5f);
+
+            spriteBatch.End();
+
+            var textOffset = 20f.ToResolutionY();
+            // draw strictly the bonus text shadow and border here
+            spriteBatch.Begin();
+
+            // TODO: localize later...
+            DrawUtils.DrawStringShadowOnly(spriteBatch, FontGlobals.RebirthFontLarge, drawPos - new Vector2(0, textOffset), Vector2.One * _bannerScale, TankGame.GameLanguage.BonusTank, Vector2.One * _bannerScale * 0.5f,
+                BonusBannerAlpha, shadowAlpha: 0.5f);
+            DrawUtils.DrawStringBorderOnly(spriteBatch, FontGlobals.RebirthFontLarge, TankGame.GameLanguage.BonusTank, drawPos - new Vector2(0, textOffset), BonusBannerTextBorderColor, Vector2.One * _bannerScale * 0.5f,
+                0f, borderThickness: 1.5f);
+
+            spriteBatch.End();
+
+            // draw the inner text with the gradient
+            spriteBatch.Begin(effect: BonusTextGradient);
+
+            // fuck these mental calculations yo... 
+            // in the RT prepration i have to add half of the buffer height and then subtract half of it here
+            spriteBatch.Draw(BonusBannerTextBuffer, new Vector2(0, _renderY - BonusBannerTextBuffer.Height / 2 - textOffset), Color.White * BonusBannerAlpha);
+
+            spriteBatch.End();
+        } else {
+            _offset = Vector2.Zero;
+        }
+
+        // manage fading in & out
+
+        if (GameUI.Paused) return;
+
+        if (ShouldFade && ShouldFadeIn)
+            IntermissionSystem.TickAlpha(ALPHA_FADE_CONSTANT * RuntimeData.DeltaTime);
+        if (ShouldFade && !ShouldFadeIn)
+            IntermissionSystem.TickAlpha(-ALPHA_FADE_CONSTANT * RuntimeData.DeltaTime);
+    }
+    public static void PlayOpeningFanfare() {
+        var missionStarting = "Assets/music/fanfares/mission_starting.ogg";
+        SoundPlayer.PlaySoundInstance(missionStarting, SoundContext.Effect, 0.8f);
+    }
     public static void DrawBlack(SpriteBatch spriteBatch) {
         BlackAlpha = MathHelper.Clamp(BlackAlpha, 0f, 1f);
         spriteBatch.Draw(
@@ -324,9 +539,30 @@ public static class IntermissionSystem {
             new Rectangle(0, 0, WindowUtils.WindowWidth, WindowUtils.WindowHeight),
             Color.Black * BlackAlpha);
     }
-
-    private static void DrawBonusLifeHUD() {
+    private static void DrawBonusLifeBanner(SpriteBatch spriteBatch) {
         // TODO: implement.
+
+        var margin = 0.33f;
+        var renderBeginX = BonusBannerBuffer.Width * margin;
+        var renderEndX = BonusBannerBuffer.Width * (1f - margin);
+
+        // draw the left segment
+        spriteBatch.Draw(BonusBannerBase, new Vector2(renderBeginX, 0), null, Color.White, 0f,
+            Vector2.Zero, Vector2.One, default, 0f);
+        spriteBatch.Draw(BonusBannerBase, new Vector2(renderBeginX, BonusBannerBase.Height), null, Color.White, 0f,
+            Vector2.Zero, Vector2.One, SpriteEffects.FlipVertically, 0f);
+
+        // draw the middle segment
+        spriteBatch.Draw(BonusBannerBase, new Vector2(renderBeginX + BonusBannerBase.Width, 0), _cutForLength, Color.White,
+            0f, Vector2.Zero, new Vector2(renderEndX - renderBeginX - BonusBannerBase.Width, 1f), default, 0f);
+        spriteBatch.Draw(BonusBannerBase, new Vector2(renderBeginX + BonusBannerBase.Width, BonusBannerBase.Height), _cutForLength, Color.White,
+            0f, Vector2.Zero, new Vector2(renderEndX - renderBeginX - BonusBannerBase.Width, 1f), SpriteEffects.FlipVertically, 0f);
+
+        // draw the right segment
+        spriteBatch.Draw(BonusBannerBase, new Vector2(renderEndX, 0), null, Color.White, 0f, 
+            Vector2.Zero, Vector2.One, SpriteEffects.FlipHorizontally, 0f);
+        spriteBatch.Draw(BonusBannerBase, new Vector2(renderEndX, BonusBannerBase.Height), null, Color.White, 0f,
+            Vector2.Zero, Vector2.One, SpriteEffects.FlipVertically | SpriteEffects.FlipHorizontally, 0f);
     }
 
     private static void DrawStripe(SpriteBatch spriteBatch, Color color, float offsetY, float alpha) {
@@ -339,17 +575,8 @@ public static class IntermissionSystem {
     }
 
     public static void BeginOperation(float time) {
-        WaitTime = time;
-        CurrentWaitTime = time;
         IntermissionAnimator?.Restart();
         IntermissionAnimator?.Run();
-    }
-
-    public static void Tick(float delta) {
-        if (CurrentWaitTime - delta < 0)
-            CurrentWaitTime = 0;
-        else
-            CurrentWaitTime -= delta;
     }
 
     public static void TickAlpha(float delta) {

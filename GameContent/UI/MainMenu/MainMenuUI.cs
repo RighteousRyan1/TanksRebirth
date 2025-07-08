@@ -196,7 +196,7 @@ public static partial class MainMenuUI
         foreach (var elem in campaignNames)
             elem?.Remove();
 
-        IntermissionSystem.TimeBlack = 240;
+        IntermissionSystem.TimeBlack = 280;
 
         CampaignGlobals.ShouldMissionsProgress = true;
 

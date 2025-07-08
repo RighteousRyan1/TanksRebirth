@@ -55,11 +55,8 @@ public static class IntermissionHandler {
             var victory = "Assets/music/fanfares/mission_complete_M20.ogg";
             SoundPlayer.PlaySoundInstance(victory, SoundContext.Effect, 0.5f, rememberMe: true);
         }
-        if (result1up && context == MissionEndContext.Win) {
+        if (context == MissionEndContext.Win) {
             TankGame.GameData.MissionsCompleted++;
-            PlayerTank.AddLives(1);
-            var lifeget = "Assets/music/fanfares/life_get.ogg";
-            SoundPlayer.PlaySoundInstance(lifeget, SoundContext.Effect, 0.5f, rememberMe: true);
         }
         if (!Client.IsConnected()) {
             if (context == MissionEndContext.Lose) {
@@ -100,7 +97,6 @@ public static class IntermissionHandler {
                 var deathSound = "Assets/fanfares/gameover_playerdeath";
                 SoundPlayer.PlaySoundInstance(deathSound, SoundContext.Effect, 0.3f);
             }*/
-
         }
         if (context == MissionEndContext.Win) {
             TankGame.GameData.MissionsCompleted++;
@@ -176,6 +172,7 @@ public static class IntermissionHandler {
         var nothingAnymore = NothingCanHappenAnymore(CampaignGlobals.LoadedCampaign.CurrentMission, out bool victory);
 
         if (nothingAnymore) {
+            IntermissionSystem.IsAwaitingNewMission = true;
             CampaignGlobals.InMission = false;
             if (!CampaignGlobals.InMission && _wasInMission) {
                 bool isExtraLifeMission = CampaignGlobals.LoadedCampaign.MetaData.ExtraLivesMissions.Contains(CampaignGlobals.LoadedCampaign.CurrentMissionId + 1);
@@ -186,8 +183,10 @@ public static class IntermissionHandler {
                 if (victory) {
                     restartTime = DEF_INTERMISSION_TIME;
 
-                    if (isExtraLifeMission)
+                    if (isExtraLifeMission) {
                         restartTime += DEF_PLUSLIFE_TIME;
+                        IntermissionSystem.ShouldDrawBanner = false;
+                    }
 
                     endContext = MissionEndContext.Win;
 
@@ -208,7 +207,7 @@ public static class IntermissionHandler {
                             }
                         }
                     }
-                    // doesnt work on 1 client
+                    // TODO: doesnt work on 1 client
                     bool check = Client.IsConnected() ? PlayerTank.Lives.All(x => x == 0) : PlayerTank.GetMyLives() <= 0;
 
                     // why is "win" a ternary result? it will never be "win" given the we are in the "!victory" branch. wtf ryan code once again
@@ -221,17 +220,6 @@ public static class IntermissionHandler {
                 CampaignGlobals.MissionEndEvent_Invoke(restartTime, endContext, isExtraLifeMission);
             }
         }
-        if (IntermissionSystem.CurrentWaitTime > 0)
-            IntermissionSystem.Tick(RuntimeData.DeltaTime);
-
-        if (IntermissionSystem.CurrentWaitTime > 240 && IntermissionSystem.CurrentWaitTime < 450) {
-            // this hardcode makes me want to commit neck rope
-            // boolean is changed within the scope of the check so we check again. weird.
-            IntermissionSystem.TickAlpha(1f / 60f * RuntimeData.DeltaTime);
-            // ^ when the mission info popup starts to appear
-        }
-        else
-            IntermissionSystem.TickAlpha(-1f / 45f * RuntimeData.DeltaTime);
     }
     /// <summary>This marks the beginning of the player seeing all of the tanks on the map, before the round begins.</summary>
     public static void BeginIntroSequence() {

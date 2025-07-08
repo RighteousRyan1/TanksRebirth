@@ -608,6 +608,12 @@
 /processorParam:DebugMode=Auto
 /build:Assets/shaders/black_hue.fx
 
+#begin Assets/shaders/controlled_gradient.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:Assets/shaders/controlled_gradient.fx
+
 #begin Assets/shaders/ExampleVxShader.fx
 /importer:EffectImporter
 /processor:EffectProcessor

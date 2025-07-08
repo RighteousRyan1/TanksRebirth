@@ -162,7 +162,7 @@ public class Animator {
         CurrentScale = Current.Scale + (futureFrame.Scale - Current.Scale) * ease;
         CurrentPosition3D = Current.Position3D + (futureFrame.Position3D - Current.Position3D) * ease;
 
-        // floats array goes by way faster than it should, skips animation basically
+        // TODO: fix, floats array goes by way faster than it should, skips animation basically
         if (CurrentFloats is not null)
             for (int i = 0; i < CurrentFloats.Length; i++)
                 if (CurrentFloats != null && futureFrame.Floats != null && Current.Floats != null

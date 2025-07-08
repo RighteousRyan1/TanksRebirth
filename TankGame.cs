@@ -207,7 +207,7 @@ public class TankGame : Game {
 
         VanillaAchievements.InitializeToRepository();
 
-        IntermissionSystem.InitializeAnmiations();
+        IntermissionSystem.InitializeAllStartupLogic();
 
         VanillaAchievementPopupHandler = new(VanillaAchievements.Repository);
 
@@ -293,6 +293,8 @@ public class TankGame : Game {
             "Assets/textures/misc/bot_hit",
             "Assets/textures/ui/tank_background_billboard",
             "Assets/textures/ui/playertank2d",
+            "Assets/textures/ui/tnk_bonus_star",
+            "Assets/textures/ui/tnk_bonus_base",
             "Assets/textures/ui/banner",
             "Assets/textures/ui/grades",
             "Assets/textures/ui/scoreboard_inner",
@@ -671,7 +673,7 @@ public class TankGame : Game {
             });
     }
     public static void Quit() => Instance.Exit();
-    public void PrepareGameRT(SpriteBatch spriteBatch) {
+    public void PrepareGameBuffers(SpriteBatch spriteBatch) {
         if (GameFrameBuffer == null || GameFrameBuffer.IsDisposed || GameFrameBuffer.Size() != WindowUtils.WindowBounds) {
             GameFrameBuffer?.Dispose();
             var presentationParams = GraphicsDevice.PresentationParameters;
@@ -743,21 +745,24 @@ public class TankGame : Game {
         }
     }
     public static void DrawInteractiveUI() {
-        ChatSystem.DrawMessages();
-
         SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: RenderGlobals.DefaultRasterizer);
 
         // if (LevelEditorUI.Active) LevelEditorUI.Render();
         if (CampaignCompleteUI.IsViewingResults) CampaignCompleteUI.Render();
+
+        // draw black before intermission graphics because we don't want to reveal the mission as it's loading
+        IntermissionSystem.DrawBlack(SpriteRenderer);
+
         SpriteRenderer.End();
 
         // this method begins the spritebatch, since it's supposed to have its own
         IntermissionSystem.Draw(SpriteRenderer);
 
+        ChatSystem.DrawMessages();
+
         SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: RenderGlobals.DefaultRasterizer);
 
         GameHandler.RenderUI();
-        IntermissionSystem.DrawBlack(SpriteRenderer);
         if (IsCrashInfoVisible) DrawErrorScreen();
 
         SpriteRenderer.End();
@@ -782,9 +787,9 @@ public class TankGame : Game {
     }
     public void PrepareAllRTs() {
         // switch to RT, begin SB, do drawing, end SB, SetRenderTarget(null), begin SB again, draw RT, end SB
-        MainMenuUI.PrepareTextRTs(GraphicsDevice, SpriteRenderer);
-        PrepareGameRT(SpriteRenderer);
-        IntermissionSystem.PrepareRTs(GraphicsDevice, SpriteRenderer);
+        PrepareGameBuffers(SpriteRenderer);
+        MainMenuUI.PrepareTextBuffers(GraphicsDevice, SpriteRenderer);
+        IntermissionSystem.PrepareBuffers(GraphicsDevice, SpriteRenderer);
     }
     public static void DrawGameElements() {
         var shader = Difficulties.Types["LanternMode"] && !MainMenuUI.Active ? GameShaders.LanternShader : (MainMenuUI.Active ? GameShaders.GaussianBlurShader : null);

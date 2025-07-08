@@ -136,7 +136,9 @@ public class GameHandler {
                 pu?.Update();
         }
         else {
-            TankMusicSystem.StopAll();
+            foreach (var audio in TankMusicSystem.Audio) {
+                audio.Value.BackingAudio.Stop();
+            }
         }
 
         LevelEditorUI.Update();

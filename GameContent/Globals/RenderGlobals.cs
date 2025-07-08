@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using HidSharp;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
@@ -6,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TanksRebirth.GameContent.RebirthUtils;
+using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.GameContent.Globals;
 
@@ -25,4 +27,14 @@ public static class RenderGlobals {
         AddressU = TextureAddressMode.Clamp,
         AddressV = TextureAddressMode.Clamp,
     };
+
+    public static void EnsureRenderTargetOK(ref RenderTarget2D rt, GraphicsDevice device, int desiredWidth, int desiredHeight) {
+        if (rt == null || rt.IsDisposed || rt.Size() != new Vector2(desiredWidth, desiredHeight)) {
+            rt?.Dispose();
+            var presentationParams = TankGame.Instance.GraphicsDevice.PresentationParameters;
+            rt = new RenderTarget2D(device,
+                desiredWidth, desiredHeight, false,
+                presentationParams.BackBufferFormat, presentationParams.DepthStencilFormat, 0, RenderTargetUsage.PreserveContents);
+        }
+    }
 }
