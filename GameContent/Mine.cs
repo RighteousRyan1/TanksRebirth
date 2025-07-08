@@ -154,10 +154,10 @@ public sealed class Mine : IAITankDanger
         Hitbox = new((int)Position.X - 10, (int)Position.Y - 10, 20, 20);
 
         if (Server.NetManager != null || !Client.IsConnected()) {
-            DetonateTime -= TankGame.DeltaTime;
+            DetonateTime -= RuntimeData.DeltaTime;
 
             if (DetonateTime < TICKS_OF_FLASHING) {
-                if (DetonateTime % 2 <= TankGame.DeltaTime) {
+                if (DetonateTime % 2 <= RuntimeData.DeltaTime) {
                     _tickRed = !_tickRed;
                 }
                 if (_oldDetonateTime > TICKS_OF_FLASHING && Owner is not null && Owner is PlayerTank) {

@@ -1,9 +1,10 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using TanksRebirth.Internals.Common.Utilities;
 using FontStashSharp;
+using TanksRebirth.GameContent.Globals;
 
 namespace TanksRebirth.Internals.Common.Framework.Graphics
 {
@@ -76,7 +77,7 @@ namespace TanksRebirth.Internals.Common.Framework.Graphics
                 int j = 0;
                 foreach (var pos in triangle.vertices)
                 {
-                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, j.ToString(), pos, Color.White, new Vector2(0.5f), 0f, TankGame.TextFont.MeasureString(j.ToString()) / 2);
+                    TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, j.ToString(), pos, Color.White, new Vector2(0.5f), 0f, FontGlobals.RebirthFont.MeasureString(j.ToString()) / 2);
                     j++;
                 }
             }

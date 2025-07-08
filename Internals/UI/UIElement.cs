@@ -1,4 +1,4 @@
-﻿using FontStashSharp;
+using FontStashSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using TanksRebirth.GameContent.Globals;
 using TanksRebirth.Internals.Common.GameUI;
 using TanksRebirth.Internals.Common.Utilities;
 
@@ -297,7 +298,7 @@ public abstract partial class UIElement {
 
     // TODO: tooltip anchors
     internal void DrawTooltipBox(SpriteBatch spriteBatch, Color color) {
-        var font = TankGame.TextFont;
+        var font = FontGlobals.RebirthFont;
         var scaleFont = font.MeasureString(Tooltip);
 
         var width = (int)(scaleFont.X + 30).ToResolutionX();

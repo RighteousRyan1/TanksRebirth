@@ -1,4 +1,4 @@
-﻿using FontStashSharp;
+using FontStashSharp;
 using Microsoft.Xna.Framework;
 using System;
 using System.Linq;
@@ -17,13 +17,13 @@ public partial class LevelEditorUI {
             _missionButtonScissor = new Rectangle(_missionTab.X, _missionTab.Y + heightDiff, _missionTab.Width, _missionTab.Height - heightDiff * 2).ToResolution();
             TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], _missionTab.ToResolution(), null, Color.Gray, 0f, Vector2.Zero, default, 0f);
             TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Rectangle(_missionTab.X, _missionTab.Y, _missionTab.Width, heightDiff).ToResolution(), null, Color.White, 0f, Vector2.Zero, default, 0f);
-            TankGame.SpriteRenderer.DrawString(TankGame.TextFont,
+            TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont,
                 TankGame.GameLanguage.MissionList,
                 new Vector2(175, 153).ToResolution(),
                 Color.Black,
                 Vector2.One.ToResolution(),
                 0f,
-                Anchor.TopCenter.GetAnchor(TankGame.TextFont.MeasureString(TankGame.GameLanguage.MissionList)));
+                Anchor.TopCenter.GetAnchor(FontGlobals.RebirthFont.MeasureString(TankGame.GameLanguage.MissionList)));
         }
     }
     public static void SetupMissionsBar(Campaign campaign, bool setCampaignData = true) {
@@ -54,7 +54,7 @@ public partial class LevelEditorUI {
                 var mission = campaign.CachedMissions[i];
                 if (mission == default || mission.Name is null)
                     break;
-                var btn = new UITextButton(mission.Name, TankGame.TextFont, Color.White, () => Vector2.One.ToResolution());
+                var btn = new UITextButton(mission.Name, FontGlobals.RebirthFont, Color.White, () => Vector2.One.ToResolution());
                 btn.SetDimensions(() => new Vector2(_missionButtonScissor.X + 15.ToResolutionX(), _missionButtonScissor.Y + _missionsOffset), () => new Vector2(_missionButtonScissor.Width - 30.ToResolutionX(), 25.ToResolutionY()));
 
                 btn.Offset = new(0, i * 30);

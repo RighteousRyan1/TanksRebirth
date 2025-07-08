@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
@@ -7,6 +7,7 @@ using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.Cosmetics;
 
@@ -32,8 +33,8 @@ public struct CosmeticChest
         {
             cos.LockOptions = PropLockOptions.ToTurret;
             cos.Scale = new(5f);
-            cos.RelativePosition = new Vector3(0, 20, 0); // + new Vector3(20, 0, 0).RotateXZ(TankGame.RunTime / 10);
-            cos.Rotation = Vector3.Zero; //new Vector3(0.0102f, 0.034f, 0.075f) * TankGame.DeltaTime;
+            cos.RelativePosition = new Vector3(0, 20, 0); // + new Vector3(20, 0, 0).RotateXZ(RuntimeData.RunTime / 10);
+            cos.Rotation = Vector3.Zero; //new Vector3(0.0102f, 0.034f, 0.075f) * RuntimeData.DeltaTime;
         },
         Scale = new(10f)
     };
@@ -76,10 +77,10 @@ public struct CosmeticChest
 
             if (tnk.IsIngame && !tnk.Properties.Invisible) {
                 float y = 20f;
-                if (TankGame.UpdateCount % 10 == 0) {
+                if (RuntimeData.UpdateCount % 10 == 0) {
                     GameHandler.Particles.MakeShineSpot(tnk.Position3D +
-                        new Vector3(cos.RelativePosition.X, cos.RelativePosition.Y, siny / 5 + (Vector2.UnitY * 5).Rotate(GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi)).Y), 
-                        Color.Yellow, GameHandler.GameRand.NextFloat(0.3f, 0.5f));
+                        new Vector3(cos.RelativePosition.X, cos.RelativePosition.Y, siny / 5 + (Vector2.UnitY * 5).Rotate(Client.ClientRandom.NextFloat(0, MathHelper.TwoPi)).Y), 
+                        Color.Yellow, Client.ClientRandom.NextFloat(0.3f, 0.5f));
                 }
             }
         }
@@ -126,7 +127,7 @@ public struct CosmeticChest
     {
         static bool between(float min, float max, float value) => value > min && value < max;
 
-        var rolledRand = GameHandler.GameRand.NextFloat(0, 1);
+        var rolledRand = Client.ClientRandom.NextFloat(0, 1);
 
         // get the lowest float value in WeightedContents
         var ordered = WeightedContents.Values.OrderBy(x => x).ToArray();

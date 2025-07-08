@@ -300,17 +300,17 @@ public abstract class Tank {
             lp.TextureScale = new(5);
 
             if (lp.LifeTime > 90)
-                lp.Alpha -= 0.01f * TankGame.DeltaTime;
+                lp.Alpha -= 0.01f * RuntimeData.DeltaTime;
 
             if (lp.Alpha <= 0)
                 lp.Destroy();
             /*if (lp.Scale.X < 5f)
-                GeometryUtils.Add(ref lp.Scale, 0.12f * TankGame.DeltaTime);
+                GeometryUtils.Add(ref lp.Scale, 0.12f * RuntimeData.DeltaTime);
             if (lp.Alpha < 1f && lp.Scale.X < 5f)
-                lp.Alpha += 0.02f * TankGame.DeltaTime;
+                lp.Alpha += 0.02f * RuntimeData.DeltaTime;
 
             if (lp.LifeTime > 90)
-                lp.Alpha -= 0.005f * TankGame.DeltaTime;
+                lp.Alpha -= 0.005f * RuntimeData.DeltaTime;
 
             if (lp.Scale.X < 0f)
                 lp.Destroy();*/
@@ -329,12 +329,12 @@ public abstract class Tank {
             lp.Scale = new(1f);
 
             lp.UniqueBehavior = (elp) => {
-                elp.Position.X += velocity.X * TankGame.DeltaTime;
-                elp.Position.Z += velocity.Y * TankGame.DeltaTime;
+                elp.Position.X += velocity.X * RuntimeData.DeltaTime;
+                elp.Position.Z += velocity.Y * RuntimeData.DeltaTime;
 
                 if (elp.LifeTime > 15) {
-                    GeometryUtils.Add(ref elp.Scale, -0.03f * TankGame.DeltaTime);
-                    elp.Alpha -= 0.03f * TankGame.DeltaTime;
+                    GeometryUtils.Add(ref elp.Scale, -0.03f * RuntimeData.DeltaTime);
+                    elp.Alpha -= 0.03f * RuntimeData.DeltaTime;
                 }
 
                 if (elp.Scale.X <= 0f || elp.Alpha <= 0f)
@@ -463,27 +463,27 @@ public abstract class Tank {
         if (OwnedMineCount < 0)
             OwnedMineCount = 0;
         if (DecelerationRateDecayTime > 0)
-            DecelerationRateDecayTime -= TankGame.DeltaTime;
+            DecelerationRateDecayTime -= RuntimeData.DeltaTime;
 
         if (!Properties.Stationary) {
             float treadPlaceTimer = 0;
             if (Velocity.Length() != 0) {
                 treadPlaceTimer = MathF.Round(11 / Velocity.Length());
                 // MAYBE: change back to <= delta time if it doesn't work.
-                if (TankGame.RunTime % treadPlaceTimer < TankGame.DeltaTime)
+                if (RuntimeData.RunTime % treadPlaceTimer < RuntimeData.DeltaTime)
                     LayFootprint(Properties.TrackType == TrackID.Thick);
             }
             if (IsTurning && TankRotation != _oldRotation) {
                 treadPlaceTimer = Properties.TurningSpeed * 150;
                 // MAYBE: change back to <= delta time if it doesn't work.
-                if (TankGame.RunTime % treadPlaceTimer < TankGame.DeltaTime)
+                if (RuntimeData.RunTime % treadPlaceTimer < RuntimeData.DeltaTime)
                     LayFootprint(Properties.TrackType == TrackID.Thick);
             }
             if (!Properties.IsSilent && Velocity.Length() > 0) {
                 // why did i clamp? i hate old code
-                if (TankGame.RunTime % MathHelper.Clamp(treadPlaceTimer / 2, 4, 6) < TankGame.DeltaTime) {
+                if (RuntimeData.RunTime % MathHelper.Clamp(treadPlaceTimer / 2, 4, 6) < RuntimeData.DeltaTime) {
                     Properties.TreadPitch = MathHelper.Clamp(Properties.TreadPitch, -1f, 1f);
-                    var treadPlace = $"Assets/sounds/tnk_tread_place_{GameHandler.GameRand.Next(1, 5)}.ogg";
+                    var treadPlace = $"Assets/sounds/tnk_tread_place_{Client.ClientRandom.Next(1, 5)}.ogg";
                     var sfx = SoundPlayer.PlaySoundInstance(treadPlace, SoundContext.Effect, Properties.TreadVolume, 0f,
                         Properties.TreadPitch, gameplaySound: true);
                     sfx.Instance.Pitch = Properties.TreadPitch;
@@ -493,7 +493,7 @@ public abstract class Tank {
 
         if (!IsTurning) {
             IsTurning = false;
-            Speed += Properties.Acceleration * TankGame.DeltaTime;
+            Speed += Properties.Acceleration * RuntimeData.DeltaTime;
 
 
             if (Speed > Properties.MaxSpeed)
@@ -501,7 +501,7 @@ public abstract class Tank {
         }
 
         if (IsTurning || CurShootStun > 0 || CurMineStun > 0 || Properties.Stationary) {
-            Speed -= Properties.Deceleration /* * (DecelerationRateDecayTime > 0 ? 0.25f : 1f)*/ * TankGame.DeltaTime;
+            Speed -= Properties.Deceleration /* * (DecelerationRateDecayTime > 0 ? 0.25f : 1f)*/ * RuntimeData.DeltaTime;
             if (Speed < 0)
                 Speed = 0;
             IsTurning = true;
@@ -514,13 +514,13 @@ public abstract class Tank {
         Model.CopyAbsoluteBoneTransformsTo(_boneTransforms);
 
         if (CurShootStun > 0)
-            CurShootStun -= TankGame.DeltaTime;
+            CurShootStun -= RuntimeData.DeltaTime;
         if (CurShootCooldown > 0)
-            CurShootCooldown -= TankGame.DeltaTime;
+            CurShootCooldown -= RuntimeData.DeltaTime;
         if (CurMineStun > 0)
-            CurMineStun -= TankGame.DeltaTime;
+            CurMineStun -= RuntimeData.DeltaTime;
         if (CurMineCooldown > 0)
-            CurMineCooldown -= TankGame.DeltaTime;
+            CurMineCooldown -= RuntimeData.DeltaTime;
 
         // fix 2d peeopled
         foreach (var cosmetic in Props)
@@ -575,7 +575,7 @@ public abstract class Tank {
                 _ => part.Color,
             };
             part.HasAddativeBlending = false;
-            part.Origin2D = TankGame.TextFont.MeasureString(TankGame.GameLanguage.Hit) / 2;
+            part.Origin2D = FontGlobals.RebirthFont.MeasureString(TankGame.GameLanguage.Hit) / 2;
             part.Scale = new Vector3(Vector2.One.ToResolution(), 1);
             part.Alpha = 0;
 
@@ -587,11 +587,11 @@ public abstract class Tank {
             float height = 5f;
 
             part.UniqueBehavior = (a) => {
-                var sin = MathF.Sin(TankGame.RunTime * speed) * height;
-                part.Position.Y = origPos.Y + sin * TankGame.DeltaTime;
+                var sin = MathF.Sin(RuntimeData.RunTime * speed) * height;
+                part.Position.Y = origPos.Y + sin * RuntimeData.DeltaTime;
 
                 if (a.LifeTime > 90)
-                    GeometryUtils.Add(ref a.Scale, -0.05f * TankGame.DeltaTime);
+                    GeometryUtils.Add(ref a.Scale, -0.05f * RuntimeData.DeltaTime);
 
                 height -= 0.02f;
 
@@ -601,7 +601,7 @@ public abstract class Tank {
                     a.Destroy();
             };
             part.UniqueDraw = particle => {
-                DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, TankGame.TextFontLarge, particle.Text,
+                DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, particle.Text,
                     MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(particle.Position),
                         CameraGlobals.GameView, CameraGlobals.GameProjection),
                     particle.Color, Color.White, new(particle.Scale.X, particle.Scale.Y), 0f, Anchor.Center);
@@ -614,9 +614,9 @@ public abstract class Tank {
             if (Properties.Armor.HitPoints > 0) {
                 Properties.Armor.HitPoints--;
                 var ding = SoundPlayer.PlaySoundInstance(
-                    $"Assets/sounds/armor_ding_{GameHandler.GameRand.Next(1, 3)}.ogg", SoundContext.Effect,
+                    $"Assets/sounds/armor_ding_{Client.ClientRandom.Next(1, 3)}.ogg", SoundContext.Effect,
                     gameplaySound: true);
-                ding.Instance.Pitch = GameHandler.GameRand.NextFloat(-0.1f, 0.1f);
+                ding.Instance.Pitch = Client.ClientRandom.NextFloat(-0.1f, 0.1f);
                 OnDamage?.Invoke(this, Properties.Armor.HitPoints == 0, context);
                 if (this is not AITank ai) 
                     return;
@@ -698,7 +698,7 @@ public abstract class Tank {
 
         void doDestructionFx() {
             for (int i = 0; i < 12; i++) {
-                var tex = GameResources.GetGameResource<Texture2D>(GameHandler.GameRand.Next(0, 2) == 0
+                var tex = GameResources.GetGameResource<Texture2D>(Client.ClientRandom.Next(0, 2) == 0
                     ? "Assets/textures/misc/tank_rock"
                     : "Assets/textures/misc/tank_rock_2");
 
@@ -706,8 +706,8 @@ public abstract class Tank {
 
                 particle.HasAddativeBlending = false;
 
-                var vel = new Vector3(GameHandler.GameRand.NextFloat(-3, 3), GameHandler.GameRand.NextFloat(3, 6),
-                    GameHandler.GameRand.NextFloat(-3, 3));
+                var vel = new Vector3(Client.ClientRandom.NextFloat(-3, 3), Client.ClientRandom.NextFloat(3, 6),
+                    Client.ClientRandom.NextFloat(-3, 3));
 
                 particle.Roll = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
@@ -716,10 +716,10 @@ public abstract class Tank {
                 particle.Color = Properties.DestructionColor;
 
                 particle.UniqueBehavior = particle => { // Hide local var from outer scope with same name.
-                    particle.Pitch += MathF.Sin(particle.Position.Length() / 10) * TankGame.DeltaTime;
+                    particle.Pitch += MathF.Sin(particle.Position.Length() / 10) * RuntimeData.DeltaTime;
                     vel.Y -= 0.2f;
-                    particle.Position += vel * TankGame.DeltaTime;
-                    particle.Alpha -= 0.025f * TankGame.DeltaTime;
+                    particle.Position += vel * RuntimeData.DeltaTime;
+                    particle.Alpha -= 0.025f * RuntimeData.DeltaTime;
 
                     if (particle.Alpha <= 0f)
                         particle.Destroy();
@@ -741,8 +741,8 @@ public abstract class Tank {
             explosionParticle.IsIn2DSpace = true;
 
             explosionParticle.UniqueBehavior = (p) => {
-                GeometryUtils.Add(ref p.Scale, -0.3f * TankGame.DeltaTime);
-                p.Alpha -= 0.06f * TankGame.DeltaTime;
+                GeometryUtils.Add(ref p.Scale, -0.3f * RuntimeData.DeltaTime);
+                p.Alpha -= 0.06f * RuntimeData.DeltaTime;
                 if (p.Scale.X <= 0f)
                     p.Destroy();
             };
@@ -856,7 +856,7 @@ public abstract class Tank {
                 part.Color = Color.Orange;
 
                 if (part.LifeTime > 1)
-                    part.Alpha -= 0.1f * TankGame.DeltaTime;
+                    part.Alpha -= 0.1f * RuntimeData.DeltaTime;
                 if (part.Alpha <= 0)
                     part.Destroy();
             };
@@ -891,11 +891,11 @@ public abstract class Tank {
             part.Color.G = (byte)MathUtils.RoughStep(part.Color.G, achieveable, step);
             part.Color.B = (byte)MathUtils.RoughStep(part.Color.B, achieveable, step);
 
-            GeometryUtils.Add(ref part.Scale, 0.004f * TankGame.DeltaTime);
+            GeometryUtils.Add(ref part.Scale, 0.004f * RuntimeData.DeltaTime);
 
             if (part.Color.G == achieveable) {
                 part.Color.B = (byte)achieveable;
-                part.Alpha -= 0.04f * TankGame.DeltaTime;
+                part.Alpha -= 0.04f * RuntimeData.DeltaTime;
 
                 if (part.Alpha <= 0)
                     part.Destroy();
@@ -936,7 +936,7 @@ public abstract class Tank {
         if (!GameScene.ShouldRenderAll)
             return;
         /*foreach (var shell in OwnedShells) {
-            SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"Owned by: {(this is PlayerTank ? PlayerID.Collection.GetKey(((PlayerTank)shell.Owner).PlayerType) : TankID.Collection.GetKey(((AITank)shell.Owner).Tier))}",
+            SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, FontGlobals.RebirthFont, $"Owned by: {(this is PlayerTank ? PlayerID.Collection.GetKey(((PlayerTank)shell.Owner).PlayerType) : TankID.Collection.GetKey(((AITank)shell.Owner).Tier))}",
                 MatrixUtils.ConvertWorldToScreen(Vector3.Zero, shell.World, shell.View, shell.Projection) - new Vector2(0, 20), this is PlayerTank ? PlayerID.PlayerTankColors[((PlayerTank)shell.Owner).PlayerType].ToColor() : AITank.TankDestructionColors[((AITank)shell.Owner).Tier], Color.White, Vector2.One.ToResolution(), 0f, 2f);
         }*/
 
@@ -1001,7 +1001,7 @@ public abstract class Tank {
         for (int i = 0; i < info.Length; i++) {
             var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Up * 20, World, View, Projection) -
                 new Vector2(0, (i * 20));
-            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, TankGame.TextFont, info[i], pos, 
+            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, info[i], pos, 
                 Color.Aqua, Color.Black, new Vector2(0.5f).ToResolution(), 0f, Anchor.TopCenter, 0.6f);
         }
     }

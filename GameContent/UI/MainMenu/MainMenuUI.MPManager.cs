@@ -1,4 +1,4 @@
-﻿using FontStashSharp;
+using FontStashSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Linq;
@@ -273,9 +273,9 @@ public static partial class MainMenuUI {
 
             Vector2 serverNamePos = new(_panelPosition.X + _panelWidth / 2, _panelPosition.Y + _panelHeaderHeight + 20.ToResolutionY());
 
-            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, TankGame.TextFontLarge, $"\"{NetPlay.ServerName}\"", serverNamePos,
+            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, $"\"{NetPlay.ServerName}\"", serverNamePos,
                 Color.White, Color.Black, new Vector2(0.6f).ToResolution(), 0f, Anchor.Center, 0.8f);
-            /*DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, TankGame.TextFont, $"Connected Players:", initialPosition + new Vector2(0, 40),
+            /*DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, $"Connected Players:", initialPosition + new Vector2(0, 40),
                 Color.White, Color.Black, new Vector2(0.6f).ToResolution(), 0f, Anchor.TopLeft, 0.8f);*/
             var numClients = Server.ConnectedClients.Count(x => x is not null);
 
@@ -291,7 +291,7 @@ public static partial class MainMenuUI {
 
                 var clientNamePos = new Vector2(_panelPosition.X + (panelXCut * (i + 1)), _panelPosition.Y + _panelHeaderHeight + _panelHeight / 3);
 
-                DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, TankGame.TextFontLarge, $"{client.Name}",
+                DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, $"{client.Name}",
                     clientNamePos, textCol, borderColor, new Vector2(0.3f).ToResolution(), 0f, Anchor.Center, 0.8f);
                 DrawUtils.DrawTextureWithBorder(TankGame.SpriteRenderer, GameResources.GetGameResource<Texture2D>("Assets/textures/ui/tank2d"),
                     clientNamePos + new Vector2(0, 35).ToResolution(), textCol, borderColor, new Vector2(1f), 0f);

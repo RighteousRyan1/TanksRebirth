@@ -1,4 +1,4 @@
-﻿using FontStashSharp;
+using FontStashSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
@@ -16,7 +16,7 @@ public static partial class LevelEditorUI {
     private static List<string> _renderNamesPlayers = [];
 
     public static void DrawTankDescriptionFlavor() {
-        var measure = TankGame.TextFont.MeasureString(_curDescription);
+        var measure = FontGlobals.RebirthFont.MeasureString(_curDescription);
 
         if (_curDescription != null && _curDescription != string.Empty) {
             int padding = 20;
@@ -29,7 +29,7 @@ public static partial class LevelEditorUI {
                 orig,
                 default,
                 0f);
-            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, _curDescription, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight * 0.78f), Color.Black, Vector2.One.ToResolution(), 0f, new Vector2(measure.X / 2, measure.Y));
+            TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, _curDescription, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight * 0.78f), Color.Black, Vector2.One.ToResolution(), 0f, new Vector2(measure.X / 2, measure.Y));
         }
     }
 }

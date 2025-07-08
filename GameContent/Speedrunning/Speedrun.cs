@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
@@ -89,12 +89,12 @@ public class Speedrun
 
             var len = CampaignGlobals.LoadedCampaign.CurrentMissionId + 2 > CampaignGlobals.LoadedCampaign.CachedMissions.Length ? CampaignGlobals.LoadedCampaign.CachedMissions.Length - 1 : CampaignGlobals.LoadedCampaign.CurrentMissionId + 2;
 
-            spriteBatch.DrawString(TankGame.TextFontLarge, $"Time: {CurrentSpeedrun.Timer.Elapsed}", new Vector2(10, 5), Color.White, new Vector2(0.15f), 0f, Vector2.Zero);
+            spriteBatch.DrawString(FontGlobals.RebirthFontLarge, $"Time: {CurrentSpeedrun.Timer.Elapsed}", new Vector2(10, 5), Color.White, new Vector2(0.15f), 0f, Vector2.Zero);
             for (int i = num; i <= len; i++) { // current.times.count originally
 
                 var time = CurrentSpeedrun.MissionTimes.ElementAt(i);
                 // display mission name and time taken
-                spriteBatch.DrawString(TankGame.TextFontLarge, $"{time.Key}: {time.Value.Item2}", new Vector2(10, 20 + ((i - num) * 15)), Color.White, new Vector2(0.15f), 0f, Vector2.Zero);
+                spriteBatch.DrawString(FontGlobals.RebirthFontLarge, $"{time.Key}: {time.Value.Item2}", new Vector2(10, 20 + ((i - num) * 15)), Color.White, new Vector2(0.15f), 0f, Vector2.Zero);
             }
         }
     }

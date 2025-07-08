@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 using System;
 using TanksRebirth.GameContent.UI;
@@ -66,9 +66,9 @@ public static class RebirthMouse
             CursorTrail.MainColor = ColorUtils.ChangeColorBrightness(PlayerID.PlayerTankColors[NetPlay.GetMyClientId()].ToColor(), 0.5f);
             CursorTrail?.Update(MouseUtils.MousePosition.ToResolution(new(Trail.WIDTH_TRAILS_ENJOY, Trail.HEIGHT_TRAILS_ENJOY)));
             CursorTrail?.Draw();
-            /*if (!float.IsInfinity(TankGame.DeltaTime)) {
-                if (TankGame.RunTime % 60 <= TankGame.DeltaTime) {
-                    var newVal = (int)(TRAIL_POINTS_BASE / TankGame.DeltaTime);
+            /*if (!float.IsInfinity(RuntimeData.DeltaTime)) {
+                if (RuntimeData.RunTime % 60 <= RuntimeData.DeltaTime) {
+                    var newVal = (int)(TRAIL_POINTS_BASE / RuntimeData.DeltaTime);
 
                     Console.WriteLine(newVal);
                     if (newVal > 0)

@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
@@ -207,7 +207,7 @@ public class PlacementSquare {
 
                 //var pos1 = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
 
-                //SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, TankGame.TextFont, $"{Id}\n({RelativePosition.X}, {RelativePosition.Y})", pos1, Color.White, Color.Black, new Vector2(TankGame.AddativeZoom * 0.8f).ToResolution(), 0f);
+                //SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, FontGlobals.RebirthFont, $"{Id}\n({RelativePosition.X}, {RelativePosition.Y})", pos1, Color.White, Color.Black, new Vector2(TankGame.AddativeZoom * 0.8f).ToResolution(), 0f);
 
                 if (DrawStacks) {
                     if (BlockId > -1) {
@@ -215,24 +215,24 @@ public class PlacementSquare {
                             if (Block.AllBlocks[BlockId].Properties.CanStack) {
                                 var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
 
-                                DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, TankGame.TextFont, $"{Block.AllBlocks[BlockId].Stack}", pos, Color.White, Color.Black, new Vector2(CameraGlobals.AddativeZoom * 1.5f).ToResolution(), 0f, Anchor.Center);
+                                DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, $"{Block.AllBlocks[BlockId].Stack}", pos, Color.White, Color.Black, new Vector2(CameraGlobals.AddativeZoom * 1.5f).ToResolution(), 0f, Anchor.Center);
                             }
                             if (Block.AllBlocks[BlockId].Type == BlockID.Teleporter) {
                                 var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
 
-                                DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, TankGame.TextFont, $"TP:{Block.AllBlocks[BlockId].TpLink}", pos, Color.White, Color.Black, new Vector2(CameraGlobals.AddativeZoom * 1.5f).ToResolution(), 0f, Anchor.Center);
+                                DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, $"TP:{Block.AllBlocks[BlockId].TpLink}", pos, Color.White, Color.Black, new Vector2(CameraGlobals.AddativeZoom * 1.5f).ToResolution(), 0f, Anchor.Center);
                             }
                         }
                     }
                     else if (TankId > -1) {
                         var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
 
-                        DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, TankGame.TextFont, $"{LevelEditorUI.TeamColorsLocalized[GameHandler.AllTanks[TankId].Team]}", pos - new Vector2(0, 8).ToResolution(), TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.Black, new Vector2(0.9f).ToResolution() * CameraGlobals.AddativeZoom, 0f, Anchor.Center);
+                        DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, $"{LevelEditorUI.TeamColorsLocalized[GameHandler.AllTanks[TankId].Team]}", pos - new Vector2(0, 8).ToResolution(), TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.Black, new Vector2(0.9f).ToResolution() * CameraGlobals.AddativeZoom, 0f, Anchor.Center);
 
                         if (GameHandler.AllTanks[TankId] is AITank ai)
-                            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, TankGame.TextFont, $"ID: {ai.AITankId}", pos + new Vector2(0, 8), TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.Black, new Vector2(0.8f).ToResolution() * CameraGlobals.AddativeZoom, 0f, Anchor.Center);
+                            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, $"ID: {ai.AITankId}", pos + new Vector2(0, 8), TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.Black, new Vector2(0.8f).ToResolution() * CameraGlobals.AddativeZoom, 0f, Anchor.Center);
                         if (GameHandler.AllTanks[TankId] is PlayerTank player)
-                            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, TankGame.TextFont, $"ID: {player.PlayerId}", pos + new Vector2(0, 8), TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.Black, new Vector2(0.8f).ToResolution() * CameraGlobals.AddativeZoom, 0f, Anchor.Center);
+                            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, $"ID: {player.PlayerId}", pos + new Vector2(0, 8), TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.Black, new Vector2(0.8f).ToResolution() * CameraGlobals.AddativeZoom, 0f, Anchor.Center);
                     }
                 }
                 effect.TextureEnabled = true;

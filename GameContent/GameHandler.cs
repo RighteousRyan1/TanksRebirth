@@ -1,4 +1,4 @@
-﻿using TanksRebirth.Internals.UI;
+using TanksRebirth.Internals.UI;
 using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.Utilities;
 using Microsoft.Xna.Framework;
@@ -38,19 +38,9 @@ public class GameHandler {
     public delegate void PostUpdate();
     public static event PostUpdate? OnPostUpdate;
 
-    private static int _randSeed;
-    public static int GameRandSeed {
-        get => _randSeed;
-        set {
-            _randSeed = value;
-            GameRand = new(value);
-        }
-
-    }
-    /// <summary>The randomizing behind the game's events. The seed can be modified if you change <see cref="GameRandSeed"/>.</summary>
-    public static Random GameRand { get; private set; }
     public static ParticleSystem Particles { get; } = new(MAX_PARTICLES, () => CameraGlobals.GameView, () => CameraGlobals.GameProjection);
     public static XpBar ExperienceBar;
+
     public static AITank[] AllAITanks = new AITank[MAX_AI_TANKS];
     public static PlayerTank[] AllPlayerTanks = new PlayerTank[MAX_PLAYERS];
     public static Tank[] AllTanks = new Tank[MAX_PLAYERS + MAX_AI_TANKS];
@@ -60,8 +50,8 @@ public class GameHandler {
     }
 
     internal static void Initialize() {
-        GameRandSeed = DateTime.Now.Millisecond;
-        GameRand = new(GameRandSeed);
+        Client.ClientRandSeed = DateTime.Now.Millisecond;
+        Client.ClientRandom = new(Client.ClientRandSeed);
 
         AllAITanks = new AITank[MAX_AI_TANKS];
         AllPlayerTanks = new PlayerTank[MAX_PLAYERS];
@@ -83,7 +73,7 @@ public class GameHandler {
             int longestId = -1;
             var longest = 0f;
             for (int i = 0; i < str.Length; i++) {
-                var x = TankGame.TextFontLarge.MeasureString(str[i].ToString()).X;
+                var x = FontGlobals.RebirthFontLarge.MeasureString(str[i].ToString()).X;
                 if (x > longest) {
                     longestId = i;
                     longest = x;
@@ -97,36 +87,8 @@ public class GameHandler {
         CosmeticsUI.Update();
         RoomScene.Update();
 
-        // TODO: move this code elsewhere.
-        if (((DebugManager.DebuggingEnabled && DebugManager.DebugLevel == -2) || Difficulties.Types["TacticalPlanes"]) && CampaignGlobals.InMission) {
-            if (RuntimeData.RunTime % 300 <= RuntimeData.DeltaTime) {
-                // 33% chance every 5 seconds
-                if (Server.ServerRandom.Next(3) == 0) {
-                    // TODO: sync the plane over the net... soon!
-                    var pos = Airplane.ChooseRandomXZPosition(GameRand);
-                    var vel = Airplane.ChooseRandomFlightTarget(GameRand, pos, 0.5f, 0.5f);
-                    var plane = new Airplane(new Vector3(pos.X, 100, pos.Y), vel, 400f);
-                    plane.WhileTrapDoorsOpened = () => {
-                        if (RuntimeData.RunTime % 30 <= RuntimeData.DeltaTime) {
-                            ParticleGameplay.CreateSmokeGrenade(Particles, plane.Position, Vector3.Down + new Vector3(plane.Velocity.X, 0, plane.Velocity.Y) * 0.5f/* * GameRand.NextFloat(0.5f, 1.1f)*/);
-                        }
-                    };
-                }
-            }
-        }
-        if (DebugManager.DebuggingEnabled) {
-            if (InputUtils.AreKeysJustPressed(Keys.Q, Keys.E))
-                Server.SyncSeeds();
-            if (InputUtils.KeyJustPressed(Keys.M))
-                if (PlayerTank.ClientTank is not null)
-                    ParticleGameplay.CreateSmokeGrenade(Particles, PlayerTank.ClientTank.Position3D + new Vector3(0, 10, 0), Vector3.Up);
-            if (InputUtils.KeyJustPressed(Keys.G)) {
-                TankGame.VanillaAchievementPopupHandler.SummonOrQueue(GameRand.Next(VanillaAchievements.Repository.GetAchievements().Count));
-            }
-            if (InputUtils.KeyJustPressed(Keys.OemPipe)) {
-                var expl = new Explosion(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ(), 5f);
-            }
-        }
+        Difficulties.GlobalManage();
+
         if (MainMenuUI.Active)
             PlayerTank.SetLives(999);
         // technically, level 0 in code is level 1, so we want to use that number (1) if the user is level 0.
@@ -135,6 +97,7 @@ public class GameHandler {
         VanillaAchievements.Repository.UpdateCompletions(TankGame.VanillaAchievementPopupHandler);
 
         Client.SendLives();
+
         /* uh, yeah. this is the decay-per-level calculation. people don't want it!
         var floor1 = MathF.Floor(TankGame.GameData.ExpLevel + 1f);
         var floor0 = MathF.Floor(TankGame.GameData.ExpLevel);
@@ -198,6 +161,7 @@ public class GameHandler {
         if (MainMenuUI.Active)
             MainMenuUI.Update();
 
+        // questioning as to why this is placed here
         if ((CameraGlobals.OverheadView || MainMenuUI.Active) && !LevelEditorUI.Active) {
             CampaignGlobals.InMission = false;
             IntermissionHandler.TankFunctionWait = 600;
@@ -259,6 +223,7 @@ public class GameHandler {
         if (DebugManager.DebuggingEnabled) {
 
             var posOffset = new Vector2(0, 80);
+
             DebugManager.DrawDebugString(TankGame.SpriteRenderer, "Spawn Tank With Info:", WindowUtils.WindowTop + posOffset, 3, centered: true);
             DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"Tier: {TankID.Collection.GetKey(DebugManager.tankToSpawnType)}", WindowUtils.WindowTop + posOffset + new Vector2(0, 16), 3, centered: true);
             DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"Team: {TeamID.Collection.GetKey(DebugManager.tankToSpawnTeam)}", WindowUtils.WindowTop + posOffset + new Vector2(0, 32), 3, centered: true);
@@ -319,7 +284,6 @@ public class GameHandler {
 
     #endregion
 
-    #region Extra
     public static void RenderUI() {
         foreach (var element in UIElement.AllUIElements) {
             // element.Position = Vector2.Transform(element.Position, UIMatrix * Matrix.CreateTranslation(element.Position.X, element.Position.Y, 0));
@@ -345,5 +309,4 @@ public class GameHandler {
         DebugManager.InitDebugUI();
         PlacementSquare.InitializeLevelEditorSquares();
     }
-    #endregion
 }

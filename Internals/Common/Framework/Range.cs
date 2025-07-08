@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Numerics;
 
 namespace TanksRebirth.Internals.Common.Framework;
@@ -9,5 +9,5 @@ public struct Range<T>(T min, T max) where T : INumber<T> {
     public T Max = max;
 
     public readonly T Difference => Max - Min;
-    // public static implicit operator T(Range<T> range) { return GameHandler.GameRand.Next(range.Min, range.Max); }
+    // public static implicit operator T(Range<T> range) { return Client.ClientRandom.Next(range.Min, range.Max); }
 }

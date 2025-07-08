@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Steamworks;
 using System;
@@ -35,7 +35,7 @@ public static class SteamworksUtils
         IsOverlayActive = pCallback.m_bActive != 0;
     }
     public static void Update() {
-        if (TankGame.UpdateCount % 30 == 0)
+        if (RuntimeData.UpdateCount % 30 == 0)
             FriendsCount = SteamFriends.GetFriendCount(EFriendFlags.k_EFriendFlagAll);
         SteamAPI.RunCallbacks();
     }

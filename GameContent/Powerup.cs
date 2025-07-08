@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
@@ -128,7 +128,7 @@ namespace TanksRebirth.GameContent
             }
             else
             {
-                Rotation.X += 0.05f * TankGame.DeltaTime;
+                Rotation.X += 0.05f * RuntimeData.DeltaTime;
                 if (GameHandler.AllTanks.TryGetFirst(tnk => tnk is not null && Vector3.Distance(Position, tnk.Position3D) <= PickupRadius, out Tank tank))
                     Pickup(tank);
             }

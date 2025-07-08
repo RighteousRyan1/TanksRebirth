@@ -1,6 +1,10 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
 using System.Linq;
+using tainicom.Aether.Physics2D.Fluids;
+using TanksRebirth.GameContent.Globals;
+using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.Internals.Common.Utilities;
@@ -96,5 +100,28 @@ public record Difficulties {
             }
         }
         return newMission;
+    }
+
+    public static void GlobalManage() {
+        ManageAirplanes();
+    }
+
+    public static void ManageAirplanes() {
+        if (((DebugManager.DebuggingEnabled && DebugManager.DebugLevel == DebugManager.Id.AirplaneTest) || Difficulties.Types["TacticalPlanes"]) && CampaignGlobals.InMission) {
+            if (RuntimeData.RunTime % 300 <= RuntimeData.DeltaTime) {
+                // 33% chance every 5 seconds
+                if (Server.ServerRandom.Next(3) == 0) {
+                    // TODO: sync the plane over the net... soon!
+                    var pos = Airplane.ChooseRandomXZPosition(Client.ClientRandom);
+                    var vel = Airplane.ChooseRandomFlightTarget(Client.ClientRandom, pos, 0.5f, 0.5f);
+                    var plane = new Airplane(new Vector3(pos.X, 100, pos.Y), vel, 400f);
+                    plane.WhileTrapDoorsOpened = () => {
+                        if (RuntimeData.RunTime % 30 <= RuntimeData.DeltaTime) {
+                            ParticleGameplay.CreateSmokeGrenade(GameHandler.Particles, plane.Position, Vector3.Down + new Vector3(plane.Velocity.X, 0, plane.Velocity.Y) * 0.5f/* * GameRand.NextFloat(0.5f, 1.1f)*/);
+                        }
+                    };
+                }
+            }
+        }
     }
 }

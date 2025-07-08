@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
@@ -243,7 +243,7 @@ public static class RoomScene {
         Minute = TimeUtils.GetMinuteFromCircle(MinuteHandRotation);
 
         // hacky way to prevent chiming on game boot. 
-        if (TankGame.RunTime > 60f) {
+        if (RuntimeData.RunTime > 60f) {
             if (Hour != _oldHour) {
                 Console.WriteLine($"Attempting chime at hour {Hour % 12}");
                 ChimeHourly(Hour % 12);

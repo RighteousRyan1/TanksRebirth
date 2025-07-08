@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
@@ -62,11 +62,11 @@ public class IngamePing {
 
         //float x = 0f;
         p.UniqueBehavior = (a) => {
-            //x += 0.003f * TankGame.DeltaTime;
+            //x += 0.003f * RuntimeData.DeltaTime;
             //var val = Easings.InOutElastic(x);
             var val = 0.005f;
             GeometryUtils.Add(ref p.Scale, val); //Easings.OutSine()
-            p.Alpha -= val * 1.8f * TankGame.DeltaTime;
+            p.Alpha -= val * 1.8f * RuntimeData.DeltaTime;
             p.Roll = MathHelper.PiOver2;
 
             p.Color = Color;
@@ -89,7 +89,7 @@ public class IngamePing {
     }
 
     public void Update() {
-        _lifeTime += TankGame.DeltaTime;
+        _lifeTime += RuntimeData.DeltaTime;
 
         var easeSpeed = 0.025f;
 
@@ -98,12 +98,12 @@ public class IngamePing {
         }
 
         if (_lifeTime > MaxLifeTime) {
-            _scaleEase -= TankGame.DeltaTime * easeSpeed;
+            _scaleEase -= RuntimeData.DeltaTime * easeSpeed;
             if (_scaleEase <= 0) {
                 _delete = true;
             }
         } else {
-            _scaleEase += TankGame.DeltaTime * easeSpeed;
+            _scaleEase += RuntimeData.DeltaTime * easeSpeed;
         }
         _scaleEase = MathHelper.Clamp(_scaleEase, 0, 1);
     }

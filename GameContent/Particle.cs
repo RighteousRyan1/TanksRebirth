@@ -111,7 +111,7 @@ public class Particle
     public void Update()
     {
         UniqueBehavior?.Invoke(this);
-        LifeTime += TankGame.DeltaTime;
+        LifeTime += RuntimeData.DeltaTime;
     }
 
     public static BasicEffect EffectHandle = new(TankGame.Instance.GraphicsDevice);
@@ -185,7 +185,7 @@ public class Particle
                 TankGame.SpriteRenderer.Begin(SpriteSortMode.FrontToBack, HasAddativeBlending ? BlendState.Additive : BlendState.NonPremultiplied, SamplerState.PointWrap, DepthStencilState.DepthRead, RenderGlobals.DefaultRasterizer, EffectHandle); if (!IsText)
                     TankGame.SpriteRenderer.Draw(Texture, Vector2.Zero, TextureCrop, Color * Alpha, Rotation2D, Origin2D != default ? Origin2D : Texture.Size() / 2, /*TextureScale*/ Scale.X, default, Layer);
                 else
-                    TankGame.SpriteRenderer.DrawString(TankGame.TextFont, Text, Vector2.Zero, Color * Alpha, new Vector2(Scale.X, Scale.Y), Rotation2D, Origin2D, Layer);
+                    TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, Text, Vector2.Zero, Color * Alpha, new Vector2(Scale.X, Scale.Y), Rotation2D, Origin2D, Layer);
 
                 TankGame.SpriteRenderer.End();
                 TankGame.SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
@@ -199,7 +199,7 @@ public class Particle
                     MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(Position), System.SystemView, System.SystemProjection) : 
                     new Vector2(Position.X, Position.Y), TextureCrop, Color * Alpha, Rotation2D, Origin2D != default ? Origin2D : Texture.Size() / 2, TextureScale, default, Layer);
             else
-                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, Text, ToScreenSpace ? 
+                TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, Text, ToScreenSpace ? 
                     MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(Position), System.SystemView, System.SystemProjection) : 
                     new Vector2(Position.X, Position.Y), Color * Alpha, TextureScale, Rotation2D, Origin2D, Layer);
             TankGame.SpriteRenderer.End();

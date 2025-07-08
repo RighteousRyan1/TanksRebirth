@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using tainicom.Aether.Physics2D.Dynamics;
@@ -124,7 +124,7 @@ public class Airplane {
     public void OpenTrapDoors() => _isOpening = true;
     public void CloseTrapDoors() => _isOpening = false;
     /// <summary>Returns a random position on the outskirts of the playing field. Pass Server.ServerRandom if doing server-sided stuff.
-    /// Use GameHandler.GameRand if not.</summary>
+    /// Use Client.ClientRandom if not.</summary>
     public static Vector2 ChooseRandomXZPosition(Random random) {
         var spawnZAxis = random.Next(2) == 0;
 
@@ -148,7 +148,7 @@ public class Airplane {
         return randomPos;
     }
     /// <summary>Returns a random direction for a plane to use, normalized.</summary>
-    /// <param name="random">Pass Server.ServerRandom if doing server-sided stuff. Use GameHandler.GameRand if not.</param>
+    /// <param name="random">Pass Server.ServerRandom if doing server-sided stuff. Use Client.ClientRandom if not.</param>
     /// <param name="posXZ">The position of the plane, initially.</param>
     /// <param name="xPotential">What percent of the map's x-axis, centering from the center of the map, the plane can take flight towards.</param>
     /// <param name="zPotential">What percent of the map's z-axis, centering from the center of the map, the plane can take flight towards.</param>
@@ -182,7 +182,7 @@ public class Airplane {
         AllPlanes[Id] = null;
     }
     public void Update() {
-        LifeTime += TankGame.DeltaTime;
+        LifeTime += RuntimeData.DeltaTime;
 
         Position.X += Velocity.X;
         Position.Z += Velocity.Y;
@@ -197,7 +197,7 @@ public class Airplane {
         // opening/closing w/hatch speed
         var openSpeed = 0.03f;
         if (_isOpening) {
-            _openPercent += openSpeed * TankGame.DeltaTime;
+            _openPercent += openSpeed * RuntimeData.DeltaTime;
             if (_openPercent > 1) {
                 AreDoorsFullyOpen = true;
 
@@ -214,7 +214,7 @@ public class Airplane {
             _doorLRotation = _doorRRotation = Easings.GetEasingBehavior(EasingFunction.OutBack, _openPercent) * MathHelper.PiOver2;
         }
         else { 
-            _openPercent -= openSpeed * TankGame.DeltaTime;
+            _openPercent -= openSpeed * RuntimeData.DeltaTime;
             if (_openPercent < 0) { 
                 _openPercent = 0;
 

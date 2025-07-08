@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using TanksRebirth.Internals.UI;
@@ -113,7 +113,7 @@ namespace TanksRebirth.Internals.Common.GameUI
                 }
                 else
                 {
-                    //if (!TankGame.TextFont.Characters.Contains(args.Character))
+                    //if (!FontGlobals.RebirthFont.Characters.Contains(args.Character))
                     //return;
 
                     if (Text.Length < MaxLength)

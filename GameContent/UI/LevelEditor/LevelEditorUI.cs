@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
@@ -99,7 +99,7 @@ public static partial class LevelEditorUI {
         LevelContentsPanel = new Rectangle(WindowUtils.WindowWidth / 4, (int)(WindowUtils.WindowHeight * 0.1f), WindowUtils.WindowWidth / 2, (int)(WindowUtils.WindowHeight * 0.625f));
 
         // changed from 30 to 20.
-        MissionName = new(TankGame.TextFont, Color.White, 1f, MAX_MISSION_CHARS);
+        MissionName = new(FontGlobals.RebirthFont, Color.White, 1f, MAX_MISSION_CHARS);
 
         MissionName.SetDimensions(() => new(LevelContentsPanel.X + 20.ToResolutionX(),
                 LevelContentsPanel.Y + 60.ToResolutionY()),
@@ -107,7 +107,7 @@ public static partial class LevelEditorUI {
                 50.ToResolutionY()));
         MissionName.DefaultString = TankGame.GameLanguage.Name;
 
-        SaveMenuReturn = new(TankGame.GameLanguage.Return, TankGame.TextFont, Color.White);
+        SaveMenuReturn = new(TankGame.GameLanguage.Return, FontGlobals.RebirthFont, Color.White);
         SaveMenuReturn.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(),
                 LevelContentsPanel.Y + LevelContentsPanel.Height - 60.ToResolutionY()),
             () => new(200.ToResolutionX(),
@@ -122,7 +122,7 @@ public static partial class LevelEditorUI {
             _missionButtons[id].Color = SelectedColor;
         };
 
-        SaveLevelConfirm = new(TankGame.GameLanguage.Save, TankGame.TextFont, Color.White);
+        SaveLevelConfirm = new(TankGame.GameLanguage.Save, FontGlobals.RebirthFont, Color.White);
         SaveLevelConfirm.SetDimensions(() => new Vector2(LevelContentsPanel.X + 40.ToResolutionX() + SaveMenuReturn.Size.X,
                 LevelContentsPanel.Y + LevelContentsPanel.Height - 60.ToResolutionY()),
             () => new(200.ToResolutionX(),
@@ -168,7 +168,7 @@ public static partial class LevelEditorUI {
         float width = 300;
         float height = 50;
 
-        SwapMenu = new(TankGame.GameLanguage.CampaignDetails, TankGame.TextFont, Color.White);
+        SwapMenu = new(TankGame.GameLanguage.CampaignDetails, FontGlobals.RebirthFont, Color.White);
         SwapMenu.SetDimensions(() => new Vector2(LevelContentsPanel.X + LevelContentsPanel.Width - width.ToResolutionX() - 20.ToResolutionX(),
                 LevelContentsPanel.Y + LevelContentsPanel.Height - height.ToResolutionY() - 10.ToResolutionY()),
             () => new(width.ToResolutionX(),
@@ -179,7 +179,7 @@ public static partial class LevelEditorUI {
             if (MissionName.GetRealText() != string.Empty)
                 loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId].Name = MissionName.GetRealText();
         };
-        CampaignName = new(TankGame.TextFont, Color.White, 1f, 30);
+        CampaignName = new(FontGlobals.RebirthFont, Color.White, 1f, 30);
         CampaignName.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(),
                 LevelContentsPanel.Y + 60.ToResolutionY()),
             () => new(LevelContentsPanel.Width - 40.ToResolutionX(),
@@ -187,42 +187,42 @@ public static partial class LevelEditorUI {
         CampaignName.DefaultString = TankGame.GameLanguage.Name;
         CampaignName.Tooltip = TankGame.GameLanguage.CampaignNameFlavor;
 
-        CampaignDescription = new(TankGame.TextFont, Color.White, 1f, 100);
+        CampaignDescription = new(FontGlobals.RebirthFont, Color.White, 1f, 100);
         CampaignDescription.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), LevelContentsPanel.Y + 120.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 50.ToResolutionY()));
         CampaignDescription.DefaultString = TankGame.GameLanguage.Description;
         CampaignDescription.Tooltip = TankGame.GameLanguage.DescriptionFlavor;
 
-        CampaignAuthor = new(TankGame.TextFont, Color.White, 1f, 25);
+        CampaignAuthor = new(FontGlobals.RebirthFont, Color.White, 1f, 25);
         CampaignAuthor.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), LevelContentsPanel.Y + 180.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 50.ToResolutionY()));
         CampaignAuthor.DefaultString = TankGame.GameLanguage.Author;
         CampaignAuthor.Tooltip = TankGame.GameLanguage.AuthorFlavor;
 
-        CampaignTags = new(TankGame.TextFont, Color.White, 1f, 35);
+        CampaignTags = new(FontGlobals.RebirthFont, Color.White, 1f, 35);
         CampaignTags.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), LevelContentsPanel.Y + 240.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 50.ToResolutionY()));
         CampaignTags.DefaultString = TankGame.GameLanguage.Tags;
         CampaignTags.Tooltip = TankGame.GameLanguage.TagsFlavor;
 
-        CampaignExtraLives = new(TankGame.TextFont, Color.White, 1f, 100);
+        CampaignExtraLives = new(FontGlobals.RebirthFont, Color.White, 1f, 100);
         CampaignExtraLives.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), LevelContentsPanel.Y + 300.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 50.ToResolutionY()));
         CampaignExtraLives.DefaultString = TankGame.GameLanguage.ExtraLifeMissions;
         CampaignExtraLives.Tooltip = TankGame.GameLanguage.ExtraLifeMissionsFlavor;
 
-        CampaignVersion = new(TankGame.TextFont, Color.White, 1f, 10);
+        CampaignVersion = new(FontGlobals.RebirthFont, Color.White, 1f, 10);
         CampaignVersion.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), LevelContentsPanel.Y + 360.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 50.ToResolutionY()));
         CampaignVersion.DefaultString = TankGame.GameLanguage.Version;
         CampaignVersion.Tooltip = TankGame.GameLanguage.VersionFlavor;
 
-        CampaignLoadingBGColor = new(TankGame.TextFont, Color.White, 1f, 11);
+        CampaignLoadingBGColor = new(FontGlobals.RebirthFont, Color.White, 1f, 11);
         CampaignLoadingBGColor.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), LevelContentsPanel.Y + 420.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 50.ToResolutionY()));
         CampaignLoadingBGColor.DefaultString = TankGame.GameLanguage.BGColor;
         CampaignLoadingBGColor.Tooltip = TankGame.GameLanguage.BGColorFlavor;
 
-        CampaignLoadingStripColor = new(TankGame.TextFont, Color.White, 1f, 11);
+        CampaignLoadingStripColor = new(FontGlobals.RebirthFont, Color.White, 1f, 11);
         CampaignLoadingStripColor.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), LevelContentsPanel.Y + 480.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 50.ToResolutionY()));
         CampaignLoadingStripColor.DefaultString = TankGame.GameLanguage.StripColor;
         CampaignLoadingStripColor.Tooltip = TankGame.GameLanguage.StripColorFlavor;
 
-        CampaignMajorVictory = new("", TankGame.TextFont, Color.White, () => Vector2.One.ToResolution());
+        CampaignMajorVictory = new("", FontGlobals.RebirthFont, Color.White, () => Vector2.One.ToResolution());
         CampaignMajorVictory.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), LevelContentsPanel.Y + 540.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 50.ToResolutionY()));
         CampaignMajorVictory.OnLeftClick = (a) => _hasMajorVictory = !_hasMajorVictory;
         CampaignMajorVictory.Tooltip = TankGame.GameLanguage.HasMajorVictoryThemeFlavor;
@@ -366,7 +366,7 @@ public static partial class LevelEditorUI {
 
         _initialized = true;
 
-        AddMissionBtn = new UITextButton("+", TankGame.TextFont, Color.White, () => Vector2.One.ToResolution()) {
+        AddMissionBtn = new UITextButton("+", FontGlobals.RebirthFont, Color.White, () => Vector2.One.ToResolution()) {
             Tooltip = "Insert a blank mission after the currently selected mission."
         };
         AddMissionBtn.SetDimensions(
@@ -377,7 +377,7 @@ public static partial class LevelEditorUI {
         };
         _listModifyButtons.Add(AddMissionBtn);
 
-        RemoveMissionBtn = new UITextButton("-", TankGame.TextFont, Color.White, () => Vector2.One.ToResolution()) {
+        RemoveMissionBtn = new UITextButton("-", FontGlobals.RebirthFont, Color.White, () => Vector2.One.ToResolution()) {
             Tooltip = "Remove this mission from the missions list."
         };
         RemoveMissionBtn.SetDimensions(
@@ -388,7 +388,7 @@ public static partial class LevelEditorUI {
         };
         _listModifyButtons.Add(RemoveMissionBtn);
 
-        MoveMissionUp = new UITextButton("v", TankGame.TextFont, Color.White, () => Vector2.One.ToResolution()) {
+        MoveMissionUp = new UITextButton("v", FontGlobals.RebirthFont, Color.White, () => Vector2.One.ToResolution()) {
             Tooltip = "Swap the currently selected mission with the one above it.",
             TextRotation = MathHelper.Pi
         };
@@ -398,7 +398,7 @@ public static partial class LevelEditorUI {
         MoveMissionUp.OnLeftClick = (a) => { MoveMission(true); };
         _listModifyButtons.Add(MoveMissionUp);
 
-        MoveMissionDown = new UITextButton("v", TankGame.TextFont, Color.White, () => Vector2.One.ToResolution()) {
+        MoveMissionDown = new UITextButton("v", FontGlobals.RebirthFont, Color.White, () => Vector2.One.ToResolution()) {
             Tooltip = "Swap the currently selected mission with the one below it.",
         };
         MoveMissionDown.SetDimensions(
@@ -412,7 +412,7 @@ public static partial class LevelEditorUI {
             MoveMissionUp.IsVisible =
             MoveMissionDown.IsVisible = Active;
 
-        TestLevel = new(TankGame.GameLanguage.TestLevel, TankGame.TextFont, Color.White);
+        TestLevel = new(TankGame.GameLanguage.TestLevel, FontGlobals.RebirthFont, Color.White);
         TestLevel.SetDimensions(() => new(WindowUtils.WindowWidth * 0.01f, WindowUtils.WindowHeight * 0.725f), () => new Vector2(200, 50).ToResolution());
 
         TestLevel.OnLeftClick = (l) => {
@@ -425,7 +425,7 @@ public static partial class LevelEditorUI {
             cachedMission = Mission.GetCurrent(name);
         };
 
-        ReturnToEditor = new(TankGame.GameLanguage.Return, TankGame.TextFont, Color.White);
+        ReturnToEditor = new(TankGame.GameLanguage.Return, FontGlobals.RebirthFont, Color.White);
         ReturnToEditor.SetDimensions(() => new(WindowUtils.WindowWidth * 0.01f, WindowUtils.WindowHeight * 0.02f), () => new Vector2(250, 50).ToResolution());
 
         ReturnToEditor.OnLeftClick = (l) => {
@@ -443,23 +443,23 @@ public static partial class LevelEditorUI {
                 _missionButtons[loadedCampaign.CurrentMissionId].Color = SelectedColor;
         };
 
-        Perspective = new(TankGame.GameLanguage.Perspective, TankGame.TextFont, Color.White);
+        Perspective = new(TankGame.GameLanguage.Perspective, FontGlobals.RebirthFont, Color.White);
         Perspective.SetDimensions(() => new(WindowUtils.WindowWidth * 0.125f, WindowUtils.WindowHeight * 0.725f), () => new Vector2(200, 50).ToResolution());
         Perspective.Tooltip = TankGame.GameLanguage.PerspectiveFlavor;
         Perspective.OnLeftClick = (l) => { CameraGlobals.OverheadView = !CameraGlobals.OverheadView; };
 
-        TerrainCategory = new(TankGame.GameLanguage.Terrain, TankGame.TextFont, Color.White);
+        TerrainCategory = new(TankGame.GameLanguage.Terrain, FontGlobals.RebirthFont, Color.White);
         TerrainCategory.SetDimensions(() => new(WindowUtils.WindowWidth * 0.75f, WindowUtils.WindowHeight * 0.725f), () => new Vector2(200, 50).ToResolution());
         TerrainCategory.OnLeftClick = (l) => { CurCategory = Category.Terrain; };
 
-        EnemyTanksCategory = new(TankGame.GameLanguage.AIControlled, TankGame.TextFont, Color.White);
+        EnemyTanksCategory = new(TankGame.GameLanguage.AIControlled, FontGlobals.RebirthFont, Color.White);
         EnemyTanksCategory.SetDimensions(() => new(WindowUtils.WindowWidth * 0.875f, WindowUtils.WindowHeight * 0.725f), () => new Vector2(200, 50).ToResolution());
         EnemyTanksCategory.OnLeftClick = (l) => { CurCategory = Category.EnemyTanks; };
-        PlayerTanksCategory = new(TankGame.GameLanguage.Players, TankGame.TextFont, Color.White);
+        PlayerTanksCategory = new(TankGame.GameLanguage.Players, FontGlobals.RebirthFont, Color.White);
         PlayerTanksCategory.SetDimensions(() => new(WindowUtils.WindowWidth * 0.875f, WindowUtils.WindowHeight * 0.65f), () => new Vector2(200, 50).ToResolution());
         PlayerTanksCategory.OnLeftClick = (l) => { CurCategory = Category.PlayerTanks; };
 
-        Properties = new(TankGame.GameLanguage.Properties, TankGame.TextFont, Color.White);
+        Properties = new(TankGame.GameLanguage.Properties, FontGlobals.RebirthFont, Color.White);
 
         float width = 200;
 
@@ -471,7 +471,7 @@ public static partial class LevelEditorUI {
                 GUICategory = UICategory.LevelEditor;
         };
 
-        LoadLevel = new(TankGame.GameLanguage.Load, TankGame.TextFont, Color.White);
+        LoadLevel = new(TankGame.GameLanguage.Load, FontGlobals.RebirthFont, Color.White);
 
         LoadLevel.SetDimensions(() => new(WindowUtils.WindowWidth * 0.575f - (width / 2).ToResolutionX(), 10.ToResolutionY()), () => new Vector2(width, 50).ToResolution());
         LoadLevel.OnLeftClick = (a) => {
@@ -597,13 +597,13 @@ public static partial class LevelEditorUI {
         ShouldDrawBarUI = !GameUI.Paused;
         SwapMenu.Text = _viewMissionDetails ? "Campaign Details" : "Mission Details";
 
-        var measure = TankGame.TextFont.MeasureString(AlertText);
+        var measure = FontGlobals.RebirthFont.MeasureString(AlertText);
 
         DrawAlerts();
         if (!ShouldDrawBarUI) return;
         var info = TankGame.GameLanguage.BinDisclaimer;
         DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer,
-            TankGame.TextFont, info, new Vector2(WindowUtils.WindowWidth - 175.ToResolutionX(), WindowUtils.WindowHeight / 2 - 40.ToResolutionY()), 
+            FontGlobals.RebirthFont, info, new Vector2(WindowUtils.WindowWidth - 175.ToResolutionX(), WindowUtils.WindowHeight / 2 - 40.ToResolutionY()), 
             Color.White, Color.Black, new Vector2(0.6f).ToResolution(), 0f, Anchor.TopCenter);
 
         #region Main UI
@@ -625,7 +625,7 @@ public static partial class LevelEditorUI {
         DrawPlacementInfo();
         // render teams
         //if (CurCategory == Category.Blocks)
-        //TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"Block Stack: {BlockHeight}", new Vector2(WindowUtils.WindowWidth - 335.ToResolutionX(), 40.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
+        //TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, $"Block Stack: {BlockHeight}", new Vector2(WindowUtils.WindowWidth - 335.ToResolutionX(), 40.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
 
         if (CurCategory == Category.EnemyTanks) {
             for (int i = 0; i < _renderNamesTanks.Count; i++) {
@@ -762,13 +762,13 @@ public static partial class LevelEditorUI {
                 Vector2.Zero,
                 default,
                 0f);
-            TankGame.SpriteRenderer.DrawString(TankGame.TextFont,
+            TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont,
                     txt,
                     new Vector2(LevelContentsPanel.X + LevelContentsPanel.Width / 2, LevelContentsPanel.Y + 10.ToResolutionY()),
                     Color.White,
                     Vector2.One.ToResolution(),
                     0f,
-                    new Vector2(TankGame.TextFont.MeasureString(txt).X / 2, 0));
+                    new Vector2(FontGlobals.RebirthFont.MeasureString(txt).X / 2, 0));
         }
 
         // i believe this makes the text left-origin instead of center-origin
@@ -782,11 +782,11 @@ public static partial class LevelEditorUI {
                 // fix why this isn't drawing???
                 var pos = new Vector2(elem.Position.X + 10.ToResolutionX(), elem.Position.Y + elem.Size.Y / 2);
                 string text = elem.DefaultString + ": " + elem.GetRealText();
-                var msr1 = TankGame.TextFontLarge.MeasureString(text);
-                var msr2 = TankGame.TextFontLarge.MeasureString(elem.DefaultString);
+                var msr1 = FontGlobals.RebirthFontLarge.MeasureString(text);
+                var msr2 = FontGlobals.RebirthFontLarge.MeasureString(elem.DefaultString);
                 float constScale = 0.4f.ToResolutionX();
                 float scale =  msr1.X * constScale > elem.Size.X ? msr2.X / (msr1.X + msr2.X) : constScale;
-                b.DrawString(TankGame.TextFontLarge, text, pos, Color.Black, new Vector2(scale).ToResolution(), 0f, new Vector2(0, msr1.Y / 2));
+                b.DrawString(FontGlobals.RebirthFontLarge, text, pos, Color.Black, new Vector2(scale).ToResolution(), 0f, new Vector2(0, msr1.Y / 2));
             };
         });
     }

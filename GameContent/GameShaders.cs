@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Systems;
@@ -39,7 +39,7 @@ public class GameShaders
     public static void UpdateShaders() {
         AnimatedRainbow.Parameters["oTime"]?.SetValue((float)TankGame.LastGameTime.TotalGameTime.TotalSeconds);
         AnimatedRainbow.Parameters["oStrength"].SetValue(0.5f);
-        AnimatedRainbow.Parameters["oAngle"].SetValue(TankGame.RunTime * 0.1f);
+        AnimatedRainbow.Parameters["oAngle"].SetValue(RuntimeData.RunTime * 0.1f);
         AnimatedRainbow.Parameters["oSpeed"].SetValue(0.5f);
         AnimatedRainbow.Parameters["oMinLum"].SetValue(0.1f);
 
@@ -68,7 +68,7 @@ public class GameShaders
             var index = NetPlay.GetMyClientId(); //Array.FindIndex(GameHandler.AllPlayerTanks, x => x is not null && !x.Dead);
             var pos = index > -1 && !MainMenuUI.Active ? MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(GameHandler.AllPlayerTanks[index].Position.X, 11, GameHandler.AllPlayerTanks[index].Position.Y), CameraGlobals.GameView, CameraGlobals.GameProjection).ToCartesianCoordinates() : new Vector2(-1);
             // var val = (float)TankGame.LastGameTime.TotalGameTime.TotalSeconds;
-            LanternShader.Parameters["oPower"]?.SetValue(MainMenuUI.Active ? 100f : GameHandler.GameRand.NextFloat(0.195f, 0.20f));
+            LanternShader.Parameters["oPower"]?.SetValue(MainMenuUI.Active ? 100f : Client.ClientRandom.NextFloat(0.195f, 0.20f));
             LanternShader.Parameters["oPosition"]?.SetValue(pos/*MouseUtils.MousePosition.ToCartesianCoordinates()*/);
         }
     }

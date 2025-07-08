@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
@@ -33,7 +33,7 @@ public class AudioQueue {
         if (entry.SoundEffect != null)
             return entry.SoundEffect;
         
-        if (!TankGame.IsMainThread && entry.SoundEffect == null) 
+        if (!RuntimeData.IsMainThread && entry.SoundEffect == null) 
             throw new InvalidOperationException("AudioQueue.GetOggAudioFromPath() can only be called from the main thread if the audio has not been brought into memory lazily.");
 
         if (!entry.IsLoadedInMemory) 

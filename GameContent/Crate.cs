@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Linq;
@@ -141,11 +141,11 @@ public class Crate
     {
         if (!IsOpening)
         {
-            velocity.Y -= gravity * 0.05f * TankGame.DeltaTime;
+            velocity.Y -= gravity * 0.05f * RuntimeData.DeltaTime;
 
             // dropSpeed += dropSpeedAccel;
 
-            position += velocity * TankGame.DeltaTime;
+            position += velocity * RuntimeData.DeltaTime;
 
             if (position.Y <= (9.6f * scale))
             {

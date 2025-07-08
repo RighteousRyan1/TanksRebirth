@@ -315,7 +315,7 @@ public class PlayerTank : Tank
         var rotationMet = TankRotation > TargetTankRotation - Properties.MaximalTurn && TankRotation < TargetTankRotation + Properties.MaximalTurn;
 
         if (!rotationMet) {
-            Speed -= Properties.Deceleration * TankGame.DeltaTime;
+            Speed -= Properties.Deceleration * RuntimeData.DeltaTime;
             if (Speed < 0)
                 Speed = 0;
             IsTurning = true;
@@ -324,7 +324,7 @@ public class PlayerTank : Tank
             if (Difficulties.Types["POV"])
                 preterbedVelocity = preterbedVelocity.Rotate(-TurretRotation + MathHelper.Pi);
 
-            Speed += Properties.Acceleration * TankGame.DeltaTime;
+            Speed += Properties.Acceleration * RuntimeData.DeltaTime;
             if (Speed > Properties.MaxSpeed)
                 Speed = Properties.MaxSpeed;
 
@@ -354,7 +354,7 @@ public class PlayerTank : Tank
 
         TargetTankRotation = norm.ToRotation() - MathHelper.PiOver2;
 
-        TankRotation = MathUtils.RoughStep(TankRotation, TargetTankRotation, Properties.TurningSpeed * TankGame.DeltaTime);
+        TankRotation = MathUtils.RoughStep(TankRotation, TargetTankRotation, Properties.TurningSpeed * RuntimeData.DeltaTime);
 
         if (rightStick.Length() > 0) {
             var unprojectedPosition = MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), World, View, Projection);
@@ -422,7 +422,7 @@ public class PlayerTank : Tank
 
         TargetTankRotation = norm.ToRotation() - MathHelper.PiOver2;
 
-        TankRotation = MathUtils.RoughStep(TankRotation, TargetTankRotation, Properties.TurningSpeed * TankGame.DeltaTime);
+        TankRotation = MathUtils.RoughStep(TankRotation, TargetTankRotation, Properties.TurningSpeed * RuntimeData.DeltaTime);
 
         Velocity = Vector2.UnitY.Rotate(TankRotation) * Speed;
     }
@@ -542,7 +542,7 @@ public class PlayerTank : Tank
             var scale = Vector2.One * 4 * off;
             DrawUtils.DrawTextureWithBorder(TankGame.SpriteRenderer, whitePixel, pathPosScreen, Color.Black,
                 rgbColor, scale, 0f, Anchor.Center, 1f);
-            //TankGame.SpriteRenderer.Draw(whitePixel, pathPosScreen, null, ColorUtils.HsvToRgb(TankGame.UpdateCount + i % 255 / 255f * 360, 1, 1), 0, whitePixel.Size() / 2, new Vector2(3 + off).ToResolution(), default, default);
+            //TankGame.SpriteRenderer.Draw(whitePixel, pathPosScreen, null, ColorUtils.HsvToRgb(RuntimeData.UpdateCount + i % 255 / 255f * 360, 1, 1), 0, whitePixel.Size() / 2, new Vector2(3 + off).ToResolution(), default, default);
         }
     }
     public override void Render() {
@@ -588,7 +588,7 @@ public class PlayerTank : Tank
                         if (Team != TeamID.NoTeam) {
                             //var ex = new Color[1024];
 
-                            //Array.Fill(ex, new Color(GameHandler.GameRand.Next(0, 256), GameHandler.GameRand.Next(0, 256), GameHandler.GameRand.Next(0, 256)));
+                            //Array.Fill(ex, new Color(Client.ClientRandom.Next(0, 256), Client.ClientRandom.Next(0, 256), Client.ClientRandom.Next(0, 256)));
 
                             //effect.Texture.SetData(0, new Rectangle(0, 8, 32, 15), ex, 0, 480);
                             var ex = new Color[1024];
@@ -657,7 +657,7 @@ public class PlayerTank : Tank
             TankGame.SpriteRenderer.Draw(tex1, pos, null, Color.White, rotation, tex1.Size() / 2, 0.5f.ToResolution(), default, default);
             TankGame.SpriteRenderer.Draw(tex2, pos, null, playerColor, rotation, tex2.Size() / 2, 0.5f.ToResolution(), default, default);
 
-            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, TankGame.TextFontLarge, pText, new(pos.X, pos.Y + (flip ? 100 : -125).ToResolutionY()), playerColor, Color.White, Vector2.One.ToResolution(), 0f, Anchor.Center, 2f);
+            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, pText, new(pos.X, pos.Y + (flip ? 100 : -125).ToResolutionY()), playerColor, Color.White, Vector2.One.ToResolution(), 0f, Anchor.Center, 2f);
         }
 
         if (DebugManager.DebugLevel == 1 || _drawShotPath)

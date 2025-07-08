@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Steamworks;
 using System;
 using System.Collections.Generic;
@@ -70,7 +70,7 @@ public static class ModLoader
     public static string Error = string.Empty;
     public static string LoadType = string.Empty;
     private static void AttemptCompile(string modName) {
-        if (!TankGame.IsWindows) {
+        if (!RuntimeData.IsWindows) {
             TankGame.ClientLog.Write("Auto-compilation of mod failed. Specified OS architecture is not Windows.", Internals.LogType.Warn);
             return;
         }
@@ -456,10 +456,10 @@ public static class ModLoader
             barDims * new Vector2(ratio, 1f).ToResolution(), default, 0f);
 
         var txt = $"{ModLoader.Status} {ModLoader.ModBeingLoaded}...";
-        TankGame.SpriteRenderer.DrawString(TankGame.TextFont, txt, new(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 75.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(Anchor.Center, TankGame.TextFont.MeasureString(txt)));
+        TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, txt, new(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 75.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(Anchor.Center, FontGlobals.RebirthFont.MeasureString(txt)));
 
         txt = ModLoader.Error == string.Empty ? $"Loading your mods... {ratio * 100:0}% ({ModLoader.ActionsComplete} / {ModLoader.ActionsNeeded})" :
         $"Error Loading '{ModLoader.ModBeingLoaded}' ({ModLoader.Error})";
-        TankGame.SpriteRenderer.DrawString(TankGame.TextFont, txt, new(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 150.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(Anchor.Center, TankGame.TextFont.MeasureString(txt)));
+        TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, txt, new(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 150.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(Anchor.Center, FontGlobals.RebirthFont.MeasureString(txt)));
     }
 }

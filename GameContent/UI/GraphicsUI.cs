@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
@@ -68,7 +68,7 @@ namespace TanksRebirth.GameContent.UI
             };
             PerPixelLightingToggle.SetDimensions(() => new Vector2(695, 95).ToResolution(), () => new Vector2(510, 160).ToResolution());
 
-            PerPixelLightingButton = new(TankGame.GameLanguage.PerPxLight, TankGame.TextFont, Color.WhiteSmoke)
+            PerPixelLightingButton = new(TankGame.GameLanguage.PerPxLight, FontGlobals.RebirthFont, Color.WhiteSmoke)
             {
                 IsVisible = false,
                 Tooltip = TankGame.GameLanguage.PerPxLightDesc
@@ -87,7 +87,7 @@ namespace TanksRebirth.GameContent.UI
             };
             VsyncToggle.SetDimensions(() => new Vector2(695, 345).ToResolution(), () => new Vector2(510, 160).ToResolution());
 
-            VsyncButton = new(TankGame.GameLanguage.VSync, TankGame.TextFont, Color.WhiteSmoke)
+            VsyncButton = new(TankGame.GameLanguage.VSync, FontGlobals.RebirthFont, Color.WhiteSmoke)
             {
                 IsVisible = false,
                 Tooltip = TankGame.GameLanguage.VSyncDesc
@@ -107,7 +107,7 @@ namespace TanksRebirth.GameContent.UI
             };
             FullScreenToggle.SetDimensions(() => new Vector2(695, 595).ToResolution(), () => new Vector2(510, 160).ToResolution());
 
-            FullScreenButton = new(TankGame.GameLanguage.BorderlessWindow, TankGame.TextFont, Color.WhiteSmoke)
+            FullScreenButton = new(TankGame.GameLanguage.BorderlessWindow, FontGlobals.RebirthFont, Color.WhiteSmoke)
             {
                 IsVisible = false,
                 Tooltip = TankGame.GameLanguage.BorderlessWindowDesc
@@ -128,7 +128,7 @@ namespace TanksRebirth.GameContent.UI
             };
 
             //Resolution
-            ResolutionButton = new($"{TankGame.GameLanguage.Resolution}: {CurrentRes.Key}x{CurrentRes.Value}", TankGame.TextFont, Color.WhiteSmoke)
+            ResolutionButton = new($"{TankGame.GameLanguage.Resolution}: {CurrentRes.Key}x{CurrentRes.Value}", FontGlobals.RebirthFont, Color.WhiteSmoke)
             {
                 IsVisible = false,
                 Tooltip = TankGame.GameLanguage.ResolutionDesc

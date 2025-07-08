@@ -1,4 +1,4 @@
-﻿using Microsoft.Win32;
+using Microsoft.Win32;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
@@ -11,6 +11,7 @@ using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent;
 
@@ -76,9 +77,9 @@ public class Explosion : IAITankDanger {
         ring.Color = ExplosionColor == Color.White ? Color.Yellow : ExplosionColor;
 
         ring.UniqueBehavior = (a) => {
-            ring.Alpha -= 0.08f * TankGame.DeltaTime;
+            ring.Alpha -= 0.08f * RuntimeData.DeltaTime;
 
-            GeometryUtils.Add(ref ring.Scale, 0.04f * TankGame.DeltaTime);
+            GeometryUtils.Add(ref ring.Scale, 0.04f * RuntimeData.DeltaTime);
             if (ring.Alpha <= 0)
                 ring.Destroy();
         };
@@ -93,14 +94,14 @@ public class Explosion : IAITankDanger {
 
                 //var explScalar = (MAGIC_EXPLOSION_NUMBER - 3) * Scale;
 
-                var lingerRandom = GameHandler.GameRand.NextFloat(0.8f, 1.2f);
+                var lingerRandom = Client.ClientRandom.NextFloat(0.8f, 1.2f);
                 var particle = GameHandler.Particles.MakeExplosionFlameParticle(new Vector3(0, -100, 0), out var act, LingerDuration / 60f * lingerRandom);// * lingerRandom/*, scale / MAGIC_EXPLOSION_NUMBER * 1.1f*/);
 
                 // TODO: make particles face center of explosion
                 particle.UniqueBehavior = (a) => {
                     act?.Invoke(particle);
                     particle.Color = ExplosionColor;
-                    rotation += rotationSpeed1 * TankGame.DeltaTime;
+                    rotation += rotationSpeed1 * RuntimeData.DeltaTime;
 
                     var explScalar = MAGIC_EXPLOSION_NUMBER * Scale;
                     // find why the rotation isnt rotating the right way. maybe needs a unit circle offset? piover2?
@@ -153,8 +154,8 @@ public class Explosion : IAITankDanger {
         if (LifeTime > LingerDuration)
             Remove();
 
-        Rotation += RotationSpeed * TankGame.DeltaTime;
-        LifeTime += TankGame.DeltaTime;
+        Rotation += RotationSpeed * RuntimeData.DeltaTime;
+        LifeTime += RuntimeData.DeltaTime;
 
         OnPostUpdate?.Invoke(this);
     }

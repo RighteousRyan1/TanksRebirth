@@ -1,10 +1,11 @@
-﻿using System.IO;
+using System.IO;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Internals;
 using TanksRebirth.GameContent.Systems.Coordinates;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.UI.MainMenu;
 
@@ -22,7 +23,7 @@ public static partial class MainMenuUI {
 
                 if (missionComplete) {
                     // TODO: finish.
-                    _newMisCd += TankGame.DeltaTime;
+                    _newMisCd += RuntimeData.DeltaTime;
                     if (_newMisCd > _timeToWait)
                         LoadTemplateMission();
                 }
@@ -71,7 +72,7 @@ public static partial class MainMenuUI {
 
             SceneManager.CleanupScene();
 
-            var rand = GameHandler.GameRand.Next(1, _cachedMissions.Count);
+            var rand = Client.ClientRandom.Next(1, _cachedMissions.Count);
 
             var mission = _cachedMissions[rand];
 

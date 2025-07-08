@@ -9,9 +9,10 @@ using TanksRebirth.GameContent.RebirthUtils;
 
 namespace TanksRebirth.GameContent.Globals;
 
+#pragma warning disable CA2211
 public static class RenderGlobals {
 
-    public static readonly Color BackBufferColor = Color.Transparent;
+    public static Color BackBufferColor = Color.Transparent;
     public static RasterizerState DefaultRasterizer => DebugManager.RenderWireframe ? new() { FillMode = FillMode.WireFrame } : RasterizerState.CullNone;
 
     public static readonly DepthStencilState DefaultStencilState = DepthStencilState.Default;

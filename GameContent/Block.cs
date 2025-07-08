@@ -12,6 +12,7 @@ using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Internals.Core.Interfaces;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent;
 
@@ -258,14 +259,14 @@ public class Block : IGameObject
             }
 
             for (int i = 0; i < PARTICLE_COUNT; i++) {
-                var tex = GameResources.GetGameResource<Texture2D>(GameHandler.GameRand.Next(0, 2) == 0 ? "Assets/textures/misc/tank_rock" : "Assets/textures/misc/tank_rock_2");
+                var tex = GameResources.GetGameResource<Texture2D>(Client.ClientRandom.Next(0, 2) == 0 ? "Assets/textures/misc/tank_rock" : "Assets/textures/misc/tank_rock_2");
 
                 var part = GameHandler.Particles.MakeParticle(Position3D, tex);
                 // var part = ParticleSystem.MakeParticle(Position3D, "wtf");
 
                 part.HasAddativeBlending = false;
 
-                var vel = new Vector3(GameHandler.GameRand.NextFloat(-3, 3), GameHandler.GameRand.NextFloat(4, 6), GameHandler.GameRand.NextFloat(-3, 3));
+                var vel = new Vector3(Client.ClientRandom.NextFloat(-3, 3), Client.ClientRandom.NextFloat(4, 6), Client.ClientRandom.NextFloat(-3, 3));
 
                 part.Roll = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
 

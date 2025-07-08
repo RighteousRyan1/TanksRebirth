@@ -1,4 +1,4 @@
-﻿using FontStashSharp;
+using FontStashSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -43,7 +43,7 @@ public static partial class LevelEditorUI {
             bp.Roll = 0f;
             bp.Yaw = 0f; 
             bp.Pitch = MathHelper.PiOver4;
-            bp.Scale = new(2f); //new(2f + MathF.Sin(TankGame.RunTime / 10f) / 10f);
+            bp.Scale = new(2f); //new(2f + MathF.Sin(RuntimeData.RunTime / 10f) / 10f);
         };
 
         // block culler
@@ -74,13 +74,13 @@ public static partial class LevelEditorUI {
         // placement information
         TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], PlaceInfoRect, null, Color.Gray, 0f, Vector2.Zero, default, 0f);
         TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Rectangle(WindowUtils.WindowWidth - (int)350.ToResolutionX(), 0, (int)350.ToResolutionX(), (int)40.ToResolutionY()), null, Color.White, 0f, Vector2.Zero, default, 0f);
-        TankGame.SpriteRenderer.DrawString(TankGame.TextFont,
+        TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont,
             TankGame.GameLanguage.PlaceInfo,
             new Vector2(WindowUtils.WindowWidth - 175.ToResolutionX(), 3.ToResolutionY()),
             Color.Black,
             Vector2.One.ToResolution(),
             0f,
-            Anchor.TopCenter.GetAnchor(TankGame.TextFont.MeasureString(TankGame.GameLanguage.PlaceInfo)));
+            Anchor.TopCenter.GetAnchor(FontGlobals.RebirthFont.MeasureString(TankGame.GameLanguage.PlaceInfo)));
 
         var helpText = TankGame.GameLanguage.PlacementTeamInfo;
         PlaceInfoStart = new(WindowUtils.WindowWidth - 250.ToResolutionX(), 140.ToResolutionY());
@@ -88,30 +88,30 @@ public static partial class LevelEditorUI {
         // draw tank placement info
         if (CurCategory == Category.EnemyTanks || CurCategory == Category.PlayerTanks) {
             // TODO: should be optimised. do later.
-            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, TankGame.GameLanguage.TankTeams, new Vector2(PlaceInfoStart.X + 45.ToResolutionX(), PlaceInfoStart.Y - 80.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, TankGame.TextFont.MeasureString(TankGame.GameLanguage.TankTeams) / 2);
+            TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, TankGame.GameLanguage.TankTeams, new Vector2(PlaceInfoStart.X + 45.ToResolutionX(), PlaceInfoStart.Y - 80.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, FontGlobals.RebirthFont.MeasureString(TankGame.GameLanguage.TankTeams) / 2);
 
             TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Rectangle((int)PlaceInfoStart.X, (int)(PlaceInfoStart.Y - 40.ToResolutionY()), (int)40.ToResolutionX(), (int)40.ToResolutionY()), null, Color.Black, 0f, Vector2.Zero, default, 0f);
-            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, TankGame.GameLanguage.NoTeam, new Vector2(PlaceInfoStart.X + 45.ToResolutionX(), PlaceInfoStart.Y - 40.ToResolutionY()), Color.Black, Vector2.One.ToResolution(), 0f, Vector2.Zero);
+            TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, TankGame.GameLanguage.NoTeam, new Vector2(PlaceInfoStart.X + 45.ToResolutionX(), PlaceInfoStart.Y - 40.ToResolutionY()), Color.Black, Vector2.One.ToResolution(), 0f, Vector2.Zero);
             for (int i = 0; i < TeamID.Collection.Count - 1; i++) {
                 var color = TeamID.TeamColors[i + 1];
 
-                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, TeamColorsLocalized[i + 1], new Vector2(PlaceInfoStart.X + 45.ToResolutionX(), PlaceInfoStart.Y + (i * 40).ToResolutionY()), color, Vector2.One.ToResolution(), 0f, Vector2.Zero);
+                TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, TeamColorsLocalized[i + 1], new Vector2(PlaceInfoStart.X + 45.ToResolutionX(), PlaceInfoStart.Y + (i * 40).ToResolutionY()), color, Vector2.One.ToResolution(), 0f, Vector2.Zero);
                 TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Rectangle((int)PlaceInfoStart.X, (int)(PlaceInfoStart.Y + (i * 40).ToResolutionY()), (int)40.ToResolutionX(), (int)40.ToResolutionY()), null, color, 0f, Vector2.Zero, default, 0f);
             }
 
             // draw the visual that indicates to the user that they can press up and down arrows
-            TankGame.SpriteRenderer.DrawString(TankGame.TextFontLarge, ">", new Vector2(PlaceInfoStart.X - 25.ToResolutionX(), PlaceInfoStart.Y + ((SelectedTankTeam - 1) * 40).ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, TankGame.TextFontLarge.MeasureString(">") / 2);
+            TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFontLarge, ">", new Vector2(PlaceInfoStart.X - 25.ToResolutionX(), PlaceInfoStart.Y + ((SelectedTankTeam - 1) * 40).ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, FontGlobals.RebirthFontLarge.MeasureString(">") / 2);
 
             if (SelectedTankTeam != TeamID.Magenta)
-                TankGame.SpriteRenderer.DrawString(TankGame.TextFont, "v", new Vector2(PlaceInfoStart.X - 25.ToResolutionX(), PlaceInfoStart.Y + ((SelectedTankTeam - 1) * 40 + 50).ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, TankGame.TextFont.MeasureString("v") / 2);
+                TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, "v", new Vector2(PlaceInfoStart.X - 25.ToResolutionX(), PlaceInfoStart.Y + ((SelectedTankTeam - 1) * 40 + 50).ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, FontGlobals.RebirthFont.MeasureString("v") / 2);
             if (SelectedTankTeam != TeamID.NoTeam)
-                TankGame.SpriteRenderer.DrawString(TankGame.TextFont,
+                TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont,
                     "v",
                     new Vector2(PlaceInfoStart.X - 25.ToResolutionX(), PlaceInfoStart.Y + ((SelectedTankTeam - 1) * 40 - 10).ToResolutionY()),
                     Color.White,
                     Vector2.One.ToResolution(),
                     MathHelper.Pi,
-                    TankGame.TextFont.MeasureString("v") / 2);
+                    FontGlobals.RebirthFont.MeasureString("v") / 2);
         }
         // draw obstacle placement info
         else if (CurCategory == Category.Terrain) {
@@ -123,22 +123,22 @@ public static partial class LevelEditorUI {
             TankGame.SpriteRenderer.Draw(RenderTextures[tex], PlaceInfoStart, null, Color.White, 0f, new Vector2(size.X / 2, size.Y), Vector2.One.ToResolution(), default, 0f);
             // TODO: reduce the hardcode for modders, yeah
             if (SelectedBlockType != BlockID.Teleporter && SelectedBlockType != BlockID.Hole) {
-                TankGame.SpriteRenderer.DrawString(TankGame.TextFontLarge, "v", new Vector2(PlaceInfoStart.X + 100.ToResolutionX(), PlaceInfoStart.Y - 75.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, TankGame.TextFontLarge.MeasureString("v") / 2);
-                TankGame.SpriteRenderer.DrawString(TankGame.TextFontLarge, "v", new Vector2(PlaceInfoStart.X - 100.ToResolutionX(), PlaceInfoStart.Y - 25.ToResolutionY()), Color.White, Vector2.One.ToResolution(), MathHelper.Pi, TankGame.TextFontLarge.MeasureString("v") / 2);
+                TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFontLarge, "v", new Vector2(PlaceInfoStart.X + 100.ToResolutionX(), PlaceInfoStart.Y - 75.ToResolutionY()), Color.White, Vector2.One.ToResolution(), 0f, FontGlobals.RebirthFontLarge.MeasureString("v") / 2);
+                TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFontLarge, "v", new Vector2(PlaceInfoStart.X - 100.ToResolutionX(), PlaceInfoStart.Y - 25.ToResolutionY()), Color.White, Vector2.One.ToResolution(), MathHelper.Pi, FontGlobals.RebirthFontLarge.MeasureString("v") / 2);
             }
         }
-        TankGame.SpriteRenderer.DrawString(TankGame.TextFont, helpText, new Vector2(WindowUtils.WindowWidth - 175.ToResolutionX(), WindowUtils.WindowHeight / 2 - 70.ToResolutionY()), Color.White, new Vector2(0.5f).ToResolution(), 0f, TankGame.TextFont.MeasureString(helpText) / 2);
+        TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, helpText, new Vector2(WindowUtils.WindowWidth - 175.ToResolutionX(), WindowUtils.WindowHeight / 2 - 70.ToResolutionY()), Color.White, new Vector2(0.5f).ToResolution(), 0f, FontGlobals.RebirthFont.MeasureString(helpText) / 2);
         TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], _curHoverRect, null, HoverBoxColor * 0.5f, 0f, Vector2.Zero, default, 0f);
     }
     public static void DrawLevelInfo() {
         TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Rectangle(0, 0, 350, 125).ToResolution(), null, Color.Gray, 0f, Vector2.Zero, default, 0f);
         TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], new Rectangle(0, 0, 350, 40).ToResolution(), null, Color.White, 0f, Vector2.Zero, default, 0f);
 
-        TankGame.SpriteRenderer.DrawString(TankGame.TextFont, TankGame.GameLanguage.LevelInfo, new Vector2(175, 3).ToResolution(), Color.Black, Vector2.One.ToResolution(), 0f, Anchor.TopCenter.GetAnchor(TankGame.TextFont.MeasureString(TankGame.GameLanguage.LevelInfo)));
-        TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"{TankGame.GameLanguage.EnemyTankTotal}: {AIManager.CountAll()}", new Vector2(10, 40).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
+        TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, TankGame.GameLanguage.LevelInfo, new Vector2(175, 3).ToResolution(), Color.Black, Vector2.One.ToResolution(), 0f, Anchor.TopCenter.GetAnchor(FontGlobals.RebirthFont.MeasureString(TankGame.GameLanguage.LevelInfo)));
+        TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, $"{TankGame.GameLanguage.EnemyTankTotal}: {AIManager.CountAll()}", new Vector2(10, 40).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
         // localize later.
-        TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"Total Terrain: {Block.AllBlocks.Count(x => x is not null)}", new Vector2(10, 60).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
-        TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"{TankGame.GameLanguage.DifficultyRating}: {DifficultyAlgorithm.GetDifficulty(missionToRate):0.00}", new Vector2(10, 80).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
+        TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, $"Total Terrain: {Block.AllBlocks.Count(x => x is not null)}", new Vector2(10, 60).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
+        TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, $"{TankGame.GameLanguage.DifficultyRating}: {DifficultyAlgorithm.GetDifficulty(missionToRate):0.00}", new Vector2(10, 80).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
     }
     public static void DrawAlerts() {
         if (_alertTime > 0) {
@@ -152,8 +152,8 @@ public static partial class LevelEditorUI {
                 new Vector2(scale).ToResolution(),
                 default,
                 default);
-            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, TankGame.TextFontLarge, AlertText, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight * 0.625f), Color.Red, Color.White, new Vector2(0.4f).ToResolution(), 0f, Anchor.Center);
-            _alertTime -= TankGame.DeltaTime;
+            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, AlertText, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight * 0.625f), Color.Red, Color.White, new Vector2(0.4f).ToResolution(), 0f, Anchor.Center);
+            _alertTime -= RuntimeData.DeltaTime;
         }
     }
 

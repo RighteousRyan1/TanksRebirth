@@ -1,5 +1,6 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using System;
+using TanksRebirth.GameContent.Globals;
 using TanksRebirth.Internals.Common.Framework.Input;
 using TanksRebirth.Internals.Common.GameUI;
 using TanksRebirth.Internals.Common.Utilities;
@@ -49,7 +50,7 @@ namespace TanksRebirth.GameContent.UI
             MusicVolume.BarWidth = 10;
             MusicVolume.SliderColor = Color.WhiteSmoke;
 
-            MusicText = new(TankGame.GameLanguage.MusicVolume, TankGame.TextFont, Color.Black)
+            MusicText = new(TankGame.GameLanguage.MusicVolume, FontGlobals.RebirthFont, Color.Black)
             {
                 // IgnoreMouseInteractions = true,
                 IsVisible = false,
@@ -69,7 +70,7 @@ namespace TanksRebirth.GameContent.UI
             EffectsVolume.BarWidth = 10;
             EffectsVolume.SliderColor = Color.WhiteSmoke;
 
-            EffectsText = new(TankGame.GameLanguage.EffectsVolume, TankGame.TextFont, Color.Black)
+            EffectsText = new(TankGame.GameLanguage.EffectsVolume, FontGlobals.RebirthFont, Color.Black)
             {
                 //IgnoreMouseInteractions = true,
                 IsVisible = false
@@ -88,7 +89,7 @@ namespace TanksRebirth.GameContent.UI
             AmbientVolume.BarWidth = 10;
             AmbientVolume.SliderColor = Color.WhiteSmoke;
 
-            AmbientText = new(TankGame.GameLanguage.AmbientVolume, TankGame.TextFont, Color.Black)
+            AmbientText = new(TankGame.GameLanguage.AmbientVolume, FontGlobals.RebirthFont, Color.Black)
             {
                 //IgnoreMouseInteractions = true,
                 IsVisible = false

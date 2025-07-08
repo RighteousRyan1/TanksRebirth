@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
@@ -89,7 +89,7 @@ public class TankFootprint {
             track.Yaw = rotation;
 
             if (ShouldTracksFade)
-                track.Alpha -= 0.001f * TankGame.DeltaTime;
+                track.Alpha -= 0.001f * RuntimeData.DeltaTime;
 
             if (track.Alpha <= 0 || _destroy) {
                 track.Destroy();

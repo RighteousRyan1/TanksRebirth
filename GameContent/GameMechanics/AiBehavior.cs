@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,7 +16,7 @@ namespace TanksRebirth.GameContent.GameMechanics
         {
             if (remainder == 0)
                 return false;
-            return Value % remainder < TankGame.DeltaTime;
+            return Value % remainder < RuntimeData.DeltaTime;
         }
     }
     public static class AiBehaviorExtensions

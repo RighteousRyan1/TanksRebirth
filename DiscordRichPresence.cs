@@ -1,4 +1,4 @@
-﻿using DiscordRPC;
+using DiscordRPC;
 using System;
 using System.Linq;
 using TanksRebirth.GameContent;
@@ -53,7 +53,7 @@ public static class DiscordRichPresence {
                     return "a";
                 }
             }
-            SetLargeAsset("tanks_physical_logo", $"v{TankGame.Instance.GameVersion}");
+            SetLargeAsset("tanks_physical_logo", $"v{RuntimeData.GameVersion}");
             if (MainMenuUI.Active) {
                 switch (MainMenuUI.MenuState) {
                     case MainMenuUI.UIState.PrimaryMenu:

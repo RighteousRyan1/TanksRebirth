@@ -1,6 +1,7 @@
-﻿using FontStashSharp;
+using FontStashSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
+using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems;
@@ -84,7 +85,7 @@ public static partial class MainMenuUI {
                     IPInput.Text = "localhost";
                     PortInput.Text = "7777";
                     ServerNameInput.Text = "TestServer";
-                    UsernameInput.Text = GameHandler.GameRand.Next(0, ushort.MaxValue).ToString();
+                    UsernameInput.Text = Client.ClientRandom.Next(0, ushort.MaxValue).ToString();
                 }
             }
         }
@@ -121,14 +122,14 @@ public static partial class MainMenuUI {
     }
     public static void RenderDifficultiesMenu() {
         if (MenuState == UIState.Difficulties) {
-            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, TankGame.TextFont,
+            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont,
                 "Ideas are welcome! Let us know in our DISCORD server!",
                 new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 6), Color.White, Color.Black, new Vector2(1f), 0f, Anchor.Center, 0.8f);
         }
     }
     private static void InitializeDifficultyButtons() {
         _diffButtonsInitialized = true;
-        SpriteFontBase font = TankGame.TextFont;
+        SpriteFontBase font = FontGlobals.RebirthFont;
         TanksAreCalculators = new("Tanks are Calculators", font, Color.White) {
             IsVisible = false,
             Tooltip = "ALL tanks will begin to look for angles" +

@@ -52,6 +52,8 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 - `TankGame.PostDraw` -> `TankGame.PostDrawEverything`
 - Numerous rendering-related things are now stored in `RenderGlobals`
 - Many things from `TankGame` (such as frame time, delta time, etc) have been moved to `RuntimeData`
+- `TankGame.TextFont`/`TextFontLarge` -> `FontGlobals.RebirthFont`/`RebirthFontLarge`
+- `GameHandler.GameRand` -> `Client.ClientRandom`
 
 ## Fixes
 

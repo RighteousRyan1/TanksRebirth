@@ -1,4 +1,4 @@
-﻿using FontStashSharp;
+using FontStashSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -22,7 +22,7 @@ public static partial class MainMenuUI
     public static RenderTarget2D TextTarget;
 
     private static readonly string tanksMessage =
-    $"Tanks Rebirth ALPHA v{TankGame.Instance.GameVersion}" +
+    $"Tanks Rebirth ALPHA v{RuntimeData.GameVersion}" +
     $"\nOriginal game and assets developed by Nintendo" +
     $"\nProgrammed by RighteousRyan" +
     $"\nArt and graphics by BigKitty1011" +
@@ -194,10 +194,10 @@ public static partial class MainMenuUI
     public static void PrepareTextRTs(GraphicsDevice device, SpriteBatch spriteBatch) {
         device.SetRenderTarget(TextTarget);
 
-        device.Clear(TankGame.ClearColor);
+        device.Clear(RenderGlobals.BackBufferColor);
 
         spriteBatch.Begin();
-        DrawUtils.DrawTextWithBorder(spriteBatch, TankGame.TextFont, tanksMessage, Vector2.Zero,
+        DrawUtils.DrawTextWithBorder(spriteBatch, FontGlobals.RebirthFont, tanksMessage, Vector2.Zero,
             Color.White, Color.Black, new Vector2(0.8f).ToResolution(), 0f, Anchor.TopLeft, 0.5f);
         spriteBatch.End();
 
@@ -205,7 +205,7 @@ public static partial class MainMenuUI
     }
     public static void RenderGeneralUI() {
         if (SteamworksUtils.IsInitialized)
-            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"STEAM LAUNCH!\nLogged in as '{SteamworksUtils.MyUsername}'\n" +
+            TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, $"STEAM LAUNCH!\nLogged in as '{SteamworksUtils.MyUsername}'\n" +
                 $"You have {SteamworksUtils.FriendsCount} friends.", Vector2.One * 8, Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
 
         TankGame.SpriteRenderer.End();
@@ -217,9 +217,9 @@ public static partial class MainMenuUI
         TankGame.SpriteRenderer.Begin();
 
         if (MenuState == UIState.PrimaryMenu || MenuState == UIState.PlayList) {
-            var size = TankGame.TextFont.MeasureString(TankGame.Instance.MOTD);
+            var size = FontGlobals.RebirthFont.MeasureString(TankGame.Instance.MOTD);
             var MotdPos = new Vector2(WindowUtils.WindowWidth / 2, 10);
-            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, TankGame.Instance.MOTD, MotdPos, Color.White, Vector2.One * 0.5f, 0f, Anchor.TopCenter.GetAnchor(size));
+            TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, TankGame.Instance.MOTD, MotdPos, Color.White, Vector2.One * 0.5f, 0f, Anchor.TopCenter.GetAnchor(size));
         }
     }
     public static void UpdateUI() {

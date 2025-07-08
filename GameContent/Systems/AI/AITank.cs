@@ -178,13 +178,10 @@ public partial class AITank : Tank {
         }
         else
             _tankTexture = Assets[$"tank_" + TankID.Collection.GetKey(tier)!.ToLower()];
-        #region Special
 
         if (!UsesCustomModel) {
             Model = ModelResources.TankEnemy.Asset;
         }
-
-        #endregion
 
         _shadowTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank_shadow");
 
@@ -353,7 +350,7 @@ public partial class AITank : Tank {
 
     private void GiveXP() {
         if (!LevelEditorUI.Editing) {
-            var rand = GameHandler.GameRand.NextFloat(-(BaseExpValue * 0.25f), BaseExpValue * 0.25f);
+            var rand = Client.ClientRandom.NextFloat(-(BaseExpValue * 0.25f), BaseExpValue * 0.25f);
             var gain = BaseExpValue + rand;
             // i will keep this commented if anything else happens.
             //var gain = (BaseExpValue + rand) * GameData.UniversalExpMultiplier;
@@ -363,7 +360,7 @@ public partial class AITank : Tank {
 
             p.Scale = new(0.5f);
             p.Roll = MathHelper.Pi;
-            p.Origin2D = TankGame.TextFont.MeasureString($"+{gain * 100:0.00} XP") / 2;
+            p.Origin2D = FontGlobals.RebirthFont.MeasureString($"+{gain * 100:0.00} XP") / 2;
 
             p.UniqueBehavior = (p) => {
                 p.Position.Y += 0.1f * RuntimeData.DeltaTime;
@@ -390,132 +387,142 @@ public partial class AITank : Tank {
     // TODO: literally fix everything about these turret rotation values.
     private List<Tank> GetTanksInPath(Vector2 pathDir, out Vector2[] ricochetPoints, out Vector2[] tankCollPoints,
         bool draw = false, Vector2 offset = default, float missDist = 0f, Func<Block, bool> pattern = null, bool doBounceReset = true) {
-        var ricoPoints = new List<Vector2>();
-        var tnkPoints = new List<Vector2>();
-        ricochetPoints = [];
-        tankCollPoints = [];
-        List<Tank> tanks = [];
-        pattern ??= (c) => c.Properties.IsSolid || c.Type == BlockID.Teleporter;
-
         const int MAX_PATH_UNITS = 1000;
         const int PATH_UNIT_LENGTH = 8;
 
-        // 20, 30
+        List<Tank> tanks = [];
+        List<Vector2> ricoPoints = [];
+        List<Vector2> tnkPoints = [];
+
+        pattern ??= c => c.Properties.IsSolid || c.Type == BlockID.Teleporter;
 
         var whitePixel = TextureGlobals.Pixels[Color.White];
-        var pathPos = Position + offset.Rotate(-TurretRotation);
-
-        pathDir.Y *= -1; // this may be a culprit and i hate it.
+        Vector2 pathPos = Position + offset.Rotate(-TurretRotation);
+        pathDir.Y *= -1;
         pathDir *= PATH_UNIT_LENGTH;
-        int pathRicochetCount = 0;
 
+        int ricochetCount = 0;
         int uninterruptedIterations = 0;
 
-        bool goneThroughTeleporter = false;
-        int tpidx = -1;
-        Vector2 tppos = Vector2.Zero;
+        bool teleported = false;
+        int tpTriggerIndex = -1;
+        Vector2 teleportedTo = Vector2.Zero;
+
+        var pathHitbox = new Rectangle();
 
         for (int i = 0; i < MAX_PATH_UNITS; i++) {
-            var dummyPos = Vector2.Zero;
-
             uninterruptedIterations++;
 
+            // World bounds check
             if (pathPos.X < GameScene.MIN_X || pathPos.X > GameScene.MAX_X) {
                 ricoPoints.Add(pathPos);
                 pathDir.X *= -1;
-                pathRicochetCount++;
-                resetIterations();
+                ricochetCount++;
+                if (doBounceReset) uninterruptedIterations = 0;
             }
             else if (pathPos.Y < GameScene.MIN_Z || pathPos.Y > GameScene.MAX_Z) {
                 ricoPoints.Add(pathPos);
                 pathDir.Y *= -1;
-                pathRicochetCount++;
-                resetIterations();
+                ricochetCount++;
+                if (doBounceReset) uninterruptedIterations = 0;
             }
 
-            var pathHitbox = new Rectangle((int)pathPos.X - 5, (int)pathPos.Y - 5, 8, 8);
+            // Setup hitbox once
+            pathHitbox.X = (int)pathPos.X - 5;
+            pathHitbox.Y = (int)pathPos.Y - 5;
+            pathHitbox.Width = 8;
+            pathHitbox.Height = 8;
 
-            // Why is velocity passed by reference here lol
-            Collision.HandleCollisionSimple_ForBlocks(pathHitbox, pathDir, ref dummyPos, out var dir, out var block, out bool corner, false, pattern);
-            if (corner)
-                return tanks;
+            Vector2 dummy = Vector2.Zero;
+            Collision.HandleCollisionSimple_ForBlocks(pathHitbox, pathDir, ref dummy, out var dir, out var block, out bool corner, false, pattern);
+            if (corner) break;
 
             if (block is not null) {
-                if (block.Type == BlockID.Teleporter) {
-                    if (!goneThroughTeleporter) {
-                        var otherTp = Block.AllBlocks.FirstOrDefault(bl => bl != null && bl != block && bl.TpLink == block.TpLink);
-
-                        if (Array.IndexOf(Block.AllBlocks, otherTp) > -1) {
-                            //pathPos = otherTp.Position;
-                            tppos = otherTp!.Position;
-                            goneThroughTeleporter = true;
-                            tpidx = i + 1;
-                        }
+                if (block.Type == BlockID.Teleporter && !teleported) {
+                    var dest = Block.AllBlocks.FirstOrDefault(bl => bl != null && bl != block && bl.TpLink == block.TpLink);
+                    if (dest is not null) {
+                        teleported = true;
+                        teleportedTo = dest.Position;
+                        tpTriggerIndex = i + 1;
                     }
                 }
-                else {
-                    if (block.Properties.AllowShotPathBounce) {
-                        ricoPoints.Add(pathPos);
-                        switch (dir) {
-                            case CollisionDirection.Up:
-                            case CollisionDirection.Down:
-                                pathDir.Y *= -1;
-                                pathRicochetCount += block.Properties.PathBounceCount;
-                                resetIterations();
-                                break;
-                            case CollisionDirection.Left:
-                            case CollisionDirection.Right:
-                                pathDir.X *= -1;
-                                pathRicochetCount += block.Properties.PathBounceCount;
-                                resetIterations();
-                                break;
-                        }
+                else if (block.Properties.AllowShotPathBounce) {
+                    ricoPoints.Add(pathPos);
+                    ricochetCount += block.Properties.PathBounceCount;
+
+                    switch (dir) {
+                        case CollisionDirection.Up:
+                        case CollisionDirection.Down:
+                            pathDir.Y *= -1;
+                            break;
+                        case CollisionDirection.Left:
+                        case CollisionDirection.Right:
+                            pathDir.X *= -1;
+                            break;
                     }
+
+                    if (doBounceReset) uninterruptedIterations = 0;
                 }
             }
 
-            if (goneThroughTeleporter && i == tpidx)
-                pathPos = tppos;
-
-            void resetIterations() { if (doBounceReset) uninterruptedIterations = 0; }
-
-            tankCollPoints = [.. tnkPoints];
-            ricochetPoints = [.. ricoPoints];
-
-            var hitsInstant = i == 0 && Block.AllBlocks.Any(x => x is not null && x.Hitbox.Intersects(pathHitbox) && pattern is not null && pattern.Invoke(x));
-            var hitsTooEarly = i < (int)Properties.ShellSpeed / 2 && pathRicochetCount > 0;
-            var shouldDestroy = pathRicochetCount > Properties.RicochetCount;
-            if (hitsInstant || hitsTooEarly || shouldDestroy)
-                return tanks;
-
-            pathPos += pathDir;
-            var realMiss = 1f + (missDist * uninterruptedIterations);
-            if (draw) {
-                var pathPosScreen = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(pathPos.X, 11, pathPos.Y), CameraGlobals.GameView, CameraGlobals.GameProjection);
-                TankGame.SpriteRenderer.Draw(whitePixel, pathPosScreen, null, Color.White * 0.5f, 0, whitePixel.Size() / 2, /*2 + (float)Math.Sin(i * Math.PI / 5 - TankGame.GameUpdateTime * 0.1f) * */realMiss, default, default);
-                // DebugUtils.DrawDebugString(TankGame.spriteBatch, $"{goneThroughTeleporter}:{(block is not null ? $"{block.Type}" : "N/A")}", MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), Matrix.CreateTranslation(pathPos.X, 0, pathPos.Y), View, Projection), 1, centered: true);
+            // Delay teleport until next frame
+            if (teleported && i == tpTriggerIndex) {
+                pathPos = teleportedTo;
             }
+
+            // Check destroy conditions
+            bool hitsInstant = i == 0 && Block.AllBlocks.Any(x => x != null && x.Hitbox.Intersects(pathHitbox) && pattern(x));
+            bool hitsTooEarly = i < (int)Properties.ShellSpeed / 2 && ricochetCount > 0;
+            bool ricochetLimitReached = ricochetCount > Properties.RicochetCount;
+
+            if (hitsInstant || hitsTooEarly || ricochetLimitReached)
+                break;
+
+            // Check tanks BEFORE moving
+            float realMiss = 1f + (missDist * uninterruptedIterations);
 
             foreach (var enemy in GameHandler.AllTanks) {
-                if (enemy is null) continue;
-                if (enemy.Dead || tanks.Contains(enemy)) continue;
-                if (i > 15) {
-                    if (GameUtils.Distance_WiiTanksUnits(enemy.Position, pathPos) <= realMiss) {
-                        var rot = pathDir.ToRotation();
-                        var angle = MathUtils.DirectionTo(pathPos, enemy.Position).ToRotation();
+                if (enemy is null || enemy.Dead || tanks.Contains(enemy)) continue;
 
-                        if (MathUtils.AbsoluteAngleBetween(rot, angle) >= MathHelper.PiOver2) {
-                            tanks.Add(enemy);
-                        }
-                    }
+                if (i > 15 && GameUtils.Distance_WiiTanksUnits(enemy.Position, pathPos) <= realMiss) {
+                    var pathAngle = pathDir.ToRotation();
+                    var toEnemy = MathUtils.DirectionTo(pathPos, enemy.Position).ToRotation();
+
+                    if (MathUtils.AbsoluteAngleBetween(pathAngle, toEnemy) >= MathHelper.PiOver2)
+                        tanks.Add(enemy);
                 }
-                var pathCircle = new Circle() { Center = pathPos, Radius = 4 };
+
+                var pathCircle = new Circle { Center = pathPos, Radius = 4 };
                 if (enemy.CollisionCircle.Intersects(pathCircle)) {
                     tnkPoints.Add(pathPos);
                     tanks.Add(enemy);
                 }
             }
+
+            if (draw) {
+                var screenPos = MatrixUtils.ConvertWorldToScreen(
+                    Vector3.Zero,
+                    Matrix.CreateTranslation(pathPos.X, 11, pathPos.Y),
+                    CameraGlobals.GameView,
+                    CameraGlobals.GameProjection
+                );
+
+                TankGame.SpriteRenderer.Draw(
+                    whitePixel,
+                    screenPos,
+                    null,
+                    Color.White * 0.5f,
+                    0,
+                    whitePixel.Size() / 2,
+                    realMiss,
+                    default,
+                    default
+                );
+            }
+
+            pathPos += pathDir;
         }
+
         tankCollPoints = [.. tnkPoints];
         ricochetPoints = [.. ricoPoints];
         return tanks;
@@ -523,67 +530,86 @@ public partial class AITank : Tank {
 
     public const int PATH_UNIT_LENGTH = 8;
     public int PathHitMax = 10;
+
+    // reworked tahnkfully
     private bool IsObstacleInWay(int checkDist, Vector2 pathDir, out Vector2 endpoint, out RaycastReflection[] reflections, int size = 1, bool draw = false) {
         bool hasCollided = false;
-
-        var list = new List<RaycastReflection>();
+        List<RaycastReflection> reflectionList = new();
 
         var whitePixel = TextureGlobals.Pixels[Color.White];
-        var pathPos = Position;
-
+        Vector2 pathPos = Position;
         pathDir *= PATH_UNIT_LENGTH;
 
-        for (int i = 0; i < checkDist; i++) {
-            var dummyPos = Vector2.Zero;
+        // Avoid constant allocation
+        Rectangle pathHitbox = new();
+        Vector2 dummyPos = Vector2.Zero;
 
+        for (int i = 0; i < checkDist; i++) {
+            // Check X bounds
             if (pathPos.X < GameScene.MIN_X || pathPos.X > GameScene.MAX_X) {
                 pathDir.X *= -1;
                 hasCollided = true;
-                list.Add(new(pathPos, Vector2.UnitY));
+                reflectionList.Add(new(pathPos, Vector2.UnitY));
             }
+
+            // Check Y bounds
             if (pathPos.Y < GameScene.MIN_Z || pathPos.Y > GameScene.MAX_Z) {
                 pathDir.Y *= -1;
                 hasCollided = true;
-                list.Add(new(pathPos, -Vector2.UnitY));
+                reflectionList.Add(new(pathPos, -Vector2.UnitY));
             }
 
-            var pathHitbox = new Rectangle((int)pathPos.X, (int)pathPos.Y, size, size);
+            pathHitbox.X = (int)pathPos.X;
+            pathHitbox.Y = (int)pathPos.Y;
+            pathHitbox.Width = size;
+            pathHitbox.Height = size;
 
-            // Why is velocity passed by reference here lol
-            Collision.HandleCollisionSimple_ForBlocks(pathHitbox, pathDir, ref dummyPos, out var dir, out var block, out bool corner, false);
+            // Simplified collision logic
+            Collision.HandleCollisionSimple_ForBlocks(pathHitbox, pathDir, ref dummyPos, out var dir, out _, out _, false);
 
-            switch (dir) {
-                case CollisionDirection.Up:
-                    hasCollided = true;
-                    pathDir.Y *= -1;
-                    list.Add(new(pathPos, -Vector2.UnitY));
-                    break;
-                case CollisionDirection.Down:
-                    hasCollided = true;
-                    pathDir.Y *= -1;
-                    list.Add(new(pathPos, Vector2.UnitY));
-                    break;
-                case CollisionDirection.Left:
+            if (dir != CollisionDirection.None) {
+                hasCollided = true;
+                Vector2 normal = dir switch {
+                    CollisionDirection.Up => -Vector2.UnitY,
+                    CollisionDirection.Down => Vector2.UnitY,
+                    CollisionDirection.Left => Vector2.UnitX,
+                    CollisionDirection.Right => -Vector2.UnitX,
+                    _ => Vector2.Zero
+                };
+
+                if (dir is CollisionDirection.Left or CollisionDirection.Right)
                     pathDir.X *= -1;
-                    hasCollided = true;
-                    list.Add(new(pathPos, Vector2.UnitX));
-                    break;
-                case CollisionDirection.Right:
-                    pathDir.X *= -1;
-                    hasCollided = true;
-                    list.Add(new(pathPos, -Vector2.UnitX));
-                    break;
+                else
+                    pathDir.Y *= -1;
+
+                reflectionList.Add(new(pathPos, normal));
+            }
+
+            if (draw) {
+                var screenPos = MatrixUtils.ConvertWorldToScreen(
+                    Vector3.Zero,
+                    Matrix.CreateTranslation(pathPos.X, 11, pathPos.Y),
+                    CameraGlobals.GameView,
+                    CameraGlobals.GameProjection
+                );
+
+                TankGame.SpriteRenderer.Draw(
+                    whitePixel,
+                    screenPos,
+                    null,
+                    Color.White,
+                    0,
+                    whitePixel.Size() / 2,
+                    new Vector2(size, size),
+                    default,
+                    default
+                );
             }
 
             pathPos += pathDir;
-
-            if (draw) {
-                //var sin = 2 + MathF.Sin(i * MathF.PI / 5 - TankGame.UpdateCount * 0.3f);
-                var pathPosScreen = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(pathPos.X, 11, pathPos.Y), CameraGlobals.GameView, CameraGlobals.GameProjection);
-                TankGame.SpriteRenderer.Draw(whitePixel, pathPosScreen, null, Color.White, 0, whitePixel.Size() / 2, new Vector2(size, size), default, default);
-            }
         }
-        reflections = [.. list];
+
+        reflections = [.. reflectionList];
         endpoint = pathPos;
         return hasCollided;
     }
@@ -902,7 +928,7 @@ public partial class AITank : Tank {
         }
         if (Behaviors[1].IsModOf(AiParams.TurretMeanderFrequency)) {
             var dirVec = Position - AimTarget;
-            TargetTurretRotation = -dirVec.ToRotation() - MathHelper.PiOver2 + GameHandler.GameRand.NextFloat(-AiParams.AimOffset, AiParams.AimOffset);
+            TargetTurretRotation = -dirVec.ToRotation() - MathHelper.PiOver2 + Client.ClientRandom.NextFloat(-AiParams.AimOffset, AiParams.AimOffset);
         }
         TurretRotation = MathUtils.RoughStep(TurretRotation, TargetTurretRotation, AiParams.TurretSpeed * TurretRotationMultiplier * RuntimeData.DeltaTime);
     }
@@ -911,7 +937,7 @@ public partial class AITank : Tank {
         //Console.WriteLine(shouldMove);
         if (shouldMove) {
             if (Behaviors[0].IsModOf(AiParams.MeanderFrequency)) {
-                var random = GameHandler.GameRand.NextFloat(-AiParams.MeanderAngle / 2, AiParams.MeanderAngle / 2);
+                var random = Client.ClientRandom.NextFloat(-AiParams.MeanderAngle / 2, AiParams.MeanderAngle / 2);
 
                 TargetTankRotation += random;
             }
@@ -943,13 +969,13 @@ public partial class AITank : Tank {
             if (AiParams.SmartMineLaying) {
                 if (IsNearDestructibleObstacle) {
                     // (100, 100)? why?
-                    //TargetTankRotation = new Vector2(100, 100).RotatedByRadians(GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi)).ToRotation();
+                    //TargetTankRotation = new Vector2(100, 100).RotatedByRadians(Client.ClientRandom.NextFloat(0, MathHelper.TwoPi)).ToRotation();
                     LayMine();
                 }
             }
             else {
-                if (GameHandler.GameRand.NextFloat(0, 1) <= AiParams.MinePlacementChance) {
-                    //TargetTankRotation = new Vector2(100, 100).RotatedByRadians(GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi)).ToRotation();
+                if (Client.ClientRandom.NextFloat(0, 1) <= AiParams.MinePlacementChance) {
+                    //TargetTankRotation = new Vector2(100, 100).RotatedByRadians(Client.ClientRandom.NextFloat(0, MathHelper.TwoPi)).ToRotation();
                     LayMine();
                 }
             }
@@ -995,7 +1021,7 @@ public partial class AITank : Tank {
 
                     // this is a very bandaid fix....
                     if (refAngle % MathHelper.PiOver2 == 0) {
-                        refAngle += GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi);
+                        refAngle += Client.ClientRandom.NextFloat(0, MathHelper.TwoPi);
                     }
                     TargetTankRotation = refAngle;
                 }

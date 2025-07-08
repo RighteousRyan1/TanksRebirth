@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
@@ -59,8 +59,8 @@ public class AchievementPopupHandler {
             if (!string.IsNullOrEmpty(ach.Name)) {
                 _title = ach.Name;
                 _description = ach.Description;
-                var titleMeasure = TankGame.TextFontLarge.MeasureString(_title) * _textScale;
-                var descMeasure = TankGame.TextFontLarge.MeasureString(_description) * _textScale / 2;
+                var titleMeasure = FontGlobals.RebirthFontLarge.MeasureString(_title) * _textScale;
+                var descMeasure = FontGlobals.RebirthFontLarge.MeasureString(_description) * _textScale / 2;
                 var biggerFloat = titleMeasure.X > descMeasure.X ? titleMeasure : descMeasure;
                 _popupDims = ach.Texture.Size() + biggerFloat + new Vector2(100, 0);
                 float interp = 0f;
@@ -72,7 +72,7 @@ public class AchievementPopupHandler {
                         var val = Easings.OutBounce(interp);
                         interp += easingDelta;
                         _popupPos = WindowUtils.WindowTop - new Vector2(_popupDims.X / 2, _popupDims.Y) + new Vector2(0, val * _popupDims.Y);
-                        await Task.Delay(TimeSpan.FromMilliseconds((int)TankGame.LogicTime.TotalMilliseconds));
+                        await Task.Delay(TimeSpan.FromMilliseconds((int)RuntimeData.LogicTime.TotalMilliseconds));
                     }
                     if (interp > 1f)
                         interp = 1f;
@@ -84,7 +84,7 @@ public class AchievementPopupHandler {
                         var val = Easings.InOutSine(interp);
                         interp -= easingDelta;
                         _popupPos = WindowUtils.WindowTop - new Vector2(_popupDims.X / 2, _popupDims.Y) + new Vector2(0, val * _popupDims.Y);
-                        await Task.Delay(TimeSpan.FromMilliseconds((int)TankGame.LogicTime.TotalMilliseconds));
+                        await Task.Delay(TimeSpan.FromMilliseconds((int)RuntimeData.LogicTime.TotalMilliseconds));
                     }
                     if (interp < 0f)
                         interp = 0f;
@@ -105,7 +105,7 @@ public class AchievementPopupHandler {
         var titleOff = new Vector2(100, 25);
         var descOff = new Vector2(0, 60);
 
-        spriteBatch.DrawString(TankGame.TextFontLarge, _title, _popupPos + new Vector2(texOff.X, 0) + titleOff, Color.White, Vector2.One * _textScale, textStyle: TextStyle.Underline);
-        spriteBatch.DrawString(TankGame.TextFontLarge, _description, _popupPos + new Vector2(texOff.X, 0) + titleOff + descOff, Color.White, Vector2.One * _textScale / 2);
+        spriteBatch.DrawString(FontGlobals.RebirthFontLarge, _title, _popupPos + new Vector2(texOff.X, 0) + titleOff, Color.White, Vector2.One * _textScale, textStyle: TextStyle.Underline);
+        spriteBatch.DrawString(FontGlobals.RebirthFontLarge, _description, _popupPos + new Vector2(texOff.X, 0) + titleOff + descOff, Color.White, Vector2.One * _textScale / 2);
     }
 }

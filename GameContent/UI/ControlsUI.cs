@@ -1,5 +1,6 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using System;
+using TanksRebirth.GameContent.Globals;
 using TanksRebirth.Internals.Common.Framework.Input;
 using TanksRebirth.Internals.Common.GameUI;
 using TanksRebirth.Internals.Common.Utilities;
@@ -23,7 +24,7 @@ namespace TanksRebirth.GameContent.UI
         public static void Initialize()
         {
             var pressKey = TankGame.GameLanguage.PressAKey;
-            UpKeybindButton = new("Up: " + PlayerTank.controlUp.Assigned.KeyAsString(), TankGame.TextFont, Color.WhiteSmoke)
+            UpKeybindButton = new("Up: " + PlayerTank.controlUp.Assigned.KeyAsString(), FontGlobals.RebirthFont, Color.WhiteSmoke)
             {
                 IsVisible = false
             };
@@ -40,7 +41,7 @@ namespace TanksRebirth.GameContent.UI
                 PlayerTank.controlUp.PendReassign = true;
             };
 
-            LeftKeybindButton = new("Left: " + PlayerTank.controlLeft.Assigned.KeyAsString(), TankGame.TextFont, Color.WhiteSmoke)
+            LeftKeybindButton = new("Left: " + PlayerTank.controlLeft.Assigned.KeyAsString(), FontGlobals.RebirthFont, Color.WhiteSmoke)
             {
                 IsVisible = false
             };
@@ -57,7 +58,7 @@ namespace TanksRebirth.GameContent.UI
                 PlayerTank.controlLeft.PendReassign = true;
             };
 
-            RightKeybindButton = new("Right: " + PlayerTank.controlRight.Assigned.KeyAsString(), TankGame.TextFont, Color.WhiteSmoke)
+            RightKeybindButton = new("Right: " + PlayerTank.controlRight.Assigned.KeyAsString(), FontGlobals.RebirthFont, Color.WhiteSmoke)
             {
                 IsVisible = false
             };
@@ -74,7 +75,7 @@ namespace TanksRebirth.GameContent.UI
                 PlayerTank.controlRight.PendReassign = true;
             };
 
-            DownKeybindButton = new("Down: " + PlayerTank.controlDown.Assigned.KeyAsString(), TankGame.TextFont, Color.WhiteSmoke)
+            DownKeybindButton = new("Down: " + PlayerTank.controlDown.Assigned.KeyAsString(), FontGlobals.RebirthFont, Color.WhiteSmoke)
             {
                 IsVisible = false
             };
@@ -91,7 +92,7 @@ namespace TanksRebirth.GameContent.UI
                 PlayerTank.controlDown.PendReassign = true;
             };
 
-            MineKeybindButton = new("Mine: " + PlayerTank.controlMine.Assigned.KeyAsString(), TankGame.TextFont, Color.WhiteSmoke)
+            MineKeybindButton = new("Mine: " + PlayerTank.controlMine.Assigned.KeyAsString(), FontGlobals.RebirthFont, Color.WhiteSmoke)
             {
                 IsVisible = false
             };

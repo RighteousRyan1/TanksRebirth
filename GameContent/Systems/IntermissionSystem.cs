@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Internals;
@@ -225,7 +225,7 @@ public static class IntermissionSystem {
 
             // slight misalignment
 
-            DrawUtils.DrawBorderedStringWithShadow(spriteBatch, TankGame.TextFontLarge,
+            DrawUtils.DrawBorderedStringWithShadow(spriteBatch, FontGlobals.RebirthFontLarge,
                 new Vector2(WindowUtils.WindowWidth / 2 - spacingMissionName, WindowUtils.WindowHeight / 2 - 200.ToResolutionY()),
                 Vector2.One,
                 missionName,
@@ -233,7 +233,7 @@ public static class IntermissionSystem {
                 ColorForBorders,
                 TextAnimatorLarge.CurrentScale.ToResolution(),
                 overallAlpha, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 3f, charSpacing: spacing);
-            DrawUtils.DrawBorderedStringWithShadow(spriteBatch, TankGame.TextFontLarge,
+            DrawUtils.DrawBorderedStringWithShadow(spriteBatch, FontGlobals.RebirthFontLarge,
                 new Vector2(WindowUtils.WindowWidth / 2 - spacingEnemyTankDisplay, WindowUtils.WindowHeight / 2 - 50.ToResolutionY()),
                 Vector2.One,
                 enemyTankDisplay,
@@ -255,7 +255,7 @@ public static class IntermissionSystem {
                 var pos = new Vector2(WindowUtils.WindowWidth / (count + 1) * (i + 1), WindowUtils.WindowHeight / 2 + 375.ToResolutionY());
 
                 var lifeText = $"×  {PlayerTank.Lives[i]}";
-                DrawUtils.DrawBorderedStringWithShadow(spriteBatch, TankGame.TextFontLarge,
+                DrawUtils.DrawBorderedStringWithShadow(spriteBatch, FontGlobals.RebirthFontLarge,
                     pos + new Vector2(75, -25).ToResolution(),
                     Vector2.One,
                     lifeText,
@@ -266,7 +266,7 @@ public static class IntermissionSystem {
                     overallAlpha,
                     Anchor.Center, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 1f);
 
-                DrawUtils.DrawStringWithShadow(spriteBatch, TankGame.TextFontLarge,
+                DrawUtils.DrawStringWithShadow(spriteBatch, FontGlobals.RebirthFontLarge,
                     pos - new Vector2(0, 75).ToResolution(),
                     Vector2.One,
                     name,
@@ -280,7 +280,7 @@ public static class IntermissionSystem {
             }
             // draw mission data on the billboard (?) thing
             if (CampaignGlobals.LoadedCampaign.CurrentMissionId == 0)
-                DrawUtils.DrawBorderedStringWithShadow(spriteBatch, TankGame.TextFontLarge,
+                DrawUtils.DrawBorderedStringWithShadow(spriteBatch, FontGlobals.RebirthFontLarge,
                     new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 295.ToResolutionY()),
                     Vector2.One,
                     $"{TankGame.GameLanguage.Campaign}: \"{CampaignGlobals.LoadedCampaign.MetaData.Name}\" ({TankGame.GameLanguage.Mission} #{CampaignGlobals.LoadedCampaign.CurrentMissionId + 1})",
@@ -289,7 +289,7 @@ public static class IntermissionSystem {
                     TextAnimatorSmall.CurrentScale.ToResolution(),
                     overallAlpha, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 1.5f);
             else
-                DrawUtils.DrawBorderedStringWithShadow(spriteBatch, TankGame.TextFontLarge,
+                DrawUtils.DrawBorderedStringWithShadow(spriteBatch, FontGlobals.RebirthFontLarge,
                     new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2 - 295.ToResolutionY()),
                     Vector2.One,
                     $"{TankGame.GameLanguage.Mission} #{CampaignGlobals.LoadedCampaign.CurrentMissionId + 1}",

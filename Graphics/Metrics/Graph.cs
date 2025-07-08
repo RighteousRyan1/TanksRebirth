@@ -1,4 +1,4 @@
-﻿using FontStashSharp;
+using FontStashSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Newtonsoft.Json.Linq;
@@ -85,7 +85,7 @@ public class Graph(string name, Func<float> value, float rangeMax, int length = 
             new Vector2(graphVisualWidth, graphVisualHeight) * scale, default, 0);
 
         // draw graph name
-        DrawUtils.DrawTextWithBorder(sb, TankGame.TextFontLarge, Name,
+        DrawUtils.DrawTextWithBorder(sb, FontGlobals.RebirthFontLarge, Name,
             position - new Vector2(0, graphVisualHeight) * scale - new Vector2(0, 20),
             Color.White, Color.Black, new Vector2(scale) * 0.08f, 0f, Anchor.LeftCenter, 0.65f, charSpacing: 8);
 
@@ -102,12 +102,12 @@ public class Graph(string name, Func<float> value, float rangeMax, int length = 
 
         for (int i = 0; i <= splits; i++) {
             var vValue = VerticalRange.Max / splits * i;
-            DrawUtils.DrawTextWithBorder(sb, TankGame.TextFontLarge, vValue.ToString(), position - new Vector2(20, vValue * scale * HeightBetweenPoints),
+            DrawUtils.DrawTextWithBorder(sb, FontGlobals.RebirthFontLarge, vValue.ToString(), position - new Vector2(20, vValue * scale * HeightBetweenPoints),
                 Color.White, Color.Black, new Vector2(scale) * 0.05f, 0f, Anchor.RightCenter, 0.65f);
         }
 
         // draw current value
-        DrawUtils.DrawTextWithBorder(sb, TankGame.TextFontLarge, CurrentValue.ToString(),
+        DrawUtils.DrawTextWithBorder(sb, FontGlobals.RebirthFontLarge, CurrentValue.ToString(),
             position - new Vector2(-LengthBetweenPoints * scale * _numElements, CurrentValue * scale * HeightBetweenPoints),
             Color.White, Color.Black, new Vector2(scale) * 0.05f, 0f, Anchor.LeftCenter, 0.65f, charSpacing: 8);
 
@@ -121,16 +121,16 @@ public class Graph(string name, Func<float> value, float rangeMax, int length = 
 
         var average = MathF.Round(_values.Average());
 
-        DrawUtils.DrawTextWithBorder(sb, TankGame.TextFontLarge, $"Min: {min}", position + new Vector2(0, 20),
+        DrawUtils.DrawTextWithBorder(sb, FontGlobals.RebirthFontLarge, $"Min: {min}", position + new Vector2(0, 20),
             Color.White, Color.Black, new Vector2(scale) * 0.07f, 0f, Anchor.LeftCenter, 0.65f, charSpacing: 8);
 
-        DrawUtils.DrawTextWithBorder(sb, TankGame.TextFontLarge, $"Max: {max}", position + new Vector2(splitLen * scale, 20),
+        DrawUtils.DrawTextWithBorder(sb, FontGlobals.RebirthFontLarge, $"Max: {max}", position + new Vector2(splitLen * scale, 20),
             Color.White, Color.Black, new Vector2(scale) * 0.07f, 0f, Anchor.LeftCenter, 0.65f, charSpacing: 8);
 
-        DrawUtils.DrawTextWithBorder(sb, TankGame.TextFontLarge, $"Avg: {average}", position + new Vector2(splitLen * 2 * scale, 20),
+        DrawUtils.DrawTextWithBorder(sb, FontGlobals.RebirthFontLarge, $"Avg: {average}", position + new Vector2(splitLen * 2 * scale, 20),
             Color.White, Color.Black, new Vector2(scale) * 0.07f, 0f, Anchor.LeftCenter, 0.65f, charSpacing: 8);
 
-        DrawUtils.DrawTextWithBorder(sb, TankGame.TextFontLarge, $"Range: {max - min}", position + new Vector2(splitLen * 3 * scale, 20),
+        DrawUtils.DrawTextWithBorder(sb, FontGlobals.RebirthFontLarge, $"Range: {max - min}", position + new Vector2(splitLen * 3 * scale, 20),
             Color.White, Color.Black, new Vector2(scale) * 0.07f, 0f, Anchor.LeftCenter, 0.65f, charSpacing: 8);
 
         // draw lines to connect points

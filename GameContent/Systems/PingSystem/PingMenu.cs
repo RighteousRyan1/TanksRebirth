@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
@@ -110,15 +110,15 @@ public static class PingMenu {
             rect.X -= w;
         }
         if (rect.Contains(MouseUtils.MouseX, MouseUtils.MouseY)) {
-            _uiOpacity += 0.04f * TankGame.DeltaTime;
+            _uiOpacity += 0.04f * RuntimeData.DeltaTime;
             if (_uiOpacity > 1f) _uiOpacity = 1f;
         } else {
-            _uiOpacity -= 0.04f * TankGame.DeltaTime;
+            _uiOpacity -= 0.04f * RuntimeData.DeltaTime;
             if (_uiOpacity < 0.1f) _uiOpacity = 0.1f;
         }
         for (int i = PingIdToName.Count - 1; i >= 0; i--) {
             var pos = WindowUtils.WindowBottomRight + cornerOff + new Vector2(offX, 0);
-            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, TankGame.TextFontLarge, $"{i + 1}. {PingIdToName[i]}",
+            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, $"{i + 1}. {PingIdToName[i]}",
                 pos, PlayerID.PlayerTankColors[NetPlay.GetMyClientId()].ToColor() * _uiOpacity, Color.White * _uiOpacity,
                 0.75f * scale.ToResolution(), 0f, Anchor.TopCenter);
             TankGame.SpriteRenderer.Draw(PingIdToTexture[i], pos + new Vector2(0, 20), null, Color.White * _uiOpacity, 0f, 

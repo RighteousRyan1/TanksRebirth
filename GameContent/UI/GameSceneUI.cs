@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Graphics;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.UI.LevelEditor;
@@ -18,7 +18,7 @@ public static class GameSceneUI {
         DrawScore(PlayerID.PlayerTankColors[NetPlay.GetMyClientId()].ToColor(), PlayerTank.KillCounts[NetPlay.GetMyClientId()], WindowUtils.WindowHeight * 0.9f);
     }
     public static void DrawMissionInfoBar() {
-        var font = TankGame.TextFontLarge;
+        var font = FontGlobals.RebirthFontLarge;
         var infoScale = 0.5f;
         var alpha = 1f;
         var bar = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/mission_info");
@@ -104,7 +104,7 @@ public static class GameSceneUI {
     flip: true,
     shadowAlpha: 0f, shadowDistScale: 0.5f);
 
-        DrawUtils.DrawBorderedStringWithShadow(TankGame.SpriteRenderer, TankGame.TextFontLarge, new Vector2((pertrusion - 10).ToResolutionX(),
+        DrawUtils.DrawBorderedStringWithShadow(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, new Vector2((pertrusion - 10).ToResolutionX(),
             y - 14f.ToResolutionY() * scale),
             Vector2.One, score.ToString(), brighterColor, color, new Vector2(0.675f * scale).ToResolution(), 1f, shadowAlpha: 0.5f);
     }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Text.Json;
 using System.Reflection;
@@ -85,15 +85,11 @@ public class TankGame : Game {
     /// <summary>The index/vertex buffer used to render to a framebuffer.</summary>
     public static SpriteBatch SpriteRenderer;
 
-    public static SpriteFontBase TextFont;
-    public static SpriteFontBase TextFontLarge;
-
     public static AutoUpdater AutoUpdater;
     public static AchievementPopupHandler VanillaAchievementPopupHandler;
 
     public static RenderTarget2D GameFrameBuffer;
 
-    private readonly FontSystem _fontSystem;
     public static RasterizerState _cachedState;
 
     private static Particle _secret;
@@ -163,7 +159,7 @@ public class TankGame : Game {
 
         IsMouseVisible = false;
 
-        _fontSystem = new();
+        FontGlobals.RebirthFontSystem = new();
 
         RuntimeData.GameVersion = typeof(TankGame).Assembly.GetName().Version!;
 
@@ -398,15 +394,15 @@ public class TankGame : Game {
 
         TextureGlobals.CreateDynamicTexturesAsync(GraphicsDevice);
         
-        _fontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/en_US.ttf"));
-        _fontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/ja_JP.ttf"));
-        _fontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/es_ES.ttf"));
-        _fontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/ru_RU.ttf"));
+        FontGlobals.RebirthFontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/en_US.ttf"));
+        FontGlobals.RebirthFontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/ja_JP.ttf"));
+        FontGlobals.RebirthFontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/es_ES.ttf"));
+        FontGlobals.RebirthFontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/ru_RU.ttf"));
 
         ClientLog.Write($"Loaded fonts.", LogType.Info);
 
-        TextFont = _fontSystem.GetFont(35);
-        TextFontLarge = _fontSystem.GetFont(120);
+        FontGlobals.RebirthFont = FontGlobals.RebirthFontSystem.GetFont(35);
+        FontGlobals.RebirthFontLarge = FontGlobals.RebirthFontSystem.GetFont(120);
 
         if (!File.Exists(Path.Combine(SaveDirectory, "settings.json"))) {
             Settings = new();
@@ -647,7 +643,7 @@ public class TankGame : Game {
 
                 // questionable as to why it causes hella lag on game start
                 // TODO: try and find out why this happens lol.
-                if (!float.IsFinite(RuntimeData.DeltaTime))
+                if (float.IsFinite(RuntimeData.DeltaTime))
                     Tank.CollisionsWorld.Step(RuntimeData.DeltaTime);
             }
         }
@@ -723,20 +719,20 @@ public class TankGame : Game {
     private static void DrawErrorScreen() {
         SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], WindowUtils.ScreenRect, Color.Blue);
 
-        SpriteRenderer.DrawString(TextFontLarge, ":(", new Vector2(100, 100).ToResolution(), Color.White, (Vector2.One).ToResolution());
-        SpriteRenderer.DrawString(TextFontLarge,
+        SpriteRenderer.DrawString(FontGlobals.RebirthFontLarge, ":(", new Vector2(100, 100).ToResolution(), Color.White, (Vector2.One).ToResolution());
+        SpriteRenderer.DrawString(FontGlobals.RebirthFontLarge,
             "Your game ran into a problem and might need to restart. We're just" +
             "\nshowing you what's wrong, and how it might affect your game.",
             new Vector2(100, 250).ToResolution(),
             Color.White,
             (Vector2.One * 0.4f).ToResolution());
-        SpriteRenderer.DrawString(TextFontLarge, RuntimeData.CrashInfo.Reason, new Vector2(100, 500).ToResolution(), Color.White, (Vector2.One * 0.3f).ToResolution());
-        SpriteRenderer.DrawString(TextFontLarge, RuntimeData.CrashInfo.Description, new Vector2(100, 550).ToResolution(), Color.White, (Vector2.One * 0.2f).ToResolution());
+        SpriteRenderer.DrawString(FontGlobals.RebirthFontLarge, RuntimeData.CrashInfo.Reason, new Vector2(100, 500).ToResolution(), Color.White, (Vector2.One * 0.3f).ToResolution());
+        SpriteRenderer.DrawString(FontGlobals.RebirthFontLarge, RuntimeData.CrashInfo.Description, new Vector2(100, 550).ToResolution(), Color.White, (Vector2.One * 0.2f).ToResolution());
 
         var yMsg = "Press 'Y' to proceed with closing the game.";
         var nMsg = "Press 'N' to attempt to carry on with the game.";
-        SpriteRenderer.DrawString(TextFontLarge, yMsg, WindowUtils.WindowBottomLeft + new Vector2(10, -10), Color.White, (Vector2.One * 0.2f).ToResolution(), origin: GameUtils.GetAnchor(Anchor.BottomLeft, TextFontLarge.MeasureString(yMsg)));
-        SpriteRenderer.DrawString(TextFontLarge, nMsg, WindowUtils.WindowBottomRight + new Vector2(-10, -10), Color.White, (Vector2.One * 0.2f).ToResolution(), origin: GameUtils.GetAnchor(Anchor.BottomRight, TextFontLarge.MeasureString(nMsg)));
+        SpriteRenderer.DrawString(FontGlobals.RebirthFontLarge, yMsg, WindowUtils.WindowBottomLeft + new Vector2(10, -10), Color.White, (Vector2.One * 0.2f).ToResolution(), origin: GameUtils.GetAnchor(Anchor.BottomLeft, FontGlobals.RebirthFontLarge.MeasureString(yMsg)));
+        SpriteRenderer.DrawString(FontGlobals.RebirthFontLarge, nMsg, WindowUtils.WindowBottomRight + new Vector2(-10, -10), Color.White, (Vector2.One * 0.2f).ToResolution(), origin: GameUtils.GetAnchor(Anchor.BottomRight, FontGlobals.RebirthFontLarge.MeasureString(nMsg)));
         if (InputUtils.KeyJustPressed(Keys.Y)) {
             ReportError(RuntimeData.CrashInfo.Cause, true, true, false);
             Quit();
@@ -773,11 +769,11 @@ public class TankGame : Game {
 
         SpriteRenderer.Begin();
 
-        if (MainMenuUI.Active) MainMenuUI.Render();
+        MainMenuUI.Render();
         // i really wish i didn't have to draw this here.
         VanillaAchievementPopupHandler.DrawPopup(SpriteRenderer);
 
-        if (Debugger.IsAttached) SpriteRenderer.DrawString(TextFont, "DEBUGGER ATTACHED", new Vector2(10, 50), Color.Red, new Vector2(0.8f));
+        if (Debugger.IsAttached) SpriteRenderer.DrawString(FontGlobals.RebirthFont, "DEBUGGER ATTACHED", new Vector2(10, 50), Color.Red, new Vector2(0.8f));
         DebugManager.DrawDebug(SpriteRenderer);
         DebugManager.DrawDebugMetrics();
         Speedrun.DrawSpeedrunHUD(SpriteRenderer);

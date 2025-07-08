@@ -22,6 +22,7 @@ using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.Graphics;
+using tainicom.Aether.Physics2D.Fluids;
 
 namespace TanksRebirth.GameContent.RebirthUtils;
 
@@ -94,7 +95,7 @@ public static class DebugManager {
 
         var sizeAdjust = new Vector2(scale * 0.6f * (float)(WindowUtils.WindowWidth / 1920f), scale * 0.6f * (float)(WindowUtils.WindowHeight / 1080f));
 
-        sb.DrawString(TankGame.TextFont, info.ToString(), position, color == default ? Color.White : color, sizeAdjust, 0f, centered ? TankGame.TextFont.MeasureString(info.ToString()) / 2 : default);
+        sb.DrawString(FontGlobals.RebirthFont, info.ToString(), position, color == default ? Color.White : color, sizeAdjust, 0f, centered ? FontGlobals.RebirthFont.MeasureString(info.ToString()) / 2 : default);
 
         if (beginSb)
             sb.End();
@@ -108,7 +109,7 @@ public static class DebugManager {
 
         var sizeAdjust = new Vector2(scale * 0.6f * (float)(WindowUtils.WindowWidth / 1920f), scale * 0.6f * (float)(WindowUtils.WindowHeight / 1080f));
 
-        sb.DrawString(font, info.ToString(), position, color == default ? Color.White : color, sizeAdjust, 0f, centered ? TankGame.TextFont.MeasureString(info.ToString()) / 2 : default);
+        sb.DrawString(font, info.ToString(), position, color == default ? Color.White : color, sizeAdjust, 0f, centered ? FontGlobals.RebirthFont.MeasureString(info.ToString()) / 2 : default);
 
         if (beginSb)
             sb.End();
@@ -126,18 +127,18 @@ public static class DebugManager {
             sb.End();
     }
     public static void InitDebugUI() {
-        MissionName = new(TankGame.TextFont, Color.White, 0.75f, 20) {
+        MissionName = new(FontGlobals.RebirthFont, Color.White, 0.75f, 20) {
             DefaultString = "Mission Name",
             IsVisible = false
         };
         MissionName.SetDimensions(20, 60, 230, 50);
-        CampaignName = new(TankGame.TextFont, Color.White, 0.75f, 20) {
+        CampaignName = new(FontGlobals.RebirthFont, Color.White, 0.75f, 20) {
             DefaultString = "Campaign Name",
             IsVisible = false
         };
         CampaignName.SetDimensions(20, 120, 230, 50);
 
-        SaveMission = new("Save", TankGame.TextFont, Color.White, 0.5f);
+        SaveMission = new("Save", FontGlobals.RebirthFont, Color.White, 0.5f);
         SaveMission.OnLeftClick = (l) => {
             if (MissionName.IsEmpty()) {
                 ChatSystem.SendMessage("Invalid name for mission.", Color.Red);
@@ -150,7 +151,7 @@ public static class DebugManager {
         SaveMission.IsVisible = false;
         SaveMission.SetDimensions(20, 180, 105, 50);
 
-        LoadMission = new("Load", TankGame.TextFont, Color.White, 0.5f);
+        LoadMission = new("Load", FontGlobals.RebirthFont, Color.White, 0.5f);
         LoadMission.OnLeftClick = (l) => {
             if (RuntimeData.IsWindows && MissionName.IsEmpty()) {
                 var res = Dialog.FileOpen("mission", TankGame.SaveDirectory);
@@ -173,7 +174,7 @@ public static class DebugManager {
         LoadMission.IsVisible = false;
         LoadMission.SetDimensions(145, 180, 105, 50);
 
-        LoadCampaign = new("Load Campaign", TankGame.TextFont, Color.White, 0.75f) {
+        LoadCampaign = new("Load Campaign", FontGlobals.RebirthFont, Color.White, 0.75f) {
             OnLeftClick = (l) => {
                 if (MissionName.IsEmpty()) {
                     ChatSystem.SendMessage("Invalid name for campaign.", Color.Red);
@@ -186,33 +187,33 @@ public static class DebugManager {
         };
         LoadCampaign.SetDimensions(20, 240, 230, 50);
 
-        ClearTracks = new("Clear Tracks", TankGame.TextFont, Color.LightBlue, 0.5f);
+        ClearTracks = new("Clear Tracks", FontGlobals.RebirthFont, Color.LightBlue, 0.5f);
         ClearTracks.SetDimensions(250, 25, 100, 50);
         ClearTracks.IsVisible = false;
 
         ClearTracks.OnLeftClick = (a) => SceneManager.ClearTankTracks();
 
-        ClearChecks = new("Clear Checks", TankGame.TextFont, Color.LightBlue, 0.5f);
+        ClearChecks = new("Clear Checks", FontGlobals.RebirthFont, Color.LightBlue, 0.5f);
         ClearChecks.SetDimensions(250, 95, 100, 50);
         ClearChecks.IsVisible = false;
 
         ClearChecks.OnLeftClick = (a) => SceneManager.ClearTankDeathmarks();
 
-        SetupMissionAgain = new("Restart\nMission", TankGame.TextFont, Color.LightBlue, 0.5f);
+        SetupMissionAgain = new("Restart\nMission", FontGlobals.RebirthFont, Color.LightBlue, 0.5f);
         SetupMissionAgain.SetDimensions(250, 165, 100, 50);
         SetupMissionAgain.IsVisible = false;
 
         SetupMissionAgain.OnLeftClick = (obj) => IntermissionHandler.BeginIntroSequence();
 
-        MovePULeft = new("<", TankGame.TextFont, Color.LightBlue, 0.5f);
+        MovePULeft = new("<", FontGlobals.RebirthFont, Color.LightBlue, 0.5f);
         MovePULeft.SetDimensions(WindowUtils.WindowWidth / 2 - 100, 25, 50, 50);
         MovePULeft.IsVisible = false;
 
-        MovePURight = new(">", TankGame.TextFont, Color.LightBlue, 0.5f);
+        MovePURight = new(">", FontGlobals.RebirthFont, Color.LightBlue, 0.5f);
         MovePURight.SetDimensions(WindowUtils.WindowWidth / 2 + 100, 25, 50, 50);
         MovePURight.IsVisible = false;
 
-        Display = new(powerups[mode].Name, TankGame.TextFont, Color.LightBlue, 0.5f);
+        Display = new(powerups[mode].Name, FontGlobals.RebirthFont, Color.LightBlue, 0.5f);
         Display.SetDimensions(WindowUtils.WindowWidth / 2 - 35, 25, 125, 50);
         Display.IsVisible = false;
 
@@ -265,6 +266,17 @@ public static class DebugManager {
             RuntimeData.LogicTimeGraph.Draw(TankGame.SpriteRenderer, new Vector2(500, 400), 2);
         }
 
+        if (InputUtils.AreKeysJustPressed(Keys.Q, Keys.E))
+            Server.SyncSeeds();
+        if (InputUtils.KeyJustPressed(Keys.M))
+            if (PlayerTank.ClientTank is not null)
+                ParticleGameplay.CreateSmokeGrenade(GameHandler.Particles, PlayerTank.ClientTank.Position3D + new Vector3(0, 10, 0), Vector3.Up);
+        if (InputUtils.KeyJustPressed(Keys.G)) {
+            TankGame.VanillaAchievementPopupHandler.SummonOrQueue(Client.ClientRandom.Next(VanillaAchievements.Repository.GetAchievements().Count));
+        }
+        if (InputUtils.KeyJustPressed(Keys.OemPipe)) {
+            new Explosion(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ(), 5f);
+        }
         if (InputUtils.AreKeysJustPressed(Keys.LeftAlt, Keys.RightAlt))
             Lighting.AccurateShadows = !Lighting.AccurateShadows;
         if (InputUtils.AreKeysJustPressed(Keys.LeftShift, Keys.RightShift))
@@ -329,7 +341,7 @@ public static class DebugManager {
             if (InputUtils.KeyJustPressed(Keys.PageUp))
                 SpawnTankPlethorae(true);
             if (InputUtils.KeyJustPressed(Keys.PageDown))
-                SpawnMe(GameHandler.GameRand.Next(PlayerID.Blue, PlayerID.Yellow + 1), tankToSpawnTeam);
+                SpawnMe(Client.ClientRandom.Next(PlayerID.Blue, PlayerID.Yellow + 1), tankToSpawnTeam);
             if (InputUtils.KeyJustPressed(Keys.Home))
                 SpawnTankAt(!CameraGlobals.OverheadView ? MatrixUtils.GetWorldPosition(MouseUtils.MousePosition) : PlacementSquare.CurrentlyHovered.Position, tankToSpawnType, tankToSpawnTeam);
 
@@ -351,12 +363,12 @@ public static class DebugManager {
     }
     public static void DrawDebug(SpriteBatch SpriteRenderer) {
         if (!DebuggingEnabled) return;
-        SpriteRenderer.DrawString(TankGame.TextFont,
+        SpriteRenderer.DrawString(FontGlobals.RebirthFont,
                 "Debug Level: " + DebugManager.CurDebugLabel,
                 WindowUtils.WindowBottom - new Vector2(0, 15),
                 Color.White,
                 new Vector2(0.6f),
-                origin: TankGame.TextFont.MeasureString("Debug Level: " + CurDebugLabel) / 2);
+                origin: FontGlobals.RebirthFont.MeasureString("Debug Level: " + CurDebugLabel) / 2);
         DrawDebugString(SpriteRenderer,
             $"Garbage Collection: {MemoryParser.To(MemoryParser.Size.Bytes, MemoryParser.Size.Megabytes, RuntimeData.GCMemory):0} MB" +
             $"\nPhysical Memory: {RuntimeData.CompSpecs.RAM}" +
@@ -412,7 +424,7 @@ public static class DebugManager {
         }
         DrawDebugString(SpriteRenderer, $"Position: {CameraGlobals.RebirthFreecam.Position}" +
             $"\nRotation: {CameraGlobals.RebirthFreecam.Rotation}" +
-            $"\nFOV: {CameraGlobals.RebirthFreecam.FieldOfView}°" +
+            $"\nFOV: {CameraGlobals.RebirthFreecam.FieldOfView}ï¿½" +
             $"\nForward: {CameraGlobals.GameView.Forward}" +
             $"\nBackward: {CameraGlobals.GameView.Backward}" +
             $"\nLeft: {CameraGlobals.GameView.Left}" +
@@ -434,7 +446,7 @@ public static class DebugManager {
             $"Textures: {TankGame.Instance.Graphics.GraphicsDevice.Metrics.TextureCount}",
             $"Targets: {TankGame.Instance.Graphics.GraphicsDevice.Metrics.TargetCount}"
         };
-        DrawDebugString(TankGame.TextFont, TankGame.SpriteRenderer, string.Join('\n', information), Vector2.Zero, -1);
+        DrawDebugString(FontGlobals.RebirthFont, TankGame.SpriteRenderer, string.Join('\n', information), Vector2.Zero, -1);
     }
     public static void SpawnCrateAtMouse() {
         var pos = MatrixUtils.GetWorldPosition(MouseUtils.MousePosition);
@@ -454,7 +466,7 @@ public static class DebugManager {
         t.TurretRotation = rot;
         t.Team = team;
         t.Dead = false;
-        var pos = new BlockMapPosition(GameHandler.GameRand.Next(0, 27), GameHandler.GameRand.Next(0, 20));
+        var pos = new BlockMapPosition(Client.ClientRandom.Next(0, 27), Client.ClientRandom.Next(0, 20));
         t.Body.Position = pos;
         t.Position = pos;
 
@@ -476,7 +488,7 @@ public static class DebugManager {
     }
     public static void SpawnTankPlethorae(bool useCurTank = false) {
         for (int i = 0; i < 5; i++) {
-            var random = new BlockMapPosition(GameHandler.GameRand.Next(0, 23), GameHandler.GameRand.Next(0, 18));
+            var random = new BlockMapPosition(Client.ClientRandom.Next(0, 23), Client.ClientRandom.Next(0, 18));
             var rot = GeometryUtils.GetPiRandom();
             var t = new AITank(useCurTank ? tankToSpawnType : AITank.PickRandomTier());
             t.TankRotation = rot;
@@ -505,13 +517,13 @@ public static class DebugManager {
         return myTank;
     }
     public static void SpawnTankInCrate(int tierOverride = default, int teamOverride = default, bool createEvenDrop = false) {
-        var random = new BlockMapPosition(GameHandler.GameRand.Next(0, 26), GameHandler.GameRand.Next(0, 20));
+        var random = new BlockMapPosition(Client.ClientRandom.Next(0, 26), Client.ClientRandom.Next(0, 20));
 
-        var drop = Crate.SpawnCrate(new(BlockMapPosition.Convert3D(random).X, 500 + (createEvenDrop ? 0 : GameHandler.GameRand.Next(-300, 301)), BlockMapPosition.Convert3D(random).Z), 2f);
+        var drop = Crate.SpawnCrate(new(BlockMapPosition.Convert3D(random).X, 500 + (createEvenDrop ? 0 : Client.ClientRandom.Next(-300, 301)), BlockMapPosition.Convert3D(random).Z), 2f);
         drop.scale = 1.25f;
         drop.TankToSpawn = new TankTemplate() {
             AiTier = tierOverride == default ? AITank.PickRandomTier() : tierOverride,
-            Team = teamOverride == default ? GameHandler.GameRand.Next(TeamID.NoTeam, TeamID.Collection.Count) : teamOverride
+            Team = teamOverride == default ? Client.ClientRandom.Next(TeamID.NoTeam, TeamID.Collection.Count) : teamOverride
         };
     }
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -67,7 +67,7 @@ public class AchievementRepository
                 achievement.Complete();
 
                 if (popupHelper != null) {
-                    if (TankGame.RunTime > 1f) {
+                    if (RuntimeData.RunTime > 1f) {
                         if (TankGame.VanillaAchievementPopupHandler.Repo._achievements.Contains(achievement)) {
                             TankGame.VanillaAchievementPopupHandler.SummonOrQueue(TankGame.VanillaAchievementPopupHandler.Repo._achievements.FindIndex(x => x == achievement));
                         }

@@ -4,6 +4,7 @@ using System.Linq;
 using LiteNetLib;
 using LiteNetLib.Utils;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
 using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.UI.MainMenu;
@@ -24,6 +25,17 @@ public class Client {
     public int Id;
     public string Name;
     public bool IsOperatedByPlayer;
+
+    private static int _randSeed;
+    public static int ClientRandSeed {
+        get => _randSeed;
+        set {
+            _randSeed = value;
+            ClientRandom = new(value);
+        }
+    }
+    /// <summary>The randomizing behind the game's events. The seed can be modified if you change <see cref="ClientRandSeed"/>.</summary>
+    public static Random ClientRandom { get; internal set; } = new();
     internal Client(int id, string username, bool isOperatedByPlayer = true) {
         Id = id;
         Name = username;

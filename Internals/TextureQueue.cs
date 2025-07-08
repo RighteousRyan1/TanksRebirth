@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
@@ -41,7 +41,7 @@ public class TextureQueue {
          *  It can be called out of sync once the texture is preloaded, although that makes little sense.
          */
 
-        if (!TankGame.IsMainThread)
+        if (!RuntimeData.IsMainThread)
             throw new InvalidOperationException("TextureQueue.GetTextureFromPath() can only be called from the main thread.");
 
         if (!entry.IsLoadedInMemory)

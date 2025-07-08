@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
@@ -56,45 +56,45 @@ public static class SceneManager {
             GameLight.Color = new(50, 50, 50, 50);
             GameLight.Brightness = 0.4f;
             GameLight.Apply(false);
-            TankGame.ClearColor = (Color.DeepSkyBlue.ToVector3() * 0.2f).ToColor();
-            if (GameHandler.GameRand.NextFloat(0, 1) <= 0.3f) {
+            RenderGlobals.BackBufferColor = (Color.DeepSkyBlue.ToVector3() * 0.2f).ToColor();
+            if (Client.ClientRandom.NextFloat(0, 1) <= 0.3f) {
 
                 // TODO: add some sort of snowflake limit because the damn renderer sucks ass.
 
                 float y = 200f;
 
-                float x = GameHandler.GameRand.NextFloat(-450f, 450f);
-                float z = GameHandler.GameRand.NextFloat(-250f, 400f);
+                float x = Client.ClientRandom.NextFloat(-450f, 450f);
+                float z = Client.ClientRandom.NextFloat(-250f, 400f);
 
-                int snowflake = GameHandler.GameRand.Next(0, 2);
+                int snowflake = Client.ClientRandom.Next(0, 2);
 
                 var p = GameHandler.Particles.MakeParticle(new Vector3(x, y, z), GameResources.GetGameResource<Texture2D>($"Assets/christmas/snowflake_{snowflake}"));
 
-                p.Scale = new Vector3(GameHandler.GameRand.NextFloat(0.1f, 0.25f));
+                p.Scale = new Vector3(Client.ClientRandom.NextFloat(0.1f, 0.25f));
 
                 Vector2 wind = new(0.05f, 0f);
 
-                float weight = GameHandler.GameRand.NextFloat(0.05f, 0.15f);
+                float weight = Client.ClientRandom.NextFloat(0.05f, 0.15f);
 
-                float rotFactor = GameHandler.GameRand.NextFloat(0.001f, 0.01f);
+                float rotFactor = Client.ClientRandom.NextFloat(0.001f, 0.01f);
 
                 p.UniqueBehavior = (a) => {
                     if (p.Position.Y <= 0) {
-                        GeometryUtils.Add(ref p.Scale, -0.006f * TankGame.DeltaTime);
+                        GeometryUtils.Add(ref p.Scale, -0.006f * RuntimeData.DeltaTime);
                         if (p.Scale.X <= 0)
                             p.Destroy();
 
                     }
                     else {
-                        p.Position.X += wind.X * TankGame.DeltaTime;
+                        p.Position.X += wind.X * RuntimeData.DeltaTime;
                         p.Position.Y -= weight;
-                        p.Position.Z += wind.Y * TankGame.DeltaTime;
+                        p.Position.Z += wind.Y * RuntimeData.DeltaTime;
 
-                        p.Rotation2D += 0.01f * TankGame.DeltaTime;
+                        p.Rotation2D += 0.01f * RuntimeData.DeltaTime;
 
-                        p.Roll += rotFactor * TankGame.DeltaTime;
+                        p.Roll += rotFactor * RuntimeData.DeltaTime;
 
-                        p.Pitch += (rotFactor / 2) * TankGame.DeltaTime;
+                        p.Pitch += (rotFactor / 2) * RuntimeData.DeltaTime;
                     }
                 };
             }
@@ -104,7 +104,8 @@ public static class SceneManager {
         if (IntermissionSystem.BlackAlpha > 0 || IntermissionSystem.Alpha >= 1f || MainMenuUI.Active || GameUI.Paused) {
             if (Thunder.SoftRain!.IsPlaying()) {
                 Thunder.SoftRain.Instance.Stop();
-                TankGame.ClearColor = Color.Black;
+                // maybe black instead? don't think it matters tho since models are rendered in place of it
+                RenderGlobals.BackBufferColor = Color.Transparent;
 
                 GameLight.Color = new(150, 150, 170);
                 GameLight.Brightness = 0.71f;
@@ -119,9 +120,9 @@ public static class SceneManager {
 
 
         // TODO: should the chance be scaled by tps?
-        if (GameHandler.GameRand.NextFloat(0, 1f) <= 0.003f * TankGame.DeltaTime) {
+        if (Client.ClientRandom.NextFloat(0, 1f) <= 0.003f * RuntimeData.DeltaTime) {
             var rand = new Range<byte>((byte)Thunder.ThunderType.Fast, (byte)Thunder.ThunderType.Instant2);
-            var type = (Thunder.ThunderType)GameHandler.GameRand.Next(rand.Min, rand.Max);
+            var type = (Thunder.ThunderType)Client.ClientRandom.Next(rand.Min, rand.Max);
 
             if (!Thunder.Thunders.Any(x => x is not null && x.Type == type))
                 new Thunder(type);
@@ -146,7 +147,7 @@ public static class SceneManager {
 
 
         if (brightest is not null && brightest.CurBright > minThresh) {
-            TankGame.ClearColor = Color.DeepSkyBlue * brightest.CurBright;
+            RenderGlobals.BackBufferColor = Color.DeepSkyBlue * brightest.CurBright;
             GameLight.Brightness = brightest.CurBright / 2;
             Console.WriteLine("no balls");
         }

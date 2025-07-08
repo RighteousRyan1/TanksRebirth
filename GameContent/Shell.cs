@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Runtime.CompilerServices;
@@ -244,7 +244,7 @@ public class Shell : IAITankDanger
             return;
 
         Rotation = Velocity.ToRotation() - MathHelper.PiOver2;
-        Position += Velocity * 0.62f * TankGame.DeltaTime;
+        Position += Velocity * 0.62f * RuntimeData.DeltaTime;
         World = Matrix.CreateFromYawPitchRoll(-Rotation, 0, 0)
                 * Matrix.CreateTranslation(Position3D);
 
@@ -278,7 +278,7 @@ public class Shell : IAITankDanger
             }
         }
         else
-            _wallRicCooldown -= TankGame.DeltaTime;
+            _wallRicCooldown -= RuntimeData.DeltaTime;
 
         var dummy = Vector2.Zero;
 
@@ -328,7 +328,7 @@ public class Shell : IAITankDanger
             }
         }
 
-        LifeTime += TankGame.DeltaTime;
+        LifeTime += RuntimeData.DeltaTime;
 
         while (LifeTime > Properties.HomeProperties.Cooldown) { // Use loop to reduce nesting smh.
             if (Owner == null)
@@ -397,12 +397,12 @@ public class Shell : IAITankDanger
     }
     private void RenderSmokeParticle(float timer) {
         if (CameraGlobals.IsUsingPOVCamera) timer /= 2;
-        if (!(LifeTime % timer <= TankGame.DeltaTime)) return;
+        if (!(LifeTime % timer <= RuntimeData.DeltaTime)) return;
 
         Particle p;
         if (CameraGlobals.IsUsingPOVCamera) {
             p = GameHandler.Particles.MakeParticle(Position3D + new Vector3(0, 0, 5).FlattenZ()
-                                .Rotate(Rotation + MathHelper.Pi + GameHandler.GameRand.NextFloat(-0.3f, 0.3f))
+                                .Rotate(Rotation + MathHelper.Pi + Client.ClientRandom.NextFloat(-0.3f, 0.3f))
                                 .ExpandZ(),
             ModelResources.Smoke.Asset,
             GameResources.GetGameResource<Texture2D>("Assets/textures/smoke/smoke"));
@@ -411,7 +411,7 @@ public class Shell : IAITankDanger
         else{
             p = GameHandler.Particles.MakeParticle(
                 Position3D + new Vector3(0, 0, 5).FlattenZ()
-                                            .Rotate(Rotation + MathHelper.Pi + GameHandler.GameRand.NextFloat(-0.3f, 0.3f))
+                                            .Rotate(Rotation + MathHelper.Pi + Client.ClientRandom.NextFloat(-0.3f, 0.3f))
                                             .ExpandZ(),
             GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
             p.Scale = new(0.3f);
@@ -429,9 +429,9 @@ public class Shell : IAITankDanger
                 particle.Destroy();
 
             if (particle.Alpha > 0)
-                particle.Alpha -= (Properties.Flaming ? 0.03f : 0.02f) * TankGame.DeltaTime;
+                particle.Alpha -= (Properties.Flaming ? 0.03f : 0.02f) * RuntimeData.DeltaTime;
 
-            GeometryUtils.Add(ref particle.Scale, 0.0075f * TankGame.DeltaTime);
+            GeometryUtils.Add(ref particle.Scale, 0.0075f * RuntimeData.DeltaTime);
         };
     }
     private void RenderLeaveTrail() {
@@ -442,39 +442,39 @@ public class Shell : IAITankDanger
         var p = GameHandler.Particles.MakeParticle(
             Position3D + new Vector3(0, 0, 5).FlattenZ().Rotate(Rotation + MathHelper.Pi).ExpandZ(),
             GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
-        p.Roll = -MathHelper.PiOver2 + (TankGame.RunTime % MathHelper.Tau);
+        p.Roll = -MathHelper.PiOver2 + (RuntimeData.RunTime % MathHelper.Tau);
         p.Color = Properties.TrailColor;
         p.HasAddativeBlending = false;
         p.Scale = new(0.45f, 0.5f, 2f); // x = length, y = height, z = width
                                         // defaults = (x = 0.4, y = 0.25, 0.4)
 
         p.UniqueBehavior = (a) => {
-            var diff = 0.05f * TankGame.DeltaTime;
+            var diff = 0.05f * RuntimeData.DeltaTime;
             p.Roll += diff;
             p.Pitch += diff;
 
-            p.Alpha -= 0.02f * TankGame.DeltaTime;
+            p.Alpha -= 0.02f * RuntimeData.DeltaTime;
 
             if (p.Alpha <= 0f)
                 p.Destroy();
         };
     }
     private void RenderFlamingParticle() {
-        if (!(0 <= TankGame.DeltaTime)) return;
+        if (!(0 <= RuntimeData.DeltaTime)) return;
 
         var p = GameHandler.Particles.MakeParticle(
             Position3D + new Vector3(0, 0, 5).FlattenZ().Rotate(Rotation + MathHelper.Pi).ExpandZ(),
             GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/flame"));
 
         p.Roll = -MathHelper.PiOver2;
-        var scaleRand = GameHandler.GameRand.NextFloat(0.5f, 0.75f);
+        var scaleRand = Client.ClientRandom.NextFloat(0.5f, 0.75f);
         p.Scale = new(scaleRand, 0.165f, 0.4f); // x is outward from bullet
         p.Color = Properties.FlameColor;
         p.HasAddativeBlending = false;
-        // GameHandler.GameRand.NextFloat(-2f, 2f)
+        // Client.ClientRandom.NextFloat(-2f, 2f)
         p.Rotation2D = -MathHelper.PiOver2;
 
-        var rotoff = GameHandler.GameRand.NextFloat(-0.25f, 0.25f);
+        var rotoff = Client.ClientRandom.NextFloat(-0.25f, 0.25f);
         p.Origin2D = new(p.Texture.Size().X / 2, p.Texture.Size().Y);
 
         var initialScale = p.Scale;
@@ -490,10 +490,10 @@ public class Shell : IAITankDanger
             par.Roll = -Rotation - MathHelper.PiOver2 + rotoff;
 
             //if (TankGame.GameUpdateTime % 2 == 0)
-            //p.Roll = GameHandler.GameRand.NextFloat(0, MathHelper.TwoPi);
+            //p.Roll = Client.ClientRandom.NextFloat(0, MathHelper.TwoPi);
 
 
-            par.Scale.X -= scalingConstant * TankGame.DeltaTime;
+            par.Scale.X -= scalingConstant * RuntimeData.DeltaTime;
 
             if (par.Scale.X <= 0)
                 par.Destroy();
@@ -530,14 +530,14 @@ public class Shell : IAITankDanger
 
         if (Owner is not null) {
             if (Owner.Properties.ShellType == ShellID.TrailedRocket) {
-                sound.Instance.Pitch = GameHandler.GameRand.NextFloat(0.15f, 0.25f);
+                sound.Instance.Pitch = Client.ClientRandom.NextFloat(0.15f, 0.25f);
                 var rocketRSound = SoundPlayer.PlaySoundInstance("Assets/sounds/ricochet_zip.ogg", SoundContext.Effect,
                     0.05f,
                     gameplaySound: true);
                 rocketRSound.Instance.Pitch = -0.65f;
             }
             else {
-                sound.Instance.Pitch = GameHandler.GameRand.NextFloat(-0.05f, 0.05f);
+                sound.Instance.Pitch = Client.ClientRandom.NextFloat(-0.05f, 0.05f);
             }
         }
 
@@ -628,7 +628,7 @@ public class Shell : IAITankDanger
             if (playSound) {
                 var sfx = SoundPlayer.PlaySoundInstance("Assets/sounds/bullet_destroy.ogg", SoundContext.Effect, 0.5f,
                     gameplaySound: true);
-                sfx.Instance.Pitch = GameHandler.GameRand.NextFloat(-0.1f, 0.1f);
+                sfx.Instance.Pitch = Client.ClientRandom.NextFloat(-0.1f, 0.1f);
             }
 
             GameHandler.Particles.MakeSmallExplosion(Position3D, 8, 10, 1.25f, 15);

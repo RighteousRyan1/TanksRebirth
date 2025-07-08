@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 using tainicom.Aether.Physics2D.Fluids;
 using TanksRebirth.Internals;
@@ -39,8 +39,8 @@ public static class ParticleGameplay {
             velocity.Y -= gravity;
 
             if (hits > 0) {
-                p.Roll += 0.07f * velocity.Length() * TankGame.DeltaTime;
-                p.Pitch += 0.07f * velocity.Length() * TankGame.DeltaTime;
+                p.Roll += 0.07f * velocity.Length() * RuntimeData.DeltaTime;
+                p.Pitch += 0.07f * velocity.Length() * RuntimeData.DeltaTime;
             }
 
             // bounce off walls
@@ -92,7 +92,7 @@ public static class ParticleGameplay {
                 }
             }
 
-            if (startTimer) timer += TankGame.DeltaTime;
+            if (startTimer) timer += RuntimeData.DeltaTime;
 
             if (timer > 60 && !exploded) {
                 exploded = true;
@@ -107,12 +107,12 @@ public static class ParticleGameplay {
                     c.Scale.X = randSize;
                     c.Scale.Z = randSize;
                     c.UniqueBehavior = (b) => {
-                        c.Pitch += 0.005f * TankGame.DeltaTime;
+                        c.Pitch += 0.005f * RuntimeData.DeltaTime;
                         if (c.Scale.Y < randSize && c.LifeTime < 600)
-                            c.Scale.Y += 0.1f * TankGame.DeltaTime;
+                            c.Scale.Y += 0.1f * RuntimeData.DeltaTime;
                         if (c.LifeTime >= 600) {
-                            c.Scale.Y -= 0.06f * TankGame.DeltaTime;
-                            c.Alpha -= 0.06f / randSize * TankGame.DeltaTime;
+                            c.Scale.Y -= 0.06f * RuntimeData.DeltaTime;
+                            c.Alpha -= 0.06f / randSize * RuntimeData.DeltaTime;
 
                             if (c.Scale.Y <= 0) {
                                 c.Destroy();

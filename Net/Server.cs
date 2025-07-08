@@ -36,8 +36,7 @@ public class Server
             ServerRandom = new(value);
         }
     }
-    /// <summary>Can be used to do randomization on the client in single-player, but once the server is started, should only be used for random events
-    /// that should happen on both clients at the same time.</summary>
+    /// <summary>Should only be used for events in a multiplayer context in order for events to happen the same way on all clients.</summary>
     public static Random ServerRandom { get; private set; } = new();
 
     public static Client[] ConnectedClients;

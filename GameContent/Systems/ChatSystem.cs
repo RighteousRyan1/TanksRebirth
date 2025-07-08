@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -388,7 +388,7 @@ public struct ChatMessage
     public Color Color;
 
     /// <summary>The <see cref="SpriteFont"/> in which to use to render the content of this <see cref="ChatMessage"/>.</summary>
-    public static SpriteFontBase Font = TankGame.TextFont;
+    public static SpriteFontBase Font = FontGlobals.RebirthFont;
 
     /// <summary>
     /// Creates a new <see cref="ChatMessage"/>.

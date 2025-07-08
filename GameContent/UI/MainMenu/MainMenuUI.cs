@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using TanksRebirth.Internals.Common;
 using System;
 using TanksRebirth.Internals.UI;
@@ -90,7 +90,7 @@ public static partial class MainMenuUI
         }
         _initialized = true;
 
-        var font = TankGame.TextFont;
+        var font = FontGlobals.RebirthFont;
         InitializeMain(font);
         InitializeMP(font);
 
@@ -125,7 +125,7 @@ public static partial class MainMenuUI
         // it would give reason to have the camera move over for the player.
 
         if (!Active) return;
-        //RebirthLogo.Rotation = new(MathF.Sin(TankGame.RunTime / 100) * MathHelper.PiOver4, 0, 0);
+        //RebirthLogo.Rotation = new(MathF.Sin(RuntimeData.RunTime / 100) * MathHelper.PiOver4, 0, 0);
         RebirthLogo.Scale = 0.8f.ToResolutionF();
         RebirthLogo.View = CameraGlobals.ScreenView;
         RebirthLogo.Projection = CameraGlobals.ScreenProjOrthographic;
@@ -217,6 +217,10 @@ public static partial class MainMenuUI
         UpdateGameplay();
         UpdateMusic();
         UpdateMP();
+
+        if (!Active) {
+            UpdateCampaignButton.IsVisible = false;
+        }
     }
     public static void Open() {
         OpenUI();
@@ -230,6 +234,7 @@ public static partial class MainMenuUI
     public static void Render() {
         if (!_initialized || !_diffButtonsInitialized)
             return;
+
         if (Active) {
             RenderGeneralUI();
             if (MenuState == UIState.StatsMenu)
@@ -244,6 +249,8 @@ public static partial class MainMenuUI
             else if (MenuState == UIState.Cosmetics)
                 RenderCosmeticsUI();
         }
+
+        // why does this need to be here?????????? doesn't work in Update()
         _oldwheel = InputUtils.DeltaScrollWheel;
     }
 }

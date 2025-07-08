@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Input;
 using System.Diagnostics;
 using System.IO;
 using System;
@@ -22,7 +22,7 @@ namespace TanksRebirth.GameContent.UI.MainMenu;
 public static partial class MainMenuUI {
     static bool _playerHasVanillaCampaign;
 
-    public static UITextButton UpdateCampaignButton = new("Validate", TankGame.TextFont, Color.Black);
+    public static UITextButton UpdateCampaignButton = new("Validate", FontGlobals.RebirthFont, Color.Black);
     public static void DrawCampaignsUI() {
         DrawCampaignMenuExtras();
     }
@@ -36,7 +36,7 @@ public static partial class MainMenuUI {
         UpdateCampaignButton.Tooltip = "Ensures your Vanilla campaign is up-to-date.";
         UpdateCampaignButton.SetDimensions(WindowUtils.WindowWidth / 2 - width / 2, 10, width, height);
         UpdateCampaignButton.Color = Color.White;
-        UpdateCampaignButton.Font = TankGame.TextFont;
+        UpdateCampaignButton.Font = FontGlobals.RebirthFont;
         UpdateCampaignButton.OnLeftClick = (a) => {
             DownloadVanillaCampaign(true);
             ChatSystem.SendMessage("Validation complete!", Color.Lime);
@@ -66,7 +66,7 @@ public static partial class MainMenuUI {
                 numTanks += mission.Tanks.Count(x => !x.IsPlayer);
             }
 
-            var elem = new UITextButton(Path.GetFileNameWithoutExtension(name), TankGame.TextFont, Color.White, 0.8f) {
+            var elem = new UITextButton(Path.GetFileNameWithoutExtension(name), FontGlobals.RebirthFont, Color.White, 0.8f) {
                 IsVisible = true,
                 Tooltip = missions.Length + " missions" +
                 $"\n{numTanks} tanks total" +
@@ -104,7 +104,7 @@ public static partial class MainMenuUI {
             elem.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick.ogg", SoundContext.Effect); };
             campaignNames.Add(elem);
         }
-        var extra = new UITextButton("Freeplay", TankGame.TextFont, Color.White, 0.8f) {
+        var extra = new UITextButton("Freeplay", FontGlobals.RebirthFont, Color.White, 0.8f) {
             IsVisible = true,
             Tooltip = "Play without a campaign!",
         };
@@ -124,7 +124,7 @@ public static partial class MainMenuUI {
     }
     public static void BotherUserForNotHavingVanillaCampaign() {
         if (Client.IsConnected() && Client.IsHost())
-            TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"The people who are connected to you MUST own this\ncampaign, and it MUST have the same file name.\nOtherwise, the campaign will not load.", new(12, WindowUtils.WindowHeight / 2), Color.White, new Vector2(0.75f).ToResolution(), 0f, Vector2.Zero);
+            TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, $"The people who are connected to you MUST own this\ncampaign, and it MUST have the same file name.\nOtherwise, the campaign will not load.", new(12, WindowUtils.WindowHeight / 2), Color.White, new Vector2(0.75f).ToResolution(), 0f, Vector2.Zero);
     }
     // dlBytes is only non-null values when campaignExists is true
     public static bool IsVanillaCampaignUpToDate(out bool campaignExists, out byte[]? dlBytes, out string? dlName) {
@@ -156,11 +156,11 @@ public static partial class MainMenuUI {
         if (MissionCheckpoint < 0)
             MissionCheckpoint = 0;
 
-        DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, TankGame.TextFont, $"You can scroll with your mouse to skip to a certain mission." +
+        DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, $"You can scroll with your mouse to skip to a certain mission." +
             $"\nCurrently, you will skip to mission {MissionCheckpoint + 1}." +
             $"\nYou will be alerted if that mission does not exist.", new Vector2(12, 200).ToResolution(),
             Color.White, Color.Black, new Vector2(0.75f).ToResolution(), 0f, Anchor.TopLeft);
-        //TankGame.SpriteRenderer.DrawString(TankGame.TextFont, $"You can scroll with your mouse to skip to a certain mission." +
+        //TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, $"You can scroll with your mouse to skip to a certain mission." +
         //$"\nCurrently, you will skip to mission {MissionCheckpoint + 1}." +
         //$"\nYou will be alerted if that mission does not exist.", new Vector2(12, 200).ToResolution(), Color.White, new Vector2(0.75f).ToResolution(), 0f, Vector2.Zero);
 
@@ -168,6 +168,6 @@ public static partial class MainMenuUI {
         var defPos = new Vector2(60, 380);
         TankGame.SpriteRenderer.Draw(tex, defPos.ToResolution(), null, Color.White, 0f, new Vector2(tex.Size().X, tex.Size().Y / 2), new Vector2(0.1f).ToResolution(), default, default);
         var text = $"Top {Speedrun.LoadedSpeedruns.Length} speedruns:\n" + string.Join(Environment.NewLine, Speedrun.LoadedSpeedruns);
-        DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, TankGame.TextFont, text, defPos.ToResolution(), Color.White, Color.Black, new Vector2(0.75f).ToResolution(), 0f, Anchor.LeftCenter);
+        DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, text, defPos.ToResolution(), Color.White, Color.Black, new Vector2(0.75f).ToResolution(), 0f, Anchor.LeftCenter);
     }
 }

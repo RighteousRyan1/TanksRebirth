@@ -1,4 +1,4 @@
-﻿using FontStashSharp;
+using FontStashSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using TanksRebirth.GameContent.Globals;
@@ -107,7 +107,7 @@ namespace TanksRebirth.Internals.Common.GameUI
             }
 
             DrawUtils.DrawNineSliced(spriteBatch, UIPanelBackground, 12, Hitbox, MouseHovering ? Color.CornflowerBlue : Color, Vector2.Zero);
-            SpriteFontBase font = TankGame.TextFont;
+            SpriteFontBase font = FontGlobals.RebirthFont;
             Vector2 drawOrigin = font.MeasureString(Text) / 2f;
             spriteBatch.DrawString(font, Text, Hitbox.Center.ToVector2(), Color.Black, new Vector2(Scale), 0, drawOrigin);
 

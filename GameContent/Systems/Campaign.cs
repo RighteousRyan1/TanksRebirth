@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -432,7 +432,7 @@ public class Campaign
         if (missionRange.Max >= CachedMissions.Length)
             missionRange.Max = CachedMissions.Length - 1;
 
-        int num = GameHandler.GameRand.Next(missionRange.Min, missionRange.Max);
+        int num = Client.ClientRandom.Next(missionRange.Min, missionRange.Max);
 
         var mission = CachedMissions[num];
 

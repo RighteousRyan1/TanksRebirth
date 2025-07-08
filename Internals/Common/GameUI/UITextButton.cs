@@ -1,7 +1,8 @@
-﻿using FontStashSharp;
+using FontStashSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using TanksRebirth.GameContent.Globals;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Internals.UI;
 
@@ -41,7 +42,7 @@ public class UITextButton : UIImage
     public override void DrawSelf(SpriteBatch spriteBatch)
     {
         DrawUtils.DrawNineSliced(spriteBatch, UIPanelBackground, 12, Hitbox, MouseHovering ? HoverColor : Color, GameUtils.GetAnchor(Anchor, UIPanelBackground.Size()));
-        SpriteFontBase font = TankGame.TextFont;
+        SpriteFontBase font = FontGlobals.RebirthFont;
         Vector2 drawOrigin = font.MeasureString(Text) / 2f;
         if (TextScale != null && DrawText)
             spriteBatch.DrawString(font, Text, Hitbox.Center.ToVector2(), Color.Black, AutoResolutionHandle ? TextScale.Invoke().ToResolution() : TextScale.Invoke(), TextRotation, drawOrigin);

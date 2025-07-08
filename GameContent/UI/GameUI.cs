@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using TanksRebirth.Internals.Common.GameUI;
 using TanksRebirth.Internals.Common.Utilities;
@@ -68,7 +68,7 @@ public static class GameUI
         }
         _initialized = true;
         var ttColor = Color.LightGray;
-        var font = TankGame.TextFont;
+        var font = FontGlobals.RebirthFont;
 
         ResumeButton = new(TankGame.GameLanguage.Resume, font, Color.WhiteSmoke)
         {

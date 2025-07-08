@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,12 +24,12 @@ public static class MouseUtils
     public static Vector2 MouseVelocity { get; internal set; }
     public static Vector2 GetMouseVelocity(Vector2 fromOffset = default)
     {
-        if (TankGame.UpdateCount == _lastUsedUpdate)
+        if (RuntimeData.UpdateCount == _lastUsedUpdate)
             return _velCache;
         var pos = fromOffset == default ? MousePosition : fromOffset;
         var diff = pos - _oldMousePos;
 
-        _lastUsedUpdate = TankGame.UpdateCount;
+        _lastUsedUpdate = RuntimeData.UpdateCount;
         _velCache = diff;
         return diff;
     }

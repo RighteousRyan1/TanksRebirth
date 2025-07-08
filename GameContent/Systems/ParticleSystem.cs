@@ -5,6 +5,7 @@ using tainicom.Aether.Physics2D.Fluids;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent;
 
@@ -102,11 +103,11 @@ public class ParticleSystem
             b.TextureCrop = new Rectangle(0, frame * frameHeight, t.Width, frameHeight);
 
             if (frame < 50) {
-                if (b.LifeTime % 0.8f <= TankGame.DeltaTime)
+                if (b.LifeTime % 0.8f <= RuntimeData.DeltaTime)
                     frame++;
             } 
             else {
-                if (b.LifeTime % (0.8f * lingerMultiplier) <= TankGame.DeltaTime)
+                if (b.LifeTime % (0.8f * lingerMultiplier) <= RuntimeData.DeltaTime)
                     frame++;
             }
 
@@ -127,7 +128,7 @@ public class ParticleSystem
 
             var spark = MakeParticle(position, texture);
 
-            var vel = new Vector3(GameHandler.GameRand.NextFloat(-0.25f, 0.25f), GameHandler.GameRand.NextFloat(0, 0.75f), GameHandler.GameRand.NextFloat(-0.25f, 0.25f)) * 2;
+            var vel = new Vector3(Client.ClientRandom.NextFloat(-0.25f, 0.25f), Client.ClientRandom.NextFloat(0, 0.75f), Client.ClientRandom.NextFloat(-0.25f, 0.25f)) * 2;
 
             spark.Roll = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
@@ -137,13 +138,13 @@ public class ParticleSystem
             spark.Pitch = angles.Pitch;
             spark.Yaw = angles.Yaw;
             spark.Alpha = 1f;
-            spark.Scale = new(GameHandler.GameRand.NextFloat(0.4f, 0.6f));
+            spark.Scale = new(Client.ClientRandom.NextFloat(0.4f, 0.6f));
 
             spark.Color = Color.Yellow;
 
             spark.UniqueBehavior = (part) => {
-                part.Position += vel * TankGame.DeltaTime;
-                part.Alpha -= 0.025f * TankGame.DeltaTime;
+                part.Position += vel * RuntimeData.DeltaTime;
+                part.Alpha -= 0.025f * RuntimeData.DeltaTime;
 
                 if (part.Alpha <= 0f)
                     part.Destroy();
@@ -164,22 +165,22 @@ public class ParticleSystem
 
             var velocity = Vector2.UnitY.Rotate(MathHelper.ToRadians(360f / numClouds * i)).ExpandZ() / 2;
 
-            smoke.Position.Y += 5f + GameHandler.GameRand.NextFloat(0f, 8f);
+            smoke.Position.Y += 5f + Client.ClientRandom.NextFloat(0f, 8f);
 
             smoke.Color = Color.DarkOrange;
 
             smoke.UniqueBehavior = (p) => {
                 smoke.Position += velocity;
-                GeometryUtils.Add(ref smoke.Scale, -0.01f * TankGame.DeltaTime);
+                GeometryUtils.Add(ref smoke.Scale, -0.01f * RuntimeData.DeltaTime);
 
                 if (smoke.Scale.X <= 0f)
                     smoke.Destroy();
 
                 if (smoke.LifeTime > timeMovingSideways) {
-                    smoke.Alpha -= 0.02f * TankGame.DeltaTime;
-                    smoke.Position.Y += GameHandler.GameRand.NextFloat(0.1f, 0.25f) * TankGame.DeltaTime;
-                    velocity.X *= 0.9f * TankGame.DeltaTime;
-                    velocity.Z *= 0.9f * TankGame.DeltaTime;
+                    smoke.Alpha -= 0.02f * RuntimeData.DeltaTime;
+                    smoke.Position.Y += Client.ClientRandom.NextFloat(0.1f, 0.25f) * RuntimeData.DeltaTime;
+                    velocity.X *= 0.9f * RuntimeData.DeltaTime;
+                    velocity.Z *= 0.9f * RuntimeData.DeltaTime;
                 }
             };
         }
@@ -189,9 +190,9 @@ public class ParticleSystem
         p.Scale = new(scale);
         p.Color = color;
         p.UniqueBehavior = (part) => {
-            GeometryUtils.Add(ref p.Scale, -0.0175f * TankGame.DeltaTime);
+            GeometryUtils.Add(ref p.Scale, -0.0175f * RuntimeData.DeltaTime);
 
-            p.Alpha -= 0.025f * TankGame.DeltaTime;
+            p.Alpha -= 0.025f * RuntimeData.DeltaTime;
 
             if (p.Alpha <= 0f || p.Scale.X <= 0f)
                 p.Destroy();

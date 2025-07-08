@@ -1,6 +1,7 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using System;
 using System.Threading.Tasks;
+using TanksRebirth.GameContent.Globals;
 using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.GameContent.Systems;
@@ -31,7 +32,7 @@ public class Popup
     }
 
     public void Start() {
-        var measure = TankGame.TextFont.MeasureString(Text);
+        var measure = FontGlobals.RebirthFont.MeasureString(Text);
 
         _curPos = Anchor switch {
             PopupAnchor.Top => new(WindowUtils.WindowWidth / 2, -measure.Y * 1.2f),

@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,12 +30,12 @@ public static class CosmeticsUI {
         CosmeticsChest.View = CameraGlobals.GameView;
         CosmeticsChest.Projection = CameraGlobals.GameProjection;
 
-        GameShaders.BlurFactor += (!IsActive ? 0.000075f : -0.000075f) * TankGame.DeltaTime;
+        GameShaders.BlurFactor += (!IsActive ? 0.000075f : -0.000075f) * RuntimeData.DeltaTime;
         GameShaders.BlurFactor = MathHelper.Clamp(GameShaders.BlurFactor, 0f, 0.0075f);
 
-        _interp += (_switch ? 0.015f : -0.015f) * TankGame.DeltaTime;
+        _interp += (_switch ? 0.015f : -0.015f) * RuntimeData.DeltaTime;
 
-        if (TankGame.RunTime % 120 <= TankGame.DeltaTime) _switch = !_switch;
+        if (RuntimeData.RunTime % 120 <= RuntimeData.DeltaTime) _switch = !_switch;
         if (_interp > 1) _interp = 1;
         if (_interp < 0) _interp = 0;
 

@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using System;
 using System.Linq;
 using TanksRebirth.Enums;
@@ -217,16 +217,16 @@ public static class IntermissionHandler {
             }
         }
         if (IntermissionSystem.CurrentWaitTime > 0)
-            IntermissionSystem.Tick(TankGame.DeltaTime);
+            IntermissionSystem.Tick(RuntimeData.DeltaTime);
 
         if (IntermissionSystem.CurrentWaitTime > 240 && IntermissionSystem.CurrentWaitTime < 450) {
             // this hardcode makes me want to commit neck rope
             // boolean is changed within the scope of the check so we check again. weird.
-            IntermissionSystem.TickAlpha(1f / 60f * TankGame.DeltaTime);
+            IntermissionSystem.TickAlpha(1f / 60f * RuntimeData.DeltaTime);
             // ^ when the mission info popup starts to appear
         }
         else
-            IntermissionSystem.TickAlpha(-1f / 45f * TankGame.DeltaTime);
+            IntermissionSystem.TickAlpha(-1f / 45f * RuntimeData.DeltaTime);
     }
     /// <summary>This marks the beginning of the player seeing all of the tanks on the map, before the round begins.</summary>
     public static void BeginIntroSequence() {
@@ -249,7 +249,7 @@ public static class IntermissionHandler {
 
     public static void Update() {
         if (TankFunctionWait > 0)
-            TankFunctionWait -= TankGame.DeltaTime;
+            TankFunctionWait -= RuntimeData.DeltaTime;
         if (TankFunctionWait <= 0 && _oldWait > 0 && !MainMenuUI.Active) {
             // FIXME: maybe causes issues since the mission is 1 tick from starting?
             // TODO: move this to the animator?
@@ -306,7 +306,7 @@ public static class IntermissionHandler {
 
     public static void RenderCountdownGraphics() {
         if (!MainMenuUI.Active && !CameraGlobals.OverheadView && !LevelEditorUI.Active/* && TankFunctionWait > 0*/) {
-            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, TankGame.TextFontLarge, PrepareDisplay, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 3), 
+            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, PrepareDisplay, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 3), 
                 IntermissionSystem.BackgroundColor, IntermissionSystem.StripColor, CountdownAnimator.CurrentScale.ToResolution(), 0f, Anchor.Center, 3);
         }
     }
