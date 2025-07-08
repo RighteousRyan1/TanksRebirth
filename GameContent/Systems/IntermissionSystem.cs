@@ -64,22 +64,27 @@ public static class IntermissionSystem {
             .WithFrame(new(duration: TimeSpan.FromSeconds(0.5), easing: EasingFunction.Linear))
             .WithFrame(new(duration: TimeSpan.FromSeconds(3.66), easing: EasingFunction.Linear))
             .WithFrame(new(duration: TimeSpan.FromSeconds(0), easing: EasingFunction.Linear));
+
         IntermissionAnimator.OnKeyFrameFinish += DoMidAnimationActions;
     }
 
-    public static void InitializeCountdowns() {
+    public static void InitializeCountdowns(bool oneUp = false) {
         // 10 seconds to complete the entire thing
         // at 3 seconds in, the opening fanfare plays (but for some reason i gotta use 4 in this.)
         // at 220 frames left (3.66 seconds), the snare drums begin, and the scene is visible
         // at halfway through, the next mission is set-up
         float secs1 = 3;
-        float secs2 = 3f;
+
+        // + 4 since DEF_PLUSLIFE_TIME is 240 ticks (4 seconds)
+        float secs2 = oneUp ? 3f : 7f;
         if (TimeBlack > 0) {
             secs1 = 4;
             secs2 = 3;
         }
         IntermissionAnimator.KeyFrames[0] = new(duration: TimeSpan.FromSeconds(secs1), easing: EasingFunction.Linear);
         IntermissionAnimator.KeyFrames[2] = new(duration: TimeSpan.FromSeconds(secs2), easing: EasingFunction.Linear);
+
+
         // the last frame is filler because i dunno how to fix the last frame finish event firing bug
         // ignore the last frame
         // TODO: fix this fuckery above

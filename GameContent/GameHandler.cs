@@ -24,10 +24,8 @@ using TanksRebirth.Graphics.Metrics;
 
 namespace TanksRebirth.GameContent;
 
-public class GameHandler {
 #pragma warning disable CS8618
-
-    #region Non-test
+public class GameHandler {
 
     public const int MAX_AI_TANKS = 50;
     public const int MAX_PLAYERS = 4;
@@ -182,6 +180,7 @@ public class GameHandler {
 
         if (!MainMenuUI.Active && !LevelEditorUI.Editing)
             ExperienceBar?.Render(TankGame.SpriteRenderer, new(WindowUtils.WindowWidth / 2, 50.ToResolutionY()), new Vector2(100, 20).ToResolution(), Anchor.Center, Color.Red, Color.Lime);
+        
         // CHECK: move this back if necessary
         GameScene.RenderWorldModels();
 
@@ -220,38 +219,6 @@ public class GameHandler {
         if ((DebugManager.DebugLevel == DebugManager.Id.LevelEditDebug && CameraGlobals.OverheadView) || LevelEditorUI.Active)
             foreach (var sq in PlacementSquare.Placements)
                 sq?.Render();
-        if (DebugManager.DebuggingEnabled) {
-
-            var posOffset = new Vector2(0, 80);
-
-            DebugManager.DrawDebugString(TankGame.SpriteRenderer, "Spawn Tank With Info:", WindowUtils.WindowTop + posOffset, 3, centered: true);
-            DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"Tier: {TankID.Collection.GetKey(DebugManager.tankToSpawnType)}", WindowUtils.WindowTop + posOffset + new Vector2(0, 16), 3, centered: true);
-            DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"Team: {TeamID.Collection.GetKey(DebugManager.tankToSpawnTeam)}", WindowUtils.WindowTop + posOffset + new Vector2(0, 32), 3, centered: true);
-            DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"BlockStack: {DebugManager.blockHeight} | BlockType: {BlockID.Collection.GetKey(DebugManager.blockType)}", WindowUtils.WindowBottom - new Vector2(0, 20), 3, centered: true);
-
-            DebugManager.tankToSpawnType = MathHelper.Clamp(DebugManager.tankToSpawnType, 2, TankID.Collection.Count - 1);
-            DebugManager.tankToSpawnTeam = MathHelper.Clamp(DebugManager.tankToSpawnTeam, 0, TeamID.Collection.Count - 1);
-
-
-            if (DebugManager.DebuggingEnabled) {
-                DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"Logic Time: {RuntimeData.LogicTime.TotalMilliseconds:0.00}ms" +
-                                                           $"\nLogic FPS: {RuntimeData.LogicFPS}" +
-                                                           $"\n\nRender Time: {RuntimeData.RenderTime.TotalMilliseconds:0.00}ms" +
-                                                           $"\nRender FPS: {RuntimeData.RenderFPS}" +
-                                                           $"\nKeys Q + W: Localhost Connect for Multiplayer Debug" +
-                                                           $"\nKeys U + I: Unload All Mods" +
-                                                           $"\nKeys O + P: Reload All Mods" +
-                                                           $"\nKeys Q + E: Resynchronize Randoms", new Vector2(10, 500));
-
-                DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"Current Mission: {CampaignGlobals.LoadedCampaign.CurrentMission.Name}\nCurrent Campaign: {CampaignGlobals.LoadedCampaign.MetaData.Name}", WindowUtils.WindowBottomLeft - new Vector2(-4, 60), 3, centered: false);
-            }
-
-            DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"HighestTier: {AIManager.GetHighestTierActive()}", new(10, WindowUtils.WindowHeight * 0.26f), 1);
-            // DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"CurSong: {(Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f) != null ? Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f).Name : "N/A")}", new(10, WindowUtils.WindowHeight - 100), 1);
-
-            for (int i = 0; i < TankID.Collection.Count; i++)
-                DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"{TankID.Collection.GetKey(i)}: {AIManager.GetTankCountOfType(i)}", new(10, WindowUtils.WindowHeight * 0.3f + (i * 20)), 1);
-        }
 
         TankGame.Instance.GraphicsDevice.BlendState = BlendState.NonPremultiplied;
 
@@ -282,8 +249,6 @@ public class GameHandler {
         OnPostRender?.Invoke();
     }
 
-    #endregion
-
     public static void RenderUI() {
         foreach (var element in UIElement.AllUIElements) {
             // element.Position = Vector2.Transform(element.Position, UIMatrix * Matrix.CreateTranslation(element.Position.X, element.Position.Y, 0));
@@ -300,6 +265,7 @@ public class GameHandler {
         }
         foreach (var element in UIElement.AllUIElements)
             element?.DrawTooltips(TankGame.SpriteRenderer);
+
         CameraGlobals.SetMatrices();
     }
     public static void SetupGraphics() {

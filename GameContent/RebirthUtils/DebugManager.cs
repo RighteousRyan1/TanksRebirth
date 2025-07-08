@@ -363,8 +363,36 @@ public static class DebugManager {
     }
     public static void DrawDebug(SpriteBatch SpriteRenderer) {
         if (!DebuggingEnabled) return;
+
+        var posOffset = new Vector2(0, 80);
+
+        DrawDebugString(TankGame.SpriteRenderer, "Spawn Tank With Info:", WindowUtils.WindowTop + posOffset, 3, centered: true);
+        DrawDebugString(TankGame.SpriteRenderer, $"Tier: {TankID.Collection.GetKey(tankToSpawnType)}", WindowUtils.WindowTop + posOffset + new Vector2(0, 16), 3, centered: true);
+        DrawDebugString(TankGame.SpriteRenderer, $"Team: {TeamID.Collection.GetKey(tankToSpawnTeam)}", WindowUtils.WindowTop + posOffset + new Vector2(0, 32), 3, centered: true);
+        DrawDebugString(TankGame.SpriteRenderer, $"BlockStack: {blockHeight} | BlockType: {BlockID.Collection.GetKey(blockType)}", WindowUtils.WindowBottom - new Vector2(0, 20), 3, centered: true);
+
+        tankToSpawnType = MathHelper.Clamp(tankToSpawnType, 2, TankID.Collection.Count - 1);
+        tankToSpawnTeam = MathHelper.Clamp(tankToSpawnTeam, 0, TeamID.Collection.Count - 1);
+
+        DrawDebugString(TankGame.SpriteRenderer, $"Logic Time: {RuntimeData.LogicTime.TotalMilliseconds:0.00}ms" +
+                                                   $"\nLogic FPS: {RuntimeData.LogicFPS}" +
+                                                   $"\n\nRender Time: {RuntimeData.RenderTime.TotalMilliseconds:0.00}ms" +
+                                                   $"\nRender FPS: {RuntimeData.RenderFPS}" +
+                                                   $"\nKeys Q + W: Localhost Connect for Multiplayer Debug" +
+                                                   $"\nKeys U + I: Unload All Mods" +
+                                                   $"\nKeys O + P: Reload All Mods" +
+                                                   $"\nKeys Q + E: Resynchronize Randoms", new Vector2(10, 500));
+
+        DrawDebugString(TankGame.SpriteRenderer, $"Current Mission: {CampaignGlobals.LoadedCampaign.CurrentMission.Name}\nCurrent Campaign: {CampaignGlobals.LoadedCampaign.MetaData.Name}", WindowUtils.WindowBottomLeft - new Vector2(-4, 60), 3, centered: false);
+
+        DrawDebugString(TankGame.SpriteRenderer, $"HighestTier: {AIManager.GetHighestTierActive()}", new(10, WindowUtils.WindowHeight * 0.26f), 1);
+        // DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"CurSong: {(Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f) != null ? Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f).Name : "N/A")}", new(10, WindowUtils.WindowHeight - 100), 1);
+
+        for (int i = 0; i < TankID.Collection.Count; i++)
+            DrawDebugString(TankGame.SpriteRenderer, $"{TankID.Collection.GetKey(i)}: {AIManager.GetTankCountOfType(i)}", new(10, WindowUtils.WindowHeight * 0.3f + (i * 20)), 1);
+
         SpriteRenderer.DrawString(FontGlobals.RebirthFont,
-                "Debug Level: " + DebugManager.CurDebugLabel,
+                "Debug Level: " + CurDebugLabel,
                 WindowUtils.WindowBottom - new Vector2(0, 15),
                 Color.White,
                 new Vector2(0.6f),

@@ -16,6 +16,8 @@ using TanksRebirth.GameContent.UI.LevelEditor;
 
 namespace TanksRebirth.GameContent.Systems;
 public static class IntermissionHandler {
+    public const int DEF_INTERMISSION_TIME = 600;
+    public const int DEF_PLUSLIFE_TIME = 240;
     public static Animator ThirdPersonTransitionAnimation;
 
     public static Animator[] PopupAnimators;
@@ -176,22 +178,25 @@ public static class IntermissionHandler {
         if (nothingAnymore) {
             CampaignGlobals.InMission = false;
             if (!CampaignGlobals.InMission && _wasInMission) {
-                IntermissionSystem.InitializeCountdowns();
                 bool isExtraLifeMission = CampaignGlobals.LoadedCampaign.MetaData.ExtraLivesMissions.Contains(CampaignGlobals.LoadedCampaign.CurrentMissionId + 1);
                 int restartTime;
                 MissionEndContext endContext;
+
+                IntermissionSystem.InitializeCountdowns(isExtraLifeMission);
                 if (victory) {
-                    restartTime = 600;
-                    //if (isExtraLifeMission)
-                    //restartTime += 200;
+                    restartTime = DEF_INTERMISSION_TIME;
+
+                    if (isExtraLifeMission)
+                        restartTime += DEF_PLUSLIFE_TIME;
 
                     endContext = MissionEndContext.Win;
 
                     if (CampaignGlobals.LoadedCampaign.CurrentMissionId >= CampaignGlobals.LoadedCampaign.CachedMissions.Length - 1)
-                        endContext = CampaignGlobals.LoadedCampaign.MetaData.HasMajorVictory ? MissionEndContext.CampaignCompleteMajor : MissionEndContext.CampaignCompleteMinor;
+                        endContext = CampaignGlobals.LoadedCampaign.MetaData.HasMajorVictory ? 
+                            MissionEndContext.CampaignCompleteMajor : MissionEndContext.CampaignCompleteMinor;
                 }
                 else {
-                    restartTime = 600;
+                    restartTime = DEF_INTERMISSION_TIME;
 
                     // TODO: if a 1-up mission, extend by X amount of time (TBD?)
                     // we check <= 1 since the lives haven't actually been deducted yet.

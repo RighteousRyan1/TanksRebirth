@@ -94,8 +94,10 @@ public class Explosion : IAITankDanger {
 
                 //var explScalar = (MAGIC_EXPLOSION_NUMBER - 3) * Scale;
 
+                var explScalar = MAGIC_EXPLOSION_NUMBER * Scale;
                 var lingerRandom = Client.ClientRandom.NextFloat(0.8f, 1.2f);
-                var particle = GameHandler.Particles.MakeExplosionFlameParticle(new Vector3(0, -100, 0), out var act, LingerDuration / 60f * lingerRandom);// * lingerRandom/*, scale / MAGIC_EXPLOSION_NUMBER * 1.1f*/);
+                var position = Vector3.Transform(Vector3.UnitX * explScalar, Matrix.CreateFromYawPitchRoll(rotZ + rotation, 0, rotX) * Matrix.CreateTranslation(Position3D));
+                var particle = GameHandler.Particles.MakeExplosionFlameParticle(position, out var act, LingerDuration / 60f * lingerRandom);// * lingerRandom/*, scale / MAGIC_EXPLOSION_NUMBER * 1.1f*/);
 
                 // TODO: make particles face center of explosion
                 particle.UniqueBehavior = (a) => {
@@ -103,9 +105,8 @@ public class Explosion : IAITankDanger {
                     particle.Color = ExplosionColor;
                     rotation += rotationSpeed1 * RuntimeData.DeltaTime;
 
-                    var explScalar = MAGIC_EXPLOSION_NUMBER * Scale;
                     // find why the rotation isnt rotating the right way. maybe needs a unit circle offset? piover2?
-                    var position = Vector3.Transform(Vector3.UnitX * explScalar, Matrix.CreateFromYawPitchRoll(rotZ + rotation, 0, rotX) * Matrix.CreateTranslation(Position3D));
+                    position = Vector3.Transform(Vector3.UnitX * explScalar, Matrix.CreateFromYawPitchRoll(rotZ + rotation, 0, rotX) * Matrix.CreateTranslation(Position3D));
                     particle.Position = position;
 
                     var rot = MathUtils.CalculateRotationToFaceCenter(particle.Position, Position3D);
