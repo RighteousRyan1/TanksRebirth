@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using tainicom.Aether.Physics2D.Fluids;
 using TanksRebirth.GameContent.Globals;
+using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.GameContent.UI;
@@ -44,6 +45,17 @@ public record Difficulties {
         ["FFA"] = false,
         ["LanternMode"] = false,
         ["Disguise"] = false
+    };
+    public static readonly Dictionary<int, int> VanillaToMasterModeConversions = new() {
+        [TankID.Brown] = TankID.Bronze,
+        [TankID.Ash] = TankID.Silver,
+        [TankID.Marine] = TankID.Sapphire,
+        [TankID.Yellow] = TankID.Citrine,
+        [TankID.Pink] = TankID.Ruby,
+        [TankID.Green] = TankID.Emerald,
+        [TankID.Violet] = TankID.Amethyst,
+        [TankID.White] = TankID.Gold,
+        [TankID.Black] = TankID.Obsidian
     };
     public static TankTemplate[] HijackTanks(TankTemplate[] tanks) {
         for (int i = 0; i < tanks.Length; i++) {

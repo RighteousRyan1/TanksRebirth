@@ -52,6 +52,10 @@ public class Animator {
     /// <summary>The interpolated value from 0 to 1 representing the total percent completion of the entire animation stored in this <see cref="Animator"/>.</summary>
     public float Interpolated { get; private set; }
 
+    /// <summary>
+    /// Perform actions once a KeyFrame finish elapsing.
+    /// </summary>
+    /// <param name="frame">The frame that was just completed.</param>
     public delegate void OnKeyFrameEnd(KeyFrame frame);
     /// <summary>Invocated once a keyframe finishes playing in this animation.</summary>
     public event OnKeyFrameEnd? OnKeyFrameFinish;

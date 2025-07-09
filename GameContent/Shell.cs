@@ -487,7 +487,8 @@ public class Shell : IAITankDanger
 
             par.Position = off.ExpandZ() + new Vector3(0, 11, 0);
 
-            par.Roll = -Rotation - MathHelper.PiOver2 + rotoff;
+            par.Roll = Rotation + MathHelper.PiOver2 + rotoff;
+            par.Pitch = MathHelper.PiOver2;
 
             //if (TankGame.GameUpdateTime % 2 == 0)
             //p.Roll = Client.ClientRandom.NextFloat(0, MathHelper.TwoPi);

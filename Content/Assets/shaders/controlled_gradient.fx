@@ -1,10 +1,10 @@
-﻿
-sampler TexSampler : register(s0);
+﻿sampler TexSampler : register(s0);
 
 float4 oTopColor : register(c0);
 float4 oBottomColor : register(c1);
 float oAngle : register(c2); // Angle in radians (0 = vertical, PI/2 = horizontal)
 float oCenter : register(c3); // Center position (0.0 to 1.0)
+float oOpacity : register(c4);
 
 // Pixel Shader
 float4 main(float2 coords : TEXCOORD0) : COLOR0
@@ -43,7 +43,7 @@ float4 main(float2 coords : TEXCOORD0) : COLOR0
     // Interpolate between top and bottom colors
     color = lerp(oTopColor, oBottomColor, adjustedPos);
     
-    return color; //float4(gradientColor.rgb, color.a * gradientColor.a);
+    return color * oOpacity; //float4(gradientColor.rgb, color.a * gradientColor.a);
 
 }
 technique Gradient

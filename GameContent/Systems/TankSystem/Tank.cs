@@ -153,6 +153,7 @@ public abstract class Tank {
     public Matrix Projection { get; set; }
 
     public int WorldId { get; set; }
+    /// <summary>This <see cref="Tank"/>'s <see cref="TeamID"/>.</summary>
     public int Team { get; set; }
 
     /// <summary>The current speed of this tank.</summary>
@@ -173,8 +174,7 @@ public abstract class Tank {
     public Vector3 TurretPosition3D => new(TurretPosition.X, 11, TurretPosition.Y);
     public Vector2 Position;
     public Vector2 Velocity;
-
-    /// <summary>This <see cref="Tank"/>'s <see cref="TeamID"/>.</summary>
+    public Vector2 KnockbackVelocity;
 
     /// <summary>The rotation of this <see cref="Tank"/>'s barrel. Generally should not be modified in a player context.</summary>>
     public BoundingBox Worldbox { get; set; }
@@ -431,9 +431,13 @@ public abstract class Tank {
                     ModLoader.ModTanks[i].PreUpdate(ai);
         }
 
+        KnockbackVelocity.X = MathUtils.RoughStep(KnockbackVelocity.X, 0, 0.1f * RuntimeData.DeltaTime);
+        KnockbackVelocity.Y = MathUtils.RoughStep(KnockbackVelocity.Y, 0, 0.1f * RuntimeData.DeltaTime);
+
         Position = Body.Position * UNITS_PER_METER;
 
-        Body.LinearVelocity = Velocity * 0.55f / UNITS_PER_METER;
+        // magical multiplication number to maintain values like 1.8 max speed with the original game
+        Body.LinearVelocity = (Velocity * 0.55f + KnockbackVelocity) / UNITS_PER_METER;
 
         // try to make positive. i hate game
         World = Matrix.CreateScale(Scaling) 
@@ -460,10 +464,6 @@ public abstract class Tank {
 
         if (!MainMenuUI.Active && (!CampaignGlobals.InMission || IntermissionSystem.IsAwaitingNewMission))
             Velocity = Vector2.Zero;
-        if (OwnedMineCount < 0)
-            OwnedMineCount = 0;
-        if (DecelerationRateDecayTime > 0)
-            DecelerationRateDecayTime -= RuntimeData.DeltaTime;
 
         if (!Properties.Stationary) {
             float treadPlaceTimer = 0;
@@ -763,8 +763,6 @@ public abstract class Tank {
         };
     }
 
-    public float DecelerationRateDecayTime;
-
     /// <summary>Shoot a <see cref="Shell"/> from this <see cref="Tank"/>.</summary>
     public virtual void Shoot(bool fxOnly) {
         if ((!MainMenuUI.Active && !CampaignGlobals.InMission) || !Properties.HasTurret)
@@ -802,10 +800,8 @@ public abstract class Tank {
         // theoretical "recoil" velocity
         // idea: separate recoil velocity from movement velocity
 
-        // var force = (Position - defPos) * Properties.Recoil;
-        //Velocity = force / UNITS_PER_METER;
-        //DecelerationRateDecayTime = 20 * Properties.Recoil;
-        //Body.ApplyForce(force / UNITS_PER_METER);
+        var force = (Position - TurretPosition) * Properties.Recoil;
+        KnockbackVelocity = force / UNITS_PER_METER;
 
         if (!fxOnly) {
             for (int i = 1; i < Properties.ShellShootCount; i++) {

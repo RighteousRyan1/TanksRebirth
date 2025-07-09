@@ -129,9 +129,7 @@ public class Particle
         //TankGame.SpriteRenderer.Begin(blendState: HasAddativeBlending ? BlendState.Additive : BlendState.NonPremultiplied, rasterizerState: System.Rasterizer);
         var world =
                 Matrix.CreateScale(Scale) *
-                Matrix.CreateRotationX(Roll) *
-                Matrix.CreateRotationY(Pitch) *
-                Matrix.CreateRotationZ(Yaw) *
+                Matrix.CreateFromYawPitchRoll(Yaw, Pitch, Roll) * 
                 Matrix.CreateTranslation(Position);
         for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
             foreach (ModelMesh mesh in Model.Meshes) {

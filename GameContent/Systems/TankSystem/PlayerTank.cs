@@ -161,6 +161,7 @@ public class PlayerTank : Tank
         properties.Acceleration = 0.3f;
         properties.Deceleration = 0.6f;
         properties.TurningSpeed = 0.1f;
+
         // this changes depending on input (or should it?)
         properties.MaximalTurn = MathHelper.ToRadians(InputUtils.CurrentGamePadSnapshot.IsConnected ? 10 : 46); // normally it's 10 degrees, but we want to make it easier for keyboard players.
 
@@ -227,8 +228,8 @@ public class PlayerTank : Tank
                         TurretRotation = TankRotation;
                 }
                 else if (!GameUI.Paused) {
-
-                    if (DebugManager.IsFreecamEnabled && InputUtils.MouseRight) { } else {
+                    // if (DebugManager.IsFreecamEnabled && InputUtils.MouseRight) { } 
+                    if (!DebugManager.IsFreecamEnabled && !InputUtils.CanDetectClick()) {
                         var mouseState = Mouse.GetState();
                         var screenCenter = new Point(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2);
 

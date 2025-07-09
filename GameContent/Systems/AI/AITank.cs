@@ -136,7 +136,7 @@ public partial class AITank : Tank {
             if (Difficulties.Types["Monochrome"])
                 tier = Difficulties.MonochromeValue;
             if (Difficulties.Types["MasterModBuff"])
-                tier += 9;
+                tier = Difficulties.VanillaToMasterModeConversions[tier];
         }
 
         Behaviors = new AiBehavior[10];

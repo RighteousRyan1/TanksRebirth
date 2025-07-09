@@ -1,5 +1,7 @@
 /* Enter message here */
 
+##### TODO: Campaign screen no-overflow, multiplayer stats (press tab n stuff to see other player kill counts, also have kills be per-player)
+
 Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed later) speedruns will get their spot on the main menu!
 
 ## Additions
@@ -72,7 +74,6 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 
 ## TODO
 
-- [ ] Bonus life screen
 - [ ] New AI tank aggression system (depending on the tank type, will either make advances towards you or will avoid you)
 
 PLEASE, if you find anything wrong, go to my [discord](https://discord.gg/KhfzvbrrKx) server and report bugs in the #bugs 

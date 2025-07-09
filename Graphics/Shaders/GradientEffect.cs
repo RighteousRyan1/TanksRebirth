@@ -7,7 +7,7 @@ namespace TanksRebirth.Graphics.Shaders;
 public class GradientEffect {
     public readonly Effect Shader;
 
-    public float _center, _angle;
+    public float _center, _angle, _opacity;
     public Color _top, _bottom;
 
     public float Center {
@@ -21,6 +21,13 @@ public class GradientEffect {
         get => _angle;
         set {
             Shader.Parameters["oAngle"]?.SetValue(value);
+            _angle = value;
+        }
+    }
+    public float Opacity {
+        get => _opacity;
+        set {
+            Shader.Parameters["oOpacity"]?.SetValue(value);
             _angle = value;
         }
     }
@@ -39,7 +46,7 @@ public class GradientEffect {
         }
     }
 
-    public GradientEffect(Color top, Color bottom, float center = 0.5f, float angle = 0f) {
+    public GradientEffect(Color top, Color bottom, float center = 0.5f, float angle = 0f, float opacity = 1f) {
         // might not need it to be an instanced asset, but we'll see
         Shader = GameResources.GetRawGameAsset<Effect>("Assets/shaders/controlled_gradient");
 
@@ -48,6 +55,7 @@ public class GradientEffect {
 
         Center = center;
         Angle = angle;
+        Opacity = opacity;
     }
 
     public static implicit operator Effect(GradientEffect effect) => effect.Shader;

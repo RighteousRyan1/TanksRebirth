@@ -96,7 +96,7 @@ public class Explosion : IAITankDanger {
 
                 var explScalar = MAGIC_EXPLOSION_NUMBER * Scale;
                 var lingerRandom = Client.ClientRandom.NextFloat(0.8f, 1.2f);
-                var position = Vector3.Transform(Vector3.UnitX * explScalar, Matrix.CreateFromYawPitchRoll(rotZ + rotation, 0, rotX) * Matrix.CreateTranslation(Position3D));
+                var position = Vector3.UnitY * -5000f;//Vector3.Transform(Vector3.UnitX * explScalar, Matrix.CreateFromYawPitchRoll(rotZ + rotation, 0, rotX) * Matrix.CreateTranslation(Position3D));
                 var particle = GameHandler.Particles.MakeExplosionFlameParticle(position, out var act, LingerDuration / 60f * lingerRandom);// * lingerRandom/*, scale / MAGIC_EXPLOSION_NUMBER * 1.1f*/);
 
                 // TODO: make particles face center of explosion

@@ -260,10 +260,6 @@ public static class DebugManager {
                 RuntimeData.RenderTimeGraph.Update();
                 RuntimeData.LogicTimeGraph.Update();
             }
-            RuntimeData.RenderFpsGraph.Draw(TankGame.SpriteRenderer, new Vector2(100, 200), 2);
-            RuntimeData.LogicFpsGraph.Draw(TankGame.SpriteRenderer, new Vector2(100, 400), 2);
-            RuntimeData.RenderTimeGraph.Draw(TankGame.SpriteRenderer, new Vector2(500, 200), 2);
-            RuntimeData.LogicTimeGraph.Draw(TankGame.SpriteRenderer, new Vector2(500, 400), 2);
         }
 
         if (InputUtils.AreKeysJustPressed(Keys.Q, Keys.E))
@@ -348,7 +344,7 @@ public static class DebugManager {
             if (InputUtils.KeyJustPressed(Keys.OemSemicolon))
                 new Mine(null, MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ(), 400);
             if (InputUtils.KeyJustPressed(Keys.OemQuotes))
-                new Shell(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ(), Vector2.Zero, ShellID.Standard, null!, 0);
+                new Shell(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition).FlattenZ(), Vector2.Zero, ShellID.Rocket, null!, 0);
             if (InputUtils.KeyJustPressed(Keys.End))
                 SpawnCrateAtMouse();
 
@@ -361,20 +357,20 @@ public static class DebugManager {
         blockHeight = MathHelper.Clamp(blockHeight, 1, 7);
         blockType = MathHelper.Clamp(blockType, 0, 3);
     }
-    public static void DrawDebug(SpriteBatch SpriteRenderer) {
+    public static void DrawDebug(SpriteBatch spriteBatch) {
         if (!DebuggingEnabled) return;
 
         var posOffset = new Vector2(0, 80);
 
-        DrawDebugString(TankGame.SpriteRenderer, "Spawn Tank With Info:", WindowUtils.WindowTop + posOffset, 3, centered: true);
-        DrawDebugString(TankGame.SpriteRenderer, $"Tier: {TankID.Collection.GetKey(tankToSpawnType)}", WindowUtils.WindowTop + posOffset + new Vector2(0, 16), 3, centered: true);
-        DrawDebugString(TankGame.SpriteRenderer, $"Team: {TeamID.Collection.GetKey(tankToSpawnTeam)}", WindowUtils.WindowTop + posOffset + new Vector2(0, 32), 3, centered: true);
-        DrawDebugString(TankGame.SpriteRenderer, $"BlockStack: {blockHeight} | BlockType: {BlockID.Collection.GetKey(blockType)}", WindowUtils.WindowBottom - new Vector2(0, 20), 3, centered: true);
+        DrawDebugString(spriteBatch, "Spawn Tank With Info:", WindowUtils.WindowTop + posOffset, 3, centered: true);
+        DrawDebugString(spriteBatch, $"Tier: {TankID.Collection.GetKey(tankToSpawnType)}", WindowUtils.WindowTop + posOffset + new Vector2(0, 16), 3, centered: true);
+        DrawDebugString(spriteBatch, $"Team: {TeamID.Collection.GetKey(tankToSpawnTeam)}", WindowUtils.WindowTop + posOffset + new Vector2(0, 32), 3, centered: true);
+        DrawDebugString(spriteBatch, $"BlockStack: {blockHeight} | BlockType: {BlockID.Collection.GetKey(blockType)}", WindowUtils.WindowBottom - new Vector2(0, 20), 3, centered: true);
 
         tankToSpawnType = MathHelper.Clamp(tankToSpawnType, 2, TankID.Collection.Count - 1);
         tankToSpawnTeam = MathHelper.Clamp(tankToSpawnTeam, 0, TeamID.Collection.Count - 1);
 
-        DrawDebugString(TankGame.SpriteRenderer, $"Logic Time: {RuntimeData.LogicTime.TotalMilliseconds:0.00}ms" +
+        DrawDebugString(spriteBatch, $"Logic Time: {RuntimeData.LogicTime.TotalMilliseconds:0.00}ms" +
                                                    $"\nLogic FPS: {RuntimeData.LogicFPS}" +
                                                    $"\n\nRender Time: {RuntimeData.RenderTime.TotalMilliseconds:0.00}ms" +
                                                    $"\nRender FPS: {RuntimeData.RenderFPS}" +
@@ -383,21 +379,21 @@ public static class DebugManager {
                                                    $"\nKeys O + P: Reload All Mods" +
                                                    $"\nKeys Q + E: Resynchronize Randoms", new Vector2(10, 500));
 
-        DrawDebugString(TankGame.SpriteRenderer, $"Current Mission: {CampaignGlobals.LoadedCampaign.CurrentMission.Name}\nCurrent Campaign: {CampaignGlobals.LoadedCampaign.MetaData.Name}", WindowUtils.WindowBottomLeft - new Vector2(-4, 60), 3, centered: false);
+        DrawDebugString(spriteBatch, $"Current Mission: {CampaignGlobals.LoadedCampaign.CurrentMission.Name}\nCurrent Campaign: {CampaignGlobals.LoadedCampaign.MetaData.Name}", WindowUtils.WindowBottomLeft - new Vector2(-4, 60), 3, centered: false);
 
-        DrawDebugString(TankGame.SpriteRenderer, $"HighestTier: {AIManager.GetHighestTierActive()}", new(10, WindowUtils.WindowHeight * 0.26f), 1);
-        // DebugUtils.DrawDebugString(TankGame.SpriteRenderer, $"CurSong: {(Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f) != null ? Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f).Name : "N/A")}", new(10, WindowUtils.WindowHeight - 100), 1);
+        DrawDebugString(spriteBatch, $"HighestTier: {AIManager.GetHighestTierActive()}", new(10, WindowUtils.WindowHeight * 0.26f), 1);
+        // DebugUtils.DrawDebugString(spriteBatch, $"CurSong: {(Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f) != null ? Music.AllMusic.FirstOrDefault(music => music.Volume == 0.5f).Name : "N/A")}", new(10, WindowUtils.WindowHeight - 100), 1);
 
         for (int i = 0; i < TankID.Collection.Count; i++)
-            DrawDebugString(TankGame.SpriteRenderer, $"{TankID.Collection.GetKey(i)}: {AIManager.GetTankCountOfType(i)}", new(10, WindowUtils.WindowHeight * 0.3f + (i * 20)), 1);
+            DrawDebugString(spriteBatch, $"{TankID.Collection.GetKey(i)}: {AIManager.GetTankCountOfType(i)}", new(10, WindowUtils.WindowHeight * 0.3f + (i * 20)), 1);
 
-        SpriteRenderer.DrawString(FontGlobals.RebirthFont,
+        spriteBatch.DrawString(FontGlobals.RebirthFont,
                 "Debug Level: " + CurDebugLabel,
                 WindowUtils.WindowBottom - new Vector2(0, 15),
                 Color.White,
                 new Vector2(0.6f),
                 origin: FontGlobals.RebirthFont.MeasureString("Debug Level: " + CurDebugLabel) / 2);
-        DrawDebugString(SpriteRenderer,
+        DrawDebugString(spriteBatch,
             $"Garbage Collection: {MemoryParser.To(MemoryParser.Size.Bytes, MemoryParser.Size.Megabytes, RuntimeData.GCMemory):0} MB" +
             $"\nPhysical Memory: {RuntimeData.CompSpecs.RAM}" +
             $"\nGPU: {RuntimeData.CompSpecs.GPU}" +
@@ -406,15 +402,15 @@ public static class DebugManager {
             $"Total Memory: {MemoryParser.To(MemoryParser.Size.Bytes, MemoryParser.Size.Megabytes, RuntimeData.CompSpecs.RAM.TotalPhysical):0}MB",
             new Vector2(8, WindowUtils.WindowHeight * 0.15f));
 
-        DrawDebugString(SpriteRenderer, $"Tank Kill Counts:", new(8, WindowUtils.WindowHeight * 0.05f), 2);
+        DrawDebugString(spriteBatch, $"Tank Kill Counts:", new(8, WindowUtils.WindowHeight * 0.05f), 2);
 
         for (int i = 0; i < PlayerTank.TankKills.Count; i++) {
             var tier = TankID.Collection.GetKey(PlayerTank.TankKills.ElementAt(i).Key);
             var count = PlayerTank.TankKills.ElementAt(i).Value;
 
-            DrawDebugString(SpriteRenderer, $"{tier}: {count}", new(8, WindowUtils.WindowHeight * 0.05f + (14f * (i + 1))), 2);
+            DrawDebugString(spriteBatch, $"{tier}: {count}", new(8, WindowUtils.WindowHeight * 0.05f + (14f * (i + 1))), 2);
         }
-        DrawDebugString(SpriteRenderer,
+        DrawDebugString(spriteBatch,
             $"Lives / StartingLives: {PlayerTank.Lives[Client.IsConnected() ? NetPlay.GetMyClientId() : 0]} / {PlayerTank.StartingLives}" +
             $"\nKillCount: {PlayerTank.KillCounts}" +
             $"\n\nSavable Game Data:" +
@@ -431,11 +427,11 @@ public static class DebugManager {
             var tier = PlayerTank.TankKills.ElementAt(i).Key;
             var count = PlayerTank.TankKills.ElementAt(i).Value;
 
-            DrawDebugString(SpriteRenderer, $"{tier}: {count}", new(WindowUtils.WindowWidth * 0.9f, 8 + (14f * (i + 1))), 2);
+            DrawDebugString(spriteBatch, $"{tier}: {count}", new(WindowUtils.WindowWidth * 0.9f, 8 + (14f * (i + 1))), 2);
         }
 
         foreach (var body in Tank.CollisionsWorld.BodyList) {
-            DrawDebugString(SpriteRenderer,
+            DrawDebugString(spriteBatch,
                 $"BODY",
                 MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(body.Position.X * Tank.UNITS_PER_METER, 0, body.Position.Y * Tank.UNITS_PER_METER), CameraGlobals.GameView, CameraGlobals.GameProjection),
                 centered: true);
@@ -444,13 +440,13 @@ public static class DebugManager {
         for (int i = 0; i < VanillaAchievements.Repository.GetAchievements().Count; i++) {
             var achievement = VanillaAchievements.Repository.GetAchievements()[i];
 
-            DrawDebugString(SpriteRenderer,
+            DrawDebugString(spriteBatch,
                 $"{achievement.Name}: {(achievement.IsComplete ? "Complete" : "Incomplete")}",
                 new Vector2(8, 24 + (i * 20)),
                 level: Id.AchievementData,
                 centered: false);
         }
-        DrawDebugString(SpriteRenderer, $"Position: {CameraGlobals.RebirthFreecam.Position}" +
+        DrawDebugString(spriteBatch, $"Position: {CameraGlobals.RebirthFreecam.Position}" +
             $"\nRotation: {CameraGlobals.RebirthFreecam.Rotation}" +
             $"\nFOV: {CameraGlobals.RebirthFreecam.FieldOfView}�" +
             $"\nForward: {CameraGlobals.GameView.Forward}" +
@@ -459,6 +455,13 @@ public static class DebugManager {
             $"\nRight: {CameraGlobals.GameView.Right}" +
             $"\n\nToggle Persist Freecam: Z + X (Currently {(persistFreecam ? "enabled" : "disabled")})" +
             $"\n\nCTRL + C: Copy Position and Rotation Vectors as C# Vector3 constructors", new Vector2(10, 80), Id.FreeCamTest);
+
+        if (DebugLevel == Id.SceneMetrics) {
+            RuntimeData.RenderFpsGraph.Draw(spriteBatch, new Vector2(100, 200), 2);
+            RuntimeData.LogicFpsGraph.Draw(spriteBatch, new Vector2(100, 400), 2);
+            RuntimeData.RenderTimeGraph.Draw(spriteBatch, new Vector2(500, 200), 2);
+            RuntimeData.LogicTimeGraph.Draw(spriteBatch, new Vector2(500, 400), 2);
+        }
 
         if (InputUtils.AreKeysJustPressed(Keys.LeftControl, Keys.C)) {
             TextCopy.ClipboardService.SetText($"{CameraGlobals.RebirthFreecam.Position.ToCtor()}, {CameraGlobals.RebirthFreecam.Rotation.ToCtor()}");

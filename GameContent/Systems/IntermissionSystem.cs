@@ -40,9 +40,10 @@ public static class IntermissionSystem {
     public static bool ShouldFade;
     public static bool ShouldFadeIn;
 
-    public const float ALPHA_FADE_CONSTANT = 1f / 45f;
+    public const float ALPHA_FADE_CONSTANT = 1f / 30f;
     public static float BannerAlpha = 1f;
     public static float BonusBannerAlpha;
+    public static bool ShouldDrawBonusBanner;
 
     public static float Alpha;
     public static float ColorMultiplierForBorders = 0.35f;
@@ -60,6 +61,7 @@ public static class IntermissionSystem {
     static Vector2 _offset;
     static Rectangle _cutForLength;
     static float _oldBlack;
+    static bool _forceBonusDrawToHeight;
 
     public static Texture2D BonusBannerBase;
     public static Texture2D BonusBannerStar;
@@ -100,8 +102,29 @@ public static class IntermissionSystem {
             .WithFrame(new(duration: TimeSpan.FromSeconds(3.16), easing: EasingFunction.Linear))
             .WithFrame(new(duration: TimeSpan.FromSeconds(0), easing: EasingFunction.Linear));
 
-        // TODO
-        BonusLifeAnimator = Animator.Create();
+        // only use position2d.Y when referencing!!!
+        BonusLifeAnimator = Animator.Create()
+            // time before the banner drops in
+            .WithFrame(new(duration: TimeSpan.FromSeconds(0.5), scale: Vector2.One, position2d: Vector2.UnitY * -200, easing: EasingFunction.OutElastic))
+            // elastic animation where the banner drops from the top
+            // after this frame, force drawing to 40% of window height
+            .WithFrame(new(duration: TimeSpan.FromSeconds(1), scale: Vector2.One, position2d: Vector2.UnitY * WindowUtils.WindowHeight * 0.4f, easing: EasingFunction.Linear))
+            // text gets brighter and slightly scales up
+            // also makes the player life text(s) glow yellow and grow for a second
+            .WithFrame(new(duration: TimeSpan.FromSeconds(0.2), scale: Vector2.One, position2d: Vector2.Zero, easing: EasingFunction.OutBack))
+            // text shrinks back to original size
+            // duration = 0 so it shrinks as soon as the OutBack animation is done
+            .WithFrame(new(duration: TimeSpan.FromSeconds(0.2), scale: Vector2.One * 1.25f, position2d: Vector2.Zero, easing: EasingFunction.Linear))
+            // time before banner fades out of existence
+            .WithFrame(new(duration: TimeSpan.FromSeconds(2.5), scale: Vector2.One, position2d: Vector2.Zero, easing: EasingFunction.Linear))
+            // banner actually fades from existence
+            // opacity will be handled in the mid-frame actions
+            .WithFrame(new(duration: TimeSpan.FromSeconds(0.5), scale: Vector2.One, position2d: Vector2.Zero, easing: EasingFunction.Linear))
+            // dummy frame :(
+            .WithFrame(new(duration: TimeSpan.FromSeconds(0), scale: Vector2.One, position2d: Vector2.Zero, easing: EasingFunction.Linear));
+
+        BonusLifeAnimator?.Restart();
+        BonusLifeAnimator?.Stop(); // to ensure brightness calculations are proper
 
         BonusLifeAnimator.OnKeyFrameFinish += DoActionsForBonusLife;
         IntermissionAnimator.OnKeyFrameFinish += DoMidAnimationActions;
@@ -110,12 +133,29 @@ public static class IntermissionSystem {
     private static void DoActionsForBonusLife(KeyFrame frame) {
         var frameId = BonusLifeAnimator.KeyFrames.FindIndex(f => f.Equals(frame));
 
-        // 0 is entirely placeholder
+        ChatSystem.SendMessage(frameId.ToString());
+
         if (frameId == 0) {
-            PlayerTank.AddLives(1);
             var lifeget = "Assets/music/fanfares/life_get.ogg";
             SoundPlayer.PlaySoundInstance(lifeget, SoundContext.Effect, 0.5f, rememberMe: true);
+            _forceBonusDrawToHeight = true;
+        } 
+        else if (frameId == 1) {
+            PlayerTank.AddLives(1);
         }
+        else if (frameId == 2) {
+
+        }
+        else if (frameId == 3) {
+
+        }
+        else if (frameId == 4) {
+            ShouldDrawBonusBanner = false;
+        }
+        else if (frameId == 5) {
+            
+        }
+        // FIXME: frameId 6 doesn't get called because of some stupid ahh code
     }
 
     public static void InitializeCountdowns(bool oneUp = false) {
@@ -141,6 +181,8 @@ public static class IntermissionSystem {
         IntermissionAnimator.KeyFrames[2] = new(duration: TimeSpan.FromSeconds(secs2), easing: EasingFunction.Linear);
         IntermissionAnimator.KeyFrames[3] = new(duration: TimeSpan.FromSeconds(secs3), easing: EasingFunction.Linear);
 
+        BonusLifeAnimator.KeyFrames[1] = new(duration: TimeSpan.FromSeconds(1), scale: Vector2.One, position2d: Vector2.UnitY * WindowUtils.WindowHeight * 0.4f, easing: EasingFunction.OutElastic);
+
 
         // the last frame is filler because i dunno how to fix the last frame finish event firing bug
         // ignore the last frame
@@ -150,7 +192,12 @@ public static class IntermissionSystem {
         var frameId = IntermissionAnimator.KeyFrames.FindIndex(f => f.Equals(frame));
 
         if (MainMenuUI.Active) {
+            IntermissionAnimator?.Restart();
             IntermissionAnimator?.Stop(); // the player dipped during the intermission lol
+            BonusLifeAnimator?.Restart();
+            BonusLifeAnimator?.Stop();
+            ShouldDrawBanner = true;
+            _forceBonusDrawToHeight = false;
             return;
         }
 
@@ -162,8 +209,17 @@ public static class IntermissionSystem {
             SceneManager.CleanupScene();
 
             // ShouldDrawBanner indicates there wasn't a bonus life to be had
-            if (ShouldDrawBanner)
+            if (ShouldDrawBanner) {
                 PlayOpeningFanfare();
+
+                ReplayTextAnimations();
+            }
+            else {
+                _forceBonusDrawToHeight = false;
+                ShouldDrawBonusBanner = true;
+                BonusLifeAnimator?.Restart();
+                BonusLifeAnimator?.Run();
+            }
         }
         // happens in the middle of full opaque-ness
         else if (frameId == 1) {
@@ -183,10 +239,7 @@ public static class IntermissionSystem {
         else if (frameId == 2 && !ShouldDrawBanner) {
             ShouldDrawBanner = true;
 
-            TextAnimatorLarge?.Restart();
-            TextAnimatorSmall?.Restart();
-            TextAnimatorLarge?.Run();
-            TextAnimatorSmall?.Run();
+            ReplayTextAnimations();
 
             // only plays if the banner is fading in
             PlayOpeningFanfare();
@@ -209,13 +262,16 @@ public static class IntermissionSystem {
             IntermissionHandler.BeginIntroSequence();
             IntermissionHandler.CountdownAnimator?.Restart();
             IntermissionHandler.CountdownAnimator?.Run();
+
+            // just in case.
+            _forceBonusDrawToHeight = false;
         }
     }
     public static void PrepareBuffers(GraphicsDevice device, SpriteBatch spriteBatch) {
         RenderGlobals.EnsureRenderTargetOK(ref BackgroundBuffer, TankGame.Instance.GraphicsDevice, WindowUtils.WindowWidth, WindowUtils.WindowHeight);
         RenderGlobals.EnsureRenderTargetOK(ref BannerBuffer, TankGame.Instance.GraphicsDevice, WindowUtils.WindowWidth, WindowUtils.WindowHeight / 2);
         RenderGlobals.EnsureRenderTargetOK(ref BonusBannerBuffer, TankGame.Instance.GraphicsDevice, WindowUtils.WindowWidth, BonusBannerBase.Height * 2);
-        RenderGlobals.EnsureRenderTargetOK(ref BonusBannerTextBuffer, TankGame.Instance.GraphicsDevice, WindowUtils.WindowWidth, 100);
+        RenderGlobals.EnsureRenderTargetOK(ref BonusBannerTextBuffer, TankGame.Instance.GraphicsDevice, WindowUtils.WindowWidth, 125);
 
         if (TankGame.Instance.IsActive) {
             // System.Diagnostics.Debug.WriteLine(TimeBlack);
@@ -230,12 +286,6 @@ public static class IntermissionSystem {
             MainMenuUI.Leave();
         }
         // wait a little bit to do animations so they are clearly visible to the user
-        if (BlackAlpha <= 0.9f && _oldBlack > 0.9f) {
-            TextAnimatorLarge?.Restart();
-            TextAnimatorSmall?.Restart();
-            TextAnimatorLarge?.Run();
-            TextAnimatorSmall?.Run();
-        }
         Alpha = MathHelper.Clamp(Alpha, 0f, 1f);
 
         if (!GameUI.Paused && TankGame.Instance.IsActive) {
@@ -250,6 +300,9 @@ public static class IntermissionSystem {
         // System.Diagnostics.Debug.WriteLine($"{IntermissionAnimator.ElapsedTime} - {IntermissionAnimator.CurrentInterpolation}");
         // TankGame.Interp = Alpha <= 0 && BlackAlpha <= 0 && GameHandler.InterpCheck;
         // switch to RT, begin SB, do drawing, end SB, SetRenderTarget(null), begin SB again, draw RT, end SB
+
+        // used in the bonus life animation, to determine color flashing upon growth
+        var brightness = (BonusLifeAnimator.CurrentScale - Vector2.One).Length();
 
         #region RenderToBackground
 
@@ -293,15 +346,17 @@ public static class IntermissionSystem {
 
             var pos = new Vector2(WindowUtils.WindowWidth / (count + 1) * (i + 1), WindowUtils.WindowHeight / 2 + 375.ToResolutionY());
 
+            var lerpedColor = Color.Lerp(brightPlayerColor, GradientTopColor, brightness);
+
             var lifeText = $"×  {PlayerTank.Lives[i]}";
             DrawUtils.DrawBorderedStringWithShadow(spriteBatch, FontGlobals.RebirthFontLarge,
                 pos + new Vector2(75, -25).ToResolution(),
                 Vector2.One,
                 lifeText,
-                brightPlayerColor,
+                lerpedColor,
                 // hacky or not?
                 PlayerID.PlayerTankColors[i].ToColor(),
-                Vector2.One.ToResolution(),
+                Vector2.One.ToResolution() * (ShouldDrawBanner ? Vector2.One : BonusLifeAnimator.CurrentScale),
                 overallAlpha,
                 Anchor.Center, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 1f);
 
@@ -321,8 +376,6 @@ public static class IntermissionSystem {
         _oldBlack = BlackAlpha;
 
         spriteBatch.End();
-
-        device.SetRenderTarget(null);
 
         #endregion
 
@@ -412,8 +465,6 @@ public static class IntermissionSystem {
 
         spriteBatch.End();
 
-        device.SetRenderTarget(null);
-
         #endregion
 
         #region RenderToBonusBanner
@@ -422,13 +473,17 @@ public static class IntermissionSystem {
 
         device.Clear(RenderGlobals.BackBufferColor);
 
+        // magical ass calculations
+        // idk how to center it...
+        _renderBeginX = BonusBannerBuffer.Width * _renderMargin; // / _bannerScale;
+        _renderEndX = BonusBannerBuffer.Width * (1f - _renderMargin); // / _bannerScale);
+
         spriteBatch.Begin(rasterizerState: RenderGlobals.DefaultRasterizer, blendState: BlendState.NonPremultiplied);
 
         DrawBonusLifeBanner(spriteBatch);
 
         spriteBatch.End();
 
-        device.SetRenderTarget(null);
         #endregion
 
         #region RenderToBonusBannerText
@@ -442,8 +497,15 @@ public static class IntermissionSystem {
         // slight offset to make the top color pop more...?
         // TODO: make the animation that makes the player tank graphic grow and glow, as well as the banner
         BonusTextGradient.Center = 0.6f;
+        // ChatSystem.SendMessage(brightness.ToString());
+        var gradientModifiedTopColor = ColorUtils.ChangeColorBrightness(GradientTopColor, brightness);
+        var gradientModifiedBottomColor = ColorUtils.ChangeColorBrightness(GradientBottomColor, brightness);
 
-        spriteBatch.DrawString(FontGlobals.RebirthFontLarge, TankGame.GameLanguage.BonusTank, new Vector2(WindowUtils.WindowWidth / 2, BonusBannerTextBuffer.Height / 2), Color.White, Vector2.One * _bannerScale * 0.5f,
+        BonusTextGradient.Top = gradientModifiedTopColor;
+        BonusTextGradient.Bottom = gradientModifiedBottomColor;
+
+        spriteBatch.DrawString(FontGlobals.RebirthFontLarge, TankGame.GameLanguage.BonusTank, new Vector2(WindowUtils.WindowWidth / 2, BonusBannerTextBuffer.Height / 2), 
+            Color.White, (Vector2.One * _bannerScale * 0.5f * BonusLifeAnimator.CurrentScale).ToResolution(), 
             origin: Anchor.Center.GetAnchor(FontGlobals.RebirthFontLarge.MeasureString(TankGame.GameLanguage.BonusTank)));
 
         spriteBatch.End();
@@ -451,10 +513,13 @@ public static class IntermissionSystem {
         device.SetRenderTarget(null);
 
         #endregion
-        
-        // assign this to update position constantly
-        _renderY = WindowUtils.WindowHeight * 0.40f;
+
+        // maximum value should be 40% of window height
+        _renderY = _forceBonusDrawToHeight ? WindowUtils.WindowHeight * 0.4f : BonusLifeAnimator.CurrentPosition2D.Y;
     }
+
+    static float _renderMargin = 0.33f;
+    static float _renderBeginX, _renderEndX;
 
     static float _renderY;
     static float _bannerScale = 2f;
@@ -468,14 +533,18 @@ public static class IntermissionSystem {
             // manage banner alpha
             if (ShouldDrawBanner) {
                 BannerAlpha += ALPHA_FADE_CONSTANT * RuntimeData.DeltaTime;
-                BonusBannerAlpha -= ALPHA_FADE_CONSTANT * 2 * RuntimeData.DeltaTime;
-
                 if (BannerAlpha > 1) BannerAlpha = 1;
-                if (BonusBannerAlpha < 0) BonusBannerAlpha = 0;
             }
             else {
                 BannerAlpha = 0f;
+            }
+
+            if (ShouldDrawBonusBanner) {
                 BonusBannerAlpha = 1f;
+            }
+            else {
+                BonusBannerAlpha -= ALPHA_FADE_CONSTANT * 2 * RuntimeData.DeltaTime;
+                if (BonusBannerAlpha < 0) BonusBannerAlpha = 0;
             }
 
             // draw the banner only if we want it to
@@ -488,6 +557,7 @@ public static class IntermissionSystem {
             }
 
             // render the bonus life banner now
+            // window width / 2
             var drawPos = new Vector2(WindowUtils.WindowWidth / 2, _renderY);
 
             DrawUtils.DrawTextureWithShadow(TankGame.SpriteRenderer, BonusBannerBuffer, drawPos, 
@@ -495,26 +565,45 @@ public static class IntermissionSystem {
 
             spriteBatch.End();
 
-            var textOffset = 20f.ToResolutionY();
-            // draw strictly the bonus text shadow and border here
-            spriteBatch.Begin();
+            if (ShouldDrawBonusBanner) {
 
-            // TODO: localize later...
-            DrawUtils.DrawStringShadowOnly(spriteBatch, FontGlobals.RebirthFontLarge, drawPos - new Vector2(0, textOffset), Vector2.One * _bannerScale, TankGame.GameLanguage.BonusTank, Vector2.One * _bannerScale * 0.5f,
-                BonusBannerAlpha, shadowAlpha: 0.5f);
-            DrawUtils.DrawStringBorderOnly(spriteBatch, FontGlobals.RebirthFontLarge, TankGame.GameLanguage.BonusTank, drawPos - new Vector2(0, textOffset), BonusBannerTextBorderColor, Vector2.One * _bannerScale * 0.5f,
-                0f, borderThickness: 1.5f);
+                var textOffset = 20f.ToResolutionY();
+                // draw strictly the bonus text shadow and border here
+                spriteBatch.Begin();
 
-            spriteBatch.End();
+                DrawUtils.DrawStringShadowOnly(spriteBatch, FontGlobals.RebirthFontLarge, drawPos - new Vector2(0, textOffset), Vector2.One * _bannerScale,
+                    TankGame.GameLanguage.BonusTank, (Vector2.One * _bannerScale * 0.5f * BonusLifeAnimator.CurrentScale).ToResolution(), BonusBannerAlpha * Alpha, shadowAlpha: 0.5f);
+                DrawUtils.DrawStringBorderOnly(spriteBatch, FontGlobals.RebirthFontLarge, TankGame.GameLanguage.BonusTank, drawPos - new Vector2(0, textOffset),
+                    BonusBannerTextBorderColor * Alpha * BonusBannerAlpha, (Vector2.One * _bannerScale * 0.5f * BonusLifeAnimator.CurrentScale).ToResolution(), 0f, borderThickness: 1.5f);
 
-            // draw the inner text with the gradient
-            spriteBatch.Begin(effect: BonusTextGradient);
+                spriteBatch.End();
 
-            // fuck these mental calculations yo... 
-            // in the RT prepration i have to add half of the buffer height and then subtract half of it here
-            spriteBatch.Draw(BonusBannerTextBuffer, new Vector2(0, _renderY - BonusBannerTextBuffer.Height / 2 - textOffset), Color.White * BonusBannerAlpha);
+                // draw the inner text with the gradient
+                spriteBatch.Begin(blendState: BlendState.AlphaBlend, effect: BonusTextGradient);
 
-            spriteBatch.End();
+                BonusTextGradient.Opacity = Alpha * BonusBannerAlpha;
+                // fuck these mental calculations yo... 
+                // in the RT prepration i have to add half of the buffer height and then subtract half of it here
+                spriteBatch.Draw(BonusBannerTextBuffer, new Vector2(0, _renderY - BonusBannerTextBuffer.Height / 2 - textOffset), Color.White * BonusBannerAlpha);
+
+                spriteBatch.End();
+
+                spriteBatch.Begin(blendState: BlendState.NonPremultiplied);
+
+                // now draw the stars. draw them not within the rendertarget beacuse they need their own shadows
+
+                var starScale = 2f;
+
+                // left star
+                DrawUtils.DrawTextureWithShadow(spriteBatch, BonusBannerStar, new Vector2(WindowUtils.WindowWidth * 0.2f, _renderY), Vector2.UnitY, GradientTopColor, new Vector2(starScale).ToResolution(),
+                    Alpha * BonusBannerAlpha, shadowDistScale: 0.5f, shadowAlpha: 0.5f);
+
+                // right star
+                DrawUtils.DrawTextureWithShadow(spriteBatch, BonusBannerStar, new Vector2(WindowUtils.WindowWidth * 0.83f, _renderY), Vector2.UnitY, GradientTopColor, new Vector2(starScale).ToResolution(),
+                    Alpha * BonusBannerAlpha, shadowDistScale: 0.5f, shadowAlpha: 0.5f);
+
+                spriteBatch.End();
+            }
         } else {
             _offset = Vector2.Zero;
         }
@@ -540,28 +629,23 @@ public static class IntermissionSystem {
             Color.Black * BlackAlpha);
     }
     private static void DrawBonusLifeBanner(SpriteBatch spriteBatch) {
-        // TODO: implement.
-
-        var margin = 0.33f;
-        var renderBeginX = BonusBannerBuffer.Width * margin;
-        var renderEndX = BonusBannerBuffer.Width * (1f - margin);
 
         // draw the left segment
-        spriteBatch.Draw(BonusBannerBase, new Vector2(renderBeginX, 0), null, Color.White, 0f,
+        spriteBatch.Draw(BonusBannerBase, new Vector2(_renderBeginX, 0), null, Color.White, 0f,
             Vector2.Zero, Vector2.One, default, 0f);
-        spriteBatch.Draw(BonusBannerBase, new Vector2(renderBeginX, BonusBannerBase.Height), null, Color.White, 0f,
+        spriteBatch.Draw(BonusBannerBase, new Vector2(_renderBeginX, BonusBannerBase.Height), null, Color.White, 0f,
             Vector2.Zero, Vector2.One, SpriteEffects.FlipVertically, 0f);
 
         // draw the middle segment
-        spriteBatch.Draw(BonusBannerBase, new Vector2(renderBeginX + BonusBannerBase.Width, 0), _cutForLength, Color.White,
-            0f, Vector2.Zero, new Vector2(renderEndX - renderBeginX - BonusBannerBase.Width, 1f), default, 0f);
-        spriteBatch.Draw(BonusBannerBase, new Vector2(renderBeginX + BonusBannerBase.Width, BonusBannerBase.Height), _cutForLength, Color.White,
-            0f, Vector2.Zero, new Vector2(renderEndX - renderBeginX - BonusBannerBase.Width, 1f), SpriteEffects.FlipVertically, 0f);
+        spriteBatch.Draw(BonusBannerBase, new Vector2(_renderBeginX + BonusBannerBase.Width, 0), _cutForLength, Color.White,
+            0f, Vector2.Zero, new Vector2(_renderEndX - _renderBeginX - BonusBannerBase.Width, 1f), default, 0f);
+        spriteBatch.Draw(BonusBannerBase, new Vector2(_renderBeginX + BonusBannerBase.Width, BonusBannerBase.Height), _cutForLength, Color.White,
+            0f, Vector2.Zero, new Vector2(_renderEndX - _renderBeginX - BonusBannerBase.Width, 1f), SpriteEffects.FlipVertically, 0f);
 
         // draw the right segment
-        spriteBatch.Draw(BonusBannerBase, new Vector2(renderEndX, 0), null, Color.White, 0f, 
+        spriteBatch.Draw(BonusBannerBase, new Vector2(_renderEndX, 0), null, Color.White, 0f, 
             Vector2.Zero, Vector2.One, SpriteEffects.FlipHorizontally, 0f);
-        spriteBatch.Draw(BonusBannerBase, new Vector2(renderEndX, BonusBannerBase.Height), null, Color.White, 0f,
+        spriteBatch.Draw(BonusBannerBase, new Vector2(_renderEndX, BonusBannerBase.Height), null, Color.White, 0f,
             Vector2.Zero, Vector2.One, SpriteEffects.FlipVertically | SpriteEffects.FlipHorizontally, 0f);
     }
 
@@ -586,5 +670,12 @@ public static class IntermissionSystem {
             Alpha = 1;
         else
             Alpha += delta;
+    }
+
+    public static void ReplayTextAnimations() {
+        TextAnimatorLarge?.Restart();
+        TextAnimatorSmall?.Restart();
+        TextAnimatorLarge?.Run();
+        TextAnimatorSmall?.Run();
     }
 }
