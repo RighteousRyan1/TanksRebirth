@@ -28,17 +28,14 @@ public static class MathUtils
     public static Vector2 DirectionTo(this Vector2 current, Vector2 destination) => destination - current;
     public static Rectangle ToRect(this AABB aabb) => AbsoluteRectangle(new((int)(aabb.Center.X - aabb.Width), (int)(aabb.Center.Y - aabb.Height), (int)aabb.Width, (int)aabb.Height));
     public static AABB ToAABB(this Rectangle rect) => new(new Vector2(rect.X, rect.Y), new Vector2(rect.X + rect.Width, rect.Y + rect.Width));
-    public static Rectangle AbsoluteRectangle(Rectangle input)
-    {
+    public static Rectangle AbsoluteRectangle(Rectangle input) {
         var returnRect = input;
 
-        if (input.Width < 0)
-        {
+        if (input.Width < 0) {
             returnRect.X -= Math.Abs(input.Width);
             returnRect.Width = Math.Abs(input.Width);
         }
-        if (input.Height < 0)
-        {
+        if (input.Height < 0) {
             returnRect.Y -= Math.Abs(input.Height);
             returnRect.Height = Math.Abs(input.Height);
         }
@@ -54,8 +51,7 @@ public static class MathUtils
         return MathF.Abs((a - b + MathF.PI * 3) % (MathF.PI * 2) - MathF.PI);
     }
     public static Point ToPoint(this Vector2 vector2) => new((int)vector2.X, (int)vector2.Y);
-    public static Vector2 Rotate(this Vector2 spinPoint, float radians, Vector2 center = default)
-    {
+    public static Vector2 Rotate(this Vector2 spinPoint, float radians, Vector2 center = default) {
         float cos = MathF.Cos(radians);
         float sin = MathF.Sin(radians);
         Vector2 newPoint = spinPoint - center;
@@ -118,21 +114,18 @@ public static class MathUtils
         return result3d;
     }
     public static float Distance(this Vector2 initial, Vector2 other) => Vector2.Distance(initial, other);
-    public static float MaxDistanceValue(Vector2 initial, Vector2 end, float maxDist)
-    {
+    public static float MaxDistanceValue(Vector2 initial, Vector2 end, float maxDist) {
         var init = initial.Distance(end);
 
         float actual = 1f - init / maxDist <= 0 ? 0 : 1f - init / maxDist;
 
         return actual;
     }
-    public static float CreateGradientValue(float value, float min, float max)
-    {
+    public static float CreateGradientValue(float value, float min, float max) {
         float mid = (max + min) / 2;
         float returnValue;
 
-        if (value > mid)
-        {
+        if (value > mid) {
             var inverse = 1f - (value - min) / (max - min) * 2;
             returnValue = 1f + inverse;
             return MathHelper.Clamp(returnValue, 0f, 1f);
@@ -145,19 +138,15 @@ public static class MathUtils
             return 1;
         return CreateGradientValue(value, min, max);
     }
-    public static float InverseLerp(float begin, float end, float value, bool clamped = false)
-    {
-        if (clamped)
-        {
-            if (begin < end)
-            {
+    public static float InverseLerp(float begin, float end, float value, bool clamped = false) {
+        if (clamped) {
+            if (begin < end) {
                 if (value < begin)
                     return 0f;
                 if (value > end)
                     return 1f;
             }
-            else
-            {
+            else {
                 if (value < end)
                     return 1f;
                 if (value > begin)
@@ -167,18 +156,14 @@ public static class MathUtils
         return (value - begin) / (end - begin);
     }
     public static float ModifiedInverseLerp(float begin, float end, float value, bool clamped = false) => InverseLerp(begin, end, value, clamped) * 2 - 0.5f;
-    public static float AngleLerp(this float curAngle, float targetAngle, float amount)
-    {
+    public static float AngleLerp(this float curAngle, float targetAngle, float amount) {
         float angle;
-        if (targetAngle < curAngle)
-        {
+        if (targetAngle < curAngle) {
             float num = targetAngle + MathHelper.TwoPi;
             angle = (num - curAngle > curAngle - targetAngle) ? MathHelper.Lerp(curAngle, targetAngle, amount) : MathHelper.Lerp(curAngle, num, amount);
         }
-        else
-        {
-            if (!(targetAngle > curAngle))
-            {
+        else {
+            if (!(targetAngle > curAngle)) {
                 return curAngle;
             }
             float num = targetAngle - (float)Math.PI * 2f;
@@ -186,46 +171,36 @@ public static class MathUtils
         }
         return MathHelper.WrapAngle(angle);
     }
-    public static float RoughStep(float value, float goal, float step)
-    {
-        if (value < goal)
-        {
+    public static float RoughStep(float value, float goal, float step) {
+        if (value < goal) {
             value += step;
 
-            if (value > goal)
-            {
+            if (value > goal) {
                 return goal;
             }
         }
-        else if (value > goal)
-        {
+        else if (value > goal) {
             value -= step;
 
-            if (value < goal)
-            {
+            if (value < goal) {
                 return goal;
             }
         }
 
         return value;
     }
-    public static float SoftStep(float value, float goal, float step)
-    {
-        if (value < goal)
-        {
+    public static float SoftStep(float value, float goal, float step) {
+        if (value < goal) {
             value += step * (value / goal);
 
-            if (value > goal)
-            {
+            if (value > goal) {
                 return goal;
             }
         }
-        else if (value > goal)
-        {
+        else if (value > goal) {
             value -= step * (value - goal);
 
-            if (value < goal)
-            {
+            if (value < goal) {
                 return goal;
             }
         }
@@ -289,8 +264,8 @@ public static class MathUtils
 
     public static float WrapTauAngle(this float angle) {
         return angle switch {
-            <0 => angle + (float)(Math.Ceiling(-angle / Math.Tau) * Math.Tau),
-            >(float)Math.Tau => angle - (float)((Math.Ceiling(angle / Math.Tau) - 1) * Math.Tau),
+            < 0 => angle + (float)(Math.Ceiling(-angle / Math.Tau) * Math.Tau),
+            > (float)Math.Tau => angle - (float)((Math.Ceiling(angle / Math.Tau) - 1) * Math.Tau),
             _ => angle
         };
     }

@@ -22,7 +22,8 @@ using TanksRebirth.GameContent.Globals.Assets;
 
 namespace TanksRebirth.GameContent;
 
-public class Shell : IAITankDanger {
+public class Shell : IAITankDanger
+{
     public delegate void PostCreateDelegate(Shell shell);
 
     public static event PostCreateDelegate? PostCreate;
@@ -83,6 +84,7 @@ public class Shell : IAITankDanger {
 
     /// <summary>The <see cref="Tank"/> which shot this <see cref="Shell"/>.</summary>
     public Tank? Owner;
+    public ModShell? ModdedData { get; set; }
 
     public Vector3 Position3D => Position.ExpandZ() + new Vector3(0, 11, 0);
     public Vector3 Velocity3D => Velocity.ExpandZ();
@@ -402,7 +404,7 @@ public class Shell : IAITankDanger {
             GameResources.GetGameResource<Texture2D>("Assets/textures/smoke/smoke"));
             p.Scale = new(0.7f);
         }
-        else{
+        else {
             p = GameHandler.Particles.MakeParticle(
                 Position3D + new Vector3(0, 0, 5).FlattenZ()
                                             .Rotate(Rotation + MathHelper.Pi + Client.ClientRandom.NextFloat(-0.3f, 0.3f))
@@ -495,7 +497,7 @@ public class Shell : IAITankDanger {
         };
     }
     private void TankGame_OnFocusRegained(object? sender, nint e) {
-       if (TrailSound is not null && TrailSound.Instance is not null)
+        if (TrailSound is not null && TrailSound.Instance is not null)
             TrailSound.Instance?.Resume();
     }
     private void TankGame_OnFocusLost(object? sender, nint e) {

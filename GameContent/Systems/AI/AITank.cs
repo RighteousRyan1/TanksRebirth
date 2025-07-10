@@ -119,7 +119,7 @@ public partial class AITank : Tank {
     /// <summary>
     /// Creates a new <see cref="AITank"/>.
     /// </summary>
-    /// <param name="tier">The tier of this <see cref="AITank"/>. If '<see cref="TankID.Random"/>', it will be randomly chosen.</param>
+    /// <param name="tier">The tier of this <see cref="AITank"/>.</param>
     /// <param name="setTankDefaults">Whether or not to give this <see cref="AITank"/> the default values.</param>
     /// <param name="isIngame">Whether or not this <see cref="AITank"/> is a gameplay tank or a cosmetic tank (i.e: display models on menus, etc).</param>
     public AITank(int tier, bool setTankDefaults = true, bool isIngame = true) {

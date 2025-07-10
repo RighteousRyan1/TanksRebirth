@@ -21,9 +21,6 @@ namespace TanksRebirth.GameContent.GameMechanics
     }
     public static class AiBehaviorExtensions
     {
-        public static AiBehavior FromName(this AiBehavior[] arr, string name)
-        {
-            return arr.First(behavior => behavior.Label == name);
-        }
+        public static AiBehavior FromName(this AiBehavior[] arr, string name) => arr.First(behavior => behavior.Label == name);
     }
 }

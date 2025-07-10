@@ -54,7 +54,6 @@ public class ModTank : ILoadable, IModContent {
     //public virtual void TargetsSpotted(List<Tank> tanksSpotted) { }
     /// <summary>Change things about the tank when it is spawned in the world. Be absolutely sure to call <c>base.PostApplyDefaults(AITank)</c>
     /// to ensure that your modded tank's texture is placed onto any spawning tanks that are this <see cref="ModTank"/>.</summary>
-    /// <param name="tank">The tank.</param>
     public virtual void PostApplyDefaults() {
         if (_texture is null || Texture is null)
             return;

@@ -182,7 +182,7 @@ public static class ModLoader
             _modBlockDictionary[mod].Clear();
 
             var modShellCount = _modShellDictionary[mod].Count;
-            for (int i = 0; i < _modShellDictionary[mod].Count; i++) {
+            for (int i = _modShellDictionary[mod].Count - 1; i >= 0; i--) {
                 _modShellDictionary[mod][i].Unload();
             }
             ModShell.unloadOffset += modShellCount;

@@ -22,8 +22,8 @@ namespace TanksRebirth.Net;
 public class NetPlay {
     public static IPEndPoint? Ip;
     public static int Port;
-    public static Client? CurrentClient;
-    public static Server? CurrentServer;
+    public static Client CurrentClient;
+    public static Server CurrentServer;
     /// <summary>Whether or not to log packets going out or coming in.</summary>
 
     public static bool DoPacketLogging = false;
@@ -283,8 +283,6 @@ public class NetPlay {
                     return;
 
                 Shell.AllShells[idAdjust]?.Destroy((Shell.DestructionContext)cxt, wasSentByAnotherClient: true);
-
-
 
                 // old and stupid "ghost bullets" workaround
                 /*if (GameHandler.AllTanks[ownerId] is not null)
@@ -784,10 +782,8 @@ public class NetPlay {
         return true;
     }
     public static int GetMyClientId() {
-        if (!Client.IsConnected())
-            return 0;
-        else
-            return CurrentClient.Id;
+        if (!Client.IsConnected()) return 0;
+        else return CurrentClient.Id;
     }
 }
 

@@ -16,6 +16,7 @@ namespace TanksRebirth.GameContent.ModSupport;
 public class ModShell : ILoadable, IModContent {
     /// <summary>The <see cref="TanksMod"/> that this <see cref="ModShell"/> is a part of.</summary>
     public TanksMod Mod { get; set; }
+    public Shell Shell { get; set; }
     public int Type { get; set; }
 
     private Texture2D? _texture;
@@ -25,7 +26,7 @@ public class ModShell : ILoadable, IModContent {
     public virtual string ShootSound => string.Empty;
     /// <summary>The sound for while this shell is flying. Utilize Path.Combine(ModPath, ...)</summary>
     public virtual string TrailSound => string.Empty;
-    public virtual LocalizedString Name => new(new());
+    public virtual LocalizedString Name => new([]);
 
     /// <summary>Initialize what you want alongside the loading of your modded shell.</summary>
     public virtual void OnLoad() { }

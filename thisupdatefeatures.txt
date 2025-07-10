@@ -70,6 +70,8 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 - `TankProperties.VulnerableToMines` -> `TankProperties.InvulnerableToMines`
 - The modding API has moved away from singletons and now has different modded data per ModTank, ModShell, and ModBlock, so code does not execute on every entity of a given type at once
 - Virtual methods no longer have a parameter for what they are modding, and now have a property (i.e: `ModTank.AITank`, `ModBlock.Block`, `ModShell.Shell`)
+- `MainMenu` -> `MainMenuUI`
+- `GameSceneRenderer` -> `GameScene`
 
 ## Fixes
 
