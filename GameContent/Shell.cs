@@ -114,13 +114,50 @@ public class Shell : IAITankDanger {
     public bool IsPlayerSourced { get; set; }
 
     private Texture2D? _shellTexture;
+    /// <summary>
+    /// Represents the ID of this shell in the array. Useful for local operations relating to collisions and such.
+    /// </summary>
     public int Id { get; private set; }
+    /// <summary>
+    /// Represents an ID between (0-63 * client #) used for syncing. Set randomly and is synced on spawn but not manipulated! Useful for state change operations on the bullet, such as death.
+    /// </summary>
+    public byte UID { get; private set; }
     private float _wallRicCooldown;
     /// <summary>How long this shell has existed in the world.</summary>
     public float LifeTime;
     public ShellProperties Properties { get; set; } = new();
     public int Type { get; set; }
     public void ReassignId(int newId) => Id = newId;
+    /// <summary>
+    /// Updates the UID of the shell. Avoid changing during runtime if unnecessary.
+    /// </summary>
+    /// <param name="newID"></param>
+    public void SetUID(byte newID) => UID = newID;
+    /// <summary>
+    /// Generates a random UID for use with shell instance management
+    /// </summary>
+    public byte GenerateUID(Tank owner)
+    {
+        bool repetitionCheck = true;
+        int attempts = 0;
+        while (repetitionCheck && attempts < 8)
+        {
+            attempts += 1;
+            repetitionCheck = false;
+            byte newID = (byte)((Client.ClientRandom.Next(0, 64)) + (NetPlay.GetMyClientId() * 64));        //splits the byte range (0-255) amongst 4 players and allows each player to allocate 0-63 of the addr.
+            for (int i = 0; i < owner.OwnedShellCount; i++)
+            {
+                if (owner.OwnedShells[i].UID == newID)      //if there's a repetition, redo
+                {
+                    repetitionCheck = true;
+                    break;
+                }
+            }
+            if (!repetitionCheck)
+                return newID;
+        }
+        return 255;     //Could not generate.
+    }
     public void SwapTexture(Texture2D texture) => _shellTexture = texture;
     public void Swap(int type) {
         Type = type;
@@ -229,6 +266,7 @@ public class Shell : IAITankDanger {
         if (idx > -1)
             Owner.OwnedShells[idx] = this;
 
+        SetUID(GenerateUID(owner));
         PostCreate?.Invoke(this);
     }
     private void StopSounds(int delay, MissionEndContext context, bool result1up) {
