@@ -268,6 +268,7 @@ public class NetPlay {
             case PacketID.ShellDestroy:
                 var ownerId = reader.GetInt();
                 var senderShellId = reader.GetInt();
+                var otherShellUID = reader.GetByte();
                 var senderShellCount = reader.GetInt();
                 var cxt = reader.GetByte();
 
@@ -275,14 +276,24 @@ public class NetPlay {
                 // FIXME? wait for results.
                 // TODO: see if this works.
 
-                var currentClientShellCount = Shell.AllShells.Count(x => x is not null);
+                /*var currentClientShellCount = Shell.AllShells.Count(x => x is not null);
 
                 var idAdjust = senderShellId + (currentClientShellCount - senderShellCount);
 
                 if (idAdjust < 0)
                     return;
 
-                Shell.AllShells[idAdjust]?.Destroy((Shell.DestructionContext)cxt, wasSentByAnotherClient: true);
+                Shell.AllShells[idAdjust]?.Destroy((Shell.DestructionContext)cxt, wasSentByAnotherClient: true);*/
+
+                var currentClientShellCount = Shell.AllShells.Count(x => x is not null);
+                for (int i = 0; i < currentClientShellCount; i++)
+                {
+                    if (Shell.AllShells[i].UID == otherShellUID)
+                    {
+                        Shell.AllShells[i].Destroy((Shell.DestructionContext)cxt, wasSentByAnotherClient: true);
+                        break;
+                    }
+                }
 
                 // old and stupid "ghost bullets" workaround
                 /*if (GameHandler.AllTanks[ownerId] is not null)
@@ -302,9 +313,12 @@ public class NetPlay {
                 var shellVel = reader.GetVector2();
                 var shellRicochets = reader.GetUInt();
                 var shellOwner = reader.GetInt();
+                var shellID = reader.GetInt();
+                var shellUID = reader.GetByte();
 
                 // GameHandler.AllTanks[shellOwner].Shoot(true);
                 var shell = new Shell(shellPos, shellVel, shellType, GameHandler.AllTanks[shellOwner], ricochets: shellRicochets);
+                shell.SetUID(shellUID);
                 GameHandler.AllTanks[shellOwner]?.DoShootParticles();
 
                 // ChatSystem.SendMessage($"Pos: {shell.Position} | Vel: {shell.Velocity}", Color.White);
@@ -553,11 +567,13 @@ public class NetPlay {
             case PacketID.ShellDestroy:
                 var ownerId = reader.GetInt();
                 var senderShellId = reader.GetInt();
+                var senderShellUID = reader.GetByte();
                 var senderShellCount = reader.GetInt();
                 var cxt = reader.GetByte();
 
                 message.Put(ownerId);
                 message.Put(senderShellId);
+                message.Put(senderShellUID);
                 message.Put(senderShellCount);
                 message.Put(cxt);
 
@@ -575,12 +591,16 @@ public class NetPlay {
                 var shellVel = reader.GetVector2();
                 var shellRicochets = reader.GetUInt();
                 var shellOwner = reader.GetInt();
+                var shellInstanceID = reader.GetInt();
+                var shellUniqueID = reader.GetByte();
 
                 message.Put(shellType);
                 message.Put(shellPos);
                 message.Put(shellVel);
                 message.Put(shellRicochets);
                 message.Put(shellOwner);
+                message.Put(shellInstanceID);
+                message.Put(shellUniqueID);
 
                 Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;
