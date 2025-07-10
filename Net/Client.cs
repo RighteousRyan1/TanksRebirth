@@ -217,6 +217,7 @@ public class Client {
         message.Put(shell.RicochetsRemaining);
         message.Put(shell.Owner!.WorldId);
         message.Put(shell.Id);
+        message.Put(shell.UID);
 
         // ChatSystem.SendMessage($"Pos: {shell.Position} | Vel: {shell.Velocity}", Color.White);
 
@@ -249,6 +250,9 @@ public class Client {
 
         // sending the shell id on the current client.
         message.Put(shell.Id);
+
+        //sending the shell UID on the current client.
+        message.Put(shell.UID);
 
         // to fix "ghost bullets": compare Array Length of Shells from server to each client, then
         // add the difference between the client's # of shells from the server's # of shells.

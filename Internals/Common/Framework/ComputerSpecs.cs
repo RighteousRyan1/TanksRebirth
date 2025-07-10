@@ -102,7 +102,7 @@ public struct ComputerSpecs : IEquatable<ComputerSpecs>
         float? used = mem.Sensors.FirstOrDefault(s => s.SensorType == SensorType.Data && s.Name == "Memory Used")?.Value;
         float? available = mem.Sensors.FirstOrDefault(s => s.SensorType == SensorType.Data && s.Name == "Memory Available")?.Value;
 
-        var firstValidStick = _sysComputer.SMBios.MemoryDevices.First(x => x.ManufacturerName != "Unknown");
+        var firstValidStick = _sysComputer.SMBios.MemoryDevices.First(x => x.ConfiguredSpeed > 0 && x.Speed > 0 && x.Size > 0);
 
         var ram = new RAM {
             TotalPhysical = used.HasValue && available.HasValue ? 
