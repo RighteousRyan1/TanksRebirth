@@ -18,6 +18,7 @@ using TanksRebirth.Localization;
 using TanksRebirth.Internals.Common.Utilities;
 using FontStashSharp;
 using TanksRebirth.GameContent.UI.MainMenu;
+using System.Xml.Linq;
 
 namespace TanksRebirth.GameContent.ModSupport;
 
@@ -351,8 +352,15 @@ public static class ModLoader
 
                                                         // load each tank and its data, add to moddedTypes the singleton of the ModTank.
                                                         ModContent.moddedTypes.Add(modTank);
-                                                        modTank.Name.AddLocalization(LangCode.English, $"{tanksMod.InternalName}.{modTank.GetType().Name}");
-                                                        modTank!.Register();
+
+                                                        var tankName = modTank.GetType().Name;
+
+                                                        modTank.Name ??= new([]);
+                                                        modTank.Texture ??= tankName;
+
+                                                        // doesn't insert anything if there is already something for English
+                                                        modTank.Name.AddLocalization(LangCode.English, $"{tanksMod.InternalName}.{tankName}");
+                                                        modTank!.Load();
                                                         DifficultyAlgorithm.TankDiffs[modTank.Type] = 0f;
                                                         TankGame.ClientLog.Write($"Loaded modded tank '{modTank.Name.GetLocalizedString(LangCode.English)}'", LogType.Info);
                                                     } 

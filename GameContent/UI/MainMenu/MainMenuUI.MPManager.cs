@@ -60,7 +60,7 @@ public static partial class MainMenuUI {
             ServerNameInput.IsVisible = visible && !Client.IsConnected();
         }
         DisconnectButton.IsVisible = visible && Client.IsConnected();
-        StartMPGameButton.IsVisible = visible && Client.IsHost();
+        StartMPGameButton.IsVisible = visible && Client.IsHost() && Client.IsConnected();
     }
     public static void InitializeMP(SpriteFontBase font) {
         var uiColor = Color.LightGray;
@@ -287,7 +287,7 @@ public static partial class MainMenuUI {
             for (int i = 0; i < numClients; i++) {
                 var client = Server.ConnectedClients[i];
                 // TODO: when u work on this again be sure to like, re-enable this code, cuz like, if u dont, u die.
-                Color textCol = PlayerID.PlayerTankColors[client.Id].ToColor();
+                Color textCol = PlayerID.PlayerTankColors[client.Id];
 
                 var clientNamePos = new Vector2(_panelPosition.X + (panelXCut * (i + 1)), _panelPosition.Y + _panelHeaderHeight + _panelHeight / 3);
 

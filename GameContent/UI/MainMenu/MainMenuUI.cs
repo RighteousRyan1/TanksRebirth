@@ -14,6 +14,7 @@ using TanksRebirth.Net;
 
 using TanksRebirth.Internals.Common.Framework.Animation;
 using TanksRebirth.Graphics;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace TanksRebirth.GameContent.UI.MainMenu;
 
@@ -187,6 +188,11 @@ public static partial class MainMenuUI
             // if it is, load the mission
             completePreparation(camp);
 
+            SetPlayButtonsVisibility(false);
+            SetPrimaryMenuButtonsVisibility(false);
+            SetMPButtonsVisibility(false);
+            SetDifficultiesButtonsVisibility(false);
+
             TransitionToGame();
         }
 
@@ -231,12 +237,12 @@ public static partial class MainMenuUI
     }
 
     private static int _oldwheel;
-    public static void Render() {
+    public static void Render(SpriteBatch spriteBatch) {
         if (!_initialized || !_diffButtonsInitialized)
             return;
 
         if (Active) {
-            RenderGeneralUI();
+            RenderGeneralUI(spriteBatch);
             if (MenuState == UIState.StatsMenu)
                 RenderStatsMenu();
             else if (MenuState == UIState.LoadingMods)

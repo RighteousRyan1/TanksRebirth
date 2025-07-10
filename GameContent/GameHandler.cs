@@ -39,9 +39,9 @@ public class GameHandler {
     public static ParticleSystem Particles { get; } = new(MAX_PARTICLES, () => CameraGlobals.GameView, () => CameraGlobals.GameProjection);
     public static XpBar ExperienceBar;
 
-    public static AITank[] AllAITanks = new AITank[MAX_AI_TANKS];
-    public static PlayerTank[] AllPlayerTanks = new PlayerTank[MAX_PLAYERS];
-    public static Tank[] AllTanks = new Tank[MAX_PLAYERS + MAX_AI_TANKS];
+    public static AITank[] AllAITanks = new AITank?[MAX_AI_TANKS];
+    public static PlayerTank[] AllPlayerTanks = new PlayerTank?[MAX_PLAYERS];
+    public static Tank[] AllTanks = new Tank?[MAX_PLAYERS + MAX_AI_TANKS];
 
     internal static void MapEvents() {
         CampaignGlobals.OnMissionEnd += IntermissionHandler.DoEndMissionWorkload;
@@ -95,6 +95,7 @@ public class GameHandler {
         VanillaAchievements.Repository.UpdateCompletions(TankGame.VanillaAchievementPopupHandler);
 
         Client.SendLives();
+        Client.SendKillCounts();
 
         /* uh, yeah. this is the decay-per-level calculation. people don't want it!
         var floor1 = MathF.Floor(TankGame.GameData.ExpLevel + 1f);

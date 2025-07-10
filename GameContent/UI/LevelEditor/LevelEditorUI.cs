@@ -812,7 +812,7 @@ public static partial class LevelEditorUI {
                 if (RayUtils.GetMouseToWorldRay().Intersects(tnk.Worldbox).HasValue) {
                     HoveringAnyTank = true;
                     if (InputUtils.KeyJustPressed(Keys.K) && Array.IndexOf(GameHandler.AllTanks, tnk) > -1)
-                        tnk?.Destroy(new TankHurtContextOther()); // hmmm
+                        tnk?.Destroy(new TankHurtContextOther(), false); // hmmm
 
                     if (InputUtils.CanDetectClick(rightClick: true)) {
                         tnk!.TankRotation = (tnk.TankRotation - MathHelper.PiOver2).WrapTauAngle() - MathHelper.Pi;

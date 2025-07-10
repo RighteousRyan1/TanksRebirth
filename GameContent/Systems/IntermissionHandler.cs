@@ -226,10 +226,7 @@ public static class IntermissionHandler {
         TankFunctionWait = TANK_FUNC_WAIT_MAX;
 
         TankMusicSystem.StopAll();
-
-        var tune = "Assets/music/fanfares/mission_snare.ogg";
-
-        SoundPlayer.PlaySoundInstance(tune, SoundContext.Music, 1f);
+        IntermissionSystem.SetMusic();
 
         foreach (var tank in GameHandler.AllTanks)
             if (tank is not null)

@@ -110,12 +110,13 @@ public sealed record ChatSystem {
     /// <summary>
     /// Sends a new <see cref="ChatMessage"/> to the chat.
     /// </summary>
-    /// <param name="message">The content of the <see cref="ChatMessage"/>.</param>
+    /// <param name="contents">The content of the <see cref="ChatMessage"/>.</param>
     /// <param name="color">The color in which to render the content of the <see cref="ChatMessage"/>.</param>
     /// <param name="sender">The sender of the message, e.g: a player</param>
     /// <param name="netSend">If true, will send the message to the server in a multiplayer context.</param>
-    public static void SendMessage(string message, Color color, string? sender = null, bool netSend = false)
+    public static void SendMessage(object contents, Color color, string? sender = null, bool netSend = false)
     {
+        var message = contents.ToString()!;
         if (message.Length > 0 && message[0] == CommandGlobals.ExpectedPrefix) {
             var cmdSplit = message.Remove(0, 1).Split(' ');
             var cmdName = cmdSplit[0];
@@ -183,8 +184,8 @@ public sealed record ChatSystem {
         // return msgs.ToArray();
     }
     /// <summary>Sends a message in the color white.</summary>
-    public static void SendMessage(string message, string? sender = null, bool netSend = false) {
-        SendMessage(message, Color.White, sender, netSend);
+    public static void SendMessage(object contents, string? sender = null, bool netSend = false) {
+        SendMessage(contents, Color.White, sender, netSend);
     }
 
     private static void DrawChatBox(out Rectangle chatBox, out Rectangle typeBox)

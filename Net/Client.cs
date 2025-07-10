@@ -85,6 +85,32 @@ public class Client {
 
         NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
+    public static void SendKillCounts() {
+        if (MainMenuUI.Active || !IsConnected())
+            return;
+
+        NetDataWriter message = new();
+        message.Put(PacketID.SyncKills);
+
+        var curClient = NetPlay.GetMyClientId();
+        message.Put(curClient);
+        message.Put(PlayerTank.KillCounts[curClient]);
+
+        NetClient.Send(message, DeliveryMethod.Unreliable);
+    }
+    // int kind for the kind of plane soon?
+    public static void SendAirplaneSpawn(Vector2 spawnPos, Vector2 velocity) {
+        if (MainMenuUI.Active || !IsConnected())
+            return;
+
+        NetDataWriter message = new();
+        message.Put(PacketID.SendAirplane);
+
+        message.Put(spawnPos);
+        message.Put(velocity);
+
+        NetClient.Send(message, DeliveryMethod.ReliableSequenced);
+    }
     public static void SendLives() {
         if (MainMenuUI.Active || !IsConnected())
             return;
@@ -92,7 +118,8 @@ public class Client {
         NetDataWriter message = new();
         message.Put(PacketID.SyncLives);
 
-        message.Put(NetPlay.CurrentClient.Id);
+        var curClient = NetPlay.GetMyClientId();
+        message.Put(curClient);
         message.Put(PlayerTank.GetMyLives());
 
         NetClient.Send(message, DeliveryMethod.Unreliable);
@@ -176,11 +203,7 @@ public class Client {
 
         NetClient.Send(message, DeliveryMethod.Unreliable);
     }
-    /// <summary>Be sure to sync by accessing the index of the tank from the AllTanks array. (<see cref="GameHandler.AllTanks"/>)
-    /// <para></para>
-    /// <c>AllTanks[<paramref name="tankId"/>].Shoot()</c>
-    /// </summary>
-    /// <param name="tankId">The identified of the <see cref="Tank"/> that fired.</param>
+    /// <summary>Be sure to sync by accessing the index of the tank from the AllTanks array. (<see cref="GameHandler.AllTanks"/>)</summary>
     public static void SyncShellFire(Shell shell) {
         if (MainMenuUI.Active || !IsConnected())
             return;
@@ -203,20 +226,15 @@ public class Client {
         NetClient.Send(message, DeliveryMethod.Sequenced);
     }
     // maybe make contexts serializable?
-    public static void SyncDamage(int id, bool wasTank, bool isPlayer/*, ITankHurtContext cxt*/, int sender = -1) {
+    public static void SyncDamage(int hurtId, Color colorOverride) {
         if (!IsConnected() || MainMenuUI.Active)
             return;
         NetDataWriter message = new();
         message.Put(PacketID.TankDamage);
 
-        message.Put(id);
+        message.Put(hurtId);
 
-        message.Put(wasTank);
-        message.Put(isPlayer);
-
-        // TODO: not syncing an ITankHurtContext is causing the "Hit!" visual to not gain color on receiving clients.
-        //message.Put(cxt.);
-        message.Put(sender);
+        message.Put(colorOverride);
 
         NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
@@ -433,5 +451,5 @@ public class Client {
             return NetClient.ConnectionState == ConnectionState.Connected;
         return false;
     }
-    public static bool IsHost() => IsConnected() && Server.NetManager is not null;
+    public static bool IsHost() => (IsConnected() && Server.NetManager is not null) || !Client.IsConnected();
 }

@@ -1,6 +1,6 @@
-﻿namespace TanksRebirth.GameContent;
+﻿namespace TanksRebirth.GameContent; // need i even rename this?
 
 public struct TankHurtContextShell(Shell shell) : ITankHurtContext {
-    public bool IsPlayer { get; } = shell.Owner is not null && shell.Owner is PlayerTank;
-    public Shell Shell { get; set; } = shell;
+    public readonly Tank? Source => shell is not null && shell.Owner is not null ? Shell.Owner : null;
+    public readonly Shell Shell => shell;
 }

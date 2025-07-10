@@ -25,8 +25,6 @@ public static class RebirthMouse
 
     public static float DistUntilPathTrace = 1575f;
 
-    private static Vector2 _oldMouse;
-
     public static bool DoTrail = true;
 
     public static Trail? CursorTrail;
@@ -34,7 +32,7 @@ public static class RebirthMouse
     public const int TRAIL_POINTS_BASE = 20;
 
     public static void Initialize() {
-        CursorTrail = new(TankGame.Instance.GraphicsDevice, ColorUtils.ChangeColorBrightness(PlayerID.PlayerTankColors[NetPlay.GetMyClientId()].ToColor(), 0.5f));
+        CursorTrail = new(TankGame.Instance.GraphicsDevice, ColorUtils.ChangeColorBrightness(PlayerID.PlayerTankColors[NetPlay.GetMyClientId()], 0.5f));
     }
 
     public static void DrawMouse() {
@@ -63,7 +61,7 @@ public static class RebirthMouse
         }
 
         if (DoTrail) {
-            CursorTrail.MainColor = ColorUtils.ChangeColorBrightness(PlayerID.PlayerTankColors[NetPlay.GetMyClientId()].ToColor(), 0.5f);
+            CursorTrail.MainColor = ColorUtils.ChangeColorBrightness(PlayerID.PlayerTankColors[NetPlay.GetMyClientId()], 0.5f);
             CursorTrail?.Update(MouseUtils.MousePosition.ToResolution(new(Trail.WIDTH_TRAILS_ENJOY, Trail.HEIGHT_TRAILS_ENJOY)));
             CursorTrail?.Draw();
             /*if (!float.IsInfinity(RuntimeData.DeltaTime)) {
@@ -80,6 +78,5 @@ public static class RebirthMouse
 
         MouseTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/cursor_1");
         TankGame.SpriteRenderer.Draw(MouseTexture, MouseUtils.MousePosition, null, Color.White, 0f, MouseTexture.Size() / 2, (1f + _sinScale / 16).ToResolution(), default, default);
-        _oldMouse = MouseUtils.MousePosition;
     }
 }

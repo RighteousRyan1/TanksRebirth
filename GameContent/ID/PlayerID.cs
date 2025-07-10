@@ -11,12 +11,12 @@ public sealed class PlayerID
     public const int Green = 2;
     public const int Yellow = 3;
 
-    public static readonly Dictionary<int, Vector3> PlayerTankColors = new()
+    public static readonly Dictionary<int, Color> PlayerTankColors = new()
     {
-        [Blue] = new Vector3(0, 0, 1),
-        [Red] = new Vector3(1, 0, 0),
-        [Green] = new Vector3(0, 1, 0),
-        [Yellow] = new Vector3(1, 1, 0)
+        [Blue] = Color.Blue,
+        [Red] = Color.Red,
+        [Green] = Color.Lime,
+        [Yellow] = Color.Yellow
     };
 
     public static ReflectionDictionary<PlayerID> Collection { get; internal set; } = new(MemberType.Fields);

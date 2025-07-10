@@ -21,16 +21,21 @@ namespace TanksRebirth.GameContent.Systems.PingSystem;
 public class IngamePing {
     // 4 players, 7 pings possible per player
     public static IngamePing[] AllIngamePings = new IngamePing[28];
-    private float _lifeTime;
-    public float _scaleEase;
+
+    float _lifeTime;
+    float _scaleEase;
+
+    bool _delete;
+
+    static Texture2D? _pingTexture;
+    Texture2D? _pingGraphic;
+
+    readonly Model _model;
+
     public Vector3 Position { get; set; }
     public int PingId { get; set; }
     public int Id { get; private set; }
-    public Color Color;
-    private Model _model;
-    private bool _delete;
-    private static Texture2D _pingTexture;
-    private Texture2D _pingGraphic;
+    public Color Color { get; set; }
     public static float MaxLifeTime = 60 * 15; // * seconds
 
     public Tank? TrackedTank;
@@ -141,7 +146,7 @@ public class IngamePing {
         return new IngamePing(
             position3d, 
             pingId, 
-            PlayerID.PlayerTankColors[playerId].ToColor());
+            PlayerID.PlayerTankColors[playerId]);
     }
     public static IngamePing CreateFromTankSender(Vector2 position2d, int pingId, int playerId, bool send = false) {
         if (send)
@@ -149,6 +154,6 @@ public class IngamePing {
         return new IngamePing(
             MatrixUtils.GetWorldPosition(position2d),
             pingId,
-            PlayerID.PlayerTankColors[playerId].ToColor());
+            PlayerID.PlayerTankColors[playerId]);
     }
 }

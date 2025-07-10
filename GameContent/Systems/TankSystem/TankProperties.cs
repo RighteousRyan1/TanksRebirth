@@ -94,7 +94,7 @@ public class TankProperties {
     public Color DestructionColor { get; set; } = Color.Black;
 
     /// <summary>The armor properties this <see cref="Tank"/> has.</summary>
-    public Armor? Armor { get; set; } = null;
+    public TankArmor? Armor { get; set; } = null;
 
     // Get it working before using this.
     /// <summary>How much this <see cref="Tank"/> is launched backward after firing a shell.</summary>
@@ -104,11 +104,13 @@ public class TankProperties {
     public bool HasTurret { get; set; } = true;
 
     /// <summary>Whether or not this <see cref="Tank"/> is able to be destroyed by <see cref="Mine"/>s.</summary>
-    public bool VulnerableToMines { get; set; } = true;
+    public bool InvulnerableToMines { get; set; }
 
     /// <summary>Whether or not this <see cref="Tank"/> is unable to be destroyed.</summary>
-    public bool Immortal { get; set; } = false;
+    public bool Immortal { get; set; }
 
     /// <summary>The homing properties of the shells this <see cref="Tank"/> shoots.</summary>
     public Shell.HomingProperties ShellHoming = new();
+
+    public int SafeGetArmorHitPoints() => Armor is null ? 0 : Armor.HitPoints;
 }

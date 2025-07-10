@@ -8,29 +8,29 @@ using TanksRebirth.GameContent.Globals.Assets;
 
 namespace TanksRebirth.GameContent;
 
-public class Armor
-{
+public class TankArmor {
     /// <summary>The tank who has this armor.</summary>
     public Tank Host;
 
-    private int _hitpointsMax;
+    private readonly int _hitpointsMax;
     public int HitPoints;
 
-    private Texture2D _maskingTexture;
-
-    private Model _model;
+    private readonly Texture2D _maskingTexture;
+    private readonly Model _model;
 
     public bool HideArmor;
 
-    public Armor(Tank host, int hitPoints)
-    {
+    private readonly Particle _healthBarTotal;
+    private readonly Particle _healthBarCurrent;
+
+    public TankArmor(Tank host, int hitPoints) {
         _model = ModelResources.Armor.Asset;
         Host = host;
         HitPoints = _hitpointsMax = hitPoints;
         _maskingTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/armor");
 
-        _healthBarTotal = GameHandler.Particles.MakeParticle(Host.Position3D + new Vector3(0, 20, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"));
-        _healthBarCurrent = GameHandler.Particles.MakeParticle(Host.Position3D + new Vector3(0, 20, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"));
+        _healthBarTotal = GameHandler.Particles.MakeParticle(host.Position3D + new Vector3(0, 20, 0), TextureGlobals.Pixels[Color.White]);
+        _healthBarCurrent = GameHandler.Particles.MakeParticle(host.Position3D + new Vector3(0, 20, 0), TextureGlobals.Pixels[Color.White]);
 
         _healthBarTotal.HasAddativeBlending = false;
         _healthBarCurrent.HasAddativeBlending = false;
@@ -41,12 +41,7 @@ public class Armor
         _healthBarCurrent.Roll = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
         _healthBarTotal.Roll = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
     }
-
-    private Particle _healthBarTotal;
-    private Particle _healthBarCurrent;
-
-    public void Render(bool canRenderHealthBar = true)
-    {
+    public void Render(bool canRenderHealthBar = true) {
         if (HideArmor) return;
         /*void DrawHealthBar(Vector2 position, float width, float height)
         {
@@ -54,14 +49,12 @@ public class Armor
             //TankGame.spriteBatch.Draw(GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel"), new Rectangle((int)(position.X - _hitpointsMax / 2 * width), (int)position.Y, (int)(HitPoints * width), (int)height), Color.Lime);
         }*/
 
-        void setHealthBar(float xScl, float yScl)
-        {
+        void setHealthBar(float xScl, float yScl) {
             _healthBarTotal.Scale = new(xScl, yScl, 1f);
             _healthBarCurrent.Scale = new(xScl * (HitPoints + 1) / (_hitpointsMax + 1), yScl, 1f);
         }
 
-        if (canRenderHealthBar && _hitpointsMax > 3)
-        {
+        if (canRenderHealthBar && _hitpointsMax > 3) {
             setHealthBar(5, 2);
             _healthBarTotal.Position = Host.Position3D + new Vector3(0, 40, 0);
             _healthBarCurrent.Position = Host.Position3D + new Vector3(0, 40, 0);
@@ -71,8 +64,8 @@ public class Armor
         if (HitPoints < 0) // so armor point amount is clamped to be greater than 0 at all times.
             HitPoints = 0;
 
-        Vector2[] offset = { Vector2.Zero, Vector2.Zero, Vector2.Zero };
-        bool[] render = { false, false, false }; // whether or not to render each.
+        Vector2[] offset = [ Vector2.Zero, Vector2.Zero, Vector2.Zero ];
+        bool[] render = [ false, false, false ]; // whether or not to render each.
         switch (HitPoints) {
             case 0:
                 // we dont really want to render anything since there isn't any armor present, so call return.
@@ -99,16 +92,12 @@ public class Armor
 
         float scale = 100f;
 
-        for (int i = 0; i < HitPoints; i++)
-        {
-            foreach (ModelMesh mesh in _model.Meshes)
-            {
-                foreach (BasicEffect effect in mesh.Effects)
-                {
+        for (int i = 0; i < HitPoints; i++) {
+            foreach (ModelMesh mesh in _model.Meshes) {
+                foreach (BasicEffect effect in mesh.Effects) {
                     //if (render[i])
                     //{
-                    if (i < 3)
-                    {
+                    if (i < 3) {
                         effect.World = Matrix.CreateRotationX(-MathHelper.PiOver2)
                              * Matrix.CreateRotationY(-Host.TankRotation)
                              * Matrix.CreateScale(scale)
@@ -128,10 +117,12 @@ public class Armor
             }
         }
     }
-    /// <summary>Remove this <see cref="Armor"/> from memory.</summary>
-    public void Remove()
-    {
+    /// <summary>Remove this <see cref="TankArmor"/> from memory.</summary>
+    public void Remove() {
         _healthBarTotal.Destroy();
         _healthBarCurrent.Destroy();
+
+        // i think this works
+        Host.Properties.Armor = null;
     }
 }

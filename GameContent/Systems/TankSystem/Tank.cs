@@ -20,6 +20,7 @@ using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.GameContent.Globals.Assets;
+using DiscordRPC;
 
 namespace TanksRebirth.GameContent;
 
@@ -103,16 +104,16 @@ public abstract class Tank {
 
     public static event DamageDelegate? OnDamage;
 
-    public delegate void ApplyDefaultsDelegate(Tank tank, ref TankProperties properties);
+    public delegate void ApplyDefaultsDelegate(Tank tank, TankProperties properties);
 
     public static event ApplyDefaultsDelegate? PostApplyDefaults;
 
-    public delegate void ShootDelegate(Tank tank, ref Shell shell);
+    public delegate void ShootDelegate(Tank tank, Shell shell);
 
     /// <summary>Does not run for spread-fire.</summary>
     public static event ShootDelegate? OnShoot;
 
-    public delegate void LayMineDelegate(Tank tank, ref Mine mine);
+    public delegate void LayMineDelegate(Tank tank, Mine mine);
 
     public static event LayMineDelegate? OnLayMine;
 
@@ -291,7 +292,7 @@ public abstract class Tank {
         var lightParticle = GameHandler.Particles.MakeParticle(Position3D,
             GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_particle"));
 
-        lightParticle.Alpha = 1;
+        lightParticle.Alpha = 1f;
         lightParticle.IsIn2DSpace = true;
         lightParticle.Color = Color.SkyBlue;
 
@@ -304,16 +305,6 @@ public abstract class Tank {
 
             if (lp.Alpha <= 0)
                 lp.Destroy();
-            /*if (lp.Scale.X < 5f)
-                GeometryUtils.Add(ref lp.Scale, 0.12f * RuntimeData.DeltaTime);
-            if (lp.Alpha < 1f && lp.Scale.X < 5f)
-                lp.Alpha += 0.02f * RuntimeData.DeltaTime;
-
-            if (lp.LifeTime > 90)
-                lp.Alpha -= 0.005f * RuntimeData.DeltaTime;
-
-            if (lp.Scale.X < 0f)
-                lp.Destroy();*/
         };
 
         const int NUM_LOCATIONS = 8;
@@ -344,34 +335,10 @@ public abstract class Tank {
     }
     /// <summary>Apply all the default parameters for this <see cref="Tank"/>.</summary>
     public virtual void ApplyDefaults(ref TankProperties properties) {
-        PostApplyDefaults?.Invoke(this, ref properties);
-        if (this is AITank ai) {
-            for (int i = 0; i < ModLoader.ModTanks.Length; i++) {
-                if (ai.AiTankType == ModLoader.ModTanks[i].Type) {
-                    properties = ModLoader.ModTanks[i].Properties;
-                    ai.AiParams = ModLoader.ModTanks[i].AiParameters;
-                    ModLoader.ModTanks[i].PostApplyDefaults(ai);
-                    return;
-                }
-            }
-
-        }
+        PostApplyDefaults?.Invoke(this, properties);
         Properties = properties;
     }
     public virtual void Initialize() {
-        /*var shadow = GameHandler.Particles.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>("Assets/textures/tank_shadow"));
-        shadow.HasAddativeBlending = false;
-        shadow.IsIn2DSpace = false;
-        shadow.Roll = -MathHelper.PiOver2;
-        shadow.Scale = new(1f);
-        shadow.Tag = $"tank_{WorldId}_shadow";
-        shadow.UniqueBehavior = (p) => {
-            shadow.Alpha = Properties.Invisible ? 0f : 0.5f;
-            shadow.Position = Position3D + new Vector3(0, 0.1f, 0);
-            shadow.Rotation2D = -TankRotation;
-        };
-        OwnedShells = new Shell[Properties.ShellLimit];*/
-
         InitModelSemantics();
         if (DebugManager.SecretCosmeticSetting) {
             for (int i = 0; i < 1; i++) {
@@ -425,11 +392,7 @@ public abstract class Tank {
             return;
 
         OnPreUpdate?.Invoke(this);
-        if (this is AITank ai) {
-            for (int i = 0; i < ModLoader.ModTanks.Length; i++)
-                if (ai.AiTankType == ModLoader.ModTanks[i].Type)
-                    ModLoader.ModTanks[i].PreUpdate(ai);
-        }
+        PreUpdate();
 
         KnockbackVelocity.X = MathUtils.RoughStep(KnockbackVelocity.X, 0, 0.1f * RuntimeData.DeltaTime);
         KnockbackVelocity.Y = MathUtils.RoughStep(KnockbackVelocity.Y, 0, 0.1f * RuntimeData.DeltaTime);
@@ -529,119 +492,95 @@ public abstract class Tank {
         _oldRotation = TankRotation;
 
         OnPostUpdate?.Invoke(this);
+        PostUpdate();
     }
-
-    /// <summary>Damage this <see cref="Tank"/>. If it has no armor, <see cref="Destroy"/> it.</summary>
-    public virtual void Damage(ITankHurtContext context) {
+    public virtual void PreUpdate() { }
+    public virtual void PostUpdate() { }
+    /// <summary>Damage this <see cref="Tank"/>. If it has no armor, destroy it.</summary>
+    public virtual void Damage(ITankHurtContext context, bool netSend, Color? colorOverride = null) {
         if (Dead || Properties.Immortal)
             return;
 
-        if (context is TankHurtContextShell cxtshell) {
-            if (cxtshell.Shell.Owner is PlayerTank player)
-                Client.SyncDamage(WorldId, true, true, player.PlayerId);
-            else if (cxtshell.Shell.Owner is not null)
-                Client.SyncDamage(WorldId, true, true, cxtshell.Shell.Owner!.WorldId);
-        }
-        else if (context is TankHurtContextMine cxtmine) {
-            if (cxtmine.MineExplosion.Owner is PlayerTank player)
-                Client.SyncDamage(WorldId, true, true, player.PlayerId);
-            else if (cxtmine.MineExplosion.Owner is not null)
-                Client.SyncDamage(WorldId, true, true, cxtmine.MineExplosion.Owner!.WorldId);
-        }
-        else {
-            Client.SyncDamage(WorldId, false, false);
-        }
-
-        void doTextPopup() {
-            var part = GameHandler.Particles.MakeParticle(Position3D + new Vector3(0, 15, 0),
-                TankGame.GameLanguage.Hit);
-
-            part.IsIn2DSpace = true;
-            part.ToScreenSpace = true;
-
-            // Switch on the context the tank got hurt on.
-            part.Color = context switch {
-                TankHurtContextMine thcm => thcm.MineExplosion.Owner switch {
-                    PlayerTank pl => PlayerID.PlayerTankColors[pl.PlayerType].ToColor(),
-                    AITank ai => AITank.TankDestructionColors[ai.AiTankType],
-                    _ => part.Color,
-                },
-
-                TankHurtContextShell thcs => thcs.Shell.Owner switch {
-                    PlayerTank pl => PlayerID.PlayerTankColors[pl.PlayerType].ToColor(),
-                    AITank ai => AITank.TankDestructionColors[ai.AiTankType],
-                    _ => part.Color,
-                },
-                _ => part.Color,
-            };
-            part.HasAddativeBlending = false;
-            part.Origin2D = FontGlobals.RebirthFont.MeasureString(TankGame.GameLanguage.Hit) / 2;
-            part.Scale = new Vector3(Vector2.One.ToResolution(), 1);
-            part.Alpha = 0;
-
-            // TODO: Fix layering bullshit.
-            part.Layer = 1;
-
-            var origPos = part.Position;
-            var speed = 0.5f;
-            float height = 5f;
-
-            part.UniqueBehavior = (a) => {
-                var sin = MathF.Sin(RuntimeData.RunTime * speed) * height;
-                part.Position.Y = origPos.Y + sin * RuntimeData.DeltaTime;
-
-                if (a.LifeTime > 90)
-                    GeometryUtils.Add(ref a.Scale, -0.05f * RuntimeData.DeltaTime);
-
-                height -= 0.02f;
-
-                // ChatSystem.SendMessage(sin.ToString(), Color.White);
-
-                if (a.Scale.X < 0)
-                    a.Destroy();
-            };
-            part.UniqueDraw = particle => {
-                DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, particle.Text,
-                    MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(particle.Position),
-                        CameraGlobals.GameView, CameraGlobals.GameProjection),
-                    particle.Color, Color.White, new(particle.Scale.X, particle.Scale.Y), 0f, Anchor.Center);
-            };
-        }
-
-        doTextPopup();
-
-        if (Properties.Armor is not null) {
-            if (Properties.Armor.HitPoints > 0) {
-                Properties.Armor.HitPoints--;
-                var ding = SoundPlayer.PlaySoundInstance(
-                    $"Assets/sounds/armor_ding_{Client.ClientRandom.Next(1, 3)}.ogg", SoundContext.Effect,
-                    gameplaySound: true);
-                ding.Instance.Pitch = Client.ClientRandom.NextFloat(-0.1f, 0.1f);
-                OnDamage?.Invoke(this, Properties.Armor.HitPoints == 0, context);
-                if (this is not AITank ai) 
-                    return;
-                
-                for (int i = 0; i < ModLoader.ModTanks.Length; i++)
-                    if (ai.AiTankType == ModLoader.ModTanks[i].Type) 
-                        ModLoader.ModTanks[i].TakeDamage(ai, Properties.Armor.HitPoints == 0, context);
-
-                return;
-            }
-        }
+        Color popupColor;
         
-        if (this is AITank _ai) {
-            for (int i = 0; i < ModLoader.ModTanks.Length; i++)
-                if (_ai.AiTankType == ModLoader.ModTanks[i].Type) {
-                    ModLoader.ModTanks[i].TakeDamage(_ai, true, context);
-                }
+        popupColor = context.Source is not null ? context.Source switch {
+            PlayerTank pl => PlayerID.PlayerTankColors[pl.PlayerType],
+            AITank ai => AITank.TankDestructionColors[ai.AiTankType],
+            _ => Color.White
+        } : (colorOverride is null ? Color.White : colorOverride.Value);
+
+        if (netSend)
+            Client.SyncDamage(WorldId, popupColor);
+
+        DoDamageTextPopup(popupColor);
+
+        bool willDestroy = true;
+
+        // this method returns 0 if Armor is null
+        if (Properties.SafeGetArmorHitPoints() > 0) {
+            Properties.Armor!.HitPoints--;
+            var ding = SoundPlayer.PlaySoundInstance(
+                $"Assets/sounds/armor_ding_{Client.ClientRandom.Next(1, 3)}.ogg", SoundContext.Effect,
+                gameplaySound: true);
+
+            ding.Instance.Pitch = Client.ClientRandom.NextFloat(-0.1f, 0.1f);
+            OnDamage?.Invoke(this, Properties.Armor.HitPoints == 0, context);
+
+            willDestroy = false;
         }
 
-        OnDamage?.Invoke(this, true, context);
-        Destroy(context);
-    }
+        if (this is AITank aiTank)
+            aiTank.ModdedData?.TakeDamage(willDestroy, context);
 
+        OnDamage?.Invoke(this, willDestroy, context);
+
+        if (willDestroy)
+            Destroy(context, netSend);
+    }
+    public void DoDamageTextPopup(Color color) {
+        var part = GameHandler.Particles.MakeParticle(Position3D + new Vector3(0, 15, 0),
+            TankGame.GameLanguage.Hit);
+
+        part.IsIn2DSpace = true;
+        part.ToScreenSpace = true;
+
+        part.Color = color;
+
+        part.HasAddativeBlending = false;
+        part.Origin2D = FontGlobals.RebirthFont.MeasureString(TankGame.GameLanguage.Hit) / 2;
+        part.Scale = new Vector3(Vector2.One.ToResolution(), 1);
+        part.Alpha = 0;
+
+        // TODO: Fix layering bullshit.
+        part.Layer = 1;
+
+        var origPos = part.Position;
+        var speed = 0.5f;
+        float height = 5f;
+
+        part.UniqueBehavior = (a) => {
+            var sin = MathF.Sin(RuntimeData.RunTime * speed) * height;
+            part.Position.Y = origPos.Y + sin * RuntimeData.DeltaTime;
+
+            if (a.LifeTime > 90)
+                GeometryUtils.Add(ref a.Scale, -0.05f * RuntimeData.DeltaTime);
+
+            height -= 0.02f;
+
+            // ChatSystem.SendMessage(sin.ToString(), Color.White);
+
+            if (a.Scale.X < 0)
+                a.Destroy();
+        };
+        part.UniqueDraw = particle => {
+            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, particle.Text,
+                MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(particle.Position),
+                    CameraGlobals.GameView, CameraGlobals.GameProjection),
+                particle.Color, Color.White, new(particle.Scale.X, particle.Scale.Y), 0f, Anchor.Center);
+        };
+    }
     /// <summary>Destroy this <see cref="Tank"/>.</summary>
-    public virtual void Destroy(ITankHurtContext context) {
+    public virtual void Destroy(ITankHurtContext context, bool netSend) {
         CampaignGlobals.OnMissionStart -= OnMissionStart;
 
         // i think this is right? | (Probably, a destroyed tank is a dead tank!)
@@ -650,110 +589,64 @@ public abstract class Tank {
         const string tankDestroySound0 = "Assets/sounds/tnk_destroy.ogg";
         SoundPlayer.PlaySoundInstance(tankDestroySound0, SoundContext.Effect, 0.2f, gameplaySound: true);
 
-        switch (this) {
-            case AITank t: {
-                const string tankDestroySound1 = "Assets/sounds/tnk_destroy_enemy.ogg";
-                SoundPlayer.PlaySoundInstance(tankDestroySound1, SoundContext.Effect, 0.3f, gameplaySound: true);
-
-                var aiDeathMark = new TankDeathMark(TankDeathMark.CheckColor.White) {
-                    Position = Position3D + new Vector3(0, 0.1f, 0),
-                };
-
-                aiDeathMark.StoredTank = new TankTemplate {
-                    AiTier = t.AiTankType,
-                    IsPlayer = false,
-                    Position = aiDeathMark.Position.FlattenZ(),
-                    Rotation = t.TankRotation,
-                    Team = t.Team,
-                };
-
-                break;
-            }
-            case PlayerTank p: {
-                var c = p.PlayerType switch {
-                    PlayerID.Blue => TankDeathMark.CheckColor.Blue,
-                    PlayerID.Red => TankDeathMark.CheckColor.Red,
-                    PlayerID.Green => TankDeathMark.CheckColor.Green,
-                    PlayerID.Yellow => TankDeathMark.CheckColor.Yellow, // TODO: change these colors.
-                    _ => throw new Exception($"Player Death Mark for colour {p.PlayerType} is not supported."),
-                };
-
-                var playerDeathMark = new TankDeathMark(c) {
-                    Position = Position3D + new Vector3(0, 0.1f, 0),
-                };
-
-                playerDeathMark.StoredTank = new TankTemplate {
-                    IsPlayer = true,
-                    Position = playerDeathMark.Position.FlattenZ(),
-                    Rotation = p.TankRotation,
-                    Team = p.Team,
-                    PlayerType = p.PlayerType,
-                };
-                break;
-            }
-        }
-
         Properties.Armor?.Remove();
-        Properties.Armor = null;
 
-        void doDestructionFx() {
-            for (int i = 0; i < 12; i++) {
-                var tex = GameResources.GetGameResource<Texture2D>(Client.ClientRandom.Next(0, 2) == 0
-                    ? "Assets/textures/misc/tank_rock"
-                    : "Assets/textures/misc/tank_rock_2");
-
-                var particle = GameHandler.Particles.MakeParticle(Position3D, tex);
-
-                particle.HasAddativeBlending = false;
-
-                var vel = new Vector3(Client.ClientRandom.NextFloat(-3, 3), Client.ClientRandom.NextFloat(3, 6),
-                    Client.ClientRandom.NextFloat(-3, 3));
-
-                particle.Roll = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
-
-                particle.Scale = new(0.55f);
-
-                particle.Color = Properties.DestructionColor;
-
-                particle.UniqueBehavior = particle => { // Hide local var from outer scope with same name.
-                    particle.Pitch += MathF.Sin(particle.Position.Length() / 10) * RuntimeData.DeltaTime;
-                    vel.Y -= 0.2f;
-                    particle.Position += vel * RuntimeData.DeltaTime;
-                    particle.Alpha -= 0.025f * RuntimeData.DeltaTime;
-
-                    if (particle.Alpha <= 0f)
-                        particle.Destroy();
-                };
-            }
-
-            var explosionParticle = GameHandler.Particles.MakeParticle(Position3D,
-                GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
-
-            explosionParticle.Color = Color.Yellow * 0.75f;
-
-            explosionParticle.ToScreenSpace = true;
-
-            explosionParticle.Scale = new(50f);
-            explosionParticle.TextureScale = new(4f);
-
-            explosionParticle.HasAddativeBlending = true;
-
-            explosionParticle.IsIn2DSpace = true;
-
-            explosionParticle.UniqueBehavior = (p) => {
-                GeometryUtils.Add(ref p.Scale, -0.3f * RuntimeData.DeltaTime);
-                p.Alpha -= 0.06f * RuntimeData.DeltaTime;
-                if (p.Scale.X <= 0f)
-                    p.Destroy();
-            };
-            GameHandler.Particles.MakeSmallExplosion(Position3D, 15, 20, 1.3f, 15);
-        }
-
-        doDestructionFx();
+        DoDestructionEffects();
 
         Remove(false);
     }
+    public void DoDestructionEffects() {
+        for (int i = 0; i < 12; i++) {
+            var tex = GameResources.GetGameResource<Texture2D>(Client.ClientRandom.Next(0, 2) == 0
+                ? "Assets/textures/misc/tank_rock"
+                : "Assets/textures/misc/tank_rock_2");
 
+            var particle = GameHandler.Particles.MakeParticle(Position3D, tex);
+
+            particle.HasAddativeBlending = false;
+
+            var vel = new Vector3(Client.ClientRandom.NextFloat(-3, 3), Client.ClientRandom.NextFloat(3, 6),
+                Client.ClientRandom.NextFloat(-3, 3));
+
+            particle.Roll = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
+
+            particle.Scale = new(0.55f);
+
+            particle.Color = Properties.DestructionColor;
+
+            particle.UniqueBehavior = particle => { // Hide local var from outer scope with same name.
+                particle.Pitch += MathF.Sin(particle.Position.Length() / 10) * RuntimeData.DeltaTime;
+                vel.Y -= 0.2f;
+                particle.Position += vel * RuntimeData.DeltaTime;
+                particle.Alpha -= 0.025f * RuntimeData.DeltaTime;
+
+                if (particle.Alpha <= 0f)
+                    particle.Destroy();
+            };
+        }
+
+        var explosionParticle = GameHandler.Particles.MakeParticle(Position3D,
+            GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
+
+        explosionParticle.Color = Color.Yellow * 0.75f;
+
+        explosionParticle.ToScreenSpace = true;
+
+        explosionParticle.Scale = new(50f);
+        explosionParticle.TextureScale = new(4f);
+
+        explosionParticle.HasAddativeBlending = true;
+
+        explosionParticle.IsIn2DSpace = true;
+
+        explosionParticle.UniqueBehavior = (p) => {
+            GeometryUtils.Add(ref p.Scale, -0.3f * RuntimeData.DeltaTime);
+            p.Alpha -= 0.06f * RuntimeData.DeltaTime;
+            if (p.Scale.X <= 0f)
+                p.Destroy();
+        };
+        GameHandler.Particles.MakeSmallExplosion(Position3D, 15, 20, 1.3f, 15);
+    }
     /// <summary>Lay a <see cref="TankFootprint"/> under this <see cref="Tank"/>.</summary>
     public virtual void LayFootprint(bool alt) {
         if (!Properties.CanLayTread)
@@ -780,14 +673,12 @@ public abstract class Tank {
             var shell = new Shell(TurretPosition, new Vector2(-new2d.X, new2d.Y) * Properties.ShellSpeed,
                 Properties.ShellType, this, Properties.RicochetCount, homing: Properties.ShellHoming);
 
-            OnShoot?.Invoke(this, ref shell);
+            OnShoot?.Invoke(this, shell);
 
-            if (this is AITank ai) {
-                for (int j = 0; j < ModLoader.ModTanks.Length; j++)
-                    if (ai.AiTankType == ModLoader.ModTanks[j].Type)
-                        ModLoader.ModTanks[j].Shoot(ai, ref shell);
-            }
+            if (this is AITank ai)
+                ai.ModdedData?.Shoot(shell);
 
+            // only send this code once for the shooting player
             if (this is PlayerTank pt) {
                 if (NetPlay.IsClientMatched(pt.PlayerId))
                     Client.SyncShellFire(shell);
@@ -795,7 +686,8 @@ public abstract class Tank {
             else
                 Client.SyncShellFire(shell);
         }
-        DoShootParticles(TurretPosition3D);
+
+        DoShootParticles();
 
         // theoretical "recoil" velocity
         // idea: separate recoil velocity from movement velocity
@@ -840,10 +732,9 @@ public abstract class Tank {
 
         _oldShellLimit = Properties.ShellLimit;
     }
-
-    public void DoShootParticles(Vector3 position) {
+    public void DoShootParticles() {
         if (!CameraGlobals.IsUsingPOVCamera) {
-            var hit = GameHandler.Particles.MakeParticle(position,
+            var hit = GameHandler.Particles.MakeParticle(TurretPosition3D,
                 GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
 
             hit.Pitch = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
@@ -860,7 +751,7 @@ public abstract class Tank {
         Particle smoke;
 
         if (CameraGlobals.IsUsingPOVCamera) {
-            smoke = GameHandler.Particles.MakeParticle(position,
+            smoke = GameHandler.Particles.MakeParticle(TurretPosition3D,
                 ModelResources.Smoke.Asset,
                 GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
 
@@ -869,7 +760,7 @@ public abstract class Tank {
             smoke.HasAddativeBlending = false;
         }
         else {
-            smoke = GameHandler.Particles.MakeParticle(position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
+            smoke = GameHandler.Particles.MakeParticle(TurretPosition3D, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
 
             smoke.Roll = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
@@ -920,12 +811,10 @@ public abstract class Tank {
         else
             Client.SyncMinePlace(mine.Position, mine.DetonateTime, WorldId);
 
-        OnLayMine?.Invoke(this, ref mine);
-        if (this is AITank ai) {
-            for (int i = 0; i < ModLoader.ModTanks.Length; i++)
-                if (ai.AiTankType == ModLoader.ModTanks[i].Type)
-                    ModLoader.ModTanks[i].LayMine(ai, ref mine);
-        }
+        OnLayMine?.Invoke(this, mine);
+
+        if (this is AITank ai)
+            ai.ModdedData?.LayMine(mine);
     }
 
     public virtual void Render() {

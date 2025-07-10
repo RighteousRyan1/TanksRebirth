@@ -50,11 +50,11 @@ public static class GameUI
     // TODO: make rect scissor work -> get powerups to be pickupable
     private static bool _initialized;
 
-    internal static Vector2 QuitButtonSize = new Vector2(500, 150);
-    internal static Vector2 OptionsButtonSize = new Vector2(500, 150);
+    internal static Vector2 QuitButtonSize = new(500, 150);
+    internal static Vector2 OptionsButtonSize = new(500, 150);
 
-    internal static Vector2 QuitButtonPos = new Vector2(700, 850);
-    internal static Vector2 OptionsButtonPos = new Vector2(700, 600);
+    internal static Vector2 QuitButtonPos = new(700, 850);
+    internal static Vector2 OptionsButtonPos = new(700, 600);
 
     internal static void Initialize()
     {
@@ -212,13 +212,11 @@ public static class GameUI
         {
             if (CampaignCompleteUI.IsViewingResults)
                 return;
-            if (InOptions)
-            {
+            if (InOptions) {
                 HandleBackButton();
                 return;
             }
-            else if (!MainMenuUI.Active)
-            {
+            else if (!MainMenuUI.Active) {
                 Paused = !Paused;
 
                 if (CampaignGlobals.InMission) {
@@ -227,6 +225,11 @@ public static class GameUI
                     else
                         TankMusicSystem.ResumeAll();
                 }
+
+                if (Paused)
+                    IntermissionSystem.TryPauseAll();
+                else
+                    IntermissionSystem.TryResumeAll();
             }
 
             ResumeButton.IsVisible = Paused;
@@ -418,6 +421,7 @@ public static class GameUI
         // UIElement.ResizeAndRelocate();
     }
 
+    // i swear these are present elsewhere in the codebase
     private static int _newScroll;
     private static int _oldScroll;
 

@@ -7,6 +7,7 @@ using TanksRebirth.Internals;
 using Microsoft.Xna.Framework;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.Net;
+using TanksRebirth.Internals.Common;
 
 namespace TanksRebirth.GameContent.UI;
 
@@ -15,7 +16,16 @@ public static class GameSceneUI {
         // put any initialization logic here if needed
     }
     public static void DrawScores() {
-        DrawScore(PlayerID.PlayerTankColors[NetPlay.GetMyClientId()].ToColor(), PlayerTank.KillCounts[NetPlay.GetMyClientId()], WindowUtils.WindowHeight * 0.9f);
+        var drawCount = Client.IsConnected() ? Server.CurrentClientCount : 1;
+        for (int i = 0; i < drawCount; i++) {
+
+            float y = WindowUtils.WindowHeight * 0.9f;
+            bool flip = i % 2 != 0;
+
+            if (i >= 2) y -= WindowUtils.WindowHeight * 0.1f;
+
+            DrawScore(PlayerID.PlayerTankColors[i], PlayerTank.KillCounts[i], y, flipSide: flip, scale: 2f);
+        }
     }
     public static void DrawMissionInfoBar() {
         var font = FontGlobals.RebirthFontLarge;
@@ -46,69 +56,78 @@ public static class GameSceneUI {
     }
 
     // helpers
-
-    private static void DrawScore(Color color, int score, float y, float scale = 1f, float pertrusion = 90) {
-
+    private static void DrawScore(Color color, int score, float y, bool flipSide = false, float scale = 1f, float pertrusion = 90) {
         color = ColorUtils.ChangeColorBrightness(color, 0.25f);
         var brighterColor = ColorUtils.ChangeColorBrightness(color, 0.5f);
 
         // draw the trailing part.
 
         // how much of the texture to crop and repeat
-        var trim = 5;
+        var trim = 1;
         var inner = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/scoreboard_inner");
         var outer = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/scoreboard_outer");
 
-        // invert pertrusion since anchor doesn't want to behave properly
+        var pertrusionReal = flipSide ? WindowUtils.WindowWidth - pertrusion : pertrusion;
+        var outerPadding = flipSide ? WindowUtils.WindowWidth - pertrusion : 0;
+
+        scale = scale.ToResolutionY();
+
+        var pertrusionScaling = new Vector2(pertrusion, scale);
+
         DrawUtils.DrawTextureWithShadow(TankGame.SpriteRenderer, outer,
-    new Vector2(-pertrusion.ToResolutionX(), y),
+    new Vector2(outerPadding, y),
     shadowDir: Vector2.UnitY,
     color: brighterColor,
-    scale: new Vector2(scale * 2 * (pertrusion / trim), scale * 2).ToResolution(),
-    alpha: 0.8f,
+    scale: pertrusionScaling,
+    alpha: 0.9f,
     Anchor.LeftCenter,
-    flip: false,
+    flip: !flipSide ? SpriteEffects.FlipHorizontally : SpriteEffects.None,
     rotation: 0f,
-    shadowAlpha: 0.5f, shadowDistScale: 0.5f, srcRect: new(outer.Width - trim, 0, trim, outer.Height));
+    shadowAlpha: 0.5f, shadowDistScale: 0.5f, 
+    srcRect: new(outer.Width - trim, 0, trim, outer.Height));
 
         DrawUtils.DrawTextureWithShadow(TankGame.SpriteRenderer, inner,
-    new Vector2(-pertrusion.ToResolutionX(), y),
+    new Vector2(outerPadding, y),
     shadowDir: Vector2.UnitY,
     color: Color.White,
-    scale: new Vector2(scale * 2 * (pertrusion / trim), scale * 2).ToResolution(),
-    alpha: 0.8f,
+    scale: pertrusionScaling,
+    alpha: 0.9f,
     Anchor.LeftCenter,
-    flip: false,
+    flip: !flipSide ? SpriteEffects.FlipHorizontally : SpriteEffects.None,
     rotation: 0f,
-    shadowAlpha: 0f, shadowDistScale: 0.5f, srcRect: new(inner.Width - trim, 0, trim, inner.Height));
+    shadowAlpha: 0f, shadowDistScale: 0.5f, 
+    srcRect: new(inner.Width - trim, 0, trim, inner.Height));
 
         // draw the actual score thingy
 
         DrawUtils.DrawTextureWithShadow(TankGame.SpriteRenderer, outer,
-    new Vector2(pertrusion.ToResolutionX(), y),
+    new Vector2(pertrusionReal, y),
     shadowDir: Vector2.UnitY,
     color: brighterColor,
-    scale: new Vector2(scale * 2).ToResolution(),
-    alpha: 0.8f,
-    Anchor.LeftCenter,
-    flip: true,
+    scale: new Vector2(scale),
+    alpha: 0.9f,
+    flipSide ? Anchor.RightCenter : Anchor.LeftCenter,
+    flip: !flipSide ? SpriteEffects.FlipHorizontally : SpriteEffects.None,
     shadowAlpha: 0.5f, shadowDistScale: 0.5f);
         
         DrawUtils.DrawTextureWithShadow(TankGame.SpriteRenderer, inner,
-    new Vector2(pertrusion.ToResolutionX(), y),
+    new Vector2(pertrusionReal, y),
     shadowDir: Vector2.UnitY,
     color: Color.White,
-    scale: new Vector2(scale * 2).ToResolution(),
-    alpha: 0.8f,
-    Anchor.LeftCenter,
-    flip: true,
+    scale: new Vector2(scale),
+    alpha: 0.9f,
+    flipSide ? Anchor.RightCenter : Anchor.LeftCenter,
+    flip: !flipSide ? SpriteEffects.FlipHorizontally : SpriteEffects.None,
     shadowAlpha: 0f, shadowDistScale: 0.5f);
 
-        DrawUtils.DrawBorderedStringWithShadow(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, new Vector2((pertrusion - 10).ToResolutionX(),
-            y - 14f.ToResolutionY() * scale),
-            Vector2.One, score.ToString(), brighterColor, color, new Vector2(0.675f * scale).ToResolution(), 1f, shadowAlpha: 0.5f);
+        DrawUtils.DrawBorderedStringWithShadow(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, 
+            // draws the text on the right side of the screen
+            new Vector2(flipSide ? pertrusionReal + 10 : pertrusionReal - 10,
+            y - 7f * scale),
+            Vector2.One, score.ToString(), brighterColor, color, new Vector2(0.375f * scale), 1f, shadowAlpha: 0.5f);
     }
 
+    // pretty sure this doesn't work.
     private static Texture2D GenerateScoreboard(Color color) {
         var scoreboard = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/scoreboard");
 

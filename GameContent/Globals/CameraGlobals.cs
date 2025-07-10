@@ -10,6 +10,7 @@ using TanksRebirth.GameContent.UI;
 using TanksRebirth.Internals.Common;
 using TanksRebirth.Net;
 using TanksRebirth.Graphics.Cameras;
+using System.Linq;
 
 namespace TanksRebirth.GameContent.Globals;
 
@@ -114,7 +115,7 @@ public static class CameraGlobals {
                 GameView = RebirthFreecam.View;
                 GameProjection = RebirthFreecam.Projection;
             }
-            if (Difficulties.Types["POV"]) {
+            if (Difficulties.Types["POV"] && !MainMenuUI.Active) {
                 if (GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()] is not null && !GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()].Dead) {
                     SpectatorId = NetPlay.GetMyClientId();
                     POVCameraPosition = GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()].Position.ExpandZ();
@@ -214,17 +215,15 @@ public static class CameraGlobals {
         }
     }
     public static int SpectateValidTank(int id, bool increase) {
-        var arr = GameHandler.AllPlayerTanks;
+        var arr = GameHandler.AllPlayerTanks.Where(x => x is not null).ToArray();
 
         var newId = id + (increase ? 1 : -1);
 
-        if (newId < 0)
-            return arr.Length - 1;
-        else if (newId >= arr.Length)
-            return 0;
+        if (newId < 0) newId = arr.Length - 1;
+        else if (newId >= arr.Length) newId = 0;
 
-        if (arr[newId] is null || arr[newId].Dead)
-            return SpectateValidTank(newId, increase);
+        if (arr[newId].Dead)
+            return SpectateValidTank(newId, increase); // this should just return the only player then...?
         else return newId;
     }
 }

@@ -84,6 +84,12 @@ public static class IntermissionSystem {
         _cutForLength = new Rectangle(31, 0, 1, BonusBannerBase.Height);
     }
     public static void InitializeAnmiations() {
+
+        TankGame.OnFocusLost += PauseIntermissionSounds;
+        TankGame.OnFocusRegained += ResumeIntermissionSounds;
+        GameUI.Pause.OnPress += () => {
+        };
+
         IntermissionHandler.Initialize();
         // should this be where the animator is re-instantiated?
         TextAnimatorSmall = Animator.Create()
@@ -130,6 +136,37 @@ public static class IntermissionSystem {
         IntermissionAnimator.OnKeyFrameFinish += DoMidAnimationActions;
     }
 
+    public static void TryPauseAll() {
+        if (_snareDrums != null)
+            if (_snareDrums.IsPlaying())
+                _snareDrums.Pause();
+        if (_startingFanfare != null)
+            if (_startingFanfare.IsPlaying())
+                _startingFanfare.Pause();
+        if (_bonusLifeGet != null)
+            if (_bonusLifeGet.IsPlaying())
+                _bonusLifeGet.Pause();
+    }
+    public static void TryResumeAll() {
+        if (_snareDrums != null)
+            if (_snareDrums.IsPaused())
+                _snareDrums.Play();
+        if (_startingFanfare != null)
+            if (_startingFanfare.IsPaused())
+                _startingFanfare.Play();
+        if (_bonusLifeGet != null)
+            if (_bonusLifeGet.IsPaused())
+                _bonusLifeGet.Play();
+    }
+
+    private static void ResumeIntermissionSounds(object? sender, nint e) {
+        TryResumeAll();
+    }
+
+    private static void PauseIntermissionSounds(object? sender, nint e) {
+        TryPauseAll();
+    }
+
     private static void DoActionsForBonusLife(KeyFrame frame) {
         var frameId = BonusLifeAnimator.KeyFrames.FindIndex(f => f.Equals(frame));
 
@@ -137,7 +174,7 @@ public static class IntermissionSystem {
 
         if (frameId == 0) {
             var lifeget = "Assets/music/fanfares/life_get.ogg";
-            SoundPlayer.PlaySoundInstance(lifeget, SoundContext.Effect, 0.5f, rememberMe: true);
+            _bonusLifeGet = SoundPlayer.PlaySoundInstance(lifeget, SoundContext.Effect, 0.5f, rememberMe: true);
             _forceBonusDrawToHeight = true;
         } 
         else if (frameId == 1) {
@@ -151,6 +188,7 @@ public static class IntermissionSystem {
         }
         else if (frameId == 4) {
             ShouldDrawBonusBanner = false;
+            MissionSetup();
         }
         else if (frameId == 5) {
             
@@ -227,14 +265,8 @@ public static class IntermissionSystem {
             ShouldFade = false;
             ShouldFadeIn = false;
 
-            if (Difficulties.Types["RandomizedTanks"]) {
-                if (CampaignGlobals.LoadedCampaign.CurrentMissionId == MainMenuUI.MissionCheckpoint
-                    && IntermissionHandler.LastResult != MissionEndContext.Lose) {
-                    CampaignGlobals.LoadedCampaign.CachedMissions[CampaignGlobals.LoadedCampaign.CurrentMissionId].Tanks
-                        = Difficulties.HijackTanks(CampaignGlobals.LoadedCampaign.CachedMissions[CampaignGlobals.LoadedCampaign.CurrentMissionId].Tanks);
-                }
-            }
-            CampaignGlobals.LoadedCampaign.SetupLoadedMission(GameHandler.AllPlayerTanks.Any(tnk => tnk != null && !tnk.Dead));
+            if (!ShouldDrawBonusBanner)
+                MissionSetup();
         }
         else if (frameId == 2 && !ShouldDrawBanner) {
             ShouldDrawBanner = true;
@@ -249,6 +281,7 @@ public static class IntermissionSystem {
             // tell the game to fade out to enter game scene view
             IsAwaitingNewMission = false;
             ShouldFade = true;
+
             // TODO: fix float interp
             if (PlayerTank.ClientTank is not null) {
                 // hacky using vectors for now.
@@ -260,6 +293,7 @@ public static class IntermissionSystem {
                 IntermissionHandler.ThirdPersonTransitionAnimation?.Run();
             }
             IntermissionHandler.BeginIntroSequence();
+            
             IntermissionHandler.CountdownAnimator?.Restart();
             IntermissionHandler.CountdownAnimator?.Run();
 
@@ -267,11 +301,25 @@ public static class IntermissionSystem {
             _forceBonusDrawToHeight = false;
         }
     }
+    public static void MissionSetup() {
+        if (Difficulties.Types["RandomizedTanks"]) {
+            if (CampaignGlobals.LoadedCampaign.CurrentMissionId == MainMenuUI.MissionCheckpoint
+                && IntermissionHandler.LastResult != MissionEndContext.Lose) {
+                CampaignGlobals.LoadedCampaign.CachedMissions[CampaignGlobals.LoadedCampaign.CurrentMissionId].Tanks
+                    = Difficulties.HijackTanks(CampaignGlobals.LoadedCampaign.CachedMissions[CampaignGlobals.LoadedCampaign.CurrentMissionId].Tanks);
+            }
+        }
+        CampaignGlobals.LoadedCampaign.SetupLoadedMission(GameHandler.AllPlayerTanks.Any(tnk => tnk != null && !tnk.Dead));
+    }
+    public static void SetMusic() {
+        var tune = "Assets/music/fanfares/mission_snare.ogg";
+        _snareDrums = SoundPlayer.PlaySoundInstance(tune, SoundContext.Music, 1f);
+    }
     public static void PrepareBuffers(GraphicsDevice device, SpriteBatch spriteBatch) {
-        RenderGlobals.EnsureRenderTargetOK(ref BackgroundBuffer, TankGame.Instance.GraphicsDevice, WindowUtils.WindowWidth, WindowUtils.WindowHeight);
-        RenderGlobals.EnsureRenderTargetOK(ref BannerBuffer, TankGame.Instance.GraphicsDevice, WindowUtils.WindowWidth, WindowUtils.WindowHeight / 2);
-        RenderGlobals.EnsureRenderTargetOK(ref BonusBannerBuffer, TankGame.Instance.GraphicsDevice, WindowUtils.WindowWidth, BonusBannerBase.Height * 2);
-        RenderGlobals.EnsureRenderTargetOK(ref BonusBannerTextBuffer, TankGame.Instance.GraphicsDevice, WindowUtils.WindowWidth, 125);
+        RenderGlobals.EnsureRenderTargetOK(ref BackgroundBuffer, device, WindowUtils.WindowWidth, WindowUtils.WindowHeight);
+        RenderGlobals.EnsureRenderTargetOK(ref BannerBuffer, device, WindowUtils.WindowWidth, WindowUtils.WindowHeight / 2);
+        RenderGlobals.EnsureRenderTargetOK(ref BonusBannerBuffer, device, WindowUtils.WindowWidth, BonusBannerBase.Height * 2);
+        RenderGlobals.EnsureRenderTargetOK(ref BonusBannerTextBuffer, device, WindowUtils.WindowWidth, 125);
 
         if (TankGame.Instance.IsActive) {
             // System.Diagnostics.Debug.WriteLine(TimeBlack);
@@ -341,8 +389,8 @@ public static class IntermissionSystem {
         for (int i = 0; i < count; i++) {
             var name = Client.IsConnected() ? Server.ConnectedClients[i].Name : string.Empty;
 
-            var brightPlayerColor = ColorUtils.ChangeColorBrightness(PlayerID.PlayerTankColors[i].ToColor(), 0.85f);
-            var brighterPlayerColor = ColorUtils.ChangeColorBrightness(PlayerID.PlayerTankColors[i].ToColor(), 0.25f);
+            var brightPlayerColor = ColorUtils.ChangeColorBrightness(PlayerID.PlayerTankColors[i], 0.85f);
+            var brighterPlayerColor = ColorUtils.ChangeColorBrightness(PlayerID.PlayerTankColors[i], 0.25f);
 
             var pos = new Vector2(WindowUtils.WindowWidth / (count + 1) * (i + 1), WindowUtils.WindowHeight / 2 + 375.ToResolutionY());
 
@@ -355,7 +403,7 @@ public static class IntermissionSystem {
                 lifeText,
                 lerpedColor,
                 // hacky or not?
-                PlayerID.PlayerTankColors[i].ToColor(),
+                PlayerID.PlayerTankColors[i],
                 Vector2.One.ToResolution() * (ShouldDrawBanner ? Vector2.One : BonusLifeAnimator.CurrentScale),
                 overallAlpha,
                 Anchor.Center, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 1f);
@@ -364,7 +412,7 @@ public static class IntermissionSystem {
                 pos - new Vector2(0, 75).ToResolution(),
                 Vector2.One,
                 name,
-                PlayerID.PlayerTankColors[i].ToColor(),
+                PlayerID.PlayerTankColors[i],
                 new Vector2(0.3f).ToResolution(),
                 overallAlpha,
                 Anchor.Center, shadowDistScale: 1.5f, shadowAlpha: 0.5f);
@@ -523,6 +571,11 @@ public static class IntermissionSystem {
 
     static float _renderY;
     static float _bannerScale = 2f;
+
+    static OggAudio _startingFanfare;
+    static OggAudio _bonusLifeGet;
+    static OggAudio _snareDrums;
+
     /// <summary>Renders the intermission.</summary>
     public static void Draw(SpriteBatch spriteBatch) {
         if (Alpha > 0f) {
@@ -619,7 +672,7 @@ public static class IntermissionSystem {
     }
     public static void PlayOpeningFanfare() {
         var missionStarting = "Assets/music/fanfares/mission_starting.ogg";
-        SoundPlayer.PlaySoundInstance(missionStarting, SoundContext.Effect, 0.8f);
+        _startingFanfare = SoundPlayer.PlaySoundInstance(missionStarting, SoundContext.Effect, 0.8f);
     }
     public static void DrawBlack(SpriteBatch spriteBatch) {
         BlackAlpha = MathHelper.Clamp(BlackAlpha, 0f, 1f);

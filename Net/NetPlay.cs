@@ -257,26 +257,13 @@ public class NetPlay {
                 break;
             case PacketID.TankDamage:
                 var hurtTankId = reader.GetInt();
-                var wasTank = reader.GetBool();
-                var wasPlayer = reader.GetBool();
-                var senderId = reader.GetInt();
 
-                /*if (GameHandler.AllTanks[hurtTankId] is PlayerTank player) {
-                    // checks if the damage recipient is themself
-                    if (IsClientMatched(hurtTankId)) {
+                var colorOverride = reader.GetColor();
 
-                    }
-                }*/
-                /*if (wasTank) {
-                    if (wasPlayer) {
-                        var tnkSender = GameHandler.AllPlayerTanks[senderId];
+                // why did i make it this way
+                TankHurtContextStandard context = new(null);
 
-
-                    } else {
-                        var tnkSender = GameHandler.AllTanks[senderId];
-                    }
-                }*/
-                GameHandler.AllTanks[hurtTankId]?.Damage(null);
+                GameHandler.AllTanks[hurtTankId]?.Damage(context, false, colorOverride);
                 break;
             case PacketID.ShellDestroy:
                 var ownerId = reader.GetInt();
@@ -288,7 +275,9 @@ public class NetPlay {
                 // FIXME? wait for results.
                 // TODO: see if this works.
 
-                var idAdjust = senderShellId + (Shell.AllShells.Count(x => x is not null) - senderShellCount);
+                var currentClientShellCount = Shell.AllShells.Count(x => x is not null);
+
+                var idAdjust = senderShellId + (currentClientShellCount - senderShellCount);
 
                 if (idAdjust < 0)
                     return;
@@ -303,8 +292,6 @@ public class NetPlay {
                         if (GameHandler.AllTanks[ownerId].OwnedShells.Length > ownerShellIndex)
                             if (GameHandler.AllTanks[ownerId].OwnedShells[ownerShellIndex] is not null)
                                 GameHandler.AllTanks[ownerId].OwnedShells[ownerShellIndex]?.Destroy((Shell.DestructionContext)cxt, wasSentByAnotherClient: true);*/
-
-
                 break;
             case PacketID.MineDetonate:
                 var destroyedMineId = reader.GetInt();
@@ -320,7 +307,7 @@ public class NetPlay {
 
                 // GameHandler.AllTanks[shellOwner].Shoot(true);
                 var shell = new Shell(shellPos, shellVel, shellType, GameHandler.AllTanks[shellOwner], ricochets: shellRicochets);
-                GameHandler.AllTanks[shellOwner].DoShootParticles(shell.Position3D);
+                GameHandler.AllTanks[shellOwner]?.DoShootParticles();
 
                 // ChatSystem.SendMessage($"Pos: {shell.Position} | Vel: {shell.Velocity}", Color.White);
                 break;
@@ -371,6 +358,12 @@ public class NetPlay {
 
                 IngamePing.CreateFromTankSender(loc, pingId, pid);
                 break;
+            case PacketID.SendAirplane:
+                var planePos = reader.GetVector2();
+                var planeVel = reader.GetVector2();
+
+                Airplane.SpawnPlaneWithSmokeGrenades(planePos, planeVel, true);
+                break;
             #endregion
             #region ConstantSends
             case PacketID.SyncPlayer:
@@ -412,6 +405,12 @@ public class NetPlay {
                 var lives = reader.GetInt();
 
                 PlayerTank.Lives[clid] = lives;
+                break;
+            case PacketID.SyncKills:
+                var clientid = reader.GetInt();
+                var kills = reader.GetInt();
+
+                PlayerTank.KillCounts[clientid] = kills;
                 break;
             case PacketID.SyncDifficulties:
                 for (int i = 0; i < Difficulties.Types.Count; i++) {
@@ -546,14 +545,10 @@ public class NetPlay {
                 break;
             case PacketID.TankDamage:
                 var hurtTankId = reader.GetInt();
-                var wasTank = reader.GetBool();
-                var wasPlayer = reader.GetBool();
-                var senderId = reader.GetInt();
+                var colorOverride = reader.GetColor();
 
                 message.Put(hurtTankId);
-                message.Put(wasTank);
-                message.Put(wasPlayer);
-                message.Put(senderId);
+                message.Put(colorOverride);
 
                 Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;
@@ -687,6 +682,15 @@ public class NetPlay {
 
                 Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;
+            case PacketID.SendAirplane:
+                var planePos = reader.GetVector2();
+                var planeVel = reader.GetVector2();
+
+                message.Put(planePos);
+                message.Put(planeVel);
+
+                Server.NetManager.SendToAll(message, deliveryMethod, peer);
+                break;
             #endregion
             #region ConstantSends
             case PacketID.SyncPlayer:
@@ -734,6 +738,15 @@ public class NetPlay {
 
                 message.Put(clid);
                 message.Put(lives);
+
+                Server.NetManager.SendToAll(message, deliveryMethod, peer);
+                break;
+            case PacketID.SyncKills:
+                var clientid = reader.GetInt();
+                var kills = reader.GetInt();
+
+                message.Put(clientid);
+                message.Put(kills);
 
                 Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;

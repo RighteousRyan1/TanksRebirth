@@ -40,6 +40,7 @@ using TanksRebirth.GameContent.Speedrunning;
 using TanksRebirth.GameContent.Cosmetics;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.GameContent.UI.LevelEditor;
+using TanksRebirth.Graphics.Shaders;
 
 namespace TanksRebirth;
 
@@ -522,6 +523,7 @@ public class TankGame : Game {
             SoundPlayer.SoundError();
         });
         PlaceSecrets();
+
         SceneManager.GameLight.Apply(false);
     }
     // FIXME: this method is a clusterfuck
@@ -606,7 +608,7 @@ public class TankGame : Game {
             CameraGlobals.Update();
         }
 
-        DoUpdate2(gameTime);
+        SubHandleLogic(gameTime);
 
         // AchievementsUI.UpdateBtns();
 
@@ -628,7 +630,7 @@ public class TankGame : Game {
     }
 
     // wtf is wrong with me btw this code is ass
-    private void DoUpdate2(GameTime gameTime) {
+    private void SubHandleLogic(GameTime gameTime) {
         // TODO: this
         IsFixedTimeStep = !Settings.Vsync || !RuntimeData.Interp;
 
@@ -763,6 +765,7 @@ public class TankGame : Game {
         SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: RenderGlobals.DefaultRasterizer);
 
         GameHandler.RenderUI();
+
         if (IsCrashInfoVisible) DrawErrorScreen();
 
         SpriteRenderer.End();
@@ -774,7 +777,7 @@ public class TankGame : Game {
 
         SpriteRenderer.Begin();
 
-        MainMenuUI.Render();
+        MainMenuUI.Render(SpriteRenderer);
         // i really wish i didn't have to draw this here.
         VanillaAchievementPopupHandler.DrawPopup(SpriteRenderer);
 

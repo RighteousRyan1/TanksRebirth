@@ -37,7 +37,7 @@ public class Explosion : IAITankDanger {
 
     /// <summary>Only merlin himself could decode why I use this... Use this number with any explosion-based calculations.</summary>
     public const float MAGIC_EXPLOSION_NUMBER = 9f;
-    private int _id;
+    public int Id { get; private set; }
 
     public float Scale;
     public float LingerDuration = 40f;
@@ -92,12 +92,10 @@ public class Explosion : IAITankDanger {
                 float rotation = 0f;
                 float rotationSpeed1 = 0.06f * RotationSpeed;
 
-                //var explScalar = (MAGIC_EXPLOSION_NUMBER - 3) * Scale;
-
                 var explScalar = MAGIC_EXPLOSION_NUMBER * Scale;
                 var lingerRandom = Client.ClientRandom.NextFloat(0.8f, 1.2f);
-                var position = Vector3.UnitY * -5000f;//Vector3.Transform(Vector3.UnitX * explScalar, Matrix.CreateFromYawPitchRoll(rotZ + rotation, 0, rotX) * Matrix.CreateTranslation(Position3D));
-                var particle = GameHandler.Particles.MakeExplosionFlameParticle(position, out var act, LingerDuration / 60f * lingerRandom);// * lingerRandom/*, scale / MAGIC_EXPLOSION_NUMBER * 1.1f*/);
+                var position = Vector3.UnitY * -5000f;
+                var particle = GameHandler.Particles.MakeExplosionFlameParticle(position, out var act, LingerDuration / 60f * lingerRandom);
 
                 // TODO: make particles face center of explosion
                 particle.UniqueBehavior = (a) => {
@@ -121,7 +119,7 @@ public class Explosion : IAITankDanger {
 
         SoundPlayer.PlaySoundInstance(destroysound, SoundContext.Effect, 1f, 0f, soundPitch, gameplaySound: true);
 
-        _id = index;
+        Id = index;
 
         Explosions[index] = this;
     }
@@ -142,13 +140,13 @@ public class Explosion : IAITankDanger {
             }
             foreach (var tank in GameHandler.AllTanks) {
                 if (tank is null || Vector2.Distance(tank.Position, Position) > Scale * MAGIC_EXPLOSION_NUMBER
-                    || tank.Dead || HasHit[tank.WorldId] || !tank.Properties.VulnerableToMines)
+                    || tank.Dead || HasHit[tank.WorldId] || tank.Properties.InvulnerableToMines)
                     continue;
                 HasHit[tank.WorldId] = true;
                 if (Owner is null)
-                    tank.Damage(new TankHurtContextOther(false, TankHurtContextOther.HurtContext.FromIngame, "Unowned Explosion", this));
+                    tank.Damage(new TankHurtContextOther(null, TankHurtContextOther.HurtContext.FromIngame, "Unowned Explosion"), true);
                 else if (Owner is not null) {
-                    tank.Damage(new TankHurtContextMine(this));
+                    tank.Damage(new TankHurtContextExplosion(this), true);
                 }
             }
         }
@@ -163,6 +161,6 @@ public class Explosion : IAITankDanger {
 
     public void Remove() {
         AITank.Dangers.Remove(this);
-        Explosions[_id] = null;
+        Explosions[Id] = null;
     }
 }

@@ -34,8 +34,7 @@ public class PlayerTank : Tank
     public static int MyTeam;
     public static int MyTankType;
     public static int StartingLives = 3;
-    // public static Dictionary<PlayerType, Dictionary<TankTier, int>> TanksKillDict = new(); // this campaign only!
-    public static Dictionary<int, int> TankKills = []; // this campaign only!
+    public static Dictionary<int, int> TankKills { get; set; } = []; // this campaign only!
     // questioning the validity of this struct but whatever
     public struct CampaignStats
     {
@@ -47,7 +46,7 @@ public class PlayerTank : Tank
     }
     public static CampaignStats PlayerStatistics;
     public static bool _drawShotPath;
-    public static int[] KillCounts = [0, 0, 0, 0];
+    public static int[] KillCounts { get; set; } = [0, 0, 0, 0];
     public int PlayerId { get; }
     public int PlayerType { get; }
 
@@ -106,25 +105,13 @@ public class PlayerTank : Tank
     }
     public void SwapTankTexture(Texture2D texture) => _tankTexture = texture;
     public PlayerTank(int playerType, bool isPlayerModel = true, int copyTier = -1) {
-        Model = isPlayerModel ? ModelResources.TankPlayer.Asset : ModelResources.TankPlayer.Asset;
+        Model = isPlayerModel ? ModelResources.TankPlayer.Asset : ModelResources.TankEnemy.Asset;
         if (copyTier == -1)
             _tankTexture = Assets[$"plrtank_" + PlayerID.Collection.GetKey(playerType)!.ToLower()];
         else {
             _tankTexture = Assets[$"tank_" + TankID.Collection.GetKey(copyTier)!.ToLower()];
-            var dummy = new AITank(copyTier, true, false);
 
-            // ugly hardcode fix lol - prevents nantuple instead of triple bounces
-            // maybe inefficient on memory
-            // TODO: should probably be written better
-
-
-            // TODO: hardcode hell. bad. suck. balls
-            if (Difficulties.Types["BulletHell"])
-                dummy.Properties.RicochetCount /= 3;
-
-            Properties = dummy.Properties;
-
-            dummy.Remove(true);
+            Properties = AIManager.GetAITankProperties(copyTier);
         }
 
         _isPlayerModel = isPlayerModel;
@@ -199,13 +186,7 @@ public class PlayerTank : Tank
         if (NetPlay.IsClientMatched(PlayerId))
             Client.SyncPlayerTank(this);
 
-        if (Dead)
-            return;
-
-        //CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
-        //Model.Root.Transform = World;
-
-        //Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
+        if (Dead) return;
 
         if (CampaignGlobals.InMission) {
             if (TargetTankRotation - TankRotation >= MathHelper.PiOver2) {
@@ -218,6 +199,7 @@ public class PlayerTank : Tank
             }
         }
 
+        // TODO: optimize?
         if (IsIngame) {
             if (NetPlay.IsClientMatched(PlayerId) && !IntermissionSystem.IsAwaitingNewMission) {
                 if (!Difficulties.Types["POV"] || LevelEditorUI.Active || MainMenuUI.Active) {
@@ -229,7 +211,7 @@ public class PlayerTank : Tank
                 }
                 else if (!GameUI.Paused) {
                     // if (DebugManager.IsFreecamEnabled && InputUtils.MouseRight) { } 
-                    if (!DebugManager.IsFreecamEnabled && !InputUtils.CanDetectClick()) {
+                    if (!DebugManager.IsFreecamEnabled && !InputUtils.CanDetectClick() && !controlMine.JustPressed) {
                         var mouseState = Mouse.GetState();
                         var screenCenter = new Point(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2);
 
@@ -271,12 +253,11 @@ public class PlayerTank : Tank
 
             if (CampaignGlobals.InMission && !LevelEditorUI.Active) {
                 if (NetPlay.IsClientMatched(PlayerId)) {
-                    if (InputUtils.CanDetectClick())
-                        if (!ChatSystem.ChatBoxHover && !ChatSystem.ActiveHandle && !GameUI.Paused)
+                    if (InputUtils.CanDetectClick()) {
+                        if (!ChatSystem.ChatBoxHover && !ChatSystem.ActiveHandle && !GameUI.Paused) {
                             Shoot(false);
-
-                    if (!Properties.Stationary)
-                        UpdatePlayerMovement();
+                        }
+                    }
                 }
             }
         }
@@ -284,9 +265,6 @@ public class PlayerTank : Tank
         timeSinceLastAction++;
 
         playerControl_isBindPressed = false;
-
-        //if (Client.IsConnected() && IsIngame)
-        //Client.SyncPlayer(this);
 
         oldPosition = Position;
     }
@@ -427,19 +405,13 @@ public class PlayerTank : Tank
 
         Velocity = Vector2.UnitY.Rotate(TankRotation) * Speed;
     }
-    public override void Destroy(ITankHurtContext context) {
+    public override void Destroy(ITankHurtContext context, bool netSend) {
         if (Client.IsConnected()) {
-            Tank culprit = this;
-            if (context is TankHurtContextMine thcm) {
-                if (thcm.MineExplosion.Owner is not null)
-                    culprit = thcm.MineExplosion.Owner;
-            }
-            else if (context is TankHurtContextShell thcs) {
-                if (thcs.Shell.Owner is not null)
-                    culprit = thcs.Shell.Owner;
-            }
             // maybe make a camera transition to said tank.
-            CameraGlobals.SpectatorId = CameraGlobals.SpectateValidTank(culprit.WorldId, true);
+            if (context.Source is not null)
+                CameraGlobals.SpectatorId = CameraGlobals.SpectateValidTank(context.Source.WorldId, true);
+
+            // only decements the lives on the destroyed player's system, where lives are synced across everyone at all times
             if (NetPlay.IsClientMatched(PlayerId)) {
                 Lives[PlayerId]--;
             }
@@ -447,35 +419,39 @@ public class PlayerTank : Tank
         else
             AddLives(-1);
 
-        if (context is not null) {
-            if (context.IsPlayer) {
-                // friendly fire counts as suicides lol
-                // this probably makes sense
-                TankGame.GameData.Suicides++;
-                PlayerStatistics.Suicides++;
-                // check if player id matches client id, if so, increment that player's kill count, then sync to the server
-                // TODO: convert TankHurtContext into a struct and use it here
-                // Will be used to track the reason of death and who caused the death, if any tank owns a shell or mine
-                //
-                // if (context.PlayerId == Client.PlayerId)
-                // {
-                //    PlayerTank.KillCount++;
-                //    Client.Send(new TankKillCountUpdateMessage(PlayerTank.KillCount)); 
-                //    not a bad idea actually
-            }
+        Remove(false);
+
+        var c = PlayerType switch {
+            PlayerID.Blue => TankDeathMark.CheckColor.Blue,
+            PlayerID.Red => TankDeathMark.CheckColor.Red,
+            PlayerID.Green => TankDeathMark.CheckColor.Green,
+            PlayerID.Yellow => TankDeathMark.CheckColor.Yellow, // TODO: change these colors.
+            _ => throw new Exception($"Player Death Mark for colour {PlayerType} is not supported."),
+        };
+
+        var playerDeathMark = new TankDeathMark(c) {
+            Position = Position3D + new Vector3(0, 0.1f, 0),
+        };
+
+        playerDeathMark.StoredTank = new TankTemplate {
+            IsPlayer = true,
+            Position = playerDeathMark.Position.FlattenZ(),
+            Rotation = TankRotation,
+            Team = Team,
+            PlayerType = PlayerType,
+        };
+
+        base.Destroy(context, netSend);
+
+        if (context.Source is not PlayerTank player) return;
+
+        // only increment these data values on the destroyed player's system
+        // ensure the source tank is 
+        if (NetPlay.IsClientMatched(player.PlayerId)) {
+            TankGame.GameData.Suicides++;
+            PlayerStatistics.Suicides++;
         }
         TankGame.GameData.Deaths++;
-
-        Remove(false);
-        base.Destroy(context);
-    }
-    public void UpdatePlayerMovement() {
-        if (!CampaignGlobals.InMission)
-            return;
-        //if (!controlDown.IsPressed && !controlUp.IsPressed && leftStick.Y == 0)
-        //Velocity.Y = 0;
-        //if (!controlLeft.IsPressed && !controlRight.IsPressed && leftStick.X == 0)
-        //Velocity.X = 0;
     }
     private void DrawShootPath() {
         const int MAX_PATH_UNITS = 10000;
@@ -632,7 +608,7 @@ public class PlayerTank : Tank
         bool needClarification = CampaignGlobals.ShouldMissionsProgress 
             && !CampaignGlobals.InMission && IsIngame && !IntermissionSystem.IsAwaitingNewMission && MainMenuUI.MenuState == MainMenuUI.UIState.Mulitplayer;
 
-        var playerColor = PlayerID.PlayerTankColors[PlayerType].ToColor();
+        var playerColor = PlayerID.PlayerTankColors[PlayerType];
         var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 125).ToResolution(); ;
 
         bool flip = false;
@@ -669,7 +645,6 @@ public class PlayerTank : Tank
 
         Properties.Armor?.Render();
     }
-
     public override string ToString()
         => $"pos: {Position} | vel: {Velocity} | dead: {Dead} | rotation: {TankRotation} | OwnedBullets: {OwnedShellCount}";
 }

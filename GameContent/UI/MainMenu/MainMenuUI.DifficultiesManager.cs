@@ -79,6 +79,7 @@ public static partial class MainMenuUI {
         DisguiseMode.Text = "Disguise: " + TankID.Collection.GetKey(Difficulties.DisguiseValue);
         Monochrome.Text = "Monochrome: " + TankID.Collection.GetKey(Difficulties.MonochromeValue);
         RandomizedTanks.Text = $"Randomized Tanks\nLower: {TankID.Collection.GetKey(Difficulties.RandomTanksLower)} | Upper: {TankID.Collection.GetKey(Difficulties.RandomTanksUpper)}";
+        Difficulties.Types["RandomizedTanks"] = Difficulties.RandomTanksLower > 0 && Difficulties.RandomTanksUpper > 0;
         if (MenuState == UIState.Mulitplayer) {
             if (DebugManager.DebuggingEnabled) {
                 if (InputUtils.AreKeysJustPressed(Keys.Q, Keys.W)) {

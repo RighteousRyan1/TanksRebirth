@@ -42,7 +42,7 @@ public static class DiscordRichPresence {
         _client?.SetPresence(_rp);
         _client?.Initialize();
     }
-    private static string? tnkCnt;
+    static string? tnkCnt;
     public static void Update() {
         if (!_client!.IsDisposed) {
             static string getArticle(string word) {

@@ -2,16 +2,18 @@ using FontStashSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Octokit;
 using System.Collections.Generic;
+using System.Linq;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Speedrunning;
-using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.Framework.Animation;
 using TanksRebirth.Internals.Common.GameUI;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Internals.UI;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace TanksRebirth.GameContent.UI.MainMenu;
 
@@ -22,11 +24,14 @@ public static partial class MainMenuUI
     public static RenderTarget2D TextTarget;
 
     private static readonly string tanksMessage =
-    $"Tanks Rebirth ALPHA v{RuntimeData.GameVersion}" +
-    $"\nOriginal game and assets developed by Nintendo" +
-    $"\nProgrammed by RighteousRyan" +
-    $"\nArt and graphics by BigKitty1011" +
-    $"\nTANKS to all our contributors!";
+        $"Tanks Rebirth ALPHA v{string.Join('.', RuntimeData.GameVersion.ToString().TrimStart('v', 'V').Split('.').Take(2))}" +
+        $"\nOriginal game and assets developed by Nintendo" +
+        $"\nProgrammed by RighteousRyan" +
+        $"\nArt and graphics by BigKitty1011" +
+        $"\nTANKS to all of our contributors, including:\n" +
+        $"\nDottik, Arram, TheGoldfishKing, LolXD87," +
+        $"\nAnotherGuy, Dymkar, Arctan Dev, 4mbro0s3-2," +
+        $"\nvsjoqvist, Tomat, nakamurash, timweh, Guthen";
     // not always properly set, fix later
     // this code is becoming so shit i want to vomit but i don't know any better
     public enum UIState {
@@ -85,10 +90,6 @@ public static partial class MainMenuUI
     public static UITextButton StatsMenu;
 
     public static void InitializeMain(SpriteFontBase font) {
-        var presentationParams = TankGame.Instance.GraphicsDevice.PresentationParameters;
-        TextTarget = new(TankGame.Instance.GraphicsDevice, 420, 140, false, 
-            presentationParams.BackBufferFormat, presentationParams.DepthStencilFormat, 0, RenderTargetUsage.DiscardContents);
-        
         PlayButton = new(TankGame.GameLanguage.Play, font, Color.WhiteSmoke) {
             IsVisible = true,
         };
@@ -192,34 +193,48 @@ public static partial class MainMenuUI
     // the code is horrid but at least it's separated now
     // TODO: make rainbow work, ask lolxd or someone knowledgeable
     public static void PrepareTextBuffers(GraphicsDevice device, SpriteBatch spriteBatch) {
+        RenderGlobals.EnsureRenderTargetOK(ref TextTarget, device, (int)420.ToResolutionX(), (int)300.ToResolutionY());
+
         device.SetRenderTarget(TextTarget);
 
         device.Clear(RenderGlobals.BackBufferColor);
 
+        var bottomLeft = Anchor.BottomLeft.GetTextureAnchor(TextTarget);
+
+        var messageScale = new Vector2(0.8f).ToResolution();
+        var font = FontGlobals.RebirthFont;
+
         spriteBatch.Begin();
-        DrawUtils.DrawTextWithBorder(spriteBatch, FontGlobals.RebirthFont, tanksMessage, Vector2.Zero,
-            Color.White, Color.Black, new Vector2(0.8f).ToResolution(), 0f, Anchor.TopLeft, 0.5f);
+
+        DrawUtils.DrawStringBorderOnly(spriteBatch, font, tanksMessage, bottomLeft, Color.Black, messageScale, 0f, Anchor.BottomLeft, borderThickness: 0.75f);
+
+        spriteBatch.End();
+
+        spriteBatch.Begin();
+        spriteBatch.DrawString(font, tanksMessage, bottomLeft, Color.White, messageScale, origin: Anchor.BottomLeft.GetAnchor(font.MeasureString(tanksMessage)));
+        //DrawUtils.DrawTextWithBorder(spriteBatch, FontGlobals.RebirthFont, tanksMessage, Anchor.BottomLeft.GetTextureAnchor(TextTarget),
+        //Color.White, Color.Black, new Vector2(0.8f).ToResolution(), 0f, Anchor.BottomLeft, 0.5f);
         spriteBatch.End();
 
         device.SetRenderTarget(null);
     }
-    public static void RenderGeneralUI() {
+    public static void RenderGeneralUI(SpriteBatch spriteBatch) {
         if (SteamworksUtils.IsInitialized)
             TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, $"STEAM LAUNCH!\nLogged in as '{SteamworksUtils.MyUsername}'\n" +
                 $"You have {SteamworksUtils.FriendsCount} friends.", Vector2.One * 8, Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
 
-        TankGame.SpriteRenderer.End();
+        spriteBatch.End();
 
-        TankGame.SpriteRenderer.Begin(effect: GameShaders.AnimatedRainbow);
-        TankGame.SpriteRenderer.Draw(TextTarget, new Vector2(10, WindowUtils.WindowHeight - 10), null, Color.White, 0f, Anchor.BottomLeft.GetTextureAnchor(TextTarget), 1f, default, 0f);
-        TankGame.SpriteRenderer.End();
+        spriteBatch.Begin(effect: GameShaders.AnimatedRainbow);
+        spriteBatch.Draw(TextTarget, new Vector2(10, WindowUtils.WindowHeight - 10), null, Color.White, 0f, Anchor.BottomLeft.GetTextureAnchor(TextTarget), 1f, default, 0f);
+        spriteBatch.End();
 
-        TankGame.SpriteRenderer.Begin();
+        spriteBatch.Begin();
 
         if (MenuState == UIState.PrimaryMenu || MenuState == UIState.PlayList) {
             var size = FontGlobals.RebirthFont.MeasureString(TankGame.Instance.MOTD);
-            var MotdPos = new Vector2(WindowUtils.WindowWidth / 2, 10);
-            TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, TankGame.Instance.MOTD, MotdPos, Color.White, Vector2.One * 0.5f, 0f, Anchor.TopCenter.GetAnchor(size));
+            var motdPos = new Vector2(WindowUtils.WindowWidth / 2, 10);
+            spriteBatch.DrawString(FontGlobals.RebirthFont, TankGame.Instance.MOTD, motdPos, Color.White, Vector2.One * 0.5f, 0f, Anchor.TopCenter.GetAnchor(size));
         }
     }
     public static void UpdateUI() {

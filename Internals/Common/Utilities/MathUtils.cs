@@ -274,17 +274,17 @@ public static class MathUtils
             copy[j] = new(MathHelper.Lerp(points[j].X, points[j + 1].X, progress), MathHelper.Lerp(points[j].Y, points[j + 1].Y, progress));
         return BezierDestructive(progress, copy);
     }
-    public static int RoundToClosest(this int i, int nearest) {
-        if (nearest <= 0 || nearest % 10 != 0)
-            throw new ArgumentOutOfRangeException("nearest", "Must round to a positive multiple of 10");
+    public static int RoundToClosest(this int i, int multiple) {
+        if (multiple <= 0 || multiple % 10 != 0)
+            throw new ArgumentOutOfRangeException(nameof(multiple), "Must round to a positive multiple of 10");
 
-        return (i + 5 * nearest / 10) / nearest * nearest;
+        return (i + 5 * multiple / 10) / multiple * multiple;
     }
-    public static float RoundToClosest(this float i, int nearest) {
-        if (nearest <= 0 || nearest % 10 != 0)
-            throw new ArgumentOutOfRangeException("nearest", "Must round to a positive multiple of 10");
+    public static float RoundToClosest(this float g, int multiple) {
+        if (multiple <= 0 || multiple % 10 != 0)
+            throw new ArgumentOutOfRangeException(nameof(multiple), "Must round to a positive multiple of 10");
 
-        return (i + 5 * nearest / 10) / nearest * nearest;
+        return (g + 5 * multiple / 10) / multiple * multiple;
     }
 
     public static float WrapTauAngle(this float angle) {

@@ -44,8 +44,8 @@ public class GameShaders
         AnimatedRainbow.Parameters["oMinLum"].SetValue(0.1f);
 
         MouseShader.Parameters["oGlobalTime"].SetValue((float)TankGame.LastGameTime.TotalGameTime.TotalSeconds);
-        var value = PlayerID.PlayerTankColors[PlayerTank.MyTankType];
-        MouseShader.Parameters["oColor"].SetValue(value);
+        var value = PlayerID.PlayerTankColors[NetPlay.GetMyClientId()];
+        MouseShader.Parameters["oColor"].SetValue(value.ToVector3());
         /*MouseRenderer.HsvToRgb(TankGame.GameUpdateTime % 255 / 255f * 360, 1, 1).ToVector3());*/
         MouseShader.Parameters["oSpeed"].SetValue(-20f);
         MouseShader.Parameters["oSpacing"].SetValue(10f);
@@ -66,7 +66,14 @@ public class GameShaders
 
         if (Difficulties.Types["LanternMode"]) {
             var index = NetPlay.GetMyClientId(); //Array.FindIndex(GameHandler.AllPlayerTanks, x => x is not null && !x.Dead);
-            var pos = index > -1 && !MainMenuUI.Active ? MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(GameHandler.AllPlayerTanks[index].Position.X, 11, GameHandler.AllPlayerTanks[index].Position.Y), CameraGlobals.GameView, CameraGlobals.GameProjection).ToCartesianCoordinates() : new Vector2(-1);
+
+            if (GameHandler.AllPlayerTanks[index] is null)
+                return;
+            var pos = index > -1 && 
+                !MainMenuUI.Active ? 
+                MatrixUtils.ConvertWorldToScreen(Vector3.Zero, 
+                Matrix.CreateTranslation(GameHandler.AllPlayerTanks[index].Position.X, 11, GameHandler.AllPlayerTanks[index].Position.Y), CameraGlobals.GameView, CameraGlobals.GameProjection).ToCartesianCoordinates() 
+                : new Vector2(-1);
             // var val = (float)TankGame.LastGameTime.TotalGameTime.TotalSeconds;
             LanternShader.Parameters["oPower"]?.SetValue(MainMenuUI.Active ? 100f : Client.ClientRandom.NextFloat(0.195f, 0.20f));
             LanternShader.Parameters["oPosition"]?.SetValue(pos/*MouseUtils.MousePosition.ToCartesianCoordinates()*/);

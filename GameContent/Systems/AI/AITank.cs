@@ -28,7 +28,13 @@ using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.Globals.Assets;
 
 namespace TanksRebirth.GameContent;
+
+#pragma warning disable CA2211
 public partial class AITank : Tank {
+    private Texture2D? _tankTexture;
+    private static Texture2D? _shadowTexture;
+
+    public ModTank? ModdedData { get; internal set; }
     /// <summary>A list of all active dangers on the map to <see cref="AITank"/>s. Includes <see cref="Shell"/>s, <see cref="Mine"/>s,
     /// and <see cref="Explosion"/>s by default. To make an AI Tank behave towards any thing you would like, make it inherit from <see cref="IAITankDanger"/>
     /// and change the tank's behavior when running away by hooking into <see cref="WhileDangerDetected"/>.</summary>
@@ -50,8 +56,6 @@ public partial class AITank : Tank {
     public AiBehavior[] SpecialBehaviors;
     /// <summary>The AI Tank Tier/Type of this <see cref="AITank"/>. For instance, a Brown tank would be <see cref="TankID.Brown"/>.</summary>
     public int AiTankType;
-    private Texture2D? _tankTexture;
-    private static Texture2D? _shadowTexture;
     /// <summary>The invoked method for performing the actions of the tank's AI.</summary>
     public Action? AIBehaviorAction;
     /// <summary>The position of this <see cref="AITank"/> in the <see cref="GameHandler.AllAITanks"/> array.</summary>
@@ -83,18 +87,17 @@ public partial class AITank : Tank {
     /// <summary>Change the texture of this <see cref="AITank"/>.</summary>
     /// <param name="texture">The new texture.</param>
     public void SwapTankTexture(Texture2D texture) => _tankTexture = texture;
-    #region AiTankParams
+
     /// <summary>The AI parameter collection of this AI Tank.</summary>
     public AiParameters AiParams { get; set; } = new();
     /// <summary>The position of the target this <see cref="AITank"/> is currently attempting to aim at.</summary>
-    public Vector2 AimTarget;
+    public Vector2 AimTarget { get; set; }
     /// <summary>Whether or not this tank sees its target. Generally should not be set, but the tank will shoot if able when this is true.</summary>
     public bool SeesTarget { get; set; }
     /// <summary>The target rotation for this tank's turret. <see cref="Tank.TurretRotation"/> will move towards this value at a rate of <see cref="AiParameters.TurretSpeed"/>.</summary>
-    public float TargetTurretRotation;
+    public float TargetTurretRotation { get; set; }
     /// <summary>The default XP value to award to players if a player destroys this <see cref="AITank"/>.</summary>
     public float BaseExpValue { get; set; }
-    #endregion
     /// <summary>Changes this <see cref="AITank"/> to a completely different type of tank. Should only be used in special cases.</summary>
     /// <param name="tier">The new tier that this tank will be.</param>
     /// <param name="setDefaults">Whether or not to set the associated defaults of this tank in accordance to <paramref name="tier"/>.</param>
@@ -105,15 +108,9 @@ public partial class AITank : Tank {
 
         //if (tier <= TankID.Marble)
         SwapTankTexture(Assets[$"tank_" + tierName]);
-        #region Special
 
-
-        // if (UsesCustomModel) { }
-        //else {
-        // set model to default
-        //}
-        Model = ModelResources.TankEnemy.Asset;
-        #endregion
+        if (!UsesCustomModel)
+            Model = ModelResources.TankEnemy.Asset;
 
         if (setDefaults)
             ApplyDefaults(ref Properties);
@@ -139,6 +136,8 @@ public partial class AITank : Tank {
                 tier = Difficulties.VanillaToMasterModeConversions[tier];
         }
 
+        AiTankType = tier;
+
         Behaviors = new AiBehavior[10];
         SpecialBehaviors = new AiBehavior[3];
 
@@ -160,9 +159,24 @@ public partial class AITank : Tank {
         SpecialBehaviors[1].Label = "SpecialBehavior2";
         SpecialBehaviors[2].Label = "SpecialBehavior3";
 
+        if (!UsesCustomModel) {
+            Model = ModelResources.TankEnemy.Asset;
+        }
+
+        // create modded data
+
+        for (int i = 0; i < ModLoader.ModTanks.Length; i++) {
+            var modTank = ModLoader.ModTanks[i];
+
+            // associate values properly for modded data
+            if (AiTankType == modTank.Type) {
+                ModdedData = modTank.Clone();
+                ModdedData.AITank = this;
+            }
+        }
+        var tierName = TankID.Collection.GetKey(tier)!.ToLower();
         if (RuntimeData.IsMainThread) {
             if (!UsesCustomModel) {
-                var tierName = TankID.Collection.GetKey(tier)!.ToLower();
                 var tnkAsset = Assets[$"tank_" + tierName];
 
                 var t = new Texture2D(TankGame.Instance.GraphicsDevice, tnkAsset.Width, tnkAsset.Height);
@@ -177,24 +191,16 @@ public partial class AITank : Tank {
             }
         }
         else
-            _tankTexture = Assets[$"tank_" + TankID.Collection.GetKey(tier)!.ToLower()];
-
-        if (!UsesCustomModel) {
-            Model = ModelResources.TankEnemy.Asset;
-        }
+            _tankTexture = Assets[$"tank_" + tierName];
 
         _shadowTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank_shadow");
-
-        AiTankType = tier;
 
         if (setTankDefaults)
             ApplyDefaults(ref Properties);
 
         int index = Array.IndexOf(GameHandler.AllAITanks, null);
 
-        if (index < 0) {
-            return;
-        }
+        if (index < 0) return;
 
         AITankId = index;
 
@@ -216,7 +222,9 @@ public partial class AITank : Tank {
     }
     public override void ApplyDefaults(ref TankProperties properties) {
         properties.DestructionColor = TankDestructionColors[AiTankType];
-        AiParams = this.GetAiDefaults(AiTankType);
+        AiParams = AIManager.GetAiDefaults(AiTankType, out float baseXp);
+        Properties = AIManager.GetAITankProperties(AiTankType);
+        BaseExpValue = baseXp;
 
         if (properties.Stationary) {
             properties.Deceleration = 0.2f;
@@ -260,7 +268,10 @@ public partial class AITank : Tank {
         if (Difficulties.Types["Predictions"])
             AiParams.PredictsPositions = true;
         properties.TreadVolume = 0.05f;
+
         base.ApplyDefaults(ref properties);
+
+        ModdedData?.PostApplyDefaults();
     }
     public override void Update() {
         if (ModLoader.Status != LoadStatus.Complete)
@@ -276,7 +287,7 @@ public partial class AITank : Tank {
         if (DebugManager.SuperSecretDevOption) {
             var tnkGet = Array.FindIndex(GameHandler.AllAITanks, x => x is not null && !x.Dead && !x.Properties.Stationary);
             if (tnkGet > -1)
-                if (AITankId == GameHandler.AllAITanks[tnkGet].AITankId)
+                if (AITankId == GameHandler.AllAITanks[tnkGet]!.AITankId)
                     TargetTankRotation = (MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - MouseUtils.MousePosition).ToRotation() + MathHelper.PiOver2;
         }
         // do ai only if host, and send ai across the interweb
@@ -292,6 +303,12 @@ public partial class AITank : Tank {
                 Client.SyncAITank(this);
         }
     }
+    public override void PreUpdate() {
+        ModdedData?.PreUpdate();
+    }
+    public override void PostUpdate() {
+        ModdedData?.PostUpdate();
+    }
     public override void Remove(bool nullifyMe) {
         if (nullifyMe) {
             GameHandler.AllAITanks[AITankId] = null;
@@ -299,43 +316,65 @@ public partial class AITank : Tank {
         }
         base.Remove(nullifyMe);
     }
-    public override void Destroy(ITankHurtContext context) {
+    public override void Destroy(ITankHurtContext context, bool netSend) {
         // might not account for level testing via the level editor?
         OnDestroy?.Invoke();
-        if (!MainMenuUI.Active && !LevelEditorUI.Active && !Client.IsConnected()) // goofy ahh...
-        {
-            if (!PlayerTank.TankKills.TryGetValue(AiTankType, out int value1))
-                PlayerTank.TankKills.Add(AiTankType, 1);
-            else
-                PlayerTank.TankKills[AiTankType] = ++value1;
 
-            if (context.IsPlayer) {
-                // this code lowkey hurts to read
-                // check if less than certain values for different value coins
+        const string tankDestroySound1 = "Assets/sounds/tnk_destroy_enemy.ogg";
+        SoundPlayer.PlaySoundInstance(tankDestroySound1, SoundContext.Effect, 0.3f, gameplaySound: true);
 
-                if (context is TankHurtContextShell cxt1) {
-                    TankGame.GameData.BulletKills++;
-                    TankGame.GameData.TotalKills++;
+        var aiDeathMark = new TankDeathMark(TankDeathMark.CheckColor.White) {
+            Position = Position3D + new Vector3(0, 0.1f, 0),
+        };
 
-                    // if the ricochets remaining is less than the ricochets the bullet has, it has bounced at least once.
-                    if (cxt1.Shell.RicochetsRemaining < cxt1.Shell.Ricochets)
-                        TankGame.GameData.BounceKills++;
-                }
-                if (context is TankHurtContextMine cxt2) {
-                    TankGame.GameData.MineKills++;
-                    TankGame.GameData.TotalKills++;
-                }
+        aiDeathMark.StoredTank = new TankTemplate {
+            AiTier = AiTankType,
+            IsPlayer = false,
+            Position = aiDeathMark.Position.FlattenZ(),
+            Rotation = TankRotation,
+            Team = Team,
+        };
 
-                if (TankGame.GameData.TankKills.TryGetValue(AiTankType, out uint value))
-                    TankGame.GameData.TankKills[AiTankType] = ++value;
+        base.Destroy(context, netSend);
 
-                // haaaaaaarddddddcode
-                if (!LevelEditorUI.Editing) {
-                    GiveXP();
-                }
-            }
+        if (MainMenuUI.Active) return;
+        if (LevelEditorUI.Active) return;
+        if (LevelEditorUI.Editing) return;
+        if (context.Source is null && Client.IsConnected()) return;
+
+        // count enemy team-kills only in single player
+        if (context.Source is not PlayerTank && Client.IsConnected()) return;
+
+        // var player = context.Source as PlayerTank;
+
+        if (!PlayerTank.TankKills.TryGetValue(AiTankType, out int value1))
+            PlayerTank.TankKills.Add(AiTankType, 1);
+        else
+            PlayerTank.TankKills[AiTankType] = ++value1;
+
+        // this code lowkey hurts to read
+        // check if less than certain values for different value coins
+
+        if (context is TankHurtContextShell cxtShell) {
+            TankGame.GameData.BulletKills++;
+
+            // if the ricochets remaining is less than the ricochets the bullet has, it has bounced at least once.
+            if (cxtShell.Shell.RicochetsRemaining < cxtShell.Shell.Ricochets)
+                TankGame.GameData.BounceKills++;
         }
-        else {
+        if (context is TankHurtContextExplosion) {
+            TankGame.GameData.MineKills++;
+        }
+
+        // pretty sure != null isn't necessary because if Source is null it can't convert
+        PlayerTank.KillCounts[/*player!.PlayerId*/NetPlay.GetMyClientId()]++;
+
+        TankGame.GameData.TotalKills++;
+
+        if (TankGame.GameData.TankKills.TryGetValue(AiTankType, out uint value))
+            TankGame.GameData.TankKills[AiTankType] = ++value;
+
+        GiveXP();
             // check if player id matches client id, if so, increment that player's kill count, then sync to the server
             // TODO: convert TankHurtContext into a struct and use it here
             // Will be used to track the reason of death and who caused the death, if any tank owns a shell or mine
@@ -344,10 +383,7 @@ public partial class AITank : Tank {
             // {
             //    PlayerTank.KillCount++;
             //    Client.Send(new TankKillCountUpdateMessage(PlayerTank.KillCount)); // not a bad idea actually
-        }
-        base.Destroy(context);
     }
-
     private void GiveXP() {
         if (!LevelEditorUI.Editing) {
             var rand = Client.ClientRandom.NextFloat(-(BaseExpValue * 0.25f), BaseExpValue * 0.25f);
@@ -761,9 +797,7 @@ public partial class AITank : Tank {
 
             if (isThereDanger) {
                 WhileDangerDetected?.Invoke(this, danger!);
-                for (int i = 0; i < ModLoader.ModTanks.Length; i++)
-                    if (AiTankType == ModLoader.ModTanks[i].Type)
-                        ModLoader.ModTanks[i].DangerDetected(this, danger!);
+                ModdedData?.DangerDetected(danger!);
             }
 
             IsShellNear = isThereDanger && danger is Shell;
@@ -863,10 +897,6 @@ public partial class AITank : Tank {
         };
         if (AutoEnactAIBehavior)
             AIBehaviorAction?.Invoke();
-        OnPostUpdateAI?.Invoke(this);
-        for (int i = 0; i < ModLoader.ModTanks.Length; i++)
-            if (AiTankType == ModLoader.ModTanks[i].Type)
-                ModLoader.ModTanks[i].PostUpdate(this);
     }
     public Tank? GetClosestTarget() {
         Tank? target = null;

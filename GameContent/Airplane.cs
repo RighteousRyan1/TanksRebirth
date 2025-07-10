@@ -31,11 +31,10 @@ public class Airplane {
     public static event TrapDoorsOpened? WhileTrapDoorsOpenedEvent;
     public static event TrapDoorsClosed? WhileTrapDoorsClosedEvent;
 
-    // for general purpose
-    public Action OnTrapDoorsFullyOpened;
-    public Action OnTrapDoorsFullyClosed;
-    public Action WhileTrapDoorsOpened;
-    public Action WhileTrapDoorsClosed;
+    public event TrapDoorsFullyOpened? OnTrapDoorsFullyOpenedInstance;
+    public event TrapDoorsFullyClosed? OnTrapDoorsFullyClosedInstance;
+    public event TrapDoorsOpened? WhileTrapDoorsOpenedInstance;
+    public event TrapDoorsClosed? WhileTrapDoorsClosedInstance;
 
     public readonly int Id;
     public float LifeSpan;
@@ -152,7 +151,7 @@ public class Airplane {
     /// <param name="posXZ">The position of the plane, initially.</param>
     /// <param name="xPotential">What percent of the map's x-axis, centering from the center of the map, the plane can take flight towards.</param>
     /// <param name="zPotential">What percent of the map's z-axis, centering from the center of the map, the plane can take flight towards.</param>
-    public static Vector2 ChooseRandomFlightTarget(Random random, Vector2 posXZ, float xPotential = 1f, float zPotential = 1f) {
+    public static Vector2 ChooseRandomFlightTarget(Random random, Vector2 posXZ, float speedMult = 1f, float xPotential = 1f, float zPotential = 1f) {
         // magic numbers used reduce bias towards negative Z from the origin
         var zOff = 132;
         var randomPosition = new Vector2 {
@@ -163,18 +162,12 @@ public class Airplane {
         
 
         // return normalized so the user can modify its magnitude
-        return Vector2.Normalize(randomPosition - posXZ);
+        return Vector2.Normalize(randomPosition - posXZ) * speedMult;
     }
     public void Remove() {
         GameUI.Pause.OnPress -= PauseSounds;
         TankGame.OnFocusLost -= PauseSoundsWindow;
         TankGame.OnFocusRegained -= ResumeSounds;
-
-        // idk if these null statements are redundant or not but oh well
-        OnTrapDoorsFullyClosed = null;
-        OnTrapDoorsFullyOpened = null;
-        WhileTrapDoorsClosed = null;
-        WhileTrapDoorsOpened = null;
 
         PlaneLoop.Stop();
         //PlaneLoop.Dispose();
@@ -184,8 +177,8 @@ public class Airplane {
     public void Update() {
         LifeTime += RuntimeData.DeltaTime;
 
-        Position.X += Velocity.X;
-        Position.Z += Velocity.Y;
+        Position.X += Velocity.X * RuntimeData.DeltaTime;
+        Position.Z += Velocity.Y * RuntimeData.DeltaTime;
 
         // TODO: unhardcode this.
         if (LifeTime > 60)
@@ -203,13 +196,13 @@ public class Airplane {
 
                 if (AreDoorsFullyOpen && !_wereDoorsFullyOpen) {
                     OnTrapDoorsFullyOpenedEvent?.Invoke(this);
-                    OnTrapDoorsFullyOpened?.Invoke();
+                    OnTrapDoorsFullyOpenedInstance?.Invoke(this);
                 }
                 _openPercent = 1; 
             }
 
             WhileTrapDoorsOpenedEvent?.Invoke(this);
-            WhileTrapDoorsOpened?.Invoke();
+            WhileTrapDoorsOpenedInstance?.Invoke(this);
 
             _doorLRotation = _doorRRotation = Easings.GetEasingBehavior(EasingFunction.OutBack, _openPercent) * MathHelper.PiOver2;
         }
@@ -220,12 +213,12 @@ public class Airplane {
 
                 if (!AreDoorsFullyOpen && _wereDoorsFullyOpen) {
                     OnTrapDoorsFullyClosedEvent?.Invoke(this);
-                    OnTrapDoorsFullyClosed?.Invoke();
+                    OnTrapDoorsFullyClosedInstance?.Invoke(this);
                 }
             }
 
             WhileTrapDoorsClosedEvent?.Invoke(this);
-            WhileTrapDoorsClosed?.Invoke();
+            WhileTrapDoorsClosedInstance?.Invoke(this);
 
             _doorLRotation = _doorRRotation = Easings.GetEasingBehavior(EasingFunction.OutCubic, _openPercent) * MathHelper.PiOver2;
         }
@@ -263,13 +256,31 @@ public class Airplane {
 
         _wereDoorsFullyOpen = AreDoorsFullyOpen;
     }
+    public static void SpawnPlaneWithSmokeGrenades(Vector2? spawnSet = null, Vector2? flightTarget = null, bool wasSentFromNet = false) {
+        // TODO: sync the plane over the net... soon!
+        Vector2 pos;
+        Vector2 vel;
+
+        pos = spawnSet != null ? spawnSet.Value : ChooseRandomXZPosition(Client.ClientRandom);
+        vel = flightTarget != null ? flightTarget.Value : ChooseRandomFlightTarget(Client.ClientRandom, pos, 2.5f, 0.5f, 0.5f);
+
+        var pos3d = new Vector3(pos.X, 100, pos.Y);
+
+        if (!wasSentFromNet)
+            Client.SendAirplaneSpawn(pos, vel);
+
+        var plane = new Airplane(pos3d, vel, 400f);
+        plane.WhileTrapDoorsOpenedInstance = (t) => {
+            if (RuntimeData.RunTime % 30 <= RuntimeData.DeltaTime) {
+                ParticleGameplay.CreateSmokeGrenade(GameHandler.Particles, plane.Position, Vector3.Down + new Vector3(plane.Velocity.X, 0, plane.Velocity.Y) * 0.25f);
+            }
+        };
+    }
     public void Render() {
         if (!GameScene.ShouldRenderAll)
             return;
         World = Matrix.CreateScale(0.6f)
             * Matrix.CreateRotationY(Rotation) 
-            //* Matrix.CreateRotationX(MathHelper.Pi) // for testing
-            //* Matrix.CreateFromYawPitchRoll(Rotation.Yaw, Rotation.Pitch, Rotation.Roll) 
             * Matrix.CreateTranslation(Position);    
         Projection = CameraGlobals.GameProjection;
         View = CameraGlobals.GameView;

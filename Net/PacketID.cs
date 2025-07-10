@@ -64,6 +64,9 @@ public sealed class PacketID {
     /// <summary>Syncs randomization seeds to random events are synchronous on each client.</summary>
     public const int SyncSeeds = 28;
 
+    public const int SyncKills = 29;
+    public const int SendAirplane = 30;
+
     public static int AddPacketId(string name) => Collection.ForcefullyInsert(name);
 
     public static ReflectionDictionary<PacketID> Collection { get; internal set; } = new(MemberType.Fields);

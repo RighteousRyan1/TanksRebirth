@@ -17,9 +17,7 @@ public static class DrawUtils {
         float origMeasureScale = 1f) {
 
         DrawStringBorderOnly(spriteBatch, font, text, position, borderColor, scale, rotation, anchor, borderThickness, charSpacing, origMeasureScale);
-        /*for (int i = 0; i < 4; i++)
-            spriteBatch.DrawString(font, text, position + new Vector2(0, 2f * borderThickness).Rotate(MathHelper.PiOver2 * i + MathHelper.PiOver4),
-                borderColor, scale, rotation, GameUtils.GetAnchor(anchor, font.MeasureString(text) * origMeasureScale), 0f, characterSpacing: charSpacing);*/
+
         spriteBatch.DrawString(font, text, position, textColor, scale, rotation, GameUtils.GetAnchor(anchor, font.MeasureString(text) * origMeasureScale), 1f, characterSpacing: charSpacing);
     }
     public static void DrawTextureWithBorder(SpriteBatch spriteBatch, Texture2D texture, Vector2 position, Color textureColor, Color borderColor, 
@@ -33,15 +31,13 @@ public static class DrawUtils {
         string text, Color color, Vector2 scale, float alpha, Anchor anchor = Anchor.Center, 
         float shadowDistScale = 1f, float shadowAlpha = 1f, float origMeasureScale = 1f, float charSpacing = 0) {
 
-        /*spriteBatch.DrawString(font, text, position + Vector2.Normalize(shadowDir) * (10f * shadowDistScale * scale), 
-            Color.Black * alpha * shadowAlpha, scale, 0f, anchor.GetAnchor(font.MeasureString(text) * origMeasureScale), 0f, characterSpacing: charSpacing);*/
         DrawStringShadowOnly(spriteBatch, font, position, shadowDir, text, scale, alpha, anchor, shadowDistScale, shadowAlpha, origMeasureScale, charSpacing);
 
         spriteBatch.DrawString(font, text, position, color * alpha, scale, 0f, anchor.GetAnchor(font.MeasureString(text) * origMeasureScale), 0f, characterSpacing: charSpacing);
     }
     public static void DrawTextureWithShadow(SpriteBatch spriteBatch, Texture2D texture, Vector2 position, Vector2 shadowDir, 
         Color color, Vector2 scale, float alpha, Anchor anchor = Anchor.Center, 
-        bool flip = false, float shadowDistScale = 1f, float shadowAlpha = 1f, float rotation = 0f, Rectangle? srcRect = null) {
+        SpriteEffects flip = SpriteEffects.None, float shadowDistScale = 1f, float shadowAlpha = 1f, float rotation = 0f, Rectangle? srcRect = null) {
 
         if (shadowAlpha > 0) {
             spriteBatch.Draw(texture,
@@ -51,10 +47,10 @@ public static class DrawUtils {
                 rotation,
                 anchor.GetAnchor(texture.Size()),
                 scale,
-                flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None,
+                flip,
                 default);
         }
-        spriteBatch.Draw(texture, position, srcRect, color * alpha, rotation, anchor.GetAnchor(texture.Size()), scale, flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, default);
+        spriteBatch.Draw(texture, position, srcRect, color * alpha, rotation, anchor.GetAnchor(texture.Size()), scale, flip, default);
     }
     public static void DrawBorderedStringWithShadow(SpriteBatch spriteBatch, SpriteFontBase font, Vector2 position, Vector2 shadowDir, 
         string text, Color color, Color borderColor, Vector2 scale, float alpha, Anchor anchor = Anchor.Center, 
@@ -71,7 +67,7 @@ public static class DrawUtils {
         Color borderColor, Vector2 scale, float rotation, Anchor anchor = Anchor.Center, float borderThickness = 1f, float charSpacing = 0,
         float origMeasureScale = 1f) {
         for (int i = 0; i < 4; i++)
-            spriteBatch.DrawString(font, text, position + new Vector2(0, 2f * borderThickness).Rotate(MathHelper.PiOver2 * i + MathHelper.PiOver4),
+            spriteBatch.DrawString(font, text, position + new Vector2(0, 2f * borderThickness).Rotate(MathHelper.PiOver2 * i + MathHelper.PiOver4).ToResolution(),
                 borderColor, scale, rotation, GameUtils.GetAnchor(anchor, font.MeasureString(text) * origMeasureScale), 0f, characterSpacing: charSpacing);
     }
     public static void DrawStringShadowOnly(SpriteBatch spriteBatch, SpriteFontBase font, Vector2 position, Vector2 shadowDir,

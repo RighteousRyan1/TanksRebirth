@@ -76,7 +76,7 @@ public struct CosmeticChest
             cos.RelativePosition = new Vector3(sinx, 20 + siny / 5, 0f);
 
             if (tnk.IsIngame && !tnk.Properties.Invisible) {
-                float y = 20f;
+                // float y = 20f;
                 if (RuntimeData.UpdateCount % 10 == 0) {
                     GameHandler.Particles.MakeShineSpot(tnk.Position3D +
                         new Vector3(cos.RelativePosition.X, cos.RelativePosition.Y, siny / 5 + (Vector2.UnitY * 5).Rotate(Client.ClientRandom.NextFloat(0, MathHelper.TwoPi)).Y), 

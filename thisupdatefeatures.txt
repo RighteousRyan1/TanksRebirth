@@ -1,13 +1,16 @@
 /* Enter message here */
 
-##### TODO: Campaign screen no-overflow, multiplayer stats (press tab n stuff to see other player kill counts, also have kills be per-player)
+##### TODO: multiplayer stats (press tab n stuff to see other player kill counts, also have kills be per-player)
+##### ALSO: make ping tab vertical (maybe)
+##### ALSO: fix campaign not ending until another attempt passes
 
 Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed later) speedruns will get their spot on the main menu!
 
 ## Additions
 
-- Added "Tactical Planes" mode where old "Marble Mod Buff" was
 - Added an entire room that the entire game scene exists in! There is no longer a black void that consumes the game
+	- There's even a cool grandfather clock that matches your system's clock time!
+- Added "Tactical Planes" mode where old "Marble Mod Buff" was
 - Added some handy-dandy FPS graphs at the user's disposal, if needed
 - Added scores for every player in the game
 - Added 'Total terrain' info to the Level Info bar within the level editor
@@ -28,13 +31,16 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 - MOTD is now just plastered on the top of the screen
 - Adjusted the look of the mission title bar / background
 - UI tooltips no longer go off-screen
-- Revamped the multiplayer UI a little bit
+- Revamped the multiplayer UI
 - Player scoreboards have been changed in color and look
 - "東方 Mode" changed to "Bullet Hell"
 - Window title has been changed to "Tanks! Rebirth"
 - LARGELY improved the mission intermission look, which looks about 99.9% accurate now (validate the campaign version in the campaigns menu!!!)
 - The chat now appears over the intermission screen
 - The intermission screen background no longer scrolls when paused/stopped
+- You now have to middle click instead of right click to delete a campaign, which makes mistakes much less likely
+- Somewhat modified the campaigns menu look, so buttons don't overflow
+- Having a controller plugged in no longer prevents keyboard usage for gameplay
 
 ## Changes Important for Modders
 
@@ -59,18 +65,26 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 - Many things from `TankGame` (such as frame time, delta time, etc) have been moved to `RuntimeData`
 - `TankGame.TextFont`/`TextFontLarge` -> `FontGlobals.RebirthFont`/`RebirthFontLarge`
 - `GameHandler.GameRand` -> `Client.ClientRandom`
+- AI tank properties and parameters can now be fetched separately inside of AIManager
+- `Armor` -> `TankArmor`
+- `TankProperties.VulnerableToMines` -> `TankProperties.InvulnerableToMines`
+- The modding API has moved away from singletons and now has different modded data per ModTank, ModShell, and ModBlock, so code does not execute on every entity of a given type at once
+- Virtual methods no longer have a parameter for what they are modding, and now have a property (i.e: `ModTank.AITank`, `ModBlock.Block`, `ModShell.Shell`)
 
 ## Fixes
 
 - Pause UI now appears over everything
 - Citrine Tank Music now is prioritized over Ruby
-- Optimized various mathematical operations around the code, making things a bit more performant
+- Optimized various mathematical operations around the code
+- Optimized branching and code execution all around the game, so the game should run ~10% better
 - Level editor now properly displays the correct mission name on the info bar
 - Fixed crash involving deleting the first mission of a campaign
 - Enabling "Lantern Mode" no longer makes the main menu blur go away
 - Resolution is only changed upon leaving the settings menu if you are *not* in full screen, fixing the black screen bug
 - Fixed the mission intermission screen having "overlap" while fading in and out
 - Fixed game not properly retrieving hardware information
+- Fixed the "Hit!" graphic not being the correct color on all clients in multiplayer
+- The results screen now shows the cumulative effort of all players in mutliplayer
 
 ## TODO
 

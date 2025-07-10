@@ -21,25 +21,23 @@ namespace TanksRebirth.GameContent.ModSupport;
 /// </summary>
 public class ModTank : ILoadable, IModContent {
     private List<OggMusic> _music;
+    private Texture2D? _texture;
 
     /// <summary>The <see cref="TanksMod"/> that this <see cref="ModTank"/> is a part of.</summary>
     public TanksMod Mod { get; set; }
+    /// <summary>The AI Tier ID for the modded tank.</summary>
     public int Type { get; set; }
-    private Texture2D? _texture;
     /// <summary>The path to the texture of this <see cref="ModTank"/>. Can be either the PNG or JPG image format.</summary>
-    public virtual string Texture => string.Empty;
+    public virtual string Texture { get; internal set; }
 
+    public AITank AITank { get; internal set; }
     /// <summary>Should include the name of the tank type without 'Tank' after it. 
     /// <para>
     /// i.e: a "Brown Tank" would just be called "Brown"
     /// </para>
     /// The English localized name will be the name that gets added to the game internally.
     /// </summary>
-    public virtual LocalizedString Name => new(new());
-    /// <summary>The properties that should be given to your tank when it spawns in the world.</summary>
-    public TankProperties Properties { get; set; }
-    /// <summary>The parameters of the AI that your tank will have when it spawns.</summary>
-    public AiParameters AiParameters { get; set; }
+    public virtual LocalizedString Name { get; internal set; }
     /// <summary>The color to associate with this <see cref="ModTank"/>. This color will be used for the "Hit!" graphics, the post-game
     /// results screen, and the color of the tank chunks when the tank is destroyed. Defaults to <see cref="Color.Black"/>.</summary>
     public virtual Color AssociatedColor => Color.Black;
@@ -57,34 +55,28 @@ public class ModTank : ILoadable, IModContent {
     /// <summary>Change things about the tank when it is spawned in the world. Be absolutely sure to call <c>base.PostApplyDefaults(AITank)</c>
     /// to ensure that your modded tank's texture is placed onto any spawning tanks that are this <see cref="ModTank"/>.</summary>
     /// <param name="tank">The tank.</param>
-    public virtual void PostApplyDefaults(AITank tank) {
+    public virtual void PostApplyDefaults() {
         if (_texture is null || Texture is null)
             return;
-        tank.SwapTankTexture(_texture);
+        AITank.SwapTankTexture(_texture);
     }
     /// <summary>Called when your tank takes damage.</summary>
-    /// <param name="tank">The tank.</param>
-    /// <param name="destroy">Whether or not the tank was destroyed upon taking this damage.</param>
+    /// <param name="destroy">Whether or not the tank will be destroyed upon taking this damage.</param>
     /// <param name="context">The context under which this tank took damage.</param>
-    public virtual void TakeDamage(AITank tank, bool destroy, ITankHurtContext context) { }
+    public virtual void TakeDamage(bool destroy, ITankHurtContext context) { }
     /// <summary>Called when this tank detects danger.</summary>
-    /// <param name="tank">The tank.</param>
     /// <param name="danger">The dangerous object.</param>
-    public virtual void DangerDetected(AITank tank, IAITankDanger danger) { }
+    public virtual void DangerDetected(IAITankDanger danger) { }
     /// <summary>Called when this tank shoots.</summary>
-    /// <param name="tank">The tank.</param>
     /// <param name="shell">The shell which was shot.</param>
-    public virtual void Shoot(AITank tank, ref Shell shell) { }
+    public virtual void Shoot(Shell shell) { }
     /// <summary>Called when this tank lays a mine.</summary>
-    /// <param name="tank">The tank.</param>
     /// <param name="mine">The mine that was laid</param>
-    public virtual void LayMine(AITank tank, ref Mine mine) { }
+    public virtual void LayMine(Mine mine) { }
     /// <summary>Called before the update cycle of a tank.</summary>
-    /// <param name="tank">The tank.</param>
-    public virtual void PreUpdate(AITank tank) { }
+    public virtual void PreUpdate() { }
     /// <summary>Called after the update cycle of a tank.</summary>
-    /// <param name="tank">The tank.</param>
-    public virtual void PostUpdate(AITank tank) { }
+    public virtual void PostUpdate() { }
 
     // Pre/Post render soon...
 
@@ -102,11 +94,14 @@ public class ModTank : ILoadable, IModContent {
             _music[i].BackingAudio.Dispose();
             TankMusicSystem.Audio.Remove($"{name.ToLower()}{i + 1}");
         }
+        Tank.Assets.Remove("tank_" + name.ToLower());
     }
 
-    internal void Register() {
-        var name = Name.GetLocalizedString(LangCode.English)!;
+    internal void Load() {
         _music = [];
+
+        var name = Name.GetLocalizedString(LangCode.English)!;
+
         Type = TankID.Collection.ForcefullyInsert(name);
         TankMusicSystem.MaxSongNumPerTank[Type] = Songs;
         AITank.TankDestructionColors[Type] = AssociatedColor;
@@ -128,8 +123,10 @@ public class ModTank : ILoadable, IModContent {
         }
 
         _texture = Mod.ImportAsset<Texture2D>(Texture);
+        Tank.Assets["tank_" + name.ToLower()] = _texture;
+    }
 
-        Properties = new();
-        AiParameters = new();
+    internal virtual ModTank Clone() {
+        return (ModTank)MemberwiseClone();
     }
 }

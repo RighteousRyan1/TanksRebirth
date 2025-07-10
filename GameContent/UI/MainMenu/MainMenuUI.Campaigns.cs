@@ -22,7 +22,11 @@ namespace TanksRebirth.GameContent.UI.MainMenu;
 public static partial class MainMenuUI {
     static bool _playerHasVanillaCampaign;
 
-    public static UITextButton UpdateCampaignButton = new("Validate", FontGlobals.RebirthFont, Color.Black);
+    const int MAX_CAMPAIGNS_PER_COLUMN = 8;
+
+    public static UITextButton UpdateCampaignButton = new("Validate", FontGlobals.RebirthFont, Color.Black) {
+        Position = new Vector2(-100)
+    };
     public static void DrawCampaignsUI() {
         DrawCampaignMenuExtras();
     }
@@ -52,19 +56,30 @@ public static partial class MainMenuUI {
 
         var campaignFiles = Directory.GetFiles(path).Where(file => file.EndsWith(".campaign")).ToArray();
 
+        var defaultDimensions = new Vector2(300, 40);
+        float padding = 20f;
+
+        int totalCampaigns = campaignFiles.Length;
+        int numColumns = (int)Math.Ceiling(totalCampaigns / (float)MAX_CAMPAIGNS_PER_COLUMN);
+
+        float totalWidth = numColumns * defaultDimensions.X + (numColumns - 1) * padding;
+        float uiStartX = (WindowUtils.WindowWidth - totalWidth.ToResolutionX()) / 2f;
+
         for (int i = 0; i < campaignFiles.Length; i++) {
-            int offset = i * 60;
+            var yOffControl = i % MAX_CAMPAIGNS_PER_COLUMN;
+            var xOffControl = i / MAX_CAMPAIGNS_PER_COLUMN;
+
+            float offsetY = yOffControl * (defaultDimensions.Y + padding);
+            float offsetX = xOffControl * (defaultDimensions.X + padding);
+
             var name = campaignFiles[i];
 
             int numTanks = 0;
             var campaign = Campaign.Load(name);
-
             var missions = campaign.CachedMissions;
 
-            foreach (var mission in missions) {
-                // load the mission file, then count each tank, then add that to the total
+            foreach (var mission in missions)
                 numTanks += mission.Tanks.Count(x => !x.IsPlayer);
-            }
 
             var elem = new UITextButton(Path.GetFileNameWithoutExtension(name), FontGlobals.RebirthFont, Color.White, 0.8f) {
                 IsVisible = true,
@@ -75,40 +90,46 @@ public static partial class MainMenuUI {
                 $"\nVersion: {campaign.MetaData.Version}" +
                 $"\nStarting Lives: {campaign.MetaData.StartingLives}" +
                 $"\nBonus Life Count: {campaign.MetaData.ExtraLivesMissions.Length}" +
-                // display all tags in a string
                 $"\nTags: {string.Join(", ", campaign.MetaData.Tags)}" +
-                $"\n\nRight click to DELETE ME."
+                $"\n\nMiddle click to DELETE ME."
             };
-            elem.SetDimensions(() => new Vector2(700, 100 + offset).ToResolution(), () => new Vector2(300, 40).ToResolution());
-            //elem.HasScissor = true;
-            //elem.
+
+            elem.SetDimensions(() =>
+                new Vector2(
+                    uiStartX.ToResolutionX() + offsetX.ToResolutionX(),
+                    WindowUtils.WindowHeight * 0.15f + offsetY.ToResolutionY()
+                ),
+                () => defaultDimensions.ToResolution()
+            );
+
             elem.OnLeftClick += (el) => {
                 if (Client.IsConnected() && !Client.IsHost()) {
                     ChatSystem.SendMessage("You cannot initiate a game as you are not the host!", Color.Red);
                     SoundPlayer.SoundError();
                     return;
                 }
-                var noExt = Path.GetFileNameWithoutExtension(name);
 
-                // i couldn't find where the campaign buttons are forcibly removed upon loading
+                var noExt = Path.GetFileNameWithoutExtension(name);
                 UpdateCampaignButton.IsVisible = false;
-                PrepareGameplay(noExt, !Client.IsConnected() || Server.CurrentClientCount == 1, false); // switch second param to !Client.IsConnected() when it should check first.
+                PrepareGameplay(noExt, !Client.IsConnected() || Server.CurrentClientCount == 1, false);
                 OnCampaignSelected?.Invoke(CampaignGlobals.LoadedCampaign);
             };
-            elem.OnRightClick += (el) => {
-                var path = Path.Combine(TankGame.SaveDirectory, "Campaigns", elem.Text);
 
+            elem.OnMiddleClick += (el) => {
+                var path = Path.Combine(TankGame.SaveDirectory, "Campaigns", elem.Text);
                 File.Delete(path + ".campaign");
                 SetCampaignDisplay();
             };
-            elem.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick.ogg", SoundContext.Effect); };
+
+            elem.OnMouseOver = (_) => SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick.ogg", SoundContext.Effect);
+
             campaignNames.Add(elem);
         }
         var extra = new UITextButton("Freeplay", FontGlobals.RebirthFont, Color.White, 0.8f) {
             IsVisible = true,
             Tooltip = "Play without a campaign!",
         };
-        extra.SetDimensions(() => new Vector2(1150, 100).ToResolution(), () => new Vector2(300, 40).ToResolution());
+        extra.SetDimensions(() => new Vector2(WindowUtils.WindowWidth / 2 - defaultDimensions.X / 2, 90).ToResolution(), () => defaultDimensions.ToResolution());
         extra.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick.ogg", SoundContext.Effect); };
         //elem.HasScissor = true;
         //elem.
@@ -158,16 +179,13 @@ public static partial class MainMenuUI {
 
         DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, $"You can scroll with your mouse to skip to a certain mission." +
             $"\nCurrently, you will skip to mission {MissionCheckpoint + 1}." +
-            $"\nYou will be alerted if that mission does not exist.", new Vector2(12, 200).ToResolution(),
-            Color.White, Color.Black, new Vector2(0.75f).ToResolution(), 0f, Anchor.TopLeft);
-        //TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, $"You can scroll with your mouse to skip to a certain mission." +
-        //$"\nCurrently, you will skip to mission {MissionCheckpoint + 1}." +
-        //$"\nYou will be alerted if that mission does not exist.", new Vector2(12, 200).ToResolution(), Color.White, new Vector2(0.75f).ToResolution(), 0f, Vector2.Zero);
+            $"\nYou will be alerted if that mission does not exist.", new Vector2(WindowUtils.WindowWidth / 3, WindowUtils.WindowHeight * 0.6f),
+            Color.White, Color.Black, new Vector2(0.75f).ToResolution(), 0f, Anchor.TopCenter);
 
+        var recordsPos = new Vector2(WindowUtils.WindowWidth / 3 * 2, WindowUtils.WindowHeight * 0.6f);
         var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/trophy");
-        var defPos = new Vector2(60, 380);
-        TankGame.SpriteRenderer.Draw(tex, defPos.ToResolution(), null, Color.White, 0f, new Vector2(tex.Size().X, tex.Size().Y / 2), new Vector2(0.1f).ToResolution(), default, default);
+        TankGame.SpriteRenderer.Draw(tex, recordsPos - new Vector2(175, -45).ToResolution(), null, Color.White, 0f, Anchor.RightCenter.GetTextureAnchor(tex), new Vector2(0.1f).ToResolution(), default, default);
         var text = $"Top {Speedrun.LoadedSpeedruns.Length} speedruns:\n" + string.Join(Environment.NewLine, Speedrun.LoadedSpeedruns);
-        DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, text, defPos.ToResolution(), Color.White, Color.Black, new Vector2(0.75f).ToResolution(), 0f, Anchor.LeftCenter);
+        DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, text, recordsPos, Color.White, Color.Black, new Vector2(0.75f).ToResolution(), 0f, Anchor.TopCenter);
     }
 }

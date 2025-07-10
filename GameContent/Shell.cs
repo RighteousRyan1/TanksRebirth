@@ -22,8 +22,7 @@ using TanksRebirth.GameContent.Globals.Assets;
 
 namespace TanksRebirth.GameContent;
 
-public class Shell : IAITankDanger
-{
+public class Shell : IAITankDanger {
     public delegate void PostCreateDelegate(Shell shell);
 
     public static event PostCreateDelegate? PostCreate;
@@ -75,8 +74,6 @@ public class Shell : IAITankDanger
 
         public bool HeatSeeks;
     }
-
-    private Vector2 _oldPosition;
 
     // this used to be 1500. why?
     /// <summary>The maximum shells allowed at any given time.</summary>
@@ -175,7 +172,7 @@ public class Shell : IAITankDanger
     /// <param name="ricochets">How many times the newly created <see cref="Shell"/> can ricochet.</param>
     /// <param name="homing">Whether or not the newly created <see cref="Shell"/> homes in on enemies.</param>
     /// <param name="playSpawnSound">Play the shooting sound associated with this <see cref="Shell"/>.</param>
-    public Shell(Vector2 position, Vector2 velocity, int type, Tank owner, uint ricochets = 0,
+    public Shell(Vector2 position, Vector2 velocity, int type, Tank? owner, uint ricochets = 0,
         HomingProperties homing = default, bool playSpawnSound = true) {
         Type = type;
         RicochetsRemaining = ricochets;
@@ -205,7 +202,7 @@ public class Shell : IAITankDanger
                     ShellID.TrailedRocket => new OggAudio("Content/Assets/sounds/tnk_shoot_ricochet_rocket.ogg"),
                     ShellID.Supressed => new OggAudio("Content/Assets/sounds/tnk_shoot_silencer.ogg"),
                     ShellID.Explosive => new OggAudio("Content/Assets/sounds/tnk_shoot_regular_2.ogg"),
-                    // _ => throw new NotImplementedException($"Sound for the shell type {Type} is not implemented, yet."),
+                    _ => throw new NotImplementedException($"Sound for the shell type {Type} is not implemented, yet."),
                 };
             }
         }
@@ -216,8 +213,8 @@ public class Shell : IAITankDanger
         }
 
         CampaignGlobals.OnMissionEnd += StopSounds;
-        TankGame.OnFocusLost += TankGame_OnFocusLost;
-        TankGame.OnFocusRegained += TankGame_OnFocusRegained;
+        //TankGame.OnFocusLost += TankGame_OnFocusLost;
+        //TankGame.OnFocusRegained += TankGame_OnFocusRegained;
 
         int index = Array.IndexOf(AllShells, null);
 
@@ -234,7 +231,6 @@ public class Shell : IAITankDanger
 
         PostCreate?.Invoke(this);
     }
-
     private void StopSounds(int delay, MissionEndContext context, bool result1up) {
         TrailSound?.Instance?.Stop();
         ShootSound?.Instance?.Stop();
@@ -392,8 +388,6 @@ public class Shell : IAITankDanger
             }
         }
         OnPostUpdate?.Invoke(this);
-
-        _oldPosition = Position;
     }
     private void RenderSmokeParticle(float timer) {
         if (CameraGlobals.IsUsingPOVCamera) timer /= 2;
@@ -500,13 +494,13 @@ public class Shell : IAITankDanger
                 par.Destroy();
         };
     }
-    private void TankGame_OnFocusRegained(object sender, IntPtr e) {
-       // if (TrailSound is not null && TrailSound.Instance is not null)
-            //TrailSound.Instance?.Resume();
+    private void TankGame_OnFocusRegained(object? sender, nint e) {
+       if (TrailSound is not null && TrailSound.Instance is not null)
+            TrailSound.Instance?.Resume();
     }
-    private void TankGame_OnFocusLost(object sender, IntPtr e) {
-        //if (TrailSound is not null && TrailSound.Instance is not null)
-            //TrailSound.Instance?.Pause();
+    private void TankGame_OnFocusLost(object? sender, nint e) {
+        if (TrailSound is not null && TrailSound.Instance is not null)
+            TrailSound.Instance?.Pause();
     }
 
     /// <summary>
@@ -569,7 +563,8 @@ public class Shell : IAITankDanger
             }
 
             Destroy(cxt);
-            tank.Damage(new TankHurtContextShell(this));
+
+            tank.Damage(new TankHurtContextShell(this), true);
         }
 
         ref var bulletSSpace = ref MemoryMarshal.GetReference((Span<Shell>)AllShells);
