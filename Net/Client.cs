@@ -216,7 +216,6 @@ public class Client {
         message.Put(shell.Velocity);
         message.Put(shell.RicochetsRemaining);
         message.Put(shell.Owner!.WorldId);
-        message.Put(shell.Id);
         message.Put(shell.UID);
 
         // ChatSystem.SendMessage($"Pos: {shell.Position} | Vel: {shell.Velocity}", Color.White);

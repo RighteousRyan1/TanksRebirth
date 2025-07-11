@@ -468,14 +468,14 @@ public static class IntermissionSystem {
         string enemyTankDisplay = $"{TankGame.GameLanguage.EnemyTanks}: {mafs}";
         string missionName = CampaignGlobals.LoadedCampaign.LoadedMission.Name;
 
-        float spacingEnemyTankDisplay = DrawUtils.GetTextXOffsetForSpacing(enemyTankDisplay, spacing) / TextAnimatorLarge.CurrentScale.ToResolution().X;
-        float spacingMissionName = DrawUtils.GetTextXOffsetForSpacing(missionName, spacing) / TextAnimatorLarge.CurrentScale.ToResolution().X;
+        float spacingEnemyTankDisplay = DrawUtils.GetTextXOffsetForSpacing(enemyTankDisplay, spacing) / TextAnimatorLarge.CurrentScale.X;
+        float spacingMissionName = DrawUtils.GetTextXOffsetForSpacing(missionName, spacing) / TextAnimatorLarge.CurrentScale.X;
 
         // slight misalignment
 
         // draw mission name, tanks remaining
         DrawUtils.DrawBorderedStringWithShadow(spriteBatch, FontGlobals.RebirthFontLarge,
-            new Vector2(WindowUtils.WindowWidth / 2 - spacingMissionName, textOffsetMissionName),
+            new Vector2(WindowUtils.WindowWidth / 2 - spacingMissionName.ToResolutionX(), textOffsetMissionName),
             Vector2.One,
             missionName,
             BackgroundColor,
@@ -483,7 +483,7 @@ public static class IntermissionSystem {
             TextAnimatorLarge.CurrentScale.ToResolution(),
             overallAlpha, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 3f, charSpacing: spacing);
         DrawUtils.DrawBorderedStringWithShadow(spriteBatch, FontGlobals.RebirthFontLarge,
-            new Vector2(WindowUtils.WindowWidth / 2 - spacingEnemyTankDisplay, textOffsetTanksLeft),
+            new Vector2(WindowUtils.WindowWidth / 2 - spacingEnemyTankDisplay.ToResolutionX(), textOffsetTanksLeft),
             Vector2.One,
             enemyTankDisplay,
             BackgroundColor,
@@ -705,9 +705,9 @@ public static class IntermissionSystem {
     private static void DrawStripe(SpriteBatch spriteBatch, Color color, float offsetY, float alpha) {
         var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/banner");
 
-        var scaling = new Vector2(3, 3f);
+        var scaling = new Vector2(3.25f, 3f);
 
-        spriteBatch.Draw(tex, new Vector2(-15, offsetY), null, color * alpha, 0f, Vector2.Zero, scaling.ToResolution(), default, default);
+        spriteBatch.Draw(tex, new Vector2(-12, offsetY), null, color * alpha, 0f, Vector2.Zero, scaling.ToResolution(), default, default);
         spriteBatch.Draw(tex, new Vector2(WindowUtils.WindowWidth / 2, offsetY), null, color * alpha, 0f, Vector2.Zero, scaling.ToResolution(), default, default);
     }
 

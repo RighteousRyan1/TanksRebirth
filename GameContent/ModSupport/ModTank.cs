@@ -125,7 +125,5 @@ public class ModTank : ILoadable, IModContent {
         Tank.Assets["tank_" + name.ToLower()] = _texture;
     }
 
-    internal virtual ModTank Clone() {
-        return (ModTank)MemberwiseClone();
-    }
+    internal virtual ModTank Clone() => (ModTank)MemberwiseClone();
 }

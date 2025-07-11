@@ -160,9 +160,22 @@ public class Particle
         if (!GameScene.ShouldRenderAll || Model is not null)
             return;
 
-        var world = Matrix.CreateScale(Scale) *
-            Matrix.CreateFromYawPitchRoll(Yaw, Pitch, Roll) * 
-            Matrix.CreateTranslation(Position);
+        Matrix world;
+
+        if (FaceTowardsMe) {
+            world = Matrix.CreateScale(Scale) *
+                    Matrix.CreateBillboard(Position,
+                                            CameraGlobals.RebirthFreecam.Position,
+                                            // might need up for other things tho
+                                            CameraGlobals.RebirthFreecam.World.Down,
+                                            CameraGlobals.RebirthFreecam.World.Forward);
+        }
+        else {
+            world = Matrix.CreateScale(Scale) *
+                    Matrix.CreateFromYawPitchRoll(Yaw, Pitch, Roll) *
+                    Matrix.CreateTranslation(Position);
+        }
+
         if (!IsIn2DSpace)
         {
             if (Model is null) {

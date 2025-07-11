@@ -3,13 +3,9 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace TanksRebirth.Graphics.Cameras;
 
-public class Freecam {
-    public readonly GraphicsDevice Device;
-
-    public Freecam(GraphicsDevice device) {
-        Device = device;
-    }
-
+public class Freecam(GraphicsDevice device)
+{
+    public readonly GraphicsDevice Device = device;
     private float _minPitch;
     public float MinPitch {
         get => _minPitch;

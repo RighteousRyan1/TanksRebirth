@@ -159,7 +159,7 @@ public class ParticleSystem
 
             smoke.HasAddativeBlending = true;
 
-            smoke.Roll = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
+            smoke.Pitch = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
             smoke.Scale = new(0.8f);
 

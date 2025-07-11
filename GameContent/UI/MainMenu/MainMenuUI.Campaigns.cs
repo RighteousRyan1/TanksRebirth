@@ -38,7 +38,7 @@ public static partial class MainMenuUI {
         UpdateCampaignButton.IsVisible = true;
         UpdateCampaignButton.Text = "Validate";
         UpdateCampaignButton.Tooltip = "Ensures your Vanilla campaign is up-to-date.";
-        UpdateCampaignButton.SetDimensions(WindowUtils.WindowWidth / 2 - width / 2, 10, width, height);
+        UpdateCampaignButton.SetDimensions(() => new(WindowUtils.WindowWidth / 2 - width.ToResolutionX() / 2, 10), () => new Vector2(width, height).ToResolution());
         UpdateCampaignButton.Color = Color.White;
         UpdateCampaignButton.Font = FontGlobals.RebirthFont;
         UpdateCampaignButton.OnLeftClick = (a) => {
@@ -62,8 +62,11 @@ public static partial class MainMenuUI {
         int totalCampaigns = campaignFiles.Length;
         int numColumns = (int)Math.Ceiling(totalCampaigns / (float)MAX_CAMPAIGNS_PER_COLUMN);
 
+        // totalWidth and uiStartX must be calculated in logical units
         float totalWidth = numColumns * defaultDimensions.X + (numColumns - 1) * padding;
-        float uiStartX = (WindowUtils.WindowWidth - totalWidth.ToResolutionX()) / 2f;
+
+        // scale the start position AFTER calculating centering
+        float uiStartX = totalWidth / 2f;
 
         for (int i = 0; i < campaignFiles.Length; i++) {
             var yOffControl = i % MAX_CAMPAIGNS_PER_COLUMN;
@@ -77,7 +80,6 @@ public static partial class MainMenuUI {
             int numTanks = 0;
             var campaign = Campaign.Load(name);
             var missions = campaign.CachedMissions;
-
             foreach (var mission in missions)
                 numTanks += mission.Tanks.Count(x => !x.IsPlayer);
 
@@ -96,8 +98,9 @@ public static partial class MainMenuUI {
 
             elem.SetDimensions(() =>
                 new Vector2(
-                    uiStartX.ToResolutionX() + offsetX.ToResolutionX(),
-                    WindowUtils.WindowHeight * 0.15f + offsetY.ToResolutionY()
+                    // center X and offset by scaled X
+                    (WindowUtils.WindowWidth / 2f) - uiStartX.ToResolutionX() + offsetX.ToResolutionX(),
+                    150f.ToResolutionY() + offsetY.ToResolutionY()
                 ),
                 () => defaultDimensions.ToResolution()
             );
@@ -129,7 +132,7 @@ public static partial class MainMenuUI {
             IsVisible = true,
             Tooltip = "Play without a campaign!",
         };
-        extra.SetDimensions(() => new Vector2(WindowUtils.WindowWidth / 2 - defaultDimensions.X / 2, 90).ToResolution(), () => defaultDimensions.ToResolution());
+        extra.SetDimensions(() => new Vector2(WindowUtils.WindowWidth / 2 - defaultDimensions.X.ToResolutionX() / 2, 90.ToResolutionY()), () => defaultDimensions.ToResolution());
         extra.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick.ogg", SoundContext.Effect); };
         //elem.HasScissor = true;
         //elem.

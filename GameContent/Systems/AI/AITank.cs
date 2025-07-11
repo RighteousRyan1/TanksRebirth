@@ -34,7 +34,7 @@ public partial class AITank : Tank {
     private Texture2D? _tankTexture;
     private static Texture2D? _shadowTexture;
 
-    public ModTank? ModdedData { get; internal set; }
+    public ModTank? ModdedData { get; private set; }
     /// <summary>A list of all active dangers on the map to <see cref="AITank"/>s. Includes <see cref="Shell"/>s, <see cref="Mine"/>s,
     /// and <see cref="Explosion"/>s by default. To make an AI Tank behave towards any thing you would like, make it inherit from <see cref="IAITankDanger"/>
     /// and change the tank's behavior when running away by hooking into <see cref="WhileDangerDetected"/>.</summary>
@@ -159,10 +159,6 @@ public partial class AITank : Tank {
         SpecialBehaviors[1].Label = "SpecialBehavior2";
         SpecialBehaviors[2].Label = "SpecialBehavior3";
 
-        if (!UsesCustomModel) {
-            Model = ModelResources.TankEnemy.Asset;
-        }
-
         // create modded data
 
         for (int i = 0; i < ModLoader.ModTanks.Length; i++) {
@@ -174,9 +170,11 @@ public partial class AITank : Tank {
                 ModdedData.AITank = this;
             }
         }
+
         var tierName = TankID.Collection.GetKey(tier)!.ToLower();
         if (RuntimeData.IsMainThread) {
             if (!UsesCustomModel) {
+                Model = ModelResources.TankEnemy.Asset;
                 var tnkAsset = Assets[$"tank_" + tierName];
 
                 var t = new Texture2D(TankGame.Instance.GraphicsDevice, tnkAsset.Width, tnkAsset.Height);
@@ -367,7 +365,15 @@ public partial class AITank : Tank {
         }
 
         // pretty sure != null isn't necessary because if Source is null it can't convert
-        PlayerTank.KillCounts[/*player!.PlayerId*/NetPlay.GetMyClientId()]++;
+        // it knows the owner is not me but increments my kill count anyway
+        if (context.Source is PlayerTank p) {
+            var myId = NetPlay.GetMyClientId();
+
+            bool isMe = p.PlayerId == myId;
+            //Console.WriteLine($"p.PlayerId ({p.PlayerId}) == myId ({myId}) ----> {isMe}");
+            if (isMe)
+                PlayerTank.KillCounts[myId]++;
+        }
 
         TankGame.GameData.TotalKills++;
 
@@ -395,7 +401,8 @@ public partial class AITank : Tank {
             var p = GameHandler.Particles.MakeParticle(Position3D + new Vector3(0, 30, 0), $"+{gain * 100:0.00} XP");
 
             p.Scale = new(0.5f);
-            p.Roll = MathHelper.Pi;
+            p.Pitch = MathHelper.Pi + MouseUtils.Test.X;
+            p.FaceTowardsMe = true;
             p.Origin2D = FontGlobals.RebirthFont.MeasureString($"+{gain * 100:0.00} XP") / 2;
 
             p.UniqueBehavior = (p) => {

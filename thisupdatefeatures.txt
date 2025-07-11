@@ -40,7 +40,10 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 - The intermission screen background no longer scrolls when paused/stopped
 - You now have to middle click instead of right click to delete a campaign, which makes mistakes much less likely
 - Somewhat modified the campaigns menu look, so buttons don't overflow
+- Also somewhat modified the difficulties menu to look nicer and have respects to resolution
 - Having a controller plugged in no longer prevents keyboard usage for gameplay
+- Packet send-out time decreased from 15ms to 10ms for more responsive netcode
+- XP gained from destroying tanks is now billboarded towards players in POV mode
 
 ## Changes Important for Modders
 
@@ -87,6 +90,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 - Fixed game not properly retrieving hardware information
 - Fixed the "Hit!" graphic not being the correct color on all clients in multiplayer
 - The results screen now shows the cumulative effort of all players in mutliplayer
+- Fixed mouse hitching in POV mode when rotating your turret
 
 ## TODO
 

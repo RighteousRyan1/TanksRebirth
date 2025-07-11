@@ -22,7 +22,6 @@ using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.Graphics;
-using tainicom.Aether.Physics2D.Fluids;
 
 namespace TanksRebirth.GameContent.RebirthUtils;
 
@@ -310,10 +309,16 @@ public static class DebugManager {
                 if (InputUtils.MouseRight)
                     CameraGlobals.OrthoRotationVector += MouseUtils.MouseVelocity / 500f;
 
+                if (InputUtils.MouseRight && InputUtils.MouseLeft) {
+                    CameraGlobals.OrthoRotationVector = Vector2.Zero;
+                    CameraGlobals.AddativeZoom = 0f;
+                    CameraGlobals.CameraFocusOffset = Vector2.Zero;
+                }
+
                 if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Add))
-                    CameraGlobals.AddativeZoom += 0.01f;
+                    CameraGlobals.AddativeZoom += 0.025f * RuntimeData.DeltaTime;
                 if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Subtract))
-                    CameraGlobals.AddativeZoom -= 0.01f;
+                    CameraGlobals.AddativeZoom -= 0.025f * RuntimeData.DeltaTime;
 
                 if (InputUtils.MouseMiddle)
                     CameraGlobals.CameraFocusOffset += MouseUtils.MouseVelocity;
@@ -367,8 +372,8 @@ public static class DebugManager {
         DrawDebugString(spriteBatch, $"Team: {TeamID.Collection.GetKey(tankToSpawnTeam)}", WindowUtils.WindowTop + posOffset + new Vector2(0, 32), 3, centered: true);
         DrawDebugString(spriteBatch, $"BlockStack: {blockHeight} | BlockType: {BlockID.Collection.GetKey(blockType)}", WindowUtils.WindowBottom - new Vector2(0, 20), 3, centered: true);
 
-        tankToSpawnType = MathHelper.Clamp(tankToSpawnType, 2, TankID.Collection.Count - 1);
-        tankToSpawnTeam = MathHelper.Clamp(tankToSpawnTeam, 0, TeamID.Collection.Count - 1);
+        tankToSpawnType = MathHelper.Clamp(tankToSpawnType, TankID.Brown, TankID.Collection.Count - 1);
+        tankToSpawnTeam = MathHelper.Clamp(tankToSpawnTeam, TeamID.NoTeam, TeamID.Collection.Count - 1);
 
         DrawDebugString(spriteBatch, $"Logic Time: {RuntimeData.LogicTime.TotalMilliseconds:0.00}ms" +
                                                    $"\nLogic FPS: {RuntimeData.LogicFPS}" +

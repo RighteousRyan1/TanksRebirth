@@ -285,11 +285,10 @@ public class NetPlay {
 
                 Shell.AllShells[idAdjust]?.Destroy((Shell.DestructionContext)cxt, wasSentByAnotherClient: true);*/
 
-                var currentClientShellCount = Shell.AllShells.Count(x => x is not null);
-                for (int i = 0; i < currentClientShellCount; i++)
-                {
-                    if (Shell.AllShells[i].UID == otherShellUID)
-                    {
+                var currentClientShellCount = Shell.AllShells.Length;
+                for (int i = 0; i < currentClientShellCount; i++) {
+                    if (Shell.AllShells[i] is null) continue;
+                    if (Shell.AllShells[i].UID == otherShellUID) {
                         Shell.AllShells[i].Destroy((Shell.DestructionContext)cxt, wasSentByAnotherClient: true);
                         break;
                     }
@@ -313,7 +312,6 @@ public class NetPlay {
                 var shellVel = reader.GetVector2();
                 var shellRicochets = reader.GetUInt();
                 var shellOwner = reader.GetInt();
-                var shellID = reader.GetInt();
                 var shellUID = reader.GetByte();
 
                 // GameHandler.AllTanks[shellOwner].Shoot(true);
@@ -591,7 +589,6 @@ public class NetPlay {
                 var shellVel = reader.GetVector2();
                 var shellRicochets = reader.GetUInt();
                 var shellOwner = reader.GetInt();
-                var shellInstanceID = reader.GetInt();
                 var shellUniqueID = reader.GetByte();
 
                 message.Put(shellType);
@@ -599,7 +596,6 @@ public class NetPlay {
                 message.Put(shellVel);
                 message.Put(shellRicochets);
                 message.Put(shellOwner);
-                message.Put(shellInstanceID);
                 message.Put(shellUniqueID);
 
                 Server.NetManager.SendToAll(message, deliveryMethod, peer);

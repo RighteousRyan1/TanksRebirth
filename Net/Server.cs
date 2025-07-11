@@ -73,6 +73,7 @@ public class Server
 
         NetManager.Start(port);
         NetManager.DisconnectTimeout = 10000;
+        NetManager.UpdateTime = 10;
 
         // serverNetManager.NatPunchEnabled = true;
         NetListener.PeerDisconnectedEvent += NetListener_PeerDisconnectedEvent;

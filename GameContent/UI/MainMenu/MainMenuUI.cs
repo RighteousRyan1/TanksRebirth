@@ -26,6 +26,8 @@ public static partial class MainMenuUI
     public static Animator CameraPositionAnimator;
     public static Animator CameraRotationAnimator;
 
+    public static OggAudio TickSound;
+
     public static OggMusic Theme;
     private static bool _musicFading;
 
@@ -71,6 +73,7 @@ public static partial class MainMenuUI
 
     public static RebirthLogoModel RebirthLogo;
     public static void InitializeBasics() {
+        TickSound = new OggAudio("Content/Assets/sounds/menu/menu_tick.ogg");
         CameraPositionAnimator = Animator.Create();
         CameraRotationAnimator = Animator.Create();
         MenuState = UIState.PrimaryMenu;
@@ -100,7 +103,7 @@ public static partial class MainMenuUI
             DifficultiesButton ];
 
         foreach (var e in _menuElements) {
-            e.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick.ogg", SoundContext.Effect, rememberMe: true); };
+            e.OnMouseOver = (uiElement) => SoundPlayer.PlaySoundInstance(TickSound, SoundContext.Effect);
         }
     }
     public static void Leave() {

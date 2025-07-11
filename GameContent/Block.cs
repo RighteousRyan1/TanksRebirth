@@ -67,9 +67,17 @@ public class Block : IGameObject
 
     public static event RicochetDelegate? OnRicochet;
 
+    Vector3 _offset;
+    public const float BLOCK_DEF_SCALING = 0.646f;
+    Vector3 _scaling = new(0.646f);
+    Texture2D _texture;
+    Particle _shadow;
+
     /// <summary>The teleportation index for this <see cref="Block"/>. Make sure that no more than 2 teleporters share this same number.</summary>
     public sbyte TpLink = -1;
     private int[] _tankCooldowns = new int[GameHandler.AllTanks.Length];
+
+    public ModBlock ModdedData { get; private set; }
 
     /// <summary>The type of this <see cref="Block"/>. (i.e: Wood, Cork, Hole)</summary>
     public int Type { get; set; }
@@ -91,9 +99,7 @@ public class Block : IGameObject
     /// <summary>The hitbox for this <see cref="Block"/>.</summary>
     public Rectangle Hitbox;
 
-    private Texture2D _texture;
-
-    private byte _stack;
+    byte _stack;
     /// <summary>How tall this <see cref="Block"/> is.</summary>
     public byte Stack {
         get => _stack;
@@ -124,11 +130,7 @@ public class Block : IGameObject
     // 141 for normal
 
     /// <summary>The identifier for this <see cref="Block"/>.</summary>
-    public readonly int Id;
-
-    private Vector3 _offset;
-
-    private static Vector3 _scaling = new(0.646f);
+    public int Id { get; }
 
     public BlockProperties Properties { get; set; } = new();
     /// <summary>Whether or not this <see cref="Block"/> is using its alternate model.</summary>
@@ -171,19 +173,21 @@ public class Block : IGameObject
                 _texture = GameScene.Assets["teleporter"];
                 Properties.CanStack = false;
                 break;
+            default:
+                ModdedData?.PostInitialize();
+                break;
         }
         if (Properties.HasShadow) {
             // fix this, but dont worry about it for now
-            var p = GameHandler.Particles.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>($"Assets/textures/tank_shadow"));
-            p.Tag = "block_shadow_" + Id;
-            p.TextureCrop = null;
+            _shadow = GameHandler.Particles.MakeParticle(Position3D, GameResources.GetGameResource<Texture2D>($"Assets/textures/tank_shadow"));
+            _shadow.TextureCrop = null;
             //bool moveL = true;
             //bool moveD = true;
-            p.Pitch = MathHelper.PiOver2;
-            p.Scale = new(1f);
-            p.Alpha = 1f;
-            p.HasAddativeBlending = false;
-            p.UniqueBehavior = (a) => {
+            _shadow.Pitch = MathHelper.PiOver2;
+            _shadow.Scale = new(1f);
+            _shadow.Alpha = 1f;
+            _shadow.HasAddativeBlending = false;
+            _shadow.UniqueBehavior = (a) => {
                 // TODO: save for when i make shadows look... proper.
                 //p.TextureCrop = new(0, 0, 32, 32);
 
@@ -192,14 +196,9 @@ public class Block : IGameObject
 
                 //float coordOff = 16 * p.Scale.X;
 
-                p.Position = new Vector3(Position3D.X, 0.15f, Position3D.Z);
+                _shadow.Position = new Vector3(Position3D.X, 0.15f, Position3D.Z);
             };
             // TODO: Finish collisions
-        }
-        for (int i = 0; i < ModLoader.ModBlocks.Length; i++) {
-            if (Type == ModLoader.ModBlocks[i].Type) {
-                ModLoader.ModBlocks[i].PostInitialize(this);
-            }
         }
     }
 
@@ -221,9 +220,19 @@ public class Block : IGameObject
         else
             Position = position;
 
-        Id = Array.FindIndex(AllBlocks, block => block is null);
+        for (int i = 0; i < ModLoader.ModBlocks.Length; i++) {
+            var modBlock = ModLoader.ModBlocks[i];
+
+            // associate values properly for modded data
+            if (Type == modBlock.Type) {
+                ModdedData = modBlock.Clone();
+                ModdedData.Block = this;
+            }
+        }
 
         Swap(type);
+
+        Id = Array.FindIndex(AllBlocks, block => block is null);
 
         AllBlocks[Id] = this;
 
@@ -233,14 +242,7 @@ public class Block : IGameObject
 
     /// <summary>Remove this <see cref="Block"/> from the game scene and memory.</summary>
     public void Remove() {
-        var index = Array.FindIndex(GameHandler.Particles.CurrentParticles,
-            a => {
-                if (a == null)
-                    return false;
-                return (string)a.Tag == "block_shadow_" + Id;
-            });
-        if (index > -1)
-            GameHandler.Particles.CurrentParticles[index].Destroy();
+        _shadow?.Destroy();
 
         if (Body != null && Tank.CollisionsWorld.BodyList.Contains(Body))
             Tank.CollisionsWorld.Remove(Body);
@@ -252,11 +254,7 @@ public class Block : IGameObject
         if (Properties.IsDestructible) {
             const int PARTICLE_COUNT = 12;
 
-            for (int i = 0; i < ModLoader.ModBlocks.Length; i++) {
-                if (Type == ModLoader.ModBlocks[i].Type) {
-                    ModLoader.ModBlocks[i].OnDestroy(this);
-                }
-            }
+            ModdedData?.OnDestroy();
 
             for (int i = 0; i < PARTICLE_COUNT; i++) {
                 var tex = GameResources.GetGameResource<Texture2D>(Client.ClientRandom.Next(0, 2) == 0 ? "Assets/textures/misc/tank_rock" : "Assets/textures/misc/tank_rock_2");
@@ -397,12 +395,7 @@ public class Block : IGameObject
                 mesh.Draw();
             }
         }
-        for (int i = 0; i < ModLoader.ModBlocks.Length; i++) {
-            if (Type == ModLoader.ModBlocks[i].Type) {
-                ModLoader.ModBlocks[i].PostRender(this);
-                return;
-            }
-        }
+        ModdedData?.PostRender();
         OnPostRender?.Invoke(this);
     }
 
@@ -440,12 +433,7 @@ public class Block : IGameObject
             }
         }
         UpdateOffset();
-        for (int i = 0; i < ModLoader.ModBlocks.Length; i++) {
-            if (Type == ModLoader.ModBlocks[i].Type) {
-                ModLoader.ModBlocks[i].PostUpdate(this);
-                return;
-            }
-        }
+        ModdedData?.PostUpdate();
         OnPostUpdate?.Invoke(this);
     }
 }

@@ -254,7 +254,7 @@ public class GameHandler {
     }
 
     public static void RenderUI() {
-        foreach (var element in UIElement.AllUIElements) {
+        foreach (var element in UIElement.AllUIElements.ToList()) {
             // element.Position = Vector2.Transform(element.Position, UIMatrix * Matrix.CreateTranslation(element.Position.X, element.Position.Y, 0));
             if (element.Parent != null)
                 continue;

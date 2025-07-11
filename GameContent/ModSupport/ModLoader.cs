@@ -167,7 +167,7 @@ public static class ModLoader
 
             // unload modded stuff and all data
             var modTankCount = _modTankDictionary[mod].Count;
-            for (int i = 0; i < _modTankDictionary[mod].Count; i++) {
+            for (int i = modTankCount - 1; i >= 0; i--) {
                 _modTankDictionary[mod][i].Unload();
             }
             // this allows the next mod to unload properly... thrice
@@ -175,14 +175,14 @@ public static class ModLoader
             _modTankDictionary[mod].Clear();
 
             var modBlockCount = _modBlockDictionary[mod].Count;
-            for (int i = 0; i < _modBlockDictionary[mod].Count; i++) {
+            for (int i = modBlockCount - 1; i >= 0; i--) {
                 _modBlockDictionary[mod][i].Unload();
             }
             ModBlock.unloadOffset += modBlockCount;
             _modBlockDictionary[mod].Clear();
 
             var modShellCount = _modShellDictionary[mod].Count;
-            for (int i = _modShellDictionary[mod].Count - 1; i >= 0; i--) {
+            for (int i = modShellCount - 1; i >= 0; i--) {
                 _modShellDictionary[mod][i].Unload();
             }
             ModShell.unloadOffset += modShellCount;

@@ -1,6 +1,8 @@
 using FontStashSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
+using System.Collections.Generic;
+using System;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
@@ -9,11 +11,14 @@ using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.GameUI;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
+using TanksRebirth.Internals.UI;
+using TanksRebirth.Internals.Common.Framework.Audio;
 
 namespace TanksRebirth.GameContent.UI.MainMenu;
 
 #pragma warning disable
 public static partial class MainMenuUI {
+
     private static bool _diffButtonsInitialized;
     public static UITextButton TanksAreCalculators; // make them calculate shots abnormally
     public static UITextButton PieFactory;
@@ -45,6 +50,8 @@ public static partial class MainMenuUI {
     public static UITextButton LanternMode;
 
     public static UITextButton DisguiseMode;
+
+    public static List<UIElement> AllDifficultyButtons = [];
 
     // TODO: UI Layers. This is fucking ugly.
     internal static void SetDifficultiesButtonsVisibility(bool visible) {
@@ -130,6 +137,7 @@ public static partial class MainMenuUI {
     }
     private static void InitializeDifficultyButtons() {
         _diffButtonsInitialized = true;
+
         SpriteFontBase font = FontGlobals.RebirthFont;
         TanksAreCalculators = new("Tanks are Calculators", font, Color.White) {
             IsVisible = false,
@@ -138,8 +146,6 @@ public static partial class MainMenuUI {
             "\nDo note that this uses significantly more CPU power.",
             OnLeftClick = (elem) => Difficulties.Types["TanksAreCalculators"] = !Difficulties.Types["TanksAreCalculators"]
         };
-        TanksAreCalculators.SetDimensions(100, 300, 300, 40);
-
         PieFactory = new("Lemon Pie Factory", font, Color.White) {
             IsVisible = false,
             Tooltip = "Makes yellow tanks absurdly more dangerous by" +
@@ -147,59 +153,43 @@ public static partial class MainMenuUI {
             "\nOh, yeah. They're immune to explosions now too.",
             OnLeftClick = (elem) => Difficulties.Types["PieFactory"] = !Difficulties.Types["PieFactory"]
         };
-        PieFactory.SetDimensions(100, 350, 300, 40);
-
         UltraMines = new("Ultra Mines", font, Color.White) {
             IsVisible = false,
             Tooltip = "Mines are now 2x as deadly!" +
             "\nTheir explosion radii are now 2x as big!",
             OnLeftClick = (elem) => Difficulties.Types["UltraMines"] = !Difficulties.Types["UltraMines"]
         };
-        UltraMines.SetDimensions(100, 400, 300, 40);
-
         BulletHell = new("Bullet Hell", font, Color.White) {
             IsVisible = false,
             Tooltip = "Bullets now ricochet thrice as much as before!",
             OnLeftClick = (elem) => Difficulties.Types["BulletHell"] = !Difficulties.Types["BulletHell"]
         };
-        BulletHell.SetDimensions(100, 450, 300, 40);
-
         AllInvisible = new("All Invisible", font, Color.White) {
             IsVisible = false,
             Tooltip = "Every single non-player tank is now invisible and no longer lay tracks!",
             OnLeftClick = (elem) => Difficulties.Types["AllInvisible"] = !Difficulties.Types["AllInvisible"]
         };
-        AllInvisible.SetDimensions(100, 500, 300, 40);
-
         AllStationary = new("All Stationary", font, Color.White) {
             IsVisible = false,
             Tooltip = "Every single non-player tank is now stationary." +
             "\nThis should REDUCE difficulty.",
             OnLeftClick = (elem) => Difficulties.Types["AllStationary"] = !Difficulties.Types["AllStationary"]
         };
-        AllStationary.SetDimensions(100, 550, 300, 40);
-
         AllHoming = new("Seekers", font, Color.White) {
             IsVisible = false,
             Tooltip = "Every enemy tank now has homing bullets.",
             OnLeftClick = (elem) => Difficulties.Types["AllHoming"] = !Difficulties.Types["AllHoming"]
         };
-        AllHoming.SetDimensions(100, 600, 300, 40);
-
         Armored = new("Armored", font, Color.White) {
             IsVisible = false,
             Tooltip = "Every single non-player tank has 3 armor points added to it.",
             OnLeftClick = (elem) => Difficulties.Types["Armored"] = !Difficulties.Types["Armored"]
         };
-        Armored.SetDimensions(100, 650, 300, 40);
-
         BumpUp = new("Bump Up", font, Color.White) {
             IsVisible = false,
             Tooltip = "Makes the game a bit harder by \"Bumping up\" each tank, giving them one extra tier.",
             OnLeftClick = (elem) => Difficulties.Types["BumpUp"] = !Difficulties.Types["BumpUp"]
         };
-        BumpUp.SetDimensions(100, 700, 300, 40);
-
         Monochrome = new("Monochrome", font, Color.White) {
             IsVisible = false,
             Tooltip = "Makes every tank the tank of your choice." +
@@ -219,38 +209,28 @@ public static partial class MainMenuUI {
                 Difficulties.Types["Monochrome"] = Difficulties.MonochromeValue != TankID.None;
             }
         };
-        Monochrome.SetDimensions(100, 750, 300, 40);
-
         InfiniteLives = new("Infinite Lives", font, Color.White) {
             IsVisible = false,
             Tooltip = "You now have infinite lives. Have fun!",
             OnLeftClick = (elem) => Difficulties.Types["InfiniteLives"] = !Difficulties.Types["InfiniteLives"]
         };
-        InfiniteLives.SetDimensions(450, 300, 300, 40);
-
         MasterMode = new("Master Mode", font, Color.White) {
             IsVisible = false,
             Tooltip = "Original tanks will become much more difficult." +
             "\nNew music, mechanics, and more!",
             OnLeftClick = (elem) => Difficulties.Types["MasterModBuff"] = !Difficulties.Types["MasterModBuff"]
         };
-        MasterMode.SetDimensions(450, 350, 300, 40);
-
         TacticalPlanes = new("Tactical Planes", font, Color.White) {
             IsVisible = false,
             Tooltip = "Airplanes will occasionally come through the sky" +
             "\nand drop smoke grenades to block your vision!",
             OnLeftClick = (elem) => Difficulties.Types["TacticalPlanes"] = !Difficulties.Types["TacticalPlanes"]
         };
-        TacticalPlanes.SetDimensions(450, 400, 300, 40);
-
         MachineGuns = new("Machine Guns", font, Color.White) {
             IsVisible = false,
             Tooltip = "Every tank (including the player) now has the ability to fire as fast as they want.",
             OnLeftClick = (elem) => Difficulties.Types["MachineGuns"] = !Difficulties.Types["MachineGuns"]
         };
-        MachineGuns.SetDimensions(450, 450, 300, 40);
-
         RandomizedTanks = new("Randomized Tanks", font, Color.White, 0.5f) {
             IsVisible = false,
             Tooltip = "Every tank is now randomized." +
@@ -277,67 +257,48 @@ public static partial class MainMenuUI {
                 Difficulties.RandomTanksUpper = TankID.None;
             }
         };
-        RandomizedTanks.SetDimensions(450, 500, 300, 40);
-
         ThunderMode = new("Thunder Mode", font, Color.White) {
             IsVisible = false,
             Tooltip = "The scene is much darker, and thunder is your only source of decent light.",
             OnLeftClick = (elem) => Difficulties.Types["ThunderMode"] = !Difficulties.Types["ThunderMode"]
         };
-        ThunderMode.SetDimensions(450, 550, 300, 40);
-
         POVMode = new("POV Mode", font, Color.White) {
             IsVisible = false,
             Tooltip = "Play the game in the POV of your tank!" +
             "\nYou can move around inter-directionally with WASD, and aim by dragging the mouse.",
             OnLeftClick = (elem) => Difficulties.Types["POV"] = !Difficulties.Types["POV"]
         };
-        POVMode.SetDimensions(450, 600, 300, 40);
-
         AiCompanion = new("AI Companion", font, Color.White) {
             IsVisible = false,
             Tooltip = "A random tank will spawn at your location and help you throughout every mission.",
             OnLeftClick = (elem) => Difficulties.Types["AiCompanion"] = !Difficulties.Types["AiCompanion"]
         };
-        AiCompanion.SetDimensions(450, 650, 300, 40);
-
         Shotguns = new("Shotguns", font, Color.White) {
             IsVisible = false,
             Tooltip = "Every tank now fires a spread of bullets.",
             OnLeftClick = (elem) => Difficulties.Types["Shotguns"] = !Difficulties.Types["Shotguns"]
         };
-        Shotguns.SetDimensions(450, 700, 300, 40);
-
-        //init predictions
         Predictions = new("Predictions", font, Color.White) {
             IsVisible = false,
             Tooltip = "Every tank predicts your future position.",
             OnLeftClick = (elem) => Difficulties.Types["Predictions"] = !Difficulties.Types["Predictions"]
         };
-        Predictions.SetDimensions(450, 750, 300, 40);
-
         RandomizedPlayer = new("Randomized Player", font, Color.White) {
             IsVisible = false,
             Tooltip = "You become a random enemy tank every life.",
             OnLeftClick = (elem) => Difficulties.Types["RandomPlayer"] = !Difficulties.Types["RandomPlayer"]
         };
-        RandomizedPlayer.SetDimensions(800, 300, 300, 40);
-
         BulletBlocking = new("Bullet Blocking", font, Color.White) {
             IsVisible = false,
             Tooltip = "Enemies *attempt* to block your bullets." +
             "\nIt doesn't always work, sometimes even killing teammates.\nHigh fire-rate enemies are mostly affected.",
             OnLeftClick = (elem) => Difficulties.Types["BulletBlocking"] = !Difficulties.Types["BulletBlocking"]
         };
-        BulletBlocking.SetDimensions(800, 350, 300, 40);
-
         FFA = new("Free-for-all", font, Color.White) {
             IsVisible = false,
             Tooltip = "Every tank is on their own!",
             OnLeftClick = (elem) => Difficulties.Types["FFA"] = !Difficulties.Types["FFA"]
         };
-        FFA.SetDimensions(800, 400, 300, 40);
-
         LanternMode = new("Lantern Mode", font, Color.White) {
             IsVisible = false,
             Tooltip = "Everything is dark. Only you and your lantern can save you now.",
@@ -346,7 +307,6 @@ public static partial class MainMenuUI {
                 GameShaders.LanternMode = Difficulties.Types["LanternMode"];
             }
         };
-        LanternMode.SetDimensions(800, 450, 300, 40);
         DisguiseMode = new("Disguise", font, Color.White) {
             IsVisible = false,
             Tooltip = "You become a tank of your choosing during gameplay.",
@@ -365,7 +325,37 @@ public static partial class MainMenuUI {
                 Difficulties.Types["Disguise"] = Difficulties.DisguiseValue != TankID.None;
             }
         };
-        DisguiseMode.SetDimensions(800, 500, 300, 40);
+
+        AllDifficultyButtons.AddRange(new UITextButton[] { TanksAreCalculators, PieFactory, UltraMines, BulletHell, AllInvisible, AllStationary, Armored, AllHoming, BumpUp, Monochrome,
+        InfiniteLives, MasterMode, TacticalPlanes, MachineGuns, RandomizedTanks, ThunderMode, POVMode, AiCompanion, Shotguns, Predictions,
+        RandomizedPlayer, BulletBlocking, FFA, LanternMode, DisguiseMode });
+
         // make all buttons not-interactable for non-host clients.
+    }
+    private static void ArrangeDifficultyButtons() {
+
+        const int maxRowsPerColumn = 12;
+        Vector2 buttonSize = new Vector2(300, 40);
+        float padding = 20f;
+        int totalButtons = AllDifficultyButtons.Count;
+        int columnCount = (int)Math.Ceiling(totalButtons / (float)maxRowsPerColumn);
+
+        // Get total width of all columns combined (scaled after ToResolutionX)
+        //float totalWidth = (buttonSize.X * columnCount + padding * (columnCount - 1)).ToResolutionX();
+        float totalWidth = columnCount * buttonSize.X + (columnCount + 1) * padding;
+        float startX = totalWidth / 2f; //(WindowUtils.WindowWidth - totalWidth) / 2f;
+
+        for (int i = 0; i < totalButtons; i++) {
+            var button = AllDifficultyButtons[i];
+            int col = i / maxRowsPerColumn;
+            int row = i % maxRowsPerColumn;
+
+            float offsetX = (buttonSize.X + padding) * col;
+            float offsetY = (buttonSize.Y + padding) * row;
+
+            Vector2 position = new Vector2(startX + offsetX, (WindowUtils.WindowHeight * 0.1f) + offsetY.ToResolutionY());
+            button.SetDimensions(() => position.ToResolution(), () => buttonSize.ToResolution());
+            button.OnMouseOver = (a) => SoundPlayer.PlaySoundInstance(TickSound, SoundContext.Effect);
+        }
     }
 }

@@ -186,10 +186,8 @@ public class Crate
         if (ContainsTank)
         {
             var tier = TankToSpawn.AiTier;
-            if (Difficulties.Types["MarbleModBuff"])
-                tier -= 18;
             if (Difficulties.Types["MasterModBuff"])
-                tier -= 9;
+                tier = Difficulties.VanillaToMasterModeConversions[tier];
             var t = new AITank(tier);
             t.Body.Position = position.FlattenZ() / Tank.UNITS_PER_METER;
             t.Position = position.FlattenZ();

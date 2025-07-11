@@ -84,7 +84,7 @@ public class Shell : IAITankDanger
 
     /// <summary>The <see cref="Tank"/> which shot this <see cref="Shell"/>.</summary>
     public Tank? Owner;
-    public ModShell? ModdedData { get; set; }
+    public ModShell? ModdedData { get; private set; }
 
     public Vector3 Position3D => Position.ExpandZ() + new Vector3(0, 11, 0);
     public Vector3 Velocity3D => Velocity.ExpandZ();
@@ -120,9 +120,7 @@ public class Shell : IAITankDanger
     /// Represents the ID of this shell in the array. Useful for local operations relating to collisions and such.
     /// </summary>
     public int Id { get; private set; }
-    /// <summary>
-    /// Represents an ID between (0-63 * client #) used for syncing. Set randomly and is synced on spawn but not manipulated! Useful for state change operations on the bullet, such as death.
-    /// </summary>
+    /// <summary>Represents an ID between (0-63 * client #) used for syncing. Set randomly and is synced on spawn but not manipulated! Useful for state change operations on the bullet, such as death.</summary>
     public byte UID { get; private set; }
     private float _wallRicCooldown;
     /// <summary>How long this shell has existed in the world.</summary>
@@ -130,27 +128,19 @@ public class Shell : IAITankDanger
     public ShellProperties Properties { get; set; } = new();
     public int Type { get; set; }
     public void ReassignId(int newId) => Id = newId;
-    /// <summary>
-    /// Updates the UID of the shell. Avoid changing during runtime if unnecessary.
-    /// </summary>
-    /// <param name="newID"></param>
+    /// <summary>Updates the UID of the shell. Avoid changing during runtime if unnecessary.</summary>
     public void SetUID(byte newID) => UID = newID;
-    /// <summary>
-    /// Generates a random UID for use with shell instance management
-    /// </summary>
-    public byte GenerateUID(Tank owner)
-    {
+    /// <summary>aGenerates a random UID for use with shell instance management</summary>
+    public static byte GenerateUID(Tank owner) {
         bool repetitionCheck = true;
         int attempts = 0;
-        while (repetitionCheck && attempts < 8)
-        {
+        while (repetitionCheck && attempts < 8) {
             attempts += 1;
             repetitionCheck = false;
-            byte newID = (byte)((Client.ClientRandom.Next(0, 64)) + (NetPlay.GetMyClientId() * 64));        //splits the byte range (0-255) amongst 4 players and allows each player to allocate 0-63 of the addr.
-            for (int i = 0; i < owner.OwnedShellCount; i++)
-            {
-                if (owner.OwnedShells[i].UID == newID)      //if there's a repetition, redo
-                {
+            byte newID = (byte)(Client.ClientRandom.Next(0, byte.MaxValue / GameHandler.MAX_PLAYERS + 1) + NetPlay.GetMyClientId() * byte.MaxValue / GameHandler.MAX_PLAYERS + 1);        //splits the byte range (0-255) amongst 4 players and allows each player to allocate 0-63 of the addr.
+            for (int i = 0; i < owner.OwnedShellCount; i++) {
+                if (owner.OwnedShells[i] is null) continue;
+                if (owner.OwnedShells[i].UID == newID) {      //if there's a repetition, redo
                     repetitionCheck = true;
                     break;
                 }
@@ -191,12 +181,7 @@ public class Shell : IAITankDanger
                 Properties.IsDestructible = false;
                 break;
             default:
-                for (int i = 0; i < ModLoader.ModShells.Length; i++) {
-                    if (Type == ModLoader.ModShells[i].Type) {
-                        ModLoader.ModShells[i].OnCreate(this);
-                        break;
-                    }
-                }
+                ModdedData?.OnCreate();
                 break;
         }
     }
@@ -230,6 +215,17 @@ public class Shell : IAITankDanger
 
         PreCreate?.Invoke(this);
 
+        for (int i = 0; i < ModLoader.ModShells.Length; i++) {
+            var modShell = ModLoader.ModShells[i];
+
+            // associate values properly for modded data
+            if (Type == modShell.Type) {
+                ModdedData = modShell.Clone();
+                ModdedData.Shell = this;
+            }
+        }
+
+        // ths calls OnCreate for ModdedData
         Swap(type);
 
         if (playSpawnSound) {
@@ -244,11 +240,10 @@ public class Shell : IAITankDanger
                     _ => throw new NotImplementedException($"Sound for the shell type {Type} is not implemented, yet."),
                 };
             }
-        }
-
-        if (owner is not null && playSpawnSound) {
-            ShootSound!.Instance.Pitch = MathHelper.Clamp(owner.Properties.ShootPitch, -1, 1);
-            SoundPlayer.PlaySoundInstance(ShootSound, SoundContext.Effect, 0.3f);
+            if (owner is not null) {
+                ShootSound!.Instance.Pitch = MathHelper.Clamp(owner.Properties.ShootPitch, -1, 1);
+                SoundPlayer.PlaySoundInstance(ShootSound, SoundContext.Effect, 0.3f);
+            }
         }
 
         CampaignGlobals.OnMissionEnd += StopSounds;
@@ -289,12 +284,7 @@ public class Shell : IAITankDanger
                 OnRicochet?.Invoke(this);
                 Ricochet(true);
 
-                for (int i = 0; i < ModLoader.ModShells.Length; i++) {
-                    if (Type == ModLoader.ModShells[i].Type) {
-                        ModLoader.ModShells[i].OnRicochet(this, null);
-                        return;
-                    }
-                }
+                ModdedData?.OnRicochet(null);
 
                 _wallRicCooldown = 5;
             }
@@ -303,12 +293,7 @@ public class Shell : IAITankDanger
                 OnRicochet?.Invoke(this);
                 Ricochet(false);
 
-                for (int i = 0; i < ModLoader.ModShells.Length; i++) {
-                    if (Type == ModLoader.ModShells[i].Type) {
-                        ModLoader.ModShells[i].OnRicochet(this, null);
-                        return;
-                    }
-                }
+                ModdedData?.OnRicochet(null);
 
                 _wallRicCooldown = 5;
             }
@@ -329,37 +314,18 @@ public class Shell : IAITankDanger
             switch (dir) {
                 case CollisionDirection.Up:
                 case CollisionDirection.Down:
-                    for (int i = 0; i < ModLoader.ModBlocks.Length; i++) {
-                        if (Type == ModLoader.ModBlocks[i].Type) {
-                            ModLoader.ModBlocks[i].OnRicochet(block, this);
-                            return;
-                        }
-                    }
-                    for (int i = 0; i < ModLoader.ModShells.Length; i++) {
-                        if (Type == ModLoader.ModShells[i].Type) {
-                            ModLoader.ModShells[i].OnRicochet(this, block);
-                            return;
-                        }
-                    }
-                    OnRicochetWithBlock?.Invoke(block, this);
                     Ricochet(false);
+                    block.ModdedData?.OnRicochet(this);
+                    ModdedData?.OnRicochet(block);
+                    OnRicochetWithBlock?.Invoke(block, this);
                     break;
                 case CollisionDirection.Left:
                 case CollisionDirection.Right:
-                    for (int i = 0; i < ModLoader.ModBlocks.Length; i++) {
-                        if (Type == ModLoader.ModBlocks[i].Type) {
-                            ModLoader.ModBlocks[i].OnRicochet(block, this);
-                            return;
-                        }
-                    }
-                    for (int i = 0; i < ModLoader.ModShells.Length; i++) {
-                        if (Type == ModLoader.ModShells[i].Type) {
-                            ModLoader.ModShells[i].OnRicochet(this, block);
-                            return;
-                        }
-                    }
-                    OnRicochetWithBlock?.Invoke(block, this);
+                    // TODO: fix this pls
                     Ricochet(true);
+                    block.ModdedData?.OnRicochet(this);
+                    ModdedData?.OnRicochet(block);
+                    OnRicochetWithBlock?.Invoke(block, this);
                     break;
             }
         }
@@ -421,12 +387,8 @@ public class Shell : IAITankDanger
 
         if (Properties.Flaming)
             RenderFlamingParticle();
-        for (int i = 0; i < ModLoader.ModShells.Length; i++) {
-            if (Type == ModLoader.ModShells[i].Type) {
-                ModLoader.ModShells[i].PostUpdate(this);
-                return;
-            }
-        }
+
+        ModdedData?.PostUpdate();
         OnPostUpdate?.Invoke(this);
     }
     private void RenderSmokeParticle(float timer) {
@@ -653,12 +615,7 @@ public class Shell : IAITankDanger
     public void Destroy(DestructionContext context, bool playSound = true, bool wasSentByAnotherClient = false) {
         ShootSound?.Instance?.Stop(true);
         // ParticleSystem.MakeSparkEmission(Position, 10);
-        for (int i = 0; i < ModLoader.ModShells.Length; i++) {
-            if (Type == ModLoader.ModShells[i].Type) {
-                ModLoader.ModShells[i].OnDestroy(this, context, ref playSound);
-                //return;
-            }
-        }
+        ModdedData?.OnDestroy(context, ref playSound);
         if (context != DestructionContext.WithHostileTank && context != DestructionContext.WithMine &&
             context != DestructionContext.WithExplosion) {
             if (playSound) {
@@ -709,12 +666,7 @@ public class Shell : IAITankDanger
         for (var i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
             DrawShellMesh(i);
         }
-        for (int i = 0; i < ModLoader.ModShells.Length; i++) {
-            if (Type == ModLoader.ModShells[i].Type) {
-                ModLoader.ModShells[i].PostRender(this);
-                return;
-            }
-        }
+        ModdedData?.PostRender();
         OnPostRender?.Invoke(this);
     }
 

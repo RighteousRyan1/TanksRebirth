@@ -117,6 +117,7 @@ public static partial class MainMenuUI
         };
         DifficultiesButton.SetDimensions(() => new Vector2(700, 550).ToResolution(), () => new Vector2(500, 50).ToResolution());
         DifficultiesButton.OnLeftClick = (element) => {
+            ArrangeDifficultyButtons();
             MenuState = UIState.Difficulties;
         };
 
