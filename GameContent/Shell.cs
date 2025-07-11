@@ -242,7 +242,9 @@ public class Shell : IAITankDanger
             }
             if (owner is not null) {
                 ShootSound!.Instance.Pitch = MathHelper.Clamp(owner.Properties.ShootPitch, -1, 1);
-                SoundPlayer.PlaySoundInstance(ShootSound, SoundContext.Effect, 0.3f);
+                SoundPlayer.PlaySoundInstance(ShootSound, SoundContext.Effect, volume: 0.3f);
+                //if (CameraGlobals.IsUsingFirstPresonCamera)
+                //    SoundUtils.CreateSpatialSound(ShootSound, owner.TurretPosition3D, CameraGlobals.RebirthFreecam.Position);
             }
         }
 
@@ -278,6 +280,11 @@ public class Shell : IAITankDanger
         Position += Velocity * 0.62f * RuntimeData.DeltaTime;
         World = Matrix.CreateFromYawPitchRoll(-Rotation, 0, 0)
                 * Matrix.CreateTranslation(Position3D);
+
+        if (TrailSound != null) {
+            //if (CameraGlobals.IsUsingFirstPresonCamera)
+            //    SoundUtils.CreateSpatialSound(TrailSound, Position3D, CameraGlobals.RebirthFreecam.Position);
+        }
 
         if (_wallRicCooldown <= 0) {
             if (Position.X is < GameScene.MIN_X or > GameScene.MAX_X) {
@@ -392,11 +399,11 @@ public class Shell : IAITankDanger
         OnPostUpdate?.Invoke(this);
     }
     private void RenderSmokeParticle(float timer) {
-        if (CameraGlobals.IsUsingPOVCamera) timer /= 2;
+        if (CameraGlobals.IsUsingFirstPresonCamera) timer /= 2;
         if (!(LifeTime % timer <= RuntimeData.DeltaTime)) return;
 
         Particle p;
-        if (CameraGlobals.IsUsingPOVCamera) {
+        if (CameraGlobals.IsUsingFirstPresonCamera) {
             p = GameHandler.Particles.MakeParticle(Position3D + new Vector3(0, 0, 5).FlattenZ()
                                 .Rotate(Rotation + MathHelper.Pi + Client.ClientRandom.NextFloat(-0.3f, 0.3f))
                                 .ExpandZ(),
@@ -523,15 +530,19 @@ public class Shell : IAITankDanger
             Velocity.Y = -Velocity.Y;
 
 
-        var sound = SoundPlayer.PlaySoundInstance(ricochetSound, SoundContext.Effect, 0.5f, gameplaySound: true);
+        var sound = SoundPlayer.PlaySoundInstance(ricochetSound, SoundContext.Effect, 0.5f);
+
+        //bool fp = CameraGlobals.IsUsingFirstPresonCamera;
+        //if (fp)
+        //    SoundUtils.CreateSpatialSound(sound, Position3D, CameraGlobals.RebirthFreecam.Position);
 
         if (Owner is not null) {
             if (Owner.Properties.ShellType == ShellID.TrailedRocket) {
                 sound.Instance.Pitch = Client.ClientRandom.NextFloat(0.15f, 0.25f);
-                var rocketRSound = SoundPlayer.PlaySoundInstance("Assets/sounds/ricochet_zip.ogg", SoundContext.Effect,
-                    0.05f,
-                    gameplaySound: true);
+                var rocketRSound = SoundPlayer.PlaySoundInstance("Assets/sounds/ricochet_zip.ogg", SoundContext.Effect, 0.05f);
                 rocketRSound.Instance.Pitch = -0.65f;
+                //if (fp)
+                //    SoundUtils.CreateSpatialSound(sound, Position3D, CameraGlobals.RebirthFreecam.Position);
             }
             else {
                 sound.Instance.Pitch = Client.ClientRandom.NextFloat(-0.05f, 0.05f);
@@ -619,9 +630,11 @@ public class Shell : IAITankDanger
         if (context != DestructionContext.WithHostileTank && context != DestructionContext.WithMine &&
             context != DestructionContext.WithExplosion) {
             if (playSound) {
-                var sfx = SoundPlayer.PlaySoundInstance("Assets/sounds/bullet_destroy.ogg", SoundContext.Effect, 0.5f,
-                    gameplaySound: true);
+                var sfx = SoundPlayer.PlaySoundInstance("Assets/sounds/bullet_destroy.ogg", SoundContext.Effect, 0.5f);
                 sfx.Instance.Pitch = Client.ClientRandom.NextFloat(-0.1f, 0.1f);
+
+                if (CameraGlobals.IsUsingFirstPresonCamera)
+                    sfx.MaxVolume = SoundUtils.GetVolumeFromCameraPosition(Position3D, CameraGlobals.RebirthFreecam.Position);
             }
 
             GameHandler.Particles.MakeSmallExplosion(Position3D, 8, 10, 1.25f, 15);

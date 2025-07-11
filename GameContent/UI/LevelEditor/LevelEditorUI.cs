@@ -812,12 +812,15 @@ public static partial class LevelEditorUI {
                 if (RayUtils.GetMouseToWorldRay().Intersects(tnk.Worldbox).HasValue) {
                     HoveringAnyTank = true;
                     if (InputUtils.KeyJustPressed(Keys.K) && Array.IndexOf(GameHandler.AllTanks, tnk) > -1)
-                        tnk?.Destroy(new TankHurtContextOther(), false); // hmmm
+                        tnk?.Destroy(new TankHurtContextOther(null, TankHurtContextOther.HurtContext.FromOther, "Smitten by zeus!"), false); // hmmm
 
                     if (InputUtils.CanDetectClick(rightClick: true)) {
                         tnk!.TankRotation = (tnk.TankRotation - MathHelper.PiOver2).WrapTauAngle() - MathHelper.Pi;
-                        tnk!.TurretRotation = (tnk.TurretRotation - MathHelper.PiOver2).WrapTauAngle() - MathHelper.Pi;
+                        tnk!.TargetTankRotation = (tnk.TargetTankRotation - MathHelper.PiOver2).WrapTauAngle() - MathHelper.Pi;
                         tnk!.TurretRotation = (tnk.TurretRotation + MathHelper.PiOver2).WrapTauAngle() - MathHelper.Pi;
+
+                        // why tf was this here???
+                        // tnk!.TurretRotation = (tnk.TurretRotation + MathHelper.PiOver2).WrapTauAngle() - MathHelper.Pi;
                     }
 
                     tnk.IsHoveredByMouse = true;
@@ -828,7 +831,7 @@ public static partial class LevelEditorUI {
         }
 
         if (missionToRate == MainMenuUI.curMenuMission)
-            ReturnToEditor.OnLeftClick?.Invoke(null);
+            ReturnToEditor.OnLeftClick?.Invoke(null!);
 
         AddMissionBtn.IsVisible =
             RemoveMissionBtn.IsVisible =

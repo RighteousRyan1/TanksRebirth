@@ -60,21 +60,6 @@ public static class IntermissionHandler {
         }
         if (!Client.IsConnected()) {
             if (context == MissionEndContext.Lose) {
-                // hardcode hell
-                /*if (!Difficulties.Types["InfiniteLives"])
-                    PlayerTank.AddLives(-1);*/
-
-                // what is this comment?
-                /*int len = $"{VanillaCampaign.CachedMissions.Count(x => !string.IsNullOrEmpty(x.Name))}".Length;
-                int diff = len - $"{VanillaCampaign.CurrentMissionId}".Length;
-
-                string realName = "";
-
-                for (int i = 0; i < diff; i++)
-                    realName += "0";
-                realName += $"{VanillaCampaign.CurrentMissionId + 1}";
-
-                VanillaCampaign.CachedMissions[VanillaCampaign.CurrentMissionId] = Mission.Load(realName, VanillaCampaign.Name);*/
                 var deathSound = "Assets/music/fanfares/tank_player_death.ogg";
                 SoundPlayer.PlaySoundInstance(deathSound, SoundContext.Effect, 0.3f);
             }
@@ -179,7 +164,7 @@ public static class IntermissionHandler {
                 int restartTime;
                 MissionEndContext endContext;
 
-                IntermissionSystem.InitializeCountdowns(isExtraLifeMission);
+                IntermissionSystem.InitializeCountdowns(isExtraLifeMission && victory);
                 if (victory) {
                     restartTime = DEF_INTERMISSION_TIME;
 

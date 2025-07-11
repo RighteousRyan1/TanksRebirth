@@ -1,15 +1,7 @@
 ﻿using Microsoft.Xna.Framework.Audio;
-using StbVorbisSharp;
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using TanksRebirth.Internals.Common.Framework.Audio.AudioSerializers;
-using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.Internals.Common.Framework.Audio;
 
@@ -40,10 +32,22 @@ public class OggAudio : IDisposable, IAudio {
         }
     }
 
-    public float MaxVolume { get; set; }
+    float _maxVolume;
+    public float MaxVolume {
+        // maybe causes volume decay if called constantly...?
+        get => _maxVolume;
+        set {
+            _maxVolume = value;
+
+            // intentional...? to call the setter. weird code but whatever
+            Volume = Volume;
+        }
+    }
     public string Name { get; set; }
 
     public SoundState State => Instance.State;
+
+    public static OggDeserializer _oggDeserializer = new();
 
     public void Play() {
         ThrowIfDisposed();
@@ -61,30 +65,30 @@ public class OggAudio : IDisposable, IAudio {
     }
 
     public OggAudio(string path, SoundEffect effect) {
-        this.Path = path;
-        this._effect = effect;
-        this.Instance = effect.CreateInstance();
+        Path = path;
+        _effect = effect;
+        Instance = effect.CreateInstance();
     }
     public OggAudio(string path) {
         Path = path;
         Load(Path);
-        this.MaxVolume = 1f;
+        MaxVolume = 1f;
     }
 
     public OggAudio(string path, string audioName, float maxVolume) {
         Path = path;
         Name = audioName;
         Load(Path);
-        this.MaxVolume = maxVolume;
+        MaxVolume = maxVolume;
     }
 
     public OggAudio(string path, float maxVolume) {
         Path = path;
         Load(Path);
-        this.MaxVolume = maxVolume;
+        MaxVolume = maxVolume;
     }
 
-    private void Load(string path) {
+    private void Load(string path, bool compressToMono = false) {
         var soundEffect = GameResources.GetGameResource<SoundEffect>(path);
         if (soundEffect != null) {
             _effect = soundEffect;
@@ -92,7 +96,26 @@ public class OggAudio : IDisposable, IAudio {
             return;
         }
         
-        var audioData = new OggDeserializer().Deserialize(path);
+        var audioData = _oggDeserializer.Deserialize(path);
+
+        if (compressToMono) {
+            if (audioData.channelCount == 2) {
+
+                // average left and right channels lol
+                var monoData = new byte[audioData.binaryData.Length / 2];
+                for (int i = 0; i < monoData.Length; i += 2) {
+                    short left = BitConverter.ToInt16(audioData.binaryData, i * 2);
+                    short right = BitConverter.ToInt16(audioData.binaryData, i * 2 + 2);
+                    short mono = (short)((left + right) / 2);
+                    byte[] monoBytes = BitConverter.GetBytes(mono);
+                    monoData[i] = monoBytes[0];
+                    monoData[i + 1] = monoBytes[1];
+                }
+                audioData.binaryData = monoData;
+                audioData.channelCount = 1;
+            }
+        }
+
         _effect = new SoundEffect(audioData.binaryData, audioData.sampleRate, (AudioChannels)audioData.channelCount);
         Instance = _effect.CreateInstance();
     }

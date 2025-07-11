@@ -25,11 +25,12 @@ public class Freecam(GraphicsDevice device)
             //}
         }
     }
-
+    public Vector3 Velocity { get; private set; }
     private Vector3 _position;
     public Vector3 Position {
         get => _position;
         set {
+            Velocity = value - _position;
             _position = value;
             ChangeViewWorld();
         }

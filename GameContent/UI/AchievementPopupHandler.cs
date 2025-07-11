@@ -54,7 +54,7 @@ public class AchievementPopupHandler {
         if (hasTexture) {
             var achievementGet = "Assets/sounds/menu/achievement.ogg";
 
-            SoundPlayer.PlaySoundInstance(achievementGet, SoundContext.Effect, 1f, 0f, 0f, gameplaySound: true);
+            SoundPlayer.PlaySoundInstance(achievementGet, SoundContext.Effect, 1f, 0f, 0f);
             _curTexture = ach.Texture;
             if (!string.IsNullOrEmpty(ach.Name)) {
                 _title = ach.Name;

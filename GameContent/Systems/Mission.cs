@@ -37,7 +37,7 @@ public record struct Mission {
     /// Creates a <see cref="Mission"/> instance from the current placement of everything.
     /// </summary>
     /// <returns>The mission that is currently active, or created.</returns>
-    public static Mission GetCurrent(string name = null) {
+    public static Mission GetCurrent(string? name = null) {
         const int roundingFactor = 5;
         List<TankTemplate> tanks = [];
         List<BlockTemplate> blocks = [];

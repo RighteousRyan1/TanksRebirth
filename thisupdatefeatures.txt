@@ -18,6 +18,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 - Added a button to the campaigns menu instead of the user having to press Enter to download the latest version
 - Added the ability for the game to obtain hardware information on any OS (MacOS, Linux) instead of only Windows
 - Added the bonus life animation after over 3.5 years!
+- Added a spectate feature to POV mode
 
 ## Changes
 
@@ -91,6 +92,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 - Fixed the "Hit!" graphic not being the correct color on all clients in multiplayer
 - The results screen now shows the cumulative effort of all players in mutliplayer
 - Fixed mouse hitching in POV mode when rotating your turret
+- Multiplayer now no longer suffers from "ghost bullets"
 
 ## TODO
 

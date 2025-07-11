@@ -228,11 +228,8 @@ public class Airplane {
         if (RotateTowardsVelocity) Rotation = -Velocity.ToRotation() + MathHelper.PiOver2;
 
         var screenPos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection);
-        if (Difficulties.Types["POV"]) {
-            // change to freecam pos soon?
-            if (PlayerTank.ClientTank is not null) {
-                PlaneLoop.Volume = SoundUtils.GetVolumeFromCameraPosition(Position, PlayerTank.ClientTank.Position3D);
-            }
+        if (CameraGlobals.IsUsingFirstPresonCamera) {
+            PlaneLoop.Volume = SoundUtils.GetVolumeFromCameraPosition(Position, CameraGlobals.RebirthFreecam.Position);
         }
         else PlaneLoop.Volume = SoundUtils.GetVolumeFromScreenPosition(screenPos);
         //PlaneLoop.Instance.Pan = SoundUtils.GetPanFromScreenPosition(screenPos.X) - 1;// * 0.8f;

@@ -53,7 +53,7 @@ public sealed class Mine : IAITankDanger
     private ModelMesh? _mineMesh;
     private ModelMesh? _envMesh;
 
-    public OggAudio TickingNoise;
+    public OggAudio? TickingNoise;
 
     public Rectangle Hitbox;
 
@@ -104,8 +104,12 @@ public sealed class Mine : IAITankDanger
 
         Position = pos;
 
-        if (owner != null)
-            SoundPlayer.PlaySoundInstance("Assets/sounds/mine_place.ogg", SoundContext.Effect, 0.5f, gameplaySound: true);
+        if (owner != null) {
+            var placeSound = SoundPlayer.PlaySoundInstance("Assets/sounds/mine_place.ogg", SoundContext.Effect, 0.5f);
+
+            //if (CameraGlobals.IsUsingFirstPresonCamera)
+            //    SoundUtils.CreateSpatialSound(placeSound, Position3D, CameraGlobals.RebirthFreecam.Position);
+        }
 
         _mineMesh = Model.Meshes["polygon1"];
         _envMesh = Model.Meshes["polygon0"];
@@ -161,12 +165,12 @@ public sealed class Mine : IAITankDanger
                     _tickRed = !_tickRed;
                 }
                 if (_oldDetonateTime > TICKS_OF_FLASHING && Owner is not null && Owner is PlayerTank) {
-                    SoundPlayer.PlaySoundInstance("Assets/sounds/mine_trip.ogg", SoundContext.Effect, 1f, gameplaySound: true);
+                    SoundPlayer.PlaySoundInstance("Assets/sounds/mine_trip.ogg", SoundContext.Effect, 1f);
                 }
             }
             if (Owner is not null && Owner is PlayerTank) {
                 if (DetonateTime < TICKS_OF_FLASHING - 5 && _oldDetonateTime > TICKS_OF_FLASHING - 5) {
-                    TickingNoise = SoundPlayer.PlaySoundInstance("Assets/sounds/mine_tick.ogg", SoundContext.Effect, 0.7f, gameplaySound: true);
+                    TickingNoise = SoundPlayer.PlaySoundInstance("Assets/sounds/mine_tick.ogg", SoundContext.Effect, 0.7f);
                     TickingNoise.Instance.IsLooped = true;
                 }
             }

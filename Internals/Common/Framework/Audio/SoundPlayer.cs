@@ -23,7 +23,7 @@ public static class SoundPlayer
     private static float EffectsVolume => TankGame.Settings.EffectsVolume;
     private static float AmbientVolume => TankGame.Settings.AmbientVolume;
     // my spidey senses are telling me this is horribly inefficient.
-    public static OggAudio PlaySoundInstance(string audioPath, SoundContext context, float volume = 1f, float panOverride = 0f, float pitchOverride = 0f, bool gameplaySound = false, bool rememberMe = false) {
+    public static OggAudio PlaySoundInstance(string audioPath, SoundContext context, float volume = 1f, float maxVolume = 1f, float panOverride = 0f, float pitchOverride = 0f, bool rememberMe = false) {
         // because ogg is the only good audio format.
         audioPath = Path.Combine(audioPath.Contains("Content/") ? "" : TankGame.Instance.Content.RootDirectory, audioPath);
 
@@ -44,8 +44,8 @@ public static class SoundPlayer
             SavedSounds.Add(audioPath, sfx);
         sfx.Instance.Pan = MathHelper.Clamp(panOverride, -1f, 1f);
         sfx.Instance.Pitch = MathHelper.Clamp(pitchOverride, -1f, 1f);
-        sfx.Instance.Play();
-        sfx.Instance.Volume = MathHelper.Clamp(volume, 0f, 1f);
+        sfx.Play();
+        sfx.Volume = MathHelper.Clamp(volume * maxVolume, 0f, 1f);
 
         //GameContent.Systems.ChatSystem.SendMessage($"{nameof(exists)}: {exists}", Color.White);
         //GameContent.Systems.ChatSystem.SendMessage($"new list count: {Sounds.Count}", Color.White);
@@ -70,19 +70,17 @@ public static class SoundPlayer
 
         return sfx;
     }
-    public static void PlaySoundInstance(OggAudio fromSound, SoundContext context, float volume = 1f, bool playNew = false, float panOverride = 0f, float pitchOverride = 0f) {
+    public static void PlaySoundInstance(OggAudio fromSound, SoundContext context, float volume = 1f, float maxVolume = 1f, bool playNew = false, float panOverride = 0f, float pitchOverride = 0f) {
         volume *= context switch {
             SoundContext.Music => MusicVolume,
             SoundContext.Effect => EffectsVolume,
             SoundContext.Ambient => AmbientVolume,
             _ => throw new ArgumentOutOfRangeException(nameof(context), context, "Uh oh! Seems like a new sound type was implemented, but I was not given a way to handle it!"),
         };
-        if (playNew) {
-            PlaySoundInstance(fromSound.Path, context, volume, panOverride, pitchOverride, false);
+        //if (playNew) {
+            PlaySoundInstance(fromSound.Path, context, volume, maxVolume, panOverride, pitchOverride);
             return;
-        }
-        fromSound.Play();
-        fromSound.Volume = volume;
+        //}
     }
 
     public static OggAudio SoundError() => PlaySoundInstance("Assets/sounds/menu/menu_error.ogg", SoundContext.Effect, rememberMe: true);

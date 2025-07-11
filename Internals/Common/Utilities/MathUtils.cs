@@ -133,6 +133,14 @@ public static class MathUtils
         returnValue = (value - min) / (max - min) * 2;
         return MathHelper.Clamp(returnValue, 0f, 1f);
     }
+    public static float CreateGradientValueWithNegative(float value, float min, float max) {
+        float mid = (max + min) / 2f;
+        float halfRange = (max - min) / 2f;
+
+        // Shift the value so the midpoint is 0, then scale to [-1, 1]
+        float result = (value - mid) / halfRange;
+        return MathHelper.Clamp(result, -1f, 1f);
+    }
     public static float CreateGradientCapped(float value, float min, float max) {
         if (value > ((min + max) / 2))
             return 1;

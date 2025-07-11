@@ -96,7 +96,7 @@ public static class ParticleGameplay {
 
             if (timer > 60 && !exploded) {
                 exploded = true;
-                SoundPlayer.PlaySoundInstance("Assets/sounds/smoke_hiss.ogg", SoundContext.Effect, 0.3f, gameplaySound: true);
+                SoundPlayer.PlaySoundInstance("Assets/sounds/smoke_hiss.ogg", SoundContext.Effect, 0.3f);
                 for (int i = 0; i < 8; i++) {
                     var c = system.MakeParticle(p.Position,
                         ModelResources.Smoke.Asset,

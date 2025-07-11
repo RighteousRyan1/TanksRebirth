@@ -21,6 +21,7 @@ using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.GameContent.Globals.Assets;
 using DiscordRPC;
+using System.Net.NetworkInformation;
 
 namespace TanksRebirth.GameContent;
 
@@ -287,7 +288,7 @@ public abstract class Tank {
             Team = TeamID.NoTeam;
         if (!Properties.Invisible || Dead) return;
 
-        SoundPlayer.PlaySoundInstance(invisibleTankSound, SoundContext.Effect, 0.3f, gameplaySound: true);
+        SoundPlayer.PlaySoundInstance(invisibleTankSound, SoundContext.Effect, 0.3f);
 
         var lightParticle = GameHandler.Particles.MakeParticle(Position3D,
             GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_particle"));
@@ -445,11 +446,14 @@ public abstract class Tank {
             if (!Properties.IsSilent && Velocity.Length() > 0) {
                 // why did i clamp? i hate old code
                 if (RuntimeData.RunTime % MathHelper.Clamp(treadPlaceTimer / 2, 4, 6) < RuntimeData.DeltaTime) {
+                    // can use reflection to go over or under the pitch limits, remember that
                     Properties.TreadPitch = MathHelper.Clamp(Properties.TreadPitch, -1f, 1f);
                     var treadPlace = $"Assets/sounds/tnk_tread_place_{Client.ClientRandom.Next(1, 5)}.ogg";
-                    var sfx = SoundPlayer.PlaySoundInstance(treadPlace, SoundContext.Effect, Properties.TreadVolume, 0f,
-                        Properties.TreadPitch, gameplaySound: true);
+                    var sfx = SoundPlayer.PlaySoundInstance(treadPlace, SoundContext.Effect, volume: Properties.TreadVolume, pitchOverride: Properties.TreadPitch);
                     sfx.Instance.Pitch = Properties.TreadPitch;
+
+                    //if (CameraGlobals.IsUsingFirstPresonCamera)
+                    //    SoundUtils.CreateSpatialSound(sfx, Position3D, CameraGlobals.RebirthFreecam.Position);
                 }
             }
         }
@@ -520,10 +524,11 @@ public abstract class Tank {
         if (Properties.SafeGetArmorHitPoints() > 0) {
             Properties.Armor!.HitPoints--;
             var ding = SoundPlayer.PlaySoundInstance(
-                $"Assets/sounds/armor_ding_{Client.ClientRandom.Next(1, 3)}.ogg", SoundContext.Effect,
-                gameplaySound: true);
+                $"Assets/sounds/armor_ding_{Client.ClientRandom.Next(1, 3)}.ogg", SoundContext.Effect);
 
             ding.Instance.Pitch = Client.ClientRandom.NextFloat(-0.1f, 0.1f);
+            //if (CameraGlobals.IsUsingFirstPresonCamera)
+            //    SoundUtils.CreateSpatialSound(ding, Position3D, CameraGlobals.RebirthFreecam.Position, 1.25f);
             OnDamage?.Invoke(this, Properties.Armor.HitPoints == 0, context);
 
             willDestroy = false;
@@ -587,7 +592,10 @@ public abstract class Tank {
         Dead = true;
 
         const string tankDestroySound0 = "Assets/sounds/tnk_destroy.ogg";
-        SoundPlayer.PlaySoundInstance(tankDestroySound0, SoundContext.Effect, 0.2f, gameplaySound: true);
+        var destroy = SoundPlayer.PlaySoundInstance(tankDestroySound0, SoundContext.Effect, 0.2f);
+
+        //if (CameraGlobals.IsUsingFirstPresonCamera)
+        //    SoundUtils.CreateSpatialSound(destroy, Position3D, CameraGlobals.RebirthFreecam.Position, 1.25f);
 
         Properties.Armor?.Remove();
 
@@ -733,7 +741,7 @@ public abstract class Tank {
         _oldShellLimit = Properties.ShellLimit;
     }
     public void DoShootParticles() {
-        if (!CameraGlobals.IsUsingPOVCamera) {
+        if (!CameraGlobals.IsUsingFirstPresonCamera) {
             var hit = GameHandler.Particles.MakeParticle(TurretPosition3D,
                 GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
 
@@ -750,7 +758,7 @@ public abstract class Tank {
         }
         Particle smoke;
 
-        if (CameraGlobals.IsUsingPOVCamera) {
+        if (CameraGlobals.IsUsingFirstPresonCamera) {
             smoke = GameHandler.Particles.MakeParticle(TurretPosition3D,
                 ModelResources.Smoke.Asset,
                 GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));

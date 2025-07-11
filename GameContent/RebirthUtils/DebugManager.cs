@@ -310,9 +310,9 @@ public static class DebugManager {
                     CameraGlobals.OrthoRotationVector += MouseUtils.MouseVelocity / 500f;
 
                 if (InputUtils.MouseRight && InputUtils.MouseLeft) {
-                    CameraGlobals.OrthoRotationVector = Vector2.Zero;
-                    CameraGlobals.AddativeZoom = 0f;
-                    CameraGlobals.CameraFocusOffset = Vector2.Zero;
+                    CameraGlobals.OrthoRotationVector = new Vector2(0, LevelEditorUI.Active ? CameraGlobals.LVL_EDIT_ANGLE : CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE);
+                    CameraGlobals.AddativeZoom = LevelEditorUI.Active ? CameraGlobals.LVL_EDIT_ZOOM : 1f;
+                    CameraGlobals.CameraFocusOffset = LevelEditorUI.Active ? new Vector2(0, CameraGlobals.LVL_EDIT_Y_OFF) : Vector2.Zero;
                 }
 
                 if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Add))
@@ -452,6 +452,7 @@ public static class DebugManager {
                 centered: false);
         }
         DrawDebugString(spriteBatch, $"Position: {CameraGlobals.RebirthFreecam.Position}" +
+            $"\nVelocity: {CameraGlobals.RebirthFreecam.Velocity}" +
             $"\nRotation: {CameraGlobals.RebirthFreecam.Rotation}" +
             $"\nFOV: {CameraGlobals.RebirthFreecam.FieldOfView}�" +
             $"\nForward: {CameraGlobals.GameView.Forward}" +

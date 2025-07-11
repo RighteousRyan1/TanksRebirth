@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Linq;
+using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.AI;
@@ -61,9 +62,6 @@ public class Explosion : IAITankDanger {
 
         var destroysound = "Assets/sounds/mine_explode.ogg";
 
-        //int vertLayers = (int)(scale * 2.5f); // 16
-        //int horizLayers = (int)scale; // 5
-
         int horizLayers = (int)(scale * 1.5f) + 2; // 10
         int vertLayers = (int)(scale * 1.1f) + 2; // 8
 
@@ -117,7 +115,9 @@ public class Explosion : IAITankDanger {
             horizLayers -= (int)MathF.Round((float)horizLayers / vertLayers);
         }
 
-        SoundPlayer.PlaySoundInstance(destroysound, SoundContext.Effect, 1f, 0f, soundPitch, gameplaySound: true);
+        var audio = SoundPlayer.PlaySoundInstance(destroysound, SoundContext.Effect, 1f, pitchOverride: soundPitch);
+        //if (CameraGlobals.IsUsingFirstPresonCamera)
+        //    SoundUtils.CreateSpatialSound(audio, Position3D, CameraGlobals.RebirthFreecam.Position, 1.25f);
 
         Id = index;
 

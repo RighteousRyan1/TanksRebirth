@@ -132,19 +132,22 @@ public class Campaign
 
             OnPreLoadTank?.Invoke(ref template);
 
+            var chassisRotation = MathF.Round(template.Rotation, roundingFactor);
+
             if (!template.IsPlayer) {
                 if (TrackedSpawnPoints[i].Alive) {
                     var tank = template.GetAiTank();
 
                     tank.Position = template.Position;
-                    tank.TankRotation = MathF.Round(template.Rotation, roundingFactor);
-                    tank.TargetTankRotation = MathF.Round(template.Rotation, roundingFactor);
+
+                    tank.TankRotation = chassisRotation;
+                    tank.TargetTankRotation = chassisRotation;
                     tank.TurretRotation = MathF.Round(-template.Rotation, roundingFactor);
                     tank.Dead = false;
                     tank.Team = template.Team;
                     if (CampaignGlobals.ShouldMissionsProgress) {
                         tank.OnDestroy += () => {
-                            TrackedSpawnPoints[Array.IndexOf(TrackedSpawnPoints, TrackedSpawnPoints.First(pos => pos.Item1 == template.Position))].Item2 = false; // make sure the tank is not spawned again
+                            TrackedSpawnPoints[Array.IndexOf(TrackedSpawnPoints, TrackedSpawnPoints.First(pos => pos.Position == template.Position))].Alive = false; // make sure the tank is not spawned again
                         };
                     }
                     var placement = PlacementSquare.Placements.FindIndex(place => Vector3.Distance(place.Position, tank.Position3D) < Block.SIDE_LENGTH / 2);
@@ -162,8 +165,8 @@ public class Campaign
                     var tank = template.GetPlayerTank();
 
                     tank.Position = template.Position;
-                    tank.TankRotation = MathF.Round(template.Rotation, roundingFactor);
-                    tank.TargetTankRotation = MathF.Round(template.Rotation, roundingFactor);
+                    tank.TankRotation = chassisRotation;
+                    tank.TargetTankRotation = chassisRotation;
                     tank.TurretRotation = MathF.Round(-template.Rotation, roundingFactor);
                     tank.Dead = false;
                     tank.Team = template.Team;

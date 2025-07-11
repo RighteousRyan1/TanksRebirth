@@ -238,14 +238,14 @@ public static partial class MainMenuUI {
             "\n\nLeft click to increase the upper limit." +
             "\nRight click to increase the lower limit." +
             "\nMiddle click to reset both to 'None'.",
-            OnLeftClick = (elem) => {
+            OnRightClick = (elem) => {
                 if (Difficulties.RandomTanksUpper + 1 >= TankID.Collection.Count)
                     Difficulties.RandomTanksUpper = TankID.None;
                 else
                     Difficulties.RandomTanksUpper++;
                 Difficulties.Types["RandomizedTanks"] = Difficulties.RandomTanksLower != TankID.None && Difficulties.RandomTanksUpper != TankID.None;
             },
-            OnRightClick = (elem) => {
+            OnLeftClick = (elem) => {
                 if (Difficulties.RandomTanksLower + 1 >= TankID.Collection.Count)
                     Difficulties.RandomTanksLower = TankID.None;
                 else
