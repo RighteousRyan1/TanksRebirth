@@ -53,7 +53,7 @@ public static class DiscordRichPresence {
                     return "a";
                 }
             }
-            SetLargeAsset("tanks_physical_logo", $"v{RuntimeData.GameVersion}");
+            SetLargeAsset("tanks_physical_logo", $"v{RuntimeData.ShortVersion}");
             if (MainMenuUI.Active) {
                 switch (MainMenuUI.MenuState) {
                     case MainMenuUI.UIState.PrimaryMenu:

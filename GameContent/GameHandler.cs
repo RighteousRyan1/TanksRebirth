@@ -56,9 +56,11 @@ public class GameHandler {
         AllPlayerTanks = new PlayerTank[MAX_PLAYERS];
         AllTanks = new Tank[MAX_PLAYERS + MAX_AI_TANKS];
 
-        ExperienceBar = new();
-        ExperienceBar.Level = (ushort)TankGame.SaveFile.ExpLevel;
+        ExperienceBar = new() {
+            Level = (ushort)TankGame.SaveFile.ExpLevel
+        };
         ExperienceBar.Value = TankGame.SaveFile.ExpLevel - ExperienceBar.Level;
+        ExperienceBar.ApproachValue = ExperienceBar.Value;
 
         ExperienceBar.Alignment = Anchor.LeftCenter;
         ExperienceBar.FillColor = Color.Lime;

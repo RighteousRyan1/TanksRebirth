@@ -25,6 +25,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 
 - All tank types above "obsidian" are now gone.
 	- This is because they were poorly designed, and will benefit more being replaced by the tanks to come in the future!
+- The experience bar now has a little more flair and visual appeal
 - "Master Mod Buff" changed to "Master Mode"
 - Changed the game's main font (for english only)
 - Players can no longer *visually* peek through corners of map geometry
@@ -79,8 +80,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 - `MainMenu` -> `MainMenuUI`
 - `GameSceneRenderer` -> `GameScene`
 - `TankGame.GameData` -> `TankGame.SaveFile`
-- Particles have gotten an entire makeover- `ParticleSystem` is now a namespace, where the old `ParticleSystem` class got changed to `ParticleManager`.
-	- `Particle` is now the parent class of the new `Particle2D` and `Particle3D`, where logic is handled separately between the two.
+- `ParticleSystem` -> `ParticleManager`
 
 ## Fixes
 

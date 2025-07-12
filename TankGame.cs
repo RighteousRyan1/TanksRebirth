@@ -42,6 +42,7 @@ using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.Graphics.Shaders;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
+using System.Linq;
 
 namespace TanksRebirth;
 
@@ -164,6 +165,7 @@ public class TankGame : Game {
         FontGlobals.RebirthFontSystem = new();
 
         RuntimeData.GameVersion = typeof(TankGame).Assembly.GetName().Version!;
+        RuntimeData.ShortVersion = string.Join('.', RuntimeData.GameVersion.ToString().TrimStart('v', 'V').Split('.').Take(2));
 
         ClientLog.Write(
             $"Running {typeof(TankGame).Assembly.GetName().Name} on version '{RuntimeData.GameVersion}'",
@@ -171,6 +173,12 @@ public class TankGame : Game {
     }
 
     protected override void Initialize() {
+        SaveFile.Setup();
+        if (File.Exists(Path.Combine(SaveFile.Directory, SaveFile.Name)))
+            SaveFile.Deserialize();
+
+        ClientLog.Write("Save file loaded.", LogType.Info);
+
         GameHandler.Initialize();
         GameDirectory = Directory.GetCurrentDirectory();
         CameraGlobals.Initialize(GraphicsDevice);
@@ -200,10 +208,6 @@ public class TankGame : Game {
         Graphics.ApplyChanges();
 
         ClientLog.Write($"Applying changes to graphics device... ({Graphics.PreferredBackBufferWidth}x{Graphics.PreferredBackBufferHeight})", LogType.Info);
-
-        SaveFile.Setup();
-        if (File.Exists(Path.Combine(SaveFile.Directory, SaveFile.Name)))
-            SaveFile.Deserialize();
 
         ClientLog.Write($"Loaded save data.", LogType.Info);
 

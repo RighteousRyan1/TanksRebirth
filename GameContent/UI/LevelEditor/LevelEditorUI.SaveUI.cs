@@ -3,6 +3,7 @@ using NativeFileDialogSharp;
 using System.IO;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Systems;
+using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Framework.Graphics;
 using TanksRebirth.Internals.Common.GameUI;
 using TanksRebirth.Internals.Common.Utilities;
@@ -20,7 +21,7 @@ public static partial class LevelEditorUI {
     public static UITextInput CampaignVersion;
     public static UITextInput CampaignTags;
     public static UITextButton MissionGrantsLife;
-    public static UITextInput CampaignLoadingStripColor;
+    public static UITextInput CampaignLoadingBannercolor;
     public static UITextInput CampaignLoadingBGColor;
     public static UITextButton SaveMenuReturn;
     public static UITextButton SaveLevelConfirm;
@@ -78,7 +79,15 @@ public static partial class LevelEditorUI {
                 50.ToResolutionY()));
         SaveLevelConfirm.OnLeftClick = (l) => {
             // Mission.Save(LevelName.GetRealText(), )
+            var isValidStartingLives = int.TryParse(CampaignStartingLives.GetRealText(), out int startingLives);
+            if (!isValidStartingLives) {
+                SoundPlayer.SoundError();
+                ChatSystem.SendMessage("Invalid 'Starting Lives' count!", Color.Red);
+                return;
+            }
+
             var res = Dialog.FileSave(_viewMissionDetails ? "mission,bin" : "campaign", TankGame.SaveDirectory);
+
             if (res.Path != null && res.IsOk) {
                 try {
                     var name = _viewMissionDetails ? MissionName.Text : CampaignName.Text;
@@ -101,8 +110,10 @@ public static partial class LevelEditorUI {
                         loadedCampaign.MetaData.Tags = split;
                         loadedCampaign.MetaData.Version = CampaignVersion.GetRealText();
                         loadedCampaign.MetaData.BackgroundColor = UnpackedColor.FromStringFormat(CampaignLoadingBGColor.GetRealText());
-                        loadedCampaign.MetaData.MissionStripColor = UnpackedColor.FromStringFormat(CampaignLoadingStripColor.GetRealText());
+                        loadedCampaign.MetaData.MissionStripColor = UnpackedColor.FromStringFormat(CampaignLoadingBannercolor.GetRealText());
                         loadedCampaign.MetaData.HasMajorVictory = _hasMajorVictory;
+                        loadedCampaign.MetaData.StartingLives = startingLives;
+
                         Campaign.Save(res.Path, loadedCampaign);
                     }
                 }
@@ -160,10 +171,10 @@ public static partial class LevelEditorUI {
         CampaignLoadingBGColor.DefaultString = TankGame.GameLanguage.BGColor;
         CampaignLoadingBGColor.Tooltip = TankGame.GameLanguage.BGColorFlavor;
 
-        CampaignLoadingStripColor = new(FontGlobals.RebirthFont, Color.White, 1f, 11);
-        CampaignLoadingStripColor.SetDimensions(() => new Vector2(LevelContentsPanel.X + padX.ToResolutionX(), LevelContentsPanel.Y + 420.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), height.ToResolutionY()));
-        CampaignLoadingStripColor.DefaultString = TankGame.GameLanguage.BannerColor;
-        CampaignLoadingStripColor.Tooltip = TankGame.GameLanguage.BannerColorFlavor;
+        CampaignLoadingBannercolor = new(FontGlobals.RebirthFont, Color.White, 1f, 11);
+        CampaignLoadingBannercolor.SetDimensions(() => new Vector2(LevelContentsPanel.X + padX.ToResolutionX(), LevelContentsPanel.Y + 420.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), height.ToResolutionY()));
+        CampaignLoadingBannercolor.DefaultString = TankGame.GameLanguage.BannerColor;
+        CampaignLoadingBannercolor.Tooltip = TankGame.GameLanguage.BannerColorFlavor;
 
         CampaignStartingLives = new(FontGlobals.RebirthFont, Color.White, 1f, 11);
         CampaignStartingLives.SetDimensions(() => new Vector2(LevelContentsPanel.X + padX.ToResolutionX(), LevelContentsPanel.Y + 480.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), height.ToResolutionY()));
@@ -181,7 +192,7 @@ public static partial class LevelEditorUI {
         _campaignTextInputs.Add(CampaignName);
         _campaignTextInputs.Add(CampaignVersion);
         _campaignTextInputs.Add(CampaignLoadingBGColor);
-        _campaignTextInputs.Add(CampaignLoadingStripColor);
+        _campaignTextInputs.Add(CampaignLoadingBannercolor);
         _campaignTextInputs.Add(CampaignTags);
         _campaignTextInputs.Add(CampaignAuthor);
         _campaignTextInputs.Add(CampaignDescription);

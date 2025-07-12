@@ -402,7 +402,7 @@ public partial class AITank : Tank {
 
             p.Scale = new(0.5f);
             p.Pitch = MathHelper.Pi + MouseUtils.Test.X;
-            p.FaceTowardsMe = true;
+            p.FaceTowardsMe = CameraGlobals.IsUsingFirstPresonCamera;
             p.Origin2D = FontGlobals.RebirthFont.MeasureString($"+{gain * 100:0.00} XP") / 2;
 
             p.UniqueBehavior = (p) => {

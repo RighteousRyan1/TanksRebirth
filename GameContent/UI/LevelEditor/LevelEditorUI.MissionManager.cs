@@ -37,7 +37,7 @@ public partial class LevelEditorUI {
             CampaignVersion.Text = campaign.MetaData.Version;
             CampaignVersion.Text = campaign.MetaData.Version;
             CampaignLoadingBGColor.Text = campaign.MetaData.BackgroundColor.ToString();
-            CampaignLoadingStripColor.Text = campaign.MetaData.MissionStripColor.ToString();
+            CampaignLoadingBannercolor.Text = campaign.MetaData.MissionStripColor.ToString();
             _hasMajorVictory = campaign.MetaData.HasMajorVictory;
         }
 

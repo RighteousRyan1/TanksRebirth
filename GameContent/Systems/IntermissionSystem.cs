@@ -60,7 +60,7 @@ public static class IntermissionSystem {
 
     static Vector2 _offset;
     static Rectangle _cutForLength;
-    static float _oldBlack;
+    internal static float oldBlack;
     static bool _forceBonusDrawToHeight;
 
     public static Texture2D BonusBannerBase;
@@ -330,7 +330,7 @@ public static class IntermissionSystem {
             else
                 BlackAlpha -= ALPHA_FADE_CONSTANT * RuntimeData.DeltaTime;
         }
-        if (BlackAlpha >= 1f && _oldBlack < 1f) {
+        if (BlackAlpha >= 1f && oldBlack < 1f) {
             MainMenuUI.Leave();
         }
         // wait a little bit to do animations so they are clearly visible to the user
@@ -421,7 +421,7 @@ public static class IntermissionSystem {
                 shadowDistScale: 1f, shadowAlpha: 0.5f);
         }
 
-        _oldBlack = BlackAlpha;
+        oldBlack = BlackAlpha;
 
         spriteBatch.End();
 

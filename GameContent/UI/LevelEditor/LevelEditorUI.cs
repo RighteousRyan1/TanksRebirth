@@ -95,7 +95,10 @@ public static partial class LevelEditorUI {
 
     internal static Mission missionToRate = new([], []);
 
-    private static bool _sdbui;
+    static bool _sdbui;
+
+    static bool _queueOpen;
+    static float _openCountndown;
     public static bool ShouldDrawBarUI {
         get => _sdbui;
         set {
@@ -160,7 +163,7 @@ public static partial class LevelEditorUI {
         CampaignStartingLives.IsVisible = visible && !_viewMissionDetails;
         CampaignVersion.IsVisible = visible && !_viewMissionDetails;
         CampaignLoadingBGColor.IsVisible = visible && !_viewMissionDetails;
-        CampaignLoadingStripColor.IsVisible = visible && !_viewMissionDetails;
+        CampaignLoadingBannercolor.IsVisible = visible && !_viewMissionDetails;
         CampaignMajorVictory.IsVisible = visible && !_viewMissionDetails;
     }
     private static void SetLevelEditorVisibility(bool visible) {
@@ -285,7 +288,7 @@ public static partial class LevelEditorUI {
         ReturnToEditor.SetDimensions(() => new(WindowUtils.WindowWidth * 0.01f, WindowUtils.WindowHeight * 0.02f), () => new Vector2(250, 50).ToResolution());
 
         ReturnToEditor.OnLeftClick = (l) => {
-            Open(false);
+            TryOpen(false);
             IsTestingLevel = false;
             CameraGlobals.OverheadView = true;
             CampaignGlobals.InMission = false;
@@ -349,6 +352,7 @@ public static partial class LevelEditorUI {
                         MissionName.Text = loadedCampaign.CachedMissions[0].Name;
                         SetupMissionsBar(loadedCampaign);
                         _missionButtons[0].Color = Color.SkyBlue;
+                        CampaignStartingLives.Text = loadedCampaign.MetaData.StartingLives.ToString();
                     }
                     else if (ext == ".bin") {
                         var map = new WiiMap(res.Path);
@@ -370,36 +374,14 @@ public static partial class LevelEditorUI {
         InitializeSaveMenu();
         SetLevelEditorVisibility(false);
     }
-    public static void Open(bool fromMainMenu = true) {
+    public static void TryOpen(bool fromMainMenu = true) {
         if (fromMainMenu) {
             //OpenPeripherals();
-            IntermissionSystem.TimeBlack = 180;
+            float time = 180;
+            IntermissionSystem.TimeBlack = time;
+            _queueOpen = true;
+            _openCountndown = time;
             CampaignGlobals.ShouldMissionsProgress = false;
-            _loadTask ??= Task.Run(async () => {
-                await Task.Delay(RuntimeData.LogicTime).ConfigureAwait(false);
-                while (IntermissionSystem.BlackAlpha > 0.8f || MainMenuUI.Active) {
-                    if (IntermissionSystem.BlackAlpha == 0) {
-                        // The user has exited without completing the transition by our greatly hardcoded poorly parallelized code.
-                        // why did we design this like this?
-                        // - Dottik
-                        _loadTask = null;
-                        return;
-                    }
-                    await Task.Delay(RuntimeData.LogicTime).ConfigureAwait(false);
-                }
-
-                Active = true;
-                CameraGlobals.OverheadView = true;
-                Theme.Play();
-                SetLevelEditorVisibility(true);
-                loadedCampaign = new();
-                loadedCampaign.CachedMissions[0] = new([], []) {
-                    Name = "No Name"
-                };
-                SetupMissionsBar(loadedCampaign);
-                _missionButtons[0].Color = SelectedColor;
-                _loadTask = null;
-            });
         }
         else {
             Theme.Play();
@@ -407,6 +389,19 @@ public static partial class LevelEditorUI {
             SetLevelEditorVisibility(true);
         }
         Editing = true;
+    }
+    public static void OpenForce() {
+        Active = true;
+        CameraGlobals.OverheadView = true;
+        Theme.Play();
+        SetLevelEditorVisibility(true);
+        loadedCampaign = new();
+        loadedCampaign.CachedMissions[0] = new([], []) {
+            Name = "No Name"
+        };
+        SetupMissionsBar(loadedCampaign);
+        _missionButtons[0].Color = SelectedColor;
+        _loadTask = null;
     }
     public static void Close(bool toMainMenu) {
         Active = false;
@@ -654,6 +649,13 @@ public static partial class LevelEditorUI {
         //              Ryan
         if (!_initialized)
             return;
+
+        if (_openCountndown >= 0) {
+            _openCountndown -= RuntimeData.DeltaTime;
+        } else if (_queueOpen) {
+            OpenForce();
+            _queueOpen = false;
+        }
 
         HoveringAnyTank = false;
         // TODO: why is this here and not LevelEditor

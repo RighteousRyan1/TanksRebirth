@@ -11,15 +11,19 @@ namespace TanksRebirth.GameContent.UI;
 public class XpBar {
     // TODO: make fancy and cool
     float _interp;
+    //float _popupInterp;
 
     public float ApproachValue;
 
     public ushort Level;
 
     public float Value;
-    public float MaxValue;
+    public float MaxValue = 1f;
 
     public Vector2 Scale;
+
+    //Vector2 _animPos;
+    //Vector2 _targetPos;
     public Vector2 Position;
 
     public Color EmptyColor;
@@ -33,12 +37,15 @@ public class XpBar {
         ApproachValue += xp;
 
         if (ApproachValue > MaxValue) {
-            ApproachValue -= MaxValue;
             Level++;
         }
     }
 
     public void Update() {
+        //if (_popupInterp >= 1) {
+
+        //}
+        //else _popupInterp += 0.005f * RuntimeData.DeltaTime;
         if (_interp < 1) {
             _interp += 0.005f * RuntimeData.DeltaTime;
 
@@ -52,6 +59,11 @@ public class XpBar {
             p.UniqueBehavior = (a) => {
                 float velX = Client.ClientRandom.NextFloat(-0.5f, -0.1f) * RuntimeData.DeltaTime;
             };*/
+            if (Value >= MaxValue) {
+                // bring back to the beginning of the bar
+                Value -= MaxValue;
+                ApproachValue -= MaxValue;
+            }
         }
         else _interp = 1;
 
@@ -69,7 +81,7 @@ public class XpBar {
         sb.Draw(TextureGlobals.Pixels[Color.White], Position, null, EmptyColor, 0f, GameUtils.GetAnchor(Alignment, TextureGlobals.Pixels[Color.White].Size()), Scale.ToResolution(), default, 0f);
 
         // draw approaching xp value
-        sb.Draw(TextureGlobals.Pixels[Color.White], Position, null, GainedColor, 0f, GameUtils.GetAnchor(Alignment, TextureGlobals.Pixels[Color.White].Size()), new Vector2(Scale.X * ApproachValue, Scale.Y).ToResolution(), default, 0f);
+        sb.Draw(TextureGlobals.Pixels[Color.White], Position, null, GainedColor, 0f, GameUtils.GetAnchor(Alignment, TextureGlobals.Pixels[Color.White].Size()), new Vector2(Scale.X * MathF.Min(MaxValue, ApproachValue), Scale.Y).ToResolution(), default, 0f);
 
         // draw gained xp
         sb.Draw(TextureGlobals.Pixels[Color.White], Position , null, FillColor, 0f, GameUtils.GetAnchor(Alignment, TextureGlobals.Pixels[Color.White].Size()), new Vector2(Scale.X * Value, Scale.Y).ToResolution(), default, 0f);

@@ -24,7 +24,7 @@ public static partial class MainMenuUI
     public static RenderTarget2D TextTarget;
 
     private static readonly string tanksMessage =
-        $"Tanks Rebirth ALPHA v{string.Join('.', RuntimeData.GameVersion.ToString().TrimStart('v', 'V').Split('.').Take(2))}" +
+        $"Tanks Rebirth ALPHA v{RuntimeData.ShortVersion}" +
         $"\nOriginal game and assets developed by Nintendo" +
         $"\nProgrammed by RighteousRyan" +
         $"\nArt and graphics by BigKitty1011" +
@@ -140,7 +140,7 @@ public static partial class MainMenuUI
         PlayButton_LevelEditor.SetDimensions(() => new Vector2(700, 650).ToResolution(), () => new Vector2(500, 50).ToResolution());
         PlayButton_LevelEditor.OnLeftClick = (b) => {
             LevelEditorUI.Initialize();
-            LevelEditorUI.Open();
+            LevelEditorUI.TryOpen();
         };
         CosmeticsMenuButton = new(TankGame.GameLanguage.CosmeticsMenu, font, Color.WhiteSmoke) {
             IsVisible = false,
