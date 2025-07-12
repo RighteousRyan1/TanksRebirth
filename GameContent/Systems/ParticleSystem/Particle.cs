@@ -1,4 +1,4 @@
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Linq;
@@ -10,7 +10,7 @@ using tainicom.Aether.Physics2D.Dynamics;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Globals;
 
-namespace TanksRebirth.GameContent;
+namespace TanksRebirth.GameContent.Systems.ParticleSystem;
 
 public enum ParticleIntensity
 {
@@ -87,7 +87,7 @@ public class Particle
     /// <summary>Light power multiplier for this <see cref="Particle"/>.</summary>
     public float LightPower;
     /// <summary>The <see cref="ParticleSystem"/> this <see cref="Particle"/> exists in.</summary>
-    public ParticleSystem System { get; }
+    public ParticleManager System { get; }
 
     public float Layer;
 
@@ -97,7 +97,7 @@ public class Particle
      * billboard from 'position' to the camera.
      */
 
-    internal Particle(Vector3 position, ParticleSystem system)
+    internal Particle(Vector3 position, ParticleManager system)
     {
         Position = position;
         System = system;

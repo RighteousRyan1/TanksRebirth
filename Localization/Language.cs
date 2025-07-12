@@ -80,7 +80,6 @@ public class Language
 
     #endregion
     #region LevelEdit
-
     public string BinDisclaimer { get; set; } // thinking this might be weird?
 
     public string TestLevel { get; set; }
@@ -116,14 +115,16 @@ public class Language
     public string AuthorFlavor { get; set; }
     public string Tags { get; set; }
     public string TagsFlavor { get; set; }
-    public string ExtraLifeMissions { get; set; }
-    public string ExtraLifeMissionsFlavor { get; set; }
+    public string GrantsBonusLife { get; set; }
+    public string GrantsBonusLifeFlavor { get; set; }
     public string Version { get; set; }
     public string VersionFlavor { get; set; }
     public string BGColor { get; set; }
     public string BGColorFlavor { get; set; }
-    public string StripColor { get; set; }
-    public string StripColorFlavor { get; set; }
+    public string BannerColor { get; set; }
+    public string BannerColorFlavor { get; set; }
+    public string StartingLives { get; set; }
+    public string StartingLivesFlavor { get; set; }
     public string HasMajorVictoryTheme { get; set; }
     public string HasMajorVictoryThemeFlavor { get; set; }
 

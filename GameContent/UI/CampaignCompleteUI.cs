@@ -85,7 +85,7 @@ public static class CampaignCompleteUI
         _soundPlayed = false;
 
         if (context != MissionEndContext.GameOver)
-            TankGame.GameData.CampaignsCompleted++;
+            TankGame.SaveFile.CampaignsCompleted++;
 
         // TierDisplays?.Clear();
         // then reinitialize with the proper tank-to-kill values.
@@ -194,7 +194,6 @@ public static class CampaignCompleteUI
         };
         for (int i = 0; i < funFacts.Length; i++) {
             var ff = funFacts[i];
-            measure = FontGlobals.RebirthFont.MeasureString(ff);
 
             DrawUtils.DrawStringWithShadow(TankGame.SpriteRenderer, FontGlobals.RebirthFont, new Vector2(8.ToResolutionX(), WindowUtils.WindowHeight / 3 + (75 + (i * 25)).ToResolutionY()), Vector2.One,
                 ff, Color.DeepSkyBlue, new Vector2(0.75f).ToResolution(), 1f, Anchor.LeftCenter, 0.4f);

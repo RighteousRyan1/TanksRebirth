@@ -9,7 +9,6 @@ using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.RebirthUtils;
-using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
@@ -19,6 +18,7 @@ using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.GameContent.Globals.Assets;
+using TanksRebirth.GameContent.Systems.ParticleSystem;
 
 namespace TanksRebirth.GameContent;
 
@@ -201,7 +201,7 @@ public class Shell : IAITankDanger
         Type = type;
         RicochetsRemaining = ricochets;
         Position = position;
-        Model = ModelResources.Bullet.Asset;
+        Model = ModelGlobals.Bullet.Asset;
 
         AITank.Dangers.Add(this);
         IsPlayerSourced = owner is PlayerTank;
@@ -407,7 +407,7 @@ public class Shell : IAITankDanger
             p = GameHandler.Particles.MakeParticle(Position3D + new Vector3(0, 0, 5).FlattenZ()
                                 .Rotate(Rotation + MathHelper.Pi + Client.ClientRandom.NextFloat(-0.3f, 0.3f))
                                 .ExpandZ(),
-            ModelResources.Smoke.Asset,
+            ModelGlobals.Smoke.Asset,
             GameResources.GetGameResource<Texture2D>("Assets/textures/smoke/smoke"));
             p.Scale = new(0.7f);
         }

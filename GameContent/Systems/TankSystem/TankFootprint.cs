@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.Internals;
 
 namespace TanksRebirth.GameContent;
@@ -19,6 +20,8 @@ public class TankFootprint {
     public float rotation;
 
     public Texture2D texture;
+
+    private Particle _track;
 
     internal static int total_treads_placed;
 
@@ -76,23 +79,23 @@ public class TankFootprint {
             ? $"Assets/textures/tank_footprint_alt"
             : $"Assets/textures/tank_footprint");
 
-        var track = GameHandler.Particles.MakeParticle(Position, texture);
+        _track = GameHandler.Particles.MakeParticle(Position, texture);
 
-        track.HasAddativeBlending = false;
+        _track.HasAddativeBlending = false;
 
-        track.Pitch = MathHelper.PiOver2;
-        track.Scale = new(0.5f, 0.55f, 0.5f);
-        track.Alpha = 0.7f;
-        track.Color = Color.White;
-        track.UniqueBehavior = track => {
+        _track.Pitch = MathHelper.PiOver2;
+        _track.Scale = new(0.5f, 0.55f, 0.5f);
+        _track.Alpha = 0.7f;
+        _track.Color = Color.White;
+        _track.UniqueBehavior = track => {
             track.Position = Position;
             track.Yaw = rotation;
 
             if (ShouldTracksFade)
                 track.Alpha -= 0.001f * RuntimeData.DeltaTime;
 
-            if (track.Alpha <= 0 || _destroy) {
-                track.Destroy();
+            if (track.Alpha <= 0) {
+                Remove();
             }
         };
 
@@ -110,5 +113,5 @@ public class TankFootprint {
     public void Update() => lifeTime++;
 
     private bool _destroy;
-    public void Remove() => _destroy = true;
+    public void Remove() => _track.Destroy();
 }

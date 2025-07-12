@@ -7,14 +7,16 @@ using TanksRebirth.Net;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Graphics;
 using TanksRebirth.GameContent.Globals.Assets;
+using TanksRebirth.GameContent.Systems.ParticleSystem;
 
 namespace TanksRebirth.GameContent;
 
 /// <summary>Each of these particles are server-shared.</summary>
-public static class ParticleGameplay {
+public static class ParticleGameplay
+{
     // TODO: track smokes as objects, so ai can't shoot through?
-    public static void CreateSmokeGrenade(ParticleSystem system, Vector3 position, Vector3 velocity) {
-        var p = system.MakeParticle(position, ModelResources.SmokeGrenade.Asset, GameResources.GetGameResource<Texture2D>("Assets/textures/smoke/smokenade"));
+    public static void CreateSmokeGrenade(ParticleManager manager, Vector3 position, Vector3 velocity) {
+        var p = manager.MakeParticle(position, ModelGlobals.SmokeGrenade.Asset, GameResources.GetGameResource<Texture2D>("Assets/textures/smoke/smokenade"));
         bool exploded = false;
 
         float gravity = 0.03f;
@@ -98,8 +100,8 @@ public static class ParticleGameplay {
                 exploded = true;
                 SoundPlayer.PlaySoundInstance("Assets/sounds/smoke_hiss.ogg", SoundContext.Effect, 0.3f);
                 for (int i = 0; i < 8; i++) {
-                    var c = system.MakeParticle(p.Position,
-                        ModelResources.Smoke.Asset,
+                    var c = manager.MakeParticle(p.Position,
+                        ModelGlobals.Smoke.Asset,
                         GameResources.GetGameResource<Texture2D>("Assets/textures/smoke/smoke"));
                     var randDir = new Vector3(Server.ServerRandom.NextFloat(-35, 35), 0, Server.ServerRandom.NextFloat(-35, 35));
                     c.Position += randDir;
@@ -126,7 +128,7 @@ public static class ParticleGameplay {
             oldPosition = p.Position;
         };
 
-        var shadow = system.MakeParticle(position, GameResources.GetGameResource<Texture2D>("Assets/textures/mine/mine_shadow"));
+        var shadow = manager.MakeParticle(position, GameResources.GetGameResource<Texture2D>("Assets/textures/mine/mine_shadow"));
         shadow.Scale = new(0.8f);
         shadow.Color = Color.Black;
         shadow.HasAddativeBlending = false;

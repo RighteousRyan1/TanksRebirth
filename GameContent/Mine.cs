@@ -97,7 +97,7 @@ public sealed class Mine : IAITankDanger
         AITank.Dangers.Add(this);
         IsPlayerSourced = owner is PlayerTank;
 
-        Model = ModelResources.Mine.Asset;
+        Model = ModelGlobals.Mine.Asset;
 
         DetonateTime = detonateTime;
         DetonateTimeMax = detonateTime;
@@ -187,18 +187,19 @@ public sealed class Mine : IAITankDanger
 
             if (Position != _oldPosition) // magicqe number
                 IsNearDestructibles = Block.AllBlocks.Any(b => b != null && Position.Distance(b.Position) <= ExplosionRadius - 6f && b.Properties.IsDestructible);
-            List<Tank> tanksNear = [];
 
             // NOTE: this scope may be inconsistent over a server? check soon.
             if (DetonateTime > MineReactTime) {
                 foreach (var tank in GameHandler.AllTanks) {
-                    if (tank is not null && GameUtils.Distance_WiiTanksUnits(tank.Position, Position) < MineReactRadius) {
-                        tanksNear.Add(tank);
-                    }
-                }
-                // this is apparently causing near-instant explosion
-                if (!tanksNear.Any(tnk => tnk == Owner && !tnk.Dead) && tanksNear.Count > 0)
+                    if (tank is null) continue;
+                    if (tank.Dead) continue;
+                    if (tank.WorldId == Owner!.WorldId) continue;
+
+                    var dist = GameUtils.Distance_WiiTanksUnits(tank.Position, Position);
+                    if (dist > MineReactRadius) continue;
+
                     DetonateTime = MineReactTime;
+                }
             }
         }
 
@@ -245,6 +246,7 @@ public sealed class Mine : IAITankDanger
                 }
             }
         }
+
         OnPostRender?.Invoke(this);
     }
 }

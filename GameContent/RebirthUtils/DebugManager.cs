@@ -143,9 +143,9 @@ public static class DebugManager {
                 ChatSystem.SendMessage("Invalid name for mission.", Color.Red);
                 return;
             }
-            Mission.Save(MissionName.GetRealText(), CampaignName.IsEmpty() ? null : CampaignName.GetRealText());
+            Mission.GetCurrent(CampaignGlobals.LoadedCampaign.CurrentMission.Name).Save(MissionName.GetRealText());
 
-            ChatSystem.SendMessage(CampaignName.IsEmpty() ? $"Saved mission '{MissionName.GetRealText()}'." : $"Saved mission '{MissionName.GetRealText()}' to Campaign folder '{CampaignName.GetRealText()}'.", Color.White);
+            ChatSystem.SendMessage($"Saved mission '{MissionName.GetRealText()}'.", Color.White);
         };
         SaveMission.IsVisible = false;
         SaveMission.SetDimensions(20, 180, 105, 50);
@@ -419,11 +419,11 @@ public static class DebugManager {
             $"Lives / StartingLives: {PlayerTank.Lives[Client.IsConnected() ? NetPlay.GetMyClientId() : 0]} / {PlayerTank.StartingLives}" +
             $"\nKillCount: {PlayerTank.KillCounts}" +
             $"\n\nSavable Game Data:" +
-            $"\nTotal / Bullet / Mine / Bounce Kills: {TankGame.GameData.TotalKills} / {TankGame.GameData.BulletKills} / {TankGame.GameData.MineKills} / {TankGame.GameData.BounceKills}" +
-            $"\nTotal Deaths: {TankGame.GameData.Deaths}" +
-            $"\nTotal Suicides: {TankGame.GameData.Suicides}" +
-            $"\nMissions Completed: {TankGame.GameData.MissionsCompleted}" +
-            $"\nExp Level / Multiplier: {TankGame.GameData.ExpLevel} / {GameData.UniversalExpMultiplier}",
+            $"\nTotal / Bullet / Mine / Bounce Kills: {TankGame.SaveFile.TotalKills} / {TankGame.SaveFile.BulletKills} / {TankGame.SaveFile.MineKills} / {TankGame.SaveFile.BounceKills}" +
+            $"\nTotal Deaths: {TankGame.SaveFile.Deaths}" +
+            $"\nTotal Suicides: {TankGame.SaveFile.Suicides}" +
+            $"\nMissions Completed: {TankGame.SaveFile.MissionsCompleted}" +
+            $"\nExp Level / Multiplier: {TankGame.SaveFile.ExpLevel} / {GameData.UniversalExpMultiplier}",
             new(8, WindowUtils.WindowHeight * 0.4f),
             2);
         for (int i = 0; i < PlayerTank.TankKills.Count; i++) {

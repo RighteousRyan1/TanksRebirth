@@ -1,26 +1,42 @@
 using FontStashSharp;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Systems;
+using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals.Common.Framework.Audio;
+using TanksRebirth.Internals.Common.GameUI;
 using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.GameContent.UI.LevelEditor;
 
 #pragma warning disable
 public static partial class LevelEditorUI {
+    public static UITextButton TestLevel;
+    public static UITextButton Perspective;
+
+    public static UITextButton TerrainCategory;
+    public static UITextButton EnemyTanksCategory;
+    public static UITextButton PlayerTanksCategory;
+
+    public static UITextButton Properties;
+    public static UITextButton LoadLevel;
+
+    public static UITextButton ReturnToEditor;
+
+    public static UITextButton AddMissionBtn;
+    public static UITextButton RemoveMissionBtn;
+    public static UITextButton MoveMissionUp;
+    public static UITextButton MoveMissionDown;
     public static Rectangle PlaceInfoRect => new Rectangle(WindowUtils.WindowWidth - (int)350.ToResolutionX(), 0, (int)350.ToResolutionX(), (int)500.ToResolutionY());
     public static Vector2 PlaceInfoStart;
 
     // 255 for now. no real need to make it bigger unless modders are ballin'
-    public static ParticleSystem EditorParticleSystem = new(255, () => CameraGlobals.ScreenView, () => CameraGlobals.ScreenProjOrthographic);
+    public static ParticleManager EditorParticleSystem = new(255, () => CameraGlobals.ScreenView, () => CameraGlobals.ScreenProjOrthographic);
     // TODO: dynamically drawn 3d models on the UI.
     // TODO: rework scrollbar UI code, massively. my sanity is starting to taper off and achieve an all time low.
     // this will have the tanks at the bottom n stuff.
@@ -31,23 +47,22 @@ public static partial class LevelEditorUI {
     public static string AlertText;
     private static float _alertTime;
     public static float DefaultAlertDuration { get; set; } = 120;
-
     private static void OpenPeripherals() {
         // ensure particle trimming for blocks
         // spawn block model particle
-        var bp = EditorParticleSystem.MakeParticle(Vector3.Zero, ModelResources.BlockStack.Duplicate(), GameScene.Assets["block.1"]);
+        var bp = EditorParticleSystem.MakeParticle(Vector3.Zero, ModelGlobals.BlockStack.Duplicate(), GameScene.Assets["block.1"]);
         bp.Scale = Vector3.One;
         bp.Alpha = 1f;
         bp.UniqueBehavior = (p) => {
             bp.Position = DrawUtils.CenteredOrthoToScreen(PlaceInfoStart).Expand();
             bp.Roll = 0f;
-            bp.Yaw = 0f; 
+            bp.Yaw = 0f;
             bp.Pitch = MathHelper.PiOver4;
             bp.Scale = new(2f); //new(2f + MathF.Sin(RuntimeData.RunTime / 10f) / 10f);
         };
 
         // block culler
-        var bc = EditorParticleSystem.MakeParticle(Vector3.Zero, ModelResources.BlockStack.Duplicate(), 
+        var bc = EditorParticleSystem.MakeParticle(Vector3.Zero, ModelGlobals.BlockStack.Duplicate(),
             /*TextureGlobals.Pixels[Color.Transparent]*/GameScene.Assets["block.1"]);
         bc.Alpha = 1f;
         bc.UniqueBehavior = (p) => {

@@ -132,7 +132,7 @@ public static class GameScene
         {
             _blackPixel = new Texture2D(TankGame.Instance.GraphicsDevice, 1, 1);
             _blackPixel.SetData(new Color[] { Color.Black });
-            FloorModelBase = ModelResources.Floor.Asset;
+            FloorModelBase = ModelGlobals.Floor.Asset;
             switch (Theme)
             {
                 case MapTheme.Vanilla:
@@ -202,7 +202,7 @@ public static class GameScene
             switch (Theme)
             {
                 case MapTheme.Vanilla:
-                    BoundaryModel = ModelResources.GameBoundary.Asset;
+                    BoundaryModel = ModelGlobals.GameBoundary.Asset;
 
                     SetBlockTexture(BoundaryModel.Meshes["polygon48"], BoundaryTextureContext.block_other_c);
                     SetBlockTexture(BoundaryModel.Meshes["polygon40"], BoundaryTextureContext.block_other_a);
@@ -220,7 +220,7 @@ public static class GameScene
 
                     break;
                 case MapTheme.Christmas:
-                    BoundaryModel = ModelResources.GameBoundarySnowy.Asset;
+                    BoundaryModel = ModelGlobals.GameBoundarySnowy.Asset;
 
                     SetBlockTexture(BoundaryModel.Meshes["polygon48"], BoundaryTextureContext.block_other_c);
                     SetBlockTexture(BoundaryModel.Meshes["polygon40"], BoundaryTextureContext.block_other_a);

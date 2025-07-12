@@ -141,8 +141,8 @@ public static partial class MainMenuUI {
                 elem.Remove();
 
             CampaignGlobals.ShouldMissionsProgress = false;
-
-            IntermissionSystem.TimeBlack = 150;
+            UpdateCampaignButton.IsVisible = false;
+            IntermissionSystem.TimeBlack = 90;
         };
         campaignNames.Add(extra);
     }

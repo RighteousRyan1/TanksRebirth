@@ -30,7 +30,7 @@ public class RenderableCrate
 
     public RenderableCrate(Vector3 position, Matrix view, Matrix proj)
     {
-        Model = ModelResources.Chest.Asset;
+        Model = ModelGlobals.Chest.Asset;
         Texture = GameResources.GetGameResource<Texture2D>("Assets/textures/chest/chest");
 
         LidMesh = Model.Meshes["Lid"];

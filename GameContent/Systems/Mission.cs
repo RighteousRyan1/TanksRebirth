@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.Systems.Coordinates;
@@ -11,7 +12,8 @@ using TanksRebirth.Internals;
 
 namespace TanksRebirth.GameContent.Systems;
 
-public record struct Mission {
+public record struct Mission
+{
     /// <summary>The name of this <see cref="Mission"/>.</summary>
     public string Name { get; set; } = "No Name";
 
@@ -22,6 +24,8 @@ public record struct Mission {
 
     /// <summary>The obstacles in the <see cref="Mission"/>.</summary>
     public BlockTemplate[] Blocks { get; set; }
+
+    public bool GrantsExtraLife;
 
     /// <summary>
     /// Construct a mission. Should generally never be called by the user unless you want to use a lot of time figuring things out.
@@ -93,7 +97,7 @@ public record struct Mission {
                 PlacementSquare.Placements[placement].TankId = tank.WorldId;
                 PlacementSquare.Placements[placement].HasBlock = false;
             }
-            
+
             // TODO: Find the root cause that causes us to manually have to add Math.PI to 1.57.
             // Explanation for hack fix: When rotating in the editor, we add Math.Pi / 2 to the rotation.
             // However for some unknown reason, when returning from test play, this value gets automatically increased to Math.Pi. With no reason.
@@ -104,7 +108,7 @@ public record struct Mission {
 
             // ReSharper disable once CompareOfFloatsByEqualityOperator
             //if (float.Round(tnk.Rotation) == float.Round(1.57f))
-                //tnk.Rotation += MathF.PI * 2;
+            //tnk.Rotation += MathF.PI * 2;
 
             tank.TankRotation = MathF.Round(tnk.Rotation, 5);
             tank.TargetTankRotation = tank.TankRotation;
@@ -129,31 +133,32 @@ public record struct Mission {
     /// Saves a mission as a <c>.mission</c> file for reading later.
     /// </summary>
     /// <param name="path">The path to where the mission will be stored.</param>
-    /// <param name="name">The name of the mission to save.</param>
-    public static void Save(string path, string name) {
+    public readonly void Save(string path) {
         if (Path.GetExtension(path) == string.Empty)
             path += ".mission";
 
         using var writer = new BinaryWriter(File.Open(path, FileMode.OpenOrCreate, FileAccess.ReadWrite));
 
-        WriteCurrent(writer, name);
+        WriteToStream(writer);
 
         if (File.Exists(path)) {
-            TankGame.ClientLog.Write($"Overwrote \"{name}.mission\" in map save path.", LogType.Info);
+            TankGame.ClientLog.Write($"Overwrote \"{Name}.mission\" in map save path.", LogType.Info);
             return;
         }
-        TankGame.ClientLog.Write($"Saved mission file \"{name}.mission\" in map save path.", LogType.Info);
+        TankGame.ClientLog.Write($"Saved mission file \"{Name}.mission\" in map save path.", LogType.Info);
     }
 
-    public static void WriteCurrent(BinaryWriter writer, string name) {
+    // TODO: write is bonus mission to stream
+    public readonly void WriteToStream(BinaryWriter writer) {
         /* File Order / Format
          * 1) File Header (TANK in ASCII) (byte[])
          * 2) Level Editor version (to check if older levels might cause anomalies!)
          * 3) Name (string)
+         * 4) GrantsBonusLife (bool)
          *
-         * 4) Total Tanks Used (int)
+         * 5) Total Tanks Used (int)
          *
-         * 5) Storing of Tanks (their respective templates)
+         * 6) Storing of Tanks (their respective templates)
          *  - IsPlayer (bool)
          *  - X (float)
          *  - Y (float)
@@ -162,73 +167,50 @@ public record struct Mission {
          *  - PlayerType (byte) - should be as default if it's an AI.
          *  - Team (byte)
          *
-         * 6) Total Blocks Used (int)
+         * 7) Total Blocks Used (int)
          *
-         * 7) Storing of Blocks (their respective templates)
+         * 8) Storing of Blocks (their respective templates)
          *  - Type (byte)
          *  - Stack (sbyte)
          *  - X (float)
          *  - Y (float)
          *  - TpLink (sbyte) (VERSION 2 or GREATER)
          *
-         *  8) Extras
-         *   - Note (string) (VERSION 3 OR GREATER) (NOT IMPLEMENTED YET)
+         *  9) Extras
+         *   - Note (string) (NOT IMPLEMENTED YET)
          */
 
         writer.Write(LevelEditorUI.LevelFileHeader);
         writer.Write(LevelEditorUI.EDITOR_VERSION);
-        writer.Write(name);
+        writer.Write(Name);
+        writer.Write(GrantsExtraLife);
 
         int totalTanks = GameHandler.AllTanks.Count(tnk => tnk is not null && !tnk.Dead);
         writer.Write(totalTanks);
 
-        for (int i = 0; i < GameHandler.AllTanks.Length; i++) {
-            var tank = GameHandler.AllTanks[i];
-            if (tank is null || tank.Dead) continue;
+        for (int i = 0; i < Tanks.Length; i++) {
+            var template = Tanks[i];
 
-            var temp = new TankTemplate();
+            writer.Write(template.IsPlayer);
+            writer.Write(template.Position.X);
+            writer.Write(template.Position.Y);
+            writer.Write(template.Rotation);
 
-            switch (tank) {
-                case AITank ai:
-                    temp.AiTier = ai.AiTankType;
-                    break;
-                case PlayerTank player:
-                    temp.PlayerType = player.PlayerType;
-                    break;
-            }
-
-            temp.IsPlayer = tank is PlayerTank;
-            temp.Position = tank.Position;
-            temp.Rotation = tank.TankRotation;
-            temp.Team = tank.Team;
-
-            writer.Write(temp.IsPlayer);
-            writer.Write(temp.Position.X);
-            writer.Write(temp.Position.Y);
-            writer.Write(temp.Rotation);
-            writer.Write((byte)temp.AiTier);
-            writer.Write((byte)temp.PlayerType);
-            writer.Write((byte)temp.Team);
+            // THEORETICALLY if mods add 255 tank types then this is cooked
+            writer.Write((byte)template.AiTier);
+            writer.Write((byte)template.PlayerType);
+            writer.Write((byte)template.Team);
         }
 
         int totalBlocks = Block.AllBlocks.Count(x => x is not null);
         writer.Write(totalBlocks);
-        for (int i = 0; i < Block.AllBlocks.Length; i++) {
-            var block = Block.AllBlocks[i];
-            if (block is not null) {
-                var temp = new BlockTemplate {
-                    Type = block.Type,
-                    Stack = block.Stack,
-                    Position = block.Position,
-                    TpLink = block.TpLink
-                };
-
-                writer.Write((byte)temp.Type);
-                writer.Write(temp.Stack);
-                writer.Write(temp.Position.X);
-                writer.Write(temp.Position.Y);
-                writer.Write(temp.TpLink);
-            }
+        for (int i = 0; i < Blocks.Length; i++) {
+            var temp = Blocks[i];
+            writer.Write((byte)temp.Type);
+            writer.Write(temp.Stack);
+            writer.Write(temp.Position.X);
+            writer.Write(temp.Position.Y);
+            writer.Write(temp.TpLink);
         }
         ChatSystem.SendMessage($"Saved mission with {totalTanks} tank(s) and {totalBlocks} block(s).", Color.Lime);
     }
@@ -237,6 +219,7 @@ public record struct Mission {
         writer.Write(LevelEditorUI.LevelFileHeader);
         writer.Write(LevelEditorUI.EDITOR_VERSION);
         writer.Write(mission.Name);
+        writer.Write(mission.GrantsExtraLife);
 
         var tanks = mission.Tanks;
         writer.Write(tanks.Length);
@@ -309,10 +292,11 @@ public record struct Mission {
         var version = reader.ReadInt32();
 
         //if (version != LevelEditorUI.EDITOR_VERSION)
-            //ChatSystem.SendMessage($"Warning: This level was saved with a different version of the level editor. It may not work correctly.", Color.Yellow);
+        //ChatSystem.SendMessage($"Warning: This level was saved with a different version of the level editor. It may not work correctly.", Color.Yellow);
         return version switch {
             2 => LoadMissionV2(reader),
             3 => LoadMissionV3(reader),
+            4 => LoadMissionV4(reader),
             _ => throw new Exception("This is not supposed to happen."),
         };
     }
@@ -333,6 +317,8 @@ public record struct Mission {
             var y = reader.ReadSingle();
             var rotation = reader.ReadSingle();
             var tier = reader.ReadByte();
+
+            tier = (byte)MathHelper.Clamp(tier, TankID.Brown, TankID.Collection.Count);
 
             // this is due to the failures of removing 2 constants in TankID.
             // if the player doesn't update their campaign for a minute then oh well
@@ -387,6 +373,8 @@ public record struct Mission {
             var pType = reader.ReadByte();
             var team = reader.ReadByte();
 
+            tier = (byte)MathHelper.Clamp(tier, TankID.Brown, TankID.Collection.Count);
+
             tanks.Add(new() {
                 IsPlayer = isPlayer,
                 Position = new(x, y),
@@ -416,6 +404,55 @@ public record struct Mission {
 
         return new Mission([.. tanks], [.. blocks]) {
             Name = name
+        };
+    }
+    public static Mission LoadMissionV4(BinaryReader reader) {
+        List<TankTemplate> tanks = [];
+        List<BlockTemplate> blocks = [];
+        var name = reader.ReadString();
+        var grantsLife = reader.ReadBoolean();
+
+        var totalTanks = reader.ReadInt32();
+
+        for (int i = 0; i < totalTanks; i++) {
+            var isPlayer = reader.ReadBoolean();
+            var x = reader.ReadSingle();
+            var y = reader.ReadSingle();
+            var rotation = reader.ReadSingle();
+            var tier = reader.ReadByte();
+            var pType = reader.ReadByte();
+            var team = reader.ReadByte();
+
+            tanks.Add(new() {
+                IsPlayer = isPlayer,
+                Position = new(x, y),
+                Rotation = rotation,
+                AiTier = tier,
+                PlayerType = pType,
+                Team = team
+            });
+        }
+
+        var totalBlocks = reader.ReadInt32();
+
+        for (int i = 0; i < totalBlocks; i++) {
+            var type = reader.ReadByte();
+            var stack = reader.ReadByte();
+            var x = reader.ReadSingle();
+            var y = reader.ReadSingle();
+            var link = reader.ReadSByte();
+
+            blocks.Add(new() {
+                Type = type,
+                Stack = stack,
+                Position = new(x, y),
+                TpLink = link
+            });
+        }
+
+        return new Mission([.. tanks], [.. blocks]) {
+            Name = name,
+            GrantsExtraLife = grantsLife
         };
     }
 }

@@ -8,6 +8,7 @@ using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.Systems.Coordinates;
+using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Utilities;
@@ -142,8 +143,8 @@ public class Block : IGameObject
         Type = type;
 
         var model = GameScene.Theme switch {
-            MapTheme.Vanilla => IsAlternateModel ? ModelResources.BlockStackAlt : ModelResources.BlockStack,
-            MapTheme.Christmas => IsAlternateModel ? ModelResources.BlockStackAltSnowy : ModelResources.BlockStackSnowy,
+            MapTheme.Vanilla => IsAlternateModel ? ModelGlobals.BlockStackAlt : ModelGlobals.BlockStack,
+            MapTheme.Christmas => IsAlternateModel ? ModelGlobals.BlockStackAltSnowy : ModelGlobals.BlockStackSnowy,
             _ => throw new Exception()
         };
 
@@ -160,14 +161,14 @@ public class Block : IGameObject
                 Model = model.Asset;
                 break;
             case BlockID.Hole:
-                Model = ModelResources.FlatFace.Asset;
+                Model = ModelGlobals.FlatFace.Asset;
                 Properties.IsSolid = false;
                 _texture = GameScene.Assets["block_harf.1"];
                 Properties.CanStack = false;
                 Properties.HasShadow = false;
                 break;
             case BlockID.Teleporter:
-                Model = ModelResources.Teleporter.Asset;
+                Model = ModelGlobals.Teleporter.Asset;
                 Properties.IsSolid = false;
                 Properties.IsCollidable = false;
                 _texture = GameScene.Assets["teleporter"];

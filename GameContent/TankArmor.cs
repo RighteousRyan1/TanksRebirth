@@ -5,6 +5,7 @@ using TanksRebirth.Internals;
 using TanksRebirth.Graphics;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Globals.Assets;
+using TanksRebirth.GameContent.Systems.ParticleSystem;
 
 namespace TanksRebirth.GameContent;
 
@@ -24,7 +25,7 @@ public class TankArmor {
     private readonly Particle _healthBarCurrent;
 
     public TankArmor(Tank host, int hitPoints) {
-        _model = ModelResources.Armor.Asset;
+        _model = ModelGlobals.Armor.Asset;
         Host = host;
         HitPoints = _hitpointsMax = hitPoints;
         _maskingTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/armor");

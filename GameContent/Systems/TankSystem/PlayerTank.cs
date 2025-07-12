@@ -105,7 +105,7 @@ public class PlayerTank : Tank
     }
     public void SwapTankTexture(Texture2D texture) => _tankTexture = texture;
     public PlayerTank(int playerType, bool isPlayerModel = true, int copyTier = -1) {
-        Model = isPlayerModel ? ModelResources.TankPlayer.Asset : ModelResources.TankEnemy.Asset;
+        Model = isPlayerModel ? ModelGlobals.TankPlayer.Asset : ModelGlobals.TankEnemy.Asset;
         if (copyTier == -1)
             _tankTexture = Assets[$"plrtank_" + PlayerID.Collection.GetKey(playerType)!.ToLower()];
         else {
@@ -448,10 +448,10 @@ public class PlayerTank : Tank
         // only increment these data values on the destroyed player's system
         // ensure the source tank is 
         if (NetPlay.IsClientMatched(player.PlayerId)) {
-            TankGame.GameData.Suicides++;
+            TankGame.SaveFile.Suicides++;
             PlayerStatistics.Suicides++;
         }
-        TankGame.GameData.Deaths++;
+        TankGame.SaveFile.Deaths++;
     }
     private void DrawShootPath() {
         const int MAX_PATH_UNITS = 10000;

@@ -25,7 +25,7 @@ public struct CosmeticChest
             // apparently this stuff aint updating or sum.
         }
     };
-    public static Prop3D DefaultBlenderCube = new("Default Blender Cube", ModelResources.BlenderDefaultCube.Asset, 
+    public static Prop3D DefaultBlenderCube = new("Default Blender Cube", ModelGlobals.BlenderDefaultCube.Asset, 
         TextureGlobals.Pixels[Color.White], new(0, 100, 0), PropLockOptions.None)
     {
         Rotation = new(-MathHelper.PiOver2, 0, 0),
@@ -39,7 +39,7 @@ public struct CosmeticChest
         Scale = new(10f)
     };
     // cosmetics like this block the first person camera. fix it by either changing camera position or changing cosmetic location/rotation anchor
-    public static Prop3D KingsCrown = new("King's Crown", ModelResources.Crown.Asset, GameResources.GetGameResource<Texture2D>("Assets/models/cosmetics/crown_tex"), new(0, 21, 0), PropLockOptions.ToTurret) {
+    public static Prop3D KingsCrown = new("King's Crown", ModelGlobals.Crown.Asset, GameResources.GetGameResource<Texture2D>("Assets/models/cosmetics/crown_tex"), new(0, 21, 0), PropLockOptions.ToTurret) {
         UniqueBehavior = (cos, tnk) => {
             /*cos.LockOptions = CosmeticLockOptions.None;
             cos.Rotation = new(-MathHelper.PiOver2 - 0.3f, 0, -MathHelper.PiOver4 / 2);
@@ -58,12 +58,12 @@ public struct CosmeticChest
         Rotation = new(-MathHelper.PiOver2, 0, 0),
         Scale = new(3.5f)
     };
-    public static Prop3D DevilsHorns = new("Devil Horns", ModelResources.Horns.Asset, TextureGlobals.Pixels[Color.White], new(0, 11, 0), PropLockOptions.ToTurret)
+    public static Prop3D DevilsHorns = new("Devil Horns", ModelGlobals.Horns.Asset, TextureGlobals.Pixels[Color.White], new(0, 11, 0), PropLockOptions.ToTurret)
     {
         Rotation = new(MathHelper.Pi, 0, 0),
         Scale = new(100f)
     };
-    public static Prop3D AngelHalo = new("Angel Halo", ModelResources.Halo.Asset, GameResources.GetGameResource<Texture2D>("Assets/models/cosmetics/halo_tex"), new(0, 20, 0), PropLockOptions.ToTurret)
+    public static Prop3D AngelHalo = new("Angel Halo", ModelGlobals.Halo.Asset, GameResources.GetGameResource<Texture2D>("Assets/models/cosmetics/halo_tex"), new(0, 20, 0), PropLockOptions.ToTurret)
     {
         Rotation = new(MathHelper.PiOver2, 0, 0),
         Scale = new(5f, 2f, 5f),
@@ -85,12 +85,12 @@ public struct CosmeticChest
             }
         }
     };
-    public static Prop3D ArmyHat = new("Army Hat", ModelResources.ArmyHat.Asset, GameResources.GetGameResource<Texture2D>("Assets/models/cosmetics/army_hat_tex"), new(0, 13.5f, 0), PropLockOptions.ToTurret)
+    public static Prop3D ArmyHat = new("Army Hat", ModelGlobals.ArmyHat.Asset, GameResources.GetGameResource<Texture2D>("Assets/models/cosmetics/army_hat_tex"), new(0, 13.5f, 0), PropLockOptions.ToTurret)
     {
         Rotation = new(-MathHelper.PiOver2, 0, 0),
         Scale = new(10f)
     };
-    public static Prop3D SantaHat = new("Santa Hat", ModelResources.SantaHat.Asset, GameResources.GetGameResource<Texture2D>("Assets/models/cosmetics/santa_hat_tex"), new(0, 12.5f, 0), PropLockOptions.ToTurret)
+    public static Prop3D SantaHat = new("Santa Hat", ModelGlobals.SantaHat.Asset, GameResources.GetGameResource<Texture2D>("Assets/models/cosmetics/santa_hat_tex"), new(0, 12.5f, 0), PropLockOptions.ToTurret)
     {
         Rotation = new(-MathHelper.PiOver2, MathHelper.Pi, 0),
         Scale = new(100f)

@@ -41,7 +41,7 @@ public static class GameSceneUI {
         var tanksRemaining = $"× {AIManager.CountAll()}";
 
         DrawUtils.DrawTextureWithShadow(TankGame.SpriteRenderer, bar, barPos,
-            Vector2.UnitY, IntermissionSystem.StripColor, Vector2.One.ToResolution(), alpha, Anchor.Center, shadowDistScale: 0.5f, shadowAlpha: 0.5f);
+            Vector2.UnitY, IntermissionSystem.BannerColor, Vector2.One.ToResolution(), alpha, Anchor.Center, shadowDistScale: 0.5f, shadowAlpha: 0.5f);
 
         DrawUtils.DrawTextureWithShadow(TankGame.SpriteRenderer, tnk, barPos + new Vector2(bar.Size().X * 0.25f, 0).ToResolution(),
             Vector2.One, IntermissionSystem.BackgroundColor, new Vector2(1.5f).ToResolution(), alpha, Anchor.Center, shadowDistScale: 0.5f, shadowAlpha: 0.5f);

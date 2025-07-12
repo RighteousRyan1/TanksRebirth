@@ -56,7 +56,7 @@ public static class IntermissionSystem {
     public static readonly Color BonusBannerColor = new(93, 145, 92);
 
     public static Color BackgroundColor = new(228, 231, 173);
-    public static Color StripColor = Color.DarkRed;
+    public static Color BannerColor = new(186, 62, 47);
 
     static Vector2 _offset;
     static Rectangle _cutForLength;
@@ -441,7 +441,7 @@ public static class IntermissionSystem {
         // draws the plaid(?) banner across the screen
         for (int i = 0; i < 6; i++) {
             var off = 75f;
-            DrawStripe(spriteBatch, StripColor, (off * i).ToResolutionY(), overallAlpha);
+            DrawStripe(spriteBatch, BannerColor, (off * i).ToResolutionY(), overallAlpha);
         }
 
         // i got this by mathing 1080 * 0.18 - 1080 * 0.16 (what the old offset was)

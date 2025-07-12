@@ -35,12 +35,10 @@ public class Campaign
     public delegate void PreLoadBlockDelegate(ref BlockTemplate template);
     public static event PreLoadBlockDelegate OnPreLoadBlock;
 
-    /// <summary>The maximum allowed missions in a campaign.</summary>
-    public const int MAX_MISSIONS = 100;
     /// <summary>Returns the names of campaigns in the user's <c>Campaigns/</c> directory.</summary>
     public static string[] GetCampaignNames()
         => Directory.GetFiles(Path.Combine(TankGame.SaveDirectory, "Campaigns")); //IOUtils.GetSubFolders(Path.Combine(TankGame.SaveDirectory, "Campaigns"), true);
-    public Mission[] CachedMissions = new Mission[MAX_MISSIONS];
+    public Mission[] CachedMissions;
     public Mission CurrentMission { get; private set; }
     public Mission LoadedMission { get; private set; }
     public int CurrentMissionId { get; private set; }
@@ -49,6 +47,7 @@ public class Campaign
     public CampaignMetaData MetaData;
 
     public Campaign() {
+        CachedMissions = new Mission[1];
         TrackedSpawnPoints = [];
         MetaData = CampaignMetaData.GetDefault();
     }
@@ -87,7 +86,7 @@ public class Campaign
 
     /// <summary>Loads the next mission in the <see cref="Campaign"/>.</summary>
     public void LoadNextMission() {
-        if (CurrentMissionId + 1 >= MAX_MISSIONS || CurrentMissionId + 1 >= CachedMissions.Length) {
+        if (CurrentMissionId + 1 >= CachedMissions.Length) {
             TankGame.ClientLog.Write($"CachedMissions[{CurrentMissionId + 1}] is not existent.", LogType.Warn);
             return;
         }
@@ -303,10 +302,10 @@ public class Campaign
         writer.Write(campaign.MetaData.Description);
         writer.Write(campaign.MetaData.Author);
         writer.Write(campaign.MetaData.Tags.Length);
-        Array.ForEach(campaign.MetaData.Tags, tag => writer.Write(tag));
+
+        Array.ForEach(campaign.MetaData.Tags, writer.Write);
         writer.Write(campaign.MetaData.StartingLives);
-        writer.Write(campaign.MetaData.ExtraLivesMissions.Length);
-        Array.ForEach(campaign.MetaData.ExtraLivesMissions, id => writer.Write(id));
+
         writer.Write(campaign.MetaData.Version);
         writer.Write(campaign.MetaData.HasMajorVictory);
         writer.Write(campaign.MetaData.MissionStripColor);
@@ -345,6 +344,30 @@ public class Campaign
             campaign.MetaData.ExtraLivesMissions = new int[reader.ReadInt32()];
             for (int j = 0; j < campaign.MetaData.ExtraLivesMissions.Length; j++)
                 campaign.MetaData.ExtraLivesMissions[j] = reader.ReadInt32();
+            campaign.MetaData.Version = reader.ReadString();
+            campaign.MetaData.HasMajorVictory = reader.ReadBoolean();
+            campaign.MetaData.MissionStripColor = reader.ReadColor();
+            campaign.MetaData.BackgroundColor = reader.ReadColor();
+
+            for (int i = 0; i < totalMissions; i++) {
+                campaign.CachedMissions[i] = Mission.Read(reader);
+                var isIdMatched = campaign.MetaData.ExtraLivesMissions.Any(x => x == i + 1);
+                campaign.CachedMissions[i].GrantsExtraLife = isIdMatched;
+            }
+        }
+        else if (editorVersion == 4) {
+            var totalMissions = reader.ReadInt32();
+
+            campaign.CachedMissions = new Mission[totalMissions];
+
+            campaign.MetaData.Name = reader.ReadString();
+            campaign.MetaData.Description = reader.ReadString();
+            campaign.MetaData.Author = reader.ReadString();
+            campaign.MetaData.Tags = new string[reader.ReadInt32()];
+            for (int j = 0; j < campaign.MetaData.Tags.Length; j++)
+                campaign.MetaData.Tags[j] = reader.ReadString();
+            campaign.MetaData.StartingLives = reader.ReadInt32();
+
             campaign.MetaData.Version = reader.ReadString();
             campaign.MetaData.HasMajorVictory = reader.ReadBoolean();
             campaign.MetaData.MissionStripColor = reader.ReadColor();

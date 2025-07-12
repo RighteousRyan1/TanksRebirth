@@ -58,7 +58,7 @@ public class PlacementSquare {
         Position = position;
         _box = new(position - new Vector3(dimensions / 2, 0, dimensions / 2), position + new Vector3(dimensions / 2, 0, dimensions / 2));
 
-        _model = ModelResources.FlatFace.Asset;
+        _model = ModelGlobals.FlatFace.Asset;
 
         Id = Placements.Count;
 
@@ -119,7 +119,7 @@ public class PlacementSquare {
                 HasBlock = true;
                 IsPlacing = false;
             }
-            LevelEditorUI.missionToRate = Mission.GetCurrent();
+            LevelEditorUI.missionToRate = Mission.GetCurrent(string.Empty);
         }
         else {
             // var team = LevelEditor.Active ? LevelEditor.SelectedTankTeam : (TankTeam)GameHandler.tankToSpawnTeam;
@@ -131,7 +131,7 @@ public class PlacementSquare {
                 // FIXME: why does this even craaaash?
                 GameHandler.AllTanks[TankId].Remove(true);
                 TankId = -1;
-                LevelEditorUI.missionToRate = Mission.GetCurrent();
+                LevelEditorUI.missionToRate = Mission.GetCurrent(string.Empty);
                 return;
             }
 
@@ -159,7 +159,7 @@ public class PlacementSquare {
                 var me = DebugManager.SpawnMe(type, team);
                 TankId = me.WorldId;
             }
-            LevelEditorUI.missionToRate = Mission.GetCurrent();
+            LevelEditorUI.missionToRate = Mission.GetCurrent(string.Empty);
         }
     }
     public void Update() {

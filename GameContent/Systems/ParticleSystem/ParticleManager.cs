@@ -1,15 +1,14 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
-using tainicom.Aether.Physics2D.Fluids;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
 
-namespace TanksRebirth.GameContent;
+namespace TanksRebirth.GameContent.Systems.ParticleSystem;
 
-public class ParticleSystem
+public class ParticleManager
 {
     public int MaxParticles = 150000;
     public Particle[] CurrentParticles;
@@ -20,7 +19,7 @@ public class ParticleSystem
     private Func<Matrix> _viewFunc;
     private Func<Matrix> _projFunc;
 
-    public ParticleSystem(int maxParticles, Func<Matrix> view, Func<Matrix> proj) {
+    public ParticleManager(int maxParticles, Func<Matrix> view, Func<Matrix> proj) {
         MaxParticles = maxParticles;
         CurrentParticles = new Particle[MaxParticles];
         _viewFunc = view;
@@ -105,7 +104,7 @@ public class ParticleSystem
             if (frame < 50) {
                 if (b.LifeTime % 0.8f <= RuntimeData.DeltaTime)
                     frame++;
-            } 
+            }
             else {
                 if (b.LifeTime % (0.8f * lingerMultiplier) <= RuntimeData.DeltaTime)
                     frame++;

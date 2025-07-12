@@ -321,6 +321,8 @@ public abstract partial class UIElement {
 
             // If it is null and we should not update do not.
             if (element == null) continue;
+            // also don't update invisible elements. wastes cpu computation
+            if (!element.IsVisible) continue;
             if (!element._doUpdating) continue;
             // this may need revertation. 
             element.Position = element.InternalPosition =
@@ -336,6 +338,10 @@ public abstract partial class UIElement {
         var focusedElements = GetElementsAt(MouseUtils.MousePosition, true);
 
         foreach (var el in focusedElements) {
+
+            // also don't waste stack space
+            if (!el.IsVisible) continue;
+
             el.LeftClick();
             el.LeftDown();
             el.LeftUp();
@@ -352,32 +358,6 @@ public abstract partial class UIElement {
         }
 
         ResizeAndRelocate();
-
-        /*var trySlider = GetElementsAt(MouseUtils.MousePosition);
-
-        if (trySlider.Count > 0)
-        {
-            if (trySlider[0] != null)
-            {
-                UIElement elementWeWant = trySlider[0].GetElementAt(MouseUtils.MousePosition);
-                //if (elementWeWant is not UIImage)
-                    //return;
-
-                elementWeWant.LeftClick();
-                elementWeWant.LeftDown();
-                elementWeWant.LeftUp();
-
-                elementWeWant.RightClick();
-                elementWeWant.RightDown();
-                elementWeWant.RightUp();
-
-                elementWeWant.MiddleClick();
-                elementWeWant.MiddleDown();
-                elementWeWant.MiddleUp();
-
-                elementWeWant.MouseOver();
-            }
-        }*/
 
         foreach (UIElement element in AllUIElements) {
             if (element.MouseHovering)

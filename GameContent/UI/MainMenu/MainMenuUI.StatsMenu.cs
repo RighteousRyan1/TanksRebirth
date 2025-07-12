@@ -13,15 +13,15 @@ public static partial class MainMenuUI {
     private static string[] _info;
     public static void RequestStats() {
         _info = [
-            $"{TankGame.GameLanguage.TankKillsTotal}: {TankGame.GameData.TotalKills}",
-            $"{TankGame.GameLanguage.TankKillsTotalBullets}: {TankGame.GameData.BulletKills}",
-            $"{TankGame.GameLanguage.TankKillsTotalBulletsBounced}: {TankGame.GameData.BounceKills}",
-            $"{TankGame.GameLanguage.TankKillsTotalMines}: {TankGame.GameData.MineKills}",
-            $"{TankGame.GameLanguage.MissionsCompleted}: {TankGame.GameData.MissionsCompleted}",
-            $"{TankGame.GameLanguage.CampaignsCompleted}: {TankGame.GameData.CampaignsCompleted}",
-            $"{TankGame.GameLanguage.Deaths}: {TankGame.GameData.Deaths}",
-            $"{TankGame.GameLanguage.Suicides}: {TankGame.GameData.Suicides}",
-            $"{TankGame.GameLanguage.TimePlayedTotal}: {TankGame.GameData.TimePlayed.TotalHours:0.0} hrs",
+            $"{TankGame.GameLanguage.TankKillsTotal}: {TankGame.SaveFile.TotalKills}",
+            $"{TankGame.GameLanguage.TankKillsTotalBullets}: {TankGame.SaveFile.BulletKills}",
+            $"{TankGame.GameLanguage.TankKillsTotalBulletsBounced}: {TankGame.SaveFile.BounceKills}",
+            $"{TankGame.GameLanguage.TankKillsTotalMines}: {TankGame.SaveFile.MineKills}",
+            $"{TankGame.GameLanguage.MissionsCompleted}: {TankGame.SaveFile.MissionsCompleted}",
+            $"{TankGame.GameLanguage.CampaignsCompleted}: {TankGame.SaveFile.CampaignsCompleted}",
+            $"{TankGame.GameLanguage.Deaths}: {TankGame.SaveFile.Deaths}",
+            $"{TankGame.GameLanguage.Suicides}: {TankGame.SaveFile.Suicides}",
+            $"{TankGame.GameLanguage.TimePlayedTotal}: {TankGame.SaveFile.TimePlayed.TotalHours:0.0} hrs",
             $"{TankGame.GameLanguage.TimePlayedCurrent}: {TankGame.CurrentSessionTimer.Elapsed.TotalMinutes:0.0} mins"
         ];
     }
@@ -36,8 +36,8 @@ public static partial class MainMenuUI {
         DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, TankGame.GameLanguage.TankKillsPerType + ":", tankKillsPos, Color.White, Color.Black, Vector2.One.ToResolution(), 0f, Anchor.Center);
         // GameUtils.GetAnchor(aligning, FontGlobals.RebirthFont.MeasureString("Tanks Killed by Type:"))
         int count = 1;
-        for (int i = 2; i < TankGame.GameData.TankKills.Count; i++) {
-            var elem = TankGame.GameData.TankKills.ElementAt(i);
+        for (int i = 2; i < TankGame.SaveFile.TankKills.Count; i++) {
+            var elem = TankGame.SaveFile.TankKills.ElementAt(i);
             if (elem.Value == 0)
                 continue;
             count++;
@@ -46,8 +46,8 @@ public static partial class MainMenuUI {
             DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, display, tankKillsPos + Vector2.UnitY * ((count - 1) * 25).ToResolutionY(), AITank.TankDestructionColors[elem.Key], Color.Black, Vector2.One.ToResolution(), 0f, Anchor.Center);
             //TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, display, tankKillsPos + Vector2.UnitY * ((i - 1) * 25).ToResolutionY(), Color.White, Vector2.One.ToResolution(), 0f, GameUtils.GetAnchor(aligning, FontGlobals.RebirthFont.MeasureString(display)), 0f);
         }
-        if (TankGame.GameData.ReadingOutdatedFile)
-            TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, $"Outdated save file ({TankGame.GameData.Name})! Delete the old one!", new Vector2(8, 8), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero, 0f);
+        if (TankGame.SaveFile.ReadingOutdatedFile)
+            TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, $"Outdated save file ({TankGame.SaveFile.Name})! Delete the old one!", new Vector2(8, 8), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero, 0f);
         DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, "Press ESC to return", WindowUtils.WindowBottom - Vector2.UnitY * 40.ToResolutionY(), Color.White, Color.Black, Vector2.One.ToResolution(), 0f, Anchor.Center);
         // GameUtils.GetAnchor(aligning, FontGlobals.RebirthFont.MeasureString("Press ESC to return"))
     }

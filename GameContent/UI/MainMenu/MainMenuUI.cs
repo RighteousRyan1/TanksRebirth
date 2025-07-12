@@ -156,7 +156,7 @@ public static partial class MainMenuUI
             CampaignGlobals.LoadedCampaign.LoadMission(MissionCheckpoint); // loading the mission specified
 
             PlayerTank.StartingLives = campaign.MetaData.StartingLives;
-            IntermissionSystem.StripColor = campaign.MetaData.MissionStripColor;
+            IntermissionSystem.BannerColor = campaign.MetaData.MissionStripColor;
             IntermissionSystem.BackgroundColor = campaign.MetaData.BackgroundColor;
         }
 

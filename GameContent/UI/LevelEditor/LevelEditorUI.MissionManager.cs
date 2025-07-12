@@ -29,18 +29,12 @@ public partial class LevelEditorUI {
     public static void SetupMissionsBar(Campaign campaign, bool setCampaignData = true) {
         RemoveMissionButtons();
 
-        // TODO: scissor, etc
-        // offset
-        // campaign metadata editing
-        // go to bed ryan
-
         if (setCampaignData) {
             CampaignName.Text = campaign.MetaData.Name;
             CampaignDescription.Text = campaign.MetaData.Description;
             CampaignAuthor.Text = campaign.MetaData.Author;
             CampaignTags.Text = string.Join(',', campaign.MetaData.Tags);
             CampaignVersion.Text = campaign.MetaData.Version;
-            CampaignExtraLives.Text = string.Join(',', campaign.MetaData.ExtraLivesMissions);
             CampaignVersion.Text = campaign.MetaData.Version;
             CampaignLoadingBGColor.Text = campaign.MetaData.BackgroundColor.ToString();
             CampaignLoadingStripColor.Text = campaign.MetaData.MissionStripColor.ToString();
@@ -74,6 +68,7 @@ public partial class LevelEditorUI {
                     var mission = loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId];
 
                     loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId] = Mission.GetCurrent(mission.Name);
+                    loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId].GrantsExtraLife = mission.GrantsExtraLife;
 
                     loadedCampaign.LoadMission(index);
                     loadedCampaign.SetupLoadedMission(true);
@@ -88,7 +83,8 @@ public partial class LevelEditorUI {
     public static void AddMission() {
         _missionButtons.ForEach(x => x.Color = Color.White);
 
-        // Array.Resize(ref _loadedCampaign.CachedMissions, _loadedCampaign.CachedMissions.Length + 1);
+        // resize so we can add the new mission
+        Array.Resize(ref loadedCampaign.CachedMissions, loadedCampaign.CachedMissions.Length + 1);
         var count = loadedCampaign.CachedMissions.Count(c => c != default);
         var id = loadedCampaign.CurrentMissionId;
         loadedCampaign.CachedMissions[id] = Mission.GetCurrent(loadedCampaign.CachedMissions[id].Name);
@@ -116,7 +112,7 @@ public partial class LevelEditorUI {
     public static void RemoveMission() {
         _missionButtons.ForEach(x => x.Color = Color.White);
 
-        // Array.Resize(ref _loadedCampaign.CachedMissions, _loadedCampaign.CachedMissions.Length + 1);
+        Array.Resize(ref loadedCampaign.CachedMissions, loadedCampaign.CachedMissions.Length - 1);
         var count = loadedCampaign.CachedMissions.Count(c => c != default);
         var id = loadedCampaign.CurrentMissionId;
         loadedCampaign.CachedMissions[id] = Mission.GetCurrent(loadedCampaign.CachedMissions[id].Name);

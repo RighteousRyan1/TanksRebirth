@@ -53,7 +53,7 @@ public static class RoomScene {
     private static Matrix _basePendulumTransform;
     public static void Initialize() {
         //return; // return for now, since .png breaks the UVs vs .jpg
-        RoomSkyboxScene = ModelResources.Room.Asset;
+        RoomSkyboxScene = ModelGlobals.Room.Asset;
         _boneTransforms = new Matrix[RoomSkyboxScene.Bones.Count];
         HandHour = RoomSkyboxScene.Meshes["Clock_Hand_Hour"];
         HandMinute = RoomSkyboxScene.Meshes["Clock_Hand_Minute"];

@@ -4,21 +4,74 @@ using System;
 using TanksRebirth.Internals.Common.Utilities;
 using FontStashSharp;
 using TanksRebirth.GameContent.Globals;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.UI;
 
 public class XpBar {
     // TODO: make fancy and cool
+    float _interp;
+
+    public float ApproachValue;
+
+    public ushort Level;
 
     public float Value;
     public float MaxValue;
-    public void Render(SpriteBatch sb, Vector2 position, Vector2 scale, Anchor aligning, Color emptyColor, Color fillColor) {
 
-        TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, $"Level: {MathF.Floor(TankGame.GameData.ExpLevel)} | {MathF.Floor(Value / MaxValue * 100)}%", position - (Vector2.UnitY * 20).ToResolution(), Color.White, new Vector2(0.6f).ToResolution(), 0f, FontGlobals.RebirthFont.MeasureString($"Level: {MathF.Floor(TankGame.GameData.ExpLevel)} | {MathF.Floor(Value / MaxValue * 100)}%") / 2, 0f);
-        //TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, $"Level: {MathF.Floor(TankGame.GameData.ExpLevel)} | {MathF.Floor(Value / MaxValue * 100)}%", position + new Vector2(0, 20), Color.White, 0f, FontGlobals.RebirthFont.MeasureString($"Level: {MathF.Floor(TankGame.GameData.ExpLevel)} | {MathF.Floor(Value / MaxValue * 100)}%") / 2, 1f, 0f);
+    public Vector2 Scale;
+    public Vector2 Position;
 
-        sb.Draw(TextureGlobals.Pixels[Color.White], position, null, emptyColor, 0f, GameUtils.GetAnchor(aligning, TextureGlobals.Pixels[Color.White].Size()), new Vector2(scale.X, scale.Y), default, 0f);
+    public Color EmptyColor;
+    public Color FillColor;
+    public Color GainedColor;
 
-        sb.Draw(TextureGlobals.Pixels[Color.White], position, null, fillColor, 0f, GameUtils.GetAnchor(aligning, TextureGlobals.Pixels[Color.White].Size()), new Vector2(scale.X * Value, scale.Y), default, 0f);
+    public Anchor Alignment;
+
+    public void GainExperience(float xp) {
+        _interp = 0;
+        ApproachValue += xp;
+
+        if (ApproachValue > MaxValue) {
+            ApproachValue -= MaxValue;
+            Level++;
+        }
+    }
+
+    public void Update() {
+        if (_interp < 1) {
+            _interp += 0.005f * RuntimeData.DeltaTime;
+
+            // later.
+            /*var p = GameHandler.Particles.MakeParticle(new Vector3(), TextureGlobals.Pixels[Color.White]);
+            p.Color = GainedColor;
+
+            float initVelY = Client.ClientRandom.NextFloat(-0.1f, 0.1f);
+            // p.Position.X = 
+
+            p.UniqueBehavior = (a) => {
+                float velX = Client.ClientRandom.NextFloat(-0.5f, -0.1f) * RuntimeData.DeltaTime;
+            };*/
+        }
+        else _interp = 1;
+
+        Value += (ApproachValue - Value) * Easings.GetEasingBehavior(EasingFunction.InOutQuint, _interp);
+    }
+
+    // todo, when xp gained, draw a text particle that shows how much was gained
+    // also when leveling up make it go to end and then go to supposed xp value
+    public void Render(SpriteBatch sb) {
+        var text = $"Level: {Level} | {MathF.Floor(Value * 100)}%";
+        // draw empty xp
+        DrawUtils.DrawTextWithBorder(sb, FontGlobals.RebirthFont, text, Position - (Vector2.UnitY * 20).ToResolution(), Color.White, Color.Black, new Vector2(0.6f).ToResolution(),
+            0f, Alignment, borderThickness: 0.5f);
+
+        sb.Draw(TextureGlobals.Pixels[Color.White], Position, null, EmptyColor, 0f, GameUtils.GetAnchor(Alignment, TextureGlobals.Pixels[Color.White].Size()), Scale.ToResolution(), default, 0f);
+
+        // draw approaching xp value
+        sb.Draw(TextureGlobals.Pixels[Color.White], Position, null, GainedColor, 0f, GameUtils.GetAnchor(Alignment, TextureGlobals.Pixels[Color.White].Size()), new Vector2(Scale.X * ApproachValue, Scale.Y).ToResolution(), default, 0f);
+
+        // draw gained xp
+        sb.Draw(TextureGlobals.Pixels[Color.White], Position , null, FillColor, 0f, GameUtils.GetAnchor(Alignment, TextureGlobals.Pixels[Color.White].Size()), new Vector2(Scale.X * Value, Scale.Y).ToResolution(), default, 0f);
     }
 }

@@ -41,6 +41,7 @@ using TanksRebirth.GameContent.Cosmetics;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.Graphics.Shaders;
+using TanksRebirth.GameContent.Systems.ParticleSystem;
 
 namespace TanksRebirth;
 
@@ -65,7 +66,7 @@ public class TankGame : Game {
     private Vector2 _mouseOld;
 
     public static TankGame Instance { get; private set; }
-    public static GameData GameData { get; private set; } = new();
+    public static GameData SaveFile { get; private set; } = new();
     public static GameTime LastGameTime { get; private set; }
     /// <summary>The handle of the game's logging file. Used to write information to a file that can be read after the game closes.</summary>
     public static Logger ClientLog { get; private set; }
@@ -200,9 +201,9 @@ public class TankGame : Game {
 
         ClientLog.Write($"Applying changes to graphics device... ({Graphics.PreferredBackBufferWidth}x{Graphics.PreferredBackBufferHeight})", LogType.Info);
 
-        GameData.Setup();
-        if (File.Exists(Path.Combine(GameData.Directory, GameData.Name)))
-            GameData.Deserialize();
+        SaveFile.Setup();
+        if (File.Exists(Path.Combine(SaveFile.Directory, SaveFile.Name)))
+            SaveFile.Deserialize();
 
         ClientLog.Write($"Loaded save data.", LogType.Info);
 
@@ -218,13 +219,15 @@ public class TankGame : Game {
         ClientLog.Write($"Handling termination process...", LogType.Info);
 
         // update game-related numbers
-        GameData.TimePlayed += CurrentSessionTimer.Elapsed;
+        SaveFile.TimePlayed += CurrentSessionTimer.Elapsed;
 
         // save everything related to game-data
         SettingsHandler = new(Settings, Path.Combine(SaveDirectory, "settings.json"));
         JsonSerializerOptions opts = new() { WriteIndented = true };
         SettingsHandler.Serialize(opts, true);
-        GameData.Serialize();
+
+        SaveFile.ExpLevel = GameHandler.ExperienceBar.Level + GameHandler.ExperienceBar.Value;
+        SaveFile.Serialize();
 
         DiscordRichPresence.Terminate();
 
@@ -794,9 +797,11 @@ public class TankGame : Game {
         MainMenuUI.PrepareTextBuffers(GraphicsDevice, SpriteRenderer);
         IntermissionSystem.PrepareBuffers(GraphicsDevice, SpriteRenderer);
     }
+
     public static void DrawGameElements() {
         var shader = Difficulties.Types["LanternMode"] && !MainMenuUI.Active ? GameShaders.LanternShader : (MainMenuUI.Active ? GameShaders.GaussianBlurShader : null);
         if (!GameScene.ShouldRenderAll) shader = null;
+
         SpriteRenderer.Begin(effect: shader);
         SpriteRenderer.Draw(GameFrameBuffer, Vector2.Zero, null, Color.White, 0f, Vector2.Zero, Vector2.One, default, 0f);
         SpriteRenderer.End();

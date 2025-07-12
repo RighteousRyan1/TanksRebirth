@@ -86,7 +86,7 @@ public class RebirthLogoModel {
     public RebirthLogoModel() {
         // mesh.ParentBone.Parent would be the word bone for a mesh 
 
-        _model = ModelResources.Logo.Asset;
+        _model = ModelGlobals.Logo.Asset;
         Tanks_T = _model.Meshes["TANKS1"];
         Tanks_a = _model.Meshes["TANKS2"];
         Tanks_n = _model.Meshes["TANKS3"];

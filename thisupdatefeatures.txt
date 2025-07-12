@@ -19,6 +19,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 - Added the ability for the game to obtain hardware information on any OS (MacOS, Linux) instead of only Windows
 - Added the bonus life animation after over 3.5 years!
 - Added a spectate feature to POV mode
+- Added the ability to change your campaign's starting lives
 
 ## Changes
 
@@ -45,6 +46,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 - Having a controller plugged in no longer prevents keyboard usage for gameplay
 - Packet send-out time decreased from 15ms to 10ms for more responsive netcode
 - XP gained from destroying tanks is now billboarded towards players in POV mode
+- Campaigns can now support up to 2,147,483,647 missions! I don't recommend spending that much time creating them though...
 
 ## Changes Important for Modders
 
@@ -76,6 +78,9 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 - Virtual methods no longer have a parameter for what they are modding, and now have a property (i.e: `ModTank.AITank`, `ModBlock.Block`, `ModShell.Shell`)
 - `MainMenu` -> `MainMenuUI`
 - `GameSceneRenderer` -> `GameScene`
+- `TankGame.GameData` -> `TankGame.SaveFile`
+- Particles have gotten an entire makeover- `ParticleSystem` is now a namespace, where the old `ParticleSystem` class got changed to `ParticleManager`.
+	- `Particle` is now the parent class of the new `Particle2D` and `Particle3D`, where logic is handled separately between the two.
 
 ## Fixes
 
@@ -93,6 +98,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 - The results screen now shows the cumulative effort of all players in mutliplayer
 - Fixed mouse hitching in POV mode when rotating your turret
 - Multiplayer now no longer suffers from "ghost bullets"
+- Fixed mines wanting to explode when placed near dead tanks
 
 ## TODO
 

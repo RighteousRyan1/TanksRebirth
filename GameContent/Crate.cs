@@ -60,7 +60,7 @@ public class Crate
 
     private Crate() 
     {
-        Model = ModelResources.BoxFace.Asset;
+        Model = ModelGlobals.BoxFace.Asset;
 
         int index = Array.IndexOf(crates, crates.First(c => c is null));
 

@@ -69,7 +69,7 @@ public class Airplane {
 
         PlaneLoop = new OggAudio("Content/Assets/sounds/plane/plane_loop.ogg");
 
-        Model = ModelResources.Plane.Duplicate();
+        Model = ModelGlobals.Plane.Duplicate();
         _boneTransforms = new Matrix[Model.Bones.Count];
         Model.CopyAbsoluteBoneTransformsTo(_boneTransforms);
         Model!.Root.Transform = World;

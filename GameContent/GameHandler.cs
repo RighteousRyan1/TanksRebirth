@@ -21,6 +21,7 @@ using TanksRebirth.GameContent.Cosmetics;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.Graphics.Metrics;
+using TanksRebirth.GameContent.Systems.ParticleSystem;
 
 namespace TanksRebirth.GameContent;
 
@@ -36,7 +37,7 @@ public class GameHandler {
     public delegate void PostUpdate();
     public static event PostUpdate? OnPostUpdate;
 
-    public static ParticleSystem Particles { get; } = new(MAX_PARTICLES, () => CameraGlobals.GameView, () => CameraGlobals.GameProjection);
+    public static ParticleManager Particles { get; } = new(MAX_PARTICLES, () => CameraGlobals.GameView, () => CameraGlobals.GameProjection);
     public static XpBar ExperienceBar;
 
     public static AITank[] AllAITanks = new AITank?[MAX_AI_TANKS];
@@ -56,12 +57,20 @@ public class GameHandler {
         AllTanks = new Tank[MAX_PLAYERS + MAX_AI_TANKS];
 
         ExperienceBar = new();
+        ExperienceBar.Level = (ushort)TankGame.SaveFile.ExpLevel;
+        ExperienceBar.Value = TankGame.SaveFile.ExpLevel - ExperienceBar.Level;
+
+        ExperienceBar.Alignment = Anchor.LeftCenter;
+        ExperienceBar.FillColor = Color.Lime;
+        ExperienceBar.EmptyColor = Color.Red;
 
         GameSceneUI.Initialize();
         CosmeticsUI.Initialize();
         RebirthMouse.Initialize();
     }
     internal static void UpdateAll(GameTime gameTime) {
+        if (InputUtils.KeyJustPressed(Keys.P))
+            ExperienceBar.GainExperience(0.1f);
         /*void doTestWithFont() {
             var str = 
                 "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
@@ -82,6 +91,8 @@ public class GameHandler {
         if (InputUtils.KeyJustPressed(Keys.OemTilde))
             doTestWithFont();*/
         // ChatSystem.CurTyping = SoundPlayer.GetLengthOfSound("Content/Assets/sounds/tnk_shoot_ricochet_rocket_loop.ogg").ToString();
+
+        ExperienceBar.Update();
         CosmeticsUI.Update();
         RoomScene.Update();
 
@@ -90,7 +101,7 @@ public class GameHandler {
         if (MainMenuUI.Active)
             PlayerTank.SetLives(999);
         // technically, level 0 in code is level 1, so we want to use that number (1) if the user is level 0.
-        ExperienceBar.Value = TankGame.GameData.ExpLevel - MathF.Floor(TankGame.GameData.ExpLevel);
+        // ExperienceBar.Value = TankGame.GameData.ExpLevel - MathF.Floor(TankGame.GameData.ExpLevel);
 
         VanillaAchievements.Repository.UpdateCompletions(TankGame.VanillaAchievementPopupHandler);
 
@@ -182,8 +193,15 @@ public class GameHandler {
     internal static void RenderAll() {
         TankGame.Instance.GraphicsDevice.BlendState = BlendState.AlphaBlend;
 
-        if (!MainMenuUI.Active && !LevelEditorUI.Editing)
-            ExperienceBar?.Render(TankGame.SpriteRenderer, new(WindowUtils.WindowWidth / 2, 50.ToResolutionY()), new Vector2(100, 20).ToResolution(), Anchor.Center, Color.Red, Color.Lime);
+        if (!MainMenuUI.Active && !LevelEditorUI.Editing) {
+            ExperienceBar.Position = new(WindowUtils.WindowWidth / 2 - ExperienceBar.Scale.X / 2, 50);
+            ExperienceBar.Scale = new(600, 20);
+            ExperienceBar.Alignment = Anchor.LeftCenter;
+            ExperienceBar.FillColor = Color.Green;
+            ExperienceBar.EmptyColor = Color.Red;
+            ExperienceBar.GainedColor = Color.Lime;
+            ExperienceBar.Render(TankGame.SpriteRenderer);
+        }
         
         // CHECK: move this back if necessary
         GameScene.RenderWorldModels();

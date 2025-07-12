@@ -110,7 +110,7 @@ public partial class AITank : Tank {
         SwapTankTexture(Assets[$"tank_" + tierName]);
 
         if (!UsesCustomModel)
-            Model = ModelResources.TankEnemy.Asset;
+            Model = ModelGlobals.TankEnemy.Asset;
 
         if (setDefaults)
             ApplyDefaults(ref Properties);
@@ -174,7 +174,7 @@ public partial class AITank : Tank {
         var tierName = TankID.Collection.GetKey(tier)!.ToLower();
         if (RuntimeData.IsMainThread) {
             if (!UsesCustomModel) {
-                Model = ModelResources.TankEnemy.Asset;
+                Model = ModelGlobals.TankEnemy.Asset;
                 var tnkAsset = Assets[$"tank_" + tierName];
 
                 var t = new Texture2D(TankGame.Instance.GraphicsDevice, tnkAsset.Width, tnkAsset.Height);
@@ -354,14 +354,14 @@ public partial class AITank : Tank {
         // check if less than certain values for different value coins
 
         if (context is TankHurtContextShell cxtShell) {
-            TankGame.GameData.BulletKills++;
+            TankGame.SaveFile.BulletKills++;
 
             // if the ricochets remaining is less than the ricochets the bullet has, it has bounced at least once.
             if (cxtShell.Shell.RicochetsRemaining < cxtShell.Shell.Ricochets)
-                TankGame.GameData.BounceKills++;
+                TankGame.SaveFile.BounceKills++;
         }
         if (context is TankHurtContextExplosion) {
-            TankGame.GameData.MineKills++;
+            TankGame.SaveFile.MineKills++;
         }
 
         // pretty sure != null isn't necessary because if Source is null it can't convert
@@ -375,10 +375,10 @@ public partial class AITank : Tank {
                 PlayerTank.KillCounts[myId]++;
         }
 
-        TankGame.GameData.TotalKills++;
+        TankGame.SaveFile.TotalKills++;
 
-        if (TankGame.GameData.TankKills.TryGetValue(AiTankType, out uint value))
-            TankGame.GameData.TankKills[AiTankType] = ++value;
+        if (TankGame.SaveFile.TankKills.TryGetValue(AiTankType, out uint value))
+            TankGame.SaveFile.TankKills[AiTankType] = ++value;
 
         GiveXP();
             // check if player id matches client id, if so, increment that player's kill count, then sync to the server
@@ -396,7 +396,7 @@ public partial class AITank : Tank {
             var gain = BaseExpValue + rand;
             // i will keep this commented if anything else happens.
             //var gain = (BaseExpValue + rand) * GameData.UniversalExpMultiplier;
-            TankGame.GameData.ExpLevel += gain;
+            GameHandler.ExperienceBar.GainExperience(gain);
 
             var p = GameHandler.Particles.MakeParticle(Position3D + new Vector3(0, 30, 0), $"+{gain * 100:0.00} XP");
 

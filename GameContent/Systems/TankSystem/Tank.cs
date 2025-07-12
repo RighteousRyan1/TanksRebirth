@@ -22,6 +22,7 @@ using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.GameContent.Globals.Assets;
 using DiscordRPC;
 using System.Net.NetworkInformation;
+using TanksRebirth.GameContent.Systems.ParticleSystem;
 
 namespace TanksRebirth.GameContent;
 
@@ -248,7 +249,13 @@ public abstract class Tank {
     /// <summary>Initializes bone transforms and mesh assignments. You will want to call this method if you're modifying a tank model, and the new model
     /// contains a different number of bones than the original one.</summary>
     public void InitModelSemantics() {
-        _cannonMesh = Model!.Meshes["Cannon"];
+        // for some reason Model is null when returning from campaign completion with certain mods.
+        if (Model is null) {
+            Remove(true);
+            return;
+        }
+
+        _cannonMesh = Model.Meshes["Cannon"];
         _boneTransforms = new Matrix[Model.Bones.Count];
     }
     public void AddProp2D(Prop2D prop, Func<bool>? destroyOn = null) {
@@ -632,28 +639,6 @@ public abstract class Tank {
                     particle.Destroy();
             };
         }
-
-        var explosionParticle = GameHandler.Particles.MakeParticle(Position3D,
-            GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
-
-        explosionParticle.Color = Color.Yellow * 0.75f;
-
-        explosionParticle.ToScreenSpace = true;
-
-        explosionParticle.Scale = new(50f);
-        explosionParticle.TextureScale = new(4f);
-
-        explosionParticle.HasAddativeBlending = true;
-
-        explosionParticle.IsIn2DSpace = true;
-
-        explosionParticle.UniqueBehavior = (p) => {
-            GeometryUtils.Add(ref p.Scale, -0.3f * RuntimeData.DeltaTime);
-            p.Alpha -= 0.06f * RuntimeData.DeltaTime;
-            if (p.Scale.X <= 0f)
-                p.Destroy();
-        };
-        GameHandler.Particles.MakeSmallExplosion(Position3D, 15, 20, 1.3f, 15);
     }
     /// <summary>Lay a <see cref="TankFootprint"/> under this <see cref="Tank"/>.</summary>
     public virtual void LayFootprint(bool alt) {
@@ -760,7 +745,7 @@ public abstract class Tank {
 
         if (CameraGlobals.IsUsingFirstPresonCamera) {
             smoke = GameHandler.Particles.MakeParticle(TurretPosition3D,
-                ModelResources.Smoke.Asset,
+                ModelGlobals.Smoke.Asset,
                 GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
 
             smoke.Scale = new(1.25f);

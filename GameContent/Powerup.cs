@@ -84,7 +84,7 @@ namespace TanksRebirth.GameContent
 
         public Powerup(PowerupTemplate template)
         {
-            _model = ModelResources.Medal.Asset;
+            _model = ModelGlobals.Medal.Asset;
             PickupRadius = template.pickupRadius;
             Duration = template.duration;
             PowerupEffects = template.PowerupEffects;

@@ -38,12 +38,10 @@ public static partial class LevelEditorUI {
         SavingThings,
     }
     public static readonly byte[] LevelFileHeader = [84, 65, 78, 75]; // T, A, N, K
-    public const int EDITOR_VERSION = 3;
+    public const int EDITOR_VERSION = 4;
 
     public const int MAX_MISSION_CHARS = 30;
     public static bool IsTestingLevel { get; private set; }
-
-    // TODO: allow the moving of missions up and down in the level editor order -- done... i think.
 
     public static bool Active { get; private set; }
     public static OggMusic Theme = new("Level Editor Theme", "Content/Assets/music/mainmenu/editor.ogg", 0.7f);
@@ -64,20 +62,20 @@ public static partial class LevelEditorUI {
         PlayerTanks
     }
 
-    private static bool _initialized;
+    static bool _initialized;
 
-    internal static Campaign? loadedCampaign;
+    internal static Campaign loadedCampaign;
 
-    private static bool _viewMissionDetails = true;
-    private static bool _hasMajorVictory;
+    static bool _viewMissionDetails = true;
+    static bool _hasMajorVictory;
 
     public static Color SelectedColor = Color.SkyBlue;
     public static Color UnselectedColor = Color.White;
 
-    private static Task? _loadTask;
-    private static int _oldelta;
+    static Task? _loadTask;
+    static int _oldelta;
 
-    private static readonly List<UITextInput> _campaignElems = [];
+    static readonly List<UITextInput> _campaignTextInputs = [];
     public static void HandleLevelEditorModifications() {
         var cur = PlacementSquare.CurrentlyHovered;
 
@@ -93,150 +91,6 @@ public static partial class LevelEditorUI {
         }
 
         _oldelta = InputUtils.DeltaScrollWheel;
-    }
-    // reduce hardcode -- make a variable that tracks height.
-    public static void InitializeSaveMenu() {
-        LevelContentsPanel = new Rectangle(WindowUtils.WindowWidth / 4, (int)(WindowUtils.WindowHeight * 0.1f), WindowUtils.WindowWidth / 2, (int)(WindowUtils.WindowHeight * 0.625f));
-
-        // changed from 30 to 20.
-        MissionName = new(FontGlobals.RebirthFont, Color.White, 1f, MAX_MISSION_CHARS);
-
-        MissionName.SetDimensions(() => new(LevelContentsPanel.X + 20.ToResolutionX(),
-                LevelContentsPanel.Y + 60.ToResolutionY()),
-            () => new(LevelContentsPanel.Width - 40.ToResolutionX(),
-                50.ToResolutionY()));
-        MissionName.DefaultString = TankGame.GameLanguage.Name;
-
-        SaveMenuReturn = new(TankGame.GameLanguage.Return, FontGlobals.RebirthFont, Color.White);
-        SaveMenuReturn.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(),
-                LevelContentsPanel.Y + LevelContentsPanel.Height - 60.ToResolutionY()),
-            () => new(200.ToResolutionX(),
-                50.ToResolutionY()));
-
-        SaveMenuReturn.OnLeftClick = (l) => {
-            GUICategory = UICategory.LevelEditor;
-            var id = loadedCampaign.CurrentMissionId;
-            if (MissionName.GetRealText() != string.Empty)
-                loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId].Name = MissionName.GetRealText();
-            SetupMissionsBar(loadedCampaign, false);
-            _missionButtons[id].Color = SelectedColor;
-        };
-
-        SaveLevelConfirm = new(TankGame.GameLanguage.Save, FontGlobals.RebirthFont, Color.White);
-        SaveLevelConfirm.SetDimensions(() => new Vector2(LevelContentsPanel.X + 40.ToResolutionX() + SaveMenuReturn.Size.X,
-                LevelContentsPanel.Y + LevelContentsPanel.Height - 60.ToResolutionY()),
-            () => new(200.ToResolutionX(),
-                50.ToResolutionY()));
-        SaveLevelConfirm.OnLeftClick = (l) => {
-            // Mission.Save(LevelName.GetRealText(), )
-            var res = Dialog.FileSave(_viewMissionDetails ? "mission,bin" : "campaign", TankGame.SaveDirectory);
-            if (res.Path != null && res.IsOk) {
-                try {
-                    var name = _viewMissionDetails ? MissionName.Text : CampaignName.Text;
-                    var realName = Path.HasExtension(res.Path) ? Path.GetFileNameWithoutExtension(res.Path) : Path.GetFileName(res.Path);
-
-                    var misName = loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId].Name;
-                    loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId] = Mission.GetCurrent(misName);
-                    if (_viewMissionDetails) {
-                        var ext = Path.GetExtension(res.Path);
-                        if (ext == ".mission" || ext == string.Empty)
-                            Mission.Save(res.Path, name);
-                        else if (ext == ".bin")
-                            WiiMap.SaveToTanksBinFile(res.Path, true);
-                    }
-                    else {
-                        loadedCampaign.MetaData.Name = CampaignName.GetRealText();
-                        loadedCampaign.MetaData.Description = CampaignDescription.GetRealText();
-                        loadedCampaign.MetaData.Author = CampaignAuthor.GetRealText();
-                        var split = CampaignTags.GetRealText().Split(',');
-                        loadedCampaign.MetaData.Tags = split;
-                        loadedCampaign.MetaData.ExtraLivesMissions = ArrayUtils.SequenceToInt32Array(CampaignExtraLives.GetRealText());
-                        loadedCampaign.MetaData.Version = CampaignVersion.GetRealText();
-                        loadedCampaign.MetaData.BackgroundColor = UnpackedColor.FromStringFormat(CampaignLoadingBGColor.GetRealText());
-                        loadedCampaign.MetaData.MissionStripColor = UnpackedColor.FromStringFormat(CampaignLoadingStripColor.GetRealText());
-                        loadedCampaign.MetaData.HasMajorVictory = _hasMajorVictory;
-                        Campaign.Save(res.Path, loadedCampaign);
-                    }
-                } catch {
-                    // guh...
-                }
-            }
-
-            // GUICategory = UICategory.LevelEditor;
-        };
-
-        float width = 300;
-        float height = 50;
-
-        SwapMenu = new(TankGame.GameLanguage.CampaignDetails, FontGlobals.RebirthFont, Color.White);
-        SwapMenu.SetDimensions(() => new Vector2(LevelContentsPanel.X + LevelContentsPanel.Width - width.ToResolutionX() - 20.ToResolutionX(),
-                LevelContentsPanel.Y + LevelContentsPanel.Height - height.ToResolutionY() - 10.ToResolutionY()),
-            () => new(width.ToResolutionX(),
-                height.ToResolutionY()));
-
-        SwapMenu.OnLeftClick = (l) => {
-            _viewMissionDetails = !_viewMissionDetails;
-            if (MissionName.GetRealText() != string.Empty)
-                loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId].Name = MissionName.GetRealText();
-        };
-        CampaignName = new(FontGlobals.RebirthFont, Color.White, 1f, 30);
-        CampaignName.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(),
-                LevelContentsPanel.Y + 60.ToResolutionY()),
-            () => new(LevelContentsPanel.Width - 40.ToResolutionX(),
-                50.ToResolutionY()));
-        CampaignName.DefaultString = TankGame.GameLanguage.Name;
-        CampaignName.Tooltip = TankGame.GameLanguage.CampaignNameFlavor;
-
-        CampaignDescription = new(FontGlobals.RebirthFont, Color.White, 1f, 100);
-        CampaignDescription.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), LevelContentsPanel.Y + 120.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 50.ToResolutionY()));
-        CampaignDescription.DefaultString = TankGame.GameLanguage.Description;
-        CampaignDescription.Tooltip = TankGame.GameLanguage.DescriptionFlavor;
-
-        CampaignAuthor = new(FontGlobals.RebirthFont, Color.White, 1f, 25);
-        CampaignAuthor.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), LevelContentsPanel.Y + 180.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 50.ToResolutionY()));
-        CampaignAuthor.DefaultString = TankGame.GameLanguage.Author;
-        CampaignAuthor.Tooltip = TankGame.GameLanguage.AuthorFlavor;
-
-        CampaignTags = new(FontGlobals.RebirthFont, Color.White, 1f, 35);
-        CampaignTags.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), LevelContentsPanel.Y + 240.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 50.ToResolutionY()));
-        CampaignTags.DefaultString = TankGame.GameLanguage.Tags;
-        CampaignTags.Tooltip = TankGame.GameLanguage.TagsFlavor;
-
-        CampaignExtraLives = new(FontGlobals.RebirthFont, Color.White, 1f, 100);
-        CampaignExtraLives.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), LevelContentsPanel.Y + 300.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 50.ToResolutionY()));
-        CampaignExtraLives.DefaultString = TankGame.GameLanguage.ExtraLifeMissions;
-        CampaignExtraLives.Tooltip = TankGame.GameLanguage.ExtraLifeMissionsFlavor;
-
-        CampaignVersion = new(FontGlobals.RebirthFont, Color.White, 1f, 10);
-        CampaignVersion.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), LevelContentsPanel.Y + 360.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 50.ToResolutionY()));
-        CampaignVersion.DefaultString = TankGame.GameLanguage.Version;
-        CampaignVersion.Tooltip = TankGame.GameLanguage.VersionFlavor;
-
-        CampaignLoadingBGColor = new(FontGlobals.RebirthFont, Color.White, 1f, 11);
-        CampaignLoadingBGColor.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), LevelContentsPanel.Y + 420.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 50.ToResolutionY()));
-        CampaignLoadingBGColor.DefaultString = TankGame.GameLanguage.BGColor;
-        CampaignLoadingBGColor.Tooltip = TankGame.GameLanguage.BGColorFlavor;
-
-        CampaignLoadingStripColor = new(FontGlobals.RebirthFont, Color.White, 1f, 11);
-        CampaignLoadingStripColor.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), LevelContentsPanel.Y + 480.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 50.ToResolutionY()));
-        CampaignLoadingStripColor.DefaultString = TankGame.GameLanguage.StripColor;
-        CampaignLoadingStripColor.Tooltip = TankGame.GameLanguage.StripColorFlavor;
-
-        CampaignMajorVictory = new("", FontGlobals.RebirthFont, Color.White, () => Vector2.One.ToResolution());
-        CampaignMajorVictory.SetDimensions(() => new Vector2(LevelContentsPanel.X + 20.ToResolutionX(), LevelContentsPanel.Y + 540.ToResolutionY()), () => new(LevelContentsPanel.Width - 40.ToResolutionX(), 50.ToResolutionY()));
-        CampaignMajorVictory.OnLeftClick = (a) => _hasMajorVictory = !_hasMajorVictory;
-        CampaignMajorVictory.Tooltip = TankGame.GameLanguage.HasMajorVictoryThemeFlavor;
-        SetSaveMenuVisibility(false);
-
-        _campaignElems.Add(MissionName);
-        _campaignElems.Add(CampaignName);
-        _campaignElems.Add(CampaignVersion);
-        _campaignElems.Add(CampaignLoadingBGColor);
-        _campaignElems.Add(CampaignLoadingStripColor);
-        _campaignElems.Add(CampaignTags);
-        _campaignElems.Add(CampaignAuthor);
-        _campaignElems.Add(CampaignExtraLives);
-        _campaignElems.Add(CampaignDescription);
     }
 
     internal static Mission missionToRate = new([], []);
@@ -292,6 +146,8 @@ public static partial class LevelEditorUI {
     private static void SetSaveMenuVisibility(bool visible) {
         _saveMenuOpen = visible;
         MissionName.IsVisible = visible && _viewMissionDetails;
+        MissionGrantsLife.IsVisible = visible && _viewMissionDetails;
+
         SaveLevelConfirm.IsVisible = visible;
         SaveMenuReturn.IsVisible = visible;
         SwapMenu.IsVisible = visible;
@@ -301,8 +157,8 @@ public static partial class LevelEditorUI {
         CampaignDescription.IsVisible = visible && !_viewMissionDetails;
         CampaignAuthor.IsVisible = visible && !_viewMissionDetails;
         CampaignTags.IsVisible = visible && !_viewMissionDetails;
+        CampaignStartingLives.IsVisible = visible && !_viewMissionDetails;
         CampaignVersion.IsVisible = visible && !_viewMissionDetails;
-        CampaignExtraLives.IsVisible = visible && !_viewMissionDetails;
         CampaignLoadingBGColor.IsVisible = visible && !_viewMissionDetails;
         CampaignLoadingStripColor.IsVisible = visible && !_viewMissionDetails;
         CampaignMajorVictory.IsVisible = visible && !_viewMissionDetails;
@@ -541,6 +397,7 @@ public static partial class LevelEditorUI {
                     Name = "No Name"
                 };
                 SetupMissionsBar(loadedCampaign);
+                _missionButtons[0].Color = SelectedColor;
                 _loadTask = null;
             });
         }
@@ -773,10 +630,9 @@ public static partial class LevelEditorUI {
 
         // i believe this makes the text left-origin instead of center-origin
         // TODO: make text origin in relation to the ui element a property of the UI itself..?
-        _campaignElems.ForEach(elem => {
-            if (elem is UITextInput)
-                elem.DrawText = false;
+        _campaignTextInputs.ForEach(elem => {
             elem.UniqueDraw = (a, b) => {
+                elem.DrawText = false;
                 if (!elem.IsVisible)
                     return;
                 // fix why this isn't drawing???
@@ -811,8 +667,8 @@ public static partial class LevelEditorUI {
 
                 if (RayUtils.GetMouseToWorldRay().Intersects(tnk.Worldbox).HasValue) {
                     HoveringAnyTank = true;
-                    if (InputUtils.KeyJustPressed(Keys.K) && Array.IndexOf(GameHandler.AllTanks, tnk) > -1)
-                        tnk?.Destroy(new TankHurtContextOther(null, TankHurtContextOther.HurtContext.FromOther, "Smitten by zeus!"), false); // hmmm
+                    if (InputUtils.KeyJustPressed(Keys.K))
+                        tnk.Destroy(new TankHurtContextOther(null, TankHurtContextOther.HurtContext.FromOther, "Smitten by zeus!"), false); // hmmm
 
                     if (InputUtils.CanDetectClick(rightClick: true)) {
                         tnk!.TankRotation = (tnk.TankRotation - MathHelper.PiOver2).WrapTauAngle() - MathHelper.Pi;
@@ -843,7 +699,11 @@ public static partial class LevelEditorUI {
 
         _missionsMaxOff = _missionButtons.Count * 30.ToResolutionY();
         SaveLevelConfirm.Tooltip = _viewMissionDetails ? TankGame.GameLanguage.MissionSaveFlavor : TankGame.GameLanguage.CampaignSaveFlavor;
+
         CampaignMajorVictory.Text = TankGame.GameLanguage.HasMajorVictoryTheme + ": " + (_hasMajorVictory ? TankGame.GameLanguage.Yes : TankGame.GameLanguage.No);
+
+        if (loadedCampaign is not null)
+            MissionGrantsLife.Text = TankGame.GameLanguage.GrantsBonusLife + ": " + (loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId].GrantsExtraLife ? TankGame.GameLanguage.Yes : TankGame.GameLanguage.No);
 
         if (_missionsOffset > 0)
             _missionsOffset = 0;

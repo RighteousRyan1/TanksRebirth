@@ -46,17 +46,17 @@ public static class IntermissionHandler {
         //delay += 200;
 
         if (context == MissionEndContext.CampaignCompleteMajor) {
-            TankGame.GameData.CampaignsCompleted++;
+            TankGame.SaveFile.CampaignsCompleted++;
             string victory = "Assets/music/fanfares/mission_complete_M100.ogg";
             SoundPlayer.PlaySoundInstance(victory, SoundContext.Effect, 0.5f, rememberMe: true);
         }
         else if (context == MissionEndContext.CampaignCompleteMinor) {
-            TankGame.GameData.CampaignsCompleted++;
+            TankGame.SaveFile.CampaignsCompleted++;
             var victory = "Assets/music/fanfares/mission_complete_M20.ogg";
             SoundPlayer.PlaySoundInstance(victory, SoundContext.Effect, 0.5f, rememberMe: true);
         }
         if (context == MissionEndContext.Win) {
-            TankGame.GameData.MissionsCompleted++;
+            TankGame.SaveFile.MissionsCompleted++;
         }
         if (!Client.IsConnected()) {
             if (context == MissionEndContext.Lose) {
@@ -84,7 +84,7 @@ public static class IntermissionHandler {
             }*/
         }
         if (context == MissionEndContext.Win) {
-            TankGame.GameData.MissionsCompleted++;
+            TankGame.SaveFile.MissionsCompleted++;
             CampaignGlobals.LoadedCampaign.LoadNextMission();
             // hijack the next mission if random tanks is enabled.
             // IntermissionSystem.cs line 89 contains when the next mission is actually set-up.
@@ -282,7 +282,7 @@ public static class IntermissionHandler {
     public static void RenderCountdownGraphics() {
         if (!MainMenuUI.Active && !CameraGlobals.OverheadView && !LevelEditorUI.Active/* && TankFunctionWait > 0*/) {
             DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, PrepareDisplay, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 3), 
-                IntermissionSystem.BackgroundColor, IntermissionSystem.StripColor, CountdownAnimator.CurrentScale.ToResolution(), 0f, Anchor.Center, 3);
+                IntermissionSystem.BackgroundColor, IntermissionSystem.BannerColor, CountdownAnimator.CurrentScale.ToResolution(), 0f, Anchor.Center, 3);
         }
     }
 }

@@ -9,7 +9,7 @@ namespace TanksRebirth.GameContent.Globals.Assets;
 
 #pragma warning disable
 // only ModelResources for now. maybe TextureResources
-public static class ModelResources {
+public static class ModelGlobals {
     // general models
     public static Resource<Model> Armor = new(PathGlobals.MODEL_PATH, "armor");
     public static Resource<Model> BoxFace = new(PathGlobals.MODEL_PATH, "box_face");
