@@ -105,6 +105,9 @@ public class TankGame : Game {
 
     public static event Action<GameTime> PostDrawEverything;
 
+    public delegate void OnResolutionChangedDelegate(int newX, int newY);
+    public static event OnResolutionChangedDelegate OnResolutionChanged;
+
     public TankGame() : base() {
         // prepare IO
         Directory.CreateDirectory(SaveDirectory);
@@ -687,6 +690,8 @@ public class TankGame : Game {
             GameFrameBuffer?.Dispose();
             var presentationParams = GraphicsDevice.PresentationParameters;
             GameFrameBuffer = new RenderTarget2D(GraphicsDevice, presentationParams.BackBufferWidth, presentationParams.BackBufferHeight, false, presentationParams.BackBufferFormat, presentationParams.DepthStencilFormat, 0, RenderTargetUsage.PreserveContents);
+
+            OnResolutionChanged?.Invoke(WindowUtils.WindowWidth, WindowUtils.WindowHeight);
         }
         // TankFootprint.DecalHandler.UpdateRenderTarget();
         GraphicsDevice.SetRenderTarget(GameFrameBuffer);

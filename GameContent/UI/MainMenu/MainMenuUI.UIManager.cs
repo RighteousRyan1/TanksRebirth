@@ -31,7 +31,7 @@ public static partial class MainMenuUI
         $"\nTANKS to all of our contributors, including:\n" +
         $"\nDottik, Arram, TheGoldfishKing, LolXD87," +
         $"\nAnotherGuy, Dymkar, Arctan Dev, 4mbro0s3-2," +
-        $"\nvsjoqvist, Tomat, nakamurash, timweh, Guthen";
+        $"\nvsjoqvist, Tomat, nakamurash, timweh, Guthen, Vicerix";
     // not always properly set, fix later
     // this code is becoming so shit i want to vomit but i don't know any better
     public enum UIState {
@@ -45,7 +45,6 @@ public static partial class MainMenuUI
         Settings,
         StatsMenu
     }
-
     private static UIState _menuState;
     public static UIState MenuState {
         get => _menuState;

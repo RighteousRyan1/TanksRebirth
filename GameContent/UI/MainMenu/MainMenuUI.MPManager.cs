@@ -156,7 +156,7 @@ public static partial class MainMenuUI {
             Tooltip = "Create a server with the written IP and Port in the form of ip:port"
         };
         CreateServerButton.SetDimensions(
-            () => new Vector2(_panelPosition.X + _panelWidth / 2 - CreateServerButton.Size.X / 2, _panelPosition.Y + _panelHeaderHeight + _panelHeight - 30.ToResolutionY()), 
+            () => new Vector2(_panelPosition.X + _panelWidth / 2 - CreateServerButton.Size.X / 2, _panelPosition.Y + _panelHeaderHeight + _panelHeight - 30.ToResolutionY()),
             () => UsernameInput.Size);
         CreateServerButton.OnLeftClick = (uiButton) => {
             if (UsernameInput.IsEmpty()) {
@@ -216,11 +216,11 @@ public static partial class MainMenuUI {
             MenuState = UIState.Campaigns;
         };
         StartMPGameButton.SetDimensions(
-            () => _panelPosition + new Vector2(_panelWidth / 3 - DisconnectButton.Size.X / 2, _panelHeaderHeight / 4), 
+            () => _panelPosition + new Vector2(_panelWidth / 3 - DisconnectButton.Size.X / 2, _panelHeaderHeight / 4),
             () => UsernameInput.Size);
     }
     public static void UpdateMP() {
-  
+
         var plrOffset = -10f;
         if (!Client.IsConnected()) {
             if (PlayerTank.ClientTank is null) {
@@ -228,7 +228,7 @@ public static partial class MainMenuUI {
                 p.Body.Position = (PlayersGraphicOrigin + new Vector2(0, plrOffset)) / Tank.UNITS_PER_METER;
                 p.TankRotation = PlayersGraphicRotationOrigin.Z;
                 p.Dead = false;
-            }else {
+            } else {
                 if (InputUtils.KeyJustPressed(Microsoft.Xna.Framework.Input.Keys.K))
                     PlayerTank.ClientTank.Remove(true);
             }
@@ -256,46 +256,44 @@ public static partial class MainMenuUI {
                 Server.ConnectedClients[i] = new(i, "Client" + i);
             }
         }
-        // TODO: rework this very rudimentary ui
-        if (true || Server.ConnectedClients is not null && Client.IsConnected() && Client.LobbyDataReceived) {
 
-            float divisor = 8;
-            float initialX = WindowUtils.WindowWidth / divisor;
-            _panelWidth = initialX * (divisor - 2);
-            _panelHeaderHeight = 50f.ToResolutionY();
-            _panelHeight = 300f.ToResolutionY();
-            _panelPosition = new Vector2(initialX, 50);
+        float divisor = 8;
+        float initialX = WindowUtils.WindowWidth / divisor;
+        _panelWidth = initialX * (divisor - 2);
+        _panelHeaderHeight = 50f.ToResolutionY();
+        _panelHeight = 300f.ToResolutionY();
+        _panelPosition = new Vector2(initialX, 50);
 
-            TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], _panelPosition, null, 
-                Color.White, 0f, Vector2.Zero, new Vector2(_panelWidth, _panelHeaderHeight), default, 0f);
-            TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], _panelPosition + new Vector2(0, _panelHeaderHeight), null,
-                Color.Gray, 0f, Vector2.Zero, new Vector2(_panelWidth, _panelHeight), default, 0f);
+        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], _panelPosition, null,
+            Color.White, 0f, Vector2.Zero, new Vector2(_panelWidth, _panelHeaderHeight), default, 0f);
+        TankGame.SpriteRenderer.Draw(TextureGlobals.Pixels[Color.White], _panelPosition + new Vector2(0, _panelHeaderHeight), null,
+            Color.Gray, 0f, Vector2.Zero, new Vector2(_panelWidth, _panelHeight), default, 0f);
 
-            Vector2 serverNamePos = new(_panelPosition.X + _panelWidth / 2, _panelPosition.Y + _panelHeaderHeight + 20.ToResolutionY());
+        Vector2 serverNamePos = new(_panelPosition.X + _panelWidth / 2, _panelPosition.Y + _panelHeaderHeight + 20.ToResolutionY());
 
-            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, $"\"{NetPlay.ServerName}\"", serverNamePos,
-                Color.White, Color.Black, new Vector2(0.6f).ToResolution(), 0f, Anchor.Center, 0.8f);
-            /*DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, $"Connected Players:", initialPosition + new Vector2(0, 40),
-                Color.White, Color.Black, new Vector2(0.6f).ToResolution(), 0f, Anchor.TopLeft, 0.8f);*/
-            var numClients = Server.ConnectedClients.Count(x => x is not null);
+        /*DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, $"Connected Players:", initialPosition + new Vector2(0, 40),
+            Color.White, Color.Black, new Vector2(0.6f).ToResolution(), 0f, Anchor.TopLeft, 0.8f);*/
+        var numClients = Server.CurrentClientCount;
 
-            var divisions = numClients + 1;
-            var panelXCut = _panelWidth / divisions;
+        var divisions = numClients + 1;
+        var panelXCut = _panelWidth / divisions;
 
-            var borderColor = Color.Black;
+        var borderColor = Color.Black;
 
-            for (int i = 0; i < numClients; i++) {
-                var client = Server.ConnectedClients[i];
-                // TODO: when u work on this again be sure to like, re-enable this code, cuz like, if u dont, u die.
-                Color textCol = PlayerID.PlayerTankColors[client.Id];
+        DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, numClients > 0 ? $"\"{NetPlay.ServerName}\"" : "N/A", serverNamePos,
+            Color.White, Color.Black, new Vector2(0.6f).ToResolution(), 0f, Anchor.Center, 0.8f);
 
-                var clientNamePos = new Vector2(_panelPosition.X + (panelXCut * (i + 1)), _panelPosition.Y + _panelHeaderHeight + _panelHeight / 3);
+        for (int i = 0; i < numClients; i++) {
+            var client = Server.ConnectedClients[i];
+            // TODO: when u work on this again be sure to like, re-enable this code, cuz like, if u dont, u die.
+            Color textCol = PlayerID.PlayerTankColors[client.Id];
 
-                DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, $"{client.Name}",
-                    clientNamePos, textCol, borderColor, new Vector2(0.3f).ToResolution(), 0f, Anchor.Center, 0.8f);
-                DrawUtils.DrawTextureWithBorder(TankGame.SpriteRenderer, GameResources.GetGameResource<Texture2D>("Assets/textures/ui/tank2d"),
-                    clientNamePos + new Vector2(0, 35).ToResolution(), textCol, borderColor, new Vector2(1f), 0f);
-            }
+            var clientNamePos = new Vector2(_panelPosition.X + (panelXCut * (i + 1)), _panelPosition.Y + _panelHeaderHeight + _panelHeight / 3);
+
+            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, $"{client.Name}",
+                clientNamePos, textCol, borderColor, new Vector2(0.3f).ToResolution(), 0f, Anchor.Center, 0.8f);
+            DrawUtils.DrawTextureWithBorder(TankGame.SpriteRenderer, GameResources.GetGameResource<Texture2D>("Assets/textures/ui/tank2d"),
+                clientNamePos + new Vector2(0, 35).ToResolution(), textCol, borderColor, new Vector2(1f), 0f);
         }
     }
 }

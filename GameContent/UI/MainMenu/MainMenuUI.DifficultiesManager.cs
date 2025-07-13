@@ -353,7 +353,7 @@ public static partial class MainMenuUI {
             float offsetX = (buttonSize.X + padding) * col;
             float offsetY = (buttonSize.Y + padding) * row;
 
-            Vector2 position = new Vector2(startX + offsetX, (WindowUtils.WindowHeight * 0.1f) + offsetY.ToResolutionY());
+            Vector2 position = new Vector2(startX + offsetX, (WindowUtils.WindowHeight * 0.1f) + offsetY);
             button.SetDimensions(() => position.ToResolution(), () => buttonSize.ToResolution());
             button.OnMouseOver = (a) => SoundPlayer.PlaySoundInstance(TickSound, SoundContext.Effect);
         }

@@ -1,11 +1,8 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TanksRebirth.Internals.Common.Utilities;
+using HidSharp;
 
 namespace TanksRebirth.Graphics;
 
@@ -29,9 +26,6 @@ public class Trail {
     private readonly Queue<Vector2> _positions = [];
     private VertexPositionColor[] _vertices;
     private short[] _indices;
-
-    public const float WIDTH_TRAILS_ENJOY = 800;
-    public const float HEIGHT_TRAILS_ENJOY = 480;
 
     private Color _mainColor;
     public Color MainColor {
@@ -58,7 +52,7 @@ public class Trail {
         InitializeIndices();
     }
 
-    private void InitializeIndices() {
+    public void InitializeIndices() {
         for (int i = 0; i < MaxTrailPoints - 1; i++) {
             // border indices
             int baseIndex = i * 12;
@@ -81,6 +75,8 @@ public class Trail {
 
     public void Update(Vector2 newPosition) {
         _positions.Enqueue(newPosition);
+
+        _effect.Projection = Matrix.CreateOrthographicOffCenter(0, WindowUtils.WindowWidth, WindowUtils.WindowHeight, 0, 0, 1);
         while (_positions.Count > MaxTrailPoints) _positions.Dequeue();
         UpdateVertices();
     }
