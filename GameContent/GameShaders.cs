@@ -30,10 +30,10 @@ public class GameShaders
     }
 
     public static void Initialize() {
-        GaussianBlurShader = GameResources.GetGameResource<Effect>("Assets/Shaders/gaussian_blur");
-        MouseShader = GameResources.GetGameResource<Effect>("Assets/Shaders/mouse");
-        LanternShader = GameResources.GetGameResource<Effect>("Assets/Shaders/lantern");
-        AnimatedRainbow = GameResources.GetGameResource<Effect>("Assets/Shaders/rainbow_grad_anim");
+        GaussianBlurShader = GameResources.GetGameResource<Effect>("Assets/shaders/gaussian_blur");
+        MouseShader = GameResources.GetGameResource<Effect>("Assets/shaders/mouse");
+        LanternShader = GameResources.GetGameResource<Effect>("Assets/shaders/lantern");
+        AnimatedRainbow = GameResources.GetGameResource<Effect>("Assets/shaders/rainbow_grad_anim");
     }
     //static float val = 1f;
     public static void UpdateShaders() {
