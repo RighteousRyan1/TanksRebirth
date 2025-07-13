@@ -173,8 +173,11 @@ public class GameHandler {
 
         Particles.UpdateParticles();
 
-        if (MainMenuUI.Active)
+        var mmActive = MainMenuUI.Active;
+        if (mmActive)
             MainMenuUI.Update();
+        // I AM PUTTING THIS HERE BECAUSE FUCK YOU.
+        MainMenuUI.UpdateCampaignButton.IsVisible = MainMenuUI.MenuState == MainMenuUI.UIState.Campaigns && mmActive;
 
         // questioning as to why this is placed here
         if ((CameraGlobals.OverheadView || MainMenuUI.Active) && !LevelEditorUI.Active) {

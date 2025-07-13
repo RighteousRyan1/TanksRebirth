@@ -312,7 +312,7 @@ public class Campaign
         writer.Write(campaign.MetaData.BackgroundColor);
 
         for (int i = 0; i < totalMissions; i++)
-            Mission.WriteContentsOf(writer, campaign.CachedMissions[i]);
+            campaign.CachedMissions[i].WriteToStream(writer);
 
         ChatSystem.SendMessage($"Saved campaign with {totalMissions} missions.", Color.Lime);
     }
@@ -344,6 +344,7 @@ public class Campaign
             campaign.MetaData.ExtraLivesMissions = new int[reader.ReadInt32()];
             for (int j = 0; j < campaign.MetaData.ExtraLivesMissions.Length; j++)
                 campaign.MetaData.ExtraLivesMissions[j] = reader.ReadInt32();
+
             campaign.MetaData.Version = reader.ReadString();
             campaign.MetaData.HasMajorVictory = reader.ReadBoolean();
             campaign.MetaData.MissionStripColor = reader.ReadColor();

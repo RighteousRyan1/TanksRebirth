@@ -195,6 +195,18 @@ public static class GameUI
             foreach (var elem in MainMenuUI.campaignNames)
                 elem?.Remove();
             MainMenuUI.campaignNames.Clear();
+
+            // LOL: fuck it it's a funny bug, leave it in.
+            IntermissionSystem.ShouldDrawBanner = false;
+            IntermissionSystem.ShouldDrawBonusBanner = false;
+            IntermissionSystem.BlackAlpha = 0f;
+            IntermissionSystem.Alpha = 0f;
+
+            IntermissionSystem.BonusLifeAnimator?.Restart();
+            IntermissionSystem.IntermissionAnimator?.Restart();
+            IntermissionSystem.BonusLifeAnimator?.Stop();
+            IntermissionSystem.BonusLifeAnimator?.Stop();
+
             MainMenuUI.Open();
             if (LevelEditorUI.Active) {
                 LevelEditorUI.Close(true);
@@ -371,8 +383,6 @@ public static class GameUI
                     MainMenuUI.MenuState = MainMenuUI.UIState.PlayList;
 
                     MainMenuUI.campaignNames.Clear();
-                    MainMenuUI.UpdateCampaignButton.IsVisible = false;
-                    MainMenuUI.UpdateCampaignButton.IsVisible = false;
                 }
                 else if (MainMenuUI.PlayButton_SinglePlayer.IsVisible)
                 {
@@ -396,7 +406,7 @@ public static class GameUI
                     GraphicsUI.BatchVisible = false;
                     VolumeUI.BatchVisible = false;
 
-                    MainMenuUI.MenuState = MainMenuUI.UIState.PrimaryMenu;    
+                    MainMenuUI.MenuState = MainMenuUI.UIState.PrimaryMenu;
                 }
                 else if (MainMenuUI.ConnectToServerButton.IsVisible || MainMenuUI.DisconnectButton.IsVisible)
                 {

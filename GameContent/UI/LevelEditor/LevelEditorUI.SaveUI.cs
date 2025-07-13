@@ -94,7 +94,7 @@ public static partial class LevelEditorUI {
                     var realName = Path.HasExtension(res.Path) ? Path.GetFileNameWithoutExtension(res.Path) : Path.GetFileName(res.Path);
 
                     var misName = loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId].Name;
-                    loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId] = Mission.GetCurrent(misName);
+                    loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId] = Mission.GetCurrent(misName, loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId].GrantsExtraLife);
                     if (_viewMissionDetails) {
                         var ext = Path.GetExtension(res.Path);
                         if (ext == ".mission" || ext == string.Empty)
@@ -119,6 +119,8 @@ public static partial class LevelEditorUI {
                 }
                 catch {
                     // guh...
+                    SoundPlayer.SoundError();
+                    ChatSystem.SendMessage("Unable to save.", Color.Red);
                 }
             }
 

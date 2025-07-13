@@ -226,10 +226,6 @@ public static partial class MainMenuUI
         UpdateGameplay();
         UpdateMusic();
         UpdateMP();
-
-        if (!Active) {
-            UpdateCampaignButton.IsVisible = false;
-        }
     }
     public static void Open() {
         OpenUI();

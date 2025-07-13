@@ -35,7 +35,6 @@ public static partial class MainMenuUI {
 
         float width = 150;
         float height = 50;
-        UpdateCampaignButton.IsVisible = true;
         UpdateCampaignButton.Text = "Validate";
         UpdateCampaignButton.Tooltip = "Ensures your Vanilla campaign is up-to-date.";
         UpdateCampaignButton.SetDimensions(() => new(WindowUtils.WindowWidth / 2 - width.ToResolutionX() / 2, 10), () => new Vector2(width, height).ToResolution());
@@ -113,7 +112,6 @@ public static partial class MainMenuUI {
                 }
 
                 var noExt = Path.GetFileNameWithoutExtension(name);
-                UpdateCampaignButton.IsVisible = false;
                 PrepareGameplay(noExt, !Client.IsConnected() || Server.CurrentClientCount == 1, false);
                 OnCampaignSelected?.Invoke(CampaignGlobals.LoadedCampaign);
             };

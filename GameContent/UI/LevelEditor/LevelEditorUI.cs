@@ -22,6 +22,7 @@ using TanksRebirth.Localization;
 using Microsoft.Xna.Framework.Input;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.UI.MainMenu;
+using System.Diagnostics;
 
 namespace TanksRebirth.GameContent.UI.LevelEditor;
 
@@ -362,7 +363,7 @@ public static partial class LevelEditorUI {
                     }
 
                     ChatSystem.SendMessage($"Loaded '{Path.GetFileName(res.Path)}'.", Color.White);
-                } catch (Exception e) {
+                } catch (Exception e) when (!Debugger.IsAttached) {
                     ChatSystem.SendMessage("Failed to load.", Color.Red);
                     ChatSystem.SendMessage(e.Message, Color.Red);
                 }
@@ -649,6 +650,9 @@ public static partial class LevelEditorUI {
         //              Ryan
         if (!_initialized)
             return;
+
+        if (loadedCampaign is not null)
+            cachedMission = loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId];
 
         if (_openCountndown >= 0) {
             _openCountndown -= RuntimeData.DeltaTime;

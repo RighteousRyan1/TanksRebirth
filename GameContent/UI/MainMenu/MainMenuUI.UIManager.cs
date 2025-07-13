@@ -193,7 +193,7 @@ public static partial class MainMenuUI
     // the code is horrid but at least it's separated now
     // TODO: make rainbow work, ask lolxd or someone knowledgeable
     public static void PrepareTextBuffers(GraphicsDevice device, SpriteBatch spriteBatch) {
-        RenderGlobals.EnsureRenderTargetOK(ref TextTarget, device, (int)420.ToResolutionX(), (int)300.ToResolutionY());
+        RenderGlobals.EnsureRenderTargetOK(ref TextTarget, device, (int)500.ToResolutionX(), (int)300.ToResolutionY());
 
         device.SetRenderTarget(TextTarget);
 

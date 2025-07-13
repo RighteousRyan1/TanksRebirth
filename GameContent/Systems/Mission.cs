@@ -41,7 +41,7 @@ public record struct Mission
     /// Creates a <see cref="Mission"/> instance from the current placement of everything.
     /// </summary>
     /// <returns>The mission that is currently active, or created.</returns>
-    public static Mission GetCurrent(string? name = null) {
+    public static Mission GetCurrent(string? name = null, bool grantsLife = false) {
         const int roundingFactor = 5;
         List<TankTemplate> tanks = [];
         List<BlockTemplate> blocks = [];
@@ -74,7 +74,7 @@ public record struct Mission
             }
         }
 
-        return new([.. tanks], [.. blocks]) { Name = name };
+        return new([.. tanks], [.. blocks]) { Name = name, GrantsExtraLife = grantsLife };
     }
 
     /// <summary>
@@ -185,10 +185,10 @@ public record struct Mission
         writer.Write(Name);
         writer.Write(GrantsExtraLife);
 
-        int totalTanks = GameHandler.AllTanks.Count(tnk => tnk is not null && !tnk.Dead);
+        int totalTanks = Tanks.Length;
         writer.Write(totalTanks);
 
-        for (int i = 0; i < Tanks.Length; i++) {
+        for (int i = 0; i < totalTanks; i++) {
             var template = Tanks[i];
 
             writer.Write(template.IsPlayer);
@@ -202,9 +202,9 @@ public record struct Mission
             writer.Write((byte)template.Team);
         }
 
-        int totalBlocks = Block.AllBlocks.Count(x => x is not null);
+        int totalBlocks = Blocks.Length;
         writer.Write(totalBlocks);
-        for (int i = 0; i < Blocks.Length; i++) {
+        for (int i = 0; i < totalBlocks; i++) {
             var temp = Blocks[i];
             writer.Write((byte)temp.Type);
             writer.Write(temp.Stack);
@@ -213,39 +213,6 @@ public record struct Mission
             writer.Write(temp.TpLink);
         }
         ChatSystem.SendMessage($"Saved mission with {totalTanks} tank(s) and {totalBlocks} block(s).", Color.Lime);
-    }
-
-    public static void WriteContentsOf(BinaryWriter writer, Mission mission) {
-        writer.Write(LevelEditorUI.LevelFileHeader);
-        writer.Write(LevelEditorUI.EDITOR_VERSION);
-        writer.Write(mission.Name);
-        writer.Write(mission.GrantsExtraLife);
-
-        var tanks = mission.Tanks;
-        writer.Write(tanks.Length);
-        for (int i = 0; i < tanks.Length; i++) {
-            var tank = tanks[i];
-            writer.Write(tank.IsPlayer);
-            writer.Write(tank.Position.X);
-            writer.Write(tank.Position.Y);
-            writer.Write(tank.Rotation);
-            writer.Write((byte)tank.AiTier);
-            writer.Write((byte)tank.PlayerType);
-            writer.Write((byte)tank.Team);
-        }
-
-        var blocks = mission.Blocks;
-        writer.Write(blocks.Length);
-        for (int i = 0; i < blocks.Length; i++) {
-            var block = blocks[i];
-
-            writer.Write((byte)block.Type);
-            writer.Write(block.Stack);
-            writer.Write(block.Position.X);
-            writer.Write(block.Position.Y);
-            writer.Write(block.TpLink);
-        }
-        ChatSystem.SendMessage($"Saved mission '{mission.Name}' with {tanks.Length} tank(s) and {blocks.Length} block(s).", Color.Lime);
     }
 
     /// <summary>

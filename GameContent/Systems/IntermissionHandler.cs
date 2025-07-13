@@ -160,7 +160,7 @@ public static class IntermissionHandler {
             IntermissionSystem.IsAwaitingNewMission = true;
             CampaignGlobals.InMission = false;
             if (!CampaignGlobals.InMission && _wasInMission) {
-                bool isExtraLifeMission = CampaignGlobals.LoadedCampaign.MetaData.ExtraLivesMissions.Contains(CampaignGlobals.LoadedCampaign.CurrentMissionId + 1);
+                bool isExtraLifeMission = CampaignGlobals.LoadedCampaign.CachedMissions[CampaignGlobals.LoadedCampaign.CurrentMissionId].GrantsExtraLife;
                 int restartTime;
                 MissionEndContext endContext;
 
