@@ -127,10 +127,21 @@ public class Particle
         //}
 
         //TankGame.SpriteRenderer.Begin(blendState: HasAddativeBlending ? BlendState.Additive : BlendState.NonPremultiplied, rasterizerState: System.Rasterizer);
-        var world =
-                Matrix.CreateScale(Scale) *
-                Matrix.CreateFromYawPitchRoll(Yaw, Pitch, Roll) * 
-                Matrix.CreateTranslation(Position);
+        Matrix world;
+
+        if (FaceTowardsMe) {
+            world = Matrix.CreateScale(Scale) *
+                    Matrix.CreateBillboard(Position,
+                                            CameraGlobals.RebirthFreecam.Position,
+                                            // up is wrong for some reason
+                                            CameraGlobals.RebirthFreecam.World.Down,
+                                            CameraGlobals.RebirthFreecam.World.Forward);
+        }
+        else {
+            world = Matrix.CreateScale(Scale) *
+                    Matrix.CreateFromYawPitchRoll(Yaw, Pitch, Roll) *
+                    Matrix.CreateTranslation(Position);
+        }
         for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
             foreach (ModelMesh mesh in Model.Meshes) {
                 foreach (BasicEffect effect in mesh.Effects) {

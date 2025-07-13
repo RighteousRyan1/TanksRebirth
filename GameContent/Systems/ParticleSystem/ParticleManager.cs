@@ -138,6 +138,7 @@ public class ParticleManager
             spark.Yaw = angles.Yaw;
             spark.Alpha = 1f;
             spark.Scale = new(Client.ClientRandom.NextFloat(0.4f, 0.6f));
+            spark.FaceTowardsMe = CameraGlobals.IsUsingFirstPresonCamera;
 
             spark.Color = Color.Yellow;
 
@@ -161,6 +162,8 @@ public class ParticleManager
             smoke.Pitch = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
             smoke.Scale = new(0.8f);
+
+            smoke.FaceTowardsMe = CameraGlobals.IsUsingFirstPresonCamera;
 
             var velocity = Vector2.UnitY.Rotate(MathHelper.ToRadians(360f / numClouds * i)).ExpandZ() / 2;
 
@@ -188,6 +191,7 @@ public class ParticleManager
         var p = MakeParticle(position, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_star"));
         p.Scale = new(scale);
         p.Color = color;
+        p.FaceTowardsMe = CameraGlobals.IsUsingFirstPresonCamera;
         p.UniqueBehavior = (part) => {
             GeometryUtils.Add(ref p.Scale, -0.0175f * RuntimeData.DeltaTime);
 

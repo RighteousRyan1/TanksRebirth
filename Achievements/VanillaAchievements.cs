@@ -89,6 +89,7 @@ public static class VanillaAchievements
         new("What are these?", "Create a mission."),
         #endregion
         #region Blood, Sweat, and Tears
+        // verify by matching SequenceEqual to the one online
         new("A winner is you", "Complete the Vanilla campaign."),
         new("Is winning this easy?", "Complete 5 custom-made campaigns."),
         new("All your base are belong to us", "Complete 10 custom-made campaigns."),

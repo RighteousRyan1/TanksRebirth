@@ -15,24 +15,19 @@ using TanksRebirth.GameContent.Globals;
 
 namespace TanksRebirth.GameContent.UI;
 
-public class AchievementPopupHandler {
+public class AchievementPopupHandler(AchievementRepository repo) {
+    Vector2 _popupPos;
+    Vector2 _popupDims;
+    string _title = string.Empty;
+    string _description = string.Empty;
+    Texture2D? _curTexture;
 
-    private Vector2 _popupPos;
-    private Vector2 _popupDims;
-    private string _title;
-    private string _description;
-    private Texture2D? _curTexture;
+    volatile bool _isCurrentlyActive;
 
-    private volatile bool _isCurrentlyActive;
+    float _textScale = 0.5f;
 
-    private float _textScale = 0.5f;
+    public AchievementRepository Repo = repo;
 
-    public AchievementRepository Repo;
-    public AchievementPopupHandler(AchievementRepository repo) {
-        Repo = repo;
-        _title = string.Empty;
-        _description = string.Empty;
-    }
     public void SummonOrQueue(int achievementId) {
         if (_isCurrentlyActive) {
             Task.Run(async () => {

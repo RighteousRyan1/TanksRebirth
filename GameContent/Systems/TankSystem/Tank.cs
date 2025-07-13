@@ -16,12 +16,9 @@ using TanksRebirth.Graphics;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.Net;
-using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.GameContent.Globals.Assets;
-using DiscordRPC;
-using System.Net.NetworkInformation;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
 
 namespace TanksRebirth.GameContent;
@@ -626,6 +623,8 @@ public abstract class Tank {
             particle.Roll = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
             particle.Scale = new(0.55f);
+
+            particle.FaceTowardsMe = CameraGlobals.IsUsingFirstPresonCamera;
 
             particle.Color = Properties.DestructionColor;
 

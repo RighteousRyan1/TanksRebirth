@@ -170,8 +170,6 @@ public static class IntermissionSystem {
     private static void DoActionsForBonusLife(KeyFrame frame) {
         var frameId = BonusLifeAnimator.KeyFrames.FindIndex(f => f.Equals(frame));
 
-        ChatSystem.SendMessage(frameId.ToString());
-
         if (frameId == 0) {
             var lifeget = "Assets/music/fanfares/life_get.ogg";
             _bonusLifeGet = SoundPlayer.PlaySoundInstance(lifeget, SoundContext.Effect, 0.5f, rememberMe: true);
@@ -252,7 +250,8 @@ public static class IntermissionSystem {
 
                 ReplayTextAnimations();
             }
-            else {
+            // ensures it isnt the first load. hacky asf but whatever
+            else if (PlayerTank.KillCounts[0] > 0) {
                 _forceBonusDrawToHeight = false;
                 ShouldDrawBonusBanner = true;
                 BonusLifeAnimator?.Restart();
