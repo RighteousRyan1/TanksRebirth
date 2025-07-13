@@ -639,6 +639,27 @@ public abstract class Tank {
                     particle.Destroy();
             };
         }
+        var explosionParticle = GameHandler.Particles.MakeParticle(Position3D,
+                GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
+
+        explosionParticle.Color = Color.Yellow * 0.75f;
+
+        explosionParticle.ToScreenSpace = true;
+
+        explosionParticle.Scale = new(50f);
+        explosionParticle.TextureScale = new(4f);
+
+        explosionParticle.HasAddativeBlending = true;
+
+        explosionParticle.IsIn2DSpace = true;
+
+        explosionParticle.UniqueBehavior = (p) => {
+            GeometryUtils.Add(ref p.Scale, -0.3f * RuntimeData.DeltaTime);
+            p.Alpha -= 0.06f * RuntimeData.DeltaTime;
+            if (p.Scale.X <= 0f)
+                p.Destroy();
+        };
+        GameHandler.Particles.MakeSmallExplosion(Position3D, 15, 20, 1.3f, 15);
     }
     /// <summary>Lay a <see cref="TankFootprint"/> under this <see cref="Tank"/>.</summary>
     public virtual void LayFootprint(bool alt) {
