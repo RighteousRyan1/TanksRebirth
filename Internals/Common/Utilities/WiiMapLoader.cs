@@ -36,8 +36,8 @@ public readonly struct WiiMap
     public readonly int Width;
     public readonly int Height;
 
-    public readonly int QValue;
-    public readonly int PValue;
+    public readonly int P1BalloonDirection;
+    public readonly int P2BalloonDirection;
     public readonly List<WiiMapTileData> MapItems; // Point (xy pos), Kvp<int, int> (type, stack)
     public WiiMap(string file) {
         RawData = File.ReadAllBytes(file);
@@ -50,8 +50,9 @@ public readonly struct WiiMap
         if (RawData.Length != 0x10 + ((Height * Width) << 2))
             throw new Exception("The file header is invalid.");
 
-        PValue = RawData[0xB];
-        QValue = RawData[0xF];
+        P2BalloonDirection = RawData[0xB];
+        P1BalloonDirection = RawData[0xF];
+
         MapItems = [];
         for (var i = 0; i < Width * Height; i++) {
             var blockTypeOrig = RawData[i * 0x4 + 0x13];

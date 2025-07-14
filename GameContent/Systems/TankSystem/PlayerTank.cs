@@ -71,6 +71,9 @@ public class PlayerTank : Tank
     // 46 if using keyboard, 10 if using a controller
     //private float _maxTurnInputBased;
     #endregion
+
+    public static float StickDeadzone { get; set; } = 0.12f;
+    public static float StickAntiDeadzone { get; set; } = 0.85f;
     /// <summary>A <see cref="PlayerTank"/> instance which represents the current client's tank they *primarily* control. Will return null in cases where
     /// the tank simply is inexistent (i.e: in the main menu). In a single-player context, this will always be the first player tank.</summary>
     public static PlayerTank ClientTank => GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()];
@@ -142,8 +145,9 @@ public class PlayerTank : Tank
         properties.MaxSpeed = 1.8f; // 1.8
         properties.RicochetCount = 1; // 1
         properties.ShellLimit = 5; // 5
+        properties.MineCooldown = 6;
         properties.MineLimit = 2; // 2
-        properties.MineStun = 8; // 8
+        properties.MineStun = 1; // 8
         properties.Invisible = false;
         properties.Acceleration = 0.3f;
         properties.Deceleration = 0.6f;

@@ -379,7 +379,7 @@ public abstract class Tank {
                 Properties.ShootStun = 0;
 
                 if (this is AITank tank)
-                    tank.AiParams.Inaccuracy *= 2;
+                    tank.AiParams.DetectionForgivenessHostile *= 2;
             }
 
             if (Difficulties.Types["Shotguns"]) {
@@ -388,7 +388,7 @@ public abstract class Tank {
                 Properties.ShellLimit *= 3;
 
                 if (this is AITank tank)
-                    tank.AiParams.Inaccuracy *= 2;
+                    tank.AiParams.DetectionForgivenessHostile *= 2;
             }
         }
 
@@ -431,9 +431,8 @@ public abstract class Tank {
             }
         }
 
-        // FIXME: is the 'ToRadians(5)' operation necessary?
-        IsTurning = !(TankRotation > TargetTankRotation - Properties.MaximalTurn/* - MathHelper.ToRadians(5)*/ &&
-                      TankRotation < TargetTankRotation + Properties.MaximalTurn/* + MathHelper.ToRadians(5)*/);
+        IsTurning = !(TankRotation > TargetTankRotation - Properties.MaximalTurn &&
+                      TankRotation < TargetTankRotation + Properties.MaximalTurn);
 
         if (!MainMenuUI.Active && (!CampaignGlobals.InMission || IntermissionSystem.IsAwaitingNewMission))
             Velocity = Vector2.Zero;
@@ -471,17 +470,12 @@ public abstract class Tank {
             IsTurning = false;
             Speed += Properties.Acceleration * RuntimeData.DeltaTime;
 
-
             if (Speed > Properties.MaxSpeed)
                 Speed = Properties.MaxSpeed;
         }
 
-        if (IsTurning || CurShootStun > 0 || CurMineStun > 0 || Properties.Stationary) {
-            Speed -= Properties.Deceleration /* * (DecelerationRateDecayTime > 0 ? 0.25f : 1f)*/ * RuntimeData.DeltaTime;
-            if (Speed < 0)
-                Speed = 0;
-            IsTurning = true;
-        }
+        if (IsTurning || CurShootStun > 0 || CurMineStun > 0 || Properties.Stationary)
+            Speed *= Properties.Deceleration * RuntimeData.DeltaTime;
 
         // try to make negative. go poopoo
         _cannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));

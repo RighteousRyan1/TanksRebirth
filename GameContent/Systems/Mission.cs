@@ -222,7 +222,7 @@ public record struct Mission
     /// <param name="campaignName">The campaign to search for the mission in. If null, searches the <c>Missions/</c> directory.</param>
     /// <returns>The successfully loaded mission.</returns>
     /// <exception cref="FileLoadException"></exception>
-    public static Mission Load(string missionName, string campaignName) {
+    public static Mission Load(string missionName, string? campaignName) {
         string root;
         if (campaignName is not null)
             root = Path.Combine(TankGame.SaveDirectory, "Campaigns", campaignName);
