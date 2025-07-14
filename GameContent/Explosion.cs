@@ -6,6 +6,7 @@ using System;
 using System.Linq;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Globals.Assets;
+using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.Graphics;
@@ -39,6 +40,8 @@ public class Explosion : IAITankDanger {
     /// <summary>Only merlin himself could decode why I use this... Use this number with any explosion-based calculations.</summary>
     public const float MAGIC_EXPLOSION_NUMBER = 9f;
     public int Id { get; private set; }
+    public DangerPriority Priority => DangerPriority.Medium;
+    public int Team => Owner?.Team ?? TeamID.NoTeam;
 
     public float Scale;
     public float LingerDuration = 40f;

@@ -1,4 +1,6 @@
-﻿namespace TanksRebirth.GameContent;
+﻿using TanksRebirth.GameContent.Systems.AI;
+
+namespace TanksRebirth.GameContent;
 
 public class BlockProperties
 {

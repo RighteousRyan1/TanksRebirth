@@ -22,8 +22,7 @@ using TanksRebirth.GameContent.Systems.ParticleSystem;
 
 namespace TanksRebirth.GameContent;
 
-public class Shell : IAITankDanger
-{
+public class Shell : IAITankDanger {
     public delegate void PostCreateDelegate(Shell shell);
 
     public static event PostCreateDelegate? PostCreate;
@@ -113,7 +112,8 @@ public class Shell : IAITankDanger
 
     /// <summary>The hurtcircle on the 2D backing map for the game.</summary>
     public Circle HitCircle => new() { Center = Position, Radius = 4 };
-    public bool IsPlayerSourced { get; set; }
+    public DangerPriority Priority => DangerPriority.Medium;
+    public int Team => Owner?.Team ?? TeamID.NoTeam;
 
     private Texture2D? _shellTexture;
     /// <summary>
@@ -204,7 +204,6 @@ public class Shell : IAITankDanger
         Model = ModelGlobals.Bullet.Asset;
 
         AITank.Dangers.Add(this);
-        IsPlayerSourced = owner is PlayerTank;
 
         Properties.HomeProperties = homing;
         Owner = owner;

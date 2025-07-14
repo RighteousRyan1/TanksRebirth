@@ -22,6 +22,7 @@ using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.Graphics;
+using TanksRebirth.GameContent.Systems.AI;
 
 namespace TanksRebirth.GameContent.RebirthUtils;
 

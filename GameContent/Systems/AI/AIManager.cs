@@ -1,13 +1,12 @@
 using System;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Systems;
+using TanksRebirth.GameContent.Systems.TankSystem;
 
-namespace TanksRebirth.GameContent;
+namespace TanksRebirth.GameContent.Systems.AI;
 
 public static class AIManager {
     /// <summary>
@@ -923,7 +922,7 @@ public static class AIManager {
         for (var i = 0; i < GameHandler.AllAITanks.Length; i++) {
             var tank = Unsafe.Add(ref tanksSearchSpace, i);
 
-            if (tank is null || tank.Dead || (predicate is not null && !predicate.Invoke(tank))) continue;
+            if (tank is null || tank.Dead || predicate is not null && !predicate.Invoke(tank)) continue;
 
             if (tank.AiTankType > highest)
                 highest = tank.AiTankType;
@@ -943,7 +942,7 @@ public static class AIManager {
         ref var tanksSearchSpace = ref MemoryMarshal.GetReference(tanks);
         for (var i = 0; i < tanks.Length; i++) {
             var tank = Unsafe.Add(ref tanksSearchSpace, i);
-            if (tank is not null && !tank.Dead && ((predicate is not null && predicate.Invoke(tank)) || predicate is null)) cnt++;
+            if (tank is not null && !tank.Dead && (predicate is not null && predicate.Invoke(tank) || predicate is null)) cnt++;
         }
 
         return cnt;

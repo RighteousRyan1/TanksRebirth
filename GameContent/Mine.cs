@@ -1,26 +1,24 @@
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Globals.Assets;
+using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
-using TanksRebirth.Internals.Common.Framework;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent;
 
-public sealed class Mine : IAITankDanger
-{
+public sealed class Mine : IAITankDanger {
+
     public delegate void ExplodeDelegate(Mine mine);
     public static event ExplodeDelegate? OnExplode;
     public delegate void PostUpdateDelegate(Mine mine);
@@ -49,6 +47,8 @@ public sealed class Mine : IAITankDanger
     private static Texture2D? _envTexture;
 
     public int Id { get; private set; }
+    public DangerPriority Priority => DangerPriority.High;
+    public int Team => Owner?.Team ?? TeamID.NoTeam;
 
     private ModelMesh? _mineMesh;
     private ModelMesh? _envMesh;
@@ -64,7 +64,6 @@ public sealed class Mine : IAITankDanger
     public readonly float DetonateTimeMax;
 
     private bool _tickRed;
-    public bool IsPlayerSourced { get; set; }
     /// <summary>Whether or not this <see cref="Mine"/> is near destructible <see cref="Block"/>s.</summary>
     public bool IsNearDestructibles { get; private set; }
 
@@ -95,7 +94,6 @@ public sealed class Mine : IAITankDanger
         ExplosionRadius = radius;
 
         AITank.Dangers.Add(this);
-        IsPlayerSourced = owner is PlayerTank;
 
         Model = ModelGlobals.Mine.Asset;
 

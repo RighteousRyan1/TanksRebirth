@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework;
 using System.Linq;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.ID;
+using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.GameContent.UI.MainMenu;

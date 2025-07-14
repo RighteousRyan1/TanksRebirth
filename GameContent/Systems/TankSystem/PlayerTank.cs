@@ -24,6 +24,8 @@ using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Internals.Common.Framework;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.Globals.Assets;
+using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.Systems.AI;
 
 namespace TanksRebirth.GameContent;
 

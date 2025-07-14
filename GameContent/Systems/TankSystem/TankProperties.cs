@@ -1,6 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 
-namespace TanksRebirth.GameContent;
+namespace TanksRebirth.GameContent.Systems.TankSystem;
 
 public class TankProperties {
     /// <summary>Whether or not the tank should become invisible at mission start. Word 1</summary>

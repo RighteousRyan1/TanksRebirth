@@ -6,6 +6,7 @@ using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Systems;
+using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals.Common.Framework.Audio;

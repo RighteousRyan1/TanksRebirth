@@ -20,6 +20,7 @@ using Microsoft.Xna.Framework.Input;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.UI.MainMenu;
+using TanksRebirth.GameContent.Systems.AI;
 
 namespace TanksRebirth.GameContent.UI;
 

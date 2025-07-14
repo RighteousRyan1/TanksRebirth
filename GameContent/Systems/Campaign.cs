@@ -20,6 +20,7 @@ using TanksRebirth.Internals.Common.IO;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
 using TanksRebirth.GameContent.UI.LevelEditor;
+using TanksRebirth.GameContent.Systems.AI;
 
 namespace TanksRebirth.GameContent.Systems;
 

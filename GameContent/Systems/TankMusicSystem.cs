@@ -1,5 +1,4 @@
 using TanksRebirth;
-using TanksRebirth.GameContent;
 using System;
 using System.Linq;
 using TanksRebirth.Internals.Core.Interfaces;
@@ -15,6 +14,7 @@ using Microsoft.Xna.Framework.Graphics;
 using TanksRebirth.Internals;
 using TanksRebirth.Graphics;
 using TanksRebirth.GameContent.UI.MainMenu;
+using TanksRebirth.GameContent.Systems.AI;
 
 namespace TanksRebirth.GameContent.Systems;
 

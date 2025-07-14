@@ -8,6 +8,7 @@ using Microsoft.Xna.Framework;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.Net;
 using TanksRebirth.Internals.Common;
+using TanksRebirth.GameContent.Systems.AI;
 
 namespace TanksRebirth.GameContent.UI;
 

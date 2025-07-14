@@ -16,6 +16,7 @@ using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.Globals.Assets;
+using TanksRebirth.GameContent.Systems.AI;
 
 namespace TanksRebirth.GameContent.Systems.Coordinates;
 
