@@ -11,15 +11,12 @@ using TanksRebirth.GameContent.GameMechanics;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Graphics;
-using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.Internals.Common.Framework;
 using TanksRebirth.Net;
 using TanksRebirth.GameContent.Globals;
-using TanksRebirth.GameContent.Cosmetics;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.Systems.AI;
-using System.Threading.Tasks;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems.PingSystem;
 using TanksRebirth.Internals.Common.Framework.Collision;
@@ -290,7 +287,7 @@ public partial class AITank : Tank {
                     TargetTankRotation = (MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - MouseUtils.MousePosition).ToRotation() + MathHelper.PiOver2;
         }
         // do ai only if host, and send ai across the interweb
-        if ((Client.IsHost() && Client.IsConnected()) || (!Client.IsConnected() && !Dead) || MainMenuUI.Active) {
+        if (Client.IsHost() || (!Client.IsConnected() && !Dead) || MainMenuUI.Active) {
             timeSinceLastAction++;
 
             if (!MainMenuUI.Active)
@@ -599,6 +596,8 @@ public partial class AITank : Tank {
     public const int PATH_UNIT_LENGTH = 8;
     public int PathHitMax = 10;
 
+    public Vector2 PathEndpoint;
+
     // reworked tahnkfully
     private bool IsObstacleInWay(int checkDist, Vector2 pathDir, out Vector2 endpoint, out RaycastReflection[] reflections, int size = 1, bool draw = false) {
         bool hasCollided = false;
@@ -678,7 +677,7 @@ public partial class AITank : Tank {
         }
 
         reflections = [.. reflectionList];
-        endpoint = pathPos;
+        PathEndpoint = endpoint = pathPos;
         return hasCollided;
     }
 
@@ -1012,25 +1011,12 @@ public partial class AITank : Tank {
                 TargetTankRotation += random;
             }
             // disabling aggression for now.
-            /*if (targetExists) {
-                if (AiParams.PursuitFrequency != 0) {
-                    //if (Behaviors[0].IsModOf(AiParams.PursuitFrequency)) {
-                    float angleToTarget = MathUtils.DirectionOf(Position, TargetTank!.Position).ToRotation();
+            if (TargetTank is not null) {
+                var targetDirVector = Vector2.Normalize(MathUtils.DirectionTo(Position, TargetTank!.Position));
+                var dirDirVector = Vector2.Normalize(MathUtils.DirectionTo(Position, PathEndpoint));
 
-                        // we want to go AWAY from the target.
-                        if (AiParams.PursuitLevel < 0)
-                            angleToTarget += MathHelper.Pi;
-                        // TODO: FIX THIS HORRIBLE DAMN CODE BY FIXING THE BROKEN ASS ROTATION MATH IN TANKS. HOLY SHIT. actually going to poop my pants
-                        // if this problem isnt fixed.
-                        var targetAngle = (angleToTarget + MathHelper.PiOver2 * 3) * AiParams.PursuitLevel;
-                    if (targetAngle + MathHelper.Pi > MathHelper.Tau)
-                        targetAngle -= MathHelper.Tau;
-                    ChatSystem.SendMessage(angleToTarget.ToString() + ", " + targetAngle.ToString(), Color.White);
-
-                    TargetTankRotation = targetAngle;
-                    //}
-                }
-            }*/
+                // yadda yadda
+            }
         }
     }
     public void TryMineLay() {

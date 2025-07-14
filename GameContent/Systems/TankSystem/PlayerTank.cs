@@ -408,8 +408,9 @@ public class PlayerTank : Tank
     public override void Destroy(ITankHurtContext context, bool netSend) {
         if (Client.IsConnected()) {
             // maybe make a camera transition to said tank.
-            if (context.Source is not null)
-                CameraGlobals.SpectatorId = CameraGlobals.SpectateValidTank(context.Source.WorldId, true);
+
+            //if (context.Source is not null)
+                //CameraGlobals.SpectatorId = CameraGlobals.SpectateValidTank(context.Source.WorldId, true);
 
             // only decements the lives on the destroyed player's system, where lives are synced across everyone at all times
             if (NetPlay.IsClientMatched(PlayerId)) {

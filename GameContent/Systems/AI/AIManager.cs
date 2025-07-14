@@ -45,8 +45,7 @@ public static class AIManager {
 
                 aiParams.Inaccuracy = 0.9f;
 
-                aiParams.PursuitLevel = 0.4f;
-                aiParams.PursuitFrequency = 300;
+                aiParams.PursuitLevel = 0.03f;
 
                 aiParams.ProjectileWarinessRadius_PlayerShot = 40;
                 aiParams.ProjectileWarinessRadius_AIShot = 70;
@@ -70,8 +69,7 @@ public static class AIManager {
                 aiParams.ProjectileWarinessRadius_PlayerShot = 40;
                 aiParams.MineWarinessRadius_PlayerLaid = 80;
 
-                aiParams.PursuitFrequency = 180;
-                aiParams.PursuitLevel = -0.6f;
+                aiParams.PursuitLevel = -0.1f;
 
                 aiParams.BlockWarinessDistance = 40;
 
@@ -110,8 +108,7 @@ public static class AIManager {
 
                 aiParams.Inaccuracy = 1.3f;
 
-                aiParams.PursuitLevel = 0.7f;
-                aiParams.PursuitFrequency = 180;
+                aiParams.PursuitLevel = 0.2f;
 
                 aiParams.ProjectileWarinessRadius_PlayerShot = 40;
                 aiParams.MineWarinessRadius_PlayerLaid = 160;
@@ -131,8 +128,7 @@ public static class AIManager {
                 aiParams.TurretSpeed = 0.03f;
                 aiParams.AimOffset = 0.18f;
 
-                aiParams.PursuitLevel = 0.6f;
-                aiParams.PursuitFrequency = 240;
+                aiParams.PursuitLevel = 0.1f;
 
                 aiParams.ProjectileWarinessRadius_PlayerShot = 60;
                 aiParams.MineWarinessRadius_PlayerLaid = 160;
@@ -164,8 +160,7 @@ public static class AIManager {
 
                 aiParams.Inaccuracy = 0.8f;
 
-                aiParams.PursuitLevel = 0.6f;
-                aiParams.PursuitFrequency = 240;
+                aiParams.PursuitLevel = 0.1f;
 
                 aiParams.ProjectileWarinessRadius_PlayerShot = 40;
                 aiParams.MineWarinessRadius_PlayerLaid = 160;
@@ -186,8 +181,7 @@ public static class AIManager {
 
                 aiParams.Inaccuracy = 0.35f;
 
-                aiParams.PursuitLevel = 0.8f;
-                aiParams.PursuitFrequency = 240;
+                aiParams.PursuitLevel = 0.2f;
 
                 aiParams.ProjectileWarinessRadius_PlayerShot = 100;
                 aiParams.MineWarinessRadius_PlayerLaid = 110; // 60
@@ -226,8 +220,7 @@ public static class AIManager {
 
                 aiParams.Inaccuracy = 0.4f;
 
-                aiParams.PursuitLevel = 0.4f;
-                aiParams.PursuitFrequency = 120;
+                aiParams.PursuitLevel = 0.08f;
 
                 aiParams.ProjectileWarinessRadius_PlayerShot = 70;
                 aiParams.MineWarinessRadius_PlayerLaid = 140;
@@ -245,8 +238,7 @@ public static class AIManager {
 
                 aiParams.Inaccuracy = 0.4f;
 
-                aiParams.PursuitLevel = -0.6f;
-                aiParams.PursuitFrequency = 240;
+                aiParams.PursuitLevel = -0.1f;
 
                 aiParams.ProjectileWarinessRadius_PlayerShot = 40;
                 aiParams.MineWarinessRadius_PlayerLaid = 70;
@@ -264,8 +256,7 @@ public static class AIManager {
 
                 aiParams.Inaccuracy = 0.6f;
 
-                aiParams.PursuitLevel = 0.9f;
-                aiParams.PursuitFrequency = 360;
+                aiParams.PursuitLevel = 0.3f;
 
                 aiParams.ProjectileWarinessRadius_PlayerShot = 50;
                 aiParams.MineWarinessRadius_PlayerLaid = 70;
@@ -285,9 +276,7 @@ public static class AIManager {
 
                 aiParams.Inaccuracy = 0.25f;
 
-                // max aggression from blud lmfao
-                aiParams.PursuitLevel = 1f;
-                aiParams.PursuitFrequency = 240;
+                aiParams.PursuitLevel = 0.5f;
 
                 aiParams.ProjectileWarinessRadius_PlayerShot = 80;
                 aiParams.MineWarinessRadius_PlayerLaid = 140;
@@ -309,8 +298,7 @@ public static class AIManager {
 
                 aiParams.Inaccuracy = 0.65f;
 
-                aiParams.PursuitLevel = 0.25f;
-                aiParams.PursuitFrequency = 180;
+                aiParams.PursuitLevel = 0.03f;
 
                 aiParams.ProjectileWarinessRadius_PlayerShot = 70;
                 aiParams.MineWarinessRadius_PlayerLaid = 140;
@@ -340,8 +328,7 @@ public static class AIManager {
 
                 aiParams.Inaccuracy = 0.4f;
 
-                aiParams.PursuitLevel = 0.6f;
-                aiParams.PursuitFrequency = 240;
+                aiParams.PursuitLevel = 0.2f;
 
                 aiParams.ShootChance = 0.7f;
 
@@ -362,8 +349,7 @@ public static class AIManager {
 
                 aiParams.Inaccuracy = 0.9f;
 
-                aiParams.PursuitLevel = 0.6f;
-                aiParams.PursuitFrequency = 240;
+                aiParams.PursuitLevel = 0.15f;
 
                 aiParams.ProjectileWarinessRadius_PlayerShot = 70;
                 aiParams.MineWarinessRadius_PlayerLaid = 140;
