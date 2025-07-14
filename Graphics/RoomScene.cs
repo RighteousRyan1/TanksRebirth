@@ -82,7 +82,7 @@ public static class RoomScene {
             if (!mesh.Name.Contains("Book")) continue;
             if (mesh.Name.Contains("Side")) continue;
             // X2CHECK: ServerRand should be fine to use since it's the same amount of randomization on each client.
-            var pickedColor = ColorUtils.BrightColors[Server.ServerRandom.Next(ColorUtils.BrightColors.Length)];
+            var pickedColor = ColorUtils.BrightColors[Client.ClientRandom.Next(ColorUtils.BrightColors.Length)];
             BookColors[mesh.Name] = pickedColor;
         }
     }

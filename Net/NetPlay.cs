@@ -266,10 +266,7 @@ public class NetPlay {
                 GameHandler.AllTanks[hurtTankId]?.Damage(context, false, colorOverride);
                 break;
             case PacketID.ShellDestroy:
-                var ownerId = reader.GetInt();
-                var senderShellId = reader.GetInt();
                 var otherShellUID = reader.GetByte();
-                var senderShellCount = reader.GetInt();
                 var cxt = reader.GetByte();
 
                 // FIXME: crashes if recieving on a dead player. weird.
@@ -315,9 +312,21 @@ public class NetPlay {
                 var shellUID = reader.GetByte();
 
                 // GameHandler.AllTanks[shellOwner].Shoot(true);
-                var shell = new Shell(shellPos, shellVel, shellType, GameHandler.AllTanks[shellOwner], ricochets: shellRicochets);
-                shell.SetUID(shellUID);
-                GameHandler.AllTanks[shellOwner]?.DoShootParticles();
+                //var shell = new Shell(shellPos, shellVel, shellType, GameHandler.AllTanks[shellOwner], ricochets: shellRicochets);
+                //shell.SetUID(shellUID);
+                // GameHandler.AllTanks[shellOwner]?.DoShootParticles();
+                var shooter = GameHandler.AllTanks[shellOwner];
+
+                if (shooter is null) break;
+
+                shooter.Shoot(false, false);
+                if (shooter.LastShotShell is not null) {
+                    shooter!.LastShotShell!.Type = shellType;
+                    shooter.LastShotShell.Position = shellPos;
+                    shooter.LastShotShell.Velocity = shellVel;
+                    shooter.LastShotShell.Ricochets = shooter.LastShotShell.RicochetsRemaining = shellRicochets;
+                    shooter.LastShotShell.SetUID(shellUID);
+                }
 
                 // ChatSystem.SendMessage($"Pos: {shell.Position} | Vel: {shell.Velocity}", Color.White);
                 break;
@@ -402,8 +411,17 @@ public class NetPlay {
                 float vX1 = reader.GetFloat();
                 float vY1 = reader.GetFloat();
 
+                bool hasTarget = reader.GetBool();
+                bool seesTarget = reader.GetBool();
+
                 if (GameHandler.AllAITanks[id1] is null)
                     break;
+
+                if (hasTarget) {
+                    var targetWorldId = reader.GetInt();
+                    GameHandler.AllAITanks[id1].TargetTank = GameHandler.AllTanks[targetWorldId];
+                    GameHandler.AllAITanks[id1].SeesTarget = seesTarget;
+                }
 
                 GameHandler.AllAITanks[id1].Body.Position = new(x3, y3);
                 GameHandler.AllAITanks[id1].TankRotation = tankRotation1;
@@ -563,16 +581,10 @@ public class NetPlay {
                 Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;
             case PacketID.ShellDestroy:
-                var ownerId = reader.GetInt();
-                var senderShellId = reader.GetInt();
                 var senderShellUID = reader.GetByte();
-                var senderShellCount = reader.GetInt();
                 var cxt = reader.GetByte();
 
-                message.Put(ownerId);
-                message.Put(senderShellId);
                 message.Put(senderShellUID);
-                message.Put(senderShellCount);
                 message.Put(cxt);
 
                 Server.NetManager.SendToAll(message, deliveryMethod, peer);
@@ -735,6 +747,9 @@ public class NetPlay {
                 float vX1 = reader.GetFloat();
                 float vY1 = reader.GetFloat();
 
+                bool hasTarget = reader.GetBool();
+                bool seesTarget = reader.GetBool();
+
                 message.Put(id1);
                 message.Put(x3);
                 message.Put(y3);
@@ -742,6 +757,13 @@ public class NetPlay {
                 message.Put(turretRotation1);
                 message.Put(vX1);
                 message.Put(vY1);
+                message.Put(hasTarget);
+                message.Put(seesTarget);
+
+                if (hasTarget) {
+                    int targetWorldId = reader.GetInt();
+                    message.Put(targetWorldId);
+                }
 
                 Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;

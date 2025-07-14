@@ -281,8 +281,9 @@ public static partial class LevelEditorUI {
 
             IsTestingLevel = true;
 
-            var name = loadedCampaign?.CachedMissions[loadedCampaign.CurrentMissionId].Name;
-            cachedMission = Mission.GetCurrent(name);
+            var name = loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId].Name;
+            var grantsLife = loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId].GrantsExtraLife;
+            cachedMission = Mission.GetCurrent(name, grantsLife);
         };
 
         ReturnToEditor = new(TankGame.GameLanguage.Return, FontGlobals.RebirthFont, Color.White);
@@ -651,7 +652,7 @@ public static partial class LevelEditorUI {
         if (!_initialized)
             return;
 
-        if (loadedCampaign is not null)
+        if (loadedCampaign is not null && !IsTestingLevel)
             cachedMission = loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId];
 
         if (_openCountndown >= 0) {

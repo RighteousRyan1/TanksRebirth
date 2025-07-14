@@ -216,6 +216,11 @@ public static class CameraGlobals {
         }
     }
     public static int SpectateValidTank(int id, bool increase) {
+        var count = GameHandler.AllPlayerTanks.Count(x => x is not null);
+
+        if (count == 0)
+            return 0;
+
         var arr = GameHandler.AllPlayerTanks.Where(x => x is not null).ToArray();
 
         var newId = id + (increase ? 1 : -1);

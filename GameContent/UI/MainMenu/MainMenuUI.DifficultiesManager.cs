@@ -235,8 +235,8 @@ public static partial class MainMenuUI {
             IsVisible = false,
             Tooltip = "Every tank is now randomized." +
             "\nA black tank could appear where a brown tank would be!" +
-            "\n\nLeft click to increase the upper limit." +
-            "\nRight click to increase the lower limit." +
+            "\n\nLeft click to increase the lower limit." +
+            "\nRight click to increase the upper limit." +
             "\nMiddle click to reset both to 'None'.",
             OnRightClick = (elem) => {
                 if (Difficulties.RandomTanksUpper + 1 >= TankID.Collection.Count)

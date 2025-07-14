@@ -126,6 +126,8 @@ public abstract class Tank {
 
     #endregion
 
+    public Shell? LastShotShell;
+
     public static bool ShowTeamVisuals = false;
 
     public static World CollisionsWorld = new(Vector2.Zero);
@@ -239,8 +241,11 @@ public abstract class Tank {
         return [.. teams];
     }
     /// <summary>Initializes the physics body for this tank. Only use if you know what you're doing with it.</summary>
-    public void InitPhysics() {
-        Body = CollisionsWorld.CreateCircle(TNK_WIDTH * 0.4f / UNITS_PER_METER, 1f, Position / UNITS_PER_METER,
+    public void GeneratePhysics() {
+        //Scaling = new Vector3(1, 1, 3);
+        //Body = CollisionsWorld.CreateEllipse(TNK_WIDTH * 0.4f / UNITS_PER_METER * Scaling.X, TNK_WIDTH * 0.4f / UNITS_PER_METER * Scaling.Z, 8, 1f, 
+        //    Position / UNITS_PER_METER, bodyType: BodyType.Dynamic);
+        Body = CollisionsWorld.CreateCircle(TNK_WIDTH * 0.4f / UNITS_PER_METER /* * Scaling.X*/, 1f, Position / UNITS_PER_METER,
             BodyType.Dynamic);
     }
     /// <summary>Initializes bone transforms and mesh assignments. You will want to call this method if you're modifying a tank model, and the new model
@@ -248,8 +253,8 @@ public abstract class Tank {
     public void InitModelSemantics() {
         // for some reason Model is null when returning from campaign completion with certain mods.
         if (Model is null) {
-            Remove(true);
-            return;
+            Model = this is PlayerTank ? ModelGlobals.TankPlayer.Asset : ModelGlobals.TankEnemy.Asset;
+            TankGame.ClientLog.Write("Unexpected pitfall in initializing tank model semantics. Assigning defaults.", LogType.Warn);
         }
 
         _cannonMesh = Model.Meshes["Cannon"];
@@ -356,7 +361,7 @@ public abstract class Tank {
             }
         }
 
-        InitPhysics();
+        GeneratePhysics();
 
         if (GameScene.Theme == MapTheme.Christmas)
             Props.Add(CosmeticChest.SantaHat);
@@ -436,13 +441,13 @@ public abstract class Tank {
         if (!Properties.Stationary) {
             float treadPlaceTimer = 0;
             if (Velocity.Length() != 0) {
-                treadPlaceTimer = MathF.Round(11 / Velocity.Length());
+                treadPlaceTimer = MathF.Round(11 / Velocity.Length()) * Scaling.X;
                 // MAYBE: change back to <= delta time if it doesn't work.
                 if (RuntimeData.RunTime % treadPlaceTimer < RuntimeData.DeltaTime)
                     LayFootprint(Properties.TrackType == TrackID.Thick);
             }
             if (IsTurning && TankRotation != _oldRotation) {
-                treadPlaceTimer = Properties.TurningSpeed * 150;
+                treadPlaceTimer = Properties.TurningSpeed * 150 * Scaling.X;
                 // MAYBE: change back to <= delta time if it doesn't work.
                 if (RuntimeData.RunTime % treadPlaceTimer < RuntimeData.DeltaTime)
                     LayFootprint(Properties.TrackType == TrackID.Thick);
@@ -666,11 +671,12 @@ public abstract class Tank {
             return;
         new TankFootprint(this, -TankRotation, alt) {
             Position = Position3D + new Vector3(0, 0.15f, 0),
+            Scale = Scaling
         };
     }
 
     /// <summary>Shoot a <see cref="Shell"/> from this <see cref="Tank"/>.</summary>
-    public virtual void Shoot(bool fxOnly) {
+    public virtual void Shoot(bool fxOnly, bool netSend = true) {
         if ((!MainMenuUI.Active && !CampaignGlobals.InMission) || !Properties.HasTurret)
             return;
 
@@ -680,11 +686,13 @@ public abstract class Tank {
         bool flip = false;
         float angle = 0f;
 
-        var new2d = Vector2.UnitY.Rotate(TurretRotation);
+        var rotatedPos = Vector2.UnitY.Rotate(TurretRotation);
 
         if (!fxOnly) {
-            var shell = new Shell(TurretPosition, new Vector2(-new2d.X, new2d.Y) * Properties.ShellSpeed,
+            var shell = new Shell(TurretPosition, new Vector2(-rotatedPos.X, rotatedPos.Y) * Properties.ShellSpeed,
                 Properties.ShellType, this, Properties.RicochetCount, homing: Properties.ShellHoming);
+
+            LastShotShell = shell;
 
             OnShoot?.Invoke(this, shell);
 
@@ -692,18 +700,17 @@ public abstract class Tank {
                 ai.ModdedData?.Shoot(shell);
 
             // only send this code once for the shooting player
-            if (this is PlayerTank pt) {
-                if (NetPlay.IsClientMatched(pt.PlayerId))
+            if (netSend) {
+                if (this is PlayerTank pt) {
+                    if (NetPlay.IsClientMatched(pt.PlayerId))
+                        Client.SyncShellFire(shell);
+                }
+                else
                     Client.SyncShellFire(shell);
             }
-            else
-                Client.SyncShellFire(shell);
         }
 
         DoShootParticles();
-
-        // theoretical "recoil" velocity
-        // idea: separate recoil velocity from movement velocity
 
         var force = (Position - TurretPosition) * Properties.Recoil;
         KnockbackVelocity = force / UNITS_PER_METER;
@@ -722,13 +729,13 @@ public abstract class Tank {
 
                 var shell = new Shell(Position, Vector2.Zero, Properties.ShellType, this,
                     homing: Properties.ShellHoming);
-                new2d = Vector2.UnitY.Rotate(TurretRotation);
+                rotatedPos = Vector2.UnitY.Rotate(TurretRotation);
 
                 var newPos = Position + new Vector2(0, 20).Rotate(-TurretRotation + newAngle);
 
                 shell.Position = new Vector2(newPos.X, newPos.Y);
 
-                shell.Velocity = new Vector2(-new2d.X, new2d.Y).Rotate(newAngle) *
+                shell.Velocity = new Vector2(-rotatedPos.X, rotatedPos.Y).Rotate(newAngle) *
                                  Properties.ShellSpeed;
 
                 shell.RicochetsRemaining = Properties.RicochetCount;

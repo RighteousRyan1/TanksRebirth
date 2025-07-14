@@ -185,8 +185,10 @@ public class Campaign
                             tank.Remove(true);
                     }
                     // TODO: note to self, this code above is what causes the skill issue.
-                    if (Difficulties.Types["AiCompanion"] && template.PlayerType == PlayerID.Red) {
-                        var tnk = new AITank(TankID.Black) {
+                    if (Difficulties.Types["AiCompanion"] && 
+                        (template.PlayerType == Server.CurrentClientCount + PlayerID.Red || (Server.CurrentClientCount == 4 && template.PlayerType == PlayerID.Yellow))) {
+                        var randomTier = AITank.PickRandomTier();
+                        var tnk = new AITank(randomTier) {
                             // target = rot - pi
                             // turret =  -rot
                             Position = template.Position,
@@ -194,11 +196,9 @@ public class Campaign
                             TankRotation = MathF.Round(template.Rotation, roundingFactor),
                             TargetTankRotation = MathF.Round(template.Rotation, roundingFactor),
                             TurretRotation = MathF.Round(-template.Rotation, roundingFactor),
-                            Dead = false
+                            Dead = false,
                         };
                         tnk.Body.Position = template.Position / Tank.UNITS_PER_METER;
-
-                        tnk.Swap(AITank.PickRandomTier());
                     }
                     var placement = PlacementSquare.Placements.FindIndex(place => Vector3.Distance(place.Position, tank.Position3D) < Block.SIDE_LENGTH / 2);
 

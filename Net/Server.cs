@@ -100,13 +100,14 @@ public class Server
 
         NetDataWriter message = new();
         // 'Millisecond' will be different on other clients if not sent (latency)
-        var millis = DateTime.Now.Millisecond;
+        var seed = Guid.NewGuid().GetHashCode(); //DateTime.Now.Microsecond * DateTime.Now.Millisecond;
         message.Put(PacketID.SyncSeeds);
-        message.Put(millis);
 
-        RandSeed = millis;
+        message.Put(seed);
 
-        ChatSystem.SendMessage("Seed synced: " + millis, Color.Lime);
+        RandSeed = seed;
+
+        ChatSystem.SendMessage("Seed synced: " + seed, Color.Lime);
 
         // since this is sending from the server itself, no point in sending to itself.
         NetManager.SendToAll(message, DeliveryMethod.ReliableOrdered, Client.NetClient);

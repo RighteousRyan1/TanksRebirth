@@ -159,6 +159,7 @@ public static class IntermissionHandler {
         if (nothingAnymore) {
             IntermissionSystem.IsAwaitingNewMission = true;
             CampaignGlobals.InMission = false;
+
             if (!CampaignGlobals.InMission && _wasInMission) {
                 bool isExtraLifeMission = CampaignGlobals.LoadedCampaign.CachedMissions[CampaignGlobals.LoadedCampaign.CurrentMissionId].GrantsExtraLife;
                 int restartTime;

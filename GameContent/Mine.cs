@@ -193,6 +193,7 @@ public sealed class Mine : IAITankDanger
                 foreach (var tank in GameHandler.AllTanks) {
                     if (tank is null) continue;
                     if (tank.Dead) continue;
+                    if (Owner is null) continue;
                     if (tank.WorldId == Owner!.WorldId) continue;
 
                     var dist = GameUtils.Distance_WiiTanksUnits(tank.Position, Position);

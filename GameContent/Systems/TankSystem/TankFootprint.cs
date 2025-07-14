@@ -12,16 +12,17 @@ namespace TanksRebirth.GameContent;
 public class TankFootprint {
     public static bool ShouldTracksFade;
 
-    private static int MaxFootprintsAllowed => TankGame.Settings.TankFootprintLimit;
+    public static TankFootprint[] AllFootprints = new TankFootprint[TankGame.Settings.TankFootprintLimit];
 
-    public static TankFootprint[] AllFootprints = new TankFootprint[MaxFootprintsAllowed];
-
+    public Vector3 Scale;
     public Vector3 Position;
-    public float rotation;
+    public float Rotation;
 
-    public Texture2D texture;
+    public readonly Tank Owner;
+    public Texture2D Texture;
 
-    private Particle _track;
+    bool _destroy;
+    Particle _track;
 
     internal static int total_treads_placed;
 
@@ -29,17 +30,15 @@ public class TankFootprint {
 
     public long lifeTime;
 
-    public readonly Tank owner;
-
-    public int id = 0;
+    public int Id = 0;
 
     //public static DecalSystem DecalHandler; // = new(TankGame.SpriteRenderer, TankGame.Instance.GraphicsDevice);
 
     public TankFootprint(Tank owner, float rotation, bool alt = false) {
-        this.rotation = rotation;
+        Rotation = rotation;
         alternate = alt;
-        this.owner = owner;
-        if (total_treads_placed + 1 >= MaxFootprintsAllowed) {
+        Owner = owner;
+        if (total_treads_placed + 1 >= TankGame.Settings.TankFootprintLimit) {
             // Old implementation of this code in case of any regressions.
             // footprints[Array.IndexOf(footprints, footprints.Min(x => x.lifeTime > 0))] = null; // i think?
 
@@ -72,24 +71,27 @@ public class TankFootprint {
         }
 
         alternate = alt;
-        id = total_treads_placed;
+        Id = total_treads_placed;
         Position = owner.Position3D;
 
-        texture = GameResources.GetGameResource<Texture2D>(alt
+        Texture = GameResources.GetGameResource<Texture2D>(alt
             ? $"Assets/textures/tank_footprint_alt"
             : $"Assets/textures/tank_footprint");
 
-        _track = GameHandler.Particles.MakeParticle(Position, texture);
+        _track = GameHandler.Particles.MakeParticle(Position, Texture);
 
         _track.HasAddativeBlending = false;
 
         _track.Pitch = MathHelper.PiOver2;
-        _track.Scale = new(0.5f, 0.55f, 0.5f);
+
+        var defScale = new Vector3(0.5f, 0.55f, 0.5f);
+        _track.Scale = defScale;
         _track.Alpha = 0.7f;
         _track.Color = Color.White;
         _track.UniqueBehavior = track => {
             track.Position = Position;
             track.Yaw = rotation;
+            track.Scale = Scale * defScale;
 
             if (ShouldTracksFade)
                 track.Alpha -= 0.001f * RuntimeData.DeltaTime;
@@ -111,7 +113,5 @@ public class TankFootprint {
     }
 
     public void Update() => lifeTime++;
-
-    private bool _destroy;
     public void Remove() => _track.Destroy();
 }

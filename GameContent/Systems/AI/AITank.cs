@@ -244,10 +244,11 @@ public partial class AITank : Tank {
             properties.Stationary = true;
 
         if (Difficulties.Types["AllHoming"]) {
-            properties.ShellHoming = new();
-            properties.ShellHoming.Radius = 200f;
-            properties.ShellHoming.Speed = properties.ShellSpeed;
-            properties.ShellHoming.Power = 0.1f * properties.ShellSpeed;
+            properties.ShellHoming = new() {
+                Radius = 200f,
+                Speed = properties.ShellSpeed,
+                Power = 0.1f * properties.ShellSpeed
+            };
             // ShellHoming.isHeatSeeking = true;
 
             AiParams.Inaccuracy *= 4;
@@ -300,7 +301,31 @@ public partial class AITank : Tank {
             if (IsIngame)
                 Client.SyncAITank(this);
         }
+        if (!Client.IsHost() && Client.IsConnected()) {
+            HandleTankMetaData();
+        }
+
+        /*Console.WriteLine("MetaData:");
+        WriteData(this);
+
+        if (TargetTank is AITank ai) {
+            Console.WriteLine("AI Data:");
+            WriteData(ai);
+        } 
+        else if (TargetTank is PlayerTank player) {
+            Console.WriteLine("Player Data:");
+            Console.WriteLine($"PlayerType: {PlayerID.Collection.GetKey(player.PlayerType)}");
+        }*/
     }
+    /*public static void WriteData(AITank ai) {
+        Console.WriteLine($"AiType: {TankID.Collection.GetKey(ai.AiTankType)}" +
+            $"\nDangerExists: {ai.CurrentDanger is not null}" +
+            $"\nDangerIsShell: {ai.CurrentDanger is Shell}" +
+            $"\nDangerIsMine: {ai.CurrentDanger is Mine}" +
+            $"\nDangerIsExpl: {ai.CurrentDanger is Explosion}" +
+            $"\nDangerIsOther: {ai.CurrentDanger is not Shell && ai.CurrentDanger is not Mine && ai.CurrentDanger is not Explosion}" +
+            $"\nTargetIsAI: {ai.TargetTank is AITank}");
+    }*/
     public override void PreUpdate() {
         ModdedData?.PreUpdate();
     }
@@ -745,7 +770,7 @@ public partial class AITank : Tank {
         bool checkNoTeam = Team == TeamID.NoTeam || !TanksNear.Any(x => x.Team == Team);
 
         // tanks wont shoot when fleeing from a mine
-        if (IsMineNear) return;
+        if (CurrentDanger is Mine) return;
 
         if (AiParams.PredictsPositions) {
             if (SeesTarget && checkNoTeam)
@@ -771,13 +796,39 @@ public partial class AITank : Tank {
     public bool DoMovements = true;
     public bool DoMoveTowards = true;
 
-    public bool IsShellNear;
-    public bool IsInDangerOfShell;
-    public bool IsMineNear;
-    public bool IsExplosionNear;
+    public bool IsInDanger;
 
     public List<Tank> TanksNear = [];
     public List<Block> BlocksNear = [];
+
+    public IAITankDanger? CurrentDanger;
+
+    public void HandleTankMetaData() {
+        TargetTank = GetClosestTarget();
+
+        // get ai to target a player's ping
+        TargetTank = TryOverrideTarget();
+
+        // measure the biggest WarinessRadius, player or ai, then check the larger, then do manual calculations.
+        var radii = new float[] { AiParams.MineWarinessRadius_AILaid, AiParams.MineWarinessRadius_PlayerLaid, AiParams.ProjectileWarinessRadius_AIShot, AiParams.ProjectileWarinessRadius_PlayerShot };
+        var biggest = radii.Max();
+        IsInDanger = TryGetDangerNear(biggest, out CurrentDanger);
+
+        if (IsInDanger) {
+            WhileDangerDetected?.Invoke(this, CurrentDanger!);
+            ModdedData?.DangerDetected(CurrentDanger!);
+        }
+
+        // if the danger is a shell, recalculate the desire to dodge
+        if (CurrentDanger is Shell shell) {
+            var dist = shell.IsPlayerSourced ? AiParams.ProjectileWarinessRadius_PlayerShot : AiParams.ProjectileWarinessRadius_AIShot;
+
+            // hardcode heaven :)
+            if (!shell.IsHeadingTowards(Position, dist, MathHelper.Pi)) {
+                CurrentDanger = null;
+            }
+        }
+    }
 
     public void DoAi() {
         TanksNear.Clear();
@@ -792,35 +843,7 @@ public partial class AITank : Tank {
 
         // defining an Action isn't that intensive, right?
         AIBehaviorAction = () => {
-            TargetTank = GetClosestTarget();
-
-            // get ai to target a player's ping
-            TargetTank = TryOverrideTarget();
-
-            // measure the biggest WarinessRadius, player or ai, then check the larger, then do manual calculations.
-            var radii = new float[] { AiParams.MineWarinessRadius_AILaid, AiParams.MineWarinessRadius_PlayerLaid, AiParams.ProjectileWarinessRadius_AIShot, AiParams.ProjectileWarinessRadius_PlayerShot };
-            var biggest = radii.Max();
-            bool isThereDanger = TryGetDangerNear(biggest, out var danger);
-
-            if (isThereDanger) {
-                WhileDangerDetected?.Invoke(this, danger!);
-                ModdedData?.DangerDetected(danger!);
-            }
-
-            IsShellNear = isThereDanger && danger is Shell;
-            IsMineNear = isThereDanger && danger is Mine;
-            IsExplosionNear = isThereDanger && danger is Explosion;
-
-            // only use if checking the respective boolean!
-            var shell = (danger as Shell)!;
-            var mine = (danger as Mine)!;
-            var explosion = (danger as Explosion)!;
-
-            // if the danger is a shell, recalculate the desire to dodge
-            if (IsShellNear) {
-                var dist = shell.IsPlayerSourced ? AiParams.ProjectileWarinessRadius_PlayerShot : AiParams.ProjectileWarinessRadius_AIShot;
-                IsShellNear = shell.IsHeadingTowards(Position, dist, MathHelper.Pi);
-            }
+            HandleTankMetaData();
 
             foreach (var tank in GameHandler.AllTanks)
                 if (tank != this && tank is not null && !tank.Dead && GameUtils.Distance_WiiTanksUnits(tank.Position, Position) <= AiParams.TankWarinessRadius)
@@ -830,8 +853,17 @@ public partial class AITank : Tank {
                 if (block is not null && GameUtils.Distance_WiiTanksUnits(Position, block.Position) < AiParams.BlockWarinessDistance)
                     BlocksNear.Add(block);
 
+            var isShellNear = IsInDanger && CurrentDanger is Shell;
+            var isMineNear = IsInDanger && CurrentDanger is Mine;
+            var isExplosionNear = IsInDanger && CurrentDanger is Explosion;
+
+            // only use if checking the respective boolean!
+            var shell = (CurrentDanger as Shell)!;
+            var mine = (CurrentDanger as Mine)!;
+            var explosion = (CurrentDanger as Explosion)!;
+
             if (AiParams.DeflectsBullets) {
-                if (isThereDanger && IsShellNear) {
+                if (isShellNear) {
                     DoDeflection(shell);
                 }
             }
@@ -843,10 +875,11 @@ public partial class AITank : Tank {
 
                 // facing down = 0 radians/2pi radians
 
-                if (IsShellNear)
+                if (isShellNear)
                     ShellAvoid(shell);
 
-                if (!IsMineNear && !IsShellNear) {
+                // null danger so nothing exists?
+                if (CurrentDanger is null /*danger is not Mine && danger is not Shell*/) {
                     DoBlockNav();
                     DoMovement();
                 }
@@ -857,10 +890,10 @@ public partial class AITank : Tank {
                     }
                 }
 
-                if (IsMineNear && !IsShellNear && !IsExplosionNear)
+                if (isMineNear && !isShellNear && !isExplosionNear)
                     MineAvoid(mine);
 
-                if (IsExplosionNear)
+                if (isExplosionNear)
                     ExplosionAvoid(explosion);
             }
 
@@ -1068,24 +1101,21 @@ public partial class AITank : Tank {
         }
     }
     public void DoDeflection(Shell shell) {
-        if (shell.LifeTime > 60) {
-            var dir = MathUtils.DirectionTo(Position, shell.Position);
-            //var rotation = dir.ToRotation();
-            var calculation = (Position.Distance(shell.Position) - 20f) / (float)(Properties.ShellSpeed * 1.2f);
-            float rot = -MathUtils.DirectionTo(Position,
-                GeometryUtils.PredictFuturePosition(shell.Position, shell.Velocity, calculation))
-                .ToRotation() + MathHelper.PiOver2;
+        var calculation = (Position.Distance(shell.Position) - 20f) / (float)(Properties.ShellSpeed * 1.2f);
+        float rot = -MathUtils.DirectionTo(Position,
+            GeometryUtils.PredictFuturePosition(shell.Position, shell.Velocity, calculation))
+            .ToRotation() + MathHelper.PiOver2;
 
-            TargetTurretRotation = rot;
+        TargetTurretRotation = rot;
 
-            TurretRotationMultiplier = 4f;
+        TurretRotationMultiplier = 4f;
 
-            // used to be rot %=... was it necessary?
-            //TargetTurretRotation %= MathHelper.Tau;
+        // used to be rot %=... was it necessary?
+        //TargetTurretRotation %= MathHelper.Tau;
 
-            //if ((-TurretRotation + MathHelper.PiOver2).IsInRangeOf(TargetTurretRotation, 0.15f))
-            Shoot(false);
-        }
+        //if ((-TurretRotation + MathHelper.PiOver2).IsInRangeOf(TargetTurretRotation, 0.15f))
+
+        Shoot(false);
     }
     public override void Render() {
         base.Render();
@@ -1094,6 +1124,8 @@ public partial class AITank : Tank {
         TankGame.Instance.GraphicsDevice.BlendState = BlendState.AlphaBlend;
         DrawExtras();
         if ((MainMenuUI.Active && Properties.Invisible) || (Properties.Invisible && CampaignGlobals.InMission))
+            return;
+        if (Model is null)
             return;
 
         for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
@@ -1216,12 +1248,6 @@ public partial class AITank : Tank {
         danger = closest;
         return closest != null;
     }
-
-    private static readonly int[] workingTiers =
-    {
-        TankID.Brown, TankID.Marine, TankID.Yellow, TankID.Black, TankID.White, TankID.Pink, TankID.Violet, TankID.Green, TankID.Ash,
-        TankID.Bronze, TankID.Silver, TankID.Sapphire, TankID.Ruby, TankID.Citrine, TankID.Amethyst, TankID.Emerald, TankID.Gold, TankID.Obsidian,
-    };
     public static int PickRandomTier()
-        => workingTiers[Server.ServerRandom.Next(0, workingTiers.Length)];
+        => Server.ServerRandom.Next(0, TankID.Collection.Count);
 }

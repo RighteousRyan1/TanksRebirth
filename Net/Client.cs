@@ -201,6 +201,16 @@ public class Client {
         message.Put(tank.Velocity.X);
         message.Put(tank.Velocity.Y);
 
+        var targetExists = tank.TargetTank is not null;
+        message.Put(targetExists);
+
+        message.Put(tank.SeesTarget);
+
+        // message.Put(tank.isin)
+
+        if (targetExists)
+            message.Put(tank.TargetTank!.WorldId);
+
         NetClient.Send(message, DeliveryMethod.Unreliable);
     }
     /// <summary>Be sure to sync by accessing the index of the tank from the AllTanks array. (<see cref="GameHandler.AllTanks"/>)</summary>
@@ -243,21 +253,8 @@ public class Client {
             return;
         NetDataWriter message = new();
         message.Put(PacketID.ShellDestroy);
-        // TODO: bool hasOwner to decide whether or not to subtract from an owner's shell count
-
-        message.Put(shell.Owner is not null ? shell.Owner.WorldId : -1);
-
-        // sending the shell id on the current client.
-        message.Put(shell.Id);
-
         //sending the shell UID on the current client.
         message.Put(shell.UID);
-
-        // to fix "ghost bullets": compare Array Length of Shells from server to each client, then
-        // add the difference between the client's # of shells from the server's # of shells.
-        // there's gotta be a way to make this more performant...
-        message.Put(Shell.AllShells.Count(x => x is not null));
-
         // send the index of the shell in the owner's OwnedShell array for destruction on other clients
         // message.Put(Array.IndexOf(shell.Owner.OwnedShells, shell));
         message.Put((byte)cxt);
@@ -454,5 +451,5 @@ public class Client {
             return NetClient.ConnectionState == ConnectionState.Connected;
         return false;
     }
-    public static bool IsHost() => (IsConnected() && Server.NetManager is not null) || !Client.IsConnected();
+    public static bool IsHost() => (IsConnected() && Server.NetManager is not null);
 }
