@@ -430,7 +430,7 @@ public class Block : IGameObject
                 otherTp!._tankCooldowns[tnk.WorldId] = 120;
 
                 tnk.Position = otherTp.Position;
-                tnk.Body.Position = otherTp.Position / Tank.UNITS_PER_METER;
+                tnk.Physics.Position = otherTp.Position / Tank.UNITS_PER_METER;
             }
         }
         UpdateOffset();

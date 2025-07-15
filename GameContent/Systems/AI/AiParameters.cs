@@ -4,7 +4,7 @@ namespace TanksRebirth.GameContent.Systems.AI;
 
 public record AiParameters {
     /// <summary>The amount of distance to check (in units) in all directions for obstacles to ensure laying a mine is safe. Word 2.</summary>
-    public float MineObstacleAwareness { get; set; }
+    public float ObstacleAwarenessMine { get; set; }
     /// <summary>The minimum amount of time before this <see cref="AITank"/> can lay a mine. Word 4.</summary>
     public int RandomTimerMinMine { get; set; }
     /// <summary>The maximum amount of time before this <see cref="AITank"/> can lay a mine. Word 5.</summary>
@@ -59,8 +59,8 @@ public record AiParameters {
     public float TurretSpeed { get; set; }
     /// <summary>How often this tank will move its turret in the target's direction. It will be inaccurate at the measure of <see cref="AimOffset"/>. Word 40.</summary>
     public uint TurretMovementTimer { get; set; }
-    /// <summary>How far this tank must be from a friendly <see cref="Tank"/> before it can fire a <see cref="Shell"/>. Word 41.</summary>
-    public float DetectionRadiusShellFriendly { get; set; }
+    /// <summary>How far this tank must be from a friendly <see cref="Tank"/> before it can shoot. Word 41.</summary>
+    public float TankAwarenessShoot { get; set; }
 
 
 

@@ -241,7 +241,7 @@ public class NetPlay {
                 float turRot = reader.GetFloat();
 
                 var tank = new PlayerTank(type);
-                tank.Body.Position = new(x, y);
+                tank.Physics.Position = new(x, y);
                 tank.Dead = false;
                 tank.TankRotation = tnkRot;
                 tank.TurretRotation = turRot;
@@ -397,7 +397,7 @@ public class NetPlay {
                 if (GameHandler.AllPlayerTanks[id] is null)
                     break;
 
-                GameHandler.AllPlayerTanks[id].Body.Position = new(x2, y2);
+                GameHandler.AllPlayerTanks[id].Physics.Position = new(x2, y2);
                 GameHandler.AllPlayerTanks[id].TankRotation = tankRotation;
                 GameHandler.AllPlayerTanks[id].TurretRotation = turretRotation;
                 GameHandler.AllPlayerTanks[id].Velocity = new(vX, vY);
@@ -423,7 +423,7 @@ public class NetPlay {
                     GameHandler.AllAITanks[id1].SeesTarget = seesTarget;
                 }
 
-                GameHandler.AllAITanks[id1].Body.Position = new(x3, y3);
+                GameHandler.AllAITanks[id1].Physics.Position = new(x3, y3);
                 GameHandler.AllAITanks[id1].TankRotation = tankRotation1;
                 GameHandler.AllAITanks[id1].TurretRotation = turretRotation1;
                 GameHandler.AllAITanks[id1].Velocity = new(vX1, vY1);

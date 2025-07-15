@@ -34,7 +34,7 @@ public struct TankTemplate {
             throw new Exception($"{nameof(IsPlayer)} is true. This method cannot execute.");
 
         var ai = new AITank(AiTier);
-        ai.Body.Position = Position / Tank.UNITS_PER_METER;
+        ai.Physics.Position = Position / Tank.UNITS_PER_METER;
         ai.Position = Position;
         ai.TankRotation = Rotation;
         ai.TargetTankRotation = Rotation;
@@ -64,7 +64,7 @@ public struct TankTemplate {
             player = new PlayerTank(PlayerType, false, Difficulties.DisguiseValue);
         else
             player = new PlayerTank(PlayerType);
-        player.Body.Position = Position / Tank.UNITS_PER_METER;
+        player.Physics.Position = Position / Tank.UNITS_PER_METER;
         player.Position = Position;
         player.TankRotation = Rotation;
         player.TurretRotation = Rotation;

@@ -143,7 +143,7 @@ public abstract class Tank {
 
     #region Fields / Properties
     private float _oldRotation;
-    public Body Body { get; set; } = new();
+    public Body Physics { get; set; } = new();
 
     /// <summary>This <see cref="Tank"/>'s model. If this will be any different than the default, set <see cref="UsesCustomModel"/> to <c>true</c>.</summary>
     public Model Model { get; set; }
@@ -247,7 +247,7 @@ public abstract class Tank {
         //Scaling = new Vector3(1, 1, 3);
         //Body = CollisionsWorld.CreateEllipse(TNK_WIDTH * 0.4f / UNITS_PER_METER * Scaling.X, TNK_WIDTH * 0.4f / UNITS_PER_METER * Scaling.Z, 8, 1f, 
         //    Position / UNITS_PER_METER, bodyType: BodyType.Dynamic);
-        Body = CollisionsWorld.CreateCircle(TNK_WIDTH * 0.4f / UNITS_PER_METER /* * Scaling.X*/, 1f, Position / UNITS_PER_METER,
+        Physics = CollisionsWorld.CreateCircle(TNK_WIDTH * 0.4f / UNITS_PER_METER /* * Scaling.X*/, 1f, Position / UNITS_PER_METER,
             BodyType.Dynamic);
     }
     /// <summary>Initializes bone transforms and mesh assignments. You will want to call this method if you're modifying a tank model, and the new model
@@ -409,10 +409,10 @@ public abstract class Tank {
         KnockbackVelocity.X = MathUtils.RoughStep(KnockbackVelocity.X, 0, 0.1f * RuntimeData.DeltaTime);
         KnockbackVelocity.Y = MathUtils.RoughStep(KnockbackVelocity.Y, 0, 0.1f * RuntimeData.DeltaTime);
 
-        Position = Body.Position * UNITS_PER_METER;
+        Position = Physics.Position * UNITS_PER_METER;
 
         // magical multiplication number to maintain values like 1.8 max speed with the original game
-        Body.LinearVelocity = (Velocity * 0.55f + KnockbackVelocity) / UNITS_PER_METER;
+        Physics.LinearVelocity = (Velocity * 0.55f + KnockbackVelocity) / UNITS_PER_METER;
 
         // try to make positive. i hate game
         World = Matrix.CreateScale(Scaling) 
@@ -469,7 +469,6 @@ public abstract class Tank {
         }
 
         if (!IsTurning) {
-            IsTurning = false;
             Speed += Properties.Acceleration * RuntimeData.DeltaTime;
 
             if (Speed > Properties.MaxSpeed)
@@ -909,8 +908,8 @@ public abstract class Tank {
     public uint timeSinceLastAction = 15000;
 
     public virtual void Remove(bool nullifyMe) {
-        if (CollisionsWorld.BodyList.Contains(Body))
-            CollisionsWorld.Remove(Body);
+        if (CollisionsWorld.BodyList.Contains(Physics))
+            CollisionsWorld.Remove(Physics);
         foreach (var particle in GameHandler.Particles.CurrentParticles) {
             if (particle is not null && particle.Tag is string tag) {
                 if (tag == $"cosmetic_2d_{GetHashCode()}" || tag == $"tank_{WorldId}_shadow") // remove all particles related to this tank

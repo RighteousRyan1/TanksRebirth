@@ -30,7 +30,7 @@ public static class AIManager {
                 aiParams.RandomTimerMinShoot = 30;
                 aiParams.TurretSpeed = 0.01f;
                 aiParams.TurretMovementTimer = 60;
-                aiParams.DetectionRadiusShellFriendly = 70;
+                aiParams.TankAwarenessShoot = 70;
 
 
 
@@ -38,12 +38,12 @@ public static class AIManager {
                 break;
 
             case TankID.Ash:
-                aiParams.MineObstacleAwareness = 100;
                 aiParams.MaxAngleRandomTurn = MathHelper.ToRadians(30);
                 aiParams.RandomTimerMaxMove = 15;
                 aiParams.RandomTimerMinMove = 10;
                 aiParams.AwarenessFriendlyMine = 120;
                 aiParams.AwarenessFriendlyShell = 120;
+                aiParams.AwarenessHostileMine = 40;
                 aiParams.AwarenessHostileShell = 40;
                 aiParams.CantShootWhileFleeing = true;
                 aiParams.AggressivenessBias = 0.03f;
@@ -57,23 +57,13 @@ public static class AIManager {
                 aiParams.RandomTimerMinShoot = 30;
                 aiParams.TurretSpeed = 0.01f;
                 aiParams.TurretMovementTimer = 45;
-                aiParams.DetectionRadiusShellFriendly = 70;
+                aiParams.TankAwarenessShoot = 70;
 
-
-
-
-                aiParams.RandomTimerMinMove = 15;
-
-                aiParams.AwarenessHostileShell = 40;
-                aiParams.AwarenessFriendlyShell = 70;
-                aiParams.AwarenessHostileMine = 40;
-                aiParams.AwarenessFriendlyMine = 70;
 
                 baseExp = 0.015f;
                 break;
 
             case TankID.Marine:
-                aiParams.MineObstacleAwareness = 100;
                 aiParams.MaxAngleRandomTurn = MathHelper.ToRadians(30);
                 aiParams.RandomTimerMaxMove = 10;
                 aiParams.RandomTimerMinMove = 5;
@@ -91,17 +81,9 @@ public static class AIManager {
                 aiParams.RandomTimerMinShoot = 5;
                 aiParams.TurretSpeed = 0.05f;
                 aiParams.TurretMovementTimer = 8;
-                aiParams.DetectionRadiusShellFriendly = 70;
+                aiParams.TankAwarenessShoot = 70;
 
 
-
-
-
-                aiParams.RandomTimerMinMove = 10;
-                aiParams.AimOffset = 0; // no extra math
-
-                aiParams.AwarenessHostileShell = 40;
-                aiParams.AwarenessHostileMine = 80;
 
                 aiParams.CantShootWhileFleeing = false;
 
@@ -109,7 +91,7 @@ public static class AIManager {
                 break;
 
             case TankID.Yellow:
-                aiParams.MineObstacleAwareness = 100;
+                aiParams.ObstacleAwarenessMine = 100;
                 aiParams.RandomTimerMaxMine = 60;
                 aiParams.RandomTimerMinMine = 40;
                 aiParams.TankAwarenessMine = 100;
@@ -133,16 +115,8 @@ public static class AIManager {
                 aiParams.RandomTimerMinShoot = 30;
                 aiParams.TurretSpeed = 0.02f;
                 aiParams.TurretMovementTimer = 30;
-                aiParams.DetectionRadiusShellFriendly = 70;
+                aiParams.TankAwarenessShoot = 70;
 
-
-
-                aiParams.RandomTimerMinMove = 15;
-
-                aiParams.AwarenessHostileShell = 40;
-                aiParams.AwarenessHostileMine = 160;
-
-                aiParams.ChanceMineLay = 0.3f;
 
                 aiParams.CantShootWhileFleeing = false;
 
@@ -156,7 +130,6 @@ public static class AIManager {
                 break;
 
             case TankID.Pink:
-                aiParams.MineObstacleAwareness = 100;
                 aiParams.MaxAngleRandomTurn = MathHelper.ToRadians(30);
                 aiParams.RandomTimerMaxMove = 10;
                 aiParams.RandomTimerMinMove = 5;
@@ -174,13 +147,8 @@ public static class AIManager {
                 aiParams.RandomTimerMinShoot = 5;
                 aiParams.TurretSpeed = 0.02f;
                 aiParams.TurretMovementTimer = 20;
-                aiParams.DetectionRadiusShellFriendly = 70;
+                aiParams.TankAwarenessShoot = 70;
 
-
-                aiParams.RandomTimerMinMove = 10;
-
-                aiParams.AwarenessHostileShell = 40;
-                aiParams.AwarenessHostileMine = 160;
 
                 aiParams.CantShootWhileFleeing = true;
 
@@ -188,7 +156,7 @@ public static class AIManager {
                 break;
 
             case TankID.Violet:
-                aiParams.MineObstacleAwareness = 200;
+                aiParams.ObstacleAwarenessMine = 200;
                 aiParams.RandomTimerMaxMine = 60;
                 aiParams.RandomTimerMinMine = 40;
                 aiParams.TankAwarenessMine = 100;
@@ -213,15 +181,10 @@ public static class AIManager {
                 aiParams.RandomTimerMinShoot = 5;
                 aiParams.TurretSpeed = 0.03f;
                 aiParams.TurretMovementTimer = 20;
-                aiParams.DetectionRadiusShellFriendly = 70;
+                aiParams.TankAwarenessShoot = 70;
 
 
 
-
-                aiParams.RandomTimerMinMove = 10;
-
-                aiParams.AwarenessHostileShell = 60;
-                aiParams.AwarenessHostileMine = 160;
 
                 aiParams.ChanceMineLay = 0.05f;
 
@@ -231,8 +194,6 @@ public static class AIManager {
                 break;
 
             case TankID.Green:
-                aiParams.MineObstacleAwareness = 100;
-                aiParams.AwarenessHostileShell = 70;
                 aiParams.AimOffset = MathHelper.ToRadians(80);
                 aiParams.DetectionForgivenessSelf = MathHelper.ToRadians(5);
                 aiParams.DetectionForgivenessFriendly = MathHelper.ToRadians(20);
@@ -241,7 +202,7 @@ public static class AIManager {
                 aiParams.RandomTimerMinShoot = 5;
                 aiParams.TurretSpeed = 0.02f;
                 aiParams.TurretMovementTimer = 30;
-                aiParams.DetectionRadiusShellFriendly = 70;
+                aiParams.TankAwarenessShoot = 70;
 
 
 
@@ -252,7 +213,7 @@ public static class AIManager {
                 break;
 
             case TankID.White:
-                aiParams.MineObstacleAwareness = 200;
+                aiParams.ObstacleAwarenessMine = 200;
                 aiParams.RandomTimerMaxMine = 60;
                 aiParams.RandomTimerMinMine = 40;
                 aiParams.TankAwarenessMine = 100;
@@ -276,15 +237,8 @@ public static class AIManager {
                 aiParams.RandomTimerMinShoot = 5;
                 aiParams.TurretSpeed = 0.03f;
                 aiParams.TurretMovementTimer = 30;
-                aiParams.DetectionRadiusShellFriendly = 70;
+                aiParams.TankAwarenessShoot = 70;
 
-
-                aiParams.RandomTimerMinMove = 10;
-
-                aiParams.AwarenessHostileShell = 40;
-                aiParams.AwarenessHostileMine = 160;
-
-                aiParams.ChanceMineLay = 0.08f;
 
                 aiParams.CantShootWhileFleeing = false;
 
@@ -292,7 +246,7 @@ public static class AIManager {
                 break;
 
             case TankID.Black:
-                aiParams.MineObstacleAwareness = 200;
+                aiParams.ObstacleAwarenessMine = 200;
                 aiParams.RandomTimerMaxMine = 60;
                 aiParams.RandomTimerMinMine = 40;
                 aiParams.TankAwarenessMine = 100;
@@ -316,17 +270,7 @@ public static class AIManager {
                 aiParams.RandomTimerMinShoot = 5;
                 aiParams.TurretSpeed = 0.03f;
                 aiParams.TurretMovementTimer = 20;
-
-
-
-                aiParams.RandomTimerMinMove = 10;
-
-                aiParams.AwarenessHostileShell = 100;
-                aiParams.AwarenessHostileMine = 110;
-
-                aiParams.ChanceMineLay = 0.05f;
-
-                aiParams.DetectionRadiusShellFriendly = 70;
+                aiParams.TankAwarenessShoot = 70;
 
                 aiParams.CantShootWhileFleeing = true;
 
@@ -388,22 +332,28 @@ public static class AIManager {
                 baseExp = 0.095f;
                 break;
             case TankID.Ruby:
-                aiParams.MaxAngleRandomTurn = MathHelper.ToRadians(30);
-                aiParams.RandomTimerMinMove = 10;
-                aiParams.TurretMovementTimer = 20;
-                aiParams.TurretSpeed = 0.025f;
-                aiParams.AimOffset = 0.05f;
-
-                aiParams.DetectionForgivenessHostile = 0.6f;
-
-                aiParams.AggressivenessBias = 0.3f;
-
+                aiParams.MaxAngleRandomTurn = MathHelper.ToRadians(45);
+                aiParams.RandomTimerMaxMove = 10;
+                aiParams.RandomTimerMinMove = 5;
+                aiParams.AwarenessFriendlyMine = 120;
+                aiParams.AwarenessFriendlyShell = 120;
+                aiParams.AwarenessHostileMine = 0;
                 aiParams.AwarenessHostileShell = 50;
-                aiParams.AwarenessHostileMine = 70;
+                aiParams.AggressivenessBias = 0.3f;
+                aiParams.MaxQueuedMovements = 4;
+                aiParams.ObstacleAwarenessMovement = 20;
+                aiParams.AimOffset = MathHelper.ToRadians(3);
+                aiParams.DetectionForgivenessSelf = MathHelper.ToRadians(5);
+                aiParams.DetectionForgivenessFriendly = MathHelper.ToRadians(20);
+                aiParams.DetectionForgivenessHostile = MathHelper.ToRadians(20);
+                aiParams.RandomTimerMaxShoot = 10;
+                aiParams.RandomTimerMinShoot = 5;
+                aiParams.TurretSpeed = 0.025f;
+                aiParams.TurretMovementTimer = 10;
+                aiParams.TankAwarenessShoot = 70;
 
-                aiParams.ChanceMineLay = 0;
 
-                aiParams.ObstacleAwarenessMovement = 30;
+                aiParams.CantShootWhileFleeing = true;
 
                 baseExp = 0.13f;
                 break;

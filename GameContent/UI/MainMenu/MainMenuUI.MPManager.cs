@@ -225,7 +225,7 @@ public static partial class MainMenuUI {
         if (!Client.IsConnected()) {
             if (PlayerTank.ClientTank is null) {
                 var p = new PlayerTank(PlayerID.Blue);
-                p.Body.Position = (PlayersGraphicOrigin + new Vector2(0, plrOffset)) / Tank.UNITS_PER_METER;
+                p.Physics.Position = (PlayersGraphicOrigin + new Vector2(0, plrOffset)) / Tank.UNITS_PER_METER;
                 p.TankRotation = PlayersGraphicRotationOrigin.Z;
                 p.Dead = false;
             } else {
@@ -243,7 +243,7 @@ public static partial class MainMenuUI {
             if (GameHandler.AllPlayerTanks[i] is not null) continue;
 
             var p = new PlayerTank(client.Id);
-            p.Body.Position = (PlayersGraphicOrigin + new Vector2(0, plrOffset).Rotate(MathHelper.PiOver2 / 2 * i)) / Tank.UNITS_PER_METER;
+            p.Physics.Position = (PlayersGraphicOrigin + new Vector2(0, plrOffset).Rotate(MathHelper.PiOver2 / 2 * i)) / Tank.UNITS_PER_METER;
             p.TankRotation = PlayersGraphicRotationOrigin.Z;
             p.Dead = false;
         }

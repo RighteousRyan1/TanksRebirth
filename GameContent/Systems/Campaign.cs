@@ -199,7 +199,7 @@ public class Campaign
                             TurretRotation = MathF.Round(-template.Rotation, roundingFactor),
                             Dead = false,
                         };
-                        tnk.Body.Position = template.Position / Tank.UNITS_PER_METER;
+                        tnk.Physics.Position = template.Position / Tank.UNITS_PER_METER;
                     }
                     var placement = PlacementSquare.Placements.FindIndex(place => Vector3.Distance(place.Position, tank.Position3D) < Block.SIDE_LENGTH / 2);
 

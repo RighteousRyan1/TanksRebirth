@@ -38,7 +38,7 @@ public static class DebugManager {
         public const int LevelEditDebug = 3;
         public const int Powerups = 4;
         public const int AchievementData = 5;
-        public const int NavData = 6;
+        public const int AIData = 6;
     }
     private static readonly Dictionary<int, string> DebuggingNames = new() {
         [Id.FreeCamTest] = "freecam",
@@ -50,7 +50,7 @@ public static class DebugManager {
         [Id.LevelEditDebug] = "lvlmake", // level editor debug
         [Id.Powerups] = "pwrup", // powerup
         [Id.AchievementData] = "achdat", // achievement data
-        [Id.NavData] = "tnknav" // ai tank navigation
+        [Id.AIData] = "tnknav" // ai tank navigation
     };
 
     static int mode;
@@ -437,10 +437,20 @@ public static class DebugManager {
         }
 
         foreach (var body in Tank.CollisionsWorld.BodyList) {
-            DrawDebugString(spriteBatch,
-                $"BODY",
-                MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(body.Position.X * Tank.UNITS_PER_METER, 0, body.Position.Y * Tank.UNITS_PER_METER), CameraGlobals.GameView, CameraGlobals.GameProjection),
-                centered: true);
+            if (DebugLevel == Id.General) {
+                Color drawColor = Color.Black;
+
+                if (body.Tag is Color c)
+                    drawColor = c;
+
+                var position = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(
+                    body.Position.X * Tank.UNITS_PER_METER, 0,
+                    body.Position.Y * Tank.UNITS_PER_METER),
+                    CameraGlobals.GameView, CameraGlobals.GameProjection);
+
+                DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, "BODY", position, drawColor, 
+                    Color.White, Vector2.One * 0.5f, 0f, borderThickness: 0.5f);
+            }
         }
 
         for (int i = 0; i < VanillaAchievements.Repository.GetAchievements().Count; i++) {
@@ -505,7 +515,7 @@ public static class DebugManager {
         t.Team = team;
         t.Dead = false;
         var pos = new BlockMapPosition(Client.ClientRandom.Next(0, 27), Client.ClientRandom.Next(0, 20));
-        t.Body.Position = pos;
+        t.Physics.Position = pos;
         t.Position = pos;
 
         return t;
@@ -520,7 +530,7 @@ public static class DebugManager {
 
         x.Team = team;
         x.Dead = false;
-        x.Body.Position = position.FlattenZ() / Tank.UNITS_PER_METER;
+        x.Physics.Position = position.FlattenZ() / Tank.UNITS_PER_METER;
         x.Position = position.FlattenZ();
         return x;
     }
@@ -533,7 +543,7 @@ public static class DebugManager {
             t.TurretRotation = rot;
             t.Dead = false;
             t.Team = useCurTank ? tankToSpawnTeam : TeamID.NoTeam;
-            t.Body.Position = random;
+            t.Physics.Position = random;
             t.Position = random;
         }
     }
@@ -546,7 +556,7 @@ public static class DebugManager {
             Team = team,
             Dead = false
         };
-        myTank.Body.Position = pos.FlattenZ() / Tank.UNITS_PER_METER;
+        myTank.Physics.Position = pos.FlattenZ() / Tank.UNITS_PER_METER;
         myTank.Position = pos.FlattenZ();
 
         if (Client.IsConnected())

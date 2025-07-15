@@ -4,10 +4,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using tainicom.Aether.Physics2D.Dynamics;
 using TanksRebirth.GameContent.GameMechanics;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.Graphics;
+using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.Framework.Collision;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
@@ -26,33 +28,31 @@ public partial class AITank {
 
     public int CurrentRandomMove;
 
+    public Body? NearbyObstaclesChecker;
+
     // this code runs every "movement opportunity" (any number between RandomTimerMinMove and RandomTimerMaxMove)
     public void DoMovement() {
-        bool shouldMove = !IsTurning && CurMineStun <= 0 && CurShootStun <= 0 && !IsPathBlocked;
-        //Console.WriteLine(shouldMove);
+        bool shouldMove = !IsTurning && CurMineStun <= 0 && CurShootStun <= 0;
+
         if (!shouldMove) return;
         if (Behaviors[0].IsModOf(CurrentRandomMove)) {
             DoBlockNav(); // determines IsPathBlocked
 
             // determine the frame timer for a new movement opportunity
             CurrentRandomMove = Client.ClientRandom.Next(AiParams.RandomTimerMinMove, AiParams.RandomTimerMaxMove);
-
-            if (!IsPathBlocked) {
-                var random = Client.ClientRandom.NextFloat(-AiParams.MaxAngleRandomTurn, AiParams.MaxAngleRandomTurn);
-
-                TargetTankRotation += random;
-            }
-
+ 
             // might need to check specific dangers here like mines or shells
             // my loneliness is killing me (and i) I must confess, i still believe (still believe)
             // oh baby baby, how was i supposed to know
             foreach (var danger in NearbyDangers) {
                 var isHostile = danger.Team != Team && danger.Team != TeamID.NoTeam;
-                if (danger is Mine mine) {
-                    var isCloseEnough = GameUtils.Distance_WiiTanksUnits(Position, mine.Position) <= (isHostile ? AiParams.AwarenessHostileMine : AiParams.AwarenessFriendlyMine);
+
+                // mines and explosions should be treated the same
+                if (danger is Mine || danger is Explosion) {
+                    var isCloseEnough = GameUtils.Distance_WiiTanksUnits(Position, danger.Position) <= (isHostile ? AiParams.AwarenessHostileMine : AiParams.AwarenessFriendlyMine);
                     // already accounts for hostility via the above ^
                     if (isCloseEnough) {
-                        Avoid(mine.Position);
+                        Avoid(danger.Position);
                         break;
                     }
                 }
@@ -82,15 +82,23 @@ public partial class AITank {
                 }
             }
 
+            if (!IsPathBlocked) {
+                var random = Client.ClientRandom.NextFloat(-AiParams.MaxAngleRandomTurn, AiParams.MaxAngleRandomTurn);
+
+                TargetTankRotation += random;
+            }
+
             // aggression/pursuit handling
             if (TargetTank is not null) {
                 var targetDirVector = Vector2.Normalize(Position.DirectionTo(TargetTank!.Position));
-                var dirDirVector = Vector2.Normalize(Position.DirectionTo(PathEndpoint));
+                var dirVector = Vector2.Normalize(Position.DirectionTo(PathEndpoint));
 
-                var finalVector = dirDirVector + targetDirVector * AiParams.AggressivenessBias;
+                var finalVector = Vector2.Normalize(dirVector + targetDirVector) * AiParams.AggressivenessBias;
 
-                // negative plus pi/2...?
-                TargetTankRotation = finalVector.ToRotation();
+
+                // TODO: discover wtf is happening with bigkitty / goldfishking
+                var finalVectorRotation = finalVector.ToRotation();
+                TargetTankRotation = finalVectorRotation - MathHelper.PiOver2;
             }
         }
     }
@@ -133,7 +141,7 @@ public partial class AITank {
         List<RaycastReflection> reflectionList = [];
 
         // until fix/correction is made
-        pathDir *= 8; //Speed;
+        pathDir *= Speed;
 
         // Avoid constant allocation
         Rectangle pathHitbox = new();

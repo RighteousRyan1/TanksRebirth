@@ -27,6 +27,11 @@ public partial class AITank {
 
     public int CurrentRandomMineLay;
     public int CurrentRandomShoot;
+
+    /// <summary>The location(s) of which this tank's shot path hits an obstacle.</summary>
+    public Vector2[] ShotPathRicochetPoints { get; private set; } = [];
+    /// <summary>The location(s) of which this tank's shot path hits an tank.</summary>
+    public Vector2[] ShotPathTankCollPoints { get; private set; } = [];
     public void HandleTurret() {
         TargetTurretRotation %= MathHelper.TwoPi;
 
@@ -216,6 +221,22 @@ public partial class AITank {
             }
         }
         return target;
+    }
+    public void DoDeflection(Shell shell) {
+        var calculation = (Position.Distance(shell.Position) - 20f) / (float)(Properties.ShellSpeed * 1.2f);
+        float rot = -Position.DirectionTo(GeometryUtils.PredictFuturePosition(shell.Position, shell.Velocity, calculation))
+            .ToRotation() + MathHelper.PiOver2;
+
+        TargetTurretRotation = rot;
+
+        TurretRotationMultiplier = 4f;
+
+        // used to be rot %=... was it necessary?
+        //TargetTurretRotation %= MathHelper.Tau;
+
+        //if ((-TurretRotation + MathHelper.PiOver2).IsInRangeOf(TargetTurretRotation, 0.15f))
+
+        Shoot(false);
     }
 
     // TODO: literally fix everything about these turret rotation values.

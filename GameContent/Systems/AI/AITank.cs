@@ -3,27 +3,21 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Internals;
 using TanksRebirth.GameContent.GameMechanics;
-using TanksRebirth.GameContent.Systems;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Graphics;
-using TanksRebirth.Internals.Common.Framework;
 using TanksRebirth.Net;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.RebirthUtils;
-using TanksRebirth.GameContent.Systems.PingSystem;
-using TanksRebirth.Internals.Common.Framework.Collision;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.Globals.Assets;
-using System.Runtime.InteropServices.Marshalling;
 using TanksRebirth.GameContent.Systems.TankSystem;
+using tainicom.Aether.Physics2D.Dynamics;
 
 namespace TanksRebirth.GameContent.Systems.AI;
 
@@ -85,7 +79,6 @@ public partial class AITank : Tank {
     /// <summary>Change the texture of this <see cref="AITank"/>.</summary>
     /// <param name="texture">The new texture.</param>
     public void SwapTankTexture(Texture2D texture) => _tankTexture = texture;
-
     /// <summary>The AI parameter collection of this AI Tank.</summary>
     public AiParameters AiParams { get; set; } = new();
     /// <summary>The position of the target this <see cref="AITank"/> is currently attempting to aim at.</summary>
@@ -105,7 +98,6 @@ public partial class AITank : Tank {
 
         var tierName = TankID.Collection.GetKey(tier)!.ToLower();
 
-        //if (tier <= TankID.Marble)
         SwapTankTexture(Assets[$"tank_" + tierName]);
 
         if (!UsesCustomModel)
@@ -119,9 +111,9 @@ public partial class AITank : Tank {
     /// Creates a new <see cref="AITank"/>.
     /// </summary>
     /// <param name="tier">The tier of this <see cref="AITank"/>.</param>
-    /// <param name="setTankDefaults">Whether or not to give this <see cref="AITank"/> the default values.</param>
+    /// <param name="applyDefaults">Whether or not to give this <see cref="AITank"/> the default values.</param>
     /// <param name="isIngame">Whether or not this <see cref="AITank"/> is a gameplay tank or a cosmetic tank (i.e: display models on menus, etc).</param>
-    public AITank(int tier, bool setTankDefaults = true, bool isIngame = true) {
+    public AITank(int tier, bool applyDefaults = true, bool isIngame = true) {
         IsIngame = isIngame;
         // TargetTankRotation = MathHelper.Pi;
         if (IsIngame) {
@@ -184,7 +176,7 @@ public partial class AITank : Tank {
 
         _shadowTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank_shadow");
 
-        if (setTankDefaults)
+        if (applyDefaults)
             ApplyDefaults(ref Properties);
 
         int index = Array.IndexOf(GameHandler.AllAITanks, null);
@@ -264,7 +256,28 @@ public partial class AITank : Tank {
         base.ApplyDefaults(ref properties);
 
         ModdedData?.PostApplyDefaults();
+
+        if (AiParams.ObstacleAwarenessMine > 0) {
+            NearbyObstaclesChecker = CollisionsWorld.CreateCircle(GameUtils.Value_WiiTanksUnits(AiParams.ObstacleAwarenessMine) / 2 / UNITS_PER_METER, 0f, Physics.Position, BodyType.Static);
+            NearbyObstaclesChecker.OnCollision += FindNearbyObstacles;
+            NearbyObstaclesChecker.OnSeparation += OnSeparationOfNearbyObstacles;
+        }
     }
+
+    public int NumBlocksNearby;
+
+    private void OnSeparationOfNearbyObstacles(Fixture sender, Fixture other, tainicom.Aether.Physics2D.Dynamics.Contacts.Contact contact) {
+        NumBlocksNearby--;
+    }
+
+    private bool FindNearbyObstacles(Fixture sender, Fixture other, tainicom.Aether.Physics2D.Dynamics.Contacts.Contact contact) {
+        sender.Body.Tag = TankDestructionColors[AiTankType];
+        NumBlocksNearby++;
+        // other.Body.Tag = TankDestructionColors[AiTankType];
+        // never actually collide but do return data for use.
+        return false;
+    }
+
     public override void Update() {
         if (ModLoader.Status != LoadStatus.Complete)
             return;
@@ -306,9 +319,17 @@ public partial class AITank : Tank {
     }
     public override void Remove(bool nullifyMe) {
         if (nullifyMe) {
-            GameHandler.AllAITanks[AITankId] = null;
-            GameHandler.AllTanks[WorldId] = null;
+            GameHandler.AllAITanks[AITankId] = null!;
+            GameHandler.AllTanks[WorldId] = null!;
         }
+
+        // remove the checker and related events 
+        if (CollisionsWorld.BodyList.Contains(NearbyObstaclesChecker)) {
+            CollisionsWorld.Remove(NearbyObstaclesChecker);
+            NearbyObstaclesChecker!.OnCollision -= FindNearbyObstacles;
+            NearbyObstaclesChecker!.OnSeparation -= OnSeparationOfNearbyObstacles;
+        }
+
         base.Remove(nullifyMe);
     }
     public override void Destroy(ITankHurtContext context, bool netSend) {
@@ -412,12 +433,6 @@ public partial class AITank : Tank {
             };
         }
     }
-
-    /// <summary>The location(s) of which this tank's shot path hits an obstacle.</summary>
-    public Vector2[] ShotPathRicochetPoints { get; private set; } = [];
-    /// <summary>The location(s) of which this tank's shot path hits an tank.</summary>
-    public Vector2[] ShotPathTankCollPoints { get; private set; } = [];
-
     public void HandleTankMetaData() {
         TargetTank = GetClosestTarget();
 
@@ -444,7 +459,6 @@ public partial class AITank : Tank {
             }
         }*/
     }
-
     public void DoAi() {
         TanksNear.Clear();
         BlocksNear.Clear();
@@ -462,7 +476,7 @@ public partial class AITank : Tank {
             HandleTankMetaData();
 
             foreach (var tank in GameHandler.AllTanks)
-                if (tank != this && tank is not null && !tank.Dead && GameUtils.Distance_WiiTanksUnits(tank.TurretPosition, Position) <= AiParams.DetectionRadiusShellFriendly)
+                if (tank != this && tank is not null && !tank.Dead && GameUtils.Distance_WiiTanksUnits(tank.TurretPosition, Position) <= AiParams.TankAwarenessShoot)
                     TanksNear.Add(tank);
 
             foreach (var block in Block.AllBlocks)
@@ -534,22 +548,8 @@ public partial class AITank : Tank {
         if (AutoEnactAIBehavior)
             AIBehaviorAction?.Invoke();
     }
-    public void DoDeflection(Shell shell) {
-        var calculation = (Position.Distance(shell.Position) - 20f) / (float)(Properties.ShellSpeed * 1.2f);
-        float rot = -Position.DirectionTo(            GeometryUtils.PredictFuturePosition(shell.Position, shell.Velocity, calculation))
-            .ToRotation() + MathHelper.PiOver2;
 
-        TargetTurretRotation = rot;
-
-        TurretRotationMultiplier = 4f;
-
-        // used to be rot %=... was it necessary?
-        //TargetTurretRotation %= MathHelper.Tau;
-
-        //if ((-TurretRotation + MathHelper.PiOver2).IsInRangeOf(TargetTurretRotation, 0.15f))
-
-        Shoot(false);
-    }
+    public BasicEffect TankBasicEffectHandler = new(TankGame.Instance.GraphicsDevice);
     public override void Render() {
         base.Render();
         if (Dead || !GameScene.ShouldRenderAll)
@@ -610,13 +610,77 @@ public partial class AITank : Tank {
             }
         }
     }
+
+    public void DrawAwarenessCircle(BasicEffect effect, float awareness, Color color) {
+        if (awareness <= 0)
+            return;
+
+        const int circleResolution = 32;
+
+        float radius = GameUtils.Value_WiiTanksUnits(awareness + TNK_WIDTH) / 2f;
+        float heightOffset = 0.2f; // Slightly above the tank Y to prevent z-fighting
+
+        VertexPositionColor[] vertices = new VertexPositionColor[circleResolution + 1];
+
+        for (int i = 0; i <= circleResolution; i++) {
+            float angle = MathHelper.TwoPi * i / circleResolution;
+            float x = MathF.Cos(angle) * radius;
+            float z = MathF.Sin(angle) * radius;
+
+            var worldPos = new Vector3(Position.X + x, heightOffset, Position.Y + z);
+            vertices[i] = new VertexPositionColor(worldPos, color);
+        }
+
+        effect.World = Matrix.Identity;
+        effect.View = View;
+        effect.Projection = Projection;
+
+        effect.VertexColorEnabled = true;
+
+        foreach (EffectPass pass in effect.CurrentTechnique.Passes) {
+            pass.Apply();
+            effect.GraphicsDevice.DrawUserPrimitives(PrimitiveType.LineStrip, vertices, 0, circleResolution);
+        }
+    }
     private void DrawExtras() {
         if (Dead)
             return;
 
         // did i ever make any good programming choices before this past year or so?
-        if (DebugManager.DebugLevel == DebugManager.Id.EntityData) {
+        // this code looks like it was written by a 12 year old with a broken arm - GitHub Copilot
+        // even ai hates my code.
+        if (DebugManager.DebugLevel == DebugManager.Id.AIData) {
             float calculation = 0f;
+
+            var drawInfo = new Dictionary<(string Name, float Value), Color>() {
+                [(nameof(AiParams.ObstacleAwarenessMine), AiParams.ObstacleAwarenessMine)] = Color.Yellow,
+                [(nameof(AiParams.ObstacleAwarenessMovement), AiParams.ObstacleAwarenessMovement)] = Color.Purple,
+
+                [(nameof(AiParams.AwarenessFriendlyShell), AiParams.AwarenessFriendlyShell)] = Color.Green,
+                [(nameof(AiParams.AwarenessFriendlyMine), AiParams.AwarenessFriendlyMine)] = Color.LimeGreen,
+
+                [(nameof(AiParams.AwarenessHostileShell), AiParams.AwarenessHostileShell)] = Color.DarkRed,
+                [(nameof(AiParams.AwarenessHostileMine), AiParams.AwarenessHostileMine)] = Color.Red,
+
+                [(nameof(AiParams.TankAwarenessShoot), AiParams.TankAwarenessShoot)] = Color.Blue,
+                [(nameof(AiParams.TankAwarenessMine), AiParams.TankAwarenessMine)] = Color.Cyan,
+
+                [(nameof(NumBlocksNearby), NumBlocksNearby)] = Color.Orange,
+            };
+
+            // NOTE: cross-product with target rotation vector and rotation vector gives you whether or not (negative or positive)
+            // the tank needs to rotate clockwise or counter-clockwise
+
+            for (int i = 0; i < drawInfo.Count; i++) {
+                var info = drawInfo.ElementAt(i);
+
+                var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Up * 20, World, View, Projection) - new Vector2(0, i * 20);
+                DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, $"{info.Key.Name}: {info.Key.Value}", pos, info.Value, Color.White,
+                    Vector2.One * 0.75f, 0f, borderThickness: 0.25f);
+                DrawAwarenessCircle(TankBasicEffectHandler, info.Key.Value, info.Value);
+            }
+
+            drawInfo.Clear();
 
             if (AiParams.PredictsPositions && TargetTank is not null)
                 calculation = Position.Distance(TargetTank.Position) / (float)(Properties.ShellSpeed * 1.2f);
@@ -639,8 +703,15 @@ public partial class AITank : Tank {
                 DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"col{i}", MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0),
                     Matrix.CreateTranslation(tnkCol2[i].X, 0, tnkCol2[i].Y), View, Projection), 1, centered: true);
             }
+
+            /*for (int i = 0; i < info.Length; i++) {
+                var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Up * 20, World, View, Projection) -
+                    new Vector2(0, (i * 20));
+                DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, info[i], pos,
+                    Color.Aqua, Color.Black, new Vector2(0.5f).ToResolution(), 0f, Anchor.TopCenter, 0.6f);
+            }*/
         }
-        if (DebugManager.DebugLevel == DebugManager.Id.NavData && !Properties.Stationary) {
+        if (DebugManager.DebugLevel == DebugManager.Id.AIData && !Properties.Stationary) {
             // magical numbers too lazy, look at update method to define
             IsObstacleInWay(AiParams.ObstacleAwarenessMovement / 2, Vector2.UnitY.Rotate(TargetTankRotation), out var travelPos, out var refPoints, TankPathCheckSize, draw: true);
             DebugManager.DrawDebugString(TankGame.SpriteRenderer, "TEP", MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(travelPos.X, 11, travelPos.Y), View, Projection), 6, centered: true);

@@ -163,8 +163,8 @@ public class Client {
 
         message.Put(tank.PlayerType);
         message.Put(tank.Team);
-        message.Put(tank.Body.Position.X);
-        message.Put(tank.Body.Position.Y);
+        message.Put(tank.Physics.Position.X);
+        message.Put(tank.Physics.Position.Y);
         message.Put(tank.TankRotation);
         message.Put(tank.TurretRotation);
 
@@ -178,8 +178,8 @@ public class Client {
         message.Put(PacketID.SyncPlayer);
 
         message.Put(tank.PlayerId);
-        message.Put(tank.Body.Position.X);
-        message.Put(tank.Body.Position.Y);
+        message.Put(tank.Physics.Position.X);
+        message.Put(tank.Physics.Position.Y);
         message.Put(tank.TankRotation);
         message.Put(tank.TurretRotation);
         message.Put(tank.Velocity.X);
@@ -195,8 +195,8 @@ public class Client {
         message.Put(PacketID.SyncAiTank);
 
         message.Put(tank.AITankId);
-        message.Put(tank.Body.Position.X);
-        message.Put(tank.Body.Position.Y);
+        message.Put(tank.Physics.Position.X);
+        message.Put(tank.Physics.Position.Y);
         message.Put(tank.TankRotation);
         message.Put(tank.TurretRotation);
         message.Put(tank.Velocity.X);
