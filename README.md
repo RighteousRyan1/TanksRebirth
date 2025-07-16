@@ -26,7 +26,7 @@ I decided to re-create this tanks game from the game "Wii Play" because it was a
 I felt the compulsion to recreate it- not only for myself, but for others. This project has been going on for what is about to be 4 years, this coming halloween. I've spent a lot of my free time developing this game and I hope you all enjoy
 it as much as I do!
 
-#-----------------------------------------------------------------------------------------------------------------------------------------------------------#
+#-----------------------------------------------------------------------------------------------------------#
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/07aa304e-6cb9-4fc6-945d-b92729719812" width="45%" />
@@ -43,7 +43,7 @@ it as much as I do!
   <img src="https://github.com/user-attachments/assets/b8d64614-2658-4e63-9681-d2fb171102b6" width="45%" />
 </p>
 
-#-----------------------------------------------------------------------------------------------------------------------------------------------------------#
+#-----------------------------------------------------------------------------------------------------------#
 
 If you wish to keep up with development in real time, consider joining the server at the top of the README.
 
