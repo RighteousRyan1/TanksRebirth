@@ -9,6 +9,7 @@ using tainicom.Aether.Physics2D.Dynamics;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.ID;
+using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework.Audio;

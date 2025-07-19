@@ -12,15 +12,19 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 
 ## Changes
 
-
+- AI Tanks are now completely overhauled! They now behave much different from how they did before
+	- They almost never kill themselves
+	- Almost never shoot themselves
+	- Act 10x more similar to the original game
 
 ## Changes Important for Modders
 
-
+- Completely overhauled the AI Parameters.
+	- Be sure to read the documentation of them by hovering on them in your IDE!
 
 ## Fixes
 
-
+- Fixed needing a "Starting Lives" value to save a specific mission
 
 ## TODO
 

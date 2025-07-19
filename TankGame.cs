@@ -43,6 +43,9 @@ using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.Graphics.Shaders;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
 using System.Linq;
+using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.ID;
+using TanksRebirth.GameContent.Systems.AI;
 
 namespace TanksRebirth;
 
@@ -543,6 +546,22 @@ public class TankGame : Game {
                 SteamworksUtils.SetSteamStatus("balls", "inspector");
                 SteamFriends.GetFriendGamePlayed(SteamFriends.GetFriendByIndex(0, EFriendFlags.k_EFriendFlagAll), out var x);
 
+            }*/
+            /*if (InputUtils.KeyJustPressed(Keys.F11)) {
+                for (int i = 0; i < TankID.Collection.Count; i++) {
+                    var parameters = AIManager.GetAIParameters(i);
+                    var properties = AIManager.GetAITankProperties(i);
+
+                    var json = JsonSerializer.Serialize(
+                        new {
+                            Parameters = parameters,
+                            Properties = properties
+                        },
+                        new JsonSerializerOptions { WriteIndented = true, IncludeFields = true });
+
+                    Directory.CreateDirectory("ai_params");
+                    File.WriteAllText("ai_params/tank_" + TankID.Collection.GetKey(i) + ".json", json);
+                }
             }*/
             HandleLogic(gameTime);
         }

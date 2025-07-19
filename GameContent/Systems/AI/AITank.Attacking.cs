@@ -4,16 +4,20 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using tainicom.Aether.Physics2D.Dynamics;
+using TanksRebirth.Enums;
 using TanksRebirth.GameContent.GameMechanics;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Systems.PingSystem;
+using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals.Common.Framework;
+using TanksRebirth.Internals.Common.Framework.Collisions;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
 
-namespace TanksRebirth.GameContent.Systems.AI; 
+namespace TanksRebirth.GameContent.Systems.AI;
 public partial class AITank {
     bool _predicts;
     bool _isSeeking;
@@ -27,6 +31,8 @@ public partial class AITank {
 
     public int CurrentRandomMineLay;
     public int CurrentRandomShoot;
+
+    public float ObstacleAwarenessMineReal;
 
     /// <summary>The location(s) of which this tank's shot path hits an obstacle.</summary>
     public Vector2[] ShotPathRicochetPoints { get; private set; } = [];
@@ -46,7 +52,7 @@ public partial class AITank {
         bool targetExists = Array.IndexOf(GameHandler.AllTanks, TargetTank) > -1 && TargetTank is not null;
         if (targetExists) {
             if (!_isSeeking && !_predicts) {
-                if (Behaviors[1].IsModOf(AiParams.TurretMovementTimer)) {
+                if (Behaviors[1].IsModOf(Parameters.TurretMovementTimer)) {
                     IsEnemySpotted = false;
                     if (TargetTank!.Properties.Invisible && TargetTank.timeSinceLastAction < 60) {
                         AimTarget = TargetTank.Position;
@@ -62,38 +68,95 @@ public partial class AITank {
             if (DoAttack)
                 UpdateAim();
         }
-        if (Behaviors[1].IsModOf(AiParams.TurretMovementTimer)) {
+        if (Behaviors[1].IsModOf(Parameters.TurretMovementTimer)) {
             var dirVec = Position - AimTarget;
-            TargetTurretRotation = -dirVec.ToRotation() - MathHelper.PiOver2 + Client.ClientRandom.NextFloat(-AiParams.AimOffset, AiParams.AimOffset);
+            TargetTurretRotation = -dirVec.ToRotation() - MathHelper.PiOver2 + Client.ClientRandom.NextFloat(-Parameters.AimOffset, Parameters.AimOffset);
         }
-        TurretRotation = MathUtils.RoughStep(TurretRotation, TargetTurretRotation, AiParams.TurretSpeed * TurretRotationMultiplier * RuntimeData.DeltaTime);
+        TurretRotation = MathUtils.RoughStep(TurretRotation, TargetTurretRotation, Parameters.TurretSpeed * TurretRotationMultiplier * RuntimeData.DeltaTime);
     }
     public void TryMineLay() {
+        // don't even bother if the tank can't lay mines
         if (Properties.MineLimit <= 0) return;
+        if (IsSurviving) return;
         if (!Behaviors[3].IsModOf(CurrentRandomMineLay)) return;
 
-        if (!TanksNear.Any(x => x.Team == Team)) {
-            IsNearDestructibleObstacle = BlocksNear.Any(c => c.Properties.IsDestructible);
-            if (AiParams.SmartMineLaying) {
-                if (IsNearDestructibleObstacle) {
-                    LayMine();
-                }
+        // set our new random window, this gets set
+        Behaviors[3].Value = 0;
+        CurrentRandomMineLay = Client.ClientRandom.Next(Parameters.RandomTimerMinMine, Parameters.RandomTimerMaxMine);
+
+        // check for friendly tanks nearby, if there are any, don't even attempt to lay a mine
+        if (TanksNearMineAwareness.Any(x => x.Team == Team && x.Team != TeamID.NoTeam)) return;
+
+        bool nearDestructible = false;
+
+        // call me the wizard of oz
+        ObstacleAwarenessMineReal = 3 * Parameters.ObstacleAwarenessMine;
+
+        var dist = ObstacleAwarenessMineReal / 2;
+
+        var dirs = RayCastCardinals(dist, (fixture, point, normal, fraction) => {
+            if (fixture.Body.Tag is Block b) {
+                if (!nearDestructible)
+                    nearDestructible = b.Properties.IsDestructible;
+
+                // b.Stack = (byte)Client.ClientRandom.Next(1, 8);
             }
-            else {
-                // attempt via an opportunity to lay a mine
-                var random = Client.ClientRandom.NextFloat(0, 1);
-                if (random <= (IsNearDestructibleObstacle ? AiParams.ChanceMineLayNearBreakables : AiParams.ChanceMineLay)) {
-                    // ensure no blocks are within iParams.MineObstacleAwareness
+            return fraction;
 
-                    LayMine();
+            // this wizardry goes beyond me
+        }, TankRotation - MathHelper.Pi);
 
-                    // check cardinals for a good movement direction
-                    // but how...? i'll find out
+        var goodDirs = dirs.Where(x => x.Direction != CollisionDirection.None).ToArray();
 
-                    CurrentRandomMineLay = Client.ClientRandom.Next(AiParams.RandomTimerMinMine, AiParams.RandomTimerMaxMine);
+        for (int i = 0; i < goodDirs.Length; i++) {
+            var pos = goodDirs[i].Vec * dist;
+            for (int j = 0; j < Mine.AllMines.Length; j++) {
+                var mine = Mine.AllMines[j];
+                if (mine is null) continue;
+
+                // check against radius
+                if (GameUtils.Distance_WiiTanksUnits(pos, mine.Position) <= mine.ExplosionRadius * GameUtils.Value_WiiTanksUnits(70)) {
+                    Console.WriteLine("Direction " + dirs[i].Direction + " is contaminated");
+                    goodDirs[i].Direction = CollisionDirection.None;
                 }
             }
         }
+
+        bool isMineLayOk = goodDirs.Length != 0;
+
+        Console.WriteLine();
+        Console.WriteLine($"Opportunity: " +
+            $"\nIsOk:             {isMineLayOk}" +
+            $"\nDirsNoObstacle:   {string.Join(", ", goodDirs.Select(x => x.Direction))}" +
+            $"\nNearDestructible: {nearDestructible}" +
+            $"\nNewOpportunity:   {CurrentRandomMineLay}");
+
+        //Console.WriteLine(isMineLayOk ? $"Mine-lay is ok! ({string.Join(", ", dirs.Where(x => x.Direction != CollisionDirection.None).Select(x => x.Direction))})" : "Mine-lay is not ok.");
+
+        // don't lay a mine if the checks fail
+        if (!isMineLayOk) return;
+
+        // SmartMineLaying was removed in favor
+        // attempt via an opportunity to lay a mine
+        var random = Client.ClientRandom.NextFloat(0, 1);
+
+        // change chance based on whether or not the tank is near a destructible obstacle
+        var randomSuccess = random <= (nearDestructible ? Parameters.ChanceMineLayNearBreakables : Parameters.ChanceMineLay);
+
+        if (!randomSuccess) return;
+        
+        LayMine();
+
+        var randomDir = Client.ClientRandom.Next(goodDirs.Length);
+
+        // then determine a good fleeing direction
+        Console.WriteLine("Laid mine. Choosing to go " + goodDirs[randomDir].Direction);
+
+
+        var rot = goodDirs[randomDir].Vec.ToRotation();
+
+        // Position += goodDirs[randomDir].Vec * 50;
+        TargetTankRotation = rot - MathHelper.PiOver2;
     }
     // TODO: make view distance, and make tanks in path public
     public void UpdateAim() {
@@ -105,7 +168,7 @@ public partial class AITank {
         List<Tank> tanksDef;
 
         if (Properties.ShellType == ShellID.Explosive) {
-            tanksDef = GetTanksInPath(Vector2.UnitY.Rotate(TurretRotation - MathHelper.Pi), out var ricP, out var tnkCol, offset: Vector2.UnitY * 20, pattern: x => !x.Properties.IsDestructible && x.Properties.IsSolid || x.Type == BlockID.Teleporter, missDist: AiParams.DetectionForgivenessHostile, doBounceReset: AiParams.BounceReset);
+            tanksDef = GetTanksInPath(Vector2.UnitY.Rotate(TurretRotation - MathHelper.Pi), out var ricP, out var tnkCol, offset: Vector2.UnitY * 20, pattern: x => !x.Properties.IsDestructible && x.Properties.IsSolid || x.Type == BlockID.Teleporter, missDist: Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
             if (GameUtils.Distance_WiiTanksUnits(ricP[^1], Position) < 150f) // TODO: change from hardcode to normalcode :YES:
                 tooCloseToExplosiveShell = true;
         }
@@ -113,14 +176,14 @@ public partial class AITank {
             tanksDef = GetTanksInPath(
                 Vector2.UnitY.Rotate(TurretRotation - MathHelper.Pi),
                 out var ricP, out var tnkCol, offset: Vector2.UnitY * 20,
-                missDist: AiParams.DetectionForgivenessHostile, doBounceReset: AiParams.BounceReset);
+                missDist: Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
 
             TanksSpotted = [.. tanksDef];
 
             ShotPathRicochetPoints = ricP;
             ShotPathTankCollPoints = tnkCol;
         }
-        if (AiParams.PredictsPositions) {
+        if (Parameters.PredictsPositions) {
             if (TargetTank is not null) {
                 var calculation = Position.Distance(TargetTank.Position) / (float)(Properties.ShellSpeed * 1.2f);
                 float rot = -Position.DirectionTo(GeometryUtils.PredictFuturePosition(TargetTank.Position, TargetTank.Velocity, calculation))
@@ -128,12 +191,12 @@ public partial class AITank {
 
                 tanksDef = GetTanksInPath(
                 Vector2.UnitY.Rotate(-Position.DirectionTo(TargetTank.Position).ToRotation() - MathHelper.PiOver2),
-                out var ricP, out var tnkCol, offset: AiParams.PredictsPositions ? Vector2.Zero : Vector2.UnitY * 20,
-                missDist: AiParams.DetectionForgivenessHostile, doBounceReset: AiParams.BounceReset);
+                out var ricP, out var tnkCol, offset: Parameters.PredictsPositions ? Vector2.Zero : Vector2.UnitY * 20,
+                missDist: Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
 
                 var targ = GeometryUtils.PredictFuturePosition(TargetTank.Position, TargetTank.Velocity, calculation);
                 var posPredict = GetTanksInPath(Vector2.UnitY.Rotate(rot),
-                    out var ricP1, out var tnkCol2, offset: Vector2.UnitY * 20, missDist: AiParams.DetectionForgivenessHostile, doBounceReset: AiParams.BounceReset);
+                    out var ricP1, out var tnkCol2, offset: Vector2.UnitY * 20, missDist: Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
 
                 if (tanksDef.Contains(TargetTank)) {
                     _predicts = true;
@@ -150,12 +213,12 @@ public partial class AITank {
         if (findsEnemy && !tooCloseToExplosiveShell)
             SeesTarget = true;
 
-        if (AiParams.SmartRicochets) {
+        if (Parameters.SmartRicochets) {
             //if (!seeks)
-            _seekRotation += AiParams.TurretSpeed * 0.5f;
+            _seekRotation += Parameters.TurretSpeed * 0.25f;
             var canShoot = !(CurShootCooldown > 0 || OwnedShellCount >= Properties.ShellLimit);
             if (canShoot) {
-                var tanks = GetTanksInPath(Vector2.UnitY.Rotate(_seekRotation), out var ricP, out var tnkCol, false, default, AiParams.DetectionForgivenessHostile, doBounceReset: AiParams.BounceReset);
+                var tanks = GetTanksInPath(Vector2.UnitY.Rotate(_seekRotation), out var ricP, out var tnkCol, false, default, Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
 
                 var findsEnemy2 = tanks.Any(tnk => tnk is not null && (tnk.Team != Team || tnk.Team == TeamID.NoTeam) && tnk != this);
                 // var findsSelf2 = tanks.Any(tnk => tnk is not null && tnk == this);
@@ -172,17 +235,19 @@ public partial class AITank {
                 _isSeeking = false;
         }
 
-        bool checkNoTeam = Team == TeamID.NoTeam || !TanksNear.Any(x => x.Team == Team);
+        bool checkNoTeam = Team == TeamID.NoTeam || !TanksNearShootAwareness.Any(x => x.Team == Team);
 
         // tanks wont shoot when fleeing from a mine
         if (ClosestDanger is Mine)
-            if (AiParams.CantShootWhileFleeing)
+            if (Parameters.CantShootWhileFleeing)
                 return;
 
+        Console.WriteLine(TanksSpotted.Length);
         if (Behaviors[2].IsModOf(CurrentRandomShoot)) {
-            CurrentRandomShoot = Client.ClientRandom.Next(AiParams.RandomTimerMinShoot, AiParams.RandomTimerMaxShoot);
+            CurrentRandomShoot = Client.ClientRandom.Next(Parameters.RandomTimerMinShoot, Parameters.RandomTimerMaxShoot);
+            Behaviors[2].Value = 0;
 
-            if (AiParams.PredictsPositions) {
+            if (Parameters.PredictsPositions) {
                 if (SeesTarget && checkNoTeam)
                     if (CurShootCooldown <= 0)
                         Shoot(false);
@@ -334,7 +399,7 @@ public partial class AITank {
                 break;
 
             // Check tanks BEFORE moving
-            float realMiss = 1f + missDist * uninterruptedIterations;
+            float realMiss = 1f + missDist * 2 * uninterruptedIterations;
 
             foreach (var enemy in GameHandler.AllTanks) {
                 if (enemy is null || enemy.Dead || tanks.Contains(enemy)) continue;

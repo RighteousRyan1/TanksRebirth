@@ -8,6 +8,7 @@ using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.AI;
+using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
@@ -47,7 +48,6 @@ public sealed class Mine : IAITankDanger {
     private static Texture2D? _envTexture;
 
     public int Id { get; private set; }
-    public DangerPriority Priority => DangerPriority.High;
     public int Team => Owner?.Team ?? TeamID.NoTeam;
 
     private ModelMesh? _mineMesh;

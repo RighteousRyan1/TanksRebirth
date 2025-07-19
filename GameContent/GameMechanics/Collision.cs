@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TanksRebirth.Enums;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
@@ -110,7 +111,7 @@ namespace TanksRebirth.GameContent.GameMechanics
         }
         public static void HandleCollisionSimple(Rectangle movingBox, Rectangle collidingBox, ref Vector2 velocity, ref Vector2 position, out CollisionDirection direction, bool setpos = true)
         {
-            direction = CollisionDirection.Other;
+            direction = CollisionDirection.None;
             var offset = velocity;
 
             CollisionInfo collisionInfo = new();
@@ -319,13 +320,4 @@ namespace TanksRebirth.GameContent.GameMechanics
             return true;
         }
     }
-}
-public enum CollisionDirection
-{
-    None,
-    Other,
-    Up,
-    Down,
-    Left,
-    Right
 }

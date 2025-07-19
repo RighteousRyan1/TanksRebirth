@@ -23,6 +23,7 @@ using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.Graphics.Metrics;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.GameContent.Systems.AI;
+using TanksRebirth.GameContent.Systems.TankSystem;
 
 namespace TanksRebirth.GameContent;
 

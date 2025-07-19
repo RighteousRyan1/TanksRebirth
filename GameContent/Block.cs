@@ -9,6 +9,7 @@ using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
+using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Utilities;
@@ -85,7 +86,10 @@ public class Block : IGameObject
     /// <summary>All <see cref="Block"/>s stored in the same array.</summary>
     public static Block[] AllBlocks = new Block[BlockMapPosition.MAP_WIDTH_169 * BlockMapPosition.MAP_HEIGHT * 5];
 
-    public Vector2 Position;
+    public Vector2 Position {
+        get => Physics.Position * Tank.UNITS_PER_METER;
+        set => Physics.Position = value / Tank.UNITS_PER_METER;
+    }
     public Vector3 Position3D => Position.ExpandZ();
 
     public Model Model;
@@ -96,7 +100,7 @@ public class Block : IGameObject
     /// <summary>Represents how tall (in arbitrary units) the top of this block is from the ground.</summary>
     public float HeightFromGround { get; private set; }
     /// <summary>The physics body for this <see cref="Block"/>.</summary>
-    public Body Body;
+    public Body Physics;
     /// <summary>The hitbox for this <see cref="Block"/>.</summary>
     public Rectangle Hitbox;
 
@@ -215,8 +219,8 @@ public class Block : IGameObject
         };
 
         if (Properties.IsCollidable) {
-            Body = Tank.CollisionsWorld.CreateRectangle(SIDE_LENGTH / Tank.UNITS_PER_METER, SIDE_LENGTH / Tank.UNITS_PER_METER, 1f, position / Tank.UNITS_PER_METER, 0f, BodyType.Static);
-            Position = Body.Position * Tank.UNITS_PER_METER;
+            Physics = Tank.CollisionsWorld.CreateRectangle(SIDE_LENGTH / Tank.UNITS_PER_METER, SIDE_LENGTH / Tank.UNITS_PER_METER, 1f, position / Tank.UNITS_PER_METER, 0f, BodyType.Static);
+            Physics.Tag = this;
         }
         else
             Position = position;
@@ -245,8 +249,8 @@ public class Block : IGameObject
     public void Remove() {
         _shadow?.Destroy();
 
-        if (Body != null && Tank.CollisionsWorld.BodyList.Contains(Body))
-            Tank.CollisionsWorld.Remove(Body);
+        if (Physics != null && Tank.CollisionsWorld.BodyList.Contains(Physics))
+            Tank.CollisionsWorld.Remove(Physics);
         AllBlocks[Id] = null;
     }
 

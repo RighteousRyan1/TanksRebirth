@@ -26,6 +26,7 @@ using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.GameContent.Systems.AI;
+using TanksRebirth.Internals.Common.Framework.Collisions;
 
 namespace TanksRebirth.GameContent;
 
@@ -300,7 +301,7 @@ public class PlayerTank : Tank
         var rotationMet = TankRotation > TargetTankRotation - Properties.MaximalTurn && TankRotation < TargetTankRotation + Properties.MaximalTurn;
 
         if (!rotationMet) {
-            Speed -= Properties.Deceleration * RuntimeData.DeltaTime;
+            Speed *= Properties.Deceleration * (1f - RuntimeData.DeltaTime);
             if (Speed < 0)
                 Speed = 0;
             IsTurning = true;
@@ -511,7 +512,7 @@ public class PlayerTank : Tank
             var cannotBounce = pathRicochetCount > Properties.RicochetCount;
             if (cannotBounce) return;
             var tankInPath = GameHandler.AllTanks.FirstOrDefault(
-                tnk => tnk is not null && !tnk.Dead && tnk.CollisionCircle.Intersects(new Circle() { Center = pathPos, Radius = 4 }));
+                tnk => tnk is not null && !tnk.Dead && tnk.CollisionCircle.Intersects(new Circle { Center = pathPos, Radius = 4 }));
             if (Array.IndexOf(GameHandler.AllTanks, tankInPath) > -1 && tankInPath is not null) {
                 TanksSpotted = [tankInPath!];
                 return;

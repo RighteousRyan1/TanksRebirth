@@ -12,13 +12,15 @@ using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
-using TanksRebirth.Internals.Common.Framework;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
+using TanksRebirth.Internals.Common.Framework.Collision;
+using TanksRebirth.Internals.Common.Framework.Collisions;
+using TanksRebirth.GameContent.Systems.TankSystem;
 
 namespace TanksRebirth.GameContent;
 
@@ -112,7 +114,6 @@ public class Shell : IAITankDanger {
 
     /// <summary>The hurtcircle on the 2D backing map for the game.</summary>
     public Circle HitCircle => new() { Center = Position, Radius = 4 };
-    public DangerPriority Priority => DangerPriority.Medium;
     public int Team => Owner?.Team ?? TeamID.NoTeam;
 
     private Texture2D? _shellTexture;
@@ -241,7 +242,7 @@ public class Shell : IAITankDanger {
             }
             if (owner is not null) {
                 ShootSound!.Instance.Pitch = MathHelper.Clamp(owner.Properties.ShootPitch, -1, 1);
-                SoundPlayer.PlaySoundInstance(ShootSound, SoundContext.Effect, volume: 0.3f);
+                SoundPlayer.PlaySoundInstance(ShootSound, SoundContext.Effect, volume: 0.6f);
                 //if (CameraGlobals.IsUsingFirstPresonCamera)
                 //    SoundUtils.CreateSpatialSound(ShootSound, owner.TurretPosition3D, CameraGlobals.RebirthFreecam.Position);
             }

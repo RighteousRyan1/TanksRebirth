@@ -9,6 +9,7 @@ using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.AI;
+using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework.Audio;
@@ -40,7 +41,6 @@ public class Explosion : IAITankDanger {
     /// <summary>Only merlin himself could decode why I use this... Use this number with any explosion-based calculations.</summary>
     public const float MAGIC_EXPLOSION_NUMBER = 9f;
     public int Id { get; private set; }
-    public DangerPriority Priority => DangerPriority.Medium;
     public int Team => Owner?.Team ?? TeamID.NoTeam;
 
     public float Scale;

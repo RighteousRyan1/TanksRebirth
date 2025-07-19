@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -7,6 +8,7 @@ using tainicom.Aether.Physics2D.Dynamics;
 using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Globals.Assets;
+using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
@@ -181,6 +183,7 @@ public static class GameScene
     // make proper texturepack loading.
     public static class BoundsRenderer
     {
+        public const string BOUNDARY_TAG = "bounds";
         public static Body[] Boundaries = new Body[4];
         public static Model BoundaryModel;
 
@@ -198,6 +201,8 @@ public static class GameScene
 
             Boundaries[3] = Tank.CollisionsWorld.CreateRectangle(5 / Tank.UNITS_PER_METER, 1000 / Tank.UNITS_PER_METER, 1f, 
                 new Vector2(MIN_X - 7, MAX_Z) / Tank.UNITS_PER_METER, 0f, BodyType.Static);
+
+            Array.ForEach(Boundaries, x => x.Tag = BOUNDARY_TAG);
             
             switch (Theme)
             {

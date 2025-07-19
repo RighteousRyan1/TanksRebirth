@@ -12,6 +12,46 @@ namespace TanksRebirth.Internals.Common.Utilities;
 
 public static class MathUtils
 {
+    public static Vector2 Slerp(Vector2 from, Vector2 to, float t) {
+        t = MathHelper.Clamp(t, 0f, 1f);
+
+        from.Normalize();
+        to.Normalize();
+
+        float dot = Vector2.Dot(from, to);
+        dot = MathHelper.Clamp(dot, -1f, 1f);
+
+        float theta = MathF.Acos(dot) * t;
+
+        Vector2 relative = to - from * dot;
+        relative.Normalize();
+
+        Vector2 result = from * MathF.Cos(theta) + relative * MathF.Sin(theta);
+        if (float.IsNaN(result.X) || float.IsNaN(result.Y))
+            System.Diagnostics.Debugger.Break();
+
+        return result;
+    }
+    public static Vector2 SlerpWtf(Vector2 from, Vector2 to, float t) {
+        t = MathHelper.Clamp(t, 0f, 1f);
+
+        from.Normalize();
+        to.Normalize();
+
+        float dot = Vector2.Dot(from, to);
+        dot = MathHelper.Clamp(dot, -1f, 1f);
+
+        float theta = MathF.Acos(dot) * t;
+
+        Vector2 relative = to - from * dot;
+        // relative.Normalize();
+
+        Vector2 result = from * MathF.Cos(theta) + relative * MathF.Sin(theta);
+        if (float.IsNaN(result.X) || float.IsNaN(result.Y))
+            System.Diagnostics.Debugger.Break();
+
+        return result;
+    }
     public static Vector2 GetSmoothedDirection(Vector2[] points, int index) {
         if (points.Length < 2) return Vector2.UnitX;
 
