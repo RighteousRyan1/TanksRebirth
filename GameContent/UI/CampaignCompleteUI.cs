@@ -134,6 +134,7 @@ public static class CampaignCompleteUI
             _skip = true;
             _shouldShowGrade = true;
 
+            // TODO: make this thread-safe. it's probably causing tank models to become null somehow
             while (!InputUtils.KeyJustPressed(Keys.Enter)) {
                 ModifyTracks();
                 await Task.Delay(TankGame.LastGameTime.ElapsedGameTime).ConfigureAwait(false);
@@ -310,7 +311,7 @@ public static class CampaignCompleteUI
 
         // then, we determine the number of possible lives by checking how many extra life missions
         // there were this campaign, along with adding the starting life count.
-        TotalPossibleLives = PlayerTank.StartingLives + campaign.MetaData.ExtraLivesMissions.Length;
+        TotalPossibleLives = PlayerTank.StartingLives + campaign.CachedMissions.Count(x => x.GrantsExtraLife);
 
         if (orderByTier)
             KillsPerType = KillsPerType.OrderBy(tier => tier.Key).ToDictionary(x => x.Key, y => y.Value);

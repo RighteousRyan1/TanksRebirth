@@ -26,7 +26,7 @@ public record struct Mission
     /// <summary>The obstacles in the <see cref="Mission"/>.</summary>
     public BlockTemplate[] Blocks { get; set; }
 
-    public bool GrantsExtraLife;
+    public bool GrantsExtraLife { get; set; }
 
     /// <summary>
     /// Construct a mission. Should generally never be called by the user unless you want to use a lot of time figuring things out.

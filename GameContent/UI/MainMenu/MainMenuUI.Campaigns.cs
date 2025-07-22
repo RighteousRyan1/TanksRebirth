@@ -90,7 +90,7 @@ public static partial class MainMenuUI {
                 $"\nDescription: {campaign.MetaData.Description}" +
                 $"\nVersion: {campaign.MetaData.Version}" +
                 $"\nStarting Lives: {campaign.MetaData.StartingLives}" +
-                $"\nBonus Life Count: {campaign.MetaData.ExtraLivesMissions.Length}" +
+                $"\nBonus Life Count: {campaign.CachedMissions.Count(x => x.GrantsExtraLife)}" +
                 $"\nTags: {string.Join(", ", campaign.MetaData.Tags)}" +
                 $"\n\nMiddle click to DELETE ME."
             };

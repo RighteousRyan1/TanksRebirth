@@ -20,8 +20,8 @@ namespace TanksRebirth.GameContent.Systems.PingSystem;
 
 // TODO: finish images rendering
 public class IngamePing {
-    // 4 players, 7 pings possible per player
-    public static IngamePing[] AllIngamePings = new IngamePing[28];
+    // 4 players, 7 pings possible per player. a few buffered spots since pings fade out over time
+    public static IngamePing[] AllIngamePings = new IngamePing[32];
 
     float _lifeTime;
     float _scaleEase;
@@ -60,10 +60,10 @@ public class IngamePing {
 
         for (int i = 0; i < GameHandler.AllTanks.Length; i++) {
             var tank = GameHandler.AllTanks[i];
-            if (tank is not null && Vector3.Distance(tank.Position3D, position) < 20) {
-                TrackedTank = tank;
-                break;
-            }
+            if (tank is null) continue;
+            if (tank.Dead) continue;
+            if (Vector3.Distance(tank.Position3D, position) > 20) continue;
+            TrackedTank = tank;
         }
 
         //float x = 0f;
@@ -73,7 +73,7 @@ public class IngamePing {
             var val = 0.005f;
             GeometryUtils.Add(ref p.Scale, val); //Easings.OutSine()
             p.Alpha -= val * 1.8f * RuntimeData.DeltaTime;
-            p.Roll = MathHelper.PiOver2;
+            p.Pitch = MathHelper.PiOver2;
 
             p.Color = Color;
 
