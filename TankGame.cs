@@ -98,9 +98,6 @@ public class TankGame : Game {
 
     public static RasterizerState _cachedState;
 
-    private static Particle _secret;
-    private static Particle _secretText;
-
     // ### EVENTS ###
 
     public static event EventHandler<IntPtr> OnFocusLost;
@@ -271,7 +268,8 @@ public class TankGame : Game {
             "Assets/textures/misc/tank_smokes",
             "Assets/textures/misc/tank_smokes",
 
-            "Assets/textures/secret/special2",
+            "Assets/textures/secret/ziggy",
+            "Assets/textures/secret/bk_cypher",
             
             
             // Tank Textures
@@ -839,30 +837,40 @@ public class TankGame : Game {
         RebirthMouse.DrawMouse();
         SpriteRenderer.End();
     }
+
+    static Particle _ziggy;
+    static Particle _ziggyText;
+    static Particle _bkCypher;
     private static void PlaceSecrets() {
         // magic.
         const float SECRET_BASE_POS_X = GameScene.MIN_X - 28.5f;
         const float SECRET_BASE_POS_Y = 22;
         const float SECRET_BASE_POS_Z = 20;
 
-        _secret = GameHandler.Particles.MakeParticle(new Vector3(100, 0.1f, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/secret/special2"));
-        _secret.UniqueBehavior = (p) => {
-            _secret.Position = new Vector3(SECRET_BASE_POS_X, SECRET_BASE_POS_Y, SECRET_BASE_POS_Z - 40);
-            _secret.Pitch = MathHelper.Pi;
-            _secret.Yaw = -MathHelper.PiOver2;
-            _secret.Roll = RuntimeData.RunTime / 60 % 2 < 1 ? -MathHelper.PiOver4 / 4 : MathHelper.PiOver4 / 4;
-
-            _secret.Scale = Vector3.One * 0.3f;
-            _secret.HasAddativeBlending = false;
+        _ziggy = GameHandler.Particles.MakeParticle(new Vector3(100, 0.1f, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/secret/ziggy"));
+        _ziggy.Position = new Vector3(SECRET_BASE_POS_X, SECRET_BASE_POS_Y, SECRET_BASE_POS_Z - 40);
+        _ziggy.Pitch = MathHelper.Pi;
+        _ziggy.Yaw = -MathHelper.PiOver2;
+        _ziggy.Scale = Vector3.One * 0.3f;
+        _ziggy.HasAddativeBlending = false;
+        _ziggy.UniqueBehavior = (a) => {
+            _ziggy.Roll = RuntimeData.RunTime / 60 % 2 < 1 ? -MathHelper.PiOver4 / 4 : MathHelper.PiOver4 / 4;
         };
-        _secretText = GameHandler.Particles.MakeParticle(new Vector3(100, 0.1f, 0), "Ziggy <3");
-        _secretText.UniqueBehavior = (p) => {
-            _secretText.Position = new Vector3(SECRET_BASE_POS_X, SECRET_BASE_POS_Y + 20, SECRET_BASE_POS_Z - 8 - 40);
-            _secretText.Yaw = MathHelper.PiOver2;
-            _secretText.Roll = MathHelper.Pi;
 
-            _secretText.Scale = Vector3.One * 0.3f;
-            _secretText.HasAddativeBlending = false;
+        _ziggyText = GameHandler.Particles.MakeParticle(new Vector3(100, 0.1f, 0), "Ziggy <3");
+        _ziggyText.Position = new Vector3(SECRET_BASE_POS_X, SECRET_BASE_POS_Y + 20, SECRET_BASE_POS_Z - 8 - 40);
+        _ziggyText.Yaw = MathHelper.PiOver2;
+        _ziggyText.Roll = MathHelper.Pi;
+        _ziggyText.Scale = Vector3.One * 0.3f;
+        _ziggyText.HasAddativeBlending = false;
+
+        _bkCypher = GameHandler.Particles.MakeParticle(new Vector3(1000, 0.1f, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/secret/bk_cypher"));
+        _bkCypher.UniqueBehavior = (a) => {
+            _bkCypher.Yaw = MathHelper.PiOver2 + MathHelper.PiOver4;
+            _bkCypher.Roll = MathHelper.Pi;
+            _bkCypher.Scale = Vector3.One * 0.65f;
+            _bkCypher.HasAddativeBlending = false;
+            _bkCypher.Position = new Vector3(1500, 1350, 100);
         };
     }
     private void TankGame_OnFocusRegained(object sender, IntPtr e) {

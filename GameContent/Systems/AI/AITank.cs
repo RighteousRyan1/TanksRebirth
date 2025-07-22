@@ -393,7 +393,7 @@ public partial class AITank : Tank {
     void GiveXP() {
         if (!LevelEditorUI.Editing) {
             var rand = Client.ClientRandom.NextFloat(0.75f, 1.25f);
-            var gain = Parameters.BaseXP + rand;
+            var gain = Parameters.BaseXP * rand;
             // i will keep this commented if anything else happens.
             //var gain = (BaseExpValue + rand) * GameData.UniversalExpMultiplier;
             GameHandler.ExperienceBar.GainExperience(gain);
@@ -456,8 +456,8 @@ public partial class AITank : Tank {
 
         HandleTankMetaData();
 
-        TanksNearMineAwareness = [.. GameHandler.AllTanks.Where(x => x is not null && x != this && !x.Dead && GameUtils.Distance_WiiTanksUnits(Position, x.Position) <= Parameters.TankAwarenessMine + TNK_HEIGHT)];
-        TanksNearShootAwareness = [.. GameHandler.AllTanks.Where(x => x is not null && x != this && !x.Dead && GameUtils.Distance_WiiTanksUnits(TurretPosition, x.Position) <= Parameters.TankAwarenessMine + TNK_HEIGHT)];
+        TanksNearMineAwareness = [.. GameHandler.AllTanks.Where(x => x is not null && x != this && !x.Dead && GameUtils.Distance_WiiTanksUnits(Position, x.Position) <= Parameters.TankAwarenessMine)];
+        TanksNearShootAwareness = [.. GameHandler.AllTanks.Where(x => x is not null && x != this && !x.Dead && GameUtils.Distance_WiiTanksUnits(TurretPosition, x.Position) <= Parameters.TankAwarenessShoot)];
         var isShellNear = IsInDanger && ClosestDanger is Shell;
 
         // only use if checking the respective boolean!
@@ -576,7 +576,7 @@ public partial class AITank : Tank {
             }
         }
     }
-    public void DrawAwarenessCircle(BasicEffect effect, float awareness, Color color) {
+    public void DrawAwarenessCircle(BasicEffect effect, float awareness, Color color, Vector2? posOverride = null) {
         if (awareness <= 0)
             return;
 
@@ -589,12 +589,14 @@ public partial class AITank : Tank {
 
         VertexPositionColor[] vertices = new VertexPositionColor[circleResolution + 1];
 
+        var pos = posOverride ?? Position;
+
         for (int i = 0; i <= circleResolution; i++) {
             float angle = MathHelper.TwoPi * i / circleResolution;
             float x = MathF.Cos(angle) * radius;
             float z = MathF.Sin(angle) * radius;
 
-            var worldPos = new Vector3(Position.X + x, heightOffset, Position.Y + z);
+            var worldPos = new Vector3(pos.X + x, heightOffset, pos.Y + z);
             vertices[i] = new VertexPositionColor(worldPos, color);
         }
 
@@ -647,22 +649,22 @@ public partial class AITank : Tank {
         if (DebugManager.DebugLevel == DebugManager.Id.AIData) {
             float calculation = 0f;
 
-            var drawInfo = new Dictionary<(string Name, float Value), Color>() {
-                [(nameof(Parameters.ObstacleAwarenessMine), ObstacleAwarenessMineReal / 2)] = Color.Yellow,
+            var drawInfo = new Dictionary<(string Name, float Value, bool TrackTurret), Color>() {
+                [(nameof(Parameters.ObstacleAwarenessMine), ObstacleAwarenessMineReal / 2, false)] = Color.Yellow,
 
-                [(nameof(Parameters.ObstacleAwarenessMovement), Parameters.ObstacleAwarenessMovement * 2)] = Color.Purple,
+                [(nameof(Parameters.ObstacleAwarenessMovement), Parameters.ObstacleAwarenessMovement * 2, false)] = Color.Purple,
 
-                [(nameof(Parameters.AwarenessFriendlyShell), Parameters.AwarenessFriendlyShell)] = Color.Green,
-                [(nameof(Parameters.AwarenessFriendlyMine), Parameters.AwarenessFriendlyMine)] = Color.LimeGreen,
+                [(nameof(Parameters.AwarenessFriendlyShell), Parameters.AwarenessFriendlyShell, false)] = Color.Green,
+                [(nameof(Parameters.AwarenessFriendlyMine), Parameters.AwarenessFriendlyMine, false)] = Color.LimeGreen,
 
-                [(nameof(Parameters.AwarenessHostileShell), Parameters.AwarenessHostileShell)] = Color.DarkRed,
-                [(nameof(Parameters.AwarenessHostileMine), Parameters.AwarenessHostileMine)] = Color.Red,
+                [(nameof(Parameters.AwarenessHostileShell), Parameters.AwarenessHostileShell, false)] = Color.DarkRed,
+                [(nameof(Parameters.AwarenessHostileMine), Parameters.AwarenessHostileMine, false)] = Color.Red,
 
-                [(nameof(Parameters.TankAwarenessShoot), Parameters.TankAwarenessShoot)] = Color.Blue,
-                [(nameof(Parameters.TankAwarenessMine), Parameters.TankAwarenessMine)] = Color.Cyan,
+                [(nameof(Parameters.TankAwarenessShoot), Parameters.TankAwarenessShoot, true)] = Color.Blue,
+                [(nameof(Parameters.TankAwarenessMine), Parameters.TankAwarenessMine, false)] = Color.Cyan,
 
-                [(nameof(BlocksNear), BlocksNear.Count)] = Color.Orange,
-                [(nameof(TanksNearMineAwareness), TanksNearMineAwareness.Count)] = Color.IndianRed,
+                [(nameof(BlocksNear), BlocksNear.Count, false)] = Color.Orange,
+                [(nameof(TanksNearMineAwareness), TanksNearMineAwareness.Count, false)] = Color.IndianRed,
             };
 
             // NOTE: cross-product with target rotation vector and rotation vector gives you whether or not (negative or positive)
@@ -678,8 +680,8 @@ public partial class AITank : Tank {
                 var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Up * 20, World, View, Projection) - new Vector2(0, realI * 20);
                 DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, 
                     $"{info.Key.Name}: {info.Key.Value} ({GameUtils.Value_WiiTanksUnits(info.Key.Value)})", pos, info.Value, Color.White,
-                    Vector2.One * 0.75f, 0f, borderThickness: 0.25f);
-                DrawAwarenessCircle(TankBasicEffectHandler, info.Key.Value, info.Value);
+                    Vector2.One * 0.5f, 0f, borderThickness: 0.25f);
+                DrawAwarenessCircle(TankBasicEffectHandler, info.Key.Value, info.Value, info.Key.TrackTurret ? TurretPosition : null);
             }
 
             DrawAwarenessLine(TankBasicEffectHandler, Parameters.ObstacleAwarenessMovement / 2 * Speed, Color.Black);
@@ -734,6 +736,7 @@ public partial class AITank : Tank {
     public void SetEntityDetectionCircle(float diameter) {
         EntityDetector.Radius = GameUtils.Value_WiiTanksUnits(diameter / 2);
     }
+    public bool IsOnSameTeamAs(int otherTeam) => Team == otherTeam && Team != TeamID.NoTeam && otherTeam != TeamID.NoTeam;
     public static int PickRandomTier() => Server.ServerRandom.Next(0, TankID.Collection.Count);
     /// <summary>Performs a raycast in all 4 cardinal directions of the tank (rotation-agnostic).</summary>
     /// <param name="distance">The diameter of the detection circle.</param>
@@ -764,7 +767,7 @@ public partial class AITank : Tank {
                 callback?.Invoke(fixture, point, normal, fraction);
 
                 if (fixture.Body.Tag is Block or GameScene.BoundsRenderer.BOUNDARY_TAG) {
-                     Console.WriteLine("hit along ray: " + fraction + "(" + collDir + ")");
+                     // Console.WriteLine("hit along ray: " + fraction + "(" + collDir + ")");
                      goodDirs[i] = (CollisionDirection.None, Vector2.Zero);
                 }
                 else {

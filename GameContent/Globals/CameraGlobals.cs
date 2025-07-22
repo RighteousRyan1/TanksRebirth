@@ -193,8 +193,15 @@ public static class CameraGlobals {
             var keyl = LevelEditorUI.Active || !isPlayerActive ? Keys.A : Keys.Left;
             var keyr = LevelEditorUI.Active || !isPlayerActive ? Keys.D : Keys.Right;
 
-            if (InputUtils.MouseRight)
-                RebirthFreecam.Rotation -= new Vector3(0, MouseUtils.MouseVelocity.Y * rotationSpeed, MouseUtils.MouseVelocity.X * rotationSpeed);
+            if (InputUtils.MouseRight) {
+                RebirthFreecam.Rotation -= new Vector3(0, 
+                    MouseUtils.MouseVelocity.Y * rotationSpeed,
+                    MouseUtils.MouseVelocity.X * rotationSpeed);
+
+                 RebirthFreecam.Rotation = new Vector3(0,
+                     MathHelper.Clamp(RebirthFreecam.Rotation.Y, -MathHelper.PiOver2, MathHelper.PiOver2),
+                     RebirthFreecam.Rotation.Z);
+            }
             if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Add))
                 RebirthFreecam.FieldOfView += 0.5f * RuntimeData.DeltaTime;
             if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Subtract))

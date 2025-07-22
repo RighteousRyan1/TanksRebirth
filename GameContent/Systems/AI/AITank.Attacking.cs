@@ -76,12 +76,14 @@ public partial class AITank {
     }
     public void TryMineLay() {
         // don't even bother if the tank can't lay mines
-        if (Properties.MineLimit <= 0) return;
-        if (IsSurviving) return;
         if (!Behaviors[3].IsModOf(CurrentRandomMineLay)) return;
 
         // set our new random window, this gets set
         Behaviors[3].Value = 0;
+
+        if (Properties.MineLimit <= 0) return;
+        if (IsSurviving) return;
+
         CurrentRandomMineLay = Client.ClientRandom.Next(Parameters.RandomTimerMinMine, Parameters.RandomTimerMaxMine);
 
         // check for friendly tanks nearby, if there are any, don't even attempt to lay a mine
@@ -124,12 +126,12 @@ public partial class AITank {
 
         bool isMineLayOk = goodDirs.Length != 0;
 
-        Console.WriteLine();
+        /*Console.WriteLine();
         Console.WriteLine($"Opportunity: " +
             $"\nIsOk:             {isMineLayOk}" +
             $"\nDirsNoObstacle:   {string.Join(", ", goodDirs.Select(x => x.Direction))}" +
             $"\nNearDestructible: {nearDestructible}" +
-            $"\nNewOpportunity:   {CurrentRandomMineLay}");
+            $"\nNewOpportunity:   {CurrentRandomMineLay}");*/
 
         //Console.WriteLine(isMineLayOk ? $"Mine-lay is ok! ({string.Join(", ", dirs.Where(x => x.Direction != CollisionDirection.None).Select(x => x.Direction))})" : "Mine-lay is not ok.");
 
@@ -164,6 +166,10 @@ public partial class AITank {
         SeesTarget = false;
 
         bool tooCloseToExplosiveShell = false;
+
+        var friendliesNearby = TanksNearShootAwareness.Any(x => IsOnSameTeamAs(x.Team));
+        // stop doing expensive checks if the tank can't even shoot anyway
+        if (friendliesNearby) return;
 
         List<Tank> tanksDef;
 
@@ -234,26 +240,24 @@ public partial class AITank {
             if (TurretRotation == TargetTurretRotation || !canShoot)
                 _isSeeking = false;
         }
-
-        bool checkNoTeam = Team == TeamID.NoTeam || !TanksNearShootAwareness.Any(x => x.Team == Team);
-
         // tanks wont shoot when fleeing from a mine
         if (ClosestDanger is Mine)
             if (Parameters.CantShootWhileFleeing)
                 return;
 
-        Console.WriteLine(TanksSpotted.Length);
+        // Console.WriteLine(TanksSpotted.Length);
         if (Behaviors[2].IsModOf(CurrentRandomShoot)) {
             CurrentRandomShoot = Client.ClientRandom.Next(Parameters.RandomTimerMinShoot, Parameters.RandomTimerMaxShoot);
             Behaviors[2].Value = 0;
 
+            // no need to check friendliesNearby because we return earlier in this method if there are any
             if (Parameters.PredictsPositions) {
-                if (SeesTarget && checkNoTeam)
+                if (SeesTarget)
                     if (CurShootCooldown <= 0)
                         Shoot(false);
             }
             else {
-                if (SeesTarget && checkNoTeam && !findsSelf && !findsFriendly)
+                if (SeesTarget && !findsSelf && !findsFriendly)
                     if (CurShootCooldown <= 0)
                         Shoot(false);
             }

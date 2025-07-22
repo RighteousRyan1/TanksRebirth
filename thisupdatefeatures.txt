@@ -16,15 +16,22 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 	- They almost never kill themselves
 	- Almost never shoot themselves
 	- Act 10x more similar to the original game
+	- Should, overall, make them less of a nuisance to destroy
+	- Should also improve their random movements a ton
+- Yellow tank music is now prioritized over pink tank music
+- Reworked Co-op spawn positions on most Vanilla campaign levels
+- Reworked a few missions, and buffed the final mission slightly
 
 ## Changes Important for Modders
 
 - Completely overhauled the AI Parameters.
 	- Be sure to read the documentation of them by hovering on them in your IDE!
+- Pink tanks, internally, are now listed before Yellow tanks
 
 ## Fixes
 
 - Fixed needing a "Starting Lives" value to save a specific mission
+- Changed some inconsistencies between the original missions and Rebirth's
 
 ## TODO
 

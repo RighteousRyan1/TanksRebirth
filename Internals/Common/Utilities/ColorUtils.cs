@@ -41,6 +41,30 @@ public static class ColorUtils
 
         return new((int)red, (int)green, (int)blue, color.A);
     }
+    public static void AdjustSaturation(Texture2D texture, float saturation) {
+        if (texture.Format != SurfaceFormat.Color)
+            throw new InvalidOperationException("Texture format must be Color.");
+
+        Color[] pixels = new Color[texture.Width * texture.Height];
+        texture.GetData(pixels);
+
+        for (int i = 0; i < pixels.Length; i++) {
+            var color = pixels[i];
+            float r = color.R / 255f;
+            float g = color.G / 255f;
+            float b = color.B / 255f;
+
+            float gray = r * 0.3f + g * 0.59f + b * 0.11f;
+
+            r = MathHelper.Clamp(gray + (r - gray) * saturation, 0f, 1f);
+            g = MathHelper.Clamp(gray + (g - gray) * saturation, 0f, 1f);
+            b = MathHelper.Clamp(gray + (b - gray) * saturation, 0f, 1f);
+
+            pixels[i] = new Color(r, g, b, color.A / 255f);
+        }
+
+        texture.SetData(pixels);
+    }
     public static Color HsvToRgb(double h, double S, double V)
     {
         Color c = new();

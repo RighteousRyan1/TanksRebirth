@@ -1,24 +1,19 @@
 ﻿using Microsoft.Xna.Framework;
-using Steamworks;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 using tainicom.Aether.Physics2D.Dynamics;
 using TanksRebirth.Enums;
-using TanksRebirth.GameContent.GameMechanics;
-using TanksRebirth.GameContent.Globals;
-using TanksRebirth.GameContent.ID;
 using TanksRebirth.Graphics;
-using TanksRebirth.Internals.Common;
-using TanksRebirth.Internals.Common.Framework.Collision;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.Systems.AI; 
+
+public enum PivotType {
+    RandomTurn = 2,
+    NavTurn = 1,
+}
 public partial class AITank {
     public bool IsTooCloseToObstacle;
 
@@ -29,7 +24,7 @@ public partial class AITank {
 
     // random movements do not happen until this queue is empty
     // random turns ARE added to the pivot queue
-    public List<Vector2> PivotQueue = [];
+    public List<(Vector2 Direction, PivotType Type)> PivotQueue = [];
     public List<Vector2> SubPivotQueue = [];
 
 
@@ -79,20 +74,6 @@ public partial class AITank {
             }
             else if (!IsTooCloseToObstacle && !IsSurviving) {
                 DoRandomMove();
-
-                // divides because uh... idk. might change based on what bigkitty says
-                // TargetTankRotation += randomTurn / 4;
-
-                // aggression/pursuit handling
-                // this implementation does NOT apply aggressiveness to the random movement bias, but rather just overrides it
-                /*if (TargetTank is not null) {
-                    var toTarget = Vector2.Normalize(TargetTank.Position - Position);
-                    var toPath = Vector2.Normalize(PathEndpoint - Position);
-
-                    var finalVector = Vector2.Normalize(Vector2.Lerp(toPath, toTarget, AiParams.AggressivenessBias));
-
-                    TargetTankRotation = finalVector.ToRotation() - MathHelper.PiOver2;
-                }*/
             }
         }
         // only generates a subqueue if there are no large pivot queues and there are not already a subqueue
@@ -107,20 +88,57 @@ public partial class AITank {
         //uint framesLookAhead = AiParams.ObstacleAwarenessMovement / 2;
         //var tankDirection = Vector2.UnitY.Rotate(TargetTankRotation);
 
+        var checkDist = Parameters.ObstacleAwarenessMovement / 2;
         // strictly 
-        IsTooCloseToObstacle = RaycastAheadOfTank(Parameters.ObstacleAwarenessMovement * Speed);
+        IsTooCloseToObstacle = RaycastAheadOfTank(checkDist * Speed);
 
         // don't bother doing anything else since it's not blocked
         if (!IsTooCloseToObstacle) {
-            //Console.WriteLine("Obstacle not found.. block navigation skipped.");
+            Console.WriteLine("Obstacle not found.. block navigation skipped.");
             return;
         }
 
-        var dist = Parameters.ObstacleAwarenessMovement;
+        float angleDiff = MathHelper.PiOver4 / 2; // normally pi/2
+
+        float fracL = -1f;
+        float fracR = -1f;
+
+        bool checkLeft = RaycastAheadOfTank(checkDist * 100, -angleDiff,
+            (fixture, point, normal, fraction) => {
+                fracL = fraction;
+                return fraction;
+            });
+
+        bool checkRight = RaycastAheadOfTank(checkDist * 100, angleDiff,
+            (fixture, point, normal, fraction) => {
+                fracR = fraction;
+                return fraction;
+            });
+
+        var dir = fracL > fracR ? CollisionDirection.Left : CollisionDirection.Right;
+
+        Console.WriteLine(dir);
+
+        /*if (left != CollisionDirection.None && right != CollisionDirection.None) {
+            var random = Client.ClientRandom.Next(0, 2);
+
+            dir = random == 0 ? left : right;
+        }
+        else {
+            // should only be one or the other in this branch
+            if (left != CollisionDirection.None)
+                dir = left;
+            else
+                dir = right;
+        }*/
+
+        /*bool checkLeft = RaycastAheadOfTank(checkDist * 100, -MathHelper.PiOver2);
+
+        bool checkRight = RaycastAheadOfTank(checkDist * 100, MathHelper.PiOver2);
 
         // returns if the path is blocked
-        var left = !RaycastAheadOfTank(dist, -MathHelper.PiOver2) ? CollisionDirection.Left : CollisionDirection.None;
-        var right = !RaycastAheadOfTank(dist, MathHelper.PiOver2) ? CollisionDirection.Right : CollisionDirection.None;
+        var left = !checkLeft ? CollisionDirection.Left : CollisionDirection.None;
+        var right = !checkRight ? CollisionDirection.Right : CollisionDirection.None;
 
         bool goBackwards = false;
 
@@ -141,46 +159,32 @@ public partial class AITank {
                 else
                     dir = right;
             }
-            Console.WriteLine($"[{TankID.Collection.GetKey(AiTankType)} ({AITankId})] Wall detected, moving " + dir);
-        }
-        else {
-            Console.WriteLine($"[{TankID.Collection.GetKey(AiTankType)} ({AITankId})] Wall detected, moving Backwards");
-        }
+        }*/
+
+        // Console.WriteLine($"[{TankID.Collection.GetKey(AiTankType)} ({AITankId})] Wall detected, moving " + dir);
 
         float vecRot;
-        if (goBackwards)
-            vecRot = MathHelper.Pi;
-        else
-            vecRot = dir == left ? -MathHelper.PiOver2 : MathHelper.PiOver2;
+        //if (goBackwards)
+        //vecRot = MathHelper.Pi;
+        //else
+
+        var redirectAngle = MathHelper.PiOver2; // normally /2
+            vecRot = dir == /*left*/ CollisionDirection.Left ? -redirectAngle : redirectAngle;
 
         var movementDirection = Vector2.UnitY.Rotate(TankRotation + vecRot);
 
-        SubPivotQueue.Clear();
+        // SubPivotQueue.Clear();
 
-        if (PivotQueue.Count > 0) {
-            PivotQueue.Insert(0, movementDirection);
-            Console.WriteLine("Pivot 0 overwritten.");
+        if (/*PivotQueue.Count > 0*/ !PivotQueue.Any(x => x.Type == PivotType.NavTurn)) {
+            PivotQueue.Insert(0, (movementDirection, PivotType.NavTurn));
+            // Console.WriteLine("Pivot 0 overwritten.");
         }
-        else
-            PivotQueue.Add(movementDirection);
-
-        /*IsPathBlocked = IsObstacleInWay(framesLookAhead, tankDirection, out var travelPath, out var reflections, TankPathCheckSize);
-        if (IsPathBlocked) {
-            if (reflections.Length > 0) {
-                var dirOf = travelPath.DirectionTo(Position).ToRotation();
-                var refAngle = dirOf + MathHelper.PiOver2;
-
-                // this is a very bandaid fix....
-                if (refAngle % MathHelper.PiOver2 == 0) {
-                    refAngle += Client.ClientRandom.NextFloat(0, MathHelper.TwoPi);
-                }
-                TargetTankRotation = refAngle;
-            }
-
-            // TODO: i literally do not understand this
-        }*/
+        else {
+            // PivotQueue.Add(movementDirection);
+        }
     }
     public void DoRandomMove() {
+        // previous impl
         var randomTurn = Client.ClientRandom.NextFloat(-Parameters.MaxAngleRandomTurn, Parameters.MaxAngleRandomTurn);
 
         if (TargetTank is not null) {
@@ -194,17 +198,20 @@ public partial class AITank {
             // negatives don't work?
 
             // applies bias toward or away from the target's angle
-            randomTurn += angleDifference * 2 * Parameters.AggressivenessBias;
+            randomTurn += angleDifference * Parameters.AggressivenessBias;
         }
 
-        float finalAngle = TankRotation + randomTurn;
+        /*float finalAngle = TankRotation + randomTurn;
         Vector2 direction = Vector2.UnitY.Rotate(finalAngle);
+
+        PivotQueue.Add((direction, PivotType.RandomTurn));
 
         // add to list
         Console.WriteLine();
         Console.WriteLine("Random movement: " + MathHelper.ToDegrees(direction.ToRotation()));
-        Console.WriteLine();
-        PivotQueue.Add(direction);
+        Console.WriteLine();*/
+
+        TargetTankRotation += randomTurn / 2;
     }
     // if raycasting based on radii, divide what is input to distance by two
     public bool RaycastAheadOfTank(float distance, float offset = 0f, RayCastReportFixtureDelegate? callback = null) {
@@ -234,10 +241,12 @@ public partial class AITank {
         if (PivotQueue.Count == 0) return false;
         if (SubPivotQueue.Count > 0) return false;
         // grab from the top of the queue
-        var pivotDir = PivotQueue[0];
-        for (int i = 0; i < Parameters.MaxQueuedMovements; i++) {
+        var pivot = PivotQueue[0];
+        var desiredCuts = Parameters.MaxQueuedMovements;
+
+        for (int i = 0; i < desiredCuts; i++) {
             //SubPivotQueue.Add(Vector2.UnitY.Rotate(MathHelper.PiOver2 * i));
-            SubPivotQueue.Add(MathUtils.SlerpWtf(Vector2.UnitY.Rotate(TankRotation), pivotDir, 1f / Parameters.MaxQueuedMovements * (i + 1)));
+            SubPivotQueue.Add(MathUtils.SlerpWtf(Vector2.UnitY.Rotate(TankRotation), pivot.Direction, 1f / desiredCuts * (i + 1)));
         }
         // drop the first element since this works as a queue under the hood
         PivotQueue.RemoveAt(0);
