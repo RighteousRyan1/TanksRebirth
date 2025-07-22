@@ -310,6 +310,7 @@ public partial class AITank : Tank {
         if (nullifyMe) {
             GameHandler.AllAITanks[AITankId] = null!;
             GameHandler.AllTanks[WorldId] = null!;
+            _tankTexture?.Dispose();
         }
 
         base.Remove(nullifyMe);

@@ -53,7 +53,7 @@ public class PlayerTank : Tank
     public int PlayerId { get; }
     public int PlayerType { get; }
 
-    private Texture2D _tankTexture;
+    private Texture2D? _tankTexture;
 
     public static Keybind controlUp = new("Up", Keys.W);
     public static Keybind controlDown = new("Down", Keys.S);
@@ -279,6 +279,7 @@ public class PlayerTank : Tank
         if (nullifyMe) {
             GameHandler.AllPlayerTanks[PlayerId] = null;
             GameHandler.AllTanks[WorldId] = null;
+            _tankTexture.Dispose();
         }
         base.Remove(nullifyMe);
     }
