@@ -24,8 +24,8 @@ using TanksRebirth.GameContent.Systems.AI;
 
 namespace TanksRebirth.GameContent.UI;
 
-public static class CampaignCompleteUI
-{
+#pragma warning disable
+public static class CampaignCompleteUI {
     public static bool IsViewingResults;
     public static Rectangle ParseGradeRect(Grade grade) {
         // 128 being the width of each section.
@@ -35,32 +35,39 @@ public static class CampaignCompleteUI
         return new(col * 128, row * 128, 128, 128);
     }
 
-    private static TimeSpan _delayPerTank = TimeSpan.FromMilliseconds(500);
+    static float _animationTime;
 
-    public static Dictionary<int, int> KillsPerType = new();
+    static readonly float _delayPerTank = 30f;
+    //static readonly TimeSpan _delayPerTank = TimeSpan.FromMilliseconds(500);
+
+    public static Dictionary<int, int> KillsPerType = [];
 
     public static Grade Grade;
 
-    private static float _gradeAlpha;
-    private static float _gradeScale;
-    private static float _gradeScaleDefault = 3f;
-    private static float _gradeFadeSpeed = 0.1f;
-    private static float _gradeTargetScale = 1f;
+    static float _gradeAlpha;
+    static float _gradeScale;
+    static float _gradeScaleDefault = 3f;
+    static float _gradeFadeSpeed = 0.1f;
+    static float _gradeTargetScale = 1f;
 
-    private static float _panelAlpha = 0f;
-    private static float _panelAlphaMax = 1f;
-    private static float _panelFadeSpeed = 0.03f;
+    static float _panelAlpha = 0f;
+    static float _panelAlphaMax = 1f;
+    static float _panelFadeSpeed = 0.03f;
 
-    public static bool _skip;
-    private static bool[] _tierDisplays;
-    private static bool _shouldShowGrade;
-    private static float[] _tierAlphas;
-    private static float[] _tierScales;
-    private static float _defaultSize = 2.5f;
-    private static float _appearSpeed = 0.1f;
-    private static float _tankSize = 1.5f;
-    private static float _spacePerTank = 30f;
-    private static float _tnkDrawYOff = 200f;
+    static float _defaultSize = 2.5f;
+    static float _appearSpeed = 0.1f;
+    static float _tankSize = 1.5f;
+    static float _spacePerTank = 30f;
+    static float _tnkDrawYOff = 200f;
+
+    static int _curTier;
+
+    static bool[] _tierDisplays;
+    static float[] _tierAlphas;
+    static float[] _tierScales;
+
+    public static bool ForceSkip;
+    static bool _shouldShowGrade;
     private static Color _textColor = Color.DarkGray;
 
     public static int TanksPerColumn = 18;
@@ -78,7 +85,12 @@ public static class CampaignCompleteUI
     public static void PerformSequence(MissionEndContext context) {
         IsViewingResults = true;
 
+        _curTier = 0;
+        _animationTime = 0;
+
         _lastContext = context;
+
+        _animationTime = 0f;
 
         _shouldShowGrade = false;
         _gradeScale = _gradeScaleDefault;
@@ -96,9 +108,9 @@ public static class CampaignCompleteUI
         SetStats(CampaignGlobals.LoadedCampaign, PlayerTank.PlayerStatistics, PlayerTank.TankKills);
         Grade = FormulateGradeLevel(true);
 
-        _skip = false;
+        ForceSkip = false;
 
-        Task.Run(async () => {
+        /*Task.Run(async () => {
             while (_panelAlpha < 1f)
                 await Task.Delay(TankGame.LastGameTime.ElapsedGameTime).ConfigureAwait(false);
             if (!ResultsFanfare.IsPlaying()) {
@@ -116,7 +128,7 @@ public static class CampaignCompleteUI
 
                 //ChatSystem.SendMessage($"{killData.Key}:{killData.Value}", Color.White);
 
-                if (!_skip) {
+                if (!ForceSkip) {
                     if (i % 4 == 3) // i think this is the value
                         SoundPlayer.PlaySoundInstance("Assets/sounds/results/whistle_double.ogg", SoundContext.Effect, 1f);
                     else
@@ -131,7 +143,7 @@ public static class CampaignCompleteUI
             //ChatSystem.SendMessage("whistle", Color.White);
             SoundPlayer.PlaySoundInstance("Assets/sounds/results/whistle_full.ogg", SoundContext.Effect, 1f);
 
-            _skip = true;
+            ForceSkip = true;
             _shouldShowGrade = true;
 
             // TODO: make this thread-safe. it's probably causing tank models to become null somehow
@@ -146,16 +158,74 @@ public static class CampaignCompleteUI
             if (!ResultsFanfare.IsStopped())
                 ResultsFanfare.Stop();
             MainMenuUI.Open();
-        });
+        });*/
         // changing bools in other threads = safe
         // - ryan
+    }
+
+    public static void Update() {
+        if (!ResultsFanfare.IsPlaying()) {
+            ResultsFanfare.SetVolume(TankGame.Settings.MusicVolume);
+            ResultsFanfare.Play();
+        }
+        // sleep the thread for the duration of the fanfare.
+        Vector2 basePos = new(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight * 0.2f);
+
+        if (_curTier < KillsPerType.Count) {
+            if (ForceSkip ? true : _animationTime % _delayPerTank <= RuntimeData.DeltaTime) {
+                var killData = KillsPerType.ElementAt(_curTier);
+
+                _tierDisplays[_curTier] = true;
+
+                //ChatSystem.SendMessage($"{killData.Key}:{killData.Value}", Color.White);
+
+                if (!ForceSkip) {
+                    if (_curTier % 4 == 3) // i think this is the value
+                        SoundPlayer.PlaySoundInstance("Assets/sounds/results/whistle_double.ogg", SoundContext.Effect, 1f);
+                    else
+                        SoundPlayer.PlaySoundInstance("Assets/sounds/results/whistle_singular.ogg", SoundContext.Effect, 1f);
+                }
+                _curTier++;
+
+                if (_curTier == KillsPerType.Count - 1) {
+                    ForceSkip = true;
+                    SoundPlayer.PlaySoundInstance("Assets/sounds/results/whistle_full.ogg", SoundContext.Effect, 1f);
+                }
+            }
+        }
+
+        ResultsFanfare.SetVolume(TankGame.Instance.IsActive ? TankGame.Settings.MusicVolume : 0f);
+        _animationTime += RuntimeData.DeltaTime;
+
+        if (InputUtils.KeyJustPressed(Keys.Enter)) {
+            SkipOrExit();
+        }
+    }
+    static void SkipOrExit() {
+        if (_curTier < KillsPerType.Count) {
+            ForceSkip = true;
+            _shouldShowGrade = true;
+
+            return;
+        }
+
+        _curTier = 0;
+        _panelAlpha = 0f;
+        _gradeAlpha = 0f;
+        IsViewingResults = false;
+
+        // :(
+        IntermissionSystem.IsAwaitingNewMission = false;
+        if (!ResultsFanfare.IsStopped())
+            ResultsFanfare.Stop();
+
+        MainMenuUI.Open();
     }
 
     private static void ModifyTracks() {
         try {
             ResultsFanfare.SetVolume(TankGame.Instance.IsActive ? TankGame.Settings.MusicVolume : 0f);
-        }
-        catch { }
+        } catch { }
     }
 
     private static void ResetThings() {
@@ -173,7 +243,7 @@ public static class CampaignCompleteUI
     private static bool _soundPlayed;
     public static void Render() {
         if (InputUtils.KeyJustPressed(Keys.Enter))
-            _skip = true;
+            ForceSkip = true;
 
         _panelAlpha += _panelFadeSpeed;
         if (_panelAlpha > _panelAlphaMax)
@@ -283,7 +353,7 @@ public static class CampaignCompleteUI
             }
         }
         #endregion
-        txt = _skip ? "Press 'Enter' to exit." : "Press 'Enter' to skip.";
+        txt = ForceSkip ? "Press 'Enter' to exit." : "Press 'Enter' to skip.";
         DrawUtils.DrawStringWithShadow(TankGame.SpriteRenderer, FontGlobals.RebirthFont, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight - 8), Vector2.One, txt, Color.Black, Vector2.One.ToResolution(), 1f, Anchor.BottomCenter, 0.4f);
 
         txt = "Campaign Results";

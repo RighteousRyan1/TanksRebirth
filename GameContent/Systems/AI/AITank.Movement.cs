@@ -42,10 +42,10 @@ public partial class AITank {
         if (!shouldMove) return;
         if (!Behaviors[0].IsModOf(CurrentRandomMove)) return;
 
-        if (Properties.MaxSpeed > 0) {
+        /*if (Properties.MaxSpeed > 0) {
             Console.WriteLine("Pivot Queue:    " + PivotQueue.Count);
             Console.WriteLine("Pivot Subqueue: " + SubPivotQueue.Count);
-        }
+        }*/
 
         //Console.WriteLine("Creating new pivot sequence...");
         //PivotQueue.Add(Vector2.UnitY.Rotate(TankRotation + MathHelper.PiOver2));
@@ -94,7 +94,7 @@ public partial class AITank {
 
         // don't bother doing anything else since it's not blocked
         if (!IsTooCloseToObstacle) {
-            Console.WriteLine("Obstacle not found.. block navigation skipped.");
+            // Console.WriteLine("Obstacle not found.. block navigation skipped.");
             return;
         }
 
@@ -117,59 +117,22 @@ public partial class AITank {
 
         var dir = fracL > fracR ? CollisionDirection.Left : CollisionDirection.Right;
 
-        Console.WriteLine(dir);
-
-        /*if (left != CollisionDirection.None && right != CollisionDirection.None) {
-            var random = Client.ClientRandom.Next(0, 2);
-
-            dir = random == 0 ? left : right;
+        // if the rays are highly similar in distance, reverse, since you're most likely heading into a wall directly
+        if (fracL.IsWithinRange(fracR, 0.0025f)) {
+            // backwards, not down, lol
+            dir = CollisionDirection.Down;
         }
-        else {
-            // should only be one or the other in this branch
-            if (left != CollisionDirection.None)
-                dir = left;
-            else
-                dir = right;
-        }*/
-
-        /*bool checkLeft = RaycastAheadOfTank(checkDist * 100, -MathHelper.PiOver2);
-
-        bool checkRight = RaycastAheadOfTank(checkDist * 100, MathHelper.PiOver2);
-
-        // returns if the path is blocked
-        var left = !checkLeft ? CollisionDirection.Left : CollisionDirection.None;
-        var right = !checkRight ? CollisionDirection.Right : CollisionDirection.None;
-
-        bool goBackwards = false;
-
-        if (left == CollisionDirection.None && right == CollisionDirection.None)
-            goBackwards = true;
-
-        var dir = CollisionDirection.None;
-
-        if (!goBackwards) {
-            if (left != CollisionDirection.None && right != CollisionDirection.None) {
-                var random = Client.ClientRandom.Next(0, 2);
-
-                dir = random == 0 ? left : right;
-            } else {
-                // should only be one or the other in this branch
-                if (left != CollisionDirection.None)
-                    dir = left;
-                else
-                    dir = right;
-            }
-        }*/
-
-        // Console.WriteLine($"[{TankID.Collection.GetKey(AiTankType)} ({AITankId})] Wall detected, moving " + dir);
 
         float vecRot;
         //if (goBackwards)
         //vecRot = MathHelper.Pi;
         //else
-
         var redirectAngle = MathHelper.PiOver2; // normally /2
+
+        if (dir != CollisionDirection.Down)
             vecRot = dir == /*left*/ CollisionDirection.Left ? -redirectAngle : redirectAngle;
+        else
+            vecRot = MathHelper.Pi;
 
         var movementDirection = Vector2.UnitY.Rotate(TankRotation + vecRot);
 

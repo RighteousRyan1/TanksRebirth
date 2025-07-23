@@ -186,6 +186,8 @@ public static class MathUtils
             return 1;
         return CreateGradientValue(value, min, max);
     }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsWithinRange(this float value, float target, float tolerance) => MathF.Abs(value - target) <= tolerance;
     public static float InverseLerp(float begin, float end, float value, bool clamped = false) {
         if (clamped) {
             if (begin < end) {

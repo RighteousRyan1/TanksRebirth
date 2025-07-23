@@ -260,7 +260,7 @@ public abstract class Tank {
     public void InitModelSemantics() {
         // for some reason Model is null when returning from campaign completion with certain mods.
         if (Model is null) {
-            Model = this is PlayerTank ? ModelGlobals.TankPlayer.Duplicate() : ModelGlobals.TankEnemy.Duplicate();
+            Model = this is PlayerTank ? ModelGlobals.TankPlayer.Asset : ModelGlobals.TankEnemy.Asset;
             TankGame.ClientLog.Write("Unexpected pitfall in initializing tank model semantics. Assigning defaults.", LogType.Warn);
         }
 
@@ -467,7 +467,7 @@ public abstract class Tank {
             }
         }
 
-        IsTurning = !(TankRotation > TargetTankRotation - Properties.MaximalTurn * 2 && TankRotation < TargetTankRotation + Properties.MaximalTurn * 2);
+        IsTurning = !(TankRotation > TargetTankRotation - Properties.MaximalTurn && TankRotation < TargetTankRotation + Properties.MaximalTurn * 2);
 
         // ensure no movements happen when not desired
         if (!MainMenuUI.Active && (!CampaignGlobals.InMission || IntermissionSystem.IsAwaitingNewMission))

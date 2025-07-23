@@ -73,8 +73,6 @@ public class GameHandler {
         RebirthMouse.Initialize();
     }
     internal static void UpdateAll(GameTime gameTime) {
-        if (InputUtils.KeyJustPressed(Keys.P))
-            ExperienceBar.GainExperience(0.1f);
         /*void doTestWithFont() {
             var str = 
                 "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +

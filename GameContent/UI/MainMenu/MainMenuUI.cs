@@ -57,8 +57,8 @@ public static partial class MainMenuUI
         [UIState.Settings] = (new(1461f, 928f, 623f), new(0, -0.33f, 0.53f)), // near grandfather clock
         [UIState.StatsMenu] = (new(-1121f, 176f, 439f), new(0, -0.231f, -0.67f)), // near sheet music
         [UIState.Difficulties] = (new(-1189f, 288f, 2583f), new(0f, -0.25f, -2.27f)), // near books
-        [UIState.LoadingMods] = (new(-3443f, 2088f, 3183f), new(0, -0.6307f, -0.91f)),
-        [UIState.Cosmetics] = (new(-953f, 1078f, 2753f), new(0f, -0.226f, -2.56f))
+        [UIState.LoadingMods] = (new(-3443f, 2088f, 3183f), new(0, -0.6307f, -0.91f)), // top of the door
+        [UIState.Cosmetics] = (new(-953f, 1078f, 2753f), new(0f, -0.226f, -2.56f)) // second-to-top shelf of bookshelf
     };
 
     public static Vector3 CamPosMain = new(0, 150, GameScene.MAX_Z + 100); // this is in front of the game scene, viewing it
@@ -123,7 +123,6 @@ public static partial class MainMenuUI
         RebirthLogo.Rotation.Y = rotY;
     }
     public static void RenderModels() {
-
         UpdateModels();
         // TODO: change this to world view/world projection...? i think it would look better if the crate existed in world space
         // it would give reason to have the camera move over for the player.
@@ -221,6 +220,7 @@ public static partial class MainMenuUI
     public static void Update() {
         if (!_initialized || !_diffButtonsInitialized)
             return;
+        IntermissionSystem.IsAwaitingNewMission = false;
         UpdateUI();
         UpdateDifficulties();
         UpdateGameplay();

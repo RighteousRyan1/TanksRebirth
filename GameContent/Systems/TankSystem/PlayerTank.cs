@@ -75,6 +75,9 @@ public class PlayerTank : Tank
     //private float _maxTurnInputBased;
     #endregion
 
+    public static bool LastUsedController = false;
+
+    public Vector2 DesiredDirection;
     public static float StickDeadzone { get; set; } = 0.12f;
     public static float StickAntiDeadzone { get; set; } = 0.85f;
     /// <summary>A <see cref="PlayerTank"/> instance which represents the current client's tank they *primarily* control. Will return null in cases where
@@ -112,13 +115,18 @@ public class PlayerTank : Tank
     public void SwapTankTexture(Texture2D texture) => _tankTexture = texture;
     public PlayerTank(int playerType, bool isPlayerModel = true, int copyTier = -1) {
         Model = isPlayerModel ? ModelGlobals.TankPlayer.Asset : ModelGlobals.TankEnemy.Asset;
+
+        Texture2D texAsset;
+
         if (copyTier == -1)
-            _tankTexture = Assets[$"plrtank_" + PlayerID.Collection.GetKey(playerType)!.ToLower()];
+            texAsset = Assets[$"plrtank_" + PlayerID.Collection.GetKey(playerType)!.ToLower()];
         else {
-            _tankTexture = Assets[$"tank_" + TankID.Collection.GetKey(copyTier)!.ToLower()];
+            texAsset = Assets[$"tank_" + TankID.Collection.GetKey(copyTier)!.ToLower()];
 
             Properties = AIManager.GetAITankProperties(copyTier);
         }
+
+        _tankTexture = texAsset.Duplicate(TankGame.Instance.GraphicsDevice);
 
         _isPlayerModel = isPlayerModel;
         PlayerType = playerType;
@@ -185,6 +193,8 @@ public class PlayerTank : Tank
         // 0 = down
         // pi/4 = right
         // 3/4pi = left
+        DesiredDirection = Vector2.Zero;
+        LastUsedController = InputUtils.IsGamepadBeingUsed();
 
         base.Update();
 
@@ -244,10 +254,10 @@ public class PlayerTank : Tank
                 if (CurShootStun <= 0 && CurMineStun <= 0) {
                     if (!Properties.Stationary) {
                         if (NetPlay.IsClientMatched(PlayerId)) {
-                            if (InputUtils.CurrentGamePadSnapshot.IsConnected)
+                            if (LastUsedController)
                                 ControlHandle_ConsoleController();
-                            // removed 'else' so players don't get confused when a controller is plugged in
-                            ControlHandle_Keybinding();
+                            else
+                                ControlHandle_Keybinding();
                         }
                     }
                 }
@@ -279,7 +289,7 @@ public class PlayerTank : Tank
         if (nullifyMe) {
             GameHandler.AllPlayerTanks[PlayerId] = null;
             GameHandler.AllTanks[WorldId] = null;
-            _tankTexture.Dispose();
+            _tankTexture?.Dispose();
         }
         base.Remove(nullifyMe);
     }
@@ -297,47 +307,49 @@ public class PlayerTank : Tank
         var rightStick = InputUtils.CurrentGamePadSnapshot.ThumbSticks.Right;
         var dPad = InputUtils.CurrentGamePadSnapshot.DPad;
 
-        var preterbedVelocity = new Vector2(leftStick.X, -leftStick.Y);
+        // inverse y because stick down is positive y (which is up z)
+        DesiredDirection = new Vector2(leftStick.X, -leftStick.Y);
 
-        var rotationMet = TankRotation > TargetTankRotation - Properties.MaximalTurn && TankRotation < TargetTankRotation + Properties.MaximalTurn;
+        var rotationMet = TankRotation > TargetTankRotation - Properties.MaximalTurn 
+            && TankRotation < TargetTankRotation + Properties.MaximalTurn;
+
+        if (leftStick.Length() > 0) {
+            playerControl_isBindPressed = true;
+        }
+
+        if (dPad.Down == ButtonState.Pressed) {
+            playerControl_isBindPressed = true;
+            DesiredDirection.Y = 1;
+        }
+        if (dPad.Up == ButtonState.Pressed) {
+            playerControl_isBindPressed = true;
+            DesiredDirection.Y = -1;
+        }
+        if (dPad.Left == ButtonState.Pressed) {
+            playerControl_isBindPressed = true;
+            DesiredDirection.X = -1;
+        }
+        if (dPad.Right == ButtonState.Pressed) {
+            playerControl_isBindPressed = true;
+            DesiredDirection.X = 1;
+        }
 
         if (!rotationMet) {
             Speed *= Properties.Deceleration * (1f - RuntimeData.DeltaTime);
+            IsTurning = true;
             if (Speed < 0)
                 Speed = 0;
-            IsTurning = true;
         }
         else {
             if (Difficulties.Types["POV"])
-                preterbedVelocity = preterbedVelocity.Rotate(-TurretRotation + MathHelper.Pi);
+                DesiredDirection = DesiredDirection.Rotate(-TurretRotation + MathHelper.Pi);
 
             Speed += Properties.Acceleration * RuntimeData.DeltaTime;
             if (Speed > Properties.MaxSpeed)
                 Speed = Properties.MaxSpeed;
-
-            if (leftStick.Length() > 0) {
-                playerControl_isBindPressed = true;
-            }
-
-            if (dPad.Down == ButtonState.Pressed) {
-                playerControl_isBindPressed = true;
-                preterbedVelocity.Y = 1;
-            }
-            if (dPad.Up == ButtonState.Pressed) {
-                playerControl_isBindPressed = true;
-                preterbedVelocity.Y = -1;
-            }
-            if (dPad.Left == ButtonState.Pressed) {
-                playerControl_isBindPressed = true;
-                preterbedVelocity.X = -1;
-            }
-            if (dPad.Right == ButtonState.Pressed) {
-                playerControl_isBindPressed = true;
-                preterbedVelocity.X = 1;
-            }
         }
 
-        var norm = Vector2.Normalize(preterbedVelocity);
+        var norm = Vector2.Normalize(DesiredDirection);
 
         TargetTankRotation = norm.ToRotation() - MathHelper.PiOver2;
 
@@ -366,46 +378,33 @@ public class PlayerTank : Tank
 
         //var rotationMet = TankRotation > TargetTankRotation - Properties.MaximalTurn && TankRotation < TargetTankRotation + Properties.MaximalTurn;
 
-        var preterbedVelocity = Vector2.Zero;
-
         TankRotation %= MathHelper.Tau;
-
-        /*if (!rotationMet)
-        {
-            Speed -= Properties.Deceleration;
-            if (Speed < 0)
-                Speed = 0;
-            IsTurning = true;
-        }
-        else
-        {
-            Speed += Properties.Acceleration;
-            if (Speed > Properties.MaxSpeed)
-                Speed = Properties.MaxSpeed;
-        }*/
-
 
         if (controlDown.IsPressed) {
             playerControl_isBindPressed = true;
-            preterbedVelocity.Y = 1;
+            DesiredDirection.Y = 1;
+            LastUsedController = false;
         }
         if (controlUp.IsPressed) {
             playerControl_isBindPressed = true;
-            preterbedVelocity.Y = -1;
+            DesiredDirection.Y = -1;
+            LastUsedController = false;
         }
         if (controlLeft.IsPressed) {
             playerControl_isBindPressed = true;
-            preterbedVelocity.X = -1;
+            DesiredDirection.X = -1;
+            LastUsedController = false;
         }
         if (controlRight.IsPressed) {
             playerControl_isBindPressed = true;
-            preterbedVelocity.X = 1;
+            DesiredDirection.X = 1;
+            LastUsedController = false;
         }
 
         if (Difficulties.Types["POV"])
-            preterbedVelocity = preterbedVelocity.Rotate(-TurretRotation + MathHelper.Pi);
+            DesiredDirection = DesiredDirection.Rotate(-TurretRotation + MathHelper.Pi);
 
-        var norm = Vector2.Normalize(preterbedVelocity);
+        var norm = Vector2.Normalize(DesiredDirection);
 
         TargetTankRotation = norm.ToRotation() - MathHelper.PiOver2;
 

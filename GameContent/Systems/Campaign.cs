@@ -188,7 +188,8 @@ public class Campaign
                     }
                     // TODO: note to self, this code above is what causes the skill issue.
                     if (Difficulties.Types["AiCompanion"] && 
-                        (template.PlayerType == Server.CurrentClientCount + PlayerID.Red || (Server.CurrentClientCount == 4 && template.PlayerType == PlayerID.Yellow))) {
+                        (template.PlayerType == Server.CurrentClientCount + PlayerID.Red || 
+                        (Server.CurrentClientCount == 4 && template.PlayerType == PlayerID.Yellow))) {
                         var randomTier = AITank.PickRandomTier();
                         var tnk = new AITank(randomTier) {
                             // target = rot - pi

@@ -30,12 +30,13 @@ public static partial class MainMenuUI {
                 else
                     _newMisCd = 0;
             }
+            else {
+                LoadTemplateMission();
+            }
         }
     }
     public static void OpenGP() {
-        SceneManager.CleanupEntities();
-        SceneManager.ClearTankTracks();
-        SceneManager.ClearTankDeathmarks();
+        SceneManager.CleanupScene();
         PlayerTank.TankKills.Clear();
 
         LoadTemplateMission();
@@ -49,7 +50,7 @@ public static partial class MainMenuUI {
         Theme.Stop();
     }
     private static void LoadTemplateMission(bool autoSetup = true, bool loadForMenu = true) {
-        try {
+        //try {
             if (_firstTime) {
                 var attempt = 1;
 
@@ -70,8 +71,6 @@ public static partial class MainMenuUI {
                 _firstTime = false;
             }
 
-            SceneManager.CleanupScene();
-
             var rand = Client.ClientRandom.Next(1, _cachedMissions.Count);
 
             var mission = _cachedMissions[rand];
@@ -82,10 +81,10 @@ public static partial class MainMenuUI {
             }
             if (loadForMenu)
                 curMenuMission = mission;
-        }
-        catch {
-            TankGame.ClientLog.Write("Unable to fetch map data via the internet. Oops!", LogType.Warn);
-        }
+        //}
+        //catch {
+            //TankGame.ClientLog.Write("Unable to fetch map data via the internet. Oops!", LogType.Warn);
+        //}
     }
 
 }

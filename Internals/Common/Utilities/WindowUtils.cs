@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -35,4 +36,33 @@ public static class WindowUtils
     public static Rectangle ScreenRect => new(0, 0, WindowWidth, WindowHeight);
     public static Vector2 ToNormalisedCoordinates(this Vector2 input) => new Vector2(input.X / WindowWidth - 0.5f, input.Y / WindowHeight - 0.5f) * 2;
     public static Vector2 ToCartesianCoordinates(this Vector2 input) => new(input.X / WindowWidth, input.Y / WindowHeight);
+
+    public static void ChangeWindowKind(WindowKind kind) {
+        var graphics = TankGame.Instance.Graphics;
+        var window = TankGame.Instance.Window;
+        var display = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode;
+
+        switch (kind) {
+            case WindowKind.Fullscreen:
+                graphics.IsFullScreen = true;
+                window.IsBorderless = false;
+                break;
+
+            case WindowKind.Windowed:
+                graphics.IsFullScreen = false;
+                window.IsBorderless = false;
+                graphics.PreferredBackBufferWidth = TankGame.Settings.ResWidth;
+                graphics.PreferredBackBufferHeight = TankGame.Settings.ResHeight;
+                break;
+
+            case WindowKind.FullscreenBorderless:
+                graphics.IsFullScreen = false;
+                window.IsBorderless = true;
+                graphics.PreferredBackBufferWidth = display.Width;
+                graphics.PreferredBackBufferHeight = display.Height;
+                break;
+        }
+
+        TankGame.Instance.Graphics.ApplyChanges();
+    }
 }

@@ -443,7 +443,7 @@ public class TankGame : Game {
         #region Config Initialization
 
         Graphics.SynchronizeWithVerticalRetrace = Settings.Vsync;
-        Graphics.IsFullScreen = Settings.FullScreen;
+        WindowUtils.ChangeWindowKind(Settings.WindowKind);
         PlayerTank.controlUp.ForceReassign(Settings.UpKeybind);
         PlayerTank.controlDown.ForceReassign(Settings.DownKeybind);
         PlayerTank.controlLeft.ForceReassign(Settings.LeftKeybind);
@@ -635,6 +635,9 @@ public class TankGame : Game {
             CameraGlobals.Update();
         }
 
+        if (CampaignCompleteUI.IsViewingResults)
+            CampaignCompleteUI.Update();
+
         SubHandleLogic(gameTime);
 
         // AchievementsUI.UpdateBtns();
@@ -710,6 +713,7 @@ public class TankGame : Game {
 
             OnResolutionChanged?.Invoke(WindowUtils.WindowWidth, WindowUtils.WindowHeight);
         }
+
         // TankFootprint.DecalHandler.UpdateRenderTarget();
         GraphicsDevice.SetRenderTarget(GameFrameBuffer);
         GraphicsDevice.Clear(RenderGlobals.BackBufferColor);
@@ -821,6 +825,7 @@ public class TankGame : Game {
         // switch to RT, begin SB, do drawing, end SB, SetRenderTarget(null), begin SB again, draw RT, end SB
         PrepareGameBuffers(SpriteRenderer);
         MainMenuUI.PrepareTextBuffers(GraphicsDevice, SpriteRenderer);
+
         IntermissionSystem.PrepareBuffers(GraphicsDevice, SpriteRenderer);
     }
 

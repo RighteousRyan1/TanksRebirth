@@ -132,7 +132,7 @@ public partial class AITank : Tank {
 
         AiTankType = tier;
 
-        Behaviors = new AiBehavior[10];
+        Behaviors = new AiBehavior[4];
 
         for (int i = 0; i < Behaviors.Length; i++)
             Behaviors[i] = new();
@@ -157,18 +157,9 @@ public partial class AITank : Tank {
         var tierName = TankID.Collection.GetKey(tier)!.ToLower();
         if (RuntimeData.IsMainThread) {
             if (!UsesCustomModel) {
-                Model = ModelGlobals.TankEnemy.Duplicate();
+                Model = ModelGlobals.TankEnemy.Asset;
                 var tnkAsset = Assets[$"tank_" + tierName];
-
-                var t = new Texture2D(TankGame.Instance.GraphicsDevice, tnkAsset.Width, tnkAsset.Height);
-
-                var colors = new Color[tnkAsset.Width * tnkAsset.Height];
-
-                tnkAsset.GetData(colors);
-
-                t.SetData(colors);
-
-                _tankTexture = t;
+                _tankTexture = tnkAsset.Duplicate(TankGame.Instance.GraphicsDevice);
             }
         }
         else

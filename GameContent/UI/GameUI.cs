@@ -92,14 +92,13 @@ public static class GameUI
         {
             _delay = 1;
             InOptions = true;
+
             ResumeButton.IsVisible = false;
             RestartButton.IsVisible = false;
             QuitButton.IsVisible = false;
             OptionsButton.IsVisible = false;
-            VolumeButton.IsVisible = true;
-            GraphicsButton.IsVisible = true;
-            ControlsButton.IsVisible = true;
-            BackButton.IsVisible = true;
+
+            SetSettingsUIVisibility(true);
 
             MainMenuUI.MenuState = MainMenuUI.UIState.Settings;
 
@@ -180,6 +179,13 @@ public static class GameUI
         ControlsUI.Initialize();
         VolumeUI.Initialize();
         PostInitialize();
+    }
+
+    public static void SetSettingsUIVisibility(bool visible) {
+        VolumeButton.IsVisible = visible;
+        GraphicsButton.IsVisible = visible;
+        ControlsButton.IsVisible = visible;
+        BackButton.IsVisible = visible;
     }
 
     public static void QuitOut(bool netSent = false) {
@@ -275,7 +281,6 @@ public static class GameUI
             GraphicsUI.PerPixelLightingButton,
             GraphicsUI.PerPixelLightingToggle,
             GraphicsUI.FullScreenButton,
-            GraphicsUI.FullScreenToggle,
             GraphicsUI.ResolutionButton
         ];
         foreach (UIElement button in graphicsElements)
@@ -348,7 +353,7 @@ public static class GameUI
             GraphicsButton.IsVisible = true;
             ControlsButton.IsVisible = true;
 
-            if (!TankGame.Settings.FullScreen) {
+            if (TankGame.Settings.WindowKind == WindowKind.Windowed) {
                 TankGame.Settings.ResWidth = GraphicsUI.CurrentRes.Key;
                 TankGame.Settings.ResHeight = GraphicsUI.CurrentRes.Value;
 

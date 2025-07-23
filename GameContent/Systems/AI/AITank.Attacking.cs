@@ -116,9 +116,10 @@ public partial class AITank {
                 var mine = Mine.AllMines[j];
                 if (mine is null) continue;
 
-                // check against radius
+                // check against radius. ensures the tank doesn't move towards an already laid mine
+                // 70 is the magic number for the default mine radius, multiplied by the scalar
                 if (GameUtils.Distance_WiiTanksUnits(pos, mine.Position) <= mine.ExplosionRadius * GameUtils.Value_WiiTanksUnits(70)) {
-                    Console.WriteLine("Direction " + dirs[i].Direction + " is contaminated");
+                    // Console.WriteLine("Direction " + dirs[i].Direction + " is contaminated");
                     goodDirs[i].Direction = CollisionDirection.None;
                 }
             }
@@ -152,7 +153,7 @@ public partial class AITank {
         var randomDir = Client.ClientRandom.Next(goodDirs.Length);
 
         // then determine a good fleeing direction
-        Console.WriteLine("Laid mine. Choosing to go " + goodDirs[randomDir].Direction);
+        // Console.WriteLine("Laid mine. Choosing to go " + goodDirs[randomDir].Direction);
 
 
         var rot = goodDirs[randomDir].Vec.ToRotation();

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using System;
 
 namespace TanksRebirth.Internals.Common.Utilities;
 
@@ -16,6 +17,7 @@ public enum Anchor
 }
 public static class GameUtils
 {
+    public static float ToGameTicks(this TimeSpan t) => (float)(t.TotalMilliseconds / 1 / 60f);
     public static Vector2 GetAnchor(this Anchor a, Vector2 vector) {
         return a switch {
             Anchor.TopLeft => Vector2.Zero,

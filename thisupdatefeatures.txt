@@ -8,7 +8,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 
 ## Additions
 
-
+- You can now switch individually between Windowed, Fullscreen, and Borderless Fullscreen in the graphics settings
 
 ## Changes
 
@@ -37,6 +37,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 - Fixed some particles not being oriented properly
 - Pings no longer track dead tanks
 - Campaign tooltips now display proper extra-lives count
+- (Potentially) fixed linux systems not being able to exit campaigns after success or failure
 
 ## TODO
 
