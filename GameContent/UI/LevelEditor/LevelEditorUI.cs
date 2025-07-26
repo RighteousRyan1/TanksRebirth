@@ -32,6 +32,7 @@ namespace TanksRebirth.GameContent.UI.LevelEditor;
  * 2) LevelEditorTankElement - One for each enemy tank. Will support mods
  * 3) LevelEditorTerrainElement - One for each obstacle. Will support mods
  * 4) Make these elements not textures, but rather rendered as their appropriate models with text underneath, for modularity
+ * 5) When in the level editor, the GC gains ~10MB per second. Find out why. (Collections are often)
  */
 public static partial class LevelEditorUI {
     public enum UICategory {
@@ -329,7 +330,7 @@ public static partial class LevelEditorUI {
         AutoOrientTanks.OnLeftClick = (e) => {
             PlacementSquare.Placements.ForEach(p => {
 
-                var tnkRot = WiiMap.GetAutoTankRotation(p.RelativePosition);
+                var tnkRot = WiiMap.GetAutoTankRotation(p.Position.FlattenZ());
 
                 var flashColor = tnkRot switch {
                     // down

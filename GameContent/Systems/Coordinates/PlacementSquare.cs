@@ -62,6 +62,10 @@ public class PlacementSquare {
 
     float _flashTime;
 
+    public Matrix World;
+    public Matrix View;
+    public Matrix Projection;
+
     public PlacementSquare(Vector3 position, float dimensions) {
         Position = position;
         _box = new(position - new Vector3(dimensions / 2, 0, dimensions / 2), position + new Vector3(dimensions / 2, 0, dimensions / 2));
@@ -172,16 +176,17 @@ public class PlacementSquare {
     }
     public void Update() {
 
-        if (_flashTime > 0) {
-            _flashTime -= 0.01f * RuntimeData.DeltaTime;
-            Alpha = _flashTime;
-            if (_flashTime <= 0) {
-                AutoAlphaHandle = true;
-                SquareColor = Color.White;
+        if (!IsHovered) {
+            if (_flashTime > 0) {
+                _flashTime -= 0.01f * RuntimeData.DeltaTime;
+                Alpha = _flashTime * 0.5f;
+                if (_flashTime <= 0) {
+                    AutoAlphaHandle = true;
+                    SquareColor = Color.White;
+                }
             }
+            return;
         }
-
-        if (!IsHovered) return;
         CurrentlyHovered = this;
         if (InputUtils.CanDetectClick())
             _onClick?.Invoke(this);
@@ -223,56 +228,58 @@ public class PlacementSquare {
 
         if (hoverUi) return;
 
+        World = Matrix.CreateScale(0.678f) * Matrix.CreateTranslation(Position + new Vector3(0, 0.1f, 0));
+        View = CameraGlobals.GameView;
+        Projection = CameraGlobals.GameProjection;
+        var texture = TextureGlobals.Pixels[SquareColor];
+
+        if (AutoAlphaHandle) {
+            if (IsHovered)
+                Alpha = 0.7f;
+            else
+                Alpha = 0f;
+        }
+
         foreach (var mesh in _model.Meshes) {
             foreach (BasicEffect effect in mesh.Effects) {
-                effect.World = Matrix.CreateScale(0.68f) * Matrix.CreateTranslation(Position + new Vector3(0, 0.1f, 0));
-                effect.View = CameraGlobals.GameView;
-                effect.Projection = CameraGlobals.GameProjection;
+                effect.World = World;
+                effect.View = View;
+                effect.Projection = Projection;
 
-                //var pos1 = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
-
-                //SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, FontGlobals.RebirthFont, $"{Id}\n({RelativePosition.X}, {RelativePosition.Y})", pos1, Color.White, Color.Black, new Vector2(TankGame.AddativeZoom * 0.8f).ToResolution(), 0f);
-
-                if (DrawStacks) {
-                    if (BlockId > -1) {
-                        if (displayHeights && Block.AllBlocks[BlockId] is not null) {
-                            if (Block.AllBlocks[BlockId].Properties.CanStack) {
-                                var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
-
-                                DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, $"{Block.AllBlocks[BlockId].Stack}", pos, Color.White, Color.Black, new Vector2(CameraGlobals.AddativeZoom * 1.5f).ToResolution(), 0f, Anchor.Center);
-                            }
-                            if (Block.AllBlocks[BlockId].Type == BlockID.Teleporter) {
-                                var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
-
-                                DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, $"TP:{Block.AllBlocks[BlockId].TpLink}", pos, Color.White, Color.Black, new Vector2(CameraGlobals.AddativeZoom * 1.5f).ToResolution(), 0f, Anchor.Center);
-                            }
-                        }
-                    }
-                    else if (TankId > -1) {
-                        var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, effect.World, effect.View, effect.Projection);
-
-                        DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, $"{LevelEditorUI.TeamColorsLocalized[GameHandler.AllTanks[TankId].Team]}", pos - new Vector2(0, 8).ToResolution(), TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.Black, new Vector2(0.9f).ToResolution() * CameraGlobals.AddativeZoom, 0f, Anchor.Center);
-
-                        if (GameHandler.AllTanks[TankId] is AITank ai)
-                            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, $"ID: {ai.AITankId}", pos + new Vector2(0, 8), TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.Black, new Vector2(0.8f).ToResolution() * CameraGlobals.AddativeZoom, 0f, Anchor.Center);
-                        if (GameHandler.AllTanks[TankId] is PlayerTank player)
-                            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, $"ID: {player.PlayerId}", pos + new Vector2(0, 8), TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.Black, new Vector2(0.8f).ToResolution() * CameraGlobals.AddativeZoom, 0f, Anchor.Center);
-                    }
-                }
                 effect.TextureEnabled = true;
-                effect.Texture = TextureGlobals.Pixels[SquareColor];
+                effect.Texture = texture;
 
-                if (AutoAlphaHandle) {
-                    if (IsHovered)
-                        Alpha = effect.Alpha = 0.7f;
-                    else
-                        Alpha = effect.Alpha = 0f;
-                }
-                else
-                    effect.Alpha = Alpha;
+                effect.Alpha = Alpha;
                 effect.SetDefaultGameLighting_IngameEntities();
             }
             mesh.Draw();
+        }
+
+        if (!DrawStacks) return;
+
+        if (BlockId > -1) {
+            if (displayHeights && Block.AllBlocks[BlockId] is not null) {
+                if (Block.AllBlocks[BlockId].Properties.CanStack) {
+                    var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection);
+
+                    DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, $"{Block.AllBlocks[BlockId].Stack}", pos, Color.White, Color.Black, new Vector2(CameraGlobals.AddativeZoom * 1.5f).ToResolution(), 0f, Anchor.Center);
+                }
+                if (Block.AllBlocks[BlockId].Type == BlockID.Teleporter) {
+                    var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection);
+
+                    DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, $"TP:{Block.AllBlocks[BlockId].TpLink}", pos, Color.White, Color.Black, new Vector2(CameraGlobals.AddativeZoom * 1.5f).ToResolution(), 0f, Anchor.Center);
+                }
+            }
+        }
+        else if (TankId > -1) {
+            var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection);
+
+            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, $"{LevelEditorUI.TeamColorsLocalized[GameHandler.AllTanks[TankId].Team]}", pos - new Vector2(0, 8).ToResolution(), TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.Black, new Vector2(0.9f).ToResolution() * CameraGlobals.AddativeZoom, 0f, Anchor.Center);
+
+            if (GameHandler.AllTanks[TankId] is AITank ai)
+                DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, $"ID: {ai.AITankId}", pos + new Vector2(0, 8), TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.Black, new Vector2(0.8f).ToResolution() * CameraGlobals.AddativeZoom, 0f, Anchor.Center);
+            if (GameHandler.AllTanks[TankId] is PlayerTank player)
+                DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, $"ID: {player.PlayerId}", pos + new Vector2(0, 8), TeamID.TeamColors[GameHandler.AllTanks[TankId].Team], Color.Black, new Vector2(0.8f).ToResolution() * CameraGlobals.AddativeZoom, 0f, Anchor.Center);
         }
     }
 }

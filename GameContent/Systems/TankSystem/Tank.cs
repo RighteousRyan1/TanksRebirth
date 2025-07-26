@@ -151,11 +151,11 @@ public abstract class Tank {
     public bool UsesCustomModel { get; set; }
 
     /// <summary>This <see cref="Tank"/>'s world position. Used to change the actual location of the model relative to the <see cref="View"/> and <see cref="Projection"/>.</summary>
-    public Matrix World { get; set; }
+    public Matrix World;
     /// <summary>How the <see cref="Model"/> is viewed through the <see cref="Projection"/>.</summary>
-    public Matrix View { get; set; }
+    public Matrix View;
     /// <summary>The projection from the screen to the <see cref="Model"/>.</summary>
-    public Matrix Projection { get; set; }
+    public Matrix Projection;
 
     public int WorldId { get; set; }
     /// <summary>This <see cref="Tank"/>'s <see cref="TeamID"/>.</summary>

@@ -27,6 +27,8 @@ public static class GameScene
     public static bool ShouldRenderBounds { get; set; } = true;
     public static bool RenderFloorAsBlack { get; set; } = false;
 
+    public static Vector2 MapCenter => new(0, MIN_Z + MAX_Z / 2);
+
     private static Texture2D _blackPixel;
 
     public delegate void PostLoadBoundsDelegate();
@@ -62,12 +64,12 @@ public static class GameScene
         ["floor_lower"] = null,
         ["teleporter"] = null,
         ["snow"] = GameResources.GetGameResource<Texture2D>("Assets/christmas/snow")
-};
+    };
 
     public static void LoadTexturePack(string folder)
     {
         LoadVanillaTextures();
-        if (folder.ToLower() == "vanilla")
+        if (folder.Equals("vanilla", StringComparison.CurrentCultureIgnoreCase))
         {
             TankGame.ClientLog.Write($"Loaded vanilla textures for Scene.", LogType.Info);
             return;
@@ -208,43 +210,24 @@ public static class GameScene
             {
                 case MapTheme.Vanilla:
                     BoundaryModel = ModelGlobals.GameBoundary.Asset;
-
-                    SetBlockTexture(BoundaryModel.Meshes["polygon48"], BoundaryTextureContext.block_other_c);
-                    SetBlockTexture(BoundaryModel.Meshes["polygon40"], BoundaryTextureContext.block_other_a);
-                    SetBlockTexture(BoundaryModel.Meshes["polygon33"], BoundaryTextureContext.block_other_b_test);
-                    SetBlockTexture(BoundaryModel.Meshes["polygon7"], BoundaryTextureContext.block_shadow_b);
-                    SetBlockTexture(BoundaryModel.Meshes["polygon15"], BoundaryTextureContext.block_shadow_b);
-
-                    SetBlockTexture(BoundaryModel.Meshes["polygon5"], BoundaryTextureContext.block_shadow_h);
-
-                    SetBlockTexture(BoundaryModel.Meshes["polygon20"], BoundaryTextureContext.block_shadow_d);
-
-                    SetBlockTexture(BoundaryModel.Meshes["polygon21"], BoundaryTextureContext.block_shadow_b);
-
-                    //SetBlockTexture(BoundaryModel.Meshes["polygon32"], BoundaryTextureContext.floor_lower);
-
                     break;
                 case MapTheme.Christmas:
                     BoundaryModel = ModelGlobals.GameBoundarySnowy.Asset;
-
-                    SetBlockTexture(BoundaryModel.Meshes["polygon48"], BoundaryTextureContext.block_other_c);
-                    SetBlockTexture(BoundaryModel.Meshes["polygon40"], BoundaryTextureContext.block_other_a);
-                    SetBlockTexture(BoundaryModel.Meshes["polygon33"], BoundaryTextureContext.block_other_b_test);
-                    SetBlockTexture(BoundaryModel.Meshes["polygon7"], BoundaryTextureContext.block_shadow_b);
-                    SetBlockTexture(BoundaryModel.Meshes["polygon15"], BoundaryTextureContext.block_shadow_b);
-
-                    SetBlockTexture(BoundaryModel.Meshes["polygon5"], BoundaryTextureContext.block_shadow_h);
-
-                    SetBlockTexture(BoundaryModel.Meshes["polygon20"], BoundaryTextureContext.block_shadow_d);
-
-                    SetBlockTexture(BoundaryModel.Meshes["polygon21"], BoundaryTextureContext.block_shadow_b);
-
-                    //SetBlockTexture(BoundaryModel.Meshes["polygon32"], BoundaryTextureContext.floor_lower);
-
                     SetBlockTexture(BoundaryModel.Meshes["snow_field"], "snow");
                     SetBlockTexture(BoundaryModel.Meshes["snow_blocks"], "snow");
                     break;
             }
+            SetBlockTexture(BoundaryModel.Meshes["polygon48"], BoundaryTextureContext.block_other_c);
+            SetBlockTexture(BoundaryModel.Meshes["polygon40"], BoundaryTextureContext.block_other_a);
+            SetBlockTexture(BoundaryModel.Meshes["polygon33"], BoundaryTextureContext.block_other_b_test);
+            SetBlockTexture(BoundaryModel.Meshes["polygon7"], BoundaryTextureContext.block_shadow_b);
+            SetBlockTexture(BoundaryModel.Meshes["polygon15"], BoundaryTextureContext.block_shadow_b);
+
+            SetBlockTexture(BoundaryModel.Meshes["polygon5"], BoundaryTextureContext.block_shadow_h);
+
+            SetBlockTexture(BoundaryModel.Meshes["polygon20"], BoundaryTextureContext.block_shadow_d);
+
+            SetBlockTexture(BoundaryModel.Meshes["polygon21"], BoundaryTextureContext.block_shadow_b);
             PostLoadBounds?.Invoke();
         }
 
@@ -257,7 +240,7 @@ public static class GameScene
                     foreach (var mesh in BoundaryModel.Meshes) {
                         foreach (BasicEffect effect in mesh.Effects) {
 
-                            if (mesh.Name.Contains("outer", System.StringComparison.InvariantCultureIgnoreCase)) {
+                            if (mesh.Name.Contains("outer", StringComparison.InvariantCultureIgnoreCase)) {
                                 continue;
                             }
 

@@ -292,37 +292,36 @@ public class Block : IGameObject
         Remove();
     }
 
-    private void UpdateOffset() {
-        if (Properties.CanStack) {
-            var newFullSize = FULL_SIZE;
-            switch (Stack) {
-                case 1:
-                    _offset = new(0, newFullSize - SIDE_LENGTH, 0);
-                    break;
-                case 2:
-                    _offset = new(0, newFullSize - (SIDE_LENGTH + SLAB_SIZE), 0);
-                    break;
-                case 3:
-                    _offset = new(0, newFullSize - (SIDE_LENGTH + SLAB_SIZE * 3), 0);
-                    break;
-                case 4:
-                    _offset = new(0, newFullSize - (SIDE_LENGTH * 2 + SLAB_SIZE), 0);
-                    break;
-                case 5:
-                    _offset = new(0, newFullSize - (SIDE_LENGTH * 2 + SLAB_SIZE * 2), 0);
-                    break;
-                case 6:
-                    _offset = new(0, newFullSize - (SIDE_LENGTH * 2 + SLAB_SIZE * 4), 0);
-                    break;
-                case 7:
-                    _offset = new(0, newFullSize - (SIDE_LENGTH * 3 + SLAB_SIZE * 2), 0);
-                    break;
-            }
-        }
-        else
+    void UpdateOffset() {
+        _offset *= _scaling / BLOCK_DEF_SCALING;
+        if (!Properties.CanStack) {
             _offset.Y -= 0.1f;
-        // divide by 0.62f since that was the initial scale and it's what everything has been accounted for. might change in the future.
-        _offset *= (_scaling / 0.62f);
+            return;
+        }
+
+        switch (Stack) {
+            case 1:
+                _offset = new(0, FULL_SIZE - SIDE_LENGTH, 0);
+                break;
+            case 2:
+                _offset = new(0, FULL_SIZE - (SIDE_LENGTH + SLAB_SIZE), 0);
+                break;
+            case 3:
+                _offset = new(0, FULL_SIZE - (SIDE_LENGTH + SLAB_SIZE * 3), 0);
+                break;
+            case 4:
+                _offset = new(0, FULL_SIZE - (SIDE_LENGTH * 2 + SLAB_SIZE), 0);
+                break;
+            case 5:
+                _offset = new(0, FULL_SIZE - (SIDE_LENGTH * 2 + SLAB_SIZE * 2), 0);
+                break;
+            case 6:
+                _offset = new(0, FULL_SIZE - (SIDE_LENGTH * 2 + SLAB_SIZE * 4), 0);
+                break;
+            case 7:
+                _offset = new(0, FULL_SIZE - (SIDE_LENGTH * 3 + SLAB_SIZE * 2), 0);
+                break;
+        }
     }
 
     void IGameObject.OnDestroy() {
@@ -341,30 +340,29 @@ public class Block : IGameObject
         // TODO: seeing this, don't make this poor CPU have overhead (use derived types!)
         if (Type != BlockID.Teleporter) {
             World = Matrix.CreateScale(_scaling) * Matrix.CreateTranslation(Position3D - _offset);
+
             Projection = CameraGlobals.GameProjection;
             View = CameraGlobals.GameView;
 
-            for (int i = 0; i < /*(Lighting.AccurateShadows ? 2 : 1)*/ 1; i++) { // shadows later if i can fix it {
-                foreach (var mesh in Model.Meshes) {
-                    foreach (BasicEffect effect in mesh.Effects) {
-                        effect.View = View;
-                        effect.World = i == 0 ? World : World * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0) * Matrix.CreateScale(1, 1, Stack / 7f);
-                        effect.Projection = Projection;
+            foreach (var mesh in Model.Meshes) {
+                foreach (BasicEffect effect in mesh.Effects) {
+                    effect.View = View;
+                    effect.World = World;
+                    effect.Projection = Projection;
 
-                        effect.TextureEnabled = true;
-                        if (mesh.Name != "snow")
-                            effect.Texture = _texture;
-                        else
-                            effect.Texture = GameScene.Assets["snow"];
+                    effect.TextureEnabled = true;
+                    if (mesh.Name != "snow")
+                        effect.Texture = _texture;
+                    else
+                        effect.Texture = GameScene.Assets["snow"];
 
-                        effect.SetDefaultGameLighting_IngameEntities(10f);
+                    effect.SetDefaultGameLighting_IngameEntities(10f);
 
-                        effect.DirectionalLight0.Direction *= 0.1f;
+                    effect.DirectionalLight0.Direction *= 0.1f;
 
-                        effect.Alpha = 1f;
-                    }
-                    mesh.Draw();
+                    effect.Alpha = 1f;
                 }
+                mesh.Draw();
             }
         }
         else {

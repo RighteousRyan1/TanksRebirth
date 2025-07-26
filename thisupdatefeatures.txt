@@ -9,7 +9,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 ## Additions
 
 - You can now switch individually between Windowed, Fullscreen, and Borderless Fullscreen in the graphics settings
-- Added an "Auto-Orient Tanks" option to the level editor so tanks can be oriented similarly (not identically) to how they were in the original game
+- Added an "Auto-Orient Tanks" option to the level editor so tanks can be oriented identically to how they were in the original game
 - Added coordinates display above the mouse in the level editor
 
 ## Changes
@@ -31,6 +31,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 	- Be sure to read the documentation of them by hovering on them in your IDE!
 - Pink tanks, internally, are now listed before Yellow tanks
 	- Update any campaigns!
+- You can now compile mods on versions higher than .NET 8.0
 
 ## Fixes
 

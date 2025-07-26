@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.IsolatedStorage;
 using System.Linq;
 using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.ID;
@@ -9,6 +10,7 @@ using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.GameContent.UI.LevelEditor;
+using TanksRebirth.Graphics;
 
 namespace TanksRebirth.Internals.Common.Utilities;
 // todo: implement
@@ -239,76 +241,27 @@ public readonly struct WiiMap
         // unfortunately we cannot do much more than this, since enemy spawns are handled in the parameter file.
         // ...but we can find where they would spawn. go ahead and put a brown tank on the blue team there.
     }
-    public static float GetAutoTankRotation(BlockMapPosition p) {
+    public static float GetAutoTankRotation(Vector2 p) {
         const float ROWS_PER_COL = (float)BlockMapPosition.MAP_HEIGHT / BlockMapPosition.MAP_WIDTH_169;
 
-        // literally reverse-engineered the original game's code to get this, yet it doesn't work.
-        // killing myself in minecraft.
-        // IT'S ONE SMALL STUPIDITY OFF
+        // adjust to the center of the map.
 
-        // the original game is +Y-Axis = Upwards, so invert here
-        bool top_left = ROWS_PER_COL * p.X <= (BlockMapPosition.MAP_HEIGHT - (p.Y + 1));
-        bool top_right = -ROWS_PER_COL * p.X <= (BlockMapPosition.MAP_HEIGHT - (p.Y + 1));
+        // p.Y = p.Y - GameScene.MapCenter.Y - 20;
+        p.Y -= Block.SIDE_LENGTH * 6;
 
-        bool above_diag = ROWS_PER_COL * (p.X + 1) < (p.Y + 1);
-        // bool top_right_rebirth = -ROWS_PER_COL * p.X < p.Y;
+        bool top_left = ROWS_PER_COL * p.X < p.Y;
+        bool top_right = -ROWS_PER_COL * p.X < p.Y;
 
-        // bool isUpper = p.Y < BlockMapPosition.MAP_HEIGHT / 2;
-
-        // lowest (blue)
         if (top_left && top_right) {
-            // should face down
-            if (!above_diag)
-                return 0;
-            // should face up
-            return MathHelper.PiOver2; // MathHelper.Pi;
+            return MathHelper.Pi;
         }
-        // rightmost (yellow)
-        /*else if (top_left && !top_right) {
-            if (above_diag)
-                return MathHelper.PiOver2;
-            return -MathHelper.PiOver2;
-        }*/
-        // leftmost (green)
-        else if (!top_left && top_right) {
-            // should face down
-            if (above_diag)
-                return MathHelper.Pi;
-            // should face left
-            return -MathHelper.PiOver2;
-        }
-        // highest (default case, red)
-        // only happens if there's a mathematical error
-        return MathHelper.Pi;
-
-        const int HALF_MAP_WIDTH = BlockMapPosition.MAP_WIDTH_169 / 2;  // 11
-        const int HALF_MAP_HEIGHT = BlockMapPosition.MAP_HEIGHT / 2;    // 8
-
-        if (p.X == 0) {
+        else if (top_left && !top_right) {
             return MathHelper.PiOver2;
         }
-        else if (p.X == BlockMapPosition.MAP_WIDTH_169 - 1) {
+        else if (!top_left && top_right) {
             return -MathHelper.PiOver2;
         }
-
-        // Convert to center-relative coordinates
-        int relX = p.X - HALF_MAP_WIDTH;   // negative = left of center, positive = right
-        int relY = p.Y - HALF_MAP_HEIGHT;  // negative = above center, positive = below
-
-        // Tie-breakers now go to vertical regions
-
-        if (Math.Abs(relX) >= Math.Abs(relY) + 2) {
-            if (relX >= 0)
-                return -MathHelper.PiOver2;     // Face left
-            else
-                return MathHelper.PiOver2;      // Face right
-        }
-        else {
-            if (relY > 0)
-                return MathHelper.Pi;           // Face up
-            else
-                return 0f;                      // Face down
-        }
+        return 0;
     }
 }
 [Flags]
