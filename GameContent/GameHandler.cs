@@ -100,7 +100,7 @@ public class GameHandler {
 
         Difficulties.GlobalManage();
 
-        if (MainMenuUI.Active)
+        if (MainMenuUI.IsActive)
             PlayerTank.SetLives(999);
         // technically, level 0 in code is level 1, so we want to use that number (1) if the user is level 0.
         // ExperienceBar.Value = TankGame.GameData.ExpLevel - MathF.Floor(TankGame.GameData.ExpLevel);
@@ -161,26 +161,26 @@ public class GameHandler {
         foreach (var expl in Explosion.Explosions)
             expl?.Update();
 
-        if (CampaignGlobals.ShouldMissionsProgress && !MainMenuUI.Active)
+        if (CampaignGlobals.ShouldMissionsProgress && !MainMenuUI.IsActive)
             IntermissionHandler.HandleMissionChanging();
 
         foreach (var cube in Block.AllBlocks)
             cube?.OnUpdate();
 
-        if ((DebugManager.DebuggingEnabled && DebugManager.DebugLevel == DebugManager.Id.LevelEditDebug && CameraGlobals.OverheadView) || LevelEditorUI.Active)
+        if ((DebugManager.DebuggingEnabled && DebugManager.DebugLevel == DebugManager.Id.LevelEditDebug && CameraGlobals.OverheadView) || LevelEditorUI.IsActive)
             foreach (var sq in PlacementSquare.Placements)
                 sq?.Update();
 
         Particles.UpdateParticles();
 
-        var mmActive = MainMenuUI.Active;
+        var mmActive = MainMenuUI.IsActive;
         if (mmActive)
             MainMenuUI.Update();
         // I AM PUTTING THIS HERE BECAUSE FUCK YOU.
         MainMenuUI.UpdateCampaignButton.IsVisible = MainMenuUI.MenuState == MainMenuUI.UIState.Campaigns && mmActive;
 
         // questioning as to why this is placed here
-        if ((CameraGlobals.OverheadView || MainMenuUI.Active) && !LevelEditorUI.Active) {
+        if ((CameraGlobals.OverheadView || MainMenuUI.IsActive) && !LevelEditorUI.IsActive) {
             CampaignGlobals.InMission = false;
             IntermissionHandler.TankFunctionWait = 600;
         }
@@ -198,7 +198,7 @@ public class GameHandler {
     internal static void RenderAll() {
         TankGame.Instance.GraphicsDevice.BlendState = BlendState.AlphaBlend;
 
-        if (!MainMenuUI.Active && !LevelEditorUI.Editing) {
+        if (!MainMenuUI.IsActive && !LevelEditorUI.IsEditing) {
             ExperienceBar.Position = new(WindowUtils.WindowWidth / 2 - ExperienceBar.Scale.X / 2, 50);
             ExperienceBar.Scale = new(600, 20);
             ExperienceBar.Alignment = Anchor.LeftCenter;
@@ -243,7 +243,7 @@ public class GameHandler {
 
         Particles.RenderModelParticles();
 
-        if ((DebugManager.DebugLevel == DebugManager.Id.LevelEditDebug && CameraGlobals.OverheadView) || LevelEditorUI.Active)
+        if ((DebugManager.DebugLevel == DebugManager.Id.LevelEditDebug && CameraGlobals.OverheadView) || LevelEditorUI.IsActive)
             foreach (var sq in PlacementSquare.Placements)
                 sq?.Render();
 
@@ -253,20 +253,20 @@ public class GameHandler {
 
         // only render the level editor if it's active
         // change depth stencil...?
-        if (LevelEditorUI.Active) {
+        if (LevelEditorUI.IsActive) {
             LevelEditorUI.Render();
         }
 
         // only draw if ingame + is multiplayer.
         if (CampaignGlobals.ShouldMissionsProgress 
-            && !MainMenuUI.Active
+            && !MainMenuUI.IsActive
             && Client.IsConnected()) {
             PingMenu.DrawPingHUD();
         }
 
         IntermissionHandler.RenderCountdownGraphics();
 
-        var shouldSeeInfo = !MainMenuUI.Active && !LevelEditorUI.Active && !CampaignCompleteUI.IsViewingResults;
+        var shouldSeeInfo = !MainMenuUI.IsActive && !LevelEditorUI.IsActive && !CampaignCompleteUI.IsViewingResults;
         if (shouldSeeInfo) {
             GameSceneUI.DrawScores();
             GameSceneUI.DrawMissionInfoBar();

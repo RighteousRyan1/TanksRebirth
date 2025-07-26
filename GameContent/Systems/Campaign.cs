@@ -173,14 +173,14 @@ public class Campaign
                     tank.Team = template.Team;
 
                     if (tank.PlayerId <= Server.CurrentClientCount) {
-                        if (!LevelEditorUI.Active) {
+                        if (!LevelEditorUI.IsActive) {
                             if (NetPlay.IsClientMatched(tank.PlayerId)) {
                                 PlayerTank.MyTeam = tank.Team;
                                 PlayerTank.MyTankType = tank.PlayerType;
                             }
                         }
                     }
-                    else if (!LevelEditorUI.Active)
+                    else if (!LevelEditorUI.IsActive)
                         tank.Remove(true);
                     if (Client.IsConnected()) {
                         if (PlayerTank.Lives[tank.PlayerId] <= 0)

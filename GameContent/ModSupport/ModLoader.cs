@@ -1,5 +1,4 @@
 using Microsoft.Xna.Framework;
-using Steamworks;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -31,8 +30,7 @@ public enum LoadStatus
     Sandboxing,
     Complete
 }
-public static class ModLoader
-{
+public static class ModLoader {
     public delegate void FinishModLoading();
     public static event FinishModLoading? OnFinishModLoading;
     public delegate void PostLoadModContent(TanksMod mod);
@@ -41,14 +39,16 @@ public static class ModLoader
     public static List<TanksMod> LoadedMods { get; set; } = [];
     private static List<AssemblyLoadContext> _loadedAlcs = [];
 
+    public static bool AreCompilesAllowed { get; set; } = false;
     public static int ActionsNeeded { get; private set; }
     public static int ActionsComplete { get; private set; }
-    public static LoadStatus Status { get; private set; } = LoadStatus.Inactive; 
+    public static LoadStatus Status { get; private set; } = LoadStatus.Inactive;
     public static string ModBeingLoaded { get; private set; } = string.Empty;
     public static bool LoadingMods { get; private set; }
     public static string ModsPath { get; } = Path.Combine(TankGame.SaveDirectory, "Mods");
 
-    public const string ModNETVersion = "net8.0";
+    public const string EXPECTED_NET_VERSION = "net8.0";
+    public const int MIN_NET_VERSION = 8;
 
     private volatile static List<Action> _loadingActions = [];
     private volatile static List<Action> _sandboxingActions = [];
@@ -70,41 +70,45 @@ public static class ModLoader
     /// <summary>The error given from the mod-loading process.</summary>
     public static string Error = string.Empty;
     public static string LoadType = string.Empty;
-    private static void AttemptCompile(string modName) {
+    public static bool CheckIfCompilesAreAllowed() {
         if (!RuntimeData.IsWindows) {
             TankGame.ClientLog.Write("Auto-compilation of mod failed. Specified OS architecture is not Windows.", Internals.LogType.Warn);
-            return;
+            return false;
         }
-        else {
-            // painfully local code.
-            var checkPath = "C:\\Program Files\\dotnet\\sdk";
-            Process process = new();
-            process.StartInfo.FileName = "dotnet.exe";
-            process.StartInfo.Arguments = "--list-sdks";
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.RedirectStandardOutput = true;
-            process.Start();
+        // painfully local code.
+        var checkPath = "C:\\Program Files\\dotnet\\sdk";
+        Process process = new();
+        process.StartInfo.FileName = "dotnet.exe";
+        process.StartInfo.Arguments = "--list-sdks";
+        process.StartInfo.UseShellExecute = false;
+        process.StartInfo.RedirectStandardOutput = true;
+        process.Start();
 
-            string[] versions = process.StandardOutput
-                .ReadToEnd()
-                .TrimEnd()
-                .Replace("[", string.Empty)
-                .Replace("]", string.Empty)
-                .Replace("\r", string.Empty)
-                .Replace(checkPath, string.Empty)
-                .Split("\n")
-                .Select(x => x.Trim())
-                .ToArray();
+        string[] versions = [.. process.StandardOutput
+            .ReadToEnd()
+            .TrimEnd()
+            .Replace("[", string.Empty)
+            .Replace("]", string.Empty)
+            .Replace("\r", string.Empty)
+            .Replace(checkPath, string.Empty)
+            .Split("\n")
+            .Select(x => x.Trim())];
 
-            var versionsSingular = string.Join(", ", versions);
+        var versionsSingular = string.Join(", ", versions);
+        var versionsReal = versions.Select(x => new Version(x)).ToArray();
 
-            process.WaitForExit();
-            // check if any version starts with a '8' to indicate that it is a .NET 8.0 SDK.
-            if (!versions.Any(x => x.StartsWith('8'))) {
-                TankGame.ClientLog.Write("Auto-compilation of mod failed. User does not have a .NET 8.0 SDK installed.", LogType.Warn);
-                return;
-            }
+        process.WaitForExit();
+        // check if any version starts with a '8' to indicate that it is a .NET 8.0 SDK.
+        if (versionsReal.All(x => x.Major < MIN_NET_VERSION)) {
+            TankGame.ClientLog.Write($"Auto-compilation disallowed. User does not have a .NET {MIN_NET_VERSION}.0 SDK or higher installed.", LogType.Warn);
+            return false;
         }
+        TankGame.ClientLog.Write($"Auto-compile allowed. (.NET {versionsReal[^1]})", LogType.Info);
+        return true;
+    }
+    private static void AttemptCompile(string modName) {
+        if (!AreCompilesAllowed) return;
+
         Status = LoadStatus.Compiling;
         Process proc = new();
         try {
@@ -149,7 +153,7 @@ public static class ModLoader
         }
     }
     internal static void UnloadAll() {
-        if (MainMenuUI.Active) {
+        if (MainMenuUI.IsActive) {
             SceneManager.CleanupEntities();
             SceneManager.CleanupScene();
         }
@@ -259,6 +263,8 @@ public static class ModLoader
 
         if (!_firstLoad)
             ChatSystem.SendMessage("Reloading mods...", Color.Red);
+        else
+            AreCompilesAllowed = CheckIfCompilesAreAllowed();
 
         Directory.CreateDirectory(ModsPath);
 
@@ -286,8 +292,8 @@ public static class ModLoader
                             var lines = File.ReadAllLines(file2);
                             var netVer = GetCsprojPropertyValue(lines, LocateCsprojProperty(lines, "TargetFramework"));
 
-                            if (netVer != ModNETVersion) {
-                                Error = $"This mod does not match TanksRebirth's .NET version ({ModNETVersion})";
+                            if (netVer != EXPECTED_NET_VERSION) {
+                                Error = $"This mod does not match TanksRebirth's .NET version ({EXPECTED_NET_VERSION})";
                                 return;
                             }
 
@@ -309,7 +315,7 @@ public static class ModLoader
                                 }
                                 AttemptCompile(modName);
                                 Status = LoadStatus.Loading;
-                                string filepath = Path.Combine(folder, "bin", LoadType, ModNETVersion, $"{modName}.dll");
+                                string filepath = Path.Combine(folder, "bin", LoadType, EXPECTED_NET_VERSION, $"{modName}.dll");
                                 string pdb = Path.ChangeExtension(filepath, ".pdb");
                                 // TODO: load PDB into the ALC.
                                 var alc = new AssemblyLoadContext(modName, true);
@@ -344,7 +350,8 @@ public static class ModLoader
                                                 // i feel like this is gravely inefficient but it can be changed
                                                 // update: this is definitely somewhat horrid
                                                 foreach (var type2 in tanksMod.GetType().Assembly.GetTypes()) {
-                                                    if (type2.IsSubclassOf(typeof(ModTank)) && !type.IsAbstract) {
+                                                    var isModTank = type2.IsSubclassOf(typeof(ModTank));
+                                                    if (isModTank && !type2.IsAbstract) {
                                                         var modTank = (Activator.CreateInstance(type2) as ModTank)!;
                                                         _modTankDictionary[tanksMod].Add(modTank);
                                                         _modTanks.Add(modTank);

@@ -125,7 +125,7 @@ public static partial class MainMenuUI {
         LanternMode.Color = Difficulties.Types["LanternMode"] ? Color.Lime : Color.Red;
         DisguiseMode.Color = Difficulties.Types["Disguise"] ? Color.Lime : Color.Red;
 
-        if (Active && Client.IsConnected() && Client.IsHost())
+        if (IsActive && Client.IsConnected() && Client.IsHost())
             Client.SendDiffiulties();
     }
     public static void RenderDifficultiesMenu() {

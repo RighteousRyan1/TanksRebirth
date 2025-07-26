@@ -227,7 +227,7 @@ public static class IntermissionSystem {
     private static void DoMidAnimationActions(KeyFrame frame) {
         var frameId = IntermissionAnimator.KeyFrames.FindIndex(f => f.Equals(frame));
 
-        if (MainMenuUI.Active) {
+        if (MainMenuUI.IsActive) {
             IntermissionAnimator?.Restart();
             IntermissionAnimator?.Stop(); // the player dipped during the intermission lol
             BonusLifeAnimator?.Restart();
@@ -335,12 +335,14 @@ public static class IntermissionSystem {
         // wait a little bit to do animations so they are clearly visible to the user
         Alpha = MathHelper.Clamp(Alpha, 0f, 1f);
 
+        if (MainMenuUI.IsActive) return;
+
         if (!GameUI.Paused && TankGame.Instance.IsActive) {
             // moves the background tank graphic
             _offset.Y -= 1f * RuntimeData.DeltaTime;
             _offset.X += 1f * RuntimeData.DeltaTime;
         }
-        if (MainMenuUI.Active && BlackAlpha <= 0) {
+        if (MainMenuUI.IsActive && BlackAlpha <= 0) {
             Alpha = 0f;
         }
 

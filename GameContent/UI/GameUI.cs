@@ -104,7 +104,7 @@ public static class GameUI
 
             BackButton.Size.Y = 150;
 
-            if (MainMenuUI.Active)
+            if (MainMenuUI.IsActive)
             {
                 MainMenuUI.PlayButton.IsVisible = false;
             }
@@ -189,7 +189,7 @@ public static class GameUI
     }
 
     public static void QuitOut(bool netSent = false) {
-        if (!MainMenuUI.Active) {
+        if (!MainMenuUI.IsActive) {
             // if a non-host client tries quitting, deny them
             if (!netSent && Client.IsConnected() && !Client.IsHost()) {
                 ChatSystem.SendMessage("Only the host can quit the campaign!", Color.Red);
@@ -214,9 +214,9 @@ public static class GameUI
             IntermissionSystem.BonusLifeAnimator?.Stop();
 
             MainMenuUI.Open();
-            if (LevelEditorUI.Active) {
+            if (LevelEditorUI.IsActive) {
                 LevelEditorUI.Close(true);
-                LevelEditorUI.Editing = false;
+                LevelEditorUI.IsEditing = false;
             }
         }
         else {
@@ -234,7 +234,7 @@ public static class GameUI
                 HandleBackButton();
                 return;
             }
-            else if (!MainMenuUI.Active) {
+            else if (!MainMenuUI.IsActive) {
                 Paused = !Paused;
 
                 if (CampaignGlobals.InMission) {
@@ -307,7 +307,7 @@ public static class GameUI
             MainMenuUI.MenuState = MainMenuUI.UIState.PrimaryMenu;
 
         // We are on the main menu and in the settings menu.
-        if (MainMenuUI.MenuState == MainMenuUI.UIState.Settings && MainMenuUI.Active && VolumeButton.IsVisible) {
+        if (MainMenuUI.MenuState == MainMenuUI.UIState.Settings && MainMenuUI.IsActive && VolumeButton.IsVisible) {
             // Set to main menu, we are going back to it after all.
             MainMenuUI.MenuState = MainMenuUI.UIState.PrimaryMenu;
             
@@ -325,7 +325,7 @@ public static class GameUI
         }
         
 
-        if (VolumeButton.IsVisible && !MainMenuUI.Active)
+        if (VolumeButton.IsVisible && !MainMenuUI.IsActive)
         {
             ResumeButton.IsVisible = true;
             OptionsButton.IsVisible = true;
@@ -377,7 +377,7 @@ public static class GameUI
         else
         {
             // WHAT THE HELL IS THIS CODE????
-            if (MainMenuUI.Active)
+            if (MainMenuUI.IsActive)
             {
                 if (MainMenuUI.PlayButton.IsVisible)
                     return;
@@ -474,7 +474,7 @@ public static class GameUI
         if (VolumeUI.AmbientVolume.Value <= 0.01f)
             VolumeUI.AmbientVolume.Value = 0f;
 
-        if (!MainMenuUI.Active)
+        if (!MainMenuUI.IsActive)
             TankMusicSystem.UpdateVolume();
 
         if (_delay > 0 && !InputUtils.MouseLeft)

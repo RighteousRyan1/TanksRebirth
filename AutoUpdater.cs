@@ -56,7 +56,12 @@ public class AutoUpdater {
         var assetWeWant = _assets.First(x => x.ToLower().Contains("tanks_rebirth"));
         var linkDl = _ghLink + "/releases/download/" + _tag + "/" + assetWeWant;
         Task.Run(() => {
-            var bytes = WebUtils.DownloadWebFile(linkDl, out var name1);
+            var bytes = WebUtils.DownloadWebFile(linkDl, out var name1, out var status);
+
+            if (bytes == null || status != System.Net.HttpStatusCode.OK) {
+                TankGame.ClientLog.Write($"Failed to download the update from {linkDl}. Status: {status}", LogType.Warn);
+                return;
+            }
 
             File.WriteAllBytes(assetWeWant, bytes);
 

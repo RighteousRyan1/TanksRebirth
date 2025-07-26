@@ -64,9 +64,9 @@ public class ModTank : ILoadable, IModContent {
     /// <param name="destroy">Whether or not the tank will be destroyed upon taking this damage.</param>
     /// <param name="context">The context under which this tank took damage.</param>
     public virtual void TakeDamage(bool destroy, ITankHurtContext context) { }
-    /// <summary>Called when this tank detects danger.</summary>
-    /// <param name="danger">The dangerous object.</param>
-    public virtual void DangerDetected(IAITankDanger danger) { }
+    /// <summary>Called when this tank detects danger.
+    /// <br></br>Use <see cref="AITank.NearbyDangers"/> to access dangerous objects near the tank.</summary>
+    public virtual void DangerDetected() { }
     /// <summary>Called when this tank shoots.</summary>
     /// <param name="shell">The shell which was shot.</param>
     public virtual void Shoot(Shell shell) { }
@@ -77,11 +77,13 @@ public class ModTank : ILoadable, IModContent {
     public virtual void PreUpdate() { }
     /// <summary>Called after the update cycle of a tank.</summary>
     public virtual void PostUpdate() { }
-
+    /// <summary>Custom code you wish to execute for AI. This method can be used to write your own tank behaviors.
+    /// <br></br>Metadata will STILL be updated if returned false. (i.e: <see cref="AITank.NearbyDangers"/>, <see cref="AITank.TanksNearMineAwareness"/>, etc)
+    /// <br></br>Return true if you wish to keep standard tank behavior, return false if you wish to not use it.</summary>
+    public virtual bool CustomAI() => true;
     // Pre/Post render soon...
 
     internal static int unloadOffset = 0;
-
     internal void Unload() {
         var name = Name.GetLocalizedString(LangCode.English)!;
         // if more than one mod has a modded tank, the game unloads that, and indexes are not adjusted... unloadOffset fixes that

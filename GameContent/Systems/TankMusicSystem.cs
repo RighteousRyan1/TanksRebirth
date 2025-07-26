@@ -112,7 +112,7 @@ public static class TankMusicSystem
         foreach (var song in Audio.ToList())
             song.Value?.SetVolume(0f);
 
-        if (MainMenuUI.Active && AIManager.CountAll() == 0 || TierHighest == TankID.None) {
+        if (MainMenuUI.IsActive && AIManager.CountAll() == 0 || TierHighest == TankID.None) {
             return;
         }
 

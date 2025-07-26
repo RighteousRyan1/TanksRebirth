@@ -28,18 +28,23 @@ public class PlacementSquare {
     public static bool IsPlacing { get; private set; }
     public bool HasItem => BlockId > -1 || TankId > -1;
 
-    public static PlacementSquare CurrentlyHovered;
+    public static PlacementSquare? CurrentlyHovered;
 
     public static bool displayHeights = true;
 
     public static List<PlacementSquare> Placements = [];
 
+    public Color SquareColor = Color.White;
+
     public Vector3 Position { get; set; }
 
-    private BoundingBox _box;
+    BoundingBox _box;
 
-    private Model _model;
+    Model _model;
 
+    public float Alpha;
+
+    public static bool AutoAlphaHandle = true;
     public bool IsHovered => RayUtils.GetMouseToWorldRay().Intersects(_box).HasValue;
 
     public static bool PlacesBlock; // if false, tanks will be placed
@@ -47,13 +52,15 @@ public class PlacementSquare {
     public int TankId = -1;
     public int BlockId = -1;
 
-    private Action<PlacementSquare> _onClick = null;
+    private Action<PlacementSquare>? _onClick = null;
 
     public bool HasBlock; // if false, a tank exists here
 
     public readonly int Id;
 
-    public Point RelativePosition;
+    public BlockMapPosition RelativePosition;
+
+    float _flashTime;
 
     public PlacementSquare(Vector3 position, float dimensions) {
         Position = position;
@@ -77,7 +84,7 @@ public class PlacementSquare {
                         else
                             place.DoPlacementAction(false);
                     },
-                    RelativePosition = new Point(i, j)
+                    RelativePosition = new BlockMapPosition(i, j)
                 };
             }
         }
@@ -103,7 +110,7 @@ public class PlacementSquare {
                 return;
 
             if (place) {
-                var block = new Block(LevelEditorUI.Active ? LevelEditorUI.SelectedBlockType : DebugManager.blockType, LevelEditorUI.Active ? LevelEditorUI.BlockHeight : DebugManager.blockHeight, Position.FlattenZ());
+                var block = new Block(LevelEditorUI.IsActive ? LevelEditorUI.SelectedBlockType : DebugManager.blockType, LevelEditorUI.IsActive ? LevelEditorUI.BlockHeight : DebugManager.blockHeight, Position.FlattenZ());
                 BlockId = block.Id;
 
                 HasBlock = true;
@@ -136,20 +143,20 @@ public class PlacementSquare {
                 return;
             }
 
-            var team = LevelEditorUI.Active ? LevelEditorUI.SelectedTankTeam : DebugManager.tankToSpawnTeam;
+            var team = LevelEditorUI.IsActive ? LevelEditorUI.SelectedTankTeam : DebugManager.tankToSpawnTeam;
             if (LevelEditorUI.CurCategory == LevelEditorUI.Category.EnemyTanks) {
-                if (LevelEditorUI.Active && LevelEditorUI.SelectedTankTier < TankID.Brown)
+                if (LevelEditorUI.IsActive && LevelEditorUI.SelectedTankTier < TankID.Brown)
                     return;
                 if (AIManager.CountAll() >= 50) {
                     LevelEditorUI.Alert("You are at enemy tank capacity!");
                     return;
                 }
-                var tnk = DebugManager.SpawnTankAt(Position, LevelEditorUI.Active ? LevelEditorUI.SelectedTankTier : DebugManager.tankToSpawnType, team); // todo: finish
+                var tnk = DebugManager.SpawnTankAt(Position, LevelEditorUI.IsActive ? LevelEditorUI.SelectedTankTier : DebugManager.tankToSpawnType, team); // todo: finish
                 HasBlock = false;
                 TankId = tnk.WorldId;
             }
             else {
-                var type = LevelEditorUI.Active ? LevelEditorUI.SelectedPlayerType : PlayerID.Blue;
+                var type = LevelEditorUI.IsActive ? LevelEditorUI.SelectedPlayerType : PlayerID.Blue;
 
                 var idx = Array.FindIndex(GameHandler.AllPlayerTanks, x => x is not null && x.PlayerType == type);
                 if (idx > -1) {
@@ -164,27 +171,35 @@ public class PlacementSquare {
         }
     }
     public void Update() {
-        if (IsHovered) {
-            CurrentlyHovered = this;
-            if (InputUtils.CanDetectClick())
-                _onClick?.Invoke(this);
 
-            if (PlacesBlock) {
-                if (InputUtils.MouseLeft) {
-                    if (IsPlacing) {
-                        if (!HasItem) {
-                            DoPlacementAction(true);
-                        }
-                    }
-                    else {
-                        if (HasItem) {
-                            DoPlacementAction(false);
-                        }
-                    }
-                }
+        if (_flashTime > 0) {
+            _flashTime -= 0.01f * RuntimeData.DeltaTime;
+            Alpha = _flashTime;
+            if (_flashTime <= 0) {
+                AutoAlphaHandle = true;
+                SquareColor = Color.White;
             }
         }
 
+        if (!IsHovered) return;
+        CurrentlyHovered = this;
+        if (InputUtils.CanDetectClick())
+            _onClick?.Invoke(this);
+
+        if (!InputUtils.MouseLeft) return;
+
+        if (PlacesBlock) {
+            if (IsPlacing) {
+                if (!HasItem) {
+                    DoPlacementAction(true);
+                }
+            }
+            else {
+                if (HasItem) {
+                    DoPlacementAction(false);
+                }
+            }
+        }
         if (BlockId > -1) {
             if (PlacesBlock) {
                 if (Block.AllBlocks[BlockId] is null)
@@ -196,9 +211,17 @@ public class PlacementSquare {
                 TankId = -1;
         }
     }
+    /// <summary>The color must be a pre-defined color within <see cref="Color"/>.</summary>
+    public void FlashAsColor(Color c) {
+        _flashTime = 1f;
+        AutoAlphaHandle = false;
+        SquareColor = c;
+    }
 
     public void Render() {
         var hoverUi = UIElement.GetElementsAt(MouseUtils.MousePosition).Count > 0;
+
+        if (hoverUi) return;
 
         foreach (var mesh in _model.Meshes) {
             foreach (BasicEffect effect in mesh.Effects) {
@@ -237,13 +260,16 @@ public class PlacementSquare {
                     }
                 }
                 effect.TextureEnabled = true;
-                effect.Texture = TextureGlobals.Pixels[Color.White];
+                effect.Texture = TextureGlobals.Pixels[SquareColor];
 
-                if (IsHovered && !hoverUi)
-                    effect.Alpha = 0.7f;
+                if (AutoAlphaHandle) {
+                    if (IsHovered)
+                        Alpha = effect.Alpha = 0.7f;
+                    else
+                        Alpha = effect.Alpha = 0f;
+                }
                 else
-                    effect.Alpha = 0f;
-
+                    effect.Alpha = Alpha;
                 effect.SetDefaultGameLighting_IngameEntities();
             }
             mesh.Draw();

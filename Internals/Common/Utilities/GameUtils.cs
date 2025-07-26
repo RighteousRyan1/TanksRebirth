@@ -1,5 +1,8 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using TanksRebirth.GameContent.Systems.AI;
 
 namespace TanksRebirth.Internals.Common.Utilities;
 
@@ -17,6 +20,23 @@ public enum Anchor
 }
 public static class GameUtils
 {
+    public static IAITankDanger? Closest(this IList<IAITankDanger> positions, Vector2 source) {
+        if (positions == null || !positions.Any())
+            return null;
+
+        float closestDistanceSquared = float.MaxValue;
+        IAITankDanger closest = positions[0];
+
+        foreach (var danger in positions) {
+            float distanceSquared = Vector2.DistanceSquared(source, danger.Position);
+            if (distanceSquared < closestDistanceSquared) {
+                closestDistanceSquared = distanceSquared;
+                closest = danger;
+            }
+        }
+
+        return closest;
+    }
     public static float ToGameTicks(this TimeSpan t) => (float)(t.TotalMilliseconds / 1 / 60f);
     public static Vector2 GetAnchor(this Anchor a, Vector2 vector) {
         return a switch {

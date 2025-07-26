@@ -52,7 +52,7 @@ public class GameShaders
 
         GaussianBlurShader.Parameters["oResolution"].SetValue(Vector2.One);
         GaussianBlurShader.Parameters["oBlurFactor"].SetValue(BlurFactor);
-        GaussianBlurShader.Parameters["oEnabledBlur"].SetValue(MainMenuUI.Active);
+        GaussianBlurShader.Parameters["oEnabledBlur"].SetValue(MainMenuUI.IsActive);
 
         /*if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Up))
             val += 0.01f;
@@ -70,12 +70,12 @@ public class GameShaders
             if (GameHandler.AllPlayerTanks[index] is null)
                 return;
             var pos = index > -1 && 
-                !MainMenuUI.Active ? 
+                !MainMenuUI.IsActive ? 
                 MatrixUtils.ConvertWorldToScreen(Vector3.Zero, 
                 Matrix.CreateTranslation(GameHandler.AllPlayerTanks[index].Position.X, 11, GameHandler.AllPlayerTanks[index].Position.Y), CameraGlobals.GameView, CameraGlobals.GameProjection).ToCartesianCoordinates() 
                 : new Vector2(-1);
             // var val = (float)TankGame.LastGameTime.TotalGameTime.TotalSeconds;
-            LanternShader.Parameters["oPower"]?.SetValue(MainMenuUI.Active ? 100f : Client.ClientRandom.NextFloat(0.195f, 0.20f));
+            LanternShader.Parameters["oPower"]?.SetValue(MainMenuUI.IsActive ? 100f : Client.ClientRandom.NextFloat(0.195f, 0.20f));
             LanternShader.Parameters["oPosition"]?.SetValue(pos/*MouseUtils.MousePosition.ToCartesianCoordinates()*/);
         }
     }

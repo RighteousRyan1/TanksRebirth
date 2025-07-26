@@ -80,7 +80,7 @@ public static class CameraGlobals {
             }
             else {
                 OrthoRotationVector.Y = MathUtils.SoftStep(OrthoRotationVector.Y, DEFAULT_ORTHOGRAPHIC_ANGLE, 0.08f * RuntimeData.DeltaTime);
-                if (!LevelEditorUI.Active)
+                if (!LevelEditorUI.IsActive)
                     AddativeZoom = MathUtils.SoftStep(AddativeZoom, 1f, 0.08f * RuntimeData.DeltaTime);
                 CameraFocusOffset.Y = MathUtils.RoughStep(CameraFocusOffset.Y, 0f, 2f * RuntimeData.DeltaTime);
             }
@@ -89,12 +89,12 @@ public static class CameraGlobals {
 
     public static void Update() {
         bool isFreecam = DebugManager.DebugLevel == DebugManager.Id.FreeCamTest || DebugManager.persistFreecam;
-        bool isMainMenu = MainMenuUI.Active;
+        bool isMainMenu = MainMenuUI.IsActive;
         bool isPOV = Difficulties.Types["POV"] && !isMainMenu;
 
         if (!isFreecam) {
             if (!isMainMenu) {
-                if (!Difficulties.Types["POV"] || LevelEditorUI.Active) {
+                if (!Difficulties.Types["POV"] || LevelEditorUI.IsActive) {
                     UpdateOverhead();
 
                     GameView = Matrix.CreateScale(DEFAULT_ZOOM * AddativeZoom) *
@@ -180,18 +180,18 @@ public static class CameraGlobals {
 
             bool isPlayerActive = PlayerTank.ClientTank is not null;
 
-            var keysprint = LevelEditorUI.Active || !isPlayerActive ? Keys.LeftShift : Keys.RightShift;
-            var keyslow = LevelEditorUI.Active || !isPlayerActive ? Keys.LeftControl : Keys.RightControl;
+            var keysprint = LevelEditorUI.IsActive || !isPlayerActive ? Keys.LeftShift : Keys.RightShift;
+            var keyslow = LevelEditorUI.IsActive || !isPlayerActive ? Keys.LeftControl : Keys.RightControl;
 
             if (InputUtils.CurrentKeySnapshot.IsKeyDown(keysprint))
                 realMoveSpeed *= 2;
             if (InputUtils.CurrentKeySnapshot.IsKeyDown(keyslow))
                 realMoveSpeed /= 4;
 
-            var keyf = LevelEditorUI.Active || !isPlayerActive ? Keys.W : Keys.Up;
-            var keyb = LevelEditorUI.Active || !isPlayerActive ? Keys.S : Keys.Down;
-            var keyl = LevelEditorUI.Active || !isPlayerActive ? Keys.A : Keys.Left;
-            var keyr = LevelEditorUI.Active || !isPlayerActive ? Keys.D : Keys.Right;
+            var keyf = LevelEditorUI.IsActive || !isPlayerActive ? Keys.W : Keys.Up;
+            var keyb = LevelEditorUI.IsActive || !isPlayerActive ? Keys.S : Keys.Down;
+            var keyl = LevelEditorUI.IsActive || !isPlayerActive ? Keys.A : Keys.Left;
+            var keyr = LevelEditorUI.IsActive || !isPlayerActive ? Keys.D : Keys.Right;
 
             if (InputUtils.MouseRight) {
                 RebirthFreecam.Rotation -= new Vector3(0, 

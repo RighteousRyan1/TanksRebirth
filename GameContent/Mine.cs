@@ -152,7 +152,7 @@ public sealed class Mine : IAITankDanger {
     }
 
     internal void Update() {
-        if (!GameScene.ShouldRenderAll || (!CampaignGlobals.InMission && !MainMenuUI.Active))
+        if (!GameScene.ShouldRenderAll || (!CampaignGlobals.InMission && !MainMenuUI.IsActive))
             return;
 
         World = Matrix.CreateScale(MineScale * 0.6f) * Matrix.CreateTranslation(Position3D);

@@ -46,7 +46,7 @@ public static class RebirthMouse
         _sinScale = MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalSeconds);
         var scaleReal = 1f + _sinScale / 12;
 
-        if (!MainMenuUI.Active && !GameUI.Paused && !LevelEditorUI.Active) {
+        if (!MainMenuUI.IsActive && !GameUI.Paused && !LevelEditorUI.IsActive) {
             var clientId = NetPlay.CurrentClient is null ? 0 : NetPlay.CurrentClient.Id;
             if (GameHandler.AllPlayerTanks[clientId] is not null) {
                 var me = GameHandler.AllPlayerTanks[clientId];

@@ -233,7 +233,7 @@ public static class DebugManager {
         if (InputUtils.KeyJustPressed(Keys.F4))
             DebuggingEnabled = !DebuggingEnabled;
 
-        if (!MainMenuUI.Active) {
+        if (!MainMenuUI.IsActive) {
             ClearTracks.IsVisible = DebuggingEnabled && DebugLevel == 0;
             ClearChecks.IsVisible = DebuggingEnabled && DebugLevel == 0;
             SetupMissionAgain.IsVisible = DebuggingEnabled && DebugLevel == 0;
@@ -254,13 +254,11 @@ public static class DebugManager {
             RuntimeData.MemoryUsageInBytes = (ulong)RuntimeData.ProcessMemory;
         }
         if (DebugLevel == Id.SceneMetrics) {
-            if (RuntimeData.RunTime % 10f <= RuntimeData.DeltaTime) {
-                RuntimeData.RenderFpsGraph.Update();
-                RuntimeData.LogicFpsGraph.Update();
+            RuntimeData.RenderFpsGraph.Update();
+            RuntimeData.LogicFpsGraph.Update();
 
-                RuntimeData.RenderTimeGraph.Update();
-                RuntimeData.LogicTimeGraph.Update();
-            }
+            RuntimeData.RenderTimeGraph.Update();
+            RuntimeData.LogicTimeGraph.Update();
         }
 
         if (InputUtils.AreKeysJustPressed(Keys.Q, Keys.E))
@@ -300,7 +298,7 @@ public static class DebugManager {
             DebugLevel++;
         if (InputUtils.KeyJustPressed(Keys.F5))
             DebugLevel--;
-        if (!MainMenuUI.Active) {
+        if (!MainMenuUI.IsActive) {
             if (InputUtils.KeyJustPressed(Keys.Z))
                 blockType--;
             if (InputUtils.KeyJustPressed(Keys.X))
@@ -312,9 +310,9 @@ public static class DebugManager {
                     CameraGlobals.OrthoRotationVector += MouseUtils.MouseVelocity / 500f;
 
                 if (InputUtils.MouseRight && InputUtils.MouseLeft) {
-                    CameraGlobals.OrthoRotationVector = new Vector2(0, LevelEditorUI.Active ? CameraGlobals.LVL_EDIT_ANGLE : CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE);
-                    CameraGlobals.AddativeZoom = LevelEditorUI.Active ? CameraGlobals.LVL_EDIT_ZOOM : 1f;
-                    CameraGlobals.CameraFocusOffset = LevelEditorUI.Active ? new Vector2(0, CameraGlobals.LVL_EDIT_Y_OFF) : Vector2.Zero;
+                    CameraGlobals.OrthoRotationVector = new Vector2(0, LevelEditorUI.IsActive ? CameraGlobals.LVL_EDIT_ANGLE : CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE);
+                    CameraGlobals.AddativeZoom = LevelEditorUI.IsActive ? CameraGlobals.LVL_EDIT_ZOOM : 1f;
+                    CameraGlobals.CameraFocusOffset = LevelEditorUI.IsActive ? new Vector2(0, CameraGlobals.LVL_EDIT_Y_OFF) : Vector2.Zero;
                 }
 
                 if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Add))
@@ -549,7 +547,7 @@ public static class DebugManager {
         }
     }
     public static PlayerTank SpawnMe(int playerType, int team, Vector3 posOverride = default) {
-        var pos = LevelEditorUI.Active ? PlacementSquare.CurrentlyHovered.Position : MatrixUtils.GetWorldPosition(MouseUtils.MousePosition);
+        var pos = LevelEditorUI.IsActive ? PlacementSquare.CurrentlyHovered.Position : MatrixUtils.GetWorldPosition(MouseUtils.MousePosition);
 
         if (posOverride != default)
             pos = posOverride;

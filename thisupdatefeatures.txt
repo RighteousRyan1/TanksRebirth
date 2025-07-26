@@ -9,6 +9,8 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 ## Additions
 
 - You can now switch individually between Windowed, Fullscreen, and Borderless Fullscreen in the graphics settings
+- Added an "Auto-Orient Tanks" option to the level editor so tanks can be oriented similarly (not identically) to how they were in the original game
+- Added coordinates display above the mouse in the level editor
 
 ## Changes
 
@@ -38,6 +40,8 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 - Pings no longer track dead tanks
 - Campaign tooltips now display proper extra-lives count
 - (Potentially) fixed linux systems not being able to exit campaigns after success or failure
+- Fixed visual stuttering on AI controlled tanks when their rotation changes when facing down
+- Fixed a bug where exiting the level editor and playing a campaign denied the player any score
 
 ## TODO
 

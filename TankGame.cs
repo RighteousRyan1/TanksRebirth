@@ -126,7 +126,7 @@ public class TankGame : Game {
                     LogType.Info);
                 var bytes = WebUtils.DownloadWebFile(
                     "https://raw.githubusercontent.com/RighteousRyan1/tanks_rebirth_motds/master/motd.txt",
-                    out var name);
+                    out var name, out var status);
                 MOTD = System.Text.Encoding.Default.GetString(bytes);
             }
             catch {
@@ -571,7 +571,7 @@ public class TankGame : Game {
 
             SoundPlayer.SoundError();
 
-            if (LevelEditorUI.Active && LevelEditorUI.loadedCampaign != null) {
+            if (LevelEditorUI.IsActive && LevelEditorUI.loadedCampaign != null) {
                 Campaign.Save(Path.Combine(SaveDirectory, "Backup", $"backup_{DateTime.Now.StringFormatCustom("_")}"), LevelEditorUI.loadedCampaign!);
             }
 
@@ -608,7 +608,7 @@ public class TankGame : Game {
                 Graphics.ApplyChanges();
             }
 
-            RebirthMouse.ShouldRender = !Difficulties.Types["POV"] || GameUI.Paused || MainMenuUI.Active || LevelEditorUI.Active;
+            RebirthMouse.ShouldRender = !Difficulties.Types["POV"] || GameUI.Paused || MainMenuUI.IsActive || LevelEditorUI.IsActive;
 
             UIElement.UpdateElements();
             GameUI.UpdateButtons();
@@ -830,7 +830,7 @@ public class TankGame : Game {
     }
 
     public static void DrawGameElements() {
-        var shader = Difficulties.Types["LanternMode"] && !MainMenuUI.Active ? GameShaders.LanternShader : (MainMenuUI.Active ? GameShaders.GaussianBlurShader : null);
+        var shader = Difficulties.Types["LanternMode"] && !MainMenuUI.IsActive ? GameShaders.LanternShader : (MainMenuUI.IsActive ? GameShaders.GaussianBlurShader : null);
         if (!GameScene.ShouldRenderAll) shader = null;
 
         SpriteRenderer.Begin(effect: shader);
@@ -882,9 +882,9 @@ public class TankGame : Game {
         if (TankMusicSystem.IsLoaded) {
             Thunder.ResumeGlobalSounds();
             TankMusicSystem.ResumeAll();
-            if (MainMenuUI.Active)
+            if (MainMenuUI.IsActive)
                 MainMenuUI.Theme.Resume();
-            if (LevelEditorUI.Active)
+            if (LevelEditorUI.IsActive)
                 LevelEditorUI.Theme.Resume();
         }
     }
@@ -892,9 +892,9 @@ public class TankGame : Game {
         if (TankMusicSystem.IsLoaded) {
             Thunder.PauseGlobalSounds();
             TankMusicSystem.PauseAll();
-            if (MainMenuUI.Active)
+            if (MainMenuUI.IsActive)
                 MainMenuUI.Theme.Pause();
-            if (LevelEditorUI.Active)
+            if (LevelEditorUI.IsActive)
                 LevelEditorUI.Theme.Pause();
         }
     }

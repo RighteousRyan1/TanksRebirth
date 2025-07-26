@@ -21,7 +21,7 @@ namespace TanksRebirth.GameContent.UI.MainMenu;
 // unfortunately godclassed asf
 public static partial class MainMenuUI
 {
-    public static bool Active { get; private set; } = true;
+    public static bool IsActive { get; private set; } = true;
 
     public static Animator CameraPositionAnimator;
     public static Animator CameraRotationAnimator;
@@ -127,7 +127,7 @@ public static partial class MainMenuUI
         // TODO: change this to world view/world projection...? i think it would look better if the crate existed in world space
         // it would give reason to have the camera move over for the player.
 
-        if (!Active) return;
+        if (!IsActive) return;
         //RebirthLogo.Rotation = new(MathF.Sin(RuntimeData.RunTime / 100) * MathHelper.PiOver4, 0, 0);
         RebirthLogo.Scale = 0.8f.ToResolutionF();
         RebirthLogo.View = CameraGlobals.ScreenView;
@@ -240,7 +240,7 @@ public static partial class MainMenuUI
         if (!_initialized || !_diffButtonsInitialized)
             return;
 
-        if (Active) {
+        if (IsActive) {
             RenderGeneralUI(spriteBatch);
             if (MenuState == UIState.StatsMenu)
                 RenderStatsMenu();

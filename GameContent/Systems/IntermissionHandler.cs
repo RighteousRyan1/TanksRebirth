@@ -227,7 +227,7 @@ public static class IntermissionHandler {
     public static void Update() {
         if (TankFunctionWait > 0)
             TankFunctionWait -= RuntimeData.DeltaTime;
-        if (TankFunctionWait <= 0 && _oldWait > 0 && !MainMenuUI.Active) {
+        if (TankFunctionWait <= 0 && _oldWait > 0 && !MainMenuUI.IsActive) {
             // FIXME: maybe causes issues since the mission is 1 tick from starting?
             // TODO: move this to the animator?
             if (!CampaignGlobals.InMission) {
@@ -238,13 +238,13 @@ public static class IntermissionHandler {
         }
         DebugManager.UpdateDebug();
 
-        if (MainMenuUI.Active) {
+        if (MainMenuUI.IsActive) {
             PlayerTank.KillCounts[NetPlay.GetMyClientId()] = 0;
             // don't know if this fucks with the stack or not. to be determined.
             PlayerTank.PlayerStatistics = default;
         }
 
-        if (!CameraGlobals.OverheadView && _wasOverhead && !LevelEditorUI.Active)
+        if (!CameraGlobals.OverheadView && _wasOverhead && !LevelEditorUI.IsActive)
             BeginIntroSequence();
 
         _wasOverhead = CameraGlobals.OverheadView;
@@ -282,7 +282,7 @@ public static class IntermissionHandler {
     }
 
     public static void RenderCountdownGraphics() {
-        if (!MainMenuUI.Active && !CameraGlobals.OverheadView && !LevelEditorUI.Active/* && TankFunctionWait > 0*/) {
+        if (!MainMenuUI.IsActive && !CameraGlobals.OverheadView && !LevelEditorUI.IsActive/* && TankFunctionWait > 0*/) {
             DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, PrepareDisplay, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 3), 
                 IntermissionSystem.BackgroundColor, IntermissionSystem.BannerColor, CountdownAnimator.CurrentScale.ToResolution(), 0f, Anchor.Center, 3);
         }

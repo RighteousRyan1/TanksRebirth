@@ -198,7 +198,7 @@ public class PlayerTank : Tank
 
         base.Update();
 
-        if (LevelEditorUI.Active) return;
+        if (LevelEditorUI.IsActive) return;
 
         if (NetPlay.IsClientMatched(PlayerId))
             Client.SyncPlayerTank(this);
@@ -219,9 +219,9 @@ public class PlayerTank : Tank
         // TODO: optimize?
         if (IsIngame) {
             if (NetPlay.IsClientMatched(PlayerId) && !IntermissionSystem.IsAwaitingNewMission) {
-                if (!Difficulties.Types["POV"] || LevelEditorUI.Active || MainMenuUI.Active) {
+                if (!Difficulties.Types["POV"] || LevelEditorUI.IsActive || MainMenuUI.IsActive) {
                     Vector3 mouseWorldPos = MatrixUtils.GetWorldPosition(MouseUtils.MousePosition, -11f);
-                    if (!LevelEditorUI.Active)
+                    if (!LevelEditorUI.IsActive)
                         TurretRotation = -(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position).ToRotation() + MathHelper.PiOver2;
                     else
                         TurretRotation = TankRotation;
@@ -250,7 +250,7 @@ public class PlayerTank : Tank
                 }
             }
 
-            if (CampaignGlobals.InMission && !LevelEditorUI.Active && !ChatSystem.ActiveHandle) {
+            if (CampaignGlobals.InMission && !LevelEditorUI.IsActive && !ChatSystem.ActiveHandle) {
                 if (CurShootStun <= 0 && CurMineStun <= 0) {
                     if (!Properties.Stationary) {
                         if (NetPlay.IsClientMatched(PlayerId)) {
@@ -268,7 +268,7 @@ public class PlayerTank : Tank
                 Speed = 0;
             }
 
-            if (CampaignGlobals.InMission && !LevelEditorUI.Active) {
+            if (CampaignGlobals.InMission && !LevelEditorUI.IsActive) {
                 if (NetPlay.IsClientMatched(PlayerId)) {
                     if (InputUtils.CanDetectClick()) {
                         if (!ChatSystem.ChatBoxHover && !ChatSystem.ActiveHandle && !GameUI.Paused) {
@@ -594,7 +594,7 @@ public class PlayerTank : Tank
         if (Dead)
             return;
 
-        if (!MainMenuUI.Active) {
+        if (!MainMenuUI.IsActive) {
             if (NetPlay.IsClientMatched(PlayerId)) {
                 var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/bullet_ui");
                 var scale = 0.5f; // the graphic gets smaller for each availiable shell.

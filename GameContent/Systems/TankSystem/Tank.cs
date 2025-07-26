@@ -22,6 +22,7 @@ using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.Internals.Common.Framework.Collision;
 using TanksRebirth.Internals.Common.Framework.Collisions;
+using TanksRebirth.GameContent.UI.LevelEditor;
 
 namespace TanksRebirth.GameContent.Systems.TankSystem;
 
@@ -268,7 +269,7 @@ public abstract class Tank {
         _boneTransforms = new Matrix[Model.Bones.Count];
     }
     public void AddProp2D(Prop2D prop, Func<bool>? destroyOn = null) {
-        if (!MainMenuUI.Active && IsIngame) {
+        if (!MainMenuUI.IsActive && IsIngame) {
             if (Props.Contains(prop))
                 return;
             Props.Add(prop);
@@ -467,11 +468,35 @@ public abstract class Tank {
             }
         }
 
-        IsTurning = !(TankRotation > TargetTankRotation - Properties.MaximalTurn && TankRotation < TargetTankRotation + Properties.MaximalTurn * 2);
+        // * 2 since it's in both directions
+        IsTurning = !(TankRotation > TargetTankRotation - Properties.MaximalTurn * 2 && TankRotation < TargetTankRotation + Properties.MaximalTurn * 2);
 
         // ensure no movements happen when not desired
-        if (!MainMenuUI.Active && (!CampaignGlobals.InMission || IntermissionSystem.IsAwaitingNewMission))
+        if (!MainMenuUI.IsActive && (!CampaignGlobals.InMission || IntermissionSystem.IsAwaitingNewMission))
             Velocity = Vector2.Zero;
+
+        if (!IsTurning) {
+            Speed += Properties.Acceleration * RuntimeData.DeltaTime;
+
+            if (Speed > Properties.MaxSpeed)
+                Speed = Properties.MaxSpeed;
+        }
+        else
+            Speed *= Properties.Deceleration * (1f - RuntimeData.DeltaTime);
+
+        // bigkitty told me that stuns instantly apply zero-velocity
+        if (CurShootStun > 0 || CurMineStun > 0 || Properties.Stationary) {
+            Velocity = Vector2.Zero;
+            Speed = 0f;
+        }
+
+        // try to make negative. go poopoo
+        _cannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
+        Model!.Root.Transform = World;
+
+        Model.CopyAbsoluteBoneTransformsTo(_boneTransforms);
+
+        if (!CampaignGlobals.InMission) return;
 
         if (!Properties.Stationary) {
             float treadPlaceTimer = 0;
@@ -501,27 +526,6 @@ public abstract class Tank {
                 }
             }
         }
-
-        if (!IsTurning) {
-            Speed += Properties.Acceleration * RuntimeData.DeltaTime;
-
-            if (Speed > Properties.MaxSpeed)
-                Speed = Properties.MaxSpeed;
-        }
-
-        if (IsTurning)
-            Speed *= Properties.Deceleration * (1f - RuntimeData.DeltaTime);
-        // bigkitty told me that stuns instantly apply zero-velocity
-        if (CurShootStun > 0 || CurMineStun > 0 || Properties.Stationary) {
-            Velocity = Vector2.Zero;
-            Speed = 0f;
-        }
-
-        // try to make negative. go poopoo
-        _cannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
-        Model!.Root.Transform = World;
-
-        Model.CopyAbsoluteBoneTransformsTo(_boneTransforms);
 
         if (CurShootStun > 0)
             CurShootStun -= RuntimeData.DeltaTime;
@@ -711,7 +715,7 @@ public abstract class Tank {
 
     /// <summary>Shoot a <see cref="Shell"/> from this <see cref="Tank"/>.</summary>
     public virtual void Shoot(bool fxOnly, bool netSend = true) {
-        if (!MainMenuUI.Active && !CampaignGlobals.InMission || !Properties.HasTurret)
+        if (!MainMenuUI.IsActive && !CampaignGlobals.InMission || !Properties.HasTurret)
             return;
 
         if (CurShootCooldown > 0 || OwnedShellCount >= Properties.ShellLimit / Properties.ShellShootCount)

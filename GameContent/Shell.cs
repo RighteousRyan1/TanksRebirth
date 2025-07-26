@@ -273,7 +273,7 @@ public class Shell : IAITankDanger {
         ShootSound?.Instance?.Stop();
     }
     internal void Update() {
-        if (!GameScene.ShouldRenderAll || (!CampaignGlobals.InMission && !MainMenuUI.Active))
+        if (!GameScene.ShouldRenderAll || (!CampaignGlobals.InMission && !MainMenuUI.IsActive))
             return;
 
         Rotation = Velocity.ToRotation() - MathHelper.PiOver2;

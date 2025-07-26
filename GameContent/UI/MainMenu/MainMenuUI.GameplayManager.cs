@@ -49,26 +49,31 @@ public static partial class MainMenuUI {
         SceneManager.CleanupScene();
         Theme.Stop();
     }
+    static bool _failedFetch;
     private static void LoadTemplateMission(bool autoSetup = true, bool loadForMenu = true) {
-        //try {
+        if (_failedFetch && _cachedMissions.Count == 0) return;
+
+        try {
             if (_firstTime) {
+                _firstTime = false;
                 var attempt = 1;
 
             tryAgain:
                 var linkTry = $"https://github.com/RighteousRyan1/tanks_rebirth_motds/blob/master/menu_missions/Menu{attempt}.mission?raw=true";
-                var exists = WebUtils.RemoteFileExists(linkTry);
+                var bytes = WebUtils.DownloadWebFile(linkTry, out var name1, out var status);
 
-                if (exists) {
-                    var bytes1 = WebUtils.DownloadWebFile(linkTry, out var name1);
-
-                    using var reader1 = new BinaryReader(new MemoryStream(bytes1));
+                if (status == System.Net.HttpStatusCode.OK) {
+                    using var reader1 = new BinaryReader(new MemoryStream(bytes));
 
                     _cachedMissions.Add(Mission.Read(reader1));
                     attempt++;
                     goto tryAgain;
                 }
-
-                _firstTime = false;
+                else {
+                    TankGame.ClientLog.Write($"Unable to fetch map data via the internet (at map={attempt}). Status: {status}", LogType.Warn);
+                    _failedFetch = true;
+                    return;
+                }
             }
 
             var rand = Client.ClientRandom.Next(1, _cachedMissions.Count);
@@ -81,10 +86,10 @@ public static partial class MainMenuUI {
             }
             if (loadForMenu)
                 curMenuMission = mission;
-        //}
-        //catch {
-            //TankGame.ClientLog.Write("Unable to fetch map data via the internet. Oops!", LogType.Warn);
-        //}
+        }
+        catch {
+            TankGame.ClientLog.Write("Unable to fetch map data via the internet. Oops!", LogType.Warn);
+        }
     }
 
 }

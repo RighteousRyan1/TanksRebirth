@@ -55,7 +55,7 @@ public static class DiscordRichPresence {
                 }
             }
             SetLargeAsset("tanks_physical_logo", $"v{RuntimeData.ShortVersion}");
-            if (MainMenuUI.Active) {
+            if (MainMenuUI.IsActive) {
                 switch (MainMenuUI.MenuState) {
                     case MainMenuUI.UIState.PrimaryMenu:
                     case MainMenuUI.UIState.PlayList:
@@ -103,11 +103,11 @@ public static class DiscordRichPresence {
                     SetDetails($"Campaign: '{CampaignGlobals.LoadedCampaign.MetaData.Name}' on '{CampaignGlobals.LoadedCampaign.CurrentMission.Name}' | Lives: {PlayerTank.Lives[NetPlay.GetMyClientId()]}");
                 }
                 else {
-                    if (LevelEditorUI.Active)
+                    if (LevelEditorUI.IsActive)
                         SetDetails($"Editing a level");
-                    else if (!LevelEditorUI.Editing)
+                    else if (!LevelEditorUI.IsEditing)
                         SetDetails($"Playing freeplay | {tnkCnt}");
-                    else if (LevelEditorUI.Editing)
+                    else if (LevelEditorUI.IsEditing)
                         SetDetails($"Testing a level");
                 }
 

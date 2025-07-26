@@ -23,9 +23,9 @@ public record AIParameters {
     public int RandomTimerMaxMove { get; set; } = 2;
     /// <summary>The minimum amount of time before updating the tank's <see cref="Tank.TargetTankRotation"/> from 0 to <see cref="MaxAngleRandomTurn"/> radians. Word 15.</summary>
     public int RandomTimerMinMove { get; set; } = 1;
-    /// <summary>The distance of which this tank is wary of mines laid by <see cref="AITank"/>s and tries to move away from them. Word 16.</summary>
+    /// <summary>The distance of which this tank is wary of mines laid by allies and tries to move away from them. Word 16.</summary>
     public float AwarenessFriendlyMine { get; set; }
-    /// <summary>The distance of which this tank is wary of friendly projectiles and tries to move away from them. Word 17.</summary>
+    /// <summary>The distance of which this tank is wary of projectiles shot by allies and tries to move away from them. Word 17.</summary>
     public float AwarenessFriendlyShell { get; set; }
     /// <summary>The distance of which this tank is wary of mines laid by enemies and tries to move away from them. Word 18.</summary>
     public float AwarenessHostileMine { get; set; }

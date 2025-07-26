@@ -75,7 +75,7 @@ public partial class LevelEditorUI {
 
                     MissionName.Text = loadedCampaign.CachedMissions[index].Name;
                 };
-                btn.IsVisible = Active;
+                btn.IsVisible = IsActive;
                 _missionButtons.Add(btn);
             }
         }

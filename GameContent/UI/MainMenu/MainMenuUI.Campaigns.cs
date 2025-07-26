@@ -158,14 +158,14 @@ public static partial class MainMenuUI {
             return false;
         }
         campaignExists = true;
-        dlBytes = WebUtils.DownloadWebFile("https://github.com/RighteousRyan1/tanks_rebirth_motds/blob/master/Vanilla.campaign?raw=true", out dlName);
+        dlBytes = WebUtils.DownloadWebFile("https://github.com/RighteousRyan1/tanks_rebirth_motds/blob/master/Vanilla.campaign?raw=true", out dlName, out var status);
         var fileBytes = File.ReadAllBytes(checkPath);
 
 
         return dlBytes.SequenceEqual(fileBytes);
     }
     public static void DownloadVanillaCampaign(bool inCampaignsMenu) {
-        var bytes = WebUtils.DownloadWebFile("https://github.com/RighteousRyan1/tanks_rebirth_motds/blob/master/Vanilla.campaign?raw=true", out var filename);
+        var bytes = WebUtils.DownloadWebFile("https://github.com/RighteousRyan1/tanks_rebirth_motds/blob/master/Vanilla.campaign?raw=true", out var filename, out var status);
         var path = Path.Combine(TankGame.SaveDirectory, "Campaigns", filename);
         File.WriteAllBytes(path, bytes);
 

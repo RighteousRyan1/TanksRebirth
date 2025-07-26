@@ -59,13 +59,11 @@ public partial class AITank {
             // might need to check specific dangers here like mines or shells
             // my loneliness is killing me (and i) I must confess, i still believe (still believe)
 
-            var dangerPositions = GetEvasionData();
-
             DoBlockNav();
 
             // the tank avoids the average position of all dangers
-            if (dangerPositions.Count > 0) {
-                var averageDangerPosition = dangerPositions.Aggregate(Vector2.Zero, (sum, pos) => sum + pos) / dangerPositions.Count;
+            if (NearbyDangers.Count > 0) {
+                var averageDangerPosition = NearbyDangers.Aggregate(Vector2.Zero, (sum, dng) => sum + dng.Position) / NearbyDangers.Count;
 
                 // Console.WriteLine("Evading " + dangerPositions.Count + " dangers");
 
@@ -98,7 +96,7 @@ public partial class AITank {
             return;
         }
 
-        float angleDiff = MathHelper.PiOver4 / 2; // normally pi/2
+        float angleDiff = MathHelper.PiOver4; // normally pi/2
 
         float fracL = -1f;
         float fracR = -1f;
@@ -118,7 +116,7 @@ public partial class AITank {
         var dir = fracL > fracR ? CollisionDirection.Left : CollisionDirection.Right;
 
         // if the rays are highly similar in distance, reverse, since you're most likely heading into a wall directly
-        if (fracL.IsWithinRange(fracR, 0.0025f)) {
+        if (fracL.IsWithinRange(fracR, 0.00125f)) {
             // backwards, not down, lol
             dir = CollisionDirection.Down;
         }

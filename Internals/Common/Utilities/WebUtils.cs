@@ -32,22 +32,27 @@ public static class WebUtils {
             return false; 
         }
     }
-    public static byte[] DownloadWebFile(string url, out string fileName) {
+    public static byte[] DownloadWebFile(string url, out string fileName, out HttpStatusCode status) {
         var data = Inner_DownloadWebFile(url).GetAwaiter().GetResult();
 
-        fileName = data.Item2;
-        return data.Item1;
+        fileName = data.Name;
+        status = data.Status;
+        return data.Data;
     }
-    private static async Task<(byte[], string)> Inner_DownloadWebFile(string url) {
+    private static async Task<(byte[] Data, string Name, HttpStatusCode Status)> Inner_DownloadWebFile(string url) {
         var response = await _client.GetAsync(url); // Get the whole response
-        
+
+        if (response.StatusCode != HttpStatusCode.OK) {
+            return (null, null, response.StatusCode)!;
+        }
+
         var fileName = response.Content.Headers.ContentDisposition != null ? 
             response.Content.Headers.ContentDisposition.FileName : 
             System.IO.Path.GetFileName(url).Split('?')[0];
             
         // GameHandler.ClientLog.Write($"WebRequest sent to '{url}'", LogType.Debug); make a logger.. of course.
 
-        return (await response.Content.ReadAsByteArrayAsync(), fileName);
+        return (await response.Content.ReadAsByteArrayAsync(), fileName, response.StatusCode)!;
     }
 
     public static async Task<bool> RemoteFileExistsAsync(string url) {
@@ -60,7 +65,17 @@ public static class WebUtils {
         
         return response.StatusCode is HttpStatusCode.OK;
     }
-    
+    public static async Task<bool> RemoteFileExistsAttempt(string url) {
+        var request = new HttpRequestMessage {
+            Method = HttpMethod.Head,
+            RequestUri = new(url),
+        };
+
+        var response = await _client.SendAsync(request);
+
+        return response.StatusCode is HttpStatusCode.OK;
+    }
+
     public static bool RemoteFileExists(string url) {
         try {
             return RemoteFileExistsAsync(url).GetAwaiter().GetResult();

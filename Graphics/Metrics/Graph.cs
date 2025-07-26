@@ -10,18 +10,19 @@ using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.Graphics.Metrics;
 
-public class Graph(string name, Func<float> value, float rangeMax, int length = 100, float deltaX = 1f, float deltaY = 1f) {
-    private int _numElements;
-    private float[] _values = new float[length];
+public class Graph(string name, Func<float> value, float rangeMax, int length = 100, float deltaX = 1f, float deltaY = 1f, uint updateCount = 30) {
+    int _numElements;
+    float[] _values = new float[length];
+    readonly Func<float> _independent = value;
 
     public string Name { get; set; } = name;
-
-    private readonly Func<float> _independent = value;
+    /// <summary>Measured in frames, not ticks, so the graph will update faster on higher framerates.</summary>
+    public uint UpdateFrequency { get; set; } = updateCount;
     /// <summary>The range of values within the graph, vertically, aka: the Y value range.</summary>
     public Range<float> VerticalRange { get; set; } = new(0, rangeMax);
     public float CurrentValue { get; private set; }
 
-    private int _length = length;
+    int _length = length;
     /// <summary>The length of the graph, aka the X value range. X will always be time.</summary>
     public int Length {
         get => _length;
@@ -57,6 +58,9 @@ public class Graph(string name, Func<float> value, float rangeMax, int length = 
     }
 
     public void Update() {
+        if (RuntimeData.UpdateCount % UpdateFrequency != 0)
+            return;
+
         var valueReal = _independent.Invoke();
         CurrentValue = float.IsFinite(valueReal) ? valueReal : 0;
         //if (CurrentValue > VerticalRange.Max) CurrentValue = 0;

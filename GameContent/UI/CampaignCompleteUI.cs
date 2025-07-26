@@ -168,11 +168,13 @@ public static class CampaignCompleteUI {
             ResultsFanfare.SetVolume(TankGame.Settings.MusicVolume);
             ResultsFanfare.Play();
         }
+        if (_panelAlpha < _panelAlphaMax)
+            return;
         // sleep the thread for the duration of the fanfare.
         Vector2 basePos = new(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight * 0.2f);
 
         if (_curTier < KillsPerType.Count) {
-            if (ForceSkip ? true : _animationTime % _delayPerTank <= RuntimeData.DeltaTime) {
+            if (ForceSkip ? true : _animationTime % _delayPerTank < RuntimeData.DeltaTime) {
                 var killData = KillsPerType.ElementAt(_curTier);
 
                 _tierDisplays[_curTier] = true;
@@ -185,13 +187,24 @@ public static class CampaignCompleteUI {
                     else
                         SoundPlayer.PlaySoundInstance("Assets/sounds/results/whistle_singular.ogg", SoundContext.Effect, 1f);
                 }
-                _curTier++;
-
                 if (_curTier == KillsPerType.Count - 1) {
                     ForceSkip = true;
+                    _shouldShowGrade = true;
                     SoundPlayer.PlaySoundInstance("Assets/sounds/results/whistle_full.ogg", SoundContext.Effect, 1f);
                 }
+
+                _curTier++;
             }
+        }
+
+        if (DebugManager.DebuggingEnabled) {
+            if (InputUtils.AreKeysJustPressed(Keys.OemOpenBrackets, Keys.OemCloseBrackets)) {
+                ResetThings();
+
+                PerformSequence(_lastContext);
+            }
+            else if (InputUtils.KeyJustPressed(Keys.P))
+                ResetThings();
         }
 
         ResultsFanfare.SetVolume(TankGame.Instance.IsActive ? TankGame.Settings.MusicVolume : 0f);
@@ -291,16 +304,6 @@ public static class CampaignCompleteUI {
             TankGame.SpriteRenderer.Draw(tex, new Vector2(WindowUtils.WindowWidth / 3 * 2, 250.ToResolutionY()), ParseGradeRect(Grade), Color.White * _gradeAlpha, 0f, new Vector2(64, 64), new Vector2(_gradeScale).ToResolution(), default, 0f);
         }
 
-        if (DebugManager.DebuggingEnabled) {
-            if (InputUtils.AreKeysJustPressed(Keys.OemOpenBrackets, Keys.OemCloseBrackets)) {
-                ResetThings();
-
-                PerformSequence(_lastContext);
-            }
-            else if (InputUtils.KeyJustPressed(Keys.P))
-                ResetThings();
-        }
-
         #region Tank Graphics
         float offY = 0;
         int xAdjust = 200;
@@ -333,21 +336,21 @@ public static class CampaignCompleteUI {
                         _tnkDrawYOff.ToResolutionY() + offY - (xAdjustCount * _spacePerTank * TanksPerColumn * _tankSize * ((float)WindowUtils.WindowHeight / 1080))),
                     Vector2.One, AITank.TankDestructionColors[display.Key],
                     new Vector2(_tierScales[i]) * (WindowUtils.WindowBounds / new Vector2(1920, 1080)),
-                    _tierAlphas[i], Anchor.Center, shadowDistScale: 0.4f);
+                    _tierAlphas[i], Anchor.Center, shadowDistScale: 0.4f, shadowAlpha: 0.5f);
                 // draw the name of the tank just to make things nicer.
                 DrawUtils.DrawStringWithShadow(TankGame.SpriteRenderer, FontGlobals.RebirthFont,
                     new Vector2(
                         WindowUtils.WindowWidth / 3 + WindowUtils.WindowWidth * 0.025f + xAdjust * xAdjustCount * ((float)WindowUtils.WindowWidth / 1920),
                         _tnkDrawYOff.ToResolutionY() + offY - (-5f + xAdjustCount * _spacePerTank * TanksPerColumn * _tankSize * ((float)WindowUtils.WindowHeight / 1080))),
                     Vector2.One, $"{TankID.Collection.GetKey(display.Key)}", Color.LightGray, new Vector2(_tierScales[i]) * (WindowUtils.WindowBounds / new Vector2(1920, 1080)) * 0.3f, _tierAlphas[i], Anchor.Center,
-                    shadowDistScale: 0.4f);
+                    shadowDistScale: 0.4f, shadowAlpha: 0.5f);
                 // draw the kill count text
                 DrawUtils.DrawStringWithShadow(TankGame.SpriteRenderer, FontGlobals.RebirthFont,
                     new Vector2(
                         WindowUtils.WindowWidth / 3 + WindowUtils.WindowWidth * 0.025f + (xAdjust / 2).ToResolutionX() + xAdjust * xAdjustCount * ((float)WindowUtils.WindowWidth / 1920),
                         _tnkDrawYOff.ToResolutionY() - 2f.ToResolutionY() + offY - (xAdjustCount * _spacePerTank * TanksPerColumn * _tankSize * ((float)WindowUtils.WindowHeight / 1080))),
                     Vector2.One, $"{display.Value}", _textColor, new Vector2(_tierScales[i]) * (WindowUtils.WindowBounds / new Vector2(1920, 1080)), _tierAlphas[i], Anchor.Center,
-                    shadowDistScale: 0.4f);
+                    shadowDistScale: 0.2f, shadowAlpha: 0.5f);
 
                 offY += _spacePerTank * _tankSize * ((float)WindowUtils.WindowHeight / 1080);
             }

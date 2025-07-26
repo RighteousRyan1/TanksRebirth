@@ -19,10 +19,10 @@ public partial class AITank {
             TargetTankRotation = direction.ToRotation();
         }
     }
-    public List<Vector2> GetEvasionData() {
-        var dangerPositions = new List<Vector2>();
+    public List<IAITankDanger> GetEvasionData() {
+        var dangerPositions = new List<IAITankDanger>();
 
-        foreach (var danger in NearbyDangers) {
+        foreach (var danger in Dangers) {
             var isHostile = danger.Team != Team && danger.Team != TeamID.NoTeam;
 
             // mines and explosions should be treated differently and specially
@@ -31,7 +31,7 @@ public partial class AITank {
                     (isHostile ? Parameters.AwarenessHostileMine : Parameters.AwarenessFriendlyMine);
 
                 if (isCloseEnough) {
-                    dangerPositions.Add(danger.Position);
+                    dangerPositions.Add(danger);
                     IsSurviving = true;
                 }
             }
@@ -39,13 +39,13 @@ public partial class AITank {
                 var isHeadingTowards = shell.IsHeadingTowards(Position, isHostile ? Parameters.AwarenessHostileShell : Parameters.AwarenessFriendlyShell, MathHelper.Pi);
                 // already accounts for hostility via the above ^
                 if (isHeadingTowards) {
-                    dangerPositions.Add(danger.Position);
+                    dangerPositions.Add(danger);
                     IsSurviving = true;
                 }
             }
             // non-vanilla sources of danger
             else {
-                dangerPositions.Add(danger.Position);
+                dangerPositions.Add(danger);
                 IsSurviving = true;
             }
         }

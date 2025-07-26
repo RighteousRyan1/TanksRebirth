@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Xna.Framework;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -9,6 +10,40 @@ namespace TanksRebirth.Internals.Common.Utilities;
 
 public static class CollectionUtils
 {
+    public static Vector2 Closest(this IEnumerable<Vector2> positions, Vector2 source) {
+        if (positions == null || !positions.Any())
+            return source;
+
+        float closestDistanceSquared = float.MaxValue;
+        Vector2 closest = Vector2.Zero;
+
+        foreach (var pos in positions) {
+            float distanceSquared = Vector2.DistanceSquared(source, pos);
+            if (distanceSquared < closestDistanceSquared) {
+                closestDistanceSquared = distanceSquared;
+                closest = pos;
+            }
+        }
+
+        return closest;
+    }
+    public static int IndexClosest(this IList<Vector2> positions, Vector2 source) {
+        if (positions == null || !positions.Any())
+            return -1;
+
+        float closestDistanceSquared = float.MaxValue;
+        Vector2 closest = Vector2.Zero;
+
+        foreach (var pos in positions) {
+            float distanceSquared = Vector2.DistanceSquared(source, pos);
+            if (distanceSquared < closestDistanceSquared) {
+                closestDistanceSquared = distanceSquared;
+                closest = pos;
+            }
+        }
+
+        return positions.IndexOf(closest);
+    }
     public static ICollection<T> Combine<T>(this ICollection<T> collection1, ICollection<T> mergeTo)
     {
         foreach (var item in collection1)

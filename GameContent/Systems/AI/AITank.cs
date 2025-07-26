@@ -276,11 +276,11 @@ public partial class AITank : Tank {
                     TargetTankRotation = (MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - MouseUtils.MousePosition).ToRotation() + MathHelper.PiOver2;
         }
         // do ai only if host, and send ai across the interweb
-        if (Client.IsHost() || !Client.IsConnected() && !Dead || MainMenuUI.Active) {
+        if (Client.IsHost() || !Client.IsConnected() && !Dead || MainMenuUI.IsActive) {
             timeSinceLastAction++;
 
-            if (!MainMenuUI.Active)
-                if (!CampaignGlobals.InMission || IntermissionSystem.IsAwaitingNewMission || LevelEditorUI.Active)
+            if (!MainMenuUI.IsActive)
+                if (!CampaignGlobals.InMission || IntermissionSystem.IsAwaitingNewMission || LevelEditorUI.IsActive)
                     Velocity = Vector2.Zero;
             DoAi();
 
@@ -288,6 +288,7 @@ public partial class AITank : Tank {
                 Client.SyncAITank(this);
         }
         if (!Client.IsHost() && Client.IsConnected()) {
+            if (ModdedData is null || ModdedData.CustomAI())
             HandleTankMetaData();
         }
     }
@@ -327,9 +328,9 @@ public partial class AITank : Tank {
 
         base.Destroy(context, netSend);
 
-        if (MainMenuUI.Active) return;
-        if (LevelEditorUI.Active) return;
-        if (LevelEditorUI.Editing) return;
+        if (MainMenuUI.IsActive) return;
+        if (LevelEditorUI.IsActive) return;
+        if (LevelEditorUI.IsEditing) return;
         if (context.Source is null && Client.IsConnected()) return;
 
         // count enemy team-kills only in single player
@@ -362,12 +363,15 @@ public partial class AITank : Tank {
             var myId = NetPlay.GetMyClientId();
 
             bool isMe = p.PlayerId == myId;
-            //Console.WriteLine($"p.PlayerId ({p.PlayerId}) == myId ({myId}) ----> {isMe}");
             if (isMe)
                 PlayerTank.KillCounts[myId]++;
         }
+        // hardcoded for now until local multiplayer exists
+        else if (!Client.IsConnected()) {
+            PlayerTank.KillCounts[0]++;
 
-        TankGame.SaveFile.TotalKills++;
+            TankGame.SaveFile.TotalKills++;
+        }
 
         if (TankGame.SaveFile.TankKills.TryGetValue(AiTankType, out uint value))
             TankGame.SaveFile.TankKills[AiTankType] = ++value;
@@ -383,7 +387,7 @@ public partial class AITank : Tank {
         //    Client.Send(new TankKillCountUpdateMessage(PlayerTank.KillCount)); // not a bad idea actually
     }
     void GiveXP() {
-        if (!LevelEditorUI.Editing) {
+        if (!LevelEditorUI.IsEditing) {
             var rand = Client.ClientRandom.NextFloat(0.75f, 1.25f);
             var gain = Parameters.BaseXP * rand;
             // i will keep this commented if anything else happens.
@@ -419,25 +423,17 @@ public partial class AITank : Tank {
         // measure the biggest WarinessRadius, player or ai, then check the larger, then do manual calculations.
         var radii = new float[] { Parameters.AwarenessFriendlyMine, Parameters.AwarenessHostileMine, Parameters.AwarenessFriendlyShell, Parameters.AwarenessHostileShell };
         var biggest = radii.Max();
-        IsInDanger = TryGetDangerNear(biggest, out NearbyDangers, out ClosestDanger);
 
-        if (IsInDanger) {
+        NearbyDangers = GetEvasionData();
+        ClosestDanger = NearbyDangers.Closest(Position);
+
+        if (NearbyDangers.Count > 0) {
             WhileDangerDetected?.Invoke(this, ClosestDanger!);
-            ModdedData?.DangerDetected(ClosestDanger!);
+            ModdedData?.DangerDetected();
         }
-
-        // if the danger is a shell, recalculate the desire to dodge
-        /*if (ClosestDanger is Shell shell) {
-            var dist = shell.IsPlayerSourced ? AiParams.AwarenessHostileShell : AiParams.AwarenessFriendlyShell;
-
-            // hardcode heaven :)
-            if (!shell.IsHeadingTowards(Position, dist, MathHelper.Pi)) {
-                ClosestDanger = null;
-            }
-        }*/
     }
     public void DoAi() {
-        if (!MainMenuUI.Active && !CampaignGlobals.InMission)
+        if (!MainMenuUI.IsActive && !CampaignGlobals.InMission)
             return;
 
         // SetEntityDetectionCircle(AiParams.ObstacleAwarenessMine);
@@ -450,7 +446,13 @@ public partial class AITank : Tank {
 
         TanksNearMineAwareness = [.. GameHandler.AllTanks.Where(x => x is not null && x != this && !x.Dead && GameUtils.Distance_WiiTanksUnits(Position, x.Position) <= Parameters.TankAwarenessMine)];
         TanksNearShootAwareness = [.. GameHandler.AllTanks.Where(x => x is not null && x != this && !x.Dead && GameUtils.Distance_WiiTanksUnits(TurretPosition, x.Position) <= Parameters.TankAwarenessShoot)];
-        var isShellNear = IsInDanger && ClosestDanger is Shell;
+        
+        if (ModdedData is not null) {
+            if (!ModdedData.CustomAI())
+                return;
+        }
+
+        var isShellNear = NearbyDangers.Count > 0 && ClosestDanger is Shell;
 
         // only use if checking the respective boolean!
         var shell = (ClosestDanger as Shell)!;
@@ -480,25 +482,10 @@ public partial class AITank : Tank {
 
         // i really hope to remove this hardcode.
         if (DoMoveTowards) {
-            if (!IsTurning) {
-                Speed += Properties.Acceleration * (1f - RuntimeData.DeltaTime);
-
-                if (Speed > Properties.MaxSpeed)
-                    Speed = Properties.MaxSpeed;
-            }
-            else {
-                Speed *= Properties.Deceleration * (1f - RuntimeData.DeltaTime);
-            }
-            if (TargetTankRotation > MathHelper.Tau)
-                TargetTankRotation -= MathHelper.Tau;
-            if (TargetTankRotation < 0)
-                TargetTankRotation += MathHelper.Tau;
 
             var dir = Vector2.UnitY.Rotate(TankRotation);
-            Velocity.X = dir.X;
-            Velocity.Y = dir.Y;
 
-            Velocity.Normalize();
+            Velocity = Vector2.Normalize(dir);
 
             Velocity *= Speed;
             TankRotation = MathUtils.RoughStep(TankRotation, TargetTankRotation, Properties.TurningSpeed * RuntimeData.DeltaTime);
@@ -514,7 +501,7 @@ public partial class AITank : Tank {
             return;
         TankGame.Instance.GraphicsDevice.BlendState = BlendState.AlphaBlend;
         DrawExtras();
-        if (MainMenuUI.Active && Properties.Invisible || Properties.Invisible && CampaignGlobals.InMission)
+        if (MainMenuUI.IsActive && Properties.Invisible || Properties.Invisible && CampaignGlobals.InMission)
             return;
         if (Model is null)
             return;
@@ -720,7 +707,7 @@ public partial class AITank : Tank {
             //DebugUtils.DrawDebugString(TankGame.SpriteRenderer, "end", MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(MathUtils.DirectionOf(travelPos, Position).X, 0, MathUtils.DirectionOf(travelPos, Position).Y), View, Projection), 6, centered: true);
         }*/
 
-        if (Properties.Invisible && (CampaignGlobals.InMission || MainMenuUI.Active))
+        if (Properties.Invisible && (CampaignGlobals.InMission || MainMenuUI.IsActive))
             return;
 
         Properties.Armor?.Render();

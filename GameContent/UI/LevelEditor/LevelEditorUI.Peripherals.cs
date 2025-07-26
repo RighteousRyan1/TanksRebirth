@@ -27,6 +27,8 @@ public static partial class LevelEditorUI {
     public static UITextButton Properties;
     public static UITextButton LoadLevel;
 
+    public static UITextButton AutoOrientTanks;
+
     public static UITextButton ReturnToEditor;
 
     public static UITextButton AddMissionBtn;
