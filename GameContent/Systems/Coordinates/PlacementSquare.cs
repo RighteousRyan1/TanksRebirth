@@ -1,22 +1,23 @@
+using FontStashSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using TanksRebirth.Enums;
+using TanksRebirth.GameContent.Globals;
+using TanksRebirth.GameContent.Globals.Assets;
+using TanksRebirth.GameContent.ID;
+using TanksRebirth.GameContent.RebirthUtils;
+using TanksRebirth.GameContent.Systems.AI;
+using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.Utilities;
-using FontStashSharp;
-using System.Linq;
-using TanksRebirth.Enums;
 using TanksRebirth.Internals.UI;
-using TanksRebirth.GameContent.ID;
-using Microsoft.Xna.Framework.Input;
-using TanksRebirth.GameContent.RebirthUtils;
-using TanksRebirth.GameContent.Globals;
-using TanksRebirth.GameContent.UI.LevelEditor;
-using TanksRebirth.GameContent.Globals.Assets;
-using TanksRebirth.GameContent.Systems.AI;
 
 namespace TanksRebirth.GameContent.Systems.Coordinates;
 
@@ -102,6 +103,16 @@ public class PlacementSquare {
     }
     // TODO: need a sound for placement
 
+    /// <summary>Attempts to get the closest <see cref="PlacementSquare"/> given a position. Returns null if one was not found.
+    /// <br></br>This method checks if the position is cloest to a <see cref="PlacementSquare"/> within half a block size.</summary>
+    /// <param name="pos">The position to check from.</param>
+    /// <returns>The closest <see cref="PlacementSquare"/>.</returns>
+    public static PlacementSquare? GetFromClosest(Vector3 pos) {
+        var closestIdx = Placements.FindIndex(place => Vector3.Distance(place.Position, pos) < Block.SIDE_LENGTH / 2);
+
+        return closestIdx > -1 ? Placements[closestIdx] : null;
+    }
+
     /// <summary>
     /// Does default block placement/removal.
     /// </summary>
@@ -131,7 +142,7 @@ public class PlacementSquare {
                 HasBlock = true;
                 IsPlacing = false;
             }
-            LevelEditorUI.missionToRate = Mission.GetCurrent(string.Empty);
+            LevelEditorUI.difficultyRating = DifficultyAlgorithm.GetDifficulty(Mission.GetCurrent());
         }
         else {
             // var team = LevelEditor.Active ? LevelEditor.SelectedTankTeam : (TankTeam)GameHandler.tankToSpawnTeam;
@@ -143,7 +154,7 @@ public class PlacementSquare {
                 // FIXME: why does this even craaaash?
                 GameHandler.AllTanks[TankId].Remove(true);
                 TankId = -1;
-                LevelEditorUI.missionToRate = Mission.GetCurrent(string.Empty);
+                LevelEditorUI.difficultyRating = DifficultyAlgorithm.GetDifficulty(Mission.GetCurrent());
                 return;
             }
 
@@ -171,7 +182,7 @@ public class PlacementSquare {
                 var me = DebugManager.SpawnMe(type, team);
                 TankId = me.WorldId;
             }
-            LevelEditorUI.missionToRate = Mission.GetCurrent(string.Empty);
+            LevelEditorUI.difficultyRating = DifficultyAlgorithm.GetDifficulty(Mission.GetCurrent());
         }
     }
     public void Update() {

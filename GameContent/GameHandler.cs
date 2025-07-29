@@ -115,6 +115,11 @@ public class GameHandler {
         var floor0 = MathF.Floor(TankGame.GameData.ExpLevel);
         GameData.UniversalExpMultiplier = floor1 - (GameData.DecayPerLevel * floor0);*/
 
+        if (InputUtils.KeyJustPressed(Keys.I)) {
+            new Shell(new Vector2(0, 100), -Vector2.UnitY * 2, ShellID.Standard, null);
+            new Shell(new Vector2(MouseUtils.Test.X * 10, -100), Vector2.UnitY * 2, ShellID.Standard, null);
+        }
+
         if (Difficulties.Types["InfiniteLives"])
             PlayerTank.SetLives(PlayerTank.StartingLives);
 
@@ -125,8 +130,10 @@ public class GameHandler {
             ping?.Update();
 
         if (!IntermissionSystem.IsAwaitingNewMission) {
-            foreach (var tank in AllTanks)
-                tank?.Update();
+            foreach (var pTank in AllPlayerTanks)
+                pTank?.Update();
+
+            AIManager.ProcessAITanks();
 
             foreach (var mine in Mine.AllMines)
                 mine?.Update();
@@ -210,6 +217,7 @@ public class GameHandler {
         
         // CHECK: move this back if necessary
         GameScene.RenderWorldModels();
+        // TankFootprint.Draw();
 
         foreach (var tank in AllTanks)
             tank?.Render();

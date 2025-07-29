@@ -16,6 +16,8 @@ using TanksRebirth.Internals.Common.Utilities;
 namespace TanksRebirth.GameContent.UI.LevelEditor;
 
 #pragma warning disable
+
+// TODO: introduce localization to reduce garbage collection
 public static partial class LevelEditorUI {
     public static UITextButton TestLevel;
     public static UITextButton Perspective;
@@ -156,7 +158,7 @@ public static partial class LevelEditorUI {
         TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, $"{TankGame.GameLanguage.EnemyTankTotal}: {AIManager.CountAll()}", new Vector2(10, 40).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
         // localize later.
         TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, $"Total Terrain: {Block.AllBlocks.Count(x => x is not null)}", new Vector2(10, 60).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
-        TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, $"{TankGame.GameLanguage.DifficultyRating}: {DifficultyAlgorithm.GetDifficulty(missionToRate):0.00}", new Vector2(10, 80).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
+        TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, $"{TankGame.GameLanguage.DifficultyRating}: {difficultyRating:0.00}", new Vector2(10, 80).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
     }
     public static void DrawAlerts() {
         if (_alertTime > 0) {

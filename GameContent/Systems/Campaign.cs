@@ -151,18 +151,20 @@ public class Campaign
                             TrackedSpawnPoints[Array.IndexOf(TrackedSpawnPoints, TrackedSpawnPoints.First(pos => pos.Position == template.Position))].Alive = false; // make sure the tank is not spawned again
                         };
                     }
-                    var placement = PlacementSquare.Placements.FindIndex(place => Vector3.Distance(place.Position, tank.Position3D) < Block.SIDE_LENGTH / 2);
-
-                    if (placement > -1) {
+                    var placement = PlacementSquare.GetFromClosest(tank.Position3D);
+                    if (placement is not null) {
                         // ChatSystem.SendMessage("Loaded " + TankID.Collection.GetKey(tank.Tier), Color.Blue);
-                        PlacementSquare.Placements[placement].TankId = tank.WorldId;
-                        PlacementSquare.Placements[placement].HasBlock = false;
+                        placement.TankId = tank.WorldId;
+                        placement.HasBlock = false;
+
+                        // set the position since there doesn't need to be any hassle
+                        tank.Position = placement.Position.FlattenZ();
                     }
                 }
             }
             else {
                 numPlayers++;
-                if ((Client.IsConnected() && numPlayers <= Server.ConnectedClients.Count(x => x is not null)) || !Client.IsConnected()) {
+                if ((Client.IsConnected() && numPlayers <= Server.CurrentClientCount) || !Client.IsConnected()) {
                     var tank = template.GetPlayerTank();
 
                     tank.Position = template.Position;
@@ -359,7 +361,7 @@ public class Campaign
                 campaign.CachedMissions[i].GrantsExtraLife = isIdMatched;
             }
         }
-        else if (editorVersion == 4) {
+        else if (editorVersion == 4 || editorVersion == 5) {
             var totalMissions = reader.ReadInt32();
 
             campaign.CachedMissions = new Mission[totalMissions];

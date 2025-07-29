@@ -17,7 +17,7 @@ public class GameConfig
     public float AmbientVolume { get; set; } = 1f;
 
     #region Graphics Settings
-    public int TankFootprintLimit { get; set; } = 100000;
+    public int TankFootprintLimit { get; set; } = 10000;
     public bool PerPixelLighting { get; set; } = true;
     public bool Vsync { get; set; } = true;
     public WindowKind WindowKind { get; set; } = WindowKind.Windowed;

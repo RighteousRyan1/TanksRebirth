@@ -1,11 +1,12 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using LiteNetLib;
+﻿using LiteNetLib;
 using LiteNetLib.Utils;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
+using System;
+using System.IO;
+using System.Linq;
 using TanksRebirth.GameContent;
+using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.UI.MainMenu;
@@ -51,8 +52,6 @@ public class Client {
         };
         ClientManager.Start();
         NetPlay.MapClientNetworking();
-
-        Console.ForegroundColor = ConsoleColor.Green;
 
         Client c = new(0, username);
 
@@ -373,19 +372,6 @@ public class Client {
 
         NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
-    public static void SendDisconnect(int peerId, string name, string reason) {
-        if (!IsConnected())
-            return;
-        OnClientDisconnect?.Invoke(NetPlay.CurrentClient);
-        NetDataWriter message = new();
-        message.Put(PacketID.Disconnect);
-
-        message.Put(peerId);
-        message.Put(name);
-        message.Put(reason);
-
-        NetClient.Send(message, DeliveryMethod.ReliableOrdered);
-    }
     public static void SendCampaignStatus(string campaignName, int clientId, bool success) {
         if (!IsConnected())
             return;
@@ -447,10 +433,31 @@ public class Client {
 
         NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
+    public static void Disconnect() {
+        NetPlay.UnmapClientNetworking();
+
+        // tells all other clients that the host disconnected.
+        NetPlay.TryUnmapServerNetworking();
+
+        Client.NetClient.Disconnect();
+
+        for (int i = PlayerID.Red; i <= PlayerID.Yellow; i++)
+            GameHandler.AllPlayerTanks[i]?.Destroy(new TankHurtContextOther(), false);
+
+        NetPlay.CurrentClient = null;
+        NetPlay.CurrentServer = null;
+
+        Server.ConnectedClients = null;
+        Server.NetManager = null;
+
+        Server.CurrentClientCount = 0;
+
+        MainMenuUI.ShouldServerButtonsBeVisible = true;
+    }
     public static bool IsConnected() {
         if (NetClient is not null)
             return NetClient.ConnectionState == ConnectionState.Connected;
         return false;
     }
-    public static bool IsHost() => (IsConnected() && Server.NetManager is not null);
+    public static bool IsHost() => Server.NetManager is not null;
 }

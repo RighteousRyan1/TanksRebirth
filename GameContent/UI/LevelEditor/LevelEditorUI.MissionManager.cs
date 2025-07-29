@@ -67,6 +67,7 @@ public partial class LevelEditorUI {
 
                     var mission = loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId];
 
+                    // save what we have before changing
                     loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId] = Mission.GetCurrent(mission.Name);
                     loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId].GrantsExtraLife = mission.GrantsExtraLife;
 
@@ -74,6 +75,9 @@ public partial class LevelEditorUI {
                     loadedCampaign.SetupLoadedMission(true);
 
                     MissionName.Text = loadedCampaign.CachedMissions[index].Name;
+
+                    // update the mission we are wanting to rate
+                    difficultyRating = DifficultyAlgorithm.GetDifficulty(loadedCampaign.CurrentMission);
                 };
                 btn.IsVisible = IsActive;
                 _missionButtons.Add(btn);

@@ -39,13 +39,12 @@ public sealed class PacketID {
     public const int ServerNameSync = 16;
     public const int StartGame = 17;
     public const int LeaveGame = 18;
-    public const int Disconnect = 19;
 
     // map sync
 
-    public const int SendCampaign = 20;
-    public const int SendCampaignByName = 21;
-    public const int SendMission = 22;
+    public const int SendCampaign = 19;
+    public const int SendCampaignByName = 20;
+    public const int SendMission = 21;
 
     // misc
 
@@ -66,6 +65,8 @@ public sealed class PacketID {
 
     public const int SyncKills = 29;
     public const int SendAirplane = 30;
+
+    public const int HostDisconnect = 31;
 
     public static int AddPacketId(string name) => Collection.ForcefullyInsert(name);
 

@@ -63,7 +63,20 @@
   
   <ItemGroup>
     <!--Copy the contents of this folders to the output directory, for reference, https://stackoverflow.com/questions/44374074/ -->
-    <Content Include="Content/Assets/fonts/*.*;&#xD;&#xA;&#xD;&#xA;Content/Assets/music/**/*.*;&#xD;&#xA;&#xD;&#xA;Content/Assets/sounds/**/*.*;&#xD;&#xA;&#xD;&#xA;Content/Assets/fanfares/**/*.*;&#xD;&#xA;&#xD;&#xA;Content/Assets/mainmenu/**/*.*;&#xD;&#xA;&#xD;&#xA;Content/Assets/textures/**/*.*;&#xD;&#xA;&#xD;&#xA;Content/Assets/*.png;&#xD;&#xA;&#xD;&#xA;Content/Assets/models/logo/**/*.png;&#xD;&#xA;&#xD;&#xA;Content/Assets/models/scene/**/*.png;&#xD;&#xA;&#xD;&#xA;Content/Assets/toy/**/*.png;&#xD;&#xA;&#xD;&#xA;Content/Assets/forest/**/*.png;&#xD;&#xA;&#xD;&#xA;Content/Assets/cosmetics/**/*.png;&#xD;&#xA;&#xD;&#xA;Content/Assets/christmas/**/*.png;&#xD;&#xA;&#xD;&#xA;Content/Assets/models/cosmetics/*.png;">
+    <Content Include=
+"Content/Assets/fonts/*.*;
+Content/Assets/music/**/*.*;
+Content/Assets/sounds/**/*.*;
+Content/Assets/fanfares/**/*.*;
+Content/Assets/mainmenu/**/*.*;
+Content/Assets/textures/**/*.*;
+Content/Assets/*.png;
+Content/Assets/models/logo/**/*.png;
+Content/Assets/models/scene/**/*.png;
+Content/Assets/models/rebirth_tanks/**/*.png;
+Content/Assets/cosmetics/**/*.png;
+Content/Assets/christmas/**/*.png;
+Content/Assets/models/cosmetics/*.png;">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

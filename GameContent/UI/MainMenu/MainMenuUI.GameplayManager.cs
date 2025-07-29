@@ -19,7 +19,8 @@ public static partial class MainMenuUI {
     public static void UpdateGameplay() {
         if (!IntermissionSystem.IsAwaitingNewMission || IntermissionSystem.BlackAlpha <= 0f) {
             if (curMenuMission.Blocks != null) {
-                var missionComplete = IntermissionHandler.NothingCanHappenAnymore(curMenuMission, out bool victory);
+                // do not count player tanks into the check
+                var missionComplete = IntermissionHandler.NothingCanHappenAnymore(curMenuMission, out _, (t) => t is not PlayerTank);
 
                 if (missionComplete) {
                     // TODO: finish.

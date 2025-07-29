@@ -239,15 +239,12 @@ public readonly struct WiiMap
         };
 
         // unfortunately we cannot do much more than this, since enemy spawns are handled in the parameter file.
-        // ...but we can find where they would spawn. go ahead and put a brown tank on the blue team there.
+        // ...but we can find where they would spawn. go ahead and put a random tank on the red team there.
     }
     public static float GetAutoTankRotation(Vector2 p) {
         const float ROWS_PER_COL = (float)BlockMapPosition.MAP_HEIGHT / BlockMapPosition.MAP_WIDTH_169;
 
         // adjust to the center of the map.
-
-        // p.Y = p.Y - GameScene.MapCenter.Y - 20;
-        p.Y -= Block.SIDE_LENGTH * 6;
 
         bool top_left = ROWS_PER_COL * p.X < p.Y;
         bool top_right = -ROWS_PER_COL * p.X < p.Y;
@@ -264,6 +261,7 @@ public readonly struct WiiMap
         return 0;
     }
 }
+
 [Flags]
 public enum WiiMapValidationResult {
     Success, 

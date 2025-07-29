@@ -53,7 +53,7 @@ public static partial class MainMenuUI
     public static Dictionary<UIState, (Vector3 Position, Vector3 Rotation)> MenuCameraManipulations = new() {
         [UIState.Campaigns] = (new(330f, 204f, 879f), new(0, -0.18f, 0.29f)), // seat headrest
         [UIState.PlayList] = (new Vector3(247.031f, 59.885f, 204.935f), new Vector3(0f, -0.404f, 1.397f)),
-        [UIState.Mulitplayer] = (new(51f, 34f, -140f), new(0, -0.36f, 3.7f)), // behind game scene
+        [UIState.Mulitplayer] = (new Vector3(57.25f, 47.419f, -263.85f), new Vector3(0f, -0.53f, 3.78f)), // behind game scene
         [UIState.Settings] = (new(1461f, 928f, 623f), new(0, -0.33f, 0.53f)), // near grandfather clock
         [UIState.StatsMenu] = (new(-1121f, 176f, 439f), new(0, -0.231f, -0.67f)), // near sheet music
         [UIState.Difficulties] = (new(-1189f, 288f, 2583f), new(0f, -0.25f, -2.27f)), // near books
@@ -223,9 +223,12 @@ public static partial class MainMenuUI
         IntermissionSystem.IsAwaitingNewMission = false;
         UpdateUI();
         UpdateDifficulties();
-        UpdateGameplay();
         UpdateMusic();
         UpdateMP();
+
+        if (RuntimeData.RunTime % 60f < RuntimeData.DeltaTime) {
+            UpdateGameplay();
+        }
     }
     public static void Open() {
         OpenUI();

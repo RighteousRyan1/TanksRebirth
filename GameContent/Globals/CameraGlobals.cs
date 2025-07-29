@@ -50,8 +50,9 @@ public static class CameraGlobals {
 
     public static int SpectatorId;
 
-    public const float DEFAULT_ORTHOGRAPHIC_ANGLE = 0.75f;
-    public const float DEFAULT_ZOOM = 3.3f;
+    // 1/8 of a circle, as opposed to 0.75, maybe?
+    public const float DEFAULT_ORTHOGRAPHIC_ANGLE = MathHelper.PiOver4;
+    public const float DEFAULT_ZOOM = 3.25f;
 
     public const float LVL_EDIT_ZOOM = 0.6f;
     public const float LVL_EDIT_Y_OFF = 82f;
@@ -98,12 +99,13 @@ public static class CameraGlobals {
                     UpdateOverhead();
 
                     GameView = Matrix.CreateScale(DEFAULT_ZOOM * AddativeZoom) *
-                               Matrix.CreateLookAt(new(0f, 0, 350f), Vector3.Zero, Vector3.Up) *
-                               Matrix.CreateTranslation(CameraFocusOffset.X, -CameraFocusOffset.Y + 40, 0) *
+                               Matrix.CreateLookAt(new(0f, 0, 100), Vector3.Zero, Vector3.Up) *
+                               Matrix.CreateTranslation(CameraFocusOffset.X, -CameraFocusOffset.Y - 110, 0) *
                                Matrix.CreateRotationY(OrthoRotationVector.X) *
                                Matrix.CreateRotationX(OrthoRotationVector.Y);
 
                     GameProjection = Matrix.CreateOrthographic(1920, 1080, -2000, 5000);
+                    // GameProjection = Matrix.CreateOrthographic(WindowUtils.WindowWidth, WindowUtils.WindowHeight, -2000, 5000);
                 }
             }
             else {

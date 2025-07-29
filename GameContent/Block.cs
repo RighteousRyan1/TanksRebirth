@@ -191,7 +191,7 @@ public class Block : IGameObject
             _shadow.Pitch = MathHelper.PiOver2;
             _shadow.Scale = new(1f);
             _shadow.Alpha = 1f;
-            _shadow.HasAddativeBlending = false;
+            _shadow.HasAdditiveBlending = false;
             _shadow.UniqueBehavior = (a) => {
                 // TODO: save for when i make shadows look... proper.
                 //p.TextureCrop = new(0, 0, 32, 32);
@@ -267,7 +267,7 @@ public class Block : IGameObject
                 var part = GameHandler.Particles.MakeParticle(Position3D, tex);
                 // var part = ParticleSystem.MakeParticle(Position3D, "wtf");
 
-                part.HasAddativeBlending = false;
+                part.HasAdditiveBlending = false;
 
                 var vel = new Vector3(Client.ClientRandom.NextFloat(-3, 3), Client.ClientRandom.NextFloat(4, 6), Client.ClientRandom.NextFloat(-3, 3));
 

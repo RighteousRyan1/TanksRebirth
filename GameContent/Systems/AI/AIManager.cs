@@ -1,13 +1,19 @@
+using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text.Json;
-using Microsoft.Xna.Framework;
 using TanksRebirth.GameContent.ID;
+using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.Graphics;
+using TanksRebirth.Internals.Common;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.Systems.AI;
 
@@ -928,5 +934,50 @@ public static class AIManager {
         }
 
         return cnt;
+    }
+
+    //static Stopwatch s = new();
+    //static List<double> msList = [];
+    internal static void ProcessAITanks() {
+        if (ModLoader.Status != LoadStatus.Complete)
+            return;
+
+        if (!GameScene.ShouldRenderAll)
+            return;
+
+        //if (InputUtils.KeyJustPressed(Microsoft.Xna.Framework.Input.Keys.H)) {
+        //    msList = [];
+        //    msList.Clear();
+        //}
+
+        Span<AITank> aiTanks = GameHandler.AllAITanks;
+        ref var tanksSearchSpace = ref MemoryMarshal.GetReference(aiTanks);
+        for (var i = 0; i < aiTanks.Length; i++) {
+            var tank = Unsafe.Add(ref tanksSearchSpace, i);
+            if (tank is null || tank.Dead) continue;
+
+            tank.Update();
+            tank.HandleTankMetaData();
+        }
+
+        // if you're not connected to a server or you aren't *the* server
+        if (!Client.IsHost() && Client.IsConnected()) return;
+
+        //s.Restart();
+
+        for (var i = 0; i < aiTanks.Length; i++) {
+            var tank = Unsafe.Add(ref tanksSearchSpace, i);
+            if (tank is null || tank.Dead) continue;
+
+            tank.DoAI();
+
+            // only does anything if you're in a multiplayer context.
+            Client.SyncAITank(tank);
+        }
+        //s.Stop();
+        //double ms = (s.ElapsedTicks * 1_000_000.0) / Stopwatch.Frequency / 1000;
+        //Console.WriteLine($"AI time this frame: {ms:0.000}ms | Average: {(msList.Sum() / msList.Count):0.000}");
+
+        //msList?.Add(ms);
     }
 }

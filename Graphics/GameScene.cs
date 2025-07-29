@@ -15,6 +15,7 @@ using TanksRebirth.Internals;
 
 namespace TanksRebirth.Graphics;
 
+#pragma warning disable
 public enum MapTheme
 {
     Vanilla,
@@ -315,18 +316,18 @@ public static class GameScene
 
     public const float MIN_X = -234;
     public const float MAX_X = 234;
-    public const float MIN_Z = -48;
-    public const float MAX_Z = 312;
+    public const float MIN_Z = -182;
+    public const float MAX_Z = 182;
 
     public const float CUBE_MIN_X = MIN_X + Block.SIDE_LENGTH / 2 - 6f;
     public const float CUBE_MAX_X = MAX_X - Block.SIDE_LENGTH / 2;
-    public const float CUBE_MIN_Y = MIN_Z + Block.SIDE_LENGTH / 2 - 6f;
-    public const float CUBE_MAX_Y = MAX_Z - Block.SIDE_LENGTH / 2;
+    public const float CUBE_MIN_Z = MIN_Z + Block.SIDE_LENGTH / 2 - 6f;
+    public const float CUBE_MAX_Z = MAX_Z - Block.SIDE_LENGTH / 2;
 
-    public static Vector3 TopLeft => new(CUBE_MIN_X, 0, CUBE_MAX_Y);
-    public static Vector3 TopRight => new(CUBE_MAX_X, 0, CUBE_MAX_Y);
-    public static Vector3 BottomLeft => new(CUBE_MIN_X, 0, CUBE_MIN_Y);
-    public static Vector3 BottomRight => new(CUBE_MAX_X, 0, CUBE_MIN_Y);
+    public static Vector3 TopLeft => new(CUBE_MIN_X, 0, CUBE_MAX_Z);
+    public static Vector3 TopRight => new(CUBE_MAX_X, 0, CUBE_MAX_Z);
+    public static Vector3 BottomLeft => new(CUBE_MIN_X, 0, CUBE_MIN_Z);
+    public static Vector3 BottomRight => new(CUBE_MAX_X, 0, CUBE_MIN_Z);
     public static void InitializeRenderers()
     {
         FloorRenderer.LoadFloor();
@@ -335,7 +336,7 @@ public static class GameScene
     }
 
     public static float Scale = 0.62f;
-    public static Vector3 Center = new Vector3(0, 0, 130);
+    public static Vector3 Center = Vector3.Zero;
 
     public static void RenderWorldModels()
     {

@@ -40,7 +40,7 @@ public static partial class LevelEditorUI {
         SavingThings,
     }
     public static readonly byte[] LevelFileHeader = [84, 65, 78, 75]; // T, A, N, K
-    public const int EDITOR_VERSION = 4;
+    public const int EDITOR_VERSION = 5;
 
     public const int MAX_MISSION_CHARS = 30;
     public static bool IsTestingLevel { get; private set; }
@@ -95,7 +95,8 @@ public static partial class LevelEditorUI {
         _oldelta = InputUtils.DeltaScrollWheel;
     }
 
-    internal static Mission missionToRate = new([], []);
+    internal static float difficultyRating;
+    // internal static float difficultyRating;
 
     static bool _sdbui;
 
@@ -404,7 +405,6 @@ public static partial class LevelEditorUI {
                     ChatSystem.SendMessage(e.Message, Color.Red);
                 }
             }
-            return;
         };
         // TODO: non-windows support. i am lazy. fuck this. also localize bozo
         LoadLevel.Tooltip = "Will open a file dialog for\nyou to choose what mission/campaign to load.";
@@ -735,9 +735,6 @@ public static partial class LevelEditorUI {
             }
         }
 
-        if (missionToRate == MainMenuUI.curMenuMission)
-            ReturnToEditor.OnLeftClick?.Invoke(null!);
-
         AddMissionBtn.IsVisible =
             RemoveMissionBtn.IsVisible =
             MoveMissionUp.IsVisible =
@@ -854,7 +851,7 @@ public static partial class LevelEditorUI {
             ClickEventsPerItem.Clear();
         }
         else if (IsEditing && !IsActive && cachedMission != default && CampaignGlobals.InMission)
-            if (IntermissionHandler.NothingCanHappenAnymore(cachedMission, out bool victory))
+            if (IntermissionHandler.NothingCanHappenAnymore(cachedMission, out _))
                 QueueEditorReEntry(120f);
         // if (ReturnToEditor != null)
         ReturnToEditor.IsVisible = IsEditing && !IsActive && !MainMenuUI.IsActive;

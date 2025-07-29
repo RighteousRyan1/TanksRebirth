@@ -1,50 +1,80 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Net.NetworkInformation;
 using TanksRebirth.GameContent.Globals;
+using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
+using TanksRebirth.Internals.Common.Framework.Collections;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
+using static TanksRebirth.GameContent.RebirthUtils.DebugManager;
 
 namespace TanksRebirth.GameContent.Systems.ParticleSystem;
 
 public class ParticleManager
 {
-    public int MaxParticles = 150000;
-    public Particle[] CurrentParticles;
+    // maybe rendertarget for lvl edit particles?
+    public SwapBackArray<Particle> CurrentParticles;
 
     public Matrix SystemView => _viewFunc.Invoke();
     public Matrix SystemProjection => _projFunc.Invoke();
 
-    private Func<Matrix> _viewFunc;
-    private Func<Matrix> _projFunc;
+    private readonly Func<Matrix> _viewFunc;
+    private readonly Func<Matrix> _projFunc;
 
     public ParticleManager(int maxParticles, Func<Matrix> view, Func<Matrix> proj) {
-        MaxParticles = maxParticles;
-        CurrentParticles = new Particle[MaxParticles];
+        CurrentParticles = [];
         _viewFunc = view;
         _projFunc = proj;
+        CurrentParticles.OnSwapBack += OnSwapBack;
     }
-
+    void OnSwapBack(int index, Particle particle) {
+        //Console.WriteLine($"remove: {particle.Id} ---> {index}");
+        particle.Id = index;
+    }
     public void Empty() {
-        for (int i = 0; i < CurrentParticles.Length; i++) {
+        CurrentParticles.Clear();
+        for (int i = 0; i < CurrentParticles.Count; i++) {
             CurrentParticles[i]?.Destroy();
         }
     }
 
     public void RenderParticles(bool renderInReverseOrder = false) {
+        if (!GameScene.ShouldRenderAll)
+            return;
+
+        //if (Internals.Common.InputUtils.KeyJustPressed(Microsoft.Xna.Framework.Input.Keys.U))
+            //Console.Clear();
+
+        //Console.SetCursorPosition(0, 0);
+        //var s = Stopwatch.StartNew();
+
+        Particle.EffectHandle.TextureEnabled = true;
+        Particle.EffectHandle.View = SystemView;
+        Particle.EffectHandle.Projection = SystemProjection;
+        Particle.EffectHandle.FogEnabled = false;
+
         if (renderInReverseOrder) {
-            for (int i = CurrentParticles.Length - 1; i >= 0; i--)
+            for (int i = CurrentParticles.Count - 1; i >= 0; i--)
                 CurrentParticles[i]?.Render();
         }
         else {
-            for (int i = 0; i < CurrentParticles.Length; i++)
+            for (int i = 0; i < CurrentParticles.Count; i++)
                 CurrentParticles[i]?.Render();
         }
+        //double ms = s.ElapsedTicks * 1_000_000.0 / Stopwatch.Frequency / 1000;
+        //Console.WriteLine($"Particle Render: {ms:0.000}ms");
     }
     public void RenderModelParticles(bool renderInReverseOrder = false) {
+        if (!GameScene.ShouldRenderAll)
+            return;
+
         if (renderInReverseOrder) {
-            for (int i = CurrentParticles.Length - 1; i >= 0; i--) {
+            for (int i = CurrentParticles.Count - 1; i >= 0; i--) {
                 var particle = CurrentParticles[i];
                 if (particle is not null)
                     if (particle.Model != null)
@@ -52,7 +82,7 @@ public class ParticleManager
             }
         }
         else {
-            for (int i = 0; i < CurrentParticles.Length; i++) {
+            for (int i = 0; i < CurrentParticles.Count; i++) {
                 var particle = CurrentParticles[i];
                 if (particle is not null)
                     if (particle.Model != null)
@@ -61,9 +91,17 @@ public class ParticleManager
         }
     }
     public void UpdateParticles() {
-        foreach (var particle in CurrentParticles) {
-            particle?.Update();
+        if (!GameScene.ShouldRenderAll)
+            return;
+
+        //var s = Stopwatch.StartNew();
+
+        for (int i = 0; i < CurrentParticles.Count; i++) {
+            CurrentParticles[i].Update();
         }
+        
+        //double ms = s.ElapsedTicks * 1_000_000.0 / Stopwatch.Frequency / 1000;
+        //Console.WriteLine($"Particle Logic: {ms:0.000}ms");
     }
     /// <summary>Creates a particle.</summary>
     /// <param name="position">The initial position of this particle.</param>
@@ -95,7 +133,7 @@ public class ParticleManager
 
         p.Scale = new(particleScaleMultiplier);
         p.IsIn2DSpace = false;
-        p.HasAddativeBlending = false;
+        p.HasAdditiveBlending = false;
         p.Alpha = 1;
         p.Origin2D = new Vector2(t.Width / 2, frameHeight / 2);
         void act(Particle b) {
@@ -157,7 +195,7 @@ public class ParticleManager
 
             var smoke = MakeParticle(position, texture);
 
-            smoke.HasAddativeBlending = true;
+            smoke.HasAdditiveBlending = true;
 
             smoke.Pitch = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
@@ -169,11 +207,14 @@ public class ParticleManager
 
             smoke.Position.Y += 5f + Client.ClientRandom.NextFloat(0f, 8f);
 
-            smoke.Color = Color.DarkOrange;
+            var smokeInitColor = Color.DarkOrange;
+            float fullLerpTime = 50f;
 
             smoke.UniqueBehavior = (p) => {
                 smoke.Position += velocity;
-                GeometryUtils.Add(ref smoke.Scale, -0.01f * RuntimeData.DeltaTime);
+                smoke.Scale -= new Vector3(0.01f) * RuntimeData.DeltaTime;
+                var time = MathF.Min(smoke.LifeTime, fullLerpTime);
+                smoke.Color = Color.Lerp(smokeInitColor, new Color(40, 40, 40), time / fullLerpTime);
 
                 if (smoke.Scale.X <= 0f)
                     smoke.Destroy();

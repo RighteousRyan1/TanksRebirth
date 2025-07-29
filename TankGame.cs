@@ -690,7 +690,7 @@ public class TankGame : Game {
         ChatSystem.SendMessage("Saved image to " + fs.Name, Color.Lime);
     }
     public static void ReportError(Exception? e, bool notifyUser = true, bool openFile = true, bool writeToLog = true) {
-        if (writeToLog)
+        if (writeToLog && e != null)
             ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.ErrorFatal);
         if (notifyUser) {
             var str = $"The error above is important for the developer of this game. If you are able to report it, explain how to reproduce it.";
@@ -706,6 +706,7 @@ public class TankGame : Game {
     }
     public static void Quit() => Instance.Exit();
     public void PrepareGameBuffers(SpriteBatch spriteBatch) {
+        // idea: have 3d resolution parameter to save performance (which also scales this down
         if (GameFrameBuffer == null || GameFrameBuffer.IsDisposed || GameFrameBuffer.Size() != WindowUtils.WindowBounds) {
             GameFrameBuffer?.Dispose();
             var presentationParams = GraphicsDevice.PresentationParameters;
@@ -719,6 +720,8 @@ public class TankGame : Game {
         GraphicsDevice.Clear(RenderGlobals.BackBufferColor);
 
         spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: RenderGlobals.DefaultRasterizer);
+
+        // TankFootprint.PrepareRT(GraphicsDevice);
 
         GraphicsDevice.DepthStencilState = RenderGlobals.DefaultStencilState;
 
@@ -857,7 +860,7 @@ public class TankGame : Game {
         _ziggy.Pitch = MathHelper.Pi;
         _ziggy.Yaw = -MathHelper.PiOver2;
         _ziggy.Scale = Vector3.One * 0.3f;
-        _ziggy.HasAddativeBlending = false;
+        _ziggy.HasAdditiveBlending = false;
         _ziggy.UniqueBehavior = (a) => {
             _ziggy.Roll = RuntimeData.RunTime / 60 % 2 < 1 ? -MathHelper.PiOver4 / 4 : MathHelper.PiOver4 / 4;
         };
@@ -867,14 +870,14 @@ public class TankGame : Game {
         _ziggyText.Yaw = MathHelper.PiOver2;
         _ziggyText.Roll = MathHelper.Pi;
         _ziggyText.Scale = Vector3.One * 0.3f;
-        _ziggyText.HasAddativeBlending = false;
+        _ziggyText.HasAdditiveBlending = false;
 
         _bkCypher = GameHandler.Particles.MakeParticle(new Vector3(1000, 0.1f, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/secret/bk_cypher"));
         _bkCypher.UniqueBehavior = (a) => {
             _bkCypher.Yaw = MathHelper.PiOver2 + MathHelper.PiOver4;
             _bkCypher.Roll = MathHelper.Pi;
             _bkCypher.Scale = Vector3.One * 0.65f;
-            _bkCypher.HasAddativeBlending = false;
+            _bkCypher.HasAdditiveBlending = false;
             _bkCypher.Position = new Vector3(1500, 1350, 100);
         };
     }

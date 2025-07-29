@@ -35,44 +35,37 @@ public partial class AITank {
         // IsTurning is on crack?
         bool shouldMove = !IsTurning && CurMineStun <= 0 && CurShootStun <= 0;
 
-        // CurrentRandomMove = 60;
-        //Properties.ShellLimit = 0;
-        //Properties.MineLimit = 0;
-
         if (!shouldMove) return;
         if (!Behaviors[0].IsModOf(CurrentRandomMove)) return;
 
+        CurrentRandomMove = Client.ClientRandom.Next(Parameters.RandomTimerMinMove, Parameters.RandomTimerMaxMove);
+        Behaviors[0].Value = 0;
         /*if (Properties.MaxSpeed > 0) {
             Console.WriteLine("Pivot Queue:    " + PivotQueue.Count);
             Console.WriteLine("Pivot Subqueue: " + SubPivotQueue.Count);
         }*/
 
-        //Console.WriteLine("Creating new pivot sequence...");
-        //PivotQueue.Add(Vector2.UnitY.Rotate(TankRotation + MathHelper.PiOver2));
-
-        if (PivotQueue.Count == 0 && SubPivotQueue.Count == 0) {
+        if (PivotQueue.Count == 0 && SubPivotQueue.Count == 0 && !IsInDanger) {
             IsSurviving = false;
-            // determine the frame timer for a new movement opportunity
-            CurrentRandomMove = Client.ClientRandom.Next(Parameters.RandomTimerMinMove, Parameters.RandomTimerMaxMove);
-            Behaviors[0].Value = 0;
 
-            // might need to check specific dangers here like mines or shells
-            // my loneliness is killing me (and i) I must confess, i still believe (still believe)
-
-            DoBlockNav();
-
-            // the tank avoids the average position of all dangers
-            if (NearbyDangers.Count > 0) {
-                var averageDangerPosition = NearbyDangers.Aggregate(Vector2.Zero, (sum, dng) => sum + dng.Position) / NearbyDangers.Count;
-
-                // Console.WriteLine("Evading " + dangerPositions.Count + " dangers");
-
-                // unsure yet if this should be added to the queue or not
-                Avoid(averageDangerPosition);
-            }
-            else if (!IsTooCloseToObstacle && !IsSurviving) {
+            if (!IsTooCloseToObstacle && !IsSurviving) {
                 DoRandomMove();
             }
+        }
+
+        DoBlockNav();
+
+        // the tank avoids the average position of all dangers
+        if (NearbyDangers.Count > 0) {
+            var averageDangerPosition = NearbyDangers.Aggregate(Vector2.Zero, (sum, dng) => sum + dng.Position) / NearbyDangers.Count;
+
+            SubPivotQueue.Clear();
+            PivotQueue.Clear();
+
+            // Console.WriteLine("Evading " + dangerPositions.Count + " dangers");
+
+            // unsure yet if this should be added to the queue or not
+            Avoid(averageDangerPosition);
         }
         // only generates a subqueue if there are no large pivot queues and there are not already a subqueue
         TryGenerateSubQueue();
@@ -96,7 +89,7 @@ public partial class AITank {
             return;
         }
 
-        float angleDiff = MathHelper.PiOver4; // normally pi/2
+        float angleDiff = MathHelper.PiOver4 / 2; // normally pi/2
 
         float fracL = -1f;
         float fracR = -1f;
@@ -128,20 +121,17 @@ public partial class AITank {
         var redirectAngle = MathHelper.PiOver2; // normally /2
 
         if (dir != CollisionDirection.Down)
-            vecRot = dir == /*left*/ CollisionDirection.Left ? -redirectAngle : redirectAngle;
+            vecRot = dir == CollisionDirection.Left ? -redirectAngle : redirectAngle;
         else
-            vecRot = MathHelper.Pi;
+            vecRot = MathHelper.Pi + Client.ClientRandom.NextFloat(-0.5f, 0.5f);
 
         var movementDirection = Vector2.UnitY.Rotate(TankRotation + vecRot);
 
         // SubPivotQueue.Clear();
 
-        if (/*PivotQueue.Count > 0*/ !PivotQueue.Any(x => x.Type == PivotType.NavTurn)) {
+        if (!PivotQueue.Any(x => x.Type == PivotType.NavTurn)) {
             PivotQueue.Insert(0, (movementDirection, PivotType.NavTurn));
             // Console.WriteLine("Pivot 0 overwritten.");
-        }
-        else {
-            // PivotQueue.Add(movementDirection);
         }
     }
     public void DoRandomMove() {

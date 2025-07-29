@@ -12,6 +12,7 @@ public static partial class GameLauncher
 {
     public static bool AutoLaunch = true;
     public static bool IsRunning { get; private set; }
+    public static bool IsConsoleAllocated { get; private set; }
     public static void LaunchGame() {
         IsRunning = true;
         using var game = new TankGame();
@@ -22,7 +23,7 @@ public static partial class GameLauncher
     [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool AllocConsole();
     
-    [Conditional("DEBUG")]
+    // [Conditional("DEBUG")]
     public static void DebugCheck() {
         /*
          *  Boot up console for debugging purposes and other goods.
@@ -33,6 +34,7 @@ public static partial class GameLauncher
         Thread.Sleep(1000);
         Console.OpenStandardOutput();
         Console.OpenStandardError();
+        IsConsoleAllocated = true;
     }
     
     //[STAThread]

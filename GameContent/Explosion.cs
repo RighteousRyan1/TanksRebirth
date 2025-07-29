@@ -74,7 +74,7 @@ public class Explosion : IAITankDanger {
 
         ring.Scale = new(1.3f);
         ring.Pitch = MathHelper.PiOver2;
-        ring.HasAddativeBlending = true;
+        ring.HasAdditiveBlending = true;
         ring.Color = ExplosionColor == Color.White ? Color.Yellow : ExplosionColor;
 
         ring.UniqueBehavior = (a) => {

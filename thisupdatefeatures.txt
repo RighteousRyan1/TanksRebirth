@@ -3,6 +3,7 @@
 ##### TODO: multiplayer stats (press tab n stuff to see other player kill counts, also have kills be per-player)
 ##### ALSO: make ping tab vertical (maybe)
 ##### ALSO: fix campaign not ending until another attempt passes
+##### ALSO: wiimotelib, improved particles, mines not flashing on MP, fix res on intermission
 
 Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed later) speedruns will get their spot on the main menu!
 
@@ -24,6 +25,9 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 - Reworked Co-op spawn positions on most Vanilla campaign levels
 - Reworked a few missions, and buffed the final mission slightly
 - Slightly changed the look of the "vanish" animation of invisible tanks
+- Bullets how have much more generous hitboxes (same-ish as the original, now)
+- Reverted third-person smoke particles to normal
+- Slightly adjusted the orthographic camera
 
 ## Changes Important for Modders
 
@@ -43,6 +47,8 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 - (Potentially) fixed linux systems not being able to exit campaigns after success or failure
 - Fixed visual stuttering on AI controlled tanks when their rotation changes when facing down
 - Fixed a bug where exiting the level editor and playing a campaign denied the player any score
+- Fixed the difficulty algorithm not updating when switching levels in the level editor
+- Optimizations to the particle system (~400% faster, but still has issues)
 
 ## TODO
 

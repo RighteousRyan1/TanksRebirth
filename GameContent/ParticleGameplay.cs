@@ -131,7 +131,7 @@ public static class ParticleGameplay
         var shadow = manager.MakeParticle(position, GameResources.GetGameResource<Texture2D>("Assets/textures/mine/mine_shadow"));
         shadow.Scale = new(0.8f);
         shadow.Color = Color.Black;
-        shadow.HasAddativeBlending = false;
+        shadow.HasAdditiveBlending = false;
         // shadow.Roll = -MathHelper.PiOver2;
         shadow.Pitch = MathHelper.PiOver2;
 

@@ -33,8 +33,8 @@ public class TankArmor {
         _healthBarTotal = GameHandler.Particles.MakeParticle(host.Position3D + new Vector3(0, 20, 0), TextureGlobals.Pixels[Color.White]);
         _healthBarCurrent = GameHandler.Particles.MakeParticle(host.Position3D + new Vector3(0, 20, 0), TextureGlobals.Pixels[Color.White]);
 
-        _healthBarTotal.HasAddativeBlending = false;
-        _healthBarCurrent.HasAddativeBlending = false;
+        _healthBarTotal.HasAdditiveBlending = false;
+        _healthBarCurrent.HasAdditiveBlending = false;
 
         _healthBarTotal.Color = Color.Red;
         _healthBarCurrent.Color = Color.Lime;

@@ -30,8 +30,7 @@ using TanksRebirth.Internals.Common.Framework.Collisions;
 
 namespace TanksRebirth.GameContent;
 
-public class PlayerTank : Tank
-{
+public class PlayerTank : Tank {
     private static bool _justCenteredMouse = false;
     #region The Rest
     public static int MyTeam;
@@ -39,8 +38,7 @@ public class PlayerTank : Tank
     public static int StartingLives = 3;
     public static Dictionary<int, int> TankKills { get; set; } = []; // this campaign only!
     // questioning the validity of this struct but whatever
-    public struct CampaignStats
-    {
+    public struct CampaignStats {
         public int ShellsShot;
         public int ShellHits;
         public int MinesLaid;
@@ -193,19 +191,15 @@ public class PlayerTank : Tank
         // 0 = down
         // pi/4 = right
         // 3/4pi = left
+
         DesiredDirection = Vector2.Zero;
         LastUsedController = InputUtils.IsGamepadBeingUsed();
 
         base.Update();
 
-        if (LevelEditorUI.IsActive) return;
+        if (LevelEditorUI.IsActive || Dead) return;
 
-        if (NetPlay.IsClientMatched(PlayerId))
-            Client.SyncPlayerTank(this);
-
-        if (Dead) return;
-
-        if (CampaignGlobals.InMission) {
+        if (IsTurning) {
             if (TargetTankRotation - TankRotation >= MathHelper.PiOver2) {
                 TankRotation += MathHelper.Pi;
                 Flip = !Flip;
@@ -216,74 +210,70 @@ public class PlayerTank : Tank
             }
         }
 
+        if (NetPlay.IsClientMatched(PlayerId))
+            Client.SyncPlayerTank(this);
+
         // TODO: optimize?
-        if (IsIngame) {
-            if (NetPlay.IsClientMatched(PlayerId) && !IntermissionSystem.IsAwaitingNewMission) {
-                if (!Difficulties.Types["POV"] || LevelEditorUI.IsActive || MainMenuUI.IsActive) {
-                    Vector3 mouseWorldPos = MatrixUtils.GetWorldPosition(MouseUtils.MousePosition, -11f);
-                    if (!LevelEditorUI.IsActive)
-                        TurretRotation = -(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position).ToRotation() + MathHelper.PiOver2;
-                    else
-                        TurretRotation = TankRotation;
-                }
-                else if (!GameUI.Paused) {
-                    // if (DebugManager.IsFreecamEnabled && InputUtils.MouseRight) { } 
-                    if (!DebugManager.IsFreecamEnabled && !InputUtils.CanDetectClick() && !controlMine.JustPressed) {
-                        var mouseState = Mouse.GetState();
-                        var screenCenter = new Point(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2);
+        ProcessPlayerMouse();
 
-                        if (_justCenteredMouse) {
-                            // skip to avoid jumps
-                            _justCenteredMouse = false;
-                            return;
-                        }
+        if (!CampaignGlobals.InMission || LevelEditorUI.IsActive || ChatSystem.ActiveHandle) {
+            playerControl_isBindPressed = false;
+            return;
+        }
 
-                        // subtract mouse delta eventually
-                        int deltaX = mouseState.X - screenCenter.X;
-
-                        TurretRotation += -deltaX / (312f.ToResolutionX());
-
-                        // recenter
-                        Mouse.SetPosition(screenCenter.X, screenCenter.Y);
-                        _justCenteredMouse = true;
-                    }
-                }
-            }
-
-            if (CampaignGlobals.InMission && !LevelEditorUI.IsActive && !ChatSystem.ActiveHandle) {
+        if (!Properties.Stationary) {
+            if (NetPlay.IsClientMatched(PlayerId)) {
                 if (CurShootStun <= 0 && CurMineStun <= 0) {
-                    if (!Properties.Stationary) {
-                        if (NetPlay.IsClientMatched(PlayerId)) {
-                            if (LastUsedController)
-                                ControlHandle_ConsoleController();
-                            else
-                                ControlHandle_Keybinding();
-                        }
-                    }
-                }
-            }
-            else {
-                // Due to a problem of Inheritance, the tank will move 1.8 in the x coordinate for no reason. Thanks OOP, a revolution in Computer Science.
-                // To avoid this, just force the damn speed to zero when we are not in a mission.
-                Speed = 0;
-            }
-
-            if (CampaignGlobals.InMission && !LevelEditorUI.IsActive) {
-                if (NetPlay.IsClientMatched(PlayerId)) {
-                    if (InputUtils.CanDetectClick()) {
-                        if (!ChatSystem.ChatBoxHover && !ChatSystem.ActiveHandle && !GameUI.Paused) {
-                            Shoot(false);
-                        }
-                    }
+                    if (LastUsedController)
+                        ControlHandle_ConsoleController();
+                    else
+                        ControlHandle_Keybinding();
                 }
             }
         }
 
-        timeSinceLastAction++;
-
-        playerControl_isBindPressed = false;
+        if (NetPlay.IsClientMatched(PlayerId)) {
+            if (InputUtils.CanDetectClick()) {
+                if (!ChatSystem.ChatBoxHover && !ChatSystem.ActiveHandle && !GameUI.Paused) {
+                    Shoot(false);
+                }
+            }
+        }
 
         oldPosition = Position;
+    }
+    void ProcessPlayerMouse() {
+        if (NetPlay.IsClientMatched(PlayerId)) {
+            if (!Difficulties.Types["POV"] || LevelEditorUI.IsActive || MainMenuUI.IsActive) {
+                Vector3 mouseWorldPos = MatrixUtils.GetWorldPosition(MouseUtils.MousePosition, -11f);
+                if (!LevelEditorUI.IsActive)
+                    TurretRotation = -(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position).ToRotation() + MathHelper.PiOver2;
+                else
+                    TurretRotation = TankRotation;
+            }
+            else if (!GameUI.Paused) {
+                // if (DebugManager.IsFreecamEnabled && InputUtils.MouseRight) { } 
+                if (!DebugManager.IsFreecamEnabled && !InputUtils.CanDetectClick() && !controlMine.JustPressed) {
+                    var mouseState = Mouse.GetState();
+                    var screenCenter = new Point(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2);
+
+                    if (_justCenteredMouse) {
+                        // skip to avoid jumps
+                        _justCenteredMouse = false;
+                        return;
+                    }
+
+                    // subtract mouse delta eventually
+                    int deltaX = mouseState.X - screenCenter.X;
+
+                    TurretRotation += -deltaX / (312f.ToResolutionX());
+
+                    // recenter
+                    Mouse.SetPosition(screenCenter.X, screenCenter.Y);
+                    _justCenteredMouse = true;
+                }
+            }
+        }
     }
     public override void Remove(bool nullifyMe) {
         if (nullifyMe) {
@@ -553,11 +543,9 @@ public class PlayerTank : Tank
 
                     if (mesh.Name == "Shadow") {
                         if (!Lighting.AccurateShadows) {
-                            if (IsIngame) {
-                                effect.Alpha = 0.5f;
-                                effect.Texture = _shadowTexture;
-                                mesh.Draw();
-                            }
+                            effect.Alpha = 0.5f;
+                            effect.Texture = _shadowTexture;
+                            mesh.Draw();
                         }
                         continue;
                     }
@@ -613,25 +601,23 @@ public class PlayerTank : Tank
         }
 
         // a bit hardcoded but whatever
-        bool needClarification = CampaignGlobals.ShouldMissionsProgress 
-            && !CampaignGlobals.InMission && IsIngame && !IntermissionSystem.IsAwaitingNewMission && MainMenuUI.MenuState == MainMenuUI.UIState.Mulitplayer;
-
-        var playerColor = PlayerID.PlayerTankColors[PlayerType];
-        var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 125).ToResolution(); ;
-
-        bool flip = false;
-
-        float rotation = 0f;
-
-        // flip the graphic so it doesn't appear offscreen if it would normally appear too high
-        if (pos.Y <= 150) {
-            flip = true;
-            pos.Y += 225;
-            rotation = MathHelper.Pi;
-        }
-
+        bool needClarification = (CampaignGlobals.ShouldMissionsProgress && !MainMenuUI.IsActive
+            && !CampaignGlobals.InMission && !IntermissionSystem.IsAwaitingNewMission) || MainMenuUI.MenuState == MainMenuUI.UIState.Mulitplayer;
 
         if (needClarification) {
+            var playerColor = PlayerID.PlayerTankColors[PlayerType];
+            var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 125).ToResolution(); ;
+
+            bool flip = false;
+
+            float rotation = 0f;
+
+            // flip the graphic so it doesn't appear offscreen if it would normally appear too high
+            if (pos.Y <= 150) {
+                flip = true;
+                pos.Y += 225;
+                rotation = MathHelper.Pi;
+            }
             var tex1 = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/chevron_border");
             var tex2 = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/chevron_inside");
 

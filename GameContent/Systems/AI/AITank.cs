@@ -20,6 +20,7 @@ using TanksRebirth.GameContent.Systems.TankSystem;
 using tainicom.Aether.Physics2D.Dynamics;
 using TanksRebirth.Internals.Common.Framework.Collisions;
 using TanksRebirth.Enums;
+using TanksRebirth.GameContent.Cosmetics;
 
 namespace TanksRebirth.GameContent.Systems.AI;
 
@@ -165,6 +166,9 @@ public partial class AITank : Tank {
         else
             _tankTexture = Assets[$"tank_" + tierName];
 
+        // for debugging custom models
+        // Model = GameResources.GetGameResource<Model>("Assets/models/rebirth_tanks/tank_necro");
+
         _shadowTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank_shadow");
 
         if (applyDefaults)
@@ -191,9 +195,10 @@ public partial class AITank : Tank {
         GameHandler.AllTanks[index2] = this;
 
         base.Initialize();
+
+        // Props.Add(CosmeticChest.WitchHat);
     }
 
-    public Circle EntityDetector;
     public override void ApplyDefaults(ref TankProperties properties) {
         properties.DestructionColor = TankDestructionColors[AiTankType];
         Parameters = AIManager.GetAIParameters(AiTankType);
@@ -248,49 +253,12 @@ public partial class AITank : Tank {
         base.ApplyDefaults(ref properties);
 
         ModdedData?.PostApplyDefaults();
-
-        EntityDetector = new Circle {
-            Radius = Parameters.ObstacleAwarenessMine
-        };
     }
     public List<Tank> TanksNearMineAwareness = [];
     public List<Tank> TanksNearShootAwareness = [];
     public List<Block> BlocksNear = [];
     public override void Update() {
-        if (ModLoader.Status != LoadStatus.Complete)
-            return;
-
         base.Update();
-
-        //CannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
-
-        if (Dead || !GameScene.ShouldRenderAll)
-            return;
-
-        EntityDetector.Center = Position;
-
-        if (DebugManager.SuperSecretDevOption) {
-            var tnkGet = Array.FindIndex(GameHandler.AllAITanks, x => x is not null && !x.Dead && !x.Properties.Stationary);
-            if (tnkGet > -1)
-                if (AITankId == GameHandler.AllAITanks[tnkGet]!.AITankId)
-                    TargetTankRotation = (MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - MouseUtils.MousePosition).ToRotation() + MathHelper.PiOver2;
-        }
-        // do ai only if host, and send ai across the interweb
-        if (Client.IsHost() || !Client.IsConnected() && !Dead || MainMenuUI.IsActive) {
-            timeSinceLastAction++;
-
-            if (!MainMenuUI.IsActive)
-                if (!CampaignGlobals.InMission || IntermissionSystem.IsAwaitingNewMission || LevelEditorUI.IsActive)
-                    Velocity = Vector2.Zero;
-            DoAi();
-
-            if (IsIngame)
-                Client.SyncAITank(this);
-        }
-        if (!Client.IsHost() && Client.IsConnected()) {
-            if (ModdedData is null || ModdedData.CustomAI())
-            HandleTankMetaData();
-        }
     }
     public override void PreUpdate() {
         ModdedData?.PreUpdate();
@@ -432,7 +400,7 @@ public partial class AITank : Tank {
             ModdedData?.DangerDetected();
         }
     }
-    public void DoAi() {
+    public void DoAI() {
         if (!MainMenuUI.IsActive && !CampaignGlobals.InMission)
             return;
 
@@ -441,8 +409,6 @@ public partial class AITank : Tank {
         TurretRotationMultiplier = 1f;
 
         Array.ForEach(Behaviors, x => x.Value += RuntimeData.DeltaTime);
-
-        HandleTankMetaData();
 
         TanksNearMineAwareness = [.. GameHandler.AllTanks.Where(x => x is not null && x != this && !x.Dead && GameUtils.Distance_WiiTanksUnits(Position, x.Position) <= Parameters.TankAwarenessMine)];
         TanksNearShootAwareness = [.. GameHandler.AllTanks.Where(x => x is not null && x != this && !x.Dead && GameUtils.Distance_WiiTanksUnits(TurretPosition, x.Position) <= Parameters.TankAwarenessShoot)];
@@ -503,13 +469,14 @@ public partial class AITank : Tank {
         DrawExtras();
         if (MainMenuUI.IsActive && Properties.Invisible || Properties.Invisible && CampaignGlobals.InMission)
             return;
-        if (Model is null)
-            return;
 
         for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
             foreach (ModelMesh mesh in Model.Meshes) {
                 foreach (BasicEffect effect in mesh.Effects) {
-                    effect.World = i == 0 ? _boneTransforms[mesh.ParentBone.Index] : _boneTransforms[mesh.ParentBone.Index] * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
+                    effect.World = i == 0 ? 
+                        _boneTransforms[mesh.ParentBone.Index] : 
+                        _boneTransforms[mesh.ParentBone.Index] * 
+                        Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
                     effect.View = View;
                     effect.Projection = Projection;
 
@@ -533,8 +500,18 @@ public partial class AITank : Tank {
                     else
                         effect.EmissiveColor = Color.Black.ToVector3();
 
-                    effect.Texture = _tankTexture;
+                    /*if (mesh.Name is "Cannon" or "Chassis") {
+                        effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/models/rebirth_tanks/tank_necro_tank");
+                    }
+                    else if (mesh.Name is "Cloak" or "Jewel") {
+                        effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/models/rebirth_tanks/tank_necro_extras");
+                    }
+                    else if (mesh.Name is "Skulls") {
+                        effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/models/rebirth_tanks/tank_necro_skulls");
+                    }*/
+                    // ^ old testing stuff
                     effect.Alpha = 1;
+                    effect.Texture = _tankTexture;
 
                     // TODO: uncomment code when disabling implementation is re-implemented.
 
@@ -657,7 +634,7 @@ public partial class AITank : Tank {
                 realI++;
 
                 var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Up * 20, World, View, Projection) - new Vector2(0, realI * 20);
-                DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, 
+                DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont,
                     $"{info.Key.Name}: {info.Key.Value} ({GameUtils.Value_WiiTanksUnits(info.Key.Value)})", pos, info.Value, Color.White,
                     Vector2.One * 0.5f, 0f, borderThickness: 0.25f);
                 DrawAwarenessCircle(TankBasicEffectHandler, info.Key.Value, info.Value, info.Key.TrackTurret ? TurretPosition : null);
@@ -711,9 +688,6 @@ public partial class AITank : Tank {
             return;
 
         Properties.Armor?.Render();
-    }
-    public void SetEntityDetectionCircle(float diameter) {
-        EntityDetector.Radius = GameUtils.Value_WiiTanksUnits(diameter / 2);
     }
     public bool IsOnSameTeamAs(int otherTeam) => Team == otherTeam && Team != TeamID.NoTeam && otherTeam != TeamID.NoTeam;
     public static int PickRandomTier() => Server.ServerRandom.Next(0, TankID.Collection.Count);

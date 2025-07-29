@@ -1,29 +1,31 @@
+using FontStashSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using FontStashSharp;
-using TanksRebirth.Internals.Common.GameUI;
-using TanksRebirth.GameContent.Systems;
-using TanksRebirth.GameContent.Globals;
-using NativeFileDialogSharp;
-using System.IO;
-using TanksRebirth.Internals.Common.Utilities;
 using Microsoft.Xna.Framework.Input;
-using TanksRebirth.GameContent.ID;
-using TanksRebirth.GameContent.Systems.Coordinates;
-using TanksRebirth.Net;
-using TanksRebirth.Internals.Common;
-using System.Collections.Generic;
-using System.Linq;
+using NativeFileDialogSharp;
 using System;
-using TanksRebirth.Internals.Common.Framework;
-using TanksRebirth.IO;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using tainicom.Aether.Physics2D.Dynamics;
 using TanksRebirth.Achievements;
-using TanksRebirth.GameContent.UI.MainMenu;
-using TanksRebirth.GameContent.UI.LevelEditor;
+using TanksRebirth.GameContent.Globals;
+using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.ModSupport;
-using TanksRebirth.Graphics;
+using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.AI;
+using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.UI.LevelEditor;
+using TanksRebirth.GameContent.UI.MainMenu;
+using TanksRebirth.Graphics;
+using TanksRebirth.Internals.Common;
+using TanksRebirth.Internals.Common.Framework;
+using TanksRebirth.Internals.Common.GameUI;
+using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.IO;
+using TanksRebirth.Net;
+using static TanksRebirth.GameContent.UI.MainMenu.MainMenuUI;
 
 namespace TanksRebirth.GameContent.RebirthUtils;
 
@@ -250,6 +252,14 @@ public static class DebugManager {
         if (!DebuggingEnabled)
             return; // won't update debug if debugging is not currently enabled.
 
+        if (SuperSecretDevOption) {
+            var tnkGet = Array.FindIndex(GameHandler.AllAITanks, x => x is not null && !x.Dead && !x.Properties.Stationary);
+            if (tnkGet > -1) {
+                var tnk = GameHandler.AllAITanks[tnkGet];
+                tnk.TargetTankRotation = (MatrixUtils.ConvertWorldToScreen(Vector3.Zero, tnk.World, tnk.View, tnk.Projection) - MouseUtils.MousePosition).ToRotation() + MathHelper.PiOver2;
+            }
+        }
+
         if (RuntimeData.RunTime % 60 <= RuntimeData.DeltaTime) {
             RuntimeData.MemoryUsageInBytes = (ulong)RuntimeData.ProcessMemory;
         }
@@ -260,7 +270,14 @@ public static class DebugManager {
             RuntimeData.RenderTimeGraph.Update();
             RuntimeData.LogicTimeGraph.Update();
         }
-
+        if (MenuState == UIState.Mulitplayer) {
+            if (InputUtils.AreKeysJustPressed(Keys.Q, Keys.W)) {
+                IPInput.Text = "localhost";
+                PortInput.Text = "7777";
+                ServerNameInput.Text = "TestServer";
+                UsernameInput.Text = Client.ClientRandom.Next(0, ushort.MaxValue).ToString();
+            }
+        }
         if (InputUtils.AreKeysJustPressed(Keys.Q, Keys.E))
             Server.SyncSeeds();
         if (InputUtils.KeyJustPressed(Keys.M))

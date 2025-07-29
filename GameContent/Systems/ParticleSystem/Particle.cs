@@ -9,6 +9,7 @@ using FontStashSharp;
 using tainicom.Aether.Physics2D.Dynamics;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Globals;
+using HidSharp.Reports.Units;
 
 namespace TanksRebirth.GameContent.Systems.ParticleSystem;
 
@@ -18,6 +19,11 @@ public enum ParticleIntensity
     Low, // Particles emit at 25% the frequency
     Medium, // ... 50%
     High, // ... 100%
+}
+public enum ParticleImportance {
+    Critical, // must always render (e.g., player hit, mine explosion, damage feedback)
+    Important, // render on Medium and High
+    Cosmetic // only render on High
 }
 public class Particle
 {
@@ -52,7 +58,7 @@ public class Particle
     public float Alpha = 1f;
 
     /// <summary>The unique identifier of this <see cref="Particle"/>.</summary>
-    public readonly int Id;
+    public int Id;
 
     /// <summary>Whether to billboard this <see cref="Particle"/> towards the camera, if in a 3D space.</summary>
     public bool FaceTowardsMe;
@@ -63,13 +69,13 @@ public class Particle
     public bool ToScreenSpace = true;
 
     /// <summary>What this <see cref="Particle"/> should do every given update.</summary>
-    public Action<Particle> UniqueBehavior;
+    public Action<Particle>? UniqueBehavior;
 
     /// <summary>What this <see cref="Particle"/> should do every given draw call.</summary>
-    public Action<Particle> UniqueDraw;
+    public Action<Particle>? UniqueDraw;
 
     /// <summary>Whether or not the color of this <see cref="Particle"/> has addative blending applied.</summary>
-    public bool HasAddativeBlending = true;
+    public bool HasAdditiveBlending = true;
 
     /// <summary>How to crop the texture of this particle.</summary>
     public Rectangle? TextureCrop = null; // for framing a particle's texture
@@ -101,11 +107,9 @@ public class Particle
     {
         Position = position;
         System = system;
-        int index = Array.IndexOf(System.CurrentParticles, null);
 
-        Id = index;
-
-        System.CurrentParticles[index] = this;
+        Id = System.CurrentParticles.AddWithIndex(this);
+        // Console.WriteLine($"{Id} -- count: {System.CurrentParticles.Count}");
     }
 
     public void Update()
@@ -145,16 +149,15 @@ public class Particle
         for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
             foreach (ModelMesh mesh in Model.Meshes) {
                 foreach (BasicEffect effect in mesh.Effects) {
-                    effect.World = i == 0 ? world : world * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
+                    effect.World = i == 0 ? world : world * 
+                        Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
                     effect.View = System.SystemView;
                     effect.Projection = System.SystemProjection;
 
-                    effect.TextureEnabled = true;
                     effect.Texture = Texture;
 
                     effect.Alpha = Alpha;
 
-                    effect.FogEnabled = false;
                     effect.EmissiveColor = Color.ToVector3() * SceneManager.GameLight.Brightness;
 
                     effect.SetDefaultGameLighting_IngameEntities(LightPower);
@@ -168,7 +171,7 @@ public class Particle
     }
     internal void Render()
     {
-        if (!GameScene.ShouldRenderAll || Model is not null)
+        if (Model is not null)
             return;
 
         Matrix world;
@@ -191,20 +194,16 @@ public class Particle
         {
             if (Model is null) {
                 EffectHandle.World = world;
-                EffectHandle.View = System.SystemView;
-                EffectHandle.Projection = System.SystemProjection;
-                EffectHandle.TextureEnabled = true;
-                EffectHandle.Texture = Texture;
+                // EffectHandle.Texture = Texture;
                 EffectHandle.EmissiveColor = Color.ToVector3() * SceneManager.GameLight.Brightness;
 
                 EffectHandle.Alpha = Alpha;
 
                 EffectHandle.SetDefaultGameLighting_IngameEntities(LightPower);
 
-                EffectHandle.FogEnabled = false;
-
                 TankGame.SpriteRenderer.End();
-                TankGame.SpriteRenderer.Begin(SpriteSortMode.FrontToBack, HasAddativeBlending ? BlendState.Additive : BlendState.NonPremultiplied, SamplerState.PointWrap, DepthStencilState.DepthRead, RenderGlobals.DefaultRasterizer, EffectHandle); if (!IsText)
+                TankGame.SpriteRenderer.Begin(SpriteSortMode.FrontToBack, HasAdditiveBlending ? BlendState.Additive : BlendState.NonPremultiplied, SamplerState.PointWrap, DepthStencilState.DepthRead, RenderGlobals.DefaultRasterizer, EffectHandle); 
+                if (!IsText)
                     TankGame.SpriteRenderer.Draw(Texture, Vector2.Zero, TextureCrop, Color * Alpha, Rotation2D, Origin2D != default ? Origin2D : Texture.Size() / 2, /*TextureScale*/ Scale.X, default, Layer);
                 else
                     TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, Text, Vector2.Zero, Color * Alpha, new Vector2(Scale.X, Scale.Y), Rotation2D, Origin2D, Layer);
@@ -216,7 +215,7 @@ public class Particle
         else
         {
             TankGame.SpriteRenderer.End();
-            TankGame.SpriteRenderer.Begin(SpriteSortMode.FrontToBack, HasAddativeBlending ? BlendState.Additive : BlendState.NonPremultiplied, rasterizerState: RenderGlobals.DefaultRasterizer); if (!IsText)
+            TankGame.SpriteRenderer.Begin(SpriteSortMode.FrontToBack, HasAdditiveBlending ? BlendState.Additive : BlendState.NonPremultiplied, rasterizerState: RenderGlobals.DefaultRasterizer); if (!IsText)
                 TankGame.SpriteRenderer.Draw(Texture, ToScreenSpace ? 
                     MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(Position), System.SystemView, System.SystemProjection) : 
                     new Vector2(Position.X, Position.Y), TextureCrop, Color * Alpha, Rotation2D, Origin2D != default ? Origin2D : Texture.Size() / 2, TextureScale, default, Layer);
@@ -232,6 +231,8 @@ public class Particle
 
     public void Destroy() {
         UniqueBehavior = null;
-        System.CurrentParticles[Id] = null;
+
+        if (System.CurrentParticles.Contains(this))
+            System.CurrentParticles.RemoveAt(Id);
     }
 }

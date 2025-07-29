@@ -6,6 +6,7 @@ using Mono.Unix.Native;
 using System;
 using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.Systems;
+using TanksRebirth.Internals.Common.Framework.Audio;
 
 namespace TanksRebirth.Net;
 
@@ -64,7 +65,6 @@ public class Server
             Password = password,
             Name = name
         };
-        //ServerRandom = new
 
         NetPlay.CurrentServer = server;
         OnServerStart?.Invoke(server);
@@ -73,7 +73,7 @@ public class Server
 
         NetManager.Start(port);
         NetManager.DisconnectTimeout = 10000;
-        NetManager.UpdateTime = 10;
+        NetManager.UpdateTime = 15;
 
         // serverNetManager.NatPunchEnabled = true;
         NetListener.PeerDisconnectedEvent += NetListener_PeerDisconnectedEvent;
@@ -82,7 +82,12 @@ public class Server
 
     private static void NetListener_ConnectionRequestEvent(ConnectionRequest request) {
         if (NetManager.ConnectedPeersCount < MaxClients) {
-            request.AcceptIfKey(NetPlay.CurrentServer!.Password);
+            var peer = request.AcceptIfKey(NetPlay.CurrentServer!.Password);
+
+            // fix the peer map on the server
+            NetPlay.PeerMap[peer.Id] = CurrentClientCount;
+            NetPlay.ReversePeerMap[CurrentClientCount] = peer.Id;
+            ChatSystem.SendMessage($"Connected peer {peer.Id} -> {CurrentClientCount}");
         }
         else {
             ChatSystem.SendMessage("User rejected: Incorrect password.", Color.Red);
@@ -91,7 +96,14 @@ public class Server
     }
 
     private static void NetListener_PeerDisconnectedEvent(NetPeer peer, DisconnectInfo disconnectInfo) {
+        var peerIdReal = NetPlay.PeerMap[peer.Id];
 
+        ChatSystem.SendMessage($"{ConnectedClients[peerIdReal].Name} has disconnected. ({disconnectInfo.Reason})", Color.Red);
+        CurrentClientCount--;
+
+        GameHandler.AllPlayerTanks[peer.Id]?.Destroy(new TankHurtContextOther(), false);
+
+        SoundPlayer.PlaySoundInstance("Assets/sounds/menu/client_leave.ogg", SoundContext.Effect, 0.75f);
     }
 
     public static void SyncSeeds() {
@@ -99,15 +111,25 @@ public class Server
         if (!Client.IsHost()) return;
 
         NetDataWriter message = new();
-        // 'Millisecond' will be different on other clients if not sent (latency)
-        var seed = Guid.NewGuid().GetHashCode(); //DateTime.Now.Microsecond * DateTime.Now.Millisecond;
+
+        var seed = Guid.NewGuid().GetHashCode();
         message.Put(PacketID.SyncSeeds);
 
         message.Put(seed);
 
         RandSeed = seed;
 
-        ChatSystem.SendMessage("Seed synced: " + seed, Color.Lime);
+        // since this is sending from the server itself, no point in sending to itself.
+        NetManager.SendToAll(message, DeliveryMethod.ReliableOrdered, Client.NetClient);
+    }
+
+    public static void SendHostDisconnect() {
+        if (!Client.IsConnected()) return;
+        if (!Client.IsHost()) return;
+
+        NetDataWriter message = new();
+
+        message.Put(PacketID.HostDisconnect);
 
         // since this is sending from the server itself, no point in sending to itself.
         NetManager.SendToAll(message, DeliveryMethod.ReliableOrdered, Client.NetClient);

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using TanksRebirth.Enums;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Systems;
+using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Graphics;
