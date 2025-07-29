@@ -40,12 +40,9 @@ using TanksRebirth.GameContent.Speedrunning;
 using TanksRebirth.GameContent.Cosmetics;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.GameContent.UI.LevelEditor;
-using TanksRebirth.Graphics.Shaders;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
 using System.Linq;
 using TanksRebirth.GameContent.Systems.TankSystem;
-using TanksRebirth.GameContent.ID;
-using TanksRebirth.GameContent.Systems.AI;
 
 namespace TanksRebirth;
 
@@ -853,10 +850,10 @@ public class TankGame : Game {
         // magic.
         const float SECRET_BASE_POS_X = GameScene.MIN_X - 28.5f;
         const float SECRET_BASE_POS_Y = 22;
-        const float SECRET_BASE_POS_Z = 20;
+        const float SECRET_BASE_POS_Z = -130;
 
         _ziggy = GameHandler.Particles.MakeParticle(new Vector3(100, 0.1f, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/secret/ziggy"));
-        _ziggy.Position = new Vector3(SECRET_BASE_POS_X, SECRET_BASE_POS_Y, SECRET_BASE_POS_Z - 40);
+        _ziggy.Position = new Vector3(SECRET_BASE_POS_X, SECRET_BASE_POS_Y, SECRET_BASE_POS_Z);
         _ziggy.Pitch = MathHelper.Pi;
         _ziggy.Yaw = -MathHelper.PiOver2;
         _ziggy.Scale = Vector3.One * 0.3f;
@@ -866,20 +863,18 @@ public class TankGame : Game {
         };
 
         _ziggyText = GameHandler.Particles.MakeParticle(new Vector3(100, 0.1f, 0), "Ziggy <3");
-        _ziggyText.Position = new Vector3(SECRET_BASE_POS_X, SECRET_BASE_POS_Y + 20, SECRET_BASE_POS_Z - 8 - 40);
+        _ziggyText.Position = new Vector3(SECRET_BASE_POS_X, SECRET_BASE_POS_Y + 20, SECRET_BASE_POS_Z - 8);
         _ziggyText.Yaw = MathHelper.PiOver2;
         _ziggyText.Roll = MathHelper.Pi;
         _ziggyText.Scale = Vector3.One * 0.3f;
         _ziggyText.HasAdditiveBlending = false;
 
         _bkCypher = GameHandler.Particles.MakeParticle(new Vector3(1000, 0.1f, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/secret/bk_cypher"));
-        _bkCypher.UniqueBehavior = (a) => {
-            _bkCypher.Yaw = MathHelper.PiOver2 + MathHelper.PiOver4;
-            _bkCypher.Roll = MathHelper.Pi;
-            _bkCypher.Scale = Vector3.One * 0.65f;
-            _bkCypher.HasAdditiveBlending = false;
-            _bkCypher.Position = new Vector3(1500, 1350, 100);
-        };
+        _bkCypher.Yaw = MathHelper.PiOver2 + MathHelper.PiOver4;
+        _bkCypher.Roll = MathHelper.Pi;
+        _bkCypher.Scale = Vector3.One * 0.65f;
+        _bkCypher.HasAdditiveBlending = false;
+        _bkCypher.Position = new Vector3(1500, 1350, 149.5f);
     }
     private void TankGame_OnFocusRegained(object sender, IntPtr e) {
         if (TankMusicSystem.IsLoaded) {

@@ -13,6 +13,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 - Added an "Auto-Orient Tanks" option to the level editor so tanks can be oriented identically to how they were in the original game
 - Added coordinates display above the mouse in the level editor
 - Added network metrics (ping, packet loss, packets sent/received) to the top of a multiplayer session
+- Added more particle effects in various areas of the game
 
 # Changes
 
@@ -30,11 +31,13 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 - Slightly adjusted the orthographic camera
 - Bullets how have much more generous hitboxes (same-ish as the original, now)
 - Reverted third-person smoke particles to normal
+- The main menu logo no longer follows your mouse off-screen
+- Slightly changed the appearance of the path created to the mouse
 
 # Changes Important for Modders
 
 - Completely overhauled the AI Parameters.
-	- Be sure to read the documentation of them by hovering on them in your IDE!
+	- Be sure to read the documentation of them by hovering on them in your IDE
 - Pink tanks, internally, are now listed before Yellow tanks
 	- Update any campaigns!
 - You can now compile mods on versions higher than .NET 8.0

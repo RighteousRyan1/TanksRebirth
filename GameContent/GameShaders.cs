@@ -47,8 +47,9 @@ public class GameShaders
         var value = PlayerID.PlayerTankColors[NetPlay.GetMyClientId()];
         MouseShader.Parameters["oColor"].SetValue(value.ToVector3());
         /*MouseRenderer.HsvToRgb(TankGame.GameUpdateTime % 255 / 255f * 360, 1, 1).ToVector3());*/
-        MouseShader.Parameters["oSpeed"].SetValue(-20f);
+        MouseShader.Parameters["oSpeed"].SetValue(15f);
         MouseShader.Parameters["oSpacing"].SetValue(10f);
+        // MouseShader.Parameters["oRotation"].SetValue(MathHelper.Pi);
 
         GaussianBlurShader.Parameters["oResolution"].SetValue(Vector2.One);
         GaussianBlurShader.Parameters["oBlurFactor"].SetValue(BlurFactor);
