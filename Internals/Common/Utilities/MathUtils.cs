@@ -240,22 +240,7 @@ public static class MathUtils
         return value;
     }
     public static float SoftStep(float value, float goal, float step) {
-        if (value < goal) {
-            value += step * (value / goal);
-
-            if (value > goal) {
-                return goal;
-            }
-        }
-        else if (value > goal) {
-            value -= step * (value - goal);
-
-            if (value < goal) {
-                return goal;
-            }
-        }
-
-        return value;
+        return MathHelper.Lerp(value, goal, MathHelper.Clamp(step, 0f, 1f));
     }
     public static Vector3 ExpandZ(this Vector2 vector)
     => new(vector.X, 0, vector.Y);

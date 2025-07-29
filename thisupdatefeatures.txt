@@ -7,13 +7,14 @@
 
 Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed later) speedruns will get their spot on the main menu!
 
-## Additions
+# Additions
 
 - You can now switch individually between Windowed, Fullscreen, and Borderless Fullscreen in the graphics settings
 - Added an "Auto-Orient Tanks" option to the level editor so tanks can be oriented identically to how they were in the original game
 - Added coordinates display above the mouse in the level editor
+- Added network metrics (ping, packet loss, packets sent/received) to the top of a multiplayer session
 
-## Changes
+# Changes
 
 - AI Tanks are now completely overhauled! They now behave much different from how they did before
 	- They almost never kill themselves
@@ -21,15 +22,16 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 	- Act 10x more similar to the original game
 	- Should, overall, make them less of a nuisance to destroy
 	- Should also improve their movements a ton
-- Yellow tank music is now prioritized over pink tank music
+- Leveling now has decay (leveling up now takes more XP for each level) (MAYBED SAHDSHAJKD HJSKAHD JKSAHJKSD AHJKSAD HJKSDA HJKA SD)
 - Reworked Co-op spawn positions on most Vanilla campaign levels
+- Yellow tank music is now prioritized over the pink tank's
 - Reworked a few missions, and buffed the final mission slightly
 - Slightly changed the look of the "vanish" animation of invisible tanks
+- Slightly adjusted the orthographic camera
 - Bullets how have much more generous hitboxes (same-ish as the original, now)
 - Reverted third-person smoke particles to normal
-- Slightly adjusted the orthographic camera
 
-## Changes Important for Modders
+# Changes Important for Modders
 
 - Completely overhauled the AI Parameters.
 	- Be sure to read the documentation of them by hovering on them in your IDE!
@@ -37,7 +39,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 	- Update any campaigns!
 - You can now compile mods on versions higher than .NET 8.0
 
-## Fixes
+# Fixes
 
 - Fixed needing a "Starting Lives" value to save a specific mission
 - Changed some inconsistencies between the original missions and Rebirth's
@@ -49,10 +51,13 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 - Fixed a bug where exiting the level editor and playing a campaign denied the player any score
 - Fixed the difficulty algorithm not updating when switching levels in the level editor
 - Optimizations to the particle system (~400% faster, but still has issues)
+- Fixed some elements of the intermission animation being improperly scaled with resolution
 
-## TODO
+# TODO
 
-- [ ] New AI tank aggression system (depending on the tank type, will either make advances towards you or will avoid you)
+- [ ] Multithreaded tank AI
+- [ ] Campaign fail/success display
+- [ ] Tank tread hyper-optimization (and visual re-haul)
 
 PLEASE, if you find anything wrong, go to my [discord](https://discord.gg/KhfzvbrrKx) server and report bugs in the #bugs 
 channel, or, if you want to suggest something, suggest them in the #suggestions channel.

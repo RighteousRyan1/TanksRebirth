@@ -1,6 +1,7 @@
 ﻿using FontStashSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using TanksRebirth.GameContent.Globals;
 
 namespace TanksRebirth.Internals.Common.Utilities;
 
@@ -11,6 +12,21 @@ public static class DrawUtils {
         var vector = orthoPos - WindowUtils.WindowBounds / 2;
         var negativeVector = new Vector2(vector.X, -vector.Y);
         return negativeVector;
+    }
+
+    public static void DrawBox(Vector2 start, Vector2 end, Color boxColor, Vector2 origin = default) {
+        var tex = TextureGlobals.Pixels[Color.White];
+
+        start -= origin;
+        end -= origin;
+        // top line
+        TankGame.SpriteRenderer.Draw(tex, start, null, boxColor, 0f, Vector2.Zero, new Vector2(end.X - start.X, 1), default, 0);
+        // bottom line
+        TankGame.SpriteRenderer.Draw(tex, start + Vector2.UnitY * (end.Y - start.Y), null, boxColor, 0f, Vector2.Zero, new Vector2(end.X - start.X, 1), default, 0);
+        // left line
+        TankGame.SpriteRenderer.Draw(tex, start, null, boxColor, 0f, Vector2.Zero, new Vector2(1, end.Y - start.Y), default, 0);
+        // right line
+        TankGame.SpriteRenderer.Draw(tex, start + Vector2.UnitX * (end.X - start.X), null, boxColor, 0f, Vector2.Zero, new Vector2(1, end.Y - start.Y), default, 0);
     }
     public static void DrawTextWithBorder(SpriteBatch spriteBatch, SpriteFontBase font, string text, Vector2 position, 
         Color textColor, Color borderColor, Vector2 scale, float rotation, Anchor anchor = Anchor.Center, float borderThickness = 1f, float charSpacing = 0,

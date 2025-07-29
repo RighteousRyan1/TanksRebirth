@@ -113,14 +113,22 @@ public static partial class MainMenuUI
     }
     private static void UpdateModels() {
         RebirthLogo.Position = new Vector3(0, 300.ToResolutionY(), 0);
-        //var testX = MouseUtils.MousePosition.X / WindowUtils.WindowWidth;
-        //var testY = MouseUtils.MousePosition.Y / WindowUtils.WindowHeight;
 
-        var scalar = 0.4f;
-        var rotX = -((MouseUtils.MousePosition.X - WindowUtils.WindowWidth / 2) / (WindowUtils.WindowWidth / 2)) * scalar;
-        var rotY = MathHelper.PiOver2 + (MouseUtils.MousePosition.Y - WindowUtils.WindowHeight / 4) / (WindowUtils.WindowHeight / 4) * scalar * 0.5f;
-        RebirthLogo.Rotation.X = rotX;
-        RebirthLogo.Rotation.Y = rotY;
+        // slowly return to normal if the mouse is not on-screen
+        if (!MouseUtils.MouseOnScreen) {
+            RebirthLogo.Rotation.X = MathUtils.SoftStep(RebirthLogo.Rotation.X, 0, 0.05f * RuntimeData.DeltaTime);
+            RebirthLogo.Rotation.Y = MathUtils.SoftStep(RebirthLogo.Rotation.Y, MathHelper.PiOver2, 0.05f * RuntimeData.DeltaTime);
+
+            RebirthLogo.Rotation_Tanks = new(MathHelper.PiOver2, 0, 0);
+            return;
+        }
+        var scalar = MathHelper.PiOver4;
+
+        var rotX = -(MouseUtils.Test.X - 0.5f) * scalar;
+        var rotY = MathHelper.PiOver2 + (MouseUtils.Test.Y - 0.25f) * scalar;
+
+        RebirthLogo.Rotation.X = MathUtils.SoftStep(RebirthLogo.Rotation.X, rotX, 0.1f * RuntimeData.DeltaTime);
+        RebirthLogo.Rotation.Y = MathUtils.SoftStep(RebirthLogo.Rotation.Y, rotY, 0.1f * RuntimeData.DeltaTime);
     }
     public static void RenderModels() {
         UpdateModels();

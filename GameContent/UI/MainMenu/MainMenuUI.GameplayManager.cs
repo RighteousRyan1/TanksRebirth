@@ -11,25 +11,15 @@ namespace TanksRebirth.GameContent.UI.MainMenu;
 
 #pragma warning disable
 public static partial class MainMenuUI {
-    private static bool _firstTime = true;
-    // time after nothing can happen untiul next mission is loaded
-    private static float _newMisCd;
-    // default time for above field
-    private static float _timeToWait = 180;
+    static bool _firstTime = true;
     public static void UpdateGameplay() {
         if (!IntermissionSystem.IsAwaitingNewMission || IntermissionSystem.BlackAlpha <= 0f) {
             if (curMenuMission.Blocks != null) {
                 // do not count player tanks into the check
                 var missionComplete = IntermissionHandler.NothingCanHappenAnymore(curMenuMission, out _, (t) => t is not PlayerTank);
 
-                if (missionComplete) {
-                    // TODO: finish.
-                    _newMisCd += RuntimeData.DeltaTime;
-                    if (_newMisCd > _timeToWait)
-                        LoadTemplateMission();
-                }
-                else
-                    _newMisCd = 0;
+                if (missionComplete)
+                    LoadTemplateMission();
             }
             else {
                 LoadTemplateMission();

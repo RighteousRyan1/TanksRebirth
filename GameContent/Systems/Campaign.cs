@@ -113,6 +113,7 @@ public class Campaign
         // FIXME: source of level editor bug.
         PlacementSquare.ResetSquares();
         SceneManager.CleanupEntities();
+        SceneManager.CleanupScene();
         const int roundingFactor = 5;
         int numPlayers = 0;
         for (int i = 0; i < LoadedMission.Tanks.Length; i++) {
