@@ -37,7 +37,7 @@ public static partial class MainMenuUI {
         DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, TankGame.GameLanguage.TankKillsPerType + ":", tankKillsPos, Color.White, Color.Black, Vector2.One.ToResolution(), 0f, Anchor.Center);
         // GameUtils.GetAnchor(aligning, FontGlobals.RebirthFont.MeasureString("Tanks Killed by Type:"))
         int count = 1;
-        for (int i = 2; i < TankGame.SaveFile.TankKills.Count; i++) {
+        for (int i = 1; i < TankGame.SaveFile.TankKills.Count; i++) {
             var elem = TankGame.SaveFile.TankKills.ElementAt(i);
             if (elem.Value == 0)
                 continue;

@@ -185,7 +185,7 @@ public static partial class MainMenuUI {
 
         var recordsPos = new Vector2(WindowUtils.WindowWidth / 3 * 2, WindowUtils.WindowHeight * 0.6f);
         var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/trophy");
-        TankGame.SpriteRenderer.Draw(tex, recordsPos - new Vector2(175, -45).ToResolution(), null, Color.White, 0f, Anchor.RightCenter.GetTextureAnchor(tex), new Vector2(0.1f).ToResolution(), default, default);
+        TankGame.SpriteRenderer.Draw(tex, recordsPos - new Vector2(175, -45).ToResolution(), null, Color.White, 0f, Anchor.RightCenter.GetTextureAnchor(tex), new Vector2(0.5f).ToResolution(), default, default);
         var text = $"Top {Speedrun.LoadedSpeedruns.Length} speedruns:\n" + string.Join(Environment.NewLine, Speedrun.LoadedSpeedruns);
         DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, text, recordsPos, Color.White, Color.Black, new Vector2(0.75f).ToResolution(), 0f, Anchor.TopCenter);
     }

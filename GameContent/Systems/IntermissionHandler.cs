@@ -153,6 +153,8 @@ public static class IntermissionHandler {
         return false; // multiple teams still active
     }
     public static void HandleMissionChanging() {
+        // if (Client.IsConnected() && !Client.IsHost()) return;
+
         if (CampaignGlobals.LoadedCampaign.CachedMissions[0].Name is null)
             return;
 
@@ -161,54 +163,80 @@ public static class IntermissionHandler {
         bool victory = myTank is null ? true : myTank.Team != TeamID.NoTeam && myTank.Team == finalTeam;
 
         if (nothingAnymore) {
-            IntermissionSystem.IsAwaitingNewMission = true;
-            CampaignGlobals.InMission = false;
+            PrepareIntermission(victory);
+        }
+    }
+    public static void PrepareIntermission(bool victory) {
+        IntermissionSystem.IsAwaitingNewMission = true;
+        CampaignGlobals.InMission = false;
 
-            if (!CampaignGlobals.InMission && _wasInMission) {
-                bool isExtraLifeMission = CampaignGlobals.LoadedCampaign.CachedMissions[CampaignGlobals.LoadedCampaign.CurrentMissionId].GrantsExtraLife;
-                int restartTime;
-                MissionEndContext endContext;
+        if (!CampaignGlobals.InMission && _wasInMission) {
+            bool isExtraLifeMission = CampaignGlobals.LoadedCampaign.CachedMissions[CampaignGlobals.LoadedCampaign.CurrentMissionId].GrantsExtraLife;
+            int restartTime;
+            MissionEndContext endContext;
 
-                IntermissionSystem.InitializeCountdowns(isExtraLifeMission && victory);
-                if (victory) {
-                    restartTime = DEF_INTERMISSION_TIME;
+            IntermissionSystem.InitializeCountdowns(isExtraLifeMission && victory);
+            if (victory) {
+                restartTime = DEF_INTERMISSION_TIME;
 
-                    if (isExtraLifeMission) {
-                        restartTime += DEF_PLUSLIFE_TIME;
-                        IntermissionSystem.ShouldDrawBanner = false;
-                    }
-
-                    endContext = MissionEndContext.Win;
-
-                    if (CampaignGlobals.LoadedCampaign.CurrentMissionId >= CampaignGlobals.LoadedCampaign.CachedMissions.Length - 1)
-                        endContext = CampaignGlobals.LoadedCampaign.MetaData.HasMajorVictory ? 
-                            MissionEndContext.CampaignCompleteMajor : MissionEndContext.CampaignCompleteMinor;
+                if (isExtraLifeMission) {
+                    restartTime += DEF_PLUSLIFE_TIME;
+                    IntermissionSystem.ShouldDrawBanner = false;
                 }
-                else {
-                    restartTime = DEF_INTERMISSION_TIME;
 
-                    // TODO: if a 1-up mission, extend by X amount of time (TBD?)
-                    // we check <= 1 since the lives haven't actually been deducted yet.
+                endContext = MissionEndContext.Win;
 
-                    if (Client.IsConnected()) {
-                        for (int i = 0; i < PlayerTank.Lives.Length; i++) {
-                            if (i >= Server.CurrentClientCount) {
-                                PlayerTank.Lives[i] = 0;
-                            }
+                if (CampaignGlobals.LoadedCampaign.CurrentMissionId >= CampaignGlobals.LoadedCampaign.CachedMissions.Length - 1)
+                    endContext = CampaignGlobals.LoadedCampaign.MetaData.HasMajorVictory ?
+                        MissionEndContext.CampaignCompleteMajor : MissionEndContext.CampaignCompleteMinor;
+            }
+            else {
+                restartTime = DEF_INTERMISSION_TIME;
+
+                // we check <= 1 since the lives haven't actually been deducted yet.
+
+                /*if (Client.IsConnected()) {
+                    for (int i = 0; i < PlayerTank.Lives.Length; i++) {
+                        if (i >= Server.CurrentClientCount) {
+                            PlayerTank.Lives[i] = 0;
                         }
                     }
-                    // TODO: doesnt work on 1 client
-                    bool check = Client.IsConnected() ? PlayerTank.Lives.All(x => x == 0) : PlayerTank.GetMyLives() <= 0;
+                }*/
 
-                    // why is "win" a ternary result? it will never be "win" given the we are in the "!victory" branch. wtf ryan code once again
-                    endContext = !GameHandler.AllPlayerTanks.Any(tnk => tnk != null && !tnk.IsDestroyed) ? (check ? MissionEndContext.GameOver : MissionEndContext.Lose) : MissionEndContext.Win;
+                // we want to move on anyway even if one player 'lost' and another 'won' so other players aren't held back while others advance (desync alert!!)
+                var allPlayersDead = !GameHandler.AllPlayerTanks.Any(tnk => tnk != null && !tnk.IsDestroyed);
 
-                    // hardcode hell 2: electric boogaloo
-                    if (Difficulties.Types["InfiniteLives"])
+                // assume true, but set to false later if any player has lives remaining
+                bool everyoneLostAllLives = true;
+                if (allPlayersDead) {
+                    // networking is *consistently* behind the host here
+
+                    for (int i = 0; i < GameHandler.AllPlayerTanks.Length; i++) {
+                        var tank = GameHandler.AllPlayerTanks[i];
+                        if (tank is null) continue;
+                        var lives = PlayerTank.Lives[i];
+                        var livesCountLocal = tank.IsDestroyed ? lives - 1 : lives;
+
+                        // if any player has any lives remaining, the campaign isn't over
+                        if (livesCountLocal > 0)
+                            everyoneLostAllLives = false;
+                    }
+                }
+
+                if (allPlayersDead) {
+                    if (everyoneLostAllLives)
+                        endContext = MissionEndContext.GameOver;
+                    else
                         endContext = MissionEndContext.Lose;
                 }
-                CampaignGlobals.MissionEndEvent_Invoke(restartTime, endContext, isExtraLifeMission);
+                else
+                    endContext = MissionEndContext.Win;
+
+                // hardcode hell 2: electric boogaloo
+                if (Difficulties.Types["InfiniteLives"])
+                    endContext = MissionEndContext.Lose;
             }
+            CampaignGlobals.MissionEndEvent_Invoke(restartTime, endContext, isExtraLifeMission);
         }
     }
     /// <summary>This marks the beginning of the player seeing all of the tanks on the map, before the round begins.</summary>

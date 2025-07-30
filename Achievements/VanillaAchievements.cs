@@ -36,7 +36,7 @@ public static class VanillaAchievements
 
         new("Lesser Child Abuse", "Destroy 100 Bronze Tanks", GetAchTex("100bronze"), () => TankGame.SaveFile.TankKills[TankID.Bronze] >= 100),
         new("It's no Use!", "Destroy 100 Silver Tanks", GetAchTex("100silver"), () => TankGame.SaveFile.TankKills[TankID.Silver] >= 100),
-        new("Gemmin' it up", "Destroy 100 Sapphire Tanks", GetAchTex("100sapphire"), () => TankGame.SaveFile.TankKills[TankID.Sapphire] >= 100),
+        new("Rocked and Loaded", "Destroy 100 Sapphire Tanks", GetAchTex("100sapphire"), () => TankGame.SaveFile.TankKills[TankID.Sapphire] >= 100),
         new("The Glint in your Eye", "Destroy 100 Ruby Tanks", GetAchTex("100ruby"), () => TankGame.SaveFile.TankKills[TankID.Ruby] >= 100),
         new("Fast and Furious", "Destroy 100 Citrine Tanks", GetAchTex("100citrine"), () => TankGame.SaveFile.TankKills[TankID.Citrine] >= 100),
         new("Purple Pain", "Destroy 100 Amethyst Tanks", GetAchTex("100amethyst"), () => TankGame.SaveFile.TankKills[TankID.Amethyst] >= 100),
@@ -68,7 +68,7 @@ public static class VanillaAchievements
         new("I cannon believe you've done this.", "Destroy one of your teammates."),
         #endregion
         #region Secrets
-        new("Nice tunes, bro", "This is a hidden achievement!"), // click main menu logo
+        new("Nice Tunes", "This is a hidden achievement!"), // click main menu logo
         #endregion
         #region Time Played
         new("A Good Start", "Play for your first 10 minutes.", GetAchTex("mins10"),

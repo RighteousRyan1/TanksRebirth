@@ -3,24 +3,25 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using tainicom.Aether.Physics2D.Dynamics;
 using TanksRebirth.Enums;
 using TanksRebirth.GameContent.GameMechanics;
+using TanksRebirth.GameContent.Globals;
+using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.ModSupport;
-using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems.AI;
+using TanksRebirth.GameContent.Systems.ParticleSystem;
+using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework.Audio;
-using TanksRebirth.Internals.Common.Utilities;
-using TanksRebirth.Net;
-using TanksRebirth.GameContent.UI.MainMenu;
-using TanksRebirth.GameContent.Globals.Assets;
-using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.Internals.Common.Framework.Collision;
 using TanksRebirth.Internals.Common.Framework.Collisions;
-using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent;
 
@@ -358,18 +359,29 @@ public class Shell : IAITankDanger {
             }
 
             if (Properties.HomeProperties.Target != Vector2.Zero) {
-                bool hits = Collision.DoRaycast(Position, Properties.HomeProperties.Target, (int)Properties.HomeProperties.Radius * 2);
+                bool success = false;
+                Tank.CollisionsWorld.RayCast((fixture, point, normal, fraction) => {
+                    // pretty self-explanatory
+                    if (fixture.Body.Tag is Tank t) {
+                        if (!t.IsOnSameTeamAs(Team)) {
+                            float distanceToHit = Vector2.Distance(Position / Tank.UNITS_PER_METER, point);
+                            if (distanceToHit <= Properties.HomeProperties.Radius / Tank.UNITS_PER_METER) {
+                                success = true;
+                            }
+                            return fraction;
+                        }
+                        return -1f;
+                    }
+                    success = false;
+                    return 0f;
+                }, Position / Tank.UNITS_PER_METER, Properties.HomeProperties.Target / Tank.UNITS_PER_METER);
 
-                if (hits) {
+                if (success) {
                     float dist = Vector2.Distance(Position, Properties.HomeProperties.Target);
 
-                    Velocity.X += MathUtils.DirectionTo(Position, Properties.HomeProperties.Target).X *
-                        Properties.HomeProperties.Power / dist;
-                    Velocity.Y += MathUtils.DirectionTo(Position, Properties.HomeProperties.Target).Y *
-                        Properties.HomeProperties.Power / dist;
+                    Velocity += MathUtils.DirectionTo(Position, Properties.HomeProperties.Target) * Properties.HomeProperties.Power / dist;
 
                     Vector2 trueSpeed = Vector2.Normalize(Velocity) * Properties.HomeProperties.Speed;
-
 
                     Velocity = trueSpeed;
                 }
@@ -658,8 +670,8 @@ public class Shell : IAITankDanger {
         View = CameraGlobals.GameView;
 
         // TODO: wtf? DoRaycast failing?
-        if (DebugManager.DebuggingEnabled && DebugManager.DebugLevel == 1 && Properties.HomeProperties.Speed > 0)
-            Collision.DoRaycast(Position, Properties.HomeProperties.Target, (int)Properties.HomeProperties.Radius, true);
+        //if (DebugManager.DebuggingEnabled && DebugManager.DebugLevel == 1 && Properties.HomeProperties.Speed > 0)
+        //    Collision.DoRaycast(Position, Properties.HomeProperties.Target, (int)Properties.HomeProperties.Radius, true);
         if (DebugManager.DebuggingEnabled)
             DebugManager.DrawDebugString(TankGame.SpriteRenderer,
                 $"RicochetsLeft: {RicochetsRemaining}\nTier: {Type}\nId: {Id}",

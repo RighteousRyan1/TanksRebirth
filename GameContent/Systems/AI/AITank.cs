@@ -229,7 +229,7 @@ public partial class AITank : Tank {
             };
             // ShellHoming.isHeatSeeking = true;
 
-            Parameters.DetectionForgivenessHostile *= 4;
+            Parameters.DetectionForgivenessHostile *= 2;
         }
 
         if (Difficulties.Types["BulletBlocking"])

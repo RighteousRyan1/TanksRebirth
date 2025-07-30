@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using TanksRebirth.Enums;
@@ -11,313 +12,157 @@ using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Utilities;
 
-namespace TanksRebirth.GameContent.GameMechanics
-{
-    public static class Collision
-    {
-        public struct CollisionInfo {
-            public float Value;
-            public Vector2 Normal;
+namespace TanksRebirth.GameContent.GameMechanics;
+
+public static class Collision {
+    public struct CollisionInfo {
+        public float Value;
+        public Vector2 Normal;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Set(float value, float normalX, float normalY) {
+            Value = value;
+            Normal.X = normalX;
+            Normal.Y = normalY;
         }
-        public static bool IsColliding(Rectangle movingBox, Rectangle collidingBox, Vector2 offset, out CollisionInfo info)
-        {
-            info = new();
-            float x;
-            if (offset.X > 0)
-                x = (collidingBox.Left - movingBox.Right) / offset.X;
-            else if (offset.X < 0)
-                x = (collidingBox.Right - movingBox.Left) / offset.X;
-            else
-                x = -1.0f;
+    }
 
-            float verticalT;
-            if (offset.Y > 0)
-                verticalT = (collidingBox.Top - movingBox.Bottom) / offset.Y;
-            else if (offset.Y < 0)
-                verticalT = (collidingBox.Bottom - movingBox.Top) / offset.Y;
-            else
-                verticalT = -1.0f;
-
-            bool isHorizontal = true;
-            if (x < 0.0f)
-                isHorizontal = false;
-            if (x > 1.0f)
-                isHorizontal = false;
-            if (collidingBox.Top >= movingBox.Bottom || collidingBox.Bottom <= movingBox.Top)
-                isHorizontal = false;
-
-            bool isVertical = true;
-            if (verticalT < 0.0f)
-                isVertical = false;
-            if (verticalT > 1.0f)
-                isVertical = false;
-            if (collidingBox.Left >= movingBox.Right || collidingBox.Right <= movingBox.Left)
-                isVertical = false;
-
-            if (!isHorizontal && !isVertical)
-                return false;
-
-            if (!isVertical || (x < verticalT && isHorizontal))
-            {
-                info.Value = x;
-                if (offset.X > 0)
-                    info.Normal = new(-1.0f, 0.0f);
-                else
-                    info.Normal = new(1.0f, 0.0f);
-            }
-            else
-            {
-                info.Value = verticalT;
-                if (offset.Y > 0)
-                    info.Normal = new(0.0f, -1.0f);
-                else
-                    info.Normal = new(0.0f, 1.0f);
-            }
-            return true;
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsColliding(Rectangle movingBox, Rectangle collidingBox, Vector2 offset, out CollisionInfo info) {
+        // early exit if no movement
+        if (offset.X == 0f && offset.Y == 0f) {
+            info = default;
+            return false;
         }
 
+        float horizontalT = -1f;
+        float verticalT = -1f;
 
-        public static void HandleCollisionSimple(Rectangle movingBox, Rectangle collidingBox, Vector2 velocity, ref Vector2 position, bool setpos = true)
-        {
-            var offset = Vector2.Zero;
-
-            CollisionInfo collisionInfo = new();
-
-            collisionInfo.Value = 1f;
-            if (IsColliding(movingBox, collidingBox, velocity, out var info))
-            {
-                if (info.Value < collisionInfo.Value)
-                    collisionInfo = info;
-            }
-
-            var pos = position;
-
-            pos += offset * collisionInfo.Value;
-
-            if (collisionInfo.Value < 1)
-            {
-                pos -= Vector2.Dot(velocity, collisionInfo.Normal) * collisionInfo.Normal;
-                offset -= Vector2.Dot(offset, collisionInfo.Normal) * collisionInfo.Normal;
-                offset *= 1f - collisionInfo.Value;
-            }
-            else
-                return;
-
-            if (setpos)
-            {
-                position.X = pos.X;
-                position.Y = pos.Y;
-            }
+        // calculates horizontal collision time
+        if (offset.X > 0f) {
+            horizontalT = (collidingBox.Left - movingBox.Right) / offset.X;
         }
-        public static void HandleCollisionSimple(Rectangle movingBox, Rectangle collidingBox, ref Vector2 velocity, ref Vector2 position, out CollisionDirection direction, bool setpos = true)
-        {
+        else if (offset.X < 0f) {
+            horizontalT = (collidingBox.Right - movingBox.Left) / offset.X;
+        }
+
+        // now vertical collision time
+        if (offset.Y > 0f) {
+            verticalT = (collidingBox.Top - movingBox.Bottom) / offset.Y;
+        }
+        else if (offset.Y < 0f) {
+            verticalT = (collidingBox.Bottom - movingBox.Top) / offset.Y;
+        }
+
+        // check horizontal collision validity
+        bool isHorizontalValid = horizontalT >= 0f && horizontalT <= 1f &&
+            collidingBox.Top < movingBox.Bottom && collidingBox.Bottom > movingBox.Top;
+
+        // ... now vertical
+        bool isVerticalValid = verticalT >= 0f && verticalT <= 1f &&
+            collidingBox.Left < movingBox.Right && collidingBox.Right > movingBox.Left;
+
+        if (!isHorizontalValid && !isVerticalValid) {
+            info = default;
+            return false;
+        }
+
+        // choose the earliest collision
+        if (!isVerticalValid || (isHorizontalValid && horizontalT < verticalT)) {
+            info.Value = horizontalT;
+            info.Normal.X = offset.X > 0f ? -1f : 1f;
+            info.Normal.Y = 0f;
+        }
+        else {
+            info.Value = verticalT;
+            info.Normal.X = 0f;
+            info.Normal.Y = offset.Y > 0f ? -1f : 1f;
+        }
+
+        return true;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void HandleCollisionSimple(Rectangle movingBox, Rectangle collidingBox, Vector2 velocity, ref Vector2 position, bool setpos = true) {
+        if (!IsColliding(movingBox, collidingBox, velocity, out var info) || info.Value >= 1f)
+            return;
+
+        if (setpos) {
+            // Calculate dot product inline for better performance
+            float dot = velocity.X * info.Normal.X + velocity.Y * info.Normal.Y;
+            position.X -= dot * info.Normal.X;
+            position.Y -= dot * info.Normal.Y;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void HandleCollisionSimple(Rectangle movingBox, Rectangle collidingBox, ref Vector2 velocity, ref Vector2 position, out CollisionDirection direction, bool setpos = true) {
+        if (!IsColliding(movingBox, collidingBox, velocity, out var info) || info.Value >= 1f) {
             direction = CollisionDirection.None;
-            var offset = velocity;
+            return;
+        }
 
-            CollisionInfo collisionInfo = new();
+        if (setpos) {
+            float dot = velocity.X * info.Normal.X + velocity.Y * info.Normal.Y;
+            position.X -= dot * info.Normal.X;
+            position.Y -= dot * info.Normal.Y;
+        }
 
-            collisionInfo.Value = 1f;
-            if (IsColliding(movingBox, collidingBox, velocity, out var info))
-            {
-                if (info.Value < collisionInfo.Value)
-                    collisionInfo = info;
+        // Branchless direction assignment using bit manipulation
+        direction = info.Normal.Y > 0f ? CollisionDirection.Up :
+                    info.Normal.Y < 0f ? CollisionDirection.Down :
+                    info.Normal.X > 0f ? CollisionDirection.Left : CollisionDirection.Right;
+    }
+
+    // i asked ai to optimize this method since i have no clue what the hell i wrote before
+    public static void HandleCollisionSimple_ForBlocks(Rectangle movingBox, Vector2 velocity, ref Vector2 position, out CollisionDirection direction, out Block block, out bool cornerCollision, bool setpos = true, Func<Block, bool> exclude = null) {
+        cornerCollision = false;
+        block = null;
+        direction = CollisionDirection.None;
+
+        var collisionInfo = new CollisionInfo { Value = 1f };
+        int collisionCount = 0;
+
+        // Cache blocks array to avoid repeated property access
+        var blocks = Block.AllBlocks;
+        var blocksLength = blocks.Length;
+
+        // Use for loop instead of foreach for better performance
+        for (int i = 0; i < blocksLength; i++) {
+            var cube = blocks[i];
+            if (cube == null) continue;
+
+            if (movingBox.Intersects(cube.Hitbox)) {
+                collisionCount++;
+                if (exclude?.Invoke(cube) == true && collisionCount == 1) {
+                    cornerCollision = true;
+                    break;
+                }
+                else if (exclude == null) {
+                    cornerCollision = true;
+                    break;
+                }
             }
 
-            var pos = position;
+            // Skip collision calculation if excluded
+            if (exclude != null && !exclude(cube)) continue;
 
-            if (collisionInfo.Value < 1)
-            {
-                pos -= Vector2.Dot(velocity, collisionInfo.Normal) * collisionInfo.Normal;
-                offset -= Vector2.Dot(offset, collisionInfo.Normal) * collisionInfo.Normal;
-                offset *= 1f - collisionInfo.Value;
-            }
-            else
-                return;
-
-            pos += offset * collisionInfo.Value;
-
-            if (setpos)
-            {
-                position.X = pos.X;
-                position.Y = pos.Y;
-            }
-
-            if (collisionInfo.Normal.Y > 0)
-            {
-                // ceil
-
-                direction = CollisionDirection.Up;
-            }
-            else if (collisionInfo.Normal.Y < 0)
-            {
-                // floor
-
-                direction = CollisionDirection.Down;
-            }
-            else if (collisionInfo.Normal.X > 0)
-            {
-                // wall left
-
-                direction = CollisionDirection.Left;
-            }
-            else if (collisionInfo.Normal.X < 0)
-            {
-                // wall right
-
-                direction = CollisionDirection.Right;
+            if (IsColliding(movingBox, cube.Hitbox, velocity, out var info) && info.Value < collisionInfo.Value) {
+                collisionInfo = info;
+                block = cube;
             }
         }
 
-        // Only collides with solids by default.
-        public static void HandleCollisionSimple_ForBlocks(Rectangle movingBox, Vector2 velocity, ref Vector2 position, out CollisionDirection direction, out Block block, out bool cornerCollision, bool setpos = true, Func<Block, bool> exclude = null)
-        {
-            cornerCollision = false;
-            block = null;
-            direction = CollisionDirection.None;
-            var offset = velocity;
+        if (collisionInfo.Value >= 1f) return;
 
-            CollisionInfo collisionInfo = new();
-
-            collisionInfo.Value = 1f;
-
-            var collisionCount = 0;
-
-            foreach (var cube in Block.AllBlocks) {
-                if (cube is not null) {
-                    if (movingBox.Intersects(cube.Hitbox)) {
-                        collisionCount++;
-                        if (exclude is not null) {
-                            if (exclude.Invoke(cube) && collisionCount == 1)
-                                cornerCollision = true;
-                            break;
-                        }
-                        else {
-                            cornerCollision = true;
-                            break;
-                        }
-                    }
-                    if (exclude is null) {
-                        if (IsColliding(movingBox, cube.Hitbox, velocity, out var info)) {
-                            if (info.Value < collisionInfo.Value)
-                                collisionInfo = info;
-                            block = cube;
-                        }
-                    }
-                    else {
-                        if (exclude.Invoke(cube)) {
-                            if (IsColliding(movingBox, cube.Hitbox, velocity, out var info)) {
-                                if (info.Value < collisionInfo.Value)
-                                    collisionInfo = info;
-                                block = cube;
-                            }
-                        }
-                    }
-                }
-            }
-
-            var pos = position;
-
-            pos += offset * collisionInfo.Value;
-
-            if (collisionInfo.Value < 1)
-            {
-                pos -= Vector2.Dot(velocity, collisionInfo.Normal) * collisionInfo.Normal;
-                offset -= Vector2.Dot(offset, collisionInfo.Normal) * collisionInfo.Normal;
-                offset *= 1f - collisionInfo.Value;
-            }
-
-            if (setpos)
-            {
-                position.X = pos.X;
-                position.Y = pos.Y;
-            }
-
-            if (collisionInfo.Normal.Y > 0)
-            {
-                // ceil
-
-                direction = CollisionDirection.Up;
-            }
-            else if (collisionInfo.Normal.Y < 0)
-            {
-                // floor
-
-                direction = CollisionDirection.Down;
-            }
-            else if (collisionInfo.Normal.X > 0)
-            {
-                // wall left
-
-                direction = CollisionDirection.Left;
-            }
-            else if (collisionInfo.Normal.X < 0)
-            {
-                // wall right
-
-                direction = CollisionDirection.Right;
-            }
-            /*else if (collisionInfo.Normal == Vector2.Zero)
-            {
-                direction = CollisionDirection.Other;
-               
-            }*/ // huh?
+        if (setpos) {
+            float dot = velocity.X * collisionInfo.Normal.X + velocity.Y * collisionInfo.Normal.Y;
+            position.X -= dot * collisionInfo.Normal.X;
+            position.Y -= dot * collisionInfo.Normal.Y;
         }
 
-        public static bool DoRaycast(Vector2 start, Vector2 destination, float forgiveness, bool draw = false)
-        {
-            const int PATH_UNIT_LENGTH = 4;
-            const int MAX_DIST = 1000;
-
-            // 20, 30
-
-            var pathDir = MathUtils.DirectionTo(start, destination).ToRotation();
-
-            var pathPos = start + Vector2.Zero.Rotate(pathDir);
-
-            pathDir *= PATH_UNIT_LENGTH;
-
-            for (int i = 0; i < MAX_DIST; i++)
-            {
-                var dummyPos = Vector2.Zero;
-
-                if (pathPos.X < GameScene.MIN_X || pathPos.X > GameScene.MAX_X)
-                {
-                    return false;
-                }
-                if (pathPos.Y < GameScene.MIN_Z || pathPos.Y > GameScene.MAX_Z)
-                {
-                    return false;
-                }
-
-                var pathHitbox = new Rectangle((int)pathPos.X, (int)pathPos.Y, 1, 1);
-
-                // Why is velocity passed by reference here lol
-                HandleCollisionSimple_ForBlocks(pathHitbox, start, ref dummyPos, out var dir, out var block, out bool corner, false);
-
-                switch (dir)
-                {
-                    case CollisionDirection.Up:
-                    case CollisionDirection.Down:
-                        return false;
-                    case CollisionDirection.Left:
-                    case CollisionDirection.Right:
-                        return false;
-                }
-
-                if (Vector2.Distance(pathPos, destination) < forgiveness)
-                    return true;
-
-                pathPos += Vector2.Normalize(MathUtils.DirectionTo(start, destination));
-
-                if (draw)
-                {
-                    var whitePixel = GameResources.GetGameResource<Texture2D>("Assets/textures/WhitePixel");
-                    var pathPosScreen = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(pathPos.X, 11, pathPos.Y), CameraGlobals.GameView, CameraGlobals.GameProjection);
-                    TankGame.SpriteRenderer.Draw(whitePixel, pathPosScreen, null, Color.White, 0, whitePixel.Size() / 2, 2 + (float)Math.Sin(i * Math.PI / 5 - RuntimeData.UpdateCount * 0.3f), default, default);
-                }
-
-            }
-            return true;
-        }
+        direction = collisionInfo.Normal.Y > 0f ? CollisionDirection.Up :
+                    collisionInfo.Normal.Y < 0f ? CollisionDirection.Down :
+                    collisionInfo.Normal.X > 0f ? CollisionDirection.Left : CollisionDirection.Right;
     }
 }

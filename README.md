@@ -90,7 +90,7 @@ OS: Windows 10 or newer
 
 Processor: 2 Core processor at least 2 GHz
 
-Memory: 1024 MB RAM, 256MB VRAM
+Memory: 4GB RAM, 4GB VRAM
 
 ## Minimum
 
@@ -98,4 +98,4 @@ OS: Windows 7
 
 Processor: 2 Core processor at least 1 GHz
 
-Memory: 512 MB RAM, 128MB VRAM
+Memory: 2GB RAM, 2GB VRAM

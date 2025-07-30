@@ -1,6 +1,7 @@
 using DiscordRPC;
 using System;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Systems;
@@ -41,24 +42,22 @@ public static class DiscordRichPresence {
             Start = DateTime.UtcNow,
         };
         _client?.SetPresence(_rp);
+
+        SetLargeAsset("tanks_physical_logo", $"v{RuntimeData.ShortVersion}");
         _client?.Initialize();
     }
     static string? tnkCnt;
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static string GetArticle(string word) {
+        return "aeiou".Contains(char.ToLower(word[0])) ? "an" : "a";
+    }
     public static void Update() {
         if (!_client!.IsDisposed) {
-            static string getArticle(string word) {
-                if (word.ToLower().StartsWith('a') || word.ToLower().StartsWith('e') || word.ToLower().StartsWith('i') || word.ToLower().StartsWith('o') || word.ToLower().StartsWith('u')) {
-                    return "an";
-                }
-                else {
-                    return "a";
-                }
-            }
-            SetLargeAsset("tanks_physical_logo", $"v{RuntimeData.ShortVersion}");
             if (MainMenuUI.IsActive) {
                 switch (MainMenuUI.MenuState) {
                     case MainMenuUI.UIState.PrimaryMenu:
                     case MainMenuUI.UIState.PlayList:
+                    default:
                         SetDetails("Browsing the main menu");
                         break;
                     case MainMenuUI.UIState.StatsMenu:
@@ -74,7 +73,7 @@ public static class DiscordRichPresence {
                         SetDetails($"Challenging themselves with {count} {(count == 1 ? "difficulty" : "difficulties")}");
                         break;
                     case MainMenuUI.UIState.Cosmetics:
-                        SetDetails("Testing their luck");
+                        SetDetails("Viewing what's to come");
                         break;
                     case MainMenuUI.UIState.Mulitplayer:
                         if (Client.IsConnected()) {
@@ -90,9 +89,6 @@ public static class DiscordRichPresence {
                     case MainMenuUI.UIState.Campaigns:
                         // subtract one because "Freeplay" counts as a campaign, even though it really isn't
                         SetDetails($"Choosing one of their {MainMenuUI.campaignNames.Count - 1} campaigns to play");
-                        break;
-                    default:
-                        SetDetails($"Browsing the main menu");
                         break;
                 }
             }
@@ -112,7 +108,7 @@ public static class DiscordRichPresence {
                 }
 
                 var highestTierTank = AIManager.GetHighestTierActive();
-                SetSmallAsset($"tank_{highestTierTank.ToString().ToLower()}", $"Currently fighting {getArticle(highestTierTank.ToString())} {highestTierTank} Tank");
+                SetSmallAsset($"tank_{highestTierTank.ToString().ToLower()}", $"Currently fighting {GetArticle(highestTierTank.ToString())} {highestTierTank} Tank");
             }
             _client?.SetPresence(_rp);
         }

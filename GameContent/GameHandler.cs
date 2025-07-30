@@ -107,8 +107,10 @@ public class GameHandler {
 
         VanillaAchievements.Repository.UpdateCompletions(TankGame.VanillaAchievementPopupHandler);
 
-        Client.SendLives();
-        Client.SendKillCounts();
+        if (RuntimeData.RunTime % 30 < RuntimeData.DeltaTime) {
+            Client.SendLives();
+            Client.SendKillCounts();
+        }
 
         /* uh, yeah. this is the decay-per-level calculation. people don't want it!
         var floor1 = MathF.Floor(TankGame.GameData.ExpLevel + 1f);
