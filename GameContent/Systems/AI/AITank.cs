@@ -160,7 +160,7 @@ public partial class AITank : Tank {
             }
         }
         else
-            _tankTexture = Assets[$"tank_" + tierName];
+            _tankTexture = Assets[$"tank_" + tierName].Duplicate(TankGame.Instance.GraphicsDevice);
 
         // for debugging custom models
         // Model = GameResources.GetGameResource<Model>("Assets/models/rebirth_tanks/tank_necro");

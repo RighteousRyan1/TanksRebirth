@@ -124,7 +124,7 @@ public class ModTank : ILoadable, IModContent {
             TankMusicSystem.TierExclusionRule_DoesntHaveSong.Add(Type);
         }
 
-        _texture = Mod.ImportAsset<Texture2D>(Texture, true);
+        _texture = Mod.ImportAsset<Texture2D>(Texture);
         Tank.Assets["tank_" + name.ToLower()] = _texture;
     }
 
