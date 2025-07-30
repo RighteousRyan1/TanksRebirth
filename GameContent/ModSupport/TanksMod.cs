@@ -31,16 +31,23 @@ public abstract class TanksMod : ILoadable {
     /// Things like shaders (FX) and models (FBX or OBJ) MUST be compiled before being loaded, unfortunately. Still searching for a better way to handle that stuff.
     /// Textures can be loaded via mulitple formats, including PNG and JPG.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="path"></param>
-    /// <returns></returns>
-    public T ImportAsset<T>(string path) where T : class {
+    /// <typeparam name="T">The kind of content.</typeparam>
+    /// <param name="path">The path to your content, rooted in your mod folder.</param>
+    /// <param name="raw">Whether or not to load this asset as completely clean data.
+    /// <br></br>Useful for times where you want to <c>.Dispose()</c> things like texture data for released memory, but plan to re-use them later.</param>
+    /// <returns>The imported asset.</returns>
+    public T ImportAsset<T>(string path, bool raw = false) where T : class {
         var defaultContentPath = Path.Combine(TankGame.GameDirectory, TankGame.Instance.Content.RootDirectory);
         var modContentPath = Path.Combine(TankGame.SaveDirectory, "Mods", InternalName);
 
         TankGame.Instance.Content.RootDirectory = modContentPath;
 
-        var asset = GameResources.GetGameResource<T>(path);
+        T asset;
+
+        if (raw)
+            asset = GameResources.GetRawGameAsset<T>(path);
+        else
+            asset = GameResources.GetGameResource<T>(path);
 
         TankGame.Instance.Content.RootDirectory = defaultContentPath;
 

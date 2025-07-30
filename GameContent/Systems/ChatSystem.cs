@@ -302,14 +302,14 @@ public sealed record ChatSystem {
         }
         else {
             TankGame.SpriteRenderer.Begin();
-            var scale = new Vector2(0.2f);
+            var scale = new Vector2(0.8f);
             if (Alerts > 0) {
                 TankGame.SpriteRenderer.Draw(ChatAlert, OpenOrigin.ToResolution(), null, Color.White, 0f, Vector2.Zero, scale, default, default);
-                TankGame.SpriteRenderer.DrawString(ChatMessage.Font, Alerts.ToString(), OpenOrigin.ToResolution() + (ChatAlert.Size() * scale) - new Vector2(12, 12).ToResolution(), Color.White, scale * 3f);
-                TankGame.SpriteRenderer.DrawString(ChatMessage.Font, TankGame.GameLanguage.Press + $" [{ToggleChat.Assigned}] " + TankGame.GameLanguage.ToToggleChat, OpenOrigin.ToResolution() + new Vector2(ChatAlert.Size().X * scale.X + 10.ToResolutionX(), 0), Color.White, scale * 3f);
+                TankGame.SpriteRenderer.DrawString(ChatMessage.Font, Alerts.ToString(), OpenOrigin.ToResolution() + (ChatAlert.Size() * scale) - new Vector2(12, 12).ToResolution(), Color.White, scale);
+                TankGame.SpriteRenderer.DrawString(ChatMessage.Font, TankGame.GameLanguage.Press + $" [{ToggleChat.Assigned}] " + TankGame.GameLanguage.ToToggleChat, OpenOrigin.ToResolution() + new Vector2(ChatAlert.Size().X * scale.X + 10.ToResolutionX(), 0), Color.White, scale);
             }
             else
-                TankGame.SpriteRenderer.DrawString(ChatMessage.Font, TankGame.GameLanguage.Press + $" [{ToggleChat.Assigned}] " + TankGame.GameLanguage.ToToggleChat, OpenOrigin.ToResolution(), Color.White, scale * 3f);
+                TankGame.SpriteRenderer.DrawString(ChatMessage.Font, TankGame.GameLanguage.Press + $" [{ToggleChat.Assigned}] " + TankGame.GameLanguage.ToToggleChat, OpenOrigin.ToResolution(), Color.White, scale);
             // TODO: draw an alertbox saying "!1" or something similar.
             TankGame.SpriteRenderer.End();
         }

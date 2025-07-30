@@ -72,19 +72,20 @@ public static class ModLoader {
     public static string LoadType = string.Empty;
     public static bool CheckIfCompilesAreAllowed() {
         if (!RuntimeData.IsWindows) {
-            TankGame.ClientLog.Write("Auto-compilation of mod failed. Specified OS architecture is not Windows.", Internals.LogType.Warn);
+            TankGame.ClientLog.Write("Auto-compilation disallowed. Current OS is not Windows.", Internals.LogType.Warn);
             return false;
         }
-        // painfully local code.
-        var checkPath = "C:\\Program Files\\dotnet\\sdk";
-        Process process = new();
-        process.StartInfo.FileName = "dotnet.exe";
-        process.StartInfo.Arguments = "--list-sdks";
-        process.StartInfo.UseShellExecute = false;
-        process.StartInfo.RedirectStandardOutput = true;
-        process.Start();
+        try {
+            // painfully local code.
+            var checkPath = "C:\\Program Files\\dotnet\\sdk";
+            Process process = new();
+            process.StartInfo.FileName = "dotnet.exe";
+            process.StartInfo.Arguments = "--list-sdks";
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.RedirectStandardOutput = true;
+            process.Start();
 
-        string[] versions = [.. process.StandardOutput
+            string[] versions = [.. process.StandardOutput
             .ReadToEnd()
             .TrimEnd()
             .Replace("[", string.Empty)
@@ -94,17 +95,28 @@ public static class ModLoader {
             .Split("\n")
             .Select(x => x.Trim())];
 
-        var versionsSingular = string.Join(", ", versions);
-        var versionsReal = versions.Select(x => new Version(x)).ToArray();
+            var versionsSingular = string.Join(", ", versions);
+            var versionsReal = versions.Select(x => new Version(x)).ToArray();
 
-        process.WaitForExit();
-        // check if any version starts with a '8' to indicate that it is a .NET 8.0 SDK.
-        if (versionsReal.All(x => x.Major < MIN_NET_VERSION)) {
-            TankGame.ClientLog.Write($"Auto-compilation disallowed. User does not have a .NET {MIN_NET_VERSION}.0 SDK or higher installed.", LogType.Warn);
+            process.WaitForExit();
+            // check if any version starts with a '8' to indicate that it is a .NET 8.0 SDK.
+            if (versionsReal.All(x => x.Major < MIN_NET_VERSION)) {
+                TankGame.ClientLog.Write($"Auto-compilation disallowed. User does not have a .NET {MIN_NET_VERSION}.0 SDK or higher installed.", LogType.Warn);
+                return false;
+            }
+
+            TankGame.ClientLog.Write($"Auto-compile allowed. (.NET {versionsReal[^1]})", LogType.Info);
+            return true;
+        }
+        catch(Exception e) {
+            var trace = new StackTrace(e, true);
+            var frame = trace.GetFrame(0);
+            int line = frame?.GetFileLineNumber() ?? -1;
+
+            TankGame.ClientLog.Write($"Auto-compile eligibility failed. (reason={e.Message}, where={line})", LogType.Info);
+
             return false;
         }
-        TankGame.ClientLog.Write($"Auto-compile allowed. (.NET {versionsReal[^1]})", LogType.Info);
-        return true;
     }
     private static void AttemptCompile(string modName) {
         if (!AreCompilesAllowed) return;

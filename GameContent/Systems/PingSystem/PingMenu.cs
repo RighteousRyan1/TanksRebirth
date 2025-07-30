@@ -1,17 +1,10 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.Internals;
-using TanksRebirth.Internals.Common.Framework;
-using TanksRebirth.Internals.Common.Framework.Audio;
-using TanksRebirth.Internals.Common.Framework.Input;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
 using TanksRebirth.GameContent.UI.MainMenu;
@@ -21,7 +14,7 @@ using TanksRebirth.Internals.Common;
 namespace TanksRebirth.GameContent.Systems.PingSystem;
 
 public static class PingMenu {
-    public static Dictionary<int, Texture2D> PingIdToTexture = new();
+    public static Dictionary<int, Texture2D> PingIdToTexture = [];
 
     // TODO: localize
     public static Dictionary<int, string> PingIdToName = new() {
@@ -40,55 +33,6 @@ public static class PingMenu {
             PingIdToTexture[i] = GameResources.GetGameResource<Texture2D>($"Assets/textures/ui/ping/{specialReplace(PingIdToName[i])}");
         }
     }
-    public static Keybind PingGeneral = new(nameof(PingGeneral), Keys.D1) {
-        OnPress = () => {
-            if (MainMenuUI.IsActive || LevelEditorUI.IsActive || !CampaignGlobals.ShouldMissionsProgress || ChatSystem.ActiveHandle)
-                return;
-            IngamePing.CreateFromTankSender(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition), PingID.Generic, NetPlay.GetMyClientId(), Client.IsConnected());
-        }
-    };
-    public static Keybind PingStay = new(nameof(PingStay), Keys.D2) {
-        OnPress = () => {
-            if (MainMenuUI.IsActive || LevelEditorUI.IsActive || !CampaignGlobals.ShouldMissionsProgress || ChatSystem.ActiveHandle)
-                return;
-            IngamePing.CreateFromTankSender(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition), PingID.StayHere, NetPlay.GetMyClientId(), Client.IsConnected());
-        }
-    };
-    public static Keybind PingWatch = new(nameof(PingWatch), Keys.D3) {
-        OnPress = () => {
-            if (MainMenuUI.IsActive || LevelEditorUI.IsActive || !CampaignGlobals.ShouldMissionsProgress || ChatSystem.ActiveHandle)
-                return;
-            IngamePing.CreateFromTankSender(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition), PingID.WatchHere, NetPlay.GetMyClientId(), Client.IsConnected());
-        }
-    };
-    public static Keybind PingAvoid = new(nameof(PingAvoid), Keys.D4) {
-        OnPress = () => {
-            if (MainMenuUI.IsActive || LevelEditorUI.IsActive || !CampaignGlobals.ShouldMissionsProgress || ChatSystem.ActiveHandle)
-                return;
-            IngamePing.CreateFromTankSender(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition), PingID.AvoidHere, NetPlay.GetMyClientId(), Client.IsConnected());
-        }
-    };
-    public static Keybind PingGo = new(nameof(PingGo), Keys.D5) {
-        OnPress = () => {
-            if (MainMenuUI.IsActive || LevelEditorUI.IsActive || !CampaignGlobals.ShouldMissionsProgress || ChatSystem.ActiveHandle)
-                return;
-            IngamePing.CreateFromTankSender(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition), PingID.GoHere, NetPlay.GetMyClientId(), Client.IsConnected());
-        }
-    };
-    public static Keybind PingFocus = new(nameof(PingFocus), Keys.D6) {
-        OnPress = () => {
-            if (MainMenuUI.IsActive || LevelEditorUI.IsActive || !CampaignGlobals.ShouldMissionsProgress || ChatSystem.ActiveHandle)
-                return;
-            IngamePing.CreateFromTankSender(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition), PingID.FocusHere, NetPlay.GetMyClientId(), Client.IsConnected());
-        }
-    };
-    public static Keybind PingGroup = new(nameof(PingGroup), Keys.D7) {
-        OnPress = () => {
-            if (MainMenuUI.IsActive || LevelEditorUI.IsActive || !CampaignGlobals.ShouldMissionsProgress || ChatSystem.ActiveHandle)
-                return;
-            IngamePing.CreateFromTankSender(MatrixUtils.GetWorldPosition(MouseUtils.MousePosition), PingID.GroupHere, NetPlay.GetMyClientId(), Client.IsConnected());
-        }
-    };
     // for now just a graphic on the top right
 
     static float _uiOpacity;
@@ -108,7 +52,7 @@ public static class PingMenu {
             _pickedPingId = PingIdToName.Count - 1;
 
         float offY = 0f;
-        float scale = 0.15f;
+        float scale = 0.5f;
         var basePos = WindowUtils.WindowRight - new Vector2(60, 300).ToResolution();
         var padding = 10f;
         var rect = new Rectangle() {
@@ -131,7 +75,7 @@ public static class PingMenu {
             var pos = basePos + new Vector2(0, offY);
             DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, $"{i + 1}. {PingIdToName[i]}",
                 pos, PlayerID.PlayerTankColors[NetPlay.GetMyClientId()] * pickOpacity, Color.White * pickOpacity,
-                scale.ToResolution(), 0f, Anchor.TopCenter, 0.75f);
+                scale.ToResolution() * 0.35f, 0f, Anchor.TopCenter, 0.75f);
             TankGame.SpriteRenderer.Draw(PingIdToTexture[i], pos + new Vector2(0, 15), null, Color.White * pickOpacity, 0f,
                 Anchor.TopCenter.GetAnchor(PingIdToTexture[i].Size()), scale.ToResolution(), default, 0f);
 

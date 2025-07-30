@@ -44,6 +44,7 @@ public static partial class MainMenuUI {
     private static void LoadTemplateMission(bool autoSetup = true, bool loadForMenu = true) {
         if (_failedFetch && _cachedMissions.Count == 0) return;
 
+        // something here or after here is causing players' games to crash
         try {
             if (_firstTime) {
                 _firstTime = false;

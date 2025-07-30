@@ -616,7 +616,7 @@ public class TankGame : Game {
         NetPlay.PollEvents();
 
         if (RuntimeData.RunTime % 60 < RuntimeData.DeltaTime)
-            DiscordRichPresence.Update();
+            Task.Run(DiscordRichPresence.Update);
 
         LastGameTime = gameTime;
 

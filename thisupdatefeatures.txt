@@ -9,7 +9,12 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 # Changes
 
 - Made homing shells work much better
+- Made discord rich presence 
 - Changed some achievement names
+- Made names displayed above players smaller
+- Changed the sync rate of player lives/points to reduce bandwidth usage
+- Decreased some asset sizes, reducing VRAM and RAM usage
+- Made the bullet count UI a bit smaller, again
 
 # Changes Important for Modders
 
@@ -18,6 +23,10 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 # Fixes
 
 - Optimized bullet collisions/path calculations by ~7.5%
+- Fixed crashing on game-load for some users without a .NET SDK
+- Fixed brown tank kill count not being displayed in the stats menu
+- Fixed players continuing to advance missions even though the campaign should be over
+- Fixed old keybinds for pings still working
 
 # TODO
 

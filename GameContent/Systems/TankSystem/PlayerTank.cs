@@ -601,12 +601,11 @@ public class PlayerTank : Tank {
         }
 
         // a bit hardcoded but whatever
-        bool needClarification = (CampaignGlobals.ShouldMissionsProgress && !MainMenuUI.IsActive
-            && !CampaignGlobals.InMission && !IntermissionSystem.IsAwaitingNewMission) || MainMenuUI.MenuState == MainMenuUI.UIState.Mulitplayer;
+        bool needClarification = (!MainMenuUI.IsActive && IntermissionHandler.TankFunctionWait > 0) || MainMenuUI.MenuState == MainMenuUI.UIState.Mulitplayer;
 
         if (needClarification) {
             var playerColor = PlayerID.PlayerTankColors[PlayerType];
-            var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 125).ToResolution(); ;
+            var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 50).ToResolution();
 
             bool flip = false;
 
@@ -615,7 +614,7 @@ public class PlayerTank : Tank {
             // flip the graphic so it doesn't appear offscreen if it would normally appear too high
             if (pos.Y <= 150) {
                 flip = true;
-                pos.Y += 225;
+                pos.Y += 75;
                 rotation = MathHelper.Pi;
             }
             var tex1 = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/chevron_border");
@@ -623,12 +622,13 @@ public class PlayerTank : Tank {
 
             // var p = GameHandler.AllPlayerTanks;
             //string pText = "nerd";
+            var scale = 0.3f;
             string pText = Client.IsConnected() ? Server.ConnectedClients[PlayerId].Name : $"P{PlayerId + 1}"; // heeheeheeha
 
-            TankGame.SpriteRenderer.Draw(tex1, pos, null, Color.White, rotation, tex1.Size() / 2, 0.5f.ToResolution(), default, default);
-            TankGame.SpriteRenderer.Draw(tex2, pos, null, playerColor, rotation, tex2.Size() / 2, 0.5f.ToResolution(), default, default);
+            TankGame.SpriteRenderer.Draw(tex1, pos, null, Color.White, rotation, Anchor.BottomCenter.GetAnchor(tex1.Size()), scale.ToResolution(), default, default);
+            TankGame.SpriteRenderer.Draw(tex2, pos, null, playerColor, rotation, Anchor.BottomCenter.GetAnchor(tex2.Size()), scale.ToResolution(), default, default);
 
-            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, pText, new(pos.X, pos.Y + (flip ? 100 : -125).ToResolutionY()), playerColor, Color.White, Vector2.One.ToResolution(), 0f, Anchor.Center, 2f);
+            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, pText, new(pos.X, pos.Y + (flip ? 90 : -110).ToResolutionY()), playerColor, Color.White, new Vector2(scale * 2).ToResolution(), 0f, Anchor.Center, 2f);
         }
 
         if (DebugManager.DebugLevel == 1 || _drawShotPath)
