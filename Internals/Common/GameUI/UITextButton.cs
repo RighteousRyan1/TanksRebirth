@@ -14,7 +14,7 @@ public class UITextButton : UIImage
 
     public SpriteFontBase Font { get; set; }
 
-    public Color Color { get; set; }
+    public new Color Color { get; set; }
 
     public Color HoverColor { get; set; } = Color.CornflowerBlue;
 

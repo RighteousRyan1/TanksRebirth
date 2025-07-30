@@ -40,8 +40,9 @@ public enum Grade {
     FMinus = 14
 }
 public enum CollisionDirection {
-    Up,
+    None,
     Down,
     Left,
+    Up,
     Right
 }

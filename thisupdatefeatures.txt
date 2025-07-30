@@ -1,108 +1,79 @@
-/* Enter message here */
+Hello! This is quite a big "minor" update. This update is jam-packed with cool new things, such as an entirely re-programmed AI tank system and
+new AI tank behaviors, lots of performance enhancements, bug fixes, and more!
 
-##### TODO: multiplayer stats (press tab n stuff to see other player kill counts, also have kills be per-player)
-##### ALSO: make ping tab vertical (maybe)
-##### ALSO: fix campaign not ending until another attempt passes
+Starting from this point on, I will be uploading a debug-enabled binary of the game for modders to use (windows only for now, others will need to compile)
 
-Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed later) speedruns will get their spot on the main menu!
+Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will get their spot on the main menu!
 
-## Additions
+# Additions
 
-- Added an entire room that the entire game scene exists in! There is no longer a black void that consumes the game
-	- There's even a cool grandfather clock that matches your system's clock time!
-- Added "Tactical Planes" mode where old "Marble Mod Buff" was
-- Added some handy-dandy FPS graphs at the user's disposal, if needed
-- Added scores for every player in the game
-- Added 'Total terrain' info to the Level Info bar within the level editor
-- Added the long-awaited cursor trail!
-- Added a button to the campaigns menu instead of the user having to press Enter to download the latest version
-- Added the ability for the game to obtain hardware information on any OS (MacOS, Linux) instead of only Windows
-- Added the bonus life animation after over 3.5 years!
-- Added a spectate feature to POV mode
-- Added the ability to change your campaign's starting lives
+- You can now switch individually between Windowed, Fullscreen, and Borderless Fullscreen in the graphics settings
+- Added an "Auto-Orient Tanks" option to the level editor so tanks can be oriented identically to how they were in the original game
+- Added coordinates display above the mouse in the level editor
+- Added network metrics (ping, packet loss, packets sent/received) to the top of a multiplayer session
+- Added more particle effects in various areas of the game
 
-## Changes
+# Changes
 
-- All tank types above "obsidian" are now gone.
-	- This is because they were poorly designed, and will benefit more being replaced by the tanks to come in the future!
-- The experience bar now has a little more flair and visual appeal
-- "Master Mod Buff" changed to "Master Mode"
-- Changed the game's main font (for english only)
-- Players can no longer *visually* peek through corners of map geometry
-- Blocks are now slightly bigger
-- Main menu animation is now much different
-- MOTD is now just plastered on the top of the screen
-- Adjusted the look of the mission title bar / background
-- UI tooltips no longer go off-screen
-- Revamped the multiplayer UI
-- Player scoreboards have been changed in color and look
-- "東方 Mode" changed to "Bullet Hell"
-- Window title has been changed to "Tanks! Rebirth"
-- LARGELY improved the mission intermission look, which looks about 99.9% accurate now (validate the campaign version in the campaigns menu!!!)
-- The chat now appears over the intermission screen
-- The intermission screen background no longer scrolls when paused/stopped
-- You now have to middle click instead of right click to delete a campaign, which makes mistakes much less likely
-- Somewhat modified the campaigns menu look, so buttons don't overflow
-- Also somewhat modified the difficulties menu to look nicer and have respects to resolution
-- Having a controller plugged in no longer prevents keyboard usage for gameplay
-- Packet send-out time decreased from 15ms to 10ms for more responsive netcode
-- XP gained from destroying tanks is now billboarded towards players in POV mode
-- Campaigns can now support up to 2,147,483,647 missions! I don't recommend spending that much time creating them though...
+- AI Tanks are now completely overhauled! They now behave much different from how they did before
+	- They almost never kill themselves
+	- Almost never shoot themselves
+	- Act 10x more similar to the original game
+	- Should, overall, make them less of a nuisance to destroy
+	- Should also improve their movements a ton
+- The ping menu is now located on the right of the screen, and is vertically aligned
+	- Pinging is now much simpler, using your scroll wheel to determine which one to use
+	- Now, you press middle click to use the highlighted ping selection
+- Slightly changed the position and look of the bullet count display
+- Lantern mode has now been touched up, and now shows the lanterns of each player, and looks visually different
+	- Also allows the player to see very slightly in the darkness if they squint
+- Reworked Co-op spawn positions on most Vanilla campaign levels
+- Yellow tank music is now prioritized over the pink tank's
+- Reworked a few missions, and buffed the final mission slightly
+- Slightly changed the look of the "vanish" animation of invisible tanks
+- Slightly adjusted the orthographic camera
+- Bullets how have much more generous hitboxes (same-ish as the original, now)
+- Reverted third-person smoke particles to normal
+- The main menu logo no longer follows your mouse off-screen
+- Slightly changed the appearance of the path created to the mouse
 
-## Changes Important for Modders
+# Changes Important for Modders
 
-- `GameProperties` -> `CampaignGlobals`
-- `TanksRebirth.GameContent.Properties` -> `TanksRebirth.GameContent.Globals`
-- Almost every asset is now stored in a more general folder
-    - General-purpose models are now under `models`
-    - All music is now in `music` or a subfolder under `music`
-- `RotatedByRadians` -> `Rotate`
-- `TankID.Random` has been purged, for good reasons
-- Lots of camera-related things from `TankGame` are now located in `CameraGlobals`
-	- This includes `GameView` and `GameProjection`, important matrices to include with custom 3D rendering involving gameplay
-- `GamepadBind` and `Keybind` now are `IInputBind<T>`s, which means you can use use them modularly within your code
-- When changing tank models, be sure to set `UsesCustomModel` to `true`
-- Assets (only models, for now) are managed via `Resource<Model>`s within `ModelResources`.
-- Particles now rotate on the proper Yaw-Pitch-Roll axes, conversion:
-	- Old Yaw -> Roll
-	- Old Pitch -> Yaw
-	- Old Roll -> Pitch
-- `TankGame.PostDraw` -> `TankGame.PostDrawEverything`
-- Numerous rendering-related things are now stored in `RenderGlobals`
-- Many things from `TankGame` (such as frame time, delta time, etc) have been moved to `RuntimeData`
-- `TankGame.TextFont`/`TextFontLarge` -> `FontGlobals.RebirthFont`/`RebirthFontLarge`
-- `GameHandler.GameRand` -> `Client.ClientRandom`
-- AI tank properties and parameters can now be fetched separately inside of AIManager
-- `Armor` -> `TankArmor`
-- `TankProperties.VulnerableToMines` -> `TankProperties.InvulnerableToMines`
-- The modding API has moved away from singletons and now has different modded data per ModTank, ModShell, and ModBlock, so code does not execute on every entity of a given type at once
-- Virtual methods no longer have a parameter for what they are modding, and now have a property (i.e: `ModTank.AITank`, `ModBlock.Block`, `ModShell.Shell`)
-- `MainMenu` -> `MainMenuUI`
-- `GameSceneRenderer` -> `GameScene`
-- `TankGame.GameData` -> `TankGame.SaveFile`
-- `ParticleSystem` -> `ParticleManager`
+- Completely overhauled the AI Parameters.
+	- Be sure to read the documentation of them by hovering on them in your IDE
+- Pink tanks, internally, are now listed before Yellow tanks
+	- Update any campaigns!
+- The center of the game scene is now (0, 0) instead of being slightly biased to the top
+- You can now compile mods on versions higher than .NET 8.0
+- `TankRotation` -> `ChassisRotation`
+- `TargetXRotation` -> `DesiredXRotation`
+- `Tank.Dead` -> `Tank.IsDestroyed`
+- `Tank.IsIngame` has been removed
+- All `DrawUtils` methods now use `String` instead of `Text`
+- `DrawUtils.DrawBorderedStringWithShadow` -> `DrawUtils.DrawStringWithShadowAndBorder`
 
-## Fixes
+# Fixes
 
-- Pause UI now appears over everything
-- Citrine Tank Music now is prioritized over Ruby
-- Optimized various mathematical operations around the code
-- Optimized branching and code execution all around the game, so the game should run ~10% better
-- Level editor now properly displays the correct mission name on the info bar
-- Fixed crash involving deleting the first mission of a campaign
-- Enabling "Lantern Mode" no longer makes the main menu blur go away
-- Resolution is only changed upon leaving the settings menu if you are *not* in full screen, fixing the black screen bug
-- Fixed the mission intermission screen having "overlap" while fading in and out
-- Fixed game not properly retrieving hardware information
-- Fixed the "Hit!" graphic not being the correct color on all clients in multiplayer
-- The results screen now shows the cumulative effort of all players in mutliplayer
-- Fixed mouse hitching in POV mode when rotating your turret
-- Multiplayer now no longer suffers from "ghost bullets"
-- Fixed mines wanting to explode when placed near dead tanks
+- Fixed needing a "Starting Lives" value to save a specific mission
+- Changed some inconsistencies between the original missions and Rebirth's
+- Fixed some particles not being oriented properly
+- Pings no longer track dead tanks
+- Campaign tooltips now display proper extra-lives count
+- (Potentially) fixed linux systems not being able to exit campaigns after success or failure
+- Fixed visual stuttering on AI controlled tanks when their rotation changes when facing down
+- Fixed a bug where exiting the level editor and playing a campaign denied the player any score
+- Fixed the difficulty algorithm not updating when switching levels in the level editor
+- Optimizations to the particle system (~400% faster, but still has issues)
+- Fixed some elements of the intermission animation being improperly scaled with resolution
 
-## TODO
+# TODO
 
-- [ ] New AI tank aggression system (depending on the tank type, will either make advances towards you or will avoid you)
+- [ ] Multithreaded tank AI
+- [ ] Campaign fail/success display
+- [ ] Tank tread hyper-optimization (and visual re-haul)
+- [ ] Wiimote support
+- [ ] Real-time multiplayer stats
+- [ ] Fix campaigns not ending immediately on all clients
 
 PLEASE, if you find anything wrong, go to my [discord](https://discord.gg/KhfzvbrrKx) server and report bugs in the #bugs 
 channel, or, if you want to suggest something, suggest them in the #suggestions channel.

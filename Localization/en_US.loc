@@ -26,8 +26,8 @@
   "PerPxLightDesc": "Whether or not to draw lighting on each individual pixel",
   "VSync": "Vertical Sync",
   "VSyncDesc": "Whether or not to synchronize the game with your monitor's refresh rate",
-  "BorderlessWindow": "Full Screen",
-  "BorderlessWindowDesc": "Whether or not to run the game window borderless in full screen",
+  "WindowKind": "Window Kind",
+  "WindowKindDesc": "What kind of window to run the game in",
   "Resolution": "Resolution",
   "ResolutionDesc": "Changes the resolution of the game",
   "PressAKey": "Press a key",
@@ -57,7 +57,6 @@
   "TimePlayedCurrent": "Current Play Session",
   "TimePlayedTotal": "Time Played Total",
   "TankKillsPerType": "Tanks Killed by Type",
-  "BinDisclaimer": "If you are exporting Tanks bin maps,\nplaytesting can mix up tank IDs.\nPlaytest at your own risk.",
   "TestLevel": "Test Level",
   "Perspective": "Perspective",
   "PerspectiveFlavor": "View your mission at the perspective of the player",
@@ -136,5 +135,7 @@
   "MissionsComplete": "Missions Complete",
   "EnemyTanks": "Enemy Tanks",
   "Campaign": "Campaign",
-  "BonusTank": "Bonus Tank!"
+  "BonusTank": "Bonus Tank!",
+  "AutoOrientTanks": "Auto-Orient Tanks",
+  "AutoOrientTanksFlavor": "Automatically orients tanks based on the closest boundary."
 }

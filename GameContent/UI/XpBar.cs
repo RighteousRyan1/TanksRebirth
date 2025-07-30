@@ -75,7 +75,7 @@ public class XpBar {
     public void Render(SpriteBatch sb) {
         var text = $"Level: {Level} | {MathF.Floor(Value * 100)}%";
         // draw empty xp
-        DrawUtils.DrawTextWithBorder(sb, FontGlobals.RebirthFont, text, Position - (Vector2.UnitY * 20).ToResolution(), Color.White, Color.Black, new Vector2(0.6f).ToResolution(),
+        DrawUtils.DrawStringWithBorder(sb, FontGlobals.RebirthFont, text, Position - (Vector2.UnitY * 20).ToResolution(), Color.White, Color.Black, new Vector2(0.6f).ToResolution(),
             0f, Alignment, borderThickness: 0.5f);
 
         sb.Draw(TextureGlobals.Pixels[Color.White], Position, null, EmptyColor, 0f, GameUtils.GetAnchor(Alignment, TextureGlobals.Pixels[Color.White].Size()), Scale.ToResolution(), default, 0f);

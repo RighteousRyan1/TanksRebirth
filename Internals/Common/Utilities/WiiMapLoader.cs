@@ -2,12 +2,15 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.IsolatedStorage;
 using System.Linq;
 using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
+using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.GameContent.UI.LevelEditor;
+using TanksRebirth.Graphics;
 
 namespace TanksRebirth.Internals.Common.Utilities;
 // todo: implement
@@ -36,8 +39,8 @@ public readonly struct WiiMap
     public readonly int Width;
     public readonly int Height;
 
-    public readonly int QValue;
-    public readonly int PValue;
+    public readonly int P1BalloonDirection;
+    public readonly int P2BalloonDirection;
     public readonly List<WiiMapTileData> MapItems; // Point (xy pos), Kvp<int, int> (type, stack)
     public WiiMap(string file) {
         RawData = File.ReadAllBytes(file);
@@ -50,8 +53,9 @@ public readonly struct WiiMap
         if (RawData.Length != 0x10 + ((Height * Width) << 2))
             throw new Exception("The file header is invalid.");
 
-        PValue = RawData[0xB];
-        QValue = RawData[0xF];
+        P2BalloonDirection = RawData[0xB];
+        P1BalloonDirection = RawData[0xF];
+
         MapItems = [];
         for (var i = 0; i < Width * Height; i++) {
             var blockTypeOrig = RawData[i * 0x4 + 0x13];
@@ -197,42 +201,21 @@ public readonly struct WiiMap
 
         // This tile is basically a tank.
 
-        var tnkRot = 0f;
-
-        const int HALF_MAP_WIDTH = BlockMapPosition.MAP_WIDTH_169 / 2;
-        const int HALF_MAP_HEIGHT = BlockMapPosition.MAP_HEIGHT / 2;
-
-
-        // The tank will face rightward.
-        if (tile.RelativePosition.X <= tile.RelativePosition.Y && tile.RelativePosition.X < HALF_MAP_WIDTH)
-            tnkRot = -MathHelper.PiOver2 * 3;
-        // The tank will face downward.
-        else if (tile.RelativePosition.X >= tile.RelativePosition.Y && tile.RelativePosition.Y < HALF_MAP_HEIGHT)
-            tnkRot = 0;
-
-        // The tank will face leftward.
-        if ((tile.RelativePosition.X - HALF_MAP_WIDTH) <= tile.RelativePosition.Y &&
-            tile.RelativePosition.X > HALF_MAP_WIDTH)
-            tnkRot = -MathHelper.PiOver2;
-
-        // The tank will face upward.
-        else if (tile.RelativePosition.X > (tile.RelativePosition.Y - HALF_MAP_HEIGHT) &&
-                 tile.RelativePosition.Y > HALF_MAP_HEIGHT)
-            tnkRot = -MathHelper.Pi;
+        var tnkRot = GetAutoTankRotation(tile.RelativePosition);
 
         switch (mapTile.Stack) {
             case PLAYER_TANK_ID: { // Player Tank, That's us!
                 var pl = DebugManager.SpawnMe(mapTile.Type, TeamID.Red, tile.Position);
-                pl.TankRotation = tnkRot;
-                pl.TargetTankRotation = tnkRot;
+                pl.ChassisRotation = tnkRot;
+                pl.DesiredChassisRotation = tnkRot;
                 pl.TurretRotation = tnkRot;
                 tile.TankId = pl.WorldId;
                 break;
             }
             case ENEMY_TANK_ID: { // Enemy Tank.
                 var ai = DebugManager.SpawnTankAt(tile.Position, AITank.PickRandomTier(), TeamID.Blue);
-                ai.TankRotation = tnkRot;
-                ai.TargetTankRotation = tnkRot;
+                ai.ChassisRotation = tnkRot;
+                ai.DesiredChassisRotation = tnkRot;
                 ai.TurretRotation = tnkRot;
                 tile.TankId = ai.WorldId;
                 ai.ReassignId(mapTile.Type);
@@ -256,9 +239,29 @@ public readonly struct WiiMap
         };
 
         // unfortunately we cannot do much more than this, since enemy spawns are handled in the parameter file.
-        // ...but we can find where they would spawn. go ahead and put a brown tank on the blue team there.
+        // ...but we can find where they would spawn. go ahead and put a random tank on the red team there.
+    }
+    public static float GetAutoTankRotation(Vector2 p) {
+        const float ROWS_PER_COL = (float)BlockMapPosition.MAP_HEIGHT / BlockMapPosition.MAP_WIDTH_169;
+
+        // adjust to the center of the map.
+
+        bool top_left = ROWS_PER_COL * p.X < p.Y;
+        bool top_right = -ROWS_PER_COL * p.X < p.Y;
+
+        if (top_left && top_right) {
+            return MathHelper.Pi;
+        }
+        else if (top_left && !top_right) {
+            return MathHelper.PiOver2;
+        }
+        else if (!top_left && top_right) {
+            return -MathHelper.PiOver2;
+        }
+        return 0;
     }
 }
+
 [Flags]
 public enum WiiMapValidationResult {
     Success, 

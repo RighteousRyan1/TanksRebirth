@@ -32,6 +32,7 @@ namespace TanksRebirth.GameContent.UI.LevelEditor;
  * 2) LevelEditorTankElement - One for each enemy tank. Will support mods
  * 3) LevelEditorTerrainElement - One for each obstacle. Will support mods
  * 4) Make these elements not textures, but rather rendered as their appropriate models with text underneath, for modularity
+ * 5) When in the level editor, the GC gains ~10MB per second. Find out why. (Collections are often)
  */
 public static partial class LevelEditorUI {
     public enum UICategory {
@@ -39,12 +40,12 @@ public static partial class LevelEditorUI {
         SavingThings,
     }
     public static readonly byte[] LevelFileHeader = [84, 65, 78, 75]; // T, A, N, K
-    public const int EDITOR_VERSION = 4;
+    public const int EDITOR_VERSION = 5;
 
     public const int MAX_MISSION_CHARS = 30;
     public static bool IsTestingLevel { get; private set; }
 
-    public static bool Active { get; private set; }
+    public static bool IsActive { get; private set; }
     public static OggMusic Theme = new("Level Editor Theme", "Content/Assets/music/mainmenu/editor.ogg", 0.7f);
 
     public static Category CurCategory { get; private set; }
@@ -53,7 +54,7 @@ public static partial class LevelEditorUI {
     public static int SelectedPlayerType { get; private set; }
     public static int SelectedBlockType { get; private set; }
     public static int BlockHeight { get; private set; }
-    public static bool Editing { get; internal set; }
+    public static bool IsEditing { get; internal set; }
     public static bool HoveringAnyTank;
 
     internal static Mission cachedMission;
@@ -94,7 +95,8 @@ public static partial class LevelEditorUI {
         _oldelta = InputUtils.DeltaScrollWheel;
     }
 
-    internal static Mission missionToRate = new([], []);
+    internal static float difficultyRating;
+    // internal static float difficultyRating;
 
     static bool _sdbui;
 
@@ -175,6 +177,7 @@ public static partial class LevelEditorUI {
         PlayerTanksCategory.IsVisible = visible;
         Properties.IsVisible = visible;
         LoadLevel.IsVisible = visible;
+        AutoOrientTanks.IsVisible = visible;
     }
     public static void Initialize() {
         if (_initialized) {
@@ -270,7 +273,7 @@ public static partial class LevelEditorUI {
         AddMissionBtn.IsVisible =
             RemoveMissionBtn.IsVisible =
             MoveMissionUp.IsVisible =
-            MoveMissionDown.IsVisible = Active;
+            MoveMissionDown.IsVisible = IsActive;
 
         TestLevel = new(TankGame.GameLanguage.TestLevel, FontGlobals.RebirthFont, Color.White);
         TestLevel.SetDimensions(() => new(WindowUtils.WindowWidth * 0.01f, WindowUtils.WindowHeight * 0.725f), () => new Vector2(200, 50).ToResolution());
@@ -281,8 +284,9 @@ public static partial class LevelEditorUI {
 
             IsTestingLevel = true;
 
-            var name = loadedCampaign?.CachedMissions[loadedCampaign.CurrentMissionId].Name;
-            cachedMission = Mission.GetCurrent(name);
+            var name = loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId].Name;
+            var grantsLife = loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId].GrantsExtraLife;
+            cachedMission = Mission.GetCurrent(name, grantsLife);
         };
 
         ReturnToEditor = new(TankGame.GameLanguage.Return, FontGlobals.RebirthFont, Color.White);
@@ -318,6 +322,39 @@ public static partial class LevelEditorUI {
         PlayerTanksCategory = new(TankGame.GameLanguage.Players, FontGlobals.RebirthFont, Color.White);
         PlayerTanksCategory.SetDimensions(() => new(WindowUtils.WindowWidth * 0.875f, WindowUtils.WindowHeight * 0.65f), () => new Vector2(200, 50).ToResolution());
         PlayerTanksCategory.OnLeftClick = (l) => { CurCategory = Category.PlayerTanks; };
+
+        AutoOrientTanks = new(TankGame.GameLanguage.AutoOrientTanks, FontGlobals.RebirthFont, Color.White);
+        AutoOrientTanks.SetDimensions(() => new Vector2(WindowUtils.WindowWidth * 0.875f, WindowUtils.WindowHeight * 0.575f), 
+            () => new Vector2(200, 50).ToResolution());
+        AutoOrientTanks.Tooltip = TankGame.GameLanguage.AutoOrientTanksFlavor;
+        AutoOrientTanks.TextScale = () => new Vector2(0.8f);
+        AutoOrientTanks.OnLeftClick = (e) => {
+            PlacementSquare.Placements.ForEach(p => {
+
+                var tnkRot = WiiMap.GetAutoTankRotation(p.Position.FlattenZ());
+
+                var flashColor = tnkRot switch {
+                    // down
+                    0 => Color.Blue,
+                    // up
+                    MathHelper.Pi => Color.Red,
+                    // left
+                    -MathHelper.PiOver2 => Color.Yellow,
+                    // right
+                    _ => Color.Green
+                };
+                p.FlashAsColor(flashColor);
+                if (p.TankId > -1) {
+                    var tank = GameHandler.AllTanks[p.TankId];
+                    tank.ChassisRotation = tnkRot;
+
+                    // :( negatives why
+                    tank.DesiredChassisRotation = -tnkRot;
+                    tank.TurretRotation = tnkRot;
+                }
+
+            });
+        };
 
         Properties = new(TankGame.GameLanguage.Properties, FontGlobals.RebirthFont, Color.White);
 
@@ -368,7 +405,6 @@ public static partial class LevelEditorUI {
                     ChatSystem.SendMessage(e.Message, Color.Red);
                 }
             }
-            return;
         };
         // TODO: non-windows support. i am lazy. fuck this. also localize bozo
         LoadLevel.Tooltip = "Will open a file dialog for\nyou to choose what mission/campaign to load.";
@@ -386,13 +422,13 @@ public static partial class LevelEditorUI {
         }
         else {
             Theme.Play();
-            Active = true;
+            IsActive = true;
             SetLevelEditorVisibility(true);
         }
-        Editing = true;
+        IsEditing = true;
     }
     public static void OpenForce() {
-        Active = true;
+        IsActive = true;
         CameraGlobals.OverheadView = true;
         Theme.Play();
         SetLevelEditorVisibility(true);
@@ -405,8 +441,9 @@ public static partial class LevelEditorUI {
         _loadTask = null;
     }
     public static void Close(bool toMainMenu) {
-        Active = false;
+        IsActive = false;
         IsTestingLevel = false;
+
         RemoveMissionButtons();
 
         Theme.SetVolume(0);
@@ -416,6 +453,7 @@ public static partial class LevelEditorUI {
         // SetMissionsVisibility(false);
         if (toMainMenu) {
             //ClosePeripherals();
+            IsEditing = false;
             RemoveEditButtons();
             loadedCampaign = new();
             loadedCampaign.CachedMissions[0] = new([], []) {
@@ -443,21 +481,26 @@ public static partial class LevelEditorUI {
 
         // called twice since Update() isn't called when paused, rip
         AddMissionBtn.IsVisible =
+            AutoOrientTanks.IsVisible = 
             RemoveMissionBtn.IsVisible =
             MoveMissionUp.IsVisible =
-            MoveMissionDown.IsVisible = Active && !GameUI.Paused;
+            MoveMissionDown.IsVisible = IsActive && !GameUI.Paused;
 
         ShouldDrawBarUI = !GameUI.Paused;
         SwapMenu.Text = _viewMissionDetails ? "Campaign Details" : "Mission Details";
+
+        if (PlacementSquare.CurrentlyHovered != null) {
+            var mapCoords = PlacementSquare.CurrentlyHovered.RelativePosition;
+
+            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, mapCoords.ToString(),
+                MouseUtils.MousePosition - Vector2.UnitY * 30, Color.White, Color.Black, Vector2.One * 0.5f, 0f,
+            Anchor.BottomCenter, 0.5f);
+        }
 
         var measure = FontGlobals.RebirthFont.MeasureString(AlertText);
 
         DrawAlerts();
         if (!ShouldDrawBarUI) return;
-        var info = TankGame.GameLanguage.BinDisclaimer;
-        DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer,
-            FontGlobals.RebirthFont, info, new Vector2(WindowUtils.WindowWidth - 175.ToResolutionX(), WindowUtils.WindowHeight / 2 - 40.ToResolutionY()), 
-            Color.White, Color.Black, new Vector2(0.6f).ToResolution(), 0f, Anchor.TopCenter);
 
         #region Main UI
 
@@ -651,7 +694,7 @@ public static partial class LevelEditorUI {
         if (!_initialized)
             return;
 
-        if (loadedCampaign is not null)
+        if (loadedCampaign is not null && !IsTestingLevel)
             cachedMission = loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId];
 
         if (_openCountndown >= 0) {
@@ -664,11 +707,11 @@ public static partial class LevelEditorUI {
         HoveringAnyTank = false;
         // TODO: why is this here and not LevelEditor
         // ... or literally anywhere else
-        if (!MainMenuUI.Active && (CameraGlobals.OverheadView || Active)) {
+        if (!MainMenuUI.IsActive && (CameraGlobals.OverheadView || IsActive)) {
             foreach (var tnk in GameHandler.AllTanks) {
                 if (tnk == null) continue;
 
-                if (tnk.Dead)
+                if (tnk.IsDestroyed)
                     continue;
 
                 if (RayUtils.GetMouseToWorldRay().Intersects(tnk.Worldbox).HasValue) {
@@ -677,8 +720,8 @@ public static partial class LevelEditorUI {
                         tnk.Destroy(new TankHurtContextOther(null, TankHurtContextOther.HurtContext.FromOther, "Smitten by zeus!"), false); // hmmm
 
                     if (InputUtils.CanDetectClick(rightClick: true)) {
-                        tnk!.TankRotation = (tnk.TankRotation - MathHelper.PiOver2).WrapTauAngle() - MathHelper.Pi;
-                        tnk!.TargetTankRotation = (tnk.TargetTankRotation - MathHelper.PiOver2).WrapTauAngle() - MathHelper.Pi;
+                        tnk!.ChassisRotation = (tnk.ChassisRotation - MathHelper.PiOver2).WrapTauAngle() - MathHelper.Pi;
+                        tnk!.DesiredChassisRotation = (tnk.DesiredChassisRotation - MathHelper.PiOver2).WrapTauAngle() - MathHelper.Pi;
                         tnk!.TurretRotation = (tnk.TurretRotation + MathHelper.PiOver2).WrapTauAngle() - MathHelper.Pi;
 
                         // why tf was this here???
@@ -692,13 +735,10 @@ public static partial class LevelEditorUI {
             }
         }
 
-        if (missionToRate == MainMenuUI.curMenuMission)
-            ReturnToEditor.OnLeftClick?.Invoke(null!);
-
         AddMissionBtn.IsVisible =
             RemoveMissionBtn.IsVisible =
             MoveMissionUp.IsVisible =
-            MoveMissionDown.IsVisible = Active && !GameUI.Paused;
+            MoveMissionDown.IsVisible = IsActive && !GameUI.Paused;
 
         if (_missionButtonScissor.Contains(MouseUtils.MousePosition))
             _missionsOffset += InputUtils.GetScrollWheelChange() * 30;
@@ -737,7 +777,7 @@ public static partial class LevelEditorUI {
                 PlayerTanksCategory.Color = Color.DeepSkyBlue;
                 break;
         }
-        if (Active) {
+        if (IsActive) {
             if (TankGame.Instance.IsActive)
                 UpdateParticles();
 
@@ -810,11 +850,11 @@ public static partial class LevelEditorUI {
             }
             ClickEventsPerItem.Clear();
         }
-        else if (Editing && !Active && cachedMission != default && CampaignGlobals.InMission)
-            if (IntermissionHandler.NothingCanHappenAnymore(cachedMission, out bool victory))
+        else if (IsEditing && !IsActive && cachedMission != default && CampaignGlobals.InMission)
+            if (IntermissionHandler.NothingCanHappenAnymore(cachedMission, out _))
                 QueueEditorReEntry(120f);
         // if (ReturnToEditor != null)
-        ReturnToEditor.IsVisible = Editing && !Active && !MainMenuUI.Active;
+        ReturnToEditor.IsVisible = IsEditing && !IsActive && !MainMenuUI.IsActive;
     }
 
     private static float _waitTime;

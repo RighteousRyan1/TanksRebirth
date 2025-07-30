@@ -162,12 +162,12 @@ public static class GeometryUtils
 /// <summary>
 /// Useful for conversion of <see cref="Quaternion"/>s to basic Yaw/Pitch/Roll angles.
 /// </summary>
-public struct EulerAngles
+public struct EulerAngles(float yaw, float pitch, float roll)
 {
     /// <summary>The Z rotation</summary>
-    public float Yaw;
+    public float Yaw = yaw;
     /// <summary>The Y rotation</summary>
-    public float Pitch;
+    public float Pitch = pitch;
     /// <summary>The X rotation</summary>
-    public float Roll;
+    public float Roll = roll;
 }

@@ -1,7 +1,9 @@
 ﻿using System;
 using Microsoft.Xna.Framework;
 using TanksRebirth.GameContent.Systems;
+using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.Systems.Coordinates;
+using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.Internals.Common.Framework;
 
 namespace TanksRebirth.GameContent;
@@ -33,11 +35,11 @@ public struct TankTemplate {
             throw new Exception($"{nameof(IsPlayer)} is true. This method cannot execute.");
 
         var ai = new AITank(AiTier);
-        ai.Body.Position = Position / Tank.UNITS_PER_METER;
+        ai.Physics.Position = Position / Tank.UNITS_PER_METER;
         ai.Position = Position;
-        ai.TankRotation = Rotation;
-        ai.TargetTankRotation = Rotation;
-        ai.Dead = false;
+        ai.ChassisRotation = Rotation;
+        ai.DesiredChassisRotation = Rotation;
+        ai.IsDestroyed = false;
         ai.TurretRotation = Rotation;
         ai.Team = Team;
 
@@ -63,11 +65,11 @@ public struct TankTemplate {
             player = new PlayerTank(PlayerType, false, Difficulties.DisguiseValue);
         else
             player = new PlayerTank(PlayerType);
-        player.Body.Position = Position / Tank.UNITS_PER_METER;
+        player.Physics.Position = Position / Tank.UNITS_PER_METER;
         player.Position = Position;
-        player.TankRotation = Rotation;
+        player.ChassisRotation = Rotation;
         player.TurretRotation = Rotation;
-        player.Dead = false;
+        player.IsDestroyed = false;
         player.Team = Team;
 
         var placement = PlacementSquare.Placements.FindIndex(place => place.Position == player.Position3D);

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TanksRebirth.Internals.Common.Framework.Collections;
+﻿using TanksRebirth.Internals.Common.Framework.Collections;
 
 namespace TanksRebirth.GameContent.ID;
 
@@ -15,6 +10,14 @@ public sealed class ShellID
     public const int TrailedRocket = 3;
     public const int Supressed = 4;
     public const int Explosive = 5;
+
+    /* IDEAS:
+     * Clustering shell: explodes into multiple smaller shells (after X amount of time or distance?)
+     * Grenade...? self explanatory
+     * Torpedo: digs underground and approaches enemies from below, pops up and explodes
+     * Blazing shell: leaves a trail of fire behind it which damages enemies
+     * 
+     */
 
     public static ReflectionDictionary<ShellID> Collection { get; internal set; } = new(MemberType.Fields);
 }

@@ -80,7 +80,7 @@ public static partial class LevelEditorUI {
         SaveLevelConfirm.OnLeftClick = (l) => {
             // Mission.Save(LevelName.GetRealText(), )
             var isValidStartingLives = int.TryParse(CampaignStartingLives.GetRealText(), out int startingLives);
-            if (!isValidStartingLives) {
+            if (!isValidStartingLives && !_viewMissionDetails) {
                 SoundPlayer.SoundError();
                 ChatSystem.SendMessage("Invalid 'Starting Lives' count!", Color.Red);
                 return;
@@ -95,6 +95,7 @@ public static partial class LevelEditorUI {
 
                     var misName = loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId].Name;
                     loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId] = Mission.GetCurrent(misName, loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId].GrantsExtraLife);
+                    cachedMission = loadedCampaign.CachedMissions[loadedCampaign.CurrentMissionId];
                     if (_viewMissionDetails) {
                         var ext = Path.GetExtension(res.Path);
                         if (ext == ".mission" || ext == string.Empty)

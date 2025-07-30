@@ -6,6 +6,7 @@ using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Systems;
+using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals.Common.Framework.Audio;
@@ -15,6 +16,8 @@ using TanksRebirth.Internals.Common.Utilities;
 namespace TanksRebirth.GameContent.UI.LevelEditor;
 
 #pragma warning disable
+
+// TODO: introduce localization to reduce garbage collection
 public static partial class LevelEditorUI {
     public static UITextButton TestLevel;
     public static UITextButton Perspective;
@@ -25,6 +28,8 @@ public static partial class LevelEditorUI {
 
     public static UITextButton Properties;
     public static UITextButton LoadLevel;
+
+    public static UITextButton AutoOrientTanks;
 
     public static UITextButton ReturnToEditor;
 
@@ -153,7 +158,7 @@ public static partial class LevelEditorUI {
         TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, $"{TankGame.GameLanguage.EnemyTankTotal}: {AIManager.CountAll()}", new Vector2(10, 40).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
         // localize later.
         TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, $"Total Terrain: {Block.AllBlocks.Count(x => x is not null)}", new Vector2(10, 60).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
-        TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, $"{TankGame.GameLanguage.DifficultyRating}: {DifficultyAlgorithm.GetDifficulty(missionToRate):0.00}", new Vector2(10, 80).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
+        TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, $"{TankGame.GameLanguage.DifficultyRating}: {difficultyRating:0.00}", new Vector2(10, 80).ToResolution(), Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
     }
     public static void DrawAlerts() {
         if (_alertTime > 0) {
@@ -167,7 +172,7 @@ public static partial class LevelEditorUI {
                 new Vector2(scale).ToResolution(),
                 default,
                 default);
-            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, AlertText, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight * 0.625f), Color.Red, Color.White, new Vector2(0.4f).ToResolution(), 0f, Anchor.Center);
+            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, AlertText, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight * 0.625f), Color.Red, Color.White, new Vector2(0.4f).ToResolution(), 0f, Anchor.Center);
             _alertTime -= RuntimeData.DeltaTime;
         }
     }

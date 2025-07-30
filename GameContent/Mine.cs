@@ -1,26 +1,25 @@
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Globals.Assets;
+using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.AI;
+using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
-using TanksRebirth.Internals.Common.Framework;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent;
 
-public sealed class Mine : IAITankDanger
-{
+public sealed class Mine : IAITankDanger {
+
     public delegate void ExplodeDelegate(Mine mine);
     public static event ExplodeDelegate? OnExplode;
     public delegate void PostUpdateDelegate(Mine mine);
@@ -34,40 +33,44 @@ public sealed class Mine : IAITankDanger
 
     public Tank? Owner;
 
+    Vector2 _oldPosition;
     public Vector2 Position { get; set; }
-    private Vector2 _oldPosition;
 
     public Matrix View;
     public Matrix Projection;
     public Matrix World;
 
+    public Color InactiveColor = new(219, 228, 64);
+    public Color ActiveColor = new(231, 62, 99);
+
     public Vector3 Position3D => Position.ExpandZ();
 
     public Model Model;
 
-    private static Texture2D? _mineTexture;
-    private static Texture2D? _envTexture;
+    static Texture2D? _mineTexture;
+    static Texture2D? _envTexture;
 
     public int Id { get; private set; }
+    public int Team => Owner?.Team ?? TeamID.NoTeam;
 
-    private ModelMesh? _mineMesh;
-    private ModelMesh? _envMesh;
+    readonly ModelMesh? _mineMesh;
+    readonly ModelMesh? _envMesh;
 
     public OggAudio? TickingNoise;
 
     public Rectangle Hitbox;
 
-    private float _oldDetonateTime;
+    float _oldDetonateTime;
     /// <summary>The time left (in ticks) until detonation.</summary>
     public float DetonateTime;
     /// <summary>The time until detonation (in ticks) from when this <see cref="Mine"/> was/is created.</summary>
     public readonly float DetonateTimeMax;
 
-    private bool _tickRed;
-    public bool IsPlayerSourced { get; set; }
+    bool _tickRed;
     /// <summary>Whether or not this <see cref="Mine"/> is near destructible <see cref="Block"/>s.</summary>
     public bool IsNearDestructibles { get; private set; }
 
+    public float MineScale = 1f;
     /// <summary>The radius of this <see cref="Mine"/>'s explosion.</summary>
     public float ExplosionRadius;
     public float ExplosionRadiusInUnits => ExplosionRadius * 65f;
@@ -95,7 +98,6 @@ public sealed class Mine : IAITankDanger
         ExplosionRadius = radius;
 
         AITank.Dangers.Add(this);
-        IsPlayerSourced = owner is PlayerTank;
 
         Model = ModelGlobals.Mine.Asset;
 
@@ -150,10 +152,10 @@ public sealed class Mine : IAITankDanger
     }
 
     internal void Update() {
-        if (!GameScene.ShouldRenderAll || (!CampaignGlobals.InMission && !MainMenuUI.Active))
+        if (!GameScene.ShouldRenderAll || (!CampaignGlobals.InMission && !MainMenuUI.IsActive))
             return;
 
-        World = Matrix.CreateScale(0.7f) * Matrix.CreateTranslation(Position3D);
+        World = Matrix.CreateScale(MineScale * 0.6f) * Matrix.CreateTranslation(Position3D);
 
         Hitbox = new((int)Position.X - 10, (int)Position.Y - 10, 20, 20);
 
@@ -161,7 +163,7 @@ public sealed class Mine : IAITankDanger
             DetonateTime -= RuntimeData.DeltaTime;
 
             if (DetonateTime < TICKS_OF_FLASHING) {
-                if (DetonateTime % 2 <= RuntimeData.DeltaTime) {
+                if (DetonateTime % 3.5f <= RuntimeData.DeltaTime) {
                     _tickRed = !_tickRed;
                 }
                 if (_oldDetonateTime > TICKS_OF_FLASHING && Owner is not null && Owner is PlayerTank) {
@@ -192,7 +194,8 @@ public sealed class Mine : IAITankDanger
             if (DetonateTime > MineReactTime) {
                 foreach (var tank in GameHandler.AllTanks) {
                     if (tank is null) continue;
-                    if (tank.Dead) continue;
+                    if (tank.IsDestroyed) continue;
+                    if (Owner is null) continue;
                     if (tank.WorldId == Owner!.WorldId) continue;
 
                     var dist = GameUtils.Distance_WiiTanksUnits(tank.Position, Position);
@@ -216,6 +219,47 @@ public sealed class Mine : IAITankDanger
         View = CameraGlobals.GameView;
         Projection = CameraGlobals.GameProjection;
         DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"DetonationTime: {DetonateTime}/{DetonateTimeMax}\nNearDestructibles: {IsNearDestructibles}\nId: {Id}", MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 20), 1, centered: true);
+
+        // this is horrendous but it looks better
+        TankGame.Instance.GraphicsDevice.BlendState = BlendState.Additive;
+        foreach (ModelMesh mesh in Model.Meshes) {
+            foreach (BasicEffect effect in mesh.Effects) {
+                effect.World = World;
+                effect.View = View;
+                effect.Projection = Projection;
+
+                effect.TextureEnabled = true;
+
+                if (mesh == _mineMesh) {
+                    effect.EmissiveColor = (_tickRed ?
+                        ActiveColor.ToVector3() : InactiveColor.ToVector3())
+                        * SceneManager.GameLight.Brightness;
+                    effect.DiffuseColor *= 0.5f;
+                    effect.Texture = _mineTexture;
+                    effect.Alpha = 1f;
+
+                    mesh.Draw();
+                }
+                effect.SetDefaultGameLighting_IngameEntities();
+            }
+        }
+        TankGame.Instance.GraphicsDevice.BlendState = BlendState.AlphaBlend;
+        foreach (ModelMesh mesh in Model.Meshes) {
+            foreach (BasicEffect effect in mesh.Effects) {
+                effect.World = World;
+                effect.View = View;
+                effect.Projection = Projection;
+
+                effect.TextureEnabled = true;
+
+                if (mesh == _envMesh) {
+                    effect.Texture = _envTexture;
+                    effect.Alpha = 0.6f;
+                    mesh.Draw();
+                }
+                effect.SetDefaultGameLighting_IngameEntities();
+            }
+        }
         for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
             foreach (ModelMesh mesh in Model.Meshes) {
                 foreach (BasicEffect effect in mesh.Effects) {
@@ -223,30 +267,31 @@ public sealed class Mine : IAITankDanger
                     effect.View = View;
                     effect.Projection = Projection;
 
-                    effect.TextureEnabled = true;
+                    effect.TextureEnabled = false;
 
+                    ActiveColor = new Color(231, 62, 99);
+                    InactiveColor = new Color(219, 228, 64);
                     if (mesh == _mineMesh) {
-                        if (!_tickRed) {
-                            effect.EmissiveColor = new Vector3(1, 1, 0) * SceneManager.GameLight.Brightness;
-                        }
-                        else {
-                            effect.EmissiveColor = new Vector3(1, 0, 0) * SceneManager.GameLight.Brightness;
-                        }
-                        effect.Texture = _mineTexture;
+                        effect.EmissiveColor = (_tickRed ? 
+                            ActiveColor.ToVector3() : InactiveColor.ToVector3())
+                            * SceneManager.GameLight.Brightness;
+                        effect.DiffuseColor *= 0.5f;
+                        //effect.Texture = _mineTexture;
+                        effect.Alpha = 1f;
 
                         mesh.Draw();
                     }
                     else {
                         if (!Lighting.AccurateShadows) {
-                            effect.Texture = _envTexture;
-                            mesh.Draw();
+                            //effect.Texture = _envTexture;
+                            effect.Alpha = 0.6f;
+                            //mesh.Draw();
                         }
                     }
                     effect.SetDefaultGameLighting_IngameEntities();
                 }
             }
         }
-
         OnPostRender?.Invoke(this);
     }
 }

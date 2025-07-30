@@ -1,5 +1,4 @@
 using TanksRebirth;
-using TanksRebirth.GameContent;
 using System;
 using System.Linq;
 using TanksRebirth.Internals.Core.Interfaces;
@@ -15,6 +14,7 @@ using Microsoft.Xna.Framework.Graphics;
 using TanksRebirth.Internals;
 using TanksRebirth.Graphics;
 using TanksRebirth.GameContent.UI.MainMenu;
+using TanksRebirth.GameContent.Systems.AI;
 
 namespace TanksRebirth.GameContent.Systems;
 
@@ -112,7 +112,7 @@ public static class TankMusicSystem
         foreach (var song in Audio.ToList())
             song.Value?.SetVolume(0f);
 
-        if (MainMenuUI.Active && AIManager.CountAll() == 0 || TierHighest == TankID.None) {
+        if (MainMenuUI.IsActive && AIManager.CountAll() == 0 || TierHighest == TankID.None) {
             return;
         }
 

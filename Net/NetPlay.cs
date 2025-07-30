@@ -1,6 +1,7 @@
 ﻿using LiteNetLib;
 using LiteNetLib.Utils;
 using Microsoft.Xna.Framework;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -24,6 +25,13 @@ public class NetPlay {
     public static int Port;
     public static Client CurrentClient;
     public static Server CurrentServer;
+
+    // real client id to game client id
+    /// <summary>Takes in the client's real client ID (<see cref="NetPeer.Id"/>) and returns its in-game mapped ID (<see cref="Client.Id"/>).</summary>
+    public static Dictionary<int, int> PeerMap { get; set; } = [];
+
+    /// <summary>Takes in the client's mapped client ID (<see cref="Client.Id"/>) and returns its real ID (<see cref="NetPeer.Id"/>).</summary>
+    public static Dictionary<int, int> ReversePeerMap { get; set; } = [];
     /// <summary>Whether or not to log packets going out or coming in.</summary>
 
     public static bool DoPacketLogging = false;
@@ -63,17 +71,23 @@ public class NetPlay {
     public static void MapServerNetworking() {
         Server.NetListener.NetworkReceiveEvent += OnPacketRecieve_Server;
     }
-    public static void UnmapServerNetworking() {
+    public static void TryUnmapServerNetworking() {
+        if (Server.NetManager is null) return;
+
+        Server.SendHostDisconnect();
+        Server.NetManager.Stop();
+
         Server.NetListener.NetworkReceiveEvent -= OnPacketRecieve_Server;
     }
 
     private static void OnPacketRecieve_Client(NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod) {
         var packet = reader.GetInt();
-        if (DebugManager.DebuggingEnabled) {
-            if (deliveryMethod != DeliveryMethod.Unreliable) {
-                // GameHandler.ClientLog.Write($"Packet Recieved: {packet} from peer {peer.Id}.", Internals.LogType.Debug);
-
-                ChatSystem.SendMessage($"[DEBUG]: Recieved packet {PacketID.Collection.GetKey(packet)} from peer {peer.Id}", Color.Blue);
+        if (GameLauncher.IsConsoleAllocated) {
+            if (DebugManager.DebuggingEnabled) {
+                if (deliveryMethod != DeliveryMethod.Unreliable) {
+                    // GameHandler.ClientLog.Write($"Packet Recieved: {packet} from peer {peer.Id}.", Internals.LogType.Debug);
+                    Console.WriteLine($"[DEBUG]: Recieved packet {PacketID.Collection.GetKey(packet)} from peer {peer.Id}", Color.Blue);
+                }
             }
         }
         OnReceiveClientPacket?.Invoke(packet, peer, reader, deliveryMethod);
@@ -84,6 +98,12 @@ public class NetPlay {
                 byte returnedID = reader.GetByte();
 
                 CurrentClient.Id = returnedID;
+
+                PeerMap[Client.NetClient.Id] = returnedID;
+                ReversePeerMap[returnedID] = Client.NetClient.Id;
+
+                ChatSystem.SendMessage($"Connected as peer {Client.NetClient.Id} -> {returnedID}");
+
                 Client.RequestLobbyInfo();
                 break;
             case PacketID.LobbyInfo:
@@ -107,7 +127,6 @@ public class NetPlay {
                 }
 
                 Server.CurrentClientCount = reader.GetInt();
-
                 Client.LobbyDataReceived = true;
 
                 SoundPlayer.PlaySoundInstance("Assets/sounds/menu/client_join.ogg", SoundContext.Effect, 0.75f);
@@ -116,32 +135,17 @@ public class NetPlay {
 
                 MainMenuUI.ShouldServerButtonsBeVisible = false;
                 break;
-            case PacketID.Disconnect:
-                var cId = reader.GetInt();
-                var clName = reader.GetString();
-                var reason = reader.GetString();
-
-                ChatSystem.SendMessage($"{clName} left the game ({reason}).", Color.Red, "Server", true);
-
-                Server.ConnectedClients[cId] = null;
-                Server.CurrentClientCount--;
-
-                // shift from the client id index in the array to the end of the array.
-                // i.e: [ "Name1", "Name2", "Name3", "Name4" ]
-                // client "Name3" now leaves...
-                // i.e: [ "Name1", "Name2", null, "Name4" ]
-                // fill in that gap
-                // i.e: [ "Name1", "Name2", "Name4", null ]
-                Server.ConnectedClients = ArrayUtils.Shift(Server.ConnectedClients, -1, cId, 0);
-
-                SoundPlayer.PlaySoundInstance("Assets/sounds/menu/client_join.ogg", SoundContext.Effect, 0.75f);
+            case PacketID.HostDisconnect:
+                // forcibly disconnects the user
+                ChatSystem.SendMessage("The host has disconnected. Disconnecting...", Color.Red);
+                Client.Disconnect();
                 break;
             #endregion
             #region One-Off
             case PacketID.SyncSeeds:
                 var millis = reader.GetInt();
                 Server.RandSeed = millis;
-                ChatSystem.SendMessage("Seed synced: " + millis, Color.Lime);
+                // ChatSystem.SendMessage("Seed synced: " + millis, Color.Lime);
                 break;
             case PacketID.SendCommandUsage:
                 var cmd = reader.GetString();
@@ -241,9 +245,9 @@ public class NetPlay {
                 float turRot = reader.GetFloat();
 
                 var tank = new PlayerTank(type);
-                tank.Body.Position = new(x, y);
-                tank.Dead = false;
-                tank.TankRotation = tnkRot;
+                tank.Physics.Position = new(x, y);
+                tank.IsDestroyed = false;
+                tank.ChassisRotation = tnkRot;
                 tank.TurretRotation = turRot;
                 tank.Team = team;
 
@@ -266,10 +270,7 @@ public class NetPlay {
                 GameHandler.AllTanks[hurtTankId]?.Damage(context, false, colorOverride);
                 break;
             case PacketID.ShellDestroy:
-                var ownerId = reader.GetInt();
-                var senderShellId = reader.GetInt();
                 var otherShellUID = reader.GetByte();
-                var senderShellCount = reader.GetInt();
                 var cxt = reader.GetByte();
 
                 // FIXME: crashes if recieving on a dead player. weird.
@@ -315,9 +316,21 @@ public class NetPlay {
                 var shellUID = reader.GetByte();
 
                 // GameHandler.AllTanks[shellOwner].Shoot(true);
-                var shell = new Shell(shellPos, shellVel, shellType, GameHandler.AllTanks[shellOwner], ricochets: shellRicochets);
-                shell.SetUID(shellUID);
-                GameHandler.AllTanks[shellOwner]?.DoShootParticles();
+                //var shell = new Shell(shellPos, shellVel, shellType, GameHandler.AllTanks[shellOwner], ricochets: shellRicochets);
+                //shell.SetUID(shellUID);
+                // GameHandler.AllTanks[shellOwner]?.DoShootParticles();
+                var shooter = GameHandler.AllTanks[shellOwner];
+
+                if (shooter is null) break;
+
+                shooter.Shoot(false, false);
+                if (shooter.LastShotShell is not null) {
+                    shooter!.LastShotShell!.Type = shellType;
+                    shooter.LastShotShell.Position = shellPos;
+                    shooter.LastShotShell.Velocity = shellVel;
+                    shooter.LastShotShell.Ricochets = shooter.LastShotShell.RicochetsRemaining = shellRicochets;
+                    shooter.LastShotShell.SetUID(shellUID);
+                }
 
                 // ChatSystem.SendMessage($"Pos: {shell.Position} | Vel: {shell.Velocity}", Color.White);
                 break;
@@ -388,8 +401,8 @@ public class NetPlay {
                 if (GameHandler.AllPlayerTanks[id] is null)
                     break;
 
-                GameHandler.AllPlayerTanks[id].Body.Position = new(x2, y2);
-                GameHandler.AllPlayerTanks[id].TankRotation = tankRotation;
+                GameHandler.AllPlayerTanks[id].Physics.Position = new(x2, y2);
+                GameHandler.AllPlayerTanks[id].ChassisRotation = tankRotation;
                 GameHandler.AllPlayerTanks[id].TurretRotation = turretRotation;
                 GameHandler.AllPlayerTanks[id].Velocity = new(vX, vY);
                 break;
@@ -402,11 +415,20 @@ public class NetPlay {
                 float vX1 = reader.GetFloat();
                 float vY1 = reader.GetFloat();
 
+                bool hasTarget = reader.GetBool();
+                bool seesTarget = reader.GetBool();
+
                 if (GameHandler.AllAITanks[id1] is null)
                     break;
 
-                GameHandler.AllAITanks[id1].Body.Position = new(x3, y3);
-                GameHandler.AllAITanks[id1].TankRotation = tankRotation1;
+                if (hasTarget) {
+                    var targetWorldId = reader.GetInt();
+                    GameHandler.AllAITanks[id1].TargetTank = GameHandler.AllTanks[targetWorldId];
+                    GameHandler.AllAITanks[id1].SeesTarget = seesTarget;
+                }
+
+                GameHandler.AllAITanks[id1].Physics.Position = new(x3, y3);
+                GameHandler.AllAITanks[id1].ChassisRotation = tankRotation1;
                 GameHandler.AllAITanks[id1].TurretRotation = turretRotation1;
                 GameHandler.AllAITanks[id1].Velocity = new(vX1, vY1);
                 break;
@@ -434,9 +456,7 @@ public class NetPlay {
                 #endregion
         }
 
-        //peer.Send(message, DeliveryMethod.ReliableOrdered);
 
-        //GameHandler.ClientLog.Write(string.Join(",", reader.RawData), Internals.LogType.Debug);
         reader.Recycle();
     }
 
@@ -465,13 +485,11 @@ public class NetPlay {
                 message.Put(Server.CurrentClientCount);
                 Server.CurrentClientCount++;
 
-                //Server.serverNetManager.SendToAll(message, DeliveryMethod.ReliableOrdered);
                 peer.Send(message, deliveryMethod);
-
                 Server.SyncSeeds();
                 break;
             case PacketID.LobbyInfo:
-                message.Put(Server.MaxClients);     //This dang ushort was throwing the entire packet off
+                message.Put(Server.MaxClients);
 
                 message.Put(CurrentServer.Name);
 
@@ -487,19 +505,12 @@ public class NetPlay {
 
                 message.Put(Server.CurrentClientCount);
 
-                Server.NetManager.SendToAll(message, deliveryMethod, peer);     //This sends to everyone but the one who sent
-                peer.Send(message, deliveryMethod);     //This sends it back to the guy who sent
+                Server.NetManager.SendToAll(message, deliveryMethod, peer);
+                peer.Send(message, deliveryMethod);
 
                 break;
-            case PacketID.Disconnect:
-                var clientId = reader.GetInt();
-                var clientName = reader.GetString();
-                var reason = reader.GetString();
-
-                message.Put(clientId);
-                message.Put(clientName);
-                message.Put(reason);
-
+            case PacketID.HostDisconnect:
+                // tells all other peers that the host disconnected
                 Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;
             #endregion
@@ -563,16 +574,10 @@ public class NetPlay {
                 Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;
             case PacketID.ShellDestroy:
-                var ownerId = reader.GetInt();
-                var senderShellId = reader.GetInt();
                 var senderShellUID = reader.GetByte();
-                var senderShellCount = reader.GetInt();
                 var cxt = reader.GetByte();
 
-                message.Put(ownerId);
-                message.Put(senderShellId);
                 message.Put(senderShellUID);
-                message.Put(senderShellCount);
                 message.Put(cxt);
 
                 Server.NetManager.SendToAll(message, deliveryMethod, peer);
@@ -735,6 +740,9 @@ public class NetPlay {
                 float vX1 = reader.GetFloat();
                 float vY1 = reader.GetFloat();
 
+                bool hasTarget = reader.GetBool();
+                bool seesTarget = reader.GetBool();
+
                 message.Put(id1);
                 message.Put(x3);
                 message.Put(y3);
@@ -742,6 +750,13 @@ public class NetPlay {
                 message.Put(turretRotation1);
                 message.Put(vX1);
                 message.Put(vY1);
+                message.Put(hasTarget);
+                message.Put(seesTarget);
+
+                if (hasTarget) {
+                    int targetWorldId = reader.GetInt();
+                    message.Put(targetWorldId);
+                }
 
                 Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;

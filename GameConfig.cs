@@ -5,6 +5,11 @@ using TanksRebirth.Localization;
 
 namespace TanksRebirth;
 
+public enum WindowKind {
+    Windowed,
+    Fullscreen,
+    FullscreenBorderless
+}
 public class GameConfig
 {
     public float MusicVolume { get; set; } = 0.5f;
@@ -12,10 +17,10 @@ public class GameConfig
     public float AmbientVolume { get; set; } = 1f;
 
     #region Graphics Settings
-    public int TankFootprintLimit { get; set; } = 100000;
+    public int TankFootprintLimit { get; set; } = 10000;
     public bool PerPixelLighting { get; set; } = true;
     public bool Vsync { get; set; } = true;
-    public bool FullScreen { get; set; } = false;
+    public WindowKind WindowKind { get; set; } = WindowKind.Windowed;
     public bool MSAA { get; set; } = false;
     public bool FadeFootprints { get; set; } = false;
 

@@ -75,7 +75,7 @@ public struct CosmeticChest
 
             cos.RelativePosition = new Vector3(sinx, 20 + siny / 5, 0f);
 
-            if (tnk.IsIngame && !tnk.Properties.Invisible) {
+            if (!tnk.Properties.Invisible) {
                 // float y = 20f;
                 if (RuntimeData.UpdateCount % 10 == 0) {
                     GameHandler.Particles.MakeShineSpot(tnk.Position3D +
@@ -95,6 +95,24 @@ public struct CosmeticChest
         Rotation = new(-MathHelper.PiOver2, MathHelper.Pi, 0),
         Scale = new(100f)
     };
+    public static Prop3D WitchHat = new("Witch Hat", ModelGlobals.WitchHat.Asset, 
+        GameResources.GetGameResource<Texture2D>("Assets/models/rebirth_tanks/tank_necro_extras"), new(0, 15f, 0), PropLockOptions.None) {
+        Rotation = new(-MathHelper.PiOver2, MathHelper.Pi, 0),
+        Scale = new(100f),
+        UniqueBehavior = (hat, tnk) => {
+            var sinx = MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalMilliseconds / 250) * 0.1f;
+            var siny = MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalMilliseconds / 150) * 0.1f;
+
+            hat.Rotation = new Vector3(sinx - MathHelper.PiOver2, 0, siny);
+            hat.RelativePosition = new Vector3(0, 15f + sinx * 10, 0);
+
+            /*var matrix = Matrix.CreateFromYawPitchRoll(hat.Rotation.Z, hat.Rotation.Y, hat.Rotation.X)
+                * Matrix.CreateTranslation(tnk.Position3D.X + 1.958f, tnk.Position3D.Y, tnk.Position3D.Z);
+            var newPos = Vector3.Transform(hat.RelativePosition, matrix);
+
+            GameHandler.Particles.MakeShineSpot(newPos, Color.Red, 0.5f);*/
+        }
+    };
     public static CosmeticChest Basic = new(new List<IProp>()
     {
         Anger,
@@ -104,6 +122,7 @@ public struct CosmeticChest
         AngelHalo,
         ArmyHat,
         SantaHat,
+        WitchHat
     });
 
     public static CosmeticChest Template = new(new List<IProp>()

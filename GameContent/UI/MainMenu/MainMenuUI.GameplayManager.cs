@@ -11,31 +11,23 @@ namespace TanksRebirth.GameContent.UI.MainMenu;
 
 #pragma warning disable
 public static partial class MainMenuUI {
-    private static bool _firstTime = true;
-    // time after nothing can happen untiul next mission is loaded
-    private static float _newMisCd;
-    // default time for above field
-    private static float _timeToWait = 180;
+    static bool _firstTime = true;
     public static void UpdateGameplay() {
         if (!IntermissionSystem.IsAwaitingNewMission || IntermissionSystem.BlackAlpha <= 0f) {
             if (curMenuMission.Blocks != null) {
-                var missionComplete = IntermissionHandler.NothingCanHappenAnymore(curMenuMission, out bool victory);
+                // do not count player tanks into the check
+                var missionComplete = IntermissionHandler.NothingCanHappenAnymore(curMenuMission, out _, (t) => t is not PlayerTank);
 
-                if (missionComplete) {
-                    // TODO: finish.
-                    _newMisCd += RuntimeData.DeltaTime;
-                    if (_newMisCd > _timeToWait)
-                        LoadTemplateMission();
-                }
-                else
-                    _newMisCd = 0;
+                if (missionComplete)
+                    LoadTemplateMission();
+            }
+            else {
+                LoadTemplateMission();
             }
         }
     }
     public static void OpenGP() {
-        SceneManager.CleanupEntities();
-        SceneManager.ClearTankTracks();
-        SceneManager.ClearTankDeathmarks();
+        SceneManager.CleanupScene();
         PlayerTank.TankKills.Clear();
 
         LoadTemplateMission();
@@ -48,29 +40,32 @@ public static partial class MainMenuUI {
         SceneManager.CleanupScene();
         Theme.Stop();
     }
+    static bool _failedFetch;
     private static void LoadTemplateMission(bool autoSetup = true, bool loadForMenu = true) {
+        if (_failedFetch && _cachedMissions.Count == 0) return;
+
         try {
             if (_firstTime) {
+                _firstTime = false;
                 var attempt = 1;
 
             tryAgain:
                 var linkTry = $"https://github.com/RighteousRyan1/tanks_rebirth_motds/blob/master/menu_missions/Menu{attempt}.mission?raw=true";
-                var exists = WebUtils.RemoteFileExists(linkTry);
+                var bytes = WebUtils.DownloadWebFile(linkTry, out var name1, out var status);
 
-                if (exists) {
-                    var bytes1 = WebUtils.DownloadWebFile(linkTry, out var name1);
-
-                    using var reader1 = new BinaryReader(new MemoryStream(bytes1));
+                if (status == System.Net.HttpStatusCode.OK) {
+                    using var reader1 = new BinaryReader(new MemoryStream(bytes));
 
                     _cachedMissions.Add(Mission.Read(reader1));
                     attempt++;
                     goto tryAgain;
                 }
-
-                _firstTime = false;
+                else {
+                    TankGame.ClientLog.Write($"Unable to fetch map data via the internet (at map={attempt}). Status: {status}", LogType.Warn);
+                    _failedFetch = true;
+                    return;
+                }
             }
-
-            SceneManager.CleanupScene();
 
             var rand = Client.ClientRandom.Next(1, _cachedMissions.Count);
 

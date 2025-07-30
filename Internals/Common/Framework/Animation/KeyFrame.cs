@@ -5,25 +5,16 @@ using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.Internals.Common.Framework.Animation;
 
-/// <summary>Used in the construction of an <see cref="Animator"/>.
-public readonly struct KeyFrame {
-    public EasingFunction Easing { get; }
-    public Vector2 Position2D { get; }
-    public Vector3 Position3D { get; }
-    public TimeSpan Duration { get; }
-    public Vector2 Scale { get; }
-    public float[] Floats { get; }
-    public List<Vector2> BezierPoints { get; }
-    public KeyFrame(Vector2 position2d = default, Vector3 position3d = default, Vector2 scale = default, float[] floats = null, TimeSpan duration = default, EasingFunction easing = EasingFunction.Linear) {
-        Easing = easing;
-        Position2D = position2d;
-        Position3D = position3d;
-        Duration = duration;
-        Scale = scale;
-        Floats = floats;
-        BezierPoints = [];
-    }
-    /// <summary>BezierPoints automatically prepends <see cref="Position2D"/> and appends the next <see cref="KeyFrame"/>'s <see cref="Position2D"/> when implemented into an <see cref="Animator"/>.</summary>
+/// <summary>Used in the construction of an <see cref="Animator"/>.</summary>
+public readonly struct KeyFrame(Vector2 position2d = default, Vector3 position3d = default, Vector2 scale = default, float[] floats = null, TimeSpan duration = default, EasingFunction easing = EasingFunction.Linear) {
+    public EasingFunction Easing { get; } = easing;
+    public Vector2 Position2D { get; } = position2d;
+    public Vector3 Position3D { get; } = position3d;
+    public TimeSpan Duration { get; } = duration;
+    public Vector2 Scale { get; } = scale;
+    public float[] Floats { get; } = floats;
+    public List<Vector2> BezierPoints { get; } = [];
+    // /// <summary>BezierPoints automatically prepends <see cref="Position2D"/> and appends the next <see cref="KeyFrame"/>'s <see cref="Position2D"/> when implemented into an <see cref="Animator"/>.</summary>
     /*public KeyFrame(Vector2 position, List<Vector2> bezierPoints, Vector2 scale, float[] floats, TimeSpan duration = default, EasingFunction easing = EasingFunction.Linear) {
         Easing = easing;
         Duration = duration;

@@ -9,6 +9,7 @@ using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
+using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Utilities;
@@ -85,7 +86,10 @@ public class Block : IGameObject
     /// <summary>All <see cref="Block"/>s stored in the same array.</summary>
     public static Block[] AllBlocks = new Block[BlockMapPosition.MAP_WIDTH_169 * BlockMapPosition.MAP_HEIGHT * 5];
 
-    public Vector2 Position;
+    public Vector2 Position {
+        get => Physics.Position * Tank.UNITS_PER_METER;
+        set => Physics.Position = value / Tank.UNITS_PER_METER;
+    }
     public Vector3 Position3D => Position.ExpandZ();
 
     public Model Model;
@@ -96,7 +100,7 @@ public class Block : IGameObject
     /// <summary>Represents how tall (in arbitrary units) the top of this block is from the ground.</summary>
     public float HeightFromGround { get; private set; }
     /// <summary>The physics body for this <see cref="Block"/>.</summary>
-    public Body Body;
+    public Body Physics;
     /// <summary>The hitbox for this <see cref="Block"/>.</summary>
     public Rectangle Hitbox;
 
@@ -187,7 +191,7 @@ public class Block : IGameObject
             _shadow.Pitch = MathHelper.PiOver2;
             _shadow.Scale = new(1f);
             _shadow.Alpha = 1f;
-            _shadow.HasAddativeBlending = false;
+            _shadow.HasAdditiveBlending = false;
             _shadow.UniqueBehavior = (a) => {
                 // TODO: save for when i make shadows look... proper.
                 //p.TextureCrop = new(0, 0, 32, 32);
@@ -215,8 +219,8 @@ public class Block : IGameObject
         };
 
         if (Properties.IsCollidable) {
-            Body = Tank.CollisionsWorld.CreateRectangle(SIDE_LENGTH / Tank.UNITS_PER_METER, SIDE_LENGTH / Tank.UNITS_PER_METER, 1f, position / Tank.UNITS_PER_METER, 0f, BodyType.Static);
-            Position = Body.Position * Tank.UNITS_PER_METER;
+            Physics = Tank.CollisionsWorld.CreateRectangle(SIDE_LENGTH / Tank.UNITS_PER_METER, SIDE_LENGTH / Tank.UNITS_PER_METER, 1f, position / Tank.UNITS_PER_METER, 0f, BodyType.Static);
+            Physics.Tag = this;
         }
         else
             Position = position;
@@ -245,8 +249,8 @@ public class Block : IGameObject
     public void Remove() {
         _shadow?.Destroy();
 
-        if (Body != null && Tank.CollisionsWorld.BodyList.Contains(Body))
-            Tank.CollisionsWorld.Remove(Body);
+        if (Physics != null && Tank.CollisionsWorld.BodyList.Contains(Physics))
+            Tank.CollisionsWorld.Remove(Physics);
         AllBlocks[Id] = null;
     }
 
@@ -263,7 +267,7 @@ public class Block : IGameObject
                 var part = GameHandler.Particles.MakeParticle(Position3D, tex);
                 // var part = ParticleSystem.MakeParticle(Position3D, "wtf");
 
-                part.HasAddativeBlending = false;
+                part.HasAdditiveBlending = false;
 
                 var vel = new Vector3(Client.ClientRandom.NextFloat(-3, 3), Client.ClientRandom.NextFloat(4, 6), Client.ClientRandom.NextFloat(-3, 3));
 
@@ -288,37 +292,36 @@ public class Block : IGameObject
         Remove();
     }
 
-    private void UpdateOffset() {
-        if (Properties.CanStack) {
-            var newFullSize = FULL_SIZE;
-            switch (Stack) {
-                case 1:
-                    _offset = new(0, newFullSize - SIDE_LENGTH, 0);
-                    break;
-                case 2:
-                    _offset = new(0, newFullSize - (SIDE_LENGTH + SLAB_SIZE), 0);
-                    break;
-                case 3:
-                    _offset = new(0, newFullSize - (SIDE_LENGTH + SLAB_SIZE * 3), 0);
-                    break;
-                case 4:
-                    _offset = new(0, newFullSize - (SIDE_LENGTH * 2 + SLAB_SIZE), 0);
-                    break;
-                case 5:
-                    _offset = new(0, newFullSize - (SIDE_LENGTH * 2 + SLAB_SIZE * 2), 0);
-                    break;
-                case 6:
-                    _offset = new(0, newFullSize - (SIDE_LENGTH * 2 + SLAB_SIZE * 4), 0);
-                    break;
-                case 7:
-                    _offset = new(0, newFullSize - (SIDE_LENGTH * 3 + SLAB_SIZE * 2), 0);
-                    break;
-            }
-        }
-        else
+    void UpdateOffset() {
+        _offset *= _scaling / BLOCK_DEF_SCALING;
+        if (!Properties.CanStack) {
             _offset.Y -= 0.1f;
-        // divide by 0.62f since that was the initial scale and it's what everything has been accounted for. might change in the future.
-        _offset *= (_scaling / 0.62f);
+            return;
+        }
+
+        switch (Stack) {
+            case 1:
+                _offset = new(0, FULL_SIZE - SIDE_LENGTH, 0);
+                break;
+            case 2:
+                _offset = new(0, FULL_SIZE - (SIDE_LENGTH + SLAB_SIZE), 0);
+                break;
+            case 3:
+                _offset = new(0, FULL_SIZE - (SIDE_LENGTH + SLAB_SIZE * 3), 0);
+                break;
+            case 4:
+                _offset = new(0, FULL_SIZE - (SIDE_LENGTH * 2 + SLAB_SIZE), 0);
+                break;
+            case 5:
+                _offset = new(0, FULL_SIZE - (SIDE_LENGTH * 2 + SLAB_SIZE * 2), 0);
+                break;
+            case 6:
+                _offset = new(0, FULL_SIZE - (SIDE_LENGTH * 2 + SLAB_SIZE * 4), 0);
+                break;
+            case 7:
+                _offset = new(0, FULL_SIZE - (SIDE_LENGTH * 3 + SLAB_SIZE * 2), 0);
+                break;
+        }
     }
 
     void IGameObject.OnDestroy() {
@@ -337,30 +340,29 @@ public class Block : IGameObject
         // TODO: seeing this, don't make this poor CPU have overhead (use derived types!)
         if (Type != BlockID.Teleporter) {
             World = Matrix.CreateScale(_scaling) * Matrix.CreateTranslation(Position3D - _offset);
+
             Projection = CameraGlobals.GameProjection;
             View = CameraGlobals.GameView;
 
-            for (int i = 0; i < /*(Lighting.AccurateShadows ? 2 : 1)*/ 1; i++) { // shadows later if i can fix it {
-                foreach (var mesh in Model.Meshes) {
-                    foreach (BasicEffect effect in mesh.Effects) {
-                        effect.View = View;
-                        effect.World = i == 0 ? World : World * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0) * Matrix.CreateScale(1, 1, Stack / 7f);
-                        effect.Projection = Projection;
+            foreach (var mesh in Model.Meshes) {
+                foreach (BasicEffect effect in mesh.Effects) {
+                    effect.View = View;
+                    effect.World = World;
+                    effect.Projection = Projection;
 
-                        effect.TextureEnabled = true;
-                        if (mesh.Name != "snow")
-                            effect.Texture = _texture;
-                        else
-                            effect.Texture = GameScene.Assets["snow"];
+                    effect.TextureEnabled = true;
+                    if (mesh.Name != "snow")
+                        effect.Texture = _texture;
+                    else
+                        effect.Texture = GameScene.Assets["snow"];
 
-                        effect.SetDefaultGameLighting_IngameEntities(10f);
+                    effect.SetDefaultGameLighting_IngameEntities(10f);
 
-                        effect.DirectionalLight0.Direction *= 0.1f;
+                    effect.DirectionalLight0.Direction *= 0.1f;
 
-                        effect.Alpha = 1f;
-                    }
-                    mesh.Draw();
+                    effect.Alpha = 1f;
                 }
+                mesh.Draw();
             }
         }
         else {
@@ -430,7 +432,7 @@ public class Block : IGameObject
                 otherTp!._tankCooldowns[tnk.WorldId] = 120;
 
                 tnk.Position = otherTp.Position;
-                tnk.Body.Position = otherTp.Position / Tank.UNITS_PER_METER;
+                tnk.Physics.Position = otherTp.Position / Tank.UNITS_PER_METER;
             }
         }
         UpdateOffset();

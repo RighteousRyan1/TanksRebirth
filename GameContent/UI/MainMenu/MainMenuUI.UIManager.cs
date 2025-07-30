@@ -258,7 +258,7 @@ public static partial class MainMenuUI
         plrsConfirmed = 0;
         _musicFading = false;
         MenuState = UIState.PrimaryMenu;
-        Active = true;
+        IsActive = true;
         GameUI.Paused = false;
         CameraGlobals.OverheadView = false;
         CameraGlobals.OrthoRotationVector.Y = CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
@@ -286,7 +286,7 @@ public static partial class MainMenuUI
         SetMPButtonsVisibility(false);
         SetPlayButtonsVisibility(false);
         SetPrimaryMenuButtonsVisibility(false);
-        Active = false;
+        IsActive = false;
         GraphicsUI.BatchVisible = false;
         ControlsUI.BatchVisible = false;
         VolumeUI.BatchVisible = false;

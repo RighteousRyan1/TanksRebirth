@@ -227,7 +227,7 @@ public static class IntermissionSystem {
     private static void DoMidAnimationActions(KeyFrame frame) {
         var frameId = IntermissionAnimator.KeyFrames.FindIndex(f => f.Equals(frame));
 
-        if (MainMenuUI.Active) {
+        if (MainMenuUI.IsActive) {
             IntermissionAnimator?.Restart();
             IntermissionAnimator?.Stop(); // the player dipped during the intermission lol
             BonusLifeAnimator?.Restart();
@@ -308,7 +308,7 @@ public static class IntermissionSystem {
                     = Difficulties.HijackTanks(CampaignGlobals.LoadedCampaign.CachedMissions[CampaignGlobals.LoadedCampaign.CurrentMissionId].Tanks);
             }
         }
-        CampaignGlobals.LoadedCampaign.SetupLoadedMission(GameHandler.AllPlayerTanks.Any(tnk => tnk != null && !tnk.Dead));
+        CampaignGlobals.LoadedCampaign.SetupLoadedMission(GameHandler.AllPlayerTanks.Any(tnk => tnk != null && !tnk.IsDestroyed));
     }
     public static void SetMusic() {
         var tune = "Assets/music/fanfares/mission_snare.ogg";
@@ -317,8 +317,8 @@ public static class IntermissionSystem {
     public static void PrepareBuffers(GraphicsDevice device, SpriteBatch spriteBatch) {
         RenderGlobals.EnsureRenderTargetOK(ref BackgroundBuffer, device, WindowUtils.WindowWidth, WindowUtils.WindowHeight);
         RenderGlobals.EnsureRenderTargetOK(ref BannerBuffer, device, WindowUtils.WindowWidth, WindowUtils.WindowHeight / 2);
-        RenderGlobals.EnsureRenderTargetOK(ref BonusBannerBuffer, device, WindowUtils.WindowWidth, BonusBannerBase.Height * 2);
-        RenderGlobals.EnsureRenderTargetOK(ref BonusBannerTextBuffer, device, WindowUtils.WindowWidth, 125);
+        RenderGlobals.EnsureRenderTargetOK(ref BonusBannerBuffer, device, /*(int)(WindowUtils.WindowWidth * 0.75f)*/ WindowUtils.WindowWidth, BonusBannerBase.Height * 2);
+        RenderGlobals.EnsureRenderTargetOK(ref BonusBannerTextBuffer, device, WindowUtils.WindowWidth / 3, (int)125.ToResolutionY());
 
         if (TankGame.Instance.IsActive) {
             // System.Diagnostics.Debug.WriteLine(TimeBlack);
@@ -335,12 +335,14 @@ public static class IntermissionSystem {
         // wait a little bit to do animations so they are clearly visible to the user
         Alpha = MathHelper.Clamp(Alpha, 0f, 1f);
 
+        if (MainMenuUI.IsActive) return;
+
         if (!GameUI.Paused && TankGame.Instance.IsActive) {
             // moves the background tank graphic
             _offset.Y -= 1f * RuntimeData.DeltaTime;
             _offset.X += 1f * RuntimeData.DeltaTime;
         }
-        if (MainMenuUI.Active && BlackAlpha <= 0) {
+        if (MainMenuUI.IsActive && BlackAlpha <= 0) {
             Alpha = 0f;
         }
 
@@ -357,27 +359,25 @@ public static class IntermissionSystem {
 
         device.Clear(RenderGlobals.BackBufferColor);
 
-        // 1f since transparency is being handled in the RTs draw
-        var overallAlpha = 1f;
-
         spriteBatch.Begin(rasterizerState: RenderGlobals.DefaultRasterizer);
 
         // draw the background color
         spriteBatch.Draw(
             TextureGlobals.Pixels[Color.White],
             new Rectangle(0, 0, WindowUtils.WindowWidth, WindowUtils.WindowHeight),
-            BackgroundColor * overallAlpha);
+            BackgroundColor);
 
         int padding = 10;
-        int scale = 2;
-
-        int texWidth = 64 * scale;
+        var scale = new Vector2(2).ToResolution();
 
         // draw small tank graphics in the background
         var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/tank_background_billboard");
-        for (int i = -padding; i < WindowUtils.WindowWidth / texWidth + padding; i++) {
-            for (int j = -padding; j < WindowUtils.WindowHeight / texWidth + padding; j++) {
-                spriteBatch.Draw(tex, new Vector2(i, j) * texWidth + _offset, null, BackgroundColor * overallAlpha, 0f, Vector2.Zero, scale, default, default);
+
+        var dims = tex.Size() * scale;
+        for (int i = -padding; i < WindowUtils.WindowWidth / dims.X + padding; i++) {
+            for (int j = -padding; j < WindowUtils.WindowHeight / dims.Y + padding; j++) {
+                spriteBatch.Draw(tex, new Vector2(i, j) * dims + _offset.ToResolution(), 
+                    null, BackgroundColor, 0f, Vector2.Zero, scale, default, default);
             }
         }
 
@@ -396,7 +396,7 @@ public static class IntermissionSystem {
             var lerpedColor = Color.Lerp(brightPlayerColor, GradientTopColor, brightness);
 
             var lifeText = $"×  {PlayerTank.Lives[i]}";
-            DrawUtils.DrawBorderedStringWithShadow(spriteBatch, FontGlobals.RebirthFontLarge,
+            DrawUtils.DrawStringWithBorderAndShadow(spriteBatch, FontGlobals.RebirthFontLarge,
                 pos + new Vector2(75, -25).ToResolution(),
                 Vector2.One,
                 lifeText,
@@ -404,7 +404,7 @@ public static class IntermissionSystem {
                 // hacky or not?
                 PlayerID.PlayerTankColors[i],
                 Vector2.One.ToResolution() * (ShouldDrawBanner ? Vector2.One : BonusLifeAnimator.CurrentScale),
-                overallAlpha,
+                1f,
                 Anchor.Center, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 1f);
 
             DrawUtils.DrawStringWithShadow(spriteBatch, FontGlobals.RebirthFontLarge,
@@ -413,10 +413,10 @@ public static class IntermissionSystem {
                 name,
                 PlayerID.PlayerTankColors[i],
                 new Vector2(0.3f).ToResolution(),
-                overallAlpha,
+                1f,
                 Anchor.Center, shadowDistScale: 1.5f, shadowAlpha: 0.5f);
             DrawUtils.DrawTextureWithShadow(spriteBatch, tnk2d, pos - new Vector2(130, 0).ToResolution(), Vector2.One,
-                brighterPlayerColor, Vector2.One * 1.5f, overallAlpha, Anchor.Center,
+                brighterPlayerColor, Vector2.One * 1.5f, 1f, Anchor.Center,
                 shadowDistScale: 1f, shadowAlpha: 0.5f);
         }
 
@@ -440,7 +440,7 @@ public static class IntermissionSystem {
         // draws the plaid(?) banner across the screen
         for (int i = 0; i < 6; i++) {
             var off = 75f;
-            DrawStripe(spriteBatch, BannerColor, (off * i).ToResolutionY(), overallAlpha);
+            DrawStripe(spriteBatch, BannerColor, (off * i).ToResolutionY(), 1f);
         }
 
         // i got this by mathing 1080 * 0.18 - 1080 * 0.16 (what the old offset was)
@@ -453,9 +453,9 @@ public static class IntermissionSystem {
         // draw the little golden lines across the plaid stripe
         var wp = TextureGlobals.Pixels[Color.White];
         spriteBatch.Draw(wp, new Vector2(0, lineOffset), null,
-            Color.Goldenrod * overallAlpha, 0f, new Vector2(0, wp.Size().Y / 2), new Vector2(WindowUtils.WindowWidth, 15), default, default);
+            Color.Goldenrod * 1f, 0f, new Vector2(0, wp.Size().Y / 2), new Vector2(WindowUtils.WindowWidth, 15), default, default);
         spriteBatch.Draw(wp, new Vector2(0, lineOffset + 420.ToResolutionY()), null,
-            Color.Goldenrod * overallAlpha, 0f, new Vector2(0, wp.Size().Y / 2), new Vector2(WindowUtils.WindowWidth, 15), default, default);
+            Color.Goldenrod * 1f, 0f, new Vector2(0, wp.Size().Y / 2), new Vector2(WindowUtils.WindowWidth, 15), default, default);
 
         // calculate total enemy tanks (remaining)
         int mafs1 = CampaignGlobals.LoadedCampaign.TrackedSpawnPoints.Count(p => p.Item2);
@@ -473,42 +473,42 @@ public static class IntermissionSystem {
         // slight misalignment
 
         // draw mission name, tanks remaining
-        DrawUtils.DrawBorderedStringWithShadow(spriteBatch, FontGlobals.RebirthFontLarge,
+        DrawUtils.DrawStringWithBorderAndShadow(spriteBatch, FontGlobals.RebirthFontLarge,
             new Vector2(WindowUtils.WindowWidth / 2 - spacingMissionName.ToResolutionX(), textOffsetMissionName),
             Vector2.One,
             missionName,
             BackgroundColor,
             ColorForBorders,
             TextAnimatorLarge.CurrentScale.ToResolution(),
-            overallAlpha, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 3f, charSpacing: spacing);
-        DrawUtils.DrawBorderedStringWithShadow(spriteBatch, FontGlobals.RebirthFontLarge,
+            1f, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 3f, charSpacing: spacing);
+        DrawUtils.DrawStringWithBorderAndShadow(spriteBatch, FontGlobals.RebirthFontLarge,
             new Vector2(WindowUtils.WindowWidth / 2 - spacingEnemyTankDisplay.ToResolutionX(), textOffsetTanksLeft),
             Vector2.One,
             enemyTankDisplay,
             BackgroundColor,
             ColorForBorders,
             TextAnimatorLarge.CurrentScale.ToResolution() * 0.75f,
-            overallAlpha, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 2.5f, charSpacing: spacing);
+            1f, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 2.5f, charSpacing: spacing);
 
         // draw campaign/mission data
         if (CampaignGlobals.LoadedCampaign.CurrentMissionId == 0)
-            DrawUtils.DrawBorderedStringWithShadow(spriteBatch, FontGlobals.RebirthFontLarge,
+            DrawUtils.DrawStringWithBorderAndShadow(spriteBatch, FontGlobals.RebirthFontLarge,
                 new Vector2(WindowUtils.WindowWidth / 2, textOffsetDetails),
                 Vector2.One,
                 $"{TankGame.GameLanguage.Campaign}: \"{CampaignGlobals.LoadedCampaign.MetaData.Name}\" ({TankGame.GameLanguage.Mission} #{CampaignGlobals.LoadedCampaign.CurrentMissionId + 1})",
                 BackgroundColor,
                 ColorForBorders,
                 TextAnimatorSmall.CurrentScale.ToResolution(),
-                overallAlpha, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 1.5f);
+                1f, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 1.5f);
         else
-            DrawUtils.DrawBorderedStringWithShadow(spriteBatch, FontGlobals.RebirthFontLarge,
+            DrawUtils.DrawStringWithBorderAndShadow(spriteBatch, FontGlobals.RebirthFontLarge,
                 new Vector2(WindowUtils.WindowWidth / 2, textOffsetDetails),
                 Vector2.One,
                 $"{TankGame.GameLanguage.Mission} #{CampaignGlobals.LoadedCampaign.CurrentMissionId + 1}",
                 BackgroundColor,
                 ColorForBorders,
                 TextAnimatorSmall.CurrentScale.ToResolution(),
-                overallAlpha, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 1.5f);
+                1f, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 1.5f);
 
         spriteBatch.End();
 
@@ -544,14 +544,15 @@ public static class IntermissionSystem {
         // slight offset to make the top color pop more...?
         // TODO: make the animation that makes the player tank graphic grow and glow, as well as the banner
         BonusTextGradient.Center = 0.6f;
-        // ChatSystem.SendMessage(brightness.ToString());
+
         var gradientModifiedTopColor = ColorUtils.ChangeColorBrightness(GradientTopColor, brightness);
         var gradientModifiedBottomColor = ColorUtils.ChangeColorBrightness(GradientBottomColor, brightness);
 
         BonusTextGradient.Top = gradientModifiedTopColor;
         BonusTextGradient.Bottom = gradientModifiedBottomColor;
 
-        spriteBatch.DrawString(FontGlobals.RebirthFontLarge, TankGame.GameLanguage.BonusTank, new Vector2(WindowUtils.WindowWidth / 2, BonusBannerTextBuffer.Height / 2), 
+        spriteBatch.DrawString(FontGlobals.RebirthFontLarge, TankGame.GameLanguage.BonusTank, 
+            new Vector2(BonusBannerTextBuffer.Width / 2, BonusBannerTextBuffer.Height / 2), 
             Color.White, (Vector2.One * _bannerScale * 0.5f * BonusLifeAnimator.CurrentScale).ToResolution(), 
             origin: Anchor.Center.GetAnchor(FontGlobals.RebirthFontLarge.MeasureString(TankGame.GameLanguage.BonusTank)));
 
@@ -613,35 +614,38 @@ public static class IntermissionSystem {
             var drawPos = new Vector2(WindowUtils.WindowWidth / 2, _renderY);
 
             DrawUtils.DrawTextureWithShadow(TankGame.SpriteRenderer, BonusBannerBuffer, drawPos, 
-                Vector2.UnitY, BonusBannerColor, Vector2.One * _bannerScale, BonusBannerAlpha * Alpha, Anchor.Center, shadowDistScale: 1f, shadowAlpha: 0.5f);
+                Vector2.UnitY, BonusBannerColor, Vector2.One * _bannerScale, BonusBannerAlpha * Alpha, Anchor.Center, shadowDistScale: 1f.ToResolutionY(), shadowAlpha: 0.5f);
+
+            // DrawUtils.DrawBox(drawPos, drawPos + BonusBannerBuffer.Size(), Color.Blue, Anchor.Center.GetAnchor(BonusBannerBuffer.Size()));
 
             spriteBatch.End();
 
             if (ShouldDrawBonusBanner) {
-
-                var textOffset = 20f.ToResolutionY();
+                var bannerDims = BonusBannerBuffer.Size();
+                var textOffset = 20f;
                 // draw strictly the bonus text shadow and border here
                 spriteBatch.Begin();
-
-                DrawUtils.DrawStringShadowOnly(spriteBatch, FontGlobals.RebirthFontLarge, drawPos - new Vector2(0, textOffset), Vector2.One * _bannerScale,
+                var textPos = new Vector2(WindowUtils.WindowWidth / 2, _renderY - 20.ToResolutionY());
+                DrawUtils.DrawStringShadowOnly(spriteBatch, FontGlobals.RebirthFontLarge, textPos, Vector2.One * _bannerScale,
                     TankGame.GameLanguage.BonusTank, (Vector2.One * _bannerScale * 0.5f * BonusLifeAnimator.CurrentScale).ToResolution(), BonusBannerAlpha * Alpha, shadowAlpha: 0.5f);
-                DrawUtils.DrawStringBorderOnly(spriteBatch, FontGlobals.RebirthFontLarge, TankGame.GameLanguage.BonusTank, drawPos - new Vector2(0, textOffset),
+                DrawUtils.DrawStringBorderOnly(spriteBatch, FontGlobals.RebirthFontLarge, TankGame.GameLanguage.BonusTank, 
+                    textPos,
                     BonusBannerTextBorderColor * Alpha * BonusBannerAlpha, (Vector2.One * _bannerScale * 0.5f * BonusLifeAnimator.CurrentScale).ToResolution(), 0f, borderThickness: 1.5f);
-
                 spriteBatch.End();
 
                 // draw the inner text with the gradient
                 spriteBatch.Begin(blendState: BlendState.AlphaBlend, effect: BonusTextGradient);
-
                 BonusTextGradient.Opacity = Alpha * BonusBannerAlpha;
                 // fuck these mental calculations yo... 
                 // in the RT prepration i have to add half of the buffer height and then subtract half of it here
-                spriteBatch.Draw(BonusBannerTextBuffer, new Vector2(0, _renderY - BonusBannerTextBuffer.Height / 2 - textOffset), Color.White * BonusBannerAlpha);
+                var textRTOrigin = Anchor.Center.GetAnchor(BonusBannerTextBuffer.Size());
+
+                spriteBatch.Draw(BonusBannerTextBuffer, textPos, null, Color.White * BonusBannerAlpha,
+                    0f, textRTOrigin, Vector2.One, default, 0f);
 
                 spriteBatch.End();
 
                 spriteBatch.Begin(blendState: BlendState.NonPremultiplied);
-
                 // now draw the stars. draw them not within the rendertarget beacuse they need their own shadows
 
                 var starScale = 2f;
@@ -651,7 +655,7 @@ public static class IntermissionSystem {
                     Alpha * BonusBannerAlpha, shadowDistScale: 0.5f, shadowAlpha: 0.5f);
 
                 // right star
-                DrawUtils.DrawTextureWithShadow(spriteBatch, BonusBannerStar, new Vector2(WindowUtils.WindowWidth * 0.83f, _renderY), Vector2.UnitY, GradientTopColor, new Vector2(starScale).ToResolution(),
+                DrawUtils.DrawTextureWithShadow(spriteBatch, BonusBannerStar, new Vector2(WindowUtils.WindowWidth * 0.8f, _renderY), Vector2.UnitY, GradientTopColor, new Vector2(starScale).ToResolution(),
                     Alpha * BonusBannerAlpha, shadowDistScale: 0.5f, shadowAlpha: 0.5f);
 
                 spriteBatch.End();
@@ -681,24 +685,26 @@ public static class IntermissionSystem {
             Color.Black * BlackAlpha);
     }
     private static void DrawBonusLifeBanner(SpriteBatch spriteBatch) {
-
+        var baseDims = BonusBannerBase.Size();
+        var resY = 1f.ToResolutionY();
+        var origin = Anchor.BottomCenter.GetAnchor(baseDims);
         // draw the left segment
-        spriteBatch.Draw(BonusBannerBase, new Vector2(_renderBeginX, 0), null, Color.White, 0f,
-            Vector2.Zero, Vector2.One, default, 0f);
-        spriteBatch.Draw(BonusBannerBase, new Vector2(_renderBeginX, BonusBannerBase.Height), null, Color.White, 0f,
-            Vector2.Zero, Vector2.One, SpriteEffects.FlipVertically, 0f);
-
+        spriteBatch.Draw(BonusBannerBase, new Vector2(_renderBeginX, baseDims.Y), null, Color.White, 0f,
+            Anchor.BottomRight.GetAnchor(baseDims), Vector2.One.ToResolution(), default, 0f);
+        spriteBatch.Draw(BonusBannerBase, new Vector2(_renderBeginX, baseDims.Y), null, Color.White, 0f,
+            Anchor.TopRight.GetAnchor(baseDims), Vector2.One.ToResolution(), SpriteEffects.FlipVertically, 0f);
         // draw the middle segment
-        spriteBatch.Draw(BonusBannerBase, new Vector2(_renderBeginX + BonusBannerBase.Width, 0), _cutForLength, Color.White,
-            0f, Vector2.Zero, new Vector2(_renderEndX - _renderBeginX - BonusBannerBase.Width, 1f), default, 0f);
-        spriteBatch.Draw(BonusBannerBase, new Vector2(_renderBeginX + BonusBannerBase.Width, BonusBannerBase.Height), _cutForLength, Color.White,
-            0f, Vector2.Zero, new Vector2(_renderEndX - _renderBeginX - BonusBannerBase.Width, 1f), SpriteEffects.FlipVertically, 0f);
+        spriteBatch.Draw(BonusBannerBase, new Vector2(_renderBeginX, baseDims.Y), _cutForLength, Color.White, 0f,
+            Vector2.Zero, new Vector2(_renderEndX - _renderBeginX, resY), SpriteEffects.FlipVertically, 0f);
+        spriteBatch.Draw(BonusBannerBase, new Vector2(_renderBeginX, baseDims.Y), _cutForLength, Color.White,0f,
+            Anchor.BottomLeft.GetAnchor(new Vector2(1, baseDims.Y)), new Vector2(_renderEndX - _renderBeginX, resY), default, 0f);
 
+        // Anchor.BottomRight.GetAnchor(new Vector2(1, baseDims.Y))
         // draw the right segment
-        spriteBatch.Draw(BonusBannerBase, new Vector2(_renderEndX, 0), null, Color.White, 0f, 
-            Vector2.Zero, Vector2.One, SpriteEffects.FlipHorizontally, 0f);
-        spriteBatch.Draw(BonusBannerBase, new Vector2(_renderEndX, BonusBannerBase.Height), null, Color.White, 0f,
-            Vector2.Zero, Vector2.One, SpriteEffects.FlipVertically | SpriteEffects.FlipHorizontally, 0f);
+        spriteBatch.Draw(BonusBannerBase, new Vector2(_renderEndX, baseDims.Y), null, Color.White, 0f,
+            Anchor.BottomLeft.GetAnchor(baseDims), Vector2.One.ToResolution(), SpriteEffects.FlipHorizontally, 0f);
+        spriteBatch.Draw(BonusBannerBase, new Vector2(_renderEndX, baseDims.Y), null, Color.White, 0f,
+            Vector2.Zero, Vector2.One.ToResolution(), SpriteEffects.FlipVertically | SpriteEffects.FlipHorizontally, 0f);
     }
 
     private static void DrawStripe(SpriteBatch spriteBatch, Color color, float offsetY, float alpha) {

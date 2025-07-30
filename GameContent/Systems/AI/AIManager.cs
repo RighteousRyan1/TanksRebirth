@@ -1,202 +1,275 @@
+using Microsoft.Xna.Framework;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
-using Microsoft.Xna.Framework;
+using System.Text.Json;
 using TanksRebirth.GameContent.ID;
+using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.Systems;
+using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.Graphics;
+using TanksRebirth.Internals.Common;
+using TanksRebirth.Net;
 
-namespace TanksRebirth.GameContent;
+namespace TanksRebirth.GameContent.Systems.AI;
 
 public static class AIManager {
+    // /// <summary>The AI parameter defaults for a given tank ID.</summary>
+    //public static Dictionary<int, AIParameters> AIParameterDefaults = [];
+    // /// <summary>The AI parameter defaults for a given tank ID.</summary>
+    //public static Dictionary<int, TankProperties> AIPropertyDefaults = [];
     /// <summary>
     /// Fetch the default AI parameters from the given input tank type.
     /// </summary>
-    /// <param name="tank">The AI tank to set the defaults of.</param>
     /// <param name="tankType">The type of the tank to retrieve the defaults from.</param>
-    /// <param name="baseExp">The base experience the player will gain upon killing the AI tank.</param>
     /// <returns></returns>
-    public static AiParameters GetAiDefaults(int tankType, out float baseExp) {
-        var aiParams = new AiParameters();
+    public static AIParameters GetAIParameters(int tankType) {
+        var aiParams = new AIParameters();
 
-        baseExp = 0f;
+        /*if (!AIParameterDefaults.TryGetValue(tankType, out AIParameters? value)) {
+            var json = File.ReadAllText("ai/tank_" + TankID.Collection.GetKey(tankType) + ".json");
+            using JsonDocument doc = JsonDocument.Parse(json);
+
+            var parameters = doc.RootElement.GetProperty("Parameters");
+            AIParameterDefaults.Add(tankType, parameters.Deserialize<AIParameters>()!);
+            return AIParameterDefaults[tankType];
+        }
+        else {
+            return value;
+        }*/
 
         switch (tankType) {
             #region VanillaTanks
 
             case TankID.Brown:
-                aiParams.ProjectileWarinessRadius_PlayerShot = 60;
-
-                aiParams.TurretMeanderFrequency = 30;
-                aiParams.TurretSpeed = 0.01f;
+                aiParams.DetectionForgivenessHostile = 1.6f;
                 aiParams.AimOffset = MathHelper.ToRadians(170);
-                aiParams.Inaccuracy = 1.6f;
+                aiParams.RandomTimerMaxShoot = 45;
+                aiParams.RandomTimerMinShoot = 30;
+                aiParams.TurretSpeed = 0.01f;
+                aiParams.TurretMovementTimer = 60;
+                aiParams.TankAwarenessShoot = 70;
 
-                baseExp = 0.01f;
+                aiParams.BaseXP = 0.01f;
                 break;
 
             case TankID.Ash:
-                aiParams.MeanderAngle = MathHelper.ToRadians(30);
-                aiParams.MeanderFrequency = 15;
-                aiParams.TurretMeanderFrequency = 40;
-                aiParams.TurretSpeed = 0.01f;
+                aiParams.MaxAngleRandomTurn = MathHelper.ToRadians(30);
+                aiParams.RandomTimerMaxMove = 15;
+                aiParams.RandomTimerMinMove = 10;
+                aiParams.AwarenessFriendlyMine = 120;
+                aiParams.AwarenessFriendlyShell = 120;
+                aiParams.AwarenessHostileMine = 40;
+                aiParams.AwarenessHostileShell = 40;
+                aiParams.CantShootWhileFleeing = true;
+                aiParams.AggressivenessBias = 0.03f;
+                aiParams.MaxQueuedMovements = 4;
+                aiParams.ObstacleAwarenessMovement = 30;
                 aiParams.AimOffset = MathHelper.ToRadians(40);
+                aiParams.DetectionForgivenessSelf = MathHelper.ToRadians(5);
+                aiParams.DetectionForgivenessFriendly = MathHelper.ToRadians(20);
+                aiParams.DetectionForgivenessHostile = MathHelper.ToRadians(20);
+                aiParams.RandomTimerMaxShoot = 45;
+                aiParams.RandomTimerMinShoot = 30;
+                aiParams.TurretSpeed = 0.01f;
+                aiParams.TurretMovementTimer = 45;
+                aiParams.TankAwarenessShoot = 70;
 
-                aiParams.Inaccuracy = 0.9f;
 
-                aiParams.PursuitLevel = 0.4f;
-                aiParams.PursuitFrequency = 300;
-
-                aiParams.ProjectileWarinessRadius_PlayerShot = 40;
-                aiParams.ProjectileWarinessRadius_AIShot = 70;
-                aiParams.MineWarinessRadius_PlayerLaid = 40;
-                aiParams.MineWarinessRadius_AILaid = 70;
-
-                aiParams.BlockWarinessDistance = 25;
-
-                baseExp = 0.015f;
+                aiParams.BaseXP = 0.015f;
                 break;
 
             case TankID.Marine:
-                aiParams.MeanderAngle = MathHelper.ToRadians(30);
-                aiParams.MeanderFrequency = 10;
-                aiParams.TurretMeanderFrequency = 10;
-                aiParams.TurretSpeed = 0.1f;
-                aiParams.AimOffset = MathHelper.ToRadians(0);
+                aiParams.MaxAngleRandomTurn = MathHelper.ToRadians(30);
+                aiParams.RandomTimerMaxMove = 10;
+                aiParams.RandomTimerMinMove = 5;
+                aiParams.AwarenessFriendlyMine = 120;
+                aiParams.AwarenessFriendlyShell = 120;
+                aiParams.AwarenessHostileShell = 40;
+                aiParams.CantShootWhileFleeing = true;
+                aiParams.AggressivenessBias = -0.1f;
+                aiParams.MaxQueuedMovements = 4;
+                aiParams.ObstacleAwarenessMovement = 30;
+                aiParams.DetectionForgivenessSelf = MathHelper.ToRadians(5);
+                aiParams.DetectionForgivenessFriendly = MathHelper.ToRadians(20);
+                aiParams.DetectionForgivenessHostile = MathHelper.ToRadians(20);
+                aiParams.RandomTimerMaxShoot = 10;
+                aiParams.RandomTimerMinShoot = 5;
+                aiParams.TurretSpeed = 0.05f;
+                aiParams.TurretMovementTimer = 8;
+                aiParams.TankAwarenessShoot = 70;
 
-                aiParams.Inaccuracy = 0.15f;
-
-                aiParams.ProjectileWarinessRadius_PlayerShot = 40;
-                aiParams.MineWarinessRadius_PlayerLaid = 80;
-
-                aiParams.PursuitFrequency = 180;
-                aiParams.PursuitLevel = -0.6f;
-
-                aiParams.BlockWarinessDistance = 40;
-
-                baseExp = 0.04f;
+                aiParams.BaseXP = 0.04f;
                 break;
 
             case TankID.Yellow:
-                aiParams.MeanderAngle = MathHelper.ToRadians(40);
-                aiParams.MeanderFrequency = 15;
-                aiParams.TurretMeanderFrequency = 20;
+                aiParams.ObstacleAwarenessMine = 100;
+                aiParams.RandomTimerMaxMine = 60;
+                aiParams.RandomTimerMinMine = 40;
+                aiParams.TankAwarenessMine = 100;
+                aiParams.ChanceMineLayNearBreakables = 0.5f;
+                aiParams.ChanceMineLay = 0.5f;
+                aiParams.MaxAngleRandomTurn = MathHelper.ToRadians(30);
+                aiParams.RandomTimerMaxMove = 15;
+                aiParams.RandomTimerMinMove = 10;
+                aiParams.AwarenessFriendlyMine = 130;
+                aiParams.AwarenessFriendlyShell = 120;
+                aiParams.AwarenessHostileMine = 160;
+                aiParams.AwarenessHostileShell = 40;
+                aiParams.CantShootWhileFleeing = true;
+                aiParams.MaxQueuedMovements = 4;
+                aiParams.ObstacleAwarenessMovement = 30;
+                aiParams.AimOffset = MathHelper.ToRadians(40);
+                aiParams.DetectionForgivenessSelf = MathHelper.ToRadians(5);
+                aiParams.DetectionForgivenessFriendly = MathHelper.ToRadians(20);
+                aiParams.DetectionForgivenessHostile = MathHelper.ToRadians(20);
+                aiParams.RandomTimerMaxShoot = 45;
+                aiParams.RandomTimerMinShoot = 30;
                 aiParams.TurretSpeed = 0.02f;
-                aiParams.AimOffset = 0.5f;
+                aiParams.TurretMovementTimer = 30;
+                aiParams.TankAwarenessShoot = 70;
 
-                aiParams.Inaccuracy = 1.5f;
-
-                aiParams.ProjectileWarinessRadius_PlayerShot = 40;
-                aiParams.MineWarinessRadius_PlayerLaid = 160;
-
-                aiParams.MinePlacementChance = 0.3f;
-
-                baseExp = 0.035f;
+                aiParams.BaseXP = 0.035f;
 
                 if (Difficulties.Types["PieFactory"]) {
-                    aiParams.MinePlacementChance = 1f;
-                    aiParams.MineWarinessRadius_PlayerLaid = 0;
+                    aiParams.ChanceMineLay = 1f;
+                    aiParams.AwarenessHostileMine = 0;
                 }
 
                 break;
 
             case TankID.Pink:
-                aiParams.MeanderAngle = MathHelper.ToRadians(40);
-                aiParams.MeanderFrequency = 10;
-                aiParams.TurretMeanderFrequency = 40;
-                aiParams.TurretSpeed = 0.03f;
-                aiParams.AimOffset = 0.2f;
+                aiParams.MaxAngleRandomTurn = MathHelper.ToRadians(30);
+                aiParams.RandomTimerMaxMove = 10;
+                aiParams.RandomTimerMinMove = 5;
+                aiParams.AwarenessFriendlyMine = 120;
+                aiParams.AwarenessFriendlyShell = 120;
+                aiParams.AwarenessHostileShell = 40;
+                aiParams.CantShootWhileFleeing = true;
+                aiParams.AggressivenessBias = 0.2f;
+                aiParams.MaxQueuedMovements = 4;
+                aiParams.ObstacleAwarenessMovement = 50;
+                aiParams.AimOffset = MathHelper.ToRadians(40);
+                aiParams.DetectionForgivenessSelf = MathHelper.ToRadians(5);
+                aiParams.DetectionForgivenessFriendly = MathHelper.ToRadians(20);
+                aiParams.DetectionForgivenessHostile = MathHelper.ToRadians(20);
+                aiParams.RandomTimerMaxShoot = 10;
+                aiParams.RandomTimerMinShoot = 5;
+                aiParams.TurretSpeed = 0.02f;
+                aiParams.TurretMovementTimer = 20;
+                aiParams.TankAwarenessShoot = 70;
 
-                aiParams.Inaccuracy = 1.3f;
-
-                aiParams.PursuitLevel = 0.7f;
-                aiParams.PursuitFrequency = 180;
-
-                aiParams.ProjectileWarinessRadius_PlayerShot = 40;
-                aiParams.MineWarinessRadius_PlayerLaid = 160;
-
-                aiParams.BlockWarinessDistance = 35;
-
-                baseExp = 0.08f;
+                aiParams.BaseXP = 0.08f;
                 break;
 
             case TankID.Violet:
-                aiParams.MeanderAngle = MathHelper.ToRadians(40);
-                aiParams.MeanderFrequency = 10;
-                aiParams.TurretMeanderFrequency = 25;
-
-                aiParams.Inaccuracy = 0.8f;
-
+                aiParams.ObstacleAwarenessMine = 200;
+                aiParams.RandomTimerMaxMine = 60;
+                aiParams.RandomTimerMinMine = 40;
+                aiParams.TankAwarenessMine = 100;
+                aiParams.ChanceMineLayNearBreakables = 0.05f;
+                aiParams.ChanceMineLay = 0.03f;
+                aiParams.MaxAngleRandomTurn = MathHelper.ToRadians(30);
+                aiParams.RandomTimerMaxMove = 10;
+                aiParams.RandomTimerMinMove = 5;
+                aiParams.AwarenessFriendlyMine = 120;
+                aiParams.AwarenessFriendlyShell = 120;
+                aiParams.AwarenessHostileMine = 160;
+                aiParams.AwarenessHostileShell = 60;
+                aiParams.CantShootWhileFleeing = true;
+                aiParams.AggressivenessBias = 0.1f;
+                aiParams.MaxQueuedMovements = 4;
+                aiParams.ObstacleAwarenessMovement = 50;
+                aiParams.AimOffset = MathHelper.ToRadians(40);
+                aiParams.DetectionForgivenessSelf = MathHelper.ToRadians(5);
+                aiParams.DetectionForgivenessFriendly = MathHelper.ToRadians(20);
+                aiParams.DetectionForgivenessHostile = MathHelper.ToRadians(20);
+                aiParams.RandomTimerMaxShoot = 10;
+                aiParams.RandomTimerMinShoot = 5;
                 aiParams.TurretSpeed = 0.03f;
-                aiParams.AimOffset = 0.18f;
+                aiParams.TurretMovementTimer = 20;
+                aiParams.TankAwarenessShoot = 70;
 
-                aiParams.PursuitLevel = 0.6f;
-                aiParams.PursuitFrequency = 240;
-
-                aiParams.ProjectileWarinessRadius_PlayerShot = 60;
-                aiParams.MineWarinessRadius_PlayerLaid = 160;
-
-                aiParams.MinePlacementChance = 0.05f;
-
-                aiParams.BlockWarinessDistance = 45;
-
-                baseExp = 0.1f;
+                aiParams.BaseXP = 0.1f;
                 break;
 
             case TankID.Green:
-                aiParams.ProjectileWarinessRadius_PlayerShot = 70;
-
-                aiParams.TurretMeanderFrequency = 30;
-                aiParams.TurretSpeed = 0.02f;
                 aiParams.AimOffset = MathHelper.ToRadians(80);
-                aiParams.Inaccuracy = MathHelper.ToRadians(25);
+                aiParams.DetectionForgivenessSelf = MathHelper.ToRadians(5);
+                aiParams.DetectionForgivenessFriendly = MathHelper.ToRadians(20);
+                aiParams.DetectionForgivenessHostile = MathHelper.ToRadians(20);
+                aiParams.RandomTimerMaxShoot = 10;
+                aiParams.RandomTimerMinShoot = 5;
+                aiParams.TurretSpeed = 0.02f;
+                aiParams.TurretMovementTimer = 30;
+                aiParams.TankAwarenessShoot = 70;
 
-                baseExp = 0.12f;
+                aiParams.BaseXP = 0.12f;
                 break;
 
             case TankID.White:
-                aiParams.MeanderAngle = MathHelper.ToRadians(30);
-                aiParams.MeanderFrequency = 10;
-                aiParams.TurretMeanderFrequency = 20;
-                aiParams.TurretSpeed = 0.03f;
+                aiParams.ObstacleAwarenessMine = 200;
+                aiParams.RandomTimerMaxMine = 60;
+                aiParams.RandomTimerMinMine = 40;
+                aiParams.TankAwarenessMine = 100;
+                aiParams.ChanceMineLayNearBreakables = 0.05f;
+                aiParams.ChanceMineLay = 0.03f;
+                aiParams.MaxAngleRandomTurn = MathHelper.ToRadians(30);
+                aiParams.RandomTimerMaxMove = 10;
+                aiParams.RandomTimerMinMove = 5;
+                aiParams.AwarenessFriendlyMine = 120;
+                aiParams.AwarenessFriendlyShell = 120;
+                aiParams.AwarenessHostileMine = 160;
+                aiParams.AwarenessHostileShell = 40;
+                aiParams.CantShootWhileFleeing = false;
+                aiParams.AggressivenessBias = 0.1f;
+                aiParams.MaxQueuedMovements = 4;
+                aiParams.ObstacleAwarenessMovement = 50;
                 aiParams.AimOffset = MathHelper.ToRadians(40);
+                aiParams.DetectionForgivenessSelf = MathHelper.ToRadians(5);
+                aiParams.DetectionForgivenessFriendly = MathHelper.ToRadians(20);
+                aiParams.DetectionForgivenessHostile = MathHelper.ToRadians(20);
+                aiParams.RandomTimerMaxShoot = 10;
+                aiParams.RandomTimerMinShoot = 5;
+                aiParams.TurretSpeed = 0.03f;
+                aiParams.TurretMovementTimer = 30;
+                aiParams.TankAwarenessShoot = 70;
 
-                aiParams.Inaccuracy = 0.8f;
-
-                aiParams.PursuitLevel = 0.6f;
-                aiParams.PursuitFrequency = 240;
-
-                aiParams.ProjectileWarinessRadius_PlayerShot = 40;
-                aiParams.MineWarinessRadius_PlayerLaid = 160;
-
-                aiParams.MinePlacementChance = 0.08f;
-
-                aiParams.BlockWarinessDistance = 40; // used to be 30 but it's short
-
-                baseExp = 0.125f;
+                aiParams.BaseXP = 0.125f;
                 break;
 
             case TankID.Black:
-                aiParams.MeanderAngle = MathHelper.ToRadians(30);
-                aiParams.MeanderFrequency = 10;
-                aiParams.TurretMeanderFrequency = 20;
-                aiParams.TurretSpeed = 0.03f;
+                aiParams.ObstacleAwarenessMine = 200;
+                aiParams.RandomTimerMaxMine = 60;
+                aiParams.RandomTimerMinMine = 40;
+                aiParams.TankAwarenessMine = 100;
+                aiParams.ChanceMineLayNearBreakables = 0.05f;
+                aiParams.ChanceMineLay = 0.03f;
+                aiParams.MaxAngleRandomTurn = MathHelper.ToRadians(30);
+                aiParams.RandomTimerMaxMove = 10;
+                aiParams.RandomTimerMinMove = 5;
+                aiParams.AwarenessFriendlyMine = 120;
+                aiParams.AwarenessFriendlyShell = 120;
+                aiParams.AwarenessHostileShell = 100;
+                aiParams.CantShootWhileFleeing = true;
+                aiParams.AggressivenessBias = 0.2f;
+                aiParams.MaxQueuedMovements = 4;
+                aiParams.ObstacleAwarenessMovement = 50;
                 aiParams.AimOffset = MathHelper.ToRadians(5);
+                aiParams.DetectionForgivenessSelf = MathHelper.ToRadians(5);
+                aiParams.DetectionForgivenessFriendly = MathHelper.ToRadians(20);
+                aiParams.DetectionForgivenessHostile = MathHelper.ToRadians(20);
+                aiParams.RandomTimerMaxShoot = 10;
+                aiParams.RandomTimerMinShoot = 5;
+                aiParams.TurretSpeed = 0.03f;
+                aiParams.TurretMovementTimer = 20;
+                aiParams.TankAwarenessShoot = 70;
 
-                aiParams.Inaccuracy = 0.35f;
-
-                aiParams.PursuitLevel = 0.8f;
-                aiParams.PursuitFrequency = 240;
-
-                aiParams.ProjectileWarinessRadius_PlayerShot = 100;
-                aiParams.MineWarinessRadius_PlayerLaid = 110; // 60
-
-                aiParams.MinePlacementChance = 0.05f;
-
-                aiParams.BlockWarinessDistance = 60;
-
-                baseExp = 0.145f;
+                aiParams.BaseXP = 0.145f;
 
                 break;
 
@@ -205,285 +278,342 @@ public static class AIManager {
             #region MasterMod
 
             case TankID.Bronze:
-                aiParams.TurretMeanderFrequency = 15;
-                aiParams.TurretSpeed = 0.05f;
-                aiParams.AimOffset = 0.005f;
+                aiParams.ObstacleAwarenessMine = 200; // 2
+                aiParams.TankAwarenessMine = 100; // 6
+                aiParams.MaxQueuedMovements = 4; // 22
+                aiParams.ObstacleAwarenessMovement = 30; // 28
+                aiParams.AimOffset = MathHelper.ToRadians(0); // 29
+                aiParams.DetectionForgivenessSelf = MathHelper.ToRadians(5); // 31 
+                aiParams.DetectionForgivenessFriendly = MathHelper.ToRadians(20); // 32 
+                aiParams.DetectionForgivenessHostile = MathHelper.ToRadians(20); // 33
+                aiParams.RandomTimerMaxShoot = 30; // 35
+                aiParams.RandomTimerMinShoot = 15; // 36
+                aiParams.TurretSpeed = 0.06f; // 39
+                aiParams.TurretMovementTimer = 10; // 40
+                aiParams.TankAwarenessShoot = 70; // 41
 
-                aiParams.ProjectileWarinessRadius_PlayerShot = 140;
-
-                aiParams.Inaccuracy = 0.2f;
-
-                aiParams.MinePlacementChance = 0.05f;
-
-                baseExp = 0.025f;
+                aiParams.BaseXP = 0.025f;
                 break;
             case TankID.Silver:
-                aiParams.MeanderAngle = MathHelper.ToRadians(30);
-                aiParams.MeanderFrequency = 10;
-                aiParams.TurretMeanderFrequency = 60;
-                aiParams.TurretSpeed = 0.045f;
-                aiParams.AimOffset = 0.9f;
+                aiParams.ObstacleAwarenessMine = 200; // 2
+                aiParams.RandomTimerMaxMine = 100; // 4
+                aiParams.RandomTimerMinMine = 60; // 5
+                aiParams.TankAwarenessMine = 100; // 6
+                aiParams.ChanceMineLayNearBreakables = 0.03f; // 7
+                aiParams.ChanceMineLay = 0.05f; // 8
+                aiParams.MaxAngleRandomTurn = MathHelper.ToRadians(30); // 13
+                aiParams.RandomTimerMaxMove = 10; // 14
+                aiParams.RandomTimerMinMove = 5; // 15
+                aiParams.AwarenessFriendlyMine = 120; // 16
+                aiParams.AwarenessFriendlyShell = 120; // 17
+                aiParams.AwarenessHostileMine = 100; // 18
+                aiParams.AwarenessHostileShell = 100; // 19
+                aiParams.CantShootWhileFleeing = true; // 20
+                aiParams.MaxQueuedMovements = 4; // 22
+                aiParams.ObstacleAwarenessMovement = 100; // 28
+                aiParams.AimOffset = MathHelper.ToRadians(60); // 29
+                aiParams.DetectionForgivenessSelf = MathHelper.ToRadians(5); // 31 
+                aiParams.DetectionForgivenessFriendly = MathHelper.ToRadians(20); // 32 
+                aiParams.DetectionForgivenessHostile = MathHelper.ToRadians(20); // 33
+                aiParams.RandomTimerMaxShoot = 20; // 35
+                aiParams.RandomTimerMinShoot = 10; // 36
+                aiParams.TurretSpeed = 0.045f; // 39
+                aiParams.TurretMovementTimer = 60; // 40
+                aiParams.TankAwarenessShoot = 70; // 41
 
-                aiParams.Inaccuracy = 0.4f;
-
-                aiParams.PursuitLevel = 0.4f;
-                aiParams.PursuitFrequency = 120;
-
-                aiParams.ProjectileWarinessRadius_PlayerShot = 70;
-                aiParams.MineWarinessRadius_PlayerLaid = 140;
-
-                aiParams.MinePlacementChance = 0.05f;
-
-                baseExp = 0.07f;
+                aiParams.BaseXP = 0.07f;
                 break;
             case TankID.Sapphire:
-                aiParams.MeanderAngle = MathHelper.ToRadians(30);
-                aiParams.MeanderFrequency = 15;
-                aiParams.TurretMeanderFrequency = 20;
-                aiParams.TurretSpeed = 0.025f;
-                aiParams.AimOffset = 0.01f;
+                aiParams.ObstacleAwarenessMine = 100; // 2
+                aiParams.RandomTimerMaxMine = 40; // 4
+                aiParams.RandomTimerMinMine = 30; // 5
+                aiParams.TankAwarenessMine = 100; // 6
+                aiParams.ChanceMineLayNearBreakables = 0.04f; // 7
+                aiParams.ChanceMineLay = 0.08f; // 8
+                aiParams.MaxAngleRandomTurn = MathHelper.ToRadians(30); // 13
+                aiParams.RandomTimerMaxMove = 15; // 14
+                aiParams.RandomTimerMinMove = 10; // 15
+                aiParams.AwarenessFriendlyMine = 120; // 16
+                aiParams.AwarenessFriendlyShell = 60; // 17
+                aiParams.AwarenessHostileMine = 40; // 18
+                aiParams.AwarenessHostileShell = 70; // 19
+                aiParams.CantShootWhileFleeing = false; // 20
+                aiParams.MaxQueuedMovements = 4; // 22
+                aiParams.ObstacleAwarenessMovement = 60; // 28
+                aiParams.AimOffset = MathHelper.ToRadians(10); // 29
+                aiParams.DetectionForgivenessSelf = MathHelper.ToRadians(5); // 31 
+                aiParams.DetectionForgivenessFriendly = MathHelper.ToRadians(20); // 32 
+                aiParams.DetectionForgivenessHostile = MathHelper.ToRadians(20); // 33
+                aiParams.RandomTimerMaxShoot = 10; // 35
+                aiParams.RandomTimerMinShoot = 5; // 36
+                aiParams.TurretSpeed = 0.01f; // 39
+                aiParams.TurretMovementTimer = 3; // 40
+                aiParams.TankAwarenessShoot = 70; // 41
 
-                aiParams.Inaccuracy = 0.4f;
-
-                aiParams.PursuitLevel = -0.6f;
-                aiParams.PursuitFrequency = 240;
-
-                aiParams.ProjectileWarinessRadius_PlayerShot = 40;
-                aiParams.MineWarinessRadius_PlayerLaid = 70;
-
-                aiParams.MinePlacementChance = 0.05f;
-
-                baseExp = 0.095f;
+                aiParams.BaseXP = 0.095f;
                 break;
             case TankID.Ruby:
-                aiParams.MeanderAngle = MathHelper.ToRadians(30);
-                aiParams.MeanderFrequency = 10;
-                aiParams.TurretMeanderFrequency = 20;
+                aiParams.MaxAngleRandomTurn = MathHelper.ToRadians(45);
+                aiParams.RandomTimerMaxMove = 10;
+                aiParams.RandomTimerMinMove = 5;
+                aiParams.AwarenessFriendlyMine = 120;
+                aiParams.AwarenessFriendlyShell = 120;
+                aiParams.AwarenessHostileMine = 0;
+                aiParams.AwarenessHostileShell = 50;
+                aiParams.AggressivenessBias = 0.3f;
+                aiParams.MaxQueuedMovements = 4;
+                aiParams.ObstacleAwarenessMovement = 20;
+                aiParams.AimOffset = MathHelper.ToRadians(3);
+                aiParams.DetectionForgivenessSelf = MathHelper.ToRadians(5);
+                aiParams.DetectionForgivenessFriendly = MathHelper.ToRadians(20);
+                aiParams.DetectionForgivenessHostile = MathHelper.ToRadians(20);
+                aiParams.RandomTimerMaxShoot = 10;
+                aiParams.RandomTimerMinShoot = 5;
                 aiParams.TurretSpeed = 0.025f;
-                aiParams.AimOffset = 0.05f;
+                aiParams.TurretMovementTimer = 10;
+                aiParams.TankAwarenessShoot = 70;
 
-                aiParams.Inaccuracy = 0.6f;
 
-                aiParams.PursuitLevel = 0.9f;
-                aiParams.PursuitFrequency = 360;
+                aiParams.CantShootWhileFleeing = true;
 
-                aiParams.ProjectileWarinessRadius_PlayerShot = 50;
-                aiParams.MineWarinessRadius_PlayerLaid = 70;
-
-                aiParams.MinePlacementChance = 0;
-
-                aiParams.BlockWarinessDistance = 30;
-
-                baseExp = 0.13f;
+                aiParams.BaseXP = 0.13f;
                 break;
             case TankID.Citrine:
-                aiParams.MeanderAngle = MathHelper.ToRadians(30);
-                aiParams.MeanderFrequency = 30;
-                aiParams.TurretMeanderFrequency = 20;
-                aiParams.TurretSpeed = 0.035f;
-                aiParams.AimOffset = 0.3f;
+                aiParams.ObstacleAwarenessMine = 100; // 2
+                aiParams.RandomTimerMaxMine = 60; // 4
+                aiParams.RandomTimerMinMine = 40; // 5
+                aiParams.TankAwarenessMine = 100; // 6
+                aiParams.ChanceMineLayNearBreakables = 0.1f; // 7
+                aiParams.ChanceMineLay = 0.2f; // 8
+                aiParams.MaxAngleRandomTurn = MathHelper.ToRadians(30); // 13
+                aiParams.RandomTimerMaxMove = 30; // 14
+                aiParams.RandomTimerMinMove = 10; // 15
+                aiParams.AwarenessFriendlyMine = 160; // 16
+                aiParams.AwarenessFriendlyShell = 160; // 17
+                aiParams.AwarenessHostileMine = 140; // 18
+                aiParams.AwarenessHostileShell = 80; // 19
+                aiParams.CantShootWhileFleeing = true; // 20
+                aiParams.MaxQueuedMovements = 4; // 22
+                aiParams.ObstacleAwarenessMovement = 30; // 28
+                aiParams.AimOffset = MathHelper.ToRadians(20); // 29
+                aiParams.DetectionForgivenessSelf = MathHelper.ToRadians(5); // 31 
+                aiParams.DetectionForgivenessFriendly = MathHelper.ToRadians(20); // 32 
+                aiParams.DetectionForgivenessHostile = MathHelper.ToRadians(20); // 33
+                aiParams.RandomTimerMaxShoot = 10; // 35
+                aiParams.RandomTimerMinShoot = 5; // 36
+                aiParams.TurretSpeed = 0.035f; // 39
+                aiParams.TurretMovementTimer = 30; // 40
+                aiParams.TankAwarenessShoot = 70; // 41
 
-                aiParams.Inaccuracy = 0.25f;
 
-                // max aggression from blud lmfao
-                aiParams.PursuitLevel = 1f;
-                aiParams.PursuitFrequency = 240;
-
-                aiParams.ProjectileWarinessRadius_PlayerShot = 80;
-                aiParams.MineWarinessRadius_PlayerLaid = 140;
-
-                aiParams.MinePlacementChance = 0.15f;
-
-                aiParams.ShootChance = 0.95f;
-
-                aiParams.BlockWarinessDistance = 60;
-
-                baseExp = 0.09f;
+                aiParams.BaseXP = 0.09f;
                 break;
             case TankID.Amethyst:
-                aiParams.MeanderAngle = MathHelper.ToRadians(30);
-                aiParams.MeanderFrequency = 5;
-                aiParams.TurretMeanderFrequency = 15;
-                aiParams.TurretSpeed = 0.05f;
-                aiParams.AimOffset = 0.3f;
+                aiParams.ObstacleAwarenessMine = 150;
+                aiParams.RandomTimerMaxMine = 60;
+                aiParams.RandomTimerMinMine = 40;
+                aiParams.TankAwarenessMine = 100;
+                aiParams.ChanceMineLayNearBreakables = 0.05f;
+                aiParams.ChanceMineLay = 0.1f;
+                aiParams.MaxAngleRandomTurn = MathHelper.ToRadians(30);
+                aiParams.RandomTimerMaxMove = 5;
+                aiParams.RandomTimerMinMove = 2;
+                aiParams.AwarenessFriendlyMine = 160;
+                aiParams.AwarenessFriendlyShell = 120;
+                aiParams.AwarenessHostileMine = 80;
+                aiParams.AwarenessHostileShell = 100;
+                aiParams.CantShootWhileFleeing = true;
+                aiParams.AggressivenessBias = 0.03f;
+                aiParams.MaxQueuedMovements = 4;
+                aiParams.ObstacleAwarenessMovement = 35;
+                aiParams.AimOffset = MathHelper.ToRadians(60);
+                aiParams.DetectionForgivenessSelf = MathHelper.ToRadians(5);
+                aiParams.DetectionForgivenessFriendly = MathHelper.ToRadians(20);
+                aiParams.DetectionForgivenessHostile = MathHelper.ToRadians(20);
+                aiParams.RandomTimerMaxShoot = 20;
+                aiParams.RandomTimerMinShoot = 10;
+                aiParams.TurretSpeed = 0.03f;
+                aiParams.TurretMovementTimer = 20;
+                aiParams.TankAwarenessShoot = 70;
 
-                aiParams.Inaccuracy = 0.65f;
-
-                aiParams.PursuitLevel = 0.25f;
-                aiParams.PursuitFrequency = 180;
-
-                aiParams.ProjectileWarinessRadius_PlayerShot = 70;
-                aiParams.MineWarinessRadius_PlayerLaid = 140;
-
-                aiParams.MinePlacementChance = 0.05f;
-
-                baseExp = 0.095f;
+                aiParams.BaseXP = 0.095f;
                 break;
             case TankID.Emerald:
-                aiParams.TurretMeanderFrequency = 20;
-                aiParams.TurretSpeed = 0.04f;
-                aiParams.AimOffset = 1f;
+                aiParams.ObstacleAwarenessMine = 100; // 2
+                aiParams.TankAwarenessMine = 100; // 6
+                aiParams.MaxQueuedMovements = 4; // 22
+                aiParams.ObstacleAwarenessMovement = 50; // 28
+                aiParams.AimOffset = MathHelper.ToRadians(80); // 29
+                aiParams.DetectionForgivenessSelf = MathHelper.ToRadians(5); // 31 
+                aiParams.DetectionForgivenessFriendly = MathHelper.ToRadians(20); // 32 
+                aiParams.DetectionForgivenessHostile = MathHelper.ToRadians(20); // 33
+                aiParams.RandomTimerMaxShoot = 10; // 35
+                aiParams.RandomTimerMinShoot = 5; // 36
+                aiParams.TurretSpeed = 0.04f; // 39
+                aiParams.TurretMovementTimer = 30; // 40
+                aiParams.TankAwarenessShoot = 70; // 41
 
-                aiParams.Inaccuracy = 0.35f;
-
-                aiParams.SmartRicochets = true;
-
-                baseExp = 0.14f;
+                aiParams.BaseXP = 0.14f;
                 break;
 
             case TankID.Gold:
-                aiParams.MeanderAngle = MathHelper.ToRadians(30);
-                aiParams.MeanderFrequency = 20;
-                aiParams.TurretMeanderFrequency = 20;
-                aiParams.TurretSpeed = 0.02f;
-                aiParams.AimOffset = 0.14f;
+                aiParams.ObstacleAwarenessMine = 200; // 2
+                aiParams.RandomTimerMaxMine = 100; // 4
+                aiParams.RandomTimerMinMine = 60; // 5
+                aiParams.TankAwarenessMine = 100; // 6
+                aiParams.ChanceMineLayNearBreakables = 0.05f; // 7
+                aiParams.ChanceMineLay = 0.03f; // 8
+                aiParams.MaxAngleRandomTurn = MathHelper.ToRadians(30); // 13
+                aiParams.RandomTimerMaxMove = 10; // 14
+                aiParams.RandomTimerMinMove = 5; // 15
+                aiParams.AwarenessFriendlyMine = 120; // 16
+                aiParams.AwarenessFriendlyShell = 100; // 17
+                aiParams.AwarenessHostileMine = 120; // 18
+                aiParams.AwarenessHostileShell = 80; // 19
+                aiParams.MaxQueuedMovements = 4; // 22
+                aiParams.ObstacleAwarenessMovement = 50; // 28
+                aiParams.AimOffset = MathHelper.ToRadians(40); // 29
+                aiParams.DetectionForgivenessSelf = MathHelper.ToRadians(5); // 31 
+                aiParams.DetectionForgivenessFriendly = MathHelper.ToRadians(20); // 32 
+                aiParams.DetectionForgivenessHostile = MathHelper.ToRadians(20); // 33
+                aiParams.RandomTimerMaxShoot = 10; // 35
+                aiParams.RandomTimerMinShoot = 5; // 36
+                aiParams.TurretSpeed = 0.02f; // 39
+                aiParams.TurretMovementTimer = 15; // 40
+                aiParams.TankAwarenessShoot = 70; // 41
 
-                aiParams.Inaccuracy = 0.4f;
 
-                aiParams.PursuitLevel = 0.6f;
-                aiParams.PursuitFrequency = 240;
-
-                aiParams.ShootChance = 0.7f;
-
-                aiParams.ProjectileWarinessRadius_PlayerShot = 80;
-                aiParams.MineWarinessRadius_PlayerLaid = 120;
-
-                aiParams.MinePlacementChance = 0.01f;
-
-                baseExp = 0.16f;
+                aiParams.BaseXP = 0.16f;
                 break;
 
             case TankID.Obsidian:
-                aiParams.MeanderAngle = MathHelper.ToRadians(30);
-                aiParams.MeanderFrequency = 20;
-                aiParams.TurretMeanderFrequency = 20;
-                aiParams.TurretSpeed = 0.05f;
-                aiParams.AimOffset = 0.18f;
+                aiParams.ObstacleAwarenessMine = 50; // 2
+                aiParams.RandomTimerMaxMine = 60; // 4
+                aiParams.RandomTimerMinMine = 40; // 5
+                aiParams.TankAwarenessMine = 100; // 6
+                aiParams.ChanceMineLayNearBreakables = 0.08f; // 7
+                aiParams.ChanceMineLay = 0.05f; // 8
+                aiParams.MaxAngleRandomTurn = MathHelper.ToRadians(30); // 13
+                aiParams.RandomTimerMaxMove = 40; // 14
+                aiParams.RandomTimerMinMove = 20; // 15
+                aiParams.AwarenessFriendlyMine = 160; // 16
+                aiParams.AwarenessFriendlyShell = 140; // 17
+                aiParams.AwarenessHostileMine = 140; // 18
+                aiParams.AwarenessHostileShell = 70; // 19
+                aiParams.CantShootWhileFleeing = true; // 20
+                aiParams.MaxQueuedMovements = 4; // 22
+                aiParams.ObstacleAwarenessMovement = 75; // 28
+                aiParams.AimOffset = MathHelper.ToRadians(20); // 29
+                aiParams.DetectionForgivenessSelf = MathHelper.ToRadians(5); // 31 
+                aiParams.DetectionForgivenessFriendly = MathHelper.ToRadians(20); // 32 
+                aiParams.DetectionForgivenessHostile = MathHelper.ToRadians(20); // 33
+                aiParams.RandomTimerMaxShoot = 10; // 35
+                aiParams.RandomTimerMinShoot = 5; // 36
+                aiParams.TurretSpeed = 0.05f; // 39
+                aiParams.TurretMovementTimer = 20; // 40
+                aiParams.TankAwarenessShoot = 70; // 41
 
-                aiParams.Inaccuracy = 0.9f;
-
-                aiParams.PursuitLevel = 0.6f;
-                aiParams.PursuitFrequency = 240;
-
-                aiParams.ProjectileWarinessRadius_PlayerShot = 70;
-                aiParams.MineWarinessRadius_PlayerLaid = 140;
-
-                aiParams.MinePlacementChance = 0.1f;
-
-                aiParams.BlockWarinessDistance = 50;
-                aiParams.BlockReadTime = 10;
-
-                baseExp = 0.175f;
+                aiParams.BaseXP = 0.175f;
                 break;
 
             #endregion 
         }
-        if (aiParams.ProjectileWarinessRadius_AIShot == 0)
-            aiParams.ProjectileWarinessRadius_AIShot = aiParams.ProjectileWarinessRadius_PlayerShot;
-        if (aiParams.MineWarinessRadius_AILaid == 0)
-            aiParams.MineWarinessRadius_AILaid = aiParams.MineWarinessRadius_PlayerLaid;
 
         return aiParams;
     }
     public static TankProperties GetAITankProperties(int tankType) {
         var properties = new TankProperties();
+
+        /*if (!AIPropertyDefaults.TryGetValue(tankType, out TankProperties? value)) {
+            var json = File.ReadAllText("ai/tank_" + TankID.Collection.GetKey(tankType) + ".json");
+            using JsonDocument doc = JsonDocument.Parse(json);
+
+            var parameters = doc.RootElement.GetProperty("Properties");
+            AIPropertyDefaults.Add(tankType, parameters.Deserialize<TankProperties>()!);
+            return AIPropertyDefaults[tankType];
+        }
+        else {
+            return value;
+        }*/
+
         switch (tankType) {
             #region VanillaTanks
 
             case TankID.Brown:
-                properties.Stationary = true;
-
-                properties.TurningSpeed = 0f;
-                properties.MaximalTurn = 0;
-
-                properties.ShootStun = 20;
-                properties.ShellCooldown = 300;
-                properties.ShellLimit = 1;
-                properties.ShellSpeed = 3f;
-                properties.ShellType = ShellID.Standard;
-                properties.RicochetCount = 1;
-
                 properties.Invisible = false;
+                properties.Stationary = true;
+                properties.ShellLimit = 1;
+                properties.RicochetCount = 1;
+                properties.ShellCooldown = 300;
+                properties.ShellSpeed = 3f;
+
+
+                properties.ShellType = ShellID.Standard;
                 properties.ShellHoming = new();
-
-                properties.TreadPitch = 0;
-                properties.MaxSpeed = 0f;
-
-                properties.MineCooldown = 0;
-                properties.MineLimit = 0;
-                properties.MineStun = 0;
                 break;
 
             case TankID.Ash:
+                properties.Acceleration = 0.3f;
+                properties.Deceleration = 0.6f;
+                properties.MaxSpeed = 1.2f;
                 properties.TurningSpeed = 0.08f;
                 properties.MaximalTurn = MathHelper.ToRadians(10);
-
-                properties.ShootStun = 3;
-                properties.ShellCooldown = 180;
                 properties.ShellLimit = 1;
-                properties.ShellSpeed = 3f;
-                properties.ShellType = ShellID.Standard;
                 properties.RicochetCount = 1;
+                properties.ShellCooldown = 180;
+                properties.ShellSpeed = 3f;
+                properties.ShootStun = 10;
 
+
+
+
+                properties.ShellType = ShellID.Standard;
                 properties.Invisible = false;
                 properties.Stationary = false;
                 properties.ShellHoming = new();
-
                 properties.TreadPitch = 0.085f;
-                properties.MaxSpeed = 1.2f; // 1.2
-
-                properties.MineCooldown = 0;
-                properties.MineLimit = 0;
-                properties.MineStun = 0;
                 break;
 
             case TankID.Marine:
+                properties.Acceleration = 0.3f;
+                properties.Deceleration = 0.6f;
+                properties.MaxSpeed = 1f;
                 properties.TurningSpeed = 0.2f;
                 properties.MaximalTurn = MathHelper.ToRadians(10);
-
-                properties.ShootStun = 20;
-                properties.ShellCooldown = 180;
                 properties.ShellLimit = 1;
+                properties.ShellCooldown = 180;
                 properties.ShellSpeed = 6f;
-                properties.ShellType = ShellID.Rocket;
-                properties.RicochetCount = 0;
+                properties.ShootStun = 20;
 
+
+
+                properties.ShellType = ShellID.Rocket;
                 properties.Invisible = false;
                 properties.Stationary = false;
                 properties.ShellHoming = new();
-
                 properties.TreadPitch = 0.085f;
-                properties.MaxSpeed = 1f;
-
-                properties.MineCooldown = 0;
-                properties.MineLimit = 0;
-                properties.MineStun = 0;
                 break;
 
             case TankID.Yellow:
+                properties.MineLimit = 4;
+                properties.MineStun = 1;
                 properties.Acceleration = 0.3f;
                 properties.Deceleration = 0.6f;
-
+                properties.MaxSpeed = 1.8f;
                 properties.TurningSpeed = 0.08f;
                 properties.MaximalTurn = MathHelper.ToRadians(10);
-
-                properties.ShootStun = 20;
-                properties.ShellCooldown = 90;
                 properties.ShellLimit = 1;
-                properties.ShellSpeed = 3f;
-                properties.ShellType = ShellID.Standard;
                 properties.RicochetCount = 1;
+                properties.ShellCooldown = 180;
+                properties.ShellSpeed = 3f;
+                properties.ShootStun = 10;
 
+
+                properties.ShellType = ShellID.Standard;
                 properties.Invisible = false;
                 properties.Stationary = false;
                 properties.ShellHoming = new();
-
                 properties.TreadPitch = 0.085f;
-                properties.MaxSpeed = 1.8f;
-
-                properties.MineCooldown = 600;
-                properties.MineLimit = 4;
-                properties.MineStun = 5;
 
                 if (Difficulties.Types["PieFactory"]) {
                     properties.InvulnerableToMines = true;
@@ -495,126 +625,104 @@ public static class AIManager {
                 break;
 
             case TankID.Pink:
+                properties.Acceleration = 0.3f;
+                properties.Deceleration = 0.6f;
+                properties.MaxSpeed = 1.2f;
                 properties.TurningSpeed = 0.08f;
                 properties.MaximalTurn = MathHelper.ToRadians(10);
-
-                properties.ShootStun = 5;
-                properties.ShellCooldown = 30;
                 properties.ShellLimit = 3;
-                properties.ShellSpeed = 3f;
-                properties.ShellType = ShellID.Standard;
                 properties.RicochetCount = 1;
+                properties.ShellCooldown = 30;
+                properties.ShellSpeed = 3f;
+                properties.ShootStun = 5;
 
+
+
+                properties.ShellType = ShellID.Standard;
                 properties.Invisible = false;
                 properties.Stationary = false;
                 properties.ShellHoming = new();
-
                 properties.TreadPitch = 0.1f;
-                properties.MaxSpeed = 1.2f;
-
-                properties.MineCooldown = 0;
-                properties.MineLimit = 0;
-                properties.MineStun = 0;
                 break;
 
             case TankID.Violet:
-                properties.TurningSpeed = 0.06f;
-                properties.MaximalTurn = MathHelper.ToRadians(10);
-
-                properties.ShootStun = 5;
-                properties.ShellCooldown = 30;
-                properties.ShellLimit = 5;
-                properties.ShellSpeed = 3f;
-                properties.ShellType = ShellID.Standard;
-                properties.RicochetCount = 1;
-
-                properties.Invisible = false;
-                properties.Stationary = false;
-                properties.ShellHoming = new();
-
-                properties.TreadPitch = -0.2f;
-                properties.MaxSpeed = 1.8f;
-                properties.Acceleration = 0.3f;
-
-                properties.MineCooldown = 700;
                 properties.MineLimit = 2;
-                properties.MineStun = 10;
+                properties.MineStun = 1;
+                properties.Acceleration = 0.3f;
+                properties.Deceleration = 0.6f;
+                properties.MaxSpeed = 1.8f;
+                properties.TurningSpeed = 0.08f;
+                properties.MaximalTurn = MathHelper.ToRadians(10);
+                properties.ShellLimit = 5;
+                properties.RicochetCount = 1;
+                properties.ShellCooldown = 30;
+                properties.ShellSpeed = 3f;
+                properties.ShootStun = 5;
+
+
+                properties.ShellType = ShellID.Standard;
+                properties.ShellHoming = new();
+                properties.TreadPitch = -0.2f;
                 break;
 
             case TankID.Green:
-                properties.Stationary = true;
-
-                properties.TurningSpeed = 0f;
-                properties.MaximalTurn = 0;
-
-                properties.ShootStun = 5;
-                properties.ShellCooldown = 60;
                 properties.ShellLimit = 2;
-                properties.ShellSpeed = 6f; // 6f
+                properties.RicochetCount = 2;
+                properties.ShellCooldown = 60;
+                properties.ShellSpeed = 6f;
+
+
                 properties.ShellType = ShellID.TrailedRocket;
-                properties.RicochetCount = 2; // 2
-
-                properties.Invisible = false;
+                properties.Stationary = true;
                 properties.ShellHoming = new();
-
-                properties.TreadPitch = 0;
-                properties.MaxSpeed = 0f;
-
-                properties.MineCooldown = 0;
-                properties.MineLimit = 0;
-                properties.MineStun = 0;
                 break;
 
             case TankID.White:
-                properties.TrackType = TrackID.Thick;
-
+                properties.Invisible = true;
+                properties.MineLimit = 2;
+                properties.MineStun = 1;
+                properties.Acceleration = 0.3f;
+                properties.Deceleration = 0.6f;
+                properties.MaxSpeed = 1.2f;
                 properties.TurningSpeed = 0.08f;
                 properties.MaximalTurn = MathHelper.ToRadians(10);
-
-                properties.ShootStun = 5;
-                properties.ShellCooldown = 30;
                 properties.ShellLimit = 5;
-                properties.ShellSpeed = 3f;
-                properties.ShellType = ShellID.Standard;
                 properties.RicochetCount = 1;
+                properties.ShellCooldown = 30;
+                properties.ShellSpeed = 3f;
+                properties.ShootStun = 5;
 
-                properties.Stationary = false;
+
+
+
+
+                properties.TrackType = TrackID.Thick;
+                properties.ShellType = ShellID.Standard;
                 properties.ShellHoming = new();
-
                 properties.TreadPitch = -0.35f;
-                properties.MaxSpeed = 1.2f;
-                properties.Acceleration = 0.3f;
-
-                properties.MineCooldown = 1000;
-                properties.MineLimit = 2;
-                properties.MineStun = 8;
-                properties.Invisible = true;
                 break;
 
             case TankID.Black:
+                properties.MineLimit = 2;
+                properties.MineStun = 1;
+                properties.Acceleration = 0.3f;
+                properties.Deceleration = 0.6f;
+                properties.MaxSpeed = 2.4f;
                 properties.TurningSpeed = 0.06f;
                 properties.MaximalTurn = MathHelper.ToRadians(5);
-
-                properties.ShootStun = 5;
-                properties.ShellCooldown = 60;
                 properties.ShellLimit = 3;
+                properties.ShellCooldown = 60;
                 properties.ShellSpeed = 6f;
+                properties.ShootStun = 10;
+
+
+
+
+
                 properties.ShellType = ShellID.Rocket;
-                properties.RicochetCount = 0;
-
-                properties.Invisible = false;
-                properties.Stationary = false;
                 properties.ShellHoming = new();
-
                 properties.TreadPitch = -0.26f;
-                properties.MaxSpeed = 2.4f; // 2.4
-                properties.Acceleration = 0.3f; //0.3
-
-                properties.ShootPitch = -0.2f; // 0.2f
-
-                properties.MineCooldown = 850;
-                properties.MineLimit = 2;
-                properties.MineStun = 10;
+                properties.ShootPitch = -0.2f;
                 break;
 
             #endregion
@@ -622,201 +730,148 @@ public static class AIManager {
             #region MasterMod
 
             case TankID.Bronze:
-                properties.DestructionColor = new(152, 96, 26);
+                properties.ShellLimit = 4; // 30
+                properties.RicochetCount = 1; // 34
+                properties.ShellCooldown = 40; // 37
+                properties.ShellSpeed = 4f; // 38
 
-                properties.ShellCooldown = 50;
-                properties.ShellLimit = 2;
-                properties.ShellSpeed = 3f;
                 properties.ShellType = ShellID.Standard;
-                properties.RicochetCount = 1;
-
-                properties.Invisible = false;
                 properties.Stationary = true;
-                properties.ShellHoming = new();
                 break;
             case TankID.Silver:
-                properties.TurningSpeed = 0.13f;
-                properties.MaximalTurn = MathHelper.PiOver2;
+                properties.MineLimit = 1; // 3
+                properties.MineStun = 5; // 10
+                properties.Acceleration = 0.3f; // 11
+                properties.Deceleration = 0.6f; // 12
+                properties.MaxSpeed = 1.6f; // 23
+                properties.TurningSpeed = 0.13f; // 26
+                properties.MaximalTurn = MathHelper.ToRadians(15); // 27 
+                properties.ShellLimit = 8; // 30
+                properties.RicochetCount = 1; // 34
+                properties.ShellCooldown = 15; // 37
+                properties.ShellSpeed = 4f; // 38
+                properties.ShootStun = 0; // 42
 
-                properties.ShootStun = 0;
-                properties.ShellCooldown = 15;
-                properties.ShellLimit = 8;
-                properties.ShellSpeed = 4f;
+
                 properties.ShellType = ShellID.Standard;
-                properties.RicochetCount = 1;
-
-                properties.Invisible = false;
-                properties.Stationary = false;
-                properties.ShellHoming = new();
-
                 properties.TreadPitch = 0.2f;
                 properties.MaxSpeed = 1.6f;
-                properties.Acceleration = 0.3f;
-                properties.Deceleration = 0.6f;
-
-                properties.MineCooldown = 60 * 20;
-                properties.MineLimit = 1;
-                properties.MineStun = 10;
                 break;
             case TankID.Sapphire:
-                properties.TurningSpeed = 0.15f;
-                properties.MaximalTurn = MathHelper.PiOver2;
+                properties.MineLimit = 1; // 3
+                properties.MineStun = 0; // 10
+                properties.Acceleration = 0.3f; // 11
+                properties.Deceleration = 0.6f; // 12
+                properties.MaxSpeed = 1.4f; // 23
+                properties.TurningSpeed = 0.15f; // 26
+                properties.MaximalTurn = MathHelper.ToRadians(20); // 27 
+                properties.ShellLimit = 3; // 30
+                properties.ShellCooldown = 10; // 37
+                properties.ShellSpeed = 5.5f; // 38
+                properties.ShootStun = 20; // 42
 
-                properties.ShootStun = 20;
-                properties.ShellCooldown = 10;
-                properties.ShellLimit = 3;
-                properties.ShellSpeed = 5.5f;
+
                 properties.ShellType = ShellID.Rocket;
-                properties.RicochetCount = 0;
-
-                properties.Invisible = false;
-                properties.Stationary = false;
-                properties.ShellHoming = new();
-
                 properties.TreadPitch = 0.08f;
-                properties.MaxSpeed = 1.4f;
-                properties.Acceleration = 0.3f;
-                properties.Deceleration = 0.6f;
-
-                properties.MineCooldown = 1000;
-                properties.MineLimit = 1;
-                properties.MineStun = 0;
                 break;
             case TankID.Ruby:
-                properties.TurningSpeed = 0.5f;
-                properties.MaximalTurn = MathHelper.PiOver2;
+                properties.Acceleration = 0.4f; // 11
+                properties.Deceleration = 0.6f; // 12
+                properties.MaxSpeed = 1.2f; // 23
+                properties.TurningSpeed = 0.5f; // 26
+                properties.MaximalTurn = MathHelper.ToRadians(45); // 27 
+                properties.ShellLimit = 10; // 30
+                properties.ShellCooldown = 8; // 37
+                properties.ShellSpeed = 3f; // 38
 
-                properties.ShootStun = 0;
-                properties.ShellCooldown = 8;
-                properties.ShellLimit = 10;
-                properties.ShellSpeed = 3f;
+
                 properties.ShellType = ShellID.Standard;
-                properties.RicochetCount = 0;
-
-                properties.Invisible = false;
-                properties.Stationary = false;
-                properties.ShellHoming = new();
-
                 properties.TreadPitch = 0.08f;
-                properties.MaxSpeed = 1.2f; // 1.2
-                properties.Acceleration = 0.4f;
-                properties.Deceleration = 0.6f;
-
-                properties.MineCooldown = 0;
-                properties.MineLimit = 0;
-                properties.MineStun = 0;
                 break;
             case TankID.Citrine:
-                properties.TurningSpeed = 0.08f;
-                properties.MaximalTurn = 1.4f;
+                properties.MineLimit = 4; // 3
+                properties.MineStun = 1; // 10
+                properties.Acceleration = 0.2f; // 11
+                properties.Deceleration = 0.4f; // 12
+                properties.MaxSpeed = 3.2f; // 23
+                properties.TurningSpeed = 0.08f; // 26
+                properties.MaximalTurn = MathHelper.ToRadians(40); // 27 
+                properties.ShellLimit = 3; // 30
+                properties.RicochetCount = 0; // 34
+                properties.ShellCooldown = 60; // 37
+                properties.ShellSpeed = 6f; // 38
+                properties.ShootStun = 10; // 42
 
-                properties.ShootStun = 10;
-                properties.ShellCooldown = 60;
-                properties.ShellLimit = 3;
-                properties.ShellSpeed = 6f; // 6
                 properties.ShellType = ShellID.Standard;
-                properties.RicochetCount = 0;
-
-                properties.Invisible = false;
-                properties.Stationary = false;
-                properties.ShellHoming = new();
-
                 properties.TreadPitch = -0.08f;
-                properties.MaxSpeed = 3.2f; // 3.2
-                properties.Acceleration = 0.2f;
-                properties.Deceleration = 0.4f;
-
-                properties.MineCooldown = 360;
-                properties.MineLimit = 4;
-                properties.MineStun = 5;
                 break;
             case TankID.Amethyst:
-                properties.TurningSpeed = 0.1f;
-                properties.MaximalTurn = MathHelper.ToRadians(30);
-
-                properties.ShootStun = 5;
-                properties.ShellCooldown = 25;
-                properties.ShellLimit = 5;
-                properties.ShellSpeed = 3.5f; // 3.5
-                properties.ShellType = ShellID.Standard;
-                properties.RicochetCount = 1; // 1
-
-                properties.Invisible = false;
-                properties.Stationary = false;
-                properties.ShellHoming = new();
-
-                properties.TreadPitch = -0.2f;
-                properties.MaxSpeed = 2f; // 2
-                properties.Acceleration = 0.6f;
-                properties.Deceleration = 0.9f;
-
-                properties.MineCooldown = 360;
                 properties.MineLimit = 3;
                 properties.MineStun = 10;
+                properties.Acceleration = 0.6f;
+                properties.Deceleration = 0.9f;
+                properties.MaxSpeed = 2f;
+                properties.TurningSpeed = 0.16f;
+                properties.MaximalTurn = MathHelper.ToRadians(30);
+                properties.ShellLimit = 5;
+                properties.RicochetCount = 1;
+                properties.ShellCooldown = 25;
+                properties.ShellSpeed = 3.5f;
+                properties.ShootStun = 5;
+
+
+                properties.ShellType = ShellID.Standard;
+                properties.TreadPitch = -0.2f;
                 break;
             case TankID.Emerald:
-                properties.ShellCooldown = 60;
-                properties.ShellLimit = 3;
-                properties.ShellSpeed = 8f;
-                properties.ShellType = ShellID.TrailedRocket;
-                properties.RicochetCount = 2;
+                properties.ShellLimit = 3; // 30
+                properties.RicochetCount = 2; // 34
+                properties.ShellCooldown = 60; // 37
+                properties.ShellSpeed = 8f; // 38
 
+
+                properties.ShellType = ShellID.TrailedRocket;
                 properties.Stationary = true;
                 properties.Invisible = true;
-                properties.ShellHoming = new();
                 break;
 
             case TankID.Gold:
+                properties.MineLimit = 2; // 3
+                properties.MineStun = 1; // 10
+                properties.Acceleration = 0.8f; // 11
+                properties.Deceleration = 0.5f; // 12
+                properties.MaxSpeed = 0.9f; // 23
+                properties.TurningSpeed = 0.06f; // 26
+                properties.MaximalTurn = MathHelper.ToRadians(15); // 27 
+                properties.ShellLimit = 3; // 30
+                properties.RicochetCount = 1; // 34
+                properties.ShellCooldown = 30; // 37
+                properties.ShellSpeed = 4f; // 38
+                properties.ShootStun = 5; // 42
+
                 properties.CanLayTread = false;
-
-                properties.TurningSpeed = 0.06f;
-                properties.MaximalTurn = 1.4f;
-
-                properties.ShootStun = 5;
-                properties.ShellCooldown = 30;
-                properties.ShellLimit = 3;
-                properties.ShellSpeed = 4f;
                 properties.ShellType = ShellID.Standard;
-                properties.RicochetCount = 1;
-
-                properties.Stationary = false;
-                properties.ShellHoming = new();
-
                 properties.TreadPitch = -0.1f;
-                properties.MaxSpeed = 0.9f;
-                properties.Acceleration = 0.8f;
-                properties.Deceleration = 0.5f;
-
-                properties.MineCooldown = 700;
-                properties.MineLimit = 2;
-                properties.MineStun = 10;
-
                 properties.Invisible = true;
                 break;
 
             case TankID.Obsidian:
-                properties.TurningSpeed = 0.1f;
-                properties.MaximalTurn = MathHelper.PiOver4;
+                properties.MineLimit = 2; // 3
+                properties.MineStun = 1; // 10
+                properties.Acceleration = 0.6f; // 11
+                properties.Deceleration = 0.8f; // 12
+                properties.MaxSpeed = 3f; // 23
+                properties.TurningSpeed = 0.1f; // 26
+                properties.MaximalTurn = MathHelper.ToRadians(20); // 27 
+                properties.ShellLimit = 3; // 30
+                properties.RicochetCount = 2; // 34
+                properties.ShellCooldown = 25; // 37
+                properties.ShellSpeed = 8.5f; // 38
+                properties.ShootStun = 0; // 42
 
-                properties.ShootStun = 5;
-                properties.ShellCooldown = 25;
-                properties.ShellLimit = 3;
-                properties.ShellSpeed = 8.5f;
+
                 properties.ShellType = ShellID.Rocket;
-                properties.RicochetCount = 2;
-
-                properties.Invisible = false;
-                properties.Stationary = false;
-                properties.ShellHoming = new();
-
                 properties.TreadPitch = -0.26f;
-                properties.MaxSpeed = 3f;
-                properties.Acceleration = 0.6f;
-                properties.Deceleration = 0.8f;
-
-                properties.MineCooldown = 850;
-                properties.MineLimit = 2;
-                properties.MineStun = 10;
                 break;
 
                 #endregion
@@ -837,7 +892,7 @@ public static class AIManager {
         for (var i = 0; i < GameHandler.AllAITanks.Length; i++) {
             var tank = Unsafe.Add(ref tanksSearchSpace, i);
 
-            if (tank is null || tank.Dead || (predicate is not null && !predicate.Invoke(tank))) continue;
+            if (tank is null || tank.IsDestroyed || predicate is not null && !predicate.Invoke(tank)) continue;
 
             if (tank.AiTankType > highest)
                 highest = tank.AiTankType;
@@ -857,7 +912,7 @@ public static class AIManager {
         ref var tanksSearchSpace = ref MemoryMarshal.GetReference(tanks);
         for (var i = 0; i < tanks.Length; i++) {
             var tank = Unsafe.Add(ref tanksSearchSpace, i);
-            if (tank is not null && !tank.Dead && ((predicate is not null && predicate.Invoke(tank)) || predicate is null)) cnt++;
+            if (tank is not null && !tank.IsDestroyed && (predicate is not null && predicate.Invoke(tank) || predicate is null)) cnt++;
         }
 
         return cnt;
@@ -874,9 +929,54 @@ public static class AIManager {
         ref var tanksSearchSpace = ref MemoryMarshal.GetReference(tanks);
         for (var i = 0; i < tanks.Length; i++) {
             var tnk = Unsafe.Add(ref tanksSearchSpace, i);
-            if (tnk is not null && tnk.AiTankType == tier && !tnk.Dead) cnt++;
+            if (tnk is not null && tnk.AiTankType == tier && !tnk.IsDestroyed) cnt++;
         }
 
         return cnt;
+    }
+
+    //static Stopwatch s = new();
+    //static List<double> msList = [];
+    internal static void ProcessAITanks() {
+        if (ModLoader.Status != LoadStatus.Complete)
+            return;
+
+        if (!GameScene.ShouldRenderAll)
+            return;
+
+        //if (InputUtils.KeyJustPressed(Microsoft.Xna.Framework.Input.Keys.H)) {
+        //    msList = [];
+        //    msList.Clear();
+        //}
+
+        Span<AITank> aiTanks = GameHandler.AllAITanks;
+        ref var tanksSearchSpace = ref MemoryMarshal.GetReference(aiTanks);
+        for (var i = 0; i < aiTanks.Length; i++) {
+            var tank = Unsafe.Add(ref tanksSearchSpace, i);
+            if (tank is null || tank.IsDestroyed) continue;
+
+            tank.Update();
+            tank.HandleTankMetaData();
+        }
+
+        // if you're not connected to a server or you aren't *the* server
+        if (!Client.IsHost() && Client.IsConnected()) return;
+
+        //s.Restart();
+
+        for (var i = 0; i < aiTanks.Length; i++) {
+            var tank = Unsafe.Add(ref tanksSearchSpace, i);
+            if (tank is null || tank.IsDestroyed) continue;
+
+            tank.DoAI();
+
+            // only does anything if you're in a multiplayer context.
+            Client.SyncAITank(tank);
+        }
+        //s.Stop();
+        //double ms = (s.ElapsedTicks * 1_000_000.0) / Stopwatch.Frequency / 1000;
+        //Console.WriteLine($"AI time this frame: {ms:0.000}ms | Average: {(msList.Sum() / msList.Count):0.000}");
+
+        //msList?.Add(ms);
     }
 }

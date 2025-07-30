@@ -1,18 +1,20 @@
 using Microsoft.Xna.Framework;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using TanksRebirth.Enums;
-using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Globals;
+using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Speedrunning;
+using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.GameContent.UI;
+using TanksRebirth.GameContent.UI.LevelEditor;
+using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Internals.Common.Framework.Animation;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
-using TanksRebirth.GameContent.UI.MainMenu;
-using TanksRebirth.GameContent.UI.LevelEditor;
 
 namespace TanksRebirth.GameContent.Systems;
 public static class IntermissionHandler {
@@ -115,50 +117,53 @@ public static class IntermissionHandler {
     /// A method that returns whether or not there was a victory- be it for the enemy or the player.
     /// </summary>
     /// <param name="mission">The mission to check.</param>
-    /// <param name="victory">Whether or not it resulted in victory for the player.</param>
+    /// <param name="predicate">Functional checking for each tank to include into the check.</param>
+    /// <param name="finalTeam">The final team, with respect to the predicate.</param>
     /// <returns>Whether or not one team or one player dominates the map.</returns>
-    public static bool NothingCanHappenAnymore(Mission mission, out bool victory) {
-        if (mission.Tanks is null) {
-            victory = false;
-            return false;
-        }
-        if (mission.Tanks.Any(tnk => tnk.IsPlayer)) {
-            var activeTeams = Tank.GetActiveTeams();
+    public static bool NothingCanHappenAnymore(Mission mission, out int finalTeam, Func<Tank, bool>? predicate = null) {
+        finalTeam = -1;
 
-            if (activeTeams.Contains(TeamID.NoTeam) && GameHandler.AllTanks.Count(tnk => tnk != null && !tnk.Dead) <= 1) {
-                victory = GameHandler.AllPlayerTanks.Any(tnk => tnk != null && !tnk.Dead);
-                return true;
-            }
-            // check if it's not only FFA, and if teams left doesnt contain ffa. 
-            else if (!activeTeams.Contains(TeamID.NoTeam) && activeTeams.Length <= 1) {
-                victory = activeTeams.Contains(PlayerTank.MyTeam);
-                return true;
-            }
+        if (mission.Tanks is null)
+            return true;
+
+        var teamSet = new HashSet<int>();
+        int aliveTankCount = 0;
+
+        foreach (var tank in GameHandler.AllTanks) {
+            if (tank is null || tank.IsDestroyed)
+                continue;
+
+            if (predicate is not null && !predicate(tank))
+                continue;
+
+            aliveTankCount++;
+            teamSet.Add(tank.Team);
         }
-        else {
-            var activeTeams = Tank.GetActiveTeams();
-            // if a player was not initially spawned in the mission, check if a team is still alive and end the mission
-            if (activeTeams.Contains(TeamID.NoTeam) && GameHandler.AllTanks.Count(tnk => tnk != null && !tnk.Dead) <= 1) {
-                victory = true;
-                return true;
-            }
-            else if (!activeTeams.Contains(TeamID.NoTeam) && activeTeams.Length <= 1) {
-                victory = true;
-                return true;
-            }
+
+        if (teamSet.Count == 0)
+            return true; // no teams alive
+
+        if (teamSet.Count == 1) {
+            finalTeam = teamSet.First();
+            if (finalTeam == TeamID.NoTeam)
+                return aliveTankCount <= 1;
+            return true;
         }
-        victory = false;
-        return false;
+
+        return false; // multiple teams still active
     }
     public static void HandleMissionChanging() {
         if (CampaignGlobals.LoadedCampaign.CachedMissions[0].Name is null)
             return;
 
-        var nothingAnymore = NothingCanHappenAnymore(CampaignGlobals.LoadedCampaign.CurrentMission, out bool victory);
+        var nothingAnymore = NothingCanHappenAnymore(CampaignGlobals.LoadedCampaign.CurrentMission, out var finalTeam);
+        var myTank = GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()];
+        bool victory = myTank is null ? true : myTank.Team != TeamID.NoTeam && myTank.Team == finalTeam;
 
         if (nothingAnymore) {
             IntermissionSystem.IsAwaitingNewMission = true;
             CampaignGlobals.InMission = false;
+
             if (!CampaignGlobals.InMission && _wasInMission) {
                 bool isExtraLifeMission = CampaignGlobals.LoadedCampaign.CachedMissions[CampaignGlobals.LoadedCampaign.CurrentMissionId].GrantsExtraLife;
                 int restartTime;
@@ -196,7 +201,7 @@ public static class IntermissionHandler {
                     bool check = Client.IsConnected() ? PlayerTank.Lives.All(x => x == 0) : PlayerTank.GetMyLives() <= 0;
 
                     // why is "win" a ternary result? it will never be "win" given the we are in the "!victory" branch. wtf ryan code once again
-                    endContext = !GameHandler.AllPlayerTanks.Any(tnk => tnk != null && !tnk.Dead) ? (check ? MissionEndContext.GameOver : MissionEndContext.Lose) : MissionEndContext.Win;
+                    endContext = !GameHandler.AllPlayerTanks.Any(tnk => tnk != null && !tnk.IsDestroyed) ? (check ? MissionEndContext.GameOver : MissionEndContext.Lose) : MissionEndContext.Win;
 
                     // hardcode hell 2: electric boogaloo
                     if (Difficulties.Types["InfiniteLives"])
@@ -225,7 +230,7 @@ public static class IntermissionHandler {
     public static void Update() {
         if (TankFunctionWait > 0)
             TankFunctionWait -= RuntimeData.DeltaTime;
-        if (TankFunctionWait <= 0 && _oldWait > 0 && !MainMenuUI.Active) {
+        if (TankFunctionWait <= 0 && _oldWait > 0 && !MainMenuUI.IsActive) {
             // FIXME: maybe causes issues since the mission is 1 tick from starting?
             // TODO: move this to the animator?
             if (!CampaignGlobals.InMission) {
@@ -236,13 +241,13 @@ public static class IntermissionHandler {
         }
         DebugManager.UpdateDebug();
 
-        if (MainMenuUI.Active) {
+        if (MainMenuUI.IsActive) {
             PlayerTank.KillCounts[NetPlay.GetMyClientId()] = 0;
             // don't know if this fucks with the stack or not. to be determined.
             PlayerTank.PlayerStatistics = default;
         }
 
-        if (!CameraGlobals.OverheadView && _wasOverhead && !LevelEditorUI.Active)
+        if (!CameraGlobals.OverheadView && _wasOverhead && !LevelEditorUI.IsActive)
             BeginIntroSequence();
 
         _wasOverhead = CameraGlobals.OverheadView;
@@ -280,8 +285,8 @@ public static class IntermissionHandler {
     }
 
     public static void RenderCountdownGraphics() {
-        if (!MainMenuUI.Active && !CameraGlobals.OverheadView && !LevelEditorUI.Active/* && TankFunctionWait > 0*/) {
-            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, PrepareDisplay, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 3), 
+        if (!MainMenuUI.IsActive && !CameraGlobals.OverheadView && !LevelEditorUI.IsActive/* && TankFunctionWait > 0*/) {
+            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, PrepareDisplay, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 3), 
                 IntermissionSystem.BackgroundColor, IntermissionSystem.BannerColor, CountdownAnimator.CurrentScale.ToResolution(), 0f, Anchor.Center, 3);
         }
     }

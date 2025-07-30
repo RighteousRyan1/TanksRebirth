@@ -1,25 +1,46 @@
 ﻿using Microsoft.Xna.Framework;
 
-namespace TanksRebirth.GameContent;
+namespace TanksRebirth.GameContent.Systems.TankSystem;
 
 public class TankProperties {
+    /// <summary>Whether or not the tank should become invisible at mission start. Word 1</summary>
+    public bool Invisible { get; set; }
+    /// <summary>The maximum amount of mines this <see cref="Tank"/> can place. Word 3.</summary>
+    public uint MineLimit { get; set; }
+    /// <summary>How long until this <see cref="Tank"/> can lay another mine. Word 9.</summary>
+    public uint MineCooldown { get; set; }
+    /// <summary>How long this <see cref="Tank"/> will be immobile upon laying a mine. Word 10.</summary>
+    public uint MineStun { get; set; }
+    /// <summary>How fast the tank should accelerate towards its <see cref="MaxSpeed"/>. Word 11.</summary>
+    public float Acceleration { get; set; }
+    /// <summary>How fast the tank should decelerate when not moving. Leave between 0 and 1, please. Word 12.</summary>
+    public float Deceleration { get; set; }
+    /// <summary>The maximum speed this tank can achieve. Word 23.</summary>
+    public float MaxSpeed { get; set; }
+    // we skip words 24 and 25 because WHY THE FUCK are they words in the tank parameters struct??? someone needs to fire whoever wrote this code 19 (or something) years ago
+    /// <summary>How fast this <see cref="Tank"/> turns. Word 26.</summary>
+    public float TurningSpeed { get; set; }
+    /// <summary>The maximum angle this <see cref="Tank"/> can turn (in radians) before it has to start pivoting. Word 27.</summary>
+    public float MaximalTurn { get; set; }
+    /// <summary>How many <see cref="Shell"/>s this <see cref="Tank"/> can own at any given time. Word 30.</summary>
+    public int ShellLimit { get; set; }
+    /// <summary>How many times the <see cref="Shell"/> this <see cref="Tank"/> shoots can ricochet. Word 34.</summary>
+    public uint RicochetCount { get; set; }
+    /// <summary>How long this <see cref="Tank"/> has to wait until it can fire another bullet. Word 37.</summary>
+    public uint ShellCooldown { get; set; }
+    /// <summary>How fast the bullets this <see cref="Tank"/> shoot are. Word 38.</summary>
+    public float ShellSpeed { get; set; }
+    /// <summary>How long this <see cref="Tank"/> will be immobile upon firing a bullet. Word 42.</summary>
+    public uint ShootStun { get; set; }
+
+
+
+    // ### SEPARATION BETWEEN ORIGINAL PROPERTIES AND REBIRTH-EXCLUSIVE PROPERTIES ###
+
+
+
     /// <summary>Whether or not the tank has artillery-like function during gameplay.</summary>
     public bool Stationary { get; set; }
-
-    /// <summary>Whether or not the tank should become invisible at mission start.</summary>
-    public bool Invisible { get; set; }
-
-    /// <summary>How fast the tank should accelerate towards its <see cref="MaxSpeed"/>.</summary>
-    public float Acceleration { get; set; } = 0.6f;
-
-    /// <summary>How fast the tank should decelerate when not moving.</summary>
-    public float Deceleration { get; set; } = 0.3f;
-
-    /// <summary>The maximum speed this tank can achieve.</summary>
-    public float MaxSpeed { get; set; }
-
-    /// <summary>How fast the bullets this <see cref="Tank"/> shoot are.</summary>
-    public float ShellSpeed { get; set; }
 
     /// <summary>The volume of the footprint placement sounds.</summary>
     public float TreadVolume { get; set; }
@@ -32,33 +53,6 @@ public class TankProperties {
 
     /// <summary>The type of bullet this <see cref="Tank"/> shoots.</summary>
     public int ShellType { get; set; }
-
-    /// <summary>The maximum amount of mines this <see cref="Tank"/> can place.</summary>
-    public uint MineLimit { get; set; }
-
-    /// <summary>How long this <see cref="Tank"/> will be immobile upon firing a bullet.</summary>
-    public uint ShootStun { get; set; }
-
-    /// <summary>How long this <see cref="Tank"/> will be immobile upon laying a mine.</summary>
-    public uint MineStun { get; set; }
-
-    /// <summary>How long this <see cref="Tank"/> has to wait until it can fire another bullet.</summary>
-    public uint ShellCooldown { get; set; }
-
-    /// <summary>How long until this <see cref="Tank"/> can lay another mine</summary>
-    public uint MineCooldown { get; set; }
-
-    /// <summary>How many times the <see cref="Shell"/> this <see cref="Tank"/> shoots can ricochet.</summary>
-    public uint RicochetCount { get; set; }
-
-    /// <summary>How many <see cref="Shell"/>s this <see cref="Tank"/> can own at any given time.</summary>
-    public int ShellLimit { get; set; }
-
-    /// <summary>How fast this <see cref="Tank"/> turns.</summary>
-    public float TurningSpeed { get; set; }
-
-    /// <summary>The maximum angle this <see cref="Tank"/> can turn (in radians) before it has to start pivoting.</summary>
-    public float MaximalTurn { get; set; }
 
     /// <summary>Whether or not this <see cref="Tank"/> can lay a <see cref="TankFootprint"/>.</summary>
     public bool CanLayTread { get; set; } = true;

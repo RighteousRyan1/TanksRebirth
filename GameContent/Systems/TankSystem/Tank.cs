@@ -7,7 +7,6 @@ using TanksRebirth.Internals.Common.Utilities;
 using System.Linq;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using tainicom.Aether.Physics2D.Dynamics;
-using TanksRebirth.Internals.Common.Framework;
 using TanksRebirth.GameContent.Systems;
 using System.Collections.Generic;
 using System.IO;
@@ -20,10 +19,11 @@ using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
+using TanksRebirth.GameContent.Systems.AI;
+using TanksRebirth.Internals.Common.Framework.Collisions;
 
-namespace TanksRebirth.GameContent;
+namespace TanksRebirth.GameContent.Systems.TankSystem;
 
-// TODO: have to load type by tier - 2, since constants have been changed
 public abstract class Tank {
     #region TexPack
 
@@ -126,6 +126,10 @@ public abstract class Tank {
 
     #endregion
 
+    int _oldShellLimit;
+
+    public Shell? LastShotShell;
+
     public static bool ShowTeamVisuals = false;
 
     public static World CollisionsWorld = new(Vector2.Zero);
@@ -139,18 +143,18 @@ public abstract class Tank {
 
     #region Fields / Properties
     private float _oldRotation;
-    public Body Body { get; set; } = new();
+    public Body Physics { get; set; } = new();
 
     /// <summary>This <see cref="Tank"/>'s model. If this will be any different than the default, set <see cref="UsesCustomModel"/> to <c>true</c>.</summary>
     public Model Model { get; set; }
     public bool UsesCustomModel { get; set; }
 
     /// <summary>This <see cref="Tank"/>'s world position. Used to change the actual location of the model relative to the <see cref="View"/> and <see cref="Projection"/>.</summary>
-    public Matrix World { get; set; }
+    public Matrix World;
     /// <summary>How the <see cref="Model"/> is viewed through the <see cref="Projection"/>.</summary>
-    public Matrix View { get; set; }
+    public Matrix View;
     /// <summary>The projection from the screen to the <see cref="Model"/>.</summary>
-    public Matrix Projection { get; set; }
+    public Matrix Projection;
 
     public int WorldId { get; set; }
     /// <summary>This <see cref="Tank"/>'s <see cref="TeamID"/>.</summary>
@@ -163,20 +167,24 @@ public abstract class Tank {
     public float CurMineCooldown { get; private set; } = 0;
     public float CurMineStun { get; private set; } = 0;
 
-    private int _oldShellLimit;
+    public float TimeSinceLastAction = 15000;
 
     public TankProperties Properties = new();
 
     public Tank[] TanksSpotted = [];
     public Shell[] OwnedShells = [];
 
-    public Vector2 TurretPosition => Position + new Vector2(0, 20).Rotate(-TurretRotation);
+    /// <summary>The *backend* length of the turret. Does not affect anything graphically.</summary>
+    public float TurretLength = 20;
+    public Vector2 TurretPosition => Position + new Vector2(0, TurretLength).Rotate(-TurretRotation);
     public Vector3 TurretPosition3D => new(TurretPosition.X, 11, TurretPosition.Y);
-    public Vector2 Position;
+    public Vector2 Position {
+        get => Physics.Position * UNITS_PER_METER;
+        set => Physics.Position = value / UNITS_PER_METER;
+    }
+
     public Vector2 Velocity;
     public Vector2 KnockbackVelocity;
-
-    /// <summary>The rotation of this <see cref="Tank"/>'s barrel. Generally should not be modified in a player context.</summary>>
     public BoundingBox Worldbox { get; set; }
 
     /// <summary>The 2D circle-represented hitbox of this <see cref="Tank"/>.</summary>
@@ -197,90 +205,100 @@ public abstract class Tank {
 
     /// <summary>Whether or not this <see cref="Tank"/> is being hovered by the pointer.</summary>
     public bool IsHoveredByMouse { get; internal set; }
-
+    /// <summary>The rotation of this <see cref="Tank"/>'s turret
+    /// . Generally should not be modified in a player context.</summary>>
     public float TurretRotation { get; set; }
 
-    /// <summary>The rotation of this <see cref="Tank"/>.</summary>
-    public float TankRotation { get; set; }
+    /// <summary>The rotation of this <see cref="Tank"/>'s chassis.</summary>
+    public float ChassisRotation { get; set; }
 
-    /// <summary>The rotation this <see cref="Tank"/> will pivot to.</summary>
-    public float TargetTankRotation;
+    /// <summary>The rotation this <see cref="Tank"/>'s chassis will pivot to.</summary>
+    public float DesiredChassisRotation;
 
     /// <summary>Whether or not the tank has been destroyed or not.</summary>
-    public bool Dead { get; set; }
-
-    /// <summary>Whether or not this tank is used for ingame purposes or not.</summary>
-    public bool IsIngame { get; set; } = true;
+    public bool IsDestroyed { get; set; }
 
     public Vector3 Position3D => Position.ExpandZ();
     public Vector3 Velocity3D => Velocity.ExpandZ();
+
     public Vector3 Scaling = Vector3.One;
 
     #endregion
 
     #region Model Stuff
 
-    internal Matrix[] _boneTransforms;
+    internal Matrix[] boneTransforms = [];
 
-    internal ModelMesh _cannonMesh;
+    internal ModelMesh? cannonMesh;
 
     public bool Flip;
 
     #endregion
-    public static int[] GetActiveTeams() {
+    public static int[] GetActiveTeams(Func<Tank, bool>? predicate) {
         var teams = new List<int>();
-        foreach (var tank in GameHandler.AllTanks) {
-            if (tank is not null && !tank.Dead) {
-                if (!teams.Contains(tank.Team))
-                    teams.Add(tank.Team);
+
+        if (predicate != null) {
+            var tanks = GameHandler.AllTanks.Where(predicate.Invoke).ToArray();
+            foreach (var tank in tanks) {
+                if (tank is null || tank.IsDestroyed) continue;
+                if (teams.Contains(tank.Team)) continue;
+                teams.Add(tank.Team);
             }
+            return [.. teams];
+        }
+        // if no predicate is given, just get all teams
+        foreach (var tank in GameHandler.AllTanks) {
+            if (tank is null || tank.IsDestroyed) continue;
+            if (teams.Contains(tank.Team)) continue;
+            teams.Add(tank.Team);
         }
 
         return [.. teams];
     }
     /// <summary>Initializes the physics body for this tank. Only use if you know what you're doing with it.</summary>
-    public void InitPhysics() {
-        Body = CollisionsWorld.CreateCircle(TNK_WIDTH * 0.4f / UNITS_PER_METER, 1f, Position / UNITS_PER_METER,
+    public void GeneratePhysics() {
+        //Scaling = new Vector3(1, 1, 3);
+        //Body = CollisionsWorld.CreateEllipse(TNK_WIDTH * 0.4f / UNITS_PER_METER * Scaling.X, TNK_WIDTH * 0.4f / UNITS_PER_METER * Scaling.Z, 8, 1f, 
+        //    Position / UNITS_PER_METER, bodyType: BodyType.Dynamic);
+        Physics = CollisionsWorld.CreateCircle(TNK_WIDTH * 0.4f / UNITS_PER_METER, 1f, Position / UNITS_PER_METER,
             BodyType.Dynamic);
+        Physics.Tag = this;
     }
     /// <summary>Initializes bone transforms and mesh assignments. You will want to call this method if you're modifying a tank model, and the new model
     /// contains a different number of bones than the original one.</summary>
     public void InitModelSemantics() {
         // for some reason Model is null when returning from campaign completion with certain mods.
         if (Model is null) {
-            Remove(true);
-            return;
+            Model = this is PlayerTank ? ModelGlobals.TankPlayer.Asset : ModelGlobals.TankEnemy.Asset;
+            TankGame.ClientLog.Write("Unexpected pitfall in initializing tank model semantics. Assigning defaults.", LogType.Warn);
         }
 
-        _cannonMesh = Model.Meshes["Cannon"];
-        _boneTransforms = new Matrix[Model.Bones.Count];
+        cannonMesh = Model.Meshes["Cannon"];
+        boneTransforms = new Matrix[Model.Bones.Count];
     }
     public void AddProp2D(Prop2D prop, Func<bool>? destroyOn = null) {
-        if (!MainMenuUI.Active && IsIngame) {
-            if (Props.Contains(prop))
-                return;
-            Props.Add(prop);
-            var particle = GameHandler.Particles.MakeParticle(Position3D + prop.RelativePosition, prop.Texture);
+        if (Props.Contains(prop))
+            return;
+        Props.Add(prop);
+        var particle = GameHandler.Particles.MakeParticle(Position3D + prop.RelativePosition, prop.Texture);
 
-            particle.Scale = prop.Scale;
-            particle.Tag =
-                $"cosmetic_2d_{GetHashCode()}"; // store the hash code of this tank, so when we destroy the cosmetic's particle, it destroys all belonging to this tank!
-            particle.HasAddativeBlending = false;
-            // += vs =  ?
-            // TODO: this prolly is the culprit of 2d cosmetics not doin nun
-            particle.UniqueBehavior = particle => {
-                particle.Position = Position3D + prop.RelativePosition;
-                particle.Roll = prop.Rotation.X;
-                particle.Pitch = prop.Rotation.Y;
-                particle.Yaw = prop.Rotation.Z;
-                particle.Scale = (Properties.Invisible && CampaignGlobals.InMission) ? Vector3.Zero : prop.Scale;
+        particle.Scale = prop.Scale;
+        particle.Tag = $"cosmetic_2d_{GetHashCode()}"; // store the hash code of this tank, so when we destroy the cosmetic's particle, it destroys all belonging to this tank!
+        particle.HasAdditiveBlending = false;
+        // += vs =  ?
+        // TODO: this prolly is the culprit of 2d cosmetics not doin nun
+        particle.UniqueBehavior = particle => {
+            particle.Position = Position3D + prop.RelativePosition;
+            particle.Roll = prop.Rotation.X;
+            particle.Pitch = prop.Rotation.Y;
+            particle.Yaw = prop.Rotation.Z;
+            particle.Scale = Properties.Invisible && CampaignGlobals.InMission ? Vector3.Zero : prop.Scale;
 
-                if (destroyOn == null) return;
+            if (destroyOn == null) return;
 
-                if (destroyOn.Invoke())
-                    particle.Destroy();
-            };
-        }
+            if (destroyOn.Invoke())
+                particle.Destroy();
+        };
     }
     void OnMissionStart() {
         DoInvisibilityGFXandSFX();
@@ -290,41 +308,70 @@ public abstract class Tank {
 
         if (Difficulties.Types["FFA"])
             Team = TeamID.NoTeam;
-        if (!Properties.Invisible || Dead) return;
+        if (!Properties.Invisible || IsDestroyed) return;
 
         SoundPlayer.PlaySoundInstance(invisibleTankSound, SoundContext.Effect, 0.3f);
 
-        var lightParticle = GameHandler.Particles.MakeParticle(Position3D,
+        var lp1 = GameHandler.Particles.MakeParticle(Position3D,
             GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_particle"));
 
-        lightParticle.Alpha = 1f;
-        lightParticle.IsIn2DSpace = true;
-        lightParticle.Color = Color.SkyBlue;
+        var color = new Color(0, 200, 255, 181);
 
-        lightParticle.UniqueBehavior = (lp) => {
-            lp.Position = Position3D;
-            lp.TextureScale = new(5);
+        lp1.Alpha = 1f;
+        lp1.IsIn2DSpace = true;
+        lp1.Color = color;
 
-            if (lp.LifeTime > 90)
-                lp.Alpha -= 0.01f * RuntimeData.DeltaTime;
+        lp1.UniqueBehavior = (lp) => {
+            lp1.Position = Position3D;
+            lp1.TextureScale = new(5);
+
+            if (lp1.LifeTime > 75) {
+                lp1.Alpha -= 0.02f * RuntimeData.DeltaTime;
+                lp1.Scale -= new Vector3(0.02f);
+            }
+
+            if (lp1.Alpha <= 0)
+                lp1.Destroy();
+        };
+
+        var lp2 = GameHandler.Particles.MakeParticle(Position3D,
+            GameResources.GetGameResource<Texture2D>("Assets/textures/misc/light_particle"));
+
+        lp2.Alpha = 1f;
+        lp2.IsIn2DSpace = true;
+        lp2.Color = color;
+        lp2.Alpha = 0.4f;
+
+        lp2.UniqueBehavior = (lp) => {
+            lp2.Position = Position3D;
+            lp2.TextureScale = new(15);
+
+            if (lp2.LifeTime > 40) {
+                lp2.Alpha -= 0.025f * RuntimeData.DeltaTime;
+                lp1.Scale -= new Vector3(0.02f);
+            }
 
             if (lp.Alpha <= 0)
-                lp.Destroy();
+                lp2.Destroy();
         };
 
         const int NUM_LOCATIONS = 8;
 
         for (int i = 0; i < NUM_LOCATIONS; i++) {
-            var lp = GameHandler.Particles.MakeParticle(Position3D + new Vector3(0, 5, 0),
+            var lpSmoke = GameHandler.Particles.MakeParticle(Position3D + new Vector3(0, 5, 0),
                 GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
 
-            lp.Color = Color.SkyBlue;
+            lpSmoke.Color = color;
 
             var velocity = Vector2.UnitY.Rotate(MathHelper.ToRadians(360f / NUM_LOCATIONS * i));
 
-            lp.Scale = new(1f);
+            lpSmoke.Pitch = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
-            lp.UniqueBehavior = (elp) => {
+            lpSmoke.FaceTowardsMe = CameraGlobals.IsUsingFirstPresonCamera;
+
+            lpSmoke.Scale = new(0.75f);
+
+            lpSmoke.UniqueBehavior = (elp) => {
                 elp.Position.X += velocity.X * RuntimeData.DeltaTime;
                 elp.Position.Z += velocity.Y * RuntimeData.DeltaTime;
 
@@ -356,7 +403,7 @@ public abstract class Tank {
             }
         }
 
-        InitPhysics();
+        GeneratePhysics();
 
         if (GameScene.Theme == MapTheme.Christmas)
             Props.Add(CosmeticChest.SantaHat);
@@ -365,89 +412,116 @@ public abstract class Tank {
             if (cos is Prop2D cos2d)
                 AddProp2D(cos2d);
 
-        if (IsIngame) {
-            if (Difficulties.Types["BulletHell"])
-                Properties.RicochetCount *= 3;
-            if (Difficulties.Types["MachineGuns"]) {
-                Properties.ShellCooldown = 5;
-                Properties.ShellLimit = 50;
-                Properties.ShootStun = 0;
+        if (Difficulties.Types["BulletHell"])
+            Properties.RicochetCount *= 3;
+        if (Difficulties.Types["MachineGuns"]) {
+            Properties.ShellCooldown = 5;
+            Properties.ShellLimit = 50;
+            Properties.ShootStun = 0;
 
-                if (this is AITank tank)
-                    tank.AiParams.Inaccuracy *= 2;
-            }
+            if (this is AITank tank)
+                tank.Parameters.DetectionForgivenessHostile *= 2;
+        }
 
-            if (Difficulties.Types["Shotguns"]) {
-                Properties.ShellSpread = 0.3f;
-                Properties.ShellShootCount = 3;
-                Properties.ShellLimit *= 3;
+        if (Difficulties.Types["Shotguns"]) {
+            Properties.ShellSpread = 0.3f;
+            Properties.ShellShootCount = 3;
+            Properties.ShellLimit *= 3;
 
-                if (this is AITank tank)
-                    tank.AiParams.Inaccuracy *= 2;
-            }
+            if (this is AITank tank)
+                tank.Parameters.DetectionForgivenessHostile *= 2;
         }
 
         _oldShellLimit = Properties.ShellLimit;
         OwnedShells = new Shell[Properties.ShellLimit];
         CampaignGlobals.OnMissionStart += OnMissionStart;
     }
+    void DecrementTimers() {
+        if (CurShootStun > 0)
+            CurShootStun -= RuntimeData.DeltaTime;
+        if (CurShootCooldown > 0)
+            CurShootCooldown -= RuntimeData.DeltaTime;
+        if (CurMineStun > 0)
+            CurMineStun -= RuntimeData.DeltaTime;
+        if (CurMineCooldown > 0)
+            CurMineCooldown -= RuntimeData.DeltaTime;
+    }
     /// <summary>Update this <see cref="Tank"/>.</summary>
     public virtual void Update() {
-        if (Dead || !GameScene.ShouldRenderAll)
-            return;
-
         OnPreUpdate?.Invoke(this);
         PreUpdate();
+
+        DecrementTimers();
+
+        if (IsDestroyed) return;
 
         KnockbackVelocity.X = MathUtils.RoughStep(KnockbackVelocity.X, 0, 0.1f * RuntimeData.DeltaTime);
         KnockbackVelocity.Y = MathUtils.RoughStep(KnockbackVelocity.Y, 0, 0.1f * RuntimeData.DeltaTime);
 
-        Position = Body.Position * UNITS_PER_METER;
-
         // magical multiplication number to maintain values like 1.8 max speed with the original game
-        Body.LinearVelocity = (Velocity * 0.55f + KnockbackVelocity) / UNITS_PER_METER;
+        Physics.LinearVelocity = (Velocity * 0.55f + KnockbackVelocity) / UNITS_PER_METER;
 
         // try to make positive. i hate game
-        World = Matrix.CreateScale(Scaling) 
-            * Matrix.CreateFromYawPitchRoll(-TankRotation - (Flip ? MathHelper.Pi : 0f), 0, 0)
+        World = Matrix.CreateScale(Scaling)
+            * Matrix.CreateFromYawPitchRoll(-ChassisRotation - (Flip ? MathHelper.Pi : 0f), 0, 0)
             * Matrix.CreateTranslation(Position3D);
 
         Worldbox = new(Position3D - new Vector3(7, 0, 7), Position3D + new Vector3(10, 15, 10));
 
         if (IsTurning) {
-            // var real = TankRotation + MathHelper.PiOver2;
-            if (TargetTankRotation - TankRotation >= MathHelper.PiOver2) {
-                TankRotation += MathHelper.Pi;
+            if (DesiredChassisRotation - ChassisRotation >= MathHelper.PiOver2) {
+                ChassisRotation += MathHelper.Pi;
                 Flip = !Flip;
             }
-            else if (TargetTankRotation - TankRotation <= -MathHelper.PiOver2) {
-                TankRotation -= MathHelper.Pi;
+            else if (DesiredChassisRotation - ChassisRotation <= -MathHelper.PiOver2) {
+                ChassisRotation -= MathHelper.Pi;
                 Flip = !Flip;
             }
         }
 
-        // FIXME: is the 'ToRadians(5)' operation necessary?
-        IsTurning = !(TankRotation > TargetTankRotation - Properties.MaximalTurn/* - MathHelper.ToRadians(5)*/ &&
-                      TankRotation < TargetTankRotation + Properties.MaximalTurn/* + MathHelper.ToRadians(5)*/);
+        // * 2 since it's in both directions
+        IsTurning = !(ChassisRotation > DesiredChassisRotation - Properties.MaximalTurn * 2 && ChassisRotation < DesiredChassisRotation + Properties.MaximalTurn * 2);
 
-        if (!MainMenuUI.Active && (!CampaignGlobals.InMission || IntermissionSystem.IsAwaitingNewMission))
+        // ensure no movements happen when not desired
+        if (!MainMenuUI.IsActive && (!CampaignGlobals.InMission || IntermissionSystem.IsAwaitingNewMission))
             Velocity = Vector2.Zero;
+
+        if (!IsTurning) {
+            Speed += Properties.Acceleration * RuntimeData.DeltaTime;
+
+            if (Speed > Properties.MaxSpeed)
+                Speed = Properties.MaxSpeed;
+        }
+        else
+            Speed *= Properties.Deceleration * (1f - RuntimeData.DeltaTime);
+
+        // bigkitty told me that stuns instantly apply zero-velocity
+        if (CurShootStun > 0 || CurMineStun > 0 || Properties.Stationary || (!CampaignGlobals.InMission && !MainMenuUI.IsActive)) {
+            Velocity = Vector2.Zero;
+            Speed = 0f;
+        }
+
+        // try to make negative. go poopoo
+        cannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + ChassisRotation + (Flip ? MathHelper.Pi : 0));
+        Model!.Root.Transform = World;
+
+        Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
 
         if (!Properties.Stationary) {
             float treadPlaceTimer = 0;
             if (Velocity.Length() != 0) {
-                treadPlaceTimer = MathF.Round(11 / Velocity.Length());
+                treadPlaceTimer = MathF.Round(11 / Velocity.Length()) * Scaling.X;
                 // MAYBE: change back to <= delta time if it doesn't work.
                 if (RuntimeData.RunTime % treadPlaceTimer < RuntimeData.DeltaTime)
                     LayFootprint(Properties.TrackType == TrackID.Thick);
             }
-            if (IsTurning && TankRotation != _oldRotation) {
-                treadPlaceTimer = Properties.TurningSpeed * 150;
+            if (IsTurning && ChassisRotation != _oldRotation) {
+                treadPlaceTimer = Properties.TurningSpeed * 150 * Scaling.X;
                 // MAYBE: change back to <= delta time if it doesn't work.
                 if (RuntimeData.RunTime % treadPlaceTimer < RuntimeData.DeltaTime)
                     LayFootprint(Properties.TrackType == TrackID.Thick);
             }
-            if (!Properties.IsSilent && Velocity.Length() > 0) {
+            if (!Properties.IsSilent && Velocity.Length() > 0.01) {
                 // why did i clamp? i hate old code
                 if (RuntimeData.RunTime % MathHelper.Clamp(treadPlaceTimer / 2, 4, 6) < RuntimeData.DeltaTime) {
                     // can use reflection to go over or under the pitch limits, remember that
@@ -462,42 +536,12 @@ public abstract class Tank {
             }
         }
 
-        if (!IsTurning) {
-            IsTurning = false;
-            Speed += Properties.Acceleration * RuntimeData.DeltaTime;
-
-
-            if (Speed > Properties.MaxSpeed)
-                Speed = Properties.MaxSpeed;
-        }
-
-        if (IsTurning || CurShootStun > 0 || CurMineStun > 0 || Properties.Stationary) {
-            Speed -= Properties.Deceleration /* * (DecelerationRateDecayTime > 0 ? 0.25f : 1f)*/ * RuntimeData.DeltaTime;
-            if (Speed < 0)
-                Speed = 0;
-            IsTurning = true;
-        }
-
-        // try to make negative. go poopoo
-        _cannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
-        Model!.Root.Transform = World;
-
-        Model.CopyAbsoluteBoneTransformsTo(_boneTransforms);
-
-        if (CurShootStun > 0)
-            CurShootStun -= RuntimeData.DeltaTime;
-        if (CurShootCooldown > 0)
-            CurShootCooldown -= RuntimeData.DeltaTime;
-        if (CurMineStun > 0)
-            CurMineStun -= RuntimeData.DeltaTime;
-        if (CurMineCooldown > 0)
-            CurMineCooldown -= RuntimeData.DeltaTime;
-
         // fix 2d peeopled
         foreach (var cosmetic in Props)
             cosmetic?.UniqueBehavior?.Invoke(cosmetic, this);
 
-        _oldRotation = TankRotation;
+        _oldRotation = ChassisRotation;
+        TimeSinceLastAction += RuntimeData.DeltaTime;
 
         OnPostUpdate?.Invoke(this);
         PostUpdate();
@@ -506,16 +550,16 @@ public abstract class Tank {
     public virtual void PostUpdate() { }
     /// <summary>Damage this <see cref="Tank"/>. If it has no armor, destroy it.</summary>
     public virtual void Damage(ITankHurtContext context, bool netSend, Color? colorOverride = null) {
-        if (Dead || Properties.Immortal)
+        if (IsDestroyed || Properties.Immortal)
             return;
 
         Color popupColor;
-        
+
         popupColor = context.Source is not null ? context.Source switch {
             PlayerTank pl => PlayerID.PlayerTankColors[pl.PlayerType],
             AITank ai => AITank.TankDestructionColors[ai.AiTankType],
             _ => Color.White
-        } : (colorOverride is null ? Color.White : colorOverride.Value);
+        } : colorOverride is null ? Color.White : colorOverride.Value;
 
         if (netSend)
             Client.SyncDamage(WorldId, popupColor);
@@ -555,7 +599,7 @@ public abstract class Tank {
 
         part.Color = color;
 
-        part.HasAddativeBlending = false;
+        part.HasAdditiveBlending = false;
         part.Origin2D = FontGlobals.RebirthFont.MeasureString(TankGame.GameLanguage.Hit) / 2;
         part.Scale = new Vector3(Vector2.One.ToResolution(), 1);
         part.Alpha = 0;
@@ -582,7 +626,7 @@ public abstract class Tank {
                 a.Destroy();
         };
         part.UniqueDraw = particle => {
-            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, particle.Text,
+            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, particle.Text,
                 MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(particle.Position),
                     CameraGlobals.GameView, CameraGlobals.GameProjection),
                 particle.Color, Color.White, new(particle.Scale.X, particle.Scale.Y), 0f, Anchor.Center);
@@ -593,7 +637,7 @@ public abstract class Tank {
         CampaignGlobals.OnMissionStart -= OnMissionStart;
 
         // i think this is right? | (Probably, a destroyed tank is a dead tank!)
-        Dead = true;
+        IsDestroyed = true;
 
         const string tankDestroySound0 = "Assets/sounds/tnk_destroy.ogg";
         var destroy = SoundPlayer.PlaySoundInstance(tankDestroySound0, SoundContext.Effect, 0.2f);
@@ -615,7 +659,7 @@ public abstract class Tank {
 
             var particle = GameHandler.Particles.MakeParticle(Position3D, tex);
 
-            particle.HasAddativeBlending = false;
+            particle.HasAdditiveBlending = false;
 
             var vel = new Vector3(Client.ClientRandom.NextFloat(-3, 3), Client.ClientRandom.NextFloat(3, 6),
                 Client.ClientRandom.NextFloat(-3, 3));
@@ -648,7 +692,7 @@ public abstract class Tank {
         explosionParticle.Scale = new(50f);
         explosionParticle.TextureScale = new(4f);
 
-        explosionParticle.HasAddativeBlending = true;
+        explosionParticle.HasAdditiveBlending = true;
 
         explosionParticle.IsIn2DSpace = true;
 
@@ -664,14 +708,14 @@ public abstract class Tank {
     public virtual void LayFootprint(bool alt) {
         if (!Properties.CanLayTread)
             return;
-        new TankFootprint(this, -TankRotation, alt) {
-            Position = Position3D + new Vector3(0, 0.15f, 0),
-        };
+        // will be TankRotation, Position, Scaling.FlattenZ()
+        var fp = TankFootprint.Place(this, -ChassisRotation, alt);
+        fp.Position += new Vector3(0, 0.15f, 0);
     }
 
     /// <summary>Shoot a <see cref="Shell"/> from this <see cref="Tank"/>.</summary>
-    public virtual void Shoot(bool fxOnly) {
-        if ((!MainMenuUI.Active && !CampaignGlobals.InMission) || !Properties.HasTurret)
+    public virtual void Shoot(bool fxOnly, bool netSend = true) {
+        if (!MainMenuUI.IsActive && !CampaignGlobals.InMission || !Properties.HasTurret)
             return;
 
         if (CurShootCooldown > 0 || OwnedShellCount >= Properties.ShellLimit / Properties.ShellShootCount)
@@ -680,11 +724,13 @@ public abstract class Tank {
         bool flip = false;
         float angle = 0f;
 
-        var new2d = Vector2.UnitY.Rotate(TurretRotation);
+        var rotatedPos = Vector2.UnitY.Rotate(TurretRotation);
 
         if (!fxOnly) {
-            var shell = new Shell(TurretPosition, new Vector2(-new2d.X, new2d.Y) * Properties.ShellSpeed,
+            var shell = new Shell(TurretPosition, new Vector2(-rotatedPos.X, rotatedPos.Y) * Properties.ShellSpeed,
                 Properties.ShellType, this, Properties.RicochetCount, homing: Properties.ShellHoming);
+
+            LastShotShell = shell;
 
             OnShoot?.Invoke(this, shell);
 
@@ -692,18 +738,17 @@ public abstract class Tank {
                 ai.ModdedData?.Shoot(shell);
 
             // only send this code once for the shooting player
-            if (this is PlayerTank pt) {
-                if (NetPlay.IsClientMatched(pt.PlayerId))
+            if (netSend) {
+                if (this is PlayerTank pt) {
+                    if (NetPlay.IsClientMatched(pt.PlayerId))
+                        Client.SyncShellFire(shell);
+                }
+                else
                     Client.SyncShellFire(shell);
             }
-            else
-                Client.SyncShellFire(shell);
         }
 
         DoShootParticles();
-
-        // theoretical "recoil" velocity
-        // idea: separate recoil velocity from movement velocity
 
         var force = (Position - TurretPosition) * Properties.Recoil;
         KnockbackVelocity = force / UNITS_PER_METER;
@@ -722,20 +767,20 @@ public abstract class Tank {
 
                 var shell = new Shell(Position, Vector2.Zero, Properties.ShellType, this,
                     homing: Properties.ShellHoming);
-                new2d = Vector2.UnitY.Rotate(TurretRotation);
+                rotatedPos = Vector2.UnitY.Rotate(TurretRotation);
 
                 var newPos = Position + new Vector2(0, 20).Rotate(-TurretRotation + newAngle);
 
                 shell.Position = new Vector2(newPos.X, newPos.Y);
 
-                shell.Velocity = new Vector2(-new2d.X, new2d.Y).Rotate(newAngle) *
+                shell.Velocity = new Vector2(-rotatedPos.X, rotatedPos.Y).Rotate(newAngle) *
                                  Properties.ShellSpeed;
 
                 shell.RicochetsRemaining = Properties.RicochetCount;
             }
         }
 
-        timeSinceLastAction = 0;
+        TimeSinceLastAction = 0;
 
         CurShootStun = Properties.ShootStun;
         CurShootCooldown = Properties.ShellCooldown;
@@ -746,59 +791,65 @@ public abstract class Tank {
         _oldShellLimit = Properties.ShellLimit;
     }
     public void DoShootParticles() {
-        if (!CameraGlobals.IsUsingFirstPresonCamera) {
-            var hit = GameHandler.Particles.MakeParticle(TurretPosition3D,
-                GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
+        var hit = GameHandler.Particles.MakeParticle(TurretPosition3D,
+            GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
 
-            hit.Pitch = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
-            hit.Scale = new(0.5f);
-            hit.UniqueBehavior = (part) => {
-                part.Color = Color.Orange;
+        var billboard = CameraGlobals.IsUsingFirstPresonCamera;
 
-                if (part.LifeTime > 1)
-                    part.Alpha -= 0.1f * RuntimeData.DeltaTime;
-                if (part.Alpha <= 0)
-                    part.Destroy();
-            };
-        }
-        Particle smoke;
+        hit.Pitch = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
+        hit.Scale = new(0.5f);
+        hit.FaceTowardsMe = billboard;
+        hit.UniqueBehavior = (part) => {
+            part.Color = Color.Orange;
 
-        if (CameraGlobals.IsUsingFirstPresonCamera) {
-            smoke = GameHandler.Particles.MakeParticle(TurretPosition3D,
-                ModelGlobals.Smoke.Asset,
-                GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
+            if (part.LifeTime > 1)
+                part.Alpha -= 0.1f * RuntimeData.DeltaTime;
+            if (part.Alpha <= 0)
+                part.Destroy();
+        };
+        var smoke = GameHandler.Particles.MakeParticle(TurretPosition3D, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
+        smoke.Pitch = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
+        smoke.Scale = new(0.35f);
+        var smokeInitColor = new Color(251, 122, 74, 255);
+        smoke.HasAdditiveBlending = false;
+        smoke.FaceTowardsMe = billboard;
 
-            smoke.Scale = new(1.25f);
-            smoke.Color = new(84, 22, 0, 255);
-            smoke.HasAddativeBlending = false;
-        }
-        else {
-            smoke = GameHandler.Particles.MakeParticle(TurretPosition3D, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
+        var fullLerpTime = 20f;
 
-            smoke.Roll = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
+        smoke.UniqueBehavior = (p) => {
+            var time = MathF.Min(smoke.LifeTime, fullLerpTime);
+            smoke.Color = Color.Lerp(smokeInitColor, new Color(80, 80, 80), time / fullLerpTime);
 
-            smoke.Scale = new(0.35f);
+            smoke.Scale += new Vector3(0.004f) * RuntimeData.DeltaTime;
 
-            smoke.Color = new(84, 22, 0, 255);
+            if (time == fullLerpTime) {
+                smoke.Alpha -= 0.04f * RuntimeData.DeltaTime;
 
-            smoke.HasAddativeBlending = false;
-        }
+                if (smoke.Alpha <= 0)
+                    smoke.Destroy();
+            }
+        };
 
-        int achieveable = 80;
-        float step = 1;
-        smoke.UniqueBehavior = (part) => {
-            part.Color.R = (byte)MathUtils.RoughStep(part.Color.R, achieveable, step);
-            part.Color.G = (byte)MathUtils.RoughStep(part.Color.G, achieveable, step);
-            part.Color.B = (byte)MathUtils.RoughStep(part.Color.B, achieveable, step);
+        var ring = GameHandler.Particles.MakeParticle(TurretPosition3D, GameResources.GetGameResource<Texture2D>("Assets/textures/misc/ring"));
+        ring.Pitch = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
+        ring.Scale = new(0.4f);
+        ring.HasAdditiveBlending = true;
+        var ringInitColor = Color.Red; // new(251, 122, 74, 255);
+        ring.FaceTowardsMe = billboard;
 
-            GeometryUtils.Add(ref part.Scale, 0.004f * RuntimeData.DeltaTime);
+        var fullLerpTimeRing = 10f;
 
-            if (part.Color.G == achieveable) {
-                part.Color.B = (byte)achieveable;
-                part.Alpha -= 0.04f * RuntimeData.DeltaTime;
+        ring.UniqueBehavior = (p) => {
+            var time = MathF.Min(ring.LifeTime, fullLerpTimeRing);
+            ring.Color = Color.Lerp(smokeInitColor, new Color(80, 80, 80), time / fullLerpTimeRing);
 
-                if (part.Alpha <= 0)
-                    part.Destroy();
+            ring.Scale += new Vector3(0.008f) * RuntimeData.DeltaTime;
+
+            if (time == fullLerpTimeRing) {
+                ring.Alpha -= 0.1f * RuntimeData.DeltaTime;
+
+                if (ring.Alpha <= 0)
+                    ring.Destroy();
             }
         };
     }
@@ -813,7 +864,7 @@ public abstract class Tank {
 
         OwnedMineCount++;
 
-        timeSinceLastAction = 0;
+        TimeSinceLastAction = 0;
 
         var mine = new Mine(this, Position, 600);
 
@@ -831,19 +882,13 @@ public abstract class Tank {
     }
 
     public virtual void Render() {
-        if (!GameScene.ShouldRenderAll)
-            return;
-        /*foreach (var shell in OwnedShells) {
-            SpriteFontUtils.DrawBorderedText(TankGame.SpriteRenderer, FontGlobals.RebirthFont, $"Owned by: {(this is PlayerTank ? PlayerID.Collection.GetKey(((PlayerTank)shell.Owner).PlayerType) : TankID.Collection.GetKey(((AITank)shell.Owner).Tier))}",
-                MatrixUtils.ConvertWorldToScreen(Vector3.Zero, shell.World, shell.View, shell.Projection) - new Vector2(0, 20), this is PlayerTank ? PlayerID.PlayerTankColors[((PlayerTank)shell.Owner).PlayerType].ToColor() : AITank.TankDestructionColors[((AITank)shell.Owner).Tier], Color.White, Vector2.One.ToResolution(), 0f, 2f);
-        }*/
-
-        //if (Dead)
-        //return;
+        if (!GameScene.ShouldRenderAll) return;
+        if (IsDestroyed) return;
 
         Projection = CameraGlobals.GameProjection;
         View = CameraGlobals.GameView;
-        if (!Dead) {
+
+        if (!CampaignGlobals.InMission || !Properties.Invisible && CampaignGlobals.InMission) {
             foreach (var cosmetic in Props) {
                 //if (GameProperties.InMission && Properties.Invisible)
                 //break;
@@ -860,11 +905,11 @@ public abstract class Tank {
                             if (cosmetic.LockOptions == PropLockOptions.ToTurret)
                                 rotY = cosmetic.Rotation.Y + TurretRotation;
                             else if (cosmetic.LockOptions == PropLockOptions.ToTank)
-                                rotY = cosmetic.Rotation.Y + TankRotation;
+                                rotY = cosmetic.Rotation.Y + ChassisRotation;
                             else if (cosmetic.LockOptions == PropLockOptions.ToTurretCentered)
                                 cosmetic.RelativePosition = cosmetic.RelativePosition.RotateXZ(-rotY);
 
-                            
+
                             effect.World = i == 0 ? Matrix.CreateRotationX(cosmetic.Rotation.X) * Matrix.CreateRotationY(rotY) * Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) * Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition)
                                 : Matrix.CreateRotationX(cosmetic.Rotation.X) * Matrix.CreateRotationY(cosmetic.Rotation.Y) * Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) * Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition) * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
                             effect.View = View;
@@ -874,7 +919,7 @@ public abstract class Tank {
                             effect.Texture = i == 0 ? cos3d.ModelTexture : GameResources.GetGameResource<Texture2D>("Assets/textures/ingame/block_shadow_h");
                             effect.SetDefaultGameLighting_IngameEntities();
                         }
-                        
+
                         mesh.Draw();
                     }
                 }
@@ -884,7 +929,7 @@ public abstract class Tank {
         if (!DebugManager.DebuggingEnabled) return;
 
         var info = new string[] {
-            $"Tank Rotation/Target: {TankRotation}/{TargetTankRotation}",
+            $"Tank Rotation/Target: {ChassisRotation}/{DesiredChassisRotation}",
             $"WorldID: {WorldId}",
             this is AITank ai
                 ? $"Turret Rotation/Target: {TurretRotation}/{ai.TargetTurretRotation}"
@@ -898,25 +943,22 @@ public abstract class Tank {
         if (DebugManager.DebugLevel != DebugManager.Id.EntityData) return;
         for (int i = 0; i < info.Length; i++) {
             var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Up * 20, World, View, Projection) -
-                new Vector2(0, (i * 20));
-            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, info[i], pos, 
+                new Vector2(0, i * 20);
+            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, info[i], pos, 
                 Color.Aqua, Color.Black, new Vector2(0.5f).ToResolution(), 0f, Anchor.TopCenter, 0.6f);
         }
     }
-    public uint timeSinceLastAction = 15000;
-
+    /// <summary>Checks if this <see cref="Tank"/> is on the same team as the passed-in <see cref="TeamID"/> and is not on <see cref="TeamID.NoTeam"/>.</summary>
+    public bool IsOnSameTeamAs(int otherTeam) => Team == otherTeam && Team != TeamID.NoTeam && otherTeam != TeamID.NoTeam;
     public virtual void Remove(bool nullifyMe) {
-        if (CollisionsWorld.BodyList.Contains(Body))
-            CollisionsWorld.Remove(Body);
+        if (CollisionsWorld.BodyList.Contains(Physics))
+            CollisionsWorld.Remove(Physics);
         foreach (var particle in GameHandler.Particles.CurrentParticles) {
             if (particle is not null && particle.Tag is string tag) {
-                if (tag == $"cosmetic_2d_{GetHashCode()}" || tag == $"tank_{WorldId}_shadow") // remove all particles related to this tank
+                if (tag == $"cosmetic_2d_{GetHashCode()}") // remove all particles related to this tank
                     particle.Destroy();
             }
         }
         CampaignGlobals.OnMissionStart -= OnMissionStart;
-
-        if (nullifyMe)
-            OwnedShells = null;
     }
 }

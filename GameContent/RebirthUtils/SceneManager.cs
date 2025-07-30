@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using TanksRebirth.Enums;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Systems;
+using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Graphics;
@@ -101,7 +102,7 @@ public static class SceneManager {
         }
     }
     private static void DoThunderStuff() {
-        if (IntermissionSystem.BlackAlpha > 0 || IntermissionSystem.Alpha >= 1f || MainMenuUI.Active || GameUI.Paused) {
+        if (IntermissionSystem.BlackAlpha > 0 || IntermissionSystem.Alpha >= 1f || MainMenuUI.IsActive || GameUI.Paused) {
             if (Thunder.SoftRain!.IsPlaying()) {
                 Thunder.SoftRain.Instance.Stop();
                 // maybe black instead? don't think it matters tho since models are rendered in place of it
@@ -205,7 +206,7 @@ public static class SceneManager {
         for (int i = 0; i < GameHandler.AllTanks.Length; i++) {
             var tank = GameHandler.AllTanks[i];
             if (tank is null) continue;
-            if (tank.Dead) tank.Remove(true);
+            if (tank.IsDestroyed) tank.Remove(true);
         }
 
         TankDeathMark.total_death_marks = 0;

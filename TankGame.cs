@@ -40,9 +40,9 @@ using TanksRebirth.GameContent.Speedrunning;
 using TanksRebirth.GameContent.Cosmetics;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.GameContent.UI.LevelEditor;
-using TanksRebirth.Graphics.Shaders;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
 using System.Linq;
+using TanksRebirth.GameContent.Systems.TankSystem;
 
 namespace TanksRebirth;
 
@@ -95,9 +95,6 @@ public class TankGame : Game {
 
     public static RasterizerState _cachedState;
 
-    private static Particle _secret;
-    private static Particle _secretText;
-
     // ### EVENTS ###
 
     public static event EventHandler<IntPtr> OnFocusLost;
@@ -126,7 +123,7 @@ public class TankGame : Game {
                     LogType.Info);
                 var bytes = WebUtils.DownloadWebFile(
                     "https://raw.githubusercontent.com/RighteousRyan1/tanks_rebirth_motds/master/motd.txt",
-                    out var name);
+                    out var name, out var status);
                 MOTD = System.Text.Encoding.Default.GetString(bytes);
             }
             catch {
@@ -168,7 +165,7 @@ public class TankGame : Game {
         FontGlobals.RebirthFontSystem = new();
 
         RuntimeData.GameVersion = typeof(TankGame).Assembly.GetName().Version!;
-        RuntimeData.ShortVersion = string.Join('.', RuntimeData.GameVersion.ToString().TrimStart('v', 'V').Split('.').Take(2));
+        RuntimeData.ShortVersion = StringUtils.RemoveTrailingZeros(RuntimeData.GameVersion);
 
         ClientLog.Write(
             $"Running {typeof(TankGame).Assembly.GetName().Name} on version '{RuntimeData.GameVersion}'",
@@ -268,7 +265,8 @@ public class TankGame : Game {
             "Assets/textures/misc/tank_smokes",
             "Assets/textures/misc/tank_smokes",
 
-            "Assets/textures/secret/special2",
+            "Assets/textures/secret/ziggy",
+            "Assets/textures/secret/bk_cypher",
             
             
             // Tank Textures
@@ -442,7 +440,7 @@ public class TankGame : Game {
         #region Config Initialization
 
         Graphics.SynchronizeWithVerticalRetrace = Settings.Vsync;
-        Graphics.IsFullScreen = Settings.FullScreen;
+        WindowUtils.ChangeWindowKind(Settings.WindowKind);
         PlayerTank.controlUp.ForceReassign(Settings.UpKeybind);
         PlayerTank.controlDown.ForceReassign(Settings.DownKeybind);
         PlayerTank.controlLeft.ForceReassign(Settings.LeftKeybind);
@@ -544,6 +542,22 @@ public class TankGame : Game {
                 SteamFriends.GetFriendGamePlayed(SteamFriends.GetFriendByIndex(0, EFriendFlags.k_EFriendFlagAll), out var x);
 
             }*/
+            /*if (InputUtils.KeyJustPressed(Keys.F11)) {
+                for (int i = 0; i < TankID.Collection.Count; i++) {
+                    var parameters = AIManager.GetAIParameters(i);
+                    var properties = AIManager.GetAITankProperties(i);
+
+                    var json = JsonSerializer.Serialize(
+                        new {
+                            Parameters = parameters,
+                            Properties = properties
+                        },
+                        new JsonSerializerOptions { WriteIndented = true, IncludeFields = true });
+
+                    Directory.CreateDirectory("ai_params");
+                    File.WriteAllText("ai_params/tank_" + TankID.Collection.GetKey(i) + ".json", json);
+                }
+            }*/
             HandleLogic(gameTime);
         }
         catch (Exception e) when (!Debugger.IsAttached) {
@@ -554,7 +568,7 @@ public class TankGame : Game {
 
             SoundPlayer.SoundError();
 
-            if (LevelEditorUI.Active && LevelEditorUI.loadedCampaign != null) {
+            if (LevelEditorUI.IsActive && LevelEditorUI.loadedCampaign != null) {
                 Campaign.Save(Path.Combine(SaveDirectory, "Backup", $"backup_{DateTime.Now.StringFormatCustom("_")}"), LevelEditorUI.loadedCampaign!);
             }
 
@@ -591,7 +605,7 @@ public class TankGame : Game {
                 Graphics.ApplyChanges();
             }
 
-            RebirthMouse.ShouldRender = !Difficulties.Types["POV"] || GameUI.Paused || MainMenuUI.Active || LevelEditorUI.Active;
+            RebirthMouse.ShouldRender = !Difficulties.Types["POV"] || GameUI.Paused || MainMenuUI.IsActive || LevelEditorUI.IsActive;
 
             UIElement.UpdateElements();
             GameUI.UpdateButtons();
@@ -617,6 +631,9 @@ public class TankGame : Game {
         if (!IsCrashInfoVisible) {
             CameraGlobals.Update();
         }
+
+        if (CampaignCompleteUI.IsViewingResults)
+            CampaignCompleteUI.Update();
 
         SubHandleLogic(gameTime);
 
@@ -670,7 +687,7 @@ public class TankGame : Game {
         ChatSystem.SendMessage("Saved image to " + fs.Name, Color.Lime);
     }
     public static void ReportError(Exception? e, bool notifyUser = true, bool openFile = true, bool writeToLog = true) {
-        if (writeToLog)
+        if (writeToLog && e != null)
             ClientLog.Write($"Error: {e.Message}\n{e.StackTrace}", LogType.ErrorFatal);
         if (notifyUser) {
             var str = $"The error above is important for the developer of this game. If you are able to report it, explain how to reproduce it.";
@@ -686,6 +703,7 @@ public class TankGame : Game {
     }
     public static void Quit() => Instance.Exit();
     public void PrepareGameBuffers(SpriteBatch spriteBatch) {
+        // idea: have 3d resolution parameter to save performance (which also scales this down
         if (GameFrameBuffer == null || GameFrameBuffer.IsDisposed || GameFrameBuffer.Size() != WindowUtils.WindowBounds) {
             GameFrameBuffer?.Dispose();
             var presentationParams = GraphicsDevice.PresentationParameters;
@@ -693,11 +711,14 @@ public class TankGame : Game {
 
             OnResolutionChanged?.Invoke(WindowUtils.WindowWidth, WindowUtils.WindowHeight);
         }
+
         // TankFootprint.DecalHandler.UpdateRenderTarget();
         GraphicsDevice.SetRenderTarget(GameFrameBuffer);
         GraphicsDevice.Clear(RenderGlobals.BackBufferColor);
 
         spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: RenderGlobals.DefaultRasterizer);
+
+        // TankFootprint.PrepareRT(GraphicsDevice);
 
         GraphicsDevice.DepthStencilState = RenderGlobals.DefaultStencilState;
 
@@ -798,17 +819,24 @@ public class TankGame : Game {
         DebugManager.DrawDebugMetrics();
         Speedrun.DrawSpeedrunHUD(SpriteRenderer);
 
+        var shouldSeeInfo = !MainMenuUI.IsActive && !LevelEditorUI.IsActive && !CampaignCompleteUI.IsViewingResults;
+        if (shouldSeeInfo) {
+            GameSceneUI.DrawScores();
+            GameSceneUI.DrawMissionInfoBar();
+        }
+
         SpriteRenderer.End();
     }
     public void PrepareAllRTs() {
         // switch to RT, begin SB, do drawing, end SB, SetRenderTarget(null), begin SB again, draw RT, end SB
         PrepareGameBuffers(SpriteRenderer);
         MainMenuUI.PrepareTextBuffers(GraphicsDevice, SpriteRenderer);
+
         IntermissionSystem.PrepareBuffers(GraphicsDevice, SpriteRenderer);
     }
 
     public static void DrawGameElements() {
-        var shader = Difficulties.Types["LanternMode"] && !MainMenuUI.Active ? GameShaders.LanternShader : (MainMenuUI.Active ? GameShaders.GaussianBlurShader : null);
+        var shader = Difficulties.Types["LanternMode"] && !MainMenuUI.IsActive ? GameShaders.LanternShader : (MainMenuUI.IsActive ? GameShaders.GaussianBlurShader : null);
         if (!GameScene.ShouldRenderAll) shader = null;
 
         SpriteRenderer.Begin(effect: shader);
@@ -820,39 +848,47 @@ public class TankGame : Game {
         RebirthMouse.DrawMouse();
         SpriteRenderer.End();
     }
-    private static void PlaceSecrets() {
+
+    static Particle _ziggy;
+    static Particle _ziggyText;
+    static Particle _bkCypher;
+    static void PlaceSecrets() {
         // magic.
         const float SECRET_BASE_POS_X = GameScene.MIN_X - 28.5f;
         const float SECRET_BASE_POS_Y = 22;
-        const float SECRET_BASE_POS_Z = 20;
+        const float SECRET_BASE_POS_Z = -130;
 
-        _secret = GameHandler.Particles.MakeParticle(new Vector3(100, 0.1f, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/secret/special2"));
-        _secret.UniqueBehavior = (p) => {
-            _secret.Position = new Vector3(SECRET_BASE_POS_X, SECRET_BASE_POS_Y, SECRET_BASE_POS_Z - 40);
-            _secret.Pitch = MathHelper.Pi;
-            _secret.Yaw = -MathHelper.PiOver2;
-            _secret.Roll = RuntimeData.RunTime / 60 % 2 < 1 ? -MathHelper.PiOver4 / 4 : MathHelper.PiOver4 / 4;
-
-            _secret.Scale = Vector3.One * 0.3f;
-            _secret.HasAddativeBlending = false;
+        _ziggy = GameHandler.Particles.MakeParticle(new Vector3(100, 0.1f, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/secret/ziggy"));
+        _ziggy.Position = new Vector3(SECRET_BASE_POS_X, SECRET_BASE_POS_Y, SECRET_BASE_POS_Z);
+        _ziggy.Pitch = MathHelper.Pi;
+        _ziggy.Yaw = -MathHelper.PiOver2;
+        _ziggy.Scale = Vector3.One * 0.3f;
+        _ziggy.HasAdditiveBlending = false;
+        _ziggy.UniqueBehavior = (a) => {
+            _ziggy.Roll = RuntimeData.RunTime / 60 % 2 < 1 ? -MathHelper.PiOver4 / 4 : MathHelper.PiOver4 / 4;
         };
-        _secretText = GameHandler.Particles.MakeParticle(new Vector3(100, 0.1f, 0), "Ziggy <3");
-        _secretText.UniqueBehavior = (p) => {
-            _secretText.Position = new Vector3(SECRET_BASE_POS_X, SECRET_BASE_POS_Y + 20, SECRET_BASE_POS_Z - 8 - 40);
-            _secretText.Yaw = MathHelper.PiOver2;
-            _secretText.Roll = MathHelper.Pi;
 
-            _secretText.Scale = Vector3.One * 0.3f;
-            _secretText.HasAddativeBlending = false;
-        };
+        _ziggyText = GameHandler.Particles.MakeParticle(new Vector3(100, 0.1f, 0), "Ziggy <3");
+        _ziggyText.Position = new Vector3(SECRET_BASE_POS_X, SECRET_BASE_POS_Y + 20, SECRET_BASE_POS_Z - 8);
+        _ziggyText.Yaw = MathHelper.PiOver2;
+        _ziggyText.Roll = MathHelper.Pi;
+        _ziggyText.Scale = Vector3.One * 0.3f;
+        _ziggyText.HasAdditiveBlending = false;
+
+        _bkCypher = GameHandler.Particles.MakeParticle(new Vector3(1000, 0.1f, 0), GameResources.GetGameResource<Texture2D>("Assets/textures/secret/bk_cypher"));
+        _bkCypher.Yaw = MathHelper.PiOver2 + MathHelper.PiOver4;
+        _bkCypher.Roll = MathHelper.Pi;
+        _bkCypher.Scale = Vector3.One * 0.65f;
+        _bkCypher.HasAdditiveBlending = false;
+        _bkCypher.Position = new Vector3(1500, 1350, 149.5f);
     }
     private void TankGame_OnFocusRegained(object sender, IntPtr e) {
         if (TankMusicSystem.IsLoaded) {
             Thunder.ResumeGlobalSounds();
             TankMusicSystem.ResumeAll();
-            if (MainMenuUI.Active)
+            if (MainMenuUI.IsActive)
                 MainMenuUI.Theme.Resume();
-            if (LevelEditorUI.Active)
+            if (LevelEditorUI.IsActive)
                 LevelEditorUI.Theme.Resume();
         }
     }
@@ -860,9 +896,9 @@ public class TankGame : Game {
         if (TankMusicSystem.IsLoaded) {
             Thunder.PauseGlobalSounds();
             TankMusicSystem.PauseAll();
-            if (MainMenuUI.Active)
+            if (MainMenuUI.IsActive)
                 MainMenuUI.Theme.Pause();
-            if (LevelEditorUI.Active)
+            if (LevelEditorUI.IsActive)
                 LevelEditorUI.Theme.Pause();
         }
     }

@@ -4,8 +4,7 @@ using TanksRebirth.Internals.Common.IO;
 namespace TanksRebirth.Localization;
 
 /// <summary>Localization to load a <see cref="Language"/> from a .json entry. Defaults to English if no <see cref="LangCode"/> is loaded.</summary>
-public class Language
-{
+public class Language {
     public LangCode ActiveLang { get; private set; }
 #pragma warning disable
     #region Basic
@@ -42,8 +41,8 @@ public class Language
     public string PerPxLightDesc { get; set; }
     public string VSync { get; set; }
     public string VSyncDesc { get; set; }
-    public string BorderlessWindow { get; set; } // name is remaining the same for legacy purposes, this is actually just the dictation for fullscreen
-    public string BorderlessWindowDesc { get; set; } // same here
+    public string WindowKind { get; set; } // name is remaining the same for legacy purposes, this is actually just the dictation for fullscreen
+    public string WindowKindDesc { get; set; } // same here
     public string Resolution { get; set; }
     public string ResolutionDesc { get; set; }
     public string PressAKey { get; set; }
@@ -80,14 +79,14 @@ public class Language
 
     #endregion
     #region LevelEdit
-    public string BinDisclaimer { get; set; } // thinking this might be weird?
-
     public string TestLevel { get; set; }
     public string Perspective { get; set; }
     public string PerspectiveFlavor { get; set; }
     public string Players { get; set; }
     public string Terrain { get; set; }
     public string AIControlled { get; set; }
+    public string AutoOrientTanks { get; set; }
+    public string AutoOrientTanksFlavor { get; set; }
 
     public string MissionList { get; set; }
     public string LevelInfo { get; set; }

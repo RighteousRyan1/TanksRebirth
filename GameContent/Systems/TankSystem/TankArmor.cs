@@ -7,7 +7,7 @@ using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
 
-namespace TanksRebirth.GameContent;
+namespace TanksRebirth.GameContent.Systems.TankSystem;
 
 public class TankArmor {
     /// <summary>The tank who has this armor.</summary>
@@ -33,8 +33,8 @@ public class TankArmor {
         _healthBarTotal = GameHandler.Particles.MakeParticle(host.Position3D + new Vector3(0, 20, 0), TextureGlobals.Pixels[Color.White]);
         _healthBarCurrent = GameHandler.Particles.MakeParticle(host.Position3D + new Vector3(0, 20, 0), TextureGlobals.Pixels[Color.White]);
 
-        _healthBarTotal.HasAddativeBlending = false;
-        _healthBarCurrent.HasAddativeBlending = false;
+        _healthBarTotal.HasAdditiveBlending = false;
+        _healthBarCurrent.HasAdditiveBlending = false;
 
         _healthBarTotal.Color = Color.Red;
         _healthBarCurrent.Color = Color.Lime;
@@ -100,9 +100,9 @@ public class TankArmor {
                     //{
                     if (i < 3) {
                         effect.World = Matrix.CreateRotationX(-MathHelper.PiOver2)
-                             * Matrix.CreateRotationY(-Host.TankRotation)
+                             * Matrix.CreateRotationY(-Host.ChassisRotation)
                              * Matrix.CreateScale(scale)
-                             * Matrix.CreateTranslation(Host.Position3D + offset[i].Rotate(Host.TankRotation).ExpandZ());
+                             * Matrix.CreateTranslation(Host.Position3D + offset[i].Rotate(Host.ChassisRotation).ExpandZ());
                     }
                     //}
                     effect.View = Host.View;

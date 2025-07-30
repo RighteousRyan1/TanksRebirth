@@ -90,7 +90,7 @@ public static partial class MainMenuUI {
                 $"\nDescription: {campaign.MetaData.Description}" +
                 $"\nVersion: {campaign.MetaData.Version}" +
                 $"\nStarting Lives: {campaign.MetaData.StartingLives}" +
-                $"\nBonus Life Count: {campaign.MetaData.ExtraLivesMissions.Length}" +
+                $"\nBonus Life Count: {campaign.CachedMissions.Count(x => x.GrantsExtraLife)}" +
                 $"\nTags: {string.Join(", ", campaign.MetaData.Tags)}" +
                 $"\n\nMiddle click to DELETE ME."
             };
@@ -158,14 +158,14 @@ public static partial class MainMenuUI {
             return false;
         }
         campaignExists = true;
-        dlBytes = WebUtils.DownloadWebFile("https://github.com/RighteousRyan1/tanks_rebirth_motds/blob/master/Vanilla.campaign?raw=true", out dlName);
+        dlBytes = WebUtils.DownloadWebFile("https://github.com/RighteousRyan1/tanks_rebirth_motds/blob/master/Vanilla.campaign?raw=true", out dlName, out var status);
         var fileBytes = File.ReadAllBytes(checkPath);
 
 
         return dlBytes.SequenceEqual(fileBytes);
     }
     public static void DownloadVanillaCampaign(bool inCampaignsMenu) {
-        var bytes = WebUtils.DownloadWebFile("https://github.com/RighteousRyan1/tanks_rebirth_motds/blob/master/Vanilla.campaign?raw=true", out var filename);
+        var bytes = WebUtils.DownloadWebFile("https://github.com/RighteousRyan1/tanks_rebirth_motds/blob/master/Vanilla.campaign?raw=true", out var filename, out var status);
         var path = Path.Combine(TankGame.SaveDirectory, "Campaigns", filename);
         File.WriteAllBytes(path, bytes);
 
@@ -178,7 +178,7 @@ public static partial class MainMenuUI {
         if (MissionCheckpoint < 0)
             MissionCheckpoint = 0;
 
-        DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, $"You can scroll with your mouse to skip to a certain mission." +
+        DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, $"You can scroll with your mouse to skip to a certain mission." +
             $"\nCurrently, you will skip to mission {MissionCheckpoint + 1}." +
             $"\nYou will be alerted if that mission does not exist.", new Vector2(WindowUtils.WindowWidth / 3, WindowUtils.WindowHeight * 0.6f),
             Color.White, Color.Black, new Vector2(0.75f).ToResolution(), 0f, Anchor.TopCenter);
@@ -187,6 +187,6 @@ public static partial class MainMenuUI {
         var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/trophy");
         TankGame.SpriteRenderer.Draw(tex, recordsPos - new Vector2(175, -45).ToResolution(), null, Color.White, 0f, Anchor.RightCenter.GetTextureAnchor(tex), new Vector2(0.1f).ToResolution(), default, default);
         var text = $"Top {Speedrun.LoadedSpeedruns.Length} speedruns:\n" + string.Join(Environment.NewLine, Speedrun.LoadedSpeedruns);
-        DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, text, recordsPos, Color.White, Color.Black, new Vector2(0.75f).ToResolution(), 0f, Anchor.TopCenter);
+        DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, text, recordsPos, Color.White, Color.Black, new Vector2(0.75f).ToResolution(), 0f, Anchor.TopCenter);
     }
 }

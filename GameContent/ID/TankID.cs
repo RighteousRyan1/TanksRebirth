@@ -1,22 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TanksRebirth.Internals.Common.Framework.Collections;
+﻿using TanksRebirth.Internals.Common.Framework.Collections;
 
 namespace TanksRebirth.GameContent.ID;
 
 // should this be a dictionary for people to easily add to it?
-public sealed class TankID
-{
+public sealed class TankID {
+    // tanks from the original game
+
     public const int None = 0;
-    // this is going to be a while.
     public const int Brown = 1;
     public const int Ash = 2;
     public const int Marine = 3;
-    public const int Yellow = 4;
-    public const int Pink = 5;
+    public const int Pink = 4;
+    public const int Yellow = 5;
     public const int Violet = 6;
     public const int Green = 7;
     public const int White = 8;
@@ -33,6 +28,20 @@ public sealed class TankID
     public const int Emerald = 16;
     public const int Gold = 17;
     public const int Obsidian = 18;
+
+    // ...future tanks will go here
+
+    /* IDEAS:
+     * 
+     * Constructor tank: builds things
+     * Boring tank: plows through things
+     * 
+     * Tornado tank: creates a tornado that sucks in projectiles (and enemies?)
+     * 
+     * Rampart tank: creates a shield (or something similar) that blocks projectiles
+     * Charging tank: charges at you upon line of sight
+     * 
+     */
 
     public static ReflectionDictionary<TankID> Collection { get; internal set; } = new(MemberType.Fields);
 }

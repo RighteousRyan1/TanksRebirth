@@ -21,7 +21,7 @@ namespace TanksRebirth.GameContent.UI.MainMenu;
 // unfortunately godclassed asf
 public static partial class MainMenuUI
 {
-    public static bool Active { get; private set; } = true;
+    public static bool IsActive { get; private set; } = true;
 
     public static Animator CameraPositionAnimator;
     public static Animator CameraRotationAnimator;
@@ -53,12 +53,12 @@ public static partial class MainMenuUI
     public static Dictionary<UIState, (Vector3 Position, Vector3 Rotation)> MenuCameraManipulations = new() {
         [UIState.Campaigns] = (new(330f, 204f, 879f), new(0, -0.18f, 0.29f)), // seat headrest
         [UIState.PlayList] = (new Vector3(247.031f, 59.885f, 204.935f), new Vector3(0f, -0.404f, 1.397f)),
-        [UIState.Mulitplayer] = (new(51f, 34f, -140f), new(0, -0.36f, 3.7f)), // behind game scene
+        [UIState.Mulitplayer] = (new Vector3(57.25f, 47.419f, -263.85f), new Vector3(0f, -0.53f, 3.78f)), // behind game scene
         [UIState.Settings] = (new(1461f, 928f, 623f), new(0, -0.33f, 0.53f)), // near grandfather clock
         [UIState.StatsMenu] = (new(-1121f, 176f, 439f), new(0, -0.231f, -0.67f)), // near sheet music
         [UIState.Difficulties] = (new(-1189f, 288f, 2583f), new(0f, -0.25f, -2.27f)), // near books
-        [UIState.LoadingMods] = (new(-3443f, 2088f, 3183f), new(0, -0.6307f, -0.91f)),
-        [UIState.Cosmetics] = (new(-953f, 1078f, 2753f), new(0f, -0.226f, -2.56f))
+        [UIState.LoadingMods] = (new(-3443f, 2088f, 3183f), new(0, -0.6307f, -0.91f)), // top of the door
+        [UIState.Cosmetics] = (new(-953f, 1078f, 2753f), new(0f, -0.226f, -2.56f)) // second-to-top shelf of bookshelf
     };
 
     public static Vector3 CamPosMain = new(0, 150, GameScene.MAX_Z + 100); // this is in front of the game scene, viewing it
@@ -113,22 +113,29 @@ public static partial class MainMenuUI
     }
     private static void UpdateModels() {
         RebirthLogo.Position = new Vector3(0, 300.ToResolutionY(), 0);
-        //var testX = MouseUtils.MousePosition.X / WindowUtils.WindowWidth;
-        //var testY = MouseUtils.MousePosition.Y / WindowUtils.WindowHeight;
 
-        var scalar = 0.4f;
-        var rotX = -((MouseUtils.MousePosition.X - WindowUtils.WindowWidth / 2) / (WindowUtils.WindowWidth / 2)) * scalar;
-        var rotY = MathHelper.PiOver2 + (MouseUtils.MousePosition.Y - WindowUtils.WindowHeight / 4) / (WindowUtils.WindowHeight / 4) * scalar * 0.5f;
-        RebirthLogo.Rotation.X = rotX;
-        RebirthLogo.Rotation.Y = rotY;
+        // slowly return to normal if the mouse is not on-screen
+        if (!MouseUtils.MouseOnScreen) {
+            RebirthLogo.Rotation.X = MathUtils.SoftStep(RebirthLogo.Rotation.X, 0, 0.05f * RuntimeData.DeltaTime);
+            RebirthLogo.Rotation.Y = MathUtils.SoftStep(RebirthLogo.Rotation.Y, MathHelper.PiOver2, 0.05f * RuntimeData.DeltaTime);
+
+            RebirthLogo.Rotation_Tanks = new(MathHelper.PiOver2, 0, 0);
+            return;
+        }
+        var scalar = MathHelper.PiOver4;
+
+        var rotX = -(MouseUtils.Test.X - 0.5f) * scalar;
+        var rotY = MathHelper.PiOver2 + (MouseUtils.Test.Y - 0.25f) * scalar;
+
+        RebirthLogo.Rotation.X = MathUtils.SoftStep(RebirthLogo.Rotation.X, rotX, 0.1f * RuntimeData.DeltaTime);
+        RebirthLogo.Rotation.Y = MathUtils.SoftStep(RebirthLogo.Rotation.Y, rotY, 0.1f * RuntimeData.DeltaTime);
     }
     public static void RenderModels() {
-
         UpdateModels();
         // TODO: change this to world view/world projection...? i think it would look better if the crate existed in world space
         // it would give reason to have the camera move over for the player.
 
-        if (!Active) return;
+        if (!IsActive) return;
         //RebirthLogo.Rotation = new(MathF.Sin(RuntimeData.RunTime / 100) * MathHelper.PiOver4, 0, 0);
         RebirthLogo.Scale = 0.8f.ToResolutionF();
         RebirthLogo.View = CameraGlobals.ScreenView;
@@ -221,11 +228,15 @@ public static partial class MainMenuUI
     public static void Update() {
         if (!_initialized || !_diffButtonsInitialized)
             return;
+        IntermissionSystem.IsAwaitingNewMission = false;
         UpdateUI();
         UpdateDifficulties();
-        UpdateGameplay();
         UpdateMusic();
         UpdateMP();
+
+        if (RuntimeData.RunTime % 60f < RuntimeData.DeltaTime) {
+            UpdateGameplay();
+        }
     }
     public static void Open() {
         OpenUI();
@@ -240,7 +251,7 @@ public static partial class MainMenuUI
         if (!_initialized || !_diffButtonsInitialized)
             return;
 
-        if (Active) {
+        if (IsActive) {
             RenderGeneralUI(spriteBatch);
             if (MenuState == UIState.StatsMenu)
                 RenderStatsMenu();

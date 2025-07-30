@@ -1,13 +1,16 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 using System;
+using TanksRebirth.GameContent.Systems.TankSystem;
 
 namespace TanksRebirth.GameContent.Cosmetics;
 public enum PropLockOptions {
     None,
+    /// <summary>Will rotate with the tank.</summary>
     ToTank,
+    /// <summary>Will rotate with the turret.</summary>
     ToTurret,
-    /// <summary>Will Rotate around turret instead of rotating with turret.</summary>
+    /// <summary>Will rotate around turret instead of rotating with turret.</summary>
     ToTurretCentered
 };
 public interface IProp {

@@ -83,22 +83,15 @@ public static partial class MainMenuUI {
     }
 
     public static void UpdateDifficulties() {
+        if (MenuState != UIState.Difficulties) return;
+
         DisguiseMode.Text = "Disguise: " + TankID.Collection.GetKey(Difficulties.DisguiseValue);
         Monochrome.Text = "Monochrome: " + TankID.Collection.GetKey(Difficulties.MonochromeValue);
         RandomizedTanks.Text = $"Randomized Tanks\nLower: {TankID.Collection.GetKey(Difficulties.RandomTanksLower)} | Upper: {TankID.Collection.GetKey(Difficulties.RandomTanksUpper)}";
         Difficulties.Types["RandomizedTanks"] = Difficulties.RandomTanksLower > 0 && Difficulties.RandomTanksUpper > 0;
-        if (MenuState == UIState.Mulitplayer) {
-            if (DebugManager.DebuggingEnabled) {
-                if (InputUtils.AreKeysJustPressed(Keys.Q, Keys.W)) {
-                    IPInput.Text = "localhost";
-                    PortInput.Text = "7777";
-                    ServerNameInput.Text = "TestServer";
-                    UsernameInput.Text = Client.ClientRandom.Next(0, ushort.MaxValue).ToString();
-                }
-            }
-        }
 
         // me in march 2024: what the fuck is this code.
+        // also me in july 2025: what the FUCK is this code
         TanksAreCalculators.Color = Difficulties.Types["TanksAreCalculators"] ? Color.Lime : Color.Red;
         PieFactory.Color = Difficulties.Types["PieFactory"] ? Color.Lime : Color.Red;
         UltraMines.Color = Difficulties.Types["UltraMines"] ? Color.Lime : Color.Red;
@@ -125,12 +118,12 @@ public static partial class MainMenuUI {
         LanternMode.Color = Difficulties.Types["LanternMode"] ? Color.Lime : Color.Red;
         DisguiseMode.Color = Difficulties.Types["Disguise"] ? Color.Lime : Color.Red;
 
-        if (Active && Client.IsConnected() && Client.IsHost())
+        if (IsActive && Client.IsConnected() && Client.IsHost())
             Client.SendDiffiulties();
     }
     public static void RenderDifficultiesMenu() {
         if (MenuState == UIState.Difficulties) {
-            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont,
+            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont,
                 "Ideas are welcome! Let us know in our DISCORD server!",
                 new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 6), Color.White, Color.Black, new Vector2(1f), 0f, Anchor.Center, 0.8f);
         }
@@ -235,8 +228,8 @@ public static partial class MainMenuUI {
             IsVisible = false,
             Tooltip = "Every tank is now randomized." +
             "\nA black tank could appear where a brown tank would be!" +
-            "\n\nLeft click to increase the upper limit." +
-            "\nRight click to increase the lower limit." +
+            "\n\nLeft click to increase the lower limit." +
+            "\nRight click to increase the upper limit." +
             "\nMiddle click to reset both to 'None'.",
             OnRightClick = (elem) => {
                 if (Difficulties.RandomTanksUpper + 1 >= TankID.Collection.Count)
@@ -304,7 +297,6 @@ public static partial class MainMenuUI {
             Tooltip = "Everything is dark. Only you and your lantern can save you now.",
             OnLeftClick = (elem) => {
                 Difficulties.Types["LanternMode"] = !Difficulties.Types["LanternMode"];
-                GameShaders.LanternMode = Difficulties.Types["LanternMode"];
             }
         };
         DisguiseMode = new("Disguise", font, Color.White) {

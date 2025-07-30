@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -7,12 +8,14 @@ using tainicom.Aether.Physics2D.Dynamics;
 using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Globals.Assets;
+using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
 
 namespace TanksRebirth.Graphics;
 
+#pragma warning disable
 public enum MapTheme
 {
     Vanilla,
@@ -24,6 +27,8 @@ public static class GameScene
     public static bool ShouldRenderFloor { get; set; } = true;
     public static bool ShouldRenderBounds { get; set; } = true;
     public static bool RenderFloorAsBlack { get; set; } = false;
+
+    public static Vector2 MapCenter => new(0, MIN_Z + MAX_Z / 2);
 
     private static Texture2D _blackPixel;
 
@@ -60,12 +65,12 @@ public static class GameScene
         ["floor_lower"] = null,
         ["teleporter"] = null,
         ["snow"] = GameResources.GetGameResource<Texture2D>("Assets/christmas/snow")
-};
+    };
 
     public static void LoadTexturePack(string folder)
     {
         LoadVanillaTextures();
-        if (folder.ToLower() == "vanilla")
+        if (folder.Equals("vanilla", StringComparison.CurrentCultureIgnoreCase))
         {
             TankGame.ClientLog.Write($"Loaded vanilla textures for Scene.", LogType.Info);
             return;
@@ -181,6 +186,7 @@ public static class GameScene
     // make proper texturepack loading.
     public static class BoundsRenderer
     {
+        public const string BOUNDARY_TAG = "bounds";
         public static Body[] Boundaries = new Body[4];
         public static Model BoundaryModel;
 
@@ -198,48 +204,31 @@ public static class GameScene
 
             Boundaries[3] = Tank.CollisionsWorld.CreateRectangle(5 / Tank.UNITS_PER_METER, 1000 / Tank.UNITS_PER_METER, 1f, 
                 new Vector2(MIN_X - 7, MAX_Z) / Tank.UNITS_PER_METER, 0f, BodyType.Static);
+
+            Array.ForEach(Boundaries, x => x.Tag = BOUNDARY_TAG);
             
             switch (Theme)
             {
                 case MapTheme.Vanilla:
                     BoundaryModel = ModelGlobals.GameBoundary.Asset;
-
-                    SetBlockTexture(BoundaryModel.Meshes["polygon48"], BoundaryTextureContext.block_other_c);
-                    SetBlockTexture(BoundaryModel.Meshes["polygon40"], BoundaryTextureContext.block_other_a);
-                    SetBlockTexture(BoundaryModel.Meshes["polygon33"], BoundaryTextureContext.block_other_b_test);
-                    SetBlockTexture(BoundaryModel.Meshes["polygon7"], BoundaryTextureContext.block_shadow_b);
-                    SetBlockTexture(BoundaryModel.Meshes["polygon15"], BoundaryTextureContext.block_shadow_b);
-
-                    SetBlockTexture(BoundaryModel.Meshes["polygon5"], BoundaryTextureContext.block_shadow_h);
-
-                    SetBlockTexture(BoundaryModel.Meshes["polygon20"], BoundaryTextureContext.block_shadow_d);
-
-                    SetBlockTexture(BoundaryModel.Meshes["polygon21"], BoundaryTextureContext.block_shadow_b);
-
-                    //SetBlockTexture(BoundaryModel.Meshes["polygon32"], BoundaryTextureContext.floor_lower);
-
                     break;
                 case MapTheme.Christmas:
                     BoundaryModel = ModelGlobals.GameBoundarySnowy.Asset;
-
-                    SetBlockTexture(BoundaryModel.Meshes["polygon48"], BoundaryTextureContext.block_other_c);
-                    SetBlockTexture(BoundaryModel.Meshes["polygon40"], BoundaryTextureContext.block_other_a);
-                    SetBlockTexture(BoundaryModel.Meshes["polygon33"], BoundaryTextureContext.block_other_b_test);
-                    SetBlockTexture(BoundaryModel.Meshes["polygon7"], BoundaryTextureContext.block_shadow_b);
-                    SetBlockTexture(BoundaryModel.Meshes["polygon15"], BoundaryTextureContext.block_shadow_b);
-
-                    SetBlockTexture(BoundaryModel.Meshes["polygon5"], BoundaryTextureContext.block_shadow_h);
-
-                    SetBlockTexture(BoundaryModel.Meshes["polygon20"], BoundaryTextureContext.block_shadow_d);
-
-                    SetBlockTexture(BoundaryModel.Meshes["polygon21"], BoundaryTextureContext.block_shadow_b);
-
-                    //SetBlockTexture(BoundaryModel.Meshes["polygon32"], BoundaryTextureContext.floor_lower);
-
                     SetBlockTexture(BoundaryModel.Meshes["snow_field"], "snow");
                     SetBlockTexture(BoundaryModel.Meshes["snow_blocks"], "snow");
                     break;
             }
+            SetBlockTexture(BoundaryModel.Meshes["polygon48"], BoundaryTextureContext.block_other_c);
+            SetBlockTexture(BoundaryModel.Meshes["polygon40"], BoundaryTextureContext.block_other_a);
+            SetBlockTexture(BoundaryModel.Meshes["polygon33"], BoundaryTextureContext.block_other_b_test);
+            SetBlockTexture(BoundaryModel.Meshes["polygon7"], BoundaryTextureContext.block_shadow_b);
+            SetBlockTexture(BoundaryModel.Meshes["polygon15"], BoundaryTextureContext.block_shadow_b);
+
+            SetBlockTexture(BoundaryModel.Meshes["polygon5"], BoundaryTextureContext.block_shadow_h);
+
+            SetBlockTexture(BoundaryModel.Meshes["polygon20"], BoundaryTextureContext.block_shadow_d);
+
+            SetBlockTexture(BoundaryModel.Meshes["polygon21"], BoundaryTextureContext.block_shadow_b);
             PostLoadBounds?.Invoke();
         }
 
@@ -252,7 +241,7 @@ public static class GameScene
                     foreach (var mesh in BoundaryModel.Meshes) {
                         foreach (BasicEffect effect in mesh.Effects) {
 
-                            if (mesh.Name.Contains("outer", System.StringComparison.InvariantCultureIgnoreCase)) {
+                            if (mesh.Name.Contains("outer", StringComparison.InvariantCultureIgnoreCase)) {
                                 continue;
                             }
 
@@ -327,18 +316,18 @@ public static class GameScene
 
     public const float MIN_X = -234;
     public const float MAX_X = 234;
-    public const float MIN_Z = -48;
-    public const float MAX_Z = 312;
+    public const float MIN_Z = -182;
+    public const float MAX_Z = 182;
 
     public const float CUBE_MIN_X = MIN_X + Block.SIDE_LENGTH / 2 - 6f;
     public const float CUBE_MAX_X = MAX_X - Block.SIDE_LENGTH / 2;
-    public const float CUBE_MIN_Y = MIN_Z + Block.SIDE_LENGTH / 2 - 6f;
-    public const float CUBE_MAX_Y = MAX_Z - Block.SIDE_LENGTH / 2;
+    public const float CUBE_MIN_Z = MIN_Z + Block.SIDE_LENGTH / 2 - 6f;
+    public const float CUBE_MAX_Z = MAX_Z - Block.SIDE_LENGTH / 2;
 
-    public static Vector3 TopLeft => new(CUBE_MIN_X, 0, CUBE_MAX_Y);
-    public static Vector3 TopRight => new(CUBE_MAX_X, 0, CUBE_MAX_Y);
-    public static Vector3 BottomLeft => new(CUBE_MIN_X, 0, CUBE_MIN_Y);
-    public static Vector3 BottomRight => new(CUBE_MAX_X, 0, CUBE_MIN_Y);
+    public static Vector3 TopLeft => new(CUBE_MIN_X, 0, CUBE_MAX_Z);
+    public static Vector3 TopRight => new(CUBE_MAX_X, 0, CUBE_MAX_Z);
+    public static Vector3 BottomLeft => new(CUBE_MIN_X, 0, CUBE_MIN_Z);
+    public static Vector3 BottomRight => new(CUBE_MAX_X, 0, CUBE_MIN_Z);
     public static void InitializeRenderers()
     {
         FloorRenderer.LoadFloor();
@@ -347,7 +336,7 @@ public static class GameScene
     }
 
     public static float Scale = 0.62f;
-    public static Vector3 Center = new Vector3(0, 0, 130);
+    public static Vector3 Center = Vector3.Zero;
 
     public static void RenderWorldModels()
     {

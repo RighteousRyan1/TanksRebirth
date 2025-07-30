@@ -1,27 +1,29 @@
+using FontStashSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using FontStashSharp;
-using TanksRebirth.Internals.Common.GameUI;
-using TanksRebirth.GameContent.Systems;
-using TanksRebirth.GameContent.Globals;
-using NativeFileDialogSharp;
-using System.IO;
-using TanksRebirth.Internals.Common.Utilities;
 using Microsoft.Xna.Framework.Input;
-using TanksRebirth.GameContent.ID;
-using TanksRebirth.GameContent.Systems.Coordinates;
-using TanksRebirth.Net;
-using TanksRebirth.Internals.Common;
-using System.Collections.Generic;
-using System.Linq;
+using NativeFileDialogSharp;
 using System;
-using TanksRebirth.Internals.Common.Framework;
-using TanksRebirth.IO;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using TanksRebirth.Achievements;
-using TanksRebirth.GameContent.UI.MainMenu;
-using TanksRebirth.GameContent.UI.LevelEditor;
+using TanksRebirth.GameContent.Globals;
+using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.ModSupport;
+using TanksRebirth.GameContent.Systems;
+using TanksRebirth.GameContent.Systems.AI;
+using TanksRebirth.GameContent.Systems.Coordinates;
+using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.UI.LevelEditor;
+using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Graphics;
+using TanksRebirth.Internals.Common;
+using TanksRebirth.Internals.Common.Framework;
+using TanksRebirth.Internals.Common.GameUI;
+using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.IO;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.RebirthUtils;
 
@@ -37,7 +39,7 @@ public static class DebugManager {
         public const int LevelEditDebug = 3;
         public const int Powerups = 4;
         public const int AchievementData = 5;
-        public const int NavData = 6;
+        public const int AIData = 6;
     }
     private static readonly Dictionary<int, string> DebuggingNames = new() {
         [Id.FreeCamTest] = "freecam",
@@ -49,7 +51,7 @@ public static class DebugManager {
         [Id.LevelEditDebug] = "lvlmake", // level editor debug
         [Id.Powerups] = "pwrup", // powerup
         [Id.AchievementData] = "achdat", // achievement data
-        [Id.NavData] = "tnknav" // ai tank navigation
+        [Id.AIData] = "tnknav" // ai tank navigation
     };
 
     static int mode;
@@ -231,7 +233,7 @@ public static class DebugManager {
         if (InputUtils.KeyJustPressed(Keys.F4))
             DebuggingEnabled = !DebuggingEnabled;
 
-        if (!MainMenuUI.Active) {
+        if (!MainMenuUI.IsActive) {
             ClearTracks.IsVisible = DebuggingEnabled && DebugLevel == 0;
             ClearChecks.IsVisible = DebuggingEnabled && DebugLevel == 0;
             SetupMissionAgain.IsVisible = DebuggingEnabled && DebugLevel == 0;
@@ -248,19 +250,32 @@ public static class DebugManager {
         if (!DebuggingEnabled)
             return; // won't update debug if debugging is not currently enabled.
 
+        if (SuperSecretDevOption) {
+            var tnkGet = Array.FindIndex(GameHandler.AllAITanks, x => x is not null && !x.IsDestroyed && !x.Properties.Stationary);
+            if (tnkGet > -1) {
+                var tnk = GameHandler.AllAITanks[tnkGet];
+                tnk.DesiredChassisRotation = (MatrixUtils.ConvertWorldToScreen(Vector3.Zero, tnk.World, tnk.View, tnk.Projection) - MouseUtils.MousePosition).ToRotation() + MathHelper.PiOver2;
+            }
+        }
+
         if (RuntimeData.RunTime % 60 <= RuntimeData.DeltaTime) {
             RuntimeData.MemoryUsageInBytes = (ulong)RuntimeData.ProcessMemory;
         }
         if (DebugLevel == Id.SceneMetrics) {
-            if (RuntimeData.RunTime % 10f <= RuntimeData.DeltaTime) {
-                RuntimeData.RenderFpsGraph.Update();
-                RuntimeData.LogicFpsGraph.Update();
+            RuntimeData.RenderFpsGraph.Update();
+            RuntimeData.LogicFpsGraph.Update();
 
-                RuntimeData.RenderTimeGraph.Update();
-                RuntimeData.LogicTimeGraph.Update();
+            RuntimeData.RenderTimeGraph.Update();
+            RuntimeData.LogicTimeGraph.Update();
+        }
+        if (MainMenuUI.MenuState == MainMenuUI.UIState.Mulitplayer) {
+            if (InputUtils.AreKeysJustPressed(Keys.Q, Keys.W)) {
+                MainMenuUI.IPInput.Text = "localhost";
+                MainMenuUI.PortInput.Text = "7777";
+                MainMenuUI.ServerNameInput.Text = "TestServer";
+                MainMenuUI.UsernameInput.Text = Client.ClientRandom.Next(0, ushort.MaxValue).ToString();
             }
         }
-
         if (InputUtils.AreKeysJustPressed(Keys.Q, Keys.E))
             Server.SyncSeeds();
         if (InputUtils.KeyJustPressed(Keys.M))
@@ -298,7 +313,7 @@ public static class DebugManager {
             DebugLevel++;
         if (InputUtils.KeyJustPressed(Keys.F5))
             DebugLevel--;
-        if (!MainMenuUI.Active) {
+        if (!MainMenuUI.IsActive) {
             if (InputUtils.KeyJustPressed(Keys.Z))
                 blockType--;
             if (InputUtils.KeyJustPressed(Keys.X))
@@ -310,9 +325,9 @@ public static class DebugManager {
                     CameraGlobals.OrthoRotationVector += MouseUtils.MouseVelocity / 500f;
 
                 if (InputUtils.MouseRight && InputUtils.MouseLeft) {
-                    CameraGlobals.OrthoRotationVector = new Vector2(0, LevelEditorUI.Active ? CameraGlobals.LVL_EDIT_ANGLE : CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE);
-                    CameraGlobals.AddativeZoom = LevelEditorUI.Active ? CameraGlobals.LVL_EDIT_ZOOM : 1f;
-                    CameraGlobals.CameraFocusOffset = LevelEditorUI.Active ? new Vector2(0, CameraGlobals.LVL_EDIT_Y_OFF) : Vector2.Zero;
+                    CameraGlobals.OrthoRotationVector = new Vector2(0, LevelEditorUI.IsActive ? CameraGlobals.LVL_EDIT_ANGLE : CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE);
+                    CameraGlobals.AddativeZoom = LevelEditorUI.IsActive ? CameraGlobals.LVL_EDIT_ZOOM : 1f;
+                    CameraGlobals.CameraFocusOffset = LevelEditorUI.IsActive ? new Vector2(0, CameraGlobals.LVL_EDIT_Y_OFF) : Vector2.Zero;
                 }
 
                 if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Add))
@@ -363,6 +378,28 @@ public static class DebugManager {
         blockType = MathHelper.Clamp(blockType, 0, 3);
     }
     public static void DrawDebug(SpriteBatch spriteBatch) {
+
+        if (Client.IsConnected()) {
+            var myClient = Client.NetClient;
+            var ping = myClient.Ping;
+            var pLoss = myClient.Statistics.PacketLossPercent;
+
+            var info = new string[] {
+                $"Client ID: {myClient.Id}",
+                $"Ping: {ping}",
+                $"Packet Loss: {pLoss}%",
+            };
+
+            var textScale = new Vector2(0.5f).ToResolution();
+
+            var pingColor = new StatisticalColor<int>(Color.Lime, Color.Red, 30, ping, 250);
+            var packetLossColor = new StatisticalColor<float>(Color.Lime, Color.Red, 0f, pLoss, 0.25f);
+
+            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, info[0], WindowUtils.WindowTop, Color.White, Color.Black, textScale, 0f, Anchor.TopCenter, 0.5f);
+            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, info[1], WindowUtils.WindowTop * 0.75f, pingColor.FinalColor, Color.Black, textScale, 0f, Anchor.TopCenter, 0.5f);
+            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, info[2], WindowUtils.WindowTop * 1.25f, packetLossColor.FinalColor, Color.Black, textScale, 0f, Anchor.TopCenter, 0.5f);
+        }
+
         if (!DebuggingEnabled) return;
 
         var posOffset = new Vector2(0, 80);
@@ -436,10 +473,20 @@ public static class DebugManager {
         }
 
         foreach (var body in Tank.CollisionsWorld.BodyList) {
-            DrawDebugString(spriteBatch,
-                $"BODY",
-                MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(body.Position.X * Tank.UNITS_PER_METER, 0, body.Position.Y * Tank.UNITS_PER_METER), CameraGlobals.GameView, CameraGlobals.GameProjection),
-                centered: true);
+            if (DebugLevel == Id.General) {
+                Color drawColor = Color.Black;
+
+                if (body.Tag is Color c)
+                    drawColor = c;
+
+                var position = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(
+                    body.Position.X * Tank.UNITS_PER_METER, 0,
+                    body.Position.Y * Tank.UNITS_PER_METER),
+                    CameraGlobals.GameView, CameraGlobals.GameProjection);
+
+                DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, "BODY", position, drawColor, 
+                    Color.White, Vector2.One * 0.5f, 0f, borderThickness: 0.5f);
+            }
         }
 
         for (int i = 0; i < VanillaAchievements.Repository.GetAchievements().Count; i++) {
@@ -499,12 +546,12 @@ public static class DebugManager {
         var rot = GeometryUtils.GetPiRandom();
 
         var t = new AITank(tier);
-        t.TankRotation = rot;
+        t.ChassisRotation = rot;
         t.TurretRotation = rot;
         t.Team = team;
-        t.Dead = false;
+        t.IsDestroyed = false;
         var pos = new BlockMapPosition(Client.ClientRandom.Next(0, 27), Client.ClientRandom.Next(0, 20));
-        t.Body.Position = pos;
+        t.Physics.Position = pos;
         t.Position = pos;
 
         return t;
@@ -513,13 +560,13 @@ public static class DebugManager {
         var rot = 0f;
 
         var x = new AITank(tier);
-        x.TargetTankRotation = rot;
-        x.TankRotation = rot;
+        x.DesiredChassisRotation = rot;
+        x.ChassisRotation = rot;
         x.TurretRotation = rot;
 
         x.Team = team;
-        x.Dead = false;
-        x.Body.Position = position.FlattenZ() / Tank.UNITS_PER_METER;
+        x.IsDestroyed = false;
+        x.Physics.Position = position.FlattenZ() / Tank.UNITS_PER_METER;
         x.Position = position.FlattenZ();
         return x;
     }
@@ -528,24 +575,24 @@ public static class DebugManager {
             var random = new BlockMapPosition(Client.ClientRandom.Next(0, 23), Client.ClientRandom.Next(0, 18));
             var rot = GeometryUtils.GetPiRandom();
             var t = new AITank(useCurTank ? tankToSpawnType : AITank.PickRandomTier());
-            t.TankRotation = rot;
+            t.ChassisRotation = rot;
             t.TurretRotation = rot;
-            t.Dead = false;
+            t.IsDestroyed = false;
             t.Team = useCurTank ? tankToSpawnTeam : TeamID.NoTeam;
-            t.Body.Position = random;
+            t.Physics.Position = random;
             t.Position = random;
         }
     }
     public static PlayerTank SpawnMe(int playerType, int team, Vector3 posOverride = default) {
-        var pos = LevelEditorUI.Active ? PlacementSquare.CurrentlyHovered.Position : MatrixUtils.GetWorldPosition(MouseUtils.MousePosition);
+        var pos = LevelEditorUI.IsActive ? PlacementSquare.CurrentlyHovered.Position : MatrixUtils.GetWorldPosition(MouseUtils.MousePosition);
 
         if (posOverride != default)
             pos = posOverride;
         var myTank = new PlayerTank(playerType) {
             Team = team,
-            Dead = false
+            IsDestroyed = false
         };
-        myTank.Body.Position = pos.FlattenZ() / Tank.UNITS_PER_METER;
+        myTank.Physics.Position = pos.FlattenZ() / Tank.UNITS_PER_METER;
         myTank.Position = pos.FlattenZ();
 
         if (Client.IsConnected())

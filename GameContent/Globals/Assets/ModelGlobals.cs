@@ -48,6 +48,7 @@ public static class ModelGlobals {
     public static Resource<Model> Halo = new(PathGlobals.COSMETICS_PATH, "halo");
     public static Resource<Model> Horns = new(PathGlobals.COSMETICS_PATH, "horns");
     public static Resource<Model> SantaHat = new(PathGlobals.COSMETICS_PATH, "santa_hat");
+    public static Resource<Model> WitchHat = new(PathGlobals.COSMETICS_PATH, "witch_hat");
 
     // misc
     public static Resource<Model> Logo = new(PathGlobals.MODEL_PATH + "/logo", "logo");

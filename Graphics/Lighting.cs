@@ -99,15 +99,12 @@ public static class Lighting
         effect.DirectionalLight1.Enabled = false;
         effect.DirectionalLight2.Enabled = false;
 
-        //var ting = MouseUtils.MousePosition.X / (WindowUtils.WindowWidth - WindowUtils.WindowWidth / 2);
-        //var ting2 = MouseUtils.MousePosition.Y / (WindowUtils.WindowHeight - WindowUtils.WindowHeight / 2);
-
         var lightingConstant = 1f * powerMultiplier;
 
         if (lightDir == default)
             lightDir = Vector3.Down;
 
-        effect.DirectionalLight0.Direction = lightDir * lightingConstant; //+ new Vector3(ting, 0, ting2);
+        effect.DirectionalLight0.Direction = lightDir * lightingConstant;
 
         effect.SpecularColor = specular ? (Color.White.ToVector3() * LightPower) : new Vector3(LightPower) * (IsNight ? new Vector3(1) : LightColor.ToVector3());
 

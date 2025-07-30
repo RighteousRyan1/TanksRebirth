@@ -10,6 +10,8 @@ using TanksRebirth.Graphics;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Globals.Assets;
+using TanksRebirth.GameContent.Systems.AI;
+using TanksRebirth.GameContent.Systems.TankSystem;
 
 namespace TanksRebirth.GameContent;
 
@@ -189,9 +191,9 @@ public class Crate
             if (Difficulties.Types["MasterModBuff"])
                 tier = Difficulties.VanillaToMasterModeConversions[tier];
             var t = new AITank(tier);
-            t.Body.Position = position.FlattenZ() / Tank.UNITS_PER_METER;
+            t.Physics.Position = position.FlattenZ() / Tank.UNITS_PER_METER;
             t.Position = position.FlattenZ();
-            t.Dead = false;
+            t.IsDestroyed = false;
             t.Team = TankToSpawn.Team;
         }
         OnOpen?.Invoke(this);

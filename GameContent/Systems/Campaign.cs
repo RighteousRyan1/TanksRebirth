@@ -20,6 +20,8 @@ using TanksRebirth.Internals.Common.IO;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
 using TanksRebirth.GameContent.UI.LevelEditor;
+using TanksRebirth.GameContent.Systems.AI;
+using TanksRebirth.GameContent.Systems.TankSystem;
 
 namespace TanksRebirth.GameContent.Systems;
 
@@ -111,6 +113,7 @@ public class Campaign
         // FIXME: source of level editor bug.
         PlacementSquare.ResetSquares();
         SceneManager.CleanupEntities();
+        SceneManager.CleanupScene();
         const int roundingFactor = 5;
         int numPlayers = 0;
         for (int i = 0; i < LoadedMission.Tanks.Length; i++) {
@@ -139,66 +142,69 @@ public class Campaign
 
                     tank.Position = template.Position;
 
-                    tank.TankRotation = chassisRotation;
-                    tank.TargetTankRotation = chassisRotation;
+                    tank.ChassisRotation = chassisRotation;
+                    tank.DesiredChassisRotation = chassisRotation;
                     tank.TurretRotation = MathF.Round(-template.Rotation, roundingFactor);
-                    tank.Dead = false;
+                    tank.IsDestroyed = false;
                     tank.Team = template.Team;
                     if (CampaignGlobals.ShouldMissionsProgress) {
                         tank.OnDestroy += () => {
                             TrackedSpawnPoints[Array.IndexOf(TrackedSpawnPoints, TrackedSpawnPoints.First(pos => pos.Position == template.Position))].Alive = false; // make sure the tank is not spawned again
                         };
                     }
-                    var placement = PlacementSquare.Placements.FindIndex(place => Vector3.Distance(place.Position, tank.Position3D) < Block.SIDE_LENGTH / 2);
-
-                    if (placement > -1) {
+                    var placement = PlacementSquare.GetFromClosest(tank.Position3D);
+                    if (placement is not null) {
                         // ChatSystem.SendMessage("Loaded " + TankID.Collection.GetKey(tank.Tier), Color.Blue);
-                        PlacementSquare.Placements[placement].TankId = tank.WorldId;
-                        PlacementSquare.Placements[placement].HasBlock = false;
+                        placement.TankId = tank.WorldId;
+                        placement.HasBlock = false;
+
+                        // set the position since there doesn't need to be any hassle
+                        tank.Position = placement.Position.FlattenZ();
                     }
                 }
             }
             else {
                 numPlayers++;
-                if ((Client.IsConnected() && numPlayers <= Server.ConnectedClients.Count(x => x is not null)) || !Client.IsConnected()) {
+                if ((Client.IsConnected() && numPlayers <= Server.CurrentClientCount) || !Client.IsConnected()) {
                     var tank = template.GetPlayerTank();
 
                     tank.Position = template.Position;
-                    tank.TankRotation = chassisRotation;
-                    tank.TargetTankRotation = chassisRotation;
+                    tank.ChassisRotation = chassisRotation;
+                    tank.DesiredChassisRotation = chassisRotation;
                     tank.TurretRotation = MathF.Round(-template.Rotation, roundingFactor);
-                    tank.Dead = false;
+                    tank.IsDestroyed = false;
                     tank.Team = template.Team;
 
                     if (tank.PlayerId <= Server.CurrentClientCount) {
-                        if (!LevelEditorUI.Active) {
+                        if (!LevelEditorUI.IsActive) {
                             if (NetPlay.IsClientMatched(tank.PlayerId)) {
                                 PlayerTank.MyTeam = tank.Team;
                                 PlayerTank.MyTankType = tank.PlayerType;
                             }
                         }
                     }
-                    else if (!LevelEditorUI.Active)
+                    else if (!LevelEditorUI.IsActive)
                         tank.Remove(true);
                     if (Client.IsConnected()) {
                         if (PlayerTank.Lives[tank.PlayerId] <= 0)
                             tank.Remove(true);
                     }
                     // TODO: note to self, this code above is what causes the skill issue.
-                    if (Difficulties.Types["AiCompanion"] && template.PlayerType == PlayerID.Red) {
-                        var tnk = new AITank(TankID.Black) {
+                    if (Difficulties.Types["AiCompanion"] && 
+                        (template.PlayerType == Server.CurrentClientCount + PlayerID.Red || 
+                        (Server.CurrentClientCount == 4 && template.PlayerType == PlayerID.Yellow))) {
+                        var randomTier = AITank.PickRandomTier();
+                        var tnk = new AITank(randomTier) {
                             // target = rot - pi
                             // turret =  -rot
                             Position = template.Position,
                             Team = tank.Team,
-                            TankRotation = MathF.Round(template.Rotation, roundingFactor),
-                            TargetTankRotation = MathF.Round(template.Rotation, roundingFactor),
+                            ChassisRotation = MathF.Round(template.Rotation, roundingFactor),
+                            DesiredChassisRotation = MathF.Round(template.Rotation, roundingFactor),
                             TurretRotation = MathF.Round(-template.Rotation, roundingFactor),
-                            Dead = false
+                            IsDestroyed = false,
                         };
-                        tnk.Body.Position = template.Position / Tank.UNITS_PER_METER;
-
-                        tnk.Swap(AITank.PickRandomTier());
+                        tnk.Physics.Position = template.Position / Tank.UNITS_PER_METER;
                     }
                     var placement = PlacementSquare.Placements.FindIndex(place => Vector3.Distance(place.Position, tank.Position3D) < Block.SIDE_LENGTH / 2);
 
@@ -356,7 +362,7 @@ public class Campaign
                 campaign.CachedMissions[i].GrantsExtraLife = isIdMatched;
             }
         }
-        else if (editorVersion == 4) {
+        else if (editorVersion == 4 || editorVersion == 5) {
             var totalMissions = reader.ReadInt32();
 
             campaign.CachedMissions = new Mission[totalMissions];

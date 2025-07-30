@@ -1,12 +1,13 @@
-using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using System.Linq;
+using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Systems;
-using TanksRebirth.Internals.Common.Utilities;
-using TanksRebirth.Internals;
-using TanksRebirth.Net;
 using TanksRebirth.GameContent.UI.MainMenu;
-using TanksRebirth.GameContent.Globals;
+using TanksRebirth.Internals;
+using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent;
 
@@ -19,15 +20,6 @@ public class GameShaders
     public static Effect AnimatedRainbow { get; private set; }
 
     public static float BlurFactor = 0.0075f;
-
-    private static bool _lantern;
-    public static bool LanternMode {
-        get => _lantern;
-        set {
-            _lantern = value;
-            LanternShader.Parameters["oLantern"]?.SetValue(value);
-        }
-    }
 
     public static void Initialize() {
         GaussianBlurShader = GameResources.GetGameResource<Effect>("Assets/shaders/gaussian_blur");
@@ -47,12 +39,13 @@ public class GameShaders
         var value = PlayerID.PlayerTankColors[NetPlay.GetMyClientId()];
         MouseShader.Parameters["oColor"].SetValue(value.ToVector3());
         /*MouseRenderer.HsvToRgb(TankGame.GameUpdateTime % 255 / 255f * 360, 1, 1).ToVector3());*/
-        MouseShader.Parameters["oSpeed"].SetValue(-20f);
+        MouseShader.Parameters["oSpeed"].SetValue(15f);
         MouseShader.Parameters["oSpacing"].SetValue(10f);
+        // MouseShader.Parameters["oRotation"].SetValue(MathHelper.Pi);
 
         GaussianBlurShader.Parameters["oResolution"].SetValue(Vector2.One);
         GaussianBlurShader.Parameters["oBlurFactor"].SetValue(BlurFactor);
-        GaussianBlurShader.Parameters["oEnabledBlur"].SetValue(MainMenuUI.Active);
+        GaussianBlurShader.Parameters["oEnabledBlur"].SetValue(MainMenuUI.IsActive);
 
         /*if (Input.CurrentKeySnapshot.IsKeyDown(Keys.Up))
             val += 0.01f;
@@ -63,20 +56,40 @@ public class GameShaders
         LanternShader.Parameters["oTime"]?.SetValue((float)TankGame.LastGameTime.TotalGameTime.TotalSeconds);
         //TestShader.Parameters["oBend"]?.SetValue(val);
         //TestShader.Parameters["oDistortionFactor"].SetValue(MouseUtils.MousePosition.X / WindowUtils.WindowWidth);
-
         if (Difficulties.Types["LanternMode"]) {
-            var index = NetPlay.GetMyClientId(); //Array.FindIndex(GameHandler.AllPlayerTanks, x => x is not null && !x.Dead);
+            var activeTanks = GameHandler.AllPlayerTanks.Where(x => x is not null && !x.IsDestroyed).ToArray();
 
-            if (GameHandler.AllPlayerTanks[index] is null)
+            if (activeTanks.Length == 0 || MainMenuUI.IsActive) {
+                LanternShader.Parameters["oLanternCount"]?.SetValue(0);
                 return;
-            var pos = index > -1 && 
-                !MainMenuUI.Active ? 
-                MatrixUtils.ConvertWorldToScreen(Vector3.Zero, 
-                Matrix.CreateTranslation(GameHandler.AllPlayerTanks[index].Position.X, 11, GameHandler.AllPlayerTanks[index].Position.Y), CameraGlobals.GameView, CameraGlobals.GameProjection).ToCartesianCoordinates() 
-                : new Vector2(-1);
-            // var val = (float)TankGame.LastGameTime.TotalGameTime.TotalSeconds;
-            LanternShader.Parameters["oPower"]?.SetValue(MainMenuUI.Active ? 100f : Client.ClientRandom.NextFloat(0.195f, 0.20f));
-            LanternShader.Parameters["oPosition"]?.SetValue(pos/*MouseUtils.MousePosition.ToCartesianCoordinates()*/);
+            }
+
+            var lanternPositions = new Vector2[activeTanks.Length];
+            var lanternPowers = new float[activeTanks.Length];
+            var lanternColors = new Vector3[activeTanks.Length];
+
+            for (int i = 0; i < activeTanks.Length; i++) {
+                var tank = activeTanks[i];
+
+                var screenPos = MatrixUtils.ConvertWorldToScreen(
+                    Vector3.Zero,
+                    Matrix.CreateTranslation(tank.Position.X, 11, tank.Position.Y),
+                    CameraGlobals.GameView,
+                    CameraGlobals.GameProjection
+                ).ToCartesianCoordinates();
+
+                lanternPositions[i] = screenPos;
+                lanternPowers[i] = Client.ClientRandom.NextFloat(0.16f, 0.165f);
+
+                lanternColors[i] = new Vector3(1.0f, 0.7f, 0.3f);
+            }
+
+            LanternShader.Parameters["oMaxDark"]?.SetValue(0.015f);
+            LanternShader.Parameters["oLanternCount"]?.SetValue(activeTanks.Length);
+            LanternShader.Parameters["oLanternPositions"]?.SetValue(lanternPositions);
+            LanternShader.Parameters["oLanternPowers"]?.SetValue(lanternPowers);
+            LanternShader.Parameters["oLanternColors"]?.SetValue(lanternColors);
+            LanternShader.Parameters["oDarknessLevel"]?.SetValue(0.1f);
         }
     }
 }

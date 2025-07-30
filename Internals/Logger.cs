@@ -54,11 +54,6 @@ public sealed class Logger : IDisposable {
         sWriter = new(fStream);
     }
 
-    [Conditional("DEBUG")]
-    void ConsoleWrite(string str) {
-        Console.WriteLine(str);
-    }
-
     /// <summary>
     /// Writes content to a logging file.
     /// </summary>
@@ -81,7 +76,7 @@ public sealed class Logger : IDisposable {
             var str = _stringBuilder.ToString();
             sWriter.WriteLine(str);
             Debug.WriteLine(str);
-            ConsoleWrite(str);
+            if (GameLauncher.IsConsoleAllocated) Console.WriteLine(str);
             sWriter.Flush();
         }
 

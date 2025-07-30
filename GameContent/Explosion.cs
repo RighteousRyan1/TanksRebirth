@@ -6,8 +6,10 @@ using System;
 using System.Linq;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Globals.Assets;
+using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.AI;
+using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework.Audio;
@@ -39,6 +41,7 @@ public class Explosion : IAITankDanger {
     /// <summary>Only merlin himself could decode why I use this... Use this number with any explosion-based calculations.</summary>
     public const float MAGIC_EXPLOSION_NUMBER = 9f;
     public int Id { get; private set; }
+    public int Team => Owner?.Team ?? TeamID.NoTeam;
 
     public float Scale;
     public float LingerDuration = 40f;
@@ -71,7 +74,7 @@ public class Explosion : IAITankDanger {
 
         ring.Scale = new(1.3f);
         ring.Pitch = MathHelper.PiOver2;
-        ring.HasAddativeBlending = true;
+        ring.HasAdditiveBlending = true;
         ring.Color = ExplosionColor == Color.White ? Color.Yellow : ExplosionColor;
 
         ring.UniqueBehavior = (a) => {
@@ -105,11 +108,11 @@ public class Explosion : IAITankDanger {
                     position = Vector3.Transform(Vector3.UnitX * explScalar, Matrix.CreateFromYawPitchRoll(rotZ + rotation, 0, rotX) * Matrix.CreateTranslation(Position3D));
                     particle.Position = position;
 
-                    var rot = MathUtils.CalculateRotationToFaceCenter(particle.Position, Position3D);
+                    var rot = MathUtils.GetLookAtEulerAngles(particle.Position, Position3D);
 
-                    particle.Roll = rot.X;
-                    particle.Pitch = rot.Y;
-                    particle.Yaw = rot.Z;
+                    particle.Roll = rot.Roll;
+                    particle.Pitch = rot.Pitch;
+                    particle.Yaw = rot.Yaw;
                 };
             }
             horizLayers -= (int)MathF.Round((float)horizLayers / vertLayers);
@@ -140,7 +143,7 @@ public class Explosion : IAITankDanger {
             }
             foreach (var tank in GameHandler.AllTanks) {
                 if (tank is null || Vector2.Distance(tank.Position, Position) > Scale * MAGIC_EXPLOSION_NUMBER
-                    || tank.Dead || HasHit[tank.WorldId] || tank.Properties.InvulnerableToMines)
+                    || tank.IsDestroyed || HasHit[tank.WorldId] || tank.Properties.InvulnerableToMines)
                     continue;
                 HasHit[tank.WorldId] = true;
                 if (Owner is null)

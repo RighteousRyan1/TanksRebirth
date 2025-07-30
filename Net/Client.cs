@@ -1,12 +1,14 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using LiteNetLib;
+﻿using LiteNetLib;
 using LiteNetLib.Utils;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
+using System;
+using System.IO;
+using System.Linq;
 using TanksRebirth.GameContent;
+using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.Systems;
+using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.UI.MainMenu;
 
 namespace TanksRebirth.Net;
@@ -51,8 +53,6 @@ public class Client {
         ClientManager.Start();
         NetPlay.MapClientNetworking();
 
-        Console.ForegroundColor = ConsoleColor.Green;
-
         Client c = new(0, username);
 
         TankGame.ClientLog.Write($"Created a new client with name '{username}'.", Internals.LogType.Debug);
@@ -77,7 +77,7 @@ public class Client {
         NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
     public static void SendQuit() {
-        if (MainMenuUI.Active || !IsConnected() || !IsHost())
+        if (MainMenuUI.IsActive || !IsConnected() || !IsHost())
             return;
 
         NetDataWriter message = new();
@@ -86,7 +86,7 @@ public class Client {
         NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
     public static void SendKillCounts() {
-        if (MainMenuUI.Active || !IsConnected())
+        if (MainMenuUI.IsActive || !IsConnected())
             return;
 
         NetDataWriter message = new();
@@ -100,7 +100,7 @@ public class Client {
     }
     // int kind for the kind of plane soon?
     public static void SendAirplaneSpawn(Vector2 spawnPos, Vector2 velocity) {
-        if (MainMenuUI.Active || !IsConnected())
+        if (MainMenuUI.IsActive || !IsConnected())
             return;
 
         NetDataWriter message = new();
@@ -112,7 +112,7 @@ public class Client {
         NetClient.Send(message, DeliveryMethod.ReliableSequenced);
     }
     public static void SendLives() {
-        if (MainMenuUI.Active || !IsConnected())
+        if (MainMenuUI.IsActive || !IsConnected())
             return;
 
         NetDataWriter message = new();
@@ -125,7 +125,7 @@ public class Client {
         NetClient.Send(message, DeliveryMethod.Unreliable);
     }
     public static void SyncCleanup() {
-        if (MainMenuUI.Active || !IsConnected())
+        if (MainMenuUI.IsActive || !IsConnected())
             return;
 
         NetDataWriter message = new();
@@ -147,7 +147,7 @@ public class Client {
         NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
     public static void RequestStartGame(int checkpoint, bool shouldProgressMissions) {
-        if (MainMenuUI.Active || !IsConnected())
+        if (MainMenuUI.IsActive || !IsConnected())
             return;
         NetDataWriter message = new();
         message.Put(PacketID.StartGame);
@@ -162,9 +162,9 @@ public class Client {
 
         message.Put(tank.PlayerType);
         message.Put(tank.Team);
-        message.Put(tank.Body.Position.X);
-        message.Put(tank.Body.Position.Y);
-        message.Put(tank.TankRotation);
+        message.Put(tank.Physics.Position.X);
+        message.Put(tank.Physics.Position.Y);
+        message.Put(tank.ChassisRotation);
         message.Put(tank.TurretRotation);
 
         NetClient.Send(message, DeliveryMethod.ReliableOrdered);
@@ -177,9 +177,9 @@ public class Client {
         message.Put(PacketID.SyncPlayer);
 
         message.Put(tank.PlayerId);
-        message.Put(tank.Body.Position.X);
-        message.Put(tank.Body.Position.Y);
-        message.Put(tank.TankRotation);
+        message.Put(tank.Physics.Position.X);
+        message.Put(tank.Physics.Position.Y);
+        message.Put(tank.ChassisRotation);
         message.Put(tank.TurretRotation);
         message.Put(tank.Velocity.X);
         message.Put(tank.Velocity.Y);
@@ -187,25 +187,35 @@ public class Client {
         NetClient.Send(message, DeliveryMethod.Unreliable);
     }
     public static void SyncAITank(AITank tank) {
-        if (MainMenuUI.Active || !IsConnected())
+        if (MainMenuUI.IsActive || !IsConnected())
             return;
 
         NetDataWriter message = new();
         message.Put(PacketID.SyncAiTank);
 
         message.Put(tank.AITankId);
-        message.Put(tank.Body.Position.X);
-        message.Put(tank.Body.Position.Y);
-        message.Put(tank.TankRotation);
+        message.Put(tank.Physics.Position.X);
+        message.Put(tank.Physics.Position.Y);
+        message.Put(tank.ChassisRotation);
         message.Put(tank.TurretRotation);
         message.Put(tank.Velocity.X);
         message.Put(tank.Velocity.Y);
+
+        var targetExists = tank.TargetTank is not null;
+        message.Put(targetExists);
+
+        message.Put(tank.SeesTarget);
+
+        // message.Put(tank.isin)
+
+        if (targetExists)
+            message.Put(tank.TargetTank!.WorldId);
 
         NetClient.Send(message, DeliveryMethod.Unreliable);
     }
     /// <summary>Be sure to sync by accessing the index of the tank from the AllTanks array. (<see cref="GameHandler.AllTanks"/>)</summary>
     public static void SyncShellFire(Shell shell) {
-        if (MainMenuUI.Active || !IsConnected())
+        if (MainMenuUI.IsActive || !IsConnected())
             return;
 
         NetDataWriter message = new();
@@ -227,7 +237,7 @@ public class Client {
     }
     // maybe make contexts serializable?
     public static void SyncDamage(int hurtId, Color colorOverride) {
-        if (!IsConnected() || MainMenuUI.Active)
+        if (!IsConnected() || MainMenuUI.IsActive)
             return;
         NetDataWriter message = new();
         message.Put(PacketID.TankDamage);
@@ -239,25 +249,12 @@ public class Client {
         NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
     public static void SyncShellDestroy(Shell shell, Shell.DestructionContext cxt) {
-        if (!IsConnected() || MainMenuUI.Active)
+        if (!IsConnected() || MainMenuUI.IsActive)
             return;
         NetDataWriter message = new();
         message.Put(PacketID.ShellDestroy);
-        // TODO: bool hasOwner to decide whether or not to subtract from an owner's shell count
-
-        message.Put(shell.Owner is not null ? shell.Owner.WorldId : -1);
-
-        // sending the shell id on the current client.
-        message.Put(shell.Id);
-
         //sending the shell UID on the current client.
         message.Put(shell.UID);
-
-        // to fix "ghost bullets": compare Array Length of Shells from server to each client, then
-        // add the difference between the client's # of shells from the server's # of shells.
-        // there's gotta be a way to make this more performant...
-        message.Put(Shell.AllShells.Count(x => x is not null));
-
         // send the index of the shell in the owner's OwnedShell array for destruction on other clients
         // message.Put(Array.IndexOf(shell.Owner.OwnedShells, shell));
         message.Put((byte)cxt);
@@ -266,7 +263,7 @@ public class Client {
     }
     // maybe have owner stuff go here?
     public static void SyncMineDetonate(Mine mine) {
-        if (!IsConnected() || MainMenuUI.Active)
+        if (!IsConnected() || MainMenuUI.IsActive)
             return;
         NetDataWriter message = new();
         message.Put(PacketID.MineDetonate);
@@ -276,7 +273,7 @@ public class Client {
         NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
     public static void SyncMinePlace(Vector2 position, float detonateTime, int id) {
-        if (MainMenuUI.Active || !IsConnected())
+        if (MainMenuUI.IsActive || !IsConnected())
             return;
 
         NetDataWriter message = new();
@@ -375,19 +372,6 @@ public class Client {
 
         NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
-    public static void SendDisconnect(int peerId, string name, string reason) {
-        if (!IsConnected())
-            return;
-        OnClientDisconnect?.Invoke(NetPlay.CurrentClient);
-        NetDataWriter message = new();
-        message.Put(PacketID.Disconnect);
-
-        message.Put(peerId);
-        message.Put(name);
-        message.Put(reason);
-
-        NetClient.Send(message, DeliveryMethod.ReliableOrdered);
-    }
     public static void SendCampaignStatus(string campaignName, int clientId, bool success) {
         if (!IsConnected())
             return;
@@ -449,10 +433,31 @@ public class Client {
 
         NetClient.Send(message, DeliveryMethod.ReliableOrdered);
     }
+    public static void Disconnect() {
+        NetPlay.UnmapClientNetworking();
+
+        // tells all other clients that the host disconnected.
+        NetPlay.TryUnmapServerNetworking();
+
+        Client.NetClient.Disconnect();
+
+        for (int i = PlayerID.Red; i <= PlayerID.Yellow; i++)
+            GameHandler.AllPlayerTanks[i]?.Destroy(new TankHurtContextOther(), false);
+
+        NetPlay.CurrentClient = null;
+        NetPlay.CurrentServer = null;
+
+        Server.ConnectedClients = null;
+        Server.NetManager = null;
+
+        Server.CurrentClientCount = 0;
+
+        MainMenuUI.ShouldServerButtonsBeVisible = true;
+    }
     public static bool IsConnected() {
         if (NetClient is not null)
             return NetClient.ConnectionState == ConnectionState.Connected;
         return false;
     }
-    public static bool IsHost() => (IsConnected() && Server.NetManager is not null) || !Client.IsConnected();
+    public static bool IsHost() => Server.NetManager is not null;
 }

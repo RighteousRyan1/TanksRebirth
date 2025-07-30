@@ -12,18 +12,19 @@ using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
-using TanksRebirth.Internals.Common.Framework;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
+using TanksRebirth.Internals.Common.Framework.Collision;
+using TanksRebirth.Internals.Common.Framework.Collisions;
+using TanksRebirth.GameContent.Systems.TankSystem;
 
 namespace TanksRebirth.GameContent;
 
-public class Shell : IAITankDanger
-{
+public class Shell : IAITankDanger {
     public delegate void PostCreateDelegate(Shell shell);
 
     public static event PostCreateDelegate? PostCreate;
@@ -53,8 +54,7 @@ public class Shell : IAITankDanger
 
     public static event DestroyDelegate? OnDestroy;
 
-    public enum DestructionContext
-    {
+    public enum DestructionContext {
         WithObstacle,
         WithMine,
         WithFriendlyTank,
@@ -64,8 +64,7 @@ public class Shell : IAITankDanger
     }
 
     /// <summary>A structure that allows you to give a <see cref="Shell"/> homing properties.</summary>
-    public struct HomingProperties
-    {
+    public struct HomingProperties {
         public float Power;
         public float Radius;
         public float Speed;
@@ -112,8 +111,8 @@ public class Shell : IAITankDanger
     public Rectangle Hitbox => new((int)(Position.X - 2), (int)(Position.Y - 2), 4, 4);
 
     /// <summary>The hurtcircle on the 2D backing map for the game.</summary>
-    public Circle HitCircle => new() { Center = Position, Radius = 4 };
-    public bool IsPlayerSourced { get; set; }
+    public Circle HitCircle => new() { Center = Position, Radius = 7 };
+    public int Team => Owner?.Team ?? TeamID.NoTeam;
 
     private Texture2D? _shellTexture;
     /// <summary>
@@ -204,7 +203,6 @@ public class Shell : IAITankDanger
         Model = ModelGlobals.Bullet.Asset;
 
         AITank.Dangers.Add(this);
-        IsPlayerSourced = owner is PlayerTank;
 
         Properties.HomeProperties = homing;
         Owner = owner;
@@ -242,7 +240,7 @@ public class Shell : IAITankDanger
             }
             if (owner is not null) {
                 ShootSound!.Instance.Pitch = MathHelper.Clamp(owner.Properties.ShootPitch, -1, 1);
-                SoundPlayer.PlaySoundInstance(ShootSound, SoundContext.Effect, volume: 0.3f);
+                SoundPlayer.PlaySoundInstance(ShootSound, SoundContext.Effect, volume: 0.6f);
                 //if (CameraGlobals.IsUsingFirstPresonCamera)
                 //    SoundUtils.CreateSpatialSound(ShootSound, owner.TurretPosition3D, CameraGlobals.RebirthFreecam.Position);
             }
@@ -273,7 +271,7 @@ public class Shell : IAITankDanger
         ShootSound?.Instance?.Stop();
     }
     internal void Update() {
-        if (!GameScene.ShouldRenderAll || (!CampaignGlobals.InMission && !MainMenuUI.Active))
+        if (!GameScene.ShouldRenderAll || (!CampaignGlobals.InMission && !MainMenuUI.IsActive))
             return;
 
         Rotation = Velocity.ToRotation() - MathHelper.PiOver2;
@@ -281,10 +279,10 @@ public class Shell : IAITankDanger
         World = Matrix.CreateFromYawPitchRoll(-Rotation, 0, 0)
                 * Matrix.CreateTranslation(Position3D);
 
-        if (TrailSound != null) {
+        //if (TrailSound != null) {
             //if (CameraGlobals.IsUsingFirstPresonCamera)
             //    SoundUtils.CreateSpatialSound(TrailSound, Position3D, CameraGlobals.RebirthFreecam.Position);
-        }
+        //}
 
         if (_wallRicCooldown <= 0) {
             if (Position.X is < GameScene.MIN_X or > GameScene.MAX_X) {
@@ -343,13 +341,12 @@ public class Shell : IAITankDanger
             if (Owner == null)
                 break;
 
-            ref var tanksSSpace = ref MemoryMarshal.GetReference((Span
-                <Tank>)GameHandler.AllTanks);
+            ref var tanksSSpace = ref MemoryMarshal.GetReference((Span<Tank>)GameHandler.AllTanks);
 
             for (var i = 0; i < GameHandler.AllTanks.Length; i++) {
                 var target = Unsafe.Add(ref tanksSSpace, i);
 
-                if (target is null || target.Dead || target == Owner ||
+                if (target is null || target.IsDestroyed || target == Owner ||
                     !(Vector2.Distance(Position, target.Position) <= Properties.HomeProperties.Radius)) continue;
 
                 if (target.Team == Owner.Team && target.Team != TeamID.NoTeam) continue;
@@ -398,32 +395,24 @@ public class Shell : IAITankDanger
         ModdedData?.PostUpdate();
         OnPostUpdate?.Invoke(this);
     }
-    private void RenderSmokeParticle(float timer) {
+    void RenderSmokeParticle(float timer) {
+
+        // TODO: make look accurate
         if (CameraGlobals.IsUsingFirstPresonCamera) timer /= 2;
         if (!(LifeTime % timer <= RuntimeData.DeltaTime)) return;
 
         Particle p;
-        if (CameraGlobals.IsUsingFirstPresonCamera) {
-            p = GameHandler.Particles.MakeParticle(Position3D + new Vector3(0, 0, 5).FlattenZ()
-                                .Rotate(Rotation + MathHelper.Pi + Client.ClientRandom.NextFloat(-0.3f, 0.3f))
-                                .ExpandZ(),
-            ModelGlobals.Smoke.Asset,
-            GameResources.GetGameResource<Texture2D>("Assets/textures/smoke/smoke"));
-            p.Scale = new(0.7f);
-        }
-        else {
-            p = GameHandler.Particles.MakeParticle(
-                Position3D + new Vector3(0, 0, 5).FlattenZ()
-                                            .Rotate(Rotation + MathHelper.Pi + Client.ClientRandom.NextFloat(-0.3f, 0.3f))
-                                            .ExpandZ(),
-            GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smokes"));
-            p.Scale = new(0.3f);
+        p = GameHandler.Particles.MakeParticle(
+            Position3D + new Vector3(0, 0, 5).FlattenZ()
+                                        .Rotate(Rotation + MathHelper.Pi + Client.ClientRandom.NextFloat(-0.3f, 0.3f))
+                                        .ExpandZ(),
+        GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smoke"));
+        p.Scale = new(0.3f);
 
-            p.Pitch = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
-        }
-        p.FaceTowardsMe = false;
+        p.Pitch = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
+        p.FaceTowardsMe = CameraGlobals.IsUsingFirstPresonCamera;
 
-        p.HasAddativeBlending = false;
+        p.HasAdditiveBlending = false;
         p.Color = Properties.SmokeColor;
         p.Alpha = 0.5f;
 
@@ -437,7 +426,7 @@ public class Shell : IAITankDanger
             GeometryUtils.Add(ref particle.Scale, 0.0075f * RuntimeData.DeltaTime);
         };
     }
-    private void RenderLeaveTrail() {
+    void RenderLeaveTrail() {
         // _oldPosition and Position are *not* the same during method call.
         // TODO: make more particles added depending on the positions between 2 distinct frames
         //var numToAdd
@@ -445,9 +434,11 @@ public class Shell : IAITankDanger
         var p = GameHandler.Particles.MakeParticle(
             Position3D + new Vector3(0, 0, 5).FlattenZ().Rotate(Rotation + MathHelper.Pi).ExpandZ(),
             GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
+
+        // p.Layer = 1f;
         p.Roll = -MathHelper.PiOver2 + (RuntimeData.RunTime % MathHelper.Tau);
         p.Color = Properties.TrailColor;
-        p.HasAddativeBlending = false;
+        p.HasAdditiveBlending = false;
         p.Scale = new(0.45f, 0.5f, 2f); // x = length, y = height, z = width
                                         // defaults = (x = 0.4, y = 0.25, 0.4)
 
@@ -462,45 +453,44 @@ public class Shell : IAITankDanger
                 p.Destroy();
         };
     }
-    private void RenderFlamingParticle() {
-        if (!(0 <= RuntimeData.DeltaTime)) return;
-
-        var p = GameHandler.Particles.MakeParticle(
+    void RenderFlamingParticle() {
+        var flame = GameHandler.Particles.MakeParticle(
             Position3D + new Vector3(0, 0, 5).FlattenZ().Rotate(Rotation + MathHelper.Pi).ExpandZ(),
             GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/flame"));
 
-        p.Roll = -MathHelper.PiOver2;
         var scaleRand = Client.ClientRandom.NextFloat(0.5f, 0.75f);
-        p.Scale = new(scaleRand, 0.165f, 0.4f); // x is outward from bullet
-        p.Color = Properties.FlameColor;
-        p.HasAddativeBlending = false;
-        // Client.ClientRandom.NextFloat(-2f, 2f)
-        p.Rotation2D = -MathHelper.PiOver2;
+
+        flame.Layer = 1f;
+        flame.Scale = new(scaleRand, 0.165f, 0.4f); // x is outward from bullet
+        flame.Color = Properties.FlameColor;
+        flame.HasAdditiveBlending = false;
+
+        flame.Rotation2D = -MathHelper.PiOver2;
 
         var rotoff = Client.ClientRandom.NextFloat(-0.25f, 0.25f);
-        p.Origin2D = new(p.Texture.Size().X / 2, p.Texture.Size().Y);
+        flame.Position = new Vector3(float.MaxValue);
+        flame.Origin2D = new(flame.Texture.Size().X / 2, flame.Texture.Size().Y);
 
-        var initialScale = p.Scale;
+        var initialScale = flame.Scale;
 
-        p.UniqueBehavior = (par) => {
+        flame.UniqueBehavior = (p) => {
             const float scalingConstant = 0.06f;
-            var flat = Position;
 
-            var off = flat + Vector2.Zero.Rotate(Rotation);
+            var off = Position + Vector2.Zero.Rotate(Rotation);
 
-            par.Position = off.ExpandZ() + new Vector3(0, 11, 0);
+            flame.Position = off.ExpandZ() + new Vector3(0, 11, 0);
 
-            par.Roll = Rotation + MathHelper.PiOver2 + rotoff;
-            par.Pitch = MathHelper.PiOver2;
+            flame.Roll = Rotation + MathHelper.PiOver2 + rotoff;
+            flame.Pitch = MathHelper.PiOver2;
 
             //if (TankGame.GameUpdateTime % 2 == 0)
             //p.Roll = Client.ClientRandom.NextFloat(0, MathHelper.TwoPi);
 
 
-            par.Scale.X -= scalingConstant * RuntimeData.DeltaTime;
+            flame.Scale.X -= scalingConstant * RuntimeData.DeltaTime;
 
-            if (par.Scale.X <= 0)
-                par.Destroy();
+            if (flame.Scale.X <= 0)
+                flame.Destroy();
         };
     }
     private void TankGame_OnFocusRegained(object? sender, nint e) {
@@ -560,7 +550,7 @@ public class Shell : IAITankDanger
 
         for (var i = 0; i < GameHandler.AllTanks.Length; i++) {
             var tank = Unsafe.Add(ref tankSSpace, i);
-            if (tank == null || tank.Dead) continue;
+            if (tank == null || tank.IsDestroyed) continue;
 
             if (!tank.CollisionCircle.Intersects(HitCircle)) continue;
 
@@ -585,7 +575,7 @@ public class Shell : IAITankDanger
         for (var i = 0; i < AllShells.Length; i++) {
             ref var bullet = ref Unsafe.Add(ref bulletSSpace, i);
             if (bullet == null || bullet == this) continue;
-            if (!bullet.Hitbox.Intersects(Hitbox)) continue;
+            if (!bullet.HitCircle.Intersects(HitCircle)) continue;
 
             if (bullet.Properties.IsDestructible)
                 bullet.Destroy(DestructionContext.WithShell);
@@ -637,7 +627,7 @@ public class Shell : IAITankDanger
                     sfx.MaxVolume = SoundUtils.GetVolumeFromCameraPosition(Position3D, CameraGlobals.RebirthFreecam.Position);
             }
 
-            GameHandler.Particles.MakeSmallExplosion(Position3D, 8, 10, 1.25f, 15);
+            GameHandler.Particles.MakeSmallExplosion(Position3D, 8, 10, 1.25f, 10);
         }
 
         TrailSound?.Instance?.Stop();

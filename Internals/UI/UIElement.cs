@@ -189,9 +189,7 @@ public abstract partial class UIElement {
             DrawTooltipBox(spriteBatch, Color.White);
     }
 
-    /// <summary>
-    /// Initializes this <see cref="UIElement">.
-    /// </summary>
+    /// <summary>Initializes this <see cref="UIElement"/></summary>
     public void Initialize() {
         if (Initialized)
             return;

@@ -36,24 +36,25 @@ public class Speedrun
         public override string ToString() => $"{Runner} in {TimeUtils.StringFormatCustom(TimeTaken, ":")} on {Date:d}";
     }
     internal static void GetSpeedruns() {
-        try {
-            var bytes = WebUtils.DownloadWebFile("https://raw.githubusercontent.com/RighteousRyan1/tanks_rebirth_motds/master/topspeedruns_0-20", out var name);
-            var str = System.Text.Encoding.Default.GetString(bytes);
+        var bytes = WebUtils.DownloadWebFile("https://raw.githubusercontent.com/RighteousRyan1/tanks_rebirth_motds/master/topspeedruns_0-20", out var name, out var status);
 
-            var strSplit = str.Split('\n').Where(x => x != string.Empty).ToArray();
-
-            var data = new SpeedrunData[strSplit.Length];
-
-            for (int i = 0; i < strSplit.Length; i++) {
-                var spl = strSplit[i].Split('|');
-                data[i] = new(spl[0], TimeSpan.Parse(spl[1]), DateTime.Parse(spl[2], CultureInfo.InvariantCulture, styles: DateTimeStyles.None));
-            }
-            LoadedSpeedruns = data;
-        }
-        catch {
+        if (status != System.Net.HttpStatusCode.OK) {
             LoadedSpeedruns = new SpeedrunData[1];
-            LoadedSpeedruns[0] = new("Unable to fetch speedrun data.", TimeSpan.Zero, DateTime.UnixEpoch);
+            LoadedSpeedruns[0] = new($"Unable to fetch speedrun data. Status: {status}", TimeSpan.Zero, DateTime.UnixEpoch);
+            return;
         }
+
+        var str = Encoding.Default.GetString(bytes);
+
+        var strSplit = str.Split('\n').Where(x => x != string.Empty).ToArray();
+
+        var data = new SpeedrunData[strSplit.Length];
+
+        for (int i = 0; i < strSplit.Length; i++) {
+            var spl = strSplit[i].Split('|');
+            data[i] = new(spl[0], TimeSpan.Parse(spl[1]), DateTime.Parse(spl[2], CultureInfo.InvariantCulture, styles: DateTimeStyles.None));
+        }
+        LoadedSpeedruns = data;
     }
     public Stopwatch Timer;
     public string CampaignName { get; set; }

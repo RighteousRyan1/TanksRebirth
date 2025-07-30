@@ -46,7 +46,7 @@ public static class RebirthMouse
         _sinScale = MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalSeconds);
         var scaleReal = 1f + _sinScale / 12;
 
-        if (!MainMenuUI.Active && !GameUI.Paused && !LevelEditorUI.Active) {
+        if (!MainMenuUI.IsActive && !GameUI.Paused && !LevelEditorUI.IsActive) {
             var clientId = NetPlay.CurrentClient is null ? 0 : NetPlay.CurrentClient.Id;
             if (GameHandler.AllPlayerTanks[clientId] is not null) {
                 var me = GameHandler.AllPlayerTanks[clientId];
@@ -57,11 +57,10 @@ public static class RebirthMouse
                     var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/misc/mouse_dot");
 
                     // GameHandler.ClientLog.Write("One Loop:", LogType.Info);
-                    for (int i = 0; i < numDots; i++) {
+                    for (int i = 1; i < numDots; i++) {
                         var curDrawPos = Vector2.Lerp(tankPos, MouseUtils.MousePosition, (float)i / numDots);// tankPos.DirectionOf(MouseUtils.MousePosition) * i;
-
-                        for (int j = 0; j < 4; j++)
-                            TankGame.SpriteRenderer.Draw(tex, curDrawPos, null, Color.White, MathHelper.PiOver2 * j, tex.Size(), new Vector2(0.35f).ToResolution(), default, default);
+                        
+                        TankGame.SpriteRenderer.Draw(tex, curDrawPos, null, Color.White, 0f, Anchor.Center.GetAnchor(tex.Size()), new Vector2(0.35f).ToResolution(), default, default);
                     }
                 }
             }

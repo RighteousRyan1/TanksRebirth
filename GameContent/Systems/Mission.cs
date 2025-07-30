@@ -7,8 +7,10 @@ using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.Systems.Coordinates;
+using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.Internals;
+using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.GameContent.Systems;
 
@@ -25,7 +27,7 @@ public record struct Mission
     /// <summary>The obstacles in the <see cref="Mission"/>.</summary>
     public BlockTemplate[] Blocks { get; set; }
 
-    public bool GrantsExtraLife;
+    public bool GrantsExtraLife { get; set; }
 
     /// <summary>
     /// Construct a mission. Should generally never be called by the user unless you want to use a lot of time figuring things out.
@@ -51,7 +53,7 @@ public record struct Mission
                 var tmp = new TankTemplate {
                     IsPlayer = tank is PlayerTank,
                     Position = tank.Position,
-                    Rotation = MathF.Round(tank.TankRotation, roundingFactor),
+                    Rotation = MathF.Round(tank.ChassisRotation, roundingFactor),
                     Team = tank.Team,
                 };
 
@@ -91,11 +93,12 @@ public record struct Mission
 
             var tank = tnk.GetTank();
 
-            var placement = PlacementSquare.Placements.FindIndex(place => Vector3.Distance(place.Position, tank.Position3D) < Block.SIDE_LENGTH / 2);
+            var placement = PlacementSquare.GetFromClosest(tank.Position3D);
 
-            if (placement > -1) {
-                PlacementSquare.Placements[placement].TankId = tank.WorldId;
-                PlacementSquare.Placements[placement].HasBlock = false;
+            if (placement is not null) {
+                placement.TankId = tank.WorldId;
+                placement.HasBlock = false;
+                tank.Position = placement.Position.FlattenZ(); // BlockMapPosition.Convert2D(placement.RelativePosition);
             }
 
             // TODO: Find the root cause that causes us to manually have to add Math.PI to 1.57.
@@ -110,9 +113,9 @@ public record struct Mission
             //if (float.Round(tnk.Rotation) == float.Round(1.57f))
             //tnk.Rotation += MathF.PI * 2;
 
-            tank.TankRotation = MathF.Round(tnk.Rotation, 5);
-            tank.TargetTankRotation = tank.TankRotation;
-            tank.TurretRotation = -tank.TankRotation;
+            tank.ChassisRotation = MathF.Round(tnk.Rotation, 5);
+            tank.DesiredChassisRotation = tank.ChassisRotation;
+            tank.TurretRotation = -tank.ChassisRotation;
             if (tank is AITank aiTank)
                 aiTank.TargetTurretRotation = tank.TurretRotation;
         }
@@ -222,7 +225,7 @@ public record struct Mission
     /// <param name="campaignName">The campaign to search for the mission in. If null, searches the <c>Missions/</c> directory.</param>
     /// <returns>The successfully loaded mission.</returns>
     /// <exception cref="FileLoadException"></exception>
-    public static Mission Load(string missionName, string campaignName) {
+    public static Mission Load(string missionName, string? campaignName) {
         string root;
         if (campaignName is not null)
             root = Path.Combine(TankGame.SaveDirectory, "Campaigns", campaignName);
@@ -264,12 +267,16 @@ public record struct Mission
             2 => LoadMissionV2(reader),
             3 => LoadMissionV3(reader),
             4 => LoadMissionV4(reader),
+            5 => LoadMissionV5(reader),
             _ => throw new Exception("This is not supposed to happen."),
         };
     }
 
     // methods of loading mission data
     // preceding numbers represent the version of the editor the level was saved with
+
+    // this exists solely to port from older versions (< 5) to the version where the center is actually at (0, 0)
+    const float ADJUST_FOR_CENTER = 131f;
 
     public static Mission LoadMissionV2(BinaryReader reader) {
         List<TankTemplate> tanks = [];
@@ -281,7 +288,7 @@ public record struct Mission
         for (int i = 0; i < totalTanks; i++) {
             var isPlayer = reader.ReadBoolean();
             var x = reader.ReadSingle();
-            var y = reader.ReadSingle();
+            var y = reader.ReadSingle() - ADJUST_FOR_CENTER;
             var rotation = reader.ReadSingle();
             var tier = reader.ReadByte();
 
@@ -309,7 +316,7 @@ public record struct Mission
             var type = reader.ReadByte();
             var stack = reader.ReadByte();
             var x = reader.ReadSingle();
-            var y = reader.ReadSingle();
+            var y = reader.ReadSingle() - ADJUST_FOR_CENTER;
             var link = reader.ReadSByte();
 
             blocks.Add(new() {
@@ -334,7 +341,7 @@ public record struct Mission
         for (int i = 0; i < totalTanks; i++) {
             var isPlayer = reader.ReadBoolean();
             var x = reader.ReadSingle();
-            var y = reader.ReadSingle();
+            var y = reader.ReadSingle() - ADJUST_FOR_CENTER;
             var rotation = reader.ReadSingle();
             var tier = reader.ReadByte();
             var pType = reader.ReadByte();
@@ -358,7 +365,7 @@ public record struct Mission
             var type = reader.ReadByte();
             var stack = reader.ReadByte();
             var x = reader.ReadSingle();
-            var y = reader.ReadSingle();
+            var y = reader.ReadSingle() - ADJUST_FOR_CENTER;
             var link = reader.ReadSByte();
 
             blocks.Add(new() {
@@ -374,6 +381,56 @@ public record struct Mission
         };
     }
     public static Mission LoadMissionV4(BinaryReader reader) {
+        List<TankTemplate> tanks = [];
+        List<BlockTemplate> blocks = [];
+        var name = reader.ReadString();
+        var grantsLife = reader.ReadBoolean();
+
+        var totalTanks = reader.ReadInt32();
+
+        for (int i = 0; i < totalTanks; i++) {
+            var isPlayer = reader.ReadBoolean();
+            var x = reader.ReadSingle();
+            var y = reader.ReadSingle() - ADJUST_FOR_CENTER;
+            var rotation = reader.ReadSingle();
+            var tier = reader.ReadByte();
+            var pType = reader.ReadByte();
+            var team = reader.ReadByte();
+
+            tanks.Add(new() {
+                IsPlayer = isPlayer,
+                Position = new(x, y),
+                Rotation = rotation,
+                AiTier = tier,
+                PlayerType = pType,
+                Team = team
+            });
+        }
+
+        var totalBlocks = reader.ReadInt32();
+
+        for (int i = 0; i < totalBlocks; i++) {
+            var type = reader.ReadByte();
+            var stack = reader.ReadByte();
+            var x = reader.ReadSingle();
+            var y = reader.ReadSingle() - ADJUST_FOR_CENTER;
+            var link = reader.ReadSByte();
+
+            blocks.Add(new() {
+                Type = type,
+                Stack = stack,
+                Position = new(x, y),
+                TpLink = link
+            });
+        }
+
+        return new Mission([.. tanks], [.. blocks]) {
+            Name = name,
+            GrantsExtraLife = grantsLife
+        };
+    }
+    // could possibly be different.
+    public static Mission LoadMissionV5(BinaryReader reader) {
         List<TankTemplate> tanks = [];
         List<BlockTemplate> blocks = [];
         var name = reader.ReadString();

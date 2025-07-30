@@ -10,18 +10,19 @@ using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.Graphics.Metrics;
 
-public class Graph(string name, Func<float> value, float rangeMax, int length = 100, float deltaX = 1f, float deltaY = 1f) {
-    private int _numElements;
-    private float[] _values = new float[length];
+public class Graph(string name, Func<float> value, float rangeMax, int length = 100, float deltaX = 1f, float deltaY = 1f, uint updateCount = 30) {
+    int _numElements;
+    float[] _values = new float[length];
+    readonly Func<float> _independent = value;
 
     public string Name { get; set; } = name;
-
-    private readonly Func<float> _independent = value;
+    /// <summary>Measured in frames, not ticks, so the graph will update faster on higher framerates.</summary>
+    public uint UpdateFrequency { get; set; } = updateCount;
     /// <summary>The range of values within the graph, vertically, aka: the Y value range.</summary>
     public Range<float> VerticalRange { get; set; } = new(0, rangeMax);
     public float CurrentValue { get; private set; }
 
-    private int _length = length;
+    int _length = length;
     /// <summary>The length of the graph, aka the X value range. X will always be time.</summary>
     public int Length {
         get => _length;
@@ -57,6 +58,9 @@ public class Graph(string name, Func<float> value, float rangeMax, int length = 
     }
 
     public void Update() {
+        if (RuntimeData.UpdateCount % UpdateFrequency != 0)
+            return;
+
         var valueReal = _independent.Invoke();
         CurrentValue = float.IsFinite(valueReal) ? valueReal : 0;
         //if (CurrentValue > VerticalRange.Max) CurrentValue = 0;
@@ -85,7 +89,7 @@ public class Graph(string name, Func<float> value, float rangeMax, int length = 
             new Vector2(graphVisualWidth, graphVisualHeight) * scale, default, 0);
 
         // draw graph name
-        DrawUtils.DrawTextWithBorder(sb, FontGlobals.RebirthFontLarge, Name,
+        DrawUtils.DrawStringWithBorder(sb, FontGlobals.RebirthFontLarge, Name,
             position - new Vector2(0, graphVisualHeight) * scale - new Vector2(0, 20),
             Color.White, Color.Black, new Vector2(scale) * 0.08f, 0f, Anchor.LeftCenter, 0.65f, charSpacing: 8);
 
@@ -102,12 +106,12 @@ public class Graph(string name, Func<float> value, float rangeMax, int length = 
 
         for (int i = 0; i <= splits; i++) {
             var vValue = VerticalRange.Max / splits * i;
-            DrawUtils.DrawTextWithBorder(sb, FontGlobals.RebirthFontLarge, vValue.ToString(), position - new Vector2(20, vValue * scale * HeightBetweenPoints),
+            DrawUtils.DrawStringWithBorder(sb, FontGlobals.RebirthFontLarge, vValue.ToString(), position - new Vector2(20, vValue * scale * HeightBetweenPoints),
                 Color.White, Color.Black, new Vector2(scale) * 0.05f, 0f, Anchor.RightCenter, 0.65f);
         }
 
         // draw current value
-        DrawUtils.DrawTextWithBorder(sb, FontGlobals.RebirthFontLarge, CurrentValue.ToString(),
+        DrawUtils.DrawStringWithBorder(sb, FontGlobals.RebirthFontLarge, CurrentValue.ToString(),
             position - new Vector2(-LengthBetweenPoints * scale * _numElements, CurrentValue * scale * HeightBetweenPoints),
             Color.White, Color.Black, new Vector2(scale) * 0.05f, 0f, Anchor.LeftCenter, 0.65f, charSpacing: 8);
 
@@ -121,16 +125,16 @@ public class Graph(string name, Func<float> value, float rangeMax, int length = 
 
         var average = MathF.Round(_values.Average());
 
-        DrawUtils.DrawTextWithBorder(sb, FontGlobals.RebirthFontLarge, $"Min: {min}", position + new Vector2(0, 20),
+        DrawUtils.DrawStringWithBorder(sb, FontGlobals.RebirthFontLarge, $"Min: {min}", position + new Vector2(0, 20),
             Color.White, Color.Black, new Vector2(scale) * 0.07f, 0f, Anchor.LeftCenter, 0.65f, charSpacing: 8);
 
-        DrawUtils.DrawTextWithBorder(sb, FontGlobals.RebirthFontLarge, $"Max: {max}", position + new Vector2(splitLen * scale, 20),
+        DrawUtils.DrawStringWithBorder(sb, FontGlobals.RebirthFontLarge, $"Max: {max}", position + new Vector2(splitLen * scale, 20),
             Color.White, Color.Black, new Vector2(scale) * 0.07f, 0f, Anchor.LeftCenter, 0.65f, charSpacing: 8);
 
-        DrawUtils.DrawTextWithBorder(sb, FontGlobals.RebirthFontLarge, $"Avg: {average}", position + new Vector2(splitLen * 2 * scale, 20),
+        DrawUtils.DrawStringWithBorder(sb, FontGlobals.RebirthFontLarge, $"Avg: {average}", position + new Vector2(splitLen * 2 * scale, 20),
             Color.White, Color.Black, new Vector2(scale) * 0.07f, 0f, Anchor.LeftCenter, 0.65f, charSpacing: 8);
 
-        DrawUtils.DrawTextWithBorder(sb, FontGlobals.RebirthFontLarge, $"Range: {max - min}", position + new Vector2(splitLen * 3 * scale, 20),
+        DrawUtils.DrawStringWithBorder(sb, FontGlobals.RebirthFontLarge, $"Range: {max - min}", position + new Vector2(splitLen * 3 * scale, 20),
             Color.White, Color.Black, new Vector2(scale) * 0.07f, 0f, Anchor.LeftCenter, 0.65f, charSpacing: 8);
 
         // draw lines to connect points

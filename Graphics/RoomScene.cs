@@ -20,7 +20,7 @@ namespace TanksRebirth.Graphics;
 // when the room is added!
 // TODO: texture pack support
 public static class RoomScene {
-    public static readonly Vector3 TableScenePos = new(-350f, -61.7f, 325f);
+    public static readonly Vector3 TableScenePos = new(-350f, -61.7f, 330f);
     public static readonly Vector3 FloorScenePos = new(-155f, -0.15f, 210f);
 
     public static readonly float ClockRotation = MathHelper.PiOver4;
@@ -82,53 +82,87 @@ public static class RoomScene {
             if (!mesh.Name.Contains("Book")) continue;
             if (mesh.Name.Contains("Side")) continue;
             // X2CHECK: ServerRand should be fine to use since it's the same amount of randomization on each client.
-            var pickedColor = ColorUtils.BrightColors[Server.ServerRandom.Next(ColorUtils.BrightColors.Length)];
+            var pickedColor = ColorUtils.BrightColors[Client.ClientRandom.Next(ColorUtils.BrightColors.Length)];
             BookColors[mesh.Name] = pickedColor;
         }
     }
 
+    private static readonly Dictionary<string, string> MeshToTexture = new() {
+        // ceiling
+        ["Ceiling"] = "ceiling",
+
+        // chair
+        ["Chair_Leather"] = "leather_red_brown",
+        ["Chair_Metal"] = "metal",
+
+        // clock parts
+        ["Clock_Brass"] = "brass",
+        ["Clock_Face"] = "clock_face", // clock_face_0 is also supposed to be here...? not sure what to do about it until BigKitty does something.
+        ["Clock_Glass"] = "glass",
+        ["Clock_Hand_Hour"] = "black",
+        ["Clock_Hand_Minute"] = "black",
+        ["Clock_Pendulum"] = "brass",
+        ["Clock_Wires"] = "brass_wire",
+        ["Clock_Wood1"] = "wood_dark",
+        ["Clock_Wood2"] = "wood_med",
+
+        // room decor
+        ["Curtains"] = "curtains",
+
+        // desk books
+        ["Desk_Book_Page1"] = "book1",
+        ["Desk_Book_Page2"] = "book2",
+        ["Desk_Book_Side"] = "book_side",
+
+        // desk lamp
+        ["Desk_Lamp"] = "brass",
+
+        // closet door
+        ["Door_Closet"] = "wood_white",
+        ["Door_Closet_Knobs"] = "brass",
+
+        // room door
+        ["Door_Room_Handle_Brass"] = "brass",
+        ["Door_Room_Handle_Metal"] = "metal",
+
+        // floor & furniture
+        ["Floor"] = "floor",
+        ["Floor_Lamp"] = "brass",
+        ["Floor_Lamp_Bowl"] = "lamps",
+
+        // small lamp
+        ["Lamp_Brass"] = "brass",
+        ["Lamp_Shade"] = "lamps",
+        ["Lamp_Wood"] = "wood_med",
+
+        // trim/moulding
+        ["Moulding"] = "wood_white",
+
+        // plant
+        ["Plant_Brown"] = "dirt", // Plant_Pot itself has its own 'color' or something? Check into that.
+        ["Plant_Green"] = "plant",
+
+        // misc
+        ["Sphere"] = "pano",
+
+        // table
+        ["Table_Top"] = "wood_dark", // 'tabletop' will be 'wood_dark' for now, since 'tabletop' is mysteriously missing.
+        ["Table_Metal"] = "metal",
+        ["Table_Metal_Dark"] = "metal_dark",
+
+        // walls & windows
+        ["Walls"] = "walls",
+        ["Windows_Glass"] = "glass",
+        ["Windows_Sides"] = "window_sides",
+
+        // shelf
+        ["Shelf"] = "wood_dark"
+    };
+
     public static string GetMeshTexture(ModelMesh mesh) {
-        return mesh.Name switch {
-            "Ceiling" => "ceiling",
-            "Chair_Leather" => "leather_red_brown",
-            "Chair_Metal" => "metal",
-            "Clock_Brass" => "brass",
-            "Clock_Face" => "clock_face", // clock_face_0 is also supposed to be here...? not sure what to do about it until BigKitty does something.
-            "Clock_Glass" => "glass",
-            "Clock_Hand_Hour" => "black",
-            "Clock_Hand_Minute" => "black",
-            "Clock_Pendulum" => "brass",
-            "Clock_Wires" => "brass_wire",
-            "Clock_Wood1" => "wood_dark",
-            "Clock_Wood2" => "wood_med",
-            "Curtains" => "curtains",
-            "Desk_Book_Page1" => "book1",
-            "Desk_Book_Page2" => "book2",
-            "Desk_Book_Side" => "book_side",
-            "Desk_Lamp" => "brass",
-            "Door_Closet" => "wood_white",
-            "Door_Closet_Knobs" => "brass",
-            "Door_Room_Handle_Brass" => "brass",
-            "Door_Room_Handle_Metal" => "metal",
-            "Floor" => "floor",
-            "Floor_Lamp" => "brass",
-            "Floor_Lamp_Bowl" => "lamps",
-            "Lamp_Brass" => "brass",
-            "Lamp_Shade" => "lamps",
-            "Lamp_Wood" => "wood_med",
-            "Moulding" => "wood_white",
-            "Plant_Brown" => "dirt", // Plant_Pot itself has its own 'color' or something? Check into that.
-            "Plant_Green" => "plant",
-            "Sphere" => "pano",
-            "Table_Top" => "wood_dark", // 'tabletop' will be 'wood_dark' for now, since 'tabletop' is mysteriously missing.
-            "Table_Metal" => "metal",
-            "Table_Metal_Dark" => "metal_dark",
-            "Walls" => "walls",
-            "Windows_Glass" => "glass",
-            "Windows_Sides" => "window_sides",
-            "Shelf" => "wood_dark",
-            _ => "metal"
-        };
+        return MeshToTexture.TryGetValue(mesh.Name, out var textureName)
+            ? textureName
+            : "metal"; // fallback default
     }
     public static float GetMeshAlpha(ModelMesh mesh) {
         return mesh.Name switch {
