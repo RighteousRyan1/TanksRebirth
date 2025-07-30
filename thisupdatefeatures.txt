@@ -9,6 +9,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 # Changes
 
 - Made homing shells work much better
+- Changed some achievement names
 
 # Changes Important for Modders
 
