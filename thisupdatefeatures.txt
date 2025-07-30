@@ -9,7 +9,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 # Changes
 
 - Made homing shells work much better
-- Made discord rich presence 
+- Made Discord rich presence operate on a worker thread to allow the main thread to work better
 - Changed some achievement names
 - Made names displayed above players smaller
 - Changed the sync rate of player lives/points to reduce bandwidth usage
@@ -27,6 +27,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - Fixed brown tank kill count not being displayed in the stats menu
 - Fixed players continuing to advance missions even though the campaign should be over
 - Fixed old keybinds for pings still working
+- Fixed mines exploding almost immediately after laying them near an enemy
 
 # TODO
 

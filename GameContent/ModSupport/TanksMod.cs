@@ -34,7 +34,8 @@ public abstract class TanksMod : ILoadable {
     /// <typeparam name="T">The kind of content.</typeparam>
     /// <param name="path">The path to your content, rooted in your mod folder.</param>
     /// <param name="raw">Whether or not to load this asset as completely clean data.
-    /// <br></br>Useful for times where you want to <c>.Dispose()</c> things like texture data for released memory, but plan to re-use them later.</param>
+    /// <br></br>Useful for times where you want to <c>.Dispose()</c> things like texture data for released memory, but plan to re-use them later.
+    /// <br></br>Do note that this parameter should only be true for things like 3D models, shaders, and others of the like which are not loaded pre-compiled.</param>
     /// <returns>The imported asset.</returns>
     public T ImportAsset<T>(string path, bool raw = false) where T : class {
         var defaultContentPath = Path.Combine(TankGame.GameDirectory, TankGame.Instance.Content.RootDirectory);

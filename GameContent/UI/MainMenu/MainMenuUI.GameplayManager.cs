@@ -13,18 +13,16 @@ namespace TanksRebirth.GameContent.UI.MainMenu;
 public static partial class MainMenuUI {
     static bool _firstTime = true;
     public static void UpdateGameplay() {
-        if (!IntermissionSystem.IsAwaitingNewMission || IntermissionSystem.BlackAlpha <= 0f) {
-            if (curMenuMission.Blocks != null) {
-                // do not count player tanks into the check
-                var missionComplete = IntermissionHandler.NothingCanHappenAnymore(curMenuMission, out _, (t) => t is not PlayerTank);
-
-                if (missionComplete)
-                    LoadTemplateMission();
-            }
-            else {
-                LoadTemplateMission();
-            }
+        if (IntermissionSystem.IsAwaitingNewMission || IntermissionSystem.BlackAlpha > 0) return;
+        if (curMenuMission.Blocks is null) {
+            LoadTemplateMission();
+            return;
         }
+        // do not count player tanks into the check
+        var missionComplete = IntermissionHandler.NothingCanHappenAnymore(curMenuMission, out _, (t) => t is not PlayerTank);
+
+        if (missionComplete)
+            LoadTemplateMission();
     }
     public static void OpenGP() {
         SceneManager.CleanupScene();

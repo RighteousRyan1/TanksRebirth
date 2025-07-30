@@ -119,7 +119,7 @@ public sealed class Mine : IAITankDanger {
         _mineTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/mine/mine_env");
         _envTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/mine/mine_shadow");
 
-        MineReactRadius = ExplosionRadius * ExplosionRadiusInUnits * 0.8f;
+        MineReactRadius = ExplosionRadius * ExplosionRadiusInUnits;
 
         int index = Array.IndexOf(AllMines, AllMines.First(mine => mine is null));
 
@@ -192,17 +192,25 @@ public sealed class Mine : IAITankDanger {
 
             // NOTE: this scope may be inconsistent over a server? check soon.
             if (DetonateTime > MineReactTime) {
+                bool tryDetonate = false;
                 foreach (var tank in GameHandler.AllTanks) {
                     if (tank is null) continue;
                     if (tank.IsDestroyed) continue;
                     if (Owner is null) continue;
-                    if (tank.WorldId == Owner!.WorldId) continue;
 
                     var dist = GameUtils.Distance_WiiTanksUnits(tank.Position, Position);
                     if (dist > MineReactRadius) continue;
 
-                    DetonateTime = MineReactTime;
+                    // don't try any further, we don't want to explode if these conditions are true
+                    if (tank.WorldId == Owner!.WorldId || tank.IsOnSameTeamAs(Team)) {
+                        tryDetonate = false;
+                        break; // good check in case the tank is on NoTeam;
+                    }
+
+                    tryDetonate = true;
                 }
+                if (tryDetonate)
+                    DetonateTime = MineReactTime;
             }
         }
 
