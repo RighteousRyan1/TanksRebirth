@@ -20,7 +20,6 @@ using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Internals.UI;
 using TanksRebirth.Internals.Common.IO;
 using TanksRebirth.Internals.Common.Framework.Input;
-using TanksRebirth.Internals.Common.Framework.Core;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Framework;
 using TanksRebirth.GameContent;
@@ -41,7 +40,6 @@ using TanksRebirth.GameContent.Cosmetics;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
-using System.Linq;
 using TanksRebirth.GameContent.Systems.TankSystem;
 
 namespace TanksRebirth;
@@ -616,7 +614,9 @@ public class TankGame : Game {
         }
 
         NetPlay.PollEvents();
-        DiscordRichPresence.Update();
+
+        if (RuntimeData.RunTime % 60 < RuntimeData.DeltaTime)
+            DiscordRichPresence.Update();
 
         LastGameTime = gameTime;
 

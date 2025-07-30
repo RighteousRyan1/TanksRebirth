@@ -1,70 +1,22 @@
-Hello! This is quite a big "minor" update. This update is jam-packed with cool new things, such as an entirely re-programmed AI tank system and
-new AI tank behaviors, lots of performance enhancements, bug fixes, and more!
-
-Starting from this point on, I will be uploading a debug-enabled binary of the game for modders to use (windows only for now, others will need to compile)
+// message
 
 Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will get their spot on the main menu!
 
 # Additions
 
-- You can now switch individually between Windowed, Fullscreen, and Borderless Fullscreen in the graphics settings
-- Added an "Auto-Orient Tanks" option to the level editor so tanks can be oriented identically to how they were in the original game
-- Added coordinates display above the mouse in the level editor
-- Added network metrics (ping, packet loss, packets sent/received) to the top of a multiplayer session
-- Added more particle effects in various areas of the game
+
 
 # Changes
 
-- AI Tanks are now completely overhauled! They now behave much different from how they did before
-	- They almost never kill themselves
-	- Almost never shoot themselves
-	- Act 10x more similar to the original game
-	- Should, overall, make them less of a nuisance to destroy
-	- Should also improve their movements a ton
-- The ping menu is now located on the right of the screen, and is vertically aligned
-	- Pinging is now much simpler, using your scroll wheel to determine which one to use
-	- Now, you press middle click to use the highlighted ping selection
-- Slightly changed the position and look of the bullet count display
-- Lantern mode has now been touched up, and now shows the lanterns of each player, and looks visually different
-	- Also allows the player to see very slightly in the darkness if they squint
-- Reworked Co-op spawn positions on most Vanilla campaign levels
-- Yellow tank music is now prioritized over the pink tank's
-- Reworked a few missions, and buffed the final mission slightly
-- Slightly changed the look of the "vanish" animation of invisible tanks
-- Slightly adjusted the orthographic camera
-- Bullets how have much more generous hitboxes (same-ish as the original, now)
-- Reverted third-person smoke particles to normal
-- The main menu logo no longer follows your mouse off-screen
-- Slightly changed the appearance of the path created to the mouse
+- Made homing shells work much better
 
 # Changes Important for Modders
 
-- Completely overhauled the AI Parameters.
-	- Be sure to read the documentation of them by hovering on them in your IDE
-- Pink tanks, internally, are now listed before Yellow tanks
-	- Update any campaigns!
-- The center of the game scene is now (0, 0) instead of being slightly biased to the top
-- You can now compile mods on versions higher than .NET 8.0
-- `TankRotation` -> `ChassisRotation`
-- `TargetXRotation` -> `DesiredXRotation`
-- `Tank.Dead` -> `Tank.IsDestroyed`
-- `Tank.IsIngame` has been removed
-- All `DrawUtils` methods now use `String` instead of `Text`
-- `DrawUtils.DrawBorderedStringWithShadow` -> `DrawUtils.DrawStringWithShadowAndBorder`
+
 
 # Fixes
 
-- Fixed needing a "Starting Lives" value to save a specific mission
-- Changed some inconsistencies between the original missions and Rebirth's
-- Fixed some particles not being oriented properly
-- Pings no longer track dead tanks
-- Campaign tooltips now display proper extra-lives count
-- (Potentially) fixed linux systems not being able to exit campaigns after success or failure
-- Fixed visual stuttering on AI controlled tanks when their rotation changes when facing down
-- Fixed a bug where exiting the level editor and playing a campaign denied the player any score
-- Fixed the difficulty algorithm not updating when switching levels in the level editor
-- Optimizations to the particle system (~400% faster, but still has issues)
-- Fixed some elements of the intermission animation being improperly scaled with resolution
+- Optimized bullet collisions/path calculations by ~7.5%
 
 # TODO
 
