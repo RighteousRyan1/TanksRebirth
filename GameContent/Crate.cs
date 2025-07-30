@@ -193,7 +193,7 @@ public class Crate
             var t = new AITank(tier);
             t.Physics.Position = position.FlattenZ() / Tank.UNITS_PER_METER;
             t.Position = position.FlattenZ();
-            t.Dead = false;
+            t.IsDestroyed = false;
             t.Team = TankToSpawn.Team;
         }
         OnOpen?.Invoke(this);

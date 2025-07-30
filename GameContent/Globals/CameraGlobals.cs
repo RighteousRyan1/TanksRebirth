@@ -124,7 +124,7 @@ public static class CameraGlobals {
             }
 
             if (isPOV) {
-                if (PlayerTank.ClientTank is { Dead: false }) {
+                if (PlayerTank.ClientTank is { IsDestroyed: false }) {
                     SpectatorId = NetPlay.GetMyClientId();
                     POVCameraPosition = PlayerTank.ClientTank.Position.ExpandZ();
                     POVCameraRotation = -PlayerTank.ClientTank.TurretRotation;
@@ -237,7 +237,7 @@ public static class CameraGlobals {
         if (newId < 0) newId = arr.Length - 1;
         else if (newId >= arr.Length) newId = 0;
 
-        if (arr[newId].Dead)
+        if (arr[newId].IsDestroyed)
             return SpectateValidTank(newId, increase); // this should just return the only player then...?
         else return newId;
     }

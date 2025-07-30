@@ -33,8 +33,8 @@ public sealed class Mine : IAITankDanger {
 
     public Tank? Owner;
 
+    Vector2 _oldPosition;
     public Vector2 Position { get; set; }
-    private Vector2 _oldPosition;
 
     public Matrix View;
     public Matrix Projection;
@@ -53,8 +53,8 @@ public sealed class Mine : IAITankDanger {
     public int Id { get; private set; }
     public int Team => Owner?.Team ?? TeamID.NoTeam;
 
-    ModelMesh? _mineMesh;
-    ModelMesh? _envMesh;
+    readonly ModelMesh? _mineMesh;
+    readonly ModelMesh? _envMesh;
 
     public OggAudio? TickingNoise;
 
@@ -194,7 +194,7 @@ public sealed class Mine : IAITankDanger {
             if (DetonateTime > MineReactTime) {
                 foreach (var tank in GameHandler.AllTanks) {
                     if (tank is null) continue;
-                    if (tank.Dead) continue;
+                    if (tank.IsDestroyed) continue;
                     if (Owner is null) continue;
                     if (tank.WorldId == Owner!.WorldId) continue;
 

@@ -61,7 +61,7 @@ public class IngamePing {
         for (int i = 0; i < GameHandler.AllTanks.Length; i++) {
             var tank = GameHandler.AllTanks[i];
             if (tank is null) continue;
-            if (tank.Dead) continue;
+            if (tank.IsDestroyed) continue;
             if (Vector3.Distance(tank.Position3D, position) > 20) continue;
             TrackedTank = tank;
         }

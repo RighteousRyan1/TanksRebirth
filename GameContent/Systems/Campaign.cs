@@ -142,10 +142,10 @@ public class Campaign
 
                     tank.Position = template.Position;
 
-                    tank.TankRotation = chassisRotation;
-                    tank.TargetTankRotation = chassisRotation;
+                    tank.ChassisRotation = chassisRotation;
+                    tank.DesiredChassisRotation = chassisRotation;
                     tank.TurretRotation = MathF.Round(-template.Rotation, roundingFactor);
-                    tank.Dead = false;
+                    tank.IsDestroyed = false;
                     tank.Team = template.Team;
                     if (CampaignGlobals.ShouldMissionsProgress) {
                         tank.OnDestroy += () => {
@@ -169,10 +169,10 @@ public class Campaign
                     var tank = template.GetPlayerTank();
 
                     tank.Position = template.Position;
-                    tank.TankRotation = chassisRotation;
-                    tank.TargetTankRotation = chassisRotation;
+                    tank.ChassisRotation = chassisRotation;
+                    tank.DesiredChassisRotation = chassisRotation;
                     tank.TurretRotation = MathF.Round(-template.Rotation, roundingFactor);
-                    tank.Dead = false;
+                    tank.IsDestroyed = false;
                     tank.Team = template.Team;
 
                     if (tank.PlayerId <= Server.CurrentClientCount) {
@@ -199,10 +199,10 @@ public class Campaign
                             // turret =  -rot
                             Position = template.Position,
                             Team = tank.Team,
-                            TankRotation = MathF.Round(template.Rotation, roundingFactor),
-                            TargetTankRotation = MathF.Round(template.Rotation, roundingFactor),
+                            ChassisRotation = MathF.Round(template.Rotation, roundingFactor),
+                            DesiredChassisRotation = MathF.Round(template.Rotation, roundingFactor),
                             TurretRotation = MathF.Round(-template.Rotation, roundingFactor),
-                            Dead = false,
+                            IsDestroyed = false,
                         };
                         tnk.Physics.Position = template.Position / Tank.UNITS_PER_METER;
                     }

@@ -53,7 +53,7 @@ public record struct Mission
                 var tmp = new TankTemplate {
                     IsPlayer = tank is PlayerTank,
                     Position = tank.Position,
-                    Rotation = MathF.Round(tank.TankRotation, roundingFactor),
+                    Rotation = MathF.Round(tank.ChassisRotation, roundingFactor),
                     Team = tank.Team,
                 };
 
@@ -113,9 +113,9 @@ public record struct Mission
             //if (float.Round(tnk.Rotation) == float.Round(1.57f))
             //tnk.Rotation += MathF.PI * 2;
 
-            tank.TankRotation = MathF.Round(tnk.Rotation, 5);
-            tank.TargetTankRotation = tank.TankRotation;
-            tank.TurretRotation = -tank.TankRotation;
+            tank.ChassisRotation = MathF.Round(tnk.Rotation, 5);
+            tank.DesiredChassisRotation = tank.ChassisRotation;
+            tank.TurretRotation = -tank.ChassisRotation;
             if (tank is AITank aiTank)
                 aiTank.TargetTurretRotation = tank.TurretRotation;
         }

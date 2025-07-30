@@ -206,7 +206,7 @@ public static class SceneManager {
         for (int i = 0; i < GameHandler.AllTanks.Length; i++) {
             var tank = GameHandler.AllTanks[i];
             if (tank is null) continue;
-            if (tank.Dead) tank.Remove(true);
+            if (tank.IsDestroyed) tank.Remove(true);
         }
 
         TankDeathMark.total_death_marks = 0;

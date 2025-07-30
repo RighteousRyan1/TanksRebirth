@@ -34,9 +34,10 @@ public static class WindowUtils
     public static Vector2 WindowRight => new(WindowWidth, WindowHeight / 2);
     public static bool WindowActive => TankGame.Instance.IsActive;
     public static Rectangle ScreenRect => new(0, 0, WindowWidth, WindowHeight);
+    /// <summary>Converts pixel coordinates (0..WindowWidth, 0..WindowHeight) to normalized coordinates (-1..1, -1..1)</summary>
     public static Vector2 ToNormalisedCoordinates(this Vector2 input) => new Vector2(input.X / WindowWidth - 0.5f, input.Y / WindowHeight - 0.5f) * 2;
+    /// <summary>Converts pixel coordinates (0..WindowWidth, 0..WindowHeight) to cartesian coordinates (0..1, 0..1)</summary>
     public static Vector2 ToCartesianCoordinates(this Vector2 input) => new(input.X / WindowWidth, input.Y / WindowHeight);
-
     public static void ChangeWindowKind(WindowKind kind) {
         var graphics = TankGame.Instance.Graphics;
         var window = TankGame.Instance.Window;

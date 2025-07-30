@@ -26,7 +26,6 @@ public static class AIManager {
     /// Fetch the default AI parameters from the given input tank type.
     /// </summary>
     /// <param name="tankType">The type of the tank to retrieve the defaults from.</param>
-    /// <param name="aiParams.BaseXP">The base experience the player will gain upon killing the AI tank.</param>
     /// <returns></returns>
     public static AIParameters GetAIParameters(int tankType) {
         var aiParams = new AIParameters();
@@ -893,7 +892,7 @@ public static class AIManager {
         for (var i = 0; i < GameHandler.AllAITanks.Length; i++) {
             var tank = Unsafe.Add(ref tanksSearchSpace, i);
 
-            if (tank is null || tank.Dead || predicate is not null && !predicate.Invoke(tank)) continue;
+            if (tank is null || tank.IsDestroyed || predicate is not null && !predicate.Invoke(tank)) continue;
 
             if (tank.AiTankType > highest)
                 highest = tank.AiTankType;
@@ -913,7 +912,7 @@ public static class AIManager {
         ref var tanksSearchSpace = ref MemoryMarshal.GetReference(tanks);
         for (var i = 0; i < tanks.Length; i++) {
             var tank = Unsafe.Add(ref tanksSearchSpace, i);
-            if (tank is not null && !tank.Dead && (predicate is not null && predicate.Invoke(tank) || predicate is null)) cnt++;
+            if (tank is not null && !tank.IsDestroyed && (predicate is not null && predicate.Invoke(tank) || predicate is null)) cnt++;
         }
 
         return cnt;
@@ -930,7 +929,7 @@ public static class AIManager {
         ref var tanksSearchSpace = ref MemoryMarshal.GetReference(tanks);
         for (var i = 0; i < tanks.Length; i++) {
             var tnk = Unsafe.Add(ref tanksSearchSpace, i);
-            if (tnk is not null && tnk.AiTankType == tier && !tnk.Dead) cnt++;
+            if (tnk is not null && tnk.AiTankType == tier && !tnk.IsDestroyed) cnt++;
         }
 
         return cnt;
@@ -954,7 +953,7 @@ public static class AIManager {
         ref var tanksSearchSpace = ref MemoryMarshal.GetReference(aiTanks);
         for (var i = 0; i < aiTanks.Length; i++) {
             var tank = Unsafe.Add(ref tanksSearchSpace, i);
-            if (tank is null || tank.Dead) continue;
+            if (tank is null || tank.IsDestroyed) continue;
 
             tank.Update();
             tank.HandleTankMetaData();
@@ -967,7 +966,7 @@ public static class AIManager {
 
         for (var i = 0; i < aiTanks.Length; i++) {
             var tank = Unsafe.Add(ref tanksSearchSpace, i);
-            if (tank is null || tank.Dead) continue;
+            if (tank is null || tank.IsDestroyed) continue;
 
             tank.DoAI();
 

@@ -8,6 +8,7 @@ using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common;
+using TanksRebirth.Internals.Common.Framework;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.GameUI;
 using TanksRebirth.Internals.Common.Utilities;
@@ -211,8 +212,8 @@ public static partial class MainMenuUI {
             if (PlayerTank.ClientTank is null) {
                 var p = new PlayerTank(PlayerID.Blue);
                 p.Physics.Position = (PlayersGraphicOrigin + new Vector2(0, plrOffset)) / Tank.UNITS_PER_METER;
-                p.TankRotation = PlayersGraphicRotationOrigin.Z;
-                p.Dead = false;
+                p.ChassisRotation = PlayersGraphicRotationOrigin.Z;
+                p.IsDestroyed = false;
             } else {
                 if (InputUtils.KeyJustPressed(Microsoft.Xna.Framework.Input.Keys.K))
                     PlayerTank.ClientTank.Remove(true);
@@ -229,8 +230,8 @@ public static partial class MainMenuUI {
 
             var p = new PlayerTank(client.Id);
             p.Physics.Position = (PlayersGraphicOrigin + new Vector2(0, plrOffset).Rotate(MathHelper.PiOver2 / 2 * i)) / Tank.UNITS_PER_METER;
-            p.TankRotation = PlayersGraphicRotationOrigin.Z;
-            p.Dead = false;
+            p.ChassisRotation = PlayersGraphicRotationOrigin.Z;
+            p.IsDestroyed = false;
         }
     }
     public static void RenderMP() {
@@ -264,7 +265,7 @@ public static partial class MainMenuUI {
 
         var borderColor = Color.Black;
 
-        DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, Server.CurrentClientCount > 0 ? $"\"{NetPlay.ServerName}\"" : "N/A", serverNamePos,
+        DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, Server.CurrentClientCount > 0 ? $"\"{NetPlay.ServerName}\"" : "N/A", serverNamePos,
             Color.White, Color.Black, new Vector2(0.6f).ToResolution(), 0f, Anchor.Center, 0.8f);
 
         for (int i = 0; i < Server.CurrentClientCount; i++) {
@@ -275,7 +276,7 @@ public static partial class MainMenuUI {
             var clientNamePos = new Vector2(_panelPosition.X + (panelXCut * (i + 1)), _panelPosition.Y + _panelHeaderHeight + _panelHeight / 3);
             var pingPos = new Vector2(_panelPosition.X + (panelXCut * (i + 1)), _panelPosition.Y + _panelHeaderHeight + _panelHeight / 3 * 2);
 
-            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, $"{client.Name}",
+            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, $"{client.Name}",
                 clientNamePos, textCol, borderColor, new Vector2(0.3f).ToResolution(), 0f, Anchor.Center, 0.8f);
 
             DrawUtils.DrawTextureWithBorder(TankGame.SpriteRenderer, GameResources.GetGameResource<Texture2D>("Assets/textures/ui/tank2d"),
@@ -286,8 +287,13 @@ public static partial class MainMenuUI {
             // draw ping
             var ping = Server.NetManager.ConnectedPeerList[NetPlay.ReversePeerMap[i]].Ping;
             var badPing = 250;
-            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, $"{ping}ms",
-                pingPos, Color.Lerp(Color.Lime, Color.Red, ((float)ping / badPing)), Color.Black, new Vector2(0.15f).ToResolution(), 0f, Anchor.Center, 0.8f, 0.5f);
+
+            var sColor = new StatisticalColor<int>(Color.Lime, Color.Red, 30, ping, badPing);
+
+            // Color.Lerp(Color.Lime, Color.Red, ((float)ping / badPing))
+
+            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, $"{ping}ms",
+                pingPos, sColor.FinalColor, Color.Black, new Vector2(0.15f).ToResolution(), 0f, Anchor.Center, 0.8f, 0.5f);
         }
     }
 }

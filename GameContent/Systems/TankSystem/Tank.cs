@@ -126,6 +126,8 @@ public abstract class Tank {
 
     #endregion
 
+    int _oldShellLimit;
+
     public Shell? LastShotShell;
 
     public static bool ShowTeamVisuals = false;
@@ -165,7 +167,7 @@ public abstract class Tank {
     public float CurMineCooldown { get; private set; } = 0;
     public float CurMineStun { get; private set; } = 0;
 
-    private int _oldShellLimit;
+    public float TimeSinceLastAction = 15000;
 
     public TankProperties Properties = new();
 
@@ -207,29 +209,27 @@ public abstract class Tank {
     /// . Generally should not be modified in a player context.</summary>>
     public float TurretRotation { get; set; }
 
-    /// <summary>The rotation of this <see cref="Tank"/>.</summary>
-    public float TankRotation { get; set; }
+    /// <summary>The rotation of this <see cref="Tank"/>'s chassis.</summary>
+    public float ChassisRotation { get; set; }
 
-    /// <summary>The rotation this <see cref="Tank"/> will pivot to.</summary>
-    public float TargetTankRotation;
+    /// <summary>The rotation this <see cref="Tank"/>'s chassis will pivot to.</summary>
+    public float DesiredChassisRotation;
 
     /// <summary>Whether or not the tank has been destroyed or not.</summary>
-    public bool Dead { get; set; }
-
-    /// <summary>Whether or not this tank is used for ingame purposes or not.</summary>
-    public bool IsIngame { get; set; } = true;
+    public bool IsDestroyed { get; set; }
 
     public Vector3 Position3D => Position.ExpandZ();
     public Vector3 Velocity3D => Velocity.ExpandZ();
+
     public Vector3 Scaling = Vector3.One;
 
     #endregion
 
     #region Model Stuff
 
-    internal Matrix[] _boneTransforms;
+    internal Matrix[] boneTransforms = [];
 
-    internal ModelMesh _cannonMesh;
+    internal ModelMesh? cannonMesh;
 
     public bool Flip;
 
@@ -240,7 +240,7 @@ public abstract class Tank {
         if (predicate != null) {
             var tanks = GameHandler.AllTanks.Where(predicate.Invoke).ToArray();
             foreach (var tank in tanks) {
-                if (tank is null || tank.Dead) continue;
+                if (tank is null || tank.IsDestroyed) continue;
                 if (teams.Contains(tank.Team)) continue;
                 teams.Add(tank.Team);
             }
@@ -248,7 +248,7 @@ public abstract class Tank {
         }
         // if no predicate is given, just get all teams
         foreach (var tank in GameHandler.AllTanks) {
-            if (tank is null || tank.Dead) continue;
+            if (tank is null || tank.IsDestroyed) continue;
             if (teams.Contains(tank.Team)) continue;
             teams.Add(tank.Team);
         }
@@ -273,8 +273,8 @@ public abstract class Tank {
             TankGame.ClientLog.Write("Unexpected pitfall in initializing tank model semantics. Assigning defaults.", LogType.Warn);
         }
 
-        _cannonMesh = Model.Meshes["Cannon"];
-        _boneTransforms = new Matrix[Model.Bones.Count];
+        cannonMesh = Model.Meshes["Cannon"];
+        boneTransforms = new Matrix[Model.Bones.Count];
     }
     public void AddProp2D(Prop2D prop, Func<bool>? destroyOn = null) {
         if (Props.Contains(prop))
@@ -308,7 +308,7 @@ public abstract class Tank {
 
         if (Difficulties.Types["FFA"])
             Team = TeamID.NoTeam;
-        if (!Properties.Invisible || Dead) return;
+        if (!Properties.Invisible || IsDestroyed) return;
 
         SoundPlayer.PlaySoundInstance(invisibleTankSound, SoundContext.Effect, 0.3f);
 
@@ -453,7 +453,7 @@ public abstract class Tank {
 
         DecrementTimers();
 
-        if (Dead) return;
+        if (IsDestroyed) return;
 
         KnockbackVelocity.X = MathUtils.RoughStep(KnockbackVelocity.X, 0, 0.1f * RuntimeData.DeltaTime);
         KnockbackVelocity.Y = MathUtils.RoughStep(KnockbackVelocity.Y, 0, 0.1f * RuntimeData.DeltaTime);
@@ -463,24 +463,24 @@ public abstract class Tank {
 
         // try to make positive. i hate game
         World = Matrix.CreateScale(Scaling)
-            * Matrix.CreateFromYawPitchRoll(-TankRotation - (Flip ? MathHelper.Pi : 0f), 0, 0)
+            * Matrix.CreateFromYawPitchRoll(-ChassisRotation - (Flip ? MathHelper.Pi : 0f), 0, 0)
             * Matrix.CreateTranslation(Position3D);
 
         Worldbox = new(Position3D - new Vector3(7, 0, 7), Position3D + new Vector3(10, 15, 10));
 
         if (IsTurning) {
-            if (TargetTankRotation - TankRotation >= MathHelper.PiOver2) {
-                TankRotation += MathHelper.Pi;
+            if (DesiredChassisRotation - ChassisRotation >= MathHelper.PiOver2) {
+                ChassisRotation += MathHelper.Pi;
                 Flip = !Flip;
             }
-            else if (TargetTankRotation - TankRotation <= -MathHelper.PiOver2) {
-                TankRotation -= MathHelper.Pi;
+            else if (DesiredChassisRotation - ChassisRotation <= -MathHelper.PiOver2) {
+                ChassisRotation -= MathHelper.Pi;
                 Flip = !Flip;
             }
         }
 
         // * 2 since it's in both directions
-        IsTurning = !(TankRotation > TargetTankRotation - Properties.MaximalTurn * 2 && TankRotation < TargetTankRotation + Properties.MaximalTurn * 2);
+        IsTurning = !(ChassisRotation > DesiredChassisRotation - Properties.MaximalTurn * 2 && ChassisRotation < DesiredChassisRotation + Properties.MaximalTurn * 2);
 
         // ensure no movements happen when not desired
         if (!MainMenuUI.IsActive && (!CampaignGlobals.InMission || IntermissionSystem.IsAwaitingNewMission))
@@ -502,10 +502,10 @@ public abstract class Tank {
         }
 
         // try to make negative. go poopoo
-        _cannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + TankRotation + (Flip ? MathHelper.Pi : 0));
+        cannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + ChassisRotation + (Flip ? MathHelper.Pi : 0));
         Model!.Root.Transform = World;
 
-        Model.CopyAbsoluteBoneTransformsTo(_boneTransforms);
+        Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
 
         if (!Properties.Stationary) {
             float treadPlaceTimer = 0;
@@ -515,7 +515,7 @@ public abstract class Tank {
                 if (RuntimeData.RunTime % treadPlaceTimer < RuntimeData.DeltaTime)
                     LayFootprint(Properties.TrackType == TrackID.Thick);
             }
-            if (IsTurning && TankRotation != _oldRotation) {
+            if (IsTurning && ChassisRotation != _oldRotation) {
                 treadPlaceTimer = Properties.TurningSpeed * 150 * Scaling.X;
                 // MAYBE: change back to <= delta time if it doesn't work.
                 if (RuntimeData.RunTime % treadPlaceTimer < RuntimeData.DeltaTime)
@@ -540,8 +540,8 @@ public abstract class Tank {
         foreach (var cosmetic in Props)
             cosmetic?.UniqueBehavior?.Invoke(cosmetic, this);
 
-        _oldRotation = TankRotation;
-        timeSinceLastAction++;
+        _oldRotation = ChassisRotation;
+        TimeSinceLastAction += RuntimeData.DeltaTime;
 
         OnPostUpdate?.Invoke(this);
         PostUpdate();
@@ -550,7 +550,7 @@ public abstract class Tank {
     public virtual void PostUpdate() { }
     /// <summary>Damage this <see cref="Tank"/>. If it has no armor, destroy it.</summary>
     public virtual void Damage(ITankHurtContext context, bool netSend, Color? colorOverride = null) {
-        if (Dead || Properties.Immortal)
+        if (IsDestroyed || Properties.Immortal)
             return;
 
         Color popupColor;
@@ -626,7 +626,7 @@ public abstract class Tank {
                 a.Destroy();
         };
         part.UniqueDraw = particle => {
-            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, particle.Text,
+            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, particle.Text,
                 MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(particle.Position),
                     CameraGlobals.GameView, CameraGlobals.GameProjection),
                 particle.Color, Color.White, new(particle.Scale.X, particle.Scale.Y), 0f, Anchor.Center);
@@ -637,7 +637,7 @@ public abstract class Tank {
         CampaignGlobals.OnMissionStart -= OnMissionStart;
 
         // i think this is right? | (Probably, a destroyed tank is a dead tank!)
-        Dead = true;
+        IsDestroyed = true;
 
         const string tankDestroySound0 = "Assets/sounds/tnk_destroy.ogg";
         var destroy = SoundPlayer.PlaySoundInstance(tankDestroySound0, SoundContext.Effect, 0.2f);
@@ -709,7 +709,7 @@ public abstract class Tank {
         if (!Properties.CanLayTread)
             return;
         // will be TankRotation, Position, Scaling.FlattenZ()
-        var fp = TankFootprint.Place(this, -TankRotation, alt);
+        var fp = TankFootprint.Place(this, -ChassisRotation, alt);
         fp.Position += new Vector3(0, 0.15f, 0);
     }
 
@@ -780,7 +780,7 @@ public abstract class Tank {
             }
         }
 
-        timeSinceLastAction = 0;
+        TimeSinceLastAction = 0;
 
         CurShootStun = Properties.ShootStun;
         CurShootCooldown = Properties.ShellCooldown;
@@ -864,7 +864,7 @@ public abstract class Tank {
 
         OwnedMineCount++;
 
-        timeSinceLastAction = 0;
+        TimeSinceLastAction = 0;
 
         var mine = new Mine(this, Position, 600);
 
@@ -883,7 +883,7 @@ public abstract class Tank {
 
     public virtual void Render() {
         if (!GameScene.ShouldRenderAll) return;
-        if (Dead) return;
+        if (IsDestroyed) return;
 
         Projection = CameraGlobals.GameProjection;
         View = CameraGlobals.GameView;
@@ -905,7 +905,7 @@ public abstract class Tank {
                             if (cosmetic.LockOptions == PropLockOptions.ToTurret)
                                 rotY = cosmetic.Rotation.Y + TurretRotation;
                             else if (cosmetic.LockOptions == PropLockOptions.ToTank)
-                                rotY = cosmetic.Rotation.Y + TankRotation;
+                                rotY = cosmetic.Rotation.Y + ChassisRotation;
                             else if (cosmetic.LockOptions == PropLockOptions.ToTurretCentered)
                                 cosmetic.RelativePosition = cosmetic.RelativePosition.RotateXZ(-rotY);
 
@@ -929,7 +929,7 @@ public abstract class Tank {
         if (!DebugManager.DebuggingEnabled) return;
 
         var info = new string[] {
-            $"Tank Rotation/Target: {TankRotation}/{TargetTankRotation}",
+            $"Tank Rotation/Target: {ChassisRotation}/{DesiredChassisRotation}",
             $"WorldID: {WorldId}",
             this is AITank ai
                 ? $"Turret Rotation/Target: {TurretRotation}/{ai.TargetTurretRotation}"
@@ -944,12 +944,12 @@ public abstract class Tank {
         for (int i = 0; i < info.Length; i++) {
             var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Up * 20, World, View, Projection) -
                 new Vector2(0, i * 20);
-            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, info[i], pos, 
+            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, info[i], pos, 
                 Color.Aqua, Color.Black, new Vector2(0.5f).ToResolution(), 0f, Anchor.TopCenter, 0.6f);
         }
     }
-    public uint timeSinceLastAction = 15000;
-
+    /// <summary>Checks if this <see cref="Tank"/> is on the same team as the passed-in <see cref="TeamID"/> and is not on <see cref="TeamID.NoTeam"/>.</summary>
+    public bool IsOnSameTeamAs(int otherTeam) => Team == otherTeam && Team != TeamID.NoTeam && otherTeam != TeamID.NoTeam;
     public virtual void Remove(bool nullifyMe) {
         if (CollisionsWorld.BodyList.Contains(Physics))
             CollisionsWorld.Remove(Physics);

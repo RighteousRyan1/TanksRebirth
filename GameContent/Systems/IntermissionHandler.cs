@@ -130,7 +130,7 @@ public static class IntermissionHandler {
         int aliveTankCount = 0;
 
         foreach (var tank in GameHandler.AllTanks) {
-            if (tank is null || tank.Dead)
+            if (tank is null || tank.IsDestroyed)
                 continue;
 
             if (predicate is not null && !predicate(tank))
@@ -201,7 +201,7 @@ public static class IntermissionHandler {
                     bool check = Client.IsConnected() ? PlayerTank.Lives.All(x => x == 0) : PlayerTank.GetMyLives() <= 0;
 
                     // why is "win" a ternary result? it will never be "win" given the we are in the "!victory" branch. wtf ryan code once again
-                    endContext = !GameHandler.AllPlayerTanks.Any(tnk => tnk != null && !tnk.Dead) ? (check ? MissionEndContext.GameOver : MissionEndContext.Lose) : MissionEndContext.Win;
+                    endContext = !GameHandler.AllPlayerTanks.Any(tnk => tnk != null && !tnk.IsDestroyed) ? (check ? MissionEndContext.GameOver : MissionEndContext.Lose) : MissionEndContext.Win;
 
                     // hardcode hell 2: electric boogaloo
                     if (Difficulties.Types["InfiniteLives"])
@@ -286,7 +286,7 @@ public static class IntermissionHandler {
 
     public static void RenderCountdownGraphics() {
         if (!MainMenuUI.IsActive && !CameraGlobals.OverheadView && !LevelEditorUI.IsActive/* && TankFunctionWait > 0*/) {
-            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, PrepareDisplay, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 3), 
+            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, PrepareDisplay, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 3), 
                 IntermissionSystem.BackgroundColor, IntermissionSystem.BannerColor, CountdownAnimator.CurrentScale.ToResolution(), 0f, Anchor.Center, 3);
         }
     }

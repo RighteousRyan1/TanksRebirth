@@ -274,13 +274,6 @@ public class GameHandler {
 
         IntermissionHandler.RenderCountdownGraphics();
 
-        var shouldSeeInfo = !MainMenuUI.IsActive && !LevelEditorUI.IsActive && !CampaignCompleteUI.IsViewingResults;
-        if (shouldSeeInfo) {
-            GameSceneUI.DrawScores();
-            GameSceneUI.DrawMissionInfoBar();
-        }
-        // TODO: MissionInfoBar can be much better.
-
         OnPostRender?.Invoke();
     }
 

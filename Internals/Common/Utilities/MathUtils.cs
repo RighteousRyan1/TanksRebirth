@@ -12,7 +12,8 @@ namespace TanksRebirth.Internals.Common.Utilities;
 
 public static class MathUtils
 {
-    public static Vector2 Slerp(Vector2 from, Vector2 to, float t) {
+    /// <summary>Performs a Spherical Linear Interpolation on a 2D plane, with vector normalization.</summary>
+    public static Vector2 Slerp2DNormalize(Vector2 from, Vector2 to, float t) {
         t = MathHelper.Clamp(t, 0f, 1f);
 
         from.Normalize();
@@ -32,7 +33,8 @@ public static class MathUtils
 
         return result;
     }
-    public static Vector2 SlerpWtf(Vector2 from, Vector2 to, float t) {
+    /// <summary>Performs a Spherical Linear Interpolation on a 2D plane, without vector normalization.</summary>
+    public static Vector2 Slerp2D(Vector2 from, Vector2 to, float t) {
         t = MathHelper.Clamp(t, 0f, 1f);
 
         from.Normalize();
@@ -52,6 +54,7 @@ public static class MathUtils
 
         return result;
     }
+    /// <summary>Smooths the direction vector towards the next point in a collection of vectors.</summary>
     public static Vector2 GetSmoothedDirection(Vector2[] points, int index) {
         if (points.Length < 2) return Vector2.UnitX;
 
@@ -62,12 +65,14 @@ public static class MathUtils
         Vector2 combined = prev + next;
         return combined != Vector2.Zero ? Vector2.Normalize(combined) : Vector2.UnitX;
     }
+    /// <summary>Splits a given 3D vector into an array with its respective elements, [X, Y, Z].</summary>
     public static float[] ToFloatArray(this Vector3 v) => [v.X, v.Y, v.Z];
     /// <summary>Turns a 3-element array into a Vector3, must be ordered [x, y, z]</summary>
     public static Vector3 ToVector3(this float[] f) => new(f[0], f[1], f[2]);
     public static Vector2 DirectionTo(this Vector2 current, Vector2 destination) => destination - current;
     public static Rectangle ToRect(this AABB aabb) => AbsoluteRectangle(new((int)(aabb.Center.X - aabb.Width), (int)(aabb.Center.Y - aabb.Height), (int)aabb.Width, (int)aabb.Height));
     public static AABB ToAABB(this Rectangle rect) => new(new Vector2(rect.X, rect.Y), new Vector2(rect.X + rect.Width, rect.Y + rect.Width));
+    /// <summary>Gets a rectangle that is guaranteed to have positive width and height.</summary>
     public static Rectangle AbsoluteRectangle(Rectangle input) {
         var returnRect = input;
 
@@ -81,9 +86,7 @@ public static class MathUtils
         }
         return returnRect;
     }
-    public static float GetRotationVectorOf(Vector2 initial, Vector2 target) => (target - initial).ToRotation();
     public static float ToRotation(this Vector2 vector) => MathF.Atan2(vector.Y, vector.X);
-    public static float UnitClamp(this float angle) => angle % MathHelper.Tau;
     public static float AngleBetween(float a, float b) {
         return (a - b + MathF.PI * 3) % (MathF.PI * 2) - MathF.PI;
     }
@@ -91,6 +94,13 @@ public static class MathUtils
         return MathF.Abs((a - b + MathF.PI * 3) % (MathF.PI * 2) - MathF.PI);
     }
     public static Point ToPoint(this Vector2 vector2) => new((int)vector2.X, (int)vector2.Y);
+    /// <summary>
+    /// Rotates a point around a center point by a given angle in radians.
+    /// </summary>
+    /// <param name="spinPoint">The point being rotated.</param>
+    /// <param name="radians">The rotation in radians.</param>
+    /// <param name="center">The center.</param>
+    /// <returns>The rotated vector.</returns>
     public static Vector2 Rotate(this Vector2 spinPoint, float radians, Vector2 center = default) {
         float cos = MathF.Cos(radians);
         float sin = MathF.Sin(radians);
@@ -100,13 +110,17 @@ public static class MathUtils
         result.Y += newPoint.X * sin + newPoint.Y * cos;
         return result;
     }
-    public static Vector3 CalculateRotationToFaceCenter(Vector3 particlePosition, Vector3 centerPoint) {
+    /// <summary>Gets the euler angles from a position to face a look-at position.</summary>
+    /// <param name="position">The position to rotate towards <paramref name="lookAt"/>.</param>
+    /// <param name="lookAt">The desired look-at position for <paramref name="position"/>.</param>
+    /// <returns>The rotation as euler angles.</returns>
+    public static EulerAngles GetLookAtEulerAngles(Vector3 position, Vector3 lookAt) {
         Vector3 rotation = Vector3.Zero;
 
-        Vector3 direction = centerPoint - particlePosition;
+        Vector3 direction = lookAt - position;
 
         if (direction.LengthSquared() < 0.0001f)
-            return rotation;
+            return rotation.AsEulerAngles();
 
         // Normalize the direction
         direction.Normalize();
@@ -121,7 +135,7 @@ public static class MathUtils
         // rotation around Z axis (Roll)
         rotation.X = 0.0f;
 
-        return rotation; // Vector3(roll, pitch, yaw)
+        return rotation.AsEulerAngles(); // Vector3(roll, pitch, yaw)
     }
     public static Vector3 RotateXZ(this Vector3 spinPoint3d, float radians, Vector3 center3d = default) {
         Vector2 spinPoint = spinPoint3d.FlattenZ();
@@ -152,6 +166,15 @@ public static class MathUtils
         Vector3 result3d = result.Expand();
         result3d.Z = spinPoint3d.Z;
         return result3d;
+    }
+    public static EulerAngles AsEulerAngles(this Vector3 vector) {
+        return new(vector.Z, vector.Y, vector.X);
+    }
+    public static EulerAngles ToEulerAngles(this Vector3 vector) {
+        float roll = MathF.Atan2(vector.Y, vector.Z);
+        float pitch = MathF.Atan2(-vector.X, MathF.Sqrt(vector.Y * vector.Y + vector.Z * vector.Z));
+        float yaw = 0f;
+        return new EulerAngles(roll, pitch, yaw);
     }
     public static float Distance(this Vector2 initial, Vector2 other) => Vector2.Distance(initial, other);
     public static float MaxDistanceValue(Vector2 initial, Vector2 end, float maxDist) {

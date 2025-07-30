@@ -206,16 +206,16 @@ public readonly struct WiiMap
         switch (mapTile.Stack) {
             case PLAYER_TANK_ID: { // Player Tank, That's us!
                 var pl = DebugManager.SpawnMe(mapTile.Type, TeamID.Red, tile.Position);
-                pl.TankRotation = tnkRot;
-                pl.TargetTankRotation = tnkRot;
+                pl.ChassisRotation = tnkRot;
+                pl.DesiredChassisRotation = tnkRot;
                 pl.TurretRotation = tnkRot;
                 tile.TankId = pl.WorldId;
                 break;
             }
             case ENEMY_TANK_ID: { // Enemy Tank.
                 var ai = DebugManager.SpawnTankAt(tile.Position, AITank.PickRandomTier(), TeamID.Blue);
-                ai.TankRotation = tnkRot;
-                ai.TargetTankRotation = tnkRot;
+                ai.ChassisRotation = tnkRot;
+                ai.DesiredChassisRotation = tnkRot;
                 ai.TurretRotation = tnkRot;
                 tile.TankId = ai.WorldId;
                 ai.ReassignId(mapTile.Type);

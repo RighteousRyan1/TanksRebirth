@@ -37,9 +37,9 @@ public struct TankTemplate {
         var ai = new AITank(AiTier);
         ai.Physics.Position = Position / Tank.UNITS_PER_METER;
         ai.Position = Position;
-        ai.TankRotation = Rotation;
-        ai.TargetTankRotation = Rotation;
-        ai.Dead = false;
+        ai.ChassisRotation = Rotation;
+        ai.DesiredChassisRotation = Rotation;
+        ai.IsDestroyed = false;
         ai.TurretRotation = Rotation;
         ai.Team = Team;
 
@@ -67,9 +67,9 @@ public struct TankTemplate {
             player = new PlayerTank(PlayerType);
         player.Physics.Position = Position / Tank.UNITS_PER_METER;
         player.Position = Position;
-        player.TankRotation = Rotation;
+        player.ChassisRotation = Rotation;
         player.TurretRotation = Rotation;
-        player.Dead = false;
+        player.IsDestroyed = false;
         player.Team = Team;
 
         var placement = PlacementSquare.Placements.FindIndex(place => place.Position == player.Position3D);

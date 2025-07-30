@@ -1,11 +1,9 @@
-/* Enter message here */
+Hello! This is quite a big "minor" update. This update is jam-packed with cool new things, such as an entirely re-programmed AI tank system and
+new AI tank behaviors, lots of performance enhancements, bug fixes, and more!
 
-##### TODO: multiplayer stats (press tab n stuff to see other player kill counts, also have kills be per-player)
-##### ALSO: make ping tab vertical (maybe)
-##### ALSO: fix campaign not ending until another attempt passes
-##### ALSO: wiimotelib, improved particles, mines not flashing on MP, fix res on intermission
+Starting from this point on, I will be uploading a debug-enabled binary of the game for modders to use (windows only for now, others will need to compile)
 
-Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed later) speedruns will get their spot on the main menu!
+Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will get their spot on the main menu!
 
 # Additions
 
@@ -23,7 +21,12 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 	- Act 10x more similar to the original game
 	- Should, overall, make them less of a nuisance to destroy
 	- Should also improve their movements a ton
-- Leveling now has decay (leveling up now takes more XP for each level) (MAYBED SAHDSHAJKD HJSKAHD JKSAHJKSD AHJKSAD HJKSDA HJKA SD)
+- The ping menu is now located on the right of the screen, and is vertically aligned
+	- Pinging is now much simpler, using your scroll wheel to determine which one to use
+	- Now, you press middle click to use the highlighted ping selection
+- Slightly changed the position and look of the bullet count display
+- Lantern mode has now been touched up, and now shows the lanterns of each player, and looks visually different
+	- Also allows the player to see very slightly in the darkness if they squint
 - Reworked Co-op spawn positions on most Vanilla campaign levels
 - Yellow tank music is now prioritized over the pink tank's
 - Reworked a few missions, and buffed the final mission slightly
@@ -40,7 +43,14 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 	- Be sure to read the documentation of them by hovering on them in your IDE
 - Pink tanks, internally, are now listed before Yellow tanks
 	- Update any campaigns!
+- The center of the game scene is now (0, 0) instead of being slightly biased to the top
 - You can now compile mods on versions higher than .NET 8.0
+- `TankRotation` -> `ChassisRotation`
+- `TargetXRotation` -> `DesiredXRotation`
+- `Tank.Dead` -> `Tank.IsDestroyed`
+- `Tank.IsIngame` has been removed
+- All `DrawUtils` methods now use `String` instead of `Text`
+- `DrawUtils.DrawBorderedStringWithShadow` -> `DrawUtils.DrawStringWithShadowAndBorder`
 
 # Fixes
 
@@ -61,6 +71,9 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded (may be changed 
 - [ ] Multithreaded tank AI
 - [ ] Campaign fail/success display
 - [ ] Tank tread hyper-optimization (and visual re-haul)
+- [ ] Wiimote support
+- [ ] Real-time multiplayer stats
+- [ ] Fix campaigns not ending immediately on all clients
 
 PLEASE, if you find anything wrong, go to my [discord](https://discord.gg/KhfzvbrrKx) server and report bugs in the #bugs 
 channel, or, if you want to suggest something, suggest them in the #suggestions channel.

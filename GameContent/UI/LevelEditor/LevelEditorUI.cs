@@ -346,10 +346,10 @@ public static partial class LevelEditorUI {
                 p.FlashAsColor(flashColor);
                 if (p.TankId > -1) {
                     var tank = GameHandler.AllTanks[p.TankId];
-                    tank.TankRotation = tnkRot;
+                    tank.ChassisRotation = tnkRot;
 
                     // :( negatives why
-                    tank.TargetTankRotation = -tnkRot;
+                    tank.DesiredChassisRotation = -tnkRot;
                     tank.TurretRotation = tnkRot;
                 }
 
@@ -492,7 +492,7 @@ public static partial class LevelEditorUI {
         if (PlacementSquare.CurrentlyHovered != null) {
             var mapCoords = PlacementSquare.CurrentlyHovered.RelativePosition;
 
-            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, mapCoords.ToString(),
+            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, mapCoords.ToString(),
                 MouseUtils.MousePosition - Vector2.UnitY * 30, Color.White, Color.Black, Vector2.One * 0.5f, 0f,
             Anchor.BottomCenter, 0.5f);
         }
@@ -711,7 +711,7 @@ public static partial class LevelEditorUI {
             foreach (var tnk in GameHandler.AllTanks) {
                 if (tnk == null) continue;
 
-                if (tnk.Dead)
+                if (tnk.IsDestroyed)
                     continue;
 
                 if (RayUtils.GetMouseToWorldRay().Intersects(tnk.Worldbox).HasValue) {
@@ -720,8 +720,8 @@ public static partial class LevelEditorUI {
                         tnk.Destroy(new TankHurtContextOther(null, TankHurtContextOther.HurtContext.FromOther, "Smitten by zeus!"), false); // hmmm
 
                     if (InputUtils.CanDetectClick(rightClick: true)) {
-                        tnk!.TankRotation = (tnk.TankRotation - MathHelper.PiOver2).WrapTauAngle() - MathHelper.Pi;
-                        tnk!.TargetTankRotation = (tnk.TargetTankRotation - MathHelper.PiOver2).WrapTauAngle() - MathHelper.Pi;
+                        tnk!.ChassisRotation = (tnk.ChassisRotation - MathHelper.PiOver2).WrapTauAngle() - MathHelper.Pi;
+                        tnk!.DesiredChassisRotation = (tnk.DesiredChassisRotation - MathHelper.PiOver2).WrapTauAngle() - MathHelper.Pi;
                         tnk!.TurretRotation = (tnk.TurretRotation + MathHelper.PiOver2).WrapTauAngle() - MathHelper.Pi;
 
                         // why tf was this here???

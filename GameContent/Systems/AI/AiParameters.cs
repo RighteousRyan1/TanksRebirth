@@ -19,9 +19,9 @@ public record AIParameters {
     public float ChanceMineLay { get; set; }
     /// <summary>The max angle of which this tank will change its movement direction. Word 13.</summary>
     public float MaxAngleRandomTurn { get; set; }
-    /// <summary>The maximum amount of time before updating the tank's <see cref="Tank.TargetTankRotation"/> from 0 to <see cref="MaxAngleRandomTurn"/> radians. Word 14.</summary>
+    /// <summary>The maximum amount of time before updating the tank's <see cref="Tank.DesiredChassisRotation"/> from 0 to <see cref="MaxAngleRandomTurn"/> radians. Word 14.</summary>
     public int RandomTimerMaxMove { get; set; } = 2;
-    /// <summary>The minimum amount of time before updating the tank's <see cref="Tank.TargetTankRotation"/> from 0 to <see cref="MaxAngleRandomTurn"/> radians. Word 15.</summary>
+    /// <summary>The minimum amount of time before updating the tank's <see cref="Tank.DesiredChassisRotation"/> from 0 to <see cref="MaxAngleRandomTurn"/> radians. Word 15.</summary>
     public int RandomTimerMinMove { get; set; } = 1;
     /// <summary>The distance of which this tank is wary of mines laid by allies and tries to move away from them. Word 16.</summary>
     public float AwarenessFriendlyMine { get; set; }
@@ -37,7 +37,7 @@ public record AIParameters {
     /// <summary>Determines how much this tank will move in attempt to get closer to its target. 
     /// <br></br>Values reach absurdity under -1 or above 1. Word 21.</summary>
     public float AggressivenessBias { get; set; }
-    /// <summary>This is unimplemented. Acts as the maximum amount of queued "movements" this tank needs to take before it can move randomly. Word 22.</summary>
+    /// <summary>Acts as the maximum amount of queued "movements" this tank needs to take before it can move randomly. Word 22.</summary>
     // note: all tanks use this value at 4
     public int MaxQueuedMovements { get; set; }
     /// <summary>How far from this tank that it is aware of obstacles and navigates around them. Word 28.</summary>
@@ -68,7 +68,9 @@ public record AIParameters {
     // ### SEPARATION BETWEEN ORIGINAL PARAMETERS AND REBIRTH-EXCLUSIVE PARAMETERS ###
 
 
-
+    /// <summary>How long this <see cref="AITank"/> remembers that an <see cref="TankProperties.Invisible"/> tank acted for. This affects how long it will target the invisible tank after an action.
+    /// <br></br>This parameter is measured in ticks, so 60 (default) = 1 second.</summary>
+    public uint Rememberance { get; set; } = 60;
     /// <summary>Whether or not this tank tries to find calculations all around it. This is not recommended for mobile tanks.</summary>
     public bool SmartRicochets { get; set; }
 

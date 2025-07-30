@@ -47,11 +47,11 @@ public static class GameSceneUI {
         DrawUtils.DrawTextureWithShadow(TankGame.SpriteRenderer, tnk, barPos + new Vector2(bar.Size().X * 0.25f, 0).ToResolution(),
             Vector2.One, IntermissionSystem.BackgroundColor, new Vector2(1.5f).ToResolution(), alpha, Anchor.Center, shadowDistScale: 0.5f, shadowAlpha: 0.5f);
 
-        DrawUtils.DrawBorderedStringWithShadow(TankGame.SpriteRenderer, font, barPos - new Vector2(bar.Size().X / 6, 7.5f * infoScaling).ToResolution(),
+        DrawUtils.DrawStringWithBorderAndShadow(TankGame.SpriteRenderer, font, barPos - new Vector2(bar.Size().X / 6, 7.5f * infoScaling).ToResolution(),
             Vector2.One, missionInfo, IntermissionSystem.BackgroundColor, IntermissionSystem.ColorForBorders, new Vector2(infoScale * infoScaling).ToResolution(),
             1f, Anchor.BottomRight, shadowDistScale: 1.5f, origMeasureScale: infoScale, shadowAlpha: 0.5f, charSpacing: 10);
 
-        DrawUtils.DrawBorderedStringWithShadow(TankGame.SpriteRenderer, font, barPos + new Vector2(bar.Size().X * 0.375f, -7.5f).ToResolution(),
+        DrawUtils.DrawStringWithBorderAndShadow(TankGame.SpriteRenderer, font, barPos + new Vector2(bar.Size().X * 0.375f, -7.5f).ToResolution(),
             Vector2.One, tanksRemaining, IntermissionSystem.BackgroundColor, IntermissionSystem.ColorForBorders, new Vector2(infoScale).ToResolution(),
             alpha, Anchor.BottomRight, shadowDistScale: 1.5f, origMeasureScale: infoScale, shadowAlpha: 0.5f, charSpacing: 5);
     }
@@ -121,7 +121,7 @@ public static class GameSceneUI {
     flip: !flipSide ? SpriteEffects.FlipHorizontally : SpriteEffects.None,
     shadowAlpha: 0f, shadowDistScale: 0.5f);
 
-        DrawUtils.DrawBorderedStringWithShadow(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, 
+        DrawUtils.DrawStringWithBorderAndShadow(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, 
             // draws the text on the right side of the screen
             new Vector2(flipSide ? pertrusionReal + 10 : pertrusionReal - 10,
             y - 7f * scale),

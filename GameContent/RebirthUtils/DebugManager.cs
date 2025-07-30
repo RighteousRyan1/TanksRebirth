@@ -7,7 +7,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using tainicom.Aether.Physics2D.Dynamics;
 using TanksRebirth.Achievements;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.ID;
@@ -25,7 +24,6 @@ using TanksRebirth.Internals.Common.GameUI;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.IO;
 using TanksRebirth.Net;
-using static TanksRebirth.GameContent.UI.MainMenu.MainMenuUI;
 
 namespace TanksRebirth.GameContent.RebirthUtils;
 
@@ -253,10 +251,10 @@ public static class DebugManager {
             return; // won't update debug if debugging is not currently enabled.
 
         if (SuperSecretDevOption) {
-            var tnkGet = Array.FindIndex(GameHandler.AllAITanks, x => x is not null && !x.Dead && !x.Properties.Stationary);
+            var tnkGet = Array.FindIndex(GameHandler.AllAITanks, x => x is not null && !x.IsDestroyed && !x.Properties.Stationary);
             if (tnkGet > -1) {
                 var tnk = GameHandler.AllAITanks[tnkGet];
-                tnk.TargetTankRotation = (MatrixUtils.ConvertWorldToScreen(Vector3.Zero, tnk.World, tnk.View, tnk.Projection) - MouseUtils.MousePosition).ToRotation() + MathHelper.PiOver2;
+                tnk.DesiredChassisRotation = (MatrixUtils.ConvertWorldToScreen(Vector3.Zero, tnk.World, tnk.View, tnk.Projection) - MouseUtils.MousePosition).ToRotation() + MathHelper.PiOver2;
             }
         }
 
@@ -270,12 +268,12 @@ public static class DebugManager {
             RuntimeData.RenderTimeGraph.Update();
             RuntimeData.LogicTimeGraph.Update();
         }
-        if (MenuState == UIState.Mulitplayer) {
+        if (MainMenuUI.MenuState == MainMenuUI.UIState.Mulitplayer) {
             if (InputUtils.AreKeysJustPressed(Keys.Q, Keys.W)) {
-                IPInput.Text = "localhost";
-                PortInput.Text = "7777";
-                ServerNameInput.Text = "TestServer";
-                UsernameInput.Text = Client.ClientRandom.Next(0, ushort.MaxValue).ToString();
+                MainMenuUI.IPInput.Text = "localhost";
+                MainMenuUI.PortInput.Text = "7777";
+                MainMenuUI.ServerNameInput.Text = "TestServer";
+                MainMenuUI.UsernameInput.Text = Client.ClientRandom.Next(0, ushort.MaxValue).ToString();
             }
         }
         if (InputUtils.AreKeysJustPressed(Keys.Q, Keys.E))
@@ -380,6 +378,28 @@ public static class DebugManager {
         blockType = MathHelper.Clamp(blockType, 0, 3);
     }
     public static void DrawDebug(SpriteBatch spriteBatch) {
+
+        if (Client.IsConnected()) {
+            var myClient = Client.NetClient;
+            var ping = myClient.Ping;
+            var pLoss = myClient.Statistics.PacketLossPercent;
+
+            var info = new string[] {
+                $"Client ID: {myClient.Id}",
+                $"Ping: {ping}",
+                $"Packet Loss: {pLoss}%",
+            };
+
+            var textScale = new Vector2(0.5f).ToResolution();
+
+            var pingColor = new StatisticalColor<int>(Color.Lime, Color.Red, 30, ping, 250);
+            var packetLossColor = new StatisticalColor<float>(Color.Lime, Color.Red, 0f, pLoss, 0.25f);
+
+            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, info[0], WindowUtils.WindowTop, Color.White, Color.Black, textScale, 0f, Anchor.TopCenter, 0.5f);
+            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, info[1], WindowUtils.WindowTop * 0.75f, pingColor.FinalColor, Color.Black, textScale, 0f, Anchor.TopCenter, 0.5f);
+            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, info[2], WindowUtils.WindowTop * 1.25f, packetLossColor.FinalColor, Color.Black, textScale, 0f, Anchor.TopCenter, 0.5f);
+        }
+
         if (!DebuggingEnabled) return;
 
         var posOffset = new Vector2(0, 80);
@@ -464,7 +484,7 @@ public static class DebugManager {
                     body.Position.Y * Tank.UNITS_PER_METER),
                     CameraGlobals.GameView, CameraGlobals.GameProjection);
 
-                DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, "BODY", position, drawColor, 
+                DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, "BODY", position, drawColor, 
                     Color.White, Vector2.One * 0.5f, 0f, borderThickness: 0.5f);
             }
         }
@@ -526,10 +546,10 @@ public static class DebugManager {
         var rot = GeometryUtils.GetPiRandom();
 
         var t = new AITank(tier);
-        t.TankRotation = rot;
+        t.ChassisRotation = rot;
         t.TurretRotation = rot;
         t.Team = team;
-        t.Dead = false;
+        t.IsDestroyed = false;
         var pos = new BlockMapPosition(Client.ClientRandom.Next(0, 27), Client.ClientRandom.Next(0, 20));
         t.Physics.Position = pos;
         t.Position = pos;
@@ -540,12 +560,12 @@ public static class DebugManager {
         var rot = 0f;
 
         var x = new AITank(tier);
-        x.TargetTankRotation = rot;
-        x.TankRotation = rot;
+        x.DesiredChassisRotation = rot;
+        x.ChassisRotation = rot;
         x.TurretRotation = rot;
 
         x.Team = team;
-        x.Dead = false;
+        x.IsDestroyed = false;
         x.Physics.Position = position.FlattenZ() / Tank.UNITS_PER_METER;
         x.Position = position.FlattenZ();
         return x;
@@ -555,9 +575,9 @@ public static class DebugManager {
             var random = new BlockMapPosition(Client.ClientRandom.Next(0, 23), Client.ClientRandom.Next(0, 18));
             var rot = GeometryUtils.GetPiRandom();
             var t = new AITank(useCurTank ? tankToSpawnType : AITank.PickRandomTier());
-            t.TankRotation = rot;
+            t.ChassisRotation = rot;
             t.TurretRotation = rot;
-            t.Dead = false;
+            t.IsDestroyed = false;
             t.Team = useCurTank ? tankToSpawnTeam : TeamID.NoTeam;
             t.Physics.Position = random;
             t.Position = random;
@@ -570,7 +590,7 @@ public static class DebugManager {
             pos = posOverride;
         var myTank = new PlayerTank(playerType) {
             Team = team,
-            Dead = false
+            IsDestroyed = false
         };
         myTank.Physics.Position = pos.FlattenZ() / Tank.UNITS_PER_METER;
         myTank.Position = pos.FlattenZ();

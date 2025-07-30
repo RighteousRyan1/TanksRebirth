@@ -246,8 +246,8 @@ public class NetPlay {
 
                 var tank = new PlayerTank(type);
                 tank.Physics.Position = new(x, y);
-                tank.Dead = false;
-                tank.TankRotation = tnkRot;
+                tank.IsDestroyed = false;
+                tank.ChassisRotation = tnkRot;
                 tank.TurretRotation = turRot;
                 tank.Team = team;
 
@@ -402,7 +402,7 @@ public class NetPlay {
                     break;
 
                 GameHandler.AllPlayerTanks[id].Physics.Position = new(x2, y2);
-                GameHandler.AllPlayerTanks[id].TankRotation = tankRotation;
+                GameHandler.AllPlayerTanks[id].ChassisRotation = tankRotation;
                 GameHandler.AllPlayerTanks[id].TurretRotation = turretRotation;
                 GameHandler.AllPlayerTanks[id].Velocity = new(vX, vY);
                 break;
@@ -428,7 +428,7 @@ public class NetPlay {
                 }
 
                 GameHandler.AllAITanks[id1].Physics.Position = new(x3, y3);
-                GameHandler.AllAITanks[id1].TankRotation = tankRotation1;
+                GameHandler.AllAITanks[id1].ChassisRotation = tankRotation1;
                 GameHandler.AllAITanks[id1].TurretRotation = turretRotation1;
                 GameHandler.AllAITanks[id1].Velocity = new(vX1, vY1);
                 break;

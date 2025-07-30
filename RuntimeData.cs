@@ -54,8 +54,7 @@ public static class RuntimeData {
     public static DateTime LaunchTime;
     public static OSPlatform OS;
     public static CrashReportInfo CrashInfo;
-
-    public static string ShortVersion;
+    public static string ShortVersion { get; internal set; }
     public static Version? GameVersion { get; internal set; }
 
     public static Graph RenderFpsGraph = new("Render", () => (float)RenderFPS, 200, 50, 3, 0.35f);

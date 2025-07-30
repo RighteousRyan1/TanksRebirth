@@ -11,14 +11,15 @@ public partial class AITank {
     public bool IsInDanger;
     public List<IAITankDanger> NearbyDangers;
     public IAITankDanger? ClosestDanger;
+    /// <summary>Makes this <see cref="AITank"/> profusely avoid the given location.</summary>
     public void Avoid(Vector2 location) {
         IsSurviving = true;
-        // TODO: add all shells that may or may not be near, average their position and make the tank go away from that position
         if (CurMineStun <= 0 && CurShootStun <= 0) {
             var direction = -Vector2.UnitY.Rotate(location.DirectionTo(Position).ToRotation());
-            TargetTankRotation = direction.ToRotation();
+            DesiredChassisRotation = direction.ToRotation();
         }
     }
+    /// <summary>Gets a list of dangerous objects near the <see cref="AITank"/>.</summary>
     public List<IAITankDanger> GetEvasionData() {
         var dangerPositions = new List<IAITankDanger>();
 
@@ -52,6 +53,7 @@ public partial class AITank {
         return dangerPositions;
     }
     // this might need to be redone completely because different dangers have difernernejakswklfsadkolf dasjkl fsadjklsaf dkjhlsfda jhknas dfjhkbsadf jhkbsadf jhkfsa djkhsa fd
+    [Obsolete("This method is outdated and may not work as expected. Use GetEvasionData() instead.")]
     public bool TryGetDangerNear(float distance, out List<IAITankDanger> dangersNear, out IAITankDanger? dClosest) {
         IAITankDanger? closest = null;
         dangersNear = [];

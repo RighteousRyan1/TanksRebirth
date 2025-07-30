@@ -100,9 +100,9 @@ public class TankArmor {
                     //{
                     if (i < 3) {
                         effect.World = Matrix.CreateRotationX(-MathHelper.PiOver2)
-                             * Matrix.CreateRotationY(-Host.TankRotation)
+                             * Matrix.CreateRotationY(-Host.ChassisRotation)
                              * Matrix.CreateScale(scale)
-                             * Matrix.CreateTranslation(Host.Position3D + offset[i].Rotate(Host.TankRotation).ExpandZ());
+                             * Matrix.CreateTranslation(Host.Position3D + offset[i].Rotate(Host.ChassisRotation).ExpandZ());
                     }
                     //}
                     effect.View = Host.View;

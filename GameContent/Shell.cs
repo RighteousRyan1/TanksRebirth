@@ -279,10 +279,10 @@ public class Shell : IAITankDanger {
         World = Matrix.CreateFromYawPitchRoll(-Rotation, 0, 0)
                 * Matrix.CreateTranslation(Position3D);
 
-        if (TrailSound != null) {
+        //if (TrailSound != null) {
             //if (CameraGlobals.IsUsingFirstPresonCamera)
             //    SoundUtils.CreateSpatialSound(TrailSound, Position3D, CameraGlobals.RebirthFreecam.Position);
-        }
+        //}
 
         if (_wallRicCooldown <= 0) {
             if (Position.X is < GameScene.MIN_X or > GameScene.MAX_X) {
@@ -341,13 +341,12 @@ public class Shell : IAITankDanger {
             if (Owner == null)
                 break;
 
-            ref var tanksSSpace = ref MemoryMarshal.GetReference((Span
-                <Tank>)GameHandler.AllTanks);
+            ref var tanksSSpace = ref MemoryMarshal.GetReference((Span<Tank>)GameHandler.AllTanks);
 
             for (var i = 0; i < GameHandler.AllTanks.Length; i++) {
                 var target = Unsafe.Add(ref tanksSSpace, i);
 
-                if (target is null || target.Dead || target == Owner ||
+                if (target is null || target.IsDestroyed || target == Owner ||
                     !(Vector2.Distance(Position, target.Position) <= Properties.HomeProperties.Radius)) continue;
 
                 if (target.Team == Owner.Team && target.Team != TeamID.NoTeam) continue;
@@ -396,7 +395,7 @@ public class Shell : IAITankDanger {
         ModdedData?.PostUpdate();
         OnPostUpdate?.Invoke(this);
     }
-    private void RenderSmokeParticle(float timer) {
+    void RenderSmokeParticle(float timer) {
 
         // TODO: make look accurate
         if (CameraGlobals.IsUsingFirstPresonCamera) timer /= 2;
@@ -427,7 +426,7 @@ public class Shell : IAITankDanger {
             GeometryUtils.Add(ref particle.Scale, 0.0075f * RuntimeData.DeltaTime);
         };
     }
-    private void RenderLeaveTrail() {
+    void RenderLeaveTrail() {
         // _oldPosition and Position are *not* the same during method call.
         // TODO: make more particles added depending on the positions between 2 distinct frames
         //var numToAdd
@@ -435,6 +434,8 @@ public class Shell : IAITankDanger {
         var p = GameHandler.Particles.MakeParticle(
             Position3D + new Vector3(0, 0, 5).FlattenZ().Rotate(Rotation + MathHelper.Pi).ExpandZ(),
             GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
+
+        // p.Layer = 1f;
         p.Roll = -MathHelper.PiOver2 + (RuntimeData.RunTime % MathHelper.Tau);
         p.Color = Properties.TrailColor;
         p.HasAdditiveBlending = false;
@@ -452,13 +453,14 @@ public class Shell : IAITankDanger {
                 p.Destroy();
         };
     }
-    private void RenderFlamingParticle() {
+    void RenderFlamingParticle() {
         var flame = GameHandler.Particles.MakeParticle(
             Position3D + new Vector3(0, 0, 5).FlattenZ().Rotate(Rotation + MathHelper.Pi).ExpandZ(),
             GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/flame"));
 
         var scaleRand = Client.ClientRandom.NextFloat(0.5f, 0.75f);
 
+        flame.Layer = 1f;
         flame.Scale = new(scaleRand, 0.165f, 0.4f); // x is outward from bullet
         flame.Color = Properties.FlameColor;
         flame.HasAdditiveBlending = false;
@@ -548,7 +550,7 @@ public class Shell : IAITankDanger {
 
         for (var i = 0; i < GameHandler.AllTanks.Length; i++) {
             var tank = Unsafe.Add(ref tankSSpace, i);
-            if (tank == null || tank.Dead) continue;
+            if (tank == null || tank.IsDestroyed) continue;
 
             if (!tank.CollisionCircle.Intersects(HitCircle)) continue;
 

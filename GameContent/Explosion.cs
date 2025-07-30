@@ -108,11 +108,11 @@ public class Explosion : IAITankDanger {
                     position = Vector3.Transform(Vector3.UnitX * explScalar, Matrix.CreateFromYawPitchRoll(rotZ + rotation, 0, rotX) * Matrix.CreateTranslation(Position3D));
                     particle.Position = position;
 
-                    var rot = MathUtils.CalculateRotationToFaceCenter(particle.Position, Position3D);
+                    var rot = MathUtils.GetLookAtEulerAngles(particle.Position, Position3D);
 
-                    particle.Roll = rot.X;
-                    particle.Pitch = rot.Y;
-                    particle.Yaw = rot.Z;
+                    particle.Roll = rot.Roll;
+                    particle.Pitch = rot.Pitch;
+                    particle.Yaw = rot.Yaw;
                 };
             }
             horizLayers -= (int)MathF.Round((float)horizLayers / vertLayers);
@@ -143,7 +143,7 @@ public class Explosion : IAITankDanger {
             }
             foreach (var tank in GameHandler.AllTanks) {
                 if (tank is null || Vector2.Distance(tank.Position, Position) > Scale * MAGIC_EXPLOSION_NUMBER
-                    || tank.Dead || HasHit[tank.WorldId] || tank.Properties.InvulnerableToMines)
+                    || tank.IsDestroyed || HasHit[tank.WorldId] || tank.Properties.InvulnerableToMines)
                     continue;
                 HasHit[tank.WorldId] = true;
                 if (Owner is null)

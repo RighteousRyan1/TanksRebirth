@@ -115,18 +115,14 @@ public partial class AITank : Tank {
     /// <param name="applyDefaults">Whether or not to give this <see cref="AITank"/> the default values.</param>
     /// <param name="isIngame">Whether or not this <see cref="AITank"/> is a gameplay tank or a cosmetic tank (i.e: display models on menus, etc).</param>
     public AITank(int tier, bool applyDefaults = true, bool isIngame = true) {
-        IsIngame = isIngame;
-        // TargetTankRotation = MathHelper.Pi;
-        if (IsIngame) {
-            // looking at this code makes me want to barf.
-            // maybe move this stuff to events within Difficulties.cs
-            if (Difficulties.Types["BumpUp"])
-                tier++;
-            if (Difficulties.Types["Monochrome"])
-                tier = Difficulties.MonochromeValue;
-            if (Difficulties.Types["MasterModBuff"])
-                tier = Difficulties.VanillaToMasterModeConversions[tier];
-        }
+        // looking at this code makes me want to barf.
+        // maybe move this stuff to events within Difficulties.cs
+        if (Difficulties.Types["BumpUp"])
+            tier++;
+        if (Difficulties.Types["Monochrome"])
+            tier = Difficulties.MonochromeValue;
+        if (Difficulties.Types["MasterModBuff"])
+            tier = Difficulties.VanillaToMasterModeConversions[tier];
 
         SpecialBehaviors = [];
         NearbyDangers = [];
@@ -290,7 +286,7 @@ public partial class AITank : Tank {
             AiTier = AiTankType,
             IsPlayer = false,
             Position = aiDeathMark.Position.FlattenZ(),
-            Rotation = TankRotation,
+            Rotation = ChassisRotation,
             Team = Team,
         };
 
@@ -379,6 +375,8 @@ public partial class AITank : Tank {
             };
         }
     }
+    /// <summary>Sets various meta-data things about this <see cref="AITank"/>.
+    /// <br></br>Sets <see cref="TargetTank"/>, <see cref="NearbyDangers"/>, and <see cref="ClosestDanger"/>.</summary>
     public void HandleTankMetaData() {
         TanksNearMineAwareness.Clear();
         BlocksNear.Clear();
@@ -400,6 +398,7 @@ public partial class AITank : Tank {
             ModdedData?.DangerDetected();
         }
     }
+    /// <summary>The main AI loop of this <see cref="AITank"/>.</summary>
     public void DoAI() {
         if (!MainMenuUI.IsActive && !CampaignGlobals.InMission)
             return;
@@ -410,8 +409,8 @@ public partial class AITank : Tank {
 
         Array.ForEach(Behaviors, x => x.Value += RuntimeData.DeltaTime);
 
-        TanksNearMineAwareness = [.. GameHandler.AllTanks.Where(x => x is not null && x != this && !x.Dead && GameUtils.Distance_WiiTanksUnits(Position, x.Position) <= Parameters.TankAwarenessMine)];
-        TanksNearShootAwareness = [.. GameHandler.AllTanks.Where(x => x is not null && x != this && !x.Dead && GameUtils.Distance_WiiTanksUnits(TurretPosition, x.Position) <= Parameters.TankAwarenessShoot)];
+        TanksNearMineAwareness = [.. GameHandler.AllTanks.Where(x => x is not null && x != this && !x.IsDestroyed && GameUtils.Distance_WiiTanksUnits(Position, x.Position) <= Parameters.TankAwarenessMine)];
+        TanksNearShootAwareness = [.. GameHandler.AllTanks.Where(x => x is not null && x != this && !x.IsDestroyed && GameUtils.Distance_WiiTanksUnits(TurretPosition, x.Position) <= Parameters.TankAwarenessShoot)];
         
         if (ModdedData is not null) {
             if (!ModdedData.CustomAI())
@@ -449,12 +448,12 @@ public partial class AITank : Tank {
         // i really hope to remove this hardcode.
         if (DoMoveTowards) {
 
-            var dir = Vector2.UnitY.Rotate(TankRotation);
+            var dir = Vector2.UnitY.Rotate(ChassisRotation);
 
             Velocity = Vector2.Normalize(dir);
 
             Velocity *= Speed;
-            TankRotation = MathUtils.RoughStep(TankRotation, TargetTankRotation, Properties.TurningSpeed * RuntimeData.DeltaTime);
+            ChassisRotation = MathUtils.RoughStep(ChassisRotation, DesiredChassisRotation, Properties.TurningSpeed * RuntimeData.DeltaTime);
         }
 
         #endregion
@@ -463,7 +462,7 @@ public partial class AITank : Tank {
     public BasicEffect TankBasicEffectHandler = new(TankGame.Instance.GraphicsDevice);
     public override void Render() {
         base.Render();
-        if (Dead || !GameScene.ShouldRenderAll)
+        if (IsDestroyed || !GameScene.ShouldRenderAll)
             return;
         TankGame.Instance.GraphicsDevice.BlendState = BlendState.AlphaBlend;
         DrawExtras();
@@ -474,8 +473,8 @@ public partial class AITank : Tank {
             foreach (ModelMesh mesh in Model.Meshes) {
                 foreach (BasicEffect effect in mesh.Effects) {
                     effect.World = i == 0 ? 
-                        _boneTransforms[mesh.ParentBone.Index] : 
-                        _boneTransforms[mesh.ParentBone.Index] * 
+                        boneTransforms[mesh.ParentBone.Index] : 
+                        boneTransforms[mesh.ParentBone.Index] * 
                         Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
                     effect.View = View;
                     effect.Projection = Projection;
@@ -572,7 +571,7 @@ public partial class AITank : Tank {
 
         var start = new Vector3(Position.X, heightOffset, Position.Y);
 
-        var forward = Vector2.UnitY.Rotate(TankRotation);
+        var forward = Vector2.UnitY.Rotate(ChassisRotation);
 
         // not to game units...?
         var gameUnits = GameUtils.Value_WiiTanksUnits(distance + TNK_WIDTH);
@@ -596,7 +595,7 @@ public partial class AITank : Tank {
         }
     }
     private void DrawExtras() {
-        if (Dead)
+        if (IsDestroyed)
             return;
 
         // did i ever make any good programming choices before this past year or so?
@@ -634,7 +633,7 @@ public partial class AITank : Tank {
                 realI++;
 
                 var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Up * 20, World, View, Projection) - new Vector2(0, realI * 20);
-                DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont,
+                DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont,
                     $"{info.Key.Name}: {info.Key.Value} ({GameUtils.Value_WiiTanksUnits(info.Key.Value)})", pos, info.Value, Color.White,
                     Vector2.One * 0.5f, 0f, borderThickness: 0.25f);
                 DrawAwarenessCircle(TankBasicEffectHandler, info.Key.Value, info.Value, info.Key.TrackTurret ? TurretPosition : null);
@@ -689,10 +688,9 @@ public partial class AITank : Tank {
 
         Properties.Armor?.Render();
     }
-    public bool IsOnSameTeamAs(int otherTeam) => Team == otherTeam && Team != TeamID.NoTeam && otherTeam != TeamID.NoTeam;
     public static int PickRandomTier() => Server.ServerRandom.Next(0, TankID.Collection.Count);
     /// <summary>Performs a raycast in all 4 cardinal directions of the tank (rotation-agnostic).</summary>
-    /// <param name="distance">The diameter of the detection circle.</param>
+    /// <param name="distance">The length of the raycast.</param>
     /// <param name="callback">Code-callback for performing special actions based on the raycast.</param>
     /// <param name="offset">The angle offset.</param>
     /// <param name="ignoreDirs">Which directions to not cast a ray towards.</param>

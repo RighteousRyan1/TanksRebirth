@@ -28,7 +28,7 @@ public static class DrawUtils {
         // right line
         TankGame.SpriteRenderer.Draw(tex, start + Vector2.UnitX * (end.X - start.X), null, boxColor, 0f, Vector2.Zero, new Vector2(1, end.Y - start.Y), default, 0);
     }
-    public static void DrawTextWithBorder(SpriteBatch spriteBatch, SpriteFontBase font, string text, Vector2 position, 
+    public static void DrawStringWithBorder(SpriteBatch spriteBatch, SpriteFontBase font, string text, Vector2 position, 
         Color textColor, Color borderColor, Vector2 scale, float rotation, Anchor anchor = Anchor.Center, float borderThickness = 1f, float charSpacing = 0,
         float origMeasureScale = 1f) {
 
@@ -68,7 +68,7 @@ public static class DrawUtils {
         }
         spriteBatch.Draw(texture, position, srcRect, color * alpha, rotation, anchor.GetAnchor(texture.Size()), scale, flip, default);
     }
-    public static void DrawBorderedStringWithShadow(SpriteBatch spriteBatch, SpriteFontBase font, Vector2 position, Vector2 shadowDir, 
+    public static void DrawStringWithBorderAndShadow(SpriteBatch spriteBatch, SpriteFontBase font, Vector2 position, Vector2 shadowDir, 
         string text, Color color, Color borderColor, Vector2 scale, float alpha, Anchor anchor = Anchor.Center, 
         float shadowDistScale = 1f, float shadowAlpha = 1f, float borderThickness = 1f, float charSpacing = 0, float origMeasureScale = 1f) {
 
@@ -76,7 +76,7 @@ public static class DrawUtils {
             Vector2.Normalize(shadowDir) * (10f * shadowDistScale * scale), 
             Color.Black * alpha * shadowAlpha, scale, 0f, anchor.GetAnchor(font.MeasureString(text) * origMeasureScale), 0f, characterSpacing: charSpacing);
 
-        DrawTextWithBorder(spriteBatch, font, text, position, color * alpha, borderColor * alpha, scale, 0f, anchor, borderThickness, charSpacing: charSpacing, origMeasureScale: origMeasureScale); 
+        DrawStringWithBorder(spriteBatch, font, text, position, color * alpha, borderColor * alpha, scale, 0f, anchor, borderThickness, charSpacing: charSpacing, origMeasureScale: origMeasureScale); 
     }
 
     public static void DrawStringBorderOnly(SpriteBatch spriteBatch, SpriteFontBase font, string text, Vector2 position,

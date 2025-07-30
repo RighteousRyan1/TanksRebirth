@@ -91,6 +91,7 @@ public static partial class MainMenuUI {
         Difficulties.Types["RandomizedTanks"] = Difficulties.RandomTanksLower > 0 && Difficulties.RandomTanksUpper > 0;
 
         // me in march 2024: what the fuck is this code.
+        // also me in july 2025: what the FUCK is this code
         TanksAreCalculators.Color = Difficulties.Types["TanksAreCalculators"] ? Color.Lime : Color.Red;
         PieFactory.Color = Difficulties.Types["PieFactory"] ? Color.Lime : Color.Red;
         UltraMines.Color = Difficulties.Types["UltraMines"] ? Color.Lime : Color.Red;
@@ -122,7 +123,7 @@ public static partial class MainMenuUI {
     }
     public static void RenderDifficultiesMenu() {
         if (MenuState == UIState.Difficulties) {
-            DrawUtils.DrawTextWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont,
+            DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont,
                 "Ideas are welcome! Let us know in our DISCORD server!",
                 new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 6), Color.White, Color.Black, new Vector2(1f), 0f, Anchor.Center, 0.8f);
         }
@@ -296,7 +297,6 @@ public static partial class MainMenuUI {
             Tooltip = "Everything is dark. Only you and your lantern can save you now.",
             OnLeftClick = (elem) => {
                 Difficulties.Types["LanternMode"] = !Difficulties.Types["LanternMode"];
-                GameShaders.LanternMode = Difficulties.Types["LanternMode"];
             }
         };
         DisguiseMode = new("Disguise", font, Color.White) {

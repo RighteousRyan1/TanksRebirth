@@ -308,7 +308,7 @@ public static class IntermissionSystem {
                     = Difficulties.HijackTanks(CampaignGlobals.LoadedCampaign.CachedMissions[CampaignGlobals.LoadedCampaign.CurrentMissionId].Tanks);
             }
         }
-        CampaignGlobals.LoadedCampaign.SetupLoadedMission(GameHandler.AllPlayerTanks.Any(tnk => tnk != null && !tnk.Dead));
+        CampaignGlobals.LoadedCampaign.SetupLoadedMission(GameHandler.AllPlayerTanks.Any(tnk => tnk != null && !tnk.IsDestroyed));
     }
     public static void SetMusic() {
         var tune = "Assets/music/fanfares/mission_snare.ogg";
@@ -396,7 +396,7 @@ public static class IntermissionSystem {
             var lerpedColor = Color.Lerp(brightPlayerColor, GradientTopColor, brightness);
 
             var lifeText = $"×  {PlayerTank.Lives[i]}";
-            DrawUtils.DrawBorderedStringWithShadow(spriteBatch, FontGlobals.RebirthFontLarge,
+            DrawUtils.DrawStringWithBorderAndShadow(spriteBatch, FontGlobals.RebirthFontLarge,
                 pos + new Vector2(75, -25).ToResolution(),
                 Vector2.One,
                 lifeText,
@@ -473,7 +473,7 @@ public static class IntermissionSystem {
         // slight misalignment
 
         // draw mission name, tanks remaining
-        DrawUtils.DrawBorderedStringWithShadow(spriteBatch, FontGlobals.RebirthFontLarge,
+        DrawUtils.DrawStringWithBorderAndShadow(spriteBatch, FontGlobals.RebirthFontLarge,
             new Vector2(WindowUtils.WindowWidth / 2 - spacingMissionName.ToResolutionX(), textOffsetMissionName),
             Vector2.One,
             missionName,
@@ -481,7 +481,7 @@ public static class IntermissionSystem {
             ColorForBorders,
             TextAnimatorLarge.CurrentScale.ToResolution(),
             1f, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 3f, charSpacing: spacing);
-        DrawUtils.DrawBorderedStringWithShadow(spriteBatch, FontGlobals.RebirthFontLarge,
+        DrawUtils.DrawStringWithBorderAndShadow(spriteBatch, FontGlobals.RebirthFontLarge,
             new Vector2(WindowUtils.WindowWidth / 2 - spacingEnemyTankDisplay.ToResolutionX(), textOffsetTanksLeft),
             Vector2.One,
             enemyTankDisplay,
@@ -492,7 +492,7 @@ public static class IntermissionSystem {
 
         // draw campaign/mission data
         if (CampaignGlobals.LoadedCampaign.CurrentMissionId == 0)
-            DrawUtils.DrawBorderedStringWithShadow(spriteBatch, FontGlobals.RebirthFontLarge,
+            DrawUtils.DrawStringWithBorderAndShadow(spriteBatch, FontGlobals.RebirthFontLarge,
                 new Vector2(WindowUtils.WindowWidth / 2, textOffsetDetails),
                 Vector2.One,
                 $"{TankGame.GameLanguage.Campaign}: \"{CampaignGlobals.LoadedCampaign.MetaData.Name}\" ({TankGame.GameLanguage.Mission} #{CampaignGlobals.LoadedCampaign.CurrentMissionId + 1})",
@@ -501,7 +501,7 @@ public static class IntermissionSystem {
                 TextAnimatorSmall.CurrentScale.ToResolution(),
                 1f, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 1.5f);
         else
-            DrawUtils.DrawBorderedStringWithShadow(spriteBatch, FontGlobals.RebirthFontLarge,
+            DrawUtils.DrawStringWithBorderAndShadow(spriteBatch, FontGlobals.RebirthFontLarge,
                 new Vector2(WindowUtils.WindowWidth / 2, textOffsetDetails),
                 Vector2.One,
                 $"{TankGame.GameLanguage.Mission} #{CampaignGlobals.LoadedCampaign.CurrentMissionId + 1}",

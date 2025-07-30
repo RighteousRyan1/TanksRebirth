@@ -165,7 +165,7 @@ public class TankGame : Game {
         FontGlobals.RebirthFontSystem = new();
 
         RuntimeData.GameVersion = typeof(TankGame).Assembly.GetName().Version!;
-        RuntimeData.ShortVersion = string.Join('.', RuntimeData.GameVersion.ToString().TrimStart('v', 'V').Split('.').Take(2));
+        RuntimeData.ShortVersion = StringUtils.RemoveTrailingZeros(RuntimeData.GameVersion);
 
         ClientLog.Write(
             $"Running {typeof(TankGame).Assembly.GetName().Name} on version '{RuntimeData.GameVersion}'",
@@ -819,6 +819,12 @@ public class TankGame : Game {
         DebugManager.DrawDebugMetrics();
         Speedrun.DrawSpeedrunHUD(SpriteRenderer);
 
+        var shouldSeeInfo = !MainMenuUI.IsActive && !LevelEditorUI.IsActive && !CampaignCompleteUI.IsViewingResults;
+        if (shouldSeeInfo) {
+            GameSceneUI.DrawScores();
+            GameSceneUI.DrawMissionInfoBar();
+        }
+
         SpriteRenderer.End();
     }
     public void PrepareAllRTs() {
@@ -846,7 +852,7 @@ public class TankGame : Game {
     static Particle _ziggy;
     static Particle _ziggyText;
     static Particle _bkCypher;
-    private static void PlaceSecrets() {
+    static void PlaceSecrets() {
         // magic.
         const float SECRET_BASE_POS_X = GameScene.MIN_X - 28.5f;
         const float SECRET_BASE_POS_Y = 22;
