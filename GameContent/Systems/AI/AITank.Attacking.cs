@@ -151,7 +151,6 @@ public partial class AITank {
 
         if (!randomSuccess) return;
 
-        // TankGame.MainThreadTasks.Enqueue(LayMine);
         LayMine();
 
         var randomDir = Client.ClientRandom.Next(goodDirs.Length);
@@ -261,14 +260,14 @@ public partial class AITank {
         if (Parameters.PredictsPositions) {
             if (SeesTarget)
                 if (CurShootCooldown <= 0)
-                    //TankGame.MainThreadTasks.Enqueue(() => Shoot(false));
-                    Shoot(false);
+                    TankGame.MainThreadTasks.Enqueue(() => Shoot(false));
+                    //Shoot(false);
         }
         else {
             if (SeesTarget && !findsSelf && !findsFriendly)
                 if (CurShootCooldown <= 0)
-                    //TankGame.MainThreadTasks.Enqueue(() => Shoot(false));
-                    Shoot(false);
+                    TankGame.MainThreadTasks.Enqueue(() => Shoot(false));
+                    //Shoot(false);
         }
     }
     /// <summary>Gets the cloesest <see cref="Tank"/> that is hostile and is targetable.</summary>

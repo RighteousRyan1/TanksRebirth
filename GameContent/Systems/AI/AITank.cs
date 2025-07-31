@@ -3,24 +3,24 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TanksRebirth.Internals.Common.Utilities;
-using TanksRebirth.Internals;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using tainicom.Aether.Physics2D.Dynamics;
+using TanksRebirth.Enums;
 using TanksRebirth.GameContent.GameMechanics;
-using TanksRebirth.Internals.Common.Framework.Audio;
-using TanksRebirth.Graphics;
-using TanksRebirth.Net;
 using TanksRebirth.GameContent.Globals;
+using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.RebirthUtils;
-using TanksRebirth.GameContent.UI.MainMenu;
-using TanksRebirth.GameContent.UI.LevelEditor;
-using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.Systems.TankSystem;
-using tainicom.Aether.Physics2D.Dynamics;
-using TanksRebirth.Internals.Common.Framework.Collisions;
-using TanksRebirth.Enums;
-using TanksRebirth.GameContent.Cosmetics;
+using TanksRebirth.GameContent.UI.LevelEditor;
+using TanksRebirth.GameContent.UI.MainMenu;
+using TanksRebirth.Graphics;
+using TanksRebirth.Internals;
+using TanksRebirth.Internals.Common.Framework.Audio;
+using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.Systems.AI;
 
@@ -401,19 +401,37 @@ public partial class AITank : Tank {
         if (!MainMenuUI.IsActive && !CampaignGlobals.InMission)
             return;
 
-        // SetEntityDetectionCircle(AiParams.ObstacleAwarenessMine);
-
         TurretRotationMultiplier = 1f;
 
         Array.ForEach(Behaviors, x => x.Value += RuntimeData.DeltaTime);
 
-        TanksNearMineAwareness = [.. GameHandler.AllTanks.Where(x => x is not null && x != this && !x.IsDestroyed && GameUtils.Distance_WiiTanksUnits(Position, x.Position) <= Parameters.TankAwarenessMine)];
-        TanksNearShootAwareness = [.. GameHandler.AllTanks.Where(x => x is not null && x != this && !x.IsDestroyed && GameUtils.Distance_WiiTanksUnits(TurretPosition, x.Position) <= Parameters.TankAwarenessShoot)];
-        
+        #region HandleTanksNear
+        TanksNearMineAwareness.Clear();
+        TanksNearShootAwareness.Clear();
+
+        Span<Tank?> allTanks = GameHandler.AllTanks;
+        ref var search = ref MemoryMarshal.GetReference(allTanks);
+
+        for (int i = 0; i < allTanks.Length; i++) {
+            var tank = Unsafe.Add(ref search, i);
+            if (tank is null || tank == this || tank.IsDestroyed)
+                continue;
+
+            float distToBody = GameUtils.Distance_WiiTanksUnits(Position, tank.Position);
+            float distToTurret = GameUtils.Distance_WiiTanksUnits(TurretPosition, tank.Position);
+
+            if (distToBody <= Parameters.TankAwarenessMine)
+                TanksNearMineAwareness.Add(tank);
+
+            if (distToTurret <= Parameters.TankAwarenessShoot)
+                TanksNearShootAwareness.Add(tank);
+        }
+
         if (ModdedData is not null) {
             if (!ModdedData.CustomAI())
                 return;
         }
+        #endregion
 
         var isShellNear = NearbyDangers.Count > 0 && ClosestDanger is Shell;
 

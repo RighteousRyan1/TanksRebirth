@@ -936,16 +936,29 @@ public static class AIManager {
         return cnt;
     }
 
+    public const int SECTION_1 = 30;
+    public const int SECTION_2 = 60;
+    // public const int SECTION_3 = 60;
     //static Stopwatch s = new();
     //static List<double> msList = [];
 
-    /*public static Thread AITankThread { get; } = new Thread(ProcessAI) {
-        Name = "AITankThread",
+    public static Thread AIThread1 { get; } = new Thread(ProcessAISection1) {
+        Name = "AIThread1",
         IsBackground = true,
         Priority = ThreadPriority.AboveNormal
     };
-    public static bool RunThread = true;*/
-    internal static void ProcessAITanks() {
+    public static Thread AIThread2 { get; } = new Thread(ProcessAISection2) {
+        Name = "AIThread2",
+        IsBackground = true,
+        Priority = ThreadPriority.AboveNormal
+    };
+    /*public static Thread AIThread3 { get; } = new Thread(ProcessAISection3) {
+        Name = "AIThread3",
+        IsBackground = true,
+        Priority = ThreadPriority.AboveNormal
+    };*/
+    public static bool RunThreads = true;
+    internal static void UpdateAITanks() {
 
         if (ModLoader.Status != LoadStatus.Complete)
             return;
@@ -971,7 +984,7 @@ public static class AIManager {
         // if you're not connected to a server or you aren't *the* server
         if (!Client.IsHost() && Client.IsConnected()) return;
 
-        ProcessAI();
+        // ProcessAI();
         //s.Restart();
         //s.Stop();
         //double ms = (s.ElapsedTicks * 1_000_000.0) / Stopwatch.Frequency / 1000;
@@ -979,11 +992,16 @@ public static class AIManager {
 
         //msList?.Add(ms);
     }
-    public static void ProcessAI() {
-        //while (RunThread) {
+    public static void ProcessAISection1() {
+        while (RunThreads) {
+            if (GameHandler.ActiveAITankCount == 0) continue;
+            if (!TankGame.Instance.IsActive && !Client.IsConnected()) continue;
+
             Span<AITank> aiTanks = GameHandler.AllAITanks;
             ref var tanksSearchSpace = ref MemoryMarshal.GetReference(aiTanks);
-            for (var i = 0; i < aiTanks.Length; i++) {
+
+            // start of the array to SECTION_1
+            for (var i = 0; i < SECTION_1; i++) {
                 var tank = Unsafe.Add(ref tanksSearchSpace, i);
                 if (tank is null || tank.IsDestroyed) continue;
 
@@ -992,8 +1010,52 @@ public static class AIManager {
                 // only does anything if you're in a multiplayer context.
                 Client.SyncAITank(tank);
             }
+            int sleepTime = TankGame.LastGameTime is null ? 1 : Math.Max(1, (int)TankGame.LastGameTime.ElapsedGameTime.TotalMilliseconds);
+            Thread.Sleep(sleepTime);
+        }
+    }
+    public static void ProcessAISection2() {
+        while (RunThreads) {
+            if (GameHandler.ActiveAITankCount < SECTION_1) continue;
+            if (!TankGame.Instance.IsActive && !Client.IsConnected()) continue;
 
-            //Thread.Sleep(1);
-        //}
+            Span<AITank> aiTanks = GameHandler.AllAITanks;
+            ref var tanksSearchSpace = ref MemoryMarshal.GetReference(aiTanks);
+
+            // SECTION_1 to SECTION_2
+            for (var i = SECTION_1; i < SECTION_2; i++) {
+                var tank = Unsafe.Add(ref tanksSearchSpace, i);
+                if (tank is null || tank.IsDestroyed) continue;
+
+                tank.DoAI();
+
+                // only does anything if you're in a multiplayer context.
+                Client.SyncAITank(tank);
+            }
+            int sleepTime = TankGame.LastGameTime is null ? 1 : Math.Max(1, (int)TankGame.LastGameTime.ElapsedGameTime.TotalMilliseconds);
+            Thread.Sleep(sleepTime);
+        }
+    }
+    public static void ProcessAISection3() {
+        while (RunThreads) {
+            if (GameHandler.ActiveAITankCount < SECTION_2) continue;
+            if (!TankGame.Instance.IsActive && !Client.IsConnected()) continue;
+
+            Span<AITank> aiTanks = GameHandler.AllAITanks;
+            ref var tanksSearchSpace = ref MemoryMarshal.GetReference(aiTanks);
+
+            // SECTION_2 to the end of the array
+            for (var i = SECTION_2; i < aiTanks.Length; i++) {
+                var tank = Unsafe.Add(ref tanksSearchSpace, i);
+                if (tank is null || tank.IsDestroyed) continue;
+
+                tank.DoAI();
+
+                // only does anything if you're in a multiplayer context.
+                Client.SyncAITank(tank);
+            }
+            int sleepTime = TankGame.LastGameTime is null ? 1 : Math.Max(1, (int)TankGame.LastGameTime.ElapsedGameTime.TotalMilliseconds);
+            Thread.Sleep(sleepTime);
+        }
     }
 }

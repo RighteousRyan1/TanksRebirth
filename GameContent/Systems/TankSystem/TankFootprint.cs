@@ -63,9 +63,7 @@ public class TankFootprint {
 
         Id = Array.IndexOf(AllFootprints, null);
 
-        Texture = GameResources.GetGameResource<Texture2D>(alt
-            ? $"Assets/textures/tank_footprint_alt"
-            : $"Assets/textures/tank_footprint");
+        Texture = alt ? TextureGlobals.FootprintThick : TextureGlobals.FootprintStandard;
 
         _track = GameHandler.Particles.MakeParticle(Position, Texture);
 

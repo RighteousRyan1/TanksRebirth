@@ -4,17 +4,11 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 
 # Additions
 
-
+- Made the game take advantage of multiple threads! If your CPU has multiple threads (hopefully it does), the game should now run better under higher workloads, and just overall better.
 
 # Changes
 
-- Made homing shells work much better
-- Made Discord rich presence operate on a worker thread to allow the main thread to work better
-- Changed some achievement names
-- Made names displayed above players smaller
-- Changed the sync rate of player lives/points to reduce bandwidth usage
-- Decreased some asset sizes, reducing VRAM and RAM usage
-- Made the bullet count UI a bit smaller, again
+- Increased the maximum tank count to 60
 
 # Changes Important for Modders
 
@@ -22,12 +16,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 
 # Fixes
 
-- Optimized bullet collisions/path calculations by ~7.5%
-- Fixed crashing on game-load for some users without a .NET SDK
-- Fixed brown tank kill count not being displayed in the stats menu
-- Fixed players continuing to advance missions even though the campaign should be over
-- Fixed old keybinds for pings still working
-- Fixed mines exploding almost immediately after laying them near an enemy
+
 
 # TODO
 

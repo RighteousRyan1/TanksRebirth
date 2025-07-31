@@ -7,6 +7,7 @@ namespace TanksRebirth.Internals.Common.Framework.Collections;
 public class SwapBackArray<T>(int capacity = 256) : IEnumerable<T> {
     T[] _items = new T[capacity];
     public int Count { get; private set; } = 0;
+    public int Length => Count; // alias
     public int Capacity => _items.Length;
 
     public Action<int, T>? OnSwapBack;

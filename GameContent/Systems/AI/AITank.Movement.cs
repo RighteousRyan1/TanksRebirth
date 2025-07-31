@@ -189,17 +189,20 @@ public partial class AITank {
         var gameUnits = GameUtils.Value_WiiTanksUnits(TNK_WIDTH + distance);
         var endpoint = Physics.Position + dir * gameUnits / UNITS_PER_METER;
 
-        CollisionsWorld.RayCast((fixture, point, normal, fraction) => {
-            callback?.Invoke(fixture, point, normal, fraction);
+        // exceptions thrown here, "Stack is empty", assuming race conditions? (and sometimes nullreference?)
+        try {
+            CollisionsWorld.RayCast((fixture, point, normal, fraction) => {
+                callback?.Invoke(fixture, point, normal, fraction);
 
-            if (fixture.Body.Tag is Block or GameScene.BoundsRenderer.BOUNDARY_TAG) {
-                isPathBlocked = true;
-            }
+                if (fixture.Body.Tag is Block or GameScene.BoundsRenderer.BOUNDARY_TAG) {
+                    isPathBlocked = true;
+                }
 
-            return fraction;
-            // divide by 2 because it's a radius, i think
-        }, Physics.Position, endpoint);
-
+                return fraction;
+                // divide by 2 because it's a radius, i think
+            }, Physics.Position, endpoint);
+        }
+        catch { return false; }
         return isPathBlocked;
     }
     /// <summary>Attempts to dequeue from <see cref="PivotQueue"/> and split it into <see cref="AIParameters.MaxQueuedMovements"/> smaller turns.</summary>

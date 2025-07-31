@@ -217,9 +217,13 @@ public class TankGame : Game {
 
         IntermissionSystem.InitializeAllStartupLogic();
 
+        TextureGlobals.Populate();
+
         VanillaAchievementPopupHandler = new(VanillaAchievements.Repository);
 
-        // AIManager.AITankThread.Start();
+        AIManager.AIThread1.Start();
+        AIManager.AIThread2.Start();
+        // AIManager.AIThread3.Start();
 
         base.Initialize();
     }
@@ -240,6 +244,9 @@ public class TankGame : Game {
         DiscordRichPresence.Terminate();
 
         CurrentSessionTimer.Stop();
+
+        AIManager.RunThreads = false;
+        AIManager.AIThread1.Join();
 
         // write end-life metrics
 

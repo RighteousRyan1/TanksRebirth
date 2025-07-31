@@ -116,9 +116,6 @@ public sealed class Mine : IAITankDanger {
         _mineMesh = Model.Meshes["polygon1"];
         _envMesh = Model.Meshes["polygon0"];
 
-        _mineTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/mine/mine_env");
-        _envTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/mine/mine_shadow");
-
         MineReactRadius = ExplosionRadius * ExplosionRadiusInUnits;
 
         int index = Array.IndexOf(AllMines, AllMines.First(mine => mine is null));
@@ -127,7 +124,10 @@ public sealed class Mine : IAITankDanger {
 
         AllMines[index] = this;
     }
-
+    public static void InitTextures() {
+        _mineTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/mine/mine_env");
+        _envTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/mine/mine_shadow");
+    }
     /// <summary>Detonates this <see cref="Mine"/>.</summary>
     public void Detonate() {
         Detonated = true;

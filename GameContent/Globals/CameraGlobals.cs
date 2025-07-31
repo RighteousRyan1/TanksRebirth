@@ -36,8 +36,8 @@ public static class CameraGlobals {
 
     // game camera stuff
 
-    private static bool _oView;
-    private static int _transitionTimer;
+    static bool _oView;
+    static float _transitionTimer;
     public static bool OverheadView {
         get => _oView;
         set {
@@ -73,7 +73,7 @@ public static class CameraGlobals {
     }
     public static void UpdateOverhead() {
         if (_transitionTimer > 0) {
-            _transitionTimer--;
+            _transitionTimer -= RuntimeData.DeltaTime;
             if (OverheadView) {
                 OrthoRotationVector.Y = MathUtils.SoftStep(OrthoRotationVector.Y, LVL_EDIT_ANGLE, 0.08f * RuntimeData.DeltaTime);
                 AddativeZoom = MathUtils.SoftStep(AddativeZoom, LVL_EDIT_ZOOM, 0.08f * RuntimeData.DeltaTime);
@@ -84,6 +84,7 @@ public static class CameraGlobals {
                 if (!LevelEditorUI.IsActive)
                     AddativeZoom = MathUtils.SoftStep(AddativeZoom, 1f, 0.08f * RuntimeData.DeltaTime);
                 CameraFocusOffset.Y = MathUtils.RoughStep(CameraFocusOffset.Y, 0f, 2f * RuntimeData.DeltaTime);
+                Console.WriteLine(RuntimeData.DeltaTime);
             }
         }
     }

@@ -30,7 +30,7 @@ namespace TanksRebirth.GameContent;
 #pragma warning disable CS8618
 public class GameHandler {
 
-    public const int MAX_AI_TANKS = 50;
+    public const int MAX_AI_TANKS = 60;
     public const int MAX_PLAYERS = 4;
     public const int MAX_PARTICLES = 15000;
 
@@ -42,6 +42,9 @@ public class GameHandler {
     public static ParticleManager Particles { get; } = new(MAX_PARTICLES, () => CameraGlobals.GameView, () => CameraGlobals.GameProjection);
     public static XpBar ExperienceBar;
 
+    public static byte ActiveTankCount;
+    public static byte ActiveAITankCount;
+    public static byte ActivePlayerTankCount;
     public static AITank[] AllAITanks = new AITank?[MAX_AI_TANKS];
     public static PlayerTank[] AllPlayerTanks = new PlayerTank?[MAX_PLAYERS];
     public static Tank[] AllTanks = new Tank?[MAX_PLAYERS + MAX_AI_TANKS];
@@ -73,6 +76,9 @@ public class GameHandler {
         RebirthMouse.Initialize();
     }
     internal static void UpdateAll(GameTime gameTime) {
+        ActiveTankCount = (byte)AllTanks.Count(t => t is not null);
+        ActiveAITankCount = (byte)AllAITanks.Count(t => t is not null);
+        ActivePlayerTankCount = (byte)AllPlayerTanks.Count(t => t is not null);
         /*void doTestWithFont() {
             var str = 
                 "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
@@ -135,10 +141,10 @@ public class GameHandler {
             foreach (var pTank in AllPlayerTanks)
                 pTank?.Update();
 
-            AIManager.ProcessAITanks();
+            AIManager.UpdateAITanks();
 
-            //TankGame.Instance.Graphics.SynchronizeWithVerticalRetrace = false;
-            //TankGame.Instance.IsFixedTimeStep = false;
+            TankGame.Instance.Graphics.SynchronizeWithVerticalRetrace = false;
+            TankGame.Instance.IsFixedTimeStep = false;
 
             foreach (var mine in Mine.AllMines)
                 mine?.Update();

@@ -162,7 +162,7 @@ public class PlacementSquare {
             if (LevelEditorUI.CurCategory == LevelEditorUI.Category.EnemyTanks) {
                 if (LevelEditorUI.IsActive && LevelEditorUI.SelectedTankTier < TankID.Brown)
                     return;
-                if (AIManager.CountAll() >= 50) {
+                if (AIManager.CountAll() >= GameHandler.MAX_AI_TANKS) {
                     LevelEditorUI.Alert("You are at enemy tank capacity!");
                     return;
                 }
