@@ -84,7 +84,7 @@ public static class CameraGlobals {
                 if (!LevelEditorUI.IsActive)
                     AddativeZoom = MathUtils.SoftStep(AddativeZoom, 1f, 0.08f * RuntimeData.DeltaTime);
                 CameraFocusOffset.Y = MathUtils.RoughStep(CameraFocusOffset.Y, 0f, 2f * RuntimeData.DeltaTime);
-                Console.WriteLine(RuntimeData.DeltaTime);
+                // Console.WriteLine(RuntimeData.DeltaTime);
             }
         }
     }

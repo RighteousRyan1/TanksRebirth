@@ -510,10 +510,10 @@ public static class DebugManager {
             $"\n\nCTRL + C: Copy Position and Rotation Vectors as C# Vector3 constructors", new Vector2(10, 80), Id.FreeCamTest);
 
         if (DebugLevel == Id.SceneMetrics) {
-            RuntimeData.RenderFpsGraph.Draw(spriteBatch, new Vector2(100, 200), 2);
-            RuntimeData.LogicFpsGraph.Draw(spriteBatch, new Vector2(100, 400), 2);
-            RuntimeData.RenderTimeGraph.Draw(spriteBatch, new Vector2(500, 200), 2);
-            RuntimeData.LogicTimeGraph.Draw(spriteBatch, new Vector2(500, 400), 2);
+            RuntimeData.RenderFpsGraph.Draw(spriteBatch, new Vector2(100, 400), 2);
+            RuntimeData.LogicFpsGraph.Draw(spriteBatch, new Vector2(100, 800), 2);
+            RuntimeData.RenderTimeGraph.Draw(spriteBatch, new Vector2(500, 400), 2);
+            RuntimeData.LogicTimeGraph.Draw(spriteBatch, new Vector2(500, 800), 2);
         }
 
         if (InputUtils.AreKeysJustPressed(Keys.LeftControl, Keys.C)) {

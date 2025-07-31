@@ -222,7 +222,7 @@ public class TankGame : Game {
         VanillaAchievementPopupHandler = new(VanillaAchievements.Repository);
 
         AIManager.AIThread1.Start();
-        AIManager.AIThread2.Start();
+        //AIManager.AIThread2.Start();
         // AIManager.AIThread3.Start();
 
         base.Initialize();

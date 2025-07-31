@@ -83,7 +83,7 @@ public class TankFootprint {
             track.Scale = Scale * defScale;
 
             if (ShouldTracksFade)
-                track.Alpha -= 0.001f * RuntimeData.DeltaTime;
+                track.Alpha -= 0.0015f * RuntimeData.DeltaTime;
 
             if (track.Alpha <= 0) {
                 Remove();

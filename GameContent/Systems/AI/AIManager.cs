@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Threading;
+using System.Threading.Tasks;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.Systems;
@@ -936,9 +937,9 @@ public static class AIManager {
         return cnt;
     }
 
-    public const int SECTION_1 = 30;
+    public const int SECTION_1 = 60;
     public const int SECTION_2 = 60;
-    // public const int SECTION_3 = 60;
+    public const int SECTION_3 = 60;
     //static Stopwatch s = new();
     //static List<double> msList = [];
 
@@ -947,11 +948,11 @@ public static class AIManager {
         IsBackground = true,
         Priority = ThreadPriority.AboveNormal
     };
-    public static Thread AIThread2 { get; } = new Thread(ProcessAISection2) {
+    /*public static Thread AIThread2 { get; } = new Thread(ProcessAISection2) {
         Name = "AIThread2",
         IsBackground = true,
         Priority = ThreadPriority.AboveNormal
-    };
+    };*/
     /*public static Thread AIThread3 { get; } = new Thread(ProcessAISection3) {
         Name = "AIThread3",
         IsBackground = true,
@@ -984,6 +985,18 @@ public static class AIManager {
         // if you're not connected to a server or you aren't *the* server
         if (!Client.IsHost() && Client.IsConnected()) return;
 
+        /*Parallel.For(0, GameHandler.ActiveAITankCount, new ParallelOptions() {
+            MaxDegreeOfParallelism = 1,
+        }, i => {
+            var tank = GameHandler.AllAITanks[i];
+            if (tank.IsDestroyed) return;
+
+            tank.DoAI();
+
+            // only does anything if you're in a multiplayer context.
+            Client.SyncAITank(tank);
+        });*/
+
         // ProcessAI();
         //s.Restart();
         //s.Stop();
@@ -1001,7 +1014,7 @@ public static class AIManager {
             ref var tanksSearchSpace = ref MemoryMarshal.GetReference(aiTanks);
 
             // start of the array to SECTION_1
-            for (var i = 0; i < SECTION_1; i++) {
+            for (var i = 0; i < GameHandler.AllAITanks.Length; i++) {
                 var tank = Unsafe.Add(ref tanksSearchSpace, i);
                 if (tank is null || tank.IsDestroyed) continue;
 
