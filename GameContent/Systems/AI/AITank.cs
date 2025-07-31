@@ -152,15 +152,11 @@ public partial class AITank : Tank {
         }
 
         var tierName = TankID.Collection.GetKey(tier)!.ToLower();
-        if (RuntimeData.IsMainThread) {
-            if (!UsesCustomModel) {
-                Model = ModelGlobals.TankEnemy.Asset;
-                var tnkAsset = Assets[$"tank_" + tierName];
-                _tankTexture = tnkAsset.Duplicate(TankGame.Instance.GraphicsDevice);
-            }
+        if (!UsesCustomModel) {
+            Model = ModelGlobals.TankEnemy.Asset;
+            var tnkAsset = Assets[$"tank_" + tierName];
+            _tankTexture = tnkAsset.Duplicate(TankGame.Instance.GraphicsDevice);
         }
-        else
-            _tankTexture = Assets[$"tank_" + tierName].Duplicate(TankGame.Instance.GraphicsDevice);
 
         // for debugging custom models
         // Model = GameResources.GetGameResource<Model>("Assets/models/rebirth_tanks/tank_necro");
@@ -266,7 +262,9 @@ public partial class AITank : Tank {
         if (nullifyMe) {
             GameHandler.AllAITanks[AITankId] = null!;
             GameHandler.AllTanks[WorldId] = null!;
-            _tankTexture?.Dispose();
+
+            // NO DISPOSING FOR NOW, it causes weird BUGS with modded tanks.... WACK!
+            // _tankTexture?.Dispose();
         }
 
         base.Remove(nullifyMe);
