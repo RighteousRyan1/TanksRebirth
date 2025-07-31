@@ -41,6 +41,7 @@ using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.GameContent.Systems.TankSystem;
+using System.Collections.Concurrent;
 
 namespace TanksRebirth;
 
@@ -102,6 +103,8 @@ public class TankGame : Game {
 
     public delegate void OnResolutionChangedDelegate(int newX, int newY);
     public static event OnResolutionChangedDelegate OnResolutionChanged;
+
+    public static ConcurrentQueue<Action> MainThreadTasks = [];
 
     public TankGame() : base() {
         // prepare IO
@@ -557,6 +560,10 @@ public class TankGame : Game {
                 }
             }*/
             HandleLogic(gameTime);
+
+            if (MainThreadTasks.TryDequeue(out var action)) {
+                action.Invoke();
+            }
         }
         catch (Exception e) when (!Debugger.IsAttached) {
             ReportError(e, false, false);

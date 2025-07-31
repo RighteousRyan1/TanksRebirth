@@ -7,6 +7,7 @@ using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Framework.Interfaces;
+using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Localization;
 
 namespace TanksRebirth.GameContent.ModSupport;
@@ -127,6 +128,5 @@ public class ModTank : ILoadable, IModContent {
         _texture = Mod.ImportAsset<Texture2D>(Texture);
         Tank.Assets["tank_" + name.ToLower()] = _texture;
     }
-
     internal virtual ModTank Clone() => (ModTank)MemberwiseClone();
 }

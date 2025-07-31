@@ -12,7 +12,7 @@ public abstract class TanksMod : ILoadable {
     public virtual string Name { get; internal set; } = "";
     /// <summary>The internal name of this mod. This is the name of the project the mod was built in.</summary>
     public string InternalName { get; internal set; } = "";
-    /// <summary>The local path to this mod. Generally used in tandem with <see cref="ImportAsset{T}(string)"/> or with other manners of loading content.</summary>
+    /// <summary>The local path to this mod.</summary>
     public string ModPath => Path.Combine(TankGame.SaveDirectory, "Mods", InternalName);
     /// <summary>The place where music for tanks is loaded from in your mod.</summary>
     public string MusicFolder { get; } = "Music";
@@ -39,16 +39,12 @@ public abstract class TanksMod : ILoadable {
     /// <returns>The imported asset.</returns>
     public T ImportAsset<T>(string path, bool raw = false) where T : class {
         var defaultContentPath = Path.Combine(TankGame.GameDirectory, TankGame.Instance.Content.RootDirectory);
-        var modContentPath = Path.Combine(TankGame.SaveDirectory, "Mods", InternalName);
-
-        TankGame.Instance.Content.RootDirectory = modContentPath;
+        TankGame.Instance.Content.RootDirectory = ModPath;
 
         T asset;
 
-        if (raw)
-            asset = GameResources.GetRawGameAsset<T>(path);
-        else
-            asset = GameResources.GetGameResource<T>(path);
+        if (raw) asset = GameResources.GetRawGameAsset<T>(path);
+        else asset = GameResources.GetGameResource<T>(path);
 
         TankGame.Instance.Content.RootDirectory = defaultContentPath;
 

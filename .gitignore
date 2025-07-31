@@ -1,4 +1,6 @@
 bin/
 obj/
+build/
 .vs
 .idea
+build_all.bat
