@@ -137,6 +137,9 @@ public class GameHandler {
 
             AIManager.ProcessAITanks();
 
+            //TankGame.Instance.Graphics.SynchronizeWithVerticalRetrace = false;
+            //TankGame.Instance.IsFixedTimeStep = false;
+
             foreach (var mine in Mine.AllMines)
                 mine?.Update();
 

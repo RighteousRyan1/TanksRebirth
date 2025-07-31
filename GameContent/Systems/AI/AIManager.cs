@@ -7,6 +7,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text.Json;
+using System.Threading;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.Systems;
@@ -937,7 +938,15 @@ public static class AIManager {
 
     //static Stopwatch s = new();
     //static List<double> msList = [];
+
+    /*public static Thread AITankThread { get; } = new Thread(ProcessAI) {
+        Name = "AITankThread",
+        IsBackground = true,
+        Priority = ThreadPriority.AboveNormal
+    };
+    public static bool RunThread = true;*/
     internal static void ProcessAITanks() {
+
         if (ModLoader.Status != LoadStatus.Complete)
             return;
 
@@ -962,21 +971,29 @@ public static class AIManager {
         // if you're not connected to a server or you aren't *the* server
         if (!Client.IsHost() && Client.IsConnected()) return;
 
+        ProcessAI();
         //s.Restart();
-
-        for (var i = 0; i < aiTanks.Length; i++) {
-            var tank = Unsafe.Add(ref tanksSearchSpace, i);
-            if (tank is null || tank.IsDestroyed) continue;
-
-            tank.DoAI();
-
-            // only does anything if you're in a multiplayer context.
-            Client.SyncAITank(tank);
-        }
         //s.Stop();
         //double ms = (s.ElapsedTicks * 1_000_000.0) / Stopwatch.Frequency / 1000;
         //Console.WriteLine($"AI time this frame: {ms:0.000}ms | Average: {(msList.Sum() / msList.Count):0.000}");
 
         //msList?.Add(ms);
+    }
+    public static void ProcessAI() {
+        //while (RunThread) {
+            Span<AITank> aiTanks = GameHandler.AllAITanks;
+            ref var tanksSearchSpace = ref MemoryMarshal.GetReference(aiTanks);
+            for (var i = 0; i < aiTanks.Length; i++) {
+                var tank = Unsafe.Add(ref tanksSearchSpace, i);
+                if (tank is null || tank.IsDestroyed) continue;
+
+                tank.DoAI();
+
+                // only does anything if you're in a multiplayer context.
+                Client.SyncAITank(tank);
+            }
+
+            //Thread.Sleep(1);
+        //}
     }
 }

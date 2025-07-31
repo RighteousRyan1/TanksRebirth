@@ -2,9 +2,11 @@
 using LiteNetLib.Utils;
 using Microsoft.Xna.Framework;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Threading;
 using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.RebirthUtils;
@@ -13,7 +15,6 @@ using TanksRebirth.GameContent.Systems.PingSystem;
 using TanksRebirth.GameContent.UI;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Internals.Common.Framework.Audio;
-using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.Net;
 
@@ -38,13 +39,15 @@ public class NetPlay {
 
     public static string? ServerName;
 
+    //public static ConcurrentQueue<Action> NetworkQueue = [];
+    //public static Thread NetworkingThread;
+
     public delegate void OnRecieveServerPacketDelegate(int packet, NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod);
     /// <summary>Called when a packet is recieved server-side. This is called before all packets are handled.</summary>
     public static event OnRecieveServerPacketDelegate? OnReceiveServerPacket;
     public delegate void OnRecieveClientPacketDelegate(int packet, NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod);
     /// <summary>Called when a packet is recieved client-side. This is called before all packets are handled.</summary>
     public static event OnRecieveClientPacketDelegate? OnReceiveClientPacket;
-
     public static void MapClientNetworking() {
         Client.ClientListener.NetworkReceiveEvent += OnPacketRecieve_Client;
         Client.ClientListener.PeerConnectedEvent += OnClientJoin;

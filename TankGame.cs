@@ -42,6 +42,7 @@ using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.GameContent.Systems.TankSystem;
 using System.Collections.Concurrent;
+using TanksRebirth.GameContent.Systems.AI;
 
 namespace TanksRebirth;
 
@@ -217,6 +218,8 @@ public class TankGame : Game {
         IntermissionSystem.InitializeAllStartupLogic();
 
         VanillaAchievementPopupHandler = new(VanillaAchievements.Repository);
+
+        // AIManager.AITankThread.Start();
 
         base.Initialize();
     }
