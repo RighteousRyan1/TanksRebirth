@@ -48,9 +48,6 @@ public partial class AITank {
         CurrentRandomMove = Client.ClientRandom.Next(Parameters.RandomTimerMinMove, Parameters.RandomTimerMaxMove);
         Behaviors[0].Value = 0;
 
-        // only works the subqueue if there is a subqueue
-        TryWorkSubQueue();
-
         if (PivotQueue.Count == 0 && SubPivotQueue.Count == 0 && !IsInDanger) {
             IsSurviving = false;
 
@@ -76,6 +73,9 @@ public partial class AITank {
 
         // only generates a subqueue if there are no large pivot queues and there are not already a subqueue
         TryGenerateSubQueue();
+
+        // only works the subqueue if there is a subqueue
+        TryWorkSubQueue();
 
         /*if (Properties.MaxSpeed > 0) {
             Console.WriteLine("Pivot Queue:    " + PivotQueue.Count);

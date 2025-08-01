@@ -215,7 +215,7 @@ public static class IntermissionHandler {
                         var tank = GameHandler.AllPlayerTanks[i];
                         if (tank is null) continue;
                         var lives = PlayerTank.Lives[i];
-                        var livesCountLocal = tank.IsDestroyed ? lives - 1 : lives;
+                        var livesCountLocal = tank.IsDestroyed ? (i != NetPlay.GetMyClientId() ? lives - 1 : lives) : lives;
 
                         // if any player has any lives remaining, the campaign isn't over
                         if (livesCountLocal > 0)
