@@ -108,6 +108,7 @@ public static partial class MainMenuUI
     }
     public static void Leave() {
         // call partially implemented methods
+        MenuState = UIState.PlayList;
         LeaveUI();
         LeaveGP();
     }

@@ -108,6 +108,7 @@ public static class ParticleGameplay
                     var randSize = Server.ServerRandom.NextFloat(5, 10);
                     c.Scale.X = randSize;
                     c.Scale.Z = randSize;
+                    c.HasAdditiveBlending = false;
                     c.UniqueBehavior = (b) => {
                         c.Pitch += 0.005f * RuntimeData.DeltaTime;
                         if (c.Scale.Y < randSize && c.LifeTime < 600)

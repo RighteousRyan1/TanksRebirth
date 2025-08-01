@@ -1007,8 +1007,12 @@ public static class AIManager {
     }
     public static void ProcessAISection1() {
         while (RunThreads) {
+            int sleepTime = TankGame.LastGameTime is null ? 1 : Math.Max(1, (int)TankGame.LastGameTime.ElapsedGameTime.TotalMilliseconds);
+            Thread.Sleep(sleepTime);
+
             if (GameHandler.ActiveAITankCount == 0) continue;
             if (!TankGame.Instance.IsActive && !Client.IsConnected()) continue;
+            if (!Client.IsHost() && Client.IsConnected()) continue;
 
             Span<AITank> aiTanks = GameHandler.AllAITanks;
             ref var tanksSearchSpace = ref MemoryMarshal.GetReference(aiTanks);
@@ -1023,8 +1027,6 @@ public static class AIManager {
                 // only does anything if you're in a multiplayer context.
                 Client.SyncAITank(tank);
             }
-            int sleepTime = TankGame.LastGameTime is null ? 1 : Math.Max(1, (int)TankGame.LastGameTime.ElapsedGameTime.TotalMilliseconds);
-            Thread.Sleep(sleepTime);
         }
     }
     public static void ProcessAISection2() {

@@ -12,11 +12,12 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 
 # Changes Important for Modders
 
-
+- Don't create, modify, or generate textures in AI-related tank logic code now! It will throw an exception as it won't be the main thread
 
 # Fixes
 
-
+- Fixed nametags showing for non-host clients after the game has started if the host started the game with the client being in the multiplayer menu
+- Fixed smokes generated from smoke grenades being the wrong color
 
 # TODO
 

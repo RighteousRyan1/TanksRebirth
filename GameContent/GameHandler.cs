@@ -143,9 +143,6 @@ public class GameHandler {
 
             AIManager.UpdateAITanks();
 
-            TankGame.Instance.Graphics.SynchronizeWithVerticalRetrace = false;
-            TankGame.Instance.IsFixedTimeStep = false;
-
             foreach (var mine in Mine.AllMines)
                 mine?.Update();
 
