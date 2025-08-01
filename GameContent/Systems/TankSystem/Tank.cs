@@ -260,7 +260,7 @@ public abstract class Tank {
         //Scaling = new Vector3(1, 1, 3);
         //Body = CollisionsWorld.CreateEllipse(TNK_WIDTH * 0.4f / UNITS_PER_METER * Scaling.X, TNK_WIDTH * 0.4f / UNITS_PER_METER * Scaling.Z, 8, 1f, 
         //    Position / UNITS_PER_METER, bodyType: BodyType.Dynamic);
-        Physics = CollisionsWorld.CreateCircle(TNK_WIDTH * 0.4f / UNITS_PER_METER, 1f, Position / UNITS_PER_METER,
+        Physics = CollisionsWorld.CreateCircle(TNK_WIDTH * 0.4f / UNITS_PER_METER * Scaling.X, 1f, Position / UNITS_PER_METER,
             BodyType.Dynamic);
         Physics.Tag = this;
     }
@@ -468,6 +468,9 @@ public abstract class Tank {
 
         Worldbox = new(Position3D - new Vector3(7, 0, 7), Position3D + new Vector3(10, 15, 10));
 
+        // * 2 since it's in both directions
+        IsTurning = !(ChassisRotation > DesiredChassisRotation - Properties.MaximalTurn * 2 && ChassisRotation < DesiredChassisRotation + Properties.MaximalTurn * 2);
+
         if (IsTurning) {
             if (DesiredChassisRotation - ChassisRotation >= MathHelper.PiOver2) {
                 ChassisRotation += MathHelper.Pi;
@@ -477,10 +480,7 @@ public abstract class Tank {
                 ChassisRotation -= MathHelper.Pi;
                 Flip = !Flip;
             }
-        }
-
-        // * 2 since it's in both directions
-        IsTurning = !(ChassisRotation > DesiredChassisRotation - Properties.MaximalTurn * 2 && ChassisRotation < DesiredChassisRotation + Properties.MaximalTurn * 2);
+        };
 
         // ensure no movements happen when not desired
         if (!MainMenuUI.IsActive && (!CampaignGlobals.InMission || IntermissionSystem.IsAwaitingNewMission))

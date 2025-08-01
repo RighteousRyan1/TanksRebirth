@@ -13,6 +13,7 @@ using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.ModSupport;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.UI;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals.Common;
 using TanksRebirth.Net;
@@ -1011,7 +1012,7 @@ public static class AIManager {
             Thread.Sleep(sleepTime);
 
             if (GameHandler.ActiveAITankCount == 0) continue;
-            if (!TankGame.Instance.IsActive && !Client.IsConnected()) continue;
+            if ((!TankGame.Instance.IsActive || GameUI.Paused) && !Client.IsConnected()) continue;
             if (!Client.IsHost() && Client.IsConnected()) continue;
 
             Span<AITank> aiTanks = GameHandler.AllAITanks;

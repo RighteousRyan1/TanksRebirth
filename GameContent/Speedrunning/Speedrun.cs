@@ -60,7 +60,7 @@ public class Speedrun
     public string CampaignName { get; set; }
 
     /// <summary>Stores the name of the mission completed and the time it took to complete it both in TOTAL and BY-MISSION.</summary>
-    public Dictionary<string, (TimeSpan, TimeSpan)> MissionTimes { get; set; } // total, mission only
+    public Dictionary<string, (TimeSpan TotalTime, TimeSpan MissionTime)> MissionTimes { get; set; } // total, mission only
     internal Speedrun(string campaignName)
     {
         CampaignName = campaignName;
@@ -90,12 +90,14 @@ public class Speedrun
 
             var len = CampaignGlobals.LoadedCampaign.CurrentMissionId + 2 > CampaignGlobals.LoadedCampaign.CachedMissions.Length ? CampaignGlobals.LoadedCampaign.CachedMissions.Length - 1 : CampaignGlobals.LoadedCampaign.CurrentMissionId + 2;
 
-            spriteBatch.DrawString(FontGlobals.RebirthFontLarge, $"Time: {CurrentSpeedrun.Timer.Elapsed}", new Vector2(10, 5), Color.White, new Vector2(0.15f), 0f, Vector2.Zero);
+            var drawPos = new Vector2(5, WindowUtils.WindowHeight / 2);
+            spriteBatch.DrawString(FontGlobals.RebirthFontLarge, $"Time: {CurrentSpeedrun.Timer.Elapsed.StopwatchFormat()}", drawPos, Color.White, new Vector2(0.15f), 0f, Vector2.Zero);
             for (int i = num; i <= len; i++) { // current.times.count originally
 
                 var time = CurrentSpeedrun.MissionTimes.ElementAt(i);
                 // display mission name and time taken
-                spriteBatch.DrawString(FontGlobals.RebirthFontLarge, $"{time.Key}: {time.Value.Item2}", new Vector2(10, 20 + ((i - num) * 15)), Color.White, new Vector2(0.15f), 0f, Vector2.Zero);
+                spriteBatch.DrawString(FontGlobals.RebirthFontLarge, $"{time.Key}: {time.Value.MissionTime.StopwatchFormat()}", 
+                    new Vector2(drawPos.X, drawPos.Y + 10 + ((i - num) * 15)), Color.White, new Vector2(0.15f), 0f, Vector2.Zero);
             }
         }
     }

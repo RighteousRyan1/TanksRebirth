@@ -51,16 +51,17 @@ public static class TimeUtils
     {
         string hours;
         if (span.Hours >= 10 && span.Hours < 100)
-            hours = $"0{span.Hours}";
-        else if (span.Hours < 10)
-            hours = $"00{span.Hours}";
-        else
-            hours = $"{span.Hours}";
+            hours = $"0{span.Hours}:";
+        else if (span.Hours < 10 && span.Hours > 0)
+            hours = $"00{span.Hours}:";
+        else 
+            hours = string.Empty;
+        
         string mins = span.Minutes < 10 ? $"0{span.Minutes}" : $"{span.Minutes}";
         string secs = span.Seconds < 10 ? $"0{span.Seconds}" : $"{span.Seconds}";
         int millisecs = span.Milliseconds;
 
-        return $"{hours}:{mins}:{secs}:{millisecs}";
+        return $"{hours}{mins}:{secs}:{millisecs}";
     }
     public static float InterpolateMinuteToHour(TimeSpan timeSpan) {
         return (float)timeSpan.TotalMinutes % 60 / 60;

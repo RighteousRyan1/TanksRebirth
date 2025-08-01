@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using TanksRebirth.GameContent.Systems.AI;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.Internals.Common.Utilities;
 
@@ -20,6 +21,7 @@ public enum Anchor
 }
 public static class GameUtils
 {
+    public static float NaturalPitchShift => Client.ClientRandom.NextFloat(-0.08f, 0.08f);
     public static IAITankDanger? Closest(this IList<IAITankDanger> positions, Vector2 source) {
         if (positions == null || !positions.Any())
             return null;

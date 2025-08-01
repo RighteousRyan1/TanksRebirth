@@ -241,7 +241,7 @@ public class Shell : IAITankDanger {
             }
             if (owner is not null) {
                 ShootSound!.Instance.Pitch = MathHelper.Clamp(owner.Properties.ShootPitch, -1, 1);
-                SoundPlayer.PlaySoundInstance(ShootSound, SoundContext.Effect, volume: 0.6f);
+                SoundPlayer.PlaySoundInstance(ShootSound, SoundContext.Effect, volume: 0.6f, pitchOverride: GameUtils.NaturalPitchShift);
                 //if (CameraGlobals.IsUsingFirstPresonCamera)
                 //    SoundUtils.CreateSpatialSound(ShootSound, owner.TurretPosition3D, CameraGlobals.RebirthFreecam.Position);
             }
@@ -542,12 +542,12 @@ public class Shell : IAITankDanger {
             if (Owner.Properties.ShellType == ShellID.TrailedRocket) {
                 sound.Instance.Pitch = Client.ClientRandom.NextFloat(0.15f, 0.25f);
                 var rocketRSound = SoundPlayer.PlaySoundInstance("Assets/sounds/ricochet_zip.ogg", SoundContext.Effect, 0.05f);
-                rocketRSound.Instance.Pitch = -0.65f;
+                rocketRSound.Instance.Pitch = -0.65f + GameUtils.NaturalPitchShift;
                 //if (fp)
                 //    SoundUtils.CreateSpatialSound(sound, Position3D, CameraGlobals.RebirthFreecam.Position);
             }
             else {
-                sound.Instance.Pitch = Client.ClientRandom.NextFloat(-0.05f, 0.05f);
+                sound.Instance.Pitch = GameUtils.NaturalPitchShift;
             }
         }
 

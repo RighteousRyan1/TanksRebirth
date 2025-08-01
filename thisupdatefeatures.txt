@@ -5,6 +5,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 # Additions
 
 - Made the game take advantage of multiple threads! If your CPU has multiple threads (hopefully it does), the game should now run better under higher workloads, and just overall better.
+- Added slight pitch shifting in many game-related sound effects
 
 # Changes
 

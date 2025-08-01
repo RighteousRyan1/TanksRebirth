@@ -601,7 +601,7 @@ public class PlayerTank : Tank {
         }
 
         // a bit hardcoded but whatever
-        bool needClarification = (!MainMenuUI.IsActive && IntermissionHandler.TankFunctionWait > 0) || MainMenuUI.MenuState == MainMenuUI.UIState.Mulitplayer;
+        bool needClarification = (!MainMenuUI.IsActive && !LevelEditorUI.IsActive && IntermissionHandler.TankFunctionWait > 0) || MainMenuUI.MenuState == MainMenuUI.UIState.Mulitplayer;
 
         if (needClarification) {
             var playerColor = PlayerID.PlayerTankColors[PlayerType];

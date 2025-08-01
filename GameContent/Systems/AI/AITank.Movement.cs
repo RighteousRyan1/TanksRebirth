@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using tainicom.Aether.Physics2D.Dynamics;
@@ -47,6 +48,9 @@ public partial class AITank {
         CurrentRandomMove = Client.ClientRandom.Next(Parameters.RandomTimerMinMove, Parameters.RandomTimerMaxMove);
         Behaviors[0].Value = 0;
 
+        // only works the subqueue if there is a subqueue
+        TryWorkSubQueue();
+
         if (PivotQueue.Count == 0 && SubPivotQueue.Count == 0 && !IsInDanger) {
             IsSurviving = false;
 
@@ -70,15 +74,13 @@ public partial class AITank {
             Avoid(averageDangerPosition);
         }
 
+        // only generates a subqueue if there are no large pivot queues and there are not already a subqueue
+        TryGenerateSubQueue();
+
         /*if (Properties.MaxSpeed > 0) {
             Console.WriteLine("Pivot Queue:    " + PivotQueue.Count);
             Console.WriteLine("Pivot Subqueue: " + SubPivotQueue.Count);
         }*/
-        // only generates a subqueue if there are no large pivot queues and there are not already a subqueue
-        TryGenerateSubQueue();
-
-        // only works the subqueue if there is a subqueue
-        TryWorkSubQueue();
     }
     /// <summary>Makes this <see cref="AITank"/> navigate around obstacles.</summary>
     public void DoBlockNav() {
