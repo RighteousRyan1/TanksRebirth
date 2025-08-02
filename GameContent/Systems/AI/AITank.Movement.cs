@@ -94,8 +94,13 @@ public partial class AITank {
         //var tankDirection = Vector2.UnitY.Rotate(TargetTankRotation);
 
         var checkDist = Parameters.ObstacleAwarenessMovement / 2;
+        // var rayNormal = Vector2.Zero;
         // strictly 
-        IsTooCloseToObstacle = RaycastAheadOfTank(checkDist * Speed);
+        IsTooCloseToObstacle = RaycastAheadOfTank(checkDist * Speed/*, callback: 
+            (fixture, point, normal, fraction) => {
+                rayNormal = normal;
+                return fraction;
+            }*/);
 
         // don't bother doing anything else since it's not blocked
         if (!IsTooCloseToObstacle) {
@@ -103,7 +108,7 @@ public partial class AITank {
             return;
         }
 
-        float angleDiff = MathHelper.PiOver4 / 2; // normally pi/2
+        float angleDiff = MathHelper.PiOver4 / 2; // normally MathHelper.PiOver2
 
         float fracL = -1f;
         float fracR = -1f;
@@ -111,6 +116,7 @@ public partial class AITank {
         bool checkLeft = RaycastAheadOfTank(checkDist * 100, -angleDiff,
             (fixture, point, normal, fraction) => {
                 fracL = fraction;
+
                 return fraction;
             });
 
@@ -120,7 +126,12 @@ public partial class AITank {
                 return fraction;
             });
 
-        var dir = fracL > fracR ? CollisionDirection.Left : CollisionDirection.Right;
+        /*var dir = CollisionDirection.Down;
+        if (!checkLeft && checkRight)
+            dir = CollisionDirection.Right;
+        else if (checkLeft && !checkRight)
+            dir = CollisionDirection.Left;*/
+            var dir = fracL > fracR ? CollisionDirection.Left : CollisionDirection.Right;
 
         // if the rays are highly similar in distance, reverse, since you're most likely heading into a wall directly
         if (fracL.IsWithinRange(fracR, 0.00125f)) {
@@ -137,6 +148,7 @@ public partial class AITank {
         else
             vecRot = MathHelper.Pi + Client.ClientRandom.NextFloat(-0.5f, 0.5f);
 
+        // old = Vector2.UnitY.Rotate(-rayNormal.ToRotation() - MathHelper.PiOver2);
         var movementDirection = Vector2.UnitY.Rotate(ChassisRotation + vecRot);
 
         // determines if there is a NavTurn in the queue
@@ -179,6 +191,10 @@ public partial class AITank {
         Console.WriteLine();
         Console.WriteLine("Random movement: " + MathHelper.ToDegrees(direction.ToRotation()));
         Console.WriteLine();*/
+
+        //var eventualRotation = DesiredChassisRotation + randomTurn / 2;
+
+        //PivotQueue.Enqueue((Vector2.UnitY.Rotate(eventualRotation), PivotType.RandomTurn));
 
         DesiredChassisRotation += randomTurn / 2;
     }
