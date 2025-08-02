@@ -60,7 +60,11 @@ public partial class AITank {
 
         // the tank avoids the average position of all dangers
         if (NearbyDangers.Count > 0) {
-            var averageDangerPosition = NearbyDangers.Aggregate(Vector2.Zero, (sum, dng) => sum + dng.Position) / NearbyDangers.Count;
+            var sum = Vector2.Zero;
+            for (int i = 0; i < NearbyDangers.Count; i++)
+                sum += NearbyDangers[i].Position;
+
+            var averageDangerPosition = sum / NearbyDangers.Count;
 
             SubPivotQueue.Clear();
             PivotQueue.Clear();
@@ -125,10 +129,8 @@ public partial class AITank {
         }
 
         float vecRot;
-        //if (goBackwards)
-        //vecRot = MathHelper.Pi;
-        //else
-        var redirectAngle = MathHelper.PiOver2; // normally /2
+
+        var redirectAngle = 1.35f; // MathHelper.PiOver2; // normally /2
 
         if (dir != CollisionDirection.Down)
             vecRot = dir == CollisionDirection.Left ? -redirectAngle : redirectAngle;
@@ -137,11 +139,16 @@ public partial class AITank {
 
         var movementDirection = Vector2.UnitY.Rotate(ChassisRotation + vecRot);
 
-        // SubPivotQueue.Clear();
+        // determines if there is a NavTurn in the queue
+        bool hasNavTurn = false;
+        foreach (var p in PivotQueue) {
+            if (p.Type != PivotType.NavTurn) continue;
+            hasNavTurn = true;
+            break;
+        }
 
-        if (!PivotQueue.Any(x => x.Type == PivotType.NavTurn)) {
+        if (!hasNavTurn) {
             PivotQueue.Enqueue((movementDirection, PivotType.NavTurn));
-            // Console.WriteLine("Pivot 0 overwritten.");
         }
     }
     /// <summary>Makes this <see cref="AITank"/> perform a random turn.</summary>
@@ -192,7 +199,7 @@ public partial class AITank {
         var endpoint = Physics.Position + dir * gameUnits / UNITS_PER_METER;
 
         // exceptions thrown here, "Stack is empty", assuming race conditions? (and sometimes nullreference?)
-        try {
+        lock (_rayCastLock) {
             CollisionsWorld.RayCast((fixture, point, normal, fraction) => {
                 callback?.Invoke(fixture, point, normal, fraction);
 
@@ -204,7 +211,6 @@ public partial class AITank {
                 // divide by 2 because it's a radius, i think
             }, Physics.Position, endpoint);
         }
-        catch { return false; }
         return isPathBlocked;
     }
     /// <summary>Attempts to dequeue from <see cref="PivotQueue"/> and split it into <see cref="AIParameters.MaxQueuedMovements"/> smaller turns.</summary>

@@ -708,6 +708,7 @@ public abstract class Tank {
     public virtual void LayFootprint(bool alt) {
         if (!Properties.CanLayTread)
             return;
+        // return;
         // will be TankRotation, Position, Scaling.FlattenZ()
         var fp = TankFootprint.Place(this, -ChassisRotation, alt);
         fp.Position += new Vector3(0, 0.15f, 0);

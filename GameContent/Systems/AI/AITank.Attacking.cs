@@ -171,8 +171,15 @@ public partial class AITank {
         SeesTarget = false;
 
         bool tooCloseToExplosiveShell = false;
-        
-        var friendliesNearby = TanksNearShootAwareness.Any(x => IsOnSameTeamAs(x.Team));
+
+        bool friendliesNearby = false;
+        for (int i = 0; i < TanksNearShootAwareness.Count; i++) {
+            var tank = TanksNearShootAwareness[i];
+            if (IsOnSameTeamAs(tank.Team)) {
+                friendliesNearby = true;
+                break; // early exit like LINQ does
+            }
+        }
         // stop doing expensive checks if the tank can't even shoot anyway
         if (friendliesNearby) return;
 
@@ -270,10 +277,36 @@ public partial class AITank {
                     //Shoot(false);
         }
     }
-    /// <summary>Gets the cloesest <see cref="Tank"/> that is hostile and is targetable.</summary>
-    public Tank? GetClosestTarget() {
+    /// <summary>Gets the a <see cref="Tank"/> that is hostile and is targetable (with respect to <see cref="Parameters"/>).</summary>
+    public Tank? GetAppropriateTarget() {
         Tank? target = null;
         var targetPosition = new Vector2(float.MaxValue);
+
+        var useSmartTargeting = Parameters.SmartTargeting;
+
+        if (useSmartTargeting) {
+            var smallestActionTime = float.MaxValue;
+            Tank? smallestActionTimeTank = TargetTank;
+
+            foreach (var tank in GameHandler.AllTanks) {
+                if (tank is null || tank.IsDestroyed) continue;
+                //if (tank is not AITank ai) continue;
+                if (tank == this) continue;
+                if (tank.IsOnSameTeamAs(Team)) continue; // no friendly fire
+                //if (ai.TargetTank != this) continue;
+
+                if (useSmartTargeting) {
+                    if (tank.TimeSinceLastAction < smallestActionTime) {
+                        smallestActionTime = tank.TimeSinceLastAction;
+                        smallestActionTimeTank = tank;
+                    }
+                    continue;
+                }
+            }
+            return smallestActionTimeTank;
+        }
+
+        // do standard
         foreach (var tank in GameHandler.AllTanks) {
             if (tank is null || tank.IsDestroyed) continue;
             if (tank == this) continue; // don't target self
@@ -290,17 +323,19 @@ public partial class AITank {
         }
         return target;
     }
-    /// <summary>A method that simply changes an AI </summary>
-    public Tank? TryOverrideTarget() {
+    /// <summary>A method that simply changes an AI tank's target to a pinged tank.</summary>
+    public Tank? TryOverrideTarget(out bool overridden) {
+        overridden = false;
         Tank? target = TargetTank;
         if (GameHandler.AllPlayerTanks.Any(x => x is not null && x.IsOnSameTeamAs(Team))) {
             foreach (var ping in IngamePing.AllIngamePings) {
                 if (ping is null) break;
                 if (ping.TrackedTank is null) break;
-                if (ping.TrackedTank == this) continue; // no self-targeting
-                if (ping.TrackedTank.IsDestroyed) continue; // no dead tanks
+                if (ping.TrackedTank == this) break; // no self-targeting
                 if (ping.TrackedTank.Team == Team) break; // no friendly fire
                 target = ping.TrackedTank;
+                overridden = true;
+                break;
             }
         }
         return target;

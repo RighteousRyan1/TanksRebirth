@@ -379,10 +379,11 @@ public partial class AITank : Tank {
         TanksNearMineAwareness.Clear();
         BlocksNear.Clear();
 
-        TargetTank = GetClosestTarget();
-
         // get ai to target a player's ping
-        TargetTank = TryOverrideTarget();
+        TargetTank = TryOverrideTarget(out bool wasOverwritten);
+
+        if (!wasOverwritten)
+            TargetTank = GetAppropriateTarget();
 
         // measure the biggest WarinessRadius, player or ai, then check the larger, then do manual calculations.
         var radii = new float[] { Parameters.AwarenessFriendlyMine, Parameters.AwarenessHostileMine, Parameters.AwarenessFriendlyShell, Parameters.AwarenessHostileShell };
@@ -705,6 +706,8 @@ public partial class AITank : Tank {
         Properties.Armor?.Render();
     }
     public static int PickRandomTier() => Server.ServerRandom.Next(0, TankID.Collection.Count);
+
+    static readonly object _rayCastLock = new();
     /// <summary>Performs a raycast in all 4 cardinal directions of the tank (rotation-agnostic).</summary>
     /// <param name="distance">The length of the raycast.</param>
     /// <param name="callback">Code-callback for performing special actions based on the raycast.</param>
@@ -729,27 +732,29 @@ public partial class AITank : Tank {
             var gameUnits = GameUtils.Value_WiiTanksUnits(TNK_WIDTH + distance);
             var endpoint = Physics.Position + dir * gameUnits / UNITS_PER_METER;
 
-            // check in the 4 cardinal directions if mine-laying is ok.
-            CollisionsWorld.RayCast((fixture, point, normal, fraction) => {
-                callback?.Invoke(fixture, point, normal, fraction);
+            lock (_rayCastLock) {
+                // check in the 4 cardinal directions if mine-laying is ok.
+                CollisionsWorld.RayCast((fixture, point, normal, fraction) => {
+                    callback?.Invoke(fixture, point, normal, fraction);
 
-                if (fixture.Body.Tag is Block or GameScene.BoundsRenderer.BOUNDARY_TAG) {
-                     // Console.WriteLine("hit along ray: " + fraction + "(" + collDir + ")");
-                     goodDirs[i] = (CollisionDirection.None, Vector2.Zero);
-                }
-                else {
-                    //Console.WriteLine($"ignoring... not implemented. ({fixture.Body.Tag})");
-                    return -1f;
-                }
-                //Console.WriteLine("Hit fixture: " + fixture.Body.Tag);
-                //Console.WriteLine("At point: " + point);
-                //Console.WriteLine("With normal: " + normal);
-                //Console.WriteLine("Fraction along ray: " + fraction);
-                // Console.WriteLine();
+                    if (fixture.Body.Tag is Block or GameScene.BoundsRenderer.BOUNDARY_TAG) {
+                        // Console.WriteLine("hit along ray: " + fraction + "(" + collDir + ")");
+                        goodDirs[i] = (CollisionDirection.None, Vector2.Zero);
+                    }
+                    else {
+                        //Console.WriteLine($"ignoring... not implemented. ({fixture.Body.Tag})");
+                        return -1f;
+                    }
+                    //Console.WriteLine("Hit fixture: " + fixture.Body.Tag);
+                    //Console.WriteLine("At point: " + point);
+                    //Console.WriteLine("With normal: " + normal);
+                    //Console.WriteLine("Fraction along ray: " + fraction);
+                    // Console.WriteLine();
 
-                return fraction;
-                // divide by 2 because it's a radius, i think
-            }, Physics.Position, endpoint);
+                    return fraction;
+                    // divide by 2 because it's a radius, i think
+                }, Physics.Position, endpoint);
+            }
         }
 
         return goodDirs;

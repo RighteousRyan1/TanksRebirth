@@ -88,6 +88,8 @@ public record AIParameters {
 
     /// <summary>Whether or not this <see cref="AITank"/> will shoot mines that are near destructible obstacles.</summary>
     public bool ShootsMinesSmartly { get; set; }
+    /// <summary>If true, this tank will target the tank that is actively firing at it rather than the closest, if applicable.</summary>
+    public bool SmartTargeting { get; set; }
     /// <summary>The 'base' experience value the player gains killing this tank.</summary>
     public float BaseXP { get; set; }
 }
