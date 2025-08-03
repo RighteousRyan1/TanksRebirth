@@ -22,12 +22,10 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 
 # TODO
 
-- [ ] Multithreaded tank AI
 - [ ] Campaign fail/success display
 - [ ] Tank tread hyper-optimization (and visual re-haul)
 - [ ] Wiimote support
 - [ ] Real-time multiplayer stats
-- [ ] Fix campaigns not ending immediately on all clients
 
 PLEASE, if you find anything wrong, go to my [discord](https://discord.gg/KhfzvbrrKx) server and report bugs in the #bugs 
 channel, or, if you want to suggest something, suggest them in the #suggestions channel.
