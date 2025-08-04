@@ -161,4 +161,24 @@ public static class InputUtils
     public static int OldDeltaScrollWheel => OldMouseSnapshot.ScrollWheelValue / 120;
 
     public static int GetScrollWheelChange() => DeltaScrollWheel == OldDeltaScrollWheel ? 0 : DeltaScrollWheel - OldDeltaScrollWheel;
+
+    public static float ApplyDeadzone(float value, float minDeadzone, float maxDeadzone, float minVal, float maxVal) {
+        float mid = (minVal + maxVal) * 0.5f;
+        // float range = (maxVal - minVal) * 0.5f;
+
+        float offset = value - mid;
+        float magnitude = MathF.Abs(offset);
+        float sign = MathF.Sign(offset);
+
+        if (magnitude < minDeadzone)
+            return 0f;
+
+        if (magnitude > maxDeadzone)
+            return sign;
+
+
+        // Rescale between MinDeadzone and MaxDeadzone to [0, 1]
+        float normalized = (magnitude - minDeadzone) / (maxDeadzone - minDeadzone);
+        return MathHelper.Clamp(normalized * sign, minVal, maxVal);
+    }
 }

@@ -241,6 +241,8 @@ public class TankGame : Game {
         SaveFile.ExpLevel = GameHandler.ExperienceBar.Level + GameHandler.ExperienceBar.Value;
         SaveFile.Serialize();
 
+        WiimoteSystem.TryDisconnect();
+
         DiscordRichPresence.Terminate();
 
         CurrentSessionTimer.Stop();
@@ -569,6 +571,15 @@ public class TankGame : Game {
                     File.WriteAllText("ai_params/tank_" + TankID.Collection.GetKey(i) + ".json", json);
                 }
             }*/
+
+            if (InputUtils.AreKeysJustPressed(Keys.T, Keys.I)) {
+                WiimoteSystem.TryConnect();
+            }
+
+            if (WiimoteSystem.IsConnected) {
+                // Mouse.SetPosition(Mouse.GetState().X + (int)WiimoteSystem.Motion.X, Mouse.GetState().Y + (int)WiimoteSystem.Motion.Z);
+            }
+
             HandleLogic(gameTime);
 
             if (MainThreadTasks.TryDequeue(out var action)) {
