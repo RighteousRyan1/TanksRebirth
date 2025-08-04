@@ -281,6 +281,7 @@ public class GameHandler {
         }
 
         IntermissionHandler.RenderCountdownGraphics();
+        WiimoteSystem.DrawWiimoteBatteryLife(TankGame.SpriteRenderer, FontGlobals.RebirthFont);
 
         OnPostRender?.Invoke();
     }

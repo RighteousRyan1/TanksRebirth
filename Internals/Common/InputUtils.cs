@@ -2,22 +2,77 @@
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Linq;
+using System.Runtime.InteropServices;
 using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.Internals.Common;
 
-public static class InputUtils
-{
+public static class InputUtils {
+    [StructLayout(LayoutKind.Sequential)]
+    struct RAW_INPUT {
+        public uint type;
+        public INPUT_UNION u;
+    }
+    [StructLayout(LayoutKind.Explicit)]
+    struct INPUT_UNION {
+        [FieldOffset(0)]
+        public KB_INPUT ki;
+    }
+    [StructLayout(LayoutKind.Sequential)]
+    struct KB_INPUT {
+        public ushort w_vk;
+        public ushort w_scan;
+        public uint dw_flags;
+        public uint time;
+        public IntPtr dw_info;
+    }
+
+    [DllImport("user32.dll")]
+    static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint dwData, IntPtr dwExtraInfo);
+
+    const uint MOUSE_RIGHTDOWN = 0x0008;
+    const uint MOUSE_RIGHTUP = 0x0010;
+    const uint MOUSE_LEFTDOWN = 0x0002;
+    const uint MOUSE_LEFTUP = 0x0004;
+
+    [DllImport("user32.dll", SetLastError = true)]
+    static extern uint SendInput(uint nInputs, RAW_INPUT[] pInputs, int cbSize);
+
+    const uint INPUT_KB = 1;
+    const uint KEYEVENT_KEYUP = 0x0002;
+
+    public static void MouseForce(bool down = true, bool right = false) {
+        if (right) {
+            if (down)
+                mouse_event(MOUSE_RIGHTDOWN, 0, 0, 0, IntPtr.Zero);
+            else
+                mouse_event(MOUSE_RIGHTUP, 0, 0, 0, IntPtr.Zero);
+            return;
+        }
+
+        if (down)
+            mouse_event(MOUSE_LEFTDOWN, 0, 0, 0, IntPtr.Zero);
+        else
+            mouse_event(MOUSE_LEFTUP, 0, 0, 0, IntPtr.Zero);
+    }
+    public static void KeyForce(Keys key, bool down = true) {
+        var inp = new RAW_INPUT[1];
+
+        inp[0].type = INPUT_KB;
+        inp[0].u.ki = new KB_INPUT {
+            w_vk = (ushort)key,
+            dw_flags = down ? 0 : KEYEVENT_KEYUP,
+            dw_info = IntPtr.Zero
+        };
+
+        SendInput(1, inp, Marshal.SizeOf(typeof(RAW_INPUT)));
+    }
+
     public static KeyboardState CurrentKeySnapshot { get; internal set; }
-
     public static KeyboardState OldKeySnapshot { get; internal set; }
-
     public static MouseState CurrentMouseSnapshot { get; internal set; }
-
     public static MouseState OldMouseSnapshot { get; internal set; }
-
     public static GamePadState CurrentGamePadSnapshot { get; internal set; }
-
     public static GamePadState OldGamePadSnapshot { get; internal set; }
 
     public static void PollEvents(PlayerIndex pIndex = PlayerIndex.One) {

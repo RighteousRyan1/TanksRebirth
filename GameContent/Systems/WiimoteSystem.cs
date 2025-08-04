@@ -1,26 +1,34 @@
-﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Input;
+﻿using FontStashSharp;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System;
+using System.Linq;
+using System.Runtime.InteropServices;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common;
+using TanksRebirth.Internals.Common.Framework;
 using TanksRebirth.Internals.Common.Utilities;
 using WiimoteLib;
 
 namespace TanksRebirth.GameContent.Systems;
 
 #pragma warning disable
+public enum WiimoteButton {
+    A, B, 
+    Minus, Plus, 
+    One, Two, 
+    Home, Up, Down, Left, Right,
+
+    // nunchuk buttons
+    C, Z
+}
 public static class WiimoteSystem {
     static Wiimote _wm;
-    public static bool IsConnected => _wm != null;
-    public static bool IsNunchukConnected => IsConnected && _wm.WiimoteState.ExtensionType == ExtensionType.Nunchuk;
 
-    public static Vector2 PointerLocation {
-        get {
-            if (!IsConnected) return Vector2.Zero;
-            var state = _wm.WiimoteState;
-            return new Vector2(state.IRState.IRSensors[0].Position.X, state.IRState.IRSensors[0].Position.Y);
-        }
-    }
+    public static WiimoteState State => _wm.WiimoteState;
+    public static ButtonState PreviousButtons { get; private set; }
+    public static bool IsConnected { get; private set; }
+    public static bool IsNunchukConnected => IsConnected && _wm.WiimoteState.ExtensionType == ExtensionType.Nunchuk;
     public static float BatteryPercent => _wm.WiimoteState.Battery;
 
     public static float MinDeadzone;
@@ -41,6 +49,7 @@ public static class WiimoteSystem {
             _wm.WiimoteChanged += UpdateWiimoteState;
             _wm.WiimoteExtensionChanged += WiimoteExtChanged;
 
+            IsConnected = true;
             TankGame.ClientLog.Write("Wiimote connected and mapped successfully.", LogType.Info);
             return true;
         } catch (Exception e) {
@@ -51,8 +60,9 @@ public static class WiimoteSystem {
     public static void TryDisconnect() {
         if (!IsConnected) return;
 
-        _wm.SetLEDs(0);
-        _wm.Disconnect();
+        _wm?.SetLEDs(0);
+        _wm?.Disconnect();
+        IsConnected = false;
         _wm.WiimoteChanged -= UpdateWiimoteState;
         _wm.WiimoteExtensionChanged -= WiimoteExtChanged;
 
@@ -70,6 +80,8 @@ public static class WiimoteSystem {
     }
 
     static void UpdateWiimoteState(object? sender, WiimoteChangedEventArgs e) {
+        if (!TankGame.Instance.IsActive) return;
+
         var state = e.WiimoteState;
         var nunState = state.NunchukState;
 
@@ -81,34 +93,87 @@ public static class WiimoteSystem {
 
         NunchukAxis = new Vector2(
             InputUtils.ApplyDeadzone(nunState.Joystick.X, MinDeadzone, MaxDeadzone, min_any, max_any),
-            InputUtils.ApplyDeadzone(nunState.Joystick.Y, MinDeadzone, MaxDeadzone, min_any, max_any)
+            -InputUtils.ApplyDeadzone(nunState.Joystick.Y, MinDeadzone, MaxDeadzone, min_any, max_any)
         );
 
         // calculates the cursor position in screen coordinates
-        float screenX = 1 - state.IRState.Midpoint.X;
-        float screenY = state.IRState.Midpoint.Y;
-        var mousePos = Vector2.Zero;
+        float screenX = 1 - state.IRState.IRSensors[1].Position.X;
+        float screenY = state.IRState.IRSensors[1].Position.Y;
 
+        state.IRState.Mode = IRMode.Extended;
 
-        //Mouse.SetPosition(
+        var realX = state.IRState.IRSensors[0].Position.X + state.IRState.IRSensors[1].Position.X / 2 - 0.5f;
+        var realY = state.IRState.IRSensors[0].Position.Y + state.IRState.IRSensors[1].Position.Y / 2 - 0.5f;
+
         var realPos = new Vector2(
-            MathHelper.Clamp(screenX, 0.15f, 0.85f) * WindowUtils.WindowWidth,
-            MathHelper.Clamp(screenY, 0.15f, 0.85f) * WindowUtils.WindowHeight);
+            MathHelper.Clamp((1f - realX), 0, 1) * WindowUtils.WindowWidth,
+            MathHelper.Clamp(realY, 0, 1) * WindowUtils.WindowHeight
+        );
 
-        if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.LeftShift))
-            Mouse.SetPosition((int)realPos.X, (int)realPos.Y);
+        HandleInputs(state);
 
-        Console.WriteLine(realPos);
+        // Console.WriteLine($"{realPos}\nnormalized: ({screenX}, {screenY})");
+        //Console.WriteLine("Sensors:\n\n" + string.Join("\n", state.IRState.IRSensors[..2].Select(x => x.Position)));
 
-        /*float rate = 0.4f;
-        mousePos = new((int)MathHelper.Lerp(MouseUtils.MousePosition.X, newScreenX, rate),
-            (int)MathHelper.Lerp(cursorY, newScreenY, rate));*/
+        // Console.WriteLine($"\nAverage of sensors: ({realPos.X}, {realPos.Y})\n");
+
+        //Console.WriteLine($"PixelPos: {realPos}\n");
+        //Console.WriteLine("IR 1: " + state.IRState.IRSensors[1]);
+
+        float smoothing = 0.4f;
+        var mousePos = new Vector2(
+            (int)MathHelper.Lerp(MouseUtils.MousePosition.X, realPos.X, smoothing),
+            (int)MathHelper.Lerp(MouseUtils.MousePosition.Y, realPos.Y, smoothing)
+        );
+
+        Microsoft.Xna.Framework.Input.Mouse.SetPosition((int)mousePos.X, (int)mousePos.Y);
 
 
-        //Mouse.SetPosition((int)mousePos.X, (int)mousePos.Y);
+        PreviousButtons = state.ButtonState;
+    }
 
-        // Console.WriteLine(NunchukAxis);
-        // Console.WriteLine($"{screenX}, {screenY}");
-        // Console.WriteLine(Motion);
+    static void HandleInputs(WiimoteState state) {
+        if (state.ButtonState.B && !PreviousButtons.B) {
+            InputUtils.MouseForce();
+        }
+        else if (!PreviousButtons.B && !state.ButtonState.B) {
+            InputUtils.MouseForce(false);
+        }
+
+        /*if (state.ButtonState.Up && !_prevUp) {
+            InputUtils.KeyForce(Keys.W);
+        }
+        else if (_prevUp && !state.ButtonState.Up) {
+            InputUtils.KeyForce(Keys.W, false);
+        }
+
+        if (state.ButtonState.Down && !_prevDown) {
+            InputUtils.KeyForce(Keys.S);
+        }
+        else if (_prevDown && !state.ButtonState.Down) {
+            InputUtils.KeyForce(Keys.S, false);
+        }
+
+        if (state.ButtonState.Right && !_prevRight) {
+            InputUtils.KeyForce(Keys.D);
+        }
+        else if (_prevRight && !state.ButtonState.Right) {
+            InputUtils.KeyForce(Keys.D, false);
+        }
+
+        if (state.ButtonState.Left && !_prevLeft) {
+            InputUtils.KeyForce(Keys.A);
+        }
+        else if (_prevRight && !state.ButtonState.Left) {
+            InputUtils.KeyForce(Keys.A, false);
+        }*/
+    }
+
+    public static void DrawWiimoteBatteryLife(SpriteBatch spriteBatch, SpriteFontBase font) {
+        if (!IsConnected) return;
+
+        var statColor = new StatisticalColor<float>(Color.Red, Color.Lime, 0f, BatteryPercent, 1f);
+        DrawUtils.DrawStringWithBorder(spriteBatch, font, $"Battery Life: {BatteryPercent}%", WindowUtils.WindowBottomLeft,
+            statColor.FinalColor, ColorUtils.ChangeColorBrightness(statColor.FinalColor, -0.5f), new Vector2(0.8f).ToResolution(), 0f, Anchor.BottomLeft, 0.75f);
     }
 }

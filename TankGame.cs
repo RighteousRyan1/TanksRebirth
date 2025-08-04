@@ -573,7 +573,10 @@ public class TankGame : Game {
             }*/
 
             if (InputUtils.AreKeysJustPressed(Keys.T, Keys.I)) {
-                WiimoteSystem.TryConnect();
+                if (WiimoteSystem.IsConnected)
+                    WiimoteSystem.TryDisconnect();
+                else
+                    WiimoteSystem.TryConnect();
             }
 
             if (WiimoteSystem.IsConnected) {

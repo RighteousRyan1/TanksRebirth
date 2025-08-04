@@ -482,10 +482,6 @@ public abstract class Tank {
             }
         };
 
-        // ensure no movements happen when not desired
-        if (!MainMenuUI.IsActive && (!CampaignGlobals.InMission || IntermissionSystem.IsAwaitingNewMission))
-            Velocity = Vector2.Zero;
-
         if (!IsTurning) {
             Speed += Properties.Acceleration * RuntimeData.DeltaTime;
 
@@ -502,7 +498,7 @@ public abstract class Tank {
         }
 
         // try to make negative. go poopoo
-        cannonMesh.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + ChassisRotation + (Flip ? MathHelper.Pi : 0));
+        cannonMesh!.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + ChassisRotation + (Flip ? MathHelper.Pi : 0));
         Model!.Root.Transform = World;
 
         Model.CopyAbsoluteBoneTransformsTo(boneTransforms);

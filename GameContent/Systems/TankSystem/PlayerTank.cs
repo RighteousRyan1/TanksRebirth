@@ -30,6 +30,11 @@ using TanksRebirth.Internals.Common.Framework.Collisions;
 
 namespace TanksRebirth.GameContent;
 
+public enum PlayerInput {
+    KBM,
+    Gamepad,
+    Wiimote
+}
 public class PlayerTank : Tank {
     private static bool _justCenteredMouse = false;
     #region The Rest
@@ -73,7 +78,7 @@ public class PlayerTank : Tank {
     //private float _maxTurnInputBased;
     #endregion
 
-    public static bool LastUsedController = false;
+    public static PlayerInput LastUsedController = PlayerInput.KBM;
 
     public Vector2 DesiredDirection;
     public static float StickDeadzone { get; set; } = 0.12f;
@@ -193,8 +198,16 @@ public class PlayerTank : Tank {
         // 3/4pi = left
 
         DesiredDirection = Vector2.Zero;
-        LastUsedController = InputUtils.IsGamepadBeingUsed();
 
+        if (!WiimoteSystem.IsConnected) {
+            if (InputUtils.IsGamepadBeingUsed())
+                LastUsedController = PlayerInput.Gamepad;
+            else
+                LastUsedController = PlayerInput.KBM;
+        }
+        else
+            LastUsedController = PlayerInput.Wiimote;
+        
         base.Update();
 
         if (LevelEditorUI.IsActive || IsDestroyed) return;
@@ -224,10 +237,12 @@ public class PlayerTank : Tank {
         if (!Properties.Stationary) {
             if (NetPlay.IsClientMatched(PlayerId)) {
                 if (CurShootStun <= 0 && CurMineStun <= 0) {
-                    if (LastUsedController)
-                        ControlHandle_ConsoleController();
-                    else
+                    if (LastUsedController == PlayerInput.Gamepad)
+                        ControlHandle_Gamepad();
+                    else if (LastUsedController == PlayerInput.KBM)
                         ControlHandle_Keybinding();
+                    else
+                        ControlHandle_Wiimote(WiimoteSystem.State);
                 }
             }
         }
@@ -240,7 +255,19 @@ public class PlayerTank : Tank {
             }
         }
 
-        oldPosition = Position;
+        if (playerControl_isBindPressed) {
+            var norm = Vector2.Normalize(DesiredDirection);
+
+            DesiredChassisRotation = norm.ToRotation() - MathHelper.PiOver2;
+
+            ChassisRotation = MathUtils.RoughStep(ChassisRotation, DesiredChassisRotation, Properties.TurningSpeed * RuntimeData.DeltaTime);
+
+            Console.WriteLine(Speed);
+
+            Velocity = Vector2.UnitY.Rotate(ChassisRotation) * Speed;
+
+            oldPosition = Position;
+        }
     }
     void ProcessPlayerMouse() {
         if (NetPlay.IsClientMatched(PlayerId)) {
@@ -291,8 +318,42 @@ public class PlayerTank : Tank {
         PlayerStatistics.MinesLaid++;
         base.LayMine();
     }
-    private void ControlHandle_ConsoleController() {
+    // B is already mapped to left click forcibly
+    void ControlHandle_Wiimote(WiimoteLib.WiimoteState state) {
 
+        if (state.ExtensionType != WiimoteLib.ExtensionType.Nunchuk) {
+            if (state.ButtonState.Up) {
+                playerControl_isBindPressed = true;
+                DesiredDirection.Y = -1;
+            }
+            else if (state.ButtonState.Down) {
+                playerControl_isBindPressed = true;
+                DesiredDirection.Y = 1;
+            }
+
+            if (state.ButtonState.Right) {
+                playerControl_isBindPressed = true;
+                DesiredDirection.X = 1;
+            }
+            else if (state.ButtonState.Left) {
+                playerControl_isBindPressed = true;
+                DesiredDirection.X = -1;
+            }
+        }
+        else {
+            DesiredDirection = Vector2.Normalize(WiimoteSystem.NunchukAxis);
+
+            if (DesiredDirection.Length() > 0.5f)
+                playerControl_isBindPressed = true;
+        }
+
+        if (state.ButtonState.A && !_prev.A)
+            LayMine();
+
+        _prev = state.ButtonState;
+    }
+    static WiimoteLib.ButtonState _prev;
+    void ControlHandle_Gamepad() {
         var leftStick = InputUtils.CurrentGamePadSnapshot.ThumbSticks.Left;
         var rightStick = InputUtils.CurrentGamePadSnapshot.ThumbSticks.Right;
         var dPad = InputUtils.CurrentGamePadSnapshot.DPad;
@@ -300,8 +361,8 @@ public class PlayerTank : Tank {
         // inverse y because stick down is positive y (which is up z)
         DesiredDirection = new Vector2(leftStick.X, -leftStick.Y);
 
-        var rotationMet = ChassisRotation > DesiredChassisRotation - Properties.MaximalTurn 
-            && ChassisRotation < DesiredChassisRotation + Properties.MaximalTurn;
+        /*var rotationMet = ChassisRotation > DesiredChassisRotation - Properties.MaximalTurn 
+            && ChassisRotation < DesiredChassisRotation + Properties.MaximalTurn;*/
 
         if (leftStick.Length() > 0) {
             playerControl_isBindPressed = true;
@@ -324,41 +385,12 @@ public class PlayerTank : Tank {
             DesiredDirection.X = 1;
         }
 
-        if (!rotationMet) {
-            Speed *= Properties.Deceleration * (1f - RuntimeData.DeltaTime);
-            IsTurning = true;
-            if (Speed < 0)
-                Speed = 0;
-        }
-        else {
-            if (Difficulties.Types["POV"])
-                DesiredDirection = DesiredDirection.Rotate(-TurretRotation + MathHelper.Pi);
-
-            Speed += Properties.Acceleration * RuntimeData.DeltaTime;
-            if (Speed > Properties.MaxSpeed)
-                Speed = Properties.MaxSpeed;
-        }
-
-        var norm = Vector2.Normalize(DesiredDirection);
-
-        DesiredChassisRotation = norm.ToRotation() - MathHelper.PiOver2;
-
-        ChassisRotation = MathUtils.RoughStep(ChassisRotation, DesiredChassisRotation, Properties.TurningSpeed * RuntimeData.DeltaTime);
-
-        if (rightStick.Length() > 0) {
-            var unprojectedPosition = MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), World, View, Projection);
-            Mouse.SetPosition((int)(unprojectedPosition.X + rightStick.X * 250), (int)(unprojectedPosition.Y - rightStick.Y * 250));
-            //Mouse.SetPosition((int)(Input.CurrentMouseSnapshot.X + rightStick.X * TankGame.Instance.Settings.ControllerSensitivity), (int)(Input.CurrentMouseSnapshot.Y - rightStick.Y * TankGame.Instance.Settings.ControllerSensitivity));
-        }
-
-        Velocity = Vector2.UnitY.Rotate(ChassisRotation) * Speed;
-
         if (FireBullet.JustPressed)
             Shoot(false);
         if (PlaceMine.JustPressed)
             LayMine();
     }
-    private void ControlHandle_Keybinding() {
+    void ControlHandle_Keybinding() {
         if (controlFirePath.JustPressed)
             _drawShotPath = !_drawShotPath;
         if (controlMine.JustPressed)
@@ -373,34 +405,22 @@ public class PlayerTank : Tank {
         if (controlDown.IsPressed) {
             playerControl_isBindPressed = true;
             DesiredDirection.Y = 1;
-            LastUsedController = false;
         }
         if (controlUp.IsPressed) {
             playerControl_isBindPressed = true;
             DesiredDirection.Y = -1;
-            LastUsedController = false;
         }
         if (controlLeft.IsPressed) {
             playerControl_isBindPressed = true;
             DesiredDirection.X = -1;
-            LastUsedController = false;
         }
         if (controlRight.IsPressed) {
             playerControl_isBindPressed = true;
             DesiredDirection.X = 1;
-            LastUsedController = false;
         }
 
         if (Difficulties.Types["POV"])
             DesiredDirection = DesiredDirection.Rotate(-TurretRotation + MathHelper.Pi);
-
-        var norm = Vector2.Normalize(DesiredDirection);
-
-        DesiredChassisRotation = norm.ToRotation() - MathHelper.PiOver2;
-
-        ChassisRotation = MathUtils.RoughStep(ChassisRotation, DesiredChassisRotation, Properties.TurningSpeed * RuntimeData.DeltaTime);
-
-        Velocity = Vector2.UnitY.Rotate(ChassisRotation) * Speed;
     }
     public override void Destroy(ITankHurtContext context, bool netSend) {
         if (Client.IsConnected()) {

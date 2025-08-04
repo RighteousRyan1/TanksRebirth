@@ -127,23 +127,4 @@ public static class GameSceneUI {
             y - 7f * scale),
             Vector2.One, score.ToString(), brighterColor, color, new Vector2(0.375f * scale), 1f, shadowAlpha: 0.5f);
     }
-
-    // pretty sure this doesn't work.
-    private static Texture2D GenerateScoreboard(Color color) {
-        var scoreboard = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/scoreboard");
-
-        var colors = new Color[scoreboard.Width * scoreboard.Height];
-        scoreboard.GetData(colors);
-
-        for (int i = 0; i < colors.Length; i++) {
-            if (colors[i] == Color.Black) {
-                colors[i] = color;
-            }
-        }
-
-        var texture = new Texture2D(TankGame.Instance.GraphicsDevice, scoreboard.Width, scoreboard.Height);
-
-        texture.SetData(colors);
-        return texture;
-    }
 }
