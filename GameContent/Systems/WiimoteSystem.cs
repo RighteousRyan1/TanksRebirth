@@ -23,7 +23,7 @@ public enum WiimoteButton {
     C, Z
 }
 public static class WiimoteSystem {
-    static Wiimote _wm;
+    static Wiimote? _wm;
 
     public static WiimoteState State => _wm.WiimoteState;
     public static ButtonState PreviousButtons { get; private set; }
@@ -61,10 +61,12 @@ public static class WiimoteSystem {
         if (!IsConnected) return;
 
         _wm?.SetLEDs(0);
-        _wm?.Disconnect();
-        IsConnected = false;
         _wm.WiimoteChanged -= UpdateWiimoteState;
         _wm.WiimoteExtensionChanged -= WiimoteExtChanged;
+        _wm?.Disconnect();
+        _wm = null;
+
+        IsConnected = false;
 
         TankGame.ClientLog.Write("Wiimote disconnected successfully.", LogType.Info);
     }

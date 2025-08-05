@@ -108,11 +108,11 @@ public class Shell : IAITankDanger {
     public OggAudio? ShootSound;
     public OggAudio? TrailSound;
 
-    /// <summary>The hurtbox on the 2D backing map for the game.</summary>
+    /// <summary>The hitbox on the 2D backing map for the game.</summary>
     public Rectangle Hitbox => new((int)(Position.X - 2), (int)(Position.Y - 2), 4, 4);
 
-    /// <summary>The hurtcircle on the 2D backing map for the game.</summary>
-    public Circle HitCircle => new() { Center = Position, Radius = 7 };
+    /// <summary>The hit-circle on the 2D backing map for the game.</summary>
+    public Circle HitCircle => new() { Center = Position, Radius = 5 }; // original is moreso a radius of 7, but 5 is good, since it isnt 480p
     public int Team => Owner?.Team ?? TeamID.NoTeam;
 
     private Texture2D? _shellTexture;
