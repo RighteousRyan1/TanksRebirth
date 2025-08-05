@@ -240,7 +240,6 @@ public class Shell : IAITankDanger {
                 };
             }
             if (owner is not null) {
-                ShootSound!.Instance.Pitch = MathHelper.Clamp(owner.Properties.ShootPitch, -1, 1);
                 SoundPlayer.PlaySoundInstance(ShootSound, SoundContext.Effect, volume: 0.6f, pitchOverride: GameUtils.NaturalPitchShift);
                 //if (CameraGlobals.IsUsingFirstPresonCamera)
                 //    SoundUtils.CreateSpatialSound(ShootSound, owner.TurretPosition3D, CameraGlobals.RebirthFreecam.Position);
@@ -532,7 +531,7 @@ public class Shell : IAITankDanger {
             Velocity.Y = -Velocity.Y;
 
 
-        var sound = SoundPlayer.PlaySoundInstance(ricochetSound, SoundContext.Effect, 0.5f);
+        var sound = SoundPlayer.PlaySoundInstance(ricochetSound, SoundContext.Effect, 0.5f, pitchOverride: GameUtils.NaturalPitchShift);
 
         //bool fp = CameraGlobals.IsUsingFirstPresonCamera;
         //if (fp)
@@ -542,12 +541,9 @@ public class Shell : IAITankDanger {
             if (Owner.Properties.ShellType == ShellID.TrailedRocket) {
                 sound.Instance.Pitch = Client.ClientRandom.NextFloat(0.15f, 0.25f);
                 var rocketRSound = SoundPlayer.PlaySoundInstance("Assets/sounds/ricochet_zip.ogg", SoundContext.Effect, 0.05f);
-                rocketRSound.Instance.Pitch = -0.65f + GameUtils.NaturalPitchShift;
+                rocketRSound.Pitch -= 0.65f;
                 //if (fp)
                 //    SoundUtils.CreateSpatialSound(sound, Position3D, CameraGlobals.RebirthFreecam.Position);
-            }
-            else {
-                sound.Instance.Pitch = GameUtils.NaturalPitchShift;
             }
         }
 
@@ -632,8 +628,7 @@ public class Shell : IAITankDanger {
         if (context != DestructionContext.WithHostileTank && context != DestructionContext.WithMine &&
             context != DestructionContext.WithExplosion) {
             if (playSound) {
-                var sfx = SoundPlayer.PlaySoundInstance("Assets/sounds/bullet_destroy.ogg", SoundContext.Effect, 0.5f);
-                sfx.Instance.Pitch = Client.ClientRandom.NextFloat(-0.1f, 0.1f);
+                var sfx = SoundPlayer.PlaySoundInstance("Assets/sounds/bullet_destroy.ogg", SoundContext.Effect, 0.5f, pitchOverride: GameUtils.NaturalPitchShift);
 
                 if (CameraGlobals.IsUsingFirstPresonCamera)
                     sfx.MaxVolume = SoundUtils.GetVolumeFromCameraPosition(Position3D, CameraGlobals.RebirthFreecam.Position);

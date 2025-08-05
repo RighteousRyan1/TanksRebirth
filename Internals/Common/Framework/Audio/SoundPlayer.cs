@@ -43,7 +43,7 @@ public static class SoundPlayer
         if (!existsInDictionary && rememberMe)
             SavedSounds.Add(audioPath, sfx);
         sfx.Instance.Pan = MathHelper.Clamp(panOverride, -1f, 1f);
-        sfx.Instance.Pitch = MathHelper.Clamp(pitchOverride, -1f, 1f);
+        sfx.Pitch = pitchOverride;
         sfx.Play();
         sfx.Volume = MathHelper.Clamp(volume * maxVolume, 0f, 1f);
 

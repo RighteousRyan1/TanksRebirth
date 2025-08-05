@@ -4,7 +4,8 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 
 # Additions
 
-- Added Wii remote support!
+- Added Wii remote support, check the [guide](https://github.com/RighteousRyan1/TanksRebirth/wiki/Wii-Remote-Support) on how to use one
+	- Also allows the use of a nunchuk
 - Made the game take advantage of multiple threads! If your CPU has multiple threads (hopefully it does), the game should now run better under higher workloads, and just overall better.
 - Added slight pitch shifting in many game-related sound effects
 
@@ -15,6 +16,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 # Changes Important for Modders
 
 - Don't create, modify, or generate textures in AI-related tank logic code now! It will throw an exception as it won't be the main thread
+- There is now a much higher limit on pitch-shifting (of specifically `OggAudio`. Change `OggAudio.Pitch` directly)
 
 # Fixes
 

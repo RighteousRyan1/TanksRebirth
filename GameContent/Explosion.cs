@@ -117,8 +117,7 @@ public class Explosion : IAITankDanger {
             }
             horizLayers -= (int)MathF.Round((float)horizLayers / vertLayers);
         }
-
-        var audio = SoundPlayer.PlaySoundInstance(destroysound, SoundContext.Effect, 1f, pitchOverride: soundPitch);
+        var audio = SoundPlayer.PlaySoundInstance(destroysound, SoundContext.Effect, 1f, pitchOverride: soundPitch + GameUtils.NaturalPitchShift);
         //if (CameraGlobals.IsUsingFirstPresonCamera)
         //    SoundUtils.CreateSpatialSound(audio, Position3D, CameraGlobals.RebirthFreecam.Position, 1.25f);
 

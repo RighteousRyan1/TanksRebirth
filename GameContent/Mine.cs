@@ -107,7 +107,7 @@ public sealed class Mine : IAITankDanger {
         Position = pos;
 
         if (owner != null) {
-            var placeSound = SoundPlayer.PlaySoundInstance("Assets/sounds/mine_place.ogg", SoundContext.Effect, 0.5f);
+            var placeSound = SoundPlayer.PlaySoundInstance("Assets/sounds/mine_place.ogg", SoundContext.Effect, 0.5f, pitchOverride: GameUtils.NaturalPitchShift);
 
             //if (CameraGlobals.IsUsingFirstPresonCamera)
             //    SoundUtils.CreateSpatialSound(placeSound, Position3D, CameraGlobals.RebirthFreecam.Position);

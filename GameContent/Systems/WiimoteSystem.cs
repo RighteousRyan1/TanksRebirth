@@ -53,7 +53,7 @@ public static class WiimoteSystem {
             TankGame.ClientLog.Write("Wiimote connected and mapped successfully.", LogType.Info);
             return true;
         } catch (Exception e) {
-            TankGame.ClientLog.Write($"Failed to connect Wiimote: {e.Message} (did you set-up your wiimote with your OS?)", LogType.ErrorFatal);
+            TankGame.ClientLog.Write($"Failed to connect Wiimote: {e.Message} (did you set-up your wiimote with your OS?)", LogType.ErrorSilent);
             return false;
         }
     }
@@ -174,8 +174,8 @@ public static class WiimoteSystem {
     public static void DrawWiimoteBatteryLife(SpriteBatch spriteBatch, SpriteFontBase font) {
         if (!IsConnected) return;
 
-        var statColor = new StatisticalColor<float>(Color.Red, Color.Lime, 0f, BatteryPercent, 1f);
+        var statColor = new StatisticalColor<float>(Color.Red, Color.Lime, 0f, BatteryPercent, 100f);
         DrawUtils.DrawStringWithBorder(spriteBatch, font, $"Battery Life: {BatteryPercent}%", WindowUtils.WindowBottomLeft,
-            statColor.FinalColor, ColorUtils.ChangeColorBrightness(statColor.FinalColor, -0.5f), new Vector2(0.8f).ToResolution(), 0f, Anchor.BottomLeft, 0.75f);
+            statColor.FinalColor, ColorUtils.ChangeColorBrightness(statColor.FinalColor, -0.75f), new Vector2(0.8f).ToResolution(), 0f, Anchor.BottomLeft, 0.75f);
     }
 }

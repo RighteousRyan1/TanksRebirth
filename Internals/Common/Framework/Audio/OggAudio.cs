@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework.Audio;
 using System;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using TanksRebirth.Internals.Common.Framework.Audio.AudioSerializers;
 
@@ -15,9 +16,20 @@ public class OggAudio : IDisposable, IAudio {
             throw new ObjectDisposedException(nameof(OggAudio), "This object instance has been disposed.");
     }
 
+    FieldInfo _pitchField;
+
     public SoundEffectInstance Instance;
     public bool IsDisposed { get; private set; }
     public string Path { get; }
+
+    float _pitch;
+    public float Pitch {
+        get => _pitch;
+        set {
+            _pitch = value;
+            _pitchField?.SetValue(Instance, value);
+        }
+    }
     public float Volume {
         get => _backingVolume;
         set {
@@ -93,6 +105,7 @@ public class OggAudio : IDisposable, IAudio {
         if (soundEffect != null) {
             _effect = soundEffect;
             Instance = soundEffect.CreateInstance();
+            _pitchField = Instance.GetType().GetField("_pitch", BindingFlags.NonPublic | BindingFlags.Instance)!;
             return;
         }
         
@@ -118,6 +131,8 @@ public class OggAudio : IDisposable, IAudio {
 
         _effect = new SoundEffect(audioData.binaryData, audioData.sampleRate, (AudioChannels)audioData.channelCount);
         Instance = _effect.CreateInstance();
+
+        _pitchField = Instance.GetType().GetField("_pitch", BindingFlags.NonPublic | BindingFlags.Instance)!;
     }
 
     public bool IsPaused() {

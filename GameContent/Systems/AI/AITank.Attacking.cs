@@ -151,13 +151,13 @@ public partial class AITank {
 
         if (!randomSuccess) return;
 
-        LayMine();
+        // do not hurt the worker thread plskthx
+        TankGame.MainThreadTasks.Enqueue(LayMine);
 
         var randomDir = Client.ClientRandom.Next(goodDirs.Length);
 
         // then determine a good fleeing direction
         // Console.WriteLine("Laid mine. Choosing to go " + goodDirs[randomDir].Direction);
-
 
         var rot = goodDirs[randomDir].Vec.ToRotation();
 
