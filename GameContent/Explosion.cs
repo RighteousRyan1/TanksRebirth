@@ -43,7 +43,8 @@ public class Explosion : IAITankDanger {
     public int Id { get; private set; }
     public int Team => Owner?.Team ?? TeamID.NoTeam;
 
-    public float Scale;
+    public float MaxScale;
+    public float DamageRadiusScale;
     public float LingerDuration = 40f;
     public float Rotation;
     public float RotationSpeed;
@@ -55,7 +56,7 @@ public class Explosion : IAITankDanger {
     public Explosion(Vector2 pos, float scale, Tank? owner = null, float rotationSpeed = 1f, float soundPitch = 0f) {
         RotationSpeed = rotationSpeed;
         Position = pos;
-        Scale = scale;
+        MaxScale = scale;
         Owner = owner;
 
         AITank.Dangers.Add(this);
@@ -93,7 +94,7 @@ public class Explosion : IAITankDanger {
                 float rotation = 0f;
                 float rotationSpeed1 = 0.06f * RotationSpeed;
 
-                var explScalar = MAGIC_EXPLOSION_NUMBER * Scale;
+                // var explScalar = MAGIC_EXPLOSION_NUMBER * MaxScale;
                 var lingerRandom = Client.ClientRandom.NextFloat(0.8f, 1.2f);
                 var position = Vector3.UnitY * -5000f;
                 var particle = GameHandler.Particles.MakeExplosionFlameParticle(position, out var act, LingerDuration / 60f * lingerRandom);
@@ -103,6 +104,7 @@ public class Explosion : IAITankDanger {
                     act?.Invoke(particle);
                     particle.Color = ExplosionColor;
                     rotation += rotationSpeed1 * RuntimeData.DeltaTime;
+                    var explScalar = MAGIC_EXPLOSION_NUMBER * DamageRadiusScale;
 
                     // find why the rotation isnt rotating the right way. maybe needs a unit circle offset? piover2?
                     position = Vector3.Transform(Vector3.UnitX * explScalar, Matrix.CreateFromYawPitchRoll(rotZ + rotation, 0, rotX) * Matrix.CreateTranslation(Position3D));
@@ -127,21 +129,23 @@ public class Explosion : IAITankDanger {
     }
 
     public void Update() {
+        DamageRadiusScale = MathUtils.SoftStep(DamageRadiusScale, MaxScale, 0.2f * RuntimeData.DeltaTime);
+
         if (!IntermissionSystem.IsAwaitingNewMission) {
             foreach (var mine in Mine.AllMines) {
-                if (mine is not null && Vector2.Distance(mine.Position, Position) <= Scale * MAGIC_EXPLOSION_NUMBER) // magick
+                if (mine is not null && Vector2.Distance(mine.Position, Position) <= DamageRadiusScale * MAGIC_EXPLOSION_NUMBER) // magick
                     mine.Detonate();
             }
             foreach (var block in Block.AllBlocks) {
-                if (block is not null && Vector2.Distance(block.Position, Position) <= Scale * MAGIC_EXPLOSION_NUMBER && block.Properties.IsDestructible)
+                if (block is not null && Vector2.Distance(block.Position, Position) <= DamageRadiusScale * MAGIC_EXPLOSION_NUMBER && block.Properties.IsDestructible)
                     block.Destroy();
             }
             foreach (var shell in Shell.AllShells) {
-                if (shell is not null && Vector2.Distance(shell.Position, Position) < Scale * MAGIC_EXPLOSION_NUMBER)
+                if (shell is not null && Vector2.Distance(shell.Position, Position) < DamageRadiusScale * MAGIC_EXPLOSION_NUMBER)
                     shell.Destroy(Shell.DestructionContext.WithExplosion);
             }
             foreach (var tank in GameHandler.AllTanks) {
-                if (tank is null || Vector2.Distance(tank.Position, Position) > Scale * MAGIC_EXPLOSION_NUMBER
+                if (tank is null || Vector2.Distance(tank.Position, Position) > DamageRadiusScale * MAGIC_EXPLOSION_NUMBER
                     || tank.IsDestroyed || HasHit[tank.WorldId] || tank.Properties.InvulnerableToMines)
                     continue;
                 HasHit[tank.WorldId] = true;
