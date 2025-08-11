@@ -43,7 +43,8 @@ public static partial class MainMenuUI
         Cosmetics,
         Difficulties,
         Settings,
-        StatsMenu
+        StatsMenu,
+        ModsMenu
     }
     private static UIState _menuState;
     public static UIState MenuState {

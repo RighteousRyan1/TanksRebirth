@@ -18,11 +18,13 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 
 - Don't create, modify, or generate textures in AI-related tank logic code now! It will throw an exception as it won't be the main thread
 - There is now a much higher limit on pitch-shifting (of specifically `OggAudio`. Change `OggAudio.Pitch` directly)
+- Added `mod_info.json` to the mod template. If your mod does not have it, you can download the default `mod_info.json` [here](link_lol_PLEASE_ADD_ME)
 
 # Fixes
 
 - Fixed nametags showing for non-host clients after the game has started if the host started the game with the client being in the multiplayer menu
 - Fixed smokes generated from smoke grenades being the wrong color
+- Optimized mod loading quite a lot
 
 # TODO
 

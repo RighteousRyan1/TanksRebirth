@@ -1,13 +1,14 @@
-using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using tainicom.Aether.Physics2D.Fluids;
+using TanksRebirth.GameContent.Globals.Assets;
+using TanksRebirth.GameContent.Systems.AI;
+using TanksRebirth.GameContent.Systems.ParticleSystem;
+using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework.Audio;
-using TanksRebirth.Net;
 using TanksRebirth.Internals.Common.Utilities;
-using TanksRebirth.Graphics;
-using TanksRebirth.GameContent.Globals.Assets;
-using TanksRebirth.GameContent.Systems.ParticleSystem;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent;
 
@@ -98,31 +99,7 @@ public static class ParticleGameplay
 
             if (timer > 60 && !exploded) {
                 exploded = true;
-                SoundPlayer.PlaySoundInstance("Assets/sounds/smoke_hiss.ogg", SoundContext.Effect, 0.3f);
-                for (int i = 0; i < 8; i++) {
-                    var c = manager.MakeParticle(p.Position,
-                        ModelGlobals.Smoke.Asset,
-                        GameResources.GetGameResource<Texture2D>("Assets/textures/smoke/smoke"));
-                    var randDir = new Vector3(Server.ServerRandom.NextFloat(-35, 35), 0, Server.ServerRandom.NextFloat(-35, 35));
-                    c.Position += randDir;
-                    var randSize = Server.ServerRandom.NextFloat(5, 10);
-                    c.Scale.X = randSize;
-                    c.Scale.Z = randSize;
-                    c.HasAdditiveBlending = false;
-                    c.UniqueBehavior = (b) => {
-                        c.Pitch += 0.005f * RuntimeData.DeltaTime;
-                        if (c.Scale.Y < randSize && c.LifeTime < 600)
-                            c.Scale.Y += 0.1f * RuntimeData.DeltaTime;
-                        if (c.LifeTime >= 600) {
-                            c.Scale.Y -= 0.06f * RuntimeData.DeltaTime;
-                            c.Alpha -= 0.06f / randSize * RuntimeData.DeltaTime;
-
-                            if (c.Scale.Y <= 0) {
-                                c.Destroy();
-                            }
-                        }
-                    };
-                }
+                MakeSmoke(manager, p.Position);
                 isSmokeDestroyed = true;
                 p.Destroy();
             }
@@ -146,5 +123,32 @@ public static class ParticleGameplay
 
             shadow.Alpha = MathUtils.InverseLerp(150, 7, p.Position.Y, true);
         };
+    }
+
+    public static void MakeSmoke(ParticleManager manager, Vector3 position) {
+        SoundPlayer.PlaySoundInstance("Assets/sounds/smoke_hiss.ogg", SoundContext.Effect, 0.3f);
+        for (int i = 0; i < 8; i++) {
+            var c = manager.MakeParticle(position,
+                ModelGlobals.Smoke.Asset,
+                GameResources.GetGameResource<Texture2D>("Assets/textures/smoke/smoke"));
+            var randDir = new Vector3(Server.ServerRandom.NextFloat(-35, 35), 0, Server.ServerRandom.NextFloat(-35, 35));
+            c.Position += randDir;
+            var randSize = Server.ServerRandom.NextFloat(5, 10);
+            c.Scale.X = randSize;
+            c.Scale.Z = randSize;
+            c.UniqueBehavior = (b) => {
+                c.Pitch += 0.005f * RuntimeData.DeltaTime;
+                if (c.Scale.Y < randSize && c.LifeTime < 600)
+                    c.Scale.Y += 0.1f * RuntimeData.DeltaTime;
+                if (c.LifeTime >= 600) {
+                    c.Scale.Y -= 0.06f * RuntimeData.DeltaTime;
+                    c.Alpha -= 0.06f / randSize * RuntimeData.DeltaTime;
+
+                    if (c.Scale.Y <= 0) {
+                        c.Destroy();
+                    }
+                }
+            };
+        }
     }
 }

@@ -265,6 +265,8 @@ public static partial class MainMenuUI
                 DrawCampaignsUI();
             else if (MenuState == UIState.Cosmetics)
                 RenderCosmeticsUI();
+            else if (MenuState == UIState.ModsMenu)
+                DrawModsMenu();
         }
 
         // why does this need to be here?????????? doesn't work in Update()

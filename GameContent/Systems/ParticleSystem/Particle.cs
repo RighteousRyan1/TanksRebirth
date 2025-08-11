@@ -154,11 +154,12 @@ public class Particle
                     effect.View = System.SystemView;
                     effect.Projection = System.SystemProjection;
 
+                    effect.TextureEnabled = true;
                     effect.Texture = Texture;
 
                     effect.Alpha = Alpha;
 
-                    effect.EmissiveColor = Color.ToVector3() * SceneManager.GameLight.Brightness;
+                    effect.EmissiveColor = Color.ToVector3()  * SceneManager.GameLight.Brightness;
 
                     effect.SetDefaultGameLighting_IngameEntities(LightPower);
                 }

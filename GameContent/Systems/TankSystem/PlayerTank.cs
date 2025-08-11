@@ -271,7 +271,7 @@ public class PlayerTank : Tank {
 
             ChassisRotation = MathUtils.RoughStep(ChassisRotation, DesiredChassisRotation, Properties.TurningSpeed * RuntimeData.DeltaTime);
 
-            Console.WriteLine(Speed);
+            // Console.WriteLine(Speed);
 
             Velocity = Vector2.UnitY.Rotate(ChassisRotation) * Speed;
 

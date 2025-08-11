@@ -27,9 +27,9 @@ namespace TanksRebirth.GameContent.Systems.TankSystem;
 public abstract class Tank {
     #region TexPack
 
-    public static Dictionary<string, Texture2D> Assets = [];
+    public static Dictionary<string, Texture2D?> Assets = [];
 
-    public static string AssetRoot;
+    public static string? AssetRoot;
 
     public static void SetAssetNames() {
         Assets.Clear();
