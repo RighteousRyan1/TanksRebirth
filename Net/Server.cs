@@ -85,8 +85,8 @@ public class Server
             var peer = request.AcceptIfKey(NetPlay.CurrentServer!.Password);
 
             // fix the peer map on the server
-            NetPlay.PeerMap[peer.Id] = CurrentClientCount;
-            NetPlay.ReversePeerMap[CurrentClientCount] = peer.Id;
+            NetPlay.PeerMap.Add(peer.Id, CurrentClientCount);
+            NetPlay.ReversePeerMap.Add(CurrentClientCount, peer.Id);
             ChatSystem.SendMessage($"Connected peer {peer.Id} -> {CurrentClientCount}");
         }
         else {

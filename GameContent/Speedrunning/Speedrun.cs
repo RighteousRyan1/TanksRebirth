@@ -14,15 +14,13 @@ using FontStashSharp;
 
 namespace TanksRebirth.GameContent.Speedrunning;
 
-public class Speedrun
-{
+public class Speedrun {
     public static bool SpeedrunMode;
     public static bool AreSpeedrunsFetched { get; internal set; }
     public static SpeedrunData[] LoadedSpeedruns { get; private set; } = [];
 
     [StructLayout(LayoutKind.Sequential)]
-    public readonly struct SpeedrunData
-    {
+    public readonly struct SpeedrunData {
         public readonly TimeSpan TimeTaken = TimeSpan.Zero;
         public readonly string? Runner = null;
         public readonly DateTime Date = DateTime.UnixEpoch;
@@ -33,7 +31,7 @@ public class Speedrun
             TimeTaken = timeTaken;
         }
 
-        public override string ToString() => $"{Runner} in {TimeUtils.StringFormatCustom(TimeTaken, ":")} on {Date:d}";
+        public override string ToString() => $"{Runner} in {TimeUtils.StringFormatCustom(TimeTaken, ':')} on {Date:d}";
     }
     internal static void GetSpeedruns() {
         var bytes = WebUtils.DownloadWebFile("https://raw.githubusercontent.com/RighteousRyan1/tanks_rebirth_motds/master/topspeedruns_0-20", out var name, out var status);
@@ -45,9 +43,7 @@ public class Speedrun
         }
 
         var str = Encoding.Default.GetString(bytes);
-
         var strSplit = str.Split('\n').Where(x => x != string.Empty).ToArray();
-
         var data = new SpeedrunData[strSplit.Length];
 
         for (int i = 0; i < strSplit.Length; i++) {
@@ -64,7 +60,7 @@ public class Speedrun
     internal Speedrun(string campaignName)
     {
         CampaignName = campaignName;
-        MissionTimes = new();
+        MissionTimes = [];
         Timer = new();
     }
 
@@ -97,7 +93,7 @@ public class Speedrun
                 var time = CurrentSpeedrun.MissionTimes.ElementAt(i);
                 // display mission name and time taken
                 spriteBatch.DrawString(FontGlobals.RebirthFontLarge, $"{time.Key}: {time.Value.MissionTime.StopwatchFormat()}", 
-                    new Vector2(drawPos.X, drawPos.Y + 10 + ((i - num) * 15)), Color.White, new Vector2(0.15f), 0f, Vector2.Zero);
+                    new Vector2(drawPos.X, drawPos.Y + 15 + ((i - num) * 15)), Color.White, new Vector2(0.15f), 0f, Vector2.Zero);
             }
         }
     }

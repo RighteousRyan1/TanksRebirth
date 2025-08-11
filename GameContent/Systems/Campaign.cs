@@ -22,6 +22,7 @@ using TanksRebirth.Net;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.UI.MainMenu;
 
 namespace TanksRebirth.GameContent.Systems;
 
@@ -50,7 +51,7 @@ public class Campaign
 
     public Campaign() {
         CachedMissions = new Mission[1];
-        TrackedSpawnPoints = [];
+        currentTrackedSpawns = [];
         MetaData = CampaignMetaData.GetDefault();
     }
     /// <summary>Load a specific mission into the current mission.</summary>
@@ -59,7 +60,7 @@ public class Campaign
         if (string.IsNullOrEmpty(mission.Name))
             return;
 
-        TrackedSpawnPoints = new (Vector2, bool)[mission.Tanks.Length];
+        currentTrackedSpawns = new (Vector2, bool)[mission.Tanks.Length];
         LoadedMission = mission;
     }
     /// <summary>Load a mission already in memory by ID.</summary>
@@ -69,10 +70,10 @@ public class Campaign
 
         CurrentMissionId = id;
         if (LoadedMission.Tanks != null) {
-            TrackedSpawnPoints = new (Vector2, bool)[LoadedMission.Tanks.Length];
+            currentTrackedSpawns = new (Vector2, bool)[LoadedMission.Tanks.Length];
             for (int i = 0; i < LoadedMission.Tanks.Length; i++) {
-                TrackedSpawnPoints[i].Position = LoadedMission.Tanks[i].Position;
-                TrackedSpawnPoints[i].Alive = true;
+                currentTrackedSpawns[i].Position = LoadedMission.Tanks[i].Position;
+                currentTrackedSpawns[i].Alive = true;
             }
         }
     }
@@ -96,16 +97,16 @@ public class Campaign
 
         LoadedMission = CachedMissions[CurrentMissionId];
 
-        TrackedSpawnPoints = new (Vector2, bool)[LoadedMission.Tanks.Length];
+        currentTrackedSpawns = new (Vector2, bool)[LoadedMission.Tanks.Length];
         for (int i = 0; i < LoadedMission.Tanks.Length; i++) {
-            TrackedSpawnPoints[i].Position = LoadedMission.Tanks[i].Position;
-            TrackedSpawnPoints[i].Alive = true;
+            currentTrackedSpawns[i].Position = LoadedMission.Tanks[i].Position;
+            currentTrackedSpawns[i].Alive = true;
         }
         // run line 120 and 121 in each when i get back
     }
 
     // FIXME: not sure why this is public?
-    public (Vector2 Position, bool Alive)[] TrackedSpawnPoints { get; set; } // position of spawn, alive
+    internal static (Vector2 Position, bool Alive)[] currentTrackedSpawns { get; set; } // position of spawn, alive
 
     /// <summary>Sets up the <see cref="Mission"/> that is loaded.</summary>
     /// <param name="spawnNewSet">If true, will spawn all tanks as if it's the first time the player(s) has/have entered this mission.</param>
@@ -115,13 +116,14 @@ public class Campaign
         SceneManager.CleanupEntities();
         SceneManager.CleanupScene();
         const int roundingFactor = 5;
-        int numPlayers = 0;
+
+        bool hasSpawnedCompanion = false;
         for (int i = 0; i < LoadedMission.Tanks.Length; i++) {
             var template = LoadedMission.Tanks[i];
 
             if (spawnNewSet) {
-                TrackedSpawnPoints[i].Position = LoadedMission.Tanks[i].Position;
-                TrackedSpawnPoints[i].Alive = true;
+                currentTrackedSpawns[i].Position = LoadedMission.Tanks[i].Position;
+                currentTrackedSpawns[i].Alive = true;
             }
 
             while (template.Rotation < 0) {
@@ -137,7 +139,7 @@ public class Campaign
             var chassisRotation = MathF.Round(template.Rotation, roundingFactor);
 
             if (!template.IsPlayer) {
-                if (TrackedSpawnPoints[i].Alive) {
+                if (currentTrackedSpawns[i].Alive) {
                     var tank = template.GetAiTank();
 
                     tank.Position = template.Position;
@@ -147,9 +149,12 @@ public class Campaign
                     tank.TurretRotation = MathF.Round(-template.Rotation, roundingFactor);
                     tank.IsDestroyed = false;
                     tank.Team = template.Team;
-                    if (CampaignGlobals.ShouldMissionsProgress) {
+                    if (CampaignGlobals.ShouldMissionsProgress && !MainMenuUI.IsActive) {
                         tank.OnDestroy += () => {
-                            TrackedSpawnPoints[Array.IndexOf(TrackedSpawnPoints, TrackedSpawnPoints.First(pos => pos.Position == template.Position))].Alive = false; // make sure the tank is not spawned again
+                            var tankSpawnIndex = Array.IndexOf(currentTrackedSpawns, currentTrackedSpawns.First(pos => pos.Position == template.Position));
+
+                            if (tankSpawnIndex > -1)
+                                currentTrackedSpawns[tankSpawnIndex].Alive = false; // make sure the tank is not spawned again
                         };
                     }
                     var placement = PlacementSquare.GetFromClosest(tank.Position3D);
@@ -164,8 +169,17 @@ public class Campaign
                 }
             }
             else {
-                numPlayers++;
-                if ((Client.IsConnected() && numPlayers <= Server.CurrentClientCount) || !Client.IsConnected()) {
+                var lives = PlayerTank.Lives[template.PlayerType];
+                var isValidMPPlayer = template.PlayerType < Server.CurrentClientCount;
+                var isSinglePlayer = !Client.IsConnected();
+
+                if (lives <= 0)
+                    goto skip_player_init;
+
+                if (isSinglePlayer && template.PlayerType > 0)
+                    goto skip_player_init;
+
+                if (isValidMPPlayer || isSinglePlayer) {
                     var tank = template.GetPlayerTank();
 
                     tank.Position = template.Position;
@@ -175,45 +189,50 @@ public class Campaign
                     tank.IsDestroyed = false;
                     tank.Team = template.Team;
 
-                    if (tank.PlayerId <= Server.CurrentClientCount) {
-                        if (!LevelEditorUI.IsActive) {
-                            if (NetPlay.IsClientMatched(tank.PlayerId)) {
-                                PlayerTank.MyTeam = tank.Team;
-                                PlayerTank.MyTankType = tank.PlayerType;
-                            }
+                    // NOTE TO SELF: no more level editor checks since i'm disabling the access of the level editor while in a multiplayer context
+                    if (NetPlay.IsClientMatched(tank.PlayerId)) {
+                        PlayerTank.MyTeam = tank.Team;
+                        PlayerTank.MyTankType = tank.PlayerType;
+                    }
+
+                    // almost definitely never fails.
+                    var placeId = PlacementSquare.Placements.FindIndex(place => Vector3.Distance(place.Position, tank.Position3D) < Block.SIDE_LENGTH / 2);
+                    var placement = PlacementSquare.Placements[placeId];
+
+                    if (Difficulties.Types["AiCompanion"] && !hasSpawnedCompanion) {
+                        var companionPos = template.Position;
+
+                        var nextPlayerIdx = Array.FindIndex(LoadedMission.Tanks, t => t.IsPlayer && t.PlayerType > template.PlayerType);
+
+                        if (nextPlayerIdx > -1) {
+                            companionPos = LoadedMission.Tanks[nextPlayerIdx].Position;
                         }
-                    }
-                    else if (!LevelEditorUI.IsActive)
-                        tank.Remove(true);
-                    if (Client.IsConnected()) {
-                        if (PlayerTank.Lives[tank.PlayerId] <= 0)
-                            tank.Remove(true);
-                    }
-                    // TODO: note to self, this code above is what causes the skill issue.
-                    if (Difficulties.Types["AiCompanion"] && 
-                        (template.PlayerType == Server.CurrentClientCount + PlayerID.Red || 
-                        (Server.CurrentClientCount == 4 && template.PlayerType == PlayerID.Yellow))) {
+
                         var randomTier = AITank.PickRandomTier();
                         var tnk = new AITank(randomTier) {
                             // target = rot - pi
                             // turret =  -rot
-                            Position = template.Position,
+                            Position = companionPos,
                             Team = tank.Team,
                             ChassisRotation = MathF.Round(template.Rotation, roundingFactor),
                             DesiredChassisRotation = MathF.Round(template.Rotation, roundingFactor),
                             TurretRotation = MathF.Round(-template.Rotation, roundingFactor),
                             IsDestroyed = false,
                         };
-                        tnk.Physics.Position = template.Position / Tank.UNITS_PER_METER;
-                    }
-                    var placement = PlacementSquare.Placements.FindIndex(place => Vector3.Distance(place.Position, tank.Position3D) < Block.SIDE_LENGTH / 2);
 
-                    if (placement > -1) {
-                        PlacementSquare.Placements[placement].TankId = tank.WorldId;
-                        PlacementSquare.Placements[placement].HasBlock = false;
+                        hasSpawnedCompanion = true;
+                        // tnk.Physics.Position = template.Position / Tank.UNITS_PER_METER;
                     }
+
+                    placement.TankId = tank.WorldId;
+                    placement.HasBlock = false;
                 }
             }
+
+            // skips past this player's initialization logic
+            skip_player_init:
+            // since we need some sort of logic after a label :(
+            continue;
         }
 
         for (int b = 0; b < LoadedMission.Blocks.Length; b++) {
@@ -278,7 +297,7 @@ public class Campaign
 
         if (autoSetLoadedMission) {
             campaign.LoadMission(0); // first mission in campaign
-            campaign.TrackedSpawnPoints = new (Vector2, bool)[campaign.LoadedMission.Tanks.Length];
+            currentTrackedSpawns = new (Vector2, bool)[campaign.LoadedMission.Tanks.Length];
             PlayerTank.StartingLives = properties.StartingLives;
         }
 

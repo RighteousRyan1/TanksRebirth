@@ -186,9 +186,14 @@ public partial class AITank : Tank {
 
         GameHandler.AllTanks[index2] = this;
 
-        base.Initialize();
+        Initialize();
 
         // Props.Add(CosmeticChest.WitchHat);
+    }
+    public override void Initialize() {
+        base.Initialize();
+
+        Physics.OnCollision += Physics_OnCollision;
     }
 
     public override void ApplyDefaults(ref TankProperties properties) {
@@ -266,7 +271,7 @@ public partial class AITank : Tank {
             // NO DISPOSING FOR NOW, it causes weird BUGS with modded tanks.... WACK!
             // _tankTexture?.Dispose();
         }
-
+        Physics.OnCollision -= Physics_OnCollision; 
         base.Remove(nullifyMe);
     }
     public override void Destroy(ITankHurtContext context, bool netSend) {

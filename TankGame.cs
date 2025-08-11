@@ -48,7 +48,6 @@ namespace TanksRebirth;
 
 #pragma warning disable CS8618, CA2211
 public class TankGame : Game {
-
     // ### STRINGS ###
     public string MOTD { get; private set; }
     public static string GameDirectory { get; private set; }
@@ -175,57 +174,62 @@ public class TankGame : Game {
     }
 
     protected override void Initialize() {
-        SaveFile.Setup();
-        if (File.Exists(Path.Combine(SaveFile.Directory, SaveFile.Name)))
-            SaveFile.Deserialize();
+        try {
+            SaveFile.Setup();
+            if (File.Exists(Path.Combine(SaveFile.Directory, SaveFile.Name)))
+                SaveFile.Deserialize();
 
-        ClientLog.Write("Save file loaded.", LogType.Info);
+            ClientLog.Write("Save file loaded.", LogType.Info);
 
-        GameHandler.Initialize();
-        GameDirectory = Directory.GetCurrentDirectory();
-        CameraGlobals.Initialize(GraphicsDevice);
-        if (Debugger.IsAttached && SteamAPI.IsSteamRunning()) {
-            ClientLog.Write("Initialising SteamWorks API...", LogType.Debug);
-            SteamworksUtils.Initialize();
+            GameHandler.Initialize();
+            GameDirectory = Directory.GetCurrentDirectory();
+            CameraGlobals.Initialize(GraphicsDevice);
+            if (Debugger.IsAttached && SteamAPI.IsSteamRunning()) {
+                ClientLog.Write("Initialising SteamWorks API...", LogType.Debug);
+                SteamworksUtils.Initialize();
+            }
+            Window.Title = "Tanks! Rebirth";
+
+            CurrentSessionTimer.Start();
+            PingMenu.Initialize();
+
+            GameHandler.MapEvents();
+            ClientLog.Write($"Mapped events...", LogType.Info);
+
+            DiscordRichPresence.Load();
+            ClientLog.Write($"Loaded Discord Rich Presence...", LogType.Info);
+
+            // systems = ReflectionUtils.GetInheritedTypesOf<IGameSystem>(Assembly.GetExecutingAssembly());
+
+            GameCamera = new OrthographicCamera(0, WindowUtils.WindowWidth, WindowUtils.WindowHeight, 0f, 0.01f, 2000f);
+
+            SpriteRenderer = new(GraphicsDevice);
+
+            Graphics.PreferMultiSampling = true;
+
+            Graphics.ApplyChanges();
+
+            ClientLog.Write($"Applying changes to graphics device... ({Graphics.PreferredBackBufferWidth}x{Graphics.PreferredBackBufferHeight})", LogType.Info);
+
+            ClientLog.Write($"Loaded save data.", LogType.Info);
+
+            VanillaAchievements.InitializeToRepository();
+
+            IntermissionSystem.InitializeAllStartupLogic();
+
+            TextureGlobals.Populate();
+
+            VanillaAchievementPopupHandler = new(VanillaAchievements.Repository);
+
+            AIManager.AIThread1.Start();
+            AIManager.AIThread2.Start();
+            AIManager.AIThread3.Start();
+
+            base.Initialize();
         }
-        Window.Title = "Tanks! Rebirth";
-
-        CurrentSessionTimer.Start();
-        PingMenu.Initialize();
-
-        GameHandler.MapEvents();
-        ClientLog.Write($"Mapped events...", LogType.Info);
-
-        DiscordRichPresence.Load();
-        ClientLog.Write($"Loaded Discord Rich Presence...", LogType.Info);
-
-        // systems = ReflectionUtils.GetInheritedTypesOf<IGameSystem>(Assembly.GetExecutingAssembly());
-
-        GameCamera = new OrthographicCamera(0, WindowUtils.WindowWidth, WindowUtils.WindowHeight, 0f, 0.01f, 2000f);
-
-        SpriteRenderer = new(GraphicsDevice);
-
-        Graphics.PreferMultiSampling = true;
-
-        Graphics.ApplyChanges();
-
-        ClientLog.Write($"Applying changes to graphics device... ({Graphics.PreferredBackBufferWidth}x{Graphics.PreferredBackBufferHeight})", LogType.Info);
-
-        ClientLog.Write($"Loaded save data.", LogType.Info);
-
-        VanillaAchievements.InitializeToRepository();
-
-        IntermissionSystem.InitializeAllStartupLogic();
-
-        TextureGlobals.Populate();
-
-        VanillaAchievementPopupHandler = new(VanillaAchievements.Repository);
-
-        AIManager.AIThread1.Start();
-        AIManager.AIThread2.Start();
-        AIManager.AIThread3.Start();
-
-        base.Initialize();
+        catch (Exception e) when (!Debugger.IsAttached) {
+            ReportError(e);
+        }
     }
     protected override void OnExiting(object sender, EventArgs args) {
         ClientLog.Write($"Handling termination process...", LogType.Info);
@@ -361,191 +365,192 @@ public class TankGame : Game {
             , default);
     }
     protected override void LoadContent() {
-        PreloadContent();
-        var s = Stopwatch.StartNew();
+        //try {
+            PreloadContent();
+            var s = Stopwatch.StartNew();
 
-        RuntimeData.MainThreadId = Environment.CurrentManagedThreadId;
+            RuntimeData.MainThreadId = Environment.CurrentManagedThreadId;
 
-        OrthographicCamera = new(0, 0, 1920, 1080, -2000, 5000);
-        SpectatorCamera = new(MathHelper.ToRadians(100), GraphicsDevice.Viewport.AspectRatio, 0.1f, 5000f);
-        PerspectiveCamera = new(MathHelper.ToRadians(90), GraphicsDevice.Viewport.AspectRatio, 0.1f, 5000f);
+            OrthographicCamera = new(0, 0, 1920, 1080, -2000, 5000);
+            SpectatorCamera = new(MathHelper.ToRadians(100), GraphicsDevice.Viewport.AspectRatio, 0.1f, 5000f);
+            PerspectiveCamera = new(MathHelper.ToRadians(90), GraphicsDevice.Viewport.AspectRatio, 0.1f, 5000f);
 
-        Task.Run(() => {
-            RuntimeData.CompSpecs = ComputerSpecs.GetSpecs(out bool error);
+            Task.Run(() => {
+                RuntimeData.CompSpecs = ComputerSpecs.GetSpecs(out bool error);
 
-            if (error) {
-                ClientLog.Write(
-                    "Unable to load computer specs: Error.",
-                    LogType.Warn);
-            }
-            else {
-                ClientLog.Write($"CPU: {RuntimeData.CompSpecs.CPU}", LogType.Info);
-                ClientLog.Write($"GPU: {RuntimeData.CompSpecs.GPU}", LogType.Info);
-                ClientLog.Write($"Physical Memory (RAM): {RuntimeData.CompSpecs.RAM}", LogType.Info);
-            }
+                if (error) {
+                    ClientLog.Write(
+                        "Unable to load computer specs: Error.",
+                        LogType.Warn);
+                }
+                else {
+                    ClientLog.Write($"CPU: {RuntimeData.CompSpecs.CPU}", LogType.Info);
+                    ClientLog.Write($"GPU: {RuntimeData.CompSpecs.GPU}", LogType.Info);
+                    ClientLog.Write($"Physical Memory (RAM): {RuntimeData.CompSpecs.RAM}", LogType.Info);
+                }
 
-            if (!RuntimeData.CompSpecs.Equals(default) && !error) {
-                var profiler = new SpecAnalysis(RuntimeData.CompSpecs.GPU, RuntimeData.CompSpecs.CPU, RuntimeData.CompSpecs.RAM);
+                if (!RuntimeData.CompSpecs.Equals(default) && !error) {
+                    var profiler = new SpecAnalysis(RuntimeData.CompSpecs.GPU, RuntimeData.CompSpecs.CPU, RuntimeData.CompSpecs.RAM);
 
-                profiler.Analyze(false, out var ramr, out var gpur, out var cpur);
+                    profiler.Analyze(false, out var ramr, out var gpur, out var cpur);
 
-                ChatSystem.SendMessage(ramr, Color.White);
-                ChatSystem.SendMessage(gpur, Color.White);
-                ChatSystem.SendMessage(cpur, Color.White);
+                    ChatSystem.SendMessage(ramr, Color.White);
+                    ChatSystem.SendMessage(gpur, Color.White);
+                    ChatSystem.SendMessage(cpur, Color.White);
 
-                ChatSystem.SendMessage(profiler.ToString(), Color.Brown);
+                    ChatSystem.SendMessage(profiler.ToString(), Color.Brown);
 
-                ClientLog.Write("Sucessfully analyzed hardware.", LogType.Info);
-            }
-            else {
-                ClientLog.Write("Failed to analyze hardware.", LogType.Warn);
-            }
-        });
-
-        // I forget why this check is needed...
-        ChatSystem.Initialize();
-
-        _cachedState = GraphicsDevice.RasterizerState;
-
-        UIElement.UIPanelBackground = GameResources.GetGameResource<Texture2D>("Assets/UIPanelBackground");
-
-        Thunder.SoftRain = new OggAudio("Content/Assets/sounds/ambient/soft_rain.ogg");
-        Thunder.SoftRain.Instance.Volume = 0;
-        Thunder.SoftRain.Instance.IsLooped = true;
-
-        OnFocusLost += TankGame_OnFocusLost!;
-        OnFocusRegained += TankGame_OnFocusRegained!;
-
-        TextureGlobals.CreateDynamicTexturesAsync(GraphicsDevice);
-        
-        FontGlobals.RebirthFontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/en_US.ttf"));
-        FontGlobals.RebirthFontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/ja_JP.ttf"));
-        FontGlobals.RebirthFontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/es_ES.ttf"));
-        FontGlobals.RebirthFontSystem.AddFont(File.ReadAllBytes(@"Content/Assets/fonts/ru_RU.ttf"));
-
-        ClientLog.Write($"Loaded fonts.", LogType.Info);
-
-        FontGlobals.RebirthFont = FontGlobals.RebirthFontSystem.GetFont(35);
-        FontGlobals.RebirthFontLarge = FontGlobals.RebirthFontSystem.GetFont(120);
-
-        if (!File.Exists(Path.Combine(SaveDirectory, "settings.json"))) {
-            Settings = new();
-            SettingsHandler = new(Settings, Path.Combine(SaveDirectory, "settings.json"));
-            JsonSerializerOptions opts = new() {
-                WriteIndented = true
-            };
-            SettingsHandler.Serialize(opts, true);
-        }
-        else {
-            SettingsHandler = new(Settings, Path.Combine(SaveDirectory, "settings.json"));
-            Settings = SettingsHandler.Deserialize();
-        }
-        RuntimeData.LaunchTime = DateTime.Now;
-        RuntimeData.IsSouthernHemi = RegionUtils.IsSouthernHemisphere(RegionInfo.CurrentRegion.EnglishName);
-
-        if (RuntimeData.IsSouthernHemi)
-            ClientLog.Write("User is in the southern hemisphere.", LogType.Info);
-        else
-            ClientLog.Write("User is in the northern hemisphere.", LogType.Info);
-
-        ClientLog.Write($"Loaded user settings.", LogType.Info);
-
-        #region Config Initialization
-
-        Graphics.SynchronizeWithVerticalRetrace = Settings.Vsync;
-        WindowUtils.ChangeWindowKind(Settings.WindowKind);
-        PlayerTank.controlUp.ForceReassign(Settings.UpKeybind);
-        PlayerTank.controlDown.ForceReassign(Settings.DownKeybind);
-        PlayerTank.controlLeft.ForceReassign(Settings.LeftKeybind);
-        PlayerTank.controlRight.ForceReassign(Settings.RightKeybind);
-        PlayerTank.controlMine.ForceReassign(Settings.MineKeybind);
-        GameScene.Theme = Settings.GameTheme;
-
-        /*if (!IsSouthernHemi ? LaunchTime.Month != 12 : LaunchTime.Month != 7)
-            MapRenderer.Theme = Settings.GameTheme;
-        else
-            MapRenderer.Theme = MapTheme.Christmas;*/
-
-        TankFootprint.ShouldTracksFade = Settings.FadeFootprints;
-
-        Graphics.PreferredBackBufferWidth = Settings.ResWidth;
-        Graphics.PreferredBackBufferHeight = Settings.ResHeight;
-
-        ClientLog.Write($"Applied user settings.", LogType.Info);
-
-        Tank.SetAssetNames();
-        TankMusicSystem.SetAssetAssociations();
-        GameScene.LoadTexturePack(Settings.MapPack);
-        TankMusicSystem.LoadSoundPack(Settings.MusicPack);
-        Tank.LoadTexturePack(Settings.TankPack);
-        Graphics.ApplyChanges();
-
-        Language.LoadLang(Settings.Language, out GameLanguage);
-        // Language.GenerateLocalizationTemplate("en_US.loc");
-
-        Achievement.MysteryTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/achievement/secret");
-    
-        GameResources.EnsurePreloadedAssetsArePreloaded();
-        GameHandler.SetupGraphics();
-        GameUI.Initialize();
-        MainMenuUI.InitializeUI();
-        MainMenuUI.InitializeBasics();
-
-        // this is achievements stuff
-        // TODO: fucking do it mate
-        // AchievementsUI.GetVanillaAchievementsToList();
-        // AchievementsUI.AchievementsPerRow = 10;
-        // AchievementsUI.InitBtns();
-
-        #endregion
-
-        /*TankFootprint.DecalHandler.Effect = new(GraphicsDevice)
-        {
-            World = Matrix.CreateRotationX(MathHelper.PiOver2) * Matrix.CreateTranslation(0, 0.05f, 0),
-            View = GameView,
-            Projection = GameProjection,
-        };*/
-        MainMenuUI.MenuState = MainMenuUI.UIState.PrimaryMenu;
-
-        MainMenuUI.Open();
-
-        ModLoader.LoadMods();
-
-        if (ModLoader.LoadingMods) {
-            MainMenuUI.MenuState = MainMenuUI.UIState.LoadingMods;
-            Task.Run(async () => {
-                while (ModLoader.LoadingMods)
-                    await Task.Delay(50).ConfigureAwait(false);
-                MainMenuUI.MenuState = MainMenuUI.UIState.PrimaryMenu;
+                    ClientLog.Write("Sucessfully analyzed hardware.", LogType.Info);
+                }
+                else {
+                    ClientLog.Write("Failed to analyze hardware.", LogType.Warn);
+                }
             });
-        }
 
-        ClientLog.Write("Running in directory: " + GameDirectory, LogType.Info);
+            // I forget why this check is needed...
+            ChatSystem.Initialize();
 
-        ClientLog.Write($"Content loaded in {s.Elapsed}.", LogType.Debug);
-        ClientLog.Write($"DebugMode: {Debugger.IsAttached}", LogType.Debug);
+            _cachedState = GraphicsDevice.RasterizerState;
 
-        s.Stop();
+            UIElement.UIPanelBackground = GameResources.GetGameResource<Texture2D>("Assets/UIPanelBackground");
 
-        // it isnt really an autoupdater tho.
-        Task.Run(() => {
-            ClientLog.Write("Checking for update...", LogType.Info);
-            AutoUpdater = new("https://github.com/RighteousRyan1/TanksRebirth", RuntimeData.GameVersion);
+            Thunder.SoftRain = new OggAudio("Content/Assets/sounds/ambient/soft_rain.ogg");
+            Thunder.SoftRain.Instance.Volume = 0;
+            Thunder.SoftRain.Instance.IsLooped = true;
 
-            if (!AutoUpdater.IsOutdated) {
-                ClientLog.Write("Game is up to date.", LogType.Info);
-                return;
+            OnFocusLost += TankGame_OnFocusLost!;
+            OnFocusRegained += TankGame_OnFocusRegained!;
+
+            TextureGlobals.CreateDynamicTexturesAsync(GraphicsDevice);
+
+            if (!File.Exists(Path.Combine(SaveDirectory, "settings.json"))) {
+                Settings = new();
+                SettingsHandler = new(Settings, Path.Combine(SaveDirectory, "settings.json"));
+                JsonSerializerOptions opts = new() {
+                    WriteIndented = true
+                };
+                SettingsHandler.Serialize(opts, true);
+            }
+            else {
+                SettingsHandler = new(Settings, Path.Combine(SaveDirectory, "settings.json"));
+                Settings = SettingsHandler.Deserialize();
             }
 
-            ClientLog.Write($"Game is out of date (current={RuntimeData.GameVersion}, recent={AutoUpdater.GetRecentVersion()}).", LogType.Warn);
-            //CommandGlobals.IsUpdatePending = true;
-            ChatSystem.SendMessage($"Outdated game version detected (current={RuntimeData.GameVersion}, recent={AutoUpdater.GetRecentVersion()}).", Color.Red);
-            //ChatSystem.SendMessage("Type /update to update the game and automatically restart.", Color.Red);
-            SoundPlayer.SoundError();
-        });
-        PlaceSecrets();
+            FontGlobals.LoadFont(Settings.Language);
+            FontGlobals.RebirthFont = FontGlobals.RebirthFontSystem.GetFont(35);
+            FontGlobals.RebirthFontLarge = FontGlobals.RebirthFontSystem.GetFont(120);
+            ClientLog.Write($"Loaded fonts.", LogType.Info);
 
-        SceneManager.GameLight.Apply(false);
+            RuntimeData.LaunchTime = DateTime.Now;
+            RuntimeData.IsSouthernHemi = RegionUtils.IsSouthernHemisphere(RegionInfo.CurrentRegion.EnglishName);
+
+            if (RuntimeData.IsSouthernHemi)
+                ClientLog.Write("User is in the southern hemisphere.", LogType.Info);
+            else
+                ClientLog.Write("User is in the northern hemisphere.", LogType.Info);
+
+            ClientLog.Write($"Loaded user settings.", LogType.Info);
+
+            #region Config Initialization
+
+            Graphics.SynchronizeWithVerticalRetrace = Settings.Vsync;
+            WindowUtils.ChangeWindowKind(Settings.WindowKind);
+            PlayerTank.controlUp.ForceReassign(Settings.UpKeybind);
+            PlayerTank.controlDown.ForceReassign(Settings.DownKeybind);
+            PlayerTank.controlLeft.ForceReassign(Settings.LeftKeybind);
+            PlayerTank.controlRight.ForceReassign(Settings.RightKeybind);
+            PlayerTank.controlMine.ForceReassign(Settings.MineKeybind);
+            GameScene.Theme = Settings.GameTheme;
+
+            /*if (!IsSouthernHemi ? LaunchTime.Month != 12 : LaunchTime.Month != 7)
+                MapRenderer.Theme = Settings.GameTheme;
+            else
+                MapRenderer.Theme = MapTheme.Christmas;*/
+
+            TankFootprint.ShouldTracksFade = Settings.FadeFootprints;
+
+            Graphics.PreferredBackBufferWidth = Settings.ResWidth;
+            Graphics.PreferredBackBufferHeight = Settings.ResHeight;
+
+            ClientLog.Write($"Applied user settings.", LogType.Info);
+
+            Tank.SetAssetNames();
+            TankMusicSystem.SetAssetAssociations();
+            GameScene.LoadTexturePack(Settings.MapPack);
+            TankMusicSystem.LoadSoundPack(Settings.MusicPack);
+            Tank.LoadTexturePack(Settings.TankPack);
+            Graphics.ApplyChanges();
+
+            Language.LoadLang(Settings.Language, out GameLanguage);
+            // Language.GenerateLocalizationTemplate("en_US.loc");
+
+            Achievement.MysteryTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/ui/achievement/secret");
+
+            GameResources.EnsurePreloadedAssetsArePreloaded();
+            GameHandler.SetupGraphics();
+            GameUI.Initialize();
+            MainMenuUI.InitializeUI();
+            MainMenuUI.InitializeBasics();
+
+            // this is achievements stuff
+            // TODO: fucking do it mate
+            // AchievementsUI.GetVanillaAchievementsToList();
+            // AchievementsUI.AchievementsPerRow = 10;
+            // AchievementsUI.InitBtns();
+
+            #endregion
+
+            /*TankFootprint.DecalHandler.Effect = new(GraphicsDevice)
+            {
+                World = Matrix.CreateRotationX(MathHelper.PiOver2) * Matrix.CreateTranslation(0, 0.05f, 0),
+                View = GameView,
+                Projection = GameProjection,
+            };*/
+            MainMenuUI.MenuState = MainMenuUI.UIState.PrimaryMenu;
+
+            MainMenuUI.Open();
+
+            ModLoader.LoadMods();
+
+            if (ModLoader.LoadingMods) {
+                MainMenuUI.MenuState = MainMenuUI.UIState.LoadingMods;
+                Task.Run(async () => {
+                    while (ModLoader.LoadingMods)
+                        await Task.Delay(50).ConfigureAwait(false);
+                    MainMenuUI.MenuState = MainMenuUI.UIState.PrimaryMenu;
+                });
+            }
+
+            ClientLog.Write("Running in directory: " + GameDirectory, LogType.Info);
+
+            ClientLog.Write($"Content loaded in {s.Elapsed}.", LogType.Debug);
+            ClientLog.Write($"DebugMode: {Debugger.IsAttached}", LogType.Debug);
+
+            s.Stop();
+
+            // it isnt really an autoupdater tho.
+            Task.Run(() => {
+                ClientLog.Write("Checking for update...", LogType.Info);
+                AutoUpdater = new("https://github.com/RighteousRyan1/TanksRebirth", RuntimeData.GameVersion);
+
+                if (!AutoUpdater.IsOutdated) {
+                    ClientLog.Write("Game is up to date.", LogType.Info);
+                    return;
+                }
+
+                ClientLog.Write($"Game is out of date (current={RuntimeData.GameVersion}, recent={AutoUpdater.GetRecentVersion()}).", LogType.Warn);
+                //CommandGlobals.IsUpdatePending = true;
+                ChatSystem.SendMessage($"Outdated game version detected (current={RuntimeData.GameVersion}, recent={AutoUpdater.GetRecentVersion()}).", Color.Red);
+                //ChatSystem.SendMessage("Type /update to update the game and automatically restart.", Color.Red);
+                SoundPlayer.SoundError();
+            });
+            PlaceSecrets();
+
+            SceneManager.GameLight.Apply(false);
+        //}
+        //catch (Exception e) when (!Debugger.IsAttached) {
+        //    ReportError(e);
+        //}
     }
     // FIXME: this method is a clusterfuck
     protected override void Update(GameTime gameTime) {
@@ -572,24 +577,30 @@ public class TankGame : Game {
                 }
             }*/
 
-            if (InputUtils.AreKeysJustPressed(Keys.T, Keys.I)) {
-                if (WiimoteSystem.IsConnected)
-                    WiimoteSystem.TryDisconnect();
-                else
-                    WiimoteSystem.TryConnect();
-            }
+            if (InputUtils.AreKeysJustPressed(Keys.M, Keys.O, Keys.T, Keys.E)) {
+                if (WiimoteSystem.IsConnected) {
+                    bool disconnected = WiimoteSystem.TryDisconnect();
 
-            if (WiimoteSystem.IsConnected) {
-                // Mouse.SetPosition(Mouse.GetState().X + (int)WiimoteSystem.Motion.X, Mouse.GetState().Y + (int)WiimoteSystem.Motion.Z);
-            }
+                    if (disconnected)
+                        ChatSystem.SendMessage("Wiimote disconnected.", Color.Lime);
+                    else
+                        ChatSystem.SendMessage("Wiimote cannot disconnect.", Color.Red);
+                }
+                else {
+                    bool connected = WiimoteSystem.TryConnect();
 
+                    if (connected)
+                        ChatSystem.SendMessage("Wiimote connected.", Color.Lime);
+                    else
+                        ChatSystem.SendMessage("Wiimote cannot connect.", Color.Red);
+                }
+            }
             HandleLogic(gameTime);
 
-            if (MainThreadTasks.TryDequeue(out var action)) {
+            if (MainThreadTasks.TryDequeue(out var action))
                 action.Invoke();
-            }
-        }
-        catch (Exception e) when (!Debugger.IsAttached) {
+
+        } catch (Exception e) when (!Debugger.IsAttached) {
             ReportError(e, false, false);
 
             MainMenuUI.Theme.Volume = 0f;

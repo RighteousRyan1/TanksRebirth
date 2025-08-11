@@ -11,11 +11,6 @@ using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.Systems.AI; 
 
-/// <summary>The kind of pivot entered into a pivot queue.</summary>
-public enum PivotType {
-    RandomTurn = 2,
-    NavTurn = 1,
-}
 public partial class AITank {
     public bool IsTooCloseToObstacle;
 
@@ -29,7 +24,7 @@ public partial class AITank {
     // random movements do not happen until this queue is empty
     // random turns SHOULD BE (but not now) added to the pivot queue
     /// <summary>A queue of movements that will be split into <see cref="AIParameters.MaxQueuedMovements"/> sub-turns, which are entered into <see cref="SubPivotQueue"/>.</summary>
-    public Queue<(Vector2 Direction, PivotType Type)> PivotQueue = [];
+    public Queue<Vector2> PivotQueue = [];
     /// <summary>The most recently removed <see cref="PivotQueue"/> entry, divided into <see cref="AIParameters.MaxQueuedMovements"/> turns.</summary>
     public Queue<Vector2> SubPivotQueue = [];
 
@@ -75,6 +70,7 @@ public partial class AITank {
             Avoid(averageDangerPosition);
         }
 
+        // something about this code (the order, probably) causes tanks to kind of stare at walls temporarily
         // only generates a subqueue if there are no large pivot queues and there are not already a subqueue
         TryGenerateSubQueue();
 
@@ -90,6 +86,7 @@ public partial class AITank {
     public void DoBlockNav() {
         // dont navigate if running away from something
         if (IsSurviving) return;
+        if (SubPivotQueue.Count > 0) return;
         //uint framesLookAhead = AiParams.ObstacleAwarenessMovement / 2;
         //var tankDirection = Vector2.UnitY.Rotate(TargetTankRotation);
 
@@ -150,18 +147,8 @@ public partial class AITank {
 
         // old = Vector2.UnitY.Rotate(-rayNormal.ToRotation() - MathHelper.PiOver2);
         var movementDirection = Vector2.UnitY.Rotate(ChassisRotation + vecRot);
-
-        // determines if there is a NavTurn in the queue
-        bool hasNavTurn = false;
-        foreach (var p in PivotQueue) {
-            if (p.Type != PivotType.NavTurn) continue;
-            hasNavTurn = true;
-            break;
-        }
-
-        if (!hasNavTurn) {
-            PivotQueue.Enqueue((movementDirection, PivotType.NavTurn));
-        }
+        
+        PivotQueue.Enqueue(movementDirection);
     }
     /// <summary>Makes this <see cref="AITank"/> perform a random turn.</summary>
     public void DoRandomMove() {
@@ -240,7 +227,7 @@ public partial class AITank {
 
         for (int i = 0; i < desiredCuts; i++) {
             //SubPivotQueue.Add(Vector2.UnitY.Rotate(MathHelper.PiOver2 * i));
-            SubPivotQueue.Enqueue(MathUtils.Slerp2D(Vector2.UnitY.Rotate(ChassisRotation), pivot.Direction, 1f / desiredCuts * (i + 1)));
+            SubPivotQueue.Enqueue(MathUtils.Slerp2D(Vector2.UnitY.Rotate(ChassisRotation), pivot, 1f / desiredCuts * (i + 1)));
         }
         // drop the first element since this works as a queue under the hood
         // PivotQueue.RemoveAt(0);
@@ -256,6 +243,15 @@ public partial class AITank {
 
         // drop the first element again, but for the sub-queue
         // SubPivotQueue.RemoveAt(0);
+
+        return true;
+    }
+
+    // makes the tank turn if it happens to run into a block
+    protected static bool Physics_OnCollision(Fixture sender, Fixture other, tainicom.Aether.Physics2D.Dynamics.Contacts.Contact contact) {
+        if (other.Body.Tag is Block) {
+            // contact.Manifold.LocalNormal
+        }
 
         return true;
     }

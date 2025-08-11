@@ -83,14 +83,17 @@ public partial class AITank {
 
         // set our new random window, this gets set
         Behaviors[3].Value = 0;
+        CurrentRandomMineLay = Client.ClientRandom.Next(Parameters.RandomTimerMinMine, Parameters.RandomTimerMaxMine);
 
         if (Properties.MineLimit <= 0) return;
         if (IsSurviving) return;
 
-        CurrentRandomMineLay = Client.ClientRandom.Next(Parameters.RandomTimerMinMine, Parameters.RandomTimerMaxMine);
-
         // check for friendly tanks nearby, if there are any, don't even attempt to lay a mine
-        if (TanksNearMineAwareness.Any(x => x.Team == Team && x.Team != TeamID.NoTeam)) return;
+        for (int i = 0; i < TanksNearMineAwareness.Count; i++) {
+            var tank = TanksNearMineAwareness[i];
+            if (tank.IsOnSameTeamAs(Team))
+                return;
+        }
 
         bool nearDestructible = false;
 

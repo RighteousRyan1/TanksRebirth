@@ -24,7 +24,6 @@ public enum WiimoteButton {
 }
 public static class WiimoteSystem {
     static Wiimote? _wm;
-
     public static WiimoteState State => _wm.WiimoteState;
     public static ButtonState PreviousButtons { get; private set; }
     public static bool IsConnected { get; private set; }
@@ -44,7 +43,7 @@ public static class WiimoteSystem {
 
             _wm.SetLEDs(1);
             _wm.SetReportType(InputReport.IRExtensionAccel, true);
-            _wm.SetRumble(true);
+            // _wm.SetRumble(true);
 
             _wm.WiimoteChanged += UpdateWiimoteState;
             _wm.WiimoteExtensionChanged += WiimoteExtChanged;
@@ -57,8 +56,8 @@ public static class WiimoteSystem {
             return false;
         }
     }
-    public static void TryDisconnect() {
-        if (!IsConnected) return;
+    public static bool TryDisconnect() {
+        if (!IsConnected) return false;
 
         _wm?.SetLEDs(0);
         _wm.WiimoteChanged -= UpdateWiimoteState;
@@ -69,6 +68,8 @@ public static class WiimoteSystem {
         IsConnected = false;
 
         TankGame.ClientLog.Write("Wiimote disconnected successfully.", LogType.Info);
+
+        return true;
     }
 
     static void WiimoteExtChanged(object? sender, WiimoteExtensionChangedEventArgs e) {

@@ -35,6 +35,15 @@ public enum PlayerInput {
     Gamepad,
     Wiimote
 }
+public ref struct PlayerBinds {
+    public Keybind ControlUp;
+    public Keybind ControlDown;
+    public Keybind ControlLeft;
+    public Keybind ControlRight;
+
+    public Keybind ControlMine;
+    public Keybind ToggleShootPath;
+}
 public class PlayerTank : Tank {
     private static bool _justCenteredMouse = false;
     #region The Rest
@@ -623,7 +632,7 @@ public class PlayerTank : Tank {
         // a bit hardcoded but whatever
         bool needClarification = (!MainMenuUI.IsActive && !LevelEditorUI.IsActive && IntermissionHandler.TankFunctionWait > 0) || MainMenuUI.MenuState == MainMenuUI.UIState.Mulitplayer;
 
-        if (needClarification) {
+        if (needClarification && PlayerId < Server.CurrentClientCount) {
             var playerColor = PlayerID.PlayerTankColors[PlayerType];
             var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 50).ToResolution();
 
@@ -643,6 +652,7 @@ public class PlayerTank : Tank {
             // var p = GameHandler.AllPlayerTanks;
             //string pText = "nerd";
             var scale = 0.3f;
+
             string pText = Client.IsConnected() ? Server.ConnectedClients[PlayerId].Name : $"P{PlayerId + 1}"; // heeheeheeha
 
             TankGame.SpriteRenderer.Draw(tex1, pos, null, Color.White, rotation, Anchor.BottomCenter.GetAnchor(tex1.Size()), scale.ToResolution(), default, default);

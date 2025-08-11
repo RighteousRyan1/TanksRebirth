@@ -489,7 +489,8 @@ public abstract class Tank {
                 Speed = Properties.MaxSpeed;
         }
         else
-            Speed *= Properties.Deceleration * (1f - RuntimeData.DeltaTime);
+            // used to be 1f - DeltaTime
+            Speed *= Properties.Deceleration * RuntimeData.DeltaTime;
 
         // bigkitty told me that stuns instantly apply zero-velocity
         if (CurShootStun > 0 || CurMineStun > 0 || Properties.Stationary || (!CampaignGlobals.InMission && !MainMenuUI.IsActive)) {

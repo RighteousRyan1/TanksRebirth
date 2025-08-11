@@ -6,12 +6,13 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 
 - Added Wii remote support, check the [guide](https://github.com/RighteousRyan1/TanksRebirth/wiki/Wii-Remote-Support) on how to use one
 	- Also allows the use of a nunchuk
-- Made the game take advantage of multiple threads! If your CPU has multiple threads (hopefully it does), the game should now run better under higher workloads, and just overall better.
+- Made the game take advantage of multiple threads! If your CPU has multiple threads (hopefully it does), the game should now run better under higher workloads, and just overall better
 - Added slight pitch shifting in many game-related sound effects
 
 # Changes
 
 - Increased the maximum tank count to 60
+- Made mines not destroy everything instantly, but rather grow, similar to the original
 
 # Changes Important for Modders
 
@@ -27,7 +28,6 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 
 - [ ] Campaign fail/success display
 - [ ] Tank tread hyper-optimization (and visual re-haul)
-- [ ] Wiimote support
 - [ ] Real-time multiplayer stats
 
 PLEASE, if you find anything wrong, go to my [discord](https://discord.gg/KhfzvbrrKx) server and report bugs in the #bugs 

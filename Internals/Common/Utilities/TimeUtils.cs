@@ -27,7 +27,7 @@ public static class TimeUtils
 
         return $"{days}{hours}{mins}{secs}";
     }
-    public static string StringFormatCustom(this TimeSpan span, string between)
+    public static string StringFormatCustom(this TimeSpan span, char between)
     {
         string days = span.Days == 0 ? "" : (span.Days == 1 ? $"{span.Days}{between}" : $"{span.Days}{between}");
         string hours = span.Hours == 0 ? "" : (span.Hours == 1 ? $"{span.Hours}{between}" : $"{span.Hours}{between}");
