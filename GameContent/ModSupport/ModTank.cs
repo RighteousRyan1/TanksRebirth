@@ -95,7 +95,8 @@ public class ModTank : ILoadable, IModContent {
         for (int i = 0; i < _music.Count; i++) {
             _music[i].Stop();
             _music[i].BackingAudio.Dispose();
-            TankMusicSystem.Audio.Remove($"{name.ToLower()}{i + 1}");
+            var audioName = _music.Count > 1 ? $"{name.ToLower()}{i + 1}" : name.ToLower();
+            TankMusicSystem.Audio.Remove(audioName);
         }
         Tank.Assets.Remove("tank_" + name.ToLower());
     }

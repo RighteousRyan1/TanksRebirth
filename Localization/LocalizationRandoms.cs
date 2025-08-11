@@ -26,7 +26,6 @@ namespace TanksRebirth.Localization
             "Stevie please fix the game",
             "Are you crazy?! Are you out of your mind?!",
             "Thanks BigKitty1011 for the amazing crown!",
-            "Thanks BigKitty1011 for literally all other models outside of the vanilla game...",
             "Doesn't include gambling!",
             "Be sure not to erase your data unless there is an important update!",
             "Do not look at your memory usage...",

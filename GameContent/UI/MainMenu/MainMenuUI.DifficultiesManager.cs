@@ -324,15 +324,14 @@ public static partial class MainMenuUI {
 
         // make all buttons not-interactable for non-host clients.
     }
-    private static void ArrangeDifficultyButtons() {
-
+    static void ArrangeDifficultyButtons() {
         const int maxRowsPerColumn = 12;
         Vector2 buttonSize = new Vector2(300, 40);
         float padding = 20f;
         int totalButtons = AllDifficultyButtons.Count;
         int columnCount = (int)Math.Ceiling(totalButtons / (float)maxRowsPerColumn);
 
-        // Get total width of all columns combined (scaled after ToResolutionX)
+        // gets the total width of all columns combined (scaled after ToResolutionX)
         //float totalWidth = (buttonSize.X * columnCount + padding * (columnCount - 1)).ToResolutionX();
         float totalWidth = columnCount * buttonSize.X + (columnCount + 1) * padding;
         float startX = totalWidth / 2f; //(WindowUtils.WindowWidth - totalWidth) / 2f;

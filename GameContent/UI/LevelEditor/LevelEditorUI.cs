@@ -230,7 +230,7 @@ public static partial class LevelEditorUI {
         _initialized = true;
 
         AddMissionBtn = new UITextButton("+", FontGlobals.RebirthFont, Color.White, () => Vector2.One.ToResolution()) {
-            Tooltip = "Insert a blank mission after the currently selected mission."
+            Tooltip = TankGame.GameLanguage.AddMissionFlavor
         };
         AddMissionBtn.SetDimensions(
             () => new Vector2(_missionButtonScissor.X + 15.ToResolutionX(), _missionButtonScissor.Y + _missionButtonScissor.Height + 5.ToResolutionY()),
@@ -241,7 +241,7 @@ public static partial class LevelEditorUI {
         _listModifyButtons.Add(AddMissionBtn);
 
         RemoveMissionBtn = new UITextButton("-", FontGlobals.RebirthFont, Color.White, () => Vector2.One.ToResolution()) {
-            Tooltip = "Remove this mission from the missions list."
+            Tooltip = TankGame.GameLanguage.RemoveMissionFlavor
         };
         RemoveMissionBtn.SetDimensions(
             () => new Vector2(AddMissionBtn.Position.X + AddMissionBtn.Size.X, AddMissionBtn.Position.Y),
@@ -252,7 +252,7 @@ public static partial class LevelEditorUI {
         _listModifyButtons.Add(RemoveMissionBtn);
 
         MoveMissionUp = new UITextButton("v", FontGlobals.RebirthFont, Color.White, () => Vector2.One.ToResolution()) {
-            Tooltip = "Swap the currently selected mission with the one above it.",
+            Tooltip = TankGame.GameLanguage.MoveMissionUpFlavor,
             TextRotation = MathHelper.Pi
         };
         MoveMissionUp.SetDimensions(
@@ -262,7 +262,7 @@ public static partial class LevelEditorUI {
         _listModifyButtons.Add(MoveMissionUp);
 
         MoveMissionDown = new UITextButton("v", FontGlobals.RebirthFont, Color.White, () => Vector2.One.ToResolution()) {
-            Tooltip = "Swap the currently selected mission with the one below it.",
+            Tooltip = TankGame.GameLanguage.MoveMissionDownFlavor
         };
         MoveMissionDown.SetDimensions(
             () => new(MoveMissionUp.Position.X + MoveMissionUp.Size.X, AddMissionBtn.Position.Y),
@@ -406,8 +406,7 @@ public static partial class LevelEditorUI {
                 }
             }
         };
-        // TODO: non-windows support. i am lazy. fuck this. also localize bozo
-        LoadLevel.Tooltip = "Will open a file dialog for\nyou to choose what mission/campaign to load.";
+        LoadLevel.Tooltip = TankGame.GameLanguage.LoadMissionFlavor;
         InitializeSaveMenu();
         SetLevelEditorVisibility(false);
     }

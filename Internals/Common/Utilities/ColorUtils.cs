@@ -10,9 +10,38 @@ namespace TanksRebirth.Internals.Common.Utilities;
 
 public static class ColorUtils
 {
-    public static Color[] AllColors { get; } = typeof(Color).GetProperties(BindingFlags.Static | BindingFlags.Public).Select(x => (Color)x.GetValue(null)!).ToArray();
+    public static Color[] AllColors { get; } = [.. typeof(Color).GetProperties(BindingFlags.Static | BindingFlags.Public).Select(x => (Color)x.GetValue(null)!)];
     public static Color[] BrightColors { get; } = [.. AllColors.Where(x => GetLuminosity(x) > 0.33f)];
     public static Color DiscoPartyColor => HsvToRgb(RuntimeData.UpdateCount % 255 / 255f * 360, 1, 1);
+
+    /// <summary>Returns the average color of a given <see cref="Texture2D"/>.</summary>
+    public static Color GetAverageColor(Texture2D texture) {
+        ArgumentNullException.ThrowIfNull(texture);
+
+        Color[] pixels = new Color[texture.Width * texture.Height];
+        texture.GetData(pixels);
+
+        long totalR = 0;
+        long totalG = 0;
+        long totalB = 0;
+        long totalA = 0;
+
+        foreach (var pixel in pixels) {
+            totalR += pixel.R;
+            totalG += pixel.G;
+            totalB += pixel.B;
+            totalA += pixel.A;
+        }
+
+        int pixelCount = pixels.Length;
+
+        return new Color(
+            (byte)(totalR / pixelCount),
+            (byte)(totalG / pixelCount),
+            (byte)(totalB / pixelCount),
+            (byte)(totalA / pixelCount)
+        );
+    }
     /// <summary>
     /// Creates color with corrected brightness.
     /// </summary>

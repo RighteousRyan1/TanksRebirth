@@ -12,6 +12,10 @@ public class Language {
     public string Yes { get; set; }
     public string No { get; set; }
 
+    public string Status { get; set; }
+    public string Enabled { get; set; }
+    public string Disabled { get; set; }
+
 
     public string NoTeam { get; set; }
     public string Red { get; set; }
@@ -92,12 +96,19 @@ public class Language {
     public string LevelInfo { get; set; }
     public string Properties  { get; set; }
     public string Load { get; set; }
+    public string LoadMissionFlavor { get; set; }
     public string PlaceInfo { get; set; }
     public string TankTeams { get; set; }
     public string PlacementTeamInfo { get; set; }
     public string PlacementStackInfo { get; set; }
     public string EnemyTankTotal { get; set; }
     public string DifficultyRating { get; set; }
+    public string AddMissionFlavor { get; set; }
+    public string RemoveMissionFlavor { get; set; }
+    public string MoveMissionUpFlavor { get; set; }
+    public string MoveMissionDownFlavor { get; set; }
+    public string BlockStackFlavor { get; set; }
+    public string GameStatsFlavor { get; set; }
 
     #region PropertiesMenu
     public string Return { get; set; }
@@ -189,6 +200,8 @@ public class Language {
     public string MissionsComplete { get; set; }
     public string EnemyTanks { get; set; }
     public string Campaign { get; set; }
+    public string Mods { get; set; }
+    public string ReloadMods { get; set; }
     #endregion
 
 #pragma warning enable

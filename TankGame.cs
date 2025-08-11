@@ -365,7 +365,7 @@ public class TankGame : Game {
             , default);
     }
     protected override void LoadContent() {
-        //try {
+        try {
             PreloadContent();
             var s = Stopwatch.StartNew();
 
@@ -435,7 +435,9 @@ public class TankGame : Game {
                 SettingsHandler = new(Settings, Path.Combine(SaveDirectory, "settings.json"));
                 Settings = SettingsHandler.Deserialize();
             }
-
+       
+            // english is loaded so fallback characters work.
+            FontGlobals.LoadFont(LangCode.English);
             FontGlobals.LoadFont(Settings.Language);
             FontGlobals.RebirthFont = FontGlobals.RebirthFontSystem.GetFont(35);
             FontGlobals.RebirthFontLarge = FontGlobals.RebirthFontSystem.GetFont(120);
@@ -512,10 +514,10 @@ public class TankGame : Game {
 
             ModLoader.LoadMods();
 
-            if (ModLoader.LoadingMods) {
+            if (ModLoader.IsLoadingMods) {
                 MainMenuUI.MenuState = MainMenuUI.UIState.LoadingMods;
                 Task.Run(async () => {
-                    while (ModLoader.LoadingMods)
+                    while (ModLoader.IsLoadingMods)
                         await Task.Delay(50).ConfigureAwait(false);
                     MainMenuUI.MenuState = MainMenuUI.UIState.PrimaryMenu;
                 });
@@ -547,10 +549,10 @@ public class TankGame : Game {
             PlaceSecrets();
 
             SceneManager.GameLight.Apply(false);
-        //}
-        //catch (Exception e) when (!Debugger.IsAttached) {
-        //    ReportError(e);
-        //}
+        }
+        catch (Exception e) when (!Debugger.IsAttached) {
+            ReportError(e);
+        }
     }
     // FIXME: this method is a clusterfuck
     protected override void Update(GameTime gameTime) {

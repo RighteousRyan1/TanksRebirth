@@ -135,7 +135,7 @@ public static partial class LevelEditorUI {
         }
         // draw obstacle placement info
         else if (CurCategory == Category.Terrain) {
-            helpText = "UP and DOWN to change stack.";
+            helpText = TankGame.GameLanguage.BlockStackFlavor;
             // TODO: add static dict for specific types?
             var tex = SelectedBlockType != BlockID.Hole ? $"{BlockID.Collection.GetKey(SelectedBlockType)}_{BlockHeight}" : $"{BlockID.Collection.GetKey(SelectedBlockType)}";
             var size = RenderTextures[tex].Size();

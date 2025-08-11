@@ -58,7 +58,8 @@ public static partial class MainMenuUI
         [UIState.StatsMenu] = (new(-1121f, 176f, 439f), new(0, -0.231f, -0.67f)), // near sheet music
         [UIState.Difficulties] = (new(-1189f, 288f, 2583f), new(0f, -0.25f, -2.27f)), // near books
         [UIState.LoadingMods] = (new(-3443f, 2088f, 3183f), new(0, -0.6307f, -0.91f)), // top of the door
-        [UIState.Cosmetics] = (new(-953f, 1078f, 2753f), new(0f, -0.226f, -2.56f)) // second-to-top shelf of bookshelf
+        [UIState.Cosmetics] = (new(-953f, 1078f, 2753f), new(0f, -0.226f, -2.56f)), // second-to-top shelf of bookshelf
+        [UIState.ModsMenu] = (new Vector3(1186.641f, 180.621f, 507.690f), new Vector3(0f, 0.003f, -0.773f)) // facing towards the clock pendulum
     };
 
     public static Vector3 CamPosMain = new(0, 150, GameScene.MAX_Z + 100); // this is in front of the game scene, viewing it
@@ -265,8 +266,6 @@ public static partial class MainMenuUI
                 DrawCampaignsUI();
             else if (MenuState == UIState.Cosmetics)
                 RenderCosmeticsUI();
-            else if (MenuState == UIState.ModsMenu)
-                DrawModsMenu();
         }
 
         // why does this need to be here?????????? doesn't work in Update()

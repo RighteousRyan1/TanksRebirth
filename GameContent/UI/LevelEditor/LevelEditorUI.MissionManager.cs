@@ -114,32 +114,39 @@ public partial class LevelEditorUI {
         _missionButtons[id + 1].Color = SelectedColor;
     }
     public static void RemoveMission() {
-        _missionButtons.ForEach(x => x.Color = Color.White);
+        _missionButtons.ForEach(b => b.Color = Color.White);
 
-        Array.Resize(ref loadedCampaign.CachedMissions, loadedCampaign.CachedMissions.Length - 1);
-        var count = loadedCampaign.CachedMissions.Count(c => c != default);
-        var id = loadedCampaign.CurrentMissionId;
-        loadedCampaign.CachedMissions[id] = Mission.GetCurrent(loadedCampaign.CachedMissions[id].Name);
+        var missions = loadedCampaign.CachedMissions;
+        int n = missions.Length;
+        int id = loadedCampaign.CurrentMissionId;
 
-        // move every mission back by 1 in the array.
-        for (int i = id; i < loadedCampaign.CachedMissions.Length - 1; i++) {
-            loadedCampaign.CachedMissions[i] = loadedCampaign.CachedMissions[i + 1];
-        }
-        loadedCampaign.CachedMissions[^1] = default;
-        //if (id + 1 >= loadedCampaign.CachedMissions.Length)
-        //Array.Resize(ref loadedCampaign.CachedMissions, loadedCampaign.CachedMissions.Length + 1);
-        SetupMissionsBar(loadedCampaign, false);
+        if (n == 0 || id < 0 || id >= n || missions.Length == 1)
+            return; // prevents fails in code
 
-        // if there is no fallback mission
-        if (loadedCampaign.CachedMissions.Length == 1) {
-            loadedCampaign.LoadMission(new Mission() {
+        // shift left from id
+        for (int i = id; i < n - 1; i++)
+            missions[i] = missions[i + 1];
+
+        // clear tail
+        missions[n - 1] = default;
+
+        Array.Resize(ref loadedCampaign.CachedMissions, n - 1);
+
+        // if empty, create a fallback mission
+        if (loadedCampaign.CachedMissions.Length == 0) {
+            loadedCampaign.LoadMission(new Mission {
                 Blocks = [],
                 Name = $"{TankGame.GameLanguage.Mission} 1",
                 Tanks = []
             });
+            SetupMissionsBar(loadedCampaign, false);
             return;
         }
-        var newId = id > 0 ? id - 1 : id;
+
+        // pick new selected mission
+        int newId = Math.Min(id, loadedCampaign.CachedMissions.Length - 1);
+
+        SetupMissionsBar(loadedCampaign, false);
         loadedCampaign.LoadMission(newId);
         loadedCampaign.SetupLoadedMission(true);
 

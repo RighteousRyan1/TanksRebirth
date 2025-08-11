@@ -137,5 +137,17 @@
   "Campaign": "Campaign",
   "BonusTank": "Bonus Tank!",
   "AutoOrientTanks": "Auto-Orient Tanks",
-  "AutoOrientTanksFlavor": "Automatically orients tanks based on the closest boundary."
+  "AutoOrientTanksFlavor": "Automatically orients tanks based on the closest boundary.",
+  "Mods": "Mods",
+  "ReloadMods": "Reload Mods",
+  "Status": "Status",
+  "Enabled": "Enabled",
+  "Disabled": "Disabled",
+  "AddMissionFlavor": "Insert a blank mission after the currently selected mission.",
+  "RemoveMissionFlavor": "Remove this mission from the missions list.",
+  "MoveMissionUpFlavor": "Swap the currently selected mission with the one above it.",
+  "MoveMissionDownFlavor": "Swap the currently selected mission with the one below it.",
+  "LoadMissionFlavor": "Will open a file dialog for you to choose what mission/campaign to load.",
+  "BlockStackFlavor": "UP and DOWN to change stack.",
+  "GameStatsFlavor": "View your all-time statistics!"
 }

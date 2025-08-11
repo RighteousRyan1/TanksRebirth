@@ -16,7 +16,12 @@ public static class FontGlobals {
     public static SpriteFontBase RebirthFont;
     public static SpriteFontBase RebirthFontLarge;
 
+    public static List<LangCode> LoadedFontLangs = [];
+
     public static void LoadFont(LangCode lang) {
+        if (LoadedFontLangs.Contains(lang)) return;
+
+        LoadedFontLangs.Add(lang);
         RebirthFontSystem.AddFont(File.ReadAllBytes(@$"Content/Assets/fonts/{lang.Language}_{lang.Country}.ttf"));
     }
 }

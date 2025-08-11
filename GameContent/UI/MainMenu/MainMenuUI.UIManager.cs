@@ -158,12 +158,14 @@ public static partial class MainMenuUI
         StatsMenu = new(TankGame.GameLanguage.GameStats, font, Color.WhiteSmoke) {
             IsVisible = false,
             OnLeftClick = (a) => { MenuState = UIState.StatsMenu; },
-            Tooltip = "View your all-time statistics for this game!"
+            Tooltip = TankGame.GameLanguage.GameStatsFlavor
         };
         StatsMenu.OnLeftClick = (a) => {
             RequestStats();
             MenuState = UIState.StatsMenu;
         };
+
+        InitModsMenu(font);
         StatsMenu.SetDimensions(() => new Vector2(WindowUtils.WindowWidth / 2 - 90.ToResolutionX(), WindowUtils.WindowHeight - 100.ToResolutionY()), () => new Vector2(180, 50).ToResolution());
     }
     private static void HideAll() {
@@ -187,7 +189,7 @@ public static partial class MainMenuUI
         GameUI.BackButton.Size.Y = 50;
 
         PlayButton.IsVisible = visible;
-
+        ModsMenuButton.IsVisible = visible;
         StatsMenu.IsVisible = visible;
     }
 
