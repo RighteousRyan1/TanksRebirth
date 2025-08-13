@@ -18,7 +18,6 @@ using TanksRebirth.Internals.Common.Utilities;
 using FontStashSharp;
 using TanksRebirth.GameContent.UI.MainMenu;
 using System.Text.Json;
-using Microsoft.Xna.Framework.Graphics;
 
 namespace TanksRebirth.GameContent.ModSupport;
 
@@ -63,6 +62,7 @@ public static class ModLoader {
     internal static Dictionary<TanksMod, string> modDirs = [];
 
     // set within the mods menu, generally
+    public static List<string> FirstLoadMods = [];
     public static Dictionary<string, bool> ModsEnabled = [];
     public static ModTank[] ModTanks { get; private set; } = [];
     static List<ModTank> _modTanks = [];
@@ -237,7 +237,6 @@ public static class ModLoader {
         ModShell.unloadOffset = 0;
         ChatSystem.SendMessage("Mod unload successful!", Color.Lime);
         Status = LoadStatus.Complete;
-
     }
     // doesn't work?
     static void ResetContentDictionaries() {
@@ -311,7 +310,7 @@ public static class ModLoader {
 
                 // skip mods that should not be loaded
                 if (ModsEnabled.TryGetValue(modName, out bool value))
-                if (ModsEnabled[modName] = !value) continue;
+                    if (!value) continue;
 
                 if (fileName != modName + ".csproj") continue;
                 ActionsNeeded++;
@@ -388,6 +387,7 @@ public static class ModLoader {
 
                             LoadModContent(tanksMod, types);
 
+                            FirstLoadMods.Add(tanksMod.InternalName);
                             ModsEnabled.TryAdd(tanksMod.InternalName, true);
 
                             LoadedMods.Add(tanksMod);

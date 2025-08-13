@@ -154,7 +154,7 @@ public class TankGame : Game {
         Graphics = new(this) {
             PreferHalfPixelOffset = true,
             HardwareModeSwitch = false,
-            IsFullScreen = false
+            IsFullScreen = false,
         };
 
         Content.RootDirectory = "Content";
@@ -439,6 +439,7 @@ public class TankGame : Game {
             // english is loaded so fallback characters work.
             FontGlobals.LoadFont(LangCode.English);
             FontGlobals.LoadFont(Settings.Language);
+
             FontGlobals.RebirthFont = FontGlobals.RebirthFontSystem.GetFont(35);
             FontGlobals.RebirthFontLarge = FontGlobals.RebirthFontSystem.GetFont(120);
             ClientLog.Write($"Loaded fonts.", LogType.Info);
@@ -837,7 +838,9 @@ public class TankGame : Game {
         // this method begins the spritebatch, since it's supposed to have its own
         IntermissionSystem.Draw(SpriteRenderer);
 
-        ChatSystem.DrawMessages();
+        // hardcode hell. but whatever
+        if (!LevelEditorUI.IsActive && MainMenuUI.MenuState != MainMenuUI.UIState.ModsMenu)
+            ChatSystem.DrawMessages();
 
         SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, rasterizerState: RenderGlobals.DefaultRasterizer);
 

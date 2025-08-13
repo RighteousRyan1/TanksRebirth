@@ -378,35 +378,26 @@ public sealed record ChatSystem {
     }
 }
 
-// TODO: perhaps struct.
 /// <summary>Represents a system used to store messages and their contents in use with the <see cref="ChatSystem"/>.</summary>
-public struct ChatMessage
-{
+/// <remarks>
+/// Creates a new <see cref="ChatMessage"/>.
+/// </remarks>
+/// <param name="content">The content of the <see cref="ChatMessage"/>.</param>
+/// <param name="color">The color in which to render the content of the <see cref="ChatMessage"/>.</param>
+public struct ChatMessage(string content, Color color) {
     /// <summary>The content of this <see cref="ChatMessage"/>.</summary>
-    public string Content;
+    public string Content = content;
 
     /// <summary>The color of the content of this <see cref="ChatMessage"/>.</summary>
-    public Color Color;
+    public Color Color = color;
 
     /// <summary>The <see cref="SpriteFont"/> in which to use to render the content of this <see cref="ChatMessage"/>.</summary>
     public static SpriteFontBase Font = FontGlobals.RebirthFont;
-
-    /// <summary>
-    /// Creates a new <see cref="ChatMessage"/>.
-    /// </summary>
-    /// <param name="content">The content of the <see cref="ChatMessage"/>.</param>
-    /// <param name="color">The color in which to render the content of the <see cref="ChatMessage"/>.</param>
-    public ChatMessage(string content, Color color)
-    {
-        Content = content;
-        Color = color;
-    }
 }
 
-public enum ChatMessageCorner
-{
-    TopLeft     = 0,
-    TopRight    = 1,
-    BottomLeft  = 2,
-    BottomRight = 3 
+public enum ChatMessageCorner {
+    TopLeft = 0,
+    TopRight = 1,
+    BottomLeft = 2,
+    BottomRight = 3
 }
