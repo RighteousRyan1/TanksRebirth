@@ -84,7 +84,6 @@ public static class IntermissionSystem {
         _cutForLength = new Rectangle(31, 0, 1, BonusBannerBase.Height);
     }
     public static void InitializeAnmiations() {
-
         TankGame.OnFocusLost += PauseIntermissionSounds;
         TankGame.OnFocusRegained += ResumeIntermissionSounds;
         GameUI.Pause.OnPress += () => {

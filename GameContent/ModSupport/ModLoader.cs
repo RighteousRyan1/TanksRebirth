@@ -42,15 +42,32 @@ public static class ModLoader {
     public static List<TanksMod> LoadedMods { get; set; } = [];
     static List<AssemblyLoadContext> _loadedAlcs = [];
 
+    /// <summary>True if mods are loading.</summary>
     public static bool IsLoadingMods { get; private set; }
+    /// <summary>Determined at loading-time. False if:
+    /// <list type="bullet">
+    ///   <item>
+    ///     <description>The user does not have a .NET SDK Version >= MIN_NET_VERSION </description>
+    ///   </item>
+    ///   <item>
+    ///     <description>User does not have a SDK verison at all.</description>
+    ///   </item>
+    /// </list>
+    /// </summary>
     public static bool AreCompilesAllowed { get; set; } = false;
+    /// <summary>Number of mods * number of actions per mod (load, initialize).</summary>
     public static int ActionsNeeded { get; private set; }
+    /// <summary>Number of actions that have already been completed in the mod loading process.</summary>
     public static int ActionsComplete { get; private set; }
+    /// <summary>The current status of the mod loader.</summary>
     public static LoadStatus Status { get; private set; } = LoadStatus.Inactive;
+    /// <summary>The name of the mod being loaded.</summary>
     public static string ModBeingLoaded { get; private set; } = string.Empty;
+    /// <summary>The path to where mods are loaded from.</summary>
     public static string ModsPath { get; } = Path.Combine(TankGame.SaveDirectory, "Mods");
-
+    /// <summary>The oldest .NET version (within the CSPROJ) Tanks Rebirth expects mods to be.</summary>
     public const string EXPECTED_NET_VERSION = "net8.0";
+    /// <summary>The oldest .NET version Tanks Rebirth expects mod to be.</summary>
     public const int MIN_NET_VERSION = 8;
 
     volatile static List<Action> _loadingActions = [];
@@ -64,18 +81,20 @@ public static class ModLoader {
     // set within the mods menu, generally
     public static List<string> FirstLoadMods = [];
     public static Dictionary<string, bool> ModsEnabled = [];
+    /// <summary>A mod-agnostic list of modded tanks.</summary>
     public static ModTank[] ModTanks { get; private set; } = [];
     static List<ModTank> _modTanks = [];
-
+    /// <summary>A mod-agnostic list of modded blocks.</summary>
     public static ModBlock[] ModBlocks { get; private set; } = [];
     static List<ModBlock> _modBlocks = [];
-
+    /// <summary>A mod-agnostic list of modded shells.</summary>
     public static ModShell[] ModShells { get; private set; } = [];
     static List<ModShell> _modShells = [];
 
     static bool _firstLoad = true;
     /// <summary>The error given from the mod-loading process.</summary>
     public static string Error = string.Empty;
+    /// <summary>What kind of compilation is performed- Debug or Release.</summary>
     public static string LoadType = string.Empty;
     public static bool CheckIfCompilesAreAllowed() {
         if (!RuntimeData.IsWindows) {
@@ -131,7 +150,6 @@ public static class ModLoader {
         Status = LoadStatus.Compiling;
         Process proc = new();
         try {
-            LoadType = Debugger.IsAttached ? "Debug" : "Release";
             ProcessStartInfo startInfo = new() {
                 UseShellExecute = false,
 
@@ -275,6 +293,8 @@ public static class ModLoader {
             ChatSystem.SendMessage("Mods are currently loading! Unable to load mods.", Color.Red);
         if (LoadedMods.Count > 0)
             UnloadAll();
+
+        LoadType = Debugger.IsAttached ? "Debug" : "Release";
 
         ActionsNeeded = 0;
         ActionsComplete = 0;
@@ -512,6 +532,7 @@ public static class ModLoader {
     }
 
     // rendering
+    // refactor pl0x
     public static void DrawModLoading() {
         var alpha = 0.7f;
         var width = WindowUtils.WindowWidth / 3;

@@ -152,7 +152,7 @@ public static class IntermissionHandler {
 
         return false; // multiple teams still active
     }
-    public static void HandleMissionChanging() {
+    public static void CheckMissionCompletion() {
         // if (Client.IsConnected() && !Client.IsHost()) return;
 
         if (CampaignGlobals.LoadedCampaign.CachedMissions[0].Name is null)
@@ -160,7 +160,7 @@ public static class IntermissionHandler {
 
         var nothingAnymore = NothingCanHappenAnymore(CampaignGlobals.LoadedCampaign.CurrentMission, out var finalTeam);
         var myTank = GameHandler.AllPlayerTanks[NetPlay.GetMyClientId()];
-        bool victory = myTank is null ? true : myTank.Team != TeamID.NoTeam && myTank.Team == finalTeam;
+        bool victory = myTank is null || myTank.Team != TeamID.NoTeam && myTank.Team == finalTeam;
 
         if (nothingAnymore) {
             PrepareIntermission(victory);
@@ -264,6 +264,9 @@ public static class IntermissionHandler {
             if (!CampaignGlobals.InMission) {
                 CampaignGlobals.InMission = true;
                 CampaignGlobals.DoMissionStartInvoke();
+
+                // if for some reason we return back to a mission with no enemies left
+                CheckMissionCompletion();
                 TankMusicSystem.PlayAll();
             }
         }

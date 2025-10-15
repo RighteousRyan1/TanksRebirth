@@ -61,25 +61,28 @@ public class TankGame : Game {
 
     // ### STRUCTURES / CLASSES ###
 
+    /// <summary>The JSON manager/serializer/deserializer for the game's settings.</summary>
     public static JsonHandler<GameConfig> SettingsHandler;
+    public static GameConfig Settings;
 
     private Vector2 _mouseOld;
 
     public static TankGame Instance { get; private set; }
+    /// <summary>The user's save data.</summary>
     public static GameData SaveFile { get; private set; } = new();
+    /// <summary>The game time for the previous logic loop.</summary>
     public static GameTime LastGameTime { get; private set; }
     /// <summary>The handle of the game's logging file. Used to write information to a file that can be read after the game closes.</summary>
     public static Logger ClientLog { get; private set; }
 
-    public static GameConfig Settings;
-
     public static Language GameLanguage = new();
+
+    /// <summary>How long the process/game has been open.</summary>
     public static Stopwatch CurrentSessionTimer = new();
+
+    /// <summary>Counts the average FPS over the entire lifespan of the process/game.</summary>
     public static readonly FpsTracker ProcessLifetimeFpsTracker = new();
     public readonly GraphicsDeviceManager Graphics;
-
-    /// <summary>Currently not functional due to programming problems.</summary>
-    public static Camera GameCamera;
 
     public static OrthographicCamera OrthographicCamera;
     public static SpectatorCamera SpectatorCamera;
@@ -104,6 +107,8 @@ public class TankGame : Game {
     public delegate void OnResolutionChangedDelegate(int newX, int newY);
     public static event OnResolutionChangedDelegate OnResolutionChanged;
 
+    /// <summary>A queue of actions to be taken on the main thread.
+    /// <br></br>This is particularly useful for performing things on the main thread when you are processing on other threads.</summary>
     public static ConcurrentQueue<Action> MainThreadTasks = [];
 
     public TankGame() : base() {
@@ -200,8 +205,6 @@ public class TankGame : Game {
             ClientLog.Write($"Loaded Discord Rich Presence...", LogType.Info);
 
             // systems = ReflectionUtils.GetInheritedTypesOf<IGameSystem>(Assembly.GetExecutingAssembly());
-
-            GameCamera = new OrthographicCamera(0, WindowUtils.WindowWidth, WindowUtils.WindowHeight, 0f, 0.01f, 2000f);
 
             SpriteRenderer = new(GraphicsDevice);
 

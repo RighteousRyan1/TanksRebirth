@@ -45,16 +45,17 @@ public class GameHandler {
     public static byte ActiveTankCount;
     public static byte ActiveAITankCount;
     public static byte ActivePlayerTankCount;
-    public static AITank[] AllAITanks = new AITank?[MAX_AI_TANKS];
-    public static PlayerTank[] AllPlayerTanks = new PlayerTank?[MAX_PLAYERS];
-    public static Tank[] AllTanks = new Tank?[MAX_PLAYERS + MAX_AI_TANKS];
+    public static AITank[] AllAITanks = new AITank[MAX_AI_TANKS];
+    public static PlayerTank[] AllPlayerTanks = new PlayerTank[MAX_PLAYERS];
+    public static Tank[] AllTanks = new Tank[MAX_PLAYERS + MAX_AI_TANKS];
 
     internal static void MapEvents() {
         CampaignGlobals.OnMissionEnd += IntermissionHandler.DoEndMissionWorkload;
+        Tank.OnDamage += AttemptIntermission;
     }
 
     internal static void Initialize() {
-        Client.ClientRandSeed = DateTime.Now.Millisecond;
+        Client.ClientRandSeed = (int)DateTime.Now.Ticks;
         Client.ClientRandom = new(Client.ClientRandSeed);
 
         AllAITanks = new AITank[MAX_AI_TANKS];
@@ -75,6 +76,14 @@ public class GameHandler {
         CosmeticsUI.Initialize();
         RebirthMouse.Initialize();
     }
+
+    private static void AttemptIntermission(Tank victim, bool destroy, ITankHurtContext context) {
+        if (!destroy) return;
+
+        if (CampaignGlobals.ShouldMissionsProgress && !MainMenuUI.IsActive)
+            IntermissionHandler.CheckMissionCompletion();
+    }
+
     internal static void UpdateAll(GameTime gameTime) {
         ActiveTankCount = (byte)AllTanks.Count(t => t is not null);
         ActiveAITankCount = (byte)AllAITanks.Count(t => t is not null);
@@ -175,9 +184,6 @@ public class GameHandler {
 
         foreach (var expl in Explosion.Explosions)
             expl?.Update();
-
-        if (CampaignGlobals.ShouldMissionsProgress && !MainMenuUI.IsActive)
-            IntermissionHandler.HandleMissionChanging();
 
         foreach (var cube in Block.AllBlocks)
             cube?.OnUpdate();

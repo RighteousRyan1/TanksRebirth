@@ -80,6 +80,7 @@ public static partial class MainMenuUI
         MenuState = UIState.PrimaryMenu;
         RebirthLogo = new() {
             Position = new(0, 500, 250),
+            Rotation = new(0, MathHelper.TwoPi, 0)
         };
 
         // LogoTexture = SteamworksUtils.GetAvatar(Steamworks.SteamUser.GetSteamID());

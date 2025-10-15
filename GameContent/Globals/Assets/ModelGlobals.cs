@@ -52,7 +52,4 @@ public static class ModelGlobals {
 
     // misc
     public static Resource<Model> Logo = new(PathGlobals.MODEL_PATH + "/logo", "logo");
-    public static void Initialize() {
-        
-    }
 }

@@ -21,7 +21,7 @@ namespace TanksRebirth.GameContent.Systems;
 /// <summary>A system for handling chat.</summary>
 public sealed record ChatSystem {
     // TODO: add more here.
-    public struct ChatTag {
+    public readonly struct ChatTag {
         // TODO: start sometime eventually?
         // [HEX###:text]
         // [r,g,b: text]
@@ -85,14 +85,19 @@ public sealed record ChatSystem {
     public static event OnMessageAddedDelegate? OnMessageAdded;
 
     public static List<ChatMessage> ChatMessages { get; private set; } = [];
-    public static int Alerts;
+    /// <summary>The number that appears by the red exclamation bubble, notifying the player of unread messages.</summary>
+    public static int UnreadMessageCount;
+    /// <summary>Whether or not the chat window is open for the player to read.</summary>
     public static bool IsOpen;
+
+    /// <summary>The corner </summary>
     public static ChatMessageCorner Corner { get; set; } = ChatMessageCorner.TopLeft;
 
     public static Vector2 OpenOrigin = new(8, 8);
 
     public static Vector2 Scale = new(0.8f);
 
+    /// <summary>How many messages can be viewed at once on the window.</summary>
     public static int MessagesAtOnce = 10;
 
     public static string CurTyping = string.Empty;
@@ -176,7 +181,7 @@ public sealed record ChatSystem {
             else
                 msgs.Add(new ChatMessage($"{split[i]}", color));
         }
-        Alerts++;
+        UnreadMessageCount++;
 
         ChatMessages.AddRange(msgs);
 
@@ -298,14 +303,14 @@ public sealed record ChatSystem {
         TankGame.SpriteRenderer.End();
 
         if (IsOpen) {
-            Alerts = 0;
+            UnreadMessageCount = 0;
         }
         else {
             TankGame.SpriteRenderer.Begin();
             var scale = new Vector2(0.8f);
-            if (Alerts > 0) {
+            if (UnreadMessageCount > 0) {
                 TankGame.SpriteRenderer.Draw(ChatAlert, OpenOrigin.ToResolution(), null, Color.White, 0f, Vector2.Zero, scale, default, default);
-                TankGame.SpriteRenderer.DrawString(ChatMessage.Font, Alerts.ToString(), OpenOrigin.ToResolution() + (ChatAlert.Size() * scale) - new Vector2(12, 12).ToResolution(), Color.White, scale);
+                TankGame.SpriteRenderer.DrawString(ChatMessage.Font, UnreadMessageCount.ToString(), OpenOrigin.ToResolution() + (ChatAlert.Size() * scale) - new Vector2(12, 12).ToResolution(), Color.White, scale);
                 TankGame.SpriteRenderer.DrawString(ChatMessage.Font, TankGame.GameLanguage.Press + $" [{ToggleChat.Assigned}] " + TankGame.GameLanguage.ToToggleChat, OpenOrigin.ToResolution() + new Vector2(ChatAlert.Size().X * scale.X + 10.ToResolutionX(), 0), Color.White, scale);
             }
             else

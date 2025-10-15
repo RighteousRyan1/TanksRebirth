@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 
 namespace TanksRebirth.Internals.Common.Framework.Collections;
 public class SwapBackArray<T>(int capacity = 256) : IEnumerable<T> {

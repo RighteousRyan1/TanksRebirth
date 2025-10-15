@@ -566,7 +566,8 @@ public abstract class Tank {
         bool willDestroy = true;
 
         // this method returns 0 if Armor is null
-        if (Properties.SafeGetArmorHitPoints() > 0) {
+        var hp = Properties.SafeGetArmorHitPoints();
+        if (hp > 0) {
             Properties.Armor!.HitPoints--;
             var ding = SoundPlayer.PlaySoundInstance(
                 $"Assets/sounds/armor_ding_{Client.ClientRandom.Next(1, 3)}.ogg", SoundContext.Effect);
@@ -574,7 +575,6 @@ public abstract class Tank {
             ding.Instance.Pitch = Client.ClientRandom.NextFloat(-0.1f, 0.1f);
             //if (CameraGlobals.IsUsingFirstPresonCamera)
             //    SoundUtils.CreateSpatialSound(ding, Position3D, CameraGlobals.RebirthFreecam.Position, 1.25f);
-            OnDamage?.Invoke(this, Properties.Armor.HitPoints == 0, context);
 
             willDestroy = false;
         }
@@ -582,10 +582,10 @@ public abstract class Tank {
         if (this is AITank aiTank)
             aiTank.ModdedData?.TakeDamage(willDestroy, context);
 
-        OnDamage?.Invoke(this, willDestroy, context);
-
         if (willDestroy)
             Destroy(context, netSend);
+
+        OnDamage?.Invoke(this, hp == 0, context);
     }
     public void DoDamageTextPopup(Color color) {
         var part = GameHandler.Particles.MakeParticle(Position3D + new Vector3(0, 15, 0),
@@ -705,7 +705,7 @@ public abstract class Tank {
     public virtual void LayFootprint(bool alt) {
         if (!Properties.CanLayTread)
             return;
-        // return;
+
         // will be TankRotation, Position, Scaling.FlattenZ()
         var fp = TankFootprint.Place(this, -ChassisRotation, alt);
         fp.Position += new Vector3(0, 0.15f, 0);
