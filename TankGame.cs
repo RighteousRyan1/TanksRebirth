@@ -699,6 +699,8 @@ public class TankGame : Game {
 
         RuntimeData.LogicFPS = Math.Round(1f / gameTime.ElapsedGameTime.TotalSeconds);
 
+        RuntimeData.DeltaTime = RuntimeData.Interp ? (!float.IsInfinity(60 / (float)RuntimeData.LogicFPS) ? 60 / (float)RuntimeData.LogicFPS : 0) : 1;
+
         _wasActive = IsActive;
         //Console.WriteLine($"{MouseUtils.MousePosition} - {_mOld}");
         _mouseOld = MouseUtils.MousePosition;

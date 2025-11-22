@@ -6,7 +6,7 @@ using TanksRebirth.Internals.Common.Framework.Interfaces;
 namespace TanksRebirth.GameContent.ModSupport;
 
 /// <summary>Request modded content here.</summary>
-public static class ModContent {
+public static class ModSingletons {
     internal static List<IModContent> moddedTypes = [];
     /// <summary>A useful method that gets properties of a modded type. Can be used to manually swap properties after spawning an entity.</summary>
     /// <typeparam name="T">The <see cref="Type"/> of the modded content you wish to request data from.</typeparam>
@@ -14,8 +14,9 @@ public static class ModContent {
     public static T GetSingleton<T>() where T : IModContent {
         var properTypes = moddedTypes.OfType<T>().ToArray();
         var modContent = properTypes.FirstOrDefault();
-        if (modContent == null)
-            throw new Exception("Modding Exception: Failed to retrieve moddedType '" + typeof(T).Name + "'. Did you forget to unsubscribe from an event?");
-        return modContent!;
+        
+        return modContent == null
+            ? throw new ModRuntimeException("Failed to retrieve moddedType '" + typeof(T).Name + "'. Did you forget to unsubscribe from an event?")
+            : modContent!;
     }
 }

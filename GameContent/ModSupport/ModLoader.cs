@@ -47,7 +47,7 @@ public static class ModLoader {
     /// <summary>Determined at loading-time. False if:
     /// <list type="bullet">
     ///   <item>
-    ///     <description>The user does not have a .NET SDK Version >= MIN_NET_VERSION </description>
+    ///     <description>The user does not have a .NET SDK Version >= MIN_NET_VERSION</description>
     ///   </item>
     ///   <item>
     ///     <description>User does not have a SDK verison at all.</description>
@@ -247,7 +247,7 @@ public static class ModLoader {
         _modBlockDictionary.Clear();
         _modShellDictionary.Clear();
         modDirs.Clear();
-        ModContent.moddedTypes.Clear();
+        ModSingletons.moddedTypes.Clear();
         _loadedAlcs.Clear();
         ResetContentDictionaries();
         ModTank.unloadOffset = 0;
@@ -266,24 +266,46 @@ public static class ModLoader {
         TeamID.Collection = new(MemberType.Fields);
         TrackID.Collection = new(MemberType.Fields);
     }
+    // strictly unloads static events within the assembly
     static void UnloadModContent(TanksMod mod) {
-        return;
-        // unfinished for now.
-        /*var types = mod.GetType().Assembly.GetTypes();
+        // assembly that belongs to this mod (collectible ALC)
+        var modAssembly = mod.GetType().Assembly;
 
-        for (int i = 0; i < types.Length; i++) {
-            var fields = types[i].GetFields();
-            for (int j = 0; j < fields.Length; i++) {
-                var events = fields[j].FieldType.GetEvents();
+        var types = modAssembly.GetTypes();
 
-                for (int k = 0; k < events.Length; k++) {
-                    var @event = events[k];
-                    var eventType = @event.EventHandlerType;
-                    var cEvent = @event.get
-                    foreach (var subscriber in )
+        foreach (var type in types) {
+            if (type == null) continue;
+
+            // only static
+            var events = type.GetEvents(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+
+            foreach (var ev in events) {
+                try {
+                    // attempts to find the backing field
+                    var field = type.GetField(ev.Name, BindingFlags.NonPublic | BindingFlags.Static)
+                        ?? type.GetField($"<{ev.Name}>k__BackingField",
+                            BindingFlags.NonPublic | BindingFlags.Static);
+
+                    if (field == null) {
+                        continue;
+                    }
+
+                    if (field.GetValue(null) is not MulticastDelegate del)
+                        continue;
+
+                    // forcefully strip the event of any handlers that belong to the mod's assembly
+                    foreach (var handler in del.GetInvocationList()) {
+                        var handlerAsm = handler.Method.DeclaringType?.Assembly;
+                        if (handlerAsm == modAssembly) {
+                            // For static events the target is null
+                            ev.RemoveEventHandler(null, handler);
+                        }
+                    }
+                } catch {
+                    // oh well lol we tried
                 }
             }
-        }*/
+        }
     }
     /// <summary>Prepare your garbage collector!</summary>
     internal static void LoadMods() {
@@ -343,30 +365,6 @@ public static class ModLoader {
                     return;
                 }
 
-                // load assemblies included in the modrefs folder when i get it to work :(
-                /*var dirPath = Path.Combine(folder, "modrefs");
-
-                if (Directory.Exists(dirPath)) {
-                    // Create a single ALC for all dependencies of this mod
-                    var depAlc = new AssemblyLoadContext($"{modName}_Dependencies", true);
-                    _modDeps[modName] = depAlc;
-
-                    foreach (var dllPath in Directory.GetFiles(dirPath).Where(x => x.EndsWith(".dll"))) {
-                        // Load each dependency into the same ALC
-                        var pdbPath = Path.ChangeExtension(dllPath, ".pdb");
-
-                        using var dllStream = File.Open(dllPath, FileMode.Open, FileAccess.Read);
-
-                        if (File.Exists(pdbPath)) {
-                            using var pdbStream = File.Open(pdbPath, FileMode.Open, FileAccess.Read);
-                            depAlc.LoadFromStream(dllStream, pdbStream);
-                        }
-                        else {
-                            depAlc.LoadFromStream(dllStream);
-                        }
-                    }
-                }*/
-
                 _loadingActions.Add(() => {
                     try {
                         ModBeingLoaded = modName;
@@ -376,13 +374,30 @@ public static class ModLoader {
                         Status = LoadStatus.Loading;
                         string filepath = Path.Combine(folder, "bin", LoadType, EXPECTED_NET_VERSION, $"{modName}.dll");
                         string pdb = Path.ChangeExtension(filepath, ".pdb");
-                        // TODO: load PDB into the ALC.
-                        var alc = new AssemblyLoadContext(modName, true);
-                        alc.LoadFromStream(File.Open(filepath, FileMode.Open), File.Open(pdb, FileMode.Open));
+
+                        var alc = new AssemblyLoadContext(modName, isCollectible: true);
+                        // alc.LoadFromStream(File.Open(filepath, FileMode.Open), File.Open(pdb, FileMode.Open));
+
+                        // Load mod-specific dependencies into *this* ALC
+                        var dirPath = Path.Combine(folder, "modrefs");
+                        if (Directory.Exists(dirPath)) {
+                            foreach (var dllPath in Directory.GetFiles(dirPath, "*.dll")) {
+                                alc.LoadFromAssemblyPath(dllPath);
+                            }
+                        }
+
+                        // Now load the mod itself into the same ALC
+                        using var mainDll = File.OpenRead(filepath);
+                        using var mainPdb = File.Exists(pdb) ? File.OpenRead(pdb) : null;
+
+                        if (mainPdb is not null)
+                            alc.LoadFromStream(mainDll, mainPdb);
+                        else
+                            alc.LoadFromStream(mainDll);
 
                         _loadedAlcs.Add(alc);
 
-                        var assembly = alc.Assemblies.First();
+                        var assembly = alc.Assemblies.First(x => x.GetName().Name == modName);
                         var types = assembly.GetTypes();
                         var tanksModTypes = types.Where(t => t.IsSubclassOf(typeof(TanksMod)) && !t.IsAbstract).ToArray();
 
@@ -480,7 +495,7 @@ public static class ModLoader {
                 modTank!.Mod = mod;
 
                 // load each tank and its data, add to moddedTypes the singleton of the ModTank.
-                ModContent.moddedTypes.Add(modTank);
+                ModSingletons.moddedTypes.Add(modTank);
 
                 var tankName = modTank.GetType().Name;
 
@@ -500,7 +515,7 @@ public static class ModLoader {
                 modBlock!.Mod = mod;
 
                 // again, but with modlbocks
-                ModContent.moddedTypes.Add(modBlock);
+                ModSingletons.moddedTypes.Add(modBlock);
                 modBlock.Name.AddLocalization(LangCode.English, $"{mod.InternalName}.{modBlock.GetType().Name}");
                 modBlock.Register();
                 TankGame.ClientLog.Write($"Loaded modded block '{modBlock.Name.GetLocalizedString(LangCode.English)}'", LogType.Info);
@@ -512,7 +527,7 @@ public static class ModLoader {
                 modShell!.Mod = mod;
 
                 // again, but with modshels
-                ModContent.moddedTypes.Add(modShell);
+                ModSingletons.moddedTypes.Add(modShell);
                 modShell.Name.AddLocalization(LangCode.English, $"{mod.InternalName}.{modShell.GetType().Name}");
                 modShell.Register();
                 TankGame.ClientLog.Write($"Loaded modded shell '{modShell.Name.GetLocalizedString(LangCode.English)}'", LogType.Info);

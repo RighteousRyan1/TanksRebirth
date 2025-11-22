@@ -249,7 +249,8 @@ public static partial class MainMenuUI
         OnMenuOpen?.Invoke();
     }
 
-    private static int _oldwheel;
+    static int _oldwheel;
+
     public static void Render(SpriteBatch spriteBatch) {
         if (!_initialized || !_diffButtonsInitialized)
             return;
