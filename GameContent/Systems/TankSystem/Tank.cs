@@ -582,9 +582,10 @@ public abstract class Tank {
         if (this is AITank aiTank)
             aiTank.ModdedData?.TakeDamage(willDestroy, context);
 
-        if (willDestroy)
+        if (willDestroy) {
             Destroy(context, netSend);
-
+            return;
+        }
         OnDamage?.Invoke(this, hp == 0, context);
     }
     public void DoDamageTextPopup(Color color) {
@@ -646,6 +647,9 @@ public abstract class Tank {
 
         DoDestructionEffects();
 
+        // if Damage ends up calling Destroy, Damage itself will not invoke OnDamage, but Destroy will.
+        OnDamage?.Invoke(this, true, context);
+
         Remove(false);
     }
     public void DoDestructionEffects() {
@@ -654,46 +658,42 @@ public abstract class Tank {
                 ? "Assets/textures/misc/tank_rock"
                 : "Assets/textures/misc/tank_rock_2");
 
-            var particle = GameHandler.Particles.MakeParticle(Position3D, tex);
+            var rock = GameHandler.Particles.MakeParticle(Position3D, tex);
 
-            particle.HasAdditiveBlending = false;
+            rock.HasAdditiveBlending = false;
 
             var vel = new Vector3(Client.ClientRandom.NextFloat(-3, 3), Client.ClientRandom.NextFloat(3, 6),
                 Client.ClientRandom.NextFloat(-3, 3));
 
-            particle.Roll = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
+            rock.Roll = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
-            particle.Scale = new(0.55f);
+            rock.Scale = new(0.55f);
 
-            particle.FaceTowardsMe = CameraGlobals.IsUsingFirstPresonCamera;
+            rock.FaceTowardsMe = CameraGlobals.IsUsingFirstPresonCamera;
 
-            particle.Color = Properties.DestructionColor;
+            rock.Color = Properties.DestructionColor;
 
-            particle.UniqueBehavior = particle => { // Hide local var from outer scope with same name.
-                particle.Pitch += MathF.Sin(particle.Position.Length() / 10) * RuntimeData.DeltaTime;
-                vel.Y -= 0.2f;
-                particle.Position += vel * RuntimeData.DeltaTime;
-                particle.Alpha -= 0.025f * RuntimeData.DeltaTime;
+            rock.UniqueBehavior = particle => { // Hide local var from outer scope with same name.
+                rock.Pitch += MathF.Sin(rock.Position.Length() / 10) * RuntimeData.DeltaTime;
+                vel.Y -= 0.2f * RuntimeData.DeltaTime;
+                rock.Position += vel * RuntimeData.DeltaTime;
+                rock.Alpha -= 0.025f * RuntimeData.DeltaTime;
 
-                if (particle.Alpha <= 0f)
-                    particle.Destroy();
+                if (rock.Alpha <= 0f)
+                    rock.Destroy();
             };
         }
-        var explosionParticle = GameHandler.Particles.MakeParticle(Position3D,
+        var expl = GameHandler.Particles.MakeParticle(Position3D,
                 GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
 
-        explosionParticle.Color = Color.Yellow * 0.75f;
+        expl.Color = Color.Yellow * 0.75f;
+        expl.ToScreenSpace = true;
+        expl.Scale = new(50f);
+        expl.TextureScale = new(4f);
+        expl.HasAdditiveBlending = true;
+        expl.IsIn2DSpace = true;
 
-        explosionParticle.ToScreenSpace = true;
-
-        explosionParticle.Scale = new(50f);
-        explosionParticle.TextureScale = new(4f);
-
-        explosionParticle.HasAdditiveBlending = true;
-
-        explosionParticle.IsIn2DSpace = true;
-
-        explosionParticle.UniqueBehavior = (p) => {
+        expl.UniqueBehavior = (p) => {
             GeometryUtils.Add(ref p.Scale, -0.3f * RuntimeData.DeltaTime);
             p.Alpha -= 0.06f * RuntimeData.DeltaTime;
             if (p.Scale.X <= 0f)
