@@ -72,12 +72,6 @@ public static class ModLoader {
 
     volatile static List<Action> _loadingActions = [];
 
-    static Dictionary<string, AssemblyLoadContext> _modDeps = [];
-    static Dictionary<TanksMod, List<ModTank>> _modTankDictionary = [];
-    static Dictionary<TanksMod, List<ModBlock>> _modBlockDictionary = [];
-    static Dictionary<TanksMod, List<ModShell>> _modShellDictionary = [];
-    internal static Dictionary<TanksMod, string> modDirs = [];
-
     // set within the mods menu, generally
     public static List<string> FirstLoadMods = [];
     public static Dictionary<string, bool> ModsEnabled = [];
@@ -205,48 +199,35 @@ public static class ModLoader {
         LoadedMods.ForEach(mod => {
             // for indivudally unloaded mods.
 
+            var content = mod.Data;
+
             // unload modded stuff and all data
-            var modTankCount = _modTankDictionary[mod].Count;
+            var modTankCount = content.Tanks.Count;
             for (int i = modTankCount - 1; i >= 0; i--) {
-                _modTankDictionary[mod][i].Unload();
+                content.Tanks[i].Unload();
             }
             // this allows the next mod to unload properly... thrice
             ModTank.unloadOffset += modTankCount;
-            _modTankDictionary[mod].Clear();
+            content.Tanks.Clear();
 
-            var modBlockCount = _modBlockDictionary[mod].Count;
+            var modBlockCount = content.Blocks.Count;
             for (int i = modBlockCount - 1; i >= 0; i--) {
-                _modBlockDictionary[mod][i].Unload();
+                content.Blocks[i].Unload();
             }
             ModBlock.unloadOffset += modBlockCount;
-            _modBlockDictionary[mod].Clear();
-
-            var modShellCount = _modShellDictionary[mod].Count;
+            content.Blocks.Clear();
+            var modShellCount = content.Shells.Count;
             for (int i = modShellCount - 1; i >= 0; i--) {
-                _modShellDictionary[mod][i].Unload();
+                content.Shells[i].Unload();
             }
             ModShell.unloadOffset += modShellCount;
-            _modShellDictionary[mod].Clear();
+            content.Shells.Clear();
 
             mod.OnUnload();
             UnloadModContent(mod);
         });
         LoadedMods.Clear();
-        _loadedAlcs.ForEach(asm => {
-            asm.Unload();
-            ChatSystem.SendMessage($"Unloaded '{asm.Name}'", Color.Orange);
-        });
-        foreach (var entry in _modDeps) {
-            var alc = entry.Value;
-            var mod = entry.Key;
-
-            ChatSystem.SendMessage($"Unloaded dependency '{alc.Name}' from {mod}", Color.DarkOrange);
-        }
         // for when the unloading process is done.
-        _modTankDictionary.Clear();
-        _modBlockDictionary.Clear();
-        _modShellDictionary.Clear();
-        modDirs.Clear();
         ModSingletons.moddedTypes.Clear();
         _loadedAlcs.Clear();
         ResetContentDictionaries();
@@ -271,13 +252,13 @@ public static class ModLoader {
         // assembly that belongs to this mod (collectible ALC)
         var modAssembly = mod.GetType().Assembly;
 
-        var types = modAssembly.GetTypes();
+        var types = Assembly.GetExecutingAssembly().GetTypes();
 
         foreach (var type in types) {
             if (type == null) continue;
 
             // only static
-            var events = type.GetEvents(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+            var events = type.GetEvents(BindingFlags.Static | BindingFlags.Public);
 
             foreach (var ev in events) {
                 try {
@@ -299,6 +280,7 @@ public static class ModLoader {
                         if (handlerAsm == modAssembly) {
                             // For static events the target is null
                             ev.RemoveEventHandler(null, handler);
+                            TankGame.ClientLog.Write($"Mod {mod.InternalName} forgot to unsubscribe from event {ev.DeclaringType.Name}.{ev.Name}. Unsubscribing...", LogType.Info);
                         }
                     }
                 } catch {
@@ -306,6 +288,7 @@ public static class ModLoader {
                 }
             }
         }
+        mod.Data.assemblyContainer.Unload();
     }
     /// <summary>Prepare your garbage collector!</summary>
     internal static void LoadMods() {
@@ -333,7 +316,7 @@ public static class ModLoader {
         if (folders.Length == 0) {
             _firstLoad = true;
             Status = LoadStatus.Complete;
-            ChatSystem.SendMessage(_firstLoad ? $"Loaded {_loadedAlcs.Count} mod(s)." : $"Reloaded {_loadedAlcs.Count} mod(s).", Color.Lime);
+            ChatSystem.SendMessage(_firstLoad ? $"Loaded {LoadedMods.Count} mod(s)." : $"Reloaded {LoadedMods.Count} mod(s).", Color.Lime);
             return;
         }
 
@@ -401,7 +384,7 @@ public static class ModLoader {
                         var types = assembly.GetTypes();
                         var tanksModTypes = types.Where(t => t.IsSubclassOf(typeof(TanksMod)) && !t.IsAbstract).ToArray();
 
-                        TanksMod tanksMod;
+                        TanksMod mod;
 
                         if (tanksModTypes.Length != 1) {
                             if (tanksModTypes.Length > 1)
@@ -411,23 +394,26 @@ public static class ModLoader {
                         }
                         // initialize what needs to be initialized (DAMN THATS A BAR)
                         else {
-                            tanksMod = (Activator.CreateInstance(tanksModTypes[0]) as TanksMod)!;
-                            tanksMod.InternalName = modName;
-
-                            modDirs.Add(tanksMod, folder);
+                            mod = (Activator.CreateInstance(tanksModTypes[0]) as TanksMod)!;
+                            mod.InternalName = modName;
+                            mod.Data.LoadDirectory = folder;
+                            mod.Data.assemblyContainer = alc;
+                            mod.Data.LoadDirectory = filepath;
+                            mod.Data.Dependencies = alc.Assemblies.Select(x => x.FullName!).ToArray();
+                            mod.Data.Assemblies = alc.Assemblies;
 
                             var modInfoPath = Path.Combine(folder, "mod_info.json");
 
-                            SetupMod(tanksMod, modInfoPath);
+                            SetupMod(mod, modInfoPath);
 
-                            LoadModContent(tanksMod, types);
+                            LoadModContent(mod, types);
 
-                            FirstLoadMods.Add(tanksMod.InternalName);
-                            ModsEnabled.TryAdd(tanksMod.InternalName, true);
+                            FirstLoadMods.Add(mod.InternalName);
+                            ModsEnabled.TryAdd(mod.InternalName, true);
 
-                            LoadedMods.Add(tanksMod);
-                            tanksMod.OnLoad();
-                            OnPostModLoad?.Invoke(tanksMod);
+                            LoadedMods.Add(mod);
+                            mod.OnLoad();
+                            OnPostModLoad?.Invoke(mod);
                         }
                         ActionsComplete++;
                         TankGame.ClientLog.Write($"Loaded mod assembly '{assembly.GetName().Name}', version '{assembly.GetName().Version}'", LogType.Info);
@@ -446,7 +432,7 @@ public static class ModLoader {
             ModBeingLoaded = string.Empty;
             Status = LoadStatus.Complete;
 
-            ChatSystem.SendMessage(_firstLoad ? $"Loaded {_loadedAlcs.Count} mod(s)." : $"Reloaded {_loadedAlcs.Count} mod(s).", Color.Lime);
+            ChatSystem.SendMessage(_firstLoad ? $"Loaded {LoadedMods.Count} mod(s)." : $"Reloaded {LoadedMods.Count} mod(s).", Color.Lime);
             _firstLoad = false;
 
             ModTanks = [.. _modTanks];
@@ -475,10 +461,9 @@ public static class ModLoader {
             File.WriteAllText(modInfoPath, JsonSerializer.Serialize<ModInfo>(default, _indented));
             tanksMod.ModInfo = new();
         }
-
-        _modTankDictionary.Add(tanksMod, []);
-        _modBlockDictionary.Add(tanksMod, []);
-        _modShellDictionary.Add(tanksMod, []);
+        tanksMod.Data.Tanks = [];
+        tanksMod.Data.Blocks = [];
+        tanksMod.Data.Shells = [];
     }
     internal static void LoadModContent(TanksMod mod, Type[] types) {
         foreach (var type in types) {
@@ -490,7 +475,7 @@ public static class ModLoader {
 
             if (isModTank) {
                 var modTank = (Activator.CreateInstance(type) as ModTank)!;
-                _modTankDictionary[mod].Add(modTank);
+                mod.Data.Tanks.Add(modTank);
                 _modTanks.Add(modTank);
                 modTank!.Mod = mod;
 
@@ -510,7 +495,7 @@ public static class ModLoader {
             }
             else if (isModBlock) {
                 var modBlock = (Activator.CreateInstance(type) as ModBlock)!;
-                _modBlockDictionary[mod].Add(modBlock);
+                mod.Data.Blocks.Add(modBlock);
                 _modBlocks.Add(modBlock);
                 modBlock!.Mod = mod;
 
@@ -522,7 +507,7 @@ public static class ModLoader {
             }
             else if (isModShell) {
                 var modShell = (Activator.CreateInstance(type) as ModShell)!;
-                _modShellDictionary[mod].Add(modShell);
+                mod.Data.Shells.Add(modShell);
                 _modShells.Add(modShell);
                 modShell!.Mod = mod;
 

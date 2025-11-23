@@ -27,31 +27,26 @@ public enum LogType {
 
 /// <summary>Represents a system which reads and writes to a logging file.</summary>
 public sealed class Logger : IDisposable {
-    private readonly StringBuilder _stringBuilder = new(128);
-    private readonly string writeTo;
+    readonly StringBuilder _builder = new(128);
+    readonly string _filePath;
+    readonly FileStream _stream;
+    readonly StreamWriter _writer;
 
-    public readonly string Name;
+    public string Name { get; }
+    public string FileName { get; }
 
-    public readonly string FileName;
-
-    private readonly Assembly assembly;
-
-    private static FileStream fStream;
-    private static StreamWriter sWriter;
-    
     public Logger(string writeFile, string name) {
-        assembly = Assembly.GetExecutingAssembly();
         Name = name;
 
-        FileName = _stringBuilder.Append(name).Append('_').Append(DateTime.Now.StringFormatCustom("_")).Append(".log").ToString();
+        FileName = _builder.Append(name).Append('_').Append(DateTime.Now.StringFormatCustom("_")).Append(".log").ToString();
 
-        writeTo = Path.Combine(writeFile, $"{FileName}");
+        _filePath = Path.Combine(writeFile, $"{FileName}");
 
-        Debug.WriteLine($"Created '{writeTo}'");
+        Debug.WriteLine($"Created '{_filePath}'");
 
-        fStream = new(writeTo, FileMode.OpenOrCreate);
-        fStream.SetLength(0);
-        sWriter = new(fStream);
+        _stream = new(_filePath, FileMode.OpenOrCreate);
+        _stream.SetLength(0);
+        _writer = new(_stream);
     }
 
     /// <summary>
@@ -63,21 +58,21 @@ public sealed class Logger : IDisposable {
     /// <exception cref="Exception">If <paramref name="throwException"/> is set to <see langword="true"/>, this exception will be thrown upon write completion.</exception>
     public void Write(object contents, LogType writeType, bool throwException = false) {
         var contentsAsString = contents.ToString();
-        fStream.Position = fStream.Length;
-        lock (sWriter) {
-            _stringBuilder.Clear(); // Clear the sb to avoid writing stuff we don't really want.
+        _stream.Position = _stream.Length;
+        lock (_writer) {
+            _builder.Clear(); // Clear the sb to avoid writing stuff we don't really want.
             // Equivalent to $"[{DateTime.Now}] [{assembly.GetName().Name}] [{writeType}]: {contents}"
-            _stringBuilder
+            _builder
                 .Append('[').Append(DateTime.Now.ToString(CultureInfo.InvariantCulture)).Append("] ")
-                .Append('[').Append(assembly.GetName().Name).Append("] ")
+                .Append('[').Append(Assembly.GetCallingAssembly().GetName().Name).Append("] ")
                 .Append('[').Append(FromLogLevel(writeType)).Append("]: ")
                 .Append(contentsAsString);
 
-            var str = _stringBuilder.ToString();
-            sWriter.WriteLine(str);
+            var str = _builder.ToString();
+            _writer.WriteLine(str);
             Debug.WriteLine(str);
             if (GameLauncher.IsConsoleAllocated) Console.WriteLine(str);
-            sWriter.Flush();
+            _writer.Flush();
         }
 
         if (throwException)
@@ -96,8 +91,8 @@ public sealed class Logger : IDisposable {
     }
     
     public void Dispose() {
-        sWriter.Dispose();
-        fStream.Dispose();
+        _writer.Dispose();
+        _stream.Dispose();
         GC.SuppressFinalize(this);
     }
     ~Logger() {

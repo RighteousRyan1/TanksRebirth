@@ -59,11 +59,11 @@ public partial class MainMenuUI {
 
         float uiScaleX = 400f;
         float uiScaleY = 100f;
-        for (int i = 0; i < ModLoader.modDirs.Count; i++) {
-            var dir = ModLoader.modDirs.ElementAt(i);
+        for (int i = 0; i < ModLoader.LoadedMods.Count; i++) {
+            var mod = ModLoader.LoadedMods[i];
+            var dir = mod.ModPath;
 
-            var mod = dir.Key;
-            var iconPath = Path.Combine(dir.Value, "mod_icon.png");
+            var iconPath = Path.Combine(dir, "mod_icon.png");
             var iconExists = File.Exists(iconPath);
 
             if (iconExists)

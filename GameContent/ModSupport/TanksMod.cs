@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework.Interfaces;
 
@@ -6,7 +7,8 @@ namespace TanksRebirth.GameContent.ModSupport;
 
 /// <summary>A class that contains an entrypoint into the game.</summary>
 public abstract class TanksMod : ILoadable {
-    internal ModData data = new();
+    /// <summary>A struct containing many things pertaining to the contents of a mod, such as added mod content, dependencies/loaded assemblies, and more.</summary>
+    public ModData Data = new();
     /// <summary>The folder within your mod path that contains project references with <c>.dll</c>.</summary>
     public string RefsFolder { get; } = "modrefs";
     // /// <summary>The display name of this mod. Generally named the internal name, but split by PascalCase.</summary>

@@ -119,7 +119,7 @@ public class TankGame : Game {
         Directory.CreateDirectory(Path.Combine(SaveDirectory, "Resource Packs", "Music"));
         Directory.CreateDirectory(Path.Combine(SaveDirectory, "Logs"));
         Directory.CreateDirectory(Path.Combine(SaveDirectory, "Backup"));
-        ClientLog = new(Path.Combine(SaveDirectory, "Logs"), "client");
+        ClientLog = new(Path.Combine(SaveDirectory, "Logs"), "tanks_rebirth_client");
 
         // logging speaks for itself
         Task.Run(() => {
