@@ -280,7 +280,7 @@ public class PlayerTank : Tank {
     }
     void ProcessPlayerMouse() {
         if (NetPlay.IsClientMatched(PlayerId)) {
-            if (!Difficulties.Types["POV"] || LevelEditorUI.IsActive || MainMenuUI.IsActive) {
+            if (!Modifiers.Map[Modifiers.POV] || LevelEditorUI.IsActive || MainMenuUI.IsActive) {
                 Vector3 mouseWorldPos = MatrixUtils.GetWorldPosition(MouseUtils.MousePosition, -11f);
                 if (!LevelEditorUI.IsActive)
                     TurretRotation = -(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position).ToRotation() + MathHelper.PiOver2;
@@ -428,7 +428,7 @@ public class PlayerTank : Tank {
             DesiredDirection.X = 1;
         }
 
-        if (Difficulties.Types["POV"])
+        if (Modifiers.Map[Modifiers.POV])
             DesiredDirection = DesiredDirection.Rotate(-TurretRotation + MathHelper.Pi);
     }
     public override void Destroy(ITankHurtContext context, bool netSend) {

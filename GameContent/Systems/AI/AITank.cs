@@ -117,12 +117,12 @@ public partial class AITank : Tank {
     public AITank(int tier, bool applyDefaults = true, bool isIngame = true) {
         // looking at this code makes me want to barf.
         // maybe move this stuff to events within Difficulties.cs
-        if (Difficulties.Types["BumpUp"])
+        if (Modifiers.Map[Modifiers.BUMP])
             tier++;
-        if (Difficulties.Types["Monochrome"])
-            tier = Difficulties.MonochromeValue;
-        if (Difficulties.Types["MasterModBuff"])
-            tier = Difficulties.VanillaToMasterModeConversions[tier];
+        if (Modifiers.Map[Modifiers.MONOCHROME])
+            tier = Modifiers.MonochromeValue;
+        if (Modifiers.Map[Modifiers.MASTER])
+            tier = Modifiers.VanillaToMasterModeConversions[tier];
 
         SpecialBehaviors = [];
         NearbyDangers = [];
@@ -207,22 +207,22 @@ public partial class AITank : Tank {
         CurrentRandomShoot = Client.ClientRandom.Next(Parameters.RandomTimerMinShoot, Parameters.RandomTimerMaxShoot);
 
         // unfortunately these are just miserable
-        if (Difficulties.Types["TanksAreCalculators"])
+        if (Modifiers.Map[Modifiers.EXTRA_CALCS])
             if (properties.RicochetCount >= 1)
                 if (properties.HasTurret)
                     Parameters.SmartRicochets = true;
 
-        if (Difficulties.Types["UltraMines"])
+        if (Modifiers.Map[Modifiers.BIG_MINES])
             Parameters.AwarenessHostileMine *= 3;
 
-        if (Difficulties.Types["AllInvisible"]) {
+        if (Modifiers.Map[Modifiers.INVIS]) {
             properties.Invisible = true;
             properties.CanLayTread = false;
         }
-        if (Difficulties.Types["AllStationary"])
+        if (Modifiers.Map[Modifiers.STATIONARY])
             properties.Stationary = true;
 
-        if (Difficulties.Types["AllHoming"]) {
+        if (Modifiers.Map[Modifiers.HOMING]) {
             properties.ShellHoming = new() {
                 Radius = 200f,
                 Speed = properties.ShellSpeed,
@@ -233,17 +233,17 @@ public partial class AITank : Tank {
             Parameters.DetectionForgivenessHostile *= 2;
         }
 
-        if (Difficulties.Types["BulletBlocking"])
+        if (Modifiers.Map[Modifiers.DEFLECT])
             Parameters.DeflectsBullets = true;
 
-        if (Difficulties.Types["Armored"]) {
+        if (Modifiers.Map[Modifiers.ARMOR]) {
             if (properties.Armor is null)
                 properties.Armor = new(this, 3);
             else
                 properties.Armor = new(this, properties.Armor.HitPoints + 3);
         }
 
-        if (Difficulties.Types["Predictions"])
+        if (Modifiers.Map[Modifiers.PREDICTIONS])
             Parameters.PredictsPositions = true;
         properties.TreadVolume = 0.05f;
 

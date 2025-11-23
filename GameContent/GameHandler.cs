@@ -24,6 +24,7 @@ using TanksRebirth.Graphics.Metrics;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.Internals.Common.Framework.Audio;
 
 namespace TanksRebirth.GameContent;
 
@@ -107,13 +108,12 @@ public class GameHandler {
         }
         if (InputUtils.KeyJustPressed(Keys.OemTilde))
             doTestWithFont();*/
-        // ChatSystem.CurTyping = SoundPlayer.GetLengthOfSound("Content/Assets/sounds/tnk_shoot_ricochet_rocket_loop.ogg").ToString();
 
         ExperienceBar.Update();
         CosmeticsUI.Update();
         RoomScene.Update();
 
-        Difficulties.GlobalManage();
+        Modifiers.GlobalManage();
 
         if (MainMenuUI.IsActive)
             PlayerTank.SetLives(999);
@@ -132,12 +132,7 @@ public class GameHandler {
         var floor0 = MathF.Floor(TankGame.GameData.ExpLevel);
         GameData.UniversalExpMultiplier = floor1 - (GameData.DecayPerLevel * floor0);*/
 
-        if (InputUtils.KeyJustPressed(Keys.I)) {
-            new Shell(new Vector2(0, 100), -Vector2.UnitY * 2, ShellID.Standard, null);
-            new Shell(new Vector2(MouseUtils.Test.X * 10, -100), Vector2.UnitY * 2, ShellID.Standard, null);
-        }
-
-        if (Difficulties.Types["InfiniteLives"])
+        if (Modifiers.Map[Modifiers.INF_LIFE])
             PlayerTank.SetLives(PlayerTank.StartingLives);
 
         for (int i = 0; i < Animator.Animators.Count; i++)

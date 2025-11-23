@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.Xna.Framework;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.AI;
@@ -59,10 +59,10 @@ public struct TankTemplate {
         PlayerTank player;
 
         // change player based on chosen difficulties
-        if (Difficulties.Types["RandomPlayer"])
+        if (Modifiers.Map[Modifiers.RANDOM_PLAYER])
             player = new PlayerTank(PlayerType, false, AITank.PickRandomTier());
-        else if (Difficulties.Types["Disguise"])
-            player = new PlayerTank(PlayerType, false, Difficulties.DisguiseValue);
+        else if (Modifiers.Map[Modifiers.DISGUISE])
+            player = new PlayerTank(PlayerType, false, Modifiers.DisguiseValue);
         else
             player = new PlayerTank(PlayerType);
         player.Physics.Position = Position / Tank.UNITS_PER_METER;

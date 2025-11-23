@@ -199,7 +199,7 @@ public class Campaign
                     var placeId = PlacementSquare.Placements.FindIndex(place => Vector3.Distance(place.Position, tank.Position3D) < Block.SIDE_LENGTH / 2);
                     var placement = PlacementSquare.Placements[placeId];
 
-                    if (Difficulties.Types["AiCompanion"] && !hasSpawnedCompanion) {
+                    if (Modifiers.Map[Modifiers.AI_COMPANION] && !hasSpawnedCompanion) {
                         var companionPos = template.Position;
 
                         var nextPlayerIdx = Array.FindIndex(LoadedMission.Tanks, t => t.IsPlayer && t.PlayerType > template.PlayerType);

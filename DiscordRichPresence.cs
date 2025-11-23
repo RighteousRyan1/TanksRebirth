@@ -67,7 +67,7 @@ public static class DiscordRichPresence {
                         SetDetails("Making things juuuust right");
                         break;
                     case MainMenuUI.UIState.Difficulties:
-                        var count = Difficulties.Types.Count(diff => diff.Value);
+                        var count = Modifiers.Map.Count(diff => diff.Value);
 
 
                         SetDetails($"Challenging themselves with {count} {(count == 1 ? "difficulty" : "difficulties")}");

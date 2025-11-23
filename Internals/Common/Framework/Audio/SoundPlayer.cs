@@ -3,21 +3,26 @@ using Microsoft.Xna.Framework.Audio;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Security.Cryptography.X509Certificates;
-using TanksRebirth.GameContent.ModSupport;
-using TanksRebirth.GameContent.UI;
-using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.Internals.Common.Framework.Audio;
 
 public static class SoundPlayer
 {
     /// <summary>Sounds that will have a sound limit.</summary>
-    public static Dictionary<string, OggAudio> SavedSounds = new();
+    public static Dictionary<string, OggAudio> SavedSounds = [];
+    static readonly Dictionary<string, TimeSpan> _durationCache = [];
+
     public static TimeSpan GetLengthOfSound(string filePath) {
-        byte[] soundData = File.ReadAllBytes(filePath);
-        return SoundEffect.GetSampleDuration(soundData.Length, 44100, AudioChannels.Stereo);
+        if (_durationCache.TryGetValue(filePath, out var cached))
+            return cached;
+
+        using var stream = File.OpenRead(filePath);
+        using var soundEffect = SoundEffect.FromStream(stream);
+
+        var duration = soundEffect.Duration;
+        _durationCache[filePath] = duration;
+
+        return duration;
     }
     private static float MusicVolume => TankGame.Settings.MusicVolume;
     private static float EffectsVolume => TankGame.Settings.EffectsVolume;

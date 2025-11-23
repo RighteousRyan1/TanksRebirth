@@ -90,9 +90,9 @@ public static class IntermissionHandler {
             CampaignGlobals.LoadedCampaign.LoadNextMission();
             // hijack the next mission if random tanks is enabled.
             // IntermissionSystem.cs line 89 contains when the next mission is actually set-up.
-            if (Difficulties.Types["RandomizedTanks"])
+            if (Modifiers.Map["RandomizedTanks"])
                 CampaignGlobals.LoadedCampaign.CachedMissions[CampaignGlobals.LoadedCampaign.CurrentMissionId].Tanks
-                            = Difficulties.HijackTanks(CampaignGlobals.LoadedCampaign.CachedMissions[CampaignGlobals.LoadedCampaign.CurrentMissionId].Tanks);
+                            = Modifiers.HijackTanks(CampaignGlobals.LoadedCampaign.CachedMissions[CampaignGlobals.LoadedCampaign.CurrentMissionId].Tanks);
             SoundPlayer.PlaySoundInstance("Assets/music/fanfares/mission_complete.ogg", SoundContext.Effect, 0.5f);
             if (Speedrun.CurrentSpeedrun is not null) {
                 if (CampaignGlobals.LoadedCampaign.CurrentMissionId > 1) {
@@ -233,7 +233,7 @@ public static class IntermissionHandler {
                     endContext = MissionEndContext.Win;
 
                 // hardcode hell 2: electric boogaloo
-                if (Difficulties.Types["InfiniteLives"])
+                if (Modifiers.Map[Modifiers.INF_LIFE])
                     endContext = MissionEndContext.Lose;
             }
             CampaignGlobals.MissionEndEvent_Invoke(restartTime, endContext, isExtraLifeMission);

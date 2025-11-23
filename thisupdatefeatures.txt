@@ -14,6 +14,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 
 - Increased the maximum tank count to 60
 - Made mines not destroy everything instantly, but rather grow, similar to the original
+- "Difficulties" now changed to "Modifiers"
 
 # Changes Important for Modders
 
@@ -21,6 +22,10 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 	- You can enqueue to `TankGame.MainThreadTasks` for actions to be performed on the main thread
 - There is now a much higher limit on pitch-shifting (of specifically `OggAudio`. Change `OggAudio.Pitch` directly)
 - Added `mod_info.json` to the mod template. If your mod does not have it, you can download the default `mod_info.json` [here](link_lol_PLEASE_ADD_ME)
+- `Difficulties` is now `Modifiers` in source
+	- `Types` now renamed to just `Map`
+	- Each default modifier identifier now has a constant string associated with it, which makes things much less of a headache
+		- The constants have simplified names for lesser code cram. The names should be good enough to decipher 
 
 # Fixes
 

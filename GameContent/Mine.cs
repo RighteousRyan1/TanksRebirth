@@ -131,7 +131,7 @@ public sealed class Mine : IAITankDanger {
     /// <summary>Detonates this <see cref="Mine"/>.</summary>
     public void Detonate() {
         Detonated = true;
-        var scale = ExplosionRadiusInUnits * 0.101f * (Difficulties.Types["UltraMines"] ? 2 : 1);
+        var scale = ExplosionRadiusInUnits * 0.101f * (Modifiers.Map[Modifiers.BIG_MINES] ? 2 : 1);
         var expl = new Explosion(Position, scale, Owner);
 
         if (Owner != null)

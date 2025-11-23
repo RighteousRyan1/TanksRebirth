@@ -300,11 +300,11 @@ public static class IntermissionSystem {
         }
     }
     public static void MissionSetup() {
-        if (Difficulties.Types["RandomizedTanks"]) {
+        if (Modifiers.Map["RandomizedTanks"]) {
             if (CampaignGlobals.LoadedCampaign.CurrentMissionId == MainMenuUI.MissionCheckpoint
                 && IntermissionHandler.LastResult != MissionEndContext.Lose) {
                 CampaignGlobals.LoadedCampaign.CachedMissions[CampaignGlobals.LoadedCampaign.CurrentMissionId].Tanks
-                    = Difficulties.HijackTanks(CampaignGlobals.LoadedCampaign.CachedMissions[CampaignGlobals.LoadedCampaign.CurrentMissionId].Tanks);
+                    = Modifiers.HijackTanks(CampaignGlobals.LoadedCampaign.CachedMissions[CampaignGlobals.LoadedCampaign.CurrentMissionId].Tanks);
             }
         }
         CampaignGlobals.LoadedCampaign.SetupLoadedMission(GameHandler.AllPlayerTanks.Any(tnk => tnk != null && !tnk.IsDestroyed));

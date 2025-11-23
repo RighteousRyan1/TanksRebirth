@@ -138,7 +138,7 @@ public static class AIManager {
 
                 aiParams.BaseXP = 0.035f;
 
-                if (Difficulties.Types["PieFactory"]) {
+                if (Modifiers.Map[Modifiers.MINE_SPAM]) {
                     aiParams.ChanceMineLay = 1f;
                     aiParams.AwarenessHostileMine = 0;
                 }
@@ -618,7 +618,7 @@ public static class AIManager {
                 properties.ShellHoming = new();
                 properties.TreadPitch = 0.085f;
 
-                if (Difficulties.Types["PieFactory"]) {
+                if (Modifiers.Map[Modifiers.MINE_SPAM]) {
                     properties.InvulnerableToMines = true;
                     properties.MineCooldown = 10;
                     properties.MineLimit = 20;

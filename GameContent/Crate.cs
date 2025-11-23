@@ -15,8 +15,7 @@ using TanksRebirth.GameContent.Systems.TankSystem;
 
 namespace TanksRebirth.GameContent;
 
-public class Crate
-{
+public class Crate {
     public delegate void OpenDelegate(Crate crate);
     public static event OpenDelegate OnOpen;
     public delegate void PostUpdateDelegate(Crate crate);
@@ -60,8 +59,7 @@ public class Crate
 
     private int _maxBounces = 2;
 
-    private Crate() 
-    {
+    private Crate() {
         Model = ModelGlobals.BoxFace.Asset;
 
         int index = Array.IndexOf(crates, crates.First(c => c is null));
@@ -77,24 +75,20 @@ public class Crate
     /// <param name="pos">The position to spawn the <see cref="Crate"/> in the game world.</param>
     /// <param name="gravity">The gravity which affects the <see cref="Crate"/> while it falls.</param>
     /// <returns>The <see cref="Crate"/> spawned.</returns>
-    public static Crate SpawnCrate(Vector3 pos, float gravity)
-    {
+    public static Crate SpawnCrate(Vector3 pos, float gravity) {
         var spawnSfx = "Assets/sounds/crate/CrateSpawn.ogg";
 
         SoundPlayer.PlaySoundInstance(spawnSfx, SoundContext.Effect, 0.2f);
 
-        return new()
-        {
+        return new() {
             position = pos,
             gravity = gravity,
         };
     }
-    public void Remove()
-    {
+    public void Remove() {
         crates[id] = null;
     }
-    public void Render()
-    {
+    public void Render() {
         // face order: right, left, front, back, top, bottom
 
 
@@ -114,12 +108,9 @@ public class Crate
         faceWorlds[4] = scaleMtx * rotationMtxZ * Matrix.CreateRotationX(MathHelper.PiOver2) * Matrix.CreateTranslation(position.X, position.Y + cubeOffset, position.Z);
         faceWorlds[5] = scaleMtx * rotationMtxZ * Matrix.CreateRotationX(MathHelper.PiOver2) * Matrix.CreateTranslation(position.X, position.Y - cubeOffset, position.Z);
 
-        for (int i = 0; i < faceWorlds.Length; i++)
-        {
-            foreach (ModelMesh mesh in Model.Meshes)
-            {
-                foreach (BasicEffect effect in mesh.Effects)
-                {
+        for (int i = 0; i < faceWorlds.Length; i++) {
+            foreach (ModelMesh mesh in Model.Meshes) {
+                foreach (BasicEffect effect in mesh.Effects) {
                     effect.World = faceWorlds[i];
                     effect.View = CameraGlobals.GameView;
                     effect.Projection = CameraGlobals.GameProjection;
@@ -131,7 +122,7 @@ public class Crate
                     effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/Textures/ingame/block_other_c");
 
                     //if (IsOpening)
-                        //effect.Alpha -= fadeScale;
+                    //effect.Alpha -= fadeScale;
                 }
 
                 mesh.Draw();
@@ -139,20 +130,16 @@ public class Crate
         }
         OnPostRender?.Invoke(this);
     }
-    public void Update()
-    {
-        if (!IsOpening)
-        {
+    public void Update() {
+        if (!IsOpening) {
             velocity.Y -= gravity * 0.05f * RuntimeData.DeltaTime;
 
             // dropSpeed += dropSpeedAccel;
 
             position += velocity * RuntimeData.DeltaTime;
 
-            if (position.Y <= (9.6f * scale))
-            {
-                if (velocity.Y <= -1f)
-                {
+            if (position.Y <= (9.6f * scale)) {
+                if (velocity.Y <= -1f) {
                     var spawnSfx = "Assets/sounds/crate/CrateImpact.ogg";
 
                     SoundPlayer.PlaySoundInstance(spawnSfx, SoundContext.Effect, 0.2f);
@@ -167,8 +154,7 @@ public class Crate
             }
         }
 
-        else
-        {
+        else {
             scale -= fadeScale;
 
             if (scale <= 0)
@@ -181,15 +167,13 @@ public class Crate
     }
 
     /// <summary>Open this <see cref="Crate"/>.</summary>
-    public void Open()
-    {
+    public void Open() {
         IsOpening = true;
 
-        if (ContainsTank)
-        {
+        if (ContainsTank) {
             var tier = TankToSpawn.AiTier;
-            if (Difficulties.Types["MasterModBuff"])
-                tier = Difficulties.VanillaToMasterModeConversions[tier];
+            if (Modifiers.Map[Modifiers.MASTER])
+                tier = Modifiers.VanillaToMasterModeConversions[tier];
             var t = new AITank(tier);
             t.Physics.Position = position.FlattenZ() / Tank.UNITS_PER_METER;
             t.Position = position.FlattenZ();

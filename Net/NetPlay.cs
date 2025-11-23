@@ -448,13 +448,13 @@ public class NetPlay {
                 PlayerTank.KillCounts[clientid] = kills;
                 break;
             case PacketID.SyncDifficulties:
-                for (int i = 0; i < Difficulties.Types.Count; i++) {
-                    Difficulties.Types[Difficulties.Types.Keys.ElementAt(i)] = reader.GetBool();
+                for (int i = 0; i < Modifiers.Map.Count; i++) {
+                    Modifiers.Map[Modifiers.Map.Keys.ElementAt(i)] = reader.GetBool();
                 }
-                Difficulties.RandomTanksLower = reader.GetInt();
-                Difficulties.RandomTanksUpper = reader.GetInt();
-                Difficulties.MonochromeValue = reader.GetInt();
-                Difficulties.DisguiseValue = reader.GetInt();
+                Modifiers.RandomTanksLower = reader.GetInt();
+                Modifiers.RandomTanksUpper = reader.GetInt();
+                Modifiers.MonochromeValue = reader.GetInt();
+                Modifiers.DisguiseValue = reader.GetInt();
                 break;
                 #endregion
         }
@@ -783,7 +783,7 @@ public class NetPlay {
                 Server.NetManager.SendToAll(message, deliveryMethod, peer);
                 break;
             case PacketID.SyncDifficulties:
-                for (int i = 0; i < Difficulties.Types.Count; i++) {
+                for (int i = 0; i < Modifiers.Map.Count; i++) {
                     var val = reader.GetBool();
                     message.Put(val);
                 }

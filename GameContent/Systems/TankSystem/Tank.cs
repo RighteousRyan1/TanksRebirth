@@ -1,13 +1,11 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
-using TanksRebirth.Enums;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Utilities;
 using System.Linq;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using tainicom.Aether.Physics2D.Dynamics;
-using TanksRebirth.GameContent.Systems;
 using System.Collections.Generic;
 using System.IO;
 using TanksRebirth.GameContent.Cosmetics;
@@ -18,7 +16,6 @@ using TanksRebirth.Net;
 using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.GameContent.Globals.Assets;
-using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.Internals.Common.Framework.Collisions;
 
@@ -142,7 +139,7 @@ public abstract class Tank {
     public List<IProp> Props = [];
 
     #region Fields / Properties
-    private float _oldRotation;
+    float _oldRotation;
     public Body Physics { get; set; } = new();
 
     /// <summary>This <see cref="Tank"/>'s model. If this will be any different than the default, set <see cref="UsesCustomModel"/> to <c>true</c>.</summary>
@@ -306,7 +303,7 @@ public abstract class Tank {
     public void DoInvisibilityGFXandSFX() {
         const string invisibleTankSound = "Assets/sounds/tnk_invisible.ogg";
 
-        if (Difficulties.Types["FFA"])
+        if (Modifiers.Map[Modifiers.FFA])
             Team = TeamID.NoTeam;
         if (!Properties.Invisible || IsDestroyed) return;
 
@@ -412,9 +409,9 @@ public abstract class Tank {
             if (cos is Prop2D cos2d)
                 AddProp2D(cos2d);
 
-        if (Difficulties.Types["BulletHell"])
+        if (Modifiers.Map[Modifiers.TRIPLE_BOUNCE])
             Properties.RicochetCount *= 3;
-        if (Difficulties.Types["MachineGuns"]) {
+        if (Modifiers.Map[Modifiers.MACHINE_GUNS]) {
             Properties.ShellCooldown = 5;
             Properties.ShellLimit = 50;
             Properties.ShootStun = 0;
@@ -423,7 +420,7 @@ public abstract class Tank {
                 tank.Parameters.DetectionForgivenessHostile *= 2;
         }
 
-        if (Difficulties.Types["Shotguns"]) {
+        if (Modifiers.Map[Modifiers.SHOTGUNS]) {
             Properties.ShellSpread = 0.3f;
             Properties.ShellShootCount = 3;
             Properties.ShellLimit *= 3;

@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.Internals.Common.Utilities;
 using Microsoft.Xna.Framework.Graphics;
@@ -92,11 +92,11 @@ public static class CameraGlobals {
     public static void Update() {
         bool isFreecam = DebugManager.DebugLevel == DebugManager.Id.FreeCamTest || DebugManager.persistFreecam;
         bool isMainMenu = MainMenuUI.IsActive;
-        bool isPOV = Difficulties.Types["POV"] && !isMainMenu;
+        bool isPOV = Modifiers.Map[Modifiers.POV] && !isMainMenu;
 
         if (!isFreecam) {
             if (!isMainMenu) {
-                if (!Difficulties.Types["POV"] || LevelEditorUI.IsActive) {
+                if (!Modifiers.Map[Modifiers.POV] || LevelEditorUI.IsActive) {
                     UpdateOverhead();
 
                     GameView = Matrix.CreateScale(DEFAULT_ZOOM * AddativeZoom) *

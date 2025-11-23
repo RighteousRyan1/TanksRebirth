@@ -414,13 +414,13 @@ public class Client {
         NetDataWriter message = new();
 
         message.Put(PacketID.SyncDifficulties);
-        foreach (var item in Difficulties.Types) {
+        foreach (var item in Modifiers.Map) {
             message.Put(item.Value);
         }
-        message.Put(Difficulties.RandomTanksLower);
-        message.Put(Difficulties.RandomTanksUpper);
-        message.Put(Difficulties.MonochromeValue);
-        message.Put(Difficulties.DisguiseValue);
+        message.Put(Modifiers.RandomTanksLower);
+        message.Put(Modifiers.RandomTanksUpper);
+        message.Put(Modifiers.MonochromeValue);
+        message.Put(Modifiers.DisguiseValue);
         NetClient.Send(message, DeliveryMethod.Sequenced);
     }
     public static void SendMapPing(Vector3 location, int pingId, int playerId) {

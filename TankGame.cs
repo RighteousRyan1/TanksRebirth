@@ -651,7 +651,7 @@ public class TankGame : Game {
                 Graphics.ApplyChanges();
             }
 
-            RebirthMouse.ShouldRender = !Difficulties.Types["POV"] || GameUI.Paused || MainMenuUI.IsActive || LevelEditorUI.IsActive;
+            RebirthMouse.ShouldRender = !Modifiers.Map[Modifiers.POV] || GameUI.Paused || MainMenuUI.IsActive || LevelEditorUI.IsActive;
 
             UIElement.UpdateElements();
             GameUI.UpdateButtons();
@@ -888,7 +888,7 @@ public class TankGame : Game {
     }
 
     public static void DrawGameElements() {
-        var shader = Difficulties.Types["LanternMode"] && !MainMenuUI.IsActive ? GameShaders.LanternShader : (MainMenuUI.IsActive ? GameShaders.GaussianBlurShader : null);
+        var shader = Modifiers.Map[Modifiers.LANTERN] && !MainMenuUI.IsActive ? GameShaders.LanternShader : (MainMenuUI.IsActive ? GameShaders.GaussianBlurShader : null);
         if (!GameScene.ShouldRenderAll) shader = null;
 
         SpriteRenderer.Begin(effect: shader);

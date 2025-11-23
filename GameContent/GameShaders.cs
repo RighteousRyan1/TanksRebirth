@@ -56,7 +56,7 @@ public class GameShaders
         LanternShader.Parameters["oTime"]?.SetValue((float)TankGame.LastGameTime.TotalGameTime.TotalSeconds);
         //TestShader.Parameters["oBend"]?.SetValue(val);
         //TestShader.Parameters["oDistortionFactor"].SetValue(MouseUtils.MousePosition.X / WindowUtils.WindowWidth);
-        if (Difficulties.Types["LanternMode"]) {
+        if (Modifiers.Map[Modifiers.LANTERN]) {
             var activeTanks = GameHandler.AllPlayerTanks.Where(x => x is not null && !x.IsDestroyed).ToArray();
 
             if (activeTanks.Length == 0 || MainMenuUI.IsActive) {
