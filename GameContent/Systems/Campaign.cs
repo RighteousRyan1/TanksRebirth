@@ -51,7 +51,7 @@ public class Campaign
 
     public Campaign() {
         CachedMissions = new Mission[1];
-        currentTrackedSpawns = [];
+        CurrentTrackedSpawns = [];
         MetaData = CampaignMetaData.GetDefault();
     }
     /// <summary>Load a specific mission into the current mission.</summary>
@@ -60,7 +60,7 @@ public class Campaign
         if (string.IsNullOrEmpty(mission.Name))
             return;
 
-        currentTrackedSpawns = new (Vector2, bool)[mission.Tanks.Length];
+        CurrentTrackedSpawns = new (BlockMapPosition, bool)[mission.Tanks.Length];
         LoadedMission = mission;
     }
     /// <summary>Load a mission already in memory by ID.</summary>
@@ -70,10 +70,10 @@ public class Campaign
 
         CurrentMissionId = id;
         if (LoadedMission.Tanks != null) {
-            currentTrackedSpawns = new (Vector2, bool)[LoadedMission.Tanks.Length];
+            CurrentTrackedSpawns = new (BlockMapPosition, bool)[LoadedMission.Tanks.Length];
             for (int i = 0; i < LoadedMission.Tanks.Length; i++) {
-                currentTrackedSpawns[i].Position = LoadedMission.Tanks[i].Position;
-                currentTrackedSpawns[i].Alive = true;
+                CurrentTrackedSpawns[i].Position = BlockMapPosition.ConvertFromVector2(LoadedMission.Tanks[i].Position);
+                CurrentTrackedSpawns[i].Alive = true;
             }
         }
     }
@@ -97,16 +97,16 @@ public class Campaign
 
         LoadedMission = CachedMissions[CurrentMissionId];
 
-        currentTrackedSpawns = new (Vector2, bool)[LoadedMission.Tanks.Length];
+        CurrentTrackedSpawns = new (BlockMapPosition, bool)[LoadedMission.Tanks.Length];
         for (int i = 0; i < LoadedMission.Tanks.Length; i++) {
-            currentTrackedSpawns[i].Position = LoadedMission.Tanks[i].Position;
-            currentTrackedSpawns[i].Alive = true;
+            CurrentTrackedSpawns[i].Position = BlockMapPosition.ConvertFromVector2(LoadedMission.Tanks[i].Position);
+            CurrentTrackedSpawns[i].Alive = true;
         }
         // run line 120 and 121 in each when i get back
     }
 
     // FIXME: not sure why this is public?
-    internal static (Vector2 Position, bool Alive)[] currentTrackedSpawns { get; set; } // position of spawn, alive
+    public static (BlockMapPosition Position, bool Alive)[] CurrentTrackedSpawns { get; set; } // position of spawn, alive
 
     /// <summary>Sets up the <see cref="Mission"/> that is loaded.</summary>
     /// <param name="spawnNewSet">If true, will spawn all tanks as if it's the first time the player(s) has/have entered this mission.</param>
@@ -118,12 +118,13 @@ public class Campaign
         const int roundingFactor = 5;
 
         bool hasSpawnedCompanion = false;
+        // do not be confused by there being more tanks than there is visible. Tanks also contains the players that are not spawned
         for (int i = 0; i < LoadedMission.Tanks.Length; i++) {
             var template = LoadedMission.Tanks[i];
 
             if (spawnNewSet) {
-                currentTrackedSpawns[i].Position = LoadedMission.Tanks[i].Position;
-                currentTrackedSpawns[i].Alive = true;
+                CurrentTrackedSpawns[i].Position = BlockMapPosition.ConvertFromVector2(LoadedMission.Tanks[i].Position);
+                CurrentTrackedSpawns[i].Alive = true;
             }
 
             while (template.Rotation < 0) {
@@ -139,7 +140,7 @@ public class Campaign
             var chassisRotation = MathF.Round(template.Rotation, roundingFactor);
 
             if (!template.IsPlayer) {
-                if (currentTrackedSpawns[i].Alive) {
+                if (CurrentTrackedSpawns[i].Alive) {
                     var tank = template.GetAiTank();
 
                     tank.Position = template.Position;
@@ -151,10 +152,13 @@ public class Campaign
                     tank.Team = template.Team;
                     if (CampaignGlobals.ShouldMissionsProgress && !MainMenuUI.IsActive) {
                         tank.OnDestroy += () => {
-                            var tankSpawnIndex = Array.IndexOf(currentTrackedSpawns, currentTrackedSpawns.First(pos => pos.Position == template.Position));
+                            var tankSpawnIndex = Array.IndexOf(CurrentTrackedSpawns, CurrentTrackedSpawns.First(pos => {
+                                var converted = BlockMapPosition.ConvertFromVector2(template.Position);
+                                return pos.Position == converted;
+                            }));
 
                             if (tankSpawnIndex > -1)
-                                currentTrackedSpawns[tankSpawnIndex].Alive = false; // make sure the tank is not spawned again
+                                CurrentTrackedSpawns[tankSpawnIndex].Alive = false; // make sure the tank is not spawned again
                         };
                     }
                     var placement = PlacementSquare.GetFromClosest(tank.Position3D);
@@ -297,7 +301,7 @@ public class Campaign
 
         if (autoSetLoadedMission) {
             campaign.LoadMission(0); // first mission in campaign
-            currentTrackedSpawns = new (Vector2, bool)[campaign.LoadedMission.Tanks.Length];
+            CurrentTrackedSpawns = new (BlockMapPosition, bool)[campaign.LoadedMission.Tanks.Length];
             PlayerTank.StartingLives = properties.StartingLives;
         }
 

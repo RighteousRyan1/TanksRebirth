@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using TanksRebirth.Graphics;
 using TanksRebirth.Internals.Common.Utilities;
 
@@ -62,13 +63,22 @@ public struct BlockMapPosition
     }
     public static BlockMapPosition ConvertFromVector2(Vector2 position) {
         // convert position into a CubeMapPosition, and grid lock it
-        var invarX = (int)MathF.Round(position.X % Block.SIDE_LENGTH, 1);
-        var invarY = (int)MathF.Round(position.Y % Block.SIDE_LENGTH, 1);
+        //var invarX = (int)MathF.Round(position.X / Block.SIDE_LENGTH, 1);
+        //var invarY = (int)MathF.Round(position.Y / Block.SIDE_LENGTH, 1);
+
+        float lerpX = MathUtils.InverseLerp(GameScene.MIN_X, GameScene.MAX_X, position.X) * MAP_WIDTH_169;
+        float lerpY = MathUtils.InverseLerp(GameScene.MIN_Z, GameScene.MAX_Z, position.Y) * MAP_HEIGHT;
+        var invarX = (int)MathF.Floor(lerpX);
+        var invarY = (int)MathF.Floor(lerpY);
+
         var invar = new BlockMapPosition(invarX, invarY);
 
         return invar;
 
     }
+
+    public static bool operator ==(BlockMapPosition a, BlockMapPosition b) => a.X == b.X && a.Y == b.Y;
+    public static bool operator !=(BlockMapPosition a, BlockMapPosition b) => a.X != b.X || a.Y != b.Y;
 
     public override string ToString() {
         var sb = new System.Text.StringBuilder()

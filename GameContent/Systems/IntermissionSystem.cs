@@ -300,7 +300,7 @@ public static class IntermissionSystem {
         }
     }
     public static void MissionSetup() {
-        if (Modifiers.Map["RandomizedTanks"]) {
+        if (Modifiers.Map[Modifiers.RANDOM_ENEMY]) {
             if (CampaignGlobals.LoadedCampaign.CurrentMissionId == MainMenuUI.MissionCheckpoint
                 && IntermissionHandler.LastResult != MissionEndContext.Lose) {
                 CampaignGlobals.LoadedCampaign.CachedMissions[CampaignGlobals.LoadedCampaign.CurrentMissionId].Tanks
@@ -457,7 +457,7 @@ public static class IntermissionSystem {
             Color.Goldenrod * 1f, 0f, new Vector2(0, wp.Size().Y / 2), new Vector2(WindowUtils.WindowWidth, 15), default, default);
 
         // calculate total enemy tanks (remaining)
-        int mafs1 = Campaign.currentTrackedSpawns.Count(p => p.Item2);
+        int mafs1 = Campaign.CurrentTrackedSpawns.Count(p => p.Item2);
         int mafs2 = CampaignGlobals.LoadedCampaign.LoadedMission.Tanks.Count(x => x.IsPlayer);
         int mafs = mafs1 - mafs2; // waddafak. why is my old code so horrid.
 
