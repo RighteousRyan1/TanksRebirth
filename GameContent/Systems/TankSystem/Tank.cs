@@ -18,10 +18,25 @@ using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.Internals.Common.Framework.Collisions;
+using TanksRebirth.Graphics.Drawing;
 
 namespace TanksRebirth.GameContent.Systems.TankSystem;
 
 public abstract class Tank {
+    public struct TankDrawParams {
+        public Texture2D? ShadowTexture;
+        public Texture2D? TankTexture;
+
+        public float ShadowAlpha;
+        public float TankAlpha;
+
+        /// <summary>This <see cref="Tank"/>'s model. If this will be any different than the default, set <see cref="UsesCustomModel"/> to <c>true</c>.</summary>
+        public Model Model;
+
+        public const float PLR_AMB_MUL = 2f;
+        public const float AI_AMB_MUL = 0.9f;
+    }
+
     #region TexPack
 
     public static Dictionary<string, Texture2D?> Assets = [];
@@ -142,16 +157,7 @@ public abstract class Tank {
     float _oldRotation;
     public Body Physics { get; set; } = new();
 
-    /// <summary>This <see cref="Tank"/>'s model. If this will be any different than the default, set <see cref="UsesCustomModel"/> to <c>true</c>.</summary>
-    public Model Model { get; set; }
     public bool UsesCustomModel { get; set; }
-
-    /// <summary>This <see cref="Tank"/>'s world position. Used to change the actual location of the model relative to the <see cref="View"/> and <see cref="Projection"/>.</summary>
-    public Matrix World;
-    /// <summary>How the <see cref="Model"/> is viewed through the <see cref="Projection"/>.</summary>
-    public Matrix View;
-    /// <summary>The projection from the screen to the <see cref="Model"/>.</summary>
-    public Matrix Projection;
 
     public int WorldId { get; set; }
     /// <summary>This <see cref="Tank"/>'s <see cref="TeamID"/>.</summary>
@@ -173,6 +179,9 @@ public abstract class Tank {
 
     /// <summary>The *backend* length of the turret. Does not affect anything graphically.</summary>
     public float TurretLength = 20;
+
+    public BasicDrawParams DrawParams = new();
+    public TankDrawParams DrawParamsTank;
     public Vector2 TurretPosition => Position + new Vector2(0, TurretLength).Rotate(-TurretRotation);
     public Vector3 TurretPosition3D => new(TurretPosition.X, 11, TurretPosition.Y);
     public Vector2 Position {
@@ -265,13 +274,13 @@ public abstract class Tank {
     /// contains a different number of bones than the original one.</summary>
     public void InitModelSemantics() {
         // for some reason Model is null when returning from campaign completion with certain mods.
-        if (Model is null) {
-            Model = this is PlayerTank ? ModelGlobals.TankPlayer.Asset : ModelGlobals.TankEnemy.Asset;
+        if (DrawParamsTank.Model is null) {
+            DrawParamsTank.Model = this is PlayerTank ? ModelGlobals.TankPlayer.Asset : ModelGlobals.TankEnemy.Asset;
             TankGame.ClientLog.Write("Unexpected pitfall in initializing tank model semantics. Assigning defaults.", LogType.Warn);
         }
 
-        cannonMesh = Model.Meshes["Cannon"];
-        boneTransforms = new Matrix[Model.Bones.Count];
+        cannonMesh = DrawParamsTank.Model.Meshes["Cannon"];
+        boneTransforms = new Matrix[DrawParamsTank.Model.Bones.Count];
     }
     public void AddProp2D(Prop2D prop, Func<bool>? destroyOn = null) {
         if (Props.Contains(prop))
@@ -400,6 +409,9 @@ public abstract class Tank {
             }
         }
 
+        DrawParamsTank.ShadowAlpha = 0.5f;
+        DrawParamsTank.TankAlpha = 1f;
+
         GeneratePhysics();
 
         if (GameScene.Theme == MapTheme.Christmas)
@@ -459,7 +471,7 @@ public abstract class Tank {
         Physics.LinearVelocity = (Velocity * 0.55f + KnockbackVelocity) / UNITS_PER_METER;
 
         // try to make positive. i hate game
-        World = Matrix.CreateScale(Scaling)
+        DrawParams.World = Matrix.CreateScale(Scaling)
             * Matrix.CreateFromYawPitchRoll(-ChassisRotation - (Flip ? MathHelper.Pi : 0f), 0, 0)
             * Matrix.CreateTranslation(Position3D);
 
@@ -497,9 +509,9 @@ public abstract class Tank {
 
         // try to make negative. go poopoo
         cannonMesh!.ParentBone.Transform = Matrix.CreateRotationY(TurretRotation + ChassisRotation + (Flip ? MathHelper.Pi : 0));
-        Model!.Root.Transform = World;
+        DrawParamsTank.Model!.Root.Transform = DrawParams.World;
 
-        Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
+        DrawParamsTank.Model.CopyAbsoluteBoneTransformsTo(boneTransforms);
 
         if (!Properties.Stationary) {
             float treadPlaceTimer = 0;
@@ -880,8 +892,8 @@ public abstract class Tank {
         if (!GameScene.ShouldRenderAll) return;
         if (IsDestroyed) return;
 
-        Projection = CameraGlobals.GameProjection;
-        View = CameraGlobals.GameView;
+        DrawParams.Projection = CameraGlobals.GameProjection;
+        DrawParams.View = CameraGlobals.GameView;
 
         if (!CampaignGlobals.InMission || !Properties.Invisible && CampaignGlobals.InMission) {
             foreach (var cosmetic in Props) {
@@ -904,15 +916,31 @@ public abstract class Tank {
                             else if (cosmetic.LockOptions == PropLockOptions.ToTurretCentered)
                                 cosmetic.RelativePosition = cosmetic.RelativePosition.RotateXZ(-rotY);
 
-
                             effect.World = i == 0 ? Matrix.CreateRotationX(cosmetic.Rotation.X) * Matrix.CreateRotationY(rotY) * Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) * Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition)
                                 : Matrix.CreateRotationX(cosmetic.Rotation.X) * Matrix.CreateRotationY(cosmetic.Rotation.Y) * Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) * Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition) * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
-                            effect.View = View;
-                            effect.Projection = Projection;
+                            effect.View = DrawParams.View;
+                            effect.Projection = DrawParams.Projection;
+
+                            // hover highlight
+                            if (IsHoveredByMouse)
+                                effect.EmissiveColor = Color.White.ToVector3();
+                            else
+                                effect.EmissiveColor = Color.Black.ToVector3();
+
+                            if (ShowTeamVisuals) {
+                                if (Team != TeamID.NoTeam) {
+                                    var ex = new Color[1024];
+
+                                    Array.Fill(ex, TeamID.TeamColors[Team]);
+
+                                    effect.Texture?.SetData(0, new Rectangle(0, 0, 32, 9), ex, 0, 288);
+                                    effect.Texture?.SetData(0, new Rectangle(0, 23, 32, 9), ex, 0, 288);
+                                }
+                            }
 
                             effect.TextureEnabled = true;
                             effect.Texture = i == 0 ? cos3d.ModelTexture : GameResources.GetGameResource<Texture2D>("Assets/textures/ingame/block_shadow_h");
-                            effect.SetDefaultGameLighting_IngameEntities();
+                            effect.SetDefaultGameLighting_IngameEntities(DrawParams.LightPower, DrawParams.AmbientPower, DrawParams.UsePhong, DrawParams.LightDirection);
                         }
 
                         mesh.Draw();
@@ -937,7 +965,7 @@ public abstract class Tank {
 
         if (DebugManager.DebugLevel != DebugManager.Id.EntityData) return;
         for (int i = 0; i < info.Length; i++) {
-            var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Up * 20, World, View, Projection) -
+            var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Up * 20, DrawParams.World, DrawParams.View, DrawParams.Projection) -
                 new Vector2(0, i * 20);
             DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont, info[i], pos, 
                 Color.Aqua, Color.Black, new Vector2(0.5f).ToResolution(), 0f, Anchor.TopCenter, 0.6f);

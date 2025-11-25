@@ -27,6 +27,7 @@ using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.Internals.Common.Framework.Collisions;
+using TanksRebirth.Graphics.Drawing;
 
 namespace TanksRebirth.GameContent;
 
@@ -65,23 +66,19 @@ public class PlayerTank : Tank {
     public int PlayerId { get; }
     public int PlayerType { get; }
 
-    private Texture2D? _tankTexture;
+    public static Keybind MoveUp = new("Up", Keys.W);
+    public static Keybind MoveDown = new("Down", Keys.S);
+    public static Keybind MoveLeft = new("Left", Keys.A);
+    public static Keybind MoveRight = new("Right", Keys.D);
+    public static Keybind PlaceMine = new("Place Mine", Keys.Space);
+    public static Keybind ShowShotPath = new("Draw Shot Path", Keys.Q);
+    public static GamepadBind GamePadShoot = new("Fire Bullet", Buttons.RightTrigger);
+    public static GamepadBind GamePadPlaceMine = new("Place Mine", Buttons.A);
 
-    public static Keybind controlUp = new("Up", Keys.W);
-    public static Keybind controlDown = new("Down", Keys.S);
-    public static Keybind controlLeft = new("Left", Keys.A);
-    public static Keybind controlRight = new("Right", Keys.D);
-    public static Keybind controlMine = new("Place Mine", Keys.Space);
-    public static Keybind controlFirePath = new("Draw Shot Path", Keys.Q);
-    public static GamepadBind FireBullet = new("Fire Bullet", Buttons.RightTrigger);
-    public static GamepadBind PlaceMine = new("Place Mine", Buttons.A);
-
-    private bool playerControl_isBindPressed;
+    bool playerControl_isBindPressed;
+    bool _isPlayerModel;
 
     public Vector2 oldPosition;
-
-    private bool _isPlayerModel;
-    private Texture2D? _shadowTexture;
 
     // 46 if using keyboard, 10 if using a controller
     //private float _maxTurnInputBased;
@@ -124,39 +121,35 @@ public class PlayerTank : Tank {
             for (int i = 0; i < Lives.Length; i++)
                 Lives[i] = num;
     }
-    public void SwapTankTexture(Texture2D texture) => _tankTexture = texture;
     public PlayerTank(int playerType, bool isPlayerModel = true, int copyTier = -1) {
-        Model = isPlayerModel ? ModelGlobals.TankPlayer.Asset : ModelGlobals.TankEnemy.Asset;
+        DrawParamsTank.Model = isPlayerModel ? ModelGlobals.TankPlayer.Asset : ModelGlobals.TankEnemy.Asset;
 
         Texture2D texAsset;
 
-        if (copyTier == -1)
-            texAsset = Assets[$"plrtank_" + PlayerID.Collection.GetKey(playerType)!.ToLower()];
+        if (copyTier == -1) texAsset = Assets[$"plrtank_" + PlayerID.Collection.GetKey(playerType)!.ToLower()]!;
         else {
-            texAsset = Assets[$"tank_" + TankID.Collection.GetKey(copyTier)!.ToLower()];
-
+            texAsset = Assets[$"tank_" + TankID.Collection.GetKey(copyTier)!.ToLower()]!;
             Properties = AIManager.GetAITankProperties(copyTier);
         }
 
-        _tankTexture = texAsset.Duplicate(TankGame.Instance.GraphicsDevice);
+        DrawParamsTank.TankTexture = texAsset!.Duplicate(TankGame.Instance.GraphicsDevice);
+        DrawParamsTank.ShadowTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank_shadow");
 
         _isPlayerModel = isPlayerModel;
         PlayerType = playerType;
-        Team = TeamID.Red;
-        IsDestroyed = true;
         PlayerId = playerType;
-        _shadowTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank_shadow");
 
         GameHandler.AllPlayerTanks[PlayerId] = this;
 
-        if (copyTier == -1)
-            ApplyDefaults(ref Properties);
+        // initialize drawing parameters
+        DrawParams.UsePhong = _isPlayerModel;
+        DrawParams.LightPower = 1f;
+        DrawParams.AmbientPower = _isPlayerModel ? TankDrawParams.PLR_AMB_MUL : TankDrawParams.AI_AMB_MUL;
 
-        var newTankIndex = Array.IndexOf(GameHandler.AllTanks, null);
+        if (copyTier == -1) ApplyDefaults(ref Properties);
 
-        WorldId = newTankIndex;
-
-        GameHandler.AllTanks[newTankIndex] = this;
+        WorldId = Array.IndexOf(GameHandler.AllTanks, null);
+        GameHandler.AllTanks[WorldId] = this;
 
         base.Initialize();
     }
@@ -279,35 +272,43 @@ public class PlayerTank : Tank {
         }
     }
     void ProcessPlayerMouse() {
-        if (NetPlay.IsClientMatched(PlayerId)) {
-            if (!Modifiers.Map[Modifiers.POV] || LevelEditorUI.IsActive || MainMenuUI.IsActive) {
-                Vector3 mouseWorldPos = MatrixUtils.GetWorldPosition(MouseUtils.MousePosition, -11f);
+        if (!NetPlay.IsClientMatched(PlayerId)) return;
+
+        var shouldAimingHappen = !Modifiers.Map[Modifiers.POV] || LevelEditorUI.IsActive || MainMenuUI.IsActive;
+        if (shouldAimingHappen) {
+            // the mice, obv
+            var arr = TankGame.PlayerMice.Values.ToArray();
+            var cursorIdx = Array.FindIndex(arr, x => x.Player == PlayerId);
+            if (cursorIdx > -1) {
+                var cursorToAimAt = arr[cursorIdx];
+
+                var mouseWorldPos = MatrixUtils.GetWorldPosition(cursorToAimAt.Position!.Invoke(), -11f);
                 if (!LevelEditorUI.IsActive)
                     TurretRotation = -(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position).ToRotation() + MathHelper.PiOver2;
                 else
                     TurretRotation = ChassisRotation;
             }
-            else if (!GameUI.Paused) {
-                // if (DebugManager.IsFreecamEnabled && InputUtils.MouseRight) { } 
-                if (!DebugManager.IsFreecamEnabled && !InputUtils.CanDetectClick() && !controlMine.JustPressed) {
-                    var mouseState = Mouse.GetState();
-                    var screenCenter = new Point(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2);
+        }
+        // handle POV mode aiming
+        else if (!GameUI.Paused) { 
+            if (!DebugManager.IsFreecamEnabled && !InputUtils.CanDetectClick() && !PlaceMine.JustPressed) {
+                var mouseState = Mouse.GetState();
+                var screenCenter = new Point(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 2);
 
-                    if (_justCenteredMouse) {
-                        // skip to avoid jumps
-                        _justCenteredMouse = false;
-                        return;
-                    }
-
-                    // subtract mouse delta eventually
-                    int deltaX = mouseState.X - screenCenter.X;
-
-                    TurretRotation += -deltaX / (312f.ToResolutionX());
-
-                    // recenter
-                    Mouse.SetPosition(screenCenter.X, screenCenter.Y);
-                    _justCenteredMouse = true;
+                if (_justCenteredMouse) {
+                    // skip to avoid jumps
+                    _justCenteredMouse = false;
+                    return;
                 }
+
+                // subtract mouse delta eventually
+                int deltaX = mouseState.X - screenCenter.X;
+
+                TurretRotation += -deltaX / (312f.ToResolutionX());
+
+                // recenter
+                Mouse.SetPosition(screenCenter.X, screenCenter.Y);
+                _justCenteredMouse = true;
             }
         }
     }
@@ -315,7 +316,7 @@ public class PlayerTank : Tank {
         if (nullifyMe) {
             GameHandler.AllPlayerTanks[PlayerId] = null;
             GameHandler.AllTanks[WorldId] = null;
-            _tankTexture?.Dispose();
+            DrawParamsTank.TankTexture?.Dispose();
         }
         base.Remove(nullifyMe);
     }
@@ -329,7 +330,6 @@ public class PlayerTank : Tank {
     }
     // B is already mapped to left click forcibly
     void ControlHandle_Wiimote(WiimoteLib.WiimoteState state) {
-
         if (state.ExtensionType != WiimoteLib.ExtensionType.Nunchuk) {
             if (state.ButtonState.Up) {
                 playerControl_isBindPressed = true;
@@ -362,6 +362,8 @@ public class PlayerTank : Tank {
         _prev = state.ButtonState;
     }
     static WiimoteLib.ButtonState _prev;
+
+    // TODO: this is where we are going to handle the heavenly local multiplayer :)
     void ControlHandle_Gamepad() {
         var leftStick = InputUtils.CurrentGamePadSnapshot.ThumbSticks.Left;
         var rightStick = InputUtils.CurrentGamePadSnapshot.ThumbSticks.Right;
@@ -394,15 +396,15 @@ public class PlayerTank : Tank {
             DesiredDirection.X = 1;
         }
 
-        if (FireBullet.JustPressed)
+        if (GamePadShoot.JustPressed)
             Shoot(false);
         if (PlaceMine.JustPressed)
             LayMine();
     }
     void ControlHandle_Keybinding() {
-        if (controlFirePath.JustPressed)
+        if (ShowShotPath.JustPressed)
             _drawShotPath = !_drawShotPath;
-        if (controlMine.JustPressed)
+        if (PlaceMine.JustPressed)
             LayMine();
 
         IsTurning = false;
@@ -411,19 +413,19 @@ public class PlayerTank : Tank {
 
         ChassisRotation %= MathHelper.Tau;
 
-        if (controlDown.IsPressed) {
+        if (MoveDown.IsPressed) {
             playerControl_isBindPressed = true;
             DesiredDirection.Y = 1;
         }
-        if (controlUp.IsPressed) {
+        if (MoveUp.IsPressed) {
             playerControl_isBindPressed = true;
             DesiredDirection.Y = -1;
         }
-        if (controlLeft.IsPressed) {
+        if (MoveLeft.IsPressed) {
             playerControl_isBindPressed = true;
             DesiredDirection.X = -1;
         }
-        if (controlRight.IsPressed) {
+        if (MoveRight.IsPressed) {
             playerControl_isBindPressed = true;
             DesiredDirection.X = 1;
         }
@@ -557,13 +559,13 @@ public class PlayerTank : Tank {
         if (Properties.Invisible && CampaignGlobals.InMission)
             return;
         for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
-            foreach (ModelMesh mesh in Model.Meshes) {
+            foreach (ModelMesh mesh in DrawParamsTank.Model.Meshes) {
                 foreach (BasicEffect effect in mesh.Effects) {
                     effect.World = i == 0 ? boneTransforms[mesh.ParentBone.Index] : 
                         boneTransforms[mesh.ParentBone.Index] 
                         * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
-                    effect.View = View;
-                    effect.Projection = Projection;
+                    effect.View = DrawParams.View;
+                    effect.Projection = DrawParams.Projection;
                     effect.TextureEnabled = true;
 
                     if (!Properties.HasTurret)
@@ -572,36 +574,17 @@ public class PlayerTank : Tank {
 
                     if (mesh.Name == "Shadow") {
                         if (!Lighting.AccurateShadows) {
-                            effect.Alpha = 0.5f;
-                            effect.Texture = _shadowTexture;
+                            effect.Alpha = DrawParamsTank.ShadowAlpha;
+                            effect.Texture = DrawParamsTank.ShadowTexture;
                             mesh.Draw();
                         }
                         continue;
                     }
 
-                    effect.Alpha = 1f;
-                    effect.Texture = _tankTexture;
+                    effect.Alpha = DrawParamsTank.TankAlpha;
+                    effect.Texture = DrawParamsTank.TankTexture;
 
-                    if (IsHoveredByMouse)
-                        effect.EmissiveColor = Color.White.ToVector3();
-                    else
-                        effect.EmissiveColor = Color.Black.ToVector3();
-                    if (ShowTeamVisuals) {
-                        if (Team != TeamID.NoTeam) {
-                            //var ex = new Color[1024];
-
-                            //Array.Fill(ex, new Color(Client.ClientRandom.Next(0, 256), Client.ClientRandom.Next(0, 256), Client.ClientRandom.Next(0, 256)));
-
-                            //effect.Texture.SetData(0, new Rectangle(0, 8, 32, 15), ex, 0, 480);
-                            var ex = new Color[1024];
-
-                            Array.Fill(ex, TeamID.TeamColors[Team]);
-
-                            effect.Texture.SetData(0, new Rectangle(0, 0, 32, 9), ex, 0, 288);
-                            effect.Texture.SetData(0, new Rectangle(0, 23, 32, 9), ex, 0, 288);
-                        }
-                    }
-                    effect.SetDefaultGameLighting_IngameEntities(specular: _isPlayerModel, ambientMultiplier: _isPlayerModel ? 2f : 0.9f);
+                    effect.SetDefaultGameLighting_IngameEntities(DrawParams.LightPower, DrawParams.AmbientPower, DrawParams.UsePhong, DrawParams.LightDirection);
                     mesh.Draw();
                 }
             }
@@ -634,7 +617,7 @@ public class PlayerTank : Tank {
 
         if (needClarification && PlayerId < Server.CurrentClientCount) {
             var playerColor = PlayerID.PlayerTankColors[PlayerType];
-            var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 50).ToResolution();
+            var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Zero, DrawParams.World, DrawParams.View, DrawParams.Projection) - new Vector2(0, 50).ToResolution();
 
             bool flip = false;
 

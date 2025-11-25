@@ -31,7 +31,7 @@ public class ModShell : ILoadable, IModContent {
     public virtual void OnCreate() {
         if (_texture is null || Texture is null)
             return;
-        Shell.SwapTexture(!string.IsNullOrEmpty(Texture) ? Mod.ImportAsset<Texture2D>(Texture) : GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/bullet"));
+        Shell.DrawParamsShell.ShellTexture = (!string.IsNullOrEmpty(Texture) ? Mod.ImportAsset<Texture2D>(Texture) : GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/bullet"));
         if (Shell.Properties.LeavesTrail)
             Shell.TrailSound = !string.IsNullOrEmpty(ShootSound) ? new OggAudio(Path.Combine(Mod.ModPath, TrailSound), 0.3f) : new OggAudio("Content/Assets/sounds/tnk_shoot_ricochet_rocket_loop.ogg", 0.3f);
         Shell.ShootSound = !string.IsNullOrEmpty(ShootSound) ? new OggAudio(Path.Combine(Mod.ModPath, ShootSound)) : new OggAudio("Content/Assets/sounds/tnk_shoot_regular_1.ogg");

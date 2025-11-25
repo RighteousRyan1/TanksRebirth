@@ -12,9 +12,7 @@ using TanksRebirth.Net;
 namespace TanksRebirth.GameContent;
 
 #pragma warning disable
-public class GameShaders
-{
-    public static Effect MouseShader { get; private set; }
+public class GameShaders {
     public static Effect GaussianBlurShader { get; private set; }
     public static Effect LanternShader { get; private set; }
     public static Effect AnimatedRainbow { get; private set; }
@@ -23,7 +21,6 @@ public class GameShaders
 
     public static void Initialize() {
         GaussianBlurShader = GameResources.GetGameResource<Effect>("Assets/shaders/gaussian_blur");
-        MouseShader = GameResources.GetGameResource<Effect>("Assets/shaders/mouse");
         LanternShader = GameResources.GetGameResource<Effect>("Assets/shaders/lantern");
         AnimatedRainbow = GameResources.GetGameResource<Effect>("Assets/shaders/rainbow_grad_anim");
     }
@@ -35,12 +32,6 @@ public class GameShaders
         AnimatedRainbow.Parameters["oSpeed"].SetValue(0.5f);
         AnimatedRainbow.Parameters["oMinLum"].SetValue(0.1f);
 
-        MouseShader.Parameters["oGlobalTime"].SetValue((float)TankGame.LastGameTime.TotalGameTime.TotalSeconds);
-        var value = PlayerID.PlayerTankColors[NetPlay.GetMyClientId()];
-        MouseShader.Parameters["oColor"].SetValue(value.ToVector3());
-        /*MouseRenderer.HsvToRgb(TankGame.GameUpdateTime % 255 / 255f * 360, 1, 1).ToVector3());*/
-        MouseShader.Parameters["oSpeed"].SetValue(15f);
-        MouseShader.Parameters["oSpacing"].SetValue(10f);
         // MouseShader.Parameters["oRotation"].SetValue(MathHelper.Pi);
 
         GaussianBlurShader.Parameters["oResolution"].SetValue(Vector2.One);
@@ -93,4 +84,3 @@ public class GameShaders
         }
     }
 }
-

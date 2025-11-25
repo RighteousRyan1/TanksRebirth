@@ -17,6 +17,7 @@ using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Graphics;
+using TanksRebirth.Graphics.Drawing;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Utilities;
@@ -26,9 +27,6 @@ namespace TanksRebirth.GameContent.Systems.AI;
 
 #pragma warning disable CA2211
 public partial class AITank : Tank {
-    Texture2D? _tankTexture;
-    static Texture2D? _shadowTexture;
-
     public ModTank? ModdedData { get; private set; }
     /// <summary>A list of all active dangers on the map to <see cref="AITank"/>s. Includes <see cref="Shell"/>s, <see cref="Mine"/>s,
     /// and <see cref="Explosion"/>s by default. To make an AI Tank behave towards any thing you would like, make it inherit from <see cref="IAITankDanger"/>
@@ -81,7 +79,7 @@ public partial class AITank : Tank {
     };
     /// <summary>Change the texture of this <see cref="AITank"/>.</summary>
     /// <param name="texture">The new texture.</param>
-    public void SwapTankTexture(Texture2D texture) => _tankTexture = texture;
+    public void SwapTankTexture(Texture2D texture) => DrawParamsTank.TankTexture = texture;
     /// <summary>The AI parameter collection of this AI Tank.</summary>
     public AIParameters Parameters { get; set; } = new();
     /// <summary>The position of the target this <see cref="AITank"/> is currently attempting to aim at.</summary>
@@ -91,6 +89,7 @@ public partial class AITank : Tank {
     /// <summary>The target rotation for this tank's turret. <see cref="Tank.TurretRotation"/> will move towards this value at a rate of <see cref="AIParameters.TurretSpeed"/>.</summary>
     public float TargetTurretRotation { get; set; }
     public bool AutoEnactAIBehavior = true;
+
     /// <summary>Changes this <see cref="AITank"/> to a completely different type of tank. Should only be used in special cases.</summary>
     /// <param name="tier">The new tier that this tank will be.</param>
     /// <param name="setDefaults">Whether or not to set the associated defaults of this tank in accordance to <paramref name="tier"/>.</param>
@@ -102,7 +101,7 @@ public partial class AITank : Tank {
         SwapTankTexture(Assets[$"tank_" + tierName]);
 
         if (!UsesCustomModel)
-            Model = ModelGlobals.TankEnemy.Duplicate();
+            DrawParamsTank.Model = ModelGlobals.TankEnemy.Duplicate();
 
         if (setDefaults)
             ApplyDefaults(ref Properties);
@@ -139,6 +138,7 @@ public partial class AITank : Tank {
         Behaviors[2].Label = "TankShellFire";
         Behaviors[3].Label = "TankMinePlacement";
 
+        DrawParams.LightPower = TankDrawParams.AI_AMB_MUL;
 
         // create modded data
         for (int i = 0; i < ModLoader.ModTanks.Length; i++) {
@@ -153,15 +153,15 @@ public partial class AITank : Tank {
 
         var tierName = TankID.Collection.GetKey(tier)!.ToLower();
         if (!UsesCustomModel) {
-            Model = ModelGlobals.TankEnemy.Asset;
+            DrawParamsTank.Model = ModelGlobals.TankEnemy.Asset;
             var tnkAsset = Assets[$"tank_" + tierName];
-            _tankTexture = tnkAsset.Duplicate(TankGame.Instance.GraphicsDevice);
+            DrawParamsTank.TankTexture = tnkAsset!.Duplicate(TankGame.Instance.GraphicsDevice);
         }
 
         // for debugging custom models
         // Model = GameResources.GetGameResource<Model>("Assets/models/rebirth_tanks/tank_necro");
 
-        _shadowTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank_shadow");
+        DrawParamsTank.ShadowTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/tank_shadow");
 
         if (applyDefaults)
             ApplyDefaults(ref Properties);
@@ -492,14 +492,13 @@ public partial class AITank : Tank {
             return;
 
         for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
-            foreach (ModelMesh mesh in Model.Meshes) {
+            foreach (ModelMesh mesh in DrawParamsTank.Model.Meshes) {
                 foreach (BasicEffect effect in mesh.Effects) {
-                    effect.World = i == 0 ? 
-                        boneTransforms[mesh.ParentBone.Index] : 
+                    effect.World = i == 0 ?  boneTransforms[mesh.ParentBone.Index] : 
                         boneTransforms[mesh.ParentBone.Index] * 
                         Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
-                    effect.View = View;
-                    effect.Projection = Projection;
+                    effect.View = DrawParams.View;
+                    effect.Projection = DrawParams.Projection;
 
                     effect.TextureEnabled = true;
 
@@ -509,17 +508,12 @@ public partial class AITank : Tank {
 
                     if (mesh.Name == "Shadow") {
                         if (!Lighting.AccurateShadows) {
-                            effect.Texture = _shadowTexture;
-                            effect.Alpha = 0.5f;
+                            effect.Texture = DrawParamsTank.ShadowTexture;
+                            effect.Alpha = DrawParamsTank.ShadowAlpha;
                             mesh.Draw();
                         }
                         continue;
                     }
-
-                    if (IsHoveredByMouse)
-                        effect.EmissiveColor = Color.White.ToVector3();
-                    else
-                        effect.EmissiveColor = Color.Black.ToVector3();
 
                     /*if (mesh.Name is "Cannon" or "Chassis") {
                         effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/models/rebirth_tanks/tank_necro_tank");
@@ -531,23 +525,11 @@ public partial class AITank : Tank {
                         effect.Texture = GameResources.GetGameResource<Texture2D>("Assets/models/rebirth_tanks/tank_necro_skulls");
                     }*/
                     // ^ old testing stuff
-                    effect.Alpha = 1;
-                    effect.Texture = _tankTexture;
 
-                    // TODO: uncomment code when disabling implementation is re-implemented.
+                    effect.Alpha = DrawParamsTank.TankAlpha;
+                    effect.Texture = DrawParamsTank.TankTexture;
 
-                    if (ShowTeamVisuals) {
-                        if (Team != TeamID.NoTeam) {
-                            var ex = new Color[1024];
-
-                            Array.Fill(ex, TeamID.TeamColors[Team]);
-
-                            effect.Texture?.SetData(0, new Rectangle(0, 0, 32, 9), ex, 0, 288);
-                            effect.Texture?.SetData(0, new Rectangle(0, 23, 32, 9), ex, 0, 288);
-                        }
-                    }
-
-                    effect.SetDefaultGameLighting_IngameEntities(0.9f);
+                    effect.SetDefaultGameLighting_IngameEntities(DrawParams.LightPower, DrawParams.AmbientPower, DrawParams.UsePhong, DrawParams.LightDirection);
                     mesh.Draw();
                 }
             }
@@ -578,8 +560,8 @@ public partial class AITank : Tank {
         }
 
         effect.World = Matrix.Identity;
-        effect.View = View;
-        effect.Projection = Projection;
+        effect.View = DrawParams.View;
+        effect.Projection = DrawParams.Projection;
 
         effect.VertexColorEnabled = true;
 
@@ -588,20 +570,19 @@ public partial class AITank : Tank {
             effect.GraphicsDevice.DrawUserPrimitives(PrimitiveType.LineStrip, vertices, 0, circleResolution);
         }
     }
-    public void DrawAwarenessLine(BasicEffect effect, float distance, Color color) {
+    public void DrawAwarenessLine(BasicEffect effect, float distance, Color color, Vector3 offset = default) {
         float heightOffset = 0.2f;
 
-        var start = new Vector3(Position.X, heightOffset, Position.Y);
+        var start = new Vector3(Position.X, heightOffset, Position.Y) + offset;
 
         var forward = Vector2.UnitY.Rotate(ChassisRotation);
 
         // not to game units...?
         var gameUnits = GameUtils.Value_WiiTanksUnits(distance + TNK_WIDTH);
         var end2D = Position + forward * gameUnits;
-        var end = new Vector3(end2D.X, heightOffset, end2D.Y);
+        var end = new Vector3(end2D.X, heightOffset, end2D.Y) + offset;
 
-        var lineVerts = new VertexPositionColor[]
-        {
+        var lineVerts = new VertexPositionColor[] {
             new(start, color),
             new(end, color * 0.75f)
         };
@@ -654,7 +635,7 @@ public partial class AITank : Tank {
 
                 realI++;
 
-                var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Up * 20, World, View, Projection) - new Vector2(0, realI * 20);
+                var pos = MatrixUtils.ConvertWorldToScreen(Vector3.Up * 20, DrawParams.World, DrawParams.View, DrawParams.Projection) - new Vector2(0, realI * 20);
                 DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFont,
                     $"{info.Key.Name}: {info.Key.Value} ({GameUtils.Value_WiiTanksUnits(info.Key.Value)})", pos, info.Value, Color.White,
                     Vector2.One * 0.5f, 0f, borderThickness: 0.25f);
@@ -680,11 +661,11 @@ public partial class AITank : Tank {
             }
             for (int i = 0; i < ricP2.Length; i++) {
                 DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"ric{i}", MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0),
-                    Matrix.CreateTranslation(ricP2[i].X, 0, ricP2[i].Y), View, Projection), 1, centered: true);
+                    Matrix.CreateTranslation(ricP2[i].X, 0, ricP2[i].Y), DrawParams.View, DrawParams.Projection), 1, centered: true);
             }
             for (int i = 0; i < tnkCol2.Length; i++) {
                 DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"col{i}", MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0),
-                    Matrix.CreateTranslation(tnkCol2[i].X, 0, tnkCol2[i].Y), View, Projection), 1, centered: true);
+                    Matrix.CreateTranslation(tnkCol2[i].X, 0, tnkCol2[i].Y), DrawParams.View, DrawParams.Projection), 1, centered: true);
             }
 
             /*for (int i = 0; i < info.Length; i++) {

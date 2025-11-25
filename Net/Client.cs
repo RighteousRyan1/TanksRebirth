@@ -18,6 +18,7 @@ public class Client {
     public static event ClientStart? OnClientStart;
     public delegate void ClientDisconnected(Client client);
     public static event ClientDisconnected? OnClientDisconnect;
+
     public static NetManager ClientManager;
     public static EventBasedNetListener ClientListener;
     public static NetPeer NetClient;

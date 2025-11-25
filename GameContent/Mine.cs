@@ -15,10 +15,17 @@ using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
+using TanksRebirth.Graphics.Drawing;
 
 namespace TanksRebirth.GameContent;
 
 public sealed class Mine : IAITankDanger {
+    public struct MineDrawParams {
+        public Texture2D? MineTexture;
+        public Texture2D? ShadowTexture;
+
+        public Model Model;
+    }
 
     public delegate void ExplodeDelegate(Mine mine);
     public static event ExplodeDelegate? OnExplode;
@@ -36,19 +43,13 @@ public sealed class Mine : IAITankDanger {
     Vector2 _oldPosition;
     public Vector2 Position { get; set; }
 
-    public Matrix View;
-    public Matrix Projection;
-    public Matrix World;
+    public BasicDrawParams DrawParams = new();
+    public MineDrawParams DrawParamsMine;
 
     public Color InactiveColor = new(219, 228, 64);
     public Color ActiveColor = new(231, 62, 99);
 
     public Vector3 Position3D => Position.ExpandZ();
-
-    public Model Model;
-
-    static Texture2D? _mineTexture;
-    static Texture2D? _envTexture;
 
     public int Id { get; private set; }
     public int Team => Owner?.Team ?? TeamID.NoTeam;
@@ -99,7 +100,7 @@ public sealed class Mine : IAITankDanger {
 
         AITank.Dangers.Add(this);
 
-        Model = ModelGlobals.Mine.Asset;
+        DrawParamsMine.Model = ModelGlobals.Mine.Asset;
 
         DetonateTime = detonateTime;
         DetonateTimeMax = detonateTime;
@@ -113,8 +114,11 @@ public sealed class Mine : IAITankDanger {
             //    SoundUtils.CreateSpatialSound(placeSound, Position3D, CameraGlobals.RebirthFreecam.Position);
         }
 
-        _mineMesh = Model.Meshes["polygon1"];
-        _envMesh = Model.Meshes["polygon0"];
+        DrawParamsMine.MineTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/mine/mine_env");
+        DrawParamsMine.ShadowTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/mine/mine_shadow").Duplicate(TankGame.Instance.GraphicsDevice);
+
+        _mineMesh = DrawParamsMine.Model.Meshes["polygon1"];
+        _envMesh = DrawParamsMine.Model.Meshes["polygon0"];
 
         MineReactRadius = ExplosionRadius * ExplosionRadiusInUnits;
 
@@ -123,10 +127,6 @@ public sealed class Mine : IAITankDanger {
         Id = index;
 
         AllMines[index] = this;
-    }
-    public static void InitTextures() {
-        _mineTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/mine/mine_env");
-        _envTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/mine/mine_shadow");
     }
     /// <summary>Detonates this <see cref="Mine"/>.</summary>
     public void Detonate() {
@@ -155,7 +155,7 @@ public sealed class Mine : IAITankDanger {
         if (!GameScene.ShouldRenderAll || (!CampaignGlobals.InMission && !MainMenuUI.IsActive))
             return;
 
-        World = Matrix.CreateScale(MineScale * 0.6f) * Matrix.CreateTranslation(Position3D);
+        DrawParams.World = Matrix.CreateScale(MineScale * 0.6f) * Matrix.CreateTranslation(Position3D);
 
         Hitbox = new((int)Position.X - 10, (int)Position.Y - 10, 20, 20);
 
@@ -224,17 +224,19 @@ public sealed class Mine : IAITankDanger {
         if (!GameScene.ShouldRenderAll)
             return;
 
-        View = CameraGlobals.GameView;
-        Projection = CameraGlobals.GameProjection;
-        DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"DetonationTime: {DetonateTime}/{DetonateTimeMax}\nNearDestructibles: {IsNearDestructibles}\nId: {Id}", MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 20), 1, centered: true);
+        DrawParams.View = CameraGlobals.GameView;
+        DrawParams.Projection = CameraGlobals.GameProjection;
+        DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"DetonationTime: {DetonateTime}/{DetonateTimeMax}\nNearDestructibles: {IsNearDestructibles}\nId: {Id}", 
+            MatrixUtils.ConvertWorldToScreen(Vector3.Zero, DrawParams.World, DrawParams.View, DrawParams.Projection) - new Vector2(0, 20), 1, centered: true);
 
         // this is horrendous but it looks better
+        // this is fucking horrible - ryan, 11/24/25
         TankGame.Instance.GraphicsDevice.BlendState = BlendState.Additive;
-        foreach (ModelMesh mesh in Model.Meshes) {
+        foreach (ModelMesh mesh in DrawParamsMine.Model.Meshes) {
             foreach (BasicEffect effect in mesh.Effects) {
-                effect.World = World;
-                effect.View = View;
-                effect.Projection = Projection;
+                effect.World = DrawParams.World;
+                effect.View = DrawParams.View;
+                effect.Projection = DrawParams.Projection;
 
                 effect.TextureEnabled = true;
 
@@ -243,37 +245,37 @@ public sealed class Mine : IAITankDanger {
                         ActiveColor.ToVector3() : InactiveColor.ToVector3())
                         * SceneManager.GameLight.Brightness;
                     effect.DiffuseColor *= 0.5f;
-                    effect.Texture = _mineTexture;
+                    effect.Texture = DrawParamsMine.MineTexture;
                     effect.Alpha = 1f;
 
                     mesh.Draw();
                 }
-                effect.SetDefaultGameLighting_IngameEntities();
+                effect.SetDefaultGameLighting_IngameEntities(DrawParams.LightPower, DrawParams.AmbientPower, DrawParams.UsePhong, DrawParams.LightDirection);
             }
         }
         TankGame.Instance.GraphicsDevice.BlendState = BlendState.AlphaBlend;
-        foreach (ModelMesh mesh in Model.Meshes) {
+        foreach (ModelMesh mesh in DrawParamsMine.Model.Meshes) {
             foreach (BasicEffect effect in mesh.Effects) {
-                effect.World = World;
-                effect.View = View;
-                effect.Projection = Projection;
+                effect.World = DrawParams.World;
+                effect.View = DrawParams.View;
+                effect.Projection = DrawParams.Projection;
 
                 effect.TextureEnabled = true;
 
                 if (mesh == _envMesh) {
-                    effect.Texture = _envTexture;
+                    effect.Texture = DrawParamsMine.ShadowTexture;
                     effect.Alpha = 0.6f;
                     mesh.Draw();
                 }
-                effect.SetDefaultGameLighting_IngameEntities();
+                effect.SetDefaultGameLighting_IngameEntities(DrawParams.LightPower, DrawParams.AmbientPower, DrawParams.UsePhong, DrawParams.LightDirection);
             }
         }
         for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
-            foreach (ModelMesh mesh in Model.Meshes) {
+            foreach (ModelMesh mesh in DrawParamsMine.Model.Meshes) {
                 foreach (BasicEffect effect in mesh.Effects) {
-                    effect.World = i == 0 ? World : World * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
-                    effect.View = View;
-                    effect.Projection = Projection;
+                    effect.World = i == 0 ? DrawParams.World : DrawParams.World * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
+                    effect.View = DrawParams.View;
+                    effect.Projection = DrawParams.Projection;
 
                     effect.TextureEnabled = false;
 
@@ -296,7 +298,7 @@ public sealed class Mine : IAITankDanger {
                             //mesh.Draw();
                         }
                     }
-                    effect.SetDefaultGameLighting_IngameEntities();
+                    effect.SetDefaultGameLighting_IngameEntities(DrawParams.LightPower, DrawParams.AmbientPower, DrawParams.UsePhong, DrawParams.LightDirection);
                 }
             }
         }

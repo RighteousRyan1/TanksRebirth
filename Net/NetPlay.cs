@@ -6,7 +6,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Threading;
 using TanksRebirth.GameContent;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.RebirthUtils;
@@ -21,7 +20,7 @@ namespace TanksRebirth.Net;
 /// <summary>
 /// Holds the keys to all of what happens through the networking of the game.
 /// </summary>
-public class NetPlay {
+public static class NetPlay {
     public static IPEndPoint? Ip;
     public static int Port;
     public static Client CurrentClient;
@@ -807,12 +806,9 @@ public class NetPlay {
     }
     /// <summary>Check whether the current client's ID on the server matches a given integer.</summary>
     public static bool IsClientMatched(int otherId) {
-        if (CurrentClient is null && CurrentServer is null)
-            return true;
-        if (CurrentClient is null && CurrentServer is not null)
-            return false;
-        if (CurrentClient.Id != otherId)
-            return false;
+        if (CurrentClient is null && CurrentServer is null) return true;
+        if (CurrentClient is null && CurrentServer is not null) return false;
+        if (CurrentClient.Id != otherId) return false;
         return true;
     }
     public static int GetMyClientId() {

@@ -105,8 +105,8 @@ public class TankArmor {
                              * Matrix.CreateTranslation(Host.Position3D + offset[i].Rotate(Host.ChassisRotation).ExpandZ());
                     }
                     //}
-                    effect.View = Host.View;
-                    effect.Projection = Host.Projection;
+                    effect.View = Host.DrawParams.View;
+                    effect.Projection = Host.DrawParams.Projection;
 
                     effect.SetDefaultGameLighting_IngameEntities();
 

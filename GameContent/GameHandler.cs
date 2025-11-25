@@ -75,7 +75,6 @@ public class GameHandler {
 
         GameSceneUI.Initialize();
         CosmeticsUI.Initialize();
-        RebirthMouse.Initialize();
     }
 
     private static void AttemptIntermission(Tank victim, bool destroy, ITankHurtContext context) {
@@ -85,7 +84,7 @@ public class GameHandler {
             IntermissionHandler.CheckMissionCompletion();
     }
 
-    internal static void UpdateAll(GameTime gameTime) {
+    internal static void GameLoopLogic(GameTime gameTime) {
         ActiveTankCount = (byte)AllTanks.Count(t => t is not null);
         ActiveAITankCount = (byte)AllAITanks.Count(t => t is not null);
         ActivePlayerTankCount = (byte)AllPlayerTanks.Count(t => t is not null);

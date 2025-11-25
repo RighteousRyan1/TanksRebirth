@@ -254,7 +254,7 @@ public static class DebugManager {
             var tnkGet = Array.FindIndex(GameHandler.AllAITanks, x => x is not null && !x.IsDestroyed && !x.Properties.Stationary);
             if (tnkGet > -1) {
                 var tnk = GameHandler.AllAITanks[tnkGet];
-                tnk.DesiredChassisRotation = (MatrixUtils.ConvertWorldToScreen(Vector3.Zero, tnk.World, tnk.View, tnk.Projection) - MouseUtils.MousePosition).ToRotation() + MathHelper.PiOver2;
+                tnk.DesiredChassisRotation = (MatrixUtils.ConvertWorldToScreen(Vector3.Zero, tnk.DrawParams.World, tnk.DrawParams.View, tnk.DrawParams.Projection) - MouseUtils.MousePosition).ToRotation() + MathHelper.PiOver2;
             }
         }
 

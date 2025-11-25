@@ -168,7 +168,7 @@ namespace TanksRebirth.GameContent
             }
             else
             {
-                var pos = MatrixUtils.ConvertWorldToScreen(default, AffectedTank.World, CameraGlobals.GameView, CameraGlobals.GameProjection);
+                var pos = MatrixUtils.ConvertWorldToScreen(default, AffectedTank.DrawParams.World, CameraGlobals.GameView, CameraGlobals.GameProjection);
 
                 DebugManager.DrawDebugString(TankGame.SpriteRenderer, this, pos, 4, centered: true);
             }

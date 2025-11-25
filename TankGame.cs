@@ -43,6 +43,7 @@ using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.GameContent.Systems.TankSystem;
 using System.Collections.Concurrent;
 using TanksRebirth.GameContent.Systems.AI;
+using TanksRebirth.GameContent.ID;
 
 namespace TanksRebirth;
 
@@ -57,7 +58,7 @@ public class TankGame : Game {
     // ### BOOLEANS ###
 
     public static bool IsCrashInfoVisible;
-    private bool _wasActive;
+    bool _wasActive;
 
     // ### STRUCTURES / CLASSES ###
 
@@ -65,7 +66,7 @@ public class TankGame : Game {
     public static JsonHandler<GameConfig> SettingsHandler;
     public static GameConfig Settings;
 
-    private Vector2 _mouseOld;
+    Vector2 _mouseOld;
 
     public static TankGame Instance { get; private set; }
     /// <summary>The user's save data.</summary>
@@ -97,12 +98,14 @@ public class TankGame : Game {
 
     public static RasterizerState _cachedState;
 
+    public static Dictionary<int, RebirthMouse> PlayerMice = [];
+
     // ### EVENTS ###
 
     public static event EventHandler<IntPtr> OnFocusLost;
     public static event EventHandler<IntPtr> OnFocusRegained;
 
-    public static event Action<GameTime> PostDrawEverything;
+    public static event Action<GameTime> PreDrawBackBuffer;
 
     public delegate void OnResolutionChangedDelegate(int newX, int newY);
     public static event OnResolutionChangedDelegate OnResolutionChanged;
@@ -228,12 +231,28 @@ public class TankGame : Game {
             AIManager.AIThread2.Start();
             AIManager.AIThread3.Start();
 
+            // add the main player in when loading
+            PlayerMice.Add(0, new RebirthMouse(PlayerID.PlayerTankColors[PlayerID.Blue], PlayerID.PlayerTankColorsBright[PlayerID.Blue], PlayerID.Blue));
+            PlayerMice[0].Position = () => MouseUtils.MousePosition;
+
+            PlayerMice.Add(1, new RebirthMouse(PlayerID.PlayerTankColors[PlayerID.Red], PlayerID.PlayerTankColorsBright[PlayerID.Red], PlayerID.Red));
+            PlayerMice[1].Position = () => MouseUtils.MousePosition + Vector2.UnitX * 100;
+
+            Client.OnClientStart += UpdateMainClientMouse;
+
             base.Initialize();
         }
         catch (Exception e) when (!Debugger.IsAttached) {
             ReportError(e);
         }
     }
+
+    private void UpdateMainClientMouse(Client client) {
+        // update only the current client's mouse.
+        // other mice won't exist in online multiplayer contexts, but will exist in local multiplayer.
+        PlayerMice[0].MouseColor = PlayerID.PlayerTankColorsBright[client.Id];
+    }
+
     protected override void OnExiting(object sender, EventArgs args) {
         ClientLog.Write($"Handling termination process...", LogType.Info);
 
@@ -461,11 +480,11 @@ public class TankGame : Game {
 
             Graphics.SynchronizeWithVerticalRetrace = Settings.Vsync;
             WindowUtils.ChangeWindowKind(Settings.WindowKind);
-            PlayerTank.controlUp.ForceReassign(Settings.UpKeybind);
-            PlayerTank.controlDown.ForceReassign(Settings.DownKeybind);
-            PlayerTank.controlLeft.ForceReassign(Settings.LeftKeybind);
-            PlayerTank.controlRight.ForceReassign(Settings.RightKeybind);
-            PlayerTank.controlMine.ForceReassign(Settings.MineKeybind);
+            PlayerTank.MoveUp.ForceReassign(Settings.UpKeybind);
+            PlayerTank.MoveDown.ForceReassign(Settings.DownKeybind);
+            PlayerTank.MoveLeft.ForceReassign(Settings.LeftKeybind);
+            PlayerTank.MoveRight.ForceReassign(Settings.RightKeybind);
+            PlayerTank.PlaceMine.ForceReassign(Settings.MineKeybind);
             GameScene.Theme = Settings.GameTheme;
 
             /*if (!IsSouthernHemi ? LaunchTime.Month != 12 : LaunchTime.Month != 7)
@@ -651,7 +670,9 @@ public class TankGame : Game {
                 Graphics.ApplyChanges();
             }
 
-            RebirthMouse.ShouldRender = !Modifiers.Map[Modifiers.POV] || GameUI.Paused || MainMenuUI.IsActive || LevelEditorUI.IsActive;
+            foreach (var elem in PlayerMice) {
+                elem.Value.ShouldRender = !Modifiers.Map[Modifiers.POV] || GameUI.Paused || MainMenuUI.IsActive || LevelEditorUI.IsActive;
+            }
 
             UIElement.UpdateElements();
             GameUI.UpdateButtons();
@@ -720,7 +741,7 @@ public class TankGame : Game {
         bool shouldUpdate = Client.IsConnected() || (IsActive && !GameUI.Paused && !CampaignCompleteUI.IsViewingResults);
         if (!IsCrashInfoVisible) {
             if (shouldUpdate) {
-                GameHandler.UpdateAll(gameTime);
+                GameHandler.GameLoopLogic(gameTime);
 
                 // questionable as to why it causes hella lag on game start
                 // TODO: try and find out why this happens lol.
@@ -792,9 +813,9 @@ public class TankGame : Game {
 
         DrawInteractiveUI();
 
-        DrawCursor();
+        DrawCursors();
 
-        PostDrawEverything?.Invoke(gameTime);
+        PreDrawBackBuffer?.Invoke(gameTime);
 
         RuntimeData.RenderTime = gameTime.ElapsedGameTime;
         RuntimeData.RenderFPS = Math.Round(1f / gameTime.ElapsedGameTime.TotalSeconds);
@@ -895,10 +916,10 @@ public class TankGame : Game {
         SpriteRenderer.Draw(GameFrameBuffer, Vector2.Zero, null, Color.White, 0f, Vector2.Zero, Vector2.One, default, 0f);
         SpriteRenderer.End();
     } 
-    public static void DrawCursor() {
-        SpriteRenderer.Begin(blendState: BlendState.AlphaBlend, effect: GameShaders.MouseShader, rasterizerState: RenderGlobals.DefaultRasterizer);
-        RebirthMouse.DrawMouse();
-        SpriteRenderer.End();
+    public static void DrawCursors() {
+        foreach (var elem in PlayerMice) {
+            elem.Value.Draw();
+        }
     }
 
     static Particle _ziggy;

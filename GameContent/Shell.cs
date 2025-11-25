@@ -16,6 +16,7 @@ using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.Graphics;
+using TanksRebirth.Graphics.Drawing;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Framework.Collisions;
@@ -25,6 +26,31 @@ using TanksRebirth.Net;
 namespace TanksRebirth.GameContent;
 
 public class Shell : IAITankDanger {
+    public enum DestructionContext {
+        WithObstacle,
+        WithMine,
+        WithFriendlyTank,
+        WithHostileTank,
+        WithShell,
+        WithExplosion
+    }
+
+    /// <summary>A structure that allows you to give a <see cref="Shell"/> homing properties.</summary>
+    public struct HomingProperties {
+        public float Power;
+        public float Radius;
+        public float Speed;
+        public float Cooldown;
+
+        public Vector2 Target;
+
+        public bool HeatSeeks;
+    }
+
+    public struct ShellDrawParams {
+        public Texture2D? ShellTexture;
+        public Model Model;
+    }
     public delegate void PostCreateDelegate(Shell shell);
 
     public static event PostCreateDelegate? PostCreate;
@@ -54,27 +80,6 @@ public class Shell : IAITankDanger {
 
     public static event DestroyDelegate? OnDestroy;
 
-    public enum DestructionContext {
-        WithObstacle,
-        WithMine,
-        WithFriendlyTank,
-        WithHostileTank,
-        WithShell,
-        WithExplosion
-    }
-
-    /// <summary>A structure that allows you to give a <see cref="Shell"/> homing properties.</summary>
-    public struct HomingProperties {
-        public float Power;
-        public float Radius;
-        public float Speed;
-        public int Cooldown;
-
-        public Vector2 Target;
-
-        public bool HeatSeeks;
-    }
-
     // this used to be 1500. why?
     /// <summary>The maximum shells allowed at any given time.</summary>
     private const int MaxShells = 200;
@@ -98,11 +103,8 @@ public class Shell : IAITankDanger {
     public Vector2 Position { get; set; }
     public Vector2 Velocity;
 
-    public Matrix View;
-    public Matrix Projection;
-    public Matrix World;
-
-    public Model Model;
+    public BasicDrawParams DrawParams = new();
+    public ShellDrawParams DrawParamsShell;
 
     public OggAudio? ShootSound;
     public OggAudio? TrailSound;
@@ -113,15 +115,13 @@ public class Shell : IAITankDanger {
     /// <summary>The hit-circle on the 2D backing map for the game.</summary>
     public Circle HitCircle => new() { Center = Position, Radius = 5 }; // original is moreso a radius of 7, but 5 is good, since it isnt 480p
     public int Team => Owner?.Team ?? TeamID.NoTeam;
-
-    private Texture2D? _shellTexture;
     /// <summary>
     /// Represents the ID of this shell in the array. Useful for local operations relating to collisions and such.
     /// </summary>
     public int Id { get; private set; }
     /// <summary>Represents an ID between (0-63 * client #) used for syncing. Set randomly and is synced on spawn but not manipulated! Useful for state change operations on the bullet, such as death.</summary>
     public byte UID { get; private set; }
-    private float _wallRicCooldown;
+    float _wallRicCooldown;
     /// <summary>How long this shell has existed in the world.</summary>
     public float LifeTime;
     public ShellProperties Properties { get; set; } = new();
@@ -149,23 +149,22 @@ public class Shell : IAITankDanger {
         }
         return 255;     //Could not generate.
     }
-    public void SwapTexture(Texture2D texture) => _shellTexture = texture;
     public void Swap(int type) {
         Type = type;
 
         switch (Type) {
             case ShellID.Player:
             case ShellID.Standard:
-                _shellTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/bullet");
+                DrawParamsShell.ShellTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/bullet");
                 break;
             case ShellID.Rocket:
-                _shellTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/bullet");
+                DrawParamsShell.ShellTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/bullet");
                 Properties.Flaming = true;
                 TrailSound = new OggAudio("Content/Assets/sounds/tnk_shoot_rocket_loop.ogg", 0.3f);
                 TrailSound.Instance.IsLooped = true;
                 break;
             case ShellID.TrailedRocket:
-                _shellTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/bullet");
+                DrawParamsShell.ShellTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/bullet");
                 Properties.EmitsSmoke = false;
                 Properties.LeavesTrail = true;
                 Properties.Flaming = true;
@@ -173,10 +172,10 @@ public class Shell : IAITankDanger {
                 TrailSound.Instance.IsLooped = true;
                 break;
             case ShellID.Supressed:
-                _shellTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/explosive_bullet");
+                DrawParamsShell.ShellTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/explosive_bullet");
                 break;
             case ShellID.Explosive:
-                _shellTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/explosive_bullet");
+                DrawParamsShell.ShellTexture = GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/explosive_bullet");
                 Properties.IsDestructible = false;
                 break;
             default:
@@ -200,7 +199,7 @@ public class Shell : IAITankDanger {
         Type = type;
         RicochetsRemaining = ricochets;
         Position = position;
-        Model = ModelGlobals.Bullet.Asset;
+        DrawParamsShell.Model = ModelGlobals.Bullet.Asset;
 
         AITank.Dangers.Add(this);
 
@@ -275,7 +274,7 @@ public class Shell : IAITankDanger {
 
         Rotation = Velocity.ToRotation() - MathHelper.PiOver2;
         Position += Velocity * 0.62f * RuntimeData.DeltaTime;
-        World = Matrix.CreateFromYawPitchRoll(-Rotation, 0, 0)
+        DrawParams.World = Matrix.CreateFromYawPitchRoll(-Rotation, 0, 0)
                 * Matrix.CreateTranslation(Position3D);
 
         //if (TrailSound != null) {
@@ -660,8 +659,8 @@ public class Shell : IAITankDanger {
         if (!GameScene.ShouldRenderAll)
             return;
 
-        Projection = CameraGlobals.GameProjection;
-        View = CameraGlobals.GameView;
+        DrawParams.Projection = CameraGlobals.GameProjection;
+        DrawParams.View = CameraGlobals.GameView;
 
         // TODO: wtf? DoRaycast failing?
         //if (DebugManager.DebuggingEnabled && DebugManager.DebugLevel == 1 && Properties.HomeProperties.Speed > 0)
@@ -669,7 +668,7 @@ public class Shell : IAITankDanger {
         if (DebugManager.DebuggingEnabled)
             DebugManager.DrawDebugString(TankGame.SpriteRenderer,
                 $"RicochetsLeft: {RicochetsRemaining}\nTier: {Type}\nId: {Id}",
-                MatrixUtils.ConvertWorldToScreen(Vector3.Zero, World, View, Projection) - new Vector2(0, 20), 1,
+                MatrixUtils.ConvertWorldToScreen(Vector3.Zero, DrawParams.World, DrawParams.View, DrawParams.Projection) - new Vector2(0, 20), 1,
                 centered: true);
 
         for (var i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
@@ -679,27 +678,27 @@ public class Shell : IAITankDanger {
         OnPostRender?.Invoke(this);
     }
 
-    private void DrawShellMesh(int currentIteration) {
+    void DrawShellMesh(int currentIteration) {
         void RenderMeshEffects(int i, ModelMesh mesh) {
             for (var j = 0; j < mesh.Effects.Count; j++) {
                 var effect = (BasicEffect)mesh.Effects[j];
                 effect.World = i == 0
-                    ? World
-                    : World * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) *
+                    ? DrawParams.World
+                    : DrawParams.World * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) *
                       Matrix.CreateTranslation(0, 0.2f, 0);
 
-                effect.View = View;
-                effect.Projection = Projection;
+                effect.View = DrawParams.View;
+                effect.Projection = DrawParams.Projection;
                 effect.TextureEnabled = true;
 
-                effect.Texture = _shellTexture;
+                effect.Texture = DrawParamsShell.ShellTexture;
 
                 effect.SetDefaultGameLighting_IngameEntities();
             }
         }
 
-        for (var i = 0; i < Model.Meshes.Count; i++) {
-            var mesh = Model.Meshes[i];
+        for (var i = 0; i < DrawParamsShell.Model.Meshes.Count; i++) {
+            var mesh = DrawParamsShell.Model.Meshes[i];
             RenderMeshEffects(currentIteration, mesh);
             mesh.Draw();
         }

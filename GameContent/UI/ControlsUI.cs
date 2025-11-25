@@ -24,7 +24,7 @@ namespace TanksRebirth.GameContent.UI
         public static void Initialize()
         {
             var pressKey = TankGame.GameLanguage.PressAKey;
-            UpKeybindButton = new("Up: " + PlayerTank.controlUp.Assigned.KeyAsString(), FontGlobals.RebirthFont, Color.WhiteSmoke)
+            UpKeybindButton = new("Up: " + PlayerTank.MoveUp.Assigned.KeyAsString(), FontGlobals.RebirthFont, Color.WhiteSmoke)
             {
                 IsVisible = false
             };
@@ -32,16 +32,16 @@ namespace TanksRebirth.GameContent.UI
             UpKeybindButton.OnLeftClick = (uiElement) =>
             {
                 UpKeybindButton.Text = pressKey;
-                PlayerTank.controlUp.OnReassign = (key) =>
+                PlayerTank.MoveUp.OnReassign = (key) =>
                 {
                     UpKeybindButton.Text = "Up: " + key.KeyAsString();
                     TankGame.Settings.UpKeybind = key;
-                    PlayerTank.controlUp.OnReassign = null;
+                    PlayerTank.MoveUp.OnReassign = null;
                 };
-                PlayerTank.controlUp.PendReassign = true;
+                PlayerTank.MoveUp.PendReassign = true;
             };
 
-            LeftKeybindButton = new("Left: " + PlayerTank.controlLeft.Assigned.KeyAsString(), FontGlobals.RebirthFont, Color.WhiteSmoke)
+            LeftKeybindButton = new("Left: " + PlayerTank.MoveLeft.Assigned.KeyAsString(), FontGlobals.RebirthFont, Color.WhiteSmoke)
             {
                 IsVisible = false
             };
@@ -49,16 +49,16 @@ namespace TanksRebirth.GameContent.UI
             LeftKeybindButton.OnLeftClick = (uiElement) =>
             {
                 LeftKeybindButton.Text = pressKey;
-                PlayerTank.controlLeft.OnReassign = (key) =>
+                PlayerTank.MoveLeft.OnReassign = (key) =>
                 {
                     LeftKeybindButton.Text = "Left: " + key.KeyAsString();
                     TankGame.Settings.LeftKeybind = key;
-                    PlayerTank.controlLeft.OnReassign = null;
+                    PlayerTank.MoveLeft.OnReassign = null;
                 };
-                PlayerTank.controlLeft.PendReassign = true;
+                PlayerTank.MoveLeft.PendReassign = true;
             };
 
-            RightKeybindButton = new("Right: " + PlayerTank.controlRight.Assigned.KeyAsString(), FontGlobals.RebirthFont, Color.WhiteSmoke)
+            RightKeybindButton = new("Right: " + PlayerTank.MoveRight.Assigned.KeyAsString(), FontGlobals.RebirthFont, Color.WhiteSmoke)
             {
                 IsVisible = false
             };
@@ -66,16 +66,16 @@ namespace TanksRebirth.GameContent.UI
             RightKeybindButton.OnLeftClick = (uiElement) =>
             {
                 RightKeybindButton.Text = pressKey;
-                PlayerTank.controlRight.OnReassign = (key) =>
+                PlayerTank.MoveRight.OnReassign = (key) =>
                 {
                     RightKeybindButton.Text = "Right: " + key.KeyAsString();
                     TankGame.Settings.RightKeybind = key;
-                    PlayerTank.controlRight.OnReassign = null;
+                    PlayerTank.MoveRight.OnReassign = null;
                 };
-                PlayerTank.controlRight.PendReassign = true;
+                PlayerTank.MoveRight.PendReassign = true;
             };
 
-            DownKeybindButton = new("Down: " + PlayerTank.controlDown.Assigned.KeyAsString(), FontGlobals.RebirthFont, Color.WhiteSmoke)
+            DownKeybindButton = new("Down: " + PlayerTank.MoveDown.Assigned.KeyAsString(), FontGlobals.RebirthFont, Color.WhiteSmoke)
             {
                 IsVisible = false
             };
@@ -83,16 +83,16 @@ namespace TanksRebirth.GameContent.UI
             DownKeybindButton.OnLeftClick = (uiElement) =>
             {
                 DownKeybindButton.Text = pressKey;
-                PlayerTank.controlDown.OnReassign = (key) =>
+                PlayerTank.MoveDown.OnReassign = (key) =>
                 {
                     DownKeybindButton.Text = "Down: " + key.KeyAsString();
                     TankGame.Settings.DownKeybind = key;
-                    PlayerTank.controlDown.OnReassign = null;
+                    PlayerTank.MoveDown.OnReassign = null;
                 };
-                PlayerTank.controlDown.PendReassign = true;
+                PlayerTank.MoveDown.PendReassign = true;
             };
 
-            MineKeybindButton = new("Mine: " + PlayerTank.controlMine.Assigned.KeyAsString(), FontGlobals.RebirthFont, Color.WhiteSmoke)
+            MineKeybindButton = new("Mine: " + PlayerTank.PlaceMine.Assigned.KeyAsString(), FontGlobals.RebirthFont, Color.WhiteSmoke)
             {
                 IsVisible = false
             };
@@ -100,13 +100,13 @@ namespace TanksRebirth.GameContent.UI
             MineKeybindButton.OnLeftClick = (uiElement) =>
             {
                 MineKeybindButton.Text = pressKey;
-                PlayerTank.controlMine.OnReassign = (key) =>
+                PlayerTank.PlaceMine.OnReassign = (key) =>
                 {
                     MineKeybindButton.Text = "Mine: " + key.KeyAsString();
                     TankGame.Settings.MineKeybind = key;
-                    PlayerTank.controlMine.OnReassign = null;
+                    PlayerTank.PlaceMine.OnReassign = null;
                 };
-                PlayerTank.controlMine.PendReassign = true;
+                PlayerTank.PlaceMine.PendReassign = true;
             };
         }
 
