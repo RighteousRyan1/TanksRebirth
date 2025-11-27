@@ -229,7 +229,7 @@ public static partial class MainMenuUI {
             if (GameHandler.AllPlayerTanks[i] is not null) continue;
 
             var p = new PlayerTank(client.Id);
-            p.Physics.Position = (PlayersGraphicOrigin + new Vector2(0, plrOffset).Rotate(MathHelper.PiOver2 / 2 * i)) / Tank.UNITS_PER_METER;
+            p.Physics.Position = (PlayersGraphicOrigin + new Vector2(0, plrOffset).RotatedBy(MathHelper.PiOver2 / 2 * i)) / Tank.UNITS_PER_METER;
             p.ChassisRotation = PlayersGraphicRotationOrigin.Z;
             p.IsDestroyed = false;
         }

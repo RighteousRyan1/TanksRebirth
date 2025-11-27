@@ -203,7 +203,7 @@ public class ParticleManager
 
             smoke.FaceTowardsMe = CameraGlobals.IsUsingFirstPresonCamera;
 
-            var velocity = Vector2.UnitY.Rotate(MathHelper.ToRadians(360f / numClouds * i)).ExpandZ() / 2;
+            var velocity = Vector2.UnitY.RotatedBy(MathHelper.ToRadians(360f / numClouds * i)).ExpandZ() / 2;
 
             smoke.Position.Y += 5f + Client.ClientRandom.NextFloat(0f, 8f);
 

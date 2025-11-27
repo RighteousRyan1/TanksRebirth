@@ -253,7 +253,7 @@ public class TankGame : Game {
         PlayerMice[0].MouseColor = PlayerID.PlayerTankColorsBright[client.Id];
     }
 
-    protected override void OnExiting(object sender, EventArgs args) {
+    protected override void OnExiting(object sender, ExitingEventArgs args) {
         ClientLog.Write($"Handling termination process...", LogType.Info);
 
         // update game-related numbers

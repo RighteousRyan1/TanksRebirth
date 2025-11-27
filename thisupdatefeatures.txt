@@ -27,6 +27,8 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 	- Each default modifier identifier now has a constant string associated with it, which makes things much less of a headache
 		- The constants have simplified names for lesser code cram. The names should be good enough to decipher 
 - All drawing-related fields/properties of drawn objects have been moved into their own `DrawParams`
+- `TankGame.PostDrawEverything` -> `TankGame.PreDrawBackBuffer`
+- `MathUtils.Rotate` -> `MathUtils.RotatedBy` because the new MonoGame version has `Vector2.Rotate` declared
 
 # Fixes
 

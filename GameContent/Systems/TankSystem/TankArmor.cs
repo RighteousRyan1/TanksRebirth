@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Internals;
@@ -102,7 +102,7 @@ public class TankArmor {
                         effect.World = Matrix.CreateRotationX(-MathHelper.PiOver2)
                              * Matrix.CreateRotationY(-Host.ChassisRotation)
                              * Matrix.CreateScale(scale)
-                             * Matrix.CreateTranslation(Host.Position3D + offset[i].Rotate(Host.ChassisRotation).ExpandZ());
+                             * Matrix.CreateTranslation(Host.Position3D + offset[i].RotatedBy(Host.ChassisRotation).ExpandZ());
                     }
                     //}
                     effect.View = Host.DrawParams.View;

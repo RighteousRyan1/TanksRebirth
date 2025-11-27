@@ -156,7 +156,7 @@ public static class CameraGlobals {
 
                 GameView = Matrix.CreateLookAt(
                     povCameraPosCurrent,
-                    POVCameraPosition + new Vector2(0, 20).Rotate(povCameraRotationCurrent).ExpandZ(),
+                    POVCameraPosition + new Vector2(0, 20).RotatedBy(povCameraRotationCurrent).ExpandZ(),
                     Vector3.Up
                 ) * Matrix.CreateScale(AddativeZoom) *
                     Matrix.CreateTranslation(0, -20, 0);

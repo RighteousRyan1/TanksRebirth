@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -188,13 +188,13 @@ public partial class AITank {
         List<Tank> tanksDef;
 
         if (Properties.ShellType == ShellID.Explosive) {
-            tanksDef = GetTanksInPath(Vector2.UnitY.Rotate(TurretRotation - MathHelper.Pi), out var ricP, out var tnkCol, offset: Vector2.UnitY * 20, pattern: x => !x.Properties.IsDestructible && x.Properties.IsSolid || x.Type == BlockID.Teleporter, missDist: Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
+            tanksDef = GetTanksInPath(Vector2.UnitY.RotatedBy(TurretRotation - MathHelper.Pi), out var ricP, out var tnkCol, offset: Vector2.UnitY * 20, pattern: x => !x.Properties.IsDestructible && x.Properties.IsSolid || x.Type == BlockID.Teleporter, missDist: Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
             if (GameUtils.Distance_WiiTanksUnits(ricP[^1], Position) < 150f) // TODO: change from hardcode to normalcode :YES:
                 tooCloseToExplosiveShell = true;
         }
         else {
             tanksDef = GetTanksInPath(
-                Vector2.UnitY.Rotate(TurretRotation - MathHelper.Pi),
+                Vector2.UnitY.RotatedBy(TurretRotation - MathHelper.Pi),
                 out var ricP, out var tnkCol, offset: Vector2.UnitY * 20,
                 missDist: Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
 
@@ -210,12 +210,12 @@ public partial class AITank {
                     .ToRotation() - MathHelper.PiOver2;
 
                 tanksDef = GetTanksInPath(
-                Vector2.UnitY.Rotate(-Position.DirectionTo(TargetTank.Position).ToRotation() - MathHelper.PiOver2),
+                Vector2.UnitY.RotatedBy(-Position.DirectionTo(TargetTank.Position).ToRotation() - MathHelper.PiOver2),
                 out var ricP, out var tnkCol, offset: Parameters.PredictsPositions ? Vector2.Zero : Vector2.UnitY * 20,
                 missDist: Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
 
                 var targ = GeometryUtils.PredictFuturePosition(TargetTank.Position, TargetTank.Velocity, calculation);
-                var posPredict = GetTanksInPath(Vector2.UnitY.Rotate(rot),
+                var posPredict = GetTanksInPath(Vector2.UnitY.RotatedBy(rot),
                     out var ricP1, out var tnkCol2, offset: Vector2.UnitY * 20, missDist: Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
 
                 if (tanksDef.Contains(TargetTank)) {
@@ -238,7 +238,7 @@ public partial class AITank {
             _seekRotation += Parameters.TurretSpeed * 0.25f;
             var canShoot = !(CurShootCooldown > 0 || OwnedShellCount >= Properties.ShellLimit);
             if (canShoot) {
-                var tanks = GetTanksInPath(Vector2.UnitY.Rotate(_seekRotation), out var ricP, out var tnkCol, false, default, Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
+                var tanks = GetTanksInPath(Vector2.UnitY.RotatedBy(_seekRotation), out var ricP, out var tnkCol, false, default, Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
 
                 var findsEnemy2 = tanks.Any(tnk => tnk is not null && !tnk.IsOnSameTeamAs(Team) && tnk != this);
                 // var findsSelf2 = tanks.Any(tnk => tnk is not null && tnk == this);
@@ -373,7 +373,7 @@ public partial class AITank {
         pattern ??= c => c.Properties.IsSolid || c.Type == BlockID.Teleporter;
 
         var whitePixel = TextureGlobals.Pixels[Color.White];
-        Vector2 pathPos = Position + offset.Rotate(-TurretRotation);
+        Vector2 pathPos = Position + offset.RotatedBy(-TurretRotation);
         pathDir.Y *= -1;
         pathDir *= PATH_UNIT_LENGTH;
 

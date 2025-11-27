@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -88,7 +88,7 @@ public partial class AITank {
         if (IsSurviving) return;
         if (SubPivotQueue.Count > 0) return;
         //uint framesLookAhead = AiParams.ObstacleAwarenessMovement / 2;
-        //var tankDirection = Vector2.UnitY.Rotate(TargetTankRotation);
+        //var tankDirection = Vector2.UnitY.RotatedBy(TargetTankRotation);
 
         var checkDist = Parameters.ObstacleAwarenessMovement / 2;
         // var rayNormal = Vector2.Zero;
@@ -145,8 +145,8 @@ public partial class AITank {
         else
             vecRot = MathHelper.Pi + Client.ClientRandom.NextFloat(-0.5f, 0.5f);
 
-        // old = Vector2.UnitY.Rotate(-rayNormal.ToRotation() - MathHelper.PiOver2);
-        var movementDirection = Vector2.UnitY.Rotate(ChassisRotation + vecRot);
+        // old = Vector2.UnitY.RotatedBy(-rayNormal.ToRotation() - MathHelper.PiOver2);
+        var movementDirection = Vector2.UnitY.RotatedBy(ChassisRotation + vecRot);
         
         PivotQueue.Enqueue(movementDirection);
     }
@@ -170,7 +170,7 @@ public partial class AITank {
         }
 
         /*float finalAngle = TankRotation + randomTurn;
-        Vector2 direction = Vector2.UnitY.Rotate(finalAngle);
+        Vector2 direction = Vector2.UnitY.RotatedBy(finalAngle);
 
         PivotQueue.Add((direction, PivotType.RandomTurn));
 
@@ -181,7 +181,7 @@ public partial class AITank {
 
         //var eventualRotation = DesiredChassisRotation + randomTurn / 2;
 
-        //PivotQueue.Enqueue((Vector2.UnitY.Rotate(eventualRotation), PivotType.RandomTurn));
+        //PivotQueue.Enqueue((Vector2.UnitY.RotatedBy(eventualRotation), PivotType.RandomTurn));
 
         DesiredChassisRotation += randomTurn / 2;
     }
@@ -195,7 +195,7 @@ public partial class AITank {
         bool isPathBlocked = false;
 
         // the tank by default faces down, so positive Y.
-        var dir = Vector2.UnitY.Rotate(ChassisRotation + offset);
+        var dir = Vector2.UnitY.RotatedBy(ChassisRotation + offset);
 
         // switch to using game units if necessary?
         var gameUnits = GameUtils.Value_WiiTanksUnits(TNK_WIDTH + distance);
@@ -226,8 +226,8 @@ public partial class AITank {
         var desiredCuts = Parameters.MaxQueuedMovements;
 
         for (int i = 0; i < desiredCuts; i++) {
-            //SubPivotQueue.Add(Vector2.UnitY.Rotate(MathHelper.PiOver2 * i));
-            SubPivotQueue.Enqueue(MathUtils.Slerp2D(Vector2.UnitY.Rotate(ChassisRotation), pivot, 1f / desiredCuts * (i + 1)));
+            //SubPivotQueue.Add(Vector2.UnitY.RotatedBy(MathHelper.PiOver2 * i));
+            SubPivotQueue.Enqueue(MathUtils.Slerp2D(Vector2.UnitY.RotatedBy(ChassisRotation), pivot, 1f / desiredCuts * (i + 1)));
         }
         // drop the first element since this works as a queue under the hood
         // PivotQueue.RemoveAt(0);

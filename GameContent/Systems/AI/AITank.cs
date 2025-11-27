@@ -470,7 +470,7 @@ public partial class AITank : Tank {
         // i really hope to remove this hardcode.
         if (DoMoveTowards) {
 
-            var dir = Vector2.UnitY.Rotate(ChassisRotation);
+            var dir = Vector2.UnitY.RotatedBy(ChassisRotation);
 
             Velocity = Vector2.Normalize(dir);
 
@@ -575,7 +575,7 @@ public partial class AITank : Tank {
 
         var start = new Vector3(Position.X, heightOffset, Position.Y) + offset;
 
-        var forward = Vector2.UnitY.Rotate(ChassisRotation);
+        var forward = Vector2.UnitY.RotatedBy(ChassisRotation);
 
         // not to game units...?
         var gameUnits = GameUtils.Value_WiiTanksUnits(distance + TNK_WIDTH);
@@ -650,14 +650,14 @@ public partial class AITank : Tank {
                 calculation = Position.Distance(TargetTank.Position) / (float)(Properties.ShellSpeed * 1.2f);
 
             if (Parameters.SmartRicochets)
-                GetTanksInPath(Vector2.UnitY.Rotate(_seekRotation), out var ricP1, out var tnkCol1, true, missDist: Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
+                GetTanksInPath(Vector2.UnitY.RotatedBy(_seekRotation), out var ricP1, out var tnkCol1, true, missDist: Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
             // maybe not necessary. store from the cpu, draw on the gpu.
-            var poo = GetTanksInPath(Vector2.UnitY.Rotate(TurretRotation - MathHelper.Pi), out var ricP2, out var tnkCol2, true, offset: Vector2.UnitY * 20, pattern: x => x.Properties.IsSolid | x.Type == BlockID.Teleporter, missDist: Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
+            var poo = GetTanksInPath(Vector2.UnitY.RotatedBy(TurretRotation - MathHelper.Pi), out var ricP2, out var tnkCol2, true, offset: Vector2.UnitY * 20, pattern: x => x.Properties.IsSolid | x.Type == BlockID.Teleporter, missDist: Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
             if (Parameters.PredictsPositions) {
                 float rot = -Position.DirectionTo(TargetTank is not null ?
                     GeometryUtils.PredictFuturePosition(TargetTank.Position, TargetTank.Velocity, calculation) :
                     AimTarget).ToRotation() - MathHelper.PiOver2;
-                GetTanksInPath(Vector2.UnitY.Rotate(rot), out var ricP3, out var tnkCol3, true, Vector2.Zero, pattern: x => x.Properties.IsSolid | x.Type == BlockID.Teleporter, missDist: Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
+                GetTanksInPath(Vector2.UnitY.RotatedBy(rot), out var ricP3, out var tnkCol3, true, Vector2.Zero, pattern: x => x.Properties.IsSolid | x.Type == BlockID.Teleporter, missDist: Parameters.DetectionForgivenessHostile, doBounceReset: Parameters.BounceReset);
             }
             for (int i = 0; i < ricP2.Length; i++) {
                 DebugManager.DrawDebugString(TankGame.SpriteRenderer, $"ric{i}", MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0),
@@ -677,7 +677,7 @@ public partial class AITank : Tank {
         }
         /*if (DebugManager.DebugLevel == DebugManager.Id.AIData && !Properties.Stationary) {
             // magical numbers too lazy, look at update method to define
-            IsObstacleInWay(AiParams.ObstacleAwarenessMovement / 2, Vector2.UnitY.Rotate(TargetTankRotation), out var travelPos, out var refPoints, TankPathCheckSize, draw: true);
+            IsObstacleInWay(AiParams.ObstacleAwarenessMovement / 2, Vector2.UnitY.RotatedBy(TargetTankRotation), out var travelPos, out var refPoints, TankPathCheckSize, draw: true);
             DebugManager.DrawDebugString(TankGame.SpriteRenderer, "TEP", MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(travelPos.X, 11, travelPos.Y), View, Projection), 6, centered: true);
             foreach (var pt in refPoints)
                 DebugManager.DrawDebugString(TankGame.SpriteRenderer, "pt", MatrixUtils.ConvertWorldToScreen(new Vector3(0, 11, 0), Matrix.CreateTranslation(pt.ReflectionPoint.X, 0, pt.ReflectionPoint.Y), View, Projection), 6, centered: true);
@@ -711,7 +711,7 @@ public partial class AITank : Tank {
                 continue;
 
             // start raycast going down (positive Y axis)
-            var dir = Vector2.UnitY.Rotate(i * MathHelper.PiOver2 + offset);
+            var dir = Vector2.UnitY.RotatedBy(i * MathHelper.PiOver2 + offset);
             goodDirs[i] = (collDir, dir);
 
             // Value_ToWiiTanksUnits...?

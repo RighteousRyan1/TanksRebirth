@@ -1,4 +1,4 @@
-﻿using FontStashSharp;
+using FontStashSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using TanksRebirth.GameContent.Globals;
@@ -39,7 +39,7 @@ public static class DrawUtils {
     public static void DrawTextureWithBorder(SpriteBatch spriteBatch, Texture2D texture, Vector2 position, Color textureColor, Color borderColor, 
         Vector2 scale, float rotation, Anchor anchor = Anchor.Center, float borderThickness = 1f) {
         for (int i = 0; i < 4; i++)
-            spriteBatch.Draw(texture, position + new Vector2(0, 2f * borderThickness).Rotate(MathHelper.PiOver2 * i + MathHelper.PiOver4),
+            spriteBatch.Draw(texture, position + new Vector2(0, 2f * borderThickness).RotatedBy(MathHelper.PiOver2 * i + MathHelper.PiOver4),
                 null, borderColor, rotation, GameUtils.GetAnchor(anchor, texture.Size()), scale, default, 0f);
         spriteBatch.Draw(texture, position, null, textureColor, rotation, GameUtils.GetAnchor(anchor, texture.Size()), scale, default, 1f);
     }
@@ -83,7 +83,7 @@ public static class DrawUtils {
         Color borderColor, Vector2 scale, float rotation, Anchor anchor = Anchor.Center, float borderThickness = 1f, float charSpacing = 0,
         float origMeasureScale = 1f) {
         for (int i = 0; i < 4; i++)
-            spriteBatch.DrawString(font, text, position + new Vector2(0, 2f * borderThickness).Rotate(MathHelper.PiOver2 * i + MathHelper.PiOver4).ToResolution(),
+            spriteBatch.DrawString(font, text, position + new Vector2(0, 2f * borderThickness).RotatedBy(MathHelper.PiOver2 * i + MathHelper.PiOver4).ToResolution(),
                 borderColor, scale, rotation, GameUtils.GetAnchor(anchor, font.MeasureString(text) * origMeasureScale), 0f, characterSpacing: charSpacing);
     }
     public static void DrawStringShadowOnly(SpriteBatch spriteBatch, SpriteFontBase font, Vector2 position, Vector2 shadowDir,

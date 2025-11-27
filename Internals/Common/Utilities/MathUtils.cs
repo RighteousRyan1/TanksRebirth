@@ -101,7 +101,7 @@ public static class MathUtils
     /// <param name="radians">The rotation in radians.</param>
     /// <param name="center">The center.</param>
     /// <returns>The rotated vector.</returns>
-    public static Vector2 Rotate(this Vector2 spinPoint, float radians, Vector2 center = default) {
+    public static Vector2 RotatedBy(this Vector2 spinPoint, float radians, Vector2 center = default) {
         float cos = MathF.Cos(radians);
         float sin = MathF.Sin(radians);
         Vector2 newPoint = spinPoint - center;

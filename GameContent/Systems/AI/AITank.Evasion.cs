@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -15,7 +15,7 @@ public partial class AITank {
     public void Avoid(Vector2 location) {
         IsSurviving = true;
         if (CurMineStun <= 0 && CurShootStun <= 0) {
-            var direction = -Vector2.UnitY.Rotate(location.DirectionTo(Position).ToRotation());
+            var direction = -Vector2.UnitY.RotatedBy(location.DirectionTo(Position).ToRotation());
             DesiredChassisRotation = direction.ToRotation();
         }
     }

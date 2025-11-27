@@ -182,7 +182,7 @@ public abstract class Tank {
 
     public BasicDrawParams DrawParams = new();
     public TankDrawParams DrawParamsTank;
-    public Vector2 TurretPosition => Position + new Vector2(0, TurretLength).Rotate(-TurretRotation);
+    public Vector2 TurretPosition => Position + new Vector2(0, TurretLength).RotatedBy(-TurretRotation);
     public Vector3 TurretPosition3D => new(TurretPosition.X, 11, TurretPosition.Y);
     public Vector2 Position {
         get => Physics.Position * UNITS_PER_METER;
@@ -369,7 +369,7 @@ public abstract class Tank {
 
             lpSmoke.Color = color;
 
-            var velocity = Vector2.UnitY.Rotate(MathHelper.ToRadians(360f / NUM_LOCATIONS * i));
+            var velocity = Vector2.UnitY.RotatedBy(MathHelper.ToRadians(360f / NUM_LOCATIONS * i));
 
             lpSmoke.Pitch = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
@@ -731,7 +731,7 @@ public abstract class Tank {
         bool flip = false;
         float angle = 0f;
 
-        var rotatedPos = Vector2.UnitY.Rotate(TurretRotation);
+        var rotatedPos = Vector2.UnitY.RotatedBy(TurretRotation);
 
         if (!fxOnly) {
             var shell = new Shell(TurretPosition, new Vector2(-rotatedPos.X, rotatedPos.Y) * Properties.ShellSpeed,
@@ -774,13 +774,13 @@ public abstract class Tank {
 
                 var shell = new Shell(Position, Vector2.Zero, Properties.ShellType, this,
                     homing: Properties.ShellHoming);
-                rotatedPos = Vector2.UnitY.Rotate(TurretRotation);
+                rotatedPos = Vector2.UnitY.RotatedBy(TurretRotation);
 
-                var newPos = Position + new Vector2(0, 20).Rotate(-TurretRotation + newAngle);
+                var newPos = Position + new Vector2(0, 20).RotatedBy(-TurretRotation + newAngle);
 
                 shell.Position = new Vector2(newPos.X, newPos.Y);
 
-                shell.Velocity = new Vector2(-rotatedPos.X, rotatedPos.Y).Rotate(newAngle) *
+                shell.Velocity = new Vector2(-rotatedPos.X, rotatedPos.Y).RotatedBy(newAngle) *
                                  Properties.ShellSpeed;
 
                 shell.RicochetsRemaining = Properties.RicochetCount;

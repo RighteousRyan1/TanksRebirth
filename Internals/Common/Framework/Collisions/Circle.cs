@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -50,5 +50,5 @@ public struct Circle
         => Radius * 2 * MathHelper.Pi;
 
     public readonly Vector2 GetRotatedPoint(float rads) 
-        => Center + new Vector2(Radius, 0).Rotate(rads);
+        => Center + new Vector2(Radius, 0).RotatedBy(rads);
 }

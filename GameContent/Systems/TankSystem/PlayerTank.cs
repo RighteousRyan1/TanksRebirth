@@ -266,7 +266,7 @@ public class PlayerTank : Tank {
 
             // Console.WriteLine(Speed);
 
-            Velocity = Vector2.UnitY.Rotate(ChassisRotation) * Speed;
+            Velocity = Vector2.UnitY.RotatedBy(ChassisRotation) * Speed;
 
             oldPosition = Position;
         }
@@ -431,7 +431,7 @@ public class PlayerTank : Tank {
         }
 
         if (Modifiers.Map[Modifiers.POV])
-            DesiredDirection = DesiredDirection.Rotate(-TurretRotation + MathHelper.Pi);
+            DesiredDirection = DesiredDirection.RotatedBy(-TurretRotation + MathHelper.Pi);
     }
     public override void Destroy(ITankHurtContext context, bool netSend) {
         if (Client.IsConnected()) {
@@ -486,8 +486,8 @@ public class PlayerTank : Tank {
         const int MAX_PATH_UNITS = 10000;
 
         var whitePixel = TextureGlobals.Pixels[Color.White];
-        var pathPos = Position + new Vector2(0, 18).Rotate(-TurretRotation);
-        var pathDir = Vector2.UnitY.Rotate(TurretRotation - MathHelper.Pi);
+        var pathPos = Position + new Vector2(0, 18).RotatedBy(-TurretRotation);
+        var pathDir = Vector2.UnitY.RotatedBy(TurretRotation - MathHelper.Pi);
         pathDir.Y *= -1;
         pathDir *= Properties.ShellSpeed;
 

@@ -413,7 +413,7 @@ public class Shell : IAITankDanger {
         Particle p;
         p = GameHandler.Particles.MakeParticle(
             Position3D + new Vector3(0, 0, 5).FlattenZ()
-                                        .Rotate(Rotation + MathHelper.Pi + Client.ClientRandom.NextFloat(-0.3f, 0.3f))
+                                        .RotatedBy(Rotation + MathHelper.Pi + Client.ClientRandom.NextFloat(-0.3f, 0.3f))
                                         .ExpandZ(),
         GameResources.GetGameResource<Texture2D>("Assets/textures/misc/tank_smoke"));
         p.Scale = new(0.3f);
@@ -441,7 +441,7 @@ public class Shell : IAITankDanger {
         //var numToAdd
 
         var p = GameHandler.Particles.MakeParticle(
-            Position3D + new Vector3(0, 0, 5).FlattenZ().Rotate(Rotation + MathHelper.Pi).ExpandZ(),
+            Position3D + new Vector3(0, 0, 5).FlattenZ().RotatedBy(Rotation + MathHelper.Pi).ExpandZ(),
             GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/smoketrail"));
 
         // p.Layer = 1f;
@@ -464,7 +464,7 @@ public class Shell : IAITankDanger {
     }
     void RenderFlamingParticle() {
         var flame = GameHandler.Particles.MakeParticle(
-            Position3D + new Vector3(0, 0, 5).FlattenZ().Rotate(Rotation + MathHelper.Pi).ExpandZ(),
+            Position3D + new Vector3(0, 0, 5).FlattenZ().RotatedBy(Rotation + MathHelper.Pi).ExpandZ(),
             GameResources.GetGameResource<Texture2D>("Assets/textures/bullet/flame"));
 
         var scaleRand = Client.ClientRandom.NextFloat(0.5f, 0.75f);
@@ -485,7 +485,7 @@ public class Shell : IAITankDanger {
         flame.UniqueBehavior = (p) => {
             const float scalingConstant = 0.06f;
 
-            var off = Position + Vector2.Zero.Rotate(Rotation);
+            var off = Position + Vector2.Zero.RotatedBy(Rotation);
 
             flame.Position = off.ExpandZ() + new Vector3(0, 11, 0);
 

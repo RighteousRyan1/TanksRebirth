@@ -79,7 +79,7 @@ public struct CosmeticChest
                 // float y = 20f;
                 if (RuntimeData.UpdateCount % 10 == 0) {
                     GameHandler.Particles.MakeShineSpot(tnk.Position3D +
-                        new Vector3(cos.RelativePosition.X, cos.RelativePosition.Y, siny / 5 + (Vector2.UnitY * 5).Rotate(Client.ClientRandom.NextFloat(0, MathHelper.TwoPi)).Y), 
+                        new Vector3(cos.RelativePosition.X, cos.RelativePosition.Y, siny / 5 + (Vector2.UnitY * 5).RotatedBy(Client.ClientRandom.NextFloat(0, MathHelper.TwoPi)).Y), 
                         Color.Yellow, Client.ClientRandom.NextFloat(0.3f, 0.5f));
                 }
             }
