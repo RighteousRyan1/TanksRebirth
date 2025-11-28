@@ -12,11 +12,9 @@ namespace TanksRebirth.Internals.Common.Framework.Input;
 /// <typeparam name="T">An enum representing a list of 'buttons' or methods of input.</typeparam>
 public interface IInputBind<T> where T : IConvertible {
     public string Name { get; }
-    public bool JustPressed { get; }
-    public bool IsPressed { get; }
     public bool PendReassign { get; set; }
     public T Assigned { get; internal set; }
-    public Action OnPress { get; }
-    public Action<T> OnReassign { get; set; }
+    public Action? OnPress { get; }
+    public Action<T>? OnReassign { get; set; }
     public void Fire();
 }

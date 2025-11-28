@@ -23,6 +23,7 @@ using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.GameContent.UI.MainMenu;
+using TanksRebirth.Internals.Common;
 
 namespace TanksRebirth.GameContent.Systems;
 
@@ -175,15 +176,18 @@ public class Campaign
             else {
                 var lives = PlayerTank.Lives[template.PlayerType];
                 var isValidMPPlayer = template.PlayerType < Server.CurrentClientCount;
-                var isSinglePlayer = !Client.IsConnected();
+                var isLocalGame = !Client.IsConnected();
 
                 if (lives <= 0)
                     goto skip_player_init;
 
-                if (isSinglePlayer && template.PlayerType > 0)
-                    goto skip_player_init;
+                if (isLocalGame) {
+                    var isValidLocalPlayer = template.PlayerType < InputUtils.NumConnectedInputs;
+                    if (!isValidLocalPlayer)
+                        goto skip_player_init;
+                }
 
-                if (isValidMPPlayer || isSinglePlayer) {
+                if (isValidMPPlayer || isLocalGame) {
                     var tank = template.GetPlayerTank();
 
                     tank.Position = template.Position;

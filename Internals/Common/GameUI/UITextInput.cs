@@ -43,7 +43,7 @@ namespace TanksRebirth.Internals.Common.GameUI
                 Text = Text.Remove(MaxLength);
 
             if (ActiveHandle)
-                if ((InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.LeftControl) || InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.RightControl)) && InputUtils.KeyJustPressed(Keys.V))
+                if ((InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(Keys.LeftControl) || InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(Keys.RightControl)) && InputUtils.KeyJustPressed(Keys.V))
                     Text += ClipboardService.GetText();
 
             if (InputUtils.CanDetectClick()) {

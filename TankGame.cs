@@ -233,18 +233,26 @@ public class TankGame : Game {
 
             // add the main player in when loading
             PlayerMice.Add(0, new RebirthMouse(PlayerID.PlayerTankColors[PlayerID.Blue], PlayerID.PlayerTankColorsBright[PlayerID.Blue], PlayerID.Blue));
-            PlayerMice[0].Position = () => MouseUtils.MousePosition;
-
-            PlayerMice.Add(1, new RebirthMouse(PlayerID.PlayerTankColors[PlayerID.Red], PlayerID.PlayerTankColorsBright[PlayerID.Red], PlayerID.Red));
-            PlayerMice[1].Position = () => MouseUtils.MousePosition + Vector2.UnitX * 100;
 
             Client.OnClientStart += UpdateMainClientMouse;
+
+            InputUtils.OnGamePadConnected += InputUtils_OnGamePadConnected;
+            InputUtils.OnGamePadDisconnected += InputUtils_OnGamePadDisconnected;
 
             base.Initialize();
         }
         catch (Exception e) when (!Debugger.IsAttached) {
             ReportError(e);
         }
+    }
+
+    private void InputUtils_OnGamePadDisconnected(int player) {
+        PlayerMice.Remove(player + 1);
+    }
+
+    private void InputUtils_OnGamePadConnected(int player) {
+        PlayerMice.Add(player + 1, new RebirthMouse(PlayerID.PlayerTankColors[player + 1], PlayerID.PlayerTankColorsBright[player + 1], player + 1));
+        PlayerMice[player + 1].Position = MouseUtils.MousePosition + Vector2.UnitX * 100 * (player + 1);
     }
 
     private void UpdateMainClientMouse(Client client) {
@@ -642,8 +650,22 @@ public class TankGame : Game {
         }
     }
     private void HandleLogic(GameTime gameTime) {
-        MouseUtils.MousePosition = new(InputUtils.CurrentMouseSnapshot.X, InputUtils.CurrentMouseSnapshot.Y);
+        MouseUtils.MousePosition = new(InputUtils.KeyboardMouse.CurrentMouse.X, InputUtils.KeyboardMouse.CurrentMouse.Y);
         MouseUtils.MouseVelocity = MouseUtils.MousePosition - _mouseOld;
+
+        PlayerMice[0].Position = MouseUtils.MousePosition;
+
+        /*if ()
+        // since "connected inputs" also tracks the keyboard.
+        for (int i = 1; i < PlayerMice.Count; i++) {
+            var gpCur = InputUtils.GamePads[i - 1];
+            var lStick = gpCur.Current.ThumbSticks.Left;
+
+            PlayerTank.AimTargets[i] += new Vector2(lStick.X, -lStick.Y) * 10;
+            ChatSystem.SendMessage(lStick);
+
+            PlayerMice[i].Position = PlayerTank.AimTargets[i];
+        }*/
 
         #region Non-Camera
 
@@ -736,7 +758,9 @@ public class TankGame : Game {
 
         GameShaders.UpdateShaders();
 
-        InputUtils.PollEvents();
+        InputUtils.PollGamepad();
+        InputUtils.PollKBM();
+        InputUtils.Watch();
 
         bool shouldUpdate = Client.IsConnected() || (IsActive && !GameUI.Paused && !CampaignCompleteUI.IsViewingResults);
         if (!IsCrashInfoVisible) {

@@ -330,9 +330,9 @@ public static class DebugManager {
                     CameraGlobals.CameraFocusOffset = LevelEditorUI.IsActive ? new Vector2(0, CameraGlobals.LVL_EDIT_Y_OFF) : Vector2.Zero;
                 }
 
-                if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Add))
+                if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(Keys.Add))
                     CameraGlobals.AddativeZoom += 0.025f * RuntimeData.DeltaTime;
-                if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Subtract))
+                if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(Keys.Subtract))
                     CameraGlobals.AddativeZoom -= 0.025f * RuntimeData.DeltaTime;
 
                 if (InputUtils.MouseMiddle)

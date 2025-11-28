@@ -17,7 +17,9 @@ public static class GameSceneUI {
         // put any initialization logic here if needed
     }
     public static void DrawScores() {
-        var drawCount = Client.IsConnected() ? Server.CurrentClientCount : 1;
+        // TODO: probably make it where single player can use controllers
+        // make a ui for that later xd im too FUCKING TIRED rn
+        var drawCount = Client.IsConnected() ? Server.CurrentClientCount : InputUtils.NumConnectedInputs;
         for (int i = 0; i < drawCount; i++) {
 
             float y = WindowUtils.WindowHeight * 0.9f;

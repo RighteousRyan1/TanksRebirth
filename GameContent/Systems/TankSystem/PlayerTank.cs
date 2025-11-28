@@ -1,36 +1,32 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
-using TanksRebirth.Enums;
 using System.Linq;
-using Microsoft.Xna.Framework.Input;
-using TanksRebirth.Internals.Common.Utilities;
-using TanksRebirth.Internals;
-using Microsoft.Xna.Framework.Audio;
-using TanksRebirth.Internals.Common;
+using TanksRebirth.Enums;
 using TanksRebirth.GameContent.GameMechanics;
-using TanksRebirth.Internals.Common.Framework.Audio;
-using TanksRebirth.Internals.Common.Framework.Input;
-using TanksRebirth.Graphics;
-using TanksRebirth.Net;
-using TanksRebirth.GameContent.Systems;
-using FontStashSharp;
 using TanksRebirth.GameContent.Globals;
-using TanksRebirth.GameContent.UI;
+using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.GameContent.RebirthUtils;
-using TanksRebirth.GameContent.UI.MainMenu;
-using TanksRebirth.Internals.Common.Framework;
-using TanksRebirth.GameContent.UI.LevelEditor;
-using TanksRebirth.GameContent.Globals.Assets;
-using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.AI;
+using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.GameContent.UI;
+using TanksRebirth.GameContent.UI.LevelEditor;
+using TanksRebirth.GameContent.UI.MainMenu;
+using TanksRebirth.Graphics;
+using TanksRebirth.Internals;
+using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.Framework.Collisions;
-using TanksRebirth.Graphics.Drawing;
+using TanksRebirth.Internals.Common.Framework.Input;
+using TanksRebirth.Internals.Common.Utilities;
+using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent;
 
+// pretty sure literally everything breaks if you try local multiplayer input in a multiplayer server. get to that later!
 public enum PlayerInput {
     KBM,
     Gamepad,
@@ -46,7 +42,7 @@ public ref struct PlayerBinds {
     public Keybind ToggleShootPath;
 }
 public class PlayerTank : Tank {
-    private static bool _justCenteredMouse = false;
+    static bool _justCenteredMouse = false;
     #region The Rest
     public static int MyTeam;
     public static int MyTankType;
@@ -75,7 +71,7 @@ public class PlayerTank : Tank {
     public static GamepadBind GamePadShoot = new("Fire Bullet", Buttons.RightTrigger);
     public static GamepadBind GamePadPlaceMine = new("Place Mine", Buttons.A);
 
-    bool playerControl_isBindPressed;
+    bool playerControl;
     bool _isPlayerModel;
 
     public Vector2 oldPosition;
@@ -84,7 +80,37 @@ public class PlayerTank : Tank {
     //private float _maxTurnInputBased;
     #endregion
 
-    public static PlayerInput LastUsedController = PlayerInput.KBM;
+    public static Vector2[] AimTargets = new Vector2[4];
+
+    // -1 if all are controllers!
+    public static int PlayerControlledByKeyboard = PlayerID.Blue;
+
+    /// <summary>
+    /// True if this player is the one controlled by keyboard+mouse.
+    /// </summary>
+    public bool UsesKeyboard => PlayerId == PlayerControlledByKeyboard;
+
+    /// <summary>
+    /// Returns the gamepad index for this player, or -1 if this player uses keyboard/mouse.
+    /// The mapping "packs" gamepads so that when one player is KBM, the controllers shift down.
+    /// </summary>
+    public int GamepadIndex {
+        get {
+            if (PlayerControlledByKeyboard == -1)
+                return PlayerId; // everyone is controller: 0->0, 1->1...
+
+            if (PlayerId == PlayerControlledByKeyboard)
+                return -1; // THIS player is keyboard+mouse, no gamepad index.
+
+            if (PlayerId < PlayerControlledByKeyboard)
+                return PlayerId; // before the KBM slot, indices are unchanged.
+
+            // after the KBM slot, shift left by one
+            return PlayerId - 1;
+        }
+    }
+
+    public PlayerInput InputMethod = PlayerInput.KBM;
 
     public Vector2 DesiredDirection;
     public static float StickDeadzone { get; set; } = 0.12f;
@@ -99,9 +125,7 @@ public class PlayerTank : Tank {
 
     /// <summary>In multiplayer, gets the lives of the client that this code is currently being called on.</summary>
     public static int GetMyLives() => Lives[NetPlay.GetMyClientId()];
-    /// <summary>
-    /// Adds lives to the player in Single-Player, adds to the lives of all players in Multiplayer.
-    /// </summary>
+    /// <summary>Adds lives to the player in Single-Player, adds to the lives of all players in Multiplayer.</summary>
     /// <param name="num">How many lives to add.</param>
     public static void AddLives(int num) {
         if (Client.IsConnected())
@@ -170,7 +194,13 @@ public class PlayerTank : Tank {
         properties.TurningSpeed = 0.1f;
 
         // this changes depending on input (or should it?)
-        properties.MaximalTurn = MathHelper.ToRadians(InputUtils.CurrentGamePadSnapshot.IsConnected ? 10 : 46); // normally it's 10 degrees, but we want to make it easier for keyboard players.
+        // normally it's 10 degrees, but we want to make it easier for keyboard players
+        int padIndex = GamepadIndex;
+        bool hasGamepad =
+            padIndex >= 0 &&
+            padIndex < InputUtils.GamePads.Length &&
+            InputUtils.GamePads[padIndex].Current.IsConnected;
+        properties.MaximalTurn = MathHelper.ToRadians(hasGamepad ? 10 : 46);
 
         Properties.ShootPitch = 0.1f * PlayerType;
 
@@ -199,16 +229,25 @@ public class PlayerTank : Tank {
         // pi/4 = right
         // 3/4pi = left
 
-        DesiredDirection = Vector2.Zero;
-
-        if (!WiimoteSystem.IsConnected) {
-            if (InputUtils.IsGamepadBeingUsed())
-                LastUsedController = PlayerInput.Gamepad;
-            else
-                LastUsedController = PlayerInput.KBM;
+        // moved to tank spawn/load only since yes
+        if (WiimoteSystem.IsConnected) {
+            InputMethod = PlayerInput.Wiimote;
         }
-        else
-            LastUsedController = PlayerInput.Wiimote;
+        else {
+            // If this is the configured keyboard player, force KBM.
+            if (UsesKeyboard) {
+                InputMethod = PlayerInput.KBM;
+            }
+            else {
+                int padIndex = GamepadIndex;
+                if (padIndex >= 0 && InputUtils.IsGamepadBeingUsed(padIndex))
+                    InputMethod = PlayerInput.Gamepad;
+                else
+                    InputMethod = PlayerInput.KBM; // fallback if pad not actually in use
+            }
+        }
+
+        DesiredDirection = Vector2.Zero;
         
         base.Update();
 
@@ -232,39 +271,38 @@ public class PlayerTank : Tank {
         ProcessPlayerMouse();
 
         if (!CampaignGlobals.InMission || LevelEditorUI.IsActive || ChatSystem.ActiveHandle) {
-            playerControl_isBindPressed = false;
+            playerControl = false;
             return;
         }
 
-        if (!Properties.Stationary) {
-            if (NetPlay.IsClientMatched(PlayerId)) {
-                if (CurShootStun <= 0 && CurMineStun <= 0) {
-                    if (LastUsedController == PlayerInput.Gamepad)
+        if (NetPlay.IsClientMatched(PlayerId)) {
+            if (!Properties.Stationary && CurShootStun <= 0 && CurMineStun <= 0) {
+                switch (InputMethod) {
+                    case PlayerInput.Gamepad:
                         ControlHandle_Gamepad();
-                    else if (LastUsedController == PlayerInput.KBM)
+                        break;
+                    case PlayerInput.KBM:
                         ControlHandle_Keybinding();
-                    else
+                        break;
+                    case PlayerInput.Wiimote:
                         ControlHandle_Wiimote(WiimoteSystem.State);
+                        break;
                 }
             }
-        }
 
-        if (NetPlay.IsClientMatched(PlayerId)) {
-            if (InputUtils.CanDetectClick()) {
+            if (InputUtils.CanDetectClick() && UsesKeyboard) {
                 if (!ChatSystem.ChatBoxHover && !ChatSystem.ActiveHandle && !GameUI.Paused) {
                     Shoot(false);
                 }
             }
         }
 
-        if (playerControl_isBindPressed) {
+        if (playerControl) {
             var norm = Vector2.Normalize(DesiredDirection);
 
             DesiredChassisRotation = norm.ToRotation() - MathHelper.PiOver2;
 
             ChassisRotation = MathUtils.RoughStep(ChassisRotation, DesiredChassisRotation, Properties.TurningSpeed * RuntimeData.DeltaTime);
-
-            // Console.WriteLine(Speed);
 
             Velocity = Vector2.UnitY.RotatedBy(ChassisRotation) * Speed;
 
@@ -274,22 +312,27 @@ public class PlayerTank : Tank {
     void ProcessPlayerMouse() {
         if (!NetPlay.IsClientMatched(PlayerId)) return;
 
+        if (TankGame.PlayerMice.Count <= PlayerId) return;
+
+        if (UsesKeyboard)
+            AimTargets[PlayerId] = MouseUtils.MousePosition;
+
         var shouldAimingHappen = !Modifiers.Map[Modifiers.POV] || LevelEditorUI.IsActive || MainMenuUI.IsActive;
         if (shouldAimingHappen) {
-            // the mice, obv
-            var arr = TankGame.PlayerMice.Values.ToArray();
-            var cursorIdx = Array.FindIndex(arr, x => x.Player == PlayerId);
-            if (cursorIdx > -1) {
-                var cursorToAimAt = arr[cursorIdx];
+            //int padIndex = GamepadIndex;
+            //if (padIndex < 0)
+            //    return; // KBM player will use actual mouse
 
-                var mouseWorldPos = MatrixUtils.GetWorldPosition(cursorToAimAt.Position!.Invoke(), -11f);
-                if (!LevelEditorUI.IsActive)
-                    TurretRotation = -(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position).ToRotation() + MathHelper.PiOver2;
-                else
-                    TurretRotation = ChassisRotation;
-            }
+            var cursorToAimAt = TankGame.PlayerMice[PlayerId];
+
+            var mouseWorldPos = MatrixUtils.GetWorldPosition(cursorToAimAt.Position, -11f);
+            if (!LevelEditorUI.IsActive)
+                TurretRotation = -(new Vector2(mouseWorldPos.X, mouseWorldPos.Z) - Position).ToRotation() + MathHelper.PiOver2;
+            else
+                TurretRotation = ChassisRotation;
         }
         // handle POV mode aiming
+        // also pov mode should not be used in local games for now (i do not want to make splitscreen pls)
         else if (!GameUI.Paused) { 
             if (!DebugManager.IsFreecamEnabled && !InputUtils.CanDetectClick() && !PlaceMine.JustPressed) {
                 var mouseState = Mouse.GetState();
@@ -332,20 +375,20 @@ public class PlayerTank : Tank {
     void ControlHandle_Wiimote(WiimoteLib.WiimoteState state) {
         if (state.ExtensionType != WiimoteLib.ExtensionType.Nunchuk) {
             if (state.ButtonState.Up) {
-                playerControl_isBindPressed = true;
+                playerControl = true;
                 DesiredDirection.Y = -1;
             }
             else if (state.ButtonState.Down) {
-                playerControl_isBindPressed = true;
+                playerControl = true;
                 DesiredDirection.Y = 1;
             }
 
             if (state.ButtonState.Right) {
-                playerControl_isBindPressed = true;
+                playerControl = true;
                 DesiredDirection.X = 1;
             }
             else if (state.ButtonState.Left) {
-                playerControl_isBindPressed = true;
+                playerControl = true;
                 DesiredDirection.X = -1;
             }
         }
@@ -353,7 +396,7 @@ public class PlayerTank : Tank {
             DesiredDirection = Vector2.Normalize(WiimoteSystem.NunchukAxis);
 
             if (DesiredDirection.Length() > 0.5f)
-                playerControl_isBindPressed = true;
+                playerControl = true;
         }
 
         if (state.ButtonState.A && !_prev.A)
@@ -365,43 +408,58 @@ public class PlayerTank : Tank {
 
     // TODO: this is where we are going to handle the heavenly local multiplayer :)
     void ControlHandle_Gamepad() {
-        var leftStick = InputUtils.CurrentGamePadSnapshot.ThumbSticks.Left;
-        var rightStick = InputUtils.CurrentGamePadSnapshot.ThumbSticks.Right;
-        var dPad = InputUtils.CurrentGamePadSnapshot.DPad;
+        int padIndex = GamepadIndex;
+        if (padIndex < 0)
+            return; // should never happen if InputMethod == Gamepad, but guard anyway
+
+        var leftStick = InputUtils.GamePads[padIndex].Current.ThumbSticks.Left;
+        var rightStick = InputUtils.GamePads[padIndex].Current.ThumbSticks.Right;
+        var dPad = InputUtils.GamePads[padIndex].Current.DPad;
 
         // inverse y because stick down is positive y (which is up z)
         DesiredDirection = new Vector2(leftStick.X, -leftStick.Y);
 
-        /*var rotationMet = ChassisRotation > DesiredChassisRotation - Properties.MaximalTurn 
-            && ChassisRotation < DesiredChassisRotation + Properties.MaximalTurn;*/
-
         if (leftStick.Length() > 0) {
-            playerControl_isBindPressed = true;
+            playerControl = true;
         }
 
         if (dPad.Down == ButtonState.Pressed) {
-            playerControl_isBindPressed = true;
+            playerControl = true;
             DesiredDirection.Y = 1;
         }
         if (dPad.Up == ButtonState.Pressed) {
-            playerControl_isBindPressed = true;
+            playerControl = true;
             DesiredDirection.Y = -1;
         }
         if (dPad.Left == ButtonState.Pressed) {
-            playerControl_isBindPressed = true;
+            playerControl = true;
             DesiredDirection.X = -1;
         }
         if (dPad.Right == ButtonState.Pressed) {
-            playerControl_isBindPressed = true;
+            playerControl = true;
             DesiredDirection.X = 1;
         }
 
-        if (GamePadShoot.JustPressed)
+        if (GamePadShoot.JustPressed(GamepadIndex))
             Shoot(false);
-        if (PlaceMine.JustPressed)
+        if (GamePadPlaceMine.JustPressed(GamepadIndex))
             LayMine();
+
+        if (rightStick.Length() > 0) {
+            var unprojectedPosition = MatrixUtils.ConvertWorldToScreen(
+                new Vector3(0, 11, 0), DrawParams.World, DrawParams.View, DrawParams.Projection);
+
+            var newMousePos = new Vector2(
+                (int)(unprojectedPosition.X + rightStick.X * 400),
+                (int)(unprojectedPosition.Y - rightStick.Y * 400));
+
+            TankGame.PlayerMice[padIndex + 1].Position = newMousePos;
+        }
     }
     void ControlHandle_Keybinding() {
+        if (PlayerId != PlayerControlledByKeyboard)
+            return;
+
         if (ShowShotPath.JustPressed)
             _drawShotPath = !_drawShotPath;
         if (PlaceMine.JustPressed)
@@ -414,19 +472,19 @@ public class PlayerTank : Tank {
         ChassisRotation %= MathHelper.Tau;
 
         if (MoveDown.IsPressed) {
-            playerControl_isBindPressed = true;
+            playerControl = true;
             DesiredDirection.Y = 1;
         }
         if (MoveUp.IsPressed) {
-            playerControl_isBindPressed = true;
+            playerControl = true;
             DesiredDirection.Y = -1;
         }
         if (MoveLeft.IsPressed) {
-            playerControl_isBindPressed = true;
+            playerControl = true;
             DesiredDirection.X = -1;
         }
         if (MoveRight.IsPressed) {
-            playerControl_isBindPressed = true;
+            playerControl = true;
             DesiredDirection.X = 1;
         }
 
@@ -482,7 +540,7 @@ public class PlayerTank : Tank {
         }
         TankGame.SaveFile.Deaths++;
     }
-    private void DrawShootPath() {
+    void DrawShootPath() {
         const int MAX_PATH_UNITS = 10000;
 
         var whitePixel = TextureGlobals.Pixels[Color.White];

@@ -7,7 +7,20 @@ using TanksRebirth.Internals.Common.Utilities;
 
 namespace TanksRebirth.Internals.Common;
 
+#pragma warning disable IDE0079 // lol
+#pragma warning disable SYSLIB1054
+public enum MouseInput {
+    None,
+    Left,
+    Right,
+    Middle,
+    Mouse3,
+    Mouse4
+}
+#pragma warning disable IDE0079 // lol
+#pragma warning disable SYSLIB1054
 public static class InputUtils {
+    #region Raw Input
     [StructLayout(LayoutKind.Sequential)]
     struct RAW_INPUT {
         public uint type;
@@ -24,11 +37,11 @@ public static class InputUtils {
         public ushort w_scan;
         public uint dw_flags;
         public uint time;
-        public IntPtr dw_info;
+        public nint dw_info;
     }
 
     [DllImport("user32.dll")]
-    static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint dwData, IntPtr dwExtraInfo);
+    static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint dwData, nint dwExtraInfo);
 
     const uint MOUSE_RIGHTDOWN = 0x0008;
     const uint MOUSE_RIGHTUP = 0x0010;
@@ -44,16 +57,16 @@ public static class InputUtils {
     public static void MouseForce(bool down = true, bool right = false) {
         if (right) {
             if (down)
-                mouse_event(MOUSE_RIGHTDOWN, 0, 0, 0, IntPtr.Zero);
+                mouse_event(MOUSE_RIGHTDOWN, 0, 0, 0, nint.Zero);
             else
-                mouse_event(MOUSE_RIGHTUP, 0, 0, 0, IntPtr.Zero);
+                mouse_event(MOUSE_RIGHTUP, 0, 0, 0, nint.Zero);
             return;
         }
 
         if (down)
-            mouse_event(MOUSE_LEFTDOWN, 0, 0, 0, IntPtr.Zero);
+            mouse_event(MOUSE_LEFTDOWN, 0, 0, 0, nint.Zero);
         else
-            mouse_event(MOUSE_LEFTUP, 0, 0, 0, IntPtr.Zero);
+            mouse_event(MOUSE_LEFTUP, 0, 0, 0, nint.Zero);
     }
     public static void KeyForce(Keys key, bool down = true) {
         var inp = new RAW_INPUT[1];
@@ -62,71 +75,126 @@ public static class InputUtils {
         inp[0].u.ki = new KB_INPUT {
             w_vk = (ushort)key,
             dw_flags = down ? 0 : KEYEVENT_KEYUP,
-            dw_info = IntPtr.Zero
+            dw_info = nint.Zero
         };
 
         SendInput(1, inp, Marshal.SizeOf(typeof(RAW_INPUT)));
     }
+    #endregion
 
-    public static KeyboardState CurrentKeySnapshot { get; internal set; }
-    public static KeyboardState OldKeySnapshot { get; internal set; }
-    public static MouseState CurrentMouseSnapshot { get; internal set; }
-    public static MouseState OldMouseSnapshot { get; internal set; }
-    public static GamePadState CurrentGamePadSnapshot { get; internal set; }
-    public static GamePadState OldGamePadSnapshot { get; internal set; }
+    static readonly Buttons[] _buttonBuffer = new Buttons[11];
+    static readonly MouseInput[] _mouseBuffer = new MouseInput[5];
 
-    public static void PollEvents(PlayerIndex pIndex = PlayerIndex.One) {
-        OldKeySnapshot = CurrentKeySnapshot;
-        OldMouseSnapshot = CurrentMouseSnapshot;
-        OldGamePadSnapshot = CurrentGamePadSnapshot;
-        CurrentKeySnapshot = Keyboard.GetState();
-        CurrentMouseSnapshot = Mouse.GetState();
-        CurrentGamePadSnapshot = GamePad.GetState(pIndex);
+    public struct GamePadSnapshot {
+        /// <summary>The previous frame of input.</summary>
+        public GamePadState Previous;
+        /// <summary>The current frame of input.</summary>
+        public GamePadState Current;
+        /// <summary>The capabilties of this controller.</summary>
+        public GamePadCapabilities Capabilities;
     }
-    public static bool KeyJustPressed(Keys key) {
-        bool pressed = CurrentKeySnapshot.IsKeyDown(key) && OldKeySnapshot.IsKeyUp(key);
-        return pressed;
+
+    public struct KBMSnapshot {
+        public KeyboardState CurrentKey;
+        public KeyboardState PreviousKey;
+
+        public MouseState CurrentMouse;
+        public MouseState PreviousMouse;
     }
-    public static bool AreKeysDown(params Keys[] keys)
-    {
-        return keys.All(key => CurrentKeySnapshot.IsKeyDown(key));
+
+    public delegate void OnGamePadConnect(int player);
+    public delegate void OnGamePadDisconnect(int player);
+    /// <summary>0 = player 1, 3 = player 4</summary>
+    public static event OnGamePadConnect? OnGamePadConnected;
+    /// <summary>0 = player 1, 3 = player 4</summary>
+    public static event OnGamePadDisconnect? OnGamePadDisconnected;
+
+    public const int MAX_GAMEPADS = 4;
+    public static GamePadSnapshot[] GamePads { get; } = new GamePadSnapshot[MAX_GAMEPADS];
+    public static KBMSnapshot KeyboardMouse = new();
+
+    readonly static bool[] _previousConnected = new bool[MAX_GAMEPADS];
+
+    // they *must* have a keyboard + mouse plugged in, right?
+    public static int NumConnectedInputs { get; private set; } = 1;
+    public static void PollKBM() {
+        KeyboardMouse.PreviousKey = KeyboardMouse.CurrentKey;
+        KeyboardMouse.PreviousMouse = KeyboardMouse.CurrentMouse;
+
+        KeyboardMouse.CurrentKey = Keyboard.GetState();
+        KeyboardMouse.CurrentMouse = Mouse.GetState();
     }
-    public static bool AreKeysJustPressed(params Keys[] keys)
-    {
-        bool allAreDown = keys.All(key => CurrentKeySnapshot.IsKeyDown(key));
-        bool notAllUp = keys.Any(key => OldKeySnapshot.IsKeyUp(key));
-        
+    public static void PollGamepad() {
+        for (int i = 0; i < MAX_GAMEPADS; i++) {
+            GamePads[i].Previous = GamePads[i].Current;
+
+            GamePads[i].Capabilities = GamePad.GetCapabilities(i);
+
+            GamePads[i].Current = GamePad.GetState(i);
+        }
+    }
+
+    /// <summary>
+    /// Monitors controller ports and fires events when controllers are plugged or unplugged.
+    /// </summary>
+    public static void Watch() {
+        for (int i = 0; i < MAX_GAMEPADS; i++) {
+            var index = i;
+            var nowConnected = GamePads[i].Current.IsConnected;
+            bool wasConnected = _previousConnected[i];
+
+            if (nowConnected && !wasConnected) {
+                OnGamePadConnected?.Invoke(index);
+                NumConnectedInputs++;
+            }
+            else if (!nowConnected && wasConnected) {
+                OnGamePadDisconnected?.Invoke(index);
+                NumConnectedInputs--;
+            }
+
+            _previousConnected[i] = nowConnected;
+        }
+    }
+    public static bool KeyJustPressed(Keys key) => KeyboardMouse.CurrentKey.IsKeyDown(key) && KeyboardMouse.PreviousKey.IsKeyUp(key);
+    public static bool AreKeysDown(params Keys[] keys) => keys.All(key => KeyboardMouse.CurrentKey.IsKeyDown(key));
+    public static bool AreKeysJustPressed(params Keys[] keys) {
+        bool allAreDown = keys.All(key => KeyboardMouse.CurrentKey.IsKeyDown(key));
+        bool notAllUp = keys.Any(key => KeyboardMouse.PreviousKey.IsKeyUp(key));
+
         return allAreDown && notAllUp;
     }
-    public static bool MouseLeft => CurrentMouseSnapshot.LeftButton == ButtonState.Pressed;
-    public static bool MouseMiddle => CurrentMouseSnapshot.MiddleButton == ButtonState.Pressed;
-    public static bool MouseRight => CurrentMouseSnapshot.RightButton == ButtonState.Pressed;
-    public static bool OldMouseLeft => OldMouseSnapshot.LeftButton == ButtonState.Pressed;
-    public static bool OldMouseMiddle => OldMouseSnapshot.MiddleButton == ButtonState.Pressed;
-    public static bool OldMouseRight => OldMouseSnapshot.RightButton == ButtonState.Pressed;
+    public static bool MouseLeft => KeyboardMouse.CurrentMouse.LeftButton == ButtonState.Pressed;
+    public static bool MouseMiddle => KeyboardMouse.CurrentMouse.MiddleButton == ButtonState.Pressed;
+    public static bool MouseRight => KeyboardMouse.CurrentMouse.RightButton == ButtonState.Pressed;
+    public static bool Mouse3 => KeyboardMouse.CurrentMouse.XButton1 == ButtonState.Pressed;
+    public static bool Mouse4 => KeyboardMouse.CurrentMouse.XButton2 == ButtonState.Pressed;
+
+    public static bool OldMouseLeft => KeyboardMouse.PreviousMouse.LeftButton == ButtonState.Pressed;
+    public static bool OldMouseMiddle => KeyboardMouse.PreviousMouse.MiddleButton == ButtonState.Pressed;
+    public static bool OldMouseRight => KeyboardMouse.PreviousMouse.LeftButton == ButtonState.Pressed;
+    public static bool OldMouse3 => KeyboardMouse.PreviousMouse.XButton1 == ButtonState.Pressed;
+    public static bool OldMouse4 => KeyboardMouse.PreviousMouse.XButton2 == ButtonState.Pressed;
     public static bool CanDetectClick(bool rightClick = false) {
-        bool clicked = !rightClick ? (CurrentMouseSnapshot.LeftButton == ButtonState.Pressed && OldMouseSnapshot.LeftButton == ButtonState.Released)
-            : (CurrentMouseSnapshot.RightButton == ButtonState.Pressed && OldMouseSnapshot.RightButton == ButtonState.Released);
+        bool clicked = !rightClick ? KeyboardMouse.CurrentMouse.LeftButton == ButtonState.Pressed && KeyboardMouse.PreviousMouse.LeftButton == ButtonState.Released
+            : KeyboardMouse.CurrentMouse.RightButton == ButtonState.Pressed && KeyboardMouse.PreviousMouse.RightButton == ButtonState.Released;
         return WindowUtils.WindowActive && clicked;
     }
     public static bool CanDetectClickRelease(bool rightClick = false) {
-        bool released = !rightClick ? (CurrentMouseSnapshot.LeftButton != ButtonState.Pressed && OldMouseSnapshot.LeftButton != ButtonState.Released)
-            : (CurrentMouseSnapshot.RightButton != ButtonState.Pressed && OldMouseSnapshot.RightButton != ButtonState.Released);
+        bool released = !rightClick ? KeyboardMouse.CurrentMouse.LeftButton != ButtonState.Pressed && KeyboardMouse.PreviousMouse.LeftButton != ButtonState.Released
+            : KeyboardMouse.CurrentMouse.RightButton != ButtonState.Pressed && KeyboardMouse.PreviousMouse.RightButton != ButtonState.Released;
         return WindowUtils.WindowActive && released;
     }
-    public static Keys FirstPressedKey
-    {
-        get
-        {
-            if (CurrentKeySnapshot.GetPressedKeys().Length > 0)
-                return CurrentKeySnapshot.GetPressedKeys()[^1];
+    public static Keys FirstPressedKey {
+        get {
+            if (KeyboardMouse.CurrentKey.GetPressedKeys().Length > 0)
+                return KeyboardMouse.CurrentKey.GetPressedKeys()[^1];
             return Keys.None;
         }
     }
     /// <summary>
     /// Returns true if the user has used the gamepad this frame (i.e: pressed buttons, moved stick, pulled trigger)
     /// </summary>
-    public static bool IsGamepadBeingUsed(PlayerIndex player = PlayerIndex.One) {
+    public static bool IsGamepadBeingUsed(int player) {
         var state = GamePad.GetState(player);
 
         if (!state.IsConnected)
@@ -158,68 +226,74 @@ public static class InputUtils {
                dpad.Left == ButtonState.Pressed ||
                dpad.Right == ButtonState.Pressed;
     }
-    public static Buttons[] GetPressedButtons(GamePadButtons buttons, bool excludeSystemButtons = false)
-    {
-        var pressedButtons = new Buttons[10];
+
+    public static ReadOnlySpan<Buttons> GetPressedButtons(GamePadButtons buttons, bool excludeSystemButtons = false) {
+        int count = 0;
+
         if (buttons.A == ButtonState.Pressed)
-        {
-            pressedButtons.Append(Buttons.A);
-        }
+            _buttonBuffer[count++] = Buttons.A;
         if (buttons.B == ButtonState.Pressed)
-        {
-            pressedButtons.Append(Buttons.B);
-        }
-        if (buttons.Back == ButtonState.Pressed)
-        {
-            pressedButtons.Append(Buttons.Back);
-        }
+            _buttonBuffer[count++] = Buttons.B;
+        if (buttons.Back == ButtonState.Pressed && !excludeSystemButtons)
+            _buttonBuffer[count++] = Buttons.Back;
         if (buttons.BigButton == ButtonState.Pressed && !excludeSystemButtons)
-        {
-            pressedButtons.Append(Buttons.BigButton);
-        }
+            _buttonBuffer[count++] = Buttons.BigButton;
         if (buttons.LeftShoulder == ButtonState.Pressed)
-        {
-            pressedButtons.Append(Buttons.LeftShoulder);
-        }
+            _buttonBuffer[count++] = Buttons.LeftShoulder;
         if (buttons.LeftStick == ButtonState.Pressed)
-        {
-            pressedButtons.Append(Buttons.LeftStick);
-        }
+            _buttonBuffer[count++] = Buttons.LeftStick;
         if (buttons.RightShoulder == ButtonState.Pressed)
-        {
-            pressedButtons.Append(Buttons.RightShoulder);
-        }
+            _buttonBuffer[count++] = Buttons.RightShoulder;
         if (buttons.RightStick == ButtonState.Pressed)
-        {
-            pressedButtons.Append(Buttons.RightStick);
-        }
+            _buttonBuffer[count++] = Buttons.RightStick;
         if (buttons.Start == ButtonState.Pressed && !excludeSystemButtons)
-        {
-            pressedButtons.Append(Buttons.Start);
-        }
+            _buttonBuffer[count++] = Buttons.Start;
         if (buttons.X == ButtonState.Pressed)
-        {
-            pressedButtons.Append(Buttons.X);
-        }
+            _buttonBuffer[count++] = Buttons.X;
         if (buttons.Y == ButtonState.Pressed)
-        {
-            pressedButtons.Append(Buttons.Y);
-        }
-        return pressedButtons;
-    }
-    public static bool ButtonJustPressed(Buttons button)
-    {
-        bool pressed = CurrentGamePadSnapshot.IsButtonDown(button) && OldGamePadSnapshot.IsButtonUp(button);
-        return pressed;
-    }
-    public static int DeltaScrollWheel => CurrentMouseSnapshot.ScrollWheelValue / 120;
-    public static int OldDeltaScrollWheel => OldMouseSnapshot.ScrollWheelValue / 120;
+            _buttonBuffer[count++] = Buttons.Y;
 
+        return _buttonBuffer.AsSpan(0, count);
+    }
+    public static bool CheckMouseInputPressed(MouseInput mouseInput) {
+        return mouseInput switch {
+            MouseInput.Left => MouseLeft,
+            MouseInput.Right => MouseRight,
+            MouseInput.Middle => MouseMiddle,
+            MouseInput.Mouse3 => Mouse3,
+            MouseInput.Mouse4 => Mouse4,
+            _ => false
+        };
+    }
+    public static bool CheckMouseFreshInput(MouseInput mouseInput) {
+        return mouseInput switch {
+            MouseInput.Left => !MouseLeft && KeyboardMouse.PreviousMouse.LeftButton == ButtonState.Pressed,
+            MouseInput.Right => !MouseRight && KeyboardMouse.PreviousMouse.RightButton == ButtonState.Pressed,
+            MouseInput.Middle => !MouseMiddle && KeyboardMouse.PreviousMouse.MiddleButton == ButtonState.Pressed,
+            MouseInput.Mouse3 => !Mouse3 && KeyboardMouse.PreviousMouse.XButton1 == ButtonState.Pressed,
+            MouseInput.Mouse4 => !Mouse4 && KeyboardMouse.PreviousMouse.XButton2 == ButtonState.Pressed,
+            _ => false
+        };
+    }
+
+    public static ReadOnlySpan<MouseInput> GetPressedMouseButtons() {
+        int count = 0;
+
+        if (MouseLeft) _mouseBuffer[count++] = MouseInput.Left;
+        if (MouseRight) _mouseBuffer[count++] = MouseInput.Right;
+        if (MouseMiddle) _mouseBuffer[count++] = MouseInput.Middle;
+        if (Mouse3) _mouseBuffer[count++] = MouseInput.Mouse3;
+        if (Mouse4) _mouseBuffer[count++] = MouseInput.Mouse4;
+
+        return _mouseBuffer.AsSpan(0, count);
+    }
+    public static bool ButtonJustPressed(int player, Buttons button)
+        => GamePads[player].Current.IsButtonDown(button) && GamePads[player].Previous.IsButtonUp(button);
+    public static int DeltaScrollWheel => KeyboardMouse.CurrentMouse.ScrollWheelValue / 120;
+    public static int OldDeltaScrollWheel => KeyboardMouse.CurrentMouse.ScrollWheelValue / 120;
     public static int GetScrollWheelChange() => DeltaScrollWheel == OldDeltaScrollWheel ? 0 : DeltaScrollWheel - OldDeltaScrollWheel;
-
     public static float ApplyDeadzone(float value, float minDeadzone, float maxDeadzone, float minVal, float maxVal) {
         float mid = (minVal + maxVal) * 0.5f;
-        // float range = (maxVal - minVal) * 0.5f;
 
         float offset = value - mid;
         float magnitude = MathF.Abs(offset);
@@ -232,7 +306,7 @@ public static class InputUtils {
             return sign;
 
 
-        // Rescale between MinDeadzone and MaxDeadzone to [0, 1]
+        // rescale between MinDeadzone and MaxDeadzone to [0, 1]
         float normalized = (magnitude - minDeadzone) / (maxDeadzone - minDeadzone);
         return MathHelper.Clamp(normalized * sign, minVal, maxVal);
     }

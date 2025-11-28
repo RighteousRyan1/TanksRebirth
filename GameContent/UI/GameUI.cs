@@ -448,7 +448,7 @@ public static class GameUI
         }    
         if (!_initialized)
             return;
-        _newScroll = InputUtils.CurrentMouseSnapshot.ScrollWheelValue;
+        _newScroll = InputUtils.KeyboardMouse.CurrentMouse.ScrollWheelValue;
 
         if (_newScroll != _oldScroll)
         {

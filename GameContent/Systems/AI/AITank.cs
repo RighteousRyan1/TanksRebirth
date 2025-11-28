@@ -329,15 +329,16 @@ public partial class AITank : Tank {
         if (context.Source is PlayerTank p) {
             var myId = NetPlay.GetMyClientId();
 
-            bool isMe = p.PlayerId == myId;
-            if (isMe)
-                PlayerTank.KillCounts[myId]++;
-        }
-        // hardcoded for now until local multiplayer exists
-        else if (!Client.IsConnected()) {
-            PlayerTank.KillCounts[0]++;
+            if (Client.IsConnected()) {
+                bool isMe = p.PlayerId == myId;
+                if (isMe)
+                    PlayerTank.KillCounts[myId]++;
+            }
+            else {
+                PlayerTank.KillCounts[p.PlayerId]++;
 
-            TankGame.SaveFile.TotalKills++;
+                TankGame.SaveFile.TotalKills++;
+            }
         }
 
         if (TankGame.SaveFile.TankKills.TryGetValue(AiTankType, out uint value))

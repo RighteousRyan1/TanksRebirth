@@ -3,17 +3,15 @@ using System;
 using System.Collections.Generic;
 
 namespace TanksRebirth.Internals.Common.Framework.Input;
-
 public class Keybind : IInputBind<Keys> {
     public static List<Keybind> AllKeybinds { get; internal set; } = [];
-
     public string Name { get; set; } = "Not Named";
     public bool JustPressed => InputUtils.KeyJustPressed(Assigned) && !PendReassign;
-    public bool IsPressed => InputUtils.CurrentKeySnapshot.IsKeyDown(Assigned) && !PendReassign;
+    public bool IsPressed => InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(Assigned) && !PendReassign;
     public bool PendReassign { get; set; } = false;
     public Keys Assigned { get; set; } = Keys.None;
-    public Action OnPress { get; set; }
-    public Action<Keys> OnReassign { get; set; }
+    public Action? OnPress { get; set; }
+    public Action<Keys>? OnReassign { get; set; }
     public Keybind(string name, Keys defaultKey = Keys.None) {
         Name = name;
         Assigned = defaultKey;
@@ -23,9 +21,10 @@ public class Keybind : IInputBind<Keys> {
         Assigned = newKey;
     }
 
-    private void PollReassign() {
-        if (InputUtils.CurrentKeySnapshot.GetPressedKeys().Length > 0) {
-            var firstKey = InputUtils.CurrentKeySnapshot.GetPressedKeys()[0];
+    void PollReassign() {
+        var pressedKeys = InputUtils.KeyboardMouse.CurrentKey.GetPressedKeys();
+        if (pressedKeys.Length > 0) {
+            var firstKey = pressedKeys[0];
             if (InputUtils.KeyJustPressed(firstKey) && firstKey == Assigned) {
                 OnReassign?.Invoke(Assigned);
                 PendReassign = false;
@@ -42,10 +41,11 @@ public class Keybind : IInputBind<Keys> {
             PendReassign = false;
             return;
         }
+        else {
+
+        }
     }
-
     public void Fire() => OnPress?.Invoke();
-
     internal void Update() {
         if (PendReassign)
             PollReassign();
@@ -55,7 +55,5 @@ public class Keybind : IInputBind<Keys> {
         }
     }
 
-    public override string ToString() {
-        return Name + " = {" + $"Key: {Assigned.KeyAsString()} | Pressed: {IsPressed} | ReassignPending: {PendReassign} " + "}";
-    }
+    public override string ToString() => Name + " = {" + $"Key: {Assigned.KeyAsString()} | Pressed: {IsPressed} | ReassignPending: {PendReassign} " + "}";
 }

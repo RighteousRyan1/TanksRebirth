@@ -21,7 +21,7 @@ public class RebirthMouse {
     static float _scaleOscillation;
     public Trail? CursorTrail;
 
-    public Func<Vector2>? Position;
+    public Vector2 Position;
     public float Rotation;
 
     public Texture2D DotTexture;
@@ -62,7 +62,7 @@ public class RebirthMouse {
 
     // drawn within MouseShader
     public void Draw() {
-        if (!ShouldRender || Position is null)
+        if (!ShouldRender)
             return;
 
         _mouseShader.Parameters["oGlobalTime"].SetValue((float)TankGame.LastGameTime.TotalGameTime.TotalSeconds);
@@ -71,8 +71,6 @@ public class RebirthMouse {
 
         _scaleOscillation = MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalSeconds);
         var scaleReal = 1f + _scaleOscillation / 12;
-
-        var position = Position.Invoke();
 
         TankGame.SpriteRenderer.Begin(blendState: BlendState.AlphaBlend, effect: _mouseShader, rasterizerState: RenderGlobals.DefaultRasterizer);
 
@@ -84,10 +82,10 @@ public class RebirthMouse {
                     new Vector3(0, 11, 0), me.DrawParams.World, CameraGlobals.GameView, CameraGlobals.GameProjection);
 
                 // any scale doesnt matter?
-                if (GameUtils.Distance_WiiTanksUnits(tankPos, position) >= PATH_TRACE_MIN_DIST.ToResolutionX()) {
+                if (GameUtils.Distance_WiiTanksUnits(tankPos, Position) >= PATH_TRACE_MIN_DIST.ToResolutionX()) {
                     // GameHandler.ClientLog.Write("One Loop:", LogType.Info);
                     for (int i = 1; i < DotCount; i++) {
-                        var curDrawPos = Vector2.Lerp(tankPos, position, (float)i / DotCount);
+                        var curDrawPos = Vector2.Lerp(tankPos, Position, (float)i / DotCount);
 
                         TankGame.SpriteRenderer.Draw(DotTexture, curDrawPos, null, Color.White, 0f, Anchor.Center.GetAnchor(DotTexture.Size()), new Vector2(0.35f).ToResolution(), default, default);
                     }
@@ -98,7 +96,7 @@ public class RebirthMouse {
         if (HasTrail) {
             CursorTrail!.StartWidth = 10f.ToResolutionF() + _scaleOscillation;
 
-            CursorTrail?.Update(position);
+            CursorTrail?.Update(Position);
             CursorTrail?.Draw();
             /*if (!float.IsInfinity(RuntimeData.DeltaTime)) {
                 if (RuntimeData.RunTime % 60 <= RuntimeData.DeltaTime) {
@@ -112,7 +110,7 @@ public class RebirthMouse {
             }*/
         }
 
-        TankGame.SpriteRenderer.Draw(MouseTexture, position, null, Color.White, Rotation, MouseTexture.Size() / 2, scaleReal.ToResolution(), default, default);
+        TankGame.SpriteRenderer.Draw(MouseTexture, Position, null, Color.White, Rotation, MouseTexture.Size() / 2, scaleReal.ToResolution(), default, default);
 
         TankGame.SpriteRenderer.End();
     }

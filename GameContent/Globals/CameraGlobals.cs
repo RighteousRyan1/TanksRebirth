@@ -186,9 +186,9 @@ public static class CameraGlobals {
             var keysprint = LevelEditorUI.IsActive || !isPlayerActive ? Keys.LeftShift : Keys.RightShift;
             var keyslow = LevelEditorUI.IsActive || !isPlayerActive ? Keys.LeftControl : Keys.RightControl;
 
-            if (InputUtils.CurrentKeySnapshot.IsKeyDown(keysprint))
+            if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(keysprint))
                 realMoveSpeed *= 2;
-            if (InputUtils.CurrentKeySnapshot.IsKeyDown(keyslow))
+            if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(keyslow))
                 realMoveSpeed /= 4;
 
             var keyf = LevelEditorUI.IsActive || !isPlayerActive ? Keys.W : Keys.Up;
@@ -205,20 +205,20 @@ public static class CameraGlobals {
                      MathHelper.Clamp(RebirthFreecam.Rotation.Y, -MathHelper.PiOver2, MathHelper.PiOver2),
                      RebirthFreecam.Rotation.Z);
             }
-            if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Add))
+            if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(Keys.Add))
                 RebirthFreecam.FieldOfView += 0.5f * RuntimeData.DeltaTime;
-            if (InputUtils.CurrentKeySnapshot.IsKeyDown(Keys.Subtract))
+            if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(Keys.Subtract))
                 RebirthFreecam.FieldOfView -= 0.5f * RuntimeData.DeltaTime;
             if (InputUtils.MouseMiddle)
                 RebirthFreecam.FieldOfView = 90;
 
-            if (InputUtils.CurrentKeySnapshot.IsKeyDown(keyf))
+            if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(keyf))
                 RebirthFreecam.Move(RebirthFreecam.World.Forward * realMoveSpeed);
-            if (InputUtils.CurrentKeySnapshot.IsKeyDown(keyb))
+            if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(keyb))
                 RebirthFreecam.Move(RebirthFreecam.World.Backward * realMoveSpeed);
-            if (InputUtils.CurrentKeySnapshot.IsKeyDown(keyl))
+            if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(keyl))
                 RebirthFreecam.Move(RebirthFreecam.World.Left * realMoveSpeed);
-            if (InputUtils.CurrentKeySnapshot.IsKeyDown(keyr))
+            if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(keyr))
                 RebirthFreecam.Move(RebirthFreecam.World.Right * realMoveSpeed);
 
             GameView = RebirthFreecam.View;
