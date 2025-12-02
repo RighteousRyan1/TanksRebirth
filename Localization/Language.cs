@@ -202,6 +202,9 @@ public class Language {
     public string Campaign { get; set; }
     public string Mods { get; set; }
     public string ReloadMods { get; set; }
+
+    public string KeysCount { get; set; }
+    public string KeysWarning { get; set; }
     #endregion
 
 #pragma warning enable

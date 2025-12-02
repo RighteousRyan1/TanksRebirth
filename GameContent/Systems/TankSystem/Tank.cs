@@ -19,6 +19,7 @@ using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.Internals.Common.Framework.Collisions;
 using TanksRebirth.Graphics.Drawing;
+using TanksRebirth.GameContent.Systems.ParticleSystem;
 
 namespace TanksRebirth.GameContent.Systems.TankSystem;
 
@@ -138,6 +139,8 @@ public abstract class Tank {
 
     #endregion
 
+    public bool CamTooClose;
+
     int _oldShellLimit;
 
     public Shell? LastShotShell;
@@ -152,7 +155,7 @@ public abstract class Tank {
 
     /// <summary>This <see cref="Tank"/>'s swag apparel as a <see cref="List{T}"/> of <see cref="IProp"/>s.</summary>
     public List<IProp> Props = [];
-
+    readonly List<Particle> _propParticles = [];
     #region Fields / Properties
     float _oldRotation;
     public Body Physics { get; set; } = new();
@@ -283,13 +286,11 @@ public abstract class Tank {
         boneTransforms = new Matrix[DrawParamsTank.Model.Bones.Count];
     }
     public void AddProp2D(Prop2D prop, Func<bool>? destroyOn = null) {
-        if (Props.Contains(prop))
-            return;
+        if (Props.Contains(prop)) return;
         Props.Add(prop);
         var particle = GameHandler.Particles.MakeParticle(Position3D + prop.RelativePosition, prop.Texture);
 
         particle.Scale = prop.Scale;
-        particle.Tag = $"cosmetic_2d_{GetHashCode()}"; // store the hash code of this tank, so when we destroy the cosmetic's particle, it destroys all belonging to this tank!
         particle.HasAdditiveBlending = false;
         // += vs =  ?
         // TODO: this prolly is the culprit of 2d cosmetics not doin nun
@@ -305,6 +306,8 @@ public abstract class Tank {
             if (destroyOn.Invoke())
                 particle.Destroy();
         };
+
+        _propParticles.Add(particle);
     }
     void OnMissionStart() {
         DoInvisibilityGFXandSFX();
@@ -373,7 +376,7 @@ public abstract class Tank {
 
             lpSmoke.Pitch = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
 
-            lpSmoke.FaceTowardsMe = CameraGlobals.IsUsingFirstPresonCamera;
+            lpSmoke.FaceTowardsMe = CameraGlobals.IsUsingFirstPersonCamera;
 
             lpSmoke.Scale = new(0.75f);
 
@@ -542,9 +545,15 @@ public abstract class Tank {
             }
         }
 
+        var camDist = Vector3.Distance(CameraGlobals.RebirthFreecam.Position, Position3D + new Vector3(0, CameraGlobals.POV_CAM_OFFSET_Y, 0));
+        CamTooClose = CameraGlobals.IsUsingFirstPersonCamera && camDist < 10;
+
         // fix 2d peeopled
-        foreach (var cosmetic in Props)
-            cosmetic?.UniqueBehavior?.Invoke(cosmetic, this);
+        if (!CamTooClose) {
+            foreach (var cosmetic in Props) {
+                cosmetic?.UniqueBehavior?.Invoke(cosmetic, this);
+            }
+        }
 
         _oldRotation = ChassisRotation;
         TimeSinceLastAction += RuntimeData.DeltaTime;
@@ -678,7 +687,7 @@ public abstract class Tank {
 
             rock.Scale = new(0.55f);
 
-            rock.FaceTowardsMe = CameraGlobals.IsUsingFirstPresonCamera;
+            rock.FaceTowardsMe = CameraGlobals.IsUsingFirstPersonCamera;
 
             rock.Color = Properties.DestructionColor;
 
@@ -801,7 +810,7 @@ public abstract class Tank {
         var hit = GameHandler.Particles.MakeParticle(TurretPosition3D,
             GameResources.GetGameResource<Texture2D>("Assets/textures/misc/bot_hit"));
 
-        var billboard = CameraGlobals.IsUsingFirstPresonCamera;
+        var billboard = CameraGlobals.IsUsingFirstPersonCamera;
 
         hit.Pitch = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
         hit.Scale = new(0.5f);
@@ -896,57 +905,7 @@ public abstract class Tank {
         DrawParams.View = CameraGlobals.GameView;
 
         if (!CampaignGlobals.InMission || !Properties.Invisible && CampaignGlobals.InMission) {
-            foreach (var cosmetic in Props) {
-                //if (GameProperties.InMission && Properties.Invisible)
-                //break;
-                if (cosmetic is not Prop3D cos3d)
-                    continue;
-
-                for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
-                    foreach (var mesh in cos3d.PropModel.Meshes) {
-                        if (cos3d.IgnoreMeshesByName.Any(meshName => meshName == mesh.Name))
-                            continue;
-
-                        foreach (BasicEffect effect in mesh.Effects) {
-                            float rotY = TurretRotation;
-                            if (cosmetic.LockOptions == PropLockOptions.ToTurret)
-                                rotY = cosmetic.Rotation.Y + TurretRotation;
-                            else if (cosmetic.LockOptions == PropLockOptions.ToTank)
-                                rotY = cosmetic.Rotation.Y + ChassisRotation;
-                            else if (cosmetic.LockOptions == PropLockOptions.ToTurretCentered)
-                                cosmetic.RelativePosition = cosmetic.RelativePosition.RotateXZ(-rotY);
-
-                            effect.World = i == 0 ? Matrix.CreateRotationX(cosmetic.Rotation.X) * Matrix.CreateRotationY(rotY) * Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) * Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition)
-                                : Matrix.CreateRotationX(cosmetic.Rotation.X) * Matrix.CreateRotationY(cosmetic.Rotation.Y) * Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) * Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition) * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
-                            effect.View = DrawParams.View;
-                            effect.Projection = DrawParams.Projection;
-
-                            // hover highlight
-                            if (IsHoveredByMouse)
-                                effect.EmissiveColor = Color.White.ToVector3();
-                            else
-                                effect.EmissiveColor = Color.Black.ToVector3();
-
-                            if (ShowTeamVisuals) {
-                                if (Team != TeamID.NoTeam) {
-                                    var ex = new Color[1024];
-
-                                    Array.Fill(ex, TeamID.TeamColors[Team]);
-
-                                    effect.Texture?.SetData(0, new Rectangle(0, 0, 32, 9), ex, 0, 288);
-                                    effect.Texture?.SetData(0, new Rectangle(0, 23, 32, 9), ex, 0, 288);
-                                }
-                            }
-
-                            effect.TextureEnabled = true;
-                            effect.Texture = i == 0 ? cos3d.ModelTexture : GameResources.GetGameResource<Texture2D>("Assets/textures/ingame/block_shadow_h");
-                            effect.SetDefaultGameLighting_IngameEntities(DrawParams.LightPower, DrawParams.AmbientPower, DrawParams.UsePhong, DrawParams.LightDirection);
-                        }
-
-                        mesh.Draw();
-                    }
-                }
-            }
+            DrawProps();
         }
 
         if (!DebugManager.DebuggingEnabled) return;
@@ -971,16 +930,74 @@ public abstract class Tank {
                 Color.Aqua, Color.Black, new Vector2(0.5f).ToResolution(), 0f, Anchor.TopCenter, 0.6f);
         }
     }
+    void DrawProps() {
+        if (CamTooClose) {
+            // prevent particle drawing...?
+            foreach (var particle in _propParticles) {
+                particle.Position = new Vector3(0, 100000, 0);
+            }
+            return;
+        }
+
+        foreach (var cosmetic in Props) {
+            //if (GameProperties.InMission && Properties.Invisible)
+            //break;
+            if (cosmetic is not Prop3D cos3d)
+                continue;
+
+            for (int i = 0; i < (Lighting.AccurateShadows ? 2 : 1); i++) {
+                foreach (var mesh in cos3d.PropModel.Meshes) {
+                    if (cos3d.IgnoreMeshesByName.Any(meshName => meshName == mesh.Name))
+                        continue;
+
+                    foreach (BasicEffect effect in mesh.Effects) {
+                        float rotY = TurretRotation;
+                        if (cosmetic.LockOptions == PropLockOptions.ToTurret)
+                            rotY = cosmetic.Rotation.Y + TurretRotation;
+                        else if (cosmetic.LockOptions == PropLockOptions.ToTank)
+                            rotY = cosmetic.Rotation.Y + ChassisRotation;
+                        else if (cosmetic.LockOptions == PropLockOptions.ToTurretCentered)
+                            cosmetic.RelativePosition = cosmetic.RelativePosition.RotateXZ(-rotY);
+
+                        effect.World = i == 0 ? Matrix.CreateRotationX(cosmetic.Rotation.X) * Matrix.CreateRotationY(rotY) * Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) * Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition)
+                            : Matrix.CreateRotationX(cosmetic.Rotation.X) * Matrix.CreateRotationY(cosmetic.Rotation.Y) * Matrix.CreateRotationZ(cosmetic.Rotation.Z) * Matrix.CreateScale(cosmetic.Scale) * Matrix.CreateTranslation(Position3D + cosmetic.RelativePosition) * Matrix.CreateShadow(Lighting.AccurateLightingDirection, new(Vector3.UnitY, 0)) * Matrix.CreateTranslation(0, 0.2f, 0);
+                        effect.View = DrawParams.View;
+                        effect.Projection = DrawParams.Projection;
+
+                        // hover highlight
+                        if (IsHoveredByMouse)
+                            effect.EmissiveColor = Color.White.ToVector3();
+                        else
+                            effect.EmissiveColor = Color.Black.ToVector3();
+
+                        if (ShowTeamVisuals) {
+                            if (Team != TeamID.NoTeam) {
+                                var ex = new Color[1024];
+
+                                Array.Fill(ex, TeamID.TeamColors[Team]);
+
+                                effect.Texture?.SetData(0, new Rectangle(0, 0, 32, 9), ex, 0, 288);
+                                effect.Texture?.SetData(0, new Rectangle(0, 23, 32, 9), ex, 0, 288);
+                            }
+                        }
+
+                        effect.TextureEnabled = true;
+                        effect.Texture = i == 0 ? cos3d.ModelTexture : GameResources.GetGameResource<Texture2D>("Assets/textures/ingame/block_shadow_h");
+                        effect.SetDefaultGameLighting_IngameEntities(DrawParams.LightPower, DrawParams.AmbientPower, DrawParams.UsePhong, DrawParams.LightDirection);
+                    }
+
+                    mesh.Draw();
+                }
+            }
+        }
+    }
     /// <summary>Checks if this <see cref="Tank"/> is on the same team as the passed-in <see cref="TeamID"/> and is not on <see cref="TeamID.NoTeam"/>.</summary>
     public bool IsOnSameTeamAs(int otherTeam) => Team == otherTeam && Team != TeamID.NoTeam && otherTeam != TeamID.NoTeam;
     public virtual void Remove(bool nullifyMe) {
         if (CollisionsWorld.BodyList.Contains(Physics))
             CollisionsWorld.Remove(Physics);
-        foreach (var particle in GameHandler.Particles.CurrentParticles) {
-            if (particle is not null && particle.Tag is string tag) {
-                if (tag == $"cosmetic_2d_{GetHashCode()}") // remove all particles related to this tank
-                    particle.Destroy();
-            }
+        foreach (var particle in _propParticles) {
+            particle?.Destroy();
         }
         CampaignGlobals.OnMissionStart -= OnMissionStart;
     }

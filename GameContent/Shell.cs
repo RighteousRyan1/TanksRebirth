@@ -407,7 +407,7 @@ public class Shell : IAITankDanger {
     void RenderSmokeParticle(float timer) {
 
         // TODO: make look accurate
-        if (CameraGlobals.IsUsingFirstPresonCamera) timer /= 2;
+        if (CameraGlobals.IsUsingFirstPersonCamera) timer /= 2;
         if (!(LifeTime % timer <= RuntimeData.DeltaTime)) return;
 
         Particle p;
@@ -419,7 +419,7 @@ public class Shell : IAITankDanger {
         p.Scale = new(0.3f);
 
         p.Pitch = -CameraGlobals.DEFAULT_ORTHOGRAPHIC_ANGLE;
-        p.FaceTowardsMe = CameraGlobals.IsUsingFirstPresonCamera;
+        p.FaceTowardsMe = CameraGlobals.IsUsingFirstPersonCamera;
 
         p.HasAdditiveBlending = false;
         p.Color = Properties.SmokeColor;
@@ -628,7 +628,7 @@ public class Shell : IAITankDanger {
             if (playSound) {
                 var sfx = SoundPlayer.PlaySoundInstance("Assets/sounds/bullet_destroy.ogg", SoundContext.Effect, 0.5f, pitchOverride: GameUtils.NaturalPitchShift);
 
-                if (CameraGlobals.IsUsingFirstPresonCamera)
+                if (CameraGlobals.IsUsingFirstPersonCamera)
                     sfx.MaxVolume = SoundUtils.GetVolumeFromCameraPosition(Position3D, CameraGlobals.RebirthFreecam.Position);
             }
 

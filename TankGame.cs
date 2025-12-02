@@ -183,7 +183,6 @@ public class TankGame : Game {
 
     protected override void Initialize() {
         try {
-            SaveFile.Setup();
             if (File.Exists(Path.Combine(SaveFile.Directory, SaveFile.Name)))
                 SaveFile.Deserialize();
 

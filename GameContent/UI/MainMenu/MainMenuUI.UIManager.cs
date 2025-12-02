@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework.Input;
 using Octokit;
 using System.Collections.Generic;
 using System.Linq;
+using TanksRebirth.GameContent.Cosmetics;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Speedrunning;
 using TanksRebirth.GameContent.UI.LevelEditor;
@@ -13,7 +14,6 @@ using TanksRebirth.Internals.Common.Framework.Animation;
 using TanksRebirth.Internals.Common.GameUI;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Internals.UI;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace TanksRebirth.GameContent.UI.MainMenu;
 
@@ -144,7 +144,10 @@ public static partial class MainMenuUI
         };
         CosmeticsMenuButton = new(TankGame.GameLanguage.CosmeticsMenu, font, Color.WhiteSmoke) {
             IsVisible = false,
-            Tooltip = TankGame.GameLanguage.CosmeticsFlavor
+            Tooltip = TankGame.GameLanguage.CosmeticsMenu,
+            OnLeftClick = (a) => {
+                CosmeticsUI.EnterMenu();
+            }
         };
         CosmeticsMenuButton.SetDimensions(() => new Vector2(50, 50).ToResolution(), () => new Vector2(300, 50).ToResolution());
         CosmeticsMenuButton.OnLeftClick += (elem) => {

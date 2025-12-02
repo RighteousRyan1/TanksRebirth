@@ -167,6 +167,21 @@ public static class MathUtils
         result3d.Z = spinPoint3d.Z;
         return result3d;
     }
+    public static Vector3 RotateYZ(this Vector3 spinPoint3d, float radians, Vector3 center3d = default) {
+        Vector2 spinPoint = spinPoint3d.Flatten(0);
+        Vector2 center = center3d.Flatten(0);
+
+        float cos = MathF.Cos(radians);
+        float sin = MathF.Sin(radians);
+        Vector2 newPoint = spinPoint - center;
+        Vector2 result = center;
+        result.X += newPoint.X * cos - newPoint.Y * sin;
+        result.Y += newPoint.X * sin + newPoint.Y * cos;
+
+        Vector3 result3d = result.Expand();
+        result3d.Z = spinPoint3d.Z;
+        return result3d;
+    }
     public static EulerAngles AsEulerAngles(this Vector3 vector) {
         return new(vector.Z, vector.Y, vector.X);
     }
@@ -269,8 +284,14 @@ public static class MathUtils
     => new(vector.X, 0, vector.Y);
     public static Vector3 Expand(this Vector2 vector)
         => new(vector, 0);
-    public static Vector2 Flatten(this Vector3 vector) => new(vector.X, vector.Y);
-    public static Vector2 FlattenZ(this Vector3 vector) => new(vector.X, vector.Z);
+    public static Vector2 Flatten(this Vector3 vector, int excludedAxis = 2) {
+        return excludedAxis switch {
+            0 => new Vector2(vector.Y, vector.Z),
+            1 => new Vector2(vector.X, vector.Z),
+            2 => new Vector2(vector.X, vector.Y)
+        };
+    }
+    public static Vector2 FlattenZ(this Vector3 vector) => vector.Flatten(1);
     public static Vector2 FlattenZ_InvertZ(this Vector3 vector) => new(vector.X, -vector.Z);
     public static Rectangle GetScreenRect() => new(0, 0, TankGame.Instance.Window.ClientBounds.Width, TankGame.Instance.Window.ClientBounds.Height);
     public static float Damp(float source, float destination, float smoothing, float dt) => MathHelper.Lerp(source, destination, 1f - MathF.Pow(smoothing, dt));

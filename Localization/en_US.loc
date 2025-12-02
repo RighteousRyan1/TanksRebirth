@@ -41,7 +41,7 @@
   "Difficulties": "Modifiers",
   "GameStats": "Game Stats",
   "CosmeticsMenu": "Cosmetics Menu",
-  "CosmeticsFlator": "Use some of your currency and luck out on items for your tank!",
+  "CosmeticsFlavor": "Use some of your currency and luck out on items for your tank!",
   "SinglePlayerFlavor": "Choose from your downloaded campaigns.",
   "DifficultiesFlavor": "Make the game how you want it, be it harder or easier.",
   "LevelEditFlavor": "Create your own missions and campaigns with ease!",
@@ -149,5 +149,7 @@
   "MoveMissionDownFlavor": "Swap the currently selected mission with the one below it.",
   "LoadMissionFlavor": "Will open a file dialog for you to choose what mission/campaign to load.",
   "BlockStackFlavor": "UP and DOWN to change stack.",
-  "GameStatsFlavor": "View your all-time statistics!"
+  "GameStatsFlavor": "View your all-time statistics!",
+  "KeysCount": "You have {0} keys.",
+  "KeysWarning": "Too many keys!"
 }

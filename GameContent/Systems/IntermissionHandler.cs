@@ -208,15 +208,20 @@ public static class IntermissionHandler {
 
                 // assume true, but set to false later if any player has lives remaining
                 bool everyoneLostAllLives = true;
+
                 if (allPlayersDead) {
                     // networking is *consistently* behind the host here
-
+                    var clientConnected = Client.IsConnected();
                     for (int i = 0; i < GameHandler.AllPlayerTanks.Length; i++) {
                         var tank = GameHandler.AllPlayerTanks[i];
                         if (tank is null) continue;
                         var lives = PlayerTank.Lives[i];
-                        var livesCountLocal = tank.IsDestroyed ? (i != NetPlay.GetMyClientId() ? lives - 1 : lives) : lives;
-
+                        int livesCountLocal = lives;
+                        if (tank.IsDestroyed) {
+                            if (clientConnected) {
+                                livesCountLocal = i != NetPlay.GetMyClientId() ? lives - 1 : lives;
+                            }
+                        }
                         // if any player has any lives remaining, the campaign isn't over
                         if (livesCountLocal > 0)
                             everyoneLostAllLives = false;

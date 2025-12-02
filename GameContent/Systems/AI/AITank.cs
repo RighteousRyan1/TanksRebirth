@@ -339,6 +339,8 @@ public partial class AITank : Tank {
 
                 TankGame.SaveFile.TotalKills++;
             }
+
+            KeyDropLogic(PlayerID.PlayerTankColors[p.PlayerId]);
         }
 
         if (TankGame.SaveFile.TankKills.TryGetValue(AiTankType, out uint value))
@@ -354,30 +356,119 @@ public partial class AITank : Tank {
         //    PlayerTank.KillCount++;
         //    Client.Send(new TankKillCountUpdateMessage(PlayerTank.KillCount)); // not a bad idea actually
     }
-    void GiveXP() {
-        if (!LevelEditorUI.IsEditing) {
-            var rand = Client.ClientRandom.NextFloat(0.75f, 1.25f);
-            var gain = Parameters.BaseXP * rand;
-            // i will keep this commented if anything else happens.
-            //var gain = (BaseExpValue + rand) * GameData.UniversalExpMultiplier;
-            GameHandler.ExperienceBar.GainExperience(gain);
+    // TODO: kepe things better
+    void KeyDropLogic(Color color) {
+        if (TankGame.SaveFile.CollectedKeys >= 10) {
+            SoundPlayer.SoundError();
+            var str = TankGame.GameLanguage.KeysWarning;
+            var p = GameHandler.Particles.MakeParticle(Position3D + new Vector3(0, 30, 0), str);
 
-            var p = GameHandler.Particles.MakeParticle(Position3D + new Vector3(0, 30, 0), $"+{gain * 100:0.00} XP");
-
-            p.Scale = new(0.5f);
-            p.Pitch = MathHelper.Pi + MouseUtils.Test.X;
-            p.FaceTowardsMe = CameraGlobals.IsUsingFirstPresonCamera;
-            p.Origin2D = FontGlobals.RebirthFont.MeasureString($"+{gain * 100:0.00} XP") / 2;
+            p.Scale = new(0.65f);
+            p.Pitch = MathHelper.Pi;
+            p.FaceTowardsMe = CameraGlobals.IsUsingFirstPersonCamera;
+            p.Origin2D = FontGlobals.RebirthFont.MeasureString(str) / 2;
+            p.Color = Color.Red;
 
             p.UniqueBehavior = (p) => {
-                p.Position.Y += 0.1f * RuntimeData.DeltaTime;
+                p.Position.Y += 0.35f * RuntimeData.DeltaTime;
 
-                p.Alpha -= 0.01f * RuntimeData.DeltaTime;
+                if (p.LifeTime > 30)
+                    p.Alpha -= 0.02f * RuntimeData.DeltaTime;
 
                 if (p.Alpha <= 0)
                     p.Destroy();
             };
+            return;
         }
+
+        // do logic on the client for now
+        var rand = Client.ClientRandom.Next(101);
+
+        if (rand != 0) return;
+
+        TankGame.SaveFile.CollectedKeys++;
+
+        var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/chest/key");
+        var sound = SoundPlayer.PlaySoundInstance("Assets/sounds/shiny_get.ogg", SoundContext.Effect);
+
+        // TextureGlobals.Pixels[color]
+
+        var keyPart = GameHandler.Particles.MakeParticle(Position3D + new Vector3(0, 15, 0), ModelGlobals.Key.Asset, tex);
+
+        keyPart.Alpha = 1f;
+        // maybe this is retarded
+        keyPart.Scale = Vector3.One * 40;
+        keyPart.HasAdditiveBlending = false;
+        keyPart.Pitch = MathHelper.PiOver2;
+        keyPart.Color = color;
+
+        float t = 0;
+        float t2 = 0;
+
+        float velY = 4f;
+        float gravY = 0.05f;
+
+        float lifeTime = 240;
+
+        keyPart.UniqueBehavior = (p) => {
+            p.Position.Y += velY * RuntimeData.DeltaTime;
+            velY -= gravY;
+            if (velY < 0) velY = 0;
+
+            t += 0.01f * RuntimeData.DeltaTime;
+
+            if (t > 1) t = 1;
+
+            float ease = Easings.GetEasingBehavior(EasingFunction.InOutSine, t);
+
+            p.Roll = ease * MathHelper.TwoPi * 6 + MathHelper.PiOver2;
+
+            if (p.LifeTime > lifeTime) {
+                t2 += 0.01f * RuntimeData.DeltaTime;
+
+                if (t2 > 1) t2 = 1;
+
+                float ease2 = Easings.GetEasingBehavior(EasingFunction.InOutSine, t2);
+
+                p.Position.Y += ease2;
+
+                if (p.Position.Y > 500f)
+                    p.Destroy();
+            }
+
+            float randX = Client.ClientRandom.NextFloat(-10, 20);
+            float randY = Client.ClientRandom.NextFloat(-5, 5);
+
+            if (RuntimeData.UpdateCount % 10 == 0) {
+                GameHandler.Particles.MakeShineSpot(p.Position + new Vector3(randX, randY, 0),
+                    Color.Yellow, Client.ClientRandom.NextFloat(0.3f, 0.5f));
+            }
+        };
+    }
+    void GiveXP() {
+        if (LevelEditorUI.IsEditing) return;
+        var rand = Client.ClientRandom.NextFloat(0.75f, 1.25f);
+        var gain = Parameters.BaseXP * rand;
+        // i will keep this commented if anything else happens.
+        //var gain = (BaseExpValue + rand) * GameData.UniversalExpMultiplier;
+        GameHandler.ExperienceBar.GainExperience(gain);
+
+        var str = $"+{gain * 100:0.00} XP";
+        var p = GameHandler.Particles.MakeParticle(Position3D + new Vector3(0, 30, 0), str);
+
+        p.Scale = new(0.5f);
+        p.Pitch = MathHelper.Pi;
+        p.FaceTowardsMe = CameraGlobals.IsUsingFirstPersonCamera;
+        p.Origin2D = FontGlobals.RebirthFont.MeasureString(str) / 2;
+
+        p.UniqueBehavior = (p) => {
+            p.Position.Y += 0.1f * RuntimeData.DeltaTime;
+
+            p.Alpha -= 0.01f * RuntimeData.DeltaTime;
+
+            if (p.Alpha <= 0)
+                p.Destroy();
+        };
     }
     /// <summary>Sets various meta-data things about this <see cref="AITank"/>.
     /// <br></br>Sets <see cref="TargetTank"/>, <see cref="NearbyDangers"/>, and <see cref="ClosestDanger"/>.</summary>

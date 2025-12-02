@@ -135,6 +135,7 @@ public class Particle
 
         if (FaceTowardsMe) {
             world = Matrix.CreateScale(Scale) *
+                    Matrix.CreateFromYawPitchRoll(Yaw, Pitch, Roll) *
                     Matrix.CreateBillboard(Position,
                                             CameraGlobals.RebirthFreecam.Position,
                                             // up is wrong for some reason

@@ -101,12 +101,12 @@ public static partial class MainMenuUI {
         AllHoming.Color = Modifiers.Map[Modifiers.HOMING] ? Color.Lime : Color.Red;
         Armored.Color = Modifiers.Map[Modifiers.ARMOR] ? Color.Lime : Color.Red;
         BumpUp.Color = Modifiers.Map[Modifiers.BUMP] ? Color.Lime : Color.Red;
-        Monochrome.Color = Modifiers.Map["Monochrome"] ? Color.Lime : Color.Red;
+        Monochrome.Color = Modifiers.Map[Modifiers.MONOCHROME] ? Color.Lime : Color.Red;
         InfiniteLives.Color = Modifiers.Map[Modifiers.INF_LIFE] ? Color.Lime : Color.Red;
         MasterMode.Color = Modifiers.Map[Modifiers.MASTER] ? Color.Lime : Color.Red;
         TacticalPlanes.Color = Modifiers.Map[Modifiers.PLANES] ? Color.Lime : Color.Red;
         MachineGuns.Color = Modifiers.Map[Modifiers.MACHINE_GUNS] ? Color.Lime : Color.Red;
-        RandomizedTanks.Color = Modifiers.Map["RandomizedTanks"] ? Color.Lime : Color.Red;
+        RandomizedTanks.Color = Modifiers.Map[Modifiers.RANDOM_ENEMY] ? Color.Lime : Color.Red;
         ThunderMode.Color = Modifiers.Map[Modifiers.THUNDER] ? Color.Lime : Color.Red;
         POVMode.Color = Modifiers.Map[Modifiers.POV] ? Color.Lime : Color.Red;
         AiCompanion.Color = Modifiers.Map[Modifiers.AI_COMPANION] ? Color.Lime : Color.Red;

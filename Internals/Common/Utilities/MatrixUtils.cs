@@ -56,6 +56,42 @@ public static class MatrixUtils
 
         return new Ray(nearPlane, Vector3.Normalize(farPlane - nearPlane));
     }
+    /// <summary>
+    /// Extracts the camera rotation (pitch, yaw, roll) from a view matrix.
+    /// </summary>
+    public static EulerAngles GetRotationFromView(Matrix view) {
+        Matrix camWorld = Matrix.Invert(view);
+
+        // Get a quaternion that represents the rotation part of the matrix.
+        Quaternion q = Quaternion.CreateFromRotationMatrix(camWorld);
+
+        float pitch, yaw, roll;
+
+        // --- Quaternion -> Euler (pitch, yaw, roll) ---
+
+        // pitch
+        float sinr_cosp = 2f * (q.W * q.X + q.Y * q.Z);
+        float cosr_cosp = 1f - 2f * (q.X * q.X + q.Y * q.Y);
+        pitch = MathF.Atan2(sinr_cosp, cosr_cosp);
+
+        // yaw
+        float sinp = 2f * (q.W * q.Y - q.Z * q.X);
+        if (MathF.Abs(sinp) >= 1f)
+            yaw = MathF.CopySign(MathHelper.PiOver2, sinp); // clamp to 90°
+        else
+            yaw = MathF.Asin(sinp);
+
+        // roll
+        float siny_cosp = 2f * (q.W * q.Z + q.X * q.Y);
+        float cosy_cosp = 1f - 2f * (q.Y * q.Y + q.Z * q.Z);
+        roll = MathF.Atan2(siny_cosp, cosy_cosp);
+
+        return new EulerAngles {
+            Pitch = pitch,
+            Yaw = yaw,
+            Roll = roll
+        };
+    }
 
     public static bool AreMatricesEqual(Matrix m1, Matrix m2, float epsilon = 0.0001f) {
         return Math.Abs(m1.M11 - m2.M11) < epsilon &&

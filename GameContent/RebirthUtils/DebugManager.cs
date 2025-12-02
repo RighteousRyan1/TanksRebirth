@@ -330,9 +330,9 @@ public static class DebugManager {
                     CameraGlobals.CameraFocusOffset = LevelEditorUI.IsActive ? new Vector2(0, CameraGlobals.LVL_EDIT_Y_OFF) : Vector2.Zero;
                 }
 
-                if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(Keys.Add))
-                    CameraGlobals.AddativeZoom += 0.025f * RuntimeData.DeltaTime;
                 if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(Keys.Subtract))
+                    CameraGlobals.AddativeZoom += 0.025f * RuntimeData.DeltaTime;
+                if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(Keys.Add))
                     CameraGlobals.AddativeZoom -= 0.025f * RuntimeData.DeltaTime;
 
                 if (InputUtils.MouseMiddle)
@@ -378,7 +378,6 @@ public static class DebugManager {
         blockType = MathHelper.Clamp(blockType, 0, 3);
     }
     public static void DrawDebug(SpriteBatch spriteBatch) {
-
         if (Client.IsConnected()) {
             var myClient = Client.NetClient;
             var ping = myClient.Ping;
@@ -401,6 +400,8 @@ public static class DebugManager {
         }
 
         if (!DebuggingEnabled) return;
+
+        DrawAxes();
 
         var posOffset = new Vector2(0, 80);
 
@@ -545,11 +546,12 @@ public static class DebugManager {
     public static AITank SpawnTank(int tier, int team) {
         var rot = GeometryUtils.GetPiRandom();
 
-        var t = new AITank(tier);
-        t.ChassisRotation = rot;
-        t.TurretRotation = rot;
-        t.Team = team;
-        t.IsDestroyed = false;
+        var t = new AITank(tier) {
+            ChassisRotation = rot,
+            TurretRotation = rot,
+            Team = team,
+            IsDestroyed = false
+        };
         var pos = new BlockMapPosition(Client.ClientRandom.Next(0, 27), Client.ClientRandom.Next(0, 20));
         t.Physics.Position = pos;
         t.Position = pos;
@@ -559,13 +561,14 @@ public static class DebugManager {
     public static AITank SpawnTankAt(Vector3 position, int tier, int team) {
         var rot = 0f;
 
-        var x = new AITank(tier);
-        x.DesiredChassisRotation = rot;
-        x.ChassisRotation = rot;
-        x.TurretRotation = rot;
+        var x = new AITank(tier) {
+            DesiredChassisRotation = rot,
+            ChassisRotation = rot,
+            TurretRotation = rot,
 
-        x.Team = team;
-        x.IsDestroyed = false;
+            Team = team,
+            IsDestroyed = false
+        };
         x.Physics.Position = position.FlattenZ() / Tank.UNITS_PER_METER;
         x.Position = position.FlattenZ();
         return x;
@@ -574,11 +577,12 @@ public static class DebugManager {
         for (int i = 0; i < 5; i++) {
             var random = new BlockMapPosition(Client.ClientRandom.Next(0, 23), Client.ClientRandom.Next(0, 18));
             var rot = GeometryUtils.GetPiRandom();
-            var t = new AITank(useCurTank ? tankToSpawnType : AITank.PickRandomTier());
-            t.ChassisRotation = rot;
-            t.TurretRotation = rot;
-            t.IsDestroyed = false;
-            t.Team = useCurTank ? tankToSpawnTeam : TeamID.NoTeam;
+            var t = new AITank(useCurTank ? tankToSpawnType : AITank.PickRandomTier()) {
+                ChassisRotation = rot,
+                TurretRotation = rot,
+                IsDestroyed = false,
+                Team = useCurTank ? tankToSpawnTeam : TeamID.NoTeam
+            };
             t.Physics.Position = random;
             t.Position = random;
         }
@@ -609,5 +613,181 @@ public static class DebugManager {
             AiTier = tierOverride == default ? AITank.PickRandomTier() : tierOverride,
             Team = teamOverride == default ? Client.ClientRandom.Next(TeamID.NoTeam, TeamID.Collection.Count) : teamOverride
         };
+    }
+
+    // Optional: make the length configurable
+    const float AXIS_DRAW_LEN = 5f;
+
+    static BasicEffect _debugEff;
+
+    private static void EnsureBboxEffect() {
+        _debugEff ??= new BasicEffect(TankGame.Instance.GraphicsDevice) {
+                VertexColorEnabled = true
+            };
+
+        _debugEff.World = Matrix.Identity;
+        _debugEff.View = CameraGlobals.GameView;
+        _debugEff.Projection = CameraGlobals.GameProjection;
+    }
+
+    public static void DrawAxes() {
+        if (!DebuggingEnabled)
+            return;
+
+        var gd = TankGame.Instance.GraphicsDevice;
+
+        var cam = CameraGlobals.RebirthFreecam;
+
+        Vector3 origin = Vector3.Zero;
+        if (CameraGlobals.IsUsingFirstPersonCamera)
+            origin = cam.Position + cam.World.Forward * 100;
+
+        var vertices = new VertexPositionColor[6];
+
+        // X+ = red
+        vertices[0] = new VertexPositionColor(origin, Color.Red);
+        vertices[1] = new VertexPositionColor(origin + Vector3.UnitX * AXIS_DRAW_LEN, Color.Red);
+
+        // Y+ green
+        vertices[2] = new VertexPositionColor(origin, Color.Green);
+        vertices[3] = new VertexPositionColor(origin + Vector3.UnitY * AXIS_DRAW_LEN, Color.Green);
+
+        // Z+ blue
+        vertices[4] = new VertexPositionColor(origin, Color.Blue);
+        vertices[5] = new VertexPositionColor(origin + Vector3.UnitZ * AXIS_DRAW_LEN, Color.Blue);
+
+        EnsureBboxEffect();
+
+        foreach (var pass in _debugEff.CurrentTechnique.Passes) {
+            pass.Apply();
+            gd.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 3);
+        }
+    }
+    static readonly VertexPositionColor[] _bboxVertices = new VertexPositionColor[24];
+    public static void DrawBoundingBox(
+         BoundingBox box,
+         Color color,
+         Matrix view,
+         Matrix projection,
+         Matrix? world = null) {
+
+        if (!DebuggingEnabled)
+            return;
+
+        EnsureBboxEffect();
+
+        var gd = TankGame.Instance.GraphicsDevice;
+
+        _debugEff.World = world ?? Matrix.Identity;
+        _debugEff.View = view;
+        _debugEff.Projection = projection;
+
+        // Get the 8 box corners as a regular array (no ref struct / Span issues)
+        Vector3[] corners = box.GetCorners(); // length 8
+
+        int v = 0;
+        void AddEdge(int i0, int i1) {
+            _bboxVertices[v++] = new VertexPositionColor(corners[i0], color);
+            _bboxVertices[v++] = new VertexPositionColor(corners[i1], color);
+        }
+
+        // Corner order for BoundingBox.GetCorners():
+        // 0: Near Bottom Left
+        // 1: Near Top Left
+        // 2: Near Top Right
+        // 3: Near Bottom Right
+        // 4: Far Bottom Left
+        // 5: Far Top Left
+        // 6: Far Top Right
+        // 7: Far Bottom Right
+
+        // Near face
+        AddEdge(0, 1);
+        AddEdge(1, 2);
+        AddEdge(2, 3);
+        AddEdge(3, 0);
+
+        // Far face
+        AddEdge(4, 5);
+        AddEdge(5, 6);
+        AddEdge(6, 7);
+        AddEdge(7, 4);
+
+        // Connect near & far
+        AddEdge(0, 4);
+        AddEdge(1, 5);
+        AddEdge(2, 6);
+        AddEdge(3, 7);
+
+        foreach (var pass in _debugEff.CurrentTechnique.Passes) {
+            pass.Apply();
+            gd.DrawUserPrimitives(PrimitiveType.LineList, _bboxVertices, 0, 12);
+        }
+    }
+
+    /// <summary>
+    /// Draws a wireframe 3D bounding sphere using three great circles (XY, XZ, YZ planes).
+    /// The sphere is assumed to be in the same space as the given world matrix.
+    /// </summary>
+    public static void DrawBoundingSphere(
+        BoundingSphere sphere,
+        Color color,
+        Matrix view,
+        Matrix projection,
+        Matrix? world = null,
+        int segments = 32) {
+
+        if (!DebuggingEnabled)
+            return;
+
+        if (segments < 4)
+            segments = 4; // minimum to look like a circle
+
+        EnsureBboxEffect();
+
+        var gd = TankGame.Instance.GraphicsDevice;
+
+        _debugEff.World = world ?? Matrix.Identity;
+        _debugEff.View = view;
+        _debugEff.Projection = projection;
+
+        // Three circles: XY, XZ, YZ planes
+        var vertsXY = new VertexPositionColor[segments + 1];
+        var vertsXZ = new VertexPositionColor[segments + 1];
+        var vertsYZ = new VertexPositionColor[segments + 1];
+
+        float radius = sphere.Radius;
+        Vector3 center = sphere.Center;
+
+        for (int i = 0; i <= segments; i++) {
+            float t = (float)i / segments;
+            float angle = t * MathHelper.TwoPi;
+            float cos = MathF.Cos(angle);
+            float sin = MathF.Sin(angle);
+
+            // XY plane (Z constant)
+            vertsXY[i] = new VertexPositionColor(
+                center + new Vector3(cos * radius, sin * radius, 0f),
+                color);
+
+            // XZ plane (Y constant)
+            vertsXZ[i] = new VertexPositionColor(
+                center + new Vector3(cos * radius, 0f, sin * radius),
+                color);
+
+            // YZ plane (X constant)
+            vertsYZ[i] = new VertexPositionColor(
+                center + new Vector3(0f, cos * radius, sin * radius),
+                color);
+        }
+
+        foreach (var pass in _debugEff.CurrentTechnique.Passes) {
+            pass.Apply();
+
+            // Each circle is a line strip of `segments` segments
+            gd.DrawUserPrimitives(PrimitiveType.LineStrip, vertsXY, 0, segments);
+            gd.DrawUserPrimitives(PrimitiveType.LineStrip, vertsXZ, 0, segments);
+            gd.DrawUserPrimitives(PrimitiveType.LineStrip, vertsYZ, 0, segments);
+        }
     }
 }

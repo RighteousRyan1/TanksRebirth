@@ -17,7 +17,7 @@ namespace TanksRebirth.GameContent.Globals;
 
 public static class CameraGlobals {
 
-    public static bool IsUsingFirstPresonCamera => MatrixUtils.AreMatricesEqual(GameProjection, RebirthFreecam.Projection, 0.1f);
+    public static bool IsUsingFirstPersonCamera => MatrixUtils.AreMatricesEqual(GameProjection, RebirthFreecam.Projection, 0.1f);
 
     // screen camera stuff
 
@@ -67,6 +67,8 @@ public static class CameraGlobals {
     public static Matrix GameView;
     public static Matrix GameProjection;
 
+    public const float POV_CAM_OFFSET_Y = 20f;
+
     public static void Initialize(GraphicsDevice device) {
         RebirthFreecam = new(device);
         RebirthFreecam.Position = MainMenuUI.MenuCameraManipulations[MainMenuUI.UIState.LoadingMods].Position;
@@ -96,7 +98,7 @@ public static class CameraGlobals {
 
         if (!isFreecam) {
             if (!isMainMenu) {
-                if (!Modifiers.Map[Modifiers.POV] || LevelEditorUI.IsActive) {
+                if (!isPOV || LevelEditorUI.IsActive) {
                     UpdateOverhead();
 
                     GameView = Matrix.CreateScale(DEFAULT_ZOOM * AddativeZoom) *
@@ -125,9 +127,10 @@ public static class CameraGlobals {
             }
 
             if (isPOV) {
-                if (PlayerTank.ClientTank is { IsDestroyed: false }) {
+                Vector3 offsetVector = new(0, POV_CAM_OFFSET_Y, 0);
+                if (PlayerTank.ClientTank is { IsDestroyed: true }) {
                     SpectatorId = NetPlay.GetMyClientId();
-                    POVCameraPosition = PlayerTank.ClientTank.Position.ExpandZ();
+                    POVCameraPosition = PlayerTank.ClientTank.Position.ExpandZ() + offsetVector;
                     POVCameraRotation = -PlayerTank.ClientTank.TurretRotation;
                 }
                 else if (GameHandler.AllPlayerTanks[SpectatorId] is not null) {
@@ -136,14 +139,14 @@ public static class CameraGlobals {
                     else if (InputUtils.KeyJustPressed(Keys.Right))
                         SpectatorId = SpectateValidTank(SpectatorId, true);
 
-                    POVCameraPosition = GameHandler.AllPlayerTanks[SpectatorId].Position.ExpandZ();
+                    POVCameraPosition = GameHandler.AllPlayerTanks[SpectatorId].Position.ExpandZ() + offsetVector;
                     POVCameraRotation = -GameHandler.AllPlayerTanks[SpectatorId].TurretRotation;
                 }
 
                 if (IntermissionHandler.ThirdPersonTransitionAnimation is not null && PlayerTank.ClientTank is not null) {
                     IntermissionHandler.ThirdPersonTransitionAnimation.KeyFrames[1] = new(
                         position2d: new Vector2(-PlayerTank.ClientTank.TurretRotation),
-                        position3d: PlayerTank.ClientTank.Position3D
+                        position3d: PlayerTank.ClientTank.Position3D + offsetVector
                     );
                 }
 
@@ -158,13 +161,12 @@ public static class CameraGlobals {
                     povCameraPosCurrent,
                     POVCameraPosition + new Vector2(0, 20).RotatedBy(povCameraRotationCurrent).ExpandZ(),
                     Vector3.Up
-                ) * Matrix.CreateScale(AddativeZoom) *
-                    Matrix.CreateTranslation(0, -20, 0);
+                ) * Matrix.CreateScale(AddativeZoom);
 
                 RebirthFreecam.FieldOfView = 90f;
                 GameProjection = RebirthFreecam.Projection;
 
-                RebirthFreecam.Position = POVCameraPosition;
+                RebirthFreecam.Position = povCameraPosCurrent;
             }
         }
         else if (!GameUI.Paused && !isMainMenu && DebugManager.DebuggingEnabled) {
@@ -205,9 +207,9 @@ public static class CameraGlobals {
                      MathHelper.Clamp(RebirthFreecam.Rotation.Y, -MathHelper.PiOver2, MathHelper.PiOver2),
                      RebirthFreecam.Rotation.Z);
             }
-            if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(Keys.Add))
-                RebirthFreecam.FieldOfView += 0.5f * RuntimeData.DeltaTime;
             if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(Keys.Subtract))
+                RebirthFreecam.FieldOfView += 0.5f * RuntimeData.DeltaTime;
+            if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(Keys.Add))
                 RebirthFreecam.FieldOfView -= 0.5f * RuntimeData.DeltaTime;
             if (InputUtils.MouseMiddle)
                 RebirthFreecam.FieldOfView = 90;

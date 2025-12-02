@@ -12,6 +12,7 @@ using TanksRebirth.Net;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.Globals;
+using TanksRebirth.GameContent.Cosmetics;
 
 namespace TanksRebirth.GameContent.UI;
 
@@ -60,8 +61,8 @@ public static class GameUI
     {
         if (_initialized) {
             foreach (var field in typeof(GameUI).GetFields()) {
-                if (field.GetValue(null) is UIElement) {
-                    ((UIElement)field.GetValue(null)).Remove();
+                if (field.GetValue(null) is UIElement element) {
+                    element.Remove();
                     field.SetValue(null, null);
                 }
             }
@@ -297,12 +298,15 @@ public static class GameUI
 
     // 7/7/25 - WHAT THE FUCK IS THIS SHIT.
     // TODO: pls get arctan to finish the rewrite
+    // TODO: arctan is fucking ignoring me
     private static void HandleBackButton()
     {
         if (!_initialized)
             return;
-        if (MainMenuUI.MenuState == MainMenuUI.UIState.Cosmetics)
+        if (MainMenuUI.MenuState == MainMenuUI.UIState.Cosmetics) {
             MainMenuUI.MenuState = MainMenuUI.UIState.PlayList;
+            CosmeticsUI.LeaveMenu();
+        }
         if (MainMenuUI.MenuState == MainMenuUI.UIState.StatsMenu)
             MainMenuUI.MenuState = MainMenuUI.UIState.PrimaryMenu;
 

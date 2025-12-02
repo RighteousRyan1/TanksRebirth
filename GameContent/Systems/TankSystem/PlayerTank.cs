@@ -496,49 +496,50 @@ public class PlayerTank : Tank {
             // maybe make a camera transition to said tank.
 
             //if (context.Source is not null)
-                //CameraGlobals.SpectatorId = CameraGlobals.SpectateValidTank(context.Source.WorldId, true);
+            //CameraGlobals.SpectatorId = CameraGlobals.SpectateValidTank(context.Source.WorldId, true);
 
             // only decements the lives on the destroyed player's system, where lives are synced across everyone at all times
             if (NetPlay.IsClientMatched(PlayerId)) {
                 Lives[PlayerId]--;
             }
         }
-        else
-            AddLives(-1);
+        else {
+            Lives[PlayerId]--;
 
-        Remove(false);
+            Remove(false);
 
-        var c = PlayerType switch {
-            PlayerID.Blue => TankDeathMark.CheckColor.Blue,
-            PlayerID.Red => TankDeathMark.CheckColor.Red,
-            PlayerID.Green => TankDeathMark.CheckColor.Green,
-            PlayerID.Yellow => TankDeathMark.CheckColor.Yellow, // TODO: change these colors.
-            _ => throw new Exception($"Player Death Mark for colour {PlayerType} is not supported."),
-        };
+            var c = PlayerType switch {
+                PlayerID.Blue => TankDeathMark.CheckColor.Blue,
+                PlayerID.Red => TankDeathMark.CheckColor.Red,
+                PlayerID.Green => TankDeathMark.CheckColor.Green,
+                PlayerID.Yellow => TankDeathMark.CheckColor.Yellow, // TODO: change these colors.
+                _ => throw new Exception($"Player Death Mark for colour {PlayerType} is not supported."),
+            };
 
-        var playerDeathMark = new TankDeathMark(c) {
-            Position = Position3D + new Vector3(0, 0.1f, 0),
-        };
+            var playerDeathMark = new TankDeathMark(c) {
+                Position = Position3D + new Vector3(0, 0.1f, 0),
+            };
 
-        playerDeathMark.StoredTank = new TankTemplate {
-            IsPlayer = true,
-            Position = playerDeathMark.Position.FlattenZ(),
-            Rotation = ChassisRotation,
-            Team = Team,
-            PlayerType = PlayerType,
-        };
+            playerDeathMark.StoredTank = new TankTemplate {
+                IsPlayer = true,
+                Position = playerDeathMark.Position.FlattenZ(),
+                Rotation = ChassisRotation,
+                Team = Team,
+                PlayerType = PlayerType,
+            };
 
-        base.Destroy(context, netSend);
+            base.Destroy(context, netSend);
 
-        if (context.Source is not PlayerTank player) return;
+            if (context.Source is not PlayerTank player) return;
 
-        // only increment these data values on the destroyed player's system
-        // ensure the source tank is 
-        if (NetPlay.IsClientMatched(player.PlayerId)) {
-            TankGame.SaveFile.Suicides++;
-            PlayerStatistics.Suicides++;
+            // only increment these data values on the destroyed player's system
+            // ensure the source tank is 
+            if (NetPlay.IsClientMatched(player.PlayerId)) {
+                TankGame.SaveFile.Suicides++;
+                PlayerStatistics.Suicides++;
+            }
+            TankGame.SaveFile.Deaths++;
         }
-        TankGame.SaveFile.Deaths++;
     }
     void DrawShootPath() {
         const int MAX_PATH_UNITS = 10000;

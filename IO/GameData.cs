@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using TanksRebirth.Achievements;
 using TanksRebirth.Enums;
 using TanksRebirth.GameContent;
+using TanksRebirth.GameContent.Cosmetics;
 using TanksRebirth.GameContent.ID;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Utilities;
@@ -14,17 +15,23 @@ using TanksRebirth.Internals.Common.Utilities;
 namespace TanksRebirth.IO;
 
 public class GameData : IFileSerializable {
-    private const byte CURRENT_GAME_DATA_VERSION = 0;
+    private const byte CURRENT_GAME_DATA_VERSION = 1;
 
     public bool ReadingOutdatedFile;
-
     public string Directory { get; } = TankGame.SaveDirectory;
     public string Name { get; } = "GameData.dat";
 
     public const float DECAY_PER_LEVEL = 1.01f;
     public static float UniversalExpMultiplier { get; internal set; } = 1f;
 
-    private static byte[] _message = IOUtils.ToAsciiBytes("If you ever choose to modify this file manually, just know you are making the game unfun for yourself."); // hmm...
+
+    // If you ever choose to modify this file manually, just know you are making the game unfun for yourself.
+    /*static byte[] _message = 
+        IOUtils.ToAsciiBytes(
+            "If you ever choose to modify this file manually, just know you are making the game unfun for yourself.");*/ // hmm...
+
+    public uint CollectedKeys;
+    public List<int> UnlockedCosmetics = [];
 
     // only kills from a player will count in single player to increment these!
     public uint TotalKills;
@@ -47,13 +54,8 @@ public class GameData : IFileSerializable {
 
     public float ExpLevel; // every whole number is an XP level | 1.000 = XP level 1
 
-    public void Setup() {
-        for (int i = 0; i < TankID.Collection.Count; i++) {
-            TankKills.Add(i, 0);
-        }
-    }
     public void Serialize() {
-        using var writer = new BinaryWriter(File.Open(Path.Combine(Directory, Name), FileMode.OpenOrCreate));
+        using var writer = new BinaryWriter(File.Open(Path.Combine(Directory, Name), FileMode.Create));
         /* File Serialization Order:
          * Do note: If you edit the game's data, you are scum
          * 
@@ -86,9 +88,22 @@ public class GameData : IFileSerializable {
 
         writer.Write(ExpLevel);
 
+        // version 1 and up
+
+        writer.Write(CollectedKeys);
+        int cosLen = UnlockedCosmetics.Count;
+        writer.Write(cosLen);
+        for (int i = 0; i < cosLen; i++) {
+            writer.Write(UnlockedCosmetics[i]);
+        }
     }
-    public void Deserialize()
-    {
+    public void Deserialize() {
+        // prepare dictionaries + lists
+        TankKills.Clear();
+        UnlockedCosmetics.Clear();
+        for (int i = 0; i < TankID.Collection.Count; i++) 
+            TankKills.Add(i, 0);
+
         using var reader = new BinaryReader(File.Open(Path.Combine(Directory, Name), FileMode.OpenOrCreate));
 
         // reader.ReadString();
@@ -121,8 +136,20 @@ public class GameData : IFileSerializable {
             ExpLevel = reader.ReadSingle();
 
             GameHandler.ExperienceBar = new() { MaxValue = 1f, Value = ExpLevel - MathF.Floor(ExpLevel) };
-        }
-        catch (Exception e) when (ReadingOutdatedFile) {
+
+            // version 1 and up
+
+            if (saveVersion >= 1) {
+                CollectedKeys = reader.ReadUInt32();
+                int cosLen = reader.ReadInt32();
+                for (int i = 0; i < cosLen; i++) {
+
+                }
+            } else {
+                CollectedKeys = 0;
+                UnlockedCosmetics = [];
+            }
+        } catch (Exception e) when (ReadingOutdatedFile) {
             TankGame.ReportError(e);
             TankGame.ClientLog.Write(
                 "An error occurred, possibly due to your save file being out-of-date. For now, delete it and restart the game. Sorry!",

@@ -29,7 +29,7 @@ public static partial class MainMenuUI
     public static OggAudio TickSound;
 
     public static OggMusic Theme;
-    private static bool _musicFading;
+    static bool _musicFading;
 
     public delegate void MenuOpenDelegate();
     public delegate void MenuCloseDelegate();
@@ -68,9 +68,9 @@ public static partial class MainMenuUI
     #endregion
 
     internal static Mission curMenuMission;
-    private static List<Mission> _cachedMissions = [];
+    static readonly List<Mission> _cachedMissions = [];
 
-    private static bool _initialized;
+    static bool _initialized;
 
     public static RebirthLogoModel RebirthLogo;
     public static void InitializeBasics() {
