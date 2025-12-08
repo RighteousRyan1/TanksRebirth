@@ -11,8 +11,10 @@ using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Systems;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.GameContent.UI.MainMenu;
+using TanksRebirth.Graphics;
 using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common;
+using TanksRebirth.Internals.Common.Framework.Animation;
 using TanksRebirth.Internals.Common.Framework.Audio;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Net;
@@ -23,16 +25,19 @@ namespace TanksRebirth.GameContent.Cosmetics;
 
 // ikik, not in the UI namespace but whatever
 public static class CosmeticsUI {
-    public static bool IsActive => MainMenuUI.MenuState == MainMenuUI.UIState.Cosmetics;
-
     static float _interp;
-    static bool _switch;
+    static bool _isOpening;
+    static BoundingSphere _clickSpot;
+    static Particle _dispPart;
+    static List<Particle> _keys = [];
+    static Particle _movingKey;
 
+    static Animator _keyAnimation;
+
+    static float _prevTotalAnim;
+
+    public static bool IsActive => MainMenuUI.MenuState == MainMenuUI.UIState.Cosmetics;
     public static RenderableChest Chest;
-
-    internal static Particle dispPart;
-
-    static BoundingBox _clickSpot;
 
     public static void Initialize() {
         Chest = new(new(0, 0, 0), CameraGlobals.GameView, CameraGlobals.GameProjection);
@@ -46,60 +51,106 @@ public static class CosmeticsUI {
         GameShaders.BlurFactor += (!IsActive ? 0.000075f : -0.000075f) * RuntimeData.DeltaTime;
         GameShaders.BlurFactor = MathHelper.Clamp(GameShaders.BlurFactor, 0f, 0.0075f);
 
-        _interp += (_switch ? 0.015f : -0.015f) * RuntimeData.DeltaTime;
-
+        _interp += (_isOpening ? 0.015f : -0.015f) * RuntimeData.DeltaTime;
         _interp = MathHelper.Clamp(_interp, 0, 1);
 
-        if (_interp == 1f)
-            _switch = false;
-
         Chest.Scale = 0.3f;
-
         Chest.ChestPosition = new Vector3(-875f, 992.81537f, 2860f);
 
         var basePos = Chest.ChestPosition - new Vector3(15, 23, 15);
-
-        float boxDimsXZ = 5f;
-        float boxHeight = 9f;
-        float yOff = 50f;
-
-        _clickSpot = new(basePos - new Vector3(boxDimsXZ, -yOff, boxDimsXZ), 
-            basePos + new Vector3(boxDimsXZ, yOff + boxHeight, boxDimsXZ));
+        _clickSpot = new BoundingSphere(Chest.KeySlotPos, 6);
 
         var ray = RayUtils.GetMouseToWorldRay();
-
         var inter = ray.Intersects(_clickSpot);
 
         if (inter.HasValue) {
-            if (_interp == 0f)
-                _switch = true;
+
+            if (InputUtils.CanDetectClick()) {
+                var ypr = Matrix.CreateFromYawPitchRoll(Chest.Rotation.Z, Chest.Rotation.Y, Chest.Rotation.X);
+                var preSlotPos = Chest.KeySlotPos + Vector3.Transform(new Vector3(0, 0, 50), ypr);
+                var lookAt = MathUtils.GetLookAtEulerAngles(preSlotPos, Chest.KeySlotPos);
+
+                float[] slotRot = [lookAt.Roll, lookAt.Pitch, lookAt.Yaw];
+
+                var rand = Client.ClientRandom.Next(_keys.Count);
+                _movingKey = _keys[rand];
+
+                // i fucking hate this animation system.
+                // keyframe durations should be of the duration that it's GOING TO not the one it's GOING FROM
+                // TODO: fix
+                _keyAnimation = Animator.Create()
+                    .WithFrame(new(_movingKey.Position, Vector3.One, duration: TimeSpan.FromSeconds(1),
+                    easing: EasingFunction.InOutQuad, floats: [_movingKey.Roll, _movingKey.Pitch, _movingKey.Yaw]))
+                    // just x for now
+                    .WithFrame(new(preSlotPos, Vector3.One, easing: EasingFunction.InOutCubic, duration: TimeSpan.FromSeconds(2), floats: slotRot))
+                    .WithFrame(new(Chest.KeySlotPos, Vector3.One, duration: TimeSpan.FromSeconds(0.5), floats: slotRot, easing: EasingFunction.InOutCubic))
+                    .WithFrame(new(Chest.KeySlotPos, Vector3.One, duration: TimeSpan.FromSeconds(1), floats: slotRot, easing: EasingFunction.InOutCubic))
+                    // what the fuck is this rotational magic??? rotating just one axis doesn't work at all
+                    //.WithFrame(new(Chest.KeySlotPos, Vector3.One, duration: TimeSpan.FromSeconds(2), floats: [slotRot[0] - MathHelper.PiOver2, slotRot[1] - MathHelper.PiOver2, slotRot[2] + MathHelper.PiOver2]))
+                    .WithFrame(new(Chest.KeySlotPos, Vector3.One, duration: TimeSpan.FromSeconds(1), floats: slotRot, easing: EasingFunction.InOutCubic))
+                    .WithFrame(new(preSlotPos, Vector3.One, floats: slotRot));
+
+                _keyAnimation.Run();
+            }
 
             // GameHandler.Particles.MakeShineSpot(ray.Direction * inter.Value, Color.White, 0.5f);
 
             // ChatSystem.SendMessage(inter.Value, ColorUtils.DiscoPartyColor);
         }
+        if (_keyAnimation is not null) {
+            // start things
+            if (_keyAnimation.TotalProgress > 0.6f && _prevTotalAnim <= 0.6f) {
+                _isOpening = true;
 
-        Chest.LidRotation = new Vector3(0, Easings.GetEasingBehavior
-            (_switch ? EasingFunction.OutBounce : EasingFunction.OutSine, _interp) * (MathHelper.Pi + MathHelper.PiOver4 / 2), 
+                var prop = FuckingGamble(VanillaCosmetics.LootPool, out float percent);
+                var rarity = VanillaCosmetics.GetRarityFromFloat(percent);
+                Console.WriteLine($"{prop.Name} | {rarity} | {percent:0.00}");
+
+                Particle cosPart;
+
+                if (prop is Prop3D p3d)
+                    cosPart = GameHandler.Particles.MakeParticle(Chest.ChestPosition, p3d.PropModel, p3d.ModelTexture);
+                else {
+                    cosPart = GameHandler.Particles.MakeParticle(Chest.ChestPosition, ((Prop2D)prop).Texture);
+                    cosPart.Scale = new(0.3f);
+                }
+                
+                // for some reason lighting just... isnt applied. ok. whatever. fix later.
+                cosPart.Alpha = 1f;
+                cosPart.Scale = Vector3.One * prop.Scale;
+                cosPart.HasAdditiveBlending = false;
+
+                cosPart.UniqueBehavior = (p) => {
+                    // p.Position.Y += 0.1f * RuntimeData.DeltaTime;
+                    p.Position = Chest.ChestPosition + new Vector3(0, 75, 0);
+                    if (p.LifeTime > 180)
+                        p.Destroy();
+                };
+            }
+
+            _prevTotalAnim = _keyAnimation.TotalProgress;
+        }
+        Chest.LidRotation = new Vector3(0, Easings.ComputeEase
+            (_isOpening ? EasingFunction.OutBounce : EasingFunction.OutSine, _interp) * (MathHelper.Pi + MathHelper.PiOver4 / 2), 
             0);
     }
     public static void EnterMenu() {
         var pos = Chest.ChestPosition;
 
-        dispPart = GameHandler.Particles.MakeParticle(Vector3.Zero, 
+        _dispPart = GameHandler.Particles.MakeParticle(Vector3.Zero, 
             string.Format(TankGame.GameLanguage.KeysCount, TankGame.SaveFile.CollectedKeys));
 
-        dispPart.IsIn2DSpace = true;
-        dispPart.ToScreenSpace = true;
+        _dispPart.IsIn2DSpace = true;
+        _dispPart.ToScreenSpace = true;
 
-        dispPart.Color = Color.White;
+        _dispPart.Color = Color.White;
 
-        dispPart.HasAdditiveBlending = false;
-        dispPart.Origin2D = FontGlobals.RebirthFont.MeasureString(dispPart.Text) / 2;
-        dispPart.Scale = Vector3.One;
-        dispPart.Alpha = 0;
+        _dispPart.HasAdditiveBlending = false;
+        _dispPart.Origin2D = FontGlobals.RebirthFont.MeasureString(_dispPart.Text) / 2;
+        _dispPart.Scale = Vector3.One;
+        _dispPart.Alpha = 0;
 
-        dispPart.UniqueDraw = particle => {
+        _dispPart.UniqueDraw = particle => {
             particle.Position = Chest.ChestPosition + new Vector3(0, 150, 0);
             DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, particle.Text,
                 MatrixUtils.ConvertWorldToScreen(Vector3.Zero, Matrix.CreateTranslation(particle.Position),
@@ -110,7 +161,14 @@ public static class CosmeticsUI {
         SpawnKeys();
     }
 
+    public static IProp FuckingGamble(LootBox<IProp> lootPool, out float percent) {
+        var result = lootPool.Roll(out percent);
+
+        return result;
+    }
+
     static void SpawnKeys() {
+        _keys.Clear();
         var numKeys = TankGame.SaveFile.CollectedKeys;
 
         var tex = GameResources.GetGameResource<Texture2D>("Assets/textures/chest/key");
@@ -148,9 +206,52 @@ public static class CosmeticsUI {
 
             float moveSpeed = 0.02f;
 
+            _keys.Add(keyPart);
+
+            float velY = 0.8f;
+            float velX = Client.ClientRandom.NextFloat(0.25f, 0.75f);
+            float velZ = Client.ClientRandom.NextFloat(0, -0.5f);
+
             keyPart.UniqueBehavior = (p) => {
                 // gives time for the camera to transition
                 if (p.LifeTime < 80) return;
+
+                if (_movingKey == keyPart) {
+                    keyPart.Position = _keyAnimation.CurrentPosition;
+                    keyPart.FaceTowardsMe = false;
+
+                    var deconstructed = _keyAnimation.CurrentFloats.ToVector3();
+                    keyPart.Roll = deconstructed.X + MathHelper.Pi;
+                    keyPart.Pitch = deconstructed.Y - MathHelper.PiOver2; //+ MathHelper.PiOver2 * 3 + MouseUtils.Test.Y * MathHelper.Tau;
+                    keyPart.Yaw = deconstructed.Z; //+ MouseUtils.Test.X * MathHelper.Tau;
+
+                    // Console.WriteLine($"{string.Join(", ", _keyAnimation.CurrentFloats)}");
+
+                    if (_keyAnimation.TotalProgress == 1) {
+                        // if tag is false, it's "discarded"
+                        keyPart.Tag = false;
+                        SoundPlayer.PlaySoundInstance("Assets/sounds/menu/key_toss_away.ogg", SoundContext.Effect);
+                        _movingKey = null;
+                        _isOpening = false;
+                        _keys.Remove(keyPart);
+                    }
+                    return;
+                }
+                if (keyPart.Tag is bool) {
+                    var vec = new Vector3(velX, velY, velZ);
+                    keyPart.Position += vec;
+
+                    velY -= 0.01f;
+
+                    keyPart.Roll += 0.025f;
+                    keyPart.Pitch -= 0.025f;
+
+                    if (keyPart.Position.Y < 0) {
+                        keyPart.Destroy();
+                    }
+
+                    return;
+                }
 
                 if (MainMenuUI.MenuState == MainMenuUI.UIState.Cosmetics) {
                     t += moveSpeed * RuntimeData.DeltaTime;
@@ -158,13 +259,16 @@ public static class CosmeticsUI {
                     if (t > 1) t = 1;
                 }
                 else {
-                    if (t <= 0) p.Destroy();
+                    if (t <= 0) {
+                        p.Destroy();
+                        _keys.Remove(keyPart);
+                    }
 
                     t -= moveSpeed * 2.5f * RuntimeData.DeltaTime;
 
                     if (t < 0) t = 0;
                 }
-                float ease = Easings.GetEasingBehavior(EasingFunction.InOutSine, t);
+                float ease = Easings.ComputeEase(EasingFunction.InOutSine, t);
 
                 p.Roll = ease * MathHelper.TwoPi * 3 + MathHelper.PiOver2;
 
@@ -188,10 +292,11 @@ public static class CosmeticsUI {
 
     // non-important shit
     public static void LeaveMenu() {
-        dispPart?.Destroy();
+        _dispPart?.Destroy();
+        _movingKey = null;
     }
     public static void RenderCrates() {
-        DebugManager.DrawBoundingBox(_clickSpot, Color.White, CameraGlobals.GameView, CameraGlobals.GameProjection);
+        DebugManager.DrawBoundingSphere(_clickSpot, ColorUtils.DiscoPartyColor, CameraGlobals.GameView, CameraGlobals.GameProjection);
         Chest?.Render();
     }
 }

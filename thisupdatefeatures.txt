@@ -4,6 +4,10 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 
 # Additions
 
+- Added local multiplayer support! It's rather rudimentary, so here's the parameters, *for now*:
+	- Player 1 *must* use the keyboard
+	- All other players must use game pads (PlayStation/Xbox controllers)
+	- Does not work in multiplayer contexts (e.g: two local players cannot play with an online player)
 - Added Wii remote support, check the [guide](https://github.com/RighteousRyan1/TanksRebirth/wiki/Wii-Remote-Support) on how to use one
 	- Also allows the use of a nunchuk
 - Made the game take advantage of multiple threads! If your CPU has multiple threads (hopefully it does), the game should now run better under higher workloads, and just overall better
@@ -34,7 +38,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 
 - Fixed nametags showing for non-host clients after the game has started if the host started the game with the client being in the multiplayer menu
 - Fixed smokes generated from smoke grenades being the wrong color
-- Optimized mod loading quite a lot 
+- Mods should load ~25% quicker on average, depending on content
 - Fixed some tank destruction particles having frame-dependent animation
 - Fixed bug where you would Game Over with 2 lives in single player and in some multiplayer contexts
 

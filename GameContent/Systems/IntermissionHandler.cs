@@ -20,7 +20,7 @@ namespace TanksRebirth.GameContent.Systems;
 public static class IntermissionHandler {
     public const int DEF_INTERMISSION_TIME = 600;
     public const int DEF_PLUSLIFE_TIME = 240;
-    public static Animator ThirdPersonTransitionAnimation;
+    public static Animator ThirdPersonTransition;
 
     public static Animator[] PopupAnimators;
 
@@ -299,13 +299,15 @@ public static class IntermissionHandler {
     public static void Initialize() {
         CountdownAnimator = Animator.Create()
             // id = 0
-            .WithFrame(new(scale: Vector2.One * 2, duration: TimeSpan.FromSeconds(1.5), easing: _ez))  // ready 
-            .WithFrame(new(scale: Vector2.One * 1, duration: TimeSpan.FromSeconds(0), easing: _ez))  // ready 
-            .WithFrame(new(scale: Vector2.One * 2, duration: TimeSpan.FromSeconds(1.5), easing: _ez))  // set
-            .WithFrame(new(scale: Vector2.One * 1, duration: TimeSpan.FromSeconds(0), easing: _ez))  // set
-            .WithFrame(new(scale: Vector2.One * 2, duration: TimeSpan.FromSeconds(1), easing: _ez))  // start 
-            .WithFrame(new(scale: new Vector2(2, 0), duration: TimeSpan.FromSeconds(1), easing: _ez));
+            .WithFrame(new(scale: Vector3.One * 2, duration: TimeSpan.FromSeconds(1.5), easing: _ez))  // ready 
+            .WithFrame(new(scale: Vector3.One * 1, duration: TimeSpan.FromSeconds(0), easing: _ez))  // ready 
+            .WithFrame(new(scale: Vector3.One * 2, duration: TimeSpan.FromSeconds(1.5), easing: _ez))  // set
+            .WithFrame(new(scale: Vector3.One * 1, duration: TimeSpan.FromSeconds(0), easing: _ez))  // set
+            .WithFrame(new(scale: Vector3.One * 2, duration: TimeSpan.FromSeconds(1), easing: _ez))  // start 
+            .WithFrame(new(scale: new Vector3(2, 0, 0), duration: TimeSpan.FromSeconds(1), easing: _ez));
         CountdownAnimator.OnKeyFrameFinish += CountdownAnimator_OnKeyFrameFinish;
+
+        // TODO: localize!
         CountdownAnimator.OnAnimationRun += () => PrepareDisplay = "Ready?";
     }
 
@@ -323,7 +325,7 @@ public static class IntermissionHandler {
     public static void RenderCountdownGraphics() {
         if (!MainMenuUI.IsActive && !CameraGlobals.OverheadView && !LevelEditorUI.IsActive/* && TankFunctionWait > 0*/) {
             DrawUtils.DrawStringWithBorder(TankGame.SpriteRenderer, FontGlobals.RebirthFontLarge, PrepareDisplay, new Vector2(WindowUtils.WindowWidth / 2, WindowUtils.WindowHeight / 3), 
-                IntermissionSystem.BackgroundColor, IntermissionSystem.BannerColor, CountdownAnimator.CurrentScale.ToResolution(), 0f, Anchor.Center, 3);
+                IntermissionSystem.BackgroundColor, IntermissionSystem.BannerColor, CountdownAnimator.CurrentScale.Flatten().ToResolution(), 0f, Anchor.Center, 3);
         }
     }
 }

@@ -204,7 +204,7 @@ public class Airplane {
             WhileTrapDoorsOpenedEvent?.Invoke(this);
             WhileTrapDoorsOpenedInstance?.Invoke(this);
 
-            _doorLRotation = _doorRRotation = Easings.GetEasingBehavior(EasingFunction.OutBack, _openPercent) * MathHelper.PiOver2;
+            _doorLRotation = _doorRRotation = Easings.ComputeEase(EasingFunction.OutBack, _openPercent) * MathHelper.PiOver2;
         }
         else { 
             _openPercent -= openSpeed * RuntimeData.DeltaTime;
@@ -220,7 +220,7 @@ public class Airplane {
             WhileTrapDoorsClosedEvent?.Invoke(this);
             WhileTrapDoorsClosedInstance?.Invoke(this);
 
-            _doorLRotation = _doorRRotation = Easings.GetEasingBehavior(EasingFunction.OutCubic, _openPercent) * MathHelper.PiOver2;
+            _doorLRotation = _doorRRotation = Easings.ComputeEase(EasingFunction.OutCubic, _openPercent) * MathHelper.PiOver2;
         }
 
         // why the fuck do i have to do "-rotation + Pi/2"

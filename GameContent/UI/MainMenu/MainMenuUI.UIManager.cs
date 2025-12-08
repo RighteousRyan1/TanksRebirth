@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Octokit;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using TanksRebirth.GameContent.Cosmetics;
@@ -34,6 +35,7 @@ public static partial class MainMenuUI
         $"\nvsjoqvist, Tomat, nakamurash, timweh, Guthen, Vicerix";
     // not always properly set, fix later
     // this code is becoming so shit i want to vomit but i don't know any better
+    [Flags]
     public enum UIState {
         LoadingMods,
         PrimaryMenu,
@@ -54,20 +56,20 @@ public static partial class MainMenuUI
 
             if (MenuCameraManipulations.ContainsKey(value)) {
                 CameraPositionAnimator = Animator.Create()
-                    .WithFrame(new(position3d: CameraGlobals.RebirthFreecam.Position, duration: CameraTransitionTime, easing: CameraEasingFunction))
-                    .WithFrame(new(position3d: MenuCameraManipulations[value].Position));
+                    .WithFrame(new(position: CameraGlobals.RebirthFreecam.Position, duration: CameraTransitionTime, easing: CameraEasingFunction))
+                    .WithFrame(new(position: MenuCameraManipulations[value].Position));
                 CameraRotationAnimator = Animator.Create()
-                    .WithFrame(new(position3d: CameraGlobals.RebirthFreecam.Rotation, duration: CameraTransitionTime, easing: CameraEasingFunction))
-                    .WithFrame(new(position3d: MenuCameraManipulations[value].Rotation));
+                    .WithFrame(new(position: CameraGlobals.RebirthFreecam.Rotation, duration: CameraTransitionTime, easing: CameraEasingFunction))
+                    .WithFrame(new(position: MenuCameraManipulations[value].Rotation));
             }
             // if it doesn't have a proper camera position, just go to the regular one.
             else {
                 CameraPositionAnimator = Animator.Create()
-                    .WithFrame(new(position3d: CameraGlobals.RebirthFreecam.Position, duration: CameraTransitionTime, easing: CameraEasingFunction))
-                    .WithFrame(new(position3d: CamPosMain));
+                    .WithFrame(new(position: CameraGlobals.RebirthFreecam.Position, duration: CameraTransitionTime, easing: CameraEasingFunction))
+                    .WithFrame(new(position: CamPosMain));
                 CameraRotationAnimator = Animator.Create()
-                    .WithFrame(new(position3d: CameraGlobals.RebirthFreecam.Rotation, duration: CameraTransitionTime, easing: CameraEasingFunction))
-                    .WithFrame(new(position3d: CamPosMainRotation));
+                    .WithFrame(new(position: CameraGlobals.RebirthFreecam.Rotation, duration: CameraTransitionTime, easing: CameraEasingFunction))
+                    .WithFrame(new(position: CamPosMainRotation));
             }
             CameraPositionAnimator.Restart();
             CameraPositionAnimator.Run();
@@ -211,9 +213,7 @@ public static partial class MainMenuUI
         var font = FontGlobals.RebirthFont;
 
         spriteBatch.Begin();
-
         DrawUtils.DrawStringBorderOnly(spriteBatch, font, tanksMessage, bottomLeft, Color.Black, messageScale, 0f, Anchor.BottomLeft, borderThickness: 0.75f);
-
         spriteBatch.End();
 
         spriteBatch.Begin();
@@ -226,18 +226,19 @@ public static partial class MainMenuUI
     }
     public static void RenderGeneralUI(SpriteBatch spriteBatch) {
         if (SteamworksUtils.IsInitialized)
-            TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, $"STEAM LAUNCH!\nLogged in as '{SteamworksUtils.MyUsername}'\n" +
-                $"You have {SteamworksUtils.FriendsCount} friends.", Vector2.One * 8, Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
+            TankGame.SpriteRenderer.DrawString(FontGlobals.RebirthFont, $"Seam: {SteamworksUtils.MyUsername}" +
+                $"\n{SteamworksUtils.FriendsCount} friends", Vector2.One * 8, Color.White, Vector2.One.ToResolution(), 0f, Vector2.Zero);
 
         spriteBatch.End();
 
+        GameShaders.AnimatedRainbow.Parameters["oMinLum"].SetValue(0.5f);
         spriteBatch.Begin(effect: GameShaders.AnimatedRainbow);
         spriteBatch.Draw(TextTarget, new Vector2(10, WindowUtils.WindowHeight - 10), null, Color.White, 0f, Anchor.BottomLeft.GetTextureAnchor(TextTarget), 1f, default, 0f);
         spriteBatch.End();
 
         spriteBatch.Begin();
 
-        if (MenuState == UIState.PrimaryMenu || MenuState == UIState.PlayList) {
+        if (MenuState is UIState.PrimaryMenu or UIState.PlayList) {
             var size = FontGlobals.RebirthFont.MeasureString(TankGame.Instance.MOTD);
             var motdPos = new Vector2(WindowUtils.WindowWidth / 2, 10);
             spriteBatch.DrawString(FontGlobals.RebirthFont, TankGame.Instance.MOTD, motdPos, Color.White, Vector2.One * 0.5f, 0f, Anchor.TopCenter.GetAnchor(size));
@@ -293,7 +294,7 @@ public static partial class MainMenuUI
         SetPlayButtonsVisibility(false);
         SetPrimaryMenuButtonsVisibility(false);
         IsActive = false;
-        GraphicsUI.BatchVisible = false;
+        GraphicsUI.IsVisible = false;
         ControlsUI.BatchVisible = false;
         VolumeUI.BatchVisible = false;
         GameUI.InOptions = false;

@@ -116,7 +116,7 @@ public class IngamePing {
 
     public void Render() {  
         var easing = EasingFunction.InOutSine;
-        var fullEase = Easings.GetEasingBehavior(easing, _scaleEase);
+        var fullEase = Easings.ComputeEase(easing, _scaleEase);
         foreach (ModelMesh mesh in _model.Meshes) {
             foreach (BasicEffect effect in mesh.Effects) {
                 effect.World = Matrix.CreateScale(fullEase * 20f, fullEase * 20, fullEase * 30) * Matrix.CreateRotationX(-MathHelper.PiOver2) * Matrix.CreateRotationY(MathHelper.PiOver2) * Matrix.CreateTranslation(Position);

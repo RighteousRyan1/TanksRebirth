@@ -282,13 +282,13 @@ public static class MathUtils
     }
     public static Vector3 ExpandZ(this Vector2 vector)
     => new(vector.X, 0, vector.Y);
-    public static Vector3 Expand(this Vector2 vector)
-        => new(vector, 0);
+    public static Vector3 Expand(this Vector2 vector) => new(vector, 0);
     public static Vector2 Flatten(this Vector3 vector, int excludedAxis = 2) {
         return excludedAxis switch {
             0 => new Vector2(vector.Y, vector.Z),
             1 => new Vector2(vector.X, vector.Z),
-            2 => new Vector2(vector.X, vector.Y)
+            2 => new Vector2(vector.X, vector.Y),
+            _ => throw new ArgumentOutOfRangeException(nameof(excludedAxis)),
         };
     }
     public static Vector2 FlattenZ(this Vector3 vector) => vector.Flatten(1);
@@ -303,7 +303,6 @@ public static class MathUtils
             MathF.Round(value.W));
 
     public static Vector3 ToVector3(this Vector4 value) => new Vector3(value.X, value.Y, value.Z) / value.W;
-
     private static Vector2 BezierDestructive(float amount, Span<Vector2> points) {
         for (int i = points.Length - 1; i > 0; i--)
             for (int j = 0; j < i; j++)
@@ -347,5 +346,46 @@ public static class MathUtils
             > (float)Math.Tau => angle - (float)((Math.Ceiling(angle / Math.Tau) - 1) * Math.Tau),
             _ => angle
         };
+    }
+    // in-place de casteljau, just like 2d
+    static Vector3 BezierDestructive3D(float t, Span<Vector3> points) {
+        for (int i = points.Length - 1; i > 0; i--)
+            for (int j = 0; j < i; j++)
+                points[j] = Vector3.Lerp(points[j], points[j + 1], t);
+        return points[0];
+    }
+    /// <summary>
+    /// de Casteljau Bézier evaluation for 3D control points.
+    /// Accepts ReadOnlySpan to avoid copies at the callsite- internally does one level then runs in-place.
+    /// </summary>
+    public static Vector3 Bezier3D(float t, ReadOnlySpan<Vector3> points) {
+        int n = points.Length;
+        if (n == 0) return default;
+        if (n == 1) return points[0];
+        if (n == 2) return Vector3.Lerp(points[0], points[1], t);
+
+        // small-count fast path
+        if (n <= 33) {
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            static Vector3 ByStackalloc(float tt, ReadOnlySpan<Vector3> src) {
+                Span<Vector3> copy = stackalloc Vector3[32]; // enough for first level
+                // First level of interpolation
+                int last = src.Length - 1;
+                for (int j = 0; j < last; j++)
+                    copy[j] = Vector3.Lerp(src[j], src[j + 1], tt);
+
+                // finish with in-place destructive pass over the reduced span
+                return BezierDestructive3D(tt, copy[..last]);
+            }
+            return ByStackalloc(t, points);
+        }
+
+        // heap path for large control point sets
+        int m = n - 1;
+        Vector3[] copy = GC.AllocateUninitializedArray<Vector3>(m);
+        for (int j = 0; j < m; j++)
+            copy[j] = Vector3.Lerp(points[j], points[j + 1], t);
+
+        return BezierDestructive3D(t, copy);
     }
 }

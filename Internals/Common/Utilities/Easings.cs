@@ -98,7 +98,7 @@ public static class Easings
         return 1 - InBounce((1 - t) * 2) / 2;
     }
 
-    public static float GetEasingBehavior(EasingFunction easingType, float easeValue) {
+    public static float ComputeEase(EasingFunction easingType, float easeValue) {
         return easingType switch {
             EasingFunction.Linear => Easings.Linear(easeValue),
             EasingFunction.InQuad => Easings.InQuad(easeValue),

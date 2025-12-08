@@ -67,7 +67,7 @@ public class XpBar {
         }
         else _interp = 1;
 
-        Value += (ApproachValue - Value) * Easings.GetEasingBehavior(EasingFunction.InOutQuint, _interp);
+        Value += (ApproachValue - Value) * Easings.ComputeEase(EasingFunction.InOutQuint, _interp);
     }
 
     // todo, when xp gained, draw a text particle that shows how much was gained

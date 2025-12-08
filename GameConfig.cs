@@ -59,6 +59,8 @@ public class GameConfig
     public string TankPack { get; set; } = "Vanilla";
     public string MusicPack { get; set; } = "Vanilla";
 
+    public bool MenuGameplayEnabled { get; set; } = true;
+
     #endregion
 
     #region Language

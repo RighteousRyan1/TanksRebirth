@@ -682,8 +682,7 @@ public static class DebugManager {
         _debugEff.View = view;
         _debugEff.Projection = projection;
 
-        // Get the 8 box corners as a regular array (no ref struct / Span issues)
-        Vector3[] corners = box.GetCorners(); // length 8
+        Vector3[] corners = box.GetCorners();
 
         int v = 0;
         void AddEdge(int i0, int i1) {
@@ -691,29 +690,29 @@ public static class DebugManager {
             _bboxVertices[v++] = new VertexPositionColor(corners[i1], color);
         }
 
-        // Corner order for BoundingBox.GetCorners():
-        // 0: Near Bottom Left
-        // 1: Near Top Left
-        // 2: Near Top Right
-        // 3: Near Bottom Right
-        // 4: Far Bottom Left
-        // 5: Far Top Left
-        // 6: Far Top Right
-        // 7: Far Bottom Right
+        // corner order:
+        // 0: near Bottom Left
+        // 1: near Top Left
+        // 2: near Top Right
+        // 3: near Bottom Right
+        // 4: nar Bottom Left
+        // 5: nar Top Left
+        // 6: nar Top Right
+        // 7: nar Bottom Right
 
-        // Near face
+        // near face
         AddEdge(0, 1);
         AddEdge(1, 2);
         AddEdge(2, 3);
         AddEdge(3, 0);
 
-        // Far face
+        // far face
         AddEdge(4, 5);
         AddEdge(5, 6);
         AddEdge(6, 7);
         AddEdge(7, 4);
 
-        // Connect near & far
+        // connect near & far
         AddEdge(0, 4);
         AddEdge(1, 5);
         AddEdge(2, 6);
@@ -725,23 +724,14 @@ public static class DebugManager {
         }
     }
 
-    /// <summary>
-    /// Draws a wireframe 3D bounding sphere using three great circles (XY, XZ, YZ planes).
-    /// The sphere is assumed to be in the same space as the given world matrix.
-    /// </summary>
-    public static void DrawBoundingSphere(
-        BoundingSphere sphere,
-        Color color,
-        Matrix view,
-        Matrix projection,
-        Matrix? world = null,
-        int segments = 32) {
+    // eensy weensy bit of ai help cuz i was programming this at 3am
+    /// <summary>Draws a wireframe 3D bounding sphere.</summary>
+    public static void DrawBoundingSphere(BoundingSphere sphere, Color color, Matrix view,
+        Matrix projection, Matrix? world = null, int segments = 32) {
 
-        if (!DebuggingEnabled)
-            return;
+        if (!DebuggingEnabled) return;
 
-        if (segments < 4)
-            segments = 4; // minimum to look like a circle
+        if (segments < 4) segments = 4;
 
         EnsureBboxEffect();
 
@@ -751,43 +741,69 @@ public static class DebugManager {
         _debugEff.View = view;
         _debugEff.Projection = projection;
 
-        // Three circles: XY, XZ, YZ planes
-        var vertsXY = new VertexPositionColor[segments + 1];
-        var vertsXZ = new VertexPositionColor[segments + 1];
-        var vertsYZ = new VertexPositionColor[segments + 1];
-
         float radius = sphere.Radius;
         Vector3 center = sphere.Center;
 
-        for (int i = 0; i <= segments; i++) {
-            float t = (float)i / segments;
-            float angle = t * MathHelper.TwoPi;
-            float cos = MathF.Cos(angle);
-            float sin = MathF.Sin(angle);
+        // latitudes and longitudes to draw
+        int latitudeCount = segments / 2; // around y
+        int meridianCount = segments / 2; // around x
+        int circleSegments = segments;
 
-            // XY plane (Z constant)
-            vertsXY[i] = new VertexPositionColor(
-                center + new Vector3(cos * radius, sin * radius, 0f),
-                color);
+        // should i make this publicly accessible?
+        void CircleDraw(Func<float, Vector3> pointOnCircle) {
+            var verts = new VertexPositionColor[circleSegments + 1];
 
-            // XZ plane (Y constant)
-            vertsXZ[i] = new VertexPositionColor(
-                center + new Vector3(cos * radius, 0f, sin * radius),
-                color);
+            for (int i = 0; i <= circleSegments; i++) {
+                float t = (float)i / circleSegments; // 0 -> 1
+                float angle = t * MathHelper.TwoPi; // 0 -> 2pi
+                verts[i] = new VertexPositionColor(
+                    center + pointOnCircle(angle),
+                    color);
+            }
 
-            // YZ plane (X constant)
-            vertsYZ[i] = new VertexPositionColor(
-                center + new Vector3(0f, cos * radius, sin * radius),
-                color);
+            gd.DrawUserPrimitives(
+                PrimitiveType.LineStrip,
+                verts,
+                0,
+                circleSegments);
         }
 
         foreach (var pass in _debugEff.CurrentTechnique.Passes) {
             pass.Apply();
 
-            // Each circle is a line strip of `segments` segments
-            gd.DrawUserPrimitives(PrimitiveType.LineStrip, vertsXY, 0, segments);
-            gd.DrawUserPrimitives(PrimitiveType.LineStrip, vertsXZ, 0, segments);
-            gd.DrawUserPrimitives(PrimitiveType.LineStrip, vertsYZ, 0, segments);
+            // latitudes w/o poles
+            for (int lat = 1; lat < latitudeCount; lat++) {
+                float v = (float)lat / latitudeCount;
+                float elev = (v - 0.5f) * MathHelper.Pi;
+
+                float y = radius * MathF.Sin(elev);
+                float r = radius * MathF.Cos(elev); // radius at given y
+
+                CircleDraw(angle => new Vector3(
+                    MathF.Cos(angle) * r,
+                    y,
+                    MathF.Sin(angle) * r));
+            }
+
+            // meridians
+            for (int m = 0; m < meridianCount; m++) {
+                float phi = (float)m / meridianCount * MathHelper.TwoPi; 
+
+                CircleDraw(theta => {
+                    float cosT = MathF.Cos(theta);
+                    float sinT = MathF.Sin(theta);
+                    float y = radius * cosT;
+                    float z = radius * sinT;
+
+                    float sinPhi = MathF.Sin(phi);
+                    float cosPhi = MathF.Cos(phi);
+
+                    float x = z * sinPhi;
+                    float zRot = z * cosPhi;
+
+                    return new Vector3(x, y, zRot);
+                });
+            }
         }
     }
 }

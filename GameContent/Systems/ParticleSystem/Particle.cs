@@ -21,9 +21,12 @@ public enum ParticleIntensity
     High, // ... 100%
 }
 public enum ParticleImportance {
-    Critical, // must always render (e.g., player hit, mine explosion, damage feedback)
-    Important, // render on Medium and High
-    Cosmetic // only render on High
+    /// <summary>Must always render (e.g., player hit, mine explosion, damage feedback).</summary>
+    Critical,
+    /// <summary>Generally important for feedback, but the player can deduce what happens even without.</summary>
+    Important,
+    /// <summary>Particles that are pureply haptic and are not necessary in any regard.</summary>
+    Cosmetic 
 }
 public class Particle
 {
@@ -228,6 +231,8 @@ public class Particle
             TankGame.SpriteRenderer.End();
             TankGame.SpriteRenderer.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
         }
+
+        // EffectHandle.SetDefaultGameLighting_IngameEntities();
         UniqueDraw?.Invoke(this);
     }
 

@@ -93,11 +93,11 @@ public static class IntermissionSystem {
         IntermissionHandler.Initialize();
         // should this be where the animator is re-instantiated?
         TextAnimatorSmall = Animator.Create()
-            .WithFrame(new(position2d: Vector2.Zero, scale: Vector2.Zero, duration: TimeSpan.FromSeconds(0.25), easing: EasingFunction.OutBack))
-            .WithFrame(new(position2d: Vector2.Zero, scale: Vector2.One * 0.4f, duration: TimeSpan.FromSeconds(0.25), easing: EasingFunction.OutBack));
+            .WithFrame(new(position: Vector3.Zero, scale: Vector3.Zero, duration: TimeSpan.FromSeconds(0.25), easing: EasingFunction.OutBack))
+            .WithFrame(new(position: Vector3.Zero, scale: Vector3.One * 0.4f, duration: TimeSpan.FromSeconds(0.25), easing: EasingFunction.OutBack));
         TextAnimatorLarge = Animator.Create()
-            .WithFrame(new(position2d: Vector2.Zero, scale: Vector2.Zero, duration: TimeSpan.FromSeconds(0.35), easing: EasingFunction.OutBack))
-            .WithFrame(new(position2d: Vector2.Zero, scale: Vector2.One * 1.2f, duration: TimeSpan.FromSeconds(0.35), easing: EasingFunction.OutBack));
+            .WithFrame(new(position: Vector3.Zero, scale: Vector3.Zero, duration: TimeSpan.FromSeconds(0.35), easing: EasingFunction.OutBack))
+            .WithFrame(new(position: Vector3.Zero, scale: Vector3.One * 1.2f, duration: TimeSpan.FromSeconds(0.35), easing: EasingFunction.OutBack));
 
         IntermissionAnimator = Animator.Create()
             .WithFrame(new(duration: TimeSpan.FromSeconds(3), easing: EasingFunction.Linear))
@@ -111,23 +111,23 @@ public static class IntermissionSystem {
         // only use position2d.Y when referencing!!!
         BonusLifeAnimator = Animator.Create()
             // time before the banner drops in
-            .WithFrame(new(duration: TimeSpan.FromSeconds(0.5), scale: Vector2.One, position2d: Vector2.UnitY * -200, easing: EasingFunction.OutElastic))
+            .WithFrame(new(duration: TimeSpan.FromSeconds(0.5), scale: Vector3.One, position: Vector3.UnitY * -200, easing: EasingFunction.OutElastic))
             // elastic animation where the banner drops from the top
             // after this frame, force drawing to 40% of window height
-            .WithFrame(new(duration: TimeSpan.FromSeconds(1), scale: Vector2.One, position2d: Vector2.UnitY * WindowUtils.WindowHeight * 0.4f, easing: EasingFunction.Linear))
+            .WithFrame(new(duration: TimeSpan.FromSeconds(1), scale: Vector3.One, position: Vector3.UnitY * WindowUtils.WindowHeight * 0.4f, easing: EasingFunction.Linear))
             // text gets brighter and slightly scales up
             // also makes the player life text(s) glow yellow and grow for a second
-            .WithFrame(new(duration: TimeSpan.FromSeconds(0.2), scale: Vector2.One, position2d: Vector2.Zero, easing: EasingFunction.OutBack))
+            .WithFrame(new(duration: TimeSpan.FromSeconds(0.2), scale: Vector3.One, position: Vector3.Zero, easing: EasingFunction.OutBack))
             // text shrinks back to original size
             // duration = 0 so it shrinks as soon as the OutBack animation is done
-            .WithFrame(new(duration: TimeSpan.FromSeconds(0.2), scale: Vector2.One * 1.25f, position2d: Vector2.Zero, easing: EasingFunction.Linear))
+            .WithFrame(new(duration: TimeSpan.FromSeconds(0.2), scale: Vector3.One * 1.25f, position: Vector3.Zero, easing: EasingFunction.Linear))
             // time before banner fades out of existence
-            .WithFrame(new(duration: TimeSpan.FromSeconds(2.5), scale: Vector2.One, position2d: Vector2.Zero, easing: EasingFunction.Linear))
+            .WithFrame(new(duration: TimeSpan.FromSeconds(2.5), scale: Vector3.One, position: Vector3.Zero, easing: EasingFunction.Linear))
             // banner actually fades from existence
             // opacity will be handled in the mid-frame actions
-            .WithFrame(new(duration: TimeSpan.FromSeconds(0.5), scale: Vector2.One, position2d: Vector2.Zero, easing: EasingFunction.Linear))
+            .WithFrame(new(duration: TimeSpan.FromSeconds(0.5), scale: Vector3.One, position: Vector3.Zero, easing: EasingFunction.Linear))
             // dummy frame :(
-            .WithFrame(new(duration: TimeSpan.FromSeconds(0), scale: Vector2.One, position2d: Vector2.Zero, easing: EasingFunction.Linear));
+            .WithFrame(new(duration: TimeSpan.FromSeconds(0), scale: Vector3.One, position: Vector3.Zero, easing: EasingFunction.Linear));
 
         BonusLifeAnimator?.Restart();
         BonusLifeAnimator?.Stop(); // to ensure brightness calculations are proper
@@ -217,7 +217,7 @@ public static class IntermissionSystem {
         IntermissionAnimator.KeyFrames[2] = new(duration: TimeSpan.FromSeconds(secs2), easing: EasingFunction.Linear);
         IntermissionAnimator.KeyFrames[3] = new(duration: TimeSpan.FromSeconds(secs3), easing: EasingFunction.Linear);
 
-        BonusLifeAnimator.KeyFrames[1] = new(duration: TimeSpan.FromSeconds(1), scale: Vector2.One, position2d: Vector2.UnitY * WindowUtils.WindowHeight * 0.4f, easing: EasingFunction.OutElastic);
+        BonusLifeAnimator.KeyFrames[1] = new(duration: TimeSpan.FromSeconds(1), scale: Vector3.One, position: Vector3.UnitY * WindowUtils.WindowHeight * 0.4f, easing: EasingFunction.OutElastic);
 
 
         // the last frame is filler because i dunno how to fix the last frame finish event firing bug
@@ -284,12 +284,12 @@ public static class IntermissionSystem {
             // TODO: fix float interp
             if (PlayerTank.ClientTank is not null) {
                 // hacky using vectors for now.
-                IntermissionHandler.ThirdPersonTransitionAnimation = Animator.Create()
+                IntermissionHandler.ThirdPersonTransition = Animator.Create()
                     //.WithFrame(new(position2d: Vector2.Zero, position3d: PlayerTank.ClientTank.Position3D + new Vector3(0, 100, 0), duration: TimeSpan.FromSeconds(2)))
-                    .WithFrame(new(position2d: Vector2.Zero, position3d: PlayerTank.ClientTank.Position3D + new Vector3(0, 100, 0), duration: TimeSpan.FromSeconds(3), easing: EasingFunction.InOutQuad))
-                    .WithFrame(new(position2d: new Vector2(-PlayerTank.ClientTank.TurretRotation), position3d: PlayerTank.ClientTank.Position3D));
-                IntermissionHandler.ThirdPersonTransitionAnimation?.Restart();
-                IntermissionHandler.ThirdPersonTransitionAnimation?.Run();
+                    .WithFrame(new(floats: [0], position: PlayerTank.ClientTank.Position3D + new Vector3(0, 100, 0), duration: TimeSpan.FromSeconds(3), easing: EasingFunction.InOutQuad))
+                    .WithFrame(new(floats: [-PlayerTank.ClientTank.TurretRotation], position: PlayerTank.ClientTank.Position3D));
+                IntermissionHandler.ThirdPersonTransition?.Restart();
+                IntermissionHandler.ThirdPersonTransition?.Run();
             }
             IntermissionHandler.BeginIntroSequence();
             
@@ -351,7 +351,7 @@ public static class IntermissionSystem {
         // switch to RT, begin SB, do drawing, end SB, SetRenderTarget(null), begin SB again, draw RT, end SB
 
         // used in the bonus life animation, to determine color flashing upon growth
-        var brightness = (BonusLifeAnimator.CurrentScale - Vector2.One).Length();
+        var brightness = (BonusLifeAnimator.CurrentScale - Vector3.One).Length();
 
         #region RenderToBackground
 
@@ -411,7 +411,7 @@ public static class IntermissionSystem {
                 lerpedColor,
                 // hacky or not?
                 PlayerID.PlayerTankColors[i],
-                Vector2.One.ToResolution() * (ShouldDrawBanner ? Vector2.One : BonusLifeAnimator.CurrentScale),
+                Vector2.One.ToResolution() * (ShouldDrawBanner ? Vector2.One : BonusLifeAnimator.CurrentScale.Flatten()),
                 1f,
                 Anchor.Center, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 1f);
 
@@ -487,7 +487,7 @@ public static class IntermissionSystem {
             missionName,
             BackgroundColor,
             ColorForBorders,
-            TextAnimatorLarge.CurrentScale.ToResolution(),
+            TextAnimatorLarge.CurrentScale.Flatten().ToResolution(),
             1f, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 3f, charSpacing: spacing);
         DrawUtils.DrawStringWithBorderAndShadow(spriteBatch, FontGlobals.RebirthFontLarge,
             new Vector2(WindowUtils.WindowWidth / 2 - spacingEnemyTankDisplay.ToResolutionX(), textOffsetTanksLeft),
@@ -495,7 +495,7 @@ public static class IntermissionSystem {
             enemyTankDisplay,
             BackgroundColor,
             ColorForBorders,
-            TextAnimatorLarge.CurrentScale.ToResolution() * 0.75f,
+            TextAnimatorLarge.CurrentScale.Flatten().ToResolution() * 0.75f,
             1f, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 2.5f, charSpacing: spacing);
 
         // draw campaign/mission data
@@ -506,7 +506,7 @@ public static class IntermissionSystem {
                 $"{TankGame.GameLanguage.Campaign}: \"{CampaignGlobals.LoadedCampaign.MetaData.Name}\" ({TankGame.GameLanguage.Mission} #{CampaignGlobals.LoadedCampaign.CurrentMissionId + 1})",
                 BackgroundColor,
                 ColorForBorders,
-                TextAnimatorSmall.CurrentScale.ToResolution(),
+                TextAnimatorSmall.CurrentScale.Flatten().ToResolution(),
                 1f, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 1.5f);
         else
             DrawUtils.DrawStringWithBorderAndShadow(spriteBatch, FontGlobals.RebirthFontLarge,
@@ -515,7 +515,7 @@ public static class IntermissionSystem {
                 $"{TankGame.GameLanguage.Mission} #{CampaignGlobals.LoadedCampaign.CurrentMissionId + 1}",
                 BackgroundColor,
                 ColorForBorders,
-                TextAnimatorSmall.CurrentScale.ToResolution(),
+                TextAnimatorSmall.CurrentScale.Flatten().ToResolution(),
                 1f, shadowDistScale: 1.5f, shadowAlpha: 0.5f, borderThickness: 1.5f);
 
         spriteBatch.End();
@@ -561,7 +561,7 @@ public static class IntermissionSystem {
 
         spriteBatch.DrawString(FontGlobals.RebirthFontLarge, TankGame.GameLanguage.BonusTank, 
             new Vector2(BonusBannerTextBuffer.Width / 2, BonusBannerTextBuffer.Height / 2), 
-            Color.White, (Vector2.One * _bannerScale * 0.5f * BonusLifeAnimator.CurrentScale).ToResolution(), 
+            Color.White, (Vector2.One * _bannerScale * 0.5f * BonusLifeAnimator.CurrentScale.Flatten()).ToResolution(), 
             origin: Anchor.Center.GetAnchor(FontGlobals.RebirthFontLarge.MeasureString(TankGame.GameLanguage.BonusTank)));
 
         spriteBatch.End();
@@ -571,7 +571,7 @@ public static class IntermissionSystem {
         #endregion
 
         // maximum value should be 40% of window height
-        _renderY = _forceBonusDrawToHeight ? WindowUtils.WindowHeight * 0.4f : BonusLifeAnimator.CurrentPosition2D.Y;
+        _renderY = _forceBonusDrawToHeight ? WindowUtils.WindowHeight * 0.4f : BonusLifeAnimator.CurrentPosition.Y;
     }
 
     static float _renderMargin = 0.33f;
@@ -635,10 +635,10 @@ public static class IntermissionSystem {
                 spriteBatch.Begin();
                 var textPos = new Vector2(WindowUtils.WindowWidth / 2, _renderY - 20.ToResolutionY());
                 DrawUtils.DrawStringShadowOnly(spriteBatch, FontGlobals.RebirthFontLarge, textPos, Vector2.One * _bannerScale,
-                    TankGame.GameLanguage.BonusTank, (Vector2.One * _bannerScale * 0.5f * BonusLifeAnimator.CurrentScale).ToResolution(), BonusBannerAlpha * Alpha, shadowAlpha: 0.5f);
+                    TankGame.GameLanguage.BonusTank, (Vector2.One * _bannerScale * 0.5f * BonusLifeAnimator.CurrentScale.Flatten()).ToResolution(), BonusBannerAlpha * Alpha, shadowAlpha: 0.5f);
                 DrawUtils.DrawStringBorderOnly(spriteBatch, FontGlobals.RebirthFontLarge, TankGame.GameLanguage.BonusTank, 
                     textPos,
-                    BonusBannerTextBorderColor * Alpha * BonusBannerAlpha, (Vector2.One * _bannerScale * 0.5f * BonusLifeAnimator.CurrentScale).ToResolution(), 0f, borderThickness: 1.5f);
+                    BonusBannerTextBorderColor * Alpha * BonusBannerAlpha, (Vector2.One * _bannerScale * 0.5f * BonusLifeAnimator.CurrentScale.Flatten()).ToResolution(), 0f, borderThickness: 1.5f);
                 spriteBatch.End();
 
                 // draw the inner text with the gradient

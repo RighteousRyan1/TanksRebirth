@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using TanksRebirth.GameContent.Globals.Assets;
+using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.Graphics;
 using TanksRebirth.Graphics.Drawing;
 using TanksRebirth.Internals;
@@ -27,6 +28,9 @@ public class RenderableChest
 
     readonly Matrix[] _boneTransforms;
 
+
+    public Vector3 KeySlotPos { get; private set; }
+
     public RenderableChest(Vector3 position, Matrix view, Matrix proj)
     {
         Model = ModelGlobals.Chest.Asset;
@@ -47,14 +51,17 @@ public class RenderableChest
         /* Remember: mesh origins (+translations)
          * 
          */
+        var ypr = Matrix.CreateFromYawPitchRoll(Rotation.Z, Rotation.Y, Rotation.X);
         DrawParams.World = Matrix.CreateScale(Scale)
-            * Matrix.CreateFromYawPitchRoll(Rotation.Z, Rotation.Y, Rotation.X)
+            * ypr
             * Matrix.CreateTranslation(ChestPosition - new Vector3(0, 0, /*15.2424f*/0));
         LidMesh.ParentBone.Transform = Matrix.CreateFromYawPitchRoll(LidRotation.Z, LidRotation.Y, LidRotation.X)
             * Matrix.CreateTranslation(LidPosition);
 
         Model.CopyAbsoluteBoneTransformsTo(_boneTransforms);
         Model!.Root.Transform = DrawParams.World;
+
+        KeySlotPos = ChestPosition + Vector3.Transform(new Vector3(0, 30.6f, 20), ypr);
 
         /*for (int i = 0; i < Model.Bones.Count; i++) {
             var bone = Model.Bones[i];

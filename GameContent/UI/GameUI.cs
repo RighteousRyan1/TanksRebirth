@@ -37,6 +37,7 @@ public static class GameUI
 
     public static UITextButton ControlsButton;
 
+
     public static UITextButton BackButton;
 
     public static UIElement[] menuElements;
@@ -44,12 +45,12 @@ public static class GameUI
 
     public static bool Paused { get; set; } = false;
 
-    private static int _delay;
+    static int _delay;
 
-    private static float _gpuSettingsOffset = 0f;
+    static float _gpuSettingsOffset = 0f;
 
     // TODO: make rect scissor work -> get powerups to be pickupable
-    private static bool _initialized;
+    static bool _initialized;
 
     internal static Vector2 QuitButtonSize = new(500, 150);
     internal static Vector2 OptionsButtonSize = new(500, 150);
@@ -134,9 +135,8 @@ public static class GameUI
         GraphicsButton.SetDimensions(() => new Vector2(700, 350).ToResolution(), () => new Vector2(500, 150).ToResolution());
         GraphicsButton.OnLeftClick = (uiElement) =>
         {
-            GraphicsUI.BatchVisible = true;
-            GraphicsUI.ShowAll();
-            GraphicsUI.VsyncButton.IgnoreMouseInteractions = true;
+            GraphicsUI.SetVisibility(true);
+            GraphicsUI.VSyncBtn.IgnoreMouseInteractions = true;
             _delay = 1;
             VolumeButton.IsVisible = false;
             GraphicsButton.IsVisible = false;
@@ -267,27 +267,25 @@ public static class GameUI
             GraphicsButton,
             ControlsButton,
             BackButton,
-            GraphicsUI.VsyncButton,
-            GraphicsUI.PerPixelLightingButton,
-            GraphicsUI.FullScreenButton,
-            GraphicsUI.ResolutionButton,
+            GraphicsUI.VSyncBtn,
+            GraphicsUI.PPLButton,
+            GraphicsUI.WinKindBtn,
+            GraphicsUI.ResBtn,
             VolumeUI.MusicVolume,
             VolumeUI.EffectsVolume,
             VolumeUI.AmbientVolume
         ];
         graphicsElements =
         [
-            GraphicsUI.VsyncButton,
-            GraphicsUI.VsyncToggle,
-            GraphicsUI.PerPixelLightingButton,
-            GraphicsUI.PerPixelLightingToggle,
-            GraphicsUI.FullScreenButton,
-            GraphicsUI.ResolutionButton
+            GraphicsUI.VSyncBtn,
+            GraphicsUI.PPLButton,
+            GraphicsUI.WinKindBtn,
+            GraphicsUI.ResBtn
         ];
         foreach (UIElement button in graphicsElements)
         {
-            button.HasScissor = true;
-            button.Scissor = () => new(0, (int)(WindowUtils.WindowHeight * 0.05f), WindowUtils.WindowWidth, (int)(WindowUtils.WindowHeight * 0.7f));
+            // button.HasScissor = true;
+            // button.Scissor = () => new(0, (int)(WindowUtils.WindowHeight * 0.05f), WindowUtils.WindowWidth, (int)(WindowUtils.WindowHeight * 0.7f));
             button.OnMouseOver = (uiElement) => { SoundPlayer.PlaySoundInstance("Assets/sounds/menu/menu_tick.ogg", SoundContext.Effect); };
         }
         foreach (var e in menuElements)
@@ -349,10 +347,9 @@ public static class GameUI
             GraphicsButton.IsVisible = true;
             ControlsButton.IsVisible = true;
         }
-        else if (GraphicsUI.BatchVisible)
+        else if (GraphicsUI.IsVisible)
         {
-            GraphicsUI.BatchVisible = false;
-            GraphicsUI.HideAll();
+            GraphicsUI.SetVisibility(false);
             VolumeButton.IsVisible = true;
             GraphicsButton.IsVisible = true;
             ControlsButton.IsVisible = true;
@@ -412,7 +409,7 @@ public static class GameUI
                     ControlsButton.IsVisible = false;
                     OptionsButton.IsVisible = true;
                     QuitButton.IsVisible = true;
-                    GraphicsUI.BatchVisible = false;
+                    GraphicsUI.IsVisible = false;
                     VolumeUI.BatchVisible = false;
 
                     MainMenuUI.MenuState = MainMenuUI.UIState.PrimaryMenu;
@@ -452,18 +449,6 @@ public static class GameUI
         }    
         if (!_initialized)
             return;
-        _newScroll = InputUtils.KeyboardMouse.CurrentMouse.ScrollWheelValue;
-
-        if (_newScroll != _oldScroll)
-        {
-            _gpuSettingsOffset = _newScroll - _oldScroll;
-            foreach (var b in graphicsElements)
-            {
-                b.Position = new(b.Position.X, b.Position.Y + _gpuSettingsOffset);
-                b.MouseHovering = false;
-            }
-            // ChatSystem.SendMessage(_gpuSettingsOffset, Color.White, "<Debug>");
-        }
 
         TankGame.Settings.MusicVolume = VolumeUI.MusicVolume.Value;
         TankGame.Settings.EffectsVolume = VolumeUI.EffectsVolume.Value;
@@ -486,7 +471,7 @@ public static class GameUI
         if (_delay <= 0)
         {
             VolumeUI.MusicVolume.IgnoreMouseInteractions = false;
-            GraphicsUI.VsyncButton.IgnoreMouseInteractions = false;
+            GraphicsUI.VSyncBtn.IgnoreMouseInteractions = false;
         }
         VolumeUI.MusicVolume.Tooltip = $"{Math.Round(TankGame.Settings.MusicVolume * 100, 1)}%";
         VolumeUI.EffectsVolume.Tooltip = $"{Math.Round(TankGame.Settings.EffectsVolume * 100, 1)}%";

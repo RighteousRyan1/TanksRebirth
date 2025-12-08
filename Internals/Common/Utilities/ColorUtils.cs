@@ -12,7 +12,7 @@ public static class ColorUtils
 {
     public static Color[] AllColors { get; } = [.. typeof(Color).GetProperties(BindingFlags.Static | BindingFlags.Public).Select(x => (Color)x.GetValue(null)!)];
     public static Color[] BrightColors { get; } = [.. AllColors.Where(x => GetLuminosity(x) > 0.33f)];
-    public static Color DiscoPartyColor => HsvToRgb(RuntimeData.UpdateCount % 255 / 255f * 360, 1, 1);
+    public static Color DiscoPartyColor => HsvToRgb(RuntimeData.RunTime % 255 / 255f * 360, 1, 1);
 
     /// <summary>Returns the average color of a given <see cref="Texture2D"/>.</summary>
     public static Color GetAverageColor(Texture2D texture) {

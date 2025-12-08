@@ -499,6 +499,8 @@ public class TankGame : Game {
             else
                 MapRenderer.Theme = MapTheme.Christmas;*/
 
+            // GameScene.Theme = MapTheme.Christmas;
+
             TankFootprint.ShouldTracksFade = Settings.FadeFootprints;
 
             Graphics.PreferredBackBufferWidth = Settings.ResWidth;
@@ -719,7 +721,7 @@ public class TankGame : Game {
 
         // TODO: this is quite hellcode. reorganize.
         if (!IsCrashInfoVisible) {
-            CameraGlobals.Update();
+            CameraGlobals.UpdateCamera();
         }
 
         if (CampaignCompleteUI.IsViewingResults)

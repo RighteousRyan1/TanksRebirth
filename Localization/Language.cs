@@ -1,4 +1,5 @@
 using System.IO;
+using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.Internals.Common.IO;
 
 namespace TanksRebirth.Localization;
@@ -41,14 +42,6 @@ public class Language {
     public string MusicVolume { get; set; }
     public string EffectsVolume { get; set; }
     public string AmbientVolume { get; set; }
-    public string PerPxLight { get; set; }
-    public string PerPxLightDesc { get; set; }
-    public string VSync { get; set; }
-    public string VSyncDesc { get; set; }
-    public string WindowKind { get; set; } // name is remaining the same for legacy purposes, this is actually just the dictation for fullscreen
-    public string WindowKindDesc { get; set; } // same here
-    public string Resolution { get; set; }
-    public string ResolutionDesc { get; set; }
     public string PressAKey { get; set; }
     public string Back { get; set; }
     #endregion
@@ -188,6 +181,23 @@ public class Language {
     #region Gameplay
     public string Hit { get; set; }
     #endregion
+    #region Settings
+    public string PerPxLight { get; set; }
+    public string PerPxLightDesc { get; set; }
+    public string VSync { get; set; }
+    public string VSyncDesc { get; set; }
+    public string WindowKind { get; set; } // name is remaining the same for legacy purposes, this is actually just the dictation for fullscreen
+    public string WindowKindDesc { get; set; } // same here
+    public string Resolution { get; set; }
+    public string ResolutionDesc { get; set; }
+    public string FadeTracks { get; set; }
+    public string FadeTracksDesc { get; set; }
+
+    public string MenuGameplay { get; set; }
+    public string MenuGameplayDesc { get; set; }
+    public string ParticleIntensity { get; set; }
+    public string ParticleIntensityDesc { get; set; }
+    #endregion
     #region Other
     public string BonusTank { get; set; }
     public string CampaignResults { get; set; }
@@ -239,4 +249,6 @@ public class Language {
         JsonHandler<Language> handler = new(lang, path);
         var newLang = handler.Serialize(new() { WriteIndented = true }, true);
     }
+
+    public string GetEnablement(bool enabled) => enabled ? Enabled : Disabled;
 }

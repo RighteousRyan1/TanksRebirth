@@ -419,7 +419,7 @@ public partial class AITank : Tank {
 
             if (t > 1) t = 1;
 
-            float ease = Easings.GetEasingBehavior(EasingFunction.InOutSine, t);
+            float ease = Easings.ComputeEase(EasingFunction.InOutSine, t);
 
             p.Roll = ease * MathHelper.TwoPi * 6 + MathHelper.PiOver2;
 
@@ -428,7 +428,7 @@ public partial class AITank : Tank {
 
                 if (t2 > 1) t2 = 1;
 
-                float ease2 = Easings.GetEasingBehavior(EasingFunction.InOutSine, t2);
+                float ease2 = Easings.ComputeEase(EasingFunction.InOutSine, t2);
 
                 p.Position.Y += ease2;
 

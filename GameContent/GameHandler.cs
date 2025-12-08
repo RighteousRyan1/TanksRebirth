@@ -1,8 +1,6 @@
 using TanksRebirth.Internals.UI;
-using TanksRebirth.Internals.Common;
 using TanksRebirth.Internals.Common.Utilities;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Input;
 using System.Linq;
 using System;
 using TanksRebirth.GameContent.Systems;
@@ -12,7 +10,6 @@ using TanksRebirth.GameContent.Systems.Coordinates;
 using TanksRebirth.Net;
 using TanksRebirth.Achievements;
 using TanksRebirth.GameContent.Globals;
-using TanksRebirth.GameContent.ID;
 using TanksRebirth.Graphics;
 using TanksRebirth.GameContent.Systems.PingSystem;
 using TanksRebirth.Internals.Common.Framework.Animation;
@@ -20,11 +17,9 @@ using TanksRebirth.GameContent.RebirthUtils;
 using TanksRebirth.GameContent.Cosmetics;
 using TanksRebirth.GameContent.UI.MainMenu;
 using TanksRebirth.GameContent.UI.LevelEditor;
-using TanksRebirth.Graphics.Metrics;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.Systems.TankSystem;
-using TanksRebirth.Internals.Common.Framework.Audio;
 
 namespace TanksRebirth.GameContent;
 
@@ -109,6 +104,7 @@ public class GameHandler {
             doTestWithFont();*/
 
         ExperienceBar.Update();
+
         CosmeticsUI.Update();
         RoomScene.Update();
 
@@ -135,7 +131,7 @@ public class GameHandler {
             PlayerTank.SetLives(PlayerTank.StartingLives);
 
         for (int i = 0; i < Animator.Animators.Count; i++)
-            Animator.Animators[i].PlayAnimation(gameTime);
+            Animator.Animators[i].PlayAnimationIfRunning(gameTime);
 
         foreach (var ping in IngamePing.AllIngamePings)
             ping?.Update();

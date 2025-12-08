@@ -30,7 +30,7 @@ public class GameData : IFileSerializable {
         IOUtils.ToAsciiBytes(
             "If you ever choose to modify this file manually, just know you are making the game unfun for yourself.");*/ // hmm...
 
-    public uint CollectedKeys;
+    public byte CollectedKeys;
     public List<int> UnlockedCosmetics = [];
 
     // only kills from a player will count in single player to increment these!
@@ -90,7 +90,7 @@ public class GameData : IFileSerializable {
 
         // version 1 and up
 
-        writer.Write(CollectedKeys);
+        writer.Write((byte)CollectedKeys);
         int cosLen = UnlockedCosmetics.Count;
         writer.Write(cosLen);
         for (int i = 0; i < cosLen; i++) {
@@ -140,7 +140,7 @@ public class GameData : IFileSerializable {
             // version 1 and up
 
             if (saveVersion >= 1) {
-                CollectedKeys = reader.ReadUInt32();
+                CollectedKeys = reader.ReadByte();
                 int cosLen = reader.ReadInt32();
                 for (int i = 0; i < cosLen; i++) {
 

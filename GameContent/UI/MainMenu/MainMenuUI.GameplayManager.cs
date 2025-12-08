@@ -13,6 +13,10 @@ namespace TanksRebirth.GameContent.UI.MainMenu;
 public static partial class MainMenuUI {
     static bool _firstTime = true;
     public static void UpdateGameplay() {
+        if (!TankGame.Settings.MenuGameplayEnabled) {
+            return;
+        }
+
         if (IntermissionSystem.IsAwaitingNewMission || IntermissionSystem.BlackAlpha > 0) return;
         if (curMenuMission.Blocks is null) {
             LoadTemplateMission();

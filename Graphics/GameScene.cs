@@ -21,8 +21,7 @@ public enum MapTheme
     Vanilla,
     Christmas,
 }
-public static class GameScene
-{
+public static class GameScene {
     public static bool ShouldRenderAll { get; set; } = true;
     public static bool ShouldRenderFloor { get; set; } = true;
     public static bool ShouldRenderBounds { get; set; } = true;
@@ -48,8 +47,7 @@ public static class GameScene
 
     public static MapTheme Theme { get; set; } = MapTheme.Vanilla;
 
-    public static Dictionary<string, Texture2D> Assets = new()
-    {
+    public static Dictionary<string, Texture2D> Assets = new() {
         ["block.1"] = null,
         ["block.2"] = null,
         ["block_harf.1"] = null,
@@ -68,11 +66,9 @@ public static class GameScene
         ["snow"] = GameResources.GetGameResource<Texture2D>("Assets/christmas/snow")
     };
 
-    public static void LoadTexturePack(string folder)
-    {
+    public static void LoadTexturePack(string folder) {
         LoadVanillaTextures();
-        if (folder.Equals("vanilla", StringComparison.CurrentCultureIgnoreCase))
-        {
+        if (folder.Equals("vanilla", StringComparison.CurrentCultureIgnoreCase)) {
             TankGame.ClientLog.Write($"Loaded vanilla textures for Scene.", LogType.Info);
             return;
         }
@@ -85,26 +81,22 @@ public static class GameScene
         Directory.CreateDirectory(baseRoot);
         Directory.CreateDirectory(rootGameScene);
 
-        if (!Directory.Exists(path))
-        {
+        if (!Directory.Exists(path)) {
             TankGame.ClientLog.Write($"Error: Directory '{path}' not found when attempting texture pack load.", LogType.Warn);
             return;
         }
 
         AssetRoot = path;
 
-        foreach (var file in Directory.GetFiles(path))
-        {
-            if (Assets.Any(type => type.Key == Path.GetFileNameWithoutExtension(file)))
-            {
+        foreach (var file in Directory.GetFiles(path)) {
+            if (Assets.Any(type => type.Key == Path.GetFileNameWithoutExtension(file))) {
                 Assets[Path.GetFileNameWithoutExtension(file)] = Texture2D.FromFile(TankGame.Instance.GraphicsDevice, Path.Combine(path, Path.GetFileName(file)));
                 TankGame.ClientLog.Write($"Texture pack '{folder}' overrided texture '{Path.GetFileNameWithoutExtension(file)}'", LogType.Info);
             }
         }
     }
 
-    public static void LoadVanillaTextures()
-    {
+    public static void LoadVanillaTextures() {
         AssetRoot = "Assets/textures/ingame";
         static Texture2D get(string s)
             => GameResources.GetGameResource<Texture2D>(Path.Combine(AssetRoot, s), premultiply: true);
@@ -128,19 +120,16 @@ public static class GameScene
         PostLoadTextures?.Invoke();
     }
 
-    public static class FloorRenderer
-    {
+    public static class FloorRenderer {
         public static Model FloorModelBase;
 
         public static float scale = 1f;
 
-        public static void LoadFloor()
-        {
+        public static void LoadFloor() {
             _blackPixel = new Texture2D(TankGame.Instance.GraphicsDevice, 1, 1);
             _blackPixel.SetData(new Color[] { Color.Black });
             FloorModelBase = ModelGlobals.Floor.Asset;
-            switch (Theme)
-            {
+            switch (Theme) {
                 case MapTheme.Vanilla:
                     AssetRoot = "Assets/textures/ingame/";
                     break;
@@ -152,8 +141,7 @@ public static class GameScene
             PostLoadFloor?.Invoke();
         }
         // TODO: finish christmas stuff kekw failure
-        public static void RenderFloor()
-        {
+        public static void RenderFloor() {
             scale = 0.95f;
             if (!ShouldRenderFloor) return;
             foreach (var mesh in FloorModelBase.Meshes) {
@@ -185,31 +173,28 @@ public static class GameScene
 
 
     // make proper texturepack loading.
-    public static class BoundsRenderer
-    {
+    public static class BoundsRenderer {
         public const string BOUNDARY_TAG = "bounds";
         public static Body[] Boundaries = new Body[4];
         public static Model BoundaryModel;
 
-        public static void LoadBounds()
-        {
+        public static void LoadBounds() {
             // 0 -> top, 1 -> right, 2 -> bottom, 3 -> left
-            Boundaries[0] = Tank.CollisionsWorld.CreateRectangle(1000 / Tank.UNITS_PER_METER, 5 / Tank.UNITS_PER_METER, 1f, 
+            Boundaries[0] = Tank.CollisionsWorld.CreateRectangle(1000 / Tank.UNITS_PER_METER, 5 / Tank.UNITS_PER_METER, 1f,
                 new Vector2(MIN_X, MIN_Z - 4) / Tank.UNITS_PER_METER, 0f, BodyType.Static);
 
-            Boundaries[1] = Tank.CollisionsWorld.CreateRectangle(5 / Tank.UNITS_PER_METER, 1000 / Tank.UNITS_PER_METER, 1f, 
+            Boundaries[1] = Tank.CollisionsWorld.CreateRectangle(5 / Tank.UNITS_PER_METER, 1000 / Tank.UNITS_PER_METER, 1f,
                 new Vector2(MAX_X + 7, MAX_Z) / Tank.UNITS_PER_METER, 0f, BodyType.Static);
 
-            Boundaries[2] = Tank.CollisionsWorld.CreateRectangle(1000 / Tank.UNITS_PER_METER, 5 / Tank.UNITS_PER_METER, 1f, 
+            Boundaries[2] = Tank.CollisionsWorld.CreateRectangle(1000 / Tank.UNITS_PER_METER, 5 / Tank.UNITS_PER_METER, 1f,
                 new Vector2(MIN_X, MAX_Z + 4) / Tank.UNITS_PER_METER, 0f, BodyType.Static);
 
-            Boundaries[3] = Tank.CollisionsWorld.CreateRectangle(5 / Tank.UNITS_PER_METER, 1000 / Tank.UNITS_PER_METER, 1f, 
+            Boundaries[3] = Tank.CollisionsWorld.CreateRectangle(5 / Tank.UNITS_PER_METER, 1000 / Tank.UNITS_PER_METER, 1f,
                 new Vector2(MIN_X - 7, MAX_Z) / Tank.UNITS_PER_METER, 0f, BodyType.Static);
 
             Array.ForEach(Boundaries, x => x.Tag = BOUNDARY_TAG);
-            
-            switch (Theme)
-            {
+
+            switch (Theme) {
                 case MapTheme.Vanilla:
                     BoundaryModel = ModelGlobals.GameBoundary.Asset;
                     break;
@@ -233,11 +218,10 @@ public static class GameScene
             PostLoadBounds?.Invoke();
         }
 
-        public static void RenderBounds()
-        {
+        public static void RenderBounds() {
+            // hardcode hell wtf
             if (!ShouldRenderBounds) return;
-            switch (Theme)
-            {
+            switch (Theme) {
                 case MapTheme.Vanilla:
                     foreach (var mesh in BoundaryModel.Meshes) {
                         foreach (BasicEffect effect in mesh.Effects) {
@@ -267,13 +251,15 @@ public static class GameScene
                             effect.View = View;
                             effect.Projection = Projection;
                             effect.World = World;
+                            effect.TextureEnabled = true;
+                            effect.Alpha = 1f;
 
-                            if (mesh.Name == "snow_field" || mesh.Name == "snow_blocks")
+                            if (mesh.Name == "snow_field" || mesh.Name == "snow_blocks") {
+                                // ... apparently my initial assignment just... doesn't work. so it's set here.
+                                effect.Texture = Assets["snow"];
+                                // literally what the fuck is this
                                 effect.World = Matrix.CreateRotationX(-MathHelper.PiOver2) * Matrix.CreateScale(62) * Matrix.CreateTranslation(Center);
-                            if (mesh.Name == "polygon2")
-                                effect.Alpha = 0.1f;
-                            else
-                                effect.Alpha = 1f;
+                            }
 
                             effect.SetDefaultGameLighting();
                         }
@@ -290,15 +276,14 @@ public static class GameScene
         /// <param name="mesh"></param>
         private static void SetBlockTexture(ModelMesh mesh, BoundaryTextureContext context) {
             foreach (BasicEffect effect in mesh.Effects)
-                effect.Texture = Assets[context.ToString()];//GameResources.GetGameResource<Texture2D>($"{AssetRoot}{context}");
+                effect.Texture = Assets[context.ToString()];
         }
         private static void SetBlockTexture(ModelMesh mesh, string textureName) {
             foreach (BasicEffect effect in mesh.Effects)
-                effect.Texture = Assets[textureName.ToString()];//GameResources.GetGameResource<Texture2D>($"{AssetRoot}{context}");
+                effect.Texture = Assets[textureName.ToString()];
         }
 
-        private enum BoundaryTextureContext
-        {
+        private enum BoundaryTextureContext {
             block_other_a,
             block_other_b,
             block_other_c,
@@ -332,8 +317,7 @@ public static class GameScene
     public static Vector3 TopRight => new(CUBE_MAX_X, 0, CUBE_MAX_Z);
     public static Vector3 BottomLeft => new(CUBE_MIN_X, 0, CUBE_MIN_Z);
     public static Vector3 BottomRight => new(CUBE_MAX_X, 0, CUBE_MIN_Z);
-    public static void InitializeRenderers()
-    {
+    public static void InitializeRenderers() {
         FloorRenderer.LoadFloor();
         BoundsRenderer.LoadBounds();
         RoomScene.Initialize();
@@ -342,14 +326,12 @@ public static class GameScene
     public static float Scale = 0.62f;
     public static Vector3 Center = Vector3.Zero;
 
-    public static void RenderWorldModels()
-    {
+    public static void RenderWorldModels() {
         View = CameraGlobals.GameView;
         Projection = CameraGlobals.GameProjection;
         World = Matrix.CreateScale(Scale) * Matrix.CreateTranslation(Center);
 
-        if (ShouldRenderAll)
-        {
+        if (ShouldRenderAll) {
             FloorRenderer.RenderFloor();
             BoundsRenderer.RenderBounds();
         }

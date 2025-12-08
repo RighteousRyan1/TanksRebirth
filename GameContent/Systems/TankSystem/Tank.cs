@@ -403,7 +403,7 @@ public abstract class Tank {
         InitModelSemantics();
         if (DebugManager.SecretCosmeticSetting) {
             for (int i = 0; i < 1; i++) {
-                var recieved = CosmeticChest.Basic.Open();
+                var recieved = VanillaCosmetics.LootPool.Roll(out _);
 
                 if (recieved is Prop3D cosmetic1)
                     Props.Add(cosmetic1);
@@ -418,7 +418,7 @@ public abstract class Tank {
         GeneratePhysics();
 
         if (GameScene.Theme == MapTheme.Christmas)
-            Props.Add(CosmeticChest.SantaHat);
+            Props.Add(VanillaCosmetics.SantaHat);
 
         foreach (var cos in Props)
             if (cos is Prop2D cos2d)

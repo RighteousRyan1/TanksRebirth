@@ -151,5 +151,11 @@
   "BlockStackFlavor": "UP and DOWN to change stack.",
   "GameStatsFlavor": "View your all-time statistics!",
   "KeysCount": "You have {0} keys.",
-  "KeysWarning": "Too many keys!"
+  "KeysWarning": "Too many keys!",
+  "FadeTracks": "Fading Tank Tracks",
+  "FadeTracksDesc": "If enabled, tank tracks will fade slowly. This can save a lot of performance.",
+  "MenuGameplay": "Menu Gameplay",
+  "MenuGameplayDesc": "Whether or not to enable gameplay in the background of the menu.",
+  "ParticleIntensity": "Particle Intensity",
+  "ParticleIntensityDesc": "The intensity of particle effects. (this setting is purely experimental!)"
 }

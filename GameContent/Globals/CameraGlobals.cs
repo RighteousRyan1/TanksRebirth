@@ -16,7 +16,12 @@ using System;
 namespace TanksRebirth.GameContent.Globals;
 
 public static class CameraGlobals {
-
+    enum CameraMode {
+        Overhead,
+        POV,
+        MainMenu,
+        Freecam
+    }
     public static bool IsUsingFirstPersonCamera => MatrixUtils.AreMatricesEqual(GameProjection, RebirthFreecam.Projection, 0.1f);
 
     // screen camera stuff
@@ -70,8 +75,9 @@ public static class CameraGlobals {
     public const float POV_CAM_OFFSET_Y = 20f;
 
     public static void Initialize(GraphicsDevice device) {
-        RebirthFreecam = new(device);
-        RebirthFreecam.Position = MainMenuUI.MenuCameraManipulations[MainMenuUI.UIState.LoadingMods].Position;
+        RebirthFreecam = new(device) {
+            Position = MainMenuUI.MenuCameraManipulations[MainMenuUI.UIState.LoadingMods].Position
+        };
     }
     public static void UpdateOverhead() {
         if (_transitionTimer > 0) {
@@ -90,143 +96,192 @@ public static class CameraGlobals {
             }
         }
     }
-
-    public static void Update() {
-        bool isFreecam = DebugManager.DebugLevel == DebugManager.Id.FreeCamTest || DebugManager.persistFreecam;
+    static CameraMode GetCameraMode() {
         bool isMainMenu = MainMenuUI.IsActive;
+        bool isFreecamFlag =
+            DebugManager.DebugLevel == DebugManager.Id.FreeCamTest ||
+            DebugManager.persistFreecam;
+
         bool isPOV = Modifiers.Map[Modifiers.POV] && !isMainMenu;
 
-        if (!isFreecam) {
-            if (!isMainMenu) {
-                if (!isPOV || LevelEditorUI.IsActive) {
-                    UpdateOverhead();
+        if (isMainMenu)
+            return CameraMode.MainMenu;
 
-                    GameView = Matrix.CreateScale(DEFAULT_ZOOM * AddativeZoom) *
-                               Matrix.CreateLookAt(new(0f, 0, 100), Vector3.Zero, Vector3.Up) *
-                               Matrix.CreateTranslation(CameraFocusOffset.X, -CameraFocusOffset.Y - 110, 0) *
-                               Matrix.CreateRotationY(OrthoRotationVector.X) *
-                               Matrix.CreateRotationX(OrthoRotationVector.Y);
+        if (isFreecamFlag && !GameUI.Paused && DebugManager.DebuggingEnabled)
+            return CameraMode.Freecam;
 
-                    GameProjection = Matrix.CreateOrthographic(1920, 1080, -2000, 5000);
-                    // GameProjection = Matrix.CreateOrthographic(WindowUtils.WindowWidth, WindowUtils.WindowHeight, -2000, 5000);
-                }
-            }
-            else {
-                if (MainMenuUI.CameraPositionAnimator.CurrentPosition3D != Vector3.Zero) {
-                    RebirthFreecam.Position = MainMenuUI.CameraPositionAnimator.CurrentPosition3D;
-                    RebirthFreecam.Rotation = MainMenuUI.CameraRotationAnimator.CurrentPosition3D;
-                }
+        if (isPOV)
+            return CameraMode.POV;
 
-                RebirthFreecam.HasLookAt = false;
-                RebirthFreecam.FieldOfView = 100f;
-                RebirthFreecam.NearViewDistance = 0.1f;
-                RebirthFreecam.FarViewDistance = 100000f;
+        return CameraMode.Overhead;
+    }
+    public static void UpdateCamera() {
+        var mode = GetCameraMode();
 
-                GameView = RebirthFreecam.View;
-                GameProjection = RebirthFreecam.Projection;
-            }
+        switch (mode) {
+            case CameraMode.MainMenu:
+                UpdateMainMenuCamera();
+                break;
 
-            if (isPOV) {
-                Vector3 offsetVector = new(0, POV_CAM_OFFSET_Y, 0);
-                if (PlayerTank.ClientTank is { IsDestroyed: true }) {
-                    SpectatorId = NetPlay.GetMyClientId();
-                    POVCameraPosition = PlayerTank.ClientTank.Position.ExpandZ() + offsetVector;
-                    POVCameraRotation = -PlayerTank.ClientTank.TurretRotation;
-                }
-                else if (GameHandler.AllPlayerTanks[SpectatorId] is not null) {
-                    if (InputUtils.KeyJustPressed(Keys.Left))
-                        SpectatorId = SpectateValidTank(SpectatorId, false);
-                    else if (InputUtils.KeyJustPressed(Keys.Right))
-                        SpectatorId = SpectateValidTank(SpectatorId, true);
+            case CameraMode.Freecam:
+                UpdateFreecamCamera();
+                break;
 
-                    POVCameraPosition = GameHandler.AllPlayerTanks[SpectatorId].Position.ExpandZ() + offsetVector;
-                    POVCameraRotation = -GameHandler.AllPlayerTanks[SpectatorId].TurretRotation;
-                }
+            case CameraMode.POV:
+                UpdateOverheadCamera(); 
+                ManagePOV();
+                break;
 
-                if (IntermissionHandler.ThirdPersonTransitionAnimation is not null && PlayerTank.ClientTank is not null) {
-                    IntermissionHandler.ThirdPersonTransitionAnimation.KeyFrames[1] = new(
-                        position2d: new Vector2(-PlayerTank.ClientTank.TurretRotation),
-                        position3d: PlayerTank.ClientTank.Position3D + offsetVector
-                    );
-                }
-
-                var anim = IntermissionHandler.ThirdPersonTransitionAnimation;
-                var povCameraRotationCurrent = IntermissionHandler.TankFunctionWait > 0 && anim != null ?
-                    anim.CurrentPosition2D.X : POVCameraRotation;
-
-                var povCameraPosCurrent = IntermissionHandler.TankFunctionWait > 0 && anim != null ?
-                    anim.CurrentPosition3D : POVCameraPosition;
-
-                GameView = Matrix.CreateLookAt(
-                    povCameraPosCurrent,
-                    POVCameraPosition + new Vector2(0, 20).RotatedBy(povCameraRotationCurrent).ExpandZ(),
-                    Vector3.Up
-                ) * Matrix.CreateScale(AddativeZoom);
-
-                RebirthFreecam.FieldOfView = 90f;
-                GameProjection = RebirthFreecam.Projection;
-
-                RebirthFreecam.Position = povCameraPosCurrent;
-            }
-        }
-        else if (!GameUI.Paused && !isMainMenu && DebugManager.DebuggingEnabled) {
-            if (InputUtils.AreKeysJustPressed(Keys.Z, Keys.X)) {
-                DebugManager.persistFreecam = !DebugManager.persistFreecam;
-            }
-
-            var realMoveSpeed = 10f * RuntimeData.DeltaTime;
-            var rotationSpeed = 0.01f;
-
-            RebirthFreecam.HasLookAt = false;
-            RebirthFreecam.NearViewDistance = 0.1f;
-            RebirthFreecam.FarViewDistance = 1_000_000f;
-            RebirthFreecam.MinPitch = -180;
-            RebirthFreecam.MaxPitch = 180;
-
-            bool isPlayerActive = PlayerTank.ClientTank is not null;
-
-            var keysprint = LevelEditorUI.IsActive || !isPlayerActive ? Keys.LeftShift : Keys.RightShift;
-            var keyslow = LevelEditorUI.IsActive || !isPlayerActive ? Keys.LeftControl : Keys.RightControl;
-
-            if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(keysprint))
-                realMoveSpeed *= 2;
-            if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(keyslow))
-                realMoveSpeed /= 4;
-
-            var keyf = LevelEditorUI.IsActive || !isPlayerActive ? Keys.W : Keys.Up;
-            var keyb = LevelEditorUI.IsActive || !isPlayerActive ? Keys.S : Keys.Down;
-            var keyl = LevelEditorUI.IsActive || !isPlayerActive ? Keys.A : Keys.Left;
-            var keyr = LevelEditorUI.IsActive || !isPlayerActive ? Keys.D : Keys.Right;
-
-            if (InputUtils.MouseRight) {
-                RebirthFreecam.Rotation -= new Vector3(0, 
-                    MouseUtils.MouseVelocity.Y * rotationSpeed,
-                    MouseUtils.MouseVelocity.X * rotationSpeed);
-
-                 RebirthFreecam.Rotation = new Vector3(0,
-                     MathHelper.Clamp(RebirthFreecam.Rotation.Y, -MathHelper.PiOver2, MathHelper.PiOver2),
-                     RebirthFreecam.Rotation.Z);
-            }
-            if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(Keys.Subtract))
-                RebirthFreecam.FieldOfView += 0.5f * RuntimeData.DeltaTime;
-            if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(Keys.Add))
-                RebirthFreecam.FieldOfView -= 0.5f * RuntimeData.DeltaTime;
-            if (InputUtils.MouseMiddle)
-                RebirthFreecam.FieldOfView = 90;
-
-            if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(keyf))
-                RebirthFreecam.Move(RebirthFreecam.World.Forward * realMoveSpeed);
-            if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(keyb))
-                RebirthFreecam.Move(RebirthFreecam.World.Backward * realMoveSpeed);
-            if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(keyl))
-                RebirthFreecam.Move(RebirthFreecam.World.Left * realMoveSpeed);
-            if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(keyr))
-                RebirthFreecam.Move(RebirthFreecam.World.Right * realMoveSpeed);
-
-            GameView = RebirthFreecam.View;
-            GameProjection = RebirthFreecam.Projection;
+            case CameraMode.Overhead:
+            default:
+                UpdateOverheadCamera();
+                break;
         }
     }
+    static void UpdateOverheadCamera() {
+        UpdateOverhead();
+
+        GameView =
+            Matrix.CreateScale(DEFAULT_ZOOM * AddativeZoom) *
+            Matrix.CreateLookAt(new(0f, 0f, 100f), Vector3.Zero, Vector3.Up) *
+            Matrix.CreateTranslation(
+                CameraFocusOffset.X,
+                -CameraFocusOffset.Y - 110f,
+                0f) *
+            Matrix.CreateRotationY(OrthoRotationVector.X) *
+            Matrix.CreateRotationX(OrthoRotationVector.Y);
+
+        GameProjection = Matrix.CreateOrthographic(1920, 1080, -2000f, 5000f);
+    }
+
+    static void UpdateMainMenuCamera() {
+        if (MainMenuUI.CameraPositionAnimator.CurrentPosition != Vector3.Zero) {
+            RebirthFreecam.Position = MainMenuUI.CameraPositionAnimator.CurrentPosition;
+            RebirthFreecam.Rotation = MainMenuUI.CameraRotationAnimator.CurrentPosition;
+        }
+
+        RebirthFreecam.HasLookAt = false;
+        RebirthFreecam.FieldOfView = 100f;
+        RebirthFreecam.NearViewDistance = 0.1f;
+        RebirthFreecam.FarViewDistance = 100000f;
+
+        GameView = RebirthFreecam.View;
+        GameProjection = RebirthFreecam.Projection;
+    }
+
+    static void UpdateFreecamCamera() {
+        if (InputUtils.AreKeysJustPressed(Keys.Z, Keys.X))
+            DebugManager.persistFreecam = !DebugManager.persistFreecam;
+
+        float realMoveSpeed = 10f * RuntimeData.DeltaTime;
+        const float rotationSpeed = 0.01f;
+
+        RebirthFreecam.HasLookAt = false;
+        RebirthFreecam.NearViewDistance = 0.1f;
+        RebirthFreecam.FarViewDistance = 1_000_000f;
+        RebirthFreecam.MinPitch = -180f;
+        RebirthFreecam.MaxPitch = 180f;
+
+        bool isPlayerActive = PlayerTank.ClientTank is not null;
+        bool editorOrNoPlayer = LevelEditorUI.IsActive || !isPlayerActive;
+
+        Keys keySprint = editorOrNoPlayer ? Keys.LeftShift : Keys.RightShift;
+        Keys keySlow = editorOrNoPlayer ? Keys.LeftControl : Keys.RightControl;
+
+        if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(keySprint))
+            realMoveSpeed *= 2f;
+        if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(keySlow))
+            realMoveSpeed /= 4f;
+
+        Keys keyF = editorOrNoPlayer ? Keys.W : Keys.Up;
+        Keys keyB = editorOrNoPlayer ? Keys.S : Keys.Down;
+        Keys keyL = editorOrNoPlayer ? Keys.A : Keys.Left;
+        Keys keyR = editorOrNoPlayer ? Keys.D : Keys.Right;
+
+        if (InputUtils.MouseRight) {
+            RebirthFreecam.Rotation -= new Vector3(
+                0f,
+                MouseUtils.MouseVelocity.Y * rotationSpeed,
+                MouseUtils.MouseVelocity.X * rotationSpeed);
+
+            RebirthFreecam.Rotation = new Vector3(
+                0f,
+                MathHelper.Clamp(
+                    RebirthFreecam.Rotation.Y,
+                    -MathHelper.PiOver2,
+                    MathHelper.PiOver2),
+                RebirthFreecam.Rotation.Z);
+        }
+
+        if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(Keys.Subtract))
+            RebirthFreecam.FieldOfView += 0.5f * RuntimeData.DeltaTime;
+        if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(Keys.Add))
+            RebirthFreecam.FieldOfView -= 0.5f * RuntimeData.DeltaTime;
+        if (InputUtils.MouseMiddle)
+            RebirthFreecam.FieldOfView = 90f;
+
+        if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(keyF))
+            RebirthFreecam.Move(RebirthFreecam.World.Forward * realMoveSpeed);
+        if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(keyB))
+            RebirthFreecam.Move(RebirthFreecam.World.Backward * realMoveSpeed);
+        if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(keyL))
+            RebirthFreecam.Move(RebirthFreecam.World.Left * realMoveSpeed);
+        if (InputUtils.KeyboardMouse.CurrentKey.IsKeyDown(keyR))
+            RebirthFreecam.Move(RebirthFreecam.World.Right * realMoveSpeed);
+
+        GameView = RebirthFreecam.View;
+        GameProjection = RebirthFreecam.Projection;
+    }
+
+    public static void ManagePOV() {
+        var clientTank = PlayerTank.ClientTank;
+
+        if (clientTank is null) return;
+
+        Vector3 offsetVector = new(0, POV_CAM_OFFSET_Y, 0);
+        var plOffset = clientTank.Position3D + offsetVector;
+        if (clientTank is { IsDestroyed: true }) {
+            SpectatorId = NetPlay.GetMyClientId();
+            POVCameraPosition = plOffset;
+            POVCameraRotation = -clientTank.TurretRotation;
+        }
+        else if (GameHandler.AllPlayerTanks[SpectatorId] is not null) {
+            if (InputUtils.KeyJustPressed(Keys.Left))
+                SpectatorId = SpectateValidTank(SpectatorId, false);
+            else if (InputUtils.KeyJustPressed(Keys.Right))
+                SpectatorId = SpectateValidTank(SpectatorId, true);
+
+            POVCameraPosition = GameHandler.AllPlayerTanks[SpectatorId].Position.ExpandZ() + offsetVector;
+            POVCameraRotation = -GameHandler.AllPlayerTanks[SpectatorId].TurretRotation;
+        }
+
+        if (IntermissionHandler.ThirdPersonTransition is not null && PlayerTank.ClientTank is not null) {
+            IntermissionHandler.ThirdPersonTransition.KeyFrames[1] = new(
+                position: plOffset
+            );
+            IntermissionHandler.ThirdPersonTransition.ModifyFloat(0, -clientTank.TurretRotation);
+        }
+
+        var anim = IntermissionHandler.ThirdPersonTransition;
+        var povCameraRotationCurrent = IntermissionHandler.TankFunctionWait > 0 && anim != null ?
+            // the current anim rotation to meet the tank turret rotation
+            -clientTank.TurretRotation : POVCameraRotation;
+
+        var povCameraPosCurrent = IntermissionHandler.TankFunctionWait > 0 && anim != null ?
+            anim.CurrentPosition : POVCameraPosition;
+
+        GameView = Matrix.CreateLookAt(
+            povCameraPosCurrent,
+            POVCameraPosition + new Vector2(0, 20).RotatedBy(povCameraRotationCurrent).ExpandZ(),
+            Vector3.Up
+        ) * Matrix.CreateScale(AddativeZoom);
+
+        RebirthFreecam.FieldOfView = 90f;
+        GameProjection = RebirthFreecam.Projection;
+
+        RebirthFreecam.Position = povCameraPosCurrent;
+    }
+
     public static int SpectateValidTank(int id, bool increase) {
         var count = GameHandler.AllPlayerTanks.Count(x => x is not null);
 

@@ -1,8 +1,7 @@
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using TanksRebirth.GameContent.Globals;
 using TanksRebirth.GameContent.Globals.Assets;
 using TanksRebirth.Internals;
@@ -11,26 +10,19 @@ using TanksRebirth.Net;
 
 namespace TanksRebirth.GameContent.Cosmetics;
 
-// TODO: pets lol???
-// TODO: make cosmetics fade out if you're really close in freecam/POV
-// Not inherently locked to cosmetics only, but exist to distinguish from tank crates.
-public struct CosmeticChest
-{
-    public static Prop2D Anger = new("Anger!", GameResources.GetGameResource<Texture2D>("Assets/models/cosmetics/anger_symbol"), new(8, 20, 8), PropLockOptions.None)
-    {
-        UniqueBehavior = (cos, tnk) =>
-        {
+#pragma warning disable
+public static class VanillaCosmetics {
+    public static Prop2D Anger = new("Anger!", GameResources.GetGameResource<Texture2D>("Assets/models/cosmetics/anger_symbol"), new(8, 20, 8), PropLockOptions.None) {
+        UniqueBehavior = (cos, tnk) => {
             var sin = MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalMilliseconds / 500) / 8;
             cos.Scale = new Vector3(MathF.Abs(sin) + 0.15f) * 1.25f;
             // apparently this stuff aint updating or sum.
         }
     };
-    public static Prop3D DefaultBlenderCube = new("Default Blender Cube", ModelGlobals.BlenderDefaultCube.Asset, 
-        TextureGlobals.Pixels[Color.White], new(0, 100, 0), PropLockOptions.None)
-    {
+    public static Prop3D BlenderCube = new("Default Blender Cube", ModelGlobals.BlenderDefaultCube.Asset,
+        TextureGlobals.Pixels[Color.White], new(0, 100, 0), PropLockOptions.None) {
         Rotation = new(-MathHelper.PiOver2, 0, 0),
-        UniqueBehavior = (cos, tnk) =>
-        {
+        UniqueBehavior = (cos, tnk) => {
             cos.LockOptions = PropLockOptions.ToTurret;
             cos.Scale = new(5f);
             cos.RelativePosition = new Vector3(0, 20, 0); // + new Vector3(20, 0, 0).RotateXZ(RuntimeData.RunTime / 10);
@@ -41,6 +33,7 @@ public struct CosmeticChest
     // cosmetics like this block the first person camera. fix it by either changing camera position or changing cosmetic location/rotation anchor
     public static Prop3D KingsCrown = new("King's Crown", ModelGlobals.Crown.Asset, GameResources.GetGameResource<Texture2D>("Assets/models/cosmetics/crown_tex"), new(0, 21, 0), PropLockOptions.ToTurret) {
         UniqueBehavior = (cos, tnk) => {
+            // corner follow
             /*cos.LockOptions = CosmeticLockOptions.None;
             cos.Rotation = new(-MathHelper.PiOver2 - 0.3f, 0, -MathHelper.PiOver4 / 2);
             cos.RelativePosition = new Vector3(5, 19, -3);
@@ -58,18 +51,15 @@ public struct CosmeticChest
         Rotation = new(-MathHelper.PiOver2, 0, 0),
         Scale = new(3.5f)
     };
-    public static Prop3D DevilsHorns = new("Devil Horns", ModelGlobals.Horns.Asset, TextureGlobals.Pixels[Color.White], new(0, 11, 0), PropLockOptions.ToTurret)
-    {
+    public static Prop3D DevilsHorns = new("Devil Horns", ModelGlobals.Horns.Asset, TextureGlobals.Pixels[Color.White], new(0, 11, 0), PropLockOptions.ToTurret) {
         Rotation = new(MathHelper.Pi, 0, 0),
         Scale = new(100f)
     };
-    public static Prop3D AngelHalo = new("Angel Halo", ModelGlobals.Halo.Asset, GameResources.GetGameResource<Texture2D>("Assets/models/cosmetics/halo_tex"), new(0, 20, 0), PropLockOptions.ToTurret)
-    {
+    public static Prop3D AngelHalo = new("Angel Halo", ModelGlobals.Halo.Asset, GameResources.GetGameResource<Texture2D>("Assets/models/cosmetics/halo_tex"), new(0, 20, 0), PropLockOptions.ToTurret) {
         Rotation = new(MathHelper.PiOver2, 0, 0),
         Scale = new(5f, 2f, 5f),
 
-        UniqueBehavior = (cos, tnk) =>
-        {
+        UniqueBehavior = (cos, tnk) => {
             var sinx = MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalMilliseconds / 250);
             var siny = MathF.Sin((float)TankGame.LastGameTime.TotalGameTime.TotalMilliseconds / 150);
 
@@ -79,23 +69,21 @@ public struct CosmeticChest
                 // float y = 20f;
                 if (RuntimeData.UpdateCount % 10 == 0) {
                     GameHandler.Particles.MakeShineSpot(tnk.Position3D +
-                        new Vector3(cos.RelativePosition.X, cos.RelativePosition.Y, siny / 5 + (Vector2.UnitY * 5).RotatedBy(Client.ClientRandom.NextFloat(0, MathHelper.TwoPi)).Y), 
+                        new Vector3(cos.RelativePosition.X, cos.RelativePosition.Y, siny / 5 + (Vector2.UnitY * 5).RotatedBy(Client.ClientRandom.NextFloat(0, MathHelper.TwoPi)).Y),
                         Color.Yellow, Client.ClientRandom.NextFloat(0.3f, 0.5f));
                 }
             }
         }
     };
-    public static Prop3D ArmyHat = new("Army Hat", ModelGlobals.ArmyHat.Asset, GameResources.GetGameResource<Texture2D>("Assets/models/cosmetics/army_hat_tex"), new(0, 13.5f, 0), PropLockOptions.ToTurret)
-    {
+    public static Prop3D ArmyHat = new("Army Hat", ModelGlobals.ArmyHat.Asset, GameResources.GetGameResource<Texture2D>("Assets/models/cosmetics/army_hat_tex"), new(0, 13.5f, 0), PropLockOptions.ToTurret) {
         Rotation = new(-MathHelper.PiOver2, 0, 0),
         Scale = new(10f)
     };
-    public static Prop3D SantaHat = new("Santa Hat", ModelGlobals.SantaHat.Asset, GameResources.GetGameResource<Texture2D>("Assets/models/cosmetics/santa_hat_tex"), new(0, 12.5f, 0), PropLockOptions.ToTurret)
-    {
+    public static Prop3D SantaHat = new("Santa Hat", ModelGlobals.SantaHat.Asset, GameResources.GetGameResource<Texture2D>("Assets/models/cosmetics/santa_hat_tex"), new(0, 12.5f, 0), PropLockOptions.ToTurret) {
         Rotation = new(-MathHelper.PiOver2, MathHelper.Pi, 0),
         Scale = new(100f)
     };
-    public static Prop3D WitchHat = new("Witch Hat", ModelGlobals.WitchHat.Asset, 
+    public static Prop3D WitchHat = new("Witch Hat", ModelGlobals.WitchHat.Asset,
         GameResources.GetGameResource<Texture2D>("Assets/models/rebirth_tanks/tank_necro_extras"), new(0, 15f, 0), PropLockOptions.None) {
         Rotation = new(-MathHelper.PiOver2, MathHelper.Pi, 0),
         Scale = new(100f),
@@ -113,65 +101,60 @@ public struct CosmeticChest
             GameHandler.Particles.MakeShineSpot(newPos, Color.Red, 0.5f);*/
         }
     };
-    public static CosmeticChest Basic = new(new List<IProp>()
-    {
-        Anger,
-        DefaultBlenderCube,
-        KingsCrown,
-        DevilsHorns,
-        AngelHalo,
-        ArmyHat,
-        SantaHat,
-        WitchHat
-    });
 
-    public static CosmeticChest Template = new(new List<IProp>()
-    {
+    // definitions
 
-    });
+    static VanillaCosmetics() {
+        rarityMakeup = new() {
+            [LootBoxRarity.Common] = .50f, // 50% makeup for common
+            [LootBoxRarity.Uncommon] = .25f, // 25% makeup for uncommon
+            [LootBoxRarity.Rare] = .15f, // 15% makeup for rare
+            [LootBoxRarity.Epic] = .06f, // 6% makeup for epic
+            [LootBoxRarity.Legendary] = .02f, // 2% makeup for legendary
+            [LootBoxRarity.Mythical] = .015f, // 1.5% makeup for mythical
+            [LootBoxRarity.Godly] = .005f // 0.5% makeup for godly
+        };
 
-    /// <summary>All of the contents should add up to 100f.</summary>
-    public Dictionary<IProp, float> WeightedContents;
+        LootPool = new(new Dictionary<IProp, LootBoxRarity>() {
+            [Anger]       = LootBoxRarity.Common,
+            [BlenderCube] = LootBoxRarity.Common,
 
-    public CosmeticChest(Dictionary<IProp, float> weightedContents)
-    {
-        WeightedContents = weightedContents;
+            [ArmyHat]     = LootBoxRarity.Uncommon,
+
+            [DevilsHorns] = LootBoxRarity.Rare,
+
+            [SantaHat]    = LootBoxRarity.Epic,
+
+            [AngelHalo]   = LootBoxRarity.Legendary,
+
+            [KingsCrown]  = LootBoxRarity.Mythical,
+
+            [WitchHat]    = LootBoxRarity.Godly,
+        });
     }
-    public CosmeticChest(List<IProp> contents) {
-        var evenProportion = 1f / contents.Count;
-        WeightedContents = contents.ToDictionary(x => x, y => evenProportion);
-    }
 
-    public readonly IProp Open()
-    {
-        static bool between(float min, float max, float value) => value > min && value < max;
+    // % composition
+    internal static readonly Dictionary<LootBoxRarity, float> rarityMakeup;
 
-        var rolledRand = Client.ClientRandom.NextFloat(0, 1);
+    public static LootBox<IProp> LootPool;
 
-        // get the lowest float value in WeightedContents
-        var ordered = WeightedContents.Values.OrderBy(x => x).ToArray();
-        var orderedDict = WeightedContents.OrderBy(x => x.Value);
+    // may need changing with updating 
+    public static LootBoxRarity GetRarityFromFloat(float flt) {
+        if (flt > rarityMakeup[0])
+            return LootBoxRarity.Common;
+        else if (flt < rarityMakeup[(LootBoxRarity)(rarityMakeup.Count - 1)])
+            return LootBoxRarity.Godly;
 
-        Dictionary<(float, float), float> minMaxes = [];
+        // second rarity to second to last rarity
+        for (int i = 1; i < rarityMakeup.Count; i++) {
+            var thisRarity = (LootBoxRarity)i;
+            var prevRarity = (LootBoxRarity)(i - 1);
 
-        float cur = 0f;
-        int pickedIdx = 0;
-        foreach (var pair in ordered)
-        {
-            minMaxes.Add((cur, cur + pair), pair);
-            cur += pair;
+            if (flt >= rarityMakeup[thisRarity] && flt < rarityMakeup[prevRarity]) {
+                return thisRarity;
+            }
         }
-        for (int i = 0; i < minMaxes.Count; i++)
-        {
-            var entry = minMaxes.ElementAt(i);
 
-            if (between(entry.Key.Item1, entry.Key.Item2, rolledRand))
-                pickedIdx = i;
-        }
-        //var pickedIdx = (int)Math.Floor(rolledRand / )
-
-        var pickedDictEntry = orderedDict.ElementAt(pickedIdx);// WeightedContents.First(pair => pair.Value == pickedIdx);
-
-        return pickedDictEntry.Key;
+        throw new ArgumentOutOfRangeException($"'{nameof(flt)}' must be within 0 to 1.");
     }
 }
