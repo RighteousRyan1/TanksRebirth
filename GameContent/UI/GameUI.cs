@@ -283,6 +283,7 @@ public static class GameUI {
     private static void HandleBackButton() {
         if (!_initialized)
             return;
+
         if (MainMenuUI.MenuState == MainMenuUI.UIState.Cosmetics) {
             MainMenuUI.MenuState = MainMenuUI.UIState.PlayList;
             CosmeticsUI.LeaveMenu();

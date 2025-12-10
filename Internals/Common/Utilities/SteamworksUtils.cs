@@ -18,7 +18,7 @@ public static class SteamworksUtils {
 
     public static bool IsOverlayActive { get; private set; }
 
-    private static Callback<GameOverlayActivated_t> _overlayActivate;
+    static Callback<GameOverlayActivated_t>? _overlayActivate;
 
     public static void Initialize() {
         SteamAPI.Init();

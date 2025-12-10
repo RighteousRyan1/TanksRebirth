@@ -19,7 +19,7 @@ public abstract partial class UIElement {
     public static Texture2D UIPanelBackground;
     public bool HasScissor { get; set; }
 
-    public Func<Rectangle> Scissor = () => new(-int.MaxValue, -int.MaxValue, 0, 0);
+    public Rectangle Scissor = new(0, 0, 10000, 10000);
 
     private Vector2 InternalPosition;
 
@@ -155,10 +155,8 @@ public abstract partial class UIElement {
             }
         }
         else {
-
             TankGame.Instance.GraphicsDevice.RasterizerState = _state;
-
-            TankGame.Instance.GraphicsDevice.ScissorRectangle = Scissor.Invoke();
+            TankGame.Instance.GraphicsDevice.ScissorRectangle = Scissor;
 
             spriteBatch.Begin(rasterizerState: _state);
 
@@ -323,6 +321,7 @@ public abstract partial class UIElement {
             if (!element.IsVisible) continue;
             if (!element._doUpdating) continue;
             // this may need revertation. 
+
             element.Position = element.InternalPosition =
                 element._updatedPos.Invoke() + element.Offset.ToResolution();
             element.Size = element.InternalSize = element._updatedSize.Invoke();
@@ -336,7 +335,6 @@ public abstract partial class UIElement {
         var focusedElements = GetElementsAt(MouseUtils.MousePosition, true);
 
         foreach (var el in focusedElements) {
-
             // also don't waste stack space
             if (!el.IsVisible) continue;
 

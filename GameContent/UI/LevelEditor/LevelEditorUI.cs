@@ -129,12 +129,12 @@ public static partial class LevelEditorUI {
         }
     }
 
-    private static List<UITextButton> _missionButtons = [];
-    private static List<UITextButton> _listModifyButtons = [];
-    private static Rectangle _missionTab = new(0, 150, 350, 535);
-    private static Rectangle _missionButtonScissor;
-    private static float _missionsOffset;
-    private static float _missionsMaxOff;
+    static List<UITextButton> _missionButtons = [];
+    static List<UITextButton> _listModifyButtons = [];
+    static Rectangle _missionTab = new(0, 150, 350, 535);
+    static Rectangle _missionButtonScissor;
+    static float _missionsOffset;
+    static float _missionsMaxOff;
 
     private static bool _saveMenuOpen;
 

@@ -55,7 +55,7 @@ public partial class LevelEditorUI {
                 totalOff += btn.Offset.Y;
 
                 btn.HasScissor = true;
-                btn.Scissor = () => _missionButtonScissor;
+                btn.Scissor = _missionButtonScissor;
 
                 int index = i;
                 var len = btn.Text.Length;

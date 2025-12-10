@@ -335,6 +335,8 @@ public static class IntermissionSystem {
         // wait a little bit to do animations so they are clearly visible to the user
         Alpha = MathHelper.Clamp(Alpha, 0f, 1f);
 
+
+        oldBlack = BlackAlpha;
         if (MainMenuUI.IsActive) return;
 
         if (!GameUI.Paused && TankGame.Instance.IsActive) {

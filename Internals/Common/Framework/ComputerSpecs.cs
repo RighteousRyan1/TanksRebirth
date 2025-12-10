@@ -18,13 +18,12 @@ public struct ComputerSpecs : IEquatable<ComputerSpecs>
         error = false;
 
         try {
-            ComputerSpecs specs = new();
-
-
-            specs._sysComputer = new Computer {
-                IsGpuEnabled = true,
-                IsCpuEnabled = true,
-                IsMemoryEnabled = true
+            ComputerSpecs specs = new() {
+                _sysComputer = new Computer {
+                    IsGpuEnabled = true,
+                    IsCpuEnabled = true,
+                    IsMemoryEnabled = true
+                }
             };
             specs._sysComputer.Open();
 
@@ -68,11 +67,12 @@ public struct ComputerSpecs : IEquatable<ComputerSpecs>
                 hardware.Update();
 
                 string name = CleanCpuName(hardware.Name);
-                int coreCount = hardware.Sensors
+                /*int coreCount = hardware.Sensors
+                    // uhhh, why is this not getting cores.
                     .Where(s => s.SensorType == SensorType.Load && s.Name == "")
                     .Select(s => s.Name)
                     .Distinct()
-                    .Count();
+                    .Count();*/
 
                 //Console.WriteLine("CPU Sensors:\n " + string.Join("\n", hardware.Sensors.Select(x => x.Name)));
 
@@ -80,8 +80,8 @@ public struct ComputerSpecs : IEquatable<ComputerSpecs>
 
                 return new CPU {
                     Name = name,
-                    CoreCount = coreCount,
-                    Threads = threadCount
+                    CoreCount = threadCount / 2,
+                    ThreadCount = threadCount
                 };
             }
         }
@@ -89,7 +89,7 @@ public struct ComputerSpecs : IEquatable<ComputerSpecs>
         throw new Exception("No CPU found.");
     }
 
-    private RAM GetRamInfo() {
+    RAM GetRamInfo() {
         var mem = _sysComputer.Hardware.FirstOrDefault(h => h.HardwareType == HardwareType.Memory) ?? throw new Exception("No memory hardware found.");
 
         mem.Update();
@@ -116,16 +116,12 @@ public struct ComputerSpecs : IEquatable<ComputerSpecs>
         return ram;
     }
 
-    private static string CleanGpuName(string name) {
-        return name?.Replace("(", "").Split(')')[0].Trim() ?? "Unknown";
-    }
+    static string CleanGpuName(string name) => name?.Replace("(", "").Split(')')[0].Trim() ?? "Unknown";
 
-    private static string CleanCpuName(string name) {
-        return name?
+    private static string CleanCpuName(string name) => name?
             .Replace("Processor", "", StringComparison.OrdinalIgnoreCase)
             .Replace("CPU", "", StringComparison.OrdinalIgnoreCase)
             .Trim() ?? "Unknown";
-    }
 
     public readonly bool Equals(ComputerSpecs other) => GPU.Equals(other.GPU) && CPU.Equals(other.CPU) && RAM.Equals(other.RAM);
     public override readonly bool Equals(object? obj) => obj is ComputerSpecs other && Equals(other);
@@ -147,52 +143,34 @@ public struct GPU : IEquatable<GPU> {
         return $"{Name} (VRAM: {gbRounded} GB)";
     }
 
-    public readonly bool Equals(GPU other) {
-        return VRAM == other.VRAM && Name == other.Name;
-    }
+    public readonly bool Equals(GPU other) => VRAM == other.VRAM && Name == other.Name;
 
-    public override readonly bool Equals(object? obj) {
-        return obj is GPU other && Equals(other);
-    }
+    public override readonly bool Equals(object? obj) => obj is GPU other && Equals(other);
 
     public override readonly int GetHashCode() {
         return HashCode.Combine(VRAM, Name);
     }
 
-    public static bool operator ==(GPU left, GPU right) {
-        return left.Equals(right);
-    }
+    public static bool operator ==(GPU left, GPU right) => left.Equals(right);
 
-    public static bool operator !=(GPU left, GPU right) {
-        return !left.Equals(right);
-    }
+    public static bool operator !=(GPU left, GPU right) => !left.Equals(right);
 }
 public struct CPU : IEquatable<CPU> {
     public int CoreCount;
-    public int Threads;
+    public int ThreadCount;
     public string Name;
 
-    public override readonly string ToString() => $"{Name} (Core Count: {CoreCount})";
+    public override readonly string ToString() => $"{Name} (Threads: {ThreadCount})";
 
-    public readonly bool Equals(CPU other) {
-        return CoreCount == other.CoreCount && Threads == other.Threads && Name == other.Name;
-    }
+    public readonly bool Equals(CPU other) => CoreCount == other.CoreCount && ThreadCount == other.ThreadCount && Name == other.Name;
 
-    public override bool Equals(object? obj) {
-        return obj is CPU other && Equals(other);
-    }
+    public override readonly bool Equals(object? obj) => obj is CPU other && Equals(other);
 
-    public override readonly int GetHashCode() {
-        return HashCode.Combine(CoreCount, Threads, Name);
-    }
+    public override readonly int GetHashCode() => HashCode.Combine(CoreCount, ThreadCount, Name);
 
-    public static bool operator ==(CPU left, CPU right) {
-        return left.Equals(right);
-    }
+    public static bool operator ==(CPU left, CPU right) => left.Equals(right);
 
-    public static bool operator !=(CPU left, CPU right) {
-        return !left.Equals(right);
-    }
+    public static bool operator !=(CPU left, CPU right) => !left.Equals(right);
 }
 public struct RAM : IEquatable<RAM> {
     public ulong TotalPhysical;
@@ -208,25 +186,15 @@ public struct RAM : IEquatable<RAM> {
         return $"{Manufacturer} {mem}GB {Type} @{Speed}hz";
     }
 
-    public readonly bool Equals(RAM other) {
-        return TotalPhysical == other.TotalPhysical && Manufacturer == other.Manufacturer && Speed == other.Speed && Type == other.Type;
-    }
+    public readonly bool Equals(RAM other) => TotalPhysical == other.TotalPhysical && Manufacturer == other.Manufacturer && Speed == other.Speed && Type == other.Type;
 
-    public override readonly bool Equals(object? obj) {
-        return obj is RAM other && Equals(other);
-    }
+    public override readonly bool Equals(object? obj) => obj is RAM other && Equals(other);
 
-    public override readonly int GetHashCode() {
-        return HashCode.Combine(TotalPhysical, Manufacturer, Speed, Type);
-    }
+    public override readonly int GetHashCode() => HashCode.Combine(TotalPhysical, Manufacturer, Speed, Type);
 
-    public static bool operator ==(RAM left, RAM right) {
-        return left.Equals(right);
-    }
+    public static bool operator ==(RAM left, RAM right) => left.Equals(right);
 
-    public static bool operator !=(RAM left, RAM right) {
-        return !left.Equals(right);
-    }
+    public static bool operator !=(RAM left, RAM right) => !left.Equals(right);
 }
 
 /// <summary>
@@ -259,7 +227,7 @@ public struct SpecAnalysis {
     /// <param name="gpuResponse">The response to the given GPU specs.</param>
     /// <param name="cpuResponse">The response to the given CPU specs.</param>
     public readonly void Analyze(bool takeActions, out string ramResponse, out string gpuResponse, out string cpuResponse) {
-        List<Action> actionsToTake = new();
+        List<Action> actionsToTake = [];
 
         ramResponse = gpuResponse = cpuResponse = string.Empty;
 

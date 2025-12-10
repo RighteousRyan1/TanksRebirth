@@ -186,7 +186,7 @@ public class TankGame : Game {
             LogType.Info);
     }
 
-    private void WriteToIngameConsole(string data, LogType logType) {
+    private void WriteToIngameConsole(Assembly assembly, string data, LogType logType) {
         var color = logType switch {
             LogType.Info => Color.Orange,
             LogType.Warn => Color.IndianRed,
@@ -195,7 +195,7 @@ public class TankGame : Game {
             LogType.Debug => Color.MediumPurple,
             _ => Color.Green
         };
-        IngameConsole?.Log($"[{logType}] " + data, color);
+        IngameConsole?.Log($"[{assembly.GetName().Name}] [{logType}] " + data, color);
     }
 
     protected override void Initialize() {

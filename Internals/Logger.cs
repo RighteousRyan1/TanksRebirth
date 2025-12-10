@@ -26,7 +26,7 @@ public enum LogType {
     Debug
 }
 
-public delegate void OnLog(string data, LogType logType);
+public delegate void OnLog(Assembly assembly, string data, LogType logType);
 
 /// <summary>Represents a system which reads and writes to a logging file.</summary>
 public sealed class Logger : IDisposable {
@@ -68,16 +68,17 @@ public sealed class Logger : IDisposable {
             _builder.Clear(); // Clear the sb to avoid writing stuff we don't really want.
             // Equivalent to $"[{DateTime.Now}] [{assembly.GetName().Name}] [{writeType}]: {contents}"
 
+            var callingAssembly = Assembly.GetCallingAssembly();
             _builder
                 .Append('[').Append(DateTime.Now.ToString(CultureInfo.InvariantCulture)).Append("] ")
-                .Append('[').Append(Assembly.GetCallingAssembly().GetName().Name).Append("] ")
+                .Append('[').Append(callingAssembly.GetName().Name).Append("] ")
                 .Append('[').Append(FromLogLevel(writeType)).Append("]: ")
                 .Append(contentsAsString);
 
             var finalStr = _builder.ToString();
             _writer.WriteLine(finalStr);
             Debug.WriteLine(finalStr);
-            OnLogWrite?.Invoke(contentsAsString, writeType);
+            OnLogWrite?.Invoke(callingAssembly, contentsAsString, writeType);
             if (GameLauncher.IsConsoleAllocated) Console.WriteLine(finalStr);
             _writer.Flush();
         }

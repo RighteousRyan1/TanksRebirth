@@ -20,6 +20,7 @@ using TanksRebirth.GameContent.UI.LevelEditor;
 using TanksRebirth.GameContent.Systems.ParticleSystem;
 using TanksRebirth.GameContent.Systems.AI;
 using TanksRebirth.GameContent.Systems.TankSystem;
+using TanksRebirth.Internals.Common.GameUI;
 
 namespace TanksRebirth.GameContent;
 
@@ -273,6 +274,7 @@ public class GameHandler {
 
     public static void RenderUI() {
         foreach (var element in UIElement.AllUIElements.ToList()) {
+            if (!element.IsVisible) continue;
             // element.Position = Vector2.Transform(element.Position, UIMatrix * Matrix.CreateTranslation(element.Position.X, element.Position.Y, 0));
             if (element.Parent != null)
                 continue;

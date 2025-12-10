@@ -78,10 +78,10 @@ namespace TanksRebirth.Internals.Common.GameUI
             {
                 child.IsVisible = Dropped;
                 child.HasScissor = true;
-                child.Scissor = () => wrapper;
+                child.Scissor = wrapper;
             }
             HasScissor = true;
-            Scissor = () => wrapper;
+            Scissor = wrapper;
             OnLeftClick = (uiElement) =>
             {
                 Dropped = !Dropped;

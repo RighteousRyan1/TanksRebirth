@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -8,17 +9,18 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using tainicom.Aether.Physics2D;
+using TanksRebirth.GameContent.Globals;
+using TanksRebirth.GameContent.Systems.TankSystem;
 using TanksRebirth.GameContent.UI;
+using TanksRebirth.GameContent.UI.LevelEditor;
+using TanksRebirth.GameContent.UI.MainMenu;
+using TanksRebirth.Graphics;
+using TanksRebirth.Internals;
 using TanksRebirth.Internals.Common.Framework.Input;
 using TanksRebirth.Internals.Common.Utilities;
 using TanksRebirth.Localization;
 using TanksRebirth.Net;
-using Microsoft.Xna.Framework.Input;
-using TanksRebirth.Internals;
-using TanksRebirth.Graphics;
-using TanksRebirth.GameContent.UI.MainMenu;
-using TanksRebirth.GameContent.UI.LevelEditor;
-using TanksRebirth.GameContent.Systems.TankSystem;
 
 namespace TanksRebirth.GameContent.Systems.CommandsSystem;
 #pragma warning disable
@@ -82,6 +84,7 @@ public static class CommandGlobals {
             if (exists) {
                 var parseLang = LangCode.Parse(lang);
                 Language.LoadLang(parseLang, out TankGame.GameLanguage);
+                FontGlobals.LoadFont(parseLang);
                 TankGame.Settings.Language = parseLang;
 
                 // TODO: try to only initialize the localization lol (causes UI to appear when it shouldn't)

@@ -25,6 +25,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - Increased the maximum tank count to 60
 - Made mines not destroy everything instantly, but rather grow, similar to the original
 - "Difficulties" now changed to "Modifiers"
+- Severely overhauled the chat box
 
 # Changes Important for Modders
 
@@ -44,11 +45,10 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 
 - Fixed nametags showing for non-host clients after the game has started if the host started the game with the client being in the multiplayer menu
 - Fixed smokes generated from smoke grenades being the wrong color
-- Mods should load ~25% quicker on average, depending on content
+- Mods should load 5 TIMES quicker on average, depending on content, since mod loading is no longer parallelized
 - Fixed some tank destruction particles having frame-dependent animation
 - Fixed bug where you would Game Over with 2 lives in single player and in some multiplayer contexts
 - Fixed clock pendulum not accurately tracking seconds (there was some margin of error before)
-- Fixed ingame ping graphics not being properly scaled to resolution
 
 # TODO
 

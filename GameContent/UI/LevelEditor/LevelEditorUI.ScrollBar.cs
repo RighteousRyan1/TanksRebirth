@@ -8,12 +8,12 @@ using TanksRebirth.Internals.Common.Utilities;
 namespace TanksRebirth.GameContent.UI.LevelEditor; 
 public static partial class LevelEditorUI {
     public static Dictionary<string, Texture2D> RenderTextures = [];
-    private static float _barOffset;
-    private static Vector2 _origClick;
-    private static float _maxScroll;
-    private static List<string> _renderNamesTanks = [];
-    private static List<string> _renderNamesBlocks = [];
-    private static List<string> _renderNamesPlayers = [];
+    static float _barOffset;
+    static Vector2 _origClick;
+    static float _maxScroll;
+    static List<string> _renderNamesTanks = [];
+    static List<string> _renderNamesBlocks = [];
+    static List<string> _renderNamesPlayers = [];
 
     public static void DrawTankDescriptionFlavor() {
         var measure = FontGlobals.RebirthFont.MeasureString(_curDescription);

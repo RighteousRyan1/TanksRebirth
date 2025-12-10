@@ -341,7 +341,7 @@ public static class ModLoader {
                     return;
                 }
 
-                _loadingActions.Add(() => {
+                /*_loadingActions.Add(() => {
                     try {
                         ModBeingLoaded = modName;
 
@@ -352,9 +352,8 @@ public static class ModLoader {
                         string pdb = Path.ChangeExtension(filepath, ".pdb");
 
                         var alc = new AssemblyLoadContext(modName, isCollectible: true);
-                        // alc.LoadFromStream(File.Open(filepath, FileMode.Open), File.Open(pdb, FileMode.Open));
 
-                        // Load mod-specific dependencies into *this* ALC
+                        // loads mod-specific dependencies into *this* ALC
                         var dirPath = Path.Combine(folder, "modrefs");
                         if (Directory.Exists(dirPath)) {
                             foreach (var dllPath in Directory.GetFiles(dirPath, "*.dll")) {
@@ -362,7 +361,7 @@ public static class ModLoader {
                             }
                         }
 
-                        // Now load the mod itself into the same ALC
+                        // now load the mod itself into the same ALC
                         using var mainDll = File.OpenRead(filepath);
                         using var mainPdb = File.Exists(pdb) ? File.OpenRead(pdb) : null;
 
@@ -415,10 +414,93 @@ public static class ModLoader {
                         Error = e.Message;
                         return;
                     }
-                });
+                });*/
+                try {
+                    ModBeingLoaded = modName;
+
+                    AttemptCompile(modName);
+
+                    Status = LoadStatus.Loading;
+                    string filepath = Path.Combine(folder, "bin", LoadType, EXPECTED_NET_VERSION, $"{modName}.dll");
+                    string pdb = Path.ChangeExtension(filepath, ".pdb");
+
+                    var alc = new AssemblyLoadContext(modName, isCollectible: true);
+
+                    // loads mod-specific dependencies into *this* ALC
+                    var dirPath = Path.Combine(folder, "modrefs");
+                    if (Directory.Exists(dirPath)) {
+                        foreach (var dllPath in Directory.GetFiles(dirPath, "*.dll")) {
+                            alc.LoadFromAssemblyPath(dllPath);
+                        }
+                    }
+
+                    // now load the mod itself into the same ALC
+                    using var mainDll = File.OpenRead(filepath);
+                    using var mainPdb = File.Exists(pdb) ? File.OpenRead(pdb) : null;
+
+                    if (mainPdb is not null)
+                        alc.LoadFromStream(mainDll, mainPdb);
+                    else
+                        alc.LoadFromStream(mainDll);
+
+                    _loadedAlcs.Add(alc);
+
+                    var assembly = alc.Assemblies.First(x => x.GetName().Name == modName);
+                    var types = assembly.GetTypes();
+                    var tanksModTypes = types.Where(t => t.IsSubclassOf(typeof(TanksMod)) && !t.IsAbstract).ToArray();
+
+                    TanksMod mod;
+
+                    if (tanksModTypes.Length != 1) {
+                        if (tanksModTypes.Length > 1)
+                            throw new ModLoadException($"Too many classes inherit from {nameof(TanksMod)}! Only one is allowed per-mod.");
+                        else
+                            throw new ModLoadException($"No classes that inherit from {nameof(TanksMod)}, no entrypoint to use.");
+                    }
+                    // initialize what needs to be initialized (DAMN THATS A BAR)
+                    else {
+                        mod = (Activator.CreateInstance(tanksModTypes[0]) as TanksMod)!;
+                        mod.InternalName = modName;
+                        mod.Data.LoadDirectory = folder;
+                        mod.Data.assemblyContainer = alc;
+                        mod.Data.LoadDirectory = filepath;
+                        mod.Data.Dependencies = alc.Assemblies.Select(x => x.FullName!).ToArray();
+                        mod.Data.Assemblies = alc.Assemblies;
+
+                        var modInfoPath = Path.Combine(folder, "mod_info.json");
+
+                        SetupMod(mod, modInfoPath);
+
+                        LoadModContent(mod, types);
+
+                        FirstLoadMods.Add(mod.InternalName);
+                        ModsEnabled.TryAdd(mod.InternalName, true);
+
+                        LoadedMods.Add(mod);
+                        mod.OnLoad();
+                        OnPostModLoad?.Invoke(mod);
+                    }
+                    ActionsComplete++;
+                    TankGame.ClientLog.Write($"Loaded mod '{assembly.GetName().Name}', version '{assembly.GetName().Version}'", LogType.Info);
+                } catch (Exception e) {
+                    TankGame.ReportError(e, true, true);
+                    Error = e.Message;
+                    return;
+                }
             }
         }
-        Task.Run(() => {
+        IsLoadingMods = false;
+        ModBeingLoaded = string.Empty;
+        Status = LoadStatus.Complete;
+        TankGame.ClientLog.Write(_firstLoad ? $"Loaded {LoadedMods.Count} mod(s)." : $"Reloaded {LoadedMods.Count} mod(s).", LogType.Info);
+        _firstLoad = false;
+
+        ModTanks = [.. _modTanks];
+        ModBlocks = [.. _modBlocks];
+        ModShells = [.. _modShells];
+
+        OnFinishModLoading?.Invoke();
+        /*Task.Run(() => {
             _loadingActions.ForEach(x => x());
 
             IsLoadingMods = false;
@@ -433,7 +515,7 @@ public static class ModLoader {
             ModShells = [.. _modShells];
 
             OnFinishModLoading?.Invoke();
-        });
+        });*/
 
     }
     internal static void SetupMod(TanksMod mod, string modInfoPath) {

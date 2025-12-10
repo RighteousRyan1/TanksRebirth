@@ -290,7 +290,7 @@ public static class InputUtils {
     public static bool ButtonJustPressed(int player, Buttons button)
         => GamePads[player].Current.IsButtonDown(button) && GamePads[player].Previous.IsButtonUp(button);
     public static int DeltaScrollWheel => KeyboardMouse.CurrentMouse.ScrollWheelValue / 120;
-    public static int OldDeltaScrollWheel => KeyboardMouse.CurrentMouse.ScrollWheelValue / 120;
+    public static int OldDeltaScrollWheel => KeyboardMouse.PreviousMouse.ScrollWheelValue / 120;
     public static int GetScrollWheelChange() => DeltaScrollWheel == OldDeltaScrollWheel ? 0 : DeltaScrollWheel - OldDeltaScrollWheel;
     public static float ApplyDeadzone(float value, float minDeadzone, float maxDeadzone, float minVal, float maxVal) {
         float mid = (minVal + maxVal) * 0.5f;
