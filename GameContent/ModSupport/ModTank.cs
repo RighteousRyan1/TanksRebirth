@@ -87,7 +87,7 @@ public class ModTank : ILoadable, IModContent {
     internal static int unloadOffset = 0;
     internal void Unload() {
         var name = Name.GetLocalizedString(LangCode.English)!;
-        // if more than one mod has a modded tank, the game unloads that, and indexes are not adjusted... unloadOffset fixes that
+        // if more than one mod has a modded tank, the game unloads that, and indices are not adjusted... unloadOffset fixes that
         TankID.Collection.TryRemove(Type - unloadOffset);
         AITank.TankDestructionColors.Remove(Type);
         if (!HasSong)

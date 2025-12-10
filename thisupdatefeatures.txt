@@ -48,6 +48,7 @@ Remember you can enable speedrun mode with `F1`! Top 5 uploaded speedruns will g
 - Fixed some tank destruction particles having frame-dependent animation
 - Fixed bug where you would Game Over with 2 lives in single player and in some multiplayer contexts
 - Fixed clock pendulum not accurately tracking seconds (there was some margin of error before)
+- Fixed ingame ping graphics not being properly scaled to resolution
 
 # TODO
 

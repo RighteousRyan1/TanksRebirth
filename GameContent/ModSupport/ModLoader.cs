@@ -18,6 +18,8 @@ using TanksRebirth.Internals.Common.Utilities;
 using FontStashSharp;
 using TanksRebirth.GameContent.UI.MainMenu;
 using System.Text.Json;
+using System.Collections.Concurrent;
+using System.Threading;
 
 namespace TanksRebirth.GameContent.ModSupport;
 
@@ -144,36 +146,28 @@ public static class ModLoader {
         Status = LoadStatus.Compiling;
         Process proc = new();
         try {
+            // uses dotnet instead of just the cli -> dotnet command
             ProcessStartInfo startInfo = new() {
+                FileName = "dotnet",
+                Arguments = $"build -c {LoadType}",
+                WorkingDirectory = Path.Combine(ModsPath, modName),
                 UseShellExecute = false,
-
                 CreateNoWindow = true,
                 WindowStyle = ProcessWindowStyle.Hidden,
-                FileName = @"C:\Windows\system32\cmd.exe",
-                WorkingDirectory = Path.Combine(ModsPath, modName),
-                Arguments = $"/c dotnet build -c " + LoadType,
                 RedirectStandardOutput = true,
             };
 
             proc.StartInfo = startInfo;
             proc.Start();
 
-            var lines = proc.StandardOutput
-                .ReadToEnd()
-                .Replace("\n", "")
-                .Split('\r')
-                .Select(x => x.Trim())
-                .Where(x => !string.IsNullOrEmpty(x))
-                .ToArray();
+            var output = proc.StandardOutput.ReadToEnd();
+            proc.WaitForExit();
 
-            // find a build failure
-
-            var idx = Array.FindIndex(lines, l => l.Contains("build failed", StringComparison.CurrentCultureIgnoreCase));
-            if (idx > -1) {
-                var reasonP = Environment.NewLine + lines[idx - 1];
-                var reason = reasonP.Remove(Array.FindIndex(reasonP.ToArray(), x => x == '['));
-                Error = reason;
-                TankGame.ReportError(new Exception(reason));
+            if (proc.ExitCode != 0) {
+                var lines = output.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
+                var errorLine = lines.FirstOrDefault(l => l.Contains("error", StringComparison.OrdinalIgnoreCase));
+                Error = errorLine ?? "Unknown Build Failure";
+                TankGame.ReportError(new Exception(Error));
             }
 
             proc.WaitForExit();
@@ -228,7 +222,7 @@ public static class ModLoader {
         });
         LoadedMods.Clear();
         // for when the unloading process is done.
-        ModSingletons.moddedTypes.Clear();
+        ModSingletons._singletonMap.Clear();
         _loadedAlcs.Clear();
         ResetContentDictionaries();
         ModTank.unloadOffset = 0;
@@ -442,27 +436,26 @@ public static class ModLoader {
         });
 
     }
-    internal static void SetupMod(TanksMod tanksMod, string modInfoPath) {
-        if (File.Exists(modInfoPath)) {
-            try {
-                var modInfoJson = File.ReadAllText(modInfoPath);
-                tanksMod.ModInfo = JsonSerializer.Deserialize<ModInfo>(modInfoJson);
-            } catch (Exception ex) {
-                TankGame.ClientLog.Write($"Bad data in mod_info.json for mod '{tanksMod.InternalName}': {ex.Message}.", LogType.Warn);
+    internal static void SetupMod(TanksMod mod, string modInfoPath) {
+        mod.Data.Tanks = [];
+        mod.Data.Blocks = [];
+        mod.Data.Shells = [];
 
-                tanksMod.ModInfo = new();
-            }
-        }
-        else {
-            TankGame.ClientLog.Write($"mod_info.json not found for mod '{tanksMod.InternalName}', using defaults.", LogType.Info);
-
-            // create a default one
+        // trycatch is now avoided typically
+        if (!File.Exists(modInfoPath)) {
+            TankGame.ClientLog.Write($"mod_info.json missing for '{mod.InternalName}', creating defaults.", LogType.Info);
             File.WriteAllText(modInfoPath, JsonSerializer.Serialize<ModInfo>(default, _indented));
-            tanksMod.ModInfo = new();
+            mod.ModInfo = new();
+            return;
         }
-        tanksMod.Data.Tanks = [];
-        tanksMod.Data.Blocks = [];
-        tanksMod.Data.Shells = [];
+
+        try {
+            var modInfoJson = File.ReadAllText(modInfoPath);
+            mod.ModInfo = JsonSerializer.Deserialize<ModInfo>(modInfoJson);
+        } catch (JsonException ex) {
+            TankGame.ClientLog.Write($"Invalid JSON in '{mod.InternalName}': {ex.Message}.", LogType.Warn);
+            mod.ModInfo = new();
+        }
     }
     internal static void LoadModContent(TanksMod mod, Type[] types) {
         foreach (var type in types) {
@@ -473,50 +466,60 @@ public static class ModLoader {
             var isModShell = type.IsSubclassOf(typeof(ModShell)) && !type.IsAbstract;
 
             if (isModTank) {
-                var modTank = (Activator.CreateInstance(type) as ModTank)!;
-                mod.Data.Tanks.Add(modTank);
-                _modTanks.Add(modTank);
-                modTank!.Mod = mod;
-
-                // load each tank and its data, add to moddedTypes the singleton of the ModTank.
-                ModSingletons.moddedTypes.Add(modTank);
-
-                var tankName = modTank.GetType().Name;
-
-                modTank.Name ??= new([]);
-                modTank.Texture ??= tankName;
-
-                // doesn't insert anything if there is already something for English
-                modTank.Name.AddLocalization(LangCode.English, $"{mod.InternalName}.{tankName}");
-                DifficultyAlgorithm.TankDiffs[modTank.Type] = 0f;
-                modTank!.Load();
-                TankGame.ClientLog.Write($"Loaded modded tank '{modTank.Name.GetLocalizedString(LangCode.English)}'", LogType.Info);
+                LoadModTank(mod, type);
             }
             else if (isModBlock) {
-                var modBlock = (Activator.CreateInstance(type) as ModBlock)!;
-                mod.Data.Blocks.Add(modBlock);
-                _modBlocks.Add(modBlock);
-                modBlock!.Mod = mod;
-
-                // again, but with modlbocks
-                ModSingletons.moddedTypes.Add(modBlock);
-                modBlock.Name.AddLocalization(LangCode.English, $"{mod.InternalName}.{modBlock.GetType().Name}");
-                modBlock.Register();
-                TankGame.ClientLog.Write($"Loaded modded block '{modBlock.Name.GetLocalizedString(LangCode.English)}'", LogType.Info);
+                LoadModBlock(mod, type);
             }
             else if (isModShell) {
-                var modShell = (Activator.CreateInstance(type) as ModShell)!;
-                mod.Data.Shells.Add(modShell);
-                _modShells.Add(modShell);
-                modShell!.Mod = mod;
-
-                // again, but with modshels
-                ModSingletons.moddedTypes.Add(modShell);
-                modShell.Name.AddLocalization(LangCode.English, $"{mod.InternalName}.{modShell.GetType().Name}");
-                modShell.Register();
-                TankGame.ClientLog.Write($"Loaded modded shell '{modShell.Name.GetLocalizedString(LangCode.English)}'", LogType.Info);
+                LoadModShell(mod, type);
             }
         }
+    }
+
+    public static void LoadModTank(TanksMod mod, Type type) {
+        var modTank = (Activator.CreateInstance(type) as ModTank)!;
+        mod.Data.Tanks.Add(modTank);
+        _modTanks.Add(modTank);
+        modTank!.Mod = mod;
+
+        // load each tank and its data, add to moddedTypes the singleton of the ModTank.
+        ModSingletons._singletonMap.Add(type, modTank);
+
+        var tankName = modTank.GetType().Name;
+
+        modTank.Name ??= new([]);
+        modTank.Texture ??= tankName;
+
+        // doesn't insert anything if there is already something for English
+        modTank.Name.AddLocalization(LangCode.English, $"{mod.InternalName}.{tankName}");
+        DifficultyAlgorithm.TankDiffs[modTank.Type] = 0f;
+        modTank!.Load();
+        TankGame.ClientLog.Write($"Loaded modded tank '{modTank.Name.GetLocalizedString(LangCode.English)}'", LogType.Info);
+    }
+    public static void LoadModBlock(TanksMod mod, Type type) {
+        var modBlock = (Activator.CreateInstance(type) as ModBlock)!;
+        mod.Data.Blocks.Add(modBlock);
+        _modBlocks.Add(modBlock);
+        modBlock!.Mod = mod;
+
+        // again, but with modlbocks
+        ModSingletons._singletonMap.Add(type, modBlock);
+        modBlock.Name.AddLocalization(LangCode.English, $"{mod.InternalName}.{modBlock.GetType().Name}");
+        modBlock.Register();
+        TankGame.ClientLog.Write($"Loaded modded block '{modBlock.Name.GetLocalizedString(LangCode.English)}'", LogType.Info);
+    }
+    public static void LoadModShell(TanksMod mod, Type type) {
+        var modShell = (Activator.CreateInstance(type) as ModShell)!;
+        mod.Data.Shells.Add(modShell);
+        _modShells.Add(modShell);
+        modShell!.Mod = mod;
+
+        // again, but with modshels
+        ModSingletons._singletonMap.Add(type, modShell);
+        modShell.Name.AddLocalization(LangCode.English, $"{mod.InternalName}.{modShell.GetType().Name}");
+        modShell.Register();
+        TankGame.ClientLog.Write($"Loaded modded shell '{modShell.Name.GetLocalizedString(LangCode.English)}'", LogType.Info);
     }
     public static int LocateCsprojProperty(string[] contents, string match) {
         return Array.FindIndex(contents, x => {
